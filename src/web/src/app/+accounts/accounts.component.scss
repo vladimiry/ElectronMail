@@ -1,0 +1,218 @@
+@import '~_web_src/variables';
+
+$accounts-column-width: 250px;
+
+:host {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: $app-color-primary-dark;
+
+    &::ng-deep {
+        #{$app-prefix}-account {
+            border-top: 1px solid $app-color-webview-border;
+        }
+    }
+
+    .wrapper {
+        height: 100%;
+        display: flex;
+        flex-flow: column;
+    }
+
+    .no-accounts-block {
+        height: 100%;
+
+        .btn {
+            white-space: normal;
+        }
+    }
+
+    .accounts-block {
+        display: flex;
+        flex-flow: row;
+        z-index: 100;
+
+        .accounts-list {
+            flex: 1;
+            flex-grow: 100;
+        }
+
+        .list-group.accounts-list {
+            display: none;
+
+            &::ng-deep {
+                #{$app-prefix}-account-title {
+                    .account-value-sync-title {
+                        display: block;
+                    }
+                }
+            }
+
+            .list-group-item {
+                word-wrap: break-word;
+            }
+        }
+
+        .btn-group.accounts-list {
+            &::ng-deep {
+                .dropdown-toggle {
+                    #{$app-prefix}-account-title {
+                        .account-value-sync-title {
+                            &:before {
+                                content: "| ";
+                            }
+                        }
+                    }
+                }
+
+                .dropdown-menu {
+                    #{$app-prefix}-account-title {
+                        .account-value-sync-title {
+                            display: block;
+                        }
+                    }
+                }
+            }
+
+            .unread-summary {
+                $padding-x-addition: $app-spacer-1 * .75;
+                @include button-size($input-btn-padding-y, $input-btn-padding-x, $font-size-base, $input-btn-line-height, $btn-border-radius);
+                padding-left: $padding-x-addition;
+                padding-right: ($app-spacer-2 + $padding-x-addition);
+
+                .badge {
+                    font-size: 100%;
+                }
+            }
+
+            & > .dropdown-toggle {
+                width: 100%;
+                border-top-left-radius: $btn-border-radius;
+                border-bottom-left-radius: $btn-border-radius;
+                white-space: normal;
+            }
+
+            .dropdown-menu {
+                margin-top: $app-spacer-2;
+                width: 100%;
+            }
+        }
+
+        .controls {
+            display: flex;
+            flex-grow: 0;
+            margin: 0 0 0 $app-spacer-2;
+
+            .btn-group {
+                & > .btn-secondary {
+                    &:nth-of-type(1) {
+                        width: 100%;
+                    }
+                }
+            }
+
+            .dropdown-menu {
+                left: auto !important;
+                right: 0 !important;
+                margin-top: $app-spacer-2;
+
+                .toggle-layout-view {
+                    display: none;
+                }
+            }
+        }
+    }
+
+    .account-block {
+        position: relative;
+        flex: 1;
+    }
+
+    @media (min-width: #{map-get($grid-breakpoints, lg)}) {
+        .accounts-block {
+            .controls {
+                .dropdown-menu {
+                    .toggle-layout-view {
+                        display: block;
+                    }
+                }
+            }
+        }
+
+        .wrapper:not(.compact-layout) {
+            flex-flow: row;
+
+            &::ng-deep {
+                #{$app-prefix}-account {
+                    border-left: 1px solid $app-color-webview-border;
+                    border-top: 0;
+                }
+            }
+
+            > .btn-group {
+                display: none;
+            }
+
+            .no-accounts-block {
+                margin-left: -$accounts-column-width;
+            }
+
+            .accounts-block {
+                position: relative;
+                flex-grow: 0;
+                width: $accounts-column-width;
+
+                .list-group.accounts-list {
+                    display: flex;
+                    margin-bottom: 50px;
+                }
+
+                .btn-group.accounts-list {
+                    display: none;
+                }
+
+                .controls {
+                    position: absolute;
+                    bottom: 0;
+                    right: 0;
+                    left: 0;
+                    margin: $app-spacer-2;
+
+                    .btn-group {
+                        width: 100%;
+
+                        & > .btn-secondary {
+                            &:nth-of-type(2) {
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                            }
+                        }
+                    }
+
+                    .dropdown-toggle {
+                        &:after {
+                            transform: rotate(180deg);
+                        }
+                    }
+
+                    .dropdown-menu {
+                        bottom: 100% !important;
+                        top: auto !important;
+                        width: 100%;
+                        margin-top: 0;
+                        margin-bottom: $app-spacer-1;
+                    }
+                }
+            }
+
+            .account-block {
+                flex-grow: 100;
+            }
+        }
+    }
+}

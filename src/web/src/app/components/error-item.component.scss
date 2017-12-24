@@ -1,0 +1,18 @@
+@import '~_web_src/variables';
+
+:host {
+    display: block;
+
+    .alert {
+        position: relative;
+        word-wrap: break-word;
+        margin: 0;
+        padding-right: 40px;
+
+        .close {
+            position: absolute;
+            top: 0;
+            right: 0;
+        }
+    }
+}

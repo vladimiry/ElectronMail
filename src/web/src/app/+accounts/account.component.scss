@@ -1,0 +1,23 @@
+@import '~_web_src/variables';
+
+:host {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+
+    webview {
+        flex: 1;
+        height: 100%;
+    }
+
+    &::ng-deep {
+        #{$app-prefix}-keepass-request {
+            &, .progress {
+                border-radius: 0 !important;
+            }
+        }
+    }
+}

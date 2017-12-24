@@ -1,0 +1,89 @@
+<div class="wrapper" *ngIf="initialized$ | async" [ngClass]="{'compact-layout': compactLayout$ | async}">
+    <div class="accounts-block p-2">
+        <div class="btn-group accounts-list" dropdown placement="bottom right"
+             [ngStyle]="!accounts.length && {'visibility': 'hidden'}">
+            <div class="unread-summary" *ngIf="accounts.length > 1 && (accountsUnreadSummary$ | async)">
+                <span class="badge badge-danger">{{ accountsUnreadSummary$ | async }}</span>
+            </div>
+            <button dropdownToggle type="button" class="btn btn-warning-light dropdown-toggle" *ngIf="selectedAccount$ | async">
+                <protonmail-desktop-app-account-title [account]="selectedAccount$ | async"></protonmail-desktop-app-account-title>
+                <span class="caret"></span>
+            </button>
+            <ul *dropdownMenu class="dropdown-menu dropdown-menu-right" role="menu">
+                <li role="menuitem" *ngFor="let account of accounts; trackBy: trackAccount">
+                    <a class="dropdown-item" (click)="activateAccount(account)">
+                        <protonmail-desktop-app-account-title [account]="account"></protonmail-desktop-app-account-title>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <ul class="list-group accounts-list">
+            <a class="list-group-item list-group-item-action" href="javascript:void(0)"
+               *ngFor="let account of accounts; trackBy: trackAccount" (click)="activateAccount(account)"
+               [ngClass]="{'list-group-item-warning': account.accountConfig.login === (selectedLogin$ | async)}">
+                <protonmail-desktop-app-account-title [account]="account"></protonmail-desktop-app-account-title>
+            </a>
+        </ul>
+        <div class="controls">
+            <div class="btn-group" dropdown>
+                <button type="button" class="btn btn-secondary" (click)="openSettingsView()">
+                    <i class="fa fa-cog"></i>
+                    Options
+                </button>
+                <button type="button" dropdownToggle class="btn btn-secondary dropdown-toggle dropdown-toggle-split">
+                    <span class="caret"></span>
+                </button>
+                <ul *dropdownMenu class="dropdown-menu" role="menu">
+                    <li role="menuitem">
+                        <button class="dropdown-item toggle-layout-view" type="button" (click)="toggleCompactLayout()">
+                            <i class="fa fa-spinner fa-pulse fa-fw" *ngIf="togglingCompactLayout$ | async"></i>
+                            Toggle Compact View
+                        </button>
+                    </li>
+                    <li role="menuitem">
+                        <button class="dropdown-item" type="button" (click)="openAboutWindow()">
+                            About
+                        </button>
+                    </li>
+                    <li class="divider dropdown-divider"></li>
+                    <li role="menuitem">
+                        <button class="dropdown-item" type="button" (click)="openSettingsFolder()">
+                            Open Settings Folder
+                        </button>
+                    </li>
+                    <li class="divider dropdown-divider"></li>
+                    <li role="menuitem">
+                        <button class="dropdown-item" type="button" (click)="logout()" id="logoutButton">
+                            <i class="fa fa-sign-out"></i>
+                            Log out
+                        </button>
+                    </li>
+                    <li role="menuitem">
+                        <button class="dropdown-item text-danger" type="button" (click)="quit()" id="quitButton">
+                            <i class="fa fa-times"></i>
+                            Exit
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="account-block">
+        <div *ngIf="accounts.length; then accountsDefined else accountsUnDefined"></div>
+        <ng-template #accountsDefined>
+            <protonmail-desktop-app-account
+                *ngFor="let account of accounts; trackBy: trackAccount"
+                [account]="account"
+                [ngStyle]="account.accountConfig.login != (selectedLogin$ | async) && {'visibility': 'hidden'}"
+            ></protonmail-desktop-app-account>
+        </ng-template>
+        <ng-template #accountsUnDefined>
+            <div class="d-flex justify-content-center align-items-center p-3 no-accounts-block">
+                <button type="button" class="btn btn-primary btn-lg" (click)="openAddingAccountView()">
+                    <i class="fa fa-plus"></i>
+                    Add Account
+                </button>
+            </div>
+        </ng-template>
+    </div>
+</div>

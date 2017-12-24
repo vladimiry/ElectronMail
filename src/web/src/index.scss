@@ -1,0 +1,10 @@
+@import './variables';
+
+html, body {
+    height: 100%;
+}
+
+.form-group.required > label:after {
+    content: "*";
+    color: theme-color("danger");
+}

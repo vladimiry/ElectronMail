@@ -1,0 +1,7 @@
+{
+  "extends": "../../../tsconfig.json",
+  "files": [
+    "./account/index.ts",
+    "./browser-window-production-env/index.ts"
+  ]
+}

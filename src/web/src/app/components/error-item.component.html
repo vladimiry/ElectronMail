@@ -1,0 +1,20 @@
+<div class="alert alert-danger alert-dismissible" role="alert">
+    {{ error.message }}
+    <div>
+        <a href="javascript:void(0)" class="alert-link" (click)="details()">Toggle details</a>
+        <i class="fa" [ngClass]="{
+            'fa-caret-up': stackTraceOpened,
+            'fa-caret-down': !stackTraceOpened
+        }"></i>
+        <div *ngIf="stackTraceOpened">
+            <pre>{{ browserStackTrace }}</pre>
+            <div *ngIf="backendStackTrace">
+                <label>Backend:</label>
+                <pre>{{ backendStackTrace }}</pre>
+            </div>
+        </div>
+    </div>
+    <button type="button" class="close" (click)="remove()">
+        &times;
+    </button>
+</div>

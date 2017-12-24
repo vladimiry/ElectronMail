@@ -1,0 +1,29 @@
+{
+  "extends": "./../../tsconfig.json",
+  "compilerOptions": {
+    "target": "es6",
+    "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "allowSyntheticDefaultImports": true,
+    "importHelpers": true,
+    "lib": [
+      "es2015",
+      "dom"
+    ],
+    "baseUrl": "../../",
+    "outDir": "../../app",
+    "typeRoots": [
+      "../../node_modules/@types",
+      "../../src/@types",
+      "./src/typings.d.ts"
+    ]
+  },
+  "exclude": [
+    "**/*.spec.ts"
+  ],
+  "angularCompilerOptions": {
+    "preserveWhitespaces": false,
+    "fullTemplateTypeCheck": false
+  }
+}

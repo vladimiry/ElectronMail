@@ -1,0 +1,35 @@
+@import '~_web_src/variables';
+
+:host {
+    & > .modal {
+        display: block;
+        position: relative;
+
+        & > .modal-dialog > .modal-content > .modal-body {
+            & > .wrapper {
+                & > .list-group {
+                    margin: 0 0 $app-spacer-3 0;
+                }
+
+                @media (min-width: #{map-get($grid-breakpoints, lg)}) {
+                    display: flex;
+
+                    & > .list-group {
+                        flex-grow: 0;
+                        display: flex;
+                        margin: 0 $app-spacer-3 0 0;
+                    }
+
+                    &::ng-deep {
+                        & > router-outlet {
+                            & + * {
+                                //display: flex;
+                                flex-grow: 100;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

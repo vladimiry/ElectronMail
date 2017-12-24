@@ -1,0 +1,81 @@
+{
+  "extends": [
+    "tslint:recommended",
+    "rxjs-tslint-rules",
+    "./tslint-codelyzer.json"
+  ],
+  "rulesDirectory": [
+    "node_modules/tslint-rules-bunch/rules"
+  ],
+  "rules": {
+    "no-import-zones": [
+      true,
+      {
+        "verbose": true,
+        "zones": [
+          {
+            "patterns": [
+              {
+                "target": "src/web/src/**/*",
+                "from": [
+                  "_web_app/**/*",
+                  
+                  "!_web_app/store/**/*",
+                  "!_web_app\\store\\**\\*",
+                  
+                  "!_web_app/+shared/shared.module",
+                  "!_web_app\\+shared\\shared.module",
+
+                  "!_web_app/app.constants",
+                  "!_web_app\\app.constants"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "rxjs-no-add": {
+      "severity": "error"
+    },
+    "rxjs-no-operator": {
+      "severity": "error"
+    },
+    "rxjs-no-patched": {
+      "severity": "error"
+    },
+    "rxjs-no-wholesale": {
+      "severity": "error"
+    },
+    "no-unused-variable": true,
+    "import-blacklist": [
+      true,
+      "rxjs",
+      "rxjs/Rx"
+    ],
+    "max-line-length": [
+      true,
+      140
+    ],
+    "prefer-for-of": true,
+    "await-promise": true,
+    "no-empty-interface": false,
+    "variable-name": [
+      true,
+      "ban-keywords",
+      "check-format",
+      "allow-leading-underscore"
+    ],
+    "object-literal-sort-keys": false,
+    "ordered-imports": false,
+    "member-access": false,
+    "interface-name": false,
+    "arrow-parens": [
+      true
+    ],
+    "max-classes-per-file": [
+      false
+    ],
+    "no-empty": false
+  }
+}

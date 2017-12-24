@@ -1,0 +1,38 @@
+<div class="modal-backdrop show"></div>
+
+<div class="modal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Settings</h5>
+                <button type="button" class="close" aria-label="Close" (click)="close()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="wrapper">
+                    <ul class="list-group">
+                        <a class="list-group-item list-group-item-action" href="javascript:void(0)"
+                           [routerLink]="['accounts']" routerLinkActive="list-group-item-warning">
+                            Accounts
+                        </a>
+                        <a class="list-group-item list-group-item-action" href="javascript:void(0)"
+                           [routerLink]="['password-change']" routerLinkActive="list-group-item-warning">
+                            Master Password
+                        </a>
+                        <a class="list-group-item list-group-item-action" href="javascript:void(0)"
+                           [routerLink]="['keepass-associate-settings']" routerLinkActive="list-group-item-warning">
+                            KeePass Integration
+                        </a>
+                    </ul>
+                    <router-outlet></router-outlet>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" (click)="close()">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

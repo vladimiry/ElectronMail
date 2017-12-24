@@ -1,0 +1,60 @@
+@import '~_web_src/variables';
+
+$button-size: $input-height-sm;
+$fill-color: theme-color("success");
+$bg-color: white;
+$border-width: 1px;
+
+:host {
+    display: none;
+    position: relative;
+    border: $border-width solid $fill-color;
+    border-radius: $border-radius;
+    background-color: $bg-color;
+
+    .progress {
+        position: relative;
+        height: $button-size;
+        margin-right: $button-size;
+        border-radius: ($border-radius / 2);
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+        background-color: $bg-color;
+        border-width: 0;
+
+        > div:first-child {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: $font-size-sm;
+        }
+    }
+
+    .control {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: $button-size;
+        height: $button-size;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-left: $border-width solid $fill-color;
+        color: $fill-color;
+        font-size: $font-size-sm;
+        cursor: pointer;
+
+        &.locked {
+            cursor: not-allowed;
+        }
+
+        &:hover {
+            color: darken($fill-color, 20%);
+        }
+    }
+}

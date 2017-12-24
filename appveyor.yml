@@ -1,0 +1,31 @@
+# http://www.appveyor.com/docs/appveyor-yml
+
+branches:
+  only:
+    - master
+skip_tags: true
+environment:
+  matrix:
+    - nodejs_version: 8
+platform:
+  - x64
+cache:
+  - node_modules
+  - "%LOCALAPPDATA%/electron"
+  - "%USERPROFILE%/.electron"
+  #- "%USERPROFILE%/.electron-builder"
+test: off
+install:
+  - ps: Update-NodeJsInstallation (Get-NodeJsLatestBuild $env:nodejs_version) $env:Platform
+  #- SET CI=true
+  #- SET PATH=%cd%\node_modules\.bin;%PATH%
+  - npm install
+build_script:
+  - node --version
+  - npm --version
+  - npm run lint
+  - npm run test:electron:main
+  #- npm run clean:app
+  - npm run compile:production
+  - npm run test:e2e:run
+  #- ps: if($env:APPVEYOR_REPO_TAG -eq "true") { npm run release } else { echo "Skipping releasing as commit is not tagged" }

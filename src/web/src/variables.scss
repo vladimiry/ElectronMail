@@ -1,0 +1,11 @@
+@import './vendor/variables';
+
+$app-prefix: protonmail-desktop-app;
+
+$app-spacer-1: map-get($spacers, 1);
+$app-spacer-2: map-get($spacers, 2);
+$app-spacer-3: map-get($spacers, 3);
+
+$app-color-primary: theme-color("primary");
+$app-color-primary-dark: #505061;
+$app-color-webview-border: darken($app-color-primary-dark, 5%);

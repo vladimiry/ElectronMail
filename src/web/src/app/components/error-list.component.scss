@@ -1,0 +1,25 @@
+@import '~_web_src/variables';
+
+:host {
+    display: block;
+    float: right;
+    width: 100%;
+
+    @media (min-width: #{map-get($grid-breakpoints, lg)}) {
+        width: 50%;
+    }
+
+    .modal-content {
+        z-index: ($zindex-modal + 1);
+    }
+
+    &::ng-deep {
+        .items {
+            #{$app-prefix}-error-item {
+                &:not(:last-child) {
+                    margin-bottom: $app-spacer-3;
+                }
+            }
+        }
+    }
+}

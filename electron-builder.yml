@@ -1,0 +1,69 @@
+appId: com.github.vladimiry.protonmail-desktop-app
+artifactName: ${name}-${version}-${os}-${arch}.${ext}
+
+publish: github
+forceCodeSigning: false
+
+directories:
+  app: .
+  output: ./dist
+files: [
+  "./app/**/*",
+  "./package.json",
+  # rxjs
+  "!node_modules/rxjs/{_esm5,_esm2015,src,bundles}",
+  # stacktrace-js
+  "!node_modules/error-stack-parser/dist",
+  "!node_modules/source-map/dist",
+  "!node_modules/stack-generator/dist",
+  "!node_modules/stackframe/dist",
+  "!node_modules/stacktrace-gps/dist",
+  "!node_modules/stacktrace-js/dist",
+  # sodium-native
+  # TODO sodium-native: include into the package only needed prebuilds for the platform is being built
+  "!node_modules/sodium-native/{src,test,libsodium}",
+]
+asar: true
+compression: maximum
+
+mac:
+  icon: ./app/assets/icons/mac/icon.icns
+  category: public.app-category.productivity
+
+dmg:
+  icon: ./app/assets/icons/mac/icon.icns
+  iconSize: 128
+  contents:
+    - {x: 380, y: 240, type: link, path: /Applications}
+    - {x: 122, y: 240, type: file}
+
+linux:
+  icon: ./app/assets/icons/png
+  category: Office
+  packageCategory: Office
+  target:
+    - {target: AppImage}
+    - {target: deb}
+    - {target: freebsd}
+    - {target: pacman}
+    - {target: rpm}
+    - {target: snap}
+    - {target: tar.gz}
+
+win:
+  artifactName: ${name}-${version}-windows-${arch}.${ext}
+  icon: ./app/assets/icons/win/icon.ico
+  target:
+    - {target: nsis}
+    - {target: portable}
+    - {target: zip}
+
+nsis:
+  artifactName: ${name}-${version}-windows-${arch}-installer.${ext}
+  oneClick: true
+  perMachine: false
+  unicode: false
+
+portable:
+    artifactName: ${name}-${version}-windows-${arch}-portable.${ext}
+    unicode: false

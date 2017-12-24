@@ -1,0 +1,45 @@
+<div class="d-flex justify-content-center">
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <h2>Master Password Setup</h2>
+        <fieldset [disabled]="processing$ | async">
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <input type="password" class="form-control form-control-lg" formControlName="password" #passwordRef
+                           placeholder="Password"
+                           [ngClass]="password.dirty ? {
+                           'is-invalid': password.invalid,
+                           'is-valid': password.valid
+                       } : {}">
+                </div>
+                <div class="form-group col-md-6">
+                    <input type="password" class="form-control form-control-lg" formControlName="passwordConfirm"
+                           placeholder="Password Confirm"
+                           [ngClass]="passwordConfirm.dirty ? {
+                           'is-invalid': passwordConfirm.invalid,
+                           'is-valid': passwordConfirm.valid
+                       } : {}">
+                    <div class="invalid-feedback" *ngIf="passwordConfirm.invalid && passwordConfirm.errors?.mismatch">
+                        Passwords don't match.
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-primary btn-lg btn-block" type="submit" [disabled]="form.invalid">
+                <i class="fa fa-spinner fa-pulse fa-fw" *ngIf="processing$ | async"></i>
+                Submit
+            </button>
+            <div class="form-check text-right">
+                <label class="form-check-label">
+                    <input type="checkbox" class="form-check-input" formControlName="savePassword">
+                    Keep me signed in
+                </label>
+                <i class="fa fa-info-circle text-danger" *ngIf="savePassword.value"
+                   [popover]="popTemplate" placement="bottom" container="body" triggers="mouseenter:mouseleave"
+                ></i>
+                <ng-template #popTemplate>
+                    Choosing <strong>"Keep me signed in"</strong> option enables saving the master password on your computer. It weakens
+                    the security.
+                </ng-template>
+            </div>
+        </fieldset>
+    </form>
+</div>

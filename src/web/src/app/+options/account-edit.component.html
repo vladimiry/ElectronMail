@@ -1,0 +1,73 @@
+<nav aria-label="breadcrumb" role="navigation">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active">
+            {{ (account$ | async) ? "Edit Account: " + ((account$ | async).login) : "Add Account" }}
+        </li>
+    </ol>
+</nav>
+<fieldset [disabled]="(processing$ | async) || (removing$ | async)">
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="form-group">
+        <div class="form-group required" *ngIf="!(account$ | async)">
+            <label>Login</label>
+            <input type="text" class="form-control" formControlName="login" #loginRef
+                   [ngClass]="login.dirty ? {'is-invalid': login.invalid, 'is-valid': login.valid} : {}">
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" class="form-control" formControlName="password"
+                   [ngClass]="password.dirty ? {'is-invalid': password.invalid, 'is-valid': password.valid} : {}">
+        </div>
+        <div class="form-group">
+            <label>Mail Password</label>
+            <input type="password" class="form-control" formControlName="mailPassword"
+                   [ngClass]="mailPassword.dirty ? {'is-invalid': mailPassword.invalid, 'is-valid': mailPassword.valid} : {}">
+        </div>
+        <div class="clearfix">
+            <button class="btn btn-outline-danger pull-left" type="button" *ngIf="(account$ | async)" (click)="remove()">
+                <i class="fa" [ngClass]="{
+                    'fa-spinner fa-pulse fa-fw': (removing$ | async),
+                    'fa-times': !(removing$ | async)
+                }"></i>
+                Remove
+            </button>
+            <button class="btn btn-primary pull-right" type="submit" [disabled]="form.invalid">
+                <i class="fa" [ngClass]="{
+                    'fa-spinner fa-pulse fa-fw': (processing$ | async),
+                    'fa-check': !(processing$ | async)
+                }"></i>
+                {{ (account$ | async) ? "Update" : "Add" }}
+            </button>
+        </div>
+    </form>
+    <div *ngIf="(account$ | async)">
+        <div>
+            <a href="javascript:void(0)" (click)="keePassRefCollapsed = !keePassRefCollapsed">KeePass References</a>
+            <i class="fa" [ngClass]="{
+                'fa-caret-up': !keePassRefCollapsed,
+                'fa-caret-down': keePassRefCollapsed
+            }"></i>
+        </div>
+        <div [collapse]="keePassRefCollapsed">
+            <hr>
+            <div class="form-group">
+                <label>Password</label>
+                <protonmail-desktop-app-keepass-reference
+                    [keePassClientConf$]="keePassClientConf$"
+                    [reference$]="passwordKeePassRef$"
+                    (linkHandler)="onPasswordKeePassLink($event)"
+                    (unlinkHandler)="onPasswordKeePassUnlink($event)"
+                ></protonmail-desktop-app-keepass-reference>
+            </div>
+            <hr>
+            <div class="form-group">
+                <label>Mail Password</label>
+                <protonmail-desktop-app-keepass-reference
+                    [keePassClientConf$]="keePassClientConf$"
+                    [reference$]="mailPasswordKeePassRef$"
+                    (linkHandler)="onMailPasswordKeePassLink($event)"
+                    (unlinkHandler)="onMailPasswordKeePassUnlink($event)"
+                ></protonmail-desktop-app-keepass-reference>
+            </div>
+        </div>
+    </div>
+</fieldset>

@@ -1,0 +1,22 @@
+<protonmail-desktop-app-keepass-request
+    *ngIf="isPageUrLogin()"
+    [keePassRef$]="passwordKeePassRef$"
+    [keePassClientConf$]="keePassClientConf$"
+    (passwordHandler)="onPassword($event)"
+    [lock$]="passwordProgress$"
+></protonmail-desktop-app-keepass-request>
+
+<protonmail-desktop-app-keepass-request
+    *ngIf="isPageUrlUnlock()"
+    [keePassRef$]="mailPasswordKeePassRef$"
+    [keePassClientConf$]="keePassClientConf$"
+    (passwordHandler)="onMailPassword($event)"
+    [lock$]="mailPasswordProgress$"
+></protonmail-desktop-app-keepass-request>
+
+<webview
+    *ngIf="webViewPreload$ | async"
+    #webViewRef
+    [src]="webViewSrc"
+    [preload]="webViewPreload$ | async"
+></webview>

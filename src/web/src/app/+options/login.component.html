@@ -1,0 +1,30 @@
+<div class="d-flex justify-content-center">
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <h2>Log in</h2>
+        <fieldset [disabled]="processing$ | async" class="form-group">
+            <div class="form-group">
+                <input type="password" class="form-control form-control-lg" formControlName="password" #passwordRef
+                       placeholder="Password" autocorrect="off" autocapitalize="off" spellcheck="off"
+                       [ngClass]="password.dirty ? {'is-invalid': password.invalid, 'is-valid': password.valid} : {}">
+            </div>
+            <button class="btn btn-primary btn-lg btn-block" type="submit" [disabled]="form.invalid">
+                <i class="fa fa-spinner fa-pulse fa-fw" *ngIf="processing$ | async"></i>
+                Submit
+            </button>
+            <div class="form-check text-right">
+                <label class="form-check-label">
+                    <input type="checkbox" class="form-check-input" formControlName="savePassword">
+                    Keep me signed in
+                </label>
+                <i class="fa fa-info-circle text-danger" *ngIf="savePassword.value"
+                   [popover]="popTemplate" placement="bottom" container="body" triggers="mouseenter:mouseleave"
+                ></i>
+                <ng-template #popTemplate>
+                    Choosing <strong>"Keep me signed in"</strong> option enables saving the master password on your computer. It weakens
+                    the security.
+                </ng-template>
+            </div>
+        </fieldset>
+    </form>
+</div>
+<!-- 123 -->

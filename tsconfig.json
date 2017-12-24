@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "target": "es2015",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "importHelpers": true,
+    "noEmitOnError": true,
+    "declaration": false,
+    "sourceMap": true,
+    "lib": [
+      "es2015",
+      "dom"
+    ],
+    "outDir": "./app",
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/@types"
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "_root/package.json": [
+        "./package.json"
+      ],
+      "_shared/*": [
+        "./src/shared/*"
+      ],
+      "_web_app/*": [
+        "./src/web/src/app/*"
+      ]
+    }
+  },
+  "exclude": [
+    "node_modules"
+  ]
+}

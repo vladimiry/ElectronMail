@@ -1,0 +1,83 @@
+# https://docs.travis-ci.com/user/customizing-the-build/
+
+branches:
+  only:
+    - master
+matrix:
+  include:
+    - os: osx
+      osx_image: xcode9.0
+      language: node_js
+      node_js: 8
+      env:
+        - ELECTRON_CACHE=$HOME/.cache/electron
+        - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
+    - os: linux
+      sudo: required
+      dist: trusty
+      language: node_js
+      node_js: 8
+      env:
+        - ELECTRON_CACHE=$HOME/.cache/electron
+        - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
+services:
+  - docker
+env:
+  global:
+    - ELECTRON_CACHE=$HOME/.cache/electron
+    - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+    # the following packages are needed by the "node-keytar" module during running e2e tests
+      - gnome-keyring
+      - libsecret-1-dev
+      - python-gnomekeyring
+cache:
+  directories:
+    - node_modules
+    - $HOME/.cache/electron
+    - $HOME/.cache/electron-builder
+before_cache:
+  - rm -rf $HOME/.cache/electron-builder/wine
+before_install:
+  - node --version
+  - npm --version
+install:
+  - npm install
+before_script:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export DISPLAY=:99.0; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sh -e /etc/init.d/xvfb start; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sleep 3; fi
+script:
+  - npm run lint
+  - npm run test:electron:main
+  #- npm run clean:app
+  - npm run compile:production
+  # TODO make "test:e2e:run" work on all platforms
+  # - npm run test:e2e:run
+  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then npm run test:e2e:run; fi
+  - |
+    if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+      npm run electron-builder:release:mac
+    fi
+    if [ "$TRAVIS_OS_NAME" == "linux" ]; then
+      docker run --rm \
+        --env-file <(env | grep -iE 'NAME|DEBUG|NODE_|ELECTRON_|YARN_|NPM_|CI|CSC_|_TOKEN|_KEY|STRIP|BUILD_') \
+        --env ELECTRON_CACHE="/root/.cache/electron" \
+        --env ELECTRON_BUILDER_CACHE="/root/.cache/electron-builder" \
+        -v ${PWD}:/project \
+        -v ~/.cache/electron:/root/.cache/electron \
+        -v ~/.cache/electron-builder:/root/.cache/electron-builder \
+        electronuserland/builder:wine \
+        /bin/bash -c "npm run electron-builder:release:linux && npm run electron-builder:release:win"
+    fi
+after_failure:
+  - curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash
+  - artifacts upload $(git ls-files -o | grep -Fv -e node_modules -e dist -e app)
+notifications:
+  email:
+    on_success: never
+    on_failure: change

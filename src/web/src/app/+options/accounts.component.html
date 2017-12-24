@@ -1,0 +1,13 @@
+<a [routerLink]="['./../account-edit']" class="btn btn-primary mb-3">
+    <i class="fa fa-plus" aria-hidden="true"></i>
+    Add Account
+</a>
+
+<ul class="list-group">
+    <li class="list-group-item" *ngFor="let account of accounts$ | async">
+        {{ account.login }}
+        <a [routerLink]="['./../account-edit', account.login]" class="float-right">
+            Edit
+        </a>
+    </li>
+</ul>

@@ -1,0 +1,322 @@
+import * as fs from "fs";
+import * as path from "path";
+import * as mkdirp from "mkdirp";
+import * as electron from "electron";
+import * as randomString from "randomstring";
+import * as psNode from "ps-node"; // see also https://www.npmjs.com/package/find-process
+import * as psTree from "ps-tree";
+import {promisify} from "util";
+import {GenericTestContext} from "ava";
+import {Application} from "spectron";
+
+import {Environment} from "_shared/model/electron";
+
+export interface TestContext extends GenericTestContext<{
+    context: {
+        app: Application;
+        outputDirPath: string;
+        userDataDirPath: string;
+        appDirPath: string;
+        logFilePath: string;
+    };
+}> {}
+
+const rootDirPath = path.resolve(__dirname, process.cwd());
+const appDirPath = path.join(rootDirPath, "./app");
+const mainScriptFilePath = path.join(appDirPath, "./electron/main/index.js");
+
+export const ENV = {
+    masterPassword: `master-password-${randomString.generate({length: 8})}`,
+    login: `login-${randomString.generate({length: 8})}`,
+};
+export const CONF = {
+    timeouts: {
+        element: 700,
+        elementTouched: 300,
+        encryption: 5000,
+    },
+};
+
+async function mkOutputDirs(dirs: string[]) {
+    dirs.forEach((dir) => promisify(mkdirp)(dir));
+}
+
+export async function initApp(t: TestContext, options: { initial: boolean }) {
+    try {
+        const outputDirPath = t.context.outputDirPath = t.context.outputDirPath
+            || path.join(rootDirPath, "./output/e2e", String(Number(new Date())));
+        const userDataDirPath = path.join(outputDirPath, "./app-data");
+        const logFilePath = path.join(userDataDirPath, "log.log");
+        const webdriverLogDirPath = path.join(outputDirPath, "webdriver-driver-log");
+        const chromeDriverLogFilePath = path.join(outputDirPath, "chrome-driver.log");
+
+        await mkOutputDirs([
+            outputDirPath,
+            userDataDirPath,
+            webdriverLogDirPath,
+        ]);
+
+        t.context.appDirPath = appDirPath;
+        t.context.userDataDirPath = userDataDirPath;
+        t.context.logFilePath = logFilePath;
+
+        const missedFiles = (["production", "development", "e2e"] as Environment[])
+            .map((env) => `./electron/renderer/browser-window-${env}-env.js`)
+            .concat([
+                "./electron/renderer/account.js",
+                "./web/index.html",
+                "./assets/icons/icon.png",
+            ])
+            .map((file) => path.join(t.context.appDirPath, file))
+            .map((file) => {
+                const exists = fs.existsSync(file);
+                t.true(exists, `"${file}" file doesn't exist`);
+                return exists;
+            })
+            .filter((exists) => !exists)
+            .length > 0;
+
+        if (missedFiles) {
+            t.fail("Not all the required files exist");
+            return;
+        }
+
+        if (options.initial) {
+            t.false(fs.existsSync(path.join(userDataDirPath, "config.json")),
+                `"config.json" should not exist yet in "${userDataDirPath}"`);
+            t.false(fs.existsSync(path.join(userDataDirPath, "settings.bin")),
+                `"settings.bin" should not exist yet in "${userDataDirPath}"`);
+        }
+
+        t.context.app = new Application({
+            path: electron as any,
+            args: [mainScriptFilePath],
+            // TODO consider running e2e tests on copiled/binary app too
+            // path: path.join(rootPath, "./dist/linux-unpacked/protonmail-desktop-app"),
+            env: {
+                NODE_ENV: "e2e",
+                TEST_USER_DATA_DIR: userDataDirPath,
+            },
+            requireName: "electronRequire",
+            webdriverLogPath: webdriverLogDirPath,
+            chromeDriverLogPath: chromeDriverLogFilePath,
+        });
+
+        await t.context.app.start();
+        t.is(t.context.app.isRunning(), true);
+
+        // TODO make t.context.app.client.waitUntilWindowLoaded call work
+        // https://github.com/electron/spectron/issues/174
+        // await t.context.app.client.waitUntilWindowLoaded();
+
+        // await t.context.app.client.pause(1500);
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+
+        // await awaitAngular(t.context.app.client); // seems to be not needed
+
+        // TODO requires t.context.app.client.waitUntilWindowLoaded call
+        await (async () => {
+            const browserWindow = t.context.app.browserWindow;
+
+            // t.false(await browserWindow.webContents.isDevToolsOpened(), "dev tools closed");
+            t.false(await (browserWindow as any).isDevToolsOpened(), "browserWindow: dev tools closed");
+            t.false(await browserWindow.isMinimized(), "browserWindow: not minimized");
+
+            if (options.initial) {
+                t.true(await browserWindow.isVisible(), "browserWindow: visible");
+                t.true(await browserWindow.isFocused(), "browserWindow: focused");
+            } else {
+                t.false(await browserWindow.isVisible(), "browserWindow: not visible");
+                t.false(await browserWindow.isFocused(), "browserWindow: not focused");
+            }
+
+            const {width, height} = await browserWindow.getBounds();
+            t.true(width > 0, "window width > 0");
+            t.true(height > 0, "window height > 0");
+        });
+    } catch (error) {
+        catchError(t, error);
+    }
+}
+
+export const actions = {
+    async destroyApp(t: TestContext) {
+        try {
+            if (!t.context.app || !t.context.app.isRunning()) {
+                t.pass("app is not running");
+                return;
+            }
+
+            await t.context.app.stop();
+            t.is(t.context.app.isRunning(), false);
+            delete t.context.app;
+
+            // TODO Spectron doesn't stop app properly
+            // https://github.com/electron/spectron/issues/50
+            // https://github.com/electron/spectron/issues/101
+            await (async () => {
+                const processes = await promisify(psNode.lookup)({
+                    command: "electron",
+                    arguments: mainScriptFilePath.replace(/\\/g, "\\\\"),
+                });
+                const pid = processes.length && processes.shift().pid;
+
+                if (pid) {
+                    [...(await promisify(psTree)(pid)), {PID: pid}].forEach(({PID}) => {
+                        process.kill(Number(PID), "SIGKILL");
+                    });
+                }
+            })();
+        } catch (error) {
+            catchError(t, error);
+        }
+    },
+
+    async login(t: TestContext, options: { setup: boolean, savePassword: boolean }) {
+        const client = t.context.app.client;
+        let selector: string | null = null;
+
+        try {
+            if (options.setup) {
+                t.is(
+                    (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/settings-setup)",
+                    `"settings-setup" page url`,
+                );
+            } else {
+                t.is(
+                    (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/login//accounts-outlet:accounts)",
+                    `"settings-setup" page url`,
+                );
+            }
+
+            await client.waitForVisible(selector = `[formControlName="password"]`, CONF.timeouts.element);
+            await client.setValue(selector, ENV.masterPassword);
+
+            if (options.setup) {
+                await client.waitForVisible(selector = `[formControlName="passwordConfirm"]`, CONF.timeouts.element);
+                await client.setValue(selector, ENV.masterPassword);
+            }
+
+            if (options.savePassword) {
+                await client.waitForVisible(selector = `[formControlName="savePassword"]`, CONF.timeouts.element);
+                await client.click(selector);
+            }
+
+            await client.click(selector = `button[type="submit"]`);
+
+            // await client.pause(CONF.timeouts.encryption);
+            await new Promise((resolve) => setTimeout(resolve, CONF.timeouts.encryption));
+
+            if (options.setup) {
+                // TODO make sure there are no accounts added
+                t.is(
+                    (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/account-edit//accounts-outlet:accounts)",
+                    `"accounts" page url`,
+                );
+            } else {
+                // TODO make sure there is 1 account added
+                t.is(
+                    (await client.getUrl()).split("#").pop(), "/(accounts-outlet:accounts)",
+                    `"accounts" page url`,
+                );
+            }
+        } catch (error) {
+            catchError(t, error);
+        }
+    },
+
+    async addAccount(t: TestContext) {
+        const client = t.context.app.client;
+        let selector: string | null = null;
+
+        try {
+            await client.waitForVisible(selector = `[formcontrolname=login]`, CONF.timeouts.element);
+            await client.setValue(selector, ENV.login);
+
+            // await client.pause(CONF.timeouts.elementTouched);
+            await new Promise((resolve) => setTimeout(resolve, CONF.timeouts.elementTouched));
+
+            await client.click(selector = `button[type="submit"]`);
+
+            // await client.pause(CONF.timeouts.encryption);
+            await new Promise((resolve) => setTimeout(resolve, CONF.timeouts.encryption));
+
+            t.is(
+                (await client.getUrl()).split("#").pop(),
+                `/(settings-outlet:settings/account-edit//accounts-outlet:accounts)?login=${ENV.login}`,
+                `"accounts?login=${ENV.login}" page url`,
+            );
+            await client.click(selector = `button.close`);
+
+            // await client.pause(CONF.timeouts.elementTouched);
+            await new Promise((resolve) => setTimeout(resolve, CONF.timeouts.elementTouched));
+
+            t.is(
+                (await client.getUrl()).split("#").pop(),
+                "/(accounts-outlet:accounts)",
+                `"accounts" page url (settings modal closed)`,
+            );
+        } catch (error) {
+            catchError(t, error);
+        }
+    },
+
+    async logout(t: TestContext) {
+        const client = t.context.app.client;
+
+        try {
+            await client.click(`.controls .dropdown-toggle`);
+            await client.click(`#logoutButton`);
+
+            // await client.pause(CONF.timeouts.elementTouched);
+            await new Promise((resolve) => setTimeout(resolve, CONF.timeouts.elementTouched));
+
+            t.is(
+                (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/login//accounts-outlet:accounts)",
+                `login page url`,
+            );
+        } catch (error) {
+            catchError(t, error);
+        }
+    },
+};
+
+export async function catchError(t: TestContext, error: Error) {
+    try {
+        await saveErrorShot(t);
+    } catch {
+        // NOOP
+    }
+
+    await printElectronLogs(t);
+
+    throw error;
+}
+
+// tslint:disable:no-console
+
+async function saveErrorShot(t: TestContext) {
+    const file = path.join(
+        t.context.outputDirPath,
+        `errorShot-${t.title}-${new Date().toISOString()}.png`.replace(/[^A-Za-z0-9\.]/g, "_"),
+    );
+    const image = await t.context.app.browserWindow.capturePage();
+
+    promisify(fs.writeFile)(file, image);
+
+    console.info(`ErrorShot produced: ${file}`);
+}
+
+function printElectronLogs(t: TestContext) {
+    t.context.app.client.getMainProcessLogs()
+        .then((logs) => logs.forEach((log) => console.log(log)));
+
+    t.context.app.client.getRenderProcessLogs()
+        .then((logs) => logs.forEach((log) => {
+            console.log(log.level);
+            console.log(log.message);
+            console.log((log as any).source);
+        }));
+}
+
+// tslint:enable:no-console

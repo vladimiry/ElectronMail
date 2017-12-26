@@ -21,7 +21,7 @@ test("login, add account, logout, auto login", async (t: TestContext) => {
 
         await initApp(t, {initial: false, outputDirPath: t.context.userDataDirPath});
 
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        await t.context.app.client.pause(1500);
 
         t.is(
             (await t.context.app.client.getUrl()).split("#").pop(), "/(accounts-outlet:accounts)",

@@ -7,19 +7,19 @@ is an unofficial [ProtonMail](https://protonmail.com/) desktop client. It's basi
 ![view-compact](https://user-images.githubusercontent.com/1560781/34328615-a0efd0be-e8f4-11e7-8c1e-09af27073127.png)
 
 ## Features
-- Cross platform (Linux/OSX/Windows platforms).
+- Cross platform, Linux/OSX/Windows packages [provided](https://github.com/vladimiry/protonmail-desktop-app/releases).
 - Multi accounts support.
+- Automatic login into the app with remembered master password ("Keep me signed in" feature).
 - Auto login into the accounts using either saved in the settings password or KeePass password manager.
 - Encrypted settings storage with switchable predefined key derivation and encryption presets. Argon2 is used as the default key derivation function.
-- "Keep me signed in" feature (automatic login into the app) using the system's keychain.
-- Native notifications for individual accounts clicking on which focuses the app window and selects the respective account in the accounts list.
+- Native notifications for individual accounts clicking on which focuses the app window and selects respective account in the accounts list.
 - System tray icon with a total number of unread messages shown on top of it.
 - Start minimized to tray.
 - Close to tray.
 - Compact view mode.
 
 ## TODO
-- The following features are already configurable via the `config.json` file (you can reach the `config.json` file clicking "Open Settings Folder" item in the app menu), but so far there is no UI to configure them:
+- The following features are already toggleable/configurable via the `config.json` file (you can reach the `config.json` file clicking "Open Settings Folder" item in the app menu), but so far there is no UI to configure them:
   - Notifications.
   - Start minimized to tray.
   - Close to tray.

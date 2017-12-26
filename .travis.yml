@@ -54,11 +54,11 @@ before_script:
 script:
   - npm run lint
   - npm run test:electron:main
-  #- npm run clean:app
+  # - npm run clean:app
   - npm run compile:production
   # TODO make "test:e2e:run" work on all platforms
   # - npm run test:e2e:run
-  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then npm run test:e2e:run; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then npm run test:e2e:run; fi
   - |
     if [ "$TRAVIS_OS_NAME" == "osx" ]; then
       npm run electron-builder:release:mac

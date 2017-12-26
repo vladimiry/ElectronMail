@@ -3,8 +3,6 @@ import * as path from "path";
 import * as mkdirp from "mkdirp";
 import * as electron from "electron";
 import * as randomString from "randomstring";
-import * as psNode from "ps-node"; // see also https://www.npmjs.com/package/find-process
-import * as psTree from "ps-tree";
 import {promisify} from "util";
 import {GenericTestContext} from "ava";
 import {Application} from "spectron";
@@ -105,16 +103,10 @@ export async function initApp(t: TestContext, options: { initial: boolean }) {
         await t.context.app.start();
         t.is(t.context.app.isRunning(), true);
 
-        // TODO make t.context.app.client.waitUntilWindowLoaded call work
-        // https://github.com/electron/spectron/issues/174
-        // await t.context.app.client.waitUntilWindowLoaded();
-
-        // await t.context.app.client.pause(1500);
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-
+        await t.context.app.client.waitUntilWindowLoaded();
         // await awaitAngular(t.context.app.client); // seems to be not needed
+        // await t.context.app.client.pause(1500);
 
-        // TODO requires t.context.app.client.waitUntilWindowLoaded call
         await (async () => {
             const browserWindow = t.context.app.browserWindow;
 
@@ -150,23 +142,6 @@ export const actions = {
             await t.context.app.stop();
             t.is(t.context.app.isRunning(), false);
             delete t.context.app;
-
-            // TODO Spectron doesn't stop app properly
-            // https://github.com/electron/spectron/issues/50
-            // https://github.com/electron/spectron/issues/101
-            await (async () => {
-                const processes = await promisify(psNode.lookup)({
-                    command: "electron",
-                    arguments: mainScriptFilePath.replace(/\\/g, "\\\\"),
-                });
-                const pid = processes.length && processes.shift().pid;
-
-                if (pid) {
-                    [...(await promisify(psTree)(pid)), {PID: pid}].forEach(({PID}) => {
-                        process.kill(Number(PID), "SIGKILL");
-                    });
-                }
-            })();
         } catch (error) {
             catchError(t, error);
         }
@@ -203,9 +178,7 @@ export const actions = {
             }
 
             await client.click(selector = `button[type="submit"]`);
-
-            // await client.pause(CONF.timeouts.encryption);
-            await new Promise((resolve) => setTimeout(resolve, CONF.timeouts.encryption));
+            await client.pause(CONF.timeouts.encryption);
 
             if (options.setup) {
                 // TODO make sure there are no accounts added
@@ -232,14 +205,9 @@ export const actions = {
         try {
             await client.waitForVisible(selector = `[formcontrolname=login]`, CONF.timeouts.element);
             await client.setValue(selector, ENV.login);
-
-            // await client.pause(CONF.timeouts.elementTouched);
-            await new Promise((resolve) => setTimeout(resolve, CONF.timeouts.elementTouched));
-
+            await client.pause(CONF.timeouts.elementTouched);
             await client.click(selector = `button[type="submit"]`);
-
-            // await client.pause(CONF.timeouts.encryption);
-            await new Promise((resolve) => setTimeout(resolve, CONF.timeouts.encryption));
+            await client.pause(CONF.timeouts.encryption);
 
             t.is(
                 (await client.getUrl()).split("#").pop(),
@@ -247,9 +215,7 @@ export const actions = {
                 `"accounts?login=${ENV.login}" page url`,
             );
             await client.click(selector = `button.close`);
-
-            // await client.pause(CONF.timeouts.elementTouched);
-            await new Promise((resolve) => setTimeout(resolve, CONF.timeouts.elementTouched));
+            await client.pause(CONF.timeouts.elementTouched);
 
             t.is(
                 (await client.getUrl()).split("#").pop(),
@@ -267,9 +233,7 @@ export const actions = {
         try {
             await client.click(`.controls .dropdown-toggle`);
             await client.click(`#logoutButton`);
-
-            // await client.pause(CONF.timeouts.elementTouched);
-            await new Promise((resolve) => setTimeout(resolve, CONF.timeouts.elementTouched));
+            await client.pause(CONF.timeouts.elementTouched);
 
             t.is(
                 (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/login//accounts-outlet:accounts)",

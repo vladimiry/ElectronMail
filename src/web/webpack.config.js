@@ -347,7 +347,7 @@ const config = {
                     ecma: 5,
                     warnings: false,
                     ie8: false,
-                    mangle: true,
+                    mangle: false, // https://github.com/mishoo/UglifyJS2/issues/2664
                     compress: {
                         pure_getters: true,
                         passes: 3

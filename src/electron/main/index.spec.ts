@@ -90,7 +90,7 @@ test.beforeEach(async (t: TestContext) => {
                     .with(mocks["./tray"]);
                 // mock("./app-update")
                 //     .with(mocks["./app-update"]);
-                mock("keytar-prebuild")
+                mock("keytar")
                     .with({
                         getPassword: sinon.spy(),
                         deletePassword: sinon.spy(),

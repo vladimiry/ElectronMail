@@ -105,8 +105,8 @@ test.serial(`API: ${IpcMainActions.SettingsExists.channel}`, async (t: TestConte
 });
 
 test.serial(`API: ${IpcMainActions.ReadSettings.channel}`, async (t: TestContext) => {
-    const setPasswordSpy = t.context.mocks["keytar-prebuild"].setPassword;
-    const deletePasswordSpy = t.context.mocks["keytar-prebuild"].deletePassword;
+    const setPasswordSpy = t.context.mocks.keytar.setPassword;
+    const deletePasswordSpy = t.context.mocks.keytar.deletePassword;
     const endpoints = t.context.endpoints;
 
     t.false(await t.context.ctx.settingsStore.readable(), "settings file does not exist");
@@ -287,7 +287,7 @@ test.serial(`API: ${IpcMainActions.ChangeMasterPassword.channel}`, async (t: Tes
 });
 
 test.serial(`API: ${IpcMainActions.Logout.channel}`, async (t: TestContext) => {
-    const deletePasswordSpy = t.context.mocks["keytar-prebuild"].deletePassword;
+    const deletePasswordSpy = t.context.mocks.keytar.deletePassword;
     const endpoints = t.context.endpoints;
     const action = endpoints[IpcMainActions.Logout.channel];
 
@@ -422,7 +422,7 @@ test.beforeEach(async (t: TestContext) => {
                     openItem: sinon.spy(),
                 },
             },
-            "keytar-prebuild": {
+            "keytar": {
                 _rewiremock_no_callThrough: true,
                 getPassword: sinon.spy(),
                 deletePassword: sinon.spy(),

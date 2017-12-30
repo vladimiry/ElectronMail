@@ -9,8 +9,10 @@ directories:
 files: [
   "./app/**/*",
   "./package.json",
-  # rxjs
+  "!node_modules/jimp/{browser,fonts}",
   "!node_modules/rxjs/{_esm5,_esm2015,src,bundles}",
+  # TODO sodium-native: include into the package only needed prebuilds for the platform is being built
+  "!node_modules/sodium-native/{src,test,libsodium}",
   # stacktrace-js
   "!node_modules/error-stack-parser/dist",
   "!node_modules/source-map/dist",
@@ -18,9 +20,6 @@ files: [
   "!node_modules/stackframe/dist",
   "!node_modules/stacktrace-gps/dist",
   "!node_modules/stacktrace-js/dist",
-  # sodium-native
-  # TODO sodium-native: include into the package only needed prebuilds for the platform is being built
-  "!node_modules/sodium-native/{src,test,libsodium}",
 ]
 asar: true
 compression: maximum
@@ -46,7 +45,6 @@ linux:
     - {target: freebsd}
     - {target: pacman}
     - {target: rpm}
-    - {target: snap}
     - {target: tar.gz}
 
 win:

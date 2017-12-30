@@ -5,7 +5,6 @@ publish: github
 forceCodeSigning: false
 
 directories:
-  app: .
   output: ./dist
 files: [
   "./app/**/*",
@@ -55,15 +54,14 @@ win:
   icon: ./app/assets/icons/win/icon.ico
   target:
     - {target: nsis}
+    - {target: nsis-web}
     - {target: portable}
     - {target: zip}
 
 nsis:
   artifactName: ${name}-${version}-windows-${arch}-installer.${ext}
-  oneClick: true
+  oneClick: false
   perMachine: false
-  unicode: false
 
 portable:
     artifactName: ${name}-${version}-windows-${arch}-portable.${ext}
-    unicode: false

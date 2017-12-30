@@ -23,9 +23,5 @@ install:
 build_script:
   - node --version
   - npm --version
-  - npm run lint
-  - npm run test:electron:main
-  #- npm run clean:app
-  - npm run compile:production
-  - npm run test:e2e:run
-  #- ps: if($env:APPVEYOR_REPO_TAG -eq "true") { npm run release } else { echo "Skipping releasing as commit is not tagged" }
+  - npm run app:build
+  - npm run electron-builder:release

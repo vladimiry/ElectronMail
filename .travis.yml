@@ -56,7 +56,7 @@ script:
   - npm run app:build
   - npm run electron-builder:release
 after_failure:
-  - zip -r $FAILURE_ZIP_FILE $(git ls-files -o | grep -Fv -e node_modules -e dist -e app)
+  - zip -r $FAILURE_ZIP_FILE $(git ls-files -o | grep -Fv -e node_modules -e app -e dist)
   - aws --endpoint=$AWS_ENDPOINT_URL s3 cp $FAILURE_ZIP_FILE s3://$AWS_BUCKET
 notifications:
   email:

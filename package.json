@@ -1,7 +1,7 @@
 {
   "name": "protonmail-desktop-app",
   "description": "Unofficial ProtonMail Desktop App",
-  "version": "0.1.0-alpha.3",
+  "version": "0.1.0-alpha.4",
   "author": "Vladimir Yakovlev <desktop-app@protonmail.ch>",
   "license": "MIT",
   "homepage": "https://github.com/vladimiry/protonmail-desktop-app",

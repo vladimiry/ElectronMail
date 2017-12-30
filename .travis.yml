@@ -3,80 +3,61 @@
 branches:
   only:
     - master
+language: node_js
+node_js: 8
 matrix:
   include:
     - os: osx
       osx_image: xcode9.0
-      language: node_js
-      node_js: 8
-      env:
-        - ELECTRON_CACHE=$HOME/.cache/electron
-        - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
     - os: linux
-      sudo: required
+      sudo: false
       dist: trusty
-      language: node_js
-      node_js: 8
-      env:
-        - ELECTRON_CACHE=$HOME/.cache/electron
-        - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
-services:
-  - docker
+      group: stable
+      addons:
+        apt:
+          packages:
+            - gnome-keyring
+            - libsecret-1-dev
+            - python-gnomekeyring
 env:
   global:
     - ELECTRON_CACHE=$HOME/.cache/electron
     - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-    # the following packages are needed by the "node-keytar" module during running e2e tests
-      - gnome-keyring
-      - libsecret-1-dev
-      - python-gnomekeyring
+    - FAILURE_ZIP_FILE=travis-build-id-$TRAVIS_BUILD_ID.zip
 cache:
   directories:
     - node_modules
     - $HOME/.cache/electron
     - $HOME/.cache/electron-builder
-before_cache:
-  - rm -rf $HOME/.cache/electron-builder/wine
 before_install:
+  - |
+    echo install awscli
+    pip install --user awscli
+    export PATH=$PATH:$HOME/.local/bin
+  - |
+    echo setup virtual screen
+    if [ "$TRAVIS_OS_NAME" == "linux" ]; then
+      export DISPLAY=:99.0
+      sh -e /etc/init.d/xvfb start
+      sleep 3
+    fi
+  - |
+    echo start gnome-keyring-daemon
+    if [ "$TRAVIS_OS_NAME" == "linux" ]; then
+      eval $(echo -n "" | /usr/bin/gnome-keyring-daemon --login);
+      eval $(/usr/bin/gnome-keyring-daemon --components=secrets --start);
+      dbus-launch /usr/bin/python -c "import gnomekeyring;gnomekeyring.create_sync('login', '');"
+    fi
+install:
   - node --version
   - npm --version
-install:
   - npm install
-before_script:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export DISPLAY=:99.0; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sh -e /etc/init.d/xvfb start; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sleep 3; fi
 script:
-  - npm run lint
-  - npm run test:electron:main
-  # - npm run clean:app
-  - npm run compile:production
-  # TODO make "test:e2e:run" work on all platforms
-  # - npm run test:e2e:run
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then npm run test:e2e:run; fi
-  - |
-    if [ "$TRAVIS_OS_NAME" == "osx" ]; then
-      npm run electron-builder:release:mac
-    fi
-    if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-      docker run --rm \
-        --env-file <(env | grep -iE 'NAME|DEBUG|NODE_|ELECTRON_|YARN_|NPM_|CI|CSC_|_TOKEN|_KEY|STRIP|BUILD_') \
-        --env ELECTRON_CACHE="/root/.cache/electron" \
-        --env ELECTRON_BUILDER_CACHE="/root/.cache/electron-builder" \
-        -v ${PWD}:/project \
-        -v ~/.cache/electron:/root/.cache/electron \
-        -v ~/.cache/electron-builder:/root/.cache/electron-builder \
-        electronuserland/builder:wine \
-        /bin/bash -c "npm run electron-builder:release:linux && npm run electron-builder:release:win"
-    fi
+  - npm run app:build
+  - npm run electron-builder:release
 after_failure:
-  - curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install | bash
-  - artifacts upload $(git ls-files -o | grep -Fv -e node_modules -e dist -e app)
+  - zip -r $FAILURE_ZIP_FILE $(git ls-files -o | grep -Fv -e node_modules -e dist -e app)
+  - aws --endpoint=$AWS_ENDPOINT_URL s3 cp $FAILURE_ZIP_FILE s3://$AWS_BUCKET
 notifications:
   email:
     on_success: never

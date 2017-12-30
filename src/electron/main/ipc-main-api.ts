@@ -3,7 +3,7 @@ import {promisify} from "util";
 import {nativeImage, shell, app} from "electron";
 import {KeePassHttpClient, Model as KeePassHttpClientModel} from "keepasshttp-client";
 // TODO switch "keytar-prebuild" => "keytar" on https://github.com/atom/node-keytar/pull/67 resolving
-import * as keytar from "keytar-prebuild";
+import * as keytar from "keytar";
 import * as Jimp from "jimp";
 
 import {ElectronIpcMainAction} from "_shared/electron-actions/model";

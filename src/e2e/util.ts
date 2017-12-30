@@ -31,7 +31,8 @@ export const CONF = {
     timeouts: {
         element: 700,
         elementTouched: 300,
-        encryption: 5000,
+        encryption: 8000,
+        transition: 2000,
     },
 };
 
@@ -104,8 +105,6 @@ export async function initApp(t: TestContext, options: { initial: boolean }) {
         t.is(t.context.app.isRunning(), true);
 
         await t.context.app.client.waitUntilWindowLoaded();
-        // await awaitAngular(t.context.app.client); // seems to be not needed
-        // await t.context.app.client.pause(1500);
 
         await (async () => {
             const browserWindow = t.context.app.browserWindow;
@@ -126,6 +125,9 @@ export async function initApp(t: TestContext, options: { initial: boolean }) {
             t.true(width > 0, "window width > 0");
             t.true(height > 0, "window height > 0");
         });
+
+        // await awaitAngular(t.context.app.client); // seems to be not needed
+        await t.context.app.client.pause(2000);
     } catch (error) {
         catchError(t, error);
     }
@@ -155,12 +157,12 @@ export const actions = {
             if (options.setup) {
                 t.is(
                     (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/settings-setup)",
-                    `"settings-setup" page url`,
+                    `login: "settings-setup" page url`,
                 );
             } else {
                 t.is(
                     (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/login//accounts-outlet:accounts)",
-                    `"settings-setup" page url`,
+                    `login: "settings-setup" page url`,
                 );
             }
 
@@ -181,17 +183,12 @@ export const actions = {
             await client.pause(CONF.timeouts.encryption);
 
             if (options.setup) {
-                // TODO make sure there are no accounts added
                 t.is(
                     (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/account-edit//accounts-outlet:accounts)",
-                    `"accounts" page url`,
+                    `login: "accounts" page url`,
                 );
-            } else {
-                // TODO make sure there is 1 account added
-                t.is(
-                    (await client.getUrl()).split("#").pop(), "/(accounts-outlet:accounts)",
-                    `"accounts" page url`,
-                );
+
+                // TODO make sure there are no accounts added
             }
         } catch (error) {
             catchError(t, error);
@@ -212,7 +209,7 @@ export const actions = {
             t.is(
                 (await client.getUrl()).split("#").pop(),
                 `/(settings-outlet:settings/account-edit//accounts-outlet:accounts)?login=${ENV.login}`,
-                `"accounts?login=${ENV.login}" page url`,
+                `addAccount: "accounts?login=${ENV.login}" page url`,
             );
             await client.click(selector = `button.close`);
             await client.pause(CONF.timeouts.elementTouched);
@@ -220,7 +217,7 @@ export const actions = {
             t.is(
                 (await client.getUrl()).split("#").pop(),
                 "/(accounts-outlet:accounts)",
-                `"accounts" page url (settings modal closed)`,
+                `addAccount: "accounts" page url (settings modal closed)`,
             );
         } catch (error) {
             catchError(t, error);
@@ -237,7 +234,7 @@ export const actions = {
 
             t.is(
                 (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/login//accounts-outlet:accounts)",
-                `login page url`,
+                `logout: login page url`,
             );
         } catch (error) {
             catchError(t, error);
@@ -245,33 +242,48 @@ export const actions = {
     },
 };
 
-export async function catchError(t: TestContext, error: Error) {
+export async function catchError(t: TestContext, error?: Error) {
     try {
-        await saveErrorShot(t);
+        try {
+            await t.context.app.client.waitForVisible(`.alert-link`, CONF.timeouts.element);
+            await t.context.app.client.click(`.alert-link`);
+        } catch {
+            // NOOP
+        }
+
+        await saveShot(t);
     } catch {
         // NOOP
     }
 
     await printElectronLogs(t);
 
-    throw error;
+    if (typeof error !== "undefined") {
+        throw error;
+    }
 }
 
 // tslint:disable:no-console
 
-async function saveErrorShot(t: TestContext) {
+export async function saveShot(t: TestContext): string {
     const file = path.join(
         t.context.outputDirPath,
-        `errorShot-${t.title}-${new Date().toISOString()}.png`.replace(/[^A-Za-z0-9\.]/g, "_"),
+        `sreenshot-${t.title}-${new Date().toISOString()}.png`.replace(/[^A-Za-z0-9\.]/g, "_"),
     );
     const image = await t.context.app.browserWindow.capturePage();
 
     promisify(fs.writeFile)(file, image);
 
     console.info(`ErrorShot produced: ${file}`);
+
+    return file;
 }
 
-function printElectronLogs(t: TestContext) {
+export function printElectronLogs(t: TestContext) {
+    if (!t.context.app || !t.context.app.client) {
+        return;
+    }
+
     t.context.app.client.getMainProcessLogs()
         .then((logs) => logs.forEach((log) => console.log(log)));
 

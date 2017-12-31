@@ -48,6 +48,7 @@ export interface EndpointsMap extends Record<string, any> {
     "OpenAboutWindow": ElectronIpcMainAction<IpcMainActions.OpenAboutWindow.Type>;
     "OpenExternal": ElectronIpcMainAction<IpcMainActions.OpenExternal.Type>;
     "OpenSettingsFolder": ElectronIpcMainAction<IpcMainActions.OpenSettingsFolder.Type>;
+    "PatchBaseSettings": ElectronIpcMainAction<IpcMainActions.PatchBaseSettings.Type>;
     "Quit": ElectronIpcMainAction<IpcMainActions.Quit.Type>;
     "ReadConfig": ElectronIpcMainAction<IpcMainActions.ReadConfig.Type>;
     "ReadSettings": ElectronIpcMainAction<IpcMainActions.ReadSettings.Type>;

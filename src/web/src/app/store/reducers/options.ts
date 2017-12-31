@@ -1,20 +1,27 @@
 import {createFeatureSelector, createSelector} from "@ngrx/store";
 
-import {Config, Settings} from "_shared/model/options";
-import {OptionsActions} from "_web_app/store/actions";
 import {ElectronContextLocations} from "_shared/model/electron";
+import {BASE_CONFIG_PROPS, Config, Settings} from "_shared/model/options";
+import {OptionsActions} from "_web_app/store/actions";
 import * as fromRoot from "./root";
+
+// TODO TS2497 "lodash" TS declarations are broken
+// tslint:disable:no-var-requires
+const pick = require("lodash.pick");
+// tslint:enable:no-var-requires
 
 export const featureName = "options";
 
 interface Progress {
     addingAccount?: boolean;
-    updatingAccount?: boolean;
-    removingAccount?: boolean;
     changingPassword?: boolean;
-    signingIn?: boolean;
     keePassReferencing?: boolean;
+    reEncryptingSettings?: boolean;
+    removingAccount?: boolean;
+    signingIn?: boolean;
     togglingCompactLayout?: boolean;
+    updatingAccount?: boolean;
+    updatingBaseSettings?: boolean;
 }
 
 export interface ProgressPatch extends Partial<Progress> {}
@@ -78,6 +85,7 @@ export const hasSavedPasswordSelector = createSelector(stateSelector, ({hasSaved
 
 // config
 export const configSelector = createSelector(stateSelector, ({config}) => config);
+export const baseConfigSelector = createSelector(configSelector, (config) => pick(config, BASE_CONFIG_PROPS));
 export const configCompactLayoutSelector = createSelector(configSelector, ({compactLayout}) => compactLayout);
 export const configUnreadNotificationsSelector = createSelector(configSelector, ({unreadNotifications}) => unreadNotifications);
 

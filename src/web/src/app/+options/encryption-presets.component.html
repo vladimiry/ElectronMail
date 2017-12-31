@@ -1,0 +1,35 @@
+<div [formGroup]="formGroup">
+    <div class="form-group">
+        <label for="keyDerivationSelect">Key Derivation Preset</label>
+        <i class="fa fa-info-circle text-primary"
+           [popover]="popTemplate" placement="bottom" container="body" triggers="mouseenter:mouseleave"
+        ></i>
+        <ng-template #popTemplate>
+            <p>
+                The encryption work factor can be adjusted by this option.
+            </p>
+            <p>
+                <strong>sensitive</strong> kinds of presets generally enable the highest work factor, so it's the most
+                secure option from the list, but its execution takes significantly longer than other kinds of presets.
+                <strong>moderate</strong> is in the middle and <strong>interactive</strong> is the least secure option, but it works faster.
+            </p>
+            <p>
+                <strong>sodium.crypto_pwhash</strong> is considered as a more secure key derivation function than
+                <strong>node.pbkdf2</strong> as it goes with the Argon2 algorithm.
+            </p>
+        </ng-template>
+        <select class="form-control" formControlName="keyDerivation" id="keyDerivationSelect">
+            <option
+                *ngFor="let title of keyDerivationTitles" [value]="title">{{ title }}
+            </option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="encryptionSelect">Encryption Preset</label>
+        <select class="form-control" formControlName="encryption" id="encryptionSelect">
+            <option
+                *ngFor="let title of encryptionTitles" [value]="title">{{ title }}
+            </option>
+        </select>
+    </div>
+</div>

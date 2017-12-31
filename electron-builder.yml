@@ -45,21 +45,22 @@ linux:
     - {target: freebsd}
     - {target: pacman}
     - {target: rpm}
-    - {target: tar.gz}
 
 win:
   artifactName: ${name}-${version}-windows-${arch}.${ext}
   icon: ./app/assets/icons/win/icon.ico
   target:
     - {target: nsis}
-    - {target: nsis-web}
     - {target: portable}
-    - {target: zip}
+    - {target: squirrel}
 
 nsis:
-  artifactName: ${name}-${version}-windows-${arch}-installer.${ext}
+  artifactName: ${name}-${version}-windows-${arch}-nsis-installer.${ext}
   oneClick: false
   perMachine: false
 
 portable:
     artifactName: ${name}-${version}-windows-${arch}-portable.${ext}
+
+squirrel:
+    artifactName: ${name}-${version}-windows-${arch}-squirrel-installer.${ext}

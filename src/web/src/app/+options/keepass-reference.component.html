@@ -11,9 +11,11 @@
             <div class="form-group">
                 <input type="text" class="form-control" [value]="(reference$ | async).uuid" readonly>
             </div>
-            <button class="btn btn-outline-danger btn-block" type="submit">
-                Unlink KeePass Record
-            </button>
+            <div class="clearfix">
+                <button class="btn btn-outline-danger pull-right" type="submit">
+                    Unlink KeePass Record
+                </button>
+            </div>
         </form>
     </ng-template>
 
@@ -33,10 +35,12 @@
                         </div>
                     </div>
                 </div>
-                <button class="btn btn-primary btn-block" type="submit" [disabled]="form.invalid">
-                    <i class="fa fa-spinner fa-pulse fa-fw" *ngIf="referencing"></i>
-                    Link KeePass Record
-                </button>
+                <div class="clearfix">
+                    <button class="btn btn-primary pull-right" type="submit" [disabled]="form.invalid">
+                        <i class="fa fa-spinner fa-pulse fa-fw" *ngIf="referencing"></i>
+                        Link KeePass Record
+                    </button>
+                </div>
             </fieldset>
         </form>
     </ng-template>

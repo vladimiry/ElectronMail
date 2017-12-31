@@ -19,14 +19,14 @@ test.serial("workflow", async (t: TestContext) => {
     const makeSingleInstanceSpy: sinon.SinonSpy = mocks.electron.app.makeSingleInstance;
     const initBrowserWindowSpy: sinon.SinonSpy = mocks["./window"].initBrowserWindow;
     const initTraySpy: sinon.SinonSpy = mocks["./tray"].initTray;
-    // const initAutoUpdateSpy: sinon.SinonSpy = mocks["./app-update"].initAutoUpdate;
+    const initAutoUpdateSpy: sinon.SinonSpy = mocks["./app-update"].initAutoUpdate;
 
     t.true(electronUnhandledSpy.calledWithExactly(sinon.match.hasOwn("logger")), `"electronUnhandled" called`);
     t.true(mocks[`./util`].initContext.calledWithExactly(), `"initContext" called`);
     t.true(makeSingleInstanceSpy.calledWithExactly(t.context.mocked.index.activateBrowserWindow), `"makeSingleInstance" called`);
     t.true(initBrowserWindowSpy.calledWithExactly(t.context.ctx), `"initBrowserWindow" called`);
     t.true(initTraySpy.calledWithExactly(t.context.ctx, t.context.endpoints), `"initTray" called`);
-    // t.true(initAutoUpdateSpy.calledWithExactly(), `"initAutoUpdate" called`);
+    t.true(initAutoUpdateSpy.calledWithExactly(), `"initAutoUpdate" called`);
 });
 
 test.beforeEach(async (t: TestContext) => {
@@ -55,9 +55,9 @@ test.beforeEach(async (t: TestContext) => {
             "./tray": {
                 initTray: sinon.spy(),
             },
-            // "./app-update": {
-            //     initAutoUpdate: sinon.spy(),
-            // },
+            "./app-update": {
+                initAutoUpdate: sinon.spy(),
+            },
             "electron-unhandled": sinon.spy(),
             "electron": {
                 app: {
@@ -88,8 +88,8 @@ test.beforeEach(async (t: TestContext) => {
                     .with(mocks["./window"]);
                 mock("./tray")
                     .with(mocks["./tray"]);
-                // mock("./app-update")
-                //     .with(mocks["./app-update"]);
+                mock("./app-update")
+                    .with(mocks["./app-update"]);
                 mock("keytar")
                     .with({
                         getPassword: sinon.spy(),

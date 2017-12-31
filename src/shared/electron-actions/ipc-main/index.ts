@@ -7,7 +7,9 @@ import * as Logout from "./logout";
 import * as OpenAboutWindow from "./open-about-window";
 import * as OpenExternal from "./open-external";
 import * as OpenSettingsFolder from "./open-settings-folder";
+import * as PatchBaseSettings from "./patch-base-settings";
 import * as Quit from "./quit";
+import * as ReEncryptSettings from "./re-encrypt-settings";
 import * as ReadConfig from "./read-config";
 import * as ReadSettings from "./read-settings";
 import * as ReadSettingsAuto from "./read-settings-auto";
@@ -28,7 +30,9 @@ export {
     OpenAboutWindow,
     OpenExternal,
     OpenSettingsFolder,
+    PatchBaseSettings,
     Quit,
+    ReEncryptSettings,
     ReadConfig,
     ReadSettings,
     ReadSettingsAuto,

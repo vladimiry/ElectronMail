@@ -1,6 +1,6 @@
 # protonmail-desktop-app
 
-is an unofficial [ProtonMail](https://protonmail.com/) desktop client. It's basically the ProtonMail's [web interface](https://mail.protonmail.com) that's being opened inside the [Electron](https://github.com/electron/electron) container with custom features built on top of it. You can see below the screenshots of the `default` and `compact` view modes.
+is an unofficial [ProtonMail](https://protonmail.com/) desktop client. It's basically the ProtonMail's [web interface](https://mail.protonmail.com) that's being opened inside [Electron](https://github.com/electron/electron) container with custom features built on top of it. You can see below the screenshots of the `default` and `compact` view modes.
 
 ![view-default](https://user-images.githubusercontent.com/1560781/34328616-a10c2a2a-e8f4-11e7-9cfe-2308ee3391b2.png)
 
@@ -17,10 +17,3 @@ is an unofficial [ProtonMail](https://protonmail.com/) desktop client. It's basi
 - Start minimized to tray.
 - Close to tray.
 - Compact view mode.
-
-## TODO
-- The following features are already toggleable/configurable via the `config.json` file (you can reach the `config.json` file clicking "Open Settings Folder" item in the app menu), but so far there is no UI to configure them:
-  - Notifications.
-  - Start minimized to tray.
-  - Close to tray.
-  - Key derivation and encryption presets selection.

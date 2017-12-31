@@ -8,7 +8,9 @@ import {GetSettingsAutoRequest} from "./get-settings-auto-request";
 import {GetSettingsResponse} from "./get-settings-response";
 import {InitRequest} from "./init-request";
 import {InitResponse} from "./init-response";
+import {PatchBaseSettingsRequest} from "./patch-base-settings-request";
 import {PatchProgress} from "./patch-progress";
+import {ReEncryptSettings} from "./re-encrypt-settings";
 import {RemoveAccountRequest} from "./remove-account-request";
 import {SignInRequest} from "./signin-in-request";
 import {ToggleCompactRequest} from "./toggle-compact-request";
@@ -25,7 +27,9 @@ export {
     GetSettingsResponse,
     InitRequest,
     InitResponse,
+    PatchBaseSettingsRequest,
     PatchProgress,
+    ReEncryptSettings,
     RemoveAccountRequest,
     SignInRequest,
     ToggleCompactRequest,
@@ -43,7 +47,9 @@ export type All =
     | GetSettingsResponse
     | InitRequest
     | InitResponse
+    | PatchBaseSettingsRequest
     | PatchProgress
+    | ReEncryptSettings
     | RemoveAccountRequest
     | SignInRequest
     | ToggleCompactRequest

@@ -1,4 +1,4 @@
-import {filter, map, pairwise, takeUntil} from "rxjs/operators";
+import {filter, map, pairwise, takeUntil, withLatestFrom} from "rxjs/operators";
 import {Observable} from "rxjs/Observable";
 import {Subject} from "rxjs/Subject";
 import {BehaviorSubject} from "rxjs/BehaviorSubject";
@@ -13,7 +13,6 @@ import {
 } from "_web_app/store/reducers/options";
 import {State} from "_web_app/store/reducers/accounts";
 import {AccountsActions, NavigationActions} from "_web_app/store/actions";
-import {switchMap} from "rxjs/operators/switchMap";
 
 @Component({
     selector: `protonmail-desktop-app-account`,
@@ -71,16 +70,14 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
             this.mailPasswordProgress$ = this.account$.pipe(map(({progress}) => !!progress.mailPassword));
 
             // notifications
-            this.unreadNotifications$
+            this.account$
                 .pipe(
-                    filter((unreadNotifications) => !!unreadNotifications),
-                    takeUntil(this.unSubscribe$),
-                    switchMap(() => this.account$),
-                )
-                .pipe(
-                    map(({sync}) => sync.unread || 0),
+                    withLatestFrom(this.unreadNotifications$),
+                    filter((args) => !!args[1]),
+                    map((args) => args[0].sync.unread || 0),
                     pairwise(),
                     filter(([prev, curr]) => curr > prev),
+                    takeUntil(this.unSubscribe$),
                 )
                 .subscribe(([prev, curr]) => {
                     const login = this.account$.getValue().accountConfig.login;

@@ -1,6 +1,7 @@
 import * as aboutWindow from "about-window";
+import {isWebUri} from "valid-url";
 import {promisify} from "util";
-import {nativeImage, shell, app} from "electron";
+import {app, nativeImage, shell} from "electron";
 import {KeePassHttpClient, Model as KeePassHttpClientModel} from "keepasshttp-client";
 // TODO switch "keytar-prebuild" => "keytar" on https://github.com/atom/node-keytar/pull/67 resolving
 import * as keytar from "keytar";
@@ -11,7 +12,7 @@ import {StatusCode, StatusCodeError} from "_shared/model/error";
 import {MessageFieldContainer} from "_shared/model/container";
 import {IpcMainActions} from "_shared/electron-actions";
 import {AccountConfig} from "_shared/model/account";
-import {assert, isAllowedUrl} from "_shared/util";
+import {assert} from "_shared/util";
 import {KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "./constants";
 import {Context, EndpointsMap} from "./model";
 import {ipcMainOn} from "./util";
@@ -73,7 +74,9 @@ export const initEndpoints = (ctx: Context): EndpointsMap => {
             async ({password, savePassword}) => {
                 const adapter = await ctx.buildSettingsAdapter(password);
                 const store = ctx.settingsStore.clone({adapter});
-                const settings = (await store.read()) || await store.write(ctx.initialStores.settings);
+                const settings = await store.readable()
+                    ? await store.readExisting()
+                    : await store.write(ctx.initialStores.settings);
 
                 if (savePassword) {
                     await keytar.setPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, password);
@@ -84,6 +87,18 @@ export const initEndpoints = (ctx: Context): EndpointsMap => {
                 ctx.settingsStore = store;
 
                 return settings;
+            },
+        ),
+        // TODO test "ReEncryptSettings" API
+        [IpcMainActions.ReEncryptSettings.channel]: new ElectronIpcMainAction<IpcMainActions.ReEncryptSettings.Type>(
+            IpcMainActions.ReEncryptSettings.channel,
+            async ({encryptionPreset, password}) => {
+                await ctx.configStore.write({
+                    ...(await ctx.configStore.readExisting()),
+                    encryptionPreset,
+                });
+
+                return await endpoints[IpcMainActions.ChangeMasterPassword.channel].process({password, newPassword: password});
             },
         ),
         [IpcMainActions.SettingsExists.channel]: new ElectronIpcMainAction<IpcMainActions.SettingsExists.Type>(
@@ -171,6 +186,10 @@ export const initEndpoints = (ctx: Context): EndpointsMap => {
 
                 ctx.settingsStore = newStore;
 
+                if (keytar.getPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT)) {
+                    await keytar.setPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, newPassword);
+                }
+
                 return newData;
             },
         ),
@@ -248,7 +267,7 @@ export const initEndpoints = (ctx: Context): EndpointsMap => {
         [IpcMainActions.OpenExternal.channel]: new ElectronIpcMainAction<IpcMainActions.OpenExternal.Type>(
             IpcMainActions.OpenExternal.channel,
             async ({url}) => {
-                if (!isAllowedUrl(url)) {
+                if (!isWebUri(url)) {
                     throw new Error(`Forbidden url "${url}" opening has been prevented`);
                 }
 
@@ -259,6 +278,15 @@ export const initEndpoints = (ctx: Context): EndpointsMap => {
             IpcMainActions.OpenSettingsFolder.channel,
             async () => {
                 shell.openItem(ctx.locations.data);
+            },
+        ),
+        [IpcMainActions.PatchBaseSettings.channel]: new ElectronIpcMainAction<IpcMainActions.PatchBaseSettings.Type>(
+            IpcMainActions.PatchBaseSettings.channel,
+            async (patch) => {
+                const config = await ctx.configStore.readExisting();
+                const actualPatch = JSON.parse(JSON.stringify(patch));
+
+                return await ctx.configStore.write({...config, ...actualPatch});
             },
         ),
         // TODO test "UpdateOverlayIcon" action

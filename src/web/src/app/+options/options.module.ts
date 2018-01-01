@@ -12,11 +12,13 @@ import {LoginComponent} from "./login.component";
 import {SettingsComponent} from "./settings.component";
 import {SettingsSetupComponent} from "./settings-setup.component";
 import {AccountEditComponent} from "./account-edit.component";
-import {PasswordChangeComponent} from "./password-change.component";
 import {AccountsComponent} from "./accounts.component";
 import {KeepassAssociateComponent} from "./keepass-associate.component";
 import {KeepassAssociateSettingsComponent} from "./keepass-associate-settings.component";
 import {KeePassReferenceComponent} from "./keepass-reference.component";
+import {BaseSettingsComponent} from "./base-settings.component";
+import {EncryptionPresetsComponent} from "./encryption-presets.component";
+import {StorageComponent} from "./storage.component";
 
 @NgModule({
     imports: [
@@ -35,11 +37,13 @@ import {KeePassReferenceComponent} from "./keepass-reference.component";
         SettingsComponent,
         SettingsSetupComponent,
         AccountEditComponent,
-        PasswordChangeComponent,
         AccountsComponent,
         KeepassAssociateComponent,
         KeepassAssociateSettingsComponent,
         KeePassReferenceComponent,
+        BaseSettingsComponent,
+        EncryptionPresetsComponent,
+        StorageComponent,
     ],
 })
 export class OptionsModule {}

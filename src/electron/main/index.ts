@@ -3,13 +3,14 @@ import logger from "electron-log";
 import {app} from "electron";
 
 import {IpcMainActions} from "_shared/electron-actions";
+import {Environment} from "_shared/model/electron";
 import {isAllowedUrl} from "_shared/util";
 import {initEndpoints} from "./ipc-main-api";
 import {Context, UIContext} from "./model";
 import {initContext} from "./util";
 import {initBrowserWindow} from "./window";
 import {initTray} from "./tray";
-// import {initAutoUpdate} from "./app-update";
+import {initAutoUpdate} from "./app-update";
 
 electronUnhandled({logger: logger.error});
 
@@ -45,11 +46,11 @@ export function initApp(ctx: Context) {
             }
         });
 
-        // ((skipEnvs: Environment[]) => {
-        //     if (skipEnvs.indexOf(ctx.env) === -1) {
-        //         initAutoUpdate();
-        //     }
-        // })(["development", "e2e"]);
+        ((skipEnvs: Environment[]) => {
+            if (skipEnvs.indexOf(ctx.env) === -1) {
+                initAutoUpdate();
+            }
+        })(["development", "e2e"]);
 
         app.on("activate", async () => {
             // on macOS it's common to re-create a window in the app when the dock icon is clicked and there are no other windows open

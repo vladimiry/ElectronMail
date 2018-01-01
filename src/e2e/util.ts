@@ -31,8 +31,8 @@ export const CONF = {
     timeouts: {
         element: 700,
         elementTouched: 300,
-        encryption: 8000,
-        transition: 2000,
+        encryption: process.env.CI ? 5000 : 1000,
+        transition: process.env.CI ? 2000 : 500,
     },
 };
 
@@ -127,7 +127,7 @@ export async function initApp(t: TestContext, options: { initial: boolean }) {
         });
 
         // await awaitAngular(t.context.app.client); // seems to be not needed
-        await t.context.app.client.pause(2000);
+        // await t.context.app.client.pause(2000);
     } catch (error) {
         catchError(t, error);
     }

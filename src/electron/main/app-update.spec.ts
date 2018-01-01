@@ -4,7 +4,7 @@ import {test} from "ava";
 
 import {CHECK_INTERVAL_MS} from "./app-update";
 
-test.serial("initAutoUpdate", async (t: TestContext) => {
+test.serial("initAutoUpdate", async (t) => {
     const loggerSpy = sinon.spy();
     const electronUpdaterLibrary = {
         autoUpdater: {

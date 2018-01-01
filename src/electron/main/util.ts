@@ -11,7 +11,7 @@ import {empty} from "rxjs/observable/empty";
 import {Model as StoreModel, Store} from "fs-json-store";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 
-import {Config, Settings, settingsAccountLoginUniquenessValidator} from "_shared/model/options";
+import {Config, configEncryptionPresetValidator, Settings, settingsAccountLoginUniquenessValidator} from "_shared/model/options";
 import {ElectronTransport, Environment} from "_shared/model/electron";
 import {ElectronIpcMainActionType} from "_shared/electron-actions/model";
 import {ElectronTransportEvent} from "../model";
@@ -56,6 +56,7 @@ export async function initContext(opts: ContextInitOptions = {}): Promise<Contex
         ...fsOption,
         optimisticLocking: true,
         file: path.join(locations.data, "config.json"),
+        validators: [configEncryptionPresetValidator],
     });
     let configInstance: Config;
     const eventEmitter = new EventEmitter();

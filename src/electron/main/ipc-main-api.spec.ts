@@ -7,13 +7,19 @@ import {Fs} from "fs-json-store";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter/encryption-adapter";
 
 import {assert} from "_shared/util";
-import {Config, Settings} from "_shared/model/options";
+import {BASE_CONFIG_PROPS, Config, Settings} from "_shared/model/options";
 import {IpcMainActions} from "_shared/electron-actions";
 import {IpcMainChannel} from "_shared/electron-actions/model";
 import {StatusCode, StatusCodeError} from "_shared/model/error";
 import {INITIAL_STORES, KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "./constants";
 import {Context, EndpointsMap} from "./model";
 import {initContext} from "./util";
+
+// TODO TS2497 "lodash" TS declarations are broken
+// tslint:disable:no-var-requires
+const pick = require("lodash.pick");
+
+// tslint:enable:no-var-requires
 
 interface TestContext extends GenericTestContext<{
     context: {
@@ -257,6 +263,9 @@ test.serial(`API: ${IpcMainActions.RemoveAccount.channel}`, async (t: TestContex
 });
 
 test.serial(`API: ${IpcMainActions.ChangeMasterPassword.channel}`, async (t: TestContext) => {
+    const getPasswordStub = t.context.mocks.keytar.getPassword;
+    const setPasswordSpy = t.context.mocks.keytar.setPassword;
+
     const endpoints = t.context.endpoints;
     const endpoint = endpoints[IpcMainActions.ChangeMasterPassword.channel];
     const payload = {password: OPTIONS.masterPassword, newPassword: "new password 1"};
@@ -284,6 +293,11 @@ test.serial(`API: ${IpcMainActions.ChangeMasterPassword.channel}`, async (t: Tes
     t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings, `re-saved settings is persisted`);
     const newStore = t.context.ctx.settingsStore.clone({adapter: await t.context.ctx.buildSettingsAdapter(payload.newPassword)});
     t.deepEqual(await newStore.read(), expectedSettings, `reading re-saved settings with new password`);
+
+    t.is(getPasswordStub.callCount, 1);
+    getPasswordStub.calledWithExactly(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT);
+    t.is(setPasswordSpy.callCount, 1);
+    setPasswordSpy.calledWithExactly(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, payload.newPassword);
 });
 
 test.serial(`API: ${IpcMainActions.Logout.channel}`, async (t: TestContext) => {
@@ -346,10 +360,6 @@ test.serial(`API: ${IpcMainActions.OpenExternal.channel}`, async (t: TestContext
     const action = endpoints[IpcMainActions.OpenExternal.channel];
 
     const forbiddenUrls = [
-        "https://www.domain.com",
-        "https://www.domain.com/page",
-        "http://www.domain.com",
-        "http://www.domain.com/page",
         "file://some/file",
         "/some/path",
         "",
@@ -365,6 +375,8 @@ test.serial(`API: ${IpcMainActions.OpenExternal.channel}`, async (t: TestContext
         "https://mail.protonmail.com/page",
         "https://protonmail.com",
         "https://protonmail.com/page",
+        "https://somedomain.com/",
+        "https://somedomain.com/page",
     ];
     for (const url of allowedUrls) {
         await t.notThrows(action.process({url}));
@@ -380,6 +392,37 @@ test.serial(`API: ${IpcMainActions.OpenSettingsFolder.channel}`, async (t: TestC
     await action.process(undefined);
 
     t.true(openItemSpy.alwaysCalledWith(t.context.ctx.locations.data));
+});
+
+test.serial(`API: ${IpcMainActions.PatchBaseSettings.channel}`, async (t: TestContext) => {
+    const endpoints = t.context.endpoints;
+    const action = endpoints[IpcMainActions.PatchBaseSettings.channel];
+    const patches = [
+        {
+            startMinimized: false,
+            compactLayout: true,
+            closeToTray: false,
+            unreadNotifications: true,
+        },
+        {
+            startMinimized: true,
+            compactLayout: undefined,
+            closeToTray: true,
+            unreadNotifications: false,
+        },
+    ];
+
+    await initConfig(endpoints);
+
+    for (const patch of patches) {
+        const initialConfig = await t.context.ctx.configStore.readExisting();
+        const updatedConfig = await action.process(patch);
+        const actual = pick(updatedConfig, BASE_CONFIG_PROPS);
+        const expected = pick({...initialConfig, ...JSON.parse(JSON.stringify(patch))}, BASE_CONFIG_PROPS);
+
+        t.deepEqual(actual, expected);
+        t.deepEqual(await t.context.ctx.configStore.readExisting(), updatedConfig);
+    }
 });
 
 async function initConfig(endpoints: EndpointsMap): Promise<Config> {
@@ -424,7 +467,7 @@ test.beforeEach(async (t: TestContext) => {
             },
             "keytar": {
                 _rewiremock_no_callThrough: true,
-                getPassword: sinon.spy(),
+                getPassword: sinon.stub().returns(OPTIONS.masterPassword),
                 deletePassword: sinon.spy(),
                 setPassword: sinon.spy(),
             },

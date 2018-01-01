@@ -15,9 +15,11 @@
             <input type="text" class="form-control" formControlName="key" readonly
                    [ngClass]="key.dirty ? {'is-invalid': key.invalid, 'is-valid': key.valid} : {}">
         </div>
-        <button class="btn btn-primary btn-block" type="submit" [disabled]="form.invalid">
-            <i class="fa fa-spinner fa-pulse fa-fw" *ngIf="processing$ | async"></i>
-            Setup Connection
-        </button>
+        <div class="clearfix">
+            <button class="btn btn-primary pull-right" type="submit" [disabled]="form.invalid">
+                <i class="fa fa-spinner fa-pulse fa-fw" *ngIf="processing$ | async"></i>
+                Setup Connection
+            </button>
+        </div>
     </fieldset>
 </form>

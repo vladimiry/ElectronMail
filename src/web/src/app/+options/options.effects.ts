@@ -110,7 +110,8 @@ export class OptionsEffects {
                                     [ACCOUNTS_OUTLET]: ACCOUNTS_PATH,
                                 },
                             }],
-                        })]),
+                        }),
+                    ]),
                     catchError((error) => {
                         error.message = "Failed to log in";
                         return this.effectsService.buildFailActionObservable(error);
@@ -217,12 +218,42 @@ export class OptionsEffects {
                 ),
         )));
 
+    @Effect()
+    updateBaseSettings$ = this.actions$
+        .ofType<OptionsActions.PatchBaseSettingsRequest>(OptionsActions.PatchBaseSettingsRequest.type)
+        .pipe(switchMap(({patch}) => observableMerge(
+            of(this.buildPatchProgress({updatingBaseSettings: true})),
+            this.electronService
+                .callIpcMain<IpcMainActions.PatchBaseSettings.Type>(IpcMainActions.PatchBaseSettings.channel, patch)
+                .pipe(
+                    map((config) => new OptionsActions.GetConfigResponse(config)),
+                    catchError((error) => this.effectsService.buildFailActionObservable(error)),
+                    finalize(() => this.dispatchProgress({updatingBaseSettings: false})),
+                ),
+        )));
+
+    @Effect()
+    reEncryptingSettings$ = this.actions$
+        .ofType<OptionsActions.ReEncryptSettings>(OptionsActions.ReEncryptSettings.type)
+        .pipe(switchMap(({encryptionPreset, password}) => observableMerge(
+            of(this.buildPatchProgress({reEncryptingSettings: true})),
+            this.electronService
+                .callIpcMain<IpcMainActions.ReEncryptSettings.Type>(
+                    IpcMainActions.ReEncryptSettings.channel,
+                    {encryptionPreset, password},
+                )
+                .pipe(
+                    map((settings) => new OptionsActions.GetSettingsResponse(settings)),
+                    catchError((error) => this.effectsService.buildFailActionObservable(error)),
+                    finalize(() => this.dispatchProgress({reEncryptingSettings: false})),
+                ),
+        )));
+
     constructor(private effectsService: EffectsService,
                 private optionsService: OptionsService,
                 private electronService: ElectronService,
                 private store: Store<State>,
-                private actions$: Actions) {
-    }
+                private actions$: Actions) {}
 
     private buildPatchProgress(patch: ProgressPatch) {
         return new OptionsActions.PatchProgress(patch);

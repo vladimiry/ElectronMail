@@ -1,0 +1,34 @@
+<fieldset [disabled]="(processing$ | async)">
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="form-group">
+        <div class="form-check">
+            <label class="form-check-label">
+                <input type="checkbox" class="form-check-input" formControlName="closeToTray">
+                Close to tray
+            </label>
+        </div>
+        <div class="form-check">
+            <label class="form-check-label">
+                <input type="checkbox" class="form-check-input" formControlName="compactLayout">
+                Compact view mode
+            </label>
+        </div>
+        <div class="form-check">
+            <label class="form-check-label">
+                <input type="checkbox" class="form-check-input" formControlName="startMinimized">
+                Start minimized to tray
+            </label>
+        </div>
+        <div class="form-check">
+            <label class="form-check-label">
+                <input type="checkbox" class="form-check-input" formControlName="unreadNotifications">
+                Unread messages desktop notifications
+            </label>
+        </div>
+        <div class="clearfix">
+            <button class="btn btn-primary pull-right" type="submit" [disabled]="form.invalid">
+                <i class="fa fa-check" *ngIf="processing$ | async"></i>
+                Apply
+            </button>
+        </div>
+    </form>
+</fieldset>

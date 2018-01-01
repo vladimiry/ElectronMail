@@ -7,3 +7,5 @@ export const SETTINGS_PATH = "settings";
 export const ERRORS_OUTLET = "errors-outlet";
 export const ERRORS_PATH = "errors";
 export const ERRORS_LIMIT = 50;
+
+export const ESC_KEY_CODE = 27;

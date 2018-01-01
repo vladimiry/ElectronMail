@@ -31,4 +31,4 @@ is an unofficial [ProtonMail](https://protonmail.com/) desktop client. It's basi
 - [Clone](https://help.github.com/articles/cloning-a-repository/) this project to your local device. If you are going to contribute, consider cloning the [forked](https://help.github.com/articles/fork-a-repo/) into your own GitHub account project.
 - Install dependencies running `npm install`.
 - Build app running `npm run app:dist`. It's better to not touch a mouse during the process, since it might interfere with the `e2e` tests running at the end of the process.
-- Build the final Electron binary running `electron-builder:dist`. Outcome will be placed under the `./dist` folder.
+- Build the final Electron binary running `npm run electron-builder:dist`. Outcome will be placed under the `./dist` folder.

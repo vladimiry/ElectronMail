@@ -61,6 +61,3 @@ nsis:
 
 portable:
     artifactName: ${name}-${version}-windows-${arch}-portable.${ext}
-
-squirrel:
-    artifactName: ${name}-${version}-windows-${arch}-squirrel-installer.${ext}

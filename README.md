@@ -1,5 +1,7 @@
 # protonmail-desktop-app
 
+[![Build Status: Linux / MacOS](https://travis-ci.org/vladimiry/protonmail-desktop-app.svg?branch=master)](https://travis-ci.org/vladimiry/protonmail-desktop-app) [![Build status: Windows](https://ci.appveyor.com/api/projects/status/yytvx09x43gif849?svg=true)](https://ci.appveyor.com/project/vladimiry/protonmail-desktop-app)
+
 is an unofficial [ProtonMail](https://protonmail.com/) desktop client. It's basically the ProtonMail's [web interface](https://mail.protonmail.com) that's being opened inside [Electron](https://github.com/electron/electron) container with custom features built on top of it. You can see below the screenshots of the `default` and `compact` view modes.
 
 ![view-default](https://user-images.githubusercontent.com/1560781/34328616-a10c2a2a-e8f4-11e7-9cfe-2308ee3391b2.png)

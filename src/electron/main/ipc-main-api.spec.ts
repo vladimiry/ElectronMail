@@ -360,10 +360,6 @@ test.serial(`API: ${IpcMainActions.OpenExternal.channel}`, async (t: TestContext
     const action = endpoints[IpcMainActions.OpenExternal.channel];
 
     const forbiddenUrls = [
-        "https://www.domain.com",
-        "https://www.domain.com/page",
-        "http://www.domain.com",
-        "http://www.domain.com/page",
         "file://some/file",
         "/some/path",
         "",
@@ -379,6 +375,8 @@ test.serial(`API: ${IpcMainActions.OpenExternal.channel}`, async (t: TestContext
         "https://mail.protonmail.com/page",
         "https://protonmail.com",
         "https://protonmail.com/page",
+        "https://somedomain.com/",
+        "https://somedomain.com/page",
     ];
     for (const url of allowedUrls) {
         await t.notThrows(action.process({url}));

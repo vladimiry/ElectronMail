@@ -1,4 +1,5 @@
 import * as aboutWindow from "about-window";
+import {isWebUri} from "valid-url";
 import {promisify} from "util";
 import {app, nativeImage, shell} from "electron";
 import {KeePassHttpClient, Model as KeePassHttpClientModel} from "keepasshttp-client";
@@ -11,7 +12,7 @@ import {StatusCode, StatusCodeError} from "_shared/model/error";
 import {MessageFieldContainer} from "_shared/model/container";
 import {IpcMainActions} from "_shared/electron-actions";
 import {AccountConfig} from "_shared/model/account";
-import {assert, isAllowedUrl} from "_shared/util";
+import {assert} from "_shared/util";
 import {KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "./constants";
 import {Context, EndpointsMap} from "./model";
 import {ipcMainOn} from "./util";
@@ -266,7 +267,7 @@ export const initEndpoints = (ctx: Context): EndpointsMap => {
         [IpcMainActions.OpenExternal.channel]: new ElectronIpcMainAction<IpcMainActions.OpenExternal.Type>(
             IpcMainActions.OpenExternal.channel,
             async ({url}) => {
-                if (!isAllowedUrl(url)) {
+                if (!isWebUri(url)) {
                     throw new Error(`Forbidden url "${url}" opening has been prevented`);
                 }
 

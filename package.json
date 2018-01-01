@@ -72,7 +72,8 @@
     "keytar": "4.1.0",
     "lodash.pick": "4.4.0",
     "rxjs": "5.5.6",
-    "stacktrace-js": "2.0.0"
+    "stacktrace-js": "2.0.0",
+    "valid-url": "1.0.9"
   },
   "devDependencies": {
     "@angular-devkit/build-optimizer": "0.0.36",
@@ -99,6 +100,7 @@
     "@types/randomstring": "1.1.6",
     "@types/sinon": "4.1.2",
     "@types/stacktrace-js": "0.0.32",
+    "@types/valid-url": "1.0.2",
     "@types/webdriverio": "4.8.7",
     "@types/webpack": "3.8.1",
     "@types/webpack-env": "1.13.3",

@@ -21,8 +21,8 @@ files: [
   "!node_modules/stacktrace-gps/dist",
   "!node_modules/stacktrace-js/dist",
 ]
-asar: true
 compression: maximum
+asar: true
 
 mac:
   icon: ./app/assets/icons/mac/icon.icns
@@ -39,12 +39,8 @@ linux:
   icon: ./app/assets/icons/png
   category: Office
   packageCategory: Office
-  target:
-    - {target: AppImage}
-    - {target: deb}
-    - {target: freebsd}
-    - {target: pacman}
-    - {target: rpm}
+  asarUnpack:
+    - "**/node_modules/sodium-native/**/*"
 
 win:
   artifactName: ${name}-${version}-windows-${arch}.${ext}

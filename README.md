@@ -28,9 +28,17 @@ is an unofficial [ProtonMail](https://protonmail.com/) desktop client. It's basi
   - Run `nvm use 8`.
 - [keytar](https://github.com/atom/node-keytar) module requires compiling prebuild node files and for that Python and C++ compiler need to be installed on your system:
   - **`On Windows`**: the simplest way to install all the needed stuff on Windows is to run `npm install --global --production windows-build-tools` CLI command.
-  - **`On Linux`**: `python v2.7`, `make` and a C/C++ compiler toolchain, like `GCC` are most likely already installed.
+  - **`On Linux`**: `python v2.7`, `make` and a C/C++ compiler toolchain, like `GCC` are most likely already installed. Besides there is a need to install `libsecret` dependency, see `Installing` section [here](https://github.com/atom/node-keytar).
   - **`On Mac OS X`**: `python v2.7` and [Xcode](https://developer.apple.com/xcode/download/) need to be installed. You also need to install the `Command Line Tools` via Xcode, can be found under the `Xcode -> Preferences -> Downloads` menu.
 - [Clone](https://help.github.com/articles/cloning-a-repository/) this project to your local device. If you are going to contribute, consider cloning the [forked](https://help.github.com/articles/fork-a-repo/) into your own GitHub account project.
 - Install dependencies running `npm install`.
 - Build app running `npm run app:dist`. It's better to not touch a mouse during the process, since it might interfere with the `e2e` tests running at the end of the process.
-- Build the final Electron binary running `npm run electron-builder:dist`. Outcome will be placed under the `./dist` folder.
+- Build a package to install running `npm run electron-builder:dist` command to build Windows/Mac OS X package and one of the following commands to build Linux package:
+  - `electron-builder:dist:linux:appimage`
+  - `electron-builder:dist:linux:deb`
+  - `electron-builder:dist:linux:freebsd`
+  - `electron-builder:dist:linux:pacman`
+  - `electron-builder:dist:linux:rpm`
+  - `electron-builder:dist:linux:snap`
+- If you don't need a package to install, but a folder to execute app from, simply run `electron-builder:dir` command.  
+- Outcome, whether it's a folder or package to install, comes into the `./dist` folder.

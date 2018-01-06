@@ -10,22 +10,18 @@ matrix:
     - os: osx
       osx_image: xcode9.0
     - os: linux
-      sudo: false
+      sudo: required
       dist: trusty
       group: stable
       addons:
         apt:
           packages:
-            - bsdtar
-            - g++-multilib
-            - gcc-multilib
             - gnome-keyring
-            - icnsutils
             - libgnome-keyring-dev
             - libsecret-1-dev
             - python-gnomekeyring
-            - rpm
-            - xz-utils
+      services:
+        - docker
 env:
   global:
     - ELECTRON_CACHE=$HOME/.cache/electron
@@ -36,6 +32,7 @@ cache:
     - node_modules
     - $HOME/.cache/electron
     - $HOME/.cache/electron-builder
+    - $HOME/.cache/snapcraft
 before_install:
   - pip install --user awscli ; export PATH=$PATH:$HOME/.local/bin
   - |
@@ -51,7 +48,20 @@ install:
   - npm install
 script:
   - npm run app:dist
-  - npm run electron-builder:release
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then npm run electron-builder:release:x64; fi
+  - |
+    if [ "$TRAVIS_OS_NAME" == "linux" ]; then
+      docker run --rm -ti \
+        --env-file <(env | grep -iE 'DEBUG|NODE_|ELECTRON_|YARN_|NPM_|CI|CIRCLE|TRAVIS|APPVEYOR_|CSC_|GH_|GITHUB_|BT_|AWS_|STRIP|BUILD_') \
+        --env ELECTRON_CACHE="/root/.cache/electron" \
+        --env ELECTRON_BUILDER_CACHE="/root/.cache/electron-builder" \
+        -v ${PWD}:/project \
+        -v ~/.cache/electron:/root/.cache/electron \
+        -v ~/.cache/electron-builder:/root/.cache/electron-builder \
+        -v ~/.cache/snapcraft:/root/.cache/snapcraft \
+        electronuserland/builder:8 \
+        /bin/bash -c "apt-get update && apt-get install libsecret-1-dev -y && npm run electron-builder:release:x64:linux"
+    fi
 after_failure:
   - $(git ls-files -o | grep -Fv -e node_modules -e app -e dist >> failure-files.list)
   - find /home/travis/.npm/_logs/*.log >> failure-files.list

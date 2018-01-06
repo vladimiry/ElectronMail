@@ -24,4 +24,4 @@ build_script:
   - node --version
   - npm --version
   - npm run app:dist
-  - npm run electron-builder:release
+  - npm run electron-builder:release:x64

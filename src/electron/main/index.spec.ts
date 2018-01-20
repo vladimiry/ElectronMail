@@ -1,6 +1,6 @@
 import * as sinon from "sinon";
 import rewiremock from "rewiremock";
-import {test} from "ava";
+import {GenericTestContext, test} from "ava";
 
 import {IpcMainActions} from "_shared/electron-actions";
 
@@ -78,10 +78,10 @@ test.beforeEach(async (t: TestContext) => {
             (mock) => {
                 const mocks = t.context.mocks["~index"];
 
-                mock("./util")
+                mock(() => import("./util"))
                     .callThrough()
                     .with(mocks["./util"]);
-                mock("./ipc-main-api")
+                mock(() => import("./ipc-main-api"))
                     .callThrough()
                     .with(mocks["./ipc-main-api"]);
                 mock("./window")

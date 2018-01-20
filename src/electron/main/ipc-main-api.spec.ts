@@ -94,10 +94,10 @@ test.serial(`API: ${IpcMainActions.ToggleCompactLayout.channel}`, async (t: Test
     const initial = await initConfig(endpoints);
     t.true(!initial.compactLayout);
 
-    let updated = await action.process();
+    let updated = await action.process(undefined);
     t.is(updated.compactLayout, true);
 
-    await action.process();
+    await action.process(undefined);
     updated = await t.context.ctx.configStore.readExisting();
     t.is(updated.compactLayout, false);
 });
@@ -118,7 +118,10 @@ test.serial(`API: ${IpcMainActions.ReadSettings.channel}`, async (t: TestContext
     t.false(await t.context.ctx.settingsStore.readable(), "settings file does not exist");
     t.falsy(t.context.ctx.settingsStore.adapter, "adapter is not set");
     const initial = await initConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
-    t.is(t.context.ctx.settingsStore.adapter.constructor.name, EncryptionAdapter.name, "adapter is an EncryptionAdapter");
+    t.is(t.context.ctx.settingsStore.adapter && t.context.ctx.settingsStore.adapter.constructor.name,
+        EncryptionAdapter.name,
+        "adapter is an EncryptionAdapter",
+    );
     const initialExpected = {...t.context.ctx.initialStores.settings, ...{_rev: 0}};
     t.deepEqual(initial, initialExpected, "checking initial settings file");
     t.true(await t.context.ctx.settingsStore.readable(), "settings file exists");
@@ -330,7 +333,7 @@ test.serial(`API: ${IpcMainActions.Quit.channel}`, async (t: TestContext) => {
 });
 
 test.serial(`API: ${IpcMainActions.ToggleBrowserWindow.channel}`, async (t: TestContext) => {
-    const emitSpy: sinon.SinonSpy = t.context.ctx.emit;
+    const emitSpy: any = t.context.ctx.emit;
     const endpoints = t.context.endpoints;
     const action = endpoints[IpcMainActions.ToggleBrowserWindow.channel];
     const payloads = [
@@ -367,7 +370,7 @@ test.serial(`API: ${IpcMainActions.OpenExternal.channel}`, async (t: TestContext
         null,
     ];
     for (const url of forbiddenUrls) {
-        await t.throws(action.process({url}), `Forbidden url "${url}" opening has been prevented`);
+        await t.throws(action.process({url: String(url)}), `Forbidden url "${url}" opening has been prevented`);
     }
 
     const allowedUrls = [
@@ -459,7 +462,9 @@ test.beforeEach(async (t: TestContext) => {
                     openExternalSpy,
                     openExternal: (url: string, options?: Electron.OpenExternalOptions, callback?: (error: Error) => void): boolean => {
                         openExternalSpy(url);
-                        callback(null, callback);
+                        if (callback) {
+                            callback(null as any);
+                        }
                         return true;
                     },
                     openItem: sinon.spy(),

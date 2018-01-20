@@ -39,7 +39,7 @@ test("login, add account, logout, auto login", async (t: TestContext) => {
             await actions.destroyApp(t);
         })();
 
-        await initApp(t, {initial: false, outputDirPath: t.context.userDataDirPath});
+        await initApp(t, {initial: false});
         await t.context.app.client.pause(CONF.timeouts.transition + CONF.timeouts.encryption);
 
         t.is(

@@ -265,7 +265,7 @@ export async function catchError(t: TestContext, error?: Error) {
 
 // tslint:disable:no-console
 
-export async function saveShot(t: TestContext): string {
+export async function saveShot(t: TestContext) {
     const file = path.join(
         t.context.outputDirPath,
         `sreenshot-${t.title}-${new Date().toISOString()}.png`.replace(/[^A-Za-z0-9\.]/g, "_"),

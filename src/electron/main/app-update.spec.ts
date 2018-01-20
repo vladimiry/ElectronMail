@@ -9,6 +9,7 @@ test.serial("initAutoUpdate", async (t) => {
     const electronUpdaterLibrary = {
         autoUpdater: {
             checkForUpdatesAndNotify: sinon.spy(),
+            logger: undefined,
         },
     };
     const library = await rewiremock.around(
@@ -22,18 +23,18 @@ test.serial("initAutoUpdate", async (t) => {
     );
 
     const setIntervalReference = setInterval;
-    setInterval = sinon.spy();
+    (setInterval as any) = sinon.spy();
 
     library.initAutoUpdate();
 
     t.true(
-        setInterval.calledWith(
-            sinon.match((value) => String(value).indexOf("autoUpdater.checkForUpdatesAndNotify()") !== -1),
+        (setInterval as sinon.SinonSpy).calledWith(
+            sinon.match((value: any) => String(value).indexOf("autoUpdater.checkForUpdatesAndNotify()") !== -1),
             CHECK_INTERVAL_MS,
         ),
         `"setInterval" called`,
     );
-    setInterval = setIntervalReference;
+    (setInterval as any) = setIntervalReference;
 
     t.is(electronUpdaterLibrary.autoUpdater.logger, loggerSpy, `"autoUpdater.logger" set to "electron-log"`);
     t.true(electronUpdaterLibrary.autoUpdater.checkForUpdatesAndNotify.calledWithExactly(), `"checkForUpdatesAndNotify" called`);

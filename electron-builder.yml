@@ -41,6 +41,7 @@ linux:
   packageCategory: Office
   asarUnpack:
     - "**/node_modules/sodium-native/**/*"
+    - "**/node_modules/keytar/**/*"
 
 win:
   artifactName: ${name}-${version}-windows-${arch}.${ext}

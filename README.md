@@ -34,11 +34,11 @@ is an unofficial [ProtonMail](https://protonmail.com/) desktop client. It's basi
 - Install dependencies running `npm install`.
 - Build app running `npm run app:dist`. It's better to not touch a mouse during the process, since it might interfere with the `e2e` tests running at the end of the process.
 - Build a package to install running `npm run electron-builder:dist` command to build Windows/Mac OS X package and one of the following commands to build Linux package:
-  - `electron-builder:dist:linux:appimage`
-  - `electron-builder:dist:linux:deb`
-  - `electron-builder:dist:linux:freebsd`
-  - `electron-builder:dist:linux:pacman`
-  - `electron-builder:dist:linux:rpm`
-  - `electron-builder:dist:linux:snap`
-- If you don't need a package to install, but a folder to execute app from, simply run `electron-builder:dir` command.  
+  - `npm run electron-builder:dist:linux:appimage`
+  - `npm run electron-builder:dist:linux:deb`
+  - `npm run electron-builder:dist:linux:freebsd`
+  - `npm run electron-builder:dist:linux:pacman`
+  - `npm run electron-builder:dist:linux:rpm`
+  - `npm run electron-builder:dist:linux:snap`
+- If you don't need a package to install, but a folder to execute app from, simply run `npm run electron-builder:dir` command.  
 - Outcome, whether it's a folder or package to install, comes into the `./dist` folder.

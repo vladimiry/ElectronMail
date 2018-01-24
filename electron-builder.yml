@@ -55,6 +55,9 @@ nsis:
   artifactName: ${name}-${version}-windows-${arch}-nsis-installer.${ext}
   oneClick: false
   perMachine: false
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+  runAfterFinish: false
 
 portable:
     artifactName: ${name}-${version}-windows-${arch}-portable.${ext}

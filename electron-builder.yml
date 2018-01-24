@@ -23,6 +23,9 @@ files: [
 ]
 compression: maximum
 asar: true
+asarUnpack:
+  - "**/node_modules/sodium-native/**/*"
+  - "**/node_modules/keytar/**/*"
 
 mac:
   icon: ./app/assets/icons/mac/icon.icns
@@ -39,9 +42,6 @@ linux:
   icon: ./app/assets/icons/png
   category: Office
   packageCategory: Office
-  asarUnpack:
-    - "**/node_modules/sodium-native/**/*"
-    - "**/node_modules/keytar/**/*"
 
 win:
   artifactName: ${name}-${version}-windows-${arch}.${ext}

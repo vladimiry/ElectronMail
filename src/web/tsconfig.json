@@ -1,19 +1,11 @@
 {
   "extends": "./../../tsconfig.json",
   "compilerOptions": {
-    "target": "es6",
+    "target": "es2015",
     "moduleResolution": "node",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "allowSyntheticDefaultImports": true,
-    "importHelpers": true,
-    "lib": [
-      "es2015",
-      "es2017.object",
-      "dom"
-    ],
-    "baseUrl": "../../",
-    "outDir": "../../app",
     "typeRoots": [
       "../../node_modules/@types",
       "../../src/@types",

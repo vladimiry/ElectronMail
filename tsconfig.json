@@ -1,11 +1,12 @@
 {
   "compilerOptions": {
-    "strict": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
     "target": "es2015",
     "module": "commonjs",
     "moduleResolution": "node",
+    "strict": true,
+    "strictPropertyInitialization": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
     "importHelpers": true,
     "noEmitOnError": true,
     "declaration": false,
@@ -15,12 +16,8 @@
       "es2017.object",
       "dom"
     ],
-    "outDir": "./app",
-    "typeRoots": [
-      "./node_modules/@types",
-      "./src/@types"
-    ],
     "baseUrl": ".",
+    "outDir": "./app",
     "paths": {
       "_root/package.json": [
         "./package.json"
@@ -31,7 +28,11 @@
       "_web_app/*": [
         "./src/web/src/app/*"
       ]
-    }
+    },
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/@types"
+    ]
   },
   "exclude": [
     "node_modules"

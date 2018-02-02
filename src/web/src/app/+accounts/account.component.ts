@@ -1,14 +1,17 @@
+import {AfterViewInit, Component, HostBinding, Input, NgZone, OnDestroy, ViewChild, ElementRef} from "@angular/core";
+import {BehaviorSubject} from "rxjs/BehaviorSubject";
+import {DidFailLoadEvent} from "electron";
 import {filter, map, pairwise, takeUntil, withLatestFrom} from "rxjs/operators";
 import {Observable} from "rxjs/Observable";
-import {Subject} from "rxjs/Subject";
-import {BehaviorSubject} from "rxjs/BehaviorSubject";
-import {AfterViewInit, Component, ElementRef, Input, NgZone, OnDestroy, ViewChild} from "@angular/core";
 import {Store} from "@ngrx/store";
+import {Subject} from "rxjs/Subject";
 
 import {KeePassRef} from "_shared/model/keepasshttp";
 import {WebAccount, WebAccountPageUrl} from "_shared/model/account";
 import {
-    configUnreadNotificationsSelector, electronLocationsSelector, settingsKeePassClientConfSelector,
+    configUnreadNotificationsSelector,
+    electronLocationsSelector,
+    settingsKeePassClientConfSelector,
     State as OptionsState,
 } from "_web_app/store/reducers/options";
 import {State} from "_web_app/store/reducers/accounts";
@@ -33,6 +36,13 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
     keePassClientConf$ = this.optionsStore.select(settingsKeePassClientConfSelector);
     passwordKeePassRef$: Observable<KeePassRef | undefined>;
     mailPasswordKeePassRef$: Observable<KeePassRef | undefined>;
+    // offline interval
+    offlineIntervalStepSec = 10;
+    offlineIntervalAttempt = 0;
+    offlineIntervalHandle: any;
+    didFailLoadErrorDescription: string;
+    @HostBinding("class.web-view-hidden")
+    offlineIntervalRemainingSec: number;
     // other
     @ViewChild("webViewRef", {read: ElementRef})
     webViewRef: ElementRef;
@@ -133,25 +143,58 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
     }
 
     ngAfterViewInit() {
+        this.subscribePageLoadingEvents();
+
         // this.webView.addEventListener("dom-ready", () => this.webView.openDevTools());
-        this.webView.addEventListener("dom-ready", this.pageLoadingStartHandler);
-        this.webView.addEventListener("did-stop-loading", this.pageLoadingEndHandler);
         this.webView.addEventListener("new-window", ({url}: any) => {
             this.optionsStore.dispatch(new NavigationActions.OpenExternal(url));
         });
+        this.webView.addEventListener("did-fail-load", ({errorDescription}: DidFailLoadEvent) => {
+            this.unsubscribePageLoadingEvents();
+            this.didFailLoadErrorDescription = errorDescription;
+
+            this.offlineIntervalAttempt++;
+            this.offlineIntervalRemainingSec = Math.min(this.offlineIntervalStepSec * this.offlineIntervalAttempt, 60);
+            this.offlineIntervalHandle = setInterval(() => {
+                this.offlineIntervalRemainingSec--;
+
+                if (!this.offlineIntervalRemainingSec) {
+                    clearInterval(this.offlineIntervalHandle);
+                    this.subscribePageLoadingEvents();
+                    this.webView.reloadIgnoringCache();
+                }
+            }, 1000);
+        });
+    }
+
+    subscribePageLoadingEvents() {
+        this.webView.addEventListener("dom-ready", this.pageLoadingStartHandler);
+        this.webView.addEventListener("did-stop-loading", this.pageLoadingEndHandler);
+    }
+
+    unsubscribePageLoadingEvents() {
+        this.webView.removeEventListener("dom-ready", this.pageLoadingStartHandler);
+        this.webView.removeEventListener("did-stop-loading", this.pageLoadingEndHandler);
     }
 
     ngOnDestroy() {
         this.unSubscribe$.next();
         this.unSubscribe$.complete();
 
-        this.webView.removeEventListener("dom-ready", this.pageLoadingStartHandler);
-        this.webView.removeEventListener("did-stop-loading", this.pageLoadingEndHandler);
+        this.unsubscribePageLoadingEvents();
 
         this.pageLoadingStartResolve();
     }
 
-    private dispatchPageLoadingEndAction(account: WebAccount) {
+    pageLoadingStartHandler = () => {
+        this.dispatchPageLoadingStartAction(this.account$.getValue());
+    }
+
+    pageLoadingEndHandler = () => {
+        this.dispatchPageLoadingEndAction(this.account$.getValue());
+    }
+
+    dispatchPageLoadingEndAction(account: WebAccount) {
         const patch = {webView: this.webView, pageUrl: this.pageUrl};
 
         this.optionsStore.dispatch(new AccountsActions.PageLoadingEnd(
@@ -160,7 +203,7 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
         ));
     }
 
-    private dispatchPageLoadingStartAction(account: WebAccount) {
+    dispatchPageLoadingStartAction(account: WebAccount) {
         const patch = {webView: this.webView, pageUrl: this.pageUrl};
 
         this.pageLoadingStartResolve();
@@ -170,13 +213,5 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
             patch,
             new Promise((resolve) => this.pageLoadingStartResolve = resolve),
         ));
-    }
-
-    private pageLoadingStartHandler = () => {
-        this.dispatchPageLoadingStartAction(this.account$.getValue());
-    }
-
-    private pageLoadingEndHandler = () => {
-        this.dispatchPageLoadingEndAction(this.account$.getValue());
     }
 }

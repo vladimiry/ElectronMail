@@ -20,3 +20,8 @@
     [src]="webViewSrc"
     [preload]="webViewPreload$ | async"
 ></webview>
+
+<div *ngIf="!!offlineIntervalRemainingSec" class="p-3 text-center text-warning">
+    Failed to load <strong>{{ webViewSrc }}</strong> page with error code: <strong>{{ didFailLoadErrorDescription }}</strong>.
+    Reloading in <strong>{{ offlineIntervalRemainingSec }}</strong> sec.
+</div>

@@ -1,4 +1,4 @@
-@import '~_web_src/variables';
+@import "~_web_src/variables";
 
 $accounts-column-width: 250px;
 
@@ -62,7 +62,7 @@ $accounts-column-width: 250px;
                 .dropdown-toggle {
                     #{$app-prefix}-account-title {
                         .account-value-sync-title {
-                            &:before {
+                            &::before {
                                 content: "| ";
                             }
                         }
@@ -79,7 +79,7 @@ $accounts-column-width: 250px;
             }
 
             .unread-summary {
-                $padding-x-addition: $app-spacer-1 * .75;
+                $padding-x-addition: $app-spacer-1 * 0.75;
                 @include button-size($input-btn-padding-y, $input-btn-padding-x, $font-size-base, $input-btn-line-height, $btn-border-radius);
                 padding-left: $padding-x-addition;
                 padding-right: ($app-spacer-2 + $padding-x-addition);
@@ -116,8 +116,10 @@ $accounts-column-width: 250px;
             }
 
             .dropdown-menu {
+                // sass-lint:disable-all
                 left: auto !important;
                 right: 0 !important;
+                // sass-lint:enable-all
                 margin-top: $app-spacer-2;
 
                 .toggle-layout-view {
@@ -195,14 +197,16 @@ $accounts-column-width: 250px;
                     }
 
                     .dropdown-toggle {
-                        &:after {
+                        &::after {
                             transform: rotate(180deg);
                         }
                     }
 
                     .dropdown-menu {
+                        // sass-lint:disable-all
                         bottom: 100% !important;
                         top: auto !important;
+                        // sass-lint:enable-all
                         width: 100%;
                         margin-top: 0;
                         margin-bottom: $app-spacer-1;

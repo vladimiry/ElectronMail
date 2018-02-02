@@ -1,11 +1,12 @@
-@import '~_web_src/variables';
+@import "~_web_src/variables";
 
 :host {
     .account-value {
         &-login {
             font-weight: bold;
-            opacity: .85;
+            opacity: 0.85;
         }
+
         &-sync-title {
             font-size: $font-size-sm;
         }

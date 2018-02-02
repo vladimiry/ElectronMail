@@ -1,8 +1,8 @@
-@import '~_web_src/variables';
+@import "~_web_src/variables";
 
 $button-size: $input-height-sm;
 $fill-color: theme-color("success");
-$bg-color: white;
+$bg-color: #ffffff;
 $border-width: 1px;
 
 :host {

@@ -1,4 +1,4 @@
-@import '~_web_src/variables';
+@import "~_web_src/variables";
 
 :host {
     display: block;
@@ -13,11 +13,7 @@
         height: 100%;
     }
 
-    &::ng-deep {
-        #{$app-prefix}-keepass-request {
-            &, .progress {
-                border-radius: 0 !important;
-            }
-        }
+    > #{$app-prefix}-keepass-request {
+        margin: $app-spacer-2 $app-spacer-2 0;
     }
 }

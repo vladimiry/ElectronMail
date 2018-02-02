@@ -1,4 +1,4 @@
-@import '~_web_src/variables';
+@import "~_web_src/variables";
 
 :host {
     width: 100%;
@@ -20,12 +20,4 @@
         bottom: 0;
         left: 0;
     }
-
-    //&::ng-deep {
-    //    & > router-outlet {
-    //        & + * {
-    //            width: 100%;
-    //        }
-    //    }
-    //}
 }

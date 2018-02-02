@@ -1,4 +1,4 @@
-@import '~_web_src/variables';
+@import "~_web_src/variables";
 
 :host {
     display: block;
@@ -7,7 +7,7 @@
     right: 0;
     top: 0;
     bottom: 0;
-    background-color: white;
+    background-color: #ffffff;
 
     & > .d-flex {
         align-items: center;
@@ -15,6 +15,6 @@
     }
 
     .btn-block {
-        margin-bottom: ($form-group-margin-bottom * .75);
+        margin-bottom: ($form-group-margin-bottom * 0.75);
     }
 }

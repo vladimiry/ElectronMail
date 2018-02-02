@@ -1,4 +1,4 @@
-@import '~_web_src/variables';
+@import "~_web_src/variables";
 
 :host {
     & > .d-flex {
@@ -7,6 +7,6 @@
     }
 
     .btn-block {
-        margin-bottom: ($form-group-margin-bottom * .75);
+        margin-bottom: ($form-group-margin-bottom * 0.75);
     }
 }

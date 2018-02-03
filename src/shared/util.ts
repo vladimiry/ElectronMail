@@ -1,3 +1,5 @@
+import {Config} from "_shared/model/options";
+
 export function assert(t: any, m?: string) {
     if (!t) {
         throw new Error(m || "AssertionError");
@@ -7,6 +9,20 @@ export function assert(t: any, m?: string) {
 
 export function assertUnsignedInteger(t: number, m?: string) {
     return assert(Number.isInteger(t) && t > 0, m || "Not signed integer");
+}
+
+function pick<T, K extends keyof T>(obj: T, ...keys: K[]): Pick<T, K> {
+    const ret: any = {};
+
+    keys.forEach((key) => {
+        ret[key] = obj[key];
+    });
+
+    return ret;
+}
+
+export function pickBaseConfigProperties(config: Config) {
+    return pick(config, "startMinimized", "compactLayout", "closeToTray", "unreadNotifications");
 }
 
 // TODO TS: make "in" operator work as type guard

@@ -1,12 +1,10 @@
-import {Model as StoreModel} from "fs-json-store";
-import {KeyDerivationPresets} from "fs-json-store-encryption-adapter/key-derivation";
 import {EncryptionPresets} from "fs-json-store-encryption-adapter/encryption";
-
+import {KeyDerivationPresets} from "fs-json-store-encryption-adapter/key-derivation";
+import {Model as StoreModel} from "fs-json-store";
 import {Options as EncryptionAdapterOptions} from "fs-json-store-encryption-adapter";
+
 import {KeePassClientConfFieldContainer, KeePassRefFieldContainer} from "_shared/model/container";
 import {AccountConfig} from "_shared/model/account";
-
-export const BASE_CONFIG_PROPS = ["startMinimized", "compactLayout", "closeToTray", "unreadNotifications"];
 
 export const KEY_DERIVATION_PRESETS: Record<string, KeyDerivationPresets> = {
     "node.pbkdf2 (interactive)": {type: "pbkdf2", preset: "mode:interactive|digest:sha256"},

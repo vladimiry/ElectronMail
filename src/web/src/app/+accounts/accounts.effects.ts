@@ -67,7 +67,7 @@ export class AccountsEffects {
 
                     notifications.push(
                         this.accountService.notification(webView, undefined /*{interval: 1000 * 10}*/, unSubscribeOn)
-                            .pipe(map((notification) => new AccountsActions.AccountNotification(account, notification))),
+                            .pipe(map((notification) => new AccountsActions.AccountNotification(account.accountConfig, notification))),
                     );
 
                     return observableMerge(...notifications);

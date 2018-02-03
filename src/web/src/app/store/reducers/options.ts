@@ -1,14 +1,10 @@
 import {createFeatureSelector, createSelector} from "@ngrx/store";
 
-import {ElectronContextLocations} from "_shared/model/electron";
-import {BASE_CONFIG_PROPS, Config, Settings} from "_shared/model/options";
-import {OptionsActions} from "_web_app/store/actions";
 import * as fromRoot from "./root";
-
-// TODO TS2497 "lodash" TS declarations are broken
-// tslint:disable:no-var-requires
-const pick = require("lodash.pick");
-// tslint:enable:no-var-requires
+import {Config, Settings} from "_shared/model/options";
+import {ElectronContextLocations} from "_shared/model/electron";
+import {OptionsActions} from "_web_app/store/actions";
+import {pickBaseConfigProperties} from "_shared/util";
 
 export const featureName = "options";
 
@@ -52,24 +48,18 @@ export function reducer(state = initialState, action: OptionsActions.All): State
             return {...state, settings: (action as OptionsActions.GetSettingsResponse).settings};
         }
         case OptionsActions.PatchProgress.type: {
-            return patchProgress(state, (action as OptionsActions.PatchProgress).patch);
+            return {
+                ...state,
+                progress: {
+                    ...state.progress,
+                    ...(action as OptionsActions.PatchProgress).patch,
+                },
+            };
         }
         default: {
             return state;
         }
     }
-}
-
-function patchProgress(state: State, patch: ProgressPatch) {
-    return {
-        ...state,
-        ...{
-            progress: {
-                ...state.progress,
-                ...patch,
-            },
-        },
-    };
 }
 
 export const stateSelector = createFeatureSelector<State>(featureName);
@@ -85,7 +75,7 @@ export const hasSavedPasswordSelector = createSelector(stateSelector, ({hasSaved
 
 // config
 export const configSelector = createSelector(stateSelector, ({config}) => config);
-export const baseConfigSelector = createSelector(configSelector, (config) => pick(config, BASE_CONFIG_PROPS));
+export const baseConfigSelector = createSelector(configSelector, (config) => pickBaseConfigProperties(config));
 export const configCompactLayoutSelector = createSelector(configSelector, ({compactLayout}) => compactLayout);
 export const configUnreadNotificationsSelector = createSelector(configSelector, ({unreadNotifications}) => unreadNotifications);
 

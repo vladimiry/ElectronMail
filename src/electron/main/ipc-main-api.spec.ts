@@ -6,20 +6,14 @@ import {GenericTestContext, test} from "ava";
 import {Fs} from "fs-json-store";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter/encryption-adapter";
 
-import {assert} from "_shared/util";
-import {BASE_CONFIG_PROPS, Config, Settings} from "_shared/model/options";
+import {assert, pickBaseConfigProperties} from "_shared/util";
+import {Config, Settings} from "_shared/model/options";
 import {IpcMainActions} from "_shared/electron-actions";
 import {IpcMainChannel} from "_shared/electron-actions/model";
 import {StatusCode, StatusCodeError} from "_shared/model/error";
 import {INITIAL_STORES, KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "./constants";
 import {Context, EndpointsMap} from "./model";
 import {initContext} from "./util";
-
-// TODO TS2497 "lodash" TS declarations are broken
-// tslint:disable:no-var-requires
-const pick = require("lodash.pick");
-
-// tslint:enable:no-var-requires
 
 interface TestContext extends GenericTestContext<{
     context: {
@@ -420,8 +414,8 @@ test.serial(`API: ${IpcMainActions.PatchBaseSettings.channel}`, async (t: TestCo
     for (const patch of patches) {
         const initialConfig = await t.context.ctx.configStore.readExisting();
         const updatedConfig = await action.process(patch);
-        const actual = pick(updatedConfig, BASE_CONFIG_PROPS);
-        const expected = pick({...initialConfig, ...JSON.parse(JSON.stringify(patch))}, BASE_CONFIG_PROPS);
+        const actual = pickBaseConfigProperties(updatedConfig);
+        const expected = pickBaseConfigProperties({...initialConfig, ...JSON.parse(JSON.stringify(patch))});
 
         t.deepEqual(actual, expected);
         t.deepEqual(await t.context.ctx.configStore.readExisting(), updatedConfig);

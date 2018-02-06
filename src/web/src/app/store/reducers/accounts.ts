@@ -35,8 +35,12 @@ export function reducer(state = initialState, action: AccountsActions.All): Stat
                     // add
                     accounts.push({
                         accountConfig,
-                        sync: {},
                         progress: {},
+                        sync: {
+                            pageType: {
+                                url: "initial",
+                            },
+                        },
                     });
                 } else {
                     const account = accounts[index];
@@ -60,31 +64,17 @@ export function reducer(state = initialState, action: AccountsActions.All): Stat
                     : accounts.length ? accounts[0].accountConfig.login : undefined,
             };
         }
-        case AccountsActions.AccountPatch.type: {
-            const {login, patch} = action as AccountsActions.AccountPatch;
-            const {index} = selectAccountByLogin(state.accounts, login);
-
-            return updateIn(
-                state,
-                (_) => _.accounts[index],
-                (_) => ({
-                    ..._,
-                    ...patch,
-                }),
-                [index],
-            );
-        }
         case AccountsActions.AccountNotification.type: {
-            const {accountConfig, payload} = action as AccountsActions.AccountNotification;
+            const {accountConfig, notification} = action as AccountsActions.AccountNotification;
             const {index} = selectAccountByLogin(state.accounts, accountConfig.login);
 
-            if (["title", "unread"].indexOf(payload.type) !== -1) {
+            if ("value" in notification) {
                 return updateIn(
                     state,
                     (_) => _.accounts[index],
                     (account) => ({
                         ...account,
-                        sync: {...account.sync, ...{[payload.type]: payload.value}},
+                        sync: {...account.sync, ...{[notification.type]: notification.value}},
                     }),
                     [index],
                 );

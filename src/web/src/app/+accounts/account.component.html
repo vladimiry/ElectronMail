@@ -1,5 +1,5 @@
 <protonmail-desktop-app-keepass-request
-    *ngIf="isPageUrLogin()"
+    *ngIf="isPageLogin()"
     [keePassRef$]="passwordKeePassRef$"
     [keePassClientConf$]="keePassClientConf$"
     (passwordHandler)="onPassword($event)"
@@ -7,12 +7,16 @@
 ></protonmail-desktop-app-keepass-request>
 
 <protonmail-desktop-app-keepass-request
-    *ngIf="isPageUrlUnlock()"
+    *ngIf="isPageUnlock()"
     [keePassRef$]="mailPasswordKeePassRef$"
     [keePassClientConf$]="keePassClientConf$"
     (passwordHandler)="onMailPassword($event)"
     [lock$]="mailPasswordProgress$"
 ></protonmail-desktop-app-keepass-request>
+
+<!--
+TODO enable keepass interaction for "twoFactorCode"
+-->
 
 <webview
     *ngIf="webViewPreload$ | async"

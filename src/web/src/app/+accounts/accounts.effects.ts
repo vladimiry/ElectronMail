@@ -6,7 +6,6 @@ import {Injectable} from "@angular/core";
 import {Actions, Effect} from "@ngrx/effects";
 import {Store} from "@ngrx/store";
 
-import {WebAccountPageUrl} from "_shared/model/account";
 import {IpcMainActions} from "_shared/electron-actions";
 import {AccountsActions, OptionsActions} from "_web_app/store/actions";
 import {State} from "_web_app/store/reducers/accounts";
@@ -24,11 +23,11 @@ export class AccountsEffects {
     @Effect()
     accountLogin$ = this.actions$
         .ofType<AccountsActions.Login>(AccountsActions.Login.type)
-        .pipe(switchMap(({pageUrl, webView, account, password}) => {
+        .pipe(switchMap(({pageType, webView, account, password}) => {
             const login = account.accountConfig.login;
 
-            switch (pageUrl) {
-                case WebAccountPageUrl.Login: {
+            switch (pageType) {
+                case "login": {
                     return observableMerge(
                         of(new AccountsActions.PatchAccountProgress(login, {password: true})),
                         this.accountService.login(webView, {login, password})
@@ -39,7 +38,18 @@ export class AccountsEffects {
                             ),
                     );
                 }
-                case WebAccountPageUrl.Unlock: {
+                case "login2fa": {
+                    return observableMerge(
+                        of(new AccountsActions.PatchAccountProgress(login, {password2fa: true})),
+                        this.accountService.login2fa(webView, {password})
+                            .pipe(
+                                mergeMap(() => []),
+                                catchError((error) => this.effectsService.buildFailActionObservable(error)),
+                                finalize(() => this.store.dispatch(new AccountsActions.PatchAccountProgress(login, {password2fa: false}))),
+                            ),
+                    );
+                }
+                case "unlock": {
                     return observableMerge(
                         of(new AccountsActions.PatchAccountProgress(login, {mailPassword: true})),
                         this.accountService.unlock(webView, {mailPassword: password})
@@ -52,7 +62,7 @@ export class AccountsEffects {
                 }
             }
 
-            throw new Error(`Unexpected page: ${pageUrl}`);
+            throw new Error(`Unexpected page type: ${pageType}`);
         }));
 
     @Effect()
@@ -62,9 +72,7 @@ export class AccountsEffects {
         return this.actions$
             .ofType<AccountsActions.PageLoadingStart>(AccountsActions.PageLoadingStart.type)
             .pipe(
-                switchMap(({account, patch, unSubscribeOn}) => {
-                    const {webView} = patch || account;
-
+                switchMap(({account, webView, unSubscribeOn}) => {
                     notifications.push(
                         this.accountService.notification(webView, undefined /*{interval: 1000 * 10}*/, unSubscribeOn)
                             .pipe(map((notification) => new AccountsActions.AccountNotification(account.accountConfig, notification))),
@@ -80,39 +88,42 @@ export class AccountsEffects {
     accountPageLoadingEnd$ = this.actions$
         .ofType<AccountsActions.PageLoadingEnd>(AccountsActions.PageLoadingEnd.type)
         .pipe(
-            switchMap(({account, patch}) => {
+            switchMap(({account, webView}) => {
                 const {accountConfig} = account;
-                const {pageUrl, webView} = patch || account;
+                const pageType = account.sync.pageType.type;
                 const credentials = accountConfig.credentials;
-                const observers: Array<Observable<any>> = [
-                    of(new AccountsActions.AccountPatch(account.accountConfig.login, {pageUrl})),
-                ];
 
-                switch (pageUrl) {
-                    case WebAccountPageUrl.Login: {
+                switch (pageType) {
+                    case "login": {
                         if (credentials.password.value) {
-                            observers.push(of(
-                                new AccountsActions.Login(pageUrl, webView, account, credentials.password.value),
-                            ));
+                            return of(
+                                new AccountsActions.Login(pageType, webView, account, credentials.password.value),
+                            );
                         } else {
-                            observers.push(
-                                this.accountService.fillLogin(webView, {login: accountConfig.login})
-                                    .pipe(mergeMap(() => [])),
+                            return this.accountService
+                                .fillLogin(webView, {login: accountConfig.login})
+                                .pipe(mergeMap(() => []));
+                        }
+                    }
+                    case "login2fa": {
+                        if (credentials.twoFactorCode && credentials.twoFactorCode.value) {
+                            return of(
+                                new AccountsActions.Login(pageType, webView, account, credentials.twoFactorCode.value),
                             );
                         }
                         break;
                     }
-                    case WebAccountPageUrl.Unlock: {
+                    case "unlock": {
                         if (credentials.mailPassword.value) {
-                            observers.push(of(
-                                new AccountsActions.Login(pageUrl, webView, account, credentials.mailPassword.value),
-                            ));
+                            return of(
+                                new AccountsActions.Login(pageType, webView, account, credentials.mailPassword.value),
+                            );
                         }
                         break;
                     }
                 }
 
-                return observableMerge(...observers);
+                return observableMerge([]);
             }),
             catchError(this.effectsService.buildFailActionObservable.bind(this.effectsService)),
         );

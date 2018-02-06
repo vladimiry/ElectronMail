@@ -11,6 +11,7 @@ import {Config, Settings} from "_shared/model/options";
 import {IpcMainActions} from "_shared/electron-actions";
 import {IpcMainChannel} from "_shared/electron-actions/model";
 import {StatusCode, StatusCodeError} from "_shared/model/error";
+import {AccountConfigPatch} from "_shared/model/container";
 import {INITIAL_STORES, KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "./constants";
 import {Context, EndpointsMap} from "./model";
 import {initContext} from "./util";
@@ -140,6 +141,7 @@ test.serial(`API: ${IpcMainActions.AddAccount.channel}`, async (t: TestContext) 
         login: "login1",
         passwordValue: "password1",
         mailPasswordValue: "mailPassword1",
+        twoFactorCodeValue: "twoFactorCodeValue1",
     });
 
     const settings = await initConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
@@ -157,6 +159,7 @@ test.serial(`API: ${IpcMainActions.AddAccount.channel}`, async (t: TestContext) 
                 credentials: {
                     password: {value: payload.passwordValue},
                     mailPassword: {value: payload.mailPasswordValue},
+                    twoFactorCode: {value: payload.twoFactorCodeValue},
                 },
             },
         ],
@@ -193,8 +196,8 @@ test.serial(`API: ${IpcMainActions.UpdateAccount.channel}`, async (t: TestContex
     const endpoints = t.context.endpoints;
     const addHandler = endpoints[IpcMainActions.AddAccount.channel];
     const updateHandler = endpoints[IpcMainActions.UpdateAccount.channel];
-    const payload = {login: "login345", password: "password1", mailPassword: "mailPassword1"};
-    const updatePatch = {login: "login345", passwordValue: "password2"};
+    const payload = {login: "login345", password: "password1", mailPassword: "mailPassword1", twoFactorCode: "2fa1"};
+    const updatePatch: AccountConfigPatch = {login: "login345", passwordValue: "password2", twoFactorCodeValue: "2fa2"};
 
     await initConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
 
@@ -212,7 +215,19 @@ test.serial(`API: ${IpcMainActions.UpdateAccount.channel}`, async (t: TestContex
         _rev: (settings._rev as number) + 1,
         accounts: [{
             ...settings.accounts[0],
-            ...{credentials: {...settings.accounts[0].credentials, ...{password: {value: updatePatch.passwordValue}}}},
+            ...{
+                credentials: {
+                    ...settings.accounts[0].credentials,
+                    ...{
+                        password: {
+                            value: updatePatch.passwordValue,
+                        },
+                        twoFactorCode: {
+                            value: updatePatch.twoFactorCodeValue,
+                        },
+                    },
+                },
+            },
         }],
     };
 
@@ -225,8 +240,8 @@ test.serial(`API: ${IpcMainActions.RemoveAccount.channel}`, async (t: TestContex
     const endpoints = t.context.endpoints;
     const addHandler = endpoints[IpcMainActions.AddAccount.channel];
     const removeHandler = endpoints[IpcMainActions.RemoveAccount.channel];
-    const addPayload1 = {login: "login1", passwordValue: "password1", mailPasswordValue: "mailPassword1"};
-    const addPayload2 = {login: "login2", passwordValue: "password2", mailPasswordValue: "mailPassword2"};
+    const addPayload1 = {login: "login1", passwordValue: "password1", mailPasswordValue: "mailPassword1", twoFactorCodeValue: "2fa1"};
+    const addPayload2 = {login: "login2", passwordValue: "password2", mailPasswordValue: "mailPassword2", twoFactorCodeValue: "2fa2"};
     const removePayload = {login: addPayload1.login};
     const removePayload404 = {login: "404 login"};
 
@@ -250,6 +265,7 @@ test.serial(`API: ${IpcMainActions.RemoveAccount.channel}`, async (t: TestContex
             credentials: {
                 password: {value: addPayload2.passwordValue},
                 mailPassword: {value: addPayload2.mailPasswordValue},
+                twoFactorCode: {value: addPayload2.twoFactorCodeValue},
             },
         }],
     };

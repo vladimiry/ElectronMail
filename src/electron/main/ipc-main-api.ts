@@ -107,13 +107,14 @@ export const initEndpoints = (ctx: Context): EndpointsMap => {
         ),
         [IpcMainActions.AddAccount.channel]: new ElectronIpcMainAction<IpcMainActions.AddAccount.Type>(
             IpcMainActions.AddAccount.channel,
-            async ({login, passwordValue, mailPasswordValue}) => {
+            async ({login, passwordValue, mailPasswordValue, twoFactorCodeValue}) => {
                 const settings = await ctx.settingsStore.readExisting();
                 const account: AccountConfig = {
                     login,
                     credentials: {
                         password: {value: passwordValue || undefined},
                         mailPassword: {value: mailPasswordValue || undefined},
+                        twoFactorCode: {value: twoFactorCodeValue || undefined},
                     },
                 };
 
@@ -140,6 +141,11 @@ export const initEndpoints = (ctx: Context): EndpointsMap => {
 
                 if ("passwordValue" in payload) {
                     matchedAccount.credentials.password.value = payload.passwordValue || undefined;
+                }
+                if ("twoFactorCodeValue" in payload) {
+                    matchedAccount.credentials.twoFactorCode = {
+                        value: payload.twoFactorCodeValue || undefined,
+                    };
                 }
                 if ("mailPasswordValue" in payload) {
                     matchedAccount.credentials.mailPassword.value = payload.mailPasswordValue || undefined;

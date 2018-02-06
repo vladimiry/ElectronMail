@@ -95,7 +95,7 @@ export const ipcRendererObservable = <T extends ElectronIpcRendererActionType> (
 
 export const waitElements = <E extends HTMLElement, T extends { [k: string]: () => E }> (
     queries: T,
-    opts: {timeoutMs: number, final: (result: T) => boolean} = {timeoutMs: 1000 * 10, final: () => true},
+    opts: {timeoutMs: number} = {timeoutMs: 1000 * 10},
 ): Promise<T> => new Promise((resolve, reject) => {
     const startTime = Number(new Date());
     const keys = Object.keys(queries) as [keyof T];
@@ -113,7 +113,7 @@ export const waitElements = <E extends HTMLElement, T extends { [k: string]: () 
             return store;
         }, result);
 
-        if (Object.keys(result).length === keys.length && opts.final(result)) {
+        if (Object.keys(result).length === keys.length) {
             return resolve(result);
         }
 
@@ -124,7 +124,7 @@ export const waitElements = <E extends HTMLElement, T extends { [k: string]: () 
         }
 
         // TODO try window.requestAnimationFrame(testIteration)
-        setTimeout(iteration, Math.min(100, opts.timeoutMs / 100));
+        setTimeout(iteration, Math.max(100, opts.timeoutMs / 100));
     };
 
     iteration();

@@ -12,6 +12,7 @@ is an unofficial [ProtonMail](https://protonmail.com/) desktop client. It's basi
 - Cross platform, Linux/OSX/Windows packages [provided](https://github.com/vladimiry/protonmail-desktop-app/releases).
 - Multi accounts support.
 - Automatic login into the app with remembered master password ("Keep me signed in" feature).
+- Automatic login into ProtonMail accounts. Two Factor Authentication (2FA) [is supported](https://github.com/vladimiry/protonmail-desktop-app/issues/10).
 - Auto login into the accounts using either saved in the settings password or KeePass password manager.
 - Encrypted settings storage with switchable predefined key derivation and encryption presets. Argon2 is used as the default key derivation function.
 - Native notifications for individual accounts clicking on which focuses the app window and selects respective account in the accounts list.

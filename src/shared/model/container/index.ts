@@ -49,6 +49,7 @@ export interface AccountFieldContainer {
 export interface PasswordChangeContainer extends PasswordFieldContainer, NewPasswordFieldContainer {}
 
 export interface AccountConfigPatch extends LoginFieldContainer {
+    twoFactorCodeValue?: string;
     passwordValue?: string;
     passwordKeePassRef?: KeePassRef | null;
     mailPasswordValue?: string;

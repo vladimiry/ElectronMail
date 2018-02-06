@@ -1,4 +1,5 @@
 import {KeePassRef} from "../keepasshttp";
+import {NotificationType} from "_shared/electron-actions/ipc-renderer/notification";
 
 export interface AccountCredentials {
     password: {
@@ -9,6 +10,11 @@ export interface AccountCredentials {
         value?: string;
         keePassRef?: KeePassRef;
     };
+    twoFactorCode?: {
+        value?: string;
+        // TODO enable keepass interaction for "twoFactorCode"
+        // keePassRef?: KeePassRef;
+    };
 }
 
 export interface AccountConfig {
@@ -16,25 +22,27 @@ export interface AccountConfig {
     login: string;
 }
 
-export enum WebAccountPageUrl {
-    Undefined = "Undefined",
-    Login = "https://mail.protonmail.com/login",
-    Unlock = "https://mail.protonmail.com/login/unlock",
-    Inbox = "https://mail.protonmail.com/inbox",
-}
-
 export interface WebAccountProgress {
     password?: boolean;
+    password2fa?: boolean;
     mailPassword?: boolean;
+}
+
+// TODO define page types as enum
+export type WebAccountPageType = "login" | "login2fa" | "unlock";
+
+export interface WebAccountPageLocation {
+    url: string;
+    type?: WebAccountPageType;
 }
 
 export interface WebAccount {
     accountConfig: AccountConfig;
-    pageUrl?: WebAccountPageUrl;
-    webView?: any; /* TODO switch to Electron.WebviewTag */
+    /* TODO switch to Electron.WebviewTag */
     progress: WebAccountProgress;
     sync: {
         title?: string;
         unread?: number;
-    };
+        pageType: WebAccountPageLocation;
+    } & Partial<Record<NotificationType, any>>;
 }

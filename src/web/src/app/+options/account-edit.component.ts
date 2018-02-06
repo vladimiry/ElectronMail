@@ -30,10 +30,12 @@ export class AccountEditComponent implements OnInit, AfterViewInit, OnDestroy {
     // form
     login = new FormControl(null, Validators.required);
     password = new FormControl(null);
+    twoFactorCode = new FormControl(null);
     mailPassword = new FormControl(null);
     form = new FormGroup({
         login: this.login,
         password: this.password,
+        twoFactorCode: this.twoFactorCode,
         mailPassword: this.mailPassword,
     });
 
@@ -81,6 +83,9 @@ export class AccountEditComponent implements OnInit, AfterViewInit, OnDestroy {
                     this.account$.next(account);
                     this.form.removeControl("login");
                     this.password.patchValue(account.credentials.password.value);
+                    if (account.credentials.twoFactorCode) {
+                        this.twoFactorCode.patchValue(account.credentials.twoFactorCode.value);
+                    }
                     this.mailPassword.patchValue(account.credentials.mailPassword.value);
                 } else if (login === this.removingAccountLogin$.getValue()) {
                     this.store.dispatch(this.optionsService.buildNavigationAction({path: "accounts"}));
@@ -99,6 +104,7 @@ export class AccountEditComponent implements OnInit, AfterViewInit, OnDestroy {
         const patch: AccountConfigPatch = {
             login: account ? account.login : this.login.value,
             passwordValue: this.password.value,
+            twoFactorCodeValue: this.twoFactorCode.value,
             mailPasswordValue: this.mailPassword.value,
         };
 

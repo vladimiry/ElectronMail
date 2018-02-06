@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, HostBinding, Input, NgZone, OnDestroy, ViewChild, ElementRef} from "@angular/core";
+import {AfterViewInit, Component, ElementRef, HostBinding, Input, NgZone, OnDestroy, ViewChild} from "@angular/core";
 import {BehaviorSubject} from "rxjs/BehaviorSubject";
 import {DidFailLoadEvent} from "electron";
 import {filter, map, pairwise, takeUntil, withLatestFrom} from "rxjs/operators";
@@ -7,7 +7,7 @@ import {Store} from "@ngrx/store";
 import {Subject} from "rxjs/Subject";
 
 import {KeePassRef} from "_shared/model/keepasshttp";
-import {WebAccount, WebAccountPageUrl} from "_shared/model/account";
+import {WebAccount} from "_shared/model/account";
 import {
     configUnreadNotificationsSelector,
     electronLocationsSelector,
@@ -16,6 +16,7 @@ import {
 } from "_web_app/store/reducers/options";
 import {State} from "_web_app/store/reducers/accounts";
 import {AccountsActions, NavigationActions} from "_web_app/store/actions";
+import {distinctUntilChanged} from "rxjs/operators/distinctUntilChanged";
 
 @Component({
     selector: `protonmail-desktop-app-account`,
@@ -24,10 +25,11 @@ import {AccountsActions, NavigationActions} from "_web_app/store/actions";
 })
 export class AccountComponent implements AfterViewInit, OnDestroy {
     // webView initialization
-    webViewSrc = WebAccountPageUrl.Login;
+    webViewSrc = "https://mail.protonmail.com/login";
     webViewPreload$ = this.optionsStore.select(electronLocationsSelector)
         .pipe(map((electronLocations) => electronLocations && electronLocations.preload.account));
     // account
+    // TODO simplify account$ initialization and usage
     account$: BehaviorSubject<WebAccount>;
     // progress
     passwordProgress$: Observable<boolean>;
@@ -47,7 +49,6 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
     @ViewChild("webViewRef", {read: ElementRef})
     webViewRef: ElementRef;
     pageLoadingStartResolve: () => void;
-    unreadNotifications$ = this.optionsStore.select(configUnreadNotificationsSelector);
     unSubscribe$ = new Subject();
 
     constructor(private store: Store<State>,
@@ -60,45 +61,12 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
     set account(account: WebAccount) {
         if (this.account$) {
             if (JSON.stringify(account.accountConfig) !== JSON.stringify(this.account$.getValue().accountConfig)) {
-                this.dispatchPageLoadingEndAction(account);
+                this.pageChangeReaction(account);
             }
-
             this.account$.next(account);
         } else {
             this.account$ = new BehaviorSubject(account);
-
-            // keepass - password
-            this.passwordKeePassRef$ = this.account$.pipe(map(({accountConfig}) =>
-                accountConfig.credentials.password.keePassRef,
-            ));
-            this.passwordProgress$ = this.account$.pipe(map(({progress}) => !!progress.password));
-
-            // keepass - mail password
-            this.mailPasswordKeePassRef$ = this.account$.pipe(map(({accountConfig}) =>
-                accountConfig.credentials.mailPassword.keePassRef,
-            ));
-            this.mailPasswordProgress$ = this.account$.pipe(map(({progress}) => !!progress.mailPassword));
-
-            // notifications
-            this.account$
-                .pipe(
-                    withLatestFrom(this.unreadNotifications$),
-                    filter((args) => !!args[1]),
-                    map((args) => args[0].sync.unread || 0),
-                    pairwise(),
-                    filter(([prev, curr]) => curr > prev),
-                    takeUntil(this.unSubscribe$),
-                )
-                .subscribe(([prev, curr]) => {
-                    const login = this.account$.getValue().accountConfig.login;
-                    const title = APP_CONSTANTS.appName;
-                    const body = `Account "${login}" has ${curr} unread email${curr > 1 ? "s" : ""}.`;
-
-                    new Notification(title, {body}).onclick = () => this.zone.run(() => {
-                        this.store.dispatch(new AccountsActions.ActivateAccount(login));
-                        this.store.dispatch(new NavigationActions.ToggleBrowserWindow({forcedState: true}));
-                    });
-                });
+            this.initAccountReactions();
         }
     }
 
@@ -106,39 +74,71 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
         return this.webViewRef.nativeElement;
     }
 
-    get pageUrl(): WebAccountPageUrl {
-        const url = this.webView.getAttribute("src") as string;
+    initAccountReactions() {
+        this.account$
+            .pipe(
+                map(({sync}) => sync.pageType),
+                filter((value) => !!value.type),
+                distinctUntilChanged(),
+                takeUntil(this.unSubscribe$),
+            )
+            .subscribe(() => this.pageChangeReaction(this.account$.getValue()));
 
-        // TODO simplify url => WebAccountPageUrl mapping
-        switch (url) {
-            case WebAccountPageUrl.Login: {
-                return WebAccountPageUrl.Login;
-            }
-            case WebAccountPageUrl.Unlock: {
-                return WebAccountPageUrl.Unlock;
-            }
-        }
+        // keepass - password
+        this.passwordKeePassRef$ = this.account$.pipe(map(({accountConfig}) =>
+            accountConfig.credentials.password.keePassRef,
+        ));
+        this.passwordProgress$ = this.account$.pipe(map(({progress}) => !!progress.password));
 
-        return WebAccountPageUrl.Undefined;
+        // keepass - mail password
+        this.mailPasswordKeePassRef$ = this.account$.pipe(map(({accountConfig}) =>
+            accountConfig.credentials.mailPassword.keePassRef,
+        ));
+        this.mailPasswordProgress$ = this.account$.pipe(map(({progress}) => !!progress.mailPassword));
+
+        // unread notifications
+        this.account$
+            .pipe(
+                withLatestFrom(this.optionsStore.select(configUnreadNotificationsSelector)),
+                filter((args) => !!args[1]),
+                map((args) => args[0].sync.unread || 0),
+                pairwise(),
+                filter(([prev, curr]) => curr > prev),
+                takeUntil(this.unSubscribe$),
+            )
+            .subscribe(([prev, curr]) => {
+                const login = this.account$.getValue().accountConfig.login;
+                const title = APP_CONSTANTS.appName;
+                const body = `Account "${login}" has ${curr} unread email${curr > 1 ? "s" : ""}.`;
+
+                new Notification(title, {body}).onclick = () => this.zone.run(() => {
+                    this.store.dispatch(new AccountsActions.ActivateAccount(login));
+                    this.store.dispatch(new NavigationActions.ToggleBrowserWindow({forcedState: true}));
+                });
+            });
     }
 
-    isPageUrLogin() {
-        return WebAccountPageUrl.Login === this.account$.getValue().pageUrl;
+    pageChangeReaction(account: WebAccount) {
+        this.optionsStore.dispatch(new AccountsActions.PageLoadingEnd(account, this.webView));
     }
 
-    isPageUrlUnlock() {
-        return WebAccountPageUrl.Unlock === this.account$.getValue().pageUrl;
+    isPageLogin() {
+        return this.account$.getValue().sync.pageType.type === "login";
+    }
+
+    isPageUnlock() {
+        return this.account$.getValue().sync.pageType.type === "unlock";
     }
 
     onPassword(password: string) {
         this.optionsStore.dispatch(
-            new AccountsActions.Login(WebAccountPageUrl.Login, this.webView, this.account$.getValue(), password),
+            new AccountsActions.Login("login", this.webView, this.account$.getValue(), password),
         );
     }
 
     onMailPassword(mailPassword: string) {
         this.optionsStore.dispatch(
-            new AccountsActions.Login(WebAccountPageUrl.Unlock, this.webView, this.account$.getValue(), mailPassword),
+            new AccountsActions.Login("unlock", this.webView, this.account$.getValue(), mailPassword),
         );
     }
 
@@ -169,12 +169,20 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
 
     subscribePageLoadingEvents() {
         this.webView.addEventListener("dom-ready", this.pageLoadingStartHandler);
-        this.webView.addEventListener("did-stop-loading", this.pageLoadingEndHandler);
     }
 
     unsubscribePageLoadingEvents() {
         this.webView.removeEventListener("dom-ready", this.pageLoadingStartHandler);
-        this.webView.removeEventListener("did-stop-loading", this.pageLoadingEndHandler);
+    }
+
+    pageLoadingStartHandler = () => {
+        this.pageLoadingStartResolve();
+
+        this.optionsStore.dispatch(new AccountsActions.PageLoadingStart(
+            this.account$.getValue(),
+            this.webView,
+            new Promise((resolve) => this.pageLoadingStartResolve = resolve),
+        ));
     }
 
     ngOnDestroy() {
@@ -184,34 +192,5 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
         this.unsubscribePageLoadingEvents();
 
         this.pageLoadingStartResolve();
-    }
-
-    pageLoadingStartHandler = () => {
-        this.dispatchPageLoadingStartAction(this.account$.getValue());
-    }
-
-    pageLoadingEndHandler = () => {
-        this.dispatchPageLoadingEndAction(this.account$.getValue());
-    }
-
-    dispatchPageLoadingEndAction(account: WebAccount) {
-        const patch = {webView: this.webView, pageUrl: this.pageUrl};
-
-        this.optionsStore.dispatch(new AccountsActions.PageLoadingEnd(
-            account,
-            patch,
-        ));
-    }
-
-    dispatchPageLoadingStartAction(account: WebAccount) {
-        const patch = {webView: this.webView, pageUrl: this.pageUrl};
-
-        this.pageLoadingStartResolve();
-
-        this.optionsStore.dispatch(new AccountsActions.PageLoadingStart(
-            account,
-            patch,
-            new Promise((resolve) => this.pageLoadingStartResolve = resolve),
-        ));
     }
 }

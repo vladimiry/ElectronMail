@@ -26,6 +26,7 @@ export enum IpcRendererChannel {
     AccountNotification = "account:notification",
     AccountFillLogin = "account:fill-login",
     AccountLogin = "account:login",
+    AccountLogin2FA = "account:login2fa",
     AccountUnlock = "account:unlock",
 }
 

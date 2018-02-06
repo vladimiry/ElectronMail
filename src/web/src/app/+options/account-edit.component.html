@@ -18,6 +18,11 @@
                    [ngClass]="password.dirty ? {'is-invalid': password.invalid, 'is-valid': password.valid} : {}">
         </div>
         <div class="form-group">
+            <label>Two Factor Secret Key</label>
+            <input type="password" class="form-control" formControlName="twoFactorCode"
+                   [ngClass]="twoFactorCode.dirty ? {'is-invalid': twoFactorCode.invalid, 'is-valid': twoFactorCode.valid} : {}">
+        </div>
+        <div class="form-group">
             <label>Mail Password</label>
             <input type="password" class="form-control" formControlName="mailPassword"
                    [ngClass]="mailPassword.dirty ? {'is-invalid': mailPassword.invalid, 'is-valid': mailPassword.valid} : {}">
@@ -58,6 +63,9 @@
                     (unlinkHandler)="onPasswordKeePassUnlink($event)"
                 ></protonmail-desktop-app-keepass-reference>
             </div>
+            <!--
+            TODO enable keepass interaction for "twoFactorCode"
+            -->
             <hr>
             <div class="form-group">
                 <label>Mail Password</label>

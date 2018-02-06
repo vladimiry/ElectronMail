@@ -1,5 +1,4 @@
 import {AccountNotification} from "./account-notification";
-import {AccountPatch} from "./account-patch";
 import {ActivateAccount} from "./activate-account";
 import {DestroyAccount} from "./destory-account";
 import {Login} from "./login";
@@ -11,7 +10,6 @@ import {UpdateOverlayIcon} from "./update-overlay-icon";
 
 export {
     AccountNotification,
-    AccountPatch,
     ActivateAccount,
     DestroyAccount,
     Login,
@@ -24,7 +22,6 @@ export {
 
 export type All =
     | AccountNotification
-    | AccountPatch
     | ActivateAccount
     | DestroyAccount
     | Login

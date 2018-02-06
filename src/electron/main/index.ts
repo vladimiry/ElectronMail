@@ -11,6 +11,7 @@ import {initContext} from "./util";
 import {initBrowserWindow} from "./window";
 import {initTray} from "./tray";
 import {initAutoUpdate} from "./app-update";
+import {initWebContentContextMenu} from "./web-content-context-menu";
 
 electronUnhandled({logger: logger.error});
 
@@ -33,6 +34,8 @@ export function initApp(ctx: Context) {
             browserWindow: await initBrowserWindow(ctx),
             tray: await initTray(ctx, endpoints),
         };
+
+        initWebContentContextMenu(uiContext);
 
         ctx.on("toggleBrowserWindow", (forcedState?: boolean) => {
             const needsToBeVisible = typeof forcedState !== "undefined"

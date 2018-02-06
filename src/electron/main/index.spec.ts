@@ -19,6 +19,7 @@ test.serial("workflow", async (t: TestContext) => {
     const makeSingleInstanceSpy: sinon.SinonSpy = mocks.electron.app.makeSingleInstance;
     const initBrowserWindowSpy: sinon.SinonSpy = mocks["./window"].initBrowserWindow;
     const initTraySpy: sinon.SinonSpy = mocks["./tray"].initTray;
+    const initWebContentContextMenuSpy: sinon.SinonSpy = mocks["./web-content-context-menu"].initWebContentContextMenu;
     const initAutoUpdateSpy: sinon.SinonSpy = mocks["./app-update"].initAutoUpdate;
 
     t.true(electronUnhandledSpy.calledWithExactly(sinon.match.hasOwn("logger")), `"electronUnhandled" called`);
@@ -26,6 +27,7 @@ test.serial("workflow", async (t: TestContext) => {
     t.true(makeSingleInstanceSpy.calledWithExactly(t.context.mocked.index.activateBrowserWindow), `"makeSingleInstance" called`);
     t.true(initBrowserWindowSpy.calledWithExactly(t.context.ctx), `"initBrowserWindow" called`);
     t.true(initTraySpy.calledWithExactly(t.context.ctx, t.context.endpoints), `"initTray" called`);
+    t.true(initWebContentContextMenuSpy.calledWithExactly(t.context.ctx.uiContext), `"initWebContentContextMenu" called`);
     t.true(initAutoUpdateSpy.calledWithExactly(), `"initAutoUpdate" called`);
 });
 
@@ -54,6 +56,9 @@ test.beforeEach(async (t: TestContext) => {
             },
             "./tray": {
                 initTray: sinon.spy(),
+            },
+            "./web-content-context-menu": {
+                initWebContentContextMenu: sinon.spy(),
             },
             "./app-update": {
                 initAutoUpdate: sinon.spy(),
@@ -88,6 +93,8 @@ test.beforeEach(async (t: TestContext) => {
                     .with(mocks["./window"]);
                 mock("./tray")
                     .with(mocks["./tray"]);
+                mock("./web-content-context-menu")
+                    .with(mocks["./web-content-context-menu"]);
                 mock("./app-update")
                     .with(mocks["./app-update"]);
                 mock("keytar")

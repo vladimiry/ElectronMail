@@ -27,7 +27,7 @@ test.serial("workflow", async (t: TestContext) => {
     t.true(makeSingleInstanceSpy.calledWithExactly(t.context.mocked.index.activateBrowserWindow), `"makeSingleInstance" called`);
     t.true(initBrowserWindowSpy.calledWithExactly(t.context.ctx), `"initBrowserWindow" called`);
     t.true(initTraySpy.calledWithExactly(t.context.ctx, t.context.endpoints), `"initTray" called`);
-    t.true(initWebContentContextMenuSpy.calledWithExactly(t.context.ctx.uiContext), `"initWebContentContextMenu" called`);
+    t.true(initWebContentContextMenuSpy.calledWithExactly(t.context.ctx), `"initWebContentContextMenu" called`);
     t.true(initAutoUpdateSpy.calledWithExactly(), `"initAutoUpdate" called`);
 });
 

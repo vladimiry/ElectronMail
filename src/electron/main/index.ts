@@ -30,12 +30,12 @@ export function initApp(ctx: Context) {
 
         await readConfigApi.process(undefined);
 
+        initWebContentContextMenu(ctx);
+
         uiContext = ctx.uiContext = {
             browserWindow: await initBrowserWindow(ctx),
             tray: await initTray(ctx, endpoints),
         };
-
-        initWebContentContextMenu(uiContext);
 
         ctx.on("toggleBrowserWindow", (forcedState?: boolean) => {
             const needsToBeVisible = typeof forcedState !== "undefined"

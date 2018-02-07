@@ -1,48 +1,58 @@
-import {app, clipboard, Menu} from "electron";
+import {app, clipboard, ContextMenuParams, Event, Menu} from "electron";
 
-import {UIContext} from "./model";
+import {Context} from "./model";
 
-export function initWebContentContextMenu(uiContext: UIContext) {
-    app.on("web-contents-created", (webContentsCreatedEvent, contents) => {
-        const selectionMenu = Menu.buildFromTemplate([
-            {role: "copy"},
-            {type: "separator"},
-            {role: "selectall"},
-        ]);
-        const inputMenu = Menu.buildFromTemplate([
-            {role: "undo"},
-            {role: "redo"},
-            {type: "separator"},
-            {role: "cut"},
-            {role: "copy"},
-            {role: "paste"},
-            {type: "separator"},
-            {role: "selectall"},
-        ]);
+const selectionMenu = Menu.buildFromTemplate([
+    {role: "copy"},
+    {type: "separator"},
+    {role: "selectall"},
+]);
+const inputMenu = Menu.buildFromTemplate([
+    {role: "undo"},
+    {role: "redo"},
+    {type: "separator"},
+    {role: "cut"},
+    {role: "copy"},
+    {role: "paste"},
+    {type: "separator"},
+    {role: "selectall"},
+]);
 
-        contents.on("context-menu", (e, props) => {
-            const {selectionText, isEditable, linkURL} = props;
+export function initWebContentContextMenu(ctx: Context) {
+    const contextMenuEvenHandler = (e: Event, props: ContextMenuParams) => {
+        const {selectionText, isEditable, linkURL} = props;
+        const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
 
-            if (isEditable) {
-                inputMenu.popup(uiContext.browserWindow);
-                return;
-            }
+        if (!browserWindow) {
+            return;
+        }
 
-            if (linkURL) {
-                Menu
-                    .buildFromTemplate([{
-                        label: "Copy Link Address",
-                        click() {
-                            clipboard.writeText(linkURL);
-                        },
-                    }])
-                    .popup(uiContext.browserWindow);
-                return;
-            }
+        if (isEditable) {
+            inputMenu.popup(browserWindow);
+            return;
+        }
 
-            if (selectionText && selectionText.trim()) {
-                selectionMenu.popup(uiContext.browserWindow);
-            }
-        });
+        if (linkURL) {
+            Menu
+                .buildFromTemplate([{
+                    label: "Copy Link Address",
+                    click() {
+                        clipboard.writeText(linkURL);
+                    },
+                }])
+                .popup(browserWindow);
+            return;
+        }
+
+        if (selectionText && selectionText.trim()) {
+            selectionMenu.popup(browserWindow);
+        }
+    };
+
+    app.on("browser-window-created", (event, {webContents}) => {
+        webContents.on("context-menu", contextMenuEvenHandler);
+    });
+    app.on("web-contents-created", (webContentsCreatedEvent, webContents) => {
+        webContents.on("context-menu", contextMenuEvenHandler);
     });
 }

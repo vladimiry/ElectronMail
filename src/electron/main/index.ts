@@ -21,7 +21,10 @@ let uiContext: UIContext;
 
 export function initApp(ctx: Context) {
     if (app.makeSingleInstance(activateBrowserWindow)) {
-        app.quit();
+        ctx.forceClose = true;
+        // calling app.exit() instead of app.quit() in order to prevent "Error: Cannot find module ..." error happening
+        // https://github.com/electron/electron/issues/8862
+        app.exit();
     }
 
     app.on("ready", async () => {

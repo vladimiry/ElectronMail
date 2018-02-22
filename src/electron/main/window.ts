@@ -19,8 +19,7 @@ export async function initBrowserWindow(ctx: Context): Promise<BrowserWindow> {
         show: false,
     };
     const browserWindow = new BrowserWindow(browserWindowConstructorOptions);
-    const appBeforeQuitEventHandler = () => forceClose = true;
-    let forceClose = false;
+    const appBeforeQuitEventHandler = () => ctx.forceClose = true;
 
     app.on("before-quit", appBeforeQuitEventHandler);
 
@@ -36,7 +35,7 @@ export async function initBrowserWindow(ctx: Context): Promise<BrowserWindow> {
     });
     browserWindow.on("closed", () => {
         browserWindow.destroy();
-
+        delete ctx.forceClose;
         app.removeListener("before-quit", appBeforeQuitEventHandler);
 
         // On macOS it is common for applications and their menu bar to stay active until the user quits explicitly with Cmd + Q
@@ -45,7 +44,7 @@ export async function initBrowserWindow(ctx: Context): Promise<BrowserWindow> {
         }
     });
     browserWindow.on("close", (event) => {
-        if (!ctx.configInstance().closeToTray || forceClose) {
+        if (!ctx.configInstance().closeToTray || ctx.forceClose) {
             // allow window closing
             return true;
         }

@@ -32,14 +32,14 @@ is an unofficial [ProtonMail](https://protonmail.com/) desktop client. It's basi
   - **`On Linux`**: `python v2.7`, `make` and a C/C++ compiler toolchain, like `GCC` are most likely already installed. Besides there is a need to install `libsecret` dependency, see `Installing` section [here](https://github.com/atom/node-keytar).
   - **`On Mac OS X`**: `python v2.7` and [Xcode](https://developer.apple.com/xcode/download/) need to be installed. You also need to install the `Command Line Tools` via Xcode, can be found under the `Xcode -> Preferences -> Downloads` menu.
 - [Clone](https://help.github.com/articles/cloning-a-repository/) this project to your local device. If you are going to contribute, consider cloning the [forked](https://help.github.com/articles/fork-a-repo/) into your own GitHub account project.
-- Install dependencies running `npm install`.
-- Build app running `npm run app:dist`. It's better to not touch a mouse during the process, since it might interfere with the `e2e` tests running at the end of the process.
-- Build a package to install running `npm run electron-builder:dist` command to build Windows/Mac OS X package and one of the following commands to build Linux package:
-  - `npm run electron-builder:dist:linux:appimage`
-  - `npm run electron-builder:dist:linux:deb`
-  - `npm run electron-builder:dist:linux:freebsd`
-  - `npm run electron-builder:dist:linux:pacman`
-  - `npm run electron-builder:dist:linux:rpm`
-  - `npm run electron-builder:dist:linux:snap`
-- If you don't need a package to install, but a folder to execute app from, simply run `npm run electron-builder:dir` command.  
+- Install dependencies running `yarn`.
+- Build app running `yarn run app:dist`. It's better to not touch a mouse during the process, since it might interfere with the `e2e` tests running at the end of the process.
+- Build a package to install running `yarn run electron-builder:dist` command to build Windows/Mac OS X package and one of the following commands to build Linux package:
+  - `yarn run electron-builder:dist:linux:appimage`
+  - `yarn run electron-builder:dist:linux:deb`
+  - `yarn run electron-builder:dist:linux:freebsd`
+  - `yarn run electron-builder:dist:linux:pacman`
+  - `yarn run electron-builder:dist:linux:rpm`
+  - `yarn run electron-builder:dist:linux:snap`
+- If you don't need a package to install, but a folder to execute app from, simply run `yarn run electron-builder:dir` command.  
 - Outcome, whether it's a folder or package to install, comes into the `./dist` folder.

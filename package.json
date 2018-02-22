@@ -11,9 +11,8 @@
   },
   "main": "./app/electron/main/index.js",
   "scripts": {
-    "postinstall": "npm-run-all postinstall:cross-os postinstall:install-app-deps",
+    "postinstall": "npm-run-all postinstall:install-app-deps",
     "postinstall:install-app-deps": "build install-app-deps",
-    "postinstall:cross-os": "cross-os 7zip-bin",
     "electron-builder:dir": "electron-builder --dir",
     "electron-builder:dist": "electron-builder",
     "electron-builder:dist:linux": "electron-builder --linux AppImage deb freebsd pacman rpm snap",
@@ -48,13 +47,6 @@
     "lint:sass": "sass-lint -v -q -c sass-lint.yml",
     "test:e2e": "ava-ts --verbose \"./src/e2e/**/*.{spec,test}.ts\"",
     "test:electron:main": "ava-ts -p ./tsconfig.json --verbose \"./src/electron/main/**/*.{spec,test}.ts\""
-  },
-  "cross-os": {
-    "7zip-bin": {
-      "linux": "npm i --no-save 7zip-bin-linux",
-      "darwin": "npm i --no-save 7zip-bin-mac",
-      "win32": "npm i --no-save 7zip-bin-win"
-    }
   },
   "pre-commit": [
     "lint"
@@ -121,14 +113,13 @@
     "codelyzer": "4.1.0",
     "core-js": "2.5.3",
     "cross-env": "5.1.3",
-    "cross-os": "1.2.2",
     "cross-spawn": "6.0.4",
     "css-loader": "0.28.9",
     "cssnano": "3.10.0",
     "devtron": "1.4.0",
     "electron": "2.0.0-beta.1",
-    "electron-builder": "20.0.8",
-    "electron-builder-squirrel-windows": "20.0.5",
+    "electron-builder": "19.56.0",
+    "electron-builder-squirrel-windows": "20.0.1",
     "electron-rebuild": "1.7.3",
     "exports-loader": "0.7.0",
     "extended-define-webpack-plugin": "0.1.3",
@@ -138,7 +129,7 @@
     "gulp": "3.9.1",
     "html-loader": "0.5.5",
     "html-webpack-plugin": "2.30.1",
-    "hydux-mutator": "0.1.10",
+    "hydux-mutator": "0.1.9",
     "less-loader": "4.0.5",
     "mkdirp": "0.5.1",
     "ngx-bootstrap": "2.0.2",

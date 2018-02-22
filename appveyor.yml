@@ -4,24 +4,23 @@ branches:
   only:
     - master
 skip_tags: true
+os: unstable
 environment:
   matrix:
     - nodejs_version: 8
 platform:
   - x64
 cache:
-  - node_modules
-  - "%LOCALAPPDATA%/electron"
+  - "%LOCALAPPDATA%/Yarn"
   - "%USERPROFILE%/.electron"
   - "%USERPROFILE%/.electron-builder"
 test: off
 install:
-  - ps: Update-NodeJsInstallation (Get-NodeJsLatestBuild $env:nodejs_version) $env:Platform
+  - ps: Install-Product node $env:node_version
   - SET CI=true
-  - SET PATH=%cd%\node_modules\.bin;%PATH%
-  - npm install
+  - yarn install --mutex file
 build_script:
   - node --version
-  - npm --version
-  - npm run app:dist
-  - npm run electron-builder:release:x64
+  - yarn --version
+  - yarn run app:dist
+  - yarn run electron-builder:release:x64

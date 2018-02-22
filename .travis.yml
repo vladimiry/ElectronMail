@@ -28,6 +28,7 @@ env:
     - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
     - FAILURE_ARCHIVE_FILE=travis-build-id-$TRAVIS_BUILD_ID.tar.gz
 cache:
+  yarn: true
   directories:
     - node_modules
     - $HOME/.cache/electron
@@ -44,11 +45,11 @@ before_install:
     fi
 install:
   - node --version
-  - npm --version
-  - npm install
+  - yarn --version
+  - yarn install
 script:
-  - npm run app:dist
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then npm run electron-builder:release:x64; fi
+  - yarn run app:dist
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then yarn run electron-builder:release:x64; fi
   - |
     if [ "$TRAVIS_OS_NAME" == "linux" ]; then
       docker run --rm -ti \
@@ -60,11 +61,10 @@ script:
         -v ~/.cache/electron-builder:/root/.cache/electron-builder \
         -v ~/.cache/snapcraft:/root/.cache/snapcraft \
         electronuserland/builder:8 \
-        /bin/bash -c "apt-get update && apt-get install libsecret-1-dev -y && npm run electron-builder:release:x64:linux"
+        /bin/bash -c "apt-get update && apt-get install libsecret-1-dev -y && yarn run electron-builder:release:x64:linux"
     fi
 after_failure:
   - $(git ls-files -o | grep -Fv -e node_modules -e app -e dist >> failure-files.list)
-  - find /home/travis/.npm/_logs/*.log >> failure-files.list
   - tar cvzf $FAILURE_ARCHIVE_FILE $(cat failure-files.list)
   - aws --endpoint=$AWS_ENDPOINT_URL s3 cp $FAILURE_ARCHIVE_FILE s3://$AWS_BUCKET
 notifications:

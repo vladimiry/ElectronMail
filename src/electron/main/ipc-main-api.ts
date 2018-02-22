@@ -7,7 +7,7 @@ import {KeePassHttpClient, Model as KeePassHttpClientModel} from "keepasshttp-cl
 import * as keytar from "keytar";
 import * as Jimp from "jimp";
 
-import {ElectronIpcMainAction} from "_shared/electron-actions/model";
+import {ElectronIpcMainAction, IpcMainChannel} from "_shared/electron-actions/model";
 import {StatusCode, StatusCodeError} from "_shared/model/error";
 import {MessageFieldContainer} from "_shared/model/container";
 import {IpcMainActions} from "_shared/electron-actions";
@@ -340,7 +340,7 @@ export const initEndpoints = (ctx: Context): EndpointsMap => {
     });
 
     for (const channel of Object.keys(endpoints)) {
-        ipcMainOn(endpoints[channel]);
+        ipcMainOn(endpoints[channel as IpcMainChannel]);
     }
 
     return endpoints;

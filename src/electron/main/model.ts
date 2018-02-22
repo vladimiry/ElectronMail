@@ -1,6 +1,6 @@
 import {Model as StoreModel} from "fs-json-store";
 
-import {ElectronIpcMainAction} from "_shared/electron-actions/model";
+import {ElectronIpcMainAction, ElectronIpcMainActionType, IpcMainChannel} from "_shared/electron-actions/model";
 import {ElectronContextLocations, Environment} from "_shared/model/electron";
 import {IpcMainActions} from "_shared/electron-actions";
 import {Config, Settings} from "_shared/model/options";
@@ -20,6 +20,7 @@ export interface Context {
     };
     configStore: StoreModel.Store<Config>;
     settingsStore: StoreModel.Store<Settings>;
+    forceClose?: boolean;
     uiContext?: UIContext;
 
     configInstance(): Config;
@@ -36,9 +37,8 @@ export interface UIContext {
     tray: Electron.Tray;
 }
 
-// TODO limit object HandlersMap.key by IpcMainChannel enum members https://github.com/Microsoft/TypeScript/issues/2491
-// export interface HandlersMap extends Record<keyof IpcMainChannel, any> {
-export interface EndpointsMap extends Record<string, any> {
+// TODO extend Record<IpcMainChannel, <? extends ElectronIpcMainActionType>> type (wildcard generic)
+export interface EndpointsMap extends Record<IpcMainChannel, any> {
     "AddAccount": ElectronIpcMainAction<IpcMainActions.AddAccount.Type>;
     "AssociateSettingsWithKeePass": ElectronIpcMainAction<IpcMainActions.AssociateSettingsWithKeePass.Type>;
     "ChangeMasterPassword": ElectronIpcMainAction<IpcMainActions.ChangeMasterPassword.Type>;
@@ -53,9 +53,11 @@ export interface EndpointsMap extends Record<string, any> {
     "ReadConfig": ElectronIpcMainAction<IpcMainActions.ReadConfig.Type>;
     "ReadSettings": ElectronIpcMainAction<IpcMainActions.ReadSettings.Type>;
     "ReadSettingsAuto": ElectronIpcMainAction<IpcMainActions.ReadSettingsAuto.Type>;
+    "ReEncryptSettings": ElectronIpcMainAction<IpcMainActions.ReEncryptSettings.Type>;
     "RemoveAccount": ElectronIpcMainAction<IpcMainActions.RemoveAccount.Type>;
     "SettingsExists": ElectronIpcMainAction<IpcMainActions.SettingsExists.Type>;
     "ToggleBrowserWindow": ElectronIpcMainAction<IpcMainActions.ToggleBrowserWindow.Type>;
     "ToggleCompactLayout": ElectronIpcMainAction<IpcMainActions.ToggleCompactLayout.Type>;
     "UpdateAccount": ElectronIpcMainAction<IpcMainActions.UpdateAccount.Type>;
+    "UpdateOverlayIcon": ElectronIpcMainAction<IpcMainActions.UpdateOverlayIcon.Type>;
 }

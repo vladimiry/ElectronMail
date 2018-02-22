@@ -15,7 +15,7 @@ export const INITIAL_STORES = Object.freeze({
         closeToTray: true,
         unreadNotifications: true,
         window: {
-            bounds: {width: 900, height: 700},
+            bounds: {width: 1024, height: 768},
         },
     },
     settings: {accounts: []},

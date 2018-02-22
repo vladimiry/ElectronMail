@@ -54,6 +54,6 @@ test("login, add account, logout, auto login", async (t: TestContext) => {
         const rawSettings = promisify(fs.readFile)(path.join(t.context.userDataDirPath, "settings.bin"));
         t.true(rawSettings.toString().indexOf(ENV.login) === -1);
     } catch (error) {
-        catchError(t, error);
+        await catchError(t, error);
     }
 });

@@ -57,7 +57,7 @@ test.serial("Initialization", async (t: TestContext) => {
     );
 
     t.is(
-        endpointsChannels.reduce((sum, channel) => sum + Number(ipcMainOnSpy.calledWithExactly(endpoints[channel])), 0),
+        endpointsChannels.reduce((sum, channel) => sum + Number(ipcMainOnSpy.calledWithExactly(endpoints[channel as IpcMainChannel])), 0),
         endpointsChannels.length,
         `subscribe(): "ipcMainOn" has been called for all the ${endpointsChannels.length} endpoints"`,
     );

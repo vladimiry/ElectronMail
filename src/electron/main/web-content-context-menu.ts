@@ -1,4 +1,4 @@
-import {app, clipboard, ContextMenuParams, Event, Menu} from "electron";
+import {app, clipboard, ContextMenuParams, Event, Menu, PopupOptions} from "electron";
 
 import {Context} from "./model";
 
@@ -21,14 +21,14 @@ const inputMenu = Menu.buildFromTemplate([
 export function initWebContentContextMenu(ctx: Context) {
     const contextMenuEvenHandler = (e: Event, props: ContextMenuParams) => {
         const {selectionText, isEditable, linkURL} = props;
-        const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
+        const popupOptions: PopupOptions = {window: ctx.uiContext && ctx.uiContext.browserWindow};
 
-        if (!browserWindow) {
+        if (!popupOptions.window) {
             return;
         }
 
         if (isEditable) {
-            inputMenu.popup(browserWindow);
+            inputMenu.popup(popupOptions);
             return;
         }
 
@@ -40,12 +40,12 @@ export function initWebContentContextMenu(ctx: Context) {
                         clipboard.writeText(linkURL);
                     },
                 }])
-                .popup(browserWindow);
+                .popup(popupOptions);
             return;
         }
 
         if (selectionText && selectionText.trim()) {
-            selectionMenu.popup(browserWindow);
+            selectionMenu.popup(popupOptions);
         }
     };
 

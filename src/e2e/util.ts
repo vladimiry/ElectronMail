@@ -3,6 +3,8 @@ import * as path from "path";
 import * as mkdirp from "mkdirp";
 import * as electron from "electron";
 import * as randomString from "randomstring";
+import * as psNode from "ps-node"; // see also https://www.npmjs.com/package/find-process
+import * as psTree from "ps-tree";
 import {promisify} from "util";
 import {GenericTestContext} from "ava";
 import {Application} from "spectron";
@@ -129,23 +131,53 @@ export async function initApp(t: TestContext, options: { initial: boolean }) {
         // await awaitAngular(t.context.app.client); // seems to be not needed
         // await t.context.app.client.pause(2000);
     } catch (error) {
-        catchError(t, error);
+        if (error.message.indexOf("The inAppPurchase module can only be used on macOS") !== -1) {
+            // tslint:disable:no-console
+            console.warn(error);
+            // tslint:enable:no-console
+            await catchError(t);
+        } else {
+            await catchError(t, error);
+        }
     }
 }
 
 export const actions = {
     async destroyApp(t: TestContext) {
         try {
-            if (!t.context.app || !t.context.app.isRunning()) {
-                t.pass("app is not running");
-                return;
-            }
+            // TODO update to electron 2: app.isRunning() returns undefined, uncomment as soon as it's fixed
+            // if (!t.context.app || !t.context.app.isRunning()) {
+            //     t.pass("app is not running");
+            //     return;
+            // }
+            // await t.context.app.stop();
+            // t.is(t.context.app.isRunning(), false);
+            // delete t.context.app;
 
-            await t.context.app.stop();
-            t.is(t.context.app.isRunning(), false);
-            delete t.context.app;
+            // TODO update to electron 2: remove as soon as app.isRunning() returns valid value
+            await (async () => {
+                const processes = await promisify(psNode.lookup)({
+                    command: "electron",
+                    // arguments: mainScriptFilePath.replace(/\\/g, "\\\\"),
+                    arguments: "--enable-automation",
+                });
+                const pid = processes.length && processes.pop().pid;
+
+                if (!pid) {
+                    throw new Error("Filed to lookup process Electron root process to kill");
+                }
+
+                const processesToKill = [
+                    ...(await promisify(psTree)(pid)),
+                    {PID: pid},
+                ];
+
+                for (const {PID} of processesToKill) {
+                    process.kill(Number(PID), "SIGKILL");
+                }
+            })();
         } catch (error) {
-            catchError(t, error);
+            await catchError(t, error);
         }
     },
 
@@ -191,7 +223,7 @@ export const actions = {
                 // TODO make sure there are no accounts added
             }
         } catch (error) {
-            catchError(t, error);
+            await catchError(t, error);
         }
     },
 
@@ -220,7 +252,7 @@ export const actions = {
                 `addAccount: "accounts" page url (settings modal closed)`,
             );
         } catch (error) {
-            catchError(t, error);
+            await catchError(t, error);
         }
     },
 
@@ -237,20 +269,20 @@ export const actions = {
                 `logout: login page url`,
             );
         } catch (error) {
-            catchError(t, error);
+            await catchError(t, error);
         }
     },
 };
 
 export async function catchError(t: TestContext, error?: Error) {
     try {
-        try {
-            await t.context.app.client.waitForVisible(`.alert-link`, CONF.timeouts.element);
-            await t.context.app.client.click(`.alert-link`);
-        } catch {
-            // NOOP
-        }
+        await t.context.app.client.waitForVisible(`.alert-link`, CONF.timeouts.element);
+        await t.context.app.client.click(`.alert-link`);
+    } catch {
+        // NOOP
+    }
 
+    try {
         await saveShot(t);
     } catch {
         // NOOP

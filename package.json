@@ -118,7 +118,7 @@
     "css-loader": "0.28.10",
     "cssnano": "3.10.0",
     "devtron": "1.4.0",
-    "electron": "2.0.0-beta.1",
+    "electron": "1.8.2",
     "electron-builder": "20.1.0",
     "electron-builder-squirrel-windows": "20.1.0",
     "electron-rebuild": "1.7.3",

@@ -428,13 +428,25 @@ app-builder-bin-linux@1.3.8:
   version "1.3.8"
   resolved "https://registry.yarnpkg.com/app-builder-bin-linux/-/app-builder-bin-linux-1.3.8.tgz#138eaddce970fb485b715e8c3cd88064aee4efb4"
 
+app-builder-bin-linux@1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/app-builder-bin-linux/-/app-builder-bin-linux-1.4.0.tgz#8a5f1af5e4dd4c57efa00c2ba48864d872bad985"
+
 app-builder-bin-mac@1.3.8:
   version "1.3.8"
   resolved "https://registry.yarnpkg.com/app-builder-bin-mac/-/app-builder-bin-mac-1.3.8.tgz#ca7fa326ffeea0eb70cbdce1715ebb27b2ebb7a2"
 
+app-builder-bin-mac@1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/app-builder-bin-mac/-/app-builder-bin-mac-1.4.0.tgz#415c12362a055aac9859feb70a66f5384f654c09"
+
 app-builder-bin-win@1.3.8:
   version "1.3.8"
   resolved "https://registry.yarnpkg.com/app-builder-bin-win/-/app-builder-bin-win-1.3.8.tgz#5f48cbe5ca9b200a11b7f786c7de486b53543df9"
+
+app-builder-bin-win@1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/app-builder-bin-win/-/app-builder-bin-win-1.4.0.tgz#2e0df892c8cf686c47a54cfeeb60d6fe77837e10"
 
 app-builder-bin@1.3.8:
   version "1.3.8"
@@ -443,6 +455,14 @@ app-builder-bin@1.3.8:
     app-builder-bin-linux "1.3.8"
     app-builder-bin-mac "1.3.8"
     app-builder-bin-win "1.3.8"
+
+app-builder-bin@1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-1.4.0.tgz#4e0903bd65aad1e715f8b22b40bbb2cd611bd39f"
+  optionalDependencies:
+    app-builder-bin-linux "1.4.0"
+    app-builder-bin-mac "1.4.0"
+    app-builder-bin-win "1.4.0"
 
 app-root-path@^2.0.1:
   version "2.0.1"
@@ -1476,6 +1496,25 @@ builder-util@5.4.1, builder-util@^5.3.0:
   dependencies:
     "7zip-bin" "~3.1.0"
     app-builder-bin "1.3.8"
+    bluebird-lst "^1.0.5"
+    builder-util-runtime "^4.0.5"
+    chalk "^2.3.0"
+    debug "^3.1.0"
+    fs-extra-p "^4.5.2"
+    is-ci "^1.1.0"
+    js-yaml "^3.10.0"
+    lazy-val "^1.0.3"
+    semver "^5.5.0"
+    source-map-support "^0.5.3"
+    stat-mode "^0.2.2"
+    temp-file "^3.1.1"
+
+builder-util@5.5.0, builder-util@^5.5.0, builder-util@~5.5.0:
+  version "5.5.0"
+  resolved "https://registry.yarnpkg.com/builder-util/-/builder-util-5.5.0.tgz#b986ebaf7993adbe79865c6afeb6ce63bb4c5717"
+  dependencies:
+    "7zip-bin" "~3.1.0"
+    app-builder-bin "1.4.0"
     bluebird-lst "^1.0.5"
     builder-util-runtime "^4.0.5"
     chalk "^2.3.0"
@@ -2724,7 +2763,36 @@ ejs@^2.5.7, ejs@~2.5.6:
   version "2.5.7"
   resolved "https://registry.yarnpkg.com/ejs/-/ejs-2.5.7.tgz#cc872c168880ae3c7189762fd5ffc00896c9518a"
 
-electron-builder-lib@20.0.9, electron-builder-lib@~20.0.5:
+electron-builder-lib@20.1.0:
+  version "20.1.0"
+  resolved "https://registry.yarnpkg.com/electron-builder-lib/-/electron-builder-lib-20.1.0.tgz#16357055f467c2d9bdf72b41fa0f589fb38e5460"
+  dependencies:
+    "7zip-bin" "~3.1.0"
+    app-builder-bin "1.4.0"
+    async-exit-hook "^2.0.1"
+    bluebird-lst "^1.0.5"
+    builder-util "5.5.0"
+    builder-util-runtime "4.0.5"
+    chromium-pickle-js "^0.2.0"
+    debug "^3.1.0"
+    ejs "^2.5.7"
+    electron-osx-sign "0.4.8"
+    electron-publish "20.1.0"
+    fs-extra-p "^4.5.2"
+    hosted-git-info "^2.5.0"
+    is-ci "^1.1.0"
+    isbinaryfile "^3.0.2"
+    js-yaml "^3.10.0"
+    lazy-val "^1.0.3"
+    minimatch "^3.0.4"
+    normalize-package-data "^2.4.0"
+    plist "^2.1.0"
+    read-config-file "3.0.0"
+    sanitize-filename "^1.6.1"
+    semver "^5.5.0"
+    temp-file "^3.1.1"
+
+electron-builder-lib@~20.0.5:
   version "20.0.9"
   resolved "https://registry.yarnpkg.com/electron-builder-lib/-/electron-builder-lib-20.0.9.tgz#62d06eb8536ee6d85f82f9416c6e452dffa4734f"
   dependencies:
@@ -2753,28 +2821,28 @@ electron-builder-lib@20.0.9, electron-builder-lib@~20.0.5:
     semver "^5.5.0"
     temp-file "^3.1.1"
 
-electron-builder-squirrel-windows@20.0.5:
-  version "20.0.5"
-  resolved "https://registry.yarnpkg.com/electron-builder-squirrel-windows/-/electron-builder-squirrel-windows-20.0.5.tgz#628e118975d64080eecf739cce1ff1cf1b5fbe2f"
+electron-builder-squirrel-windows@20.1.0:
+  version "20.1.0"
+  resolved "https://registry.yarnpkg.com/electron-builder-squirrel-windows/-/electron-builder-squirrel-windows-20.1.0.tgz#46d4bf2324d27c0b501ac86b67c77d01bcb8d782"
   dependencies:
     archiver "^2.1.1"
     bluebird-lst "^1.0.5"
-    builder-util "^5.3.0"
-    fs-extra-p "^4.5.0"
+    builder-util "~5.5.0"
+    fs-extra-p "^4.5.2"
     sanitize-filename "^1.6.1"
   optionalDependencies:
     "7zip-bin" "~3.1.0"
 
-electron-builder@20.0.9:
-  version "20.0.9"
-  resolved "https://registry.yarnpkg.com/electron-builder/-/electron-builder-20.0.9.tgz#85f1b18a42104409d785b5babfca5c464b0a265e"
+electron-builder@20.1.0:
+  version "20.1.0"
+  resolved "https://registry.yarnpkg.com/electron-builder/-/electron-builder-20.1.0.tgz#22c4af4e9dc8d389598dc9347f7f1b95bff82fd7"
   dependencies:
     bluebird-lst "^1.0.5"
-    builder-util "5.4.1"
+    builder-util "5.5.0"
     builder-util-runtime "4.0.5"
     chalk "^2.3.0"
     dmg-builder "4.1.0"
-    electron-builder-lib "20.0.9"
+    electron-builder-lib "20.1.0"
     electron-download-tf "4.3.4"
     fs-extra-p "^4.5.2"
     is-ci "^1.1.0"
@@ -2864,6 +2932,18 @@ electron-publish@20.0.6:
     lazy-val "^1.0.3"
     mime "^2.2.0"
 
+electron-publish@20.1.0:
+  version "20.1.0"
+  resolved "https://registry.yarnpkg.com/electron-publish/-/electron-publish-20.1.0.tgz#a1d84b8209cfa4a48407dd7e7f6d9d65c6711e63"
+  dependencies:
+    bluebird-lst "^1.0.5"
+    builder-util "^5.5.0"
+    builder-util-runtime "^4.0.5"
+    chalk "^2.3.0"
+    fs-extra-p "^4.5.2"
+    lazy-val "^1.0.3"
+    mime "^2.2.0"
+
 electron-rebuild@1.7.3:
   version "1.7.3"
   resolved "https://registry.yarnpkg.com/electron-rebuild/-/electron-rebuild-1.7.3.tgz#24ae06ad9dd61cb7e4d688961f49118c40a110eb"
@@ -2904,9 +2984,9 @@ electron-updater@2.20.1:
     semver "^5.5.0"
     source-map-support "^0.5.2"
 
-electron@2.0.0-beta.1:
-  version "2.0.0-beta.1"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-2.0.0-beta.1.tgz#ce118df075ced3e0c41e5d66d80270d76418c4b3"
+electron@1.8.2:
+  version "1.8.2"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-1.8.2.tgz#a817cd733c2972b3c7cc4f777caf6e424b88014d"
   dependencies:
     "@types/node" "^8.0.24"
     electron-download "^3.0.1"

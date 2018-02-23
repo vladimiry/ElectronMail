@@ -91,16 +91,19 @@ export async function initApp(t: TestContext, options: { initial: boolean }) {
 
         t.context.app = new Application({
             path: electron as any,
-            args: [mainScriptFilePath],
-            // TODO consider running e2e tests on copiled/binary app too
-            // path: path.join(rootPath, "./dist/linux-unpacked/protonmail-desktop-app"),
+            requireName: "electronRequire",
             env: {
                 NODE_ENV: "e2e",
                 TEST_USER_DATA_DIR: userDataDirPath,
             },
-            requireName: "electronRequire",
+            args: [
+                mainScriptFilePath,
+            ],
             webdriverLogPath: webdriverLogDirPath,
             chromeDriverLogPath: chromeDriverLogFilePath,
+
+            // TODO consider running e2e tests on compiled/binary app too
+            // path: path.join(rootPath, "./dist/linux-unpacked/protonmail-desktop-app"),
         });
 
         await t.context.app.start();
@@ -133,7 +136,7 @@ export async function initApp(t: TestContext, options: { initial: boolean }) {
     } catch (error) {
         if (error.message.indexOf("The inAppPurchase module can only be used on macOS") !== -1) {
             // tslint:disable:no-console
-            console.warn(error);
+            console.warn(error.message);
             // tslint:enable:no-console
             await catchError(t);
         } else {

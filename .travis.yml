@@ -24,6 +24,7 @@ matrix:
         - docker
 env:
   global:
+    - CI=true
     - ELECTRON_CACHE=$HOME/.cache/electron
     - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
     - FAILURE_ARCHIVE_FILE=travis-build-id-$TRAVIS_BUILD_ID.tar.gz
@@ -34,8 +35,10 @@ cache:
     - $HOME/.cache/electron
     - $HOME/.cache/electron-builder
     - $HOME/.cache/snapcraft
-before_install:
+install:
   - pip install --user awscli ; export PATH=$PATH:$HOME/.local/bin
+  - yarn install
+before_script:
   - |
     if [ "$TRAVIS_OS_NAME" == "linux" ]; then
       export DISPLAY=:99.0; sh -e /etc/init.d/xvfb start; sleep 3;
@@ -43,25 +46,21 @@ before_install:
       eval $(/usr/bin/gnome-keyring-daemon --components=secrets --start);
       dbus-launch /usr/bin/python -c "import gnomekeyring;gnomekeyring.create_sync('login', '');"
     fi
-install:
-  - node --version
-  - yarn --version
-  - yarn install
 script:
   - yarn run app:dist
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then yarn run electron-builder:release:x64; fi
   - |
     if [ "$TRAVIS_OS_NAME" == "linux" ]; then
       docker run --rm -ti \
-        --env-file <(env | grep -iE 'DEBUG|NODE_|ELECTRON_|YARN_|NPM_|CI|CIRCLE|TRAVIS|APPVEYOR_|CSC_|GH_|GITHUB_|BT_|AWS_|STRIP|BUILD_') \
-        --env ELECTRON_CACHE="/root/.cache/electron" \
-        --env ELECTRON_BUILDER_CACHE="/root/.cache/electron-builder" \
-        -v ${PWD}:/project \
-        -v ~/.cache/electron:/root/.cache/electron \
-        -v ~/.cache/electron-builder:/root/.cache/electron-builder \
-        -v ~/.cache/snapcraft:/root/.cache/snapcraft \
-        electronuserland/builder:8 \
-        /bin/bash -c "apt-get update && apt-get install libsecret-1-dev -y && yarn run electron-builder:release:x64:linux"
+      --env-file <(env | grep -iE 'DEBUG|NODE_|ELECTRON_|YARN_|NPM_|CI|CIRCLE|TRAVIS_TAG|TRAVIS|TRAVIS_REPO_|TRAVIS_BUILD_|TRAVIS_BRANCH|TRAVIS_PULL_REQUEST_|APPVEYOR_|CSC_|GH_|GITHUB_|BT_|AWS_|STRIP|BUILD_') \
+      --env ELECTRON_CACHE="/root/.cache/electron" \
+      --env ELECTRON_BUILDER_CACHE="/root/.cache/electron-builder" \
+      -v ${PWD}:/project \
+      -v ${PWD##*/}-node-modules:/project/node_modules \
+      -v ~/.cache/electron:/root/.cache/electron \
+      -v ~/.cache/electron-builder:/root/.cache/electron-builder \
+      electronuserland/builder \
+      /bin/bash -c "apt-get update && apt-get install libsecret-1-dev -y && yarn && PATH=/snap/bin:$PATH && yarn run electron-builder:release:x64:linux"
     fi
 after_failure:
   - $(git ls-files -o | grep -Fv -e node_modules -e app -e dist >> failure-files.list)

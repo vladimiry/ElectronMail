@@ -25,7 +25,7 @@
     "electron-builder:release:x64": "electron-builder -p onTagOrDraft --x64",
     "electron-builder:release:x64:linux": "electron-builder -p onTagOrDraft --x64 --linux AppImage deb freebsd pacman rpm snap",
     "dist": "npm-run-all app:dist electron-builder:dist",
-    "app:dist": "cross-env NODE_ENV=production npm-run-all lint test:electron:main app:clean app:compile app:assets test:e2e",
+    "app:dist": "cross-env NODE_ENV=production npm-run-all security-check lint test:electron:main app:clean app:compile app:assets test:e2e",
     "app:clean": "rimraf ./app/",
     "app:assets": "gulp copy:assets",
     "app:compile:production": "NODE_ENV=production npm-run-all electron:compile web:compile",
@@ -46,7 +46,8 @@
     "lint:ts": "tslint \"./src/**/*.ts\"",
     "lint:sass": "sass-lint -v -q -c sass-lint.yml",
     "test:e2e": "ava-ts --verbose \"./src/e2e/**/*.{spec,test}.ts\"",
-    "test:electron:main": "ava-ts -p ./tsconfig.json --verbose \"./src/electron/main/**/*.{spec,test}.ts\""
+    "test:electron:main": "ava-ts -p ./tsconfig.json --verbose \"./src/electron/main/**/*.{spec,test}.ts\"",
+    "security-check": "nsp check --preprocessor yarn --reporter table"
   },
   "pre-commit": [
     "lint"
@@ -135,6 +136,8 @@
     "ngx-bootstrap": "2.0.2",
     "node-sass": "4.7.2",
     "npm-run-all": "4.1.2",
+    "nsp": "3.2.1",
+    "nsp-preprocessor-yarn": "1.0.1",
     "otpauth": "3.1.3",
     "postcss-custom-properties": "7.0.0",
     "postcss-loader": "2.1.0",

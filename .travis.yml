@@ -60,7 +60,7 @@ script:
       -v ~/.cache/electron:/root/.cache/electron \
       -v ~/.cache/electron-builder:/root/.cache/electron-builder \
       electronuserland/builder \
-      /bin/bash -c "apt-get update && apt-get install libsecret-1-dev -y && yarn && PATH=/snap/bin:$PATH && yarn run electron-builder:release:x64:linux"
+      /bin/bash -c "yarn && yarn run electron-builder:release:x64:linux"
     fi
 after_failure:
   - $(git ls-files -o | grep -Fv -e node_modules -e app -e dist >> failure-files.list)

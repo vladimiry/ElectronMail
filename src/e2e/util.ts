@@ -96,9 +96,8 @@ export async function initApp(t: TestContext, options: { initial: boolean }) {
                 NODE_ENV: "e2e",
                 TEST_USER_DATA_DIR: userDataDirPath,
             },
-            args: [
-                mainScriptFilePath,
-            ],
+            args: [mainScriptFilePath],
+            chromeDriverArgs: process.env.CI ? [/*"headless", */"no-sandbox", "disable-gpu"] : [],
             webdriverLogPath: webdriverLogDirPath,
             chromeDriverLogPath: chromeDriverLogFilePath,
 

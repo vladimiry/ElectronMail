@@ -14,8 +14,11 @@ matrix:
       dist: trusty
       group: stable
       addons:
+        chrome: stable
         apt:
           packages:
+            - libnss3
+            - libnss3-dev
             - gnome-keyring
             - libgnome-keyring-dev
             - libsecret-1-dev
@@ -46,22 +49,7 @@ before_script:
       eval $(/usr/bin/gnome-keyring-daemon --components=secrets --start);
       dbus-launch /usr/bin/python -c "import gnomekeyring;gnomekeyring.create_sync('login', '');"
     fi
-script:
-  - yarn run app:dist
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then yarn run electron-builder:release:x64; fi
-  - |
-    if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-      docker run --rm -ti \
-      --env-file <(env | grep -iE 'DEBUG|NODE_|ELECTRON_|YARN_|NPM_|CI|CIRCLE|TRAVIS_TAG|TRAVIS|TRAVIS_REPO_|TRAVIS_BUILD_|TRAVIS_BRANCH|TRAVIS_PULL_REQUEST_|APPVEYOR_|CSC_|GH_|GITHUB_|BT_|AWS_|STRIP|BUILD_') \
-      --env ELECTRON_CACHE="/root/.cache/electron" \
-      --env ELECTRON_BUILDER_CACHE="/root/.cache/electron-builder" \
-      -v ${PWD}:/project \
-      -v ${PWD##*/}-node-modules:/project/node_modules \
-      -v ~/.cache/electron:/root/.cache/electron \
-      -v ~/.cache/electron-builder:/root/.cache/electron-builder \
-      electronuserland/builder \
-      /bin/bash -c "apt-get update && apt-get install libsecret-1-dev -y && yarn && PATH=/snap/bin:$PATH && yarn run electron-builder:release:x64:linux"
-    fi
+script: ./scripts/travis.sh
 after_failure:
   - $(git ls-files -o | grep -Fv -e node_modules -e app -e dist >> failure-files.list)
   - tar cvzf $FAILURE_ARCHIVE_FILE $(cat failure-files.list)

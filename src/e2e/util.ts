@@ -175,7 +175,11 @@ export const actions = {
                 ];
 
                 for (const {PID} of processesToKill) {
-                    process.kill(Number(PID), "SIGKILL");
+                    try {
+                        process.kill(Number(PID), "SIGKILL");
+                    } catch {
+                        // NOOP
+                    }
                 }
             })();
         } catch (error) {

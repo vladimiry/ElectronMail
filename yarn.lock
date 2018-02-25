@@ -864,18 +864,17 @@ ava@0.25.0:
     unique-temp-dir "^1.0.0"
     update-notifier "^2.3.0"
 
-awesome-typescript-loader@3.4.1:
-  version "3.4.1"
-  resolved "https://registry.yarnpkg.com/awesome-typescript-loader/-/awesome-typescript-loader-3.4.1.tgz#22fa49800f0619ec18ab15383aef93b95378dea9"
+awesome-typescript-loader@3.5.0:
+  version "3.5.0"
+  resolved "https://registry.yarnpkg.com/awesome-typescript-loader/-/awesome-typescript-loader-3.5.0.tgz#4d4d10cba7a04ed433dfa0334250846fb11a1a5a"
   dependencies:
-    colors "^1.1.2"
+    chalk "^2.3.1"
     enhanced-resolve "3.3.0"
     loader-utils "^1.1.0"
     lodash "^4.17.4"
     micromatch "^3.0.3"
     mkdirp "^0.5.1"
-    object-assign "^4.1.1"
-    source-map-support "^0.4.15"
+    source-map-support "^0.5.3"
 
 aws-sign2@~0.6.0:
   version "0.6.0"
@@ -7816,9 +7815,9 @@ retry@^0.10.0:
   version "0.10.1"
   resolved "https://registry.yarnpkg.com/retry/-/retry-0.10.1.tgz#e76388d217992c252750241d3d3956fed98d8ff4"
 
-rewiremock@3.4.2:
-  version "3.4.2"
-  resolved "https://registry.yarnpkg.com/rewiremock/-/rewiremock-3.4.2.tgz#bfd8ea4321a7c62ba45a475ffb0a06706b9331d0"
+rewiremock@3.4.3:
+  version "3.4.3"
+  resolved "https://registry.yarnpkg.com/rewiremock/-/rewiremock-3.4.3.tgz#84b887437bf8944ccb3d61f6039db4aa0f64bbec"
   dependencies:
     compare-module-exports "^2.0.0"
     lodash.some "^4.6.0"

@@ -25,6 +25,7 @@ matrix:
 env:
   global:
     - CI=true
+    - NO_AT_BRIDGE=1
     - ELECTRON_CACHE=$HOME/.cache/electron
     - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
     - FAILURE_ARCHIVE_FILE=travis-build-id-$TRAVIS_BUILD_ID.tar.gz
@@ -42,9 +43,10 @@ before_script:
   - |
     if [ "$TRAVIS_OS_NAME" == "linux" ]; then
       export DISPLAY=:99.0; sh -e /etc/init.d/xvfb start; sleep 3;
+      eval $(dbus-launch --sh-syntax);
       eval $(echo -n "" | /usr/bin/gnome-keyring-daemon --login);
       eval $(/usr/bin/gnome-keyring-daemon --components=secrets --start);
-      dbus-launch /usr/bin/python -c "import gnomekeyring;gnomekeyring.create_sync('login', '');"
+      /usr/bin/python -c "import gnomekeyring;gnomekeyring.create_sync('login', '');";
     fi
 script: ./scripts/travis.sh
 after_failure:

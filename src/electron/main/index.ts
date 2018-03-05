@@ -30,8 +30,7 @@ export function initApp(ctx: Context) {
     app.on("ready", async () => {
         const endpoints = initEndpoints(ctx);
         const readConfigApi = endpoints[IpcMainActions.ReadConfig.channel];
-
-        await readConfigApi.process(undefined);
+        const {checkForUpdatesAndNotify} = await readConfigApi.process(undefined);
 
         initWebContentContextMenu(ctx);
 
@@ -53,7 +52,7 @@ export function initApp(ctx: Context) {
         });
 
         ((skipEnvs: Environment[]) => {
-            if (skipEnvs.indexOf(ctx.env) === -1) {
+            if (checkForUpdatesAndNotify && skipEnvs.indexOf(ctx.env) === -1) {
                 initAutoUpdate();
             }
         })(["development", "e2e"]);

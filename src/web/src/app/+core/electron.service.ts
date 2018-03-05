@@ -15,7 +15,7 @@ export class ElectronService {
     callCounter = 0;
     // TODO time configuring
     // TODO debug: change to 3 sec
-    readonly timeoutMs = 1000 * 10;
+    readonly timeoutMs = 1000 * 15;
 
     constructor(private zone: NgZone) {}
 

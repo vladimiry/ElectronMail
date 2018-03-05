@@ -3,7 +3,6 @@ import {isWebUri} from "valid-url";
 import {promisify} from "util";
 import {app, nativeImage, shell} from "electron";
 import {KeePassHttpClient, Model as KeePassHttpClientModel} from "keepasshttp-client";
-// TODO switch "keytar-prebuild" => "keytar" on https://github.com/atom/node-keytar/pull/67 resolving
 import * as keytar from "keytar";
 import * as Jimp from "jimp";
 
@@ -54,19 +53,24 @@ export const initEndpoints = (ctx: Context): EndpointsMap => {
 
                 const adapter = await ctx.buildSettingsAdapter(password);
                 const store = ctx.settingsStore.clone({adapter});
+                let settings;
 
                 try {
-                    const settings = await store.readExisting();
-
-                    ctx.settingsStore = store;
-
-                    return settings;
+                    settings = await store.readExisting();
                 } catch {
                     // the following errors might happen and are being ignored:
                     // - file not found - settings file might be removed manually
                     // - decryption - saved password might be wrong
                     return;
                 }
+
+                // re-save password on successful automatic login
+                // workaround for https://github.com/vladimiry/protonmail-desktop-app/issues/19
+                await keytar.setPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, password);
+
+                ctx.settingsStore = store;
+
+                return settings;
             },
         ),
         [IpcMainActions.ReadSettings.channel]: new ElectronIpcMainAction<IpcMainActions.ReadSettings.Type>(

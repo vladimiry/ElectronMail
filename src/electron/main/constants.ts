@@ -14,6 +14,7 @@ export const INITIAL_STORES = Object.freeze({
         compactLayout: false,
         closeToTray: true,
         unreadNotifications: true,
+        checkForUpdatesAndNotify: true,
         window: {
             bounds: {width: 1024, height: 768},
         },

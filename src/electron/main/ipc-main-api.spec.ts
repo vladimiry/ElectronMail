@@ -416,12 +416,14 @@ test.serial(`API: ${IpcMainActions.PatchBaseSettings.channel}`, async (t: TestCo
             compactLayout: true,
             closeToTray: false,
             unreadNotifications: true,
+            checkForUpdatesAndNotify: true,
         },
         {
             startMinimized: true,
             compactLayout: undefined,
             closeToTray: true,
             unreadNotifications: false,
+            checkForUpdatesAndNotify: false,
         },
     ];
 

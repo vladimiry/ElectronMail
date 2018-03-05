@@ -3,6 +3,7 @@ import rewiremock from "rewiremock";
 import {GenericTestContext, test} from "ava";
 
 import {IpcMainActions} from "_shared/electron-actions";
+import {INITIAL_STORES} from "./constants";
 
 export interface TestContext extends GenericTestContext<{
     context: {
@@ -34,7 +35,7 @@ test.serial("workflow", async (t: TestContext) => {
 test.beforeEach(async (t: TestContext) => {
     t.context.endpoints = {
         [IpcMainActions.ReadConfig.channel]: {
-            process: sinon.spy(),
+            process: sinon.stub().returns(INITIAL_STORES.config),
         },
     };
 

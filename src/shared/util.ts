@@ -1,4 +1,4 @@
-import {Config} from "_shared/model/options";
+import {BaseConfig, Config} from "_shared/model/options";
 
 export function assert(t: any, m?: string) {
     if (!t) {
@@ -7,28 +7,13 @@ export function assert(t: any, m?: string) {
     return t;
 }
 
-export function assertUnsignedInteger(t: number, m?: string) {
-    return assert(Number.isInteger(t) && t > 0, m || "Not signed integer");
+// @formatter:off
+export function pickBaseConfigProperties(
+    {closeToTray, compactLayout, startMinimized, unreadNotifications, checkForUpdatesAndNotify}: Config,
+): Record<keyof BaseConfig, boolean | undefined> {
+    return {closeToTray, compactLayout, startMinimized, unreadNotifications, checkForUpdatesAndNotify};
 }
-
-function pick<T, K extends keyof T>(obj: T, ...keys: K[]): Pick<T, K> {
-    const ret: any = {};
-
-    keys.forEach((key) => {
-        ret[key] = obj[key];
-    });
-
-    return ret;
-}
-
-export function pickBaseConfigProperties(config: Config) {
-    return pick(config, "startMinimized", "compactLayout", "closeToTray", "unreadNotifications");
-}
-
-// TODO TS: make "in" operator work as type guard
-// https://github.com/Microsoft/TypeScript/issues/10485
-// https://github.com/Microsoft/TypeScript/pull/15256
-export const hasProperty = <K extends string>(o: {}, k: K): o is { [_ in K]: {} } => typeof o === "object" && k in o;
+// @formatter:on
 
 export const isAllowedUrl = (() => {
     const urlPrefixesWhiteList = [

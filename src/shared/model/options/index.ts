@@ -25,6 +25,7 @@ export interface BaseConfig {
     compactLayout?: boolean;
     startMinimized?: boolean;
     unreadNotifications?: boolean;
+    checkForUpdatesAndNotify?: boolean;
 }
 
 export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {

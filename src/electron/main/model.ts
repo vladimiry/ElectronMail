@@ -1,6 +1,6 @@
 import {Model as StoreModel} from "fs-json-store";
 
-import {ElectronIpcMainAction, ElectronIpcMainActionType, IpcMainChannel} from "_shared/electron-actions/model";
+import {ElectronIpcMainAction, IpcMainChannel} from "_shared/electron-actions/model";
 import {ElectronContextLocations, Environment} from "_shared/model/electron";
 import {IpcMainActions} from "_shared/electron-actions";
 import {Config, Settings} from "_shared/model/options";

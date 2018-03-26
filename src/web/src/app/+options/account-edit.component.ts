@@ -23,7 +23,6 @@ type optionalString = string | undefined;
 @Component({
     selector: `protonmail-desktop-app-account-edit`,
     templateUrl: "./account-edit.component.html",
-    styleUrls: ["./account-edit.component.scss"],
     preserveWhitespaces: true,
 })
 export class AccountEditComponent implements OnInit, AfterViewInit, OnDestroy {

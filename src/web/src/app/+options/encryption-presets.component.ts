@@ -10,7 +10,6 @@ import {configSelector, State} from "_web_app/store/reducers/options";
 @Component({
     selector: `protonmail-desktop-app-encryption-presets`,
     templateUrl: "./encryption-presets.component.html",
-    styleUrls: ["./encryption-presets.component.scss"],
     preserveWhitespaces: true,
 })
 export class EncryptionPresetsComponent implements OnInit, OnDestroy {

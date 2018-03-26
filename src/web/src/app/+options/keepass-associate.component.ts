@@ -12,7 +12,6 @@ import {progressSelector, State} from "_web_app/store/reducers/options";
 @Component({
     selector: `protonmail-desktop-app-keepass-associate`,
     templateUrl: "./keepass-associate.component.html",
-    styleUrls: ["./keepass-associate.component.scss"],
 })
 export class KeepassAssociateComponent implements OnInit, OnDestroy {
     url = new FormControl("http://localhost:19455", Validators.required);

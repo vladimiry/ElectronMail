@@ -10,7 +10,6 @@ import {baseConfigSelector, progressSelector, State} from "_web_app/store/reduce
 @Component({
     selector: `protonmail-desktop-app-base-settings`,
     templateUrl: "./base-settings.component.html",
-    styleUrls: ["./base-settings.component.scss"],
 })
 export class BaseSettingsComponent implements OnInit {
     baseConfig$ = this.store.select(baseConfigSelector);

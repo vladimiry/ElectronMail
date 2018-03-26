@@ -19,9 +19,9 @@ import {Context, ContextInitOptions} from "./model";
 import {INITIAL_STORES} from "./constants";
 
 export async function initContext(opts: ContextInitOptions = {}): Promise<Context> {
-    const env: Environment = process.env.NODE_ENV === "development"
+    const env: Environment = process.env.NODE_ENV_RUNTIME === "development"
         ? "development"
-        : process.env.NODE_ENV === "e2e"
+        : process.env.NODE_ENV_RUNTIME === "e2e"
             ? "e2e"
             : "production";
     const locations = await (async () => {

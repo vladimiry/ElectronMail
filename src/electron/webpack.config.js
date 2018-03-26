@@ -1,9 +1,8 @@
 // TODO get rid of webpack for the electron building on resolving https://github.com/Microsoft/TypeScript/issues/15479
 
 const path = require('path');
-const webpack = require('webpack');
 const CircularDependencyPlugin = require('circular-dependency-plugin');
-const {TsConfigPathsPlugin} = require('awesome-typescript-loader');
+const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 module.exports.generateConfig = ({context}) => {
     const rootContext = process.cwd();
@@ -18,7 +17,7 @@ module.exports.generateConfig = ({context}) => {
 
     const metadata = {
         env: {
-            value: process.env.NODE_ENV || envs.development,
+            value: process.env.NODE_ENV_RUNTIME || envs.development,
             isProduction() {
                 return this.value === envs.production;
             },
@@ -41,10 +40,11 @@ module.exports.generateConfig = ({context}) => {
     console.log(`metadata: ${JSON.stringify(metadata, null, 4)}`);
 
     if (!(metadata.env.value in envs)) {
-        throw new Error('"NODE_ENV" is not defined');
+        throw new Error('"NODE_ENV_RUNTIME" is not defined');
     }
 
     const config = {
+        mode: metadata.env.isProduction() ? "production" : "development",
         node: {
             __dirname: false,
             __filename: false,
@@ -58,6 +58,9 @@ module.exports.generateConfig = ({context}) => {
             alias: {
                 ...rootConfig.resolve.alias,
             },
+            plugins: [
+                new TsconfigPathsPlugin({configFile: metadata.paths.tsConfig}),
+            ],
         },
         module: {
             rules: [
@@ -76,35 +79,11 @@ module.exports.generateConfig = ({context}) => {
             ]
         },
         plugins: [
-            new TsConfigPathsPlugin({configFileName: metadata.paths.tsConfig}),
             new CircularDependencyPlugin({
                 exclude: /node_modules/,
                 failOnError: true,
             }),
-            new webpack.NoEmitOnErrorsPlugin(),
-            // https://github.com/webpack/webpack/issues/1599#issuecomment-328927602
-            {
-                apply(compiler) {
-                    function setModuleConstant(expression, fn) {
-                        compiler.plugin('parser', function (parser) {
-                            parser.plugin(`expression ${ expression }`, function () {
-                                this.state.current.addVariable(expression, JSON.stringify(fn(this.state.module)));
-                                return true
-                            })
-                        })
-                    }
-
-                    setModuleConstant('__filename', function (module) {
-                        return module.resource
-                    });
-
-                    setModuleConstant('__dirname', function (module) {
-                        return module.context
-                    });
-                }
-            },
         ],
-        ...(metadata.sourceMap ? {devtool: 'source-map'} : {}),
     };
 
     return {metadata, config};

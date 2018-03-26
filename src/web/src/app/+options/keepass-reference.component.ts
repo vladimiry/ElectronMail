@@ -14,7 +14,6 @@ import {ElectronService} from "../+core/electron.service";
 @Component({
     selector: `protonmail-desktop-app-keepass-reference`,
     templateUrl: "./keepass-reference.component.html",
-    styleUrls: ["./keepass-reference.component.scss"],
 })
 export class KeePassReferenceComponent {
     // form

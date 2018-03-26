@@ -93,7 +93,7 @@ export async function initApp(t: TestContext, options: { initial: boolean }) {
             path: electron as any,
             requireName: "electronRequire",
             env: {
-                NODE_ENV: "e2e",
+                NODE_ENV_RUNTIME: "e2e",
                 TEST_USER_DATA_DIR: userDataDirPath,
             },
             args: [mainScriptFilePath],

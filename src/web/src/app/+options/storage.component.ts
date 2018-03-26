@@ -10,7 +10,6 @@ import {ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "_shared/mod
 @Component({
     selector: `protonmail-desktop-app-storage`,
     templateUrl: "./storage.component.html",
-    styleUrls: ["./storage.component.scss"],
     preserveWhitespaces: true,
 })
 export class StorageComponent {

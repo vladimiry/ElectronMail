@@ -169,7 +169,7 @@ ipcRendererOn<IpcRendererActions.Login.Type>(IpcRendererActions.Login.channel, a
 });
 
 ipcRendererOn<IpcRendererActions.Login2FA.Type>(IpcRendererActions.Login2FA.channel, async ({payload}) => {
-    const submitTimeOutMs = 2000;
+    const submitTimeOutMs = 4000;
     const errorMessage = `Failed to submit two factor token within ${submitTimeOutMs}ms`;
 
     try {

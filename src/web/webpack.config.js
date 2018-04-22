@@ -1,3 +1,5 @@
+// tslint:disable:object-literal-sort-keys
+
 // const {SourceMapDevToolPlugin} = require("webpack");
 const autoprefixer = require("autoprefixer");
 const CircularDependencyPlugin = require("circular-dependency-plugin");
@@ -31,13 +33,10 @@ const cssRuleUse = [
                     autoprefixer(),
                     customProperties({preserve: true}),
                     cssnano({
-                        preset: ["default", {
-                            zindex: false,
-                            autoprefixer: false,
-                            safe: true,
-                            mergeLonghand: false,
-                            discardComments: true,
-                        }],
+                        autoprefixer: false,
+                        discardComments: true,
+                        mergeLonghand: false,
+                        safe: true,
                     }),
                 ];
             },
@@ -76,12 +75,13 @@ const metadata = {
         app: path.resolve(context, "./src/app/"),
         output: path.resolve(rootContext, "./app/web/"),
         tsConfig: path.resolve(context, "./tsconfig.json"),
-    }
+    },
 };
 
 // prefer JIT over AOT in dev mode
 const aotEnabled = metadata.env.isProduction();
 
+// tslint:disable-next-line:no-console
 console.log(`metadata: ${JSON.stringify(metadata, null, 4)}`);
 
 if (!(metadata.env.value in envs)) {
@@ -145,9 +145,9 @@ const config = {
                         loader: "url-loader",
                         options: {
                             limit: 4096,
-                            name: `images/${metadata.assetsOutputFormat}`
-                        }
-                    }
+                            name: `images/${metadata.assetsOutputFormat}`,
+                        },
+                    },
                 },
                 {
                     test: /\.(eot|ttf|otf|woff|woff2|svg)$/,
@@ -155,9 +155,9 @@ const config = {
                         loader: "url-loader",
                         options: {
                             limit: 4096,
-                            name: `fonts/${metadata.assetsOutputFormat}`
-                        }
-                    }
+                            name: `fonts/${metadata.assetsOutputFormat}`,
+                        },
+                    },
                 },
             ],
         },
@@ -167,27 +167,27 @@ const config = {
                 APP_CONSTANTS: {
                     appName: packageJSON.name,
                     isDevEnv: metadata.env.isDevelopment(),
-                }
+                },
             }),
             new webpack.EnvironmentPlugin({
                 NODE_ENV_RUNTIME: metadata.env.value,
             }),
             new HtmlWebpackPlugin({
-                template: path.join(metadata.paths.src, "index.ejs"),
                 filename: "index.html",
                 hash: metadata.env.isProduction(),
                 minify: false,
+                template: path.join(metadata.paths.src, "index.ejs"),
             }),
             new CircularDependencyPlugin({
                 exclude: /([\\\/])node_modules([\\\/])/,
                 failOnError: true,
             }),
             new AngularCompilerPlugin({
-                tsConfigPath: metadata.paths.tsConfig,
+                // compilerOptions: {},
                 entryModule: `${path.join(metadata.paths.src, "app/app.module")}#AppModule`,
                 platform: PLATFORM.Browser,
                 skipCodeGeneration: !aotEnabled,
-                // compilerOptions: {},
+                tsConfigPath: metadata.paths.tsConfig,
             }),
         ],
     },
@@ -208,13 +208,13 @@ const config = {
                     test: /[\/\\]@angular[\/\\].+\.js$/,
                     sideEffects: false,
                     parser: {
-                        system: true
+                        system: true,
                     },
                 },
                 {
                     test: /\.ts$/,
                     loader: "@ngtools/webpack",
-                }
+                },
             ],
         },
         plugins: [
@@ -236,24 +236,25 @@ const config = {
                     test: /(?:\.ngfactory\.js|\.ngstyle\.js|\.ts)$/,
                     use: [
                         "@angular-devkit/build-optimizer/webpack-loader",
-                        "@ngtools/webpack"
-                    ]
+                        "@ngtools/webpack",
+                    ],
                 },
                 {
                     test: /[\/\\]@angular[\/\\].+\.js$/,
                     sideEffects: false,
                     parser: {
-                        system: true
+                        system: true,
                     },
                     use: [
                         {
                             loader: "cache-loader",
                             options: {
+                                // tslint:disable-next-line:max-line-length
                                 cacheDirectory: path.join(rootContext, "./node_modules/@angular-devkit/build-optimizer/src/.cache"),
                             },
                         },
                         "@angular-devkit/build-optimizer/webpack-loader",
-                    ]
+                    ],
                 },
                 {
                     test: /\.js$/,
@@ -261,13 +262,14 @@ const config = {
                         {
                             loader: "cache-loader",
                             options: {
+                                // tslint:disable-next-line:max-line-length
                                 cacheDirectory: path.join(rootContext, "./node_modules/@angular-devkit/build-optimizer/src/.cache"),
                             },
                         },
                         "@angular-devkit/build-optimizer/webpack-loader",
-                    ]
+                    ],
                 },
-            ]
+            ],
         },
         plugins: [
             ...(process.env.CI ? [] : [new ProgressPlugin()]),

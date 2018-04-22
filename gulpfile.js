@@ -1,15 +1,17 @@
-const electronBinary = require('electron');
-const exec = require('child_process').exec;
-const gulp = require('gulp');
-const os = require('os');
-const path = require('path');
-const psTree = require('ps-tree');
-const spawn = require('cross-spawn');
-const util = require('util');
+// tslint:disable:object-literal-sort-keys
 
-const mainScript = path.resolve('app/electron/main/index.js');
+const electronBinary = require("electron");
+const exec = require("child_process").exec;
+const gulp = require("gulp");
+const os = require("os");
+const path = require("path");
+const psTree = require("ps-tree");
+const spawn = require("cross-spawn");
+const util = require("util");
 
-gulp.task("start", ['copy:assets'], () => {
+const mainScript = path.resolve("app/electron/main/index.js");
+
+gulp.task("start", ["copy:assets"], () => {
     let child;
 
     start();
@@ -22,19 +24,20 @@ gulp.task("start", ['copy:assets'], () => {
     });
 
     function start() {
-        child = spawn(electronBinary, [mainScript], {stdio: 'inherit'});
+        child = spawn(electronBinary, [mainScript], {stdio: "inherit"});
     }
 
-    async function kill(pid, sig = 'SIGKILL') {
-        if (os.platform() === 'win32') {
+    async function kill(pid, sig = "SIGKILL") {
+        if (os.platform() === "win32") {
             exec(`taskkill /pid ${pid} /T /F`);
             return;
         }
 
         [...(await util.promisify(psTree)(pid)), {PID: pid}].forEach(({PID}) => {
             try {
-                process.kill(Number(PID), sig)
+                process.kill(Number(PID), sig);
             } catch (err) {
+                // tslint:disable-next-line:no-console
                 console.log(err);
             }
         });
@@ -42,6 +45,6 @@ gulp.task("start", ['copy:assets'], () => {
 });
 
 gulp.task("copy:assets", () => {
-    return gulp.src('./src/assets/dist/**/*')
-        .pipe(gulp.dest('./app/assets'));
+    return gulp.src("./src/assets/dist/**/*")
+        .pipe(gulp.dest("./app/assets"));
 });

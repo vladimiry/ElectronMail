@@ -19,13 +19,10 @@
                 "target": "src/web/src/**/*",
                 "from": [
                   "_web_app/**/*",
-                  
                   "!_web_app/store/**/*",
                   "!_web_app\\store\\**\\*",
-                  
                   "!_web_app/+shared/shared.module",
                   "!_web_app\\+shared\\shared.module",
-
                   "!_web_app/app.constants",
                   "!_web_app\\app.constants"
                 ]

@@ -8,7 +8,11 @@ import {WebAccount} from "_shared/model/account";
 import {SETTINGS_OUTLET, SETTINGS_PATH} from "_web_app/app.constants";
 import {AccountsActions, NavigationActions, OptionsActions} from "_web_app/store/actions";
 import {
-    accountsSelector, accountsUnreadSummarySelector, initializedSelector, selectedAccountSelector, selectedLoginSelector,
+    accountsSelector,
+    accountsUnreadSummarySelector,
+    initializedSelector,
+    selectedAccountSelector,
+    selectedLoginSelector,
     State,
 } from "_web_app/store/reducers/accounts";
 import {configCompactLayoutSelector, progressSelector} from "_web_app/store/reducers/options";
@@ -29,6 +33,8 @@ export class AccountsComponent implements OnInit, OnDestroy {
     togglingCompactLayout$ = this.store.select(progressSelector)
         .pipe(map(({togglingCompactLayout}) => togglingCompactLayout));
     accounts: WebAccount[] = [];
+    menuClosed = true;
+    accountsListClosed = true;
     unSubscribe$ = new Subject();
 
     constructor(private store: Store<State>) {}
@@ -48,6 +54,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
 
     activateAccount(account: WebAccount) {
         this.store.dispatch(new AccountsActions.ActivateAccount(account.accountConfig.login));
+        this.accountsListClosed = true;
     }
 
     trackAccount(index: number, account: WebAccount) {

@@ -1,6 +1,5 @@
 import {catchError, map, take} from "rxjs/operators";
-import {Observable} from "rxjs/Observable";
-import {of} from "rxjs/observable/of";
+import {Observable, of} from "rxjs";
 import {Component, EventEmitter, Input, Output} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";

@@ -1,7 +1,6 @@
 import {ipcRenderer} from "electron";
 import {fromError} from "stacktrace-js";
-import {Observable} from "rxjs/Observable";
-import {Subscription} from "rxjs/Subscription";
+import {Observable, Subscription} from "rxjs";
 import {catchError} from "rxjs/operators";
 import * as logger from "electron-log";
 

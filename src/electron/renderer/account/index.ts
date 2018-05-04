@@ -1,13 +1,7 @@
-import {_throw} from "rxjs/observable/throw";
-import {distinctUntilChanged} from "rxjs/operators/distinctUntilChanged";
-import {filter, map} from "rxjs/operators";
-import {fromEvent} from "rxjs/observable/fromEvent";
-import {interval} from "rxjs/observable/interval";
-import {merge} from "rxjs/observable/merge";
-import {Observable} from "rxjs/Observable";
-import {Subscriber} from "rxjs/Subscriber";
-
+import {fromEvent, interval, merge, Observable, Subscriber, throwError} from "rxjs";
+import {distinctUntilChanged, filter, map} from "rxjs/operators";
 import * as OTPAuth from "otpauth";
+
 import {IpcRendererActions} from "_shared/electron-actions";
 import {ipcRendererObservable, ipcRendererOn, waitElements} from "./util";
 
@@ -129,7 +123,7 @@ ipcRendererObservable<IpcRendererActions.Notification.Type>(IpcRendererActions.N
 
         return merge(...observables);
     } catch (error) {
-        return _throw(error);
+        return throwError(error);
     }
 });
 

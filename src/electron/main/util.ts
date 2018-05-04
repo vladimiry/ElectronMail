@@ -4,10 +4,8 @@ import {EventEmitter} from "events";
 import logger from "electron-log";
 import {app, ipcMain} from "electron";
 import {fromError} from "stacktrace-js";
-import {Observable} from "rxjs/Observable";
-import {Subscription} from "rxjs/Subscription";
+import {EMPTY, Observable, Subscription} from "rxjs";
 import {catchError} from "rxjs/operators";
-import {empty} from "rxjs/observable/empty";
 import {Model as StoreModel, Store} from "fs-json-store";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 
@@ -142,7 +140,7 @@ export const ipcMainOn = <T extends ElectronIpcMainActionType>(
 
                 logger.error(error);
 
-                return empty();
+                return EMPTY;
             });
     });
 };
@@ -187,7 +185,7 @@ export const ipcMainObservable = <T extends ElectronIpcMainActionType> (
 
             logger.error(error);
 
-            return empty();
+            return EMPTY;
         }));
     });
 };

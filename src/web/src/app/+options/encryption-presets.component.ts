@@ -1,5 +1,5 @@
 import {map, takeUntil} from "rxjs/operators";
-import {Subject} from "rxjs/Subject";
+import {Subject} from "rxjs";
 import {Component, Input, OnDestroy, OnInit} from "@angular/core";
 import {FormGroup} from "@angular/forms";
 import {Store} from "@ngrx/store";

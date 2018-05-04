@@ -1,5 +1,5 @@
 import {pairwise, takeUntil} from "rxjs/operators";
-import {Subject} from "rxjs/Subject";
+import {Subject} from "rxjs";
 import {ChangeDetectionStrategy, Component, OnDestroy, OnInit} from "@angular/core";
 import {Store} from "@ngrx/store";
 

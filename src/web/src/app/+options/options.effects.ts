@@ -1,6 +1,5 @@
 import {catchError, finalize, map, mergeMap, switchMap, withLatestFrom} from "rxjs/operators";
-import {of} from "rxjs/observable/of";
-import {merge as observableMerge} from "rxjs/observable/merge";
+import {of, merge as observableMerge} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Actions, Effect} from "@ngrx/effects";
 import {Store} from "@ngrx/store";

@@ -1,10 +1,5 @@
-import {catchError, distinctUntilChanged, filter, mergeMap, scan, switchMap, takeUntil, withLatestFrom} from "rxjs/operators";
-import {Observable} from "rxjs/Observable";
-import {BehaviorSubject} from "rxjs/BehaviorSubject";
-import {Subject} from "rxjs/Subject";
-import {interval} from "rxjs/observable/interval";
-import {of} from "rxjs/observable/of";
-import {mapTo} from "rxjs/operators/mapTo";
+import {catchError, distinctUntilChanged, filter, mergeMap, scan, switchMap, takeUntil, withLatestFrom, mapTo} from "rxjs/operators";
+import {Observable, BehaviorSubject, Subject, interval, of} from "rxjs";
 import {Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output} from "@angular/core";
 import {Store} from "@ngrx/store";
 

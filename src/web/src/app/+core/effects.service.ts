@@ -1,6 +1,5 @@
-import {of} from "rxjs/observable/of";
+import {of, Observable} from "rxjs";
 import {Injectable} from "@angular/core";
-import {Observable} from "rxjs/Observable";
 import {Action} from "@ngrx/store";
 
 import {CoreActions} from "_web_app/store/actions";

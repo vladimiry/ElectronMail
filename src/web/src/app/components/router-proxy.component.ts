@@ -1,5 +1,5 @@
 import {filter, map, takeUntil} from "rxjs/operators";
-import {Subject} from "rxjs/Subject";
+import {Subject} from "rxjs";
 import {Component, HostBinding, OnDestroy, OnInit} from "@angular/core";
 import {ActivatedRoute} from "@angular/router";
 

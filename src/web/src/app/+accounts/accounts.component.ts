@@ -1,6 +1,5 @@
-import {distinctUntilChanged} from "rxjs/operators/distinctUntilChanged";
-import {map, takeUntil} from "rxjs/operators";
-import {Subject} from "rxjs/Subject";
+import {distinctUntilChanged, map, takeUntil} from "rxjs/operators";
+import {Subject} from "rxjs";
 import {Component, OnDestroy, OnInit} from "@angular/core";
 import {Store} from "@ngrx/store";
 

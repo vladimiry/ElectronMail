@@ -6,7 +6,6 @@ import {EffectsModule} from "@ngrx/effects";
 import {Store, StoreModule} from "@ngrx/store";
 import {APP_BASE_HREF} from "@angular/common";
 import {createInputTransfer, createNewHosts, removeNgStyles} from "@angularclass/hmr";
-import {BsDropdownModule} from "ngx-bootstrap/dropdown";
 import {PopoverModule} from "ngx-bootstrap/popover";
 
 import {CoreModule} from "./+core/core.module";
@@ -26,7 +25,6 @@ import {ErrorItemComponent} from "./components/error-item.component";
         BrowserModule,
         RoutingModule,
         CoreModule,
-        BsDropdownModule.forRoot(),
         PopoverModule.forRoot(),
         StoreModule.forRoot(reducers, {metaReducers}),
         StoreModule.forFeature(AccountsReducer.featureName, AccountsReducer.reducer),

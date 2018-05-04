@@ -1,7 +1,6 @@
 {
   "extends": [
     "tslint:recommended",
-    "rxjs-tslint-rules",
     "./tslint-codelyzer.json"
   ],
   "rulesDirectory": [
@@ -32,24 +31,7 @@
         ]
       }
     ],
-    "rxjs-no-add": {
-      "severity": "error"
-    },
-    "rxjs-no-operator": {
-      "severity": "error"
-    },
-    "rxjs-no-patched": {
-      "severity": "error"
-    },
-    "rxjs-no-wholesale": {
-      "severity": "error"
-    },
     "no-unused-variable": true,
-    "import-blacklist": [
-      true,
-      "rxjs",
-      "rxjs/Rx"
-    ],
     "max-line-length": [
       true,
       140

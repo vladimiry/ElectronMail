@@ -1,10 +1,8 @@
 import {AfterViewInit, Component, ElementRef, HostBinding, Input, NgZone, OnDestroy, ViewChild} from "@angular/core";
-import {BehaviorSubject} from "rxjs/BehaviorSubject";
+import {BehaviorSubject, Observable, Subject} from "rxjs";
 import {DidFailLoadEvent} from "electron";
-import {filter, map, pairwise, takeUntil, withLatestFrom} from "rxjs/operators";
-import {Observable} from "rxjs/Observable";
+import {filter, map, pairwise, takeUntil, withLatestFrom, distinctUntilChanged} from "rxjs/operators";
 import {Store} from "@ngrx/store";
-import {Subject} from "rxjs/Subject";
 
 import {KeePassRef} from "_shared/model/keepasshttp";
 import {WebAccount} from "_shared/model/account";
@@ -16,7 +14,6 @@ import {
 } from "_web_app/store/reducers/options";
 import {State} from "_web_app/store/reducers/accounts";
 import {AccountsActions, NavigationActions} from "_web_app/store/actions";
-import {distinctUntilChanged} from "rxjs/operators/distinctUntilChanged";
 
 @Component({
     selector: `protonmail-desktop-app-account`,

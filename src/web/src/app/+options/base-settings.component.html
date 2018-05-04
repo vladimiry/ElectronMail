@@ -1,5 +1,5 @@
 <fieldset [disabled]="(processing$ | async)">
-    <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="form-group">
+    <form [formGroup]="form" novalidate class="form-group">
         <div class="form-check">
             <label class="form-check-label">
                 <input type="checkbox" class="form-check-input" formControlName="closeToTray">
@@ -29,12 +29,6 @@
                 <input type="checkbox" class="form-check-input" formControlName="checkForUpdatesAndNotify">
                 Check for updates and notify on app start
             </label>
-        </div>
-        <div class="clearfix">
-            <button class="btn btn-primary pull-right" type="submit" [disabled]="form.invalid">
-                <i class="fa fa-check" *ngIf="processing$ | async"></i>
-                Apply
-            </button>
         </div>
     </form>
 </fieldset>

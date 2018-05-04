@@ -1,6 +1,6 @@
 import {map, take} from "rxjs/operators";
 import {Component, OnInit} from "@angular/core";
-import {FormControl, FormGroup, AbstractControl} from "@angular/forms";
+import {AbstractControl, FormControl, FormGroup} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
 import {BaseConfig} from "_shared/model/options";
@@ -16,19 +16,15 @@ export class BaseSettingsComponent implements OnInit {
     processing$ = this.store.select(progressSelector)
         .pipe(map(({updatingBaseSettings}) => updatingBaseSettings));
     controls: Record<keyof BaseConfig, AbstractControl> = {
-        closeToTray: new FormControl(false),
-        compactLayout: new FormControl(false),
-        startMinimized: new FormControl(false),
-        unreadNotifications: new FormControl(false),
-        checkForUpdatesAndNotify: new FormControl(false),
+        closeToTray: new FormControl(),
+        compactLayout: new FormControl(),
+        startMinimized: new FormControl(),
+        unreadNotifications: new FormControl(),
+        checkForUpdatesAndNotify: new FormControl(),
     };
     form = new FormGroup(this.controls);
 
     constructor(private store: Store<State>) {}
-
-    submit() {
-        this.store.dispatch(new OptionsActions.PatchBaseSettingsRequest(this.form.getRawValue()));
-    }
 
     ngOnInit() {
         this.baseConfig$
@@ -36,5 +32,9 @@ export class BaseSettingsComponent implements OnInit {
             .subscribe((data) => {
                 this.form.patchValue(data);
             });
+
+        this.form.valueChanges.subscribe(() => {
+            this.store.dispatch(new OptionsActions.PatchBaseSettingsRequest(this.form.getRawValue()));
+        });
     }
 }

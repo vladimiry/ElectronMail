@@ -1,16 +1,15 @@
 <div class="wrapper" *ngIf="initialized$ | async" [ngClass]="{'compact-layout': compactLayout$ | async}">
     <div class="accounts-block p-2">
-        <div class="btn-group accounts-list" placement="bottom right dropdown"
+        <div class="btn-group accounts-list" dropdown placement="bottom right"
              [ngStyle]="!accounts.length && {'visibility': 'hidden'}">
             <div class="unread-summary" *ngIf="accounts.length > 1 && (accountsUnreadSummary$ | async)">
                 <span class="badge badge-danger">{{ accountsUnreadSummary$ | async }}</span>
             </div>
-            <button type="button" class="btn btn-warning-light dropdown-toggle"
-                    *ngIf="selectedAccount$ | async" (click)="accountsListClosed = !accountsListClosed">
+            <button dropdownToggle type="button" class="btn btn-warning-light dropdown-toggle" *ngIf="selectedAccount$ | async">
                 <protonmail-desktop-app-account-title [account]="selectedAccount$ | async"></protonmail-desktop-app-account-title>
                 <span class="caret"></span>
             </button>
-            <ul class="dropdown-menu dropdown-menu-right" role="menu" [style.display]="accountsListClosed ? 'none' : 'block'">
+            <ul *dropdownMenu class="dropdown-menu dropdown-menu-right" role="menu">
                 <li role="menuitem" *ngFor="let account of accounts; trackBy: trackAccount">
                     <a class="dropdown-item" (click)="activateAccount(account)">
                         <protonmail-desktop-app-account-title [account]="account"></protonmail-desktop-app-account-title>
@@ -26,15 +25,15 @@
             </a>
         </ul>
         <div class="controls">
-            <div class="btn-group dropdown">
+            <div class="btn-group" dropdown>
                 <button type="button" class="btn btn-secondary" (click)="openSettingsView()">
                     <i class="fa fa-cog"></i>
                     Options
                 </button>
-                <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" (click)="menuClosed = !menuClosed">
+                <button type="button" dropdownToggle class="btn btn-secondary dropdown-toggle dropdown-toggle-split">
                     <span class="caret"></span>
                 </button>
-                <ul class="dropdown-menu" role="menu" [style.display]="menuClosed ? 'none' : 'block'" (click)="menuClosed = true">
+                <ul *dropdownMenu class="dropdown-menu" role="menu">
                     <li role="menuitem">
                         <button class="dropdown-item toggle-layout-view" type="button" (click)="toggleCompactLayout()">
                             <i class="fa fa-spinner fa-pulse fa-fw" *ngIf="togglingCompactLayout$ | async"></i>

@@ -1,5 +1,6 @@
 import {NgModule, NO_ERRORS_SCHEMA} from "@angular/core";
 import {EffectsModule} from "@ngrx/effects";
+import {BsDropdownModule} from "ngx-bootstrap/dropdown";
 
 import {SharedModule} from "_web_app/+shared/shared.module";
 import {AccountsRoutingModule} from "./accounts.routing.module";
@@ -12,6 +13,7 @@ import {AccountsGuard} from "./accounts.guard";
 
 @NgModule({
     imports: [
+        BsDropdownModule,
         SharedModule,
         AccountsRoutingModule,
         EffectsModule.forFeature([AccountsEffects]),

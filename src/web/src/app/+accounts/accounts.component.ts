@@ -32,8 +32,6 @@ export class AccountsComponent implements OnInit, OnDestroy {
     togglingCompactLayout$ = this.store.select(progressSelector)
         .pipe(map(({togglingCompactLayout}) => togglingCompactLayout));
     accounts: WebAccount[] = [];
-    menuClosed = true;
-    accountsListClosed = true;
     unSubscribe$ = new Subject();
 
     constructor(private store: Store<State>) {}
@@ -53,7 +51,6 @@ export class AccountsComponent implements OnInit, OnDestroy {
 
     activateAccount(account: WebAccount) {
         this.store.dispatch(new AccountsActions.ActivateAccount(account.accountConfig.login));
-        this.accountsListClosed = true;
     }
 
     trackAccount(index: number, account: WebAccount) {

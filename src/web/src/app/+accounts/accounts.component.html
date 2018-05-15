@@ -26,7 +26,7 @@
         </ul>
         <div class="controls">
             <div class="btn-group" dropdown>
-                <button type="button" class="btn btn-secondary" (click)="openSettingsView()">
+                <button type="button" class="btn btn-secondary" (click)="openSettingsView()" id="optionsMenuItem">
                     <i class="fa fa-cog"></i>
                     Options
                 </button>
@@ -53,13 +53,13 @@
                     </li>
                     <li class="divider dropdown-divider"></li>
                     <li role="menuitem">
-                        <button class="dropdown-item" type="button" (click)="logout()" id="logoutButton">
+                        <button class="dropdown-item" type="button" (click)="logout()" id="logoutMenuItem">
                             <i class="fa fa-sign-out"></i>
                             Log out
                         </button>
                     </li>
                     <li role="menuitem">
-                        <button class="dropdown-item text-danger" type="button" (click)="quit()" id="quitButton">
+                        <button class="dropdown-item text-danger" type="button" (click)="quit()">
                             <i class="fa fa-times"></i>
                             Exit
                         </button>

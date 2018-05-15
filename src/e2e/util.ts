@@ -27,7 +27,7 @@ const mainScriptFilePath = path.join(appDirPath, "./electron/main/index.js");
 
 export const ENV = {
     masterPassword: `master-password-${randomString.generate({length: 8})}`,
-    login: `login-${randomString.generate({length: 8})}`,
+    loginPrefix: `login-${randomString.generate({length: 8})}`,
 };
 export const CONF = {
     timeouts: {
@@ -37,6 +37,8 @@ export const CONF = {
         transition: process.env.CI ? 2000 : 500,
     },
 };
+
+let loginPrefixCount = 0;
 
 async function mkOutputDirs(dirs: string[]) {
     dirs.forEach((dir) => promisify(mkdirp)(dir));
@@ -139,144 +141,188 @@ export async function initApp(t: TestContext, options: { initial: boolean }) {
             // tslint:enable:no-console
             await catchError(t);
         } else {
-            await catchError(t, error);
+            throw error;
         }
     }
 }
 
 export const actions = {
     async destroyApp(t: TestContext) {
-        try {
-            // TODO update to electron 2: app.isRunning() returns undefined, uncomment as soon as it's fixed
-            // if (!t.context.app || !t.context.app.isRunning()) {
-            //     t.pass("app is not running");
-            //     return;
-            // }
-            // await t.context.app.stop();
-            // t.is(t.context.app.isRunning(), false);
-            // delete t.context.app;
+        // TODO update to electron 2: app.isRunning() returns undefined, uncomment as soon as it's fixed
+        // if (!t.context.app || !t.context.app.isRunning()) {
+        //     t.pass("app is not running");
+        //     return;
+        // }
+        // await t.context.app.stop();
+        // t.is(t.context.app.isRunning(), false);
+        // delete t.context.app;
 
-            // TODO update to electron 2: remove as soon as app.isRunning() returns valid value
-            await (async () => {
-                const processes = await promisify(psNode.lookup)({
-                    command: "electron",
-                    // arguments: mainScriptFilePath.replace(/\\/g, "\\\\"),
-                    arguments: "--enable-automation",
-                });
-                const pid = processes.length && processes.pop().pid;
+        // TODO update to electron 2: remove as soon as app.isRunning() returns valid value
+        await (async () => {
+            const processes = await promisify(psNode.lookup)({
+                command: "electron",
+                // arguments: mainScriptFilePath.replace(/\\/g, "\\\\"),
+                arguments: "--enable-automation",
+            });
+            const pid = processes.length && processes.pop().pid;
 
-                if (!pid) {
-                    throw new Error("Filed to lookup process Electron root process to kill");
+            if (!pid) {
+                throw new Error("Filed to lookup process Electron root process to kill");
+            }
+
+            const processesToKill = [
+                ...(await promisify(psTree)(pid)),
+                {PID: pid},
+            ];
+
+            for (const {PID} of processesToKill) {
+                try {
+                    process.kill(Number(PID), "SIGKILL");
+                } catch {
+                    // NOOP
                 }
-
-                const processesToKill = [
-                    ...(await promisify(psTree)(pid)),
-                    {PID: pid},
-                ];
-
-                for (const {PID} of processesToKill) {
-                    try {
-                        process.kill(Number(PID), "SIGKILL");
-                    } catch {
-                        // NOOP
-                    }
-                }
-            })();
-        } catch (error) {
-            await catchError(t, error);
-        }
+            }
+        })();
     },
 
     async login(t: TestContext, options: { setup: boolean, savePassword: boolean }) {
         const client = t.context.app.client;
         let selector: string | null = null;
 
-        try {
-            if (options.setup) {
-                t.is(
-                    (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/settings-setup)",
-                    `login: "settings-setup" page url`,
-                );
-            } else {
-                t.is(
-                    (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/login//accounts-outlet:accounts)",
-                    `login: "settings-setup" page url`,
-                );
-            }
+        await client.pause(CONF.timeouts.transition);
 
-            await client.waitForVisible(selector = `[formControlName="password"]`, CONF.timeouts.element);
+        if (options.setup) {
+            t.is(
+                (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/settings-setup)",
+                `login: "settings-setup" page url`,
+            );
+        } else {
+            t.is(
+                (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/login//accounts-outlet:accounts)",
+                `login: "settings-setup" page url`,
+            );
+        }
+
+        await client.waitForVisible(selector = `[formControlName="password"]`, CONF.timeouts.element);
+        await client.setValue(selector, ENV.masterPassword);
+
+        if (options.setup) {
+            await client.waitForVisible(selector = `[formControlName="passwordConfirm"]`, CONF.timeouts.element);
             await client.setValue(selector, ENV.masterPassword);
+        }
 
-            if (options.setup) {
-                await client.waitForVisible(selector = `[formControlName="passwordConfirm"]`, CONF.timeouts.element);
-                await client.setValue(selector, ENV.masterPassword);
+        if (options.savePassword) {
+            await client.waitForVisible(selector = `[formControlName="savePassword"]`, CONF.timeouts.element);
+            await client.click(selector);
+        }
+
+        await client.click(selector = `button[type="submit"]`);
+        await client.pause(CONF.timeouts.encryption);
+
+        if (options.setup) {
+            t.is(
+                (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/account-edit//accounts-outlet:accounts)",
+                `login: "accounts" page url`,
+            );
+
+            // TODO make sure there are no accounts added
+
+            await this.closeSettingsModal(t);
+        }
+
+        await client.pause(CONF.timeouts.transition);
+    },
+
+    async addAccount(t: TestContext, account?: { login: string; password: string; }) {
+        const client = t.context.app.client;
+        const login = account
+            ? account.login
+            : `${ENV.loginPrefix}-${loginPrefixCount++}`;
+
+        await this.openSettingsModal(t, 0);
+
+        await client.click(`.modal-body protonmail-desktop-app-accounts > a:nth-child(1)`); // TODO select by link's text - Add Account
+        await client.setValue(`[formcontrolname=login]`, login);
+        await client.pause(CONF.timeouts.elementTouched);
+
+        if (account) {
+            await client.setValue(`[formcontrolname=password]`, account.password);
+            await client.pause(CONF.timeouts.elementTouched);
+        }
+
+        await client.click(`button[type="submit"]`);
+        await client.pause(CONF.timeouts.encryption);
+
+        t.is(
+            (await client.getUrl()).split("#").pop(),
+            `/(settings-outlet:settings/account-edit//accounts-outlet:accounts)?login=${login}`,
+            `addAccount: "accounts?login=${login}" page url`,
+        );
+        await this.closeSettingsModal(t);
+        await client.pause(CONF.timeouts.transition);
+    },
+
+    async selectAccount(t: TestContext, index = 0) {
+        const client = t.context.app.client;
+
+        await client.click(`.list-group.accounts-list > .list-group-item:nth-child(${index + 1}) protonmail-desktop-app-account-title`);
+        // TODO make sure account is selected and loaded
+    },
+
+    async accountsCount(t: TestContext) {
+        const client = t.context.app.client;
+        const els = await client.elements(`.list-group.accounts-list > .list-group-item-action > protonmail-desktop-app-account-title`);
+
+        return els.value.length;
+    },
+
+    async openSettingsModal(t: TestContext, index?: number) {
+        const listGroupSelector = `.modal-body .list-group`;
+        const client = t.context.app.client;
+
+        await client.click(`.controls .dropdown-toggle`);
+        await client.click(`#optionsMenuItem`);
+        await client.pause(CONF.timeouts.elementTouched);
+
+        // making sure modal is opened (consider testing by url)
+        await client.waitForVisible(listGroupSelector);
+
+        if (typeof index !== "undefined") {
+            await client.click(`${listGroupSelector} .list-group-item-action:nth-child(${index + 1})`);
+
+            if (index === 0) {
+                await client.waitForVisible(`.modal-body protonmail-desktop-app-accounts`);
             }
-
-            if (options.savePassword) {
-                await client.waitForVisible(selector = `[formControlName="savePassword"]`, CONF.timeouts.element);
-                await client.click(selector);
-            }
-
-            await client.click(selector = `button[type="submit"]`);
-            await client.pause(CONF.timeouts.encryption);
-
-            if (options.setup) {
-                t.is(
-                    (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/account-edit//accounts-outlet:accounts)",
-                    `login: "accounts" page url`,
-                );
-
-                // TODO make sure there are no accounts added
-            }
-        } catch (error) {
-            await catchError(t, error);
         }
     },
 
-    async addAccount(t: TestContext) {
+    async closeSettingsModal(t: TestContext) {
         const client = t.context.app.client;
-        let selector: string | null = null;
 
-        try {
-            await client.waitForVisible(selector = `[formcontrolname=login]`, CONF.timeouts.element);
-            await client.setValue(selector, ENV.login);
-            await client.pause(CONF.timeouts.elementTouched);
-            await client.click(selector = `button[type="submit"]`);
-            await client.pause(CONF.timeouts.encryption);
+        await client.click(`button.close`);
+        await client.pause(CONF.timeouts.elementTouched);
 
-            t.is(
-                (await client.getUrl()).split("#").pop(),
-                `/(settings-outlet:settings/account-edit//accounts-outlet:accounts)?login=${ENV.login}`,
-                `addAccount: "accounts?login=${ENV.login}" page url`,
-            );
-            await client.click(selector = `button.close`);
-            await client.pause(CONF.timeouts.elementTouched);
-
-            t.is(
-                (await client.getUrl()).split("#").pop(),
-                "/(accounts-outlet:accounts)",
-                `addAccount: "accounts" page url (settings modal closed)`,
-            );
-        } catch (error) {
-            await catchError(t, error);
-        }
+        // making sure modal is closed (consider testing by DOM scanning)
+        t.is(
+            (await client.getUrl()).split("#").pop(),
+            "/(accounts-outlet:accounts)",
+            `addAccount: "accounts" page url (settings modal closed)`,
+        );
     },
 
     async logout(t: TestContext) {
         const client = t.context.app.client;
 
-        try {
-            await client.click(`.controls .dropdown-toggle`);
-            await client.click(`#logoutButton`);
-            await client.pause(CONF.timeouts.elementTouched);
+        await client.click(`.controls .dropdown-toggle`);
+        await client.click(`#logoutMenuItem`);
+        await client.pause(CONF.timeouts.elementTouched);
 
-            t.is(
-                (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/login//accounts-outlet:accounts)",
-                `logout: login page url`,
-            );
-        } catch (error) {
-            await catchError(t, error);
-        }
+        t.is(
+            (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/login//accounts-outlet:accounts)",
+            `logout: login page url`,
+        );
+
+        await client.pause(CONF.timeouts.transition);
     },
 };
 
@@ -301,8 +347,6 @@ export async function catchError(t: TestContext, error?: Error) {
     }
 }
 
-// tslint:disable:no-console
-
 export async function saveShot(t: TestContext) {
     const file = path.join(
         t.context.outputDirPath,
@@ -312,12 +356,14 @@ export async function saveShot(t: TestContext) {
 
     promisify(fs.writeFile)(file, image);
 
+    // tslint:disable-next-line:no-console
     console.info(`ErrorShot produced: ${file}`);
 
     return file;
 }
 
 export function printElectronLogs(t: TestContext) {
+    // tslint:disable:no-console
     if (!t.context.app || !t.context.app.client) {
         return;
     }
@@ -327,10 +373,11 @@ export function printElectronLogs(t: TestContext) {
 
     t.context.app.client.getRenderProcessLogs()
         .then((logs) => logs.forEach((log) => {
+
             console.log(log.level);
             console.log(log.message);
             console.log((log as any).source);
-        }));
-}
 
-// tslint:enable:no-console
+        }));
+    // tslint:enable:no-console
+}

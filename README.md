@@ -11,9 +11,8 @@ is an unofficial [ProtonMail](https://protonmail.com/) desktop client. It's basi
 ## Features
 - Cross platform, Linux/OSX/Windows packages [provided](https://github.com/vladimiry/protonmail-desktop-app/releases).
 - Multi accounts support.
-- Automatic login into the app with remembered master password ("Keep me signed in" feature).
-- Automatic login into ProtonMail accounts. Two Factor Authentication (2FA) [is supported](https://github.com/vladimiry/protonmail-desktop-app/issues/10).
-- Auto login into the accounts using either saved in the settings password or KeePass password manager.
+- Automatic login into the app with remembered master password using [keytar](https://github.com/atom/node-keytar) module ("Keep me signed in" feature).
+- Automatic login into ProtonMail accounts using either saved in the settings password or KeePass password manager.. Two Factor Authentication (2FA) [is supported](https://github.com/vladimiry/protonmail-desktop-app/issues/10).
 - Encrypted settings storage with switchable predefined key derivation and encryption presets. Argon2 is used as the default key derivation function.
 - Native notifications for individual accounts clicking on which focuses the app window and selects respective account in the accounts list.
 - System tray icon with a total number of unread messages shown on top of it.
@@ -23,7 +22,7 @@ is an unofficial [ProtonMail](https://protonmail.com/) desktop client. It's basi
 
 ## Build your own binary
 
-- Regardless of the platform you are working on, you will need to have Node.JS v8 installed. Version 8 is required to match the Node.JS version Electron comes with. If you already have Node.JS installed, but not the version 8, then you might want you to use [Node Version Manager](https://github.com/creationix/nvm) to be able to work with multiple versions:
+- Regardless of the platform you are working on, you will need to have Node.JS v8 installed. Version 8 is required to match the Node.JS version Electron comes with. If you already have Node.JS installed, but not the version 8, then you might want you to use [Node Version Manager](https://github.com/creationix/nvm) to be able to switch between multiple Node.JS versions:
   - Install [NVM](https://github.com/creationix/nvm).
   - Run `nvm instal 8`.
   - Run `nvm use 8`.
@@ -42,4 +41,4 @@ is an unofficial [ProtonMail](https://protonmail.com/) desktop client. It's basi
   - `yarn run electron-builder:dist:linux:rpm`
   - `yarn run electron-builder:dist:linux:snap`
 - If you don't need a package to install, but a folder to execute app from, simply run `yarn run electron-builder:dir` command.  
-- Outcome, whether it's a folder or package to install, comes into the `./dist` folder.
+- Binary executable, whether it's a folder or package to install, comes into the `./dist` folder.

@@ -1,15 +1,15 @@
 import {Options as EncryptionAdapterOptions} from "fs-json-store-encryption-adapter";
 
-// tslint:disable:no-var-requires
-const packageJSON = require("_root/package.json");
-// tslint:enable:no-var-requires
+// tslint:disable-next-line:no-var-requires
+const {name} = require("_root/package.json");
+const encryptionPreset: EncryptionAdapterOptions = {
+    keyDerivation: {type: "sodium.crypto_pwhash", preset: "mode:interactive|algorithm:default"},
+    encryption: {type: "sodium.crypto_secretbox_easy", preset: "algorithm:default"},
+};
 
 export const INITIAL_STORES = Object.freeze({
     config: {
-        encryptionPreset: {
-            keyDerivation: {type: "sodium.crypto_pwhash", preset: "mode:interactive|algorithm:default"},
-            encryption: {type: "sodium.crypto_secretbox_easy", preset: "algorithm:default"},
-        } as EncryptionAdapterOptions,
+        encryptionPreset,
         startMinimized: true,
         compactLayout: false,
         closeToTray: true,
@@ -22,5 +22,5 @@ export const INITIAL_STORES = Object.freeze({
     settings: {accounts: []},
 });
 
-export const KEYTAR_SERVICE_NAME = packageJSON.name;
+export const KEYTAR_SERVICE_NAME = name;
 export const KEYTAR_MASTER_PASSWORD_ACCOUNT = "master-password";

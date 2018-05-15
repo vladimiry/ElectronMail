@@ -25,7 +25,7 @@ test.serial("workflow", async (t: TestContext) => {
 
     t.true(electronUnhandledSpy.calledWithExactly(sinon.match.hasOwn("logger")), `"electronUnhandled" called`);
     t.true(mocks[`./util`].initContext.calledWithExactly(), `"initContext" called`);
-    t.true(makeSingleInstanceSpy.calledWithExactly(t.context.mocked.index.activateBrowserWindow), `"makeSingleInstance" called`);
+    t.true(makeSingleInstanceSpy.called, `"makeSingleInstance" called`);
     t.true(initBrowserWindowSpy.calledWithExactly(t.context.ctx), `"initBrowserWindow" called`);
     t.true(initTraySpy.calledWithExactly(t.context.ctx, t.context.endpoints), `"initTray" called`);
     t.true(initWebContentContextMenuSpy.calledWithExactly(t.context.ctx), `"initWebContentContextMenu" called`);
@@ -47,6 +47,7 @@ test.beforeEach(async (t: TestContext) => {
         "~index": {
             "./util": {
                 initContext: sinon.stub().resolves(t.context.ctx),
+                activateBrowserWindow: sinon.spy(),
                 ipcMainOn: sinon.spy(),
             },
             "./ipc-main-api": {

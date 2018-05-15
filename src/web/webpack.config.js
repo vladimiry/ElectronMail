@@ -15,9 +15,8 @@ const webpack = require("webpack");
 const webpackMerge = require("webpack-merge");
 const {AngularCompilerPlugin, PLATFORM} = require("@ngtools/webpack");
 
-// tslint:disable:no-var-requires
+// tslint:disable-next-line:no-var-requires
 const packageJSON = require(path.join(process.cwd(), "package.json"));
-// tslint:enable:no-var-requires
 
 const cssRuleUse = [
     "css-loader",

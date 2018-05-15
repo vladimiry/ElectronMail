@@ -14,7 +14,7 @@ import {StatusCode, StatusCodeError} from "_shared/model/error";
 import {AccountConfigPatch} from "_shared/model/container";
 import {INITIAL_STORES, KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "./constants";
 import {Context, EndpointsMap} from "./model";
-import {initContext} from "./util";
+import {buildSettingsAdapter, initContext} from "./util";
 
 interface TestContext extends GenericTestContext<{
     context: {
@@ -297,14 +297,16 @@ test.serial(`API: ${IpcMainActions.ChangeMasterPassword.channel}`, async (t: Tes
         ...settings,
         _rev: (settings._rev as number) + 1,
     };
-    const expectedAdapter = await t.context.ctx.buildSettingsAdapter(payload.newPassword);
+    const expectedAdapter = await buildSettingsAdapter(t.context.ctx, payload.newPassword);
     t.truthy(t.context.ctx.settingsStore, `store is defined`);
     t.not(t.context.ctx.settingsStore, updatedSettingsStore, `new store reference`);
     t.not(t.context.ctx.settingsStore.adapter, updatedSettingsAdapter, `new store.adapter reference`);
     t.deepEqual(t.context.ctx.settingsStore.adapter, expectedAdapter, `adapter should have a new password`);
     t.deepEqual(updatedSettings, expectedSettings, `re-saved settings is returned`);
     t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings, `re-saved settings is persisted`);
-    const newStore = t.context.ctx.settingsStore.clone({adapter: await t.context.ctx.buildSettingsAdapter(payload.newPassword)});
+    const newStore = t.context.ctx.settingsStore.clone(
+        {adapter: await buildSettingsAdapter(t.context.ctx, payload.newPassword)},
+    );
     t.deepEqual(await newStore.read(), expectedSettings, `reading re-saved settings with new password`);
 
     t.is(getPasswordStub.callCount, 1);
@@ -343,7 +345,7 @@ test.serial(`API: ${IpcMainActions.Quit.channel}`, async (t: TestContext) => {
 });
 
 test.serial(`API: ${IpcMainActions.ToggleBrowserWindow.channel}`, async (t: TestContext) => {
-    const emitSpy: any = t.context.ctx.emit;
+    const toggleBrowserWindowSpy: sinon.SinonSpy = t.context.mocks["./util"].toggleBrowserWindow;
     const endpoints = t.context.endpoints;
     const action = endpoints[IpcMainActions.ToggleBrowserWindow.channel];
     const payloads = [
@@ -353,7 +355,7 @@ test.serial(`API: ${IpcMainActions.ToggleBrowserWindow.channel}`, async (t: Test
     ];
     payloads.forEach((payload) => {
         action.process(payload);
-        t.true(emitSpy.calledWithExactly("toggleBrowserWindow", payload.forcedState));
+        t.true(toggleBrowserWindowSpy.calledWithExactly(t.context.ctx.uiContext, payload.forcedState));
     });
 });
 
@@ -456,6 +458,8 @@ test.beforeEach(async (t: TestContext) => {
         t.context.mocks = {
             "./util": {
                 ipcMainOn: sinon.spy(),
+                toggleBrowserWindow: sinon.spy(),
+                buildSettingsAdapter,
             },
             "about-window": {
                 default: sinon.spy(),
@@ -536,8 +540,6 @@ test.beforeEach(async (t: TestContext) => {
         storeFs: memFsVolume,
         initialStores,
     });
-
-    ctx.emit = sinon.spy();
 
     t.true(ctx.configStore.optimisticLocking);
     t.true(ctx.settingsStore.optimisticLocking);

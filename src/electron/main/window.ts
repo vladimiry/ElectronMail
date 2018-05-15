@@ -2,6 +2,7 @@ import * as deepEqual from "deep-equal";
 import {app, BrowserWindow} from "electron";
 
 import {Context} from "./model";
+import {activateBrowserWindow} from "./util";
 
 export async function initBrowserWindow(ctx: Context): Promise<BrowserWindow> {
     const preload = ctx.locations.preload.browser[ctx.env];
@@ -27,10 +28,10 @@ export async function initBrowserWindow(ctx: Context): Promise<BrowserWindow> {
 
     browserWindow.on("ready-to-show", async () => {
         const settingsNotConfigured = !(await ctx.settingsStore.readable());
-        const startMinimized = (await ctx.configStore.readExisting()).startMinimized;
+        const {startMinimized} = await ctx.configStore.readExisting();
 
         if (settingsNotConfigured || !startMinimized) {
-            ctx.emit("toggleBrowserWindow", true);
+            activateBrowserWindow(ctx.uiContext);
         }
     });
     browserWindow.on("closed", () => {
@@ -44,17 +45,25 @@ export async function initBrowserWindow(ctx: Context): Promise<BrowserWindow> {
         }
     });
     browserWindow.on("close", (event) => {
-        if (!ctx.configInstance().closeToTray || ctx.forceClose) {
-            // allow window closing
-            return true;
-        }
-
         const sender: BrowserWindow = (event as any).sender;
 
-        event.preventDefault();
-        sender.hide();
+        if (ctx.forceClose) {
+            return event.returnValue = true;
+        }
 
-        return false;
+        event.returnValue = false;
+        event.preventDefault();
+
+        (async () => {
+            if ((await ctx.configStore.readExisting()).closeToTray) {
+                sender.hide();
+            } else {
+                ctx.forceClose = true;
+                browserWindow.close();
+            }
+        })();
+
+        return event.returnValue;
     });
 
     if (ctx.env === "development") {

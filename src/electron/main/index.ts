@@ -6,8 +6,8 @@ import {IpcMainActions} from "_shared/electron-actions";
 import {Environment} from "_shared/model/electron";
 import {isAllowedUrl} from "_shared/util";
 import {initEndpoints} from "./ipc-main-api";
-import {Context, UIContext} from "./model";
-import {initContext} from "./util";
+import {Context} from "./model";
+import {activateBrowserWindow, initContext} from "./util";
 import {initBrowserWindow} from "./window";
 import {initTray} from "./tray";
 import {initAutoUpdate} from "./app-update";
@@ -17,11 +17,8 @@ electronUnhandled({logger: logger.error});
 
 initContext().then(initApp);
 
-let uiContext: UIContext;
-
 export function initApp(ctx: Context) {
-    if (app.makeSingleInstance(activateBrowserWindow)) {
-        ctx.forceClose = true;
+    if (app.makeSingleInstance(() => activateBrowserWindow(ctx.uiContext))) {
         // calling app.exit() instead of app.quit() in order to prevent "Error: Cannot find module ..." error happening
         // https://github.com/electron/electron/issues/8862
         app.exit();
@@ -29,27 +26,13 @@ export function initApp(ctx: Context) {
 
     app.on("ready", async () => {
         const endpoints = initEndpoints(ctx);
-        const readConfigApi = endpoints[IpcMainActions.ReadConfig.channel];
-        const {checkForUpdatesAndNotify} = await readConfigApi.process(undefined);
-
-        initWebContentContextMenu(ctx);
-
-        uiContext = ctx.uiContext = {
+        const {checkForUpdatesAndNotify} = await endpoints[IpcMainActions.ReadConfig.channel].process(undefined);
+        const uiContext = ctx.uiContext = {
             browserWindow: await initBrowserWindow(ctx),
             tray: await initTray(ctx, endpoints),
         };
 
-        ctx.on("toggleBrowserWindow", (forcedState?: boolean) => {
-            const needsToBeVisible = typeof forcedState !== "undefined"
-                ? forcedState
-                : !uiContext.browserWindow.isVisible();
-
-            if (needsToBeVisible) {
-                activateBrowserWindow();
-            } else {
-                uiContext.browserWindow.hide();
-            }
-        });
+        initWebContentContextMenu(ctx);
 
         ((skipEnvs: Environment[]) => {
             if (checkForUpdatesAndNotify && skipEnvs.indexOf(ctx.env) === -1) {
@@ -73,13 +56,4 @@ export function initApp(ctx: Context) {
             });
         });
     });
-}
-
-export function activateBrowserWindow() {
-    const browserWindow = uiContext && uiContext.browserWindow;
-
-    if (browserWindow) {
-        browserWindow.show();
-        browserWindow.focus();
-    }
 }

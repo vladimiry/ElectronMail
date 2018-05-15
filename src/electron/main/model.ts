@@ -22,14 +22,6 @@ export interface Context {
     settingsStore: StoreModel.Store<Settings>;
     forceClose?: boolean;
     uiContext?: UIContext;
-
-    configInstance(): Config;
-
-    buildSettingsAdapter(password: string): Promise<StoreModel.StoreAdapter>;
-
-    on(event: "toggleBrowserWindow", listener: (forcedState?: boolean) => void): void;
-
-    emit(event: "toggleBrowserWindow", forcedState?: boolean): boolean;
 }
 
 export interface UIContext {

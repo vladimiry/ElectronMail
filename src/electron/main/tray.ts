@@ -2,13 +2,15 @@ import {app, Menu, nativeImage, Tray} from "electron";
 
 import {IpcMainActions} from "_shared/electron-actions";
 import {Context, EndpointsMap} from "./model";
+import {toggleBrowserWindow} from "./util";
 
 export async function initTray(ctx: Context, endpoints: EndpointsMap): Promise<Tray> {
     const tray = new Tray(nativeImage.createFromPath(ctx.locations.icon));
+    const toggleWindow = () => toggleBrowserWindow(ctx.uiContext);
     const contextMenu = Menu.buildFromTemplate([
         {
             label: "Toggle Window",
-            click: () => ctx.emit("toggleBrowserWindow"),
+            click: toggleWindow,
         },
         {
             label: "About",
@@ -36,12 +38,9 @@ export async function initTray(ctx: Context, endpoints: EndpointsMap): Promise<T
         },
     ]);
 
-    // tray.setToolTip("Toggle Window");
     tray.setContextMenu(contextMenu);
 
-    tray.on("click", () => {
-        ctx.emit("toggleBrowserWindow");
-    });
+    tray.on("click", toggleWindow);
 
     app.on("before-quit", () => tray.destroy());
 

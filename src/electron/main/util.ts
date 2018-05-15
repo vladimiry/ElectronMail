@@ -1,6 +1,5 @@
 import * as path from "path";
 import * as url from "url";
-import {EventEmitter} from "events";
 import logger from "electron-log";
 import {app, ipcMain} from "electron";
 import {fromError} from "stacktrace-js";
@@ -13,7 +12,7 @@ import {Config, configEncryptionPresetValidator, Settings, settingsAccountLoginU
 import {ElectronTransport, Environment} from "_shared/model/electron";
 import {ElectronIpcMainActionType} from "_shared/electron-actions/model";
 import {ElectronTransportEvent} from "../model";
-import {Context, ContextInitOptions} from "./model";
+import {Context, ContextInitOptions, UIContext} from "./model";
 import {INITIAL_STORES} from "./constants";
 
 export async function initContext(opts: ContextInitOptions = {}): Promise<Context> {
@@ -56,24 +55,6 @@ export async function initContext(opts: ContextInitOptions = {}): Promise<Contex
         file: path.join(locations.data, "config.json"),
         validators: [configEncryptionPresetValidator],
     });
-    let configInstance: Config;
-    const eventEmitter = new EventEmitter();
-
-    configStore.read = ((readOriginal) => {
-        return async function(this: Store<Config>) {
-            const config = await readOriginal.apply(this, arguments);
-
-            if (!config) {
-                return config;
-            }
-
-            // cache actual config to "configInstance", allows synchronously access
-            return configInstance = {
-                ...initialStores.config, // making sure that returned store contains the default values
-                ...config,
-            };
-        };
-    })(configStore.read);
 
     logger.transports.file.file = path.join(locations.data, "./log.log");
     logger.transports.file.level = "info";
@@ -82,13 +63,6 @@ export async function initContext(opts: ContextInitOptions = {}): Promise<Contex
         env,
         locations,
         initialStores,
-        configInstance() {
-            if (!configInstance) {
-                throw new Error(`"Config" has not yet been initialized`);
-            }
-
-            return configInstance;
-        },
         configStore,
         settingsStore: new Store<Settings>({
             ...fsOption,
@@ -96,16 +70,34 @@ export async function initContext(opts: ContextInitOptions = {}): Promise<Contex
             file: path.join(locations.data, "settings.bin"),
             validators: [settingsAccountLoginUniquenessValidator],
         }),
-        async buildSettingsAdapter(password: string): Promise<StoreModel.StoreAdapter> {
-            return new EncryptionAdapter(password, (await configStore.readExisting()).encryptionPreset);
-        },
-        on(event: "toggleBrowserWindow", listener: (forcedState?: boolean) => void): void {
-            eventEmitter.on(event, listener);
-        },
-        emit(event: "toggleBrowserWindow", forcedState?: boolean): boolean {
-            return eventEmitter.emit(event, forcedState);
-        },
     };
+}
+
+export async function buildSettingsAdapter({configStore}: Context, password: string): Promise<StoreModel.StoreAdapter> {
+    return new EncryptionAdapter(password, (await configStore.readExisting()).encryptionPreset);
+}
+
+export function toggleBrowserWindow(uiContext?: UIContext, forcedState?: boolean) {
+    if (!uiContext || !uiContext.browserWindow) {
+        return;
+    }
+
+    const {browserWindow} = uiContext;
+
+    if (typeof forcedState !== "undefined" ? forcedState : !browserWindow.isVisible()) {
+        activateBrowserWindow(uiContext);
+    } else {
+        browserWindow.hide();
+    }
+}
+
+export function activateBrowserWindow(uiContext?: UIContext) {
+    if (!uiContext || !uiContext.browserWindow) {
+        return;
+    }
+
+    uiContext.browserWindow.show();
+    uiContext.browserWindow.focus();
 }
 
 // @formatter:off

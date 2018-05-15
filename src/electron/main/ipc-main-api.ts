@@ -14,8 +14,8 @@ import {IpcMainActions} from "_shared/electron-actions";
 import {AccountConfig} from "_shared/model/account";
 import {assert} from "_shared/util";
 import {KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "./constants";
+import {buildSettingsAdapter, ipcMainOn, toggleBrowserWindow} from "./util";
 import {Context, EndpointsMap} from "./model";
-import {ipcMainOn} from "./util";
 
 export const initEndpoints = (ctx: Context): EndpointsMap => {
     const endpoints: EndpointsMap = Object.freeze({
@@ -52,7 +52,7 @@ export const initEndpoints = (ctx: Context): EndpointsMap => {
                     return;
                 }
 
-                const adapter = await ctx.buildSettingsAdapter(password);
+                const adapter = await buildSettingsAdapter(ctx, password);
                 const store = ctx.settingsStore.clone({adapter});
 
                 try {
@@ -72,7 +72,7 @@ export const initEndpoints = (ctx: Context): EndpointsMap => {
         [IpcMainActions.ReadSettings.channel]: new ElectronIpcMainAction<IpcMainActions.ReadSettings.Type>(
             IpcMainActions.ReadSettings.channel,
             async ({password, savePassword}) => {
-                const adapter = await ctx.buildSettingsAdapter(password);
+                const adapter = await buildSettingsAdapter(ctx, password);
                 const store = ctx.settingsStore.clone({adapter});
                 const settings = await store.readable()
                     ? await store.readExisting()
@@ -185,9 +185,9 @@ export const initEndpoints = (ctx: Context): EndpointsMap => {
         [IpcMainActions.ChangeMasterPassword.channel]: new ElectronIpcMainAction<IpcMainActions.ChangeMasterPassword.Type>(
             IpcMainActions.ChangeMasterPassword.channel,
             async ({password, newPassword}) => {
-                const readStore = ctx.settingsStore.clone({adapter: await ctx.buildSettingsAdapter(password)});
+                const readStore = ctx.settingsStore.clone({adapter: await buildSettingsAdapter(ctx, password)});
                 const existingData = await readStore.readExisting();
-                const newStore = ctx.settingsStore.clone({adapter: await ctx.buildSettingsAdapter(newPassword)});
+                const newStore = ctx.settingsStore.clone({adapter: await buildSettingsAdapter(ctx, newPassword)});
                 const newData = await newStore.write(existingData, {readAdapter: ctx.settingsStore.adapter});
 
                 ctx.settingsStore = newStore;
@@ -256,7 +256,7 @@ export const initEndpoints = (ctx: Context): EndpointsMap => {
         [IpcMainActions.ToggleBrowserWindow.channel]: new ElectronIpcMainAction<IpcMainActions.ToggleBrowserWindow.Type>(
             IpcMainActions.ToggleBrowserWindow.channel,
             async ({forcedState}) => {
-                ctx.emit("toggleBrowserWindow", forcedState);
+                toggleBrowserWindow(ctx.uiContext, forcedState);
             },
         ),
         [IpcMainActions.OpenAboutWindow.channel]: new ElectronIpcMainAction<IpcMainActions.OpenAboutWindow.Type>(

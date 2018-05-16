@@ -27,12 +27,14 @@ export function initApp(ctx: Context) {
     app.on("ready", async () => {
         const endpoints = initEndpoints(ctx);
         const {checkForUpdatesAndNotify} = await endpoints[IpcMainActions.ReadConfig.channel].process(undefined);
+
+        // should be called before "browserWindow" creating (listens for "browser-window-created" event)
+        initWebContentContextMenu(ctx);
+
         const uiContext = ctx.uiContext = {
             browserWindow: await initBrowserWindow(ctx),
             tray: await initTray(ctx, endpoints),
         };
-
-        initWebContentContextMenu(ctx);
 
         ((skipEnvs: Environment[]) => {
             if (checkForUpdatesAndNotify && skipEnvs.indexOf(ctx.env) === -1) {

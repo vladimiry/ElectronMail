@@ -1,5 +1,7 @@
 import * as path from "path";
 import * as url from "url";
+import * as os from "os";
+
 import logger from "electron-log";
 import {app, ipcMain} from "electron";
 import {fromError} from "stacktrace-js";
@@ -29,6 +31,7 @@ export async function initContext(opts: ContextInitOptions = {}): Promise<Contex
                 ? process.env.TEST_USER_DATA_DIR as string
                 : app.getPath("userData"),
         };
+        const iconFile = "./assets/icons/icon.png";
 
         return {
             data: paths.userData,
@@ -36,7 +39,8 @@ export async function initContext(opts: ContextInitOptions = {}): Promise<Contex
             page: env === "development"
                 ? "http://localhost:3000/index.html"
                 : formatFileUrl(path.join(paths.app, "./web/index.html")),
-            icon: path.join(paths.app, "./assets/icons/icon.png"),
+            icon: path.join(paths.app, iconFile),
+            trayIcon: path.join(paths.app, os.platform() === "darwin" ? "./assets/icons/mac/icon.png" : iconFile),
             preload: {
                 browser: {
                     production: path.join(paths.app, "./electron/renderer/browser-window-production-env.js"),

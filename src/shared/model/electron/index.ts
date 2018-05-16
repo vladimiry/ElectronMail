@@ -40,6 +40,7 @@ export interface ElectronContextLocations {
     readonly data: string;
     readonly page: string;
     readonly icon: string;
+    readonly trayIcon: string;
     readonly preload: {
         readonly browser: Record<Environment, string>;
         readonly account: string;

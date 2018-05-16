@@ -311,7 +311,7 @@ export const initEndpoints = (ctx: Context): EndpointsMap => {
                     }
 
                     if (!main) {
-                        const native = nativeImage.createFromPath(ctx.locations.icon);
+                        const native = nativeImage.createFromPath(ctx.locations.trayIcon);
                         const jimp = await Jimp.read(native.toPNG());
 
                         main = {native, jimp, w: jimp.bitmap.width, h: jimp.bitmap.height};

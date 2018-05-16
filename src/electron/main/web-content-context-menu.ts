@@ -1,5 +1,5 @@
 import * as os from "os";
-import {app, clipboard, ContextMenuParams, Event, Menu, PopupOptions} from "electron";
+import {app, clipboard, ContextMenuParams, Event, Menu, PopupOptions, WebContents} from "electron";
 
 import {Context} from "./model";
 
@@ -53,11 +53,11 @@ export function initWebContentContextMenu(ctx: Context) {
             selectionMenu.popup(popupOptions);
         }
     };
+    const windowCreateHandler = (webContents: WebContents) => {
+        webContents.removeListener("context-menu", contextMenuEvenHandler);
+        webContents.on("context-menu", contextMenuEvenHandler);
+    };
 
-    app.on("browser-window-created", (event, {webContents}) => {
-        webContents.on("context-menu", contextMenuEvenHandler);
-    });
-    app.on("web-contents-created", (webContentsCreatedEvent, webContents) => {
-        webContents.on("context-menu", contextMenuEvenHandler);
-    });
+    app.on("browser-window-created", (event, {webContents}) => windowCreateHandler(webContents));
+    app.on("web-contents-created", (webContentsCreatedEvent, webContents) => windowCreateHandler(webContents));
 }

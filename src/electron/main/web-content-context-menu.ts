@@ -1,3 +1,4 @@
+import * as os from "os";
 import {app, clipboard, ContextMenuParams, Event, Menu, PopupOptions} from "electron";
 
 import {Context} from "./model";
@@ -37,7 +38,11 @@ export function initWebContentContextMenu(ctx: Context) {
                 .buildFromTemplate([{
                     label: "Copy Link Address",
                     click() {
-                        clipboard.writeText(linkURL);
+                        if (os.platform() === "darwin") {
+                            clipboard.writeBookmark(props.linkText, props.linkURL);
+                        } else {
+                            clipboard.writeText(props.linkURL);
+                        }
                     },
                 }])
                 .popup(popupOptions);

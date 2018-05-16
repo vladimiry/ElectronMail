@@ -74,7 +74,7 @@
             <protonmail-desktop-app-account
                 *ngFor="let account of accounts; trackBy: trackAccount"
                 [account]="account"
-                [ngStyle]="account.accountConfig.login != (selectedLogin$ | async) && {'visibility': 'hidden'}"
+                [ngStyle]="account.accountConfig.login != (selectedLogin$ | async) && {'opacity': '0', 'width': '0', 'height': '0'}"
             ></protonmail-desktop-app-account>
         </ng-template>
         <ng-template #accountsUnDefined>

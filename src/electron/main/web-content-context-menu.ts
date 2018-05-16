@@ -3,19 +3,19 @@ import {app, clipboard, ContextMenuParams, Event, Menu, PopupOptions} from "elec
 import {Context} from "./model";
 
 const selectionMenu = Menu.buildFromTemplate([
-    {role: "copy"},
+    {role: "copy", accelerator: "CmdOrCtrl+C"},
     {type: "separator"},
-    {role: "selectall"},
+    {role: "selectall", accelerator: "CmdOrCtrl+A"},
 ]);
 const inputMenu = Menu.buildFromTemplate([
-    {role: "undo"},
-    {role: "redo"},
+    {role: "undo", accelerator: "CmdOrCtrl+Z"},
+    {role: "redo", accelerator: "Shift+CmdOrCtrl+Z"},
     {type: "separator"},
-    {role: "cut"},
-    {role: "copy"},
-    {role: "paste"},
+    {role: "cut", accelerator: "CmdOrCtrl+X"},
+    {role: "copy", accelerator: "CmdOrCtrl+C"},
+    {role: "paste", accelerator: "CmdOrCtrl+V"},
     {type: "separator"},
-    {role: "selectall"},
+    {role: "selectall", accelerator: "CmdOrCtrl+A"},
 ]);
 
 export function initWebContentContextMenu(ctx: Context) {

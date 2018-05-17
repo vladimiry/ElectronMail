@@ -3,7 +3,6 @@ import {isWebUri} from "valid-url";
 import {promisify} from "util";
 import {app, nativeImage, shell} from "electron";
 import {KeePassHttpClient, Model as KeePassHttpClientModel} from "keepasshttp-client";
-// TODO switch "keytar-prebuild" => "keytar" on https://github.com/atom/node-keytar/pull/67 resolving
 import * as keytar from "keytar";
 import * as Jimp from "jimp";
 
@@ -328,11 +327,13 @@ export const initEndpoints = (ctx: Context): EndpointsMap => {
                         const composedBuffer = await promisify(composedJimp.getBuffer.bind(composedJimp))(Jimp.MIME_PNG);
                         const composedNative = nativeImage.createFromBuffer(composedBuffer);
 
-                        browserWindow.setOverlayIcon(overlayNative, `Unread messages ${String(count)}`);
+                        browserWindow.setOverlayIcon(overlayNative, `Unread messages ${count}`);
                         tray.setImage(composedNative);
+                        app.setBadgeCount(count);
                     } else {
                         browserWindow.setOverlayIcon(null as any, "");
                         tray.setImage(main.native);
+                        app.setBadgeCount(0);
                     }
                 };
             })(),

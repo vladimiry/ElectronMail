@@ -13,6 +13,7 @@ import {IpcMainChannel} from "_shared/electron-actions/model";
 import {StatusCode, StatusCodeError} from "_shared/model/error";
 import {AccountConfigPatch} from "_shared/model/container";
 import {INITIAL_STORES, KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "./constants";
+// @ts-ignore (prevent "'Context' is declared but its value is never read." error)
 import {Context, EndpointsMap} from "./model";
 import {buildSettingsAdapter, initContext} from "./util";
 

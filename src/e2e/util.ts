@@ -130,7 +130,7 @@ export async function initApp(t: TestContext, options: { initial: boolean }) {
             const {width, height} = await browserWindow.getBounds();
             t.true(width > 0, "window width > 0");
             t.true(height > 0, "window height > 0");
-        });
+        })();
 
         // await awaitAngular(t.context.app.client); // seems to be not needed
         // await t.context.app.client.pause(2000);
@@ -340,7 +340,7 @@ export async function catchError(t: TestContext, error?: Error) {
         // NOOP
     }
 
-    await printElectronLogs(t);
+    printElectronLogs(t);
 
     if (typeof error !== "undefined") {
         throw error;
@@ -354,7 +354,7 @@ export async function saveShot(t: TestContext) {
     );
     const image = await t.context.app.browserWindow.capturePage();
 
-    promisify(fs.writeFile)(file, image);
+    await promisify(fs.writeFile)(file, image);
 
     // tslint:disable-next-line:no-console
     console.info(`ErrorShot produced: ${file}`);

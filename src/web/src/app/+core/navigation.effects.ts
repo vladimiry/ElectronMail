@@ -20,8 +20,9 @@ export class NavigationEffects {
             tap(({path, queryParams, extras}) => {
                 // TODO remove "zone.run" execution on https://github.com/angular/angular/issues/18254 resolving
                 // or use @angular/router v4.1.3 and older
-                this.zone.run(() => {
-                    this.router.navigate(path, {queryParams, ...extras});
+                this.zone.run(async () => {
+                    // tslint:disable-next-line:no-floating-promises
+                    await this.router.navigate(path, {queryParams, ...extras});
                 });
             }),
             catchError(this.effectsService.buildFailActionObservable.bind(this.effectsService)),

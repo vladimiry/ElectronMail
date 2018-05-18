@@ -56,6 +56,7 @@ export class ElectronService {
                 }
             };
             if (unSubscribeOn) {
+                // tslint:disable-next-line:no-floating-promises
                 unSubscribeOn.then(() => {
                     const offEventName = `${channel}:off:${request.id}`;
 
@@ -121,6 +122,7 @@ export class ElectronService {
                 }
             };
             if (unSubscribeOn) {
+                // tslint:disable-next-line:no-floating-promises
                 unSubscribeOn.then(() => {
                     const offEventName = `${channel}:off:${request.id}`;
 

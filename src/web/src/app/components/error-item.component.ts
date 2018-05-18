@@ -21,6 +21,7 @@ export class ErrorItemComponent implements OnInit {
     stackTraceOpened = false;
 
     ngOnInit() {
+        // tslint:disable-next-line:no-floating-promises
         this.initStackTrace();
     }
 

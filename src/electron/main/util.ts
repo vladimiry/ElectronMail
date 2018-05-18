@@ -121,6 +121,7 @@ export const ipcMainOn = <T extends ElectronIpcMainActionType>(
                 );
             })
             .catch((error: Error) => {
+                // tslint:disable-next-line:no-floating-promises
                 fromError(error).then((stackFrames) => {
                     event.sender.send(
                         channel,
@@ -166,6 +167,7 @@ export const ipcMainObservable = <T extends ElectronIpcMainActionType> (
         });
 
         observable.pipe(catchError((error: Error) => {
+            // tslint:disable-next-line:no-floating-promises
             fromError(error).then((stackFrames) => {
                 event.sender.send(
                     channel,

@@ -42,7 +42,7 @@ export async function initBrowserWindow(ctx: Context): Promise<BrowserWindow> {
             app.quit();
         }
     });
-    browserWindow.on("close", (event) => {
+    browserWindow.on("close", async (event) => {
         const sender: BrowserWindow = (event as any).sender;
 
         if (ctx.forceClose) {
@@ -52,7 +52,7 @@ export async function initBrowserWindow(ctx: Context): Promise<BrowserWindow> {
         event.returnValue = false;
         event.preventDefault();
 
-        (async () => {
+        await (async () => {
             if ((await ctx.configStore.readExisting()).closeToTray) {
                 sender.hide();
             } else {
@@ -119,7 +119,7 @@ async function keepState(ctx: Context, browserWindow: Electron.BrowserWindow) {
         }
 
         if (!deepEqual(storedWindowConfig, newWindowConfig)) {
-            ctx.configStore.write({...config, window: newWindowConfig});
+            await ctx.configStore.write({...config, window: newWindowConfig});
         }
     }
 }

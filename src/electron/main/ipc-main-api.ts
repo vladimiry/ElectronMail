@@ -191,7 +191,7 @@ export const initEndpoints = (ctx: Context): EndpointsMap => {
 
                 ctx.settingsStore = newStore;
 
-                if (keytar.getPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT)) {
+                if (await keytar.getPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT)) {
                     await keytar.setPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, newPassword);
                 }
 
@@ -249,13 +249,13 @@ export const initEndpoints = (ctx: Context): EndpointsMap => {
         [IpcMainActions.Quit.channel]: new ElectronIpcMainAction<IpcMainActions.Quit.Type>(
             IpcMainActions.Quit.channel,
             async () => {
-                app.quit();
+                app.exit();
             },
         ),
         [IpcMainActions.ToggleBrowserWindow.channel]: new ElectronIpcMainAction<IpcMainActions.ToggleBrowserWindow.Type>(
             IpcMainActions.ToggleBrowserWindow.channel,
             async ({forcedState}) => {
-                toggleBrowserWindow(ctx.uiContext, forcedState);
+                toggleBrowserWindow(ctx, forcedState);
             },
         ),
         [IpcMainActions.OpenAboutWindow.channel]: new ElectronIpcMainAction<IpcMainActions.OpenAboutWindow.Type>(

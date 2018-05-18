@@ -28,6 +28,7 @@ export const ipcRendererOn = <T extends ElectronIpcRendererActionType> (
                 );
             })
             .catch((error: Error) => {
+                // tslint:disable-next-line:no-floating-promises
                 fromError(error).then((stackFrames) => {
                     ipcRenderer.sendToHost(
                         channel,
@@ -66,6 +67,7 @@ export const ipcRendererObservable = <T extends ElectronIpcRendererActionType> (
 
         subscriptions[offEventName] = observable
             .pipe(catchError((error: Error) => {
+                // tslint:disable-next-line:no-floating-promises
                 fromError(error).then((stackFrames) => {
                     ipcRenderer.sendToHost(
                         channel,

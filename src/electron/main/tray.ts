@@ -14,8 +14,8 @@ export async function initTray(ctx: Context, endpoints: EndpointsMap): Promise<T
         },
         {
             label: "About",
-            click: () => {
-                endpoints[IpcMainActions.OpenAboutWindow.channel].process(undefined);
+            async click() {
+                await endpoints[IpcMainActions.OpenAboutWindow.channel].process(undefined);
             },
         },
         {
@@ -23,8 +23,8 @@ export async function initTray(ctx: Context, endpoints: EndpointsMap): Promise<T
         },
         {
             label: "Open Settings Folder",
-            click() {
-                endpoints[IpcMainActions.OpenSettingsFolder.channel].process(undefined);
+            async click() {
+                await endpoints[IpcMainActions.OpenSettingsFolder.channel].process(undefined);
             },
         },
         {

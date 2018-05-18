@@ -15,6 +15,7 @@ import {initWebContentContextMenu} from "./web-content-context-menu";
 
 electronUnhandled({logger: logger.error});
 
+// tslint:disable-next-line:no-floating-promises
 initContext().then(initApp);
 
 export function initApp(ctx: Context) {

@@ -43,7 +43,7 @@
     "web:start:wait-ready": "wait-on http://localhost:3000",
     "web:compile": "webpack --config ./src/web/webpack.config.js",
     "lint": "npm-run-all lint:sass lint:ts",
-    "lint:ts": "tslint \"./src/**/*.ts\" \"./src/**/*.js\" \"./*.js\"",
+    "lint:ts": "tslint -p ./package.json \"./src/**/*.ts\" \"./src/**/*.js\" \"./*.js\"",
     "lint:sass": "sass-lint -v -q -c sass-lint.yml",
     "test:e2e": "ava-ts --verbose \"./src/e2e/**/*.{spec,test}.ts\"",
     "test:electron:main": "ava-ts -p ./tsconfig.json --verbose \"./src/electron/main/**/*.{spec,test}.ts\"",

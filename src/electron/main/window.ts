@@ -24,8 +24,6 @@ export async function initBrowserWindow(ctx: Context): Promise<BrowserWindow> {
 
     app.on("before-quit", appBeforeQuitEventHandler);
 
-    keepState(ctx, browserWindow);
-
     browserWindow.on("ready-to-show", async () => {
         const settingsNotConfigured = !(await ctx.settingsStore.readable());
         const {startMinimized} = await ctx.configStore.readExisting();
@@ -74,14 +72,16 @@ export async function initBrowserWindow(ctx: Context): Promise<BrowserWindow> {
     browserWindow.setMenu(null);
     browserWindow.loadURL(ctx.locations.page);
 
+    // execute after handlers subscriptions
+    await keepState(ctx, browserWindow);
+
     return browserWindow;
 }
 
 async function keepState(ctx: Context, browserWindow: Electron.BrowserWindow) {
     const debounce = 500;
-    let timeoutId: any;
-    // TODO make sure config has already been created on this stage
     const {maximized, bounds} = (await ctx.configStore.readExisting()).window;
+    let timeoutId: any;
 
     if (!("x" in bounds) || !("y" in bounds)) {
         browserWindow.center();
@@ -109,6 +109,7 @@ async function keepState(ctx: Context, browserWindow: Electron.BrowserWindow) {
 
         try {
             newWindowConfig.maximized = browserWindow.isMaximized();
+
             if (!newWindowConfig.maximized) {
                 newWindowConfig.bounds = browserWindow.getBounds();
             }

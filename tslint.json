@@ -38,6 +38,7 @@
     ],
     "prefer-for-of": true,
     "await-promise": true,
+    "no-floating-promises": true,
     "no-empty-interface": false,
     "variable-name": [
       true,

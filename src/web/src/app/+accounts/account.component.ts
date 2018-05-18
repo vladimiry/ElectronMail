@@ -1,7 +1,7 @@
 import {AfterViewInit, Component, ElementRef, HostBinding, Input, NgZone, OnDestroy, ViewChild} from "@angular/core";
 import {BehaviorSubject, Observable, Subject} from "rxjs";
 import {DidFailLoadEvent} from "electron";
-import {filter, map, pairwise, takeUntil, withLatestFrom, distinctUntilChanged} from "rxjs/operators";
+import {filter, map, pairwise, takeUntil, withLatestFrom} from "rxjs/operators";
 import {Store} from "@ngrx/store";
 
 import {KeePassRef} from "_shared/model/keepasshttp";
@@ -58,7 +58,7 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
     set account(account: WebAccount) {
         if (this.account$) {
             if (JSON.stringify(account.accountConfig) !== JSON.stringify(this.account$.getValue().accountConfig)) {
-                this.pageChangeReaction(account);
+                this.pageLoadedReaction(account);
             }
             this.account$.next(account);
         } else {
@@ -75,11 +75,11 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
         this.account$
             .pipe(
                 map(({sync}) => sync.pageType),
-                filter((value) => !!value.type),
-                distinctUntilChanged(),
+                pairwise(),
+                filter(([prevPageType, currentPageType]) => currentPageType && currentPageType !== prevPageType),
                 takeUntil(this.unSubscribe$),
             )
-            .subscribe(() => this.pageChangeReaction(this.account$.getValue()));
+            .subscribe(() => this.pageLoadedReaction(this.account$.getValue()));
 
         // keepass - password
         this.passwordKeePassRef$ = this.account$.pipe(map(({accountConfig}) =>
@@ -115,7 +115,7 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
             });
     }
 
-    pageChangeReaction(account: WebAccount) {
+    pageLoadedReaction(account: WebAccount) {
         this.optionsStore.dispatch(new AccountsActions.PageLoadingEnd(account, this.webView));
     }
 

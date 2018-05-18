@@ -171,6 +171,7 @@ ipcRendererOn<IpcRendererActions.Login2FA.Type>(IpcRendererActions.Login2FA.chan
     } catch (e) {
         if (e.message === errorMessage) {
             // second attempt as token might become expired right before submitting
+            await new Promise((resolve) => setTimeout(resolve, submitTimeOutMs));
             await submit();
         }
         throw e;

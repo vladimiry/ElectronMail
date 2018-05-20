@@ -32,8 +32,8 @@ export async function initTray(ctx: Context, endpoints: EndpointsMap): Promise<T
         },
         {
             label: "Quit",
-            click() {
-                app.quit();
+            async click() {
+                await endpoints[IpcMainActions.Quit.channel].process(undefined);
             },
         },
     ]);

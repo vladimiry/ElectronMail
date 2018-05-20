@@ -22,6 +22,10 @@
     "7zip-bin-mac" "~1.0.1"
     "7zip-bin-win" "~2.2.0"
 
+"7zip-bin@~4.0.2":
+  version "4.0.2"
+  resolved "https://registry.yarnpkg.com/7zip-bin/-/7zip-bin-4.0.2.tgz#6abbdc22f33cab742053777a26db2e25ca527179"
+
 "@angular-devkit/build-optimizer@0.6.3":
   version "0.6.3"
   resolved "https://registry.yarnpkg.com/@angular-devkit/build-optimizer/-/build-optimizer-0.6.3.tgz#f455c44f34f56e3714449ca38f8a6c0ca8fdcfc7"
@@ -218,16 +222,16 @@
     "@types/node" "*"
 
 "@types/node@*":
-  version "10.1.1"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-10.1.1.tgz#ca39d8607fa1fcb146b0530420b93f1dd4802f6c"
+  version "10.1.2"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-10.1.2.tgz#1b928a0baa408fc8ae3ac012cc81375addc147c6"
 
 "@types/node@8.10.11":
   version "8.10.11"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-8.10.11.tgz#971ea8cb91adbe0b74e3fbd867dec192d5893a5f"
 
 "@types/node@^8.0.24":
-  version "8.10.16"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-8.10.16.tgz#96fadb371748845a0c8ea970a565330efb0a67d5"
+  version "8.10.17"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-8.10.17.tgz#d48cf10f0dc6dcf59f827f5a3fc7a4a6004318d3"
 
 "@types/randomstring@1.1.6":
   version "1.1.6"
@@ -558,25 +562,13 @@ app-builder-bin-linux@1.8.6:
   version "1.8.6"
   resolved "https://registry.yarnpkg.com/app-builder-bin-linux/-/app-builder-bin-linux-1.8.6.tgz#81176bbcb2929958a90f2184afb54df90b7210a3"
 
-app-builder-bin-linux@1.8.9:
-  version "1.8.9"
-  resolved "https://registry.yarnpkg.com/app-builder-bin-linux/-/app-builder-bin-linux-1.8.9.tgz#478c3269c89a92e35716200bd10497833431fe94"
-
 app-builder-bin-mac@1.8.6:
   version "1.8.6"
   resolved "https://registry.yarnpkg.com/app-builder-bin-mac/-/app-builder-bin-mac-1.8.6.tgz#20d7233c5cadf00472e7b0ccaf85627b53f90787"
 
-app-builder-bin-mac@1.8.9:
-  version "1.8.9"
-  resolved "https://registry.yarnpkg.com/app-builder-bin-mac/-/app-builder-bin-mac-1.8.9.tgz#e4047505b0b0556258cdb2af200806401b34767a"
-
 app-builder-bin-win@1.8.6:
   version "1.8.6"
   resolved "https://registry.yarnpkg.com/app-builder-bin-win/-/app-builder-bin-win-1.8.6.tgz#d09f78fb1dd5a5f8ea231294828fd5c9ad0358a5"
-
-app-builder-bin-win@1.8.9:
-  version "1.8.9"
-  resolved "https://registry.yarnpkg.com/app-builder-bin-win/-/app-builder-bin-win-1.8.9.tgz#3ffcf0b24a00a4653dbc6dc9865b166194fa7067"
 
 app-builder-bin@1.8.6:
   version "1.8.6"
@@ -586,13 +578,9 @@ app-builder-bin@1.8.6:
     app-builder-bin-mac "1.8.6"
     app-builder-bin-win "1.8.6"
 
-app-builder-bin@1.8.9:
-  version "1.8.9"
-  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-1.8.9.tgz#4b79027d85533926630d5ea749c081d671307616"
-  optionalDependencies:
-    app-builder-bin-linux "1.8.9"
-    app-builder-bin-mac "1.8.9"
-    app-builder-bin-win "1.8.9"
+app-builder-bin@1.9.0:
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-1.9.0.tgz#700ff08c2558bb27d271c655e8353fe703fa7647"
 
 app-root-path@^2.0.1:
   version "2.0.1"
@@ -1970,12 +1958,12 @@ builder-util@5.8.1:
     stat-mode "^0.2.2"
     temp-file "^3.1.2"
 
-builder-util@^5.8.1, builder-util@^5.9.0:
-  version "5.9.1"
-  resolved "https://registry.yarnpkg.com/builder-util/-/builder-util-5.9.1.tgz#4d5c4259e91ddee1824daf4673ade5e9adca335c"
+builder-util@^5.10.0, builder-util@^5.8.1:
+  version "5.10.0"
+  resolved "https://registry.yarnpkg.com/builder-util/-/builder-util-5.10.0.tgz#025291dba29a865b6e2b28959d0f757f4883c3bd"
   dependencies:
-    "7zip-bin" "~3.1.0"
-    app-builder-bin "1.8.9"
+    "7zip-bin" "~4.0.2"
+    app-builder-bin "1.9.0"
     bluebird-lst "^1.0.5"
     builder-util-runtime "^4.2.1"
     chalk "^2.4.1"
@@ -3380,13 +3368,13 @@ electron-builder-lib@~20.13.2:
     semver "^5.5.0"
     temp-file "^3.1.2"
 
-electron-builder-squirrel-windows@20.14.0:
-  version "20.14.0"
-  resolved "https://registry.yarnpkg.com/electron-builder-squirrel-windows/-/electron-builder-squirrel-windows-20.14.0.tgz#c072b6539506e7e084bd369e10e46bf95ee96193"
+electron-builder-squirrel-windows@20.14.4:
+  version "20.14.4"
+  resolved "https://registry.yarnpkg.com/electron-builder-squirrel-windows/-/electron-builder-squirrel-windows-20.14.4.tgz#0dea0ee5b145836c50161c5510af1b49a106eb24"
   dependencies:
     archiver "^2.1.1"
     bluebird-lst "^1.0.5"
-    builder-util "^5.9.0"
+    builder-util "^5.10.0"
     fs-extra-p "^4.6.0"
     sanitize-filename "^1.6.1"
   optionalDependencies:
@@ -4273,8 +4261,8 @@ fn-name@^2.0.0:
   resolved "https://registry.yarnpkg.com/fn-name/-/fn-name-2.0.1.tgz#5214d7537a4d06a4a301c0cc262feb84188002e7"
 
 follow-redirects@^1.0.0:
-  version "1.4.1"
-  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.4.1.tgz#d8120f4518190f55aac65bb6fc7b85fcd666d6aa"
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.5.0.tgz#234f49cf770b7f35b40e790f636ceba0c3a0ab77"
   dependencies:
     debug "^3.1.0"
 
@@ -5106,11 +5094,11 @@ html-minifier@^3.2.3, html-minifier@^3.5.8:
 
 "html-webpack-plugin@https://github.com/jantimon/html-webpack-plugin#webpack-4":
   version "4.0.0"
-  resolved "https://github.com/jantimon/html-webpack-plugin#b6df42c7eaacc72bf519e4c084cd747c38df0881"
+  resolved "https://github.com/jantimon/html-webpack-plugin#e8af3c587e7a5006a24a18d11354d93748bf426e"
   dependencies:
     html-minifier "^3.2.3"
     loader-utils "^1.1.0"
-    lodash "^4.17.3"
+    lodash "^4.17.10"
     pretty-error "^2.0.2"
     tapable "^1.0.0"
     util.promisify "1.0.0"
@@ -6498,7 +6486,7 @@ lodash@^3.10.1:
   version "3.10.1"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-3.10.1.tgz#5bf45e8e49ba4189e17d482789dfd15bd140b7b6"
 
-lodash@^4.0.0, lodash@^4.13.1, lodash@^4.14.0, lodash@^4.15.0, lodash@^4.17.10, lodash@^4.17.2, lodash@^4.17.3, lodash@^4.17.4, lodash@^4.17.5, lodash@^4.3.0, lodash@^4.8.0, lodash@~4.17.4:
+lodash@^4.0.0, lodash@^4.13.1, lodash@^4.14.0, lodash@^4.15.0, lodash@^4.17.10, lodash@^4.17.2, lodash@^4.17.4, lodash@^4.17.5, lodash@^4.3.0, lodash@^4.8.0, lodash@~4.17.4:
   version "4.17.10"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.10.tgz#1b7793cf7259ea38fb3661d4d38b3260af8ae4e7"
 
@@ -6872,8 +6860,8 @@ minimist@~0.0.1:
   resolved "https://registry.yarnpkg.com/minimist/-/minimist-0.0.10.tgz#de3f98543dbf96082be48ad1a0c7cda836301dcf"
 
 minipass@^2.2.1, minipass@^2.2.4:
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/minipass/-/minipass-2.3.0.tgz#2e11b1c46df7fe7f1afbe9a490280add21ffe384"
+  version "2.3.1"
+  resolved "https://registry.yarnpkg.com/minipass/-/minipass-2.3.1.tgz#4e872b959131a672837ab3cb554962bc84b1537d"
   dependencies:
     safe-buffer "^5.1.1"
     yallist "^3.0.0"
@@ -10314,8 +10302,8 @@ tslint@5.10.0:
     tsutils "^2.12.1"
 
 tsutils@^2.12.1, tsutils@^2.19.1:
-  version "2.27.0"
-  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-2.27.0.tgz#9efb252b188eaa0ca3ade41dc410d6ce7eaab816"
+  version "2.27.1"
+  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-2.27.1.tgz#ab0276ac23664f36ce8fd4414daec4aebf4373ee"
   dependencies:
     tslib "^1.8.1"
 
@@ -10470,8 +10458,8 @@ unset-value@^1.0.0:
     isobject "^3.0.0"
 
 untildify@^3.0.2:
-  version "3.0.2"
-  resolved "https://registry.yarnpkg.com/untildify/-/untildify-3.0.2.tgz#7f1f302055b3fea0f3e81dc78eb36766cb65e3f1"
+  version "3.0.3"
+  resolved "https://registry.yarnpkg.com/untildify/-/untildify-3.0.3.tgz#1e7b42b140bcfd922b22e70ca1265bfe3634c7c9"
 
 unzip-response@^2.0.1:
   version "2.0.1"

@@ -20,7 +20,6 @@ export interface Context {
     };
     configStore: StoreModel.Store<Config>;
     settingsStore: StoreModel.Store<Settings>;
-    forceClose?: boolean;
     uiContext?: UIContext;
 }
 

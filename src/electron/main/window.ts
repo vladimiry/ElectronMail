@@ -5,7 +5,6 @@ import {Context} from "./model";
 import {activateBrowserWindow} from "./util";
 
 export async function initBrowserWindow(ctx: Context): Promise<BrowserWindow> {
-    const preload = ctx.locations.preload.browser[ctx.env];
     const browserWindowConstructorOptions = {
         webPreferences: {
             nodeIntegration: ctx.env === "development",
@@ -13,29 +12,30 @@ export async function initBrowserWindow(ctx: Context): Promise<BrowserWindow> {
             webSecurity: true,
             // sandbox: true,
             disableBlinkFeatures: "Auxclick",
-            preload,
+            preload: ctx.locations.preload.browser[ctx.env],
         },
         icon: ctx.locations.icon,
         ...(await ctx.configStore.readExisting()).window.bounds,
         show: false,
     };
     const browserWindow = new BrowserWindow(browserWindowConstructorOptions);
-    const appBeforeQuitEventHandler = () => ctx.forceClose = true;
+    const appBeforeQuitEventHandler = () => forceClose = true;
+    let forceClose = false;
 
+    app.removeListener("before-quit", appBeforeQuitEventHandler);
     app.on("before-quit", appBeforeQuitEventHandler);
 
     browserWindow.on("ready-to-show", async () => {
-        const settingsNotConfigured = !(await ctx.settingsStore.readable());
+        const settingsConfigured = await ctx.settingsStore.readable();
         const {startMinimized} = await ctx.configStore.readExisting();
 
-        if (settingsNotConfigured || !startMinimized) {
-            activateBrowserWindow(ctx.uiContext);
+        if (!settingsConfigured || !startMinimized) {
+            activateBrowserWindow(ctx);
         }
     });
     browserWindow.on("closed", () => {
         browserWindow.destroy();
-        delete ctx.forceClose;
-        app.removeListener("before-quit", appBeforeQuitEventHandler);
+        forceClose = false;
 
         // On macOS it is common for applications and their menu bar to stay active until the user quits explicitly with Cmd + Q
         if (process.platform !== "darwin") {
@@ -45,21 +45,19 @@ export async function initBrowserWindow(ctx: Context): Promise<BrowserWindow> {
     browserWindow.on("close", async (event) => {
         const sender: BrowserWindow = (event as any).sender;
 
-        if (ctx.forceClose) {
+        if (forceClose) {
             return event.returnValue = true;
         }
 
         event.returnValue = false;
         event.preventDefault();
 
-        await (async () => {
-            if ((await ctx.configStore.readExisting()).closeToTray) {
-                sender.hide();
-            } else {
-                ctx.forceClose = true;
-                browserWindow.close();
-            }
-        })();
+        if ((await ctx.configStore.readExisting()).closeToTray) {
+            sender.hide();
+        } else {
+            forceClose = true;
+            browserWindow.close();
+        }
 
         return event.returnValue;
     });

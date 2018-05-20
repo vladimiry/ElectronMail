@@ -6,7 +6,7 @@ import {toggleBrowserWindow} from "./util";
 
 export async function initTray(ctx: Context, endpoints: EndpointsMap): Promise<Tray> {
     const tray = new Tray(ctx.locations.trayIcon);
-    const toggleWindow = () => toggleBrowserWindow(ctx.uiContext);
+    const toggleWindow = () => toggleBrowserWindow(ctx);
     const contextMenu = Menu.buildFromTemplate([
         {
             label: "Toggle Window",

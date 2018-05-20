@@ -337,12 +337,12 @@ test.serial(`API: ${IpcMainActions.Logout.channel}`, async (t: TestContext) => {
 });
 
 test.serial(`API: ${IpcMainActions.Quit.channel}`, async (t: TestContext) => {
-    const appQuitSpy: sinon.SinonSpy = t.context.mocks.electron.app.quit;
+    const appQuitSpy: sinon.SinonSpy = t.context.mocks.electron.app.exit;
     const endpoints = t.context.endpoints;
     const action = endpoints[IpcMainActions.Quit.channel];
 
     await action.process(undefined);
-    t.is(appQuitSpy.callCount, 1, "electron.app.quit called once");
+    t.is(appQuitSpy.callCount, 1, "electron.app.exit called once");
 });
 
 test.serial(`API: ${IpcMainActions.ToggleBrowserWindow.channel}`, async (t: TestContext) => {
@@ -356,7 +356,7 @@ test.serial(`API: ${IpcMainActions.ToggleBrowserWindow.channel}`, async (t: Test
     ];
     payloads.forEach((payload) => {
         action.process(payload);
-        t.true(toggleBrowserWindowSpy.calledWithExactly(t.context.ctx.uiContext, payload.forcedState));
+        t.true(toggleBrowserWindowSpy.calledWithExactly(t.context.ctx, payload.forcedState));
     });
 });
 
@@ -467,7 +467,7 @@ test.beforeEach(async (t: TestContext) => {
             },
             "electron": {
                 app: {
-                    quit: sinon.spy(),
+                    exit: sinon.spy(),
                 },
                 remote: {
                     BrowserWindow: sinon.spy(),

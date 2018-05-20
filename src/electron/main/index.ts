@@ -3,7 +3,6 @@ import logger from "electron-log";
 import {app} from "electron";
 
 import {IpcMainActions} from "_shared/electron-actions";
-import {Environment} from "_shared/model/electron";
 import {isAllowedUrl} from "_shared/util";
 import {initEndpoints} from "./ipc-main-api";
 import {Context} from "./model";
@@ -18,8 +17,8 @@ electronUnhandled({logger: logger.error});
 // tslint:disable-next-line:no-floating-promises
 initContext().then(initApp);
 
-export function initApp(ctx: Context) {
-    if (app.makeSingleInstance(() => activateBrowserWindow(ctx.uiContext))) {
+export async function initApp(ctx: Context) {
+    if (app.makeSingleInstance(() => activateBrowserWindow(ctx))) {
         // calling app.exit() instead of app.quit() in order to prevent "Error: Cannot find module ..." error happening
         // https://github.com/electron/electron/issues/8862
         app.exit();
@@ -37,11 +36,9 @@ export function initApp(ctx: Context) {
             tray: await initTray(ctx, endpoints),
         };
 
-        ((skipEnvs: Environment[]) => {
-            if (checkForUpdatesAndNotify && skipEnvs.indexOf(ctx.env) === -1) {
-                initAutoUpdate();
-            }
-        })(["development", "e2e"]);
+        if (checkForUpdatesAndNotify && !["development", "e2e"].includes(ctx.env)) {
+            initAutoUpdate();
+        }
 
         app.on("activate", async () => {
             // on macOS it's common to re-create a window in the app when the dock icon is clicked and there are no other windows open

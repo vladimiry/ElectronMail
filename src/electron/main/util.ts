@@ -14,7 +14,7 @@ import {Config, configEncryptionPresetValidator, Settings, settingsAccountLoginU
 import {ElectronTransport, Environment} from "_shared/model/electron";
 import {ElectronIpcMainActionType} from "_shared/electron-actions/model";
 import {ElectronTransportEvent} from "../model";
-import {Context, ContextInitOptions, UIContext} from "./model";
+import {Context, ContextInitOptions} from "./model";
 import {INITIAL_STORES} from "./constants";
 
 export async function initContext(opts: ContextInitOptions = {}): Promise<Context> {
@@ -81,21 +81,21 @@ export async function buildSettingsAdapter({configStore}: Context, password: str
     return new EncryptionAdapter(password, (await configStore.readExisting()).encryptionPreset);
 }
 
-export function toggleBrowserWindow(uiContext?: UIContext, forcedState?: boolean) {
-    if (!uiContext || !uiContext.browserWindow) {
+export function toggleBrowserWindow(ctx: Context, forcedState?: boolean) {
+    const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
+
+    if (!browserWindow) {
         return;
     }
 
-    const {browserWindow} = uiContext;
-
     if (typeof forcedState !== "undefined" ? forcedState : !browserWindow.isVisible()) {
-        activateBrowserWindow(uiContext);
+        activateBrowserWindow(ctx);
     } else {
         browserWindow.hide();
     }
 }
 
-export function activateBrowserWindow(uiContext?: UIContext) {
+export function activateBrowserWindow({uiContext}: Context) {
     if (!uiContext || !uiContext.browserWindow) {
         return;
     }

@@ -122,7 +122,7 @@
     "devtron": "1.4.0",
     "electron": "2.0.1",
     "electron-builder": "20.13.4",
-    "electron-builder-squirrel-windows": "20.14.0",
+    "electron-builder-squirrel-windows": "20.14.4",
     "electron-rebuild": "1.7.3",
     "exports-loader": "0.7.0",
     "extended-define-webpack-plugin": "0.1.3",

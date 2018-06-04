@@ -17,6 +17,7 @@
   ],
   "angularCompilerOptions": {
     "preserveWhitespaces": false,
-    "fullTemplateTypeCheck": false
+    "fullTemplateTypeCheck": false,
+    "disableTypeScriptVersionCheck": true
   }
 }

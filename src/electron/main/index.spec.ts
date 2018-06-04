@@ -1,20 +1,18 @@
 import * as sinon from "sinon";
 import rewiremock from "rewiremock";
-import {GenericTestContext, test} from "ava";
+import anyTest, {TestInterface} from "ava";
 
 import {IpcMainActions} from "_shared/electron-actions";
 import {INITIAL_STORES} from "./constants";
 
-export interface TestContext extends GenericTestContext<{
-    context: {
-        endpoints: any;
-        ctx: any;
-        mocks: any;
-        mocked: any;
-    };
-}> {}
+const test = anyTest as TestInterface<{
+    endpoints: any;
+    ctx: any;
+    mocks: any;
+    mocked: any;
+}>;
 
-test.serial("workflow", async (t: TestContext) => {
+test.serial("workflow", async (t) => {
     const mocks = t.context.mocks["~index"];
     const electronUnhandledSpy: sinon.SinonSpy = mocks["electron-unhandled"];
     const makeSingleInstanceSpy: sinon.SinonSpy = mocks.electron.app.makeSingleInstance;
@@ -32,7 +30,7 @@ test.serial("workflow", async (t: TestContext) => {
     t.true(initAutoUpdateSpy.calledWithExactly(), `"initAutoUpdate" called`);
 });
 
-test.beforeEach(async (t: TestContext) => {
+test.beforeEach(async (t) => {
     t.context.endpoints = {
         [IpcMainActions.ReadConfig.channel]: {
             process: sinon.stub().returns(INITIAL_STORES.config),

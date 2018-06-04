@@ -1,11 +1,13 @@
+// TODO enabel "tslint:await-promise" rule
+// tslint:disable:await-promise
+
 import * as fs from "fs";
 import * as path from "path";
 import {promisify} from "util";
-import test from "ava";
 
-import {actions, catchError, CONF, ENV, initApp, TestContext} from "./util";
+import {actions, catchError, CONF, ENV, initApp, test} from "./util";
 
-test.beforeEach(async (t: TestContext) => {
+test.beforeEach(async (t) => {
     try {
         await initApp(t, {initial: true});
     } catch (error) {
@@ -15,7 +17,7 @@ test.beforeEach(async (t: TestContext) => {
 
 test.afterEach.always(actions.destroyApp.bind(actions));
 
-test("login, add account, logout, auto login", async (t: TestContext) => {
+test("login, add account, logout, auto login", async (t) => {
     try {
         await (async () => {
             const client = t.context.app.client;

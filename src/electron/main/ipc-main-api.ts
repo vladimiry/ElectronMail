@@ -1,4 +1,8 @@
-import * as aboutWindow from "about-window";
+// TODO get rid of "require" import ("about-window" raises errors with TypeScript 2.9)
+// import * as aboutWindow from "about-window";
+// tslint:disable-next-line:no-var-requires
+const aboutWindow = require("about-window");
+
 import {isWebUri} from "valid-url";
 import {promisify} from "util";
 import {app, nativeImage, shell} from "electron";

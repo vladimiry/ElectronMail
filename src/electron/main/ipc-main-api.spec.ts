@@ -2,12 +2,12 @@ import * as path from "path";
 import * as sinon from "sinon";
 import * as logger from "electron-log";
 import rewiremock from "rewiremock";
-import {GenericTestContext, test} from "ava";
+import anyTest, {TestInterface} from "ava";
 import {Fs} from "fs-json-store";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter/encryption-adapter";
 
 import {assert, pickBaseConfigProperties} from "_shared/util";
-import {Config, Settings} from "_shared/model/options";
+import {BaseConfig, Config, Settings} from "_shared/model/options";
 import {IpcMainActions} from "_shared/electron-actions";
 import {IpcMainChannel} from "_shared/electron-actions/model";
 import {StatusCode, StatusCodeError} from "_shared/model/error";
@@ -17,14 +17,12 @@ import {INITIAL_STORES, KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} fro
 import {Context, EndpointsMap} from "./model";
 import {buildSettingsAdapter, initContext} from "./util";
 
-interface TestContext extends GenericTestContext<{
-    context: {
-        ctx: Context;
-        endpoints: EndpointsMap;
-        mocks: any;
-        mocked: any;
-    };
-}> {}
+const test = anyTest as TestInterface<{
+    ctx: Context;
+    endpoints: EndpointsMap;
+    mocks: any;
+    mocked: any;
+}>;
 
 const OPTIONS = Object.freeze({
     dataDirectory: path.join(
@@ -35,7 +33,7 @@ const OPTIONS = Object.freeze({
     masterPassword: "masterPassword123",
 });
 
-test.serial("Initialization", async (t: TestContext) => {
+test.serial("Initialization", async (t) => {
     const ipcMainOnSpy: sinon.SinonSpy = t.context.mocks["./util"].ipcMainOn;
 
     const endpoints = t.context.endpoints;
@@ -64,7 +62,7 @@ test.serial("Initialization", async (t: TestContext) => {
     );
 });
 
-test.serial(`API: ${IpcMainActions.Init.channel}`, async (t: TestContext) => {
+test.serial(`API: ${IpcMainActions.Init.channel}`, async (t) => {
     const endpoints = t.context.endpoints;
     const endpoint = endpoints[IpcMainActions.Init.channel];
     const result = await endpoint.process(undefined);
@@ -73,7 +71,7 @@ test.serial(`API: ${IpcMainActions.Init.channel}`, async (t: TestContext) => {
     t.is(typeof result.hasSavedPassword, "boolean");
 });
 
-test.serial(`API: ${IpcMainActions.ReadConfig.channel}`, async (t: TestContext) => {
+test.serial(`API: ${IpcMainActions.ReadConfig.channel}`, async (t) => {
     const endpoints = t.context.endpoints;
 
     t.false(await t.context.ctx.configStore.readable(), "config file does not exist");
@@ -83,7 +81,7 @@ test.serial(`API: ${IpcMainActions.ReadConfig.channel}`, async (t: TestContext) 
     t.true(await t.context.ctx.configStore.readable(), "config file exists");
 });
 
-test.serial(`API: ${IpcMainActions.ToggleCompactLayout.channel}`, async (t: TestContext) => {
+test.serial(`API: ${IpcMainActions.ToggleCompactLayout.channel}`, async (t) => {
     const endpoints = t.context.endpoints;
     const action = endpoints[IpcMainActions.ToggleCompactLayout.channel];
 
@@ -98,7 +96,7 @@ test.serial(`API: ${IpcMainActions.ToggleCompactLayout.channel}`, async (t: Test
     t.is(updated.compactLayout, false);
 });
 
-test.serial(`API: ${IpcMainActions.SettingsExists.channel}`, async (t: TestContext) => {
+test.serial(`API: ${IpcMainActions.SettingsExists.channel}`, async (t) => {
     const endpoints = t.context.endpoints;
 
     t.false(await t.context.ctx.settingsStore.readable(), "store: settings file does not exist");
@@ -106,7 +104,7 @@ test.serial(`API: ${IpcMainActions.SettingsExists.channel}`, async (t: TestConte
     t.true(await t.context.ctx.settingsStore.readable(), "store: settings file exists");
 });
 
-test.serial(`API: ${IpcMainActions.ReadSettings.channel}`, async (t: TestContext) => {
+test.serial(`API: ${IpcMainActions.ReadSettings.channel}`, async (t) => {
     const setPasswordSpy = t.context.mocks.keytar.setPassword;
     const deletePasswordSpy = t.context.mocks.keytar.deletePassword;
     const endpoints = t.context.endpoints;
@@ -135,7 +133,7 @@ test.serial(`API: ${IpcMainActions.ReadSettings.channel}`, async (t: TestContext
     setPasswordSpy.calledWithExactly(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, OPTIONS.masterPassword);
 });
 
-test.serial(`API: ${IpcMainActions.AddAccount.channel}`, async (t: TestContext) => {
+test.serial(`API: ${IpcMainActions.AddAccount.channel}`, async (t) => {
     const endpoints = t.context.endpoints;
     const addHandler = endpoints[IpcMainActions.AddAccount.channel];
     const payload = Object.freeze({
@@ -150,7 +148,7 @@ test.serial(`API: ${IpcMainActions.AddAccount.channel}`, async (t: TestContext) 
     t.is(settings.accounts.length, 0, `accounts list is empty`);
 
     const updatedSettings = await addHandler.process(payload);
-    const expectedSettings = {
+    const expectedSettings: any = {
         ...settings,
         _rev: (settings._rev as number) + 1,
         accounts: [
@@ -179,7 +177,7 @@ test.serial(`API: ${IpcMainActions.AddAccount.channel}`, async (t: TestContext) 
 
     const payload2 = {...payload, ...{login: "login2"}};
     const updatedSettings2 = await addHandler.process(payload2);
-    const expectedSettings2 = {
+    const expectedSettings2: any = {
         ...updatedSettings,
         _rev: (updatedSettings._rev as number) + 1,
         accounts: [
@@ -193,7 +191,7 @@ test.serial(`API: ${IpcMainActions.AddAccount.channel}`, async (t: TestContext) 
     t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings2, `settings with added account is persisted`);
 });
 
-test.serial(`API: ${IpcMainActions.UpdateAccount.channel}`, async (t: TestContext) => {
+test.serial(`API: ${IpcMainActions.UpdateAccount.channel}`, async (t) => {
     const endpoints = t.context.endpoints;
     const addHandler = endpoints[IpcMainActions.AddAccount.channel];
     const updateHandler = endpoints[IpcMainActions.UpdateAccount.channel];
@@ -237,7 +235,7 @@ test.serial(`API: ${IpcMainActions.UpdateAccount.channel}`, async (t: TestContex
     t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings, `settings with updated account is persisted`);
 });
 
-test.serial(`API: ${IpcMainActions.RemoveAccount.channel}`, async (t: TestContext) => {
+test.serial(`API: ${IpcMainActions.RemoveAccount.channel}`, async (t) => {
     const endpoints = t.context.endpoints;
     const addHandler = endpoints[IpcMainActions.AddAccount.channel];
     const removeHandler = endpoints[IpcMainActions.RemoveAccount.channel];
@@ -276,7 +274,7 @@ test.serial(`API: ${IpcMainActions.RemoveAccount.channel}`, async (t: TestContex
     t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings, `settings with updated account is persisted`);
 });
 
-test.serial(`API: ${IpcMainActions.ChangeMasterPassword.channel}`, async (t: TestContext) => {
+test.serial(`API: ${IpcMainActions.ChangeMasterPassword.channel}`, async (t) => {
     const getPasswordStub = t.context.mocks.keytar.getPassword;
     const setPasswordSpy = t.context.mocks.keytar.setPassword;
 
@@ -316,7 +314,7 @@ test.serial(`API: ${IpcMainActions.ChangeMasterPassword.channel}`, async (t: Tes
     setPasswordSpy.calledWithExactly(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, payload.newPassword);
 });
 
-test.serial(`API: ${IpcMainActions.Logout.channel}`, async (t: TestContext) => {
+test.serial(`API: ${IpcMainActions.Logout.channel}`, async (t) => {
     const deletePasswordSpy = t.context.mocks.keytar.deletePassword;
     const endpoints = t.context.endpoints;
     const action = endpoints[IpcMainActions.Logout.channel];
@@ -336,7 +334,7 @@ test.serial(`API: ${IpcMainActions.Logout.channel}`, async (t: TestContext) => {
     // t.true(deletePasswordSpy.alwaysCalledWithExactly(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT));
 });
 
-test.serial(`API: ${IpcMainActions.Quit.channel}`, async (t: TestContext) => {
+test.serial(`API: ${IpcMainActions.Quit.channel}`, async (t) => {
     const appQuitSpy: sinon.SinonSpy = t.context.mocks.electron.app.exit;
     const endpoints = t.context.endpoints;
     const action = endpoints[IpcMainActions.Quit.channel];
@@ -345,7 +343,7 @@ test.serial(`API: ${IpcMainActions.Quit.channel}`, async (t: TestContext) => {
     t.is(appQuitSpy.callCount, 1, "electron.app.exit called once");
 });
 
-test.serial(`API: ${IpcMainActions.ToggleBrowserWindow.channel}`, async (t: TestContext) => {
+test.serial(`API: ${IpcMainActions.ToggleBrowserWindow.channel}`, async (t) => {
     const toggleBrowserWindowSpy: sinon.SinonSpy = t.context.mocks["./util"].toggleBrowserWindow;
     const endpoints = t.context.endpoints;
     const action = endpoints[IpcMainActions.ToggleBrowserWindow.channel];
@@ -354,13 +352,13 @@ test.serial(`API: ${IpcMainActions.ToggleBrowserWindow.channel}`, async (t: Test
         {forcedState: true},
         {forcedState: false},
     ];
-    payloads.forEach((payload) => {
-        action.process(payload);
+    for (const payload of payloads) {
+        await action.process(payload);
         t.true(toggleBrowserWindowSpy.calledWithExactly(t.context.ctx, payload.forcedState));
-    });
+    }
 });
 
-test.serial(`API: ${IpcMainActions.OpenAboutWindow.channel}`, async (t: TestContext) => {
+test.serial(`API: ${IpcMainActions.OpenAboutWindow.channel}`, async (t) => {
     const defaultOnSpy: sinon.SinonSpy = t.context.mocks["about-window"].default;
     const endpoints = t.context.endpoints;
     const action = endpoints[IpcMainActions.OpenAboutWindow.channel];
@@ -370,7 +368,7 @@ test.serial(`API: ${IpcMainActions.OpenAboutWindow.channel}`, async (t: TestCont
     t.true(args.icon_path.endsWith(path.normalize("assets/icons/icon.png")), "about called with proper icon path");
 });
 
-test.serial(`API: ${IpcMainActions.OpenExternal.channel}`, async (t: TestContext) => {
+test.serial(`API: ${IpcMainActions.OpenExternal.channel}`, async (t) => {
     const openExternalSpy: sinon.SinonSpy = t.context.mocks.electron.shell.openExternalSpy;
     const endpoints = t.context.endpoints;
     const action = endpoints[IpcMainActions.OpenExternal.channel];
@@ -395,12 +393,12 @@ test.serial(`API: ${IpcMainActions.OpenExternal.channel}`, async (t: TestContext
         "https://somedomain.com/page",
     ];
     for (const url of allowedUrls) {
-        await t.notThrows(action.process({url}));
+        await t.notThrows(action.process({url: url as string}));
         t.true(openExternalSpy.calledWith(url), `electron.shell.openExternal.calledWith("${url}")`);
     }
 });
 
-test.serial(`API: ${IpcMainActions.OpenSettingsFolder.channel}`, async (t: TestContext) => {
+test.serial(`API: ${IpcMainActions.OpenSettingsFolder.channel}`, async (t) => {
     const openItemSpy: sinon.SinonSpy = t.context.mocks.electron.shell.openItem;
     const endpoints = t.context.endpoints;
     const action = endpoints[IpcMainActions.OpenSettingsFolder.channel];
@@ -410,10 +408,10 @@ test.serial(`API: ${IpcMainActions.OpenSettingsFolder.channel}`, async (t: TestC
     t.true(openItemSpy.alwaysCalledWith(t.context.ctx.locations.data));
 });
 
-test.serial(`API: ${IpcMainActions.PatchBaseSettings.channel}`, async (t: TestContext) => {
+test.serial(`API: ${IpcMainActions.PatchBaseSettings.channel}`, async (t) => {
     const endpoints = t.context.endpoints;
     const action = endpoints[IpcMainActions.PatchBaseSettings.channel];
-    const patches = [
+    const patches: BaseConfig[] = [
         {
             startMinimized: false,
             compactLayout: true,
@@ -434,7 +432,7 @@ test.serial(`API: ${IpcMainActions.PatchBaseSettings.channel}`, async (t: TestCo
 
     for (const patch of patches) {
         const initialConfig = await t.context.ctx.configStore.readExisting();
-        const updatedConfig = await action.process(patch);
+        const updatedConfig = await action.process(patch as BaseConfig);
         const actual = pickBaseConfigProperties(updatedConfig);
         const expected = pickBaseConfigProperties({...initialConfig, ...JSON.parse(JSON.stringify(patch))});
 
@@ -452,7 +450,7 @@ async function initConfigAndSettings(endpoints: EndpointsMap, payload: IpcMainAc
     return await endpoints[IpcMainActions.ReadSettings.channel].process(payload);
 }
 
-test.beforeEach(async (t: TestContext) => {
+test.beforeEach(async (t) => {
     await (async () => {
         const openExternalSpy = sinon.spy();
 
@@ -499,16 +497,18 @@ test.beforeEach(async (t: TestContext) => {
             "./ipc-main-api": await rewiremock.around(
                 () => import("./ipc-main-api"),
                 (mock) => {
-                    for (const key of Object.keys(t.context.mocks)) {
-                        const mocks = t.context.mocks[key];
-                        let mocked: any = mock(key);
+                    Object
+                        .keys(t.context.mocks)
+                        .forEach((key) => {
+                            const mocks = t.context.mocks[key];
+                            let mocked: any = mock(key);
 
-                        if (!mocks._rewiremock_no_callThrough) {
-                            mocked = mocked.callThrough();
-                        }
+                            if (!mocks._rewiremock_no_callThrough) {
+                                mocked = mocked.callThrough();
+                            }
 
-                        mocked.with(mocks);
-                    }
+                            mocked.with(mocks);
+                        });
                 },
             ),
         };

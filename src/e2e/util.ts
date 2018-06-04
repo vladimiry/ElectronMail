@@ -1,3 +1,6 @@
+// TODO enabel "tslint:await-promise" rule
+// tslint:disable:await-promise
+
 import * as fs from "fs";
 import * as path from "path";
 import * as mkdirp from "mkdirp";
@@ -6,21 +9,22 @@ import * as randomString from "randomstring";
 import * as psNode from "ps-node"; // see also https://www.npmjs.com/package/find-process
 import * as psTree from "ps-tree";
 import {promisify} from "util";
-import {GenericTestContext} from "ava";
+import anyTest, {ExecutionContext, TestInterface} from "ava";
 import {Application} from "spectron";
 
 import {Environment} from "_shared/model/electron";
 
-export interface TestContext extends GenericTestContext<{
-    context: {
-        app: Application;
-        outputDirPath: string;
-        userDataDirPath: string;
-        appDirPath: string;
-        logFilePath: string;
-    };
-}> {}
+export interface TestContext {
+    app: Application;
+    outputDirPath: string;
+    userDataDirPath: string;
+    appDirPath: string;
+    logFilePath: string;
+}
 
+export const test = anyTest as TestInterface<TestContext>;
+
+const {CI} = process.env;
 const rootDirPath = path.resolve(__dirname, process.cwd());
 const appDirPath = path.join(rootDirPath, "./app");
 const mainScriptFilePath = path.join(appDirPath, "./electron/main/index.js");
@@ -33,8 +37,8 @@ export const CONF = {
     timeouts: {
         element: 700,
         elementTouched: 300,
-        encryption: process.env.CI ? 5000 : 1000,
-        transition: process.env.CI ? 2000 : 500,
+        encryption: CI ? 5000 : 1000,
+        transition: CI ? 2000 : 500,
     },
 };
 
@@ -44,19 +48,19 @@ async function mkOutputDirs(dirs: string[]) {
     dirs.forEach((dir) => promisify(mkdirp)(dir));
 }
 
-export async function initApp(t: TestContext, options: { initial: boolean }) {
+export async function initApp(t: ExecutionContext<TestContext>, options: { initial: boolean }) {
     try {
         const outputDirPath = t.context.outputDirPath = t.context.outputDirPath
             || path.join(rootDirPath, "./output/e2e", String(Number(new Date())));
         const userDataDirPath = path.join(outputDirPath, "./app-data");
         const logFilePath = path.join(userDataDirPath, "log.log");
-        const webdriverLogDirPath = path.join(outputDirPath, "webdriver-driver-log");
-        const chromeDriverLogFilePath = path.join(outputDirPath, "chrome-driver.log");
+        // const webdriverLogDirPath = path.join(outputDirPath, "webdriver-driver-log");
+        // const chromeDriverLogFilePath = path.join(outputDirPath, "chrome-driver.log");
 
         await mkOutputDirs([
             outputDirPath,
             userDataDirPath,
-            webdriverLogDirPath,
+            // webdriverLogDirPath,
         ]);
 
         t.context.appDirPath = appDirPath;
@@ -68,6 +72,7 @@ export async function initApp(t: TestContext, options: { initial: boolean }) {
             .concat([
                 "./electron/renderer/account.js",
                 "./web/index.html",
+                "./web/app.js",
                 "./assets/icons/icon.png",
             ])
             .map((file) => path.join(t.context.appDirPath, file))
@@ -92,6 +97,8 @@ export async function initApp(t: TestContext, options: { initial: boolean }) {
         }
 
         t.context.app = new Application({
+            // TODO consider running e2e tests on compiled/binary app too
+            // path: path.join(rootPath, "./dist/linux-unpacked/protonmail-desktop-app"),
             path: electron as any,
             requireName: "electronRequire",
             env: {
@@ -99,17 +106,26 @@ export async function initApp(t: TestContext, options: { initial: boolean }) {
                 TEST_USER_DATA_DIR: userDataDirPath,
             },
             args: [mainScriptFilePath],
-            // chromeDriverArgs: process.env.CI ? [/*"headless", */"no-sandbox", "disable-gpu"] : [],
-            webdriverLogPath: webdriverLogDirPath,
-            chromeDriverLogPath: chromeDriverLogFilePath,
 
-            // TODO consider running e2e tests on compiled/binary app too
-            // path: path.join(rootPath, "./dist/linux-unpacked/protonmail-desktop-app"),
+            // TODO chromedriver throws 'Failed to redirect stderr to log file.' and 'Unable to initialize logging. Exiting...'
+            // errors if log paths are specified, only on first run
+            // webdriverLogPath: webdriverLogDirPath,
+            // chromeDriverLogPath: chromeDriverLogFilePath,
+
+            // ...(CI ? {
+            //     startTimeout: 30000,
+            //     chromeDriverArgs: [/*"headless",*/"no-sandbox", "disable-gpu"],
+            // } : {}),
         });
 
-        await t.context.app.start();
+        try {
+            await t.context.app.start();
+        } catch (e) {
+            // tslint:disable-next-line:no-console
+            console.log(`chromeDriver.logLines:\n${(t.context.app as any).chromeDriver.logLines.join("\n")}`);
+            throw e;
+        }
         t.is(t.context.app.isRunning(), true);
-
         await t.context.app.client.waitUntilWindowLoaded();
 
         await (async () => {
@@ -147,7 +163,7 @@ export async function initApp(t: TestContext, options: { initial: boolean }) {
 }
 
 export const actions = {
-    async destroyApp(t: TestContext) {
+    async destroyApp(t: ExecutionContext<TestContext>) {
         // TODO update to electron 2: app.isRunning() returns undefined, uncomment as soon as it's fixed
         // if (!t.context.app || !t.context.app.isRunning()) {
         //     t.pass("app is not running");
@@ -185,7 +201,7 @@ export const actions = {
         })();
     },
 
-    async login(t: TestContext, options: { setup: boolean, savePassword: boolean }) {
+    async login(t: ExecutionContext<TestContext>, options: { setup: boolean, savePassword: boolean }) {
         const client = t.context.app.client;
         let selector: string | null = null;
 
@@ -233,7 +249,7 @@ export const actions = {
         await client.pause(CONF.timeouts.transition);
     },
 
-    async addAccount(t: TestContext, account?: { login: string; password: string; }) {
+    async addAccount(t: ExecutionContext<TestContext>, account?: { login: string; password: string; }) {
         const client = t.context.app.client;
         const login = account
             ? account.login
@@ -262,21 +278,21 @@ export const actions = {
         await client.pause(CONF.timeouts.transition);
     },
 
-    async selectAccount(t: TestContext, index = 0) {
+    async selectAccount(t: ExecutionContext<TestContext>, index = 0) {
         const client = t.context.app.client;
 
         await client.click(`.list-group.accounts-list > .list-group-item:nth-child(${index + 1}) protonmail-desktop-app-account-title`);
         // TODO make sure account is selected and loaded
     },
 
-    async accountsCount(t: TestContext) {
+    async accountsCount(t: ExecutionContext<TestContext>) {
         const client = t.context.app.client;
         const els = await client.elements(`.list-group.accounts-list > .list-group-item-action > protonmail-desktop-app-account-title`);
 
         return els.value.length;
     },
 
-    async openSettingsModal(t: TestContext, index?: number) {
+    async openSettingsModal(t: ExecutionContext<TestContext>, index?: number) {
         const listGroupSelector = `.modal-body .list-group`;
         const client = t.context.app.client;
 
@@ -296,7 +312,7 @@ export const actions = {
         }
     },
 
-    async closeSettingsModal(t: TestContext) {
+    async closeSettingsModal(t: ExecutionContext<TestContext>) {
         const client = t.context.app.client;
 
         await client.click(`button.close`);
@@ -310,7 +326,7 @@ export const actions = {
         );
     },
 
-    async logout(t: TestContext) {
+    async logout(t: ExecutionContext<TestContext>) {
         const client = t.context.app.client;
 
         await client.click(`.controls .dropdown-toggle`);
@@ -326,7 +342,7 @@ export const actions = {
     },
 };
 
-export async function catchError(t: TestContext, error?: Error) {
+export async function catchError(t: ExecutionContext<TestContext>, error?: Error) {
     try {
         await t.context.app.client.waitForVisible(`.alert-link`, CONF.timeouts.element);
         await t.context.app.client.click(`.alert-link`);
@@ -340,14 +356,14 @@ export async function catchError(t: TestContext, error?: Error) {
         // NOOP
     }
 
-    printElectronLogs(t);
+    await printElectronLogs(t);
 
     if (typeof error !== "undefined") {
         throw error;
     }
 }
 
-export async function saveShot(t: TestContext) {
+export async function saveShot(t: ExecutionContext<TestContext>) {
     const file = path.join(
         t.context.outputDirPath,
         `sreenshot-${t.title}-${new Date().toISOString()}.png`.replace(/[^A-Za-z0-9\.]/g, "_"),
@@ -362,16 +378,16 @@ export async function saveShot(t: TestContext) {
     return file;
 }
 
-export function printElectronLogs(t: TestContext) {
+export async function printElectronLogs(t: ExecutionContext<TestContext>) {
     // tslint:disable:no-console
     if (!t.context.app || !t.context.app.client) {
         return;
     }
 
-    t.context.app.client.getMainProcessLogs()
+    await t.context.app.client.getMainProcessLogs()
         .then((logs) => logs.forEach((log) => console.log(log)));
 
-    t.context.app.client.getRenderProcessLogs()
+    await t.context.app.client.getRenderProcessLogs()
         .then((logs) => logs.forEach((log) => {
 
             console.log(log.level);

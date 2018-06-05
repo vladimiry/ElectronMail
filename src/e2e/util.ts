@@ -109,7 +109,7 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
             // TODO consider running e2e tests on compiled/binary app too
             // path: path.join(rootPath, "./dist/linux-unpacked/protonmail-desktop-app"),
 
-            startTimeout: 30000,
+            startTimeout: 60000,
         });
 
         await t.context.app.start();

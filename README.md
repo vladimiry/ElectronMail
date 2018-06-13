@@ -20,7 +20,7 @@ is an unofficial [ProtonMail](https://protonmail.com/) desktop client. It's basi
 - Close to tray.
 - Compact view mode.
 
-## Build your own binary
+## Build your own package
 
 - Regardless of the platform you are working on, you will need to have Node.JS v8 installed. Version 8 is required to match the Node.JS version Electron comes with. If you already have Node.JS installed, but not the version 8, then you might want you to use [Node Version Manager](https://github.com/creationix/nvm) to be able to switch between multiple Node.JS versions:
   - Install [NVM](https://github.com/creationix/nvm).

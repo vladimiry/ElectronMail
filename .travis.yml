@@ -29,7 +29,6 @@ env:
     - ELECTRON_CACHE=$HOME/.cache/electron
     - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
     - FAILURE_ARCHIVE_FILE=travis-build-id-$TRAVIS_BUILD_ID.tar.gz
-    - DBUS_SESSION_BUS_ADDRESS=/dev/null
 cache:
   yarn: true
   directories:

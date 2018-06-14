@@ -1,7 +1,7 @@
 import {ActionReducer} from "@ngrx/store";
 import {routerReducer, RouterReducerState} from "@ngrx/router-store";
 
-import {NavigationActions, Root} from "_web_app/store/actions";
+import {NavigationActions, Root} from "_web_src/app/store/actions";
 
 export interface State {
     router?: RouterReducerState;

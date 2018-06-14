@@ -12,9 +12,10 @@
       "./src/typings.d.ts"
     ]
   },
-  "exclude": [
-    "**/*.spec.ts"
-  ],
+  //  "exclude": [
+  //    "./src/test.ts",
+  //    "**/*.spec.ts"
+  //  ],
   "angularCompilerOptions": {
     "preserveWhitespaces": false,
     "fullTemplateTypeCheck": false,

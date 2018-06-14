@@ -12,9 +12,8 @@ const config = {
         extensions: ["*", ".js", ".ts"],
         alias: {
             "_root": rootContext,
-            "_web_src": path.join(rootContext, "./src/web/src/"),
             "_shared": path.join(rootContext, "./src/shared/"),
-            "_web_app": path.join(rootContext, "./src/web/src/app/"),
+            "_web_src": path.join(rootContext, "./src/web/src/"),
         },
     },
 };

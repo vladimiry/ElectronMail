@@ -1,7 +1,7 @@
 import {Component} from "@angular/core";
 import {Store} from "@ngrx/store";
 
-import {settingsKeePassClientConfSelector, State} from "_web_app/store/reducers/options";
+import {settingsKeePassClientConfSelector, State} from "_web_src/app/store/reducers/options";
 
 @Component({
     selector: `protonmail-desktop-app-keepass-associate-settings`,

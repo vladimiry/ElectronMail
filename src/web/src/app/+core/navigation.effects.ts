@@ -5,8 +5,8 @@ import {Location} from "@angular/common";
 import {Actions, Effect} from "@ngrx/effects";
 
 import {IpcMainActions} from "_shared/electron-actions";
-import {ACCOUNTS_OUTLET, SETTINGS_OUTLET, SETTINGS_PATH} from "_web_app/app.constants";
-import {NavigationActions} from "_web_app/store/actions";
+import {ACCOUNTS_OUTLET, SETTINGS_OUTLET, SETTINGS_PATH} from "_web_src/app/app.constants";
+import {NavigationActions} from "_web_src/app/store/actions";
 import {ElectronService} from "./electron.service";
 import {EffectsService} from "./effects.service";
 

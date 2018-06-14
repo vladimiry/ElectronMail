@@ -4,9 +4,9 @@ import {Injectable} from "@angular/core";
 import {Actions, Effect} from "@ngrx/effects";
 import {Store} from "@ngrx/store";
 
-import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "_web_app/app.constants";
-import {ProgressPatch, settingsSelector, State} from "_web_app/store/reducers/options";
-import {NavigationActions, OptionsActions} from "_web_app/store/actions";
+import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "_web_src/app/app.constants";
+import {ProgressPatch, settingsSelector, State} from "_web_src/app/store/reducers/options";
+import {NavigationActions, OptionsActions} from "_web_src/app/store/actions";
 import {IpcMainActions} from "_shared/electron-actions";
 import {ElectronService} from "../+core/electron.service";
 import {EffectsService} from "../+core/effects.service";

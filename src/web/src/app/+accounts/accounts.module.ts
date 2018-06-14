@@ -2,7 +2,7 @@ import {NgModule, NO_ERRORS_SCHEMA} from "@angular/core";
 import {EffectsModule} from "@ngrx/effects";
 import {BsDropdownModule} from "ngx-bootstrap/dropdown";
 
-import {SharedModule} from "_web_app/+shared/shared.module";
+import {SharedModule} from "_web_src/app/+shared/shared.module";
 import {AccountsRoutingModule} from "./accounts.routing.module";
 import {AccountService} from "./account.service";
 import {AccountsComponent} from "./accounts.component";

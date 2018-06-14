@@ -4,7 +4,7 @@ import {Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output} 
 import {Store} from "@ngrx/store";
 
 import {KeePassClientConf, KeePassRef} from "_shared/model/keepasshttp";
-import {CoreActions} from "_web_app/store/actions";
+import {CoreActions} from "_web_src/app/store/actions";
 import {ElectronService} from "../+core/electron.service";
 
 type NumericObservable = Observable<number>;

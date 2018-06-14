@@ -79,6 +79,7 @@ const metadata = {
 
 // prefer JIT over AOT in dev mode
 const aotEnabled = metadata.env.isProduction();
+const hrmEnabled = !metadata.env.isProduction();
 
 // tslint:disable-next-line:no-console
 console.log(`metadata: ${JSON.stringify(metadata, null, 4)}`);
@@ -108,20 +109,29 @@ const config = {
         module: {
             rules: [
                 {
-                    test: /\.css$/,
-                    use: [MiniCssExtractPlugin.loader].concat(cssRuleUse),
+                    test: /[\/\\]@angular[\/\\].+\.js$/,
+                    sideEffects: false,
+                    parser: {
+                        system: true,
+                    },
                 },
-                {
-                    test: /\.scss$/,
-                    use: [MiniCssExtractPlugin.loader].concat(
-                        cssRuleUse.concat([
-                            "sass-loader",
-                        ]),
-                    ),
-                    exclude: [
-                        metadata.paths.app,
-                    ],
-                },
+                ...(metadata.env.isTest() ? [] : [
+                    {
+                        test: /\.css$/,
+                        use: [MiniCssExtractPlugin.loader].concat(cssRuleUse),
+                    },
+                    {
+                        test: /\.scss$/,
+                        use: [MiniCssExtractPlugin.loader].concat(
+                            cssRuleUse.concat([
+                                "sass-loader",
+                            ]),
+                        ),
+                        exclude: [
+                            metadata.paths.app,
+                        ],
+                    },
+                ]),
                 {
                     test: /\.scss$/,
                     use: ["to-string-loader"].concat(
@@ -149,7 +159,7 @@ const config = {
                     },
                 },
                 {
-                    test: /\.(eot|ttf|otf|woff|woff2|svg)$/,
+                    test: /\.(eot|ttf|otf|woff|woff2)$/,
                     use: {
                         loader: "url-loader",
                         options: {
@@ -161,21 +171,25 @@ const config = {
             ],
         },
         plugins: [
-            new MiniCssExtractPlugin(),
+            ...(metadata.env.isTest() ? [] : [
+                new MiniCssExtractPlugin(),
+                new HtmlWebpackPlugin({
+                    filename: "index.html",
+                    hash: metadata.env.isProduction(),
+                    minify: false,
+                    template: path.join(metadata.paths.src, "index.ejs"),
+                }),
+            ]),
             new ExtendedDefinePlugin({
                 APP_CONSTANTS: {
                     appName: packageJSON.name,
                     isDevEnv: metadata.env.isDevelopment(),
+                    isProdEnv: metadata.env.isProduction(),
+                    isHrm: hrmEnabled,
                 },
             }),
             new webpack.EnvironmentPlugin({
                 NODE_ENV_RUNTIME: metadata.env.value,
-            }),
-            new HtmlWebpackPlugin({
-                filename: "index.html",
-                hash: metadata.env.isProduction(),
-                minify: false,
-                template: path.join(metadata.paths.src, "index.ejs"),
             }),
             new CircularDependencyPlugin({
                 exclude: /([\\\/])node_modules([\\\/])/,
@@ -196,7 +210,7 @@ const config = {
         devServer: {
             port: metadata.devPort,
             host: metadata.devHost,
-            hot: true,
+            hot: hrmEnabled,
             inline: true,
             stats: "minimal",
             clientLogLevel: "error",
@@ -204,20 +218,13 @@ const config = {
         module: {
             rules: [
                 {
-                    test: /[\/\\]@angular[\/\\].+\.js$/,
-                    sideEffects: false,
-                    parser: {
-                        system: true,
-                    },
-                },
-                {
                     test: /\.ts$/,
                     loader: "@ngtools/webpack",
                 },
             ],
         },
         plugins: [
-            new webpack.HotModuleReplacementPlugin(),
+            ...(hrmEnabled ? [new webpack.HotModuleReplacementPlugin()] : []),
             // new SourceMapDevToolPlugin({
             //     filename: "[file].map[query]",
             //     moduleFilenameTemplate: "[resource-path]",
@@ -238,36 +245,6 @@ const config = {
                         "@ngtools/webpack",
                     ],
                 },
-                {
-                    test: /[\/\\]@angular[\/\\].+\.js$/,
-                    sideEffects: false,
-                    parser: {
-                        system: true,
-                    },
-                    use: [
-                        {
-                            loader: "cache-loader",
-                            options: {
-                                // tslint:disable-next-line:max-line-length
-                                cacheDirectory: path.join(rootContext, "./node_modules/@angular-devkit/build-optimizer/src/.cache"),
-                            },
-                        },
-                        "@angular-devkit/build-optimizer/webpack-loader",
-                    ],
-                },
-                {
-                    test: /\.js$/,
-                    use: [
-                        {
-                            loader: "cache-loader",
-                            options: {
-                                // tslint:disable-next-line:max-line-length
-                                cacheDirectory: path.join(rootContext, "./node_modules/@angular-devkit/build-optimizer/src/.cache"),
-                            },
-                        },
-                        "@angular-devkit/build-optimizer/webpack-loader",
-                    ],
-                },
             ],
         },
         plugins: [
@@ -276,6 +253,47 @@ const config = {
     },
 };
 
+config.test = {
+    mode: "production",
+    target: "node",
+    entry: null,
+    output: null,
+    module: {
+        rules: [
+            {
+                test: /\.ts$/,
+                loader: "@ngtools/webpack",
+            },
+            {
+                test: /\.(css|scss|html|ico|gif|png|jpe?g|svg|eot|ttf|otf|woff|woff2)$/i,
+                loader: "null-loader",
+            },
+        ],
+    },
+    plugins: [
+        new ExtendedDefinePlugin({
+            __ELECTRON_EXPOSURE__: {
+                ipcRenderer: {},
+            },
+        }),
+    ],
+    // webpack 4 compatibility issue workaround: https://github.com/webpack-contrib/karma-webpack/issues/322
+    optimization: {
+        splitChunks: false,
+        runtimeChunk: false,
+    },
+    node: {
+        global: true,
+        process: false,
+        crypto: "empty",
+        module: false,
+        clearImmediate: false,
+        setImmediate: false,
+    },
+};
+
 const result = webpackMerge(config.common, config[metadata.env.value]);
+
+// console.log(JSON.stringify(result, null, 2));
 
 module.exports = result;

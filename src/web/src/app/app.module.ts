@@ -13,7 +13,7 @@ import {CoreModule} from "./+core/core.module";
 import {RoutingModule} from "./app.routing.module";
 import {AppComponent} from "./components/app.component";
 import {metaReducers, reducers, State} from "./store/reducers/root";
-import {HrmStateRestoreAction} from "_web_app/store/actions/root/hrm-restore-state";
+import {HrmStateRestoreAction} from "_web_src/app/store/actions/root/hrm-restore-state";
 import * as AccountsReducer from "./store/reducers/accounts";
 import * as ErrorsReducer from "./store/reducers/errors";
 import * as OptionsReducer from "./store/reducers/options";

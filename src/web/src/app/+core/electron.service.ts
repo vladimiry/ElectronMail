@@ -2,12 +2,13 @@ import {Observable, Subscriber} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 
 import {ElectronIpcMainActionType, ElectronIpcRendererActionType} from "_shared/electron-actions/model";
-import {ElectronTransport, ElectronWindow} from "_shared/model/electron";
+import {ElectronTransport} from "_shared/model/electron";
 import {IpcMainActions} from "_shared/electron-actions";
 import {KeePassClientConf, KeePassRef} from "_shared/model/keepasshttp";
 import {StackFramedError} from "_shared/model/error";
 
-const ipcRenderer = ((window as any) as ElectronWindow).__ELECTRON_EXPOSURE__.ipcRenderer;
+// @ts-ignore
+const ipcRenderer = __ELECTRON_EXPOSURE__.ipcRenderer;
 
 @Injectable()
 export class ElectronService {

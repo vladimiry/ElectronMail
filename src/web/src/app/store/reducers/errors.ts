@@ -1,8 +1,8 @@
 import {Action, createFeatureSelector, createSelector} from "@ngrx/store";
 
-import {ERRORS_LIMIT} from "_web_app/app.constants";
-import * as fromRoot from "_web_app/store/reducers/root";
-import {CoreActions} from "_web_app/store/actions";
+import {ERRORS_LIMIT} from "_web_src/app/app.constants";
+import * as fromRoot from "_web_src/app/store/reducers/root";
+import {CoreActions} from "_web_src/app/store/actions";
 
 export const featureName = "errors";
 

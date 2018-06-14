@@ -5,8 +5,8 @@ import {Actions, Effect} from "@ngrx/effects";
 import {Store} from "@ngrx/store";
 
 import {IpcMainActions} from "_shared/electron-actions";
-import {AccountsActions, OptionsActions} from "_web_app/store/actions";
-import {State} from "_web_app/store/reducers/accounts";
+import {AccountsActions, OptionsActions} from "_web_src/app/store/actions";
+import {State} from "_web_src/app/store/reducers/accounts";
 import {EffectsService} from "../+core/effects.service";
 import {ElectronService} from "./../+core/electron.service";
 import {AccountService} from "./account.service";

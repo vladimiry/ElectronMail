@@ -5,7 +5,7 @@ import {FormGroup} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
 import {ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "_shared/model/options";
-import {configSelector, State} from "_web_app/store/reducers/options";
+import {configSelector, State} from "_web_src/app/store/reducers/options";
 
 @Component({
     selector: `protonmail-desktop-app-encryption-presets`,

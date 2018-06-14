@@ -26,8 +26,8 @@
       "_shared/*": [
         "./src/shared/*"
       ],
-      "_web_app/*": [
-        "./src/web/src/app/*"
+      "_web_src/*": [
+        "./src/web/src/*"
       ]
     },
     "typeRoots": [

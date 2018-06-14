@@ -2,7 +2,7 @@ import {of, Observable} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Action} from "@ngrx/store";
 
-import {CoreActions} from "_web_app/store/actions";
+import {CoreActions} from "_web_src/app/store/actions";
 
 @Injectable()
 export class EffectsService {

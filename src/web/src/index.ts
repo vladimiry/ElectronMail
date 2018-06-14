@@ -8,14 +8,14 @@ import "./index.scss";
 
 import {AppModule} from "./app/app.module";
 
-if (!APP_CONSTANTS.isDevEnv) {
+if (APP_CONSTANTS.isProdEnv) {
     enableProdMode();
 }
 
 bootloader(async () => {
     const ngModuleRef = await platformBrowserDynamic().bootstrapModule(AppModule);
 
-    if (APP_CONSTANTS.isDevEnv) {
+    if (APP_CONSTANTS.isHrm) {
         const applicationRef = ngModuleRef.injector.get(ApplicationRef);
         const componentRef = applicationRef.components[0];
 

@@ -1,5 +1,5 @@
 import {map, merge, mergeMap, switchMap, takeUntil, withLatestFrom} from "rxjs/operators";
-import {Observable, Subject, BehaviorSubject, of} from "rxjs";
+import {BehaviorSubject, Observable, of, Subject} from "rxjs";
 import {AfterViewInit, Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {ActivatedRoute} from "@angular/router";
@@ -8,8 +8,13 @@ import {Store} from "@ngrx/store";
 import {AccountConfig, AccountCredentials} from "_shared/model/account";
 import {AccountConfigPatch} from "_shared/model/container";
 import {KeePassRef} from "_shared/model/keepasshttp";
-import {OptionsActions} from "_web_app/store/actions";
-import {progressSelector, settingsAccountByLoginSelector, settingsKeePassClientConfSelector, State} from "_web_app/store/reducers/options";
+import {OptionsActions} from "_web_src/app/store/actions";
+import {
+    progressSelector,
+    settingsAccountByLoginSelector,
+    settingsKeePassClientConfSelector,
+    State,
+} from "_web_src/app/store/reducers/options";
 import {OptionsService} from "./options.service";
 
 type optionalAccount = AccountConfig | undefined;

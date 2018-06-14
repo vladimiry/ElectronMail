@@ -3,8 +3,8 @@ import {Component} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
-import {OptionsActions} from "_web_app/store/actions";
-import {progressSelector, State} from "_web_app/store/reducers/options";
+import {OptionsActions} from "_web_src/app/store/actions";
+import {progressSelector, State} from "_web_src/app/store/reducers/options";
 import {ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "_shared/model/options";
 
 @Component({

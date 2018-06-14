@@ -5,9 +5,9 @@ import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
 import {KeePassClientConf, KeePassRef} from "_shared/model/keepasshttp";
-import {SETTINGS_OUTLET, SETTINGS_PATH} from "_web_app/app.constants";
-import {CoreActions, NavigationActions} from "_web_app/store/actions";
-import {State} from "_web_app/store/reducers/options";
+import {SETTINGS_OUTLET, SETTINGS_PATH} from "_web_src/app/app.constants";
+import {CoreActions, NavigationActions} from "_web_src/app/store/actions";
+import {State} from "_web_src/app/store/reducers/options";
 import {ElectronService} from "../+core/electron.service";
 
 @Component({

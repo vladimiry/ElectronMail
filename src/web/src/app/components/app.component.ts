@@ -2,9 +2,11 @@ import {Component, HostListener} from "@angular/core";
 import {Location} from "@angular/common";
 import {Store} from "@ngrx/store";
 
-import {ACCOUNTS_OUTLET, ERRORS_OUTLET, ESC_KEY_CODE, SETTINGS_OUTLET} from "_web_app/app.constants";
-import {NavigationActions} from "_web_app/store/actions";
-import {State} from "_web_app/store/reducers/root";
+import {ACCOUNTS_OUTLET, ERRORS_OUTLET, ESC_KEY, SETTINGS_OUTLET} from "_web_src/app/app.constants";
+import {NavigationActions} from "_web_src/app/store/actions";
+import {State} from "_web_src/app/store/reducers/root";
+
+export type CloseableOutletsType = typeof ERRORS_OUTLET | typeof SETTINGS_OUTLET;
 
 @Component({
     selector: `protonmail-desktop-app-app`,
@@ -16,29 +18,28 @@ import {State} from "_web_app/store/reducers/root";
     styleUrls: ["./app.component.scss"],
 })
 export class AppComponent {
+    private closeableOutlets: CloseableOutletsType[] = [ERRORS_OUTLET, SETTINGS_OUTLET];
+
     constructor(private location: Location,
                 private store: Store<State>) {}
 
     @HostListener("document:keyup", ["$event"])
-    onKeyUp(ev: KeyboardEvent) {
-        if (ev.keyCode !== ESC_KEY_CODE) {
+    onKeyUp({key}: KeyboardEvent) {
+        if (key !== ESC_KEY) {
             return;
         }
 
         const hash = this.location.path(true);
 
-        if (hash.indexOf(`${ERRORS_OUTLET}:`) !== -1) {
-            this.close(ERRORS_OUTLET);
-            return;
-        }
-
-        if (hash.indexOf(`${SETTINGS_OUTLET}:`) !== -1) {
-            this.close(SETTINGS_OUTLET);
-            return;
+        for (const outlet of this.closeableOutlets) {
+            if (hash.indexOf(`${outlet}:`) !== -1) {
+                this.closeOutlet(outlet);
+                return;
+            }
         }
     }
 
-    private close(outlet: string) {
+    private closeOutlet(outlet: CloseableOutletsType) {
         this.store.dispatch(new NavigationActions.Go({path: [{outlets: {[outlet]: null}}]}));
     }
 }

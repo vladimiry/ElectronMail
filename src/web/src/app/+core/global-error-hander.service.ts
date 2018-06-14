@@ -1,8 +1,8 @@
 import {Injectable} from "@angular/core";
 import {Store} from "@ngrx/store";
 
-import {CoreActions} from "_web_app/store/actions";
-import {State} from "_web_app/store/reducers/root";
+import {CoreActions} from "_web_src/app/store/actions";
+import {State} from "_web_src/app/store/reducers/root";
 
 @Injectable()
 export class GlobalErrorHandler implements GlobalErrorHandler {

@@ -1,6 +1,8 @@
 declare const APP_CONSTANTS: {
     appName: string,
     isDevEnv: boolean,
+    isProdEnv: boolean,
+    isHrm: boolean,
 };
 
 declare module "*.html" {

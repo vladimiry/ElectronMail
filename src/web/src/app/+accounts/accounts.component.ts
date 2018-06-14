@@ -4,8 +4,8 @@ import {Component, OnDestroy, OnInit} from "@angular/core";
 import {Store} from "@ngrx/store";
 
 import {WebAccount} from "_shared/model/account";
-import {SETTINGS_OUTLET, SETTINGS_PATH} from "_web_app/app.constants";
-import {AccountsActions, NavigationActions, OptionsActions} from "_web_app/store/actions";
+import {SETTINGS_OUTLET, SETTINGS_PATH} from "_web_src/app/app.constants";
+import {AccountsActions, NavigationActions, OptionsActions} from "_web_src/app/store/actions";
 import {
     accountsSelector,
     accountsUnreadSummarySelector,
@@ -13,8 +13,8 @@ import {
     selectedAccountSelector,
     selectedLoginSelector,
     State,
-} from "_web_app/store/reducers/accounts";
-import {configCompactLayoutSelector, progressSelector} from "_web_app/store/reducers/options";
+} from "_web_src/app/store/reducers/accounts";
+import {configCompactLayoutSelector, progressSelector} from "_web_src/app/store/reducers/options";
 
 @Component({
     selector: `protonmail-desktop-app-accounts`,

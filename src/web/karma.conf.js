@@ -2,19 +2,31 @@
 
 const rootPath = process.cwd();
 const webpack = require("./webpack.config.js");
-const pattern = "src/web/src/**/*.spec.ts";
+const filesBootstrap = "src/web/src/test/bootstrap.ts";
+const filesPattern = "src/web/src/**/*.spec.ts";
 
 module.exports = (config) => {
+    const customLaunchers = {
+        linux: {
+            base: "Chrome",
+            flags: ["--no-sandbox"],
+        },
+        osx: {
+            base: "Firefox",
+            flags: ["-headless"],
+        },
+    };
+
     const configuration = {
         basePath: rootPath,
         files: [
-            "src/web/src/test/bootstrap.ts",
-            {pattern: pattern, watched: false},
+            filesBootstrap,
+            {pattern: filesPattern, watched: false},
         ],
         frameworks: ["jasmine"],
         preprocessors: {
-            "src/web/src/test/bootstrap.ts": ["webpack"],
-            [pattern]: ["webpack"],
+            [filesBootstrap]: ["webpack"],
+            [filesPattern]: ["webpack"],
         },
         reporters: ["progress", "mocha"],
         webpack,
@@ -25,19 +37,14 @@ module.exports = (config) => {
         browsers: [
             "Chrome",
         ],
-        customLaunchers: {
-            Chrome_travis_ci: {
-                base: "Chrome",
-                flags: ["--no-sandbox"],
-            },
-        },
+        customLaunchers,
         mime: {
             "text/x-typescript": ["ts"],
         },
     };
 
-    if (process.env.TRAVIS) {
-        configuration.browsers = ["Chrome_travis_ci"];
+    if (process.env.TRAVIS_OS_NAME in customLaunchers) {
+        configuration.browsers = [process.env.TRAVIS_OS_NAME];
     }
 
     config.set(configuration);

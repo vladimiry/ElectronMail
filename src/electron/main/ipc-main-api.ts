@@ -11,12 +11,12 @@ import {AccountConfig} from "_shared/model/account";
 import {assert} from "_shared/util";
 import {buildSettingsAdapter, handleKeePassRequestError, toggleBrowserWindow} from "./util";
 import {Context} from "./model";
-import {EndpointsMap, ipcMainStreamService} from "_shared/ipc-stream/main";
+import {Endpoints, ipcMainStreamService} from "_shared/ipc-stream/main";
 import {KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "./constants";
 import {StatusCode, StatusCodeError} from "_shared/model/error";
 
-export const initEndpoints = (ctx: Context): EndpointsMap => {
-    const endpoints: EndpointsMap = {
+export const initEndpoints = (ctx: Context): Endpoints => {
+    const endpoints: Endpoints = {
         addAccount: ({login, passwordValue, mailPasswordValue, twoFactorCodeValue}) => from((async () => {
             const settings = await ctx.settingsStore.readExisting();
             const account: AccountConfig = {

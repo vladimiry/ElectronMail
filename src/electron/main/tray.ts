@@ -1,10 +1,10 @@
 import {app, Menu, Tray} from "electron";
 
 import {Context} from "./model";
-import {EndpointsMap} from "_shared/ipc-stream/main";
+import {Endpoints} from "_shared/ipc-stream/main";
 import {toggleBrowserWindow} from "./util";
 
-export async function initTray(ctx: Context, endpoints: EndpointsMap): Promise<Tray> {
+export async function initTray(ctx: Context, endpoints: Endpoints): Promise<Tray> {
     const tray = new Tray(ctx.locations.trayIcon);
     const toggleWindow = () => toggleBrowserWindow(ctx);
     const contextMenu = Menu.buildFromTemplate([

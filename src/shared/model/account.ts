@@ -1,5 +1,5 @@
 import {KeePassRef} from "./keepasshttp";
-import {NotificationType} from "_shared/electron-actions/ipc-renderer/notification";
+import {NotificationType} from "_shared/ipc-stream/webview/notification-output";
 
 export interface AccountCredentials {
     password: {
@@ -28,7 +28,6 @@ export interface WebAccountProgress {
     mailPassword?: boolean;
 }
 
-// TODO define page types as enum
 export type WebAccountPageType = "login" | "login2fa" | "unlock";
 
 export interface WebAccountPageLocation {
@@ -38,7 +37,6 @@ export interface WebAccountPageLocation {
 
 export interface WebAccount {
     accountConfig: AccountConfig;
-    /* TODO switch to Electron.WebviewTag */
     progress: WebAccountProgress;
     sync: {
         title?: string;

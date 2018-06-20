@@ -4,7 +4,6 @@ import {BsDropdownModule} from "ngx-bootstrap/dropdown";
 
 import {SharedModule} from "_web_src/app/+shared/shared.module";
 import {AccountsRoutingModule} from "./accounts.routing.module";
-import {AccountService} from "./account.service";
 import {AccountsComponent} from "./accounts.component";
 import {AccountComponent} from "./account.component";
 import {AccountTitleComponent} from "./account-title.component";
@@ -25,7 +24,6 @@ import {AccountsGuard} from "./accounts.guard";
     ],
     providers: [
         AccountsGuard,
-        AccountService,
     ],
     schemas: [
         // TODO enable ELECTRON_SCHEMA instead of NO_ERRORS_SCHEMA

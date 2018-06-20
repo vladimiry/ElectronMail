@@ -1,14 +1,13 @@
-import {Observable, of, merge as observableMerge} from "rxjs";
+import {Actions, Effect} from "@ngrx/effects";
 import {catchError, finalize, map, mergeMap, switchMap} from "rxjs/operators";
 import {Injectable} from "@angular/core";
-import {Actions, Effect} from "@ngrx/effects";
+import {merge as observableMerge, Observable, of} from "rxjs";
 import {Store} from "@ngrx/store";
 
 import {AccountsActions, OptionsActions} from "_web_src/app/store/actions";
-import {State} from "_web_src/app/store/reducers/accounts";
 import {EffectsService} from "../+core/effects.service";
 import {ElectronService} from "./../+core/electron.service";
-import {AccountService} from "./account.service";
+import {State} from "_web_src/app/store/reducers/accounts";
 
 @Injectable()
 export class AccountsEffects {
@@ -27,7 +26,8 @@ export class AccountsEffects {
                 case "login": {
                     return observableMerge(
                         of(new AccountsActions.PatchAccountProgress(login, {password: true})),
-                        this.accountService.login(webView, {login, password})
+                        this.electronService
+                            .ipcRendererCaller(webView)("login")({login, password})
                             .pipe(
                                 mergeMap(() => []),
                                 catchError((error) => this.effectsService.buildFailActionObservable(error)),
@@ -38,7 +38,8 @@ export class AccountsEffects {
                 case "login2fa": {
                     return observableMerge(
                         of(new AccountsActions.PatchAccountProgress(login, {password2fa: true})),
-                        this.accountService.login2fa(webView, {password})
+                        this.electronService
+                            .ipcRendererCaller(webView)("login2fa")({password})
                             .pipe(
                                 mergeMap(() => []),
                                 catchError((error) => this.effectsService.buildFailActionObservable(error)),
@@ -49,7 +50,8 @@ export class AccountsEffects {
                 case "unlock": {
                     return observableMerge(
                         of(new AccountsActions.PatchAccountProgress(login, {mailPassword: true})),
-                        this.accountService.unlock(webView, {mailPassword: password})
+                        this.electronService
+                            .ipcRendererCaller(webView)("unlock")({mailPassword: password})
                             .pipe(
                                 mergeMap(() => []),
                                 catchError((error) => this.effectsService.buildFailActionObservable(error)),
@@ -71,7 +73,8 @@ export class AccountsEffects {
             .pipe(
                 switchMap(({account, webView, unSubscribeOn}) => {
                     notifications.push(
-                        this.accountService.notification(webView, undefined /*{interval: 1000 * 10}*/, unSubscribeOn)
+                        this.electronService
+                            .ipcRendererCaller(webView)("notification", {unSubscribeOn, timeoutMs: 0})(undefined)
                             .pipe(map((notification) => new AccountsActions.AccountNotification(account.accountConfig, notification))),
                     );
 
@@ -97,8 +100,8 @@ export class AccountsEffects {
                                 new AccountsActions.Login(pageType, webView, account, credentials.password.value),
                             );
                         } else {
-                            return this.accountService
-                                .fillLogin(webView, {login: accountConfig.login})
+                            return this.electronService
+                                .ipcRendererCaller(webView)("fillLogin")({login: accountConfig.login})
                                 .pipe(mergeMap(() => []));
                         }
                     }
@@ -136,7 +139,6 @@ export class AccountsEffects {
             )));
 
     constructor(private effectsService: EffectsService,
-                private accountService: AccountService,
                 private electronService: ElectronService,
                 private actions$: Actions,
                 private store: Store<State>) {}

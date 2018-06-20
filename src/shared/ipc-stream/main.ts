@@ -16,7 +16,7 @@ import {
 import {ElectronContextLocations} from "_shared/model/electron";
 import {BaseConfig, Config, Settings} from "_shared/model/options";
 
-export interface EndpointsMap {
+export interface Endpoints {
     addAccount: Model.Action<AccountConfigPatch, Settings>;
     associateSettingsWithKeePass: Model.Action<UrlFieldContainer, Settings>;
     changeMasterPassword: Model.Action<PasswordFieldContainer & NewPasswordFieldContainer, Settings>;
@@ -41,6 +41,7 @@ export interface EndpointsMap {
     updateOverlayIcon: Model.Action<{ count: number; dataURL?: string; }, never>;
 }
 
+// TODO pick prefix from "package.json => name"
 export const ipcMainChannel = "protonmail-desktop-app:ipcMain-api";
 
-export const ipcMainStreamService = new Service<EndpointsMap>({channel: ipcMainChannel});
+export const ipcMainStreamService = new Service<Endpoints>({channel: ipcMainChannel});

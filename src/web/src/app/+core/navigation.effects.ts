@@ -1,8 +1,9 @@
-import {catchError, map, mergeMap, switchMap, tap} from "rxjs/operators";
-import {Injectable, NgZone} from "@angular/core";
-import {Router} from "@angular/router";
-import {Location} from "@angular/common";
 import {Actions, Effect} from "@ngrx/effects";
+import {catchError, map, switchMap, tap} from "rxjs/operators";
+import {concat, of} from "rxjs";
+import {Injectable, NgZone} from "@angular/core";
+import {Location} from "@angular/common";
+import {Router} from "@angular/router";
 
 import {ACCOUNTS_OUTLET, SETTINGS_OUTLET, SETTINGS_PATH} from "_web_src/app/app.constants";
 import {NavigationActions} from "_web_src/app/store/actions";
@@ -49,7 +50,6 @@ export class NavigationEffects {
         .pipe(switchMap(({payload}) => this.electronService
             .callIpcMain("toggleBrowserWindow")(payload)
             .pipe(
-                mergeMap(() => []),
                 catchError((error) => this.effectsService.buildFailActionObservable(error)),
             )));
 
@@ -59,7 +59,6 @@ export class NavigationEffects {
         .pipe(switchMap(() => this.electronService
             .callIpcMain("openAboutWindow")(undefined)
             .pipe(
-                mergeMap(() => []),
                 catchError((error) => this.effectsService.buildFailActionObservable(error)),
             )));
 
@@ -69,7 +68,6 @@ export class NavigationEffects {
         .pipe(switchMap(({url}) => this.electronService
             .callIpcMain("openExternal")({url})
             .pipe(
-                mergeMap(() => []),
                 catchError((error) => this.effectsService.buildFailActionObservable(error)),
             )));
 
@@ -79,28 +77,31 @@ export class NavigationEffects {
         .pipe(switchMap(() => this.electronService
             .callIpcMain("openSettingsFolder")(undefined)
             .pipe(
-                mergeMap(() => []),
                 catchError((error) => this.effectsService.buildFailActionObservable(error)),
             )));
 
     @Effect()
     logout$ = this.actions$
         .ofType(NavigationActions.Logout.type)
-        .pipe(switchMap(() => this.electronService
-            .callIpcMain("logout")(undefined)
-            .pipe(
-                mergeMap(() => [
-                    new NavigationActions.Go({
+        .pipe(
+            switchMap(() => {
+                const concatenated = concat(
+                    this.electronService.callIpcMain("logout")(undefined),
+                    of(new NavigationActions.Go({
                         path: [{
                             outlets: {
                                 [ACCOUNTS_OUTLET]: null,
                                 [SETTINGS_OUTLET]: SETTINGS_PATH,
                             },
                         }],
-                    }),
-                ]),
-                catchError((error) => this.effectsService.buildFailActionObservable(error)),
-            )));
+                    })),
+                );
+
+                return concatenated.pipe(
+                    catchError((error) => this.effectsService.buildFailActionObservable(error)),
+                );
+            }),
+        );
 
     @Effect()
     quit$ = this.actions$
@@ -108,7 +109,6 @@ export class NavigationEffects {
         .pipe(switchMap(() => this.electronService
             .callIpcMain("quit")(undefined)
             .pipe(
-                mergeMap(() => []),
                 catchError((error) => this.effectsService.buildFailActionObservable(error)),
             )));
 

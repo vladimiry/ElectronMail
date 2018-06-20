@@ -11,14 +11,14 @@ import {assert, pickBaseConfigProperties} from "_shared/util";
 import {BaseConfig, Config, Settings} from "_shared/model/options";
 import {buildSettingsAdapter, initContext} from "./util";
 import {Context} from "./model";
-import {EndpointsMap} from "_shared/ipc-stream/main";
+import {Endpoints} from "_shared/ipc-stream/main";
 import {INITIAL_STORES, KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "./constants";
 import {PasswordFieldContainer} from "_shared/model/container";
 import {StatusCode, StatusCodeError} from "_shared/model/error";
 
 interface TestContext {
     ctx: Context;
-    endpoints: EndpointsMap;
+    endpoints: Endpoints;
     mocks: any;
     mocked: any;
 }
@@ -34,7 +34,7 @@ const OPTIONS = Object.freeze({
     masterPassword: "masterPassword123",
 });
 
-const tests: Record<keyof EndpointsMap, (t: ExecutionContext<TestContext>) => ImplementationResult> = {
+const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => ImplementationResult> = {
     addAccount: async (t) => {
         const endpoints = t.context.endpoints;
         const addHandler = endpoints.addAccount;
@@ -409,12 +409,12 @@ Object.entries(tests).forEach(([apiMethodName, method]) => {
     test.serial(`API: ${apiMethodName}`, method);
 });
 
-async function initConfig(endpoints: EndpointsMap): Promise<Config> {
+async function initConfig(endpoints: Endpoints): Promise<Config> {
     return await endpoints.readConfig(undefined).toPromise();
 }
 
 // tslint:disable-next-line:max-line-length
-async function initConfigAndSettings(endpoints: EndpointsMap, payload: PasswordFieldContainer & { savePassword?: boolean; supressErrors?: boolean }): Promise<Settings> {
+async function initConfigAndSettings(endpoints: Endpoints, payload: PasswordFieldContainer & { savePassword?: boolean; supressErrors?: boolean }): Promise<Settings> {
     await initConfig(endpoints);
     return await endpoints.readSettings(payload).toPromise();
 }

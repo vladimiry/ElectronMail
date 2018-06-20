@@ -1,7 +1,4 @@
-import {ElectronIpcRendererActionType, IpcRendererChannel} from "_shared/electron-actions/model";
 import {WebAccountPageLocation} from "_shared/model/account";
-
-export const channel = IpcRendererChannel.AccountNotification;
 
 export type NotificationType = "noop" | "unauthorized" | "title" | "unread" | "pageType" | "offline";
 
@@ -37,16 +34,10 @@ export interface OfflineNotification extends Notification {
     type: "offline";
 }
 
-export type O =
+export type AccountNotificationOutput =
     | Noop
     | NotAuthorizedNotification
     | TitleNotification
     | UnreadNotification
     | PageTypeNotification
     | OfflineNotification;
-
-export interface Type extends ElectronIpcRendererActionType {
-    i: void; // {interval:number};
-    o: O;
-    c: typeof channel;
-}

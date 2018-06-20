@@ -90,6 +90,7 @@ if (!(metadata.env.value in envs)) {
 
 const config = {
     common: {
+        devtool: metadata.env.isProduction() ? "source-map" : "inline-source-map",
         target: "electron-renderer",
         entry: {
             app: [

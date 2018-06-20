@@ -7,13 +7,11 @@ export function assert(t: any, m?: string) {
     return t;
 }
 
-// @formatter:off
 export function pickBaseConfigProperties(
     {closeToTray, compactLayout, startMinimized, unreadNotifications, checkForUpdatesAndNotify}: Config,
 ): Record<keyof BaseConfig, boolean | undefined> {
     return {closeToTray, compactLayout, startMinimized, unreadNotifications, checkForUpdatesAndNotify};
 }
-// @formatter:on
 
 export const isAllowedUrl = (() => {
     const urlPrefixesWhiteList = [

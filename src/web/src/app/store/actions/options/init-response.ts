@@ -1,9 +1,10 @@
 import {Action} from "@ngrx/store";
-import {IpcMainActions} from "_shared/electron-actions";
+
+import {ElectronContextLocations} from "_shared/model/electron";
 
 export class InitResponse implements Action {
     static readonly type = "options:init-response";
     readonly type = InitResponse.type;
 
-    constructor(public payload: IpcMainActions.Init.Type["o"]) {}
+    constructor(public payload: { electronLocations: ElectronContextLocations; hasSavedPassword: boolean; }) {}
 }

@@ -4,7 +4,6 @@ import {Injectable} from "@angular/core";
 import {Actions, Effect} from "@ngrx/effects";
 import {Store} from "@ngrx/store";
 
-import {IpcMainActions} from "_shared/electron-actions";
 import {AccountsActions, OptionsActions} from "_web_src/app/store/actions";
 import {State} from "_web_src/app/store/reducers/accounts";
 import {EffectsService} from "../+core/effects.service";
@@ -130,7 +129,7 @@ export class AccountsEffects {
     updateOverlayIcon$ = this.actions$
         .ofType<AccountsActions.UpdateOverlayIcon>(AccountsActions.UpdateOverlayIcon.type)
         .pipe(switchMap(({count, dataURL}) => this.electronService
-            .callIpcMain<IpcMainActions.UpdateOverlayIcon.Type>(IpcMainActions.UpdateOverlayIcon.channel, {count, dataURL})
+            .callIpcMain("updateOverlayIcon")({count, dataURL})
             .pipe(
                 mergeMap(() => []),
                 catchError((error) => this.effectsService.buildFailActionObservable(error)),

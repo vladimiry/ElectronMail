@@ -1,92 +1,41 @@
-import {Observable, Subscriber} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
+import {Observable, Subscriber} from "rxjs";
 
-import {ElectronIpcMainActionType, ElectronIpcRendererActionType} from "_shared/electron-actions/model";
-import {ElectronTransport} from "_shared/model/electron";
-import {IpcMainActions} from "_shared/electron-actions";
+import {ElectronExposure, ElectronTransport} from "_shared/model/electron";
+import {ElectronIpcRendererActionType} from "_shared/electron-actions/model";
+import {ipcMainStreamService} from "_shared/ipc-stream/main";
 import {KeePassClientConf, KeePassRef} from "_shared/model/keepasshttp";
 import {StackFramedError} from "_shared/model/error";
 
-// @ts-ignore
-const ipcRenderer = __ELECTRON_EXPOSURE__.ipcRenderer;
+const ipcMainCaller = (() => {
+    const ipcRenderer = ((window as any).__ELECTRON_EXPOSURE__ as ElectronExposure).ipcRenderer;
+    const ipcRendererEventEmitter = {
+        on: (event: string, listener: (...args: any[]) => void) => {
+            ipcRenderer.on(event, (...args: any[]) => listener(args[1]));
+            return ipcRendererEventEmitter;
+        },
+        off: ipcRenderer.removeListener.bind(ipcRenderer),
+        emit: ipcRenderer.send.bind(ipcRenderer),
+    };
+    return ipcMainStreamService.caller({emitter: ipcRendererEventEmitter, listener: ipcRendererEventEmitter});
+})();
 
 @Injectable()
 export class ElectronService {
     callCounter = 0;
-    // TODO time configuring
-    // TODO debug: change to 3 sec
+
     readonly timeoutMs = 1000 * 15;
 
     constructor(private zone: NgZone) {}
 
-    keePassPassword(keePassClientConf: KeePassClientConf, keePassRef: KeePassRef, suppressErrors = false) {
-        return this.callIpcMain<IpcMainActions.KeePassRecordRequest.Type>(
-            IpcMainActions.KeePassRecordRequest.channel,
-            {keePassClientConf, keePassRef, suppressErrors},
-        );
+    callIpcMain: typeof ipcMainCaller = (name, options) => {
+        return this.zone.run(() => {
+            return ipcMainCaller(name, {timeoutMs: this.timeoutMs, ...options});
+        });
     }
 
-    // @formatter:off
-    callIpcMain<T extends ElectronIpcMainActionType>(
-        channel: T["c"],
-        payload?: T["i"],
-        unSubscribeOn?: Promise<any>,
-    ): Observable<T["o"]> {
-        const id = this.callCounter++;
-        const request = {id, payload} as ElectronTransport<T["i"]>;
-        let timeoutHandle: any;
-        const observable = Observable.create((observer: Subscriber<T["o"]>) => {
-            const listener = (event: string, response: ElectronTransport<T["o"]>) => {
-                if (response.id === request.id) {
-                    if (!unSubscribeOn) {
-                        clearTimeout(timeoutHandle);
-                        ipcRenderer.removeListener(channel, listener);
-                    }
-
-                    this.zone.run(() => {
-                        if (response.error) {
-                            observer.error(new StackFramedError(response.error));
-                        } else {
-                            observer.next(response.payload);
-
-                            if (!unSubscribeOn) {
-                                observer.complete();
-                            }
-                        }
-                    });
-                }
-            };
-            if (unSubscribeOn) {
-                // tslint:disable-next-line:no-floating-promises
-                unSubscribeOn.then(() => {
-                    const offEventName = `${channel}:off:${request.id}`;
-
-                    ipcRenderer.send(offEventName);
-                    ipcRenderer.removeListener(channel, listener);
-                });
-            } else {
-                timeoutHandle = setTimeout(
-                    () => {
-                        ipcRenderer.removeListener(channel, listener);
-
-                        this.zone.run(() => {
-                            observer.error(new Error(`"ipcRenderer" <=> "ipcMain" communication timeout: ${channel}`));
-
-                            if (!unSubscribeOn) {
-                                observer.complete();
-                            }
-                        });
-                    },
-                    this.timeoutMs,
-                );
-            }
-
-            ipcRenderer.on(channel, listener);
-        });
-
-        ipcRenderer.send(channel, request);
-
-        return observable;
+    keePassPassword(keePassClientConf: KeePassClientConf, keePassRef: KeePassRef, suppressErrors = false) {
+        return this.callIpcMain("keePassRecordRequest")({keePassClientConf, keePassRef, suppressErrors});
     }
 
     callIpcRenderer<T extends ElectronIpcRendererActionType>(
@@ -152,5 +101,4 @@ export class ElectronService {
 
         return observable;
     }
-    // @formatter:on
 }

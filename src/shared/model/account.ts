@@ -1,4 +1,4 @@
-import {KeePassRef} from "../keepasshttp";
+import {KeePassRef} from "./keepasshttp";
 import {NotificationType} from "_shared/electron-actions/ipc-renderer/notification";
 
 export interface AccountCredentials {

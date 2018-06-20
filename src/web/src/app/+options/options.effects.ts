@@ -7,7 +7,6 @@ import {Store} from "@ngrx/store";
 import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "_web_src/app/app.constants";
 import {ProgressPatch, settingsSelector, State} from "_web_src/app/store/reducers/options";
 import {NavigationActions, OptionsActions} from "_web_src/app/store/actions";
-import {IpcMainActions} from "_shared/electron-actions";
 import {ElectronService} from "../+core/electron.service";
 import {EffectsService} from "../+core/effects.service";
 import {OptionsService} from "./options.service";
@@ -18,7 +17,7 @@ export class OptionsEffects {
     initRequest$ = this.actions$
         .ofType(OptionsActions.InitRequest.type)
         .pipe(switchMap(() => this.electronService
-            .callIpcMain<IpcMainActions.Init.Type>(IpcMainActions.Init.channel)
+            .callIpcMain("init")(undefined)
             .pipe(
                 mergeMap((payload) => [
                     new OptionsActions.InitResponse(payload),
@@ -32,7 +31,7 @@ export class OptionsEffects {
     getConfigRequest$ = this.actions$
         .ofType(OptionsActions.GetConfigRequest.type)
         .pipe(switchMap(() => this.electronService
-            .callIpcMain<IpcMainActions.ReadConfig.Type>(IpcMainActions.ReadConfig.channel)
+            .callIpcMain("readConfig")(undefined)
             .pipe(
                 mergeMap((config) => [
                     new OptionsActions.GetConfigResponse(config),
@@ -55,7 +54,7 @@ export class OptionsEffects {
                 }
 
                 return this.electronService
-                    .callIpcMain<IpcMainActions.SettingsExists.Type>(IpcMainActions.SettingsExists.channel)
+                    .callIpcMain("settingsExists")(undefined)
                     .pipe(
                         map((readable) => this.optionsService.buildNavigationAction({
                             path: readable ? "login" : "settings-setup",
@@ -71,7 +70,7 @@ export class OptionsEffects {
         .pipe(switchMap(() => observableMerge(
             of(this.buildPatchProgress({signingIn: true})),
             this.electronService
-                .callIpcMain<IpcMainActions.ReadSettingsAuto.Type>(IpcMainActions.ReadSettingsAuto.channel)
+                .callIpcMain("readSettingsAuto")(undefined)
                 .pipe(
                     mergeMap((settings) => settings
                         ? [
@@ -98,7 +97,7 @@ export class OptionsEffects {
         .pipe(switchMap(({payload}) => observableMerge(
             of(this.buildPatchProgress({signingIn: true})),
             this.electronService
-                .callIpcMain<IpcMainActions.ReadSettings.Type>(IpcMainActions.ReadSettings.channel, payload)
+                .callIpcMain("readSettings")(payload)
                 .pipe(
                     mergeMap((settings) => [
                         new OptionsActions.GetSettingsResponse(settings),
@@ -125,7 +124,7 @@ export class OptionsEffects {
         .pipe(switchMap(({payload}) => observableMerge(
             of(this.buildPatchProgress({addingAccount: true})),
             this.electronService
-                .callIpcMain<IpcMainActions.AddAccount.Type>(IpcMainActions.AddAccount.channel, payload)
+                .callIpcMain("addAccount")(payload)
                 .pipe(
                     mergeMap((settings) => [
                         new OptionsActions.GetSettingsResponse(settings),
@@ -145,7 +144,7 @@ export class OptionsEffects {
         .pipe(switchMap(({payload}) => observableMerge(
             of(this.buildPatchProgress({updatingAccount: true})),
             this.electronService
-                .callIpcMain<IpcMainActions.UpdateAccount.Type>(IpcMainActions.UpdateAccount.channel, payload)
+                .callIpcMain("updateAccount")(payload)
                 .pipe(
                     map((settings) => new OptionsActions.GetSettingsResponse(settings)),
                     catchError((error) => this.effectsService.buildFailActionObservable(error)),
@@ -159,7 +158,7 @@ export class OptionsEffects {
         .pipe(switchMap(({login}) => observableMerge(
             of(this.buildPatchProgress({removingAccount: true})),
             this.electronService
-                .callIpcMain<IpcMainActions.RemoveAccount.Type>(IpcMainActions.RemoveAccount.channel, {login})
+                .callIpcMain("removeAccount")({login})
                 .pipe(
                     map((settings) => new OptionsActions.GetSettingsResponse(settings)),
                     catchError((error) => this.effectsService.buildFailActionObservable(error)),
@@ -173,9 +172,7 @@ export class OptionsEffects {
         .pipe(switchMap(({passwordChangeContainer}) => observableMerge(
             of(this.buildPatchProgress({changingPassword: true})),
             this.electronService
-                .callIpcMain<IpcMainActions.ChangeMasterPassword.Type>(
-                    IpcMainActions.ChangeMasterPassword.channel, passwordChangeContainer,
-                )
+                .callIpcMain("changeMasterPassword")(passwordChangeContainer)
                 .pipe(
                     mergeMap(() => []),
                     catchError((error) => {
@@ -193,9 +190,7 @@ export class OptionsEffects {
         .pipe(switchMap(({payload}) => observableMerge(
             of(this.buildPatchProgress({keePassReferencing: true})),
             this.electronService
-                .callIpcMain<IpcMainActions.AssociateSettingsWithKeePass.Type>(
-                    IpcMainActions.AssociateSettingsWithKeePass.channel, payload,
-                )
+                .callIpcMain("associateSettingsWithKeePass")(payload)
                 .pipe(
                     map((settings) => new OptionsActions.GetSettingsResponse(settings)),
                     catchError((error) => this.effectsService.buildFailActionObservable(error)),
@@ -209,7 +204,7 @@ export class OptionsEffects {
         .pipe(switchMap(() => observableMerge(
             of(this.buildPatchProgress({togglingCompactLayout: true})),
             this.electronService
-                .callIpcMain<IpcMainActions.ToggleCompactLayout.Type>(IpcMainActions.ToggleCompactLayout.channel)
+                .callIpcMain("toggleCompactLayout")(undefined)
                 .pipe(
                     map((config) => new OptionsActions.GetConfigResponse(config)),
                     catchError((error) => this.effectsService.buildFailActionObservable(error)),
@@ -223,7 +218,7 @@ export class OptionsEffects {
         .pipe(switchMap(({patch}) => observableMerge(
             of(this.buildPatchProgress({updatingBaseSettings: true})),
             this.electronService
-                .callIpcMain<IpcMainActions.PatchBaseSettings.Type>(IpcMainActions.PatchBaseSettings.channel, patch)
+                .callIpcMain("patchBaseSettings")(patch)
                 .pipe(
                     map((config) => new OptionsActions.GetConfigResponse(config)),
                     catchError((error) => this.effectsService.buildFailActionObservable(error)),
@@ -237,10 +232,7 @@ export class OptionsEffects {
         .pipe(switchMap(({encryptionPreset, password}) => observableMerge(
             of(this.buildPatchProgress({reEncryptingSettings: true})),
             this.electronService
-                .callIpcMain<IpcMainActions.ReEncryptSettings.Type>(
-                    IpcMainActions.ReEncryptSettings.channel,
-                    {encryptionPreset, password},
-                )
+                .callIpcMain("reEncryptSettings")({encryptionPreset, password})
                 .pipe(
                     map((settings) => new OptionsActions.GetSettingsResponse(settings)),
                     catchError((error) => this.effectsService.buildFailActionObservable(error)),

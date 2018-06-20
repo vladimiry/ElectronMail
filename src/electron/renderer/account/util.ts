@@ -10,7 +10,6 @@ import {ElectronTransportEvent} from "../../model";
 
 // TODO consider merging common stuff with util of the main process
 
-// @formatter:off
 export const ipcRendererOn = <T extends ElectronIpcRendererActionType> (
     channel: T["c"],
     callback: (args: { payload: T["i"] }) => Promise<T["o"]>,
@@ -130,4 +129,3 @@ export const waitElements = <E extends HTMLElement, T extends { [k: string]: () 
 
     iteration();
 });
-// @formatter:on

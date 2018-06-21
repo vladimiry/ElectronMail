@@ -82,7 +82,7 @@ const aotEnabled = metadata.env.isProduction();
 const hrmEnabled = !metadata.env.isProduction();
 
 // tslint:disable-next-line:no-console
-console.log(`metadata: ${JSON.stringify(metadata, null, 4)}`);
+// console.log(`metadata: ${JSON.stringify(metadata, null, 4)}`);
 
 if (!(metadata.env.value in envs)) {
     throw new Error("NODE_ENV_RUNTIME is not defined");
@@ -90,6 +90,7 @@ if (!(metadata.env.value in envs)) {
 
 const config = {
     common: {
+        devtool: metadata.env.isProduction() ? "source-map" : "inline-source-map",
         target: "electron-renderer",
         entry: {
             app: [

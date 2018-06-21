@@ -3,19 +3,16 @@ import * as url from "url";
 import * as os from "os";
 
 import logger from "electron-log";
-import {app, ipcMain} from "electron";
-import {fromError} from "stacktrace-js";
-import {EMPTY, Observable, Subscription} from "rxjs";
-import {catchError} from "rxjs/operators";
+import {app} from "electron";
 import {Model as StoreModel, Store} from "fs-json-store";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 
 import {Config, configEncryptionPresetValidator, Settings, settingsAccountLoginUniquenessValidator} from "_shared/model/options";
-import {ElectronTransport, Environment} from "_shared/model/electron";
-import {ElectronIpcMainActionType} from "_shared/electron-actions/model";
-import {ElectronTransportEvent} from "../model";
+import {Environment} from "_shared/model/electron";
 import {Context, ContextInitOptions} from "./model";
 import {INITIAL_STORES} from "./constants";
+import {Model as KeePassHttpClientModel} from "keepasshttp-client";
+import {MessageFieldContainer} from "_shared/model/container";
 
 export async function initContext(opts: ContextInitOptions = {}): Promise<Context> {
     const env: Environment = process.env.NODE_ENV_RUNTIME === "development"
@@ -104,87 +101,27 @@ export function activateBrowserWindow({uiContext}: Context) {
     uiContext.browserWindow.focus();
 }
 
-// @formatter:off
-export const ipcMainOn = <T extends ElectronIpcMainActionType>(
-    {channel, process}: {channel: T["c"], process: (args: T["i"]) => Promise<T["o"]>},
-) => {
-    type SendType = ElectronTransport<T["o"]>;
-
-    ipcMain.on(channel, (event: ElectronTransportEvent<T["o"]>, transport: ElectronTransport<T["i"]>) => {
-        const payload = Object.freeze<T["i"]>(transport.payload);
-
-        process(payload)
-            .then((result) => {
-                event.sender.send(
-                    channel,
-                    {id: transport.id, payload: result || null} as SendType,
-                );
-            })
-            .catch((error: Error) => {
-                // tslint:disable-next-line:no-floating-promises
-                fromError(error).then((stackFrames) => {
-                    event.sender.send(
-                        channel,
-                        {
-                            id: transport.id,
-                            error: {
-                                message: error.message,
-                                stackFrames,
-                            },
-                        } as SendType,
-                    );
-                });
-
-                logger.error(error);
-
-                return EMPTY;
-            });
-    });
-};
-
-// TODO make "subscriptions" map is reset on "MiscActions.Init.channel" event receiving
-export const ipcMainObservable = <T extends ElectronIpcMainActionType> (
-    channel: T["c"],
-    process: (args: T["i"]) => Observable<T["o"]>,
-) => {
-    type SendType = ElectronTransport<T["o"]>;
-    const subscriptions: Record<string, Subscription> = {};
-
-    ipcMain.on(channel, (event: ElectronTransportEvent<T["o"]>, transport: ElectronTransport<T["i"]>) => {
-        const payload = Object.freeze<T["i"]>(transport.payload);
-        const observable = process(payload);
-        const offEventName = `${channel}:off:${transport.id}`;
-
-        ipcMain.once(offEventName, () => {
-            subscriptions[offEventName].unsubscribe();
-        });
-
-        subscriptions[offEventName] = observable.subscribe((result) => {
-            event.sender.send(
-                channel,
-                {id: transport.id, payload: result || null} as SendType,
-            );
-        });
-
-        observable.pipe(catchError((error: Error) => {
-            // tslint:disable-next-line:no-floating-promises
-            fromError(error).then((stackFrames) => {
-                event.sender.send(
-                    channel,
-                    {
-                        id: transport.id,
-                        error: {
-                            message: error.message,
-                            stackFrames,
-                        },
-                    } as SendType,
-                );
-            });
-
-            logger.error(error);
-
-            return EMPTY;
-        }));
-    });
-};
-// @formatter:on
+export function handleKeePassRequestError(error: any, suppressErrors = false): MessageFieldContainer {
+    if (error instanceof KeePassHttpClientModel.Common.NetworkResponseStatusCodeError && error.statusCode === 503) {
+        if (suppressErrors) {
+            return {message: "Locked"};
+        }
+        error.message = "KeePass: Locked";
+    }
+    if (error instanceof KeePassHttpClientModel.Common.NetworkConnectionError) {
+        if (suppressErrors) {
+            return {message: "No connection"};
+        }
+        error.message = "KeePass: No connection";
+    }
+    if (error instanceof KeePassHttpClientModel.Common.NetworkResponseContentError) {
+        if (suppressErrors) {
+            return {message: "Invalid response"};
+        }
+        error.message = "KeePass: Invalid response";
+    }
+    if (suppressErrors) {
+        return {message: "Request failed"};
+    }
+    throw error;
+}

@@ -46,6 +46,7 @@ module.exports.generateConfig = ({context}) => {
 
     const config = {
         mode: metadata.env.isProduction() ? "production" : "development",
+        devtool: metadata.env.isProduction() ? "source-map" : "inline-source-map",
         module: {
             rules: [
                 {

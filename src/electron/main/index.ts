@@ -2,7 +2,6 @@ import * as electronUnhandled from "electron-unhandled";
 import logger from "electron-log";
 import {app} from "electron";
 
-import {IpcMainActions} from "_shared/electron-actions";
 import {isAllowedUrl} from "_shared/util";
 import {initEndpoints} from "./ipc-main-api";
 import {Context} from "./model";
@@ -26,7 +25,7 @@ export async function initApp(ctx: Context) {
 
     app.on("ready", async () => {
         const endpoints = initEndpoints(ctx);
-        const {checkForUpdatesAndNotify} = await endpoints[IpcMainActions.ReadConfig.channel].process(undefined);
+        const {checkForUpdatesAndNotify} = await endpoints.readConfig(undefined).toPromise();
 
         // should be called before "browserWindow" creating (listens for "browser-window-created" event)
         initWebContentContextMenu(ctx);

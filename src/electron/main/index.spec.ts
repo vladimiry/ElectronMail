@@ -2,7 +2,6 @@ import * as sinon from "sinon";
 import rewiremock from "rewiremock";
 import anyTest, {TestInterface} from "ava";
 
-import {IpcMainActions} from "_shared/electron-actions";
 import {INITIAL_STORES} from "./constants";
 
 const test = anyTest as TestInterface<{
@@ -32,9 +31,9 @@ test.serial("workflow", async (t) => {
 
 test.beforeEach(async (t) => {
     t.context.endpoints = {
-        [IpcMainActions.ReadConfig.channel]: {
-            process: sinon.stub().returns(INITIAL_STORES.config),
-        },
+        readConfig: sinon.stub().returns({
+            toPromise: () => Promise.resolve(INITIAL_STORES.config),
+        }),
     };
 
     t.context.ctx = {
@@ -46,7 +45,6 @@ test.beforeEach(async (t) => {
             "./util": {
                 initContext: sinon.stub().resolves(t.context.ctx),
                 activateBrowserWindow: sinon.spy(),
-                ipcMainOn: sinon.spy(),
             },
             "./ipc-main-api": {
                 initEndpoints: sinon.stub().returns(t.context.endpoints),

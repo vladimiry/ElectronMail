@@ -26,7 +26,7 @@ export class LoginComponent implements AfterViewInit, OnInit {
     constructor(private store: Store<State>) {}
 
     ngOnInit() {
-        this.store.select((hasSavedPasswordSelector))
+        this.store.select(hasSavedPasswordSelector)
             .pipe(
                 filter((value) => !!value),
                 take(1),

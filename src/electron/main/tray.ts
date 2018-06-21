@@ -1,10 +1,10 @@
 import {app, Menu, Tray} from "electron";
 
-import {IpcMainActions} from "_shared/electron-actions";
-import {Context, EndpointsMap} from "./model";
+import {Context} from "./model";
+import {Endpoints} from "_shared/ipc-stream/main";
 import {toggleBrowserWindow} from "./util";
 
-export async function initTray(ctx: Context, endpoints: EndpointsMap): Promise<Tray> {
+export async function initTray(ctx: Context, endpoints: Endpoints): Promise<Tray> {
     const tray = new Tray(ctx.locations.trayIcon);
     const toggleWindow = () => toggleBrowserWindow(ctx);
     const contextMenu = Menu.buildFromTemplate([
@@ -15,7 +15,7 @@ export async function initTray(ctx: Context, endpoints: EndpointsMap): Promise<T
         {
             label: "About",
             async click() {
-                await endpoints[IpcMainActions.OpenAboutWindow.channel].process(undefined);
+                await endpoints.openAboutWindow(undefined).toPromise();
             },
         },
         {
@@ -24,7 +24,7 @@ export async function initTray(ctx: Context, endpoints: EndpointsMap): Promise<T
         {
             label: "Open Settings Folder",
             async click() {
-                await endpoints[IpcMainActions.OpenSettingsFolder.channel].process(undefined);
+                await endpoints.openSettingsFolder(undefined).toPromise();
             },
         },
         {
@@ -33,7 +33,7 @@ export async function initTray(ctx: Context, endpoints: EndpointsMap): Promise<T
         {
             label: "Quit",
             async click() {
-                await endpoints[IpcMainActions.Quit.channel].process(undefined);
+                await endpoints.quit(undefined).toPromise();
             },
         },
     ]);

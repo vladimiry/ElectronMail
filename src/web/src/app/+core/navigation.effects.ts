@@ -1,10 +1,10 @@
-import {catchError, map, mergeMap, switchMap, tap} from "rxjs/operators";
-import {Injectable, NgZone} from "@angular/core";
-import {Router} from "@angular/router";
-import {Location} from "@angular/common";
 import {Actions, Effect} from "@ngrx/effects";
+import {catchError, map, switchMap, tap} from "rxjs/operators";
+import {concat, of} from "rxjs";
+import {Injectable, NgZone} from "@angular/core";
+import {Location} from "@angular/common";
+import {Router} from "@angular/router";
 
-import {IpcMainActions} from "_shared/electron-actions";
 import {ACCOUNTS_OUTLET, SETTINGS_OUTLET, SETTINGS_PATH} from "_web_src/app/app.constants";
 import {NavigationActions} from "_web_src/app/store/actions";
 import {ElectronService} from "./electron.service";
@@ -48,9 +48,8 @@ export class NavigationEffects {
     toggleBrowserWindow$ = this.actions$
         .ofType<NavigationActions.ToggleBrowserWindow>(NavigationActions.ToggleBrowserWindow.type)
         .pipe(switchMap(({payload}) => this.electronService
-            .callIpcMain<IpcMainActions.ToggleBrowserWindow.Type>(IpcMainActions.ToggleBrowserWindow.channel, payload)
+            .callIpcMain("toggleBrowserWindow")(payload)
             .pipe(
-                mergeMap(() => []),
                 catchError((error) => this.effectsService.buildFailActionObservable(error)),
             )));
 
@@ -58,9 +57,8 @@ export class NavigationEffects {
     openAboutWindow$ = this.actions$
         .ofType(NavigationActions.OpenAboutWindow.type)
         .pipe(switchMap(() => this.electronService
-            .callIpcMain<IpcMainActions.OpenAboutWindow.Type>(IpcMainActions.OpenAboutWindow.channel)
+            .callIpcMain("openAboutWindow")(undefined)
             .pipe(
-                mergeMap(() => []),
                 catchError((error) => this.effectsService.buildFailActionObservable(error)),
             )));
 
@@ -68,9 +66,8 @@ export class NavigationEffects {
     openExternal$ = this.actions$
         .ofType<NavigationActions.OpenExternal>(NavigationActions.OpenExternal.type)
         .pipe(switchMap(({url}) => this.electronService
-            .callIpcMain<IpcMainActions.OpenExternal.Type>(IpcMainActions.OpenExternal.channel, {url})
+            .callIpcMain("openExternal")({url})
             .pipe(
-                mergeMap(() => []),
                 catchError((error) => this.effectsService.buildFailActionObservable(error)),
             )));
 
@@ -78,38 +75,40 @@ export class NavigationEffects {
     openSettingsFolder$ = this.actions$
         .ofType(NavigationActions.OpenSettingsFolder.type)
         .pipe(switchMap(() => this.electronService
-            .callIpcMain<IpcMainActions.OpenSettingsFolder.Type>(IpcMainActions.OpenSettingsFolder.channel)
+            .callIpcMain("openSettingsFolder")(undefined)
             .pipe(
-                mergeMap(() => []),
                 catchError((error) => this.effectsService.buildFailActionObservable(error)),
             )));
 
     @Effect()
     logout$ = this.actions$
         .ofType(NavigationActions.Logout.type)
-        .pipe(switchMap(() => this.electronService
-            .callIpcMain<IpcMainActions.Logout.Type>(IpcMainActions.Logout.channel)
-            .pipe(
-                mergeMap(() => [
-                    new NavigationActions.Go({
+        .pipe(
+            switchMap(() => {
+                const concatenated = concat(
+                    this.electronService.callIpcMain("logout")(undefined),
+                    of(new NavigationActions.Go({
                         path: [{
                             outlets: {
                                 [ACCOUNTS_OUTLET]: null,
                                 [SETTINGS_OUTLET]: SETTINGS_PATH,
                             },
                         }],
-                    }),
-                ]),
-                catchError((error) => this.effectsService.buildFailActionObservable(error)),
-            )));
+                    })),
+                );
+
+                return concatenated.pipe(
+                    catchError((error) => this.effectsService.buildFailActionObservable(error)),
+                );
+            }),
+        );
 
     @Effect()
     quit$ = this.actions$
         .ofType(NavigationActions.Quit.type)
         .pipe(switchMap(() => this.electronService
-            .callIpcMain<IpcMainActions.Quit.Type>(IpcMainActions.Quit.channel)
+            .callIpcMain("quit")(undefined)
             .pipe(
-                mergeMap(() => []),
                 catchError((error) => this.effectsService.buildFailActionObservable(error)),
             )));
 

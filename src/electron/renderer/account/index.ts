@@ -1,11 +1,9 @@
 import * as OTPAuth from "otpauth";
 import {distinctUntilChanged, filter, map} from "rxjs/operators";
 import {from, fromEvent, interval, merge, Observable, Subscriber, throwError} from "rxjs";
-import {ipcRenderer} from "electron";
-import {Model} from "pubsub-to-stream-api";
 
 import * as Notification from "_shared/ipc-stream/webview/notification-output";
-import {Endpoints, ipcWebViewStreamService} from "_shared/ipc-stream/webview";
+import {Endpoints, IPC_WEBVIEW_API} from "_shared/ipc-stream/webview";
 import {waitElements} from "./util";
 
 delete (window as any).Notification;
@@ -220,22 +218,7 @@ export const endpoints: Endpoints = {
     })()),
 };
 
-const eventEmitter: Model.EventListener & Model.EventEmitter = {
-    on: (event, listener) => {
-        ipcRenderer.on(event, (...args: any[]) => listener(args[1]));
-        return eventEmitter;
-    },
-    off: ipcRenderer.removeListener.bind(ipcRenderer),
-    emit: (event, ...args) => {
-        ipcRenderer.sendToHost(event, ...args);
-        return true;
-    },
-};
-
-ipcWebViewStreamService.register(
-    endpoints,
-    eventEmitter,
-);
+IPC_WEBVIEW_API.registerApi(endpoints);
 
 function getUrl(): string {
     return (window as any).location.href;

@@ -1,7 +1,7 @@
 import * as aboutWindow from "about-window";
 import * as Jimp from "jimp";
 import * as keytar from "keytar";
-import {app, ipcMain, nativeImage, shell} from "electron";
+import {app, nativeImage, shell} from "electron";
 import {EMPTY, from} from "rxjs";
 import {isWebUri} from "valid-url";
 import {KeePassHttpClient} from "keepasshttp-client";
@@ -11,7 +11,7 @@ import {AccountConfig} from "_shared/model/account";
 import {assert} from "_shared/util";
 import {buildSettingsAdapter, handleKeePassRequestError, toggleBrowserWindow} from "./util";
 import {Context} from "./model";
-import {Endpoints, ipcMainStreamService} from "_shared/ipc-stream/main";
+import {Endpoints, IPC_MAIN_API} from "_shared/ipc-stream/main";
 import {KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "./constants";
 import {StatusCode, StatusCodeError} from "_shared/model/error";
 
@@ -281,17 +281,7 @@ export const initEndpoints = (ctx: Context): Endpoints => {
         })()),
     };
 
-    ipcMainStreamService.register(
-        endpoints,
-        {
-            on: ipcMain.addListener.bind(ipcMain),
-            off: ipcMain.removeListener.bind(ipcMain),
-            emit: ipcMain.emit.bind(ipcMain),
-        },
-        {
-            requestResolver: ({sender}, payload) => ({payload, emitter: {emit: sender.send.bind(sender)}}),
-        },
-    );
+    IPC_MAIN_API.registerApi(endpoints);
 
     return endpoints;
 };

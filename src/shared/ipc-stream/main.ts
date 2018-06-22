@@ -1,4 +1,4 @@
-import {Model, Service} from "pubsub-to-stream-api";
+import {ApiMethod, IpcMainApiService} from "electron-rpc-api";
 // tslint:disable-next-line:no-unused-variable
 import {Options as EncryptionAdapterOptions} from "fs-json-store-encryption-adapter";
 
@@ -17,31 +17,29 @@ import {ElectronContextLocations} from "_shared/model/electron";
 import {BaseConfig, Config, Settings} from "_shared/model/options";
 
 export interface Endpoints {
-    addAccount: Model.Action<AccountConfigPatch, Settings>;
-    associateSettingsWithKeePass: Model.Action<UrlFieldContainer, Settings>;
-    changeMasterPassword: Model.Action<PasswordFieldContainer & NewPasswordFieldContainer, Settings>;
-    init: Model.Action<undefined, { electronLocations: ElectronContextLocations; hasSavedPassword: boolean; }>;
+    addAccount: ApiMethod<AccountConfigPatch, Settings>;
+    associateSettingsWithKeePass: ApiMethod<UrlFieldContainer, Settings>;
+    changeMasterPassword: ApiMethod<PasswordFieldContainer & NewPasswordFieldContainer, Settings>;
+    init: ApiMethod<undefined, { electronLocations: ElectronContextLocations; hasSavedPassword: boolean; }>;
     // tslint:disable-next-line:max-line-length
-    keePassRecordRequest: Model.Action<KeePassRefFieldContainer & KeePassClientConfFieldContainer & { suppressErrors: boolean }, Partial<PasswordFieldContainer & MessageFieldContainer>>;
-    logout: Model.Action<undefined, never>;
-    openAboutWindow: Model.Action<undefined, never>;
-    openExternal: Model.Action<{ url: string }, never>;
-    openSettingsFolder: Model.Action<undefined, never>;
-    patchBaseSettings: Model.Action<BaseConfig, Config>;
-    quit: Model.Action<undefined, never>;
-    readConfig: Model.Action<undefined, Config>;
-    readSettings: Model.Action<PasswordFieldContainer & { savePassword?: boolean; supressErrors?: boolean }, Settings>;
-    readSettingsAuto: Model.Action<undefined, Settings | never>;
-    reEncryptSettings: Model.Action<PasswordFieldContainer & { encryptionPreset: EncryptionAdapterOptions }, Settings>;
-    removeAccount: Model.Action<LoginFieldContainer, Settings>;
-    settingsExists: Model.Action<undefined, boolean>;
-    toggleBrowserWindow: Model.Action<{ forcedState?: boolean }, never>;
-    toggleCompactLayout: Model.Action<undefined, Config>;
-    updateAccount: Model.Action<AccountConfigPatch, Settings>;
-    updateOverlayIcon: Model.Action<{ count: number; dataURL?: string; }, never>;
+    keePassRecordRequest: ApiMethod<KeePassRefFieldContainer & KeePassClientConfFieldContainer & { suppressErrors: boolean }, Partial<PasswordFieldContainer & MessageFieldContainer>>;
+    logout: ApiMethod<undefined, never>;
+    openAboutWindow: ApiMethod<undefined, never>;
+    openExternal: ApiMethod<{ url: string }, never>;
+    openSettingsFolder: ApiMethod<undefined, never>;
+    patchBaseSettings: ApiMethod<BaseConfig, Config>;
+    quit: ApiMethod<undefined, never>;
+    readConfig: ApiMethod<undefined, Config>;
+    readSettings: ApiMethod<PasswordFieldContainer & { savePassword?: boolean; supressErrors?: boolean }, Settings>;
+    readSettingsAuto: ApiMethod<undefined, Settings | never>;
+    reEncryptSettings: ApiMethod<PasswordFieldContainer & { encryptionPreset: EncryptionAdapterOptions }, Settings>;
+    removeAccount: ApiMethod<LoginFieldContainer, Settings>;
+    settingsExists: ApiMethod<undefined, boolean>;
+    toggleBrowserWindow: ApiMethod<{ forcedState?: boolean }, never>;
+    toggleCompactLayout: ApiMethod<undefined, Config>;
+    updateAccount: ApiMethod<AccountConfigPatch, Settings>;
+    updateOverlayIcon: ApiMethod<{ count: number; dataURL?: string; }, never>;
 }
 
-// TODO pick prefix from "package.json => name"
-export const ipcMainChannel = "protonmail-desktop-app:ipcMain-api";
-
-export const ipcMainStreamService = new Service<Endpoints>({channel: ipcMainChannel});
+// TODO pick "channel" from "package.json => name"
+export const IPC_MAIN_API = new IpcMainApiService<Endpoints>({channel: "protonmail-desktop-app:ipcMain-api"});

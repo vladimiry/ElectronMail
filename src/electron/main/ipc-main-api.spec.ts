@@ -6,14 +6,13 @@ import rewiremock from "rewiremock";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter/encryption-adapter";
 import {Fs} from "fs-json-store";
 
-import {AccountConfigPatch} from "_shared/model/container";
+import {AccountConfigPatch, PasswordFieldContainer} from "_shared/model/container";
 import {assert, pickBaseConfigProperties} from "_shared/util";
 import {BaseConfig, Config, Settings} from "_shared/model/options";
 import {buildSettingsAdapter, initContext} from "./util";
 import {Context} from "./model";
 import {Endpoints} from "_shared/ipc-stream/main";
 import {INITIAL_STORES, KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "./constants";
-import {PasswordFieldContainer} from "_shared/model/container";
 import {StatusCode, StatusCodeError} from "_shared/model/error";
 
 interface TestContext {
@@ -424,6 +423,11 @@ test.beforeEach(async (t) => {
         const openExternalSpy = sinon.spy();
 
         t.context.mocks = {
+            "_shared/ipc-stream/main": {
+                IPC_MAIN_API: {
+                    registerApi: sinon.spy(),
+                },
+            },
             "./util": {
                 toggleBrowserWindow: sinon.spy(),
                 buildSettingsAdapter,
@@ -520,5 +524,6 @@ test.beforeEach(async (t) => {
 
     t.context.ctx = ctx;
     t.context.endpoints = t.context.mocked["./ipc-main-api"].initEndpoints(t.context.ctx);
-    // TODO make sure "ipcMainStreamService.register" has been called
+    t.context.mocks["_shared/ipc-stream/main"].IPC_MAIN_API.registerApi.calledWithExactly(t.context.endpoints);
+    // TODO make sure "IPC_MAIN_API.register" has been called
 });

@@ -27,7 +27,7 @@ export class AccountsEffects {
                     return observableMerge(
                         of(new AccountsActions.PatchAccountProgress(login, {password: true})),
                         this.electronService
-                            .ipcRendererCaller(webView)("login")({login, password})
+                            .webViewCaller(webView)("login")({login, password})
                             .pipe(
                                 mergeMap(() => []),
                                 catchError((error) => this.effectsService.buildFailActionObservable(error)),
@@ -39,7 +39,7 @@ export class AccountsEffects {
                     return observableMerge(
                         of(new AccountsActions.PatchAccountProgress(login, {password2fa: true})),
                         this.electronService
-                            .ipcRendererCaller(webView)("login2fa")({password})
+                            .webViewCaller(webView)("login2fa")({password})
                             .pipe(
                                 mergeMap(() => []),
                                 catchError((error) => this.effectsService.buildFailActionObservable(error)),
@@ -51,7 +51,7 @@ export class AccountsEffects {
                     return observableMerge(
                         of(new AccountsActions.PatchAccountProgress(login, {mailPassword: true})),
                         this.electronService
-                            .ipcRendererCaller(webView)("unlock")({mailPassword: password})
+                            .webViewCaller(webView)("unlock")({mailPassword: password})
                             .pipe(
                                 mergeMap(() => []),
                                 catchError((error) => this.effectsService.buildFailActionObservable(error)),
@@ -74,7 +74,7 @@ export class AccountsEffects {
                 switchMap(({account, webView, unSubscribeOn}) => {
                     notifications.push(
                         this.electronService
-                            .ipcRendererCaller(webView)("notification", {unSubscribeOn, timeoutMs: 0})(undefined)
+                            .webViewCaller(webView)("notification", {unSubscribeOn, timeoutMs: 0})(undefined)
                             .pipe(map((notification) => new AccountsActions.AccountNotification(account.accountConfig, notification))),
                     );
 
@@ -101,7 +101,7 @@ export class AccountsEffects {
                             );
                         } else {
                             return this.electronService
-                                .ipcRendererCaller(webView)("fillLogin")({login: accountConfig.login})
+                                .webViewCaller(webView)("fillLogin")({login: accountConfig.login})
                                 .pipe(mergeMap(() => []));
                         }
                     }

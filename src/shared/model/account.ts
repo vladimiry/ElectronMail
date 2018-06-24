@@ -1,5 +1,5 @@
 import {KeePassRef} from "./keepasshttp";
-import {NotificationType} from "_shared/ipc-stream/webview/notification-output";
+import {NotificationType} from "_shared/api/webview/notification-output";
 
 export interface AccountCredentials {
     password: {

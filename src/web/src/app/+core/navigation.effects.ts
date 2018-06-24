@@ -57,7 +57,7 @@ export class NavigationEffects {
     openAboutWindow$ = this.actions$
         .ofType(NavigationActions.OpenAboutWindow.type)
         .pipe(switchMap(() => this.electronService
-            .callIpcMain("openAboutWindow")(undefined)
+            .callIpcMain("openAboutWindow")()
             .pipe(
                 catchError((error) => this.effectsService.buildFailActionObservable(error)),
             )));
@@ -75,7 +75,7 @@ export class NavigationEffects {
     openSettingsFolder$ = this.actions$
         .ofType(NavigationActions.OpenSettingsFolder.type)
         .pipe(switchMap(() => this.electronService
-            .callIpcMain("openSettingsFolder")(undefined)
+            .callIpcMain("openSettingsFolder")()
             .pipe(
                 catchError((error) => this.effectsService.buildFailActionObservable(error)),
             )));
@@ -86,7 +86,7 @@ export class NavigationEffects {
         .pipe(
             switchMap(() => {
                 const concatenated = concat(
-                    this.electronService.callIpcMain("logout")(undefined),
+                    this.electronService.callIpcMain("logout")(),
                     of(new NavigationActions.Go({
                         path: [{
                             outlets: {
@@ -107,7 +107,7 @@ export class NavigationEffects {
     quit$ = this.actions$
         .ofType(NavigationActions.Quit.type)
         .pipe(switchMap(() => this.electronService
-            .callIpcMain("quit")(undefined)
+            .callIpcMain("quit")()
             .pipe(
                 catchError((error) => this.effectsService.buildFailActionObservable(error)),
             )));

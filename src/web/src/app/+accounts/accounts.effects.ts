@@ -74,7 +74,7 @@ export class AccountsEffects {
                 switchMap(({account, webView, unSubscribeOn}) => {
                     notifications.push(
                         this.electronService
-                            .webViewCaller(webView)("notification", {unSubscribeOn, timeoutMs: 0})(undefined)
+                            .webViewCaller(webView)("notification", {unSubscribeOn, timeoutMs: 0})()
                             .pipe(map((notification) => new AccountsActions.AccountNotification(account.accountConfig, notification))),
                     );
 

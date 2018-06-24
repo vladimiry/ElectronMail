@@ -1,4 +1,4 @@
-import {ApiMethod, IpcMainApiService} from "electron-rpc-api";
+import {ApiMethod, ApiMethodNoArgument, IpcMainApiService} from "electron-rpc-api";
 // tslint:disable-next-line:no-unused-variable
 import {Options as EncryptionAdapterOptions} from "fs-json-store-encryption-adapter";
 
@@ -20,23 +20,23 @@ export interface Endpoints {
     addAccount: ApiMethod<AccountConfigPatch, Settings>;
     associateSettingsWithKeePass: ApiMethod<UrlFieldContainer, Settings>;
     changeMasterPassword: ApiMethod<PasswordFieldContainer & NewPasswordFieldContainer, Settings>;
-    init: ApiMethod<undefined, { electronLocations: ElectronContextLocations; hasSavedPassword: boolean; }>;
+    init: ApiMethodNoArgument<{ electronLocations: ElectronContextLocations; hasSavedPassword: boolean; }>;
     // tslint:disable-next-line:max-line-length
     keePassRecordRequest: ApiMethod<KeePassRefFieldContainer & KeePassClientConfFieldContainer & { suppressErrors: boolean }, Partial<PasswordFieldContainer & MessageFieldContainer>>;
-    logout: ApiMethod<undefined, never>;
-    openAboutWindow: ApiMethod<undefined, never>;
+    logout: ApiMethodNoArgument<never>;
+    openAboutWindow: ApiMethodNoArgument<never>;
     openExternal: ApiMethod<{ url: string }, never>;
-    openSettingsFolder: ApiMethod<undefined, never>;
+    openSettingsFolder: ApiMethodNoArgument<never>;
     patchBaseSettings: ApiMethod<BaseConfig, Config>;
-    quit: ApiMethod<undefined, never>;
-    readConfig: ApiMethod<undefined, Config>;
+    quit: ApiMethodNoArgument<never>;
+    readConfig: ApiMethodNoArgument<Config>;
     readSettings: ApiMethod<PasswordFieldContainer & { savePassword?: boolean; supressErrors?: boolean }, Settings>;
-    readSettingsAuto: ApiMethod<undefined, Settings | never>;
+    readSettingsAuto: ApiMethodNoArgument<Settings | never>;
     reEncryptSettings: ApiMethod<PasswordFieldContainer & { encryptionPreset: EncryptionAdapterOptions }, Settings>;
     removeAccount: ApiMethod<LoginFieldContainer, Settings>;
-    settingsExists: ApiMethod<undefined, boolean>;
+    settingsExists: ApiMethodNoArgument<boolean>;
     toggleBrowserWindow: ApiMethod<{ forcedState?: boolean }, never>;
-    toggleCompactLayout: ApiMethod<undefined, Config>;
+    toggleCompactLayout: ApiMethodNoArgument<Config>;
     updateAccount: ApiMethod<AccountConfigPatch, Settings>;
     updateOverlayIcon: ApiMethod<{ count: number; dataURL?: string; }, never>;
 }

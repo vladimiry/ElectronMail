@@ -1,8 +1,8 @@
 import {Injectable, NgZone} from "@angular/core";
 
 import {ElectronExposure} from "_shared/model/electron";
-import {IPC_MAIN_API} from "_shared/ipc-stream/main";
-import {IPC_WEBVIEW_API} from "_shared/ipc-stream/webview";
+import {IPC_MAIN_API} from "_shared/api/main";
+import {IPC_WEBVIEW_API} from "_shared/api/webview";
 import {KeePassClientConf, KeePassRef} from "_shared/model/keepasshttp";
 
 const ipcRenderer: any = ((window as any).__ELECTRON_EXPOSURE__ as ElectronExposure).ipcRenderer;

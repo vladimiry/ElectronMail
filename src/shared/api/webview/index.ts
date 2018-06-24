@@ -1,4 +1,4 @@
-import {ApiMethod, WebViewApiService} from "electron-rpc-api";
+import {ApiMethod, ApiMethodNoArgument, WebViewApiService} from "electron-rpc-api";
 
 import {LoginFieldContainer, MailPasswordFieldContainer, PasswordFieldContainer} from "_shared/model/container";
 import {AccountNotificationOutput} from "./notification-output";
@@ -7,7 +7,7 @@ export interface Endpoints {
     fillLogin: ApiMethod<LoginFieldContainer, { message: string }>;
     login2fa: ApiMethod<PasswordFieldContainer, { message: string }>;
     login: ApiMethod<LoginFieldContainer & PasswordFieldContainer, { message: string }>;
-    notification: ApiMethod<undefined, AccountNotificationOutput>;
+    notification: ApiMethodNoArgument<AccountNotificationOutput>;
     unlock: ApiMethod<MailPasswordFieldContainer, { message: string }>;
 }
 

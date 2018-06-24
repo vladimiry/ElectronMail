@@ -17,7 +17,7 @@ export class OptionsEffects {
     initRequest$ = this.actions$
         .ofType(OptionsActions.InitRequest.type)
         .pipe(switchMap(() => this.electronService
-            .callIpcMain("init")(undefined)
+            .callIpcMain("init")()
             .pipe(
                 mergeMap((payload) => [
                     new OptionsActions.InitResponse(payload),
@@ -31,7 +31,7 @@ export class OptionsEffects {
     getConfigRequest$ = this.actions$
         .ofType(OptionsActions.GetConfigRequest.type)
         .pipe(switchMap(() => this.electronService
-            .callIpcMain("readConfig")(undefined)
+            .callIpcMain("readConfig")()
             .pipe(
                 mergeMap((config) => [
                     new OptionsActions.GetConfigResponse(config),
@@ -54,7 +54,7 @@ export class OptionsEffects {
                 }
 
                 return this.electronService
-                    .callIpcMain("settingsExists")(undefined)
+                    .callIpcMain("settingsExists")()
                     .pipe(
                         map((readable) => this.optionsService.buildNavigationAction({
                             path: readable ? "login" : "settings-setup",
@@ -70,7 +70,7 @@ export class OptionsEffects {
         .pipe(switchMap(() => observableMerge(
             of(this.buildPatchProgress({signingIn: true})),
             this.electronService
-                .callIpcMain("readSettingsAuto")(undefined)
+                .callIpcMain("readSettingsAuto")()
                 .pipe(
                     mergeMap((settings) => settings
                         ? [
@@ -204,7 +204,7 @@ export class OptionsEffects {
         .pipe(switchMap(() => observableMerge(
             of(this.buildPatchProgress({togglingCompactLayout: true})),
             this.electronService
-                .callIpcMain("toggleCompactLayout")(undefined)
+                .callIpcMain("toggleCompactLayout")()
                 .pipe(
                     map((config) => new OptionsActions.GetConfigResponse(config)),
                     catchError((error) => this.effectsService.buildFailActionObservable(error)),

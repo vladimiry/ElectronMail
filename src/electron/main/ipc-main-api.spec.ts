@@ -11,7 +11,7 @@ import {assert, pickBaseConfigProperties} from "_shared/util";
 import {BaseConfig, Config, Settings} from "_shared/model/options";
 import {buildSettingsAdapter, initContext} from "./util";
 import {Context} from "./model";
-import {Endpoints} from "_shared/ipc-stream/main";
+import {Endpoints} from "_shared/api/main";
 import {INITIAL_STORES, KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "./constants";
 import {StatusCode, StatusCodeError} from "_shared/model/error";
 
@@ -135,7 +135,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         setPasswordSpy.calledWithExactly(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, payload.newPassword);
     },
     init: async (t) => {
-        const result = await t.context.endpoints.init(undefined).toPromise();
+        const result = await t.context.endpoints.init().toPromise();
 
         t.deepEqual(result.electronLocations, t.context.ctx.locations);
         t.is(typeof result.hasSavedPassword, "boolean");
@@ -149,7 +149,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         const endpoints = t.context.endpoints;
         const action = endpoints.logout;
 
-        await action(undefined).toPromise();
+        await action().toPromise();
         t.falsy(t.context.ctx.settingsStore.adapter);
         t.is(deletePasswordSpy.callCount, 1);
 
@@ -157,7 +157,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.truthy(t.context.ctx.settingsStore.adapter);
         t.is(deletePasswordSpy.callCount, 2);
 
-        await action(undefined).toPromise();
+        await action().toPromise();
         t.falsy(t.context.ctx.settingsStore.adapter);
         t.is(deletePasswordSpy.callCount, 3);
 
@@ -167,7 +167,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         const defaultOnSpy: sinon.SinonSpy = t.context.mocks["about-window"].default;
         const action = t.context.endpoints.openAboutWindow;
 
-        await action(undefined).toPromise();
+        await action().toPromise();
         const args = defaultOnSpy.getCall(0).args[0];
         t.true(args.icon_path.endsWith(path.normalize("assets/icons/icon.png")), "about called with proper icon path");
     },
@@ -202,7 +202,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
     },
     openSettingsFolder: async (t) => {
         const openItemSpy: sinon.SinonSpy = t.context.mocks.electron.shell.openItem;
-        await t.context.endpoints.openSettingsFolder(undefined).toPromise();
+        await t.context.endpoints.openSettingsFolder().toPromise();
         t.true(openItemSpy.alwaysCalledWith(t.context.ctx.locations.data));
     },
     patchBaseSettings: async (t) => {
@@ -239,7 +239,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
     },
     quit: async (t) => {
         const appQuitSpy: sinon.SinonSpy = t.context.mocks.electron.app.exit;
-        await t.context.endpoints.quit(undefined).toPromise();
+        await t.context.endpoints.quit().toPromise();
         t.is(appQuitSpy.callCount, 1, "electron.app.exit called once");
     },
     readConfig: async (t) => {
@@ -348,10 +348,10 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         const initial = await initConfig(endpoints);
         t.true(!initial.compactLayout);
 
-        let updated = await action(undefined).toPromise();
+        let updated = await action().toPromise();
         t.is(updated.compactLayout, true);
 
-        await action(undefined).toPromise();
+        await action().toPromise();
         updated = await t.context.ctx.configStore.readExisting();
         t.is(updated.compactLayout, false);
     },
@@ -409,7 +409,7 @@ Object.entries(tests).forEach(([apiMethodName, method]) => {
 });
 
 async function initConfig(endpoints: Endpoints): Promise<Config> {
-    return await endpoints.readConfig(undefined).toPromise();
+    return await endpoints.readConfig().toPromise();
 }
 
 // tslint:disable-next-line:max-line-length
@@ -423,7 +423,7 @@ test.beforeEach(async (t) => {
         const openExternalSpy = sinon.spy();
 
         t.context.mocks = {
-            "_shared/ipc-stream/main": {
+            "_shared/api/main": {
                 IPC_MAIN_API: {
                     registerApi: sinon.spy(),
                 },
@@ -524,6 +524,6 @@ test.beforeEach(async (t) => {
 
     t.context.ctx = ctx;
     t.context.endpoints = t.context.mocked["./ipc-main-api"].initEndpoints(t.context.ctx);
-    t.context.mocks["_shared/ipc-stream/main"].IPC_MAIN_API.registerApi.calledWithExactly(t.context.endpoints);
+    t.context.mocks["_shared/api/main"].IPC_MAIN_API.registerApi.calledWithExactly(t.context.endpoints);
     // TODO make sure "IPC_MAIN_API.register" has been called
 });

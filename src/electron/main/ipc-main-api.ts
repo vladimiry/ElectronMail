@@ -11,7 +11,7 @@ import {AccountConfig} from "_shared/model/account";
 import {assert} from "_shared/util";
 import {buildSettingsAdapter, handleKeePassRequestError, toggleBrowserWindow} from "./util";
 import {Context} from "./model";
-import {Endpoints, IPC_MAIN_API} from "_shared/ipc-stream/main";
+import {Endpoints, IPC_MAIN_API} from "_shared/api/main";
 import {KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "./constants";
 import {StatusCode, StatusCodeError} from "_shared/model/error";
 

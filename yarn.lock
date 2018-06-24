@@ -3145,11 +3145,11 @@ electron-rebuild@1.7.3:
     spawn-rx "^2.0.10"
     yargs "^7.0.2"
 
-electron-rpc-api@0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/electron-rpc-api/-/electron-rpc-api-0.1.0.tgz#37c523e5b686ce0ad2a5fcdc62c1e47c0c2703a6"
+electron-rpc-api@0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/electron-rpc-api/-/electron-rpc-api-0.2.0.tgz#0e534d6bbad892d525818068bee989d24374dc14"
   dependencies:
-    pubsub-to-stream-api "^0.1.0"
+    pubsub-to-stream-api "^0.2.0"
     tslib "^1.9.2"
 
 electron-to-chromium@^1.2.7, electron-to-chromium@^1.3.47:
@@ -3490,8 +3490,8 @@ eslint@^2.7.0:
     user-home "^2.0.0"
 
 esm@^3.0.40:
-  version "3.0.53"
-  resolved "https://registry.yarnpkg.com/esm/-/esm-3.0.53.tgz#dcab296db0531cf10d611dc783ba31c73fb58b59"
+  version "3.0.54"
+  resolved "https://registry.yarnpkg.com/esm/-/esm-3.0.54.tgz#df44b0815008b204fa7105251d4fc8690816c61f"
 
 espower-location-detector@^1.0.0:
   version "1.0.0"
@@ -8108,9 +8108,9 @@ public-encrypt@^4.0.0:
     parse-asn1 "^5.0.0"
     randombytes "^2.0.1"
 
-pubsub-to-stream-api@^0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/pubsub-to-stream-api/-/pubsub-to-stream-api-0.1.0.tgz#84b282cf56f2b52453c590044e17d597750fdecd"
+pubsub-to-stream-api@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/pubsub-to-stream-api/-/pubsub-to-stream-api-0.2.0.tgz#6950d57b4547d166b22106bc876bb3a72bd6437e"
   dependencies:
     deserialize-error "^0.0.3"
     rxjs "^6.2.1"
@@ -9159,9 +9159,9 @@ single-line-log@^1.1.2:
   dependencies:
     string-width "^1.0.1"
 
-sinon@6.0.0:
-  version "6.0.0"
-  resolved "https://registry.yarnpkg.com/sinon/-/sinon-6.0.0.tgz#f26627e4830dc34279661474da2c9e784f166215"
+sinon@6.0.1:
+  version "6.0.1"
+  resolved "https://registry.yarnpkg.com/sinon/-/sinon-6.0.1.tgz#4247b97dd8fecbe1e19f8b816a5e7eed3993bcfe"
   dependencies:
     "@sinonjs/formatio" "^2.0.0"
     diff "^3.5.0"

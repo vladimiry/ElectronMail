@@ -2,8 +2,8 @@ import * as OTPAuth from "otpauth";
 import {distinctUntilChanged, filter, map} from "rxjs/operators";
 import {from, fromEvent, interval, merge, Observable, Subscriber, throwError} from "rxjs";
 
-import * as Notification from "_shared/ipc-stream/webview/notification-output";
-import {Endpoints, IPC_WEBVIEW_API} from "_shared/ipc-stream/webview";
+import * as Notification from "_shared/api/webview/notification-output";
+import {Endpoints, IPC_WEBVIEW_API} from "_shared/api/webview";
 import {waitElements} from "./util";
 
 delete (window as any).Notification;

@@ -1,7 +1,7 @@
 import {app, Menu, Tray} from "electron";
 
 import {Context} from "./model";
-import {Endpoints} from "_shared/ipc-stream/main";
+import {Endpoints} from "_shared/api/main";
 import {toggleBrowserWindow} from "./util";
 
 export async function initTray(ctx: Context, endpoints: Endpoints): Promise<Tray> {
@@ -15,7 +15,7 @@ export async function initTray(ctx: Context, endpoints: Endpoints): Promise<Tray
         {
             label: "About",
             async click() {
-                await endpoints.openAboutWindow(undefined).toPromise();
+                await endpoints.openAboutWindow().toPromise();
             },
         },
         {
@@ -24,7 +24,7 @@ export async function initTray(ctx: Context, endpoints: Endpoints): Promise<Tray
         {
             label: "Open Settings Folder",
             async click() {
-                await endpoints.openSettingsFolder(undefined).toPromise();
+                await endpoints.openSettingsFolder().toPromise();
             },
         },
         {
@@ -33,7 +33,7 @@ export async function initTray(ctx: Context, endpoints: Endpoints): Promise<Tray
         {
             label: "Quit",
             async click() {
-                await endpoints.quit(undefined).toPromise();
+                await endpoints.quit().toPromise();
             },
         },
     ]);

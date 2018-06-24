@@ -1,18 +1,16 @@
-// TODO enabel "tslint:await-promise" rule
+// TODO enable "tslint:await-promise" rule
 // tslint:disable:await-promise
 
-import * as fs from "fs";
-import * as path from "path";
-import * as mkdirp from "mkdirp";
-import * as electron from "electron";
-import * as randomString from "randomstring";
-import * as psNode from "ps-node"; // see also https://www.npmjs.com/package/find-process
-import * as psTree from "ps-tree";
-import {promisify} from "util";
 import anyTest, {ExecutionContext, TestInterface} from "ava";
+import electron from "electron";
+import fs from "fs";
+import mkdirp from "mkdirp";
+import path from "path";
+import psNode from "ps-node"; // see also https://www.npmjs.com/package/find-process
+import psTree from "ps-tree";
+import randomString from "randomstring";
 import {Application} from "spectron";
-
-import {Environment} from "_shared/model/electron";
+import {promisify} from "util";
 
 export interface TestContext {
     app: Application;
@@ -27,7 +25,7 @@ export const test = anyTest as TestInterface<TestContext>;
 const {CI} = process.env;
 const rootDirPath = path.resolve(__dirname, process.cwd());
 const appDirPath = path.join(rootDirPath, "./app");
-const mainScriptFilePath = path.join(appDirPath, "./electron/main/index.js");
+const mainScriptFilePath = path.join(appDirPath, "./electron-main.js");
 
 export const ENV = {
     masterPassword: `master-password-${randomString.generate({length: 8})}`,
@@ -67,28 +65,6 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
         t.context.userDataDirPath = userDataDirPath;
         t.context.logFilePath = logFilePath;
 
-        const missedFiles = (["production", "development", "e2e"] as Environment[])
-            .map((env) => `./electron/renderer/browser-window-${env}-env.js`)
-            .concat([
-                "./electron/renderer/account.js",
-                "./web/index.html",
-                "./web/app.js",
-                "./assets/icons/icon.png",
-            ])
-            .map((file) => path.join(t.context.appDirPath, file))
-            .map((file) => {
-                const exists = fs.existsSync(file);
-                t.true(exists, `"${file}" file doesn't exist`);
-                return exists;
-            })
-            .filter((exists) => !exists)
-            .length > 0;
-
-        if (missedFiles) {
-            t.fail("Not all the required files exist");
-            return;
-        }
-
         if (options.initial) {
             t.false(fs.existsSync(path.join(userDataDirPath, "config.json")),
                 `"config.json" should not exist yet in "${userDataDirPath}"`);
@@ -103,7 +79,7 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
             requireName: "electronRequire",
             env: {
                 NODE_ENV_RUNTIME: "e2e",
-                TEST_USER_DATA_DIR: userDataDirPath,
+                E2E_TEST_USER_DATA_DIR: userDataDirPath,
             },
             args: [mainScriptFilePath],
 

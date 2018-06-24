@@ -3,8 +3,8 @@ import {AfterViewInit, Component, ElementRef, QueryList, ViewChildren} from "@an
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
-import {OptionsActions} from "_web_src/app/store/actions";
-import {progressSelector, State} from "_web_src/app/store/reducers/options";
+import {OptionsActions} from "_@web/src/app/store/actions";
+import {progressSelector, State} from "_@web/src/app/store/reducers/options";
 
 @Component({
     selector: `protonmail-desktop-app-settings-setup`,

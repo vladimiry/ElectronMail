@@ -1,6 +1,6 @@
 import {Action} from "@ngrx/store";
 
-import {BaseConfig} from "_shared/model/options";
+import {BaseConfig} from "_@shared/model/options";
 
 export class PatchBaseSettingsRequest implements Action {
     static readonly type = "options:patch-base-settings-request";

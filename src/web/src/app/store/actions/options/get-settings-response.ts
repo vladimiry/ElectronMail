@@ -1,6 +1,6 @@
 import {Action} from "@ngrx/store";
 
-import {Settings} from "_shared/model/options";
+import {Settings} from "_@shared/model/options";
 
 export class GetSettingsResponse implements Action {
     static readonly type = "options:get-settings-response";

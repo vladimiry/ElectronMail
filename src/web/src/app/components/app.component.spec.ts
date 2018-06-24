@@ -5,9 +5,9 @@ import {setIn} from "hydux-mutator";
 import {Store, StoreModule} from "@ngrx/store";
 
 import {AppComponent} from "./app.component";
-import {ESC_KEY, SETTINGS_OUTLET as outlet} from "_web_src/app/app.constants";
-import {initTestEnvironment} from "_web_src/test/util";
-import {NavigationActions} from "_web_src/app/store/actions";
+import {ESC_KEY, SETTINGS_OUTLET as outlet} from "_@web/src/app/app.constants";
+import {initTestEnvironment} from "_@web/test/util";
+import {NavigationActions} from "_@web/src/app/store/actions";
 
 const moduleDef: TestModuleMetadata = Object.freeze({
     imports: [

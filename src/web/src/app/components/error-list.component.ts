@@ -3,9 +3,9 @@ import {Subject} from "rxjs";
 import {ChangeDetectionStrategy, Component, OnDestroy, OnInit} from "@angular/core";
 import {Store} from "@ngrx/store";
 
-import {ERRORS_OUTLET} from "_web_src/app/app.constants";
-import {CoreActions, NavigationActions} from "_web_src/app/store/actions";
-import {errorsSelector, State} from "_web_src/app/store/reducers/errors";
+import {ERRORS_OUTLET} from "_@web/src/app/app.constants";
+import {CoreActions, NavigationActions} from "_@web/src/app/store/actions";
+import {errorsSelector, State} from "_@web/src/app/store/reducers/errors";
 
 @Component({
     selector: `protonmail-desktop-app-error-list-request`,

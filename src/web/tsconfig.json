@@ -1,21 +1,17 @@
 {
-  "extends": "./../../tsconfig.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "target": "es2015",
-    "moduleResolution": "node",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "allowSyntheticDefaultImports": true,
-    "typeRoots": [
-      "../../node_modules/@types",
-      "../../src/@types",
-      "./src/typings.d.ts"
-    ]
+    "allowSyntheticDefaultImports": true
   },
-  //  "exclude": [
-  //    "./src/test.ts",
-  //    "**/*.spec.ts"
-  //  ],
+  "include": [
+    "./**/*",
+    "./typings.d.ts"
+  ],
+  "exclude": [
+    "./**/*.spec.ts"
+  ],
   "angularCompilerOptions": {
     "preserveWhitespaces": false,
     "fullTemplateTypeCheck": false,

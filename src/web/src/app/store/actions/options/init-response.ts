@@ -1,6 +1,6 @@
 import {Action} from "@ngrx/store";
 
-import {ElectronContextLocations} from "_shared/model/electron";
+import {ElectronContextLocations} from "_@shared/model/electron";
 
 export class InitResponse implements Action {
     static readonly type = "options:init-response";

@@ -4,16 +4,16 @@ import {DidFailLoadEvent} from "electron";
 import {filter, map, pairwise, takeUntil, withLatestFrom} from "rxjs/operators";
 import {Store} from "@ngrx/store";
 
-import {KeePassRef} from "_shared/model/keepasshttp";
-import {WebAccount} from "_shared/model/account";
+import {KeePassRef} from "_@shared/model/keepasshttp";
+import {WebAccount} from "_@shared/model/account";
 import {
     configUnreadNotificationsSelector,
     electronLocationsSelector,
     settingsKeePassClientConfSelector,
     State as OptionsState,
-} from "_web_src/app/store/reducers/options";
-import {State} from "_web_src/app/store/reducers/accounts";
-import {AccountsActions, NavigationActions} from "_web_src/app/store/actions";
+} from "_@web/src/app/store/reducers/options";
+import {State} from "_@web/src/app/store/reducers/accounts";
+import {AccountsActions, NavigationActions} from "_@web/src/app/store/actions";
 
 @Component({
     selector: `protonmail-desktop-app-account`,
@@ -24,7 +24,7 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
     // webView initialization
     webViewSrc = "https://mail.protonmail.com/login";
     webViewPreload$ = this.optionsStore.select(electronLocationsSelector)
-        .pipe(map((electronLocations) => electronLocations && electronLocations.preload.account));
+        .pipe(map((electronLocations) => electronLocations && electronLocations.preload.webView));
     // account
     // TODO simplify account$ initialization and usage
     account$: BehaviorSubject<WebAccount>;
@@ -105,7 +105,7 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
             )
             .subscribe(([prev, curr]) => {
                 const login = this.account$.getValue().accountConfig.login;
-                const title = APP_CONSTANTS.appName;
+                const title = String(process.env.APP_ENV_PACKAGE_NAME);
                 const body = `Account "${login}" has ${curr} unread email${curr > 1 ? "s" : ""}.`;
 
                 new Notification(title, {body}).onclick = () => this.zone.run(() => {
@@ -142,7 +142,6 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
     ngAfterViewInit() {
         this.subscribePageLoadingEvents();
 
-        // this.webView.addEventListener("dom-ready", () => this.webView.openDevTools());
         this.webView.addEventListener("new-window", ({url}: any) => {
             this.optionsStore.dispatch(new NavigationActions.OpenExternal(url));
         });

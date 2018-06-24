@@ -1,6 +1,6 @@
 import {Action} from "@ngrx/store";
 
-import {WebAccount} from "_shared/model/account";
+import {WebAccount} from "_@shared/model/account";
 
 export class PageLoadingEnd implements Action {
     static readonly type = "account:page-loading-end";

@@ -5,8 +5,8 @@ import {Injectable, NgZone} from "@angular/core";
 import {Location} from "@angular/common";
 import {Router} from "@angular/router";
 
-import {ACCOUNTS_OUTLET, SETTINGS_OUTLET, SETTINGS_PATH} from "_web_src/app/app.constants";
-import {NavigationActions} from "_web_src/app/store/actions";
+import {ACCOUNTS_OUTLET, SETTINGS_OUTLET, SETTINGS_PATH} from "_@web/src/app/app.constants";
+import {NavigationActions} from "_@web/src/app/store/actions";
 import {ElectronService} from "./electron.service";
 import {EffectsService} from "./effects.service";
 

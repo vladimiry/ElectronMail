@@ -1,6 +1,6 @@
 import {Action} from "@ngrx/store";
 
-import {AccountConfig} from "_shared/model/account";
+import {AccountConfig} from "_@shared/model/account";
 
 export class SyncAccountsConfigs implements Action {
     static readonly type = "account:sync-accounts-configs";

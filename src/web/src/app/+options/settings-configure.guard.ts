@@ -4,8 +4,8 @@ import {Injectable} from "@angular/core";
 import {CanActivate} from "@angular/router";
 import {Store} from "@ngrx/store";
 
-import {State, stateSelector} from "_web_src/app/store/reducers/options";
-import {OptionsActions} from "_web_src/app/store/actions";
+import {State, stateSelector} from "_@web/src/app/store/reducers/options";
+import {OptionsActions} from "_@web/src/app/store/actions";
 
 @Injectable()
 export class SettingsConfigureGuard implements CanActivate {

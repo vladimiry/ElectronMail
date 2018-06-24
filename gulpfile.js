@@ -9,14 +9,14 @@ const psTree = require("ps-tree");
 const spawn = require("cross-spawn");
 const util = require("util");
 
-const mainScript = path.resolve("app/electron/main/index.js");
+const mainScript = path.resolve("./app-dev/electron-main.js");
 
-gulp.task("start", ["copy:assets"], () => {
+gulp.task("start:electron:dev", ["copy:assets:dev"], () => {
     let child;
 
     start();
 
-    gulp.watch(mainScript, () => {
+    gulp.watch([mainScript, "./app-dev/electron-preload/**/*"], () => {
         (async () => {
             await kill(child.pid);
             start();
@@ -44,7 +44,7 @@ gulp.task("start", ["copy:assets"], () => {
     }
 });
 
-gulp.task("copy:assets", () => {
+gulp.task("copy:assets:dev", () => {
     return gulp.src("./src/assets/dist/**/*")
-        .pipe(gulp.dest("./app/assets"));
+        .pipe(gulp.dest("./app-dev/assets"));
 });

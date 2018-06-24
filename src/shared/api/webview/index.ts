@@ -1,6 +1,6 @@
 import {ApiMethod, ApiMethodNoArgument, WebViewApiService} from "electron-rpc-api";
 
-import {LoginFieldContainer, MailPasswordFieldContainer, PasswordFieldContainer} from "_shared/model/container";
+import {LoginFieldContainer, MailPasswordFieldContainer, PasswordFieldContainer} from "_@shared/model/container";
 import {AccountNotificationOutput} from "./notification-output";
 
 export interface Endpoints {

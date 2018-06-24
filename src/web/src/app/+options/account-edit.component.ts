@@ -5,16 +5,16 @@ import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {ActivatedRoute} from "@angular/router";
 import {Store} from "@ngrx/store";
 
-import {AccountConfig, AccountCredentials} from "_shared/model/account";
-import {AccountConfigPatch} from "_shared/model/container";
-import {KeePassRef} from "_shared/model/keepasshttp";
-import {OptionsActions} from "_web_src/app/store/actions";
+import {AccountConfig, AccountCredentials} from "_@shared/model/account";
+import {AccountConfigPatch} from "_@shared/model/container";
+import {KeePassRef} from "_@shared/model/keepasshttp";
+import {OptionsActions} from "_@web/src/app/store/actions";
 import {
     progressSelector,
     settingsAccountByLoginSelector,
     settingsKeePassClientConfSelector,
     State,
-} from "_web_src/app/store/reducers/options";
+} from "_@web/src/app/store/reducers/options";
 import {OptionsService} from "./options.service";
 
 type optionalAccount = AccountConfig | undefined;

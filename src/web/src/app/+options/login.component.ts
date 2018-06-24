@@ -3,8 +3,8 @@ import {AfterViewInit, Component, ElementRef, OnInit, QueryList, ViewChildren} f
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
-import {NavigationActions, OptionsActions} from "_web_src/app/store/actions";
-import {hasSavedPasswordSelector, progressSelector, State} from "_web_src/app/store/reducers/options";
+import {NavigationActions, OptionsActions} from "_@web/src/app/store/actions";
+import {hasSavedPasswordSelector, progressSelector, State} from "_@web/src/app/store/reducers/options";
 
 @Component({
     selector: `protonmail-desktop-app-login`,

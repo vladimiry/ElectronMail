@@ -8,6 +8,7 @@ npm-debug.log
 yarn-error.log
 
 /app/
+/app-dev/
 /build/
 /dist/
 /output/

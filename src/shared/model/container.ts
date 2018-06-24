@@ -1,6 +1,6 @@
-import {KeePassClientConf, KeePassRef} from "_shared/model/keepasshttp";
-import {AccountConfig} from "_shared/model/account";
-import {Settings} from "_shared/model/options";
+import {KeePassClientConf, KeePassRef} from "_@shared/model/keepasshttp";
+import {AccountConfig} from "_@shared/model/account";
+import {Settings} from "_@shared/model/options";
 
 export interface AppVersionFieldContainer {
     appVersion: string;

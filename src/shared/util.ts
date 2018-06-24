@@ -1,4 +1,4 @@
-import {BaseConfig, Config} from "_shared/model/options";
+import {BaseConfig, Config} from "_@shared/model/options";
 
 export function assert(t: any, m?: string) {
     if (!t) {

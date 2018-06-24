@@ -1,6 +1,6 @@
 import {Action} from "@ngrx/store";
 
-import {WebAccount, WebAccountPageType} from "_shared/model/account";
+import {WebAccount, WebAccountPageType} from "_@shared/model/account";
 
 export class Login implements Action {
     static readonly type = "account:login";

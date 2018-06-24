@@ -4,10 +4,10 @@ import {Injectable} from "@angular/core";
 import {merge as observableMerge, Observable, of} from "rxjs";
 import {Store} from "@ngrx/store";
 
-import {AccountsActions, OptionsActions} from "_web_src/app/store/actions";
+import {AccountsActions, OptionsActions} from "_@web/src/app/store/actions";
 import {EffectsService} from "../+core/effects.service";
-import {ElectronService} from "./../+core/electron.service";
-import {State} from "_web_src/app/store/reducers/accounts";
+import {ElectronService} from "../+core/electron.service";
+import {State} from "_@web/src/app/store/reducers/accounts";
 
 @Injectable()
 export class AccountsEffects {

@@ -1,4 +1,4 @@
-import {WebAccountPageLocation} from "_shared/model/account";
+import {WebAccountPageLocation} from "_@shared/model/account";
 
 export type NotificationType = "noop" | "unauthorized" | "title" | "unread" | "pageType" | "offline";
 

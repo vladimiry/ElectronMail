@@ -3,7 +3,7 @@ import {EffectsModule} from "@ngrx/effects";
 import {CollapseModule} from "ngx-bootstrap/collapse";
 import {PopoverModule} from "ngx-bootstrap/popover";
 
-import {SharedModule} from "_web_src/app/+shared/shared.module";
+import {SharedModule} from "_@web/src/app/+shared/shared.module";
 import {OptionsRoutingModule} from "./options.routing.module";
 import {OptionsService} from "./options.service";
 import {SettingsConfigureGuard} from "./settings-configure.guard";

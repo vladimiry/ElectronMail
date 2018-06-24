@@ -1,8 +1,8 @@
 // TODO enabel "tslint:await-promise" rule
 // tslint:disable:await-promise
 
-import * as fs from "fs";
-import * as path from "path";
+import fs from "fs";
+import path from "path";
 import {promisify} from "util";
 
 import {actions, catchError, CONF, ENV, initApp, test} from "./util";

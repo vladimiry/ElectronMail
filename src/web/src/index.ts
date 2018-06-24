@@ -1,21 +1,22 @@
 import {ApplicationRef, enableProdMode} from "@angular/core";
-import {platformBrowserDynamic} from "@angular/platform-browser-dynamic";
-import {enableDebugTools} from "@angular/platform-browser";
 import {bootloader, hmrModule} from "@angularclass/hmr";
+import {enableDebugTools} from "@angular/platform-browser";
+import {platformBrowserDynamic} from "@angular/platform-browser-dynamic";
 
-import "./vendor";
+import "./vendor/index";
 import "./index.scss";
 
 import {AppModule} from "./app/app.module";
+import {BuildEnvironment} from "_@shared/model/common";
 
-if (APP_CONSTANTS.isProdEnv) {
+if ("production" === (process.env.NODE_ENV as BuildEnvironment)) {
     enableProdMode();
 }
 
 bootloader(async () => {
     const ngModuleRef = await platformBrowserDynamic().bootstrapModule(AppModule);
 
-    if (APP_CONSTANTS.isHrm) {
+    if ("development" === (process.env.NODE_ENV as BuildEnvironment)) {
         const applicationRef = ngModuleRef.injector.get(ApplicationRef);
         const componentRef = applicationRef.components[0];
 

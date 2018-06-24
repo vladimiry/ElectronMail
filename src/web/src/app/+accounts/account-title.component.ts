@@ -1,6 +1,6 @@
 import {Component, Input} from "@angular/core";
 
-import {WebAccount} from "_shared/model/account";
+import {WebAccount} from "_@shared/model/account";
 
 @Component({
     selector: `protonmail-desktop-app-account-title`,

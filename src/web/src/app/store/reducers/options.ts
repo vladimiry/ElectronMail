@@ -1,10 +1,10 @@
 import {createFeatureSelector, createSelector} from "@ngrx/store";
 
 import * as fromRoot from "./root";
-import {Config, Settings} from "_shared/model/options";
-import {ElectronContextLocations} from "_shared/model/electron";
-import {OptionsActions} from "_web_src/app/store/actions";
-import {pickBaseConfigProperties} from "_shared/util";
+import {Config, Settings} from "_@shared/model/options";
+import {ElectronContextLocations} from "_@shared/model/electron";
+import {OptionsActions} from "_@web/src/app/store/actions";
+import {pickBaseConfigProperties} from "_@shared/util";
 
 export const featureName = "options";
 

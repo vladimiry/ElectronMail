@@ -3,9 +3,9 @@ import {Component, OnInit} from "@angular/core";
 import {AbstractControl, FormControl, FormGroup} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
-import {BaseConfig} from "_shared/model/options";
-import {OptionsActions} from "_web_src/app/store/actions";
-import {baseConfigSelector, progressSelector, State} from "_web_src/app/store/reducers/options";
+import {BaseConfig} from "_@shared/model/options";
+import {OptionsActions} from "_@web/src/app/store/actions";
+import {baseConfigSelector, progressSelector, State} from "_@web/src/app/store/reducers/options";
 
 @Component({
     selector: `protonmail-desktop-app-base-settings`,

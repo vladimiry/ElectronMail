@@ -3,8 +3,8 @@ import {Observable, BehaviorSubject, Subject, interval, of} from "rxjs";
 import {Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output} from "@angular/core";
 import {Store} from "@ngrx/store";
 
-import {KeePassClientConf, KeePassRef} from "_shared/model/keepasshttp";
-import {CoreActions} from "_web_src/app/store/actions";
+import {KeePassClientConf, KeePassRef} from "_@shared/model/keepasshttp";
+import {CoreActions} from "_@web/src/app/store/actions";
 import {ElectronService} from "../+core/electron.service";
 
 type NumericObservable = Observable<number>;

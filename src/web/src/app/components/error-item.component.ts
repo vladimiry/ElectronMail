@@ -2,8 +2,6 @@ import * as StackFrame from "stackframe";
 import {fromError} from "stacktrace-js";
 import {ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output} from "@angular/core";
 
-import {StackFramedError} from "_shared/model/error";
-
 @Component({
     selector: `protonmail-desktop-app-error-item`,
     templateUrl: "./error-item.component.html",
@@ -36,7 +34,8 @@ export class ErrorItemComponent implements OnInit {
     private async initStackTrace() {
         const browserStackFrames = (await fromError(this.error))
             .map((plainFrame) => new StackFrame(plainFrame));
-        const backendStackFrames = this.error instanceof StackFramedError ? this.error.stackFrames : null;
+        // TODO get backend error
+        const backendStackFrames = null;
         const toPrintabeForm = (stackFrames: StackTrace.StackFrame[]) => stackFrames.map((stackFrame) => stackFrame.toString())
             .join("\n");
 

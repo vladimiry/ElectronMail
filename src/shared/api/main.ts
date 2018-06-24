@@ -11,10 +11,10 @@ import {
     NewPasswordFieldContainer,
     PasswordFieldContainer,
     UrlFieldContainer,
-} from "_shared/model/container";
+} from "_@shared/model/container";
 // tslint:disable-next-line:no-unused-variable
-import {ElectronContextLocations} from "_shared/model/electron";
-import {BaseConfig, Config, Settings} from "_shared/model/options";
+import {ElectronContextLocations} from "_@shared/model/electron";
+import {BaseConfig, Config, Settings} from "_@shared/model/options";
 
 export interface Endpoints {
     addAccount: ApiMethod<AccountConfigPatch, Settings>;

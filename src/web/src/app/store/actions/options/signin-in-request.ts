@@ -1,6 +1,6 @@
 import {Action} from "@ngrx/store";
 
-import {PasswordFieldContainer} from "_shared/model/container";
+import {PasswordFieldContainer} from "_@shared/model/container";
 
 export class SignInRequest implements Action {
     static readonly type = "options:sign-in-request";

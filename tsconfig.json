@@ -3,11 +3,12 @@
     "target": "es2015",
     "module": "commonjs",
     "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
     "strict": true,
     "strictPropertyInitialization": false,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "importHelpers": true,
     "noEmitOnError": true,
     "declaration": false,
     "sourceMap": true,
@@ -17,17 +18,14 @@
       "es2016.array.include",
       "dom"
     ],
-    "baseUrl": ".",
     "outDir": "./app",
+    "baseUrl": ".",
     "paths": {
-      "_root/package.json": [
-        "./package.json"
-      ],
-      "_shared/*": [
+      "_@shared/*": [
         "./src/shared/*"
       ],
-      "_web_src/*": [
-        "./src/web/src/*"
+      "_@web/*": [
+        "./src/web/*"
       ]
     },
     "typeRoots": [

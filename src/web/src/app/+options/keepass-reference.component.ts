@@ -4,10 +4,10 @@ import {Component, EventEmitter, Input, Output} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
-import {KeePassClientConf, KeePassRef} from "_shared/model/keepasshttp";
-import {SETTINGS_OUTLET, SETTINGS_PATH} from "_web_src/app/app.constants";
-import {CoreActions, NavigationActions} from "_web_src/app/store/actions";
-import {State} from "_web_src/app/store/reducers/options";
+import {KeePassClientConf, KeePassRef} from "_@shared/model/keepasshttp";
+import {SETTINGS_OUTLET, SETTINGS_PATH} from "_@web/src/app/app.constants";
+import {CoreActions, NavigationActions} from "_@web/src/app/store/actions";
+import {State} from "_@web/src/app/store/reducers/options";
 import {ElectronService} from "../+core/electron.service";
 
 @Component({

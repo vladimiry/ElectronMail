@@ -3,9 +3,9 @@ import {Component} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
-import {OptionsActions} from "_web_src/app/store/actions";
-import {progressSelector, State} from "_web_src/app/store/reducers/options";
-import {ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "_shared/model/options";
+import {OptionsActions} from "_@web/src/app/store/actions";
+import {progressSelector, State} from "_@web/src/app/store/reducers/options";
+import {ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "_@shared/model/options";
 
 @Component({
     selector: `protonmail-desktop-app-storage`,

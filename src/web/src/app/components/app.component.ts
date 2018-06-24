@@ -2,9 +2,9 @@ import {Component, HostListener} from "@angular/core";
 import {Location} from "@angular/common";
 import {Store} from "@ngrx/store";
 
-import {ACCOUNTS_OUTLET, ERRORS_OUTLET, ESC_KEY, SETTINGS_OUTLET} from "_web_src/app/app.constants";
-import {NavigationActions} from "_web_src/app/store/actions";
-import {State} from "_web_src/app/store/reducers/root";
+import {ACCOUNTS_OUTLET, ERRORS_OUTLET, ESC_KEY, SETTINGS_OUTLET} from "_@web/src/app/app.constants";
+import {NavigationActions} from "_@web/src/app/store/actions";
+import {State} from "_@web/src/app/store/reducers/root";
 
 export type CloseableOutletsType = typeof ERRORS_OUTLET | typeof SETTINGS_OUTLET;
 

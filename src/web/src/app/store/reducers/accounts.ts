@@ -1,9 +1,9 @@
 import {createFeatureSelector, createSelector} from "@ngrx/store";
 import {updateIn} from "hydux-mutator";
 
-import * as fromRoot from "_web_src/app/store/reducers/root";
-import {AccountsActions} from "_web_src/app/store/actions";
-import {WebAccount} from "_shared/model/account";
+import * as fromRoot from "_@web/src/app/store/reducers/root";
+import {AccountsActions} from "_@web/src/app/store/actions";
+import {WebAccount} from "_@shared/model/account";
 
 export const featureName = "accounts";
 

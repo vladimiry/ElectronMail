@@ -4,9 +4,9 @@ import {Component, Input, OnDestroy, OnInit} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
-import {KeePassClientConf} from "_shared/model/keepasshttp";
-import {OptionsActions} from "_web_src/app/store/actions";
-import {progressSelector, State} from "_web_src/app/store/reducers/options";
+import {KeePassClientConf} from "_@shared/model/keepasshttp";
+import {OptionsActions} from "_@web/src/app/store/actions";
+import {progressSelector, State} from "_@web/src/app/store/reducers/options";
 
 @Component({
     selector: `protonmail-desktop-app-keepass-associate`,

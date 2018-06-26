@@ -1,6 +1,4 @@
-import * as StackFrame from "stackframe";
-import {fromError} from "stacktrace-js";
-import {ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output} from "@angular/core";
+import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output} from "@angular/core";
 
 @Component({
     selector: `protonmail-desktop-app-error-item`,
@@ -9,42 +7,16 @@ import {ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output}
     changeDetection: ChangeDetectionStrategy.OnPush,
     preserveWhitespaces: true,
 })
-export class ErrorItemComponent implements OnInit {
+export class ErrorItemComponent {
+    stackTrace: string;
+    stackTraceOpened = false;
+
     @Input()
     error: Error;
     @Output()
     removeHandler = new EventEmitter<Error>();
-    backendStackTrace: string;
-    browserStackTrace: string;
-    stackTraceOpened = false;
-
-    ngOnInit() {
-        // tslint:disable-next-line:no-floating-promises
-        this.initStackTrace();
-    }
 
     remove() {
         this.removeHandler.emit(this.error);
-    }
-
-    details() {
-        this.stackTraceOpened = !this.stackTraceOpened;
-    }
-
-    private async initStackTrace() {
-        const browserStackFrames = (await fromError(this.error))
-            .map((plainFrame) => new StackFrame(plainFrame));
-        // TODO get backend error
-        const backendStackFrames = null;
-        const toPrintabeForm = (stackFrames: StackTrace.StackFrame[]) => stackFrames.map((stackFrame) => stackFrame.toString())
-            .join("\n");
-
-        if (browserStackFrames) {
-            this.browserStackTrace = toPrintabeForm(browserStackFrames);
-        }
-
-        if (backendStackFrames) {
-            this.backendStackTrace = toPrintabeForm(backendStackFrames);
-        }
     }
 }

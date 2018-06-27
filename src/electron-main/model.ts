@@ -5,8 +5,13 @@ import {ElectronContextLocations} from "_@shared/model/electron";
 
 export type RuntimeEnvironment = "e2e" | "production";
 
+export interface ContextInitOptionsPaths {
+    appDir: string;
+    userDataDir: string;
+}
+
 export interface ContextInitOptions {
-    paths?: { userData: string, app: string };
+    paths?: ContextInitOptionsPaths;
     initialStores?: { config: Config; settings: Settings; };
     storeFs?: StoreModel.StoreFs;
 }

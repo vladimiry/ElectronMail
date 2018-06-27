@@ -131,7 +131,7 @@
     "cssnano": "3.10.0",
     "devtron": "1.4.0",
     "electron": "2.0.3",
-    "electron-builder": "20.16.4",
+    "electron-builder": "20.17.0",
     "electron-rebuild": "1.7.3",
     "exports-loader": "0.7.0",
     "file-loader": "1.1.11",

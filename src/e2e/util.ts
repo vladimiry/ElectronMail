@@ -12,6 +12,8 @@ import randomString from "randomstring";
 import {Application} from "spectron";
 import {promisify} from "util";
 
+import {RUNTIME_ENV__E2E, RUNTIME_ENV__USER_DATA_DIR} from "_@shared/constants";
+
 export interface TestContext {
     app: Application;
     outputDirPath: string;
@@ -78,8 +80,8 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
             path: electron as any,
             requireName: "electronRequire",
             env: {
-                NODE_ENV_RUNTIME: "e2e",
-                E2E_TEST_USER_DATA_DIR: userDataDirPath,
+                [RUNTIME_ENV__E2E]: String(true),
+                [RUNTIME_ENV__USER_DATA_DIR]: userDataDirPath,
             },
             args: [mainScriptFilePath],
 

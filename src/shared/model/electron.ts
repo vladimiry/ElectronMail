@@ -11,16 +11,6 @@ export interface ElectronWindow {
     __ELECTRON_EXPOSURE__: ElectronExposure;
 }
 
-export type AppContextLocations = Readonly<{
-    readonly app: string;
-    readonly browserWindowIcon: string;
-    readonly browserWindowPage: string;
-    readonly trayIcon: string;
-    readonly renderer: Readonly<{
-        readonly browserWindow: string;
-    }>;
-}>;
-
 export interface ElectronContextLocations {
     readonly app: string;
     readonly browserWindowPage: string;

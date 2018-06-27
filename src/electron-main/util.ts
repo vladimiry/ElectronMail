@@ -1,3 +1,4 @@
+import fs from "fs";
 import logger from "electron-log";
 import os from "os";
 import path from "path";
@@ -8,36 +9,16 @@ import {Model as StoreModel, Store} from "fs-json-store";
 
 import {BuildEnvironment} from "_@shared/model/common";
 import {Config, configEncryptionPresetValidator, Settings, settingsAccountLoginUniquenessValidator} from "_@shared/model/options";
-import {Context, ContextInitOptions, RuntimeEnvironment} from "./model";
+import {Context, ContextInitOptions, ContextInitOptionsPaths, RuntimeEnvironment} from "./model";
+import {ElectronContextLocations} from "_@shared/model/electron";
 import {INITIAL_STORES} from "./constants";
 import {MessageFieldContainer} from "_@shared/model/container";
 import {Model as KeePassHttpClientModel} from "keepasshttp-client";
+import {RUNTIME_ENV__E2E, RUNTIME_ENV__USER_DATA_DIR} from "_@shared/constants";
 
 export async function initContext(options: ContextInitOptions = {}): Promise<Context> {
-    const runtimeEnvironment: RuntimeEnvironment = process.env.NODE_ENV_RUNTIME === "e2e" ? "e2e" : "production";
-    const locations = (() => {
-        const largeIcon = "./assets/icons/icon.png";
-        const paths = options.paths || {
-            app: path.join(__dirname, "development" === (process.env.NODE_ENV as BuildEnvironment) ? "../app-dev" : "../app"),
-            userData: runtimeEnvironment === "e2e" ? String(process.env.E2E_TEST_USER_DATA_DIR) : app.getPath("userData"),
-        };
-        const buildAppPath = (...value: string[]) => path.join(paths.app, ...value);
-        const formatFileUrl = (pathname: string) => url.format({pathname, protocol: "file:", slashes: true});
-
-        return {
-            app: buildAppPath(),
-            userData: paths.userData,
-            icon: buildAppPath(largeIcon),
-            trayIcon: buildAppPath(os.platform() === "darwin" ? "./assets/icons/mac/icon.png" : largeIcon),
-            browserWindowPage: "development" === (process.env.NODE_ENV as BuildEnvironment) ? "http://localhost:8080/index.html"
-                : formatFileUrl(path.join(paths.app, "./web/index.html")),
-            preload: {
-                browserWindow: buildAppPath("./electron-preload/browser-window.js"),
-                browserWindowE2E: buildAppPath("./electron-preload/browser-window-e2e.js"),
-                webView: formatFileUrl(buildAppPath("./electron-preload/webview.js")),
-            },
-        };
-    })();
+    const runtimeEnvironment: RuntimeEnvironment = Boolean(process.env[RUNTIME_ENV__E2E]) ? "e2e" : "production";
+    const locations = initLocations(runtimeEnvironment, options.paths);
     const initialStores = options.initialStores || INITIAL_STORES;
     const fsOption = options.storeFs ? {fs: options.storeFs} : {};
     const configStore = new Store<Config>({
@@ -61,6 +42,39 @@ export async function initContext(options: ContextInitOptions = {}): Promise<Con
             file: path.join(locations.userData, "settings.bin"),
             validators: [settingsAccountLoginUniquenessValidator],
         }),
+    };
+}
+
+function initLocations(runtimeEnvironment: RuntimeEnvironment, paths?: ContextInitOptionsPaths): ElectronContextLocations {
+    const userDataDirRuntimeVal = process.env[RUNTIME_ENV__USER_DATA_DIR];
+
+    if (userDataDirRuntimeVal && (!fs.existsSync(userDataDirRuntimeVal) || !fs.statSync(userDataDirRuntimeVal).isDirectory())) {
+        throw new Error(
+            `Make sure that custom "userData" dir exists before passing the "${RUNTIME_ENV__USER_DATA_DIR}" environment variable`,
+        );
+    }
+
+    const {appDir, userDataDir} = paths || {
+        appDir: path.join(__dirname, "development" === (process.env.NODE_ENV as BuildEnvironment) ? "../app-dev" : "../app"),
+        userDataDir: userDataDirRuntimeVal || app.getPath("userData"),
+    };
+    const largeIcon = "./assets/icons/icon.png";
+
+    const buildAppPath = (...value: string[]) => path.join(appDir, ...value);
+    const formatFileUrl = (pathname: string) => url.format({pathname, protocol: "file:", slashes: true});
+
+    return {
+        app: buildAppPath(),
+        userData: userDataDir,
+        icon: buildAppPath(largeIcon),
+        trayIcon: buildAppPath(os.platform() === "darwin" ? "./assets/icons/mac/icon.png" : largeIcon),
+        browserWindowPage: "development" === (process.env.NODE_ENV as BuildEnvironment) ? "http://localhost:8080/index.html"
+            : formatFileUrl(path.join(appDir, "./web/index.html")),
+        preload: {
+            browserWindow: buildAppPath("./electron-preload/browser-window.js"),
+            browserWindowE2E: buildAppPath("./electron-preload/browser-window-e2e.js"),
+            webView: formatFileUrl(buildAppPath("./electron-preload/webview.js")),
+        },
     };
 }
 

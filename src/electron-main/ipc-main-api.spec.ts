@@ -510,8 +510,8 @@ test.beforeEach(async (t) => {
 
     const ctx = await initContext({
         paths: {
-            userData: directory,
-            app: directory,
+            userDataDir: directory,
+            appDir: directory,
         },
         storeFs: memFsVolume,
         initialStores,

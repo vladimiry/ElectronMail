@@ -100,8 +100,10 @@ export const initEndpoints = (ctx: Context): Endpoints => {
             aboutWindow({
                 icon_path: ctx.locations.icon,
                 package_json_dir: "development" === (process.env.NODE_ENV as BuildEnvironment) ? process.cwd() : ctx.locations.app,
-                // TODO electron-builder strips "bugs" property out form the package.json preparing a build
-                bug_report_url: "https://github.com/vladimiry/protonmail-desktop-app/issues",
+                // TODO figure why ""about-window" doesn't automatically resolve properties like "bugs" or "description" from package.json
+                // properties are fulled in package.json, both original and modified by "electron-builder"
+                description: String(process.env.APP_ENV_PACKAGE_DESCRIPTION),
+                bug_report_url: String(process.env.APP_ENV_PACKAGE_BUGS_URL),
             });
             return EMPTY;
         },

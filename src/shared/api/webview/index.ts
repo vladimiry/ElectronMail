@@ -11,5 +11,4 @@ export interface Endpoints {
     unlock: ApiMethod<MailPasswordFieldContainer, { message: string }>;
 }
 
-// TODO pick "channel" from "package.json => name"
-export const IPC_WEBVIEW_API = new WebViewApiService<Endpoints>({channel: "protonmail-desktop-app:webview-api"});
+export const IPC_WEBVIEW_API = new WebViewApiService<Endpoints>({channel: `${process.env.APP_ENV_PACKAGE_NAME}:webview-api`});

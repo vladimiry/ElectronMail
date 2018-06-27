@@ -41,5 +41,4 @@ export interface Endpoints {
     updateOverlayIcon: ApiMethod<{ count: number; dataURL?: string; }, never>;
 }
 
-// TODO pick "channel" from "package.json => name"
-export const IPC_MAIN_API = new IpcMainApiService<Endpoints>({channel: "protonmail-desktop-app:ipcMain-api"});
+export const IPC_MAIN_API = new IpcMainApiService<Endpoints>({channel: `${process.env.APP_ENV_PACKAGE_NAME}:ipcMain-api`});

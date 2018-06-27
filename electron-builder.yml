@@ -49,7 +49,6 @@ win:
   target:
     - {target: nsis}
     - {target: portable}
-    - {target: squirrel}
 
 nsis:
   artifactName: ${name}-${version}-windows-${arch}-nsis-installer.${ext}

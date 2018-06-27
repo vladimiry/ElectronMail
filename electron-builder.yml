@@ -1,7 +1,7 @@
 appId: com.github.vladimiry.protonmail-desktop-app
 artifactName: ${name}-${version}-${os}-${arch}.${ext}
 
-publish: github
+publish: {provider: github, releaseType: draft, vPrefixedTagName: true}
 forceCodeSigning: false
 
 directories:

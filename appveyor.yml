@@ -27,4 +27,4 @@ install:
   - yarn install --mutex file
 build_script:
   - yarn run app:dist
-  - yarn run electron-builder:release:x64
+  - yarn run electron-builder:publish:x64

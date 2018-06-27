@@ -5,7 +5,7 @@ set -ev
 yarn run app:dist
 
 if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-    yarn run electron-builder:release:x64
+    yarn run electron-builder:publish:x64
 fi
 
 if [ "$TRAVIS_OS_NAME" == "linux" ]; then
@@ -18,5 +18,5 @@ if [ "$TRAVIS_OS_NAME" == "linux" ]; then
         -v ~/.cache/electron:/root/.cache/electron \
         -v ~/.cache/electron-builder:/root/.cache/electron-builder \
         electronuserland/builder \
-        /bin/bash -c "yarn && yarn run electron-builder:release:x64:linux"
+        /bin/bash -c "yarn && yarn run electron-builder:publish:x64:linux"
 fi

@@ -238,9 +238,8 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         }
     },
     quit: async (t) => {
-        const appQuitSpy: sinon.SinonSpy = t.context.mocks.electron.app.exit;
         await t.context.endpoints.quit().toPromise();
-        t.is(appQuitSpy.callCount, 1, "electron.app.exit called once");
+        t.is(t.context.mocks.electron.app.exit.callCount, 1, "electron.app.exit called once");
     },
     readConfig: async (t) => {
         t.false(await t.context.ctx.configStore.readable(), "config file does not exist");
@@ -438,6 +437,7 @@ test.beforeEach(async (t) => {
             "electron": {
                 app: {
                     exit: sinon.spy(),
+                    setAppUserModelId: sinon.spy(),
                 },
                 remote: {
                     BrowserWindow: sinon.spy(),

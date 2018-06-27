@@ -12,21 +12,17 @@ const test = anyTest as TestInterface<{
 }>;
 
 test.serial("workflow", async (t) => {
-    const mocks = t.context.mocks["~index"];
-    const electronUnhandledSpy: sinon.SinonSpy = mocks["electron-unhandled"];
-    const makeSingleInstanceSpy: sinon.SinonSpy = mocks.electron.app.makeSingleInstance;
-    const initBrowserWindowSpy: sinon.SinonSpy = mocks["./window"].initBrowserWindow;
-    const initTraySpy: sinon.SinonSpy = mocks["./tray"].initTray;
-    const initWebContentContextMenuSpy: sinon.SinonSpy = mocks["./web-content-context-menu"].initWebContentContextMenu;
-    const initAutoUpdateSpy: sinon.SinonSpy = mocks["./app-update"].initAutoUpdate;
+    const spies = t.context.mocks["~index"];
 
-    t.true(electronUnhandledSpy.calledWithExactly(sinon.match.hasOwn("logger")), `"electronUnhandled" called`);
-    t.true(mocks[`./util`].initContext.calledWithExactly(), `"initContext" called`);
-    t.true(makeSingleInstanceSpy.called, `"makeSingleInstance" called`);
-    t.true(initBrowserWindowSpy.calledWithExactly(t.context.ctx), `"initBrowserWindow" called`);
-    t.true(initTraySpy.calledWithExactly(t.context.ctx, t.context.endpoints), `"initTray" called`);
-    t.true(initWebContentContextMenuSpy.calledWithExactly(t.context.ctx), `"initWebContentContextMenu" called`);
-    t.true(initAutoUpdateSpy.calledWithExactly(), `"initAutoUpdate" called`);
+    t.true(spies.electron.app.setAppUserModelId.calledWithExactly("com.github.vladimiry.protonmail-desktop-app"));
+    t.true(spies["electron-unhandled"].calledWithExactly(sinon.match.hasOwn("logger")), `"electronUnhandled" called`);
+    t.true(spies[`./util`].initContext.calledWithExactly(), `"initContext" called`);
+    t.true(spies.electron.app.makeSingleInstance.called, `"makeSingleInstance" called`);
+    t.true(spies["./window"].initBrowserWindow.calledWithExactly(t.context.ctx), `"initBrowserWindow" called`);
+    t.true(spies["./tray"].initTray.calledWithExactly(t.context.ctx, t.context.endpoints), `"initTray" called`);
+    // tslint:disable-next-line:max-line-length
+    t.true(spies["./web-content-context-menu"].initWebContentContextMenu.calledWithExactly(t.context.ctx), `initWebContentContextMenu called`);
+    t.true(spies["./app-update"].initAutoUpdate.calledWithExactly(), `"initAutoUpdate" called`);
 });
 
 test.beforeEach(async (t) => {
@@ -64,6 +60,7 @@ test.beforeEach(async (t) => {
             "electron-unhandled": sinon.spy(),
             "electron": {
                 app: {
+                    setAppUserModelId: sinon.spy(),
                     makeSingleInstance: sinon.spy(),
                     quit: sinon.spy(),
                     on: sinon.stub()

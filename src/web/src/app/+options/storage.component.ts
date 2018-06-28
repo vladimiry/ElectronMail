@@ -3,7 +3,7 @@ import {Component} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
-import {OptionsActions} from "_@web/src/app/store/actions";
+import {OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
 import {progressSelector, State} from "_@web/src/app/store/reducers/options";
 import {ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "_@shared/model/options";
 
@@ -46,7 +46,7 @@ export class StorageComponent {
     constructor(private store: Store<State>) {}
 
     submit() {
-        this.store.dispatch(new OptionsActions.ChangeMasterPasswordRequest({
+        this.store.dispatch(OPTIONS_ACTIONS.ChangeMasterPasswordRequest({
             password: this.password.value,
             newPassword: this.newPassword.value,
         }));
@@ -57,9 +57,9 @@ export class StorageComponent {
         const encryption = ENCRYPTION_DERIVATION_PRESETS[this.encryptionPresetForm.controls.encryption.value];
         const encryptionPreset = {keyDerivation, encryption};
 
-        this.store.dispatch(new OptionsActions.ReEncryptSettings(
-            this.encryptionPresetForm.controls.password.value,
+        this.store.dispatch(OPTIONS_ACTIONS.ReEncryptSettings({
+            password: this.encryptionPresetForm.controls.password.value,
             encryptionPreset,
-        ));
+        }));
     }
 }

@@ -3,8 +3,10 @@ import {createFeatureSelector, createSelector} from "@ngrx/store";
 import * as fromRoot from "./root";
 import {Config, Settings} from "_@shared/model/options";
 import {ElectronContextLocations} from "_@shared/model/electron";
-import {OptionsActions} from "_@web/src/app/store/actions";
+import {OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
 import {pickBaseConfigProperties} from "_@shared/util";
+import {UnionOf} from "unionize";
+import {updateIn} from "hydux-mutator";
 
 export const featureName = "options";
 
@@ -36,30 +38,18 @@ const initialState: State = {
     progress: {},
 };
 
-export function reducer(state = initialState, action: OptionsActions.All): State {
-    switch (action.type) {
-        case OptionsActions.InitResponse.type: {
-            return {...state, ...(action as OptionsActions.InitResponse).payload};
-        }
-        case OptionsActions.GetConfigResponse.type: {
-            return {...state, config: (action as OptionsActions.GetConfigResponse).config};
-        }
-        case OptionsActions.GetSettingsResponse.type: {
-            return {...state, settings: (action as OptionsActions.GetSettingsResponse).settings};
-        }
-        case OptionsActions.PatchProgress.type: {
-            return {
-                ...state,
-                progress: {
-                    ...state.progress,
-                    ...(action as OptionsActions.PatchProgress).patch,
-                },
-            };
-        }
-        default: {
-            return state;
-        }
-    }
+export function reducer(state = initialState, action: UnionOf<typeof OPTIONS_ACTIONS>): State {
+    return OPTIONS_ACTIONS.match(action, {
+        InitResponse: (payload) => ({...state, ...payload}),
+        GetConfigResponse: (config) => ({...state, config}),
+        GetSettingsResponse: (settings) => ({...state, settings}),
+        PatchProgress: (patch) => updateIn(
+            state,
+            (_) => _.progress,
+            (progress) => ({...progress, ...patch}),
+        ),
+        default: () => state,
+    });
 }
 
 export const stateSelector = createFeatureSelector<State>(featureName);

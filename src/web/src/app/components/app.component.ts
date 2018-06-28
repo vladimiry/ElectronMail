@@ -3,7 +3,7 @@ import {Location} from "@angular/common";
 import {Store} from "@ngrx/store";
 
 import {ACCOUNTS_OUTLET, ERRORS_OUTLET, ESC_KEY, SETTINGS_OUTLET} from "_@web/src/app/app.constants";
-import {NavigationActions} from "_@web/src/app/store/actions";
+import {NAVIGATION_ACTIONS} from "_@web/src/app/store/actions";
 import {State} from "_@web/src/app/store/reducers/root";
 
 export type CloseableOutletsType = typeof ERRORS_OUTLET | typeof SETTINGS_OUTLET;
@@ -40,6 +40,6 @@ export class AppComponent {
     }
 
     private closeOutlet(outlet: CloseableOutletsType) {
-        this.store.dispatch(new NavigationActions.Go({path: [{outlets: {[outlet]: null}}]}));
+        this.store.dispatch(NAVIGATION_ACTIONS.Go({path: [{outlets: {[outlet]: null}}]}));
     }
 }

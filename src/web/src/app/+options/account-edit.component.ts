@@ -8,7 +8,7 @@ import {Store} from "@ngrx/store";
 import {AccountConfig, AccountCredentials} from "_@shared/model/account";
 import {AccountConfigPatch} from "_@shared/model/container";
 import {KeePassRef} from "_@shared/model/keepasshttp";
-import {OptionsActions} from "_@web/src/app/store/actions";
+import {OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
 import {
     progressSelector,
     settingsAccountByLoginSelector,
@@ -113,8 +113,8 @@ export class AccountEditComponent implements OnInit, AfterViewInit, OnDestroy {
 
         this.store.dispatch(
             account
-                ? new OptionsActions.UpdateAccountRequest(patch)
-                : new OptionsActions.AddAccountRequest(patch),
+                ? OPTIONS_ACTIONS.UpdateAccountRequest(patch)
+                : OPTIONS_ACTIONS.AddAccountRequest(patch),
         );
     }
 
@@ -131,7 +131,7 @@ export class AccountEditComponent implements OnInit, AfterViewInit, OnDestroy {
 
         this.removingAccountLogin$.next(account.login);
 
-        this.store.dispatch(new OptionsActions.RemoveAccountRequest(account.login));
+        this.store.dispatch(OPTIONS_ACTIONS.RemoveAccountRequest({login: account.login}));
     }
 
     ngOnDestroy() {
@@ -163,7 +163,7 @@ export class AccountEditComponent implements OnInit, AfterViewInit, OnDestroy {
         }
 
         this.store.dispatch(
-            new OptionsActions.UpdateAccountRequest({
+            OPTIONS_ACTIONS.UpdateAccountRequest({
                 login: account.login,
                 [passwordType === "password" ? "passwordKeePassRef" : "mailPasswordKeePassRef"]: keePassRef,
             }),

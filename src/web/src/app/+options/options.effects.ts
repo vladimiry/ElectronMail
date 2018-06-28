@@ -1,12 +1,12 @@
-import {catchError, finalize, map, mergeMap, switchMap, withLatestFrom} from "rxjs/operators";
-import {of, merge as observableMerge} from "rxjs";
+import {catchError, filter, finalize, map, mergeMap, switchMap, withLatestFrom} from "rxjs/operators";
+import {merge as observableMerge, of} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Actions, Effect} from "@ngrx/effects";
 import {Store} from "@ngrx/store";
 
 import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "_@web/src/app/app.constants";
 import {ProgressPatch, settingsSelector, State} from "_@web/src/app/store/reducers/options";
-import {NavigationActions, OptionsActions} from "_@web/src/app/store/actions";
+import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
 import {ElectronService} from "../+core/electron.service";
 import {EffectsService} from "../+core/effects.service";
 import {OptionsService} from "./options.service";
@@ -14,13 +14,13 @@ import {OptionsService} from "./options.service";
 @Injectable()
 export class OptionsEffects {
     @Effect()
-    initRequest$ = this.actions$
-        .ofType(OptionsActions.InitRequest.type)
-        .pipe(switchMap(() => this.electronService
+    initRequest$ = this.actions$.pipe(
+        filter(OPTIONS_ACTIONS.is.InitRequest),
+        switchMap(() => this.electronService
             .callIpcMain("init")()
             .pipe(
                 mergeMap((payload) => [
-                    new OptionsActions.InitResponse(payload),
+                    OPTIONS_ACTIONS.InitResponse(payload),
                     this.optionsService.buildNavigationAction({path: ""}),
                 ]),
                 catchError(this.effectsService.buildFailActionObservable.bind(this.effectsService)),
@@ -28,13 +28,13 @@ export class OptionsEffects {
         ));
 
     @Effect()
-    getConfigRequest$ = this.actions$
-        .ofType(OptionsActions.GetConfigRequest.type)
-        .pipe(switchMap(() => this.electronService
+    getConfigRequest$ = this.actions$.pipe(
+        filter(OPTIONS_ACTIONS.is.GetConfigRequest),
+        switchMap(() => this.electronService
             .callIpcMain("readConfig")()
             .pipe(
                 mergeMap((config) => [
-                    new OptionsActions.GetConfigResponse(config),
+                    OPTIONS_ACTIONS.GetConfigResponse(config),
                     this.optionsService.buildNavigationAction({path: ""}),
                 ]),
                 catchError(this.effectsService.buildFailActionObservable.bind(this.effectsService)),
@@ -42,40 +42,39 @@ export class OptionsEffects {
         ));
 
     @Effect()
-    getSettingsRequest$ = this.actions$
-        .ofType(OptionsActions.GetSettingsRequest.type)
-        .pipe(
-            withLatestFrom(this.store.select(settingsSelector)),
-            switchMap(([action, settings]) => {
-                if ("_rev" in settings) {
-                    return of(this.optionsService.buildNavigationAction({
-                        path: settings.accounts.length ? "" : "account-edit",
-                    }));
-                }
+    getSettingsRequest$ = this.actions$.pipe(
+        filter(OPTIONS_ACTIONS.is.GetSettingsRequest),
+        withLatestFrom(this.store.select(settingsSelector)),
+        switchMap(([action, settings]) => {
+            if ("_rev" in settings) {
+                return of(this.optionsService.buildNavigationAction({
+                    path: settings.accounts.length ? "" : "account-edit",
+                }));
+            }
 
-                return this.electronService
-                    .callIpcMain("settingsExists")()
-                    .pipe(
-                        map((readable) => this.optionsService.buildNavigationAction({
-                            path: readable ? "login" : "settings-setup",
-                        })),
-                        catchError(this.effectsService.buildFailActionObservable.bind(this.effectsService)),
-                    );
-            }),
-        );
+            return this.electronService
+                .callIpcMain("settingsExists")()
+                .pipe(
+                    map((readable) => this.optionsService.buildNavigationAction({
+                        path: readable ? "login" : "settings-setup",
+                    })),
+                    catchError(this.effectsService.buildFailActionObservable.bind(this.effectsService)),
+                );
+        }),
+    );
 
     @Effect()
-    getSettingsAutoRequest$ = this.actions$
-        .ofType(OptionsActions.GetSettingsAutoRequest.type)
-        .pipe(switchMap(() => observableMerge(
+    getSettingsAutoRequest$ = this.actions$.pipe(
+        filter(OPTIONS_ACTIONS.is.GetSettingsAutoRequest),
+        switchMap(() => observableMerge(
             of(this.buildPatchProgress({signingIn: true})),
             this.electronService
                 .callIpcMain("readSettingsAuto")()
                 .pipe(
                     mergeMap((settings) => settings
                         ? [
-                            new OptionsActions.GetSettingsResponse(settings),
-                            new NavigationActions.Go({
+                            OPTIONS_ACTIONS.GetSettingsResponse(settings),
+                            NAVIGATION_ACTIONS.Go({
                                 path: [{
                                     outlets: {
                                         [SETTINGS_OUTLET]: settings.accounts.length ? null : `${SETTINGS_PATH}/account-edit`,
@@ -92,16 +91,16 @@ export class OptionsEffects {
         )));
 
     @Effect()
-    signInRequest$ = this.actions$
-        .ofType<OptionsActions.SignInRequest>(OptionsActions.SignInRequest.type)
-        .pipe(switchMap(({payload}) => observableMerge(
+    signInRequest$ = this.actions$.pipe(
+        filter(OPTIONS_ACTIONS.is.SignInRequest),
+        switchMap(({payload}) => observableMerge(
             of(this.buildPatchProgress({signingIn: true})),
             this.electronService
                 .callIpcMain("readSettings")(payload)
                 .pipe(
                     mergeMap((settings) => [
-                        new OptionsActions.GetSettingsResponse(settings),
-                        new NavigationActions.Go({
+                        OPTIONS_ACTIONS.GetSettingsResponse(settings),
+                        NAVIGATION_ACTIONS.Go({
                             path: [{
                                 outlets: {
                                     [SETTINGS_OUTLET]: settings.accounts.length ? null : `${SETTINGS_PATH}/account-edit`,
@@ -119,15 +118,15 @@ export class OptionsEffects {
         )));
 
     @Effect()
-    addAccountRequest$ = this.actions$
-        .ofType<OptionsActions.AddAccountRequest>(OptionsActions.AddAccountRequest.type)
-        .pipe(switchMap(({payload}) => observableMerge(
+    addAccountRequest$ = this.actions$.pipe(
+        filter(OPTIONS_ACTIONS.is.AddAccountRequest),
+        switchMap(({payload}) => observableMerge(
             of(this.buildPatchProgress({addingAccount: true})),
             this.electronService
                 .callIpcMain("addAccount")(payload)
                 .pipe(
                     mergeMap((settings) => [
-                        new OptionsActions.GetSettingsResponse(settings),
+                        OPTIONS_ACTIONS.GetSettingsResponse(settings),
                         this.optionsService.buildNavigationAction({
                             path: "account-edit",
                             queryParams: {login: payload.login},
@@ -139,40 +138,40 @@ export class OptionsEffects {
         )));
 
     @Effect()
-    updateAccountRequest$ = this.actions$
-        .ofType<OptionsActions.UpdateAccountRequest>(OptionsActions.UpdateAccountRequest.type)
-        .pipe(switchMap(({payload}) => observableMerge(
+    updateAccountRequest$ = this.actions$.pipe(
+        filter(OPTIONS_ACTIONS.is.UpdateAccountRequest),
+        switchMap(({payload}) => observableMerge(
             of(this.buildPatchProgress({updatingAccount: true})),
             this.electronService
                 .callIpcMain("updateAccount")(payload)
                 .pipe(
-                    map((settings) => new OptionsActions.GetSettingsResponse(settings)),
+                    map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
                     catchError((error) => this.effectsService.buildFailActionObservable(error)),
                     finalize(() => this.dispatchProgress({updatingAccount: false})),
                 ),
         )));
 
     @Effect()
-    removeAccountRequest$ = this.actions$
-        .ofType<OptionsActions.RemoveAccountRequest>(OptionsActions.RemoveAccountRequest.type)
-        .pipe(switchMap(({login}) => observableMerge(
+    removeAccountRequest$ = this.actions$.pipe(
+        filter(OPTIONS_ACTIONS.is.RemoveAccountRequest),
+        switchMap(({payload}) => observableMerge(
             of(this.buildPatchProgress({removingAccount: true})),
             this.electronService
-                .callIpcMain("removeAccount")({login})
+                .callIpcMain("removeAccount")({login: payload.login})
                 .pipe(
-                    map((settings) => new OptionsActions.GetSettingsResponse(settings)),
+                    map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
                     catchError((error) => this.effectsService.buildFailActionObservable(error)),
                     finalize(() => this.dispatchProgress({removingAccount: false})),
                 ),
         )));
 
     @Effect()
-    changeMasterPasswordRequest$ = this.actions$
-        .ofType<OptionsActions.ChangeMasterPasswordRequest>(OptionsActions.ChangeMasterPasswordRequest.type)
-        .pipe(switchMap(({passwordChangeContainer}) => observableMerge(
+    changeMasterPasswordRequest$ = this.actions$.pipe(
+        filter(OPTIONS_ACTIONS.is.ChangeMasterPasswordRequest),
+        switchMap(({payload}) => observableMerge(
             of(this.buildPatchProgress({changingPassword: true})),
             this.electronService
-                .callIpcMain("changeMasterPassword")(passwordChangeContainer)
+                .callIpcMain("changeMasterPassword")(payload)
                 .pipe(
                     mergeMap(() => []),
                     catchError((error) => {
@@ -185,60 +184,64 @@ export class OptionsEffects {
         )));
 
     @Effect()
-    associateSettingsWithKeePassRequest$ = this.actions$
-        .ofType<OptionsActions.AssociateSettingsWithKeePassRequest>(OptionsActions.AssociateSettingsWithKeePassRequest.type)
-        .pipe(switchMap(({payload}) => observableMerge(
+    associateSettingsWithKeePassRequest$ = this.actions$.pipe(
+        filter(OPTIONS_ACTIONS.is.AssociateSettingsWithKeePassRequest),
+        switchMap(({payload}) => observableMerge(
             of(this.buildPatchProgress({keePassReferencing: true})),
             this.electronService
                 .callIpcMain("associateSettingsWithKeePass")(payload)
                 .pipe(
-                    map((settings) => new OptionsActions.GetSettingsResponse(settings)),
+                    map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
                     catchError((error) => this.effectsService.buildFailActionObservable(error)),
                     finalize(() => this.dispatchProgress({keePassReferencing: false})),
                 ),
         )));
 
     @Effect()
-    toggleCompactLayout$ = this.actions$
-        .ofType(OptionsActions.ToggleCompactRequest.type)
-        .pipe(switchMap(() => observableMerge(
+    toggleCompactLayout$ = this.actions$.pipe(
+        filter(OPTIONS_ACTIONS.is.ToggleCompactRequest),
+        switchMap(() => observableMerge(
             of(this.buildPatchProgress({togglingCompactLayout: true})),
             this.electronService
                 .callIpcMain("toggleCompactLayout")()
                 .pipe(
-                    map((config) => new OptionsActions.GetConfigResponse(config)),
+                    map((config) => OPTIONS_ACTIONS.GetConfigResponse(config)),
                     catchError((error) => this.effectsService.buildFailActionObservable(error)),
                     finalize(() => this.dispatchProgress({togglingCompactLayout: false})),
                 ),
         )));
 
     @Effect()
-    updateBaseSettings$ = this.actions$
-        .ofType<OptionsActions.PatchBaseSettingsRequest>(OptionsActions.PatchBaseSettingsRequest.type)
-        .pipe(switchMap(({patch}) => observableMerge(
+    updateBaseSettings$ = this.actions$.pipe(
+        filter(OPTIONS_ACTIONS.is.PatchBaseSettingsRequest),
+        switchMap((patch) => observableMerge(
             of(this.buildPatchProgress({updatingBaseSettings: true})),
             this.electronService
                 .callIpcMain("patchBaseSettings")(patch)
                 .pipe(
-                    map((config) => new OptionsActions.GetConfigResponse(config)),
+                    map((config) => OPTIONS_ACTIONS.GetConfigResponse(config)),
                     catchError((error) => this.effectsService.buildFailActionObservable(error)),
                     finalize(() => this.dispatchProgress({updatingBaseSettings: false})),
                 ),
         )));
 
     @Effect()
-    reEncryptingSettings$ = this.actions$
-        .ofType<OptionsActions.ReEncryptSettings>(OptionsActions.ReEncryptSettings.type)
-        .pipe(switchMap(({encryptionPreset, password}) => observableMerge(
-            of(this.buildPatchProgress({reEncryptingSettings: true})),
-            this.electronService
-                .callIpcMain("reEncryptSettings")({encryptionPreset, password})
-                .pipe(
-                    map((settings) => new OptionsActions.GetSettingsResponse(settings)),
-                    catchError((error) => this.effectsService.buildFailActionObservable(error)),
-                    finalize(() => this.dispatchProgress({reEncryptingSettings: false})),
-                ),
-        )));
+    reEncryptingSettings$ = this.actions$.pipe(
+        filter(OPTIONS_ACTIONS.is.ReEncryptSettings),
+        switchMap(({payload}) => {
+            const {encryptionPreset, password} = payload;
+
+            return observableMerge(
+                of(this.buildPatchProgress({reEncryptingSettings: true})),
+                this.electronService
+                    .callIpcMain("reEncryptSettings")({encryptionPreset, password})
+                    .pipe(
+                        map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
+                        catchError((error) => this.effectsService.buildFailActionObservable(error)),
+                        finalize(() => this.dispatchProgress({reEncryptingSettings: false})),
+                    ),
+            );
+        }));
 
     constructor(private effectsService: EffectsService,
                 private optionsService: OptionsService,
@@ -247,7 +250,7 @@ export class OptionsEffects {
                 private actions$: Actions) {}
 
     private buildPatchProgress(patch: ProgressPatch) {
-        return new OptionsActions.PatchProgress(patch);
+        return OPTIONS_ACTIONS.PatchProgress(patch);
     }
 
     private dispatchProgress(patch: ProgressPatch) {

@@ -4,7 +4,7 @@ import {ChangeDetectionStrategy, Component, OnDestroy, OnInit} from "@angular/co
 import {Store} from "@ngrx/store";
 
 import {ERRORS_OUTLET} from "_@web/src/app/app.constants";
-import {CoreActions, NavigationActions} from "_@web/src/app/store/actions";
+import {CORE_ACTIONS, NAVIGATION_ACTIONS} from "_@web/src/app/store/actions";
 import {errorsSelector, State} from "_@web/src/app/store/reducers/errors";
 
 @Component({
@@ -33,11 +33,11 @@ export class ErrorListComponent implements OnInit, OnDestroy {
     }
 
     close() {
-        this.store.dispatch(new NavigationActions.Go({path: [{outlets: {[ERRORS_OUTLET]: null}}]}));
+        this.store.dispatch(NAVIGATION_ACTIONS.Go({path: [{outlets: {[ERRORS_OUTLET]: null}}]}));
     }
 
     onRemove(error: Error) {
-        this.store.dispatch(new CoreActions.RemoveError(error));
+        this.store.dispatch(CORE_ACTIONS.RemoveError(error));
     }
 
     ngOnDestroy() {

@@ -13,7 +13,7 @@ import {
     State as OptionsState,
 } from "_@web/src/app/store/reducers/options";
 import {State} from "_@web/src/app/store/reducers/accounts";
-import {AccountsActions, NavigationActions} from "_@web/src/app/store/actions";
+import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "_@web/src/app/store/actions";
 
 @Component({
     selector: `protonmail-desktop-app-account`,
@@ -109,14 +109,14 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
                 const body = `Account "${login}" has ${curr} unread email${curr > 1 ? "s" : ""}.`;
 
                 new Notification(title, {body}).onclick = () => this.zone.run(() => {
-                    this.store.dispatch(new AccountsActions.ActivateAccount(login));
-                    this.store.dispatch(new NavigationActions.ToggleBrowserWindow({forcedState: true}));
+                    this.store.dispatch(ACCOUNTS_ACTIONS.ActivateAccount({login}));
+                    this.store.dispatch(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));
                 });
             });
     }
 
     pageLoadedReaction(account: WebAccount) {
-        this.optionsStore.dispatch(new AccountsActions.PageLoadingEnd(account, this.webView));
+        this.optionsStore.dispatch(ACCOUNTS_ACTIONS.PageLoadingEnd({account, webView: this.webView}));
     }
 
     isPageLogin() {
@@ -129,13 +129,13 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
 
     onPassword(password: string) {
         this.optionsStore.dispatch(
-            new AccountsActions.Login("login", this.webView, this.account$.getValue(), password),
+            ACCOUNTS_ACTIONS.Login({pageType: "login", webView: this.webView, account: this.account$.getValue(), password}),
         );
     }
 
     onMailPassword(mailPassword: string) {
         this.optionsStore.dispatch(
-            new AccountsActions.Login("unlock", this.webView, this.account$.getValue(), mailPassword),
+            ACCOUNTS_ACTIONS.Login({pageType: "unlock", webView: this.webView, account: this.account$.getValue(), password: mailPassword}),
         );
     }
 
@@ -143,7 +143,7 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
         this.subscribePageLoadingEvents();
 
         this.webView.addEventListener("new-window", ({url}: any) => {
-            this.optionsStore.dispatch(new NavigationActions.OpenExternal(url));
+            this.optionsStore.dispatch(NAVIGATION_ACTIONS.OpenExternal({url}));
         });
         this.webView.addEventListener("did-fail-load", ({errorDescription}: DidFailLoadEvent) => {
             this.unsubscribePageLoadingEvents();
@@ -174,11 +174,11 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
     pageLoadingStartHandler = () => {
         this.pageLoadingStartResolve();
 
-        this.optionsStore.dispatch(new AccountsActions.PageLoadingStart(
-            this.account$.getValue(),
-            this.webView,
-            new Promise((resolve) => this.pageLoadingStartResolve = resolve),
-        ));
+        this.optionsStore.dispatch(ACCOUNTS_ACTIONS.PageLoadingStart({
+            account: this.account$.getValue(),
+            webView: this.webView,
+            unSubscribeOn: new Promise((resolve) => this.pageLoadingStartResolve = resolve),
+        }));
     }
 
     ngOnDestroy() {

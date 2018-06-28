@@ -5,7 +5,7 @@ import {CanActivate} from "@angular/router";
 import {Store} from "@ngrx/store";
 
 import {State, stateSelector} from "_@web/src/app/store/reducers/options";
-import {OptionsActions} from "_@web/src/app/store/actions";
+import {OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
 
 @Injectable()
 export class SettingsConfigureGuard implements CanActivate {
@@ -14,17 +14,17 @@ export class SettingsConfigureGuard implements CanActivate {
     canActivate(): Observable<boolean> {
         return this.store.select(stateSelector).pipe(switchMap((state) => {
             if (!state.electronLocations) {
-                this.store.dispatch(new OptionsActions.InitRequest());
+                this.store.dispatch(OPTIONS_ACTIONS.InitRequest());
                 return of(false);
             }
 
             if (!("_rev" in state.config)) {
-                this.store.dispatch(new OptionsActions.GetConfigRequest());
+                this.store.dispatch(OPTIONS_ACTIONS.GetConfigRequest());
                 return of(false);
             }
 
             if (!("_rev" in state.settings)) {
-                this.store.dispatch(new OptionsActions.GetSettingsRequest());
+                this.store.dispatch(OPTIONS_ACTIONS.GetSettingsRequest());
                 return of(false);
             }
 

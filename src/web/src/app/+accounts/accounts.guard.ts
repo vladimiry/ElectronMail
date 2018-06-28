@@ -5,7 +5,7 @@ import {CanActivate} from "@angular/router";
 import {Store} from "@ngrx/store";
 
 import {SETTINGS_OUTLET, SETTINGS_PATH} from "_@web/src/app/app.constants";
-import {NavigationActions} from "_@web/src/app/store/actions";
+import {NAVIGATION_ACTIONS} from "_@web/src/app/store/actions";
 import {initializedSelector, State} from "_@web/src/app/store/reducers/accounts";
 
 @Injectable()
@@ -18,7 +18,7 @@ export class AccountsGuard implements CanActivate {
                 return of(true);
             }
 
-            this.store.dispatch(new NavigationActions.Go({path: [{outlets: {[SETTINGS_OUTLET]: SETTINGS_PATH}}]}));
+            this.store.dispatch(NAVIGATION_ACTIONS.Go({path: [{outlets: {[SETTINGS_OUTLET]: SETTINGS_PATH}}]}));
 
             return of(false);
         }));

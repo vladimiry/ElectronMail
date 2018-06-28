@@ -3,7 +3,7 @@ import {AfterViewInit, Component, ElementRef, QueryList, ViewChildren} from "@an
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
-import {OptionsActions} from "_@web/src/app/store/actions";
+import {OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
 import {progressSelector, State} from "_@web/src/app/store/reducers/options";
 
 @Component({
@@ -47,7 +47,7 @@ export class SettingsSetupComponent implements AfterViewInit {
     }
 
     submit() {
-        this.store.dispatch(new OptionsActions.SignInRequest({
+        this.store.dispatch(OPTIONS_ACTIONS.SignInRequest({
             password: String(this.password.value),
             savePassword: Boolean(this.savePassword.value),
         }));

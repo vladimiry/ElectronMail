@@ -4,7 +4,7 @@ import {AbstractControl, FormControl, FormGroup} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
 import {BaseConfig} from "_@shared/model/options";
-import {OptionsActions} from "_@web/src/app/store/actions";
+import {OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
 import {baseConfigSelector, progressSelector, State} from "_@web/src/app/store/reducers/options";
 
 @Component({
@@ -34,7 +34,7 @@ export class BaseSettingsComponent implements OnInit {
             });
 
         this.form.valueChanges.subscribe(() => {
-            this.store.dispatch(new OptionsActions.PatchBaseSettingsRequest(this.form.getRawValue()));
+            this.store.dispatch(OPTIONS_ACTIONS.PatchBaseSettingsRequest(this.form.getRawValue()));
         });
     }
 }

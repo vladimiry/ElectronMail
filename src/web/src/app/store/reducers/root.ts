@@ -1,7 +1,8 @@
 import {ActionReducer} from "@ngrx/store";
 import {routerReducer, RouterReducerState} from "@ngrx/router-store";
 
-import {NavigationActions, Root} from "_@web/src/app/store/actions";
+import {BuildEnvironment} from "_@shared/model/common";
+import {NAVIGATION_ACTIONS, ROOT_ACTIONS} from "_@web/src/app/store/actions";
 
 export interface State {
     router?: RouterReducerState;
@@ -12,21 +13,25 @@ export const reducers = {
 };
 
 export function innerMetaReducer(this: ActionReducer<any, any>, state: any, action: any) {
-    if (action.type === Root.HrmStateRestoreAction.type) {
-        return (action as Root.HrmStateRestoreAction).state;
+    if (NAVIGATION_ACTIONS.match(action, {Logout: () => true, default: () => false})) {
+        return this(undefined, action);
     }
 
-    if (action.type === NavigationActions.Logout.type) {
-        return this(undefined, action);
+    // TODO do not load HMR stuff for production build
+    if ("development" === (process.env.NODE_ENV as BuildEnvironment)) {
+        return ROOT_ACTIONS.match(action, {
+            HmrStateRestoreAction: (statePayload) => statePayload,
+            default: () => this(state, action),
+        });
     }
 
     return this(state, action);
 }
 
-export function hrmRootStateMetaReducer(reducer: ActionReducer<any, any>) {
+export function hmrRootStateMetaReducer(reducer: ActionReducer<any, any>) {
     return innerMetaReducer.bind(reducer);
 }
 
 export const metaReducers = [
-    hrmRootStateMetaReducer,
+    hmrRootStateMetaReducer,
 ];

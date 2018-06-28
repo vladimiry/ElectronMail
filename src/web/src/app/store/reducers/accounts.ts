@@ -1,8 +1,9 @@
 import {createFeatureSelector, createSelector} from "@ngrx/store";
+import {UnionOf} from "unionize";
 import {updateIn} from "hydux-mutator";
 
 import * as fromRoot from "_@web/src/app/store/reducers/root";
-import {AccountsActions} from "_@web/src/app/store/actions";
+import {ACCOUNTS_ACTIONS} from "_@web/src/app/store/actions";
 import {WebAccount} from "_@shared/model/account";
 
 export const featureName = "accounts";
@@ -17,37 +18,31 @@ const initialState: State = {
     accounts: [],
 };
 
-export function reducer(state = initialState, action: AccountsActions.All): State {
-    switch (action.type) {
+export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_ACTIONS>): State {
+    return ACCOUNTS_ACTIONS.match(action, {
         // TODO consider using "@ngrx/entity" library instead of dealing with a raw array
-        case AccountsActions.SyncAccountsConfigs.type: {
-            const accountConfigs = (action as AccountsActions.SyncAccountsConfigs).accountConfigs;
-
+        SyncAccountsConfigs: ({accountConfigs}) => {
             // remove
-            const accounts = state.accounts.filter(({accountConfig}) =>
-                accountConfigs.some(({login}) => accountConfig.login === login),
-            );
+            const items = state.accounts.filter(({accountConfig}) => {
+                return accountConfigs.some(({login}) => accountConfig.login === login);
+            });
 
             for (const accountConfig of accountConfigs) {
-                const {index} = selectAccountByLogin(accounts, accountConfig.login, false);
+                const {index} = selectAccountByLogin(items, accountConfig.login, false);
 
                 if (index === -1) {
                     // add
-                    accounts.push({
+                    items.push({
                         accountConfig,
                         progress: {},
-                        sync: {
-                            pageType: {
-                                url: "initial",
-                            },
-                        },
+                        sync: {pageType: {url: "initial"}},
                     });
                 } else {
-                    const account = accounts[index];
+                    const account = items[index];
 
                     if (JSON.stringify(account.accountConfig) !== JSON.stringify(accountConfig)) {
-                        // update / patch
-                        accounts[index] = {
+                        // update
+                        items[index] = {
                             ...account,
                             accountConfig,
                         };
@@ -57,55 +52,45 @@ export function reducer(state = initialState, action: AccountsActions.All): Stat
 
             return {
                 ...state,
-                accounts,
+                accounts: items,
                 initialized: true,
-                selectedLogin: accounts.some(({accountConfig}) => accountConfig.login === state.selectedLogin)
+                selectedLogin: items.some(({accountConfig}) => accountConfig.login === state.selectedLogin)
                     ? state.selectedLogin
-                    : accounts.length ? accounts[0].accountConfig.login : undefined,
+                    : items.length ? items[0].accountConfig.login : undefined,
             };
-        }
-        case AccountsActions.AccountNotification.type: {
-            const {accountConfig, notification} = action as AccountsActions.AccountNotification;
+        },
+        AccountNotification: ({accountConfig, notification}) => {
             const {index} = selectAccountByLogin(state.accounts, accountConfig.login);
 
             if ("value" in notification) {
                 return updateIn(
                     state,
-                    (_) => _.accounts[index],
-                    (account) => ({
-                        ...account,
-                        sync: {...account.sync, ...{[notification.type]: notification.value}},
-                    }),
+                    (_) => _.accounts[index].sync,
+                    (sync) => ({...sync, ...{[notification.type]: notification.value}}),
                     [index],
                 );
             }
 
             return state;
-        }
-        case AccountsActions.ActivateAccount.type: {
+        },
+        ActivateAccount: ({login}) => {
             return {
                 ...state,
-                selectedLogin: (action as AccountsActions.ActivateAccount).login,
+                selectedLogin: login,
             };
-        }
-        case AccountsActions.PatchAccountProgress.type: {
-            const {login, patch} = action as AccountsActions.PatchAccountProgress;
+        },
+        PatchAccountProgress: ({login, patch}) => {
             const {index} = selectAccountByLogin(state.accounts, login);
 
             return updateIn(
                 state,
-                (_) => _.accounts[index],
-                (_) => ({
-                    ..._,
-                    ...patch,
-                }),
+                (_) => _.accounts[index].progress,
+                (progress) => ({...progress, ...patch}),
                 [index],
             );
-        }
-        default: {
-            return state;
-        }
-    }
+        },
+        default: () => state,
+    });
 }
 
 function selectAccountByLogin(accounts: WebAccount[], login: string, strict = true) {
@@ -115,10 +100,7 @@ function selectAccountByLogin(accounts: WebAccount[], login: string, strict = tr
         throw new Error(`Account to process has not been found (login - "${login}")`);
     }
 
-    return {
-        index,
-        account: accounts[index],
-    };
+    return {index, account: accounts[index]};
 }
 
 export const stateSelector = createFeatureSelector<State>(featureName);

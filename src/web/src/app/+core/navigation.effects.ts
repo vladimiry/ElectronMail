@@ -1,112 +1,108 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {catchError, map, switchMap, tap} from "rxjs/operators";
+import {catchError, filter, map, switchMap, tap} from "rxjs/operators";
 import {concat, of} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Location} from "@angular/common";
 import {Router} from "@angular/router";
 
 import {ACCOUNTS_OUTLET, SETTINGS_OUTLET, SETTINGS_PATH} from "_@web/src/app/app.constants";
-import {NavigationActions} from "_@web/src/app/store/actions";
+import {NAVIGATION_ACTIONS} from "_@web/src/app/store/actions";
 import {ElectronService} from "./electron.service";
 import {EffectsService} from "./effects.service";
 
 @Injectable()
 export class NavigationEffects {
     @Effect({dispatch: false})
-    navigate$ = this.actions$
-        .ofType<NavigationActions.Go>(NavigationActions.Go.type)
-        .pipe(
-            map((action) => action.payload),
-            tap(({path, queryParams, extras}) => {
-                // TODO remove "zone.run" execution on https://github.com/angular/angular/issues/18254 resolving
-                // or use @angular/router v4.1.3 and older
-                this.zone.run(async () => {
-                    // tslint:disable-next-line:no-floating-promises
-                    await this.router.navigate(path, {queryParams, ...extras});
-                });
-            }),
-            catchError(this.effectsService.buildFailActionObservable.bind(this.effectsService)),
-        );
+    navigate$ = this.actions$.pipe(
+        filter(NAVIGATION_ACTIONS.is.Go),
+        map((action) => action.payload),
+        tap(({path, queryParams, extras}) => {
+            // TODO remove "zone.run" execution on https://github.com/angular/angular/issues/18254 resolving
+            // or use @angular/router v4.1.3 and older
+            this.zone.run(async () => {
+                // tslint:disable-next-line:no-floating-promises
+                await this.router.navigate(path, {queryParams, ...extras});
+            });
+        }),
+        catchError(this.effectsService.buildFailActionObservable.bind(this.effectsService)),
+    );
 
     @Effect({dispatch: false})
-    navigateBack$ = this.actions$
-        .ofType(NavigationActions.Back.type)
-        .pipe(
-            tap(() => this.location.back()),
-            catchError(this.effectsService.buildFailActionObservable.bind(this.effectsService)),
-        );
+    navigateBack$ = this.actions$.pipe(
+        filter(NAVIGATION_ACTIONS.is.Back),
+        tap(() => this.location.back()),
+        catchError(this.effectsService.buildFailActionObservable.bind(this.effectsService)),
+    );
 
     @Effect({dispatch: false})
-    navigateForward$ = this.actions$
-        .ofType(NavigationActions.Forward.type)
-        .pipe(
-            tap(() => this.location.forward()),
-            catchError(this.effectsService.buildFailActionObservable.bind(this.effectsService)),
-        );
+    navigateForward$ = this.actions$.pipe(
+        filter(NAVIGATION_ACTIONS.is.Forward),
+        tap(() => this.location.forward()),
+        catchError(this.effectsService.buildFailActionObservable.bind(this.effectsService)),
+    );
 
     @Effect()
-    toggleBrowserWindow$ = this.actions$
-        .ofType<NavigationActions.ToggleBrowserWindow>(NavigationActions.ToggleBrowserWindow.type)
-        .pipe(switchMap(({payload}) => this.electronService
+    toggleBrowserWindow$ = this.actions$.pipe(
+        filter(NAVIGATION_ACTIONS.is.ToggleBrowserWindow),
+        switchMap(({payload}) => this.electronService
             .callIpcMain("toggleBrowserWindow")(payload)
             .pipe(
                 catchError((error) => this.effectsService.buildFailActionObservable(error)),
             )));
 
     @Effect()
-    openAboutWindow$ = this.actions$
-        .ofType(NavigationActions.OpenAboutWindow.type)
-        .pipe(switchMap(() => this.electronService
+    openAboutWindow$ = this.actions$.pipe(
+        filter(NAVIGATION_ACTIONS.is.OpenAboutWindow),
+        switchMap(() => this.electronService
             .callIpcMain("openAboutWindow")()
             .pipe(
                 catchError((error) => this.effectsService.buildFailActionObservable(error)),
             )));
 
     @Effect()
-    openExternal$ = this.actions$
-        .ofType<NavigationActions.OpenExternal>(NavigationActions.OpenExternal.type)
-        .pipe(switchMap(({url}) => this.electronService
-            .callIpcMain("openExternal")({url})
+    openExternal$ = this.actions$.pipe(
+        filter(NAVIGATION_ACTIONS.is.OpenExternal),
+        switchMap(({payload}) => this.electronService
+            .callIpcMain("openExternal")({url: payload.url})
             .pipe(
                 catchError((error) => this.effectsService.buildFailActionObservable(error)),
             )));
 
     @Effect()
-    openSettingsFolder$ = this.actions$
-        .ofType(NavigationActions.OpenSettingsFolder.type)
-        .pipe(switchMap(() => this.electronService
+    openSettingsFolder$ = this.actions$.pipe(
+        filter(NAVIGATION_ACTIONS.is.OpenSettingsFolder),
+        switchMap(() => this.electronService
             .callIpcMain("openSettingsFolder")()
             .pipe(
                 catchError((error) => this.effectsService.buildFailActionObservable(error)),
             )));
 
     @Effect()
-    logout$ = this.actions$
-        .ofType(NavigationActions.Logout.type)
-        .pipe(
-            switchMap(() => {
-                const concatenated = concat(
-                    this.electronService.callIpcMain("logout")(),
-                    of(new NavigationActions.Go({
-                        path: [{
-                            outlets: {
-                                [ACCOUNTS_OUTLET]: null,
-                                [SETTINGS_OUTLET]: SETTINGS_PATH,
-                            },
-                        }],
-                    })),
-                );
+    logout$ = this.actions$.pipe(
+        filter(NAVIGATION_ACTIONS.is.Logout),
+        switchMap(() => {
+            const concatenated = concat(
+                this.electronService.callIpcMain("logout")(),
+                of(NAVIGATION_ACTIONS.Go({
+                    path: [{
+                        outlets: {
+                            [ACCOUNTS_OUTLET]: null,
+                            [SETTINGS_OUTLET]: SETTINGS_PATH,
+                        },
+                    }],
+                })),
+            );
 
-                return concatenated.pipe(
-                    catchError((error) => this.effectsService.buildFailActionObservable(error)),
-                );
-            }),
-        );
+            return concatenated.pipe(
+                catchError((error) => this.effectsService.buildFailActionObservable(error)),
+            );
+        }),
+    );
 
     @Effect()
-    quit$ = this.actions$
-        .ofType(NavigationActions.Quit.type)
-        .pipe(switchMap(() => this.electronService
+    quit$ = this.actions$.pipe(
+        filter(NAVIGATION_ACTIONS.is.Quit),
+        switchMap(() => this.electronService
             .callIpcMain("quit")()
             .pipe(
                 catchError((error) => this.effectsService.buildFailActionObservable(error)),

@@ -3,7 +3,7 @@ import {AfterViewInit, Component, ElementRef, OnInit, QueryList, ViewChildren} f
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
-import {NavigationActions, OptionsActions} from "_@web/src/app/store/actions";
+import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
 import {hasSavedPasswordSelector, progressSelector, State} from "_@web/src/app/store/reducers/options";
 
 @Component({
@@ -31,7 +31,7 @@ export class LoginComponent implements AfterViewInit, OnInit {
                 filter((value) => !!value),
                 take(1),
             )
-            .subscribe(() => this.store.dispatch(new OptionsActions.GetSettingsAutoRequest()));
+            .subscribe(() => this.store.dispatch(OPTIONS_ACTIONS.GetSettingsAutoRequest()));
     }
 
     ngAfterViewInit() {
@@ -41,11 +41,11 @@ export class LoginComponent implements AfterViewInit, OnInit {
     }
 
     quit() {
-        this.store.dispatch(new NavigationActions.Quit());
+        this.store.dispatch(NAVIGATION_ACTIONS.Quit());
     }
 
     submit() {
-        this.store.dispatch(new OptionsActions.SignInRequest({
+        this.store.dispatch(OPTIONS_ACTIONS.SignInRequest({
             password: String(this.password.value),
             savePassword: Boolean(this.savePassword.value),
         }));

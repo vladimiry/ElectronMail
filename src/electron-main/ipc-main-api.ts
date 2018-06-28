@@ -241,7 +241,7 @@ export const initEndpoints = (ctx: Context): Endpoints => {
             // TODO return updated "AccountConfig" only, not the entire settings object
             return await ctx.settingsStore.write(settings);
         })()),
-        updateOverlayIcon: ({count, dataURL}) => from((async () => {
+        updateOverlayIcon: ({unread, dataURL}) => from((async () => {
             const overlaySizeFactor = 0.6;
             const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
             const tray = ctx.uiContext && ctx.uiContext.tray;
@@ -260,7 +260,7 @@ export const initEndpoints = (ctx: Context): Endpoints => {
                 h: jimp.bitmap.height,
             };
 
-            if (dataURL) {
+            if (unread > 0 && dataURL) {
                 const overlaySource = nativeImage.createFromDataURL(dataURL);
                 const overlaySourceJimp = await Jimp.read(overlaySource.toPNG());
                 const overlaySize = {w: Math.round(main.w * overlaySizeFactor), h: Math.round(main.h * overlaySizeFactor)};
@@ -271,9 +271,9 @@ export const initEndpoints = (ctx: Context): Endpoints => {
                 const composedBuffer = await promisify(composedJimp.getBuffer.bind(composedJimp))(Jimp.MIME_PNG);
                 const composedNative = nativeImage.createFromBuffer(composedBuffer);
 
-                browserWindow.setOverlayIcon(overlayNative, `Unread messages ${count}`);
+                browserWindow.setOverlayIcon(overlayNative, `Unread messages ${unread}`);
                 tray.setImage(composedNative);
-                app.setBadgeCount(count);
+                app.setBadgeCount(unread);
             } else {
                 browserWindow.setOverlayIcon(null as any, "");
                 tray.setImage(main.native);

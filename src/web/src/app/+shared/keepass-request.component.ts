@@ -3,9 +3,9 @@ import {Observable, BehaviorSubject, Subject, interval, of} from "rxjs";
 import {Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output} from "@angular/core";
 import {Store} from "@ngrx/store";
 
-import {KeePassClientConf, KeePassRef} from "_@shared/model/keepasshttp";
-import {CoreActions} from "_@web/src/app/store/actions";
+import {CORE_ACTIONS} from "_@web/src/app/store/actions";
 import {ElectronService} from "../+core/electron.service";
+import {KeePassClientConf, KeePassRef} from "_@shared/model/keepasshttp";
 
 type NumericObservable = Observable<number>;
 
@@ -91,7 +91,7 @@ export class KeePassRequestComponent implements OnInit, OnDestroy {
                 this.progress$.next(false);
 
                 if (arg instanceof Error) {
-                    this.store.dispatch(new CoreActions.Fail(arg));
+                    this.store.dispatch(CORE_ACTIONS.Fail(arg));
                 }
 
                 const {password, message} = arg;

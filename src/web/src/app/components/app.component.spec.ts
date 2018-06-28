@@ -7,7 +7,7 @@ import {Store, StoreModule} from "@ngrx/store";
 import {AppComponent} from "./app.component";
 import {ESC_KEY, SETTINGS_OUTLET as outlet} from "_@web/src/app/app.constants";
 import {initTestEnvironment} from "_@web/test/util";
-import {NavigationActions} from "_@web/src/app/store/actions";
+import {NAVIGATION_ACTIONS} from "_@web/src/app/store/actions";
 
 const moduleDef: TestModuleMetadata = Object.freeze({
     imports: [
@@ -72,7 +72,7 @@ describe(AppComponent.name, () => {
 
         expect(locationPathStub).toHaveBeenCalledWith(true);
         expect(locationPathStub).toHaveBeenCalledBefore(storeDispatchStub);
-        expect(storeDispatchStub).toHaveBeenCalledWith(new NavigationActions.Go({path: [{outlets: {[outlet]: null}}]}));
+        expect(storeDispatchStub).toHaveBeenCalledWith(NAVIGATION_ACTIONS.Go({path: [{outlets: {[outlet]: null}}]}));
         expect(storeDispatchStub).toHaveBeenCalledTimes(1);
     });
 });

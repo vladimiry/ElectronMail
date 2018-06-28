@@ -4,11 +4,11 @@ import {Component, EventEmitter, Input, Output} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
+import {CORE_ACTIONS, NAVIGATION_ACTIONS} from "_@web/src/app/store/actions";
+import {ElectronService} from "../+core/electron.service";
 import {KeePassClientConf, KeePassRef} from "_@shared/model/keepasshttp";
 import {SETTINGS_OUTLET, SETTINGS_PATH} from "_@web/src/app/app.constants";
-import {CoreActions, NavigationActions} from "_@web/src/app/store/actions";
 import {State} from "_@web/src/app/store/reducers/options";
-import {ElectronService} from "../+core/electron.service";
 
 @Component({
     selector: `protonmail-desktop-app-keepass-reference`,
@@ -66,17 +66,14 @@ export class KeePassReferenceComponent {
                             }
                         }),
                         catchError((error) => {
+                            const failAction = CORE_ACTIONS.Fail(error);
                             delete this.referencing;
                             delete this.message;
-                            return of(new CoreActions.Fail(error));
+                            this.store.dispatch(failAction);
+                            return of(failAction);
                         }),
                         take(1),
-                    )
-                    .subscribe((value) => {
-                        if (value instanceof CoreActions.Fail) {
-                            this.store.dispatch(value);
-                        }
-                    });
+                    );
             });
     }
 
@@ -89,7 +86,7 @@ export class KeePassReferenceComponent {
     }
 
     goToKeePassConnect() {
-        this.store.dispatch(new NavigationActions.Go({
+        this.store.dispatch(NAVIGATION_ACTIONS.Go({
             path: [{outlets: {[SETTINGS_OUTLET]: `${SETTINGS_PATH}/keepass-associate-settings`}}],
         }));
     }

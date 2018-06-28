@@ -5,7 +5,7 @@ import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
 import {KeePassClientConf} from "_@shared/model/keepasshttp";
-import {OptionsActions} from "_@web/src/app/store/actions";
+import {OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
 import {progressSelector, State} from "_@web/src/app/store/reducers/options";
 
 @Component({
@@ -37,7 +37,7 @@ export class KeepassAssociateComponent implements OnInit, OnDestroy {
     }
 
     submit() {
-        this.store.dispatch(new OptionsActions.AssociateSettingsWithKeePassRequest({url: this.url.value}));
+        this.store.dispatch(OPTIONS_ACTIONS.AssociateSettingsWithKeePassRequest({url: this.url.value}));
     }
 
     ngOnDestroy() {

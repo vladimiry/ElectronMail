@@ -1,5 +1,5 @@
 import {ApplicationRef, enableProdMode} from "@angular/core";
-import {bootloader, hmrModule} from "@angularclass/hmr";
+import {bootloader, hmrModule} from "@angularclass/hmr"; // TODO do not load HMR stuff for production build
 import {enableDebugTools} from "@angular/platform-browser";
 import {platformBrowserDynamic} from "@angular/platform-browser-dynamic";
 

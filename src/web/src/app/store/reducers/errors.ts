@@ -1,8 +1,9 @@
-import {Action, createFeatureSelector, createSelector} from "@ngrx/store";
+import {createFeatureSelector, createSelector} from "@ngrx/store";
+import {UnionOf} from "unionize";
 
-import {ERRORS_LIMIT} from "_@web/src/app/app.constants";
 import * as fromRoot from "_@web/src/app/store/reducers/root";
-import {CoreActions} from "_@web/src/app/store/actions";
+import {CORE_ACTIONS} from "_@web/src/app/store/actions";
+import {ERRORS_LIMIT} from "_@web/src/app/app.constants";
 
 export const featureName = "errors";
 
@@ -14,10 +15,9 @@ const initialState: State = {
     errors: [],
 };
 
-export function reducer(state = initialState, action: Action): State {
-    switch (action.type) {
-        case CoreActions.Fail.type: {
-            const error = (action as CoreActions.Fail).error;
+export function reducer(state = initialState, action: UnionOf<typeof CORE_ACTIONS>): State {
+    return CORE_ACTIONS.match(action, {
+        Fail: (error) => {
             const errors = [...state.errors];
 
             // tslint:disable:no-console
@@ -35,9 +35,8 @@ export function reducer(state = initialState, action: Action): State {
                 ...state,
                 errors,
             };
-        }
-        case CoreActions.RemoveError.type: {
-            const error = (action as CoreActions.RemoveError).error;
+        },
+        RemoveError: (error) => {
             const errors = [...state.errors];
             const index = errors.indexOf(error);
 
@@ -49,11 +48,9 @@ export function reducer(state = initialState, action: Action): State {
                 ...state,
                 errors,
             };
-        }
-        default: {
-            return state;
-        }
-    }
+        },
+        default: () => state,
+    });
 }
 
 export const stateSelector = createFeatureSelector<State>(featureName);

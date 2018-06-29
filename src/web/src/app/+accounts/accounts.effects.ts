@@ -13,9 +13,9 @@ import {State} from "_@web/src/app/store/reducers/accounts";
 export class AccountsEffects {
     @Effect()
     syncAccountsConfigs$ = this.actions$.pipe(
-            filter(OPTIONS_ACTIONS.is.GetSettingsResponse),
-            map(({payload}) => ACCOUNTS_ACTIONS.SyncAccountsConfigs({accountConfigs: payload.accounts})),
-        );
+        filter(OPTIONS_ACTIONS.is.GetSettingsResponse),
+        map(({payload}) => ACCOUNTS_ACTIONS.SyncAccountsConfigs({accountConfigs: payload.accounts})),
+    );
 
     @Effect()
     accountLogin$ = this.actions$.pipe(
@@ -80,14 +80,21 @@ export class AccountsEffects {
             filter(ACCOUNTS_ACTIONS.is.PageLoadingStart),
             switchMap(({payload}) => {
                 const {account, webView, unSubscribeOn} = payload;
-
-                notifications.push(
-                    this.electronService
-                        .webViewCaller(webView)("notification", {unSubscribeOn, timeoutMs: 0})()
-                        .pipe(map((notification) => ACCOUNTS_ACTIONS.AccountNotification({
+                const observable = this.electronService
+                    .webViewCaller(webView)("notification", {unSubscribeOn, timeoutMs: 0})()
+                    .pipe(
+                        map((notification) => ACCOUNTS_ACTIONS.AccountNotification({
                             accountConfig: account.accountConfig, notification,
-                        }))),
-                );
+                        })),
+                    );
+
+                if (unSubscribeOn) {
+                    unSubscribeOn.then(() => {
+                        notifications.splice(notifications.indexOf(observable), 1);
+                    });
+                }
+
+                notifications.push(observable);
 
                 return observableMerge(...notifications);
             }),

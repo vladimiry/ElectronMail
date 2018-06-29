@@ -11,15 +11,9 @@ files: [
   "./package.json",
   "!node_modules/jimp/{browser,fonts}",
   "!node_modules/rxjs/{_esm5,_esm2015,src,bundles}",
+  "!app/electron-preload/browser-window-e2e.js",
   # TODO sodium-native: include into the package only needed prebuilds for the platform is being built
   "!node_modules/sodium-native/{src,test,libsodium}",
-  # stacktrace-js
-  "!node_modules/error-stack-parser/dist",
-  "!node_modules/source-map/dist",
-  "!node_modules/stack-generator/dist",
-  "!node_modules/stackframe/dist",
-  "!node_modules/stacktrace-gps/dist",
-  "!node_modules/stacktrace-js/dist",
 ]
 compression: maximum
 asar: true

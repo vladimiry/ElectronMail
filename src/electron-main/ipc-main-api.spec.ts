@@ -523,7 +523,7 @@ test.beforeEach(async (t) => {
     t.truthy(ctx.settingsStore.validators && ctx.settingsStore.validators.length);
 
     t.context.ctx = ctx;
-    t.context.endpoints = t.context.mocked["./ipc-main-api"].initEndpoints(t.context.ctx);
+    t.context.endpoints = await t.context.mocked["./ipc-main-api"].initEndpoints(t.context.ctx);
     t.context.mocks["_@shared/api/main"].IPC_MAIN_API.registerApi.calledWithExactly(t.context.endpoints);
     // TODO make sure "IPC_MAIN_API.register" has been called
 });

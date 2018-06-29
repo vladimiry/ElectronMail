@@ -34,7 +34,7 @@ export async function initApp(ctx: Context) {
     }
 
     app.on("ready", async () => {
-        const endpoints = initEndpoints(ctx);
+        const endpoints = await initEndpoints(ctx);
         const {checkForUpdatesAndNotify} = await endpoints.readConfig().toPromise();
 
         // should be called before "browserWindow" creating (listens for "browser-window-created" event)

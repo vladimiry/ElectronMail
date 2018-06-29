@@ -16,7 +16,7 @@ import {Endpoints, IPC_MAIN_API} from "_@shared/api/main";
 import {KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "./constants";
 import {StatusCode, StatusCodeError} from "_@shared/model/error";
 
-export const initEndpoints = (ctx: Context): Endpoints => {
+export const initEndpoints = async (ctx: Context): Promise<Endpoints> => {
     const endpoints: Endpoints = {
         addAccount: ({login, passwordValue, mailPasswordValue, twoFactorCodeValue}) => from((async () => {
             const settings = await ctx.settingsStore.readExisting();
@@ -241,16 +241,8 @@ export const initEndpoints = (ctx: Context): Endpoints => {
             // TODO return updated "AccountConfig" only, not the entire settings object
             return await ctx.settingsStore.write(settings);
         })()),
-        updateOverlayIcon: ({unread, dataURL}) => from((async () => {
+        ...(await (async () => {
             const overlaySizeFactor = 0.6;
-            const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
-            const tray = ctx.uiContext && ctx.uiContext.tray;
-
-            if (!browserWindow || !tray) {
-                return EMPTY.toPromise();
-            }
-
-            // TODO cache "main"
             const native = nativeImage.createFromPath(ctx.locations.trayIcon);
             const jimp = await Jimp.read(native.toPNG());
             const main: { native: Electron.NativeImage; jimp: Jimp; w: number; h: number; } = {
@@ -259,28 +251,39 @@ export const initEndpoints = (ctx: Context): Endpoints => {
                 w: jimp.bitmap.width,
                 h: jimp.bitmap.height,
             };
+            const result: Pick<Endpoints, "updateOverlayIcon"> = {
+                updateOverlayIcon: ({unread, dataURL}) => from((async () => {
+                    const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
+                    const tray = ctx.uiContext && ctx.uiContext.tray;
 
-            if (unread > 0 && dataURL) {
-                const overlaySource = nativeImage.createFromDataURL(dataURL);
-                const overlaySourceJimp = await Jimp.read(overlaySource.toPNG());
-                const overlaySize = {w: Math.round(main.w * overlaySizeFactor), h: Math.round(main.h * overlaySizeFactor)};
-                const overlayJimp = await promisify(overlaySourceJimp.resize.bind(overlaySourceJimp))(overlaySize.w, overlaySize.h);
-                const overlayBuffer = await promisify(overlayJimp.getBuffer.bind(overlayJimp))(Jimp.MIME_PNG);
-                const overlayNative = nativeImage.createFromBuffer(overlayBuffer);
-                const composedJimp = main.jimp.composite(overlayJimp, main.w - overlaySize.w, main.h - overlaySize.h);
-                const composedBuffer = await promisify(composedJimp.getBuffer.bind(composedJimp))(Jimp.MIME_PNG);
-                const composedNative = nativeImage.createFromBuffer(composedBuffer);
+                    if (!browserWindow || !tray) {
+                        return EMPTY.toPromise();
+                    }
 
-                browserWindow.setOverlayIcon(overlayNative, `Unread messages ${unread}`);
-                tray.setImage(composedNative);
-                app.setBadgeCount(unread);
-            } else {
-                browserWindow.setOverlayIcon(null as any, "");
-                tray.setImage(main.native);
-                app.setBadgeCount(0);
-            }
+                    if (unread > 0 && dataURL) {
+                        const overlaySourceJimp = await Jimp.read(nativeImage.createFromDataURL(dataURL).toPNG());
+                        const overlaySize = {w: Math.round(main.w * overlaySizeFactor), h: Math.round(main.h * overlaySizeFactor)};
+                        const overlayJimp = await promisify(overlaySourceJimp.resize.bind(overlaySourceJimp))(overlaySize.w, overlaySize.h);
+                        const overlayBuffer = await promisify(overlayJimp.getBuffer.bind(overlayJimp))(Jimp.MIME_PNG);
+                        const overlayNative = nativeImage.createFromBuffer(overlayBuffer);
+                        const composedJimp = main.jimp.composite(overlayJimp, main.w - overlaySize.w, main.h - overlaySize.h);
+                        const composedBuffer = await promisify(composedJimp.getBuffer.bind(composedJimp))(Jimp.MIME_PNG);
+                        const composedNative = nativeImage.createFromBuffer(composedBuffer);
 
-            return EMPTY.toPromise();
+                        browserWindow.setOverlayIcon(overlayNative, `Unread messages count: ${unread}`);
+                        tray.setImage(composedNative);
+                        app.setBadgeCount(unread);
+                    } else {
+                        browserWindow.setOverlayIcon(null as any, "");
+                        tray.setImage(main.native);
+                        app.setBadgeCount(0);
+                    }
+
+                    return EMPTY.toPromise();
+                })()),
+            };
+
+            return result;
         })()),
     };
 

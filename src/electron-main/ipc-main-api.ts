@@ -1,7 +1,7 @@
 import aboutWindow from "about-window";
 import Jimp from "jimp";
 import keytar from "keytar";
-import {app, nativeImage, shell} from "electron";
+import {app, nativeImage, NativeImage, shell} from "electron";
 import {EMPTY, from} from "rxjs";
 import {isWebUri} from "valid-url";
 import {KeePassHttpClient} from "keepasshttp-client";
@@ -12,6 +12,7 @@ import {assert} from "_@shared/util";
 import {BuildEnvironment} from "_@shared/model/common";
 import {buildSettingsAdapter, handleKeePassRequestError, toggleBrowserWindow} from "./util";
 import {Context} from "./model";
+import {ElectronContextLocations} from "_@shared/model/electron";
 import {Endpoints, IPC_MAIN_API} from "_@shared/api/main";
 import {KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "./constants";
 import {StatusCode, StatusCodeError} from "_@shared/model/error";
@@ -242,17 +243,9 @@ export const initEndpoints = async (ctx: Context): Promise<Endpoints> => {
             return await ctx.settingsStore.write(settings);
         })()),
         ...(await (async () => {
-            const overlaySizeFactor = 0.6;
-            const native = nativeImage.createFromPath(ctx.locations.trayIcon);
-            const jimp = await Jimp.read(native.toPNG());
-            const main: { native: Electron.NativeImage; jimp: Jimp; w: number; h: number; } = {
-                native,
-                jimp,
-                w: jimp.bitmap.width,
-                h: jimp.bitmap.height,
-            };
+            const trayIconsService = await prepareTrayIcons(ctx.locations);
             const result: Pick<Endpoints, "updateOverlayIcon"> = {
-                updateOverlayIcon: ({unread, dataURL}) => from((async () => {
+                updateOverlayIcon: ({unread}) => from((async () => {
                     const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
                     const tray = ctx.uiContext && ctx.uiContext.tray;
 
@@ -260,12 +253,13 @@ export const initEndpoints = async (ctx: Context): Promise<Endpoints> => {
                         return EMPTY.toPromise();
                     }
 
-                    if (unread > 0 && dataURL) {
-                        const overlaySourceJimp = await Jimp.read(nativeImage.createFromDataURL(dataURL).toPNG());
-                        const overlaySize = {w: Math.round(main.w * overlaySizeFactor), h: Math.round(main.h * overlaySizeFactor)};
-                        const overlayJimp = await promisify(overlaySourceJimp.resize.bind(overlaySourceJimp))(overlaySize.w, overlaySize.h);
+                    const {main, buildOverlay} = trayIconsService;
+
+                    if (unread > 0) {
+                        const overlayJimp = buildOverlay(unread);
                         const overlayBuffer = await promisify(overlayJimp.getBuffer.bind(overlayJimp))(Jimp.MIME_PNG);
                         const overlayNative = nativeImage.createFromBuffer(overlayBuffer);
+                        const overlaySize = {w: overlayJimp.bitmap.width, h: overlayJimp.bitmap.height};
                         const composedJimp = main.jimp.composite(overlayJimp, main.w - overlaySize.w, main.h - overlaySize.h);
                         const composedBuffer = await promisify(composedJimp.getBuffer.bind(composedJimp))(Jimp.MIME_PNG);
                         const composedNative = nativeImage.createFromBuffer(composedBuffer);
@@ -291,3 +285,49 @@ export const initEndpoints = async (ctx: Context): Promise<Endpoints> => {
 
     return endpoints;
 };
+
+export async function prepareTrayIcons(locations: ElectronContextLocations): Promise<{
+    main: { native: NativeImage, jimp: Jimp, w: number, h: number },
+    buildOverlay: (unread: number) => Jimp,
+}> {
+    const main = await (async () => {
+        const native = nativeImage.createFromPath(locations.trayIcon);
+        const jimp = await Jimp.read(native.toPNG());
+
+        return Object.freeze({
+            native,
+            jimp,
+            w: jimp.bitmap.width,
+            h: jimp.bitmap.height,
+        });
+    })();
+    const buildOverlay = await (async () => {
+        const factors = {overlay: .75, text: .9};
+        const size = {w: Math.round(main.w * factors.overlay), h: Math.round(main.h * factors.overlay)};
+        const imageSource = await Jimp.read(nativeImage.createFromPath(locations.trayIconOverlay).toPNG());
+        const jimp = await promisify(imageSource.resize.bind(imageSource))(size.w, size.h);
+        // TODO there is no "loadFont" function signature provided by Jimp's declaration file
+        const font = await (Jimp as any).loadFont(Jimp.FONT_SANS_64_WHITE);
+        const fontSize = 64;
+        const printX = [
+            30,
+            8,
+        ];
+        const printY = size.h / 2 - (fontSize / 2);
+
+        return (unread: number) => {
+            const index = String(unread).length - 1;
+
+            if (index < printX.length) {
+                return jimp.clone().print(font, printX[index], printY, String(unread), size.w * factors.text);
+            }
+
+            return jimp;
+        };
+    })();
+
+    return {
+        main,
+        buildOverlay,
+    };
+}

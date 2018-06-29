@@ -47,9 +47,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
                 takeUntil(this.unSubscribe$),
             )
             .subscribe((unread) => {
-                return this.store.dispatch(ACCOUNTS_ACTIONS.UpdateOverlayIcon({
-                    count: unread, dataURL: unread > 0 ? createOverlayIconDataURL(unread) : undefined,
-                }));
+                return this.store.dispatch(ACCOUNTS_ACTIONS.UpdateOverlayIcon({count: unread}));
             });
     }
 
@@ -97,30 +95,4 @@ export class AccountsComponent implements OnInit, OnDestroy {
         this.unSubscribe$.next();
         this.unSubscribe$.complete();
     }
-}
-
-// TODO move overlay creating logic to backend (main process), send only {count: unread} then
-function createOverlayIconDataURL(unread: number): string {
-    const canvas = document.createElement("canvas");
-
-    canvas.height = 128;
-    canvas.width = 128;
-    canvas.style.letterSpacing = "-5px";
-
-    const ctx = canvas.getContext("2d");
-
-    if (!ctx) {
-        throw new Error("Failed to get 2d canvas context");
-    }
-
-    ctx.fillStyle = "#DC3545";
-    ctx.beginPath();
-    ctx.ellipse(64, 64, 64, 64, 0, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.textAlign = "center";
-    ctx.fillStyle = "white";
-    ctx.font = "90px sans-serif";
-    ctx.fillText(String(Math.min(99, unread)), 64, 96);
-
-    return canvas.toDataURL();
 }

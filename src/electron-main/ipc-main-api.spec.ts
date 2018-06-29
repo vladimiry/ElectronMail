@@ -459,6 +459,17 @@ test.beforeEach(async (t) => {
                     },
                     openItem: sinon.spy(),
                 },
+                nativeImage: {
+                    createFromPath: sinon.stub().returns({toPNG: sinon.spy}),
+                },
+            },
+            "jimp": {
+                read: sinon.stub().returns(Promise.resolve({
+                    resize: (w: any, h: any, cb: any) => cb(),
+                    bitmap: {width: 0, height: 0},
+                })),
+                loadFont: sinon.spy(),
+                _rewiremock_no_callThrough: true,
             },
             "keytar": {
                 _rewiremock_no_callThrough: true,
@@ -476,10 +487,10 @@ test.beforeEach(async (t) => {
                         .keys(t.context.mocks)
                         .forEach((key) => {
                             const mocks = t.context.mocks[key];
-                            let mocked: any = mock(key);
+                            let mocked = mock(key);
 
                             if (!mocks._rewiremock_no_callThrough) {
-                                mocked = mocked.callThrough();
+                                mocked = (mocked as any).callThrough();
                             }
 
                             mocked.with(mocks);

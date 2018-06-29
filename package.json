@@ -190,7 +190,7 @@
     "unionize": "https://github.com/vladimiry/unionize#add-tagprefix-option-lib",
     "url-loader": "1.0.1",
     "wait-on": "2.1.0",
-    "webpack": "4.13.0",
+    "webpack": "4.14.0",
     "webpack-cli": "3.0.8",
     "webpack-dev-server": "3.1.4",
     "webpack-merge": "4.1.3",

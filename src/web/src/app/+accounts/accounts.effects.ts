@@ -144,7 +144,7 @@ export class AccountsEffects {
     updateOverlayIcon$ = this.actions$.pipe(
         filter(ACCOUNTS_ACTIONS.is.UpdateOverlayIcon),
         switchMap(({payload}) => this.electronService
-            .callIpcMain("updateOverlayIcon")({unread: payload.count, dataURL: payload.dataURL})
+            .callIpcMain("updateOverlayIcon")({unread: payload.count})
             .pipe(
                 mergeMap(() => []),
                 catchError((error) => this.effectsService.buildFailActionObservable(error)),

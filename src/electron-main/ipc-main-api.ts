@@ -99,7 +99,7 @@ export const initEndpoints = (ctx: Context): Endpoints => {
         openAboutWindow: () => {
             aboutWindow({
                 icon_path: ctx.locations.icon,
-                package_json_dir: "development" === (process.env.NODE_ENV as BuildEnvironment) ? process.cwd() : ctx.locations.app,
+                package_json_dir: (process.env.NODE_ENV as BuildEnvironment) === "development" ? process.cwd() : ctx.locations.app,
                 // TODO figure why ""about-window" doesn't automatically resolve properties like "bugs" or "description" from package.json
                 // properties are fulled in package.json, both original and modified by "electron-builder"
                 description: String(process.env.APP_ENV_PACKAGE_DESCRIPTION),

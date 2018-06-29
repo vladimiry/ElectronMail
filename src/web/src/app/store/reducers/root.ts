@@ -18,7 +18,7 @@ export function innerMetaReducer(this: ActionReducer<any, any>, state: any, acti
     }
 
     // TODO do not load HMR stuff for production build
-    if ("development" === (process.env.NODE_ENV as BuildEnvironment)) {
+    if ((process.env.NODE_ENV as BuildEnvironment) === "development") {
         return ROOT_ACTIONS.match(action, {
             HmrStateRestoreAction: (statePayload) => statePayload,
             default: () => this(state, action),

@@ -1,8 +1,9 @@
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
+import ts from "typescript";
 import webpack, {Configuration} from "webpack";
-
 import {AngularCompilerPlugin, PLATFORM} from "@ngtools/webpack";
+
 import {buildConfig, environment, environmentSate, outputPath, srcPath} from "./lib";
 import {BuildEnvironment} from "_@shared/model/common";
 import webpackMerge = require("webpack-merge");
@@ -11,13 +12,14 @@ import webpackMerge = require("webpack-merge");
 const cssNano = require("cssnano");
 const customProperties = require("postcss-custom-properties");
 const postCssUrl = require("postcss-url");
+const {readConfiguration} = require("@angular/compiler-cli");
 // tslint:enable:no-var-requires
 
 const webSrcPath = (...value: string[]) => srcPath("./web/src", ...value);
 const webAppPath = (...value: string[]) => webSrcPath("./app", ...value);
+const webSrcEnvPath = (...value: string[]) => webSrcPath("./environments", environmentSate.development ? "./development" : "", ...value);
 
 const aot = environmentSate.production;
-const tsConfigFile = environmentSate.test ? srcPath("./web/test/tsconfig.json") : srcPath("./web/tsconfig.json");
 const cssRuleUse = [
     "css-loader",
     {
@@ -40,6 +42,25 @@ const cssRuleUse = [
         },
     },
 ];
+const tsConfigFile = srcPath(({
+    production: "./web/tsconfig.json",
+    development: "./web/tsconfig.development.json",
+    test: "./web/test/tsconfig.json",
+} as Record<BuildEnvironment, string>)[environment]);
+const tsConfigCompilerOptions: ts.CompilerOptions = (() => {
+    // AngularCompilerPlugin does only a shallow Object.assign-like merge with options defined in tsconfig.json
+    const tsConfig = readConfiguration(tsConfigFile);
+
+    if (environmentSate.production) {
+
+    }
+
+    if (environmentSate.development) {
+        tsConfig.options.paths["_@web/src/environments/*"] = [webSrcEnvPath() + "/*"];
+    }
+
+    return tsConfig.options;
+})();
 const config = buildConfig(
     {
         target: "electron-renderer",
@@ -114,10 +135,11 @@ const config = buildConfig(
                 minify: false,
             }),
             new AngularCompilerPlugin({
-                entryModule: `${webAppPath("app.module")}#AppModule`,
+                entryModule: `${webSrcEnvPath("app.module")}#AppModule`,
                 platform: PLATFORM.Browser,
                 skipCodeGeneration: !aot,
                 tsConfigPath: tsConfigFile,
+                compilerOptions: tsConfigCompilerOptions,
             }),
         ],
     },
@@ -167,7 +189,7 @@ const configPatch: Record<BuildEnvironment, Configuration> = {
                     loader: "@ngtools/webpack",
                 },
                 {
-                    test: /\.(eot|ttf|otf|woff|woff2|ico|gif|png|jpe?g|svg)$/i,
+                    test: /\.(css|scss|eot|ttf|otf|woff|woff2|ico|gif|png|jpe?g|svg)$/i,
                     loader: "null-loader",
                 },
             ],
@@ -175,4 +197,6 @@ const configPatch: Record<BuildEnvironment, Configuration> = {
     },
 };
 
-export default webpackMerge(config, configPatch[environment]);
+const configuration = webpackMerge(config, configPatch[environment]);
+
+export default configuration;

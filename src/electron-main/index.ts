@@ -27,7 +27,7 @@ export async function initApp(ctx: Context) {
         app.exit();
     }
 
-    if ("development" === (process.env.NODE_ENV as BuildEnvironment)) {
+    if ((process.env.NODE_ENV as BuildEnvironment) === "development") {
         app.on("web-contents-created", (webContentsCreatedEvent, contents) => {
             contents.openDevTools();
         });

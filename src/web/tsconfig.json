@@ -10,7 +10,8 @@
     "./typings.d.ts"
   ],
   "exclude": [
-    "./**/*.spec.ts"
+    "./**/*.spec.ts",
+    "./src/environments/**/*.ts"
   ],
   "angularCompilerOptions": {
     "preserveWhitespaces": false,

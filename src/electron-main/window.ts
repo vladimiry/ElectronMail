@@ -8,7 +8,7 @@ import {Context} from "./model";
 export async function initBrowserWindow(ctx: Context): Promise<BrowserWindow> {
     const browserWindowConstructorOptions = {
         webPreferences: {
-            nodeIntegration: "development" === (process.env.NODE_ENV as BuildEnvironment),
+            nodeIntegration: (process.env.NODE_ENV as BuildEnvironment) === "development",
             webviewTag: true,
             webSecurity: true,
             // sandbox: true,

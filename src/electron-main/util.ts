@@ -55,7 +55,7 @@ function initLocations(runtimeEnvironment: RuntimeEnvironment, paths?: ContextIn
     }
 
     const {appDir, userDataDir} = paths || {
-        appDir: path.join(__dirname, "development" === (process.env.NODE_ENV as BuildEnvironment) ? "../app-dev" : "../app"),
+        appDir: path.join(__dirname, (process.env.NODE_ENV as BuildEnvironment) === "development" ? "../app-dev" : "../app"),
         userDataDir: userDataDirRuntimeVal || app.getPath("userData"),
     };
     const largeIcon = "./assets/icons/icon.png";
@@ -68,7 +68,7 @@ function initLocations(runtimeEnvironment: RuntimeEnvironment, paths?: ContextIn
         userData: userDataDir,
         icon: buildAppPath(largeIcon),
         trayIcon: buildAppPath(os.platform() === "darwin" ? "./assets/icons/mac/icon.png" : largeIcon),
-        browserWindowPage: "development" === (process.env.NODE_ENV as BuildEnvironment) ? "http://localhost:8080/index.html"
+        browserWindowPage: (process.env.NODE_ENV as BuildEnvironment) === "development" ? "http://localhost:8080/index.html"
             : formatFileUrl(path.join(appDir, "./web/index.html")),
         preload: {
             browserWindow: buildAppPath("./electron-preload/browser-window.js"),

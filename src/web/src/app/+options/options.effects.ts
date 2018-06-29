@@ -214,10 +214,10 @@ export class OptionsEffects {
     @Effect()
     updateBaseSettings$ = this.actions$.pipe(
         filter(OPTIONS_ACTIONS.is.PatchBaseSettingsRequest),
-        switchMap((patch) => observableMerge(
+        switchMap(({payload}) => observableMerge(
             of(this.buildPatchProgress({updatingBaseSettings: true})),
             this.electronService
-                .callIpcMain("patchBaseSettings")(patch)
+                .callIpcMain("patchBaseSettings")(payload)
                 .pipe(
                     map((config) => OPTIONS_ACTIONS.GetConfigResponse(config)),
                     catchError((error) => this.effectsService.buildFailActionObservable(error)),

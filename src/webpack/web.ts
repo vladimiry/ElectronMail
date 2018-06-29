@@ -48,12 +48,7 @@ const tsConfigFile = srcPath(({
     test: "./web/test/tsconfig.json",
 } as Record<BuildEnvironment, string>)[environment]);
 const tsConfigCompilerOptions: ts.CompilerOptions = (() => {
-    // AngularCompilerPlugin does only a shallow Object.assign-like merge with options defined in tsconfig.json
     const tsConfig = readConfiguration(tsConfigFile);
-
-    if (environmentSate.production) {
-
-    }
 
     if (environmentSate.development) {
         tsConfig.options.paths["_@web/src/environments/*"] = [webSrcEnvPath() + "/*"];

@@ -1,4 +1,4 @@
-import {catchError, map, take} from "rxjs/operators";
+import {catchError, map, switchMap, take} from "rxjs/operators";
 import {Observable, of} from "rxjs";
 import {Component, EventEmitter, Input, Output} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
@@ -41,7 +41,7 @@ export class KeePassReferenceComponent {
                 private electronService: ElectronService) {}
 
     // TODO consider moving this to the "effects" service, ie keep a component dump by interacting with the "store" only
-    submit() {
+    async submit() {
         const keePassRef = {
             url: this.url.value,
             uuid: this.uuid.value,
@@ -49,10 +49,10 @@ export class KeePassReferenceComponent {
 
         this.referencing = true;
 
-        this.keePassClientConf$
-            .pipe(take(1))
-            .subscribe((keePassClientConf) => {
-                this.electronService
+        await this.keePassClientConf$
+            .pipe(
+                take(1),
+                switchMap((keePassClientConf) => this.electronService
                     .keePassPassword(keePassClientConf, keePassRef)
                     .pipe(
                         map(({password, message}) => {
@@ -72,9 +72,9 @@ export class KeePassReferenceComponent {
                             this.store.dispatch(failAction);
                             return of(failAction);
                         }),
-                        take(1),
-                    );
-            });
+                    )),
+            )
+            .toPromise();
     }
 
     unlink() {

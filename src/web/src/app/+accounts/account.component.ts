@@ -14,7 +14,6 @@ import {
 } from "_@web/src/app/store/reducers/options";
 import {State} from "_@web/src/app/store/reducers/accounts";
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "_@web/src/app/store/actions";
-import {BuildEnvironment} from "_@shared/model/common";
 
 @Component({
     selector: `protonmail-desktop-app-account`,
@@ -29,12 +28,10 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
     // account
     // TODO simplify account$ initialization and usage
     account$: BehaviorSubject<WebAccount>;
-    // progress
-    passwordProgress$: Observable<boolean>;
-    mailPasswordProgress$: Observable<boolean>;
     // keepass
     keePassClientConf$ = this.optionsStore.select(settingsKeePassClientConfSelector);
     passwordKeePassRef$: Observable<KeePassRef | undefined>;
+    twoFactorCodeKeePassRef$: Observable<KeePassRef | undefined>;
     mailPasswordKeePassRef$: Observable<KeePassRef | undefined>;
     // offline interval
     offlineIntervalStepSec = 10;
@@ -82,17 +79,15 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
             )
             .subscribe(() => this.pageLoadedReaction(this.account$.getValue()));
 
-        // keepass - password
-        this.passwordKeePassRef$ = this.account$.pipe(map(({accountConfig}) =>
-            accountConfig.credentials.password.keePassRef,
-        ));
-        this.passwordProgress$ = this.account$.pipe(map(({progress}) => !!progress.password));
-
-        // keepass - mail password
-        this.mailPasswordKeePassRef$ = this.account$.pipe(map(({accountConfig}) =>
-            accountConfig.credentials.mailPassword.keePassRef,
-        ));
-        this.mailPasswordProgress$ = this.account$.pipe(map(({progress}) => !!progress.mailPassword));
+        this.passwordKeePassRef$ = this.account$.pipe(map(({accountConfig}) => {
+            return accountConfig.credentials.password.keePassRef;
+        }));
+        this.mailPasswordKeePassRef$ = this.account$.pipe(map(({accountConfig}) => {
+            return accountConfig.credentials.mailPassword.keePassRef;
+        }));
+        this.twoFactorCodeKeePassRef$ = this.account$.pipe(map(({accountConfig}) => {
+            return accountConfig.credentials.twoFactorCode && accountConfig.credentials.twoFactorCode.keePassRef;
+        }));
 
         // unread notifications
         this.account$
@@ -123,6 +118,12 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
     onPassword(password: string) {
         this.optionsStore.dispatch(
             ACCOUNTS_ACTIONS.Login({pageType: "login", webView: this.webView, account: this.account$.getValue(), password}),
+        );
+    }
+
+    onTwoFactorCode(password: string) {
+        this.optionsStore.dispatch(
+            ACCOUNTS_ACTIONS.Login({pageType: "login2fa", webView: this.webView, account: this.account$.getValue(), password}),
         );
     }
 

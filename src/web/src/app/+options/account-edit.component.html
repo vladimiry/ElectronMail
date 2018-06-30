@@ -1,13 +1,14 @@
 <nav aria-label="breadcrumb" role="navigation">
     <ol class="breadcrumb">
         <li class="breadcrumb-item active">
-            {{ (account$ | async) ? "Edit Account: " + ((account$ | async).login) : "Add Account" }}
+            {{ (possiblyExistingAccount$ | async) ? "Edit Account: " + ((possiblyExistingAccount$ | async).login) : "Add
+            Account" }}
         </li>
     </ol>
 </nav>
 <fieldset [disabled]="(processing$ | async) || (removing$ | async)">
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="form-group">
-        <div class="form-group required" *ngIf="!(account$ | async)">
+        <div class="form-group required" *ngIf="!(possiblyExistingAccount$ | async)">
             <label>Login</label>
             <input type="text" class="form-control" formControlName="login" #loginRef
                    [ngClass]="login.dirty ? {'is-invalid': login.invalid, 'is-valid': login.valid} : {}">
@@ -28,7 +29,7 @@
                    [ngClass]="mailPassword.dirty ? {'is-invalid': mailPassword.invalid, 'is-valid': mailPassword.valid} : {}">
         </div>
         <div class="clearfix">
-            <button class="btn btn-outline-danger pull-left" type="button" *ngIf="(account$ | async)" (click)="remove()">
+            <button class="btn btn-outline-danger pull-left" type="button" *ngIf="(possiblyExistingAccount$ | async)" (click)="remove()">
                 <i class="fa" [ngClass]="{
                     'fa-spinner fa-pulse fa-fw': (removing$ | async),
                     'fa-times': !(removing$ | async)
@@ -40,11 +41,11 @@
                     'fa-spinner fa-pulse fa-fw': (processing$ | async),
                     'fa-check': !(processing$ | async)
                 }"></i>
-                {{ (account$ | async) ? "Update" : "Add" }}
+                {{ (possiblyExistingAccount$ | async) ? "Update" : "Add" }}
             </button>
         </div>
     </form>
-    <div *ngIf="(account$ | async)">
+    <div *ngIf="(possiblyExistingAccount$ | async)">
         <div>
             <a href="javascript:void(0)" (click)="keePassRefCollapsed = !keePassRefCollapsed">KeePass References</a>
             <i class="fa" [ngClass]="{
@@ -63,9 +64,16 @@
                     (unlinkHandler)="onPasswordKeePassUnlink($event)"
                 ></protonmail-desktop-app-keepass-reference>
             </div>
-            <!--
-            TODO enable keepass interaction for "twoFactorCode"
-            -->
+            <hr>
+            <div class="form-group">
+                <label>Two Factor Secret Key</label>
+                <protonmail-desktop-app-keepass-reference
+                    [keePassClientConf$]="keePassClientConf$"
+                    [reference$]="twoFactorCodeKeePassRef$"
+                    (linkHandler)="onTwoFactorCodeKeePassLink($event)"
+                    (unlinkHandler)="onTwoFactorCodeKeePassUnlink($event)"
+                ></protonmail-desktop-app-keepass-reference>
+            </div>
             <hr>
             <div class="form-group">
                 <label>Mail Password</label>

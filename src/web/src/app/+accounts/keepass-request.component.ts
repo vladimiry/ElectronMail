@@ -1,6 +1,6 @@
-import {BehaviorSubject, EMPTY, interval, Observable, Subject} from "rxjs";
-import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from "@angular/core";
-import {distinctUntilChanged, scan, switchMap, takeUntil, tap, withLatestFrom} from "rxjs/operators";
+import {EMPTY, interval, Observable, Subject} from "rxjs";
+import {Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output} from "@angular/core";
+import {distinctUntilChanged, scan, switchMap, takeUntil, withLatestFrom} from "rxjs/operators";
 import {Store} from "@ngrx/store";
 
 import {CORE_ACTIONS} from "_@web/src/app/store/actions";
@@ -14,7 +14,9 @@ import {State} from "_@web/src/app/store/reducers/root";
     styleUrls: ["./keepass-request.component.scss"],
 })
 export class KeePassRequestComponent implements OnInit, OnDestroy {
-    paused = false;
+    @HostBinding("class.d-block")
+    visible = false;
+    paused = true;
     locked = false;
     message?: string;
     wait = 10;
@@ -25,8 +27,6 @@ export class KeePassRequestComponent implements OnInit, OnDestroy {
     keePassRef$: Observable<KeePassRef | undefined>;
     @Input()
     keePassClientConf$: Observable<KeePassClientConf>;
-    @Input()
-    locked$: Observable<boolean> = new BehaviorSubject(false);
     @Output()
     passwordHandler = new EventEmitter<string>();
 
@@ -41,7 +41,12 @@ export class KeePassRequestComponent implements OnInit, OnDestroy {
                 distinctUntilChanged(),
                 withLatestFrom(this.keePassClientConf$),
                 switchMap(([keePassRef, keePassClientConf]) => {
+                    this.paused = false;
+                    this.visible = true;
+
                     if (!keePassRef) {
+                        this.paused = true;
+                        this.visible = false;
                         return EMPTY;
                     }
 
@@ -77,13 +82,6 @@ export class KeePassRequestComponent implements OnInit, OnDestroy {
                     this.store.dispatch(CORE_ACTIONS.Fail(err));
                 },
             );
-
-        this.locked$
-            .pipe(takeUntil(this.unSubscribe$))
-            .subscribe((locked) => {
-                this.locked = locked;
-                this.togglePause(locked);
-            });
     }
 
     ngOnDestroy() {

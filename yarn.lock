@@ -500,7 +500,11 @@
   version "0.0.32"
   resolved "https://registry.yarnpkg.com/@types/stacktrace-js/-/stacktrace-js-0.0.32.tgz#d23e4a36a5073d39487fbea8234cc6186862d389"
 
-"@types/tapable@*", "@types/tapable@1.0.2":
+"@types/tapable@*", "@types/tapable@1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@types/tapable/-/tapable-1.0.3.tgz#0db6e44f99933f9bfaa952ab9db9caa9ce4896e2"
+
+"@types/tapable@1.0.2":
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/@types/tapable/-/tapable-1.0.2.tgz#e13182e1b69871a422d7863e11a4a6f5b814a4bd"
 
@@ -886,6 +890,10 @@ anymatch@^2.0.0:
   dependencies:
     micromatch "^3.1.4"
     normalize-path "^2.1.1"
+
+app-builder-bin@1.10.3:
+  version "1.10.3"
+  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-1.10.3.tgz#ab4d7b1a3bf4005dea16bf0b184077b3136f8ae9"
 
 app-builder-bin@1.9.16:
   version "1.9.16"
@@ -1621,12 +1629,31 @@ builder-util-runtime@4.4.0, builder-util-runtime@^4.4.0, builder-util-runtime@~4
     fs-extra-p "^4.6.1"
     sax "^1.2.4"
 
-builder-util@5.13.0, builder-util@^5.13.0:
+builder-util@5.13.0:
   version "5.13.0"
   resolved "https://registry.yarnpkg.com/builder-util/-/builder-util-5.13.0.tgz#c871bb491bcf645483f1c5523850f6a1956627ca"
   dependencies:
     "7zip-bin" "~4.0.2"
     app-builder-bin "1.9.16"
+    bluebird-lst "^1.0.5"
+    builder-util-runtime "^4.4.0"
+    chalk "^2.4.1"
+    debug "^3.1.0"
+    fs-extra-p "^4.6.1"
+    is-ci "^1.1.0"
+    js-yaml "^3.12.0"
+    lazy-val "^1.0.3"
+    semver "^5.5.0"
+    source-map-support "^0.5.6"
+    stat-mode "^0.2.2"
+    temp-file "^3.1.3"
+
+builder-util@^5.13.0:
+  version "5.13.2"
+  resolved "https://registry.yarnpkg.com/builder-util/-/builder-util-5.13.2.tgz#58b43b5b2c4acdeb9d4994b47152acdb111683ea"
+  dependencies:
+    "7zip-bin" "~4.0.2"
+    app-builder-bin "1.10.3"
     bluebird-lst "^1.0.5"
     builder-util-runtime "^4.4.0"
     chalk "^2.4.1"

@@ -12,8 +12,7 @@ export interface AccountCredentials {
     };
     twoFactorCode?: {
         value?: string;
-        // TODO enable keepass interaction for "twoFactorCode"
-        // keePassRef?: KeePassRef;
+        keePassRef?: KeePassRef;
     };
 }
 

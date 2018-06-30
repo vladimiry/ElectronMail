@@ -213,29 +213,38 @@ export const initEndpoints = async (ctx: Context): Promise<Endpoints> => {
                 );
             }
 
+            const {credentials} = matchedAccount;
+
             if ("passwordValue" in payload) {
-                matchedAccount.credentials.password.value = payload.passwordValue || undefined;
-            }
-            if ("twoFactorCodeValue" in payload) {
-                matchedAccount.credentials.twoFactorCode = {
-                    value: payload.twoFactorCodeValue || undefined,
-                };
-            }
-            if ("mailPasswordValue" in payload) {
-                matchedAccount.credentials.mailPassword.value = payload.mailPasswordValue || undefined;
-            }
-            if ("mailPasswordKeePassRef" in payload) {
-                if (payload.mailPasswordKeePassRef) {
-                    matchedAccount.credentials.mailPassword.keePassRef = payload.mailPasswordKeePassRef;
-                } else {
-                    delete matchedAccount.credentials.mailPassword.keePassRef;
-                }
+                credentials.password.value = payload.passwordValue || undefined;
             }
             if ("passwordKeePassRef" in payload) {
                 if (payload.passwordKeePassRef) {
-                    matchedAccount.credentials.password.keePassRef = payload.passwordKeePassRef;
+                    credentials.password.keePassRef = payload.passwordKeePassRef;
                 } else {
-                    delete matchedAccount.credentials.password.keePassRef;
+                    delete credentials.password.keePassRef;
+                }
+            }
+
+            if ("twoFactorCodeValue" in payload) {
+                (credentials.twoFactorCode = credentials.twoFactorCode || {}).value = payload.twoFactorCodeValue || undefined;
+            }
+            if ("twoFactorCodeKeePassRef" in payload) {
+                if (payload.twoFactorCodeKeePassRef) {
+                    (credentials.twoFactorCode = credentials.twoFactorCode || {}).keePassRef = payload.twoFactorCodeKeePassRef;
+                } else {
+                    delete (credentials.twoFactorCode = credentials.twoFactorCode || {}).keePassRef;
+                }
+            }
+
+            if ("mailPasswordValue" in payload) {
+                credentials.mailPassword.value = payload.mailPasswordValue || undefined;
+            }
+            if ("mailPasswordKeePassRef" in payload) {
+                if (payload.mailPasswordKeePassRef) {
+                    credentials.mailPassword.keePassRef = payload.mailPasswordKeePassRef;
+                } else {
+                    delete credentials.mailPassword.keePassRef;
                 }
             }
 

@@ -110,7 +110,7 @@
     "@types/sinon": "5.0.1",
     "@types/source-map": "0.5.7",
     "@types/stacktrace-js": "0.0.32",
-    "@types/tapable": "1.0.2",
+    "@types/tapable": "1.0.3",
     "@types/uglifyjs-webpack-plugin": "1.1.0",
     "@types/valid-url": "1.0.2",
     "@types/webdriverio": "4.10.3",

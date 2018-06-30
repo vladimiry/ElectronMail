@@ -3,7 +3,6 @@ import logger from "electron-log";
 import {app} from "electron";
 
 import {activateBrowserWindow, initContext} from "./util";
-import {BuildEnvironment} from "_@shared/model/common";
 import {Context} from "./model";
 import {initAutoUpdate} from "./app-update";
 import {initBrowserWindow} from "./window";

@@ -3,7 +3,13 @@
     [keePassRef$]="passwordKeePassRef$"
     [keePassClientConf$]="keePassClientConf$"
     (passwordHandler)="onPassword($event)"
-    [lock$]="passwordProgress$"
+></protonmail-desktop-app-keepass-request>
+
+<protonmail-desktop-app-keepass-request
+    *ngIf="(account$ | async).sync.pageType.type == 'login2fa'"
+    [keePassRef$]="twoFactorCodeKeePassRef$"
+    [keePassClientConf$]="keePassClientConf$"
+    (passwordHandler)="onTwoFactorCode($event)"
 ></protonmail-desktop-app-keepass-request>
 
 <protonmail-desktop-app-keepass-request
@@ -11,12 +17,7 @@
     [keePassRef$]="mailPasswordKeePassRef$"
     [keePassClientConf$]="keePassClientConf$"
     (passwordHandler)="onMailPassword($event)"
-    [lock$]="mailPasswordProgress$"
 ></protonmail-desktop-app-keepass-request>
-
-<!--
-TODO enable keepass interaction for "twoFactorCode"
--->
 
 <webview
     *ngIf="webViewPreload$ | async"

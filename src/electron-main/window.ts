@@ -69,6 +69,10 @@ export async function initBrowserWindow(ctx: Context): Promise<BrowserWindow> {
     // execute after handlers subscriptions
     await keepState(ctx, browserWindow);
 
+    if ((process.env.NODE_ENV as BuildEnvironment) === "development") {
+        browserWindow.webContents.openDevTools();
+    }
+
     return browserWindow;
 }
 

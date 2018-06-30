@@ -9,6 +9,7 @@ import {AccountComponent} from "./account.component";
 import {AccountTitleComponent} from "./account-title.component";
 import {AccountsEffects} from "./accounts.effects";
 import {AccountsGuard} from "./accounts.guard";
+import {KeePassRequestComponent} from "./keepass-request.component";
 
 @NgModule({
     imports: [
@@ -21,6 +22,7 @@ import {AccountsGuard} from "./accounts.guard";
         AccountsComponent,
         AccountComponent,
         AccountTitleComponent,
+        KeePassRequestComponent,
     ],
     providers: [
         AccountsGuard,

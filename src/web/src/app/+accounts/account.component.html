@@ -1,5 +1,5 @@
 <protonmail-desktop-app-keepass-request
-    *ngIf="isPageLogin()"
+    *ngIf="(account$ | async).sync.pageType.type == 'login'"
     [keePassRef$]="passwordKeePassRef$"
     [keePassClientConf$]="keePassClientConf$"
     (passwordHandler)="onPassword($event)"
@@ -7,7 +7,7 @@
 ></protonmail-desktop-app-keepass-request>
 
 <protonmail-desktop-app-keepass-request
-    *ngIf="isPageUnlock()"
+    *ngIf="(account$ | async).sync.pageType.type == 'unlock'"
     [keePassRef$]="mailPasswordKeePassRef$"
     [keePassClientConf$]="keePassClientConf$"
     (passwordHandler)="onMailPassword($event)"

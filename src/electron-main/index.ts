@@ -27,12 +27,6 @@ export async function initApp(ctx: Context) {
         app.exit();
     }
 
-    if ((process.env.NODE_ENV as BuildEnvironment) === "development") {
-        app.on("web-contents-created", (webContentsCreatedEvent, contents) => {
-            contents.openDevTools();
-        });
-    }
-
     app.on("ready", async () => {
         const endpoints = await initEndpoints(ctx);
         const {checkForUpdatesAndNotify} = await endpoints.readConfig().toPromise();

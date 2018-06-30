@@ -71,20 +71,20 @@ export const initEndpoints = async (ctx: Context): Promise<Endpoints> => {
                 hasSavedPassword: !!password,
             };
         })()),
-        keePassRecordRequest: (payload) => from((async () => {
-            const client = new KeePassHttpClient(payload.keePassClientConf);
+        keePassRecordRequest: ({keePassClientConf, keePassRef, suppressErrors}) => from((async () => {
+            const client = new KeePassHttpClient(keePassClientConf);
             let response;
 
             try {
                 await client.testAssociate();
-                response = await client.getLogins({url: payload.keePassRef.url});
+                response = await client.getLogins({url: keePassRef.url});
             } catch (error) {
-                return handleKeePassRequestError(error, payload.suppressErrors);
+                return handleKeePassRequestError(error, suppressErrors);
             }
 
             if (response.Entries) {
                 for (const entry of response.Entries) {
-                    if (entry && entry.Uuid === payload.keePassRef.uuid) {
+                    if (entry && entry.Uuid === keePassRef.uuid) {
                         return {password: entry.Password};
                     }
                 }

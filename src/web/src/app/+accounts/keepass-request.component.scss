@@ -6,7 +6,7 @@ $bg-color: #ffffff;
 $border-width: 1px;
 
 :host {
-    display: none;
+    display: block;
     position: relative;
     border: $border-width solid $fill-color;
     border-radius: $border-radius;

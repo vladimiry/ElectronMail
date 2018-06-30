@@ -1,0 +1,12 @@
+<div class="progress">
+    <div>KeePass: {{ message || "Requesting..." }}</div>
+    <div class="progress-bar bg-success" role="progressbar" [style.width.%]="progressTick"></div>
+</div>
+
+<div (click)="!locked && togglePause()" class="control" [ngClass]="{locked: locked}">
+    <i class="fa" [ngClass]="{
+        'fa-ban text-danger': locked,
+        'fa-play text-success': paused && !locked,
+        'fa-pause text-warning': !paused && !locked
+    }"></i>
+</div>

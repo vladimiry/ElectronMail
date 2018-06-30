@@ -14,6 +14,7 @@ import {
 } from "_@web/src/app/store/reducers/options";
 import {State} from "_@web/src/app/store/reducers/accounts";
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "_@web/src/app/store/actions";
+import {BuildEnvironment} from "_@shared/model/common";
 
 @Component({
     selector: `protonmail-desktop-app-account`,
@@ -119,14 +120,6 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
         this.optionsStore.dispatch(ACCOUNTS_ACTIONS.PageLoadingEnd({account, webView: this.webView}));
     }
 
-    isPageLogin() {
-        return this.account$.getValue().sync.pageType.type === "login";
-    }
-
-    isPageUnlock() {
-        return this.account$.getValue().sync.pageType.type === "unlock";
-    }
-
     onPassword(password: string) {
         this.optionsStore.dispatch(
             ACCOUNTS_ACTIONS.Login({pageType: "login", webView: this.webView, account: this.account$.getValue(), password}),
@@ -140,6 +133,10 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
     }
 
     ngAfterViewInit() {
+        // if ((process.env.NODE_ENV as BuildEnvironment) === "development") {
+        //     this.webView.addEventListener("dom-ready", () => this.webView.openDevTools());
+        // }
+
         this.subscribePageLoadingEvents();
 
         this.webView.addEventListener("new-window", ({url}: any) => {

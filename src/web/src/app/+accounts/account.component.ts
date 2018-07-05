@@ -1,19 +1,19 @@
 import {AfterViewInit, Component, ElementRef, HostBinding, Input, NgZone, OnDestroy, ViewChild} from "@angular/core";
-import {BehaviorSubject, Observable, Subject} from "rxjs";
+import {BehaviorSubject, EMPTY, Observable, of, Subject} from "rxjs";
 import {DidFailLoadEvent} from "electron";
-import {filter, map, pairwise, takeUntil, withLatestFrom} from "rxjs/operators";
+import {distinctUntilChanged, filter, map, pairwise, switchMap, takeUntil, withLatestFrom} from "rxjs/operators";
 import {Store} from "@ngrx/store";
 
-import {KeePassRef} from "_@shared/model/keepasshttp";
-import {WebAccount} from "_@shared/model/account";
 import {
     configUnreadNotificationsSelector,
     electronLocationsSelector,
     settingsKeePassClientConfSelector,
     State as OptionsState,
 } from "_@web/src/app/store/reducers/options";
-import {State} from "_@web/src/app/store/reducers/accounts";
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "_@web/src/app/store/actions";
+import {KeePassRef} from "_@shared/model/keepasshttp";
+import {State} from "_@web/src/app/store/reducers/accounts";
+import {WebAccount} from "_@shared/model/account";
 
 @Component({
     selector: `protonmail-desktop-app-account`,
@@ -22,9 +22,7 @@ import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "_@web/src/app/store/actions"
 })
 export class AccountComponent implements AfterViewInit, OnDestroy {
     // webView initialization
-    webViewSrc = "https://mail.protonmail.com/login";
-    webViewPreload$ = this.optionsStore.select(electronLocationsSelector)
-        .pipe(map((electronLocations) => electronLocations && electronLocations.preload.webView));
+    webViewOptions: { src: string; preload: string; };
     // account
     // TODO simplify account$ initialization and usage
     account$: BehaviorSubject<WebAccount>;
@@ -43,20 +41,20 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
     // other
     @ViewChild("webViewRef", {read: ElementRef})
     webViewRef: ElementRef;
-    pageLoadingStartResolve: () => void;
+    notificationsCleanupTrigger: () => void;
     unSubscribe$ = new Subject();
 
     constructor(private store: Store<State>,
                 private optionsStore: Store<OptionsState>,
                 private zone: NgZone) {
-        this.pageLoadingStartResolve = () => {};
+        this.notificationsCleanupTrigger = () => {};
     }
 
     @Input()
     set account(account: WebAccount) {
         if (this.account$) {
             if (JSON.stringify(account.accountConfig) !== JSON.stringify(this.account$.getValue().accountConfig)) {
-                this.pageLoadedReaction(account);
+                this.pageOrCconfigChangeReaction(account);
             }
             this.account$.next(account);
         } else {
@@ -65,71 +63,75 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
         }
     }
 
-    get webView(): any /* TODO switch to Electron.WebviewTag */ {
+    get webView(): Electron.WebviewTag {
         return this.webViewRef.nativeElement;
     }
 
     initAccountReactions() {
         this.account$
             .pipe(
-                map(({sync}) => sync.pageType),
+                map(({notifications}) => notifications.pageType && notifications.pageType.type),
                 pairwise(),
-                filter(([prevPageType, currentPageType]) => currentPageType && currentPageType !== prevPageType),
+                filter(([prevPageType, currentPageType]) => currentPageType !== prevPageType),
                 takeUntil(this.unSubscribe$),
             )
-            .subscribe(() => this.pageLoadedReaction(this.account$.getValue()));
+            .subscribe(() => this.pageOrCconfigChangeReaction(this.account$.getValue()));
 
-        this.passwordKeePassRef$ = this.account$.pipe(map(({accountConfig}) => {
-            return accountConfig.credentials.password.keePassRef;
-        }));
-        this.mailPasswordKeePassRef$ = this.account$.pipe(map(({accountConfig}) => {
-            return accountConfig.credentials.mailPassword.keePassRef;
-        }));
-        this.twoFactorCodeKeePassRef$ = this.account$.pipe(map(({accountConfig}) => {
-            return accountConfig.credentials.twoFactorCode && accountConfig.credentials.twoFactorCode.keePassRef;
-        }));
-
-        // unread notifications
         this.account$
             .pipe(
                 withLatestFrom(this.optionsStore.select(configUnreadNotificationsSelector)),
-                filter((args) => !!args[1]),
-                map((args) => args[0].sync.unread || 0),
+                filter(([account, notificationEnabled]) => !!notificationEnabled),
+                map(([{notifications}]) => notifications.unread),
                 pairwise(),
-                filter(([prev, curr]) => curr > prev),
+                filter(([previousUnread, currentUnread]) => currentUnread > previousUnread),
                 takeUntil(this.unSubscribe$),
             )
-            .subscribe(([prev, curr]) => {
+            .subscribe(([previousUnread, currentUnread]) => {
                 const login = this.account$.getValue().accountConfig.login;
                 const title = String(process.env.APP_ENV_PACKAGE_NAME);
-                const body = `Account "${login}" has ${curr} unread email${curr > 1 ? "s" : ""}.`;
+                const body = `Account "${login}" has ${currentUnread} unread email${currentUnread > 1 ? "s" : ""}.`;
 
                 new Notification(title, {body}).onclick = () => this.zone.run(() => {
-                    this.store.dispatch(ACCOUNTS_ACTIONS.ActivateAccount({login}));
+                    this.store.dispatch(ACCOUNTS_ACTIONS.Activate({login}));
                     this.store.dispatch(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));
                 });
             });
+
+        this.account$
+            .pipe(
+                withLatestFrom(this.optionsStore.select(electronLocationsSelector)),
+                distinctUntilChanged(([{accountConfig: prev}], [{accountConfig: curr}]) => prev.entryUrl === curr.entryUrl),
+                takeUntil(this.unSubscribe$),
+            )
+            .subscribe(([{accountConfig}, electronLocations]) => {
+                if (!electronLocations) {
+                    return;
+                }
+
+                this.webViewOptions = {
+                    src: accountConfig.entryUrl,
+                    preload: electronLocations.preload.webView[accountConfig.type],
+                };
+            });
+
+        this.passwordKeePassRef$ = this.account$.pipe(map(({accountConfig}) => {
+            return accountConfig.credentialsKeePass.password;
+        }));
+        this.twoFactorCodeKeePassRef$ = this.account$.pipe(map(({accountConfig}) => {
+            return accountConfig.credentialsKeePass.twoFactorCode;
+        }));
+        this.mailPasswordKeePassRef$ = this.account$.pipe(switchMap(({accountConfig}) => {
+            return accountConfig.type === "protonmail" ? of(accountConfig.credentialsKeePass.mailPassword) : EMPTY;
+        }));
     }
 
-    pageLoadedReaction(account: WebAccount) {
-        this.optionsStore.dispatch(ACCOUNTS_ACTIONS.PageLoadingEnd({account, webView: this.webView}));
+    pageOrCconfigChangeReaction(account: WebAccount) {
+        this.optionsStore.dispatch(ACCOUNTS_ACTIONS.Login({account, webView: this.webView}));
     }
 
-    onPassword(password: string) {
+    onKeePassPassword(password: string) {
         this.optionsStore.dispatch(
-            ACCOUNTS_ACTIONS.Login({pageType: "login", webView: this.webView, account: this.account$.getValue(), password}),
-        );
-    }
-
-    onTwoFactorCode(password: string) {
-        this.optionsStore.dispatch(
-            ACCOUNTS_ACTIONS.Login({pageType: "login2fa", webView: this.webView, account: this.account$.getValue(), password}),
-        );
-    }
-
-    onMailPassword(mailPassword: string) {
-        this.optionsStore.dispatch(
-            ACCOUNTS_ACTIONS.Login({pageType: "unlock", webView: this.webView, account: this.account$.getValue(), password: mailPassword}),
+            ACCOUNTS_ACTIONS.Login({webView: this.webView, account: this.account$.getValue(), password}),
         );
     }
 
@@ -144,7 +146,13 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
             this.optionsStore.dispatch(NAVIGATION_ACTIONS.OpenExternal({url}));
         });
         this.webView.addEventListener("did-fail-load", ({errorDescription}: DidFailLoadEvent) => {
+            // TODO figure ERR_NOT_IMPLEMENTED error cause, happening on password/2fa code submitting, tutanota only
+            if (errorDescription === "ERR_NOT_IMPLEMENTED" && this.account$.getValue().accountConfig.type === "tutanota") {
+                return;
+            }
+
             this.unsubscribePageLoadingEvents();
+            this.notificationsCleanupTrigger();
             this.didFailLoadErrorDescription = errorDescription;
 
             this.offlineIntervalAttempt++;
@@ -170,12 +178,12 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
     }
 
     pageLoadingStartHandler = () => {
-        this.pageLoadingStartResolve();
+        this.notificationsCleanupTrigger();
 
-        this.optionsStore.dispatch(ACCOUNTS_ACTIONS.PageLoadingStart({
+        this.optionsStore.dispatch(ACCOUNTS_ACTIONS.SetupNotifications({
             account: this.account$.getValue(),
             webView: this.webView,
-            unSubscribeOn: new Promise((resolve) => this.pageLoadingStartResolve = resolve),
+            unSubscribeOn: new Promise((resolve) => this.notificationsCleanupTrigger = resolve),
         }));
     }
 
@@ -185,6 +193,6 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
 
         this.unsubscribePageLoadingEvents();
 
-        this.pageLoadingStartResolve();
+        this.notificationsCleanupTrigger();
     }
 }

@@ -6,10 +6,10 @@
     <ng-template #referenceDefined>
         <form [formGroup]="form" (ngSubmit)="unlink()" novalidate>
             <div class="form-group">
-                <input type="text" class="form-control" [value]="(reference$ | async).url" readonly>
+                <input type="text" class="form-control" [value]="(reference$ | async)?.url" readonly>
             </div>
             <div class="form-group">
-                <input type="text" class="form-control" [value]="(reference$ | async).uuid" readonly>
+                <input type="text" class="form-control" [value]="(reference$ | async)?.uuid" readonly>
             </div>
             <div class="clearfix">
                 <button class="btn btn-outline-danger pull-right" type="submit">

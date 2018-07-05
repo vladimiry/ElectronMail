@@ -1,5 +1,6 @@
-<span class="account-value-sync-unread" *ngIf="account.sync.unread">
-    <span class="badge badge-danger">{{ account.sync.unread }}</span>
+<protonmail-desktop-app-type-symbol [type]="account.accountConfig.type"></protonmail-desktop-app-type-symbol>
+<span class="account-value-sync-unread" *ngIf="account.notifications.unread">
+    <span class="badge badge-danger">{{ account.notifications.unread }}</span>
 </span>
 <span class="account-value-login">{{ account.accountConfig.login }}</span>
-<span class="account-value-sync-title" *ngIf="account.sync.title">{{ account.sync.title }}</span>
+<span class="account-value-sync-title" *ngIf="account.notifications.title">{{ account.notifications.title }}</span>

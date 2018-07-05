@@ -4,19 +4,19 @@ import {app, clipboard, ContextMenuParams, Event, Menu, PopupOptions, WebContent
 import {Context} from "./model";
 
 const selectionMenu = Menu.buildFromTemplate([
-    {role: "copy", accelerator: "CmdOrCtrl+C"},
+    {role: "copy"},
     {type: "separator"},
-    {role: "selectall", accelerator: "CmdOrCtrl+A"},
+    {role: "selectall"},
 ]);
 const inputMenu = Menu.buildFromTemplate([
-    {role: "undo", accelerator: "CmdOrCtrl+Z"},
-    {role: "redo", accelerator: "Shift+CmdOrCtrl+Z"},
+    {role: "undo"},
+    {role: "redo"},
     {type: "separator"},
-    {role: "cut", accelerator: "CmdOrCtrl+X"},
-    {role: "copy", accelerator: "CmdOrCtrl+C"},
-    {role: "paste", accelerator: "CmdOrCtrl+V"},
+    {role: "cut"},
+    {role: "copy"},
+    {role: "paste"},
     {type: "separator"},
-    {role: "selectall", accelerator: "CmdOrCtrl+A"},
+    {role: "selectall"},
 ]);
 
 export function initWebContentContextMenu(ctx: Context) {

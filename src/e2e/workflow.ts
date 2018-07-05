@@ -12,7 +12,9 @@ import randomString from "randomstring";
 import {Application} from "spectron";
 import {promisify} from "util";
 
-import {RUNTIME_ENV__E2E, RUNTIME_ENV__USER_DATA_DIR} from "_@shared/constants";
+import {AccountType} from "_@shared/model/account";
+import {RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "_@shared/constants";
+import {ACCOUNTS_CONFIG} from "../shared/constants";
 
 export interface TestContext {
     app: Application;
@@ -80,8 +82,8 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
             path: electron as any,
             requireName: "electronRequire",
             env: {
-                [RUNTIME_ENV__E2E]: String(true),
-                [RUNTIME_ENV__USER_DATA_DIR]: userDataDirPath,
+                [RUNTIME_ENV_E2E]: String(true),
+                [RUNTIME_ENV_USER_DATA_DIR]: userDataDirPath,
             },
             args: [mainScriptFilePath],
 
@@ -140,7 +142,7 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
     }
 }
 
-export const actions = {
+export const workflow = {
     async destroyApp(t: ExecutionContext<TestContext>) {
         // TODO update to electron 2: app.isRunning() returns undefined, uncomment as soon as it's fixed
         // if (!t.context.app || !t.context.app.isRunning()) {
@@ -227,20 +229,42 @@ export const actions = {
         await client.pause(CONF.timeouts.transition);
     },
 
-    async addAccount(t: ExecutionContext<TestContext>, account?: { login: string; password: string; }) {
+    async addAccount(
+        t: ExecutionContext<TestContext>, account: { type: AccountType, login?: string; password?: string; twoFactorCode?: string; },
+    ) {
         const client = t.context.app.client;
-        const login = account
+        const login = account.login
             ? account.login
             : `${ENV.loginPrefix}-${loginPrefixCount++}`;
 
         await this.openSettingsModal(t, 0);
 
-        await client.click(`.modal-body protonmail-desktop-app-accounts > a:nth-child(1)`); // TODO select by link's text - Add Account
+        // select adding account menu item
+        await client.click(`#goToAccountsSettingsLink`);
+
+        // required: type
+        await client.click(`#accountEditFormTypeField`);
+        await client.pause(CONF.timeouts.elementTouched);
+        await client.click(`.ng-option-label=${account.type}`);
+        await client.pause(CONF.timeouts.elementTouched);
+
+        // required: entryUrl
+        await client.click(`#accountEditFormEntryUrlField`);
+        await client.pause(CONF.timeouts.elementTouched);
+        await client.click(`.ng-option-label=${ACCOUNTS_CONFIG[account.type].entryUrl[0].value}`);
+        await client.pause(CONF.timeouts.elementTouched);
+
+        // required: login
         await client.setValue(`[formcontrolname=login]`, login);
         await client.pause(CONF.timeouts.elementTouched);
 
-        if (account) {
+        if (account.password) {
             await client.setValue(`[formcontrolname=password]`, account.password);
+            await client.pause(CONF.timeouts.elementTouched);
+        }
+
+        if (account.twoFactorCode) {
+            await client.setValue(`[formcontrolname=twoFactorCode]`, account.twoFactorCode);
             await client.pause(CONF.timeouts.elementTouched);
         }
 

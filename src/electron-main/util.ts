@@ -14,10 +14,10 @@ import {ElectronContextLocations} from "_@shared/model/electron";
 import {INITIAL_STORES} from "./constants";
 import {MessageFieldContainer} from "_@shared/model/container";
 import {Model as KeePassHttpClientModel} from "keepasshttp-client";
-import {RUNTIME_ENV__E2E, RUNTIME_ENV__USER_DATA_DIR} from "_@shared/constants";
+import {RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "_@shared/constants";
 
 export async function initContext(options: ContextInitOptions = {}): Promise<Context> {
-    const runtimeEnvironment: RuntimeEnvironment = Boolean(process.env[RUNTIME_ENV__E2E]) ? "e2e" : "production";
+    const runtimeEnvironment: RuntimeEnvironment = Boolean(process.env[RUNTIME_ENV_E2E]) ? "e2e" : "production";
     const locations = initLocations(runtimeEnvironment, options.paths);
     const initialStores = options.initialStores || INITIAL_STORES;
     const fsOption = options.storeFs ? {fs: options.storeFs} : {};
@@ -46,11 +46,11 @@ export async function initContext(options: ContextInitOptions = {}): Promise<Con
 }
 
 function initLocations(runtimeEnvironment: RuntimeEnvironment, paths?: ContextInitOptionsPaths): ElectronContextLocations {
-    const userDataDirRuntimeVal = process.env[RUNTIME_ENV__USER_DATA_DIR];
+    const userDataDirRuntimeVal = process.env[RUNTIME_ENV_USER_DATA_DIR];
 
     if (userDataDirRuntimeVal && (!fs.existsSync(userDataDirRuntimeVal) || !fs.statSync(userDataDirRuntimeVal).isDirectory())) {
         throw new Error(
-            `Make sure that custom "userData" dir exists before passing the "${RUNTIME_ENV__USER_DATA_DIR}" environment variable`,
+            `Make sure that custom "userData" dir exists before passing the "${RUNTIME_ENV_USER_DATA_DIR}" environment variable`,
         );
     }
 
@@ -74,7 +74,10 @@ function initLocations(runtimeEnvironment: RuntimeEnvironment, paths?: ContextIn
         preload: {
             browserWindow: buildAppPath("./electron-preload/browser-window.js"),
             browserWindowE2E: buildAppPath("./electron-preload/browser-window-e2e.js"),
-            webView: formatFileUrl(buildAppPath("./electron-preload/webview.js")),
+            webView: {
+                protonmail: formatFileUrl(buildAppPath("./electron-preload/webview/protonmail.js")),
+                tutanota: formatFileUrl(buildAppPath("./electron-preload/webview/tutanota.js")),
+            },
         },
     };
 }

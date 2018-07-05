@@ -13,18 +13,18 @@ export async function initTray(ctx: Context, endpoints: Endpoints): Promise<Tray
             click: toggleWindow,
         },
         {
-            label: "About",
+            label: "Open Settings Folder",
             async click() {
-                await endpoints.openAboutWindow().toPromise();
+                await endpoints.openSettingsFolder().toPromise();
             },
         },
         {
             type: "separator",
         },
         {
-            label: "Open Settings Folder",
+            label: "About",
             async click() {
-                await endpoints.openSettingsFolder().toPromise();
+                await endpoints.openAboutWindow().toPromise();
             },
         },
         {

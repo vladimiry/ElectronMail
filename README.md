@@ -2,7 +2,7 @@
 
 [![Build Status: Linux / MacOS](https://travis-ci.org/vladimiry/protonmail-desktop-app.svg?branch=master)](https://travis-ci.org/vladimiry/protonmail-desktop-app) [![Build status: Windows](https://ci.appveyor.com/api/projects/status/yytvx09x43gif849?svg=true)](https://ci.appveyor.com/project/vladimiry/protonmail-desktop-app)
 
-is an unofficial [ProtonMail](https://protonmail.com/) desktop client. It's basically the ProtonMail's [web interface](https://mail.protonmail.com) that's being opened inside [Electron](https://github.com/electron/electron) container with custom features built on top of it. You can see below the screenshots of the `default` and `compact` view modes.
+is a built with @electron desktop client for [ProtonMail](https://protonmail.com/) and [Tutanota](https://tutanota.com/) encrypted email providers. You can see below a screenshots of the `default` and `compact` view modes.
 
 ![view-default](https://user-images.githubusercontent.com/1560781/34328616-a10c2a2a-e8f4-11e7-9cfe-2308ee3391b2.png)
 
@@ -10,12 +10,13 @@ is an unofficial [ProtonMail](https://protonmail.com/) desktop client. It's basi
 
 ## Features
 - Cross platform, Linux/OSX/Windows packages [provided](https://github.com/vladimiry/protonmail-desktop-app/releases).
+- Multi mail providers support, ProtonMail and Tutanota so far.
 - Multi accounts support.
 - Automatic login into the app with remembered master password using [keytar](https://github.com/atom/node-keytar) module ("Keep me signed in" feature).
-- Automatic login into ProtonMail accounts using either saved in the settings password or KeePass password manager. Two Factor Authentication (2FA) [is supported](https://github.com/vladimiry/protonmail-desktop-app/issues/10).
+- Automatic login into mail provider accounts using either saved in the settings password or KeePass password manager. Two-factor authentication (2FA) [is supported](https://github.com/vladimiry/protonmail-desktop-app/issues/10), only TOTP tokens format.
 - Encrypted settings storage with switchable predefined key derivation and encryption presets. Argon2 is used as the default key derivation function.
 - Native notifications for individual accounts clicking on which focuses the app window and selects respective account in the accounts list.
-- System tray icon with a total number of unread messages shown on top of it.
+- System tray icon with a total number of unread messages shown on top of it. Checking unread emails count for Tutanota has a significant flaw at the moment.
 - Start minimized to tray.
 - Close to tray.
 - Compact view mode.

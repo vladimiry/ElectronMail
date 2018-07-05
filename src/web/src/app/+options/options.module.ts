@@ -1,6 +1,7 @@
-import {NgModule} from "@angular/core";
-import {EffectsModule} from "@ngrx/effects";
+import {AccordionModule} from "ngx-bootstrap/accordion";
 import {CollapseModule} from "ngx-bootstrap/collapse";
+import {EffectsModule} from "@ngrx/effects";
+import {NgModule} from "@angular/core";
 import {PopoverModule} from "ngx-bootstrap/popover";
 
 import {SharedModule} from "_@web/src/app/+shared/shared.module";
@@ -23,6 +24,7 @@ import {StorageComponent} from "./storage.component";
 @NgModule({
     imports: [
         CollapseModule,
+        AccordionModule,
         PopoverModule,
         SharedModule,
         OptionsRoutingModule,

@@ -21,7 +21,7 @@ const initialState: State = {
 export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_ACTIONS>): State {
     return ACCOUNTS_ACTIONS.match(action, {
         // TODO consider using "@ngrx/entity" library instead of dealing with a raw array
-        SyncAccountsConfigs: ({accountConfigs}) => {
+        WireUpConfigs: ({accountConfigs}) => {
             // remove
             const items = state.accounts.filter(({accountConfig}) => {
                 return accountConfigs.some(({login}) => accountConfig.login === login);
@@ -35,8 +35,11 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                     items.push({
                         accountConfig,
                         progress: {},
-                        sync: {pageType: {url: "initial"}},
-                    });
+                        notifications: {
+                            unread: 0,
+                            pageType: {url: "", type: "undefined"},
+                        },
+                    } as WebAccount); // TODO ger rid of "TS as" casting
                 } else {
                     const account = items[index];
 
@@ -45,7 +48,7 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                         items[index] = {
                             ...account,
                             accountConfig,
-                        };
+                        } as WebAccount; // TODO ger rid of "TS as" casting
                     }
                 }
             }
@@ -59,27 +62,23 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                     : items.length ? items[0].accountConfig.login : undefined,
             };
         },
-        AccountNotification: ({accountConfig, notification}) => {
-            const {index} = selectAccountByLogin(state.accounts, accountConfig.login);
-
-            if ("value" in notification) {
-                return updateIn(
-                    state,
-                    (_) => _.accounts[index].sync,
-                    (sync) => ({...sync, ...{[notification.type]: notification.value}}),
-                    [index],
-                );
-            }
-
-            return state;
-        },
-        ActivateAccount: ({login}) => {
+        Activate: ({login}) => {
             return {
                 ...state,
                 selectedLogin: login,
             };
         },
-        PatchAccountProgress: ({login, patch}) => {
+        NotificationPatch: ({accountConfig, notification}) => {
+            const {index} = selectAccountByLogin(state.accounts, accountConfig.login);
+
+            return updateIn(
+                state,
+                (_) => _.accounts[index].notifications,
+                (_) => ({..._, ...notification}),
+                [index],
+            );
+        },
+        PatchProgress: ({login, patch}) => {
             const {index} = selectAccountByLogin(state.accounts, login);
 
             return updateIn(
@@ -112,5 +111,5 @@ export const selectedAccountSelector = createSelector(
     ({selectedLogin, accounts}) => accounts.find(({accountConfig}) => accountConfig.login === selectedLogin),
 );
 export const accountsUnreadSummarySelector = createSelector(accountsSelector, (accounts) => {
-    return accounts.reduce((sum, {sync}) => sum + (sync.unread || 0), 0);
+    return accounts.reduce((sum, {notifications}) => sum + notifications.unread, 0);
 });

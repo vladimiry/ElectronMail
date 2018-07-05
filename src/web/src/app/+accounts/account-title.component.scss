@@ -7,6 +7,12 @@
             opacity: 0.85;
         }
 
+        &-sync-unread {
+            .badge {
+                padding: 0.38em 0.55em;
+            }
+        }
+
         &-sync-title {
             font-size: $font-size-sm;
         }

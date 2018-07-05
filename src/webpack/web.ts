@@ -156,6 +156,7 @@ const configPatch: Record<BuildEnvironment, Configuration> = {
             ],
         },
     },
+    // TODO split chunks in "development" mode in order to speed up app-related code re-building
     development: {
         devServer: {
             hot: true,

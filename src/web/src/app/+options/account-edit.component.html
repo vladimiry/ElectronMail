@@ -1,16 +1,31 @@
 <nav aria-label="breadcrumb" role="navigation">
     <ol class="breadcrumb">
         <li class="breadcrumb-item active">
-            {{ (possiblyExistingAccount$ | async) ? "Edit Account: " + ((possiblyExistingAccount$ | async).login) : "Add
-            Account" }}
+            <protonmail-desktop-app-type-symbol [type]="existingAccount.type" *ngIf="existingAccount"></protonmail-desktop-app-type-symbol>
+            {{ existingAccount ? "Edit Account: " + existingAccount?.login  : "Add Account" }}
         </li>
     </ol>
 </nav>
 <fieldset [disabled]="(processing$ | async) || (removing$ | async)">
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="form-group">
-        <div class="form-group required" *ngIf="!(possiblyExistingAccount$ | async)">
+        <div class="form-group required" *ngIf="!existingAccount">
+            <label>Type</label>
+            <ng-select [items]="typeValues" [clearable]="false" formControlName="type" id="accountEditFormTypeField">
+                <ng-template ng-label-tmp let-item="item">
+                    <protonmail-desktop-app-type-symbol [type]="item"></protonmail-desktop-app-type-symbol>
+                    {{ item }}
+                </ng-template>
+            </ng-select>
+        </div>
+        <div class="form-group required">
+            <label>Domain</label>
+            <ng-select [items]="entryUrlItems" [clearable]="false" formControlName="entryUrl" bindLabel="title" bindValue="value"
+                       id="accountEditFormEntryUrlField">
+            </ng-select>
+        </div>
+        <div class="form-group required" *ngIf="!existingAccount">
             <label>Login</label>
-            <input type="text" class="form-control" formControlName="login" #loginRef
+            <input type="text" class="form-control" formControlName="login"
                    [ngClass]="login.dirty ? {'is-invalid': login.invalid, 'is-valid': login.valid} : {}">
         </div>
         <div class="form-group">
@@ -23,13 +38,13 @@
             <input type="password" class="form-control" formControlName="twoFactorCode"
                    [ngClass]="twoFactorCode.dirty ? {'is-invalid': twoFactorCode.invalid, 'is-valid': twoFactorCode.valid} : {}">
         </div>
-        <div class="form-group">
+        <div class="form-group" *ngIf="type.value == 'protonmail'">
             <label>Mail Password</label>
             <input type="password" class="form-control" formControlName="mailPassword"
                    [ngClass]="mailPassword.dirty ? {'is-invalid': mailPassword.invalid, 'is-valid': mailPassword.valid} : {}">
         </div>
         <div class="clearfix">
-            <button class="btn btn-outline-danger pull-left" type="button" *ngIf="(possiblyExistingAccount$ | async)" (click)="remove()">
+            <button class="btn btn-outline-danger pull-left" type="button" *ngIf="existingAccount" (click)="remove()">
                 <i class="fa" [ngClass]="{
                     'fa-spinner fa-pulse fa-fw': (removing$ | async),
                     'fa-times': !(removing$ | async)
@@ -41,11 +56,11 @@
                     'fa-spinner fa-pulse fa-fw': (processing$ | async),
                     'fa-check': !(processing$ | async)
                 }"></i>
-                {{ (possiblyExistingAccount$ | async) ? "Update" : "Add" }}
+                {{ existingAccount ? "Update" : "Add" }}
             </button>
         </div>
     </form>
-    <div *ngIf="(possiblyExistingAccount$ | async)">
+    <div *ngIf="existingAccount">
         <div>
             <a href="javascript:void(0)" (click)="keePassRefCollapsed = !keePassRefCollapsed">KeePass References</a>
             <i class="fa" [ngClass]="{
@@ -61,7 +76,7 @@
                     [keePassClientConf$]="keePassClientConf$"
                     [reference$]="passwordKeePassRef$"
                     (linkHandler)="onPasswordKeePassLink($event)"
-                    (unlinkHandler)="onPasswordKeePassUnlink($event)"
+                    (unlinkHandler)="onPasswordKeePassUnlink()"
                 ></protonmail-desktop-app-keepass-reference>
             </div>
             <hr>
@@ -71,18 +86,20 @@
                     [keePassClientConf$]="keePassClientConf$"
                     [reference$]="twoFactorCodeKeePassRef$"
                     (linkHandler)="onTwoFactorCodeKeePassLink($event)"
-                    (unlinkHandler)="onTwoFactorCodeKeePassUnlink($event)"
+                    (unlinkHandler)="onTwoFactorCodeKeePassUnlink()"
                 ></protonmail-desktop-app-keepass-reference>
             </div>
-            <hr>
-            <div class="form-group">
-                <label>Mail Password</label>
-                <protonmail-desktop-app-keepass-reference
-                    [keePassClientConf$]="keePassClientConf$"
-                    [reference$]="mailPasswordKeePassRef$"
-                    (linkHandler)="onMailPasswordKeePassLink($event)"
-                    (unlinkHandler)="onMailPasswordKeePassUnlink($event)"
-                ></protonmail-desktop-app-keepass-reference>
+            <div *ngIf="existingAccount?.type == 'protonmail'">
+                <hr>
+                <div class="form-group">
+                    <label>Mail Password</label>
+                    <protonmail-desktop-app-keepass-reference
+                        [keePassClientConf$]="keePassClientConf$"
+                        [reference$]="mailPasswordKeePassRef$"
+                        (linkHandler)="onMailPasswordKeePassLink($event)"
+                        (unlinkHandler)="onMailPasswordKeePassUnlink()"
+                    ></protonmail-desktop-app-keepass-reference>
+                </div>
             </div>
         </div>
     </div>

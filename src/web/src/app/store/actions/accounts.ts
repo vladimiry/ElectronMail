@@ -1,19 +1,16 @@
 import {ofType, unionize} from "unionize";
 
-import {AccountConfig, WebAccount, WebAccountPageType, WebAccountProgress} from "_@shared/model/account";
-import {AccountNotificationOutput} from "_@shared/api/webview/notification-output";
+import {AccountConfig, AccountNotificationType, AccountProgress, WebAccount} from "_@shared/model/account";
 
 export const ACCOUNTS_ACTIONS = unionize({
-        AccountNotification: ofType<{ accountConfig: AccountConfig; notification: AccountNotificationOutput }>(),
-        ActivateAccount: ofType<{ login: string }>(),
-        DestroyAccount: ofType<{ account: WebAccount }>(),
-        Login: ofType<{ pageType: WebAccountPageType; webView: Electron.WebviewTag; account: WebAccount; password: string; }>(),
-        PageLoadingEnd: ofType<{ account: WebAccount; webView: Electron.WebviewTag; }>(),
-        PageLoadingStart: ofType<{ account: WebAccount; webView: Electron.WebviewTag; unSubscribeOn: Promise<any>; }>(),
-        PatchAccountProgress: ofType<{ login: string; patch: WebAccountProgress; }>(),
+        Activate: ofType<{ login: string }>(),
+        Login: ofType<{ account: WebAccount; webView: Electron.WebviewTag; password?: string; }>(),
+        NotificationPatch: ofType<{ accountConfig: AccountConfig; notification: Partial<AccountNotificationType> }>(),
+        PatchProgress: ofType<{ login: string; patch: AccountProgress; }>(),
         Reset: ofType<{}>(),
-        SyncAccountsConfigs: ofType<{ accountConfigs: AccountConfig[] }>(),
+        SetupNotifications: ofType<{ account: WebAccount; webView: Electron.WebviewTag; unSubscribeOn: Promise<any>; }>(),
         UpdateOverlayIcon: ofType<{ count: number, dataURL?: string }>(),
+        WireUpConfigs: ofType<{ accountConfigs: AccountConfig[] }>(),
     },
     {
         tag: "type",

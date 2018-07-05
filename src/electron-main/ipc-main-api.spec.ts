@@ -1,3 +1,4 @@
+import assert from "assert";
 import logger from "electron-log";
 import path from "path";
 import sinon from "sinon";
@@ -6,8 +7,8 @@ import rewiremock from "rewiremock";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter/encryption-adapter";
 import {Fs} from "fs-json-store";
 
-import {AccountConfigPatch, PasswordFieldContainer} from "_@shared/model/container";
-import {assert, pickBaseConfigProperties} from "_@shared/util";
+import {AccountConfigCreatePatchByType, AccountConfigPatch, PasswordFieldContainer} from "_@shared/model/container";
+import {pickBaseConfigProperties} from "_@shared/util";
 import {BaseConfig, Config, Settings} from "_@shared/model/options";
 import {buildSettingsAdapter, initContext} from "./util";
 import {Context} from "./model";
@@ -37,12 +38,17 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
     addAccount: async (t) => {
         const endpoints = t.context.endpoints;
         const addHandler = endpoints.addAccount;
-        const payload = Object.freeze({
+        const payload: Readonly<AccountConfigCreatePatchByType<"protonmail">> = {
+            type: "protonmail",
             login: "login1",
-            passwordValue: "password1",
-            mailPasswordValue: "mailPassword1",
-            twoFactorCodeValue: "twoFactorCodeValue1",
-        });
+            entryUrl: "entryUrl1",
+            credentials: {
+                password: "password1",
+                twoFactorCode: "twoFactorCode1",
+                mailPassword: "mailPassword1",
+            },
+            credentialsKeePass: {},
+        };
 
         const settings = await initConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
 
@@ -55,12 +61,15 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
             accounts: [
                 ...settings.accounts,
                 {
+                    type: payload.type,
                     login: payload.login,
+                    entryUrl: payload.entryUrl,
                     credentials: {
-                        password: {value: payload.passwordValue},
-                        mailPassword: {value: payload.mailPasswordValue},
-                        twoFactorCode: {value: payload.twoFactorCodeValue},
+                        password: payload.credentials.password,
+                        twoFactorCode: payload.credentials.twoFactorCode,
+                        mailPassword: payload.credentials.mailPassword,
                     },
+                    credentialsKeePass: payload.credentialsKeePass,
                 },
             ],
         };
@@ -288,9 +297,28 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         const endpoints = t.context.endpoints;
         const addHandler = endpoints.addAccount;
         const removeHandler = endpoints.removeAccount;
-        const addPayload1 = {login: "login1", passwordValue: "password1", mailPasswordValue: "mailPassword1", twoFactorCodeValue: "2fa1"};
-        const addPayload2 = {login: "login2", passwordValue: "password2", mailPasswordValue: "mailPassword2", twoFactorCodeValue: "2fa2"};
-        const removePayload = {login: addPayload1.login};
+        const addProtonPayload: Readonly<AccountConfigCreatePatchByType<"protonmail">> = {
+            type: "protonmail",
+            login: "login1",
+            entryUrl: "entryUrl1",
+            credentials: {
+                password: "password1",
+                twoFactorCode: "twoFactorCode1",
+                mailPassword: "mailPassword1",
+            },
+            credentialsKeePass: {},
+        };
+        const addTutaPayload: Readonly<AccountConfigCreatePatchByType<"tutanota">> = {
+            type: "tutanota",
+            login: "login2",
+            entryUrl: "entryUrl1",
+            credentials: {
+                password: "password1",
+                twoFactorCode: "twoFactorCode1",
+            },
+            credentialsKeePass: {},
+        };
+        const removePayload = {login: addProtonPayload.login};
         const removePayload404 = {login: "404 login"};
 
         await initConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
@@ -301,26 +329,28 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
             t.is(message, `Account to remove has not been found (login: "${removePayload404.login}")`, "404 account");
         }
 
-        await addHandler(addPayload1).toPromise();
-        await addHandler(addPayload2).toPromise();
+        await addHandler(addProtonPayload).toPromise();
+        await addHandler(addTutaPayload).toPromise();
         const settings = await t.context.ctx.settingsStore.readExisting();
         const updatedSettings = await removeHandler(removePayload).toPromise();
         const expectedSettings = {
             ...settings,
             _rev: (settings._rev as number) + 1,
             accounts: [{
-                login: addPayload2.login,
+                type: addTutaPayload.type,
+                entryUrl: addTutaPayload.entryUrl,
+                login: addTutaPayload.login,
                 credentials: {
-                    password: {value: addPayload2.passwordValue},
-                    mailPassword: {value: addPayload2.mailPasswordValue},
-                    twoFactorCode: {value: addPayload2.twoFactorCodeValue},
+                    password: addTutaPayload.credentials.password,
+                    twoFactorCode: addTutaPayload.credentials.twoFactorCode,
                 },
+                credentialsKeePass: addTutaPayload.credentialsKeePass,
             }],
         };
 
         t.is(updatedSettings.accounts.length, 1, `1 account`);
-        t.deepEqual(updatedSettings, expectedSettings, `settings with updated account is returned`);
-        t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings, `settings with updated account is persisted`);
+        t.deepEqual(updatedSettings, expectedSettings as any, `settings with updated account is returned`);
+        t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings as any, `settings with updated account is persisted`);
     },
     settingsExists: async (t) => {
         t.false(await t.context.ctx.settingsStore.readable(), "store: settings file does not exist");
@@ -358,19 +388,18 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         const endpoints = t.context.endpoints;
         const addHandler = endpoints.addAccount;
         const updateHandler = endpoints.updateAccount;
-        const payload = {login: "login345", password: "password1", mailPassword: "mailPassword1", twoFactorCode: "2fa1"};
-        const updatePatch: AccountConfigPatch = {login: "login345", passwordValue: "password2", twoFactorCodeValue: "2fa2"};
+        const updatePatch: AccountConfigPatch = {login: "login345", credentials: {password: "ps-1", twoFactorCode: "2fa-1"}};
 
         await initConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
 
         try {
-            await updateHandler(payload).toPromise();
+            await updateHandler({login: "login123", credentials: {password: "password1"}}).toPromise();
         } catch (err) {
             t.is(err.constructor.name, StatusCodeError.name, "StatusCodeError constructor");
             t.is(err.statusCode, StatusCode.NotFoundAccount, "StatusCode.NotFoundAccount");
         }
 
-        const settings = await addHandler(payload).toPromise();
+        const settings = await addHandler({login: "login345", type: "protonmail", entryUrl: "", credentials: {password: "p1"}}).toPromise();
         const updatedSettings = await updateHandler(updatePatch).toPromise();
         const expectedSettings = {
             ...settings,
@@ -380,14 +409,8 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
                 ...{
                     credentials: {
                         ...settings.accounts[0].credentials,
-                        ...{
-                            password: {
-                                value: updatePatch.passwordValue,
-                            },
-                            twoFactorCode: {
-                                value: updatePatch.twoFactorCodeValue,
-                            },
-                        },
+                        password: updatePatch.credentials && updatePatch.credentials.password,
+                        twoFactorCode: updatePatch.credentials && updatePatch.credentials.twoFactorCode,
                     },
                 },
             }],
@@ -430,6 +453,10 @@ test.beforeEach(async (t) => {
             "./util": {
                 toggleBrowserWindow: sinon.spy(),
                 buildSettingsAdapter,
+            },
+            "./storage-upgrade": {
+                upgradeConfig: sinon.stub().returns(false),
+                upgradeSettings: sinon.stub().returns(false),
             },
             "about-window": {
                 default: sinon.spy(),
@@ -500,7 +527,8 @@ test.beforeEach(async (t) => {
         };
     })();
 
-    const testName = assert(t.title);
+    const testName = t.title;
+    assert.ok(testName, "test name is not empty");
     const directory = path.join(
         OPTIONS.dataDirectory,
         `${testName.replace(/[^A-Za-z0-9]/g, "_")}`,

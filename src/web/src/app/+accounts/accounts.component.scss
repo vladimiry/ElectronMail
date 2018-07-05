@@ -1,6 +1,7 @@
 @import "~_@web/src/variables";
 
 $accounts-column-width: 250px;
+$webview-border: darken($app-color-bg-dark, 10%);
 
 :host {
     display: block;
@@ -9,11 +10,11 @@ $accounts-column-width: 250px;
     right: 0;
     top: 0;
     bottom: 0;
-    background-color: $app-color-primary-dark;
+    background-color: $app-color-bg-dark;
 
     &::ng-deep {
         #{$app-prefix}-account {
-            border-top: 1px solid $app-color-webview-border;
+            border-top: 1px solid $webview-border;
         }
     }
 
@@ -108,7 +109,7 @@ $accounts-column-width: 250px;
             margin: 0 0 0 $app-spacer-2;
 
             .btn-group {
-                & > .btn-secondary {
+                & > .btn-light {
                     &:nth-of-type(1) {
                         width: 100%;
                     }
@@ -150,7 +151,7 @@ $accounts-column-width: 250px;
 
             &::ng-deep {
                 #{$app-prefix}-account {
-                    border-left: 1px solid $app-color-webview-border;
+                    border-left: 1px solid $webview-border;
                     border-top: 0;
                 }
             }
@@ -187,7 +188,7 @@ $accounts-column-width: 250px;
                     .btn-group {
                         width: 100%;
 
-                        & > .btn-secondary {
+                        & > .btn-light {
                             &:nth-of-type(2) {
                                 display: flex;
                                 align-items: center;
@@ -203,10 +204,8 @@ $accounts-column-width: 250px;
                     }
 
                     .dropdown-menu {
-                        // sass-lint:disable-all
-                        bottom: 100% !important;
-                        top: auto !important;
-                        // sass-lint:enable-all
+                        bottom: 100% !important; // sass-lint:disable-line no-important
+                        top: auto !important; // sass-lint:disable-line no-important
                         width: 100%;
                         margin-top: 0;
                         margin-bottom: $app-spacer-1;

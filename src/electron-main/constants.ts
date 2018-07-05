@@ -7,6 +7,7 @@ const encryptionPreset: EncryptionAdapterOptions = {
 
 export const INITIAL_STORES = Object.freeze({
     config: {
+        appVersion: String(process.env.APP_ENV_PACKAGE_VERSION),
         encryptionPreset,
         startMinimized: true,
         compactLayout: false,

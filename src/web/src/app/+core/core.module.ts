@@ -1,10 +1,9 @@
 import {ErrorHandler, NgModule, Optional, SkipSelf} from "@angular/core";
 import {EffectsModule} from "@ngrx/effects";
 
-import {GlobalErrorHandler} from "./global-error-hander.service";
 import {ElectronService} from "./electron.service";
-import {EffectsService} from "./effects.service";
 import {ErrorEffects} from "./error.effects";
+import {GlobalErrorHandler} from "./global-error-hander.service";
 import {NavigationEffects} from "./navigation.effects";
 
 @NgModule({
@@ -18,7 +17,6 @@ import {NavigationEffects} from "./navigation.effects";
             useClass: GlobalErrorHandler,
         },
         ElectronService,
-        EffectsService,
     ],
 })
 export class CoreModule {

@@ -27,11 +27,11 @@ export class AccountsComponent implements OnInit, OnDestroy {
     accountsUnreadSummary$ = this.store.select(accountsUnreadSummarySelector);
     initialized$ = this.store.select(initializedSelector);
     selectedLogin$ = this.store.select(selectedLoginSelector);
-    selectedAccount$ = this.store.select(selectedAccountSelector);
     compactLayout$ = this.store.select(configCompactLayoutSelector);
     togglingCompactLayout$ = this.store.select(progressSelector)
         .pipe(map(({togglingCompactLayout}) => togglingCompactLayout));
     accounts: WebAccount[] = [];
+    selectedAccount?: WebAccount;
     unSubscribe$ = new Subject();
 
     constructor(private store: Store<State>) {}
@@ -49,10 +49,14 @@ export class AccountsComponent implements OnInit, OnDestroy {
             .subscribe((unread) => {
                 return this.store.dispatch(ACCOUNTS_ACTIONS.UpdateOverlayIcon({count: unread}));
             });
+
+        this.store.select(selectedAccountSelector)
+            .pipe(takeUntil(this.unSubscribe$))
+            .subscribe((selectedAccount) => this.selectedAccount = selectedAccount);
     }
 
     activateAccount(account: WebAccount) {
-        this.store.dispatch(ACCOUNTS_ACTIONS.ActivateAccount({login: account.accountConfig.login}));
+        this.store.dispatch(ACCOUNTS_ACTIONS.Activate({login: account.accountConfig.login}));
     }
 
     trackAccount(index: number, account: WebAccount) {

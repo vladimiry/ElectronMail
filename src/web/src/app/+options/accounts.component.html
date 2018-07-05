@@ -1,10 +1,11 @@
-<a [routerLink]="['./../account-edit']" class="btn btn-primary mb-3">
+<a [routerLink]="['./../account-edit']" class="btn btn-primary mb-3" id="goToAccountsSettingsLink">
     <i class="fa fa-plus" aria-hidden="true"></i>
     Add Account
 </a>
 
 <ul class="list-group">
     <li class="list-group-item" *ngFor="let account of accounts$ | async">
+        <protonmail-desktop-app-type-symbol [type]="account.type"></protonmail-desktop-app-type-symbol>
         {{ account.login }}
         <a [routerLink]="['./../account-edit', account.login]" class="float-right">
             Edit

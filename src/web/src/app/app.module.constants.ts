@@ -1,3 +1,4 @@
+import {AccordionModule} from "ngx-bootstrap/accordion";
 import {APP_BASE_HREF} from "@angular/common";
 import {BrowserModule} from "@angular/platform-browser";
 import {BsDropdownModule} from "ngx-bootstrap/dropdown";
@@ -22,6 +23,7 @@ export const APP_MODULE_NG_CONF = {
         BrowserModule,
         RoutingModule,
         CoreModule,
+        AccordionModule.forRoot(),
         BsDropdownModule.forRoot(),
         PopoverModule.forRoot(),
         StoreModule.forRoot(reducers, {metaReducers}),

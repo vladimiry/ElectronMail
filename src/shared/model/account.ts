@@ -1,45 +1,54 @@
 import {KeePassRef} from "./keepasshttp";
-import {NotificationType} from "_@shared/api/webview/notification-output";
 
-export interface AccountCredentials {
-    password: {
-        value?: string;
-        keePassRef?: KeePassRef;
+export type AccountType = "protonmail" | "tutanota";
+
+// @formatter:off
+interface GenericWebAccount<
+    Type extends AccountType,
+    CredFields extends string,
+    NotificationPageTypes extends string,
+    ExtraNotifications extends Partial<Record<string, any>> = {},
+> {
+    accountConfig: {
+        type: Type;
+        login: string;
+        entryUrl: string;
+        credentials: Partial<Record<CredFields, string>>;
+        credentialsKeePass: Partial<Record<CredFields, KeePassRef>>;
     };
-    mailPassword: {
-        value?: string;
-        keePassRef?: KeePassRef;
-    };
-    twoFactorCode?: {
-        value?: string;
-        keePassRef?: KeePassRef;
-    };
+    progress: Partial<Record<CredFields, boolean>>;
+    notifications: Partial<{
+        title: string;
+    }> & {
+        unread: number;
+    } & {
+        pageType: { url?: string; type: NotificationPageTypes; },
+    } & ExtraNotifications;
 }
+// @formatter:on
 
-export interface AccountConfig {
-    credentials: AccountCredentials;
-    login: string;
-}
+// @formatter:off
+export type WebAccountProtonmail = GenericWebAccount<
+    "protonmail",
+    "password" | "twoFactorCode" | "mailPassword",
+    "login" | "login2fa" | "unlock" | "undefined"
+>;
 
-export interface WebAccountProgress {
-    password?: boolean;
-    password2fa?: boolean;
-    mailPassword?: boolean;
-}
+export type WebAccountTutanota = GenericWebAccount<
+    "tutanota",
+    "password" | "twoFactorCode",
+    "login" | "login2fa" | "undefined"
+>;
 
-export type WebAccountPageType = "login" | "login2fa" | "unlock";
+export type WebAccount = WebAccountProtonmail | WebAccountTutanota;
+// @formatter:on
 
-export interface WebAccountPageLocation {
-    url: string;
-    type?: WebAccountPageType;
-}
+export type AccountConfig = WebAccount["accountConfig"];
 
-export interface WebAccount {
-    accountConfig: AccountConfig;
-    progress: WebAccountProgress;
-    sync: {
-        title?: string;
-        unread?: number;
-        pageType: WebAccountPageLocation;
-    } & Partial<Record<NotificationType, any>>;
-}
+export type AccountConfigByType<Type extends AccountType> = Extract<AccountConfig, { type: Type }>;
+
+export type AccountProgress = WebAccount["progress"];
+
+export type AccountNotifications = WebAccount["notifications"];
+
+export type AccountNotificationType<T = AccountNotifications> = { [k in keyof T]: T[k] };

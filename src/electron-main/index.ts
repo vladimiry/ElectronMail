@@ -9,7 +9,7 @@ import {initBrowserWindow} from "./window";
 import {initEndpoints} from "./ipc-main-api";
 import {initTray} from "./tray";
 import {initWebContentContextMenu} from "./web-content-context-menu";
-import {isAllowedUrl} from "_@shared/util";
+import {isWebViewSrcWhitelisted} from "_@shared/util";
 
 electronUnhandled({logger: logger.error});
 
@@ -52,7 +52,7 @@ export async function initApp(ctx: Context) {
             contents.on("will-attach-webview", (willAttachWebviewEvent, webPreferences, params) => {
                 webPreferences.nodeIntegration = false;
 
-                if (!isAllowedUrl(params.src)) {
+                if (!isWebViewSrcWhitelisted(params.src)) {
                     willAttachWebviewEvent.preventDefault();
                 }
             });

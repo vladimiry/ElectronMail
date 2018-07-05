@@ -1,3 +1,5 @@
+import {AccountType} from "_@shared/model/account";
+
 export interface ElectronExposure {
     ipcRenderer: {
         on(channel: string, listener: (event: string, response: any) => void): any;
@@ -5,6 +7,7 @@ export interface ElectronExposure {
         send(channel: string, ...args: any[]): void;
         sendToHost(channel: string, ...args: any[]): void;
     };
+    requireNodeRollingRateLimiter: () => (...args: any[]) => (key: string) => number;
 }
 
 export interface ElectronWindow {
@@ -21,6 +24,6 @@ export interface ElectronContextLocations {
     readonly preload: {
         browserWindow: string;
         browserWindowE2E: string;
-        webView: string;
+        webView: Record<AccountType, string>;
     };
 }

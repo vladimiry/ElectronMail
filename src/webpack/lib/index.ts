@@ -36,6 +36,7 @@ const buildConfig: BuildConfig = (config, options = {}) => {
                 new webpack.DefinePlugin({
                     "process.env.NODE_ENV": JSON.stringify(environment),
                     "process.env.APP_ENV_PACKAGE_NAME": JSON.stringify(packageJson.name),
+                    "process.env.APP_ENV_PACKAGE_VERSION": JSON.stringify(packageJson.version),
                     "process.env.APP_ENV_PACKAGE_DESCRIPTION": JSON.stringify(packageJson.description),
                     "process.env.APP_ENV_PACKAGE_BUGS_URL": JSON.stringify(packageJson.bugs.url),
                 }),

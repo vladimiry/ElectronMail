@@ -1,4 +1,5 @@
 import aboutWindow from "about-window";
+import assert from "assert";
 import Jimp from "jimp";
 import keytar from "keytar";
 import {app, nativeImage, NativeImage, shell} from "electron";
@@ -8,7 +9,6 @@ import {KeePassHttpClient} from "keepasshttp-client";
 import {promisify} from "util";
 
 import {AccountConfig} from "_@shared/model/account";
-import {assert} from "_@shared/util";
 import {BuildEnvironment} from "_@shared/model/common";
 import {buildSettingsAdapter, handleKeePassRequestError, toggleBrowserWindow} from "./util";
 import {Context} from "./model";
@@ -16,23 +16,22 @@ import {ElectronContextLocations} from "_@shared/model/electron";
 import {Endpoints, IPC_MAIN_API} from "_@shared/api/main";
 import {KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "./constants";
 import {StatusCode, StatusCodeError} from "_@shared/model/error";
+import {upgradeConfig, upgradeSettings} from "./storage-upgrade";
 
 export const initEndpoints = async (ctx: Context): Promise<Endpoints> => {
     const endpoints: Endpoints = {
-        addAccount: ({login, passwordValue, mailPasswordValue, twoFactorCodeValue}) => from((async () => {
+        addAccount: ({type, entryUrl, login, credentials, credentialsKeePass}) => from((async () => {
             const settings = await ctx.settingsStore.readExisting();
-            const account: AccountConfig = {
+            const account = {
+                type,
+                entryUrl,
                 login,
-                credentials: {
-                    password: {value: passwordValue || undefined},
-                    mailPassword: {value: mailPasswordValue || undefined},
-                    twoFactorCode: {value: twoFactorCodeValue || undefined},
-                },
-            };
+                credentials,
+                credentialsKeePass,
+            } as AccountConfig; // TODO ger rid of "TS as" casting
 
             settings.accounts.push(account);
 
-            // TODO return created "AccountConfig" only, not the whole settings object
             return await ctx.settingsStore.write(settings);
         })()),
         associateSettingsWithKeePass: ({url}) => from((async () => {
@@ -131,15 +130,35 @@ export const initEndpoints = async (ctx: Context): Promise<Endpoints> => {
             app.exit();
             return EMPTY;
         },
+        // TODO update "readConfig" api method test (upgradeConfig)
         readConfig: () => from((async () => {
-            return (await ctx.configStore.read()) || ctx.configStore.write(ctx.initialStores.config);
+            const config = await ctx.configStore.read();
+
+            if (config) {
+                if (upgradeConfig(config)) {
+                    return ctx.configStore.write(config);
+                }
+                return config;
+            }
+
+            return ctx.configStore.write(ctx.initialStores.config);
         })()),
+        // TODO update "readSettings" api method test (upgradeSettings)
         readSettings: ({password, savePassword}) => from((async () => {
             const adapter = await buildSettingsAdapter(ctx, password);
             const store = ctx.settingsStore.clone({adapter});
-            const settings = await store.readable()
-                ? await store.readExisting()
-                : await store.write(ctx.initialStores.settings);
+            const settings = await (async () => {
+                const entity = await store.read();
+
+                if (entity) {
+                    if (upgradeSettings(entity)) {
+                        return store.write(entity);
+                    }
+                    return entity;
+                }
+
+                return store.write(ctx.initialStores.settings);
+            })();
 
             if (savePassword) {
                 await keytar.setPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, password);
@@ -151,6 +170,7 @@ export const initEndpoints = async (ctx: Context): Promise<Endpoints> => {
 
             return settings;
         })()),
+        // TODO update "readSettings" api method test (upgradeSettings)
         readSettingsAuto: () => from((async () => {
             const password = await keytar.getPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT);
 
@@ -162,7 +182,15 @@ export const initEndpoints = async (ctx: Context): Promise<Endpoints> => {
             const store = ctx.settingsStore.clone({adapter});
 
             try {
-                const settings = await store.readExisting();
+                const settings = await (async () => {
+                    const entity = await store.readExisting();
+
+                    if (upgradeSettings(entity)) {
+                        return store.write(entity);
+                    }
+
+                    return entity;
+                })();
 
                 ctx.settingsStore = store;
 
@@ -185,7 +213,7 @@ export const initEndpoints = async (ctx: Context): Promise<Endpoints> => {
             const settings = await ctx.settingsStore.readExisting();
             const index = settings.accounts.findIndex(({login}) => login === payload.login);
 
-            assert(index > -1, `Account to remove has not been found (login: "${payload.login}")`);
+            assert.ok(index > -1, `Account to remove has not been found (login: "${payload.login}")`);
 
             settings.accounts.splice(index, 1);
 
@@ -200,55 +228,53 @@ export const initEndpoints = async (ctx: Context): Promise<Endpoints> => {
             const config = await ctx.configStore.readExisting();
             return await ctx.configStore.write({...config, compactLayout: !config.compactLayout});
         })()),
-        updateAccount: (payload) => from((async () => {
+        // TODO update "updateAccount" api method test (entryUrl, changed credentials structure)
+        updateAccount: ({entryUrl, login, credentials, credentialsKeePass}) => from((async () => {
             const settings = await ctx.settingsStore.readExisting();
-            const matchedAccount = settings.accounts
-                .filter(({login}) => login === payload.login)
+            const existingAccount = settings.accounts
+                .filter(({login: existingLogin}) => login === existingLogin)
                 .shift();
 
-            if (!matchedAccount) {
+            if (!existingAccount) {
                 throw new StatusCodeError(
-                    `Account to update has not been found (login: "${payload.login}")`,
+                    `Account to update has not been found (login: "${login}")`,
                     StatusCode.NotFoundAccount,
                 );
             }
 
-            const {credentials} = matchedAccount;
-
-            if ("passwordValue" in payload) {
-                credentials.password.value = payload.passwordValue || undefined;
+            if (entryUrl) {
+                existingAccount.entryUrl = entryUrl;
             }
-            if ("passwordKeePassRef" in payload) {
-                if (payload.passwordKeePassRef) {
-                    credentials.password.keePassRef = payload.passwordKeePassRef;
-                } else {
-                    delete credentials.password.keePassRef;
+
+            const {credentials: existingCredentials, credentialsKeePass: existingCredentialsKeePass} = existingAccount;
+
+            if (credentials) {
+                if ("password" in credentials) {
+                    existingCredentials.password = credentials.password || undefined;
+                }
+                if ("twoFactorCode" in credentials) {
+                    existingCredentials.twoFactorCode = credentials.twoFactorCode || undefined;
                 }
             }
 
-            if ("twoFactorCodeValue" in payload) {
-                (credentials.twoFactorCode = credentials.twoFactorCode || {}).value = payload.twoFactorCodeValue || undefined;
-            }
-            if ("twoFactorCodeKeePassRef" in payload) {
-                if (payload.twoFactorCodeKeePassRef) {
-                    (credentials.twoFactorCode = credentials.twoFactorCode || {}).keePassRef = payload.twoFactorCodeKeePassRef;
-                } else {
-                    delete (credentials.twoFactorCode = credentials.twoFactorCode || {}).keePassRef;
+            if (credentialsKeePass) {
+                if ("password" in credentialsKeePass) {
+                    existingCredentialsKeePass.password = credentialsKeePass.password || undefined;
+                }
+                if ("twoFactorCode" in credentialsKeePass) {
+                    existingCredentialsKeePass.twoFactorCode = credentialsKeePass.twoFactorCode || undefined;
                 }
             }
 
-            if ("mailPasswordValue" in payload) {
-                credentials.mailPassword.value = payload.mailPasswordValue || undefined;
-            }
-            if ("mailPasswordKeePassRef" in payload) {
-                if (payload.mailPasswordKeePassRef) {
-                    credentials.mailPassword.keePassRef = payload.mailPasswordKeePassRef;
-                } else {
-                    delete credentials.mailPassword.keePassRef;
+            if (existingAccount.type === "protonmail") {
+                if (credentials && "mailPassword" in credentials) {
+                    existingAccount.credentials.mailPassword = credentials.mailPassword || undefined;
+                }
+                if (credentialsKeePass && "mailPassword" in credentialsKeePass) {
+                    existingAccount.credentialsKeePass.mailPassword = credentialsKeePass.mailPassword || undefined;
                 }
             }
 
-            // TODO return updated "AccountConfig" only, not the entire settings object
             return await ctx.settingsStore.write(settings);
         })()),
         ...(await (async () => {

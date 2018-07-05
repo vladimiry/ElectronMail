@@ -1,73 +1,75 @@
-import {filter, map, mergeMap, switchMap, takeUntil, withLatestFrom} from "rxjs/operators";
-import {BehaviorSubject, merge, Observable, of, Subject} from "rxjs";
-import {AfterViewInit, Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren} from "@angular/core";
-import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {ActivatedRoute} from "@angular/router";
+import {Component, OnDestroy, OnInit} from "@angular/core";
+import {EMPTY, merge, Observable, of, Subject} from "rxjs";
+import {filter, map, switchMap, takeUntil, withLatestFrom} from "rxjs/operators";
+import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
-import {AccountConfig} from "_@shared/model/account";
-import {AccountConfigPatch} from "_@shared/model/container";
-import {KeePassRef} from "_@shared/model/keepasshttp";
-import {OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
 import {
     progressSelector,
     settingsAccountByLoginSelector,
     settingsKeePassClientConfSelector,
     State,
 } from "_@web/src/app/store/reducers/options";
+import {AccountConfig, AccountConfigByType, AccountType} from "_@shared/model/account";
+import {AccountConfigCreatePatch, AccountConfigPatch, AccountConfigPatchByType} from "_@shared/model/container";
+import {ACCOUNTS_CONFIG, EntryUrlItem} from "_@shared/constants";
+import {KeePassRef} from "_@shared/model/keepasshttp";
+import {OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
 import {OptionsService} from "./options.service";
 
-type OptionalAccount = AccountConfig | undefined;
-
 // TODO simplify RxJS stuff of the "account-edit.component"
-// for example "OptionalAccount" looks weird
 @Component({
     selector: `protonmail-desktop-app-account-edit`,
     templateUrl: "./account-edit.component.html",
     preserveWhitespaces: true,
 })
-export class AccountEditComponent implements OnInit, AfterViewInit, OnDestroy {
+export class AccountEditComponent implements OnInit, OnDestroy {
     // form
+    typeValues: AccountType[] = ["protonmail", "tutanota"];
+    entryUrlItems: EntryUrlItem[] = [];
+    type = new FormControl(this.typeValues[0], Validators.required);
+    entryUrl = new FormControl(null, Validators.required);
     login = new FormControl(null, Validators.required);
     password = new FormControl(null);
     twoFactorCode = new FormControl(null);
     mailPassword = new FormControl(null);
     form = new FormGroup({
+        type: this.type,
+        entryUrl: this.entryUrl,
         login: this.login,
         password: this.password,
         twoFactorCode: this.twoFactorCode,
         mailPassword: this.mailPassword,
     });
     // account
+    existingAccount?: AccountConfig;
     updatingAccountLogin$: Subject<string> = new Subject();
-    possiblyExistingAccountAndPikedByLogin$: Observable<[AccountConfig | undefined, string]> = this.activatedRoute.params.pipe(
+    existingAccountByLogin$: Observable<[AccountConfig | undefined, string]> = this.activatedRoute.params.pipe(
         switchMap(({login}) => merge(of(login), this.updatingAccountLogin$)),
         filter((login) => !!login),
-        switchMap((login) => this.store.select(settingsAccountByLoginSelector(login)).pipe(withLatestFrom(of(login)))),
-    );
-    possiblyExistingAccount$: BehaviorSubject<OptionalAccount> = new BehaviorSubject(undefined as OptionalAccount);
-    existingAccount$: Observable<AccountConfig> = this.possiblyExistingAccount$.pipe(
-        mergeMap((account) => account ? [account] : []),
+        switchMap((login) => this.store
+            .select(settingsAccountByLoginSelector(login))
+            .pipe(withLatestFrom(of(login))),
+        ),
     );
     removingAccountLogin?: string;
     // progress
     processing$ = this.store.select(progressSelector).pipe(map(({addingAccount, updatingAccount}) => addingAccount || updatingAccount));
     removing$ = this.store.select(progressSelector).pipe(map(({removingAccount}) => removingAccount));
     // keepass
-    passwordKeePassRef$ = this.existingAccount$.pipe(
-        map(({credentials}) => credentials.password.keePassRef),
+    passwordKeePassRef$ = this.existingAccountByLogin$.pipe(
+        map(([account]) => account && account.credentialsKeePass.password),
     );
-    twoFactorCodeKeePassRef$ = this.existingAccount$.pipe(
-        map(({credentials}) => credentials.twoFactorCode ? credentials.twoFactorCode.keePassRef : undefined),
+    twoFactorCodeKeePassRef$ = this.existingAccountByLogin$.pipe(
+        map(([account]) => account && account.credentialsKeePass.twoFactorCode),
     );
-    mailPasswordKeePassRef$ = this.existingAccount$.pipe(
-        map(({credentials}) => credentials.mailPassword.keePassRef),
+    mailPasswordKeePassRef$ = this.existingAccountByLogin$.pipe(
+        switchMap(([account]) => (account && account.type === "protonmail") ? of(account.credentialsKeePass.mailPassword) : EMPTY),
     );
     keePassRefCollapsed = true;
     keePassClientConf$ = this.store.select(settingsKeePassClientConfSelector);
     // other
-    @ViewChildren("loginRef")
-    loginElementRefQuery: QueryList<ElementRef>;
     unSubscribe$ = new Subject();
 
     constructor(private optionsService: OptionsService,
@@ -75,51 +77,69 @@ export class AccountEditComponent implements OnInit, AfterViewInit, OnDestroy {
                 private activatedRoute: ActivatedRoute) {}
 
     ngOnInit() {
-        this.possiblyExistingAccountAndPikedByLogin$
+        this.existingAccountByLogin$
             .pipe(takeUntil(this.unSubscribe$))
             .subscribe(([accountConfig, login]) => {
                 if (accountConfig) {
-                    this.possiblyExistingAccount$.next(accountConfig);
+                    this.existingAccount = accountConfig;
                     this.form.removeControl("login");
-                    this.password.patchValue(accountConfig.credentials.password.value);
-                    this.mailPassword.patchValue(accountConfig.credentials.mailPassword.value);
-                    if (accountConfig.credentials.twoFactorCode) {
-                        this.twoFactorCode.patchValue(accountConfig.credentials.twoFactorCode.value);
+                    this.type.patchValue(accountConfig.type);
+                    this.entryUrl.patchValue(accountConfig.entryUrl);
+                    this.password.patchValue(accountConfig.credentials.password);
+                    this.twoFactorCode.patchValue(accountConfig.credentials.twoFactorCode);
+                    if (accountConfig.type === "protonmail") {
+                        this.mailPassword.patchValue(accountConfig.credentials.mailPassword);
                     }
                 } else if (login === this.removingAccountLogin) {
                     this.store.dispatch(this.optionsService.buildNavigationAction({path: "accounts"}));
                 }
             });
+
+        this.type.valueChanges
+            .pipe(takeUntil(this.unSubscribe$))
+            .subscribe(this.typeChangeReaction.bind(this));
+        this.typeChangeReaction(this.type.value);
     }
 
-    ngAfterViewInit() {
-        if (this.loginElementRefQuery.length) {
-            this.loginElementRefQuery.first.nativeElement.focus();
+    typeChangeReaction(type: AccountType) {
+        this.entryUrlItems = ACCOUNTS_CONFIG[type].entryUrl;
+
+        if (this.entryUrl.value && !this.entryUrlItems.some(({value}) => this.entryUrl.value === value)) {
+            this.entryUrl.patchValue(null);
         }
     }
 
     submit() {
-        const account = this.possiblyExistingAccount$.getValue();
-        const patch: AccountConfigPatch = {
+        const account = this.existingAccount;
+        const patch: Readonly<AccountConfigPatch> = {
             login: account ? account.login : this.login.value,
-            passwordValue: this.password.value,
-            twoFactorCodeValue: this.twoFactorCode.value,
-            mailPasswordValue: this.mailPassword.value,
+            entryUrl: this.entryUrl.value,
+            credentials: {
+                password: this.password.value,
+                twoFactorCode: this.twoFactorCode.value,
+            },
+            credentialsKeePass: {},
         };
+        const accountType: AccountType = account ? account.type : this.type.value;
+
+        if (accountType === "protonmail") {
+            // TODO ger rid of "TS as" casting
+            (patch as AccountConfigPatchByType<"protonmail">).credentials.mailPassword = this.mailPassword.value;
+        }
 
         this.updatingAccountLogin$.next(patch.login);
 
         this.store.dispatch(account
             ? OPTIONS_ACTIONS.UpdateAccountRequest(patch)
-            : OPTIONS_ACTIONS.AddAccountRequest(patch),
+            : OPTIONS_ACTIONS.AddAccountRequest({...patch, type: this.type.value} as AccountConfigCreatePatch),
         );
     }
 
     remove() {
-        const account = this.possiblyExistingAccount$.getValue();
+        const account = this.existingAccount;
 
         if (!account) {
-            throw new Error("No \"Account\" to remove");
+            throw new Error(`No "Account" to remove`);
         }
 
         if (!confirm(`Please confirm "${account.login}" account removing!`)) {
@@ -137,43 +157,49 @@ export class AccountEditComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     onPasswordKeePassLink(keePassRef: KeePassRef) {
-        this.dispatchKeePassRefUpdate("passwordKeePassRef", keePassRef);
+        this.dispatchKeePassRefUpdate("password", keePassRef);
     }
 
     onPasswordKeePassUnlink() {
-        this.dispatchKeePassRefUpdate("passwordKeePassRef", null);
+        this.dispatchKeePassRefUpdate("password", null);
     }
 
     onTwoFactorCodeKeePassLink(keePassRef: KeePassRef) {
-        this.dispatchKeePassRefUpdate("twoFactorCodeKeePassRef", keePassRef);
+        this.dispatchKeePassRefUpdate("twoFactorCode", keePassRef);
     }
 
     onTwoFactorCodeKeePassUnlink() {
-        this.dispatchKeePassRefUpdate("twoFactorCodeKeePassRef", null);
+        this.dispatchKeePassRefUpdate("twoFactorCode", null);
     }
 
     onMailPasswordKeePassLink(keePassRef: KeePassRef) {
-        this.dispatchKeePassRefUpdate("mailPasswordKeePassRef", keePassRef);
+        this.dispatchKeePassRefUpdate("mailPassword", keePassRef);
     }
 
     onMailPasswordKeePassUnlink() {
-        this.dispatchKeePassRefUpdate("mailPasswordKeePassRef", null);
+        this.dispatchKeePassRefUpdate("mailPassword", null);
     }
 
     private dispatchKeePassRefUpdate(
-        refType: keyof Required<Pick<AccountConfigPatch, "passwordKeePassRef" | "twoFactorCodeKeePassRef" | "mailPasswordKeePassRef">>,
+        // TODO simplify this stuff
+        // tslint:disable-next-line:max-line-length
+        refType: keyof Pick<AccountConfigByType<"protonmail">, "credentialsKeePass">["credentialsKeePass"] | keyof Pick<AccountConfigByType<"tutanota">, "credentialsKeePass">["credentialsKeePass"],
         refValue: KeePassRef | null,
     ) {
-        const account = this.possiblyExistingAccount$.getValue();
+        const account = this.existingAccount;
 
         if (!account) {
-            throw new Error("No \"Account\" to link/unlink KeePass record with");
+            throw new Error(`No "Account" to link/unlink KeePass record with`);
         }
 
         this.store.dispatch(
             OPTIONS_ACTIONS.UpdateAccountRequest({
                 login: account.login,
-                [refType]: refValue,
+                entryUrl: account.entryUrl,
+                credentialsKeePass: {
+                    [refType]: refValue,
+                },
+                credentials: {},
             }),
         );
     }

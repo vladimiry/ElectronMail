@@ -1,15 +1,14 @@
 import {catchError, filter, finalize, map, mergeMap, switchMap, withLatestFrom} from "rxjs/operators";
-import {merge as observableMerge, of} from "rxjs";
+import {merge, of} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Actions, Effect} from "@ngrx/effects";
 import {Store} from "@ngrx/store";
 
 import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "_@web/src/app/app.constants";
-import {ProgressPatch, settingsSelector, State} from "_@web/src/app/store/reducers/options";
-import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
-import {ElectronService} from "../+core/electron.service";
-import {EffectsService} from "../+core/effects.service";
+import {CORE_ACTIONS, NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
+import {ElectronService} from "_@web/src/app/+core/electron.service";
 import {OptionsService} from "./options.service";
+import {ProgressPatch, settingsSelector, State} from "_@web/src/app/store/reducers/options";
 
 @Injectable()
 export class OptionsEffects {
@@ -23,7 +22,7 @@ export class OptionsEffects {
                     OPTIONS_ACTIONS.InitResponse(payload),
                     this.optionsService.buildNavigationAction({path: ""}),
                 ]),
-                catchError(this.effectsService.buildFailActionObservable.bind(this.effectsService)),
+                catchError((error) => of(CORE_ACTIONS.Fail(error))),
             ),
         ));
 
@@ -37,7 +36,7 @@ export class OptionsEffects {
                     OPTIONS_ACTIONS.GetConfigResponse(config),
                     this.optionsService.buildNavigationAction({path: ""}),
                 ]),
-                catchError(this.effectsService.buildFailActionObservable.bind(this.effectsService)),
+                catchError((error) => of(CORE_ACTIONS.Fail(error))),
             ),
         ));
 
@@ -58,7 +57,7 @@ export class OptionsEffects {
                     map((readable) => this.optionsService.buildNavigationAction({
                         path: readable ? "login" : "settings-setup",
                     })),
-                    catchError(this.effectsService.buildFailActionObservable.bind(this.effectsService)),
+                    catchError((error) => of(CORE_ACTIONS.Fail(error))),
                 );
         }),
     );
@@ -66,7 +65,7 @@ export class OptionsEffects {
     @Effect()
     getSettingsAutoRequest$ = this.actions$.pipe(
         filter(OPTIONS_ACTIONS.is.GetSettingsAutoRequest),
-        switchMap(() => observableMerge(
+        switchMap(() => merge(
             of(this.buildPatchProgress({signingIn: true})),
             this.electronService
                 .callIpcMain("readSettingsAuto")()
@@ -85,7 +84,7 @@ export class OptionsEffects {
                         ]
                         : [],
                     ),
-                    catchError((error) => this.effectsService.buildFailActionObservable(error)),
+                    catchError((error) => of(CORE_ACTIONS.Fail(error))),
                     finalize(() => this.dispatchProgress({signingIn: false})),
                 ),
         )));
@@ -93,7 +92,7 @@ export class OptionsEffects {
     @Effect()
     signInRequest$ = this.actions$.pipe(
         filter(OPTIONS_ACTIONS.is.SignInRequest),
-        switchMap(({payload}) => observableMerge(
+        switchMap(({payload}) => merge(
             of(this.buildPatchProgress({signingIn: true})),
             this.electronService
                 .callIpcMain("readSettings")(payload)
@@ -111,7 +110,7 @@ export class OptionsEffects {
                     ]),
                     catchError((error) => {
                         error.message = "Failed to log in";
-                        return this.effectsService.buildFailActionObservable(error);
+                        return of(CORE_ACTIONS.Fail(error));
                     }),
                     finalize(() => this.dispatchProgress({signingIn: false})),
                 ),
@@ -120,7 +119,7 @@ export class OptionsEffects {
     @Effect()
     addAccountRequest$ = this.actions$.pipe(
         filter(OPTIONS_ACTIONS.is.AddAccountRequest),
-        switchMap(({payload}) => observableMerge(
+        switchMap(({payload}) => merge(
             of(this.buildPatchProgress({addingAccount: true})),
             this.electronService
                 .callIpcMain("addAccount")(payload)
@@ -132,7 +131,7 @@ export class OptionsEffects {
                             queryParams: {login: payload.login},
                         }),
                     ]),
-                    catchError((error) => this.effectsService.buildFailActionObservable(error)),
+                    catchError((error) => of(CORE_ACTIONS.Fail(error))),
                     finalize(() => this.dispatchProgress({addingAccount: false})),
                 ),
         )));
@@ -140,13 +139,13 @@ export class OptionsEffects {
     @Effect()
     updateAccountRequest$ = this.actions$.pipe(
         filter(OPTIONS_ACTIONS.is.UpdateAccountRequest),
-        switchMap(({payload}) => observableMerge(
+        switchMap(({payload}) => merge(
             of(this.buildPatchProgress({updatingAccount: true})),
             this.electronService
                 .callIpcMain("updateAccount")(payload)
                 .pipe(
                     map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
-                    catchError((error) => this.effectsService.buildFailActionObservable(error)),
+                    catchError((error) => of(CORE_ACTIONS.Fail(error))),
                     finalize(() => this.dispatchProgress({updatingAccount: false})),
                 ),
         )));
@@ -154,13 +153,13 @@ export class OptionsEffects {
     @Effect()
     removeAccountRequest$ = this.actions$.pipe(
         filter(OPTIONS_ACTIONS.is.RemoveAccountRequest),
-        switchMap(({payload}) => observableMerge(
+        switchMap(({payload}) => merge(
             of(this.buildPatchProgress({removingAccount: true})),
             this.electronService
                 .callIpcMain("removeAccount")({login: payload.login})
                 .pipe(
                     map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
-                    catchError((error) => this.effectsService.buildFailActionObservable(error)),
+                    catchError((error) => of(CORE_ACTIONS.Fail(error))),
                     finalize(() => this.dispatchProgress({removingAccount: false})),
                 ),
         )));
@@ -168,7 +167,7 @@ export class OptionsEffects {
     @Effect()
     changeMasterPasswordRequest$ = this.actions$.pipe(
         filter(OPTIONS_ACTIONS.is.ChangeMasterPasswordRequest),
-        switchMap(({payload}) => observableMerge(
+        switchMap(({payload}) => merge(
             of(this.buildPatchProgress({changingPassword: true})),
             this.electronService
                 .callIpcMain("changeMasterPassword")(payload)
@@ -177,7 +176,7 @@ export class OptionsEffects {
                     catchError((error) => {
                         error.message = "Failed to change the master password! " +
                             "Please make sure that correct current password has been entered.";
-                        return this.effectsService.buildFailActionObservable(error);
+                        return of(CORE_ACTIONS.Fail(error));
                     }),
                     finalize(() => this.dispatchProgress({changingPassword: false})),
                 ),
@@ -186,13 +185,13 @@ export class OptionsEffects {
     @Effect()
     associateSettingsWithKeePassRequest$ = this.actions$.pipe(
         filter(OPTIONS_ACTIONS.is.AssociateSettingsWithKeePassRequest),
-        switchMap(({payload}) => observableMerge(
+        switchMap(({payload}) => merge(
             of(this.buildPatchProgress({keePassReferencing: true})),
             this.electronService
                 .callIpcMain("associateSettingsWithKeePass")(payload)
                 .pipe(
                     map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
-                    catchError((error) => this.effectsService.buildFailActionObservable(error)),
+                    catchError((error) => of(CORE_ACTIONS.Fail(error))),
                     finalize(() => this.dispatchProgress({keePassReferencing: false})),
                 ),
         )));
@@ -200,13 +199,13 @@ export class OptionsEffects {
     @Effect()
     toggleCompactLayout$ = this.actions$.pipe(
         filter(OPTIONS_ACTIONS.is.ToggleCompactRequest),
-        switchMap(() => observableMerge(
+        switchMap(() => merge(
             of(this.buildPatchProgress({togglingCompactLayout: true})),
             this.electronService
                 .callIpcMain("toggleCompactLayout")()
                 .pipe(
                     map((config) => OPTIONS_ACTIONS.GetConfigResponse(config)),
-                    catchError((error) => this.effectsService.buildFailActionObservable(error)),
+                    catchError((error) => of(CORE_ACTIONS.Fail(error))),
                     finalize(() => this.dispatchProgress({togglingCompactLayout: false})),
                 ),
         )));
@@ -214,13 +213,13 @@ export class OptionsEffects {
     @Effect()
     updateBaseSettings$ = this.actions$.pipe(
         filter(OPTIONS_ACTIONS.is.PatchBaseSettingsRequest),
-        switchMap(({payload}) => observableMerge(
+        switchMap(({payload}) => merge(
             of(this.buildPatchProgress({updatingBaseSettings: true})),
             this.electronService
                 .callIpcMain("patchBaseSettings")(payload)
                 .pipe(
                     map((config) => OPTIONS_ACTIONS.GetConfigResponse(config)),
-                    catchError((error) => this.effectsService.buildFailActionObservable(error)),
+                    catchError((error) => of(CORE_ACTIONS.Fail(error))),
                     finalize(() => this.dispatchProgress({updatingBaseSettings: false})),
                 ),
         )));
@@ -231,20 +230,19 @@ export class OptionsEffects {
         switchMap(({payload}) => {
             const {encryptionPreset, password} = payload;
 
-            return observableMerge(
+            return merge(
                 of(this.buildPatchProgress({reEncryptingSettings: true})),
                 this.electronService
                     .callIpcMain("reEncryptSettings")({encryptionPreset, password})
                     .pipe(
                         map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
-                        catchError((error) => this.effectsService.buildFailActionObservable(error)),
+                        catchError((error) => of(CORE_ACTIONS.Fail(error))),
                         finalize(() => this.dispatchProgress({reEncryptingSettings: false})),
                     ),
             );
         }));
 
-    constructor(private effectsService: EffectsService,
-                private optionsService: OptionsService,
+    constructor(private optionsService: OptionsService,
                 private electronService: ElectronService,
                 private store: Store<State>,
                 private actions$: Actions) {}

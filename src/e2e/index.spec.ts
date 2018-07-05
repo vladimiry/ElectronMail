@@ -5,7 +5,19 @@ import fs from "fs";
 import path from "path";
 import {promisify} from "util";
 
-import {actions, catchError, CONF, ENV, initApp, test} from "./util";
+import {
+    ONE_SECOND_MS,
+    RUNTIME_ENV_E2E_PROTONMAIL_2FA_CODE,
+    RUNTIME_ENV_E2E_PROTONMAIL_LOGIN,
+    RUNTIME_ENV_E2E_PROTONMAIL_PASSWORD,
+    RUNTIME_ENV_E2E_PROTONMAIL_UNREAD_MIN,
+    RUNTIME_ENV_E2E_TUTANOTA_2FA_CODE,
+    RUNTIME_ENV_E2E_TUTANOTA_LOGIN,
+    RUNTIME_ENV_E2E_TUTANOTA_PASSWORD,
+    RUNTIME_ENV_E2E_TUTANOTA_UNREAD_MIN,
+} from "../shared/constants";
+import {catchError, CONF, ENV, initApp, test, workflow} from "./workflow";
+import {AccountType} from "../shared/model/account";
 
 test.beforeEach(async (t) => {
     try {
@@ -17,7 +29,7 @@ test.beforeEach(async (t) => {
 
 test.afterEach(async (t) => {
     try {
-        await actions.destroyApp(t);
+        await workflow.destroyApp(t);
     } catch (error) {
         await catchError(t, error);
     }
@@ -28,44 +40,71 @@ test("login, add account, logout, auto login", async (t) => {
         const client = t.context.app.client;
         let accountsCount = 0;
 
-        await actions.login(t, {setup: true, savePassword: false});
+        await workflow.login(t, {setup: true, savePassword: false});
 
-        await actions.addAccount(t);
+        await workflow.addAccount(t, {type: "protonmail"});
         accountsCount++;
-        t.is(await actions.accountsCount(t), accountsCount);
 
-        await (async () => {
-            const login = (process.env.PROTONMAIL_DESKTOP_APP_E2E_ACC_LOGIN || "").trim();
-            const password = (process.env.PROTONMAIL_DESKTOP_APP_E2E_ACC_PASSWORD || "").trim();
-            const unread = Number(process.env.PROTONMAIL_DESKTOP_APP_E2E_ACC_UNREAD);
+        await workflow.addAccount(t, {type: "tutanota"});
+        accountsCount++;
 
+        for (const {type, login, password, twoFactorCode, unread} of ([
+            {
+                type: "protonmail",
+                login: process.env[RUNTIME_ENV_E2E_PROTONMAIL_LOGIN],
+                password: process.env[RUNTIME_ENV_E2E_PROTONMAIL_PASSWORD],
+                twoFactorCode: process.env[RUNTIME_ENV_E2E_PROTONMAIL_2FA_CODE],
+                unread: Number(process.env[RUNTIME_ENV_E2E_PROTONMAIL_UNREAD_MIN]),
+            },
+            {
+                type: "tutanota",
+                login: process.env[RUNTIME_ENV_E2E_TUTANOTA_LOGIN],
+                password: process.env[RUNTIME_ENV_E2E_TUTANOTA_PASSWORD],
+                twoFactorCode: process.env[RUNTIME_ENV_E2E_TUTANOTA_2FA_CODE],
+                unread: Number(process.env[RUNTIME_ENV_E2E_TUTANOTA_UNREAD_MIN]),
+            },
+        ] as Array<{ type: AccountType, login: string, password: string, twoFactorCode: string, unread: number }>)) {
             if (!login || !password) {
-                return;
+                continue;
             }
 
-            await actions.addAccount(t, {login, password});
+            await workflow.addAccount(t, {type, login, password, twoFactorCode});
             accountsCount++;
-            t.is(await actions.accountsCount(t), accountsCount);
-            await actions.selectAccount(t, accountsCount - 1);
+
+            await workflow.selectAccount(t, accountsCount - 1);
 
             if (unread && !isNaN(unread)) {
-                await client.pause(10000);
-                // tslint:disable-next-line:max-line-length
-                const unreadText = String(await client.getText(`.list-group.accounts-list > .list-group-item:nth-child(${accountsCount}) protonmail-desktop-app-account-title > .account-value-sync-unread > .badge`));
-                const actualUnread = Number(unreadText.replace(/\D/g, ""));
-                t.true(actualUnread >= unread, `actualUnread(${actualUnread}) >= unread(${unread})`);
-            }
-        })();
+                await client.pause(ONE_SECOND_MS * 15);
 
-        await actions.logout(t);
-        await actions.login(t, {setup: false, savePassword: true});
+                const verify = async (forceCheck = false) => {
+                    // tslint:disable-next-line:max-line-length
+                    const actualUnreadText = String(await client.getText(`.list-group.accounts-list > .list-group-item:nth-child(${accountsCount}) protonmail-desktop-app-account-title > .account-value-sync-unread > .badge`));
+                    const actualUnread = Number(actualUnreadText.replace(/\D/g, ""));
+                    const result = actualUnread >= unread;
+
+                    if (result || forceCheck) {
+                        t.true(actualUnread >= unread, `actualUnread(${actualUnread}) >= unread(${unread})`);
+                    }
+
+                    return result;
+                };
+
+                if (!(await verify())) {
+                    await client.pause(ONE_SECOND_MS * (type === "tutanota" ? 70 : 10));
+                    await verify(true);
+                }
+            }
+        }
+
+        await workflow.logout(t);
+        await workflow.login(t, {setup: false, savePassword: true});
         t.is(
             (await client.getUrl()).split("#").pop(), "/(accounts-outlet:accounts)",
             `login: "accounts" page url`,
         );
-        t.is(await actions.accountsCount(t), accountsCount);
+        t.is(await workflow.accountsCount(t), accountsCount);
 
-        await actions.destroyApp(t);
+        await workflow.destroyApp(t);
     })();
 
     await initApp(t, {initial: false});

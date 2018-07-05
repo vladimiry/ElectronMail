@@ -6,9 +6,8 @@ import {Location} from "@angular/common";
 import {Router} from "@angular/router";
 
 import {ACCOUNTS_OUTLET, SETTINGS_OUTLET, SETTINGS_PATH} from "_@web/src/app/app.constants";
-import {NAVIGATION_ACTIONS} from "_@web/src/app/store/actions";
+import {CORE_ACTIONS, NAVIGATION_ACTIONS} from "_@web/src/app/store/actions";
 import {ElectronService} from "./electron.service";
-import {EffectsService} from "./effects.service";
 
 @Injectable()
 export class NavigationEffects {
@@ -24,21 +23,21 @@ export class NavigationEffects {
                 await this.router.navigate(path, {queryParams, ...extras});
             });
         }),
-        catchError(this.effectsService.buildFailActionObservable.bind(this.effectsService)),
+        catchError((error) => of(CORE_ACTIONS.Fail(error))),
     );
 
     @Effect({dispatch: false})
     navigateBack$ = this.actions$.pipe(
         filter(NAVIGATION_ACTIONS.is.Back),
         tap(() => this.location.back()),
-        catchError(this.effectsService.buildFailActionObservable.bind(this.effectsService)),
+        catchError((error) => of(CORE_ACTIONS.Fail(error))),
     );
 
     @Effect({dispatch: false})
     navigateForward$ = this.actions$.pipe(
         filter(NAVIGATION_ACTIONS.is.Forward),
         tap(() => this.location.forward()),
-        catchError(this.effectsService.buildFailActionObservable.bind(this.effectsService)),
+        catchError((error) => of(CORE_ACTIONS.Fail(error))),
     );
 
     @Effect()
@@ -47,7 +46,7 @@ export class NavigationEffects {
         switchMap(({payload}) => this.electronService
             .callIpcMain("toggleBrowserWindow")(payload)
             .pipe(
-                catchError((error) => this.effectsService.buildFailActionObservable(error)),
+                catchError((error) => of(CORE_ACTIONS.Fail(error))),
             )));
 
     @Effect()
@@ -56,7 +55,7 @@ export class NavigationEffects {
         switchMap(() => this.electronService
             .callIpcMain("openAboutWindow")()
             .pipe(
-                catchError((error) => this.effectsService.buildFailActionObservable(error)),
+                catchError((error) => of(CORE_ACTIONS.Fail(error))),
             )));
 
     @Effect()
@@ -65,7 +64,7 @@ export class NavigationEffects {
         switchMap(({payload}) => this.electronService
             .callIpcMain("openExternal")({url: payload.url})
             .pipe(
-                catchError((error) => this.effectsService.buildFailActionObservable(error)),
+                catchError((error) => of(CORE_ACTIONS.Fail(error))),
             )));
 
     @Effect()
@@ -74,7 +73,7 @@ export class NavigationEffects {
         switchMap(() => this.electronService
             .callIpcMain("openSettingsFolder")()
             .pipe(
-                catchError((error) => this.effectsService.buildFailActionObservable(error)),
+                catchError((error) => of(CORE_ACTIONS.Fail(error))),
             )));
 
     @Effect()
@@ -94,7 +93,7 @@ export class NavigationEffects {
             );
 
             return concatenated.pipe(
-                catchError((error) => this.effectsService.buildFailActionObservable(error)),
+                catchError((error) => of(CORE_ACTIONS.Fail(error))),
             );
         }),
     );
@@ -105,11 +104,10 @@ export class NavigationEffects {
         switchMap(() => this.electronService
             .callIpcMain("quit")()
             .pipe(
-                catchError((error) => this.effectsService.buildFailActionObservable(error)),
+                catchError((error) => of(CORE_ACTIONS.Fail(error))),
             )));
 
-    constructor(private effectsService: EffectsService,
-                private electronService: ElectronService,
+    constructor(private electronService: ElectronService,
                 private actions$: Actions,
                 private router: Router,
                 private location: Location,

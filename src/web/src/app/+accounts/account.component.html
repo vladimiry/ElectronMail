@@ -1,32 +1,32 @@
 <protonmail-desktop-app-keepass-request
-    *ngIf="(account$ | async).sync.pageType.type == 'login'"
+    *ngIf="(account$ | async)?.notifications.pageType.type == 'login'"
     [keePassRef$]="passwordKeePassRef$"
     [keePassClientConf$]="keePassClientConf$"
-    (passwordHandler)="onPassword($event)"
+    (passwordHandler)="onKeePassPassword($event)"
 ></protonmail-desktop-app-keepass-request>
 
 <protonmail-desktop-app-keepass-request
-    *ngIf="(account$ | async).sync.pageType.type == 'login2fa'"
+    *ngIf="(account$ | async)?.notifications.pageType.type == 'login2fa'"
     [keePassRef$]="twoFactorCodeKeePassRef$"
     [keePassClientConf$]="keePassClientConf$"
-    (passwordHandler)="onTwoFactorCode($event)"
+    (passwordHandler)="onKeePassPassword($event)"
 ></protonmail-desktop-app-keepass-request>
 
 <protonmail-desktop-app-keepass-request
-    *ngIf="(account$ | async).sync.pageType.type == 'unlock'"
+    *ngIf="(account$ | async)?.notifications.pageType.type == 'unlock' && (account$ | async)?.type == 'protonmail'"
     [keePassRef$]="mailPasswordKeePassRef$"
     [keePassClientConf$]="keePassClientConf$"
-    (passwordHandler)="onMailPassword($event)"
+    (passwordHandler)="onKeePassPassword($event)"
 ></protonmail-desktop-app-keepass-request>
 
 <webview
-    *ngIf="webViewPreload$ | async"
     #webViewRef
-    [src]="webViewSrc"
-    [preload]="webViewPreload$ | async"
+    *ngIf="webViewOptions"
+    [src]="webViewOptions.src"
+    [preload]="webViewOptions.preload"
 ></webview>
 
-<div *ngIf="!!offlineIntervalRemainingSec" class="p-3 text-center text-warning">
-    Failed to load <strong>{{ webViewSrc }}</strong> page with error code: <strong>{{ didFailLoadErrorDescription }}</strong>.
+<div *ngIf="webViewOptions && !!offlineIntervalRemainingSec" class="p-3 text-center">
+    Failed to load <strong>{{ webViewOptions.src }}</strong> page with <strong>{{ didFailLoadErrorDescription }}</strong> error code.
     Reloading in <strong>{{ offlineIntervalRemainingSec }}</strong> sec.
 </div>

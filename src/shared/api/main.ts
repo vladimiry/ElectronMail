@@ -3,6 +3,7 @@ import {ApiMethod, ApiMethodNoArgument, IpcMainApiService} from "electron-rpc-ap
 import {Options as EncryptionAdapterOptions} from "fs-json-store-encryption-adapter";
 
 import {
+    AccountConfigCreatePatch,
     AccountConfigPatch,
     KeePassClientConfFieldContainer,
     KeePassRefFieldContainer,
@@ -17,7 +18,7 @@ import {ElectronContextLocations} from "_@shared/model/electron";
 import {BaseConfig, Config, Settings} from "_@shared/model/options";
 
 export interface Endpoints {
-    addAccount: ApiMethod<AccountConfigPatch, Settings>;
+    addAccount: ApiMethod<AccountConfigCreatePatch, Settings>;
     associateSettingsWithKeePass: ApiMethod<UrlFieldContainer, Settings>;
     changeMasterPassword: ApiMethod<PasswordFieldContainer & NewPasswordFieldContainer, Settings>;
     init: ApiMethodNoArgument<{ electronLocations: ElectronContextLocations; hasSavedPassword: boolean; }>;

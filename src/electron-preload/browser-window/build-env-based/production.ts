@@ -10,6 +10,8 @@ const exposure: ElectronWindow = {
             send: ipcRenderer.send.bind(ipcRenderer),
             sendToHost: ipcRenderer.sendToHost.bind(ipcRenderer),
         },
+        // tslint:disable-next-line:no-eval
+        requireNodeRollingRateLimiter: () => eval("require")("rolling-rate-limiter"),
     },
 };
 

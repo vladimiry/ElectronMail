@@ -1,11 +1,5 @@
 import {BaseConfig, Config} from "_@shared/model/options";
-
-export function assert(t: any, m?: string) {
-    if (!t) {
-        throw new Error(m || "AssertionError");
-    }
-    return t;
-}
+import {WEBVIEW_SRC_WHITELIST} from "_@shared/constants";
 
 export function pickBaseConfigProperties(
     {closeToTray, compactLayout, startMinimized, unreadNotifications, checkForUpdatesAndNotify}: Config,
@@ -13,15 +7,6 @@ export function pickBaseConfigProperties(
     return {closeToTray, compactLayout, startMinimized, unreadNotifications, checkForUpdatesAndNotify};
 }
 
-export const isAllowedUrl = (() => {
-    const urlPrefixesWhiteList = [
-        "https://mail.protonmail.com",
-        "https://protonmail.com",
-    ];
-
-    return (url: string) => {
-        return !!urlPrefixesWhiteList
-            .filter((urlPrefix) => String(url).startsWith(urlPrefix))
-            .length;
-    };
-})();
+export const isWebViewSrcWhitelisted = (src: string) => WEBVIEW_SRC_WHITELIST.some((allowedPrefix) => {
+    return src.startsWith(allowedPrefix);
+});

@@ -1,14 +1,14 @@
 @import "~bootstrap/scss/functions";
 @import "~bootstrap/scss/mixins";
 
-$primary: darken(#9397cd, 2%);
-$secondary: #ced4da;
+$primary: #1ba489;
+$modal-header-padding: 0.7rem;
 
 @import "~bootstrap/scss/variables";
 
 // sass-lint:disable-all
 $theme-colors: map-merge($theme-colors, (
-    secondary: $gray-400,
+    //secondary: $gray-400,
     warning-light: theme-color-level("warning", -9),
 ));
 // sass-lint:enable-all

@@ -2,11 +2,13 @@
 
 is built with Electron unofficial desktop app for [ProtonMail](https://protonmail.com/) and [Tutanota](https://tutanota.com/) E2E encrypted email providers, basically a wrapper around their web interfaces.
 
-You can see below a screenshots of the `default` and `compact` view modes:
+[![Build Status: Linux / MacOS](https://travis-ci.org/vladimiry/email-securely.svg?branch=master)](https://travis-ci.org/vladimiry/email-securely) [![Build status: Windows](https://ci.appveyor.com/api/projects/status/vex909uhwadrse27?svg=true)](https://ci.appveyor.com/project/vladimiry/email-securely)
 
-![view-default](images/view-default.png)
+You can see below a screenshots of the `compact` and `default` view modes:
 
 ![view-compact](images/view-compact.png)
+
+![view-default](images/view-default.png)
 
 ## Features
 - Cross platform, Linux/OSX/Windows packages [provided](https://github.com/vladimiry/email-securely-app/releases).
@@ -16,7 +18,7 @@ You can see below a screenshots of the `default` and `compact` view modes:
 - Automatic login into mail provider accounts using either saved in the settings password or KeePass password manager. Two-factor authentication (2FA) is supported, only TOTP tokens format, [original issue](https://github.com/vladimiry/email-securely-app/issues/10).
 - Encrypted settings storage with switchable predefined key derivation and encryption presets. Argon2 is used as the default key derivation function.
 - Native notifications for individual accounts clicking on which focuses the app window and selects respective account in the accounts list.
-- System tray icon with a total number of unread messages shown on top of it. Checking unread emails count for Tutanota is currently not efficient enough.
+- System tray icon with a total number of unread messages shown on top of it. Checking unread emails count for Tutanota is currently not efficient enough, respective [issue](https://github.com/vladimiry/email-securely-app/issues/30) has been placed.
 - Start minimized to tray.
 - Close to tray.
 - Compact view mode.

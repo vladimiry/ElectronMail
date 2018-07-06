@@ -5,13 +5,20 @@
         display: block;
         position: relative;
 
+        @media (min-width: #{map-get($grid-breakpoints, sm)}) and (max-width: #{map-get($grid-breakpoints, lg)}) {
+            .modal-dialog {
+                margin: $modal-dialog-margin;
+                max-width: none;
+            }
+        }
+
         & > .modal-dialog > .modal-content > .modal-body {
             & > .wrapper {
                 & > .list-group {
                     margin: 0 0 $app-spacer-3;
                 }
 
-                @media (min-width: #{map-get($grid-breakpoints, lg)}) {
+                @media (min-width: #{map-get($grid-breakpoints, sm)}) {
                     display: flex;
 
                     & > .list-group {

@@ -24,8 +24,8 @@ export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlIte
     protonmail: {
         entryUrl: [
             {value: "https://app.protonmail.ch", title: "https://app.protonmail.ch"},
-            {value: "https://protonirockerxow.onion", title: "https://protonirockerxow.onion"},
-            {value: "https://mail.protonmail.com", title: "https://mail.protonmail.com (DEPRECATED)"},
+            {value: "https://mail.protonmail.com", title: "https://mail.protonmail.com"},
+            {value: "https://protonirockerxow.onion", title: "https://protonirockerxow.onion (Tor)"},
         ],
     },
     tutanota: {

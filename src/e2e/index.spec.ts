@@ -76,17 +76,22 @@ test("login, add account, logout, auto login", async (t) => {
             if (unread && !isNaN(unread)) {
                 await client.pause(ONE_SECOND_MS * 15);
 
-                const verify = async (forceCheck = false) => {
-                    // tslint:disable-next-line:max-line-length
-                    const actualUnreadText = String(await client.getText(`.list-group.accounts-list > .list-group-item:nth-child(${accountsCount}) email-securely-app-account-title > .account-value-sync-unread > .badge`));
-                    const actualUnread = Number(actualUnreadText.replace(/\D/g, ""));
-                    const result = actualUnread >= unread;
+                const verify = async (requiredAssertion = false) => {
+                    let actualUnreadText: string;
 
-                    if (result || forceCheck) {
-                        t.true(actualUnread >= unread, `actualUnread(${actualUnread}) >= unread(${unread})`);
+                    try {
+                        // tslint:disable-next-line:max-line-length
+                        actualUnreadText = String(await client.getText(`.list-group.accounts-list > .list-group-item:nth-child(${accountsCount}) email-securely-app-account-title > .account-value-sync-unread > .badge`));
+                    } catch (e) {
+                        if (!requiredAssertion) {
+                            return false;
+                        }
+                        throw e;
                     }
 
-                    return result;
+                    const actualUnread = Number(actualUnreadText.replace(/\D/g, ""));
+                    t.true(actualUnread >= unread, `actualUnread(${actualUnread}) >= unread(${unread})`);
+                    return true;
                 };
 
                 if (!(await verify())) {

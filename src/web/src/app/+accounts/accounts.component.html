@@ -7,13 +7,13 @@
             </div>
             <button type="button" class="btn btn-warning-light dropdown-toggle list-group-item-warning"
                     dropdownToggle *ngIf="selectedAccount">
-                <protonmail-desktop-app-account-title [account]="selectedAccount"></protonmail-desktop-app-account-title>
+                <email-securely-app-account-title [account]="selectedAccount"></email-securely-app-account-title>
                 <span class="caret"></span>
             </button>
             <ul *dropdownMenu class="dropdown-menu dropdown-menu-right" role="menu">
                 <li role="menuitem" *ngFor="let account of accounts; trackBy: trackAccount">
                     <a class="dropdown-item" (click)="activateAccount(account)">
-                        <protonmail-desktop-app-account-title [account]="account"></protonmail-desktop-app-account-title>
+                        <email-securely-app-account-title [account]="account"></email-securely-app-account-title>
                     </a>
                 </li>
             </ul>
@@ -22,7 +22,7 @@
             <a class="list-group-item list-group-item-action" href="javascript:void(0)"
                *ngFor="let account of accounts; trackBy: trackAccount" (click)="activateAccount(account)"
                [ngClass]="{'list-group-item-warning': account.accountConfig.login === (selectedLogin$ | async)}">
-                <protonmail-desktop-app-account-title [account]="account"></protonmail-desktop-app-account-title>
+                <email-securely-app-account-title [account]="account"></email-securely-app-account-title>
             </a>
         </ul>
         <div class="controls">
@@ -72,11 +72,11 @@
     <div class="account-block">
         <div *ngIf="accounts.length; then accountsDefined else accountsUnDefined"></div>
         <ng-template #accountsDefined>
-            <protonmail-desktop-app-account
+            <email-securely-app-account
                 *ngFor="let account of accounts; trackBy: trackAccount"
                 [account]="account"
                 [ngStyle]="account.accountConfig.login != (selectedLogin$ | async) && {'opacity': '0', 'width': '0', 'height': '0'}"
-            ></protonmail-desktop-app-account>
+            ></email-securely-app-account>
         </ng-template>
         <ng-template #accountsUnDefined>
             <div class="d-flex justify-content-center align-items-center p-3 no-accounts-block">

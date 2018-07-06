@@ -8,7 +8,7 @@ import {progressSelector, State} from "_@web/src/app/store/reducers/options";
 import {ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "_@shared/model/options";
 
 @Component({
-    selector: `protonmail-desktop-app-storage`,
+    selector: `email-securely-app-storage`,
     templateUrl: "./storage.component.html",
     styleUrls: ["./storage.component.scss"],
     preserveWhitespaces: true,

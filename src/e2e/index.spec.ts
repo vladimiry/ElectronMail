@@ -78,7 +78,7 @@ test("login, add account, logout, auto login", async (t) => {
 
                 const verify = async (forceCheck = false) => {
                     // tslint:disable-next-line:max-line-length
-                    const actualUnreadText = String(await client.getText(`.list-group.accounts-list > .list-group-item:nth-child(${accountsCount}) protonmail-desktop-app-account-title > .account-value-sync-unread > .badge`));
+                    const actualUnreadText = String(await client.getText(`.list-group.accounts-list > .list-group-item:nth-child(${accountsCount}) email-securely-app-account-title > .account-value-sync-unread > .badge`));
                     const actualUnread = Number(actualUnreadText.replace(/\D/g, ""));
                     const result = actualUnread >= unread;
 

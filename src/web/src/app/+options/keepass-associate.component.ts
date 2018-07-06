@@ -9,7 +9,7 @@ import {OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
 import {progressSelector, State} from "_@web/src/app/store/reducers/options";
 
 @Component({
-    selector: `protonmail-desktop-app-keepass-associate`,
+    selector: `email-securely-app-keepass-associate`,
     templateUrl: "./keepass-associate.component.html",
 })
 export class KeepassAssociateComponent implements OnInit, OnDestroy {

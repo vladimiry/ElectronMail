@@ -3,7 +3,7 @@ import {Component, Input} from "@angular/core";
 import {WebAccount} from "_@shared/model/account";
 
 @Component({
-    selector: `protonmail-desktop-app-account-title`,
+    selector: `email-securely-app-account-title`,
     templateUrl: "./account-title.component.html",
     styleUrls: ["./account-title.component.scss"],
     preserveWhitespaces: true,

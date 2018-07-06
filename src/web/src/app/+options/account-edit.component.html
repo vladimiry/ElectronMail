@@ -1,7 +1,7 @@
 <nav aria-label="breadcrumb" role="navigation">
     <ol class="breadcrumb">
         <li class="breadcrumb-item active">
-            <protonmail-desktop-app-type-symbol [type]="existingAccount.type" *ngIf="existingAccount"></protonmail-desktop-app-type-symbol>
+            <email-securely-app-type-symbol [type]="existingAccount.type" *ngIf="existingAccount"></email-securely-app-type-symbol>
             {{ existingAccount ? "Edit Account: " + existingAccount?.login  : "Add Account" }}
         </li>
     </ol>
@@ -12,7 +12,7 @@
             <label>Type</label>
             <ng-select [items]="typeValues" [clearable]="false" formControlName="type" id="accountEditFormTypeField">
                 <ng-template ng-label-tmp let-item="item">
-                    <protonmail-desktop-app-type-symbol [type]="item"></protonmail-desktop-app-type-symbol>
+                    <email-securely-app-type-symbol [type]="item"></email-securely-app-type-symbol>
                     {{ item }}
                 </ng-template>
             </ng-select>
@@ -72,33 +72,33 @@
             <hr>
             <div class="form-group">
                 <label>Password</label>
-                <protonmail-desktop-app-keepass-reference
+                <email-securely-app-keepass-reference
                     [keePassClientConf$]="keePassClientConf$"
                     [reference$]="passwordKeePassRef$"
                     (linkHandler)="onPasswordKeePassLink($event)"
                     (unlinkHandler)="onPasswordKeePassUnlink()"
-                ></protonmail-desktop-app-keepass-reference>
+                ></email-securely-app-keepass-reference>
             </div>
             <hr>
             <div class="form-group">
                 <label>Two Factor Secret Key</label>
-                <protonmail-desktop-app-keepass-reference
+                <email-securely-app-keepass-reference
                     [keePassClientConf$]="keePassClientConf$"
                     [reference$]="twoFactorCodeKeePassRef$"
                     (linkHandler)="onTwoFactorCodeKeePassLink($event)"
                     (unlinkHandler)="onTwoFactorCodeKeePassUnlink()"
-                ></protonmail-desktop-app-keepass-reference>
+                ></email-securely-app-keepass-reference>
             </div>
             <div *ngIf="existingAccount?.type == 'protonmail'">
                 <hr>
                 <div class="form-group">
                     <label>Mail Password</label>
-                    <protonmail-desktop-app-keepass-reference
+                    <email-securely-app-keepass-reference
                         [keePassClientConf$]="keePassClientConf$"
                         [reference$]="mailPasswordKeePassRef$"
                         (linkHandler)="onMailPasswordKeePassLink($event)"
                         (unlinkHandler)="onMailPasswordKeePassUnlink()"
-                    ></protonmail-desktop-app-keepass-reference>
+                    ></email-securely-app-keepass-reference>
                 </div>
             </div>
         </div>

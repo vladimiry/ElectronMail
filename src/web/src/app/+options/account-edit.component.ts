@@ -20,7 +20,7 @@ import {OptionsService} from "./options.service";
 
 // TODO simplify RxJS stuff of the "account-edit.component"
 @Component({
-    selector: `protonmail-desktop-app-account-edit`,
+    selector: `email-securely-app-account-edit`,
     templateUrl: "./account-edit.component.html",
     preserveWhitespaces: true,
 })

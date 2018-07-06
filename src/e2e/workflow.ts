@@ -78,7 +78,7 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
 
         t.context.app = new Application({
             // TODO consider running e2e tests on compiled/binary app too
-            // path: path.join(rootPath, "./dist/linux-unpacked/protonmail-desktop-app"),
+            // path: path.join(rootPath, "./dist/linux-unpacked/email-securely-app"),
             path: electron as any,
             requireName: "electronRequire",
             env: {
@@ -283,13 +283,13 @@ export const workflow = {
     async selectAccount(t: ExecutionContext<TestContext>, index = 0) {
         const client = t.context.app.client;
 
-        await client.click(`.list-group.accounts-list > .list-group-item:nth-child(${index + 1}) protonmail-desktop-app-account-title`);
+        await client.click(`.list-group.accounts-list > .list-group-item:nth-child(${index + 1}) email-securely-app-account-title`);
         // TODO make sure account is selected and loaded
     },
 
     async accountsCount(t: ExecutionContext<TestContext>) {
         const client = t.context.app.client;
-        const els = await client.elements(`.list-group.accounts-list > .list-group-item-action > protonmail-desktop-app-account-title`);
+        const els = await client.elements(`.list-group.accounts-list > .list-group-item-action > email-securely-app-account-title`);
 
         return els.value.length;
     },
@@ -309,7 +309,7 @@ export const workflow = {
             await client.click(`${listGroupSelector} .list-group-item-action:nth-child(${index + 1})`);
 
             if (index === 0) {
-                await client.waitForVisible(`.modal-body protonmail-desktop-app-accounts`);
+                await client.waitForVisible(`.modal-body email-securely-app-accounts`);
             }
         }
     },

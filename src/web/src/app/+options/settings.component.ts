@@ -5,7 +5,7 @@ import {OptionsService} from "./options.service";
 import {State} from "_@web/src/app/store/reducers/options";
 
 @Component({
-    selector: `protonmail-desktop-app-settings`,
+    selector: `email-securely-app-settings`,
     templateUrl: "./settings.component.html",
     styleUrls: ["./settings.component.scss"],
 })

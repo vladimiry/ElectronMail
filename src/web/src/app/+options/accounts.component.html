@@ -5,7 +5,7 @@
 
 <ul class="list-group">
     <li class="list-group-item" *ngFor="let account of accounts$ | async">
-        <protonmail-desktop-app-type-symbol [type]="account.type"></protonmail-desktop-app-type-symbol>
+        <email-securely-app-type-symbol [type]="account.type"></email-securely-app-type-symbol>
         {{ account.login }}
         <a [routerLink]="['./../account-edit', account.login]" class="float-right">
             Edit

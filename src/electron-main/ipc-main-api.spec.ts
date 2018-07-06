@@ -28,7 +28,7 @@ const test = anyTest as TestInterface<TestContext>;
 const OPTIONS = Object.freeze({
     dataDirectory: path.join(
         process.cwd(),
-        `protonmail-desktop-app.spec`,
+        `email-securely-app.spec`,
         `${path.basename(__filename)}-${Number(new Date())}`,
     ),
     masterPassword: "masterPassword123",
@@ -196,12 +196,10 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         }
 
         const allowedUrls = [
-            "https://mail.protonmail.com",
-            "https://mail.protonmail.com/page",
-            "https://protonmail.com",
-            "https://protonmail.com/page",
-            "https://somedomain.com/",
-            "https://somedomain.com/page",
+            "https://valid-url.com",
+            "https://valid-url.com/page",
+            "http://somedomain.com/",
+            "http://somedomain.com/page",
         ];
         for (const url of allowedUrls) {
             // tslint:disable-next-line:await-promise

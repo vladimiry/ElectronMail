@@ -7,7 +7,7 @@ import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
 import {hasSavedPasswordSelector, progressSelector, State} from "_@web/src/app/store/reducers/options";
 
 @Component({
-    selector: `protonmail-desktop-app-login`,
+    selector: `email-securely-app-login`,
     templateUrl: "./login.component.html",
     styleUrls: ["./login.component.scss"],
     preserveWhitespaces: true,

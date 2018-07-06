@@ -1,4 +1,4 @@
-appId: com.github.vladimiry.protonmail-desktop-app
+appId: com.github.vladimiry.email-securely-app
 artifactName: ${name}-${version}-${os}-${arch}.${ext}
 
 publish: {provider: github, releaseType: draft, vPrefixedTagName: true}

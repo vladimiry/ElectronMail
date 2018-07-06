@@ -1,13 +1,13 @@
 {
-  "name": "protonmail-desktop-app",
-  "description": "Unofficial ProtonMail Desktop App",
+  "name": "email-securely-app",
+  "description": "Unofficial desktop app for E2E encrypted email providers",
   "version": "1.0.0",
   "author": "Vladimir Yakovlev <desktop-app@protonmail.ch>",
   "license": "MIT",
-  "homepage": "https://github.com/vladimiry/protonmail-desktop-app",
-  "repository": "git@github.com:vladimiry/protonmail-desktop-app.git",
+  "homepage": "https://github.com/vladimiry/email-securely-app",
+  "repository": "git@github.com:vladimiry/email-securely-app.git",
   "bugs": {
-    "url": "https://github.com/vladimiry/protonmail-desktop-app/issues"
+    "url": "https://github.com/vladimiry/email-securely-app/issues"
   },
   "main": "./app/electron-main.js",
   "scripts": {

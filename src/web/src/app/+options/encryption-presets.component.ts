@@ -8,7 +8,7 @@ import {ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "_@shared/mo
 import {configSelector, State} from "_@web/src/app/store/reducers/options";
 
 @Component({
-    selector: `protonmail-desktop-app-encryption-presets`,
+    selector: `email-securely-app-encryption-presets`,
     templateUrl: "./encryption-presets.component.html",
     preserveWhitespaces: true,
 })

@@ -1,23 +1,23 @@
-<protonmail-desktop-app-keepass-request
+<email-securely-app-keepass-request
     *ngIf="(account$ | async)?.notifications.pageType.type == 'login'"
     [keePassRef$]="passwordKeePassRef$"
     [keePassClientConf$]="keePassClientConf$"
     (passwordHandler)="onKeePassPassword($event)"
-></protonmail-desktop-app-keepass-request>
+></email-securely-app-keepass-request>
 
-<protonmail-desktop-app-keepass-request
+<email-securely-app-keepass-request
     *ngIf="(account$ | async)?.notifications.pageType.type == 'login2fa'"
     [keePassRef$]="twoFactorCodeKeePassRef$"
     [keePassClientConf$]="keePassClientConf$"
     (passwordHandler)="onKeePassPassword($event)"
-></protonmail-desktop-app-keepass-request>
+></email-securely-app-keepass-request>
 
-<protonmail-desktop-app-keepass-request
+<email-securely-app-keepass-request
     *ngIf="(account$ | async)?.notifications.pageType.type == 'unlock' && (account$ | async)?.type == 'protonmail'"
     [keePassRef$]="mailPasswordKeePassRef$"
     [keePassClientConf$]="keePassClientConf$"
     (passwordHandler)="onKeePassPassword($event)"
-></protonmail-desktop-app-keepass-request>
+></email-securely-app-keepass-request>
 
 <webview
     #webViewRef

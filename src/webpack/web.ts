@@ -4,7 +4,7 @@ import ts from "typescript";
 import webpack, {Configuration} from "webpack";
 import {AngularCompilerPlugin, PLATFORM} from "@ngtools/webpack";
 
-import {buildConfig, environment, environmentSate, outputPath, srcPath} from "./lib";
+import {buildConfig, environment, environmentSate, outputPath, rootPath, srcPath} from "./lib";
 import {BuildEnvironment} from "_@shared/model/common";
 import webpackMerge = require("webpack-merge");
 
@@ -19,6 +19,8 @@ const webSrcPath = (...value: string[]) => srcPath("./web/src", ...value);
 const webAppPath = (...value: string[]) => webSrcPath("./app", ...value);
 const webSrcEnvPath = (...value: string[]) => webSrcPath("./environments", environmentSate.development ? "./development" : "", ...value);
 
+// tslint:disable:no-var-requires
+const packageJson = require(rootPath("./package.json"));
 const aot = environmentSate.production;
 const cssRuleUse = [
     "css-loader",
@@ -126,6 +128,7 @@ const config = buildConfig(
             new HtmlWebpackPlugin({
                 template: webSrcPath("index.ejs"),
                 filename: "index.html",
+                title: packageJson.description,
                 hash: environmentSate.production,
                 minify: false,
             }),

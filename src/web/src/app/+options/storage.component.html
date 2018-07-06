@@ -1,7 +1,7 @@
 <fieldset [disabled]="(changingPassword$ | async) || (reEncryptingSettings$ | async)">
     <accordion [closeOthers]="true">
         <accordion-group heading="Master password" [isOpen]="true">
-            <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="form-group">
+            <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
                 <div class="form-group required">
                     <label>Current Password</label>
                     <input type="password" class="form-control" formControlName="password"
@@ -40,7 +40,7 @@
             </form>
         </accordion-group>
         <accordion-group heading="Encryption">
-            <form [formGroup]="encryptionPresetForm" (ngSubmit)="submitPresets()" novalidate class="form-group">
+            <form [formGroup]="encryptionPresetForm" (ngSubmit)="submitPresets()" novalidate>
                 <div class="form-group required">
                     <label>Current Password</label>
                     <input type="password" class="form-control" formControlName="password"
@@ -49,9 +49,9 @@
                        'is-valid': encryptionPresetForm.controls.password.valid
                    } : {}">
                 </div>
-                <protonmail-desktop-app-encryption-presets
+                <email-securely-app-encryption-presets
                     [formGroup]="encryptionPresetForm"
-                ></protonmail-desktop-app-encryption-presets>
+                ></email-securely-app-encryption-presets>
                 <div class="clearfix">
                     <button class="btn btn-primary pull-right" type="submit" [disabled]="encryptionPresetForm.invalid">
                         <i class="fa fa-spinner fa-pulse fa-fw" *ngIf="reEncryptingSettings$ | async"></i>

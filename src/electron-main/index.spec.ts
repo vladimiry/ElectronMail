@@ -14,7 +14,7 @@ const test = anyTest as TestInterface<{
 test.serial("workflow", async (t) => {
     const spies = t.context.mocks["~index"];
 
-    t.true(spies.electron.app.setAppUserModelId.calledWithExactly("com.github.vladimiry.protonmail-desktop-app"));
+    t.true(spies.electron.app.setAppUserModelId.calledWithExactly("com.github.vladimiry.email-securely-app"));
     t.true(spies["electron-unhandled"].calledWithExactly(sinon.match.hasOwn("logger")), `"electronUnhandled" called`);
     t.true(spies[`./util`].initContext.calledWithExactly(), `"initContext" called`);
     t.true(spies.electron.app.makeSingleInstance.called, `"makeSingleInstance" called`);

@@ -4,7 +4,7 @@ import {Component, HostBinding, OnDestroy, OnInit} from "@angular/core";
 import {ActivatedRoute} from "@angular/router";
 
 @Component({
-    selector: `protonmail-desktop-app-router-proxy`,
+    selector: `email-securely-app-router-proxy`,
     template: "<router-outlet></router-outlet>",
     styleUrls: ["./router-proxy.component.scss"],
 })

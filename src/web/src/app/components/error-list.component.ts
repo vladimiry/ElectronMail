@@ -8,7 +8,7 @@ import {CORE_ACTIONS, NAVIGATION_ACTIONS} from "_@web/src/app/store/actions";
 import {errorsSelector, State} from "_@web/src/app/store/reducers/errors";
 
 @Component({
-    selector: `protonmail-desktop-app-error-list-request`,
+    selector: `email-securely-app-error-list-request`,
     templateUrl: "./error-list.component.html",
     styleUrls: ["./error-list.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,

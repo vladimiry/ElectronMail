@@ -7,7 +7,7 @@ import {OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
 import {progressSelector, State} from "_@web/src/app/store/reducers/options";
 
 @Component({
-    selector: `protonmail-desktop-app-settings-setup`,
+    selector: `email-securely-app-settings-setup`,
     templateUrl: "./settings-setup.component.html",
     styleUrls: ["./settings-setup.component.scss"],
     preserveWhitespaces: true,

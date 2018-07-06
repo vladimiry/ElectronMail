@@ -6,13 +6,13 @@
     "directive-selector": [
       true,
       "attribute",
-      "protonmail-desktop-app",
+      "email-securely-app",
       "camelCase"
     ],
     "component-selector": [
       true,
       "element",
-      "protonmail-desktop-app",
+      "email-securely-app",
       "kebab-case"
     ],
     "angular-whitespace": [

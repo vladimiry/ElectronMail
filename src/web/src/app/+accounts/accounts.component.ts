@@ -17,7 +17,7 @@ import {
 import {configCompactLayoutSelector, progressSelector} from "_@web/src/app/store/reducers/options";
 
 @Component({
-    selector: `protonmail-desktop-app-accounts`,
+    selector: `email-securely-app-accounts`,
     templateUrl: "./accounts.component.html",
     styleUrls: ["./accounts.component.scss"],
     preserveWhitespaces: true,

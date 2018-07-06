@@ -9,7 +9,7 @@ import {KeePassClientConf, KeePassRef} from "_@shared/model/keepasshttp";
 import {State} from "_@web/src/app/store/reducers/root";
 
 @Component({
-    selector: `protonmail-desktop-app-keepass-request`,
+    selector: `email-securely-app-keepass-request`,
     templateUrl: "./keepass-request.component.html",
     styleUrls: ["./keepass-request.component.scss"],
 })

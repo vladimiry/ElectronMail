@@ -8,7 +8,7 @@ import {OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
 import {baseConfigSelector, progressSelector, State} from "_@web/src/app/store/reducers/options";
 
 @Component({
-    selector: `protonmail-desktop-app-base-settings`,
+    selector: `email-securely-app-base-settings`,
     templateUrl: "./base-settings.component.html",
 })
 export class BaseSettingsComponent implements OnInit {

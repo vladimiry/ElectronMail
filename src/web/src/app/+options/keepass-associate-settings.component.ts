@@ -4,7 +4,7 @@ import {Store} from "@ngrx/store";
 import {settingsKeePassClientConfSelector, State} from "_@web/src/app/store/reducers/options";
 
 @Component({
-    selector: `protonmail-desktop-app-keepass-associate-settings`,
+    selector: `email-securely-app-keepass-associate-settings`,
     templateUrl: "./keepass-associate-settings.component.html",
 })
 export class KeepassAssociateSettingsComponent {

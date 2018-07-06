@@ -21,5 +21,5 @@ export const INITIAL_STORES = Object.freeze({
     settings: {accounts: []},
 });
 
-export const KEYTAR_SERVICE_NAME = "protonmail-desktop-app";
+export const KEYTAR_SERVICE_NAME = "email-securely-app";
 export const KEYTAR_MASTER_PASSWORD_ACCOUNT = "master-password";

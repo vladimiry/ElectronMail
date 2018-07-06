@@ -16,7 +16,7 @@ import {State} from "_@web/src/app/store/reducers/accounts";
 import {WebAccount} from "_@shared/model/account";
 
 @Component({
-    selector: `protonmail-desktop-app-account`,
+    selector: `email-securely-app-account`,
     templateUrl: "./account.component.html",
     styleUrls: ["./account.component.scss"],
 })

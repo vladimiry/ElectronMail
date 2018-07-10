@@ -1,10 +1,10 @@
 import nodeExternals from "webpack-node-externals";
 
-import {buildConfig, srcPath} from "./lib";
+import {buildBaseConfig, srcPath} from "./lib";
 
 const tsConfigFile = srcPath("./electron-main/tsconfig.json");
 
-export default buildConfig(
+export default buildBaseConfig(
     {
         target: "electron-main",
         entry: {

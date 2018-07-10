@@ -4,7 +4,7 @@ import ts from "typescript";
 import webpack, {Configuration} from "webpack";
 import {AngularCompilerPlugin, PLATFORM} from "@ngtools/webpack";
 
-import {buildConfig, environment, environmentSate, outputPath, rootPath, srcPath} from "./lib";
+import {buildBaseConfig, environment, environmentSate, outputPath, rootPath, srcPath} from "./lib";
 import {BuildEnvironment} from "_@shared/model/common";
 import webpackMerge = require("webpack-merge");
 
@@ -58,7 +58,7 @@ const tsConfigCompilerOptions: ts.CompilerOptions = (() => {
 
     return tsConfig.options;
 })();
-const config = buildConfig(
+const config = buildBaseConfig(
     {
         target: "electron-renderer",
         entry: {

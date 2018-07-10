@@ -9,6 +9,7 @@ directories:
 files: [
   "./app/**/*",
   "./package.json",
+  "./node_modules/tutanota/LICENSE.txt",
   "!node_modules/jimp/browser",
   "!node_modules/jimp/fonts/open-sans/open-sans-{8,16,32,128}-*",
   "!node_modules/jimp/fonts/open-sans/open-sans-64-black",

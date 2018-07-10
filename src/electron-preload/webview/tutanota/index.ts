@@ -2,10 +2,13 @@ import {authenticator} from "otplib";
 import {distinctUntilChanged, switchMap} from "rxjs/operators";
 import {EMPTY, from, interval, merge, Observable, of, Subscriber, throwError} from "rxjs";
 
-import {AccountNotificationType} from "_@shared/model/account";
-import {getLocationHref, submitTotpToken, typeInputValue, waitElements} from "./util";
-import {IPC_WEBVIEW_API, TutanotaApi} from "_@shared/api/webview";
-import {ONE_SECOND_MS} from "_@shared/constants";
+import {AccountNotificationType} from "src/shared/model/account";
+import {getLocationHref, submitTotpToken, typeInputValue, waitElements} from "src/electron-preload/webview/util";
+import {getRange} from "_@webview-preload/tutanota/rest";
+import {IPC_WEBVIEW_API, TutanotaApi} from "src/shared/api/webview";
+import {MailFolder, MailTypeRef} from "_@webview-preload/tutanota/rest/model";
+import {MAX_RESPONSE_ENTITY_ID} from "_@webview-preload/tutanota/from-tutanota-repo";
+import {ONE_SECOND_MS} from "src/shared/constants";
 
 const WINDOW = window as any;
 
@@ -15,11 +18,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // tslint:disable-next-line:variable-name
 function bootstrap(SystemJS: SystemJSLoader.System) {
-    interface MailFolder {
-        folderType: string;
-        mails: string;
-    }
-
     const systemJSbaseURL = String(SystemJS.getConfig().baseURL).replace(/(.*)\/$/, "$1");
     const pageChangePollingIntervalMs = ONE_SECOND_MS * 1.5;
     const unreadInitialCheckTimeoutMs = ONE_SECOND_MS * 10;
@@ -126,10 +124,6 @@ function bootstrap(SystemJS: SystemJSLoader.System) {
             type TitleOutput = Required<Pick<AccountNotificationType, "title">>;
             type UnreadOutput = Required<Pick<AccountNotificationType, "unread">>;
 
-            interface Mail {
-                unread: string;
-            }
-
             if (entryUrl !== systemJSbaseURL) {
                 return throwError(new Error(
                     `Actually loaded SystemJS Url "${systemJSbaseURL}" and app settings Url "${entryUrl}" don't match`,
@@ -192,21 +186,21 @@ function bootstrap(SystemJS: SystemJSLoader.System) {
                                 const accessToken = userController
                                     && userController.accessToken;
 
-                                if (!state.inboxMailFolder || !accessToken) {
+                                if (!state.inboxMailFolder || !accessToken || !navigator.onLine) {
                                     return;
                                 }
 
-                                // tslint:disable-next-line:max-line-length
-                                const host = `${entryUrl}/rest/tutanota/mail/${state.inboxMailFolder.mails}?start=zzzzzzzzzzzz&count=50&reverse=true`;
-                                const response = await fetch(host, {
-                                    method: "GET",
-                                    cache: "no-cache",
-                                    headers: {
-                                        "Content-Type": "application/json; charset=utf-8",
-                                        accessToken,
+                                const emails = await getRange(
+                                    MailTypeRef,
+                                    state.inboxMailFolder.mails,
+                                    entryUrl,
+                                    {accessToken},
+                                    {
+                                        count: 50,
+                                        start: MAX_RESPONSE_ENTITY_ID,
+                                        reverse: true,
                                     },
-                                });
-                                const emails: Mail[] = await response.json();
+                                );
                                 const unread = emails.reduce((sum, mail) => sum + Number(mail.unread), 0);
 
                                 observer.next({unread});

@@ -1,4 +1,5 @@
 import path from "path";
+import UglifyJsPlugin from "uglifyjs-webpack-plugin";
 import webpack, {Configuration} from "webpack";
 import webpackMerge from "webpack-merge";
 import {BuildEnvironment} from "_@shared/model/common";
@@ -24,14 +25,16 @@ const outputPath = (...value: string[]) => rootPath(environmentSate.development 
 // tslint:disable:no-var-requires
 const packageJson = require(rootPath("./package.json"));
 
-const buildConfig: BuildConfig = (config, options = {}) => {
+const buildBaseConfig: BuildConfig = (config, options = {}) => {
     const {tsConfigFile} = {tsConfigFile: rootPath("./tsconfig.json"), ...options};
 
     return webpackMerge(
         {
             mode: environmentSate.development || environmentSate.test ? "development" : "production",
             devtool: environmentSate.production ? false : "source-map",
-            output: {path: outputPath()},
+            output: {
+                path: outputPath(),
+            },
             plugins: [
                 new webpack.DefinePlugin({
                     "process.env.NODE_ENV": JSON.stringify(environment),
@@ -52,12 +55,31 @@ const buildConfig: BuildConfig = (config, options = {}) => {
                 __filename: false,
             },
         },
+        environmentSate.development ? {
+            optimization: {
+                namedChunks: true,
+                namedModules: true,
+                minimizer: [
+                    new UglifyJsPlugin({
+                        uglifyOptions: {
+                            compress: false,
+                            mangle: false,
+                            ecma: 6,
+                            output: {
+                                comments: true,
+                                beautify: true,
+                            },
+                        },
+                    }),
+                ],
+            },
+        } : {},
         config,
     );
 };
 
 export {
-    buildConfig,
+    buildBaseConfig,
     environment,
     environmentSate,
     outputPath,

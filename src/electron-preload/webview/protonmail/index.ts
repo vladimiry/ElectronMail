@@ -3,7 +3,7 @@ import {distinctUntilChanged, filter, map} from "rxjs/operators";
 import {EMPTY, from, fromEvent, interval, merge, Observable, Subscriber, throwError} from "rxjs";
 
 import {AccountNotificationType} from "_@shared/model/account";
-import {getLocationHref, submitTotpToken, typeInputValue, waitElements} from "./util";
+import {getLocationHref, submitTotpToken, typeInputValue, waitElements} from "_@webview-preload/util";
 import {IPC_WEBVIEW_API, ProtonmailApi} from "_@shared/api/webview";
 
 const WINDOW = window as any;

@@ -21,6 +21,9 @@
     "outDir": "./app",
     "baseUrl": ".",
     "paths": {
+      "_@webview-preload/*": [
+        "./src/electron-preload/webview/*"
+      ],
       "_@shared/*": [
         "./src/shared/*"
       ],

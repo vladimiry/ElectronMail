@@ -17,7 +17,6 @@ export class KeePassRequestComponent implements OnInit, OnDestroy {
     @HostBinding("class.d-block")
     visible = false;
     paused = true;
-    locked = false;
     message?: string;
     readonly wait = 5;
     progressTick = 0;

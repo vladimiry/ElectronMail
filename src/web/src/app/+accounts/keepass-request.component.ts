@@ -19,9 +19,8 @@ export class KeePassRequestComponent implements OnInit, OnDestroy {
     paused = true;
     locked = false;
     message?: string;
-    wait = 10;
+    readonly wait = 5;
     progressTick = 0;
-    passwodRequestTick = 0;
 
     @Input()
     keePassRef$: Observable<KeePassRef | undefined>;
@@ -55,14 +54,11 @@ export class KeePassRequestComponent implements OnInit, OnDestroy {
                         distinctUntilChanged(),
                         switchMap((remaining) => {
                             this.progressTick = (this.wait - remaining) * (100 / this.wait);
+
                             if (remaining) {
                                 return EMPTY;
                             }
-                            this.wait = this.wait < 30 ? 30 : 60;
-                            this.passwodRequestTick++;
-                            if (this.passwodRequestTick % 5 === 0) {
-                                this.paused = true;
-                            }
+
                             return this.electronService.keePassPassword(keePassClientConf, keePassRef, true);
                         }),
                     );

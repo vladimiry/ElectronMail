@@ -22,9 +22,6 @@ const rootPath = (...value: string[]) => path.join(process.cwd(), ...value);
 const srcPath = (...value: string[]) => rootPath("./src", ...value);
 const outputPath = (...value: string[]) => rootPath(environmentSate.development ? "./app-dev" : "./app", ...value);
 
-// tslint:disable:no-var-requires
-const packageJson = require(rootPath("./package.json"));
-
 const buildBaseConfig: BuildConfig = (config, options = {}) => {
     const {tsConfigFile} = {tsConfigFile: rootPath("./tsconfig.json"), ...options};
 
@@ -38,10 +35,6 @@ const buildBaseConfig: BuildConfig = (config, options = {}) => {
             plugins: [
                 new webpack.DefinePlugin({
                     "process.env.NODE_ENV": JSON.stringify(environment),
-                    "process.env.APP_ENV_PACKAGE_NAME": JSON.stringify(packageJson.name),
-                    "process.env.APP_ENV_PACKAGE_VERSION": JSON.stringify(packageJson.version),
-                    "process.env.APP_ENV_PACKAGE_DESCRIPTION": JSON.stringify(packageJson.description),
-                    "process.env.APP_ENV_PACKAGE_BUGS_URL": JSON.stringify(packageJson.bugs.url),
                 }),
             ],
             resolve: {

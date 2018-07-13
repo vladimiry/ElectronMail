@@ -1,11 +1,9 @@
 import compareVersions from "compare-versions";
 
+import {APP_VERSION} from "src/shared/constants";
 import {Config, Settings} from "src/shared/model/options";
 
-const APP_VERSION = String(process.env.APP_ENV_PACKAGE_VERSION);
-
 const CONFIG_UPGRADES: Record<string, (config: any) => void> = {};
-
 const SETTINGS_UPGRADES: Record<string, (settings: any) => void> = {};
 
 export function upgradeConfig(config: Config): boolean {

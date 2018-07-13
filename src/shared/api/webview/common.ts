@@ -1,8 +1,9 @@
 import {ApiMethod, ApiMethodNoArgument} from "electron-rpc-api";
 
+import {APP_NAME} from "src/shared/constants";
 import {LoginFieldContainer, PasswordFieldContainer} from "src/shared/model/container";
 
-export const channel = `${process.env.APP_ENV_PACKAGE_NAME}:webview-api`;
+export const channel = `${APP_NAME}:webview-api`;
 
 export interface CommonApi {
     ping: ApiMethodNoArgument<never>;

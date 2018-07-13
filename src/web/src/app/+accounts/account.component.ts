@@ -11,6 +11,7 @@ import {
     State as OptionsState,
 } from "src/web/src/app/store/reducers/options";
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
+import {APP_NAME} from "src/shared/constants";
 import {KeePassRef} from "src/shared/model/keepasshttp";
 import {State} from "src/web/src/app/store/reducers/accounts";
 import {WebAccount} from "src/shared/model/account";
@@ -88,10 +89,9 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
             )
             .subscribe(([previousUnread, currentUnread]) => {
                 const login = this.account$.getValue().accountConfig.login;
-                const title = String(process.env.APP_ENV_PACKAGE_NAME);
                 const body = `Account "${login}" has ${currentUnread} unread email${currentUnread > 1 ? "s" : ""}.`;
 
-                new Notification(title, {body}).onclick = () => this.zone.run(() => {
+                new Notification(APP_NAME, {body}).onclick = () => this.zone.run(() => {
                     this.store.dispatch(ACCOUNTS_ACTIONS.Activate({login}));
                     this.store.dispatch(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));
                 });

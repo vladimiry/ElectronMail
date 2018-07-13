@@ -16,7 +16,7 @@
     "build:dev": "cross-env NODE_ENV=development npm-run-all build",
     "build:electron-main": "webpack --config ./src/webpack/electron-main.ts",
     "build:electron-main:dev": "cross-env NODE_ENV=development npm-run-all build:electron-main",
-    "build:electron-main:watch": "webpack --config ./src/webpack/electron-main.ts",
+    "build:electron-main:watch": "webpack --config ./src/webpack/electron-main.ts -w",
     "build:electron-main:watch:dev": "cross-env NODE_ENV=development webpack --config ./src/webpack/electron-main.ts -w",
     "build:electron-preload": "webpack --config ./src/webpack/electron-preload.ts",
     "build:electron-preload:dev": "cross-env NODE_ENV=development npm-run-all build:electron-preload",

@@ -15,6 +15,14 @@
           {
             "patterns": [
               {
+                "target": "src/**/*",
+                "from": "package.json"
+              }
+            ]
+          },
+          {
+            "patterns": [
+              {
                 "target": "src/web/src/**/*",
                 "from": [
                   "_web_app/**/*",

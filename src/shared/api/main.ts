@@ -13,9 +13,12 @@ import {
     PasswordFieldContainer,
     UrlFieldContainer,
 } from "src/shared/model/container";
+import {APP_NAME} from "src/shared/constants";
+import {BaseConfig, Config, Settings} from "src/shared/model/options";
+
+// TODO figure why tslint detects "ElectronContextLocations" as unused
 // tslint:disable-next-line:no-unused-variable
 import {ElectronContextLocations} from "src/shared/model/electron";
-import {BaseConfig, Config, Settings} from "src/shared/model/options";
 
 export interface Endpoints {
     addAccount: ApiMethod<AccountConfigCreatePatch, Settings>;
@@ -42,4 +45,4 @@ export interface Endpoints {
     updateOverlayIcon: ApiMethod<{ hasLoggedOut: boolean, unread: number }, never>;
 }
 
-export const IPC_MAIN_API = new IpcMainApiService<Endpoints>({channel: `${process.env.APP_ENV_PACKAGE_NAME}:ipcMain-api`});
+export const IPC_MAIN_API = new IpcMainApiService<Endpoints>({channel: `${APP_NAME}:ipcMain-api`});

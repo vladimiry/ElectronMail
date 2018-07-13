@@ -3,6 +3,7 @@ import logger from "electron-log";
 import {app} from "electron";
 
 import {activateBrowserWindow, initContext} from "./util";
+import {APP_NAME} from "src/shared/constants";
 import {Context} from "./model";
 import {initAutoUpdate} from "./app-update";
 import {initBrowserWindow} from "./window";
@@ -14,7 +15,7 @@ import {isWebViewSrcWhitelisted} from "src/shared/util";
 electronUnhandled({logger: logger.error});
 
 // needs for desktop notifications properly working on Win 10, details https://www.electron.build/configuration/nsis
-app.setAppUserModelId("com.github.vladimiry.email-securely-app");
+app.setAppUserModelId(`com.github.vladimiry.${APP_NAME}`);
 
 // tslint:disable-next-line:no-floating-promises
 initContext().then(initApp);

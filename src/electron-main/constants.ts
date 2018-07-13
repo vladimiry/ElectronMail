@@ -1,5 +1,7 @@
 import {Options as EncryptionAdapterOptions} from "fs-json-store-encryption-adapter";
 
+import {APP_NAME, APP_VERSION} from "src/shared/constants";
+
 const encryptionPreset: EncryptionAdapterOptions = {
     keyDerivation: {type: "sodium.crypto_pwhash", preset: "mode:interactive|algorithm:default"},
     encryption: {type: "sodium.crypto_secretbox_easy", preset: "algorithm:default"},
@@ -7,7 +9,7 @@ const encryptionPreset: EncryptionAdapterOptions = {
 
 export const INITIAL_STORES = Object.freeze({
     config: {
-        appVersion: String(process.env.APP_ENV_PACKAGE_VERSION),
+        appVersion: APP_VERSION,
         encryptionPreset,
         startMinimized: true,
         compactLayout: false,
@@ -21,5 +23,5 @@ export const INITIAL_STORES = Object.freeze({
     settings: {accounts: []},
 });
 
-export const KEYTAR_SERVICE_NAME = "email-securely-app";
+export const KEYTAR_SERVICE_NAME = APP_NAME;
 export const KEYTAR_MASTER_PASSWORD_ACCOUNT = "master-password";

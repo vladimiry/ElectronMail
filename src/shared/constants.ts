@@ -1,5 +1,13 @@
 import {AccountType} from "src/shared/model/account";
 
+// tslint:disable-next-line:no-var-requires no-import-zones
+const {name: APP_NAME, version: APP_VERSION} = require("package.json");
+
+export {
+    APP_NAME,
+    APP_VERSION,
+};
+
 // user data dir, defaults to app.getPath("userData")
 export const RUNTIME_ENV_USER_DATA_DIR = `EMAIL_SECURELY_APP_USER_DATA_DIR`;
 // boolean

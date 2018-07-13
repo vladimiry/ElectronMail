@@ -1,7 +1,7 @@
 @import "~src/web/src/variables";
 
 $accounts-column-width: 250px;
-$account-item-padding-y: $list-group-item-padding-y * 0.65;
+$account-item-padding-y: $list-group-item-padding-y * 0.9;
 $account-item-padding-x: $list-group-item-padding-x * 0.65;
 $webview-border: darken($app-color-bg-dark, 10%);
 

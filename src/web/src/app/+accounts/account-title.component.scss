@@ -3,6 +3,8 @@
 :host {
     display: block;
     position: relative;
+    word-break: break-all;
+    padding-right: 15px;
 
     .account-value-login {
         display: inline;
@@ -22,5 +24,6 @@
         position: absolute;
         top: 0;
         right: 0;
+        opacity: 0.65;
     }
 }

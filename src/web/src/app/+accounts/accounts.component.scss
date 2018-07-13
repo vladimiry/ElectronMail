@@ -1,6 +1,8 @@
 @import "~src/web/src/variables";
 
 $accounts-column-width: 250px;
+$account-item-padding-y: $list-group-item-padding-y * 0.65;
+$account-item-padding-x: $list-group-item-padding-x * 0.65;
 $webview-border: darken($app-color-bg-dark, 10%);
 
 :host {
@@ -47,7 +49,7 @@ $webview-border: darken($app-color-bg-dark, 10%);
 
             .list-group-item {
                 word-wrap: break-word;
-                padding: ($list-group-item-padding-y * 0.65) ($list-group-item-padding-x * 0.65);
+                padding: $account-item-padding-y $account-item-padding-x;
             }
         }
 
@@ -73,12 +75,15 @@ $webview-border: darken($app-color-bg-dark, 10%);
                 width: 100%;
                 border-top-left-radius: $btn-border-radius;
                 border-bottom-left-radius: $btn-border-radius;
-                white-space: normal;
             }
 
             .dropdown-menu {
                 margin-top: $app-spacer-2;
                 width: 100%;
+
+                .dropdown-item {
+                    padding: $account-item-padding-y $account-item-padding-x;
+                }
             }
         }
 

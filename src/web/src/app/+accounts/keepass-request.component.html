@@ -4,8 +4,5 @@
 </div>
 
 <div (click)="togglePause()" class="control">
-    <i class="fa" [ngClass]="{
-        'fa-play text-success': paused,
-        'fa-pause text-warning': !paused
-    }"></i>
+    <i [class]="paused ? 'fa fa-play text-success' : 'fa fa-pause text-warning'"></i>
 </div>

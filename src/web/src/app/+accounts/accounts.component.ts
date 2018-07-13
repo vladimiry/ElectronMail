@@ -24,7 +24,6 @@ import {WebAccount} from "src/shared/model/account";
 })
 export class AccountsComponent implements OnInit, OnDestroy {
     accounts$ = this.store.select(accountsSelector);
-    loggedInAndUnreadSummarySelector$ = this.store.select(accountsLoggedInAndUnreadSummarySelector);
     initialized$ = this.store.select(initializedSelector);
     selectedLogin$ = this.store.select(selectedLoginSelector);
     compactLayout$ = this.store.select(configCompactLayoutSelector);
@@ -33,6 +32,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
     );
     accounts: WebAccount[] = [];
     selectedAccount?: WebAccount;
+    unreadSummary?: number;
     unSubscribe$ = new Subject();
 
     constructor(private store: Store<State>) {}
@@ -42,12 +42,15 @@ export class AccountsComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.unSubscribe$))
             .subscribe((accounts) => this.accounts = accounts);
 
-        this.loggedInAndUnreadSummarySelector$
+        this.store.select(accountsLoggedInAndUnreadSummarySelector)
             .pipe(
                 distinctUntilChanged((prev, curr) => prev.hasLoggedOut === curr.hasLoggedOut && prev.unread === curr.unread),
                 takeUntil(this.unSubscribe$),
             )
-            .subscribe(({hasLoggedOut, unread}) => this.store.dispatch(CORE_ACTIONS.UpdateOverlayIcon({hasLoggedOut, unread})));
+            .subscribe(({hasLoggedOut, unread}) => {
+                this.unreadSummary = unread;
+                this.store.dispatch(CORE_ACTIONS.UpdateOverlayIcon({hasLoggedOut, unread}));
+            });
 
         this.store.select(selectedAccountSelector)
             .pipe(takeUntil(this.unSubscribe$))

@@ -47,12 +47,13 @@ $webview-border: darken($app-color-bg-dark, 10%);
 
             .list-group-item {
                 word-wrap: break-word;
+                padding: ($list-group-item-padding-y * 0.65) ($list-group-item-padding-x * 0.65);
             }
         }
 
         .btn-group.accounts-list {
             &::ng-deep {
-                .dropdown-toggle:after {
+                .dropdown-toggle::after {
                     display: none;
                 }
             }

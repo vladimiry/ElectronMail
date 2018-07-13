@@ -25,7 +25,7 @@ You can see below a screenshots of the `compact` and `default` view modes:
 
 ## Build your own package
 
-- Regardless of the platform you are working on, you will need to have Node.JS v8 installed. Version 8 is required to match the Node.JS version Electron comes with. If you already have Node.JS installed, but not the version 8, then you might want you to use [Node Version Manager](https://github.com/creationix/nvm) to be able to switch between multiple Node.JS versions:
+- Regardless of the platform you are working on, you will need to have Node.JS v8 installed. Version 8 is required to match the Node.JS version Electron comes with. If you already have Node.JS installed, but not the version 8, then you might want to use [Node Version Manager](https://github.com/creationix/nvm) to be able to switch between multiple Node.JS versions:
   - Install [NVM](https://github.com/creationix/nvm).
   - Run `nvm instal 8`.
   - Run `nvm use 8`.

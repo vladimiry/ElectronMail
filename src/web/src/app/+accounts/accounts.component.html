@@ -8,7 +8,6 @@
             <button type="button" class="btn btn-warning-light dropdown-toggle list-group-item-warning"
                     dropdownToggle *ngIf="selectedAccount">
                 <email-securely-app-account-title [account]="selectedAccount"></email-securely-app-account-title>
-                <span class="caret"></span>
             </button>
             <ul *dropdownMenu class="dropdown-menu dropdown-menu-right" role="menu">
                 <li role="menuitem" *ngFor="let account of accounts; trackBy: trackAccount">

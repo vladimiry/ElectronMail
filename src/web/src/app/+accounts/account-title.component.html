@@ -1,6 +1,5 @@
 <email-securely-app-type-symbol [type]="account.accountConfig.type"></email-securely-app-type-symbol>
-<span class="account-value-sync-unread" *ngIf="account.notifications.unread">
+<div class="account-value-sync-unread" *ngIf="account.notifications.unread">
     <span class="badge badge-danger">{{ account.notifications.unread }}</span>
-</span>
-<span class="account-value-login">{{ account.accountConfig.login }}</span>
-<span class="account-value-sync-title" *ngIf="account.notifications.title">{{ account.notifications.title }}</span>
+</div>
+<div class="account-value-login">{{ account.accountConfig.login }}</div>

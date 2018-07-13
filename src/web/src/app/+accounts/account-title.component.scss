@@ -1,20 +1,20 @@
 @import "~src/web/src/variables";
 
 :host {
-    .account-value {
-        &-login {
-            font-weight: bold;
-            opacity: 0.85;
-        }
+    display: block;
+    position: relative;
 
-        &-sync-unread {
-            .badge {
-                padding: 0.38em 0.55em;
-            }
-        }
+    .account-value-login {
+        display: inline;
+        font-weight: bold;
+        opacity: 0.85;
+    }
 
-        &-sync-title {
-            font-size: $font-size-sm;
+    .account-value-sync-unread {
+        display: inline;
+
+        .badge {
+            padding: 0.38em 0.55em;
         }
     }
 }

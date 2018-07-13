@@ -45,14 +45,6 @@ $webview-border: darken($app-color-bg-dark, 10%);
         .list-group.accounts-list {
             display: none;
 
-            &::ng-deep {
-                #{$app-prefix}-account-title {
-                    .account-value-sync-title {
-                        display: block;
-                    }
-                }
-            }
-
             .list-group-item {
                 word-wrap: break-word;
             }
@@ -60,22 +52,8 @@ $webview-border: darken($app-color-bg-dark, 10%);
 
         .btn-group.accounts-list {
             &::ng-deep {
-                .dropdown-toggle {
-                    #{$app-prefix}-account-title {
-                        .account-value-sync-title {
-                            &::before {
-                                content: "| ";
-                            }
-                        }
-                    }
-                }
-
-                .dropdown-menu {
-                    #{$app-prefix}-account-title {
-                        .account-value-sync-title {
-                            display: block;
-                        }
-                    }
+                .dropdown-toggle:after {
+                    display: none;
                 }
             }
 

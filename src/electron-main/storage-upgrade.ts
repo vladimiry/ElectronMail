@@ -1,6 +1,6 @@
 import compareVersions from "compare-versions";
 
-import {Config, Settings} from "src/shared/model/options";
+import {Config, Settings} from "_@shared/model/options";
 
 const APP_VERSION = String(process.env.APP_ENV_PACKAGE_VERSION);
 

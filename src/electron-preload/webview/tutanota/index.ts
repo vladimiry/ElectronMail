@@ -1,61 +1,72 @@
 import {authenticator} from "otplib";
-import {distinctUntilChanged, switchMap} from "rxjs/operators";
+import {distinctUntilChanged, map, switchMap} from "rxjs/operators";
 import {EMPTY, from, interval, merge, Observable, of, Subscriber, throwError} from "rxjs";
 
-import {AccountNotificationType} from "src/shared/model/account";
-import {getLocationHref, submitTotpToken, typeInputValue, waitElements} from "src/electron-preload/webview/util";
-import {getRange} from "_@webview-preload/tutanota/rest";
-import {IPC_WEBVIEW_API, TutanotaApi} from "src/shared/api/webview";
-import {MailFolder, MailTypeRef} from "_@webview-preload/tutanota/rest/model";
-import {MAX_RESPONSE_ENTITY_ID} from "_@webview-preload/tutanota/from-tutanota-repo";
-import {ONE_SECOND_MS} from "src/shared/constants";
+import {AccountNotificationType, WebAccountTutanota} from "_@shared/model/account";
+import {fetchEntitiesRange} from "_@webview-preload/tutanota/lib/rest";
+import {fetchMessages} from "_@webview-preload/tutanota/lib/fetch";
+import {getLocationHref, submitTotpToken, typeInputValue, waitElements} from "_@webview-preload/util";
+import {MailFolder, MailTypeRef, User} from "_@webview-preload/tutanota/lib/rest/model";
+import {NOTIFICATION_LOGGED_IN_POLLING_INTERVAL, NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL} from "_@webview-preload/common";
+import {ONE_SECOND_MS} from "_@shared/constants";
+import {resolveWebClientApi, WebClientApi} from "_@webview-preload/tutanota/tutanota-api";
+import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi} from "_@shared/api/webview/tutanota";
 
 const WINDOW = window as any;
+const state: { inboxMailFolder?: MailFolder | undefined; } = {};
 
-document.addEventListener("DOMContentLoaded", () => {
-    bootstrap(WINDOW.SystemJS);
-});
+resolveWebClientApi()
+    .then((webClientApi) => {
+        const queue = webClientApi["src/api/common/WorkerProtocol"].Queue;
 
-// tslint:disable-next-line:variable-name
-function bootstrap(SystemJS: SystemJSLoader.System) {
-    const systemJSbaseURL = String(SystemJS.getConfig().baseURL).replace(/(.*)\/$/, "$1");
-    const pageChangePollingIntervalMs = ONE_SECOND_MS * 1.5;
-    const unreadInitialCheckTimeoutMs = ONE_SECOND_MS * 10;
-    const unreadCheckPollingIntervalMs = ONE_SECOND_MS * 60;
+        queue.prototype._handleMessage = ((orig) => function(this: typeof queue) {
+            const [response] = arguments;
+
+            if (response && response.type === "response" && Array.isArray(response.value) && response.value.length) {
+                const inboxMailFolder = response.value
+                    .filter(({_type, folderType}: any = {}) => {
+                        return typeof _type === "object" && _type.type === "MailFolder" && folderType === "1";
+                    })
+                    .shift();
+
+                if (inboxMailFolder) {
+                    state.inboxMailFolder = inboxMailFolder;
+                }
+            }
+
+            return orig.apply(this, arguments);
+        })(queue.prototype._handleMessage);
+
+        delete WINDOW.Notification;
+
+        bootstrapApi(webClientApi);
+    })
+    .catch((err) => {
+        require("electron-log").error(err);
+    });
+
+function bootstrapApi(webClientApi: WebClientApi) {
     const login2FaWaitElementsConfig = {
         input: () => document.querySelector("#modal input.input") as HTMLInputElement,
         button: () => document.querySelector("#modal input.input ~ div > button") as HTMLElement,
     };
-    const state: { inboxMailFolder?: MailFolder | undefined } = {};
-
-    delete WINDOW.Notification;
-
-    SystemJS
-        .import(`${systemJSbaseURL}/src/api/main/WorkerClient.js`)
-        .then((workerClient: any) => {
-            workerClient.worker._queue._handleMessage = ((orig) => function(this: typeof workerClient) {
-                const [response] = arguments;
-
-                if (response && response.type === "response" && Array.isArray(response.value) && response.value.length) {
-                    const inboxMailFolder = response.value
-                        .filter(({_type, folderType}: any = {}) => {
-                            return typeof _type === "object" && _type.type === "MailFolder" && folderType === "1";
-                        })
-                        .shift();
-
-                    if (inboxMailFolder) {
-                        state.inboxMailFolder = inboxMailFolder;
-                    }
-                }
-
-                return orig.apply(this, arguments);
-            })(workerClient.worker._queue._handleMessage);
-        })
-        .catch((err) => {
-            require("electron-log").error(err);
-        });
 
     const endpoints: TutanotaApi = {
+        ping: () => EMPTY,
+
+        fetchMessages: (input) => {
+            const controller = getUserController();
+
+            if (controller) {
+                return fetchMessages({
+                    ...input,
+                    user: controller.user,
+                });
+            }
+
+            return EMPTY;
+        },
+
         fillLogin: ({login}) => {
             const cancelEvenHandler = (event: MouseEvent) => {
                 event.preventDefault();
@@ -120,26 +131,24 @@ function bootstrap(SystemJS: SystemJSLoader.System) {
         })()),
 
         notification: ({entryUrl}) => {
-            type PageTypeOutput = Required<Pick<AccountNotificationType, "pageType">>;
-            type TitleOutput = Required<Pick<AccountNotificationType, "title">>;
-            type UnreadOutput = Required<Pick<AccountNotificationType, "unread">>;
-
-            if (entryUrl !== systemJSbaseURL) {
-                return throwError(new Error(
-                    `Actually loaded SystemJS Url "${systemJSbaseURL}" and app settings Url "${entryUrl}" don't match`,
-                ));
-            }
-
             try {
-                const observables = [];
+                const observables = [
+                    // loggedIn
+                    interval(NOTIFICATION_LOGGED_IN_POLLING_INTERVAL).pipe(
+                        map(() => isLoggedIn()),
+                        distinctUntilChanged((prev, curr) => prev === curr),
+                        map((loggedIn) => ({loggedIn})),
+                    ),
 
-                // pageType
-                (() => {
+                    // pageType
                     // TODO listen for location.href change instead of starting polling interval
-                    const observable: Observable<PageTypeOutput> = interval(pageChangePollingIntervalMs).pipe(
+                    interval(NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL).pipe(
                         switchMap(() => from((async () => {
                             const url = getLocationHref();
-                            const pageType: PageTypeOutput["pageType"] = {url, type: "undefined"};
+                            const pageType: (Pick<AccountNotificationType<WebAccountTutanota>, "pageType">)["pageType"] = {
+                                url,
+                                type: "undefined",
+                            };
                             const loginPageDetected = url === `${entryUrl}/login` || url.startsWith(`${entryUrl}/login?`);
 
                             if (loginPageDetected) {
@@ -165,64 +174,66 @@ function bootstrap(SystemJS: SystemJSLoader.System) {
                             return {pageType};
                         })())),
                         distinctUntilChanged(({pageType: prev}, {pageType: curr}) => prev.type === curr.type),
-                    );
+                    ),
 
-                    observables.push(observable);
-                })();
+                    // title
+                    of({title: ""}),
 
-                // title
-                observables.push(of<TitleOutput>({title: ""}));
+                    // unread
+                    // TODO listen for "unread" change instead of starting polling interval
+                    Observable.create((observer: Subscriber<{ unread: number }>) => {
+                        const intervalHandler = async () => {
+                            if (!state.inboxMailFolder || !isLoggedIn() || !navigator.onLine) {
+                                return;
+                            }
 
-                // unread
-                (() => {
-                    observables.push(
-                        // TODO listen for "unread" change instead of starting polling interval
-                        Observable.create((observer: Subscriber<UnreadOutput>) => {
-                            const intervalHandler = async () => {
-                                const userController = WINDOW.tutao
-                                    && WINDOW.tutao.logins
-                                    && typeof WINDOW.tutao.logins.getUserController === "function"
-                                    && WINDOW.tutao.logins.getUserController();
-                                const accessToken = userController
-                                    && userController.accessToken;
-
-                                if (!state.inboxMailFolder || !accessToken || !navigator.onLine) {
-                                    return;
-                                }
-
-                                const emails = await getRange(
-                                    MailTypeRef,
-                                    state.inboxMailFolder.mails,
-                                    entryUrl,
-                                    {accessToken},
-                                    {
-                                        count: 50,
-                                        start: MAX_RESPONSE_ENTITY_ID,
-                                        reverse: true,
-                                    },
-                                );
-                                const unread = emails.reduce((sum, mail) => sum + Number(mail.unread), 0);
-
-                                observer.next({unread});
-                            };
-
-                            setInterval(
-                                intervalHandler,
-                                unreadCheckPollingIntervalMs,
+                            const {GENERATED_MAX_ID} = webClientApi["src/api/common/EntityFunctions"];
+                            const emails = await fetchEntitiesRange(
+                                MailTypeRef,
+                                state.inboxMailFolder.mails,
+                                {
+                                    count: 50,
+                                    reverse: true,
+                                    start: GENERATED_MAX_ID,
+                                },
                             );
+                            const unread = emails.reduce((sum, mail) => sum + Number(mail.unread), 0);
 
-                            // initial check in "unreadInitialCheckTimeoutMs" after notifications subscription happening
-                            setTimeout(intervalHandler, unreadInitialCheckTimeoutMs);
-                        }),
-                    );
-                })();
+                            observer.next({unread});
+                        };
 
-                return merge(...observables as any);
+                        setInterval(
+                            intervalHandler,
+                            ONE_SECOND_MS * 60,
+                        );
+
+                        // initial check after notifications subscription happening
+                        setTimeout(intervalHandler, ONE_SECOND_MS * 10);
+                    }),
+                ];
+
+                return merge(...observables);
             } catch (error) {
                 return throwError(error);
             }
         },
     };
 
-    IPC_WEBVIEW_API.tutanota.registerApi(endpoints);
+    TUTANOTA_IPC_WEBVIEW_API.registerApi(endpoints);
+}
+
+function getUserController(): { accessToken: string, user: User } | null {
+    return WINDOW.tutao
+    && WINDOW.tutao.logins
+    && typeof WINDOW.tutao.logins.getUserController === "function"
+    && WINDOW.tutao.logins.getUserController() ? WINDOW.tutao.logins.getUserController()
+        : null;
+}
+
+function isLoggedIn(): boolean {
+    const controller = getUserController();
+    return !!(controller
+        && controller.accessToken
+        && controller.accessToken.length
+    );
 }

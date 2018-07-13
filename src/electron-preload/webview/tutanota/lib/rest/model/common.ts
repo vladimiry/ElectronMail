@@ -30,12 +30,12 @@ export const OperationType: Record<string, "0" | "1" | "2"> = {
 };
 
 export interface BaseResponse {
-    _id: Id;
+    _id: Id | IdTuple;
 }
 
 export type Id<T extends BaseResponse = BaseResponse> = string;
 
-export type IdTuple<T extends BaseResponse = BaseResponse> = [Id<T>, Id<T>];
+export type IdTuple<ID1 extends BaseResponse = BaseResponse, ID2 extends BaseResponse = BaseResponse> = [Id<ID1>, Id<ID2>];
 
 export type TypeRefApp = "tutanota" | "sys";
 

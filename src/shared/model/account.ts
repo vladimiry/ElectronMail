@@ -17,11 +17,10 @@ interface GenericWebAccount<
         credentialsKeePass: Partial<Record<CredFields, KeePassRef>>;
     };
     progress: Partial<Record<CredFields, boolean>>;
-    notifications: Partial<{
-        title: string;
-    }> & {
+    notifications: {
+        title?: string;
+        loggedIn: boolean;
         unread: number;
-    } & {
         pageType: { url?: string; type: NotificationPageTypes; },
     } & ExtraNotifications;
 }
@@ -31,13 +30,13 @@ interface GenericWebAccount<
 export type WebAccountProtonmail = GenericWebAccount<
     "protonmail",
     "password" | "twoFactorCode" | "mailPassword",
-    "login" | "login2fa" | "unlock" | "undefined"
+    "undefined" | "login" | "login2fa" | "unlock"
 >;
 
 export type WebAccountTutanota = GenericWebAccount<
     "tutanota",
     "password" | "twoFactorCode",
-    "login" | "login2fa" | "undefined"
+    "undefined" | "login" | "login2fa"
 >;
 
 export type WebAccount = WebAccountProtonmail | WebAccountTutanota;
@@ -49,6 +48,6 @@ export type AccountConfigByType<Type extends AccountType> = Extract<AccountConfi
 
 export type AccountProgress = WebAccount["progress"];
 
-export type AccountNotifications = WebAccount["notifications"];
+export type AccountNotifications<T extends WebAccount> = T["notifications"];
 
-export type AccountNotificationType<T = AccountNotifications> = { [k in keyof T]: T[k] };
+export type AccountNotificationType<T extends WebAccount = WebAccount, N = AccountNotifications<T>> = { [k in keyof N]: N[k] };

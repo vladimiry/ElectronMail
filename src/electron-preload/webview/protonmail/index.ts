@@ -1,18 +1,20 @@
 import {authenticator} from "otplib";
 import {distinctUntilChanged, filter, map} from "rxjs/operators";
-import {EMPTY, from, fromEvent, interval, merge, Observable, Subscriber, throwError} from "rxjs";
+import {EMPTY, from, fromEvent, interval, merge, Observable, of, Subscriber, throwError} from "rxjs";
 
-import {AccountNotificationType} from "_@shared/model/account";
+import {AccountNotificationType, WebAccountProtonmail} from "_@shared/model/account";
 import {getLocationHref, submitTotpToken, typeInputValue, waitElements} from "_@webview-preload/util";
-import {IPC_WEBVIEW_API, ProtonmailApi} from "_@shared/api/webview";
+import {NOTIFICATION_LOGGED_IN_POLLING_INTERVAL, NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL} from "_@webview-preload/common";
+import {PROTONMAIL_IPC_WEBVIEW_API, ProtonmailApi} from "_@shared/api/webview/protonmail";
 
 const WINDOW = window as any;
-const pageChangePollingIntervalMs = 1500;
 const twoFactorCodeElementId = "twoFactorCode";
 
 delete WINDOW.Notification;
 
 const endpoints: ProtonmailApi = {
+    ping: () => EMPTY,
+
     fillLogin: ({login}) => from((async () => {
         const elements = await waitElements({
             username: () => document.getElementById("username") as HTMLInputElement,
@@ -57,20 +59,34 @@ const endpoints: ProtonmailApi = {
     })()),
 
     notification: ({entryUrl}) => {
-        type PageTypeOutput = Required<Pick<AccountNotificationType, "pageType">>;
-        type TitleOutput = Required<Pick<AccountNotificationType, "title">>;
-        type UnreadOutput = Required<Pick<AccountNotificationType, "unread">>;
-
         try {
             const observables = [];
 
+            // loggedIn
+            observables.push(
+                interval(NOTIFICATION_LOGGED_IN_POLLING_INTERVAL).pipe(
+                    map(() => {
+                        const html = WINDOW.angular && WINDOW.angular.element("html");
+                        const $injector = html.data("$injector");
+                        const authentication = $injector.get("authentication");
+
+                        return authentication && authentication.isLoggedIn();
+                    }),
+                    distinctUntilChanged((prev, curr) => prev === curr),
+                    map((loggedIn) => ({loggedIn})),
+                ),
+            );
+
             // pageType
-            (() => {
-                // TODO listen for location.href change instead of starting polling interval
-                const observable: Observable<PageTypeOutput> = interval(pageChangePollingIntervalMs).pipe(
+            // TODO listen for location.href change instead of starting polling interval
+            observables.push(
+                interval(NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL).pipe(
                     map(() => {
                         const url = getLocationHref();
-                        const pageType: PageTypeOutput["pageType"] = {url, type: "undefined"};
+                        const pageType: (Pick<AccountNotificationType<WebAccountProtonmail>, "pageType">)["pageType"] = {
+                            url,
+                            type: "undefined",
+                        };
 
                         switch (url) {
                             case `${entryUrl}/login`: {
@@ -94,26 +110,24 @@ const endpoints: ProtonmailApi = {
                         return {pageType};
                     }),
                     distinctUntilChanged(({pageType: prev}, {pageType: curr}) => prev.type === curr.type),
-                );
-
-                observables.push(observable);
-            })();
+                ),
+            );
 
             // title
             (() => {
-                const titleEl = document.querySelector("title") as HTMLElement;
+                const titleEl = document.querySelector("title");
 
-                // title changing listening
-                if (titleEl) {
-                    observables.push(
-                        fromEvent<TitleOutput>(titleEl, "DOMSubtreeModified").pipe(
+                observables.push(
+                    titleEl ? fromEvent(titleEl, "DOMSubtreeModified")
+                        .pipe(
                             map(() => titleEl.innerText),
                             filter((title) => !!title),
                             distinctUntilChanged((prev, curr) => prev === curr),
                             map((title) => ({title})),
-                        ),
-                    );
+                        ) : of({title: ""}),
+                );
 
+                if (titleEl) {
                     // fire initial value emitting
                     setTimeout(() => titleEl.innerText += "");
                 }
@@ -149,7 +163,7 @@ const endpoints: ProtonmailApi = {
                 ];
 
                 observables.push(
-                    Observable.create((observer: Subscriber<UnreadOutput>) => {
+                    Observable.create((observer: Subscriber<Pick<AccountNotificationType<WebAccountProtonmail>, "unread">>) => {
                         XMLHttpRequest.prototype.send = ((original) => {
                             return function(this: XMLHttpRequest) {
                                 this.addEventListener("load", function(this: XMLHttpRequest) {
@@ -194,4 +208,4 @@ const endpoints: ProtonmailApi = {
     })()),
 };
 
-IPC_WEBVIEW_API.protonmail.registerApi(endpoints);
+PROTONMAIL_IPC_WEBVIEW_API.registerApi(endpoints);

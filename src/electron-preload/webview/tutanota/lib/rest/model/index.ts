@@ -1,3 +1,3 @@
 export * from "./common";
-export * from "./response-entity";
+export * from "./entity";
 export * from "./type-ref";

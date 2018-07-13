@@ -12,5 +12,3 @@ yarn-error.log
 /build/
 /dist/
 /output/
-
-/src/electron-preload/webview/tutanota/from-tutanota-repo/generated/

@@ -1,22 +1,48 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {catchError, filter, finalize, map, mergeMap, switchMap} from "rxjs/operators";
+import {catchError, exhaustMap, filter, finalize, map, mergeMap, switchMap} from "rxjs/operators";
 import {Injectable} from "@angular/core";
-import {merge, Observable, of} from "rxjs";
+import {merge, Observable, of, throwError} from "rxjs";
 import {Store} from "@ngrx/store";
 
 import {ACCOUNTS_ACTIONS, CORE_ACTIONS, OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
 import {ElectronExposure} from "_@shared/model/electron";
 import {ElectronService} from "_@web/src/app/+core/electron.service";
+import {ONE_SECOND_MS} from "_@shared/constants";
 import {State} from "_@web/src/app/store/reducers/accounts";
+import {Timestamp} from "_@shared/types";
 
 const rateLimiter = ((window as any).__ELECTRON_EXPOSURE__ as ElectronExposure).requireNodeRollingRateLimiter();
 
 @Injectable()
 export class AccountsEffects {
     twoPerTenSecLimiter = rateLimiter({
-        interval: 1000 * 10,
+        interval: ONE_SECOND_MS * 10,
         maxInInterval: 2,
     });
+
+    @Effect()
+    fetchMessages$ = this.actions$.pipe(
+        filter(ACCOUNTS_ACTIONS.is.FetchMessages),
+        switchMap(({payload}) => {
+            const {webView, account} = payload;
+
+            if (account.accountConfig.type !== "tutanota") {
+                return throwError(new Error("Not yet implemented"));
+            }
+
+            return this.electronService.webViewCaller(webView, account.accountConfig.type, {timeoutMs: 0}).pipe(
+                exhaustMap((caller) => {
+                    // TODO fill-in "newestStoredTimestamp" from local database
+                    const newestStoredTimestamp: Timestamp | undefined = undefined;
+                    return caller("fetchMessages")({newestStoredTimestamp});
+                }),
+                // tap((value) => {
+                //     console.log("fetched item", value);
+                // }),
+                mergeMap(() => []),
+            );
+        }),
+    );
 
     @Effect()
     syncAccountsConfigs$ = this.actions$.pipe(
@@ -29,10 +55,10 @@ export class AccountsEffects {
         filter(ACCOUNTS_ACTIONS.is.Login),
         switchMap(({payload}) => {
             const {account, webView} = payload;
-            const {accountConfig} = account;
-            const {type: accountType, login} = accountConfig;
-            const pageType = account.notifications.pageType.type;
-            const unreadReset = of(ACCOUNTS_ACTIONS.NotificationPatch({accountConfig, notification: {unread: 0}}));
+            const {accountConfig, notifications} = account;
+            const {type, login, credentials} = accountConfig;
+            const pageType = notifications.pageType.type;
+            const unreadReset = of(ACCOUNTS_ACTIONS.NotificationPatch({login, notification: {unread: 0}}));
 
             // TODO make sure passwords submitting looping doesn't happen, until then a workaround is enabled below
             const rateLimitingCheck = (password: string) => {
@@ -51,7 +77,7 @@ export class AccountsEffects {
 
             switch (pageType) {
                 case "login": {
-                    const password = payload.password || accountConfig.credentials.password;
+                    const password = payload.password || credentials.password;
 
                     if (password) {
                         rateLimitingCheck(password);
@@ -59,24 +85,23 @@ export class AccountsEffects {
                         return merge(
                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: true}})),
                             unreadReset,
-                            this.electronService
-                                .webViewCaller(webView, accountType)("login")({login, password})
-                                .pipe(
-                                    mergeMap(() => []),
-                                    catchError((error) => of(CORE_ACTIONS.Fail(error))),
-                                    finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({
-                                        login, patch: {password: false},
-                                    }))),
-                                ),
+                            this.electronService.webViewCaller(webView, type).pipe(
+                                exhaustMap((caller) => caller("login")({login, password})),
+                                mergeMap(() => []),
+                                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                                finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: false}}))),
+                            ),
                         );
                     }
 
-                    return this.electronService
-                        .webViewCaller(webView, accountType)("fillLogin")({login})
-                        .pipe(mergeMap(() => []));
+                    return this.electronService.webViewCaller(webView, type)
+                        .pipe(
+                            exhaustMap((caller) => caller("fillLogin")({login})),
+                            mergeMap(() => []),
+                        );
                 }
                 case "login2fa": {
-                    const secret = payload.password || accountConfig.credentials.twoFactorCode;
+                    const secret = payload.password || credentials.twoFactorCode;
 
                     if (secret) {
                         rateLimitingCheck(secret);
@@ -84,28 +109,25 @@ export class AccountsEffects {
                         return merge(
                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {twoFactorCode: true}})),
                             unreadReset,
-                            this.electronService
-                                .webViewCaller(webView, accountType)("login2fa")({secret})
-                                .pipe(
-                                    mergeMap(() => []),
-                                    catchError((error) => of(CORE_ACTIONS.Fail(error))),
-                                    finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({
-                                        login, patch: {twoFactorCode: false},
-                                    }))),
-                                ),
+                            this.electronService.webViewCaller(webView, type).pipe(
+                                exhaustMap((caller) => caller("login2fa")({secret})),
+                                mergeMap(() => []),
+                                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                                finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {twoFactorCode: false}}))),
+                            ),
                         );
                     }
 
                     break;
                 }
                 case "unlock": {
-                    if (accountConfig.type !== "protonmail") {
+                    if (type !== "protonmail") {
                         throw new Error(
-                            `Accounts with type "${accountConfig.type}" can't have action associated with the "${pageType}" page`,
+                            `Accounts with type "${type}" can't have action associated with the "${pageType}" page`,
                         );
                     }
 
-                    const mailPassword = payload.password || accountConfig.credentials.mailPassword;
+                    const mailPassword = payload.password || ("mailPassword" in credentials && credentials.mailPassword);
 
                     if (mailPassword) {
                         rateLimitingCheck(mailPassword);
@@ -113,15 +135,12 @@ export class AccountsEffects {
                         return merge(
                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: true}})),
                             unreadReset,
-                            this.electronService
-                                .webViewCaller(webView, accountType)("unlock")({mailPassword})
-                                .pipe(
-                                    mergeMap(() => []),
-                                    catchError((error) => of(CORE_ACTIONS.Fail(error))),
-                                    finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({
-                                        login, patch: {mailPassword: false},
-                                    }))),
-                                ),
+                            this.electronService.webViewCaller(webView, type).pipe(
+                                exhaustMap((caller) => caller("unlock")({mailPassword})),
+                                mergeMap(() => []),
+                                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                                finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: false}}))),
+                            ),
                         );
                     }
 
@@ -140,14 +159,11 @@ export class AccountsEffects {
             filter(ACCOUNTS_ACTIONS.is.SetupNotifications),
             switchMap(({payload}) => {
                 const {account, webView, unSubscribeOn} = payload;
-                const {entryUrl} = account.accountConfig;
-                const observable = this.electronService
-                    .webViewCaller(webView, account.accountConfig.type)("notification", {unSubscribeOn, timeoutMs: 0})({entryUrl})
-                    .pipe(
-                        map((notification) => ACCOUNTS_ACTIONS.NotificationPatch({
-                            accountConfig: account.accountConfig, notification,
-                        })),
-                    );
+                const {type, login, entryUrl} = account.accountConfig;
+                const observable = this.electronService.webViewCaller(webView, type).pipe(
+                    exhaustMap((caller) => caller("notification", {unSubscribeOn, timeoutMs: 0})({entryUrl})),
+                    map((notification) => ACCOUNTS_ACTIONS.NotificationPatch({login, notification})),
+                );
 
                 if (unSubscribeOn) {
                     unSubscribeOn.then(() => {

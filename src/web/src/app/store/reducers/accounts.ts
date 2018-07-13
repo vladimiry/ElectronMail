@@ -36,6 +36,7 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                         accountConfig,
                         progress: {},
                         notifications: {
+                            loggedIn: false,
                             unread: 0,
                             pageType: {url: "", type: "undefined"},
                         },
@@ -68,8 +69,8 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                 selectedLogin: login,
             };
         },
-        NotificationPatch: ({accountConfig, notification}) => {
-            const {index} = selectAccountByLogin(state.accounts, accountConfig.login);
+        NotificationPatch: ({login, notification}) => {
+            const {index} = selectAccountByLogin(state.accounts, login);
 
             return updateIn(
                 state,

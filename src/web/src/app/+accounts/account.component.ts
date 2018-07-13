@@ -54,7 +54,7 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
     set account(account: WebAccount) {
         if (this.account$) {
             if (JSON.stringify(account.accountConfig) !== JSON.stringify(this.account$.getValue().accountConfig)) {
-                this.pageOrCconfigChangeReaction(account);
+                this.pageOrConfigChangeReaction(account);
             }
             this.account$.next(account);
         } else {
@@ -75,7 +75,7 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
                 filter(([prevPageType, currentPageType]) => currentPageType !== prevPageType),
                 takeUntil(this.unSubscribe$),
             )
-            .subscribe(() => this.pageOrCconfigChangeReaction(this.account$.getValue()));
+            .subscribe(() => this.pageOrConfigChangeReaction(this.account$.getValue()));
 
         this.account$
             .pipe(
@@ -125,7 +125,7 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
         }));
     }
 
-    pageOrCconfigChangeReaction(account: WebAccount) {
+    pageOrConfigChangeReaction(account: WebAccount) {
         this.optionsStore.dispatch(ACCOUNTS_ACTIONS.Login({account, webView: this.webView}));
     }
 

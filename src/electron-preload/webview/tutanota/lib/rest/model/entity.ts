@@ -27,13 +27,19 @@ export interface MailFolderRef extends BaseResponse {
 
 export interface MailFolder<TypeRecord = typeof MailFolderType> extends BaseResponse {
     folderType: TypeRecord[keyof TypeRecord];
-    mails: Id<Mail>;
+    mails: Id<MailList>;
     subFolders: Id<MailFolder>;
+    name: string;
+}
+
+export interface MailList extends BaseResponse {
+
 }
 
 export interface Mail extends BaseResponse {
-    attachments: Array<IdTuple<File>>;
-    body: Id<MailBody>;
+    _id: IdTuple<MailList, Mail>;
+    attachments: Array<IdTuple<Mail, File>>;
+    body: IdTuple<Mail, MailBody>;
     subject: string;
     toRecipients: MailAddress[];
     ccRecipients: MailAddress[];

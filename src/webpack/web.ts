@@ -54,7 +54,7 @@ const tsConfigCompilerOptions: ts.CompilerOptions = (() => {
 
     if (environmentSate.development) {
         if (!tsConfig.options.paths) {
-            tsConfig.options.paths =  {};
+            tsConfig.options.paths = {};
         }
         tsConfig.options.paths["src/web/src/environments/*"] = [webSrcEnvPath() + "/*"];
     }
@@ -143,6 +143,17 @@ const config = buildBaseConfig(
                 compilerOptions: tsConfigCompilerOptions,
             }),
         ],
+        optimization: {
+            splitChunks: {
+                chunks: "all",
+                name: true,
+                cacheGroups: {
+                    vendors: {
+                        test: /([\\/]node_modules[\\/])|([\\/]src[\\/]web[\\/]src[\\/]vendor[\\/])/,
+                    },
+                },
+            },
+        },
     },
     {
         tsConfigFile,

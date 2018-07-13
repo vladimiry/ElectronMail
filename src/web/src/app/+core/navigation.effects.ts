@@ -90,6 +90,7 @@ export class NavigationEffects {
                         },
                     }],
                 })),
+                of(CORE_ACTIONS.UpdateOverlayIcon({hasLoggedOut: false, unread: 0})),
             );
 
             return concatenated.pipe(

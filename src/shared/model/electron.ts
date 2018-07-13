@@ -19,7 +19,8 @@ export interface ElectronContextLocations {
     readonly browserWindowPage: string;
     readonly icon: string;
     readonly trayIcon: string;
-    readonly trayIconOverlay: string;
+    readonly trayIconUnreadOverlay: string;
+    readonly trayIconLoggedOutOverlay: string;
     readonly userData: string;
     readonly preload: {
         browserWindow: string;

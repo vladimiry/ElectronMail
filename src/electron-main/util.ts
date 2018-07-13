@@ -68,7 +68,8 @@ function initLocations(runtimeEnvironment: RuntimeEnvironment, paths?: ContextIn
         userData: userDataDir,
         icon: buildAppPath(largeIcon),
         trayIcon: buildAppPath(os.platform() === "darwin" ? "./assets/icons/mac/icon.png" : largeIcon),
-        trayIconOverlay: buildAppPath("./assets/icons/tray-icon-overlay.png"),
+        trayIconUnreadOverlay: buildAppPath("./assets/icons/tray-icon-unread-overlay.png"),
+        trayIconLoggedOutOverlay: buildAppPath("./assets/icons/tray-icon-loggedout-overlay.png"),
         browserWindowPage: (process.env.NODE_ENV as BuildEnvironment) === "development" ? "http://localhost:8080/index.html"
             : formatFileUrl(path.join(appDir, "./web/index.html")),
         preload: {

@@ -2,8 +2,8 @@
     <div class="accounts-block p-2">
         <div class="btn-group accounts-list" dropdown placement="bottom right"
              [ngStyle]="!accounts.length && {'visibility': 'hidden'}">
-            <div class="unread-summary" *ngIf="accounts.length > 1 && (accountsUnreadSummary$ | async)">
-                <span class="badge badge-danger">{{ accountsUnreadSummary$ | async }}</span>
+            <div class="unread-summary" *ngIf="accounts.length > 1 && (loggedInAndUnreadSummarySelector$ | async)?.unread as unreadSummary">
+                <span class="badge badge-danger">{{ unreadSummary | async }}</span>
             </div>
             <button type="button" class="btn btn-warning-light dropdown-toggle list-group-item-warning"
                     dropdownToggle *ngIf="selectedAccount">

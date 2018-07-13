@@ -280,7 +280,7 @@ export const initEndpoints = async (ctx: Context): Promise<Endpoints> => {
         ...(await (async () => {
             const trayIconsService = await prepareTrayIcons(ctx.locations);
             const result: Pick<Endpoints, "updateOverlayIcon"> = {
-                updateOverlayIcon: ({unread}) => from((async () => {
+                updateOverlayIcon: ({hasLoggedOut, unread}) => from((async () => {
                     const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
                     const tray = ctx.uiContext && ctx.uiContext.tray;
 
@@ -288,7 +288,8 @@ export const initEndpoints = async (ctx: Context): Promise<Endpoints> => {
                         return EMPTY.toPromise();
                     }
 
-                    const {main, buildOverlay} = trayIconsService;
+                    const {buildOverlay} = trayIconsService;
+                    const main = hasLoggedOut ? trayIconsService.mainLoggedOut : trayIconsService.main;
 
                     if (unread > 0) {
                         const overlayJimp = buildOverlay(unread);
@@ -323,6 +324,7 @@ export const initEndpoints = async (ctx: Context): Promise<Endpoints> => {
 
 export async function prepareTrayIcons(locations: ElectronContextLocations): Promise<{
     main: { native: NativeImage, jimp: Jimp, w: number, h: number },
+    mainLoggedOut: { native: NativeImage, jimp: Jimp, w: number, h: number },
     buildOverlay: (unread: number) => Jimp,
 }> {
     const main = await (async () => {
@@ -336,12 +338,27 @@ export async function prepareTrayIcons(locations: ElectronContextLocations): Pro
             h: jimp.bitmap.height,
         });
     })();
+    const mainLoggedOut = await (async () => {
+        const overlayNative = nativeImage.createFromPath(locations.trayIconLoggedOutOverlay);
+        const overlayJimp = await Jimp.read(overlayNative.toPNG());
+        const composedJimp = main.jimp.clone().composite(overlayJimp, 0, 0);
+        const composedBuffer = await promisify(composedJimp.getBuffer.bind(composedJimp))(Jimp.MIME_PNG);
+        const composedNative = nativeImage.createFromBuffer(composedBuffer);
+
+        return Object.freeze({
+            native: composedNative,
+            jimp: composedJimp,
+            w: composedJimp.bitmap.width,
+            h: composedJimp.bitmap.height,
+        });
+    })();
+
     const buildOverlay = await (async () => {
         const factors = {overlay: .75, text: .9};
         const size = {w: Math.round(main.w * factors.overlay), h: Math.round(main.h * factors.overlay)};
-        const imageSource = await Jimp.read(nativeImage.createFromPath(locations.trayIconOverlay).toPNG());
+        const imageSource = await Jimp.read(nativeImage.createFromPath(locations.trayIconUnreadOverlay).toPNG());
         const jimp = await promisify(imageSource.resize.bind(imageSource))(size.w, size.h);
-        // TODO there is no "loadFont" function signature provided by Jimp's declaration file
+        // TODO there is no "loadFont" function signature described in Jimp's declaration file
         const font = await (Jimp as any).loadFont(Jimp.FONT_SANS_64_WHITE);
         const fontSize = 64;
         const printX = [
@@ -363,6 +380,7 @@ export async function prepareTrayIcons(locations: ElectronContextLocations): Pro
 
     return {
         main,
+        mainLoggedOut,
         buildOverlay,
     };
 }

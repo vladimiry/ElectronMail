@@ -126,13 +126,11 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
     }
 
     pageOrConfigChangeReaction(account: WebAccount) {
-        this.optionsStore.dispatch(ACCOUNTS_ACTIONS.Login({account, webView: this.webView}));
+        this.optionsStore.dispatch(ACCOUNTS_ACTIONS.TryToLogin({account, webView: this.webView}));
     }
 
     onKeePassPassword(password: string) {
-        this.optionsStore.dispatch(
-            ACCOUNTS_ACTIONS.Login({webView: this.webView, account: this.account$.getValue(), password}),
-        );
+        this.optionsStore.dispatch(ACCOUNTS_ACTIONS.TryToLogin({webView: this.webView, account: this.account$.getValue(), password}));
     }
 
     ngAfterViewInit() {
@@ -180,7 +178,7 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
     pageLoadingStartHandler = () => {
         this.notificationsCleanupTrigger();
 
-        this.optionsStore.dispatch(ACCOUNTS_ACTIONS.SetupNotifications({
+        this.optionsStore.dispatch(ACCOUNTS_ACTIONS.SetupNotificationChannel({
             account: this.account$.getValue(),
             webView: this.webView,
             unSubscribeOn: new Promise((resolve) => this.notificationsCleanupTrigger = resolve),

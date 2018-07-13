@@ -51,8 +51,8 @@ export class AccountsEffects {
     );
 
     @Effect()
-    accountLogin$ = this.actions$.pipe(
-        filter(ACCOUNTS_ACTIONS.is.Login),
+    tryToLogin$ = this.actions$.pipe(
+        filter(ACCOUNTS_ACTIONS.is.TryToLogin),
         switchMap(({payload}) => {
             const {account, webView} = payload;
             const {accountConfig, notifications} = account;
@@ -152,11 +152,11 @@ export class AccountsEffects {
         }));
 
     @Effect()
-    accountPageLoadingStart$ = (() => {
+    setupNotificationChannel$ = (() => {
         const notifications: Array<Observable<ReturnType<typeof ACCOUNTS_ACTIONS.NotificationPatch>>> = [];
 
         return this.actions$.pipe(
-            filter(ACCOUNTS_ACTIONS.is.SetupNotifications),
+            filter(ACCOUNTS_ACTIONS.is.SetupNotificationChannel),
             switchMap(({payload}) => {
                 const {account, webView, unSubscribeOn} = payload;
                 const {type, login, entryUrl} = account.accountConfig;
@@ -178,17 +178,6 @@ export class AccountsEffects {
             catchError((error) => of(CORE_ACTIONS.Fail(error))),
         );
     })();
-
-    @Effect()
-    updateOverlayIcon$ = this.actions$.pipe(
-        filter(ACCOUNTS_ACTIONS.is.UpdateOverlayIcon),
-        switchMap(({payload}) => this.electronService
-            .callIpcMain("updateOverlayIcon")({unread: payload.count})
-            .pipe(
-                mergeMap(() => []),
-                catchError((error) => of(CORE_ACTIONS.Fail(error))),
-            )),
-    );
 
     constructor(private electronService: ElectronService,
                 private actions$: Actions,

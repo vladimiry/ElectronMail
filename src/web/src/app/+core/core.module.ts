@@ -1,6 +1,7 @@
 import {ErrorHandler, NgModule, Optional, SkipSelf} from "@angular/core";
 import {EffectsModule} from "@ngrx/effects";
 
+import {CoreEffects} from "./core.effects";
 import {ElectronService} from "./electron.service";
 import {ErrorEffects} from "./error.effects";
 import {GlobalErrorHandler} from "./global-error-hander.service";
@@ -8,6 +9,7 @@ import {NavigationEffects} from "./navigation.effects";
 
 @NgModule({
     imports: [
+        EffectsModule.forFeature([CoreEffects]),
         EffectsModule.forFeature([ErrorEffects]),
         EffectsModule.forFeature([NavigationEffects]),
     ],

@@ -486,11 +486,18 @@ test.beforeEach(async (t) => {
                 },
                 nativeImage: {
                     createFromPath: sinon.stub().returns({toPNG: sinon.spy}),
+                    createFromBuffer: sinon.stub(),
                 },
             },
             "jimp": {
                 read: sinon.stub().returns(Promise.resolve({
                     resize: (w: any, h: any, cb: any) => cb(),
+                    clone: sinon.stub().returns({
+                        composite: () => ({
+                            bitmap: {width: 0, height: 0},
+                            getBuffer: (format: any, cb: any) => cb(),
+                        }),
+                    }),
                     bitmap: {width: 0, height: 0},
                 })),
                 loadFont: sinon.spy(),

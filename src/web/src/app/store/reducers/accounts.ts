@@ -111,6 +111,18 @@ export const selectedAccountSelector = createSelector(
     stateSelector,
     ({selectedLogin, accounts}) => accounts.find(({accountConfig}) => accountConfig.login === selectedLogin),
 );
-export const accountsUnreadSummarySelector = createSelector(accountsSelector, (accounts) => {
-    return accounts.reduce((sum, {notifications}) => sum + notifications.unread, 0);
+export const accountsLoggedInAndUnreadSummarySelector = createSelector(accountsSelector, (accounts) => {
+    return accounts.reduce(
+        (accumulator, {notifications}) => {
+            accumulator.unread += notifications.unread;
+            if (!notifications.loggedIn) {
+                accumulator.hasLoggedOut = true;
+            }
+            return accumulator;
+        },
+        {
+            hasLoggedOut: false,
+            unread: 0,
+        },
+    );
 });

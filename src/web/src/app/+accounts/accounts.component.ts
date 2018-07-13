@@ -1,20 +1,20 @@
-import {distinctUntilChanged, map, takeUntil} from "rxjs/operators";
-import {Subject} from "rxjs";
 import {Component, OnDestroy, OnInit} from "@angular/core";
+import {distinctUntilChanged, map, takeUntil} from "rxjs/operators";
 import {Store} from "@ngrx/store";
+import {Subject} from "rxjs";
 
-import {WebAccount} from "_@shared/model/account";
-import {SETTINGS_OUTLET, SETTINGS_PATH} from "_@web/src/app/app.constants";
-import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
 import {
+    accountsLoggedInAndUnreadSummarySelector,
     accountsSelector,
-    accountsUnreadSummarySelector,
     initializedSelector,
     selectedAccountSelector,
     selectedLoginSelector,
     State,
 } from "_@web/src/app/store/reducers/accounts";
+import {ACCOUNTS_ACTIONS, CORE_ACTIONS, NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
 import {configCompactLayoutSelector, progressSelector} from "_@web/src/app/store/reducers/options";
+import {SETTINGS_OUTLET, SETTINGS_PATH} from "_@web/src/app/app.constants";
+import {WebAccount} from "_@shared/model/account";
 
 @Component({
     selector: `email-securely-app-accounts`,
@@ -24,12 +24,13 @@ import {configCompactLayoutSelector, progressSelector} from "_@web/src/app/store
 })
 export class AccountsComponent implements OnInit, OnDestroy {
     accounts$ = this.store.select(accountsSelector);
-    accountsUnreadSummary$ = this.store.select(accountsUnreadSummarySelector);
+    loggedInAndUnreadSummarySelector$ = this.store.select(accountsLoggedInAndUnreadSummarySelector);
     initialized$ = this.store.select(initializedSelector);
     selectedLogin$ = this.store.select(selectedLoginSelector);
     compactLayout$ = this.store.select(configCompactLayoutSelector);
-    togglingCompactLayout$ = this.store.select(progressSelector)
-        .pipe(map(({togglingCompactLayout}) => togglingCompactLayout));
+    togglingCompactLayout$ = this.store.select(progressSelector).pipe(
+        map(({togglingCompactLayout}) => togglingCompactLayout),
+    );
     accounts: WebAccount[] = [];
     selectedAccount?: WebAccount;
     unSubscribe$ = new Subject();
@@ -41,14 +42,12 @@ export class AccountsComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.unSubscribe$))
             .subscribe((accounts) => this.accounts = accounts);
 
-        this.accountsUnreadSummary$
+        this.loggedInAndUnreadSummarySelector$
             .pipe(
-                distinctUntilChanged(),
+                distinctUntilChanged((prev, curr) => prev.hasLoggedOut === curr.hasLoggedOut && prev.unread === curr.unread),
                 takeUntil(this.unSubscribe$),
             )
-            .subscribe((unread) => {
-                return this.store.dispatch(ACCOUNTS_ACTIONS.UpdateOverlayIcon({count: unread}));
-            });
+            .subscribe(({hasLoggedOut, unread}) => this.store.dispatch(CORE_ACTIONS.UpdateOverlayIcon({hasLoggedOut, unread})));
 
         this.store.select(selectedAccountSelector)
             .pipe(takeUntil(this.unSubscribe$))

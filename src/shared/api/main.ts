@@ -39,7 +39,7 @@ export interface Endpoints {
     toggleBrowserWindow: ApiMethod<{ forcedState?: boolean }, never>;
     toggleCompactLayout: ApiMethodNoArgument<Config>;
     updateAccount: ApiMethod<AccountConfigPatch, Settings>;
-    updateOverlayIcon: ApiMethod<{ unread: number }, never>;
+    updateOverlayIcon: ApiMethod<{ hasLoggedOut: boolean, unread: number }, never>;
 }
 
 export const IPC_MAIN_API = new IpcMainApiService<Endpoints>({channel: `${process.env.APP_ENV_PACKAGE_NAME}:ipcMain-api`});

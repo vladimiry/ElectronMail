@@ -143,17 +143,19 @@ const config = buildBaseConfig(
                 compilerOptions: tsConfigCompilerOptions,
             }),
         ],
-        optimization: {
-            splitChunks: {
-                chunks: "all",
-                name: true,
-                cacheGroups: {
-                    vendors: {
-                        test: /([\\/]node_modules[\\/])|([\\/]src[\\/]web[\\/]src[\\/]vendor[\\/])/,
+        ...(environment === "test" ? {} : {
+            optimization: {
+                splitChunks: {
+                    chunks: "all",
+                    name: true,
+                    cacheGroups: {
+                        vendors: {
+                            test: /([\\/]node_modules[\\/])|([\\/]src[\\/]web[\\/]src[\\/]vendor[\\/])/,
+                        },
                     },
                 },
             },
-        },
+        }),
     },
     {
         tsConfigFile,

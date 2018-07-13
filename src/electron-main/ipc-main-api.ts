@@ -2,6 +2,7 @@ import aboutWindow from "about-window";
 import assert from "assert";
 import Jimp from "jimp";
 import keytar from "keytar";
+import path from "path";
 import {app, nativeImage, NativeImage, shell} from "electron";
 import {EMPTY, from} from "rxjs";
 import {isWebUri} from "valid-url";
@@ -9,7 +10,6 @@ import {KeePassHttpClient} from "keepasshttp-client";
 import {promisify} from "util";
 
 import {AccountConfig} from "src/shared/model/account";
-import {BuildEnvironment} from "src/shared/model/common";
 import {buildSettingsAdapter, handleKeePassRequestError, toggleBrowserWindow} from "./util";
 import {Context} from "./model";
 import {ElectronContextLocations} from "src/shared/model/electron";
@@ -99,11 +99,7 @@ export const initEndpoints = async (ctx: Context): Promise<Endpoints> => {
         openAboutWindow: () => {
             aboutWindow({
                 icon_path: ctx.locations.icon,
-                package_json_dir: (process.env.NODE_ENV as BuildEnvironment) === "development" ? process.cwd() : ctx.locations.app,
-                // TODO figure why ""about-window" doesn't automatically resolve properties like "bugs" or "description" from package.json
-                // properties are fulled in package.json, both original and modified by "electron-builder"
-                description: String(process.env.APP_ENV_PACKAGE_DESCRIPTION),
-                bug_report_url: String(process.env.APP_ENV_PACKAGE_BUGS_URL),
+                package_json_dir: path.join(ctx.locations.app, ".."),
             });
             return EMPTY;
         },

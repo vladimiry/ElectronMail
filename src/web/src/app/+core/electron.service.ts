@@ -3,13 +3,13 @@ import {Injectable, NgZone} from "@angular/core";
 import {Model} from "pubsub-to-stream-api";
 import {of, throwError, from} from "rxjs";
 
-import {AccountType} from "_@shared/model/account";
-import {ElectronExposure} from "_@shared/model/electron";
-import {IPC_MAIN_API} from "_@shared/api/main";
-import {KeePassClientConf, KeePassRef} from "_@shared/model/keepasshttp";
-import {ONE_SECOND_MS} from "_@shared/constants";
-import {PROTONMAIL_IPC_WEBVIEW_API, ProtonmailApi} from "_@shared/api/webview/protonmail";
-import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi} from "_@shared/api/webview/tutanota";
+import {AccountType} from "src/shared/model/account";
+import {ElectronExposure} from "src/shared/model/electron";
+import {IPC_MAIN_API} from "src/shared/api/main";
+import {KeePassClientConf, KeePassRef} from "src/shared/model/keepasshttp";
+import {ONE_SECOND_MS} from "src/shared/constants";
+import {PROTONMAIL_IPC_WEBVIEW_API, ProtonmailApi} from "src/shared/api/webview/protonmail";
+import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi} from "src/shared/api/webview/tutanota";
 import {WebViewApiService} from "electron-rpc-api/dist";
 
 const ipcRenderer: any = ((window as any).__ELECTRON_EXPOSURE__ as ElectronExposure).ipcRenderer;

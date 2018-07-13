@@ -2,7 +2,7 @@ import deepEqual from "deep-equal";
 import {app, BrowserWindow} from "electron";
 
 import {activateBrowserWindow} from "./util";
-import {BuildEnvironment} from "_@shared/model/common";
+import {BuildEnvironment} from "src/shared/model/common";
 import {Context} from "./model";
 
 export async function initBrowserWindow(ctx: Context): Promise<BrowserWindow> {

@@ -1,8 +1,8 @@
 import {BaseResponse, Id, IdTuple, RequestParams, TypeRef} from "./model/index";
-import {Omit} from "_@shared/types";
+import {Omit} from "src/shared/types";
 
 import * as Model from "./model";
-import {resolveWebClientApi} from "_@webview-preload/tutanota/tutanota-api";
+import {resolveWebClientApi} from "src/electron-preload/webview/tutanota/tutanota-api";
 
 export async function fetchEntity<T extends BaseResponse, TypeRefType extends TypeRef<T>>(
     typeRef: TypeRef<T>,

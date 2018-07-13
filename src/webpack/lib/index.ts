@@ -2,7 +2,7 @@ import path from "path";
 import UglifyJsPlugin from "uglifyjs-webpack-plugin";
 import webpack, {Configuration} from "webpack";
 import webpackMerge from "webpack-merge";
-import {BuildEnvironment} from "_@shared/model/common";
+import {BuildEnvironment} from "src/shared/model/common";
 import {TsconfigPathsPlugin} from "tsconfig-paths-webpack-plugin";
 
 type BuildConfig = (configPatch: Configuration, options?: { tsConfigFile?: string }) => Configuration;

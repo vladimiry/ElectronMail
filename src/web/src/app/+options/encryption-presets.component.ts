@@ -4,8 +4,8 @@ import {Component, Input, OnDestroy, OnInit} from "@angular/core";
 import {FormGroup} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
-import {ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "_@shared/model/options";
-import {configSelector, State} from "_@web/src/app/store/reducers/options";
+import {ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "src/shared/model/options";
+import {configSelector, State} from "src/web/src/app/store/reducers/options";
 
 @Component({
     selector: `email-securely-app-encryption-presets`,

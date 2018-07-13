@@ -1,7 +1,7 @@
 import {Component} from "@angular/core";
 import {Store} from "@ngrx/store";
 
-import {settingsKeePassClientConfSelector, State} from "_@web/src/app/store/reducers/options";
+import {settingsKeePassClientConfSelector, State} from "src/web/src/app/store/reducers/options";
 
 @Component({
     selector: `email-securely-app-keepass-associate-settings`,

@@ -4,12 +4,12 @@ import {Injectable} from "@angular/core";
 import {merge, Observable, of, throwError} from "rxjs";
 import {Store} from "@ngrx/store";
 
-import {ACCOUNTS_ACTIONS, CORE_ACTIONS, OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
-import {ElectronExposure} from "_@shared/model/electron";
-import {ElectronService} from "_@web/src/app/+core/electron.service";
-import {ONE_SECOND_MS} from "_@shared/constants";
-import {State} from "_@web/src/app/store/reducers/accounts";
-import {Timestamp} from "_@shared/types";
+import {ACCOUNTS_ACTIONS, CORE_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
+import {ElectronExposure} from "src/shared/model/electron";
+import {ElectronService} from "src/web/src/app/+core/electron.service";
+import {ONE_SECOND_MS} from "src/shared/constants";
+import {State} from "src/web/src/app/store/reducers/accounts";
+import {Timestamp} from "src/shared/types";
 
 const rateLimiter = ((window as any).__ELECTRON_EXPOSURE__ as ElectronExposure).requireNodeRollingRateLimiter();
 

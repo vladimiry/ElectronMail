@@ -3,10 +3,10 @@ import {Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output} 
 import {distinctUntilChanged, scan, switchMap, takeUntil, withLatestFrom} from "rxjs/operators";
 import {Store} from "@ngrx/store";
 
-import {CORE_ACTIONS} from "_@web/src/app/store/actions";
+import {CORE_ACTIONS} from "src/web/src/app/store/actions";
 import {ElectronService} from "../+core/electron.service";
-import {KeePassClientConf, KeePassRef} from "_@shared/model/keepasshttp";
-import {State} from "_@web/src/app/store/reducers/root";
+import {KeePassClientConf, KeePassRef} from "src/shared/model/keepasshttp";
+import {State} from "src/web/src/app/store/reducers/root";
 
 @Component({
     selector: `email-securely-app-keepass-request`,

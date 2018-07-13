@@ -3,8 +3,8 @@ import {catchError, filter, mergeMap, switchMap} from "rxjs/operators";
 import {Injectable} from "@angular/core";
 import {of} from "rxjs";
 
-import {CORE_ACTIONS} from "_@web/src/app/store/actions";
-import {ElectronService} from "_@web/src/app/+core/electron.service";
+import {CORE_ACTIONS} from "src/web/src/app/store/actions";
+import {ElectronService} from "src/web/src/app/+core/electron.service";
 
 @Injectable()
 export class CoreEffects {

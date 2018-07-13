@@ -1,8 +1,8 @@
 import {ActionReducer} from "@ngrx/store";
 import {routerReducer, RouterReducerState} from "@ngrx/router-store";
 
-import {BuildEnvironment} from "_@shared/model/common";
-import {NAVIGATION_ACTIONS, ROOT_ACTIONS} from "_@web/src/app/store/actions";
+import {BuildEnvironment} from "src/shared/model/common";
+import {NAVIGATION_ACTIONS, ROOT_ACTIONS} from "src/web/src/app/store/actions";
 
 export interface State {
     router?: RouterReducerState;

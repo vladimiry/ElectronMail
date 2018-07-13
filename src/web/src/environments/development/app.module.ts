@@ -3,9 +3,9 @@ import {createInputTransfer, createNewHosts, removeNgStyles} from "@angularclass
 import {Store} from "@ngrx/store";
 import {take} from "rxjs/operators";
 
-import {APP_MODULE_NG_CONF} from "_@web/src/app/app.module.constants.ts";
-import {ROOT_ACTIONS} from "_@web/src/app/store/actions";
-import {State} from "_@web/src/app/store/reducers/root";
+import {APP_MODULE_NG_CONF} from "src/web/src/app/app.module.constants";
+import {ROOT_ACTIONS} from "src/web/src/app/store/actions";
+import {State} from "src/web/src/app/store/reducers/root";
 
 @NgModule(APP_MODULE_NG_CONF)
 export class AppModule {

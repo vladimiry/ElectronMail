@@ -5,7 +5,7 @@ import webpack, {Configuration} from "webpack";
 import {AngularCompilerPlugin, PLATFORM} from "@ngtools/webpack";
 
 import {buildBaseConfig, environment, environmentSate, outputPath, rootPath, srcPath} from "./lib";
-import {BuildEnvironment} from "_@shared/model/common";
+import {BuildEnvironment} from "src/shared/model/common";
 import webpackMerge = require("webpack-merge");
 
 // tslint:disable:no-var-requires
@@ -53,7 +53,10 @@ const tsConfigCompilerOptions: ts.CompilerOptions = (() => {
     const tsConfig = readConfiguration(tsConfigFile);
 
     if (environmentSate.development) {
-        tsConfig.options.paths["_@web/src/environments/*"] = [webSrcEnvPath() + "/*"];
+        if (!tsConfig.options.paths) {
+            tsConfig.options.paths =  {};
+        }
+        tsConfig.options.paths["src/web/src/environments/*"] = [webSrcEnvPath() + "/*"];
     }
 
     return tsConfig.options;

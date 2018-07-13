@@ -12,13 +12,13 @@ const configs = [
     ),
     buildRendererConfig(
         {
-            "electron-preload/webview/protonmail/index": srcPath("./electron-preload/webview/protonmail/index.ts"),
+            "electron-preload/webview/protonmail": srcPath("./electron-preload/webview/protonmail/index.ts"),
         },
         srcPath("./electron-preload/webview/protonmail/tsconfig.json"),
     ),
     buildRendererConfig(
         {
-            "electron-preload/webview/tutanota/index": srcPath("./electron-preload/webview/tutanota/index.ts"),
+            "electron-preload/webview/tutanota": srcPath("./electron-preload/webview/tutanota/index.ts"),
         },
         srcPath("./electron-preload/webview/tutanota/tsconfig.json"),
     ),

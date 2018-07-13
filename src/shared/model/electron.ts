@@ -1,4 +1,4 @@
-import {AccountType} from "_@shared/model/account";
+import {AccountType} from "src/shared/model/account";
 
 export interface ElectronExposure {
     ipcRenderer: {

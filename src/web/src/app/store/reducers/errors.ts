@@ -1,9 +1,9 @@
 import {createFeatureSelector, createSelector} from "@ngrx/store";
 import {UnionOf} from "unionize";
 
-import * as fromRoot from "_@web/src/app/store/reducers/root";
-import {CORE_ACTIONS} from "_@web/src/app/store/actions";
-import {ERRORS_LIMIT} from "_@web/src/app/app.constants";
+import * as fromRoot from "src/web/src/app/store/reducers/root";
+import {CORE_ACTIONS} from "src/web/src/app/store/actions";
+import {ERRORS_LIMIT} from "src/web/src/app/app.constants";
 
 export const featureName = "errors";
 

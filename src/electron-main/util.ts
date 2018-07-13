@@ -7,14 +7,14 @@ import {app} from "electron";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Model as StoreModel, Store} from "fs-json-store";
 
-import {BuildEnvironment} from "_@shared/model/common";
-import {Config, configEncryptionPresetValidator, Settings, settingsAccountLoginUniquenessValidator} from "_@shared/model/options";
+import {BuildEnvironment} from "src/shared/model/common";
+import {Config, configEncryptionPresetValidator, Settings, settingsAccountLoginUniquenessValidator} from "src/shared/model/options";
 import {Context, ContextInitOptions, ContextInitOptionsPaths, RuntimeEnvironment} from "./model";
-import {ElectronContextLocations} from "_@shared/model/electron";
+import {ElectronContextLocations} from "src/shared/model/electron";
 import {INITIAL_STORES} from "./constants";
-import {MessageFieldContainer} from "_@shared/model/container";
+import {MessageFieldContainer} from "src/shared/model/container";
 import {Model as KeePassHttpClientModel} from "keepasshttp-client";
-import {RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "_@shared/constants";
+import {RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
 
 export async function initContext(options: ContextInitOptions = {}): Promise<Context> {
     const runtimeEnvironment: RuntimeEnvironment = Boolean(process.env[RUNTIME_ENV_E2E]) ? "e2e" : "production";
@@ -76,8 +76,8 @@ function initLocations(runtimeEnvironment: RuntimeEnvironment, paths?: ContextIn
             browserWindow: buildAppPath("./electron-preload/browser-window.js"),
             browserWindowE2E: buildAppPath("./electron-preload/browser-window-e2e.js"),
             webView: {
-                protonmail: formatFileUrl(buildAppPath("./electron-preload/webview/protonmail/index.js")),
-                tutanota: formatFileUrl(buildAppPath("./electron-preload/webview/tutanota/index.js")),
+                protonmail: formatFileUrl(buildAppPath("./electron-preload/webview/protonmail.js")),
+                tutanota: formatFileUrl(buildAppPath("./electron-preload/webview/tutanota.js")),
             },
         },
     };

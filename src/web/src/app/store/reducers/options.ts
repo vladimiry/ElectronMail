@@ -1,10 +1,10 @@
 import {createFeatureSelector, createSelector} from "@ngrx/store";
 
 import * as fromRoot from "./root";
-import {Config, Settings} from "_@shared/model/options";
-import {ElectronContextLocations} from "_@shared/model/electron";
-import {OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
-import {pickBaseConfigProperties} from "_@shared/util";
+import {Config, Settings} from "src/shared/model/options";
+import {ElectronContextLocations} from "src/shared/model/electron";
+import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
+import {pickBaseConfigProperties} from "src/shared/util";
 import {UnionOf} from "unionize";
 import {updateIn} from "hydux-mutator";
 

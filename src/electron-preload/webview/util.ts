@@ -1,7 +1,7 @@
 import {EMPTY} from "rxjs";
 import {Keyboard} from "keysim";
 
-import {ONE_SECOND_MS} from "_@shared/constants";
+import {ONE_SECOND_MS} from "src/shared/constants";
 
 export const waitElements = <E extends HTMLElement, T extends { [k: string]: () => E }>(
     queries: T,

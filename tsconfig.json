@@ -20,17 +20,6 @@
     ],
     "outDir": "./app",
     "baseUrl": ".",
-    "paths": {
-      "_@webview-preload/*": [
-        "./src/electron-preload/webview/*"
-      ],
-      "_@shared/*": [
-        "./src/shared/*"
-      ],
-      "_@web/*": [
-        "./src/web/*"
-      ]
-    },
     "typeRoots": [
       "./node_modules/@types",
       "./src/@types"

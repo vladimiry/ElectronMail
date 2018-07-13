@@ -1,6 +1,6 @@
 import {ipcRenderer} from "electron";
 
-import {ElectronWindow} from "_@shared/model/electron";
+import {ElectronWindow} from "src/shared/model/electron";
 
 const exposure: ElectronWindow = {
     __ELECTRON_EXPOSURE__: {

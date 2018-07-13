@@ -7,14 +7,14 @@ import rewiremock from "rewiremock";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter/encryption-adapter";
 import {Fs} from "fs-json-store";
 
-import {AccountConfigCreatePatchByType, AccountConfigPatch, PasswordFieldContainer} from "_@shared/model/container";
-import {pickBaseConfigProperties} from "_@shared/util";
-import {BaseConfig, Config, Settings} from "_@shared/model/options";
+import {AccountConfigCreatePatchByType, AccountConfigPatch, PasswordFieldContainer} from "src/shared/model/container";
+import {pickBaseConfigProperties} from "src/shared/util";
+import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {buildSettingsAdapter, initContext} from "./util";
 import {Context} from "./model";
-import {Endpoints} from "_@shared/api/main";
+import {Endpoints} from "src/shared/api/main";
 import {INITIAL_STORES, KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "./constants";
-import {StatusCode, StatusCodeError} from "_@shared/model/error";
+import {StatusCode, StatusCodeError} from "src/shared/model/error";
 
 interface TestContext {
     ctx: Context;
@@ -443,7 +443,7 @@ test.beforeEach(async (t) => {
         const openExternalSpy = sinon.spy();
 
         t.context.mocks = {
-            "_@shared/api/main": {
+            "src/shared/api/main": {
                 IPC_MAIN_API: {
                     registerApi: sinon.spy(),
                 },
@@ -568,6 +568,6 @@ test.beforeEach(async (t) => {
 
     t.context.ctx = ctx;
     t.context.endpoints = await t.context.mocked["./ipc-main-api"].initEndpoints(t.context.ctx);
-    t.context.mocks["_@shared/api/main"].IPC_MAIN_API.registerApi.calledWithExactly(t.context.endpoints);
+    t.context.mocks["src/shared/api/main"].IPC_MAIN_API.registerApi.calledWithExactly(t.context.endpoints);
     // TODO make sure "IPC_MAIN_API.register" has been called
 });

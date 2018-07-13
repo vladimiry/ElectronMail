@@ -9,11 +9,11 @@ import {
     electronLocationsSelector,
     settingsKeePassClientConfSelector,
     State as OptionsState,
-} from "_@web/src/app/store/reducers/options";
-import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "_@web/src/app/store/actions";
-import {KeePassRef} from "_@shared/model/keepasshttp";
-import {State} from "_@web/src/app/store/reducers/accounts";
-import {WebAccount} from "_@shared/model/account";
+} from "src/web/src/app/store/reducers/options";
+import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
+import {KeePassRef} from "src/shared/model/keepasshttp";
+import {State} from "src/web/src/app/store/reducers/accounts";
+import {WebAccount} from "src/shared/model/account";
 
 @Component({
     selector: `email-securely-app-account`,

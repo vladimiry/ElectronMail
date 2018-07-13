@@ -1,6 +1,6 @@
 import {ofType, unionize} from "unionize";
 
-import {State} from "_@web/src/app/store/reducers/root";
+import {State} from "src/web/src/app/store/reducers/root";
 
 export const ROOT_ACTIONS = unionize({
         HmrStateRestoreAction: ofType<State>(),

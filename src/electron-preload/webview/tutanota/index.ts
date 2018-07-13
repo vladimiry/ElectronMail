@@ -2,15 +2,15 @@ import {authenticator} from "otplib";
 import {distinctUntilChanged, map, switchMap} from "rxjs/operators";
 import {EMPTY, from, interval, merge, Observable, of, Subscriber, throwError} from "rxjs";
 
-import {AccountNotificationType, WebAccountTutanota} from "_@shared/model/account";
-import {fetchEntitiesRange} from "_@webview-preload/tutanota/lib/rest";
-import {fetchMessages} from "_@webview-preload/tutanota/lib/fetch";
-import {getLocationHref, submitTotpToken, typeInputValue, waitElements} from "_@webview-preload/util";
-import {MailFolder, MailTypeRef, User} from "_@webview-preload/tutanota/lib/rest/model";
-import {NOTIFICATION_LOGGED_IN_POLLING_INTERVAL, NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL} from "_@webview-preload/common";
-import {ONE_SECOND_MS} from "_@shared/constants";
-import {resolveWebClientApi, WebClientApi} from "_@webview-preload/tutanota/tutanota-api";
-import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi} from "_@shared/api/webview/tutanota";
+import {AccountNotificationType, WebAccountTutanota} from "src/shared/model/account";
+import {fetchEntitiesRange} from "src/electron-preload/webview/tutanota/lib/rest";
+import {fetchMessages} from "src/electron-preload/webview/tutanota/lib/fetch";
+import {getLocationHref, submitTotpToken, typeInputValue, waitElements} from "src/electron-preload/webview/util";
+import {MailFolder, MailTypeRef, User} from "src/electron-preload/webview/tutanota/lib/rest/model";
+import {NOTIFICATION_LOGGED_IN_POLLING_INTERVAL, NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL} from "src/electron-preload/webview/common";
+import {ONE_SECOND_MS} from "src/shared/constants";
+import {resolveWebClientApi, WebClientApi} from "src/electron-preload/webview/tutanota/tutanota-api";
+import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi} from "src/shared/api/webview/tutanota";
 
 const WINDOW = window as any;
 const state: { inboxMailFolder?: MailFolder | undefined; } = {};

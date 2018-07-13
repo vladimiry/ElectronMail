@@ -1,7 +1,7 @@
 import {app, Menu, Tray} from "electron";
 
 import {Context} from "./model";
-import {Endpoints} from "_@shared/api/main";
+import {Endpoints} from "src/shared/api/main";
 import {toggleBrowserWindow} from "./util";
 
 export async function initTray(ctx: Context, endpoints: Endpoints): Promise<Tray> {

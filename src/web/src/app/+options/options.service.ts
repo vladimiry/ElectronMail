@@ -1,8 +1,8 @@
 import {Injectable} from "@angular/core";
 import {Action} from "@ngrx/store";
 
-import {SETTINGS_OUTLET, SETTINGS_PATH} from "_@web/src/app/app.constants";
-import {NAVIGATION_ACTIONS} from "_@web/src/app/store/actions";
+import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
+import {NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
 
 @Injectable()
 export class OptionsService {

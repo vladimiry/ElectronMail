@@ -1,9 +1,9 @@
 import {Observable, Subscriber} from "rxjs";
 
-import {fetchEntitiesList, fetchEntitiesRange, fetchEntity, Model as M} from "_@webview-preload/tutanota/lib/rest";
-import {MailFolderRef} from "_@webview-preload/tutanota/lib/rest/model/entity";
-import {resolveWebClientApi} from "_@webview-preload/tutanota/tutanota-api";
-import {TutanotaApiFetchMessagesInput, TutanotaApiFetchMessagesOutput} from "_@shared/api/webview/tutanota";
+import {fetchEntitiesList, fetchEntitiesRange, fetchEntity, Model as M} from "src/electron-preload/webview/tutanota/lib/rest";
+import {MailFolderRef} from "src/electron-preload/webview/tutanota/lib/rest/model/entity";
+import {resolveWebClientApi} from "src/electron-preload/webview/tutanota/tutanota-api";
+import {TutanotaApiFetchMessagesInput, TutanotaApiFetchMessagesOutput} from "src/shared/api/webview/tutanota";
 
 const MAIL_FOLDER_FETCH_PORTION_SIZE = 500;
 

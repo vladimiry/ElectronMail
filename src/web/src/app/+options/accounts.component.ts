@@ -1,7 +1,7 @@
 import {Component} from "@angular/core";
 import {Store} from "@ngrx/store";
 
-import {settingsAccountsSelector, State} from "_@web/src/app/store/reducers/options";
+import {settingsAccountsSelector, State} from "src/web/src/app/store/reducers/options";
 
 @Component({
     selector: `email-securely-app-accounts`,

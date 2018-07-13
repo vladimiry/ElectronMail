@@ -2,8 +2,8 @@ import {filter, map} from "rxjs/operators";
 import {Injectable} from "@angular/core";
 import {Actions, Effect} from "@ngrx/effects";
 
-import {ERRORS_OUTLET, ERRORS_PATH} from "_@web/src/app/app.constants";
-import {CORE_ACTIONS, NAVIGATION_ACTIONS} from "_@web/src/app/store/actions";
+import {ERRORS_OUTLET, ERRORS_PATH} from "src/web/src/app/app.constants";
+import {CORE_ACTIONS, NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
 
 @Injectable()
 export class ErrorEffects {

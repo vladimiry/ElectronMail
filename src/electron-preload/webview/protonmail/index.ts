@@ -2,10 +2,10 @@ import {authenticator} from "otplib";
 import {distinctUntilChanged, filter, map} from "rxjs/operators";
 import {EMPTY, from, fromEvent, interval, merge, Observable, of, Subscriber, throwError} from "rxjs";
 
-import {AccountNotificationType, WebAccountProtonmail} from "_@shared/model/account";
-import {getLocationHref, submitTotpToken, typeInputValue, waitElements} from "_@webview-preload/util";
-import {NOTIFICATION_LOGGED_IN_POLLING_INTERVAL, NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL} from "_@webview-preload/common";
-import {PROTONMAIL_IPC_WEBVIEW_API, ProtonmailApi} from "_@shared/api/webview/protonmail";
+import {AccountNotificationType, WebAccountProtonmail} from "src/shared/model/account";
+import {getLocationHref, submitTotpToken, typeInputValue, waitElements} from "src/electron-preload/webview/util";
+import {NOTIFICATION_LOGGED_IN_POLLING_INTERVAL, NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL} from "src/electron-preload/webview/common";
+import {PROTONMAIL_IPC_WEBVIEW_API, ProtonmailApi} from "src/shared/api/webview/protonmail";
 
 const WINDOW = window as any;
 const twoFactorCodeElementId = "twoFactorCode";

@@ -13,6 +13,7 @@
   "scripts": {
     "app:dist": "npm-run-all security-check lint test:electron-main test:web clean:app build copy:assets test:e2e",
     "build": "npm-run-all electron-builder:install-app-deps build:electron-main build:electron-preload build:web",
+    "build:dev": "cross-env NODE_ENV=development npm-run-all build",
     "build:electron-main": "webpack --config ./src/webpack/electron-main.ts",
     "build:electron-main:dev": "cross-env NODE_ENV=development npm-run-all build:electron-main",
     "build:electron-main:watch": "webpack --config ./src/webpack/electron-main.ts",
@@ -29,6 +30,7 @@
     "clean": "npm-run-all clean:app clean:app-dev",
     "clean:app": "rimraf ./app/",
     "clean:app-dev": "rimraf ./app-dev/",
+    "copy": "npm-run-all copy:assets copy:assets:dev",
     "copy:assets": "cpx \"./src/assets/dist/**/*\" ./app/assets",
     "copy:assets:dev": "cpx \"./src/assets/dist/**/*\" ./app-dev/assets",
     "electron-builder:install-app-deps": "electron-builder install-app-deps",

@@ -1,6 +1,6 @@
 import {ofType, unionize} from "unionize";
 
-import {AccountConfig, AccountNotificationType, AccountProgress, WebAccount} from "_@shared/model/account";
+import {AccountConfig, AccountNotificationType, AccountProgress, WebAccount} from "src/shared/model/account";
 
 export const ACCOUNTS_ACTIONS = unionize({
         Activate: ofType<{ login: string }>(),

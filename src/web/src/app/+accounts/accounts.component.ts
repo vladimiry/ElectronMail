@@ -10,11 +10,11 @@ import {
     selectedAccountSelector,
     selectedLoginSelector,
     State,
-} from "_@web/src/app/store/reducers/accounts";
-import {ACCOUNTS_ACTIONS, CORE_ACTIONS, NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
-import {configCompactLayoutSelector, progressSelector} from "_@web/src/app/store/reducers/options";
-import {SETTINGS_OUTLET, SETTINGS_PATH} from "_@web/src/app/app.constants";
-import {WebAccount} from "_@shared/model/account";
+} from "src/web/src/app/store/reducers/accounts";
+import {ACCOUNTS_ACTIONS, CORE_ACTIONS, NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
+import {configCompactLayoutSelector, progressSelector} from "src/web/src/app/store/reducers/options";
+import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
+import {WebAccount} from "src/shared/model/account";
 
 @Component({
     selector: `email-securely-app-accounts`,

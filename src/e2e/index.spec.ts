@@ -15,9 +15,9 @@ import {
     RUNTIME_ENV_E2E_TUTANOTA_LOGIN,
     RUNTIME_ENV_E2E_TUTANOTA_PASSWORD,
     RUNTIME_ENV_E2E_TUTANOTA_UNREAD_MIN,
-} from "../shared/constants";
+} from "src/shared/constants";
 import {catchError, CONF, ENV, initApp, test, workflow} from "./workflow";
-import {AccountType} from "../shared/model/account";
+import {AccountType} from "src/shared/model/account";
 
 test.beforeEach(async (t) => {
     try {

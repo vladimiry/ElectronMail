@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
 
-import {AccountType} from "_@shared/model/account";
+import {AccountType} from "src/shared/model/account";
 
 @Component({
     selector: `email-securely-app-type-symbol`,

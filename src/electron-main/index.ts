@@ -9,7 +9,7 @@ import {initBrowserWindow} from "./window";
 import {initEndpoints} from "./ipc-main-api";
 import {initTray} from "./tray";
 import {initWebContentContextMenu} from "./web-content-context-menu";
-import {isWebViewSrcWhitelisted} from "_@shared/util";
+import {isWebViewSrcWhitelisted} from "src/shared/util";
 
 electronUnhandled({logger: logger.error});
 

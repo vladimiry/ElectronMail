@@ -10,12 +10,12 @@ import {
     settingsAccountByLoginSelector,
     settingsKeePassClientConfSelector,
     State,
-} from "_@web/src/app/store/reducers/options";
-import {AccountConfig, AccountConfigByType, AccountType} from "_@shared/model/account";
-import {AccountConfigCreatePatch, AccountConfigPatch, AccountConfigPatchByType} from "_@shared/model/container";
-import {ACCOUNTS_CONFIG, EntryUrlItem} from "_@shared/constants";
-import {KeePassRef} from "_@shared/model/keepasshttp";
-import {OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
+} from "src/web/src/app/store/reducers/options";
+import {AccountConfig, AccountConfigByType, AccountType} from "src/shared/model/account";
+import {AccountConfigCreatePatch, AccountConfigPatch, AccountConfigPatchByType} from "src/shared/model/container";
+import {ACCOUNTS_CONFIG, EntryUrlItem} from "src/shared/constants";
+import {KeePassRef} from "src/shared/model/keepasshttp";
+import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
 import {OptionsService} from "./options.service";
 
 // TODO simplify RxJS stuff of the "account-edit.component"

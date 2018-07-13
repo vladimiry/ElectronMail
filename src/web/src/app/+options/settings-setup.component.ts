@@ -3,8 +3,8 @@ import {AfterViewInit, Component, ElementRef, QueryList, ViewChildren} from "@an
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
-import {OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
-import {progressSelector, State} from "_@web/src/app/store/reducers/options";
+import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
+import {progressSelector, State} from "src/web/src/app/store/reducers/options";
 
 @Component({
     selector: `email-securely-app-settings-setup`,

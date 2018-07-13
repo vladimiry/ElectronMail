@@ -1,5 +1,5 @@
-import {BaseConfig, Config} from "_@shared/model/options";
-import {WEBVIEW_SRC_WHITELIST} from "_@shared/constants";
+import {BaseConfig, Config} from "src/shared/model/options";
+import {WEBVIEW_SRC_WHITELIST} from "src/shared/constants";
 
 export function pickBaseConfigProperties(
     {closeToTray, compactLayout, startMinimized, unreadNotifications, checkForUpdatesAndNotify}: Config,

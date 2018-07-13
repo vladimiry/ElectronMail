@@ -4,11 +4,11 @@ import {Component, EventEmitter, Input, Output} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
-import {CORE_ACTIONS, NAVIGATION_ACTIONS} from "_@web/src/app/store/actions";
+import {CORE_ACTIONS, NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
 import {ElectronService} from "../+core/electron.service";
-import {KeePassClientConf, KeePassRef} from "_@shared/model/keepasshttp";
-import {SETTINGS_OUTLET, SETTINGS_PATH} from "_@web/src/app/app.constants";
-import {State} from "_@web/src/app/store/reducers/options";
+import {KeePassClientConf, KeePassRef} from "src/shared/model/keepasshttp";
+import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
+import {State} from "src/web/src/app/store/reducers/options";
 
 @Component({
     selector: `email-securely-app-keepass-reference`,

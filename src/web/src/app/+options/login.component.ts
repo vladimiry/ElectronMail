@@ -3,8 +3,8 @@ import {AfterViewInit, Component, ElementRef, OnInit, QueryList, ViewChildren} f
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
-import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
-import {hasSavedPasswordSelector, progressSelector, State} from "_@web/src/app/store/reducers/options";
+import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
+import {hasSavedPasswordSelector, progressSelector, State} from "src/web/src/app/store/reducers/options";
 
 @Component({
     selector: `email-securely-app-login`,

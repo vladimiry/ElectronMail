@@ -1,4 +1,4 @@
-import {ONE_SECOND_MS} from "_@shared/constants";
+import {ONE_SECOND_MS} from "src/shared/constants";
 
 export const NOTIFICATION_LOGGED_IN_POLLING_INTERVAL = ONE_SECOND_MS;
 

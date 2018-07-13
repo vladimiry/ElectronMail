@@ -2,7 +2,7 @@ import {Component} from "@angular/core";
 import {Store} from "@ngrx/store";
 
 import {OptionsService} from "./options.service";
-import {State} from "_@web/src/app/store/reducers/options";
+import {State} from "src/web/src/app/store/reducers/options";
 
 @Component({
     selector: `email-securely-app-settings`,

@@ -1,6 +1,6 @@
 import {ApiMethod, ApiMethodNoArgument} from "electron-rpc-api";
 
-import {LoginFieldContainer, PasswordFieldContainer} from "_@shared/model/container";
+import {LoginFieldContainer, PasswordFieldContainer} from "src/shared/model/container";
 
 export const channel = `${process.env.APP_ENV_PACKAGE_NAME}:webview-api`;
 

@@ -8,14 +8,14 @@ import {isWebUri} from "valid-url";
 import {KeePassHttpClient} from "keepasshttp-client";
 import {promisify} from "util";
 
-import {AccountConfig} from "_@shared/model/account";
-import {BuildEnvironment} from "_@shared/model/common";
+import {AccountConfig} from "src/shared/model/account";
+import {BuildEnvironment} from "src/shared/model/common";
 import {buildSettingsAdapter, handleKeePassRequestError, toggleBrowserWindow} from "./util";
 import {Context} from "./model";
-import {ElectronContextLocations} from "_@shared/model/electron";
-import {Endpoints, IPC_MAIN_API} from "_@shared/api/main";
+import {ElectronContextLocations} from "src/shared/model/electron";
+import {Endpoints, IPC_MAIN_API} from "src/shared/api/main";
 import {KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "./constants";
-import {StatusCode, StatusCodeError} from "_@shared/model/error";
+import {StatusCode, StatusCodeError} from "src/shared/model/error";
 import {upgradeConfig, upgradeSettings} from "./storage-upgrade";
 
 export const initEndpoints = async (ctx: Context): Promise<Endpoints> => {

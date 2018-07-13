@@ -4,9 +4,9 @@ import {Injectable} from "@angular/core";
 import {CanActivate} from "@angular/router";
 import {Store} from "@ngrx/store";
 
-import {SETTINGS_OUTLET, SETTINGS_PATH} from "_@web/src/app/app.constants";
-import {NAVIGATION_ACTIONS} from "_@web/src/app/store/actions";
-import {initializedSelector, State} from "_@web/src/app/store/reducers/accounts";
+import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
+import {NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
+import {initializedSelector, State} from "src/web/src/app/store/reducers/accounts";
 
 @Injectable()
 export class AccountsGuard implements CanActivate {

@@ -12,9 +12,9 @@ import randomString from "randomstring";
 import {Application} from "spectron";
 import {promisify} from "util";
 
-import {AccountType} from "_@shared/model/account";
-import {RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "_@shared/constants";
-import {ACCOUNTS_CONFIG} from "../shared/constants";
+import {AccountType} from "src/shared/model/account";
+import {RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
+import {ACCOUNTS_CONFIG} from "src/shared/constants";
 
 export interface TestContext {
     app: Application;

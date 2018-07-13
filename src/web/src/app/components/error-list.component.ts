@@ -3,9 +3,9 @@ import {Subject} from "rxjs";
 import {ChangeDetectionStrategy, Component, OnDestroy, OnInit} from "@angular/core";
 import {Store} from "@ngrx/store";
 
-import {ERRORS_OUTLET} from "_@web/src/app/app.constants";
-import {CORE_ACTIONS, NAVIGATION_ACTIONS} from "_@web/src/app/store/actions";
-import {errorsSelector, State} from "_@web/src/app/store/reducers/errors";
+import {ERRORS_OUTLET} from "src/web/src/app/app.constants";
+import {CORE_ACTIONS, NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
+import {errorsSelector, State} from "src/web/src/app/store/reducers/errors";
 
 @Component({
     selector: `email-securely-app-error-list-request`,

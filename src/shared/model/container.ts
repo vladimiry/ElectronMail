@@ -1,5 +1,5 @@
-import {AccountConfig, AccountConfigByType, AccountType} from "_@shared/model/account";
-import {KeePassClientConf, KeePassRef} from "_@shared/model/keepasshttp";
+import {AccountConfig, AccountConfigByType, AccountType} from "src/shared/model/account";
+import {KeePassClientConf, KeePassRef} from "src/shared/model/keepasshttp";
 
 export interface KeePassRefFieldContainer {
     keePassRef: KeePassRef;

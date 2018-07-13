@@ -1,4 +1,4 @@
-import {AccountType} from "_@shared/model/account";
+import {AccountType} from "src/shared/model/account";
 
 // user data dir, defaults to app.getPath("userData")
 export const RUNTIME_ENV_USER_DATA_DIR = `EMAIL_SECURELY_APP_USER_DATA_DIR`;

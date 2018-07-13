@@ -1,5 +1,5 @@
-import {BaseResponse, Id, IdTuple, TypeRef} from "_@webview-preload/tutanota/lib/rest/model";
-import {Timestamp} from "_@shared/types";
+import {BaseResponse, Id, IdTuple, TypeRef} from "src/electron-preload/webview/tutanota/lib/rest/model";
+import {Timestamp} from "src/shared/types";
 
 type ModuleFiles =
     | "src/api/common/EntityFunctions"

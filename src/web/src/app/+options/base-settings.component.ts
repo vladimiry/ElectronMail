@@ -3,9 +3,9 @@ import {Component, OnInit} from "@angular/core";
 import {AbstractControl, FormControl, FormGroup} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
-import {BaseConfig} from "_@shared/model/options";
-import {OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
-import {baseConfigSelector, progressSelector, State} from "_@web/src/app/store/reducers/options";
+import {BaseConfig} from "src/shared/model/options";
+import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
+import {baseConfigSelector, progressSelector, State} from "src/web/src/app/store/reducers/options";
 
 @Component({
     selector: `email-securely-app-base-settings`,

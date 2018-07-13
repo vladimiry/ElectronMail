@@ -7,10 +7,10 @@ import {
     PasswordChangeContainer,
     PasswordFieldContainer,
     UrlFieldContainer,
-} from "_@shared/model/container";
-import {BaseConfig, Config, Settings} from "_@shared/model/options";
-import {ElectronContextLocations} from "_@shared/model/electron";
-import {ProgressPatch} from "_@web/src/app/store/reducers/options";
+} from "src/shared/model/container";
+import {BaseConfig, Config, Settings} from "src/shared/model/options";
+import {ElectronContextLocations} from "src/shared/model/electron";
+import {ProgressPatch} from "src/web/src/app/store/reducers/options";
 
 export const OPTIONS_ACTIONS = unionize({
         AddAccountRequest: ofType<AccountConfigCreatePatch>(),

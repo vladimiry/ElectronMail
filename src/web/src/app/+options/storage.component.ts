@@ -3,9 +3,9 @@ import {Component} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
-import {OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
-import {progressSelector, State} from "_@web/src/app/store/reducers/options";
-import {ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "_@shared/model/options";
+import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
+import {progressSelector, State} from "src/web/src/app/store/reducers/options";
+import {ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "src/shared/model/options";
 
 @Component({
     selector: `email-securely-app-storage`,

@@ -4,9 +4,9 @@ import {Component, Input, OnDestroy, OnInit} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
-import {KeePassClientConf} from "_@shared/model/keepasshttp";
-import {OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
-import {progressSelector, State} from "_@web/src/app/store/reducers/options";
+import {KeePassClientConf} from "src/shared/model/keepasshttp";
+import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
+import {progressSelector, State} from "src/web/src/app/store/reducers/options";
 
 @Component({
     selector: `email-securely-app-keepass-associate`,

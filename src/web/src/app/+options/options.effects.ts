@@ -4,11 +4,11 @@ import {Injectable} from "@angular/core";
 import {Actions, Effect} from "@ngrx/effects";
 import {Store} from "@ngrx/store";
 
-import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "_@web/src/app/app.constants";
-import {CORE_ACTIONS, NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "_@web/src/app/store/actions";
-import {ElectronService} from "_@web/src/app/+core/electron.service";
+import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
+import {CORE_ACTIONS, NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
+import {ElectronService} from "src/web/src/app/+core/electron.service";
 import {OptionsService} from "./options.service";
-import {ProgressPatch, settingsSelector, State} from "_@web/src/app/store/reducers/options";
+import {ProgressPatch, settingsSelector, State} from "src/web/src/app/store/reducers/options";
 
 @Injectable()
 export class OptionsEffects {

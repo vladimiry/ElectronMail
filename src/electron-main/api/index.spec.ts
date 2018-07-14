@@ -1,19 +1,19 @@
+import anyTest, {ExecutionContext, ImplementationResult, TestInterface} from "ava";
 import assert from "assert";
 import logger from "electron-log";
 import path from "path";
-import sinon from "sinon";
-import anyTest, {ExecutionContext, ImplementationResult, TestInterface} from "ava";
 import rewiremock from "rewiremock";
-import {EncryptionAdapter} from "fs-json-store-encryption-adapter/encryption-adapter";
+import sinon from "sinon";
+import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Fs} from "fs-json-store";
 
 import {AccountConfigCreatePatchByType, AccountConfigPatch, PasswordFieldContainer} from "src/shared/model/container";
-import {pickBaseConfigProperties} from "src/shared/util";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
-import {buildSettingsAdapter, initContext} from "./util";
-import {Context} from "./model";
+import {buildSettingsAdapter, initContext} from "src/electron-main/util";
+import {Context} from "src/electron-main/model";
 import {Endpoints} from "src/shared/api/main";
-import {INITIAL_STORES, KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "./constants";
+import {INITIAL_STORES, KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "src/electron-main/constants";
+import {pickBaseConfigProperties} from "src/shared/util";
 import {StatusCode, StatusCodeError} from "src/shared/model/error";
 
 interface TestContext {
@@ -100,10 +100,12 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.deepEqual(updatedSettings2, expectedSettings2, `settings with added account is returned`);
         t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings2, `settings with added account is persisted`);
     },
+
     associateSettingsWithKeePass: async (t) => {
         // TODO test "associateSettingsWithKeePass" API
         t.pass();
     },
+
     changeMasterPassword: async (t) => {
         const getPasswordStub = t.context.mocks.keytar.getPassword;
         const setPasswordSpy = t.context.mocks.keytar.setPassword;
@@ -143,16 +145,19 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.is(setPasswordSpy.callCount, 1);
         setPasswordSpy.calledWithExactly(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, payload.newPassword);
     },
+
     init: async (t) => {
         const result = await t.context.endpoints.init().toPromise();
 
         t.deepEqual(result.electronLocations, t.context.ctx.locations);
         t.is(typeof result.hasSavedPassword, "boolean");
     },
+
     keePassRecordRequest: async (t) => {
         // TODO test "keePassRecordRequest" API
         t.pass();
     },
+
     logout: async (t) => {
         const deletePasswordSpy = t.context.mocks.keytar.deletePassword;
         const endpoints = t.context.endpoints;
@@ -172,6 +177,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
 
         // t.true(deletePasswordSpy.alwaysCalledWithExactly(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT));
     },
+
     openAboutWindow: async (t) => {
         const defaultOnSpy: sinon.SinonSpy = t.context.mocks["about-window"].default;
         const action = t.context.endpoints.openAboutWindow;
@@ -180,6 +186,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         const args = defaultOnSpy.getCall(0).args[0];
         t.true(args.icon_path.endsWith(path.normalize("assets/icons/icon.png")), "about called with proper icon path");
     },
+
     openExternal: async (t) => {
         const openExternalSpy: sinon.SinonSpy = t.context.mocks.electron.shell.openExternalSpy;
         const action = t.context.endpoints.openExternal;
@@ -207,11 +214,13 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
             t.true(openExternalSpy.calledWith(url), `electron.shell.openExternal.calledWith("${url}")`);
         }
     },
+
     openSettingsFolder: async (t) => {
         const openItemSpy: sinon.SinonSpy = t.context.mocks.electron.shell.openItem;
         await t.context.endpoints.openSettingsFolder().toPromise();
         t.true(openItemSpy.alwaysCalledWith(t.context.ctx.locations.userData));
     },
+
     patchBaseSettings: async (t) => {
         const endpoints = t.context.endpoints;
         const action = endpoints.patchBaseSettings;
@@ -244,10 +253,12 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
             t.deepEqual(await t.context.ctx.configStore.readExisting(), updatedConfig);
         }
     },
+
     quit: async (t) => {
         await t.context.endpoints.quit().toPromise();
         t.is(t.context.mocks.electron.app.exit.callCount, 1, "electron.app.exit called once");
     },
+
     readConfig: async (t) => {
         t.false(await t.context.ctx.configStore.readable(), "config file does not exist");
         const initial = await initConfig(t.context.endpoints);
@@ -255,6 +266,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.deepEqual(initial, initialExpected, "checking initial config file");
         t.true(await t.context.ctx.configStore.readable(), "config file exists");
     },
+
     readSettings: async (t) => {
         const setPasswordSpy = t.context.mocks.keytar.setPassword;
         const deletePasswordSpy = t.context.mocks.keytar.deletePassword;
@@ -283,10 +295,12 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.is(setPasswordSpy.callCount, 1);
         setPasswordSpy.calledWithExactly(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, OPTIONS.masterPassword);
     },
+
     reEncryptSettings: async (t) => {
         // TODO test "reEncryptSettings" API
         t.pass();
     },
+
     removeAccount: async (t) => {
         const endpoints = t.context.endpoints;
         const addHandler = endpoints.addAccount;
@@ -346,13 +360,15 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.deepEqual(updatedSettings, expectedSettings as any, `settings with updated account is returned`);
         t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings as any, `settings with updated account is persisted`);
     },
+
     settingsExists: async (t) => {
         t.false(await t.context.ctx.settingsStore.readable(), "store: settings file does not exist");
         await initConfigAndSettings(t.context.endpoints, {password: OPTIONS.masterPassword});
         t.true(await t.context.ctx.settingsStore.readable(), "store: settings file exists");
     },
+
     toggleBrowserWindow: async (t) => {
-        const toggleBrowserWindowSpy: sinon.SinonSpy = t.context.mocks["./util"].toggleBrowserWindow;
+        const toggleBrowserWindowSpy: sinon.SinonSpy = t.context.mocks["src/electron-main/util"].toggleBrowserWindow;
         const action = t.context.endpoints.toggleBrowserWindow;
         const payloads = [
             {forcedState: undefined},
@@ -364,6 +380,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
             t.true(toggleBrowserWindowSpy.calledWithExactly(t.context.ctx, payload.forcedState));
         }
     },
+
     toggleCompactLayout: async (t) => {
         const endpoints = t.context.endpoints;
         const action = endpoints.toggleCompactLayout;
@@ -378,6 +395,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         updated = await t.context.ctx.configStore.readExisting();
         t.is(updated.compactLayout, false);
     },
+
     updateAccount: async (t) => {
         const endpoints = t.context.endpoints;
         const addHandler = endpoints.addAccount;
@@ -414,6 +432,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.deepEqual(updatedSettings, expectedSettings, `settings with updated account is returned`);
         t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings, `settings with updated account is persisted`);
     },
+
     updateOverlayIcon: async (t) => {
         // TODO test "updateOverlayIcon" API
         t.pass();
@@ -421,7 +440,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
 };
 
 Object.entries(tests).forEach(([apiMethodName, method]) => {
-    test.serial(`API: ${apiMethodName}`, method);
+    test.serial(apiMethodName, method);
 });
 
 async function initConfig(endpoints: Endpoints): Promise<Config> {
@@ -444,11 +463,11 @@ test.beforeEach(async (t) => {
                     registerApi: sinon.spy(),
                 },
             },
-            "./util": {
+            "src/electron-main/util": {
                 toggleBrowserWindow: sinon.spy(),
                 buildSettingsAdapter,
             },
-            "./storage-upgrade": {
+            "src/electron-main/storage-upgrade": {
                 upgradeConfig: sinon.stub().returns(false),
                 upgradeSettings: sinon.stub().returns(false),
             },
@@ -508,8 +527,8 @@ test.beforeEach(async (t) => {
         };
 
         t.context.mocked = {
-            "./ipc-main-api": await rewiremock.around(
-                () => import("./ipc-main-api"),
+            "src/electron-main/api/index": await rewiremock.around(
+                () => import("./index"),
                 (mock) => {
                     Object
                         .keys(t.context.mocks)
@@ -563,7 +582,7 @@ test.beforeEach(async (t) => {
     t.truthy(ctx.settingsStore.validators && ctx.settingsStore.validators.length);
 
     t.context.ctx = ctx;
-    t.context.endpoints = await t.context.mocked["./ipc-main-api"].initEndpoints(t.context.ctx);
+    t.context.endpoints = await t.context.mocked["src/electron-main/api/index"].initApi(t.context.ctx);
     t.context.mocks["src/shared/api/main"].IPC_MAIN_API.registerApi.calledWithExactly(t.context.endpoints);
     // TODO make sure "IPC_MAIN_API.register" has been called
 });

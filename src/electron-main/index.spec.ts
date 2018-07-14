@@ -43,8 +43,8 @@ test.beforeEach(async (t) => {
                 initContext: sinon.stub().resolves(t.context.ctx),
                 activateBrowserWindow: sinon.spy(),
             },
-            "./ipc-main-api": {
-                initEndpoints: sinon.stub().returns(t.context.endpoints),
+            "./api": {
+                initApi: sinon.stub().returns(t.context.endpoints),
             },
             "./window": {
                 initBrowserWindow: sinon.spy(),
@@ -82,9 +82,9 @@ test.beforeEach(async (t) => {
                 mock(() => import("./util"))
                     .callThrough()
                     .with(mocks["./util"]);
-                mock(() => import("./ipc-main-api"))
+                mock(() => import("./api"))
                     .callThrough()
-                    .with(mocks["./ipc-main-api"]);
+                    .with(mocks["./api"]);
                 mock("./window")
                     .with(mocks["./window"]);
                 mock("./tray")

@@ -1,6 +1,6 @@
 import {Options as EncryptionAdapterOptions} from "fs-json-store-encryption-adapter";
 
-import {APP_NAME, APP_VERSION} from "src/shared/constants";
+import {APP_NAME} from "src/shared/constants";
 
 const encryptionPreset: EncryptionAdapterOptions = {
     keyDerivation: {type: "sodium.crypto_pwhash", preset: "mode:interactive|algorithm:default"},
@@ -9,7 +9,6 @@ const encryptionPreset: EncryptionAdapterOptions = {
 
 export const INITIAL_STORES = Object.freeze({
     config: {
-        appVersion: APP_VERSION,
         encryptionPreset,
         startMinimized: true,
         compactLayout: false,

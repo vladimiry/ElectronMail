@@ -9,7 +9,7 @@ import {getLocationHref, submitTotpToken, typeInputValue, waitElements} from "sr
 import {MailFolder, MailTypeRef, User} from "src/electron-preload/webview/tutanota/lib/rest/model";
 import {NOTIFICATION_LOGGED_IN_POLLING_INTERVAL, NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL} from "src/electron-preload/webview/common";
 import {ONE_SECOND_MS} from "src/shared/constants";
-import {resolveWebClientApi, WebClientApi} from "src/electron-preload/webview/tutanota/tutanota-api";
+import {resolveWebClientApi, WebClientApi} from "src/electron-preload/webview/tutanota/lib/tutanota-api";
 import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi} from "src/shared/api/webview/tutanota";
 
 const WINDOW = window as any;

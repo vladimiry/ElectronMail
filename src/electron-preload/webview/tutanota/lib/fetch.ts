@@ -2,7 +2,7 @@ import {Observable, Subscriber} from "rxjs";
 
 import {fetchEntitiesList, fetchEntitiesRange, fetchEntity, Model as M} from "src/electron-preload/webview/tutanota/lib/rest";
 import {MailFolderRef} from "src/electron-preload/webview/tutanota/lib/rest/model/entity";
-import {resolveWebClientApi} from "src/electron-preload/webview/tutanota/tutanota-api";
+import {resolveWebClientApi} from "src/electron-preload/webview/tutanota/lib/tutanota-api";
 import {TutanotaApiFetchMessagesInput, TutanotaApiFetchMessagesOutput} from "src/shared/api/webview/tutanota";
 
 const MAIL_FOLDER_FETCH_PORTION_SIZE = 500;

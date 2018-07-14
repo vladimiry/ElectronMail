@@ -2,6 +2,7 @@ import path from "path";
 import UglifyJsPlugin from "uglifyjs-webpack-plugin";
 import webpack, {Configuration} from "webpack";
 import webpackMerge from "webpack-merge";
+
 import {BuildEnvironment} from "src/shared/model/common";
 import {TsconfigPathsPlugin} from "tsconfig-paths-webpack-plugin";
 
@@ -18,19 +19,19 @@ const environmentSate = {
 // tslint:disable-next-line:no-console
 console.log("BuildEnvironment:", environment);
 
-const rootPath = (...value: string[]) => path.join(process.cwd(), ...value);
-const srcPath = (...value: string[]) => rootPath("./src", ...value);
-const outputPath = (...value: string[]) => rootPath(environmentSate.development ? "./app-dev" : "./app", ...value);
+const rootRelateivePath = (...value: string[]) => path.join(process.cwd(), ...value);
+const srcRelateivePath = (...value: string[]) => rootRelateivePath("./src", ...value);
+const outputRelateivePath = (...value: string[]) => rootRelateivePath(environmentSate.development ? "./app-dev" : "./app", ...value);
 
 const buildBaseConfig: BuildConfig = (config, options = {}) => {
-    const {tsConfigFile} = {tsConfigFile: rootPath("./tsconfig.json"), ...options};
+    const {tsConfigFile} = {tsConfigFile: rootRelateivePath("./tsconfig.json"), ...options};
 
     return webpackMerge(
         {
             mode: environmentSate.development || environmentSate.test ? "development" : "production",
-            devtool: environmentSate.production ? false : "source-map",
+            devtool: "source-map",
             output: {
-                path: outputPath(),
+                path: outputRelateivePath(),
             },
             plugins: [
                 new webpack.DefinePlugin({
@@ -75,7 +76,7 @@ export {
     buildBaseConfig,
     environment,
     environmentSate,
-    outputPath,
-    rootPath,
-    srcPath,
+    outputRelateivePath,
+    rootRelateivePath,
+    srcRelateivePath,
 };

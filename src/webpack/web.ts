@@ -4,7 +4,7 @@ import ts from "typescript";
 import webpack, {Configuration} from "webpack";
 import {AngularCompilerPlugin, PLATFORM} from "@ngtools/webpack";
 
-import {buildBaseConfig, environment, environmentSate, outputPath, rootPath, srcPath} from "./lib";
+import {buildBaseConfig, environment, environmentSate, outputRelateivePath, rootRelateivePath, srcRelateivePath} from "./lib";
 import {BuildEnvironment} from "src/shared/model/common";
 import webpackMerge = require("webpack-merge");
 
@@ -15,12 +15,12 @@ const postCssUrl = require("postcss-url");
 const {readConfiguration} = require("@angular/compiler-cli");
 // tslint:enable:no-var-requires
 
-const webSrcPath = (...value: string[]) => srcPath("./web/src", ...value);
+const webSrcPath = (...value: string[]) => srcRelateivePath("./web/src", ...value);
 const webAppPath = (...value: string[]) => webSrcPath("./app", ...value);
 const webSrcEnvPath = (...value: string[]) => webSrcPath("./environments", environmentSate.development ? "./development" : "", ...value);
 
 // tslint:disable:no-var-requires
-const packageJson = require(rootPath("./package.json"));
+const packageJson = require(rootRelateivePath("./package.json"));
 const aot = environmentSate.production;
 const cssRuleUse = [
     "css-loader",
@@ -44,7 +44,7 @@ const cssRuleUse = [
         },
     },
 ];
-const tsConfigFile = srcPath(({
+const tsConfigFile = srcRelateivePath(({
     production: "./web/tsconfig.json",
     development: "./web/tsconfig.development.json",
     test: "./web/test/tsconfig.json",
@@ -61,7 +61,7 @@ const tsConfigCompilerOptions: ts.CompilerOptions = (() => {
 
     return tsConfig.options;
 })();
-const config = buildBaseConfig(
+const baseConfig = buildBaseConfig(
     {
         target: "electron-renderer",
         entry: {
@@ -70,7 +70,7 @@ const config = buildBaseConfig(
                 webSrcPath("./index.ts"),
             ],
         },
-        output: {path: outputPath("./web")},
+        output: {path: outputRelateivePath("./web")},
         module: {
             rules: [
                 {
@@ -79,6 +79,10 @@ const config = buildBaseConfig(
                     parser: {
                         system: true,
                     },
+                },
+                {
+                    test: /\.html$/,
+                    loader: "raw-loader",
                 },
                 {
                     test: /\.css$/,
@@ -109,10 +113,6 @@ const config = buildBaseConfig(
                     include: [
                         webAppPath(),
                     ],
-                },
-                {
-                    test: /\.html$/,
-                    loader: "raw-loader",
                 },
                 {
                     test: /\.(eot|ttf|otf|woff|woff2|ico|gif|png|jpe?g|svg)$/i,
@@ -175,7 +175,6 @@ const configPatch: Record<BuildEnvironment, Configuration> = {
             ],
         },
     },
-    // TODO split chunks in "development" mode in order to speed up app-related code re-building
     development: {
         devServer: {
             hot: true,
@@ -209,9 +208,15 @@ const configPatch: Record<BuildEnvironment, Configuration> = {
                 },
             ],
         },
+        optimization: {
+            minimize: false,
+        },
     },
 };
 
-const configuration = webpackMerge(config, configPatch[environment]);
+const config = webpackMerge(
+    baseConfig,
+    configPatch[environment],
+);
 
-export default configuration;
+export default config;

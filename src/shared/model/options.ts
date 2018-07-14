@@ -29,7 +29,6 @@ export interface BaseConfig {
 }
 
 export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
-    appVersion: string;
     encryptionPreset: EncryptionAdapterOptions;
     window: {
         maximized?: boolean;

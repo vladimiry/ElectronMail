@@ -1,26 +1,26 @@
 import {Entry, EntryFunc} from "webpack";
 
-import {buildBaseConfig, environment, srcPath} from "./lib";
+import {buildBaseConfig, environment, srcRelateivePath} from "./lib";
 
 const configs = [
     buildRendererConfig(
         {
-            "electron-preload/browser-window": srcPath(`./electron-preload/browser-window/build-env-based/${environment}.ts`),
-            "electron-preload/browser-window-e2e": srcPath("./electron-preload/browser-window/e2e.ts"),
+            "electron-preload/browser-window": srcRelateivePath(`./electron-preload/browser-window/build-env-based/${environment}.ts`),
+            "electron-preload/browser-window-e2e": srcRelateivePath("./electron-preload/browser-window/e2e.ts"),
         },
-        srcPath("./electron-preload/browser-window/tsconfig.json"),
+        srcRelateivePath("./electron-preload/browser-window/tsconfig.json"),
     ),
     buildRendererConfig(
         {
-            "electron-preload/webview/protonmail": srcPath("./electron-preload/webview/protonmail/index.ts"),
+            "electron-preload/webview/protonmail": srcRelateivePath("./electron-preload/webview/protonmail/index.ts"),
         },
-        srcPath("./electron-preload/webview/protonmail/tsconfig.json"),
+        srcRelateivePath("./electron-preload/webview/protonmail/tsconfig.json"),
     ),
     buildRendererConfig(
         {
-            "electron-preload/webview/tutanota": srcPath("./electron-preload/webview/tutanota/index.ts"),
+            "electron-preload/webview/tutanota": srcRelateivePath("./electron-preload/webview/tutanota/index.ts"),
         },
-        srcPath("./electron-preload/webview/tutanota/tsconfig.json"),
+        srcRelateivePath("./electron-preload/webview/tutanota/tsconfig.json"),
     ),
 ];
 

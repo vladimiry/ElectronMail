@@ -30,7 +30,7 @@ export class AccountsEffects {
                 return throwError(new Error("Not yet implemented"));
             }
 
-            return this.electronService.webViewCaller(webView, account.accountConfig.type, {timeoutMs: 0}).pipe(
+            return this.electronService.webViewCaller(webView, account.accountConfig.type).pipe(
                 exhaustMap((caller) => {
                     // TODO fill-in "newestStoredTimestamp" from local database
                     const newestStoredTimestamp: Timestamp | undefined = undefined;

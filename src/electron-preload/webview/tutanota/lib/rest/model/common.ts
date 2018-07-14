@@ -29,17 +29,17 @@ export const OperationType: Record<string, "0" | "1" | "2"> = {
     DELETE: "2",
 };
 
-export interface BaseResponse {
+export interface BaseEntity {
     _id: Id | IdTuple;
 }
 
-export type Id<T extends BaseResponse = BaseResponse> = string;
+export type Id<T extends BaseEntity = BaseEntity> = string;
 
-export type IdTuple<ID1 extends BaseResponse = BaseResponse, ID2 extends BaseResponse = BaseResponse> = [Id<ID1>, Id<ID2>];
+export type IdTuple<ID1 extends BaseEntity = BaseEntity, ID2 extends BaseEntity = BaseEntity> = [Id<ID1>, Id<ID2>];
 
 export type TypeRefApp = "tutanota" | "sys";
 
-export interface TypeRef<T extends BaseResponse> {
+export interface TypeRef<T extends BaseEntity> {
     _type: T;
     app: TypeRefApp;
     type: string;
@@ -50,8 +50,4 @@ export interface RequestParams {
     start?: string;
     count?: number;
     reverse?: boolean;
-}
-
-export interface RequestHeaders {
-    accessToken: string;
 }

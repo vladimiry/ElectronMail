@@ -20,44 +20,47 @@ const inputMenu = Menu.buildFromTemplate([
 ]);
 
 export function initWebContentContextMenu(ctx: Context) {
-    const contextMenuEvenHandler = (e: Event, props: ContextMenuParams) => {
-        const {selectionText, isEditable, linkURL} = props;
-        const popupOptions: PopupOptions = {window: ctx.uiContext && ctx.uiContext.browserWindow};
+    const contextMenuEventArgs = [
+        "context-menu",
+        (e: Event, props: ContextMenuParams) => {
+            const {selectionText, isEditable, linkURL} = props;
+            const popupOptions: PopupOptions = {window: ctx.uiContext && ctx.uiContext.browserWindow};
 
-        if (!popupOptions.window) {
-            return;
-        }
+            if (!popupOptions.window) {
+                return;
+            }
 
-        if (isEditable) {
-            inputMenu.popup(popupOptions);
-            return;
-        }
+            if (isEditable) {
+                inputMenu.popup(popupOptions);
+                return;
+            }
 
-        if (linkURL) {
-            Menu
-                .buildFromTemplate([{
-                    label: "Copy Link Address",
-                    click() {
-                        if (os.platform() === "darwin") {
-                            clipboard.writeBookmark(props.linkText, props.linkURL);
-                        } else {
-                            clipboard.writeText(props.linkURL);
-                        }
-                    },
-                }])
-                .popup(popupOptions);
-            return;
-        }
+            if (linkURL) {
+                Menu
+                    .buildFromTemplate([{
+                        label: "Copy Link Address",
+                        click() {
+                            if (os.platform() === "darwin") {
+                                clipboard.writeBookmark(props.linkText, props.linkURL);
+                            } else {
+                                clipboard.writeText(props.linkURL);
+                            }
+                        },
+                    }])
+                    .popup(popupOptions);
+                return;
+            }
 
-        if (selectionText && selectionText.trim()) {
-            selectionMenu.popup(popupOptions);
-        }
+            if (selectionText && selectionText.trim()) {
+                selectionMenu.popup(popupOptions);
+            }
+        },
+    ];
+    const webContentsCreatedHandler = (webContents: WebContents) => {
+        webContents.removeListener.apply(webContents, contextMenuEventArgs);
+        webContents.on.apply(webContents, contextMenuEventArgs);
     };
-    const windowCreateHandler = (webContents: WebContents) => {
-        webContents.removeListener("context-menu", contextMenuEvenHandler);
-        webContents.on("context-menu", contextMenuEvenHandler);
-    };
 
-    app.on("browser-window-created", (event, {webContents}) => windowCreateHandler(webContents));
-    app.on("web-contents-created", (webContentsCreatedEvent, webContents) => windowCreateHandler(webContents));
+    app.on("browser-window-created", (event, {webContents}) => webContentsCreatedHandler(webContents));
+    app.on("web-contents-created", (webContentsCreatedEvent, webContents) => webContentsCreatedHandler(webContents));
 }

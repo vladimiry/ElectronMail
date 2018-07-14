@@ -12,8 +12,6 @@ import {Config, configEncryptionPresetValidator, Settings, settingsAccountLoginU
 import {Context, ContextInitOptions, ContextInitOptionsPaths, RuntimeEnvironment} from "./model";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {INITIAL_STORES} from "./constants";
-import {MessageFieldContainer} from "src/shared/model/container";
-import {Model as KeePassHttpClientModel} from "keepasshttp-client";
 import {RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
 
 export async function initContext(options: ContextInitOptions = {}): Promise<Context> {
@@ -55,29 +53,29 @@ function initLocations(runtimeEnvironment: RuntimeEnvironment, paths?: ContextIn
     }
 
     const {appDir, userDataDir} = paths || {
-        appDir: path.join(__dirname, (process.env.NODE_ENV as BuildEnvironment) === "development" ? "../app-dev" : "../app"),
+        appDir: path.resolve(__dirname, (process.env.NODE_ENV as BuildEnvironment) === "development" ? "../app-dev" : "../app"),
         userDataDir: userDataDirRuntimeVal || app.getPath("userData"),
     };
     const largeIcon = "./assets/icons/icon.png";
 
-    const buildAppPath = (...value: string[]) => path.join(appDir, ...value);
+    const appRelativePath = (...value: string[]) => path.join(appDir, ...value);
     const formatFileUrl = (pathname: string) => url.format({pathname, protocol: "file:", slashes: true});
 
     return {
-        app: buildAppPath(),
+        app: appRelativePath(),
         userData: userDataDir,
-        icon: buildAppPath(largeIcon),
-        trayIcon: buildAppPath(os.platform() === "darwin" ? "./assets/icons/mac/icon.png" : largeIcon),
-        trayIconUnreadOverlay: buildAppPath("./assets/icons/tray-icon-unread-overlay.png"),
-        trayIconLoggedOutOverlay: buildAppPath("./assets/icons/tray-icon-loggedout-overlay.png"),
+        icon: appRelativePath(largeIcon),
+        trayIcon: appRelativePath(os.platform() === "darwin" ? "./assets/icons/mac/icon.png" : largeIcon),
+        trayIconUnreadOverlay: appRelativePath("./assets/icons/tray-icon-unread-overlay.png"),
+        trayIconLoggedOutOverlay: appRelativePath("./assets/icons/tray-icon-loggedout-overlay.png"),
         browserWindowPage: (process.env.NODE_ENV as BuildEnvironment) === "development" ? "http://localhost:8080/index.html"
             : formatFileUrl(path.join(appDir, "./web/index.html")),
         preload: {
-            browserWindow: buildAppPath("./electron-preload/browser-window.js"),
-            browserWindowE2E: buildAppPath("./electron-preload/browser-window-e2e.js"),
+            browserWindow: appRelativePath("./electron-preload/browser-window.js"),
+            browserWindowE2E: appRelativePath("./electron-preload/browser-window-e2e.js"),
             webView: {
-                protonmail: formatFileUrl(buildAppPath("./electron-preload/webview/protonmail.js")),
-                tutanota: formatFileUrl(buildAppPath("./electron-preload/webview/tutanota.js")),
+                protonmail: formatFileUrl(appRelativePath("./electron-preload/webview/protonmail.js")),
+                tutanota: formatFileUrl(appRelativePath("./electron-preload/webview/tutanota.js")),
             },
         },
     };
@@ -108,29 +106,4 @@ export function activateBrowserWindow({uiContext}: Context) {
 
     uiContext.browserWindow.show();
     uiContext.browserWindow.focus();
-}
-
-export function handleKeePassRequestError(error: any, suppressErrors = false): MessageFieldContainer {
-    if (error instanceof KeePassHttpClientModel.Common.NetworkResponseStatusCodeError && error.statusCode === 503) {
-        if (suppressErrors) {
-            return {message: "Locked"};
-        }
-        error.message = "KeePass: Locked";
-    }
-    if (error instanceof KeePassHttpClientModel.Common.NetworkConnectionError) {
-        if (suppressErrors) {
-            return {message: "No connection"};
-        }
-        error.message = "KeePass: No connection";
-    }
-    if (error instanceof KeePassHttpClientModel.Common.NetworkResponseContentError) {
-        if (suppressErrors) {
-            return {message: "Invalid response"};
-        }
-        error.message = "KeePass: Invalid response";
-    }
-    if (suppressErrors) {
-        return {message: "Request failed"};
-    }
-    throw error;
 }

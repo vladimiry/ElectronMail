@@ -1,14 +1,14 @@
 import nodeExternals from "webpack-node-externals";
 
-import {buildBaseConfig, srcPath} from "./lib";
+import {buildBaseConfig, srcRelateivePath} from "./lib";
 
-const tsConfigFile = srcPath("./electron-main/tsconfig.json");
+const tsConfigFile = srcRelateivePath("./electron-main/tsconfig.json");
 
 export default buildBaseConfig(
     {
         target: "electron-main",
         entry: {
-            "electron-main": srcPath("./electron-main/index.ts"),
+            "electron-main": srcRelateivePath("./electron-main/index.ts"),
         },
         module: {
             rules: [

@@ -5,9 +5,9 @@ import {app} from "electron";
 import {activateBrowserWindow, initContext} from "./util";
 import {APP_NAME} from "src/shared/constants";
 import {Context} from "./model";
+import {initApi} from "./api";
 import {initAutoUpdate} from "./app-update";
 import {initBrowserWindow} from "./window";
-import {initEndpoints} from "./ipc-main-api";
 import {initTray} from "./tray";
 import {initWebContentContextMenu} from "./web-content-context-menu";
 import {isWebViewSrcWhitelisted} from "src/shared/util";
@@ -28,7 +28,7 @@ export async function initApp(ctx: Context) {
     }
 
     app.on("ready", async () => {
-        const endpoints = await initEndpoints(ctx);
+        const endpoints = await initApi(ctx);
         const {checkForUpdatesAndNotify} = await endpoints.readConfig().toPromise();
 
         // should be called before "browserWindow" creating (listens for "browser-window-created" event)

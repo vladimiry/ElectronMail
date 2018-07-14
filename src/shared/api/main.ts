@@ -34,8 +34,7 @@ export interface Endpoints {
     patchBaseSettings: ApiMethod<BaseConfig, Config>;
     quit: ApiMethodNoArgument<never>;
     readConfig: ApiMethodNoArgument<Config>;
-    readSettings: ApiMethod<PasswordFieldContainer & { savePassword?: boolean; supressErrors?: boolean }, Settings>;
-    readSettingsAuto: ApiMethodNoArgument<Settings | never>;
+    readSettings: ApiMethod<Partial<PasswordFieldContainer> & { savePassword?: boolean; }, Settings>;
     reEncryptSettings: ApiMethod<PasswordFieldContainer & { encryptionPreset: EncryptionAdapterOptions }, Settings>;
     removeAccount: ApiMethod<LoginFieldContainer, Settings>;
     settingsExists: ApiMethodNoArgument<boolean>;

@@ -31,7 +31,7 @@ export class LoginComponent implements AfterViewInit, OnInit {
                 filter((value) => !!value),
                 take(1),
             )
-            .subscribe(() => this.store.dispatch(OPTIONS_ACTIONS.GetSettingsAutoRequest()));
+            .subscribe(() => this.store.dispatch(OPTIONS_ACTIONS.SignInRequest({})));
     }
 
     ngAfterViewInit() {

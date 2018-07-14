@@ -283,10 +283,6 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.is(setPasswordSpy.callCount, 1);
         setPasswordSpy.calledWithExactly(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, OPTIONS.masterPassword);
     },
-    readSettingsAuto: async (t) => {
-        // TODO test "readSettingsAuto" API
-        t.pass();
-    },
     reEncryptSettings: async (t) => {
         // TODO test "reEncryptSettings" API
         t.pass();

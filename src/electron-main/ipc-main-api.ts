@@ -56,18 +56,20 @@ export const initEndpoints = async (ctx: Context): Promise<Endpoints> => {
 
             ctx.settingsStore = newStore;
 
-            if (await keytar.getPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT)) {
+            if (await keytar.getPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT) === password) {
                 await keytar.setPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, newPassword);
+            } else {
+                await keytar.deletePassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT);
             }
 
             return newData;
         })()),
         init: () => from((async () => {
-            const password = await keytar.getPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT);
+            const hasSavedPassword = Boolean(await keytar.getPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT));
 
             return {
                 electronLocations: ctx.locations,
-                hasSavedPassword: !!password,
+                hasSavedPassword,
             };
         })()),
         keePassRecordRequest: ({keePassClientConf, keePassRef, suppressErrors}) => from((async () => {
@@ -139,8 +141,18 @@ export const initEndpoints = async (ctx: Context): Promise<Endpoints> => {
 
             return ctx.configStore.write(ctx.initialStores.config);
         })()),
-        // TODO update "readSettings" api method test (upgradeSettings)
+        // TODO update "readSettings" api method test, "upgradeSettings" and "no password provided" cases
         readSettings: ({password, savePassword}) => from((async () => {
+            if (!password) {
+                const storedPassword = await keytar.getPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT);
+
+                if (!storedPassword) {
+                    throw new Error("No password provided to decrypt settings with");
+                }
+
+                return await endpoints.readSettings({password: storedPassword}).toPromise();
+            }
+
             const adapter = await buildSettingsAdapter(ctx, password);
             const store = ctx.settingsStore.clone({adapter});
             const settings = await (async () => {
@@ -165,38 +177,6 @@ export const initEndpoints = async (ctx: Context): Promise<Endpoints> => {
             ctx.settingsStore = store;
 
             return settings;
-        })()),
-        // TODO update "readSettings" api method test (upgradeSettings)
-        readSettingsAuto: () => from((async () => {
-            const password = await keytar.getPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT);
-
-            if (!password) {
-                return EMPTY.toPromise();
-            }
-
-            const adapter = await buildSettingsAdapter(ctx, password);
-            const store = ctx.settingsStore.clone({adapter});
-
-            try {
-                const settings = await (async () => {
-                    const entity = await store.readExisting();
-
-                    if (upgradeSettings(entity)) {
-                        return store.write(entity);
-                    }
-
-                    return entity;
-                })();
-
-                ctx.settingsStore = store;
-
-                return settings;
-            } catch {
-                // the following errors might happen and are being ignored:
-                // - file not found - settings file might be removed manually
-                // - decryption - saved password might be wrong
-                return EMPTY.toPromise();
-            }
         })()),
         reEncryptSettings: ({encryptionPreset, password}) => from((async () => {
             await ctx.configStore.write({

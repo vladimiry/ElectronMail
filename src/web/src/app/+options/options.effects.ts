@@ -63,33 +63,6 @@ export class OptionsEffects {
     );
 
     @Effect()
-    getSettingsAutoRequest$ = this.actions$.pipe(
-        filter(OPTIONS_ACTIONS.is.GetSettingsAutoRequest),
-        switchMap(() => merge(
-            of(this.buildPatchProgress({signingIn: true})),
-            this.electronService
-                .callIpcMain("readSettingsAuto")()
-                .pipe(
-                    mergeMap((settings) => settings
-                        ? [
-                            OPTIONS_ACTIONS.GetSettingsResponse(settings),
-                            NAVIGATION_ACTIONS.Go({
-                                path: [{
-                                    outlets: {
-                                        [SETTINGS_OUTLET]: settings.accounts.length ? null : `${SETTINGS_PATH}/account-edit`,
-                                        [ACCOUNTS_OUTLET]: ACCOUNTS_PATH,
-                                    },
-                                }],
-                            }),
-                        ]
-                        : [],
-                    ),
-                    catchError((error) => of(CORE_ACTIONS.Fail(error))),
-                    finalize(() => this.dispatchProgress({signingIn: false})),
-                ),
-        )));
-
-    @Effect()
     signInRequest$ = this.actions$.pipe(
         filter(OPTIONS_ACTIONS.is.SignInRequest),
         switchMap(({payload}) => merge(

@@ -87,6 +87,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
 
         // TODO update "readSettings" api method test, "upgradeSettings" and "no password provided" cases
         readSettings: ({password, savePassword}) => from((async () => {
+            // trying to auto login
             if (!password) {
                 const storedPassword = await keytar.getPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT);
 
@@ -112,10 +113,13 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
                 return store.write(ctx.initialStores.settings);
             })();
 
-            if (savePassword) {
-                await keytar.setPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, password);
-            } else {
-                await keytar.deletePassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT);
+            // "savePassword" is unset in auto login case
+            if (typeof savePassword !== "undefined") {
+                if (savePassword) {
+                    await keytar.setPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, password);
+                } else {
+                    await keytar.deletePassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT);
+                }
             }
 
             ctx.settingsStore = store;

@@ -50,7 +50,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
             credentialsKeePass: {},
         };
 
-        const settings = await initConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
+        const settings = await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
 
         t.is(settings.accounts.length, 0, `accounts list is empty`);
 
@@ -116,7 +116,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         const emptyPasswordPayload = {password: "", newPassword: "new password 2"};
         const wrongPasswordPayload = {password: "wrong password", newPassword: "new password 3"};
 
-        const settings = await initConfigAndSettings(endpoints, {password: payload.password});
+        const settings = await readConfigAndSettings(endpoints, {password: payload.password});
 
         await t.throws(endpoint(emptyPasswordPayload).toPromise(), /Decryption\sfailed/gi);
         await t.throws(endpoint(wrongPasswordPayload).toPromise(), /Decryption\sfailed/gi);
@@ -161,17 +161,20 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
     logout: async (t) => {
         const deletePasswordSpy = t.context.mocks.keytar.deletePassword;
         const endpoints = t.context.endpoints;
-        const action = endpoints.logout;
 
-        await action().toPromise();
+        await endpoints.logout().toPromise();
         t.falsy(t.context.ctx.settingsStore.adapter);
         t.is(deletePasswordSpy.callCount, 1);
 
-        await initConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
+        await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
+        t.truthy(t.context.ctx.settingsStore.adapter);
+        t.is(deletePasswordSpy.callCount, 1);
+
+        await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword, savePassword: false});
         t.truthy(t.context.ctx.settingsStore.adapter);
         t.is(deletePasswordSpy.callCount, 2);
 
-        await action().toPromise();
+        await endpoints.logout().toPromise();
         t.falsy(t.context.ctx.settingsStore.adapter);
         t.is(deletePasswordSpy.callCount, 3);
 
@@ -241,7 +244,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
             },
         ];
 
-        await initConfig(endpoints);
+        await readConfig(endpoints);
 
         for (const patch of patches) {
             const initialConfig = await t.context.ctx.configStore.readExisting();
@@ -261,7 +264,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
 
     readConfig: async (t) => {
         t.false(await t.context.ctx.configStore.readable(), "config file does not exist");
-        const initial = await initConfig(t.context.endpoints);
+        const initial = await readConfig(t.context.endpoints);
         const initialExpected = {...t.context.ctx.initialStores.config, ...{_rev: 0}};
         t.deepEqual(initial, initialExpected, "checking initial config file");
         t.true(await t.context.ctx.configStore.readable(), "config file exists");
@@ -274,7 +277,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
 
         t.false(await t.context.ctx.settingsStore.readable(), "settings file does not exist");
         t.falsy(t.context.ctx.settingsStore.adapter, "adapter is not set");
-        const initial = await initConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
+        const initial = await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword, savePassword: false});
         t.is(t.context.ctx.settingsStore.adapter && t.context.ctx.settingsStore.adapter.constructor.name,
             EncryptionAdapter.name,
             "adapter is an EncryptionAdapter",
@@ -291,8 +294,9 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.deepEqual(initialUpdated, initialUpdatedExpected, "saved initial settings file");
         t.deepEqual(await t.context.ctx.settingsStore.read(), initialUpdatedExpected, "loaded initial settings file");
 
-        await initConfigAndSettings(endpoints, {password: OPTIONS.masterPassword, savePassword: true});
+        await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword, savePassword: true});
         t.is(setPasswordSpy.callCount, 1);
+        t.is(deletePasswordSpy.callCount, 1);
         setPasswordSpy.calledWithExactly(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, OPTIONS.masterPassword);
     },
 
@@ -329,7 +333,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         const removePayload = {login: addProtonPayload.login};
         const removePayload404 = {login: "404 login"};
 
-        await initConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
+        await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
 
         try {
             await removeHandler(removePayload404).toPromise();
@@ -363,7 +367,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
 
     settingsExists: async (t) => {
         t.false(await t.context.ctx.settingsStore.readable(), "store: settings file does not exist");
-        await initConfigAndSettings(t.context.endpoints, {password: OPTIONS.masterPassword});
+        await readConfigAndSettings(t.context.endpoints, {password: OPTIONS.masterPassword});
         t.true(await t.context.ctx.settingsStore.readable(), "store: settings file exists");
     },
 
@@ -385,7 +389,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         const endpoints = t.context.endpoints;
         const action = endpoints.toggleCompactLayout;
 
-        const initial = await initConfig(endpoints);
+        const initial = await readConfig(endpoints);
         t.true(!initial.compactLayout);
 
         let updated = await action().toPromise();
@@ -402,7 +406,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         const updateHandler = endpoints.updateAccount;
         const updatePatch: AccountConfigPatch = {login: "login345", credentials: {password: "ps-1", twoFactorCode: "2fa-1"}};
 
-        await initConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
+        await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
 
         try {
             await updateHandler({login: "login123", credentials: {password: "password1"}}).toPromise();
@@ -443,13 +447,14 @@ Object.entries(tests).forEach(([apiMethodName, method]) => {
     test.serial(apiMethodName, method);
 });
 
-async function initConfig(endpoints: Endpoints): Promise<Config> {
+async function readConfig(endpoints: Endpoints): Promise<Config> {
     return await endpoints.readConfig().toPromise();
 }
 
-// tslint:disable-next-line:max-line-length
-async function initConfigAndSettings(endpoints: Endpoints, payload: PasswordFieldContainer & { savePassword?: boolean; supressErrors?: boolean }): Promise<Settings> {
-    await initConfig(endpoints);
+async function readConfigAndSettings(
+    endpoints: Endpoints, payload: PasswordFieldContainer & { savePassword?: boolean; supressErrors?: boolean },
+): Promise<Settings> {
+    await readConfig(endpoints);
     return await endpoints.readSettings(payload).toPromise();
 }
 

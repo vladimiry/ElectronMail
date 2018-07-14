@@ -16,30 +16,16 @@ import {
     RUNTIME_ENV_E2E_TUTANOTA_PASSWORD,
     RUNTIME_ENV_E2E_TUTANOTA_UNREAD_MIN,
 } from "src/shared/constants";
-import {catchError, CONF, ENV, initApp, test, workflow} from "./workflow";
+import {ENV, initApp, test, workflow} from "./workflow";
 import {AccountType} from "src/shared/model/account";
 
-test.beforeEach(async (t) => {
-    try {
-        await initApp(t, {initial: true});
-    } catch (error) {
-        await catchError(t, error);
-    }
-});
+test("starting app / master password setup / add accounts / logout / auto login", async (t) => {
+    await initApp(t, {initial: true});
 
-test.afterEach(async (t) => {
-    try {
-        await workflow.destroyApp(t);
-    } catch (error) {
-        await catchError(t, error);
-    }
-});
+    let accountsCount = 0;
 
-test("login, add account, logout, auto login", async (t) => {
+    // initial setup and logout
     await (async () => {
-        const client = t.context.app.client;
-        let accountsCount = 0;
-
         await workflow.login(t, {setup: true, savePassword: false});
 
         await workflow.addAccount(t, {type: "protonmail"});
@@ -74,14 +60,14 @@ test("login, add account, logout, auto login", async (t) => {
             await workflow.selectAccount(t, accountsCount - 1);
 
             if (unread && !isNaN(unread)) {
-                await client.pause(ONE_SECOND_MS * 15);
+                await t.context.app.client.pause(ONE_SECOND_MS * 15);
 
                 const verify = async (requiredAssertion = false) => {
                     let actualUnreadText: string;
 
                     try {
                         // tslint:disable-next-line:max-line-length
-                        actualUnreadText = String(await client.getText(`.list-group.accounts-list > .list-group-item:nth-child(${accountsCount}) email-securely-app-account-title > .account-value-sync-unread > .badge`));
+                        actualUnreadText = String(await t.context.app.client.getText(`.list-group.accounts-list > .list-group-item:nth-child(${accountsCount}) email-securely-app-account-title > .account-value-sync-unread > .badge`));
                     } catch (e) {
                         if (!requiredAssertion) {
                             return false;
@@ -95,30 +81,37 @@ test("login, add account, logout, auto login", async (t) => {
                 };
 
                 if (!(await verify())) {
-                    await client.pause(ONE_SECOND_MS * (type === "tutanota" ? 70 : 10));
+                    await t.context.app.client.pause(ONE_SECOND_MS * (type === "tutanota" ? 70 : 10));
                     await verify(true);
                 }
             }
         }
 
         await workflow.logout(t);
-        await workflow.login(t, {setup: false, savePassword: true});
-        t.is(
-            (await client.getUrl()).split("#").pop(), "/(accounts-outlet:accounts)",
-            `login: "accounts" page url`,
-        );
-        t.is(await workflow.accountsCount(t), accountsCount);
-
-        await workflow.destroyApp(t);
     })();
 
-    await initApp(t, {initial: false});
-    await t.context.app.client.pause(CONF.timeouts.transition + CONF.timeouts.encryption);
+    const afterLoginTest = async (workflowPrefix: string) => {
+        t.is(
+            (await t.context.app.client.getUrl()).split("#").pop(),
+            "/(accounts-outlet:accounts)", `workflow.${workflowPrefix}: "accounts" page url`,
+        );
+        t.is(await workflow.accountsCount(t), accountsCount);
+    };
 
-    t.is(
-        (await t.context.app.client.getUrl()).split("#").pop(), "/(accounts-outlet:accounts)",
-        `root: "accounts" page url`,
-    );
+    // login with password saving
+    await workflow.login(t, {setup: false, savePassword: true});
+    await afterLoginTest("explicit-login-passwordSave");
+    await workflow.destroyApp(t);
+
+    // auto login 1
+    await initApp(t, {initial: false});
+    await afterLoginTest("auto-login-1");
+    await workflow.destroyApp(t);
+
+    // auto login 2, making sure previous auto login step didn't remove saved password
+    await initApp(t, {initial: false});
+    await afterLoginTest("auto-login-2");
+    await workflow.destroyApp(t); // final app instance is being destroyed by "afterEach" call
 
     // making sure log file has not been created (no errors happened)
     t.false(fs.existsSync(t.context.logFilePath), `"${t.context.logFilePath}" file should not exist`);

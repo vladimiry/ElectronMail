@@ -13,8 +13,7 @@ import {Application} from "spectron";
 import {promisify} from "util";
 
 import {AccountType} from "src/shared/model/account";
-import {RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
-import {ACCOUNTS_CONFIG} from "src/shared/constants";
+import {ACCOUNTS_CONFIG, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
 
 export interface TestContext {
     app: Application;
@@ -40,7 +39,7 @@ export const CONF = {
         element: 700,
         elementTouched: 300,
         encryption: CI ? 5000 : 1000,
-        transition: CI ? 2000 : 500,
+        transition: CI ? 2500 : 500,
     },
 };
 
@@ -56,13 +55,13 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
             || path.join(rootDirPath, "./output/e2e", String(Number(new Date())));
         const userDataDirPath = path.join(outputDirPath, "./app-data");
         const logFilePath = path.join(userDataDirPath, "log.log");
-        // const webdriverLogDirPath = path.join(outputDirPath, "webdriver-driver-log");
-        // const chromeDriverLogFilePath = path.join(outputDirPath, "chrome-driver.log");
+        const webdriverLogDirPath = path.join(outputDirPath, "webdriver-driver-log");
+        const chromeDriverLogFilePath = path.join(outputDirPath, "chrome-driver.log");
 
         await mkOutputDirs([
             outputDirPath,
             userDataDirPath,
-            // webdriverLogDirPath,
+            webdriverLogDirPath,
         ]);
 
         t.context.appDirPath = appDirPath;
@@ -89,8 +88,8 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
 
             // TODO chromedriver throws 'Failed to redirect stderr to log file.' and 'Unable to initialize logging. Exiting...'
             // errors if log paths are specified, only on first run
-            // webdriverLogPath: webdriverLogDirPath,
-            // chromeDriverLogPath: chromeDriverLogFilePath,
+            webdriverLogPath: webdriverLogDirPath,
+            chromeDriverLogPath: chromeDriverLogFilePath,
 
             // ...(CI ? {
             //     startTimeout: 30000,
@@ -130,6 +129,8 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
 
         // await awaitAngular(t.context.app.client); // seems to be not needed
         // await t.context.app.client.pause(2000);
+
+        await t.context.app.client.pause(CONF.timeouts.encryption);
     } catch (error) {
         if (error.message.indexOf("The inAppPurchase module can only be used on macOS") !== -1) {
             // tslint:disable:no-console
@@ -277,7 +278,7 @@ export const workflow = {
             `addAccount: "accounts?login=${login}" page url`,
         );
         await this.closeSettingsModal(t);
-        await client.pause(CONF.timeouts.transition);
+        await client.pause(CONF.timeouts.encryption);
     },
 
     async selectAccount(t: ExecutionContext<TestContext>, index = 0) {

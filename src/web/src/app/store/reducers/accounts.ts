@@ -1,6 +1,6 @@
+import immer from "immer";
 import {createFeatureSelector, createSelector} from "@ngrx/store";
 import {UnionOf} from "unionize";
-import {updateIn} from "hydux-mutator";
 
 import * as fromRoot from "src/web/src/app/store/reducers/root";
 import {ACCOUNTS_ACTIONS} from "src/web/src/app/store/actions";
@@ -72,22 +72,16 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
         NotificationPatch: ({login, notification}) => {
             const {index} = selectAccountByLogin(state.accounts, login);
 
-            return updateIn(
-                state,
-                (_) => _.accounts[index].notifications,
-                (_) => ({..._, ...notification}),
-                [index],
-            );
+            return immer(state, (draft) => {
+                draft.accounts[index].notifications = {...draft.accounts[index].notifications, ...notification};
+            });
         },
         PatchProgress: ({login, patch}) => {
             const {index} = selectAccountByLogin(state.accounts, login);
 
-            return updateIn(
-                state,
-                (_) => _.accounts[index].progress,
-                (progress) => ({...progress, ...patch}),
-                [index],
-            );
+            return immer(state, (draft) => {
+                draft.accounts[index].progress = {...draft.accounts[index].progress, ...patch};
+            });
         },
         default: () => state,
     });

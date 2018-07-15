@@ -161,7 +161,7 @@ export class AccountsEffects {
                 const {account, webView, unSubscribeOn} = payload;
                 const {type, login, entryUrl} = account.accountConfig;
                 const observable = this.electronService.webViewCaller(webView, type).pipe(
-                    exhaustMap((caller) => caller("notification", {unSubscribeOn, timeoutMs: 0})({entryUrl})),
+                    exhaustMap((caller) => caller("notification", {unSubscribeOn})({entryUrl})),
                     map((notification) => ACCOUNTS_ACTIONS.NotificationPatch({login, notification})),
                 );
 

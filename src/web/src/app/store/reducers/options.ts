@@ -1,12 +1,11 @@
 import {createFeatureSelector, createSelector} from "@ngrx/store";
+import {UnionOf} from "unionize";
 
 import * as fromRoot from "./root";
 import {Config, Settings} from "src/shared/model/options";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
 import {pickBaseConfigProperties} from "src/shared/util";
-import {UnionOf} from "unionize";
-import {updateIn} from "hydux-mutator";
 
 export const featureName = "options";
 
@@ -40,14 +39,13 @@ const initialState: State = {
 
 export function reducer(state = initialState, action: UnionOf<typeof OPTIONS_ACTIONS>): State {
     return OPTIONS_ACTIONS.match(action, {
-        InitResponse: (payload) => ({...state, ...payload}),
+        InitResponse: (statePatch) => ({...state, ...statePatch}),
         GetConfigResponse: (config) => ({...state, config}),
         GetSettingsResponse: (settings) => ({...state, settings}),
-        PatchProgress: (patch) => updateIn(
-            state,
-            (_) => _.progress,
-            (progress) => ({...progress, ...patch}),
-        ),
+        PatchProgress: (progressPatch) => ({
+            ...state,
+            progress: {...state.progress, ...progressPatch},
+        }),
         default: () => state,
     });
 }

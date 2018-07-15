@@ -1,7 +1,7 @@
+import immer from "immer";
 import {ComponentFixture, TestBed, TestModuleMetadata} from "@angular/core/testing";
 import {Location} from "@angular/common";
 import {RouterTestingModule} from "@angular/router/testing";
-import {setIn} from "hydux-mutator";
 import {Store, StoreModule} from "@ngrx/store";
 
 import {AppComponent} from "./app.component";
@@ -42,9 +42,12 @@ describe(AppComponent.name, () => {
         const locationPathStub = jasmine.createSpy().and.returnValue({indexOf: hashIndexOfSpy});
 
         testBed.resetTestingModule();
-        testBed = initTestEnvironment((tb) => tb.configureTestingModule(setIn(moduleDef, (_) => _.providers, [{
-            provide: Location, useValue: {path: locationPathStub},
-        }])));
+
+        testBed = initTestEnvironment((tb) => tb.configureTestingModule(immer(moduleDef, (draft) => {
+            draft.providers = [
+                {provide: Location, useValue: {path: locationPathStub}},
+            ];
+        })));
         await testBed.compileComponents();
         fixture = testBed.createComponent(AppComponent);
 
@@ -60,10 +63,13 @@ describe(AppComponent.name, () => {
         const event = new KeyboardEvent("keyup", {key: ESC_KEY});
 
         testBed.resetTestingModule();
-        testBed = initTestEnvironment((tb) => tb.configureTestingModule(setIn(moduleDef, (_) => _.providers, [
-            {provide: Location, useValue: {path: locationPathStub}},
-            {provide: Store, useValue: {dispatch: storeDispatchStub}},
-        ])));
+        testBed = initTestEnvironment((tb) => tb.configureTestingModule(immer(moduleDef, (draft) => {
+            draft.providers = [
+                {provide: Location, useValue: {path: locationPathStub}},
+                {provide: Store, useValue: {dispatch: storeDispatchStub}},
+            ];
+        })));
+
         await testBed.compileComponents();
         fixture = testBed.createComponent(AppComponent);
 

@@ -33,6 +33,8 @@ export interface BaseEntity {
     _id: Id | IdTuple;
 }
 
+export type NumberString = string;
+
 export type Id<T extends BaseEntity = BaseEntity> = string;
 
 export type IdTuple<ID1 extends BaseEntity = BaseEntity, ID2 extends BaseEntity = BaseEntity> = [Id<ID1>, Id<ID2>];

@@ -58,10 +58,10 @@ const buildBaseConfig: BuildConfig = (config, options = {}) => {
                         uglifyOptions: {
                             compress: false,
                             mangle: false,
-                            ecma: 6,
+                            ecma: 7,
                             output: {
                                 comments: true,
-                                beautify: true,
+                                beautify: false,
                             },
                         },
                     }),

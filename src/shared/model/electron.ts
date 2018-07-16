@@ -15,13 +15,13 @@ export interface ElectronWindow {
 }
 
 export interface ElectronContextLocations {
-    readonly app: string;
+    readonly appDir: string;
     readonly browserWindowPage: string;
     readonly icon: string;
     readonly trayIcon: string;
     readonly trayIconUnreadOverlay: string;
     readonly trayIconLoggedOutOverlay: string;
-    readonly userData: string;
+    readonly userDataDir: string;
     readonly preload: {
         browserWindow: string;
         browserWindowE2E: string;

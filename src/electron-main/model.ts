@@ -17,13 +17,14 @@ export interface ContextInitOptions {
 }
 
 export interface Context {
+    readonly storeFs: StoreModel.StoreFs;
     readonly runtimeEnvironment: RuntimeEnvironment;
     readonly locations: ElectronContextLocations;
-    initialStores: {
+    readonly initialStores: {
         config: Config;
         settings: Settings;
     };
-    configStore: StoreModel.Store<Config>;
+    readonly configStore: StoreModel.Store<Config>;
     settingsStore: StoreModel.Store<Settings>;
     uiContext?: UIContext;
 }

@@ -17,7 +17,7 @@ export async function buildGeneralEndpoints(
         openAboutWindow: () => {
             aboutWindow({
                 icon_path: ctx.locations.icon,
-                package_json_dir: path.join(ctx.locations.app, ".."),
+                package_json_dir: path.join(ctx.locations.appDir, ".."),
             });
             return EMPTY;
         },
@@ -33,7 +33,7 @@ export async function buildGeneralEndpoints(
         })()),
 
         openSettingsFolder: () => {
-            shell.openItem(ctx.locations.userData);
+            shell.openItem(ctx.locations.userDataDir);
             return EMPTY;
         },
 

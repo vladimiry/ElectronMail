@@ -221,7 +221,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
     openSettingsFolder: async (t) => {
         const openItemSpy: sinon.SinonSpy = t.context.mocks.electron.shell.openItem;
         await t.context.endpoints.openSettingsFolder().toPromise();
-        t.true(openItemSpy.alwaysCalledWith(t.context.ctx.locations.userData));
+        t.true(openItemSpy.alwaysCalledWith(t.context.ctx.locations.userDataDir));
     },
 
     patchBaseSettings: async (t) => {

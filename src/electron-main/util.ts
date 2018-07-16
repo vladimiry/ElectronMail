@@ -5,7 +5,7 @@ import path from "path";
 import url from "url";
 import {app} from "electron";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
-import {Model as StoreModel, Store} from "fs-json-store";
+import {Fs as StoreFs, Model as StoreModel, Store} from "fs-json-store";
 
 import {BuildEnvironment} from "src/shared/model/common";
 import {Config, configEncryptionPresetValidator, Settings, settingsAccountLoginUniquenessValidator} from "src/shared/model/options";
@@ -18,26 +18,27 @@ export async function initContext(options: ContextInitOptions = {}): Promise<Con
     const runtimeEnvironment: RuntimeEnvironment = Boolean(process.env[RUNTIME_ENV_E2E]) ? "e2e" : "production";
     const locations = initLocations(runtimeEnvironment, options.paths);
     const initialStores = options.initialStores || INITIAL_STORES;
-    const fsOption = options.storeFs ? {fs: options.storeFs} : {};
+    const storeFs = options.storeFs ? options.storeFs : StoreFs.Fs.fs;
     const configStore = new Store<Config>({
-        ...fsOption,
+        fs: storeFs,
         optimisticLocking: true,
-        file: path.join(locations.userData, "config.json"),
+        file: path.join(locations.userDataDir, "config.json"),
         validators: [configEncryptionPresetValidator],
     });
 
-    logger.transports.file.file = path.join(locations.userData, "./log.log");
+    logger.transports.file.file = path.join(locations.userDataDir, "./log.log");
     logger.transports.file.level = "info";
 
     return {
+        storeFs,
         runtimeEnvironment,
         locations,
         initialStores,
         configStore,
         settingsStore: new Store<Settings>({
-            ...fsOption,
+            fs: storeFs,
             optimisticLocking: true,
-            file: path.join(locations.userData, "settings.bin"),
+            file: path.join(locations.userDataDir, "settings.bin"),
             validators: [settingsAccountLoginUniquenessValidator],
         }),
     };
@@ -62,8 +63,8 @@ function initLocations(runtimeEnvironment: RuntimeEnvironment, paths?: ContextIn
     const formatFileUrl = (pathname: string) => url.format({pathname, protocol: "file:", slashes: true});
 
     return {
-        app: appRelativePath(),
-        userData: userDataDir,
+        appDir,
+        userDataDir,
         icon: appRelativePath(largeIcon),
         trayIcon: appRelativePath(os.platform() === "darwin" ? "./assets/icons/mac/icon.png" : largeIcon),
         trayIconUnreadOverlay: appRelativePath("./assets/icons/tray-icon-unread-overlay.png"),

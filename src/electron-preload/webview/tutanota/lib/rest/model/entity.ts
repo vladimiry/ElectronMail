@@ -1,4 +1,4 @@
-import {BaseEntity, GroupType, Id, IdTuple, MailFolderType} from "./common";
+import {BaseEntity, GroupType, Id, IdTuple, MailFolderType, NumberString} from "./common";
 
 export interface User extends BaseEntity {
     memberships: GroupMembership[];
@@ -54,7 +54,9 @@ export interface MailAddress extends BaseEntity {
 }
 
 export interface File extends BaseEntity {
-
+    mimeType?: string;
+    name: string;
+    size: NumberString;
 }
 
 export interface MailBody extends BaseEntity {

@@ -8,7 +8,7 @@ import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
 import {baseConfigSelector, progressSelector, State} from "src/web/src/app/store/reducers/options";
 
 @Component({
-    selector: `email-securely-app-base-settings`,
+    selector: "email-securely-app-base-settings",
     templateUrl: "./base-settings.component.html",
 })
 export class BaseSettingsComponent implements OnInit {

@@ -3,7 +3,7 @@ import {Options as EncryptionAdapterOptions} from "fs-json-store-encryption-adap
 
 import {
     AccountConfigCreatePatch,
-    AccountConfigPatch,
+    AccountConfigUpdatePatch,
     PasswordChangeContainer,
     PasswordFieldContainer,
     UrlFieldContainer,
@@ -28,7 +28,7 @@ export const OPTIONS_ACTIONS = unionize({
         RemoveAccountRequest: ofType<{ login: string }>(),
         SignInRequest: ofType<Partial<PasswordFieldContainer> & { savePassword?: boolean; }>(),
         ToggleCompactRequest: ofType<{}>(),
-        UpdateAccountRequest: ofType<AccountConfigPatch>(),
+        UpdateAccountRequest: ofType<AccountConfigUpdatePatch>(),
     },
     {
         tag: "type",

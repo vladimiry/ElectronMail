@@ -1,7 +1,7 @@
 {
-  "extends": "./../tsconfig.json",
+  "extends": "../tsconfig.json",
   "exclude": [
-    "./../src/environments/**/*.ts"
+    "../src/environments/**/*.ts"
   ],
   // section is taken from the parent config, inheritance does not work here
   "angularCompilerOptions": {

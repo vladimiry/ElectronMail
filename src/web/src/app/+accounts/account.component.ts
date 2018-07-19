@@ -1,38 +1,43 @@
-import {AfterViewInit, Component, ElementRef, HostBinding, Input, NgZone, OnDestroy, ViewChild} from "@angular/core";
 import {BehaviorSubject, EMPTY, Observable, of, Subject} from "rxjs";
+import {AfterViewInit, Component, ElementRef, HostBinding, Input, NgZone, OnDestroy, ViewChild} from "@angular/core";
 import {DidFailLoadEvent} from "electron";
 import {distinctUntilChanged, filter, map, pairwise, switchMap, takeUntil, withLatestFrom} from "rxjs/operators";
+import {equals, omit, pick} from "ramda";
 import {Store} from "@ngrx/store";
 
-import {
-    configUnreadNotificationsSelector,
-    electronLocationsSelector,
-    settingsKeePassClientConfSelector,
-    State as OptionsState,
-} from "src/web/src/app/store/reducers/options";
+import {AccountConfig, WebAccount} from "src/shared/model/account";
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
-import {APP_NAME} from "src/shared/constants";
+import {APP_NAME, ONE_SECOND_MS} from "src/shared/constants";
+import {configUnreadNotificationsSelector, settingsKeePassClientConfSelector} from "src/web/src/app/store/reducers/options";
+import {ElectronContextLocations} from "src/shared/model/electron";
 import {KeePassRef} from "src/shared/model/keepasshttp";
+import {Omit} from "src/shared/types";
 import {State} from "src/web/src/app/store/reducers/accounts";
-import {WebAccount} from "src/shared/model/account";
+
+export type WebViewPreloads = ElectronContextLocations["preload"]["webView"];
 
 @Component({
-    selector: `email-securely-app-account`,
+    selector: "email-securely-app-account",
     templateUrl: "./account.component.html",
     styleUrls: ["./account.component.scss"],
 })
 export class AccountComponent implements AfterViewInit, OnDestroy {
-    // webView initialization
-    webViewOptions: { src: string; preload: string; };
-    // account
     // TODO simplify account$ initialization and usage
     account$: BehaviorSubject<WebAccount>;
     // keepass
-    keePassClientConf$ = this.optionsStore.select(settingsKeePassClientConfSelector);
+    keePassClientConf$ = this.store.select(settingsKeePassClientConfSelector);
     passwordKeePassRef$: Observable<KeePassRef | undefined>;
     twoFactorCodeKeePassRef$: Observable<KeePassRef | undefined>;
     mailPasswordKeePassRef$: Observable<KeePassRef | undefined>;
-    // offline interval
+    // webview
+    @ViewChild("webViewRef", {read: ElementRef})
+    webViewRef: ElementRef;
+    webViewOptions: { src: string; preload: string; };
+    webViewPreloads: Omit<WebViewPreloads, "stub">;
+    webViewDomReadyHandlerArgs: ["dom-ready", typeof AccountComponent.prototype.webViewDomReadyEventHandler];
+    webViewSrcSetupPromiseTrigger: () => void;
+    webViewSrcSetupPromise = new Promise((resolve) => this.webViewSrcSetupPromiseTrigger = resolve);
+    // offline
     offlineIntervalStepSec = 10;
     offlineIntervalAttempt = 0;
     offlineIntervalHandle: any;
@@ -40,27 +45,38 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
     @HostBinding("class.web-view-hidden")
     offlineIntervalRemainingSec: number;
     // other
-    @ViewChild("webViewRef", {read: ElementRef})
-    webViewRef: ElementRef;
-    notificationsCleanupTrigger: () => void;
+    credentialsFields: Array<keyof AccountConfig> = ["credentials", "credentialsKeePass"];
+    // releasing
     unSubscribe$ = new Subject();
+    releasingResolvers: Array<() => void> = [];
 
     constructor(private store: Store<State>,
-                private optionsStore: Store<OptionsState>,
                 private zone: NgZone) {
-        this.notificationsCleanupTrigger = () => {};
+        this.webViewDomReadyHandlerArgs = ["dom-ready", this.webViewDomReadyEventHandler.bind(this)];
+    }
+
+    @Input()
+    set config(allWebViewPreloads: WebViewPreloads) {
+        if (!this.webViewOptions) {
+            this.webViewOptions = {src: "about:blank", preload: allWebViewPreloads.stub};
+        }
+        this.webViewPreloads = omit([((name: keyof Pick<WebViewPreloads, "stub">) => name)("stub")], allWebViewPreloads);
     }
 
     @Input()
     set account(account: WebAccount) {
         if (this.account$) {
-            if (JSON.stringify(account.accountConfig) !== JSON.stringify(this.account$.getValue().accountConfig)) {
-                this.pageOrConfigChangeReaction(account);
+            const prevCredentials = pick(this.credentialsFields, this.account$.getValue().accountConfig);
+            const newCredentials = pick(this.credentialsFields, account.accountConfig);
+
+            if (!equals(prevCredentials, newCredentials) && this.webView) {
+                this.store.dispatch(ACCOUNTS_ACTIONS.TryToLogin({account, webView: this.webView}));
             }
+
             this.account$.next(account);
         } else {
             this.account$ = new BehaviorSubject(account);
-            this.initAccountReactions();
+            this.initAccountChangeReactions();
         }
     }
 
@@ -68,20 +84,57 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
         return this.webViewRef.nativeElement;
     }
 
-    initAccountReactions() {
+    initAccountChangeReactions() {
         this.account$
             .pipe(
-                map(({notifications}) => notifications.pageType && notifications.pageType.type),
-                pairwise(),
-                filter(([prevPageType, currentPageType]) => currentPageType !== prevPageType),
+                map(({accountConfig}) => accountConfig),
+                distinctUntilChanged(({entryUrl: prev}, {entryUrl: curr}) => prev === curr),
                 takeUntil(this.unSubscribe$),
             )
-            .subscribe(() => this.pageOrConfigChangeReaction(this.account$.getValue()));
+            .subscribe((accountConfig) => {
+                this.webViewOptions = {
+                    src: accountConfig.entryUrl,
+                    preload: this.webViewPreloads[accountConfig.type],
+                };
+                this.webViewSrcSetupPromiseTrigger();
+            });
 
         this.account$
             .pipe(
-                withLatestFrom(this.optionsStore.select(configUnreadNotificationsSelector)),
-                filter(([account, notificationEnabled]) => !!notificationEnabled),
+                map(({notifications}) => notifications.pageType && notifications.pageType.type),
+                filter((pageType) => pageType !== "undefined"),
+                distinctUntilChanged(),
+                takeUntil(this.unSubscribe$),
+            )
+            .subscribe(() => {
+                this.store.dispatch(ACCOUNTS_ACTIONS.TryToLogin({account: this.account$.getValue(), webView: this.webView}));
+            });
+
+        this.account$
+            .pipe(
+                map(({notifications, accountConfig}) => ({loggedIn: notifications.loggedIn, storeMails: accountConfig.storeMails})),
+                distinctUntilChanged((prev, curr) => equals(prev, curr)), // TODO => "distinctUntilChanged(equals)"
+                takeUntil(this.unSubscribe$),
+            )
+            .subscribe(({loggedIn, storeMails}) => {
+                const account = this.account$.getValue();
+                const login = account.accountConfig.login;
+
+                if (loggedIn && storeMails) {
+                    this.store.dispatch(ACCOUNTS_ACTIONS.ToggleFetching({
+                        account,
+                        webView: this.webView,
+                        finishPromise: this.buildReleasingPromise(),
+                    }));
+                } else {
+                    this.store.dispatch(ACCOUNTS_ACTIONS.ToggleFetching({login}));
+                }
+            });
+
+        this.account$
+            .pipe(
+                withLatestFrom(this.store.select(configUnreadNotificationsSelector)),
+                filter(([account, unreadNotificationsEnabled]) => Boolean(unreadNotificationsEnabled)),
                 map(([{notifications}]) => notifications.unread),
                 pairwise(),
                 filter(([previousUnread, currentUnread]) => currentUnread > previousUnread),
@@ -97,23 +150,6 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
                 });
             });
 
-        this.account$
-            .pipe(
-                withLatestFrom(this.optionsStore.select(electronLocationsSelector)),
-                distinctUntilChanged(([{accountConfig: prev}], [{accountConfig: curr}]) => prev.entryUrl === curr.entryUrl),
-                takeUntil(this.unSubscribe$),
-            )
-            .subscribe(([{accountConfig}, electronLocations]) => {
-                if (!electronLocations) {
-                    return;
-                }
-
-                this.webViewOptions = {
-                    src: accountConfig.entryUrl,
-                    preload: electronLocations.preload.webView[accountConfig.type],
-                };
-            });
-
         this.passwordKeePassRef$ = this.account$.pipe(map(({accountConfig}) => {
             return accountConfig.credentialsKeePass.password;
         }));
@@ -125,63 +161,73 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
         }));
     }
 
-    pageOrConfigChangeReaction(account: WebAccount) {
-        this.optionsStore.dispatch(ACCOUNTS_ACTIONS.TryToLogin({account, webView: this.webView}));
+    buildReleasingPromise() {
+        // tslint:disable-next-line:no-unused-expression
+        return new Promise((resolve) => {
+            this.releasingResolvers.push(resolve);
+        });
+    }
+
+    triggerReleasingResolvers() {
+        this.releasingResolvers.forEach((resolver) => resolver());
     }
 
     onKeePassPassword(password: string) {
-        this.optionsStore.dispatch(ACCOUNTS_ACTIONS.TryToLogin({webView: this.webView, account: this.account$.getValue(), password}));
+        this.store.dispatch(ACCOUNTS_ACTIONS.TryToLogin({webView: this.webView, account: this.account$.getValue(), password}));
     }
 
-    ngAfterViewInit() {
+    async ngAfterViewInit() {
+        await this.webViewSrcSetupPromise;
+
         // if ((process.env.NODE_ENV as BuildEnvironment) === "development") {
-        //     this.webView.addEventListener("dom-ready", () => this.webView.openDevTools());
+        //     webView.addEventListener("dom-ready", () => webView.openDevTools());
         // }
 
-        this.subscribePageLoadingEvents();
+        this.subscribePageLoadedEvents();
 
         this.webView.addEventListener("new-window", ({url}: any) => {
-            this.optionsStore.dispatch(NAVIGATION_ACTIONS.OpenExternal({url}));
+            this.store.dispatch(NAVIGATION_ACTIONS.OpenExternal({url}));
         });
+
         this.webView.addEventListener("did-fail-load", ({errorDescription}: DidFailLoadEvent) => {
-            // TODO figure ERR_NOT_IMPLEMENTED error cause, happening on password/2fa code submitting, tutanota only
+            // TODO figure ERR_NOT_IMPLEMENTED error cause, happening on password/2fa code submitting, tutanota only issue
             if (errorDescription === "ERR_NOT_IMPLEMENTED" && this.account$.getValue().accountConfig.type === "tutanota") {
                 return;
             }
 
-            this.unsubscribePageLoadingEvents();
-            this.notificationsCleanupTrigger();
             this.didFailLoadErrorDescription = errorDescription;
+
+            this.unsubscribePageLoadingEvents();
+            this.triggerReleasingResolvers();
 
             this.offlineIntervalAttempt++;
             this.offlineIntervalRemainingSec = Math.min(this.offlineIntervalStepSec * this.offlineIntervalAttempt, 60);
             this.offlineIntervalHandle = setInterval(() => {
                 this.offlineIntervalRemainingSec--;
-
                 if (!this.offlineIntervalRemainingSec) {
                     clearInterval(this.offlineIntervalHandle);
-                    this.subscribePageLoadingEvents();
+                    this.subscribePageLoadedEvents();
                     this.webView.reloadIgnoringCache();
                 }
-            }, 1000);
+            }, ONE_SECOND_MS);
         });
     }
 
-    subscribePageLoadingEvents() {
-        this.webView.addEventListener("dom-ready", this.pageLoadingStartHandler);
+    subscribePageLoadedEvents() {
+        this.webView.addEventListener.apply(this.webView, this.webViewDomReadyHandlerArgs);
     }
 
     unsubscribePageLoadingEvents() {
-        this.webView.removeEventListener("dom-ready", this.pageLoadingStartHandler);
+        this.webView.removeEventListener.apply(this.webView, this.webViewDomReadyHandlerArgs);
     }
 
-    pageLoadingStartHandler = () => {
-        this.notificationsCleanupTrigger();
+    webViewDomReadyEventHandler() {
+        this.triggerReleasingResolvers();
 
-        this.optionsStore.dispatch(ACCOUNTS_ACTIONS.SetupNotificationChannel({
+        this.store.dispatch(ACCOUNTS_ACTIONS.SetupNotificationChannel({
             account: this.account$.getValue(),
             webView: this.webView,
-            unSubscribeOn: new Promise((resolve) => this.notificationsCleanupTrigger = resolve),
+            finishPromise: this.buildReleasingPromise(),
         }));
     }
 
@@ -190,7 +236,6 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
         this.unSubscribe$.complete();
 
         this.unsubscribePageLoadingEvents();
-
-        this.notificationsCleanupTrigger();
+        this.triggerReleasingResolvers();
     }
 }

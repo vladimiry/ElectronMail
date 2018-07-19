@@ -7,7 +7,7 @@ import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions
 import {hasSavedPasswordSelector, progressSelector, State} from "src/web/src/app/store/reducers/options";
 
 @Component({
-    selector: `email-securely-app-login`,
+    selector: "email-securely-app-login",
     templateUrl: "./login.component.html",
     styleUrls: ["./login.component.scss"],
     preserveWhitespaces: true,

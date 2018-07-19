@@ -1,0 +1,17 @@
+@import "~src/web/src/variables";
+
+:host {
+    .rounded {
+        background-color: $gray-200;
+        color: $gray-600;
+        padding: $list-group-item-padding-y $list-group-item-padding-x;
+
+        .form-check {
+            margin-top: $app-spacer-1;
+
+            @media (min-width: #{map-get($grid-breakpoints, md)}) {
+                margin-top: 0;
+            }
+        }
+    }
+}

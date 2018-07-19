@@ -11,7 +11,7 @@ import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
 import {State} from "src/web/src/app/store/reducers/options";
 
 @Component({
-    selector: `email-securely-app-keepass-reference`,
+    selector: "email-securely-app-keepass-reference",
     templateUrl: "./keepass-reference.component.html",
 })
 export class KeePassReferenceComponent {

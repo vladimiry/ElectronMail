@@ -1,5 +1,5 @@
-import deepEqual from "deep-equal";
 import {app, BrowserWindow} from "electron";
+import {equals} from "ramda";
 
 import {activateBrowserWindow} from "./util";
 import {BuildEnvironment} from "src/shared/model/common";
@@ -11,6 +11,7 @@ export async function initBrowserWindow(ctx: Context): Promise<BrowserWindow> {
             nodeIntegration: (process.env.NODE_ENV as BuildEnvironment) === "development",
             webviewTag: true,
             webSecurity: true,
+            // TODO explore "sandbox" mode
             // sandbox: true,
             disableBlinkFeatures: "Auxclick",
             preload: ctx.runtimeEnvironment === "e2e" ? ctx.locations.preload.browserWindowE2E : ctx.locations.preload.browserWindow,
@@ -116,7 +117,7 @@ async function keepState(ctx: Context, browserWindow: Electron.BrowserWindow) {
             return;
         }
 
-        if (!deepEqual(storedWindowConfig, newWindowConfig)) {
+        if (!equals(storedWindowConfig, newWindowConfig)) {
             await ctx.configStore.write({...config, window: newWindowConfig});
         }
     }

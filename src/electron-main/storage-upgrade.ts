@@ -10,7 +10,19 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         }
     },
 };
-const SETTINGS_UPGRADES: Record<string, (settings: Settings) => void> = {};
+
+const SETTINGS_UPGRADES: Record<string, (settings: Settings) => void> = {
+    "1.1.1": (settings) => {
+        settings.accounts.forEach((account) => {
+            if (typeof account.credentials === "undefined") {
+                account.credentials = {};
+            }
+            if (typeof account.credentialsKeePass === "undefined") {
+                account.credentialsKeePass = {};
+            }
+        });
+    },
+};
 
 export function upgradeConfig(config: Config): boolean {
     return upgrade(config, CONFIG_UPGRADES);

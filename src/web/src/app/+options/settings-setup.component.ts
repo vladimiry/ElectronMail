@@ -7,7 +7,7 @@ import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
 import {progressSelector, State} from "src/web/src/app/store/reducers/options";
 
 @Component({
-    selector: `email-securely-app-settings-setup`,
+    selector: "email-securely-app-settings-setup",
     templateUrl: "./settings-setup.component.html",
     styleUrls: ["./settings-setup.component.scss"],
     preserveWhitespaces: true,

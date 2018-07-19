@@ -9,12 +9,11 @@ directories:
 files: [
   "./app/**/*",
   "./package.json",
-  "./node_modules/tutanota/LICENSE.txt",
+  "!app/electron-preload/browser-window-e2e.js",
   "!node_modules/jimp/browser",
   "!node_modules/jimp/fonts/open-sans/open-sans-{8,16,32,128}-*",
   "!node_modules/jimp/fonts/open-sans/open-sans-64-black",
   "!node_modules/rxjs/{_esm5,_esm2015,src,bundles}",
-  "!app/electron-preload/browser-window-e2e.js",
   # TODO sodium-native: include into the package only needed prebuilds for the platform is being built
   "!node_modules/sodium-native/{src,test,libsodium}",
 ]

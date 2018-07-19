@@ -5,28 +5,27 @@ import * as fromRoot from "./root";
 import {Config, Settings} from "src/shared/model/options";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
-import {pickBaseConfigProperties} from "src/shared/util";
+import {findAccountConfigPredicate, pickBaseConfigProperties} from "src/shared/util";
 
 export const featureName = "options";
 
-interface Progress {
-    addingAccount?: boolean;
-    changingPassword?: boolean;
-    keePassReferencing?: boolean;
-    reEncryptingSettings?: boolean;
-    removingAccount?: boolean;
-    signingIn?: boolean;
-    togglingCompactLayout?: boolean;
-    updatingAccount?: boolean;
-    updatingBaseSettings?: boolean;
-}
-
-export interface ProgressPatch extends Partial<Progress> {}
+export type ProgressPatch = Partial<{
+    addingAccount: boolean;
+    changingPassword: boolean;
+    keePassReferencing: boolean;
+    reEncryptingSettings: boolean;
+    removingAccount: boolean;
+    signingIn: boolean;
+    togglingStore: boolean;
+    togglingCompactLayout: boolean;
+    updatingAccount: boolean;
+    updatingBaseSettings: boolean;
+}>;
 
 export interface State extends fromRoot.State {
     config: Config;
     settings: Settings;
-    progress: Progress;
+    progress: ProgressPatch;
     electronLocations?: ElectronContextLocations;
     hasSavedPassword?: boolean;
 }
@@ -72,9 +71,7 @@ export const settingsSelector = createSelector(stateSelector, ({settings}) => se
 export const settingsAccountsSelector = createSelector(settingsSelector, ({accounts}) => accounts);
 export const settingsAccountByLoginSelector = (login: string) => createSelector(
     settingsAccountsSelector,
-    (accounts) => accounts
-        .filter(({login: accountLogin}) => accountLogin === login)
-        .shift(),
+    (accounts) => accounts.find(findAccountConfigPredicate(login)),
 );
 export const settingsKeePassClientConfSelector = createSelector(
     settingsSelector,

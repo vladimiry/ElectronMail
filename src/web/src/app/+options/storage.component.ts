@@ -8,7 +8,7 @@ import {progressSelector, State} from "src/web/src/app/store/reducers/options";
 import {ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "src/shared/model/options";
 
 @Component({
-    selector: `email-securely-app-storage`,
+    selector: "email-securely-app-storage",
     templateUrl: "./storage.component.html",
     styleUrls: ["./storage.component.scss"],
     preserveWhitespaces: true,

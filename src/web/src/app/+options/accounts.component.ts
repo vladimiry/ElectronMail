@@ -4,7 +4,7 @@ import {Store} from "@ngrx/store";
 import {settingsAccountsSelector, State} from "src/web/src/app/store/reducers/options";
 
 @Component({
-    selector: `email-securely-app-accounts`,
+    selector: "email-securely-app-accounts",
     templateUrl: "./accounts.component.html",
 })
 export class AccountsComponent {

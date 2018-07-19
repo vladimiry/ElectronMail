@@ -8,7 +8,7 @@ import {ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "src/shared/
 import {configSelector, State} from "src/web/src/app/store/reducers/options";
 
 @Component({
-    selector: `email-securely-app-encryption-presets`,
+    selector: "email-securely-app-encryption-presets",
     templateUrl: "./encryption-presets.component.html",
     preserveWhitespaces: true,
 })

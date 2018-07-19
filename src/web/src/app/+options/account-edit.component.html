@@ -1,13 +1,18 @@
-<nav aria-label="breadcrumb" role="navigation">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item active">
-            <email-securely-app-type-symbol [type]="existingAccount.type" *ngIf="existingAccount"></email-securely-app-type-symbol>
-            {{ existingAccount ? "Edit Account: " + existingAccount?.login  : "Add Account" }}
-        </li>
-    </ol>
-</nav>
 <fieldset [disabled]="(processing$ | async) || (removing$ | async)">
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="form-group">
+        <div class="rounded mb-2">
+            <email-securely-app-type-symbol [type]="existingAccount.type" *ngIf="existingAccount"></email-securely-app-type-symbol>
+            <div class="d-inline-block">
+                <span *ngIf="existingAccount; else label">{{ existingAccount.login }}</span>
+                <ng-template #label>Add Account</ng-template>
+            </div>
+            <div class="form-check float-md-right" *ngIf="controls.type.value == 'tutanota'">
+                <label class="form-check-label">
+                    <input type="checkbox" class="form-check-input" formControlName="storeMails">
+                    Local store
+                </label>
+            </div>
+        </div>
         <div class="form-group required" *ngIf="!existingAccount">
             <label>Type</label>
             <ng-select [items]="typeValues" [clearable]="false" formControlName="type" id="accountEditFormTypeField">
@@ -27,23 +32,23 @@
             <div class="form-group col-sm-6 required" *ngIf="!existingAccount">
                 <label>Login</label>
                 <input type="text" class="form-control" formControlName="login"
-                       [ngClass]="login.dirty ? {'is-invalid': login.invalid, 'is-valid': login.valid} : {}">
+                       [ngClass]="controls.login.dirty ? {'is-invalid': controls.login.invalid, 'is-valid': controls.login.valid} : {}">
             </div>
             <div class="form-group" [ngClass]="{'col-sm-6': !existingAccount, 'col-sm-12': existingAccount}">
                 <label>Password</label>
                 <input type="password" class="form-control" formControlName="password"
-                       [ngClass]="password.dirty ? {'is-invalid': password.invalid, 'is-valid': password.valid} : {}">
+                       [ngClass]="controls.password.dirty ? {'is-invalid': controls.password.invalid, 'is-valid': controls.password.valid} : {}">
             </div>
         </div>
         <div class="form-group">
             <label>Two Factor Secret Key</label>
             <input type="password" class="form-control" formControlName="twoFactorCode"
-                   [ngClass]="twoFactorCode.dirty ? {'is-invalid': twoFactorCode.invalid, 'is-valid': twoFactorCode.valid} : {}">
+                   [ngClass]="controls.twoFactorCode.dirty ? {'is-invalid': controls.twoFactorCode.invalid, 'is-valid': controls.twoFactorCode.valid} : {}">
         </div>
-        <div class="form-group" *ngIf="type.value == 'protonmail'">
+        <div class="form-group" *ngIf="controls.type.value == 'protonmail'">
             <label>Mail Password</label>
             <input type="password" class="form-control" formControlName="mailPassword"
-                   [ngClass]="mailPassword.dirty ? {'is-invalid': mailPassword.invalid, 'is-valid': mailPassword.valid} : {}">
+                   [ngClass]="controls.mailPassword.dirty ? {'is-invalid': controls.mailPassword.invalid, 'is-valid': controls.mailPassword.valid} : {}">
         </div>
         <div class="clearfix">
             <button class="btn btn-outline-danger pull-left" type="button" *ngIf="existingAccount" (click)="remove()">

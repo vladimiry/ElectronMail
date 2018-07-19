@@ -5,7 +5,7 @@ export type AccountType = "protonmail" | "tutanota";
 // @formatter:off
 interface GenericWebAccount<
     Type extends AccountType,
-    CredFields extends string,
+    CredentialFields extends string,
     NotificationPageTypes extends string,
     ExtraNotifications extends Partial<Record<string, any>> = {},
 > {
@@ -13,12 +13,12 @@ interface GenericWebAccount<
         type: Type;
         login: string;
         entryUrl: string;
-        credentials: Partial<Record<CredFields, string>>;
-        credentialsKeePass: Partial<Record<CredFields, KeePassRef>>;
+        storeMails?: boolean;
+        credentials: Partial<Record<CredentialFields, string>>;
+        credentialsKeePass: Partial<Record<CredentialFields, KeePassRef>>;
     };
-    progress: Partial<Record<CredFields, boolean>>;
+    progress: Partial<Record<CredentialFields, boolean>>;
     notifications: {
-        title?: string;
         loggedIn: boolean;
         unread: number;
         pageType: { url?: string; type: NotificationPageTypes; },
@@ -42,9 +42,7 @@ export type WebAccountTutanota = GenericWebAccount<
 export type WebAccount = WebAccountProtonmail | WebAccountTutanota;
 // @formatter:on
 
-export type AccountConfig = WebAccount["accountConfig"];
-
-export type AccountConfigByType<Type extends AccountType> = Extract<AccountConfig, { type: Type }>;
+export type AccountConfig<Type extends AccountType = AccountType> = Extract<WebAccount["accountConfig"], { type: Type }>;
 
 export type AccountProgress = WebAccount["progress"];
 

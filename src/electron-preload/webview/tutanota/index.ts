@@ -1,6 +1,6 @@
 import {authenticator} from "otplib";
 import {distinctUntilChanged, map, switchMap} from "rxjs/operators";
-import {EMPTY, from, interval, merge, Observable, of, Subscriber, throwError} from "rxjs";
+import {EMPTY, from, interval, merge, Observable, Subscriber, throwError} from "rxjs";
 
 import {AccountNotificationType, WebAccountTutanota} from "src/shared/model/account";
 import {fetchEntitiesRange} from "src/electron-preload/webview/tutanota/lib/rest";
@@ -14,6 +14,8 @@ import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi} from "src/shared/api/webview/tuta
 
 const WINDOW = window as any;
 const state: { inboxMailFolder?: MailFolder | undefined; } = {};
+
+delete WINDOW.Notification;
 
 resolveWebClientApi()
     .then((webClientApi) => {
@@ -133,14 +135,12 @@ function bootstrapApi(webClientApi: WebClientApi) {
         notification: ({entryUrl}) => {
             try {
                 const observables = [
-                    // loggedIn
                     interval(NOTIFICATION_LOGGED_IN_POLLING_INTERVAL).pipe(
                         map(() => isLoggedIn()),
-                        distinctUntilChanged((prev, curr) => prev === curr),
+                        distinctUntilChanged(),
                         map((loggedIn) => ({loggedIn})),
                     ),
 
-                    // pageType
                     // TODO listen for location.href change instead of starting polling interval
                     interval(NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL).pipe(
                         switchMap(() => from((async () => {
@@ -149,9 +149,9 @@ function bootstrapApi(webClientApi: WebClientApi) {
                                 url,
                                 type: "undefined",
                             };
-                            const loginPageDetected = url === `${entryUrl}/login` || url.startsWith(`${entryUrl}/login?`);
+                            const loginUrlDetected = (url === `${entryUrl}/login` || url.startsWith(`${entryUrl}/login?`));
 
-                            if (loginPageDetected) {
+                            if (loginUrlDetected && !isLoggedIn()) {
                                 let twoFactorElements;
 
                                 try {
@@ -176,10 +176,6 @@ function bootstrapApi(webClientApi: WebClientApi) {
                         distinctUntilChanged(({pageType: prev}, {pageType: curr}) => prev.type === curr.type),
                     ),
 
-                    // title
-                    of({title: ""}),
-
-                    // unread
                     // TODO listen for "unread" change instead of starting polling interval
                     Observable.create((observer: Subscriber<{ unread: number }>) => {
                         const intervalHandler = async () => {

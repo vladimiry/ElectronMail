@@ -1,6 +1,6 @@
 import {authenticator} from "otplib";
-import {distinctUntilChanged, filter, map} from "rxjs/operators";
-import {EMPTY, from, fromEvent, interval, merge, Observable, of, Subscriber, throwError} from "rxjs";
+import {distinctUntilChanged, map} from "rxjs/operators";
+import {EMPTY, from, interval, merge, Observable, Subscriber, throwError} from "rxjs";
 
 import {AccountNotificationType, WebAccountProtonmail} from "src/shared/model/account";
 import {getLocationHref, submitTotpToken, typeInputValue, waitElements} from "src/electron-preload/webview/util";
@@ -60,26 +60,14 @@ const endpoints: ProtonmailApi = {
 
     notification: ({entryUrl}) => {
         try {
-            const observables = [];
-
-            // loggedIn
-            observables.push(
+            const observables = [
                 interval(NOTIFICATION_LOGGED_IN_POLLING_INTERVAL).pipe(
-                    map(() => {
-                        const html = WINDOW.angular && WINDOW.angular.element("html");
-                        const $injector = html.data("$injector");
-                        const authentication = $injector.get("authentication");
-
-                        return authentication && authentication.isLoggedIn();
-                    }),
-                    distinctUntilChanged((prev, curr) => prev === curr),
+                    map(() => isLoggedIn()),
+                    distinctUntilChanged(),
                     map((loggedIn) => ({loggedIn})),
                 ),
-            );
 
-            // pageType
-            // TODO listen for location.href change instead of starting polling interval
-            observables.push(
+                // TODO listen for location.href change instead of starting polling interval
                 interval(NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL).pipe(
                     map(() => {
                         const url = getLocationHref();
@@ -88,22 +76,24 @@ const endpoints: ProtonmailApi = {
                             type: "undefined",
                         };
 
-                        switch (url) {
-                            case `${entryUrl}/login`: {
-                                const twoFactorCode = document.getElementById(twoFactorCodeElementId);
-                                const twoFactorCodeVisible = twoFactorCode && twoFactorCode.offsetParent;
+                        if (!isLoggedIn()) {
+                            switch (url) {
+                                case `${entryUrl}/login`: {
+                                    const twoFactorCode = document.getElementById(twoFactorCodeElementId);
+                                    const twoFactorCodeVisible = twoFactorCode && twoFactorCode.offsetParent;
 
-                                if (twoFactorCodeVisible) {
-                                    pageType.type = "login2fa";
-                                } else {
-                                    pageType.type = "login";
+                                    if (twoFactorCodeVisible) {
+                                        pageType.type = "login2fa";
+                                    } else {
+                                        pageType.type = "login";
+                                    }
+
+                                    break;
                                 }
-
-                                break;
-                            }
-                            case `${entryUrl}/login/unlock`: {
-                                pageType.type = "unlock";
-                                break;
+                                case `${entryUrl}/login/unlock`: {
+                                    pageType.type = "unlock";
+                                    break;
+                                }
                             }
                         }
 
@@ -111,59 +101,37 @@ const endpoints: ProtonmailApi = {
                     }),
                     distinctUntilChanged(({pageType: prev}, {pageType: curr}) => prev.type === curr.type),
                 ),
-            );
 
-            // title
-            (() => {
-                const titleEl = document.querySelector("title");
+                // unread
+                (() => {
+                    const responseListeners = [
+                        {
+                            re: new RegExp(`${entryUrl}/api/messages/count`),
+                            handler: ({Counts}: { Counts?: Array<{ LabelID: string; Unread: number; }> }) => {
+                                if (!Counts) {
+                                    return;
+                                }
 
-                observables.push(
-                    titleEl ? fromEvent(titleEl, "DOMSubtreeModified")
-                        .pipe(
-                            map(() => titleEl.innerText),
-                            filter((title) => !!title),
-                            distinctUntilChanged((prev, curr) => prev === curr),
-                            map((title) => ({title})),
-                        ) : of({title: ""}),
-                );
-
-                if (titleEl) {
-                    // fire initial value emitting
-                    setTimeout(() => titleEl.innerText += "");
-                }
-            })();
-
-            // unread
-            (() => {
-                const responseListeners = [
-                    {
-                        re: new RegExp(`${entryUrl}/api/messages/count`),
-                        handler: ({Counts}: { Counts?: Array<{ LabelID: string; Unread: number; }> }) => {
-                            if (!Counts) {
-                                return;
-                            }
-
-                            return Counts
-                                .filter(({LabelID}) => LabelID === "0")
-                                .reduce((accumulator, item) => accumulator + item.Unread, 0);
+                                return Counts
+                                    .filter(({LabelID}) => LabelID === "0")
+                                    .reduce((accumulator, item) => accumulator + item.Unread, 0);
+                            },
                         },
-                    },
-                    {
-                        re: new RegExp(`${entryUrl}/api/events/.*==`),
-                        handler: ({MessageCounts}: { MessageCounts?: Array<{ LabelID: string; Unread: number; }> }) => {
-                            if (!MessageCounts) {
-                                return;
-                            }
+                        {
+                            re: new RegExp(`${entryUrl}/api/events/.*==`),
+                            handler: ({MessageCounts}: { MessageCounts?: Array<{ LabelID: string; Unread: number; }> }) => {
+                                if (!MessageCounts) {
+                                    return;
+                                }
 
-                            return MessageCounts
-                                .filter(({LabelID}) => LabelID === "0")
-                                .reduce((accumulator, item) => accumulator + item.Unread, 0);
+                                return MessageCounts
+                                    .filter(({LabelID}) => LabelID === "0")
+                                    .reduce((accumulator, item) => accumulator + item.Unread, 0);
+                            },
                         },
-                    },
-                ];
+                    ];
 
-                observables.push(
-                    Observable.create((observer: Subscriber<Pick<AccountNotificationType<WebAccountProtonmail>, "unread">>) => {
+                    return Observable.create((observer: Subscriber<Pick<AccountNotificationType<WebAccountProtonmail>, "unread">>) => {
                         XMLHttpRequest.prototype.send = ((original) => {
                             return function(this: XMLHttpRequest) {
                                 this.addEventListener("load", function(this: XMLHttpRequest) {
@@ -182,9 +150,9 @@ const endpoints: ProtonmailApi = {
                                 return original.apply(this, arguments);
                             } as any;
                         })(XMLHttpRequest.prototype.send);
-                    }),
-                );
-            })();
+                    });
+                })(),
+            ];
 
             return merge(...observables);
         } catch (error) {
@@ -209,3 +177,11 @@ const endpoints: ProtonmailApi = {
 };
 
 PROTONMAIL_IPC_WEBVIEW_API.registerApi(endpoints);
+
+function isLoggedIn(): boolean {
+    const html = WINDOW.angular && WINDOW.angular.element("html");
+    const $injector = html.data("$injector");
+    const authentication = $injector.get("authentication");
+
+    return authentication && authentication.isLoggedIn();
+}

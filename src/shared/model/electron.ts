@@ -25,6 +25,6 @@ export interface ElectronContextLocations {
     readonly preload: {
         browserWindow: string;
         browserWindowE2E: string;
-        webView: Record<AccountType, string>;
+        webView: Record<AccountType, string> & { stub: string };
     };
 }

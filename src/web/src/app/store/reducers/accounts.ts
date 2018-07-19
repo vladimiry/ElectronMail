@@ -69,8 +69,8 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                 selectedLogin: login,
             };
         },
-        NotificationPatch: ({login, notification}) => {
-            const {index} = selectAccountByLogin(state.accounts, login);
+        NotificationPatch: ({account, notification}) => {
+            const {index} = selectAccountByLogin(state.accounts, account.accountConfig.login);
 
             return immer(state, (draft) => {
                 draft.accounts[index].notifications = {...draft.accounts[index].notifications, ...notification};

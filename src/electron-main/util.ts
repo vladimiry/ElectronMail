@@ -75,6 +75,7 @@ function initLocations(runtimeEnvironment: RuntimeEnvironment, paths?: ContextIn
             browserWindow: appRelativePath("./electron-preload/browser-window.js"),
             browserWindowE2E: appRelativePath("./electron-preload/browser-window-e2e.js"),
             webView: {
+                stub: formatFileUrl(appRelativePath("./electron-preload/webview/stub.js")),
                 protonmail: formatFileUrl(appRelativePath("./electron-preload/webview/protonmail.js")),
                 tutanota: formatFileUrl(appRelativePath("./electron-preload/webview/tutanota.js")),
             },

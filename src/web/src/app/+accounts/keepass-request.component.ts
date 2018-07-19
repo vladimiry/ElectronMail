@@ -6,10 +6,11 @@ import {Store} from "@ngrx/store";
 import {CORE_ACTIONS} from "src/web/src/app/store/actions";
 import {ElectronService} from "../+core/electron.service";
 import {KeePassClientConf, KeePassRef} from "src/shared/model/keepasshttp";
+import {ONE_SECOND_MS} from "src/shared/constants";
 import {State} from "src/web/src/app/store/reducers/root";
 
 @Component({
-    selector: `email-securely-app-keepass-request`,
+    selector: "email-securely-app-keepass-request",
     templateUrl: "./keepass-request.component.html",
     styleUrls: ["./keepass-request.component.scss"],
 })
@@ -18,7 +19,7 @@ export class KeePassRequestComponent implements OnInit, OnDestroy {
     visible = false;
     paused = true;
     message?: string;
-    readonly wait = 5;
+    readonly waitSec = 5;
     progressTick = 0;
 
     @Input()
@@ -48,11 +49,11 @@ export class KeePassRequestComponent implements OnInit, OnDestroy {
                         return EMPTY;
                     }
 
-                    return interval(1000).pipe(
-                        scan((remaining) => remaining ? remaining - (this.paused ? 0 : 1) : this.wait, this.wait),
+                    return interval(ONE_SECOND_MS).pipe(
+                        scan((remaining) => remaining ? remaining - (this.paused ? 0 : 1) : this.waitSec, this.waitSec),
                         distinctUntilChanged(),
                         switchMap((remaining) => {
-                            this.progressTick = (this.wait - remaining) * (100 / this.wait);
+                            this.progressTick = (this.waitSec - remaining) * (100 / this.waitSec);
 
                             if (remaining) {
                                 return EMPTY;

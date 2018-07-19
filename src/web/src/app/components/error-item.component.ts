@@ -1,7 +1,7 @@
 import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output} from "@angular/core";
 
 @Component({
-    selector: `email-securely-app-error-item`,
+    selector: "email-securely-app-error-item",
     templateUrl: "./error-item.component.html",
     styleUrls: ["./error-item.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,

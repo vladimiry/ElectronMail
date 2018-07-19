@@ -7,7 +7,7 @@ import sinon from "sinon";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Fs} from "fs-json-store";
 
-import {AccountConfigCreatePatchByType, AccountConfigPatch, PasswordFieldContainer} from "src/shared/model/container";
+import {AccountConfigCreatePatch, AccountConfigUpdatePatch, PasswordFieldContainer} from "src/shared/model/container";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {buildSettingsAdapter, initContext} from "src/electron-main/util";
 import {Context} from "src/electron-main/model";
@@ -15,6 +15,8 @@ import {Endpoints} from "src/shared/api/main";
 import {INITIAL_STORES, KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "src/electron-main/constants";
 import {pickBaseConfigProperties} from "src/shared/util";
 import {StatusCode, StatusCodeError} from "src/shared/model/error";
+
+// TODO "immer" instead of cloning with "..."
 
 interface TestContext {
     ctx: Context;
@@ -38,7 +40,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
     addAccount: async (t) => {
         const endpoints = t.context.endpoints;
         const addHandler = endpoints.addAccount;
-        const payload: Readonly<AccountConfigCreatePatchByType<"protonmail">> = {
+        const payload: Readonly<AccountConfigCreatePatch<"protonmail">> = {
             type: "protonmail",
             login: "login1",
             entryUrl: "entryUrl1",
@@ -309,7 +311,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         const endpoints = t.context.endpoints;
         const addHandler = endpoints.addAccount;
         const removeHandler = endpoints.removeAccount;
-        const addProtonPayload: Readonly<AccountConfigCreatePatchByType<"protonmail">> = {
+        const addProtonPayload: Readonly<AccountConfigCreatePatch<"protonmail">> = {
             type: "protonmail",
             login: "login1",
             entryUrl: "entryUrl1",
@@ -320,7 +322,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
             },
             credentialsKeePass: {},
         };
-        const addTutaPayload: Readonly<AccountConfigCreatePatchByType<"tutanota">> = {
+        const addTutaPayload: Readonly<AccountConfigCreatePatch<"tutanota">> = {
             type: "tutanota",
             login: "login2",
             entryUrl: "entryUrl1",
@@ -338,7 +340,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         try {
             await removeHandler(removePayload404).toPromise();
         } catch ({message}) {
-            t.is(message, `Account to remove has not been found (login: "${removePayload404.login}")`, "404 account");
+            t.is(message, `Account with "${removePayload404.login}" login has not been found`, "404 account");
         }
 
         await addHandler(addProtonPayload).toPromise();
@@ -402,21 +404,22 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
 
     updateAccount: async (t) => {
         const endpoints = t.context.endpoints;
-        const addHandler = endpoints.addAccount;
-        const updateHandler = endpoints.updateAccount;
-        const updatePatch: AccountConfigPatch = {login: "login345", credentials: {password: "ps-1", twoFactorCode: "2fa-1"}};
+        const {addAccount, updateAccount} = endpoints;
+        const updatePatch: AccountConfigUpdatePatch = {login: "login345", credentials: {password: "ps-1", twoFactorCode: "2fa-1"}};
 
         await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
 
         try {
-            await updateHandler({login: "login123", credentials: {password: "password1"}}).toPromise();
+            await updateAccount({login: "login123", credentials: {password: "password1"}}).toPromise();
         } catch (err) {
             t.is(err.constructor.name, StatusCodeError.name, "StatusCodeError constructor");
             t.is(err.statusCode, StatusCode.NotFoundAccount, "StatusCode.NotFoundAccount");
         }
 
-        const settings = await addHandler({login: "login345", type: "protonmail", entryUrl: "", credentials: {password: "p1"}}).toPromise();
-        const updatedSettings = await updateHandler(updatePatch).toPromise();
+        const settings = await addAccount(
+            {login: "login345", type: "protonmail", entryUrl: "", credentials: {password: "p1"}, credentialsKeePass: {}},
+        ).toPromise();
+        const updatedSettings = await updateAccount(updatePatch).toPromise();
         const expectedSettings = {
             ...settings,
             _rev: (settings._rev as number) + 1,

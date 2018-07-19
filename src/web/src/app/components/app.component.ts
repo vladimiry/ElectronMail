@@ -9,7 +9,7 @@ import {State} from "src/web/src/app/store/reducers/root";
 export type CloseableOutletsType = typeof ERRORS_OUTLET | typeof SETTINGS_OUTLET;
 
 @Component({
-    selector: `email-securely-app-app`,
+    selector: "email-securely-app-app",
     template: `
         <router-outlet name="${ACCOUNTS_OUTLET}"></router-outlet>
         <router-outlet name="${SETTINGS_OUTLET}"></router-outlet>

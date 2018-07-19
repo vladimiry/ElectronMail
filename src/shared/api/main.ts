@@ -4,7 +4,7 @@ import {Options as EncryptionAdapterOptions} from "fs-json-store-encryption-adap
 
 import {
     AccountConfigCreatePatch,
-    AccountConfigPatch,
+    AccountConfigUpdatePatch,
     KeePassClientConfFieldContainer,
     KeePassRefFieldContainer,
     LoginFieldContainer,
@@ -15,7 +15,6 @@ import {
 } from "src/shared/model/container";
 import {APP_NAME} from "src/shared/constants";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
-
 // TODO figure why tslint detects "ElectronContextLocations" as unused
 // tslint:disable-next-line:no-unused-variable
 import {ElectronContextLocations} from "src/shared/model/electron";
@@ -25,8 +24,8 @@ export interface Endpoints {
     associateSettingsWithKeePass: ApiMethod<UrlFieldContainer, Settings>;
     changeMasterPassword: ApiMethod<PasswordFieldContainer & NewPasswordFieldContainer, Settings>;
     init: ApiMethodNoArgument<{ electronLocations: ElectronContextLocations; hasSavedPassword: boolean; }>;
-    // tslint:disable-next-line:max-line-length
-    keePassRecordRequest: ApiMethod<KeePassRefFieldContainer & KeePassClientConfFieldContainer & { suppressErrors: boolean }, Partial<PasswordFieldContainer & MessageFieldContainer>>;
+    keePassRecordRequest: ApiMethod<KeePassRefFieldContainer & KeePassClientConfFieldContainer
+        & { suppressErrors: boolean }, Partial<PasswordFieldContainer & MessageFieldContainer>>;
     logout: ApiMethodNoArgument<never>;
     openAboutWindow: ApiMethodNoArgument<never>;
     openExternal: ApiMethod<{ url: string }, never>;
@@ -40,7 +39,7 @@ export interface Endpoints {
     settingsExists: ApiMethodNoArgument<boolean>;
     toggleBrowserWindow: ApiMethod<{ forcedState?: boolean }, never>;
     toggleCompactLayout: ApiMethodNoArgument<Config>;
-    updateAccount: ApiMethod<AccountConfigPatch, Settings>;
+    updateAccount: ApiMethod<AccountConfigUpdatePatch, Settings>;
     updateOverlayIcon: ApiMethod<{ hasLoggedOut: boolean, unread: number }, never>;
 }
 

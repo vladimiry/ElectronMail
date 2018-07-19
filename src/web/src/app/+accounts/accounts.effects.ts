@@ -1,17 +1,17 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {catchError, exhaustMap, filter, finalize, map, mergeMap, switchMap} from "rxjs/operators";
+import {catchError, exhaustMap, filter, finalize, map, mergeMap, switchMap, takeUntil, tap} from "rxjs/operators";
 import {Injectable} from "@angular/core";
-import {merge, Observable, of, throwError} from "rxjs";
+import {merge, Observable, of, Subject, throwError} from "rxjs";
 import {Store} from "@ngrx/store";
 
 import {ACCOUNTS_ACTIONS, CORE_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
-import {ElectronExposure} from "src/shared/model/electron";
 import {ElectronService} from "src/web/src/app/+core/electron.service";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {State} from "src/web/src/app/store/reducers/accounts";
 import {Timestamp} from "src/shared/types";
+import {TutanotaApiFetchMessagesOutput} from "src/shared/api/webview/tutanota";
 
-const rateLimiter = ((window as any).__ELECTRON_EXPOSURE__ as ElectronExposure).requireNodeRollingRateLimiter();
+const rateLimiter = window.__ELECTRON_EXPOSURE__.requireNodeRollingRateLimiter();
 
 @Injectable()
 export class AccountsEffects {
@@ -21,28 +21,67 @@ export class AccountsEffects {
     });
 
     @Effect()
-    fetchMessages$ = this.actions$.pipe(
-        filter(ACCOUNTS_ACTIONS.is.FetchMessages),
-        switchMap(({payload}) => {
-            const {webView, account} = payload;
+    toggleFetching$ = (() => {
+        const fetchers: Record<string, { stopNotifier$: Subject<never>, fetcher$: Observable<TutanotaApiFetchMessagesOutput> }> = {};
 
-            if (account.accountConfig.type !== "tutanota") {
-                return throwError(new Error("Not yet implemented"));
-            }
+        return this.actions$.pipe(
+            filter(ACCOUNTS_ACTIONS.is.ToggleFetching),
+            switchMap(({payload}) => {
+                const result = () => {
+                    return merge(...Object.values(fetchers).map(({fetcher$}) => fetcher$)).pipe(
+                        mergeMap(() => []),
+                    );
+                };
+                const cancelFetcher = () => {
+                    const key = "login" in payload ? payload.login : payload.account.accountConfig.login;
+                    if (fetchers[key]) {
+                        fetchers[key].stopNotifier$.next();
+                    }
+                    delete fetchers[key];
+                };
 
-            return this.electronService.webViewCaller(webView, account.accountConfig.type).pipe(
-                exhaustMap((caller) => {
-                    // TODO fill-in "newestStoredTimestamp" from local database
-                    const newestStoredTimestamp: Timestamp | undefined = undefined;
-                    return caller("fetchMessages")({newestStoredTimestamp});
-                }),
-                // tap((value) => {
-                //     console.log("fetched item", value);
-                // }),
-                mergeMap(() => []),
-            );
-        }),
-    );
+                cancelFetcher();
+
+                if (!("account" in payload
+                    && payload.account.notifications.loggedIn
+                    && payload.account.accountConfig.storeMails)) {
+                    return result();
+                }
+
+                return (({account, webView, finishPromise}) => {
+                    const {login, type} = account.accountConfig;
+
+                    if (type !== "tutanota") {
+                        return throwError(new Error(`Messages fetching is not yet implemented for "${type}" email provider`));
+                    }
+
+                    const stopNotifier$ = new Subject<never>();
+                    // TODO handle errors
+                    // TODO enable interval
+                    const fetcher$ = this.electronService.webViewCaller(webView, type, {finishPromise}).pipe(
+                        exhaustMap((caller) => {
+                            // TODO take "newestStoredTimestamp" from local database
+                            const newestStoredTimestamp: Timestamp | undefined = undefined;
+                            return caller("fetchMessages")({newestStoredTimestamp});
+                        }),
+                        tap((value) => {
+                            // TODO submit item to database
+                            // tslint:disable-next-line:no-console
+                            console.log("fetched item", value);
+                        }),
+                        takeUntil(stopNotifier$),
+                    );
+
+                    fetchers[login] = {fetcher$, stopNotifier$};
+
+                    // account removing case (triggered in component's "ngOnDestroy" life-cycle function)
+                    finishPromise.then(cancelFetcher);
+
+                    return result();
+                })(payload);
+            }),
+        );
+    })();
 
     @Effect()
     syncAccountsConfigs$ = this.actions$.pipe(
@@ -58,7 +97,7 @@ export class AccountsEffects {
             const {accountConfig, notifications} = account;
             const {type, login, credentials} = accountConfig;
             const pageType = notifications.pageType.type;
-            const unreadReset = of(ACCOUNTS_ACTIONS.NotificationPatch({login, notification: {unread: 0}}));
+            const unreadReset = of(ACCOUNTS_ACTIONS.NotificationPatch({account, notification: {unread: 0}}));
 
             // TODO make sure passwords submitting looping doesn't happen, until then a workaround is enabled below
             const rateLimitingCheck = (password: string) => {
@@ -153,27 +192,29 @@ export class AccountsEffects {
 
     @Effect()
     setupNotificationChannel$ = (() => {
-        const notifications: Array<Observable<ReturnType<typeof ACCOUNTS_ACTIONS.NotificationPatch>>> = [];
+        // tslint:disable-next-line:max-line-length
+        const notifications: Record<string, { stopNotifier$: Subject<never>, notification$: Observable<ReturnType<typeof ACCOUNTS_ACTIONS.NotificationPatch>> }> = {};
 
         return this.actions$.pipe(
             filter(ACCOUNTS_ACTIONS.is.SetupNotificationChannel),
             switchMap(({payload}) => {
-                const {account, webView, unSubscribeOn} = payload;
+                const {account, webView, finishPromise} = payload;
                 const {type, login, entryUrl} = account.accountConfig;
-                const observable = this.electronService.webViewCaller(webView, type).pipe(
-                    exhaustMap((caller) => caller("notification", {unSubscribeOn})({entryUrl})),
-                    map((notification) => ACCOUNTS_ACTIONS.NotificationPatch({login, notification})),
+                const stopNotifier$ = new Subject<never>();
+                const notification$ = this.electronService.webViewCaller(webView, type, {finishPromise}).pipe(
+                    exhaustMap((caller) => caller("notification")({entryUrl})),
+                    map((notification) => ACCOUNTS_ACTIONS.NotificationPatch({account, notification})),
+                    takeUntil(stopNotifier$),
                 );
 
-                if (unSubscribeOn) {
-                    unSubscribeOn.then(() => {
-                        notifications.splice(notifications.indexOf(observable), 1);
-                    });
-                }
+                finishPromise.then(() => {
+                    stopNotifier$.next();
+                    delete notifications[login];
+                });
 
-                notifications.push(observable);
+                notifications[login] = {stopNotifier$, notification$};
 
-                return merge(...notifications);
+                return merge(...Object.values(notifications).map((item) => item.notification$));
             }),
             catchError((error) => of(CORE_ACTIONS.Fail(error))),
         );

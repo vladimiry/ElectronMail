@@ -6,4 +6,5 @@ enableProdMode();
 
 platformBrowserDynamic()
     .bootstrapModule(AppModule)
+    // tslint:disable-next-line:no-console
     .catch(console.log);

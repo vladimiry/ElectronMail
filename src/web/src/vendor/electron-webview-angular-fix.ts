@@ -1,3 +1,5 @@
+//  https://github.com/electron/electron/issues/10176
+
 const originalRemoveEventListener = window.removeEventListener;
 
 function removeEventListenerOverloaded(this: any, eventName: string, listener?: EventListenerOrEventListenerObject) {

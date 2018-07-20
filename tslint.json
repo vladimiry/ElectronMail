@@ -10,8 +10,16 @@
     "no-import-zones": [
       true,
       {
-        "verbose": true,
+        "verbose": false,
         "zones": [
+          {
+            "patterns": [
+              {
+                "target": "src/**/*",
+                "from": "nano-sql"
+              }
+            ]
+          },
           {
             "patterns": [
               {
@@ -23,15 +31,39 @@
           {
             "patterns": [
               {
+                "target": "src/electron-main/**/*",
+                "from": [
+                  "src/**/*",
+                  "!src/electron-main/**/*",
+                  "!src/shared/**/*"
+                ]
+              }
+            ]
+          },
+          {
+            "patterns": [
+              {
+                "target": "src/electron-preload/**/*",
+                "from": [
+                  "src/**/*",
+                  "!src/electron-preload/**/*",
+                  "!src/shared/**/*"
+                ]
+              }
+            ]
+          },
+          {
+            "patterns": [
+              {
                 "target": "src/web/src/**/*",
                 "from": [
-                  "_web_app/**/*",
-                  "!_web_app/store/**/*",
-                  "!_web_app\\store\\**\\*",
-                  "!_web_app/+shared/shared.module",
-                  "!_web_app\\+shared\\shared.module",
-                  "!_web_app/app.constants",
-                  "!_web_app\\app.constants"
+                  "src/**/*",
+                  "!src/web/**/*",
+                  "src/web/src/app",
+                  "!src/shared/**/*",
+                  "!src/web/src/app/store/**/*",
+                  "!src/web/src/app/+shared/shared.module",
+                  "!src/web/src/app/app.constants"
                 ]
               }
             ]

@@ -41,10 +41,10 @@ export interface Mail extends BaseEntity {
     attachments: Array<IdTuple<Mail, File>>;
     body: IdTuple<Mail, MailBody>;
     subject: string;
+    sender: MailAddress;
     toRecipients: MailAddress[];
     ccRecipients: MailAddress[];
     bccRecipients: MailAddress[];
-    sender: MailAddress;
     unread: "0" | "1";
 }
 

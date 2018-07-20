@@ -28,9 +28,8 @@ export class AccountsEffects {
             filter(ACCOUNTS_ACTIONS.is.ToggleFetching),
             switchMap(({payload}) => {
                 const result = () => {
-                    return merge(...Object.values(fetchers).map(({fetcher$}) => fetcher$)).pipe(
-                        mergeMap(() => []),
-                    );
+                    const fetchers$ = Object.values(fetchers).map(({fetcher$}) => fetcher$);
+                    return merge(...fetchers$).pipe(mergeMap(() => []));
                 };
                 const cancelFetcher = () => {
                     const key = "login" in payload ? payload.login : payload.account.accountConfig.login;
@@ -42,9 +41,11 @@ export class AccountsEffects {
 
                 cancelFetcher();
 
-                if (!("account" in payload
-                    && payload.account.notifications.loggedIn
-                    && payload.account.accountConfig.storeMails)) {
+                // TODO TS: define this condition as "disabled" variable
+                // currently TS doesn't properly understand a type guard being defined as variable.
+                if (!("account" in payload)
+                    || !payload.account.notifications.loggedIn
+                    || !payload.account.accountConfig.storeMails) {
                     return result();
                 }
 

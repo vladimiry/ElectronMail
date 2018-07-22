@@ -4,11 +4,7 @@ is built with Electron unofficial desktop app for [ProtonMail](https://protonmai
 
 [![Build Status: Linux / MacOS](https://travis-ci.org/vladimiry/email-securely-app.svg?branch=master)](https://travis-ci.org/vladimiry/email-securely-app) [![Build status: Windows](https://ci.appveyor.com/api/projects/status/vex909uhwadrse27?svg=true)](https://ci.appveyor.com/project/vladimiry/email-securely-app)
 
-You can see below a screenshots of the `compact` and `default` view modes:
-
-![view-compact](images/view-compact.png)
-
-![view-default](images/view-default.png)
+![view-toggling](images/toggling.gif)
 
 ## Features
 - Cross platform, Linux/OSX/Windows packages [provided](https://github.com/vladimiry/email-securely-app/releases).
@@ -19,9 +15,10 @@ You can see below a screenshots of the `compact` and `default` view modes:
 - Encrypted settings storage with switchable predefined key derivation and encryption presets. Argon2 is used as the default key derivation function.
 - Native notifications for individual accounts clicking on which focuses the app window and selects respective account in the accounts list.
 - System tray icon with a total number of unread messages shown on top of it. Checking unread emails count for Tutanota is currently not efficient enough, respective [issue](https://github.com/vladimiry/email-securely-app/issues/30) has been placed.
+- Full, tabs and dropdown view modes. See details [here](https://github.com/vladimiry/email-securely-app/issues/36) and screenshots in [images](images) folder.
 - Start minimized to tray.
 - Close to tray.
-- Compact view mode.
+
 
 ## Build your own package
 

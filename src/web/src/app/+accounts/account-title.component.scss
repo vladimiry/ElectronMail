@@ -3,8 +3,7 @@
 :host {
     display: block;
     position: relative;
-    word-break: break-all;
-    padding-right: 17px;
+    padding-right: $list-group-item-padding-x * 1.5;
 
     .account-value-login {
         display: inline;

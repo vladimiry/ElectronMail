@@ -1,11 +1,11 @@
-import {AccordionModule} from "ngx-bootstrap/accordion";
 import {APP_BASE_HREF} from "@angular/common";
 import {BrowserModule} from "@angular/platform-browser";
-import {BsDropdownModule} from "ngx-bootstrap/dropdown";
 import {EffectsModule} from "@ngrx/effects";
-import {PopoverModule} from "ngx-bootstrap/popover";
 import {StoreModule} from "@ngrx/store";
 import {StoreRouterConnectingModule} from "@ngrx/router-store";
+import {AccordionModule} from "ngx-bootstrap/accordion";
+import {BsDropdownModule} from "ngx-bootstrap/dropdown";
+import {PopoverModule} from "ngx-bootstrap/popover";
 
 import * as AccountsReducer from "./store/reducers/accounts";
 import * as ErrorsReducer from "./store/reducers/errors";

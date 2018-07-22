@@ -179,9 +179,9 @@ export class AccountComponent implements AfterViewInit, OnDestroy {
     async ngAfterViewInit() {
         await this.webViewSrcSetupPromise;
 
-        if ((process.env.NODE_ENV/* as BuildEnvironment*/) === "development") {
-            this.webView.addEventListener("dom-ready", () => this.webView.openDevTools());
-        }
+        // if ((process.env.NODE_ENV/* as BuildEnvironment*/) === "development") {
+        //     this.webView.addEventListener("dom-ready", () => this.webView.openDevTools());
+        // }
 
         this.subscribePageLoadedEvents();
 

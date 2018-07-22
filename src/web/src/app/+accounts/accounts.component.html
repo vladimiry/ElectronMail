@@ -1,29 +1,5 @@
 <div class="wrapper" *ngIf="initialized$ | async" [ngClass]="{'compact-layout': compactLayout$ | async}">
-    <div class="accounts-block p-2">
-        <div class="btn-group accounts-list" dropdown placement="bottom right"
-             [ngStyle]="!accounts.length && {'visibility': 'hidden'}">
-            <div class="unread-summary" *ngIf="unreadSummary">
-                <span class="badge badge-danger">{{ unreadSummary }}</span>
-            </div>
-            <button type="button" class="btn btn-warning-light dropdown-toggle list-group-item-warning"
-                    dropdownToggle *ngIf="selectedAccount">
-                <email-securely-app-account-title [account]="selectedAccount"></email-securely-app-account-title>
-            </button>
-            <ul *dropdownMenu class="dropdown-menu dropdown-menu-right" role="menu">
-                <li role="menuitem" *ngFor="let account of accounts; trackBy: trackAccount">
-                    <a class="dropdown-item" (click)="activateAccount(account)">
-                        <email-securely-app-account-title [account]="account"></email-securely-app-account-title>
-                    </a>
-                </li>
-            </ul>
-        </div>
-        <ul class="list-group accounts-list">
-            <a class="list-group-item list-group-item-action" href="javascript:void(0)"
-               *ngFor="let account of accounts; trackBy: trackAccount" (click)="activateAccount(account)"
-               [ngClass]="{'list-group-item-warning': account.accountConfig.login === (selectedLogin$ | async)}">
-                <email-securely-app-account-title [account]="account"></email-securely-app-account-title>
-            </a>
-        </ul>
+    <div class="accounts-block px-2 pt-2">
         <div class="controls">
             <div class="btn-group" dropdown>
                 <button type="button" class="btn btn-light" (click)="openSettingsView()" id="optionsMenuItem">
@@ -37,7 +13,7 @@
                     <li role="menuitem">
                         <button class="dropdown-item toggle-layout-view" type="button" (click)="toggleCompactLayout()">
                             <i class="fa fa-spinner fa-pulse fa-fw" *ngIf="togglingCompactLayout$ | async"></i>
-                            Toggle Compact View
+                            Toggle View Mode
                         </button>
                     </li>
                     <li role="menuitem">
@@ -67,6 +43,30 @@
                 </ul>
             </div>
         </div>
+        <div class="btn-group accounts-list mb-2 d-lg-none" dropdown placement="bottom right"
+             [ngStyle]="!accounts.length && {'visibility': 'hidden'}">
+            <div class="unread-summary" *ngIf="unreadSummary && accounts.length > 1">
+                <span class="badge badge-danger">{{ unreadSummary }}</span>
+            </div>
+            <button type="button" class="btn btn-warning-light dropdown-toggle list-group-item-warning"
+                    dropdownToggle *ngIf="selectedAccount">
+                <email-securely-app-account-title [account]="selectedAccount"></email-securely-app-account-title>
+            </button>
+            <ul *dropdownMenu class="dropdown-menu dropdown-menu-right" role="menu">
+                <li role="menuitem" *ngFor="let account of accounts; trackBy: trackAccount">
+                    <a class="dropdown-item" (click)="activateAccount(account)">
+                        <email-securely-app-account-title [account]="account"></email-securely-app-account-title>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <ul class="list-group accounts-list d-none d-lg-flex">
+            <a class="list-group-item list-group-item-action" href="javascript:void(0)"
+               *ngFor="let account of accounts; trackBy: trackAccount" (click)="activateAccount(account)"
+               [ngClass]="{'list-group-item-warning': account.accountConfig.login === (selectedLogin$ | async)}">
+                <email-securely-app-account-title [account]="account"></email-securely-app-account-title>
+            </a>
+        </ul>
     </div>
     <div class="account-block">
         <div *ngIf="accounts.length; then accountsDefined else accountsUnDefined"></div>

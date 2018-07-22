@@ -1,10 +1,9 @@
 @import "~src/web/src/variables";
 
-$accounts-column-width: 250px;
 $webview-border: darken($app-color-bg-dark, 10%);
 
 :host {
-    display: block;
+    display: flex;
     position: absolute;
     left: 0;
     right: 0;
@@ -19,6 +18,7 @@ $webview-border: darken($app-color-bg-dark, 10%);
     }
 
     .wrapper {
+        width: 100%;
         height: 100%;
         display: flex;
         flex-flow: column;
@@ -32,25 +32,46 @@ $webview-border: darken($app-color-bg-dark, 10%);
         }
     }
 
+    .controls {
+        display: block;
+        margin-right: $app-spacer-2;
+        margin-bottom: 0;
+
+        .btn-group {
+            width: 100%;
+
+            > .btn:first-child {
+                width: 100%;
+            }
+        }
+
+        .dropdown-menu {
+            min-width: 100%;
+
+            .toggle-layout-view {
+                display: none;
+            }
+        }
+    }
+
     .accounts-block {
         display: flex;
         flex-flow: row;
         z-index: 100;
 
-        .accounts-list {
-            flex: 1;
-            flex-grow: 100;
-        }
-
         .list-group.accounts-list {
-            display: none;
+            flex-direction: row;
+            flex-wrap: wrap;
 
-            .list-group-item {
-                word-wrap: break-word;
+            .list-group-item-action {
+                display: inline-block;
+                width: auto;
             }
         }
 
         .btn-group.accounts-list {
+            width: 100%;
+
             &::ng-deep {
                 .dropdown-toggle::after {
                     display: none;
@@ -72,41 +93,20 @@ $webview-border: darken($app-color-bg-dark, 10%);
                 width: 100%;
                 border-top-left-radius: $btn-border-radius;
                 border-bottom-left-radius: $btn-border-radius;
-            }
 
-            .dropdown-menu {
-                margin-top: $app-spacer-2;
-                width: 100%;
-
-                .dropdown-item {
-                    padding-left: $list-group-item-padding-x;
-                    padding-right: $list-group-item-padding-x;
-                }
-            }
-        }
-
-        .controls {
-            display: flex;
-            flex-grow: 0;
-            margin: 0 0 0 $app-spacer-2;
-
-            .btn-group {
-                & > .btn-light {
-                    &:nth-of-type(1) {
-                        width: 100%;
+                &::ng-deep {
+                    #{$app-prefix}-account-title {
+                        @include caret;
                     }
                 }
             }
 
             .dropdown-menu {
-                // sass-lint:disable-all
-                left: auto !important;
-                right: 0 !important;
-                // sass-lint:enable-all
                 margin-top: $app-spacer-2;
+                min-width: 100%;
 
-                .toggle-layout-view {
-                    display: none;
+                .dropdown-item {
+                    padding: ($list-group-item-padding-y * 0.8) $list-group-item-padding-x;
                 }
             }
         }
@@ -117,13 +117,25 @@ $webview-border: darken($app-color-bg-dark, 10%);
         flex: 1;
     }
 
+    .compact-layout {
+        .list-group.accounts-list {
+            .list-group-item-action {
+                border-radius: $list-group-border-radius;
+                margin-bottom: $app-spacer-2 * 1.15;
+                padding: $btn-padding-y $btn-padding-x;
+
+                &:not(:last-child) {
+                    margin-right: $app-spacer-2;
+                }
+            }
+        }
+    }
+
     @media (min-width: #{map-get($grid-breakpoints, lg)}) {
-        .accounts-block {
-            .controls {
-                .dropdown-menu {
-                    .toggle-layout-view {
-                        display: block;
-                    }
+        .controls {
+            .dropdown-menu {
+                .toggle-layout-view {
+                    display: block;
                 }
             }
         }
@@ -142,56 +154,18 @@ $webview-border: darken($app-color-bg-dark, 10%);
                 display: none;
             }
 
-            .no-accounts-block {
-                margin-left: -$accounts-column-width;
+            .controls {
+                margin-right: 0;
+                margin-bottom: $app-spacer-3;
             }
 
             .accounts-block {
                 position: relative;
+                flex-flow: column;
                 flex-grow: 0;
-                width: $accounts-column-width;
 
                 .list-group.accounts-list {
-                    display: flex;
-                    margin-bottom: 50px;
-                }
-
-                .btn-group.accounts-list {
-                    display: none;
-                }
-
-                .controls {
-                    position: absolute;
-                    bottom: 0;
-                    right: 0;
-                    left: 0;
-                    margin: $app-spacer-2;
-
-                    .btn-group {
-                        width: 100%;
-
-                        & > .btn-light {
-                            &:nth-of-type(2) {
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                            }
-                        }
-                    }
-
-                    .dropdown-toggle {
-                        &::after {
-                            transform: rotate(180deg);
-                        }
-                    }
-
-                    .dropdown-menu {
-                        bottom: 100% !important; // sass-lint:disable-line no-important
-                        top: auto !important; // sass-lint:disable-line no-important
-                        width: 100%;
-                        margin-top: 0;
-                        margin-bottom: $app-spacer-1;
-                    }
+                    flex-direction: column;
                 }
             }
 

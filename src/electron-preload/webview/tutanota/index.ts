@@ -1,51 +1,26 @@
+import logger from "electron-log";
 import {authenticator} from "otplib";
 import {distinctUntilChanged, map, switchMap} from "rxjs/operators";
 import {EMPTY, from, interval, merge, Observable, Subscriber, throwError} from "rxjs";
-import logger from "electron-log";
 
 import {AccountNotificationType, WebAccountTutanota} from "src/shared/model/account";
 import {fetchEntitiesRange} from "src/electron-preload/webview/tutanota/lib/rest";
-import {fetchMessages} from "src/electron-preload/webview/tutanota/lib/fetcher";
-import {FolderTypeService} from "src/shared/util";
+import {fetchMessages, fetchUserFoldersWithSubFolders} from "src/electron-preload/webview/tutanota/lib/fetcher";
 import {getLocationHref, submitTotpToken, typeInputValue, waitElements} from "src/electron-preload/webview/util";
-import {MailFolder, MailTypeRef, User} from "src/electron-preload/webview/tutanota/lib/rest/model";
-import {MailFolderTypeValue} from "src/shared/model/database";
+import {MailTypeRef, User} from "src/electron-preload/webview/tutanota/lib/rest/model";
 import {NOTIFICATION_LOGGED_IN_POLLING_INTERVAL, NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL} from "src/electron-preload/webview/common";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {resolveWebClientApi, WebClientApi} from "src/electron-preload/webview/tutanota/lib/tutanota-api";
 import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi} from "src/shared/api/webview/tutanota";
+import {MailFolderTypeService} from "src/shared/util";
 
 const WINDOW = window as any;
-const state: { inboxMailFolder?: MailFolder | undefined; } = {};
 
 delete WINDOW.Notification;
 
 resolveWebClientApi()
     .then((webClientApi) => {
-        const queue = webClientApi["src/api/common/WorkerProtocol"].Queue;
-
-        queue.prototype._handleMessage = ((orig) => function(this: typeof queue) {
-            const [response] = arguments;
-
-            if (response && response.type === "response" && Array.isArray(response.value) && response.value.length) {
-                const inboxMailFolder = response.value
-                    .filter(({_type, folderType}: MailFolder & { _type?: { type: string } }) => {
-                        return typeof _type === "object"
-                            && _type.type === "MailFolder"
-                            && FolderTypeService.strictInboxTest(Number(folderType) as MailFolderTypeValue);
-                    })
-                    .shift();
-
-                if (inboxMailFolder) {
-                    state.inboxMailFolder = inboxMailFolder;
-                }
-            }
-
-            return orig.apply(this, arguments);
-        })(queue.prototype._handleMessage);
-
         delete WINDOW.Notification;
-
         bootstrapApi(webClientApi);
     })
     .catch(logger.error);
@@ -182,14 +157,24 @@ function bootstrapApi(webClientApi: WebClientApi) {
                     // TODO listen for "unread" change instead of starting polling interval
                     Observable.create((observer: Subscriber<{ unread: number }>) => {
                         const intervalHandler = async () => {
-                            if (!state.inboxMailFolder || !isLoggedIn() || !navigator.onLine) {
+                            const controller = getUserController();
+
+                            if (!controller) {
+                                return;
+                            }
+
+                            const folders = await fetchUserFoldersWithSubFolders(controller.user);
+                            const inboxFolder = folders
+                                .find(({folderType}) => MailFolderTypeService.testValue(folderType as any, "inbox", false));
+
+                            if (!inboxFolder || !isLoggedIn() || !navigator.onLine) {
                                 return;
                             }
 
                             const {GENERATED_MAX_ID} = webClientApi["src/api/common/EntityFunctions"];
                             const emails = await fetchEntitiesRange(
                                 MailTypeRef,
-                                state.inboxMailFolder.mails,
+                                inboxFolder.mails,
                                 {
                                     count: 50,
                                     reverse: true,
@@ -206,8 +191,8 @@ function bootstrapApi(webClientApi: WebClientApi) {
                             ONE_SECOND_MS * 60,
                         );
 
-                        // initial check after notifications subscription happening
-                        setTimeout(intervalHandler, ONE_SECOND_MS * 10);
+                        // initial checks after notifications subscription happening
+                        setTimeout(intervalHandler, ONE_SECOND_MS * 15);
                     }),
                 ];
 

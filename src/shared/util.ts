@@ -32,7 +32,7 @@ export const findExistingAccountConfig = (accounts: AccountConfig[], login: stri
 };
 
 // tslint:disable-next-line:variable-name
-export const FolderTypeService = (() => {
+export const MailFolderTypeService = (() => {
     const mappedByTitle: Readonly<Record<MailFolderTypeTitle, MailFolderTypeValue>> = {
         custom: 0,
         inbox: 1,
@@ -64,15 +64,24 @@ export const FolderTypeService = (() => {
         }
         return result;
     };
-    const valueByTitle = (input: MailFolderTypeTitle): MailFolderTypeValue => mappedByTitle[parseTitle(input)];
-    const titleByValue = (input: MailFolderTypeValue): MailFolderTypeTitle => mappedByValue[parseValue(input)];
+    const getValueByTitle = (input: MailFolderTypeTitle): MailFolderTypeValue => mappedByTitle[parseTitle(input)];
+    const getTitleByValue = (input: MailFolderTypeValue): MailFolderTypeTitle => mappedByValue[parseValue(input)];
+    const testValue = (value: MailFolderTypeValue, title: MailFolderTypeTitle, strict: boolean = true): boolean => {
+        try {
+            return getTitleByValue(value) === title;
+        } catch (e) {
+            if (strict) {
+                return false;
+            }
+            throw e;
+        }
+    };
 
     return Object.freeze({
         parseValue,
         parseTitle,
-        valueByTitle,
-        titleByValue,
-        strictInboxTest: (value: MailFolderTypeValue) => titleByValue(value) === "custom",
-        strictCustomTest: (value: MailFolderTypeValue) => titleByValue(value) === "inbox",
+        getValueByTitle,
+        getTitleByValue,
+        testValue,
     });
 })();

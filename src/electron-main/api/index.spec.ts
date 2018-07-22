@@ -1,4 +1,4 @@
-import anyTest, {ExecutionContext, ImplementationResult, TestInterface} from "ava";
+import ava, {ExecutionContext, ImplementationResult, TestInterface} from "ava";
 import assert from "assert";
 import logger from "electron-log";
 import path from "path";
@@ -26,7 +26,7 @@ interface TestContext {
     mocks: ReturnType<typeof buildMocks>;
 }
 
-const test = anyTest as TestInterface<TestContext>;
+const test = ava as TestInterface<TestContext>;
 
 const OPTIONS = Object.freeze({
     dataDirectory: path.join(
@@ -157,10 +157,6 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
 
         t.true(mocks["nano-sql"]._tableStub.calledWithExactly(payload.table));
         t.true(mocks["nano-sql"]._queryStub.calledWithExactly("upsert", payload.data));
-    },
-
-    databaseObserveTest: async (t) => {
-        t.pass();
     },
 
     init: async (t) => {

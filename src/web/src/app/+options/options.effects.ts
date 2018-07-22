@@ -1,4 +1,4 @@
-import {catchError, concat, filter, finalize, map, mergeMap, switchMap, tap, withLatestFrom} from "rxjs/operators";
+import {catchError, filter, finalize, map, mergeMap, switchMap, withLatestFrom} from "rxjs/operators";
 import {EMPTY, merge, of} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Actions, Effect} from "@ngrx/effects";
@@ -12,7 +12,6 @@ import {ProgressPatch, settingsSelector, State} from "src/web/src/app/store/redu
 
 @Injectable()
 export class OptionsEffects {
-    // TODO release: remove "databaseObserveTest" method
     @Effect()
     initRequest$ = this.actions$.pipe(
         filter(OPTIONS_ACTIONS.is.InitRequest),
@@ -23,16 +22,6 @@ export class OptionsEffects {
                     OPTIONS_ACTIONS.InitResponse(payload),
                     this.optionsService.buildNavigationAction({path: ""}),
                 ]),
-                concat(
-                    this.electronService.ipcMainClient()("databaseObserveTest")().pipe(
-                        tap((rows) => {
-                            // TODO release: disable console.log stuff
-                            // tslint:disable-next-line:no-console
-                            console.log({rows});
-                        }),
-                        mergeMap(() => []),
-                    ),
-                ),
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
             ),
         ));

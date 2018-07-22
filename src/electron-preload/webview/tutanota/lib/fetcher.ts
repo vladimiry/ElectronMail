@@ -2,8 +2,8 @@ import {Observable, Subscriber} from "rxjs";
 
 import * as DatabaseModel from "src/shared/model/database";
 import {fetchEntitiesList, fetchEntitiesRange, fetchEntity, Model as M} from "src/electron-preload/webview/tutanota/lib/rest";
-import {FolderTypeService} from "src/shared/util";
 import {Id} from "./rest/model";
+import {MailFolderTypeService} from "src/shared/util";
 import {resolveWebClientApi} from "src/electron-preload/webview/tutanota/lib/tutanota-api";
 import {TutanotaApiFetchMessagesInput, TutanotaApiFetchMessagesOutput} from "src/shared/api/webview/tutanota";
 
@@ -18,31 +18,43 @@ export function fetchMessages(
         const {timestampToGeneratedId} = api["src/api/common/utils/Encoding"];
         const startTimestamp = typeof input.newestStoredTimestamp === "undefined" ? TIMESTAMP_MIN : input.newestStoredTimestamp + 1;
         const startId = timestampToGeneratedId(startTimestamp);
-        const userMailGroups = input.user.memberships.filter(({groupType}) => groupType === M.GroupType.Mail);
 
-        for (const {group} of userMailGroups) {
-            const {mailbox} = await fetchEntity(M.MailboxGroupRootTypeRef, group);
-            const {systemFolders} = await fetchEntity(M.MailBoxTypeRef, mailbox);
-
-            if (!systemFolders) {
-                continue;
-            }
-
-            for (const folder of await fetchFoldersWithSubFolders(systemFolders)) {
-                await new Promise((resolve, reject) => {
-                    processMailFolder(input, folder, startId).subscribe(
-                        (mail) => {
-                            mailItemFetchingObserver.next({mail});
-                        },
-                        reject,
-                        resolve,
-                    );
-                });
-            }
-
-            mailItemFetchingObserver.complete();
+        for (const folder of await fetchUserFoldersWithSubFolders(input.user)) {
+            await new Promise((resolve, reject) => {
+                // TODO consider requesting "newestStoredTimestamp" from database right here, on each folder fetching iteration
+                processMailFolder(input, folder, startId).subscribe(
+                    (mail) => {
+                        mailItemFetchingObserver.next({mail});
+                    },
+                    reject,
+                    resolve,
+                );
+            });
         }
+
+        mailItemFetchingObserver.complete();
     });
+}
+
+export async function fetchUserFoldersWithSubFolders(user: M.User) {
+    const folders: M.MailFolder[] = [];
+    const userMailGroups = user.memberships.filter(({groupType}) => groupType === M.GroupType.Mail);
+
+    for (const {group} of userMailGroups) {
+        const {mailbox} = await fetchEntity(M.MailboxGroupRootTypeRef, group);
+        const {systemFolders} = await fetchEntity(M.MailBoxTypeRef, mailbox);
+
+        if (!systemFolders) {
+            continue;
+        }
+
+        for (const folder of await fetchEntitiesList(M.MailFolderTypeRef, systemFolders.folders)) {
+            folders.push(folder);
+            folders.push(...await fetchEntitiesList(M.MailFolderTypeRef, folder.subFolders));
+        }
+    }
+
+    return folders;
 }
 
 function processMailFolder(
@@ -91,17 +103,6 @@ function processMailFolder(
     });
 }
 
-async function fetchFoldersWithSubFolders({folders: listId}: M.MailFolderRef): Promise<M.MailFolder[]> {
-    const folders = [];
-
-    for (const folder of await fetchEntitiesList(M.MailFolderTypeRef, listId)) {
-        folders.push(folder);
-        folders.push(...await fetchEntitiesList(M.MailFolderTypeRef, folder.subFolders));
-    }
-
-    return folders;
-}
-
 function formDatabaseMailModel(
     {type, login}: TutanotaApiFetchMessagesInput,
     folder: M.MailFolder,
@@ -119,7 +120,7 @@ function formDatabaseMailModel(
         body: body.text,
         folder: {
             raw: JSON.stringify(folder),
-            type: FolderTypeService.parseValue(folder.folderType),
+            type: MailFolderTypeService.parseValue(folder.folderType),
             name: folder.name,
         },
         sender: formDatabaseAddressModel(mail.sender),

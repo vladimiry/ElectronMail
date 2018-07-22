@@ -38,9 +38,6 @@ export interface Endpoints {
 
     databaseUpsert: ApiMethod<DatabaseUpsertInput, never>;
 
-    // TODO release: remove "databaseObserveTest" method
-    databaseObserveTest: ApiMethodNoArgument<DatabaseUpsertInput["data"]>;
-
     init: ApiMethodNoArgument<{ electronLocations: ElectronContextLocations; hasSavedPassword: boolean; }>;
 
     keePassRecordRequest: ApiMethod<KeePassRefFieldContainer & KeePassClientConfFieldContainer

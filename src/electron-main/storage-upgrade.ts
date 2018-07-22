@@ -37,7 +37,7 @@ function upgrade<T extends Config | Settings>(entity: T, upgrades: Record<string
 
     Object
         .keys(upgrades)
-        .filter((versionUpgradeFrom) => compareVersions(versionUpgradeFrom, APP_VERSION) <= 0)
+        .filter((upgraderVersion) => compareVersions(upgraderVersion, APP_VERSION) <= 0)
         .sort(compareVersions)
         .forEach((version) => upgrades[version](entity));
 

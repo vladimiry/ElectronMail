@@ -1,6 +1,6 @@
 import {AccountConfig} from "./model/account";
 import {BaseConfig, Config} from "./model/options";
-import {MailFolderTypeTitle, MailFolderTypeValue} from "./model/database";
+import {MailFolderTypeStringifiedValue, MailFolderTypeTitle, MailFolderTypeValue} from "./model/database";
 import {StatusCode, StatusCodeError} from "./model/error";
 import {WEBVIEW_SRC_WHITELIST} from "./constants";
 
@@ -48,40 +48,37 @@ export const MailFolderTypeService = (() => {
             ...accumulator,
             [value]: key as MailFolderTypeTitle,
         }), {} as Record<MailFolderTypeValue, MailFolderTypeTitle>);
-    const titles = Object.keys(mappedByTitle);
     const values = Object.values(mappedByTitle);
-    const parseValue = (raw: any): MailFolderTypeValue => {
-        const result = Number(raw) as MailFolderTypeValue;
+
+    // TODO consider using some module for building custom errors
+    class InvalidArgumentError extends Error {
+        constructor(message: string) {
+            super(message);
+            Object.setPrototypeOf(this, new.target.prototype);
+        }
+    }
+
+    function parseValueStrict(value: MailFolderTypeValue | MailFolderTypeStringifiedValue): MailFolderTypeValue {
+        const result = Number(value) as MailFolderTypeValue;
         if (!values.includes(result)) {
-            throw new Error(`Invalid mail folder type value: ${result}`);
+            throw new InvalidArgumentError(`Invalid mail folder type value: ${result}`);
         }
         return result;
-    };
-    const parseTitle = (raw: any): MailFolderTypeTitle => {
-        const result = String(raw) as MailFolderTypeTitle;
-        if (!titles.includes(result)) {
-            throw new Error(`Invalid mail folder type title: ${result}`);
-        }
-        return result;
-    };
-    const getValueByTitle = (input: MailFolderTypeTitle): MailFolderTypeValue => mappedByTitle[parseTitle(input)];
-    const getTitleByValue = (input: MailFolderTypeValue): MailFolderTypeTitle => mappedByValue[parseValue(input)];
-    const testValue = (value: MailFolderTypeValue, title: MailFolderTypeTitle, strict: boolean = true): boolean => {
+    }
+
+    function testValue(value: MailFolderTypeValue | MailFolderTypeStringifiedValue, title: MailFolderTypeTitle): boolean {
         try {
-            return getTitleByValue(value) === title;
+            return mappedByValue[parseValueStrict(value)] === title;
         } catch (e) {
-            if (strict) {
+            if (e instanceof InvalidArgumentError) {
                 return false;
             }
             throw e;
         }
-    };
+    }
 
     return Object.freeze({
-        parseValue,
-        parseTitle,
-        getValueByTitle,
-        getTitleByValue,
+        parseValueStrict,
         testValue,
     });
 })();

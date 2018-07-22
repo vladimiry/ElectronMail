@@ -120,7 +120,7 @@ function formDatabaseMailModel(
         body: body.text,
         folder: {
             raw: JSON.stringify(folder),
-            type: MailFolderTypeService.parseValue(folder.folderType),
+            type: MailFolderTypeService.parseValueStrict(folder.folderType),
             name: folder.name,
         },
         sender: formDatabaseAddressModel(mail.sender),

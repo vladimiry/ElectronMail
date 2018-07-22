@@ -1,7 +1,7 @@
 import logger from "electron-log";
 import {authenticator} from "otplib";
 import {distinctUntilChanged, map, switchMap} from "rxjs/operators";
-import {EMPTY, from, interval, merge, Observable, Subscriber, throwError} from "rxjs";
+import {EMPTY, from, interval, merge, Observable, Subscriber} from "rxjs";
 
 import {AccountNotificationType, WebAccountTutanota} from "src/shared/model/account";
 import {fetchEntitiesRange} from "src/electron-preload/webview/tutanota/lib/rest";
@@ -15,8 +15,6 @@ import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi} from "src/shared/api/webview/tuta
 import {MailFolderTypeService} from "src/shared/util";
 
 const WINDOW = window as any;
-
-delete WINDOW.Notification;
 
 resolveWebClientApi()
     .then((webClientApi) => {
@@ -111,95 +109,85 @@ function bootstrapApi(webClientApi: WebClientApi) {
         })()),
 
         notification: ({entryUrl}) => {
-            try {
-                const observables = [
-                    interval(NOTIFICATION_LOGGED_IN_POLLING_INTERVAL).pipe(
-                        map(() => isLoggedIn()),
-                        distinctUntilChanged(),
-                        map((loggedIn) => ({loggedIn})),
-                    ),
+            const observables = [
+                interval(NOTIFICATION_LOGGED_IN_POLLING_INTERVAL).pipe(
+                    map(() => isLoggedIn()),
+                    distinctUntilChanged(),
+                    map((loggedIn) => ({loggedIn})),
+                ),
 
-                    // TODO listen for location.href change instead of starting polling interval
-                    interval(NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL).pipe(
-                        switchMap(() => from((async () => {
-                            const url = getLocationHref();
-                            const pageType: (Pick<AccountNotificationType<WebAccountTutanota>, "pageType">)["pageType"] = {
-                                url,
-                                type: "undefined",
-                            };
-                            const loginUrlDetected = (url === `${entryUrl}/login` || url.startsWith(`${entryUrl}/login?`));
-
-                            if (loginUrlDetected && !isLoggedIn()) {
-                                let twoFactorElements;
-
-                                try {
-                                    twoFactorElements = await waitElements(login2FaWaitElementsConfig, {attemptsLimit: 1});
-                                } catch (e) {
-                                    // NOOP
-                                }
-
-                                const twoFactorCodeVisible = twoFactorElements
-                                    && twoFactorElements.input().offsetParent
-                                    && twoFactorElements.button().offsetParent;
-
-                                if (twoFactorCodeVisible) {
-                                    pageType.type = "login2fa";
-                                } else {
-                                    pageType.type = "login";
-                                }
-                            }
-
-                            return {pageType};
-                        })())),
-                        distinctUntilChanged(({pageType: prev}, {pageType: curr}) => prev.type === curr.type),
-                    ),
-
-                    // TODO listen for "unread" change instead of starting polling interval
-                    Observable.create((observer: Subscriber<{ unread: number }>) => {
-                        const intervalHandler = async () => {
-                            const controller = getUserController();
-
-                            if (!controller) {
-                                return;
-                            }
-
-                            const folders = await fetchUserFoldersWithSubFolders(controller.user);
-                            const inboxFolder = folders
-                                .find(({folderType}) => MailFolderTypeService.testValue(folderType as any, "inbox", false));
-
-                            if (!inboxFolder || !isLoggedIn() || !navigator.onLine) {
-                                return;
-                            }
-
-                            const {GENERATED_MAX_ID} = webClientApi["src/api/common/EntityFunctions"];
-                            const emails = await fetchEntitiesRange(
-                                MailTypeRef,
-                                inboxFolder.mails,
-                                {
-                                    count: 50,
-                                    reverse: true,
-                                    start: GENERATED_MAX_ID,
-                                },
-                            );
-                            const unread = emails.reduce((sum, mail) => sum + Number(mail.unread), 0);
-
-                            observer.next({unread});
+                // TODO listen for location.href change instead of starting polling interval
+                interval(NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL).pipe(
+                    switchMap(() => from((async () => {
+                        const url = getLocationHref();
+                        const pageType: (Pick<AccountNotificationType<WebAccountTutanota>, "pageType">)["pageType"] = {
+                            url,
+                            type: "undefined",
                         };
+                        const loginUrlDetected = (url === `${entryUrl}/login` || url.startsWith(`${entryUrl}/login?`));
 
-                        setInterval(
-                            intervalHandler,
-                            ONE_SECOND_MS * 60,
+                        if (loginUrlDetected && !isLoggedIn()) {
+                            let twoFactorElements;
+
+                            try {
+                                twoFactorElements = await waitElements(login2FaWaitElementsConfig, {attemptsLimit: 1});
+                            } catch (e) {
+                                // NOOP
+                            }
+
+                            const twoFactorCodeVisible = twoFactorElements
+                                && twoFactorElements.input().offsetParent
+                                && twoFactorElements.button().offsetParent;
+
+                            if (twoFactorCodeVisible) {
+                                pageType.type = "login2fa";
+                            } else {
+                                pageType.type = "login";
+                            }
+                        }
+
+                        return {pageType};
+                    })())),
+                    distinctUntilChanged(({pageType: prev}, {pageType: curr}) => prev.type === curr.type),
+                ),
+
+                // TODO listen for "unread" change instead of starting polling interval
+                Observable.create((observer: Subscriber<{ unread: number }>) => {
+                    const notifyUnreadValue = async () => {
+                        const controller = getUserController();
+
+                        if (!controller) {
+                            return;
+                        }
+
+                        const folders = await fetchUserFoldersWithSubFolders(controller.user);
+                        const inboxFolder = folders.find(({folderType}) => MailFolderTypeService.testValue(folderType, "inbox"));
+
+                        if (!inboxFolder || !isLoggedIn() || !navigator.onLine) {
+                            return;
+                        }
+
+                        const {GENERATED_MAX_ID} = webClientApi["src/api/common/EntityFunctions"];
+                        const emails = await fetchEntitiesRange(
+                            MailTypeRef,
+                            inboxFolder.mails,
+                            {
+                                count: 50,
+                                reverse: true,
+                                start: GENERATED_MAX_ID,
+                            },
                         );
+                        const unread = emails.reduce((sum, mail) => sum + Number(mail.unread), 0);
 
-                        // initial checks after notifications subscription happening
-                        setTimeout(intervalHandler, ONE_SECOND_MS * 15);
-                    }),
-                ];
+                        observer.next({unread});
+                    };
 
-                return merge(...observables);
-            } catch (error) {
-                return throwError(error);
-            }
+                    setInterval(notifyUnreadValue, ONE_SECOND_MS * 60);
+                    setTimeout(notifyUnreadValue, ONE_SECOND_MS * 15);
+                }),
+            ];
+
+            return merge(...observables);
         },
     };
 

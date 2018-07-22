@@ -46,4 +46,5 @@ export type EntityRecord = Record<"Mail", ClassType<Mail>>;
 export type EntityTable = keyof EntityRecord;
 
 export type MailFolderTypeValue = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+export type MailFolderTypeStringifiedValue = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8";
 export type MailFolderTypeTitle = "custom" | "inbox" | "sent" | "trash" | "archive" | "spam" | "draft";

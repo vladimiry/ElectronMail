@@ -5,7 +5,7 @@ import {Context} from "src/electron-main/model";
 import {Endpoints} from "src/shared/api/main";
 import {MessageFieldContainer} from "src/shared/model/container";
 
-export async function buildKeePassEndpoints(
+export async function buildEndpoints(
     ctx: Context,
 ): Promise<Pick<Endpoints, "associateSettingsWithKeePass" | "keePassRecordRequest">> {
     return {

@@ -1,5 +1,5 @@
 import {concat, delay, exhaustMap, retryWhen, takeWhile} from "rxjs/operators";
-import {from, of, throwError} from "rxjs";
+import {of, throwError, from} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {IpcRenderer} from "electron";
 import {Model} from "pubsub-to-stream-api";
@@ -26,12 +26,14 @@ export class ElectronService {
 
     constructor(private zone: NgZone) {}
 
-    webViewCaller<T extends AccountType>(webView: Electron.WebviewTag, type: T, options?: CallOptions) {
+    webViewClient<T extends AccountType>(webView: Electron.WebviewTag, type: T, options?: CallOptions) {
         // TODO TS: get rid of "as any"
         const api: WebViewApi<T> = type === "protonmail" ? PROTONMAIL_IPC_WEBVIEW_API : TUTANOTA_IPC_WEBVIEW_API as any;
         const apiClient = api.buildClient(webView, {options: this.buildApiCallOptions(options)});
+
+        // TODO it's sufficient to ping api initialization only once since there is no dynamic api de-registration enabled
         const pingStart = Number(new Date());
-        const pingObservable = from(
+        const ping$ = from(
             apiClient("ping", {timeoutMs: 1})()
                 .pipe(
                     retryWhen((errors) => errors.pipe(
@@ -43,13 +45,13 @@ export class ElectronService {
                 .toPromise(),
         );
 
-        // TODO it's sufficient to ping api initialization only once since there is no dynamic api de-registration enabled
-        return pingObservable.pipe(
+        return ping$.pipe(
             exhaustMap(() => of(apiClient)),
+            exhaustMap((client) => of(client)),
         );
     }
 
-    ipcMainCaller(options?: CallOptions) {
+    ipcMainClient(options?: CallOptions) {
         return IPC_MAIN_API.buildClient({
             ipcRenderer: __ELECTRON_EXPOSURE__.ipcRenderer as IpcRenderer,
             options: this.buildApiCallOptions(options),
@@ -57,7 +59,7 @@ export class ElectronService {
     }
 
     keePassPassword(keePassClientConf: KeePassClientConf, keePassRef: KeePassRef, suppressErrors = false) {
-        return this.ipcMainCaller()("keePassRecordRequest")({keePassClientConf, keePassRef, suppressErrors});
+        return this.ipcMainClient()("keePassRecordRequest")({keePassClientConf, keePassRef, suppressErrors});
     }
 
     private buildApiCallOptions(options: CallOptions = {}): Model.CallOptions {

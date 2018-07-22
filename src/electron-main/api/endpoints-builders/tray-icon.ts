@@ -7,7 +7,7 @@ import {Context} from "src/electron-main/model";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {Endpoints} from "src/shared/api/main";
 
-export async function buildTrayIconEndpoints(
+export async function buildEndpoints(
     ctx: Context,
 ): Promise<Pick<Endpoints, "updateOverlayIcon">> {
     const icons = await prepareTrayIcons(ctx.locations);

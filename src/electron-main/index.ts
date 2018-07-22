@@ -4,6 +4,7 @@ import {app} from "electron";
 
 import {activateBrowserWindow, initContext} from "./util";
 import {APP_NAME} from "src/shared/constants";
+import {connect} from "./database";
 import {Context} from "./model";
 import {initApi} from "./api";
 import {initAutoUpdate} from "./app-update";
@@ -28,6 +29,8 @@ export async function initApp(ctx: Context) {
     }
 
     app.on("ready", async () => {
+        await connect();
+
         const endpoints = await initApi(ctx);
         const {checkForUpdatesAndNotify} = await endpoints.readConfig().toPromise();
 

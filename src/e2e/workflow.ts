@@ -55,13 +55,13 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
             || path.join(rootDirPath, "./output/e2e", String(Number(new Date())));
         const userDataDirPath = path.join(outputDirPath, "./app-data");
         const logFilePath = path.join(userDataDirPath, "log.log");
-        const webdriverLogDirPath = path.join(outputDirPath, "webdriver-driver-log");
-        const chromeDriverLogFilePath = path.join(outputDirPath, "chrome-driver.log");
+        // const webdriverLogDirPath = path.join(outputDirPath, "webdriver-driver-log");
+        // const chromeDriverLogFilePath = path.join(outputDirPath, "chrome-driver.log");
 
         await mkOutputDirs([
             outputDirPath,
             userDataDirPath,
-            webdriverLogDirPath,
+            // webdriverLogDirPath,
         ]);
 
         t.context.appDirPath = appDirPath;
@@ -86,10 +86,12 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
             },
             args: [mainScriptFilePath],
 
-            // TODO chromedriver throws 'Failed to redirect stderr to log file.' and 'Unable to initialize logging. Exiting...'
-            // errors if log paths are specified, only on first run
-            webdriverLogPath: webdriverLogDirPath,
-            chromeDriverLogPath: chromeDriverLogFilePath,
+            // TODO setting path chromedriver config parameters might cause the following errors happening:
+            // - ChromeDriver did not start within 5000ms
+            // - Failed to redirect stderr to log file.
+            // - Unable to initialize logging. Exiting...
+            // webdriverLogPath: webdriverLogDirPath,
+            // chromeDriverLogPath: chromeDriverLogFilePath,
 
             // ...(CI ? {
             //     startTimeout: 30000,

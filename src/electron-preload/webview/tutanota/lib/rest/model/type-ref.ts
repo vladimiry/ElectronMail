@@ -1,5 +1,5 @@
-import {BaseEntity, TypeRef} from "./common";
-import {File, Mail, MailBody, MailBox, MailboxGroupRoot, MailFolder} from "./entity";
+import {BaseEntity, Id, IdTuple, TypeRef} from "./common";
+import {File, Mail, MailBody, MailBox, MailboxGroupRoot, MailFolder} from "./response";
 
 // tslint:disable:variable-name
 
@@ -12,7 +12,7 @@ export const MailTypeRef = buildTutanotaTypeRef<Mail>("Mail");
 
 // tslint:enable:variable-name
 
-function buildTutanotaTypeRef<T extends BaseEntity>(type: Pick<TypeRef<T>, "type">["type"]): TypeRef<T> {
+function buildTutanotaTypeRef<T extends BaseEntity<Id | IdTuple>>(type: Pick<TypeRef<T>, "type">["type"]): TypeRef<T> {
     return {
         app: "tutanota",
         type,

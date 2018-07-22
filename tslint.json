@@ -15,22 +15,6 @@
           {
             "patterns": [
               {
-                "target": "src/**/*",
-                "from": "nano-sql"
-              }
-            ]
-          },
-          {
-            "patterns": [
-              {
-                "target": "src/**/*",
-                "from": "package.json"
-              }
-            ]
-          },
-          {
-            "patterns": [
-              {
                 "target": "src/electron-main/**/*",
                 "from": [
                   "src/**/*",
@@ -64,6 +48,44 @@
                   "!src/web/src/app/store/**/*",
                   "!src/web/src/app/+shared/shared.module",
                   "!src/web/src/app/app.constants"
+                ]
+              }
+            ]
+          },
+          {
+            "patterns": [
+              {
+                "target": "src/**/*",
+                "from": "package.json"
+              }
+            ]
+          },
+          {
+            "patterns": [
+              {
+                "target": [
+                  "src/**/*",
+                  "!src/electron-main/database/nano-sql.ts",
+                  "!src/electron-main/api/index.spec.ts"
+                ],
+                "from": [
+                  "nano-sql",
+                  "!src/electron-main/database/nano-sql"
+                ]
+              }
+            ]
+          },
+          {
+            "patterns": [
+              {
+                "target": [
+                  "src/**/*",
+                  "!src/electron-main/**/*"
+                ],
+                "from": [
+                  "src/electron-main/database/entity/**/*",
+                  "!src/electron-main/database/entity/index",
+                  "!src/electron-main/database/entity/column-decorator"
                 ]
               }
             ]

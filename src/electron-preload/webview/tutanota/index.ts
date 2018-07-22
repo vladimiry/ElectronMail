@@ -1,12 +1,15 @@
 import {authenticator} from "otplib";
 import {distinctUntilChanged, map, switchMap} from "rxjs/operators";
 import {EMPTY, from, interval, merge, Observable, Subscriber, throwError} from "rxjs";
+import logger from "electron-log";
 
 import {AccountNotificationType, WebAccountTutanota} from "src/shared/model/account";
 import {fetchEntitiesRange} from "src/electron-preload/webview/tutanota/lib/rest";
-import {fetchMessages} from "src/electron-preload/webview/tutanota/lib/fetch";
+import {fetchMessages} from "src/electron-preload/webview/tutanota/lib/fetcher";
+import {FolderTypeService} from "src/shared/util";
 import {getLocationHref, submitTotpToken, typeInputValue, waitElements} from "src/electron-preload/webview/util";
 import {MailFolder, MailTypeRef, User} from "src/electron-preload/webview/tutanota/lib/rest/model";
+import {MailFolderTypeValue} from "src/shared/model/database";
 import {NOTIFICATION_LOGGED_IN_POLLING_INTERVAL, NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL} from "src/electron-preload/webview/common";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {resolveWebClientApi, WebClientApi} from "src/electron-preload/webview/tutanota/lib/tutanota-api";
@@ -26,8 +29,10 @@ resolveWebClientApi()
 
             if (response && response.type === "response" && Array.isArray(response.value) && response.value.length) {
                 const inboxMailFolder = response.value
-                    .filter(({_type, folderType}: any = {}) => {
-                        return typeof _type === "object" && _type.type === "MailFolder" && folderType === "1";
+                    .filter(({_type, folderType}: MailFolder & { _type?: { type: string } }) => {
+                        return typeof _type === "object"
+                            && _type.type === "MailFolder"
+                            && FolderTypeService.strictInboxTest(Number(folderType) as MailFolderTypeValue);
                     })
                     .shift();
 
@@ -43,9 +48,7 @@ resolveWebClientApi()
 
         bootstrapApi(webClientApi);
     })
-    .catch((err) => {
-        require("electron-log").error(err);
-    });
+    .catch(logger.error);
 
 function bootstrapApi(webClientApi: WebClientApi) {
     const login2FaWaitElementsConfig = {

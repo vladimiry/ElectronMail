@@ -1,6 +1,5 @@
+import {Base} from "./entities";
 import {DataModel} from "src/electron-main/database/nano-sql";
-
-import {Base} from "./entity";
 import {Omit} from "src/shared/types";
 
 const columnsDataModelRegistry: Array<{ target: typeof Base.prototype.constructor, model: DataModel }> = [];

@@ -12,7 +12,7 @@ export class CoreEffects {
     updateOverlayIcon$ = this.actions$.pipe(
         filter(CORE_ACTIONS.is.UpdateOverlayIcon),
         switchMap(({payload}) => this.electronService
-            .ipcMainCaller()("updateOverlayIcon")({hasLoggedOut: payload.hasLoggedOut, unread: payload.unread})
+            .ipcMainClient()("updateOverlayIcon")({hasLoggedOut: payload.hasLoggedOut, unread: payload.unread})
             .pipe(
                 mergeMap(() => []),
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),

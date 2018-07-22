@@ -1,24 +1,26 @@
 import {Observable, Subscriber} from "rxjs";
 
+import * as DatabaseModel from "src/shared/model/database";
 import {fetchEntitiesList, fetchEntitiesRange, fetchEntity, Model as M} from "src/electron-preload/webview/tutanota/lib/rest";
-import {MailFolderRef} from "src/electron-preload/webview/tutanota/lib/rest/model/entity";
+import {FolderTypeService} from "src/shared/util";
+import {Id} from "./rest/model";
 import {resolveWebClientApi} from "src/electron-preload/webview/tutanota/lib/tutanota-api";
 import {TutanotaApiFetchMessagesInput, TutanotaApiFetchMessagesOutput} from "src/shared/api/webview/tutanota";
 
 const MAIL_FOLDER_FETCH_PORTION_SIZE = 500;
 
 export function fetchMessages(
-    {user, newestStoredTimestamp}: { user: M.User } & TutanotaApiFetchMessagesInput,
+    input: { user: M.User } & TutanotaApiFetchMessagesInput,
 ): Observable<TutanotaApiFetchMessagesOutput> {
     return Observable.create(async (mailItemFetchingObserver: Subscriber<TutanotaApiFetchMessagesOutput>) => {
         const api = await resolveWebClientApi();
         const {FULL_INDEXED_TIMESTAMP: TIMESTAMP_MIN} = api["src/api/common/TutanotaConstants"];
         const {timestampToGeneratedId} = api["src/api/common/utils/Encoding"];
-        const startTimestamp = typeof newestStoredTimestamp === "undefined" ? TIMESTAMP_MIN : newestStoredTimestamp + 1;
+        const startTimestamp = typeof input.newestStoredTimestamp === "undefined" ? TIMESTAMP_MIN : input.newestStoredTimestamp + 1;
         const startId = timestampToGeneratedId(startTimestamp);
-        const mailGroups = user.memberships.filter(({groupType}) => groupType === M.GroupType.Mail);
+        const userMailGroups = input.user.memberships.filter(({groupType}) => groupType === M.GroupType.Mail);
 
-        for (const {group} of mailGroups) {
+        for (const {group} of userMailGroups) {
             const {mailbox} = await fetchEntity(M.MailboxGroupRootTypeRef, group);
             const {systemFolders} = await fetchEntity(M.MailBoxTypeRef, mailbox);
 
@@ -28,9 +30,9 @@ export function fetchMessages(
 
             for (const folder of await fetchFoldersWithSubFolders(systemFolders)) {
                 await new Promise((resolve, reject) => {
-                    processMailFolder(folder, startId).subscribe(
-                        (mailItem) => {
-                            mailItemFetchingObserver.next({mailItem});
+                    processMailFolder(input, folder, startId).subscribe(
+                        (mail) => {
+                            mailItemFetchingObserver.next({mail});
                         },
                         reject,
                         resolve,
@@ -44,15 +46,16 @@ export function fetchMessages(
 }
 
 function processMailFolder(
-    mailFolder: M.MailFolder,
-    startId: M.Id<M.Mail>,
-): Observable<TutanotaApiFetchMessagesOutput["mailItem"]> {
-    return Observable.create(async (mailItemFetchingObserver: Subscriber<TutanotaApiFetchMessagesOutput["mailItem"]>) => {
+    context: TutanotaApiFetchMessagesInput,
+    folder: M.MailFolder,
+    startId: Id<M.Mail["_id"][1]>,
+): Observable<TutanotaApiFetchMessagesOutput["mail"]> {
+    return Observable.create(async (mailItemFetchingObserver: Subscriber<TutanotaApiFetchMessagesOutput["mail"]>) => {
         const {timestampToGeneratedId, generatedIdToTimestamp} = (await resolveWebClientApi())["src/api/common/utils/Encoding"];
         const count = MAIL_FOLDER_FETCH_PORTION_SIZE;
         const mails = await fetchEntitiesRange(
             M.MailTypeRef,
-            mailFolder.mails,
+            folder.mails,
             {
                 count,
                 start: startId,
@@ -65,10 +68,9 @@ function processMailFolder(
         for (mail of mails) {
             const [body, files] = await Promise.all([
                 fetchEntity(M.MailBodyTypeRef, mail.body),
-                Promise.all(mail.attachments.map((attachmentId) => fetchEntity(M.FileTypeRef, attachmentId))),
+                Promise.all(mail.attachments.map((id) => fetchEntity(M.FileTypeRef, id))),
             ]);
-
-            mailItemFetchingObserver.next({mail, body, files});
+            mailItemFetchingObserver.next(formDatabaseMailModel(context, folder, mail, body, files));
         }
 
         if (fullPortionFetched && mail) {
@@ -76,7 +78,7 @@ function processMailFolder(
             const currentPortionEndTimestamp = generatedIdToTimestamp(currentPortionEndId);
             const nextPortionStartId = timestampToGeneratedId(currentPortionEndTimestamp + 1);
 
-            processMailFolder(mailFolder, nextPortionStartId).subscribe(
+            processMailFolder(context, folder, nextPortionStartId).subscribe(
                 (value) => mailItemFetchingObserver.next(value),
                 (error) => mailItemFetchingObserver.error(error),
                 () => mailItemFetchingObserver.complete(),
@@ -89,7 +91,7 @@ function processMailFolder(
     });
 }
 
-async function fetchFoldersWithSubFolders({folders: listId}: MailFolderRef): Promise<M.MailFolder[]> {
+async function fetchFoldersWithSubFolders({folders: listId}: M.MailFolderRef): Promise<M.MailFolder[]> {
     const folders = [];
 
     for (const folder of await fetchEntitiesList(M.MailFolderTypeRef, listId)) {
@@ -98,4 +100,50 @@ async function fetchFoldersWithSubFolders({folders: listId}: MailFolderRef): Pro
     }
 
     return folders;
+}
+
+function formDatabaseMailModel(
+    {type, login}: TutanotaApiFetchMessagesInput,
+    folder: M.MailFolder,
+    mail: M.Mail,
+    body: M.MailBody,
+    files: M.File[],
+): TutanotaApiFetchMessagesOutput["mail"] {
+    return {
+        raw: JSON.stringify(mail),
+        type,
+        login,
+        id: mail._id[1],
+        date: Number(mail.receivedDate), // TODO consider calling "generatedIdToTimestamp"
+        subject: mail.subject,
+        body: body.text,
+        folder: {
+            raw: JSON.stringify(folder),
+            type: FolderTypeService.parseValue(folder.folderType),
+            name: folder.name,
+        },
+        sender: formDatabaseAddressModel(mail.sender),
+        toRecipients: mail.toRecipients.map(formDatabaseAddressModel),
+        ccRecipients: mail.ccRecipients.map(formDatabaseAddressModel),
+        bccRecipients: mail.bccRecipients.map(formDatabaseAddressModel),
+        attachments: files.map(formDatabaseFileModel),
+        unread: Boolean(mail.unread),
+    };
+}
+
+function formDatabaseAddressModel(input: M.MailAddress): DatabaseModel.MailAddress {
+    return {
+        raw: JSON.stringify(input),
+        name: input.name,
+        address: input.address,
+    };
+}
+
+function formDatabaseFileModel(input: M.File): DatabaseModel.File {
+    return {
+        raw: JSON.stringify(input),
+        mimeType: input.mimeType,
+        name: input.name,
+        size: Number(input.size),
+    };
 }

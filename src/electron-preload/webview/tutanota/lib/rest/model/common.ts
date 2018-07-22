@@ -12,36 +12,25 @@ export const GroupType: Record<string, "0" | "1" | "2" | "3" | "4" | "5" | "6" |
 };
 
 // tslint:disable-next-line:variable-name
-export const MailFolderType: Record<string, "0" | "1" | "2" | "3" | "4" | "5" | "6"> = {
-    CUSTOM: "0",
-    INBOX: "1",
-    SENT: "2",
-    TRASH: "3",
-    ARCHIVE: "4",
-    SPAM: "5",
-    DRAFT: "6",
-};
-
-// tslint:disable-next-line:variable-name
 export const OperationType: Record<string, "0" | "1" | "2"> = {
     CREATE: "0",
     UPDATE: "1",
     DELETE: "2",
 };
 
-export interface BaseEntity {
-    _id: Id | IdTuple;
-}
-
 export type NumberString = string;
-
-export type Id<T extends BaseEntity = BaseEntity> = string;
-
-export type IdTuple<ID1 extends BaseEntity = BaseEntity, ID2 extends BaseEntity = BaseEntity> = [Id<ID1>, Id<ID2>];
 
 export type TypeRefApp = "tutanota" | "sys";
 
-export interface TypeRef<T extends BaseEntity> {
+export type Id<T extends string = string> = T;
+
+export type IdTuple<ID1 extends Id = Id, ID2 extends Id = Id> = [ID1, ID2];
+
+export interface BaseEntity<ID extends Id | IdTuple> {
+    _id: ID;
+}
+
+export interface TypeRef<T extends BaseEntity<Id | IdTuple>> {
     _type: T;
     app: TypeRefApp;
     type: string;

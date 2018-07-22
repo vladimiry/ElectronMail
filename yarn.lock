@@ -3610,8 +3610,8 @@ eslint@^2.7.0:
     user-home "^2.0.0"
 
 esm@^3.0.40:
-  version "3.0.71"
-  resolved "https://registry.yarnpkg.com/esm/-/esm-3.0.71.tgz#3824987412d7d8fd7782d2381e990a621519a993"
+  version "3.0.72"
+  resolved "https://registry.yarnpkg.com/esm/-/esm-3.0.72.tgz#8f71b3f54b978bbbcbb9788f7f3569a36578c136"
 
 espower-location-detector@^1.0.0:
   version "1.0.0"
@@ -3820,8 +3820,8 @@ extend-shallow@^3.0.0, extend-shallow@^3.0.2:
     is-extendable "^1.0.1"
 
 extend@3, extend@^3.0.0, extend@~3.0.0, extend@~3.0.1:
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/extend/-/extend-3.0.1.tgz#a755ea7bc1adfcc5a31ce7e762dbaadc5e636444"
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/extend/-/extend-3.0.2.tgz#f8b1136b4071fbd8eb140aff858b1019ec2915fa"
 
 external-editor@^2.0.4:
   version "2.2.0"
@@ -4431,8 +4431,8 @@ global-dirs@^0.1.0:
     ini "^1.3.4"
 
 global-modules-path@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/global-modules-path/-/global-modules-path-2.1.0.tgz#923ec524e8726bb0c1a4ed4b8e21e1ff80c88bbb"
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/global-modules-path/-/global-modules-path-2.3.0.tgz#b0e2bac6beac39745f7db5c59d26a36a0b94f7dc"
 
 global@~4.3.0:
   version "4.3.2"
@@ -6167,7 +6167,7 @@ loglevelnext@^1.0.1:
     es6-symbol "^3.1.1"
     object.assign "^4.1.0"
 
-lolex@^2.3.2, lolex@^2.4.2:
+lolex@^2.3.2, lolex@^2.7.1:
   version "2.7.1"
   resolved "https://registry.yarnpkg.com/lolex/-/lolex-2.7.1.tgz#e40a8c4d1f14b536aa03e42a537c7adbaf0c20be"
 
@@ -6419,19 +6419,15 @@ miller-rabin@^4.0.0:
     bn.js "^4.0.0"
     brorand "^1.0.1"
 
-"mime-db@>= 1.34.0 < 2":
+"mime-db@>= 1.34.0 < 2", mime-db@~1.35.0:
   version "1.35.0"
   resolved "https://registry.yarnpkg.com/mime-db/-/mime-db-1.35.0.tgz#0569d657466491283709663ad379a99b90d9ab47"
 
-mime-db@~1.33.0:
-  version "1.33.0"
-  resolved "https://registry.yarnpkg.com/mime-db/-/mime-db-1.33.0.tgz#a3492050a5cb9b63450541e39d9788d2272783db"
-
 mime-types@^2.1.11, mime-types@^2.1.12, mime-types@~2.1.17, mime-types@~2.1.18, mime-types@~2.1.7:
-  version "2.1.18"
-  resolved "https://registry.yarnpkg.com/mime-types/-/mime-types-2.1.18.tgz#6f323f60a83d11146f831ff11fd66e2fe5503bb8"
+  version "2.1.19"
+  resolved "https://registry.yarnpkg.com/mime-types/-/mime-types-2.1.19.tgz#71e464537a7ef81c15f2db9d97e913fc0ff606f0"
   dependencies:
-    mime-db "~1.33.0"
+    mime-db "~1.35.0"
 
 mime@1.4.1:
   version "1.4.1"
@@ -6611,14 +6607,15 @@ nan@^2.10.0, nan@^2.4.0, nan@^2.9.2, nan@~2.10.0:
   version "2.10.0"
   resolved "https://registry.yarnpkg.com/nan/-/nan-2.10.0.tgz#96d0cd610ebd58d4b4de9cc0c6828cda99c7548f"
 
-nano-sql@1.7.1:
+"nano-sql@https://github.com/vladimiry/Nano-SQL#lib":
   version "1.7.1"
-  resolved "https://registry.yarnpkg.com/nano-sql/-/nano-sql-1.7.1.tgz#9aa08f85dd93b0c5a6bdc3a4b4790dfaf6772dd0"
+  resolved "https://github.com/vladimiry/Nano-SQL#86b3127bd30cde5059d48d401900f3c450b58db2"
   dependencies:
     fuzzysearch "^1.0.3"
     levenshtein-edit-distance "^2.0.2"
     lie-ts "^4.0.0"
     metaphone "^1.0.3"
+    npm-run-all "4.1.3"
     prefix-trie-ts "0.0.4"
     queue "^4.4.2"
     really-small-events "^1.1.0"
@@ -6676,7 +6673,7 @@ nice-try@^1.0.4:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/nice-try/-/nice-try-1.0.4.tgz#d93962f6c52f2c1558c0fbda6d512819f1efe1c4"
 
-nise@^1.3.3:
+nise@^1.4.2:
   version "1.4.2"
   resolved "https://registry.yarnpkg.com/nise/-/nise-1.4.2.tgz#a9a3800e3994994af9e452333d549d60f72b8e8c"
   dependencies:
@@ -7628,8 +7625,8 @@ postcss-loader@2.1.6:
     schema-utils "^0.4.0"
 
 postcss-merge-longhand@^4.0.0:
-  version "4.0.1"
-  resolved "https://registry.yarnpkg.com/postcss-merge-longhand/-/postcss-merge-longhand-4.0.1.tgz#98cdebda7cc1bada4ae03c76ed1c44c97a574019"
+  version "4.0.2"
+  resolved "https://registry.yarnpkg.com/postcss-merge-longhand/-/postcss-merge-longhand-4.0.2.tgz#a2bcd7b0f9dca41ee84ba0cee23a5e6cb465ec3a"
   dependencies:
     postcss "^6.0.0"
     postcss-value-parser "^3.0.0"
@@ -8699,8 +8696,8 @@ rgb-regex@^1.0.1:
   resolved "https://registry.yarnpkg.com/rgb-regex/-/rgb-regex-1.0.1.tgz#c0e0d6882df0e23be254a475e8edd41915feaeb1"
 
 rgb2hex@~0.1.4:
-  version "0.1.8"
-  resolved "https://registry.yarnpkg.com/rgb2hex/-/rgb2hex-0.1.8.tgz#c0daf2427b7e9d1cc017143f2ca2b69c4fa93c7d"
+  version "0.1.9"
+  resolved "https://registry.yarnpkg.com/rgb2hex/-/rgb2hex-0.1.9.tgz#5d3e0e14b0177b568e6f0d5b43e34fbfdb670346"
 
 rgba-regex@^1.0.0:
   version "1.0.0"
@@ -9049,16 +9046,16 @@ single-line-log@^1.1.2:
   dependencies:
     string-width "^1.0.1"
 
-sinon@6.1.3:
-  version "6.1.3"
-  resolved "https://registry.yarnpkg.com/sinon/-/sinon-6.1.3.tgz#98e7d716b7b11f7f1200e9c997e74f50ae094660"
+sinon@6.1.4:
+  version "6.1.4"
+  resolved "https://registry.yarnpkg.com/sinon/-/sinon-6.1.4.tgz#b67f7a7b7fe2496042b54a5c2f425e2d699927a2"
   dependencies:
     "@sinonjs/formatio" "^2.0.0"
     "@sinonjs/samsam" "^2.0.0"
     diff "^3.5.0"
     lodash.get "^4.4.2"
-    lolex "^2.4.2"
-    nise "^1.3.3"
+    lolex "^2.7.1"
+    nise "^1.4.2"
     supports-color "^5.4.0"
     type-detect "^4.0.8"
 
@@ -10021,8 +10018,8 @@ tsscmp@~1.0.0:
   resolved "https://registry.yarnpkg.com/tsscmp/-/tsscmp-1.0.5.tgz#7dc4a33af71581ab4337da91d85ca5427ebd9a97"
 
 tsutils@^2.19.1, tsutils@^2.27.2:
-  version "2.27.2"
-  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-2.27.2.tgz#60ba88a23d6f785ec4b89c6e8179cac9b431f1c7"
+  version "2.28.0"
+  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-2.28.0.tgz#6bd71e160828f9d019b6f4e844742228f85169a1"
   dependencies:
     tslib "^1.8.1"
 

@@ -2,7 +2,7 @@ import keytar from "keytar";
 import {EMPTY, from} from "rxjs";
 
 import {AccountConfig} from "src/shared/model/account";
-import {buildGeneralEndpoints, buildKeePassEndpoints, buildTrayIconEndpoints} from "./endpoints-builders";
+import {Database, General, KeePass, TrayIcon} from "./endpoints-builders";
 import {buildSettingsAdapter} from "src/electron-main/util";
 import {Context} from "src/electron-main/model";
 import {Endpoints, IPC_MAIN_API} from "src/shared/api/main";
@@ -12,9 +12,10 @@ import {upgradeConfig, upgradeSettings} from "src/electron-main/storage-upgrade"
 
 export const initApi = async (ctx: Context): Promise<Endpoints> => {
     const endpoints: Endpoints = {
-        ...await buildGeneralEndpoints(ctx),
-        ...await buildKeePassEndpoints(ctx),
-        ...await buildTrayIconEndpoints(ctx),
+        ...await Database.buildEndpoints(),
+        ...await General.buildEndpoints(ctx),
+        ...await KeePass.buildEndpoints(ctx),
+        ...await TrayIcon.buildEndpoints(ctx),
 
         addAccount: ({type, login, entryUrl, storeMails, credentials, credentialsKeePass}) => from((async () => {
             const settings = await ctx.settingsStore.readExisting();

@@ -1,13 +1,16 @@
 import {AccountType} from "src/shared/model/account";
+import {ClassType} from "class-transformer-validator";
 import {Timestamp} from "src/shared/types";
 
-export interface Persistent {
-    pk: string;
+export interface Base {
+    raw: string;
 }
 
-export interface Base {
+export interface BasePersisted extends Base {
+    pk: string;
+    type: AccountType;
+    login: string;
     id: string;
-    date: Timestamp;
 }
 
 export interface MailAddress extends Base {
@@ -21,11 +24,16 @@ export interface File extends Base {
     size: number;
 }
 
-export interface Mail extends Base {
-    type: AccountType;
-    login: string;
+export interface Folder extends Base {
+    type: MailFolderTypeValue;
+    name: string;
+}
+
+export interface Mail extends BasePersisted {
+    date: Timestamp;
     subject: string;
     body: string;
+    folder: Folder;
     sender: MailAddress;
     toRecipients: MailAddress[];
     ccRecipients: MailAddress[];
@@ -34,4 +42,8 @@ export interface Mail extends Base {
     unread: boolean;
 }
 
-export type PersistentMail = Mail & Persistent;
+export type EntityRecord = Record<"Mail", ClassType<Mail>>;
+export type EntityTable = keyof EntityRecord;
+
+export type MailFolderTypeValue = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+export type MailFolderTypeTitle = "custom" | "inbox" | "sent" | "trash" | "archive" | "spam" | "draft";

@@ -44,7 +44,7 @@ export class NavigationEffects {
     toggleBrowserWindow$ = this.actions$.pipe(
         filter(NAVIGATION_ACTIONS.is.ToggleBrowserWindow),
         switchMap(({payload}) => this.electronService
-            .ipcMainCaller()("toggleBrowserWindow")(payload)
+            .ipcMainClient()("toggleBrowserWindow")(payload)
             .pipe(
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
             )));
@@ -53,7 +53,7 @@ export class NavigationEffects {
     openAboutWindow$ = this.actions$.pipe(
         filter(NAVIGATION_ACTIONS.is.OpenAboutWindow),
         switchMap(() => this.electronService
-            .ipcMainCaller()("openAboutWindow")()
+            .ipcMainClient()("openAboutWindow")()
             .pipe(
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
             )));
@@ -62,7 +62,7 @@ export class NavigationEffects {
     openExternal$ = this.actions$.pipe(
         filter(NAVIGATION_ACTIONS.is.OpenExternal),
         switchMap(({payload}) => this.electronService
-            .ipcMainCaller()("openExternal")({url: payload.url})
+            .ipcMainClient()("openExternal")({url: payload.url})
             .pipe(
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
             )));
@@ -71,7 +71,7 @@ export class NavigationEffects {
     openSettingsFolder$ = this.actions$.pipe(
         filter(NAVIGATION_ACTIONS.is.OpenSettingsFolder),
         switchMap(() => this.electronService
-            .ipcMainCaller()("openSettingsFolder")()
+            .ipcMainClient()("openSettingsFolder")()
             .pipe(
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
             )));
@@ -81,7 +81,7 @@ export class NavigationEffects {
         filter(NAVIGATION_ACTIONS.is.Logout),
         switchMap(() => {
             const concatenated = concat(
-                this.electronService.ipcMainCaller()("logout")(),
+                this.electronService.ipcMainClient()("logout")(),
                 of(NAVIGATION_ACTIONS.Go({
                     path: [{
                         outlets: {
@@ -103,7 +103,7 @@ export class NavigationEffects {
     quit$ = this.actions$.pipe(
         filter(NAVIGATION_ACTIONS.is.Quit),
         switchMap(() => this.electronService
-            .ipcMainCaller()("quit")()
+            .ipcMainClient()("quit")()
             .pipe(
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
             )));

@@ -1,18 +1,19 @@
 import {ApiMethod, WebViewApiService} from "electron-rpc-api";
 
-import {AccountNotifications, WebAccountTutanota} from "src/shared/model/account";
+import {AccountConfig, AccountNotifications, AccountType, WebAccountTutanota} from "src/shared/model/account";
 import {channel} from "./common";
 import {CommonApi} from "src/shared/api/webview/common";
-import {File, MailBody} from "src/electron-preload/webview/tutanota/lib/rest/model/entity";
-import {Mail} from "src/electron-preload/webview/tutanota/lib/rest/model";
-import {Timestamp} from "src/shared/types";
+import {Mail} from "src/shared/model/database";
+import {Omit, Timestamp} from "src/shared/types";
 
 export interface TutanotaApiFetchMessagesInput {
+    type: AccountType;
+    login: AccountConfig["login"];
     newestStoredTimestamp?: Timestamp;
 }
 
 export interface TutanotaApiFetchMessagesOutput {
-    mailItem: { mail: Mail, body: MailBody, files: File[] };
+    mail: Omit<Mail, "pk">;
 }
 
 export interface TutanotaApi extends CommonApi {

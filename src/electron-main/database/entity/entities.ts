@@ -1,49 +1,28 @@
 import "reflect-metadata";
-import {IsArray, IsBoolean, IsIn, IsInt, IsNotEmpty, IsString, ValidateNested} from "class-validator";
-
-import * as Model from "src/shared/model/database";
-import {AccountType} from "src/shared/model/account";
-import {Column} from "./decorator";
-import {Timestamp} from "src/shared/types";
+import {IsArray, IsBoolean, IsIn, IsInt, IsJSON, IsNotEmpty, IsString, ValidateNested} from "class-validator";
 import {Type} from "class-transformer";
+
+import * as DatabaseModel from "src/shared/model/database";
+import {AccountType} from "src/shared/model/account";
+import {Column} from "./column-decorator";
+import {Timestamp} from "src/shared/types";
 
 // TODO consider enabling @Entity class annotation with table name property
 
-export abstract class Base implements Model.Base {
+export abstract class Base implements DatabaseModel.Base {
+    @IsJSON()
     @IsNotEmpty()
     @IsString()
     @Column({type: "string"})
-    id: string;
-
-    @IsNotEmpty()
-    @IsInt()
-    @Column({type: "int"})
-    date: Timestamp;
+    raw: string;
 }
 
-class MailAddress extends Base implements Model.MailAddress {
+export class BasePersisted extends Base implements DatabaseModel.BasePersisted {
     @IsNotEmpty()
     @IsString()
-    address: string;
+    @Column({type: "string", props: ["pk()"]})
+    pk: string;
 
-    @IsNotEmpty()
-    @IsString()
-    name: string;
-}
-
-class File extends Base implements File {
-    @IsString()
-    mimeType?: string;
-
-    @IsString()
-    name: string;
-
-    @IsNotEmpty()
-    @IsInt()
-    size: number;
-}
-
-export class Mail extends Base implements Model.Mail {
     @IsIn(((typesMap: Record<AccountType, null>) => Object.keys(typesMap))({protonmail: null, tutanota: null}))
     @IsNotEmpty()
     @IsString()
@@ -58,11 +37,59 @@ export class Mail extends Base implements Model.Mail {
     @IsNotEmpty()
     @IsString()
     @Column({type: "string"})
+    id: string;
+}
+
+class MailAddress extends Base implements DatabaseModel.MailAddress {
+    @IsNotEmpty()
+    @IsString()
+    address: string;
+
+    @IsString()
+    name: string;
+}
+
+class File extends Base implements DatabaseModel.File {
+    @IsString()
+    mimeType?: string;
+
+    @IsString()
+    name: string;
+
+    @IsNotEmpty()
+    @IsInt()
+    size: number;
+}
+
+class Folder extends Base implements DatabaseModel.Folder {
+    @IsNotEmpty()
+    @IsInt()
+    type: DatabaseModel.MailFolderTypeValue;
+
+    @IsString()
+    name: string;
+}
+
+export class Mail extends BasePersisted implements DatabaseModel.Mail {
+    @IsNotEmpty()
+    @IsInt()
+    @Column({type: "int"})
+    date: Timestamp;
+
+    @IsNotEmpty()
+    @IsString()
+    @Column({type: "string"})
     subject: string;
 
     @IsString()
     @Column({type: "string"})
     body: string;
+
+    @IsNotEmpty()
+    @ValidateNested()
+    @Type(() => Folder)
+    @Column({type: "map"})
+    folder: Folder;
 
     @IsNotEmpty()
     @ValidateNested()
@@ -99,26 +126,3 @@ export class Mail extends Base implements Model.Mail {
     @Column({type: "bool"})
     unread: boolean;
 }
-
-class PersistentMail extends Mail implements Model.PersistentMail {
-    @IsNotEmpty()
-    @IsString()
-    @Column({type: "timeId", props: ["pk()"]})
-    pk: string;
-}
-
-const persistenceEntities = {
-    Mail: PersistentMail,
-};
-export {
-    persistenceEntities as PersistenceEntities,
-};
-
-const entities: Record<keyof typeof persistenceEntities, typeof Mail> = {
-    Mail,
-};
-export {
-    entities as Entities,
-};
-
-export type Table = keyof typeof persistenceEntities;

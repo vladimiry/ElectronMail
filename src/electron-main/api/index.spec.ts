@@ -6,6 +6,7 @@ import rewiremock from "rewiremock";
 import sinon from "sinon";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Fs} from "fs-json-store";
+import {NanoSQLInstance as NanoSQLInstanceOriginal} from "nano-sql";
 
 import {AccountConfigCreatePatch, AccountConfigUpdatePatch, PasswordFieldContainer} from "src/shared/model/container";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
@@ -15,14 +16,14 @@ import {Endpoints} from "src/shared/api/main";
 import {INITIAL_STORES, KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "src/electron-main/constants";
 import {pickBaseConfigProperties} from "src/shared/util";
 import {StatusCode, StatusCodeError} from "src/shared/model/error";
+import {DatabaseUpsertInput} from "../../shared/api/main";
 
 // TODO "immer" instead of cloning with "..."
 
 interface TestContext {
     ctx: Context;
     endpoints: Endpoints;
-    mocks: any;
-    mocked: any;
+    mocks: ReturnType<typeof buildMocks>;
 }
 
 const test = anyTest as TestInterface<TestContext>;
@@ -146,6 +147,20 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         getPasswordStub.calledWithExactly(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT);
         t.is(setPasswordSpy.callCount, 1);
         setPasswordSpy.calledWithExactly(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, payload.newPassword);
+    },
+
+    databaseUpsert: async (t) => {
+        const {endpoints, mocks} = t.context;
+        const payload: DatabaseUpsertInput = {table: "some-table", data: {value123: 123}} as any;
+
+        await endpoints.databaseUpsert(payload);
+
+        t.true(mocks["nano-sql"]._tableStub.calledWithExactly(payload.table));
+        t.true(mocks["nano-sql"]._queryStub.calledWithExactly("upsert", payload.data));
+    },
+
+    databaseObserveTest: async (t) => {
+        t.pass();
     },
 
     init: async (t) => {
@@ -461,99 +476,127 @@ async function readConfigAndSettings(
     return await endpoints.readSettings(payload).toPromise();
 }
 
-test.beforeEach(async (t) => {
-    await (async () => {
-        const openExternalSpy = sinon.spy();
+function buildMocks() {
+    const openExternalSpy = sinon.spy();
 
-        t.context.mocks = {
-            "src/shared/api/main": {
-                IPC_MAIN_API: {
-                    registerApi: sinon.spy(),
-                },
-            },
-            "src/electron-main/util": {
-                toggleBrowserWindow: sinon.spy(),
-                buildSettingsAdapter,
-            },
-            "src/electron-main/storage-upgrade": {
-                upgradeConfig: sinon.stub().returns(false),
-                upgradeSettings: sinon.stub().returns(false),
-            },
-            "about-window": {
-                default: sinon.spy(),
-            },
-            "electron": {
-                app: {
-                    exit: sinon.spy(),
-                    setAppUserModelId: sinon.spy(),
-                },
-                remote: {
-                    BrowserWindow: sinon.spy(),
-                },
-                ipcMain: {
-                    addListener: sinon.spy(),
-                    emit: sinon.spy(),
-                    on: sinon.spy(),
-                    removeListener: sinon.spy(),
-                },
-                shell: {
-                    openExternalSpy,
-                    openExternal: (url: string, options?: Electron.OpenExternalOptions, callback?: (error: Error) => void): boolean => {
-                        openExternalSpy(url);
-                        if (callback) {
-                            callback(null as any);
-                        }
-                        return true;
-                    },
-                    openItem: sinon.spy(),
-                },
-                nativeImage: {
-                    createFromPath: sinon.stub().returns({toPNG: sinon.spy}),
-                    createFromBuffer: sinon.stub(),
-                },
-            },
-            "jimp": {
-                read: sinon.stub().returns(Promise.resolve({
-                    resize: (w: any, h: any, cb: any) => cb(),
-                    clone: sinon.stub().returns({
-                        composite: () => ({
-                            bitmap: {width: 0, height: 0},
-                            getBuffer: (format: any, cb: any) => cb(),
-                        }),
-                    }),
-                    bitmap: {width: 0, height: 0},
-                })),
-                loadFont: sinon.spy(),
-                _rewiremock_no_callThrough: true,
-            },
-            "keytar": {
-                _rewiremock_no_callThrough: true,
-                getPassword: sinon.stub().returns(OPTIONS.masterPassword),
-                deletePassword: sinon.spy(),
-                setPassword: sinon.spy(),
-            },
-        };
+    const nanoSqlMocks = (() => {
+        class NanoSQLInstance extends NanoSQLInstanceOriginal {}
 
-        t.context.mocked = {
-            "src/electron-main/api/index": await rewiremock.around(
-                () => import("./index"),
-                (mock) => {
-                    Object
-                        .keys(t.context.mocks)
-                        .forEach((key) => {
-                            const mocks = t.context.mocks[key];
-                            let mocked = mock(key);
+        const _execSpy = sinon.spy();
+        const _queryStub = sinon.stub().returns({exec: _execSpy});
+        const _tableStub = sinon.stub(NanoSQLInstance.prototype, "table").callThrough();
 
-                            if (!mocks._rewiremock_no_callThrough) {
-                                mocked = (mocked as any).callThrough();
-                            }
+        Object.assign(NanoSQLInstance.prototype, {
+            query: _queryStub,
+            exec: _execSpy,
+        });
 
-                            mocked.with(mocks);
-                        });
+        return {
+            "src/electron-main/database/nano-sql.ts": {
+                "nano-sql": {
+                    NanoSQLInstance,
                 },
-            ),
+            },
+            "nano-sql": {
+                _tableStub,
+                _queryStub,
+                _execSpy,
+                NanoSQLInstance,
+            },
         };
     })();
+
+    return {
+        "src/shared/api/main": {
+            IPC_MAIN_API: {
+                registerApi: sinon.spy(),
+            },
+        },
+        "src/electron-main/util": {
+            toggleBrowserWindow: sinon.spy(),
+            buildSettingsAdapter,
+        },
+        "src/electron-main/storage-upgrade": {
+            upgradeConfig: sinon.stub().returns(false),
+            upgradeSettings: sinon.stub().returns(false),
+        },
+        "about-window": {
+            default: sinon.spy(),
+        },
+        "electron": {
+            app: {
+                exit: sinon.spy(),
+                setAppUserModelId: sinon.spy(),
+            },
+            remote: {
+                BrowserWindow: sinon.spy(),
+            },
+            ipcMain: {
+                addListener: sinon.spy(),
+                emit: sinon.spy(),
+                on: sinon.spy(),
+                removeListener: sinon.spy(),
+            },
+            shell: {
+                openExternalSpy,
+                openExternal: (url: string, options?: Electron.OpenExternalOptions, callback?: (error: Error) => void): boolean => {
+                    openExternalSpy(url);
+                    if (callback) {
+                        callback(null as any);
+                    }
+                    return true;
+                },
+                openItem: sinon.spy(),
+            },
+            nativeImage: {
+                createFromPath: sinon.stub().returns({toPNG: sinon.spy}),
+                createFromBuffer: sinon.stub(),
+            },
+        },
+        "jimp": {
+            read: sinon.stub().returns(Promise.resolve({
+                resize: (w: any, h: any, cb: any) => cb(),
+                clone: sinon.stub().returns({
+                    composite: () => ({
+                        bitmap: {width: 0, height: 0},
+                        getBuffer: (format: any, cb: any) => cb(),
+                    }),
+                }),
+                bitmap: {width: 0, height: 0},
+            })),
+            loadFont: sinon.spy(),
+            _rewiremock_no_callThrough: true,
+        },
+        "keytar": {
+            _rewiremock_no_callThrough: true,
+            getPassword: sinon.stub().returns(OPTIONS.masterPassword),
+            deletePassword: sinon.spy(),
+            setPassword: sinon.spy(),
+        },
+        ...nanoSqlMocks,
+    };
+}
+
+test.beforeEach(async (t) => {
+    t.context.mocks = buildMocks();
+
+    const mockedObject = await rewiremock.around(
+        () => import("./index"),
+        (mock) => {
+            Object
+                .keys(t.context.mocks)
+                .forEach((key) => {
+                    const mocks = t.context.mocks[key as keyof ReturnType<typeof buildMocks>];
+                    let mocked = mock(key);
+
+                    if (!("_rewiremock_no_callThrough" in mocks && mocks._rewiremock_no_callThrough)) {
+                        mocked = (mocked as any).callThrough();
+                    }
+
+                    mocked.with(mocks);
+                });
+        },
+    );
 
     const testName = t.title;
     assert.ok(testName, "test name is not empty");
@@ -590,7 +633,8 @@ test.beforeEach(async (t) => {
     t.truthy(ctx.settingsStore.validators && ctx.settingsStore.validators.length);
 
     t.context.ctx = ctx;
-    t.context.endpoints = await t.context.mocked["src/electron-main/api/index"].initApi(t.context.ctx);
+    t.context.endpoints = await mockedObject.initApi(t.context.ctx);
     t.context.mocks["src/shared/api/main"].IPC_MAIN_API.registerApi.calledWithExactly(t.context.endpoints);
+
     // TODO make sure "IPC_MAIN_API.register" has been called
 });

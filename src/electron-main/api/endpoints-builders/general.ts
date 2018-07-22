@@ -9,7 +9,7 @@ import {Context} from "src/electron-main/model";
 import {Endpoints} from "src/shared/api/main";
 import {toggleBrowserWindow} from "src/electron-main/util";
 
-export async function buildGeneralEndpoints(
+export async function buildEndpoints(
     ctx: Context,
 ): Promise<Pick<Endpoints, "openAboutWindow" | "openExternal" | "openSettingsFolder" | "quit" | "toggleBrowserWindow">> {
 

@@ -1,5 +1,5 @@
-import {catchError, filter, finalize, map, mergeMap, switchMap, withLatestFrom} from "rxjs/operators";
-import {merge, of} from "rxjs";
+import {catchError, concat, filter, finalize, map, mergeMap, switchMap, tap, withLatestFrom} from "rxjs/operators";
+import {EMPTY, merge, of} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Actions, Effect} from "@ngrx/effects";
 import {Store} from "@ngrx/store";
@@ -12,16 +12,27 @@ import {ProgressPatch, settingsSelector, State} from "src/web/src/app/store/redu
 
 @Injectable()
 export class OptionsEffects {
+    // TODO release: remove "databaseObserveTest" method
     @Effect()
     initRequest$ = this.actions$.pipe(
         filter(OPTIONS_ACTIONS.is.InitRequest),
         switchMap(() => this.electronService
-            .ipcMainCaller()("init")()
+            .ipcMainClient()("init")()
             .pipe(
                 mergeMap((payload) => [
                     OPTIONS_ACTIONS.InitResponse(payload),
                     this.optionsService.buildNavigationAction({path: ""}),
                 ]),
+                concat(
+                    this.electronService.ipcMainClient()("databaseObserveTest")().pipe(
+                        tap((rows) => {
+                            // TODO release: disable console.log stuff
+                            // tslint:disable-next-line:no-console
+                            console.log({rows});
+                        }),
+                        mergeMap(() => []),
+                    ),
+                ),
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
             ),
         ));
@@ -30,7 +41,7 @@ export class OptionsEffects {
     getConfigRequest$ = this.actions$.pipe(
         filter(OPTIONS_ACTIONS.is.GetConfigRequest),
         switchMap(() => this.electronService
-            .ipcMainCaller()("readConfig")()
+            .ipcMainClient()("readConfig")()
             .pipe(
                 mergeMap((config) => [
                     OPTIONS_ACTIONS.GetConfigResponse(config),
@@ -52,7 +63,7 @@ export class OptionsEffects {
             }
 
             return this.electronService
-                .ipcMainCaller()("settingsExists")()
+                .ipcMainClient()("settingsExists")()
                 .pipe(
                     map((readable) => this.optionsService.buildNavigationAction({
                         path: readable ? "login" : "settings-setup",
@@ -68,7 +79,7 @@ export class OptionsEffects {
         switchMap(({payload}) => merge(
             of(this.buildPatchProgress({signingIn: true})),
             this.electronService
-                .ipcMainCaller()("readSettings")(payload)
+                .ipcMainClient()("readSettings")(payload)
                 .pipe(
                     mergeMap((settings) => [
                         OPTIONS_ACTIONS.GetSettingsResponse(settings),
@@ -95,7 +106,7 @@ export class OptionsEffects {
         switchMap(({payload}) => merge(
             of(this.buildPatchProgress({addingAccount: true})),
             this.electronService
-                .ipcMainCaller()("addAccount")(payload)
+                .ipcMainClient()("addAccount")(payload)
                 .pipe(
                     mergeMap((settings) => [
                         OPTIONS_ACTIONS.GetSettingsResponse(settings),
@@ -115,7 +126,7 @@ export class OptionsEffects {
         switchMap(({payload}) => merge(
             of(this.buildPatchProgress({updatingAccount: true})),
             this.electronService
-                .ipcMainCaller()("updateAccount")(payload)
+                .ipcMainClient()("updateAccount")(payload)
                 .pipe(
                     map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
                     catchError((error) => of(CORE_ACTIONS.Fail(error))),
@@ -129,7 +140,7 @@ export class OptionsEffects {
         switchMap(({payload}) => merge(
             of(this.buildPatchProgress({removingAccount: true})),
             this.electronService
-                .ipcMainCaller()("removeAccount")({login: payload.login})
+                .ipcMainClient()("removeAccount")({login: payload.login})
                 .pipe(
                     map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
                     catchError((error) => of(CORE_ACTIONS.Fail(error))),
@@ -143,9 +154,9 @@ export class OptionsEffects {
         switchMap(({payload}) => merge(
             of(this.buildPatchProgress({changingPassword: true})),
             this.electronService
-                .ipcMainCaller()("changeMasterPassword")(payload)
+                .ipcMainClient()("changeMasterPassword")(payload)
                 .pipe(
-                    mergeMap(() => []),
+                    mergeMap(() => EMPTY),
                     catchError((error) => {
                         error.message = "Failed to change the master password! " +
                             "Please make sure that correct current password has been entered.";
@@ -161,7 +172,7 @@ export class OptionsEffects {
         switchMap(({payload}) => merge(
             of(this.buildPatchProgress({keePassReferencing: true})),
             this.electronService
-                .ipcMainCaller()("associateSettingsWithKeePass")(payload)
+                .ipcMainClient()("associateSettingsWithKeePass")(payload)
                 .pipe(
                     map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
                     catchError((error) => of(CORE_ACTIONS.Fail(error))),
@@ -175,7 +186,7 @@ export class OptionsEffects {
         switchMap(() => merge(
             of(this.buildPatchProgress({togglingCompactLayout: true})),
             this.electronService
-                .ipcMainCaller()("toggleCompactLayout")()
+                .ipcMainClient()("toggleCompactLayout")()
                 .pipe(
                     map((config) => OPTIONS_ACTIONS.GetConfigResponse(config)),
                     catchError((error) => of(CORE_ACTIONS.Fail(error))),
@@ -189,7 +200,7 @@ export class OptionsEffects {
         switchMap(({payload}) => merge(
             of(this.buildPatchProgress({updatingBaseSettings: true})),
             this.electronService
-                .ipcMainCaller()("patchBaseSettings")(payload)
+                .ipcMainClient()("patchBaseSettings")(payload)
                 .pipe(
                     map((config) => OPTIONS_ACTIONS.GetConfigResponse(config)),
                     catchError((error) => of(CORE_ACTIONS.Fail(error))),
@@ -206,7 +217,7 @@ export class OptionsEffects {
             return merge(
                 of(this.buildPatchProgress({reEncryptingSettings: true})),
                 this.electronService
-                    .ipcMainCaller()("reEncryptSettings")({encryptionPreset, password})
+                    .ipcMainClient()("reEncryptSettings")({encryptionPreset, password})
                     .pipe(
                         map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
                         catchError((error) => of(CORE_ACTIONS.Fail(error))),

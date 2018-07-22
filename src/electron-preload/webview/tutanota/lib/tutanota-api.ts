@@ -1,4 +1,4 @@
-import {BaseEntity, Id, IdTuple, TypeRef} from "src/electron-preload/webview/tutanota/lib/rest/model/index";
+import {BaseEntity, Id, IdTuple, TypeRef} from "./rest/model";
 import {Timestamp} from "src/shared/types";
 
 type ModuleFiles =
@@ -12,7 +12,7 @@ export interface WebClientApi extends Record<ModuleFiles, any> {
     "src/api/common/EntityFunctions": {
         GENERATED_MIN_ID: Id;
         GENERATED_MAX_ID: Id;
-        resolveTypeReference: <T extends BaseEntity>(
+        resolveTypeReference: <T extends BaseEntity<Id | IdTuple>>(
             typeRef: TypeRef<T>,
         ) => Promise<{ type: "ELEMENT_TYPE" | "LIST_ELEMENT_TYPE" | "DATA_TRANSFER_TYPE" | "AGGREGATED_TYPE"; version: string; }>;
     };
@@ -29,17 +29,17 @@ export interface WebClientApi extends Record<ModuleFiles, any> {
         };
     };
     "src/api/main/Entity": {
-        load: <T extends BaseEntity, TypeRefType extends TypeRef<T>>(
+        load: <T extends BaseEntity<Id | IdTuple>, TypeRefType extends TypeRef<T>>(
             typeRef: TypeRef<T>,
-            id: Id<T> | IdTuple<BaseEntity, T>,
+            id: Id | IdTuple,
         ) => Promise<T>;
-        loadAll: <T extends BaseEntity, TypeRefType extends TypeRef<T>>(
+        loadAll: <T extends BaseEntity<Id | IdTuple>, TypeRefType extends TypeRef<T>>(
             typeRef: TypeRef<T>,
-            listId: Id<T>,
+            listId: Id,
         ) => Promise<T[]>;
-        loadRange: <T extends BaseEntity, TypeRefType extends TypeRef<T>>(
+        loadRange: <T extends BaseEntity<Id | IdTuple>, TypeRefType extends TypeRef<T>>(
             typeRef: TypeRef<T>,
-            listId: Id<T>,
+            listId: Id,
             start: Id,
             count: number,
             reverse: boolean,

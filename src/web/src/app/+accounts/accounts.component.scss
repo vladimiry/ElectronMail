@@ -25,7 +25,11 @@ $webview-border: darken($app-color-bg-dark, 10%);
     }
 
     .no-accounts-block {
-        height: 100%;
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
 
         .btn {
             white-space: normal;

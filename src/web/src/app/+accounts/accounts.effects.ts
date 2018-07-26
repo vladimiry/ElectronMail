@@ -1,16 +1,18 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {catchError, exhaustMap, filter, finalize, map, mergeMap, switchMap, takeUntil, tap} from "rxjs/operators";
-import {Injectable} from "@angular/core";
+import {catchError, concatMap, exhaustMap, filter, finalize, map, mergeMap, takeUntil, tap} from "rxjs/operators";
 import {EMPTY, interval, merge, Observable, of, Subject, throwError} from "rxjs";
+import {Injectable} from "@angular/core";
 import {Store} from "@ngrx/store";
 
 import {ACCOUNTS_ACTIONS, CORE_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
 import {ElectronService} from "src/web/src/app/+core/electron.service";
+import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/src/util";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {State} from "src/web/src/app/store/reducers/accounts";
 import {TutanotaApiFetchMessagesOutput} from "src/shared/api/webview/tutanota";
 
-const rateLimiter = window.__ELECTRON_EXPOSURE__.requireNodeRollingRateLimiter();
+const _logger = getZoneNameBoundWebLogger("[accounts.effects]");
+const rateLimiter = __ELECTRON_EXPOSURE__.require["rolling-rate-limiter"]();
 
 @Injectable()
 export class AccountsEffects {
@@ -25,9 +27,11 @@ export class AccountsEffects {
 
         return this.actions$.pipe(
             filter(ACCOUNTS_ACTIONS.is.ToggleFetching),
-            switchMap(({payload}) => {
+            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+            concatMap(({payload, logger}) => {
                 const result = () => {
-                    return merge(...Object.values(record).map(({observable$}) => observable$)).pipe(
+                    const observables = Object.values(record).map(({observable$}) => observable$);
+                    return merge(...observables).pipe(
                         catchError((error) => {
                             this.store.dispatch(CORE_ACTIONS.Fail(error));
                             return EMPTY;
@@ -36,10 +40,12 @@ export class AccountsEffects {
                 };
                 const cancelFetcher = () => {
                     const key = "login" in payload ? payload.login : payload.account.accountConfig.login;
-                    if (record[key]) {
-                        record[key].stop$.next();
+                    if (!(key in record)) {
+                        return;
                     }
+                    record[key].stop$.next();
                     delete record[key];
+                    logger.verbose("release");
                 };
 
                 cancelFetcher();
@@ -59,13 +65,14 @@ export class AccountsEffects {
                         return throwError(new Error(`Messages fetching is not yet implemented for "${type}" email provider`));
                     }
 
+                    // TODO stop$ notifier doesn't seem to needed, "finishPromise" completes an observable
                     const stop$ = new Subject<never>();
                     const fetchAndPersist$ = this.electron.webViewClient(webView, type, {finishPromise}).pipe(
-                        switchMap((client) => {
+                        concatMap((client) => {
                             // TODO take "newestStoredTimestamp" from local database
                             const newestStoredTimestamp = undefined;
                             // TODO handle network errors during fetching, test for online status
-                            return client("fetchMessages")({type, login, newestStoredTimestamp}).pipe(
+                            return client("fetchMessages")({type, login, newestStoredTimestamp, zoneName: logger.zoneName()}).pipe(
                                 tap(({mail}) => {
                                     // TODO release: disable console.log stuff
                                     // tslint:disable-next-line:no-console
@@ -73,7 +80,7 @@ export class AccountsEffects {
                                 }),
                             );
                         }),
-                        switchMap((value) => this.electron.ipcMainClient()("databaseUpsert")({table: "Mail", data: [value.mail]}).pipe(
+                        concatMap((value) => this.electron.ipcMainClient()("databaseUpsert")({table: "Mail", data: [value.mail]}).pipe(
                             tap(() => {
                                 // TODO release: disable console.log stuff
                                 // tslint:disable-next-line:no-console
@@ -95,6 +102,7 @@ export class AccountsEffects {
                         observable$: buildIntervalObservable(),
                         stop$,
                     };
+                    logger.verbose("add");
 
                     // account removing case (triggered in component's "ngOnDestroy" life-cycle function)
                     finishPromise.then(cancelFetcher);
@@ -114,18 +122,20 @@ export class AccountsEffects {
     @Effect()
     tryToLogin$ = this.actions$.pipe(
         filter(ACCOUNTS_ACTIONS.is.TryToLogin),
-        switchMap(({payload}) => {
+        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+        mergeMap(({payload, logger}) => {
             const {account, webView} = payload;
             const {accountConfig, notifications} = account;
             const {type, login, credentials} = accountConfig;
             const pageType = notifications.pageType.type;
-            const unreadReset = of(ACCOUNTS_ACTIONS.NotificationPatch({account, notification: {unread: 0}}));
+            const unreadReset = of(ACCOUNTS_ACTIONS.NotificationPatch({login, notification: {unread: 0}}));
 
             // TODO make sure passwords submitting looping doesn't happen, until then a workaround is enabled below
             const rateLimitingCheck = (password: string) => {
                 const key = String([login, pageType, password]);
                 const timeLeft = this.twoPerTenSecLimiter(key);
 
+                // tslint:disable-next-line:early-exit
                 if (timeLeft > 0) {
                     throw new Error([
                         `It's not allowed to submit the same password for the same "${login}" account`,
@@ -136,6 +146,8 @@ export class AccountsEffects {
                 }
             };
 
+            logger.verbose(JSON.stringify({pageType}));
+
             switch (pageType) {
                 case "login": {
                     const password = payload.password || credentials.password;
@@ -143,11 +155,12 @@ export class AccountsEffects {
                     if (password) {
                         rateLimitingCheck(password);
 
+                        logger.info("login");
                         return merge(
                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: true}})),
                             unreadReset,
                             this.electron.webViewClient(webView, type).pipe(
-                                switchMap((caller) => caller("login")({login, password})),
+                                mergeMap((caller) => caller("login")({login, password, zoneName: logger.zoneName()})),
                                 mergeMap(() => EMPTY),
                                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
                                 finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: false}}))),
@@ -155,26 +168,30 @@ export class AccountsEffects {
                         );
                     }
 
-                    return this.electron.webViewClient(webView, type)
-                        .pipe(
-                            switchMap((caller) => caller("fillLogin")({login})),
-                            mergeMap(() => EMPTY),
-                        );
+                    logger.info("fillLogin");
+                    return this.electron.webViewClient(webView, type).pipe(
+                        mergeMap((caller) => caller("fillLogin")({login, zoneName: logger.zoneName()})),
+                        mergeMap(() => EMPTY),
+                    );
                 }
                 case "login2fa": {
                     const secret = payload.password || credentials.twoFactorCode;
 
+                    // tslint:disable-next-line:early-exit
                     if (secret) {
                         rateLimitingCheck(secret);
 
+                        logger.info("login2fa");
                         return merge(
                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {twoFactorCode: true}})),
                             unreadReset,
                             this.electron.webViewClient(webView, type).pipe(
-                                switchMap((caller) => caller("login2fa")({secret})),
+                                mergeMap((caller) => caller("login2fa")({secret, zoneName: logger.zoneName()})),
                                 mergeMap(() => EMPTY),
                                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
-                                finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {twoFactorCode: false}}))),
+                                finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({
+                                    login, patch: {twoFactorCode: false},
+                                }))),
                             ),
                         );
                     }
@@ -190,6 +207,7 @@ export class AccountsEffects {
 
                     const mailPassword = payload.password || ("mailPassword" in credentials && credentials.mailPassword);
 
+                    // tslint:disable-next-line:early-exit
                     if (mailPassword) {
                         rateLimitingCheck(mailPassword);
 
@@ -197,10 +215,12 @@ export class AccountsEffects {
                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: true}})),
                             unreadReset,
                             this.electron.webViewClient(webView, type).pipe(
-                                switchMap((caller) => caller("unlock")({mailPassword})),
+                                mergeMap((caller) => caller("unlock")({mailPassword, zoneName: logger.zoneName()})),
                                 mergeMap(() => EMPTY),
                                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
-                                finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: false}}))),
+                                finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({
+                                    login, patch: {mailPassword: false},
+                                }))),
                             ),
                         );
                     }
@@ -209,40 +229,14 @@ export class AccountsEffects {
                 }
             }
 
+            logger.verbose("empty");
+
             return merge([]);
         }));
 
-    @Effect()
-    setupNotificationChannel$ = (() => {
-        // tslint:disable-next-line:max-line-length
-        const record: Record<string, { stop$: Subject<never>, notification$: Observable<ReturnType<typeof ACCOUNTS_ACTIONS.NotificationPatch>> }> = {};
-
-        return this.actions$.pipe(
-            filter(ACCOUNTS_ACTIONS.is.SetupNotificationChannel),
-            switchMap(({payload}) => {
-                const {account, webView, finishPromise} = payload;
-                const {type, login, entryUrl} = account.accountConfig;
-                const stop$ = new Subject<never>();
-                const notification$ = this.electron.webViewClient(webView, type, {finishPromise}).pipe(
-                    switchMap((caller) => caller("notification")({entryUrl})),
-                    map((notification) => ACCOUNTS_ACTIONS.NotificationPatch({account, notification})),
-                    takeUntil(stop$),
-                );
-
-                finishPromise.then(() => {
-                    stop$.next();
-                    delete record[login];
-                });
-
-                record[login] = {stop$, notification$};
-
-                return merge(...Object.values(record).map((item) => item.notification$));
-            }),
-            catchError((error) => of(CORE_ACTIONS.Fail(error))),
-        );
-    })();
-
-    constructor(private electron: ElectronService,
-                private actions$: Actions,
-                private store: Store<State>) {}
+    constructor(
+        private electron: ElectronService,
+        private actions$: Actions,
+        private store: Store<State>,
+    ) {}
 }

@@ -1,18 +1,19 @@
-import {switchMap} from "rxjs/operators";
+import {concatMap} from "rxjs/operators";
 import {Observable, of} from "rxjs";
 import {Injectable} from "@angular/core";
 import {CanActivate} from "@angular/router";
 import {Store} from "@ngrx/store";
 
-import {State, stateSelector} from "src/web/src/app/store/reducers/options";
 import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
+import {OptionsSelectors} from "src/web/src/app/store/selectors";
+import {State} from "src/web/src/app/store/reducers/options";
 
 @Injectable()
 export class SettingsConfigureGuard implements CanActivate {
     constructor(private store: Store<State>) {}
 
     canActivate(): Observable<boolean> {
-        return this.store.select(stateSelector).pipe(switchMap((state) => {
+        return this.store.select(OptionsSelectors.STATE).pipe(concatMap((state) => {
             if (!state.electronLocations) {
                 this.store.dispatch(OPTIONS_ACTIONS.InitRequest());
                 return of(false);

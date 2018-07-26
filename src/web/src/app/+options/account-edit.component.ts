@@ -2,21 +2,18 @@ import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/form
 import {ActivatedRoute} from "@angular/router";
 import {Component, OnDestroy, OnInit} from "@angular/core";
 import {EMPTY, merge, Observable, of, Subject} from "rxjs";
-import {filter, map, switchMap, takeUntil, withLatestFrom} from "rxjs/operators";
+import {filter, map, mergeMap, pairwise, concatMap, takeUntil} from "rxjs/operators";
 import {Store} from "@ngrx/store";
 
-import {
-    progressSelector,
-    settingsAccountByLoginSelector,
-    settingsKeePassClientConfSelector,
-    State,
-} from "src/web/src/app/store/reducers/options";
 import {AccountConfig, AccountType} from "src/shared/model/account";
 import {AccountConfigCreatePatch, AccountConfigUpdatePatch} from "src/shared/model/container";
-import {ACCOUNTS_CONFIG, EntryUrlItem} from "src/shared/constants";
+import {ACCOUNTS_CONFIG} from "src/shared/constants";
+import {EntryUrlItem} from "src/shared/types";
 import {KeePassRef} from "src/shared/model/keepasshttp";
 import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
+import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {OptionsService} from "./options.service";
+import {State} from "src/web/src/app/store/reducers/options";
 
 @Component({
     selector: "email-securely-app-account-edit",
@@ -42,32 +39,23 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     // TODO release: remove temporary "typeControlDisplayable" property
     typeControlDisplayable: boolean = false;
     // account
-    existingAccount?: AccountConfig;
-    submittedAccountLogin$: Subject<string> = new Subject();
-    existingAccountByLogin$: Observable<[AccountConfig | undefined, string]> = this.activatedRoute.params.pipe(
-        switchMap(({login}) => merge(of(login), this.submittedAccountLogin$)),
-        filter((login) => Boolean(login)),
-        switchMap((login) => this.store
-            .select(settingsAccountByLoginSelector(login))
-            .pipe(withLatestFrom(of(login))),
-        ),
+    account?: AccountConfig;
+    account$: Observable<AccountConfig> = merge(this.activatedRoute.params, this.activatedRoute.queryParams).pipe(
+        mergeMap(({login}) => login ? [String(login)] : []),
+        concatMap((login) => this.store.select(OptionsSelectors.SETTINGS.pickAccount({login}))),
+        mergeMap((account) => account ? [account] : []),
     );
-    removingAccountLogin?: string;
-    // progress
-    processing$ = this.store.select(progressSelector).pipe(map(({addingAccount, updatingAccount}) => addingAccount || updatingAccount));
-    removing$ = this.store.select(progressSelector).pipe(map(({removingAccount}) => removingAccount));
     // keepass
-    passwordKeePassRef$ = this.existingAccountByLogin$.pipe(
-        map(([account]) => account && account.credentialsKeePass.password),
-    );
-    twoFactorCodeKeePassRef$ = this.existingAccountByLogin$.pipe(
-        map(([account]) => account && account.credentialsKeePass.twoFactorCode),
-    );
-    mailPasswordKeePassRef$ = this.existingAccountByLogin$.pipe(
-        switchMap(([account]) => (account && account.type === "protonmail") ? of(account.credentialsKeePass.mailPassword) : EMPTY),
-    );
     keePassRefCollapsed = true;
-    keePassClientConf$ = this.store.select(settingsKeePassClientConfSelector);
+    keePassClientConf$ = this.store.select(OptionsSelectors.SETTINGS.keePassClientConf);
+    passwordKeePassRef$ = this.account$.pipe(map(({credentialsKeePass}) => credentialsKeePass.password));
+    twoFactorCodeKeePassRef$ = this.account$.pipe(map(({credentialsKeePass}) => credentialsKeePass.twoFactorCode));
+    mailPasswordKeePassRef$ = this.account$.pipe(
+        concatMap((account) => (account.type === "protonmail") ? of(account.credentialsKeePass.mailPassword) : EMPTY),
+    );
+    // progress
+    processing$ = this.store.select(OptionsSelectors.FEATURED.progress).pipe(map((p) => p.addingAccount || p.updatingAccount));
+    removing$ = this.store.select(OptionsSelectors.FEATURED.progress).pipe(map((p) => p.removingAccount));
     // other
     unSubscribe$ = new Subject();
 
@@ -82,32 +70,37 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     ngOnInit() {
         const {controls} = this;
 
-        this.existingAccountByLogin$
+        this.account$
             .pipe(takeUntil(this.unSubscribe$))
-            .subscribe(([accountConfig, login]) => {
-                if (accountConfig) {
-                    // patch form values only once, initially
-                    if (!this.existingAccount) {
-                        this.form.removeControl(
-                            ((name: keyof Pick<typeof AccountEditComponent.prototype.controls, "login">) => name)("login"),
-                        );
+            .subscribe((account) => {
+                this.account = account;
 
-                        controls.type.patchValue(accountConfig.type);
-                        controls.entryUrl.patchValue(accountConfig.entryUrl);
-                        controls.storeMails.patchValue(accountConfig.storeMails);
-                        controls.password.patchValue(accountConfig.credentials.password);
-                        controls.twoFactorCode.patchValue(accountConfig.credentials.twoFactorCode);
-                        if (accountConfig.type === "protonmail") {
-                            controls.mailPassword.patchValue(accountConfig.credentials.mailPassword);
-                        }
-                    }
+                this.form.removeControl(((name: keyof Pick<typeof AccountEditComponent.prototype.controls, "login">) => name)("login"));
 
-                    // assign after form values after the patching
-                    this.existingAccount = accountConfig;
-                } else if (login === this.removingAccountLogin) {
-                    this.store.dispatch(this.optionsService.buildNavigationAction({path: "accounts"}));
+                controls.type.patchValue(account.type);
+                controls.entryUrl.patchValue(account.entryUrl);
+                controls.storeMails.patchValue(account.storeMails);
+                controls.password.patchValue(account.credentials.password);
+                controls.twoFactorCode.patchValue(account.credentials.twoFactorCode);
+                if (account.type === "protonmail") {
+                    controls.mailPassword.patchValue(account.credentials.mailPassword);
                 }
             });
+
+        this.store.select(OptionsSelectors.SETTINGS.accounts).pipe(
+            pairwise(),
+            filter(([prevAccounts, currAccounts]) => currAccounts.length !== prevAccounts.length),
+            takeUntil(this.unSubscribe$),
+        ).subscribe(([{length: prevAccountsCount}, accounts]) => {
+            const removed = accounts.length < prevAccountsCount;
+            const added = accounts.length > prevAccountsCount;
+            const goTo = removed ? {path: "accounts"}
+                : added ? {path: "account-edit", queryParams: {login: accounts[accounts.length - 1].login}}
+                    : false; // "false" is not really possibel due to the above "currAccounts.length !== prevAccounts.length" filtering
+            if (goTo) {
+                this.store.dispatch(this.optionsService.settingsNavigationAction(goTo));
+            }
+        });
 
         controls.type.valueChanges
             .pipe(takeUntil(this.unSubscribe$))
@@ -127,7 +120,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
 
     submit() {
         const {controls} = this;
-        const account = this.existingAccount;
+        const account = this.account;
         const patch: Readonly<AccountConfigUpdatePatch> = {
             login: account ? account.login : controls.login.value,
             entryUrl: controls.entryUrl.value,
@@ -145,8 +138,6 @@ export class AccountEditComponent implements OnInit, OnDestroy {
             (patch as AccountConfig<"protonmail">).credentials.mailPassword = controls.mailPassword.value;
         }
 
-        this.submittedAccountLogin$.next(patch.login);
-
         this.store.dispatch(account
             ? OPTIONS_ACTIONS.UpdateAccountRequest(patch)
             : OPTIONS_ACTIONS.AddAccountRequest({...patch, type: controls.type.value} as AccountConfigCreatePatch),
@@ -154,7 +145,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     }
 
     remove() {
-        const account = this.existingAccount;
+        const account = this.account;
 
         if (!account) {
             throw new Error(`No "Account" to remove`);
@@ -164,9 +155,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.removingAccountLogin = account.login;
-
-        this.store.dispatch(OPTIONS_ACTIONS.RemoveAccountRequest({login: account.login}));
+        this.store.dispatch(OPTIONS_ACTIONS.RemoveAccountRequest(account));
     }
 
     onPasswordKeePassLink(keePassRef: KeePassRef) {
@@ -199,7 +188,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
             | keyof Pick<AccountConfig<"tutanota">, "credentialsKeePass">["credentialsKeePass"],
         refValue: KeePassRef | null,
     ) {
-        const account = this.existingAccount;
+        const account = this.account;
 
         if (!account) {
             throw new Error(`No "Account" to link/unlink KeePass record with`);

@@ -1,20 +1,24 @@
-import logger from "electron-log";
 import {authenticator} from "otplib";
-import {distinctUntilChanged, map, switchMap} from "rxjs/operators";
+import {distinctUntilChanged, map, shareReplay, concatMap, tap} from "rxjs/operators";
 import {EMPTY, from, interval, merge, Observable, Subscriber} from "rxjs";
 
-import {AccountNotificationType, WebAccountTutanota} from "src/shared/model/account";
+import {
+    NOTIFICATION_LOGGED_IN_POLLING_INTERVAL,
+    NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL,
+    WEBVIEW_LOGGERS,
+} from "src/electron-preload/webview/constants";
+import {AccountNotificationType} from "src/shared/model/account";
 import {fetchEntitiesRange} from "src/electron-preload/webview/tutanota/lib/rest";
 import {fetchMessages, fetchUserFoldersWithSubFolders} from "src/electron-preload/webview/tutanota/lib/fetcher";
-import {getLocationHref, submitTotpToken, typeInputValue, waitElements} from "src/electron-preload/webview/util";
+import {fillInputValue, getLocationHref, submitTotpToken, waitElements} from "src/electron-preload/webview/util";
+import {curryFunctionMembers, MailFolderTypeService} from "src/shared/util";
 import {MailTypeRef, User} from "src/electron-preload/webview/tutanota/lib/rest/model";
-import {NOTIFICATION_LOGGED_IN_POLLING_INTERVAL, NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL} from "src/electron-preload/webview/common";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {resolveWebClientApi, WebClientApi} from "src/electron-preload/webview/tutanota/lib/tutanota-api";
 import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi} from "src/shared/api/webview/tutanota";
-import {MailFolderTypeService} from "src/shared/util";
 
 const WINDOW = window as any;
+const logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[index]");
 
 resolveWebClientApi()
     .then((webClientApi) => {
@@ -32,84 +36,101 @@ function bootstrapApi(webClientApi: WebClientApi) {
     const endpoints: TutanotaApi = {
         ping: () => EMPTY,
 
-        fetchMessages: (input) => {
+        fetchMessages: ({login, newestStoredTimestamp, type}) => {
             const controller = getUserController();
 
             if (controller) {
-                return fetchMessages({
-                    ...input,
-                    user: controller.user,
-                });
+                return fetchMessages({login, newestStoredTimestamp, type, user: controller.user});
             }
 
             return EMPTY;
         },
 
-        fillLogin: ({login}) => {
+        fillLogin: ({login, zoneName}) => from((async () => {
+            const _logPrefix = ["fillLogin()", zoneName];
+            logger.info(..._logPrefix);
+
             const cancelEvenHandler = (event: MouseEvent) => {
                 event.preventDefault();
                 event.stopPropagation();
             };
-            const usernameSelector = "form [type=email]";
-            const waitElementsConfig = {
-                username: () => document.querySelector(usernameSelector) as HTMLInputElement,
+            const elements = await waitElements({
+                username: () => document.querySelector("form [type=email]") as HTMLInputElement,
                 storePasswordCheckbox: () => document.querySelector("form .items-center [type=checkbox]") as HTMLInputElement,
                 storePasswordCheckboxBlock: () => document.querySelector("form .checkbox.pt.click") as HTMLInputElement,
-            };
+            });
+            logger.verbose(..._logPrefix, `elements resolved`);
 
-            return from((async () => {
-                const elements = await waitElements(waitElementsConfig);
-                const username = elements.username();
-                const storePasswordCheckbox = elements.storePasswordCheckbox();
-                const storePasswordCheckboxBlock = elements.storePasswordCheckboxBlock();
+            await fillInputValue(elements.username, login);
+            elements.username.readOnly = true;
+            logger.verbose(..._logPrefix, `input values filled`);
 
-                await typeInputValue(username, login);
-                username.readOnly = true;
+            elements.storePasswordCheckbox.checked = false;
+            elements.storePasswordCheckbox.disabled = true;
+            elements.storePasswordCheckboxBlock.removeEventListener("click", cancelEvenHandler);
+            elements.storePasswordCheckboxBlock.addEventListener("click", cancelEvenHandler, true);
+            logger.verbose(..._logPrefix, `"store" checkbox disabled`);
 
-                storePasswordCheckbox.checked = false;
-                storePasswordCheckbox.disabled = true;
-                storePasswordCheckboxBlock.removeEventListener("click", cancelEvenHandler);
-                storePasswordCheckboxBlock.addEventListener("click", cancelEvenHandler, true);
+            return EMPTY.toPromise();
+        })()),
 
-                return EMPTY.toPromise();
-            })());
-        },
+        login: ({password: passwordValue, login, zoneName}) => from((async () => {
+            const _logPrefix = ["login()", zoneName];
+            logger.info(..._logPrefix);
 
-        login: ({password: passwordValue, login}) => {
-            const waitElementsConfig = {
+            await endpoints.fillLogin({login, zoneName}).toPromise();
+            logger.verbose(..._logPrefix, `fillLogin() executed`);
+
+            const elements = await waitElements({
                 password: () => document.querySelector("form [type=password]") as HTMLInputElement,
                 submit: () => document.querySelector("form button") as HTMLElement,
-            };
+            });
+            logger.verbose(..._logPrefix, `elements resolved`);
 
-            return from((async () => {
-                await endpoints.fillLogin({login}).toPromise();
+            if (elements.password.value) {
+                throw new Error(`Password is not supposed to be filled already on "login" stage`);
+            }
 
-                const elements = await waitElements(waitElementsConfig);
+            await fillInputValue(elements.password, passwordValue);
+            logger.verbose(..._logPrefix, `input values filled`);
 
-                if (elements.password().value) {
-                    throw new Error("Password is not supposed to be filled already on this stage");
-                }
+            elements.submit.click();
+            logger.verbose(..._logPrefix, `clicked`);
 
-                await typeInputValue(elements.password(), passwordValue);
-                elements.submit().click();
+            return EMPTY.toPromise();
+        })()),
 
-                return EMPTY.toPromise();
-            })());
-        },
+        login2fa: ({secret, zoneName}) => from((async () => {
+            const _logPrefix = ["login2fa()", zoneName];
+            logger.info(..._logPrefix);
 
-        login2fa: ({secret}) => from((async () => {
             const elements = await waitElements(login2FaWaitElementsConfig);
+            logger.verbose(..._logPrefix, `elements resolved`);
+
             const spacesLessSecret = secret.replace(/\s/g, "");
 
             return await submitTotpToken(
-                elements.input(),
-                elements.button(),
+                elements.input,
+                elements.button,
                 () => authenticator.generate(spacesLessSecret),
+                logger,
+                _logPrefix,
             );
         })()),
 
-        notification: ({entryUrl}) => {
-            const observables = [
+        notification: ({entryUrl, zoneName}) => {
+            const _logPrefix = ["notification()", zoneName];
+            logger.info(..._logPrefix);
+
+            type LoggedInOutput = Required<Pick<AccountNotificationType, "loggedIn">>;
+            type PageTypeOutput = Required<Pick<AccountNotificationType, "pageType">>;
+            type UnreadOutput = Required<Pick<AccountNotificationType, "unread">>;
+
+            const observables: [
+                Observable<LoggedInOutput>,
+                Observable<PageTypeOutput>,
+                Observable<UnreadOutput>
+                ] = [
                 interval(NOTIFICATION_LOGGED_IN_POLLING_INTERVAL).pipe(
                     map(() => isLoggedIn()),
                     distinctUntilChanged(),
@@ -118,26 +139,23 @@ function bootstrapApi(webClientApi: WebClientApi) {
 
                 // TODO listen for location.href change instead of starting polling interval
                 interval(NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL).pipe(
-                    switchMap(() => from((async () => {
+                    concatMap(() => from((async () => {
                         const url = getLocationHref();
-                        const pageType: (Pick<AccountNotificationType<WebAccountTutanota>, "pageType">)["pageType"] = {
-                            url,
-                            type: "undefined",
-                        };
+                        const pageType: PageTypeOutput["pageType"] = {url, type: "unknown"};
                         const loginUrlDetected = (url === `${entryUrl}/login` || url.startsWith(`${entryUrl}/login?`));
 
                         if (loginUrlDetected && !isLoggedIn()) {
                             let twoFactorElements;
 
                             try {
-                                twoFactorElements = await waitElements(login2FaWaitElementsConfig, {attemptsLimit: 1});
+                                twoFactorElements = await waitElements(login2FaWaitElementsConfig, {iterationsLimit: 1});
                             } catch (e) {
                                 // NOOP
                             }
 
                             const twoFactorCodeVisible = twoFactorElements
-                                && twoFactorElements.input().offsetParent
-                                && twoFactorElements.button().offsetParent;
+                                && twoFactorElements.input.offsetParent
+                                && twoFactorElements.button.offsetParent;
 
                             if (twoFactorCodeVisible) {
                                 pageType.type = "login2fa";
@@ -148,11 +166,12 @@ function bootstrapApi(webClientApi: WebClientApi) {
 
                         return {pageType};
                     })())),
-                    distinctUntilChanged(({pageType: prev}, {pageType: curr}) => prev.type === curr.type),
+                    distinctUntilChanged(({pageType: prev}, {pageType: curr}) => curr.type === prev.type),
+                    tap((value) => logger.verbose(..._logPrefix, JSON.stringify(value))),
                 ),
 
                 // TODO listen for "unread" change instead of starting polling interval
-                Observable.create((observer: Subscriber<{ unread: number }>) => {
+                Observable.create((observer: Subscriber<UnreadOutput>) => {
                     const notifyUnreadValue = async () => {
                         const controller = getUserController();
 
@@ -184,28 +203,33 @@ function bootstrapApi(webClientApi: WebClientApi) {
 
                     setInterval(notifyUnreadValue, ONE_SECOND_MS * 60);
                     setTimeout(notifyUnreadValue, ONE_SECOND_MS * 15);
-                }),
+                }).pipe(
+                    distinctUntilChanged(({unread: prev}, {unread: curr}) => curr === prev),
+                ),
             ];
 
-            return merge(...observables);
+            return merge(...observables).pipe(
+                shareReplay(1),
+            );
         },
     };
 
     TUTANOTA_IPC_WEBVIEW_API.registerApi(endpoints);
-}
+    logger.verbose(`api registered, url: ${getLocationHref()}`);
 
-function getUserController(): { accessToken: string, user: User } | null {
-    return WINDOW.tutao
-    && WINDOW.tutao.logins
-    && typeof WINDOW.tutao.logins.getUserController === "function"
-    && WINDOW.tutao.logins.getUserController() ? WINDOW.tutao.logins.getUserController()
-        : null;
-}
+    function getUserController(): { accessToken: string, user: User } | null {
+        return WINDOW.tutao
+        && WINDOW.tutao.logins
+        && typeof WINDOW.tutao.logins.getUserController === "function"
+        && WINDOW.tutao.logins.getUserController() ? WINDOW.tutao.logins.getUserController()
+            : null;
+    }
 
-function isLoggedIn(): boolean {
-    const controller = getUserController();
-    return !!(controller
-        && controller.accessToken
-        && controller.accessToken.length
-    );
+    function isLoggedIn(): boolean {
+        const controller = getUserController();
+        return !!(controller
+            && controller.accessToken
+            && controller.accessToken.length
+        );
+    }
 }

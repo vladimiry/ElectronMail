@@ -1,4 +1,4 @@
-import immer from "immer";
+import produce from "immer";
 import {ComponentFixture, TestBed, TestModuleMetadata} from "@angular/core/testing";
 import {Location} from "@angular/common";
 import {RouterTestingModule} from "@angular/router/testing";
@@ -43,8 +43,8 @@ describe(AppComponent.name, () => {
 
         testBed.resetTestingModule();
 
-        testBed = initTestEnvironment((tb) => tb.configureTestingModule(immer(moduleDef, (draft) => {
-            draft.providers = [
+        testBed = initTestEnvironment((tb) => tb.configureTestingModule(produce(moduleDef, (draftState) => {
+            draftState.providers = [
                 {provide: Location, useValue: {path: locationPathStub}},
             ];
         })));
@@ -63,8 +63,8 @@ describe(AppComponent.name, () => {
         const event = new KeyboardEvent("keyup", {key: ESC_KEY});
 
         testBed.resetTestingModule();
-        testBed = initTestEnvironment((tb) => tb.configureTestingModule(immer(moduleDef, (draft) => {
-            draft.providers = [
+        testBed = initTestEnvironment((tb) => tb.configureTestingModule(produce(moduleDef, (draftState) => {
+            draftState.providers = [
                 {provide: Location, useValue: {path: locationPathStub}},
                 {provide: Store, useValue: {dispatch: storeDispatchStub}},
             ];

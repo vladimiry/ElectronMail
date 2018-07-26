@@ -12,11 +12,11 @@ import {AccountConfigCreatePatch, AccountConfigUpdatePatch, PasswordFieldContain
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {buildSettingsAdapter, initContext} from "src/electron-main/util";
 import {Context} from "src/electron-main/model";
+import {DatabaseUpsertInput} from "src/shared/api/main";
 import {Endpoints} from "src/shared/api/main";
 import {INITIAL_STORES, KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "src/electron-main/constants";
 import {pickBaseConfigProperties} from "src/shared/util";
 import {StatusCode, StatusCodeError} from "src/shared/model/error";
-import {DatabaseUpsertInput} from "../../shared/api/main";
 
 // TODO "immer" instead of cloning with "..."
 
@@ -247,6 +247,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
                 closeToTray: false,
                 unreadNotifications: true,
                 checkForUpdatesAndNotify: true,
+                logLevel: "warn",
             },
             {
                 startMinimized: true,
@@ -254,6 +255,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
                 closeToTray: true,
                 unreadNotifications: false,
                 checkForUpdatesAndNotify: false,
+                logLevel: "info",
             },
         ];
 
@@ -319,9 +321,8 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
     },
 
     removeAccount: async (t) => {
-        const endpoints = t.context.endpoints;
-        const addHandler = endpoints.addAccount;
-        const removeHandler = endpoints.removeAccount;
+        const {endpoints} = t.context;
+        const {addAccount, removeAccount} = endpoints;
         const addProtonPayload: Readonly<AccountConfigCreatePatch<"protonmail">> = {
             type: "protonmail",
             login: "login1",
@@ -349,15 +350,15 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
 
         try {
-            await removeHandler(removePayload404).toPromise();
+            await removeAccount(removePayload404).toPromise();
         } catch ({message}) {
             t.is(message, `Account with "${removePayload404.login}" login has not been found`, "404 account");
         }
 
-        await addHandler(addProtonPayload).toPromise();
-        await addHandler(addTutaPayload).toPromise();
+        await addAccount(addProtonPayload).toPromise();
+        await addAccount(addTutaPayload).toPromise();
         const settings = await t.context.ctx.settingsStore.readExisting();
-        const updatedSettings = await removeHandler(removePayload).toPromise();
+        const updatedSettings = await removeAccount(removePayload).toPromise();
         const expectedSettings = {
             ...settings,
             _rev: (settings._rev as number) + 1,

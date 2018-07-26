@@ -1,19 +1,19 @@
 <email-securely-app-keepass-request
-    *ngIf="(account$ | async)?.notifications.pageType.type == 'login'"
+    *ngIf="account?.notifications.pageType.type == 'login'"
     [keePassRef$]="passwordKeePassRef$"
     [keePassClientConf$]="keePassClientConf$"
     (passwordHandler)="onKeePassPassword($event)"
 ></email-securely-app-keepass-request>
 
 <email-securely-app-keepass-request
-    *ngIf="(account$ | async)?.notifications.pageType.type == 'login2fa'"
+    *ngIf="account?.notifications.pageType.type == 'login2fa'"
     [keePassRef$]="twoFactorCodeKeePassRef$"
     [keePassClientConf$]="keePassClientConf$"
     (passwordHandler)="onKeePassPassword($event)"
 ></email-securely-app-keepass-request>
 
 <email-securely-app-keepass-request
-    *ngIf="(account$ | async)?.notifications.pageType.type == 'unlock' && (account$ | async)?.type == 'protonmail'"
+    *ngIf="account?.notifications.pageType.type == 'protonmail' && account?.accountConfig.type == 'unlock'"
     [keePassRef$]="mailPasswordKeePassRef$"
     [keePassClientConf$]="keePassClientConf$"
     (passwordHandler)="onKeePassPassword($event)"
@@ -21,11 +21,12 @@
 
 <webview
     #webViewRef
-    [src]="webViewOptions.src"
-    [preload]="webViewOptions.preload"
+    *ngIf="webViewAttributes"
+    [src]="webViewAttributes.src"
+    [preload]="webViewAttributes.preload"
 ></webview>
 
-<div *ngIf="webViewOptions && !!offlineIntervalRemainingSec" class="p-3 text-center">
-    Failed to load <strong>{{ webViewOptions.src }}</strong> page with <strong>{{ didFailLoadErrorDescription }}</strong> error code.
-    Reloading in <strong>{{ offlineIntervalRemainingSec }}</strong> sec.
+<div *ngIf="webViewAttributes && !!afterFailedLoadWait" class="p-3 text-center">
+    Failed to load <strong>{{ webViewAttributes.src }}</strong> page with <strong>{{ didFailLoadErrorDescription }}</strong> error code.
+    Reloading in <strong>{{ afterFailedLoadWait }}</strong> sec.
 </div>

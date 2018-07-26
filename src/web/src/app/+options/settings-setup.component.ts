@@ -4,7 +4,8 @@ import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
 import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
-import {progressSelector, State} from "src/web/src/app/store/reducers/options";
+import {OptionsSelectors} from "src/web/src/app/store/selectors";
+import {State} from "src/web/src/app/store/reducers/options";
 
 @Component({
     selector: "email-securely-app-settings-setup",
@@ -33,7 +34,7 @@ export class SettingsSetupComponent implements AfterViewInit {
         password: this.password,
         passwordConfirm: this.passwordConfirm,
     });
-    processing$ = this.store.select(progressSelector)
+    processing$ = this.store.select(OptionsSelectors.FEATURED.progress)
         .pipe(map(({signingIn}) => signingIn));
     @ViewChildren("passwordRef")
     passwordElementRefQuery: QueryList<ElementRef>;

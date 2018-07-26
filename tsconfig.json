@@ -1,23 +1,24 @@
 {
   "compilerOptions": {
-    "target": "es2015",
-    "module": "commonjs",
+    /* strictness */
+    "strict": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": true,
+    /* resolving & capabilities */
     "moduleResolution": "node",
-    /* capabilities */
     "esModuleInterop": true,
     "resolveJsonModule": true,
     // "allowSyntheticDefaultImports": true
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    /* restrictions */
-    "strict": true,
-    "strictPropertyInitialization": false,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    /* generating */
-    "noEmitOnError": true,
-    "importHelpers": true,
+    /* emitting */
+    "target": "es2015",
+    "module": "commonjs",
     "declaration": false,
+    "emitDecoratorMetadata": true,
+    "importHelpers": true,
+    "noEmitOnError": true,
     "sourceMap": true,
     "lib": [
       "es2015",

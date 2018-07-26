@@ -16,12 +16,13 @@ files: [
   "!node_modules/rxjs/{_esm5,_esm2015,src,bundles}",
   # TODO sodium-native: include into the package only needed prebuilds for the platform is being built
   "!node_modules/sodium-native/{src,test,libsodium}",
+  # TODO exclude not needed stuff in "files:" section to reduce app packages size, can save megabytes, so a significant improvement
 ]
 compression: maximum
 asar: true
 asarUnpack:
-  - "**/node_modules/sodium-native/**/*"
-  - "**/node_modules/keytar/**/*"
+- "**/node_modules/sodium-native/**/*"
+- "**/node_modules/keytar/**/*"
 
 mac:
   icon: ./app/assets/icons/mac/icon.icns
@@ -31,8 +32,8 @@ dmg:
   icon: ./app/assets/icons/mac/icon.icns
   iconSize: 128
   contents:
-    - {x: 380, y: 240, type: link, path: /Applications}
-    - {x: 122, y: 240, type: file}
+  - {x: 380, y: 240, type: link, path: /Applications}
+  - {x: 122, y: 240, type: file}
 
 linux:
   icon: ./app/assets/icons/png
@@ -43,8 +44,8 @@ win:
   artifactName: ${name}-${version}-windows-${arch}.${ext}
   icon: ./app/assets/icons/win/icon.ico
   target:
-    - {target: nsis}
-    - {target: portable}
+  - {target: nsis}
+  - {target: portable}
 
 nsis:
   artifactName: ${name}-${version}-windows-${arch}-nsis-installer.${ext}
@@ -52,4 +53,4 @@ nsis:
   perMachine: false
 
 portable:
-    artifactName: ${name}-${version}-windows-${arch}-portable.${ext}
+  artifactName: ${name}-${version}-windows-${arch}-portable.${ext}

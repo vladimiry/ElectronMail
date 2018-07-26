@@ -6,7 +6,7 @@ import {NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
 
 @Injectable()
 export class OptionsService {
-    buildNavigationAction(opts?: { path?: string, queryParams?: object }): Action {
+    settingsNavigationAction(opts?: { path?: string, queryParams?: object }): Action {
         const path = opts && "path" in opts ? `${SETTINGS_PATH}${opts.path ? "/" + opts.path : ""}` : null;
 
         return NAVIGATION_ACTIONS.Go({

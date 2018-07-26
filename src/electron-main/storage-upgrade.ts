@@ -2,11 +2,17 @@ import compareVersions from "compare-versions";
 
 import {APP_VERSION} from "src/shared/constants";
 import {Config, Settings} from "src/shared/model/options";
+import {INITIAL_STORES} from "./constants";
 
 const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
     "1.1.0": (config) => {
         if ("appVersion" in config) {
             delete (config as any).appVersion;
+        }
+    },
+    "1.2.0": (config) => {
+        if (typeof config.logLevel === "undefined") {
+            config.logLevel = INITIAL_STORES.config.logLevel;
         }
     },
 };

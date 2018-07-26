@@ -30,13 +30,13 @@ interface GenericWebAccount<
 export type WebAccountProtonmail = GenericWebAccount<
     "protonmail",
     "password" | "twoFactorCode" | "mailPassword",
-    "undefined" | "login" | "login2fa" | "unlock"
+    "unknown" | "login" | "login2fa" | "unlock"
 >;
 
 export type WebAccountTutanota = GenericWebAccount<
     "tutanota",
     "password" | "twoFactorCode",
-    "undefined" | "login" | "login2fa"
+    "unknown" | "login" | "login2fa"
 >;
 
 export type WebAccount = WebAccountProtonmail | WebAccountTutanota;

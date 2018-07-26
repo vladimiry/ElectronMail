@@ -9,7 +9,7 @@
         <div class="form-check">
             <label class="form-check-label">
                 <input type="checkbox" class="form-check-input" formControlName="compactLayout">
-                Compact view mode
+                Tabs view mode
             </label>
         </div>
         <div class="form-check">
@@ -29,6 +29,22 @@
                 <input type="checkbox" class="form-check-input" formControlName="checkForUpdatesAndNotify">
                 Check for updates and notify on app start
             </label>
+        </div>
+        <hr>
+        <div class="form-group">
+            <label for="logLevelSelect">Log Level</label>
+            <i class="fa fa-info-circle text-warning"
+               [popover]="popoverTemplate" placement="bottom" container="body" triggers="mouseenter:mouseleave"
+            ></i>
+            <ng-template #popoverTemplate>Think twice before selecting a value other than "error".</ng-template>
+            <select class="form-control" formControlName="logLevel" id="logLevelSelect">
+                <option
+                    *ngFor="let logLevel of logLevels" [value]="logLevel">{{ logLevel }}
+                </option>
+            </select>
+            <div class="text-muted mt-2">
+                Log files located in the <a href (click)="openSettingsFolder($event)">Settings Folder</a>.
+            </div>
         </div>
     </form>
 </fieldset>

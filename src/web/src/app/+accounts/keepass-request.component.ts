@@ -1,6 +1,6 @@
-import {EMPTY, interval, Observable, Subject} from "rxjs";
 import {Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output} from "@angular/core";
-import {distinctUntilChanged, scan, switchMap, takeUntil, withLatestFrom} from "rxjs/operators";
+import {concatMap, distinctUntilChanged, scan, takeUntil, withLatestFrom} from "rxjs/operators";
+import {EMPTY, interval, Observable, Subject} from "rxjs";
 import {Store} from "@ngrx/store";
 
 import {CORE_ACTIONS} from "src/web/src/app/store/actions";
@@ -31,15 +31,17 @@ export class KeePassRequestComponent implements OnInit, OnDestroy {
 
     unSubscribe$ = new Subject();
 
-    constructor(private store: Store<State>,
-                private electronService: ElectronService) {}
+    constructor(
+        private store: Store<State>,
+        private electronService: ElectronService,
+    ) {}
 
     ngOnInit() {
         this.keePassRef$
             .pipe(
                 distinctUntilChanged(),
                 withLatestFrom(this.keePassClientConf$),
-                switchMap(([keePassRef, keePassClientConf]) => {
+                concatMap(([keePassRef, keePassClientConf]) => {
                     this.paused = false;
                     this.visible = true;
 
@@ -52,7 +54,7 @@ export class KeePassRequestComponent implements OnInit, OnDestroy {
                     return interval(ONE_SECOND_MS).pipe(
                         scan((remaining) => remaining ? remaining - (this.paused ? 0 : 1) : this.waitSec, this.waitSec),
                         distinctUntilChanged(),
-                        switchMap((remaining) => {
+                        concatMap((remaining) => {
                             this.progressTick = (this.waitSec - remaining) * (100 / this.waitSec);
 
                             if (remaining) {

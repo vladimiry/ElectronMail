@@ -2,60 +2,60 @@
 
 branches:
   only:
-    - master
+  - master
 language: node_js
 node_js: 8
 addons:
   firefox: latest
 matrix:
   include:
-    - os: osx
-      osx_image: xcode9.0
-    - os: linux
-      sudo: required
-      dist: trusty
-      group: stable
-      addons:
-        apt:
-          packages:
-            - gnome-keyring
-            - libgnome-keyring-dev
-            - libsecret-1-dev
-            - python-gnomekeyring
-      services:
-        - docker
+  - os: osx
+    osx_image: xcode9.0
+  - os: linux
+    sudo: required
+    dist: trusty
+    group: stable
+    addons:
+      apt:
+        packages:
+        - gnome-keyring
+        - libgnome-keyring-dev
+        - libsecret-1-dev
+        - python-gnomekeyring
+    services:
+    - docker
 env:
   global:
-    - CI=true
-    - NO_AT_BRIDGE=1
-    - ELECTRON_CACHE=$HOME/.cache/electron
-    - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
-    - FAILURE_ARCHIVE_FILE=travis-build-id-$TRAVIS_BUILD_ID.tar.gz
-    - MOZ_HEADLESS=1
+  - CI=true
+  - NO_AT_BRIDGE=1
+  - ELECTRON_CACHE=$HOME/.cache/electron
+  - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
+  - FAILURE_ARCHIVE_FILE=travis-build-id-$TRAVIS_BUILD_ID.tar.gz
+  - MOZ_HEADLESS=1
 cache:
   yarn: true
   directories:
-    - node_modules
-    - $HOME/.cache/electron
-    - $HOME/.cache/electron-builder
-    - $HOME/.cache/snapcraft
+  - node_modules
+  - $HOME/.cache/electron
+  - $HOME/.cache/electron-builder
+  - $HOME/.cache/snapcraft
 install:
-  - pip install --user awscli ; export PATH=$PATH:$HOME/.local/bin
-  - yarn install
+- pip install --user awscli ; export PATH=$PATH:$HOME/.local/bin
+- yarn install
 before_script:
-  - |
-    if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-      export DISPLAY=:99.0; sh -e /etc/init.d/xvfb start; sleep 3;
-      eval $(dbus-launch --sh-syntax);
-      eval $(echo -n "" | /usr/bin/gnome-keyring-daemon --login);
-      eval $(/usr/bin/gnome-keyring-daemon --components=secrets --start);
-      /usr/bin/python -c "import gnomekeyring;gnomekeyring.create_sync('login', '');";
-    fi
+- |
+  if [ "$TRAVIS_OS_NAME" == "linux" ]; then
+    export DISPLAY=:99.0; sh -e /etc/init.d/xvfb start; sleep 3;
+    eval $(dbus-launch --sh-syntax);
+    eval $(echo -n "" | /usr/bin/gnome-keyring-daemon --login);
+    eval $(/usr/bin/gnome-keyring-daemon --components=secrets --start);
+    /usr/bin/python -c "import gnomekeyring;gnomekeyring.create_sync('login', '');";
+  fi
 script: ./scripts/travis.sh
 after_failure:
-  - $(git ls-files -o | grep -Fv -e node_modules -e app -e dist >> failure-files.list)
-  - tar cvzf $FAILURE_ARCHIVE_FILE $(cat failure-files.list)
-  - aws --endpoint=$AWS_ENDPOINT_URL s3 cp $FAILURE_ARCHIVE_FILE s3://$AWS_BUCKET
+- $(git ls-files -o | grep -Fv -e node_modules -e app -e dist >> failure-files.list)
+- tar cvzf $FAILURE_ARCHIVE_FILE $(cat failure-files.list)
+- aws --endpoint=$AWS_ENDPOINT_URL s3 cp $FAILURE_ARCHIVE_FILE s3://$AWS_BUCKET
 notifications:
   email:
     on_success: never

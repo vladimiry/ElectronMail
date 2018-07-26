@@ -1,0 +1,94 @@
+{
+  "rulesDirectory": [
+    "node_modules/tslint-rules-bunch/rules"
+  ],
+  "rules": {
+    "no-import-zones": [
+      true,
+      {
+        "verbose": false,
+        "zones": [
+          {
+            "patterns": [
+              {
+                "target": "src/electron-main/**/*",
+                "from": [
+                  "src/**/*",
+                  "!src/electron-main/**/*",
+                  "!src/shared/**/*"
+                ]
+              }
+            ]
+          },
+          {
+            "patterns": [
+              {
+                "target": "src/electron-preload/**/*",
+                "from": [
+                  "electron",
+                  "electron-log",
+                  "src/**/*",
+                  "!src/electron-preload/**/*",
+                  "!src/shared/**/*"
+                ]
+              }
+            ]
+          },
+          {
+            "patterns": [
+              {
+                "target": "src/web/src/**/*",
+                "from": [
+                  "electron",
+                  "electron-log",
+                  "src/**/*",
+                  "!src/web/src/**/*",
+                  "!src/web/test/util",
+                  "!src/shared/**/*"
+                ]
+              }
+            ]
+          },
+          {
+            "patterns": [
+              {
+                "target": "src/**/*",
+                "from": "package.json"
+              }
+            ]
+          },
+          {
+            "patterns": [
+              {
+                "target": [
+                  "src/**/*",
+                  "!src/electron-main/database/nano-sql.ts",
+                  "!src/electron-main/api/index.spec.ts"
+                ],
+                "from": [
+                  "nano-sql",
+                  "!src/electron-main/database/nano-sql"
+                ]
+              }
+            ]
+          },
+          {
+            "patterns": [
+              {
+                "target": [
+                  "src/**/*",
+                  "!src/electron-main/**/*"
+                ],
+                "from": [
+                  "src/electron-main/database/entity/**/*",
+                  "!src/electron-main/database/entity/index",
+                  "!src/electron-main/database/entity/column-decorator"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "rulesDirectory": [
+    "node_modules/tslint-consistent-codestyle/rules"
+  ],
+  "rules": {
+    "early-exit": [
+      true
+    ],
+    "no-collapsible-if": [
+      true
+    ],
+    "no-unnecessary-else": [
+      true
+    ]
+  }
+}

@@ -14,39 +14,39 @@ export abstract class Base implements DatabaseModel.Base {
     @IsNotEmpty()
     @IsString()
     @Column({type: "string"})
-    raw: string;
+    raw!: string;
 }
 
 export class BasePersisted extends Base implements DatabaseModel.BasePersisted {
     @IsNotEmpty()
     @IsString()
     @Column({type: "string", props: ["pk()"]})
-    pk: string;
+    pk!: string;
 
     @IsIn(((typesMap: Record<AccountType, null>) => Object.keys(typesMap))({protonmail: null, tutanota: null}))
     @IsNotEmpty()
     @IsString()
     @Column({type: "string"})
-    type: AccountType;
+    type!: AccountType;
 
     @IsNotEmpty()
     @IsString()
     @Column({type: "string"})
-    login: string;
+    login!: string;
 
     @IsNotEmpty()
     @IsString()
     @Column({type: "string"})
-    id: string;
+    id!: string;
 }
 
 class MailAddress extends Base implements DatabaseModel.MailAddress {
     @IsNotEmpty()
     @IsString()
-    address: string;
+    address!: string;
 
     @IsString()
-    name: string;
+    name!: string;
 }
 
 class File extends Base implements DatabaseModel.File {
@@ -54,75 +54,75 @@ class File extends Base implements DatabaseModel.File {
     mimeType?: string;
 
     @IsString()
-    name: string;
+    name!: string;
 
     @IsNotEmpty()
     @IsInt()
-    size: number;
+    size!: number;
 }
 
 class Folder extends Base implements DatabaseModel.Folder {
     @IsNotEmpty()
     @IsInt()
-    type: DatabaseModel.MailFolderTypeValue;
+    type!: DatabaseModel.MailFolderTypeValue;
 
     @IsString()
-    name: string;
+    name!: string;
 }
 
 export class Mail extends BasePersisted implements DatabaseModel.Mail {
     @IsNotEmpty()
     @IsInt()
     @Column({type: "int"})
-    date: Timestamp;
+    date!: Timestamp;
 
     @IsNotEmpty()
     @IsString()
     @Column({type: "string"})
-    subject: string;
+    subject!: string;
 
     @IsString()
     @Column({type: "string"})
-    body: string;
+    body!: string;
 
     @IsNotEmpty()
     @ValidateNested()
     @Type(() => Folder)
     @Column({type: "map"})
-    folder: Folder;
+    folder!: Folder;
 
     @IsNotEmpty()
     @ValidateNested()
     @Type(() => MailAddress)
     @Column({type: "map"})
-    sender: MailAddress;
+    sender!: MailAddress;
 
     @ValidateNested()
     @IsArray()
     @Type(() => MailAddress)
     @Column({type: "array"})
-    toRecipients: MailAddress[];
+    toRecipients!: MailAddress[];
 
     @ValidateNested()
     @IsArray()
     @Type(() => MailAddress)
     @Column({type: "array"})
-    ccRecipients: MailAddress[];
+    ccRecipients!: MailAddress[];
 
     @ValidateNested()
     @IsArray()
     @Type(() => MailAddress)
     @Column({type: "array"})
-    bccRecipients: MailAddress[];
+    bccRecipients!: MailAddress[];
 
     @ValidateNested()
     @IsArray()
     @Type(() => File)
     @Column({type: "array"})
-    attachments: File[];
+    attachments!: File[];
 
     @IsNotEmpty()
     @IsBoolean()
     @Column({type: "bool"})
-    unread: boolean;
+    unread!: boolean;
 }

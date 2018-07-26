@@ -1,4 +1,5 @@
-// TODO enable "tslint:await-promise" rule when spectron gets proper declaration files (all async methods return promises)
+// TODO remove the "tslint:disable:await-promise" when spectron gets proper declaration files
+// TODO track this issue https://github.com/DefinitelyTyped/DefinitelyTyped/issues/25186
 // tslint:disable:await-promise
 
 import ava, {ExecutionContext, TestInterface} from "ava";
@@ -8,13 +9,13 @@ import mkdirp from "mkdirp";
 import path from "path";
 import psNode from "ps-node"; // see also https://www.npmjs.com/package/find-process
 import psTree from "ps-tree";
-import randomString from "randomstring";
 import sinon from "sinon";
 import {Application} from "spectron";
 import {promisify} from "util";
 
 import {AccountType} from "src/shared/model/account";
 import {ACCOUNTS_CONFIG, ONE_SECOND_MS, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
+import randomString from "randomstring";
 
 export interface TestContext {
     app: Application;
@@ -29,17 +30,16 @@ export interface TestContext {
 }
 
 export const test = ava as TestInterface<TestContext>;
-
-const {CI} = process.env;
-const rootDirPath = path.resolve(__dirname, process.cwd());
-const appDirPath = path.join(rootDirPath, "./app");
-const mainScriptFilePath = path.join(appDirPath, "./electron-main.js");
-
 export const ENV = {
     masterPassword: `master-password-${randomString.generate({length: 8})}`,
     loginPrefix: `login-${randomString.generate({length: 8})}`,
 };
-export const CONF = {
+export const {CI} = process.env;
+
+const rootDirPath = path.resolve(__dirname, process.cwd());
+const appDirPath = path.join(rootDirPath, "./app");
+const mainScriptFilePath = path.join(appDirPath, "./electron-main.js");
+const CONF = {
     timeouts: {
         element: ONE_SECOND_MS,
         elementTouched: ONE_SECOND_MS * 0.3,
@@ -47,7 +47,7 @@ export const CONF = {
         transition: ONE_SECOND_MS * (CI ? 1 : 0.3),
     },
 };
-export const GLOBAL_STATE = {
+const GLOBAL_STATE = {
     loginPrefixCount: 0,
 };
 
@@ -313,12 +313,14 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             // making sure modal is opened (consider testing by url)
             await client.waitForVisible(listGroupSelector);
 
-            if (typeof index !== "undefined") {
-                await client.click(`${listGroupSelector} .list-group-item-action:nth-child(${index + 1})`);
+            if (typeof index === "undefined") {
+                return;
+            }
 
-                if (index === 0) {
-                    await client.waitForVisible(`.modal-body email-securely-app-accounts`);
-                }
+            await client.click(`${listGroupSelector} .list-group-item-action:nth-child(${index + 1})`);
+
+            if (index === 0) {
+                await client.waitForVisible(`.modal-body email-securely-app-accounts`);
             }
         },
 

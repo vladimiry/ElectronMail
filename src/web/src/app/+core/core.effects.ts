@@ -1,17 +1,21 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {catchError, filter, mergeMap, switchMap} from "rxjs/operators";
+import {catchError, filter, map, mergeMap, concatMap} from "rxjs/operators";
 import {Injectable} from "@angular/core";
 import {of} from "rxjs";
 
 import {CORE_ACTIONS} from "src/web/src/app/store/actions";
 import {ElectronService} from "src/web/src/app/+core/electron.service";
+import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/src/util";
+
+const _logger = getZoneNameBoundWebLogger("[options.effects]");
 
 @Injectable()
 export class CoreEffects {
     @Effect()
     updateOverlayIcon$ = this.actions$.pipe(
         filter(CORE_ACTIONS.is.UpdateOverlayIcon),
-        switchMap(({payload}) => this.electronService
+        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+        concatMap(({payload}) => this.electronService
             .ipcMainClient()("updateOverlayIcon")({hasLoggedOut: payload.hasLoggedOut, unread: payload.unread})
             .pipe(
                 mergeMap(() => []),

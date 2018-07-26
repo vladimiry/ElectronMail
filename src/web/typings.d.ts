@@ -1,3 +1,4 @@
+import "zone.js";
 import {ElectronExposure, ElectronWindow} from "src/shared/model/electron";
 
 declare module "*.html" {
@@ -12,7 +13,7 @@ declare module "*.scss" {
 
 declare global {
     interface Window extends ElectronWindow {
-
+        Zone: Zone;
     }
 
     const __ELECTRON_EXPOSURE__: ElectronExposure;

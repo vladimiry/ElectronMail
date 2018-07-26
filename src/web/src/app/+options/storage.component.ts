@@ -3,9 +3,10 @@ import {Component} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
-import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
-import {progressSelector, State} from "src/web/src/app/store/reducers/options";
 import {ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "src/shared/model/options";
+import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
+import {OptionsSelectors} from "src/web/src/app/store/selectors";
+import {State} from "src/web/src/app/store/reducers/options";
 
 @Component({
     selector: "email-securely-app-storage",
@@ -39,10 +40,8 @@ export class StorageComponent {
         keyDerivation: new FormControl(null, Validators.required),
         encryption: new FormControl(null, Validators.required),
     });
-    changingPassword$ = this.store.select(progressSelector)
-        .pipe(map(({changingPassword}) => changingPassword));
-    reEncryptingSettings$ = this.store.select(progressSelector)
-        .pipe(map(({reEncryptingSettings}) => reEncryptingSettings));
+    changingPassword$ = this.store.select(OptionsSelectors.FEATURED.progress).pipe(map((p) => p.changingPassword));
+    reEncryptingSettings$ = this.store.select(OptionsSelectors.FEATURED.progress).pipe(map((p) => p.reEncryptingSettings));
 
     constructor(private store: Store<State>) {}
 

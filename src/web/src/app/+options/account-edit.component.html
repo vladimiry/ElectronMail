@@ -1,9 +1,9 @@
 <fieldset [disabled]="(processing$ | async) || (removing$ | async)">
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="form-group">
         <div class="rounded mb-2">
-            <email-securely-app-type-symbol [type]="existingAccount.type" *ngIf="existingAccount"></email-securely-app-type-symbol>
+            <email-securely-app-type-symbol [type]="account.type" *ngIf="account"></email-securely-app-type-symbol>
             <div class="d-inline-block">
-                <span *ngIf="existingAccount; else label">{{ existingAccount.login }}</span>
+                <span *ngIf="account; else label">{{ account.login }}</span>
                 <ng-template #label>Add Account</ng-template>
             </div>
             <div class="form-check float-md-right" *ngIf="typeControlDisplayable && controls.type.value == 'tutanota'">
@@ -13,7 +13,7 @@
                 </label>
             </div>
         </div>
-        <div class="form-group required" *ngIf="!existingAccount">
+        <div class="form-group required" *ngIf="!account">
             <label>Type</label>
             <ng-select [items]="typeValues" [clearable]="false" formControlName="type" id="accountEditFormTypeField">
                 <ng-template ng-label-tmp let-item="item">
@@ -29,12 +29,12 @@
             </ng-select>
         </div>
         <div class="row">
-            <div class="form-group col-sm-6 required" *ngIf="!existingAccount">
+            <div class="form-group col-sm-6 required" *ngIf="!account">
                 <label>Login</label>
                 <input type="text" class="form-control" formControlName="login"
                        [ngClass]="controls.login.dirty ? {'is-invalid': controls.login.invalid, 'is-valid': controls.login.valid} : {}">
             </div>
-            <div class="form-group" [ngClass]="{'col-sm-6': !existingAccount, 'col-sm-12': existingAccount}">
+            <div class="form-group" [ngClass]="{'col-sm-6': !account, 'col-sm-12': account}">
                 <label>Password</label>
                 <input type="password" class="form-control" formControlName="password"
                        [ngClass]="controls.password.dirty ? {'is-invalid': controls.password.invalid, 'is-valid': controls.password.valid} : {}">
@@ -51,7 +51,7 @@
                    [ngClass]="controls.mailPassword.dirty ? {'is-invalid': controls.mailPassword.invalid, 'is-valid': controls.mailPassword.valid} : {}">
         </div>
         <div class="clearfix">
-            <button class="btn btn-outline-danger pull-left" type="button" *ngIf="existingAccount" (click)="remove()">
+            <button class="btn btn-outline-danger pull-left" type="button" *ngIf="account" (click)="remove()">
                 <i class="fa" [ngClass]="{
                     'fa-spinner fa-pulse fa-fw': (removing$ | async),
                     'fa-times': !(removing$ | async)
@@ -63,11 +63,11 @@
                     'fa-spinner fa-pulse fa-fw': (processing$ | async),
                     'fa-check': !(processing$ | async)
                 }"></i>
-                {{ existingAccount ? "Update" : "Add" }}
+                {{ account ? "Update" : "Add" }}
             </button>
         </div>
     </form>
-    <div *ngIf="existingAccount">
+    <div *ngIf="account">
         <div>
             <a href="javascript:void(0)" (click)="keePassRefCollapsed = !keePassRefCollapsed">KeePass References</a>
             <i class="fa" [ngClass]="{
@@ -96,7 +96,7 @@
                     (unlinkHandler)="onTwoFactorCodeKeePassUnlink()"
                 ></email-securely-app-keepass-reference>
             </div>
-            <div *ngIf="existingAccount?.type == 'protonmail'">
+            <div *ngIf="account?.type == 'protonmail'">
                 <hr>
                 <div class="form-group">
                     <label>Mail Password</label>

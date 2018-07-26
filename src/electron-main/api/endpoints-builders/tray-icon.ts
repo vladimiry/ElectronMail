@@ -13,6 +13,7 @@ export async function buildEndpoints(
     const icons = await prepareTrayIcons(ctx.locations);
 
     return {
+        // TODO replace Jimp with something more lightweight and easier to use
         updateOverlayIcon: ({hasLoggedOut, unread}) => from((async () => {
             const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
             const tray = ctx.uiContext && ctx.uiContext.tray;

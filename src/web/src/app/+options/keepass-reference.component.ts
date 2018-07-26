@@ -1,4 +1,4 @@
-import {catchError, map, switchMap, take} from "rxjs/operators";
+import {catchError, map, concatMap, take} from "rxjs/operators";
 import {Observable, of} from "rxjs";
 import {Component, EventEmitter, Input, Output} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
@@ -52,7 +52,7 @@ export class KeePassReferenceComponent {
         await this.keePassClientConf$
             .pipe(
                 take(1),
-                switchMap((keePassClientConf) => this.electronService
+                concatMap((keePassClientConf) => this.electronService
                     .keePassPassword(keePassClientConf, keePassRef)
                     .pipe(
                         map(({password, message}) => {

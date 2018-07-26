@@ -1,13 +1,15 @@
 import keytar from "keytar";
+import logger from "electron-log";
 import {EMPTY, from} from "rxjs";
 
 import {AccountConfig} from "src/shared/model/account";
-import {Database, General, KeePass, TrayIcon} from "./endpoints-builders";
 import {buildSettingsAdapter} from "src/electron-main/util";
+import {Config} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
+import {Database, General, KeePass, TrayIcon} from "./endpoints-builders";
 import {Endpoints, IPC_MAIN_API} from "src/shared/api/main";
-import {findExistingAccountConfig} from "src/shared/util";
 import {KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "src/electron-main/constants";
+import {pickAccountStrict} from "src/shared/util";
 import {upgradeConfig, upgradeSettings} from "src/electron-main/storage-upgrade";
 
 export const initApi = async (ctx: Context): Promise<Endpoints> => {
@@ -18,7 +20,6 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
         ...await TrayIcon.buildEndpoints(ctx),
 
         addAccount: ({type, login, entryUrl, storeMails, credentials, credentialsKeePass}) => from((async () => {
-            const settings = await ctx.settingsStore.readExisting();
             const account = {
                 type,
                 login,
@@ -27,6 +28,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
                 credentials,
                 credentialsKeePass,
             } as AccountConfig; // TODO ger rid of "TS as" casting
+            const settings = await ctx.settingsStore.readExisting();
 
             settings.accounts.push(account);
 
@@ -65,28 +67,34 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
             return EMPTY.toPromise();
         })()),
 
+        // TODO update "patchBaseSettings" api method test ("logLevel" value, "logger.transports.file.level" updpate)
         patchBaseSettings: (patch) => from((async () => {
-            const config = await ctx.configStore.readExisting();
-            const actualPatch = JSON.parse(JSON.stringify(patch));
+            const config = await ctx.configStore.write({
+                ...(await ctx.configStore.readExisting()),
+                ...JSON.parse(JSON.stringify(patch)), // parse => stringify call strips out undefined values from the object
+            });
 
-            return await ctx.configStore.write({...config, ...actualPatch});
+            logger.transports.file.level = config.logLevel;
+
+            return config;
         })()),
 
-        // TODO update "readConfig" api method test (upgradeConfig)
+        // TODO update "readConfig" api method test ("upgradeConfig" call, "logger.transports.file.level" updpate)
         readConfig: () => from((async () => {
-            const config = await ctx.configStore.read();
+            let config: Config | null = await ctx.configStore.read();
 
-            if (config) {
-                if (upgradeConfig(config)) {
-                    return ctx.configStore.write(config);
-                }
-                return config;
+            if (!config) {
+                config = await ctx.configStore.write(ctx.initialStores.config);
+            } else if (upgradeConfig(config)) {
+                config = await ctx.configStore.write(config);
             }
 
-            return ctx.configStore.write(ctx.initialStores.config);
+            logger.transports.file.level = config.logLevel;
+
+            return config;
         })()),
 
-        // TODO update "readSettings" api method test, "upgradeSettings" and "no password provided" cases
+        // TODO update "readSettings" api method test ("upgradeSettings" call, "no password provided" case)
         readSettings: ({password, savePassword}) => from((async () => {
             // trying to auto login
             if (!password) {
@@ -138,7 +146,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
 
         removeAccount: ({login}) => from((async () => {
             const settings = await ctx.settingsStore.readExisting();
-            const account = findExistingAccountConfig(settings.accounts, login);
+            const account = pickAccountStrict(settings.accounts, {login});
             const index = settings.accounts.indexOf(account);
 
             settings.accounts.splice(index, 1);
@@ -156,7 +164,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
         // TODO update "updateAccount" api method test (entryUrl, changed credentials structure)
         updateAccount: ({login, entryUrl, storeMails, credentials, credentialsKeePass}) => from((async () => {
             const settings = await ctx.settingsStore.readExisting();
-            const account = findExistingAccountConfig(settings.accounts, login);
+            const account = pickAccountStrict(settings.accounts, {login});
             const {credentials: existingCredentials, credentialsKeePass: existingCredentialsKeePass} = account;
 
             if (typeof storeMails !== "undefined") {

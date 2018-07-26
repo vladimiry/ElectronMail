@@ -1,98 +1,11 @@
 {
   "extends": [
     "tslint:recommended",
-    "./tslint-codelyzer.json"
-  ],
-  "rulesDirectory": [
-    "node_modules/tslint-rules-bunch/rules"
+    "./tslint.codelyzer.json",
+    "./tslint.tslint-rules-bunch.json",
+    "./tslint.tslint-consistent-codestyle.json"
   ],
   "rules": {
-    "no-import-zones": [
-      true,
-      {
-        "verbose": false,
-        "zones": [
-          {
-            "patterns": [
-              {
-                "target": "src/electron-main/**/*",
-                "from": [
-                  "src/**/*",
-                  "!src/electron-main/**/*",
-                  "!src/shared/**/*"
-                ]
-              }
-            ]
-          },
-          {
-            "patterns": [
-              {
-                "target": "src/electron-preload/**/*",
-                "from": [
-                  "src/**/*",
-                  "!src/electron-preload/**/*",
-                  "!src/shared/**/*"
-                ]
-              }
-            ]
-          },
-          {
-            "patterns": [
-              {
-                "target": "src/web/src/**/*",
-                "from": [
-                  "src/**/*",
-                  "!src/web/**/*",
-                  "src/web/src/app",
-                  "!src/shared/**/*",
-                  "!src/web/src/app/store/**/*",
-                  "!src/web/src/app/+shared/shared.module",
-                  "!src/web/src/app/app.constants"
-                ]
-              }
-            ]
-          },
-          {
-            "patterns": [
-              {
-                "target": "src/**/*",
-                "from": "package.json"
-              }
-            ]
-          },
-          {
-            "patterns": [
-              {
-                "target": [
-                  "src/**/*",
-                  "!src/electron-main/database/nano-sql.ts",
-                  "!src/electron-main/api/index.spec.ts"
-                ],
-                "from": [
-                  "nano-sql",
-                  "!src/electron-main/database/nano-sql"
-                ]
-              }
-            ]
-          },
-          {
-            "patterns": [
-              {
-                "target": [
-                  "src/**/*",
-                  "!src/electron-main/**/*"
-                ],
-                "from": [
-                  "src/electron-main/database/entity/**/*",
-                  "!src/electron-main/database/entity/index",
-                  "!src/electron-main/database/entity/column-decorator"
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    ],
     "no-unused-variable": true,
     "max-line-length": [
       true,

@@ -1,22 +1,14 @@
 import {Component, OnDestroy, OnInit} from "@angular/core";
-import {distinctUntilChanged, filter, map, mergeMap, switchMap, take, takeUntil} from "rxjs/operators";
+import {concatMap, distinctUntilChanged, filter, mergeMap, take, takeUntil} from "rxjs/operators";
 import {equals} from "ramda";
 import {Store} from "@ngrx/store";
 import {Subject} from "rxjs";
 
-import {
-    accountsLoggedInAndUnreadSummarySelector,
-    accountsSelector,
-    initializedSelector,
-    selectedAccountSelector,
-    selectedLoginSelector,
-    State,
-} from "src/web/src/app/store/reducers/accounts";
 import {ACCOUNTS_ACTIONS, CORE_ACTIONS, NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
-import {configCompactLayoutSelector, electronLocationsSelector, progressSelector} from "src/web/src/app/store/reducers/options";
+import {AccountsSelectors, OptionsSelectors} from "src/web/src/app/store/selectors";
 import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
+import {State} from "src/web/src/app/store/reducers/accounts";
 import {WebAccount} from "src/shared/model/account";
-import {WebViewPreloads} from "./account.component";
 
 @Component({
     selector: "email-securely-app-accounts",
@@ -25,36 +17,31 @@ import {WebViewPreloads} from "./account.component";
     preserveWhitespaces: true,
 })
 export class AccountsComponent implements OnInit, OnDestroy {
-    compactLayout$ = this.store.select(configCompactLayoutSelector);
-    togglingCompactLayout$ = this.store.select(progressSelector).pipe(
-        map(({togglingCompactLayout}) => togglingCompactLayout),
-    );
-    accounts$ = this.store.select(accountsSelector);
-    initialized$ = this.store.select(initializedSelector);
-    selectedLogin$ = this.store.select(selectedLoginSelector);
-    accountComponentConfig: WebViewPreloads;
+    compactLayout$ = this.store.select(OptionsSelectors.CONFIG.compactLayout);
+    accounts$ = this.store.select(AccountsSelectors.FEATURED.accounts);
+    initialized$ = this.store.select(AccountsSelectors.FEATURED.initialized);
+    selectedLogin$ = this.store.select(AccountsSelectors.FEATURED.selectedLogin);
     accounts: WebAccount[] = [];
     selectedAccount?: WebAccount;
     unreadSummary?: number;
     unSubscribe$ = new Subject();
 
-    constructor(private store: Store<State>) {}
+    constructor(
+        private store: Store<State>,
+    ) {}
 
     ngOnInit() {
-        this.store.select(electronLocationsSelector).pipe(
+        this.store.select(OptionsSelectors.FEATURED.electronLocations).pipe(
             filter((value) => Boolean(value)),
             mergeMap((value) => value ? [value] : []),
             take(1),
-            switchMap(({preload}) => {
-                this.accountComponentConfig = preload.webView;
-                return this.accounts$;
-            }),
+            concatMap(({preload}) => this.accounts$),
             takeUntil(this.unSubscribe$),
         ).subscribe((accounts) => {
             this.accounts = accounts;
         });
 
-        this.store.select(accountsLoggedInAndUnreadSummarySelector)
+        this.store.select(AccountsSelectors.ACCOUNTS.loggedInAndUnreadSummary)
             .pipe(
                 distinctUntilChanged((prev, curr) => equals(prev, curr)), // TODO => "distinctUntilChanged(equals)"
                 takeUntil(this.unSubscribe$),
@@ -64,7 +51,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
                 this.store.dispatch(CORE_ACTIONS.UpdateOverlayIcon({hasLoggedOut, unread}));
             });
 
-        this.store.select(selectedAccountSelector)
+        this.store.select(AccountsSelectors.FEATURED.selectedAccount)
             .pipe(takeUntil(this.unSubscribe$))
             .subscribe((selectedAccount) => this.selectedAccount = selectedAccount);
     }

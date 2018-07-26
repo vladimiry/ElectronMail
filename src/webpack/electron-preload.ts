@@ -12,12 +12,6 @@ const configs = [
     ),
     buildRendererConfig(
         {
-            "electron-preload/webview/stub": srcRelateivePath("./electron-preload/webview/stub/index.ts"),
-        },
-        srcRelateivePath("./electron-preload/webview/stub/tsconfig.json"),
-    ),
-    buildRendererConfig(
-        {
             "electron-preload/webview/protonmail": srcRelateivePath("./electron-preload/webview/protonmail/index.ts"),
         },
         srcRelateivePath("./electron-preload/webview/protonmail/tsconfig.json"),

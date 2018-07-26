@@ -15,9 +15,10 @@ import {isWebViewSrcWhitelisted} from "src/shared/util";
 
 electronUnhandled({logger: logger.error});
 
-// needs for desktop notifications properly working on Win 10, details https://www.electron.build/configuration/nsis
+// needed for desktop notifications properly working on Win 10, details https://www.electron.build/configuration/nsis
 app.setAppUserModelId(`com.github.vladimiry.${APP_NAME}`);
 
+// possible rejection will be caught and logged by above initialized "electron-unhandled"
 // tslint:disable-next-line:no-floating-promises
 initContext().then(initApp);
 

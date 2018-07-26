@@ -5,6 +5,7 @@ import {channel} from "./common";
 import {CommonApi} from "src/shared/api/webview/common";
 import {Mail} from "src/shared/model/database";
 import {Omit, Timestamp} from "src/shared/types";
+import {ZoneApiParameter} from "src/shared/api/common";
 
 export interface TutanotaApiFetchMessagesInput {
     type: AccountType;
@@ -17,8 +18,8 @@ export interface TutanotaApiFetchMessagesOutput {
 }
 
 export interface TutanotaApi extends CommonApi {
-    notification: ApiMethod<{ entryUrl: string }, AccountNotifications<WebAccountTutanota>>;
-    fetchMessages: ApiMethod<TutanotaApiFetchMessagesInput, TutanotaApiFetchMessagesOutput>;
+    notification: ApiMethod<{ entryUrl: string } & ZoneApiParameter, Partial<AccountNotifications<WebAccountTutanota>>>;
+    fetchMessages: ApiMethod<TutanotaApiFetchMessagesInput & ZoneApiParameter, TutanotaApiFetchMessagesOutput>;
 }
 
 export const TUTANOTA_IPC_WEBVIEW_API = new WebViewApiService<TutanotaApi>({channel});

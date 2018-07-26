@@ -1,11 +1,13 @@
-import {createFeatureSelector, createSelector} from "@ngrx/store";
 import {UnionOf} from "unionize";
 
 import * as fromRoot from "src/web/src/app/store/reducers/root";
 import {CORE_ACTIONS} from "src/web/src/app/store/actions";
 import {ERRORS_LIMIT} from "src/web/src/app/app.constants";
+import {getZoneNameBoundWebLogger} from "src/web/src/util";
 
 export const featureName = "errors";
+
+const logger = getZoneNameBoundWebLogger("[reducers/errors]");
 
 export interface State extends fromRoot.State {
     errors: Error[];
@@ -20,16 +22,18 @@ export function reducer(state = initialState, action: UnionOf<typeof CORE_ACTION
         Fail: (error) => {
             const errors = [...state.errors];
 
-            // tslint:disable:no-console
-            console.error(error);
-            // tslint:enable:no-console
+            if (!errors.length || (errors[errors.length - 1].message !== error.message)) {
+                // tslint:disable-next-line:no-console
+                console.error(error);
+                logger.error(error);
+            }
 
             // TODO indicate in the UI that only the most recent "50 / ${ERRORS_LIMIT}" errors are shown
             if (errors.length >= ERRORS_LIMIT) {
-                errors.splice(0, 1, error);
-            } else {
-                errors.push(error);
+                errors.splice(0, 1);
             }
+
+            errors.push(error);
 
             return {
                 ...state,
@@ -52,6 +56,3 @@ export function reducer(state = initialState, action: UnionOf<typeof CORE_ACTION
         default: () => state,
     });
 }
-
-export const stateSelector = createFeatureSelector<State>(featureName);
-export const errorsSelector = createSelector(stateSelector, ({errors}) => errors);

@@ -1,5 +1,0 @@
-import {ONE_SECOND_MS} from "src/shared/constants";
-
-export const NOTIFICATION_LOGGED_IN_POLLING_INTERVAL = ONE_SECOND_MS;
-
-export const NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL = ONE_SECOND_MS * 1.5;

@@ -14,6 +14,6 @@ export class SettingsComponent {
                 private store: Store<State>) {}
 
     close() {
-        this.store.dispatch(this.optionsService.buildNavigationAction());
+        this.store.dispatch(this.optionsService.settingsNavigationAction());
     }
 }

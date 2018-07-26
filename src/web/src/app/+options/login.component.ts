@@ -4,7 +4,8 @@ import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
 import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
-import {hasSavedPasswordSelector, progressSelector, State} from "src/web/src/app/store/reducers/options";
+import {OptionsSelectors} from "src/web/src/app/store/selectors";
+import {State} from "src/web/src/app/store/reducers/options";
 
 @Component({
     selector: "email-securely-app-login",
@@ -19,14 +20,14 @@ export class LoginComponent implements AfterViewInit, OnInit {
         password: this.password,
         savePassword: this.savePassword,
     });
-    processing$ = this.store.select(progressSelector).pipe(map(({signingIn}) => signingIn));
+    processing$ = this.store.select(OptionsSelectors.FEATURED.progress).pipe(map((p) => p.signingIn));
     @ViewChildren("passwordRef")
     passwordElementRefQuery: QueryList<ElementRef>;
 
     constructor(private store: Store<State>) {}
 
     ngOnInit() {
-        this.store.select(hasSavedPasswordSelector)
+        this.store.select(OptionsSelectors.FEATURED.hasSavedPassword)
             .pipe(
                 filter((value) => !!value),
                 take(1),

@@ -24,7 +24,7 @@ is built with Electron unofficial desktop app for [ProtonMail](https://protonmai
 
 - Regardless of the platform you are working on, you will need to have Node.JS v8 installed. Version 8 is required to match the Node.JS version Electron comes with. If you already have Node.JS installed, but not the version 8, then you might want to use [Node Version Manager](https://github.com/creationix/nvm) to be able to switch between multiple Node.JS versions:
   - Install [NVM](https://github.com/creationix/nvm).
-  - Run `nvm instal 8`.
+  - Run `nvm install 8`.
   - Run `nvm use 8`.
 - [keytar](https://github.com/atom/node-keytar) module requires compiling prebuild node files and for that Python and C++ compiler need to be installed on your system:
   - **`On Windows`**: the simplest way to install all the needed stuff on Windows is to run `npm install --global --production windows-build-tools` CLI command.

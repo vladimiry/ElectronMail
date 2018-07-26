@@ -11,3 +11,8 @@ export type UnpackedPromise<T> =
         T;
 
 export type Timestamp = ReturnType<typeof Date.prototype.getTime>;
+
+export interface EntryUrlItem {
+    value: string;
+    title: string;
+}

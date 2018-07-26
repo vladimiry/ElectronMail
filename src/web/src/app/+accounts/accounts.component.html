@@ -12,7 +12,6 @@
                 <ul *dropdownMenu class="dropdown-menu" role="menu">
                     <li role="menuitem">
                         <button class="dropdown-item toggle-layout-view" type="button" (click)="toggleCompactLayout()">
-                            <i class="fa fa-spinner fa-pulse fa-fw" *ngIf="togglingCompactLayout$ | async"></i>
                             Toggle View Mode
                         </button>
                     </li>
@@ -74,7 +73,6 @@
             <email-securely-app-account
                 *ngFor="let account of accounts; trackBy: trackAccount"
                 [account]="account"
-                [config]="accountComponentConfig"
                 [ngStyle]="account.accountConfig.login != (selectedLogin$ | async) && {'opacity': '0', 'width': '0', 'height': '0'}"
             ></email-securely-app-account>
         </ng-template>

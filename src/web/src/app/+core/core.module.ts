@@ -4,7 +4,7 @@ import {EffectsModule} from "@ngrx/effects";
 import {CoreEffects} from "./core.effects";
 import {ElectronService} from "./electron.service";
 import {ErrorEffects} from "./error.effects";
-import {GlobalErrorHandler} from "./global-error-hander.service";
+import {GlobalErrorHandler} from "./global-error-handler.service";
 import {NavigationEffects} from "./navigation.effects";
 
 @NgModule({

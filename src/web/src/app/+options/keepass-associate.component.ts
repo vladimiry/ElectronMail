@@ -6,7 +6,8 @@ import {Store} from "@ngrx/store";
 
 import {KeePassClientConf} from "src/shared/model/keepasshttp";
 import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
-import {progressSelector, State} from "src/web/src/app/store/reducers/options";
+import {OptionsSelectors} from "src/web/src/app/store/selectors";
+import {State} from "src/web/src/app/store/reducers/options";
 
 @Component({
     selector: "email-securely-app-keepass-associate",
@@ -23,8 +24,7 @@ export class KeepassAssociateComponent implements OnInit, OnDestroy {
     });
     @Input()
     keePassClientConf$: Observable<KeePassClientConf>;
-    processing$ = this.store.select(progressSelector)
-        .pipe(map(({keePassReferencing}) => keePassReferencing));
+    processing$ = this.store.select(OptionsSelectors.FEATURED.progress).pipe(map((p) => p.keePassReferencing));
     unSubscribe$ = new Subject();
 
     constructor(private store: Store<State>) {
@@ -46,13 +46,15 @@ export class KeepassAssociateComponent implements OnInit, OnDestroy {
     }
 
     configureForm(keePassClientConf?: KeePassClientConf) {
-        if (keePassClientConf) {
-            this.url.patchValue(keePassClientConf.url);
+        if (typeof keePassClientConf === "undefined") {
+            return;
+        }
 
-            if (keePassClientConf.keyId) {
-                this.key.patchValue(keePassClientConf.keyId.key);
-                this.id.patchValue(keePassClientConf.keyId.id);
-            }
+        this.url.patchValue(keePassClientConf.url);
+
+        if (keePassClientConf.keyId) {
+            this.key.patchValue(keePassClientConf.keyId.key);
+            this.id.patchValue(keePassClientConf.keyId.id);
         }
     }
 }

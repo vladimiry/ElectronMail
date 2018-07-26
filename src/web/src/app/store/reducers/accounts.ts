@@ -1,16 +1,21 @@
-import immer from "immer";
-import {createFeatureSelector, createSelector} from "@ngrx/store";
+import produce from "immer";
 import {UnionOf} from "unionize";
 
 import * as fromRoot from "src/web/src/app/store/reducers/root";
+import {accountPickingPredicate} from "src/shared/util";
 import {ACCOUNTS_ACTIONS} from "src/web/src/app/store/actions";
+import {getZoneNameBoundWebLogger} from "src/web/src/util";
+import {LoginFieldContainer} from "src/shared/model/container";
 import {WebAccount} from "src/shared/model/account";
+
+const logger = getZoneNameBoundWebLogger("[reducers/accounts]");
 
 export const featureName = "accounts";
 
 export interface State extends fromRoot.State {
     selectedLogin?: string;
     initialized?: boolean;
+    // TODO consider using "@ngrx/entity" library instead of dealing with a raw array
     accounts: WebAccount[];
 }
 
@@ -19,104 +24,63 @@ const initialState: State = {
 };
 
 export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_ACTIONS>): State {
-    return ACCOUNTS_ACTIONS.match(action, {
-        // TODO consider using "@ngrx/entity" library instead of dealing with a raw array
-        WireUpConfigs: ({accountConfigs}) => {
-            // remove
-            const items = state.accounts.filter(({accountConfig}) => {
-                return accountConfigs.some(({login}) => accountConfig.login === login);
-            });
+    return produce(state, (draftState) => {
+        ACCOUNTS_ACTIONS.match(action, {
+            WireUpConfigs: ({accountConfigs}) => {
+                const needToPickNewLogin = typeof draftState.selectedLogin === "undefined"
+                    || !accountConfigs.map(({login}) => login).includes(draftState.selectedLogin);
 
-            for (const accountConfig of accountConfigs) {
-                const {index} = selectAccountByLogin(items, accountConfig.login, false);
+                draftState.selectedLogin = needToPickNewLogin ? (accountConfigs.length ? accountConfigs[0].login : undefined)
+                    : draftState.selectedLogin;
+                draftState.accounts = accountConfigs.reduce((accounts: WebAccount[], accountConfig) => {
+                    const {account} = pickAccountBundleStrict(draftState.accounts, accountConfig, false);
 
-                if (index === -1) {
-                    // add
-                    items.push({
-                        accountConfig,
-                        progress: {},
-                        notifications: {
-                            loggedIn: false,
-                            unread: 0,
-                            pageType: {url: "", type: "undefined"},
-                        },
-                    } as WebAccount); // TODO ger rid of "TS as" casting
-                } else {
-                    const account = items[index];
-
-                    if (JSON.stringify(account.accountConfig) !== JSON.stringify(accountConfig)) {
-                        // update
-                        items[index] = {
-                            ...account,
+                    if (account) {
+                        account.accountConfig = accountConfig;
+                        accounts.push(account);
+                    } else {
+                        accounts.push({
                             accountConfig,
-                        } as WebAccount; // TODO ger rid of "TS as" casting
+                            progress: {},
+                            notifications: {
+                                loggedIn: false,
+                                unread: 0,
+                                pageType: {url: "", type: "unknown"},
+                            },
+                        } as WebAccount); // TODO ger rid of "TS as" casting
                     }
-                }
-            }
 
-            return {
-                ...state,
-                accounts: items,
-                initialized: true,
-                selectedLogin: items.some(({accountConfig}) => accountConfig.login === state.selectedLogin)
-                    ? state.selectedLogin
-                    : items.length ? items[0].accountConfig.login : undefined,
-            };
-        },
-        Activate: ({login}) => {
-            return {
-                ...state,
-                selectedLogin: login,
-            };
-        },
-        NotificationPatch: ({account, notification}) => {
-            const {index} = selectAccountByLogin(state.accounts, account.accountConfig.login);
+                    return accounts;
+                }, []);
+                draftState.initialized = true;
+            },
+            Activate: ({login}) => {
+                draftState.selectedLogin = login;
+            },
+            NotificationPatch: ({login, notification}) => {
+                logger.verbose("(NotificationPatch)", JSON.stringify(notification));
+                const {account} = pickAccountBundleStrict(draftState.accounts, {login});
+                account.notifications = {...account.notifications, ...notification};
+            },
+            PatchProgress: (payload) => {
+                const {account} = pickAccountBundleStrict(draftState.accounts, payload);
+                account.progress = {...account.progress, ...payload.patch};
+            },
+            default: () => draftState,
+        });
 
-            return immer(state, (draft) => {
-                draft.accounts[index].notifications = {...draft.accounts[index].notifications, ...notification};
-            });
-        },
-        PatchProgress: ({login, patch}) => {
-            const {index} = selectAccountByLogin(state.accounts, login);
-
-            return immer(state, (draft) => {
-                draft.accounts[index].progress = {...draft.accounts[index].progress, ...patch};
-            });
-        },
-        default: () => state,
+        return draftState;
     });
 }
 
-function selectAccountByLogin(accounts: WebAccount[], login: string, strict = true) {
-    const index = accounts.findIndex(({accountConfig}) => accountConfig.login === login);
+function pickAccountBundleStrict(accounts: WebAccount[], criteria: LoginFieldContainer, strict = true) {
+    const index = accounts
+        .map(({accountConfig}) => accountConfig)
+        .findIndex(accountPickingPredicate(criteria));
 
     if (strict && index === -1) {
-        throw new Error(`Account to process has not been found (login - "${login}")`);
+        throw new Error(`Account to process has not been found (login - "${criteria.login}")`);
     }
 
     return {index, account: accounts[index]};
 }
-
-export const stateSelector = createFeatureSelector<State>(featureName);
-export const initializedSelector = createSelector(stateSelector, ({initialized}) => initialized);
-export const accountsSelector = createSelector(stateSelector, ({accounts}) => accounts);
-export const selectedLoginSelector = createSelector(stateSelector, ({selectedLogin}) => selectedLogin);
-export const selectedAccountSelector = createSelector(
-    stateSelector,
-    ({selectedLogin, accounts}) => accounts.find(({accountConfig}) => accountConfig.login === selectedLogin),
-);
-export const accountsLoggedInAndUnreadSummarySelector = createSelector(accountsSelector, (accounts) => {
-    return accounts.reduce(
-        (accumulator, {notifications}) => {
-            accumulator.unread += notifications.unread;
-            if (!notifications.loggedIn) {
-                accumulator.hasLoggedOut = true;
-            }
-            return accumulator;
-        },
-        {
-            hasLoggedOut: false,
-            unread: 0,
-        },
-    );
-});

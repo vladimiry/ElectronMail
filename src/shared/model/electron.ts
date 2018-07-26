@@ -1,13 +1,15 @@
+import logger from "electron-log";
+import {IpcRenderer} from "electron";
+
 import {AccountType} from "src/shared/model/account";
+import {Omit} from "src/shared/types";
 
 export interface ElectronExposure {
-    ipcRenderer: {
-        on(channel: string, listener: (event: string, response: any) => void): any;
-        removeListener(channel: string, listener: (event: string, response: any) => void): any;
-        send(channel: string, ...args: any[]): void;
-        sendToHost(channel: string, ...args: any[]): void;
+    ipcRendererTransport: Pick<IpcRenderer, "on" | "removeListener" | "send" | "sendToHost">;
+    webLogger: Omit<typeof logger, "transports">;
+    require: {
+        "rolling-rate-limiter": () => (...args: any[]) => (key: string) => number,
     };
-    requireNodeRollingRateLimiter: () => (...args: any[]) => (key: string) => number;
 }
 
 export interface ElectronWindow {
@@ -25,6 +27,6 @@ export interface ElectronContextLocations {
     readonly preload: {
         browserWindow: string;
         browserWindowE2E: string;
-        webView: Record<AccountType, string> & { stub: string };
+        webView: Record<AccountType, string>;
     };
 }

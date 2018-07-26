@@ -6,10 +6,10 @@ function removeEventListenerOverloaded(this: any, eventName: string, listener?: 
     if (listener && needToCallOriginalMethod(eventName, listener.toString())) {
         // calling native/original implementation
         return originalRemoveEventListener.apply(this, arguments);
-    } else {
-        // calling implementation patched by Zone.js
-        return EventTarget.prototype.removeEventListener.apply(this, arguments);
     }
+
+    // calling implementation patched by Zone.js
+    return EventTarget.prototype.removeEventListener.apply(this, arguments);
 }
 
 function needToCallOriginalMethod(eventName: string, listenerFunctionStringified: string): boolean {

@@ -8,10 +8,10 @@ import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Fs as StoreFs, Model as StoreModel, Store} from "fs-json-store";
 
 import {BuildEnvironment} from "src/shared/model/common";
-import {Config, configEncryptionPresetValidator, Settings, settingsAccountLoginUniquenessValidator} from "src/shared/model/options";
+import {Config, Settings} from "src/shared/model/options";
+import {configEncryptionPresetValidator, INITIAL_STORES, settingsAccountLoginUniquenessValidator} from "./constants";
 import {Context, ContextInitOptions, ContextInitOptionsPaths, RuntimeEnvironment} from "./model";
 import {ElectronContextLocations} from "src/shared/model/electron";
-import {INITIAL_STORES} from "./constants";
 import {RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
 
 export async function initContext(options: ContextInitOptions = {}): Promise<Context> {
@@ -27,7 +27,8 @@ export async function initContext(options: ContextInitOptions = {}): Promise<Con
     });
 
     logger.transports.file.file = path.join(locations.userDataDir, "./log.log");
-    logger.transports.file.level = "info";
+    logger.transports.file.level = false;
+    logger.transports.console.level = false;
 
     return {
         storeFs,
@@ -75,7 +76,6 @@ function initLocations(runtimeEnvironment: RuntimeEnvironment, paths?: ContextIn
             browserWindow: appRelativePath("./electron-preload/browser-window.js"),
             browserWindowE2E: appRelativePath("./electron-preload/browser-window-e2e.js"),
             webView: {
-                stub: formatFileUrl(appRelativePath("./electron-preload/webview/stub.js")),
                 protonmail: formatFileUrl(appRelativePath("./electron-preload/webview/protonmail.js")),
                 tutanota: formatFileUrl(appRelativePath("./electron-preload/webview/tutanota.js")),
             },

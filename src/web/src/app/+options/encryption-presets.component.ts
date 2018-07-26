@@ -5,7 +5,8 @@ import {FormGroup} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
 import {ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "src/shared/model/options";
-import {configSelector, State} from "src/web/src/app/store/reducers/options";
+import {OptionsSelectors} from "src/web/src/app/store/selectors";
+import {State} from "src/web/src/app/store/reducers/options";
 
 @Component({
     selector: "email-securely-app-encryption-presets",
@@ -13,7 +14,7 @@ import {configSelector, State} from "src/web/src/app/store/reducers/options";
     preserveWhitespaces: true,
 })
 export class EncryptionPresetsComponent implements OnInit, OnDestroy {
-    config$ = this.store.select(configSelector);
+    config$ = this.store.select(OptionsSelectors.FEATURED.config);
     unSubscribe$ = new Subject();
     keyDerivation = KEY_DERIVATION_PRESETS;
     keyDerivationTitles = Object.keys(this.keyDerivation);

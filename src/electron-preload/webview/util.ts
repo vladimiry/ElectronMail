@@ -1,57 +1,60 @@
 import {EMPTY} from "rxjs";
 import {Keyboard} from "keysim";
 
+import {asyncDelay} from "src/shared/util";
+import {buildLoggerBundle} from "src/electron-preload/util";
 import {ONE_SECOND_MS} from "src/shared/constants";
 
-export const waitElements = <E extends HTMLElement, T extends { [k: string]: () => E }>(
-    queries: T,
-    opts: { timeoutMs?: number, attemptsLimit?: number } = {},
-): Promise<T> => new Promise((resolve, reject) => {
-    const timeoutMs = opts.timeoutMs || ONE_SECOND_MS * 10;
-    const attemptsLimit = opts.attemptsLimit || 0; // 0 - unlimited
-    const delayMinMs = 300;
-
+export const waitElements = <E extends Element,
+    Q extends Readonly<Record<string, () => E>>,
+    K extends keyof Q,
+    R extends { [key in K]: ReturnType<Q[key]> }>(
+    query: Q,
+    opts: { timeoutMs?: number, iterationsLimit?: number } = {},
+): Promise<Readonly<R>> => new Promise((resolve, reject) => {
+    const OPTS = {
+        timeoutMs: opts.timeoutMs || ONE_SECOND_MS * 10,
+        iterationsLimit: opts.iterationsLimit || 0, // 0 - unlimited
+        delayMinMs: 300,
+    };
     const startTime = Number(new Date());
-    const delayMs = timeoutMs / 50;
-    const keys = Object.keys(queries) as [keyof T];
-    const result = {} as T;
+    const delayMs = OPTS.timeoutMs / 50;
+    const queryKeys: K[] = Object.keys(query) as K[];
+    const resolvedElements: Partial<R> = {};
+    let iteration = 0;
 
-    let attempt = 0;
+    scanElements();
 
-    iteration();
+    function scanElements() {
+        iteration++;
 
-    function iteration() {
-        attempt++;
-
-        keys.reduce((store, key) => {
-            if (!(key in store)) {
-                const el = queries[key]();
-
-                if (el) {
-                    store[key] = () => el;
-                }
+        queryKeys.forEach((key) => {
+            if (key in resolvedElements) {
+                return;
             }
+            const element = query[key]();
+            if (element) {
+                resolvedElements[key] = element as any;
+            }
+        });
 
-            return store;
-        }, result);
-
-        if (Object.keys(result).length === keys.length) {
-            return resolve(result);
+        if (Object.keys(resolvedElements).length === queryKeys.length) {
+            return resolve(resolvedElements as R);
         }
 
-        if (attemptsLimit && (attempt >= attemptsLimit)) {
+        if (OPTS.iterationsLimit && (iteration >= OPTS.iterationsLimit)) {
             return reject(new Error(
-                `Failed to locate some DOM elements: [${Object.keys(queries).join(", ")}] having made ${attempt} attempts`,
+                `Failed to resolve some DOM elements from the list [${queryKeys.join(", ")}] having "${iteration}" iterations performed`,
             ));
         }
 
-        if (Number(new Date()) - startTime > timeoutMs) {
+        if (Number(new Date()) - startTime > OPTS.timeoutMs) {
             return reject(new Error(
-                `Failed to locate some DOM elements: [${Object.keys(queries).join(", ")}] within ${timeoutMs}ms`,
+                `Failed to resolve some DOM elements from the list [${queryKeys.join(", ")}] within "${OPTS.timeoutMs}" milliseconds`,
             ));
         }
 
-        setTimeout(iteration, Math.max(delayMinMs, delayMs));
+        setTimeout(scanElements, Math.max(OPTS.delayMinMs, delayMs));
     }
 });
 
@@ -59,7 +62,7 @@ export function getLocationHref(): string {
     return (window as any).location.href;
 }
 
-export async function typeInputValue(input: HTMLInputElement, value: string) {
+export async function fillInputValue(input: HTMLInputElement, value: string) {
     input.value = value;
     Keyboard.US_ENGLISH.dispatchEventsForInput(value, input);
 }
@@ -68,8 +71,15 @@ export async function submitTotpToken(
     input: HTMLInputElement,
     button: HTMLElement,
     tokenResolver: () => string,
-    {submitTimeoutMs}: { submitTimeoutMs: number } = {submitTimeoutMs: 4000},
+    logger: ReturnType<typeof buildLoggerBundle>,
+    _logPrefixParam: string[],
 ): Promise<never> {
+    const _logPrefix = ["submitTotpToken()", ..._logPrefixParam];
+    logger.info(..._logPrefix);
+
+    const submitTimeoutMs = ONE_SECOND_MS * 4;
+    const newTokenDelayMs = ONE_SECOND_MS * 2;
+
     if (input.value) {
         throw new Error("2FA TOTP token is not supposed to be pre-filled on this stage");
     }
@@ -79,27 +89,33 @@ export async function submitTotpToken(
     try {
         await submit();
     } catch (e) {
-        if (e.message === errorMessage) {
-            // second attempt as token might become expired right before submitting
-            await new Promise((resolve) => setTimeout(resolve, submitTimeoutMs));
-            await submit();
+        if (e.message !== errorMessage) {
+            throw e;
         }
-        throw e;
+
+        logger.verbose(..._logPrefix, `submit 1 - fail: ${e.message}`);
+        // second attempt as token might become expired right before submitting
+        await asyncDelay(newTokenDelayMs, submit);
     }
 
     return EMPTY.toPromise();
 
     async function submit() {
+        logger.verbose(..._logPrefix, "submit - start");
         const urlBeforeSubmit = getLocationHref();
 
-        await typeInputValue(input, tokenResolver());
+        await fillInputValue(input, tokenResolver());
+        logger.verbose(..._logPrefix, "input filled");
 
         button.click();
+        logger.verbose(..._logPrefix, "clicked");
 
-        await new Promise((resolve) => setTimeout(resolve, submitTimeoutMs));
+        await asyncDelay(submitTimeoutMs);
 
         if (getLocationHref() === urlBeforeSubmit) {
             throw new Error(errorMessage);
         }
+
+        logger.verbose(..._logPrefix, "submit - success");
     }
 }

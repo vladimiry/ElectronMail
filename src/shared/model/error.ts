@@ -1,5 +1,6 @@
 export enum StatusCode {
     NotFoundAccount = 0,
+    InvalidArgument = 1,
 }
 
 export class StatusCodeError extends Error {

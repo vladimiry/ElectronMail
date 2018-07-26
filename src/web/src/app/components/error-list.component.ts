@@ -3,9 +3,10 @@ import {Subject} from "rxjs";
 import {ChangeDetectionStrategy, Component, OnDestroy, OnInit} from "@angular/core";
 import {Store} from "@ngrx/store";
 
-import {ERRORS_OUTLET} from "src/web/src/app/app.constants";
 import {CORE_ACTIONS, NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
-import {errorsSelector, State} from "src/web/src/app/store/reducers/errors";
+import {ERRORS_OUTLET} from "src/web/src/app/app.constants";
+import {ErrorsSelectors} from "src/web/src/app/store/selectors";
+import {State} from "src/web/src/app/store/reducers/errors";
 
 @Component({
     selector: "email-securely-app-error-list-request",
@@ -14,7 +15,7 @@ import {errorsSelector, State} from "src/web/src/app/store/reducers/errors";
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErrorListComponent implements OnInit, OnDestroy {
-    $errors = this.store.select(errorsSelector);
+    $errors = this.store.select(ErrorsSelectors.FEATURED.errors);
     unSubscribe$ = new Subject();
 
     constructor(private store: Store<State>) {}

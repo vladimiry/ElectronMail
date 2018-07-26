@@ -1,34 +1,53 @@
 import {AccountConfig} from "./model/account";
 import {BaseConfig, Config} from "./model/options";
+
+import {LoginFieldContainer} from "./model/container";
 import {MailFolderTypeStringifiedValue, MailFolderTypeTitle, MailFolderTypeValue} from "./model/database";
 import {StatusCode, StatusCodeError} from "./model/error";
 import {WEBVIEW_SRC_WHITELIST} from "./constants";
 
 export function pickBaseConfigProperties(
-    {closeToTray, compactLayout, startMinimized, unreadNotifications, checkForUpdatesAndNotify}: Config,
-): Record<keyof BaseConfig, boolean | undefined> {
-    return {closeToTray, compactLayout, startMinimized, unreadNotifications, checkForUpdatesAndNotify};
+    {closeToTray, compactLayout, startMinimized, unreadNotifications, checkForUpdatesAndNotify, logLevel}: Config,
+): BaseConfig {
+    return {closeToTray, compactLayout, startMinimized, unreadNotifications, checkForUpdatesAndNotify, logLevel};
 }
 
 export const isWebViewSrcWhitelisted = (src: string) => WEBVIEW_SRC_WHITELIST.some((allowedPrefix) => {
     return src.startsWith(allowedPrefix);
 });
 
-export const findAccountConfigPredicate = (login: string): (account: AccountConfig) => boolean => {
-    return ({login: existingLogin}) => existingLogin === login;
+export const accountPickingPredicate = (criteria: LoginFieldContainer): (account: AccountConfig) => boolean => {
+    return ({login}) => login === criteria.login;
 };
 
-export const findExistingAccountConfig = (accounts: AccountConfig[], login: string): AccountConfig => {
-    const account = accounts.find(findAccountConfigPredicate(login));
+export const pickAccountStrict = (accounts: AccountConfig[], criteria: LoginFieldContainer): AccountConfig => {
+    const account = accounts.find(accountPickingPredicate(criteria));
 
     if (!account) {
         throw new StatusCodeError(
-            `Account with "${login}" login has not been found`,
+            `Account with "${criteria.login}" login has not been found`,
             StatusCode.NotFoundAccount,
         );
     }
 
     return account;
+};
+
+export const asyncDelay = async <T>(pauseTimeMs: number, resolveAction?: () => Promise<T>): Promise<T | void> => {
+    return await new Promise<T | void>((resolve) => {
+        setTimeout(() => typeof resolveAction === "function" ? resolve(resolveAction()) : resolve(), pauseTimeMs);
+    });
+};
+
+export const curryFunctionMembers = <T extends any>(src: T, ...args: any[]): T => {
+    const dest: T = typeof src === "function" ? src.bind(undefined) : {};
+    for (const key of Object.getOwnPropertyNames(src)) {
+        const srcMember = src[key];
+        if (typeof srcMember === "function") {
+            dest[key] = srcMember.bind(undefined, ...args);
+        }
+    }
+    return dest;
 };
 
 // tslint:disable-next-line:variable-name
@@ -50,18 +69,10 @@ export const MailFolderTypeService = (() => {
         }), {} as Record<MailFolderTypeValue, MailFolderTypeTitle>);
     const values = Object.values(mappedByTitle);
 
-    // TODO consider using some module for building custom errors
-    class InvalidArgumentError extends Error {
-        constructor(message: string) {
-            super(message);
-            Object.setPrototypeOf(this, new.target.prototype);
-        }
-    }
-
     function parseValueStrict(value: MailFolderTypeValue | MailFolderTypeStringifiedValue): MailFolderTypeValue {
         const result = Number(value) as MailFolderTypeValue;
         if (!values.includes(result)) {
-            throw new InvalidArgumentError(`Invalid mail folder type value: ${result}`);
+            throw new StatusCodeError(`Invalid mail folder type value: ${result}`, StatusCode.InvalidArgument);
         }
         return result;
     }
@@ -70,7 +81,7 @@ export const MailFolderTypeService = (() => {
         try {
             return mappedByValue[parseValueStrict(value)] === title;
         } catch (e) {
-            if (e instanceof InvalidArgumentError) {
+            if (e instanceof StatusCodeError && e.statusCode === StatusCode.InvalidArgument) {
                 return false;
             }
             throw e;

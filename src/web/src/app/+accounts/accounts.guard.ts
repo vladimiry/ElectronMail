@@ -1,19 +1,22 @@
-import {switchMap} from "rxjs/operators";
-import {Observable, of} from "rxjs";
-import {Injectable} from "@angular/core";
 import {CanActivate} from "@angular/router";
+import {concatMap} from "rxjs/operators";
+import {Injectable} from "@angular/core";
+import {Observable, of} from "rxjs";
 import {Store} from "@ngrx/store";
 
-import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
+import {AccountsSelectors} from "src/web/src/app/store/selectors";
 import {NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
-import {initializedSelector, State} from "src/web/src/app/store/reducers/accounts";
+import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
+import {State} from "src/web/src/app/store/reducers/accounts";
 
 @Injectable()
 export class AccountsGuard implements CanActivate {
-    constructor(private store: Store<State>) {}
+    constructor(
+        private store: Store<State>,
+    ) {}
 
     canActivate(): Observable<boolean> {
-        return this.store.select(initializedSelector).pipe(switchMap((initialized) => {
+        return this.store.select(AccountsSelectors.FEATURED.initialized).pipe(concatMap((initialized) => {
             if (initialized) {
                 return of(true);
             }

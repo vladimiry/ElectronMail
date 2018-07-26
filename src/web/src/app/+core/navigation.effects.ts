@@ -1,5 +1,5 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {catchError, filter, map, switchMap, tap} from "rxjs/operators";
+import {catchError, filter, map, concatMap, tap} from "rxjs/operators";
 import {concat, of} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Location} from "@angular/common";
@@ -8,13 +8,22 @@ import {Router} from "@angular/router";
 import {ACCOUNTS_OUTLET, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
 import {CORE_ACTIONS, NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
 import {ElectronService} from "./electron.service";
+import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/src/util";
+
+const _logger = getZoneNameBoundWebLogger("[navigation.effects.ts]");
 
 @Injectable()
 export class NavigationEffects {
     @Effect({dispatch: false})
     navigate$ = this.actions$.pipe(
         filter(NAVIGATION_ACTIONS.is.Go),
-        map((action) => action.payload),
+        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+        map(({payload, logger}) => {
+            const {path, extras} = payload;
+            // WARN: privacy note, do not log "queryParams" as it might be filled with sensitive data (like "login"/"user name")
+            logger.verbose(JSON.stringify({path, extras}));
+            return payload;
+        }),
         tap(({path, queryParams, extras}) => {
             // TODO remove "zone.run" execution on https://github.com/angular/angular/issues/18254 resolving
             // or use @angular/router v4.1.3 and older
@@ -29,6 +38,7 @@ export class NavigationEffects {
     @Effect({dispatch: false})
     navigateBack$ = this.actions$.pipe(
         filter(NAVIGATION_ACTIONS.is.Back),
+        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         tap(() => this.location.back()),
         catchError((error) => of(CORE_ACTIONS.Fail(error))),
     );
@@ -36,6 +46,7 @@ export class NavigationEffects {
     @Effect({dispatch: false})
     navigateForward$ = this.actions$.pipe(
         filter(NAVIGATION_ACTIONS.is.Forward),
+        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         tap(() => this.location.forward()),
         catchError((error) => of(CORE_ACTIONS.Fail(error))),
     );
@@ -43,43 +54,40 @@ export class NavigationEffects {
     @Effect()
     toggleBrowserWindow$ = this.actions$.pipe(
         filter(NAVIGATION_ACTIONS.is.ToggleBrowserWindow),
-        switchMap(({payload}) => this.electronService
-            .ipcMainClient()("toggleBrowserWindow")(payload)
-            .pipe(
-                catchError((error) => of(CORE_ACTIONS.Fail(error))),
-            )));
+        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+        concatMap(({payload}) => this.electronService.ipcMainClient()("toggleBrowserWindow")(payload).pipe(
+            catchError((error) => of(CORE_ACTIONS.Fail(error))),
+        )));
 
     @Effect()
     openAboutWindow$ = this.actions$.pipe(
         filter(NAVIGATION_ACTIONS.is.OpenAboutWindow),
-        switchMap(() => this.electronService
-            .ipcMainClient()("openAboutWindow")()
-            .pipe(
-                catchError((error) => of(CORE_ACTIONS.Fail(error))),
-            )));
+        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+        concatMap(() => this.electronService.ipcMainClient()("openAboutWindow")().pipe(
+            catchError((error) => of(CORE_ACTIONS.Fail(error))),
+        )));
 
     @Effect()
     openExternal$ = this.actions$.pipe(
         filter(NAVIGATION_ACTIONS.is.OpenExternal),
-        switchMap(({payload}) => this.electronService
-            .ipcMainClient()("openExternal")({url: payload.url})
-            .pipe(
-                catchError((error) => of(CORE_ACTIONS.Fail(error))),
-            )));
+        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+        concatMap(({payload}) => this.electronService.ipcMainClient()("openExternal")({url: payload.url}).pipe(
+            catchError((error) => of(CORE_ACTIONS.Fail(error))),
+        )));
 
     @Effect()
     openSettingsFolder$ = this.actions$.pipe(
         filter(NAVIGATION_ACTIONS.is.OpenSettingsFolder),
-        switchMap(() => this.electronService
-            .ipcMainClient()("openSettingsFolder")()
-            .pipe(
-                catchError((error) => of(CORE_ACTIONS.Fail(error))),
-            )));
+        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+        concatMap(() => this.electronService.ipcMainClient()("openSettingsFolder")().pipe(
+            catchError((error) => of(CORE_ACTIONS.Fail(error))),
+        )));
 
     @Effect()
     logout$ = this.actions$.pipe(
         filter(NAVIGATION_ACTIONS.is.Logout),
-        switchMap(() => {
+        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+        concatMap(() => {
             const concatenated = concat(
                 this.electronService.ipcMainClient()("logout")(),
                 of(NAVIGATION_ACTIONS.Go({
@@ -102,11 +110,10 @@ export class NavigationEffects {
     @Effect()
     quit$ = this.actions$.pipe(
         filter(NAVIGATION_ACTIONS.is.Quit),
-        switchMap(() => this.electronService
-            .ipcMainClient()("quit")()
-            .pipe(
-                catchError((error) => of(CORE_ACTIONS.Fail(error))),
-            )));
+        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+        concatMap(() => this.electronService.ipcMainClient()("quit")().pipe(
+            catchError((error) => of(CORE_ACTIONS.Fail(error))),
+        )));
 
     constructor(private electronService: ElectronService,
                 private actions$: Actions,

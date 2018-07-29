@@ -1,6 +1,8 @@
+import * as os from "os";
 import fs from "fs";
 import memoryStreams from "memory-streams";
 import pureimage, {Bitmap, decodePNGFromStream, encodePNGToStream, registerFont} from "pureimage";
+import {modeBicubic, resampleImageFromBuffer} from "image-processing-js";
 import {NativeImage, nativeImage} from "electron";
 
 // TODO explore https://github.com/vonderheide/mono-bitmap as a possible "pureimage" replacement
@@ -20,7 +22,7 @@ export async function trayIconBundleFromPath(trayIconPath: string): Promise<Imag
 
     return {
         bitmap,
-        native: nativeImage.createFromBuffer(await convertBitmapToBuffer(bitmap)),
+        native: await bitmapToNativeImageOsDependent(bitmap),
     };
 }
 
@@ -35,7 +37,7 @@ export async function loggedOutBundle({bitmap: source}: ImageBundle, config: Cir
 
     return {
         bitmap,
-        native: nativeImage.createFromBuffer(await convertBitmapToBuffer(bitmap)),
+        native: await bitmapToNativeImageOsDependent(bitmap),
     };
 }
 
@@ -73,8 +75,8 @@ export async function unreadNative(
     bitmap.getContext("2d").drawImage(circle, 0, 0, width, height, bitmap.width - width, bitmap.height - height, width, height);
 
     return {
-        icon: nativeImage.createFromBuffer(await convertBitmapToBuffer(bitmap)),
-        overlay: nativeImage.createFromBuffer(await convertBitmapToBuffer(circle)),
+        icon: await bitmapToNativeImageOsDependent(bitmap),
+        overlay: await bitmapToNativeImageOsDependent(circle),
     };
 }
 
@@ -100,18 +102,23 @@ function skipSettingTransparentPixels(bitmap: Bitmap): void {
     })(bitmap.setPixelRGBA);
 }
 
-function cloneBitmap(input: Bitmap): Bitmap {
+async function bitmapToNativeImageOsDependent(source: Bitmap): Promise<NativeImage> {
+    const bitmap = os.platform() === "darwin" ? resampleToDarwinSize(source) : source;
+    const stream = new memoryStreams.WritableStream();
+
+    await encodePNGToStream(bitmap, stream);
+
+    return nativeImage.createFromBuffer(stream.toBuffer());
+}
+
+function resampleToDarwinSize(source: Bitmap): Bitmap {
+    return cloneBitmap(resampleImageFromBuffer(source, 16, 16, modeBicubic));
+}
+
+function cloneBitmap(input: Pick<Bitmap, "width" | "height" | "data">): Bitmap {
     const output = pureimage.make(input.width, input.height);
 
     output.data = Buffer.from(input.data);
 
     return output;
-}
-
-async function convertBitmapToBuffer(bitmap: Bitmap): Promise<Buffer> {
-    const stream = new memoryStreams.WritableStream();
-
-    await encodePNGToStream(bitmap, stream);
-
-    return stream.toBuffer();
 }

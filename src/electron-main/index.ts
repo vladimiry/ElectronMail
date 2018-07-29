@@ -35,13 +35,14 @@ export async function initApp(ctx: Context) {
         const endpoints = await initApi(ctx);
         const {checkForUpdatesAndNotify} = await endpoints.readConfig().toPromise();
 
-        // should be called before "browserWindow" creating (listens for "browser-window-created" event)
         initWebContentContextMenu(ctx);
 
         const uiContext = ctx.uiContext = {
             browserWindow: await initBrowserWindow(ctx),
             tray: await initTray(ctx, endpoints),
         };
+
+        await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0}).toPromise();
 
         if (checkForUpdatesAndNotify && ctx.runtimeEnvironment !== "e2e") {
             initAutoUpdate();

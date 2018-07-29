@@ -10,6 +10,8 @@ declare module "pureimage" {
         getContext(arg: "2d"): Context;
 
         setPixelRGBA(x: number, y: number, rgba: number): void;
+
+        getPixelRGBA(x: number, y: number): number;
     }
 
     interface Context {

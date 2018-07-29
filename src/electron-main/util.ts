@@ -1,6 +1,5 @@
 import fs from "fs";
 import logger from "electron-log";
-import os from "os";
 import path from "path";
 import url from "url";
 import {app} from "electron";
@@ -59,14 +58,13 @@ function initLocations(runtimeEnvironment: RuntimeEnvironment, paths?: ContextIn
         userDataDir: userDataDirRuntimeVal || app.getPath("userData"),
     };
     const appRelativePath = (...value: string[]) => path.join(appDir, ...value);
-    const appIconFile = "./assets/icons/icon.png";
-    const trayIcon = appRelativePath(os.platform() === "darwin" ? "./assets/icons/mac/icon.png" : appIconFile);
+    const icon = appRelativePath("./assets/icons/icon.png");
 
     return {
         appDir,
         userDataDir,
-        icon: appRelativePath(appIconFile),
-        trayIcon,
+        icon,
+        trayIcon: icon,
         numbersFont: appRelativePath("./assets/numbers.ttf"),
         browserWindowPage: (process.env.NODE_ENV as BuildEnvironment) === "development" ? "http://localhost:8080/index.html"
             : formatFileUrl(path.join(appDir, "./web/index.html")),

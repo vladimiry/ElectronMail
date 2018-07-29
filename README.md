@@ -26,9 +26,9 @@ is built with Electron unofficial desktop app for [ProtonMail](https://protonmai
   - Install [NVM](https://github.com/creationix/nvm).
   - Run `nvm install 8`.
   - Run `nvm use 8`.
-- [keytar](https://github.com/atom/node-keytar) module requires compiling prebuild node files and for that Python and C++ compiler need to be installed on your system:
+- Some native modules require node prebuilds files compiling and for that Python and C++ compiler need to be installed on your system:
   - **`On Windows`**: the simplest way to install all the needed stuff on Windows is to run `npm install --global --production windows-build-tools` CLI command.
-  - **`On Linux`**: `python v2.7`, `make` and a C/C++ compiler toolchain, like `GCC` are most likely already installed. Besides there is a need to install `libsecret` dependency, see `Installing` section [here](https://github.com/atom/node-keytar).
+  - **`On Linux`**: `python v2.7`, `make` and a C/C++ compiler toolchain, like `GCC` are most likely already installed. Besides [keytar](https://github.com/atom/node-keytar) needs `libsecret` library to be installed.
   - **`On Mac OS X`**: `python v2.7` and [Xcode](https://developer.apple.com/xcode/download/) need to be installed. You also need to install the `Command Line Tools` via Xcode, can be found under the `Xcode -> Preferences -> Downloads` menu.
 - [Clone](https://help.github.com/articles/cloning-a-repository/) this project to your local device. If you are going to contribute, consider cloning the [forked](https://help.github.com/articles/fork-a-repo/) into your own GitHub account project.
 - Install dependencies running `yarn`.

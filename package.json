@@ -12,7 +12,7 @@
   "main": "./app/electron-main.js",
   "scripts": {
     "app:dist": "npm-run-all security-check lint test:electron-main test:web clean:app build assets test:e2e",
-    "build": "npm-run-all electron-builder:install-app-deps build:electron-main build:electron-preload build:web",
+    "build": "npm-run-all build:electron-main build:electron-preload build:web",
     "build:dev": "cross-env NODE_ENV=development npm-run-all build",
     "build:electron-main": "webpack --config ./src/webpack/electron-main.ts",
     "build:electron-main:dev": "cross-env NODE_ENV=development npm-run-all build:electron-main",
@@ -84,6 +84,7 @@
     "electron-updater": "3.0.3",
     "fs-json-store": "2.0.2",
     "fs-json-store-encryption-adapter": "0.0.3",
+    "image-processing-js": "0.0.0",
     "keepasshttp-client": "2.2.6",
     "keytar": "4.2.1",
     "memory-streams": "0.1.3",

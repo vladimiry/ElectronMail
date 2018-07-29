@@ -58,18 +58,16 @@ function initLocations(runtimeEnvironment: RuntimeEnvironment, paths?: ContextIn
         appDir: path.resolve(__dirname, (process.env.NODE_ENV as BuildEnvironment) === "development" ? "../app-dev" : "../app"),
         userDataDir: userDataDirRuntimeVal || app.getPath("userData"),
     };
-    const largeIcon = "./assets/icons/icon.png";
-
     const appRelativePath = (...value: string[]) => path.join(appDir, ...value);
-    const formatFileUrl = (pathname: string) => url.format({pathname, protocol: "file:", slashes: true});
+    const appIconFile = "./assets/icons/icon.png";
+    const trayIcon = appRelativePath(os.platform() === "darwin" ? "./assets/icons/mac/icon.png" : appIconFile);
 
     return {
         appDir,
         userDataDir,
-        icon: appRelativePath(largeIcon),
-        trayIcon: appRelativePath(os.platform() === "darwin" ? "./assets/icons/mac/icon.png" : largeIcon),
-        trayIconUnreadOverlay: appRelativePath("./assets/icons/tray-icon-unread-overlay.png"),
-        trayIconLoggedOutOverlay: appRelativePath("./assets/icons/tray-icon-loggedout-overlay.png"),
+        icon: appRelativePath(appIconFile),
+        trayIcon,
+        numbersFont: appRelativePath("./assets/numbers.ttf"),
         browserWindowPage: (process.env.NODE_ENV as BuildEnvironment) === "development" ? "http://localhost:8080/index.html"
             : formatFileUrl(path.join(appDir, "./web/index.html")),
         preload: {
@@ -81,6 +79,10 @@ function initLocations(runtimeEnvironment: RuntimeEnvironment, paths?: ContextIn
             },
         },
     };
+}
+
+function formatFileUrl(pathname: string) {
+    return url.format({pathname, protocol: "file:", slashes: true});
 }
 
 export async function buildSettingsAdapter({configStore}: Context, password: string): Promise<StoreModel.StoreAdapter> {

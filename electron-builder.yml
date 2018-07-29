@@ -4,16 +4,16 @@ artifactName: ${name}-${version}-${os}-${arch}.${ext}
 publish: {provider: github, releaseType: draft, vPrefixedTagName: true}
 forceCodeSigning: false
 
+# TODO consider moving fully bundable "dependencies" to "devDependencies" to reduce final package size
+
 directories:
   output: ./dist
 files: [
   "./app/**/*",
   "./package.json",
   "!app/electron-preload/browser-window-e2e.js",
-  "!node_modules/jimp/browser",
-  "!node_modules/jimp/fonts/open-sans/open-sans-{8,16,32,128}-*",
-  "!node_modules/jimp/fonts/open-sans/open-sans-64-black",
   "!node_modules/rxjs/{_esm5,_esm2015,src,bundles}",
+  "!/node_modules/pureimage/{firstimages,tests}",
   # TODO sodium-native: include into the package only needed prebuilds for the platform is being built
   "!node_modules/sodium-native/{src,test,libsodium}",
   # TODO exclude not needed stuff in "files:" section to reduce app packages size, can save megabytes, so a significant improvement

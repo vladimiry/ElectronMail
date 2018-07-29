@@ -12,18 +12,18 @@ import {AccountConfigCreatePatch, AccountConfigUpdatePatch, PasswordFieldContain
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {buildSettingsAdapter, initContext} from "src/electron-main/util";
 import {Context} from "src/electron-main/model";
-import {DatabaseUpsertInput} from "src/shared/api/main";
-import {Endpoints} from "src/shared/api/main";
+import {DatabaseUpsertInput, Endpoints} from "src/shared/api/main";
 import {INITIAL_STORES, KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "src/electron-main/constants";
 import {pickBaseConfigProperties} from "src/shared/util";
 import {StatusCode, StatusCodeError} from "src/shared/model/error";
+import {UnpackedPromise} from "src/shared/types";
 
 // TODO "immer" instead of cloning with "..."
 
 interface TestContext {
     ctx: Context;
     endpoints: Endpoints;
-    mocks: ReturnType<typeof buildMocks>;
+    mocks: UnpackedPromise<ReturnType<typeof buildMocks>>;
 }
 
 const test = ava as TestInterface<TestContext>;
@@ -39,8 +39,8 @@ const OPTIONS = Object.freeze({
 
 const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => ImplementationResult> = {
     addAccount: async (t) => {
-        const endpoints = t.context.endpoints;
-        const addHandler = endpoints.addAccount;
+        const {endpoints} = t.context;
+        const {addAccount} = endpoints;
         const payload: Readonly<AccountConfigCreatePatch<"protonmail">> = {
             type: "protonmail",
             login: "login1",
@@ -57,7 +57,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
 
         t.is(settings.accounts.length, 0, `accounts list is empty`);
 
-        const updatedSettings = await addHandler(payload).toPromise();
+        const updatedSettings = await addAccount(payload).toPromise();
         const expectedSettings: any = {
             ...settings,
             _rev: (settings._rev as number) + 1,
@@ -82,14 +82,14 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings, `settings with added account is persisted`);
 
         try {
-            await addHandler(payload).toPromise();
+            await addAccount(payload).toPromise();
         } catch ({message}) {
             const messageEnd = `Duplicate accounts identified. Duplicated logins: ${payload.login}.`;
             t.is(messageEnd, message.substr(message.indexOf(messageEnd)), "Account.login unique constraint");
         }
 
         const payload2 = {...payload, ...{login: "login2"}};
-        const updatedSettings2 = await addHandler(payload2).toPromise();
+        const updatedSettings2 = await addAccount(payload2).toPromise();
         const expectedSettings2: any = {
             ...updatedSettings,
             _rev: (updatedSettings._rev as number) + 1,
@@ -110,23 +110,20 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
     },
 
     changeMasterPassword: async (t) => {
-        const getPasswordStub = t.context.mocks.keytar.getPassword;
-        const setPasswordSpy = t.context.mocks.keytar.setPassword;
-
-        const endpoints = t.context.endpoints;
-        const endpoint = endpoints.changeMasterPassword;
+        const {endpoints} = t.context;
+        const {changeMasterPassword} = endpoints;
         const payload = {password: OPTIONS.masterPassword, newPassword: "new password 1"};
         const emptyPasswordPayload = {password: "", newPassword: "new password 2"};
         const wrongPasswordPayload = {password: "wrong password", newPassword: "new password 3"};
 
         const settings = await readConfigAndSettings(endpoints, {password: payload.password});
 
-        await t.throws(endpoint(emptyPasswordPayload).toPromise(), /Decryption\sfailed/gi);
-        await t.throws(endpoint(wrongPasswordPayload).toPromise(), /Decryption\sfailed/gi);
+        await t.throws(changeMasterPassword(emptyPasswordPayload).toPromise(), /Decryption\sfailed/gi);
+        await t.throws(changeMasterPassword(wrongPasswordPayload).toPromise(), /Decryption\sfailed/gi);
 
         const updatedSettingsAdapter = t.context.ctx.settingsStore.adapter; // keep reference before update
         const updatedSettingsStore = t.context.ctx.settingsStore; // keep reference before update
-        const updatedSettings = await endpoint(payload).toPromise();
+        const updatedSettings = await changeMasterPassword(payload).toPromise();
         const expectedSettings = {
             ...settings,
             _rev: (settings._rev as number) + 1,
@@ -143,8 +140,11 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         );
         t.deepEqual(await newStore.read(), expectedSettings, `reading re-saved settings with new password`);
 
+        const getPasswordStub = t.context.mocks.keytar.getPassword;
         t.is(getPasswordStub.callCount, 1);
         getPasswordStub.calledWithExactly(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT);
+
+        const setPasswordSpy = t.context.mocks.keytar.setPassword;
         t.is(setPasswordSpy.callCount, 1);
         setPasswordSpy.calledWithExactly(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, payload.newPassword);
     },
@@ -473,42 +473,39 @@ async function readConfigAndSettings(
     return await endpoints.readSettings(payload).toPromise();
 }
 
-function buildMocks() {
+async function buildMocks() {
     const openExternalSpy = sinon.spy();
 
-    const nanoSqlMocks = (() => {
-        class NanoSQLInstance extends NanoSQLInstanceOriginal {}
+    return {
+        ...(() => {
+            class NanoSQLInstance extends NanoSQLInstanceOriginal {}
 
-        const _execSpy = sinon.spy();
-        const _queryStub = sinon.stub().returns({exec: _execSpy});
-        const _tableStub = sinon.stub(NanoSQLInstance.prototype, "table").callThrough();
-
-        Object.assign(NanoSQLInstance.prototype, {
-            query: _queryStub,
-            exec: _execSpy,
-        });
-
-        return {
-            "src/electron-main/database/nano-sql.ts": {
+            const _execSpy = sinon.spy();
+            const _queryStub = sinon.stub().returns({exec: _execSpy});
+            const _tableStub = sinon.stub(NanoSQLInstance.prototype, "table").callThrough();
+            Object.assign(NanoSQLInstance.prototype, {
+                query: _queryStub,
+                exec: _execSpy,
+            });
+            return {
+                "src/electron-main/database/nano-sql": {
+                    "nano-sql": {
+                        NanoSQLInstance,
+                    },
+                } as any,
                 "nano-sql": {
+                    _tableStub,
+                    _queryStub,
+                    _execSpy,
                     NanoSQLInstance,
                 },
-            },
-            "nano-sql": {
-                _tableStub,
-                _queryStub,
-                _execSpy,
-                NanoSQLInstance,
-            },
-        };
-    })();
-
-    return {
+            };
+        })(),
         "src/shared/api/main": {
             IPC_MAIN_API: {
                 registerApi: sinon.spy(),
             },
-        },
+        } as any,
         "src/electron-main/util": {
             toggleBrowserWindow: sinon.spy(),
             buildSettingsAdapter,
@@ -517,6 +514,11 @@ function buildMocks() {
             upgradeConfig: sinon.stub().returns(false),
             upgradeSettings: sinon.stub().returns(false),
         },
+        "./endpoints-builders": {
+            TrayIcon: {
+                buildEndpoints: sinon.stub().returns(Promise.resolve({updateOverlayIcon: () => {}})),
+            },
+        } as any,
         "about-window": {
             default: sinon.spy(),
         },
@@ -549,49 +551,32 @@ function buildMocks() {
                 createFromPath: sinon.stub().returns({toPNG: sinon.spy}),
                 createFromBuffer: sinon.stub(),
             },
-        },
-        "jimp": {
-            read: sinon.stub().returns(Promise.resolve({
-                resize: (w: any, h: any, cb: any) => cb(),
-                clone: sinon.stub().returns({
-                    composite: () => ({
-                        bitmap: {width: 0, height: 0},
-                        getBuffer: (format: any, cb: any) => cb(),
-                    }),
-                }),
-                bitmap: {width: 0, height: 0},
-            })),
-            loadFont: sinon.spy(),
-            _rewiremock_no_callThrough: true,
-        },
+        } as any,
         "keytar": {
             _rewiremock_no_callThrough: true,
             getPassword: sinon.stub().returns(OPTIONS.masterPassword),
             deletePassword: sinon.spy(),
             setPassword: sinon.spy(),
         },
-        ...nanoSqlMocks,
     };
 }
 
 test.beforeEach(async (t) => {
-    t.context.mocks = buildMocks();
+    t.context.mocks = await buildMocks();
 
-    const mockedObject = await rewiremock.around(
+    const mockedModule = await rewiremock.around(
         () => import("./index"),
         (mock) => {
-            Object
-                .keys(t.context.mocks)
-                .forEach((key) => {
-                    const mocks = t.context.mocks[key as keyof ReturnType<typeof buildMocks>];
-                    let mocked = mock(key);
-
-                    if (!("_rewiremock_no_callThrough" in mocks && mocks._rewiremock_no_callThrough)) {
-                        mocked = (mocked as any).callThrough();
-                    }
-
-                    mocked.with(mocks);
-                });
+            const {mocks} = t.context;
+            mock("electron").with(mocks.electron);
+            mock(() => import("keytar"))/*.callThrough()*/.with(mocks.keytar);
+            mock(() => import("nano-sql")).callThrough().with(mocks["nano-sql"]);
+            mock(() => import("about-window")).callThrough().with(mocks["about-window"]);
+            mock(() => import("src/electron-main/database/nano-sql")).callThrough().with(mocks["src/electron-main/database/nano-sql"]);
+            mock(() => import("src/shared/api/main")).callThrough().with(mocks["src/shared/api/main"]);
+            mock(() => import("src/electron-main/util")).callThrough().with(mocks["src/electron-main/util"]);
+            mock(() => import("src/electron-main/storage-upgrade")).callThrough().with(mocks["src/electron-main/storage-upgrade"]);
+            mock(() => import("./endpoints-builders")).callThrough().with(mocks["./endpoints-builders"]);
         },
     );
 
@@ -630,7 +615,7 @@ test.beforeEach(async (t) => {
     t.truthy(ctx.settingsStore.validators && ctx.settingsStore.validators.length);
 
     t.context.ctx = ctx;
-    t.context.endpoints = await mockedObject.initApi(t.context.ctx);
+    t.context.endpoints = await mockedModule.initApi(t.context.ctx);
     t.context.mocks["src/shared/api/main"].IPC_MAIN_API.registerApi.calledWithExactly(t.context.endpoints);
 
     // TODO make sure "IPC_MAIN_API.register" has been called

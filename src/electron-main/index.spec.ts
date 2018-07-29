@@ -19,7 +19,7 @@ test.serial("workflow", async (t) => {
 
     t.true(m.electron.app.setAppUserModelId.calledWithExactly(`com.github.vladimiry.${APP_NAME}`));
     t.true(m["electron-unhandled"].calledWithExactly(sinon.match.hasOwn("logger")), `"electronUnhandled" called`);
-    t.true(m[`./util`].initContext.calledWithExactly(), `"initContext" called`);
+    t.true(m["./util"].initContext.calledWithExactly(), `"initContext" called`);
     t.true(m["./database"].connect.calledWithExactly(), `"connect" called`);
     t.true(m["./api"].initApi.calledWithExactly(t.context.ctx), `"initApi" called`);
     t.true(m.electron.app.makeSingleInstance.called, `"makeSingleInstance" called`);

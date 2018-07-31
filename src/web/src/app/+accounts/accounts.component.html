@@ -47,21 +47,22 @@
             <div class="unread-summary" *ngIf="unreadSummary && accounts.length > 1">
                 <span class="badge badge-danger">{{ unreadSummary }}</span>
             </div>
-            <button type="button" class="btn btn-warning-light dropdown-toggle list-group-item-warning"
-                    dropdownToggle *ngIf="selectedAccount">
+            <a class="btn btn-warning-light dropdown-toggle list-group-item-warning"
+               dropdownToggle *ngIf="selectedAccount"
+               href="mailto:{{ selectedAccount?.accountConfig.login }}" (click)="$event.preventDefault()">
                 <email-securely-app-account-title [account]="selectedAccount"></email-securely-app-account-title>
-            </button>
+            </a>
             <ul *dropdownMenu class="dropdown-menu dropdown-menu-right" role="menu">
                 <li role="menuitem" *ngFor="let account of accounts; trackBy: trackAccount">
-                    <a class="dropdown-item" (click)="activateAccount(account)">
+                    <a class="dropdown-item" (click)="activateAccount($event, account)" href="mailto:{{ account.accountConfig.login }}">
                         <email-securely-app-account-title [account]="account"></email-securely-app-account-title>
                     </a>
                 </li>
             </ul>
         </div>
         <ul class="list-group accounts-list d-none d-lg-flex">
-            <a class="list-group-item list-group-item-action" href="javascript:void(0)"
-               *ngFor="let account of accounts; trackBy: trackAccount" (click)="activateAccount(account)"
+            <a class="list-group-item list-group-item-action" href="mailto:{{ account.accountConfig.login }}"
+               *ngFor="let account of accounts; trackBy: trackAccount" (click)="activateAccount($event, account)"
                [ngClass]="{'list-group-item-warning': account.accountConfig.login === selectedAccount?.accountConfig.login}">
                 <email-securely-app-account-title [account]="account"></email-securely-app-account-title>
             </a>

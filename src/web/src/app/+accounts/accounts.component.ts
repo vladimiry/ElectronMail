@@ -55,7 +55,8 @@ export class AccountsComponent implements OnInit, OnDestroy {
         return account ? account.accountConfig.login : undefined;
     }
 
-    activateAccount(account: WebAccount) {
+    activateAccount(event: Event, account: WebAccount) {
+        event.preventDefault();
         this.store.dispatch(ACCOUNTS_ACTIONS.Activate({login: account.accountConfig.login}));
     }
 

@@ -23,7 +23,7 @@ export function initWebContentContextMenu(ctx: Context) {
     const contextMenuEventArgs = [
         "context-menu",
         (e: Event, props: ContextMenuParams) => {
-            const {selectionText, isEditable, linkURL} = props;
+            const {selectionText, isEditable, linkURL, linkText} = props;
             const popupOptions: PopupOptions = {window: ctx.uiContext && ctx.uiContext.browserWindow};
 
             if (!popupOptions.window) {
@@ -36,18 +36,18 @@ export function initWebContentContextMenu(ctx: Context) {
             }
 
             if (linkURL) {
-                Menu
-                    .buildFromTemplate([{
-                        label: "Copy Link Address",
-                        click() {
-                            if (os.platform() === "darwin") {
-                                clipboard.writeBookmark(props.linkText, props.linkURL);
-                            } else {
-                                clipboard.writeText(props.linkURL);
-                            }
-                        },
-                    }])
-                    .popup(popupOptions);
+                const linkMenu = Menu.buildFromTemplate([{
+                    label: isEmailHref(linkURL) ? "Copy Email Address" : "Copy Link Address",
+                    click() {
+                        const url = extractEmailIfEmailHref(linkURL);
+                        if (os.platform() === "darwin") {
+                            clipboard.writeBookmark(linkText, url);
+                        } else {
+                            clipboard.writeText(url);
+                        }
+                    },
+                }]);
+                linkMenu.popup(popupOptions);
                 return;
             }
 
@@ -63,4 +63,12 @@ export function initWebContentContextMenu(ctx: Context) {
 
     app.on("browser-window-created", (event, {webContents}) => webContentsCreatedHandler(webContents));
     app.on("web-contents-created", (webContentsCreatedEvent, webContents) => webContentsCreatedHandler(webContents));
+}
+
+function isEmailHref(href: string): boolean {
+    return String(href).startsWith("mailto:");
+}
+
+function extractEmailIfEmailHref(href: string): string {
+    return isEmailHref(href) ? String(href.split("mailto:").pop()) : href;
 }

@@ -14,8 +14,9 @@ import {State} from "src/web/src/app/store/reducers/options";
     styleUrls: ["./accounts.component.scss"],
 })
 export class AccountsComponent implements OnDestroy {
-    public accounts$ = this.store.select(OptionsSelectors.SETTINGS.accounts);
-    public reorderingGroup = "accounts";
+    accounts$ = this.store.select(OptionsSelectors.SETTINGS.accounts);
+    changingAccountOrder$ = this.store.select(OptionsSelectors.FEATURED.progress).pipe(map((p) => !!p.changingAccountOrder));
+    reorderingGroup = "accounts";
     @HostBinding("class.reordering-disabled")
     reorderingDisabled: boolean = true;
     private subscription = new Subscription();
@@ -25,11 +26,8 @@ export class AccountsComponent implements OnDestroy {
         private dragulaService: DragulaService,
     ) {
         this.subscription.add(
-            this.store.select(OptionsSelectors.FEATURED.progress)
-                .pipe(
-                    map((progress) => !!progress.changingAccountOrder),
-                    withLatestFrom(this.accounts$),
-                )
+            this.changingAccountOrder$
+                .pipe(withLatestFrom(this.accounts$))
                 .subscribe(([value, accounts]) => this.reorderingDisabled = value || accounts.length < 2),
         );
 

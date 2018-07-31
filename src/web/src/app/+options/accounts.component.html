@@ -12,3 +12,8 @@
         </a>
     </li>
 </ul>
+<div class="progress mt-3" *ngIf="changingAccountOrder$ | async">
+    <div class="progress-bar progress-bar-striped progress-bar-animated bg-secondary" style="width: 100%">
+        Reordering ...
+    </div>
+</div>

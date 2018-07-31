@@ -45,7 +45,7 @@ export class AccountComponent implements OnDestroy, OnInit {
     keePassClientConf$ = this.store.select(OptionsSelectors.SETTINGS.keePassClientConf);
     @Input()
     login: string;
-    private account$: BehaviorSubject<WebAccount>;
+    account$: BehaviorSubject<WebAccount>;
     private logger: ReturnType<typeof getZoneNameBoundWebLogger>;
     private loggerZone: Zone;
     @ViewChild("webViewRef", {read: ElementRef})
@@ -65,10 +65,6 @@ export class AccountComponent implements OnDestroy, OnInit {
         this.loggerZone = Zone.current.fork({name: loggerPrefix});
         this.logger = getZoneNameBoundWebLogger(loggerPrefix);
         this.logger.info(`constructor()`);
-    }
-
-    get account(): WebAccount | null {
-        return this.account$ ? this.account$.value : null;
     }
 
     ngOnInit() {

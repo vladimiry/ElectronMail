@@ -8,6 +8,7 @@ import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "sr
 import {CORE_ACTIONS, NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
 import {ElectronService} from "src/web/src/app/+core/electron.service";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/src/util";
+import {ONE_SECOND_MS} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {OptionsService} from "./options.service";
 import {ProgressPatch, State} from "src/web/src/app/store/reducers/options";
@@ -127,7 +128,7 @@ export class OptionsEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({changingAccountOrder: true})),
-            this.electronService.ipcMainClient()("changeAccountOrder")({login: payload.login, index: payload.index}).pipe(
+            this.electronService.ipcMainClient()("changeAccountOrder", {timeoutMs: ONE_SECOND_MS * 20})(payload).pipe(
                 map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
                 finalize(() => this.dispatchProgress({changingAccountOrder: false})),

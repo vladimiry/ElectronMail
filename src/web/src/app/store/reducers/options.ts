@@ -17,6 +17,7 @@ export type ProgressPatch = Partial<{
     togglingStore: boolean;
     togglingCompactLayout: boolean;
     updatingAccount: boolean;
+    changingAccountOrder: boolean;
     updatingBaseSettings: boolean;
 }>;
 

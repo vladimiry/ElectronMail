@@ -4,6 +4,7 @@ import {Options as EncryptionAdapterOptions} from "fs-json-store-encryption-adap
 import {
     AccountConfigCreatePatch,
     AccountConfigUpdatePatch,
+    LoginFieldContainer,
     PasswordChangeContainer,
     PasswordFieldContainer,
     UrlFieldContainer,
@@ -14,6 +15,9 @@ import {ProgressPatch} from "src/web/src/app/store/reducers/options";
 
 export const OPTIONS_ACTIONS = unionize({
         AddAccountRequest: ofType<AccountConfigCreatePatch>(),
+        UpdateAccountRequest: ofType<AccountConfigUpdatePatch>(),
+        ChangeAccountOrderRequest: ofType<LoginFieldContainer & { index: number }>(),
+        RemoveAccountRequest: ofType<{ login: string }>(),
         AssociateSettingsWithKeePassRequest: ofType<UrlFieldContainer>(),
         ChangeMasterPasswordRequest: ofType<PasswordChangeContainer>(),
         GetConfigRequest: ofType<{}>(),
@@ -25,10 +29,8 @@ export const OPTIONS_ACTIONS = unionize({
         PatchBaseSettingsRequest: ofType<BaseConfig>(),
         PatchProgress: ofType<ProgressPatch>(),
         ReEncryptSettings: ofType<{ password: string, encryptionPreset: EncryptionAdapterOptions }>(),
-        RemoveAccountRequest: ofType<{ login: string }>(),
         SignInRequest: ofType<Partial<PasswordFieldContainer> & { savePassword?: boolean; }>(),
         ToggleCompactRequest: ofType<{}>(),
-        UpdateAccountRequest: ofType<AccountConfigUpdatePatch>(),
     },
     {
         tag: "type",

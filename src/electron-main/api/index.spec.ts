@@ -1,20 +1,23 @@
-import ava, {ExecutionContext, ImplementationResult, TestInterface} from "ava";
 import assert from "assert";
+import ava, {ExecutionContext, ImplementationResult, TestInterface} from "ava";
 import logger from "electron-log";
 import path from "path";
+import produce from "immer";
 import rewiremock from "rewiremock";
 import sinon from "sinon";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Fs} from "fs-json-store";
+import {generate as generateRandomString} from "randomstring";
 import {NanoSQLInstance as NanoSQLInstanceOriginal} from "nano-sql";
+import {mergeDeepRight, omit} from "ramda";
 
 import {AccountConfigCreatePatch, AccountConfigUpdatePatch, PasswordFieldContainer} from "src/shared/model/container";
+import {accountPickingPredicate, pickBaseConfigProperties} from "src/shared/util";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {buildSettingsAdapter, initContext} from "src/electron-main/util";
 import {Context} from "src/electron-main/model";
 import {DatabaseUpsertInput, Endpoints} from "src/shared/api/main";
 import {INITIAL_STORES, KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "src/electron-main/constants";
-import {pickBaseConfigProperties} from "src/shared/util";
 import {StatusCode, StatusCodeError} from "src/shared/model/error";
 import {UnpackedPromise} from "src/shared/types";
 
@@ -41,41 +44,13 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
     addAccount: async (t) => {
         const {endpoints} = t.context;
         const {addAccount} = endpoints;
-        const payload: Readonly<AccountConfigCreatePatch<"protonmail">> = {
-            type: "protonmail",
-            login: "login1",
-            entryUrl: "entryUrl1",
-            credentials: {
-                password: "password1",
-                twoFactorCode: "twoFactorCode1",
-                mailPassword: "mailPassword1",
-            },
-            credentialsKeePass: {},
-        };
-
+        const payload = buildProtonmailAccountData();
         const settings = await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
-
-        t.is(settings.accounts.length, 0, `accounts list is empty`);
-
         const updatedSettings = await addAccount(payload).toPromise();
-        const expectedSettings: any = {
-            ...settings,
-            _rev: (settings._rev as number) + 1,
-            accounts: [
-                ...settings.accounts,
-                {
-                    type: payload.type,
-                    login: payload.login,
-                    entryUrl: payload.entryUrl,
-                    credentials: {
-                        password: payload.credentials.password,
-                        twoFactorCode: payload.credentials.twoFactorCode,
-                        mailPassword: payload.credentials.mailPassword,
-                    },
-                    credentialsKeePass: payload.credentialsKeePass,
-                },
-            ],
-        };
+        const expectedSettings = produce(settings, (draft) => {
+            (draft._rev as number)++;
+            draft.accounts.push(payload);
+        });
 
         t.is(updatedSettings.accounts.length, 1, `1 account`);
         t.deepEqual(updatedSettings, expectedSettings, `settings with added account is returned`);
@@ -90,22 +65,113 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
 
         const payload2 = {...payload, ...{login: "login2"}};
         const updatedSettings2 = await addAccount(payload2).toPromise();
-        const expectedSettings2: any = {
-            ...updatedSettings,
-            _rev: (updatedSettings._rev as number) + 1,
-            accounts: [
-                ...updatedSettings.accounts,
-                {...updatedSettings.accounts[0], ...{login: payload2.login}},
-            ],
-        };
+        const expectedSettings2 = produce(updatedSettings, (draft) => {
+            (draft._rev as number)++;
+            draft.accounts.push(payload2);
+        });
 
         t.is(updatedSettings2.accounts.length, 2, `2 accounts`);
         t.deepEqual(updatedSettings2, expectedSettings2, `settings with added account is returned`);
         t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings2, `settings with added account is persisted`);
     },
 
+    updateAccount: async (t) => {
+        const {endpoints} = t.context;
+        const {addAccount, updateAccount} = endpoints;
+        const addPayload = buildProtonmailAccountData();
+        const updatePayload: AccountConfigUpdatePatch = produce(omit(["type"], addPayload), (draft) => {
+            (draft.entryUrl as any) = generateRandomString();
+            (draft.storeMails as any) = Boolean(!draft.storeMails);
+            draft.credentials.password = generateRandomString();
+            draft.credentials.mailPassword = generateRandomString();
+        });
+
+        await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
+
+        try {
+            await updateAccount({...updatePayload, login: `${updatePayload.login}404`}).toPromise();
+        } catch (err) {
+            t.is(err.constructor.name, StatusCodeError.name, "StatusCodeError constructor");
+            t.is(err.statusCode, StatusCode.NotFoundAccount, "StatusCode.NotFoundAccount");
+        }
+
+        const settings = await addAccount(addPayload).toPromise();
+        const updatedSettings = await updateAccount(updatePayload).toPromise();
+        const expectedSettings = produce(settings, (draft) => {
+            (draft._rev as number)++;
+            Object.assign(draft.accounts[0], mergeDeepRight(draft.accounts[0], updatePayload));
+        });
+
+        t.is(updatedSettings.accounts.length, 1, `1 account`);
+        t.deepEqual(updatedSettings, expectedSettings, `settings with updated account is returned`);
+        t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings, `settings with updated account is persisted`);
+    },
+
+    removeAccount: async (t) => {
+        const {endpoints} = t.context;
+        const {addAccount, removeAccount} = endpoints;
+        const addProtonPayload = buildProtonmailAccountData();
+        const addTutanotaPayload = buildTutanotaAccountData();
+        const removePayload = {login: addProtonPayload.login};
+        const removePayload404 = {login: "404 login"};
+
+        await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
+
+        try {
+            await removeAccount(removePayload404).toPromise();
+        } catch ({message}) {
+            t.is(message, `Account with "${removePayload404.login}" login has not been found`, "404 account");
+        }
+
+        await addAccount(addProtonPayload).toPromise();
+        await addAccount(addTutanotaPayload).toPromise();
+
+        const expectedSettings = produce(await t.context.ctx.settingsStore.readExisting(), (draft) => {
+            (draft._rev as number)++;
+            draft.accounts.splice(draft.accounts.findIndex(accountPickingPredicate(removePayload)), 1);
+        });
+        const updatedSettings = await removeAccount(removePayload).toPromise();
+
+        t.is(updatedSettings.accounts.length, 1, `1 account`);
+        t.deepEqual(updatedSettings, expectedSettings as any, `settings with updated account is returned`);
+        t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings as any, `settings with updated account is persisted`);
+    },
+
+    changeAccountOrder: async (t) => {
+        const {endpoints} = t.context;
+        const {addAccount, changeAccountOrder} = endpoints;
+
+        await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
+
+        await addAccount(buildProtonmailAccountData()).toPromise();
+        await addAccount(buildProtonmailAccountData()).toPromise();
+        let settings = await addAccount(buildTutanotaAccountData()).toPromise();
+
+        await t.throws(changeAccountOrder({login: "login.404", index: 0}).toPromise());
+        await t.throws(changeAccountOrder({login: settings.accounts[0].login, index: -1}).toPromise());
+        await t.throws(changeAccountOrder({login: settings.accounts[0].login, index: settings.accounts.length}).toPromise());
+        await t.throws(changeAccountOrder({login: settings.accounts[0].login, index: settings.accounts.length + 1}).toPromise());
+
+        const expectedSettings = produce(settings, (draft) => {
+            (draft._rev as number)++;
+            draft.accounts = [
+                draft.accounts[2],
+                draft.accounts[0],
+                draft.accounts[1],
+            ];
+        });
+        const args = {account: settings.accounts[settings.accounts.length - 1], toIndex: 0};
+        settings = await changeAccountOrder({login: args.account.login, index: args.toIndex}).toPromise();
+        t.deepEqual(expectedSettings, settings);
+
+        const expectedSettings2 = produce(settings, (draft) => draft);
+        const args2 = {account: settings.accounts[settings.accounts.length - 1], toIndex: settings.accounts.length - 1};
+        settings = await changeAccountOrder({login: args2.account.login, index: args2.toIndex}).toPromise();
+        t.deepEqual(expectedSettings2, settings);
+    },
+
+    // TODO test "associateSettingsWithKeePass" API
     associateSettingsWithKeePass: async (t) => {
-        // TODO test "associateSettingsWithKeePass" API
         t.pass();
     },
 
@@ -237,9 +303,9 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.true(openItemSpy.alwaysCalledWith(t.context.ctx.locations.userDataDir));
     },
 
-    patchBaseSettings: async (t) => {
+    patchBaseConfig: async (t) => {
         const endpoints = t.context.endpoints;
-        const action = endpoints.patchBaseSettings;
+        const action = endpoints.patchBaseConfig;
         const patches: BaseConfig[] = [
             {
                 startMinimized: false,
@@ -320,65 +386,6 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.pass();
     },
 
-    removeAccount: async (t) => {
-        const {endpoints} = t.context;
-        const {addAccount, removeAccount} = endpoints;
-        const addProtonPayload: Readonly<AccountConfigCreatePatch<"protonmail">> = {
-            type: "protonmail",
-            login: "login1",
-            entryUrl: "entryUrl1",
-            credentials: {
-                password: "password1",
-                twoFactorCode: "twoFactorCode1",
-                mailPassword: "mailPassword1",
-            },
-            credentialsKeePass: {},
-        };
-        const addTutaPayload: Readonly<AccountConfigCreatePatch<"tutanota">> = {
-            type: "tutanota",
-            login: "login2",
-            entryUrl: "entryUrl1",
-            credentials: {
-                password: "password1",
-                twoFactorCode: "twoFactorCode1",
-            },
-            credentialsKeePass: {},
-        };
-        const removePayload = {login: addProtonPayload.login};
-        const removePayload404 = {login: "404 login"};
-
-        await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
-
-        try {
-            await removeAccount(removePayload404).toPromise();
-        } catch ({message}) {
-            t.is(message, `Account with "${removePayload404.login}" login has not been found`, "404 account");
-        }
-
-        await addAccount(addProtonPayload).toPromise();
-        await addAccount(addTutaPayload).toPromise();
-        const settings = await t.context.ctx.settingsStore.readExisting();
-        const updatedSettings = await removeAccount(removePayload).toPromise();
-        const expectedSettings = {
-            ...settings,
-            _rev: (settings._rev as number) + 1,
-            accounts: [{
-                type: addTutaPayload.type,
-                entryUrl: addTutaPayload.entryUrl,
-                login: addTutaPayload.login,
-                credentials: {
-                    password: addTutaPayload.credentials.password,
-                    twoFactorCode: addTutaPayload.credentials.twoFactorCode,
-                },
-                credentialsKeePass: addTutaPayload.credentialsKeePass,
-            }],
-        };
-
-        t.is(updatedSettings.accounts.length, 1, `1 account`);
-        t.deepEqual(updatedSettings, expectedSettings as any, `settings with updated account is returned`);
-        t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings as any, `settings with updated account is persisted`);
-    },
-
     settingsExists: async (t) => {
         t.false(await t.context.ctx.settingsStore.readable(), "store: settings file does not exist");
         await readConfigAndSettings(t.context.endpoints, {password: OPTIONS.masterPassword});
@@ -412,44 +419,6 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         await action().toPromise();
         updated = await t.context.ctx.configStore.readExisting();
         t.is(updated.compactLayout, false);
-    },
-
-    updateAccount: async (t) => {
-        const endpoints = t.context.endpoints;
-        const {addAccount, updateAccount} = endpoints;
-        const updatePatch: AccountConfigUpdatePatch = {login: "login345", credentials: {password: "ps-1", twoFactorCode: "2fa-1"}};
-
-        await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
-
-        try {
-            await updateAccount({login: "login123", credentials: {password: "password1"}}).toPromise();
-        } catch (err) {
-            t.is(err.constructor.name, StatusCodeError.name, "StatusCodeError constructor");
-            t.is(err.statusCode, StatusCode.NotFoundAccount, "StatusCode.NotFoundAccount");
-        }
-
-        const settings = await addAccount(
-            {login: "login345", type: "protonmail", entryUrl: "", credentials: {password: "p1"}, credentialsKeePass: {}},
-        ).toPromise();
-        const updatedSettings = await updateAccount(updatePatch).toPromise();
-        const expectedSettings = {
-            ...settings,
-            _rev: (settings._rev as number) + 1,
-            accounts: [{
-                ...settings.accounts[0],
-                ...{
-                    credentials: {
-                        ...settings.accounts[0].credentials,
-                        password: updatePatch.credentials && updatePatch.credentials.password,
-                        twoFactorCode: updatePatch.credentials && updatePatch.credentials.twoFactorCode,
-                    },
-                },
-            }],
-        };
-
-        t.is(updatedSettings.accounts.length, 1, `1 account`);
-        t.deepEqual(updatedSettings, expectedSettings, `settings with updated account is returned`);
-        t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings, `settings with updated account is persisted`);
     },
 
     updateOverlayIcon: async (t) => {
@@ -620,3 +589,30 @@ test.beforeEach(async (t) => {
 
     // TODO make sure "IPC_MAIN_API.register" has been called
 });
+
+function buildProtonmailAccountData(): Readonly<AccountConfigCreatePatch<"protonmail">> {
+    return {
+        type: "protonmail",
+        login: generateRandomString(),
+        entryUrl: generateRandomString(),
+        credentials: {
+            password: generateRandomString(),
+            twoFactorCode: generateRandomString(),
+            mailPassword: generateRandomString(),
+        },
+        credentialsKeePass: {},
+    };
+}
+
+function buildTutanotaAccountData(): Readonly<AccountConfigCreatePatch<"tutanota">> {
+    return {
+        type: "tutanota",
+        login: generateRandomString(),
+        entryUrl: generateRandomString(),
+        credentials: {
+            password: generateRandomString(),
+            twoFactorCode: generateRandomString(),
+        },
+        credentialsKeePass: {},
+    };
+}

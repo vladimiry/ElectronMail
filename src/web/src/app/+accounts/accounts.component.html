@@ -62,21 +62,21 @@
         <ul class="list-group accounts-list d-none d-lg-flex">
             <a class="list-group-item list-group-item-action" href="javascript:void(0)"
                *ngFor="let account of accounts; trackBy: trackAccount" (click)="activateAccount(account)"
-               [ngClass]="{'list-group-item-warning': account.accountConfig.login === (selectedLogin$ | async)}">
+               [ngClass]="{'list-group-item-warning': account.accountConfig.login === selectedAccount?.accountConfig.login}">
                 <email-securely-app-account-title [account]="account"></email-securely-app-account-title>
             </a>
         </ul>
     </div>
     <div class="account-block">
-        <div *ngIf="accounts.length; then accountsDefined else accountsUnDefined"></div>
+        <div *ngIf="accounts.length; then accountsDefined else accountsUndefined"></div>
         <ng-template #accountsDefined>
             <email-securely-app-account
-                *ngFor="let account of accounts; trackBy: trackAccount"
-                [account]="account"
-                [ngStyle]="account.accountConfig.login != (selectedLogin$ | async) && {'opacity': '0', 'width': '0', 'height': '0'}"
+                *ngFor="let login of (loginsSet$ | async)"
+                [login]="login"
+                [ngStyle]="login != selectedAccount?.accountConfig.login && {'opacity': '0', 'width': '0', 'height': '0'}"
             ></email-securely-app-account>
         </ng-template>
-        <ng-template #accountsUnDefined>
+        <ng-template #accountsUndefined>
             <div class="d-flex justify-content-center align-items-center p-3 no-accounts-block">
                 <button type="button" class="btn btn-primary btn-lg" (click)="openAddingAccountView()">
                     <i class="fa fa-plus"></i>

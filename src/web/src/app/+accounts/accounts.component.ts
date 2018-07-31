@@ -1,8 +1,8 @@
 import {Component, OnDestroy, OnInit} from "@angular/core";
-import {concatMap, distinctUntilChanged, filter, mergeMap, take, takeUntil} from "rxjs/operators";
+import {distinctUntilChanged, map} from "rxjs/operators";
 import {equals} from "ramda";
 import {Store} from "@ngrx/store";
-import {Subject} from "rxjs";
+import {Subscription} from "rxjs";
 
 import {ACCOUNTS_ACTIONS, CORE_ACTIONS, NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/src/app/store/selectors";
@@ -17,51 +17,46 @@ import {WebAccount} from "src/shared/model/account";
     preserveWhitespaces: true,
 })
 export class AccountsComponent implements OnInit, OnDestroy {
-    compactLayout$ = this.store.select(OptionsSelectors.CONFIG.compactLayout);
     accounts$ = this.store.select(AccountsSelectors.FEATURED.accounts);
+    loginsSet$ = this.accounts$.pipe(
+        map((accounts) => accounts.map((account) => account.accountConfig.login)),
+        distinctUntilChanged((prev, curr) => equals([...prev].sort(), [...curr].sort())),
+    );
+    compactLayout$ = this.store.select(OptionsSelectors.CONFIG.compactLayout);
     initialized$ = this.store.select(AccountsSelectors.FEATURED.initialized);
-    selectedLogin$ = this.store.select(AccountsSelectors.FEATURED.selectedLogin);
     accounts: WebAccount[] = [];
     selectedAccount?: WebAccount;
     unreadSummary?: number;
-    unSubscribe$ = new Subject();
+    private subscription = new Subscription();
 
     constructor(
         private store: Store<State>,
     ) {}
 
     ngOnInit() {
-        this.store.select(OptionsSelectors.FEATURED.electronLocations).pipe(
-            filter((value) => Boolean(value)),
-            mergeMap((value) => value ? [value] : []),
-            take(1),
-            concatMap(({preload}) => this.accounts$),
-            takeUntil(this.unSubscribe$),
-        ).subscribe((accounts) => {
-            this.accounts = accounts;
-        });
-
-        this.store.select(AccountsSelectors.ACCOUNTS.loggedInAndUnreadSummary)
-            .pipe(
-                distinctUntilChanged((prev, curr) => equals(prev, curr)), // TODO => "distinctUntilChanged(equals)"
-                takeUntil(this.unSubscribe$),
-            )
-            .subscribe(({hasLoggedOut, unread}) => {
-                this.unreadSummary = unread;
-                this.store.dispatch(CORE_ACTIONS.UpdateOverlayIcon({hasLoggedOut, unread}));
-            });
-
-        this.store.select(AccountsSelectors.FEATURED.selectedAccount)
-            .pipe(takeUntil(this.unSubscribe$))
-            .subscribe((selectedAccount) => this.selectedAccount = selectedAccount);
-    }
-
-    activateAccount(account: WebAccount) {
-        this.store.dispatch(ACCOUNTS_ACTIONS.Activate({login: account.accountConfig.login}));
+        this.subscription.add(
+            this.accounts$.subscribe((accounts) => this.accounts = accounts),
+        );
+        this.subscription.add(
+            this.store.select(AccountsSelectors.ACCOUNTS.loggedInAndUnreadSummary)
+                .pipe(distinctUntilChanged((prev, curr) => equals(prev, curr))) // TODO => "distinctUntilChanged(equals)"
+                .subscribe(({hasLoggedOut, unread}) => {
+                    this.unreadSummary = unread;
+                    this.store.dispatch(CORE_ACTIONS.UpdateOverlayIcon({hasLoggedOut, unread}));
+                }),
+        );
+        this.subscription.add(
+            this.store.select(AccountsSelectors.FEATURED.selectedAccount)
+                .subscribe((selectedAccount) => this.selectedAccount = selectedAccount),
+        );
     }
 
     trackAccount(index: number, account?: WebAccount) {
         return account ? account.accountConfig.login : undefined;
+    }
+
+    activateAccount(account: WebAccount) {
+        this.store.dispatch(ACCOUNTS_ACTIONS.Activate({login: account.accountConfig.login}));
     }
 
     openSettingsView() {
@@ -97,7 +92,6 @@ export class AccountsComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.unSubscribe$.next();
-        this.unSubscribe$.complete();
+        this.subscription.unsubscribe();
     }
 }

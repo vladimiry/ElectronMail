@@ -7,12 +7,13 @@ import {
     Input,
     NgZone,
     OnDestroy,
+    OnInit,
     ViewChild,
 } from "@angular/core";
-import {BehaviorSubject, EMPTY, merge, Observable, of, Subject} from "rxjs";
+import {BehaviorSubject, EMPTY, merge, Observable, of, Subscription} from "rxjs";
 // tslint:disable-next-line:no-import-zones
 import {DidFailLoadEvent} from "electron";
-import {filter, map, mergeMap, pairwise, take, takeUntil, tap, withLatestFrom} from "rxjs/operators";
+import {filter, map, mergeMap, pairwise, take, withLatestFrom} from "rxjs/operators";
 import {equals, pick} from "ramda";
 import {Action, Store} from "@ngrx/store";
 
@@ -22,7 +23,7 @@ import {APP_NAME, ONE_SECOND_MS} from "src/shared/constants";
 import {ElectronService} from "src/web/src/app/+core/electron.service";
 import {getZoneNameBoundWebLogger} from "src/web/src/util";
 import {KeePassRef} from "src/shared/model/keepasshttp";
-import {OptionsSelectors} from "src/web/src/app/store/selectors";
+import {AccountsSelectors, OptionsSelectors} from "src/web/src/app/store/selectors";
 import {State} from "src/web/src/app/store/reducers/accounts";
 
 let componentIndex = 0;
@@ -33,7 +34,7 @@ let componentIndex = 0;
     styleUrls: ["./account.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AccountComponent implements OnDestroy {
+export class AccountComponent implements OnDestroy, OnInit {
     passwordKeePassRef$: Observable<KeePassRef | undefined>;
     twoFactorCodeKeePassRef$: Observable<KeePassRef | undefined>;
     mailPasswordKeePassRef$: Observable<KeePassRef | undefined>;
@@ -42,6 +43,8 @@ export class AccountComponent implements OnDestroy {
     @HostBinding("class.web-view-hidden")
     afterFailedLoadWait: number;
     keePassClientConf$ = this.store.select(OptionsSelectors.SETTINGS.keePassClientConf);
+    @Input()
+    login: string;
     private account$: BehaviorSubject<WebAccount>;
     private logger: ReturnType<typeof getZoneNameBoundWebLogger>;
     private loggerZone: Zone;
@@ -49,7 +52,7 @@ export class AccountComponent implements OnDestroy {
     private webViewElementRef: ElementRef;
     private webViewPromiseTrigger: (webView: Electron.WebviewTag) => void;
     private webViewPromise = new Promise<Electron.WebviewTag>((resolve) => this.webViewPromiseTrigger = resolve);
-    private unSubscribe$ = new Subject();
+    private subscription = new Subscription();
     private notificationChannelsReleasingTriggers: Array<() => void> = [];
 
     constructor(
@@ -68,23 +71,33 @@ export class AccountComponent implements OnDestroy {
         return this.account$ ? this.account$.value : null;
     }
 
-    @Input()
-    set account(account: WebAccount | null) {
-        if (!account) {
-            throw new Error(`"account" argument must be defined at this stage`);
+    ngOnInit() {
+        const login = this.login;
+
+        if (!login) {
+            throw new Error(`"login" argument must be defined at this stage`);
         }
-        if (this.account$) {
-            this.account$.next(account);
-            return;
-        }
-        this.account$ = new BehaviorSubject(account);
-        this.onAccountMounted();
+
+        this.subscription.add(
+            this.store
+                .select(AccountsSelectors.ACCOUNTS.pickAccount({login}))
+                .subscribe((account) => {
+                    if (!account) {
+                        return;
+                    }
+                    if (!this.account$) {
+                        this.account$ = new BehaviorSubject(account);
+                        this.onAccountWiredUp();
+                        return;
+                    }
+                    this.account$.next(account);
+                }),
+        );
     }
 
     ngOnDestroy() {
         this.logger.info(`ngOnDestroy()`);
-        this.unSubscribe$.next();
-        this.unSubscribe$.complete();
+        this.subscription.unsubscribe();
         this.releaseNotificationChannels();
     }
 
@@ -103,8 +116,8 @@ export class AccountComponent implements OnDestroy {
         });
     }
 
-    private onAccountMounted() {
-        this.logger.info(`onAccountMounted()`);
+    private onAccountWiredUp() {
+        this.logger.info(`onAccountWiredUp()`);
 
         this.passwordKeePassRef$ = this.account$.pipe(map((a) => a.accountConfig.credentialsKeePass.password));
         this.twoFactorCodeKeePassRef$ = this.account$.pipe(map((a) => a.accountConfig.credentialsKeePass.twoFactorCode));
@@ -112,18 +125,23 @@ export class AccountComponent implements OnDestroy {
             return accountConfig.type === "protonmail" ? of(accountConfig.credentialsKeePass.mailPassword) : EMPTY;
         }));
 
-        this.store.select(OptionsSelectors.FEATURED.electronLocations).pipe(
-            mergeMap((value) => value ? [value] : []),
-            map(({preload}) => preload.webView),
-            withLatestFrom(this.account$),
-            take(1),
-        ).subscribe(([webViewPreloads, {accountConfig}]) => {
-            this.webViewAttributes = {src: accountConfig.entryUrl, preload: webViewPreloads[accountConfig.type]};
-            this.logger.verbose(`webview:attrs initial: "${this.webViewAttributes.src}"`);
-            this.changeDetectorRef.detectChanges();
-            this.logger.info(`webview: mounted to DOM`);
-            this.onWebViewMounted(this.webViewElementRef.nativeElement);
-        });
+        // TODO "take(1)" is sufficient subscription releasing strategy in this case
+        this.subscription.add(
+            this.store.select(OptionsSelectors.FEATURED.electronLocations)
+                .pipe(
+                    mergeMap((value) => value ? [value] : []),
+                    map(({preload}) => preload.webView),
+                    withLatestFrom(this.account$),
+                    take(1),
+                )
+                .subscribe(([webViewPreloads, {accountConfig}]) => {
+                    this.webViewAttributes = {src: accountConfig.entryUrl, preload: webViewPreloads[accountConfig.type]};
+                    this.logger.verbose(`webview.attrs.initial: "${this.webViewAttributes.src}"`);
+                    this.changeDetectorRef.detectChanges();
+                    this.logger.info(`webview.detectChanges: mounted to DOM)`);
+                    this.onWebViewMounted(this.webViewElementRef.nativeElement);
+                }),
+        );
     }
 
     private onWebViewMounted(webView: Electron.WebviewTag) {
@@ -131,17 +149,22 @@ export class AccountComponent implements OnDestroy {
 
         this.webViewPromiseTrigger(webView);
 
-        merge(
-            this.account$.pipe(
-                map(({accountConfig}) => accountConfig),
-                pairwise(),
-                filter(([{entryUrl: entryUrlPrev}, {entryUrl: entryUrlCurr}]) => entryUrlPrev !== entryUrlCurr),
-                map(([prev, curr]) => curr),
-                tap(({entryUrl}) => {
+        this.subscription.add(
+            this.account$
+                .pipe(
+                    map(({accountConfig}) => accountConfig),
+                    pairwise(),
+                    filter(([{entryUrl: entryUrlPrev}, {entryUrl: entryUrlCurr}]) => entryUrlPrev !== entryUrlCurr),
+                    map(([prev, curr]) => curr),
+                )
+                .subscribe(({entryUrl}) => {
                     this.webViewAttributes.src = entryUrl;
-                    this.logger.verbose(`webview:attrs url update to "${entryUrl}"`);
+                    this.logger.verbose(`webview.attrs.urlUpdate: "${entryUrl}"`);
+                    this.changeDetectorRef.detectChanges();
+                    this.logger.info(`webview.detectChanges: updated in DOM`);
                 }),
-            ),
+        );
+        this.subscription.add(
             merge(
                 this.account$.pipe(
                     pairwise(),
@@ -164,19 +187,21 @@ export class AccountComponent implements OnDestroy {
                     }),
                     map(([accountPrev, accountCurr]) => accountCurr),
                 ),
-            ).pipe(
-                tap((account) => {
-                    this.logger.info(`dispatch "TryToLogin"`);
-                    this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.TryToLogin({account, webView}));
-                }),
-            ),
-            this.account$.pipe(
-                map(({notifications, accountConfig}) => ({loggedIn: notifications.loggedIn, storeMails: accountConfig.storeMails})),
-                pairwise(),
-                filter(([prev, curr]) => !equals(prev, curr)),
-                map(([prev, curr]) => curr),
-                withLatestFrom(this.account$),
-                tap(([{loggedIn, storeMails}, account]) => {
+            ).subscribe((account) => {
+                this.logger.info(`dispatch "TryToLogin"`);
+                this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.TryToLogin({account, webView}));
+            }),
+        );
+        this.subscription.add(
+            this.account$
+                .pipe(
+                    map(({notifications, accountConfig}) => ({loggedIn: notifications.loggedIn, storeMails: accountConfig.storeMails})),
+                    pairwise(),
+                    filter(([prev, curr]) => !equals(prev, curr)),
+                    map(([prev, curr]) => curr),
+                    withLatestFrom(this.account$),
+                )
+                .subscribe(([{loggedIn, storeMails}, account]) => {
                     const login = account.accountConfig.login;
                     // TODO wire "ToggleFetching" back after the "triggerPromisesReleasing()" call
                     if (loggedIn && storeMails) {
@@ -189,15 +214,18 @@ export class AccountComponent implements OnDestroy {
                     }
                     this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.ToggleFetching({login}));
                 }),
-            ),
-            this.account$.pipe(
-                withLatestFrom(this.store.select(OptionsSelectors.CONFIG.unreadNotifications)),
-                filter(([account, unreadNotificationsEnabled]) => Boolean(unreadNotificationsEnabled)),
-                map(([account]) => account),
-                pairwise(),
-                filter(([{notifications: prev}, {notifications: curr}]) => curr.unread > prev.unread),
-                map(([prev, curr]) => curr),
-                tap(({accountConfig, notifications}) => {
+        );
+        this.subscription.add(
+            this.account$
+                .pipe(
+                    withLatestFrom(this.store.select(OptionsSelectors.CONFIG.unreadNotifications)),
+                    filter(([account, unreadNotificationsEnabled]) => Boolean(unreadNotificationsEnabled)),
+                    map(([account]) => account),
+                    pairwise(),
+                    filter(([{notifications: prev}, {notifications: curr}]) => curr.unread > prev.unread),
+                    map(([prev, curr]) => curr),
+                )
+                .subscribe(({accountConfig, notifications}) => {
                     const {login} = accountConfig;
                     const {unread} = notifications;
                     const body = `Account "${login}" has ${unread} unread email${unread > 1 ? "s" : ""}.`;
@@ -206,12 +234,7 @@ export class AccountComponent implements OnDestroy {
                         this.dispatchInLoggerZone(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));
                     });
                 }),
-            ),
-        ).pipe(
-            takeUntil(this.unSubscribe$),
-        ).subscribe(() => {
-            // NOOP
-        });
+        );
 
         // if ((process.env.NODE_ENV/* as BuildEnvironment*/) === "development") {
         //     this.webView.addEventListener("dom-ready", () => webView.openDevTools());
@@ -224,36 +247,35 @@ export class AccountComponent implements OnDestroy {
         this.logger.info(`configureWebView()`);
 
         const domReadyEventHandler = () => {
-            this.logger.verbose(`webview:domReadyEventHandler(): "${webView.src}"`);
+            this.logger.verbose(`webview.domReadyEventHandler(): "${webView.src}"`);
             this.releaseNotificationChannels();
 
             // TODO consider moving "notification" WebView API method back to the "accounts.effects"
             const {value: account} = this.account$;
             const {type, entryUrl, login} = account.accountConfig;
             const finishPromise = this.setupNotificationChannelReleasingTrigger();
-            const subscription = this.electron.webViewClient(webView, type, {finishPromise})
-                .pipe(
-                    mergeMap((caller) => caller("notification")({entryUrl, zoneName: this.logger.zoneName()})),
-                    takeUntil(this.unSubscribe$),
-                )
-                .subscribe((notification) => {
-                    this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.NotificationPatch({login, notification}));
-                });
+            const subscription = this.subscription.add(
+                this.electron.webViewClient(webView, type, {finishPromise})
+                    .pipe(mergeMap((caller) => caller("notification")({entryUrl, zoneName: this.logger.zoneName()})))
+                    .subscribe((notification) => {
+                        this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.NotificationPatch({login, notification}));
+                    }),
+            );
             // tslint:disable-next-line:no-floating-promises
             finishPromise.then(() => subscription.unsubscribe());
         };
         const arrayOfDomReadyEvenNameAndHandler = ["dom-ready", domReadyEventHandler];
         const subscribeDomReadyHandler = () => {
-            this.logger.info(`webview:subscribeDomReadyHandler()`);
+            this.logger.info(`webview.subscribeDomReadyHandler()`);
             webView.addEventListener.apply(webView, arrayOfDomReadyEvenNameAndHandler);
         };
         const unsubscribeDomReadyHandler = () => {
-            this.logger.info(`webview:unsubscribeDomReadyHandler()`);
+            this.logger.info(`webview.unsubscribeDomReadyHandler()`);
             webView.removeEventListener.apply(webView, arrayOfDomReadyEvenNameAndHandler);
         };
 
         subscribeDomReadyHandler();
-        this.unSubscribe$.pipe(take(1)).subscribe(unsubscribeDomReadyHandler);
+        this.subscription.add({unsubscribe: unsubscribeDomReadyHandler});
 
         webView.addEventListener("new-window", ({url}: any) => {
             this.dispatchInLoggerZone(NAVIGATION_ACTIONS.OpenExternal({url}));

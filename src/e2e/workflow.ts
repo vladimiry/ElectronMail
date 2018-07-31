@@ -9,13 +9,13 @@ import mkdirp from "mkdirp";
 import path from "path";
 import psNode from "ps-node"; // see also https://www.npmjs.com/package/find-process
 import psTree from "ps-tree";
+import randomString from "randomstring";
 import sinon from "sinon";
 import {Application} from "spectron";
 import {promisify} from "util";
 
 import {AccountType} from "src/shared/model/account";
 import {ACCOUNTS_CONFIG, ONE_SECOND_MS, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
-import randomString from "randomstring";
 
 export interface TestContext {
     app: Application;

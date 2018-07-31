@@ -31,6 +31,9 @@ export interface DatabaseUpsertInput<T extends EntityTable = EntityTable,
 
 export interface Endpoints {
     addAccount: ApiMethod<AccountConfigCreatePatch, Settings>;
+    updateAccount: ApiMethod<AccountConfigUpdatePatch, Settings>;
+    changeAccountOrder: ApiMethod<LoginFieldContainer & { index: number }, Settings>;
+    removeAccount: ApiMethod<LoginFieldContainer, Settings>;
 
     associateSettingsWithKeePass: ApiMethod<UrlFieldContainer, Settings>;
 
@@ -51,7 +54,7 @@ export interface Endpoints {
 
     openSettingsFolder: ApiMethodNoArgument<never>;
 
-    patchBaseSettings: ApiMethod<BaseConfig, Config>;
+    patchBaseConfig: ApiMethod<BaseConfig, Config>;
 
     quit: ApiMethodNoArgument<never>;
 
@@ -61,15 +64,11 @@ export interface Endpoints {
 
     reEncryptSettings: ApiMethod<PasswordFieldContainer & { encryptionPreset: EncryptionAdapterOptions }, Settings>;
 
-    removeAccount: ApiMethod<LoginFieldContainer, Settings>;
-
     settingsExists: ApiMethodNoArgument<boolean>;
 
     toggleBrowserWindow: ApiMethod<{ forcedState?: boolean }, never>;
 
     toggleCompactLayout: ApiMethodNoArgument<Config>;
-
-    updateAccount: ApiMethod<AccountConfigUpdatePatch, Settings>;
 
     updateOverlayIcon: ApiMethod<{ hasLoggedOut: boolean, unread: number }, never>;
 }

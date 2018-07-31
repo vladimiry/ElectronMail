@@ -6,6 +6,7 @@ import {StoreRouterConnectingModule} from "@ngrx/router-store";
 import {AccordionModule} from "ngx-bootstrap/accordion";
 import {BsDropdownModule} from "ngx-bootstrap/dropdown";
 import {PopoverModule} from "ngx-bootstrap/popover";
+import {DragulaModule} from "ng2-dragula";
 
 import * as AccountsReducer from "./store/reducers/accounts";
 import * as ErrorsReducer from "./store/reducers/errors";
@@ -26,6 +27,7 @@ export const APP_MODULE_NG_CONF = {
         AccordionModule.forRoot(),
         BsDropdownModule.forRoot(),
         PopoverModule.forRoot(),
+        DragulaModule.forRoot(),
         StoreModule.forRoot(reducers, {metaReducers}),
         StoreModule.forFeature(AccountsReducer.featureName, AccountsReducer.reducer),
         StoreModule.forFeature(ErrorsReducer.featureName, ErrorsReducer.reducer),

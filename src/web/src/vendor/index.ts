@@ -5,3 +5,6 @@ import "./index.scss";
 
 import "./electron-webview-angular-fix.ts";
 import "zone.js/dist/zone";
+
+// TODO get rid of window.global exposing, required by "ng2-dragula"
+(window as any).global = window;

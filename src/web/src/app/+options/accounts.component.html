@@ -2,9 +2,9 @@
     <i class="fa fa-plus" aria-hidden="true"></i>
     Add Account
 </a>
-
-<ul class="list-group">
-    <li class="list-group-item" *ngFor="let account of accounts$ | async">
+<ul class="list-group" [dragula]="reorderingGroup">
+    <li class="list-group-item pl-0 pr-3" *ngFor="let account of accounts$ | async" [attr.data-login]="account.login">
+        <i class="fa fa-bars drag-hover px-3"></i>
         <email-securely-app-type-symbol [type]="account.type"></email-securely-app-type-symbol>
         {{ account.login }}
         <a [routerLink]="['./../account-edit', account.login]" class="float-right">

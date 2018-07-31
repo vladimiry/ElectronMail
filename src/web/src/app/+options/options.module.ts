@@ -3,6 +3,7 @@ import {CollapseModule} from "ngx-bootstrap/collapse";
 import {EffectsModule} from "@ngrx/effects";
 import {NgModule} from "@angular/core";
 import {PopoverModule} from "ngx-bootstrap/popover";
+import {DragulaModule} from "ng2-dragula";
 
 import {SharedModule} from "src/web/src/app/+shared/shared.module";
 import {OptionsRoutingModule} from "./options.routing.module";
@@ -26,6 +27,7 @@ import {StorageComponent} from "./storage.component";
         CollapseModule,
         AccordionModule,
         PopoverModule,
+        DragulaModule,
         SharedModule,
         OptionsRoutingModule,
         EffectsModule.forFeature([OptionsEffects]),

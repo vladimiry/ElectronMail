@@ -1,5 +1,5 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {catchError, filter, finalize, map, mergeMap, concatMap, withLatestFrom} from "rxjs/operators";
+import {catchError, concatMap, filter, finalize, map, withLatestFrom} from "rxjs/operators";
 import {EMPTY, merge, of} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store} from "@ngrx/store";
@@ -21,7 +21,7 @@ export class OptionsEffects {
         filter(OPTIONS_ACTIONS.is.InitRequest),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(() => this.electronService.ipcMainClient()("init")().pipe(
-            mergeMap((payload) => [
+            concatMap((payload) => [
                 OPTIONS_ACTIONS.InitResponse(payload),
                 this.optionsService.settingsNavigationAction({path: ""}),
             ]),
@@ -33,7 +33,7 @@ export class OptionsEffects {
         filter(OPTIONS_ACTIONS.is.GetConfigRequest),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(() => this.electronService.ipcMainClient()("readConfig")().pipe(
-            mergeMap((config) => [
+            concatMap((config) => [
                 OPTIONS_ACTIONS.GetConfigResponse(config),
                 this.optionsService.settingsNavigationAction({path: ""}),
             ]),
@@ -68,7 +68,7 @@ export class OptionsEffects {
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({signingIn: true})),
             this.electronService.ipcMainClient()("readSettings")(payload).pipe(
-                mergeMap((settings) => [
+                concatMap((settings) => [
                     OPTIONS_ACTIONS.GetSettingsResponse(settings),
                     NAVIGATION_ACTIONS.Go({
                         path: [{
@@ -96,7 +96,7 @@ export class OptionsEffects {
             this.electronService
                 .ipcMainClient()("addAccount")(payload)
                 .pipe(
-                    mergeMap((settings) => [
+                    concatMap((settings) => [
                         OPTIONS_ACTIONS.GetSettingsResponse(settings),
                         this.optionsService.settingsNavigationAction({
                             path: "account-edit",
@@ -122,6 +122,19 @@ export class OptionsEffects {
         )));
 
     @Effect()
+    changeAccountOrderRequest$ = this.actions$.pipe(
+        filter(OPTIONS_ACTIONS.is.ChangeAccountOrderRequest),
+        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+        concatMap(({payload}) => merge(
+            of(this.buildPatchProgress({changingAccountOrder: true})),
+            this.electronService.ipcMainClient()("changeAccountOrder")({login: payload.login, index: payload.index}).pipe(
+                map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
+                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                finalize(() => this.dispatchProgress({changingAccountOrder: false})),
+            ),
+        )));
+
+    @Effect()
     removeAccountRequest$ = this.actions$.pipe(
         filter(OPTIONS_ACTIONS.is.RemoveAccountRequest),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
@@ -141,7 +154,7 @@ export class OptionsEffects {
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({changingPassword: true})),
             this.electronService.ipcMainClient()("changeMasterPassword")(payload).pipe(
-                mergeMap(() => EMPTY),
+                concatMap(() => EMPTY),
                 catchError((error) => {
                     error.message = "Failed to change the master password! " +
                         "Please make sure that correct current password has been entered.";
@@ -183,7 +196,7 @@ export class OptionsEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({updatingBaseSettings: true})),
-            this.electronService.ipcMainClient()("patchBaseSettings")(payload).pipe(
+            this.electronService.ipcMainClient()("patchBaseConfig")(payload).pipe(
                 map((config) => OPTIONS_ACTIONS.GetConfigResponse(config)),
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
                 finalize(() => this.dispatchProgress({updatingBaseSettings: false})),

@@ -11,7 +11,7 @@
   },
   "main": "./app/electron-main.js",
   "scripts": {
-    "app:dist": "npm-run-all security-check lint test:electron-main test:web clean:app build assets test:e2e",
+    "app:dist": "npm-run-all security-check lint test:electron-main test:web clean:app build assets electron-builder:install-app-deps test:e2e",
     "build": "npm-run-all build:electron-main build:electron-preload build:web",
     "build:dev": "cross-env NODE_ENV=development npm-run-all build",
     "build:electron-main": "webpack --config ./src/webpack/electron-main.ts",

@@ -14,9 +14,15 @@ files: [
   "!app/electron-preload/browser-window-e2e.js",
   "!node_modules/rxjs/{_esm5,_esm2015,src,bundles}",
   "!node_modules/pureimage/{firstimages,tests}",
-  "!node_modules/{leveldown,levelup,int64-buffer}",
-  # TODO sodium-native: include into the package only needed prebuilds for the platform is being built
+  # nano-sql
+  "!node_modules/nano-sql/src",
+  "!node_modules/leveldown",
+  "!node_modules/levelup",
+  "!node_modules/int64-buffer",
+  # sodium-native TODO: include into the package only needed prebuilds for the platform is being built
   "!node_modules/sodium-native/{src,test,libsodium}",
+  "!node_modules/sodium-native/prebuilds/linux-arm",
+  "!node_modules/sodium-native/prebuilds/win32-ia32",
   # TODO exclude not needed stuff in "files:" section to reduce app packages size, can save megabytes, so a significant improvement
 ]
 compression: maximum
@@ -24,6 +30,7 @@ asar: true
 asarUnpack:
 - "**/node_modules/sodium-native/**/*"
 - "**/node_modules/keytar/**/*"
+- "**/node_modules/leveldown/**/*"
 
 mac:
   icon: ./app/assets/icons/mac/icon.icns

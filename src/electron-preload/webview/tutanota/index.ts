@@ -1,5 +1,5 @@
 import {authenticator} from "otplib";
-import {distinctUntilChanged, map, shareReplay, concatMap, tap} from "rxjs/operators";
+import {concatMap, distinctUntilChanged, map, shareReplay, tap} from "rxjs/operators";
 import {EMPTY, from, interval, merge, Observable, Subscriber} from "rxjs";
 
 import {
@@ -7,11 +7,11 @@ import {
     NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL,
     WEBVIEW_LOGGERS,
 } from "src/electron-preload/webview/constants";
-import {AccountNotificationType} from "src/shared/model/account";
+import {AccountNotificationType, WebAccountTutanota} from "src/shared/model/account";
+import {curryFunctionMembers, MailFolderTypeService} from "src/shared/util";
 import {fetchEntitiesRange} from "src/electron-preload/webview/tutanota/lib/rest";
 import {fetchMessages, fetchUserFoldersWithSubFolders} from "src/electron-preload/webview/tutanota/lib/fetcher";
 import {fillInputValue, getLocationHref, submitTotpToken, waitElements} from "src/electron-preload/webview/util";
-import {curryFunctionMembers, MailFolderTypeService} from "src/shared/util";
 import {MailTypeRef, User} from "src/electron-preload/webview/tutanota/lib/rest/model";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {resolveWebClientApi, WebClientApi} from "src/electron-preload/webview/tutanota/lib/tutanota-api";
@@ -122,9 +122,9 @@ function bootstrapApi(webClientApi: WebClientApi) {
             const _logPrefix = ["notification()", zoneName];
             logger.info(..._logPrefix);
 
-            type LoggedInOutput = Required<Pick<AccountNotificationType, "loggedIn">>;
-            type PageTypeOutput = Required<Pick<AccountNotificationType, "pageType">>;
-            type UnreadOutput = Required<Pick<AccountNotificationType, "unread">>;
+            type LoggedInOutput = Required<Pick<AccountNotificationType<WebAccountTutanota>, "loggedIn">>;
+            type PageTypeOutput = Required<Pick<AccountNotificationType<WebAccountTutanota>, "pageType">>;
+            type UnreadOutput = Required<Pick<AccountNotificationType<WebAccountTutanota>, "unread">>;
 
             const observables: [
                 Observable<LoggedInOutput>,

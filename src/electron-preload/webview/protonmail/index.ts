@@ -7,10 +7,10 @@ import {
     NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL,
     WEBVIEW_LOGGERS,
 } from "src/electron-preload/webview/constants";
-import {AccountNotificationType} from "src/shared/model/account";
+import {AccountNotificationType, WebAccountProtonmail} from "src/shared/model/account";
+import {curryFunctionMembers} from "src/shared/util";
 import {fillInputValue, getLocationHref, submitTotpToken, waitElements} from "src/electron-preload/webview/util";
 import {PROTONMAIL_IPC_WEBVIEW_API, ProtonmailApi} from "src/shared/api/webview/protonmail";
-import {curryFunctionMembers} from "src/shared/util";
 
 const WINDOW = window as any;
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[index]");
@@ -100,9 +100,9 @@ const endpoints: ProtonmailApi = {
         const _logPrefix = ["notification()", zoneName];
         logger.info(..._logPrefix);
 
-        type LoggedInOutput = Required<Pick<AccountNotificationType, "loggedIn">>;
-        type PageTypeOutput = Required<Pick<AccountNotificationType, "pageType">>;
-        type UnreadOutput = Required<Pick<AccountNotificationType, "unread">>;
+        type LoggedInOutput = Required<Pick<AccountNotificationType<WebAccountProtonmail>, "loggedIn">>;
+        type PageTypeOutput = Required<Pick<AccountNotificationType<WebAccountProtonmail>, "pageType">>;
+        type UnreadOutput = Required<Pick<AccountNotificationType<WebAccountProtonmail>, "unread">>;
 
         const observables: [
             Observable<LoggedInOutput>,

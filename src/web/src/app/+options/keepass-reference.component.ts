@@ -24,9 +24,9 @@ export class KeePassReferenceComponent {
     });
     // keepass
     @Input()
-    keePassClientConf$: Observable<KeePassClientConf>;
+    keePassClientConf$!: Observable<KeePassClientConf>;
     @Input()
-    reference$: Observable<KeePassRef>;
+    reference$!: Observable<KeePassRef>;
     // output
     @Output()
     linkHandler = new EventEmitter<KeePassRef>();

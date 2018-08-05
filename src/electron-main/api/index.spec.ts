@@ -225,6 +225,11 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.true(mocks["nano-sql"]._queryStub.calledWithExactly("upsert", payload.data));
     },
 
+    // TODO test "databaseMailRawNewestTimestamp" API
+    databaseMailRawNewestTimestamp: async (t) => {
+        t.pass();
+    },
+
     init: async (t) => {
         const result = await t.context.endpoints.init().toPromise();
 

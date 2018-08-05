@@ -2,6 +2,9 @@
 /.idea
 *.iml
 
+# Visual Studio Code IDE
+/.vscode
+
 # Node.js
 node_modules
 npm-debug.log

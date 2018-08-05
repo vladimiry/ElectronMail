@@ -22,7 +22,8 @@ export const ACCOUNTS = {
     pickAccount: (criteria: LoginFieldContainer) => createSelector(
         accountsSelector,
         (accounts) => {
-            const index = accounts.map((a) => a.accountConfig).findIndex(accountPickingPredicate(criteria));
+            const configs = accounts.map(({accountConfig}) => accountConfig);
+            const index = configs.findIndex(accountPickingPredicate(criteria));
             return index === -1 ? null : accounts[index];
         },
     ),

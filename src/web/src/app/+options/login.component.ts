@@ -22,7 +22,7 @@ export class LoginComponent implements AfterViewInit, OnInit {
     });
     processing$ = this.store.select(OptionsSelectors.FEATURED.progress).pipe(map((p) => p.signingIn));
     @ViewChildren("passwordRef")
-    passwordElementRefQuery: QueryList<ElementRef>;
+    passwordElementRefQuery!: QueryList<ElementRef>;
 
     constructor(private store: Store<State>) {}
 

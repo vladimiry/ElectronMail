@@ -8,7 +8,7 @@ import {ACCOUNTS_ACTIONS, CORE_ACTIONS, NAVIGATION_ACTIONS, OPTIONS_ACTIONS} fro
 import {AccountsSelectors, OptionsSelectors} from "src/web/src/app/store/selectors";
 import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
 import {State} from "src/web/src/app/store/reducers/accounts";
-import {WebAccount} from "src/shared/model/account";
+import {WebAccount} from "src/web/src/app/model";
 
 @Component({
     selector: "email-securely-app-accounts",

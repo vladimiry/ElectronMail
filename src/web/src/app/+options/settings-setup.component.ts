@@ -37,7 +37,7 @@ export class SettingsSetupComponent implements AfterViewInit {
     processing$ = this.store.select(OptionsSelectors.FEATURED.progress)
         .pipe(map(({signingIn}) => signingIn));
     @ViewChildren("passwordRef")
-    passwordElementRefQuery: QueryList<ElementRef>;
+    passwordElementRefQuery!: QueryList<ElementRef>;
 
     constructor(private store: Store<State>) {}
 

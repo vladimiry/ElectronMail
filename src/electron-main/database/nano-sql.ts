@@ -8,9 +8,10 @@ export * from "nano-sql";
 
 // override/extend default NanoSQLInstance here
 class NanoSQLInstanceExt extends NanoSQLInstance {
-    async execUpsertQuery<T extends DatabaseModel.BasePersisted>(data: (T | T[]) | (Omit<T, "pk"> | Array<Omit<T, "pk">>)): Promise<void> {
-        await this.query("upsert", data).exec();
-        return;
+    async execUpsertQuery<T extends DatabaseModel.BasePersisted>(
+        data: (T | T[]) | (Omit<T, "pk"> | Array<Omit<T, "pk">>),
+    ): Promise<Array<{ affectedRowPKS: Array<T["pk"]>; affectedRows: T[] }>> {
+        return (await this.query("upsert", data).exec()) as any;
     }
 }
 

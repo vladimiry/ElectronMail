@@ -1,25 +1,35 @@
 import {Observable, Subscriber} from "rxjs";
 
 import * as DatabaseModel from "src/shared/model/database";
+import {curryFunctionMembers, MailFolderTypeService} from "src/shared/util";
 import {fetchEntitiesList, fetchEntitiesRange, fetchEntity, Model as M} from "src/electron-preload/webview/tutanota/lib/rest";
+import {FetchMessagesInput, FetchMessagesOutput} from "src/shared/api/webview/common";
 import {Id} from "./rest/model";
-import {MailFolderTypeService} from "src/shared/util";
 import {resolveWebClientApi} from "src/electron-preload/webview/tutanota/lib/tutanota-api";
-import {TutanotaApiFetchMessagesInput, TutanotaApiFetchMessagesOutput} from "src/shared/api/webview/tutanota";
+import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 
+const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[lib/fetcher]");
 const MAIL_FOLDER_FETCH_PORTION_SIZE = 500;
 
 export function fetchMessages(
-    input: { user: M.User } & TutanotaApiFetchMessagesInput,
-): Observable<TutanotaApiFetchMessagesOutput> {
-    return Observable.create(async (mailItemFetchingObserver: Subscriber<TutanotaApiFetchMessagesOutput>) => {
+    input: { user: M.User } & FetchMessagesInput,
+): Observable<FetchMessagesOutput> {
+    const logger = curryFunctionMembers(_logger, "fetchMessages()");
+    logger.info();
+
+    return Observable.create(async (mailItemFetchingObserver: Subscriber<FetchMessagesOutput>) => {
         const api = await resolveWebClientApi();
         const {FULL_INDEXED_TIMESTAMP: TIMESTAMP_MIN} = api["src/api/common/TutanotaConstants"];
-        const {timestampToGeneratedId} = api["src/api/common/utils/Encoding"];
-        const startTimestamp = typeof input.newestStoredTimestamp === "undefined" ? TIMESTAMP_MIN : input.newestStoredTimestamp + 1;
-        const startId = timestampToGeneratedId(startTimestamp);
+        const {timestampToGeneratedId, generatedIdToTimestamp} = api["src/api/common/utils/Encoding"];
+        const newestStoredTimestamp = typeof input.rawNewestTimestamp === "undefined" ? TIMESTAMP_MIN
+            : generatedIdToTimestamp(input.rawNewestTimestamp) + 1;
+        const startId = timestampToGeneratedId(newestStoredTimestamp);
+        const startTime = +new Date();
+        logger.verbose(`startId: ${typeof input.rawNewestTimestamp === "undefined" ? "initial" : '"rawNewestTimestamp" based'}`);
 
         for (const folder of await fetchUserFoldersWithSubFolders(input.user)) {
+            const folderProcessingStartTime = +new Date();
+
             await new Promise((resolve, reject) => {
                 // TODO consider requesting "newestStoredTimestamp" from database right here, on each folder fetching iteration
                 processMailFolder(input, folder, startId).subscribe(
@@ -30,13 +40,20 @@ export function fetchMessages(
                     resolve,
                 );
             });
+
+            logger.verbose(`folder processed in ${+new Date() - folderProcessingStartTime}ms`);
         }
 
         mailItemFetchingObserver.complete();
+
+        logger.verbose(`all folders processed in ${+new Date() - startTime}ms`);
     });
 }
 
 export async function fetchUserFoldersWithSubFolders(user: M.User) {
+    const logger = curryFunctionMembers(_logger, "fetchUserFoldersWithSubFolders()");
+    logger.info();
+
     const folders: M.MailFolder[] = [];
     const userMailGroups = user.memberships.filter(({groupType}) => groupType === M.GroupType.Mail);
 
@@ -54,15 +71,17 @@ export async function fetchUserFoldersWithSubFolders(user: M.User) {
         }
     }
 
+    logger.verbose(`${folders.length} folders fetched`);
+
     return folders;
 }
 
 function processMailFolder(
-    context: TutanotaApiFetchMessagesInput,
+    context: FetchMessagesInput,
     folder: M.MailFolder,
     startId: Id<M.Mail["_id"][1]>,
-): Observable<TutanotaApiFetchMessagesOutput["mail"]> {
-    return Observable.create(async (mailItemFetchingObserver: Subscriber<TutanotaApiFetchMessagesOutput["mail"]>) => {
+): Observable<FetchMessagesOutput["mail"]> {
+    return Observable.create(async (mailItemFetchingObserver: Subscriber<FetchMessagesOutput["mail"]>) => {
         const {timestampToGeneratedId, generatedIdToTimestamp} = (await resolveWebClientApi())["src/api/common/utils/Encoding"];
         const count = MAIL_FOLDER_FETCH_PORTION_SIZE;
         const mails = await fetchEntitiesRange(
@@ -104,18 +123,18 @@ function processMailFolder(
 }
 
 function formDatabaseMailModel(
-    {type, login}: TutanotaApiFetchMessagesInput,
+    {type, login}: FetchMessagesInput,
     folder: M.MailFolder,
     mail: M.Mail,
     body: M.MailBody,
     files: M.File[],
-): TutanotaApiFetchMessagesOutput["mail"] {
+): FetchMessagesOutput["mail"] {
     return {
         raw: JSON.stringify(mail),
         type,
         login,
         id: mail._id[1],
-        date: Number(mail.receivedDate), // TODO consider calling "generatedIdToTimestamp"
+        date: Number(mail.receivedDate), // TODO consider calling "generatedIdToTimestamp" on "mail._id[1]"
         subject: mail.subject,
         body: body.text,
         folder: {

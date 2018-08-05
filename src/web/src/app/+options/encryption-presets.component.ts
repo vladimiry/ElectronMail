@@ -21,7 +21,7 @@ export class EncryptionPresetsComponent implements OnInit, OnDestroy {
     encryption = ENCRYPTION_DERIVATION_PRESETS;
     encryptionTitles = Object.keys(this.encryption);
     @Input()
-    formGroup: FormGroup;
+    formGroup!: FormGroup;
 
     constructor(private store: Store<State>) {}
 

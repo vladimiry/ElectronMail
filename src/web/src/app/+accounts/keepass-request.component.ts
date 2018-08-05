@@ -33,9 +33,9 @@ export class KeePassRequestComponent implements OnInit, OnDestroy {
     private subscription = new Subscription();
 
     @Input()
-    private keePassRef$: Observable<KeePassRef | undefined>;
+    private keePassRef$!: Observable<KeePassRef | undefined>;
     @Input()
-    private keePassClientConf$: Observable<KeePassClientConf>;
+    private keePassClientConf$!: Observable<KeePassClientConf>;
     @Output()
     private passwordHandler = new EventEmitter<string>();
 

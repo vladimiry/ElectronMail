@@ -35,7 +35,7 @@ export interface NewPasswordFieldContainer {
 
 export interface PasswordChangeContainer extends PasswordFieldContainer, NewPasswordFieldContainer {}
 
-export type AccountConfigCreatePatch<Type extends AccountType = AccountType> = AccountConfig<Type>;
+export type AccountConfigCreatePatch<T extends AccountType = AccountType> = AccountConfig<T>;
 
-export type AccountConfigUpdatePatch<Type extends AccountType = AccountType> = Pick<AccountConfig<Type>, "login">
-    & Partial<Pick<AccountConfig<Type>, "login" | "entryUrl" | "storeMails" | "credentials" | "credentialsKeePass">>;
+export type AccountConfigUpdatePatch<T extends AccountType = AccountType> = Pick<AccountConfig<T>, "login">
+    & Partial<Pick<AccountConfig, "login" | "entryUrl" | "storeMails" | "credentials" | "credentialsKeePass">>;

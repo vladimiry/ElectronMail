@@ -1,7 +1,7 @@
 import {EMPTY} from "rxjs";
 import {Keyboard} from "keysim";
 
-import {asyncDelay} from "src/shared/util";
+import {asyncDelay, curryFunctionMembers} from "src/shared/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
 import {ONE_SECOND_MS} from "src/shared/constants";
 
@@ -71,11 +71,10 @@ export async function submitTotpToken(
     input: HTMLInputElement,
     button: HTMLElement,
     tokenResolver: () => string,
-    logger: ReturnType<typeof buildLoggerBundle>,
-    _logPrefixParam: string[],
+    _logger: ReturnType<typeof buildLoggerBundle>,
 ): Promise<never> {
-    const _logPrefix = ["submitTotpToken()", ..._logPrefixParam];
-    logger.info(..._logPrefix);
+    const logger = curryFunctionMembers(_logger, "submitTotpToken()");
+    logger.info();
 
     const submitTimeoutMs = ONE_SECOND_MS * 4;
     const newTokenDelayMs = ONE_SECOND_MS * 2;
@@ -93,7 +92,7 @@ export async function submitTotpToken(
             throw e;
         }
 
-        logger.verbose(..._logPrefix, `submit 1 - fail: ${e.message}`);
+        logger.verbose(`submit 1 - fail: ${e.message}`);
         // second attempt as token might become expired right before submitting
         await asyncDelay(newTokenDelayMs, submit);
     }
@@ -101,14 +100,14 @@ export async function submitTotpToken(
     return EMPTY.toPromise();
 
     async function submit() {
-        logger.verbose(..._logPrefix, "submit - start");
+        logger.verbose("submit - start");
         const urlBeforeSubmit = getLocationHref();
 
         await fillInputValue(input, tokenResolver());
-        logger.verbose(..._logPrefix, "input filled");
+        logger.verbose("input filled");
 
         button.click();
-        logger.verbose(..._logPrefix, "clicked");
+        logger.verbose("clicked");
 
         await asyncDelay(submitTimeoutMs);
 
@@ -116,6 +115,6 @@ export async function submitTotpToken(
             throw new Error(errorMessage);
         }
 
-        logger.verbose(..._logPrefix, "submit - success");
+        logger.verbose("submit - success");
     }
 }

@@ -16,12 +16,16 @@ import {
 // tslint:disable-next-line:no-unused-variable
 import {APP_NAME} from "src/shared/constants";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
+import {EntityRecord, EntityTable} from "src/shared/model/database";
 // TODO figure why tslint detects "ElectronContextLocations" as unused
 // tslint:disable-next-line:no-unused-variable
 import {ElectronContextLocations} from "src/shared/model/electron";
+// TODO figure why tslint detects "Omit" as unused
 // tslint:disable-next-line:no-unused-variable
 import {Omit} from "src/shared/types";
-import {EntityRecord, EntityTable} from "src/shared/model/database";
+// TODO figure why tslint detects "AccountType" as unused
+// tslint:disable-next-line:no-unused-variable
+import {AccountType} from "src/shared/model/account";
 
 export interface DatabaseUpsertInput<T extends EntityTable = EntityTable,
     E extends InstanceType<EntityRecord[T]> = InstanceType<EntityRecord[T]>> {
@@ -40,6 +44,7 @@ export interface Endpoints {
     changeMasterPassword: ApiMethod<PasswordFieldContainer & NewPasswordFieldContainer, Settings>;
 
     databaseUpsert: ApiMethod<DatabaseUpsertInput, never>;
+    databaseMailRawNewestTimestamp: ApiMethod<{ type: AccountType, login: string }, { value?: string }>;
 
     init: ApiMethodNoArgument<{ electronLocations: ElectronContextLocations; hasSavedPassword: boolean; }>;
 

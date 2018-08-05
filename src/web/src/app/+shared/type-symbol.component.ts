@@ -10,5 +10,5 @@ import {AccountType} from "src/shared/model/account";
 })
 export class TypeSymbolComponent {
     @Input()
-    type: AccountType;
+    type!: AccountType;
 }

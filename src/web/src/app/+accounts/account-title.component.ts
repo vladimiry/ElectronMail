@@ -1,6 +1,6 @@
 import {Component, Input} from "@angular/core";
 
-import {WebAccount} from "src/shared/model/account";
+import {WebAccount} from "src/web/src/app/model";
 
 @Component({
     selector: "email-securely-app-account-title",
@@ -10,5 +10,5 @@ import {WebAccount} from "src/shared/model/account";
 })
 export class AccountTitleComponent {
     @Input()
-    account: WebAccount;
+    account!: WebAccount;
 }

@@ -1,5 +1,5 @@
 import {authenticator} from "otplib";
-import {distinctUntilChanged, map, shareReplay, tap} from "rxjs/operators";
+import {distinctUntilChanged, map, tap} from "rxjs/operators";
 import {EMPTY, from, interval, merge, Observable, Subscriber} from "rxjs";
 
 import {
@@ -7,13 +7,13 @@ import {
     NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL,
     WEBVIEW_LOGGERS,
 } from "src/electron-preload/webview/constants";
-import {AccountNotificationType, WebAccountProtonmail} from "src/shared/model/account";
 import {curryFunctionMembers} from "src/shared/util";
 import {fillInputValue, getLocationHref, submitTotpToken, waitElements} from "src/electron-preload/webview/util";
+import {NotificationsProtonmail} from "src/shared/model/account";
 import {PROTONMAIL_IPC_WEBVIEW_API, ProtonmailApi} from "src/shared/api/webview/protonmail";
 
 const WINDOW = window as any;
-const logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[index]");
+const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[index]");
 const twoFactorCodeElementId = "twoFactorCode";
 
 delete WINDOW.Notification;
@@ -22,16 +22,16 @@ const endpoints: ProtonmailApi = {
     ping: () => EMPTY,
 
     fillLogin: ({login, zoneName}) => from((async () => {
-        const _logPrefix = ["fillLogin()", zoneName];
-        logger.info(..._logPrefix);
+        const logger = curryFunctionMembers(_logger, "fillLogin()", zoneName);
+        logger.info();
 
         const elements = await waitElements({
             username: () => document.getElementById("username") as HTMLInputElement,
         });
-        logger.verbose(..._logPrefix, `elements resolved`);
+        logger.verbose(`elements resolved`);
 
         await fillInputValue(elements.username, login);
-        logger.verbose(..._logPrefix, `input values filled`);
+        logger.verbose(`input values filled`);
 
         elements.username.readOnly = true;
 
@@ -39,52 +39,52 @@ const endpoints: ProtonmailApi = {
     })()),
 
     login: ({login, password, zoneName}) => from((async () => {
-        const _logPrefix = ["login()", zoneName];
-        logger.info(..._logPrefix);
+        const logger = curryFunctionMembers(_logger, "login()", zoneName);
+        logger.info();
 
         await endpoints.fillLogin({login, zoneName}).toPromise();
-        logger.verbose(..._logPrefix, `fillLogin() executed`);
+        logger.verbose(`fillLogin() executed`);
 
         const elements = await waitElements({
             password: () => document.getElementById("password") as HTMLInputElement,
             submit: () => document.getElementById("login_btn") as HTMLElement,
         });
-        logger.verbose(..._logPrefix, `elements resolved`);
+        logger.verbose(`elements resolved`);
 
         if (elements.password.value) {
             throw new Error(`Password is not supposed to be filled already on "login" stage`);
         }
 
         await fillInputValue(elements.password, password);
-        logger.verbose(..._logPrefix, `input values filled`);
+        logger.verbose(`input values filled`);
 
         elements.submit.click();
-        logger.verbose(..._logPrefix, `clicked`);
+        logger.verbose(`clicked`);
 
         return EMPTY.toPromise();
     })()),
 
     login2fa: ({secret, zoneName}) => from((async () => {
-        const _logPrefix = ["login2fa()", zoneName];
-        logger.info(..._logPrefix);
+        const logger = curryFunctionMembers(_logger, "login2fa()", zoneName);
+        logger.info();
 
         const elements = await waitElements({
             input: () => document.getElementById(twoFactorCodeElementId) as HTMLInputElement,
             button: () => document.getElementById("login_btn_2fa") as HTMLElement,
         });
-        logger.verbose(..._logPrefix, `elements resolved`);
+        logger.verbose(`elements resolved`);
 
         return await submitTotpToken(
             elements.input,
             elements.button,
             () => authenticator.generate(secret),
             logger,
-            _logPrefix,
         );
     })()),
 
     unlock: ({mailPassword, zoneName}) => from((async () => {
-        logger.info("unlock()", zoneName);
+        curryFunctionMembers(_logger, "unlock()", zoneName).info();
+
         const elements = await waitElements({
             mailboxPassword: () => document.getElementById("password") as HTMLInputElement,
             submit: () => document.getElementById("unlock_btn") as HTMLElement,
@@ -97,12 +97,12 @@ const endpoints: ProtonmailApi = {
     })()),
 
     notification: ({entryUrl, zoneName}) => {
-        const _logPrefix = ["notification()", zoneName];
-        logger.info(..._logPrefix);
+        const logger = curryFunctionMembers(_logger, "notification()", zoneName);
+        logger.info();
 
-        type LoggedInOutput = Required<Pick<AccountNotificationType<WebAccountProtonmail>, "loggedIn">>;
-        type PageTypeOutput = Required<Pick<AccountNotificationType<WebAccountProtonmail>, "pageType">>;
-        type UnreadOutput = Required<Pick<AccountNotificationType<WebAccountProtonmail>, "unread">>;
+        type LoggedInOutput = Required<Pick<NotificationsProtonmail, "loggedIn">>;
+        type PageTypeOutput = Required<Pick<NotificationsProtonmail, "pageType">>;
+        type UnreadOutput = Required<Pick<NotificationsProtonmail, "unread">>;
 
         const observables: [
             Observable<LoggedInOutput>,
@@ -145,7 +145,7 @@ const endpoints: ProtonmailApi = {
                     return {pageType};
                 }),
                 distinctUntilChanged(({pageType: prev}, {pageType: curr}) => curr.type === prev.type),
-                tap((value) => logger.verbose(..._logPrefix, JSON.stringify(value))),
+                tap((value) => logger.verbose(JSON.stringify(value))),
             ),
 
             (() => {
@@ -201,14 +201,12 @@ const endpoints: ProtonmailApi = {
             })(),
         ];
 
-        return merge(...observables).pipe(
-            shareReplay(1),
-        );
+        return merge(...observables);
     },
 };
 
 PROTONMAIL_IPC_WEBVIEW_API.registerApi(endpoints);
-logger.verbose(`api registered, url: ${getLocationHref()}`);
+_logger.verbose(`api registered, url: ${getLocationHref()}`);
 
 function isLoggedIn(): boolean {
     const htmlElement = WINDOW.angular && typeof WINDOW.angular.element === "function" && WINDOW.angular.element("html");

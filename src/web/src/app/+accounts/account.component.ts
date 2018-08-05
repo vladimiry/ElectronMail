@@ -10,20 +10,20 @@ import {
     OnInit,
     ViewChild,
 } from "@angular/core";
-import {BehaviorSubject, EMPTY, merge, Observable, of, Subscription} from "rxjs";
+import {Action, select, Store} from "@ngrx/store";
+import {Deferred} from "ts-deferred";
+import {EMPTY, merge, of, Subscription} from "rxjs";
+import {equals, pick} from "ramda";
+import {filter, map, mergeMap, pairwise, take, withLatestFrom} from "rxjs/operators";
 // tslint:disable-next-line:no-import-zones
 import {DidFailLoadEvent} from "electron";
-import {filter, map, mergeMap, pairwise, take, withLatestFrom} from "rxjs/operators";
-import {equals, pick} from "ramda";
-import {Action, Store} from "@ngrx/store";
 
-import {AccountConfig, WebAccount} from "src/shared/model/account";
+import {AccountConfig} from "src/shared/model/account";
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
+import {AccountsSelectors, OptionsSelectors} from "src/web/src/app/store/selectors";
 import {APP_NAME, ONE_SECOND_MS} from "src/shared/constants";
 import {ElectronService} from "src/web/src/app/+core/electron.service";
 import {getZoneNameBoundWebLogger} from "src/web/src/util";
-import {KeePassRef} from "src/shared/model/keepasshttp";
-import {AccountsSelectors, OptionsSelectors} from "src/web/src/app/store/selectors";
 import {State} from "src/web/src/app/store/reducers/accounts";
 
 let componentIndex = 0;
@@ -35,25 +35,31 @@ let componentIndex = 0;
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountComponent implements OnDestroy, OnInit {
-    passwordKeePassRef$: Observable<KeePassRef | undefined>;
-    twoFactorCodeKeePassRef$: Observable<KeePassRef | undefined>;
-    mailPasswordKeePassRef$: Observable<KeePassRef | undefined>;
-    webViewAttributes: { src: string; preload: string; };
-    didFailLoadErrorDescription: string;
+    webViewAttributes?: { src: string; preload: string; };
+    didFailLoadErrorDescription?: string;
     @HostBinding("class.web-view-hidden")
-    afterFailedLoadWait: number;
+    afterFailedLoadWait: number = 0;
     keePassClientConf$ = this.store.select(OptionsSelectors.SETTINGS.keePassClientConf);
     @Input()
-    login: string;
-    account$: BehaviorSubject<WebAccount>;
+    login?: string;
+    account$ = this.store.pipe(
+        filter(() => !!this.login),
+        mergeMap(() => this.store.pipe(select(AccountsSelectors.ACCOUNTS.pickAccount({login: String(this.login)})))),
+        mergeMap((account) => account ? [account] : []),
+    );
+    passwordKeePassRef$ = this.account$.pipe(map(({accountConfig}) => accountConfig.credentialsKeePass.password));
+    twoFactorCodeKeePassRef$ = this.account$.pipe(map(({accountConfig}) => accountConfig.credentialsKeePass.twoFactorCode));
+    mailPasswordKeePassRef$ = this.account$.pipe(mergeMap(({accountConfig}) => {
+        return accountConfig.type === "protonmail" ? of(accountConfig.credentialsKeePass.mailPassword) : EMPTY;
+    }));
     private logger: ReturnType<typeof getZoneNameBoundWebLogger>;
     private loggerZone: Zone;
     @ViewChild("webViewRef", {read: ElementRef})
-    private webViewElementRef: ElementRef;
-    private webViewPromiseTrigger: (webView: Electron.WebviewTag) => void;
-    private webViewPromise = new Promise<Electron.WebviewTag>((resolve) => this.webViewPromiseTrigger = resolve);
+    private webViewElementRef?: ElementRef;
+    private webViewDeferred = new Deferred<Electron.WebviewTag>();
     private subscription = new Subscription();
-    private notificationChannelsReleasingTriggers: Array<() => void> = [];
+    private onWebViewDomReadyDeferreds: Array<Deferred<void>> = [];
+    private stopFetchingDeffered?: Deferred<void>;
 
     constructor(
         private electron: ElectronService,
@@ -68,41 +74,27 @@ export class AccountComponent implements OnDestroy, OnInit {
     }
 
     ngOnInit() {
-        const login = this.login;
-
-        if (!login) {
-            throw new Error(`"login" argument must be defined at this stage`);
+        if (!this.login) {
+            throw new Error(`"login" @Input is supposed to be initialized at this stage`);
         }
 
-        this.subscription.add(
-            this.store
-                .select(AccountsSelectors.ACCOUNTS.pickAccount({login}))
-                .subscribe((account) => {
-                    if (!account) {
-                        return;
-                    }
-                    if (!this.account$) {
-                        this.account$ = new BehaviorSubject(account);
-                        this.onAccountWiredUp();
-                        return;
-                    }
-                    this.account$.next(account);
-                }),
-        );
+        this.account$.pipe(take(1)).subscribe(() => this.onAccountWiredUp());
     }
 
     ngOnDestroy() {
         this.logger.info(`ngOnDestroy()`);
         this.subscription.unsubscribe();
-        this.releaseNotificationChannels();
+        this.resolveOnWebViewDomReadyDeferredes();
     }
 
     onKeePassPassword(password: string) {
         this.logger.info(`onKeePassPassword()`);
         // tslint:disable-next-line:no-floating-promises
-        this.webViewPromise.then((webView) => {
-            this.logger.info(`dispatch "TryToLogin" from onKeePassPassword()`);
-            this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.TryToLogin({webView, account: this.account$.value, password}));
+        this.webViewDeferred.promise.then((webView) => {
+            this.account$.pipe(take(1)).subscribe((account) => {
+                this.logger.info(`dispatch "TryToLogin" from onKeePassPassword()`);
+                this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.TryToLogin({webView, account, password}));
+            });
         });
     }
 
@@ -115,13 +107,6 @@ export class AccountComponent implements OnDestroy, OnInit {
     private onAccountWiredUp() {
         this.logger.info(`onAccountWiredUp()`);
 
-        this.passwordKeePassRef$ = this.account$.pipe(map((a) => a.accountConfig.credentialsKeePass.password));
-        this.twoFactorCodeKeePassRef$ = this.account$.pipe(map((a) => a.accountConfig.credentialsKeePass.twoFactorCode));
-        this.mailPasswordKeePassRef$ = this.account$.pipe(mergeMap(({accountConfig}) => {
-            return accountConfig.type === "protonmail" ? of(accountConfig.credentialsKeePass.mailPassword) : EMPTY;
-        }));
-
-        // TODO "take(1)" is sufficient subscription releasing strategy in this case
         this.subscription.add(
             this.store.select(OptionsSelectors.FEATURED.electronLocations)
                 .pipe(
@@ -133,8 +118,14 @@ export class AccountComponent implements OnDestroy, OnInit {
                 .subscribe(([webViewPreloads, {accountConfig}]) => {
                     this.webViewAttributes = {src: accountConfig.entryUrl, preload: webViewPreloads[accountConfig.type]};
                     this.logger.verbose(`webview.attrs.initial: "${this.webViewAttributes.src}"`);
+
                     this.changeDetectorRef.detectChanges();
                     this.logger.info(`webview.detectChanges: mounted to DOM)`);
+
+                    if (!this.webViewElementRef) {
+                        throw new Error(`"this.webViewElementRef" is supposed to be initialized at this stage`);
+                    }
+
                     this.onWebViewMounted(this.webViewElementRef.nativeElement);
                 }),
         );
@@ -143,7 +134,7 @@ export class AccountComponent implements OnDestroy, OnInit {
     private onWebViewMounted(webView: Electron.WebviewTag) {
         this.logger.info(`onWebViewMounted()`);
 
-        this.webViewPromiseTrigger(webView);
+        this.webViewDeferred.resolve(webView);
 
         this.subscription.add(
             this.account$
@@ -154,8 +145,13 @@ export class AccountComponent implements OnDestroy, OnInit {
                     map(([prev, curr]) => curr),
                 )
                 .subscribe(({entryUrl}) => {
+                    if (!this.webViewAttributes) {
+                        throw new Error(`"this.webViewAttributes" is supposed to be initialized at this stage`);
+                    }
+
                     this.webViewAttributes.src = entryUrl;
                     this.logger.verbose(`webview.attrs.urlUpdate: "${entryUrl}"`);
+
                     this.changeDetectorRef.detectChanges();
                     this.logger.info(`webview.detectChanges: updated in DOM`);
                 }),
@@ -191,29 +187,6 @@ export class AccountComponent implements OnDestroy, OnInit {
         this.subscription.add(
             this.account$
                 .pipe(
-                    map(({notifications, accountConfig}) => ({loggedIn: notifications.loggedIn, storeMails: accountConfig.storeMails})),
-                    pairwise(),
-                    filter(([prev, curr]) => !equals(prev, curr)),
-                    map(([prev, curr]) => curr),
-                    withLatestFrom(this.account$),
-                )
-                .subscribe(([{loggedIn, storeMails}, account]) => {
-                    const login = account.accountConfig.login;
-                    // TODO wire "ToggleFetching" back after the "triggerPromisesReleasing()" call
-                    if (loggedIn && storeMails) {
-                        this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.ToggleFetching({
-                            account,
-                            webView,
-                            finishPromise: this.setupNotificationChannelReleasingTrigger(),
-                        }));
-                        return;
-                    }
-                    this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.ToggleFetching({login}));
-                }),
-        );
-        this.subscription.add(
-            this.account$
-                .pipe(
                     withLatestFrom(this.store.select(OptionsSelectors.CONFIG.unreadNotifications)),
                     filter(([account, unreadNotificationsEnabled]) => Boolean(unreadNotificationsEnabled)),
                     map(([account]) => account),
@@ -233,7 +206,7 @@ export class AccountComponent implements OnDestroy, OnInit {
         );
 
         // if ((process.env.NODE_ENV/* as BuildEnvironment*/) === "development") {
-        //     this.webView.addEventListener("dom-ready", () => webView.openDevTools());
+        //     webView.addEventListener("dom-ready", () => webView.openDevTools());
         // }
 
         this.configureWebView(webView);
@@ -244,21 +217,52 @@ export class AccountComponent implements OnDestroy, OnInit {
 
         const domReadyEventHandler = () => {
             this.logger.verbose(`webview.domReadyEventHandler(): "${webView.src}"`);
-            this.releaseNotificationChannels();
 
-            // TODO consider moving "notification" WebView API method back to the "accounts.effects"
-            const {value: account} = this.account$;
-            const {type, entryUrl, login} = account.accountConfig;
-            const finishPromise = this.setupNotificationChannelReleasingTrigger();
-            const subscription = this.subscription.add(
-                this.electron.webViewClient(webView, type, {finishPromise})
-                    .pipe(mergeMap((caller) => caller("notification")({entryUrl, zoneName: this.logger.zoneName()})))
-                    .subscribe((notification) => {
-                        this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.NotificationPatch({login, notification}));
+            this.resolveOnWebViewDomReadyDeferredes();
+
+            this.account$.pipe(take(1)).subscribe(({accountConfig}) => {
+                this.subscription.add((() => {
+                    // TODO consider moving "notification" WebView API method back to the "accounts.effects"
+                    const {type, entryUrl, login} = accountConfig;
+                    const finishPromise = this.setupOnWebViewDomReadyDeferred().promise;
+
+                    return this.electron.webViewClient(webView, type, {finishPromise})
+                        .pipe(mergeMap((caller) => caller("notification")({entryUrl, zoneName: this.logger.zoneName()})))
+                        .subscribe((notification) => {
+                            this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.NotificationPatch({login, notification}));
+                        });
+                })());
+            });
+
+            this.subscription.add(
+                this.account$
+                    .pipe(
+                        map(({notifications, accountConfig}) => ({loggedIn: notifications.loggedIn, storeMails: accountConfig.storeMails})),
+                        pairwise(),
+                        filter(([prev, curr]) => !equals(prev, curr)),
+                        map(([prev, curr]) => curr),
+                        withLatestFrom(this.account$),
+                    )
+                    .subscribe(([{loggedIn, storeMails}, account]) => {
+                        // TODO wire "ToggleFetching" back after the "triggerPromisesReleasing()" call
+
+                        if (this.stopFetchingDeffered) {
+                            this.stopFetchingDeffered.resolve();
+                        }
+
+                        if (!loggedIn || !storeMails) {
+                            return;
+                        }
+
+                        this.stopFetchingDeffered = this.setupOnWebViewDomReadyDeferred();
+
+                        this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.ToggleFetching({
+                            account,
+                            webView,
+                            finishPromise: this.stopFetchingDeffered.promise,
+                        }));
                     }),
             );
-            // tslint:disable-next-line:no-floating-promises
-            finishPromise.then(() => subscription.unsubscribe());
         };
         const arrayOfDomReadyEvenNameAndHandler = ["dom-ready", domReadyEventHandler];
         const subscribeDomReadyHandler = () => {
@@ -276,55 +280,56 @@ export class AccountComponent implements OnDestroy, OnInit {
         webView.addEventListener("new-window", ({url}: any) => {
             this.dispatchInLoggerZone(NAVIGATION_ACTIONS.OpenExternal({url}));
         });
-        webView.addEventListener("did-fail-load", ((options: { attempt: number, stepSeconds: number }) => {
-            const setAfterFailedLoadWait = (value: number) => {
-                this.afterFailedLoadWait = value;
-                this.changeDetectorRef.detectChanges();
-            };
-            let intervalId: any = null;
 
-            return ({errorDescription}: DidFailLoadEvent) => {
-                this.logger.verbose(`webview:did-fail-load: "${webView.src}"`);
+        this.account$.pipe(take(1)).subscribe(({accountConfig}) => {
+            webView.addEventListener("did-fail-load", ((options: { iteration: number, stepSeconds: number }) => {
+                let intervalId: any = null;
 
-                // TODO figure ERR_NOT_IMPLEMENTED error cause, happening on password/2fa code submitting, tutanota only issue
-                if (errorDescription === "ERR_NOT_IMPLEMENTED" && this.account$.value.accountConfig.type === "tutanota") {
-                    return;
-                }
+                return ({errorDescription}: DidFailLoadEvent) => {
+                    this.logger.verbose(`webview:did-fail-load: "${webView.src}"`);
 
-                this.didFailLoadErrorDescription = errorDescription;
-
-                unsubscribeDomReadyHandler();
-                this.releaseNotificationChannels();
-
-                options.attempt++;
-
-                setAfterFailedLoadWait(Math.min(options.stepSeconds * options.attempt, 60));
-                this.changeDetectorRef.detectChanges();
-
-                intervalId = setInterval(() => {
-                    setAfterFailedLoadWait(this.afterFailedLoadWait - 1);
-                    this.changeDetectorRef.detectChanges();
-
-                    if (this.afterFailedLoadWait > 0) {
+                    // TODO figure ERR_NOT_IMPLEMENTED error cause, happening on password/2fa code submitting, tutanota only issue
+                    if (errorDescription === "ERR_NOT_IMPLEMENTED" && accountConfig.type === "tutanota") {
                         return;
                     }
 
-                    clearInterval(intervalId);
-                    subscribeDomReadyHandler();
-                    webView.reloadIgnoringCache();
-                }, ONE_SECOND_MS);
-            };
-        })({attempt: 0, stepSeconds: 10}));
+                    this.didFailLoadErrorDescription = errorDescription;
+
+                    this.resolveOnWebViewDomReadyDeferredes();
+                    unsubscribeDomReadyHandler();
+
+                    options.iteration++;
+
+                    this.afterFailedLoadWait = Math.min(options.stepSeconds * options.iteration, 60);
+                    this.changeDetectorRef.detectChanges();
+
+                    intervalId = setInterval(() => {
+                        this.afterFailedLoadWait += -1;
+                        this.changeDetectorRef.detectChanges();
+
+                        if (this.afterFailedLoadWait > 0) {
+                            return;
+                        }
+
+                        clearInterval(intervalId);
+                        subscribeDomReadyHandler();
+                        webView.reloadIgnoringCache();
+                    }, ONE_SECOND_MS);
+                };
+            })({iteration: 0, stepSeconds: 10}));
+        });
     }
 
-    private setupNotificationChannelReleasingTrigger() {
-        this.logger.info(`setupNotificationChannelReleasingTrigger()`);
-        return new Promise((resolve) => this.notificationChannelsReleasingTriggers.push(resolve));
+    private setupOnWebViewDomReadyDeferred() {
+        this.logger.info(`setupOnWebViewDomReadyDeferred()`);
+        const deferred = new Deferred<void>();
+        this.onWebViewDomReadyDeferreds.push(deferred);
+        return deferred;
     }
 
-    private releaseNotificationChannels() {
-        this.logger.info(`releaseNotificationChannels()`);
-        this.notificationChannelsReleasingTriggers.forEach((resolveTrigger) => resolveTrigger());
-        // TODO remove executed functions form the array
+    private resolveOnWebViewDomReadyDeferredes() {
+        this.logger.info(`resolveOnWebViewDomReadyDeferredes()`);
+        this.onWebViewDomReadyDeferreds.forEach((deferred) => deferred.resolve());
+        // TODO remove executed items form the array
     }
 }

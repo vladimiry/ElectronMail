@@ -35,7 +35,7 @@ export class ElectronService {
         // TODO consider removing "ping" API
         // TODO it's sufficient to "ping" API initialization only once since there is no dynamic api de-registration enabled
         const pingStart = Number(new Date());
-        const ping$ = from(apiClient("ping", {timeoutMs: ONE_SECOND_MS})({zoneName: logger.zoneName()}).pipe(
+        const ping$ = from(apiClient("ping", {timeoutMs: 1})({zoneName: logger.zoneName()}).pipe(
             retryWhen((errors) => errors.pipe(
                 takeWhile(() => (Number(new Date()) - pingStart) < this.webViewPingTimeoutMs),
                 delay(this.webViewPingIntervalMs),

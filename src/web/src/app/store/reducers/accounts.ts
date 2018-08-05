@@ -6,7 +6,7 @@ import {accountPickingPredicate} from "src/shared/util";
 import {ACCOUNTS_ACTIONS} from "src/web/src/app/store/actions";
 import {getZoneNameBoundWebLogger} from "src/web/src/util";
 import {LoginFieldContainer} from "src/shared/model/container";
-import {WebAccount} from "src/shared/model/account";
+import {WebAccount} from "src/web/src/app/model";
 
 const logger = getZoneNameBoundWebLogger("[reducers/accounts]");
 

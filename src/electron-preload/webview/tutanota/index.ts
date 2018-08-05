@@ -1,5 +1,5 @@
 import {authenticator} from "otplib";
-import {concatMap, distinctUntilChanged, map, shareReplay, tap} from "rxjs/operators";
+import {concatMap, distinctUntilChanged, map, tap} from "rxjs/operators";
 import {EMPTY, from, interval, merge, Observable, Subscriber} from "rxjs";
 
 import {
@@ -7,25 +7,25 @@ import {
     NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL,
     WEBVIEW_LOGGERS,
 } from "src/electron-preload/webview/constants";
-import {AccountNotificationType, WebAccountTutanota} from "src/shared/model/account";
 import {curryFunctionMembers, MailFolderTypeService} from "src/shared/util";
 import {fetchEntitiesRange} from "src/electron-preload/webview/tutanota/lib/rest";
 import {fetchMessages, fetchUserFoldersWithSubFolders} from "src/electron-preload/webview/tutanota/lib/fetcher";
 import {fillInputValue, getLocationHref, submitTotpToken, waitElements} from "src/electron-preload/webview/util";
 import {MailTypeRef, User} from "src/electron-preload/webview/tutanota/lib/rest/model";
+import {NotificationsTutanota} from "src/shared/model/account";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {resolveWebClientApi, WebClientApi} from "src/electron-preload/webview/tutanota/lib/tutanota-api";
 import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi} from "src/shared/api/webview/tutanota";
 
 const WINDOW = window as any;
-const logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[index]");
+const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[index]");
 
 resolveWebClientApi()
     .then((webClientApi) => {
         delete WINDOW.Notification;
         bootstrapApi(webClientApi);
     })
-    .catch(logger.error);
+    .catch(_logger.error);
 
 function bootstrapApi(webClientApi: WebClientApi) {
     const login2FaWaitElementsConfig = {
@@ -36,19 +36,19 @@ function bootstrapApi(webClientApi: WebClientApi) {
     const endpoints: TutanotaApi = {
         ping: () => EMPTY,
 
-        fetchMessages: ({login, newestStoredTimestamp, type}) => {
+        fetchMessages: ({login, rawNewestTimestamp, type}) => {
             const controller = getUserController();
 
             if (controller) {
-                return fetchMessages({login, newestStoredTimestamp, type, user: controller.user});
+                return fetchMessages({login, rawNewestTimestamp, type, user: controller.user});
             }
 
             return EMPTY;
         },
 
         fillLogin: ({login, zoneName}) => from((async () => {
-            const _logPrefix = ["fillLogin()", zoneName];
-            logger.info(..._logPrefix);
+            const logger = curryFunctionMembers(_logger, "fillLogin()", zoneName);
+            logger.info();
 
             const cancelEvenHandler = (event: MouseEvent) => {
                 event.preventDefault();
@@ -59,53 +59,53 @@ function bootstrapApi(webClientApi: WebClientApi) {
                 storePasswordCheckbox: () => document.querySelector("form .items-center [type=checkbox]") as HTMLInputElement,
                 storePasswordCheckboxBlock: () => document.querySelector("form .checkbox.pt.click") as HTMLInputElement,
             });
-            logger.verbose(..._logPrefix, `elements resolved`);
+            logger.verbose(`elements resolved`);
 
             await fillInputValue(elements.username, login);
             elements.username.readOnly = true;
-            logger.verbose(..._logPrefix, `input values filled`);
+            logger.verbose(`input values filled`);
 
             elements.storePasswordCheckbox.checked = false;
             elements.storePasswordCheckbox.disabled = true;
             elements.storePasswordCheckboxBlock.removeEventListener("click", cancelEvenHandler);
             elements.storePasswordCheckboxBlock.addEventListener("click", cancelEvenHandler, true);
-            logger.verbose(..._logPrefix, `"store" checkbox disabled`);
+            logger.verbose(`"store" checkbox disabled`);
 
             return EMPTY.toPromise();
         })()),
 
         login: ({password: passwordValue, login, zoneName}) => from((async () => {
-            const _logPrefix = ["login()", zoneName];
-            logger.info(..._logPrefix);
+            const logger = curryFunctionMembers(_logger, "login()", zoneName);
+            logger.info();
 
             await endpoints.fillLogin({login, zoneName}).toPromise();
-            logger.verbose(..._logPrefix, `fillLogin() executed`);
+            logger.verbose(`fillLogin() executed`);
 
             const elements = await waitElements({
                 password: () => document.querySelector("form [type=password]") as HTMLInputElement,
                 submit: () => document.querySelector("form button") as HTMLElement,
             });
-            logger.verbose(..._logPrefix, `elements resolved`);
+            logger.verbose(`elements resolved`);
 
             if (elements.password.value) {
                 throw new Error(`Password is not supposed to be filled already on "login" stage`);
             }
 
             await fillInputValue(elements.password, passwordValue);
-            logger.verbose(..._logPrefix, `input values filled`);
+            logger.verbose(`input values filled`);
 
             elements.submit.click();
-            logger.verbose(..._logPrefix, `clicked`);
+            logger.verbose(`clicked`);
 
             return EMPTY.toPromise();
         })()),
 
         login2fa: ({secret, zoneName}) => from((async () => {
-            const _logPrefix = ["login2fa()", zoneName];
-            logger.info(..._logPrefix);
+            const logger = curryFunctionMembers(_logger, "login2fa()", zoneName);
+            logger.info();
 
             const elements = await waitElements(login2FaWaitElementsConfig);
-            logger.verbose(..._logPrefix, `elements resolved`);
+            logger.verbose(`elements resolved`);
 
             const spacesLessSecret = secret.replace(/\s/g, "");
 
@@ -114,17 +114,16 @@ function bootstrapApi(webClientApi: WebClientApi) {
                 elements.button,
                 () => authenticator.generate(spacesLessSecret),
                 logger,
-                _logPrefix,
             );
         })()),
 
         notification: ({entryUrl, zoneName}) => {
-            const _logPrefix = ["notification()", zoneName];
-            logger.info(..._logPrefix);
+            const logger = curryFunctionMembers(_logger, "notification()", zoneName);
+            logger.info();
 
-            type LoggedInOutput = Required<Pick<AccountNotificationType<WebAccountTutanota>, "loggedIn">>;
-            type PageTypeOutput = Required<Pick<AccountNotificationType<WebAccountTutanota>, "pageType">>;
-            type UnreadOutput = Required<Pick<AccountNotificationType<WebAccountTutanota>, "unread">>;
+            type LoggedInOutput = Required<Pick<NotificationsTutanota, "loggedIn">>;
+            type PageTypeOutput = Required<Pick<NotificationsTutanota, "pageType">>;
+            type UnreadOutput = Required<Pick<NotificationsTutanota, "unread">>;
 
             const observables: [
                 Observable<LoggedInOutput>,
@@ -167,7 +166,7 @@ function bootstrapApi(webClientApi: WebClientApi) {
                         return {pageType};
                     })())),
                     distinctUntilChanged(({pageType: prev}, {pageType: curr}) => curr.type === prev.type),
-                    tap((value) => logger.verbose(..._logPrefix, JSON.stringify(value))),
+                    tap((value) => logger.verbose(JSON.stringify(value))),
                 ),
 
                 // TODO listen for "unread" change instead of starting polling interval
@@ -208,14 +207,12 @@ function bootstrapApi(webClientApi: WebClientApi) {
                 ),
             ];
 
-            return merge(...observables).pipe(
-                shareReplay(1),
-            );
+            return merge(...observables);
         },
     };
 
     TUTANOTA_IPC_WEBVIEW_API.registerApi(endpoints);
-    logger.verbose(`api registered, url: ${getLocationHref()}`);
+    _logger.verbose(`api registered, url: ${getLocationHref()}`);
 
     function getUserController(): { accessToken: string, user: User } | null {
         return WINDOW.tutao

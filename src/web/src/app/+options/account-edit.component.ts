@@ -2,10 +2,10 @@ import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/form
 import {ActivatedRoute} from "@angular/router";
 import {Component, OnDestroy, OnInit} from "@angular/core";
 import {EMPTY, merge, Observable, of, Subject} from "rxjs";
-import {filter, map, mergeMap, pairwise, concatMap, takeUntil} from "rxjs/operators";
+import {concatMap, filter, map, mergeMap, pairwise, takeUntil} from "rxjs/operators";
 import {Store} from "@ngrx/store";
 
-import {AccountConfig, AccountType} from "src/shared/model/account";
+import {AccountConfig, AccountConfigProtonmail, AccountConfigTutanota, AccountType} from "src/shared/model/account";
 import {AccountConfigCreatePatch, AccountConfigUpdatePatch} from "src/shared/model/container";
 import {ACCOUNTS_CONFIG} from "src/shared/constants";
 import {EntryUrlItem} from "src/shared/types";
@@ -26,7 +26,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     typeValues: AccountType[] = ["protonmail", "tutanota"];
     entryUrlItems: EntryUrlItem[] = [];
     controls: Record<keyof Pick<AccountConfig, "type" | "login" | "storeMails" | "entryUrl">
-        | keyof AccountConfig<"protonmail">["credentials"], AbstractControl> = {
+        | keyof AccountConfigProtonmail["credentials"], AbstractControl> = {
         type: new FormControl(this.typeValues[0], Validators.required),
         login: new FormControl(null, Validators.required),
         storeMails: new FormControl(null),
@@ -135,7 +135,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
 
         if (accountType === "protonmail") {
             // TODO ger rid of "TS as" casting
-            (patch as AccountConfig<"protonmail">).credentials.mailPassword = controls.mailPassword.value;
+            (patch as AccountConfigProtonmail).credentials.mailPassword = controls.mailPassword.value;
         }
 
         this.store.dispatch(account
@@ -184,8 +184,8 @@ export class AccountEditComponent implements OnInit, OnDestroy {
 
     dispatchKeePassRefUpdate(
         // TODO simplify type definition of "refType"
-        refType: keyof Pick<AccountConfig<"protonmail">, "credentialsKeePass">["credentialsKeePass"]
-            | keyof Pick<AccountConfig<"tutanota">, "credentialsKeePass">["credentialsKeePass"],
+        refType: keyof Pick<AccountConfigProtonmail, "credentialsKeePass">["credentialsKeePass"]
+            | keyof Pick<AccountConfigTutanota, "credentialsKeePass">["credentialsKeePass"],
         refValue: KeePassRef | null,
     ) {
         const account = this.account;

@@ -8,11 +8,9 @@ import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output} from "@
     preserveWhitespaces: true,
 })
 export class ErrorItemComponent {
-    stackTrace: string;
-    stackTraceOpened = false;
-
     @Input()
-    error: Error;
+    error!: Error;
+
     @Output()
     removeHandler = new EventEmitter<Error>();
 

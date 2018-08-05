@@ -23,7 +23,7 @@ export class KeepassAssociateComponent implements OnInit, OnDestroy {
         id: this.id,
     });
     @Input()
-    keePassClientConf$: Observable<KeePassClientConf>;
+    keePassClientConf$!: Observable<KeePassClientConf>;
     processing$ = this.store.select(OptionsSelectors.FEATURED.progress).pipe(map((p) => p.keePassReferencing));
     unSubscribe$ = new Subject();
 

@@ -8,7 +8,6 @@ import sinon from "sinon";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Fs} from "fs-json-store";
 import {generate as generateRandomString} from "randomstring";
-import {NanoSQLInstance as NanoSQLInstanceOriginal} from "nano-sql";
 import {mergeDeepRight, omit} from "ramda";
 
 import {AccountConfigCreatePatch, AccountConfigUpdatePatch, PasswordFieldContainer} from "src/shared/model/container";
@@ -16,7 +15,7 @@ import {accountPickingPredicate, pickBaseConfigProperties} from "src/shared/util
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {buildSettingsAdapter, initContext} from "src/electron-main/util";
 import {Context} from "src/electron-main/model";
-import {DatabaseUpsertInput, Endpoints} from "src/shared/api/main";
+import {Endpoints} from "src/shared/api/main";
 import {INITIAL_STORES, KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "src/electron-main/constants";
 import {StatusCode, StatusCodeError} from "src/shared/model/error";
 import {UnpackedPromise} from "src/shared/types";
@@ -215,18 +214,18 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         setPasswordSpy.calledWithExactly(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, payload.newPassword);
     },
 
-    databaseUpsert: async (t) => {
-        const {endpoints, mocks} = t.context;
-        const payload: DatabaseUpsertInput = {table: "some-table", data: {value123: 123}} as any;
-
-        await endpoints.databaseUpsert(payload);
-
-        t.true(mocks["nano-sql"]._tableStub.calledWithExactly(payload.table));
-        t.true(mocks["nano-sql"]._queryStub.calledWithExactly("upsert", payload.data));
+    // TODO test "dbInsertBootstrapContent" API
+    dbInsertBootstrapContent: (t) => {
+        t.pass();
     },
 
-    // TODO test "databaseMailRawNewestTimestamp" API
-    databaseMailRawNewestTimestamp: async (t) => {
+    // TODO test "dbProcessBatchEntityUpdatesPatch" API
+    dbProcessBatchEntityUpdatesPatch: (t) => {
+        t.pass();
+    },
+
+    // TODO test "dbGetContentMetadata" API
+    dbGetContentMetadata: (t) => {
         t.pass();
     },
 
@@ -451,30 +450,6 @@ async function buildMocks() {
     const openExternalSpy = sinon.spy();
 
     return {
-        ...(() => {
-            class NanoSQLInstance extends NanoSQLInstanceOriginal {}
-
-            const _execSpy = sinon.spy();
-            const _queryStub = sinon.stub().returns({exec: _execSpy});
-            const _tableStub = sinon.stub(NanoSQLInstance.prototype, "table").callThrough();
-            Object.assign(NanoSQLInstance.prototype, {
-                query: _queryStub,
-                exec: _execSpy,
-            });
-            return {
-                "src/electron-main/database/nano-sql": {
-                    "nano-sql": {
-                        NanoSQLInstance,
-                    },
-                } as any,
-                "nano-sql": {
-                    _tableStub,
-                    _queryStub,
-                    _execSpy,
-                    NanoSQLInstance,
-                },
-            };
-        })(),
         "src/shared/api/main": {
             IPC_MAIN_API: {
                 registerApi: sinon.spy(),
@@ -544,9 +519,7 @@ test.beforeEach(async (t) => {
             const {mocks} = t.context;
             mock("electron").with(mocks.electron);
             mock(() => import("keytar"))/*.callThrough()*/.with(mocks.keytar);
-            mock(() => import("nano-sql")).callThrough().with(mocks["nano-sql"]);
             mock(() => import("about-window")).callThrough().with(mocks["about-window"]);
-            mock(() => import("src/electron-main/database/nano-sql")).callThrough().with(mocks["src/electron-main/database/nano-sql"]);
             mock(() => import("src/shared/api/main")).callThrough().with(mocks["src/shared/api/main"]);
             mock(() => import("src/electron-main/util")).callThrough().with(mocks["src/electron-main/util"]);
             mock(() => import("src/electron-main/storage-upgrade")).callThrough().with(mocks["src/electron-main/storage-upgrade"]);

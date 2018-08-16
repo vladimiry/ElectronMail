@@ -1,6 +1,6 @@
 import keytar from "keytar";
 import logger from "electron-log";
-import {EMPTY, from} from "rxjs";
+import {from} from "rxjs";
 
 import {Account, Database, General, KeePass, TrayIcon} from "./endpoints-builders";
 import {buildSettingsAdapter} from "src/electron-main/util";
@@ -13,7 +13,7 @@ import {upgradeConfig, upgradeSettings} from "src/electron-main/storage-upgrade"
 export const initApi = async (ctx: Context): Promise<Endpoints> => {
     const endpoints: Endpoints = {
         ...await Account.buildEndpoints(ctx),
-        ...await Database.buildEndpoints(),
+        ...await Database.buildEndpoints(ctx),
         ...await General.buildEndpoints(ctx),
         ...await KeePass.buildEndpoints(ctx),
         ...await TrayIcon.buildEndpoints(ctx),
@@ -47,7 +47,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
         logout: () => from((async () => {
             await keytar.deletePassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT);
             ctx.settingsStore = ctx.settingsStore.clone({adapter: undefined});
-            return EMPTY.toPromise();
+            return null;
         })()),
 
         // TODO update "patchBaseConfig" api method test ("logLevel" value, "logger.transports.file.level" updpate)

@@ -1,17 +1,28 @@
 import {authenticator} from "otplib";
 import {concatMap, distinctUntilChanged, map, tap} from "rxjs/operators";
-import {EMPTY, from, interval, merge, Observable, Subscriber} from "rxjs";
+import {from, interval, merge, Observable, of, Subscriber} from "rxjs";
 
 import {
     NOTIFICATION_LOGGED_IN_POLLING_INTERVAL,
     NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL,
     WEBVIEW_LOGGERS,
 } from "src/electron-preload/webview/constants";
+import {
+    buildDbFolder,
+    buildDbMail,
+    buildPk,
+    fetchMailFoldersWithSubFolders,
+    resolveInstanceId,
+    sameRefType,
+} from "src/electron-preload/webview/tutanota/lib/util";
+import * as Rest from "./lib/rest";
+import * as DatabaseModel from "src/shared/model/database";
+import {BatchEntityUpdatesDatabasePatch} from "src/shared/api/common";
+import {buildLoggerBundle} from "src/electron-preload/util";
 import {curryFunctionMembers, MailFolderTypeService} from "src/shared/util";
 import {fetchEntitiesRange} from "src/electron-preload/webview/tutanota/lib/rest";
-import {fetchMessages, fetchUserFoldersWithSubFolders} from "src/electron-preload/webview/tutanota/lib/fetcher";
 import {fillInputValue, getLocationHref, submitTotpToken, waitElements} from "src/electron-preload/webview/util";
-import {MailTypeRef, User} from "src/electron-preload/webview/tutanota/lib/rest/model";
+import {generateStartId} from "./lib/util";
 import {NotificationsTutanota} from "src/shared/model/account";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {resolveWebClientApi, WebClientApi} from "src/electron-preload/webview/tutanota/lib/tutanota-api";
@@ -28,23 +39,110 @@ resolveWebClientApi()
     .catch(_logger.error);
 
 function bootstrapApi(webClientApi: WebClientApi) {
+    const {GENERATED_MAX_ID} = webClientApi["src/api/common/EntityFunctions"];
     const login2FaWaitElementsConfig = {
         input: () => document.querySelector("#modal input.input") as HTMLInputElement,
         button: () => document.querySelector("#modal input.input ~ div > button") as HTMLElement,
     };
-
     const endpoints: TutanotaApi = {
-        ping: () => EMPTY,
+        ping: () => of(null),
 
-        fetchMessages: ({login, rawNewestTimestamp, type}) => {
+        bootstrapFetch: ({lastBootstrappedMailInstanceId, zoneName}) => from((async () => {
+            const logger = curryFunctionMembers(_logger, "bootstrapFetch()", zoneName);
+            logger.info();
+
             const controller = getUserController();
 
-            if (controller) {
-                return fetchMessages({login, rawNewestTimestamp, type, user: controller.user});
+            if (!controller) {
+                throw new Error("User controller is supposed to be defined");
             }
 
-            return EMPTY;
-        },
+            const initialRun = typeof lastBootstrappedMailInstanceId === "undefined";
+
+            // last entity event batches fetching must be happening BEFORE mails and folders fetching and only INITIALLY (once)
+            // so app does further entity event batches fetching starting from the boostrap/this stage
+            const metadata: Partial<Pick<DatabaseModel.DbContent<"tutanota">["metadata"], "lastGroupEntityEventBatches">> = {};
+            if (initialRun) {
+                metadata.lastGroupEntityEventBatches = {};
+                for (const {group} of controller.user.memberships) {
+                    const entityEventBatches = await Rest.fetchEntitiesRange(
+                        Rest.Model.EntityEventBatchTypeRef,
+                        group,
+                        {
+                            count: 1,
+                            reverse: true,
+                            start: GENERATED_MAX_ID,
+                        },
+                    );
+                    if (entityEventBatches.length) {
+                        metadata.lastGroupEntityEventBatches[group] = resolveInstanceId(entityEventBatches[0]);
+                    }
+                }
+                logger.info(`fetched metadata for ${Object.keys(metadata.lastGroupEntityEventBatches).length} entity event batches`);
+            }
+
+            const startId = await generateStartId(lastBootstrappedMailInstanceId);
+            const folders = await fetchMailFoldersWithSubFolders(controller.user);
+            const mails = [];
+
+            logger.info(`startId: ${initialRun ? "initial" : 'provided "instanceId" based'}`);
+
+            for (const folder of folders) {
+                const folderMails = await Rest.fetchEntitiesRangeUntilTheEnd(
+                    Rest.Model.MailTypeRef,
+                    folder.mails,
+                    {start: startId, count: 500},
+                );
+                for (const mail of folderMails) {
+                    mails.push(await buildDbMail(mail));
+                }
+            }
+
+            logger.info(`returning ${folders.length} folders and ${mails.length} mails`);
+
+            return {
+                mails,
+                folders: folders.map((folder) => buildDbFolder(folder)),
+                metadata,
+            };
+        })()),
+
+        buildBatchEntityUpdatesDbPatch: ({lastGroupEntityEventBatches, zoneName}) => from((async () => {
+            const logger = curryFunctionMembers(_logger, "entityEventBatchesFetch()", zoneName);
+            logger.info();
+
+            const controller = getUserController();
+
+            if (!controller) {
+                throw new Error("User controller is supposed to be defined");
+            }
+
+            const entitiesUpdates: Rest.Model.EntityEventBatch[] = [];
+            const metadata: Required<Pick<DatabaseModel.DbContent<"tutanota">["metadata"], "lastGroupEntityEventBatches">> = {
+                lastGroupEntityEventBatches: {},
+            };
+
+            for (const {group} of controller.user.memberships) {
+                const startId = await generateStartId(lastGroupEntityEventBatches[group]);
+                const entityEventBatches = await Rest.fetchEntitiesRangeUntilTheEnd(
+                    Rest.Model.EntityEventBatchTypeRef,
+                    group,
+                    {start: startId, count: 500},
+                );
+                entitiesUpdates.push(...entityEventBatches);
+                if (entityEventBatches.length) {
+                    metadata.lastGroupEntityEventBatches[group] = resolveInstanceId(entityEventBatches[entityEventBatches.length - 1]);
+                }
+            }
+            logger.verbose(`fetched ${entitiesUpdates.length} entity event batches`);
+
+            const databasePatch = await buildBatchEntityUpdatesDbPatch({entitiesUpdates, _logger: logger});
+
+            return {
+                ...databasePatch,
+                metadata,
+            };
+        })()),
 
         fillLogin: ({login, zoneName}) => from((async () => {
             const logger = curryFunctionMembers(_logger, "fillLogin()", zoneName);
@@ -71,7 +169,7 @@ function bootstrapApi(webClientApi: WebClientApi) {
             elements.storePasswordCheckboxBlock.addEventListener("click", cancelEvenHandler, true);
             logger.verbose(`"store" checkbox disabled`);
 
-            return EMPTY.toPromise();
+            return null;
         })()),
 
         login: ({password: passwordValue, login, zoneName}) => from((async () => {
@@ -97,7 +195,7 @@ function bootstrapApi(webClientApi: WebClientApi) {
             elements.submit.click();
             logger.verbose(`clicked`);
 
-            return EMPTY.toPromise();
+            return null;
         })()),
 
         login2fa: ({secret, zoneName}) => from((async () => {
@@ -124,6 +222,9 @@ function bootstrapApi(webClientApi: WebClientApi) {
             type LoggedInOutput = Required<Pick<NotificationsTutanota, "loggedIn">>;
             type PageTypeOutput = Required<Pick<NotificationsTutanota, "pageType">>;
             type UnreadOutput = Required<Pick<NotificationsTutanota, "unread">>;
+
+            // TODO add "entity event batches" listening notification instead of the polling
+            // so app reacts to the mails/folders updates instantly
 
             const observables: [
                 Observable<LoggedInOutput>,
@@ -178,16 +279,15 @@ function bootstrapApi(webClientApi: WebClientApi) {
                             return;
                         }
 
-                        const folders = await fetchUserFoldersWithSubFolders(controller.user);
+                        const folders = await fetchMailFoldersWithSubFolders(controller.user);
                         const inboxFolder = folders.find(({folderType}) => MailFolderTypeService.testValue(folderType, "inbox"));
 
                         if (!inboxFolder || !isLoggedIn() || !navigator.onLine) {
                             return;
                         }
 
-                        const {GENERATED_MAX_ID} = webClientApi["src/api/common/EntityFunctions"];
                         const emails = await fetchEntitiesRange(
-                            MailTypeRef,
+                            Rest.Model.MailTypeRef,
                             inboxFolder.mails,
                             {
                                 count: 50,
@@ -213,20 +313,95 @@ function bootstrapApi(webClientApi: WebClientApi) {
 
     TUTANOTA_IPC_WEBVIEW_API.registerApi(endpoints);
     _logger.verbose(`api registered, url: ${getLocationHref()}`);
+}
 
-    function getUserController(): { accessToken: string, user: User } | null {
-        return WINDOW.tutao
-        && WINDOW.tutao.logins
-        && typeof WINDOW.tutao.logins.getUserController === "function"
-        && WINDOW.tutao.logins.getUserController() ? WINDOW.tutao.logins.getUserController()
-            : null;
+async function buildBatchEntityUpdatesDbPatch(
+    input: { entitiesUpdates: Rest.Model.EntityEventBatch[]; _logger: ReturnType<typeof buildLoggerBundle>; },
+): Promise<BatchEntityUpdatesDatabasePatch> {
+    const logger = curryFunctionMembers(input._logger, "buildBatchEntityUpdatesDbPatch()");
+    logger.info();
+
+    const mailsMap: Map<Rest.Model.Mail["_id"][1], Rest.Model.EntityUpdate[]> = new Map();
+    const foldersMap: Map<Rest.Model.MailFolder["_id"][1], Rest.Model.EntityUpdate[]> = new Map();
+
+    for (const entitiesUpdate of input.entitiesUpdates) {
+        for (const event of entitiesUpdate.events) {
+            if (sameRefType(Rest.Model.MailTypeRef, event)) {
+                const events = mailsMap.get(event.instanceId) || [];
+                events.push(event);
+                mailsMap.set(event.instanceId, events);
+            } else if (sameRefType(Rest.Model.MailFolderTypeRef, event)) {
+                const events = foldersMap.get(event.instanceId) || [];
+                events.push(event);
+                foldersMap.set(event.instanceId, events);
+            }
+        }
+    }
+    logger.verbose(`resolved ${mailsMap.size} unique mails and ${foldersMap.size} unique folders`);
+
+    const databasePatch: BatchEntityUpdatesDatabasePatch = {
+        mails: {remove: [], add: []},
+        folders: {remove: [], add: []},
+    };
+
+    for (const {entitiesUpdates, add, remove} of [
+        {
+            entitiesUpdates: mailsMap.values(),
+            add: async (update: Rest.Model.EntityUpdate) => {
+                const mail = await Rest.fetchEntity(Rest.Model.MailTypeRef, [update.instanceListId, update.instanceId]);
+                const mailDb = await buildDbMail(mail);
+                databasePatch.mails.add.push(mailDb);
+            },
+            remove: (update: Rest.Model.EntityUpdate) => {
+                databasePatch.mails.remove.push({pk: buildPk([update.instanceListId, update.instanceId])});
+            },
+        },
+        {
+            entitiesUpdates: foldersMap.values(),
+            add: async (update: Rest.Model.EntityUpdate) => {
+                const folder = await Rest.fetchEntity(Rest.Model.MailFolderTypeRef, [update.instanceListId, update.instanceId]);
+                const folderDb = buildDbFolder(folder);
+                databasePatch.folders.add.push(folderDb);
+            },
+            remove: (update: Rest.Model.EntityUpdate) => {
+                databasePatch.folders.remove.push({pk: buildPk([update.instanceListId, update.instanceId])});
+            },
+        },
+    ]) {
+        for (const entityUpdates of entitiesUpdates) {
+            let added = false;
+            // entity updates sorted in ASC order, so reversing the entity updates list in order to fetch only the newest entity
+            for (const entityUpdate of entityUpdates.reverse()) {
+                if (!added && [Rest.Model.OperationType.CREATE, Rest.Model.OperationType.UPDATE].includes(entityUpdate.operation)) {
+                    await add(entityUpdate);
+                    added = true;
+                }
+                if ([Rest.Model.OperationType.DELETE].includes(entityUpdate.operation)) {
+                    remove(entityUpdate);
+                    break;
+                }
+            }
+        }
     }
 
-    function isLoggedIn(): boolean {
-        const controller = getUserController();
-        return !!(controller
-            && controller.accessToken
-            && controller.accessToken.length
-        );
-    }
+    logger.info(`upsert/remove mails: ${databasePatch.mails.add.length}/${databasePatch.mails.remove.length}`);
+    logger.info(`upsert/remove folders: ${databasePatch.folders.add.length}/${databasePatch.folders.remove.length}`);
+
+    return databasePatch;
+}
+
+function getUserController(): { accessToken: string, user: Rest.Model.User } | null {
+    return WINDOW.tutao
+    && WINDOW.tutao.logins
+    && typeof WINDOW.tutao.logins.getUserController === "function"
+    && WINDOW.tutao.logins.getUserController() ? WINDOW.tutao.logins.getUserController()
+        : null;
+}
+
+function isLoggedIn(): boolean {
+    const controller = getUserController();
+    return !!(controller
+        && controller.accessToken
+        && controller.accessToken.length
+    );
 }

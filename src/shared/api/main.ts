@@ -1,10 +1,11 @@
 import {ApiMethod, ApiMethodNoArgument, IpcMainApiService} from "electron-rpc-api";
-// tslint:disable-next-line:no-unused-variable
+// tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects below import as unused
 import {Options as EncryptionAdapterOptions} from "fs-json-store-encryption-adapter";
 
 import {
     AccountConfigCreatePatch,
     AccountConfigUpdatePatch,
+    AccountTypeAndLoginFieldContainer,
     KeePassClientConfFieldContainer,
     KeePassRefFieldContainer,
     LoginFieldContainer,
@@ -13,25 +14,14 @@ import {
     PasswordFieldContainer,
     UrlFieldContainer,
 } from "src/shared/model/container";
-// tslint:disable-next-line:no-unused-variable
-import {APP_NAME} from "src/shared/constants";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
-import {EntityRecord, EntityTable} from "src/shared/model/database";
-// TODO figure why tslint detects "ElectronContextLocations" as unused
-// tslint:disable-next-line:no-unused-variable
-import {ElectronContextLocations} from "src/shared/model/electron";
-// TODO figure why tslint detects "Omit" as unused
-// tslint:disable-next-line:no-unused-variable
-import {Omit} from "src/shared/types";
-// TODO figure why tslint detects "AccountType" as unused
-// tslint:disable-next-line:no-unused-variable
-import {AccountType} from "src/shared/model/account";
+import {BatchEntityUpdatesDatabasePatch} from "./common";
 
-export interface DatabaseUpsertInput<T extends EntityTable = EntityTable,
-    E extends InstanceType<EntityRecord[T]> = InstanceType<EntityRecord[T]>> {
-    table: T;
-    data: Array<Omit<E, "pk">>;
-}
+// tslint:disable:no-unused-variable // TODO figure why tslint detects below imports as unused
+import {APP_NAME} from "src/shared/constants";
+import {ElectronContextLocations} from "src/shared/model/electron";
+import {DbContent, Folder, Mail} from "src/shared/model/database";
+// tslint:enable:no-unused-variable
 
 export interface Endpoints {
     addAccount: ApiMethod<AccountConfigCreatePatch, Settings>;
@@ -43,25 +33,28 @@ export interface Endpoints {
 
     changeMasterPassword: ApiMethod<PasswordFieldContainer & NewPasswordFieldContainer, Settings>;
 
-    databaseUpsert: ApiMethod<DatabaseUpsertInput, never>;
-    databaseMailRawNewestTimestamp: ApiMethod<{ type: AccountType, login: string }, { value?: string }>;
+    dbInsertBootstrapContent: ApiMethod<AccountTypeAndLoginFieldContainer & { mails: Mail[]; folders: Folder[] }
+        & {metadata: Partial<DbContent["metadata"]>}, DbContent["metadata"]>;
+    dbProcessBatchEntityUpdatesPatch: ApiMethod<AccountTypeAndLoginFieldContainer & BatchEntityUpdatesDatabasePatch
+        & {metadata: Partial<DbContent["metadata"]>}, DbContent["metadata"]>;
+    dbGetContentMetadata: ApiMethod<AccountTypeAndLoginFieldContainer, DbContent["metadata"]>;
 
     init: ApiMethodNoArgument<{ electronLocations: ElectronContextLocations; hasSavedPassword: boolean; }>;
 
     keePassRecordRequest: ApiMethod<KeePassRefFieldContainer & KeePassClientConfFieldContainer
         & { suppressErrors: boolean }, Partial<PasswordFieldContainer & MessageFieldContainer>>;
 
-    logout: ApiMethodNoArgument<never>;
+    logout: ApiMethodNoArgument<null>;
 
-    openAboutWindow: ApiMethodNoArgument<never>;
+    openAboutWindow: ApiMethodNoArgument<null>;
 
-    openExternal: ApiMethod<{ url: string }, never>;
+    openExternal: ApiMethod<{ url: string }, null>;
 
-    openSettingsFolder: ApiMethodNoArgument<never>;
+    openSettingsFolder: ApiMethodNoArgument<null>;
 
     patchBaseConfig: ApiMethod<BaseConfig, Config>;
 
-    quit: ApiMethodNoArgument<never>;
+    quit: ApiMethodNoArgument<null>;
 
     readConfig: ApiMethodNoArgument<Config>;
 
@@ -71,11 +64,11 @@ export interface Endpoints {
 
     settingsExists: ApiMethodNoArgument<boolean>;
 
-    toggleBrowserWindow: ApiMethod<{ forcedState?: boolean }, never>;
+    toggleBrowserWindow: ApiMethod<{ forcedState?: boolean }, null>;
 
     toggleCompactLayout: ApiMethodNoArgument<Config>;
 
-    updateOverlayIcon: ApiMethod<{ hasLoggedOut: boolean, unread: number }, never>;
+    updateOverlayIcon: ApiMethod<{ hasLoggedOut: boolean, unread: number }, null>;
 }
 
 export const IPC_MAIN_API = new IpcMainApiService<Endpoints>({channel: `${APP_NAME}:ipcMain-api`});

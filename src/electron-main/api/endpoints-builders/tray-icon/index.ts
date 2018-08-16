@@ -1,5 +1,5 @@
 import {app} from "electron";
-import {EMPTY, from} from "rxjs";
+import {from} from "rxjs";
 
 import {Context} from "src/electron-main/model";
 import {Endpoints} from "src/shared/api/main";
@@ -22,7 +22,7 @@ export async function buildEndpoints(
             const tray = ctx.uiContext && ctx.uiContext.tray;
 
             if (!browserWindow || !tray) {
-                return EMPTY.toPromise();
+                return null;
             }
 
             const canvas = hasLoggedOut ? loggedOutCanvas : defaultCanvas;
@@ -38,7 +38,7 @@ export async function buildEndpoints(
                 app.setBadgeCount(0);
             }
 
-            return EMPTY.toPromise();
+            return null;
         })()),
     };
 }

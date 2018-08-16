@@ -94,19 +94,17 @@ export class OptionsEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({addingAccount: true})),
-            this.electronService
-                .ipcMainClient()("addAccount")(payload)
-                .pipe(
-                    concatMap((settings) => [
-                        OPTIONS_ACTIONS.GetSettingsResponse(settings),
-                        this.optionsService.settingsNavigationAction({
-                            path: "account-edit",
-                            queryParams: {login: payload.login},
-                        }),
-                    ]),
-                    catchError((error) => of(CORE_ACTIONS.Fail(error))),
-                    finalize(() => this.dispatchProgress({addingAccount: false})),
-                ),
+            this.electronService.ipcMainClient()("addAccount")(payload).pipe(
+                concatMap((settings) => [
+                    OPTIONS_ACTIONS.GetSettingsResponse(settings),
+                    this.optionsService.settingsNavigationAction({
+                        path: "account-edit",
+                        queryParams: {login: payload.login},
+                    }),
+                ]),
+                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                finalize(() => this.dispatchProgress({addingAccount: false})),
+            ),
         )));
 
     @Effect()

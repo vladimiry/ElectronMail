@@ -1,6 +1,6 @@
 import {authenticator} from "otplib";
 import {distinctUntilChanged, map, tap} from "rxjs/operators";
-import {EMPTY, from, interval, merge, Observable, Subscriber} from "rxjs";
+import {from, interval, merge, Observable, of, Subscriber} from "rxjs";
 
 import {
     NOTIFICATION_LOGGED_IN_POLLING_INTERVAL,
@@ -19,7 +19,7 @@ const twoFactorCodeElementId = "twoFactorCode";
 delete WINDOW.Notification;
 
 const endpoints: ProtonmailApi = {
-    ping: () => EMPTY,
+    ping: () => of(null),
 
     fillLogin: ({login, zoneName}) => from((async () => {
         const logger = curryFunctionMembers(_logger, "fillLogin()", zoneName);
@@ -35,7 +35,7 @@ const endpoints: ProtonmailApi = {
 
         elements.username.readOnly = true;
 
-        return EMPTY.toPromise();
+        return null;
     })()),
 
     login: ({login, password, zoneName}) => from((async () => {
@@ -61,7 +61,7 @@ const endpoints: ProtonmailApi = {
         elements.submit.click();
         logger.verbose(`clicked`);
 
-        return EMPTY.toPromise();
+        return null;
     })()),
 
     login2fa: ({secret, zoneName}) => from((async () => {
@@ -93,7 +93,7 @@ const endpoints: ProtonmailApi = {
         await fillInputValue(elements.mailboxPassword, mailPassword);
         elements.submit.click();
 
-        return EMPTY.toPromise();
+        return null;
     })()),
 
     notification: ({entryUrl, zoneName}) => {

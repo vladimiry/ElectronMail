@@ -12,6 +12,7 @@ import {configEncryptionPresetValidator, INITIAL_STORES, settingsAccountLoginUni
 import {Context, ContextInitOptions, ContextInitOptionsPaths, RuntimeEnvironment} from "./model";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
+import {Db} from "./database/db";
 
 export async function initContext(options: ContextInitOptions = {}): Promise<Context> {
     const runtimeEnvironment: RuntimeEnvironment = Boolean(process.env[RUNTIME_ENV_E2E]) ? "e2e" : "production";
@@ -30,6 +31,7 @@ export async function initContext(options: ContextInitOptions = {}): Promise<Con
     logger.transports.console.level = false;
 
     return {
+        db: new Db(),
         storeFs,
         runtimeEnvironment,
         locations,

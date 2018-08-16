@@ -1,6 +1,6 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {catchError, filter, map, concatMap, tap} from "rxjs/operators";
-import {concat, of} from "rxjs";
+import {catchError, concatMap, filter, map, mergeMap, tap} from "rxjs/operators";
+import {concat, EMPTY, of} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Location} from "@angular/common";
 import {Router} from "@angular/router";
@@ -56,6 +56,7 @@ export class NavigationEffects {
         filter(NAVIGATION_ACTIONS.is.ToggleBrowserWindow),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => this.electronService.ipcMainClient()("toggleBrowserWindow")(payload).pipe(
+            mergeMap(() => EMPTY),
             catchError((error) => of(CORE_ACTIONS.Fail(error))),
         )));
 
@@ -64,6 +65,7 @@ export class NavigationEffects {
         filter(NAVIGATION_ACTIONS.is.OpenAboutWindow),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(() => this.electronService.ipcMainClient()("openAboutWindow")().pipe(
+            mergeMap(() => EMPTY),
             catchError((error) => of(CORE_ACTIONS.Fail(error))),
         )));
 
@@ -72,6 +74,7 @@ export class NavigationEffects {
         filter(NAVIGATION_ACTIONS.is.OpenExternal),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => this.electronService.ipcMainClient()("openExternal")({url: payload.url}).pipe(
+            mergeMap(() => EMPTY),
             catchError((error) => of(CORE_ACTIONS.Fail(error))),
         )));
 
@@ -80,6 +83,7 @@ export class NavigationEffects {
         filter(NAVIGATION_ACTIONS.is.OpenSettingsFolder),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(() => this.electronService.ipcMainClient()("openSettingsFolder")().pipe(
+            mergeMap(() => EMPTY),
             catchError((error) => of(CORE_ACTIONS.Fail(error))),
         )));
 
@@ -89,7 +93,9 @@ export class NavigationEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(() => {
             const concatenated = concat(
-                this.electronService.ipcMainClient()("logout")(),
+                this.electronService.ipcMainClient()("logout")().pipe(
+                    mergeMap(() => EMPTY),
+                ),
                 of(NAVIGATION_ACTIONS.Go({
                     path: [{
                         outlets: {
@@ -112,6 +118,7 @@ export class NavigationEffects {
         filter(NAVIGATION_ACTIONS.is.Quit),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(() => this.electronService.ipcMainClient()("quit")().pipe(
+            mergeMap(() => EMPTY),
             catchError((error) => of(CORE_ACTIONS.Fail(error))),
         )));
 

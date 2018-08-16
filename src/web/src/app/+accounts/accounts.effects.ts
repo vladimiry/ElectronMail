@@ -1,5 +1,5 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {catchError, concatMap, defaultIfEmpty, filter, finalize, map, mergeMap, switchMap, takeUntil, tap} from "rxjs/operators";
+import {catchError, concatMap, filter, finalize, map, mergeMap, takeUntil, tap} from "rxjs/operators";
 import {EMPTY, from, merge, of, throwError, timer} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store} from "@ngrx/store";
@@ -10,8 +10,8 @@ import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} fr
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {State} from "src/web/src/app/store/reducers/accounts";
 
-const _logger = getZoneNameBoundWebLogger("[accounts.effects]");
 const rateLimiter = __ELECTRON_EXPOSURE__.require["rolling-rate-limiter"]();
+const _logger = getZoneNameBoundWebLogger("[accounts.effects]");
 
 @Injectable()
 export class AccountsEffects {
@@ -30,6 +30,8 @@ export class AccountsEffects {
             const $stop = from(finishPromise).pipe(
                 tap(() => logger.info("release")),
             );
+            const ipcMainClient = this.api.ipcMainClient();
+            const zoneName = logger.zoneName();
 
             if (type !== "tutanota") {
                 return throwError(new Error(`Messages fetching is not yet implemented for "${type}" email provider`));
@@ -39,28 +41,34 @@ export class AccountsEffects {
 
             // TODO release: increase interval time to 30 minutes
             // TODO make interval time configurable
+            // TODO handle network errors during fetching, test for online status
 
             return this.api.webViewClient(webView, type, {finishPromise}).pipe(
-                mergeMap((client) => timer(0, ONE_SECOND_MS * 30).pipe(
-                    tap(() => logger.verbose("interval")),
-                    // tslint:disable-next-line:ban
-                    switchMap(() => this.api.ipcMainClient()("databaseMailRawNewestTimestamp")({type, login})),
-                    tap(({value}) => logger.verbose(`${value ? "not " : ""}empty "rawNewestTimestamp" received from database`)),
-                    mergeMap(({value: rawNewestTimestamp}) => {
-                        // TODO handle network errors during fetching, test for online status
-                        return client("fetchMessages")({type, login, rawNewestTimestamp, zoneName: logger.zoneName()}).pipe(
-                            tap(({mail}) => logger.verbose("mail fetched", JSON.stringify({id: mail.id}))),
-                            mergeMap(({mail}) => this.api.ipcMainClient()("databaseUpsert")({table: "Mail", data: [mail]}).pipe(
-                                defaultIfEmpty(undefined),
-                            )),
-                            tap(() => logger.verbose("mail persisted")),
-                            mergeMap(() => EMPTY),
-                            catchError((error) => of(CORE_ACTIONS.Fail(error))),
-                            takeUntil($stop),
-                        );
+                mergeMap((webViewClient) => ipcMainClient("dbGetContentMetadata")({type, login}).pipe(
+                    mergeMap((metadata) => {
+                        if (metadata.type !== "tutanota") {
+                            throw new Error(`Local store is supported for ${metadata.type} only for now`);
+                        }
+                        if (!metadata.lastBootstrappedMailInstanceId) {
+                            return webViewClient("bootstrapFetch")({...metadata, zoneName}).pipe(
+                                concatMap((value) => ipcMainClient("dbInsertBootstrapContent")({type, login, ...value})),
+                            );
+                        }
+                        return of(metadata);
                     }),
-                    takeUntil($stop),
+                    mergeMap(() => timer(0, ONE_SECOND_MS * 30)),
+                    mergeMap(() => ipcMainClient("dbGetContentMetadata")({type, login})),
+                    mergeMap((metadata) => {
+                        if (metadata.type !== "tutanota") {
+                            throw new Error(`Local store is supported for ${metadata.type} only for now`);
+                        }
+                        return webViewClient("buildBatchEntityUpdatesDbPatch")({...metadata, zoneName});
+                    }),
+                    mergeMap((patch) => ipcMainClient("dbProcessBatchEntityUpdatesPatch")({type, login, ...patch})),
+                    mergeMap(() => EMPTY),
+                    catchError((error) => of(CORE_ACTIONS.Fail(error))),
                 )),
+                takeUntil($stop),
             );
         }),
     );
@@ -123,8 +131,8 @@ export class AccountsEffects {
                     logger.info("fillLogin");
                     return this.api.webViewClient(webView, type).pipe(
                         mergeMap((caller) => caller("fillLogin")({login, zoneName: logger.zoneName()})),
-                        catchError((error) => of(CORE_ACTIONS.Fail(error))),
                         mergeMap(() => EMPTY),
+                        catchError((error) => of(CORE_ACTIONS.Fail(error))),
                     );
                 }
                 case "login2fa": {

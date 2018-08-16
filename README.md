@@ -7,7 +7,7 @@ is built with Electron unofficial desktop app for [ProtonMail](https://protonmai
 ![view-toggling](images/toggling.gif)
 
 ## Features
-- Cross platform, Linux/OSX/Windows packages [provided](https://github.com/vladimiry/email-securely-app/releases).
+- Cross platform, Linux/OSX/Windows installation packages [provided](https://github.com/vladimiry/email-securely-app/releases).
 - Multi email providers support.
 - Multi accounts support per each email provider. Individual entry point domain selection is [enabled](https://github.com/vladimiry/email-securely-app/issues/29).
 - Automatic login into the app with remembered master password using [keytar](https://github.com/atom/node-keytar) module ("Keep me signed in" feature).

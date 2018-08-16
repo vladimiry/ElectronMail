@@ -8,7 +8,7 @@ import {ZoneApiParameter} from "src/shared/api/common";
 
 export interface ProtonmailApi extends CommonApi {
     notification: ApiMethod<{ entryUrl: string } & ZoneApiParameter, Partial<NotificationsProtonmail>>;
-    unlock: ApiMethod<MailPasswordFieldContainer & ZoneApiParameter, never>;
+    unlock: ApiMethod<MailPasswordFieldContainer & ZoneApiParameter, null>;
 }
 
 export const PROTONMAIL_IPC_WEBVIEW_API = new WebViewApiService<ProtonmailApi>({channel});

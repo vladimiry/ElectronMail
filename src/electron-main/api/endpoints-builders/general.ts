@@ -1,7 +1,7 @@
 import aboutWindow from "about-window";
 import path from "path";
 import {app, shell} from "electron";
-import {EMPTY, from} from "rxjs";
+import {from, of} from "rxjs";
 import {isWebUri} from "valid-url";
 import {promisify} from "util";
 
@@ -19,7 +19,7 @@ export async function buildEndpoints(
                 icon_path: ctx.locations.icon,
                 package_json_dir: path.join(ctx.locations.appDir, ".."),
             });
-            return EMPTY;
+            return of(null);
         },
 
         openExternal: ({url}) => from((async () => {
@@ -29,22 +29,22 @@ export async function buildEndpoints(
 
             await promisify(shell.openExternal)(url, {activate: true});
 
-            return EMPTY.toPromise();
+            return null;
         })()),
 
         openSettingsFolder: () => {
             shell.openItem(ctx.locations.userDataDir);
-            return EMPTY;
+            return of(null);
         },
 
         quit: () => {
             app.exit();
-            return EMPTY;
+            return of(null);
         },
 
         toggleBrowserWindow: ({forcedState}) => {
             toggleBrowserWindow(ctx, forcedState);
-            return EMPTY;
+            return of(null);
         },
     };
 }

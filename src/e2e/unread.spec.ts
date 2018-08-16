@@ -3,8 +3,8 @@
 // tslint:disable:await-promise
 
 import {accountBadgeCssSelector, CI, initApp, test} from "./workflow";
-import {AccountType} from "src/shared/model/account";
 import {ONE_SECOND_MS} from "src/shared/constants";
+import {AccountTypeAndLoginFieldContainer} from "src/shared/model/container";
 
 // protonmail account to login during e2e tests running
 const RUNTIME_ENV_E2E_PROTONMAIL_LOGIN = `EMAIL_SECURELY_APP_E2E_PROTONMAIL_LOGIN`;
@@ -32,7 +32,7 @@ for (const {type, login, password, twoFactorCode, unread} of ([
         twoFactorCode: process.env[RUNTIME_ENV_E2E_TUTANOTA_2FA_CODE],
         unread: Number(process.env[RUNTIME_ENV_E2E_TUTANOTA_UNREAD_MIN]),
     },
-] as Array<{ type: AccountType, login: string, password: string, twoFactorCode: string, unread: number }>)) {
+] as Array<AccountTypeAndLoginFieldContainer & { password: string, twoFactorCode: string, unread: number }>)) {
     if (!login || !password || !unread || isNaN(unread)) {
         continue;
     }

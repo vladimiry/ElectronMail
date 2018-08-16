@@ -18,9 +18,14 @@ export const OperationType: Record<string, "0" | "1" | "2"> = {
     DELETE: "2",
 };
 
-export type NumberString = string;
+// tslint:disable-next-line:variable-name
+export const MailState = {
+    DRAFT: "0",
+    SENT: "1",
+    RECEIVED: "2",
+};
 
-export type TypeRefApp = "tutanota" | "sys";
+export type NumberString = string;
 
 export type Id<T extends string = string> = T;
 
@@ -30,10 +35,14 @@ export interface BaseEntity<ID extends Id | IdTuple> {
     _id: ID;
 }
 
+export type TypeRefApp = "tutanota" | "sys";
+
+export type TypeRefType = "File" | "MailBody" | "MailboxGroupRoot" | "MailBox" | "MailFolder" | "Mail" | "EntityEventBatch";
+
 export interface TypeRef<T extends BaseEntity<Id | IdTuple>> {
     _type: T;
     app: TypeRefApp;
-    type: string;
+    type: TypeRefType;
 }
 
 export interface RequestParams {

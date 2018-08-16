@@ -1,13 +1,20 @@
 import {ApiMethod, WebViewApiService} from "electron-rpc-api";
 
-import {channel, FetchMessagesInput, FetchMessagesOutput} from "./common";
+import {BatchEntityUpdatesDatabasePatch, ZoneApiParameter} from "src/shared/api/common";
+import {channel} from "./common";
 import {CommonApi} from "src/shared/api/webview/common";
 import {NotificationsTutanota} from "src/shared/model/account";
-import {ZoneApiParameter} from "src/shared/api/common";
+// tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects below import as unused
+import {DbContent, Folder, Mail} from "src/shared/model/database";
+
+type Metadata = DbContent<"tutanota">["metadata"];
 
 export interface TutanotaApi extends CommonApi {
     notification: ApiMethod<{ entryUrl: string } & ZoneApiParameter, Partial<NotificationsTutanota>>;
-    fetchMessages: ApiMethod<FetchMessagesInput & ZoneApiParameter, FetchMessagesOutput>;
+    bootstrapFetch: ApiMethod<Metadata & ZoneApiParameter,
+        { mails: Mail[]; folders: Folder[] } & { metadata: Partial<Pick<Metadata, "lastGroupEntityEventBatches">> }>;
+    buildBatchEntityUpdatesDbPatch: ApiMethod<Metadata & ZoneApiParameter,
+        BatchEntityUpdatesDatabasePatch & { metadata: Required<Pick<Metadata, "lastGroupEntityEventBatches">> }>;
 }
 
 export const TUTANOTA_IPC_WEBVIEW_API = new WebViewApiService<TutanotaApi>({channel});

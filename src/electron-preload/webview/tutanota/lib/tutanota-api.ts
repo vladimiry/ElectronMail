@@ -1,4 +1,4 @@
-import {BaseEntity, Id, IdTuple, TypeRef} from "./rest/model";
+import * as Rest from "./rest";
 import {Timestamp} from "src/shared/types";
 
 type ModuleFiles =
@@ -10,18 +10,18 @@ type ModuleFiles =
 
 export interface WebClientApi extends Record<ModuleFiles, any> {
     "src/api/common/EntityFunctions": {
-        GENERATED_MIN_ID: Id;
-        GENERATED_MAX_ID: Id;
-        resolveTypeReference: <T extends BaseEntity<Id | IdTuple>>(
-            typeRef: TypeRef<T>,
+        GENERATED_MIN_ID: Rest.Model.Id;
+        GENERATED_MAX_ID: Rest.Model.Id;
+        resolveTypeReference: <T extends Rest.Model.BaseEntity<Rest.Model.Id | Rest.Model.IdTuple>>(
+            typeRef: Rest.Model.TypeRef<T>,
         ) => Promise<{ type: "ELEMENT_TYPE" | "LIST_ELEMENT_TYPE" | "DATA_TRANSFER_TYPE" | "AGGREGATED_TYPE"; version: string; }>;
     };
     "src/api/common/TutanotaConstants": {
         FULL_INDEXED_TIMESTAMP: Timestamp;
     };
     "src/api/common/utils/Encoding": {
-        timestampToGeneratedId: (timestamp: Timestamp) => Id;
-        generatedIdToTimestamp: (id: Id) => Timestamp;
+        timestampToGeneratedId: (timestamp: Timestamp) => Rest.Model.Id;
+        generatedIdToTimestamp: (id: Rest.Model.Id) => Timestamp;
     };
     "src/api/common/WorkerProtocol": {
         Queue: () => void & {
@@ -29,18 +29,18 @@ export interface WebClientApi extends Record<ModuleFiles, any> {
         };
     };
     "src/api/main/Entity": {
-        load: <T extends BaseEntity<Id | IdTuple>, TypeRefType extends TypeRef<T>>(
-            typeRef: TypeRef<T>,
-            id: Id | IdTuple,
+        load: <T extends Rest.Model.BaseEntity<Rest.Model.Id | Rest.Model.IdTuple>, TypeRefType extends Rest.Model.TypeRef<T>>(
+            typeRef: Rest.Model.TypeRef<T>,
+            id: T["_id"],
         ) => Promise<T>;
-        loadAll: <T extends BaseEntity<Id | IdTuple>, TypeRefType extends TypeRef<T>>(
-            typeRef: TypeRef<T>,
-            listId: Id,
+        loadAll: <T extends Rest.Model.BaseEntity<Rest.Model.IdTuple>, TypeRefType extends Rest.Model.TypeRef<T>>(
+            typeRef: Rest.Model.TypeRef<T>,
+            listId: T["_id"][0],
         ) => Promise<T[]>;
-        loadRange: <T extends BaseEntity<Id | IdTuple>, TypeRefType extends TypeRef<T>>(
-            typeRef: TypeRef<T>,
-            listId: Id,
-            start: Id,
+        loadRange: <T extends Rest.Model.BaseEntity<Rest.Model.IdTuple>, TypeRefType extends Rest.Model.TypeRef<T>>(
+            typeRef: Rest.Model.TypeRef<T>,
+            listId: T["_id"][0],
+            start: Rest.Model.Id,
             count: number,
             reverse: boolean,
         ) => Promise<T[]>;
@@ -77,6 +77,17 @@ export async function resolveWebClientApi(): Promise<WebClientApi> {
     }
 
     state.bundle = bundle as WebClientApi;
+
+    // TODO validate all constants in a declarative way
+    if (typeof bundle["src/api/common/EntityFunctions"].GENERATED_MIN_ID !== "string") {
+        throw new Error(`Invalid "src/api/common/EntityFunctions.GENERATED_MIN_ID" value`);
+    }
+    if (typeof bundle["src/api/common/EntityFunctions"].GENERATED_MAX_ID !== "string") {
+        throw new Error(`Invalid "src/api/common/EntityFunctions.GENERATED_MAX_ID" value`);
+    }
+    if (typeof bundle["src/api/common/TutanotaConstants"].FULL_INDEXED_TIMESTAMP !== "number") {
+        throw new Error(`Invalid "src/api/common/TutanotaConstants.FULL_INDEXED_TIMESTAMP" value`);
+    }
 
     return state.bundle;
 }

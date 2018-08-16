@@ -1,6 +1,10 @@
 import {AccountConfig, AccountType} from "src/shared/model/account";
 import {KeePassClientConf, KeePassRef} from "src/shared/model/keepasshttp";
 
+export type AccountTypeAndLoginFieldContainer = Pick<AccountConfig, "type" | "login">;
+
+export type LoginFieldContainer = Pick<AccountTypeAndLoginFieldContainer, "login">;
+
 export interface KeePassRefFieldContainer {
     keePassRef: KeePassRef;
 }
@@ -15,10 +19,6 @@ export interface UrlFieldContainer {
 
 export interface MessageFieldContainer {
     message: string;
-}
-
-export interface LoginFieldContainer {
-    login: string;
 }
 
 export interface PasswordFieldContainer {

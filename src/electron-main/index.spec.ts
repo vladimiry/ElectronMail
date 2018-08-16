@@ -1,7 +1,6 @@
 import ava, {TestInterface} from "ava";
 import rewiremock from "rewiremock";
 import sinon, {SinonStub} from "sinon";
-import {EMPTY} from "rxjs";
 
 import {APP_NAME} from "src/shared/constants";
 import {Endpoints} from "src/shared/api/main";
@@ -23,7 +22,6 @@ test.serial("workflow", async (t) => {
     t.true(m.electron.app.setAppUserModelId.calledWithExactly(`com.github.vladimiry.${APP_NAME}`));
     t.true(m["electron-unhandled"].calledWithExactly(sinon.match.hasOwn("logger")), `"electronUnhandled" called`);
     t.true(m["./util"].initContext.calledWithExactly(), `"initContext" called`);
-    t.true(m["./database"].connect.calledWithExactly(), `"connect" called`);
     t.true(m["./api"].initApi.calledWithExactly(t.context.ctx), `"initApi" called`);
     t.true(m.electron.app.makeSingleInstance.called, `"makeSingleInstance" called`);
     t.true(m["./web-content-context-menu"].initWebContentContextMenu.calledWithExactly(t.context.ctx), `initWebContentContextMenu called`);
@@ -42,7 +40,7 @@ test.beforeEach(async (t) => {
             toPromise: () => Promise.resolve(INITIAL_STORES.config),
         }),
         updateOverlayIcon: sinon.stub().returns({
-            toPromise: () => Promise.resolve(EMPTY),
+            toPromise: () => Promise.resolve(null),
         }),
     };
 
@@ -58,7 +56,6 @@ test.beforeEach(async (t) => {
             const mocks = t.context.mocks["~index"];
 
             mock(() => import("./api")).callThrough().with(mocks["./api"]);
-            mock(() => import("./database")).with(mocks["./database"]);
             mock(() => import("./util")).callThrough().with(mocks["./util"]);
             mock("./window").with(mocks["./window"]);
             mock("./tray").with(mocks["./tray"]);
@@ -80,9 +77,6 @@ function buildMocks(testContext: TestContext) {
         "~index": {
             "./api": {
                 initApi: sinon.stub().returns(Promise.resolve(testContext.endpoints)),
-            },
-            "./database": {
-                connect: sinon.stub().returns(Promise.resolve()),
             },
             "./util": {
                 initContext: sinon.stub().resolves(testContext.ctx),

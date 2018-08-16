@@ -62,21 +62,6 @@
               {
                 "target": [
                   "src/**/*",
-                  "!src/electron-main/database/nano-sql.ts",
-                  "!src/electron-main/api/index.spec.ts"
-                ],
-                "from": [
-                  "nano-sql",
-                  "!src/electron-main/database/nano-sql"
-                ]
-              }
-            ]
-          },
-          {
-            "patterns": [
-              {
-                "target": [
-                  "src/**/*",
                   "!src/electron-main/**/*"
                 ],
                 "from": [

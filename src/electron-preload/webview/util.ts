@@ -1,4 +1,3 @@
-import {EMPTY} from "rxjs";
 import {Keyboard} from "keysim";
 
 import {asyncDelay, curryFunctionMembers} from "src/shared/util";
@@ -72,7 +71,7 @@ export async function submitTotpToken(
     button: HTMLElement,
     tokenResolver: () => string,
     _logger: ReturnType<typeof buildLoggerBundle>,
-): Promise<never> {
+): Promise<null> {
     const logger = curryFunctionMembers(_logger, "submitTotpToken()");
     logger.info();
 
@@ -97,7 +96,7 @@ export async function submitTotpToken(
         await asyncDelay(newTokenDelayMs, submit);
     }
 
-    return EMPTY.toPromise();
+    return null;
 
     async function submit() {
         logger.verbose("submit - start");

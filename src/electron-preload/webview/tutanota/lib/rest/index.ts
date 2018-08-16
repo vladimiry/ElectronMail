@@ -47,7 +47,7 @@ export async function fetchEntitiesRangeUntilTheEnd<T extends BaseEntity<IdTuple
         const nextPortionStartId = timestampToGeneratedId(currentPortionEndTimestamp + 1);
 
         entities.push(
-            ...await fetchEntitiesRange(typeRef, listId, {start: nextPortionStartId, count, reverse: false}),
+            ...await fetchEntitiesRangeUntilTheEnd(typeRef, listId, {start: nextPortionStartId, count}),
         );
     }
 

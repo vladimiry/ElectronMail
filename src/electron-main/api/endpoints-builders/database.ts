@@ -28,11 +28,11 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
 
             if (mails.length) {
                 const sortByProp = ((instanceIdProp: keyof Pick<Mail, "instanceId">) => instanceIdProp)("instanceId");
-                record.metadata.lastBootstrappedMailInstanceId = sortBy(prop(sortByProp))(mails)[mails.length - 1].instanceId;
+                record.metadata.bootstrappedMailId = sortBy(prop(sortByProp))(mails)[mails.length - 1].instanceId;
             }
 
-            if (metadata && "lastGroupEntityEventBatches" in metadata) {
-                Object.assign(record.metadata.lastGroupEntityEventBatches, metadata.lastGroupEntityEventBatches);
+            if (metadata && "groupEntityEventBatchIds" in metadata) {
+                Object.assign(record.metadata.groupEntityEventBatchIds, metadata.groupEntityEventBatchIds);
             }
 
             return record.metadata;
@@ -46,17 +46,17 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
             const record = ctx.db.getAccountContent({type, login});
 
             folders.remove.forEach(({pk}) => record.folders.delete(pk));
-            for (const folder of folders.add) {
+            for (const folder of folders.upsert) {
                 await record.folders.set(folder);
             }
 
             mails.remove.forEach(({pk}) => record.mails.delete(pk));
-            for (const mail of mails.add) {
+            for (const mail of mails.upsert) {
                 await record.mails.set(mail);
             }
 
-            if (metadata && "lastGroupEntityEventBatches" in metadata) {
-                Object.assign(record.metadata.lastGroupEntityEventBatches, metadata.lastGroupEntityEventBatches);
+            if (metadata && "groupEntityEventBatchIds" in metadata) {
+                Object.assign(record.metadata.groupEntityEventBatchIds, metadata.groupEntityEventBatchIds);
             }
 
             return record.metadata;

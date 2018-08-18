@@ -58,6 +58,7 @@ export class AccountComponent implements OnDestroy, OnInit {
     private webViewElementRef?: ElementRef;
     private webViewDeferred = new Deferred<Electron.WebviewTag>();
     private subscription = new Subscription();
+    private domReadySubscription = new Subscription();
     private onWebViewDomReadyDeferreds: Array<Deferred<void>> = [];
     private stopFetchingDeffered?: Deferred<void>;
 
@@ -219,22 +220,18 @@ export class AccountComponent implements OnDestroy, OnInit {
             this.logger.verbose(`webview.domReadyEventHandler(): "${webView.src}"`);
 
             this.resolveOnWebViewDomReadyDeferredes();
+            this.domReadySubscription.unsubscribe();
+            this.domReadySubscription = new Subscription();
 
-            this.account$.pipe(take(1)).subscribe(({accountConfig}) => {
-                this.subscription.add((() => {
-                    // TODO consider moving "notification" WebView API method back to the "accounts.effects"
-                    const {type, entryUrl, login} = accountConfig;
-                    const finishPromise = this.setupOnWebViewDomReadyDeferred().promise;
+            this.domReadySubscription.add(
+                this.account$.pipe(take(1)).subscribe((account) => {
+                    this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.SetupNotificationChannel({
+                        account, webView, finishPromise: this.setupOnWebViewDomReadyDeferred().promise,
+                    }));
+                }),
+            );
 
-                    return this.electron.webViewClient(webView, type, {finishPromise})
-                        .pipe(mergeMap((caller) => caller("notification")({entryUrl, zoneName: this.logger.zoneName()})))
-                        .subscribe((notification) => {
-                            this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.NotificationPatch({login, notification}));
-                        });
-                })());
-            });
-
-            this.subscription.add(
+            this.domReadySubscription.add(
                 this.account$
                     .pipe(
                         map(({notifications, accountConfig}) => ({loggedIn: notifications.loggedIn, storeMails: accountConfig.storeMails})),
@@ -244,8 +241,6 @@ export class AccountComponent implements OnDestroy, OnInit {
                         withLatestFrom(this.account$),
                     )
                     .subscribe(([{loggedIn, storeMails}, account]) => {
-                        // TODO wire "ToggleFetching" back after the "triggerPromisesReleasing()" call
-
                         if (this.stopFetchingDeffered) {
                             this.stopFetchingDeffered.resolve();
                         }
@@ -257,9 +252,7 @@ export class AccountComponent implements OnDestroy, OnInit {
                         this.stopFetchingDeffered = this.setupOnWebViewDomReadyDeferred();
 
                         this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.ToggleFetching({
-                            account,
-                            webView,
-                            finishPromise: this.stopFetchingDeffered.promise,
+                            account, webView, finishPromise: this.stopFetchingDeffered.promise,
                         }));
                     }),
             );

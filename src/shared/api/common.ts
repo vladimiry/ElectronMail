@@ -6,6 +6,6 @@ export interface ZoneApiParameter {
 }
 
 export interface BatchEntityUpdatesDatabasePatch {
-    mails: { remove: Array<Pick<Mail, "pk">>; add: Mail[]; };
-    folders: { remove: Array<Pick<Folder, "pk">>; add: Folder[]; };
+    mails: { remove: Array<Pick<Mail, "pk">>; upsert: Mail[]; };
+    folders: { remove: Array<Pick<Folder, "pk">>; upsert: Folder[]; };
 }

@@ -21,23 +21,42 @@ export class AccountsEffects {
     });
 
     @Effect()
+    syncAccountsConfigs$ = this.actions$.pipe(
+        filter(OPTIONS_ACTIONS.is.GetSettingsResponse),
+        map(({payload}) => ACCOUNTS_ACTIONS.WireUpConfigs({accountConfigs: payload.accounts})),
+    );
+
+    @Effect()
+    setupNotificationChannel$ = this.actions$.pipe(
+        filter(ACCOUNTS_ACTIONS.is.SetupNotificationChannel),
+        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+        concatMap(({payload, logger}) => {
+            const {account, webView, finishPromise} = payload;
+            const {type, login, entryUrl} = account.accountConfig;
+            const $dispose = from(finishPromise).pipe(tap(() => logger.info("dispose")));
+
+            return this.api.webViewClient(webView, type, {finishPromise}).pipe(
+                mergeMap((webViewClient) => webViewClient("notification")({entryUrl, zoneName: logger.zoneName()})),
+                map((notification) => ACCOUNTS_ACTIONS.NotificationPatch({login, notification})),
+                takeUntil($dispose),
+            );
+        }),
+    );
+
+    @Effect()
     toggleFetching$ = this.actions$.pipe(
         filter(ACCOUNTS_ACTIONS.is.ToggleFetching),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload, logger}) => {
             const {account, webView, finishPromise} = payload;
-            const {login, type} = account.accountConfig;
-            const $stop = from(finishPromise).pipe(
-                tap(() => logger.info("release")),
-            );
+            const {type, login} = account.accountConfig;
+            const $dispose = from(finishPromise).pipe(tap(() => logger.info("dispose")));
             const ipcMainClient = this.api.ipcMainClient();
             const zoneName = logger.zoneName();
 
             if (type !== "tutanota") {
                 return throwError(new Error(`Messages fetching is not yet implemented for "${type}" email provider`));
             }
-
-            logger.info("setup");
 
             // TODO release: increase interval time to 30 minutes
             // TODO make interval time configurable
@@ -49,7 +68,7 @@ export class AccountsEffects {
                         if (metadata.type !== "tutanota") {
                             throw new Error(`Local store is supported for ${metadata.type} only for now`);
                         }
-                        if (!metadata.lastBootstrappedMailInstanceId) {
+                        if (!metadata.bootstrappedMailId) {
                             return webViewClient("bootstrapFetch")({...metadata, zoneName}).pipe(
                                 concatMap((value) => ipcMainClient("dbInsertBootstrapContent")({type, login, ...value})),
                             );
@@ -68,15 +87,9 @@ export class AccountsEffects {
                     mergeMap(() => EMPTY),
                     catchError((error) => of(CORE_ACTIONS.Fail(error))),
                 )),
-                takeUntil($stop),
+                takeUntil($dispose),
             );
         }),
-    );
-
-    @Effect()
-    syncAccountsConfigs$ = this.actions$.pipe(
-        filter(OPTIONS_ACTIONS.is.GetSettingsResponse),
-        map(({payload}) => ACCOUNTS_ACTIONS.WireUpConfigs({accountConfigs: payload.accounts})),
     );
 
     @Effect()
@@ -89,6 +102,7 @@ export class AccountsEffects {
             const {type, login, credentials} = accountConfig;
             const pageType = notifications.pageType.type;
             const unreadReset = of(ACCOUNTS_ACTIONS.NotificationPatch({login, notification: {unread: 0}}));
+            const zoneName = logger.zoneName();
 
             // TODO make sure passwords submitting looping doesn't happen, until then a workaround is enabled below
             const rateLimitingCheck = (password: string) => {
@@ -98,7 +112,7 @@ export class AccountsEffects {
                 // tslint:disable-next-line:early-exit
                 if (timeLeft > 0) {
                     throw new Error([
-                        `It's not allowed to submit the same password for the same "${login}" account`,
+                        `It's not allowed to submit the same password for the same account`,
                         `more than 2 times per 10 seconds (page type: "${pageType}").`,
                         `Make sure that your password is valid.`,
                         `Auto login feature is disable until app restarted.`,
@@ -120,7 +134,7 @@ export class AccountsEffects {
                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: true}})),
                             unreadReset,
                             this.api.webViewClient(webView, type).pipe(
-                                mergeMap((caller) => caller("login")({login, password, zoneName: logger.zoneName()})),
+                                mergeMap((webViewClient) => webViewClient("login")({login, password, zoneName})),
                                 mergeMap(() => EMPTY),
                                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
                                 finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: false}}))),
@@ -130,7 +144,7 @@ export class AccountsEffects {
 
                     logger.info("fillLogin");
                     return this.api.webViewClient(webView, type).pipe(
-                        mergeMap((caller) => caller("fillLogin")({login, zoneName: logger.zoneName()})),
+                        mergeMap((webViewClient) => webViewClient("fillLogin")({login, zoneName})),
                         mergeMap(() => EMPTY),
                         catchError((error) => of(CORE_ACTIONS.Fail(error))),
                     );
@@ -147,7 +161,7 @@ export class AccountsEffects {
                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {twoFactorCode: true}})),
                             unreadReset,
                             this.api.webViewClient(webView, type).pipe(
-                                mergeMap((caller) => caller("login2fa")({secret, zoneName: logger.zoneName()})),
+                                mergeMap((webViewClient) => webViewClient("login2fa")({secret, zoneName})),
                                 mergeMap(() => EMPTY),
                                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
                                 finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {twoFactorCode: false}}))),
@@ -174,7 +188,7 @@ export class AccountsEffects {
                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: true}})),
                             unreadReset,
                             this.api.webViewClient(webView, type).pipe(
-                                mergeMap((caller) => caller("unlock")({mailPassword, zoneName: logger.zoneName()})),
+                                mergeMap((webViewClient) => webViewClient("unlock")({mailPassword, zoneName})),
                                 mergeMap(() => EMPTY),
                                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
                                 finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: false}}))),

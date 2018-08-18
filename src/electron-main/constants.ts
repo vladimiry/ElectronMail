@@ -1,22 +1,21 @@
 import {LogLevel} from "electron-log";
+import {Model as StoreModel} from "fs-json-store";
 import {Options as EncryptionAdapterOptions} from "fs-json-store-encryption-adapter";
 
 import {APP_NAME} from "src/shared/constants";
-import {Config, Settings} from "src/shared/model/options";
-import {ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "../shared/model/options";
-import {Model as StoreModel} from "fs-json-store";
+import {Config, ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS, Settings} from "src/shared/model/options";
 
 export const KEYTAR_SERVICE_NAME = APP_NAME;
 export const KEYTAR_MASTER_PASSWORD_ACCOUNT = "master-password";
 
-export const INITIAL_STORES: { config: Config; settings: Settings; } = (() => {
+export const INITIAL_STORES: Readonly<{ config: Config; settings: Settings; }> = (() => {
     const encryptionPreset: EncryptionAdapterOptions = {
         keyDerivation: {type: "sodium.crypto_pwhash", preset: "mode:interactive|algorithm:default"},
         encryption: {type: "sodium.crypto_secretbox_easy", preset: "algorithm:default"},
     };
     const logLevel: LogLevel = "error";
 
-    return Object.freeze({
+    return {
         config: {
             encryptionPreset,
             logLevel,
@@ -30,7 +29,7 @@ export const INITIAL_STORES: { config: Config; settings: Settings; } = (() => {
             },
         },
         settings: {accounts: []},
-    });
+    };
 })();
 
 export const configEncryptionPresetValidator: StoreModel.StoreValidator<Config> = async (data) => {
@@ -48,11 +47,7 @@ export const configEncryptionPresetValidator: StoreModel.StoreValidator<Config> 
             : [`Wrong "config.encryptionPreset.encryption"="${encryption}" value.`]),
     ];
 
-    return Promise.resolve(
-        errors.length
-            ? errors.join(" ")
-            : null,
-    );
+    return errors.length ? errors.join(" ") : null;
 };
 
 export const settingsAccountLoginUniquenessValidator: StoreModel.StoreValidator<Settings> = async (data) => {
@@ -64,9 +59,6 @@ export const settingsAccountLoginUniquenessValidator: StoreModel.StoreValidator<
             }
             return duplicated;
         }, []);
-    const result = duplicatedLogins.length
-        ? `Duplicate accounts identified. Duplicated logins: ${duplicatedLogins.join(", ")}.`
-        : null;
 
-    return Promise.resolve(result);
+    return duplicatedLogins.length ? `Duplicate accounts identified. Duplicated logins: ${duplicatedLogins.join(", ")}.` : null;
 };

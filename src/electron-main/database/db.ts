@@ -26,7 +26,7 @@ export class Db {
         {type, login}: TL,
     ): DbContentIntersection[TL["type"]][TL["login"]] {
         const metadatas: { [key in keyof DbContentIntersection]: DbContentIntersection[key][string]["metadata"] } = {
-            tutanota: {type: "tutanota", lastGroupEntityEventBatches: {}},
+            tutanota: {type: "tutanota", groupEntityEventBatchIds: {}},
             protonmail: {type: "protonmail"},
         };
 

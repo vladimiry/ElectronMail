@@ -50,10 +50,10 @@ type GenericDbContent<T extends AccountType, M> = Record<T, Record<AccountConfig
 }>>>;
 
 export type DbContentIntersection = GenericDbContent<"tutanota", {
-    lastBootstrappedMailInstanceId?: Mail["instanceId"],
-    lastGroupEntityEventBatches: Record</* Rest.Model.Group["_id"] */ string, /* Rest.Model.EntityEventBatch["_id"][1] */ string>;
+    bootstrappedMailId?: Mail["instanceId"],
+    groupEntityEventBatchIds: Record</* Rest.Model.Group["_id"] */ string, /* Rest.Model.EntityEventBatch["_id"][1] */ string>;
 }> & GenericDbContent<"protonmail", {
-    lastBootstrappedMailInstanceId_?: Mail["instanceId"];
+    bootstrappedMailId_?: Mail["instanceId"];
 }>;
 
 export type DbContent<T extends keyof DbContentIntersection = keyof DbContentIntersection> = DbContentIntersection[T][string];

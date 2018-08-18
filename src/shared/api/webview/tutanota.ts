@@ -12,9 +12,9 @@ type Metadata = DbContent<"tutanota">["metadata"];
 export interface TutanotaApi extends CommonApi {
     notification: ApiMethod<{ entryUrl: string } & ZoneApiParameter, Partial<NotificationsTutanota>>;
     bootstrapFetch: ApiMethod<Metadata & ZoneApiParameter,
-        { mails: Mail[]; folders: Folder[] } & { metadata: Partial<Pick<Metadata, "lastGroupEntityEventBatches">> }>;
+        { mails: Mail[]; folders: Folder[] } & { metadata: Partial<Pick<Metadata, "groupEntityEventBatchIds">> }>;
     buildBatchEntityUpdatesDbPatch: ApiMethod<Metadata & ZoneApiParameter,
-        BatchEntityUpdatesDatabasePatch & { metadata: Required<Pick<Metadata, "lastGroupEntityEventBatches">> }>;
+        BatchEntityUpdatesDatabasePatch & { metadata: Required<Pick<Metadata, "groupEntityEventBatchIds">> }>;
 }
 
 export const TUTANOTA_IPC_WEBVIEW_API = new WebViewApiService<TutanotaApi>({channel});

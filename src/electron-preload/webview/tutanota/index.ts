@@ -47,7 +47,7 @@ function bootstrapApi(webClientApi: WebClientApi) {
     const endpoints: TutanotaApi = {
         ping: () => of(null),
 
-        bootstrapFetch: ({lastBootstrappedMailInstanceId, zoneName}) => from((async () => {
+        bootstrapFetch: ({bootstrappedMailId, zoneName}) => from((async () => {
             const logger = curryFunctionMembers(_logger, "bootstrapFetch()", zoneName);
             logger.info();
 
@@ -57,13 +57,13 @@ function bootstrapApi(webClientApi: WebClientApi) {
                 throw new Error("User controller is supposed to be defined");
             }
 
-            const initialRun = typeof lastBootstrappedMailInstanceId === "undefined";
+            const initialRun = typeof bootstrappedMailId === "undefined";
 
             // last entity event batches fetching must be happening BEFORE mails and folders fetching and only INITIALLY (once)
             // so app does further entity event batches fetching starting from the boostrap/this stage
-            const metadata: Partial<Pick<DatabaseModel.DbContent<"tutanota">["metadata"], "lastGroupEntityEventBatches">> = {};
+            const metadata: Partial<Pick<DatabaseModel.DbContent<"tutanota">["metadata"], "groupEntityEventBatchIds">> = {};
             if (initialRun) {
-                metadata.lastGroupEntityEventBatches = {};
+                metadata.groupEntityEventBatchIds = {};
                 for (const {group} of controller.user.memberships) {
                     const entityEventBatches = await Rest.fetchEntitiesRange(
                         Rest.Model.EntityEventBatchTypeRef,
@@ -75,13 +75,13 @@ function bootstrapApi(webClientApi: WebClientApi) {
                         },
                     );
                     if (entityEventBatches.length) {
-                        metadata.lastGroupEntityEventBatches[group] = resolveInstanceId(entityEventBatches[0]);
+                        metadata.groupEntityEventBatchIds[group] = resolveInstanceId(entityEventBatches[0]);
                     }
                 }
-                logger.info(`fetched metadata for ${Object.keys(metadata.lastGroupEntityEventBatches).length} entity event batches`);
+                logger.info(`fetched metadata for ${Object.keys(metadata.groupEntityEventBatchIds).length} entity event batches`);
             }
 
-            const startId = await generateStartId(lastBootstrappedMailInstanceId);
+            const startId = await generateStartId(bootstrappedMailId);
             const folders = await fetchMailFoldersWithSubFolders(controller.user);
             const mails = [];
 
@@ -107,7 +107,7 @@ function bootstrapApi(webClientApi: WebClientApi) {
             };
         })()),
 
-        buildBatchEntityUpdatesDbPatch: ({lastGroupEntityEventBatches, zoneName}) => from((async () => {
+        buildBatchEntityUpdatesDbPatch: ({groupEntityEventBatchIds, zoneName}) => from((async () => {
             const logger = curryFunctionMembers(_logger, "entityEventBatchesFetch()", zoneName);
             logger.info();
 
@@ -118,12 +118,12 @@ function bootstrapApi(webClientApi: WebClientApi) {
             }
 
             const entitiesUpdates: Rest.Model.EntityEventBatch[] = [];
-            const metadata: Required<Pick<DatabaseModel.DbContent<"tutanota">["metadata"], "lastGroupEntityEventBatches">> = {
-                lastGroupEntityEventBatches: {},
+            const metadata: Required<Pick<DatabaseModel.DbContent<"tutanota">["metadata"], "groupEntityEventBatchIds">> = {
+                groupEntityEventBatchIds: {},
             };
 
             for (const {group} of controller.user.memberships) {
-                const startId = await generateStartId(lastGroupEntityEventBatches[group]);
+                const startId = await generateStartId(groupEntityEventBatchIds[group]);
                 const entityEventBatches = await Rest.fetchEntitiesRangeUntilTheEnd(
                     Rest.Model.EntityEventBatchTypeRef,
                     group,
@@ -131,7 +131,7 @@ function bootstrapApi(webClientApi: WebClientApi) {
                 );
                 entitiesUpdates.push(...entityEventBatches);
                 if (entityEventBatches.length) {
-                    metadata.lastGroupEntityEventBatches[group] = resolveInstanceId(entityEventBatches[entityEventBatches.length - 1]);
+                    metadata.groupEntityEventBatchIds[group] = resolveInstanceId(entityEventBatches[entityEventBatches.length - 1]);
                 }
             }
             logger.verbose(`fetched ${entitiesUpdates.length} entity event batches`);
@@ -340,17 +340,17 @@ async function buildBatchEntityUpdatesDbPatch(
     logger.verbose(`resolved ${mailsMap.size} unique mails and ${foldersMap.size} unique folders`);
 
     const databasePatch: BatchEntityUpdatesDatabasePatch = {
-        mails: {remove: [], add: []},
-        folders: {remove: [], add: []},
+        mails: {remove: [], upsert: []},
+        folders: {remove: [], upsert: []},
     };
 
-    for (const {entitiesUpdates, add, remove} of [
+    for (const {entitiesUpdates, upsert, remove} of [
         {
             entitiesUpdates: mailsMap.values(),
-            add: async (update: Rest.Model.EntityUpdate) => {
+            upsert: async (update: Rest.Model.EntityUpdate) => {
                 const mail = await Rest.fetchEntity(Rest.Model.MailTypeRef, [update.instanceListId, update.instanceId]);
                 const mailDb = await buildDbMail(mail);
-                databasePatch.mails.add.push(mailDb);
+                databasePatch.mails.upsert.push(mailDb);
             },
             remove: (update: Rest.Model.EntityUpdate) => {
                 databasePatch.mails.remove.push({pk: buildPk([update.instanceListId, update.instanceId])});
@@ -358,10 +358,10 @@ async function buildBatchEntityUpdatesDbPatch(
         },
         {
             entitiesUpdates: foldersMap.values(),
-            add: async (update: Rest.Model.EntityUpdate) => {
+            upsert: async (update: Rest.Model.EntityUpdate) => {
                 const folder = await Rest.fetchEntity(Rest.Model.MailFolderTypeRef, [update.instanceListId, update.instanceId]);
                 const folderDb = buildDbFolder(folder);
-                databasePatch.folders.add.push(folderDb);
+                databasePatch.folders.upsert.push(folderDb);
             },
             remove: (update: Rest.Model.EntityUpdate) => {
                 databasePatch.folders.remove.push({pk: buildPk([update.instanceListId, update.instanceId])});
@@ -373,7 +373,7 @@ async function buildBatchEntityUpdatesDbPatch(
             // entity updates sorted in ASC order, so reversing the entity updates list in order to fetch only the newest entity
             for (const entityUpdate of entityUpdates.reverse()) {
                 if (!added && [Rest.Model.OperationType.CREATE, Rest.Model.OperationType.UPDATE].includes(entityUpdate.operation)) {
-                    await add(entityUpdate);
+                    await upsert(entityUpdate);
                     added = true;
                 }
                 if ([Rest.Model.OperationType.DELETE].includes(entityUpdate.operation)) {
@@ -384,8 +384,8 @@ async function buildBatchEntityUpdatesDbPatch(
         }
     }
 
-    logger.info(`upsert/remove mails: ${databasePatch.mails.add.length}/${databasePatch.mails.remove.length}`);
-    logger.info(`upsert/remove folders: ${databasePatch.folders.add.length}/${databasePatch.folders.remove.length}`);
+    logger.info(`upsert/remove mails: ${databasePatch.mails.upsert.length}/${databasePatch.mails.remove.length}`);
+    logger.info(`upsert/remove folders: ${databasePatch.folders.upsert.length}/${databasePatch.folders.remove.length}`);
 
     return databasePatch;
 }

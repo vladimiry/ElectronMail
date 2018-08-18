@@ -22,7 +22,6 @@ import {AccountConfig} from "src/shared/model/account";
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/src/app/store/selectors";
 import {APP_NAME, ONE_SECOND_MS} from "src/shared/constants";
-import {ElectronService} from "src/web/src/app/+core/electron.service";
 import {getZoneNameBoundWebLogger} from "src/web/src/util";
 import {State} from "src/web/src/app/store/reducers/accounts";
 
@@ -63,7 +62,6 @@ export class AccountComponent implements OnDestroy, OnInit {
     private stopFetchingDeffered?: Deferred<void>;
 
     constructor(
-        private electron: ElectronService,
         private store: Store<State>,
         private zone: NgZone,
         private changeDetectorRef: ChangeDetectorRef,
@@ -85,7 +83,7 @@ export class AccountComponent implements OnDestroy, OnInit {
     ngOnDestroy() {
         this.logger.info(`ngOnDestroy()`);
         this.subscription.unsubscribe();
-        this.resolveOnWebViewDomReadyDeferredes();
+        this.resolveOnWebViewDomReadyDeferreds();
     }
 
     onKeePassPassword(password: string) {
@@ -219,7 +217,7 @@ export class AccountComponent implements OnDestroy, OnInit {
         const domReadyEventHandler = () => {
             this.logger.verbose(`webview.domReadyEventHandler(): "${webView.src}"`);
 
-            this.resolveOnWebViewDomReadyDeferredes();
+            this.resolveOnWebViewDomReadyDeferreds();
             this.domReadySubscription.unsubscribe();
             this.domReadySubscription = new Subscription();
 
@@ -288,7 +286,7 @@ export class AccountComponent implements OnDestroy, OnInit {
 
                     this.didFailLoadErrorDescription = errorDescription;
 
-                    this.resolveOnWebViewDomReadyDeferredes();
+                    this.resolveOnWebViewDomReadyDeferreds();
                     unsubscribeDomReadyHandler();
 
                     options.iteration++;
@@ -320,7 +318,7 @@ export class AccountComponent implements OnDestroy, OnInit {
         return deferred;
     }
 
-    private resolveOnWebViewDomReadyDeferredes() {
+    private resolveOnWebViewDomReadyDeferreds() {
         this.logger.info(`resolveOnWebViewDomReadyDeferredes()`);
         this.onWebViewDomReadyDeferreds.forEach((deferred) => deferred.resolve());
         // TODO remove executed items form the array

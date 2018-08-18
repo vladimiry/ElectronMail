@@ -1,14 +1,16 @@
 import {Actions, Effect} from "@ngrx/effects";
 import {catchError, concatMap, filter, finalize, map, mergeMap, takeUntil, tap} from "rxjs/operators";
-import {EMPTY, from, merge, of, throwError, timer} from "rxjs";
+import {EMPTY, from, merge, of, Subject, throwError, timer} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store} from "@ngrx/store";
 
 import {ACCOUNTS_ACTIONS, CORE_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
+import {AccountTypeAndLoginFieldContainer} from "src/shared/model/container";
 import {ElectronService} from "src/web/src/app/+core/electron.service";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/src/util";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {State} from "src/web/src/app/store/reducers/accounts";
+import {TutanotaNotificationOutput} from "src/shared/api/webview/tutanota";
 
 const rateLimiter = __ELECTRON_EXPOSURE__.require["rolling-rate-limiter"]();
 const _logger = getZoneNameBoundWebLogger("[accounts.effects]");
@@ -20,6 +22,8 @@ export class AccountsEffects {
         maxInInterval: 2,
     });
 
+    fireFetchingIteration$ = new Subject<AccountTypeAndLoginFieldContainer>();
+
     @Effect()
     syncAccountsConfigs$ = this.actions$.pipe(
         filter(OPTIONS_ACTIONS.is.GetSettingsResponse),
@@ -27,21 +31,36 @@ export class AccountsEffects {
     );
 
     @Effect()
-    setupNotificationChannel$ = this.actions$.pipe(
-        filter(ACCOUNTS_ACTIONS.is.SetupNotificationChannel),
-        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-        concatMap(({payload, logger}) => {
-            const {account, webView, finishPromise} = payload;
-            const {type, login, entryUrl} = account.accountConfig;
-            const $dispose = from(finishPromise).pipe(tap(() => logger.info("dispose")));
+    setupNotificationChannel$ = (() => {
+        const merged$ = EMPTY;
 
-            return this.api.webViewClient(webView, type, {finishPromise}).pipe(
-                mergeMap((webViewClient) => webViewClient("notification")({entryUrl, zoneName: logger.zoneName()})),
-                map((notification) => ACCOUNTS_ACTIONS.NotificationPatch({login, notification})),
-                takeUntil($dispose),
-            );
-        }),
-    );
+        return this.actions$.pipe(
+            filter(ACCOUNTS_ACTIONS.is.SetupNotificationChannel),
+            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+            mergeMap(({payload, logger}) => {
+                const {account, webView, finishPromise} = payload;
+                const {type, login, entryUrl} = account.accountConfig;
+                const $dispose = from(finishPromise).pipe(tap(() => logger.info("dispose")));
+
+                logger.info("setup");
+
+                return merge(
+                    merged$,
+                    this.api.webViewClient(webView, type, {finishPromise}).pipe(
+                        mergeMap((webViewClient) => webViewClient("notification")({entryUrl, zoneName: logger.zoneName()})),
+                        mergeMap((notification) => {
+                            if (type === "tutanota" && (notification as TutanotaNotificationOutput).batchEntityUpdatesCounter) {
+                                this.fireFetchingIteration$.next({type, login});
+                            }
+
+                            return of(ACCOUNTS_ACTIONS.NotificationPatch({login, notification}));
+                        }),
+                        takeUntil($dispose),
+                    ),
+                );
+            }),
+        );
+    })();
 
     @Effect()
     toggleFetching$ = this.actions$.pipe(
@@ -58,9 +77,10 @@ export class AccountsEffects {
                 return throwError(new Error(`Messages fetching is not yet implemented for "${type}" email provider`));
             }
 
-            // TODO release: increase interval time to 30 minutes
-            // TODO make interval time configurable
+            // TODO consider making interval time configurable
             // TODO handle network errors during fetching, test for online status
+
+            logger.info("setup");
 
             return this.api.webViewClient(webView, type, {finishPromise}).pipe(
                 mergeMap((webViewClient) => ipcMainClient("dbGetContentMetadata")({type, login}).pipe(
@@ -75,16 +95,21 @@ export class AccountsEffects {
                         }
                         return of(metadata);
                     }),
-                    mergeMap(() => timer(0, ONE_SECOND_MS * 30)),
-                    mergeMap(() => ipcMainClient("dbGetContentMetadata")({type, login})),
-                    mergeMap((metadata) => {
+                    mergeMap(() => merge(
+                        timer(0, ONE_SECOND_MS * 60),
+                        this.fireFetchingIteration$.pipe(
+                            filter((value) => value.type === type && value.login === login),
+                        ),
+                    )),
+                    concatMap(() => ipcMainClient("dbGetContentMetadata")({type, login})),
+                    concatMap((metadata) => {
                         if (metadata.type !== "tutanota") {
                             throw new Error(`Local store is supported for ${metadata.type} only for now`);
                         }
                         return webViewClient("buildBatchEntityUpdatesDbPatch")({...metadata, zoneName});
                     }),
-                    mergeMap((patch) => ipcMainClient("dbProcessBatchEntityUpdatesPatch")({type, login, ...patch})),
-                    mergeMap(() => EMPTY),
+                    concatMap((patch) => ipcMainClient("dbProcessBatchEntityUpdatesPatch")({type, login, ...patch})),
+                    concatMap(() => EMPTY),
                     catchError((error) => of(CORE_ACTIONS.Fail(error))),
                 )),
                 takeUntil($dispose),

@@ -5,8 +5,8 @@ type ModuleFiles =
     | "src/api/common/EntityFunctions"
     | "src/api/common/TutanotaConstants"
     | "src/api/common/utils/Encoding"
-    | "src/api/common/WorkerProtocol"
-    | "src/api/main/Entity";
+    | "src/api/main/Entity"
+    | "src/api/main/EntityEventController";
 
 export interface WebClientApi extends Record<ModuleFiles, any> {
     "src/api/common/EntityFunctions": {
@@ -22,11 +22,6 @@ export interface WebClientApi extends Record<ModuleFiles, any> {
     "src/api/common/utils/Encoding": {
         timestampToGeneratedId: (timestamp: Timestamp) => Rest.Model.Id;
         generatedIdToTimestamp: (id: Rest.Model.Id) => Timestamp;
-    };
-    "src/api/common/WorkerProtocol": {
-        Queue: () => void & {
-            _handleMessage: (message: any) => void;
-        };
     };
     "src/api/main/Entity": {
         load: <T extends Rest.Model.BaseEntity<Rest.Model.Id | Rest.Model.IdTuple>, TypeRefType extends Rest.Model.TypeRef<T>>(
@@ -44,6 +39,11 @@ export interface WebClientApi extends Record<ModuleFiles, any> {
             count: number,
             reverse: boolean,
         ) => Promise<T[]>;
+    };
+    "src/api/main/EntityEventController": {
+        EntityEventController: () => void & {
+            notificationReceived(entityUpdate: Rest.Model.EntityUpdate): void;
+        };
     };
 }
 
@@ -68,8 +68,8 @@ export async function resolveWebClientApi(): Promise<WebClientApi> {
         "src/api/common/EntityFunctions": null,
         "src/api/common/TutanotaConstants": null,
         "src/api/common/utils/Encoding": null,
-        "src/api/common/WorkerProtocol": null,
         "src/api/main/Entity": null,
+        "src/api/main/EntityEventController": null,
     };
 
     for (const key of Object.keys(bundle) as Array<keyof WebClientApi>) {
@@ -78,7 +78,8 @@ export async function resolveWebClientApi(): Promise<WebClientApi> {
 
     state.bundle = bundle as WebClientApi;
 
-    // TODO validate all constants in a declarative way
+    // TODO validate types of all the described constants/functions in a declarative way
+    // so app gets tutanota's breaking changes noticed on early stage
     if (typeof bundle["src/api/common/EntityFunctions"].GENERATED_MIN_ID !== "string") {
         throw new Error(`Invalid "src/api/common/EntityFunctions.GENERATED_MIN_ID" value`);
     }

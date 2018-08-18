@@ -15,7 +15,7 @@ import {
     UrlFieldContainer,
 } from "src/shared/model/container";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
-import {BatchEntityUpdatesDatabasePatch} from "./common";
+import {BatchEntityUpdatesDbPatch} from "./common";
 
 // tslint:disable:no-unused-variable // TODO figure why tslint detects below imports as unused
 import {APP_NAME} from "src/shared/constants";
@@ -35,7 +35,7 @@ export interface Endpoints {
 
     dbInsertBootstrapContent: ApiMethod<AccountTypeAndLoginFieldContainer & { mails: Mail[]; folders: Folder[] }
         & {metadata: Partial<DbContent["metadata"]>}, DbContent["metadata"]>;
-    dbProcessBatchEntityUpdatesPatch: ApiMethod<AccountTypeAndLoginFieldContainer & BatchEntityUpdatesDatabasePatch
+    dbProcessBatchEntityUpdatesPatch: ApiMethod<AccountTypeAndLoginFieldContainer & BatchEntityUpdatesDbPatch
         & {metadata: Partial<DbContent["metadata"]>}, DbContent["metadata"]>;
     dbGetContentMetadata: ApiMethod<AccountTypeAndLoginFieldContainer, DbContent["metadata"]>;
 

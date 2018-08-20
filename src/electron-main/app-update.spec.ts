@@ -1,6 +1,6 @@
 import sinon from "sinon";
 import rewiremock from "rewiremock";
-import {test} from "ava";
+import test from "ava";
 
 test.serial("initAutoUpdate", async (t) => {
     const loggerSpy = sinon.spy();

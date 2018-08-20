@@ -17,7 +17,7 @@ import {buildSettingsAdapter, initContext} from "src/electron-main/util";
 import {Context} from "src/electron-main/model";
 import {Endpoints} from "src/shared/api/main";
 import {INITIAL_STORES, KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "src/electron-main/constants";
-import {StatusCode, StatusCodeError} from "src/shared/model/error";
+import {StatusCodeError} from "src/shared/model/error";
 import {UnpackedPromise} from "src/shared/types";
 
 // TODO "immer" instead of cloning with "..."
@@ -91,7 +91,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
             await updateAccount({...updatePayload, login: `${updatePayload.login}404`}).toPromise();
         } catch (err) {
             t.is(err.constructor.name, StatusCodeError.name, "StatusCodeError constructor");
-            t.is(err.statusCode, StatusCode.NotFoundAccount, "StatusCode.NotFoundAccount");
+            t.is(err.statusCode, StatusCodeError.getStatusCodeValue("NotFoundAccount"), "StatusCode.NotFoundAccount");
         }
 
         const settings = await addAccount(addPayload).toPromise();
@@ -146,10 +146,10 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         await addAccount(buildProtonmailAccountData()).toPromise();
         let settings = await addAccount(buildTutanotaAccountData()).toPromise();
 
-        await t.throws(changeAccountOrder({login: "login.404", index: 0}).toPromise());
-        await t.throws(changeAccountOrder({login: settings.accounts[0].login, index: -1}).toPromise());
-        await t.throws(changeAccountOrder({login: settings.accounts[0].login, index: settings.accounts.length}).toPromise());
-        await t.throws(changeAccountOrder({login: settings.accounts[0].login, index: settings.accounts.length + 1}).toPromise());
+        await t.throwsAsync(changeAccountOrder({login: "login.404", index: 0}).toPromise());
+        await t.throwsAsync(changeAccountOrder({login: settings.accounts[0].login, index: -1}).toPromise());
+        await t.throwsAsync(changeAccountOrder({login: settings.accounts[0].login, index: settings.accounts.length}).toPromise());
+        await t.throwsAsync(changeAccountOrder({login: settings.accounts[0].login, index: settings.accounts.length + 1}).toPromise());
 
         const expectedSettings = produce(settings, (draft) => {
             (draft._rev as number)++;
@@ -183,8 +183,8 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
 
         const settings = await readConfigAndSettings(endpoints, {password: payload.password});
 
-        await t.throws(changeMasterPassword(emptyPasswordPayload).toPromise(), /Decryption\sfailed/gi);
-        await t.throws(changeMasterPassword(wrongPasswordPayload).toPromise(), /Decryption\sfailed/gi);
+        await t.throwsAsync(changeMasterPassword(emptyPasswordPayload).toPromise(), /Decryption\sfailed/gi);
+        await t.throwsAsync(changeMasterPassword(wrongPasswordPayload).toPromise(), /Decryption\sfailed/gi);
 
         const updatedSettingsAdapter = t.context.ctx.settingsStore.adapter; // keep reference before update
         const updatedSettingsStore = t.context.ctx.settingsStore; // keep reference before update
@@ -285,7 +285,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
             null,
         ];
         for (const url of forbiddenUrls) {
-            await t.throws(action({url: String(url)}).toPromise(), `Forbidden url "${url}" opening has been prevented`);
+            await t.throwsAsync(action({url: String(url)}).toPromise(), `Forbidden url "${url}" opening has been prevented`);
         }
 
         const allowedUrls = [
@@ -296,7 +296,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         ];
         for (const url of allowedUrls) {
             // tslint:disable-next-line:await-promise
-            await t.notThrows(action({url: url as string}).toPromise());
+            await t.notThrowsAsync(action({url: url as string}).toPromise());
             t.true(openExternalSpy.calledWith(url), `electron.shell.openExternal.calledWith("${url}")`);
         }
     },

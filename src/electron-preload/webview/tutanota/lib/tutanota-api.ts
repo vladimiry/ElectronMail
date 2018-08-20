@@ -1,5 +1,6 @@
 import * as Rest from "./rest";
 import {Timestamp} from "src/shared/types";
+import {StatusCodeError} from "src/shared/model/error";
 
 type ModuleFiles =
     | "src/api/common/EntityFunctions"
@@ -52,6 +53,10 @@ const state: { bundle?: WebClientApi } = {};
 export async function resolveWebClientApi(): Promise<WebClientApi> {
     if (state.bundle) {
         return state.bundle;
+    }
+
+    if (!navigator.onLine) {
+        throw new StatusCodeError(`"resolveWebClientApi" failed due to the offline status`, "NoNetworkConnection");
     }
 
     // tslint:disable-next-line:variable-name

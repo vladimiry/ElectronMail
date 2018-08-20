@@ -1,4 +1,4 @@
-import {test} from "ava";
+import test from "ava";
 
 import {KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "./constants";
 

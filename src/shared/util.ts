@@ -3,7 +3,7 @@ import {BaseConfig, Config} from "./model/options";
 
 import {LoginFieldContainer} from "./model/container";
 import {MailFolderTypeStringifiedValue, MailFolderTypeTitle, MailFolderTypeValue} from "./model/database";
-import {StatusCode, StatusCodeError} from "./model/error";
+import {StatusCodeError} from "./model/error";
 import {WEBVIEW_SRC_WHITELIST} from "./constants";
 
 export function pickBaseConfigProperties(
@@ -24,10 +24,7 @@ export const pickAccountStrict = (accounts: AccountConfig[], criteria: LoginFiel
     const account = accounts.find(accountPickingPredicate(criteria));
 
     if (!account) {
-        throw new StatusCodeError(
-            `Account with "${criteria.login}" login has not been found`,
-            StatusCode.NotFoundAccount,
-        );
+        throw new StatusCodeError(`Account with "${criteria.login}" login has not been found`, "NotFoundAccount");
     }
 
     return account;
@@ -72,7 +69,7 @@ export const MailFolderTypeService = (() => {
     function parseValueStrict(value: MailFolderTypeValue | MailFolderTypeStringifiedValue): MailFolderTypeValue {
         const result = Number(value) as MailFolderTypeValue;
         if (!values.includes(result)) {
-            throw new StatusCodeError(`Invalid mail folder type value: ${result}`, StatusCode.InvalidArgument);
+            throw new StatusCodeError(`Invalid mail folder type value: ${result}`, "InvalidArgument");
         }
         return result;
     }
@@ -81,7 +78,7 @@ export const MailFolderTypeService = (() => {
         try {
             return mappedByValue[parseValueStrict(value)] === title;
         } catch (e) {
-            if (e instanceof StatusCodeError && e.statusCode === StatusCode.InvalidArgument) {
+            if (e instanceof StatusCodeError && e.statusCode === StatusCodeError.getStatusCodeValue("InvalidArgument")) {
                 return false;
             }
             throw e;

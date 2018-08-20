@@ -3,11 +3,15 @@ import {BaseEntity, Id, IdTuple, RequestParams, TypeRef} from "./model";
 import {Omit} from "src/shared/types";
 import {resolveInstanceId} from "src/electron-preload/webview/tutanota/lib/util";
 import {resolveWebClientApi} from "src/electron-preload/webview/tutanota/lib/tutanota-api";
+import {StatusCodeError} from "src/shared/model/error";
 
 export async function fetchEntity<T extends BaseEntity<Id | IdTuple>, TypeRefType extends TypeRef<T>>(
     typeRef: TypeRef<T>,
     id: T["_id"],
 ): Promise<T> {
+    if (!navigator.onLine) {
+        throw new StatusCodeError(`"fetchEntity" failed due to the offline status`, "NoNetworkConnection");
+    }
     const {load} = (await resolveWebClientApi())["src/api/main/Entity"];
     return load(typeRef, id);
 }
@@ -16,6 +20,9 @@ export async function fetchEntitiesList<T extends BaseEntity<IdTuple>, TypeRefTy
     typeRef: TypeRef<T>,
     listId: T["_id"][0],
 ): Promise<T[]> {
+    if (!navigator.onLine) {
+        throw new StatusCodeError(`"fetchEntitiesList" failed due to the offline status`, "NoNetworkConnection");
+    }
     const {loadAll} = (await resolveWebClientApi())["src/api/main/Entity"];
     return loadAll(typeRef, listId);
 }
@@ -25,6 +32,9 @@ export async function fetchEntitiesRange<T extends BaseEntity<IdTuple>, TypeRefT
     listId: T["_id"][0],
     queryParams: Required<Omit<RequestParams, "ids">>,
 ): Promise<T[]> {
+    if (!navigator.onLine) {
+        throw new StatusCodeError(`"fetchEntitiesRange" failed due to the offline status`, "NoNetworkConnection");
+    }
     const {loadRange} = (await resolveWebClientApi())["src/api/main/Entity"];
     return loadRange(typeRef, listId, queryParams.start, queryParams.count, queryParams.reverse);
 }
@@ -34,6 +44,10 @@ export async function fetchEntitiesRangeUntilTheEnd<T extends BaseEntity<IdTuple
     listId: T["_id"][0],
     {start, count}: Required<Omit<RequestParams, "ids" | "reverse">>,
 ): Promise<T[]> {
+    if (!navigator.onLine) {
+        throw new StatusCodeError(`"fetchEntitiesRangeUntilTheEnd" failed due to the offline status`, "NoNetworkConnection");
+    }
+
     count = Math.max(1, Math.min(count, 500));
 
     const {timestampToGeneratedId, generatedIdToTimestamp} = (await resolveWebClientApi())["src/api/common/utils/Encoding"];

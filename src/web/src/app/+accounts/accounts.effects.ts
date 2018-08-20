@@ -66,7 +66,7 @@ export class AccountsEffects {
     toggleFetching$ = this.actions$.pipe(
         filter(ACCOUNTS_ACTIONS.is.ToggleFetching),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-        concatMap(({payload, logger}) => {
+        mergeMap(({payload, logger}) => {
             const {account, webView, finishPromise} = payload;
             const {type, login} = account.accountConfig;
             const $dispose = from(finishPromise).pipe(tap(() => logger.info("dispose")));
@@ -96,11 +96,14 @@ export class AccountsEffects {
                         return of(metadata);
                     }),
                     mergeMap(() => merge(
-                        timer(0, ONE_SECOND_MS * 60),
+                        timer(0, ONE_SECOND_MS * 60).pipe(
+                            tap(() => logger.verbose("timer")),
+                        ),
                         this.fireFetchingIteration$.pipe(
                             filter((value) => value.type === type && value.login === login),
+                            tap(() => logger.verbose("fireFetchingIteration$")),
                         ),
-                    )),
+                    ).pipe(filter(() => navigator.onLine))),
                     concatMap(() => ipcMainClient("dbGetContentMetadata")({type, login})),
                     concatMap((metadata) => {
                         if (metadata.type !== "tutanota") {

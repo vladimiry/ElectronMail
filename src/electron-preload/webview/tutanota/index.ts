@@ -32,14 +32,12 @@ const WINDOW = window as any;
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[index]");
 
 resolveWebClientApi()
-    .then((webClientApi) => {
-        delete WINDOW.Notification;
-        bootstrapApi(webClientApi);
-    })
-    .then()
+    .then(bootstrapApi)
     .catch(_logger.error);
 
 function bootstrapApi(webClientApi: WebClientApi) {
+    delete WINDOW.Notification;
+
     const {GENERATED_MAX_ID} = webClientApi["src/api/common/EntityFunctions"];
     const login2FaWaitElementsConfig = {
         input: () => document.querySelector("#modal input.input") as HTMLInputElement,
@@ -278,14 +276,14 @@ function bootstrapApi(webClientApi: WebClientApi) {
                     const notifyUnreadValue = async () => {
                         const controller = getUserController();
 
-                        if (!controller) {
+                        if (!controller || !isLoggedIn() || !navigator.onLine) {
                             return;
                         }
 
                         const folders = await fetchMailFoldersWithSubFolders(controller.user);
                         const inboxFolder = folders.find(({folderType}) => MailFolderTypeService.testValue(folderType, "inbox"));
 
-                        if (!inboxFolder || !isLoggedIn() || !navigator.onLine) {
+                        if (!inboxFolder) {
                             return;
                         }
 
@@ -321,7 +319,7 @@ function bootstrapApi(webClientApi: WebClientApi) {
                             const entitiesUpdates = [{events: [entityUpdate]}];
                             const {folders, mails} = await buildBatchEntityUpdatesDbPatch(
                                 {entitiesUpdates, _logger: logger},
-                                // mocking db builders, we only need the data structure to be formed at this point
+                                // mocking db model builders, we only need the data structure to be formed at this point
                                 // so no need to produce unnecessary fetch requests
                                 {mail: async () => null as any, folder: async () => null as any},
                             );
@@ -419,8 +417,7 @@ async function buildBatchEntityUpdatesDbPatch(
             // entity updates sorted in ASC order, so reversing the entity updates list in order to fetch only the newest entity
             for (const entityUpdate of entityUpdates.reverse()) {
                 if (!added && [Rest.Model.OperationType.CREATE, Rest.Model.OperationType.UPDATE].includes(entityUpdate.operation)) {
-                    await
-                        upsert(entityUpdate);
+                    await upsert(entityUpdate);
                     added = true;
                 }
                 if ([Rest.Model.OperationType.DELETE].includes(entityUpdate.operation)) {

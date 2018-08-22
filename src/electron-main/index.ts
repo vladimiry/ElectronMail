@@ -17,20 +17,30 @@ electronUnhandled({logger: logger.error});
 // needed for desktop notifications properly working on Win 10, details https://www.electron.build/configuration/nsis
 app.setAppUserModelId(`com.github.vladimiry.${APP_NAME}`);
 
+const secondInstanceExecutedCallbacks = (() => {
+    const callbacks: Array<() => Promise<any>> = [];
+    if (app.makeSingleInstance(async () => {
+        for (const callback of callbacks) {
+            await callback();
+        }
+    })) {
+        // calling app.exit() instead of app.quit() in order to prevent "Error: Cannot find module ..." error happening
+        // https://github.com/electron/electron/issues/8862
+        app.exit();
+    }
+    return callbacks;
+})();
+
 // possible rejection will be caught and logged by above initialized "electron-unhandled"
 // tslint:disable-next-line:no-floating-promises
 initContext().then(initApp);
 
 export function initApp(ctx: Context) {
     app.on("ready", async () => {
-        if (app.makeSingleInstance(async () => endpoints.activateBrowserWindow().toPromise())) {
-            // calling app.exit() instead of app.quit() in order to prevent "Error: Cannot find module ..." error happening
-            // https://github.com/electron/electron/issues/8862
-            app.exit();
-        }
-
         const endpoints = await initApi(ctx);
         const {checkForUpdatesAndNotify} = await endpoints.readConfig().toPromise();
+
+        secondInstanceExecutedCallbacks.push(() => endpoints.activateBrowserWindow().toPromise());
 
         initWebContentContextMenu(ctx);
 

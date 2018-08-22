@@ -31,6 +31,7 @@ export const OPTIONS_ACTIONS = unionize({
         ReEncryptSettings: ofType<{ password: string, encryptionPreset: EncryptionAdapterOptions }>(),
         SignInRequest: ofType<Partial<PasswordFieldContainer> & { savePassword?: boolean; }>(),
         ToggleCompactRequest: ofType<{}>(),
+        ActivateBrowserWindow: ofType<{}>(),
     },
     {
         tag: "type",

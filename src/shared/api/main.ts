@@ -16,11 +16,11 @@ import {
 } from "src/shared/model/container";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {BatchEntityUpdatesDbPatch} from "./common";
-
 // tslint:disable:no-unused-variable // TODO figure why tslint detects below imports as unused
 import {APP_NAME} from "src/shared/constants";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {DbContent, Folder, Mail} from "src/shared/model/database";
+
 // tslint:enable:no-unused-variable
 
 export interface Endpoints {
@@ -34,9 +34,9 @@ export interface Endpoints {
     changeMasterPassword: ApiMethod<PasswordFieldContainer & NewPasswordFieldContainer, Settings>;
 
     dbInsertBootstrapContent: ApiMethod<AccountTypeAndLoginFieldContainer & { mails: Mail[]; folders: Folder[] }
-        & {metadata: Partial<DbContent["metadata"]>}, DbContent["metadata"]>;
+        & { metadata: Partial<DbContent["metadata"]> }, DbContent["metadata"]>;
     dbProcessBatchEntityUpdatesPatch: ApiMethod<AccountTypeAndLoginFieldContainer & BatchEntityUpdatesDbPatch
-        & {metadata: Partial<DbContent["metadata"]>}, DbContent["metadata"]>;
+        & { metadata: Partial<DbContent["metadata"]> }, DbContent["metadata"]>;
     dbGetContentMetadata: ApiMethod<AccountTypeAndLoginFieldContainer, DbContent["metadata"]>;
 
     init: ApiMethodNoArgument<{ electronLocations: ElectronContextLocations; hasSavedPassword: boolean; }>;
@@ -64,11 +64,15 @@ export interface Endpoints {
 
     settingsExists: ApiMethodNoArgument<boolean>;
 
+    activateBrowserWindow: ApiMethodNoArgument<null>;
+
     toggleBrowserWindow: ApiMethod<{ forcedState?: boolean }, null>;
 
     toggleCompactLayout: ApiMethodNoArgument<Config>;
 
     updateOverlayIcon: ApiMethod<{ hasLoggedOut: boolean, unread: number }, null>;
+
+    notification: ApiMethodNoArgument<{ action: Extract<keyof Endpoints, "activateBrowserWindow"> }>;
 }
 
 export const IPC_MAIN_API = new IpcMainApiService<Endpoints>({channel: `${APP_NAME}:ipcMain-api`});

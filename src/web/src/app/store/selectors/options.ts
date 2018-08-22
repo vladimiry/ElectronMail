@@ -12,6 +12,7 @@ export const FEATURED = {
     progress: createSelector(STATE, ({progress}) => progress),
     electronLocations: createSelector(STATE, ({electronLocations}) => electronLocations),
     hasSavedPassword: createSelector(STATE, ({hasSavedPassword}) => hasSavedPassword),
+    activateBrowserWindowCounter: createSelector(STATE, ({activateBrowserWindowCounter}) => activateBrowserWindowCounter),
 };
 
 export const CONFIG = {

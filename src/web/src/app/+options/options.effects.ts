@@ -1,5 +1,6 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {catchError, concatMap, filter, finalize, map, withLatestFrom} from "rxjs/operators";
+import {catchError, concatMap, filter, finalize, map, mergeMap, withLatestFrom} from "rxjs/operators";
+import {Deferred} from "ts-deferred";
 import {EMPTY, merge, of} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store} from "@ngrx/store";
@@ -17,15 +18,29 @@ const _logger = getZoneNameBoundWebLogger("[options.effects]");
 
 @Injectable()
 export class OptionsEffects {
+    disposeNotificationDeferred?: Deferred<void>;
+    ipcMainClient = this.api.ipcMainClient();
+
     @Effect()
     initRequest$ = this.actions$.pipe(
         filter(OPTIONS_ACTIONS.is.InitRequest),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-        concatMap(() => this.electronService.ipcMainClient()("init")().pipe(
-            concatMap((payload) => [
-                OPTIONS_ACTIONS.InitResponse(payload),
-                this.optionsService.settingsNavigationAction({path: ""}),
-            ]),
+        mergeMap(() => this.ipcMainClient("init")().pipe(
+            mergeMap((payload) => merge(
+                of(OPTIONS_ACTIONS.InitResponse(payload)),
+                of(this.optionsService.settingsNavigationAction({path: ""})),
+                (() => {
+                    if (this.disposeNotificationDeferred) {
+                        this.disposeNotificationDeferred.resolve();
+                    }
+                    return this.api.ipcMainClient({
+                        finishPromise: (this.disposeNotificationDeferred = new Deferred<void>()).promise,
+                    })("notification")().pipe(
+                        mergeMap(({action}) => action === "activateBrowserWindow" ? of(OPTIONS_ACTIONS.ActivateBrowserWindow()) : EMPTY),
+                        catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                    );
+                })(),
+            )),
             catchError((error) => of(CORE_ACTIONS.Fail(error))),
         )));
 
@@ -33,7 +48,7 @@ export class OptionsEffects {
     getConfigRequest$ = this.actions$.pipe(
         filter(OPTIONS_ACTIONS.is.GetConfigRequest),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-        concatMap(() => this.electronService.ipcMainClient()("readConfig")().pipe(
+        concatMap(() => this.ipcMainClient("readConfig")().pipe(
             concatMap((config) => [
                 OPTIONS_ACTIONS.GetConfigResponse(config),
                 this.optionsService.settingsNavigationAction({path: ""}),
@@ -53,7 +68,7 @@ export class OptionsEffects {
                 }));
             }
 
-            return this.electronService.ipcMainClient()("settingsExists")().pipe(
+            return this.ipcMainClient("settingsExists")().pipe(
                 map((readable) => this.optionsService.settingsNavigationAction({
                     path: readable ? "login" : "settings-setup",
                 })),
@@ -68,7 +83,7 @@ export class OptionsEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({signingIn: true})),
-            this.electronService.ipcMainClient()("readSettings")(payload).pipe(
+            this.ipcMainClient("readSettings")(payload).pipe(
                 concatMap((settings) => [
                     OPTIONS_ACTIONS.GetSettingsResponse(settings),
                     NAVIGATION_ACTIONS.Go({
@@ -94,7 +109,7 @@ export class OptionsEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({addingAccount: true})),
-            this.electronService.ipcMainClient()("addAccount")(payload).pipe(
+            this.ipcMainClient("addAccount")(payload).pipe(
                 concatMap((settings) => [
                     OPTIONS_ACTIONS.GetSettingsResponse(settings),
                     this.optionsService.settingsNavigationAction({
@@ -113,7 +128,7 @@ export class OptionsEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({updatingAccount: true})),
-            this.electronService.ipcMainClient()("updateAccount")(payload).pipe(
+            this.ipcMainClient("updateAccount")(payload).pipe(
                 map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
                 finalize(() => this.dispatchProgress({updatingAccount: false})),
@@ -126,7 +141,7 @@ export class OptionsEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({changingAccountOrder: true})),
-            this.electronService.ipcMainClient()("changeAccountOrder", {timeoutMs: ONE_SECOND_MS * 20})(payload).pipe(
+            this.ipcMainClient("changeAccountOrder", {timeoutMs: ONE_SECOND_MS * 20})(payload).pipe(
                 map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
                 finalize(() => this.dispatchProgress({changingAccountOrder: false})),
@@ -139,7 +154,7 @@ export class OptionsEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({removingAccount: true})),
-            this.electronService.ipcMainClient()("removeAccount")({login: payload.login}).pipe(
+            this.ipcMainClient("removeAccount")({login: payload.login}).pipe(
                 map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
                 finalize(() => this.dispatchProgress({removingAccount: false})),
@@ -152,7 +167,7 @@ export class OptionsEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({changingPassword: true})),
-            this.electronService.ipcMainClient()("changeMasterPassword")(payload).pipe(
+            this.ipcMainClient("changeMasterPassword")(payload).pipe(
                 concatMap(() => EMPTY),
                 catchError((error) => {
                     error.message = "Failed to change the master password! " +
@@ -169,7 +184,7 @@ export class OptionsEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({keePassReferencing: true})),
-            this.electronService.ipcMainClient()("associateSettingsWithKeePass")(payload).pipe(
+            this.ipcMainClient("associateSettingsWithKeePass")(payload).pipe(
                 map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
                 finalize(() => this.dispatchProgress({keePassReferencing: false})),
@@ -182,7 +197,7 @@ export class OptionsEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(() => merge(
             of(this.buildPatchProgress({togglingCompactLayout: true})),
-            this.electronService.ipcMainClient()("toggleCompactLayout")().pipe(
+            this.ipcMainClient("toggleCompactLayout")().pipe(
                 map((config) => OPTIONS_ACTIONS.GetConfigResponse(config)),
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
                 finalize(() => this.dispatchProgress({togglingCompactLayout: false})),
@@ -195,7 +210,7 @@ export class OptionsEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({updatingBaseSettings: true})),
-            this.electronService.ipcMainClient()("patchBaseConfig")(payload).pipe(
+            this.ipcMainClient("patchBaseConfig")(payload).pipe(
                 map((config) => OPTIONS_ACTIONS.GetConfigResponse(config)),
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
                 finalize(() => this.dispatchProgress({updatingBaseSettings: false})),
@@ -211,7 +226,7 @@ export class OptionsEffects {
 
             return merge(
                 of(this.buildPatchProgress({reEncryptingSettings: true})),
-                this.electronService.ipcMainClient()("reEncryptSettings")({encryptionPreset, password}).pipe(
+                this.ipcMainClient("reEncryptSettings")({encryptionPreset, password}).pipe(
                     map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
                     catchError((error) => of(CORE_ACTIONS.Fail(error))),
                     finalize(() => this.dispatchProgress({reEncryptingSettings: false})),
@@ -220,7 +235,7 @@ export class OptionsEffects {
         }));
 
     constructor(private optionsService: OptionsService,
-                private electronService: ElectronService,
+                private api: ElectronService,
                 private store: Store<State>,
                 private actions$: Actions) {}
 

@@ -1,7 +1,7 @@
 import {Component, OnDestroy, OnInit} from "@angular/core";
 import {distinctUntilChanged, map} from "rxjs/operators";
 import {equals} from "ramda";
-import {Store} from "@ngrx/store";
+import {select, Store} from "@ngrx/store";
 import {Subscription} from "rxjs";
 
 import {ACCOUNTS_ACTIONS, CORE_ACTIONS, NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
@@ -46,8 +46,12 @@ export class AccountsComponent implements OnInit, OnDestroy {
                 }),
         );
         this.subscription.add(
-            this.store.select(AccountsSelectors.FEATURED.selectedAccount)
-                .subscribe((selectedAccount) => this.selectedAccount = selectedAccount),
+            this.store.pipe(
+                select(AccountsSelectors.FEATURED.selectedAccount),
+                distinctUntilChanged((prev, curr) => Boolean(prev && curr && prev.accountConfig.login === curr.accountConfig.login)),
+            ).subscribe((selectedAccount) => {
+                this.selectedAccount = selectedAccount;
+            }),
         );
     }
 

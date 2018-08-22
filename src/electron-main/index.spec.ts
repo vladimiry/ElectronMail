@@ -19,15 +19,18 @@ test.serial("workflow", async (t) => {
     const {endpoints} = t.context;
 
     // tslint:disable:max-line-length
-    t.true(m.electron.app.setAppUserModelId.calledWithExactly(`com.github.vladimiry.${APP_NAME}`));
     t.true(m["electron-unhandled"].calledWithExactly(sinon.match.hasOwn("logger")), `"electronUnhandled" called`);
+    t.true(m["electron-unhandled"].calledBefore(m.electron.app.makeSingleInstance), `"electronUnhandled" called before "makeSingleInstance"`);
+    t.true(m.electron.app.setAppUserModelId.calledWithExactly(`com.github.vladimiry.${APP_NAME}`));
+    t.true(m.electron.app.setAppUserModelId.calledBefore(m.electron.app.makeSingleInstance));
+    t.true(m.electron.app.makeSingleInstance.called, `"makeSingleInstance" called`);
+    t.true(m.electron.app.makeSingleInstance.calledBefore(m["./util"].initContext), `"makeSingleInstance" called before "initContext"`);
     t.true(m["./util"].initContext.calledWithExactly(), `"initContext" called`);
     t.true(m["./api"].initApi.calledWithExactly(t.context.ctx), `"initApi" called`);
-    t.true(m.electron.app.makeSingleInstance.called, `"makeSingleInstance" called`);
     t.true(m["./web-content-context-menu"].initWebContentContextMenu.calledWithExactly(t.context.ctx), `initWebContentContextMenu called`);
     t.true(m["./web-content-context-menu"].initWebContentContextMenu.calledBefore(m["./window"].initBrowserWindow), `initWebContentContextMenu called before "initBrowserWindow"`);
-    t.true(m["./window"].initBrowserWindow.calledWithExactly(t.context.ctx), `"initBrowserWindow" called`);
-    t.true(m["./tray"].initTray.calledWithExactly(t.context.ctx, endpoints), `"initTray" called`);
+    t.true(m["./window"].initBrowserWindow.calledWithExactly(t.context.ctx, t.context.endpoints), `"initBrowserWindow" called`);
+    t.true(m["./tray"].initTray.calledWithExactly(endpoints), `"initTray" called`);
     t.true(endpoints.updateOverlayIcon.calledWithExactly({hasLoggedOut: false, unread: 0}), `"updateOverlayIcon" called`);
     t.true(endpoints.updateOverlayIcon.calledAfter(m["./tray"].initTray), `"updateOverlayIcon" called after "initTray"`);
     t.true(m["./app-update"].initAutoUpdate.calledWithExactly(), `"initAutoUpdate" called`);

@@ -15,7 +15,9 @@ export const reducers = {
     router: routerReducer,
 };
 
-export function innerMetaReducer(this: ActionReducer<any, any>, state: State, action: { type: string } & any) {
+type RawActionReducer = ActionReducer<any, any>;
+
+export function innerMetaReducer(this: RawActionReducer, state: State, action: { type: string } & any) {
     if (typeof action.type === "string" && action.type) {
         logger.silly(action.type);
     }
@@ -34,7 +36,7 @@ export function innerMetaReducer(this: ActionReducer<any, any>, state: State, ac
     return this(state, action);
 }
 
-export function hmrRootStateMetaReducer(reducer: ActionReducer<any, any>) {
+export function hmrRootStateMetaReducer(reducer: RawActionReducer) {
     return innerMetaReducer.bind(reducer);
 }
 

@@ -88,26 +88,3 @@ function formatFileUrl(pathname: string) {
 export async function buildSettingsAdapter({configStore}: Context, password: string): Promise<StoreModel.StoreAdapter> {
     return new EncryptionAdapter(password, (await configStore.readExisting()).encryptionPreset);
 }
-
-export function toggleBrowserWindow(ctx: Context, forcedState?: boolean) {
-    const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
-
-    if (!browserWindow) {
-        return;
-    }
-
-    if (typeof forcedState !== "undefined" ? forcedState : !browserWindow.isVisible()) {
-        activateBrowserWindow(ctx);
-    } else {
-        browserWindow.hide();
-    }
-}
-
-export function activateBrowserWindow({uiContext}: Context) {
-    if (!uiContext || !uiContext.browserWindow) {
-        return;
-    }
-
-    uiContext.browserWindow.show();
-    uiContext.browserWindow.focus();
-}

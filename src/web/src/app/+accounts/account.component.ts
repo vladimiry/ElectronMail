@@ -12,9 +12,9 @@ import {
 } from "@angular/core";
 import {Action, select, Store} from "@ngrx/store";
 import {Deferred} from "ts-deferred";
-import {EMPTY, merge, of, Subscription} from "rxjs";
+import {combineLatest, EMPTY, merge, of, Subscription} from "rxjs";
 import {equals, pick} from "ramda";
-import {filter, map, mergeMap, pairwise, take, withLatestFrom} from "rxjs/operators";
+import {debounceTime, filter, map, mergeMap, pairwise, take, withLatestFrom} from "rxjs/operators";
 // tslint:disable-next-line:no-import-zones
 import {DidFailLoadEvent} from "electron";
 
@@ -59,7 +59,7 @@ export class AccountComponent implements OnDestroy, OnInit {
     private subscription = new Subscription();
     private domReadySubscription = new Subscription();
     private onWebViewDomReadyDeferreds: Array<Deferred<void>> = [];
-    private stopFetchingDeffered?: Deferred<void>;
+    private stopFetchingDeferred?: Deferred<void>;
 
     constructor(
         private store: Store<State>,
@@ -203,6 +203,18 @@ export class AccountComponent implements OnDestroy, OnInit {
                     });
                 }),
         );
+        this.subscription.add(
+            combineLatest(
+                this.store.pipe(select(AccountsSelectors.FEATURED.selectedLogin)),
+                this.store.pipe(select(OptionsSelectors.FEATURED.activateBrowserWindowCounter)),
+            ).pipe(
+                filter(([selectedLogin]) => this.login === selectedLogin),
+                debounceTime(300),
+            ).subscribe((value) => {
+                webView.blur();
+                webView.focus();
+            }),
+        );
 
         // if ((process.env.NODE_ENV/* as BuildEnvironment*/) === "development") {
         //     webView.addEventListener("dom-ready", () => webView.openDevTools());
@@ -239,18 +251,18 @@ export class AccountComponent implements OnDestroy, OnInit {
                         withLatestFrom(this.account$),
                     )
                     .subscribe(([{loggedIn, storeMails}, account]) => {
-                        if (this.stopFetchingDeffered) {
-                            this.stopFetchingDeffered.resolve();
+                        if (this.stopFetchingDeferred) {
+                            this.stopFetchingDeferred.resolve();
                         }
 
                         if (!loggedIn || !storeMails) {
                             return;
                         }
 
-                        this.stopFetchingDeffered = this.setupOnWebViewDomReadyDeferred();
+                        this.stopFetchingDeferred = this.setupOnWebViewDomReadyDeferred();
 
                         this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.ToggleFetching({
-                            account, webView, finishPromise: this.stopFetchingDeffered.promise,
+                            account, webView, finishPromise: this.stopFetchingDeferred.promise,
                         }));
                     }),
             );

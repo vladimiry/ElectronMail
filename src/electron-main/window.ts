@@ -1,11 +1,11 @@
 import {app, BrowserWindow} from "electron";
 import {equals} from "ramda";
 
-import {activateBrowserWindow} from "./util";
 import {BuildEnvironment} from "src/shared/model/common";
 import {Context} from "./model";
+import {Endpoints} from "src/shared/api/main";
 
-export async function initBrowserWindow(ctx: Context): Promise<BrowserWindow> {
+export async function initBrowserWindow(ctx: Context, endpoints: Endpoints): Promise<BrowserWindow> {
     const browserWindowConstructorOptions = {
         webPreferences: {
             nodeIntegration: (process.env.NODE_ENV as BuildEnvironment) === "development",
@@ -32,7 +32,7 @@ export async function initBrowserWindow(ctx: Context): Promise<BrowserWindow> {
         const {startMinimized} = await ctx.configStore.readExisting();
 
         if (!settingsConfigured || !startMinimized) {
-            activateBrowserWindow(ctx);
+            await endpoints.activateBrowserWindow().toPromise();
         }
     });
     browserWindow.on("closed", () => {

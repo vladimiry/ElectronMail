@@ -27,12 +27,14 @@ export interface State extends fromRoot.State {
     progress: ProgressPatch;
     electronLocations?: ElectronContextLocations;
     hasSavedPassword?: boolean;
+    activateBrowserWindowCounter: number;
 }
 
 const initialState: State = {
     config: {} as Config,
     settings: {} as Settings,
     progress: {},
+    activateBrowserWindowCounter: 0,
 };
 
 export function reducer(state = initialState, action: UnionOf<typeof OPTIONS_ACTIONS>): State {
@@ -41,6 +43,7 @@ export function reducer(state = initialState, action: UnionOf<typeof OPTIONS_ACT
         GetConfigResponse: (config) => ({...state, config}),
         GetSettingsResponse: (settings) => ({...state, settings}),
         PatchProgress: (progressPatch) => ({...state, progress: {...state.progress, ...progressPatch}}),
+        ActivateBrowserWindow: () => ({...state, activateBrowserWindowCounter: (state.activateBrowserWindowCounter || 0) + 1}),
         default: () => state,
     });
 }

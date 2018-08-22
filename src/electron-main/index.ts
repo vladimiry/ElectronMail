@@ -2,12 +2,12 @@ import electronUnhandled from "electron-unhandled";
 import logger from "electron-log";
 import {app} from "electron";
 
-import {activateBrowserWindow, initContext} from "./util";
 import {APP_NAME} from "src/shared/constants";
 import {Context} from "./model";
 import {initApi} from "./api";
 import {initAutoUpdate} from "./app-update";
 import {initBrowserWindow} from "./window";
+import {initContext} from "./util";
 import {initTray} from "./tray";
 import {initWebContentContextMenu} from "./web-content-context-menu";
 import {isWebViewSrcWhitelisted} from "src/shared/util";
@@ -21,22 +21,22 @@ app.setAppUserModelId(`com.github.vladimiry.${APP_NAME}`);
 // tslint:disable-next-line:no-floating-promises
 initContext().then(initApp);
 
-export async function initApp(ctx: Context) {
-    if (app.makeSingleInstance(() => activateBrowserWindow(ctx))) {
-        // calling app.exit() instead of app.quit() in order to prevent "Error: Cannot find module ..." error happening
-        // https://github.com/electron/electron/issues/8862
-        app.exit();
-    }
-
+export function initApp(ctx: Context) {
     app.on("ready", async () => {
+        if (app.makeSingleInstance(async () => endpoints.activateBrowserWindow().toPromise())) {
+            // calling app.exit() instead of app.quit() in order to prevent "Error: Cannot find module ..." error happening
+            // https://github.com/electron/electron/issues/8862
+            app.exit();
+        }
+
         const endpoints = await initApi(ctx);
         const {checkForUpdatesAndNotify} = await endpoints.readConfig().toPromise();
 
         initWebContentContextMenu(ctx);
 
         const uiContext = ctx.uiContext = {
-            browserWindow: await initBrowserWindow(ctx),
-            tray: await initTray(ctx, endpoints),
+            browserWindow: await initBrowserWindow(ctx, endpoints),
+            tray: initTray(endpoints),
         };
 
         await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0}).toPromise();
@@ -48,9 +48,10 @@ export async function initApp(ctx: Context) {
         app.on("activate", async () => {
             // on macOS it's common to re-create a window in the app when the dock icon is clicked and there are no other windows open
             if (!uiContext.browserWindow || uiContext.browserWindow.isDestroyed()) {
-                uiContext.browserWindow = await initBrowserWindow(ctx);
+                uiContext.browserWindow = await initBrowserWindow(ctx, endpoints);
             }
         });
+
         app.on("web-contents-created", (webContentsCreatedEvent, contents) => {
             contents.on("will-attach-webview", (willAttachWebviewEvent, webPreferences, params) => {
                 webPreferences.nodeIntegration = false;

@@ -43,7 +43,7 @@ const CONF = {
     timeouts: {
         element: ONE_SECOND_MS,
         elementTouched: ONE_SECOND_MS * 0.3,
-        encryption: ONE_SECOND_MS * (CI ? 3 : 0.5),
+        encryption: ONE_SECOND_MS * (CI ? 5 : 1.5),
         transition: ONE_SECOND_MS * (CI ? 1 : 0.3),
     },
 };

@@ -3,7 +3,6 @@ import logger from "electron-log";
 import {app} from "electron";
 
 import {APP_NAME} from "src/shared/constants";
-import {Context} from "./model";
 import {initApi} from "./api";
 import {initAutoUpdate} from "./app-update";
 import {initBrowserWindow} from "./window";
@@ -31,45 +30,41 @@ const secondInstanceExecutedCallbacks = (() => {
     return callbacks;
 })();
 
-// possible rejection will be caught and logged by above initialized "electron-unhandled"
-// tslint:disable-next-line:no-floating-promises
-initContext().then(initApp);
+const ctx = initContext();
 
-export function initApp(ctx: Context) {
-    app.on("ready", async () => {
-        const endpoints = await initApi(ctx);
-        const {checkForUpdatesAndNotify} = await endpoints.readConfig().toPromise();
+app.on("ready", async () => {
+    const endpoints = await initApi(ctx);
+    const {checkForUpdatesAndNotify} = await endpoints.readConfig().toPromise();
 
-        secondInstanceExecutedCallbacks.push(() => endpoints.activateBrowserWindow().toPromise());
+    secondInstanceExecutedCallbacks.push(() => endpoints.activateBrowserWindow().toPromise());
 
-        initWebContentContextMenu(ctx);
+    initWebContentContextMenu(ctx);
 
-        const uiContext = ctx.uiContext = {
-            browserWindow: await initBrowserWindow(ctx, endpoints),
-            tray: initTray(endpoints),
-        };
+    const uiContext = ctx.uiContext = {
+        browserWindow: await initBrowserWindow(ctx, endpoints),
+        tray: initTray(endpoints),
+    };
 
-        await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0}).toPromise();
+    await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0}).toPromise();
 
-        if (checkForUpdatesAndNotify && ctx.runtimeEnvironment !== "e2e") {
-            initAutoUpdate();
+    if (checkForUpdatesAndNotify && ctx.runtimeEnvironment !== "e2e") {
+        initAutoUpdate();
+    }
+
+    app.on("activate", async () => {
+        // on macOS it's common to re-create a window in the app when the dock icon is clicked and there are no other windows open
+        if (!uiContext.browserWindow || uiContext.browserWindow.isDestroyed()) {
+            uiContext.browserWindow = await initBrowserWindow(ctx, endpoints);
         }
+    });
 
-        app.on("activate", async () => {
-            // on macOS it's common to re-create a window in the app when the dock icon is clicked and there are no other windows open
-            if (!uiContext.browserWindow || uiContext.browserWindow.isDestroyed()) {
-                uiContext.browserWindow = await initBrowserWindow(ctx, endpoints);
+    app.on("web-contents-created", (webContentsCreatedEvent, contents) => {
+        contents.on("will-attach-webview", (willAttachWebviewEvent, webPreferences, params) => {
+            webPreferences.nodeIntegration = false;
+
+            if (!isWebViewSrcWhitelisted(params.src)) {
+                willAttachWebviewEvent.preventDefault();
             }
         });
-
-        app.on("web-contents-created", (webContentsCreatedEvent, contents) => {
-            contents.on("will-attach-webview", (willAttachWebviewEvent, webPreferences, params) => {
-                webPreferences.nodeIntegration = false;
-
-                if (!isWebViewSrcWhitelisted(params.src)) {
-                    willAttachWebviewEvent.preventDefault();
-                }
-            });
-        });
     });
-}
+});

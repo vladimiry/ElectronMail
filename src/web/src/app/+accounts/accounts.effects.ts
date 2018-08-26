@@ -1,6 +1,6 @@
 import {Actions, Effect} from "@ngrx/effects";
 import {catchError, concatMap, filter, finalize, map, mergeMap, takeUntil, tap} from "rxjs/operators";
-import {EMPTY, from, merge, of, Subject, throwError, timer} from "rxjs";
+import {EMPTY, from, merge, of, Subject, timer} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store} from "@ngrx/store";
 
@@ -63,62 +63,64 @@ export class AccountsEffects {
     })();
 
     @Effect()
-    toggleFetching$ = this.actions$.pipe(
-        filter(ACCOUNTS_ACTIONS.is.ToggleFetching),
-        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-        mergeMap(({payload, logger}) => {
-            const {account, webView, finishPromise} = payload;
-            const {type, login} = account.accountConfig;
-            const $dispose = from(finishPromise).pipe(tap(() => logger.info("dispose")));
-            const ipcMainClient = this.api.ipcMainClient();
-            const zoneName = logger.zoneName();
+    toggleFetching$ = (() => {
+        const merged$ = EMPTY;
 
-            if (type !== "tutanota") {
-                return throwError(new Error(`Messages fetching is not yet implemented for "${type}" email provider`));
-            }
+        return this.actions$.pipe(
+            filter(ACCOUNTS_ACTIONS.is.ToggleFetching),
+            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+            mergeMap(({payload, logger}) => {
+                const {account, webView, finishPromise} = payload;
+                const {type, login} = account.accountConfig;
+                const $dispose = from(finishPromise).pipe(tap(() => logger.info("dispose")));
+                const ipcMainClient = this.api.ipcMainClient();
+                const zoneName = logger.zoneName();
 
-            // TODO consider making interval time configurable
-            // TODO handle network errors during fetching, test for online status
+                if (type !== "tutanota") {
+                    throw new Error(`Local store is supported for "${type}" only for now`);
+                }
 
-            logger.info("setup");
+                // TODO consider making interval time configurable
+                // TODO handle network errors during fetching, test for online status
 
-            return this.api.webViewClient(webView, type, {finishPromise}).pipe(
-                mergeMap((webViewClient) => ipcMainClient("dbGetContentMetadata")({type, login}).pipe(
-                    mergeMap((metadata) => {
-                        if (metadata.type !== "tutanota") {
-                            throw new Error(`Local store is supported for ${metadata.type} only for now`);
-                        }
-                        if (!metadata.bootstrappedMailId) {
-                            return webViewClient("bootstrapFetch")({...metadata, zoneName}).pipe(
-                                concatMap((value) => ipcMainClient("dbInsertBootstrapContent")({type, login, ...value})),
-                            );
-                        }
-                        return of(metadata);
-                    }),
-                    mergeMap(() => merge(
-                        timer(0, ONE_SECOND_MS * 60).pipe(
-                            tap(() => logger.verbose("timer")),
-                        ),
-                        this.fireFetchingIteration$.pipe(
-                            filter((value) => value.type === type && value.login === login),
-                            tap(() => logger.verbose("fireFetchingIteration$")),
-                        ),
-                    ).pipe(filter(() => navigator.onLine))),
-                    concatMap(() => ipcMainClient("dbGetContentMetadata")({type, login})),
-                    concatMap((metadata) => {
-                        if (metadata.type !== "tutanota") {
-                            throw new Error(`Local store is supported for ${metadata.type} only for now`);
-                        }
-                        return webViewClient("buildBatchEntityUpdatesDbPatch")({...metadata, zoneName});
-                    }),
-                    concatMap((patch) => ipcMainClient("dbProcessBatchEntityUpdatesPatch")({type, login, ...patch})),
-                    concatMap(() => EMPTY),
-                    catchError((error) => of(CORE_ACTIONS.Fail(error))),
-                )),
-                takeUntil($dispose),
-            );
-        }),
-    );
+                logger.info("setup");
+
+                return merge(
+                    merged$,
+                    this.api.webViewClient(webView, type, {finishPromise}).pipe(
+                        mergeMap((webViewClient) => ipcMainClient("dbGetContentMetadata")({type, login}).pipe(
+                            mergeMap(() => merge(
+                                timer(0, ONE_SECOND_MS * 60 * 5).pipe(
+                                    tap(() => logger.verbose(`trigger: timer`)),
+                                    map(() => ({forceFlush: true})),
+                                ),
+                                this.fireFetchingIteration$.pipe(
+                                    filter((value) => value.type === type && value.login === login),
+                                    tap(() => logger.verbose(`trigger: fireFetchingIteration$`)),
+                                    map(() => ({forceFlush: false})),
+                                ),
+                            ).pipe(
+                                filter(() => navigator.onLine),
+                            )),
+                            concatMap(({forceFlush}) => ipcMainClient("dbGetContentMetadata")({type, login}).pipe(
+                                concatMap((metadata) => {
+                                    if (metadata.type !== "tutanota") {
+                                        throw new Error(`Local store is supported for "${metadata.type}" only for now`);
+                                    }
+                                    return webViewClient("buildBatchEntityUpdatesDbPatch")({...metadata, zoneName});
+                                }),
+                                concatMap((patch) => ipcMainClient("dbPatch")({type, login, forceFlush, ...patch})),
+                                concatMap(() => EMPTY),
+                                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                            )),
+                            catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                        )),
+                        takeUntil($dispose),
+                    ),
+                );
+            }),
+        );
+    })();
 
     @Effect()
     tryToLogin$ = this.actions$.pipe(

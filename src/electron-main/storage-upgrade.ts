@@ -12,7 +12,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
     },
     "1.2.0": (config) => {
         if (typeof config.logLevel === "undefined") {
-            config.logLevel = INITIAL_STORES.config.logLevel;
+            config.logLevel = INITIAL_STORES.config().logLevel;
         }
     },
 };
@@ -27,6 +27,11 @@ const SETTINGS_UPGRADES: Record<string, (settings: Settings) => void> = {
                 account.credentialsKeePass = {};
             }
         });
+    },
+    "1.4.2": (settings) => {
+        if (!settings.dbEncryptionKey) {
+            settings.dbEncryptionKey = INITIAL_STORES.settings().dbEncryptionKey;
+        }
     },
 };
 

@@ -88,5 +88,6 @@ export const MailFolderTypeService = (() => {
     return Object.freeze({
         parseValueStrict,
         testValue,
+        values: () => values,
     });
 })();

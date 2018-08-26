@@ -1,69 +1,94 @@
+import _logger from "electron-log";
 import {from, of} from "rxjs";
-import {prop, sortBy} from "ramda";
 
-import {Endpoints} from "src/shared/api/main";
+import {AccountType} from "src/shared/model/account";
 import {Context} from "src/electron-main/model";
-import {Mail} from "src/shared/model/database";
+import {curryFunctionMembers} from "src/shared/util";
+import {DbContent} from "src/shared/model/database";
+import {Endpoints} from "src/shared/api/main";
+
+const logger = curryFunctionMembers(_logger, "[database api]");
 
 type Methods =
-    | "dbInsertBootstrapContent"
-    | "dbProcessBatchEntityUpdatesPatch"
+    | "dbPatch"
     | "dbGetContentMetadata";
 
-export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Methods>> {
+export async function buildEndpoints(
+    ctx: Context,
+): Promise<Pick<Endpoints, Methods>> {
     return {
-        dbInsertBootstrapContent: ({type, login, mails, folders, metadata}) => from((async () => {
-            if (type !== "tutanota") {
-                throw new Error(`"databaseBootstrapUpsert()": not yet implemented for "${type}" email provider`);
-            }
+        dbPatch: ({type, login, folders, mails, metadata, forceFlush}) => from((async () => {
+            logger.info("dbPatch()");
 
-            const record = ctx.db.getAccountContent({type, login});
+            const record = ctx.db.getAccount({type, login});
+            // TODO watch for record changing using observable/proxy/AOP approach
+            let recordModified = false;
 
-            for (const mail of mails) {
-                await record.mails.set(mail);
-            }
-            for (const folder of folders) {
-                await record.folders.set(folder);
-            }
-
-            if (mails.length) {
-                const sortByProp = ((instanceIdProp: keyof Pick<Mail, "instanceId">) => instanceIdProp)("instanceId");
-                record.metadata.bootstrappedMailId = sortBy(prop(sortByProp))(mails)[mails.length - 1].instanceId;
-            }
-
-            if (metadata && "groupEntityEventBatchIds" in metadata) {
-                Object.assign(record.metadata.groupEntityEventBatchIds, metadata.groupEntityEventBatchIds);
-            }
-
-            return record.metadata;
-        })()),
-
-        dbProcessBatchEntityUpdatesPatch: ({type, login, folders, mails, metadata}) => from((async () => {
-            if (type !== "tutanota") {
-                throw new Error(`"dbProcessBatchEntityUpdatesPatch()": not yet implemented for "${type}" email provider`);
-            }
-
-            const record = ctx.db.getAccountContent({type, login});
-
-            folders.remove.forEach(({pk}) => record.folders.delete(pk));
+            folders.remove.forEach(({pk}) => {
+                record.folders.delete(pk);
+                recordModified = true;
+            });
             for (const folder of folders.upsert) {
-                await record.folders.set(folder);
+                await record.folders.validateAndSet(folder);
+                recordModified = true;
             }
 
-            mails.remove.forEach(({pk}) => record.mails.delete(pk));
+            mails.remove.forEach(({pk}) => {
+                record.mails.delete(pk);
+                recordModified = true;
+            });
             for (const mail of mails.upsert) {
-                await record.mails.set(mail);
+                await record.mails.validateAndSet(mail);
+                recordModified = true;
             }
 
-            if (metadata && "groupEntityEventBatchIds" in metadata) {
-                Object.assign(record.metadata.groupEntityEventBatchIds, metadata.groupEntityEventBatchIds);
+            if (patchMetadata(type, record.metadata, metadata)) {
+                recordModified = true;
+            }
+
+            if (recordModified || forceFlush) {
+                await ctx.db.saveToFile();
             }
 
             return record.metadata;
         })()),
 
         dbGetContentMetadata: ({type, login}) => {
-            return of(ctx.db.getAccountContent({type, login}).metadata);
+            logger.info("dbGetContentMetadata()");
+            return of(ctx.db.getAccount({type, login}).metadata);
         },
     };
+}
+
+export function patchMetadata(
+    type: AccountType,
+    dest: DbContent["metadata"],
+    patch: Partial<DbContent["metadata"]>,
+): boolean {
+    logger.verbose("patchMetadata()");
+
+    if (type !== "tutanota") {
+        throw new Error(`"patchMetadata()": not yet implemented for "${type}" email provider`);
+    }
+
+    if (!("groupEntityEventBatchIds" in patch) || !patch.groupEntityEventBatchIds) {
+        return false;
+    }
+
+    const patchSize = Object.keys(patch.groupEntityEventBatchIds).length;
+
+    if (!patchSize) {
+        return false;
+    }
+
+    Object.assign(
+        (dest as typeof patch).groupEntityEventBatchIds,
+        patch.groupEntityEventBatchIds,
+    );
+    logger.verbose(
+        "patchMetadata()",
+        `"metadata.groupEntityEventBatchIds" patched with ${patchSize} records`,
+    );
+
+    return true;
 }

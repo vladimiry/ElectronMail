@@ -1,5 +1,5 @@
 import {ofType, unionize} from "unionize";
-import {Options as EncryptionAdapterOptions} from "fs-json-store-encryption-adapter";
+import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 
 import {
     AccountConfigCreatePatch,
@@ -28,7 +28,7 @@ export const OPTIONS_ACTIONS = unionize({
         InitResponse: ofType<{ electronLocations: ElectronContextLocations; hasSavedPassword: boolean; }>(),
         PatchBaseSettingsRequest: ofType<BaseConfig>(),
         PatchProgress: ofType<ProgressPatch>(),
-        ReEncryptSettings: ofType<{ password: string, encryptionPreset: EncryptionAdapterOptions }>(),
+        ReEncryptSettings: ofType<{ password: string, encryptionPreset: PasswordBasedPreset }>(),
         SignInRequest: ofType<Partial<PasswordFieldContainer> & { savePassword?: boolean; }>(),
         ToggleCompactRequest: ofType<{}>(),
         ActivateBrowserWindow: ofType<{}>(),

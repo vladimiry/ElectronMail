@@ -1,6 +1,7 @@
 import {authenticator} from "otplib";
 import {concatMap, distinctUntilChanged, map, tap} from "rxjs/operators";
 import {from, interval, merge, Observable, of, Subscriber} from "rxjs";
+import {pick} from "ramda";
 
 import {
     NOTIFICATION_LOGGED_IN_POLLING_INTERVAL,
@@ -12,6 +13,7 @@ import {
     buildDbMail,
     buildPk,
     fetchMailFoldersWithSubFolders,
+    filterUserMailMemberships,
     resolveInstanceId,
     sameRefType,
 } from "src/electron-preload/webview/tutanota/lib/util";
@@ -46,66 +48,6 @@ function bootstrapApi(webClientApi: WebClientApi) {
     const endpoints: TutanotaApi = {
         ping: () => of(null),
 
-        bootstrapFetch: ({bootstrappedMailId, zoneName}) => from((async () => {
-            const logger = curryFunctionMembers(_logger, "bootstrapFetch()", zoneName);
-            logger.info();
-
-            const controller = getUserController();
-
-            if (!controller) {
-                throw new Error("User controller is supposed to be defined");
-            }
-
-            const initialRun = typeof bootstrappedMailId === "undefined";
-
-            // last entity event batches fetching must be happening BEFORE mails and folders fetching and only INITIALLY (once)
-            // so app does further entity event batches fetching starting from the boostrap/this stage
-            const metadata: Partial<Pick<DatabaseModel.DbContent<"tutanota">["metadata"], "groupEntityEventBatchIds">> = {};
-            if (initialRun) {
-                metadata.groupEntityEventBatchIds = {};
-                for (const {group} of controller.user.memberships) {
-                    const entityEventBatches = await Rest.fetchEntitiesRange(
-                        Rest.Model.EntityEventBatchTypeRef,
-                        group,
-                        {
-                            count: 1,
-                            reverse: true,
-                            start: GENERATED_MAX_ID,
-                        },
-                    );
-                    if (entityEventBatches.length) {
-                        metadata.groupEntityEventBatchIds[group] = resolveInstanceId(entityEventBatches[0]);
-                    }
-                }
-                logger.info(`fetched metadata for ${Object.keys(metadata.groupEntityEventBatchIds).length} entity event batches`);
-            }
-
-            const startId = await generateStartId(bootstrappedMailId);
-            const folders = await fetchMailFoldersWithSubFolders(controller.user);
-            const mails = [];
-
-            logger.info(`startId: ${initialRun ? "initial" : 'provided "instanceId" based'}`);
-
-            for (const folder of folders) {
-                const folderMails = await Rest.fetchEntitiesRangeUntilTheEnd(
-                    Rest.Model.MailTypeRef,
-                    folder.mails,
-                    {start: startId, count: 500},
-                );
-                for (const mail of folderMails) {
-                    mails.push(await buildDbMail(mail));
-                }
-            }
-
-            logger.info(`returning ${folders.length} folders and ${mails.length} mails`);
-
-            return {
-                mails,
-                folders: folders.map((folder) => buildDbFolder(folder)),
-                metadata,
-            };
-        })()),
-
         buildBatchEntityUpdatesDbPatch: ({groupEntityEventBatchIds, zoneName}) => from((async () => {
             const logger = curryFunctionMembers(_logger, "entityEventBatchesFetch()", zoneName);
             logger.info();
@@ -120,8 +62,9 @@ function bootstrapApi(webClientApi: WebClientApi) {
             const metadata: Required<Pick<DatabaseModel.DbContent<"tutanota">["metadata"], "groupEntityEventBatchIds">> = {
                 groupEntityEventBatchIds: {},
             };
+            const mailMemberships = filterUserMailMemberships(controller.user);
 
-            for (const {group} of controller.user.memberships) {
+            for (const {group} of mailMemberships) {
                 const startId = await generateStartId(groupEntityEventBatchIds[group]);
                 const entityEventBatches = await Rest.fetchEntitiesRangeUntilTheEnd(
                     Rest.Model.EntityEventBatchTypeRef,
@@ -133,7 +76,9 @@ function bootstrapApi(webClientApi: WebClientApi) {
                     metadata.groupEntityEventBatchIds[group] = resolveInstanceId(entityEventBatches[entityEventBatches.length - 1]);
                 }
             }
-            logger.verbose(`fetched ${entitiesUpdates.length} entity event batches`);
+            logger.verbose(
+                `fetched ${entitiesUpdates.length} entity event batches from ${mailMemberships.length} mail memberships`,
+            );
 
             const databasePatch = await buildBatchEntityUpdatesDbPatch({entitiesUpdates, _logger: logger});
 
@@ -308,6 +253,7 @@ function bootstrapApi(webClientApi: WebClientApi) {
                 ),
 
                 Observable.create((subscriber: Subscriber<BatchEntityUpdatesCounterOutput>) => {
+                    const innerLogger = curryFunctionMembers(logger, `[entity update notification]`);
                     const notification = {batchEntityUpdatesCounter: 0};
                     const {EntityEventController} = webClientApi["src/api/main/EntityEventController"];
 
@@ -316,21 +262,28 @@ function bootstrapApi(webClientApi: WebClientApi) {
                         entityUpdate: Rest.Model.EntityUpdate,
                     ) {
                         (async () => {
+                            innerLogger.verbose(JSON.stringify(pick(["application", "type", "operation"], entityUpdate)));
+
                             const entitiesUpdates = [{events: [entityUpdate]}];
                             const {folders, mails} = await buildBatchEntityUpdatesDbPatch(
-                                {entitiesUpdates, _logger: logger},
+                                {entitiesUpdates/*, _logger: logger*/},
                                 // mocking db model builders, we only need the data structure to be formed at this point
                                 // so no need to produce unnecessary fetch requests
                                 {mail: async () => null as any, folder: async () => null as any},
                             );
 
-                            if ([folders.remove, folders.upsert, mails.remove, mails.upsert].some(({length}) => Boolean(length))) {
-                                notification.batchEntityUpdatesCounter++;
-                                subscriber.next(notification);
+                            if (![folders.remove, folders.upsert, mails.remove, mails.upsert].some(({length}) => Boolean(length))) {
+                                return;
                             }
+
+                            notification.batchEntityUpdatesCounter++;
+                            subscriber.next(notification);
+
+                            innerLogger.info(`upsert/remove mails: ${mails.upsert.length}/${mails.remove.length}`);
+                            innerLogger.info(`upsert/remove folders: ${folders.upsert.length}/${folders.remove.length}`);
                         })().catch((error) => {
                             subscriber.error(error);
-                            logger.error(error);
+                            innerLogger.error(error);
                         });
 
                         return original.apply(this, arguments);
@@ -349,7 +302,7 @@ function bootstrapApi(webClientApi: WebClientApi) {
 async function buildBatchEntityUpdatesDbPatch(
     input: {
         entitiesUpdates: Array<{ events: EntityUpdate[] }>;
-        _logger: ReturnType<typeof buildLoggerBundle>;
+        _logger?: ReturnType<typeof buildLoggerBundle>;
     },
     dbModelBuilders: {
         mail: (id: { instanceListId: Rest.Model.Id, instanceId: Rest.Model.Id }) => Promise<DatabaseModel.Mail>;
@@ -365,8 +318,9 @@ async function buildBatchEntityUpdatesDbPatch(
         },
     },
 ): Promise<BatchEntityUpdatesDbPatch> {
-    const logger = curryFunctionMembers(input._logger, "buildBatchEntityUpdatesDbPatch()");
-    logger.info();
+    const logger = input._logger ? curryFunctionMembers(input._logger, "buildBatchEntityUpdatesDbPatch()") : {
+        info: (...args: any[]) => {}, verbose: (...args: any[]) => {},
+    };
 
     const mailsMap: Map<Rest.Model.Mail["_id"][1], Rest.Model.EntityUpdate[]> = new Map();
     const foldersMap: Map<Rest.Model.MailFolder["_id"][1], Rest.Model.EntityUpdate[]> = new Map();

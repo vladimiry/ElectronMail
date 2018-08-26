@@ -1,8 +1,9 @@
 import "reflect-metadata";
-import {IsArray, IsBoolean, IsInt, IsJSON, IsNotEmpty, IsString, ValidateNested} from "class-validator";
+import {IsArray, IsBoolean, IsIn, IsInt, IsJSON, IsNotEmpty, IsString, ValidateNested} from "class-validator";
 import {Type} from "class-transformer";
 
 import * as DatabaseModel from "src/shared/model/database";
+import {MailFolderTypeService} from "src/shared/util";
 import {Timestamp} from "src/shared/types";
 
 // TODO consider enabling @Entity class annotation with table name property
@@ -19,7 +20,7 @@ export abstract class Entity implements DatabaseModel.Entity {
 
     @IsNotEmpty()
     @IsString()
-    instanceId!: string;
+    id!: string;
 }
 
 class MailAddress extends Entity implements DatabaseModel.MailAddress {
@@ -36,6 +37,7 @@ class File extends Entity implements DatabaseModel.File {
     mimeType?: string;
 
     @IsString()
+    @IsNotEmpty()
     name!: string;
 
     @IsNotEmpty()
@@ -45,7 +47,7 @@ class File extends Entity implements DatabaseModel.File {
 
 export class Folder extends Entity implements DatabaseModel.Folder {
     @IsNotEmpty()
-    @IsInt()
+    @IsIn(MailFolderTypeService.values())
     folderType!: DatabaseModel.MailFolderTypeValue;
 
     @IsString()

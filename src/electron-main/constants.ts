@@ -1,6 +1,8 @@
+import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/private/constants";
 import {LogLevel} from "electron-log";
 import {Model as StoreModel} from "fs-json-store";
-import {Options as EncryptionAdapterOptions} from "fs-json-store-encryption-adapter";
+import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
+import {randomBytes} from "crypto";
 
 import {APP_NAME} from "src/shared/constants";
 import {Config, ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS, Settings} from "src/shared/model/options";
@@ -8,15 +10,18 @@ import {Config, ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS, Settings}
 export const KEYTAR_SERVICE_NAME = APP_NAME;
 export const KEYTAR_MASTER_PASSWORD_ACCOUNT = "master-password";
 
-export const INITIAL_STORES: Readonly<{ config: Config; settings: Settings; }> = (() => {
-    const encryptionPreset: EncryptionAdapterOptions = {
-        keyDerivation: {type: "sodium.crypto_pwhash", preset: "mode:interactive|algorithm:default"},
-        encryption: {type: "sodium.crypto_secretbox_easy", preset: "algorithm:default"},
-    };
-    const logLevel: LogLevel = "error";
+export const INITIAL_STORES: Readonly<{
+    config: () => Config;
+    settings: () => Settings;
+}> = Object.freeze({
+    config: () => {
+        const encryptionPreset: PasswordBasedPreset = {
+            keyDerivation: {type: "sodium.crypto_pwhash", preset: "mode:moderate|algorithm:default"},
+            encryption: {type: "sodium.crypto_secretbox_easy", preset: "algorithm:default"},
+        };
+        const logLevel: LogLevel = "error";
 
-    return {
-        config: {
+        return {
             encryptionPreset,
             logLevel,
             startMinimized: true,
@@ -27,15 +32,20 @@ export const INITIAL_STORES: Readonly<{ config: Config; settings: Settings; }> =
             window: {
                 bounds: {width: 1024, height: 768},
             },
-        },
-        settings: {accounts: []},
-    };
-})();
+        };
+    },
+    settings: () => {
+        return {
+            accounts: [],
+            // TODO "dbEncryptionKey" needs to be properly generated
+            dbEncryptionKey: randomBytes(KEY_BYTES_32).toString(BASE64_ENCODING),
+        };
+    },
+});
 
 export const configEncryptionPresetValidator: StoreModel.StoreValidator<Config> = async (data) => {
     const keyDerivation = data.encryptionPreset.keyDerivation;
     const encryption = data.encryptionPreset.encryption;
-
     const errors = [
         ...(Object.values(KEY_DERIVATION_PRESETS)
             .some((value) => value.type === keyDerivation.type && value.preset === keyDerivation.preset)

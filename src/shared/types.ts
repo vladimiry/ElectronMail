@@ -10,6 +10,9 @@ export type UnpackedPromise<T> =
     T extends Promise<infer U> ? U :
         T;
 
+export type Arguments<F extends (...x: any[]) => any> =
+    F extends (...x: infer A) => any ? A : never;
+
 export type Timestamp = ReturnType<typeof Date.prototype.getTime>;
 
 export interface EntryUrlItem {

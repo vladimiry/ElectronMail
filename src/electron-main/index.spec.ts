@@ -14,33 +14,42 @@ interface TestContext {
 
 const test = ava as TestInterface<TestContext>;
 
+// tslint:disable:max-line-length
 test.serial("workflow", async (t) => {
     const m = t.context.mocks["~index"];
     const {endpoints} = t.context;
 
-    // tslint:disable:max-line-length
     t.true(m["electron-unhandled"].calledWithExactly(sinon.match.hasOwn("logger")), `"electronUnhandled" called`);
-    t.true(m["electron-unhandled"].calledBefore(m.electron.app.makeSingleInstance), `"electronUnhandled" called before "makeSingleInstance"`);
+    t.true(m["electron-unhandled"].calledBefore(m.electron.app.setAppUserModelId), `"electronUnhandled" called before "makeSingleInstance"`);
+
     t.true(m.electron.app.setAppUserModelId.calledWithExactly(`com.github.vladimiry.${APP_NAME}`));
     t.true(m.electron.app.setAppUserModelId.calledBefore(m.electron.app.makeSingleInstance));
+
     t.true(m.electron.app.makeSingleInstance.called, `"makeSingleInstance" called`);
     t.true(m.electron.app.makeSingleInstance.calledBefore(m["./util"].initContext), `"makeSingleInstance" called before "initContext"`);
+
     t.true(m["./util"].initContext.calledWithExactly(), `"initContext" called`);
     t.true(m["./api"].initApi.calledWithExactly(t.context.ctx), `"initApi" called`);
-    t.true(m["./web-content-context-menu"].initWebContentContextMenu.calledWithExactly(t.context.ctx), `initWebContentContextMenu called`);
-    t.true(m["./web-content-context-menu"].initWebContentContextMenu.calledBefore(m["./window"].initBrowserWindow), `initWebContentContextMenu called before "initBrowserWindow"`);
+
+    t.true(m["./web-content-context-menu"].initWebContentContextMenu.calledWithExactly(t.context.ctx), `"initWebContentContextMenu" called`);
+    t.true(m["./web-content-context-menu"].initWebContentContextMenu.calledBefore(m["./window"].initBrowserWindow), `"initWebContentContextMenu" called before "initBrowserWindow"`);
+    t.true(m["./web-content-context-menu"].initWebContentContextMenu.calledBefore(m["./tray"].initTray), `"initWebContentContextMenu" called before "initTray"`);
+
     t.true(m["./window"].initBrowserWindow.calledWithExactly(t.context.ctx, t.context.endpoints), `"initBrowserWindow" called`);
+
     t.true(m["./tray"].initTray.calledWithExactly(endpoints), `"initTray" called`);
+
     t.true(endpoints.updateOverlayIcon.calledWithExactly({hasLoggedOut: false, unread: 0}), `"updateOverlayIcon" called`);
     t.true(endpoints.updateOverlayIcon.calledAfter(m["./tray"].initTray), `"updateOverlayIcon" called after "initTray"`);
+
     t.true(m["./app-update"].initAutoUpdate.calledWithExactly(), `"initAutoUpdate" called`);
-    // tslint:enable:max-line-length
 });
+// tslint:enable:max-line-length
 
 test.beforeEach(async (t) => {
     t.context.endpoints = {
         readConfig: sinon.stub().returns({
-            toPromise: () => Promise.resolve(INITIAL_STORES.config),
+            toPromise: () => Promise.resolve(INITIAL_STORES.config()),
         }),
         updateOverlayIcon: sinon.stub().returns({
             toPromise: () => Promise.resolve(null),
@@ -57,20 +66,19 @@ test.beforeEach(async (t) => {
         () => import("./index"),
         (mock) => {
             const mocks = t.context.mocks["~index"];
-
             mock(() => import("./api")).callThrough().with(mocks["./api"]);
             mock(() => import("./util")).callThrough().with(mocks["./util"]);
-            mock("./window").with(mocks["./window"]);
-            mock("./tray").with(mocks["./tray"]);
-            mock("./web-content-context-menu").with(mocks["./web-content-context-menu"]);
-            mock("./app-update").with(mocks["./app-update"]);
-            mock("keytar").with({
+            mock(() => import("./window")).callThrough().with(mocks["./window"]);
+            mock(() => import("./tray")).callThrough().with(mocks["./tray"]);
+            mock(() => import("./web-content-context-menu")).with(mocks["./web-content-context-menu"]);
+            mock(() => import("./app-update")).callThrough().with(mocks["./app-update"]);
+            mock(() => import("keytar")).with({
                 getPassword: sinon.spy(),
                 deletePassword: sinon.spy(),
                 setPassword: sinon.spy(),
             });
-            mock("electron-unhandled").with(mocks["electron-unhandled"]);
-            mock("electron").with(mocks.electron);
+            mock(() => import("electron-unhandled")).with(mocks["electron-unhandled"]);
+            mock(() => import("electron")).with(mocks.electron as any);
         },
     );
 });
@@ -82,11 +90,11 @@ function buildMocks(testContext: TestContext) {
                 initApi: sinon.stub().returns(Promise.resolve(testContext.endpoints)),
             },
             "./util": {
-                initContext: sinon.stub().resolves(testContext.ctx),
+                initContext: sinon.stub().returns(testContext.ctx),
                 activateBrowserWindow: sinon.spy(),
             },
             "./window": {
-                initBrowserWindow: sinon.spy(),
+                initBrowserWindow: sinon.stub().returns(Promise.resolve({isDestroyed: sinon.spy()})),
             },
             "./tray": {
                 initTray: sinon.spy(),

@@ -4,7 +4,6 @@ import {from} from "rxjs";
 
 import {Account, Database, General, KeePass, TrayIcon} from "./endpoints-builders";
 import {buildSettingsAdapter} from "src/electron-main/util";
-import {Config} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
 import {Endpoints, IPC_MAIN_API} from "src/shared/api/main";
 import {KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "src/electron-main/constants";
@@ -64,46 +63,34 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
 
         // TODO update "readConfig" api method test ("upgradeConfig" call, "logger.transports.file.level" updpate)
         readConfig: () => from((async () => {
-            let config: Config | null = await ctx.configStore.read();
-
-            if (!config) {
-                config = await ctx.configStore.write(ctx.initialStores.config);
-            } else if (upgradeConfig(config)) {
-                config = await ctx.configStore.write(config);
-            }
+            const store = ctx.configStore;
+            const existingConfig = await store.read();
+            const config = existingConfig
+                ? (upgradeConfig(existingConfig) ? await store.write(existingConfig) : existingConfig)
+                : await store.write(ctx.initialStores.config);
 
             logger.transports.file.level = config.logLevel;
 
             return config;
         })()),
 
-        // TODO update "readSettings" api method test ("upgradeSettings" call, "no password provided" case)
+        // TODO update "readSettings" api method test ("upgradeSettings" call, "no password provided" case, database loading)
         readSettings: ({password, savePassword}) => from((async () => {
             // trying to auto login
             if (!password) {
                 const storedPassword = await keytar.getPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT);
-
                 if (!storedPassword) {
                     throw new Error("No password provided to decrypt settings with");
                 }
-
                 return await endpoints.readSettings({password: storedPassword}).toPromise();
             }
 
             const adapter = await buildSettingsAdapter(ctx, password);
             const store = ctx.settingsStore.clone({adapter});
-            const settings = await (async () => {
-                const entity = await store.read();
-
-                if (entity) {
-                    if (upgradeSettings(entity)) {
-                        return store.write(entity);
-                    }
-                    return entity;
-                }
-
-                return store.write(ctx.initialStores.settings);
-            })();
+            const existingSettings = await store.read();
+            const settings = existingSettings
+                ? (upgradeSettings(existingSettings) ? await store.write(existingSettings) : existingSettings)
+                : await store.write(ctx.initialStores.settings);
 
             // "savePassword" is unset in auto login case
             if (typeof savePassword !== "undefined") {
@@ -115,6 +102,11 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
             }
 
             ctx.settingsStore = store;
+
+            // TODO ensure by tests that database loading occurs after the "ctx.settingsStore = store" call (see above)
+            if (await ctx.db.persisted()) {
+                await ctx.db.loadFromFile();
+            }
 
             return settings;
         })()),

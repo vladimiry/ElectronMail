@@ -1,11 +1,15 @@
-import * as Rest from "./rest";
 import * as DatabaseModel from "src/shared/model/database";
+import * as Rest from "./rest";
+import {BaseEntity, Id, IdTuple} from "./rest/model";
 import {curryFunctionMembers, MailFolderTypeService} from "src/shared/util";
 import {resolveWebClientApi} from "./tutanota-api";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
-import {BaseEntity, Id, IdTuple} from "./rest/model";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[lib/util]");
+
+export function filterUserMailMemberships(user: Rest.Model.User): Rest.Model.GroupMembership[] {
+    return user.memberships.filter(({groupType}) => groupType === Rest.Model.GroupType.Mail);
+}
 
 export async function fetchMailFoldersWithSubFolders(user: Rest.Model.User): Promise<Rest.Model.MailFolder[]> {
     const logger = curryFunctionMembers(_logger, "fetchMailFoldersWithSubFolders()", JSON.stringify({callId: +new Date()}));
@@ -50,7 +54,7 @@ function buildDbMailModel(input: Rest.Model.Mail, body: Rest.Model.MailBody, fil
     return {
         pk: buildPk(input._id),
         raw: JSON.stringify(input),
-        instanceId: resolveInstanceId(input),
+        id: resolveInstanceId(input),
         date: Number(input.receivedDate), // TODO consider calling "generatedIdToTimestamp" on "mail._id[1]"
         subject: input.subject,
         body: body.text,
@@ -67,7 +71,7 @@ function buildDbAddressModel(input: Rest.Model.MailAddress): DatabaseModel.MailA
     return {
         pk: buildPk(input._id),
         raw: JSON.stringify(input),
-        instanceId: resolveInstanceId(input),
+        id: resolveInstanceId(input),
         name: input.name,
         address: input.address,
     };
@@ -77,7 +81,7 @@ function buildDbFileModel(input: Rest.Model.File): DatabaseModel.File {
     return {
         pk: buildPk(input._id),
         raw: JSON.stringify(input),
-        instanceId: resolveInstanceId(input),
+        id: resolveInstanceId(input),
         mimeType: input.mimeType,
         name: input.name,
         size: Number(input.size),
@@ -88,7 +92,7 @@ export function buildDbFolder(input: Rest.Model.MailFolder): DatabaseModel.Folde
     return {
         pk: buildPk(input._id),
         raw: JSON.stringify(input),
-        instanceId: resolveInstanceId(input),
+        id: resolveInstanceId(input),
         folderType: MailFolderTypeService.parseValueStrict(input.folderType),
         name: input.name,
     };

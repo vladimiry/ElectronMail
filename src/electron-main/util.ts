@@ -10,33 +10,37 @@ import {BuildEnvironment} from "src/shared/model/common";
 import {Config, Settings} from "src/shared/model/options";
 import {configEncryptionPresetValidator, INITIAL_STORES, settingsAccountLoginUniquenessValidator} from "./constants";
 import {Context, ContextInitOptions, ContextInitOptionsPaths, RuntimeEnvironment} from "./model";
+import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
-import {Db} from "./database/db";
 
-export async function initContext(options: ContextInitOptions = {}): Promise<Context> {
+export function initContext(options: ContextInitOptions = {}): Context {
+    const storeFs = options.storeFs ? options.storeFs : StoreFs.Fs.fs;
     const runtimeEnvironment: RuntimeEnvironment = Boolean(process.env[RUNTIME_ENV_E2E]) ? "e2e" : "production";
     const locations = initLocations(runtimeEnvironment, options.paths);
-    const initialStores = options.initialStores || INITIAL_STORES;
-    const storeFs = options.storeFs ? options.storeFs : StoreFs.Fs.fs;
-    const configStore = new Store<Config>({
-        fs: storeFs,
-        optimisticLocking: true,
-        file: path.join(locations.userDataDir, "config.json"),
-        validators: [configEncryptionPresetValidator],
-    });
 
-    logger.transports.file.file = path.join(locations.userDataDir, "./log.log");
+    logger.transports.file.file = path.join(locations.userDataDir, "log.log");
     logger.transports.file.level = false;
     logger.transports.console.level = false;
 
-    return {
-        db: new Db(),
+    const ctx: Context = {
         storeFs,
         runtimeEnvironment,
         locations,
-        initialStores,
-        configStore,
+        db: new Database({
+            file: path.join(locations.userDataDir, "database.bin"),
+            encryption: {
+                keyResolver: async () => (await ctx.settingsStore.readExisting()).dbEncryptionKey,
+                presetResolver: async () => ({encryption: {type: "sodium.crypto_secretbox_easy", preset: "algorithm:default"}}),
+            },
+        }),
+        initialStores: options.initialStores || {config: INITIAL_STORES.config(), settings: INITIAL_STORES.settings()},
+        configStore: new Store<Config>({
+            fs: storeFs,
+            optimisticLocking: true,
+            file: path.join(locations.userDataDir, "config.json"),
+            validators: [configEncryptionPresetValidator],
+        }),
         settingsStore: new Store<Settings>({
             fs: storeFs,
             optimisticLocking: true,
@@ -44,6 +48,8 @@ export async function initContext(options: ContextInitOptions = {}): Promise<Con
             validators: [settingsAccountLoginUniquenessValidator],
         }),
     };
+
+    return ctx;
 }
 
 function initLocations(runtimeEnvironment: RuntimeEnvironment, paths?: ContextInitOptionsPaths): ElectronContextLocations {
@@ -86,5 +92,8 @@ function formatFileUrl(pathname: string) {
 }
 
 export async function buildSettingsAdapter({configStore}: Context, password: string): Promise<StoreModel.StoreAdapter> {
-    return new EncryptionAdapter(password, (await configStore.readExisting()).encryptionPreset);
+    return new EncryptionAdapter(
+        {password, preset: (await configStore.readExisting()).encryptionPreset},
+        {keyDerivationCache: true, keyDerivationCacheLimit: 3},
+    );
 }

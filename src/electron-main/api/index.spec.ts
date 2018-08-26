@@ -193,11 +193,9 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
             ...settings,
             _rev: (settings._rev as number) + 1,
         };
-        const expectedAdapter = await buildSettingsAdapter(t.context.ctx, payload.newPassword);
         t.truthy(t.context.ctx.settingsStore, `store is defined`);
         t.not(t.context.ctx.settingsStore, updatedSettingsStore, `new store reference`);
         t.not(t.context.ctx.settingsStore.adapter, updatedSettingsAdapter, `new store.adapter reference`);
-        t.deepEqual(t.context.ctx.settingsStore.adapter, expectedAdapter, `adapter should have a new password`);
         t.deepEqual(updatedSettings, expectedSettings, `re-saved settings is returned`);
         t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings, `re-saved settings is persisted`);
         const newStore = t.context.ctx.settingsStore.clone(
@@ -214,13 +212,8 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         setPasswordSpy.calledWithExactly(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, payload.newPassword);
     },
 
-    // TODO test "dbInsertBootstrapContent" API
-    dbInsertBootstrapContent: (t) => {
-        t.pass();
-    },
-
-    // TODO test "dbProcessBatchEntityUpdatesPatch" API
-    dbProcessBatchEntityUpdatesPatch: (t) => {
+    // TODO test "dbPatch" API
+    dbPatch: (t) => {
         t.pass();
     },
 
@@ -533,7 +526,7 @@ test.beforeEach(async (t) => {
         OPTIONS.dataDirectory,
         `${testName.replace(/[^A-Za-z0-9]/g, "_")}`,
     );
-    const initialStores = {...INITIAL_STORES};
+    const initialStores = {config: INITIAL_STORES.config(), settings: INITIAL_STORES.settings()};
     const encryptionPreset = initialStores.config.encryptionPreset;
     const memFsVolume = Fs.MemFs.volume();
 
@@ -547,7 +540,7 @@ test.beforeEach(async (t) => {
         logger.transports.console(msg);
     }) as any;
 
-    const ctx = await initContext({
+    const ctx = initContext({
         paths: {
             userDataDir: directory,
             appDir: directory,

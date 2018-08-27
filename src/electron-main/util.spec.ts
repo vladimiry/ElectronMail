@@ -1,3 +1,4 @@
+import path from "path";
 import rewiremock from "rewiremock";
 import sinon from "sinon";
 import test from "ava";
@@ -24,7 +25,7 @@ test.serial(`"Context.db" should resolve encryption key calling "Context.setting
 
     await t.throwsAsync(
         ctx.db.options.encryption.keyResolver(),
-        new RegExp(`${ctx.settingsStore.file} does not exist`),
+        new RegExp(`${path.basename(ctx.settingsStore.file)} does not exist`),
     );
 
     const {dbEncryptionKey} = await ctx.settingsStore.write(ctx.initialStores.settings);

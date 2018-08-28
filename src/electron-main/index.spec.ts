@@ -1,5 +1,5 @@
-import ava, {TestInterface} from "ava";
 import rewiremock from "rewiremock";
+import ava, {TestInterface} from "ava";
 import sinon, {SinonStub} from "sinon";
 
 import {APP_NAME} from "src/shared/constants";

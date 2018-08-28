@@ -1,8 +1,8 @@
 import {Keyboard} from "keysim";
 
+import {ONE_SECOND_MS} from "src/shared/constants";
 import {asyncDelay, curryFunctionMembers} from "src/shared/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
-import {ONE_SECOND_MS} from "src/shared/constants";
 
 export const waitElements = <E extends Element,
     Q extends Readonly<Record<string, () => E>>,

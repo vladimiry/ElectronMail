@@ -1,7 +1,7 @@
-import {BehaviorSubject, EMPTY, interval, Observable, Subscription} from "rxjs";
+import {BehaviorSubject, EMPTY, Observable, Subscription, interval} from "rxjs";
 import {ChangeDetectionStrategy, Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output} from "@angular/core";
-import {concatMap, distinctUntilChanged, scan, withLatestFrom} from "rxjs/operators";
 import {Store} from "@ngrx/store";
+import {concatMap, distinctUntilChanged, scan, withLatestFrom} from "rxjs/operators";
 
 import {CORE_ACTIONS} from "src/web/src/app/store/actions";
 import {ElectronService} from "../+core/electron.service";

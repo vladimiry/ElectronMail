@@ -2,8 +2,8 @@ import * as os from "os";
 import fs from "fs";
 import memoryStreams from "memory-streams";
 import pureimage, {Bitmap, decodePNGFromStream, encodePNGToStream, registerFont} from "pureimage";
-import {modeBicubic, resampleImageFromBuffer} from "image-processing-js";
 import {NativeImage, nativeImage} from "electron";
+import {modeBicubic, resampleImageFromBuffer} from "image-processing-js";
 
 // TODO explore https://github.com/vonderheide/mono-bitmap as a possible "pureimage" replacement
 

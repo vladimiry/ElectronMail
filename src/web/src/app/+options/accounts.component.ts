@@ -1,8 +1,8 @@
 import {Component, HostBinding, OnDestroy} from "@angular/core";
 import {DragulaService} from "ng2-dragula";
-import {map, withLatestFrom} from "rxjs/operators";
 import {Store} from "@ngrx/store";
 import {Subscription} from "rxjs";
+import {map, withLatestFrom} from "rxjs/operators";
 
 import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";

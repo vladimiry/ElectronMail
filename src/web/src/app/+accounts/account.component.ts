@@ -1,3 +1,4 @@
+import {Action, Store, select} from "@ngrx/store";
 import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
@@ -10,20 +11,19 @@ import {
     OnInit,
     ViewChild,
 } from "@angular/core";
-import {Action, select, Store} from "@ngrx/store";
 import {Deferred} from "ts-deferred";
-import {combineLatest, EMPTY, merge, of, Subscription} from "rxjs";
-import {equals, pick} from "ramda";
-import {debounceTime, filter, map, mergeMap, pairwise, take, withLatestFrom} from "rxjs/operators";
 // tslint:disable-next-line:no-import-zones
 import {DidFailLoadEvent} from "electron";
+import {EMPTY, Subscription, combineLatest, merge, of} from "rxjs";
+import {debounceTime, filter, map, mergeMap, pairwise, take, withLatestFrom} from "rxjs/operators";
+import {equals, pick} from "ramda";
 
-import {AccountConfig} from "src/shared/model/account";
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
-import {AccountsSelectors, OptionsSelectors} from "src/web/src/app/store/selectors";
 import {APP_NAME, ONE_SECOND_MS} from "src/shared/constants";
-import {getZoneNameBoundWebLogger} from "src/web/src/util";
+import {AccountConfig} from "src/shared/model/account";
+import {AccountsSelectors, OptionsSelectors} from "src/web/src/app/store/selectors";
 import {State} from "src/web/src/app/store/reducers/accounts";
+import {getZoneNameBoundWebLogger} from "src/web/src/util";
 
 let componentIndex = 0;
 

@@ -1,0 +1,18 @@
+# https://docs.travis-ci.com/user/customizing-the-build/
+
+if: tag IS blank
+os:
+- linux
+- osx
+sudo: false
+language: node_js
+node_js:
+- "8"
+- "10"
+install:
+- yarn install
+script:
+- node --version
+- npm --version
+- yarn --version
+- yarn run dist

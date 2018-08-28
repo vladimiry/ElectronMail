@@ -1,0 +1,19 @@
+{
+  "extends": "./node_modules/tslint/lib/configs/recommended",
+  "rules": {
+    "max-line-length": [
+      true,
+      140
+    ],
+    "prefer-for-of": true,
+    "await-promise": true,
+    "no-floating-promises": true,
+    "ordered-imports": false,
+    "interface-name": [
+      true,
+      "never-prefix"
+    ],
+    "object-literal-sort-keys": false,
+    "no-any": true
+  }
+}

@@ -1,6 +1,6 @@
 import {AccountType} from "src/shared/model/account";
-import {buildLoggerBundle} from "src/electron-preload/util";
 import {ONE_SECOND_MS} from "src/shared/constants";
+import {buildLoggerBundle} from "src/electron-preload/util";
 
 export const NOTIFICATION_LOGGED_IN_POLLING_INTERVAL = ONE_SECOND_MS;
 

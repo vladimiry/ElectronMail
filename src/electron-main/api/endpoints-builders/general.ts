@@ -1,7 +1,7 @@
 import aboutWindow from "about-window";
 import path from "path";
-import {app, shell} from "electron";
 import {BehaviorSubject, EMPTY, from, of} from "rxjs";
+import {app, shell} from "electron";
 import {isWebUri} from "valid-url";
 import {promisify} from "util";
 

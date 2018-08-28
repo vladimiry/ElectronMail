@@ -1,14 +1,14 @@
 import {NgModule} from "@angular/core";
 import {RouterModule, Routes} from "@angular/router";
 
-import {SettingsConfigureGuard} from "./settings-configure.guard";
-import {SettingsComponent} from "./settings.component";
-import {SettingsSetupComponent} from "./settings-setup.component";
-import {LoginComponent} from "./login.component";
 import {AccountEditComponent} from "./account-edit.component";
 import {AccountsComponent} from "./accounts.component";
-import {KeepassAssociateSettingsComponent} from "./keepass-associate-settings.component";
 import {BaseSettingsComponent} from "./base-settings.component";
+import {KeepassAssociateSettingsComponent} from "./keepass-associate-settings.component";
+import {LoginComponent} from "./login.component";
+import {SettingsComponent} from "./settings.component";
+import {SettingsConfigureGuard} from "./settings-configure.guard";
+import {SettingsSetupComponent} from "./settings-setup.component";
 import {StorageComponent} from "./storage.component";
 
 const routes: Routes = [

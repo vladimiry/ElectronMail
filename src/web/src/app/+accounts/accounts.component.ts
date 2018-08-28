@@ -1,8 +1,8 @@
 import {Component, OnDestroy, OnInit} from "@angular/core";
+import {Store, select} from "@ngrx/store";
+import {Subscription} from "rxjs";
 import {distinctUntilChanged, map} from "rxjs/operators";
 import {equals} from "ramda";
-import {select, Store} from "@ngrx/store";
-import {Subscription} from "rxjs";
 
 import {ACCOUNTS_ACTIONS, CORE_ACTIONS, NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/src/app/store/selectors";

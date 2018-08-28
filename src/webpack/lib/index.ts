@@ -1,10 +1,10 @@
-import path from "path";
 import UglifyJsPlugin from "uglifyjs-webpack-plugin";
-import webpack, {Configuration} from "webpack";
+import path from "path";
 import webpackMerge from "webpack-merge";
+import webpack, {Configuration} from "webpack";
+import {TsconfigPathsPlugin} from "tsconfig-paths-webpack-plugin";
 
 import {BuildEnvironment} from "src/shared/model/common";
-import {TsconfigPathsPlugin} from "tsconfig-paths-webpack-plugin";
 
 type BuildConfig = (configPatch: Configuration, options?: { tsConfigFile?: string }) => Configuration;
 

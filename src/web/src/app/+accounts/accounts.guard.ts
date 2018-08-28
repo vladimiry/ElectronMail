@@ -1,8 +1,8 @@
 import {CanActivate} from "@angular/router";
-import {concatMap} from "rxjs/operators";
 import {Injectable} from "@angular/core";
 import {Observable, of} from "rxjs";
 import {Store} from "@ngrx/store";
+import {concatMap} from "rxjs/operators";
 
 import {AccountsSelectors} from "src/web/src/app/store/selectors";
 import {NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";

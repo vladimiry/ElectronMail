@@ -1,4 +1,4 @@
-import {app, Menu, nativeImage, Tray} from "electron";
+import {Menu, Tray, app, nativeImage} from "electron";
 
 import {Endpoints} from "src/shared/api/main";
 

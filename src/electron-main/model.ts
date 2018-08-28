@@ -1,8 +1,8 @@
 import {Model as StoreModel} from "fs-json-store";
 
 import {Config, Settings} from "src/shared/model/options";
-import {ElectronContextLocations} from "src/shared/model/electron";
 import {Database} from "./database";
+import {ElectronContextLocations} from "src/shared/model/electron";
 
 export type RuntimeEnvironment = "e2e" | "production";
 

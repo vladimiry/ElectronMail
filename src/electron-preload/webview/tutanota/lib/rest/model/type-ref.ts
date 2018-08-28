@@ -1,5 +1,5 @@
 import {BaseEntity, Id, IdTuple, TypeRef, TypeRefApp} from "./common";
-import {EntityEventBatch, File, Mail, MailBody, MailBox, MailboxGroupRoot, MailFolder} from "./response";
+import {EntityEventBatch, File, Mail, MailBody, MailBox, MailFolder, MailboxGroupRoot} from "./response";
 
 // tslint:disable:variable-name
 

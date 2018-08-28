@@ -1,8 +1,8 @@
 // tslint:disable-next-line:no-import-zones
 import {LogLevel} from "electron-log";
 
-import {curryFunctionMembers} from "src/shared/util";
 import {LOG_LEVELS} from "src/shared/constants";
+import {curryFunctionMembers} from "src/shared/util";
 
 // TODO ban direct "__ELECTRON_EXPOSURE__.webLogger" referencing (using tslint), but only via "getZoneNameBoundWebLogger" call
 

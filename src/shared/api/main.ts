@@ -1,9 +1,8 @@
 import {ApiMethod, ApiMethodNoArgument, IpcMainApiService} from "electron-rpc-api";
-
-// TODO figure why tslint detects below import as unused
-// tslint:disable-next-line:no-unused-variable
+// tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects below import as unused
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 
+import {APP_NAME} from "src/shared/constants";
 import {
     AccountConfigCreatePatch,
     AccountConfigUpdatePatch,
@@ -18,13 +17,9 @@ import {
 } from "src/shared/model/container";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {BatchEntityUpdatesDbPatch} from "./common";
-
-// TODO figure why tslint detects below imports as unused
-// tslint:disable:no-unused-variable
-import {APP_NAME} from "src/shared/constants";
+import {DbContent} from "src/shared/model/database";
+// tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects below import as unused
 import {ElectronContextLocations} from "src/shared/model/electron";
-import {DbContent, Folder, Mail} from "src/shared/model/database";
-// tslint:enable:no-unused-variable
 
 export interface Endpoints {
     addAccount: ApiMethod<AccountConfigCreatePatch, Settings>;

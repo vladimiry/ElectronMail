@@ -1,9 +1,9 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {catchError, concatMap, filter, map, mergeMap, tap} from "rxjs/operators";
-import {concat, EMPTY, of} from "rxjs";
+import {EMPTY, concat, of} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Location} from "@angular/common";
 import {Router} from "@angular/router";
+import {catchError, concatMap, filter, map, mergeMap, tap} from "rxjs/operators";
 
 import {ACCOUNTS_OUTLET, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
 import {CORE_ACTIONS, NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";

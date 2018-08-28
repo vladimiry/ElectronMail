@@ -5,9 +5,9 @@ import {Model, Store} from "fs-json-store";
 
 import * as DbEntities from "./entities";
 import {AccountType} from "src/shared/model/account";
-import {curryFunctionMembers} from "src/shared/util";
 import {EntityMap} from "./entity-map";
 import {FsDb, MemoryDb} from "src/shared/model/database";
+import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[database]");
 

@@ -4,8 +4,9 @@ import ts from "typescript";
 import webpack, {Configuration} from "webpack";
 import {AngularCompilerPlugin, PLATFORM} from "@ngtools/webpack";
 
-import {buildBaseConfig, environment, environmentSate, outputRelateivePath, rootRelateivePath, srcRelateivePath} from "./lib";
 import {BuildEnvironment} from "src/shared/model/common";
+import {buildBaseConfig, environment, environmentSate, outputRelateivePath, rootRelateivePath, srcRelateivePath} from "./lib";
+
 import webpackMerge = require("webpack-merge");
 
 // tslint:disable:no-var-requires

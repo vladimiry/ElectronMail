@@ -1,8 +1,8 @@
-import {catchError, map, concatMap, take} from "rxjs/operators";
-import {Observable, of} from "rxjs";
 import {Component, EventEmitter, Input, Output} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
+import {Observable, of} from "rxjs";
 import {Store} from "@ngrx/store";
+import {catchError, concatMap, map, take} from "rxjs/operators";
 
 import {CORE_ACTIONS, NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
 import {ElectronService} from "../+core/electron.service";

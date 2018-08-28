@@ -1,0 +1,29 @@
+{
+  "extends": [
+    "./../tslint.json"
+  ],
+  "rulesDirectory": [
+    "./../node_modules/tslint-rules-bunch/rules"
+  ],
+  "rules": {
+    "no-import-zones": [
+      true,
+      {
+        "zones": [
+          {
+            "patterns": [
+              {
+                "target": "test/**/*",
+                "from": [
+                  "dist/**/*",
+                  "src",
+                  "src/**/*"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

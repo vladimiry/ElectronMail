@@ -1,13 +1,13 @@
 import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/forms";
 import {ActivatedRoute} from "@angular/router";
 import {Component, OnDestroy, OnInit} from "@angular/core";
-import {EMPTY, merge, Observable, of, Subject} from "rxjs";
-import {concatMap, filter, map, mergeMap, pairwise, takeUntil} from "rxjs/operators";
+import {EMPTY, Observable, Subject, merge, of} from "rxjs";
 import {Store} from "@ngrx/store";
+import {concatMap, filter, map, mergeMap, pairwise, takeUntil} from "rxjs/operators";
 
+import {ACCOUNTS_CONFIG} from "src/shared/constants";
 import {AccountConfig, AccountConfigProtonmail, AccountConfigTutanota, AccountType} from "src/shared/model/account";
 import {AccountConfigCreatePatch, AccountConfigUpdatePatch} from "src/shared/model/container";
-import {ACCOUNTS_CONFIG} from "src/shared/constants";
 import {EntryUrlItem} from "src/shared/types";
 import {KeePassRef} from "src/shared/model/keepasshttp";
 import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";

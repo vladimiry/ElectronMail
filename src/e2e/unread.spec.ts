@@ -2,9 +2,9 @@
 // TODO track this issue https://github.com/DefinitelyTyped/DefinitelyTyped/issues/25186
 // tslint:disable:await-promise
 
-import {accountBadgeCssSelector, CI, initApp, test} from "./workflow";
-import {ONE_SECOND_MS} from "src/shared/constants";
 import {AccountTypeAndLoginFieldContainer} from "src/shared/model/container";
+import {CI, accountBadgeCssSelector, initApp, test} from "./workflow";
+import {ONE_SECOND_MS} from "src/shared/constants";
 
 // protonmail account to login during e2e tests running
 const RUNTIME_ENV_E2E_PROTONMAIL_LOGIN = `EMAIL_SECURELY_APP_E2E_PROTONMAIL_LOGIN`;

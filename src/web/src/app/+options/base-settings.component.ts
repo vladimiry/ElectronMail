@@ -1,7 +1,7 @@
-import {map, take} from "rxjs/operators";
-import {Component, OnInit} from "@angular/core";
 import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/forms";
+import {Component, OnInit} from "@angular/core";
 import {Store} from "@ngrx/store";
+import {map, take} from "rxjs/operators";
 
 import {BaseConfig} from "src/shared/model/options";
 import {LOG_LEVELS} from "src/shared/constants";

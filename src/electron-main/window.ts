@@ -1,4 +1,4 @@
-import {app, BrowserWindow} from "electron";
+import {BrowserWindow, app} from "electron";
 import {equals} from "ramda";
 
 import {BuildEnvironment} from "src/shared/model/common";

@@ -2,7 +2,6 @@
 // TODO track this issue https://github.com/DefinitelyTyped/DefinitelyTyped/issues/25186
 // tslint:disable:await-promise
 
-import ava, {ExecutionContext, TestInterface} from "ava";
 import electron from "electron";
 import fs from "fs";
 import mkdirp from "mkdirp";
@@ -11,11 +10,12 @@ import psNode from "ps-node"; // see also https://www.npmjs.com/package/find-pro
 import psTree from "ps-tree";
 import randomString from "randomstring";
 import sinon from "sinon";
+import ava, {ExecutionContext, TestInterface} from "ava";
 import {Application} from "spectron";
 import {promisify} from "util";
 
-import {AccountType} from "src/shared/model/account";
 import {ACCOUNTS_CONFIG, ONE_SECOND_MS, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
+import {AccountType} from "src/shared/model/account";
 
 export interface TestContext {
     app: Application;

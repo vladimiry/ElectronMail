@@ -1,5 +1,5 @@
-import {ofType, unionize} from "unionize";
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
+import {ofType, unionize} from "unionize";
 
 import {
     AccountConfigCreatePatch,

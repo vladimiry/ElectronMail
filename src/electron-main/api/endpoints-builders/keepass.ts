@@ -1,5 +1,5 @@
-import {from} from "rxjs";
 import {KeePassHttpClient, Model as KeePassHttpClientModel} from "keepasshttp-client";
+import {from} from "rxjs";
 
 import {Context} from "src/electron-main/model";
 import {Endpoints} from "src/shared/api/main";

@@ -1,9 +1,9 @@
 import * as DatabaseModel from "src/shared/model/database";
 import * as Rest from "./rest";
 import {BaseEntity, Id, IdTuple} from "./rest/model";
-import {curryFunctionMembers, MailFolderTypeService} from "src/shared/util";
-import {resolveWebClientApi} from "./tutanota-api";
+import {MailFolderTypeService, curryFunctionMembers} from "src/shared/util";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
+import {resolveWebClientApi} from "./tutanota-api";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[lib/util]");
 

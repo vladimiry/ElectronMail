@@ -1,9 +1,9 @@
 import {ActionReducer} from "@ngrx/store";
-import {routerReducer, RouterReducerState} from "@ngrx/router-store";
+import {RouterReducerState, routerReducer} from "@ngrx/router-store";
 
 import {BuildEnvironment} from "src/shared/model/common";
-import {getZoneNameBoundWebLogger} from "src/web/src/util";
 import {NAVIGATION_ACTIONS, ROOT_ACTIONS} from "src/web/src/app/store/actions";
+import {getZoneNameBoundWebLogger} from "src/web/src/util";
 
 const logger = getZoneNameBoundWebLogger("[reducers/root]");
 

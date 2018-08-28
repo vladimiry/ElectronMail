@@ -1,4 +1,4 @@
-import {ClassType, transformAndValidate, TransformValidationOptions} from "class-transformer-validator";
+import {ClassType, TransformValidationOptions, transformAndValidate} from "class-transformer-validator";
 import {ValidationError} from "class-validator";
 import {flatten} from "ramda";
 

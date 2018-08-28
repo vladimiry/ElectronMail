@@ -1,5 +1,5 @@
-import sinon from "sinon";
 import rewiremock from "rewiremock";
+import sinon from "sinon";
 import test from "ava";
 
 test.serial("initAutoUpdate", async (t) => {

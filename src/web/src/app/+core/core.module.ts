@@ -1,5 +1,5 @@
-import {ErrorHandler, NgModule, Optional, SkipSelf} from "@angular/core";
 import {EffectsModule} from "@ngrx/effects";
+import {ErrorHandler, NgModule, Optional, SkipSelf} from "@angular/core";
 
 import {CoreEffects} from "./core.effects";
 import {ElectronService} from "./electron.service";

@@ -1,7 +1,7 @@
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/private/constants";
 import {LogLevel} from "electron-log";
-import {Model as StoreModel} from "fs-json-store";
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
+import {Model as StoreModel} from "fs-json-store";
 import {randomBytes} from "crypto";
 
 import {APP_NAME} from "src/shared/constants";

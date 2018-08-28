@@ -1,6 +1,6 @@
 import {ApplicationRef, NgModule} from "@angular/core";
-import {createInputTransfer, createNewHosts, removeNgStyles} from "@angularclass/hmr";
 import {Store} from "@ngrx/store";
+import {createInputTransfer, createNewHosts, removeNgStyles} from "@angularclass/hmr";
 import {take} from "rxjs/operators";
 
 import {APP_MODULE_NG_CONF} from "src/web/src/app/app.module.constants";

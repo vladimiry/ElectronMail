@@ -1,13 +1,21 @@
+import {Observable, Subscriber, from, interval, merge, of} from "rxjs";
 import {authenticator} from "otplib";
 import {concatMap, distinctUntilChanged, map, tap} from "rxjs/operators";
-import {from, interval, merge, Observable, of, Subscriber} from "rxjs";
 import {pick} from "ramda";
 
+import * as DatabaseModel from "src/shared/model/database";
+import * as Rest from "./lib/rest";
+import {BatchEntityUpdatesDbPatch} from "src/shared/api/common";
+import {EntityUpdate} from "./lib/rest/model";
+import {MailFolderTypeService, curryFunctionMembers} from "src/shared/util";
 import {
     NOTIFICATION_LOGGED_IN_POLLING_INTERVAL,
     NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL,
     WEBVIEW_LOGGERS,
 } from "src/electron-preload/webview/constants";
+import {ONE_SECOND_MS} from "src/shared/constants";
+import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi, TutanotaNotificationOutput} from "src/shared/api/webview/tutanota";
+import {WebClientApi, resolveWebClientApi} from "src/electron-preload/webview/tutanota/lib/tutanota-api";
 import {
     buildDbFolder,
     buildDbMail,
@@ -17,18 +25,10 @@ import {
     resolveInstanceId,
     sameRefType,
 } from "src/electron-preload/webview/tutanota/lib/util";
-import * as Rest from "./lib/rest";
-import * as DatabaseModel from "src/shared/model/database";
-import {BatchEntityUpdatesDbPatch} from "src/shared/api/common";
 import {buildLoggerBundle} from "src/electron-preload/util";
-import {curryFunctionMembers, MailFolderTypeService} from "src/shared/util";
 import {fetchEntitiesRange} from "src/electron-preload/webview/tutanota/lib/rest";
 import {fillInputValue, getLocationHref, submitTotpToken, waitElements} from "src/electron-preload/webview/util";
 import {generateStartId} from "./lib/util";
-import {ONE_SECOND_MS} from "src/shared/constants";
-import {resolveWebClientApi, WebClientApi} from "src/electron-preload/webview/tutanota/lib/tutanota-api";
-import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi, TutanotaNotificationOutput} from "src/shared/api/webview/tutanota";
-import {EntityUpdate} from "./lib/rest/model";
 
 const WINDOW = window as any;
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[index]");

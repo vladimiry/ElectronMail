@@ -1,13 +1,10 @@
 import {ApiMethod, WebViewApiService} from "electron-rpc-api";
 
 import {BatchEntityUpdatesDbPatch, ZoneApiParameter} from "src/shared/api/common";
-import {channel} from "./common";
 import {CommonApi} from "src/shared/api/webview/common";
+import {DbContent} from "src/shared/model/database";
 import {NotificationsTutanota} from "src/shared/model/account";
-
-// TODO figure why tslint detects below import as unused
-// tslint:disable-next-line:no-unused-variable
-import {DbContent, Folder, Mail} from "src/shared/model/database";
+import {channel} from "./common";
 
 type Metadata = DbContent<"tutanota">["metadata"];
 

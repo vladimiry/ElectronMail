@@ -2,8 +2,8 @@ import {NgModule} from "@angular/core";
 import {PreloadAllModules, RouterModule, Routes} from "@angular/router";
 
 import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, ERRORS_OUTLET, ERRORS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "./app.constants";
-import {RouterProxyComponent} from "./components/router-proxy.component";
 import {ErrorListComponent} from "./components/error-list.component";
+import {RouterProxyComponent} from "./components/router-proxy.component";
 
 // TODO consider getting rid of the lazy loading, it's not really needed for the Electron application
 const routes: Routes = [

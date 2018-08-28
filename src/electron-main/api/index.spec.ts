@@ -1,24 +1,24 @@
 import assert from "assert";
-import ava, {ExecutionContext, ImplementationResult, TestInterface} from "ava";
 import logger from "electron-log";
 import path from "path";
 import produce from "immer";
 import rewiremock from "rewiremock";
 import sinon from "sinon";
+import ava, {ExecutionContext, ImplementationResult, TestInterface} from "ava";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Fs} from "fs-json-store";
 import {generate as generateRandomString} from "randomstring";
 import {mergeDeepRight, omit} from "ramda";
 
 import {AccountConfigCreatePatch, AccountConfigUpdatePatch, PasswordFieldContainer} from "src/shared/model/container";
-import {accountPickingPredicate, pickBaseConfigProperties} from "src/shared/util";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
-import {buildSettingsAdapter, initContext} from "src/electron-main/util";
 import {Context} from "src/electron-main/model";
 import {Endpoints} from "src/shared/api/main";
 import {INITIAL_STORES, KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "src/electron-main/constants";
 import {StatusCodeError} from "src/shared/model/error";
 import {UnpackedPromise} from "src/shared/types";
+import {accountPickingPredicate, pickBaseConfigProperties} from "src/shared/util";
+import {buildSettingsAdapter, initContext} from "src/electron-main/util";
 
 // TODO "immer" instead of cloning with "..."
 

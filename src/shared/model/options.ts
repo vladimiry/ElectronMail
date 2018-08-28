@@ -1,8 +1,8 @@
 import {EncryptionPresets} from "fs-json-store-encryption-adapter/encryption";
 import {KeyDerivationPresets} from "fs-json-store-encryption-adapter/key-derivation";
 import {LogLevel} from "electron-log";
-import {Model as StoreModel} from "fs-json-store";
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
+import {Model as StoreModel} from "fs-json-store";
 
 import {AccountConfig} from "src/shared/model/account";
 import {KeePassClientConfFieldContainer, KeePassRefFieldContainer} from "src/shared/model/container";

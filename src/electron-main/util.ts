@@ -2,16 +2,16 @@ import fs from "fs";
 import logger from "electron-log";
 import path from "path";
 import url from "url";
-import {app} from "electron";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Fs as StoreFs, Model as StoreModel, Store} from "fs-json-store";
+import {app} from "electron";
 
 import {BuildEnvironment} from "src/shared/model/common";
 import {Config, Settings} from "src/shared/model/options";
-import {configEncryptionPresetValidator, INITIAL_STORES, settingsAccountLoginUniquenessValidator} from "./constants";
 import {Context, ContextInitOptions, ContextInitOptionsPaths, RuntimeEnvironment} from "./model";
 import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
+import {INITIAL_STORES, configEncryptionPresetValidator, settingsAccountLoginUniquenessValidator} from "./constants";
 import {RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
 
 export function initContext(options: ContextInitOptions = {}): Context {

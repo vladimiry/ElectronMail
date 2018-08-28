@@ -2,11 +2,11 @@ import produce from "immer";
 import {UnionOf} from "unionize";
 
 import * as fromRoot from "src/web/src/app/store/reducers/root";
-import {accountPickingPredicate} from "src/shared/util";
 import {ACCOUNTS_ACTIONS} from "src/web/src/app/store/actions";
-import {getZoneNameBoundWebLogger} from "src/web/src/util";
 import {LoginFieldContainer} from "src/shared/model/container";
 import {WebAccount} from "src/web/src/app/model";
+import {accountPickingPredicate} from "src/shared/util";
+import {getZoneNameBoundWebLogger} from "src/web/src/util";
 
 const logger = getZoneNameBoundWebLogger("[reducers/accounts]");
 

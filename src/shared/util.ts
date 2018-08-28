@@ -1,6 +1,5 @@
 import {AccountConfig} from "./model/account";
 import {BaseConfig, Config} from "./model/options";
-
 import {LoginFieldContainer} from "./model/container";
 import {MailFolderTypeStringifiedValue, MailFolderTypeTitle, MailFolderTypeValue} from "./model/database";
 import {StatusCodeError} from "./model/error";

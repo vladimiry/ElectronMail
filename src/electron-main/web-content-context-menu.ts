@@ -1,5 +1,5 @@
 import os from "os";
-import {app, clipboard, ContextMenuParams, Event, Menu, PopupOptions, WebContents} from "electron";
+import {ContextMenuParams, Event, Menu, PopupOptions, WebContents, app, clipboard} from "electron";
 
 import {Context} from "./model";
 

@@ -1,6 +1,7 @@
 {
   "extends": [
-    "tslint:recommended",
+    "./node_modules/tslint/lib/configs/recommended",
+    "./tslint.tslint-eslint-rules.json",
     "./tslint.codelyzer.json",
     "./tslint.tslint-rules-bunch.json",
     "./tslint.tslint-consistent-codestyle.json"

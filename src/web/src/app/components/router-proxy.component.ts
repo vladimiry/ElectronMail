@@ -1,7 +1,7 @@
-import {filter, map, takeUntil} from "rxjs/operators";
-import {Subject} from "rxjs";
-import {Component, HostBinding, OnDestroy, OnInit} from "@angular/core";
 import {ActivatedRoute} from "@angular/router";
+import {Component, HostBinding, OnDestroy, OnInit} from "@angular/core";
+import {Subject} from "rxjs";
+import {filter, map, takeUntil} from "rxjs/operators";
 
 @Component({
     selector: "email-securely-app-router-proxy",

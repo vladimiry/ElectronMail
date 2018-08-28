@@ -1,8 +1,8 @@
-import {map, takeUntil} from "rxjs/operators";
-import {Subject} from "rxjs";
 import {Component, Input, OnDestroy, OnInit} from "@angular/core";
 import {FormGroup} from "@angular/forms";
 import {Store} from "@ngrx/store";
+import {Subject} from "rxjs";
+import {map, takeUntil} from "rxjs/operators";
 
 import {ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "src/shared/model/options";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";

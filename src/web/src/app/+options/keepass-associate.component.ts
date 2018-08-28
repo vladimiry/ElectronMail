@@ -1,8 +1,8 @@
-import {map, takeUntil} from "rxjs/operators";
-import {Observable, Subject} from "rxjs";
 import {Component, Input, OnDestroy, OnInit} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
+import {Observable, Subject} from "rxjs";
 import {Store} from "@ngrx/store";
+import {map, takeUntil} from "rxjs/operators";
 
 import {KeePassClientConf} from "src/shared/model/keepasshttp";
 import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";

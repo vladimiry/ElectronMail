@@ -1,9 +1,9 @@
 import * as Model from "./model";
 import {BaseEntity, Id, IdTuple, RequestParams, TypeRef} from "./model";
 import {Omit} from "src/shared/types";
+import {StatusCodeError} from "src/shared/model/error";
 import {resolveInstanceId} from "src/electron-preload/webview/tutanota/lib/util";
 import {resolveWebClientApi} from "src/electron-preload/webview/tutanota/lib/tutanota-api";
-import {StatusCodeError} from "src/shared/model/error";
 
 export async function fetchEntity<T extends BaseEntity<Id | IdTuple>, TypeRefType extends TypeRef<T>>(
     typeRef: TypeRef<T>,

@@ -1,16 +1,16 @@
+import {Observable, Subscriber, from, interval, merge, of} from "rxjs";
 import {authenticator} from "otplib";
 import {distinctUntilChanged, map, tap} from "rxjs/operators";
-import {from, interval, merge, Observable, of, Subscriber} from "rxjs";
 
 import {
     NOTIFICATION_LOGGED_IN_POLLING_INTERVAL,
     NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL,
     WEBVIEW_LOGGERS,
 } from "src/electron-preload/webview/constants";
-import {curryFunctionMembers} from "src/shared/util";
-import {fillInputValue, getLocationHref, submitTotpToken, waitElements} from "src/electron-preload/webview/util";
 import {NotificationsProtonmail} from "src/shared/model/account";
 import {PROTONMAIL_IPC_WEBVIEW_API, ProtonmailApi} from "src/shared/api/webview/protonmail";
+import {curryFunctionMembers} from "src/shared/util";
+import {fillInputValue, getLocationHref, submitTotpToken, waitElements} from "src/electron-preload/webview/util";
 
 const WINDOW = window as any;
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[index]");

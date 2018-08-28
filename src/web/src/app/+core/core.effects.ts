@@ -1,6 +1,6 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {catchError, filter, map, mergeMap, concatMap} from "rxjs/operators";
 import {Injectable} from "@angular/core";
+import {catchError, concatMap, filter, map, mergeMap} from "rxjs/operators";
 import {of} from "rxjs";
 
 import {CORE_ACTIONS} from "src/web/src/app/store/actions";

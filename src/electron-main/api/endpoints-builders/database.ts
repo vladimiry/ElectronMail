@@ -3,9 +3,9 @@ import {from, of} from "rxjs";
 
 import {AccountType} from "src/shared/model/account";
 import {Context} from "src/electron-main/model";
-import {curryFunctionMembers} from "src/shared/util";
 import {DbContent} from "src/shared/model/database";
 import {Endpoints} from "src/shared/api/main";
+import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[database api]");
 

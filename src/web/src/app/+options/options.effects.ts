@@ -1,18 +1,18 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {catchError, concatMap, filter, finalize, map, mergeMap, withLatestFrom} from "rxjs/operators";
 import {Deferred} from "ts-deferred";
 import {EMPTY, merge, of} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store} from "@ngrx/store";
+import {catchError, concatMap, filter, finalize, map, mergeMap, withLatestFrom} from "rxjs/operators";
 
 import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
 import {CORE_ACTIONS, NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
 import {ElectronService} from "src/web/src/app/+core/electron.service";
-import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/src/util";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {OptionsService} from "./options.service";
 import {ProgressPatch, State} from "src/web/src/app/store/reducers/options";
+import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/src/util";
 
 const _logger = getZoneNameBoundWebLogger("[options.effects]");
 

@@ -1,6 +1,6 @@
 import {createFeatureSelector, createSelector} from "@ngrx/store";
 
-import {featureName, State} from "src/web/src/app/store/reducers/errors";
+import {State, featureName} from "src/web/src/app/store/reducers/errors";
 
 export const STATE = createFeatureSelector<State>(featureName);
 

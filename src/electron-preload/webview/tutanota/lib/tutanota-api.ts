@@ -1,6 +1,6 @@
 import * as Rest from "./rest";
-import {Timestamp} from "src/shared/types";
 import {StatusCodeError} from "src/shared/model/error";
+import {Timestamp} from "src/shared/types";
 
 type ModuleFiles =
     | "src/api/common/EntityFunctions"

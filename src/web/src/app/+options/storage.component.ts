@@ -1,7 +1,7 @@
-import {map} from "rxjs/operators";
 import {Component} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";
+import {map} from "rxjs/operators";
 
 import {ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "src/shared/model/options";
 import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";

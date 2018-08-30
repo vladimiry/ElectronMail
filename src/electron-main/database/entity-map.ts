@@ -91,7 +91,6 @@ export class EntityMap<V extends Entity, K extends V["pk"] = V["pk"]> implements
             const instance = await transformAndValidate(this.valueClassType, value, EntityMap.transformValidationOptions);
             validatedValue = JSON.parse(JSON.stringify(instance));
         } catch (e) {
-            logger.error(JSON.stringify({value}, null, 2));
             logger.error(e);
             throw EntityMap.generateValidationError(e);
         }

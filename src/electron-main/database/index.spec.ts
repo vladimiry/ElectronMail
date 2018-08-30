@@ -9,7 +9,7 @@ import {Fs, Store} from "fs-json-store";
 
 import {AccountType} from "src/shared/model/account";
 import {Database} from ".";
-import {Folder} from "src/shared/model/database";
+import {Folder, MAIL_FOLDER_TYPE} from "src/shared/model/database";
 import {INITIAL_STORES} from "src/electron-main/constants";
 
 logger.transports.console.level = false;
@@ -132,7 +132,7 @@ function buildDatabase(keyResolver?: () => Promise<string>) {
 
 function buildDatabaseOptions(keyResolver?: () => Promise<string>) {
     if (!keyResolver) {
-        const key = INITIAL_STORES.settings().dbEncryptionKey;
+        const key = INITIAL_STORES.settings().databaseEncryptionKey;
         keyResolver = async () => key;
     }
 
@@ -157,6 +157,6 @@ function buildFolder(): Folder {
         raw: "{}",
         id: randomstring.generate(),
         name: randomstring.generate(),
-        folderType: 2,
+        folderType: MAIL_FOLDER_TYPE.SENT,
     };
 }

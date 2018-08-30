@@ -1,10 +1,18 @@
+import _logger from "electron-log";
 import {ClassType, TransformValidationOptions, transformAndValidate} from "class-transformer-validator";
 import {ValidationError} from "class-validator";
 import {flatten} from "ramda";
 
 import {Entity, EntityMap as EntityMapInterface} from "src/shared/model/database";
+import {curryFunctionMembers} from "src/shared/util";
+
+const logger = curryFunctionMembers(_logger, "[entity map]");
 
 export class EntityMap<V extends Entity, K extends V["pk"] = V["pk"]> implements EntityMapInterface<K, V> {
+
+    get size() {
+        return this.map.size;
+    }
     protected static readonly transformValidationOptions: TransformValidationOptions = {
         validator: {
             whitelist: true, // stripe out unknown properties
@@ -37,7 +45,6 @@ export class EntityMap<V extends Entity, K extends V["pk"] = V["pk"]> implements
 
         return new Error(messages.join("; "));
     }
-
     private readonly map = new Map<K, V>();
 
     constructor(
@@ -47,10 +54,6 @@ export class EntityMap<V extends Entity, K extends V["pk"] = V["pk"]> implements
         if (record) {
             this.setFromObject(record);
         }
-    }
-
-    get size() {
-        return this.map.size;
     }
 
     entries() {
@@ -88,6 +91,8 @@ export class EntityMap<V extends Entity, K extends V["pk"] = V["pk"]> implements
             const instance = await transformAndValidate(this.valueClassType, value, EntityMap.transformValidationOptions);
             validatedValue = JSON.parse(JSON.stringify(instance));
         } catch (e) {
+            logger.error(JSON.stringify({value}, null, 2));
+            logger.error(e);
             throw EntityMap.generateValidationError(e);
         }
 

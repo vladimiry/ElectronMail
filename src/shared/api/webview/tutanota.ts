@@ -2,11 +2,11 @@ import {ApiMethod, WebViewApiService} from "electron-rpc-api";
 
 import {BatchEntityUpdatesDbPatch, ZoneApiParameter} from "src/shared/api/common";
 import {CommonApi} from "src/shared/api/webview/common";
-import {DbContent} from "src/shared/model/database";
+import {MemoryDbAccount} from "src/shared/model/database";
 import {NotificationsTutanota} from "src/shared/model/account";
 import {channel} from "./common";
 
-type Metadata = DbContent<"tutanota">["metadata"];
+type Metadata = MemoryDbAccount<"tutanota">["metadata"];
 
 export type TutanotaNotificationOutput = Partial<NotificationsTutanota> & Partial<{ batchEntityUpdatesCounter: number }>;
 

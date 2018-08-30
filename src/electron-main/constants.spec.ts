@@ -16,15 +16,15 @@ test("INITIAL_STORES.config().logLevel", (t) => {
     t.is("error", INITIAL_STORES.config().logLevel);
 });
 
-test("INITIAL_STORES.settings().dbEncryptionKey call should return random data", (t) => {
+test("INITIAL_STORES.settings().databaseEncryptionKey call should return random data", (t) => {
     const set: Set<string> = new Set();
     const expectedSize = 100;
     for (let i = 0; i < expectedSize; i++) {
-        set.add(INITIAL_STORES.settings().dbEncryptionKey);
+        set.add(INITIAL_STORES.settings().databaseEncryptionKey);
     }
     t.is(expectedSize, set.size);
 });
 
-test("INITIAL_STORES.settings().dbEncryptionKey should be 32 bytes length base64 encoded string", (t) => {
-    t.is(32, Buffer.from(INITIAL_STORES.settings().dbEncryptionKey, "base64").length);
+test("INITIAL_STORES.settings().databaseEncryptionKey should be 32 bytes length base64 encoded string", (t) => {
+    t.is(32, Buffer.from(INITIAL_STORES.settings().databaseEncryptionKey, "base64").length);
 });

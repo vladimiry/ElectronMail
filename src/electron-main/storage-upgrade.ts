@@ -28,10 +28,18 @@ const SETTINGS_UPGRADES: Record<string, (settings: Settings) => void> = {
             }
         });
     },
+    // TODO test "1.4.2" settings upgrader
     "1.4.2": (settings) => {
-        if (!settings.dbEncryptionKey) {
-            settings.dbEncryptionKey = INITIAL_STORES.settings().dbEncryptionKey;
+        const prevProp = "dbEncryptionKey";
+        const prop = ((value: keyof Pick<Settings, "databaseEncryptionKey">) => value)("databaseEncryptionKey");
+
+        if (!settings[prop]) {
+            settings[prop] = (settings as any)[prevProp]
+                ? (settings as any)[prevProp]
+                : INITIAL_STORES.settings()[prop];
         }
+
+        delete (settings as any)[prevProp];
     },
 };
 

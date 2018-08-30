@@ -1,5 +1,7 @@
 import {AccountConfig, AccountType} from "src/shared/model/account";
-import {Omit, Timestamp} from "src/shared/types";
+import {NumberString, Omit, Timestamp} from "src/shared/types";
+
+export * from "./constants";
 
 export interface Entity {
     pk: string;
@@ -7,19 +9,8 @@ export interface Entity {
     id: string;
 }
 
-export interface MailAddress extends Entity {
-    address: string;
-    name: string;
-}
-
-export interface File extends Entity {
-    mimeType?: string;
-    name: string;
-    size: number;
-}
-
 export interface Folder extends Entity {
-    folderType: MailFolderTypeValue;
+    folderType: string;
     name: string;
 }
 
@@ -35,9 +26,61 @@ export interface Mail extends Entity {
     unread: boolean;
 }
 
-export type MailFolderTypeValue = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
-export type MailFolderTypeStringifiedValue = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8";
-export type MailFolderTypeTitle = "custom" | "inbox" | "sent" | "trash" | "archive" | "spam" | "draft";
+export interface MailAddress extends Entity {
+    address: string;
+    name: string;
+}
+
+export interface File extends Entity {
+    mimeType?: string;
+    name: string;
+    size: number;
+}
+
+export interface Contact extends Entity {
+    comment: string;
+    company: string;
+    firstName: string;
+    lastName: string;
+    nickname?: string;
+    role: string;
+    title?: string;
+    addresses: ContactAddress[];
+    birthday?: Birthday;
+    mailAddresses: ContactMailAddress[];
+    phoneNumbers: ContactPhoneNumber[];
+    socialIds: ContactSocialId[];
+}
+
+export interface ContactAddress extends Entity {
+    type: string;
+    customTypeName: string;
+    address: string;
+}
+
+export interface ContactMailAddress extends Entity {
+    type: string;
+    customTypeName: string;
+    address: string;
+}
+
+export interface Birthday extends Entity {
+    day: NumberString;
+    month: NumberString;
+    year?: NumberString;
+}
+
+export interface ContactPhoneNumber extends Entity {
+    type: string;
+    customTypeName: string;
+    number: string;
+}
+
+export interface ContactSocialId extends Entity {
+    type: string;
+    customTypeName: string;
+    socialId: string;
+}
 
 export interface EntityMap<K extends string, V extends Entity> extends Omit<Map<K, V>, "set"> {
     validateAndSet(value: V): Promise<this>;
@@ -48,11 +91,13 @@ export interface EntityMap<K extends string, V extends Entity> extends Omit<Map<
 interface EntitiesMapContainer {
     mails: EntityMap<Mail["pk"], Mail>;
     folders: EntityMap<Folder["pk"], Folder>;
+    contacts: EntityMap<Contact["pk"], Contact>;
 }
 
 interface EntitiesRecordContainer {
     mails: Record<Mail["pk"], Mail>;
     folders: Record<Folder["pk"], Folder>;
+    contacts: Record<Contact["pk"], Contact>;
 }
 
 type GenericDb<T extends AccountType, M, EntitiesContainer extends EntitiesMapContainer | EntitiesRecordContainer> =
@@ -78,4 +123,4 @@ export type FsDb =
     &
     GenericDb<"protonmail", ProtonmailMetadataPart, EntitiesRecordContainer>;
 
-export type DbContent<T extends keyof MemoryDb = keyof MemoryDb> = MemoryDb[T][string];
+export type MemoryDbAccount<T extends keyof MemoryDb = keyof MemoryDb> = MemoryDb[T][string];

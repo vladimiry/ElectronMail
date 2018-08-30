@@ -37,8 +37,8 @@ export const INITIAL_STORES: Readonly<{
     settings: () => {
         return {
             accounts: [],
-            // TODO "dbEncryptionKey" needs to be properly generated
-            dbEncryptionKey: randomBytes(KEY_BYTES_32).toString(BASE64_ENCODING),
+            // TODO "databaseEncryptionKey" needs to be properly generated
+            databaseEncryptionKey: randomBytes(KEY_BYTES_32).toString(BASE64_ENCODING),
         };
     },
 });

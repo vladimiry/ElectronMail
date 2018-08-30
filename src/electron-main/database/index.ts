@@ -3,20 +3,29 @@ import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/pr
 import {EncryptionAdapter, KeyBasedPreset} from "fs-json-store-encryption-adapter";
 import {Model, Store} from "fs-json-store";
 
-import * as DbEntities from "./entities";
+import * as Entity from "./entity";
 import {AccountType} from "src/shared/model/account";
 import {EntityMap} from "./entity-map";
-import {FsDb, MemoryDb} from "src/shared/model/database";
+import {FsDb, MemoryDb, MemoryDbAccount} from "src/shared/model/database";
 import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[database]");
 
 export class Database {
-    static buildEmptyDb<T extends MemoryDb | FsDb>(): T {
+
+    static empty<T extends MemoryDb | FsDb>(): T {
         return {tutanota: {}, protonmail: {}} as T;
     }
 
-    private memoryDb = Database.buildEmptyDb<MemoryDb>();
+    static emptyAccountMetadata<T extends keyof MemoryDb>(type: T): MemoryDbAccount<T>["metadata"] {
+        const metadata: { [key in keyof MemoryDb]: MemoryDbAccount<key>["metadata"] } = {
+            tutanota: {type: "tutanota", groupEntityEventBatchIds: {}},
+            protonmail: {type: "protonmail"},
+        };
+        return metadata[type];
+    }
+
+    private memoryDb = Database.empty<MemoryDb>();
 
     constructor(
         public readonly options: Readonly<{
@@ -29,15 +38,11 @@ export class Database {
         }>,
     ) {}
 
-    getAccount<TL extends { type: keyof MemoryDb, login: string }>(
-        {type, login}: TL,
-    ): MemoryDb[TL["type"]][TL["login"]] {
+    getAccount<TL extends { type: keyof MemoryDb, login: string }>({type, login}: TL): MemoryDbAccount<TL["type"]> {
         return this.memoryDb[type][login] || this.initAccount({type, login});
     }
 
-    deleteAccount<TL extends { type: keyof MemoryDb, login: string }>(
-        {type, login}: TL,
-    ): void {
+    deleteAccount<TL extends { type: keyof MemoryDb, login: string }>({type, login}: TL): void {
         delete this.memoryDb[type][login];
     }
 
@@ -48,10 +53,10 @@ export class Database {
     async loadFromFile(): Promise<void> {
         logger.info("loadFromFile()");
 
-        const stat = {records: 0, folders: 0, mails: 0};
+        const stat = {records: 0, mails: 0, folders: 0, contacts: 0, time: Number(new Date())};
         const store = await this.resolveStore();
         const source = await store.readExisting();
-        const target: MemoryDb = Database.buildEmptyDb<MemoryDb>();
+        const target: MemoryDb = Database.empty<MemoryDb>();
 
         // fs => memory
         for (const type of Object.keys(source) as AccountType[]) {
@@ -59,33 +64,39 @@ export class Database {
             Object.keys(loginBundle).map((login) => {
                 const recordBundle = loginBundle[login];
                 target[type][login] = {
-                    folders: new EntityMap(DbEntities.Folder, recordBundle.folders),
-                    mails: new EntityMap(DbEntities.Mail, recordBundle.mails),
+                    mails: new EntityMap(Entity.Mail, recordBundle.mails),
+                    folders: new EntityMap(Entity.Folder, recordBundle.folders),
+                    contacts: new EntityMap(Entity.Contact, recordBundle.contacts),
                     metadata: recordBundle.metadata as any,
                 };
                 stat.records++;
-                stat.folders += target[type][login].folders.size;
                 stat.mails += target[type][login].mails.size;
+                stat.folders += target[type][login].folders.size;
+                stat.contacts += target[type][login].contacts.size;
             });
         }
 
         this.memoryDb = target;
 
+        stat.time = Number(new Date()) - stat.time;
         logger.verbose(`loadFromFile(): loaded stat: ${JSON.stringify(stat)}`);
     }
 
     async saveToFile(): Promise<FsDb> {
         logger.info("saveToFile()");
+
         const store = await this.resolveStore();
-        return await store.write(this.dumpToFsDb());
+        const dump = this.dumpToFsDb();
+
+        return await store.write(dump);
     }
 
     dumpToFsDb(): FsDb {
         logger.info("dumpToFsDb()");
 
-        const stat = {records: 0, folders: 0, mails: 0};
+        const stat = {records: 0, mails: 0, folders: 0, contacts: 0};
         const {memoryDb: source} = this;
-        const target = Database.buildEmptyDb<FsDb>();
+        const target = Database.empty<FsDb>();
 
         // memory => fs
         for (const type of Object.keys(source) as AccountType[]) {
@@ -93,13 +104,15 @@ export class Database {
             Object.keys(loginBundle).map((login) => {
                 const recordBundle = loginBundle[login];
                 target[type][login] = {
-                    folders: recordBundle.folders.toObject(),
                     mails: recordBundle.mails.toObject(),
+                    folders: recordBundle.folders.toObject(),
+                    contacts: recordBundle.contacts.toObject(),
                     metadata: recordBundle.metadata as any,
                 };
                 stat.records++;
-                stat.folders += recordBundle.folders.size;
                 stat.mails += recordBundle.mails.size;
+                stat.folders += recordBundle.folders.size;
+                stat.contacts += recordBundle.contacts.size;
             });
         }
 
@@ -108,17 +121,12 @@ export class Database {
         return target;
     }
 
-    private initAccount<TL extends { type: keyof MemoryDb, login: string }>(
-        {type, login}: TL,
-    ): MemoryDb[TL["type"]][TL["login"]] {
-        const metadata: { [key in keyof MemoryDb]: MemoryDb[key][string]["metadata"] } = {
-            tutanota: {type: "tutanota", groupEntityEventBatchIds: {}},
-            protonmail: {type: "protonmail"},
-        };
+    private initAccount<TL extends { type: keyof MemoryDb, login: string }>({type, login}: TL): MemoryDbAccount<TL["type"]> {
         const record = {
-            mails: new EntityMap(DbEntities.Mail),
-            folders: new EntityMap(DbEntities.Folder),
-            metadata: metadata[type] as any,
+            mails: new EntityMap(Entity.Mail),
+            folders: new EntityMap(Entity.Folder),
+            contacts: new EntityMap(Entity.Contact),
+            metadata: Database.emptyAccountMetadata(type) as any,
         };
 
         this.memoryDb[type][login] = record;

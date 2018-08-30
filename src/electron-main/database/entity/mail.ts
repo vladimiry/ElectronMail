@@ -1,29 +1,11 @@
-import "reflect-metadata";
-import {IsArray, IsBoolean, IsIn, IsInt, IsJSON, IsNotEmpty, IsString, ValidateNested} from "class-validator";
+import {IsArray, IsBoolean, IsInt, IsNotEmpty, IsString, ValidateNested} from "class-validator";
 import {Type} from "class-transformer";
 
-import * as DatabaseModel from "src/shared/model/database";
-import {MailFolderTypeService} from "src/shared/util";
+import * as Model from "src/shared/model/database";
+import {Entity} from "./base";
 import {Timestamp} from "src/shared/types";
 
-// TODO consider enabling @Entity class annotation with table name property
-
-export abstract class Entity implements DatabaseModel.Entity {
-    @IsNotEmpty()
-    @IsString()
-    pk!: string;
-
-    @IsJSON()
-    @IsNotEmpty()
-    @IsString()
-    raw!: string;
-
-    @IsNotEmpty()
-    @IsString()
-    id!: string;
-}
-
-class MailAddress extends Entity implements DatabaseModel.MailAddress {
+class MailAddress extends Entity implements Model.MailAddress {
     @IsNotEmpty()
     @IsString()
     address!: string;
@@ -32,7 +14,7 @@ class MailAddress extends Entity implements DatabaseModel.MailAddress {
     name!: string;
 }
 
-class File extends Entity implements DatabaseModel.File {
+class File extends Entity implements Model.File {
     @IsString()
     mimeType?: string;
 
@@ -45,16 +27,7 @@ class File extends Entity implements DatabaseModel.File {
     size!: number;
 }
 
-export class Folder extends Entity implements DatabaseModel.Folder {
-    @IsNotEmpty()
-    @IsIn(MailFolderTypeService.values())
-    folderType!: DatabaseModel.MailFolderTypeValue;
-
-    @IsString()
-    name!: string;
-}
-
-export class Mail extends Entity implements DatabaseModel.Mail {
+export class Mail extends Entity implements Model.Mail {
     @IsNotEmpty()
     @IsInt()
     date!: Timestamp;

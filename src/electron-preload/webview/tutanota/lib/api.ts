@@ -9,7 +9,7 @@ type ModuleFiles =
     | "src/api/main/Entity"
     | "src/api/main/EntityEventController";
 
-export interface WebClientApi extends Record<ModuleFiles, any> {
+interface Api extends Record<ModuleFiles, any> {
     "src/api/common/EntityFunctions": {
         GENERATED_MIN_ID: Rest.Model.Id;
         GENERATED_MAX_ID: Rest.Model.Id;
@@ -48,15 +48,15 @@ export interface WebClientApi extends Record<ModuleFiles, any> {
     };
 }
 
-const state: { bundle?: WebClientApi } = {};
+const state: { bundle?: Api } = {};
 
-export async function resolveWebClientApi(): Promise<WebClientApi> {
+export async function resolveApi(): Promise<Api> {
     if (state.bundle) {
         return state.bundle;
     }
 
     if (!navigator.onLine) {
-        throw new StatusCodeError(`"resolveWebClientApi" failed due to the offline status`, "NoNetworkConnection");
+        throw new StatusCodeError(`"resolveApi" failed due to the offline status`, "NoNetworkConnection");
     }
 
     // tslint:disable-next-line:variable-name
@@ -69,7 +69,7 @@ export async function resolveWebClientApi(): Promise<WebClientApi> {
         // TODO reject with timeout
     });
     const baseURL = String(SystemJS.getConfig().baseURL).replace(/(.*)\/$/, "$1");
-    const bundle: Record<keyof WebClientApi, any> = {
+    const bundle: Record<keyof Api, any> = {
         "src/api/common/EntityFunctions": null,
         "src/api/common/TutanotaConstants": null,
         "src/api/common/utils/Encoding": null,
@@ -77,11 +77,11 @@ export async function resolveWebClientApi(): Promise<WebClientApi> {
         "src/api/main/EntityEventController": null,
     };
 
-    for (const key of Object.keys(bundle) as Array<keyof WebClientApi>) {
+    for (const key of Object.keys(bundle) as Array<keyof Api>) {
         bundle[key] = await SystemJS.import(`${baseURL}/${key}.js`);
     }
 
-    state.bundle = bundle as WebClientApi;
+    state.bundle = bundle as Api;
 
     // TODO validate types of all the described constants/functions in a declarative way
     // so app gets tutanota's breaking changes noticed on early stage

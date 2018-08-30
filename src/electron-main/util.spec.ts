@@ -4,7 +4,7 @@ import sinon from "sinon";
 import test from "ava";
 import {Fs} from "fs-json-store";
 
-test.serial(`"Context.db" should resolve encryption key calling "Context.settingsStore.readExisting().dbEncryptionKey"`, async (t) => {
+test.serial(`"Context.db" resolves encryption key calling "Context.settingsStore.readExisting().databaseEncryptionKey"`, async (t) => {
     const memFsVolume = Fs.MemFs.volume();
     const memFsPath = process.cwd();
 
@@ -28,18 +28,22 @@ test.serial(`"Context.db" should resolve encryption key calling "Context.setting
         new RegExp(`${path.basename(ctx.settingsStore.file)} does not exist`),
     );
 
-    const {dbEncryptionKey} = await ctx.settingsStore.write(ctx.initialStores.settings);
+    const {databaseEncryptionKey} = await ctx.settingsStore.write(ctx.initialStores.settings);
 
     const readExistingSpy = sinon.spy(ctx.settingsStore, "readExisting");
     const resolvedDbKey1 = await ctx.db.options.encryption.keyResolver();
     const resolvedDbKey2 = await ctx.db.options.encryption.keyResolver();
 
     t.is(2, readExistingSpy.callCount);
-    t.is(dbEncryptionKey, resolvedDbKey1);
-    t.is(dbEncryptionKey, resolvedDbKey2);
+    t.is(databaseEncryptionKey, resolvedDbKey1);
+    t.is(databaseEncryptionKey, resolvedDbKey2);
 });
 
-test.serial(`db.options.encryption.keyResolver() == initialSettings.dbEncryptionKey == settingsStore.dbEncryptionKey`, async (t) => {
+test.serial([
+    "db.options.encryption.keyResolver()",
+    "initialSettings.databaseEncryptionKey",
+    "settingsStore.databaseEncryptionKey",
+].join(" == "), async (t) => {
     const memFsVolume = Fs.MemFs.volume();
     const memFsPath = process.cwd();
 
@@ -82,7 +86,7 @@ test.serial(`db.options.encryption.keyResolver() == initialSettings.dbEncryption
     );
     const {readSettings, readConfig} = await initApi(ctx);
     await readConfig().toPromise();
-    const {dbEncryptionKey} = await readSettings({password: "password-123"}).toPromise();
-    t.is(await ctx.db.options.encryption.keyResolver(), initialSettings.dbEncryptionKey);
-    t.is(await ctx.db.options.encryption.keyResolver(), dbEncryptionKey);
+    const {databaseEncryptionKey} = await readSettings({password: "password-123"}).toPromise();
+    t.is(await ctx.db.options.encryption.keyResolver(), initialSettings.databaseEncryptionKey);
+    t.is(await ctx.db.options.encryption.keyResolver(), databaseEncryptionKey);
 });

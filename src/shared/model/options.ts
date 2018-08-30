@@ -29,7 +29,7 @@ export interface Settings extends Partial<StoreModel.StoreEntity>,
     Partial<KeePassClientConfFieldContainer>,
     Partial<KeePassRefFieldContainer> {
     accounts: AccountConfig[];
-    dbEncryptionKey: string;
+    databaseEncryptionKey: string;
 }
 
 export const KEY_DERIVATION_PRESETS: Record<string, KeyDerivationPresets> = {

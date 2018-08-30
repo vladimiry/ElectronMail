@@ -341,14 +341,23 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
     },
 
     readConfig: async (t) => {
+        const upgradeConfigSpy = t.context.mocks["src/electron-main/storage-upgrade"].upgradeConfig;
+
         t.false(await t.context.ctx.configStore.readable(), "config file does not exist");
+
         const initial = await readConfig(t.context.endpoints);
+        t.is(0, upgradeConfigSpy.callCount);
+
         const initialExpected = {...t.context.ctx.initialStores.config, ...{_rev: 0}};
         t.deepEqual(initial, initialExpected, "checking initial config file");
         t.true(await t.context.ctx.configStore.readable(), "config file exists");
+
+        await readConfig(t.context.endpoints);
+        t.is(1, upgradeConfigSpy.callCount);
     },
 
     readSettings: async (t) => {
+        const upgradeSettingsSpy = t.context.mocks["src/electron-main/storage-upgrade"].upgradeSettings;
         const setPasswordSpy = t.context.mocks.keytar.setPassword;
         const deletePasswordSpy = t.context.mocks.keytar.deletePassword;
         const endpoints = t.context.endpoints;
@@ -356,6 +365,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.false(await t.context.ctx.settingsStore.readable(), "settings file does not exist");
         t.falsy(t.context.ctx.settingsStore.adapter, "adapter is not set");
         const initial = await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword, savePassword: false});
+        t.is(0, upgradeSettingsSpy.callCount);
         t.is(t.context.ctx.settingsStore.adapter && t.context.ctx.settingsStore.adapter.constructor.name,
             EncryptionAdapter.name,
             "adapter is an EncryptionAdapter",
@@ -373,6 +383,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.deepEqual(await t.context.ctx.settingsStore.read(), initialUpdatedExpected, "loaded initial settings file");
 
         await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword, savePassword: true});
+        t.is(1, upgradeSettingsSpy.callCount);
         t.is(setPasswordSpy.callCount, 1);
         t.is(deletePasswordSpy.callCount, 1);
         setPasswordSpy.calledWithExactly(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, OPTIONS.masterPassword);

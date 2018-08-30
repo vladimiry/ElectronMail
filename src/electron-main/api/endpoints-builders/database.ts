@@ -3,8 +3,8 @@ import {from, of} from "rxjs";
 
 import {AccountType} from "src/shared/model/account";
 import {Context} from "src/electron-main/model";
-import {DbContent} from "src/shared/model/database";
 import {Endpoints} from "src/shared/api/main";
+import {MemoryDbAccount} from "src/shared/model/database";
 import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[database api]");
@@ -17,12 +17,23 @@ export async function buildEndpoints(
     ctx: Context,
 ): Promise<Pick<Endpoints, Methods>> {
     return {
-        dbPatch: ({type, login, folders, mails, metadata, forceFlush}) => from((async () => {
+        dbPatch: ({type, login, mails, folders, contacts, metadata, forceFlush}) => from((async () => {
             logger.info("dbPatch()");
 
             const record = ctx.db.getAccount({type, login});
             // TODO watch for record changing using observable/proxy/AOP approach
             let recordModified = false;
+
+            // TODO handle "mails/folders/contacts" by iteration based processing
+
+            mails.remove.forEach(({pk}) => {
+                record.mails.delete(pk);
+                recordModified = true;
+            });
+            for (const mail of mails.upsert) {
+                await record.mails.validateAndSet(mail);
+                recordModified = true;
+            }
 
             folders.remove.forEach(({pk}) => {
                 record.folders.delete(pk);
@@ -33,12 +44,12 @@ export async function buildEndpoints(
                 recordModified = true;
             }
 
-            mails.remove.forEach(({pk}) => {
-                record.mails.delete(pk);
+            contacts.remove.forEach(({pk}) => {
+                record.contacts.delete(pk);
                 recordModified = true;
             });
-            for (const mail of mails.upsert) {
-                await record.mails.validateAndSet(mail);
+            for (const folder of contacts.upsert) {
+                await record.contacts.validateAndSet(folder);
                 recordModified = true;
             }
 
@@ -62,8 +73,8 @@ export async function buildEndpoints(
 
 export function patchMetadata(
     type: AccountType,
-    dest: DbContent["metadata"],
-    patch: Partial<DbContent["metadata"]>,
+    dest: MemoryDbAccount["metadata"],
+    patch: Partial<MemoryDbAccount["metadata"]>,
 ): boolean {
     logger.verbose("patchMetadata()");
 

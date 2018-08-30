@@ -1,9 +1,9 @@
-import * as os from "os";
-import fs from "fs";
-import memoryStreams from "memory-streams";
-import pureimage, {Bitmap, decodePNGFromStream, encodePNGToStream, registerFont} from "pureimage";
+import {Bitmap, decodePNGFromStream, encodePNGToStream, make, registerFont} from "pureimage";
 import {NativeImage, nativeImage} from "electron";
+import {WritableStream} from "memory-streams";
+import {createReadStream} from "fs";
 import {modeBicubic, resampleImageFromBuffer} from "image-processing-js";
+import {platform} from "os";
 
 // TODO explore https://github.com/vonderheide/mono-bitmap as a possible "pureimage" replacement
 
@@ -18,7 +18,7 @@ export interface ImageBundle {
 }
 
 export async function trayIconBundleFromPath(trayIconPath: string): Promise<ImageBundle> {
-    const bitmap = await decodePNGFromStream(fs.createReadStream(trayIconPath));
+    const bitmap = await decodePNGFromStream(createReadStream(trayIconPath));
 
     return {
         bitmap,
@@ -81,7 +81,7 @@ export async function unreadNative(
 }
 
 function buildCircle(rad: number, color: string): Bitmap {
-    const bitmap = pureimage.make(rad * 2, rad * 2);
+    const bitmap = make(rad * 2, rad * 2);
     const ctx = bitmap.getContext("2d");
 
     ctx.fillStyle = color;
@@ -103,8 +103,8 @@ function skipSettingTransparentPixels(bitmap: Bitmap): void {
 }
 
 async function bitmapToNativeImageOsDependent(source: Bitmap): Promise<NativeImage> {
-    const bitmap = os.platform() === "darwin" ? resampleToDarwinSize(source) : source;
-    const stream = new memoryStreams.WritableStream();
+    const bitmap = platform() === "darwin" ? resampleToDarwinSize(source) : source;
+    const stream = new WritableStream();
 
     await encodePNGToStream(bitmap, stream);
 
@@ -116,7 +116,7 @@ function resampleToDarwinSize(source: Bitmap): Bitmap {
 }
 
 function cloneBitmap(input: Pick<Bitmap, "width" | "height" | "data">): Bitmap {
-    const output = pureimage.make(input.width, input.height);
+    const output = make(input.width, input.height);
 
     output.data = Buffer.from(input.data);
 

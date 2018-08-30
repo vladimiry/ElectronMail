@@ -30,7 +30,7 @@ export function initContext(options: ContextInitOptions = {}): Context {
         db: new Database({
             file: path.join(locations.userDataDir, "database.bin"),
             encryption: {
-                keyResolver: async () => (await ctx.settingsStore.readExisting()).dbEncryptionKey,
+                keyResolver: async () => (await ctx.settingsStore.readExisting()).databaseEncryptionKey,
                 presetResolver: async () => ({encryption: {type: "sodium.crypto_secretbox_easy", preset: "algorithm:default"}}),
             },
         }),

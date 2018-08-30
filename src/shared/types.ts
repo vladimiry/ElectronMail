@@ -19,3 +19,5 @@ export interface EntryUrlItem {
     value: string;
     title: string;
 }
+
+export type NumberString = string;

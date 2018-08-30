@@ -17,9 +17,9 @@ import {
 } from "src/shared/model/container";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {BatchEntityUpdatesDbPatch} from "./common";
-import {DbContent} from "src/shared/model/database";
 // tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects below import as unused
 import {ElectronContextLocations} from "src/shared/model/electron";
+import {MemoryDbAccount} from "src/shared/model/database";
 
 export interface Endpoints {
     addAccount: ApiMethod<AccountConfigCreatePatch, Settings>;
@@ -32,8 +32,8 @@ export interface Endpoints {
     changeMasterPassword: ApiMethod<PasswordFieldContainer & NewPasswordFieldContainer, Settings>;
 
     dbPatch: ApiMethod<AccountTypeAndLoginFieldContainer & BatchEntityUpdatesDbPatch
-        & { forceFlush?: boolean } & { metadata: Partial<DbContent["metadata"]> }, DbContent["metadata"]>;
-    dbGetContentMetadata: ApiMethod<AccountTypeAndLoginFieldContainer, DbContent["metadata"]>;
+        & { forceFlush?: boolean } & { metadata: Partial<MemoryDbAccount["metadata"]> }, MemoryDbAccount["metadata"]>;
+    dbGetContentMetadata: ApiMethod<AccountTypeAndLoginFieldContainer, MemoryDbAccount["metadata"]>;
 
     init: ApiMethodNoArgument<{ electronLocations: ElectronContextLocations; hasSavedPassword: boolean; }>;
 

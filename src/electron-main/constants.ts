@@ -4,11 +4,7 @@ import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import {Model as StoreModel} from "fs-json-store";
 import {randomBytes} from "crypto";
 
-import {APP_NAME} from "src/shared/constants";
 import {Config, ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS, Settings} from "src/shared/model/options";
-
-export const KEYTAR_SERVICE_NAME = APP_NAME;
-export const KEYTAR_MASTER_PASSWORD_ACCOUNT = "master-password";
 
 export const INITIAL_STORES: Readonly<{
     config: () => Config;

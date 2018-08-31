@@ -72,7 +72,7 @@ test.beforeEach(async (t) => {
             mock(() => import("./tray")).callThrough().with(mocks["./tray"]);
             mock(() => import("./web-content-context-menu")).with(mocks["./web-content-context-menu"]);
             mock(() => import("./app-update")).callThrough().with(mocks["./app-update"]);
-            mock(() => import("keytar")).with({
+            mock(() => import("./keytar")).with({
                 getPassword: sinon.spy(),
                 deletePassword: sinon.spy(),
                 setPassword: sinon.spy(),

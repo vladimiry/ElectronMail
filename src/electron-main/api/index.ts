@@ -1,12 +1,11 @@
-import keytar from "keytar";
 import logger from "electron-log";
 import {from} from "rxjs";
 
 import {Account, Database, General, KeePass, TrayIcon} from "./endpoints-builders";
 import {Context} from "src/electron-main/model";
 import {Endpoints, IPC_MAIN_API} from "src/shared/api/main";
-import {KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "src/electron-main/constants";
 import {buildSettingsAdapter} from "src/electron-main/util";
+import {deletePassword, getPassword, setPassword} from "src/electron-main/keytar";
 import {upgradeConfig, upgradeSettings} from "src/electron-main/storage-upgrade";
 
 export const initApi = async (ctx: Context): Promise<Endpoints> => {
@@ -25,17 +24,17 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
 
             ctx.settingsStore = newStore;
 
-            if (await keytar.getPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT) === password) {
-                await keytar.setPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, newPassword);
+            if (await getPassword() === password) {
+                await setPassword(newPassword);
             } else {
-                await keytar.deletePassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT);
+                await deletePassword();
             }
 
             return newData;
         })()),
 
         init: () => from((async () => {
-            const hasSavedPassword = Boolean(await keytar.getPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT));
+            const hasSavedPassword = Boolean(await getPassword());
 
             return {
                 electronLocations: ctx.locations,
@@ -44,7 +43,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
         })()),
 
         logout: () => from((async () => {
-            await keytar.deletePassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT);
+            await deletePassword();
             ctx.settingsStore = ctx.settingsStore.clone({adapter: undefined});
             return null;
         })()),
@@ -78,7 +77,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
         readSettings: ({password, savePassword}) => from((async () => {
             // trying to auto login
             if (!password) {
-                const storedPassword = await keytar.getPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT);
+                const storedPassword = await getPassword();
                 if (!storedPassword) {
                     throw new Error("No password provided to decrypt settings with");
                 }
@@ -95,9 +94,9 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
             // "savePassword" is unset in auto login case
             if (typeof savePassword !== "undefined") {
                 if (savePassword) {
-                    await keytar.setPassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, password);
+                    await setPassword(password);
                 } else {
-                    await keytar.deletePassword(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT);
+                    await deletePassword();
                 }
             }
 

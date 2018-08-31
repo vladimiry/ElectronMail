@@ -52,14 +52,6 @@
           {
             "patterns": [
               {
-                "target": "src/**/*",
-                "from": "package.json"
-              }
-            ]
-          },
-          {
-            "patterns": [
-              {
                 "target": [
                   "src/**/*",
                   "!src/electron-main/**/*"
@@ -69,6 +61,14 @@
                   "!src/electron-main/database/entity/index",
                   "!src/electron-main/database/entity/column-decorator"
                 ]
+              }
+            ]
+          },
+          {
+            "patterns": [
+              {
+                "target": "src/**/*",
+                "from": "keytar"
               }
             ]
           }

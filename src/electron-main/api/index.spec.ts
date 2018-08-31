@@ -14,7 +14,7 @@ import {AccountConfigCreatePatch, AccountConfigUpdatePatch, PasswordFieldContain
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
 import {Endpoints} from "src/shared/api/main";
-import {INITIAL_STORES, KEYTAR_MASTER_PASSWORD_ACCOUNT, KEYTAR_SERVICE_NAME} from "src/electron-main/constants";
+import {INITIAL_STORES} from "src/electron-main/constants";
 import {StatusCodeError} from "src/shared/model/error";
 import {UnpackedPromise} from "src/shared/types";
 import {accountPickingPredicate, pickBaseConfigProperties} from "src/shared/util";
@@ -203,13 +203,11 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         );
         t.deepEqual(await newStore.read(), expectedSettings, `reading re-saved settings with new password`);
 
-        const getPasswordStub = t.context.mocks.keytar.getPassword;
+        const {getPassword: getPasswordStub, setPassword: setPasswordSpy} = t.context.mocks["src/electron-main/keytar"];
         t.is(getPasswordStub.callCount, 1);
-        getPasswordStub.calledWithExactly(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT);
-
-        const setPasswordSpy = t.context.mocks.keytar.setPassword;
+        getPasswordStub.calledWithExactly();
         t.is(setPasswordSpy.callCount, 1);
-        setPasswordSpy.calledWithExactly(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, payload.newPassword);
+        setPasswordSpy.calledWithExactly(payload.newPassword);
     },
 
     // TODO test "dbPatch" API
@@ -235,7 +233,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
     },
 
     logout: async (t) => {
-        const deletePasswordSpy = t.context.mocks.keytar.deletePassword;
+        const {deletePassword: deletePasswordSpy} = t.context.mocks["src/electron-main/keytar"];
         const endpoints = t.context.endpoints;
 
         await endpoints.logout().toPromise();
@@ -357,9 +355,8 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
     },
 
     readSettings: async (t) => {
+        const {setPassword: setPasswordSpy, deletePassword: deletePasswordSpy} = t.context.mocks["src/electron-main/keytar"];
         const upgradeSettingsSpy = t.context.mocks["src/electron-main/storage-upgrade"].upgradeSettings;
-        const setPasswordSpy = t.context.mocks.keytar.setPassword;
-        const deletePasswordSpy = t.context.mocks.keytar.deletePassword;
         const endpoints = t.context.endpoints;
 
         t.false(await t.context.ctx.settingsStore.readable(), "settings file does not exist");
@@ -375,7 +372,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.true(await t.context.ctx.settingsStore.readable(), "settings file exists");
         t.is(setPasswordSpy.callCount, 0);
         t.is(deletePasswordSpy.callCount, 1);
-        t.true(deletePasswordSpy.alwaysCalledWithExactly(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT));
+        t.true(deletePasswordSpy.alwaysCalledWithExactly());
 
         const initialUpdated = await t.context.ctx.settingsStore.write(initial);
         const initialUpdatedExpected = {...initial, ...initialExpected, ...{_rev: initialExpected._rev + 1}};
@@ -386,7 +383,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.is(1, upgradeSettingsSpy.callCount);
         t.is(setPasswordSpy.callCount, 1);
         t.is(deletePasswordSpy.callCount, 1);
-        setPasswordSpy.calledWithExactly(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT, OPTIONS.masterPassword);
+        setPasswordSpy.calledWithExactly(OPTIONS.masterPassword);
     },
 
     // TODO test "reEncryptSettings" API
@@ -472,6 +469,11 @@ async function buildMocks() {
                 buildEndpoints: sinon.stub().returns(Promise.resolve({updateOverlayIcon: () => {}})),
             },
         } as any,
+        "src/electron-main/keytar": {
+            getPassword: sinon.stub().returns(OPTIONS.masterPassword),
+            deletePassword: sinon.spy(),
+            setPassword: sinon.spy(),
+        },
         "about-window": {
             default: sinon.spy(),
         },
@@ -505,12 +507,6 @@ async function buildMocks() {
                 createFromBuffer: sinon.stub(),
             },
         } as any,
-        "keytar": {
-            _rewiremock_no_callThrough: true,
-            getPassword: sinon.stub().returns(OPTIONS.masterPassword),
-            deletePassword: sinon.spy(),
-            setPassword: sinon.spy(),
-        },
     };
 }
 
@@ -522,7 +518,7 @@ test.beforeEach(async (t) => {
         (mock) => {
             const {mocks} = t.context;
             mock("electron").with(mocks.electron);
-            mock(() => import("keytar"))/*.callThrough()*/.with(mocks.keytar);
+            mock(() => import("src/electron-main/keytar"))/*.callThrough()*/.with(mocks["src/electron-main/keytar"]);
             mock(() => import("about-window")).callThrough().with(mocks["about-window"]);
             mock(() => import("src/shared/api/main")).callThrough().with(mocks["src/shared/api/main"]);
             mock(() => import("src/electron-main/util")).callThrough().with(mocks["src/electron-main/util"]);

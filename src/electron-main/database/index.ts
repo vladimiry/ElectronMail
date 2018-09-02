@@ -14,19 +14,7 @@ const logger = curryFunctionMembers(_logger, "[database]");
 
 export class Database {
 
-    static empty<T extends MemoryDb | FsDb>(): T {
-        return {tutanota: {}, protonmail: {}} as T;
-    }
-
-    static emptyAccountMetadata<T extends keyof MemoryDb>(type: T): MemoryDbAccount<T>["metadata"] {
-        const metadata: { [key in keyof MemoryDb]: MemoryDbAccount<key>["metadata"] } = {
-            tutanota: {type: "tutanota", groupEntityEventBatchIds: {}},
-            protonmail: {type: "protonmail"},
-        };
-        return metadata[type];
-    }
-
-    private memoryDb: MemoryDb = Database.empty();
+    private memoryDb: MemoryDb = this.buildEmptyDatabase();
 
     private saveToFileQueue: PQueue<PQueue.DefaultAddOptions>;
 
@@ -41,6 +29,18 @@ export class Database {
         }>,
     ) {
         this.saveToFileQueue = new PQueue({concurrency: 1});
+    }
+
+    buildEmptyDatabase<T extends MemoryDb | FsDb>(): T {
+        return {tutanota: {}, protonmail: {}} as T;
+    }
+
+    buildEmptyAccountMetadata<T extends keyof MemoryDb>(type: T): MemoryDbAccount<T>["metadata"] {
+        const metadata: { [key in keyof MemoryDb]: MemoryDbAccount<key>["metadata"] } = {
+            tutanota: {type: "tutanota", groupEntityEventBatchIds: {}},
+            protonmail: {type: "protonmail"},
+        };
+        return metadata[type];
     }
 
     getAccount<TL extends { type: keyof MemoryDb, login: string }>({type, login}: TL): MemoryDbAccount<TL["type"]> {
@@ -61,7 +61,7 @@ export class Database {
         const stat = {records: 0, mails: 0, folders: 0, contacts: 0, time: Number(new Date())};
         const store = await this.resolveStore();
         const source = await store.readExisting();
-        const target: MemoryDb = Database.empty<MemoryDb>();
+        const target: MemoryDb = this.buildEmptyDatabase();
 
         // fs => memory
         for (const type of Object.keys(source) as AccountType[]) {
@@ -103,7 +103,7 @@ export class Database {
 
         const stat = {records: 0, mails: 0, folders: 0, contacts: 0};
         const {memoryDb: source} = this;
-        const target = Database.empty<FsDb>();
+        const target: FsDb = this.buildEmptyDatabase();
 
         // memory => fs
         for (const type of Object.keys(source) as AccountType[]) {
@@ -128,12 +128,16 @@ export class Database {
         return target;
     }
 
+    resetMemoryDb() {
+        this.memoryDb = this.buildEmptyDatabase();
+    }
+
     private initAccount<TL extends { type: keyof MemoryDb, login: string }>({type, login}: TL): MemoryDbAccount<TL["type"]> {
         const record = {
             mails: new EntityMap(Entity.Mail),
             folders: new EntityMap(Entity.Folder),
             contacts: new EntityMap(Entity.Contact),
-            metadata: Database.emptyAccountMetadata(type) as any,
+            metadata: this.buildEmptyAccountMetadata(type) as any,
         };
 
         this.memoryDb[type][login] = record;

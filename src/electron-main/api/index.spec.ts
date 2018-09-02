@@ -234,7 +234,8 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
 
     logout: async (t) => {
         const {deletePassword: deletePasswordSpy} = t.context.mocks["src/electron-main/keytar"];
-        const endpoints = t.context.endpoints;
+        const {endpoints} = t.context;
+        const resetMemoryDbSpy = sinon.spy(t.context.ctx.db, "resetMemoryDb");
 
         await endpoints.logout().toPromise();
         t.falsy(t.context.ctx.settingsStore.adapter);
@@ -252,7 +253,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.falsy(t.context.ctx.settingsStore.adapter);
         t.is(deletePasswordSpy.callCount, 3);
 
-        // t.true(deletePasswordSpy.alwaysCalledWithExactly(KEYTAR_SERVICE_NAME, KEYTAR_MASTER_PASSWORD_ACCOUNT));
+        t.is(2, resetMemoryDbSpy.callCount);
     },
 
     openAboutWindow: async (t) => {

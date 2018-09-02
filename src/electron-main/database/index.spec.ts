@@ -126,6 +126,21 @@ test("nonexistent file", async (t) => {
     await t.throwsAsync(db.loadFromFile(), `${db.options.file} does not exist`);
 });
 
+test("resetMemoryDb", async (t) => {
+    const db = buildDatabase();
+    const initial = db.buildEmptyDatabase();
+    const buildEmptyDatabaseSpy = sinon.spy(db, "buildEmptyDatabase");
+
+    t.deepEqual(db.dumpToFsDb(), initial);
+    await db.getAccount({type: "tutanota", login: "login1"}).folders.validateAndSet(buildFolder());
+    t.notDeepEqual(db.dumpToFsDb(), initial);
+
+    const buildEmptyDatabaseCallCount = buildEmptyDatabaseSpy.callCount;
+    db.resetMemoryDb();
+    t.is(buildEmptyDatabaseCallCount + 1, buildEmptyDatabaseSpy.callCount);
+    t.deepEqual(db.dumpToFsDb(), initial);
+});
+
 function buildDatabase(keyResolver?: () => Promise<string>) {
     return new Database(buildDatabaseOptions(keyResolver));
 }

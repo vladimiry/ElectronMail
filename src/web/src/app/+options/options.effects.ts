@@ -3,10 +3,10 @@ import {Deferred} from "ts-deferred";
 import {EMPTY, merge, of} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store} from "@ngrx/store";
-import {catchError, concatMap, filter, finalize, map, mergeMap, withLatestFrom} from "rxjs/operators";
+import {catchError, concatMap, finalize, map, mergeMap, withLatestFrom} from "rxjs/operators";
 
 import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
-import {CORE_ACTIONS, NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
+import {CORE_ACTIONS, NAVIGATION_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
 import {ElectronService} from "src/web/src/app/+core/electron.service";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
@@ -23,7 +23,7 @@ export class OptionsEffects {
 
     @Effect()
     initRequest$ = this.actions$.pipe(
-        filter(OPTIONS_ACTIONS.is.InitRequest),
+        unionizeActionFilter(OPTIONS_ACTIONS.is.InitRequest),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         mergeMap(() => this.ipcMainClient("init")().pipe(
             mergeMap((payload) => merge(
@@ -46,7 +46,7 @@ export class OptionsEffects {
 
     @Effect()
     getConfigRequest$ = this.actions$.pipe(
-        filter(OPTIONS_ACTIONS.is.GetConfigRequest),
+        unionizeActionFilter(OPTIONS_ACTIONS.is.GetConfigRequest),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(() => this.ipcMainClient("readConfig")().pipe(
             concatMap((config) => [
@@ -58,7 +58,7 @@ export class OptionsEffects {
 
     @Effect()
     getSettingsRequest$ = this.actions$.pipe(
-        filter(OPTIONS_ACTIONS.is.GetSettingsRequest),
+        unionizeActionFilter(OPTIONS_ACTIONS.is.GetSettingsRequest),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         withLatestFrom(this.store.select(OptionsSelectors.FEATURED.settings)),
         concatMap(([action, settings]) => {
@@ -79,7 +79,7 @@ export class OptionsEffects {
 
     @Effect()
     signInRequest$ = this.actions$.pipe(
-        filter(OPTIONS_ACTIONS.is.SignInRequest),
+        unionizeActionFilter(OPTIONS_ACTIONS.is.SignInRequest),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({signingIn: true})),
@@ -105,7 +105,7 @@ export class OptionsEffects {
 
     @Effect()
     addAccountRequest$ = this.actions$.pipe(
-        filter(OPTIONS_ACTIONS.is.AddAccountRequest),
+        unionizeActionFilter(OPTIONS_ACTIONS.is.AddAccountRequest),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({addingAccount: true})),
@@ -124,7 +124,7 @@ export class OptionsEffects {
 
     @Effect()
     updateAccountRequest$ = this.actions$.pipe(
-        filter(OPTIONS_ACTIONS.is.UpdateAccountRequest),
+        unionizeActionFilter(OPTIONS_ACTIONS.is.UpdateAccountRequest),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({updatingAccount: true})),
@@ -137,7 +137,7 @@ export class OptionsEffects {
 
     @Effect()
     changeAccountOrderRequest$ = this.actions$.pipe(
-        filter(OPTIONS_ACTIONS.is.ChangeAccountOrderRequest),
+        unionizeActionFilter(OPTIONS_ACTIONS.is.ChangeAccountOrderRequest),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({changingAccountOrder: true})),
@@ -150,7 +150,7 @@ export class OptionsEffects {
 
     @Effect()
     removeAccountRequest$ = this.actions$.pipe(
-        filter(OPTIONS_ACTIONS.is.RemoveAccountRequest),
+        unionizeActionFilter(OPTIONS_ACTIONS.is.RemoveAccountRequest),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({removingAccount: true})),
@@ -163,7 +163,7 @@ export class OptionsEffects {
 
     @Effect()
     changeMasterPasswordRequest$ = this.actions$.pipe(
-        filter(OPTIONS_ACTIONS.is.ChangeMasterPasswordRequest),
+        unionizeActionFilter(OPTIONS_ACTIONS.is.ChangeMasterPasswordRequest),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({changingPassword: true})),
@@ -180,7 +180,7 @@ export class OptionsEffects {
 
     @Effect()
     associateSettingsWithKeePassRequest$ = this.actions$.pipe(
-        filter(OPTIONS_ACTIONS.is.AssociateSettingsWithKeePassRequest),
+        unionizeActionFilter(OPTIONS_ACTIONS.is.AssociateSettingsWithKeePassRequest),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({keePassReferencing: true})),
@@ -193,7 +193,7 @@ export class OptionsEffects {
 
     @Effect()
     toggleCompactLayout$ = this.actions$.pipe(
-        filter(OPTIONS_ACTIONS.is.ToggleCompactRequest),
+        unionizeActionFilter(OPTIONS_ACTIONS.is.ToggleCompactRequest),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(() => merge(
             of(this.buildPatchProgress({togglingCompactLayout: true})),
@@ -206,7 +206,7 @@ export class OptionsEffects {
 
     @Effect()
     updateBaseSettings$ = this.actions$.pipe(
-        filter(OPTIONS_ACTIONS.is.PatchBaseSettingsRequest),
+        unionizeActionFilter(OPTIONS_ACTIONS.is.PatchBaseSettingsRequest),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({updatingBaseSettings: true})),
@@ -219,7 +219,7 @@ export class OptionsEffects {
 
     @Effect()
     reEncryptingSettings$ = this.actions$.pipe(
-        filter(OPTIONS_ACTIONS.is.ReEncryptSettings),
+        unionizeActionFilter(OPTIONS_ACTIONS.is.ReEncryptSettings),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => {
             const {encryptionPreset, password} = payload;
@@ -234,10 +234,12 @@ export class OptionsEffects {
             );
         }));
 
-    constructor(private optionsService: OptionsService,
-                private api: ElectronService,
-                private store: Store<State>,
-                private actions$: Actions) {}
+    constructor(
+        private optionsService: OptionsService,
+        private api: ElectronService,
+        private store: Store<State>,
+        private actions$: Actions<{ type: string; payload: any }>,
+    ) {}
 
     private buildPatchProgress(patch: ProgressPatch) {
         return OPTIONS_ACTIONS.PatchProgress(patch);

@@ -1,10 +1,10 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {EMPTY, Subject, from, merge, of, timer} from "rxjs";
+import {EMPTY, from, merge, of, Subject, timer} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store} from "@ngrx/store";
 import {catchError, concatMap, filter, finalize, map, mergeMap, takeUntil, tap} from "rxjs/operators";
 
-import {ACCOUNTS_ACTIONS, CORE_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
+import {ACCOUNTS_ACTIONS, CORE_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
 import {AccountTypeAndLoginFieldContainer} from "src/shared/model/container";
 import {ElectronService} from "src/web/src/app/+core/electron.service";
 import {ONE_SECOND_MS} from "src/shared/constants";
@@ -26,7 +26,7 @@ export class AccountsEffects {
 
     @Effect()
     syncAccountsConfigs$ = this.actions$.pipe(
-        filter(OPTIONS_ACTIONS.is.GetSettingsResponse),
+        unionizeActionFilter(OPTIONS_ACTIONS.is.GetSettingsResponse),
         map(({payload}) => ACCOUNTS_ACTIONS.WireUpConfigs({accountConfigs: payload.accounts})),
     );
 
@@ -35,7 +35,7 @@ export class AccountsEffects {
         const merged$ = EMPTY;
 
         return this.actions$.pipe(
-            filter(ACCOUNTS_ACTIONS.is.SetupNotificationChannel),
+            unionizeActionFilter(ACCOUNTS_ACTIONS.is.SetupNotificationChannel),
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             mergeMap(({payload, logger}) => {
                 const {account, webView, finishPromise} = payload;
@@ -67,7 +67,7 @@ export class AccountsEffects {
         const merged$ = EMPTY;
 
         return this.actions$.pipe(
-            filter(ACCOUNTS_ACTIONS.is.ToggleFetching),
+            unionizeActionFilter(ACCOUNTS_ACTIONS.is.ToggleFetching),
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             mergeMap(({payload, logger}) => {
                 const {account, webView, finishPromise} = payload;
@@ -124,7 +124,7 @@ export class AccountsEffects {
 
     @Effect()
     tryToLogin$ = this.actions$.pipe(
-        filter(ACCOUNTS_ACTIONS.is.TryToLogin),
+        unionizeActionFilter(ACCOUNTS_ACTIONS.is.TryToLogin),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         mergeMap(({payload, logger}) => {
             const {account, webView} = payload;
@@ -237,7 +237,7 @@ export class AccountsEffects {
 
     constructor(
         private api: ElectronService,
-        private actions$: Actions,
+        private actions$: Actions<{ type: string; payload: any }>,
         private store: Store<State>,
     ) {}
 }

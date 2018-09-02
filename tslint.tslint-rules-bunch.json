@@ -68,6 +68,14 @@
             "patterns": [
               {
                 "target": "src/**/*",
+                "from": "package.json"
+              }
+            ]
+          },
+          {
+            "patterns": [
+              {
+                "target": "src/**/*",
                 "from": "keytar"
               }
             ]

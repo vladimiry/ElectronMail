@@ -1,12 +1,12 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {EMPTY, concat, of} from "rxjs";
+import {concat, EMPTY, of} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Location} from "@angular/common";
 import {Router} from "@angular/router";
-import {catchError, concatMap, filter, map, mergeMap, tap} from "rxjs/operators";
+import {catchError, concatMap, map, mergeMap, tap} from "rxjs/operators";
 
 import {ACCOUNTS_OUTLET, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
-import {CORE_ACTIONS, NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
+import {CORE_ACTIONS, NAVIGATION_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
 import {ElectronService} from "./electron.service";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/src/util";
 
@@ -16,7 +16,7 @@ const _logger = getZoneNameBoundWebLogger("[navigation.effects.ts]");
 export class NavigationEffects {
     @Effect({dispatch: false})
     navigate$ = this.actions$.pipe(
-        filter(NAVIGATION_ACTIONS.is.Go),
+        unionizeActionFilter(NAVIGATION_ACTIONS.is.Go),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         map(({payload, logger}) => {
             const {path, extras} = payload;
@@ -37,7 +37,7 @@ export class NavigationEffects {
 
     @Effect({dispatch: false})
     navigateBack$ = this.actions$.pipe(
-        filter(NAVIGATION_ACTIONS.is.Back),
+        unionizeActionFilter(NAVIGATION_ACTIONS.is.Back),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         tap(() => this.location.back()),
         catchError((error) => of(CORE_ACTIONS.Fail(error))),
@@ -45,7 +45,7 @@ export class NavigationEffects {
 
     @Effect({dispatch: false})
     navigateForward$ = this.actions$.pipe(
-        filter(NAVIGATION_ACTIONS.is.Forward),
+        unionizeActionFilter(NAVIGATION_ACTIONS.is.Forward),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         tap(() => this.location.forward()),
         catchError((error) => of(CORE_ACTIONS.Fail(error))),
@@ -53,7 +53,7 @@ export class NavigationEffects {
 
     @Effect()
     toggleBrowserWindow$ = this.actions$.pipe(
-        filter(NAVIGATION_ACTIONS.is.ToggleBrowserWindow),
+        unionizeActionFilter(NAVIGATION_ACTIONS.is.ToggleBrowserWindow),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => this.electronService.ipcMainClient()("toggleBrowserWindow")(payload).pipe(
             mergeMap(() => EMPTY),
@@ -62,7 +62,7 @@ export class NavigationEffects {
 
     @Effect()
     openAboutWindow$ = this.actions$.pipe(
-        filter(NAVIGATION_ACTIONS.is.OpenAboutWindow),
+        unionizeActionFilter(NAVIGATION_ACTIONS.is.OpenAboutWindow),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(() => this.electronService.ipcMainClient()("openAboutWindow")().pipe(
             mergeMap(() => EMPTY),
@@ -71,7 +71,7 @@ export class NavigationEffects {
 
     @Effect()
     openExternal$ = this.actions$.pipe(
-        filter(NAVIGATION_ACTIONS.is.OpenExternal),
+        unionizeActionFilter(NAVIGATION_ACTIONS.is.OpenExternal),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => this.electronService.ipcMainClient()("openExternal")({url: payload.url}).pipe(
             mergeMap(() => EMPTY),
@@ -80,7 +80,7 @@ export class NavigationEffects {
 
     @Effect()
     openSettingsFolder$ = this.actions$.pipe(
-        filter(NAVIGATION_ACTIONS.is.OpenSettingsFolder),
+        unionizeActionFilter(NAVIGATION_ACTIONS.is.OpenSettingsFolder),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(() => this.electronService.ipcMainClient()("openSettingsFolder")().pipe(
             mergeMap(() => EMPTY),
@@ -89,7 +89,7 @@ export class NavigationEffects {
 
     @Effect()
     logout$ = this.actions$.pipe(
-        filter(NAVIGATION_ACTIONS.is.Logout),
+        unionizeActionFilter(NAVIGATION_ACTIONS.is.Logout),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(() => {
             const concatenated = concat(
@@ -115,16 +115,18 @@ export class NavigationEffects {
 
     @Effect()
     quit$ = this.actions$.pipe(
-        filter(NAVIGATION_ACTIONS.is.Quit),
+        unionizeActionFilter(NAVIGATION_ACTIONS.is.Quit),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(() => this.electronService.ipcMainClient()("quit")().pipe(
             mergeMap(() => EMPTY),
             catchError((error) => of(CORE_ACTIONS.Fail(error))),
         )));
 
-    constructor(private electronService: ElectronService,
-                private actions$: Actions,
-                private router: Router,
-                private location: Location,
-                private zone: NgZone) {}
+    constructor(
+        private electronService: ElectronService,
+        private actions$: Actions<{ type: string; payload: any }>,
+        private router: Router,
+        private location: Location,
+        private zone: NgZone,
+    ) {}
 }

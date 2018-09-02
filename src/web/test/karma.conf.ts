@@ -1,3 +1,4 @@
+import produce from "immer";
 import {Config} from "karma";
 
 // TODO import using alias
@@ -31,7 +32,11 @@ export default (config: Config) => {
             [filesPattern]: ["webpack"],
         },
         reporters: ["progress", "mocha"],
-        webpack: webpackConfig,
+        webpack: produce(webpackConfig, (draft) => {
+            // TODO get rid of "karma-webpack" hanging workaround
+            // https://github.com/webpack-contrib/karma-webpack/issues/322#issuecomment-417862717
+            (draft.output = draft.output || {}).filename = "[name]";
+        }),
         webpackServer: {noInfo: true},
         port: 9876,
         colors: true,

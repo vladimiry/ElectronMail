@@ -1,4 +1,5 @@
 import _logger from "electron-log";
+import PQueue from "p-queue";
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/private/constants";
 import {EncryptionAdapter, KeyBasedPreset} from "fs-json-store-encryption-adapter";
 import {Model, Store} from "fs-json-store";
@@ -25,7 +26,9 @@ export class Database {
         return metadata[type];
     }
 
-    private memoryDb = Database.empty<MemoryDb>();
+    private memoryDb: MemoryDb = Database.empty();
+
+    private saveToFileQueue: PQueue<PQueue.DefaultAddOptions>;
 
     constructor(
         public readonly options: Readonly<{
@@ -36,7 +39,9 @@ export class Database {
                 presetResolver: () => Promise<KeyBasedPreset>;
             }>
         }>,
-    ) {}
+    ) {
+        this.saveToFileQueue = new PQueue({concurrency: 1});
+    }
 
     getAccount<TL extends { type: keyof MemoryDb, login: string }>({type, login}: TL): MemoryDbAccount<TL["type"]> {
         return this.memoryDb[type][login] || this.initAccount({type, login});
@@ -82,14 +87,15 @@ export class Database {
         logger.verbose(`loadFromFile(): loaded stat: ${JSON.stringify(stat)}`);
     }
 
-    // TODO queuing saving
     async saveToFile(): Promise<FsDb> {
         logger.info("saveToFile()");
 
-        const store = await this.resolveStore();
-        const dump = this.dumpToFsDb();
+        return this.saveToFileQueue.add(async () => {
+            const store = await this.resolveStore();
+            const dump = this.dumpToFsDb();
 
-        return await store.write(dump);
+            return await store.write(dump);
+        });
     }
 
     dumpToFsDb(): FsDb {

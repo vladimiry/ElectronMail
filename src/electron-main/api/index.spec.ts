@@ -16,7 +16,7 @@ import {Context} from "src/electron-main/model";
 import {Endpoints} from "src/shared/api/main";
 import {INITIAL_STORES} from "src/electron-main/constants";
 import {StatusCodeError} from "src/shared/model/error";
-import {UnpackedPromise} from "src/shared/types";
+import {Unpacked} from "src/shared/types";
 import {accountPickingPredicate, pickBaseConfigProperties} from "src/shared/util";
 import {buildSettingsAdapter, initContext} from "src/electron-main/util";
 
@@ -25,7 +25,7 @@ import {buildSettingsAdapter, initContext} from "src/electron-main/util";
 interface TestContext {
     ctx: Context;
     endpoints: Endpoints;
-    mocks: UnpackedPromise<ReturnType<typeof buildMocks>>;
+    mocks: Unpacked<ReturnType<typeof buildMocks>>;
 }
 
 const test = ava as TestInterface<TestContext>;

@@ -7,7 +7,7 @@ import {promisify} from "util";
 
 import {Context} from "src/electron-main/model";
 import {Endpoints} from "src/shared/api/main";
-import {UnpackedObservable} from "src/shared/types";
+import {Unpacked} from "src/shared/types";
 
 type ApiMethods =
     | "openAboutWindow"
@@ -17,7 +17,7 @@ type ApiMethods =
     | "activateBrowserWindow"
     | "toggleBrowserWindow"
     | "notification";
-type NotificationOutput = UnpackedObservable<ReturnType<Pick<Endpoints, "notification">["notification"]>>;
+type NotificationOutput = Unpacked<ReturnType<Pick<Endpoints, "notification">["notification"]>>;
 
 export async function buildEndpoints(
     ctx: Context,

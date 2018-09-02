@@ -82,6 +82,7 @@ export class Database {
         logger.verbose(`loadFromFile(): loaded stat: ${JSON.stringify(stat)}`);
     }
 
+    // TODO queuing saving
     async saveToFile(): Promise<FsDb> {
         logger.info("saveToFile()");
 

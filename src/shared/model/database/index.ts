@@ -82,16 +82,16 @@ export interface ContactSocialId extends Entity {
     socialId: string;
 }
 
-export interface EntityMap<K extends string, V extends Entity> extends Omit<Map<K, V>, "set"> {
+export interface EntityMap<V extends Entity, K extends V["pk"] = V["pk"]> extends Omit<Map<K, V>, "set"> {
     validateAndSet(value: V): Promise<this>;
 
     toObject(): Record<K, V>;
 }
 
 interface EntitiesMapContainer {
-    mails: EntityMap<Mail["pk"], Mail>;
-    folders: EntityMap<Folder["pk"], Folder>;
-    contacts: EntityMap<Contact["pk"], Contact>;
+    mails: EntityMap<Mail>;
+    folders: EntityMap<Folder>;
+    contacts: EntityMap<Contact>;
 }
 
 interface EntitiesRecordContainer {

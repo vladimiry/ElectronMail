@@ -4,7 +4,7 @@ import {from, of} from "rxjs";
 import {AccountType} from "src/shared/model/account";
 import {Context} from "src/electron-main/model";
 import {Endpoints} from "src/shared/api/main";
-import {MemoryDbAccount} from "src/shared/model/database";
+import {EntityMap, MemoryDbAccount} from "src/shared/model/database";
 import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[database api]");
@@ -17,47 +17,32 @@ export async function buildEndpoints(
     ctx: Context,
 ): Promise<Pick<Endpoints, Methods>> {
     return {
-        dbPatch: ({type, login, mails, folders, contacts, metadata, forceFlush}) => from((async () => {
+        dbPatch: ({type, login, metadata, forceFlush, ...rest}) => from((async () => {
             logger.info("dbPatch()");
 
             const record = ctx.db.getAccount({type, login});
-            // TODO watch for record changing using observable/proxy/AOP approach
-            let recordModified = false;
+            const state = {recordModified: false};
 
-            // TODO handle "mails/folders/contacts" by iteration based processing
+            for (const entityType of (["mails", "folders", "contacts"] as ["mails", "folders", "contacts"])) {
+                const source = rest[entityType];
+                const destination = record[entityType];
 
-            mails.remove.forEach(({pk}) => {
-                record.mails.delete(pk);
-                recordModified = true;
-            });
-            for (const mail of mails.upsert) {
-                await record.mails.validateAndSet(mail);
-                recordModified = true;
-            }
+                source.remove.forEach(({pk}) => {
+                    destination.delete(pk);
+                    state.recordModified = true;
+                });
 
-            folders.remove.forEach(({pk}) => {
-                record.folders.delete(pk);
-                recordModified = true;
-            });
-            for (const folder of folders.upsert) {
-                await record.folders.validateAndSet(folder);
-                recordModified = true;
-            }
-
-            contacts.remove.forEach(({pk}) => {
-                record.contacts.delete(pk);
-                recordModified = true;
-            });
-            for (const folder of contacts.upsert) {
-                await record.contacts.validateAndSet(folder);
-                recordModified = true;
+                for (const entity of source.upsert) {
+                    await (destination as EntityMap<typeof entity>).validateAndSet(entity);
+                    state.recordModified = true;
+                }
             }
 
             if (patchMetadata(type, record.metadata, metadata)) {
-                recordModified = true;
+                state.recordModified = true;
             }
 
-            if (recordModified || forceFlush) {
+            if (state.recordModified || forceFlush) {
                 await ctx.db.saveToFile();
             }
 

@@ -8,19 +8,15 @@ import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[entity map]");
 
-export class EntityMap<V extends Entity, K extends V["pk"] = V["pk"]> implements EntityMapInterface<K, V> {
-
-    get size() {
-        return this.map.size;
-    }
-    protected static readonly transformValidationOptions: TransformValidationOptions = {
+export class EntityMap<V extends Entity, K extends V["pk"] = V["pk"]> implements EntityMapInterface<V, K> {
+    private static readonly transformValidationOptions: TransformValidationOptions = {
         validator: {
             whitelist: true, // stripe out unknown properties
             validationError: {target: false}, // do not attach to error object an entity being validated
         },
     };
 
-    protected static generateValidationError(e: Error): Error {
+    private static generateValidationError(e: Error): Error {
         if (!Array.isArray(e)) {
             return e;
         }
@@ -45,6 +41,7 @@ export class EntityMap<V extends Entity, K extends V["pk"] = V["pk"]> implements
 
         return new Error(messages.join("; "));
     }
+
     private readonly map = new Map<K, V>();
 
     constructor(
@@ -54,6 +51,10 @@ export class EntityMap<V extends Entity, K extends V["pk"] = V["pk"]> implements
         if (record) {
             this.setFromObject(record);
         }
+    }
+
+    get size() {
+        return this.map.size;
     }
 
     entries() {

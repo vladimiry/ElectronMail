@@ -5,7 +5,7 @@ import rewiremock from "rewiremock";
 import sinon from "sinon";
 import test, {ExecutionContext} from "ava";
 
-import {UnpackedPromise} from "src/shared/types";
+import {Unpacked} from "src/shared/types";
 
 // tslint:disable-next-line:no-var-requires no-import-zones
 const {name: SERVICE} = require("package.json");
@@ -53,7 +53,7 @@ test.serial("deletePassword", async (t) => {
 
 function testAlwaysCalledWith(
     t: ExecutionContext,
-    {getPassword, setPassword, deletePassword}: UnpackedPromise<ReturnType<typeof bootstrap>>["keytarModuleMocks"],
+    {getPassword, setPassword, deletePassword}: Unpacked<ReturnType<typeof bootstrap>>["keytarModuleMocks"],
     data: { password: string },
 ) {
     if (getPassword.called) {

@@ -15,7 +15,7 @@ import {
 } from "src/electron-preload/webview/constants";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi, TutanotaNotificationOutput} from "src/shared/api/webview/tutanota";
-import {UnpackedPromise} from "src/shared/types";
+import {Unpacked} from "src/shared/types";
 import {buildLoggerBundle} from "src/electron-preload/util";
 import {curryFunctionMembers} from "src/shared/util";
 import {fetchEntitiesRange} from "src/electron-preload/webview/tutanota/lib/rest";
@@ -29,7 +29,7 @@ resolveApi()
     .then(bootstrapApi)
     .catch(_logger.error);
 
-function bootstrapApi(api: UnpackedPromise<ReturnType<typeof resolveApi>>) {
+function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
     delete WINDOW.Notification;
 
     const {GENERATED_MAX_ID} = api["src/api/common/EntityFunctions"];

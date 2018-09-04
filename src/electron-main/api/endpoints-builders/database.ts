@@ -1,57 +1,70 @@
 import _logger from "electron-log";
 import {from, of} from "rxjs";
+import {omit} from "ramda";
 
 import {AccountType} from "src/shared/model/account";
 import {Context} from "src/electron-main/model";
-import {Endpoints} from "src/shared/api/main";
+import {Endpoints, IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {EntityMap, MemoryDbAccount} from "src/shared/model/database";
+import {NOTIFICATION_SUBJECT} from "src/electron-main/api/constants";
 import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[database api]");
 
 type Methods =
     | "dbPatch"
-    | "dbGetContentMetadata";
+    | "dbGetAccountMetadata"
+    | "dbGetAccountData";
 
-export async function buildEndpoints(
-    ctx: Context,
-): Promise<Pick<Endpoints, Methods>> {
+export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Methods>> {
     return {
         dbPatch: ({type, login, metadata, forceFlush, ...rest}) => from((async () => {
             logger.info("dbPatch()");
 
-            const record = ctx.db.getAccount({type, login});
-            const state = {recordModified: false};
+            const key = {type, login};
+            const account = ctx.db.getMemoryAccount(key) || ctx.db.initMemoryAccount(key);
+            const patchState = {modified: false};
 
             for (const entityType of (["mails", "folders", "contacts"] as ["mails", "folders", "contacts"])) {
                 const source = rest[entityType];
-                const destination = record[entityType];
+                const destination = account[entityType];
 
                 source.remove.forEach(({pk}) => {
                     destination.delete(pk);
-                    state.recordModified = true;
+                    patchState.modified = true;
                 });
 
                 for (const entity of source.upsert) {
                     await (destination as EntityMap<typeof entity>).validateAndSet(entity);
-                    state.recordModified = true;
+                    patchState.modified = true;
                 }
             }
 
-            if (patchMetadata(type, record.metadata, metadata)) {
-                state.recordModified = true;
+            if (patchMetadata(type, account.metadata, metadata)) {
+                patchState.modified = true;
             }
 
-            if (state.recordModified || forceFlush) {
+            if (patchState.modified || forceFlush) {
                 await ctx.db.saveToFile();
             }
 
-            return record.metadata;
+            if (patchState.modified) {
+                NOTIFICATION_SUBJECT.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount({key, stat: ctx.db.memoryAccountStat(account)}));
+            }
+
+            return account.metadata;
         })()),
 
-        dbGetContentMetadata: ({type, login}) => {
-            logger.info("dbGetContentMetadata()");
-            return of(ctx.db.getAccount({type, login}).metadata);
+        dbGetAccountMetadata: ({type, login}) => {
+            logger.info("dbGetAccountMetadata()");
+            const account = ctx.db.getMemoryAccount({type, login});
+            return of(account ? account.metadata : null);
+        },
+
+        dbGetAccountData: ({type, login}) => {
+            logger.info("dbGetAccountData()");
+            const account = ctx.db.getFsAccount({type, login});
+            return of(account ? omit(["metadata"], account) : null);
         },
     };
 }

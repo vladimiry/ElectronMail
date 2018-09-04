@@ -1,0 +1,10 @@
+@import "~src/web/src/variables";
+
+:host {
+    display: flex;
+    background-color: $white;
+
+    pre {
+        margin: 0;
+    }
+}

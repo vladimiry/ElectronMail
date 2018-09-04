@@ -105,7 +105,7 @@ export class EntityMap<V extends Entity, K extends V["pk"] = V["pk"]> implements
         return this.map.has(key);
     }
 
-    toObject(): Record<K, V> {
+    toJSON(): Record<K, V> {
         const object = Object.create(null);
 
         for (const [k, v] of this.map) {
@@ -115,7 +115,7 @@ export class EntityMap<V extends Entity, K extends V["pk"] = V["pk"]> implements
         return object;
     }
 
-    protected setFromObject(record: Record<K, V>) {
+    private setFromObject(record: Record<K, V>) {
         for (const k of Object.keys(record)) {
             this.map.set(k as K, (record as any)[k]);
         }

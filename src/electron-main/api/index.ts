@@ -45,7 +45,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
         logout: () => from((async () => {
             await deletePassword();
             ctx.settingsStore = ctx.settingsStore.clone({adapter: undefined});
-            ctx.db.resetMemoryDb();
+            ctx.db.reset();
             return null;
         })()),
 

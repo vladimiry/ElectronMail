@@ -1,13 +1,13 @@
 import aboutWindow from "about-window";
 import path from "path";
-import {BehaviorSubject, EMPTY, from, of} from "rxjs";
+import {EMPTY, from, of} from "rxjs";
 import {app, shell} from "electron";
 import {isWebUri} from "valid-url";
 import {promisify} from "util";
 
 import {Context} from "src/electron-main/model";
-import {Endpoints} from "src/shared/api/main";
-import {Unpacked} from "src/shared/types";
+import {Endpoints, IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {NOTIFICATION_SUBJECT} from "src/electron-main/api/constants";
 
 type ApiMethods =
     | "openAboutWindow"
@@ -17,12 +17,8 @@ type ApiMethods =
     | "activateBrowserWindow"
     | "toggleBrowserWindow"
     | "notification";
-type NotificationOutput = Unpacked<ReturnType<Pick<Endpoints, "notification">["notification"]>>;
 
-export async function buildEndpoints(
-    ctx: Context,
-): Promise<Pick<Endpoints, ApiMethods>> {
-    const notificationSubject = new BehaviorSubject<NotificationOutput>({action: "activateBrowserWindow"});
+export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiMethods>> {
     const endpoints: Pick<Endpoints, ApiMethods> = {
         openAboutWindow: () => {
             aboutWindow({
@@ -62,7 +58,7 @@ export async function buildEndpoints(
             browserWindow.show();
             browserWindow.focus();
 
-            notificationSubject.next({action: "activateBrowserWindow"});
+            NOTIFICATION_SUBJECT.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.ActivateBrowserWindow());
 
             return of(null);
         },
@@ -84,7 +80,7 @@ export async function buildEndpoints(
         },
 
         notification: () => {
-            return notificationSubject.asObservable();
+            return NOTIFICATION_SUBJECT.asObservable();
         },
     };
 

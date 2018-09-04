@@ -9,12 +9,12 @@ export async function buildEndpoints(
     ctx: Context,
 ): Promise<Pick<Endpoints, "addAccount" | "updateAccount" | "changeAccountOrder" | "removeAccount">> {
     return {
-        addAccount: ({type, login, entryUrl, storeMails, credentials, credentialsKeePass}) => from((async () => {
+        addAccount: ({type, login, entryUrl, database, credentials, credentialsKeePass}) => from((async () => {
             const account = {
                 type,
                 login,
                 entryUrl,
-                storeMails,
+                database,
                 credentials,
                 credentialsKeePass,
             } as AccountConfig; // TODO ger rid of "TS as" casting
@@ -26,13 +26,13 @@ export async function buildEndpoints(
         })()),
 
         // TODO update "updateAccount" api method test (entryUrl, changed credentials structure)
-        updateAccount: ({login, entryUrl, storeMails, credentials, credentialsKeePass}) => from((async () => {
+        updateAccount: ({login, entryUrl, database, credentials, credentialsKeePass}) => from((async () => {
             const settings = await ctx.settingsStore.readExisting();
             const account = pickAccountStrict(settings.accounts, {login});
             const {credentials: existingCredentials, credentialsKeePass: existingCredentialsKeePass} = account;
 
-            if (typeof storeMails !== "undefined") {
-                account.storeMails = storeMails;
+            if (typeof database !== "undefined") {
+                account.database = database;
             }
 
             if (typeof entryUrl !== "undefined") {

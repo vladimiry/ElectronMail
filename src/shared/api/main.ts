@@ -1,12 +1,12 @@
 import {ApiMethod, ApiMethodNoArgument, IpcMainApiService} from "electron-rpc-api";
 // tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects below import as unused
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
+import {UnionOf, ofType, unionize} from "unionize";
 
 import {APP_NAME} from "src/shared/constants";
 import {
     AccountConfigCreatePatch,
     AccountConfigUpdatePatch,
-    AccountTypeAndLoginFieldContainer,
     KeePassClientConfFieldContainer,
     KeePassRefFieldContainer,
     LoginFieldContainer,
@@ -19,7 +19,8 @@ import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {BatchEntityUpdatesDbPatch} from "./common";
 // tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects below import as unused
 import {ElectronContextLocations} from "src/shared/model/electron";
-import {MemoryDbAccount} from "src/shared/model/database";
+import {FsDbAccount, MemoryDb, MemoryDbAccount} from "src/shared/model/database";
+import {Omit} from "src/shared/types";
 
 export interface Endpoints {
     addAccount: ApiMethod<AccountConfigCreatePatch, Settings>;
@@ -31,9 +32,10 @@ export interface Endpoints {
 
     changeMasterPassword: ApiMethod<PasswordFieldContainer & NewPasswordFieldContainer, Settings>;
 
-    dbPatch: ApiMethod<AccountTypeAndLoginFieldContainer & BatchEntityUpdatesDbPatch
+    dbPatch: ApiMethod<{ type: keyof MemoryDb, login: string } & BatchEntityUpdatesDbPatch
         & { forceFlush?: boolean } & { metadata: Partial<MemoryDbAccount["metadata"]> }, MemoryDbAccount["metadata"]>;
-    dbGetContentMetadata: ApiMethod<AccountTypeAndLoginFieldContainer, MemoryDbAccount["metadata"]>;
+    dbGetAccountMetadata: ApiMethod<{ type: keyof MemoryDb, login: string }, MemoryDbAccount["metadata"] | null>;
+    dbGetAccountData: ApiMethod<{ type: keyof MemoryDb, login: string }, Omit<FsDbAccount, "metadata"> | null>;
 
     init: ApiMethodNoArgument<{ electronLocations: ElectronContextLocations; hasSavedPassword: boolean; }>;
 
@@ -68,7 +70,22 @@ export interface Endpoints {
 
     updateOverlayIcon: ApiMethod<{ hasLoggedOut: boolean, unread: number }, null>;
 
-    notification: ApiMethodNoArgument<{ action: Extract<keyof Endpoints, "activateBrowserWindow"> }>;
+    notification: ApiMethodNoArgument<UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>>;
 }
 
 export const IPC_MAIN_API = new IpcMainApiService<Endpoints>({channel: `${APP_NAME}:ipcMain-api`});
+
+// WARN: do not put sensitive data into the main process notification stream
+export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
+        ActivateBrowserWindow: ofType<{}>(),
+        DbPatchAccount: ofType<{
+            key: { type: keyof MemoryDb, login: string };
+            stat: { mails: number, folders: number; contacts: number };
+        }>(),
+    },
+    {
+        tag: "type",
+        value: "payload",
+        tagPrefix: "ipc_main_api_notification:",
+    },
+);

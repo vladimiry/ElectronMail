@@ -4,7 +4,7 @@ import {catchError, concatMap, map, mergeMap} from "rxjs/operators";
 import {of} from "rxjs";
 
 import {CORE_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
-import {ElectronService} from "src/web/src/app/+core/electron.service";
+import {ElectronService} from "src/web/src/app/_core/electron.service";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/src/util";
 
 const _logger = getZoneNameBoundWebLogger("[options.effects]");

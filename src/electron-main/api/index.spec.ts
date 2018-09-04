@@ -80,7 +80,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         const addPayload = buildProtonmailAccountData();
         const updatePayload: AccountConfigUpdatePatch = produce(omit(["type"], addPayload), (draft) => {
             (draft.entryUrl as any) = generateRandomString();
-            (draft.storeMails as any) = Boolean(!draft.storeMails);
+            (draft.database as any) = Boolean(!draft.database);
             draft.credentials.password = generateRandomString();
             draft.credentials.mailPassword = generateRandomString();
         });
@@ -215,8 +215,13 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.pass();
     },
 
-    // TODO test "dbGetContentMetadata" API
-    dbGetContentMetadata: (t) => {
+    // TODO test "dbGetAccountMetadata" API
+    dbGetAccountMetadata: (t) => {
+        t.pass();
+    },
+
+    // TODO test "dbGetAccountMetadata" API
+    dbGetAccountData: (t) => {
         t.pass();
     },
 
@@ -235,7 +240,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
     logout: async (t) => {
         const {deletePassword: deletePasswordSpy} = t.context.mocks["src/electron-main/keytar"];
         const {endpoints} = t.context;
-        const resetMemoryDbSpy = sinon.spy(t.context.ctx.db, "resetMemoryDb");
+        const resetSpy = sinon.spy(t.context.ctx.db, "reset");
 
         await endpoints.logout().toPromise();
         t.falsy(t.context.ctx.settingsStore.adapter);
@@ -253,7 +258,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.falsy(t.context.ctx.settingsStore.adapter);
         t.is(deletePasswordSpy.callCount, 3);
 
-        t.is(2, resetMemoryDbSpy.callCount);
+        t.is(2, resetSpy.callCount);
     },
 
     openAboutWindow: async (t) => {

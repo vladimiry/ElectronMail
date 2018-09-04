@@ -5,7 +5,7 @@ import {Store} from "@ngrx/store";
 import {catchError, concatMap, map, take} from "rxjs/operators";
 
 import {CORE_ACTIONS, NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
-import {ElectronService} from "../+core/electron.service";
+import {ElectronService} from "../_core/electron.service";
 import {KeePassClientConf, KeePassRef} from "src/shared/model/keepasshttp";
 import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
 import {State} from "src/web/src/app/store/reducers/options";

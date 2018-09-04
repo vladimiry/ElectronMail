@@ -1,0 +1,30 @@
+<div
+    class="btn-group"
+    *ngIf="state$ | async; let state"
+    [ngClass]="{'selected': state.selected}"
+>
+    <a href="mailto:{{ state.account.accountConfig.login }}" [ngClass]="{'btn': state.styled}">
+        <email-securely-app-type-symbol [type]="state.account.accountConfig.type" class="d-flex"></email-securely-app-type-symbol>
+        <div class="d-flex ml-2">
+            <i [class]="state.account.notifications.loggedIn ? 'fa fa-unlock' : 'fa fa-lock'"></i>
+        </div>
+        <div class="account-value-sync-unread d-flex ml-2" *ngIf="state.account.notifications.unread">
+            <span class="badge badge-danger">{{ state.account.notifications.unread }}</span>
+        </div>
+        <div class="ml-2 d-flex flex-grow-1">
+            {{ state.account.accountConfig.login }}
+        </div>
+    </a>
+    <button class="btn" (click)="toggleViewMode($event)" *ngIf="state.stored" title="Toggle online/database view mode">
+        <i
+            class="fa"
+            [ngClass]="{
+                'syncing': state.account.progress.syncing,
+                'fa-database': state.account.databaseView && !state.account.progress.togglingDatabaseView,
+                'fa-plug': !state.account.databaseView && !state.account.progress.togglingDatabaseView,
+                'fa-spinner fa-pulse fa-fw': state.account.progress.togglingDatabaseView
+            }"
+            [@fade]="state.fade" (@fade.done)="onFadeCycleDone()"
+        ></i>
+    </button>
+</div>

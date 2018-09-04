@@ -40,8 +40,8 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
     const endpoints: TutanotaApi = {
         ping: () => of(null),
 
-        buildBatchEntityUpdatesDbPatch: ({groupEntityEventBatchIds, zoneName}) => from((async () => {
-            const logger = curryFunctionMembers(_logger, "entityEventBatchesFetch()", zoneName);
+        buildBatchEntityUpdatesDbPatch: (input) => from((async () => {
+            const logger = curryFunctionMembers(_logger, "entityEventBatchesFetch()", input.zoneName);
             logger.info();
 
             const controller = getUserController();
@@ -57,7 +57,9 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
             const memberships = Rest.Util.filterSyncingMemberships(controller.user);
 
             for (const {group} of memberships) {
-                const startId = await Rest.Util.generateStartId(groupEntityEventBatchIds[group]);
+                const startId = await Rest.Util.generateStartId(
+                    input.metadata ? input.metadata.groupEntityEventBatchIds[group] : undefined,
+                );
                 const fetchedEventBatches = await Rest.fetchEntitiesRangeUntilTheEnd(
                     Rest.Model.EntityEventBatchTypeRef,
                     group,

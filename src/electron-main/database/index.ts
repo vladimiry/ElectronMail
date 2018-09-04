@@ -7,11 +7,12 @@ import {Model, Store} from "fs-json-store";
 import * as Entity from "./entity";
 import {AccountType} from "src/shared/model/account";
 import {EntityMap} from "./entity-map";
-import {FsDb, MemoryDb, MemoryDbAccount} from "src/shared/model/database";
+import {FsDb, FsDbAccount, MemoryDb, MemoryDbAccount} from "src/shared/model/database";
 import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[database]");
 
+// TODO consider dropping Map-bsed databse use ("MemoryDb"), ie use ony pupre JSON-based "FsDb"
 export class Database {
 
     private memoryDb: MemoryDb = this.buildEmptyDatabase();
@@ -43,11 +44,40 @@ export class Database {
         return metadata[type];
     }
 
-    getAccount<TL extends { type: keyof MemoryDb, login: string }>({type, login}: TL): MemoryDbAccount<TL["type"]> {
-        return this.memoryDb[type][login] || this.initAccount({type, login});
+    getFsAccount<TL extends { type: keyof MemoryDb, login: string }>({type, login}: TL): FsDbAccount<TL["type"]> | undefined {
+        const account = this.getMemoryAccount({type, login});
+
+        if (!account) {
+            return;
+        }
+
+        return this.memoryAccountToFsAccount(account);
     }
 
-    deleteAccount<TL extends { type: keyof MemoryDb, login: string }>({type, login}: TL): void {
+    getMemoryAccount<TL extends { type: keyof MemoryDb, login: string }>({type, login}: TL): MemoryDbAccount<TL["type"]> | undefined {
+        const account = this.memoryDb[type][login];
+
+        if (!account) {
+            return;
+        }
+
+        return account;
+    }
+
+    initMemoryAccount<TL extends { type: keyof MemoryDb, login: string }>({type, login}: TL): MemoryDbAccount<TL["type"]> {
+        const account = {
+            mails: new EntityMap(Entity.Mail),
+            folders: new EntityMap(Entity.Folder),
+            contacts: new EntityMap(Entity.Contact),
+            metadata: this.buildEmptyAccountMetadata(type) as any,
+        };
+
+        this.memoryDb[type][login] = account;
+
+        return account;
+    }
+
+    deleteMemoryAccount<TL extends { type: keyof MemoryDb, login: string }>({type, login}: TL): void {
         delete this.memoryDb[type][login];
     }
 
@@ -58,91 +88,104 @@ export class Database {
     async loadFromFile(): Promise<void> {
         logger.info("loadFromFile()");
 
-        const stat = {records: 0, mails: 0, folders: 0, contacts: 0, time: Number(new Date())};
+        const startTime = Number(new Date());
         const store = await this.resolveStore();
         const source = await store.readExisting();
         const target: MemoryDb = this.buildEmptyDatabase();
 
         // fs => memory
-        for (const type of Object.keys(source) as AccountType[]) {
+        for (const type of Object.keys(source) as Array<keyof typeof source>) {
             const loginBundle = source[type];
             Object.keys(loginBundle).map((login) => {
-                const recordBundle = loginBundle[login];
-                target[type][login] = {
-                    mails: new EntityMap(Entity.Mail, recordBundle.mails),
-                    folders: new EntityMap(Entity.Folder, recordBundle.folders),
-                    contacts: new EntityMap(Entity.Contact, recordBundle.contacts),
-                    metadata: recordBundle.metadata as any,
-                };
-                stat.records++;
-                stat.mails += target[type][login].mails.size;
-                stat.folders += target[type][login].folders.size;
-                stat.contacts += target[type][login].contacts.size;
+                target[type][login] = this.fsAccountToMemoryAccount(loginBundle[login]);
             });
         }
 
         this.memoryDb = target;
 
-        stat.time = Number(new Date()) - stat.time;
-        logger.verbose(`loadFromFile(): loaded stat: ${JSON.stringify(stat)}`);
+        logger.verbose(`loadFromFile().stat: ${JSON.stringify({...this.stat(), time: Number(new Date()) - startTime})}`);
     }
 
     async saveToFile(): Promise<FsDb> {
         logger.info("saveToFile()");
 
         return this.saveToFileQueue.add(async () => {
+            const startTime = Number(new Date());
             const store = await this.resolveStore();
             const dump = this.dumpToFsDb();
+            const result = await store.write(dump);
 
-            return await store.write(dump);
+            logger.verbose(`saveToFile().stat: ${JSON.stringify({...this.stat(), time: Number(new Date()) - startTime})}`);
+
+            return result;
         });
     }
 
     dumpToFsDb(): FsDb {
         logger.info("dumpToFsDb()");
 
-        const stat = {records: 0, mails: 0, folders: 0, contacts: 0};
         const {memoryDb: source} = this;
         const target: FsDb = this.buildEmptyDatabase();
 
         // memory => fs
-        for (const type of Object.keys(source) as AccountType[]) {
+        for (const type of Object.keys(source) as Array<keyof typeof source>) {
             const loginBundle = source[type];
             Object.keys(loginBundle).map((login) => {
-                const recordBundle = loginBundle[login];
-                target[type][login] = {
-                    mails: recordBundle.mails.toObject(),
-                    folders: recordBundle.folders.toObject(),
-                    contacts: recordBundle.contacts.toObject(),
-                    metadata: recordBundle.metadata as any,
-                };
-                stat.records++;
-                stat.mails += recordBundle.mails.size;
-                stat.folders += recordBundle.folders.size;
-                stat.contacts += recordBundle.contacts.size;
+                target[type][login] = this.memoryAccountToFsAccount(loginBundle[login]);
             });
         }
-
-        logger.verbose(`dumpToFsDb(): stat: ${JSON.stringify(stat)}`);
 
         return target;
     }
 
-    resetMemoryDb() {
+    reset() {
         this.memoryDb = this.buildEmptyDatabase();
     }
 
-    private initAccount<TL extends { type: keyof MemoryDb, login: string }>({type, login}: TL): MemoryDbAccount<TL["type"]> {
-        const record = {
-            mails: new EntityMap(Entity.Mail),
-            folders: new EntityMap(Entity.Folder),
-            contacts: new EntityMap(Entity.Contact),
-            metadata: this.buildEmptyAccountMetadata(type) as any,
+    stat(): { records: number, mails: number, folders: number, contacts: number } {
+        logger.info("stat()");
+
+        const {memoryDb: source} = this;
+        const stat = {records: 0, mails: 0, folders: 0, contacts: 0};
+
+        for (const type of Object.keys(source) as AccountType[]) {
+            const loginBundle = source[type];
+            Object.keys(loginBundle).map((login) => {
+                stat.records++;
+                const {mails, folders, contacts} = this.memoryAccountStat(loginBundle[login]);
+                stat.mails += mails;
+                stat.folders += folders;
+                stat.contacts += contacts;
+            });
+        }
+
+        return stat;
+    }
+
+    memoryAccountStat(account: MemoryDbAccount): { mails: number, folders: number; contacts: number } {
+        return {
+            mails: account.mails.size,
+            folders: account.folders.size,
+            contacts: account.contacts.size,
         };
+    }
 
-        this.memoryDb[type][login] = record;
+    private memoryAccountToFsAccount<T extends keyof MemoryDb>(source: MemoryDbAccount<T>): FsDbAccount<T> {
+        return {
+            mails: source.mails.toJSON(),
+            folders: source.folders.toJSON(),
+            contacts: source.contacts.toJSON(),
+            metadata: source.metadata as any,
+        };
+    }
 
-        return record;
+    private fsAccountToMemoryAccount<T extends keyof FsDb>(source: FsDbAccount<T>): MemoryDbAccount<T> {
+        return {
+            mails: new EntityMap(Entity.Mail, source.mails),
+            folders: new EntityMap(Entity.Folder, source.folders),
+            contacts: new EntityMap(Entity.Contact, source.contacts),
+            metadata: source.metadata as any,
+        };
     }
 
     private async resolveStore(): Promise<Store<FsDb>> {

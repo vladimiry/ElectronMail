@@ -8,8 +8,9 @@ import {AccountsComponent} from "./accounts.component";
 import {AccountsEffects} from "./accounts.effects";
 import {AccountsGuard} from "./accounts.guard";
 import {AccountsRoutingModule} from "./accounts.routing.module";
+import {DbViewModuleResolve} from "./db-view-module-resolve.service";
 import {KeePassRequestComponent} from "./keepass-request.component";
-import {SharedModule} from "src/web/src/app/+shared/shared.module";
+import {SharedModule} from "src/web/src/app/_shared/shared.module";
 
 @NgModule({
     imports: [
@@ -25,6 +26,7 @@ import {SharedModule} from "src/web/src/app/+shared/shared.module";
         KeePassRequestComponent,
     ],
     providers: [
+        DbViewModuleResolve,
         AccountsGuard,
     ],
     schemas: [

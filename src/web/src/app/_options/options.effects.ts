@@ -3,11 +3,12 @@ import {Deferred} from "ts-deferred";
 import {EMPTY, merge, of} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store} from "@ngrx/store";
-import {catchError, concatMap, finalize, map, mergeMap, withLatestFrom} from "rxjs/operators";
+import {catchError, concatMap, filter, finalize, map, mergeMap, withLatestFrom} from "rxjs/operators";
 
 import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
 import {CORE_ACTIONS, NAVIGATION_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
-import {ElectronService} from "src/web/src/app/+core/electron.service";
+import {ElectronService} from "src/web/src/app/_core/electron.service";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {OptionsService} from "./options.service";
@@ -36,7 +37,8 @@ export class OptionsEffects {
                     return this.api.ipcMainClient({
                         finishPromise: (this.disposeNotificationDeferred = new Deferred<void>()).promise,
                     })("notification")().pipe(
-                        mergeMap(({action}) => action === "activateBrowserWindow" ? of(OPTIONS_ACTIONS.ActivateBrowserWindow()) : EMPTY),
+                        filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.ActivateBrowserWindow),
+                        mergeMap(() => of(OPTIONS_ACTIONS.ActivateBrowserWindow())),
                         catchError((error) => of(CORE_ACTIONS.Fail(error))),
                     );
                 })(),

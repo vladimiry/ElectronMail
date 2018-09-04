@@ -19,7 +19,7 @@ import {OptionsService} from "./options.service";
 import {SettingsComponent} from "./settings.component";
 import {SettingsConfigureGuard} from "./settings-configure.guard";
 import {SettingsSetupComponent} from "./settings-setup.component";
-import {SharedModule} from "src/web/src/app/+shared/shared.module";
+import {SharedModule} from "src/web/src/app/_shared/shared.module";
 import {StorageComponent} from "./storage.component";
 
 @NgModule({

@@ -128,6 +128,9 @@ const baseConfig = buildBaseConfig(
             ],
         },
         plugins: [
+            new webpack.DefinePlugin({
+                "process.env.APP_AOT": JSON.stringify(aot),
+            }),
             new MiniCssExtractPlugin(),
             new HtmlWebpackPlugin({
                 template: webSrcPath("index.ejs"),
@@ -138,6 +141,9 @@ const baseConfig = buildBaseConfig(
             }),
             new AngularCompilerPlugin({
                 entryModule: `${webSrcEnvPath("app.module")}#AppModule`,
+                additionalLazyModules: {
+                    [`./_db-view/db-view.module#DbViewModule`]: webSrcPath("./app/_db-view/db-view.module.ts"),
+                },
                 platform: PLATFORM.Browser,
                 skipCodeGeneration: !aot,
                 tsConfigPath: tsConfigFile,

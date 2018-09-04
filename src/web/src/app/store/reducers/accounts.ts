@@ -33,10 +33,13 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                 draftState.selectedLogin = needToPickNewLogin ? (accountConfigs.length ? accountConfigs[0].login : undefined)
                     : draftState.selectedLogin;
                 draftState.accounts = accountConfigs.reduce((accounts: WebAccount[], accountConfig) => {
-                    const {account} = pickAccountBundleStrict(draftState.accounts, accountConfig, false);
+                    const {account} = pickAccountBundle(draftState.accounts, accountConfig, false);
 
                     if (account) {
                         account.accountConfig = accountConfig;
+                        if (!account.accountConfig.database) {
+                            delete account.databaseView;
+                        }
                         accounts.push(account);
                     } else {
                         accounts.push({
@@ -57,14 +60,31 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
             Activate: ({login}) => {
                 draftState.selectedLogin = login;
             },
-            NotificationPatch: ({login, notification}) => {
-                logger.verbose("(NotificationPatch)", JSON.stringify(notification));
-                const {account} = pickAccountBundleStrict(draftState.accounts, {login});
-                account.notifications = {...account.notifications, ...notification};
-            },
             PatchProgress: (payload) => {
-                const {account} = pickAccountBundleStrict(draftState.accounts, payload);
+                const {account} = pickAccountBundle(draftState.accounts, payload);
                 account.progress = {...account.progress, ...payload.patch};
+            },
+            Patch: ({login, patch}) => {
+                logger.verbose("(Patch)", JSON.stringify({patch}));
+
+                const {account} = pickAccountBundle(draftState.accounts, {login});
+
+                if ("notifications" in patch) {
+                    account.notifications = {...account.notifications, ...patch.notifications};
+                }
+                if ("syncingActivated" in patch) {
+                    account.syncingActivated = patch.syncingActivated;
+                }
+            },
+            ToggleDatabaseView: ({login, forced}) => {
+                const {account} = pickAccountBundle(draftState.accounts, {login});
+
+                if (forced) {
+                    account.databaseView = account.progress.togglingDatabaseView = forced.databaseView;
+                    return;
+                }
+
+                account.databaseView = account.progress.togglingDatabaseView = !account.databaseView;
             },
             default: () => draftState,
         });
@@ -73,7 +93,7 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
     });
 }
 
-function pickAccountBundleStrict(accounts: WebAccount[], criteria: LoginFieldContainer, strict = true) {
+function pickAccountBundle(accounts: WebAccount[], criteria: LoginFieldContainer, strict = true) {
     const index = accounts
         .map(({accountConfig}) => accountConfig)
         .findIndex(accountPickingPredicate(criteria));

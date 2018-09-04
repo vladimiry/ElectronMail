@@ -27,7 +27,7 @@ const routes: Routes = [
         children: [
             {
                 path: "",
-                loadChildren: "./+accounts/accounts.module#AccountsModule",
+                loadChildren: "./_accounts/accounts.module#AccountsModule",
             },
         ],
     },
@@ -41,7 +41,7 @@ const routes: Routes = [
         children: [
             {
                 path: "",
-                loadChildren: "./+options/options.module#OptionsModule",
+                loadChildren: "./_options/options.module#OptionsModule",
             },
         ],
     },

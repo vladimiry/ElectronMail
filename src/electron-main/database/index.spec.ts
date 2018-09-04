@@ -72,7 +72,7 @@ test("saved/saved immutability", async (t) => {
     const db = buildDatabase();
     const type: AccountType = "tutanota";
     const login = "login";
-    await db.getAccount({type, login}).folders.validateAndSet(buildFolder());
+    await db.initMemoryAccount({type, login}).folders.validateAndSet(buildFolder());
     const persisted1 = await db.saveToFile();
     const persisted2 = await db.saveToFile();
     t.deepEqual(persisted1, persisted2);
@@ -82,11 +82,11 @@ test("save => load => save immutability", async (t) => {
     const db = buildDatabase();
     const type: AccountType = "tutanota";
     const login = "login";
-    const account1 = db.getAccount({type, login});
+    const account1 = db.initMemoryAccount({type, login});
     await account1.folders.validateAndSet(buildFolder());
     const persisted1 = await db.saveToFile();
     await db.loadFromFile();
-    const account2 = db.getAccount({type, login});
+    const account2 = db.getMemoryAccount({type, login});
     const persisted2 = await db.saveToFile();
     t.deepEqual(persisted1, persisted2);
     t.deepEqual(account1, account2);
@@ -102,7 +102,7 @@ test("several sequence save calls should persist the same data", async (t) => {
 test("getting nonexistent account should initialize its content", async (t) => {
     const db = buildDatabase();
     const persisted = await db.saveToFile();
-    db.getAccount({type: "tutanota", login: "login1"});
+    db.initMemoryAccount({type: "tutanota", login: "login1"});
     const persisted2 = await db.saveToFile();
     t.notDeepEqual(persisted, persisted2);
 });
@@ -126,17 +126,17 @@ test("nonexistent file", async (t) => {
     await t.throwsAsync(db.loadFromFile(), `${db.options.file} does not exist`);
 });
 
-test("resetMemoryDb", async (t) => {
+test("reset", async (t) => {
     const db = buildDatabase();
     const initial = db.buildEmptyDatabase();
     const buildEmptyDatabaseSpy = sinon.spy(db, "buildEmptyDatabase");
 
     t.deepEqual(db.dumpToFsDb(), initial);
-    await db.getAccount({type: "tutanota", login: "login1"}).folders.validateAndSet(buildFolder());
+    await db.initMemoryAccount({type: "tutanota", login: "login1"}).folders.validateAndSet(buildFolder());
     t.notDeepEqual(db.dumpToFsDb(), initial);
 
     const buildEmptyDatabaseCallCount = buildEmptyDatabaseSpy.callCount;
-    db.resetMemoryDb();
+    db.reset();
     t.is(buildEmptyDatabaseCallCount + 1, buildEmptyDatabaseSpy.callCount);
     t.deepEqual(db.dumpToFsDb(), initial);
 });

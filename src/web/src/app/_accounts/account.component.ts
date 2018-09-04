@@ -10,19 +10,22 @@ import {
     OnDestroy,
     OnInit,
     ViewChild,
+    ViewContainerRef,
 } from "@angular/core";
 import {Deferred} from "ts-deferred";
 // tslint:disable-next-line:no-import-zones
 import {DidFailLoadEvent} from "electron";
 import {EMPTY, Subscription, combineLatest, merge, of} from "rxjs";
-import {debounceTime, filter, map, mergeMap, pairwise, take, withLatestFrom} from "rxjs/operators";
+import {debounceTime, distinctUntilChanged, filter, map, mergeMap, pairwise, take, tap, withLatestFrom} from "rxjs/operators";
 import {equals, pick} from "ramda";
 
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
 import {APP_NAME, ONE_SECOND_MS} from "src/shared/constants";
 import {AccountConfig} from "src/shared/model/account";
 import {AccountsSelectors, OptionsSelectors} from "src/web/src/app/store/selectors";
+import {DbViewModuleResolve} from "./db-view-module-resolve.service";
 import {State} from "src/web/src/app/store/reducers/accounts";
+import {Unpacked} from "src/shared/types";
 import {getZoneNameBoundWebLogger} from "src/web/src/util";
 
 let componentIndex = 0;
@@ -36,8 +39,10 @@ let componentIndex = 0;
 export class AccountComponent implements OnDestroy, OnInit {
     webViewAttributes?: { src: string; preload: string; };
     didFailLoadErrorDescription?: string;
-    @HostBinding("class.web-view-hidden")
+    @HostBinding("class.webview-hide")
     afterFailedLoadWait: number = 0;
+    @HostBinding("class.webview-hide")
+    webViewHidden: boolean = false;
     keePassClientConf$ = this.store.select(OptionsSelectors.SETTINGS.keePassClientConf);
     @Input()
     login?: string;
@@ -59,9 +64,11 @@ export class AccountComponent implements OnDestroy, OnInit {
     private subscription = new Subscription();
     private domReadySubscription = new Subscription();
     private onWebViewDomReadyDeferreds: Array<Deferred<void>> = [];
-    private stopFetchingDeferred?: Deferred<void>;
+    @ViewChild("dbViewContainer", {read: ViewContainerRef})
+    private dbViewContainerRef!: ViewContainerRef;
 
     constructor(
+        private dbViewModuleResolve: DbViewModuleResolve,
         private store: Store<State>,
         private zone: NgZone,
         private changeDetectorRef: ChangeDetectorRef,
@@ -77,7 +84,97 @@ export class AccountComponent implements OnDestroy, OnInit {
             throw new Error(`"login" @Input is supposed to be initialized at this stage`);
         }
 
-        this.account$.pipe(take(1)).subscribe(() => this.onAccountWiredUp());
+        this.subscription.add(
+            this.account$
+                .pipe(
+                    map(({accountConfig}) => accountConfig),
+                    pairwise(),
+                    filter(([{entryUrl: entryUrlPrev}, {entryUrl: entryUrlCurr}]) => entryUrlPrev !== entryUrlCurr),
+                    map(([prev, curr]) => curr),
+                )
+                .subscribe(({entryUrl}) => {
+                    if (!this.webViewAttributes) {
+                        throw new Error(`"this.webViewAttributes" is supposed to be initialized at this stage`);
+                    }
+
+                    this.webViewAttributes.src = entryUrl;
+                    this.logger.verbose(`webview.attrs.urlUpdate: "${entryUrl}"`);
+
+                    this.changeDetectorRef.detectChanges();
+                    this.logger.info(`webview.detectChanges: updated in DOM`);
+                }),
+        );
+        this.subscription.add(
+            this.account$
+                .pipe(
+                    withLatestFrom(this.store.select(OptionsSelectors.CONFIG.unreadNotifications)),
+                    filter(([account, unreadNotificationsEnabled]) => Boolean(unreadNotificationsEnabled)),
+                    map(([account]) => account),
+                    pairwise(),
+                    filter(([{notifications: prev}, {notifications: curr}]) => curr.unread > prev.unread),
+                    map(([prev, curr]) => curr),
+                )
+                .subscribe(({accountConfig, notifications}) => {
+                    const {login} = accountConfig;
+                    const {unread} = notifications;
+                    const body = `Account "${login}" has ${unread} unread email${unread > 1 ? "s" : ""}.`;
+                    new Notification(APP_NAME, {body}).onclick = () => this.zone.run(() => {
+                        this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.Activate({login}));
+                        this.dispatchInLoggerZone(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));
+                    });
+                }),
+        );
+        this.subscription.add(
+            ((state: { dbViewComponentRef?: Unpacked<ReturnType<typeof DbViewModuleResolve.prototype.buildComponentRef>> } = {}) => {
+                return this.account$
+                    .pipe(
+                        map((account) => ({
+                            type: account.accountConfig.type,
+                            login: account.accountConfig.login,
+                            databaseView: account.databaseView,
+                        })),
+                        distinctUntilChanged(({databaseView: prev}, {databaseView: curr}) => prev === curr),
+                    )
+                    .subscribe(async ({type, login, databaseView}) => {
+                        if (state.dbViewComponentRef) {
+                            state.dbViewComponentRef.destroy();
+                            this.dbViewContainerRef.clear();
+                            delete state.dbViewComponentRef;
+                        }
+                        if (databaseView) {
+                            state.dbViewComponentRef = await this.dbViewModuleResolve.buildComponentRef({type, login});
+                            this.dbViewContainerRef.insert(state.dbViewComponentRef.hostView);
+                        }
+                        this.webViewHidden = Boolean(databaseView);
+                        this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {togglingDatabaseView: false}}));
+                    });
+            })(),
+        );
+
+        // WARN: should be executed at the end of the "ngOnInit" method, ie after adding base account change subscriptions
+        this.store.select(OptionsSelectors.FEATURED.electronLocations)
+            .pipe(
+                mergeMap((value) => value ? [value] : []),
+                map(({preload}) => preload.webView),
+                withLatestFrom(this.account$.pipe(
+                    tap(() => this.logger.info(`account resolved`)),
+                )),
+                take(1),
+            )
+            .subscribe(([webViewPreloads, account]) => {
+                const {accountConfig} = account;
+                this.webViewAttributes = {src: accountConfig.entryUrl, preload: webViewPreloads[accountConfig.type]};
+                this.logger.verbose(`webview.attrs.initial: "${this.webViewAttributes.src}"`);
+
+                this.changeDetectorRef.detectChanges();
+                this.logger.info(`webview.detectChanges: mounted to DOM)`);
+
+                if (!this.webViewElementRef) {
+                    throw new Error(`"this.webViewElementRef" is supposed to be initialized at this stage`);
+                }
+
+                this.onWebViewMounted(this.webViewElementRef.nativeElement);
+            });
     }
 
     ngOnDestroy() {
@@ -103,58 +200,11 @@ export class AccountComponent implements OnDestroy, OnInit {
         });
     }
 
-    private onAccountWiredUp() {
-        this.logger.info(`onAccountWiredUp()`);
-
-        this.subscription.add(
-            this.store.select(OptionsSelectors.FEATURED.electronLocations)
-                .pipe(
-                    mergeMap((value) => value ? [value] : []),
-                    map(({preload}) => preload.webView),
-                    withLatestFrom(this.account$),
-                    take(1),
-                )
-                .subscribe(([webViewPreloads, {accountConfig}]) => {
-                    this.webViewAttributes = {src: accountConfig.entryUrl, preload: webViewPreloads[accountConfig.type]};
-                    this.logger.verbose(`webview.attrs.initial: "${this.webViewAttributes.src}"`);
-
-                    this.changeDetectorRef.detectChanges();
-                    this.logger.info(`webview.detectChanges: mounted to DOM)`);
-
-                    if (!this.webViewElementRef) {
-                        throw new Error(`"this.webViewElementRef" is supposed to be initialized at this stage`);
-                    }
-
-                    this.onWebViewMounted(this.webViewElementRef.nativeElement);
-                }),
-        );
-    }
-
     private onWebViewMounted(webView: Electron.WebviewTag) {
         this.logger.info(`onWebViewMounted()`);
 
         this.webViewDeferred.resolve(webView);
 
-        this.subscription.add(
-            this.account$
-                .pipe(
-                    map(({accountConfig}) => accountConfig),
-                    pairwise(),
-                    filter(([{entryUrl: entryUrlPrev}, {entryUrl: entryUrlCurr}]) => entryUrlPrev !== entryUrlCurr),
-                    map(([prev, curr]) => curr),
-                )
-                .subscribe(({entryUrl}) => {
-                    if (!this.webViewAttributes) {
-                        throw new Error(`"this.webViewAttributes" is supposed to be initialized at this stage`);
-                    }
-
-                    this.webViewAttributes.src = entryUrl;
-                    this.logger.verbose(`webview.attrs.urlUpdate: "${entryUrl}"`);
-
-                    this.changeDetectorRef.detectChanges();
-                    this.logger.info(`webview.detectChanges: updated in DOM`);
-                }),
-        );
         this.subscription.add(
             merge(
                 this.account$.pipe(
@@ -183,26 +233,7 @@ export class AccountComponent implements OnDestroy, OnInit {
                 this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.TryToLogin({account, webView}));
             }),
         );
-        this.subscription.add(
-            this.account$
-                .pipe(
-                    withLatestFrom(this.store.select(OptionsSelectors.CONFIG.unreadNotifications)),
-                    filter(([account, unreadNotificationsEnabled]) => Boolean(unreadNotificationsEnabled)),
-                    map(([account]) => account),
-                    pairwise(),
-                    filter(([{notifications: prev}, {notifications: curr}]) => curr.unread > prev.unread),
-                    map(([prev, curr]) => curr),
-                )
-                .subscribe(({accountConfig, notifications}) => {
-                    const {login} = accountConfig;
-                    const {unread} = notifications;
-                    const body = `Account "${login}" has ${unread} unread email${unread > 1 ? "s" : ""}.`;
-                    new Notification(APP_NAME, {body}).onclick = () => this.zone.run(() => {
-                        this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.Activate({login}));
-                        this.dispatchInLoggerZone(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));
-                    });
-                }),
-        );
+
         this.subscription.add(
             combineLatest(
                 this.store.pipe(select(AccountsSelectors.FEATURED.selectedLogin)),
@@ -242,29 +273,36 @@ export class AccountComponent implements OnDestroy, OnInit {
             );
 
             this.domReadySubscription.add(
-                this.account$
-                    .pipe(
-                        map(({notifications, accountConfig}) => ({loggedIn: notifications.loggedIn, storeMails: accountConfig.storeMails})),
-                        pairwise(),
-                        filter(([prev, curr]) => !equals(prev, curr)),
-                        map(([prev, curr]) => curr),
-                        withLatestFrom(this.account$),
-                    )
-                    .subscribe(([{loggedIn, storeMails}, account]) => {
-                        if (this.stopFetchingDeferred) {
-                            this.stopFetchingDeferred.resolve();
-                        }
+                ((state: { stopSyncingDeferred?: Deferred<void> } = {}) => {
+                    return this.account$
+                        .pipe(
+                            map(({notifications, accountConfig}) => ({
+                                loggedIn: notifications.loggedIn,
+                                database: accountConfig.database,
+                            })),
+                            pairwise(),
+                            filter(([prev, curr]) => !equals(prev, curr)),
+                            map(([prev, curr]) => curr),
+                            withLatestFrom(this.account$),
+                        )
+                        .subscribe(async ([{loggedIn, database}, account]) => {
+                            const disabled = !loggedIn || !database;
 
-                        if (!loggedIn || !storeMails) {
-                            return;
-                        }
+                            if (state.stopSyncingDeferred) {
+                                state.stopSyncingDeferred.resolve();
+                            }
 
-                        this.stopFetchingDeferred = this.setupOnWebViewDomReadyDeferred();
+                            if (disabled) {
+                                return;
+                            }
 
-                        this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.ToggleFetching({
-                            account, webView, finishPromise: this.stopFetchingDeferred.promise,
-                        }));
-                    }),
+                            state.stopSyncingDeferred = this.setupOnWebViewDomReadyDeferred();
+
+                            this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.ToggleSyncing({
+                                account, webView, finishPromise: state.stopSyncingDeferred.promise,
+                            }));
+                        });
+                })(),
             );
         };
         const arrayOfDomReadyEvenNameAndHandler = ["dom-ready", domReadyEventHandler];

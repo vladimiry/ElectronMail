@@ -1,12 +1,12 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {EMPTY, from, merge, of, Subject, timer} from "rxjs";
+import {EMPTY, Subject, from, merge, of, timer} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store} from "@ngrx/store";
 import {catchError, concatMap, filter, finalize, map, mergeMap, takeUntil, tap} from "rxjs/operators";
 
 import {ACCOUNTS_ACTIONS, CORE_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
 import {AccountTypeAndLoginFieldContainer} from "src/shared/model/container";
-import {ElectronService} from "src/web/src/app/+core/electron.service";
+import {ElectronService} from "src/web/src/app/_core/electron.service";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {State} from "src/web/src/app/store/reducers/accounts";
 import {TutanotaNotificationOutput} from "src/shared/api/webview/tutanota";
@@ -22,7 +22,7 @@ export class AccountsEffects {
         maxInInterval: 2,
     });
 
-    fireFetchingIteration$ = new Subject<AccountTypeAndLoginFieldContainer>();
+    fireSyncingIteration$ = new Subject<AccountTypeAndLoginFieldContainer>();
 
     @Effect()
     syncAccountsConfigs$ = this.actions$.pipe(
@@ -49,11 +49,15 @@ export class AccountsEffects {
                     this.api.webViewClient(webView, type, {finishPromise}).pipe(
                         mergeMap((webViewClient) => webViewClient("notification")({entryUrl, zoneName: logger.zoneName()})),
                         mergeMap((notification) => {
-                            if (type === "tutanota" && (notification as TutanotaNotificationOutput).batchEntityUpdatesCounter) {
-                                this.fireFetchingIteration$.next({type, login});
+                            if (type !== "tutanota"
+                                || typeof (notification as TutanotaNotificationOutput).batchEntityUpdatesCounter === "undefined") {
+                                return of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: notification}}));
                             }
 
-                            return of(ACCOUNTS_ACTIONS.NotificationPatch({login, notification}));
+                            this.fireSyncingIteration$.next({type, login});
+                            // skipping patching "notifications" by the "batchEntityUpdatesCounter" value
+                            return EMPTY;
+
                         }),
                         takeUntil($dispose),
                     ),
@@ -63,16 +67,19 @@ export class AccountsEffects {
     })();
 
     @Effect()
-    toggleFetching$ = (() => {
+    toggleSyncing$ = (() => {
         const merged$ = EMPTY;
 
         return this.actions$.pipe(
-            unionizeActionFilter(ACCOUNTS_ACTIONS.is.ToggleFetching),
+            unionizeActionFilter(ACCOUNTS_ACTIONS.is.ToggleSyncing),
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             mergeMap(({payload, logger}) => {
                 const {account, webView, finishPromise} = payload;
                 const {type, login} = account.accountConfig;
-                const $dispose = from(finishPromise).pipe(tap(() => logger.info("dispose")));
+                const $dispose = from(finishPromise).pipe(tap(() => {
+                    this.store.dispatch(ACCOUNTS_ACTIONS.Patch({login, patch: {syncingActivated: false}}));
+                    logger.info("dispose");
+                }));
                 const ipcMainClient = this.api.ipcMainClient();
                 const zoneName = logger.zoneName();
 
@@ -81,39 +88,48 @@ export class AccountsEffects {
                 }
 
                 // TODO consider making interval time configurable
-                // TODO handle network errors during fetching, test for online status
 
                 logger.info("setup");
 
                 return merge(
                     merged$,
                     this.api.webViewClient(webView, type, {finishPromise}).pipe(
-                        mergeMap((webViewClient) => ipcMainClient("dbGetContentMetadata")({type, login}).pipe(
-                            mergeMap(() => merge(
+                        mergeMap((webViewClient) => merge(
+                            of(ACCOUNTS_ACTIONS.Patch({login, patch: {syncingActivated: true}})),
+                            merge(
                                 timer(0, ONE_SECOND_MS * 60 * 5).pipe(
                                     tap(() => logger.verbose(`trigger: timer`)),
                                     map(() => ({forceFlush: true})),
                                 ),
-                                this.fireFetchingIteration$.pipe(
+                                this.fireSyncingIteration$.pipe(
                                     filter((value) => value.type === type && value.login === login),
-                                    tap(() => logger.verbose(`trigger: fireFetchingIteration$`)),
+                                    tap(() => logger.verbose(`trigger: fireSyncingIteration$`)),
                                     map(() => ({forceFlush: false})),
                                 ),
                             ).pipe(
                                 filter(() => navigator.onLine),
-                            )),
-                            concatMap(({forceFlush}) => ipcMainClient("dbGetContentMetadata")({type, login}).pipe(
-                                concatMap((metadata) => {
-                                    if (metadata.type !== "tutanota") {
-                                        throw new Error(`Local store is supported for "${metadata.type}" only for now`);
-                                    }
-                                    return webViewClient("buildBatchEntityUpdatesDbPatch")({...metadata, zoneName});
+                                tap(() => {
+                                    this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: true}}));
                                 }),
-                                concatMap((patch) => ipcMainClient("dbPatch")({type, login, forceFlush, ...patch})),
-                                concatMap(() => EMPTY),
+                                concatMap(({forceFlush}) => ipcMainClient("dbGetAccountMetadata")({type, login}).pipe(
+                                    concatMap((metadata) => {
+                                        if (metadata && metadata.type !== "tutanota") {
+                                            throw new Error(`Local store is supported for "${metadata.type}" only for now`);
+                                        }
+                                        return webViewClient(
+                                            "buildBatchEntityUpdatesDbPatch",
+                                            {timeoutMs: ONE_SECOND_MS * 60 * 3}, // 3 minutes
+                                        )({metadata, zoneName});
+                                    }),
+                                    concatMap((patch) => ipcMainClient("dbPatch")({type, login, forceFlush, ...patch})),
+                                    concatMap(() => EMPTY),
+                                    catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                                    finalize(() => {
+                                        this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: false}}));
+                                    }),
+                                )),
                                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
-                            )),
-                            catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                            ),
                         )),
                         takeUntil($dispose),
                     ),
@@ -131,7 +147,7 @@ export class AccountsEffects {
             const {accountConfig, notifications} = account;
             const {type, login, credentials} = accountConfig;
             const pageType = notifications.pageType.type;
-            const unreadReset = of(ACCOUNTS_ACTIONS.NotificationPatch({login, notification: {unread: 0}}));
+            const unreadReset = of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread: 0}}}));
             const zoneName = logger.zoneName();
 
             // TODO make sure passwords submitting looping doesn't happen, until then a workaround is enabled below

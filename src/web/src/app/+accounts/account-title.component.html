@@ -1,8 +1,0 @@
-<email-securely-app-type-symbol [type]="account.accountConfig.type"></email-securely-app-type-symbol>
-<div class="account-value-sync-unread" *ngIf="account.notifications.unread">
-    <span class="badge badge-danger">{{ account.notifications.unread }}</span>
-</div>
-<div class="account-value-login">{{ account.accountConfig.login }}</div>
-<div class="account-value-sync-logged-in">
-    <i [class]="account.notifications.loggedIn ? 'fa fa-unlock' : 'fa fa-lock'"></i>
-</div>

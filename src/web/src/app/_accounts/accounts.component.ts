@@ -96,6 +96,11 @@ export class AccountsComponent implements OnInit, OnDestroy {
         this.store.dispatch(NAVIGATION_ACTIONS.Quit());
     }
 
+    cancelEvent(event: Event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
     ngOnDestroy() {
         this.subscription.unsubscribe();
     }

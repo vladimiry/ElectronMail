@@ -4,7 +4,7 @@ import {Store} from "@ngrx/store";
 import {concatMap, distinctUntilChanged, scan, withLatestFrom} from "rxjs/operators";
 
 import {CORE_ACTIONS} from "src/web/src/app/store/actions";
-import {ElectronService} from "../+core/electron.service";
+import {ElectronService} from "../_core/electron.service";
 import {KeePassClientConf, KeePassRef} from "src/shared/model/keepasshttp";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {State} from "src/web/src/app/store/reducers/root";
@@ -22,20 +22,24 @@ interface ComponentState {
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class KeePassRequestComponent implements OnInit, OnDestroy {
-    stateSubject$: BehaviorSubject<ComponentState> = new BehaviorSubject({
-        paused: true,
-        progressTick: 0,
-    });
     @HostBinding("class.d-block")
     visible = false;
 
+    private stateSubject$: BehaviorSubject<ComponentState> = new BehaviorSubject({
+        paused: true,
+        progressTick: 0,
+    });
+
     private readonly waitSec = 5;
+
     private subscription = new Subscription();
 
     @Input()
     private keePassRef$!: Observable<KeePassRef | undefined>;
+
     @Input()
     private keePassClientConf$!: Observable<KeePassClientConf>;
+
     @Output()
     private passwordHandler = new EventEmitter<string>();
 

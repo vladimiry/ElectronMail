@@ -297,7 +297,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
 
         async accountsCount() {
             const client = t.context.app.client;
-            const els = await client.elements(`.list-group.accounts-list > .list-group-item-action > email-securely-app-account-title`);
+            const els = await client.elements(`.list-group.accounts-list > email-securely-app-account-title`);
 
             return els.value.length;
         },

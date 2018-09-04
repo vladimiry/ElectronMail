@@ -1,3 +1,7 @@
+import {InjectionToken} from "@angular/core";
+
+import {MemoryDb} from "src/shared/model/database";
+
 export const ACCOUNTS_OUTLET = "accounts-outlet";
 export const ACCOUNTS_PATH = "accounts";
 
@@ -9,3 +13,12 @@ export const ERRORS_PATH = "errors";
 export const ERRORS_LIMIT = 50;
 
 export const ESC_KEY = "Escape";
+
+export const DBVIEW_MODULE_ENTRY_COMPONENT_TOKEN = new InjectionToken<DbViewEntryComponent>("DbViewEntryComponent");
+
+export interface DbViewEntryComponent {
+    key?: { type: keyof MemoryDb, login: string };
+
+    // tslint:disable-next-line:no-misused-new
+    new(...args: any[]): DbViewEntryComponent;
+}

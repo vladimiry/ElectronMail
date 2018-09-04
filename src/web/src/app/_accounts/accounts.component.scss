@@ -39,7 +39,6 @@ $webview-border: darken($app-color-bg-dark, 10%);
     .controls {
         display: block;
         margin-right: $app-spacer-2;
-        margin-bottom: 0;
 
         .btn-group {
             width: 100%;
@@ -62,23 +61,21 @@ $webview-border: darken($app-color-bg-dark, 10%);
         display: flex;
         flex-flow: row;
         z-index: 100;
+        margin-bottom: $app-spacer-2;
 
         .list-group.accounts-list {
             flex-direction: row;
             flex-wrap: wrap;
-
-            .list-group-item-action {
-                display: inline-block;
-                width: auto;
-            }
         }
 
         .btn-group.accounts-list {
             width: 100%;
 
-            &::ng-deep {
-                .dropdown-toggle::after {
-                    display: none;
+            &::ng-deep #{$app-prefix}-account-title {
+                width: 100%;
+
+                .btn {
+                    padding: $btn-padding-y $btn-padding-x;
                 }
             }
 
@@ -97,12 +94,6 @@ $webview-border: darken($app-color-bg-dark, 10%);
                 width: 100%;
                 border-top-left-radius: $btn-border-radius;
                 border-bottom-left-radius: $btn-border-radius;
-
-                &::ng-deep {
-                    #{$app-prefix}-account-title {
-                        @include caret;
-                    }
-                }
             }
 
             .dropdown-menu {
@@ -122,15 +113,13 @@ $webview-border: darken($app-color-bg-dark, 10%);
     }
 
     .compact-layout {
-        .list-group.accounts-list {
-            .list-group-item-action {
-                border-radius: $list-group-border-radius;
-                margin-bottom: $app-spacer-2 * 1.15;
+        &::ng-deep #{$app-prefix}-account-title {
+            .btn {
                 padding: $btn-padding-y $btn-padding-x;
+            }
 
-                &:not(:last-child) {
-                    margin-right: $app-spacer-2;
-                }
+            &:not(:last-child) {
+                margin-right: $app-spacer-2;
             }
         }
     }
@@ -160,7 +149,7 @@ $webview-border: darken($app-color-bg-dark, 10%);
 
             .controls {
                 margin-right: 0;
-                margin-bottom: $app-spacer-3;
+                margin-bottom: $app-spacer-2 * 1.2;
             }
 
             .accounts-block {
@@ -175,6 +164,47 @@ $webview-border: darken($app-color-bg-dark, 10%);
 
             .account-block {
                 flex-grow: 100;
+            }
+
+            .list-group.accounts-list {
+                flex-direction: row;
+                flex-wrap: wrap;
+
+                &::ng-deep #{$app-prefix}-account-title {
+                    &:first-child {
+                        &,
+                        .bnt-group .btn:last-child {
+                            border-top-left-radius: $btn-border-radius;
+                            border-top-right-radius: $btn-border-radius;
+                        }
+                    }
+
+                    &:not(:first-child) {
+                        border-top: $list-group-border-width solid $gray-300;
+
+                        &,
+                        .btn {
+                            border-top-left-radius: 0;
+                            border-top-right-radius: 0;
+                        }
+                    }
+
+                    &:not(:last-child) {
+                        &,
+                        .btn {
+                            border-bottom-left-radius: 0;
+                            border-bottom-right-radius: 0;
+                        }
+                    }
+
+                    &:last-child {
+                        &,
+                        .bnt-group .btn:last-child {
+                            border-bottom-left-radius: $btn-border-radius;
+                            border-bottom-right-radius: $btn-border-radius;
+                        }
+                    }
+                }
             }
         }
     }

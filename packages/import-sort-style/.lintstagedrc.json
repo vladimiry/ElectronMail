@@ -1,13 +1,13 @@
 {
     "linters": {
-        "*.ts": [
+        "./*.ts": [
             "import-sort --write"
         ],
-        "src/**/*.ts": [
+        "./src/**/*.ts": [
             "yarn run lint:src:base --fix",
             "git add"
         ],
-        "test/**/*.ts": [
+        "./test/**/*.ts": [
             "yarn run lint:test:base --fix",
             "git add"
         ]

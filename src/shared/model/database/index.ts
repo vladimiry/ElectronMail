@@ -85,7 +85,7 @@ export interface ContactSocialId extends Entity {
 export interface EntityMap<V extends Entity, K extends V["pk"] = V["pk"]> extends Omit<Map<K, V>, "set"> {
     validateAndSet(value: V): Promise<this>;
 
-    toObject(): Record<K, V>;
+    toJSON(): Record<K, V>;
 }
 
 interface EntitiesMapContainer {
@@ -124,3 +124,5 @@ export type FsDb =
     GenericDb<"protonmail", ProtonmailMetadataPart, EntitiesRecordContainer>;
 
 export type MemoryDbAccount<T extends keyof MemoryDb = keyof MemoryDb> = MemoryDb[T][string];
+
+export type FsDbAccount<T extends keyof FsDb = keyof FsDb> = FsDb[T][string];

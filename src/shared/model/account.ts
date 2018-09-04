@@ -6,10 +6,14 @@ export interface GenericAccountConfig<Type extends AccountType, CredentialFields
     type: Type;
     login: string;
     entryUrl: string;
-    storeMails?: boolean;
+    database?: boolean;
     credentials: Partial<Record<CredentialFields, string>>;
     credentialsKeePass: Partial<Record<CredentialFields, KeePassRef>>;
 }
+
+export type AccountConfigProtonmail = GenericAccountConfig<"protonmail", "password" | "twoFactorCode" | "mailPassword">;
+export type AccountConfigTutanota = GenericAccountConfig<"tutanota", "password" | "twoFactorCode">;
+export type AccountConfig<T extends AccountType = AccountType> = Extract<AccountConfigProtonmail | AccountConfigTutanota, { type: T }>;
 
 export interface GenericNotifications<NotificationPageTypes extends string = string> {
     loggedIn: boolean;
@@ -17,12 +21,6 @@ export interface GenericNotifications<NotificationPageTypes extends string = str
     pageType: { url?: string; type: NotificationPageTypes; };
 }
 
-export type AccountConfigProtonmail = GenericAccountConfig<"protonmail", "password" | "twoFactorCode" | "mailPassword">;
-export type NotificationsProtonmail = GenericNotifications<"unknown" | "login" | "login2fa" | "unlock">;
-
-export type AccountConfigTutanota = GenericAccountConfig<"tutanota", "password" | "twoFactorCode">;
 export type NotificationsTutanota = GenericNotifications<"unknown" | "login" | "login2fa">;
-
-export type AccountConfig<T extends AccountType = AccountType> = Extract<AccountConfigProtonmail | AccountConfigTutanota, { type: T }>;
-
+export type NotificationsProtonmail = GenericNotifications<"unknown" | "login" | "login2fa" | "unlock">;
 export type Notifications = NotificationsProtonmail | NotificationsTutanota;

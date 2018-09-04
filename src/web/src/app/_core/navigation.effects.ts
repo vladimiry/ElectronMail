@@ -1,5 +1,5 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {concat, EMPTY, of} from "rxjs";
+import {EMPTY, concat, of} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Location} from "@angular/common";
 import {Router} from "@angular/router";

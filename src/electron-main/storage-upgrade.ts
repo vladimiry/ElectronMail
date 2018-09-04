@@ -1,13 +1,14 @@
 import compareVersions from "compare-versions";
 
 import {APP_VERSION} from "src/shared/constants";
+import {AccountConfig} from "src/shared/model/account";
 import {Config, Settings} from "src/shared/model/options";
 import {INITIAL_STORES} from "./constants";
 
 const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
-    "1.1.0": (config) => {
-        if ("appVersion" in config) {
-            delete (config as any).appVersion;
+    "1.1.0": (config: Config & { appVersion?: string }) => {
+        if (typeof config.appVersion !== "undefined") {
+            delete config.appVersion;
         }
     },
     "1.2.0": (config) => {
@@ -28,18 +29,23 @@ const SETTINGS_UPGRADES: Record<string, (settings: Settings) => void> = {
             }
         });
     },
-    // TODO test "1.4.2" settings upgrader
-    "1.4.2": (settings) => {
-        const prevProp = "dbEncryptionKey";
-        const prop = ((value: keyof Pick<Settings, "databaseEncryptionKey">) => value)("databaseEncryptionKey");
-
-        if (!settings[prop]) {
-            settings[prop] = (settings as any)[prevProp]
-                ? (settings as any)[prevProp]
-                : INITIAL_STORES.settings()[prop];
+    // TODO release: test "1.4.2" settings upgrader "dbEncryptionKey" renaming at least
+    "1.4.2": (settings: Settings & { dbEncryptionKey?: string }) => {
+        // rename "dbEncryptionKey" => "databaseEncryptionKey"
+        if (!settings.databaseEncryptionKey) {
+            settings.databaseEncryptionKey = settings.dbEncryptionKey
+                ? settings.dbEncryptionKey
+                : INITIAL_STORES.settings().databaseEncryptionKey;
         }
 
-        delete (settings as any)[prevProp];
+        // rename "storeMails" => "database"
+        settings.accounts.forEach((account: AccountConfig & { storeMails?: boolean }) => {
+            if (typeof account.database !== "undefined" || typeof account.storeMails === "undefined") {
+                return;
+            }
+            account.database = account.storeMails;
+            delete account.storeMails;
+        });
     },
 };
 
@@ -51,6 +57,8 @@ export function upgradeSettings(settings: Settings): boolean {
     return upgrade(settings, SETTINGS_UPGRADES);
 }
 
+// TODO consider mutating entities in upgraders in an immutable way using "immer"
+// and then test for changes size like "patches.length"
 function upgrade<T extends Config | Settings>(entity: T, upgrades: Record<string, (entity: T) => void>): boolean {
     const input = JSON.stringify(entity);
 

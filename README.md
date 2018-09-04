@@ -1,6 +1,6 @@
 # email-securely-app
 
-is built with Electron unofficial desktop app for [ProtonMail](https://protonmail.com/) and [Tutanota](https://tutanota.com/) E2E encrypted email providers, basically a wrapper around their web interfaces.
+is built with Electron unofficial desktop app for [ProtonMail](https://protonmail.com/) and [Tutanota](https://tutanota.com/) E2E encrypted email providers, basically a wrapper around their web interfaces with some enhancements aimed to increase desktop users experience.
 
 [![Build Status: Linux / MacOS](https://travis-ci.org/vladimiry/email-securely-app.svg?branch=master)](https://travis-ci.org/vladimiry/email-securely-app) [![Build status: Windows](https://ci.appveyor.com/api/projects/status/vex909uhwadrse27?svg=true)](https://ci.appveyor.com/project/vladimiry/email-securely-app)
 

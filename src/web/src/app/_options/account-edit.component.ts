@@ -25,11 +25,11 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     // form
     typeValues: AccountType[] = ["protonmail", "tutanota"];
     entryUrlItems: EntryUrlItem[] = [];
-    controls: Record<keyof Pick<AccountConfig, "type" | "login" | "storeMails" | "entryUrl">
+    controls: Record<keyof Pick<AccountConfig, "type" | "login" | "database" | "entryUrl">
         | keyof AccountConfigProtonmail["credentials"], AbstractControl> = {
         type: new FormControl(this.typeValues[0], Validators.required),
         login: new FormControl(null, Validators.required),
-        storeMails: new FormControl(null),
+        database: new FormControl(null),
         entryUrl: new FormControl(null, Validators.required),
         password: new FormControl(null),
         twoFactorCode: new FormControl(null),
@@ -79,7 +79,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
 
                 controls.type.patchValue(account.type);
                 controls.entryUrl.patchValue(account.entryUrl);
-                controls.storeMails.patchValue(account.storeMails);
+                controls.database.patchValue(account.database);
                 controls.password.patchValue(account.credentials.password);
                 controls.twoFactorCode.patchValue(account.credentials.twoFactorCode);
                 if (account.type === "protonmail") {
@@ -124,7 +124,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         const patch: Readonly<AccountConfigUpdatePatch> = {
             login: account ? account.login : controls.login.value,
             entryUrl: controls.entryUrl.value,
-            storeMails: Boolean(controls.storeMails.value),
+            database: Boolean(controls.database.value),
             credentials: {
                 password: controls.password.value,
                 twoFactorCode: controls.twoFactorCode.value,

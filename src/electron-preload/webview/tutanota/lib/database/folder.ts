@@ -7,5 +7,6 @@ export function buildFolder(input: Rest.Model.MailFolder): DatabaseModel.Folder 
         ...buildBaseEntity(input),
         folderType: DatabaseModel.MAIL_FOLDER_TYPE._.parse(input.folderType),
         name: input.name,
+        mailFolderId: input.mails,
     };
 }

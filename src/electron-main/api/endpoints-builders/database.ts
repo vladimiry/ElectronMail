@@ -1,12 +1,12 @@
 import _logger from "electron-log";
 import {from, of} from "rxjs";
-import {omit} from "ramda";
 
 import {AccountType} from "src/shared/model/account";
 import {Context} from "src/electron-main/model";
 import {Endpoints, IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
-import {EntityMap, MemoryDbAccount} from "src/shared/model/database";
+import {EntityMap, FsDbAccount, MemoryDb, MemoryDbAccount} from "src/shared/model/database";
 import {NOTIFICATION_SUBJECT} from "src/electron-main/api/constants";
+import {Unpacked} from "src/shared/types";
 import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[database api]");
@@ -14,7 +14,7 @@ const logger = curryFunctionMembers(_logger, "[database api]");
 type Methods =
     | "dbPatch"
     | "dbGetAccountMetadata"
-    | "dbGetAccountData";
+    | "dbGetAccountDataView";
 
 export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Methods>> {
     return {
@@ -22,7 +22,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
             logger.info("dbPatch()");
 
             const key = {type, login};
-            const account = ctx.db.getMemoryAccount(key) || ctx.db.initMemoryAccount(key);
+            const account = ctx.db.getAccount(key) || ctx.db.initAccount(key);
             const patchState = {modified: false};
 
             for (const entityType of (["mails", "folders", "contacts"] as ["mails", "folders", "contacts"])) {
@@ -49,7 +49,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
             }
 
             if (patchState.modified) {
-                NOTIFICATION_SUBJECT.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount({key, stat: ctx.db.memoryAccountStat(account)}));
+                NOTIFICATION_SUBJECT.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount({key, stat: ctx.db.accountStat(account)}));
             }
 
             return account.metadata;
@@ -57,14 +57,19 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
 
         dbGetAccountMetadata: ({type, login}) => {
             logger.info("dbGetAccountMetadata()");
-            const account = ctx.db.getMemoryAccount({type, login});
+
+            const account = ctx.db.getAccount({type, login});
+
             return of(account ? account.metadata : null);
         },
 
-        dbGetAccountData: ({type, login}) => {
-            logger.info("dbGetAccountData()");
+        dbGetAccountDataView: ({type, login}) => {
+            logger.info("dbGetAccountDataView()");
+
             const account = ctx.db.getFsAccount({type, login});
-            return of(account ? omit(["metadata"], account) : null);
+            const accountDataView = prepareAccountDataView(account);
+
+            return of(accountDataView);
         },
     };
 }
@@ -100,4 +105,34 @@ export function patchMetadata(
     );
 
     return true;
+}
+
+// TODO consider moving performance expensive operations to webworker
+function prepareAccountDataView<T extends keyof MemoryDb>(
+    input?: FsDbAccount<T>,
+): Unpacked<ReturnType<Endpoints["dbGetAccountDataView"]>> {
+    const {folders, mails, contacts} = input || {folders: {}, mails: {}, contacts: {}};
+    const result: ReturnType<typeof prepareAccountDataView> = {folders: [], contacts};
+    const mailsValues = Object.values(mails);
+
+    for (const pk in folders) {
+        if (!folders.hasOwnProperty(pk)) {
+            continue;
+        }
+
+        const folder: Unpacked<typeof result.folders> = {
+            ...folders[pk],
+            mails: [],
+        };
+
+        mailsValues
+            .filter((mailItem) => mailItem.mailFolderId === folder.mailFolderId)
+            .forEach((mail) => {
+                folder.mails.push({...mail, folder});
+            });
+
+        result.folders.push(folder);
+    }
+
+    return result;
 }

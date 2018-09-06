@@ -48,7 +48,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
         this.subscription.add(
             this.store.pipe(
                 select(AccountsSelectors.FEATURED.selectedAccount),
-                distinctUntilChanged((prev, curr) => Boolean(prev && curr && prev.accountConfig.login === curr.accountConfig.login)),
+                // distinctUntilChanged((prev, curr) => Boolean(prev && curr && prev.accountConfig.login === curr.accountConfig.login)),
             ).subscribe((selectedAccount) => {
                 this.selectedAccount = selectedAccount;
             }),

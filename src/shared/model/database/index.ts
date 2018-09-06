@@ -12,9 +12,15 @@ export interface Entity {
 export interface Folder extends Entity {
     folderType: string;
     name: string;
+    mailFolderId: string;
+}
+
+export interface FolderWithMailsReference extends Folder {
+    mails: MailWithFolderReference[];
 }
 
 export interface Mail extends Entity {
+    mailFolderId: Folder["mailFolderId"];
     date: Timestamp;
     subject: string;
     body: string;
@@ -24,6 +30,10 @@ export interface Mail extends Entity {
     bccRecipients: MailAddress[];
     attachments: File[];
     unread: boolean;
+}
+
+export interface MailWithFolderReference extends Mail {
+    folder: FolderWithMailsReference;
 }
 
 export interface MailAddress extends Entity {
@@ -85,22 +95,22 @@ export interface ContactSocialId extends Entity {
 export interface EntityMap<V extends Entity, K extends V["pk"] = V["pk"]> extends Omit<Map<K, V>, "set"> {
     validateAndSet(value: V): Promise<this>;
 
-    toJSON(): Record<K, V>;
+    toObject(): Record<K, V>;
 }
 
-interface EntitiesMapContainer {
+export interface DbEntitiesMapContainer {
     mails: EntityMap<Mail>;
     folders: EntityMap<Folder>;
     contacts: EntityMap<Contact>;
 }
 
-interface EntitiesRecordContainer {
+export interface DbEntitiesRecordContainer {
     mails: Record<Mail["pk"], Mail>;
     folders: Record<Folder["pk"], Folder>;
     contacts: Record<Contact["pk"], Contact>;
 }
 
-type GenericDb<T extends AccountType, M, EntitiesContainer extends EntitiesMapContainer | EntitiesRecordContainer> =
+type GenericDb<T extends AccountType, M, EntitiesContainer extends DbEntitiesMapContainer | DbEntitiesRecordContainer> =
     Record<T,
         Record<AccountConfig<T>["login"],
             Readonly<EntitiesContainer & { metadata: { type: T } & M }>>>;
@@ -114,14 +124,14 @@ interface ProtonmailMetadataPart {
 }
 
 export type MemoryDb =
-    GenericDb<"tutanota", TutanotaMetadataPart, EntitiesMapContainer>
+    GenericDb<"tutanota", TutanotaMetadataPart, DbEntitiesMapContainer>
     &
-    GenericDb<"protonmail", ProtonmailMetadataPart, EntitiesMapContainer>;
+    GenericDb<"protonmail", ProtonmailMetadataPart, DbEntitiesMapContainer>;
 
 export type FsDb =
-    GenericDb<"tutanota", TutanotaMetadataPart, EntitiesRecordContainer>
+    GenericDb<"tutanota", TutanotaMetadataPart, DbEntitiesRecordContainer>
     &
-    GenericDb<"protonmail", ProtonmailMetadataPart, EntitiesRecordContainer>;
+    GenericDb<"protonmail", ProtonmailMetadataPart, DbEntitiesRecordContainer>;
 
 export type MemoryDbAccount<T extends keyof MemoryDb = keyof MemoryDb> = MemoryDb[T][string];
 

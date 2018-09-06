@@ -11,10 +11,8 @@ $webview-border: darken($app-color-bg-dark, 10%);
     bottom: 0;
     background-color: $app-color-bg-dark;
 
-    &::ng-deep {
-        #{$app-prefix}-account {
-            border-top: 1px solid $webview-border;
-        }
+    &::ng-deep #{$app-prefix}-account {
+        border-top: 1px solid $webview-border;
     }
 
     .wrapper {
@@ -73,10 +71,6 @@ $webview-border: darken($app-color-bg-dark, 10%);
 
             &::ng-deep #{$app-prefix}-account-title {
                 width: 100%;
-
-                .btn {
-                    padding: $btn-padding-y $btn-padding-x;
-                }
             }
 
             .unread-summary {
@@ -86,6 +80,7 @@ $webview-border: darken($app-color-bg-dark, 10%);
                 padding-right: ($app-spacer-2 + $padding-x-addition);
 
                 .badge {
+                    @include app-unread-badge;
                     font-size: 100%;
                 }
             }
@@ -171,6 +166,10 @@ $webview-border: darken($app-color-bg-dark, 10%);
                 flex-wrap: wrap;
 
                 &::ng-deep #{$app-prefix}-account-title {
+                    .btn {
+                        padding: $list-group-item-padding-y $list-group-item-padding-x;
+                    }
+
                     &:first-child {
                         &,
                         .bnt-group .btn:last-child {

@@ -3,13 +3,13 @@
     *ngIf="state$ | async; let state"
     [ngClass]="{'selected': state.selected}"
 >
-    <a href="mailto:{{ state.account.accountConfig.login }}" [ngClass]="{'btn': state.styled}">
-        <email-securely-app-type-symbol [type]="state.account.accountConfig.type" class="d-flex"></email-securely-app-type-symbol>
+    <a href="mailto:{{ state.account.accountConfig.login }}" class="btn">
+        <email-securely-app-type-symbol [type]="state.account.accountConfig.type"></email-securely-app-type-symbol>
         <div class="d-flex ml-2">
             <i [class]="state.account.notifications.loggedIn ? 'fa fa-unlock' : 'fa fa-lock'"></i>
         </div>
-        <div class="account-value-sync-unread d-flex ml-2" *ngIf="state.account.notifications.unread">
-            <span class="badge badge-danger">{{ state.account.notifications.unread }}</span>
+        <div class="d-flex ml-2" *ngIf="state.account.notifications.unread">
+            <span class="badge">{{ state.account.notifications.unread }}</span>
         </div>
         <div class="ml-2 d-flex flex-grow-1">
             {{ state.account.accountConfig.login }}

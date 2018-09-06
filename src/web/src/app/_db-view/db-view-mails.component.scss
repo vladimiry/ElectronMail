@@ -1,0 +1,24 @@
+@import "~src/web/src/variables";
+
+:host {
+    display: flex;
+    width: 100%;
+
+    .folders-container {
+        display: flex;
+    }
+
+    .mails-container {
+        display: flex;
+        flex-grow: 1;
+        margin-left: $app-spacer-2;
+
+        .list-group-item {
+            padding: 0;
+        }
+    }
+
+    .list-group-item-action {
+        cursor: pointer;
+    }
+}

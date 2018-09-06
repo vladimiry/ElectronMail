@@ -57,6 +57,7 @@ export const CONTACT_SOCIAL_TYPE = build({
     CUSTOM: "5",
 });
 
+// TODO cache entries as Map<value,type> instead of iteration over array, O(1) instead of O(n) complexity
 function build<V extends string, M extends { [k: string]: V }>(map: M) {
     const {names, values} = Object.entries(map).reduce((accumulator, [key, value]) => {
         accumulator.names.push(key);

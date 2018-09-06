@@ -19,7 +19,6 @@ export const FADE_ANIMATION = trigger("fade", [
 
 interface ComponentState {
     account: WebAccount;
-    styled: boolean;
     selected: boolean;
     stored: boolean;
     fade: "on" | "off";
@@ -33,6 +32,9 @@ interface ComponentState {
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountTitleComponent implements OnInit, OnDestroy {
+    @Input()
+    highlighting: boolean = true;
+
     private stateSubject$ = new ReplaySubject<ComponentState>(1);
 
     // TODO consider replace observable with just an object explicitly triggering ChangeDetectorRef.detectChanges() after its mutation
@@ -56,12 +58,11 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
         });
     }
 
-    @Input()
-    set styled(styled: boolean) {
-        this.patchState({styled});
-    }
-
     ngOnInit() {
+        if (!this.highlighting) {
+            return;
+        }
+
         this.subscription.add(
             this.store
                 .pipe(
@@ -103,7 +104,6 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
             ? this.stateSubject$
             : of({
                 // account: null as any,
-                styled: true,
                 selected: false,
                 stored: false,
                 fade: "off",

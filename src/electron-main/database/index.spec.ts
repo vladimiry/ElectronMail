@@ -49,7 +49,7 @@ test(`save to file call should write through the "EncryptionAdapter.prototype.wr
     );
     const db = new databaseModule.Database(buildDatabaseOptions());
     // "stringify" parameters taken from the "fs-json-store/private/store.write" method
-    const dump = Buffer.from(JSON.stringify(db.dumpToFsDb(), null, 4));
+    const dump = Buffer.from(JSON.stringify(db.dump(), null, 4));
 
     t.false(adapterWriteSpy.called);
 
@@ -72,7 +72,7 @@ test("saved/saved immutability", async (t) => {
     const db = buildDatabase();
     const type: AccountType = "tutanota";
     const login = "login";
-    await db.initMemoryAccount({type, login}).folders.validateAndSet(buildFolder());
+    await db.initAccount({type, login}).folders.validateAndSet(buildFolder());
     const persisted1 = await db.saveToFile();
     const persisted2 = await db.saveToFile();
     t.deepEqual(persisted1, persisted2);
@@ -82,11 +82,11 @@ test("save => load => save immutability", async (t) => {
     const db = buildDatabase();
     const type: AccountType = "tutanota";
     const login = "login";
-    const account1 = db.initMemoryAccount({type, login});
+    const account1 = db.initAccount({type, login});
     await account1.folders.validateAndSet(buildFolder());
     const persisted1 = await db.saveToFile();
     await db.loadFromFile();
-    const account2 = db.getMemoryAccount({type, login});
+    const account2 = db.getAccount({type, login});
     const persisted2 = await db.saveToFile();
     t.deepEqual(persisted1, persisted2);
     t.deepEqual(account1, account2);
@@ -102,7 +102,7 @@ test("several sequence save calls should persist the same data", async (t) => {
 test("getting nonexistent account should initialize its content", async (t) => {
     const db = buildDatabase();
     const persisted = await db.saveToFile();
-    db.initMemoryAccount({type: "tutanota", login: "login1"});
+    db.initAccount({type: "tutanota", login: "login1"});
     const persisted2 = await db.saveToFile();
     t.notDeepEqual(persisted, persisted2);
 });
@@ -131,14 +131,14 @@ test("reset", async (t) => {
     const initial = db.buildEmptyDatabase();
     const buildEmptyDatabaseSpy = sinon.spy(db, "buildEmptyDatabase");
 
-    t.deepEqual(db.dumpToFsDb(), initial);
-    await db.initMemoryAccount({type: "tutanota", login: "login1"}).folders.validateAndSet(buildFolder());
-    t.notDeepEqual(db.dumpToFsDb(), initial);
+    t.deepEqual(db.dump(), initial);
+    await db.initAccount({type: "tutanota", login: "login1"}).folders.validateAndSet(buildFolder());
+    t.notDeepEqual(db.dump(), initial);
 
     const buildEmptyDatabaseCallCount = buildEmptyDatabaseSpy.callCount;
     db.reset();
     t.is(buildEmptyDatabaseCallCount + 1, buildEmptyDatabaseSpy.callCount);
-    t.deepEqual(db.dumpToFsDb(), initial);
+    t.deepEqual(db.dump(), initial);
 });
 
 function buildDatabase(keyResolver?: () => Promise<string>) {
@@ -173,5 +173,6 @@ function buildFolder(): Folder {
         id: randomstring.generate(),
         name: randomstring.generate(),
         folderType: MAIL_FOLDER_TYPE.SENT,
+        mailFolderId: "123",
     };
 }

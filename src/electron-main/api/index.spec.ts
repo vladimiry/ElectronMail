@@ -221,7 +221,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
     },
 
     // TODO test "dbGetAccountMetadata" API
-    dbGetAccountData: (t) => {
+    dbGetAccountDataView: (t) => {
         t.pass();
     },
 

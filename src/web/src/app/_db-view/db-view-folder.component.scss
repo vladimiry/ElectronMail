@@ -1,0 +1,9 @@
+@import "~src/web/src/variables";
+
+:host {
+    display: flex;
+
+    .badge {
+        @include app-unread-badge;
+    }
+}

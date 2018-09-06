@@ -1,13 +1,13 @@
 import {ComponentFactory, ComponentRef, Injectable, Injector, NgModuleFactoryLoader} from "@angular/core";
 
-import {DBVIEW_MODULE_ENTRY_COMPONENT_TOKEN, DbViewEntryComponent} from "src/web/src/app/app.constants";
+import {DBVIEW_MODULE_ENTRY_COMPONENT_TOKEN, DbViewEntryComponentInterface} from "src/web/src/app/app.constants";
 import {MemoryDb} from "src/shared/model/database";
 
 @Injectable()
 export class DbViewModuleResolve {
 
     private state: {
-        resolveComponentFactory: () => Promise<ComponentFactory<DbViewEntryComponent>>;
+        resolveComponentFactory: () => Promise<ComponentFactory<DbViewEntryComponentInterface>>;
     } = {
         resolveComponentFactory: async () => {
             const moduleFactory = await this.moduleLoader.load("./_db-view/db-view.module#DbViewModule");
@@ -23,7 +23,7 @@ export class DbViewModuleResolve {
         private injector: Injector,
     ) {}
 
-    async buildComponentRef(key: { type: keyof MemoryDb, login: string }): Promise<ComponentRef<DbViewEntryComponent>> {
+    async buildComponentRef(key: { type: keyof MemoryDb, login: string }): Promise<ComponentRef<DbViewEntryComponentInterface>> {
         const factory = await this.state.resolveComponentFactory();
         const componentRef = factory.create(this.injector);
 

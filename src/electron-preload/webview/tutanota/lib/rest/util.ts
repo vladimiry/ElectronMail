@@ -56,3 +56,10 @@ export function sameRefType<T extends Rest.Model.BaseEntity<Rest.Model.Id | Rest
 export function resolveInstanceId<T extends BaseEntity<Id | IdTuple>>(entity: T): Id {
     return Array.isArray(entity._id) ? entity._id[1] : entity._id;
 }
+
+export function resolveListId<T extends BaseEntity<IdTuple>>(entity: T): Id {
+    if (!Array.isArray(entity._id) || entity._id.length !== 2) {
+        throw new Error(`"_id" of the entity is not "IdTuple"/array`);
+    }
+    return entity._id[0];
+}

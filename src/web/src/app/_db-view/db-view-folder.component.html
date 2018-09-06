@@ -1,0 +1,7 @@
+<div class="d-flex flex-grow-1">
+    <span class="mr-1">{{ state.title }}</span>
+    <span>({{ state.size }})</span>
+</div>
+<div class="badge ml-2 flex-grow-0" *ngIf="state.unread">
+    {{ state.unread }}
+</div>

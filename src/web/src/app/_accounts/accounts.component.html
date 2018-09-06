@@ -45,12 +45,12 @@
         <div class="btn-group accounts-list d-lg-none" dropdown placement="bottom right"
              [ngStyle]="!accounts.length && {'visibility': 'hidden'}">
             <div class="unread-summary" *ngIf="unreadSummary && accounts.length > 1">
-                <span class="badge badge-danger">{{ unreadSummary }}</span>
+                <span class="badge">{{ unreadSummary }}</span>
             </div>
             <email-securely-app-account-title
                 *ngIf="selectedAccount"
                 [account]="selectedAccount"
-                [styled]="true"
+                [highlighting]="false"
                 dropdownToggle
                 (click)="cancelEvent($event)"
             ></email-securely-app-account-title>
@@ -67,7 +67,6 @@
             <email-securely-app-account-title
                 *ngFor="let account of accounts; trackBy: trackAccount" (click)="activateAccount($event, account)"
                 [account]="account"
-                [styled]="true"
             ></email-securely-app-account-title>
         </ul>
     </div>

@@ -10,8 +10,17 @@
 }
 
 :host {
+    $btn-default-color: theme-color("light");
+    $btn-selected-color: theme-color-level("warning", 6);
+    $btn-selected-bg-color: theme-color("warning-light");
+
     display: flex;
     padding: 0;
+
+    &::ng-deep #{$app-prefix}-type-symbol {
+        display: flex;
+        flex-direction: column;
+    }
 
     .btn-group {
         display: flex;
@@ -19,14 +28,18 @@
 
         &:not(.selected) {
             .btn {
-                @include button(theme-color("light"));
+                @include button($btn-default-color);
             }
         }
 
         &.selected {
             .btn {
-                @include button(theme-color("warning-light"));
-                color: theme-color-level("warning", 6);
+                @include button($btn-selected-bg-color);
+                color: $btn-selected-color;
+            }
+
+            button {
+                border-left: 1px solid lighten(#cdb671, 16%) !important;
             }
         }
 
@@ -39,14 +52,15 @@
         display: flex;
         flex-grow: 1;
         text-decoration: none;
-        padding: $list-group-item-padding-y $list-group-item-padding-x;
     }
 
     button {
-        padding: $list-group-item-padding-y $list-group-item-padding-x * 0.7;
+        @include app-dropdown-toggle-split;
+        border-left: 1px solid darken($btn-default-color, 13%) !important;
 
         .fa {
             font-size: 78%;
+            width: 0.78em; // prevent button size change on icon toggling
 
             &.syncing {
                 color: theme-color("primary");
@@ -54,16 +68,11 @@
         }
     }
 
-    .btn {
-        padding-top: $list-group-item-padding-y;
-        padding-bottom: $list-group-item-padding-y;
-    }
-
     .fa {
-        line-height: 1.5;
+        line-height: $line-height-base;
     }
 
     .badge {
-        padding: 0.38em 0.55em;
+        @include app-unread-badge;
     }
 }

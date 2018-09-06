@@ -1,6 +1,7 @@
 import * as DatabaseModel from "src/shared/model/database";
 import * as Rest from "src/electron-preload/webview/tutanota/lib/rest";
 import {buildBaseEntity} from ".";
+import {resolveListId} from "src/electron-preload/webview/tutanota/lib/rest/util";
 
 export async function buildMail(mail: Rest.Model.Mail): Promise<DatabaseModel.Mail> {
     const [body, files] = await Promise.all([
@@ -14,6 +15,7 @@ export async function buildMail(mail: Rest.Model.Mail): Promise<DatabaseModel.Ma
 function Mail(input: Rest.Model.Mail, body: Rest.Model.MailBody, files: Rest.Model.File[]): DatabaseModel.Mail {
     return {
         ...buildBaseEntity(input),
+        mailFolderId: resolveListId(input),
         date: Number(input.receivedDate), // TODO consider calling "generatedIdToTimestamp" on "mail._id[1]"
         subject: input.subject,
         body: body.text,

@@ -1,0 +1,11 @@
+<div class="d-flex flex-grow-1 justify-content-between">
+    <a class="sender d-flex" href="mailto:{{ mail.sender.address }}" title="{{ mail.sender.name ? mail.sender.address : '' }}">
+        {{ mail.sender.name || mail.sender.address }}
+    </a>
+    <div class="date badge d-flex">
+        {{ mail.date | date:'medium' }}
+    </div>
+</div>
+<div class="d-flex flex-grow-1">
+    <span class="subject d-flex">{{ mail.subject }}</span>
+</div>

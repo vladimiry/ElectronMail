@@ -15,7 +15,7 @@ import {getZoneNameBoundWebLogger} from "src/web/src/util";
 type WebViewApi<T extends AccountType, A = T extends "tutanota" ? TutanotaApi : ProtonmailApi>
     = WebViewApiService<Model.ActionsRecord<Extract<keyof A, string>> & A>;
 
-type CallOptions = Partial<Pick<Model.CallOptions, "timeoutMs" | "finishPromise">>;
+type CallOptions = Partial<Pick<Model.CallOptions, "timeoutMs" | "finishPromise" | "serialization">>;
 
 const logger = getZoneNameBoundWebLogger("[accounts.effects]");
 
@@ -50,7 +50,7 @@ export class ElectronService {
 
     ipcMainClient(options?: CallOptions) {
         return IPC_MAIN_API.buildClient({
-            ipcRenderer: __ELECTRON_EXPOSURE__.ipcRendererTransport as any,
+            ipcRenderer: __ELECTRON_EXPOSURE__.ipcRendererTransport,
             options: this.buildApiCallOptions(options),
         });
     }

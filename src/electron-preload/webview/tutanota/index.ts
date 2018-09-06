@@ -25,9 +25,11 @@ import {resolveApi} from "src/electron-preload/webview/tutanota/lib/api";
 const WINDOW = window as any;
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[index]");
 
-resolveApi()
-    .then(bootstrapApi)
-    .catch(_logger.error);
+if (navigator.onLine) {
+    resolveApi()
+        .then(bootstrapApi)
+        .catch(_logger.error);
+}
 
 function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
     delete WINDOW.Notification;

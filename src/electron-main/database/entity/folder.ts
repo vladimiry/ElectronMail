@@ -1,4 +1,4 @@
-import {IsIn, IsString} from "class-validator";
+import {IsIn, IsNotEmpty, IsString} from "class-validator";
 
 import * as Model from "src/shared/model/database";
 import {Entity} from "./base";
@@ -9,4 +9,8 @@ export class Folder extends Entity implements Model.Folder {
 
     @IsString()
     name!: string;
+
+    @IsNotEmpty()
+    @IsString()
+    mailFolderId!: string;
 }

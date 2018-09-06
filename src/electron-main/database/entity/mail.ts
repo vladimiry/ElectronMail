@@ -29,6 +29,10 @@ class File extends Entity implements Model.File {
 
 export class Mail extends Entity implements Model.Mail {
     @IsNotEmpty()
+    @IsString()
+    mailFolderId!: Model.Folder["mailFolderId"];
+
+    @IsNotEmpty()
     @IsInt()
     date!: Timestamp;
 

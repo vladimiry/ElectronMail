@@ -414,11 +414,11 @@ export async function printElectronLogs(t: ExecutionContext<TestContext>) {
 }
 
 export function accountCssSelector(zeroStartedAccountIndex = 0) {
-    return `.list-group.accounts-list > .list-group-item:nth-child(${zeroStartedAccountIndex + 1}) email-securely-app-account-title`;
+    return `.list-group.accounts-list > email-securely-app-account-title:nth-child(${zeroStartedAccountIndex + 1})`;
 }
 
 export function accountBadgeCssSelector(zeroStartedAccountIndex = 0) {
-    return `${accountCssSelector(zeroStartedAccountIndex)} > .account-value-sync-unread > .badge`;
+    return `${accountCssSelector(zeroStartedAccountIndex)} .badge`;
 }
 
 async function mkOutputDirs(dirs: string[]) {

@@ -39,10 +39,10 @@ let componentIndex = 0;
 export class AccountComponent implements OnDestroy, OnInit {
     webViewAttributes?: { src: string; preload: string; };
     didFailLoadErrorDescription?: string;
-    @HostBinding("class.webview-hide")
+    @HostBinding("class.webview-hidden-offline")
     afterFailedLoadWait: number = 0;
-    @HostBinding("class.webview-hide")
-    webViewHidden: boolean = false;
+    @HostBinding("class.webview-hidden-database")
+    webViewHiddenByDatabaseView: boolean = false;
     keePassClientConf$ = this.store.select(OptionsSelectors.SETTINGS.keePassClientConf);
     @Input()
     login?: string;
@@ -137,16 +137,18 @@ export class AccountComponent implements OnDestroy, OnInit {
                     )
                     .subscribe(async ({type, login, databaseView}) => {
                         if (state.dbViewComponentRef) {
-                            state.dbViewComponentRef.destroy();
-                            this.dbViewContainerRef.clear();
-                            delete state.dbViewComponentRef;
-                        }
-                        if (databaseView) {
+                            state.dbViewComponentRef.instance.setVisibility(Boolean(databaseView));
+                        } else if (databaseView) {
                             state.dbViewComponentRef = await this.dbViewModuleResolve.buildComponentRef({type, login});
                             this.dbViewContainerRef.insert(state.dbViewComponentRef.hostView);
                         }
-                        this.webViewHidden = Boolean(databaseView);
+
+                        this.webViewHiddenByDatabaseView = Boolean(databaseView);
                         this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {togglingDatabaseView: false}}));
+
+                        if (!this.webViewHiddenByDatabaseView) {
+                            setTimeout(() => this.focusWebView, 0);
+                        }
                     });
             })(),
         );
@@ -241,9 +243,8 @@ export class AccountComponent implements OnDestroy, OnInit {
             ).pipe(
                 filter(([selectedLogin]) => this.login === selectedLogin),
                 debounceTime(300),
-            ).subscribe((value) => {
-                webView.blur();
-                webView.focus();
+            ).subscribe(() => {
+                this.focusWebView();
             }),
         );
 
@@ -252,6 +253,17 @@ export class AccountComponent implements OnDestroy, OnInit {
         // }
 
         this.configureWebView(webView);
+    }
+
+    private focusWebView(webView?: Electron.WebviewTag) {
+        webView = webView || (this.webViewElementRef && this.webViewElementRef.nativeElement);
+
+        if (!webView) {
+            return;
+        }
+
+        webView.blur();
+        webView.focus();
     }
 
     private configureWebView(webView: Electron.WebviewTag) {

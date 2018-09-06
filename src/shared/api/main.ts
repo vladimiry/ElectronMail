@@ -3,6 +3,7 @@ import {ApiMethod, ApiMethodNoArgument, IpcMainApiService} from "electron-rpc-ap
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import {UnionOf, ofType, unionize} from "unionize";
 
+import * as DbModel from "src/shared/model/database";
 import {APP_NAME} from "src/shared/constants";
 import {
     AccountConfigCreatePatch,
@@ -19,23 +20,30 @@ import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {BatchEntityUpdatesDbPatch} from "./common";
 // tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects below import as unused
 import {ElectronContextLocations} from "src/shared/model/electron";
-import {FsDbAccount, MemoryDb, MemoryDbAccount} from "src/shared/model/database";
-import {Omit} from "src/shared/types";
 
 export interface Endpoints {
     addAccount: ApiMethod<AccountConfigCreatePatch, Settings>;
+
     updateAccount: ApiMethod<AccountConfigUpdatePatch, Settings>;
+
     changeAccountOrder: ApiMethod<LoginFieldContainer & { index: number }, Settings>;
+
     removeAccount: ApiMethod<LoginFieldContainer, Settings>;
 
     associateSettingsWithKeePass: ApiMethod<UrlFieldContainer, Settings>;
 
     changeMasterPassword: ApiMethod<PasswordFieldContainer & NewPasswordFieldContainer, Settings>;
 
-    dbPatch: ApiMethod<{ type: keyof MemoryDb, login: string } & BatchEntityUpdatesDbPatch
-        & { forceFlush?: boolean } & { metadata: Partial<MemoryDbAccount["metadata"]> }, MemoryDbAccount["metadata"]>;
-    dbGetAccountMetadata: ApiMethod<{ type: keyof MemoryDb, login: string }, MemoryDbAccount["metadata"] | null>;
-    dbGetAccountData: ApiMethod<{ type: keyof MemoryDb, login: string }, Omit<FsDbAccount, "metadata"> | null>;
+    dbPatch: ApiMethod<{ type: keyof DbModel.FsDb, login: string } & BatchEntityUpdatesDbPatch
+        & { forceFlush?: boolean } & { metadata: Partial<DbModel.FsDbAccount["metadata"]> }, DbModel.FsDbAccount["metadata"]>;
+
+    dbGetAccountMetadata: ApiMethod<{ type: keyof DbModel.FsDb, login: string }, DbModel.FsDbAccount["metadata"] | null>;
+
+    dbGetAccountDataView: ApiMethod<{ type: keyof DbModel.FsDb, login: string },
+        {
+            folders: DbModel.FolderWithMailsReference[];
+            contacts: DbModel.DbEntitiesRecordContainer["contacts"];
+        }>;
 
     init: ApiMethodNoArgument<{ electronLocations: ElectronContextLocations; hasSavedPassword: boolean; }>;
 
@@ -79,7 +87,7 @@ export const IPC_MAIN_API = new IpcMainApiService<Endpoints>({channel: `${APP_NA
 export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
         ActivateBrowserWindow: ofType<{}>(),
         DbPatchAccount: ofType<{
-            key: { type: keyof MemoryDb, login: string };
+            key: { type: keyof DbModel.FsDb, login: string };
             stat: { mails: number, folders: number; contacts: number };
         }>(),
     },

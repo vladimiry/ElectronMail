@@ -45,7 +45,7 @@ export class Database {
     }
 
     getFsAccount<TL extends { type: keyof MemoryDb, login: string }>({type, login}: TL): FsDbAccount<TL["type"]> | undefined {
-        const account = this.getMemoryAccount({type, login});
+        const account = this.getAccount({type, login});
 
         if (!account) {
             return;
@@ -54,7 +54,7 @@ export class Database {
         return this.memoryAccountToFsAccount(account);
     }
 
-    getMemoryAccount<TL extends { type: keyof MemoryDb, login: string }>({type, login}: TL): MemoryDbAccount<TL["type"]> | undefined {
+    getAccount<TL extends { type: keyof MemoryDb, login: string }>({type, login}: TL): MemoryDbAccount<TL["type"]> | undefined {
         const account = this.memoryDb[type][login];
 
         if (!account) {
@@ -64,7 +64,7 @@ export class Database {
         return account;
     }
 
-    initMemoryAccount<TL extends { type: keyof MemoryDb, login: string }>({type, login}: TL): MemoryDbAccount<TL["type"]> {
+    initAccount<TL extends { type: keyof MemoryDb, login: string }>({type, login}: TL): MemoryDbAccount<TL["type"]> {
         const account = {
             mails: new EntityMap(Entity.Mail),
             folders: new EntityMap(Entity.Folder),
@@ -77,7 +77,7 @@ export class Database {
         return account;
     }
 
-    deleteMemoryAccount<TL extends { type: keyof MemoryDb, login: string }>({type, login}: TL): void {
+    deleteAccount<TL extends { type: keyof MemoryDb, login: string }>({type, login}: TL): void {
         delete this.memoryDb[type][login];
     }
 
@@ -112,7 +112,7 @@ export class Database {
         return this.saveToFileQueue.add(async () => {
             const startTime = Number(new Date());
             const store = await this.resolveStore();
-            const dump = this.dumpToFsDb();
+            const dump = this.dump();
             const result = await store.write(dump);
 
             logger.verbose(`saveToFile().stat: ${JSON.stringify({...this.stat(), time: Number(new Date()) - startTime})}`);
@@ -121,8 +121,8 @@ export class Database {
         });
     }
 
-    dumpToFsDb(): FsDb {
-        logger.info("dumpToFsDb()");
+    dump(): FsDb {
+        logger.info("dump()");
 
         const {memoryDb: source} = this;
         const target: FsDb = this.buildEmptyDatabase();
@@ -152,7 +152,7 @@ export class Database {
             const loginBundle = source[type];
             Object.keys(loginBundle).map((login) => {
                 stat.records++;
-                const {mails, folders, contacts} = this.memoryAccountStat(loginBundle[login]);
+                const {mails, folders, contacts} = this.accountStat(loginBundle[login]);
                 stat.mails += mails;
                 stat.folders += folders;
                 stat.contacts += contacts;
@@ -162,7 +162,7 @@ export class Database {
         return stat;
     }
 
-    memoryAccountStat(account: MemoryDbAccount): { mails: number, folders: number; contacts: number } {
+    accountStat(account: MemoryDbAccount): { mails: number, folders: number; contacts: number } {
         return {
             mails: account.mails.size,
             folders: account.folders.size,
@@ -172,9 +172,9 @@ export class Database {
 
     private memoryAccountToFsAccount<T extends keyof MemoryDb>(source: MemoryDbAccount<T>): FsDbAccount<T> {
         return {
-            mails: source.mails.toJSON(),
-            folders: source.folders.toJSON(),
-            contacts: source.contacts.toJSON(),
+            mails: source.mails.toObject(),
+            folders: source.folders.toObject(),
+            contacts: source.contacts.toObject(),
             metadata: source.metadata as any,
         };
     }

@@ -3,12 +3,3 @@
 @import "~font-awesome/css/font-awesome.css";
 @import "~@ng-select/ng-select/themes/default.theme.css";
 @import "./dragula.css";
-
-.modal-footer {
-    padding: $modal-header-padding;
-}
-
-ng-select.ng-invalid.ng-touched .ng-select-container { // sass-lint:disable-line no-qualifying-elements
-    border-color: #dc3545;
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 0 3px #fde6e8;
-}

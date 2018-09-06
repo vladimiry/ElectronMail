@@ -105,8 +105,8 @@ export class EntityMap<V extends Entity, K extends V["pk"] = V["pk"]> implements
         return this.map.has(key);
     }
 
-    toJSON(): Record<K, V> {
-        const object = Object.create(null);
+    toObject(): Record<K, V> {
+        const object = Object.create({});
 
         for (const [k, v] of this.map) {
             object[k] = v;

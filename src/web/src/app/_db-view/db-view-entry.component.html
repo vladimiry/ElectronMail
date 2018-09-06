@@ -1,3 +1,6 @@
-<pre *ngIf="state$ | async; let state">
-    {{ state.account | json }}
-</pre>
+<email-securely-app-db-view-mails
+    *ngIf="state$ | async; let state"
+    class="p-2"
+    [input]="{folders: state.folders, filters: state.filters}"
+    (folderSelectionHandler)="folderSelectionHandler($event)"
+></email-securely-app-db-view-mails>

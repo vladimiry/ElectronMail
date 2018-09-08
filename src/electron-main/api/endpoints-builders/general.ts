@@ -63,21 +63,21 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
             return of(null);
         },
 
-        toggleBrowserWindow: ({forcedState}) => {
+        toggleBrowserWindow: ({forcedState}) => from((async () => {
             const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
 
             if (!browserWindow) {
-                return EMPTY;
+                return EMPTY.toPromise();
             }
 
             if (typeof forcedState !== "undefined" ? forcedState : !browserWindow.isVisible()) {
-                endpoints.activateBrowserWindow();
+                await endpoints.activateBrowserWindow().toPromise();
             } else {
                 browserWindow.hide();
             }
 
-            return of(null);
-        },
+            return null;
+        })()),
 
         notification: () => {
             return NOTIFICATION_SUBJECT.asObservable();

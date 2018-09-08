@@ -55,11 +55,14 @@ $webview-border: darken($app-color-bg-dark, 10%);
         }
     }
 
+    &::ng-deep #{$app-prefix}-account-title {
+        margin-bottom: $app-spacer-2 * 1.1;
+    }
+
     .accounts-block {
         display: flex;
         flex-flow: row;
         z-index: 100;
-        margin-bottom: $app-spacer-2;
 
         .list-group.accounts-list {
             flex-direction: row;
@@ -166,6 +169,8 @@ $webview-border: darken($app-color-bg-dark, 10%);
                 flex-wrap: wrap;
 
                 &::ng-deep #{$app-prefix}-account-title {
+                    margin-bottom: 0;
+
                     .btn {
                         padding: $list-group-item-padding-y $list-group-item-padding-x;
                     }

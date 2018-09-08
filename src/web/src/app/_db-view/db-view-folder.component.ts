@@ -1,8 +1,6 @@
 import {ChangeDetectionStrategy, Component, Input, OnChanges} from "@angular/core";
 
-import {FolderWithMailsReference, MAIL_FOLDER_TYPE} from "src/shared/model/database";
-
-type Folder = FolderWithMailsReference;
+import {FolderWithMailsReference as Folder, MAIL_FOLDER_TYPE} from "src/shared/model/database";
 
 const mapping: Record<keyof typeof MAIL_FOLDER_TYPE._.map, { title: (f: Folder) => string }> = {
     CUSTOM: {

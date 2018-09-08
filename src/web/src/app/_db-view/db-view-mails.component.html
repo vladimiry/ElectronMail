@@ -1,16 +1,14 @@
-<ul class="list-group folders-container">
-    <li class="list-group-item list-group-item-action" *ngFor="let folder of state.folders; trackBy: trackByEntityByPk"
-        [ngClass]="{'list-group-item-warning': input.filters.selectedFoldersMap.has(folder.pk)}">
+<ul class="list-group" *ngIf="state$ | async; let state">
+    <li class="list-group-item list-group-item-action" *ngFor="let folder of state.folders; trackBy: trackByEntityPk"
+        [ngClass]="{'list-group-item-warning': state.selectedFolderPk === folder.pk}">
         <email-securely-app-db-view-folder
             [folder]="folder"
             (click)="selectFolder(folder)"
         ></email-securely-app-db-view-folder>
     </li>
 </ul>
-<ul class="list-group mails-container">
-    <li class="list-group-item list-group-item-action" *ngFor="let mail of state.mails; trackBy: trackByEntityByPk">
-        <email-securely-app-db-view-mail
-            [mail]="mail"
-        ></email-securely-app-db-view-mail>
-    </li>
-</ul>
+<email-securely-app-db-view-mails-list
+    class="ml-2"
+    *ngIf="state$ | async; let state"
+    [mails]="state.selectedFolderMails"
+></email-securely-app-db-view-mails-list>

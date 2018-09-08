@@ -1,7 +1,7 @@
 import {ComponentFactory, ComponentRef, Injectable, Injector, NgModuleFactoryLoader} from "@angular/core";
 
 import {DBVIEW_MODULE_ENTRY_COMPONENT_TOKEN, DbViewEntryComponentInterface} from "src/web/src/app/app.constants";
-import {MemoryDb} from "src/shared/model/database";
+import {DbAccountPk} from "src/shared/model/database";
 
 @Injectable()
 export class DbViewModuleResolve {
@@ -23,11 +23,11 @@ export class DbViewModuleResolve {
         private injector: Injector,
     ) {}
 
-    async buildComponentRef(key: { type: keyof MemoryDb, login: string }): Promise<ComponentRef<DbViewEntryComponentInterface>> {
+    async buildComponentRef(dbAccountPk: DbAccountPk): Promise<ComponentRef<DbViewEntryComponentInterface>> {
         const factory = await this.state.resolveComponentFactory();
         const componentRef = factory.create(this.injector);
 
-        componentRef.instance.key = key;
+        componentRef.instance.dbAccountPk = dbAccountPk;
 
         return componentRef;
     }

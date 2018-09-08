@@ -1,18 +1,11 @@
-import {BehaviorSubject, Subscription, merge} from "rxjs";
 import {ChangeDetectionStrategy, Component, ElementRef, Input, OnDestroy, OnInit, Renderer2} from "@angular/core";
 import {Deferred} from "ts-deferred";
-import {debounceTime, filter, switchMap} from "rxjs/operators";
+import {Store} from "@ngrx/store";
 
-import {DbEntitiesRecordContainer, FolderWithMailsReference, MAIL_FOLDER_TYPE, MemoryDb} from "src/shared/model/database";
+import {DB_VIEW_ACTIONS} from "src/web/src/app/store/actions";
+import {DbAccountPk} from "src/shared/model/database";
 import {DbViewEntryComponentInterface} from "src/web/src/app/app.constants";
-import {ElectronService} from "src/web/src/app/_core/electron.service";
-import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
-
-export interface DbViewEntryComponentState {
-    folders: FolderWithMailsReference[];
-    contacts: DbEntitiesRecordContainer["contacts"];
-    filters: { selectedFoldersMap: Map<FolderWithMailsReference["pk"], FolderWithMailsReference> };
-}
+import {State} from "src/web/src/app/store/reducers/db-view";
 
 type ComponentInterface = Pick<DbViewEntryComponentInterface, Extract<keyof DbViewEntryComponentInterface, string>>;
 
@@ -24,79 +17,26 @@ type ComponentInterface = Pick<DbViewEntryComponentInterface, Extract<keyof DbVi
 })
 export class DbViewEntryComponent implements ComponentInterface, OnDestroy, OnInit {
     @Input()
-    key!: { type: keyof MemoryDb, login: string };
+    dbAccountPk!: DbAccountPk;
 
-    private stateSubject$ = new BehaviorSubject<DbViewEntryComponentState>({
-        folders: [], contacts: {}, filters: {selectedFoldersMap: new Map()},
-    });
-
-    // tslint:disable-next-line:member-ordering
-    state$ = this.stateSubject$.asObservable();
-
-    private subscription = new Subscription();
+    private finishDeferred = new Deferred<void>();
 
     constructor(
-        private electronService: ElectronService,
+        private store: Store<State>,
         private renderer: Renderer2,
         private el: ElementRef,
     ) {}
 
     ngOnInit() {
-        const notificationDeferred = new Deferred<void>();
-        const ipcMainClientPreservedPayloadReferences = this.electronService.ipcMainClient({
-            finishPromise: notificationDeferred.promise,
-            serialization: "jsan",
-        });
-
-        this.subscription.add({unsubscribe: () => notificationDeferred.resolve()});
-
-        this.subscription.add(
-            merge(
-                ipcMainClientPreservedPayloadReferences("dbGetAccountDataView")(this.key), // initial load
-                ipcMainClientPreservedPayloadReferences("notification")().pipe(
-                    filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbPatchAccount),
-                    // tslint:disable-next-line:ban
-                    switchMap(() => ipcMainClientPreservedPayloadReferences("dbGetAccountDataView")(this.key)),
-                ),
-            ).pipe(
-                debounceTime(300),
-            ).subscribe((value) => {
-                this.patchState(value);
-            }),
-        );
+        this.store.dispatch(DB_VIEW_ACTIONS.MountInstance({dbAccountPk: this.dbAccountPk, finishPromise: this.finishDeferred.promise}));
     }
 
     setVisibility(value: boolean) {
         this.renderer.setStyle(this.el.nativeElement, "display", value ? "block" : "none");
     }
 
-    folderSelectionHandler(folder: FolderWithMailsReference) {
-        // TODO enable multiple items selection
-        this.patchState({filters: {selectedFoldersMap: new Map([[folder.pk, folder]])}});
-    }
-
     ngOnDestroy() {
-        this.subscription.unsubscribe();
-    }
-
-    private patchState(patch: Partial<DbViewEntryComponentState>) {
-        const state = {...this.stateSubject$.value, ...patch};
-
-        // filter out irrelevant folder filters
-        for (const folderPk of state.filters.selectedFoldersMap.keys()) {
-            if (!state.folders.some(({pk}) => pk === folderPk)) {
-                state.filters.selectedFoldersMap.delete(folderPk);
-            }
-        }
-
-        // set initial folder filter
-        if (!state.filters.selectedFoldersMap.size) {
-            const inboxFolder = state.folders.find(({folderType}) => folderType === MAIL_FOLDER_TYPE.INBOX);
-            if (inboxFolder) {
-                state.filters.selectedFoldersMap.set(inboxFolder.pk, inboxFolder);
-            }
-        }
-
-        this.stateSubject$.next(state);
+        this.finishDeferred.resolve();
+        this.store.dispatch(DB_VIEW_ACTIONS.UnmountInstance({dbAccountPk: this.dbAccountPk}));
     }
 }

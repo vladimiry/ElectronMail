@@ -1,6 +1,4 @@
 <email-securely-app-db-view-mails
-    *ngIf="state$ | async; let state"
     class="p-2"
-    [input]="{folders: state.folders, filters: state.filters}"
-    (folderSelectionHandler)="folderSelectionHandler($event)"
+    [dbAccountPk]="dbAccountPk"
 ></email-securely-app-db-view-mails>

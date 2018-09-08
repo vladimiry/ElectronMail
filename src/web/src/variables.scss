@@ -10,8 +10,11 @@ $app-color-bg-dark: #5a6786;
 
 @mixin app-unread-badge {
     @include badge-variant(lighten(theme-color("danger"), 3%));
-    line-height: 1.5;
-    padding: 0.15em 0.5em;
+    display: flex;
+    flex-direction: column;
+    line-height: $line-height-base;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
 }
 
 @mixin app-dropdown-toggle-split {

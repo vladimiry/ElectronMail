@@ -136,3 +136,8 @@ export type FsDb =
 export type MemoryDbAccount<T extends keyof MemoryDb = keyof MemoryDb> = MemoryDb[T][string];
 
 export type FsDbAccount<T extends keyof FsDb = keyof FsDb> = FsDb[T][string];
+
+export interface DbAccountPk {
+    type: keyof MemoryDb;
+    login: string;
+}

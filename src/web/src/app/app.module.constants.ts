@@ -11,6 +11,7 @@ import {StoreModule} from "@ngrx/store";
 import {StoreRouterConnectingModule} from "@ngrx/router-store";
 
 import * as AccountsReducer from "./store/reducers/accounts";
+import * as DbViewReducer from "./store/reducers/db-view";
 import * as ErrorsReducer from "./store/reducers/errors";
 import * as OptionsReducer from "./store/reducers/options";
 import {AppComponent} from "./components/app.component";
@@ -33,8 +34,8 @@ export const APP_MODULE_NG_CONF: NgModule = {
         DragulaModule.forRoot(),
         StoreModule.forRoot(reducers, {metaReducers}),
         StoreModule.forFeature(AccountsReducer.featureName, AccountsReducer.reducer),
+        StoreModule.forFeature(DbViewReducer.featureName, DbViewReducer.reducer),
         StoreModule.forFeature(ErrorsReducer.featureName, ErrorsReducer.reducer),
-        StoreModule.forFeature(OptionsReducer.featureName, OptionsReducer.reducer),
         StoreModule.forFeature(OptionsReducer.featureName, OptionsReducer.reducer),
         StoreRouterConnectingModule,
         EffectsModule.forRoot([]),

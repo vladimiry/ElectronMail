@@ -1,8 +1,8 @@
-import produce from "immer";
 import {ComponentFixture, TestBed, TestModuleMetadata} from "@angular/core/testing";
 import {Location} from "@angular/common";
 import {RouterTestingModule} from "@angular/router/testing";
 import {Store, StoreModule} from "@ngrx/store";
+import {produce} from "immer";
 
 import {AppComponent} from "./app.component";
 import {ESC_KEY, SETTINGS_OUTLET as outlet} from "src/web/src/app/app.constants";

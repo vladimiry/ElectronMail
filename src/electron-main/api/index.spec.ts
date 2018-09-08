@@ -1,7 +1,6 @@
 import assert from "assert";
 import logger from "electron-log";
 import path from "path";
-import produce from "immer";
 import rewiremock from "rewiremock";
 import sinon from "sinon";
 import ava, {ExecutionContext, ImplementationResult, TestInterface} from "ava";
@@ -9,6 +8,7 @@ import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Fs} from "fs-json-store";
 import {generate as generateRandomString} from "randomstring";
 import {mergeDeepRight, omit} from "ramda";
+import {produce} from "immer";
 
 import {AccountConfigCreatePatch, AccountConfigUpdatePatch, PasswordFieldContainer} from "src/shared/model/container";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
@@ -153,7 +153,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
 
         const expectedSettings = produce(settings, (draft) => {
             (draft._rev as number)++;
-            draft.accounts = [
+            draft.instances = [
                 draft.accounts[2],
                 draft.accounts[0],
                 draft.accounts[1],

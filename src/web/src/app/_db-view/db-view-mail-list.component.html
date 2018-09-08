@@ -1,0 +1,7 @@
+<ul class="list-group">
+    <li class="list-group-item list-group-item-action" *ngFor="let mail of mails; trackBy: trackByEntityPk">
+        <email-securely-app-db-view-mail
+            [mail]="mail"
+        ></email-securely-app-db-view-mail>
+    </li>
+</ul>

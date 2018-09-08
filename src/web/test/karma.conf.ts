@@ -1,5 +1,5 @@
-import produce from "immer";
 import {Config} from "karma";
+import {produce} from "immer";
 
 // TODO import using alias
 import webpackConfig from "../../webpack/web";

@@ -18,19 +18,18 @@ export const reducers = {
 type RawActionReducer = ActionReducer<any, any>;
 
 export function innerMetaReducer(this: RawActionReducer, state: State, action: { type: string } & any) {
-    if (typeof action.type === "string" && action.type) {
-        logger.silly(action.type);
-    }
-
-    if (NAVIGATION_ACTIONS.match(action, {Logout: () => true, default: () => false})) {
-        return this(undefined, action);
-    }
-
     if ((process.env.NODE_ENV as BuildEnvironment) === "development") {
-        return ROOT_ACTIONS.match(action, {
-            HmrStateRestoreAction: (statePayload) => statePayload,
-            default: () => this(state, action),
-        });
+        if (typeof action.type === "string" && action.type) {
+            logger.silly(action.type);
+        }
+
+        if (ROOT_ACTIONS.is.HmrStateRestoreAction(action)) {
+            return action.payload;
+        }
+    }
+
+    if (NAVIGATION_ACTIONS.is.Logout(action)) {
+        return this(undefined, action);
     }
 
     return this(state, action);

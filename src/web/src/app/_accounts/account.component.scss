@@ -18,12 +18,6 @@
         }
     }
 
-    &::ng-deep #{$app-prefix}-db-view-entry {
-        display: flex;
-        flex: 1;
-        height: 100%;
-    }
-
     &::ng-deep #{$app-prefix}-keepass-request {
         margin: $app-spacer-2;
     }

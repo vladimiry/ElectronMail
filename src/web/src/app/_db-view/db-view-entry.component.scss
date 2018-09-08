@@ -1,10 +1,5 @@
 @import "~src/web/src/variables";
 
 :host {
-    bottom: 0;
-    display: block;
-    left: 0;
-    position: absolute;
-    right: 0;
-    top: 0;
+    display: flex;
 }

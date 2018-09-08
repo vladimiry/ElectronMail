@@ -1,8 +1,6 @@
 import {ChangeDetectionStrategy, Component, HostBinding, Input} from "@angular/core";
 
-import {MailWithFolderReference} from "src/shared/model/database";
-
-type Mail = MailWithFolderReference;
+import {MailWithFolderReference as Mail} from "src/shared/model/database";
 
 @Component({
     selector: "email-securely-app-db-view-mail",

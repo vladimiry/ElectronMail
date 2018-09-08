@@ -6,13 +6,13 @@ import {Model, Store} from "fs-json-store";
 
 import * as Entity from "./entity";
 import {AccountType} from "src/shared/model/account";
+import {DbAccountPk, FsDb, FsDbAccount, MemoryDb, MemoryDbAccount} from "src/shared/model/database";
 import {EntityMap} from "./entity-map";
-import {FsDb, FsDbAccount, MemoryDb, MemoryDbAccount} from "src/shared/model/database";
 import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[database]");
 
-// TODO consider dropping Map-bsed databse use ("MemoryDb"), ie use ony pupre JSON-based "FsDb"
+// TODO consider dropping Map-based databse use ("MemoryDb"), ie use ony pupe JSON-based "FsDb"
 export class Database {
 
     private memoryDb: MemoryDb = this.buildEmptyDatabase();
@@ -44,7 +44,7 @@ export class Database {
         return metadata[type];
     }
 
-    getFsAccount<TL extends { type: keyof MemoryDb, login: string }>({type, login}: TL): FsDbAccount<TL["type"]> | undefined {
+    getFsAccount<TL extends DbAccountPk>({type, login}: TL): FsDbAccount<TL["type"]> | undefined {
         const account = this.getAccount({type, login});
 
         if (!account) {
@@ -54,7 +54,7 @@ export class Database {
         return this.memoryAccountToFsAccount(account);
     }
 
-    getAccount<TL extends { type: keyof MemoryDb, login: string }>({type, login}: TL): MemoryDbAccount<TL["type"]> | undefined {
+    getAccount<TL extends DbAccountPk>({type, login}: TL): MemoryDbAccount<TL["type"]> | undefined {
         const account = this.memoryDb[type][login];
 
         if (!account) {
@@ -64,7 +64,7 @@ export class Database {
         return account;
     }
 
-    initAccount<TL extends { type: keyof MemoryDb, login: string }>({type, login}: TL): MemoryDbAccount<TL["type"]> {
+    initAccount<TL extends DbAccountPk>({type, login}: TL): MemoryDbAccount<TL["type"]> {
         const account = {
             mails: new EntityMap(Entity.Mail),
             folders: new EntityMap(Entity.Folder),
@@ -77,7 +77,7 @@ export class Database {
         return account;
     }
 
-    deleteAccount<TL extends { type: keyof MemoryDb, login: string }>({type, login}: TL): void {
+    deleteAccount<TL extends DbAccountPk>({type, login}: TL): void {
         delete this.memoryDb[type][login];
     }
 

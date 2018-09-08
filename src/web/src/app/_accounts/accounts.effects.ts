@@ -40,7 +40,7 @@ export class AccountsEffects {
             mergeMap(({payload, logger}) => {
                 const {account, webView, finishPromise} = payload;
                 const {type, login, entryUrl} = account.accountConfig;
-                const $dispose = from(finishPromise).pipe(tap(() => logger.info("dispose")));
+                const dispose$ = from(finishPromise).pipe(tap(() => logger.info("dispose")));
 
                 logger.info("setup");
 
@@ -59,7 +59,7 @@ export class AccountsEffects {
                             return EMPTY;
 
                         }),
-                        takeUntil($dispose),
+                        takeUntil(dispose$),
                     ),
                 );
             }),
@@ -76,7 +76,7 @@ export class AccountsEffects {
             mergeMap(({payload, logger}) => {
                 const {account, webView, finishPromise} = payload;
                 const {type, login} = account.accountConfig;
-                const $dispose = from(finishPromise).pipe(tap(() => {
+                const dispose$ = from(finishPromise).pipe(tap(() => {
                     this.store.dispatch(ACCOUNTS_ACTIONS.Patch({login, patch: {syncingActivated: false}}));
                     logger.info("dispose");
                 }));
@@ -131,7 +131,7 @@ export class AccountsEffects {
                                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
                             ),
                         )),
-                        takeUntil($dispose),
+                        takeUntil(dispose$),
                     ),
                 );
             }),

@@ -24,73 +24,69 @@ const initialState: State = {
 };
 
 export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_ACTIONS>): State {
-    return produce(state, (draftState) => {
-        ACCOUNTS_ACTIONS.match(action, {
-            WireUpConfigs: ({accountConfigs}) => {
-                const needToPickNewLogin = typeof draftState.selectedLogin === "undefined"
-                    || !accountConfigs.map(({login}) => login).includes(draftState.selectedLogin);
+    return produce(state, (draftState) => ACCOUNTS_ACTIONS.match(action, {
+        WireUpConfigs: ({accountConfigs}) => {
+            const needToPickNewLogin = typeof draftState.selectedLogin === "undefined"
+                || !accountConfigs.map(({login}) => login).includes(draftState.selectedLogin);
 
-                draftState.selectedLogin = needToPickNewLogin ? (accountConfigs.length ? accountConfigs[0].login : undefined)
-                    : draftState.selectedLogin;
-                draftState.accounts = accountConfigs.reduce((accounts: WebAccount[], accountConfig) => {
-                    const {account} = pickAccountBundle(draftState.accounts, accountConfig, false);
+            draftState.selectedLogin = needToPickNewLogin ? (accountConfigs.length ? accountConfigs[0].login : undefined)
+                : draftState.selectedLogin;
+            draftState.accounts = accountConfigs.reduce((accounts: WebAccount[], accountConfig) => {
+                const {account} = pickAccountBundle(draftState.accounts, accountConfig, false);
 
-                    if (account) {
-                        account.accountConfig = accountConfig;
-                        if (!account.accountConfig.database) {
-                            delete account.databaseView;
-                        }
-                        accounts.push(account);
-                    } else {
-                        accounts.push({
-                            accountConfig,
-                            progress: {},
-                            notifications: {
-                                loggedIn: false,
-                                unread: 0,
-                                pageType: {url: "", type: "unknown"},
-                            },
-                        } as WebAccount); // TODO ger rid of "TS as" casting
+                if (account) {
+                    account.accountConfig = accountConfig;
+                    if (!account.accountConfig.database) {
+                        delete account.databaseView;
                     }
-
-                    return accounts;
-                }, []);
-                draftState.initialized = true;
-            },
-            Activate: ({login}) => {
-                draftState.selectedLogin = login;
-            },
-            PatchProgress: (payload) => {
-                const {account} = pickAccountBundle(draftState.accounts, payload);
-                account.progress = {...account.progress, ...payload.patch};
-            },
-            Patch: ({login, patch}) => {
-                logger.verbose("(Patch)", JSON.stringify({patch}));
-
-                const {account} = pickAccountBundle(draftState.accounts, {login});
-
-                if ("notifications" in patch) {
-                    account.notifications = {...account.notifications, ...patch.notifications};
-                }
-                if ("syncingActivated" in patch) {
-                    account.syncingActivated = patch.syncingActivated;
-                }
-            },
-            ToggleDatabaseView: ({login, forced}) => {
-                const {account} = pickAccountBundle(draftState.accounts, {login});
-
-                if (forced) {
-                    account.databaseView = account.progress.togglingDatabaseView = forced.databaseView;
-                    return;
+                    accounts.push(account);
+                } else {
+                    accounts.push({
+                        accountConfig,
+                        progress: {},
+                        notifications: {
+                            loggedIn: false,
+                            unread: 0,
+                            pageType: {url: "", type: "unknown"},
+                        },
+                    } as WebAccount); // TODO ger rid of "TS as" casting
                 }
 
-                account.databaseView = account.progress.togglingDatabaseView = !account.databaseView;
-            },
-            default: () => draftState,
-        });
+                return accounts;
+            }, []);
+            draftState.initialized = true;
+        },
+        Activate: ({login}) => {
+            draftState.selectedLogin = login;
+        },
+        PatchProgress: (payload) => {
+            const {account} = pickAccountBundle(draftState.accounts, payload);
+            account.progress = {...account.progress, ...payload.patch};
+        },
+        Patch: ({login, patch}) => {
+            logger.verbose("(Patch)", JSON.stringify({patch}));
 
-        return draftState;
-    });
+            const {account} = pickAccountBundle(draftState.accounts, {login});
+
+            if ("notifications" in patch) {
+                account.notifications = {...account.notifications, ...patch.notifications};
+            }
+            if ("syncingActivated" in patch) {
+                account.syncingActivated = patch.syncingActivated;
+            }
+        },
+        ToggleDatabaseView: ({login, forced}) => {
+            const {account} = pickAccountBundle(draftState.accounts, {login});
+
+            if (forced) {
+                account.databaseView = account.progress.togglingDatabaseView = forced.databaseView;
+                return;
+            }
+
+            account.databaseView = account.progress.togglingDatabaseView = !account.databaseView;
+        },
+        default: () => draftState,
+    }));
 }
 
 function pickAccountBundle(accounts: WebAccount[], criteria: LoginFieldContainer, strict = true) {

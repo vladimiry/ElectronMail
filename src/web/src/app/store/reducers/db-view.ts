@@ -1,8 +1,7 @@
-import {UnionOf} from "unionize";
-
 import * as fromRoot from "src/web/src/app/store/reducers/root";
 import {DB_VIEW_ACTIONS} from "src/web/src/app/store/actions";
 import {DbEntitiesRecordContainer, FolderWithMailsReference as Folder, MAIL_FOLDER_TYPE} from "src/shared/model/database";
+import {UnionOf} from "@vladimiry/unionize";
 
 export const featureName = "db-view";
 

@@ -1,9 +1,8 @@
-import {UnionOf} from "unionize";
-
 import * as fromRoot from "./root";
 import {Config, Settings} from "src/shared/model/options";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
+import {UnionOf} from "@vladimiry/unionize";
 
 export const featureName = "options";
 

@@ -1,4 +1,4 @@
-import {ofType, unionize} from "unionize";
+import {ofType, unionize} from "@vladimiry/unionize";
 
 export const CORE_ACTIONS = unionize({
         Fail: ofType<Error>(),

@@ -1,5 +1,4 @@
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
-import {ofType, unionize} from "unionize";
 
 import {
     AccountConfigCreatePatch,
@@ -12,6 +11,7 @@ import {
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {ProgressPatch} from "src/web/src/app/store/reducers/options";
+import {ofType, unionize} from "@vladimiry/unionize";
 
 export const OPTIONS_ACTIONS = unionize({
         AddAccountRequest: ofType<AccountConfigCreatePatch>(),

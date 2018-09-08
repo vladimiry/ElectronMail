@@ -2,4 +2,8 @@
 
 :host {
     display: flex;
+
+    > #{$app-prefix}-db-view-mails {
+        flex-grow: 1;
+    }
 }

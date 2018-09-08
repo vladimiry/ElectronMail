@@ -1,10 +1,18 @@
 import _logger from "electron-log";
+import R from "ramda";
 import {from, of} from "rxjs";
 
 import {AccountType} from "src/shared/model/account";
 import {Context} from "src/electron-main/model";
 import {Endpoints, IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
-import {EntityMap, FsDbAccount, MemoryDb, MemoryDbAccount} from "src/shared/model/database";
+import {
+    EntityMap,
+    FolderWithMailsReference as Folder,
+    FsDbAccount,
+    MAIL_FOLDER_TYPE,
+    MemoryDb,
+    MemoryDbAccount,
+} from "src/shared/model/database";
 import {NOTIFICATION_SUBJECT} from "src/electron-main/api/constants";
 import {Unpacked} from "src/shared/types";
 import {curryFunctionMembers} from "src/shared/util";
@@ -111,28 +119,91 @@ export function patchMetadata(
 function prepareAccountDataView<T extends keyof MemoryDb>(
     input?: FsDbAccount<T>,
 ): Unpacked<ReturnType<Endpoints["dbGetAccountDataView"]>> {
-    const {folders, mails, contacts} = input || {folders: {}, mails: {}, contacts: {}};
-    const result: ReturnType<typeof prepareAccountDataView> = {folders: [], contacts};
-    const mailsValues = Object.values(mails);
+    const {folders: foldersRecord, mails: mailsRecord, contacts} = input || {folders: {}, mails: {}, contacts: {}};
+    const mails = Object.values(mailsRecord);
+    const folders: Folder[] = [];
 
-    for (const pk in folders) {
-        if (!folders.hasOwnProperty(pk)) {
+    for (const pk in foldersRecord) {
+        if (!foldersRecord.hasOwnProperty(pk)) {
             continue;
         }
 
-        const folder: Unpacked<typeof result.folders> = {
-            ...folders[pk],
+        const folder: Folder = {
+            ...foldersRecord[pk],
             mails: [],
         };
 
-        mailsValues
+        mails
             .filter((mailItem) => mailItem.mailFolderId === folder.mailFolderId)
-            .forEach((mail) => {
-                folder.mails.push({...mail, folder});
-            });
+            .forEach((mail) => folder.mails.push({...mail, folder}));
 
-        result.folders.push(folder);
+        folders.push(folder);
     }
 
-    return result;
+    return {
+        folders: prepareFoldersView(folders),
+        contacts,
+    };
 }
+
+const prepareFoldersView: (folders: Folder[]) => {
+    system: Folder[];
+    custom: Folder[];
+} = (() => {
+    const customizers: Record<keyof typeof MAIL_FOLDER_TYPE._.nameValueMap, {
+        title: (f: Folder) => string;
+        order: number;
+    }> = {
+        CUSTOM: {
+            title: ({name}) => name,
+            order: 0,
+        },
+        INBOX: {
+            title: () => "Inbox",
+            order: 1,
+        },
+        SENT: {
+            title: () => "Sent",
+            order: 3,
+        },
+        TRASH: {
+            title: () => "Trash",
+            order: 4,
+        },
+        ARCHIVE: {
+            title: () => "Archive",
+            order: 5,
+        },
+        SPAM: {
+            title: () => "Spam",
+            order: 6,
+        },
+        DRAFT: {
+            title: () => "Draft",
+            order: 2,
+        },
+    };
+    type Customizer = typeof customizers[keyof typeof MAIL_FOLDER_TYPE._.nameValueMap];
+    type CustomizerResolver = (folder: Folder) => Customizer;
+    const sortByName = R.sortBy(R.prop(((prop: keyof Pick<Folder, "name">) => prop)("name")));
+    const customizerSortDiff = (customizer: CustomizerResolver) => (o1: Folder, o2: Folder) => customizer(o1).order - customizer(o2).order;
+
+    return (folders: Folder[]) => {
+        const customizer: CustomizerResolver = (() => {
+            const cache = new Map(
+                folders.map((folder) => [
+                    folder, customizers[MAIL_FOLDER_TYPE._.resolveNameByValue(folder.folderType)],
+                ] as [Folder, Customizer]),
+            );
+            return (folder: Folder): Customizer => cache.get(folder) as Customizer;
+        })();
+        const result = {
+            system: R.sort(customizerSortDiff(customizer), folders.filter((folder) => folder.folderType !== MAIL_FOLDER_TYPE.CUSTOM)),
+            custom: sortByName(folders.filter((folder) => folder.folderType === MAIL_FOLDER_TYPE.CUSTOM)),
+        };
+
+        result.system.forEach((folder) => folder.name = customizer(folder).title(folder));
+
+        return result;
+    };
+})();

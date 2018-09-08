@@ -112,10 +112,6 @@ $webview-border: darken($app-color-bg-dark, 10%);
 
     .compact-layout {
         &::ng-deep #{$app-prefix}-account-title {
-            .btn {
-                padding: $btn-padding-y $btn-padding-x;
-            }
-
             &:not(:last-child) {
                 margin-right: $app-spacer-2;
             }

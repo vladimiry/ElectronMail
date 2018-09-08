@@ -38,8 +38,8 @@
                 color: $btn-selected-color;
             }
 
-            button {
-                border-left: 1px solid lighten(#cdb671, 16%) !important;
+            button.btn {
+                border-left: 1px solid lighten(#cdb671, 16%);
             }
         }
 
@@ -48,15 +48,16 @@
         }
     }
 
-    a {
+    a.btn {
         display: flex;
         flex-grow: 1;
         text-decoration: none;
     }
 
-    button {
+    button.btn {
         @include app-dropdown-toggle-split;
-        border-left: 1px solid darken($btn-default-color, 13%) !important;
+        border-left: 1px solid darken($btn-default-color, 13%);
+        margin-left: 0;
 
         .fa {
             font-size: 78%;

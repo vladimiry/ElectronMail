@@ -41,7 +41,10 @@ export interface Endpoints {
 
     dbGetAccountDataView: ApiMethod<{ type: keyof DbModel.FsDb, login: string },
         {
-            folders: DbModel.FolderWithMailsReference[];
+            folders: {
+                system: DbModel.FolderWithMailsReference[];
+                custom: DbModel.FolderWithMailsReference[];
+            };
             contacts: DbModel.DbEntitiesRecordContainer["contacts"];
         }>;
 

@@ -29,14 +29,15 @@ export class DbViewMailsComponent extends ObservableNgChangesComponent {
     ).pipe(
         map(([{data, filters}]) => {
             const state = {
-                folders: data.folders,
-                selectedFolderMails: data.folders
+                systemFolders: data.folders.system,
+                customFolders: data.folders.custom,
+                selectedFolderMails: data.folders.system.concat(data.folders.custom)
                     .filter((folder) => folder.pk === filters.selectedFolderPk)
                     .reduce((mailsAccumulator: typeof mails, {mails}) => mailsAccumulator.concat(mails), []),
                 selectedFolderPk: filters.selectedFolderPk,
             };
 
-            // TODO enable custom sorting
+            // TODO enable custom mails list sorting
             state.selectedFolderMails.sort((o1, o2) => o2.date - o1.date);
 
             return state;

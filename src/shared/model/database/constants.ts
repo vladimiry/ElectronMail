@@ -57,26 +57,29 @@ export const CONTACT_SOCIAL_TYPE = build({
     CUSTOM: "5",
 });
 
-// TODO cache entries as Map<value,type> instead of iteration over array, O(1) instead of O(n) complexity
-function build<V extends string, M extends { [k: string]: V }>(map: M) {
-    const {names, values} = Object.entries(map).reduce((accumulator, [key, value]) => {
-        accumulator.names.push(key);
-        accumulator.values.push(value as V);
-        return accumulator;
-    }, ((value: { names: Array<keyof M>, values: V[] }) => value)({values: [], names: []}));
-    const index = (rawValue: V/*, strict: boolean = true*/) => {
-        const result = values.indexOf(String(rawValue) as V);
-        if (/*strict && */result === -1) {
-            throw new Error(`Invalid value`);
+// TODO consider using https://github.com/cedx/enum.js instead
+function build<V extends string, M extends { [k: string]: V }>(nameValueMap: M) {
+    const {names, values, valueNameMap} = Object
+        .entries(nameValueMap)
+        .reduce((accumulator: { names: Array<keyof M>; values: V[]; valueNameMap: { [k in V]: string } }, [key, value]) => {
+            accumulator.names.push(key);
+            accumulator.values.push(value as V);
+            accumulator.valueNameMap[value] = key;
+            return accumulator;
+        }, {values: [], names: [], valueNameMap: {} as any});
+    const resolveNameByValue = (value: V, strict: boolean = true): keyof M => {
+        if (strict && !(value in valueNameMap)) {
+            throw new Error(`Failed to parse "${value}" value from the "${JSON.stringify(nameValueMap)}" map`);
         }
-        return result;
+        return valueNameMap[value];
     };
-    const parse = (rawValue: any) => values[index(rawValue)];
-    const name = (rawValue: V) => names[index(rawValue)];
+    const parseValue = (rawValue: any, strict: boolean = true): V => nameValueMap[resolveNameByValue(rawValue, strict)];
 
     // TODO deep freeze the result object
     return Object.assign(
-        {_: {index, parse, name, names, values, map}},
-        map,
+        {
+            _: {resolveNameByValue, parseValue, names, values, nameValueMap},
+        },
+        nameValueMap,
     );
 }

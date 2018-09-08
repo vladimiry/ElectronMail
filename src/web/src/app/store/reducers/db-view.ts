@@ -8,7 +8,10 @@ export const featureName = "db-view";
 
 export interface Instance {
     data: {
-        folders: Folder[];
+        folders: {
+            system: Folder[];
+            custom: Folder[];
+        };
         contacts: DbEntitiesRecordContainer["contacts"];
     };
     filters: {
@@ -32,8 +35,8 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
 
             instance.data = {...instance.data, ...patch};
 
-            const {folders} = instance.data;
             const {filters} = instance;
+            const folders = instance.data.folders.system.concat(instance.data.folders.custom);
 
             if (!folders.length) {
                 delete filters.selectedFolderPk;
@@ -85,7 +88,10 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
 function buildInstance(): Instance {
     return {
         data: {
-            folders: [],
+            folders: {
+                system: [],
+                custom: [],
+            },
             contacts: {},
         },
         filters: {

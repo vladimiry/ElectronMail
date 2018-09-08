@@ -2,11 +2,23 @@
 
 :host {
     display: flex;
-    flex-grow: 1;
 
-    > .list-group {
-        > .list-group-item-action {
-            cursor: pointer;
+    > .folders-container {
+        display: flex;
+        flex-direction: column;
+
+        > .list-group {
+            &:not(:first-of-type) {
+                margin-top: $app-spacer-2;
+            }
+
+            > .list-group-item-action {
+                cursor: pointer;
+            }
         }
+    }
+
+    > #{$app-prefix}-db-view-mails-list {
+        margin-left: $app-spacer-2;
     }
 }

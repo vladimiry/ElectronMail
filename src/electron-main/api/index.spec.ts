@@ -153,7 +153,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
 
         const expectedSettings = produce(settings, (draft) => {
             (draft._rev as number)++;
-            draft.instances = [
+            draft.accounts = [
                 draft.accounts[2],
                 draft.accounts[0],
                 draft.accounts[1],

@@ -19,7 +19,7 @@ export function buildContact(input: Rest.Model.Contact): DatabaseModel.Contact {
 function ContactAddress(input: Rest.Model.ContactAddress): DatabaseModel.ContactAddress {
     return {
         ...buildBaseEntity(input),
-        type: DatabaseModel.CONTACT_ADDRESS_TYPE._.parse(input.type),
+        type: DatabaseModel.CONTACT_ADDRESS_TYPE._.parseValue(input.type),
         customTypeName: input.customTypeName,
         address: input.address,
     };
@@ -35,7 +35,7 @@ function Birthday(input: Rest.Model.Birthday): DatabaseModel.Birthday {
 function ContactMailAddress(input: Rest.Model.ContactMailAddress): DatabaseModel.ContactMailAddress {
     return {
         ...buildBaseEntity(input),
-        type: DatabaseModel.CONTACT_ADDRESS_TYPE._.parse(input.type),
+        type: DatabaseModel.CONTACT_ADDRESS_TYPE._.parseValue(input.type),
         customTypeName: input.customTypeName,
         address: input.address,
     };
@@ -44,7 +44,7 @@ function ContactMailAddress(input: Rest.Model.ContactMailAddress): DatabaseModel
 function ContactSocialId(input: Rest.Model.ContactSocialId): DatabaseModel.ContactSocialId {
     return {
         ...buildBaseEntity(input),
-        type: DatabaseModel.CONTACT_SOCIAL_TYPE._.parse(input.type),
+        type: DatabaseModel.CONTACT_SOCIAL_TYPE._.parseValue(input.type),
         customTypeName: input.customTypeName,
         socialId: input.socialId,
     };
@@ -53,7 +53,7 @@ function ContactSocialId(input: Rest.Model.ContactSocialId): DatabaseModel.Conta
 function ContactPhoneNumber(input: Rest.Model.ContactPhoneNumber): DatabaseModel.ContactPhoneNumber {
     return {
         ...buildBaseEntity(input),
-        type: DatabaseModel.CONTACT_PHONE_NUMBER_TYPE._.parse(input.type),
+        type: DatabaseModel.CONTACT_PHONE_NUMBER_TYPE._.parseValue(input.type),
         customTypeName: input.customTypeName,
         number: input.number,
     };

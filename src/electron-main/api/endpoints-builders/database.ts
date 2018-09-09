@@ -134,7 +134,7 @@ function prepareAccountDataView<T extends keyof MemoryDb>(
         };
 
         mails
-            .filter((mailItem) => mailItem.mailFolderId === folder.mailFolderId)
+            .filter((mailItem) => mailItem.mailFolderIds.includes(folder.mailFolderId))
             .forEach((mail) => folder.mails.push({...mail, folder}));
 
         folders.push(folder);

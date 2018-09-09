@@ -1,4 +1,4 @@
-import {IsArray, IsBoolean, IsInt, IsNotEmpty, IsString, ValidateNested} from "class-validator";
+import {ArrayNotEmpty, ArrayUnique, IsArray, IsBoolean, IsInt, IsNotEmpty, IsString, ValidateNested} from "class-validator";
 import {Type} from "class-transformer";
 
 import * as Model from "src/shared/model/database";
@@ -28,9 +28,10 @@ class File extends Entity implements Model.File {
 }
 
 export class Mail extends Entity implements Model.Mail {
-    @IsNotEmpty()
-    @IsString()
-    mailFolderId!: Model.Folder["mailFolderId"];
+    @ArrayUnique()
+    @IsArray()
+    @IsString({each: true})
+    mailFolderIds!: Array<Model.Folder["mailFolderId"]>;
 
     @IsNotEmpty()
     @IsInt()
@@ -50,6 +51,7 @@ export class Mail extends Entity implements Model.Mail {
 
     @ValidateNested()
     @IsArray()
+    @ArrayNotEmpty()
     @Type(() => MailAddress)
     toRecipients!: MailAddress[];
 

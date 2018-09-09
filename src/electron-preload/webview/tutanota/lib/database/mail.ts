@@ -15,7 +15,7 @@ export async function buildMail(mail: Rest.Model.Mail): Promise<DatabaseModel.Ma
 function Mail(input: Rest.Model.Mail, body: Rest.Model.MailBody, files: Rest.Model.File[]): DatabaseModel.Mail {
     return {
         ...buildBaseEntity(input),
-        mailFolderId: resolveListId(input),
+        mailFolderIds: [resolveListId(input)],
         date: Number(input.receivedDate), // TODO consider calling "generatedIdToTimestamp" on "mail._id[1]"
         subject: input.subject,
         body: body.text,

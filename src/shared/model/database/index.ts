@@ -20,7 +20,7 @@ export interface FolderWithMailsReference extends Folder {
 }
 
 export interface Mail extends Entity {
-    mailFolderId: Folder["mailFolderId"];
+    mailFolderIds: Array<Folder["mailFolderId"]>;
     date: Timestamp;
     subject: string;
     body: string;

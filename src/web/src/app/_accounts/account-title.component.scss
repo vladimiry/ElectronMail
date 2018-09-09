@@ -30,6 +30,10 @@
             .btn {
                 @include button($btn-default-color);
             }
+
+            .b-toggle-view {
+                border-left: 1px solid darken($btn-default-color, 10%);
+            }
         }
 
         &.selected {
@@ -38,7 +42,7 @@
                 color: $btn-selected-color;
             }
 
-            button.btn {
+            .b-toggle-view {
                 border-left: 1px solid lighten(#cdb671, 16%);
             }
         }
@@ -48,15 +52,14 @@
         }
     }
 
-    a.btn {
+    .b-primary {
         display: flex;
         flex-grow: 1;
         text-decoration: none;
     }
 
-    button.btn {
+    .b-toggle-view {
         @include app-dropdown-toggle-split;
-        border-left: 1px solid darken($btn-default-color, 13%);
         margin-left: 0;
 
         .fa {

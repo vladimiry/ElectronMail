@@ -9,12 +9,20 @@ import {FolderWithMailsReference as Folder} from "src/shared/model/database";
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DbViewFolderComponent {
-    state: { size: number; title: string; unread: number } = {size: 0, title: "", unread: 0};
+    state: {
+        size?: number;
+        title?: string;
+        unread?: number;
+        folderType?: string;
+    } = {};
 
     @Input()
-    set folder({name, mails}: Folder) {
-        this.state.title = name;
-        this.state.size = mails.length;
-        this.state.unread = mails.filter(({unread}) => unread).length;
+    set folder({name, mails, folderType}: Folder) {
+        this.state = {
+            title: name,
+            size: mails.length,
+            unread: mails.filter(({unread}) => unread).length,
+            folderType,
+        };
     }
 }

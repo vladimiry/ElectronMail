@@ -6,4 +6,54 @@
     .badge {
         @include app-unread-badge;
     }
+
+    .fa {
+        line-height: inherit;
+    }
+
+    .type {
+        &-0 {
+            .fa::before {
+                content: $fa-var-user-o;
+                font-size: 80%;
+            }
+        }
+
+        &-1 {
+            .fa::before {
+                content: $fa-var-inbox;
+            }
+        }
+
+        &-2 {
+            .fa::before {
+                content: $fa-var-paper-plane-o;
+            }
+        }
+
+        &-3 {
+            .fa::before {
+                content: $fa-var-trash-o;
+            }
+        }
+
+        &-4 {
+            .fa::before {
+                content: $fa-var-archive;
+                font-size: 87%;
+            }
+        }
+
+        &-5 {
+            .fa::before {
+                content: $fa-var-ban;
+            }
+        }
+
+        &-6 {
+            .fa::before {
+                content: $fa-var-pencil-square-o;
+            }
+        }
+    }
 }

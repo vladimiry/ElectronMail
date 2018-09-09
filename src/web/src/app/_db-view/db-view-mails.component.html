@@ -1,19 +1,20 @@
 <div class="folders-container">
     <ul class="list-group" *ngIf="state$ | async; let state">
         <li class="list-group-item list-group-item-action" *ngFor="let folder of state.systemFolders; trackBy: trackByEntityPk"
-            [ngClass]="{'list-group-item-warning': state.selectedFolderPk === folder.pk}">
+            [ngClass]="{'list-group-item-warning': state.selectedFolderPk === folder.pk}"
+            (click)="selectFolder(folder)">
             <email-securely-app-db-view-folder
                 [folder]="folder"
-                (click)="selectFolder(folder)"
             ></email-securely-app-db-view-folder>
         </li>
     </ul>
     <ul class="list-group" *ngIf="state$ | async; let state">
-        <li class="list-group-item list-group-item-action" *ngFor="let folder of state.customFolders; trackBy: trackByEntityPk"
-            [ngClass]="{'list-group-item-warning': state.selectedFolderPk === folder.pk}">
+        <li class="list-group-item list-group-item-action"
+            *ngFor="let folder of state.customFolders; trackBy: trackByEntityPk"
+            [ngClass]="{'list-group-item-warning': state.selectedFolderPk === folder.pk}"
+            (click)="selectFolder(folder)">
             <email-securely-app-db-view-folder
                 [folder]="folder"
-                (click)="selectFolder(folder)"
             ></email-securely-app-db-view-folder>
         </li>
     </ul>

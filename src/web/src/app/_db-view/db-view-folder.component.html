@@ -1,6 +1,7 @@
-<div class="d-flex flex-grow-1">
+<div class="d-flex flex-grow-1 type-{{state.folderType}}">
+    <i class="fa mr-2"></i>
     <span class="mr-1">{{ state.title }}</span>
-    <span>({{ state.size }})</span>
+    <span *ngIf="state.size">({{ state.size }})</span>
 </div>
 <div class="badge ml-2 flex-grow-0" *ngIf="state.unread">
     {{ state.unread }}

@@ -14,6 +14,6 @@ export class DbViewMailComponent {
 
     @HostBinding("class.unread")
     get unread() {
-        return this.mail ? this.mail.unread : false;
+        return this.mail && this.mail.unread;
     }
 }

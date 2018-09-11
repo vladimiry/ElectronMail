@@ -1,5 +1,6 @@
 import {AccountConfig} from "./model/account";
 import {BaseConfig, Config} from "./model/options";
+import {BatchEntityUpdatesDbPatch} from "./api/common";
 import {LoginFieldContainer} from "./model/container";
 import {StatusCodeError} from "./model/error";
 import {WEBVIEW_SRC_WHITELIST} from "./constants";
@@ -44,3 +45,16 @@ export const curryFunctionMembers = <T extends any>(src: T, ...args: any[]): T =
     }
     return dest;
 };
+
+export function isEntityUpdatesPatchNotEmpty({conversationEntries, folders, mails, contacts}: BatchEntityUpdatesDbPatch): boolean {
+    return [
+        conversationEntries.remove,
+        conversationEntries.upsert,
+        mails.remove,
+        mails.upsert,
+        folders.remove,
+        folders.upsert,
+        contacts.remove,
+        contacts.upsert,
+    ].some(({length}) => Boolean(length));
+}

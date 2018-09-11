@@ -1,20 +1,21 @@
+import {UnionOf} from "@vladimiry/unionize";
+
 import * as fromRoot from "src/web/src/app/store/reducers/root";
 import {DB_VIEW_ACTIONS} from "src/web/src/app/store/actions";
-import {DbEntitiesRecordContainer, FolderWithMailsReference as Folder, MAIL_FOLDER_TYPE} from "src/shared/model/database";
-import {UnionOf} from "@vladimiry/unionize";
+import {DbEntitiesRecordContainer, MAIL_FOLDER_TYPE, View} from "src/shared/model/database";
 
 export const featureName = "db-view";
 
 export interface Instance {
     data: {
         folders: {
-            system: Folder[];
-            custom: Folder[];
+            system: View.Folder[];
+            custom: View.Folder[];
         };
         contacts: DbEntitiesRecordContainer["contacts"];
     };
     filters: {
-        selectedFolderPk?: Folder["pk"];
+        selectedFolderPk?: View.Folder["pk"];
     };
 }
 

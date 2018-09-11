@@ -6,6 +6,7 @@
     > .folders-container {
         display: flex;
         flex-direction: column;
+        min-width: $app-options-btn-min-width;
 
         > .list-group {
             &:not(:first-of-type) {

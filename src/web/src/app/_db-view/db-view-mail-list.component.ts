@@ -1,7 +1,7 @@
 import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
 
 import {DbViewUtil} from "./util";
-import {MailWithFolderReference as Mail} from "src/shared/model/database";
+import {View} from "src/shared/model/database";
 
 @Component({
     selector: "email-securely-app-db-view-mails-list",
@@ -11,7 +11,7 @@ import {MailWithFolderReference as Mail} from "src/shared/model/database";
 })
 export class DbViewMailsListComponent {
     @Input()
-    mails!: Mail[];
+    rootConversationNodes!: View.RootConversationNode[];
 
     trackByEntityPk = DbViewUtil.trackByEntityPk;
 }

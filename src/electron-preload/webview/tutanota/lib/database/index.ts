@@ -1,9 +1,10 @@
 import * as DatabaseModel from "src/shared/model/database";
 import * as Rest from "src/electron-preload/webview/tutanota/lib/rest";
 
-export {buildMail} from "./mail";
-export {buildFolder} from "./folder";
 export {buildContact} from "./contact";
+export {buildConversationEntry} from "./conversation-entry";
+export {buildFolder} from "./folder";
+export {buildMail} from "./mail";
 
 export function buildPk<ID extends Rest.Model.IdTuple | Rest.Model.Id>(id: ID): DatabaseModel.Entity["pk"] {
     if (Array.isArray(id)) {

@@ -5,12 +5,12 @@ import {Entity} from "./base";
 
 export class Folder extends Entity implements Model.Folder {
     @IsIn(Model.MAIL_FOLDER_TYPE._.values)
-    folderType!: string;
+    folderType!: Model.Folder["folderType"];
 
     @IsString()
-    name!: string;
+    name!: Model.Folder["name"];
 
     @IsNotEmpty()
     @IsString()
-    mailFolderId!: string;
+    mailFolderId!: Model.Folder["mailFolderId"];
 }

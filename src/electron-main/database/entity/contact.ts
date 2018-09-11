@@ -1,98 +1,101 @@
-import {IsArray, IsIn, IsNotEmpty, IsString, ValidateNested} from "class-validator";
+import {IsArray, IsIn, IsNotEmpty, IsOptional, IsString, ValidateNested} from "class-validator";
 import {Type} from "class-transformer";
 
 import * as Model from "src/shared/model/database";
 import {Entity} from "./base";
-import {NumberString} from "src/shared/types";
 
 class ContactAddress extends Entity implements Model.ContactAddress {
     @IsIn(Model.CONTACT_ADDRESS_TYPE._.values)
-    type!: string;
+    type!: Model.ContactAddress["type"];
 
     @IsString()
-    customTypeName!: string;
+    customTypeName!: Model.ContactAddress["customTypeName"];
 
     @IsString()
     @IsNotEmpty()
-    address!: string;
+    address!: Model.ContactAddress["address"];
 }
 
 class Birthday extends Entity implements Model.Birthday {
     @IsString()
     @IsNotEmpty()
-    day!: NumberString;
+    day!: Model.Birthday["day"];
 
     @IsString()
     @IsNotEmpty()
-    month!: NumberString;
+    month!: Model.Birthday["month"];
 
+    @IsOptional()
     @IsString()
-    year?: NumberString;
+    year?: Model.Birthday["year"];
 }
 
 class ContactMailAddress extends Entity implements Model.ContactMailAddress {
     @IsIn(Model.CONTACT_ADDRESS_TYPE._.values)
-    type!: string;
+    type!: Model.ContactMailAddress["type"];
 
     @IsString()
-    customTypeName!: string;
+    customTypeName!: Model.ContactMailAddress["customTypeName"];
 
     @IsString()
     @IsNotEmpty()
-    address!: string;
+    address!: Model.ContactMailAddress["address"];
 }
 
 class ContactPhoneNumber extends Entity implements Model.ContactPhoneNumber {
     @IsIn(Model.CONTACT_PHONE_NUMBER_TYPE._.values)
-    type!: string;
+    type!: Model.ContactPhoneNumber["type"];
 
     @IsString()
-    customTypeName!: string;
+    customTypeName!: Model.ContactPhoneNumber["customTypeName"];
 
     @IsString()
     @IsNotEmpty()
-    number!: string;
+    number!: Model.ContactPhoneNumber["number"];
 }
 
 class ContactSocialId extends Entity implements Model.ContactSocialId {
     @IsIn(Model.CONTACT_SOCIAL_TYPE._.values)
-    type!: string;
+    type!: Model.ContactSocialId["type"];
 
     @IsString()
-    customTypeName!: string;
+    customTypeName!: Model.ContactSocialId["customTypeName"];
 
     @IsString()
     @IsNotEmpty()
-    socialId!: string;
+    socialId!: Model.ContactSocialId["socialId"];
 }
 
 export class Contact extends Entity implements Model.Contact {
     @IsString()
-    comment!: string;
+    comment!: Model.Contact["comment"];
 
     @IsString()
-    company!: string;
+    company!: Model.Contact["company"];
 
     @IsString()
-    firstName!: string;
+    firstName!: Model.Contact["firstName"];
 
     @IsString()
-    lastName!: string;
+    lastName!: Model.Contact["lastName"];
+
+    @IsOptional()
+    @IsString()
+    nickname?: Model.Contact["nickname"];
 
     @IsString()
-    nickname?: string;
+    role!: Model.Contact["role"];
 
+    @IsOptional()
     @IsString()
-    role!: string;
-
-    @IsString()
-    title?: string;
+    title?: Model.Contact["title"];
 
     @ValidateNested()
     @IsArray()
     @Type(() => ContactAddress)
     addresses!: ContactAddress[];
 
+    @IsOptional()
     @ValidateNested()
     @Type(() => Birthday)
     birthday?: Birthday;

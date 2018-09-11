@@ -5,14 +5,14 @@ import * as Model from "src/shared/model/database";
 export abstract class Entity implements Model.Entity {
     @IsNotEmpty()
     @IsString()
-    pk!: string;
+    pk!: Model.Entity["pk"];
 
     @IsJSON()
     @IsNotEmpty()
     @IsString()
-    raw!: string;
+    raw!: Model.Entity["raw"];
 
     @IsNotEmpty()
     @IsString()
-    id!: string;
+    id!: Model.Entity["id"];
 }

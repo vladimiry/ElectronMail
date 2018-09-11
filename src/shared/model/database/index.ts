@@ -1,7 +1,14 @@
+import * as Constants from "./constants";
+import * as View from "./view";
 import {AccountConfig, AccountType} from "src/shared/model/account";
-import {NumberString, Omit, Timestamp} from "src/shared/types";
+import {NumberString, Omit, Timestamp, Unpacked} from "src/shared/types";
 
 export * from "./constants";
+
+export {
+    View,
+    Constants,
+};
 
 export interface Entity {
     pk: string;
@@ -10,18 +17,22 @@ export interface Entity {
 }
 
 export interface Folder extends Entity {
-    folderType: string;
+    folderType: Unpacked<typeof Constants.MAIL_FOLDER_TYPE._.values>;
     name: string;
     mailFolderId: string;
 }
 
-export interface FolderWithMailsReference extends Folder {
-    mails: MailWithFolderReference[];
+export interface ConversationEntry extends Entity {
+    conversationType: Unpacked<typeof Constants.CONVERSATION_TYPE._.values>;
+    messageId: string;
+    mailPk?: Mail["pk"];
+    previousPk?: ConversationEntry["pk"];
 }
 
 export interface Mail extends Entity {
+    conversationEntryPk: ConversationEntry["pk"];
     mailFolderIds: Array<Folder["mailFolderId"]>;
-    date: Timestamp;
+    sentDate: Timestamp;
     subject: string;
     body: string;
     sender: MailAddress;
@@ -30,10 +41,9 @@ export interface Mail extends Entity {
     bccRecipients: MailAddress[];
     attachments: File[];
     unread: boolean;
-}
-
-export interface MailWithFolderReference extends Mail {
-    folder: FolderWithMailsReference;
+    state: Unpacked<typeof Constants.MAIL_STATE._.values>;
+    confidential: boolean;
+    replyType: Unpacked<typeof Constants.REPLY_TYPE._.values>;
 }
 
 export interface MailAddress extends Entity {
@@ -63,13 +73,13 @@ export interface Contact extends Entity {
 }
 
 export interface ContactAddress extends Entity {
-    type: string;
+    type: Unpacked<typeof Constants.CONTACT_ADDRESS_TYPE._.values>;
     customTypeName: string;
     address: string;
 }
 
 export interface ContactMailAddress extends Entity {
-    type: string;
+    type: Unpacked<typeof Constants.CONTACT_ADDRESS_TYPE._.values>;
     customTypeName: string;
     address: string;
 }
@@ -81,13 +91,13 @@ export interface Birthday extends Entity {
 }
 
 export interface ContactPhoneNumber extends Entity {
-    type: string;
+    type: Unpacked<typeof Constants.CONTACT_PHONE_NUMBER_TYPE._.values>;
     customTypeName: string;
     number: string;
 }
 
 export interface ContactSocialId extends Entity {
-    type: string;
+    type: Unpacked<typeof Constants.CONTACT_SOCIAL_TYPE._.values>;
     customTypeName: string;
     socialId: string;
 }
@@ -99,12 +109,14 @@ export interface EntityMap<V extends Entity, K extends V["pk"] = V["pk"]> extend
 }
 
 export interface DbEntitiesMapContainer {
+    conversationEntries: EntityMap<ConversationEntry>;
     mails: EntityMap<Mail>;
     folders: EntityMap<Folder>;
     contacts: EntityMap<Contact>;
 }
 
 export interface DbEntitiesRecordContainer {
+    conversationEntries: Record<ConversationEntry["pk"], ConversationEntry>;
     mails: Record<Mail["pk"], Mail>;
     folders: Record<Folder["pk"], Folder>;
     contacts: Record<Contact["pk"], Contact>;

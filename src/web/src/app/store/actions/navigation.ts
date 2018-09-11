@@ -1,5 +1,4 @@
 import {NavigationExtras, Params} from "@angular/router";
-
 import {ofType, unionize} from "@vladimiry/unionize";
 
 export const NAVIGATION_ACTIONS = unionize({

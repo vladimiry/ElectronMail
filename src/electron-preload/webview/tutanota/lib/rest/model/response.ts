@@ -3,6 +3,7 @@ import {
     CONTACT_ADDRESS_TYPE,
     CONTACT_PHONE_NUMBER_TYPE,
     CONTACT_SOCIAL_TYPE,
+    CONVERSATION_TYPE,
     GROUP_TYPE,
     MAIL_FOLDER_TYPE,
     MAIL_STATE,
@@ -46,7 +47,15 @@ export interface MailFolder<TypeRecord = typeof MAIL_FOLDER_TYPE._.nameValueMap>
 
 export interface MailList extends BaseEntity<Id> {}
 
-export interface Mail<StateRecord = typeof MAIL_STATE._.nameValueMap> extends BaseEntity<[MailList["_id"], Id]> {
+export interface ConversationEntry<TypeRecord = typeof CONVERSATION_TYPE._.nameValueMap> extends BaseEntity<IdTuple> {
+    conversationType: TypeRecord[keyof TypeRecord];
+    messageId: string;
+    mail?: Mail["_id"];
+    previous?: ConversationEntry["_id"];
+}
+
+// tslint:disable-next-line:max-line-length
+export interface Mail<StateRecord = typeof MAIL_STATE._.nameValueMap, ReplyRecord = typeof MAIL_STATE._.nameValueMap> extends BaseEntity<[MailList["_id"], Id]> {
     sentDate: NumberString; // timestamp;
     receivedDate: NumberString; // timestamp;
     subject: string;
@@ -58,6 +67,9 @@ export interface Mail<StateRecord = typeof MAIL_STATE._.nameValueMap> extends Ba
     attachments: Array<File["_id"]>;
     unread: "0" | "1";
     state: StateRecord[keyof StateRecord];
+    conversationEntry: ConversationEntry["_id"];
+    confidential: boolean;
+    replyType: ReplyRecord[keyof ReplyRecord];
 }
 
 export interface MailAddress extends BaseEntity<Id> {

@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
 
-import {FolderWithMailsReference as Folder} from "src/shared/model/database";
+import {View} from "src/shared/model/database";
 
 @Component({
     selector: "email-securely-app-db-view-folder",
@@ -17,12 +17,17 @@ export class DbViewFolderComponent {
     } = {};
 
     @Input()
-    set folder({name, mails, folderType}: Folder) {
+    set folder({name, rootConversationNodes, folderType}: View.Folder) {
+        const {size, unread} = rootConversationNodes.reduce((accumulator: { size: number; unread: number }, {summary}) => {
+            accumulator.size += summary.size;
+            accumulator.unread += summary.unread;
+            return accumulator;
+        }, {size: 0, unread: 0});
         this.state = {
-            title: name,
-            size: mails.length,
-            unread: mails.filter(({unread}) => unread).length,
             folderType,
+            title: name,
+            size,
+            unread,
         };
     }
 }

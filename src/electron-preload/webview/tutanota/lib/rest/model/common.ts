@@ -8,7 +8,16 @@ export interface BaseEntity<ID extends Id | IdTuple> {
 
 export type TypeRefApp = "tutanota" | "sys";
 
-export type TypeRefType = "File" | "MailBody" | "MailboxGroupRoot" | "MailBox" | "MailFolder" | "Mail" | "Contact" | "EntityEventBatch";
+export type TypeRefType =
+    | "File"
+    | "MailBody"
+    | "MailboxGroupRoot"
+    | "MailBox"
+    | "MailFolder"
+    | "Mail"
+    | "ConversationEntry"
+    | "Contact"
+    | "EntityEventBatch";
 
 export interface TypeRef<T extends BaseEntity<Id | IdTuple>> {
     _type: T;

@@ -32,6 +32,22 @@ export const MAIL_STATE = build({
     RECEIVED: "2",
 });
 
+export const REPLY_TYPE = build({
+    NONE: "0",
+    REPLY: "1",
+    FORWARD: "2",
+    REPLY_FORWARD: "3",
+});
+
+export const CONVERSATION_TYPE = build({
+    NEW: "0",
+    REPLY: "1",
+    FORWARD: "2",
+    // TODO unexpected "CONVERSATION_TYPE=3" value actually used by Tutanota
+    // not presented in https://github.com/tutao/tutanota/blob/b689218e6bae45bb38cfef7929494c708aa0f252/src/api/common/TutanotaConstants.js
+    UNEXPECTED: "3",
+});
+
 export const CONTACT_ADDRESS_TYPE = build({
     PRIVATE: "0",
     WORK: "1",
@@ -66,7 +82,7 @@ function build<V extends string, M extends { [k: string]: V }>(nameValueMap: M) 
             accumulator.values.push(value as V);
             accumulator.valueNameMap[value] = key;
             return accumulator;
-        }, {values: [], names: [], valueNameMap: {} as any});
+        }, {values: [], names: [], valueNameMap: {} as { [k in V]: string }});
     const resolveNameByValue = (value: V, strict: boolean = true): keyof M => {
         if (strict && !(value in valueNameMap)) {
             throw new Error(`Failed to parse "${value}" value from the "${JSON.stringify(nameValueMap)}" map`);

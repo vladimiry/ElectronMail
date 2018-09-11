@@ -1,5 +1,5 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {EMPTY, from, merge, of} from "rxjs";
+import {EMPTY, from, merge} from "rxjs";
 import {Injectable} from "@angular/core";
 import {concatMap, debounceTime, filter, map, mergeMap, switchMap, takeUntil, tap} from "rxjs/operators";
 
@@ -31,8 +31,8 @@ export class DbViewEffects {
                         switchMap(() => apiClient("dbGetAccountDataView")(dbAccountPk)),
                     ),
                 ).pipe(
+                    concatMap((patch) => patch ? [DB_VIEW_ACTIONS.PatchInstanceData({dbAccountPk, patch})] : []),
                     debounceTime(300),
-                    concatMap((data) => of(DB_VIEW_ACTIONS.PatchInstanceData({dbAccountPk, patch: data}))),
                     takeUntil(dispose$),
                 );
 

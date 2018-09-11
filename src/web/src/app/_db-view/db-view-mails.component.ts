@@ -3,11 +3,11 @@ import {Store, select} from "@ngrx/store";
 import {combineLatest} from "rxjs";
 import {map, mergeMap} from "rxjs/operators";
 
-import {DB_VIEW_ACTIONS} from "../store/actions";
-import {DbAccountPk, FolderWithMailsReference as Folder} from "src/shared/model/database";
+import {DB_VIEW_ACTIONS} from "src/web/src/app/store/actions/db-view";
+import {DbAccountPk, View} from "src/shared/model/database";
 import {DbViewUtil} from "./util";
 import {FEATURED} from "src/web/src/app/store/selectors/db-view";
-import {ObservableNgChangesComponent} from "src/web/src/app/components/observable-ng-changes.component";
+import {NgChangesObservableComponent} from "src/web/src/app/components/ng-changes-observable.component";
 import {State} from "src/web/src/app/store/reducers/db-view";
 
 @Component({
@@ -16,7 +16,7 @@ import {State} from "src/web/src/app/store/reducers/db-view";
     styleUrls: ["./db-view-mails.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DbViewMailsComponent extends ObservableNgChangesComponent {
+export class DbViewMailsComponent extends NgChangesObservableComponent {
     @Input()
     dbAccountPk!: DbAccountPk;
 
@@ -25,24 +25,24 @@ export class DbViewMailsComponent extends ObservableNgChangesComponent {
             select((state) => FEATURED.accountRecord(this.dbAccountPk)(state)),
             mergeMap((account) => account ? [account] : []),
         ),
-        this.ngOnChangesObservable("dbAccountPk"),
+        this.ngChangesObservable("dbAccountPk"),
     ).pipe(
         map(([{data, filters}]) => {
             const state = {
-                systemFolders: data.folders.system,
-                customFolders: data.folders.custom,
-                selectedFolderMails: data.folders.system.concat(data.folders.custom)
+                folders: data.folders,
+                rootConversationNodes: data.folders.system.concat(data.folders.custom)
                     .filter((folder) => folder.pk === filters.selectedFolderPk)
-                    .reduce((mailsAccumulator: typeof mails, {mails}) => mailsAccumulator.concat(mails), []),
+                    .reduce((list: typeof rootConversationNodes, {rootConversationNodes}) => list.concat(rootConversationNodes), []),
                 selectedFolderPk: filters.selectedFolderPk,
             };
 
-            // TODO enable custom mails list sorting
-            state.selectedFolderMails.sort((o1, o2) => o2.date - o1.date);
+            // desc sort order, newest conversations first
+            state.rootConversationNodes.sort((o1, o2) => o2.summary.sentDateMax - o1.summary.sentDateMax);
 
             return state;
         }),
     );
+
     trackByEntityPk = DbViewUtil.trackByEntityPk;
 
     constructor(
@@ -51,7 +51,7 @@ export class DbViewMailsComponent extends ObservableNgChangesComponent {
         super();
     }
 
-    selectFolder({pk: selectedFolderPk}: Folder) {
+    selectFolder({pk: selectedFolderPk}: View.Folder) {
         this.store.dispatch(DB_VIEW_ACTIONS.PatchInstanceFilters({dbAccountPk: this.dbAccountPk, patch: {selectedFolderPk}}));
     }
 

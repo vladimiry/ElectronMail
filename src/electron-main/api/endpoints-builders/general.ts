@@ -18,6 +18,8 @@ type ApiMethods =
     | "toggleBrowserWindow"
     | "notification";
 
+const notificationObservable = NOTIFICATION_SUBJECT.asObservable();
+
 export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiMethods>> {
     const endpoints: Pick<Endpoints, ApiMethods> = {
         openAboutWindow: () => {
@@ -79,9 +81,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
             return null;
         })()),
 
-        notification: () => {
-            return NOTIFICATION_SUBJECT.asObservable();
-        },
+        notification: () => notificationObservable,
     };
 
     return endpoints;

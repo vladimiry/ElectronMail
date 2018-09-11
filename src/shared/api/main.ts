@@ -1,8 +1,8 @@
 import {ApiMethod, ApiMethodNoArgument, IpcMainApiService} from "electron-rpc-api";
 // tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects below import as unused
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
+import {UnionOf, ofType, unionize} from "@vladimiry/unionize";
 
-import * as DbModel from "src/shared/model/database";
 import {APP_NAME} from "src/shared/constants";
 import {
     AccountConfigCreatePatch,
@@ -16,10 +16,14 @@ import {
     UrlFieldContainer,
 } from "src/shared/model/container";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
+// tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects "BatchEntityUpdatesDbPatch" as unused
 import {BatchEntityUpdatesDbPatch} from "./common";
-// tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects below import as unused
+// tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects "DbEntitiesRecordContainer" as unused
+import {DbEntitiesRecordContainer, FsDb, FsDbAccount} from "src/shared/model/database";
+// tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects "ElectronContextLocations" as unused
 import {ElectronContextLocations} from "src/shared/model/electron";
-import {UnionOf, ofType, unionize} from "@vladimiry/unionize";
+// tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects "Folder" as unused
+import {Folder} from "src/shared/model/database/view";
 
 export interface Endpoints {
     addAccount: ApiMethod<AccountConfigCreatePatch, Settings>;
@@ -34,19 +38,19 @@ export interface Endpoints {
 
     changeMasterPassword: ApiMethod<PasswordFieldContainer & NewPasswordFieldContainer, Settings>;
 
-    dbPatch: ApiMethod<{ type: keyof DbModel.FsDb, login: string } & BatchEntityUpdatesDbPatch
-        & { forceFlush?: boolean } & { metadata: Partial<DbModel.FsDbAccount["metadata"]> }, DbModel.FsDbAccount["metadata"]>;
+    dbPatch: ApiMethod<{ type: keyof FsDb, login: string } & BatchEntityUpdatesDbPatch
+        & { forceFlush?: boolean } & { metadata: Partial<FsDbAccount["metadata"]> }, FsDbAccount["metadata"]>;
 
-    dbGetAccountMetadata: ApiMethod<{ type: keyof DbModel.FsDb, login: string }, DbModel.FsDbAccount["metadata"] | null>;
+    dbGetAccountMetadata: ApiMethod<{ type: keyof FsDb, login: string }, FsDbAccount["metadata"] | null>;
 
-    dbGetAccountDataView: ApiMethod<{ type: keyof DbModel.FsDb, login: string },
+    dbGetAccountDataView: ApiMethod<{ type: keyof FsDb, login: string },
         {
             folders: {
-                system: DbModel.FolderWithMailsReference[];
-                custom: DbModel.FolderWithMailsReference[];
+                system: Folder[];
+                custom: Folder[];
             };
-            contacts: DbModel.DbEntitiesRecordContainer["contacts"];
-        }>;
+            contacts: DbEntitiesRecordContainer["contacts"];
+        } | undefined>;
 
     init: ApiMethodNoArgument<{ electronLocations: ElectronContextLocations; hasSavedPassword: boolean; }>;
 
@@ -90,7 +94,7 @@ export const IPC_MAIN_API = new IpcMainApiService<Endpoints>({channel: `${APP_NA
 export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
         ActivateBrowserWindow: ofType<{}>(),
         DbPatchAccount: ofType<{
-            key: { type: keyof DbModel.FsDb, login: string };
+            key: { type: keyof FsDb, login: string };
             stat: { mails: number, folders: number; contacts: number };
         }>(),
     },

@@ -1,11 +1,22 @@
 <div class="d-flex flex-grow-1 justify-content-between">
-    <a class="sender d-flex" href="mailto:{{ mail.sender.address }}" title="{{ mail.sender.name ? mail.sender.address : '' }}">
-        {{ mail.sender.name || mail.sender.address }}
-    </a>
-    <div class="date badge d-flex">
-        {{ mail.date | date:'medium' }}
+    <div class="d-flex">
+        <i class="d-flex mr-2 fa" title="{{ stateTitle }}" [ngClass]="{
+            'fa-paper-plane-o': state.SENT,
+            'fa-inbox': state.RECEIVED,
+            'fa-pencil-square-o': state.DRAFT
+        }"></i>
+        <a class="sender d-flex"
+           href="mailto:{{ mailAddress.address }}"
+           title="{{ mailAddress.name ? mailAddress.name + ' <' + mailAddress.address + '>': '' }}">
+            {{ mailAddress.name || mailAddress.address }}
+            <span class="ml-1" *ngIf="mailAddressTotal > 1">(+{{ mailAddressTotal - 1 }})</span>
+        </a>
+    </div>
+    <div class="date d-flex">
+        {{ mail.sentDate | date:'medium' }}
     </div>
 </div>
 <div class="d-flex flex-grow-1">
-    <span class="subject d-flex">{{ mail.subject }}</span>
+    <span class="subject d-flex flex-grow-1">{{ mail.subject }}</span>
+    <i class="fa fa-shield d-flex ml-2" *ngIf="mail.confidential"></i>
 </div>

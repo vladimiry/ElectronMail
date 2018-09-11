@@ -17,7 +17,7 @@ import {ONE_SECOND_MS} from "src/shared/constants";
 import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi, TutanotaNotificationOutput} from "src/shared/api/webview/tutanota";
 import {Unpacked} from "src/shared/types";
 import {buildLoggerBundle} from "src/electron-preload/util";
-import {curryFunctionMembers} from "src/shared/util";
+import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {fetchEntitiesRange} from "src/electron-preload/webview/tutanota/lib/rest";
 import {fillInputValue, getLocationHref, submitTotpToken, waitElements} from "src/electron-preload/webview/util";
 import {resolveApi} from "src/electron-preload/webview/tutanota/lib/api";
@@ -252,6 +252,12 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
                 Observable.create((subscriber: Subscriber<BatchEntityUpdatesCounterOutput>) => {
                     const innerLogger = curryFunctionMembers(logger, `[entity update notification]`);
                     const notification = {batchEntityUpdatesCounter: 0};
+                    const dbModelBuildersStub = {
+                        conversationEntry: async () => null as any,
+                        mail: async () => null as any,
+                        folder: async () => null as any,
+                        contact: async () => null as any,
+                    };
                     const {EntityEventController} = api["src/api/main/EntityEventController"];
 
                     EntityEventController.prototype.notificationReceived = ((original) => function(
@@ -261,30 +267,23 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
                         (async () => {
                             innerLogger.verbose(JSON.stringify(pick(["application", "type", "operation"], entityUpdate)));
 
-                            const {folders, mails, contacts} = await buildBatchEntityUpdatesDbPatch(
+                            const patch = await buildBatchEntityUpdatesDbPatch(
                                 {eventBatches: [{events: [entityUpdate]}]/*, _logger: logger*/},
                                 // mocking db model builders, we only need the data structure to be formed at this point
                                 // so no need to produce unnecessary fetch requests
-                                {mail: async () => null as any, folder: async () => null as any, contact: async () => null as any},
+                                dbModelBuildersStub,
                             );
 
-                            if (![
-                                mails.remove,
-                                mails.upsert,
-                                folders.remove,
-                                folders.upsert,
-                                contacts.remove,
-                                contacts.upsert,
-                            ].some(({length}) => Boolean(length))) {
+                            if (!isEntityUpdatesPatchNotEmpty(patch)) {
                                 return;
                             }
 
                             notification.batchEntityUpdatesCounter++;
                             subscriber.next(notification);
 
-                            innerLogger.info(`upsert/remove mails: ${mails.upsert.length}/${mails.remove.length}`);
-                            innerLogger.info(`upsert/remove folders: ${folders.upsert.length}/${folders.remove.length}`);
-                            innerLogger.info(`upsert/remove contacts: ${contacts.upsert.length}/${contacts.remove.length}`);
+                            for (const key of (Object.keys(patch) as Array<keyof typeof patch>)) {
+                                innerLogger.info(`upsert/remove ${key}: ${patch[key].upsert.length}/${patch[key].remove.length}`);
+                            }
                         })().catch((error) => {
                             subscriber.error(error);
                             innerLogger.error(error);
@@ -309,21 +308,26 @@ async function buildBatchEntityUpdatesDbPatch(
         _logger?: ReturnType<typeof buildLoggerBundle>;
     },
     dbModelBuilders: {
+        conversationEntry: (id: { instanceListId: Rest.Model.Id, instanceId: Rest.Model.Id }) => Promise<DatabaseModel.ConversationEntry>;
         mail: (id: { instanceListId: Rest.Model.Id, instanceId: Rest.Model.Id }) => Promise<DatabaseModel.Mail>;
         folder: (id: { instanceListId: Rest.Model.Id, instanceId: Rest.Model.Id }) => Promise<DatabaseModel.Folder>;
         contact: (id: { instanceListId: Rest.Model.Id, instanceId: Rest.Model.Id }) => Promise<DatabaseModel.Contact>;
     } = {
+        conversationEntry: async ({instanceListId, instanceId}) => {
+            const entity = await Rest.fetchEntity(Rest.Model.ConversationEntryTypeRef, [instanceListId, instanceId]);
+            return Database.buildConversationEntry(entity);
+        },
         mail: async ({instanceListId, instanceId}) => {
-            const mail = await Rest.fetchEntity(Rest.Model.MailTypeRef, [instanceListId, instanceId]);
-            return await Database.buildMail(mail);
+            const entity = await Rest.fetchEntity(Rest.Model.MailTypeRef, [instanceListId, instanceId]);
+            return await Database.buildMail(entity);
         },
         folder: async ({instanceListId, instanceId}) => {
-            const folder = await Rest.fetchEntity(Rest.Model.MailFolderTypeRef, [instanceListId, instanceId]);
-            return Database.buildFolder(folder);
+            const entity = await Rest.fetchEntity(Rest.Model.MailFolderTypeRef, [instanceListId, instanceId]);
+            return Database.buildFolder(entity);
         },
         contact: async ({instanceListId, instanceId}) => {
-            const contact = await Rest.fetchEntity(Rest.Model.ContactTypeRef, [instanceListId, instanceId]);
-            return Database.buildContact(contact);
+            const entity = await Rest.fetchEntity(Rest.Model.ContactTypeRef, [instanceListId, instanceId]);
+            return Database.buildContact(entity);
         },
     },
 ): Promise<BatchEntityUpdatesDbPatch> {
@@ -331,6 +335,7 @@ async function buildBatchEntityUpdatesDbPatch(
         ? curryFunctionMembers(input._logger, "buildBatchEntityUpdatesDbPatch()")
         : {info: (...args: any[]) => {}, verbose: (...args: any[]) => {}};
 
+    const conversationEntriesMap: Map<Rest.Model.ConversationEntry["_id"][1], Rest.Model.EntityUpdate[]> = new Map();
     const mailsMap: Map<Rest.Model.Mail["_id"][1], Rest.Model.EntityUpdate[]> = new Map();
     const foldersMap: Map<Rest.Model.MailFolder["_id"][1], Rest.Model.EntityUpdate[]> = new Map();
     const contactsMap: Map<Rest.Model.Contact["_id"][1], Rest.Model.EntityUpdate[]> = new Map();
@@ -338,7 +343,9 @@ async function buildBatchEntityUpdatesDbPatch(
     for (const entitiesUpdate of input.eventBatches) {
         for (const event of entitiesUpdate.events) {
             // TODO replace if blocks by iteration based processing or pattern matching
-            if (Rest.Util.sameRefType(Rest.Model.MailTypeRef, event)) {
+            if (Rest.Util.sameRefType(Rest.Model.ConversationEntryTypeRef, event)) {
+                conversationEntriesMap.set(event.instanceId, [...(conversationEntriesMap.get(event.instanceId) || []), event]);
+            } else if (Rest.Util.sameRefType(Rest.Model.MailTypeRef, event)) {
                 mailsMap.set(event.instanceId, [...(mailsMap.get(event.instanceId) || []), event]);
             } else if (Rest.Util.sameRefType(Rest.Model.MailFolderTypeRef, event)) {
                 foldersMap.set(event.instanceId, [...(foldersMap.get(event.instanceId) || []), event]);
@@ -348,57 +355,63 @@ async function buildBatchEntityUpdatesDbPatch(
         }
     }
 
-    logger.verbose(`resolved: ${mailsMap.size} unique mails; ${foldersMap.size} unique folders; ${contactsMap.size} unique contacts`);
+    logger.verbose([
+        `resolved unique items by "instanceId":`,
+        `${conversationEntriesMap.size} conversationEntries;`,
+        `${mailsMap.size} mails;`,
+        `${foldersMap.size} folders;`,
+        `${contactsMap.size} contacts;`,
+    ].join(" "));
 
-    const databasePatch: BatchEntityUpdatesDbPatch = {
+    const patch: BatchEntityUpdatesDbPatch = {
+        conversationEntries: {remove: [], upsert: []},
         mails: {remove: [], upsert: []},
         folders: {remove: [], upsert: []},
         contacts: {remove: [], upsert: []},
     };
     const entitiesUpdatesGroups: Array<{
         entitiesUpdates: IterableIterator<Rest.Model.EntityUpdate[]>;
-        upsert: (update: Rest.Model.EntityUpdate) => Promise<void>;
-        remove: (pk: { pk: ReturnType<typeof Database.buildPk> }) => void;
+        upsert: (update: Rest.Model.EntityUpdate) => Promise<void | number>;
+        remove: (pk: { pk: ReturnType<typeof Database.buildPk> }) => void | number;
     }> = [
         {
+            entitiesUpdates: conversationEntriesMap.values(),
+            upsert: async (update) => patch.conversationEntries.upsert.push(await dbModelBuilders.conversationEntry(update)),
+            remove: (/*pk*/) => {
+                // WARN: removing conversation entry breaks the conversation tree consistency, so app never removes conversation entries
+                // patch.conversationEntries.remove.push(pk);
+                logger.verbose("skip conversation entry removing");
+            },
+        },
+        {
             entitiesUpdates: mailsMap.values(),
-            upsert: async (update) => {
-                databasePatch.mails.upsert.push(await dbModelBuilders.mail(update));
-            },
-            remove: (pk) => {
-                databasePatch.mails.remove.push(pk);
-            },
+            upsert: async (update) => patch.mails.upsert.push(await dbModelBuilders.mail(update)),
+            remove: (pk) => patch.mails.remove.push(pk),
         },
         {
             entitiesUpdates: foldersMap.values(),
-            upsert: async (update) => {
-                databasePatch.folders.upsert.push(await dbModelBuilders.folder(update));
-            },
-            remove: (pk) => {
-                databasePatch.folders.remove.push(pk);
-            },
+            upsert: async (update) => patch.folders.upsert.push(await dbModelBuilders.folder(update)),
+            remove: (pk) => patch.folders.remove.push(pk),
         },
         {
             entitiesUpdates: contactsMap.values(),
-            upsert: async (update) => {
-                databasePatch.contacts.upsert.push(await dbModelBuilders.contact(update));
-            },
-            remove: (pk) => {
-                databasePatch.contacts.remove.push(pk);
-            },
+            upsert: async (update) => patch.contacts.upsert.push(await dbModelBuilders.contact(update)),
+            remove: (pk) => patch.contacts.remove.push(pk),
         },
     ];
+
+    const upsertOperations = [DatabaseModel.OPERATION_TYPE.CREATE, DatabaseModel.OPERATION_TYPE.UPDATE];
 
     for (const {entitiesUpdates, upsert, remove} of entitiesUpdatesGroups) {
         for (const entityUpdates of entitiesUpdates) {
             let added = false;
-            // entity updates sorted in ASC order, so reversing the entity updates list in order to fetch only the newest entity
+            // entity updates sorted in ASC order, so reversing the entity updates list in order to start processing from the newest items
             for (const update of entityUpdates.reverse()) {
-                if (!added && [DatabaseModel.OPERATION_TYPE.CREATE, DatabaseModel.OPERATION_TYPE.UPDATE].includes(update.operation)) {
+                if (!added && upsertOperations.includes(update.operation)) {
                     await upsert(update);
                     added = true;
                 }
-                if ([DatabaseModel.OPERATION_TYPE.DELETE].includes(update.operation)) {
+                if (update.operation === DatabaseModel.OPERATION_TYPE.DELETE) {
                     remove({pk: Database.buildPk([update.instanceListId, update.instanceId])});
                     break;
                 }
@@ -406,11 +419,12 @@ async function buildBatchEntityUpdatesDbPatch(
         }
     }
 
-    logger.info(`upsert/remove mails: ${databasePatch.mails.upsert.length}/${databasePatch.mails.remove.length}`);
-    logger.info(`upsert/remove folders: ${databasePatch.folders.upsert.length}/${databasePatch.folders.remove.length}`);
-    logger.info(`upsert/remove contacts: ${databasePatch.contacts.upsert.length}/${databasePatch.contacts.remove.length}`);
+    logger.info(`upsert/remove conversationEntries: ${patch.conversationEntries.upsert.length}/${patch.conversationEntries.remove.length}`);
+    logger.info(`upsert/remove mails: ${patch.mails.upsert.length}/${patch.mails.remove.length}`);
+    logger.info(`upsert/remove folders: ${patch.folders.upsert.length}/${patch.folders.remove.length}`);
+    logger.info(`upsert/remove contacts: ${patch.contacts.upsert.length}/${patch.contacts.remove.length}`);
 
-    return databasePatch;
+    return patch;
 }
 
 function getUserController(): { accessToken: string, user: Rest.Model.User } | null {

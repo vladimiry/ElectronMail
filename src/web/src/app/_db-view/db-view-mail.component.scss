@@ -5,10 +5,15 @@
     flex-direction: column;
     padding: $list-group-item-padding-y $list-group-item-padding-x;
 
-    &.unread {
+    &.unread-1 {
         .subject {
             font-weight: bold;
         }
+    }
+
+    .fa {
+        font-size: 85%;
+        line-height: 1.33;
     }
 
     .sender,
@@ -16,9 +21,5 @@
         font-weight: normal;
         font-size: 75%;
         color: $gray-800;
-    }
-
-    .date {
-        border: 1px solid $list-group-border-color;
     }
 }

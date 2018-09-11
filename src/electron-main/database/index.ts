@@ -66,6 +66,7 @@ export class Database {
 
     initAccount<TL extends DbAccountPk>({type, login}: TL): MemoryDbAccount<TL["type"]> {
         const account = {
+            conversationEntries: new EntityMap(Entity.ConversationEntry),
             mails: new EntityMap(Entity.Mail),
             folders: new EntityMap(Entity.Folder),
             contacts: new EntityMap(Entity.Contact),
@@ -142,17 +143,18 @@ export class Database {
         this.memoryDb = this.buildEmptyDatabase();
     }
 
-    stat(): { records: number, mails: number, folders: number, contacts: number } {
+    stat(): { records: number, conversationEntries: number, mails: number, folders: number, contacts: number } {
         logger.info("stat()");
 
         const {memoryDb: source} = this;
-        const stat = {records: 0, mails: 0, folders: 0, contacts: 0};
+        const stat = {records: 0, conversationEntries: 0, mails: 0, folders: 0, contacts: 0};
 
         for (const type of Object.keys(source) as AccountType[]) {
             const loginBundle = source[type];
             Object.keys(loginBundle).map((login) => {
                 stat.records++;
-                const {mails, folders, contacts} = this.accountStat(loginBundle[login]);
+                const {conversationEntries, mails, folders, contacts} = this.accountStat(loginBundle[login]);
+                stat.conversationEntries += conversationEntries;
                 stat.mails += mails;
                 stat.folders += folders;
                 stat.contacts += contacts;
@@ -162,8 +164,9 @@ export class Database {
         return stat;
     }
 
-    accountStat(account: MemoryDbAccount): { mails: number, folders: number; contacts: number } {
+    accountStat(account: MemoryDbAccount): { conversationEntries: number, mails: number, folders: number; contacts: number } {
         return {
+            conversationEntries: account.conversationEntries.size,
             mails: account.mails.size,
             folders: account.folders.size,
             contacts: account.contacts.size,
@@ -172,6 +175,7 @@ export class Database {
 
     private memoryAccountToFsAccount<T extends keyof MemoryDb>(source: MemoryDbAccount<T>): FsDbAccount<T> {
         return {
+            conversationEntries: source.conversationEntries.toObject(),
             mails: source.mails.toObject(),
             folders: source.folders.toObject(),
             contacts: source.contacts.toObject(),
@@ -181,6 +185,7 @@ export class Database {
 
     private fsAccountToMemoryAccount<T extends keyof FsDb>(source: FsDbAccount<T>): MemoryDbAccount<T> {
         return {
+            conversationEntries: new EntityMap(Entity.ConversationEntry, source.conversationEntries),
             mails: new EntityMap(Entity.Mail, source.mails),
             folders: new EntityMap(Entity.Folder, source.folders),
             contacts: new EntityMap(Entity.Contact, source.contacts),

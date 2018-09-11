@@ -2,7 +2,7 @@ import {BehaviorSubject, Observable, of} from "rxjs";
 import {OnChanges, OnDestroy, SimpleChanges} from "@angular/core";
 import {distinctUntilChanged, mergeMap} from "rxjs/operators";
 
-export class ObservableNgChangesComponent implements OnChanges, OnDestroy {
+export abstract class NgChangesObservableComponent implements OnChanges, OnDestroy {
     protected ngChanges = new BehaviorSubject<Partial<{ [k in keyof this]: this[k] }>>({});
 
     ngOnChanges(changes: SimpleChanges) {
@@ -24,7 +24,7 @@ export class ObservableNgChangesComponent implements OnChanges, OnDestroy {
         this.ngChanges.complete();
     }
 
-    protected ngOnChangesObservable<K extends keyof this>(propertyName: K): Observable<this[K]> {
+    protected ngChangesObservable<K extends keyof this>(propertyName: K): Observable<this[K]> {
         return this.ngChanges.pipe(
             mergeMap((props) => propertyName in props ? of(props[propertyName] as this[K]) : []),
             distinctUntilChanged(),

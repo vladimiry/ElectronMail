@@ -1,7 +1,8 @@
+import {UnionOf} from "@vladimiry/unionize";
+
 import * as fromRoot from "src/web/src/app/store/reducers/root";
 import {CORE_ACTIONS} from "src/web/src/app/store/actions";
 import {ERRORS_LIMIT} from "src/web/src/app/app.constants";
-import {UnionOf} from "@vladimiry/unionize";
 import {getZoneNameBoundWebLogger} from "src/web/src/util";
 
 export const featureName = "errors";

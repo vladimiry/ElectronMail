@@ -1,6 +1,6 @@
 import * as DatabaseModel from "src/shared/model/database";
 import * as Rest from "src/electron-preload/webview/tutanota/lib/rest";
-import {buildBaseEntity} from ".";
+import {buildBaseEntity, buildPk} from ".";
 import {resolveListId} from "src/electron-preload/webview/tutanota/lib/rest/util";
 
 export async function buildMail(mail: Rest.Model.Mail): Promise<DatabaseModel.Mail> {
@@ -15,8 +15,9 @@ export async function buildMail(mail: Rest.Model.Mail): Promise<DatabaseModel.Ma
 function Mail(input: Rest.Model.Mail, body: Rest.Model.MailBody, files: Rest.Model.File[]): DatabaseModel.Mail {
     return {
         ...buildBaseEntity(input),
+        conversationEntryPk: buildPk(input.conversationEntry),
         mailFolderIds: [resolveListId(input)],
-        date: Number(input.receivedDate), // TODO consider calling "generatedIdToTimestamp" on "mail._id[1]"
+        sentDate: Number(input.sentDate),
         subject: input.subject,
         body: body.text,
         sender: Address(input.sender),
@@ -25,6 +26,9 @@ function Mail(input: Rest.Model.Mail, body: Rest.Model.MailBody, files: Rest.Mod
         bccRecipients: input.bccRecipients.map(Address),
         attachments: files.map(File),
         unread: Boolean(input.unread),
+        state: DatabaseModel.MAIL_STATE._.parseValue(input.state),
+        confidential: input.confidential,
+        replyType: input.replyType,
     };
 }
 

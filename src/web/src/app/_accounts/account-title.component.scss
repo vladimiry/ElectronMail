@@ -11,7 +11,7 @@
 
 :host {
     $btn-default-color: theme-color("light");
-    $btn-selected-color: theme-color-level("warning", 6);
+    $btn-selected-color: $app-color-warning-light-text;
     $btn-selected-bg-color: theme-color("warning-light");
 
     display: flex;

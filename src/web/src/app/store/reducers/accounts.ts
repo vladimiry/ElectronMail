@@ -1,9 +1,9 @@
 import produce from "immer";
+import {UnionOf} from "@vladimiry/unionize";
 
 import * as fromRoot from "src/web/src/app/store/reducers/root";
 import {ACCOUNTS_ACTIONS} from "src/web/src/app/store/actions";
 import {LoginFieldContainer} from "src/shared/model/container";
-import {UnionOf} from "@vladimiry/unionize";
 import {WebAccount} from "src/web/src/app/model";
 import {accountPickingPredicate} from "src/shared/util";
 import {getZoneNameBoundWebLogger} from "src/web/src/util";

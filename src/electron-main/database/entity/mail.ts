@@ -1,33 +1,48 @@
-import {ArrayNotEmpty, ArrayUnique, IsArray, IsBoolean, IsInt, IsNotEmpty, IsString, ValidateNested} from "class-validator";
+import {
+    ArrayNotEmpty,
+    ArrayUnique,
+    IsArray,
+    IsBoolean,
+    IsIn,
+    IsInt,
+    IsNotEmpty,
+    IsOptional,
+    IsString,
+    ValidateNested,
+} from "class-validator";
 import {Type} from "class-transformer";
 
 import * as Model from "src/shared/model/database";
 import {Entity} from "./base";
-import {Timestamp} from "src/shared/types";
 
 class MailAddress extends Entity implements Model.MailAddress {
     @IsNotEmpty()
     @IsString()
-    address!: string;
+    address!: Model.MailAddress["address"];
 
     @IsString()
-    name!: string;
+    name!: Model.MailAddress["name"];
 }
 
 class File extends Entity implements Model.File {
+    @IsOptional()
     @IsString()
-    mimeType?: string;
+    mimeType?: Model.File["mimeType"];
 
     @IsString()
     @IsNotEmpty()
-    name!: string;
+    name!: Model.File["name"];
 
     @IsNotEmpty()
     @IsInt()
-    size!: number;
+    size!: Model.File["size"];
 }
 
 export class Mail extends Entity implements Model.Mail {
+    @IsNotEmpty()
+    @IsString()
+    conversationEntryPk!: Model.ConversationEntry["pk"];
+
     @ArrayUnique()
     @IsArray()
     @IsString({each: true})
@@ -35,14 +50,14 @@ export class Mail extends Entity implements Model.Mail {
 
     @IsNotEmpty()
     @IsInt()
-    date!: Timestamp;
+    sentDate!: Model.Mail["sentDate"];
 
     @IsNotEmpty()
     @IsString()
-    subject!: string;
+    subject!: Model.Mail["subject"];
 
     @IsString()
-    body!: string;
+    body!: Model.Mail["body"];
 
     @IsNotEmpty()
     @ValidateNested()
@@ -72,5 +87,16 @@ export class Mail extends Entity implements Model.Mail {
 
     @IsNotEmpty()
     @IsBoolean()
-    unread!: boolean;
+    unread!: Model.Mail["unread"];
+
+    @IsIn(Model.MAIL_STATE._.values)
+    state!: Model.Mail["state"];
+
+    // TODO consider making Mail.confidential field optional, not used by protonmail?
+    @IsNotEmpty()
+    @IsBoolean()
+    confidential!: Model.Mail["confidential"];
+
+    @IsIn(Model.REPLY_TYPE._.values)
+    replyType!: Model.Mail["replyType"];
 }

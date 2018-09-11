@@ -1,6 +1,7 @@
+import {ofType, unionize} from "@vladimiry/unionize";
+
 import {DbAccountPk} from "src/shared/model/database";
 import {Instance} from "src/web/src/app/store/reducers/db-view";
-import {ofType, unionize} from "@vladimiry/unionize";
 
 export const DB_VIEW_ACTIONS = unionize({
         MountInstance: ofType<{ dbAccountPk: DbAccountPk; finishPromise: Promise<void>; }>(),

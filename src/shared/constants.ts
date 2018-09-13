@@ -24,6 +24,7 @@ export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlIte
         entryUrl: [
             {value: "https://app.protonmail.ch", title: "https://app.protonmail.ch"},
             {value: "https://mail.protonmail.com", title: "https://mail.protonmail.com"},
+            {value: "https://beta.protonmail.com", title: "https://beta.protonmail.com (Beta)"},
             {value: "https://protonirockerxow.onion", title: "https://protonirockerxow.onion (Tor)"},
         ],
     },

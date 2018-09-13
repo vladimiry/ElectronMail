@@ -377,11 +377,7 @@ async function buildBatchEntityUpdatesDbPatch(
         {
             entitiesUpdates: conversationEntriesMap.values(),
             upsert: async (update) => patch.conversationEntries.upsert.push(await dbModelBuilders.conversationEntry(update)),
-            remove: (/*pk*/) => {
-                // WARN: removing conversation entry breaks the conversation tree consistency, so app never removes conversation entries
-                // patch.conversationEntries.remove.push(pk);
-                logger.verbose("skip conversation entry removing");
-            },
+            remove: (pk) => patch.conversationEntries.remove.push(pk),
         },
         {
             entitiesUpdates: mailsMap.values(),

@@ -1,14 +1,7 @@
-import {ChangeDetectionStrategy, Component, HostListener, Input} from "@angular/core";
-import {Store, select} from "@ngrx/store";
-import {combineLatest} from "rxjs";
-import {map, mergeMap} from "rxjs/operators";
+import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
 
-import {DB_VIEW_ACTIONS} from "src/web/src/app/store/actions/db-view";
-import {DbAccountPk, View} from "src/shared/model/database";
-import {DbViewUtil} from "./util";
-import {FEATURED} from "src/web/src/app/store/selectors/db-view";
-import {NgChangesObservableComponent} from "src/web/src/app/components/ng-changes-observable.component";
-import {State} from "src/web/src/app/store/reducers/db-view";
+import {View} from "src/shared/model/database";
+import {walkConversationNodesTree} from "src/shared/util";
 
 @Component({
     selector: "email-securely-app-db-view-mails",
@@ -16,50 +9,67 @@ import {State} from "src/web/src/app/store/reducers/db-view";
     styleUrls: ["./db-view-mails.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DbViewMailsComponent extends NgChangesObservableComponent {
+export class DbViewMailsComponent {
+    rootConversationNodes!: View.RootConversationNode[];
+
+    private hiddenRootNodesMap!: WeakMap<View.RootConversationNode, boolean>;
+    private hiddenNodesMap!: WeakMap<View.ConversationNode, boolean>;
+
     @Input()
-    dbAccountPk!: DbAccountPk;
+    set input({rootConversationNodes, selectedFolderPk}: {
+        rootConversationNodes: View.RootConversationNode[];
+        selectedFolderPk?: View.Folder["pk"],
+    }) {
+        this.rootConversationNodes = rootConversationNodes;
 
-    state$ = combineLatest(
-        this.store.pipe(
-            select((state) => FEATURED.accountRecord(this.dbAccountPk)(state)),
-            mergeMap((account) => account ? [account] : []),
-        ),
-        this.ngChangesObservable("dbAccountPk"),
-    ).pipe(
-        map(([{data, filters}]) => {
-            const state = {
-                folders: data.folders,
-                rootConversationNodes: data.folders.system.concat(data.folders.custom)
-                    .filter((folder) => folder.pk === filters.selectedFolderPk)
-                    .reduce((list: typeof rootConversationNodes, {rootConversationNodes}) => list.concat(rootConversationNodes), []),
-                selectedFolderPk: filters.selectedFolderPk,
-            };
+        this.hiddenRootNodesMap = new WeakMap<View.RootConversationNode, boolean>();
+        this.hiddenNodesMap = new WeakMap<View.ConversationNode, boolean>();
 
-            // desc sort order, newest conversations first
-            state.rootConversationNodes.sort((o1, o2) => o2.summary.sentDateMax - o1.summary.sentDateMax);
+        for (const rootConversationNode of this.rootConversationNodes) {
+            let rootNodeHasHiddenMails: boolean = false;
 
-            return state;
-        }),
-    );
+            // TODO move "walkConversationNodesTree" call to the "DbViewService"
+            walkConversationNodesTree([rootConversationNode], (node) => {
+                const nodeHasHiddenMail = Boolean(
+                    selectedFolderPk && node.mail && !node.mail.folders.some((folder) => folder.pk === selectedFolderPk),
+                );
 
-    trackByEntityPk = DbViewUtil.trackByEntityPk;
+                if (nodeHasHiddenMail) {
+                    this.hiddenNodesMap.set(node, nodeHasHiddenMail);
+                }
 
-    constructor(
-        private store: Store<State>,
-    ) {
-        super();
+                rootNodeHasHiddenMails = rootNodeHasHiddenMails || nodeHasHiddenMail;
+            });
+
+            if (rootNodeHasHiddenMails) {
+                this.hiddenRootNodesMap.set(rootConversationNode, rootNodeHasHiddenMails);
+            }
+        }
     }
 
-    selectFolder({pk: selectedFolderPk}: View.Folder) {
-        this.store.dispatch(DB_VIEW_ACTIONS.PatchInstanceFilters({dbAccountPk: this.dbAccountPk, patch: {selectedFolderPk}}));
+    isEmptyNodes(nodes: View.ConversationNode[]): boolean {
+        return nodes.length === 1 && !nodes[0].mail;
     }
 
-    @HostListener("click", ["$event"])
-    onClick(event: MouseEvent) {
-        if (!event.srcElement || !event.srcElement.classList.contains("sender")) {
+    toggleRootNodeHiddenMailsVisibility(node: View.RootConversationNode): void {
+        const value = this.hiddenRootNodesMap.get(node);
+
+        if (typeof value === "undefined") {
             return;
         }
-        event.preventDefault();
+
+        this.hiddenRootNodesMap.set(node, !value);
+    }
+
+    rootNodeHasHiddenMails(node: View.RootConversationNode): boolean {
+        return this.hiddenRootNodesMap.has(node);
+    }
+
+    rootNodeCollapsed(node: View.RootConversationNode): boolean {
+        return Boolean(this.hiddenRootNodesMap.get(node));
+    }
+
+    nodeHasHiddenMail(node: View.RootConversationNode): boolean {
+        return this.hiddenNodesMap.has(node);
     }
 }

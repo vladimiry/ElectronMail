@@ -2,24 +2,35 @@
 
 :host {
     display: flex;
+    flex-grow: 1;
+    flex-direction: column;
 
-    > .folders-container {
-        display: flex;
-        flex-direction: column;
-        min-width: $app-options-btn-min-width;
+    .conversation {
+        .conversation-node {
+            background-color: transparent;
+            padding: 0;
+            border: none;
+            cursor: pointer;
 
-        > .list-group {
-            &:not(:first-of-type) {
-                margin-top: $app-spacer-2;
+            &.grayed {
+                &::ng-deep #{$app-prefix}-db-view-mail {
+                    .r {
+                        display: none;
+                    }
+                }
             }
 
-            > .list-group-item-action {
-                cursor: pointer;
+            &:not(:last-child) {
+                &::ng-deep #{$app-prefix}-db-view-mail {
+                    border-bottom-width: 0;
+                }
             }
         }
     }
 
-    > #{$app-prefix}-db-view-mails-list {
-        margin-left: $app-spacer-2;
+    .removed {
+        padding: $list-group-item-padding-y $list-group-item-padding-x;
+        opacity: 0.4;
+        cursor: default;
     }
 }

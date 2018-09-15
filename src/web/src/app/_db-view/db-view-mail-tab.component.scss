@@ -1,0 +1,25 @@
+@import "~src/web/src/variables";
+
+:host {
+    display: flex;
+
+    > .folders-container {
+        display: flex;
+        flex-direction: column;
+        min-width: $app-options-btn-min-width;
+
+        > .list-group {
+            &:not(:first-of-type) {
+                margin-top: $app-spacer-2;
+            }
+
+            > .list-group-item-action {
+                cursor: pointer;
+            }
+        }
+    }
+
+    > #{$app-prefix}-db-view-mails {
+        margin-left: $app-spacer-2;
+    }
+}

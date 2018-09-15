@@ -28,12 +28,12 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
 
             for (const entityType of entityTypes) {
                 const source = entityUpdatesPatch[entityType];
-                const destination = account[entityType];
+                const destinationMap = account[entityType];
 
-                source.remove.forEach(({pk}) => destination.delete(pk));
+                source.remove.forEach(({pk}) => destinationMap.delete(pk));
 
                 for (const entity of source.upsert) {
-                    await (destination as EntityMap<typeof entity>).validateAndSet(entity);
+                    await (destinationMap as EntityMap<typeof entity>).validateAndSet(entity);
                 }
             }
 
@@ -63,7 +63,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
         dbGetAccountDataView: ({type, login}) => {
             logger.info("dbGetAccountDataView()");
 
-            const account = ctx.db.getAccount({type, login});
+            const account = ctx.db.getFsAccount({type, login});
 
             if (!account) {
                 return of(undefined);
@@ -71,7 +71,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
 
             return of({
                 folders: prepareFoldersView(account),
-                contacts: account.contacts.toObject(),
+                contacts: account.contacts,
             });
         },
     };

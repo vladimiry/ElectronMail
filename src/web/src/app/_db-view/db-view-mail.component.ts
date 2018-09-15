@@ -36,7 +36,7 @@ export class DbViewMailComponent {
         }
 
         this.mailAddress = mail.toRecipients[0];
-        this.mailAddressTotal = mail.toRecipients.length + mail.ccRecipients.length + mail.bccRecipients.length;
+        this.mailAddressTotal = [mail.toRecipients, mail.ccRecipients, mail.bccRecipients].reduce((sum, {length}) => sum + length, 0);
     }
 
     @HostBinding("class")
@@ -45,5 +45,9 @@ export class DbViewMailComponent {
             `unread-${Number(this.mail.unread)}`,
             `state-${this.stateTitle}`,
         ] : []).join(" ");
+    }
+
+    trackFolderByPk(index: number, {pk}: View.Folder) {
+        return pk;
     }
 }

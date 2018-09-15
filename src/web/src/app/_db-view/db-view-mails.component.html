@@ -1,19 +1,38 @@
-<div class="folders-container"
-     *ngIf="state$ | async; let state">
-    <ng-container [ngTemplateOutlet]="foldersGroup" [ngTemplateOutletContext]="{folders: state.folders.system}"></ng-container>
-    <ng-container [ngTemplateOutlet]="foldersGroup" [ngTemplateOutletContext]="{folders: state.folders.custom}"></ng-container>
-    <ng-template #foldersGroup let-folders="folders">
-        <ul class="list-group" *ngIf="state$ | async; let state">
-            <li class="list-group-item list-group-item-action"
-                *ngFor="let folder of folders; trackBy: trackByEntityPk"
-                [ngClass]="{'list-group-item-warning': state.selectedFolderPk === folder.pk}"
-                (click)="selectFolder(folder)">
-                <email-securely-app-db-view-folder [folder]="folder"></email-securely-app-db-view-folder>
-            </li>
-        </ul>
-    </ng-template>
+<!-- TODO enable "trackBy" for node -->
+<div class="conversation mb-2" *ngFor="let rootNode of rootConversationNodes">
+    <a
+        class="d-block text-secondary"
+        href="javascript:void(0)"
+        *ngIf="rootNodeHasHiddenMails(rootNode)"
+        (click)="toggleRootNodeHiddenMailsVisibility(rootNode)">
+        {{ rootNodeCollapsed(rootNode) ? "Expand" : "Collapse" }} conversation
+    </a>
+    <ng-container
+        [ngTemplateOutlet]="nodesTemplate"
+        [ngTemplateOutletContext]="{nodes: [rootNode], level: 0, collapsible: rootNodeCollapsed(rootNode)}"
+    ></ng-container>
 </div>
-<email-securely-app-db-view-mails-list
-    *ngIf="state$ | async; let state"
-    [rootConversationNodes]="state.rootConversationNodes"
-></email-securely-app-db-view-mails-list>
+<ng-template #nodesTemplate let-nodes="nodes" let-level="level" let-collapsible="collapsible">
+    <!-- TODO enable "trackBy" for node -->
+    <!-- TODO consider using "virtual list", ie rendering only visible data -->
+    <ng-container *ngFor="let node of nodes;">
+        <div class="conversation-node"
+             *ngIf="!isEmptyNodes(nodes)"
+             [ngStyle]="{'padding-left': level + 'em'}"
+             [ngClass]="{'grayed': collapsible && nodeHasHiddenMail(node)}">
+            <email-securely-app-db-view-mail
+                *ngIf="node.mail; else removedEmailStub"
+                [mail]="node.mail"
+            ></email-securely-app-db-view-mail>
+            <ng-template #removedEmailStub>
+                <div class="removed d-flex">
+                    Message has been removed. This is just a stub to preserve the conversation structure consistency.
+                </div>
+            </ng-template>
+        </div>
+        <ng-container
+            [ngTemplateOutlet]="nodesTemplate"
+            [ngTemplateOutletContext]="{nodes: node.children, level: level + (isEmptyNodes(nodes) ? 0 : 0.65), collapsible: collapsible}"
+        ></ng-container>
+    </ng-container>
+</ng-template>

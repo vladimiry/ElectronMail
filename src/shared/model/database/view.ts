@@ -5,6 +5,7 @@ export interface Folder extends Model.Folder {
 }
 
 export interface Mail extends Model.Mail {
+    bodyExcerpt: string;
     folders: Folder[];
 }
 

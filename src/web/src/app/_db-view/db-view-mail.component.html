@@ -1,22 +1,35 @@
-<div class="d-flex flex-grow-1 justify-content-between">
-    <div class="d-flex">
-        <i class="d-flex mr-2 fa" title="{{ stateTitle }}" [ngClass]="{
-            'fa-paper-plane-o': state.SENT,
-            'fa-inbox': state.RECEIVED,
-            'fa-pencil-square-o': state.DRAFT
-        }"></i>
-        <a class="sender d-flex"
-           href="mailto:{{ mailAddress.address }}"
-           title="{{ mailAddress.name ? mailAddress.name + ' <' + mailAddress.address + '>': '' }}">
-            {{ mailAddress.name || mailAddress.address }}
-            <span class="ml-1" *ngIf="mailAddressTotal > 1">(+{{ mailAddressTotal - 1 }})</span>
-        </a>
+<div class="r">
+    <div class="c-auto">
+        <div class="d-flex">
+            <div class="state mr-2 badge badge-pill" title="{{ stateTitle }}"></div>
+            <a class="sender badge flex-row mr-2"
+               href="mailto:{{ mailAddress.address }}"
+               title="{{ mailAddress.name ? mailAddress.name + ' <' + mailAddress.address + '>': '' }}">
+                {{ mailAddress.name || mailAddress.address }}
+                <span class="d-flex ml-1" *ngIf="mailAddressTotal > 1">(+{{ mailAddressTotal - 1 }})</span>
+            </a>
+        </div>
     </div>
-    <div class="date d-flex">
-        {{ mail.sentDate | date:'medium' }}
+    <div class="c-stretch">
+        <div class="d-flex">
+            <div class="subject">
+                <div class="ellipsis">
+                    {{ mail.subject }}
+                </div>
+            </div>
+        </div>
+        <i class="fa fa-shield d-flex ml-2" *ngIf="mail.confidential"></i>
     </div>
-</div>
-<div class="d-flex flex-grow-1">
-    <span class="subject d-flex flex-grow-1">{{ mail.subject }}</span>
-    <i class="fa fa-shield d-flex ml-2" *ngIf="mail.confidential"></i>
+    <div class="c-auto">
+        <div class="d-flex">
+            <div class="folders mr-2 ml-2">
+                <div class="d-flex badge badge-pill" *ngFor="let folder of mail.folders; trackBy: trackFolderByPk">
+                    {{ folder.name }}
+                </div>
+            </div>
+            <div class="date badge">
+                {{ mail.sentDate | date:'medium' }}
+            </div>
+        </div>
+    </div>
 </div>

@@ -3,6 +3,7 @@ import {BaseConfig, Config} from "./model/options";
 import {BatchEntityUpdatesDbPatch} from "./api/common";
 import {LoginFieldContainer} from "./model/container";
 import {StatusCodeError} from "./model/error";
+import {View} from "src/shared/model/database";
 import {WEBVIEW_SRC_WHITELIST} from "./constants";
 
 export function pickBaseConfigProperties(
@@ -57,4 +58,20 @@ export function isEntityUpdatesPatchNotEmpty({conversationEntries, folders, mail
         contacts.remove,
         contacts.upsert,
     ].some(({length}) => Boolean(length));
+}
+
+export function walkConversationNodesTree(rootNodes: View.ConversationNode[], fn: (node: View.ConversationNode) => void): void {
+    const state: { nodes: View.ConversationNode[]; } = {nodes: [...rootNodes]};
+
+    while (state.nodes.length) {
+        const node = state.nodes.pop();
+
+        if (!node) {
+            continue;
+        }
+
+        fn(node);
+
+        state.nodes.unshift(...[...node.children]);
+    }
 }

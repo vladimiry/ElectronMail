@@ -36,7 +36,7 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
             instance.data = {...instance.data, ...patch};
 
             const {filters} = instance;
-            const folders = instance.data.folders.system.concat(instance.data.folders.custom);
+            const folders = [...instance.data.folders.system, ...instance.data.folders.custom];
 
             if (!folders.length) {
                 delete filters.selectedFolderPk;

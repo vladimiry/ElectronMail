@@ -1,7 +1,10 @@
 import R from "ramda";
 
 import * as View from "src/shared/model/database/view";
-import {ConversationEntry, Folder, MAIL_FOLDER_TYPE, MemoryDb, MemoryDbAccount} from "src/shared/model/database";
+import sanitizeHtml from "sanitize-html";
+import {ConversationEntry, Folder, FsDb, FsDbAccount, MAIL_FOLDER_TYPE} from "src/shared/model/database";
+import {fromString} from "html-to-text";
+import {walkConversationNodesTree} from "src/shared/util";
 
 const splitAndFormatFolders: (folders: View.Folder[]) => {
     system: View.Folder[];
@@ -65,10 +68,12 @@ const splitAndFormatFolders: (folders: View.Folder[]) => {
 });
 
 // TODO review the "buildFoldersView" function in order to reduce complexity and memory use
-function buildFoldersView<T extends keyof MemoryDb>(
-    account: Pick<MemoryDbAccount<T>, "conversationEntries" | "folders" | "mails">,
+function buildFoldersView<T extends keyof FsDb>(
+    _: Pick<FsDbAccount<T>, "conversationEntries" | "folders" | "mails">,
+    // making sure input account is not mutated
+    account = R.clone(_),
 ): View.Folder[] {
-    const folders: View.Folder[] = Array.from(account.folders.values(), (folder) => ({...folder, rootConversationNodes: []}));
+    const folders: View.Folder[] = Array.from(Object.values(account.folders), (folder) => ({...folder, rootConversationNodes: []}));
     const rootNodes: View.ConversationNode[] = [];
     const foldersMappedByMailFolderId = new Map(
         folders.reduce(
@@ -88,10 +93,18 @@ function buildFoldersView<T extends keyof MemoryDb>(
         return node;
     };
 
-    for (const entry of account.conversationEntries.values()) {
+    for (const entry of Object.values(account.conversationEntries)) {
         const node = nodeLookup(entry.pk);
-        const resolvedMail = entry.mailPk && account.mails.get(entry.mailPk);
-        const nodeMail: View.Mail | undefined = node.mail = resolvedMail ? {...resolvedMail, folders: []} : undefined;
+        const resolvedMail = entry.mailPk && account.mails[entry.mailPk];
+        const nodeMail: View.Mail | undefined = node.mail = resolvedMail
+            ? {
+                ...resolvedMail,
+                // TODO test that "body" sanitazing is actually happening
+                body: sanitizeHtml(resolvedMail.body),
+                bodyExcerpt: fromString(resolvedMail.body),
+                folders: [],
+            }
+            : undefined;
 
         if (nodeMail) {
             for (const mailFolderId of nodeMail.mailFolderIds) {
@@ -120,15 +133,8 @@ function buildFoldersView<T extends keyof MemoryDb>(
                 sentDateMax: 0,
             },
         };
-        const state: { nodes: View.ConversationNode[]; } = {nodes: [rootNode]};
 
-        while (state.nodes.length) {
-            const node = state.nodes.pop();
-
-            if (!node) {
-                continue;
-            }
-
+        walkConversationNodesTree([rootNode], (node) => {
             node.children.sort((o1, o2) => {
                 if (!o1.mail) {
                     return -1;
@@ -139,10 +145,8 @@ function buildFoldersView<T extends keyof MemoryDb>(
                 return o1.mail.sentDate - o2.mail.sentDate;
             });
 
-            state.nodes.unshift(...node.children);
-
             if (!node.mail) {
-                continue;
+                return;
             }
 
             rootNode.summary.size++;
@@ -154,17 +158,18 @@ function buildFoldersView<T extends keyof MemoryDb>(
                 // TODO lookup from cache instead of calling "rootConversationNodes.includes" inside a loop
                 rootConversationNodes.push(...(rootConversationNodes.includes(rootNode) ? [] : [rootNode]));
             });
-        }
+        });
     }
 
     return folders;
 }
 
 // TODO consider moving performance expensive "prepareFoldersView" function call to the background thread (window.Worker)
-export function prepareFoldersView<T extends keyof MemoryDb>(
-    account: Pick<MemoryDbAccount<T>, "conversationEntries" | "folders" | "mails">,
+// TODO make sure input "account" is not mutated
+export function prepareFoldersView<T extends keyof FsDb>(
+    account: Pick<FsDbAccount<T>, "conversationEntries" | "folders" | "mails">,
 ) {
-    // TODO filter out "raw" property from each entity (mail/folder/etc)
+    // TODO filter out unnecessary client-side properties from each entity (mail/folder/etc), such as "raw" property
     return splitAndFormatFolders(
         buildFoldersView(account),
     );

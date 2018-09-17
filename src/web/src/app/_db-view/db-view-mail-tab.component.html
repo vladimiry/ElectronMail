@@ -1,5 +1,5 @@
 <div class="folders-container"
-     *ngIf="state$ | async; let state">
+    *ngIf="state$ | async; let state">
     <ng-container [ngTemplateOutlet]="foldersGroup" [ngTemplateOutletContext]="{folders: state.folders.system}"></ng-container>
     <ng-container [ngTemplateOutlet]="foldersGroup" [ngTemplateOutletContext]="{folders: state.folders.custom}"></ng-container>
     <ng-template #foldersGroup let-folders="folders">

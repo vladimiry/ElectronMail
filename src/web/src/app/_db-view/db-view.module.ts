@@ -8,7 +8,6 @@ import {DbViewFolderComponent} from "./db-view-folder.component";
 import {DbViewMailComponent} from "./db-view-mail.component";
 import {DbViewMailTabComponent} from "./db-view-mail-tab.component";
 import {DbViewMailsComponent} from "./db-view-mails.component";
-import {DbViewMailsListComponent} from "./db-view-mail-list.component";
 import {DbViewService} from "./db-view.service";
 import {SharedModule} from "src/web/src/app/_shared/shared.module";
 
@@ -22,7 +21,6 @@ import {SharedModule} from "src/web/src/app/_shared/shared.module";
         DbViewFolderComponent,
         DbViewMailComponent,
         DbViewMailsComponent,
-        DbViewMailsListComponent,
         DbViewMailTabComponent,
     ],
     entryComponents: [

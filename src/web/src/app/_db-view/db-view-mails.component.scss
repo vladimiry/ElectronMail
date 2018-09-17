@@ -5,6 +5,17 @@
     flex-grow: 1;
     flex-direction: column;
 
+    .controls {
+        padding: $list-group-item-padding-y $list-group-item-padding-x;
+        border: 1px solid $list-group-border-color;
+        border-radius: $list-group-border-radius;
+        background-color: $white;
+    }
+
+    &::ng-deep #{$app-prefix}-db-view-mail:not(:last-of-type) {
+        border-bottom-width: 0;
+    }
+
     .conversation {
         .conversation-node {
             background-color: transparent;

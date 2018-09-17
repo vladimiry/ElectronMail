@@ -1,9 +1,9 @@
 import R from "ramda";
+import sanitizeHtml from "sanitize-html";
+import {fromString} from "html-to-text";
 
 import * as View from "src/shared/model/database/view";
-import sanitizeHtml from "sanitize-html";
 import {ConversationEntry, Folder, FsDb, FsDbAccount, MAIL_FOLDER_TYPE} from "src/shared/model/database";
-import {fromString} from "html-to-text";
 import {walkConversationNodesTree} from "src/shared/util";
 
 const splitAndFormatFolders: (folders: View.Folder[]) => {

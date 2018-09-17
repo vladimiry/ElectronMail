@@ -3,6 +3,8 @@ import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
 import {View} from "src/shared/model/database";
 import {walkConversationNodesTree} from "src/shared/util";
 
+// TODO consider storing DbViewMailsComponent's state in the central state, passing only the "selectedFolderPk" @Input attribute
+// so app doesn't re-calculate the state each time user changes the selected folder
 @Component({
     selector: "email-securely-app-db-view-mails",
     templateUrl: "./db-view-mails.component.html",
@@ -10,17 +12,19 @@ import {walkConversationNodesTree} from "src/shared/util";
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DbViewMailsComponent {
+    conversationViewMode: boolean = false;
     rootConversationNodes!: View.RootConversationNode[];
-
+    mails!: View.Mail[];
     private hiddenRootNodesMap!: WeakMap<View.RootConversationNode, boolean>;
     private hiddenNodesMap!: WeakMap<View.ConversationNode, boolean>;
 
     @Input()
     set input({rootConversationNodes, selectedFolderPk}: {
         rootConversationNodes: View.RootConversationNode[];
-        selectedFolderPk?: View.Folder["pk"],
+        selectedFolderPk?: View.Folder["pk"];
     }) {
         this.rootConversationNodes = rootConversationNodes;
+        this.mails = [];
 
         this.hiddenRootNodesMap = new WeakMap<View.RootConversationNode, boolean>();
         this.hiddenNodesMap = new WeakMap<View.ConversationNode, boolean>();
@@ -28,14 +32,16 @@ export class DbViewMailsComponent {
         for (const rootConversationNode of this.rootConversationNodes) {
             let rootNodeHasHiddenMails: boolean = false;
 
-            // TODO move "walkConversationNodesTree" call to the "DbViewService"
             walkConversationNodesTree([rootConversationNode], (node) => {
+                const mail = node.mail;
                 const nodeHasHiddenMail = Boolean(
-                    selectedFolderPk && node.mail && !node.mail.folders.some((folder) => folder.pk === selectedFolderPk),
+                    selectedFolderPk && mail && !mail.folders.some((folder) => folder.pk === selectedFolderPk),
                 );
 
                 if (nodeHasHiddenMail) {
                     this.hiddenNodesMap.set(node, nodeHasHiddenMail);
+                } else if (mail) {
+                    this.mails.push(mail);
                 }
 
                 rootNodeHasHiddenMails = rootNodeHasHiddenMails || nodeHasHiddenMail;
@@ -45,6 +51,20 @@ export class DbViewMailsComponent {
                 this.hiddenRootNodesMap.set(rootConversationNode, rootNodeHasHiddenMails);
             }
         }
+
+        this.mails.sort((o1, o2) => o2.sentDate - o1.sentDate);
+    }
+
+    toggleConversationViewMode() {
+        this.conversationViewMode = !this.conversationViewMode;
+    }
+
+    trackByMailPk(index: number, {pk}: View.Mail) {
+        return pk;
+    }
+
+    trackByNodeMailPk(index: number, {mail}: View.ConversationNode) {
+        return mail ? mail.pk : undefined;
     }
 
     isEmptyNodes(nodes: View.ConversationNode[]): boolean {

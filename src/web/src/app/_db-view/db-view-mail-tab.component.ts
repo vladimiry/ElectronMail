@@ -17,11 +17,10 @@ export class DbViewMailTabComponent {
     @Input()
     dbAccountPk!: DbAccountPk;
 
-    // TODO optimize DbViewMailsComponent.state$ value emitting, it's called 4 times for single folder selection
+    // TODO optimize DbViewMailTabComponent.state$ value emitting, it's called 4 times for single folder selection
     state$ = this.store.pipe(
         select((state) => FEATURED.accountRecord(this.dbAccountPk)(state)),
         mergeMap((account) => account ? [account] : []),
-        // distinctUntilChanged((prev, curr) => curr.filters.selectedFolderPk === prev.filters.selectedFolderPk),
     ).pipe(
         map(({data, filters}) => {
             const state = {
@@ -33,7 +32,6 @@ export class DbViewMailTabComponent {
                 selectedFolderPk: filters.selectedFolderPk,
             };
 
-            // desc sort order, newest conversations first
             state.rootConversationNodes.sort((o1, o2) => o2.summary.sentDateMax - o1.summary.sentDateMax);
 
             return state;

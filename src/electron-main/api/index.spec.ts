@@ -225,6 +225,11 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.pass();
     },
 
+    // TODO test "dbGetAccountMail" API
+    dbGetAccountMail: (t) => {
+        t.pass();
+    },
+
     init: async (t) => {
         const result = await t.context.endpoints.init().toPromise();
 

@@ -1,19 +1,25 @@
-<div class="folders-container"
-    *ngIf="state$ | async; let state">
-    <ng-container [ngTemplateOutlet]="foldersGroup" [ngTemplateOutletContext]="{folders: state.folders.system}"></ng-container>
-    <ng-container [ngTemplateOutlet]="foldersGroup" [ngTemplateOutletContext]="{folders: state.folders.custom}"></ng-container>
-    <ng-template #foldersGroup let-folders="folders">
-        <ul class="list-group" *ngIf="state$ | async; let state">
-            <li class="list-group-item list-group-item-action"
-                *ngFor="let folder of folders; trackBy: trackFolderByPk"
-                [ngClass]="{'list-group-item-warning': state.selectedFolderPk === folder.pk}"
-                (click)="selectFolder(folder)">
-                <email-securely-app-db-view-folder [folder]="folder"></email-securely-app-db-view-folder>
-            </li>
-        </ul>
-    </ng-template>
-</div>
-<email-securely-app-db-view-mails
-    *ngIf="state$ | async; let state"
-    [input]="{rootConversationNodes: state.rootConversationNodes, selectedFolderPk: state.selectedFolderPk}"
-></email-securely-app-db-view-mails>
+<ng-container *ngIf="state$ | async; let state">
+    <div class="folders-container">
+        <ng-container [ngTemplateOutlet]="foldersGroup" [ngTemplateOutletContext]="{folders: state.folders.system}"></ng-container>
+        <ng-container [ngTemplateOutlet]="foldersGroup" [ngTemplateOutletContext]="{folders: state.folders.custom}"></ng-container>
+        <ng-template #foldersGroup let-folders="folders">
+            <ul class="list-group" *ngIf="state$ | async; let state">
+                <li class="list-group-item list-group-item-action"
+                    *ngFor="let folder of folders; trackBy: trackFolderByPk"
+                    [ngClass]="{'list-group-item-warning': state.selectedFolderPk === folder.pk}"
+                    (click)="selectFolder(folder)">
+                    <email-securely-app-db-view-folder [folder]="folder"></email-securely-app-db-view-folder>
+                </li>
+            </ul>
+        </ng-template>
+    </div>
+    <email-securely-app-db-view-mails
+        [input]="{
+            folderMeta: state.folderMeta,
+            selectedMail: state.selectedMail,
+            rootConversationNodes: state.rootConversationNodes
+        }"
+        (selectMailPkHandler)="selectMailPkHandler($event)"
+        (toggleRootNodesCollapsingHandler)="toggleRootNodesCollapsingHandler($event)"
+    ></email-securely-app-db-view-mails>
+</ng-container>

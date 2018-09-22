@@ -75,3 +75,21 @@ export function walkConversationNodesTree(rootNodes: View.ConversationNode[], fn
         state.nodes.unshift(...[...node.children]);
     }
 }
+
+export function reduceNodesMails(
+    nodes: View.ConversationNode[],
+    filter: (mail: View.Mail) => boolean = () => true,
+): View.Mail[] {
+    const mails: View.Mail[] = [];
+
+    walkConversationNodesTree(nodes, (node) => {
+        if (!node.mail || !filter(node.mail)) {
+            return;
+        }
+        mails.push(node.mail);
+    });
+
+    mails.sort((o1, o2) => o2.sentDate - o1.sentDate);
+
+    return mails;
+}

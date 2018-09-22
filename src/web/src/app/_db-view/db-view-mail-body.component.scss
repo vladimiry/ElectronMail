@@ -1,0 +1,48 @@
+@import "~src/web/src/variables";
+
+:host {
+    $border-color: $list-group-border-color;
+
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: $app-spacer-2;
+    border: 1px solid $border-color;
+
+    .addresses,
+    .attachments {
+        .badge {
+            font-weight: normal;
+            font-size: $app-font-size-base-small;
+            color: $gray-700;
+            border: 1px solid $border-color;
+        }
+    }
+
+    .addresses {
+        border-bottom: 1px solid $border-color;
+
+        .badge {
+            .address:not(:last-of-type)::after {
+                content: ",";
+                margin-right: $app-spacer-1;
+            }
+        }
+    }
+
+    .attachments {
+        border-top: 1px solid $border-color;
+    }
+
+    .hovered-href {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        margin: $app-spacer-1;
+        background-color: $gray-700;
+        color: $white;
+        border: 1px solid $gray-800;
+        padding: 0.25em;
+        font-size: $app-font-size-base-small;
+    }
+}

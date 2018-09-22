@@ -2,21 +2,23 @@ import {UnionOf} from "@vladimiry/unionize";
 
 import * as fromRoot from "src/web/src/app/store/reducers/root";
 import {DB_VIEW_ACTIONS} from "src/web/src/app/store/actions";
-import {DbEntitiesRecordContainer, MAIL_FOLDER_TYPE, View} from "src/shared/model/database";
+import {DbAccountPk, Mail, View} from "src/shared/model/database";
+import {reduceNodesMails, walkConversationNodesTree} from "src/shared/util";
 
 export const featureName = "db-view";
 
 export interface Instance {
-    data: {
-        folders: {
-            system: View.Folder[];
-            custom: View.Folder[];
-        };
-        contacts: DbEntitiesRecordContainer["contacts"];
+    folders: {
+        system: View.Folder[];
+        custom: View.Folder[];
     };
-    filters: {
-        selectedFolderPk?: View.Folder["pk"];
-    };
+    foldersMeta: Record<View.Folder["pk"], {
+        collapsibleNodes: Record<View.ConversationNode["entryPk"], boolean>;
+        rootNodesCollapsed: Record<View.RootConversationNode["entryPk"], boolean>;
+        mails: View.Mail[];
+    }>;
+    selectedFolderPk?: View.Folder["pk"];
+    selectedMail?: Mail;
 }
 
 export interface State extends fromRoot.State {
@@ -27,26 +29,75 @@ const initialState: State = {
     instances: {},
 };
 
+// TODO optimize and simplify "db-view" reducer
 export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACTIONS>): State {
     return DB_VIEW_ACTIONS.match(action, {
-        PatchInstanceData: ({dbAccountPk, patch}) => {
-            const key = JSON.stringify(dbAccountPk);
-            const instance = {...(state.instances[key] || buildInstance())};
+        SetFolders: ({dbAccountPk, folders}) => {
+            const key = instanceKey(dbAccountPk);
+            const instance: Instance = {
+                ...(state.instances[key] || initInstance()),
+                folders,
+            };
 
-            instance.data = {...instance.data, ...patch};
+            return reducer(
+                {
+                    ...state,
+                    instances: {
+                        ...state.instances,
+                        [key]: instance,
+                    },
+                },
+                DB_VIEW_ACTIONS.SelectFolder({dbAccountPk, folderPk: instance.selectedFolderPk}),
+            );
+        },
+        SelectFolder: ({dbAccountPk, folderPk}) => {
+            const key = instanceKey(dbAccountPk);
+            const instance: Instance = {
+                ...(state.instances[key] || initInstance()),
+                selectedFolderPk: folderPk,
+            };
+            const folders = [...instance.folders.system, ...instance.folders.custom];
 
-            const {filters} = instance;
-            const folders = [...instance.data.folders.system, ...instance.data.folders.custom];
+            if (instance.selectedFolderPk && !folders.some(({pk}) => instance.selectedFolderPk === pk)) {
+                delete instance.selectedFolderPk;
+            }
 
-            if (!folders.length) {
-                delete filters.selectedFolderPk;
-            } else {
-                if (filters.selectedFolderPk && !folders.some(({pk}) => filters.selectedFolderPk === pk)) {
-                    delete filters.selectedFolderPk;
+            const selectedFolder = folders.find(({pk}) => pk === instance.selectedFolderPk);
+
+            // TODO cleanup "instance.foldersMeta" (delete non existing folders)
+
+            if (selectedFolder) {
+                const {rootNodesCollapsed} = (instance.foldersMeta[selectedFolder.pk] || ({rootNodesCollapsed: {}}));
+                const folderMeta: Instance["foldersMeta"][typeof selectedFolder.pk] = {
+                    collapsibleNodes: {},
+                    rootNodesCollapsed: {},
+                    mails: reduceNodesMails(selectedFolder.rootConversationNodes, (mail) => mail.folders.includes(selectedFolder)),
+                };
+
+                for (const rootNode of selectedFolder.rootConversationNodes) {
+                    let rootNodeCollapsible: boolean = false;
+
+                    walkConversationNodesTree([rootNode], (node) => {
+                        const mail = node.mail;
+                        const nodeCollapsible = Boolean(mail && !mail.folders.includes(selectedFolder));
+
+                        if (nodeCollapsible) {
+                            folderMeta.collapsibleNodes[node.entryPk] = true;
+                        }
+
+                        rootNodeCollapsible = rootNodeCollapsible || nodeCollapsible;
+                    });
+
+                    if (!rootNodeCollapsible) {
+                        continue;
+                    }
+
+                    folderMeta.rootNodesCollapsed[rootNode.entryPk] = rootNode.entryPk in rootNodesCollapsed
+                        ? rootNodesCollapsed[rootNode.entryPk] // preserve previously defined value
+                        : true;
                 }
-                if (!filters.selectedFolderPk) {
-                    filters.selectedFolderPk = (folders.find(({folderType}) => folderType === MAIL_FOLDER_TYPE.INBOX) || folders[0]).pk;
-                }
+
+                instance.foldersMeta[selectedFolder.pk] = folderMeta;
             }
 
             return {
@@ -57,11 +108,12 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
                 },
             };
         },
-        PatchInstanceFilters: ({dbAccountPk, patch}) => {
-            const key = JSON.stringify(dbAccountPk);
-            const instance = {...(state.instances[key] || buildInstance())};
-
-            instance.filters = {...instance.filters, ...patch};
+        SelectMail: ({dbAccountPk, mail}) => {
+            const key = instanceKey(dbAccountPk);
+            const instance: Instance = {
+                ...(state.instances[key] || initInstance()),
+                selectedMail: mail,
+            };
 
             return {
                 ...state,
@@ -71,10 +123,40 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
                 },
             };
         },
+        ToggleRootNodesCollapsing: ({dbAccountPk, entryPk}) => {
+            const key = instanceKey(dbAccountPk);
+            const instance = state.instances[key];
+            const selectedFolderPk: string | undefined = instance && instance.selectedFolderPk || undefined;
+            const folderMeta = selectedFolderPk && instance && instance.foldersMeta[selectedFolderPk];
+
+            if (!selectedFolderPk || !instance || !folderMeta || !(entryPk in folderMeta.rootNodesCollapsed)) {
+                return state;
+            }
+
+            return {
+                ...state,
+                instances: {
+                    ...state.instances,
+                    [key]: {
+                        ...instance,
+                        foldersMeta: {
+                            ...instance.foldersMeta,
+                            [selectedFolderPk]: {
+                                ...folderMeta,
+                                rootNodesCollapsed: {
+                                    ...folderMeta.rootNodesCollapsed,
+                                    [entryPk]: !folderMeta.rootNodesCollapsed[entryPk],
+                                },
+                            },
+                        },
+                    },
+                },
+            };
+        },
         UnmountInstance: ({dbAccountPk}) => {
             const instances = {...state.instances};
 
-            delete instances[JSON.stringify(dbAccountPk)];
+            delete instances[instanceKey(dbAccountPk)];
 
             return {
                 ...state,
@@ -85,17 +167,16 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
     });
 }
 
-function buildInstance(): Instance {
+function instanceKey(dbAccountPk: DbAccountPk): string {
+    return JSON.stringify(dbAccountPk);
+}
+
+function initInstance(): Instance {
     return {
-        data: {
-            folders: {
-                system: [],
-                custom: [],
-            },
-            contacts: {},
+        folders: {
+            system: [],
+            custom: [],
         },
-        filters: {
-            selectedFolderPk: undefined,
-        },
+        foldersMeta: {},
     };
 }

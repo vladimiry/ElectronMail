@@ -7,7 +7,6 @@
     $border-color: $list-group-border-color;
     $padding-y: $list-group-item-padding-y * 0.5;
     $padding-x: $list-group-item-padding-x * 0.5;
-    $font-size-small: $font-size-base * 0.75;
 
     display: flex;
     flex-direction: column;
@@ -46,46 +45,46 @@
     }
 
     &.state- {
-        &SENT {
+        &sent {
             border-left-color: $state-sent;
 
             .state {
                 background-color: $state-sent;
 
                 &::after {
-                    content: 'S';
+                    content: "S";
                 }
             }
         }
 
-        &RECEIVED {
+        &received {
             border-left-color: $state-received;
 
             .state {
                 background-color: $state-received;
 
                 &::after {
-                    content: 'R';
+                    content: "R";
                 }
             }
         }
 
-        &DRAFT {
+        &draft {
             border-left-color: $state-draft;
 
             .state {
                 background-color: $state-draft;
 
                 &::after {
-                    content: 'D';
+                    content: "D";
                 }
             }
         }
     }
 
     .badge {
-        padding-top: .25em;
-        padding-bottom: .25em;
+        padding-top: 0.25em;
+        padding-bottom: 0.25em;
         font-weight: normal;
     }
 
@@ -96,7 +95,7 @@
 
     .state,
     .folders,
-    .sender,
+    .address,
     .date {
         display: flex;
         flex-direction: column;
@@ -106,12 +105,12 @@
         &,
         .badge {
             font-weight: normal;
-            font-size: $font-size-small;
+            font-size: $app-font-size-base-small;
             color: $gray-700;
         }
     }
 
-    .sender,
+    .address,
     .date {
         border: 1px solid $border-color;
     }
@@ -119,7 +118,7 @@
     .state {
         text-transform: uppercase;
         color: $white;
-        font-size: $font-size-small * 0.9;
+        font-size: $app-font-size-base-small * 0.9;
     }
 
     .subject {
@@ -131,10 +130,7 @@
     .folders {
         .badge {
             background-color: $gray-300;
+            border: 1px solid darken($gray-300, 10%);
         }
-    }
-
-    @media (min-width: #{map-get($grid-breakpoints, lg)}) {
-
     }
 }

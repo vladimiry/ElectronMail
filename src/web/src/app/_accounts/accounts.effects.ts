@@ -1,8 +1,8 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {EMPTY, Subject, from, merge, of, timer} from "rxjs";
+import {EMPTY, Subject, from, fromEvent, merge, of, timer} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store} from "@ngrx/store";
-import {catchError, concatMap, filter, finalize, map, mergeMap, takeUntil, tap} from "rxjs/operators";
+import {catchError, concatMap, debounce, filter, finalize, map, mergeMap, takeUntil, tap} from "rxjs/operators";
 
 import {ACCOUNTS_ACTIONS, CORE_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
 import {AccountTypeAndLoginFieldContainer} from "src/shared/model/container";
@@ -69,6 +69,9 @@ export class AccountsEffects {
     @Effect()
     toggleSyncing$ = (() => {
         const merged$ = EMPTY;
+        const online$ = timer(0, ONE_SECOND_MS / 2).pipe(
+            filter(() => navigator.onLine),
+        );
 
         return this.actions$.pipe(
             unionizeActionFilter(ACCOUNTS_ACTIONS.is.ToggleSyncing),
@@ -98,20 +101,22 @@ export class AccountsEffects {
                             of(ACCOUNTS_ACTIONS.Patch({login, patch: {syncingActivated: true}})),
                             merge(
                                 timer(0, ONE_SECOND_MS * 60 * 5).pipe(
-                                    tap(() => logger.verbose(`trigger: timer`)),
-                                    map(() => ({forceFlush: true})),
+                                    tap(() => logger.verbose(`triggered by: timer`)),
                                 ),
                                 this.fireSyncingIteration$.pipe(
                                     filter((value) => value.type === type && value.login === login),
-                                    tap(() => logger.verbose(`trigger: fireSyncingIteration$`)),
-                                    map(() => ({forceFlush: false})),
+                                    tap(() => logger.verbose(`triggered by: fireSyncingIteration$`)),
+                                ),
+                                fromEvent(window, "online").pipe(
+                                    tap(() => logger.verbose(`triggered by: "window.online" event`)),
                                 ),
                             ).pipe(
-                                filter(() => navigator.onLine),
+                                debounce(() => online$),
                                 tap(() => {
                                     this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: true}}));
                                 }),
-                                concatMap(({forceFlush}) => ipcMainClient("dbGetAccountMetadata")({type, login}).pipe(
+                                // use "concatMap" calls below to preserve ordering
+                                concatMap(() => ipcMainClient("dbGetAccountMetadata")({type, login}).pipe(
                                     concatMap((metadata) => {
                                         if (metadata && metadata.type !== "tutanota") {
                                             throw new Error(`Local store is supported for "${metadata.type}" only for now`);
@@ -121,7 +126,7 @@ export class AccountsEffects {
                                             {timeoutMs: ONE_SECOND_MS * 60 * 3}, // 3 minutes
                                         )({metadata, zoneName});
                                     }),
-                                    concatMap((patch) => ipcMainClient("dbPatch")({type, login, forceFlush, ...patch})),
+                                    concatMap((patch) => ipcMainClient("dbPatch")({type, login, forceFlush: false, ...patch})),
                                     concatMap(() => EMPTY),
                                     catchError((error) => of(CORE_ACTIONS.Fail(error))),
                                     finalize(() => {

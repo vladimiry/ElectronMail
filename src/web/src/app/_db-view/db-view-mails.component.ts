@@ -1,10 +1,11 @@
-import {ChangeDetectionStrategy, Component, HostListener, Input} from "@angular/core";
+import {ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, Output} from "@angular/core";
 
-import {View} from "src/shared/model/database";
-import {walkConversationNodesTree} from "src/shared/util";
+import {DbViewMailTabComponent} from "./db-view-mail-tab.component";
+import {Instance} from "src/web/src/app/store/reducers/db-view";
+import {Mail, View} from "src/shared/model/database";
+import {Unpacked} from "src/shared/types";
+import {reduceNodesMails} from "src/shared/util";
 
-// TODO consider storing DbViewMailsComponent's state in the central state, passing only the "selectedFolderPk" @Input attribute
-// so app doesn't re-calculate the state each time user changes the selected folder
 @Component({
     selector: "email-securely-app-db-view-mails",
     templateUrl: "./db-view-mails.component.html",
@@ -12,47 +13,29 @@ import {walkConversationNodesTree} from "src/shared/util";
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DbViewMailsComponent {
-    conversationViewMode: boolean = false;
-    rootConversationNodes!: View.RootConversationNode[];
-    mails!: View.Mail[];
-    private hiddenRootNodesMap!: WeakMap<View.RootConversationNode, boolean>;
-    private hiddenNodesMap!: WeakMap<View.ConversationNode, boolean>;
+    // TODO read "email-securely-app-db-view-mail" dynamically from the annotation
+    private static mailComponentTagName = "email-securely-app-db-view-mail";
+    conversationViewMode: boolean = true;
+    inputState!: Pick<Unpacked<typeof DbViewMailTabComponent.prototype.state$>, "selectedMail" | "rootConversationNodes">
+        & { meta: Instance["foldersMeta"][string] };
+    @Output()
+    selectMailPkHandler = new EventEmitter<Mail["pk"]>();
+    @Output()
+    toggleRootNodesCollapsingHandler = new EventEmitter<Pick<View.RootConversationNode, "entryPk">>();
 
     @Input()
-    set input({rootConversationNodes, selectedFolderPk}: {
-        rootConversationNodes: View.RootConversationNode[];
-        selectedFolderPk?: View.Folder["pk"];
-    }) {
-        this.rootConversationNodes = rootConversationNodes;
-        this.mails = [];
-
-        this.hiddenRootNodesMap = new WeakMap<View.RootConversationNode, boolean>();
-        this.hiddenNodesMap = new WeakMap<View.ConversationNode, boolean>();
-
-        for (const rootConversationNode of this.rootConversationNodes) {
-            let rootNodeHasHiddenMails: boolean = false;
-
-            walkConversationNodesTree([rootConversationNode], (node) => {
-                const mail = node.mail;
-                const nodeHasHiddenMail = Boolean(
-                    selectedFolderPk && mail && !mail.folders.some((folder) => folder.pk === selectedFolderPk),
-                );
-
-                if (nodeHasHiddenMail) {
-                    this.hiddenNodesMap.set(node, nodeHasHiddenMail);
-                } else if (mail) {
-                    this.mails.push(mail);
-                }
-
-                rootNodeHasHiddenMails = rootNodeHasHiddenMails || nodeHasHiddenMail;
-            });
-
-            if (rootNodeHasHiddenMails) {
-                this.hiddenRootNodesMap.set(rootConversationNode, rootNodeHasHiddenMails);
-            }
-        }
-
-        this.mails.sort((o1, o2) => o2.sentDate - o1.sentDate);
+    set input(
+        input: Pick<Unpacked<typeof DbViewMailTabComponent.prototype.state$>, "folderMeta" | "selectedMail" | "rootConversationNodes">,
+    ) {
+        this.inputState = {
+            meta: input.folderMeta || {
+                collapsibleNodes: {},
+                rootNodesCollapsed: {},
+                mails: reduceNodesMails(input.rootConversationNodes),
+            },
+            selectedMail: input.selectedMail,
+            rootConversationNodes: input.rootConversationNodes,
+        };
     }
 
     toggleConversationViewMode() {
@@ -71,33 +54,45 @@ export class DbViewMailsComponent {
         return nodes.length === 1 && !nodes[0].mail;
     }
 
-    toggleRootNodeHiddenMailsVisibility(node: View.RootConversationNode): void {
-        const value = this.hiddenRootNodesMap.get(node);
-
-        if (typeof value === "undefined") {
-            return;
-        }
-
-        this.hiddenRootNodesMap.set(node, !value);
+    toggleRootNodesCollapsing({entryPk}: View.RootConversationNode): void {
+        this.toggleRootNodesCollapsingHandler.emit({entryPk});
     }
 
-    rootNodeHasHiddenMails(node: View.RootConversationNode): boolean {
-        return this.hiddenRootNodesMap.has(node);
+    rootNodeHasHiddenMails({entryPk}: View.RootConversationNode): boolean {
+        return entryPk in this.inputState.meta.rootNodesCollapsed;
     }
 
-    rootNodeCollapsed(node: View.RootConversationNode): boolean {
-        return Boolean(this.hiddenRootNodesMap.get(node));
+    rootNodeCollapsed({entryPk}: View.RootConversationNode): boolean {
+        return Boolean(this.inputState.meta.rootNodesCollapsed[entryPk]);
     }
 
-    nodeHasHiddenMail(node: View.RootConversationNode): boolean {
-        return this.hiddenNodesMap.has(node);
+    nodeHasHiddenMail({entryPk}: View.RootConversationNode): boolean {
+        return entryPk in this.inputState.meta.collapsibleNodes;
     }
 
     @HostListener("click", ["$event"])
     onClick(event: MouseEvent) {
-        if (!event.srcElement || !event.srcElement.classList.contains("sender")) {
+        const target = event.target as Element;
+        const mailElement = this.resolveMailComponentElement(target);
+
+        if (target.classList.contains("prevent-default-event")) {
+            event.preventDefault();
+        }
+
+        if (!mailElement) {
             return;
         }
-        event.preventDefault();
+
+        this.selectMailPkHandler.emit(mailElement.getAttribute("data-pk") as Mail["pk"]);
+    }
+
+    private resolveMailComponentElement(element: Element | null): Element | null {
+        while (element) {
+            if (element.tagName.toLowerCase() === DbViewMailsComponent.mailComponentTagName) {
+                return element;
+            }
+            element = element.parentElement;
+        }
+        return null;
     }
 }

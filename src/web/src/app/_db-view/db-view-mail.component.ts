@@ -27,7 +27,7 @@ export class DbViewMailComponent {
         this.state.DRAFT = mail.state === MAIL_STATE.DRAFT;
         this.state.SENT = mail.state === MAIL_STATE.SENT;
         this.state.RECEIVED = mail.state === MAIL_STATE.RECEIVED;
-        this.stateTitle = MAIL_STATE._.resolveNameByValue(mail.state);
+        this.stateTitle = MAIL_STATE._.resolveNameByValue(mail.state).toLowerCase();
 
         if (this.state.RECEIVED) {
             this.mailAddress = mail.sender;

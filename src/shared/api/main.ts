@@ -3,6 +3,8 @@ import {ApiMethod, ApiMethodNoArgument, IpcMainApiService} from "electron-rpc-ap
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import {UnionOf, ofType, unionize} from "@vladimiry/unionize";
 
+// tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects "Folder" as unused
+import * as DatabaseModel from "src/shared/model/database";
 import {APP_NAME} from "src/shared/constants";
 import {
     AccountConfigCreatePatch,
@@ -22,8 +24,6 @@ import {BatchEntityUpdatesDbPatch} from "./common";
 import {DbEntitiesRecordContainer, FsDb, FsDbAccount} from "src/shared/model/database";
 // tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects "ElectronContextLocations" as unused
 import {ElectronContextLocations} from "src/shared/model/electron";
-// tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects "Folder" as unused
-import {Folder} from "src/shared/model/database/view";
 
 export interface Endpoints {
     addAccount: ApiMethod<AccountConfigCreatePatch, Settings>;
@@ -46,11 +46,13 @@ export interface Endpoints {
     dbGetAccountDataView: ApiMethod<{ type: keyof FsDb, login: string },
         {
             folders: {
-                system: Folder[];
-                custom: Folder[];
+                system: DatabaseModel.View.Folder[];
+                custom: DatabaseModel.View.Folder[];
             };
             contacts: DbEntitiesRecordContainer["contacts"];
         } | undefined>;
+
+    dbGetAccountMail: ApiMethod<{ type: keyof FsDb, login: string, pk: DatabaseModel.Mail["pk"] }, DatabaseModel.Mail>;
 
     init: ApiMethodNoArgument<{ electronLocations: ElectronContextLocations; hasSavedPassword: boolean; }>;
 

@@ -32,7 +32,7 @@ export class DbViewEntryComponent implements ComponentInterface, OnDestroy, OnIn
     }
 
     setVisibility(value: boolean) {
-        this.renderer.setStyle(this.el.nativeElement, "display", value ? "block" : "none");
+        this.renderer.setStyle(this.el.nativeElement, "display", value ? "flex" : "none");
     }
 
     ngOnDestroy() {

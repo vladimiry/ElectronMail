@@ -10,46 +10,63 @@
         }"></i>
     </a>
 </div>
-<ng-container *ngIf="!conversationViewMode; else conversationViewTemplate">
-    <email-securely-app-db-view-mail
-        *ngFor="let mail of mails; trackBy: trackByMailPk"
-        [mail]="mail"
-    ></email-securely-app-db-view-mail>
-</ng-container>
-<ng-template #conversationViewTemplate>
-    <div class="conversation mb-2" *ngFor="let rootNode of rootConversationNodes" [ngClass]="{'collapsed': rootNodeCollapsed(rootNode)}">
-        <div
-            class="toggler"
-            *ngIf="rootNodeHasHiddenMails(rootNode)"
-            (click)="toggleRootNodeHiddenMailsVisibility(rootNode)">
-            {{ rootNodeCollapsed(rootNode) ? "Expand" : "Collapse" }}
-        </div>
-        <ng-container
-            [ngTemplateOutlet]="nodesTemplate"
-            [ngTemplateOutletContext]="{nodes: [rootNode], level: 0, collapsible: rootNodeCollapsed(rootNode)}"
-        ></ng-container>
-    </div>
-    <ng-template #nodesTemplate let-nodes="nodes" let-level="level" let-collapsible="collapsible">
-        <!-- TODO consider using "virtual list", ie rendering only visible data -->
-        <ng-container *ngFor="let node of nodes; trackBy: trackByNodeMailPk">
-            <div class="conversation-node"
-                *ngIf="!isEmptyNodes(nodes)"
-                [ngStyle]="{'padding-left': level + 'em'}"
-                [ngClass]="{'grayed': collapsible && nodeHasHiddenMail(node)}">
+<div class="d-flex flex-row">
+    <div class="mails d-flex flex-column" [ngClass]="{'flex-basis-half': inputState.selectedMail}">
+        <div class="overflow-auto">
+            <ng-container *ngIf="!conversationViewMode; else conversationViewTemplate">
                 <email-securely-app-db-view-mail
-                    *ngIf="node.mail; else removedEmailStub"
-                    [mail]="node.mail"
+                    *ngFor="let mail of inputState.meta.mails; trackBy: trackByMailPk"
+                    [attr.selected]="mail.pk === inputState.selectedMail?.pk"
+                    [attr.data-pk]="mail.pk"
+                    [mail]="mail"
                 ></email-securely-app-db-view-mail>
-                <ng-template #removedEmailStub>
-                    <!--<div class="removed d-flex">-->
-                    <!--Message has been removed. This is just a stub to preserve the conversation structure consistency.-->
-                    <!--</div>-->
+            </ng-container>
+            <ng-template #conversationViewTemplate>
+                <div
+                    class="conversation mb-2" *ngFor="let rootNode of inputState.rootConversationNodes" [ngClass]="{'collapsed': rootNodeCollapsed(rootNode)}">
+                    <div
+                        class="toggler"
+                        *ngIf="rootNodeHasHiddenMails(rootNode)"
+                        (click)="toggleRootNodesCollapsing(rootNode)"
+                    >
+                        {{ rootNodeCollapsed(rootNode) ? "Expand" : "Collapse" }}
+                    </div>
+                    <ng-container
+                        [ngTemplateOutlet]="nodesTemplate"
+                        [ngTemplateOutletContext]="{nodes: [rootNode], level: 0, collapsible: rootNodeCollapsed(rootNode)}"
+                    ></ng-container>
+                </div>
+                <ng-template #nodesTemplate let-nodes="nodes" let-level="level" let-collapsible="collapsible">
+                    <!-- TODO consider using "virtual list", ie rendering only visible data -->
+                    <ng-container *ngFor="let node of nodes; trackBy: trackByNodeMailPk">
+                        <div class="conversation-node"
+                            *ngIf="!isEmptyNodes(nodes)"
+                            [ngStyle]="{'padding-left': level + 'em'}"
+                            [ngClass]="{'collapsed': collapsible, 'collapsible': nodeHasHiddenMail(node)}">
+                            <email-securely-app-db-view-mail
+                                *ngIf="node.mail; else removedEmailStubTemplate"
+                                [attr.selected]="node.mail.pk === inputState.selectedMail?.pk"
+                                [attr.data-pk]="node.mail.pk"
+                                [mail]="node.mail"
+                            ></email-securely-app-db-view-mail>
+                            <ng-template #removedEmailStubTemplate>
+                                <!--<div class="d-flex">-->
+                                <!--Message has been removed. This is just a stub to preserve the conversation structure consistency.-->
+                                <!--</div>-->
+                            </ng-template>
+                        </div>
+                        <ng-container
+                            [ngTemplateOutlet]="nodesTemplate"
+                            [ngTemplateOutletContext]="{nodes: node.children, level: level + (isEmptyNodes(nodes) ? 0 : 0.65), collapsible: collapsible}"
+                        ></ng-container>
+                    </ng-container>
                 </ng-template>
-            </div>
-            <ng-container
-                [ngTemplateOutlet]="nodesTemplate"
-                [ngTemplateOutletContext]="{nodes: node.children, level: level + (isEmptyNodes(nodes) ? 0 : 0.65), collapsible: collapsible}"
-            ></ng-container>
-        </ng-container>
-    </ng-template>
-</ng-template>
+            </ng-template>
+        </div>
+    </div>
+    <div class="view flex-basis-half d-flex flex-column pl-2" *ngIf="inputState.selectedMail">
+        <div class="overflow-auto">
+            <email-securely-app-db-view-mail-body [mail]="inputState.selectedMail"></email-securely-app-db-view-mail-body>
+        </div>
+    </div>
+</div>

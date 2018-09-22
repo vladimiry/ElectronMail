@@ -1,6 +1,4 @@
 import R from "ramda";
-import sanitizeHtml from "sanitize-html";
-import {fromString} from "html-to-text";
 
 import * as View from "src/shared/model/database/view";
 import {ConversationEntry, Folder, FsDb, FsDbAccount, MAIL_FOLDER_TYPE} from "src/shared/model/database";
@@ -84,7 +82,7 @@ function buildFoldersView<T extends keyof FsDb>(
     const nodeLookupMap = new Map<ConversationEntry["pk"], View.ConversationNode>();
     const nodeLookup = (
         pk: ConversationEntry["pk"] | Required<ConversationEntry>["previousPk"],
-        node: View.ConversationNode = {children: []},
+        node: View.ConversationNode = {entryPk: pk, children: []},
     ): View.ConversationNode => {
         node = nodeLookupMap.get(pk) || node;
         if (!nodeLookupMap.has(pk)) {
@@ -98,10 +96,7 @@ function buildFoldersView<T extends keyof FsDb>(
         const resolvedMail = entry.mailPk && account.mails[entry.mailPk];
         const nodeMail: View.Mail | undefined = node.mail = resolvedMail
             ? {
-                ...resolvedMail,
-                // TODO test that "body" sanitazing is actually happening
-                body: sanitizeHtml(resolvedMail.body),
-                bodyExcerpt: fromString(resolvedMail.body),
+                ...R.omit(["raw", "body", "attachments"], resolvedMail),
                 folders: [],
             }
             : undefined;
@@ -161,6 +156,10 @@ function buildFoldersView<T extends keyof FsDb>(
         });
     }
 
+    folders.forEach(({rootConversationNodes}) => {
+        rootConversationNodes.sort((o1, o2) => o2.summary.sentDateMax - o1.summary.sentDateMax);
+    });
+
     return folders;
 }
 
@@ -169,7 +168,6 @@ function buildFoldersView<T extends keyof FsDb>(
 export function prepareFoldersView<T extends keyof FsDb>(
     account: Pick<FsDbAccount<T>, "conversationEntries" | "folders" | "mails">,
 ) {
-    // TODO filter out unnecessary client-side properties from each entity (mail/folder/etc), such as "raw" property
     return splitAndFormatFolders(
         buildFoldersView(account),
     );

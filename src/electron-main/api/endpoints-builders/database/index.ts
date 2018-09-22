@@ -1,5 +1,7 @@
 import _logger from "electron-log";
-import {from, of} from "rxjs";
+import sanitizeHtml from "sanitize-html";
+import {from, of, throwError} from "rxjs";
+import {omit} from "ramda";
 
 import {AccountType} from "src/shared/model/account";
 import {Context} from "src/electron-main/model";
@@ -14,7 +16,8 @@ const logger = curryFunctionMembers(_logger, "[database api]");
 type Methods =
     | "dbPatch"
     | "dbGetAccountMetadata"
-    | "dbGetAccountDataView";
+    | "dbGetAccountDataView"
+    | "dbGetAccountMail";
 
 export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Methods>> {
     return {
@@ -72,6 +75,28 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
             return of({
                 folders: prepareFoldersView(account),
                 contacts: account.contacts,
+            });
+        },
+
+        dbGetAccountMail: ({type, login, pk}) => {
+            logger.info("dbGetAccountMail()");
+
+            const account = ctx.db.getFsAccount({type, login});
+
+            if (!account) {
+                return throwError(`Database access error: failed to resolve account by the provided "type/login"`);
+            }
+
+            const mail = account.mails[pk];
+
+            if (!mail) {
+                return throwError(`Database access error: failed to resolve mail by the provided "pk"`);
+            }
+
+            return of({
+                ...omit(["body"], mail),
+                // TODO test "dbGetAccountMail" sets "mail.body" through the "sanitizeHtml" call
+                body: sanitizeHtml(mail.body),
             });
         },
     };

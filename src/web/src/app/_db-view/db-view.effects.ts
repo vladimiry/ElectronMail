@@ -1,5 +1,5 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {EMPTY, from, merge} from "rxjs";
+import {EMPTY, from, merge, of} from "rxjs";
 import {Injectable} from "@angular/core";
 import {concatMap, debounceTime, filter, map, mergeMap, switchMap, takeUntil, tap} from "rxjs/operators";
 
@@ -31,7 +31,7 @@ export class DbViewEffects {
                         switchMap(() => apiClient("dbGetAccountDataView")(dbAccountPk)),
                     ),
                 ).pipe(
-                    concatMap((patch) => patch ? [DB_VIEW_ACTIONS.PatchInstanceData({dbAccountPk, patch})] : []),
+                    concatMap((data) => data ? [DB_VIEW_ACTIONS.SetFolders({dbAccountPk, folders: data.folders})] : []),
                     debounceTime(300),
                     takeUntil(dispose$),
                 );
@@ -42,6 +42,19 @@ export class DbViewEffects {
             }),
         );
     })();
+
+    @Effect()
+    selectMail$ = this.actions$.pipe(
+        unionizeActionFilter(DB_VIEW_ACTIONS.is.SelectMailRequest),
+        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+        mergeMap(({payload}) => {
+            const {dbAccountPk, mailPk} = payload;
+
+            return this.api.ipcMainClient()("dbGetAccountMail")({...dbAccountPk, pk: mailPk}).pipe(
+                mergeMap((mail) => of(DB_VIEW_ACTIONS.SelectMail({dbAccountPk, mail}))),
+            );
+        }),
+    );
 
     constructor(
         private api: ElectronService,

@@ -2,11 +2,11 @@
     <div class="c-auto">
         <div class="d-flex">
             <div class="state mr-2 badge badge-pill" title="{{ stateTitle }}"></div>
-            <a class="sender badge flex-row mr-2"
+            <a class="prevent-default-event address badge flex-row mr-2"
                href="mailto:{{ mailAddress.address }}"
                title="{{ mailAddress.name ? mailAddress.name + ' <' + mailAddress.address + '>': '' }}">
                 {{ mailAddress.name || mailAddress.address }}
-                <span class="d-flex ml-1" *ngIf="mailAddressTotal > 1">(+{{ mailAddressTotal - 1 }})</span>
+                <span class="prevent-default-event d-flex ml-1" *ngIf="mailAddressTotal > 1">(+{{ mailAddressTotal - 1 }})</span>
             </a>
         </div>
     </div>

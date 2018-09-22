@@ -1,9 +1,9 @@
 import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
 import {Store, select} from "@ngrx/store";
-import {map, mergeMap} from "rxjs/operators";
+import {filter, map, mergeMap, tap} from "rxjs/operators";
 
 import {DB_VIEW_ACTIONS} from "src/web/src/app/store/actions/db-view";
-import {DbAccountPk, View} from "src/shared/model/database";
+import {DbAccountPk, MAIL_FOLDER_TYPE, Mail, View} from "src/shared/model/database";
 import {FEATURED} from "src/web/src/app/store/selectors/db-view";
 import {State} from "src/web/src/app/store/reducers/db-view";
 
@@ -17,24 +17,27 @@ export class DbViewMailTabComponent {
     @Input()
     dbAccountPk!: DbAccountPk;
 
-    // TODO optimize DbViewMailTabComponent.state$ value emitting, it's called 4 times for single folder selection
     state$ = this.store.pipe(
         select((state) => FEATURED.accountRecord(this.dbAccountPk)(state)),
-        mergeMap((account) => account ? [account] : []),
-    ).pipe(
-        map(({data, filters}) => {
-            const state = {
-                folders: data.folders,
-                rootConversationNodes: [...data.folders.system, ...data.folders.custom]
-                    .reduce((list: typeof folder.rootConversationNodes, folder) => {
-                        return folder.pk === filters.selectedFolderPk ? [...list, ...folder.rootConversationNodes] : list;
-                    }, []),
-                selectedFolderPk: filters.selectedFolderPk,
+        mergeMap((instance) => instance ? [instance] : []),
+        tap(({selectedFolderPk, folders}) => {
+            if (selectedFolderPk) {
+                return;
+            }
+            const inboxFolder = folders.system.find(({folderType}) => folderType === MAIL_FOLDER_TYPE.INBOX) as View.Folder;
+            this.store.dispatch(DB_VIEW_ACTIONS.SelectFolder({dbAccountPk: this.dbAccountPk, folderPk: inboxFolder.pk}));
+        }),
+        filter(({selectedFolderPk}) => Boolean(selectedFolderPk)),
+        map(({folders, selectedMail, selectedFolderPk, foldersMeta}) => {
+            const selectedFolder = [...folders.system, ...folders.custom].find(({pk}) => pk === selectedFolderPk);
+
+            return {
+                folders,
+                folderMeta: selectedFolder && selectedFolder.pk in foldersMeta ? foldersMeta[selectedFolder.pk] : undefined,
+                selectedMail,
+                selectedFolderPk,
+                rootConversationNodes: selectedFolder ? selectedFolder.rootConversationNodes : [],
             };
-
-            state.rootConversationNodes.sort((o1, o2) => o2.summary.sentDateMax - o1.summary.sentDateMax);
-
-            return state;
         }),
     );
 
@@ -46,7 +49,15 @@ export class DbViewMailTabComponent {
         return pk;
     }
 
-    selectFolder({pk: selectedFolderPk}: View.Folder) {
-        this.store.dispatch(DB_VIEW_ACTIONS.PatchInstanceFilters({dbAccountPk: this.dbAccountPk, patch: {selectedFolderPk}}));
+    selectFolder({pk: folderPk}: View.Folder) {
+        this.store.dispatch(DB_VIEW_ACTIONS.SelectFolder({dbAccountPk: this.dbAccountPk, folderPk}));
+    }
+
+    selectMailPkHandler(mailPk: Mail["pk"]) {
+        this.store.dispatch(DB_VIEW_ACTIONS.SelectMailRequest({dbAccountPk: this.dbAccountPk, mailPk}));
+    }
+
+    toggleRootNodesCollapsingHandler({entryPk}: View.RootConversationNode) {
+        this.store.dispatch(DB_VIEW_ACTIONS.ToggleRootNodesCollapsing({dbAccountPk: this.dbAccountPk, entryPk}));
     }
 }

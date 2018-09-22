@@ -22,7 +22,7 @@ $tutanota: darken(#ac2738, 5%);
         font-size: 0;
 
         &::first-letter {
-            font-size: $font-size-base * 0.85;
+            font-size: $app-font-size-base-small;
         }
 
         &.protonmail {

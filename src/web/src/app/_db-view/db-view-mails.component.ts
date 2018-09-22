@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
+import {ChangeDetectionStrategy, Component, HostListener, Input} from "@angular/core";
 
 import {View} from "src/shared/model/database";
 import {walkConversationNodesTree} from "src/shared/util";
@@ -91,5 +91,13 @@ export class DbViewMailsComponent {
 
     nodeHasHiddenMail(node: View.RootConversationNode): boolean {
         return this.hiddenNodesMap.has(node);
+    }
+
+    @HostListener("click", ["$event"])
+    onClick(event: MouseEvent) {
+        if (!event.srcElement || !event.srcElement.classList.contains("sender")) {
+            return;
+        }
+        event.preventDefault();
     }
 }

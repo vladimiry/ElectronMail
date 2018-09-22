@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, HostListener, Input} from "@angular/core";
+import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {map, mergeMap} from "rxjs/operators";
 
@@ -48,13 +48,5 @@ export class DbViewMailTabComponent {
 
     selectFolder({pk: selectedFolderPk}: View.Folder) {
         this.store.dispatch(DB_VIEW_ACTIONS.PatchInstanceFilters({dbAccountPk: this.dbAccountPk, patch: {selectedFolderPk}}));
-    }
-
-    @HostListener("click", ["$event"])
-    onClick(event: MouseEvent) {
-        if (!event.srcElement || !event.srcElement.classList.contains("sender")) {
-            return;
-        }
-        event.preventDefault();
     }
 }

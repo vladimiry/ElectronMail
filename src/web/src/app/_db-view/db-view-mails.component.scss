@@ -12,11 +12,32 @@
         background-color: $white;
     }
 
-    &::ng-deep #{$app-prefix}-db-view-mail:not(:last-of-type) {
-        border-bottom-width: 0;
+    &::ng-deep #{$app-prefix}-db-view-mail {
+        cursor: pointer;
+
+        &:not(:last-of-type) {
+            border-bottom-width: 0;
+        }
     }
 
     .conversation {
+        &.collapsed {
+            .conversation-node {
+                padding-left: 0 !important;
+            }
+        }
+
+        > .toggler {
+            background-color: $white;
+            border: 1px solid $list-group-border-color;
+            border-width: 1px 1px 0 1px;
+            border-radius: 5px 5px 0 0;
+            font-size: $font-size-base * 0.75;
+            color: $gray-600;
+            display: inline-block;
+            padding: 0.25em;
+        }
+
         .conversation-node {
             background-color: transparent;
             padding: 0;
@@ -24,11 +45,7 @@
             cursor: pointer;
 
             &.grayed {
-                &::ng-deep #{$app-prefix}-db-view-mail {
-                    .r {
-                        display: none;
-                    }
-                }
+                display: none;
             }
 
             &:not(:last-child) {

@@ -17,14 +17,13 @@
     ></email-securely-app-db-view-mail>
 </ng-container>
 <ng-template #conversationViewTemplate>
-    <div class="conversation mb-2" *ngFor="let rootNode of rootConversationNodes">
-        <a
-            class="d-block"
-            href="javascript:void(0)"
+    <div class="conversation mb-2" *ngFor="let rootNode of rootConversationNodes" [ngClass]="{'collapsed': rootNodeCollapsed(rootNode)}">
+        <div
+            class="toggler"
             *ngIf="rootNodeHasHiddenMails(rootNode)"
             (click)="toggleRootNodeHiddenMailsVisibility(rootNode)">
             {{ rootNodeCollapsed(rootNode) ? "Expand" : "Collapse" }}
-        </a>
+        </div>
         <ng-container
             [ngTemplateOutlet]="nodesTemplate"
             [ngTemplateOutletContext]="{nodes: [rootNode], level: 0, collapsible: rootNodeCollapsed(rootNode)}"
@@ -42,9 +41,9 @@
                     [mail]="node.mail"
                 ></email-securely-app-db-view-mail>
                 <ng-template #removedEmailStub>
-                    <div class="removed d-flex">
-                        Message has been removed. This is just a stub to preserve the conversation structure consistency.
-                    </div>
+                    <!--<div class="removed d-flex">-->
+                    <!--Message has been removed. This is just a stub to preserve the conversation structure consistency.-->
+                    <!--</div>-->
                 </ng-template>
             </div>
             <ng-container

@@ -9,7 +9,6 @@ $app-spacer-3: map-get($spacers, 3);
 $app-color-purple-light: #987ebf;
 $app-color-bg-dark: #5a6786;
 $app-color-warning-light-text: theme-color-level("warning", 6);
-$app-options-btn-min-width: 140px;
 
 @mixin app-unread-badge {
     @include badge-variant(lighten(theme-color("danger"), 3%));

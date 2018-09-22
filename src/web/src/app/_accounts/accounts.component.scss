@@ -37,7 +37,6 @@ $webview-border: darken($app-color-bg-dark, 10%);
     .controls {
         display: block;
         margin-right: $app-spacer-2;
-        min-width: $app-options-btn-min-width;
 
         .btn-group {
             width: 100%;

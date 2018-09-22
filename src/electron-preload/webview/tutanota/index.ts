@@ -356,7 +356,7 @@ async function buildBatchEntityUpdatesDbPatch(
     }
 
     logger.verbose([
-        `resolved unique items by "instanceId":`,
+        `resolved unique entities to process history chain:`,
         `${conversationEntriesMap.size} conversationEntries;`,
         `${mailsMap.size} mails;`,
         `${foldersMap.size} folders;`,

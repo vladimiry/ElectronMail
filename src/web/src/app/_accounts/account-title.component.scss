@@ -17,11 +17,6 @@
     display: flex;
     padding: 0;
 
-    &::ng-deep #{$app-prefix}-type-symbol {
-        display: flex;
-        flex-direction: column;
-    }
-
     .btn-group {
         display: flex;
         flex-grow: 1;

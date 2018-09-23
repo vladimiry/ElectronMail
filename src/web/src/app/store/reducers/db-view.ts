@@ -55,6 +55,7 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
             const instance: Instance = {
                 ...(state.instances[key] || initInstance()),
                 selectedFolderPk: folderPk,
+                selectedMail: undefined,
             };
             const folders = [...instance.folders.system, ...instance.folders.custom];
 

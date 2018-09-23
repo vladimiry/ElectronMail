@@ -2,6 +2,7 @@
 
 :host {
     $border-color: $list-group-border-color;
+    $font-size-small: $app-font-size-base-small * 1.2;
 
     position: relative;
     display: flex;
@@ -13,7 +14,7 @@
     .attachments {
         .badge {
             font-weight: normal;
-            font-size: $app-font-size-base-small;
+            font-size: $font-size-small;
             color: $gray-700;
             border: 1px solid $border-color;
         }
@@ -43,6 +44,6 @@
         color: $white;
         border: 1px solid $gray-800;
         padding: 0.25em;
-        font-size: $app-font-size-base-small;
+        font-size: $font-size-small;
     }
 }

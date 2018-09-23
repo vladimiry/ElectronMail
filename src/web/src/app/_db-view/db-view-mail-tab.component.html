@@ -1,7 +1,9 @@
 <ng-container *ngIf="state$ | async; let state">
-    <div class="folders-container">
-        <ng-container [ngTemplateOutlet]="foldersGroup" [ngTemplateOutletContext]="{folders: state.folders.system}"></ng-container>
-        <ng-container [ngTemplateOutlet]="foldersGroup" [ngTemplateOutletContext]="{folders: state.folders.custom}"></ng-container>
+    <div class="folders-container d-flex flex-column">
+        <div class="overflow-auto">
+            <ng-container [ngTemplateOutlet]="foldersGroup" [ngTemplateOutletContext]="{folders: state.folders.system}"></ng-container>
+            <ng-container [ngTemplateOutlet]="foldersGroup" [ngTemplateOutletContext]="{folders: state.folders.custom}"></ng-container>
+        </div>
         <ng-template #foldersGroup let-folders="folders">
             <ul class="list-group" *ngIf="state$ | async; let state">
                 <li class="list-group-item list-group-item-action"

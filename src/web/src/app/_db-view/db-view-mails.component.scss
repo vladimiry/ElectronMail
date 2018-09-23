@@ -39,11 +39,6 @@
         flex-basis: 50%;
     }
 
-    .overflow-auto {
-        overflow: auto;
-        height: 100%;
-    }
-
     .conversation {
         &.collapsed {
             .conversation-node {

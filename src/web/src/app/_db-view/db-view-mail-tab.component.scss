@@ -3,11 +3,15 @@
 :host {
     display: flex;
 
-    > .folders-container {
-        display: flex;
-        flex-direction: column;
+    &::ng-deep {
+        .overflow-auto {
+            overflow: auto;
+            height: 100%;
+        }
+    }
 
-        > .list-group {
+    .folders-container {
+        > .overflow-auto > .list-group {
             &:not(:first-of-type) {
                 margin-top: $app-spacer-2;
             }

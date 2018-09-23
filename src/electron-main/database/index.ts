@@ -6,6 +6,7 @@ import {Model, Store} from "fs-json-store";
 
 import * as Entity from "./entity";
 import {AccountType} from "src/shared/model/account";
+import {DATABASE_VERSION} from "./constants";
 import {DbAccountPk, FsDb, FsDbAccount, MemoryDb, MemoryDbAccount} from "src/shared/model/database";
 import {EntityMap} from "./entity-map";
 import {curryFunctionMembers} from "src/shared/util";
@@ -33,11 +34,14 @@ export class Database {
     }
 
     buildEmptyDatabase<T extends MemoryDb | FsDb>(): T {
-        return {tutanota: {}, protonmail: {}} as T;
+        return {
+            version: DATABASE_VERSION,
+            accounts: {tutanota: {}, protonmail: {}},
+        } as T;
     }
 
-    buildEmptyAccountMetadata<T extends keyof MemoryDb>(type: T): MemoryDbAccount<T>["metadata"] {
-        const metadata: { [key in keyof MemoryDb]: MemoryDbAccount<key>["metadata"] } = {
+    buildEmptyAccountMetadata<T extends keyof MemoryDb["accounts"]>(type: T): MemoryDbAccount<T>["metadata"] {
+        const metadata: { [key in keyof MemoryDb["accounts"]]: MemoryDbAccount<key>["metadata"] } = {
             tutanota: {type: "tutanota", groupEntityEventBatchIds: {}},
             protonmail: {type: "protonmail"},
         };
@@ -55,7 +59,7 @@ export class Database {
     }
 
     getAccount<TL extends DbAccountPk>({type, login}: TL): MemoryDbAccount<TL["type"]> | undefined {
-        const account = this.memoryDb[type][login];
+        const account = this.memoryDb.accounts[type][login];
 
         if (!account) {
             return;
@@ -73,13 +77,13 @@ export class Database {
             metadata: this.buildEmptyAccountMetadata(type) as any,
         };
 
-        this.memoryDb[type][login] = account;
+        this.memoryDb.accounts[type][login] = account;
 
         return account;
     }
 
     deleteAccount<TL extends DbAccountPk>({type, login}: TL): void {
-        delete this.memoryDb[type][login];
+        delete this.memoryDb.accounts[type][login];
     }
 
     async persisted(): Promise<boolean> {
@@ -94,11 +98,13 @@ export class Database {
         const source = await store.readExisting();
         const target: MemoryDb = this.buildEmptyDatabase();
 
+        target.version = source.version;
+
         // fs => memory
-        for (const type of Object.keys(source) as Array<keyof typeof source>) {
-            const loginBundle = source[type];
+        for (const type of Object.keys(source.accounts) as Array<keyof typeof source.accounts>) {
+            const loginBundle = source.accounts[type];
             Object.keys(loginBundle).map((login) => {
-                target[type][login] = this.fsAccountToMemoryAccount(loginBundle[login]);
+                target.accounts[type][login] = this.fsAccountToMemoryAccount(loginBundle[login]);
             });
         }
 
@@ -113,7 +119,10 @@ export class Database {
         return this.saveToFileQueue.add(async () => {
             const startTime = Number(new Date());
             const store = await this.resolveStore();
-            const dump = this.dump();
+            const dump = {
+                ...this.dump(),
+                version: DATABASE_VERSION,
+            };
             const result = await store.write(dump);
 
             logger.verbose(`saveToFile().stat: ${JSON.stringify({...this.stat(), time: Number(new Date()) - startTime})}`);
@@ -128,11 +137,13 @@ export class Database {
         const {memoryDb: source} = this;
         const target: FsDb = this.buildEmptyDatabase();
 
+        target.version = source.version;
+
         // memory => fs
-        for (const type of Object.keys(source) as Array<keyof typeof source>) {
-            const loginBundle = source[type];
+        for (const type of Object.keys(source.accounts) as Array<keyof typeof source.accounts>) {
+            const loginBundle = source.accounts[type];
             Object.keys(loginBundle).map((login) => {
-                target[type][login] = this.memoryAccountToFsAccount(loginBundle[login]);
+                target.accounts[type][login] = this.memoryAccountToFsAccount(loginBundle[login]);
             });
         }
 
@@ -149,8 +160,8 @@ export class Database {
         const {memoryDb: source} = this;
         const stat = {records: 0, conversationEntries: 0, mails: 0, folders: 0, contacts: 0};
 
-        for (const type of Object.keys(source) as AccountType[]) {
-            const loginBundle = source[type];
+        for (const type of Object.keys(source.accounts) as AccountType[]) {
+            const loginBundle = source.accounts[type];
             Object.keys(loginBundle).map((login) => {
                 stat.records++;
                 const {conversationEntries, mails, folders, contacts} = this.accountStat(loginBundle[login]);
@@ -176,7 +187,7 @@ export class Database {
         };
     }
 
-    private memoryAccountToFsAccount<T extends keyof MemoryDb>(source: MemoryDbAccount<T>): FsDbAccount<T> {
+    private memoryAccountToFsAccount<T extends keyof MemoryDb["accounts"]>(source: MemoryDbAccount<T>): FsDbAccount<T> {
         return {
             conversationEntries: source.conversationEntries.toObject(),
             mails: source.mails.toObject(),
@@ -186,7 +197,7 @@ export class Database {
         };
     }
 
-    private fsAccountToMemoryAccount<T extends keyof FsDb>(source: FsDbAccount<T>): MemoryDbAccount<T> {
+    private fsAccountToMemoryAccount<T extends keyof FsDb["accounts"]>(source: FsDbAccount<T>): MemoryDbAccount<T> {
         return {
             conversationEntries: new EntityMap(Entity.ConversationEntry, source.conversationEntries),
             mails: new EntityMap(Entity.Mail, source.mails),

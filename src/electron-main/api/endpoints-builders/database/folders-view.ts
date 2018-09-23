@@ -66,7 +66,7 @@ const splitAndFormatFolders: (folders: View.Folder[]) => {
 });
 
 // TODO review the "buildFoldersView" function in order to reduce complexity and memory use
-function buildFoldersView<T extends keyof FsDb>(
+function buildFoldersView<T extends keyof FsDb["accounts"]>(
     _: Pick<FsDbAccount<T>, "conversationEntries" | "folders" | "mails">,
     // making sure input account is not mutated
     account = R.clone(_),
@@ -165,7 +165,7 @@ function buildFoldersView<T extends keyof FsDb>(
 
 // TODO consider moving performance expensive "prepareFoldersView" function call to the background thread (window.Worker)
 // TODO make sure input "account" is not mutated
-export function prepareFoldersView<T extends keyof FsDb>(
+export function prepareFoldersView<T extends keyof FsDb["accounts"]>(
     account: Pick<FsDbAccount<T>, "conversationEntries" | "folders" | "mails">,
 ) {
     return splitAndFormatFolders(

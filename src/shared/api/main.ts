@@ -21,7 +21,7 @@ import {BaseConfig, Config, Settings} from "src/shared/model/options";
 // tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects "BatchEntityUpdatesDbPatch" as unused
 import {BatchEntityUpdatesDbPatch} from "./common";
 // tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects "DbEntitiesRecordContainer" as unused
-import {DbEntitiesRecordContainer, FsDb, FsDbAccount} from "src/shared/model/database";
+import {DbAccountPk, DbEntitiesRecordContainer, FsDbAccount} from "src/shared/model/database";
 // tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects "ElectronContextLocations" as unused
 import {ElectronContextLocations} from "src/shared/model/electron";
 
@@ -38,12 +38,12 @@ export interface Endpoints {
 
     changeMasterPassword: ApiMethod<PasswordFieldContainer & NewPasswordFieldContainer, Settings>;
 
-    dbPatch: ApiMethod<{ type: keyof FsDb, login: string } & BatchEntityUpdatesDbPatch
+    dbPatch: ApiMethod<DbAccountPk & BatchEntityUpdatesDbPatch
         & { forceFlush?: boolean } & { metadata: Partial<FsDbAccount["metadata"]> }, FsDbAccount["metadata"]>;
 
-    dbGetAccountMetadata: ApiMethod<{ type: keyof FsDb, login: string }, FsDbAccount["metadata"] | null>;
+    dbGetAccountMetadata: ApiMethod<DbAccountPk, FsDbAccount["metadata"] | null>;
 
-    dbGetAccountDataView: ApiMethod<{ type: keyof FsDb, login: string },
+    dbGetAccountDataView: ApiMethod<DbAccountPk,
         {
             folders: {
                 system: DatabaseModel.View.Folder[];
@@ -52,7 +52,7 @@ export interface Endpoints {
             contacts: DbEntitiesRecordContainer["contacts"];
         } | undefined>;
 
-    dbGetAccountMail: ApiMethod<{ type: keyof FsDb, login: string, pk: DatabaseModel.Mail["pk"] }, DatabaseModel.Mail>;
+    dbGetAccountMail: ApiMethod<DbAccountPk & { pk: DatabaseModel.Mail["pk"] }, DatabaseModel.Mail>;
 
     init: ApiMethodNoArgument<{ electronLocations: ElectronContextLocations; hasSavedPassword: boolean; }>;
 
@@ -96,7 +96,7 @@ export const IPC_MAIN_API = new IpcMainApiService<Endpoints>({channel: `${APP_NA
 export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
         ActivateBrowserWindow: ofType<{}>(),
         DbPatchAccount: ofType<{
-            key: { type: keyof FsDb, login: string };
+            key: DbAccountPk;
             entitiesModified: boolean;
             metadataModified: boolean;
             stat: { mails: number, folders: number; contacts: number; unread: number; };

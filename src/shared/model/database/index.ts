@@ -122,10 +122,12 @@ export interface DbEntitiesRecordContainer {
     contacts: Record<Contact["pk"], Contact>;
 }
 
-type GenericDb<T extends AccountType, M, EntitiesContainer extends DbEntitiesMapContainer | DbEntitiesRecordContainer> =
-    Record<T,
+interface GenericDb<T extends AccountType, M, EntitiesContainer extends DbEntitiesMapContainer | DbEntitiesRecordContainer> {
+    version: string;
+    accounts: Record<T,
         Record<AccountConfig<T>["login"],
             Readonly<EntitiesContainer & { metadata: { type: T } & M }>>>;
+}
 
 interface TutanotaMetadataPart {
     groupEntityEventBatchIds: Record</* Rest.Model.Group["_id"] */ string, /* Rest.Model.EntityEventBatch["_id"][1] */ string>;
@@ -145,11 +147,11 @@ export type FsDb =
     &
     GenericDb<"protonmail", ProtonmailMetadataPart, DbEntitiesRecordContainer>;
 
-export type MemoryDbAccount<T extends keyof MemoryDb = keyof MemoryDb> = MemoryDb[T][string];
+export type MemoryDbAccount<T extends keyof MemoryDb["accounts"] = keyof MemoryDb["accounts"]> = MemoryDb["accounts"][T][string];
 
-export type FsDbAccount<T extends keyof FsDb = keyof FsDb> = FsDb[T][string];
+export type FsDbAccount<T extends keyof FsDb["accounts"] = keyof FsDb["accounts"]> = FsDb["accounts"][T][string];
 
 export interface DbAccountPk {
-    type: keyof MemoryDb;
+    type: keyof MemoryDb["accounts"];
     login: string;
 }

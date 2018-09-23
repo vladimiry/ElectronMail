@@ -78,8 +78,9 @@ export async function initBrowserWindow(ctx: Context, endpoints: Endpoints): Pro
 }
 
 async function keepState(ctx: Context, browserWindow: Electron.BrowserWindow) {
+    const {window, startMinimized} = await ctx.configStore.readExisting();
+    const {maximized, bounds} = window;
     const debounce = 500;
-    const {maximized, bounds} = (await ctx.configStore.readExisting()).window;
     let timeoutId: any;
 
     if (!("x" in bounds) || !("y" in bounds)) {
@@ -88,7 +89,10 @@ async function keepState(ctx: Context, browserWindow: Electron.BrowserWindow) {
 
     if (maximized) {
         browserWindow.maximize();
-        browserWindow.hide();
+
+        if (startMinimized) {
+            browserWindow.hide();
+        }
     }
 
     browserWindow.on("close", saveWindowStateHandler);

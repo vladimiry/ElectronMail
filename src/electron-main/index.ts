@@ -48,7 +48,12 @@ app.on("ready", async () => {
     await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0}).toPromise();
 
     if (checkForUpdatesAndNotify && ctx.runtimeEnvironment !== "e2e") {
-        initAutoUpdate();
+        try {
+            initAutoUpdate();
+        } catch (e) {
+            // TODO ignore "no internet connection" error only, and re-throw the other
+            logger.error(e);
+        }
     }
 
     app.on("activate", async () => {

@@ -5,10 +5,10 @@
 >
     <a href="mailto:{{ state.account.accountConfig.login }}" class="btn b-primary">
         <email-securely-app-type-symbol [type]="state.account.accountConfig.type"></email-securely-app-type-symbol>
+        <div class="badge ml-2" *ngIf="state.account.notifications.unread">{{ state.account.notifications.unread }}</div>
         <div class="d-flex ml-2">
             <i [class]="state.account.notifications.loggedIn ? 'fa fa-unlock' : 'fa fa-lock'"></i>
         </div>
-        <div class="badge ml-2" *ngIf="state.account.notifications.unread">{{ state.account.notifications.unread }}</div>
         <div class="ml-2 d-flex flex-grow-1">{{ state.account.accountConfig.login }}</div>
     </a>
     <button class="btn b-toggle-view" (click)="toggleViewMode($event)" *ngIf="state.stored" title="Toggle online/database view mode">

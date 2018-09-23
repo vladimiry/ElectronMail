@@ -36,15 +36,14 @@
     <ng-template #addressTemplate let-address="address">
         <div class="address d-inline-block">
             <a class="prevent-default-event"
-                href="mailto:{{ address.address }}"
-                title="{{ address.name ? address.name + ' <' + address.address + '>': '' }}">{{ address.name || address.address }}</a>
+                href="mailto:{{ address.address }}">{{ address.name || address.address }}</a>
         </div>
     </ng-template>
 </div>
-<div class="d-flex flex-grow-1">
+<div class="body d-flex flex-grow-1">
     <div [innerHtml]="mail.body"></div>
-    <div class="hovered-href rounded" [innerText]="hoveredHref" *ngIf="hoveredHref"></div>
 </div>
+<div class="d-flex hovered-href rounded" [innerText]="hoveredHref" *ngIf="hoveredHref"></div>
 <div class="d-flex attachments pt-2 mt-2" *ngIf="mail.attachments.length">
     <div class="attachment badge flex-row mr-2" *ngFor="let attachment of mail.attachments">
         {{ attachment.name }}

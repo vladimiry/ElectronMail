@@ -31,6 +31,16 @@
         }
     }
 
+    .body {
+        &::ng-deep {
+            td,
+            th {
+                word-break: break-word;
+                white-space: normal;
+            }
+        }
+    }
+
     .attachments {
         border-top: 1px solid $border-color;
     }

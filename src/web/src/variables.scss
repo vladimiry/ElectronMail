@@ -14,11 +14,11 @@ $app-font-size-base-small: $font-size-base * 0.75;
 
 @mixin app-unread-badge {
     @include badge-variant(lighten(theme-color("danger"), 3%));
-    display: flex;
-    flex-direction: column;
-    line-height: $line-height-base;
-    padding-left: 0.5em;
-    padding-right: 0.5em;
+    display: inline-block;
+    align-self: center;
+    line-height: 1;
+    padding: 0.34em .5em;
+    margin-bottom: -1px;
 }
 
 @mixin app-dropdown-toggle-split {

@@ -3,6 +3,7 @@ import {EMPTY, Subject, from, fromEvent, merge, of, timer} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {catchError, concatMap, debounce, filter, finalize, map, mergeMap, takeUntil, tap, withLatestFrom} from "rxjs/operators";
+import {equals} from "ramda";
 
 import {ACCOUNTS_ACTIONS, CORE_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
 import {AccountTypeAndLoginFieldContainer} from "src/shared/model/container";
@@ -40,8 +41,8 @@ export class AccountsEffects {
             unionizeActionFilter(ACCOUNTS_ACTIONS.is.SetupNotificationChannel),
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             mergeMap(({payload, logger}) => {
-                const {account: payloadAccount, webView, finishPromise} = payload;
-                const {type, login, entryUrl} = payloadAccount.accountConfig;
+                const {webView, finishPromise} = payload;
+                const {type, login, entryUrl} = payload.account.accountConfig;
                 const dispose$ = from(finishPromise).pipe(tap(() => logger.info("dispose")));
 
                 logger.info("setup");
@@ -110,8 +111,9 @@ export class AccountsEffects {
                             of(ACCOUNTS_ACTIONS.Patch({login, patch: {syncingActivated: true}})),
                             this.api.ipcMainClient({finishPromise})("notification")().pipe(
                                 filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbPatchAccount),
-                                mergeMap(({payload: statPayload}) => {
-                                    return of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread: statPayload.stat.unread}}}));
+                                filter(({payload: data}) => equals(data.key, {type, login})),
+                                mergeMap(({payload: data}) => {
+                                    return of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread: data.stat.unread}}}));
                                 }),
                             ),
                             merge(

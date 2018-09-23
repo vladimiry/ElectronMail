@@ -1,12 +1,14 @@
 import {Actions, Effect} from "@ngrx/effects";
 import {EMPTY, Subject, from, fromEvent, merge, of, timer} from "rxjs";
 import {Injectable} from "@angular/core";
-import {Store} from "@ngrx/store";
-import {catchError, concatMap, debounce, filter, finalize, map, mergeMap, takeUntil, tap} from "rxjs/operators";
+import {Store, select} from "@ngrx/store";
+import {catchError, concatMap, debounce, filter, finalize, map, mergeMap, takeUntil, tap, withLatestFrom} from "rxjs/operators";
 
 import {ACCOUNTS_ACTIONS, CORE_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
 import {AccountTypeAndLoginFieldContainer} from "src/shared/model/container";
+import {AccountsSelectors} from "src/web/src/app/store/selectors";
 import {ElectronService} from "src/web/src/app/_core/electron.service";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {State} from "src/web/src/app/store/reducers/accounts";
 import {TutanotaNotificationOutput} from "src/shared/api/webview/tutanota";
@@ -38,8 +40,8 @@ export class AccountsEffects {
             unionizeActionFilter(ACCOUNTS_ACTIONS.is.SetupNotificationChannel),
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             mergeMap(({payload, logger}) => {
-                const {account, webView, finishPromise} = payload;
-                const {type, login, entryUrl} = account.accountConfig;
+                const {account: payloadAccount, webView, finishPromise} = payload;
+                const {type, login, entryUrl} = payloadAccount.accountConfig;
                 const dispose$ = from(finishPromise).pipe(tap(() => logger.info("dispose")));
 
                 logger.info("setup");
@@ -48,16 +50,23 @@ export class AccountsEffects {
                     merged$,
                     this.api.webViewClient(webView, type, {finishPromise}).pipe(
                         mergeMap((webViewClient) => webViewClient("notification")({entryUrl, zoneName: logger.zoneName()})),
-                        mergeMap((notification) => {
-                            if (type !== "tutanota"
-                                || typeof (notification as TutanotaNotificationOutput).batchEntityUpdatesCounter === "undefined") {
-                                return of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: notification}}));
+                        withLatestFrom(this.store.pipe(select(AccountsSelectors.ACCOUNTS.pickAccount({login})))),
+                        mergeMap(([notification, account]) => {
+                            const batchEntityUpdatesNotification = type === "tutanota"
+                                && typeof (notification as TutanotaNotificationOutput).batchEntityUpdatesCounter === "number";
+
+                            if (batchEntityUpdatesNotification) {
+                                this.fireSyncingIteration$.next({type, login});
+                                return EMPTY;
                             }
 
-                            this.fireSyncingIteration$.next({type, login});
-                            // skipping patching "notifications" by the "batchEntityUpdatesCounter" value
-                            return EMPTY;
+                            // app derives "unread" value form the database in case of activated database syncing
+                            // as "unread" notification should be ignored
+                            if (account && account.syncingActivated && typeof notification.unread === "number") {
+                                return EMPTY;
+                            }
 
+                            return of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: notification}}));
                         }),
                         takeUntil(dispose$),
                     ),
@@ -99,6 +108,12 @@ export class AccountsEffects {
                     this.api.webViewClient(webView, type, {finishPromise}).pipe(
                         mergeMap((webViewClient) => merge(
                             of(ACCOUNTS_ACTIONS.Patch({login, patch: {syncingActivated: true}})),
+                            this.api.ipcMainClient({finishPromise})("notification")().pipe(
+                                filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbPatchAccount),
+                                mergeMap(({payload: statPayload}) => {
+                                    return of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread: statPayload.stat.unread}}}));
+                                }),
+                            ),
                             merge(
                                 timer(0, ONE_SECOND_MS * 60 * 5).pipe(
                                     tap(() => logger.verbose(`triggered by: timer`)),

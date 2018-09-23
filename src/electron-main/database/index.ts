@@ -164,12 +164,15 @@ export class Database {
         return stat;
     }
 
-    accountStat(account: MemoryDbAccount): { conversationEntries: number, mails: number, folders: number; contacts: number } {
+    accountStat(
+        account: MemoryDbAccount,
+    ): { conversationEntries: number, mails: number, folders: number; contacts: number; unread: number } {
         return {
             conversationEntries: account.conversationEntries.size,
             mails: account.mails.size,
             folders: account.folders.size,
             contacts: account.contacts.size,
+            unread: [...account.mails.values()].reduce((unread, mail) => unread += Number(mail.unread), 0),
         };
     }
 

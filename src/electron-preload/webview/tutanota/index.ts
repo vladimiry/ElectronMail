@@ -246,7 +246,8 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
                     setInterval(notifyUnreadValue, ONE_SECOND_MS * 60);
                     setTimeout(notifyUnreadValue, ONE_SECOND_MS * 15);
                 }).pipe(
-                    distinctUntilChanged(({unread: prev}, {unread: curr}) => curr === prev),
+                    // all the values need to be sent to stream to get proper unread value after disabling database syncing
+                    // distinctUntilChanged(({unread: prev}, {unread: curr}) => curr === prev),
                 ),
 
                 Observable.create((subscriber: Subscriber<BatchEntityUpdatesCounterOutput>) => {

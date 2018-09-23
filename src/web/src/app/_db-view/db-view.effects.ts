@@ -27,6 +27,7 @@ export class DbViewEffects {
                     apiClient("dbGetAccountDataView")(dbAccountPk), // initial load
                     apiClient("notification")().pipe(
                         filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbPatchAccount),
+                        filter(({payload: patchPayload}) => patchPayload.entitiesModified),
                         // tslint:disable-next-line:ban
                         switchMap(() => apiClient("dbGetAccountDataView")(dbAccountPk)),
                     ),

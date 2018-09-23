@@ -97,7 +97,9 @@ export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
         ActivateBrowserWindow: ofType<{}>(),
         DbPatchAccount: ofType<{
             key: { type: keyof FsDb, login: string };
-            stat: { mails: number, folders: number; contacts: number };
+            entitiesModified: boolean;
+            metadataModified: boolean;
+            stat: { mails: number, folders: number; contacts: number; unread: number; };
         }>(),
     },
     {

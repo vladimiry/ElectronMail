@@ -50,9 +50,12 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
                 await ctx.db.saveToFile();
             }
 
-            if (entitiesModified) {
-                NOTIFICATION_SUBJECT.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount({key, stat: ctx.db.accountStat(account)}));
-            }
+            NOTIFICATION_SUBJECT.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount({
+                key,
+                entitiesModified,
+                metadataModified,
+                stat: ctx.db.accountStat(account),
+            }));
 
             return account.metadata;
         })()),

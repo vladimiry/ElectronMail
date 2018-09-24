@@ -25,3 +25,9 @@ $app-font-size-base-small: $font-size-base * 0.75;
     padding-left: $btn-padding-x * 1.1;
     padding-right: $btn-padding-x * 1.1;
 }
+
+@keyframes app-keyframes-opacity {
+    50% {
+        opacity: 0;
+    }
+}

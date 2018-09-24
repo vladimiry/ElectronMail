@@ -20,7 +20,6 @@
                 'fa-plug': !state.account.databaseView && !state.account.progress.togglingDatabaseView,
                 'fa-spinner fa-pulse fa-fw': state.account.progress.togglingDatabaseView
             }"
-            [@fade]="state.fade" (@fade.done)="onFadeCycleDone()"
         ></i>
     </button>
 </div>

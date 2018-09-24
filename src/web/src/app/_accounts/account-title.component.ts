@@ -1,7 +1,6 @@
 import {ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit} from "@angular/core";
 import {ReplaySubject, Subscription, of} from "rxjs";
 import {Store, select} from "@ngrx/store";
-import {animate, state, style, transition, trigger} from "@angular/animations";
 import {distinctUntilChanged, filter, take, withLatestFrom} from "rxjs/operators";
 
 import {ACCOUNTS_ACTIONS} from "src/web/src/app/store/actions";
@@ -9,26 +8,16 @@ import {AccountsSelectors} from "src/web/src/app/store/selectors";
 import {State} from "src/web/src/app/store/reducers/accounts";
 import {WebAccount} from "src/web/src/app/model";
 
-export const FADE_ANIMATION = trigger("fade", [
-    state("on", style({opacity: 0})),
-    state("off", style({opacity: 1})),
-    transition("* <=> *", [
-        animate(1000),
-    ]),
-]);
-
 interface ComponentState {
     account: WebAccount;
     selected: boolean;
     stored: boolean;
-    fade: "on" | "off";
 }
 
 @Component({
     selector: "email-securely-app-account-title",
     templateUrl: "./account-title.component.html",
     styleUrls: ["./account-title.component.scss"],
-    animations: [FADE_ANIMATION],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountTitleComponent implements OnInit, OnDestroy {
@@ -53,7 +42,6 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
     set account(account: WebAccount) {
         this.patchState({
             account,
-            fade: account.progress.syncing ? "on" : "off",
             stored: account.accountConfig.database,
         });
     }
@@ -84,17 +72,6 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
         });
     }
 
-    onFadeCycleDone() {
-        this.stateSubject$.pipe(take(1)).subscribe((value) => {
-            const fade = !value.account.progress.syncing
-                ? "off"
-                : value.fade === "on" ? "off" : "on";
-            if (value.fade !== fade) {
-                this.patchState({fade});
-            }
-        });
-    }
-
     ngOnDestroy() {
         this.subscription.unsubscribe();
     }
@@ -106,7 +83,6 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
                 // account: null as any,
                 selected: false,
                 stored: false,
-                fade: "off",
             } as ComponentState);
 
         this.stateInitiaized = true;

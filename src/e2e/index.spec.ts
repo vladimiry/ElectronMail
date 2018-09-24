@@ -6,6 +6,7 @@ import fs from "fs";
 import path from "path";
 import {promisify} from "util";
 
+import {ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX} from "src/shared/constants";
 import {ENV, initApp, test} from "./workflow";
 
 test.serial("general actions: app start, master password setup, add accounts, logout, auto login", async (t) => {
@@ -24,8 +25,16 @@ test.serial("general actions: app start, master password setup, add accounts, lo
             entryUrlValue: "https://mail.protonmail.com",
         });
         await workflow.addAccount({
+            type: "protonmail",
+            entryUrlValue: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.protonmail.com`,
+        });
+        await workflow.addAccount({
             type: "tutanota",
             entryUrlValue: "https://mail.tutanota.com",
+        });
+        await workflow.addAccount({
+            type: "tutanota",
+            entryUrlValue: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.tutanota.com`,
         });
         await workflow.logout();
 

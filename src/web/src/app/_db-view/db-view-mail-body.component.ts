@@ -1,6 +1,5 @@
 import {ChangeDetectionStrategy, Component, HostListener, Input} from "@angular/core";
 import {Store} from "@ngrx/store";
-import {clearTimeout} from "timers";
 
 import {Mail} from "src/shared/model/database";
 import {NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";

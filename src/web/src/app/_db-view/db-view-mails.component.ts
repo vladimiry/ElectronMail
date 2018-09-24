@@ -15,7 +15,7 @@ import {reduceNodesMails} from "src/shared/util";
 export class DbViewMailsComponent {
     // TODO read "email-securely-app-db-view-mail" dynamically from the annotation
     private static mailComponentTagName = "email-securely-app-db-view-mail";
-    conversationViewMode: boolean = true;
+    conversationViewMode: boolean = false;
     inputState!: Pick<Unpacked<typeof DbViewMailTabComponent.prototype.state$>, "selectedMail" | "rootConversationNodes">
         & { meta: Instance["foldersMeta"][string] };
     @Output()

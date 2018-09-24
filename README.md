@@ -22,10 +22,10 @@ is built with Electron unofficial desktop app for [ProtonMail](https://protonmai
 
 ## Build your own package
 
-- Regardless of the platform you are working on, you will need to have Node.JS v8 installed. Version 8 is required to match the Node.JS version Electron comes with. If you already have Node.JS installed, but not the version 8, then you might want to use [Node Version Manager](https://github.com/creationix/nvm) to be able to switch between multiple Node.JS versions:
+- Regardless of the platform you are working on, you will need to have Node.js v10 installed. v10 as it's recommended to go with the same Node.js version Electron comes with. If you already have Node.js installed, but not the version 10, then you might want to use [Node Version Manager](https://github.com/creationix/nvm) to be able to switch between multiple Node.js versions:
   - Install [NVM](https://github.com/creationix/nvm).
-  - Run `nvm install 8`.
-  - Run `nvm use 8`.
+  - Run `nvm install 10`.
+  - Run `nvm use 10`.
 - Some native modules require node prebuilds files compiling and for that Python and C++ compiler need to be installed on your system:
   - **`On Windows`**: the simplest way to install all the needed stuff on Windows is to run `npm install --global --production windows-build-tools` CLI command.
   - **`On Linux`**: `python v2.7`, `make` and a C/C++ compiler toolchain, like `GCC` are most likely already installed. Besides [keytar](https://github.com/atom/node-keytar) needs `libsecret` library to be installed.

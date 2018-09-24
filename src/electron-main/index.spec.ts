@@ -2,13 +2,14 @@ import rewiremock from "rewiremock";
 import ava, {TestInterface} from "ava";
 import sinon, {SinonStub} from "sinon";
 
-import {APP_NAME} from "src/shared/constants";
+import {APP_NAME, ONE_SECOND_MS} from "src/shared/constants";
 import {Endpoints} from "src/shared/api/main";
 import {INITIAL_STORES} from "./constants";
+import {asyncDelay} from "src/shared/util";
 
 interface TestContext {
     ctx: any;
-    endpoints: Record<keyof Pick<Endpoints, "readConfig" | "updateOverlayIcon">, SinonStub>;
+    endpoints: Record<keyof Pick<Endpoints, "readConfig" | "updateOverlayIcon" | "activateBrowserWindow">, SinonStub>;
     mocks: ReturnType<typeof buildMocks>;
 }
 
@@ -16,17 +17,19 @@ const test = ava as TestInterface<TestContext>;
 
 // tslint:disable:max-line-length
 test.serial("workflow", async (t) => {
+    await asyncDelay(ONE_SECOND_MS);
+
     const m = t.context.mocks["~index"];
     const {endpoints} = t.context;
 
     t.true(m["electron-unhandled"].calledWithExactly(sinon.match.hasOwn("logger")), `"electronUnhandled" called`);
-    t.true(m["electron-unhandled"].calledBefore(m.electron.app.setAppUserModelId), `"electronUnhandled" called before "makeSingleInstance"`);
+    t.true(m["electron-unhandled"].calledBefore(m.electron.app.setAppUserModelId), `"electronUnhandled" called before "requestSingleInstanceLock"`);
 
     t.true(m.electron.app.setAppUserModelId.calledWithExactly(`com.github.vladimiry.${APP_NAME}`));
-    t.true(m.electron.app.setAppUserModelId.calledBefore(m.electron.app.makeSingleInstance));
+    t.true(m.electron.app.setAppUserModelId.calledBefore(m.electron.app.requestSingleInstanceLock));
 
-    t.true(m.electron.app.makeSingleInstance.called, `"makeSingleInstance" called`);
-    t.true(m.electron.app.makeSingleInstance.calledBefore(m["./util"].initContext), `"makeSingleInstance" called before "initContext"`);
+    t.true(m.electron.app.requestSingleInstanceLock.called, `"requestSingleInstanceLock" called`);
+    t.true(m.electron.app.requestSingleInstanceLock.calledBefore(m["./util"].initContext), `"requestSingleInstanceLock" called before "initContext"`);
 
     t.true(m["./util"].initContext.calledWithExactly(), `"initContext" called`);
 
@@ -58,6 +61,9 @@ test.beforeEach(async (t) => {
         }),
         updateOverlayIcon: sinon.stub().returns({
             toPromise: () => Promise.resolve(null),
+        }),
+        activateBrowserWindow: sinon.stub().returns({
+            toPromise: () => Promise.resolve(INITIAL_STORES.config()),
         }),
     };
 
@@ -118,7 +124,7 @@ function buildMocks(testContext: TestContext) {
             "electron": {
                 app: {
                     setAppUserModelId: sinon.spy(),
-                    makeSingleInstance: sinon.spy(),
+                    requestSingleInstanceLock: sinon.stub().returns(true),
                     quit: sinon.spy(),
                     on: sinon.stub()
                         .callsArg(1)

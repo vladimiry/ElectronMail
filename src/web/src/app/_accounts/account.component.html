@@ -28,7 +28,7 @@
     [preload]="webViewAttributes.preload"
 ></webview>
 
-<div *ngIf="webViewAttributes && !!afterFailedLoadWait" class="p-3 text-center">
+<div *ngIf="webViewAttributes && !!afterFailedLoadWait" class="network-unreachable-msg p-3 text-center">
     Failed to load <strong>{{ webViewAttributes.src }}</strong> page with <strong>{{ didFailLoadErrorDescription }}</strong> error code.
     Reloading in <strong>{{ afterFailedLoadWait }}</strong> sec.
 </div>

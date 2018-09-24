@@ -18,6 +18,12 @@
         }
     }
 
+    &.webview-hidden-database {
+        .network-unreachable-msg {
+            display: none;
+        }
+    }
+
     &::ng-deep #{$app-prefix}-keepass-request {
         margin: $app-spacer-2;
     }

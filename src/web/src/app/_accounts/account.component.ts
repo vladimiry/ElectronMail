@@ -21,7 +21,6 @@ import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/src/app/store/action
 import {APP_NAME, ONE_SECOND_MS} from "src/shared/constants";
 import {AccountConfig} from "src/shared/model/account";
 import {AccountsSelectors, OptionsSelectors} from "src/web/src/app/store/selectors";
-import {BuildEnvironment} from "src/shared/model/common";
 import {CoreService} from "src/web/src/app/_core/core.service";
 import {DbViewModuleResolve} from "./db-view-module-resolve.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
@@ -254,10 +253,6 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         account: this.account, webView, finishPromise: this.setupOnWebViewDomReadyDeferred().promise,
                     })),
                 );
-
-                if ((process.env.NODE_ENV as BuildEnvironment) !== "development") {
-                    return;
-                }
 
                 this.domReadySubscription.add(
                     ((state: { stopSyncingDeferred?: Deferred<void> } = {}) => {

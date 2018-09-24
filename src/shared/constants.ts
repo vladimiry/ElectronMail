@@ -1,7 +1,6 @@
 import {LogLevel} from "electron-log";
 
 import {AccountType} from "src/shared/model/account";
-import {BuildEnvironment} from "./model/common";
 import {EntryUrlItem} from "./types";
 
 // tslint:disable-next-line:no-var-requires no-import-zones
@@ -50,12 +49,10 @@ export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlIte
                 value: "https://mail.protonmail.com",
                 title: "https://mail.protonmail.com",
             },
-            ...((process.env.NODE_ENV as BuildEnvironment) === "development" ? [
-                {
-                    value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.protonmail.com`,
-                    title: `https://mail.protonmail.com (${getBuiltInWebClientTitle("protonmail")})`,
-                },
-            ] : []),
+            {
+                value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.protonmail.com`,
+                title: `https://mail.protonmail.com (${getBuiltInWebClientTitle("protonmail")})`,
+            },
             {
                 value: "https://beta.protonmail.com",
                 title: "https://beta.protonmail.com",
@@ -64,12 +61,10 @@ export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlIte
                 value: "https://protonirockerxow.onion",
                 title: "https://protonirockerxow.onion",
             },
-            ...((process.env.NODE_ENV as BuildEnvironment) === "development" ? [
-                {
-                    value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://protonirockerxow.onion`,
-                    title: `https://protonirockerxow.onion (${getBuiltInWebClientTitle("protonmail")})`,
-                },
-            ] : []),
+            {
+                value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://protonirockerxow.onion`,
+                title: `https://protonirockerxow.onion (${getBuiltInWebClientTitle("protonmail")})`,
+            },
         ],
     },
     tutanota: {
@@ -78,12 +73,10 @@ export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlIte
                 value: "https://mail.tutanota.com",
                 title: "https://mail.tutanota.com",
             },
-            ...((process.env.NODE_ENV as BuildEnvironment) === "development" ? [
-                {
-                    value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.tutanota.com`,
-                    title: `https://mail.tutanota.com (${getBuiltInWebClientTitle("tutanota")})`,
-                },
-            ] : []),
+            {
+                value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.tutanota.com`,
+                title: `https://mail.tutanota.com (${getBuiltInWebClientTitle("tutanota")})`,
+            },
         ],
     },
 };

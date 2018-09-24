@@ -50,20 +50,26 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
             return of(null);
         },
 
-        activateBrowserWindow: () => {
+        activateBrowserWindow: () => from((async () => {
+            const {window} = await ctx.configStore.readExisting();
             const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
 
             if (!browserWindow) {
-                return EMPTY;
+                return EMPTY.toPromise();
             }
 
-            browserWindow.show();
+            if (window.maximized) {
+                browserWindow.maximize();
+            } else {
+                browserWindow.show();
+            }
+
             browserWindow.focus();
 
             NOTIFICATION_SUBJECT.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.ActivateBrowserWindow());
 
-            return of(null);
-        },
+            return null;
+        })()),
 
         toggleBrowserWindow: ({forcedState}) => from((async () => {
             const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;

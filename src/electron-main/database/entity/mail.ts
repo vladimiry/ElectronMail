@@ -52,7 +52,6 @@ export class Mail extends Entity implements Model.Mail {
     @IsInt()
     sentDate!: Model.Mail["sentDate"];
 
-    @IsNotEmpty()
     @IsString()
     subject!: Model.Mail["subject"];
 

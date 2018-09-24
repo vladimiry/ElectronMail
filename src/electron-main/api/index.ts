@@ -5,6 +5,7 @@ import {Account, Database, General, KeePass, TrayIcon} from "./endpoints-builder
 import {Context} from "src/electron-main/model";
 import {Endpoints, IPC_MAIN_API} from "src/shared/api/main";
 import {buildSettingsAdapter} from "src/electron-main/util";
+import {clearDefaultSessionCaches} from "src/electron-main/session";
 import {deletePassword, getPassword, setPassword} from "src/electron-main/keytar";
 import {upgradeConfig, upgradeSettings} from "src/electron-main/storage-upgrade";
 
@@ -46,6 +47,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
             await deletePassword();
             ctx.settingsStore = ctx.settingsStore.clone({adapter: undefined});
             ctx.db.reset();
+            await clearDefaultSessionCaches();
             return null;
         })()),
 

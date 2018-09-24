@@ -3,6 +3,7 @@ import logger from "electron-log";
 import {app} from "electron";
 
 import {APP_NAME} from "src/shared/constants";
+import {clearDefaultSessionCaches} from "./session";
 import {initApi} from "./api";
 import {initAutoUpdate} from "./app-update";
 import {initBrowserWindow} from "./window";
@@ -33,6 +34,8 @@ const secondInstanceExecutedCallbacks = (() => {
 const ctx = initContext();
 
 app.on("ready", async () => {
+    await clearDefaultSessionCaches();
+
     const endpoints = await initApi(ctx);
     const {checkForUpdatesAndNotify} = await endpoints.readConfig().toPromise();
 

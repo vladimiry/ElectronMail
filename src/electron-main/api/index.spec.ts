@@ -244,6 +244,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
 
     logout: async (t) => {
         const {deletePassword: deletePasswordSpy} = t.context.mocks["src/electron-main/keytar"];
+        const {clearDefaultSessionCaches: clearDefaultSessionCachesSpy} = t.context.mocks["src/electron-main/session"];
         const {endpoints} = t.context;
         const resetSpy = sinon.spy(t.context.ctx.db, "reset");
 
@@ -264,6 +265,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.is(deletePasswordSpy.callCount, 3);
 
         t.is(2, resetSpy.callCount);
+        t.is(2, clearDefaultSessionCachesSpy.callCount);
     },
 
     openAboutWindow: async (t) => {
@@ -468,6 +470,9 @@ async function buildMocks() {
                 registerApi: sinon.spy(),
             },
         } as any,
+        "src/electron-main/session": {
+            clearDefaultSessionCaches: sinon.stub().returns(Promise.resolve({})),
+        },
         "src/electron-main/util": {
             buildSettingsAdapter,
         },
@@ -532,6 +537,7 @@ test.beforeEach(async (t) => {
             mock(() => import("src/electron-main/keytar"))/*.callThrough()*/.with(mocks["src/electron-main/keytar"]);
             mock(() => import("about-window")).callThrough().with(mocks["about-window"]);
             mock(() => import("src/shared/api/main")).callThrough().with(mocks["src/shared/api/main"]);
+            mock(() => import("src/electron-main/session")).callThrough().with(mocks["src/electron-main/session"]);
             mock(() => import("src/electron-main/util")).callThrough().with(mocks["src/electron-main/util"]);
             mock(() => import("src/electron-main/storage-upgrade")).callThrough().with(mocks["src/electron-main/storage-upgrade"]);
             mock(() => import("./endpoints-builders")).callThrough().with(mocks["./endpoints-builders"]);

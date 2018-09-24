@@ -29,7 +29,12 @@ test.serial("workflow", async (t) => {
     t.true(m.electron.app.makeSingleInstance.calledBefore(m["./util"].initContext), `"makeSingleInstance" called before "initContext"`);
 
     t.true(m["./util"].initContext.calledWithExactly(), `"initContext" called`);
+
+    t.true(m["./session"].clearDefaultSessionCaches.calledWithExactly(), `"clearDefaultSessionCaches" called`);
+    t.true(m["./session"].clearDefaultSessionCaches.calledAfter(m["./util"].initContext), `"clearDefaultSessionCaches" called after "initContext"`);
+
     t.true(m["./api"].initApi.calledWithExactly(t.context.ctx), `"initApi" called`);
+    t.true(m["./api"].initApi.calledAfter(m["./session"].clearDefaultSessionCaches), `"initApi" called after "clearDefaultSessionCaches"`);
 
     t.true(m["./web-content-context-menu"].initWebContentContextMenu.calledWithExactly(t.context.ctx), `"initWebContentContextMenu" called`);
     t.true(m["./web-content-context-menu"].initWebContentContextMenu.calledBefore(m["./window"].initBrowserWindow), `"initWebContentContextMenu" called before "initBrowserWindow"`);
@@ -66,6 +71,7 @@ test.beforeEach(async (t) => {
         () => import("./index"),
         (mock) => {
             const mocks = t.context.mocks["~index"];
+            mock(() => import("./session")).callThrough().with(mocks["./session"]);
             mock(() => import("./api")).callThrough().with(mocks["./api"]);
             mock(() => import("./util")).callThrough().with(mocks["./util"]);
             mock(() => import("./window")).callThrough().with(mocks["./window"]);
@@ -86,6 +92,9 @@ test.beforeEach(async (t) => {
 function buildMocks(testContext: TestContext) {
     return {
         "~index": {
+            "./session": {
+                clearDefaultSessionCaches: sinon.stub().returns(Promise.resolve({})),
+            },
             "./api": {
                 initApi: sinon.stub().returns(Promise.resolve(testContext.endpoints)),
             },

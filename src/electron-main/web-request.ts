@@ -1,6 +1,5 @@
 import {URL} from "url";
 
-import {BuildEnvironment} from "src/shared/model/common";
 import {Context} from "./model";
 import {getDefaultSession} from "./session";
 
@@ -11,10 +10,6 @@ const headerNames = {
 const originsToRestoreMap = new Map<number, string>();
 
 export function initWebRequestListeners(ctx: Context) {
-    if ((process.env.NODE_ENV as BuildEnvironment) !== "development") {
-        return;
-    }
-
     const isLocalWebClientOrigin: (origin: string) => boolean = (() => {
         const localOrigins = Object
             .values(ctx.locations.webClients.protonmail)

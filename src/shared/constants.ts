@@ -1,7 +1,6 @@
 import {LogLevel} from "electron-log";
 
 import {AccountType} from "src/shared/model/account";
-import {BuildEnvironment} from "./model/common";
 import {EntryUrlItem} from "./types";
 
 // tslint:disable-next-line:no-var-requires no-import-zones
@@ -36,10 +35,10 @@ export const ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX = "local";
 export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlItem[]>> = {
     protonmail: {
         entryUrl: [
-            ...((process.env.NODE_ENV as BuildEnvironment) === "development" ? [{
+            {
                 value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}${ACCOUNTS_CONFIG_ENTRY_URL_SEPARATOR}https://mail.protonmail.com`,
                 title: `https://mail.protonmail.com (Built-in WebClient v${PROVIDER_REPO.protonmail.version})`,
-            }] : []),
+            },
             {value: "https://app.protonmail.ch", title: "https://app.protonmail.ch"},
             {value: "https://mail.protonmail.com", title: "https://mail.protonmail.com"},
             {value: "https://beta.protonmail.com", title: "https://beta.protonmail.com (Beta)"},

@@ -1,26 +1,80 @@
 # http://www.appveyor.com/docs/appveyor-yml
 
+# TODO share artifacts properly, track the following issues resolving:
+# - https://github.com/appveyor/ci/issues/2438
+# - https://github.com/appveyor/ci/issues/1623
+
 branches:
   only:
-  - master
+    - master
+    - 2.0.0
 skip_tags: true
-os: unstable
+image:
+  # WARN "image" items ordering matters
+  - Ubuntu1804
+  - Visual Studio 2017
 platform:
-- x64
-cache: false
+  - x64
+build: off
 test: off
-install:
-# - ps: Install-Product node $env:nodejs_version $env:platform
-- ps: Install-Product node 10 $env:platform
-- SET CI=true
-- npm install --global yarn
-- set PATH=%PATH%;C:\.yarn\bin
-- node --version
-- npm --version
-- yarn --version
-- yarn install --pure-lockfile --mutex file
-- yarn generate-npm-lockfile
-- npm audit
-build_script:
-- yarn run app:dist
-- yarn run electron-builder:publish:x64
+cache: false
+matrix:
+  fast_finish: true
+environment:
+  nodejs_version: 10
+  linuxJobNamePattern: 'image: Ubuntu1804'
+  linuxJobArtifactFile: 'app.zip'
+for:
+  - matrix:
+      only:
+        - image: Ubuntu1804
+    install:
+      - sudo apt-get --yes install gnome-keyring libgnome-keyring-dev libsecret-1-dev nasm
+      - cmd: powershell Install-Product node $env:nodejs_version
+      - nvm install $nodejs_version
+      - npm install --global yarn
+      - node --version
+      - npm --version
+      - yarn install --pure-lockfile
+    build_script:
+      - yarn run assets:protonmail-webclient
+      - zip -r $linuxJobArtifactFile ./app
+      - ls
+      - appveyor PushArtifact $linuxJobArtifactFile
+  - matrix:
+      only:
+        - image: Visual Studio 2017
+    install:
+      - ps: Install-Product node $env:nodejs_version
+      - SET CI=true
+      - npm install --global yarn
+      - set PATH=%PATH%;C:\.yarn\bin
+      - node --version
+      - npm --version
+      - yarn --version
+      - yarn install --pure-lockfile --mutex file
+      - yarn generate-npm-lockfile
+      - npm audit
+    build_script:
+      - ps: |
+          $headers = @{
+              "Authorization" = "Bearer $EMAIL_SECURELY_APP_APPVEYOR_API_KEY"
+              "Content-type" = "application/json"
+          }
+
+          $project = Invoke-RestMethod -Uri "https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG" -Headers $headers -Method GET
+          $linuxJob = $project.build.jobs | where {$_.name -eq $env:linuxJobNamePattern}
+          $linuxJobId = $linuxJob.jobId;
+          $linuxJobCompleted = $linuxJob.status -eq "success"
+
+          if (!$linuxJobCompleted) {
+              throw "Job `"$env:linuxJobNamePattern`" has been finished with `"$linuxJob.status`" status"
+          }
+          if (!$linuxJobId) {
+              throw "Failed to resolve i`"$env:linuxJobNamePattern`" job id"
+          }
+
+          Start-FileDownload https://ci.appveyor.com/api/buildjobs/$linuxJobId/artifacts/$env:linuxJobArtifactFile
+          7z.exe x $env:linuxJobArtifactFile
+      - yarn run app:dist
+      - yarn run electron-builder:publish:x64

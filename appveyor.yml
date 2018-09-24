@@ -3,6 +3,7 @@
 branches:
   only:
   - master
+  - 2.0.0
 skip_tags: true
 os: unstable
 platform:

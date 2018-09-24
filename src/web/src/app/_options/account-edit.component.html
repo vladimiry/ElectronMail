@@ -6,7 +6,7 @@
                 <span *ngIf="account; else label">{{ account.login }}</span>
                 <ng-template #label>Add Account</ng-template>
             </div>
-            <div class="form-check float-md-right" *ngIf="typeControlDisplayable && controls.type.value == 'tutanota'">
+            <div class="form-check float-md-right">
                 <label class="form-check-label">
                     <input type="checkbox" class="form-check-input" formControlName="database">
                     Local store

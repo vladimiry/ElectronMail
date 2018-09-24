@@ -36,8 +36,6 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         mailPassword: new FormControl(null),
     };
     form = new FormGroup(this.controls);
-    // TODO release: remove temporary "typeControlDisplayable" property
-    typeControlDisplayable: boolean = false;
     // account
     account?: AccountConfig;
     account$: Observable<AccountConfig> = merge(this.activatedRoute.params, this.activatedRoute.queryParams).pipe(
@@ -61,11 +59,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
 
     constructor(private optionsService: OptionsService,
                 private store: Store<State>,
-                private activatedRoute: ActivatedRoute) {
-        if ((process.env.NODE_ENV/* as BuildEnvironment*/) === "development") {
-            this.typeControlDisplayable = true;
-        }
-    }
+                private activatedRoute: ActivatedRoute) {}
 
     ngOnInit() {
         const {controls} = this;

@@ -3,6 +3,7 @@
 branches:
   only:
   - master
+  - 2.0.0
 language: node_js
 node_js: 10
 addons:

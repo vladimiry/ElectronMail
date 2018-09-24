@@ -7,6 +7,8 @@ export function initAutoUpdate() {
         logger.error(error);
     };
 
+    autoUpdater.channel = "beta";
+    autoUpdater.allowDowngrade = false;
     autoUpdater.logger = logger;
 
     try {

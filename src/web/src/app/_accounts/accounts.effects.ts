@@ -2,7 +2,19 @@ import {Actions, Effect} from "@ngrx/effects";
 import {EMPTY, Subject, from, fromEvent, merge, of, timer} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store, select} from "@ngrx/store";
-import {catchError, concatMap, debounce, filter, finalize, map, mergeMap, takeUntil, tap, withLatestFrom} from "rxjs/operators";
+import {
+    catchError,
+    concatMap,
+    debounce,
+    debounceTime,
+    filter,
+    finalize,
+    map,
+    mergeMap,
+    takeUntil,
+    tap,
+    withLatestFrom,
+} from "rxjs/operators";
 import {equals} from "ramda";
 
 import {ACCOUNTS_ACTIONS, CORE_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
@@ -128,6 +140,8 @@ export class AccountsEffects {
                                     tap(() => logger.verbose(`triggered by: "window.online" event`)),
                                 ),
                             ).pipe(
+                                // reduce 404 error chance in case of just created mail immediately goes from "drat" to the "sent" folder
+                                debounceTime(ONE_SECOND_MS),
                                 debounce(() => online$),
                                 tap(() => {
                                     this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: true}}));

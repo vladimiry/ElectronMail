@@ -16,8 +16,8 @@ import {
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi, TutanotaNotificationOutput} from "src/shared/api/webview/tutanota";
 import {Unpacked} from "src/shared/types";
+import {asyncDelay, curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
-import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {fetchEntitiesRange} from "src/electron-preload/webview/tutanota/lib/rest";
 import {fillInputValue, getLocationHref, submitTotpToken, waitElements} from "src/electron-preload/webview/util";
 import {resolveApi} from "src/electron-preload/webview/tutanota/lib/api";
@@ -278,6 +278,9 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
                             if (!isEntityUpdatesPatchNotEmpty(patch)) {
                                 return;
                             }
+
+                            // reduce 404 error chance in case of just created mail immediately goes from "drat" to the "sent" folder
+                            await asyncDelay(ONE_SECOND_MS / 2);
 
                             notification.batchEntityUpdatesCounter++;
                             subscriber.next(notification);

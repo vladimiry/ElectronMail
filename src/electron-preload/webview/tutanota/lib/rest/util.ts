@@ -1,6 +1,7 @@
 import * as DatabaseModel from "src/shared/model/database/index";
-import * as Rest from "./index";
+import * as Rest from ".";
 import {BaseEntity, Id, IdTuple} from "./model";
+import {Unpacked} from "src/shared/types";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {curryFunctionMembers} from "src/shared/util";
 import {resolveApi} from "src/electron-preload/webview/tutanota/lib/api";
@@ -10,6 +11,10 @@ const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[lib/util]");
 export const filterSyncingMemberships = ((types: Set<string>) => ({memberships}: Rest.Model.User): Rest.Model.GroupMembership[] => {
     return memberships.filter(({groupType}) => types.has(groupType));
 })(new Set([DatabaseModel.GROUP_TYPE.Mail, DatabaseModel.GROUP_TYPE.Contact]));
+
+export const isUpsertOperationType = ((types: Set<string>) => (type: Unpacked<typeof DatabaseModel.OPERATION_TYPE._.values>): boolean => {
+    return types.has(type);
+})(new Set([DatabaseModel.OPERATION_TYPE.CREATE, DatabaseModel.OPERATION_TYPE.UPDATE]));
 
 export async function fetchMailFoldersWithSubFolders(user: Rest.Model.User): Promise<Rest.Model.MailFolder[]> {
     const logger = curryFunctionMembers(_logger, "fetchMailFoldersWithSubFolders()", JSON.stringify({callId: +new Date()}));
@@ -26,9 +31,9 @@ export async function fetchMailFoldersWithSubFolders(user: Rest.Model.User): Pro
             continue;
         }
 
-        for (const folder of await Rest.fetchEntitiesList(Rest.Model.MailFolderTypeRef, systemFolders.folders)) {
+        for (const folder of await Rest.fetchEntities(Rest.Model.MailFolderTypeRef, systemFolders.folders)) {
             folders.push(folder);
-            folders.push(...await Rest.fetchEntitiesList(Rest.Model.MailFolderTypeRef, folder.subFolders));
+            folders.push(...await Rest.fetchEntities(Rest.Model.MailFolderTypeRef, folder.subFolders));
         }
     }
 

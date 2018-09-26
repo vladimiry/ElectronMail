@@ -18,8 +18,9 @@ import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi, TutanotaNotificationOutput} from 
 import {Unpacked} from "src/shared/types";
 import {asyncDelay, curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
-import {fetchEntitiesRange} from "src/electron-preload/webview/tutanota/lib/rest";
+import {fetchEntitiesRange, fetchMultipleEntities} from "src/electron-preload/webview/tutanota/lib/rest";
 import {fillInputValue, getLocationHref, submitTotpToken, waitElements} from "src/electron-preload/webview/util";
+import {isUpsertOperationType} from "./lib/rest/util";
 import {resolveApi} from "src/electron-preload/webview/tutanota/lib/api";
 
 const WINDOW = window as any;
@@ -251,12 +252,6 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
                 Observable.create((subscriber: Subscriber<BatchEntityUpdatesCounterOutput>) => {
                     const innerLogger = curryFunctionMembers(logger, `[entity update notification]`);
                     const notification = {batchEntityUpdatesCounter: 0};
-                    const dbModelBuildersStub = {
-                        conversationEntry: async () => null as any,
-                        mail: async () => null as any,
-                        folder: async () => null as any,
-                        contact: async () => null as any,
-                    };
                     const {EntityEventController} = api["src/api/main/EntityEventController"];
 
                     EntityEventController.prototype.notificationReceived = ((original) => function(
@@ -268,9 +263,7 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
 
                             const patch = await buildBatchEntityUpdatesDbPatch(
                                 {eventBatches: [{events: [entityUpdate]}]/*, _logger: logger*/},
-                                // mocking db model builders, we only need the data structure to be formed at this point
-                                // so no need to produce unnecessary fetch requests
-                                dbModelBuildersStub,
+                                true,
                             );
 
                             if (!isEntityUpdatesPatchNotEmpty(patch)) {
@@ -309,118 +302,115 @@ async function buildBatchEntityUpdatesDbPatch(
         eventBatches: Array<Pick<Rest.Model.EntityEventBatch, "events">>;
         _logger?: ReturnType<typeof buildLoggerBundle>;
     },
-    dbModelBuilders: {
-        conversationEntry: (id: { instanceListId: Rest.Model.Id, instanceId: Rest.Model.Id }) => Promise<DatabaseModel.ConversationEntry>;
-        mail: (id: { instanceListId: Rest.Model.Id, instanceId: Rest.Model.Id }) => Promise<DatabaseModel.Mail>;
-        folder: (id: { instanceListId: Rest.Model.Id, instanceId: Rest.Model.Id }) => Promise<DatabaseModel.Folder>;
-        contact: (id: { instanceListId: Rest.Model.Id, instanceId: Rest.Model.Id }) => Promise<DatabaseModel.Contact>;
-    } = {
-        conversationEntry: async ({instanceListId, instanceId}) => {
-            const entity = await Rest.fetchEntity(Rest.Model.ConversationEntryTypeRef, [instanceListId, instanceId]);
-            return Database.buildConversationEntry(entity);
-        },
-        mail: async ({instanceListId, instanceId}) => {
-            const entity = await Rest.fetchEntity(Rest.Model.MailTypeRef, [instanceListId, instanceId]);
-            return await Database.buildMail(entity);
-        },
-        folder: async ({instanceListId, instanceId}) => {
-            const entity = await Rest.fetchEntity(Rest.Model.MailFolderTypeRef, [instanceListId, instanceId]);
-            return Database.buildFolder(entity);
-        },
-        contact: async ({instanceListId, instanceId}) => {
-            const entity = await Rest.fetchEntity(Rest.Model.ContactTypeRef, [instanceListId, instanceId]);
-            return Database.buildContact(entity);
-        },
-    },
+    nullUpsert: boolean = false,
 ): Promise<BatchEntityUpdatesDbPatch> {
     const logger = input._logger
         ? curryFunctionMembers(input._logger, "buildBatchEntityUpdatesDbPatch()")
         : {info: (...args: any[]) => {}, verbose: (...args: any[]) => {}};
+    const mappingItem = () => ({updatesMappedByInstanceId: new Map(), remove: [], idsMappedByListId: new Map()});
+    const mapping: Record<"conversationEntries" | "mails" | "folders" | "contacts", {
+        updatesMappedByInstanceId: Map<Rest.Model.Id, Rest.Model.EntityUpdate[]>;
+        remove: Array<{ pk: string }>;
+        idsMappedByListId: Map<Rest.Model.Id, Rest.Model.Id[]>;
+    }> & {
+        conversationEntries: { refType: Rest.Model.TypeRef<Rest.Model.ConversationEntry> },
+        mails: { refType: Rest.Model.TypeRef<Rest.Model.Mail> },
+        folders: { refType: Rest.Model.TypeRef<Rest.Model.MailFolder> },
+        contacts: { refType: Rest.Model.TypeRef<Rest.Model.Contact> },
+    } = {
+        conversationEntries: {refType: Rest.Model.ConversationEntryTypeRef, ...mappingItem()},
+        mails: {refType: Rest.Model.MailTypeRef, ...mappingItem()},
+        folders: {refType: Rest.Model.MailFolderTypeRef, ...mappingItem()},
+        contacts: {refType: Rest.Model.ContactTypeRef, ...mappingItem()},
+    };
+    const mappingKeys = Object.keys(mapping) as Array<keyof typeof mapping>;
 
-    const conversationEntriesMap: Map<Rest.Model.ConversationEntry["_id"][1], Rest.Model.EntityUpdate[]> = new Map();
-    const mailsMap: Map<Rest.Model.Mail["_id"][1], Rest.Model.EntityUpdate[]> = new Map();
-    const foldersMap: Map<Rest.Model.MailFolder["_id"][1], Rest.Model.EntityUpdate[]> = new Map();
-    const contactsMap: Map<Rest.Model.Contact["_id"][1], Rest.Model.EntityUpdate[]> = new Map();
-
-    for (const entitiesUpdate of input.eventBatches) {
-        for (const event of entitiesUpdate.events) {
-            // TODO replace if blocks by iteration based processing or pattern matching
-            if (Rest.Util.sameRefType(Rest.Model.ConversationEntryTypeRef, event)) {
-                conversationEntriesMap.set(event.instanceId, [...(conversationEntriesMap.get(event.instanceId) || []), event]);
-            } else if (Rest.Util.sameRefType(Rest.Model.MailTypeRef, event)) {
-                mailsMap.set(event.instanceId, [...(mailsMap.get(event.instanceId) || []), event]);
-            } else if (Rest.Util.sameRefType(Rest.Model.MailFolderTypeRef, event)) {
-                foldersMap.set(event.instanceId, [...(foldersMap.get(event.instanceId) || []), event]);
-            } else if (Rest.Util.sameRefType(Rest.Model.ContactTypeRef, event)) {
-                contactsMap.set(event.instanceId, [...(contactsMap.get(event.instanceId) || []), event]);
+    for (const {events} of input.eventBatches) {
+        for (const event of events) {
+            for (const key of mappingKeys) {
+                const {refType, updatesMappedByInstanceId} = mapping[key];
+                if (!Rest.Util.sameRefType(refType, event)) {
+                    continue;
+                }
+                updatesMappedByInstanceId.set(
+                    event.instanceId,
+                    [...(updatesMappedByInstanceId.get(event.instanceId) || []), event],
+                );
             }
         }
     }
 
     logger.verbose([
         `resolved unique entities to process history chain:`,
-        `${conversationEntriesMap.size} conversationEntries;`,
-        `${mailsMap.size} mails;`,
-        `${foldersMap.size} folders;`,
-        `${contactsMap.size} contacts;`,
+        mappingKeys.map((key) => `${key}: ${mapping[key].updatesMappedByInstanceId.size}`).join("; "),
     ].join(" "));
 
-    const patch: BatchEntityUpdatesDbPatch = {
-        conversationEntries: {remove: [], upsert: []},
-        mails: {remove: [], upsert: []},
-        folders: {remove: [], upsert: []},
-        contacts: {remove: [], upsert: []},
-    };
-    const entitiesUpdatesGroups: Array<{
-        entitiesUpdates: IterableIterator<Rest.Model.EntityUpdate[]>;
-        upsert: (update: Rest.Model.EntityUpdate) => Promise<void | number>;
-        remove: (pk: { pk: ReturnType<typeof Database.buildPk> }) => void | number;
-    }> = [
-        {
-            entitiesUpdates: conversationEntriesMap.values(),
-            upsert: async (update) => patch.conversationEntries.upsert.push(await dbModelBuilders.conversationEntry(update)),
-            remove: (pk) => patch.conversationEntries.remove.push(pk),
-        },
-        {
-            entitiesUpdates: mailsMap.values(),
-            upsert: async (update) => patch.mails.upsert.push(await dbModelBuilders.mail(update)),
-            remove: (pk) => patch.mails.remove.push(pk),
-        },
-        {
-            entitiesUpdates: foldersMap.values(),
-            upsert: async (update) => patch.folders.upsert.push(await dbModelBuilders.folder(update)),
-            remove: (pk) => patch.folders.remove.push(pk),
-        },
-        {
-            entitiesUpdates: contactsMap.values(),
-            upsert: async (update) => patch.contacts.upsert.push(await dbModelBuilders.contact(update)),
-            remove: (pk) => patch.contacts.remove.push(pk),
-        },
-    ];
-
-    const upsertOperations = [DatabaseModel.OPERATION_TYPE.CREATE, DatabaseModel.OPERATION_TYPE.UPDATE];
-
-    for (const {entitiesUpdates, upsert, remove} of entitiesUpdatesGroups) {
-        for (const entityUpdates of entitiesUpdates) {
+    for (const key of mappingKeys) {
+        const {updatesMappedByInstanceId, idsMappedByListId, remove} = mapping[key];
+        for (const entityUpdates of updatesMappedByInstanceId.values()) {
             let added = false;
             // entity updates sorted in ASC order, so reversing the entity updates list in order to start processing from the newest items
             for (const update of entityUpdates.reverse()) {
-                if (!added && upsertOperations.includes(update.operation)) {
-                    await upsert(update);
+                if (!added && isUpsertOperationType(update.operation)) {
+                    idsMappedByListId.set(
+                        update.instanceListId,
+                        [...(idsMappedByListId.get(update.instanceListId) || []), update.instanceId],
+                    );
                     added = true;
                 }
                 if (update.operation === DatabaseModel.OPERATION_TYPE.DELETE) {
-                    remove({pk: Database.buildPk([update.instanceListId, update.instanceId])});
+                    remove.push({pk: Database.buildPk([update.instanceListId, update.instanceId])});
                     break;
                 }
             }
         }
     }
 
-    logger.info(`upsert/remove conversationEntries: ${patch.conversationEntries.upsert.length}/${patch.conversationEntries.remove.length}`);
-    logger.info(`upsert/remove mails: ${patch.mails.upsert.length}/${patch.mails.remove.length}`);
-    logger.info(`upsert/remove folders: ${patch.folders.upsert.length}/${patch.folders.remove.length}`);
-    logger.info(`upsert/remove contacts: ${patch.contacts.upsert.length}/${patch.contacts.remove.length}`);
+    const patch: BatchEntityUpdatesDbPatch = {
+        conversationEntries: {remove: mapping.conversationEntries.remove, upsert: []},
+        mails: {remove: mapping.mails.remove, upsert: []},
+        folders: {remove: mapping.folders.remove, upsert: []},
+        contacts: {remove: mapping.contacts.remove, upsert: []},
+    };
+
+    if (!nullUpsert) {
+        for (const [listId, instanceIds] of mapping.conversationEntries.idsMappedByListId.entries()) {
+            const entities = await fetchMultipleEntities(mapping.conversationEntries.refType, listId, instanceIds);
+            for (const entity of entities) {
+                patch.conversationEntries.upsert.push(Database.buildConversationEntry(entity));
+            }
+        }
+        for (const [listId, instanceIds] of mapping.mails.idsMappedByListId.entries()) {
+            const entities = await fetchMultipleEntities(mapping.mails.refType, listId, instanceIds);
+            patch.mails.upsert.push(...await Database.buildMails(entities));
+        }
+        for (const [listId, instanceIds] of mapping.folders.idsMappedByListId.entries()) {
+            const entities = await fetchMultipleEntities(mapping.folders.refType, listId, instanceIds);
+            for (const entity of entities) {
+                patch.folders.upsert.push(Database.buildFolder(entity));
+            }
+        }
+        for (const [listId, instanceIds] of mapping.contacts.idsMappedByListId.entries()) {
+            const entities = await fetchMultipleEntities(mapping.contacts.refType, listId, instanceIds);
+            for (const entity of entities) {
+                patch.contacts.upsert.push(Database.buildContact(entity));
+            }
+        }
+    } else {
+        // we only need the data structure to be formed at this point, so no need to perform the actual fetching
+        for (const key of mappingKeys) {
+            for (const instanceIds of mapping[key].idsMappedByListId.values()) {
+                instanceIds.map(() => {
+                    (patch[key].upsert as any[]).push(null);
+                });
+            }
+        }
+    }
+
+    logger.verbose([
+        `upsert/remove:`,
+        mappingKeys.map((key) => `${key}: ${patch[key].upsert.length}/${patch[key].remove.length}`).join("; "),
+    ].join(" "));
 
     return patch;
 }

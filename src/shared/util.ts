@@ -93,3 +93,17 @@ export function reduceNodesMails(
 
     return mails;
 }
+
+export function mapBy<T, K>(iterable: Iterable<T>, by: (t: T) => K): Map<K, T[]> {
+    const map = new Map<K, T[]>();
+
+    for (const el of iterable) {
+        const key = by(el);
+        const list = map.get(key) || [];
+
+        list.push(el);
+        map.set(key, list);
+    }
+
+    return map;
+}

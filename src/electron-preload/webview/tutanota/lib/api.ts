@@ -33,6 +33,11 @@ interface Api extends Record<ModuleFiles, any> {
             typeRef: Rest.Model.TypeRef<T>,
             listId: T["_id"][0],
         ) => Promise<T[]>;
+        loadMultiple: <T extends Rest.Model.BaseEntity<Rest.Model.Id | Rest.Model.IdTuple>, TypeRefType extends Rest.Model.TypeRef<T>>(
+            typeRef: Rest.Model.TypeRef<T>,
+            listId: T["_id"] extends Rest.Model.IdTuple ? T["_id"][0] : null,
+            instanceIds: Array<T["_id"] extends Rest.Model.IdTuple ? T["_id"][1] : T["_id"]>,
+        ) => Promise<T[]>;
         loadRange: <T extends Rest.Model.BaseEntity<Rest.Model.IdTuple>, TypeRefType extends Rest.Model.TypeRef<T>>(
             typeRef: Rest.Model.TypeRef<T>,
             listId: T["_id"][0],

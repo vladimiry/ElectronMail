@@ -17,7 +17,7 @@ export async function fetchEntity<T extends BaseEntity<Id | IdTuple>, TypeRefTyp
     return load(typeRef, id);
 }
 
-export async function fetchEntitiesList<T extends BaseEntity<IdTuple>, TypeRefType extends TypeRef<T>>(
+export async function fetchEntities<T extends BaseEntity<IdTuple>, TypeRefType extends TypeRef<T>>(
     typeRef: TypeRef<T>,
     listId: T["_id"][0],
 ): Promise<T[]> {
@@ -26,6 +26,19 @@ export async function fetchEntitiesList<T extends BaseEntity<IdTuple>, TypeRefTy
     }
     const {loadAll} = (await resolveApi())["src/api/main/Entity"];
     return loadAll(typeRef, listId);
+}
+
+// TODO "fetchMultipleEntities": allow optional fetching by chunks/portions, "chinkSize" argument
+export async function fetchMultipleEntities<T extends BaseEntity<Id | IdTuple>, TypeRefType extends TypeRef<T>>(
+    typeRef: TypeRef<T>,
+    listId: T["_id"] extends IdTuple ? T["_id"][0] : null,
+    instanceIds: Array<T["_id"] extends IdTuple ? T["_id"][1] : T["_id"]>,
+): Promise<T[]> {
+    if (!navigator.onLine) {
+        throw new StatusCodeError(`"fetchEntitiesList" failed due to the offline status`, "NoNetworkConnection");
+    }
+    const {loadMultiple} = (await resolveApi())["src/api/main/Entity"];
+    return loadMultiple(typeRef, listId, instanceIds);
 }
 
 export async function fetchEntitiesRange<T extends BaseEntity<IdTuple>, TypeRefType extends TypeRef<T>>(

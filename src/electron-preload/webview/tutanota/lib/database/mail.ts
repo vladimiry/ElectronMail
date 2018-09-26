@@ -1,15 +1,45 @@
+import {equals} from "ramda";
+
 import * as DatabaseModel from "src/shared/model/database";
 import * as Rest from "src/electron-preload/webview/tutanota/lib/rest";
 import {buildBaseEntity, buildPk} from ".";
-import {resolveListId} from "src/electron-preload/webview/tutanota/lib/rest/util";
+import {fetchMultipleEntities} from "src/electron-preload/webview/tutanota/lib/rest";
+import {mapBy} from "src/shared/util";
+import {resolveInstanceId, resolveListId} from "src/electron-preload/webview/tutanota/lib/rest/util";
 
-export async function buildMail(mail: Rest.Model.Mail): Promise<DatabaseModel.Mail> {
-    const [body, files] = await Promise.all([
-        Rest.fetchEntity(Rest.Model.MailBodyTypeRef, mail.body),
-        Promise.all(mail.attachments.map((id) => Rest.fetchEntity(Rest.Model.FileTypeRef, id))),
+export async function buildMails(mails: Rest.Model.Mail[]): Promise<DatabaseModel.Mail[]> {
+    const [bodies, files] = await Promise.all([
+        await fetchMultipleEntities(Rest.Model.MailBodyTypeRef, null, mails.map(({body}) => body)),
+        await (async () => {
+            const attachmentsIds = mails.reduce((accumulator: typeof mail.attachments, mail) => [...accumulator, ...mail.attachments], []);
+            const attachmentsMap = mapBy(attachmentsIds, (_id) => resolveListId({_id}));
+            const attachments: Rest.Model.File[] = [];
+
+            for (const [listId, fileIds] of attachmentsMap.entries()) {
+                const instanceIds = fileIds.map(((_id) => resolveInstanceId({_id})));
+                attachments.push(...await fetchMultipleEntities(Rest.Model.FileTypeRef, listId, instanceIds));
+            }
+
+            return attachments;
+        })(),
     ]);
 
-    return Mail(mail, body, files);
+    return mails.reduce((result: DatabaseModel.Mail[], mail) => {
+        const body = bodies.find(({_id}) => _id === mail.body);
+
+        if (!body) {
+            throw new Error(`Failed to resolve mail body by "body._id"=${mail.body}`);
+        }
+
+        return [
+            ...result,
+            Mail(
+                mail,
+                body,
+                files.filter((file) => mail.attachments.find((attachmentId) => equals(attachmentId, file._id))),
+            ),
+        ];
+    }, []);
 }
 
 function Mail(input: Rest.Model.Mail, body: Rest.Model.MailBody, files: Rest.Model.File[]): DatabaseModel.Mail {

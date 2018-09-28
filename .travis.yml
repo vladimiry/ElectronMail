@@ -4,7 +4,7 @@ branches:
   only:
   - master
 language: node_js
-node_js: 8
+node_js: 10
 addons:
   firefox: latest
 matrix:
@@ -42,6 +42,8 @@ cache:
 install:
 - pip install --user awscli ; export PATH=$PATH:$HOME/.local/bin
 - yarn install
+- npm i --package-lock-only
+- npm audit
 before_script:
 - |
   if [ "$TRAVIS_OS_NAME" == "linux" ]; then

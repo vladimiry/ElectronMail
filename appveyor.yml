@@ -5,9 +5,6 @@ branches:
   - master
 skip_tags: true
 os: unstable
-#environment:
-#  matrix:
-#    - nodejs_version: 8
 platform:
 - x64
 cache:
@@ -17,7 +14,7 @@ cache:
 test: off
 install:
 # - ps: Install-Product node $env:nodejs_version $env:platform
-- ps: Install-Product node 8 $env:platform
+- ps: Install-Product node 10 $env:platform
 - SET CI=true
 - npm install --global yarn
 - set PATH=%PATH%;C:\.yarn\bin
@@ -25,6 +22,8 @@ install:
 - npm --version
 - yarn --version
 - yarn install --mutex file
+- npm i --package-lock-only
+- npm audit
 build_script:
 - yarn run app:dist
 - yarn run electron-builder:publish:x64

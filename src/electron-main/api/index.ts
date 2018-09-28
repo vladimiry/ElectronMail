@@ -3,6 +3,7 @@ import {from} from "rxjs";
 
 import {Account, Database, General, KeePass, TrayIcon} from "./endpoints-builders";
 import {Context} from "src/electron-main/model";
+import {DbAccountPk} from "src/shared/model/database";
 import {Endpoints, IPC_MAIN_API} from "src/shared/api/main";
 import {buildSettingsAdapter} from "src/electron-main/util";
 import {clearDefaultSessionCaches} from "src/electron-main/session";
@@ -76,7 +77,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
             return config;
         })()),
 
-        // TODO update "readSettings" api method test ("upgradeSettings" call, "no password provided" case, database loading)
+        // TODO update "readSettings" api method test ("no password provided" case, database loading)
         readSettings: ({password, savePassword}) => from((async () => {
             // trying to auto login
             if (!password) {
@@ -105,9 +106,26 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
 
             ctx.settingsStore = store;
 
-            // TODO ensure by tests that database loading occurs after the "ctx.settingsStore = store" call (see above)
+            // TODO ensure by tests that database loaded occurs after the "ctx.settingsStore = store" assignment (see above)
             if (await ctx.db.persisted()) {
                 await ctx.db.loadFromFile();
+
+                const removePks: DbAccountPk[] = [];
+
+                ctx.db.iterateAccounts((account, dbAccountPk) => {
+                    if (settings.accounts.some(({type, login}) => type === dbAccountPk.type && login === dbAccountPk.login)) {
+                        return;
+                    }
+                    removePks.push(dbAccountPk);
+                });
+
+                for (const dbAccountPk of removePks) {
+                    ctx.db.deleteAccount(dbAccountPk);
+                }
+
+                if (removePks.length) {
+                    await ctx.db.saveToFile();
+                }
             }
 
             return settings;

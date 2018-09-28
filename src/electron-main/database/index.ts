@@ -82,6 +82,17 @@ export class Database {
         return account;
     }
 
+    iterateAccounts(cb: (account: MemoryDbAccount, pk: DbAccountPk) => void): void {
+        logger.info("iterateAccounts()");
+
+        const accounts = this.memoryDb.accounts;
+
+        for (const type of Object.keys(accounts) as Array<keyof typeof accounts>) {
+            const loginBundle = accounts[type];
+            Object.keys(loginBundle).map((login) => cb(loginBundle[login], {type, login}));
+        }
+    }
+
     deleteAccount<TL extends DbAccountPk>({type, login}: TL): void {
         delete this.memoryDb.accounts[type][login];
     }
@@ -140,12 +151,9 @@ export class Database {
         target.version = source.version;
 
         // memory => fs
-        for (const type of Object.keys(source.accounts) as Array<keyof typeof source.accounts>) {
-            const loginBundle = source.accounts[type];
-            Object.keys(loginBundle).map((login) => {
-                target.accounts[type][login] = this.memoryAccountToFsAccount(loginBundle[login]);
-            });
-        }
+        this.iterateAccounts((account, {type, login}) => {
+            target.accounts[type][login] = this.memoryAccountToFsAccount(account);
+        });
 
         return target;
     }

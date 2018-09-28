@@ -89,7 +89,7 @@ function build<V extends string, M extends { [k: string]: V }>(nameValueMap: M) 
         }
         return valueNameMap[value];
     };
-    const parseValue = (rawValue: any, strict: boolean = true): V => nameValueMap[resolveNameByValue(rawValue, strict)];
+    const parseValue = (rawValue: any, strict: boolean = true): V => nameValueMap[resolveNameByValue(rawValue, strict)] as V;
 
     // TODO deep freeze the result object
     return Object.assign(

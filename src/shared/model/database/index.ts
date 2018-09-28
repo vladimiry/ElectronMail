@@ -1,3 +1,5 @@
+import {Model as StoreModel} from "fs-json-store";
+
 import * as Constants from "./constants";
 import * as View from "./view";
 import {AccountConfig, AccountType} from "src/shared/model/account";
@@ -142,10 +144,10 @@ export type MemoryDb =
     &
     GenericDb<"protonmail", ProtonmailMetadataPart, DbEntitiesMapContainer>;
 
-export type FsDb =
-    GenericDb<"tutanota", TutanotaMetadataPart, DbEntitiesRecordContainer>
-    &
-    GenericDb<"protonmail", ProtonmailMetadataPart, DbEntitiesRecordContainer>;
+export type FsDb = Partial<StoreModel.StoreEntity> &
+    (GenericDb<"tutanota", TutanotaMetadataPart, DbEntitiesRecordContainer>
+        &
+        GenericDb<"protonmail", ProtonmailMetadataPart, DbEntitiesRecordContainer>);
 
 export type MemoryDbAccount<T extends keyof MemoryDb["accounts"] = keyof MemoryDb["accounts"]> = MemoryDb["accounts"][T][string];
 

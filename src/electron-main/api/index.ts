@@ -112,15 +112,15 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
 
                 const removePks: DbAccountPk[] = [];
 
-                ctx.db.iterateAccounts((account, dbAccountPk) => {
-                    if (settings.accounts.some(({type, login}) => type === dbAccountPk.type && login === dbAccountPk.login)) {
+                ctx.db.iterateAccounts(({pk}) => {
+                    if (settings.accounts.some((a) => Boolean(a.database) && a.type === pk.type && a.login === pk.login)) {
                         return;
                     }
-                    removePks.push(dbAccountPk);
+                    removePks.push(pk);
                 });
 
-                for (const dbAccountPk of removePks) {
-                    ctx.db.deleteAccount(dbAccountPk);
+                for (const pk of removePks) {
+                    ctx.db.deleteAccount(pk);
                 }
 
                 if (removePks.length) {

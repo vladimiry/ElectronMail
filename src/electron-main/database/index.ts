@@ -5,7 +5,6 @@ import {EncryptionAdapter, KeyBasedPreset} from "fs-json-store-encryption-adapte
 import {Model, Store} from "fs-json-store";
 
 import * as Entity from "./entity";
-import {AccountType} from "src/shared/model/account";
 import {DATABASE_VERSION} from "./constants";
 import {DbAccountPk, FsDb, FsDbAccount, MemoryDb, MemoryDbAccount} from "src/shared/model/database";
 import {EntityMap} from "./entity-map";
@@ -82,14 +81,14 @@ export class Database {
         return account;
     }
 
-    iterateAccounts(cb: (account: MemoryDbAccount, pk: DbAccountPk) => void): void {
+    iterateAccounts(cb: (data: { account: MemoryDbAccount; pk: DbAccountPk }) => void): void {
         logger.info("iterateAccounts()");
 
         const accounts = this.memoryDb.accounts;
 
         for (const type of Object.keys(accounts) as Array<keyof typeof accounts>) {
             const loginBundle = accounts[type];
-            Object.keys(loginBundle).map((login) => cb(loginBundle[login], {type, login}));
+            Object.keys(loginBundle).forEach((login) => cb({account: loginBundle[login], pk: {type, login}}));
         }
     }
 
@@ -151,8 +150,8 @@ export class Database {
         target.version = source.version;
 
         // memory => fs
-        this.iterateAccounts((account, {type, login}) => {
-            target.accounts[type][login] = this.memoryAccountToFsAccount(account);
+        this.iterateAccounts(({account, pk}) => {
+            target.accounts[pk.type][pk.login] = this.memoryAccountToFsAccount(account);
         });
 
         return target;
@@ -165,20 +164,16 @@ export class Database {
     stat(): { records: number, conversationEntries: number, mails: number, folders: number, contacts: number } {
         logger.info("stat()");
 
-        const {memoryDb: source} = this;
         const stat = {records: 0, conversationEntries: 0, mails: 0, folders: 0, contacts: 0};
 
-        for (const type of Object.keys(source.accounts) as AccountType[]) {
-            const loginBundle = source.accounts[type];
-            Object.keys(loginBundle).map((login) => {
-                stat.records++;
-                const {conversationEntries, mails, folders, contacts} = this.accountStat(loginBundle[login]);
-                stat.conversationEntries += conversationEntries;
-                stat.mails += mails;
-                stat.folders += folders;
-                stat.contacts += contacts;
-            });
-        }
+        this.iterateAccounts(({account}) => {
+            const {conversationEntries, mails, folders, contacts} = this.accountStat(account);
+            stat.records++;
+            stat.conversationEntries += conversationEntries;
+            stat.mails += mails;
+            stat.folders += folders;
+            stat.contacts += contacts;
+        });
 
         return stat;
     }

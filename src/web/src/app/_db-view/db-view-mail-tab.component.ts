@@ -18,7 +18,8 @@ export class DbViewMailTabComponent {
     dbAccountPk!: DbAccountPk;
 
     state$ = this.store.pipe(
-        select((state) => FEATURED.accountRecord(this.dbAccountPk)(state)),
+        select((state) => FEATURED.accountRecord(state, {pk: this.dbAccountPk})),
+        tap(() => FEATURED.accountRecord.release()),
         mergeMap((instance) => instance ? [instance] : []),
         tap(({selectedFolderPk, folders}) => {
             if (selectedFolderPk) {

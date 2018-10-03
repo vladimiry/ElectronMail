@@ -74,8 +74,8 @@
         <div *ngIf="accounts.length; then accountsDefined else accountsUndefined"></div>
         <ng-template #accountsDefined>
             <email-securely-app-account
-                *ngFor="let login of (loginsSet$ | async)"
-                [login]="login"
+                *ngFor="let login of (loginsSet$ | async); let index = index"
+                [account]="getAccountByLogin(login)"
                 [ngStyle]="login != selectedAccount?.accountConfig.login && {'opacity': '0', 'width': '0', 'height': '0'}"
             ></email-securely-app-account>
         </ng-template>

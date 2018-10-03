@@ -13,8 +13,12 @@ export class DbViewModuleResolve {
             const moduleFactory = await this.moduleLoader.load("./_db-view/db-view.module#DbViewModule");
             const moduleRef = moduleFactory.create(this.injector);
             const component = moduleRef.injector.get(DBVIEW_MODULE_ENTRY_COMPONENT_TOKEN);
-            this.state.resolveComponentFactory = async () => moduleRef.componentFactoryResolver.resolveComponentFactory(component);
-            return await this.state.resolveComponentFactory();
+            const componentFactory = moduleRef.componentFactoryResolver.resolveComponentFactory(component);
+
+            // memoize resolved factory
+            this.state.resolveComponentFactory = async () => componentFactory;
+
+            return componentFactory;
         },
     };
 
@@ -24,8 +28,8 @@ export class DbViewModuleResolve {
     ) {}
 
     async buildComponentRef(dbAccountPk: DbAccountPk): Promise<ComponentRef<DbViewEntryComponentInterface>> {
-        const factory = await this.state.resolveComponentFactory();
-        const componentRef = factory.create(this.injector);
+        const componentFactory = await this.state.resolveComponentFactory();
+        const componentRef = componentFactory.create(this.injector);
 
         componentRef.instance.dbAccountPk = dbAccountPk;
 

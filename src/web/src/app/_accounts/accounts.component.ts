@@ -1,6 +1,6 @@
 import {Component, OnDestroy, OnInit} from "@angular/core";
+import {Observable, Subscription} from "rxjs";
 import {Store, select} from "@ngrx/store";
-import {Subscription} from "rxjs";
 import {distinctUntilChanged, map} from "rxjs/operators";
 import {equals} from "ramda";
 
@@ -17,25 +17,43 @@ import {WebAccount} from "src/web/src/app/model";
     preserveWhitespaces: true,
 })
 export class AccountsComponent implements OnInit, OnDestroy {
-    accounts$ = this.store.select(AccountsSelectors.FEATURED.accounts);
-    loginsSet$ = this.accounts$.pipe(
-        map((accounts) => accounts.map((account) => account.accountConfig.login)),
-        distinctUntilChanged((prev, curr) => equals([...prev].sort(), [...curr].sort())),
-    );
-    compactLayout$ = this.store.select(OptionsSelectors.CONFIG.compactLayout);
-    initialized$ = this.store.select(AccountsSelectors.FEATURED.initialized);
-    accounts: WebAccount[] = [];
+    compactLayout$ = this.store.pipe(select(OptionsSelectors.CONFIG.compactLayout));
+    initialized$ = this.store.pipe(select(AccountsSelectors.FEATURED.initialized));
+    accountsMap: Map<WebAccount["accountConfig"]["login"], WebAccount> = new Map();
     selectedAccount?: WebAccount;
     unreadSummary?: number;
+    loginsSet$: Observable<string[]>;
+    private accounts$ = this.store.pipe(select(AccountsSelectors.FEATURED.accounts));
     private subscription = new Subscription();
 
     constructor(
         private store: Store<State>,
-    ) {}
+    ) {
+        this.loginsSet$ = this.accounts$.pipe(
+            map((accounts) => accounts.map((account) => account.accountConfig.login)),
+            distinctUntilChanged((prev, curr) => equals([...prev].sort(), [...curr].sort())),
+        );
+    }
+
+    get accounts(): WebAccount[] {
+        return [...this.accountsMap.values()];
+    }
+
+    getAccountByLogin(login: string): WebAccount {
+        const account = this.accountsMap.get(login);
+        if (!account) {
+            throw new Error(`No account found with "${login}" login`);
+        }
+        return account;
+    }
 
     ngOnInit() {
         this.subscription.add(
-            this.accounts$.subscribe((accounts) => this.accounts = accounts),
+            this.accounts$.subscribe((accounts) => {
+                this.accountsMap = new Map(accounts.reduce((entries: Array<[string, WebAccount]>, account) => {
+                    return entries.concat([[account.accountConfig.login, account]]);
+                }, []));
+            }),
         );
         this.subscription.add(
             this.store.select(AccountsSelectors.ACCOUNTS.loggedInAndUnreadSummary)

@@ -78,12 +78,9 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
         ToggleDatabaseView: ({login, forced}) => {
             const {account} = pickAccountBundle(draftState.accounts, {login});
 
-            if (forced) {
-                account.databaseView = account.progress.togglingDatabaseView = forced.databaseView;
-                return;
-            }
-
-            account.databaseView = account.progress.togglingDatabaseView = !account.databaseView;
+            account.databaseView = forced
+                ? forced.databaseView
+                : !account.databaseView;
         },
         default: () => draftState,
     }));

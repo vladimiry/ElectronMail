@@ -16,9 +16,8 @@
             class="fa"
             [ngClass]="{
                 'syncing': state.account.progress.syncing,
-                'fa-database': state.account.databaseView && !state.account.progress.togglingDatabaseView,
-                'fa-plug': !state.account.databaseView && !state.account.progress.togglingDatabaseView,
-                'fa-spinner fa-pulse fa-fw': state.account.progress.togglingDatabaseView
+                'fa-database': state.account.databaseView,
+                'fa-plug': !state.account.databaseView
             }"
         ></i>
     </button>

@@ -1,7 +1,7 @@
+import {BehaviorSubject, Subscription} from "rxjs";
 import {ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit} from "@angular/core";
-import {ReplaySubject, Subscription, of} from "rxjs";
 import {Store, select} from "@ngrx/store";
-import {distinctUntilChanged, filter, take, withLatestFrom} from "rxjs/operators";
+import {distinctUntilChanged, filter} from "rxjs/operators";
 
 import {ACCOUNTS_ACTIONS} from "src/web/src/app/store/actions";
 import {AccountsSelectors} from "src/web/src/app/store/selectors";
@@ -24,13 +24,17 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
     @Input()
     highlighting: boolean = true;
 
-    private stateSubject$ = new ReplaySubject<ComponentState>(1);
+    private stateSubject$ = new BehaviorSubject<ComponentState>({
+        // account: null,
+        selected: false,
+        stored: false,
+    } as ComponentState);
 
     // TODO consider replace observable with just an object explicitly triggering ChangeDetectorRef.detectChanges() after its mutation
     // tslint:disable-next-line:member-ordering
-    state$ = this.stateSubject$.asObservable(); // .pipe(debounceTime(200))
+    state$ = this.stateSubject$.asObservable().pipe(filter((s) => Boolean(s.account))); // .pipe(debounceTime(200))
 
-    private stateInitiaized?: boolean;
+    private accountLogin!: string;
 
     private subscription = new Subscription();
 
@@ -40,6 +44,8 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
 
     @Input()
     set account(account: WebAccount) {
+        this.accountLogin = account.accountConfig.login;
+
         this.patchState({
             account,
             stored: account.accountConfig.database,
@@ -57,19 +63,14 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
                     select(AccountsSelectors.FEATURED.selectedLogin),
                     filter((selectedLogin) => Boolean(selectedLogin)),
                     distinctUntilChanged(),
-                    withLatestFrom(this.stateSubject$),
                 )
-                .subscribe(([selectedLogin, {account}]) => {
-                    this.patchState({selected: account.accountConfig.login === selectedLogin});
-                }),
+                .subscribe((selectedLogin) => this.patchState({selected: selectedLogin === this.accountLogin})),
         );
     }
 
     toggleViewMode(event: Event) {
         event.stopPropagation();
-        this.stateSubject$.pipe(take(1)).subscribe(({account}) => {
-            this.store.dispatch(ACCOUNTS_ACTIONS.ToggleDatabaseView({login: account.accountConfig.login}));
-        });
+        this.store.dispatch(ACCOUNTS_ACTIONS.ToggleDatabaseView({login: this.accountLogin}));
     }
 
     ngOnDestroy() {
@@ -77,18 +78,6 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
     }
 
     private patchState(patch: Partial<ComponentState>) {
-        const currentState$ = this.stateInitiaized
-            ? this.stateSubject$
-            : of({
-                // account: null as any,
-                selected: false,
-                stored: false,
-            } as ComponentState);
-
-        this.stateInitiaized = true;
-
-        currentState$.pipe(take(1)).subscribe((value) => {
-            this.stateSubject$.next({...value, ...patch});
-        });
+        this.stateSubject$.next({...this.stateSubject$.value, ...patch});
     }
 }

@@ -99,8 +99,8 @@ export class AccountsEffects {
             unionizeActionFilter(ACCOUNTS_ACTIONS.is.ToggleSyncing),
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             mergeMap(({payload, logger}) => {
-                const {account, webView, finishPromise} = payload;
-                const {type, login} = account.accountConfig;
+                const {pk, webView, finishPromise} = payload;
+                const {type, login} = pk;
                 const dispose$ = from(finishPromise).pipe(tap(() => {
                     this.store.dispatch(ACCOUNTS_ACTIONS.Patch({login, patch: {syncingActivated: false}}));
                     logger.info("dispose");

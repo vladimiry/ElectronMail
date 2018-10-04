@@ -89,7 +89,7 @@ export async function resolveApi(): Promise<Api> {
     state.bundle = bundle as Api;
 
     // TODO validate types of all the described constants/functions in a declarative way
-    // so app gets tutanota's breaking changes noticed on early stage
+    // so app gets tutanota breaking changes noticed on early stage
     if (typeof bundle["src/api/common/EntityFunctions"].GENERATED_MIN_ID !== "string") {
         throw new Error(`Invalid "src/api/common/EntityFunctions.GENERATED_MIN_ID" value`);
     }

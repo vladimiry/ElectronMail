@@ -209,7 +209,8 @@ PROTONMAIL_IPC_WEBVIEW_API.registerApi(endpoints);
 _logger.verbose(`api registered, url: ${getLocationHref()}`);
 
 function isLoggedIn(): boolean {
-    const htmlElement = WINDOW.angular && typeof WINDOW.angular.element === "function" && WINDOW.angular.element("html");
+    const angular: angular.IAngularStatic | undefined = WINDOW.angular;
+    const htmlElement = angular && typeof angular.element === "function" && angular.element("html");
     const $injector = htmlElement && typeof htmlElement.data === "function" && htmlElement.data("$injector");
     const authentication = $injector && $injector.get("authentication");
 

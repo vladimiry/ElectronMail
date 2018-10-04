@@ -107,3 +107,33 @@ export function mapBy<T, K>(iterable: Iterable<T>, by: (t: T) => K): Map<K, T[]>
 
     return map;
 }
+
+// TODO consider using https://github.com/cedx/enum.js instead
+export function buildEnumBundle<V extends string | number = string>(
+    nameValueMap: { [k: string]: V },
+) {
+    type M = typeof nameValueMap;
+    const {names, values, valueNameMap} = Object
+        .entries(nameValueMap)
+        .reduce((accumulator: { names: Array<keyof M>; values: V[]; valueNameMap: { [k in V]: string } }, [key, value]) => {
+            accumulator.names.push(key);
+            accumulator.values.push(value as V);
+            accumulator.valueNameMap[value] = key;
+            return accumulator;
+        }, {values: [], names: [], valueNameMap: {} as any});
+    const resolveNameByValue = (value: V, strict: boolean = true): string => {
+        if (strict && !(value in valueNameMap)) {
+            throw new Error(`Failed to parse "${value}" value from the "${JSON.stringify(nameValueMap)}" map`);
+        }
+        return valueNameMap[value];
+    };
+    const parseValue = (rawValue: any, strict: boolean = true): V => nameValueMap[resolveNameByValue(rawValue, strict)] as V;
+
+    // TODO deep freeze the result object
+    return Object.assign(
+        {
+            _: {resolveNameByValue, parseValue, names, values, nameValueMap},
+        },
+        nameValueMap,
+    );
+}

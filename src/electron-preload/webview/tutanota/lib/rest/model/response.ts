@@ -4,11 +4,11 @@ import {
     CONTACT_PHONE_NUMBER_TYPE,
     CONTACT_SOCIAL_TYPE,
     CONVERSATION_TYPE,
-    GROUP_TYPE,
     MAIL_FOLDER_TYPE,
     MAIL_STATE,
     OPERATION_TYPE,
 } from "src/shared/model/database";
+import {GROUP_TYPE} from "./constants";
 import {NumberString} from "src/shared/types";
 
 export interface User extends BaseEntity<Id> {

@@ -1,6 +1,7 @@
 import * as DatabaseModel from "src/shared/model/database/index";
 import * as Rest from ".";
 import {BaseEntity, Id, IdTuple} from "./model";
+import {GROUP_TYPE} from "./model/constants";
 import {Unpacked} from "src/shared/types";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {curryFunctionMembers} from "src/shared/util";
@@ -10,7 +11,7 @@ const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[lib/util]");
 
 export const filterSyncingMemberships = ((types: Set<string>) => ({memberships}: Rest.Model.User): Rest.Model.GroupMembership[] => {
     return memberships.filter(({groupType}) => types.has(groupType));
-})(new Set([DatabaseModel.GROUP_TYPE.Mail, DatabaseModel.GROUP_TYPE.Contact]));
+})(new Set([GROUP_TYPE.Mail, GROUP_TYPE.Contact]));
 
 export const isUpsertOperationType = ((types: Set<string>) => (type: Unpacked<typeof DatabaseModel.OPERATION_TYPE._.values>): boolean => {
     return types.has(type);
@@ -21,7 +22,7 @@ export async function fetchMailFoldersWithSubFolders(user: Rest.Model.User): Pro
     logger.info();
 
     const folders: Rest.Model.MailFolder[] = [];
-    const mailMemberships = user.memberships.filter(({groupType}) => groupType === DatabaseModel.GROUP_TYPE.Mail);
+    const mailMemberships = user.memberships.filter(({groupType}) => groupType === GROUP_TYPE.Mail);
 
     for (const {group} of mailMemberships) {
         const {mailbox} = await Rest.fetchEntity(Rest.Model.MailboxGroupRootTypeRef, group);

@@ -150,7 +150,7 @@ const baseConfig = buildBaseConfig(
                 compilerOptions: tsConfigCompilerOptions,
             }),
         ],
-        ...(environment === "test" ? {} : {
+        ...(environment !== "test" && {
             optimization: {
                 splitChunks: {
                     chunks: "all",

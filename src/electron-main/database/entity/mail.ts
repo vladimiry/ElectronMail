@@ -1,19 +1,9 @@
-import {
-    ArrayNotEmpty,
-    ArrayUnique,
-    IsArray,
-    IsBoolean,
-    IsIn,
-    IsInt,
-    IsNotEmpty,
-    IsOptional,
-    IsString,
-    ValidateNested,
-} from "class-validator";
+import {ArrayUnique, IsArray, IsBoolean, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, ValidateNested} from "class-validator";
 import {Type} from "class-transformer";
 
 import * as Model from "src/shared/model/database";
 import {Entity} from "./base";
+import {mailRecipientsSize} from "./validation/mail-recipients-size";
 
 class MailAddress extends Entity implements Model.MailAddress {
     @IsNotEmpty()
@@ -63,9 +53,9 @@ export class Mail extends Entity implements Model.Mail {
     @Type(() => MailAddress)
     sender!: MailAddress;
 
+    @mailRecipientsSize({message: `Invalid recipients list`})
     @ValidateNested()
     @IsArray()
-    @ArrayNotEmpty()
     @Type(() => MailAddress)
     toRecipients!: MailAddress[];
 

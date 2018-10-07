@@ -7,6 +7,7 @@ import {
     MAIL_FOLDER_TYPE,
     MAIL_STATE,
     OPERATION_TYPE,
+    REPLY_TYPE,
 } from "src/shared/model/database";
 import {GROUP_TYPE} from "./constants";
 import {NumberString} from "src/shared/types";
@@ -55,7 +56,7 @@ export interface ConversationEntry<TypeRecord = typeof CONVERSATION_TYPE._.nameV
 }
 
 // tslint:disable-next-line:max-line-length
-export interface Mail<StateRecord = typeof MAIL_STATE._.nameValueMap, ReplyRecord = typeof MAIL_STATE._.nameValueMap> extends BaseEntity<[MailList["_id"], Id]> {
+export interface Mail<StateRecord = typeof MAIL_STATE._.nameValueMap, ReplyRecord = typeof REPLY_TYPE._.nameValueMap> extends BaseEntity<[MailList["_id"], Id]> {
     sentDate: NumberString; // timestamp;
     receivedDate: NumberString; // timestamp;
     subject: string;

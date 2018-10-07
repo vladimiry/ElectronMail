@@ -3,26 +3,48 @@ import {Unpacked} from "src/shared/types";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {curryFunctionMembers} from "src/shared/util";
 
-const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[lib/api]");
-
-interface Api {
+export interface Api {
+    $http: ng.IHttpService;
+    url: {
+        build: (module: string) => () => string;
+    };
+    messageModel: (message: Rest.Model.Message) => {
+        clearTextBody: () => Promise<string>;
+    };
     conversation: {
-        get: (
-            id: Rest.Model.Conversation["ID"],
-        ) => Promise<Rest.Model.ConversationResponse>;
+        get: (id: Rest.Model.Conversation["ID"]) => Promise<{ data: Rest.Model.ConversationResponse }>;
         query: (
-            params?: Rest.Model.QueryParams & {
-                LabelID: Unpacked<Rest.Model.Conversation["LabelIDs"]>;
-            },
-        ) => Promise<Rest.Model.ConversationsResponse>;
+            params?: Rest.Model.QueryParams & { LabelID?: Unpacked<Rest.Model.Conversation["LabelIDs"]> },
+        ) => Promise<{ data: Rest.Model.ConversationsResponse }>;
+    };
+    message: {
+        get: (id: Rest.Model.Message["ID"]) => Promise<Rest.Model.MessageResponse>;
+        query: (
+            params?: Rest.Model.QueryParams & { LabelID?: Unpacked<Rest.Model.Message["LabelIDs"]> },
+        ) => Promise<Rest.Model.MessagesResponse>;
+    };
+    contact: {
+        get: (id: Rest.Model.Contact["ID"]) => Promise<Rest.Model.ContactResponse["Contact"]>;
+        all: () => Promise<Rest.Model.ContactsResponse["Contacts"]>;
+    };
+    label: {
+        query: (params?: { Type?: Rest.Model.Label["Type"] }) => Promise<{ data: Rest.Model.LabelsResponse }>;
+    };
+    events: {
+        get: (id: Rest.Model.Event["EventID"]) => Promise<Rest.Model.EventResponse>;
+        getLatestID: () => Promise<Rest.Model.LatestEventResponse>;
+    };
+    vcard: {
+        // TODO proper "vcard" model definition
+        from: (vcfString: string) => { version: string; data: Record<string, any> };
     };
 }
 
+const logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[lib/api]");
 const state: { api?: Promise<Api> } = {};
 
 export async function resolveApi(): Promise<Api> {
-    const logger = curryFunctionMembers(_logger, "resolveApi()");
-    logger.info();
+    logger.info(`resolveApi()`);
 
     if (state.api) {
         return state.api;
@@ -30,25 +52,40 @@ export async function resolveApi(): Promise<Api> {
 
     return state.api = (async () => {
         const angular: angular.IAngularStatic | undefined = (window as any).angular;
+        const injector = angular && angular.element(document.body).injector();
 
-        if (!angular) {
-            throw new Error(`Failed to resolve "window.angular" library`);
+        if (!injector) {
+            throw new Error(`Failed to resolve "injector" variable`);
         }
 
-        const $injector = angular.element(document.body).injector();
-        const lazyLoader: { app: () => Promise<void> } = $injector.get("lazyLoader");
-        logger.verbose(`"lazyLoader" keys`, JSON.stringify(lazyLoader && Object.keys(lazyLoader)));
-
-        await lazyLoader.app();
-
-        const conversation: Api["conversation"] = $injector.get("conversationApi");
-        logger.verbose(`"conversation" keys`, JSON.stringify(conversation && Object.keys(conversation)));
+        await injectorGet<{ app: () => Promise<void> }>(injector, "lazyLoader").app();
 
         // TODO validate types of all the described constants/functions in a declarative way
         // so app gets protonmail breaking changes noticed on early stage
 
         return {
-            conversation,
+            $http: injectorGet<Api["$http"]>(injector, "$http"),
+            url: injectorGet<Api["url"]>(injector, "url"),
+            messageModel: injectorGet<Api["messageModel"]>(injector, "messageModel"),
+            conversation: injectorGet<Api["conversation"]>(injector, "conversationApi"),
+            message: injectorGet<Api["message"]>(injector, "messageApi"),
+            contact: injectorGet<Api["contact"]>(injector, "Contact"),
+            label: injectorGet<Api["label"]>(injector, "Label"),
+            events: injectorGet<Api["events"]>(injector, "Events"),
+            vcard: injectorGet<Api["vcard"]>(injector, "vcard"),
         };
     })();
+}
+
+function injectorGet<T>(injector: ng.auto.IInjectorService, name: string): T {
+    logger.info(`injectorGet()`);
+    const result = injector.get<T | undefined>(name);
+
+    if (!result) {
+        throw new Error(`Failed to resolve "${name}" service`);
+    }
+
+    logger.verbose(`injectorGet()`, `"${name}" keys`, JSON.stringify(Object.keys(result)));
+
+    return result;
 }

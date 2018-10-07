@@ -20,6 +20,7 @@ export const MAIL_STATE = buildEnumBundle({
     DRAFT: "0",
     SENT: "1",
     RECEIVED: "2",
+    INBOX_AND_SENT: "100",
 });
 
 export const REPLY_TYPE = buildEnumBundle({

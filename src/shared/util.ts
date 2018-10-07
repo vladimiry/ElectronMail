@@ -1,6 +1,6 @@
 import {AccountConfig} from "./model/account";
 import {BaseConfig, Config} from "./model/options";
-import {BatchEntityUpdatesDbPatch} from "./api/common";
+import {DbPatch} from "./api/common";
 import {LoginFieldContainer} from "./model/container";
 import {StatusCodeError} from "./model/error";
 import {View} from "src/shared/model/database";
@@ -47,7 +47,7 @@ export const curryFunctionMembers = <T extends any>(src: T, ...args: any[]): T =
     return dest;
 };
 
-export function isEntityUpdatesPatchNotEmpty({conversationEntries, folders, mails, contacts}: BatchEntityUpdatesDbPatch): boolean {
+export function isEntityUpdatesPatchNotEmpty({conversationEntries, folders, mails, contacts}: DbPatch): boolean {
     return [
         conversationEntries.remove,
         conversationEntries.upsert,
@@ -113,6 +113,7 @@ export function buildEnumBundle<V extends string | number = string>(
     nameValueMap: { [k: string]: V },
 ) {
     type M = typeof nameValueMap;
+
     const {names, values, valueNameMap} = Object
         .entries(nameValueMap)
         .reduce((accumulator: { names: Array<keyof M>; values: V[]; valueNameMap: { [k in V]: string } }, [key, value]) => {
@@ -121,13 +122,27 @@ export function buildEnumBundle<V extends string | number = string>(
             accumulator.valueNameMap[value] = key;
             return accumulator;
         }, {values: [], names: [], valueNameMap: {} as any});
-    const resolveNameByValue = (value: V, strict: boolean = true): string => {
+
+    interface ResolveNameByValue {
+        (value: V): string;
+
+        <S extends boolean>(value: V, strict: S): S extends true ? string : string | undefined;
+    }
+
+    const resolveNameByValue: ResolveNameByValue = (value: V, strict: boolean = true) => {
         if (strict && !(value in valueNameMap)) {
             throw new Error(`Failed to parse "${value}" value from the "${JSON.stringify(nameValueMap)}" map`);
         }
         return valueNameMap[value];
     };
-    const parseValue = (rawValue: any, strict: boolean = true): V => nameValueMap[resolveNameByValue(rawValue, strict)] as V;
+
+    interface ParseValue {
+        (rawValue: any): V;
+
+        <S extends boolean>(rawValue: any, strict: S): S extends true ? V : V | undefined;
+    }
+
+    const parseValue: ParseValue = (rawValue: any, strict: boolean = true) => nameValueMap[resolveNameByValue(rawValue, strict) as string];
 
     // TODO deep freeze the result object
     return Object.assign(

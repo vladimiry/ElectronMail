@@ -1,12 +1,12 @@
 import {ApiMethod, WebViewApiService} from "electron-rpc-api";
 
-import {CommonApi} from "src/shared/api/webview/common";
+import {CommonWebViewApi} from "src/shared/api/webview/common";
 import {MailPasswordFieldContainer} from "src/shared/model/container";
 import {NotificationsProtonmail} from "src/shared/model/account";
 import {ZoneApiParameter} from "src/shared/api/common";
 import {channel} from "./common";
 
-export interface ProtonmailApi extends CommonApi {
+export interface ProtonmailApi extends CommonWebViewApi<"protonmail"> {
     notification: ApiMethod<{ entryUrl: string } & ZoneApiParameter, Partial<NotificationsProtonmail>>;
     unlock: ApiMethod<MailPasswordFieldContainer & ZoneApiParameter, null>;
 }

@@ -1,6 +1,5 @@
 import {Injectable} from "@angular/core";
 import {Model} from "pubsub-to-stream-api";
-import {WebViewApiService} from "electron-rpc-api";
 import {concat, concatMap, delay, retryWhen, takeWhile} from "rxjs/operators";
 import {from, of, throwError} from "rxjs";
 
@@ -8,12 +7,10 @@ import {AccountType} from "src/shared/model/account";
 import {IPC_MAIN_API} from "src/shared/api/main";
 import {KeePassClientConf, KeePassRef} from "src/shared/model/keepasshttp";
 import {ONE_SECOND_MS} from "src/shared/constants";
-import {PROTONMAIL_IPC_WEBVIEW_API, ProtonmailApi} from "src/shared/api/webview/protonmail";
-import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi} from "src/shared/api/webview/tutanota";
+import {PROTONMAIL_IPC_WEBVIEW_API} from "src/shared/api/webview/protonmail";
+import {TUTANOTA_IPC_WEBVIEW_API} from "src/shared/api/webview/tutanota";
+import {WebViewApi} from "src/shared/api/webview/common";
 import {getZoneNameBoundWebLogger} from "src/web/src/util";
-
-type WebViewApi<T extends AccountType, A = T extends "tutanota" ? TutanotaApi : ProtonmailApi>
-    = WebViewApiService<Model.ActionsRecord<Extract<keyof A, string>> & A>;
 
 type CallOptions = Partial<Pick<Model.CallOptions, "timeoutMs" | "finishPromise" | "serialization">>;
 

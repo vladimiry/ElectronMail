@@ -1,9 +1,9 @@
+// tslint:disable:no-unused-variable // TODO figure why tslint detects some imports as unused
+
 import {ApiMethod, ApiMethodNoArgument, IpcMainApiService} from "electron-rpc-api";
-// tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects below import as unused
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import {UnionOf, ofType, unionize} from "@vladimiry/unionize";
 
-// tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects "Folder" as unused
 import * as DatabaseModel from "src/shared/model/database";
 import {APP_NAME} from "src/shared/constants";
 import {
@@ -17,13 +17,13 @@ import {
     PasswordFieldContainer,
     UrlFieldContainer,
 } from "src/shared/model/container";
+import {AccountType} from "src/shared/model/account";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
-// tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects "BatchEntityUpdatesDbPatch" as unused
-import {BatchEntityUpdatesDbPatch} from "./common";
-// tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects "DbEntitiesRecordContainer" as unused
+import {CommonWebViewApi} from "./webview/common";
 import {DbAccountPk, DbEntitiesRecordContainer, FsDbAccount} from "src/shared/model/database";
-// tslint:disable-next-line:no-unused-variable // TODO figure why tslint detects "ElectronContextLocations" as unused
+import {DbPatch} from "./common";
 import {ElectronContextLocations} from "src/shared/model/electron";
+import {Unpacked} from "src/shared/types";
 
 export interface Endpoints {
     addAccount: ApiMethod<AccountConfigCreatePatch, Settings>;
@@ -38,8 +38,11 @@ export interface Endpoints {
 
     changeMasterPassword: ApiMethod<PasswordFieldContainer & NewPasswordFieldContainer, Settings>;
 
-    dbPatch: ApiMethod<DbAccountPk & BatchEntityUpdatesDbPatch
-        & { forceFlush?: boolean } & { metadata: Partial<FsDbAccount["metadata"]> }, FsDbAccount["metadata"]>;
+    dbPatch: ApiMethod<DbAccountPk
+        & DbPatch
+        & { forceFlush?: boolean }
+        & { metadata: Unpacked<ReturnType<CommonWebViewApi<AccountType>["buildDbPatch"]>>["metadata"] },
+        FsDbAccount["metadata"]>;
 
     dbGetAccountMetadata: ApiMethod<DbAccountPk, FsDbAccount["metadata"] | null>;
 

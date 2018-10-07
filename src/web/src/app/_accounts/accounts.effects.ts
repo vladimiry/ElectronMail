@@ -22,9 +22,13 @@ import {AccountTypeAndLoginFieldContainer} from "src/shared/model/container";
 import {AccountsSelectors} from "src/web/src/app/store/selectors";
 import {ElectronService} from "src/web/src/app/_core/electron.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {MemoryDbAccount} from "src/shared/model/database";
 import {ONE_SECOND_MS} from "src/shared/constants";
+import {ProtonmailApi} from "src/shared/api/webview/protonmail";
 import {State} from "src/web/src/app/store/reducers/accounts";
-import {TutanotaNotificationOutput} from "src/shared/api/webview/tutanota";
+import {TutanotaApi, TutanotaNotificationOutput} from "src/shared/api/webview/tutanota";
+import {Unpacked} from "src/shared/types";
+import {WebViewApi} from "src/shared/api/webview/common";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/src/util";
 
 const rateLimiter = __ELECTRON_EXPOSURE__.require["rolling-rate-limiter"]();
@@ -65,16 +69,16 @@ export class AccountsEffects {
                         mergeMap((webViewClient) => webViewClient("notification")({entryUrl, zoneName: logger.zoneName()})),
                         withLatestFrom(this.store.pipe(select(AccountsSelectors.ACCOUNTS.pickAccount({login})))),
                         mergeMap(([notification, account]) => {
-                            const batchEntityUpdatesNotification = type === "tutanota"
+                            const tutanotaBatchEntityUpdatesNotification = type === "tutanota"
                                 && typeof (notification as TutanotaNotificationOutput).batchEntityUpdatesCounter === "number";
 
-                            if (batchEntityUpdatesNotification) {
+                            if (tutanotaBatchEntityUpdatesNotification) {
                                 this.fireSyncingIteration$.next({type, login});
                                 return EMPTY;
                             }
 
                             // app derives "unread" value form the database in case of activated database syncing
-                            // as "unread" notification should be ignored
+                            // so "unread" notification should be ignored
                             if (account && account.syncingActivated && typeof notification.unread === "number") {
                                 return EMPTY;
                             }
@@ -107,12 +111,6 @@ export class AccountsEffects {
                 }));
                 const ipcMainClient = this.api.ipcMainClient();
                 const zoneName = logger.zoneName();
-
-                if (type !== "tutanota") {
-                    throw new Error(`Local store is supported for "${type}" only for now`);
-                }
-
-                // TODO consider making interval time configurable
 
                 logger.info("setup");
 
@@ -149,15 +147,22 @@ export class AccountsEffects {
                                 // use "concatMap" calls below to preserve ordering
                                 concatMap(() => ipcMainClient("dbGetAccountMetadata")({type, login}).pipe(
                                     concatMap((metadata) => {
-                                        if (metadata && metadata.type !== "tutanota") {
-                                            throw new Error(`Local store is supported for "${metadata.type}" only for now`);
+                                        // TODO consider calling PROTONMAIL_IPC_WEBVIEW_API/TUTANOTA_IPC_WEBVIEW_API.buildDbPatch directly
+                                        if (metadata && (metadata as MemoryDbAccount<"protonmail">["metadata"]).latestEventId) {
+                                            // TODO protonmail: enable events processing
+                                            return EMPTY;
                                         }
-                                        return webViewClient(
-                                            "buildBatchEntityUpdatesDbPatch",
-                                            {timeoutMs: ONE_SECOND_MS * 60 * 3}, // 3 minutes
-                                        )({metadata, zoneName});
+                                        const method = (webViewClient as ReturnType<WebViewApi<typeof type>["buildClient"]>)(
+                                            "buildDbPatch",
+                                            {timeoutMs: ONE_SECOND_MS * 60 * 3},
+                                        );
+                                        return method.call(webViewClient, {metadata, zoneName});
                                     }),
-                                    concatMap((patch) => ipcMainClient("dbPatch")({type, login, forceFlush: false, ...patch})),
+                                    concatMap((rawPatch) => {
+                                        const patch: Unpacked<ReturnType<TutanotaApi["buildDbPatch"] | ProtonmailApi["buildDbPatch"]>>
+                                            = rawPatch as any;
+                                        return ipcMainClient("dbPatch")({type, login, forceFlush: false, ...patch});
+                                    }),
                                     concatMap(() => EMPTY),
                                     catchError((error) => of(CORE_ACTIONS.Fail(error))),
                                     finalize(() => {

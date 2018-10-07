@@ -1,9 +1,9 @@
-import _logger from "electron-log";
+import electronLog from "electron-log";
 import sanitizeHtml from "sanitize-html";
-import {from, of, throwError} from "rxjs";
+import {from} from "rxjs";
 import {omit} from "ramda";
 
-import {AccountType} from "src/shared/model/account";
+import {Arguments, Unpacked} from "src/shared/types";
 import {Context} from "src/electron-main/model";
 import {Endpoints, IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {EntityMap, MemoryDbAccount} from "src/shared/model/database";
@@ -11,7 +11,7 @@ import {NOTIFICATION_SUBJECT} from "src/electron-main/api/constants";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {prepareFoldersView} from "./folders-view";
 
-const logger = curryFunctionMembers(_logger, "[database api]");
+const _logger = curryFunctionMembers(electronLog, "[database api]");
 
 type Methods =
     | "dbPatch"
@@ -21,8 +21,10 @@ type Methods =
 
 export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Methods>> {
     return {
-        dbPatch: ({type, login, metadata, forceFlush, ...entityUpdatesPatch}) => from((async () => {
-            logger.info("dbPatch()");
+        dbPatch: ({type, login, metadata: metadataPatch, forceFlush, ...entityUpdatesPatch}) => from((async (
+            logger = curryFunctionMembers(_logger, "dbPatch()"),
+        ) => {
+            logger.info();
 
             const key = {type, login};
             const account = ctx.db.getAccount(key) || ctx.db.initAccount(key);
@@ -41,10 +43,10 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
             }
 
             const entitiesModified = isEntityUpdatesPatchNotEmpty(entityUpdatesPatch);
-            const metadataModified = patchMetadata(type, account.metadata, metadata);
+            const metadataModified = patchMetadata(account.metadata, metadataPatch);
             const modified = entitiesModified || metadataModified;
 
-            logger.verbose("dbPatch()", JSON.stringify({modified, forceFlush}));
+            logger.verbose(JSON.stringify({entitiesModified, metadataModified, modified, forceFlush}));
 
             if (modified || forceFlush) {
                 await ctx.db.saveToFile();
@@ -60,80 +62,87 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
             return account.metadata;
         })()),
 
-        dbGetAccountMetadata: ({type, login}) => {
+        dbGetAccountMetadata: ({type, login}) => from((async (
+            logger = curryFunctionMembers(_logger, "dbGetAccountMetadata()"),
+        ) => {
             logger.info("dbGetAccountMetadata()");
             const account = ctx.db.getAccount({type, login});
-            return of(account ? account.metadata : null);
-        },
+            return account ? account.metadata : null;
+        })()),
 
-        dbGetAccountDataView: ({type, login}) => {
+        dbGetAccountDataView: ({type, login}) => from((async (
+            logger = curryFunctionMembers(_logger, "dbGetAccountDataView()"),
+        ) => {
             logger.info("dbGetAccountDataView()");
 
             const account = ctx.db.getFsAccount({type, login});
 
             if (!account) {
-                return of(undefined);
+                return undefined;
             }
 
-            return of({
+            return {
                 folders: prepareFoldersView(account),
                 contacts: account.contacts,
-            });
-        },
+            };
+        })()),
 
-        dbGetAccountMail: ({type, login, pk}) => {
+        dbGetAccountMail: ({type, login, pk}) => from((async (
+            logger = curryFunctionMembers(_logger, "dbGetAccountDataView()"),
+        ) => {
             logger.info("dbGetAccountMail()");
 
             const account = ctx.db.getFsAccount({type, login});
 
             if (!account) {
-                return throwError(`Database access error: failed to resolve account by the provided "type/login"`);
+                throw new Error(`Database access error: failed to resolve account by the provided "type/login"`);
             }
 
             const mail = account.mails[pk];
 
             if (!mail) {
-                return throwError(`Database access error: failed to resolve mail by the provided "pk"`);
+                throw new Error(`Database access error: failed to resolve mail by the provided "pk"`);
             }
 
-            return of({
+            return {
                 ...omit(["body"], mail),
                 // TODO test "dbGetAccountMail" sets "mail.body" through the "sanitizeHtml" call
                 body: sanitizeHtml(mail.body),
-            });
-        },
+            };
+        })()),
     };
 }
 
 function patchMetadata(
-    type: AccountType,
     dest: MemoryDbAccount["metadata"],
-    patch: Partial<MemoryDbAccount["metadata"]>,
+    rawPatch: Arguments<Unpacked<ReturnType<typeof buildEndpoints>>["dbPatch"]>[0]["metadata"],
+    logger = curryFunctionMembers(_logger, "patchMetadata()"),
 ): boolean {
-    logger.info("patchMetadata()");
+    logger.info();
 
-    if (type !== "tutanota") {
-        throw new Error(`"patchMetadata()": not yet implemented for "${type}" email provider`);
+    if (dest.type === "tutanota" && (rawPatch as typeof dest).groupEntityEventBatchIds) {
+        const patch = (rawPatch as typeof dest);
+        const patchSize = Object.keys(patch.groupEntityEventBatchIds).length;
+
+        if (!patchSize) {
+            return false;
+        }
+
+        dest.groupEntityEventBatchIds = {
+            ...dest.groupEntityEventBatchIds,
+            ...patch.groupEntityEventBatchIds,
+        };
+        logger.verbose(`"groupEntityEventBatchIds" patched with ${patchSize} records`);
+
+        return true;
     }
 
-    if (!("groupEntityEventBatchIds" in patch) || !patch.groupEntityEventBatchIds) {
-        return false;
+    if (dest.type === "protonmail" && (rawPatch as typeof dest).latestEventId) {
+        dest.latestEventId = (rawPatch as typeof dest).latestEventId;
+        logger.verbose(`"latestEventId" patched`);
+
+        return true;
     }
 
-    const patchSize = Object.keys(patch.groupEntityEventBatchIds).length;
-
-    if (!patchSize) {
-        return false;
-    }
-
-    Object.assign(
-        (dest as typeof patch).groupEntityEventBatchIds,
-        patch.groupEntityEventBatchIds,
-    );
-    logger.verbose(
-        "patchMetadata()",
-        `"metadata.groupEntityEventBatchIds" patched with ${patchSize} records`,
-    );
-
-    return true;
+    return false;
 }

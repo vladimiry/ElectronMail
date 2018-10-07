@@ -6,7 +6,7 @@ import {pick} from "ramda";
 import * as Database from "./lib/database";
 import * as DatabaseModel from "src/shared/model/database";
 import * as Rest from "./lib/rest";
-import {BatchEntityUpdatesDbPatch} from "src/shared/api/common";
+import {DbPatch} from "src/shared/api/common";
 import {MAIL_FOLDER_TYPE} from "src/shared/model/database";
 import {
     NOTIFICATION_LOGGED_IN_POLLING_INTERVAL,
@@ -23,16 +23,16 @@ import {fillInputValue, getLocationHref, submitTotpToken, waitElements} from "sr
 import {isUpsertOperationType} from "./lib/rest/util";
 import {resolveApi} from "src/electron-preload/webview/tutanota/lib/api";
 
-const WINDOW = window as any;
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[index]");
+const WINDOW = window as any;
+
+delete WINDOW.Notification;
 
 resolveApi()
     .then(bootstrapApi)
     .catch(_logger.error);
 
 function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
-    delete WINDOW.Notification;
-
     const {GENERATED_MAX_ID} = api["src/api/common/EntityFunctions"];
     const login2FaWaitElementsConfig = {
         input: () => document.querySelector("#modal input.input") as HTMLInputElement,
@@ -41,18 +41,17 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
     const endpoints: TutanotaApi = {
         ping: () => of(null),
 
-        buildBatchEntityUpdatesDbPatch: (input) => from((async () => {
-            const logger = curryFunctionMembers(_logger, "entityEventBatchesFetch()", input.zoneName);
+        buildDbPatch: (input) => from((async (logger = curryFunctionMembers(_logger, "api:buildDbPatch()", input.zoneName)) => {
             logger.info();
 
             const controller = getUserController();
 
-            if (!controller) {
-                throw new Error("User controller is supposed to be defined");
+            if (!controller || !isLoggedIn()) {
+                throw new Error("tutanota:buildDbPatch(): user is supposed to be logged-in");
             }
 
             const eventBatches: Rest.Model.EntityEventBatch[] = [];
-            const metadata: Required<Pick<DatabaseModel.MemoryDbAccount<"tutanota">["metadata"], "groupEntityEventBatchIds">> = {
+            const metadata: Unpacked<ReturnType<TutanotaApi["buildDbPatch"]>>["metadata"] = {
                 groupEntityEventBatchIds: {},
             };
             const memberships = Rest.Util.filterSyncingMemberships(controller.user);
@@ -76,7 +75,7 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
                 `fetched ${eventBatches.length} entity event batches from ${memberships.length} syncing memberships`,
             );
 
-            const patch = await buildBatchEntityUpdatesDbPatch({eventBatches, _logger: logger});
+            const patch = await buildDbPatch({eventBatches, _logger: logger});
 
             return {
                 ...patch,
@@ -84,8 +83,7 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
             };
         })()),
 
-        fillLogin: ({login, zoneName}) => from((async () => {
-            const logger = curryFunctionMembers(_logger, "fillLogin()", zoneName);
+        fillLogin: ({login, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "api:fillLogin()", zoneName)) => {
             logger.info();
 
             const cancelEvenHandler = (event: MouseEvent) => {
@@ -112,8 +110,7 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
             return null;
         })()),
 
-        login: ({password: passwordValue, login, zoneName}) => from((async () => {
-            const logger = curryFunctionMembers(_logger, "login()", zoneName);
+        login: ({login, password, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "api:login()", zoneName)) => {
             logger.info();
 
             await endpoints.fillLogin({login, zoneName}).toPromise();
@@ -129,7 +126,7 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
                 throw new Error(`Password is not supposed to be filled already on "login" stage`);
             }
 
-            await fillInputValue(elements.password, passwordValue);
+            await fillInputValue(elements.password, password);
             logger.verbose(`input values filled`);
 
             elements.submit.click();
@@ -139,7 +136,7 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
         })()),
 
         login2fa: ({secret, zoneName}) => from((async () => {
-            const logger = curryFunctionMembers(_logger, "login2fa()", zoneName);
+            const logger = curryFunctionMembers(_logger, "api:login2fa()", zoneName);
             logger.info();
 
             const elements = await waitElements(login2FaWaitElementsConfig);
@@ -156,7 +153,7 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
         })()),
 
         notification: ({entryUrl, zoneName}) => {
-            const logger = curryFunctionMembers(_logger, "notification()", zoneName);
+            const logger = curryFunctionMembers(_logger, "api:notification()", zoneName);
             logger.info();
 
             type LoggedInOutput = Required<Pick<TutanotaNotificationOutput, "loggedIn">>;
@@ -261,7 +258,7 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
                         (async () => {
                             innerLogger.verbose(JSON.stringify(pick(["application", "type", "operation"], entityUpdate)));
 
-                            const patch = await buildBatchEntityUpdatesDbPatch(
+                            const patch = await buildDbPatch(
                                 {eventBatches: [{events: [entityUpdate]}]/*, _logger: logger*/},
                                 true,
                             );
@@ -297,15 +294,15 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
     _logger.verbose(`api registered, url: ${getLocationHref()}`);
 }
 
-async function buildBatchEntityUpdatesDbPatch(
+async function buildDbPatch(
     input: {
         eventBatches: Array<Pick<Rest.Model.EntityEventBatch, "events">>;
         _logger?: ReturnType<typeof buildLoggerBundle>;
     },
     nullUpsert: boolean = false,
-): Promise<BatchEntityUpdatesDbPatch> {
+): Promise<DbPatch> {
     const logger = input._logger
-        ? curryFunctionMembers(input._logger, "buildBatchEntityUpdatesDbPatch()")
+        ? curryFunctionMembers(input._logger, "buildDbPatch()")
         : {info: (...args: any[]) => {}, verbose: (...args: any[]) => {}};
     const mappingItem = () => ({updatesMappedByInstanceId: new Map(), remove: [], idsMappedByListId: new Map()});
     const mapping: Record<"conversationEntries" | "mails" | "folders" | "contacts", {
@@ -366,7 +363,7 @@ async function buildBatchEntityUpdatesDbPatch(
         }
     }
 
-    const patch: BatchEntityUpdatesDbPatch = {
+    const patch: DbPatch = {
         conversationEntries: {remove: mapping.conversationEntries.remove, upsert: []},
         mails: {remove: mapping.mails.remove, upsert: []},
         folders: {remove: mapping.folders.remove, upsert: []},

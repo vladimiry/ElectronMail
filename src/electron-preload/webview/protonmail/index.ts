@@ -2,6 +2,8 @@ import {Observable, Subscriber, from, interval, merge, of} from "rxjs";
 import {authenticator} from "otplib";
 import {distinctUntilChanged, map, tap} from "rxjs/operators";
 
+import * as Rest from "./lib/rest";
+import {DbPatch} from "src/shared/api/common";
 import {
     NOTIFICATION_LOGGED_IN_POLLING_INTERVAL,
     NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL,
@@ -9,11 +11,14 @@ import {
 } from "src/electron-preload/webview/constants";
 import {NotificationsProtonmail} from "src/shared/model/account";
 import {PROTONMAIL_IPC_WEBVIEW_API, ProtonmailApi} from "src/shared/api/webview/protonmail";
+import {Unpacked} from "src/shared/types";
+import {buildContact, buildFolder, buildMail} from "./lib/database";
 import {curryFunctionMembers} from "src/shared/util";
 import {fillInputValue, getLocationHref, submitTotpToken, waitElements} from "src/electron-preload/webview/util";
+import {resolveApi} from "./lib/api";
 
-const WINDOW = window as any;
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[index]");
+const WINDOW = window as any;
 const twoFactorCodeElementId = "twoFactorCode";
 
 delete WINDOW.Notification;
@@ -21,8 +26,21 @@ delete WINDOW.Notification;
 const endpoints: ProtonmailApi = {
     ping: () => of(null),
 
-    fillLogin: ({login, zoneName}) => from((async () => {
-        const logger = curryFunctionMembers(_logger, "fillLogin()", zoneName);
+    buildDbPatch: (input) => from((async (logger = curryFunctionMembers(_logger, "api:buildDbPatch()", input.zoneName)) => {
+        logger.info();
+
+        if (!isLoggedIn()) {
+            throw new Error("protonmail:buildDbPatch(): user is supposed to be logged-in");
+        }
+
+        if (!input.metadata || !input.metadata.latestEventId) {
+            return await bootstrapDbPatch();
+        }
+
+        throw new Error(`Events processing is not yet implemented`);
+    })()),
+
+    fillLogin: ({login, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "api:fillLogin()", zoneName)) => {
         logger.info();
 
         const elements = await waitElements({
@@ -38,8 +56,7 @@ const endpoints: ProtonmailApi = {
         return null;
     })()),
 
-    login: ({login, password, zoneName}) => from((async () => {
-        const logger = curryFunctionMembers(_logger, "login()", zoneName);
+    login: ({login, password, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "api:login()", zoneName)) => {
         logger.info();
 
         await endpoints.fillLogin({login, zoneName}).toPromise();
@@ -64,8 +81,7 @@ const endpoints: ProtonmailApi = {
         return null;
     })()),
 
-    login2fa: ({secret, zoneName}) => from((async () => {
-        const logger = curryFunctionMembers(_logger, "login2fa()", zoneName);
+    login2fa: ({secret, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "api:login2fa()", zoneName)) => {
         logger.info();
 
         const elements = await waitElements({
@@ -82,8 +98,8 @@ const endpoints: ProtonmailApi = {
         );
     })()),
 
-    unlock: ({mailPassword, zoneName}) => from((async () => {
-        curryFunctionMembers(_logger, "unlock()", zoneName).info();
+    unlock: ({mailPassword, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "api:unlock()", zoneName)) => {
+        logger.info();
 
         const elements = await waitElements({
             mailboxPassword: () => document.getElementById("password") as HTMLInputElement,
@@ -97,7 +113,7 @@ const endpoints: ProtonmailApi = {
     })()),
 
     notification: ({entryUrl, zoneName}) => {
-        const logger = curryFunctionMembers(_logger, "notification()", zoneName);
+        const logger = curryFunctionMembers(_logger, "api:notification()", zoneName);
         logger.info();
 
         type LoggedInOutput = Required<Pick<NotificationsProtonmail, "loggedIn">>;
@@ -215,4 +231,62 @@ function isLoggedIn(): boolean {
     const authentication = $injector && $injector.get("authentication");
 
     return authentication && authentication.isLoggedIn();
+}
+
+async function bootstrapDbPatch(): Promise<Unpacked<ReturnType<ProtonmailApi["buildDbPatch"]>>> {
+    const api = await resolveApi();
+    // WARN "getLatestID" should be called before any other fetching
+    // so app gets any potentially missed changes happening during the function execution
+    const latestEventId = await api.events.getLatestID();
+    if (!latestEventId) {
+        throw new Error(`"getLatestID" call returned empty value`);
+    }
+    const [messages, contacts, labels] = await Promise.all([
+        // messages
+        (async (query = {Page: 0, PageSize: 150}) => {
+            type Response = Unpacked<ReturnType<typeof api.conversation.query>>;
+            const responseItems: Response["data"]["Conversations"] = [];
+            let response: Response | undefined;
+            while (!response || response.data.Conversations.length) { // fetch all the entities, ie until the end
+                response = await api.conversation.query(query);
+                responseItems.push(...response.data.Conversations);
+                query.Page++;
+            }
+            const result: Rest.Model.Message[] = [];
+            for (const responseItem of responseItems) {
+                // TODO consider accumulating fetch requests to array, split array to chunks and fetch them in parallel then
+                const {data} = await api.conversation.get(responseItem.ID);
+                result.push(...data.Messages);
+            }
+            return result;
+        })(),
+        // contacts
+        (async () => {
+            const responseItems = await api.contact.all();
+            const result: Rest.Model.Contact[] = [];
+            for (const responseItem of responseItems) {
+                // TODO consider accumulating fetch requests to array, split array to chunks and fetch them in parallel then
+                const item = await api.contact.get(responseItem.ID);
+                result.push(item);
+            }
+            return result;
+        })(),
+        // labels
+        (async () => {
+            const response = await api.label.query({Type: Rest.Model.LABEL_TYPE.MESSAGE}); // fetch all the entities
+            return response.data.Labels;
+        })(),
+    ]);
+
+    const patch: DbPatch = {
+        conversationEntries: {remove: [], upsert: []},
+        mails: {remove: [], upsert: await Promise.all(messages.map((message) => buildMail(message, api)))},
+        folders: {remove: [], upsert: labels.map(buildFolder)},
+        contacts: {remove: [], upsert: contacts.map(buildContact)},
+    };
+
+    return {
+        ...patch,
+        metadata: {latestEventId},
+    };
 }

@@ -27,7 +27,7 @@ import {DbViewModuleResolve} from "./db-view-module-resolve.service";
 import {NgChangesObservableComponent} from "src/web/src/app/components/ng-changes-observable.component";
 import {State} from "src/web/src/app/store/reducers/accounts";
 import {Unpacked} from "src/shared/types";
-import {WebAccount} from "../model";
+import {WebAccount} from "src/web/src/app/model";
 import {getZoneNameBoundWebLogger} from "src/web/src/util";
 
 let componentIndex = 0;

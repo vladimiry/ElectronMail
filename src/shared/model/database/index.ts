@@ -136,7 +136,7 @@ interface TutanotaMetadataPart {
 }
 
 interface ProtonmailMetadataPart {
-    propertyPlaceholder?: string;
+    latestEventId?: string; // Rest.Model.Event["EventID"]
 }
 
 export type MemoryDb =

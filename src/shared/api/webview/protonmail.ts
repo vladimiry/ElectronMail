@@ -6,8 +6,10 @@ import {NotificationsProtonmail} from "src/shared/model/account";
 import {ZoneApiParameter} from "src/shared/api/common";
 import {channel} from "./common";
 
+export type ProtonmailNotificationOutput = Partial<NotificationsProtonmail> & Partial<{ batchEntityUpdatesCounter: number }>;
+
 export interface ProtonmailApi extends CommonWebViewApi<"protonmail"> {
-    notification: ApiMethod<{ entryUrl: string } & ZoneApiParameter, Partial<NotificationsProtonmail>>;
+    notification: ApiMethod<{ entryUrl: string } & ZoneApiParameter, ProtonmailNotificationOutput>;
     unlock: ApiMethod<MailPasswordFieldContainer & ZoneApiParameter, null>;
 }
 

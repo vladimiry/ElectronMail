@@ -3,6 +3,8 @@ import {Unpacked} from "src/shared/types";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {curryFunctionMembers} from "src/shared/util";
 
+// TODO consider executing direct $http calls
+// in order to not depend on Protonmail WebClient's AngularJS factories/services
 export interface Api {
     $http: ng.IHttpService;
     url: {
@@ -18,7 +20,7 @@ export interface Api {
         ) => Promise<{ data: Rest.Model.ConversationsResponse }>;
     };
     message: {
-        get: (id: Rest.Model.Message["ID"]) => Promise<Rest.Model.MessageResponse>;
+        get: (id: Rest.Model.Message["ID"]) => Promise<{ data: Rest.Model.MessageResponse }>;
         query: (
             params?: Rest.Model.QueryParams & { LabelID?: Unpacked<Rest.Model.Message["LabelIDs"]> },
         ) => Promise<Rest.Model.MessagesResponse>;
@@ -31,7 +33,7 @@ export interface Api {
         query: (params?: { Type?: Rest.Model.Label["Type"] }) => Promise<{ data: Rest.Model.LabelsResponse }>;
     };
     events: {
-        get: (id: Rest.Model.Event["EventID"]) => Promise<Rest.Model.EventResponse>;
+        get: (id: Rest.Model.Event["EventID"], config?: ng.IRequestShortcutConfig) => Promise<Rest.Model.EventResponse>;
         getLatestID: () => Promise<Rest.Model.LatestEventResponse>;
     };
     vcard: {
@@ -44,8 +46,6 @@ const logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[lib/api]");
 const state: { api?: Promise<Api> } = {};
 
 export async function resolveApi(): Promise<Api> {
-    logger.info(`resolveApi()`);
-
     if (state.api) {
         return state.api;
     }

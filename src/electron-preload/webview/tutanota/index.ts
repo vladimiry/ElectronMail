@@ -1,4 +1,4 @@
-import {Observable, from, interval, merge, of} from "rxjs";
+import {EMPTY, Observable, from, interval, merge, of} from "rxjs";
 import {authenticator} from "otplib";
 import {buffer, concatMap, debounceTime, distinctUntilChanged, map, tap} from "rxjs/operators";
 import {pick} from "ramda";
@@ -50,10 +50,8 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
                 throw new Error("tutanota:buildDbPatch(): user is supposed to be logged-in");
             }
 
-            const eventBatches: Rest.Model.EntityEventBatch[] = [];
-            const metadata: Unpacked<ReturnType<TutanotaApi["buildDbPatch"]>>["metadata"] = {
-                groupEntityEventBatchIds: {},
-            };
+            const missedEventBatches: Rest.Model.EntityEventBatch[] = [];
+            const metadata: Unpacked<ReturnType<TutanotaApi["buildDbPatch"]>>["metadata"] = {groupEntityEventBatchIds: {}};
             const memberships = Rest.Util.filterSyncingMemberships(controller.user);
 
             for (const {group} of memberships) {
@@ -69,13 +67,13 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
                     metadata.groupEntityEventBatchIds[group] =
                         Rest.Util.resolveInstanceId(fetchedEventBatches[fetchedEventBatches.length - 1]);
                 }
-                eventBatches.push(...fetchedEventBatches);
+                missedEventBatches.push(...fetchedEventBatches);
             }
             logger.verbose(
-                `fetched ${eventBatches.length} entity event batches from ${memberships.length} syncing memberships`,
+                `fetched ${missedEventBatches.length} entity event batches from ${memberships.length} syncing memberships`,
             );
 
-            const patch = await buildDbPatch({eventBatches, _logger: logger});
+            const patch = await buildDbPatch({eventBatches: missedEventBatches, _logger: logger});
 
             return {
                 ...patch,
@@ -246,7 +244,7 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
                     // distinctUntilChanged(({unread: prev}, {unread: curr}) => curr === prev),
                 ),
 
-                new Observable<BatchEntityUpdatesCounterOutput>((batchEntityUpdatesSubscriber) => {
+                (() => {
                     const innerLogger = curryFunctionMembers(logger, `[entity update notification]`);
                     const notification = {batchEntityUpdatesCounter: 0};
                     const notificationReceived$ = new Observable<Pick<Rest.Model.EntityEventBatch, "events">>((
@@ -263,35 +261,23 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
                         })(EntityEventController.prototype.notificationReceived);
                     });
 
-                    notificationReceived$.pipe(
+                    return notificationReceived$.pipe(
                         buffer(notificationReceived$.pipe(
-                            // reduce 404 error chance in case of just created mail immediately goes from "drat" to the "sent" folder
                             debounceTime(ONE_SECOND_MS * 1.5),
                         )),
-                        tap((eventBatches) => {
-                            (async () => {
-                                const patch = await buildDbPatch(
-                                    {eventBatches/*, _logger: logger*/},
-                                    true,
-                                );
-
-                                if (!isEntityUpdatesPatchNotEmpty(patch)) {
-                                    return;
-                                }
-
-                                notification.batchEntityUpdatesCounter++;
-                                batchEntityUpdatesSubscriber.next(notification);
-
-                                for (const key of (Object.keys(patch) as Array<keyof typeof patch>)) {
-                                    innerLogger.info(`upsert/remove ${key}: ${patch[key].upsert.length}/${patch[key].remove.length}`);
-                                }
-                            })().catch((error) => {
-                                batchEntityUpdatesSubscriber.error(error);
-                                innerLogger.error(error);
-                            });
+                        concatMap((eventBatches) => from(buildDbPatch({eventBatches}, true))),
+                        concatMap((patch) => {
+                            if (!isEntityUpdatesPatchNotEmpty(patch)) {
+                                return EMPTY;
+                            }
+                            for (const key of (Object.keys(patch) as Array<keyof typeof patch>)) {
+                                innerLogger.info(`upsert/remove ${key}: ${patch[key].upsert.length}/${patch[key].remove.length}`);
+                            }
+                            notification.batchEntityUpdatesCounter++;
+                            return [notification];
                         }),
                     );
-                }),
+                })(),
             ];
 
             return merge(...observables);
@@ -312,11 +298,11 @@ async function buildDbPatch(
     const logger = input._logger
         ? curryFunctionMembers(input._logger, "buildDbPatch()")
         : {info: (...args: any[]) => {}, verbose: (...args: any[]) => {}};
-    const mappingItem = () => ({updatesMappedByInstanceId: new Map(), remove: [], idsMappedByListId: new Map()});
+    const mappingItem = () => ({updatesMappedByInstanceId: new Map(), remove: [], upsertIds: new Map()});
     const mapping: Record<"conversationEntries" | "mails" | "folders" | "contacts", {
         updatesMappedByInstanceId: Map<Rest.Model.Id, Rest.Model.EntityUpdate[]>;
         remove: Array<{ pk: string }>;
-        idsMappedByListId: Map<Rest.Model.Id, Rest.Model.Id[]>;
+        upsertIds: Map<Rest.Model.Id, Rest.Model.Id[]>; // list.id => instance.id[]
     }> & {
         conversationEntries: { refType: Rest.Model.TypeRef<Rest.Model.ConversationEntry> },
         mails: { refType: Rest.Model.TypeRef<Rest.Model.Mail> },
@@ -337,10 +323,7 @@ async function buildDbPatch(
                 if (!Rest.Util.sameRefType(refType, event)) {
                     continue;
                 }
-                updatesMappedByInstanceId.set(
-                    event.instanceId,
-                    [...(updatesMappedByInstanceId.get(event.instanceId) || []), event],
-                );
+                updatesMappedByInstanceId.set(event.instanceId, (updatesMappedByInstanceId.get(event.instanceId) || []).concat(event));
             }
         }
     }
@@ -351,17 +334,14 @@ async function buildDbPatch(
     ].join(" "));
 
     for (const key of mappingKeys) {
-        const {updatesMappedByInstanceId, idsMappedByListId, remove} = mapping[key];
+        const {updatesMappedByInstanceId, upsertIds, remove} = mapping[key];
         for (const entityUpdates of updatesMappedByInstanceId.values()) {
-            let added = false;
+            let upserted = false;
             // entity updates sorted in ASC order, so reversing the entity updates list in order to start processing from the newest items
             for (const update of entityUpdates.reverse()) {
-                if (!added && isUpsertOperationType(update.operation)) {
-                    idsMappedByListId.set(
-                        update.instanceListId,
-                        [...(idsMappedByListId.get(update.instanceListId) || []), update.instanceId],
-                    );
-                    added = true;
+                if (!upserted && isUpsertUpdate(update)) {
+                    upsertIds.set(update.instanceListId, (upsertIds.get(update.instanceListId) || []).concat(update.instanceId));
+                    upserted = true;
                 }
                 if (update.operation === DatabaseModel.OPERATION_TYPE.DELETE) {
                     remove.push({pk: Database.buildPk([update.instanceListId, update.instanceId])});
@@ -379,23 +359,23 @@ async function buildDbPatch(
     };
 
     if (!nullUpsert) {
-        for (const [listId, instanceIds] of mapping.conversationEntries.idsMappedByListId.entries()) {
+        for (const [listId, instanceIds] of mapping.conversationEntries.upsertIds.entries()) {
             const entities = await fetchMultipleEntities(mapping.conversationEntries.refType, listId, instanceIds);
             for (const entity of entities) {
                 patch.conversationEntries.upsert.push(Database.buildConversationEntry(entity));
             }
         }
-        for (const [listId, instanceIds] of mapping.mails.idsMappedByListId.entries()) {
+        for (const [listId, instanceIds] of mapping.mails.upsertIds.entries()) {
             const entities = await fetchMultipleEntities(mapping.mails.refType, listId, instanceIds);
             patch.mails.upsert.push(...await Database.buildMails(entities));
         }
-        for (const [listId, instanceIds] of mapping.folders.idsMappedByListId.entries()) {
+        for (const [listId, instanceIds] of mapping.folders.upsertIds.entries()) {
             const entities = await fetchMultipleEntities(mapping.folders.refType, listId, instanceIds);
             for (const entity of entities) {
                 patch.folders.upsert.push(Database.buildFolder(entity));
             }
         }
-        for (const [listId, instanceIds] of mapping.contacts.idsMappedByListId.entries()) {
+        for (const [listId, instanceIds] of mapping.contacts.upsertIds.entries()) {
             const entities = await fetchMultipleEntities(mapping.contacts.refType, listId, instanceIds);
             for (const entity of entities) {
                 patch.contacts.upsert.push(Database.buildContact(entity));
@@ -404,8 +384,8 @@ async function buildDbPatch(
     } else {
         // we only need the data structure to be formed at this point, so no need to perform the actual fetching
         for (const key of mappingKeys) {
-            for (const instanceIds of mapping[key].idsMappedByListId.values()) {
-                instanceIds.map(() => {
+            for (const instanceIds of mapping[key].upsertIds.values()) {
+                instanceIds.forEach(() => {
                     (patch[key].upsert as any[]).push(null);
                 });
             }
@@ -434,4 +414,8 @@ function isLoggedIn(): boolean {
         && controller.accessToken
         && controller.accessToken.length
     );
+}
+
+function isUpsertUpdate(update: Rest.Model.EntityUpdate) {
+    return isUpsertOperationType(update.operation);
 }

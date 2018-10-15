@@ -13,7 +13,9 @@ export const filterSyncingMemberships = ((types: Set<string>) => ({memberships}:
     return memberships.filter(({groupType}) => types.has(groupType));
 })(new Set([GROUP_TYPE.Mail, GROUP_TYPE.Contact]));
 
-export const isUpsertOperationType = ((types: Set<string>) => (type: Unpacked<typeof DatabaseModel.OPERATION_TYPE._.values>): boolean => {
+export const isUpsertOperationType = (<V = Unpacked<typeof DatabaseModel.OPERATION_TYPE._.values>>(
+    types: Set<V>,
+) => (type: V): boolean => {
     return types.has(type);
 })(new Set([DatabaseModel.OPERATION_TYPE.CREATE, DatabaseModel.OPERATION_TYPE.UPDATE]));
 

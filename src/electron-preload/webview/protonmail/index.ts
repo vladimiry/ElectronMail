@@ -1,39 +1,46 @@
-import {Observable, Subject, from, interval, merge, of} from "rxjs";
+import {EMPTY, Observable, from, interval, merge, of} from "rxjs";
 import {authenticator} from "otplib";
-import {distinctUntilChanged, map, mergeMap, tap} from "rxjs/operators";
+import {buffer, concatMap, debounceTime, distinctUntilChanged, filter, map, mergeMap, tap} from "rxjs/operators";
 
+import * as Database from "./lib/database";
 import * as Rest from "./lib/rest";
+import {Api, resolveApi} from "./lib/api";
 import {DbPatch} from "src/shared/api/common";
 import {
     NOTIFICATION_LOGGED_IN_POLLING_INTERVAL,
     NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL,
     WEBVIEW_LOGGERS,
 } from "src/electron-preload/webview/constants";
-import {NotificationsProtonmail} from "src/shared/model/account";
-import {PROTONMAIL_IPC_WEBVIEW_API, ProtonmailApi} from "src/shared/api/webview/protonmail";
+import {ONE_SECOND_MS} from "src/shared/constants";
+import {PROTONMAIL_IPC_WEBVIEW_API, ProtonmailApi, ProtonmailNotificationOutput} from "src/shared/api/webview/protonmail";
 import {Unpacked} from "src/shared/types";
 import {buildContact, buildFolder, buildMail} from "./lib/database";
-import {curryFunctionMembers} from "src/shared/util";
+import {buildLoggerBundle} from "src/electron-preload/util";
+import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {fillInputValue, getLocationHref, submitTotpToken, waitElements} from "src/electron-preload/webview/util";
-import {resolveApi} from "./lib/api";
+import {isUpsertOperationType} from "./lib/uilt";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[index]");
 const WINDOW = window as any;
 const twoFactorCodeElementId = "twoFactorCode";
-const loadedXMLHttpRequestSubject$ = new Subject<XMLHttpRequest>();
+const ajaxNotificationSkipParam = `ajax-notification-skip`;
+const ajaxNotification$ = new Observable<XMLHttpRequest>((subscriber) => {
+    XMLHttpRequest.prototype.send = ((original) => function(this: XMLHttpRequest) {
+        this.addEventListener(
+            "load",
+            function(this: XMLHttpRequest) {
+                if (this.responseURL.indexOf(ajaxNotificationSkipParam) !== -1) {
+                    return;
+                }
+                subscriber.next(this);
+            },
+            false,
+        );
+        return original.apply(this, arguments);
+    })(XMLHttpRequest.prototype.send);
+});
 
 delete WINDOW.Notification;
-
-XMLHttpRequest.prototype.send = ((original) => function(this: XMLHttpRequest) {
-    this.addEventListener(
-        "load",
-        function(this: XMLHttpRequest) {
-            loadedXMLHttpRequestSubject$.next(this);
-        },
-        false,
-    );
-    return original.apply(this, arguments);
-})(XMLHttpRequest.prototype.send);
 
 const endpoints: ProtonmailApi = {
     ping: () => of(null),
@@ -49,7 +56,30 @@ const endpoints: ProtonmailApi = {
             return await bootstrapDbPatch();
         }
 
-        throw new Error(`Events processing is not yet implemented`);
+        const {missedEvents, latestEventId} = await (async ({events, $http}: Api, id: Rest.Model.Event["EventID"]) => {
+            const fetchedEvents: Rest.Model.Event[] = [];
+            do {
+                const response = await events.get(id, {params: {[ajaxNotificationSkipParam]: "1"}});
+                fetchedEvents.push(response);
+                id = response.EventID;
+                if (response.More !== 1) {
+                    break;
+                }
+            } while (true);
+            return {
+                missedEvents: fetchedEvents,
+                latestEventId: id,
+            };
+        })(await resolveApi(), input.metadata.latestEventId);
+        logger.verbose(`fetched ${missedEvents.length} missed events`);
+
+        const patch = await buildDbPatch({events: missedEvents, _logger: logger});
+        const metadata: Unpacked<ReturnType<ProtonmailApi["buildDbPatch"]>>["metadata"] = {latestEventId};
+
+        return {
+            ...patch,
+            metadata,
+        };
     })()),
 
     fillLogin: ({login, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "api:fillLogin()", zoneName)) => {
@@ -128,14 +158,16 @@ const endpoints: ProtonmailApi = {
         const logger = curryFunctionMembers(_logger, "api:notification()", zoneName);
         logger.info();
 
-        type LoggedInOutput = Required<Pick<NotificationsProtonmail, "loggedIn">>;
-        type PageTypeOutput = Required<Pick<NotificationsProtonmail, "pageType">>;
-        type UnreadOutput = Required<Pick<NotificationsProtonmail, "unread">>;
+        type LoggedInOutput = Required<Pick<ProtonmailNotificationOutput, "loggedIn">>;
+        type PageTypeOutput = Required<Pick<ProtonmailNotificationOutput, "pageType">>;
+        type UnreadOutput = Required<Pick<ProtonmailNotificationOutput, "unread">>;
+        type BatchEntityUpdatesCounterOutput = Required<Pick<ProtonmailNotificationOutput, "batchEntityUpdatesCounter">>;
 
         const observables: [
             Observable<LoggedInOutput>,
             Observable<PageTypeOutput>,
-            Observable<UnreadOutput>
+            Observable<UnreadOutput>,
+            Observable<BatchEntityUpdatesCounterOutput>
             ] = [
             interval(NOTIFICATION_LOGGED_IN_POLLING_INTERVAL).pipe(
                 map(() => isLoggedIn()),
@@ -202,9 +234,11 @@ const endpoints: ProtonmailApi = {
                     },
                 ];
 
-                return loadedXMLHttpRequestSubject$.asObservable().pipe(
+                return ajaxNotification$.pipe(
                     mergeMap((request) => responseListeners
-                        .filter(({re}) => re.test(request.responseURL))
+                        .filter(({re}) => {
+                            return re.test(request.responseURL);
+                        })
                         .reduce(
                             (accumulator, {handler}) => {
                                 const responseData = JSON.parse(request.responseText);
@@ -217,6 +251,33 @@ const endpoints: ProtonmailApi = {
                             [] as UnreadOutput[],
                         )),
                     distinctUntilChanged((prev, curr) => curr.unread === prev.unread),
+                );
+            })(),
+
+            (() => {
+                const innerLogger = curryFunctionMembers(logger, `[entity update notification]`);
+                const eventsUrlRe = new RegExp(`${entryUrl}/api/events/.*==`);
+                const notification = {batchEntityUpdatesCounter: 0};
+                const notificationReceived$: Observable<Rest.Model.EventResponse> = ajaxNotification$.pipe(
+                    filter((request) => eventsUrlRe.test(request.responseURL)),
+                    map((request) => JSON.parse(request.responseText)),
+                );
+
+                return notificationReceived$.pipe(
+                    buffer(notificationReceived$.pipe(
+                        debounceTime(ONE_SECOND_MS * 1.5),
+                    )),
+                    concatMap((events) => from(buildDbPatch({events}, true))),
+                    concatMap((patch) => {
+                        if (!isEntityUpdatesPatchNotEmpty(patch)) {
+                            return EMPTY;
+                        }
+                        for (const key of (Object.keys(patch) as Array<keyof typeof patch>)) {
+                            innerLogger.info(`upsert/remove ${key}: ${patch[key].upsert.length}/${patch[key].remove.length}`);
+                        }
+                        notification.batchEntityUpdatesCounter++;
+                        return [notification];
+                    }),
                 );
             })(),
         ];
@@ -293,4 +354,115 @@ async function bootstrapDbPatch(): Promise<Unpacked<ReturnType<ProtonmailApi["bu
         ...patch,
         metadata: {latestEventId},
     };
+}
+
+async function buildDbPatch(
+    input: {
+        events: Rest.Model.Event[];
+        _logger?: ReturnType<typeof buildLoggerBundle>;
+    },
+    nullUpsert: boolean = false,
+): Promise<DbPatch> {
+    const api = await resolveApi();
+    const logger = input._logger
+        ? curryFunctionMembers(input._logger, "buildDbPatch()")
+        : {info: (...args: any[]) => {}, verbose: (...args: any[]) => {}};
+    const mappingItem = () => ({updatesMappedByInstanceId: new Map(), remove: [], upsertIds: []});
+    const mapping: Record<"mails" | "folders" | "contacts", {
+        remove: Array<{ pk: string }>;
+        upsertIds: Rest.Model.Id[];
+    }> & {
+        mails: {
+            refType: keyof Pick<Rest.Model.Event, "Messages">;
+            updatesMappedByInstanceId: Map<Rest.Model.Id, Array<Unpacked<Required<Rest.Model.Event>["Messages"]>>>;
+        },
+        folders: {
+            refType: keyof Pick<Rest.Model.Event, "Labels">;
+            updatesMappedByInstanceId: Map<Rest.Model.Id, Array<Unpacked<Required<Rest.Model.Event>["Labels"]>>>;
+        },
+        contacts: {
+            refType: keyof Pick<Rest.Model.Event, "Contacts">;
+            updatesMappedByInstanceId: Map<Rest.Model.Id, Array<Unpacked<Required<Rest.Model.Event>["Contacts"]>>>;
+        },
+    } = {
+        mails: {refType: "Messages", ...mappingItem()},
+        folders: {refType: "Labels", ...mappingItem()},
+        contacts: {refType: "Contacts", ...mappingItem()},
+    };
+    const mappingKeys = Object.keys(mapping) as Array<keyof typeof mapping>;
+
+    for (const event of input.events) {
+        for (const key of mappingKeys) {
+            const {refType, updatesMappedByInstanceId: updatesMappedByInstanceId} = mapping[key];
+            const updateItems = event[refType];
+            if (!updateItems) {
+                continue;
+            }
+            for (const updateItem of updateItems) {
+                updatesMappedByInstanceId.set(updateItem.ID, (updatesMappedByInstanceId.get(updateItem.ID) || []).concat(updateItem));
+            }
+        }
+    }
+
+    logger.verbose([
+        `resolved unique entities to process history chain:`,
+        mappingKeys.map((key) => `${key}: ${mapping[key].updatesMappedByInstanceId.size}`).join("; "),
+    ].join(" "));
+
+    for (const key of mappingKeys) {
+        const {updatesMappedByInstanceId, upsertIds, remove} = mapping[key];
+        for (const entityUpdates of updatesMappedByInstanceId.values()) {
+            let upserted = false;
+            // entity updates sorted in ASC order, so reversing the entity updates list in order to start processing from the newest items
+            for (const update of entityUpdates.reverse()) {
+                if (!upserted && isUpsertOperationType(update.Action)) {
+                    upsertIds.push(update.ID);
+                    upserted = true;
+                }
+                if (update.Action === Rest.Model.EVENT_ACTION.DELETE) {
+                    remove.push({pk: Database.buildPk(update.ID)});
+                    break;
+                }
+            }
+        }
+    }
+
+    const patch: DbPatch = {
+        conversationEntries: {remove: [], upsert: []},
+        mails: {remove: mapping.mails.remove, upsert: []},
+        folders: {remove: mapping.folders.remove, upsert: []},
+        contacts: {remove: mapping.contacts.remove, upsert: []},
+    };
+
+    if (!nullUpsert) {
+        for (const id of mapping.mails.upsertIds) {
+            const response = await api.message.get(id);
+            patch.mails.upsert.push(await Database.buildMail(response.data.Message, api));
+        }
+        await (async () => {
+            const response = await api.label.query();
+            const folders = response.data.Labels
+                .filter(({ID}) => mapping.folders.upsertIds.includes(ID))
+                .map(Database.buildFolder);
+            patch.folders.upsert.push(...folders);
+        })();
+        for (const id of mapping.contacts.upsertIds) {
+            const contact = await api.contact.get(id);
+            patch.contacts.upsert.push(Database.buildContact(contact));
+        }
+    } else {
+        // we only need the data structure to be formed at this point, so no need to perform the actual fetching
+        for (const key of mappingKeys) {
+            mapping[key].upsertIds.forEach(() => {
+                (patch[key].upsert as any[]).push(null);
+            });
+        }
+    }
+
+    logger.verbose([
+        `upsert/remove:`,
+        mappingKeys.map((key) => `${key}: ${patch[key].upsert.length}/${patch[key].remove.length}`).join("; "),
+    ].join(" "));
+
+    return patch;
 }

@@ -22,11 +22,10 @@ import {AccountTypeAndLoginFieldContainer} from "src/shared/model/container";
 import {AccountsSelectors} from "src/web/src/app/store/selectors";
 import {ElectronService} from "src/web/src/app/_core/electron.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
-import {MemoryDbAccount} from "src/shared/model/database";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {ProtonmailApi} from "src/shared/api/webview/protonmail";
 import {State} from "src/web/src/app/store/reducers/accounts";
-import {TutanotaApi, TutanotaNotificationOutput} from "src/shared/api/webview/tutanota";
+import {TutanotaApi} from "src/shared/api/webview/tutanota";
 import {Unpacked} from "src/shared/types";
 import {WebViewApi} from "src/shared/api/webview/common";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/src/util";
@@ -69,10 +68,7 @@ export class AccountsEffects {
                         mergeMap((webViewClient) => webViewClient("notification")({entryUrl, zoneName: logger.zoneName()})),
                         withLatestFrom(this.store.pipe(select(AccountsSelectors.ACCOUNTS.pickAccount({login})))),
                         mergeMap(([notification, account]) => {
-                            const tutanotaBatchEntityUpdatesNotification = type === "tutanota"
-                                && typeof (notification as TutanotaNotificationOutput).batchEntityUpdatesCounter === "number";
-
-                            if (tutanotaBatchEntityUpdatesNotification) {
+                            if (typeof notification.batchEntityUpdatesCounter === "number") {
                                 this.fireSyncingIteration$.next({type, login});
                                 return EMPTY;
                             }
@@ -143,24 +139,18 @@ export class AccountsEffects {
                                 tap(() => {
                                     this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: true}}));
                                 }),
-                                // use "concatMap" calls below to preserve ordering
                                 concatMap(() => ipcMainClient("dbGetAccountMetadata")({type, login}).pipe(
                                     concatMap((metadata) => {
                                         // TODO consider calling PROTONMAIL_IPC_WEBVIEW_API/TUTANOTA_IPC_WEBVIEW_API.buildDbPatch directly
-                                        if (metadata && (metadata as MemoryDbAccount<"protonmail">["metadata"]).latestEventId) {
-                                            // TODO protonmail: enable events processing
-                                            return EMPTY;
-                                        }
                                         const method = (webViewClient as ReturnType<WebViewApi<typeof type>["buildClient"]>)(
                                             "buildDbPatch",
                                             {timeoutMs: ONE_SECOND_MS * 60 * 3},
                                         );
                                         return method.call(webViewClient, {metadata, zoneName});
                                     }),
-                                    concatMap((rawPatch) => {
-                                        const patch: Unpacked<ReturnType<TutanotaApi["buildDbPatch"] | ProtonmailApi["buildDbPatch"]>>
-                                            = rawPatch as any;
-                                        return ipcMainClient("dbPatch")({type, login, forceFlush: false, ...patch});
+                                    concatMap((patch) => {
+                                        type Patch = Unpacked<ReturnType<TutanotaApi["buildDbPatch"] | ProtonmailApi["buildDbPatch"]>>;
+                                        return ipcMainClient("dbPatch")({type, login, forceFlush: false, ...(patch as Patch)});
                                     }),
                                     concatMap(() => EMPTY),
                                     catchError((error) => of(CORE_ACTIONS.Fail(error))),

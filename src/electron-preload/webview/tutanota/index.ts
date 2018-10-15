@@ -1,6 +1,6 @@
-import {Observable, Subscriber, from, interval, merge, of} from "rxjs";
+import {Observable, from, interval, merge, of} from "rxjs";
 import {authenticator} from "otplib";
-import {concatMap, distinctUntilChanged, map, tap} from "rxjs/operators";
+import {buffer, concatMap, debounceTime, distinctUntilChanged, map, tap} from "rxjs/operators";
 import {pick} from "ramda";
 
 import * as Database from "./lib/database";
@@ -16,8 +16,8 @@ import {
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi, TutanotaNotificationOutput} from "src/shared/api/webview/tutanota";
 import {Unpacked} from "src/shared/types";
-import {asyncDelay, curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
+import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {fetchEntitiesRange, fetchMultipleEntities} from "src/electron-preload/webview/tutanota/lib/rest";
 import {fillInputValue, getLocationHref, submitTotpToken, waitElements} from "src/electron-preload/webview/util";
 import {isUpsertOperationType} from "./lib/rest/util";
@@ -210,7 +210,7 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
                 ),
 
                 // TODO listen for "unread" change instead of starting polling interval
-                Observable.create((observer: Subscriber<UnreadOutput>) => {
+                new Observable<UnreadOutput>((subscriber) => {
                     const notifyUnreadValue = async () => {
                         const controller = getUserController();
 
@@ -236,7 +236,7 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
                         );
                         const unread = emails.reduce((sum, mail) => sum + Number(mail.unread), 0);
 
-                        observer.next({unread});
+                        subscriber.next({unread});
                     };
 
                     setInterval(notifyUnreadValue, ONE_SECOND_MS * 60);
@@ -246,43 +246,51 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
                     // distinctUntilChanged(({unread: prev}, {unread: curr}) => curr === prev),
                 ),
 
-                Observable.create((subscriber: Subscriber<BatchEntityUpdatesCounterOutput>) => {
+                new Observable<BatchEntityUpdatesCounterOutput>((batchEntityUpdatesSubscriber) => {
                     const innerLogger = curryFunctionMembers(logger, `[entity update notification]`);
                     const notification = {batchEntityUpdatesCounter: 0};
-                    const {EntityEventController} = api["src/api/main/EntityEventController"];
-
-                    EntityEventController.prototype.notificationReceived = ((original) => function(
-                        this: typeof EntityEventController,
-                        entityUpdate: Rest.Model.EntityUpdate,
-                    ) {
-                        (async () => {
+                    const notificationReceived$ = new Observable<Pick<Rest.Model.EntityEventBatch, "events">>((
+                        notificationReceivedSubscriber,
+                    ) => {
+                        const {EntityEventController} = api["src/api/main/EntityEventController"];
+                        EntityEventController.prototype.notificationReceived = ((original) => function(
+                            this: typeof EntityEventController,
+                            entityUpdate: Rest.Model.EntityUpdate,
+                        ) {
                             innerLogger.verbose(JSON.stringify(pick(["application", "type", "operation"], entityUpdate)));
+                            notificationReceivedSubscriber.next({events: [entityUpdate]});
+                            return original.apply(this, arguments);
+                        })(EntityEventController.prototype.notificationReceived);
+                    });
 
-                            const patch = await buildDbPatch(
-                                {eventBatches: [{events: [entityUpdate]}]/*, _logger: logger*/},
-                                true,
-                            );
-
-                            if (!isEntityUpdatesPatchNotEmpty(patch)) {
-                                return;
-                            }
-
+                    notificationReceived$.pipe(
+                        buffer(notificationReceived$.pipe(
                             // reduce 404 error chance in case of just created mail immediately goes from "drat" to the "sent" folder
-                            await asyncDelay(ONE_SECOND_MS / 2);
+                            debounceTime(ONE_SECOND_MS * 1.5),
+                        )),
+                        tap((eventBatches) => {
+                            (async () => {
+                                const patch = await buildDbPatch(
+                                    {eventBatches/*, _logger: logger*/},
+                                    true,
+                                );
 
-                            notification.batchEntityUpdatesCounter++;
-                            subscriber.next(notification);
+                                if (!isEntityUpdatesPatchNotEmpty(patch)) {
+                                    return;
+                                }
 
-                            for (const key of (Object.keys(patch) as Array<keyof typeof patch>)) {
-                                innerLogger.info(`upsert/remove ${key}: ${patch[key].upsert.length}/${patch[key].remove.length}`);
-                            }
-                        })().catch((error) => {
-                            subscriber.error(error);
-                            innerLogger.error(error);
-                        });
+                                notification.batchEntityUpdatesCounter++;
+                                batchEntityUpdatesSubscriber.next(notification);
 
-                        return original.apply(this, arguments);
-                    })(EntityEventController.prototype.notificationReceived);
+                                for (const key of (Object.keys(patch) as Array<keyof typeof patch>)) {
+                                    innerLogger.info(`upsert/remove ${key}: ${patch[key].upsert.length}/${patch[key].remove.length}`);
+                                }
+                            })().catch((error) => {
+                                batchEntityUpdatesSubscriber.error(error);
+                                innerLogger.error(error);
+                            });
+                        }),
+                    );
                 }),
             ];
 

@@ -95,7 +95,7 @@ export class AccountsEffects {
     @Effect()
     toggleSyncing$ = (() => {
         const merged$ = EMPTY;
-        const online$ = timer(0, ONE_SECOND_MS / 2).pipe(
+        const onlinePing$ = timer(0, ONE_SECOND_MS).pipe(
             filter(() => navigator.onLine),
         );
 
@@ -127,7 +127,7 @@ export class AccountsEffects {
                                 }),
                             ),
                             merge(
-                                timer(0, ONE_SECOND_MS * 60 * 5).pipe(
+                                timer(0, ONE_SECOND_MS * 60 * 3).pipe(
                                     tap(() => logger.verbose(`triggered by: timer`)),
                                 ),
                                 this.fireSyncingIteration$.pipe(
@@ -138,9 +138,8 @@ export class AccountsEffects {
                                     tap(() => logger.verbose(`triggered by: "window.online" event`)),
                                 ),
                             ).pipe(
-                                // reduce 404 error chance in case of just created mail immediately goes from "drat" to the "sent" folder
                                 debounceTime(ONE_SECOND_MS),
-                                debounce(() => online$),
+                                debounce(() => onlinePing$),
                                 tap(() => {
                                     this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: true}}));
                                 }),

@@ -1,6 +1,6 @@
-import {Observable, Subscriber, from, interval, merge, of} from "rxjs";
+import {Observable, Subject, from, interval, merge, of} from "rxjs";
 import {authenticator} from "otplib";
-import {distinctUntilChanged, map, tap} from "rxjs/operators";
+import {distinctUntilChanged, map, mergeMap, tap} from "rxjs/operators";
 
 import * as Rest from "./lib/rest";
 import {DbPatch} from "src/shared/api/common";
@@ -20,8 +20,20 @@ import {resolveApi} from "./lib/api";
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[index]");
 const WINDOW = window as any;
 const twoFactorCodeElementId = "twoFactorCode";
+const loadedXMLHttpRequestSubject$ = new Subject<XMLHttpRequest>();
 
 delete WINDOW.Notification;
+
+XMLHttpRequest.prototype.send = ((original) => function(this: XMLHttpRequest) {
+    this.addEventListener(
+        "load",
+        function(this: XMLHttpRequest) {
+            loadedXMLHttpRequestSubject$.next(this);
+        },
+        false,
+    );
+    return original.apply(this, arguments);
+})(XMLHttpRequest.prototype.send);
 
 const endpoints: ProtonmailApi = {
     ping: () => of(null),
@@ -172,7 +184,6 @@ const endpoints: ProtonmailApi = {
                             if (!Counts) {
                                 return;
                             }
-
                             return Counts
                                 .filter(({LabelID}) => LabelID === "0")
                                 .reduce((accumulator, item) => accumulator + item.Unread, 0);
@@ -180,11 +191,10 @@ const endpoints: ProtonmailApi = {
                     },
                     {
                         re: new RegExp(`${entryUrl}/api/events/.*==`),
-                        handler: ({MessageCounts}: { MessageCounts?: Array<{ LabelID: string; Unread: number; }> }) => {
+                        handler: ({MessageCounts}: Rest.Model.EventResponse) => {
                             if (!MessageCounts) {
                                 return;
                             }
-
                             return MessageCounts
                                 .filter(({LabelID}) => LabelID === "0")
                                 .reduce((accumulator, item) => accumulator + item.Unread, 0);
@@ -192,27 +202,21 @@ const endpoints: ProtonmailApi = {
                     },
                 ];
 
-                return Observable.create((observer: Subscriber<UnreadOutput>) => {
-                    XMLHttpRequest.prototype.send = ((original) => {
-                        return function(this: XMLHttpRequest) {
-                            this.addEventListener("load", function(this: XMLHttpRequest) {
-                                responseListeners
-                                    .filter(({re}) => re.test(this.responseURL))
-                                    .forEach(({handler}) => {
-                                        const responseData = JSON.parse(this.responseText);
-                                        const value = (handler as any)(responseData);
+                return loadedXMLHttpRequestSubject$.asObservable().pipe(
+                    mergeMap((request) => responseListeners
+                        .filter(({re}) => re.test(request.responseURL))
+                        .reduce(
+                            (accumulator, {handler}) => {
+                                const responseData = JSON.parse(request.responseText);
+                                const value = (handler as any)(responseData);
 
-                                        if (typeof value === "number") {
-                                            observer.next({unread: value});
-                                        }
-                                    });
-                            }, false);
-
-                            return original.apply(this, arguments);
-                        } as any;
-                    })(XMLHttpRequest.prototype.send);
-                }).pipe(
-                    distinctUntilChanged(({unread: prev}, {unread: curr}) => curr === prev),
+                                return typeof value === "number"
+                                    ? accumulator.concat([{unread: value}])
+                                    : accumulator;
+                            },
+                            [] as UnreadOutput[],
+                        )),
+                    distinctUntilChanged((prev, curr) => curr.unread === prev.unread),
                 );
             })(),
         ];

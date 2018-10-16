@@ -17,7 +17,7 @@ export async function fetchEntity<T extends BaseEntity<Id | IdTuple>, TypeRefTyp
     return load(typeRef, id);
 }
 
-export async function fetchEntities<T extends BaseEntity<IdTuple>, TypeRefType extends TypeRef<T>>(
+export async function fetchAllEntities<T extends BaseEntity<IdTuple>, TypeRefType extends TypeRef<T>>(
     typeRef: TypeRef<T>,
     listId: T["_id"][0],
 ): Promise<T[]> {

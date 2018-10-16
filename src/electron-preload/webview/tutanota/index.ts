@@ -18,11 +18,12 @@ import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi, TutanotaNotificationOutput} from 
 import {Unpacked} from "src/shared/types";
 import {buildLoggerBundle} from "src/electron-preload/util";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
-import {fetchEntitiesRange, fetchMultipleEntities} from "src/electron-preload/webview/tutanota/lib/rest";
+import {fetchAllEntities, fetchEntitiesRange, fetchMultipleEntities} from "src/electron-preload/webview/tutanota/lib/rest";
 import {fillInputValue, getLocationHref, submitTotpToken, waitElements} from "src/electron-preload/webview/util";
 import {isUpsertOperationType} from "./lib/rest/util";
 import {resolveApi} from "src/electron-preload/webview/tutanota/lib/api";
 
+type BuildDbPatchInputMetadata = Unpacked<ReturnType<TutanotaApi["buildDbPatch"]>>["metadata"];
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[index]");
 const WINDOW = window as any;
 
@@ -42,34 +43,40 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
         ping: () => of(null),
 
         buildDbPatch: (input) => from((async (logger = curryFunctionMembers(_logger, "api:buildDbPatch()", input.zoneName)) => {
-            logger.info();
-
             const controller = getUserController();
 
             if (!controller || !isLoggedIn()) {
                 throw new Error("tutanota:buildDbPatch(): user is supposed to be logged-in");
             }
 
-            const missedEventBatches: Rest.Model.EntityEventBatch[] = [];
-            const metadata: Unpacked<ReturnType<TutanotaApi["buildDbPatch"]>>["metadata"] = {groupEntityEventBatchIds: {}};
-            const memberships = Rest.Util.filterSyncingMemberships(controller.user);
-
-            for (const {group} of memberships) {
-                const startId = await Rest.Util.generateStartId(
-                    input.metadata ? input.metadata.groupEntityEventBatchIds[group] : undefined,
-                );
-                const fetched = await Rest.fetchEntitiesRangeUntilTheEnd(
-                    Rest.Model.EntityEventBatchTypeRef, group, {start: startId, count: 500},
-                );
-                if (fetched.length) {
-                    metadata.groupEntityEventBatchIds[group] = Rest.Util.resolveInstanceId(fetched[fetched.length - 1]);
-                }
-                missedEventBatches.push(...fetched);
+            if (!input.metadata || !Object.keys(input.metadata.groupEntityEventBatchIds || {}).length) {
+                return await bootstrapDbPatch({api, zoneName: input.zoneName});
             }
-            logger.verbose(
-                `fetched ${missedEventBatches.length} entity event batches from ${memberships.length} syncing memberships`,
-            );
 
+            const {missedEventBatches, metadata} = await (async (
+                inputGroupEntityEventBatchIds: BuildDbPatchInputMetadata["groupEntityEventBatchIds"],
+                fetchedEventBatches: Rest.Model.EntityEventBatch[] = [],
+                memberships = Rest.Util.filterSyncingMemberships(controller.user),
+            ) => {
+                const {groupEntityEventBatchIds}: BuildDbPatchInputMetadata = {groupEntityEventBatchIds: {}};
+                for (const {group} of memberships) {
+                    const startId = await Rest.Util.generateStartId(inputGroupEntityEventBatchIds[group]);
+                    const fetched = await Rest.fetchEntitiesRangeUntilTheEnd(
+                        Rest.Model.EntityEventBatchTypeRef, group, {start: startId, count: 500},
+                    );
+                    fetchedEventBatches.push(...fetched);
+                    if (fetched.length) {
+                        groupEntityEventBatchIds[group] = Rest.Util.resolveInstanceId(fetched[fetched.length - 1]);
+                    }
+                }
+                logger.verbose(
+                    `fetched ${fetchedEventBatches.length} entity event batches from ${memberships.length} memberships`,
+                );
+                return {
+                    missedEventBatches: fetchedEventBatches,
+                    metadata: {groupEntityEventBatchIds},
+                };
+            })(input.metadata.groupEntityEventBatchIds);
             const patch = await buildDbPatch({eventBatches: missedEventBatches, _logger: logger});
 
             return {
@@ -223,11 +230,7 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
                         const emails = await fetchEntitiesRange(
                             Rest.Model.MailTypeRef,
                             inboxFolder.mails,
-                            {
-                                count: 50,
-                                reverse: true,
-                                start: GENERATED_MAX_ID,
-                            },
+                            {count: 50, reverse: true, start: GENERATED_MAX_ID},
                         );
                         const unread = emails.reduce((sum, mail) => sum + Number(mail.unread), 0);
 
@@ -283,6 +286,79 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
 
     TUTANOTA_IPC_WEBVIEW_API.registerApi(endpoints);
     _logger.verbose(`api registered, url: ${getLocationHref()}`);
+}
+
+async function bootstrapDbPatch(
+    {zoneName, api}: { api: Unpacked<ReturnType<typeof resolveApi>>, zoneName: string },
+    logger = curryFunctionMembers(_logger, "bootstrapDbPatch()", zoneName),
+): Promise<Unpacked<ReturnType<TutanotaApi["buildDbPatch"]>>> {
+    const controller = getUserController();
+
+    if (!controller) {
+        throw new Error("User controller is supposed to be defined");
+    }
+
+    // last entity event batches fetching must be happening before entities fetching
+    const {metadata} = await (async () => {
+        const {GENERATED_MAX_ID} = api["src/api/common/EntityFunctions"];
+        const {groupEntityEventBatchIds}: BuildDbPatchInputMetadata = {groupEntityEventBatchIds: {}};
+        const memberships = Rest.Util.filterSyncingMemberships(controller.user);
+        for (const {group} of memberships) {
+            const entityEventBatches = await Rest.fetchEntitiesRange(
+                Rest.Model.EntityEventBatchTypeRef,
+                group,
+                {count: 1, reverse: true, start: GENERATED_MAX_ID},
+            );
+            if (entityEventBatches.length) {
+                groupEntityEventBatchIds[group] = Rest.Util.resolveInstanceId(entityEventBatches[0]);
+            }
+        }
+        logger.info([
+            `fetched ${Object.keys(groupEntityEventBatchIds).length} "groupEntityEventBatchIds" metadata properties`,
+            `from ${memberships.length} memberships`,
+        ].join(" "));
+        return {metadata: {groupEntityEventBatchIds}};
+    })();
+    const rangeFetchParams = {start: await Rest.Util.generateStartId(), count: 100};
+    const folders = await Rest.Util.fetchMailFoldersWithSubFolders(controller.user);
+    const mails = await (async (items: Rest.Model.Mail[] = []) => {
+        for (const folder of folders) {
+            const fetched = await Rest.fetchEntitiesRangeUntilTheEnd(Rest.Model.MailTypeRef, folder.mails, rangeFetchParams);
+            items.push(...fetched);
+        }
+        return items;
+    })();
+    const conversationEntries = await (async (items: Rest.Model.ConversationEntry[] = []) => {
+        const conversationEntryListIds = mails.reduce(
+            (accumulator, mail) => {
+                accumulator.add(Rest.Util.resolveListId({_id: mail.conversationEntry}));
+                return accumulator;
+            },
+            new Set<Rest.Model.ConversationEntry["_id"][0]>(),
+        );
+        for (const listId of conversationEntryListIds.values()) {
+            const fetched = await fetchAllEntities(Rest.Model.ConversationEntryTypeRef, listId);
+            items.push(...fetched);
+        }
+        return items;
+    })();
+    const contacts = await (async () => {
+        const {group} = controller.user.userGroup;
+        const contactList = await api["src/api/main/Entity"].loadRoot(Rest.Model.ContactListTypeRef, group);
+        return await Rest.fetchAllEntities(Rest.Model.ContactTypeRef, contactList.contacts);
+    })();
+
+    const patch: DbPatch = {
+        conversationEntries: {remove: [], upsert: conversationEntries.map(Database.buildConversationEntry)},
+        mails: {remove: [], upsert: await Database.buildMails(mails)},
+        folders: {remove: [], upsert: folders.map(Database.buildFolder)},
+        contacts: {remove: [], upsert: contacts.map(Database.buildContact)},
+    };
+
+    return {
+        ...patch,
+        metadata,
+    };
 }
 
 async function buildDbPatch(

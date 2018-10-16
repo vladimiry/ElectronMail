@@ -1,5 +1,16 @@
 import {BaseEntity, Id, IdTuple, TypeRef, TypeRefApp} from "./common";
-import {Contact, ConversationEntry, EntityEventBatch, File, Mail, MailBody, MailBox, MailFolder, MailboxGroupRoot} from "./response";
+import {
+    Contact,
+    ContactList,
+    ConversationEntry,
+    EntityEventBatch,
+    File,
+    Mail,
+    MailBody,
+    MailBox,
+    MailFolder,
+    MailboxGroupRoot,
+} from "./response";
 
 // tslint:disable:variable-name
 
@@ -10,6 +21,7 @@ export const MailBoxTypeRef = buildTypeRef<MailBox>("MailBox", "tutanota");
 export const MailFolderTypeRef = buildTypeRef<MailFolder>("MailFolder", "tutanota");
 export const ConversationEntryTypeRef = buildTypeRef<ConversationEntry>("ConversationEntry", "tutanota");
 export const MailTypeRef = buildTypeRef<Mail>("Mail", "tutanota");
+export const ContactListTypeRef = buildTypeRef<ContactList>("ContactList", "tutanota");
 export const ContactTypeRef = buildTypeRef<Contact>("Contact", "tutanota");
 export const EntityEventBatchTypeRef = buildTypeRef<EntityEventBatch>("EntityEventBatch", "sys");
 

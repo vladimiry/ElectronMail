@@ -25,6 +25,10 @@ interface Api extends Record<ModuleFiles, any> {
         generatedIdToTimestamp: (id: Rest.Model.Id) => Timestamp;
     };
     "src/api/main/Entity": {
+        loadRoot: <T extends Rest.Model.BaseEntity<Rest.Model.Id/* | Rest.Model.IdTuple*/>, TypeRefType extends Rest.Model.TypeRef<T>>(
+            typeRef: Rest.Model.TypeRef<T>,
+            groupId: Rest.Model.GroupMembership["group"],
+        ) => Promise<T>;
         load: <T extends Rest.Model.BaseEntity<Rest.Model.Id | Rest.Model.IdTuple>, TypeRefType extends Rest.Model.TypeRef<T>>(
             typeRef: Rest.Model.TypeRef<T>,
             id: T["_id"],

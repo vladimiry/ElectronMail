@@ -88,7 +88,11 @@ export interface MailBody extends BaseEntity<Id> {
     text: string;
 }
 
-export interface Contact extends BaseEntity<IdTuple> {
+export interface ContactList extends BaseEntity<Id> {
+    contacts: Id; // TODO defined as Id<Contact["_id"][0]>
+}
+
+export interface Contact extends BaseEntity<[ContactList["contacts"], Id]> {
     comment: string;
     company: string;
     firstName: string;

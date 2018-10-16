@@ -16,6 +16,7 @@ export type TypeRefType =
     | "MailFolder"
     | "Mail"
     | "ConversationEntry"
+    | "ContactList"
     | "Contact"
     | "EntityEventBatch";
 

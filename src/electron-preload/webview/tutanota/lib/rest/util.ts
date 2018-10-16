@@ -34,9 +34,9 @@ export async function fetchMailFoldersWithSubFolders(user: Rest.Model.User): Pro
             continue;
         }
 
-        for (const folder of await Rest.fetchEntities(Rest.Model.MailFolderTypeRef, systemFolders.folders)) {
+        for (const folder of await Rest.fetchAllEntities(Rest.Model.MailFolderTypeRef, systemFolders.folders)) {
             folders.push(folder);
-            folders.push(...await Rest.fetchEntities(Rest.Model.MailFolderTypeRef, folder.subFolders));
+            folders.push(...await Rest.fetchAllEntities(Rest.Model.MailFolderTypeRef, folder.subFolders));
         }
     }
 

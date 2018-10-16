@@ -57,8 +57,10 @@ const endpoints: ProtonmailApi = {
             return await bootstrapDbPatch();
         }
 
-        const {missedEvents, latestEventId} = await (async ({events, $http}: Api, id: Rest.Model.Event["EventID"]) => {
-            const fetchedEvents: Rest.Model.Event[] = [];
+        const {missedEvents, latestEventId} = await (async (
+            {events, $http}: Api, id: Rest.Model.Event["EventID"],
+            fetchedEvents: Rest.Model.Event[] = [],
+        ) => {
             do {
                 const response = await events.get(id, {params: {[ajaxNotificationSkipParam]: "1"}});
                 fetchedEvents.push(response);
@@ -67,12 +69,12 @@ const endpoints: ProtonmailApi = {
                     break;
                 }
             } while (true);
+            logger.verbose(`fetched ${fetchedEvents.length} missed events`);
             return {
                 missedEvents: fetchedEvents,
                 latestEventId: id,
             };
         })(await resolveApi(), input.metadata.latestEventId);
-        logger.verbose(`fetched ${missedEvents.length} missed events`);
 
         const patch = await buildDbPatch({events: missedEvents, _logger: logger});
         const metadata: Unpacked<ReturnType<ProtonmailApi["buildDbPatch"]>>["metadata"] = {latestEventId};

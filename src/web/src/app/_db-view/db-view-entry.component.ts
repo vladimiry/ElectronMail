@@ -27,13 +27,13 @@ export class DbViewEntryComponent implements ComponentInterface, OnDestroy {
         private el: ElementRef,
     ) {}
 
-    setVisibility(value: boolean) {
-        this.renderer.setStyle(this.el.nativeElement, "display", value ? "flex" : "none");
-    }
-
     // TODO consider dispatching "DB_VIEW_ACTIONS.MountInstance" in "ngAfterViewInit"
     tabComponentInitialized() {
         this.store.dispatch(DB_VIEW_ACTIONS.MountInstance({dbAccountPk: this.dbAccountPk, finishPromise: this.finishDeferred.promise}));
+    }
+
+    setVisibility(value: boolean) {
+        this.renderer.setStyle(this.el.nativeElement, "display", value ? "flex" : "none");
     }
 
     ngOnDestroy() {

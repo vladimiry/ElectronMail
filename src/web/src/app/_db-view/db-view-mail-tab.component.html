@@ -1,4 +1,4 @@
-<ng-container *ngIf="state$ | async; let state">
+<ng-container *ngIf="(state$ | async); let state; else loadingTemplate">
     <div class="folders-container d-flex flex-column flex-shrink-0">
         <div class="overflow-auto">
             <ng-container [ngTemplateOutlet]="foldersGroup" [ngTemplateOutletContext]="{folders: state.folders.system}"></ng-container>
@@ -25,3 +25,10 @@
         (toggleRootNodesCollapsingHandler)="toggleRootNodesCollapsingHandler($event)"
     ></email-securely-app-db-view-mails>
 </ng-container>
+<ng-template #loadingTemplate>
+    <div class="progress d-flex flex-grow-1">
+        <div class="progress-bar progress-bar-striped progress-bar-animated bg-secondary" style="width: 100%">
+            Data loading ...
+        </div>
+    </div>
+</ng-template>

@@ -220,9 +220,9 @@ export class AccountComponent extends NgChangesObservableComponent implements On
             }),
         );
 
-        if ((process.env.NODE_ENV/* as BuildEnvironment*/) === "development") {
-            webView.addEventListener("dom-ready", () => webView.openDevTools());
-        }
+        // if ((process.env.NODE_ENV/* as BuildEnvironment*/) === "development") {
+        //     webView.addEventListener("dom-ready", () => webView.openDevTools());
+        // }
 
         this.configureWebView(webView);
     }

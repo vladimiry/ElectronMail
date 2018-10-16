@@ -1,16 +1,21 @@
 import R from "ramda";
 
-import * as View from "src/shared/model/database/view";
-import {ConversationEntry, Folder, FsDb, FsDbAccount, MAIL_FOLDER_TYPE} from "src/shared/model/database";
+import {
+    CONVERSATION_TYPE,
+    ConversationEntry,
+    Folder,
+    FsDb,
+    FsDbAccount,
+    MAIL_FOLDER_TYPE,
+    PROTONMAIL_MAILBOX_IDENTIFIERS,
+    View,
+} from "src/shared/model/database";
 import {walkConversationNodesTree} from "src/shared/util";
 
 const splitAndFormatFolders: (folders: View.Folder[]) => {
     system: View.Folder[];
     custom: View.Folder[];
-} = ((customizers: Record<keyof typeof MAIL_FOLDER_TYPE._.nameValueMap, {
-    title: (f: View.Folder) => string;
-    order: number;
-}>) => {
+} = ((customizers: Record<keyof typeof MAIL_FOLDER_TYPE._.nameValueMap, { title: (f: View.Folder) => string; order: number; }>) => {
     type Customizer = typeof customizers[keyof typeof MAIL_FOLDER_TYPE._.nameValueMap];
     type CustomizerResolver = (folder: View.Folder) => Customizer;
 
@@ -65,59 +70,110 @@ const splitAndFormatFolders: (folders: View.Folder[]) => {
     },
 });
 
-// TODO review the "buildFoldersView" function in order to reduce complexity and memory use
-function buildFoldersView<T extends keyof FsDb["accounts"]>(
-    _: Pick<FsDbAccount<T>, "conversationEntries" | "folders" | "mails">,
-    // making sure input account is not mutated
-    account = R.clone(_),
-): View.Folder[] {
-    const folders: View.Folder[] = Array.from(Object.values(account.folders), (folder) => ({...folder, rootConversationNodes: []}));
-    const rootNodes: View.ConversationNode[] = [];
-    const foldersMappedByMailFolderId = new Map(
-        folders.reduce(
-            (mapEntries: Array<[Folder["mailFolderId"], View.Folder]>, folder) => mapEntries.concat([[folder.mailFolderId, folder]]),
-            [],
-        ),
-    );
-    const nodeLookupMap = new Map<ConversationEntry["pk"], View.ConversationNode>();
-    const nodeLookup = (
-        pk: ConversationEntry["pk"] | Required<ConversationEntry>["previousPk"],
-        node: View.ConversationNode = {entryPk: pk, children: []},
-    ): View.ConversationNode => {
-        node = nodeLookupMap.get(pk) || node;
-        if (!nodeLookupMap.has(pk)) {
-            nodeLookupMap.set(pk, node);
-        }
-        return node;
-    };
-
-    for (const entry of Object.values(account.conversationEntries)) {
-        const node = nodeLookup(entry.pk);
-        const resolvedMail = entry.mailPk && account.mails[entry.mailPk];
-        const nodeMail: View.Mail | undefined = node.mail = resolvedMail
-            ? {
-                ...R.omit(["raw", "body", "attachments"], resolvedMail),
-                folders: [],
+const buildRootNodes = ((staticProtonmailFolders: Folder[]) => {
+    return <T extends keyof FsDb["accounts"]>(
+        account: FsDbAccount<T>,
+    ): { rootNodes: View.ConversationNode[]; folders: View.Folder[]; } => {
+        const conversationEntries: ConversationEntry[] = account.metadata.type === "tutanota"
+            ? Object.values(account.conversationEntries)
+            : ((
+                buildEntry = ({pk, mailPk}: Pick<ConversationEntry, "pk" | "mailPk">) => ({
+                    pk,
+                    id: pk,
+                    raw: "{}",
+                    messageId: "",
+                    // TODO consider filling "conversationType" based on "mail.replyType"
+                    conversationType: CONVERSATION_TYPE.UNEXPECTED,
+                    mailPk,
+                }),
+                entriesMappedByPk = new Map<ConversationEntry["pk"], ConversationEntry>(),
+            ) => {
+                for (const mail of Object.values(account.mails)) {
+                    const rootEntryPk = mail.conversationEntryPk;
+                    const mailEntryPk = `${rootEntryPk}:${mail.pk}`;
+                    entriesMappedByPk.set(rootEntryPk, entriesMappedByPk.get(rootEntryPk) || buildEntry({pk: rootEntryPk}));
+                    entriesMappedByPk.set(mailEntryPk, {
+                        ...buildEntry({pk: mailEntryPk, mailPk: mail.pk}),
+                        previousPk: rootEntryPk,
+                    });
+                }
+                return [...entriesMappedByPk.values()];
+            })();
+        const nodeLookup = ((nodeLookupMap = new Map<ConversationEntry["pk"], View.ConversationNode>()) => (
+            pk: ConversationEntry["pk"] | Required<ConversationEntry>["previousPk"],
+            node: View.ConversationNode = {entryPk: pk, children: []},
+        ): View.ConversationNode => {
+            node = nodeLookupMap.get(pk) || node;
+            if (!nodeLookupMap.has(pk)) {
+                nodeLookupMap.set(pk, node);
             }
-            : undefined;
+            return node;
+        })();
+        const folders: View.Folder[] = Array.from(
+            account.metadata.type === "tutanota"
+                ? Object.values(account.folders)
+                : staticProtonmailFolders.concat(Object.values(account.folders)),
+            (folder) => ({...folder, rootConversationNodes: []}),
+        );
+        const rootNodes: View.ConversationNode[] = [];
+        const resolveFolder = ((map = new Map(folders.reduce(
+            (entries: Array<[View.Folder["mailFolderId"], View.Folder]>, folder) => entries.concat([[folder.mailFolderId, folder]]),
+            [],
+        ))) => ({mailFolderId}: Pick<View.Folder, "mailFolderId">) => map.get(mailFolderId))();
 
-        if (nodeMail) {
-            for (const mailFolderId of nodeMail.mailFolderIds) {
-                const folder = foldersMappedByMailFolderId.get(mailFolderId);
-                if (folder) {
-                    nodeMail.folders.push(folder);
+        for (const entry of conversationEntries) {
+            const node = nodeLookup(entry.pk);
+            const resolvedMail = entry.mailPk && account.mails[entry.mailPk];
+
+            node.mail = resolvedMail
+                ? {
+                    // TODO use "pick" instead of "omit", ie prefer whitelisting over blacklisting
+                    ...R.omit(["raw", "body", "attachments"], resolvedMail),
+                    folders: [],
+                }
+                : undefined;
+
+            if (node.mail) {
+                for (const mailFolderId of node.mail.mailFolderIds) {
+                    const folder = resolveFolder({mailFolderId});
+                    if (folder) {
+                        node.mail.folders.push(folder);
+                    }
                 }
             }
+
+            if (!entry.previousPk) {
+                rootNodes.push(node);
+                continue;
+            }
+
+            nodeLookup(entry.previousPk).children.push(node);
         }
 
-        if (!entry.previousPk) {
-            rootNodes.push(node);
-            continue;
-        }
+        return {
+            rootNodes,
+            folders,
+        };
+    };
+})(([
+    [PROTONMAIL_MAILBOX_IDENTIFIERS.Inbox, MAIL_FOLDER_TYPE.INBOX],
+    [PROTONMAIL_MAILBOX_IDENTIFIERS.Drafts, MAIL_FOLDER_TYPE.DRAFT],
+    [PROTONMAIL_MAILBOX_IDENTIFIERS.Sent, MAIL_FOLDER_TYPE.SENT],
+    [PROTONMAIL_MAILBOX_IDENTIFIERS.Starred, MAIL_FOLDER_TYPE.CUSTOM],
+    [PROTONMAIL_MAILBOX_IDENTIFIERS.Archive, MAIL_FOLDER_TYPE.ARCHIVE],
+    [PROTONMAIL_MAILBOX_IDENTIFIERS.Spam, MAIL_FOLDER_TYPE.SPAM],
+    [PROTONMAIL_MAILBOX_IDENTIFIERS.Trash, MAIL_FOLDER_TYPE.TRASH],
+    [PROTONMAIL_MAILBOX_IDENTIFIERS["All Mail"], MAIL_FOLDER_TYPE.CUSTOM],
+] as Array<[Folder["id"], Folder["folderType"]]>).map(([id, folderType]) => ({
+    pk: id,
+    id,
+    raw: "{}",
+    folderType,
+    name: PROTONMAIL_MAILBOX_IDENTIFIERS._.resolveNameByValue(id as any),
+    mailFolderId: id,
+})));
 
-        nodeLookup(entry.previousPk).children.push(node);
-    }
-
+function fillRootNodesSummary(rootNodes: View.ConversationNode[]) {
     for (const rawRootNode of rootNodes) {
         const rootNode: View.RootConversationNode = {
             ...rawRootNode,
@@ -155,6 +211,12 @@ function buildFoldersView<T extends keyof FsDb["accounts"]>(
             });
         });
     }
+}
+
+function buildFoldersView<T extends keyof FsDb["accounts"]>(account: FsDbAccount<T>): View.Folder[] {
+    const {rootNodes, folders} = buildRootNodes(R.clone(account));
+
+    fillRootNodesSummary(rootNodes);
 
     folders.forEach(({rootConversationNodes}) => {
         rootConversationNodes.sort((o1, o2) => o2.summary.sentDateMax - o1.summary.sentDateMax);
@@ -164,10 +226,8 @@ function buildFoldersView<T extends keyof FsDb["accounts"]>(
 }
 
 // TODO consider moving performance expensive "prepareFoldersView" function call to the background thread (window.Worker)
-// TODO make sure input "account" is not mutated
-export function prepareFoldersView<T extends keyof FsDb["accounts"]>(
-    account: Pick<FsDbAccount<T>, "conversationEntries" | "folders" | "mails">,
-) {
+// WARN make sure input "account" is not mutated
+export function prepareFoldersView<T extends keyof FsDb["accounts"]>(account: FsDbAccount<T>) {
     return splitAndFormatFolders(
         buildFoldersView(account),
     );

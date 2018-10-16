@@ -58,16 +58,13 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
                 const startId = await Rest.Util.generateStartId(
                     input.metadata ? input.metadata.groupEntityEventBatchIds[group] : undefined,
                 );
-                const fetchedEventBatches = await Rest.fetchEntitiesRangeUntilTheEnd(
-                    Rest.Model.EntityEventBatchTypeRef,
-                    group,
-                    {start: startId, count: 500},
+                const fetched = await Rest.fetchEntitiesRangeUntilTheEnd(
+                    Rest.Model.EntityEventBatchTypeRef, group, {start: startId, count: 500},
                 );
-                if (fetchedEventBatches.length) {
-                    metadata.groupEntityEventBatchIds[group] =
-                        Rest.Util.resolveInstanceId(fetchedEventBatches[fetchedEventBatches.length - 1]);
+                if (fetched.length) {
+                    metadata.groupEntityEventBatchIds[group] = Rest.Util.resolveInstanceId(fetched[fetched.length - 1]);
                 }
-                missedEventBatches.push(...fetchedEventBatches);
+                missedEventBatches.push(...fetched);
             }
             logger.verbose(
                 `fetched ${missedEventBatches.length} entity event batches from ${memberships.length} syncing memberships`,

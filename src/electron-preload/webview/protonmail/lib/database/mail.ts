@@ -1,6 +1,7 @@
 import * as DatabaseModel from "src/shared/model/database";
 import * as Rest from "src/electron-preload/webview/protonmail/lib/rest";
 import {Api} from "src/electron-preload/webview/protonmail/lib/api";
+import {ONE_SECOND_MS} from "src/shared/constants";
 import {buildBaseEntity, buildPk} from ".";
 
 const directTypeMapping: Record<keyof typeof Rest.Model.MAIL_TYPE._.nameValueMap, DatabaseModel.Mail["state"]> = {
@@ -10,12 +11,27 @@ const directTypeMapping: Record<keyof typeof Rest.Model.MAIL_TYPE._.nameValueMap
     [Rest.Model.MAIL_TYPE.INBOX_AND_SENT]: DatabaseModel.MAIL_STATE.INBOX_AND_SENT,
 };
 
+const isConfindencial = ((encryptedValues: Array<Rest.Model.Message["IsEncrypted"]>) => {
+    return ({IsEncrypted}: Pick<Rest.Model.Message, "IsEncrypted">) => encryptedValues.includes(IsEncrypted);
+})([
+    // Rest.Model.ENCRYPTED_STATUS.NONE,
+    Rest.Model.ENCRYPTED_STATUS.INTERNAL,
+    // Rest.Model.ENCRYPTED_STATUS.EXTERNAL,
+    Rest.Model.ENCRYPTED_STATUS.OUT_ENC,
+    Rest.Model.ENCRYPTED_STATUS.OUT_PLAIN,
+    Rest.Model.ENCRYPTED_STATUS.STORED_ENC,
+    Rest.Model.ENCRYPTED_STATUS.PGP_INLINE,
+    Rest.Model.ENCRYPTED_STATUS.PGP_MIME,
+    Rest.Model.ENCRYPTED_STATUS.PGP_MIME_SIGNED,
+    // Rest.Model.ENCRYPTED_STATUS.AUTOREPLY,
+]);
+
 export async function buildMail(input: Rest.Model.Message, api: Api): Promise<DatabaseModel.Mail> {
     return {
         ...buildBaseEntity(input),
         conversationEntryPk: buildPk(input.ConversationID),
         mailFolderIds: input.LabelIDs,
-        sentDate: Number(input.Time),
+        sentDate: input.Time * ONE_SECOND_MS,
         subject: input.Subject,
         body: await api.messageModel(input).clearTextBody(),
         sender: Address({...input.Sender, ...buildAddressId(input, "Sender")}),
@@ -25,7 +41,7 @@ export async function buildMail(input: Rest.Model.Message, api: Api): Promise<Da
         attachments: input.Attachments.map(File),
         unread: !Boolean(input.IsRead),
         state: directTypeMapping[input.Type],
-        confidential: Boolean(input.IsEncrypted),
+        confidential: isConfindencial(input),
         replyType: (input.IsReplied || input.IsRepliedAll) && input.IsForwarded
             ? DatabaseModel.REPLY_TYPE.REPLY_FORWARD
             : input.IsReplied || input.IsRepliedAll

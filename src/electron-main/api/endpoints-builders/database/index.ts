@@ -1,7 +1,7 @@
 import electronLog from "electron-log";
 import sanitizeHtml from "sanitize-html";
+import {equals, mergeDeepRight, omit} from "ramda";
 import {from} from "rxjs";
-import {omit} from "ramda";
 
 import {Arguments, Unpacked} from "src/shared/types";
 import {Context} from "src/electron-main/model";
@@ -39,6 +39,9 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
 
                 for (const entity of source.upsert) {
                     await (destinationMap as EntityMap<typeof entity>).validateAndSet(entity);
+                    // if (entityType === "folders") {
+                    //     console.log(JSON.stringify({entity}, null, 2));
+                    // }
                 }
             }
 
@@ -115,34 +118,22 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
 
 function patchMetadata(
     dest: MemoryDbAccount["metadata"],
-    rawPatch: Arguments<Unpacked<ReturnType<typeof buildEndpoints>>["dbPatch"]>[0]["metadata"],
+    patch: Arguments<Unpacked<ReturnType<typeof buildEndpoints>>["dbPatch"]>[0]["metadata"],
     logger = curryFunctionMembers(_logger, "patchMetadata()"),
 ): boolean {
     logger.info();
 
-    if (dest.type === "tutanota" && (rawPatch as typeof dest).groupEntityEventBatchIds) {
-        const patch = (rawPatch as typeof dest);
-        const patchSize = Object.keys(patch.groupEntityEventBatchIds).length;
+    const merged = mergeDeepRight(dest, patch);
 
-        if (!patchSize) {
-            return false;
-        }
+    // console.log(JSON.stringify({dest, patch, merged}, null, 2));
 
-        dest.groupEntityEventBatchIds = {
-            ...dest.groupEntityEventBatchIds,
-            ...patch.groupEntityEventBatchIds,
-        };
-        logger.verbose(`"groupEntityEventBatchIds" patched with ${patchSize} records`);
-
-        return true;
+    if (equals(dest, merged)) {
+        return false;
     }
 
-    if (dest.type === "protonmail" && (rawPatch as typeof dest).latestEventId) {
-        dest.latestEventId = (rawPatch as typeof dest).latestEventId;
-        logger.verbose(`"latestEventId" patched`);
+    Object.assign(dest, merged);
 
-        return true;
-    }
+    logger.verbose(`metadata patched with ${JSON.stringify(Object.keys(patch))} properties`);
 
-    return false;
+    return true;
 }

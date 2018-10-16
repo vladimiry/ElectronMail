@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, ElementRef, Input, OnDestroy, OnInit, Renderer2} from "@angular/core";
+import {ChangeDetectionStrategy, Component, ElementRef, Input, OnDestroy, Renderer2} from "@angular/core";
 import {Deferred} from "ts-deferred";
 import {Store} from "@ngrx/store";
 
@@ -15,7 +15,7 @@ type ComponentInterface = Pick<DbViewEntryComponentInterface, Extract<keyof DbVi
     styleUrls: ["./db-view-entry.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DbViewEntryComponent implements ComponentInterface, OnDestroy, OnInit {
+export class DbViewEntryComponent implements ComponentInterface, OnDestroy {
     @Input()
     dbAccountPk!: DbAccountPk;
 
@@ -27,12 +27,13 @@ export class DbViewEntryComponent implements ComponentInterface, OnDestroy, OnIn
         private el: ElementRef,
     ) {}
 
-    ngOnInit() {
-        this.store.dispatch(DB_VIEW_ACTIONS.MountInstance({dbAccountPk: this.dbAccountPk, finishPromise: this.finishDeferred.promise}));
-    }
-
     setVisibility(value: boolean) {
         this.renderer.setStyle(this.el.nativeElement, "display", value ? "flex" : "none");
+    }
+
+    // TODO consider dispatching "DB_VIEW_ACTIONS.MountInstance" in "ngAfterViewInit"
+    tabComponentInitialized() {
+        this.store.dispatch(DB_VIEW_ACTIONS.MountInstance({dbAccountPk: this.dbAccountPk, finishPromise: this.finishDeferred.promise}));
     }
 
     ngOnDestroy() {

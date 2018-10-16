@@ -18,12 +18,12 @@
                 </div>
             </div>
         </div>
-        <i class="fa fa-shield d-flex ml-2" *ngIf="mail.confidential"></i>
+        <i class="fa fa-lock d-flex text-primary ml-2" *ngIf="mail.confidential"></i>
     </div>
     <div class="c-auto">
         <div class="d-flex">
-            <div class="folders mr-2 ml-2">
-                <div class="d-flex badge badge-pill" *ngFor="let folder of mail.folders; trackBy: trackFolderByPk">
+            <div class="folders flex-row ml-2">
+                <div class="d-flex badge badge-pill mr-2" *ngFor="let folder of mail.folders; trackBy: trackFolderByPk">
                     {{ folder.name }}
                 </div>
             </div>

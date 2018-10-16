@@ -1,4 +1,5 @@
 import {UnionOf} from "@vladimiry/unionize";
+import {equals} from "ramda";
 
 import * as fromRoot from "src/web/src/app/store/reducers/root";
 import {DB_VIEW_ACTIONS} from "src/web/src/app/store/actions";
@@ -47,15 +48,14 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
                         [key]: instance,
                     },
                 },
-                DB_VIEW_ACTIONS.SelectFolder({dbAccountPk, folderPk: instance.selectedFolderPk}),
+                DB_VIEW_ACTIONS.SelectFolder({dbAccountPk, folderPk: instance.selectedFolderPk, distinct: true}),
             );
         },
-        SelectFolder: ({dbAccountPk, folderPk}) => {
+        SelectFolder: ({dbAccountPk, folderPk, distinct}) => {
             const key = instanceKey(dbAccountPk);
             const instance: Instance = {
                 ...(state.instances[key] || initInstance()),
                 selectedFolderPk: folderPk,
-                selectedMail: undefined,
             };
             const folders = [...instance.folders.system, ...instance.folders.custom];
 
@@ -64,6 +64,8 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
             }
 
             const selectedFolder = folders.find(({pk}) => pk === instance.selectedFolderPk);
+            const selectedMailPk = instance.selectedMail && instance.selectedMail.pk;
+            let selectedMailExists: boolean = false;
 
             // TODO cleanup "instance.foldersMeta" (delete non existing folders)
 
@@ -82,6 +84,10 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
                         const mail = node.mail;
                         const nodeCollapsible = Boolean(mail && !mail.folders.includes(selectedFolder));
 
+                        if (selectedMailPk && mail && mail.pk === selectedMailPk && !selectedMailExists) {
+                            selectedMailExists = true;
+                        }
+
                         if (nodeCollapsible) {
                             folderMeta.collapsibleNodes[node.entryPk] = true;
                         }
@@ -99,6 +105,14 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
                 }
 
                 instance.foldersMeta[selectedFolder.pk] = folderMeta;
+            }
+
+            if (!selectedMailExists) {
+                delete instance.selectedMail;
+            }
+
+            if (distinct && equals(state.instances[key], instance)) {
+                return state;
             }
 
             return {

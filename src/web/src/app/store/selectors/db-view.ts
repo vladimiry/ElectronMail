@@ -8,6 +8,6 @@ export const STATE = createFeatureSelector<State>(featureName);
 export const FEATURED = {
     accountRecord: createSelector(
         STATE,
-        ({instances}: State, {pk}: { pk: DbAccountPk }) => instances[JSON.stringify(pk)],
+        (state: State, props: { pk: DbAccountPk }) => state.instances[JSON.stringify(props.pk)],
     ),
 };

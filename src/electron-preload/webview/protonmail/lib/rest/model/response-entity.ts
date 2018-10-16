@@ -1,4 +1,4 @@
-import {CONTACT_CARD, EVENT_ACTION, LABEL_TYPE, LOCATION, MAIL_TYPE} from "./constats";
+import {CONTACT_CARD, ENCRYPTED_STATUS, EVENT_ACTION, LABEL_TYPE, LOCATION, MAIL_TYPE} from "./constats";
 import {Id, NumberBoolean} from "./common";
 import {Unpacked} from "src/shared/types";
 
@@ -44,7 +44,9 @@ export interface Conversation extends Entity {
     Subject: string;
 }
 
-export interface Message<TypeRecord = typeof MAIL_TYPE._.nameValueMap, LocationRecord = typeof LOCATION._.nameValueMap> extends Entity {
+export interface Message<TypeRecord = typeof MAIL_TYPE._.nameValueMap,
+    LocationRecord = typeof LOCATION._.nameValueMap,
+    IsEncryptedRecord = typeof ENCRYPTED_STATUS._.nameValueMap> extends Entity {
     AddressID: Id;
     Attachments: Attachment[];
     BCCList: MailAddress[];
@@ -54,7 +56,7 @@ export interface Message<TypeRecord = typeof MAIL_TYPE._.nameValueMap, LocationR
     ExpirationTime: number;
     ExternalID: string;
     Header: string;
-    IsEncrypted: NumberBoolean;
+    IsEncrypted: IsEncryptedRecord[keyof IsEncryptedRecord];
     IsForwarded: NumberBoolean;
     IsRead: NumberBoolean;
     IsReplied: NumberBoolean;

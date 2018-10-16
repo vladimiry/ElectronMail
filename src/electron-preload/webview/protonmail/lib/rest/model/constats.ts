@@ -1,20 +1,5 @@
 import {buildEnumBundle} from "src/shared/util";
 
-export const MAILBOX_IDENTIFIERS = buildEnumBundle({
-    Inbox: "0", // display: 1
-    ["All Drafts"]: "1",
-    ["All Sent"]: "2",
-    Trash: "3", // display: 7
-    Spam: "4", // display: 6
-    ["All Mail"]: "5", // display: 8
-    Starred: "10", // display: 4
-    Archive: "6", // display: 5
-    Sent: "7", // display: 3
-    Drafts: "8", // display: 2
-    Search: "search",
-    Label: "label",
-});
-
 export const LOCATION = buildEnumBundle({
     location: 0,
     Inbox: 1,
@@ -50,4 +35,17 @@ export const EVENT_ACTION = buildEnumBundle({
     UPDATE: 2,
     UPDATE_DRAFT: 2,
     UPDATE_FLAGS: 3,
+});
+
+export const ENCRYPTED_STATUS = buildEnumBundle({
+    NONE: 0,
+    INTERNAL: 1,
+    EXTERNAL: 2,
+    OUT_ENC: 3,
+    OUT_PLAIN: 4,
+    STORED_ENC: 5,
+    PGP_INLINE: 7,
+    PGP_MIME: 8,
+    PGP_MIME_SIGNED: 9,
+    AUTOREPLY: 10,
 });

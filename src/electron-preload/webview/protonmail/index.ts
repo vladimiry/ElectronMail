@@ -4,6 +4,7 @@ import {buffer, concatMap, debounceTime, distinctUntilChanged, filter, map, merg
 
 import * as Database from "./lib/database";
 import * as Rest from "./lib/rest";
+import * as Throttle from "promise-parallel-throttle";
 import {Api, resolveApi} from "./lib/api";
 import {DbPatch} from "src/shared/api/common";
 import {
@@ -308,7 +309,7 @@ async function bootstrapDbPatch(): Promise<Unpacked<ReturnType<ProtonmailApi["bu
     }
     const [messages, contacts, labels] = await Promise.all([
         // messages
-        (async (query = {Page: 0, PageSize: 150}) => {
+        (async (query = {Page: 0, PageSize: 150}, throttleOptions = {maxInProgress: 3, failFast: true}) => {
             type Response = Unpacked<ReturnType<typeof api.conversation.query>>;
             const responseItems: Response["data"]["Conversations"] = [];
             let response: Response | undefined;
@@ -317,13 +318,21 @@ async function bootstrapDbPatch(): Promise<Unpacked<ReturnType<ProtonmailApi["bu
                 responseItems.push(...response.data.Conversations);
                 query.Page++;
             }
-            const result: Rest.Model.Message[] = [];
-            for (const responseItem of responseItems) {
-                // TODO consider accumulating fetch requests to array, split array to chunks and fetch them in parallel then
-                const {data} = await api.conversation.get(responseItem.ID);
-                result.push(...data.Messages);
-            }
-            return result;
+            const conversationMessages = await Throttle.all(
+                responseItems.map(({ID}) => async () => (await api.conversation.get(ID)).data.Messages),
+                throttleOptions,
+            );
+            return await Throttle.all(
+                conversationMessages
+                    .reduce((accumulator, array) => accumulator.concat(array), [])
+                    .map((mail) => async () => {
+                        if (mail.Body) {
+                            return mail;
+                        }
+                        return (await api.message.get(mail.ID)).data.Message;
+                    }),
+                throttleOptions,
+            );
         })(),
         // contacts
         (async () => {

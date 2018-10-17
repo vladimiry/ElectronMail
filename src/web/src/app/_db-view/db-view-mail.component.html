@@ -4,7 +4,8 @@
             <div class="state mr-2 badge badge-pill" title="{{ stateTitle }}"></div>
             <a class="prevent-default-event address badge flex-row mr-2"
                href="mailto:{{ mailAddress.address }}"
-               title="{{ mailAddress.name ? mailAddress.name + ' <' + mailAddress.address + '>': '' }}">
+               title="{{ mailAddress.name ? mailAddress.name + ' <' + mailAddress.address + '>': '' }}"
+               *ngIf="mailAddress">
                 {{ mailAddress.name || mailAddress.address }}
                 <span class="prevent-default-event d-flex ml-1" *ngIf="mailAddressTotal > 1">(+{{ mailAddressTotal - 1 }})</span>
             </a>

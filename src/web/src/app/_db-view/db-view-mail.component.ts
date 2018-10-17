@@ -11,7 +11,7 @@ import {MAIL_STATE, MailAddress, View} from "src/shared/model/database";
 export class DbViewMailComponent {
     state: Partial<Record<keyof typeof MAIL_STATE._.nameValueMap, boolean>> = {};
     stateTitle?: string;
-    mailAddress!: MailAddress;
+    mailAddress?: MailAddress;
     mailAddressTotal!: number;
 
     private _mail!: View.Mail;

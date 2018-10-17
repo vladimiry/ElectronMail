@@ -123,6 +123,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         } else if (databaseView) {
                             state.dbViewComponentRef = await this.dbViewModuleResolve.buildComponentRef({type, login});
                             this.dbViewContainerRef.insert(state.dbViewComponentRef.hostView);
+                            state.dbViewComponentRef.changeDetectorRef.detectChanges();
                         }
 
                         this.webViewHiddenByDatabaseView = Boolean(databaseView);

@@ -39,9 +39,6 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
 
                 for (const entity of source.upsert) {
                     await (destinationMap as EntityMap<typeof entity>).validateAndSet(entity);
-                    // if (entityType === "folders") {
-                    //     console.log(JSON.stringify({entity}, null, 2));
-                    // }
                 }
             }
 

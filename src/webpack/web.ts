@@ -18,7 +18,10 @@ const {readConfiguration} = require("@angular/compiler-cli");
 
 const webSrcPath = (...value: string[]) => srcRelateivePath("./web/src", ...value);
 const webAppPath = (...value: string[]) => webSrcPath("./app", ...value);
-const webSrcEnvPath = (...value: string[]) => webSrcPath("./environments", environmentSate.development ? "./development" : "", ...value);
+const webSrcEnvPath = (...value: string[]) => webSrcPath(
+    "./environments", environmentSate.development ? "./development" : "./production",
+    ...value,
+);
 
 // tslint:disable:no-var-requires
 const packageJson = require(rootRelateivePath("./package.json"));
@@ -53,12 +56,10 @@ const tsConfigFile = srcRelateivePath(({
 const tsConfigCompilerOptions: ts.CompilerOptions = (() => {
     const tsConfig = readConfiguration(tsConfigFile);
 
-    if (environmentSate.development) {
-        if (!tsConfig.options.paths) {
-            tsConfig.options.paths = {};
-        }
-        tsConfig.options.paths["src/web/src/environments/*"] = [webSrcEnvPath() + "/*"];
+    if (!tsConfig.options.paths) {
+        tsConfig.options.paths = {};
     }
+    tsConfig.options.paths["src/web/src/environments/*"] = [webSrcEnvPath() + "/*"];
 
     return tsConfig.options;
 })();

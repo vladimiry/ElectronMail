@@ -6,8 +6,9 @@
   ],
   "exclude": [
     "./**/*.spec.ts",
-    "./src/environments/**/*.ts"
+    "./src/environments/development/**/*"
   ],
+  // section is taken from the parent config, inheritance does not work here
   "angularCompilerOptions": {
     "preserveWhitespaces": false,
     "fullTemplateTypeCheck": true,

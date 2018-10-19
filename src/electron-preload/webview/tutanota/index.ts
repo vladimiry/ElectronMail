@@ -37,7 +37,7 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
     const {GENERATED_MAX_ID} = api["src/api/common/EntityFunctions"];
     const login2FaWaitElementsConfig = {
         input: () => document.querySelector("#modal input.input") as HTMLInputElement,
-        button: () => document.querySelector("#modal input.input ~ div > button") as HTMLElement,
+        button: () => document.querySelector("#modal .flex-half.justify-end > button") as HTMLElement,
     };
     const endpoints: TutanotaApi = {
         ping: () => of(null),

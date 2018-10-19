@@ -58,7 +58,6 @@ export interface Message<TypeRecord = typeof MAIL_TYPE._.nameValueMap,
     Header: string;
     IsEncrypted: IsEncryptedRecord[keyof IsEncryptedRecord];
     IsForwarded: NumberBoolean;
-    IsRead: NumberBoolean;
     IsReplied: NumberBoolean;
     IsRepliedAll: NumberBoolean;
     LabelIDs: string[];

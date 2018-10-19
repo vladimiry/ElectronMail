@@ -39,7 +39,7 @@ export async function buildMail(input: Rest.Model.Message, api: Api): Promise<Da
         ccRecipients: input.CCList.map((address, i) => Address({...address, ...buildAddressId(input, "CCList", i)})),
         bccRecipients: input.BCCList.map((address, i) => Address({...address, ...buildAddressId(input, "BCCList", i)})),
         attachments: input.Attachments.map(File),
-        unread: !Boolean(input.IsRead),
+        unread: Boolean(input.Unread),
         state: directTypeMapping[input.Type],
         confidential: isConfindencial(input),
         replyType: (input.IsReplied || input.IsRepliedAll) && input.IsForwarded

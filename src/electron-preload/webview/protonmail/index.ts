@@ -1,10 +1,10 @@
+import * as Throttle from "promise-parallel-throttle";
 import {EMPTY, Observable, from, interval, merge, of} from "rxjs";
 import {authenticator} from "otplib";
 import {buffer, concatMap, debounceTime, distinctUntilChanged, filter, map, mergeMap, tap} from "rxjs/operators";
 
 import * as Database from "./lib/database";
 import * as Rest from "./lib/rest";
-import * as Throttle from "promise-parallel-throttle";
 import {Api, resolveApi} from "./lib/api";
 import {DbPatch} from "src/shared/api/common";
 import {
@@ -24,13 +24,27 @@ import {isUpsertOperationType} from "./lib/uilt";
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[index]");
 const WINDOW = window as any;
 const twoFactorCodeElementId = "twoFactorCode";
-const ajaxNotificationSkipParam = `ajax-notification-skip`;
-const ajaxNotification$ = new Observable<XMLHttpRequest>((subscriber) => {
-    XMLHttpRequest.prototype.send = ((original) => function(this: XMLHttpRequest) {
+const ajaxSendNotificationSkipParam = `ajax-send-notification-skip-${Number(new Date())}`;
+const ajaxSendNotification$ = new Observable<XMLHttpRequest>((subscriber) => {
+    XMLHttpRequest.prototype.open = ((
+        original = XMLHttpRequest.prototype.open,
+        urlArgIndex = 1,
+        removeAjaxNotificationSkipParamRe = new RegExp(`[\\?\\&]${ajaxSendNotificationSkipParam}=`),
+    ) => function(this: XMLHttpRequest) {
+        const args = [...arguments];
+        if (args.length && String(args[urlArgIndex]).indexOf(ajaxSendNotificationSkipParam) !== -1) {
+            (this as any)[ajaxSendNotificationSkipParam] = true;
+            args[urlArgIndex] = args[urlArgIndex].replace(removeAjaxNotificationSkipParamRe, "");
+        }
+        return original.apply(this, args);
+    })();
+    XMLHttpRequest.prototype.send = ((
+        original = XMLHttpRequest.prototype.send,
+    ) => function(this: XMLHttpRequest) {
         this.addEventListener(
             "load",
             function(this: XMLHttpRequest) {
-                if (this.responseURL.indexOf(ajaxNotificationSkipParam) !== -1) {
+                if (ajaxSendNotificationSkipParam in this) {
                     return;
                 }
                 subscriber.next(this);
@@ -38,7 +52,7 @@ const ajaxNotification$ = new Observable<XMLHttpRequest>((subscriber) => {
             false,
         );
         return original.apply(this, arguments);
-    })(XMLHttpRequest.prototype.send);
+    })();
 });
 
 delete WINDOW.Notification;
@@ -62,7 +76,7 @@ const endpoints: ProtonmailApi = {
             fetchedEvents: Rest.Model.Event[] = [],
         ) => {
             do {
-                const response = await events.get(id, {params: {[ajaxNotificationSkipParam]: "1"}});
+                const response = await events.get(id, {params: {[ajaxSendNotificationSkipParam]: ""}});
                 fetchedEvents.push(response);
                 id = response.EventID;
                 if (response.More !== 1) {
@@ -237,7 +251,7 @@ const endpoints: ProtonmailApi = {
                     },
                 ];
 
-                return ajaxNotification$.pipe(
+                return ajaxSendNotification$.pipe(
                     mergeMap((request) => responseListeners
                         .filter(({re}) => {
                             return re.test(request.responseURL);
@@ -261,7 +275,7 @@ const endpoints: ProtonmailApi = {
                 const innerLogger = curryFunctionMembers(logger, `[entity update notification]`);
                 const eventsUrlRe = new RegExp(`${entryUrl}/api/events/.*==`);
                 const notification = {batchEntityUpdatesCounter: 0};
-                const notificationReceived$: Observable<Rest.Model.EventResponse> = ajaxNotification$.pipe(
+                const notificationReceived$: Observable<Rest.Model.EventResponse> = ajaxSendNotification$.pipe(
                     filter((request) => eventsUrlRe.test(request.responseURL)),
                     map((request) => JSON.parse(request.responseText)),
                 );

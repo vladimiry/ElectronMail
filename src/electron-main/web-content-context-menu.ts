@@ -1,5 +1,5 @@
-import os from "os";
 import {ContextMenuParams, Event, Menu, PopupOptions, WebContents, app, clipboard} from "electron";
+import {platform} from "os";
 
 import {Context} from "./model";
 
@@ -40,7 +40,7 @@ export function initWebContentContextMenu(ctx: Context) {
                     label: isEmailHref(linkURL) ? "Copy Email Address" : "Copy Link Address",
                     click() {
                         const url = extractEmailIfEmailHref(linkURL);
-                        if (os.platform() === "darwin") {
+                        if (platform() === "darwin") {
                             clipboard.writeBookmark(linkText, url);
                         } else {
                             clipboard.writeText(url);

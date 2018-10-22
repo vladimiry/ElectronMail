@@ -1,24 +1,33 @@
-import {BrowserWindow, app} from "electron";
+import {app, BrowserWindow, BrowserWindowConstructorOptions, Menu} from "electron";
+import {Store} from "fs-json-store";
 import {equals} from "ramda";
+import {platform} from "os";
 
 import {BuildEnvironment} from "src/shared/model/common";
 import {Context} from "./model";
 import {Endpoints} from "src/shared/api/main";
 
+const developmentEnvironment = (process.env.NODE_ENV as BuildEnvironment) === "development";
+
 export async function initBrowserWindow(ctx: Context, endpoints: Endpoints): Promise<BrowserWindow> {
-    const browserWindowConstructorOptions = {
+    const e2eRuntimeEnvironment = ctx.runtimeEnvironment === "e2e"
+        && await new Store({file: ctx.locations.preload.browserWindowE2E, fs: ctx.storeFs}).readable();
+    const browserWindowConstructorOptions: BrowserWindowConstructorOptions = {
         webPreferences: {
-            nodeIntegration: (process.env.NODE_ENV as BuildEnvironment) === "development",
+            nodeIntegration: developmentEnvironment,
+            nodeIntegrationInWorker: false,
             webviewTag: true,
             webSecurity: true,
-            // TODO explore "sandbox" mode
-            // sandbox: true,
+            // sandbox: true, // TODO explore "sandbox" mode
             disableBlinkFeatures: "Auxclick",
-            preload: ctx.runtimeEnvironment === "e2e" ? ctx.locations.preload.browserWindowE2E : ctx.locations.preload.browserWindow,
+            preload: e2eRuntimeEnvironment
+                ? ctx.locations.preload.browserWindowE2E
+                : ctx.locations.preload.browserWindow,
         },
         icon: ctx.locations.icon,
         ...(await ctx.configStore.readExisting()).window.bounds,
         show: false,
+        autoHideMenuBar: true,
     };
     const browserWindow = new BrowserWindow(browserWindowConstructorOptions);
     const appBeforeQuitEventHandler = () => forceClose = true;
@@ -40,13 +49,11 @@ export async function initBrowserWindow(ctx: Context, endpoints: Endpoints): Pro
         forceClose = false;
 
         // On macOS it is common for applications and their menu bar to stay active until the user quits explicitly with Cmd + Q
-        if (process.platform !== "darwin") {
+        if (platform() !== "darwin") {
             app.quit();
         }
     });
     browserWindow.on("close", async (event) => {
-        const sender: BrowserWindow = (event as any).sender;
-
         if (forceClose) {
             return event.returnValue = true;
         }
@@ -55,6 +62,7 @@ export async function initBrowserWindow(ctx: Context, endpoints: Endpoints): Pro
         event.preventDefault();
 
         if ((await ctx.configStore.readExisting()).closeToTray) {
+            const sender: BrowserWindow = (event as any).sender;
             sender.hide();
         } else {
             forceClose = true;
@@ -70,7 +78,49 @@ export async function initBrowserWindow(ctx: Context, endpoints: Endpoints): Pro
     // execute after handlers subscriptions
     await keepState(ctx, browserWindow);
 
-    if ((process.env.NODE_ENV as BuildEnvironment) === "development") {
+    Menu.setApplicationMenu(Menu.buildFromTemplate(platform() === "darwin" ? [{
+        label: app.getName(),
+        submenu: [
+            {
+                role: "hide",
+                accelerator: "Command+H",
+            },
+            {
+                role: "hideothers",
+                accelerator: "Command+Alt+H",
+            },
+            {
+                label: "Show All",
+                role: "unhide",
+            },
+            {
+                type: "separator",
+            },
+            {
+                label: "Quit",
+                async click() {
+                    await endpoints.quit().toPromise();
+                },
+            },
+        ],
+    }] : [
+        {
+            label: "File",
+            submenu: [
+                {
+                    type: "separator",
+                },
+                {
+                    label: "Quit",
+                    async click() {
+                        await endpoints.quit().toPromise();
+                    },
+                },
+            ],
+        },
+    ]));
+
+    if (developmentEnvironment) {
         browserWindow.webContents.openDevTools();
     }
 

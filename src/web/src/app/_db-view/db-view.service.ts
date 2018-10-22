@@ -5,11 +5,11 @@ import {walkConversationNodesTree} from "src/shared/util";
 
 @Injectable()
 export class DbViewService {
-    calculateFolderSummary({rootConversationNodes, mailFolderId}: View.Folder): { size: number; unread: number; } {
+    calculateFolderSummary(folder: View.Folder): { size: number; unread: number; } {
         const result: ReturnType<typeof DbViewService.prototype.calculateFolderSummary> = {size: 0, unread: 0};
 
-        walkConversationNodesTree(rootConversationNodes, ({mail}) => {
-            if (!mail || !mail.folders.some(((folder) => folder.mailFolderId === mailFolderId))) {
+        walkConversationNodesTree(folder.rootConversationNodes, ({mail}) => {
+            if (!mail || !mail.folders.includes(folder)) {
                 return;
             }
 

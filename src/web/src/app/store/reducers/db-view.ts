@@ -1,10 +1,9 @@
 import {UnionOf} from "@vladimiry/unionize";
-import {equals} from "ramda";
 
 import * as fromRoot from "src/web/src/app/store/reducers/root";
 import {DB_VIEW_ACTIONS} from "src/web/src/app/store/actions";
 import {DbAccountPk, Mail, View} from "src/shared/model/database";
-import {reduceNodesMails, walkConversationNodesTree} from "src/shared/util";
+import {walkConversationNodesTree} from "src/shared/util";
 
 export const featureName = "db-view";
 
@@ -48,54 +47,59 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
                         [key]: instance,
                     },
                 },
-                DB_VIEW_ACTIONS.SelectFolder({dbAccountPk, folderPk: instance.selectedFolderPk, distinct: true}),
+                DB_VIEW_ACTIONS.SelectFolder({dbAccountPk, folderPk: instance.selectedFolderPk}),
             );
         },
-        SelectFolder: ({dbAccountPk, folderPk, distinct}) => {
+        SelectFolder: ({dbAccountPk, folderPk}) => {
             const key = instanceKey(dbAccountPk);
             const instance: Instance = {
                 ...(state.instances[key] || initInstance()),
                 selectedFolderPk: folderPk,
             };
-            const folders = [...instance.folders.system, ...instance.folders.custom];
+            const selectedFolder = instance.folders.system.concat(instance.folders.custom)
+                .find(({pk}) => pk === instance.selectedFolderPk);
+            const matchesSelectedMailByPk = ((selectedMailPk) => {
+                return selectedMailPk
+                    ? ({pk}: View.Mail) => pk === selectedMailPk
+                    : () => false;
+            })(instance.selectedMail && instance.selectedMail.pk);
+            let keepSelectedMail: boolean = false;
 
-            if (instance.selectedFolderPk && !folders.some(({pk}) => instance.selectedFolderPk === pk)) {
-                delete instance.selectedFolderPk;
-            }
-
-            const selectedFolder = folders.find(({pk}) => pk === instance.selectedFolderPk);
-            const selectedMailPk = instance.selectedMail && instance.selectedMail.pk;
-            let selectedMailExists: boolean = false;
-
-            // TODO cleanup "instance.foldersMeta" (delete non existing folders)
+            // TODO delete non existing folders from "instance.foldersMeta"
 
             if (selectedFolder) {
-                const {rootNodesCollapsed} = (instance.foldersMeta[selectedFolder.pk] || ({rootNodesCollapsed: {}}));
+                // TODO consider caching this block calculations result, so no recalculation on repeatable same folder selection
+                // TODO consider initializing "foldersMeta" at the backend side once before serving the response
                 const folderMeta: Instance["foldersMeta"][typeof selectedFolder.pk] = {
                     collapsibleNodes: {},
                     rootNodesCollapsed: {},
-                    mails: reduceNodesMails(selectedFolder.rootConversationNodes, (mail) => mail.folders.includes(selectedFolder)),
+                    mails: [],
                 };
+                const {rootNodesCollapsed} = (instance.foldersMeta[selectedFolder.pk] || ({rootNodesCollapsed: {}}));
 
                 for (const rootNode of selectedFolder.rootConversationNodes) {
-                    let rootNodeCollapsible: boolean = false;
+                    const collapsibleNodes: typeof folderMeta.collapsibleNodes = {};
 
-                    walkConversationNodesTree([rootNode], (node) => {
-                        const mail = node.mail;
-                        const nodeCollapsible = Boolean(mail && !mail.folders.includes(selectedFolder));
-
-                        if (selectedMailPk && mail && mail.pk === selectedMailPk && !selectedMailExists) {
-                            selectedMailExists = true;
+                    walkConversationNodesTree([rootNode], ({mail, entryPk}) => {
+                        if (!mail) {
+                            return;
                         }
 
-                        if (nodeCollapsible) {
-                            folderMeta.collapsibleNodes[node.entryPk] = true;
-                        }
+                        keepSelectedMail = keepSelectedMail || matchesSelectedMailByPk(mail);
 
-                        rootNodeCollapsible = rootNodeCollapsible || nodeCollapsible;
+                        if (mail.folders.includes(selectedFolder)) {
+                            folderMeta.mails.push(mail);
+                        } else {
+                            collapsibleNodes[entryPk] = true;
+                        }
                     });
 
-                    if (!rootNodeCollapsible) {
+                    folderMeta.collapsibleNodes = {
+                        ...folderMeta.collapsibleNodes,
+                        ...collapsibleNodes,
+                    };
+
+                    if (!Object.keys(collapsibleNodes).length) {
                         continue;
                     }
 
@@ -105,14 +109,12 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
                 }
 
                 instance.foldersMeta[selectedFolder.pk] = folderMeta;
+            } else {
+                delete instance.selectedFolderPk;
             }
 
-            if (!selectedMailExists) {
+            if (!keepSelectedMail) {
                 delete instance.selectedMail;
-            }
-
-            if (distinct && equals(state.instances[key], instance)) {
-                return state;
             }
 
             return {

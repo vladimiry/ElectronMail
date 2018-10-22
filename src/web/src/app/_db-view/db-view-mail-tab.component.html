@@ -5,7 +5,7 @@
             <ng-container [ngTemplateOutlet]="foldersGroup" [ngTemplateOutletContext]="{folders: state.folders.custom}"></ng-container>
         </div>
         <ng-template #foldersGroup let-folders="folders">
-            <ul class="list-group" *ngIf="state$ | async; let state">
+            <ul class="list-group">
                 <li class="list-group-item list-group-item-action"
                     *ngFor="let folder of folders; trackBy: trackFolderByPk"
                     [ngClass]="{'list-group-item-warning': state.selectedFolderPk === folder.pk}"
@@ -17,10 +17,11 @@
     </div>
     <email-securely-app-db-view-mails
         [input]="{
+            uid: state.selectedFolderPk,
             folderMeta: state.folderMeta,
-            selectedMail: state.selectedMail,
             rootConversationNodes: state.rootConversationNodes
         }"
+        [selectedMail]="state.selectedMail"
         (selectMailPkHandler)="selectMailPkHandler($event)"
         (toggleRootNodesCollapsingHandler)="toggleRootNodesCollapsingHandler($event)"
     ></email-securely-app-db-view-mails>

@@ -2,34 +2,38 @@
     <a
         href="javascript:void(0)"
         title="Toggle Conversation/Plain View Mode"
-        (click)="toggleConversationViewMode()"
+        (click)="toggleViewMode()"
     >
         <i class="fa" [ngClass]="{
-            'fa-align-justify': conversationViewMode,
-            'fa-align-right fa-flip-vertical': !conversationViewMode
+            'fa-align-justify': !state.plainListViewMode,
+            'fa-align-right fa-flip-vertical': state.plainListViewMode
         }"></i>
     </a>
+    <div class="badge ml-2">
+        {{ state.plainListViewMode ? "mails" : "conversations" }}<span *ngIf="state.paging.size">: {{ state.paging.endIndex }} of {{ state.paging.size }}</span>
+    </div>
 </div>
 <div class="d-flex flex-row">
-    <div class="mails d-flex flex-column" [ngClass]="{'flex-basis-half': inputState.selectedMail}">
+    <div class="mails d-flex flex-column" [ngClass]="{'flex-basis-half': state.selectedMail}">
         <div class="overflow-auto">
-            <ng-container *ngIf="!conversationViewMode; else conversationViewTemplate">
+            <ng-container *ngIf="state.plainListViewMode; else conversationViewModeTemplate">
                 <email-securely-app-db-view-mail
-                    *ngFor="let mail of inputState.meta.mails; trackBy: trackByMailPk"
-                    [attr.selected]="mail.pk === inputState.selectedMail?.pk"
+                    *ngFor="let mail of state.folderMeta.mails.slice(0, state.paging.endIndex); trackBy: trackByMailPk"
+                    [attr.selected]="mail.pk === state.selectedMail?.pk"
                     [attr.data-pk]="mail.pk"
                     [mail]="mail"
                 ></email-securely-app-db-view-mail>
             </ng-container>
-            <ng-template #conversationViewTemplate>
+            <ng-template #conversationViewModeTemplate>
                 <div
-                    class="conversation mb-2" *ngFor="let rootNode of inputState.rootConversationNodes" [ngClass]="{'collapsed': rootNodeCollapsed(rootNode)}">
+                    class="conversation mb-2" *ngFor="let rootNode of state.rootConversationNodes.slice(0, state.paging.endIndex); trackBy: trackByNodeMailPk"
+                    [ngClass]="{'collapsed': rootNodeCollapsed(rootNode)}">
                     <div
                         class="toggler"
                         *ngIf="rootNodeHasHiddenMails(rootNode)"
                         (click)="toggleRootNodesCollapsing(rootNode)"
                     >
-                        {{ rootNodeCollapsed(rootNode) ? "Expand" : "Collapse" }}
+                        All folders {{ rootNodeCollapsed(rootNode) ? "+" : "-" }}
                     </div>
                     <ng-container
                         [ngTemplateOutlet]="nodesTemplate"
@@ -40,12 +44,12 @@
                     <!-- TODO consider using "virtual list", ie rendering only visible data -->
                     <ng-container *ngFor="let node of nodes; trackBy: trackByNodeMailPk">
                         <div class="conversation-node"
-                            *ngIf="!isEmptyNodes(nodes)"
-                            [ngStyle]="{'padding-left': level + 'em'}"
-                            [ngClass]="{'collapsed': collapsible, 'collapsible': nodeHasHiddenMail(node)}">
+                             *ngIf="!isEmptyNodes(nodes)"
+                             [ngStyle]="{'padding-left': level + 'em'}"
+                             [ngClass]="{'collapsed': collapsible, 'collapsible': nodeHasHiddenMail(node)}">
                             <email-securely-app-db-view-mail
                                 *ngIf="node.mail; else removedEmailStubTemplate"
-                                [attr.selected]="node.mail.pk === inputState.selectedMail?.pk"
+                                [attr.selected]="node.mail.pk === state.selectedMail?.pk"
                                 [attr.data-pk]="node.mail.pk"
                                 [mail]="node.mail"
                             ></email-securely-app-db-view-mail>
@@ -62,11 +66,14 @@
                     </ng-container>
                 </ng-template>
             </ng-template>
+            <button class="btn btn-secondary load-more my-3" *ngIf="state.paging.nextPageSize" (click)="loadMore()">
+                More <small>(+{{ state.paging.nextPageSize }})</small>
+            </button>
         </div>
     </div>
-    <div class="view flex-basis-half d-flex flex-column pl-2" *ngIf="inputState.selectedMail">
+    <div class="view flex-basis-half d-flex flex-column pl-2" *ngIf="state.selectedMail">
         <div class="overflow-auto">
-            <email-securely-app-db-view-mail-body [mail]="inputState.selectedMail"></email-securely-app-db-view-mail-body>
+            <email-securely-app-db-view-mail-body [mail]="state.selectedMail"></email-securely-app-db-view-mail-body>
         </div>
     </div>
 </div>

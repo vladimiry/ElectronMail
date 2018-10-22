@@ -10,6 +10,13 @@
         border-radius: $list-group-border-radius;
         background-color: $white;
         padding: $list-group-item-padding-y $list-group-item-padding-x;
+
+        .badge {
+            font-weight: normal;
+            font-size: $app-font-size-base-small;
+            color: $gray-700;
+            border: 1px solid $border-color;
+        }
     }
 
     .mails {
@@ -78,5 +85,11 @@
                 }
             }
         }
+    }
+
+    .load-more {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
     }
 }

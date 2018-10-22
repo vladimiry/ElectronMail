@@ -3,7 +3,7 @@ import {ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, O
 import {DbViewMailTabComponent} from "./db-view-mail-tab.component";
 import {Instance} from "src/web/src/app/store/reducers/db-view";
 import {Mail, View} from "src/shared/model/database";
-import {Unpacked} from "src/shared/types";
+import {Omit, Unpacked} from "src/shared/types";
 import {reduceNodesMails} from "src/shared/util";
 
 @Component({
@@ -13,33 +13,61 @@ import {reduceNodesMails} from "src/shared/util";
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DbViewMailsComponent {
-    // TODO read "email-securely-app-db-view-mail" dynamically from the annotation
+    // TODO read "email-securely-app-db-view-mail" dynamically from the DbViewFolderComponent.selector property
     private static mailComponentTagName = "email-securely-app-db-view-mail";
-    conversationViewMode: boolean = false;
-    inputState!: Pick<Unpacked<typeof DbViewMailTabComponent.prototype.state$>, "selectedMail" | "rootConversationNodes">
-        & { meta: Instance["foldersMeta"][string] };
+    state!: Pick<Unpacked<typeof DbViewMailTabComponent.prototype.state$>, "selectedMail" | "rootConversationNodes">
+        & { folderMeta: Instance["foldersMeta"][string] }
+        & { uid: string }
+        & { plainListViewMode: boolean }
+        & { paging: { size: number; endIndex: number; nextPageSize: number; } };
     @Output()
     selectMailPkHandler = new EventEmitter<Mail["pk"]>();
     @Output()
     toggleRootNodesCollapsingHandler = new EventEmitter<Pick<View.RootConversationNode, "entryPk">>();
+    private pageSize = 50;
 
     @Input()
-    set input(
-        input: Pick<Unpacked<typeof DbViewMailTabComponent.prototype.state$>, "folderMeta" | "selectedMail" | "rootConversationNodes">,
-    ) {
-        this.inputState = {
-            meta: input.folderMeta || {
+    set input(input: Omit<typeof DbViewMailsComponent.prototype.state, "paging" | "selectedMail">) {
+        const state = {
+            uid: input.uid,
+            plainListViewMode: this.state ? this.state.plainListViewMode : true,
+            selectedMail: this.state
+                ? this.state.selectedMail
+                : undefined,
+            folderMeta: input.folderMeta || {
                 collapsibleNodes: {},
                 rootNodesCollapsed: {},
                 mails: reduceNodesMails(input.rootConversationNodes),
             },
-            selectedMail: input.selectedMail,
             rootConversationNodes: input.rootConversationNodes,
+        };
+        this.state = {
+            ...state,
+            paging: this.calculatePaging(state, this.state && this.state.uid !== state.uid),
         };
     }
 
-    toggleConversationViewMode() {
-        this.conversationViewMode = !this.conversationViewMode;
+    @Input()
+    set selectedMail(selectedMail: Pick<typeof DbViewMailsComponent.prototype.state, "selectedMail">["selectedMail"]) {
+        this.state = {
+            ...(this.state || {}),
+            selectedMail,
+        };
+    }
+
+    loadMore() {
+        this.state.paging = this.calculatePaging(this.state);
+    }
+
+    toggleViewMode() {
+        const state = {
+            ...this.state,
+            plainListViewMode: !this.state.plainListViewMode,
+        };
+        this.state = {
+            ...state,
+            paging: this.calculatePaging(state, true),
+        };
     }
 
     trackByMailPk(index: number, {pk}: View.Mail) {
@@ -59,15 +87,15 @@ export class DbViewMailsComponent {
     }
 
     rootNodeHasHiddenMails({entryPk}: View.RootConversationNode): boolean {
-        return entryPk in this.inputState.meta.rootNodesCollapsed;
+        return entryPk in this.state.folderMeta.rootNodesCollapsed;
     }
 
     rootNodeCollapsed({entryPk}: View.RootConversationNode): boolean {
-        return Boolean(this.inputState.meta.rootNodesCollapsed[entryPk]);
+        return Boolean(this.state.folderMeta.rootNodesCollapsed[entryPk]);
     }
 
     nodeHasHiddenMail({entryPk}: View.RootConversationNode): boolean {
-        return entryPk in this.inputState.meta.collapsibleNodes;
+        return entryPk in this.state.folderMeta.collapsibleNodes;
     }
 
     @HostListener("click", ["$event"])
@@ -84,6 +112,26 @@ export class DbViewMailsComponent {
         }
 
         this.selectMailPkHandler.emit(mailElement.getAttribute("data-pk") as Mail["pk"]);
+    }
+
+    private calculatePaging(state: Omit<typeof DbViewMailsComponent.prototype.state, "paging">, reset: boolean = false) {
+        const size = (state.plainListViewMode
+            ? state.folderMeta.mails
+            : state.rootConversationNodes).length;
+        const paging: { endIndex: number; nextPageSize: number; } = this.state && !reset
+            ? {...this.state.paging}
+            : {endIndex: 0, nextPageSize: 0};
+        const add = !this.state || this.state.uid === state.uid || this.state.plainListViewMode !== state.plainListViewMode || reset
+            ? this.pageSize
+            : 0;
+        const maxIndex = size;
+        const endIndex = Math.min(
+            (paging.endIndex > 0 ? Math.min(paging.endIndex, maxIndex) : paging.endIndex) + add,
+            maxIndex,
+        );
+        const nextPageSize = Math.min(maxIndex - endIndex, this.pageSize);
+
+        return {size, endIndex, nextPageSize};
     }
 
     private resolveMailComponentElement(element: Element | null): Element | null {

@@ -136,9 +136,10 @@ const buildRootNodes = ((staticProtonmailFolders: Folder[]) => {
             if (node.mail) {
                 for (const mailFolderId of node.mail.mailFolderIds) {
                     const folder = resolveFolder({mailFolderId});
-                    if (folder) {
-                        node.mail.folders.push(folder);
+                    if (!folder) {
+                        continue;
                     }
+                    node.mail.folders.push(folder);
                 }
             }
 
@@ -184,6 +185,7 @@ function fillRootNodesSummary(rootNodes: View.ConversationNode[]) {
                 sentDateMax: 0,
             },
         };
+        const rootNodeFolders = new Set<View.Folder>();
 
         walkConversationNodesTree([rootNode], (node) => {
             node.children.sort((o1, o2) => {
@@ -205,16 +207,17 @@ function fillRootNodesSummary(rootNodes: View.ConversationNode[]) {
             rootNode.summary.sentDateMin = Math.min(node.mail.sentDate, rootNode.summary.sentDateMin);
             rootNode.summary.sentDateMax = Math.max(node.mail.sentDate, rootNode.summary.sentDateMax);
 
-            node.mail.folders.forEach(({rootConversationNodes}) => {
-                // TODO lookup from cache instead of calling "rootConversationNodes.includes" inside a loop
-                rootConversationNodes.push(...(rootConversationNodes.includes(rootNode) ? [] : [rootNode]));
-            });
+            node.mail.folders.forEach((folder) => rootNodeFolders.add(folder));
         });
+
+        for (const rootNodeFolder of rootNodeFolders) {
+            rootNodeFolder.rootConversationNodes.push(rootNode);
+        }
     }
 }
 
 function buildFoldersView<T extends keyof FsDb["accounts"]>(account: FsDbAccount<T>): View.Folder[] {
-    const {rootNodes, folders} = buildRootNodes(R.clone(account));
+    const {folders, rootNodes} = buildRootNodes(R.clone(account));
 
     fillRootNodesSummary(rootNodes);
 

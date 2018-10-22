@@ -1,4 +1,4 @@
-import {app, BrowserWindow, BrowserWindowConstructorOptions, Menu} from "electron";
+import {BrowserWindow, BrowserWindowConstructorOptions, Menu, app} from "electron";
 import {Store} from "fs-json-store";
 import {equals} from "ramda";
 import {platform} from "os";
@@ -81,6 +81,15 @@ export async function initBrowserWindow(ctx: Context, endpoints: Endpoints): Pro
     Menu.setApplicationMenu(Menu.buildFromTemplate(platform() === "darwin" ? [{
         label: app.getName(),
         submenu: [
+            {
+                label: "About",
+                async click() {
+                    await endpoints.openAboutWindow().toPromise();
+                },
+            },
+            {
+                type: "separator",
+            },
             {
                 role: "hide",
                 accelerator: "Command+H",

@@ -60,6 +60,11 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
 
             if (window.maximized) {
                 browserWindow.maximize();
+
+                // above "maximize()" call is supposed to show the window, but sometimes it doesn't on some systems (especially macOS)
+                if (!browserWindow.isVisible()) {
+                    browserWindow.show();
+                }
             } else {
                 browserWindow.show();
             }

@@ -27,6 +27,16 @@ if (!singleInstanceLock) {
 
 const ctx = initContext();
 
+app.on("web-contents-created", (webContentsCreatedEvent, contents) => {
+    contents.on("will-attach-webview", (willAttachWebviewEvent, webPreferences, params) => {
+        webPreferences.nodeIntegration = false;
+
+        if (!isWebViewSrcWhitelisted(params.src)) {
+            willAttachWebviewEvent.preventDefault();
+        }
+    });
+});
+
 app.on("ready", async () => {
     await clearDefaultSessionCaches();
 
@@ -54,19 +64,12 @@ app.on("ready", async () => {
     app.on("second-instance", async () => {
         await endpoints.activateBrowserWindow().toPromise();
     });
+
     app.on("activate", async () => {
         // on macOS it's common to re-create a window in the app when the dock icon is clicked and there are no other windows open
         if (!uiContext.browserWindow || uiContext.browserWindow.isDestroyed()) {
             uiContext.browserWindow = await initBrowserWindow(ctx, endpoints);
         }
-    });
-    app.on("web-contents-created", (webContentsCreatedEvent, contents) => {
-        contents.on("will-attach-webview", (willAttachWebviewEvent, webPreferences, params) => {
-            webPreferences.nodeIntegration = false;
-
-            if (!isWebViewSrcWhitelisted(params.src)) {
-                willAttachWebviewEvent.preventDefault();
-            }
-        });
+        await endpoints.activateBrowserWindow();
     });
 });

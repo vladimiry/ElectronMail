@@ -284,7 +284,7 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
         },
     };
 
-    TUTANOTA_IPC_WEBVIEW_API.registerApi(endpoints);
+    TUTANOTA_IPC_WEBVIEW_API.registerApi(endpoints, {logger: {error: _logger.error, info: () => {}}});
     _logger.verbose(`api registered, url: ${getLocationHref()}`);
 }
 

@@ -1,6 +1,5 @@
 import {Config} from "karma";
 import {produce} from "immer";
-
 // TODO import using alias
 import webpackConfig from "../../webpack/web";
 
@@ -54,5 +53,9 @@ export default (config: Config) => {
         configuration.browsers = [TRAVIS_OS_NAME];
     }
 
-    config.set(configuration);
+    config.set({
+        ...configuration,
+        // TODO get rid of karma circular JSON stringifying error, see https://github.com/karma-runner/karma/issues/3154
+        ...{toJSON: () => ({})} as any,
+    });
 };

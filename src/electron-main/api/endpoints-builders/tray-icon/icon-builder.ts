@@ -1,8 +1,8 @@
+import imageProcessing from "image-processing-js";
 import {Bitmap, decodePNGFromStream, encodePNGToStream, make, registerFont} from "pureimage";
 import {NativeImage, nativeImage} from "electron";
 import {WritableStream} from "memory-streams";
 import {createReadStream} from "fs";
-import {modeBicubic, resampleImageFromBuffer} from "image-processing-js";
 import {platform} from "os";
 
 // TODO explore https://github.com/vonderheide/mono-bitmap as a possible "pureimage" replacement
@@ -16,6 +16,8 @@ export interface ImageBundle {
     bitmap: Bitmap;
     native: NativeImage;
 }
+
+export const IMAGE_PROCESSOR = imageProcessing();
 
 export async function trayIconBundleFromPath(trayIconPath: string): Promise<ImageBundle> {
     const bitmap = await decodePNGFromStream(createReadStream(trayIconPath));
@@ -112,7 +114,7 @@ async function bitmapToNativeImageOsDependent(source: Bitmap): Promise<NativeIma
 }
 
 function resampleToDarwinSize(source: Bitmap): Bitmap {
-    return cloneBitmap(resampleImageFromBuffer(source, 16, 16, modeBicubic));
+    return cloneBitmap(IMAGE_PROCESSOR.resampleImageFromBuffer(source, 16, 16, IMAGE_PROCESSOR.modeBicubic));
 }
 
 function cloneBitmap(input: Pick<Bitmap, "width" | "height" | "data">): Bitmap {

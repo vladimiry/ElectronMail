@@ -289,7 +289,7 @@ const endpoints: ProtonmailApi = {
     },
 };
 
-PROTONMAIL_IPC_WEBVIEW_API.registerApi(endpoints);
+PROTONMAIL_IPC_WEBVIEW_API.registerApi(endpoints, {logger: {error: _logger.error, info: () => {}}});
 _logger.verbose(`api registered, url: ${getLocationHref()}`);
 
 function isLoggedIn(): boolean {

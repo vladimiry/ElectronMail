@@ -5,9 +5,10 @@ declare module "image-processing-js" {
         height: number;
     }
 
-    const modeNearestNeighbour: number;
-    const modeBilinear: number;
-    const modeBicubic: number;
+    const result: () => {
+        modeBicubic: number;
+        resampleImageFromBuffer: (source: Container, width: number, height: number, mode: number) => Container;
+    };
 
-    function resampleImageFromBuffer(source: Container, width: number, height: number, mode: number): Container;
+    export = result;
 }

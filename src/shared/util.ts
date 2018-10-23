@@ -76,20 +76,29 @@ export function walkConversationNodesTree(rootNodes: View.ConversationNode[], fn
     }
 }
 
+export function mailDateDescComparator(o1: View.Mail, o2: View.Mail) {
+    return o2.sentDate - o1.sentDate;
+}
+
+export function sortMails(
+    mails: View.Mail[],
+    comparator: (o1: View.Mail, o2: View.Mail) => number = mailDateDescComparator,
+): typeof mails {
+    return [...mails].sort(comparator);
+}
+
 export function reduceNodesMails(
     nodes: View.ConversationNode[],
-    filter: (mail: View.Mail) => boolean = () => true,
+    mailFilter: (mail: View.Mail) => boolean = () => true,
 ): View.Mail[] {
     const mails: View.Mail[] = [];
 
     walkConversationNodesTree(nodes, (node) => {
-        if (!node.mail || !filter(node.mail)) {
+        if (!node.mail || !mailFilter(node.mail)) {
             return;
         }
         mails.push(node.mail);
     });
-
-    mails.sort((o1, o2) => o2.sentDate - o1.sentDate);
 
     return mails;
 }

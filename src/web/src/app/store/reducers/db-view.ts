@@ -3,7 +3,7 @@ import {UnionOf} from "@vladimiry/unionize";
 import * as fromRoot from "src/web/src/app/store/reducers/root";
 import {DB_VIEW_ACTIONS} from "src/web/src/app/store/actions";
 import {DbAccountPk, Mail, View} from "src/shared/model/database";
-import {walkConversationNodesTree} from "src/shared/util";
+import {sortMails, walkConversationNodesTree} from "src/shared/util";
 
 export const featureName = "db-view";
 
@@ -107,6 +107,8 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
                         ? rootNodesCollapsed[rootNode.entryPk] // preserve previously defined value
                         : true;
                 }
+
+                folderMeta.mails = sortMails(folderMeta.mails);
 
                 instance.foldersMeta[selectedFolder.pk] = folderMeta;
             } else {

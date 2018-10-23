@@ -4,7 +4,7 @@ import {DbViewMailTabComponent} from "./db-view-mail-tab.component";
 import {Instance} from "src/web/src/app/store/reducers/db-view";
 import {Mail, View} from "src/shared/model/database";
 import {Omit, Unpacked} from "src/shared/types";
-import {reduceNodesMails} from "src/shared/util";
+import {reduceNodesMails, sortMails} from "src/shared/util";
 
 @Component({
     selector: "email-securely-app-db-view-mails",
@@ -37,7 +37,9 @@ export class DbViewMailsComponent {
             folderMeta: input.folderMeta || {
                 collapsibleNodes: {},
                 rootNodesCollapsed: {},
-                mails: reduceNodesMails(input.rootConversationNodes),
+                mails: sortMails(
+                    reduceNodesMails(input.rootConversationNodes),
+                ),
             },
             rootConversationNodes: input.rootConversationNodes,
         };

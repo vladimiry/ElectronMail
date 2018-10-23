@@ -32,13 +32,7 @@ env:
   - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
   - FAILURE_ARCHIVE_FILE=travis-build-id-$TRAVIS_BUILD_ID.tar.gz
   - MOZ_HEADLESS=1
-cache:
-  yarn: true
-  directories:
-  - node_modules
-  - $HOME/.cache/electron
-  - $HOME/.cache/electron-builder
-  - $HOME/.cache/snapcraft
+cache: false
 install:
 - pip install --user awscli ; export PATH=$PATH:$HOME/.local/bin
 - yarn install

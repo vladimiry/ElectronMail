@@ -34,7 +34,6 @@ env:
   - MOZ_HEADLESS=1
 cache: false
 install:
-- pip install --user awscli ; export PATH=$PATH:$HOME/.local/bin
 - yarn install
 - npm i --package-lock-only
 - npm audit

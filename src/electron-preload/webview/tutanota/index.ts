@@ -251,14 +251,23 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
                         notificationReceivedSubscriber,
                     ) => {
                         const {EntityEventController} = api["src/api/main/EntityEventController"];
-                        EntityEventController.prototype.notificationReceived = ((original) => function(
-                            this: typeof EntityEventController,
-                            entityUpdate: Rest.Model.EntityUpdate,
-                        ) {
-                            innerLogger.verbose(JSON.stringify(pick(["application", "type", "operation"], entityUpdate)));
-                            notificationReceivedSubscriber.next({events: [entityUpdate]});
-                            return original.apply(this, arguments);
-                        })(EntityEventController.prototype.notificationReceived);
+                        EntityEventController.prototype.notificationReceived = ((
+                            original = EntityEventController.prototype.notificationReceived,
+                        ) => {
+                            const overridden: typeof EntityEventController.prototype.notificationReceived = function(
+                                this: typeof EntityEventController,
+                                entityUpdates,
+                                // tslint:disable-next-line:trailing-comma
+                                ...args
+                            ) {
+                                entityUpdates
+                                    .map((entityUpdate) => pick(["application", "type", "operation"], entityUpdate))
+                                    .forEach((entityUpdate) => innerLogger.verbose(JSON.stringify(entityUpdate)));
+                                notificationReceivedSubscriber.next({events: entityUpdates});
+                                return original.apply(this, [entityUpdates, ...args]);
+                            };
+                            return overridden;
+                        })();
                     });
 
                     return notificationReceived$.pipe(

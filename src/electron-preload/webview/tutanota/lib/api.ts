@@ -9,6 +9,10 @@ type ModuleFiles =
     | "src/api/main/Entity"
     | "src/api/main/EntityEventController";
 
+class EntityEventController {
+    notificationReceived(entityUpdates: Rest.Model.EntityUpdate[]): void {}
+}
+
 interface Api extends Record<ModuleFiles, any> {
     "src/api/common/EntityFunctions": {
         GENERATED_MIN_ID: Rest.Model.Id;
@@ -51,9 +55,7 @@ interface Api extends Record<ModuleFiles, any> {
         ) => Promise<T[]>;
     };
     "src/api/main/EntityEventController": {
-        EntityEventController: () => void & {
-            notificationReceived(entityUpdate: Rest.Model.EntityUpdate): void;
-        };
+        EntityEventController: typeof EntityEventController;
     };
 }
 

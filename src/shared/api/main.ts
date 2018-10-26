@@ -39,7 +39,7 @@ export interface Endpoints {
     changeMasterPassword: ApiMethod<PasswordFieldContainer & NewPasswordFieldContainer, Settings>;
 
     dbPatch: ApiMethod<DbAccountPk
-        & DbPatch
+        & { patch: DbPatch }
         & { forceFlush?: boolean }
         & { metadata: Unpacked<ReturnType<CommonWebViewApi<AccountType>["buildDbPatch"]>>["metadata"] },
         FsDbAccount["metadata"]>;

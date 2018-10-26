@@ -1,7 +1,8 @@
 import * as Throttle from "promise-parallel-throttle";
-import {EMPTY, Observable, from, interval, merge, of} from "rxjs";
+import {EMPTY, Observable, from, interval, merge, of, throwError} from "rxjs";
 import {authenticator} from "otplib";
-import {buffer, concatMap, debounceTime, distinctUntilChanged, filter, map, mergeMap, tap} from "rxjs/operators";
+import {buffer, concatMap, debounceTime, delay, distinctUntilChanged, filter, map, mergeMap, retryWhen, take, tap} from "rxjs/operators";
+import {omit} from "ramda";
 
 import * as Database from "./lib/database";
 import * as Rest from "./lib/rest";
@@ -19,38 +20,45 @@ import {buildContact, buildFolder, buildMail} from "./lib/database";
 import {buildLoggerBundle} from "src/electron-preload/util";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {fillInputValue, getLocationHref, submitTotpToken, waitElements} from "src/electron-preload/webview/util";
-import {isUpsertOperationType} from "./lib/uilt";
+import {isAngularJsHttpResponse, isUpsertOperationType} from "./lib/uilt";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[index]");
-const WINDOW = window as any;
+const WINDOW = window as any; // TODO remove "as any" casting on https://github.com/Microsoft/TypeScript/issues/14701 resolving
 const twoFactorCodeElementId = "twoFactorCode";
 const ajaxSendNotificationSkipParam = `ajax-send-notification-skip-${Number(new Date())}`;
 const ajaxSendNotification$ = new Observable<XMLHttpRequest>((subscriber) => {
+    const ajaxSendNotificationSkipSymbol = Symbol(ajaxSendNotificationSkipParam);
+    type XMLHttpRequestType = XMLHttpRequest & { [ajaxSendNotificationSkipSymbol]?: true };
+
     XMLHttpRequest.prototype.open = ((
         original = XMLHttpRequest.prototype.open,
         urlArgIndex = 1,
         removeAjaxNotificationSkipParamRe = new RegExp(`[\\?\\&]${ajaxSendNotificationSkipParam}=`),
-    ) => function(this: XMLHttpRequest) {
+    ) => function(this: XMLHttpRequestType) {
         const args = [...arguments];
         if (args.length && String(args[urlArgIndex]).indexOf(ajaxSendNotificationSkipParam) !== -1) {
-            (this as any)[ajaxSendNotificationSkipParam] = true;
+            this[ajaxSendNotificationSkipSymbol] = true;
             args[urlArgIndex] = args[urlArgIndex].replace(removeAjaxNotificationSkipParamRe, "");
         }
         return original.apply(this, args);
     })();
+
     XMLHttpRequest.prototype.send = ((
         original = XMLHttpRequest.prototype.send,
-    ) => function(this: XMLHttpRequest) {
-        this.addEventListener(
-            "load",
-            function(this: XMLHttpRequest) {
-                if (ajaxSendNotificationSkipParam in this) {
-                    return;
-                }
-                subscriber.next(this);
-            },
-            false,
-        );
+        loadHandler = function(this: XMLHttpRequestType) {
+            if (this[ajaxSendNotificationSkipSymbol]) {
+                return;
+            }
+            subscriber.next(this);
+        },
+        loadEndHandler = function(this: XMLHttpRequestType) {
+            delete this[ajaxSendNotificationSkipSymbol];
+            this.removeEventListener("load", loadHandler);
+            this.removeEventListener("loadend", loadHandler);
+        },
+    ) => function(this: XMLHttpRequestType) {
+        this.addEventListener("load", loadHandler);
+        this.addEventListener("loadend", loadEndHandler);
         return original.apply(this, arguments);
     })();
 });
@@ -71,22 +79,45 @@ const endpoints: ProtonmailApi = {
             return await bootstrapDbPatch();
         }
 
-        const {missedEvents, latestEventId} = await (async (
-            {events, $http}: Api, id: Rest.Model.Event["EventID"],
-            fetchedEvents: Rest.Model.Event[] = [],
+        const {missedEvents, latestEventId, hasMoreEvents} = await (async (
+            {events, $http}: Api,
+            id: Rest.Model.Event["EventID"],
         ) => {
+            const bufferSize = 50;
+            const fetchedEvents: Rest.Model.Event[] = [];
+            const state: { iteration: number; hasMoreEvents?: boolean; } = {iteration: 0};
+
             do {
+                state.iteration++;
+
                 const response = await events.get(id, {params: {[ajaxSendNotificationSkipParam]: ""}});
+                const sameNextId = id === response.EventID;
+
                 fetchedEvents.push(response);
                 id = response.EventID;
+
                 if (response.More !== 1) {
                     break;
                 }
+                if (sameNextId) {
+                    throw new Error(
+                        `Events API indicates that there is next event in the queue, but responses with the same "next event id"`,
+                    );
+                }
+                if (state.iteration < bufferSize) {
+                    continue;
+                }
+
+                state.hasMoreEvents = true;
+                logger.verbose(`breaking after ${state.iteration} iterations`);
             } while (true);
-            logger.verbose(`fetched ${fetchedEvents.length} missed events`);
+
+            logger.info(`fetched ${fetchedEvents.length} missed events`);
+
             return {
-                missedEvents: fetchedEvents,
                 latestEventId: id,
+                missedEvents: fetchedEvents,
+                hasMoreEvents: state.hasMoreEvents,
             };
         })(await resolveApi(), input.metadata.latestEventId);
 
@@ -94,10 +125,23 @@ const endpoints: ProtonmailApi = {
         const metadata: Unpacked<ReturnType<ProtonmailApi["buildDbPatch"]>>["metadata"] = {latestEventId};
 
         return {
-            ...patch,
+            patch,
             metadata,
+            hasMoreEvents,
         };
-    })()),
+    })()).pipe(
+        retryWhen((errors) => errors.pipe(
+            mergeMap((error) => {
+                if (isAngularJsHttpResponse(error) && error.status === -1) {
+                    _logger.verbose(`retry "buildDbPatch" on network -1 error`);
+                    return of(error);
+                }
+                return throwError(error);
+            }),
+            delay(ONE_SECOND_MS * 3),
+            take(3),
+        )),
+    ),
 
     fillLogin: ({login, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "api:fillLogin()", zoneName)) => {
         logger.info();
@@ -303,7 +347,26 @@ const endpoints: ProtonmailApi = {
     },
 };
 
-PROTONMAIL_IPC_WEBVIEW_API.registerApi(endpoints, {logger: {error: _logger.error, info: () => {}}});
+PROTONMAIL_IPC_WEBVIEW_API.registerApi(
+    endpoints,
+    {
+        logger: {
+            error: (args: any[]) => {
+                _logger.error(...args.map((arg) => {
+                    if (isAngularJsHttpResponse(arg)) {
+                        return {
+                            // omitting possibly sensitive properties
+                            ...omit(["config", "headers", "data"], arg),
+                            url: arg.config && arg.config.url,
+                        };
+                    }
+                    return arg;
+                }));
+            },
+            info: () => {},
+        },
+    },
+);
 _logger.verbose(`api registered, url: ${getLocationHref()}`);
 
 function isLoggedIn(): boolean {
@@ -376,7 +439,7 @@ async function bootstrapDbPatch(): Promise<Unpacked<ReturnType<ProtonmailApi["bu
     };
 
     return {
-        ...patch,
+        patch,
         metadata: {latestEventId},
     };
 }

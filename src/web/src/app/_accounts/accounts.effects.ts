@@ -7,6 +7,7 @@ import {
     concatMap,
     debounce,
     debounceTime,
+    delay,
     filter,
     finalize,
     map,
@@ -23,10 +24,7 @@ import {AccountsSelectors} from "src/web/src/app/store/selectors";
 import {ElectronService} from "src/web/src/app/_core/electron.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
-import {ProtonmailApi} from "src/shared/api/webview/protonmail";
 import {State} from "src/web/src/app/store/reducers/accounts";
-import {TutanotaApi} from "src/shared/api/webview/tutanota";
-import {Unpacked} from "src/shared/types";
 import {WebViewApi} from "src/shared/api/webview/common";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/src/util";
 
@@ -132,6 +130,7 @@ export class AccountsEffects {
                                 ),
                                 fromEvent(window, "online").pipe(
                                     tap(() => logger.verbose(`triggered by: "window.online" event`)),
+                                    delay(ONE_SECOND_MS * 2),
                                 ),
                             ).pipe(
                                 debounceTime(ONE_SECOND_MS),
@@ -141,16 +140,21 @@ export class AccountsEffects {
                                 }),
                                 concatMap(() => ipcMainClient("dbGetAccountMetadata")({type, login}).pipe(
                                     concatMap((metadata) => {
-                                        // TODO consider calling PROTONMAIL_IPC_WEBVIEW_API/TUTANOTA_IPC_WEBVIEW_API.buildDbPatch directly
-                                        const method = (webViewClient as ReturnType<WebViewApi<typeof type>["buildClient"]>)(
-                                            "buildDbPatch",
-                                            {timeoutMs: ONE_SECOND_MS * 60 * 3},
-                                        );
-                                        return method.call(webViewClient, {metadata, zoneName});
+                                        // TODO TS: simplify "client" type casting
+                                        const client = type === "protonmail"
+                                            ? webViewClient as ReturnType<WebViewApi<typeof type>["buildClient"]>
+                                            : webViewClient as ReturnType<WebViewApi<typeof type>["buildClient"]>;
+                                        return client("buildDbPatch", {timeoutMs: ONE_SECOND_MS * 60 * 3})({
+                                            metadata: metadata as any, // TODO TS: get rid of "as any" casting
+                                            zoneName,
+                                        });
                                     }),
-                                    concatMap((patch) => {
-                                        type Patch = Unpacked<ReturnType<TutanotaApi["buildDbPatch"] | ProtonmailApi["buildDbPatch"]>>;
-                                        return ipcMainClient("dbPatch")({type, login, forceFlush: false, ...(patch as Patch)});
+                                    concatMap((data) => {
+                                        const {patch, metadata, hasMoreEvents} = data;
+                                        if (hasMoreEvents) {
+                                            this.fireSyncingIteration$.next({type, login});
+                                        }
+                                        return ipcMainClient("dbPatch")({type, login, metadata, patch, forceFlush: false});
                                     }),
                                     concatMap(() => EMPTY),
                                     catchError((error) => of(CORE_ACTIONS.Fail(error))),

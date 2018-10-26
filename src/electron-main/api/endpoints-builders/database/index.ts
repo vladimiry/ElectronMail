@@ -21,7 +21,7 @@ type Methods =
 
 export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Methods>> {
     return {
-        dbPatch: ({type, login, metadata: metadataPatch, forceFlush, ...entityUpdatesPatch}) => from((async (
+        dbPatch: ({type, login, metadata: metadataPatch, forceFlush, patch: entityUpdatesPatch}) => from((async (
             logger = curryFunctionMembers(_logger, "dbPatch()"),
         ) => {
             logger.info();

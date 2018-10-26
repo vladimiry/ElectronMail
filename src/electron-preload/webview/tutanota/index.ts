@@ -25,7 +25,7 @@ import {resolveApi} from "src/electron-preload/webview/tutanota/lib/api";
 
 type BuildDbPatchInputMetadata = Unpacked<ReturnType<TutanotaApi["buildDbPatch"]>>["metadata"];
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[index]");
-const WINDOW = window as any;
+const WINDOW = window as any; // TODO remove "as any" casting on https://github.com/Microsoft/TypeScript/issues/14701 resolving
 
 delete WINDOW.Notification;
 
@@ -80,7 +80,7 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
             const patch = await buildDbPatch({eventBatches: missedEventBatches, _logger: logger});
 
             return {
-                ...patch,
+                patch,
                 metadata,
             };
         })()),
@@ -356,7 +356,7 @@ async function bootstrapDbPatch(
     };
 
     return {
-        ...patch,
+        patch,
         metadata,
     };
 }

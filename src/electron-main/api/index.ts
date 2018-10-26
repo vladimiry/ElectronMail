@@ -49,6 +49,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
             ctx.settingsStore = ctx.settingsStore.clone({adapter: undefined});
             ctx.db.reset();
             await clearDefaultSessionCaches();
+            await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0}).toPromise();
             return null;
         })()),
 

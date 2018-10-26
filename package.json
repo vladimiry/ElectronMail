@@ -209,7 +209,7 @@
     "source-map": "0.7.3",
     "source-map-loader": "0.2.4",
     "source-map-support": "0.5.9",
-    "spectron": "5.0.0",
+    "spectron": "4.0.0",
     "style-loader": "0.23.1",
     "stylus-loader": "3.0.2",
     "to-string-loader": "1.1.5",
@@ -230,5 +230,8 @@
     "webpack-merge": "4.1.4",
     "webpack-node-externals": "1.7.2",
     "zone.js": "0.8.26"
+  },
+  "resolutions": {
+    "spectron/**/electron-chromedriver": "^3.0.0"
   }
 }

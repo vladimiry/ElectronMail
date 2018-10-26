@@ -1,11 +1,10 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {EMPTY, concat, of} from "rxjs";
+import {EMPTY, of} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Location} from "@angular/common";
 import {Router} from "@angular/router";
 import {catchError, concatMap, map, mergeMap, tap} from "rxjs/operators";
 
-import {ACCOUNTS_OUTLET, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
 import {CORE_ACTIONS, NAVIGATION_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
 import {ElectronService} from "./electron.service";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/src/util";
@@ -92,22 +91,11 @@ export class NavigationEffects {
         unionizeActionFilter(NAVIGATION_ACTIONS.is.Logout),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(() => {
-            const concatenated = concat(
-                this.electronService.ipcMainClient()("logout")().pipe(
-                    mergeMap(() => EMPTY),
-                ),
-                of(NAVIGATION_ACTIONS.Go({
-                    path: [{
-                        outlets: {
-                            [ACCOUNTS_OUTLET]: null,
-                            [SETTINGS_OUTLET]: SETTINGS_PATH,
-                        },
-                    }],
-                })),
-                of(CORE_ACTIONS.UpdateOverlayIcon({hasLoggedOut: false, unread: 0})),
-            );
-
-            return concatenated.pipe(
+            return this.electronService.ipcMainClient()("logout")().pipe(
+                concatMap(() => {
+                    setTimeout(() => window.location.reload(), 0);
+                    return EMPTY;
+                }),
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
             );
         }),

@@ -8,6 +8,7 @@ import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Fs} from "fs-json-store";
 import {generate as generateRandomString} from "randomstring";
 import {mergeDeepRight, omit} from "ramda";
+import {of} from "rxjs";
 import {produce} from "immer";
 
 import {AccountConfigCreatePatch, AccountConfigUpdatePatch, PasswordFieldContainer} from "src/shared/model/container";
@@ -247,6 +248,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         const {clearDefaultSessionCaches: clearDefaultSessionCachesSpy} = t.context.mocks["src/electron-main/session"];
         const {endpoints} = t.context;
         const resetSpy = sinon.spy(t.context.ctx.db, "reset");
+        const updateOverlayIconSpy = sinon.spy(endpoints, "updateOverlayIcon");
 
         await endpoints.logout().toPromise();
         t.falsy(t.context.ctx.settingsStore.adapter);
@@ -266,6 +268,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
 
         t.is(2, resetSpy.callCount);
         t.is(2, clearDefaultSessionCachesSpy.callCount);
+        t.is(2, updateOverlayIconSpy.callCount);
     },
 
     openAboutWindow: async (t) => {
@@ -482,7 +485,7 @@ async function buildMocks() {
         },
         "./endpoints-builders": {
             TrayIcon: {
-                buildEndpoints: sinon.stub().returns(Promise.resolve({updateOverlayIcon: () => {}})),
+                buildEndpoints: sinon.stub().returns(Promise.resolve({updateOverlayIcon: () => of(null)})),
             },
         } as any,
         "src/electron-main/keytar": {

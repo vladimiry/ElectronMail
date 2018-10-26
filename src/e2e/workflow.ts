@@ -165,7 +165,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
                 );
             } else {
                 t.is(
-                    (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/login//accounts-outlet:accounts)",
+                    (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/login)",
                     `login: "settings-setup" page url`,
                 );
             }
@@ -314,10 +314,10 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
 
             await client.click(`.controls .dropdown-toggle`);
             await client.click(`#logoutMenuItem`);
-            await client.pause(CONF.timeouts.elementTouched);
+            await client.pause(ONE_SECOND_MS * 2);
 
             t.is(
-                (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/login//accounts-outlet:accounts)",
+                (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/login)",
                 `logout: login page url`,
             );
 

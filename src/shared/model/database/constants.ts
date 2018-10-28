@@ -1,16 +1,16 @@
 import {buildEnumBundle} from "src/shared/util";
 
 export const PROTONMAIL_MAILBOX_IDENTIFIERS = buildEnumBundle({
-    Inbox: "0", // display: 1
+    Inbox: "0",
     ["All Drafts"]: "1",
     ["All Sent"]: "2",
-    Trash: "3", // display: 7
-    Spam: "4", // display: 6
-    ["All Mail"]: "5", // display: 8
-    Starred: "10", // display: 4
-    Archive: "6", // display: 5
-    Sent: "7", // display: 3
-    Drafts: "8", // display: 2
+    Trash: "3",
+    Spam: "4",
+    ["All Mail"]: "5",
+    Starred: "10",
+    Archive: "6",
+    Sent: "7",
+    Drafts: "8",
     Search: "search",
     Label: "label",
 });
@@ -29,6 +29,8 @@ export const MAIL_FOLDER_TYPE = buildEnumBundle({
     ARCHIVE: "4",
     SPAM: "5",
     DRAFT: "6",
+    ALL: "ALL",
+    STARRED: "STARRED",
 });
 
 export const MAIL_STATE = buildEnumBundle({

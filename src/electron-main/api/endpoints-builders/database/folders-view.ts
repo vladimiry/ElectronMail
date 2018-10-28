@@ -25,7 +25,7 @@ const splitAndFormatFolders: (folders: View.Folder[]) => {
     };
 
     return (folders: View.Folder[]) => {
-        const customizer: CustomizerResolver = ((cache) => (folder: View.Folder): Customizer => cache.get(folder) as Customizer)(
+        const customizer: CustomizerResolver = ((map) => (folder: View.Folder): Customizer => map.get(folder) as Customizer)(
             new Map(folders.map((folder) => [
                 folder, customizers[MAIL_FOLDER_TYPE._.resolveNameByValue(folder.folderType)],
             ] as [View.Folder, Customizer])),
@@ -48,12 +48,16 @@ const splitAndFormatFolders: (folders: View.Folder[]) => {
         title: () => "Inbox",
         order: 1,
     },
+    DRAFT: {
+        title: () => "Draft",
+        order: 2,
+    },
     SENT: {
         title: () => "Sent",
         order: 3,
     },
-    TRASH: {
-        title: () => "Trash",
+    STARRED: {
+        title: () => "Starred",
         order: 4,
     },
     ARCHIVE: {
@@ -64,9 +68,13 @@ const splitAndFormatFolders: (folders: View.Folder[]) => {
         title: () => "Spam",
         order: 6,
     },
-    DRAFT: {
-        title: () => "Draft",
-        order: 2,
+    ALL: {
+        title: () => "All Mail",
+        order: 7,
+    },
+    TRASH: {
+        title: () => "Trash",
+        order: 8,
     },
 });
 
@@ -160,11 +168,11 @@ const buildRootNodes = ((staticProtonmailFolders: Folder[]) => {
     [PROTONMAIL_MAILBOX_IDENTIFIERS.Inbox, MAIL_FOLDER_TYPE.INBOX],
     [PROTONMAIL_MAILBOX_IDENTIFIERS.Drafts, MAIL_FOLDER_TYPE.DRAFT],
     [PROTONMAIL_MAILBOX_IDENTIFIERS.Sent, MAIL_FOLDER_TYPE.SENT],
-    [PROTONMAIL_MAILBOX_IDENTIFIERS.Starred, MAIL_FOLDER_TYPE.CUSTOM],
+    [PROTONMAIL_MAILBOX_IDENTIFIERS.Starred, MAIL_FOLDER_TYPE.STARRED],
     [PROTONMAIL_MAILBOX_IDENTIFIERS.Archive, MAIL_FOLDER_TYPE.ARCHIVE],
     [PROTONMAIL_MAILBOX_IDENTIFIERS.Spam, MAIL_FOLDER_TYPE.SPAM],
     [PROTONMAIL_MAILBOX_IDENTIFIERS.Trash, MAIL_FOLDER_TYPE.TRASH],
-    [PROTONMAIL_MAILBOX_IDENTIFIERS["All Mail"], MAIL_FOLDER_TYPE.CUSTOM],
+    [PROTONMAIL_MAILBOX_IDENTIFIERS["All Mail"], MAIL_FOLDER_TYPE.ALL],
 ] as Array<[Folder["id"], Folder["folderType"]]>).map(([id, folderType]) => ({
     pk: id,
     id,

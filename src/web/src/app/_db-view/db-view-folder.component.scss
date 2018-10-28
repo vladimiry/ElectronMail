@@ -55,5 +55,17 @@
                 content: $fa-var-pencil-square-o;
             }
         }
+
+        &-STARRED { // sass-lint:disable-line class-name-format
+            .fa::before {
+                content: $fa-var-star;
+            }
+        }
+
+        &-ALL { // sass-lint:disable-line class-name-format
+            .fa::before {
+                content: $fa-var-globe;
+            }
+        }
     }
 }

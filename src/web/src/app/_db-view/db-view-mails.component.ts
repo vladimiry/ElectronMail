@@ -1,10 +1,14 @@
 import {ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, Output} from "@angular/core";
 
+import {DB_VIEW_ACTIONS} from "../store/actions";
 import {DbViewMailTabComponent} from "./db-view-mail-tab.component";
 import {Instance} from "src/web/src/app/store/reducers/db-view";
 import {Mail, View} from "src/shared/model/database";
 import {Omit, Unpacked} from "src/shared/types";
 import {reduceNodesMails, sortMails} from "src/shared/util";
+
+export type ToggleFolderMetadataPropEmitter = Pick<View.RootConversationNode, "entryPk">
+    & Pick<Extract<ReturnType<typeof DB_VIEW_ACTIONS.ToggleFolderMetadataProp>, { type: "ToggleFolderMetadataProp" }>["payload"], "prop">;
 
 @Component({
     selector: "email-securely-app-db-view-mails",
@@ -23,7 +27,7 @@ export class DbViewMailsComponent {
     @Output()
     selectMailPkHandler = new EventEmitter<Mail["pk"]>();
     @Output()
-    toggleRootNodesCollapsingHandler = new EventEmitter<Pick<View.RootConversationNode, "entryPk">>();
+    toggleFolderMetadataPropHandler = new EventEmitter<ToggleFolderMetadataPropEmitter>();
     private pageSize = 50;
 
     @Input()
@@ -35,8 +39,8 @@ export class DbViewMailsComponent {
                 ? this.state.selectedMail
                 : undefined,
             folderMeta: input.folderMeta || {
-                collapsibleNodes: {},
-                rootNodesCollapsed: {},
+                unmatchedNodes: {},
+                unmatchedNodesCollapsed: {},
                 mails: sortMails(
                     reduceNodesMails(input.rootConversationNodes),
                 ),
@@ -45,7 +49,7 @@ export class DbViewMailsComponent {
         };
         this.state = {
             ...state,
-            paging: this.calculatePaging(state, this.state && this.state.uid !== state.uid),
+            paging: this.calculatePaging(state, {reset: !this.state || this.state.uid !== state.uid}),
         };
     }
 
@@ -58,7 +62,7 @@ export class DbViewMailsComponent {
     }
 
     loadMore() {
-        this.state.paging = this.calculatePaging(this.state);
+        this.state.paging = this.calculatePaging(this.state, {increase: true});
     }
 
     toggleViewMode() {
@@ -68,7 +72,7 @@ export class DbViewMailsComponent {
         };
         this.state = {
             ...state,
-            paging: this.calculatePaging(state, true),
+            paging: this.calculatePaging(state, {reset: true}),
         };
     }
 
@@ -84,20 +88,36 @@ export class DbViewMailsComponent {
         return nodes.length === 1 && !nodes[0].mail;
     }
 
-    toggleRootNodesCollapsing({entryPk}: View.RootConversationNode): void {
-        this.toggleRootNodesCollapsingHandler.emit({entryPk});
+    toggleExpanded({entryPk}: View.RootConversationNode): void {
+        this.toggleFolderMetadataPropHandler.emit({entryPk, prop: "expanded"});
     }
 
-    rootNodeHasHiddenMails({entryPk}: View.RootConversationNode): boolean {
-        return entryPk in this.state.folderMeta.rootNodesCollapsed;
+    matchedMailsCount({entryPk}: View.RootConversationNode): number {
+        return this.state.folderMeta.matchedMailsCount[entryPk];
     }
 
-    rootNodeCollapsed({entryPk}: View.RootConversationNode): boolean {
-        return Boolean(this.state.folderMeta.rootNodesCollapsed[entryPk]);
+    mostRecentMatchedMail({entryPk}: View.RootConversationNode): View.Mail {
+        return this.state.folderMeta.mostRecentMatchedMails[entryPk];
+    }
+
+    expanded({entryPk}: View.RootConversationNode): boolean {
+        return Boolean(this.state.folderMeta.expanded[entryPk]);
+    }
+
+    toggleUnmatchedCollapsed({entryPk}: View.RootConversationNode): void {
+        this.toggleFolderMetadataPropHandler.emit({entryPk, prop: "unmatchedNodesCollapsed"});
+    }
+
+    hasUnmatchedNodes({entryPk}: View.RootConversationNode): boolean {
+        return entryPk in this.state.folderMeta.unmatchedNodesCollapsed;
+    }
+
+    unmatchedNodesCollapsed({entryPk}: View.RootConversationNode): boolean {
+        return Boolean(this.state.folderMeta.unmatchedNodesCollapsed[entryPk]);
     }
 
     nodeHasHiddenMail({entryPk}: View.RootConversationNode): boolean {
-        return entryPk in this.state.folderMeta.collapsibleNodes;
+        return entryPk in this.state.folderMeta.unmatchedNodes;
     }
 
     @HostListener("click", ["$event"])
@@ -116,14 +136,18 @@ export class DbViewMailsComponent {
         this.selectMailPkHandler.emit(mailElement.getAttribute("data-pk") as Mail["pk"]);
     }
 
-    private calculatePaging(state: Omit<typeof DbViewMailsComponent.prototype.state, "paging">, reset: boolean = false) {
+    private calculatePaging(
+        state: Omit<typeof DbViewMailsComponent.prototype.state, "paging">,
+        {reset = false, increase = reset}: { reset?: boolean; increase?: boolean; } = {},
+    ) {
         const size = (state.plainListViewMode
             ? state.folderMeta.mails
             : state.rootConversationNodes).length;
         const paging: { endIndex: number; nextPageSize: number; } = this.state && !reset
             ? {...this.state.paging}
             : {endIndex: 0, nextPageSize: 0};
-        const add = !this.state || this.state.uid === state.uid || this.state.plainListViewMode !== state.plainListViewMode || reset
+        // const add = !this.state || this.state.uid === state.uid || this.state.plainListViewMode !== state.plainListViewMode || reset
+        const add = increase
             ? this.pageSize
             : 0;
         const maxIndex = size;

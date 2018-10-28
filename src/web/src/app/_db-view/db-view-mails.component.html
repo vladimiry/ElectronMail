@@ -10,7 +10,8 @@
         }"></i>
     </a>
     <div class="badge ml-2">
-        {{ state.plainListViewMode ? "mails" : "conversations" }}<span *ngIf="state.paging.size">: {{ state.paging.endIndex }} of {{ state.paging.size }}</span>
+        {{ state.plainListViewMode ? "mails" : "conversations" }}<span *ngIf="state.paging.size">: {{ state.paging.endIndex }}
+        of {{ state.paging.size }}</span>
     </div>
 </div>
 <div class="d-flex flex-row">
@@ -26,48 +27,62 @@
             </ng-container>
             <ng-template #conversationViewModeTemplate>
                 <div
-                    class="conversation mb-2" *ngFor="let rootNode of state.rootConversationNodes.slice(0, state.paging.endIndex); trackBy: trackByNodeMailPk"
-                    [ngClass]="{'collapsed': rootNodeCollapsed(rootNode)}">
-                    <div
-                        class="toggler"
-                        *ngIf="rootNodeHasHiddenMails(rootNode)"
-                        (click)="toggleRootNodesCollapsing(rootNode)"
-                    >
-                        All folders {{ rootNodeCollapsed(rootNode) ? "+" : "-" }}
-                    </div>
-                    <ng-container
-                        [ngTemplateOutlet]="nodesTemplate"
-                        [ngTemplateOutletContext]="{nodes: [rootNode], level: 0, collapsible: rootNodeCollapsed(rootNode)}"
-                    ></ng-container>
+                    class="conversation d-flex flex-column mb-2"
+                    *ngFor="let rootNode of state.rootConversationNodes.slice(0, state.paging.endIndex); trackBy: trackByNodeMailPk"
+                    [ngClass]="{'unmatched-collapsed': unmatchedNodesCollapsed(rootNode)}">
+                    <ng-container *ngIf="expanded(rootNode); else mostRecentMatchedMailTemplate">
+                        <a href="javascript:void(0);" class="toggler d-flex align-self-start"
+                           *ngIf="hasUnmatchedNodes(rootNode)"
+                           (click)="toggleUnmatchedCollapsed(rootNode)">
+                            {{ unmatchedNodesCollapsed(rootNode) ? "Show" : "Hide" }} unmatched folders
+                        </a>
+                        <ng-container
+                            [ngTemplateOutlet]="nodesTemplate"
+                            [ngTemplateOutletContext]="{nodes: [rootNode], level: 0, unmatchedCollapsed: unmatchedNodesCollapsed(rootNode)}"
+                        ></ng-container>
+                        <a href="javascript:void(0);" class="toggler d-flex align-self-center"
+                           (click)="toggleExpanded(rootNode)">
+                            Collapse
+                        </a>
+                    </ng-container>
+                    <ng-template #mostRecentMatchedMailTemplate>
+                        <email-securely-app-db-view-mail
+                            *ngIf="mostRecentMatchedMail(rootNode); let nodeMail"
+                            [attr.selected]="nodeMail.pk === state.selectedMail?.pk"
+                            [attr.data-pk]="nodeMail.pk"
+                            [mail]="nodeMail"
+                        ></email-securely-app-db-view-mail>
+                        <a href="javascript:void(0);" class="toggler d-flex align-self-center"
+                           *ngIf="matchedMailsCount(rootNode) > 1"
+                           (click)="toggleExpanded(rootNode)">
+                            Expand (+{{ matchedMailsCount(rootNode) - 1 }})
+                        </a>
+                    </ng-template>
                 </div>
-                <ng-template #nodesTemplate let-nodes="nodes" let-level="level" let-collapsible="collapsible">
+                <ng-template #nodesTemplate let-nodes="nodes" let-level="level" let-unmatchedCollapsed="unmatchedCollapsed">
                     <!-- TODO consider using "virtual list", ie rendering only visible data -->
                     <ng-container *ngFor="let node of nodes; trackBy: trackByNodeMailPk">
                         <div class="conversation-node"
                              *ngIf="!isEmptyNodes(nodes)"
                              [ngStyle]="{'padding-left': level + 'em'}"
-                             [ngClass]="{'collapsed': collapsible, 'collapsible': nodeHasHiddenMail(node)}">
+                             [ngClass]="{'unmatched-collapsed': unmatchedCollapsed, 'unmatched-collapsible': nodeHasHiddenMail(node)}">
                             <email-securely-app-db-view-mail
-                                *ngIf="node.mail; else removedEmailStubTemplate"
+                                *ngIf="node.mail"
                                 [attr.selected]="node.mail.pk === state.selectedMail?.pk"
                                 [attr.data-pk]="node.mail.pk"
                                 [mail]="node.mail"
                             ></email-securely-app-db-view-mail>
-                            <ng-template #removedEmailStubTemplate>
-                                <!--<div class="d-flex">-->
-                                <!--Message has been removed. This is just a stub to preserve the conversation structure consistency.-->
-                                <!--</div>-->
-                            </ng-template>
                         </div>
                         <ng-container
                             [ngTemplateOutlet]="nodesTemplate"
-                            [ngTemplateOutletContext]="{nodes: node.children, level: level + (isEmptyNodes(nodes) ? 0 : 0.65), collapsible: collapsible}"
+                            [ngTemplateOutletContext]="{nodes: node.children, level: level + (isEmptyNodes(nodes) ? 0 : 0.65), unmatchedCollapsed: unmatchedCollapsed}"
                         ></ng-container>
                     </ng-container>
                 </ng-template>
             </ng-template>
             <button class="btn btn-secondary load-more my-3" *ngIf="state.paging.nextPageSize" (click)="loadMore()">
-                More <small>(+{{ state.paging.nextPageSize }})</small>
+                More
+                <small>(+{{ state.paging.nextPageSize }})</small>
             </button>
         </div>
     </div>

@@ -13,8 +13,7 @@ export interface RootConversationNode extends ConversationNode {
     summary: {
         size: number;
         unread: number;
-        sentDateMin: Model.Mail["sentDate"];
-        sentDateMax: Model.Mail["sentDate"];
+        maxDate: Model.Mail["sentDate"];
     };
 }
 

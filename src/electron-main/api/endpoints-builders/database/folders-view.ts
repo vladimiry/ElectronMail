@@ -181,8 +181,7 @@ function fillRootNodesSummary(rootNodes: View.ConversationNode[]) {
             summary: {
                 size: 0,
                 unread: 0,
-                sentDateMin: 0,
-                sentDateMax: 0,
+                maxDate: 0,
             },
         };
         const rootNodeFolders = new Set<View.Folder>();
@@ -204,8 +203,7 @@ function fillRootNodesSummary(rootNodes: View.ConversationNode[]) {
 
             rootNode.summary.size++;
             rootNode.summary.unread += Number(node.mail.unread);
-            rootNode.summary.sentDateMin = Math.min(node.mail.sentDate, rootNode.summary.sentDateMin);
-            rootNode.summary.sentDateMax = Math.max(node.mail.sentDate, rootNode.summary.sentDateMax);
+            rootNode.summary.maxDate = Math.max(node.mail.sentDate, rootNode.summary.maxDate);
 
             node.mail.folders.forEach((folder) => rootNodeFolders.add(folder));
         });
@@ -222,7 +220,7 @@ function buildFoldersView<T extends keyof FsDb["accounts"]>(account: FsDbAccount
     fillRootNodesSummary(rootNodes);
 
     folders.forEach(({rootConversationNodes}) => {
-        rootConversationNodes.sort((o1, o2) => o2.summary.sentDateMax - o1.summary.sentDateMax);
+        rootConversationNodes.sort((o1, o2) => o2.summary.maxDate - o1.summary.maxDate);
     });
 
     return folders;

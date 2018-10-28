@@ -1,6 +1,7 @@
 import {ofType, unionize} from "@vladimiry/unionize";
 
 import {DbAccountPk, Folder, Mail, View} from "src/shared/model/database";
+import {Instance} from "src/web/src/app/store/reducers/db-view";
 
 export const DB_VIEW_ACTIONS = unionize({
         MountInstance: ofType<{ dbAccountPk: DbAccountPk; finishPromise: Promise<void>; }>(),
@@ -9,7 +10,9 @@ export const DB_VIEW_ACTIONS = unionize({
         SelectFolder: ofType<{ dbAccountPk: DbAccountPk; folderPk?: Folder["pk"]; distinct?: boolean; }>(),
         SelectMailRequest: ofType<{ dbAccountPk: DbAccountPk; mailPk: Mail["pk"]; }>(),
         SelectMail: ofType<{ dbAccountPk: DbAccountPk; mail: Mail; }>(),
-        ToggleRootNodesCollapsing: ofType<{ dbAccountPk: DbAccountPk } & Pick<View.RootConversationNode, "entryPk">>(),
+        ToggleFolderMetadataProp: ofType<{ dbAccountPk: DbAccountPk }
+            & { prop: keyof Pick<Instance["foldersMeta"][string], "expanded" | "unmatchedNodesCollapsed"> }
+            & Pick<View.RootConversationNode, "entryPk">>(),
     },
     {
         tag: "type",

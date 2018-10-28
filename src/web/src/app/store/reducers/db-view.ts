@@ -13,9 +13,12 @@ export interface Instance {
         custom: View.Folder[];
     };
     foldersMeta: Record<View.Folder["pk"], {
-        collapsibleNodes: Record<View.ConversationNode["entryPk"], boolean>;
-        rootNodesCollapsed: Record<View.RootConversationNode["entryPk"], boolean>;
         mails: View.Mail[];
+        matchedMailsCount: Record<View.RootConversationNode["entryPk"], number>;
+        expanded: Record<View.RootConversationNode["entryPk"], boolean>;
+        unmatchedNodes: Record<View.ConversationNode["entryPk"], boolean>;
+        unmatchedNodesCollapsed: Record<View.RootConversationNode["entryPk"], boolean>;
+        mostRecentMatchedMails: Record<View.RootConversationNode["entryPk"], View.Mail>;
     }>;
     selectedFolderPk?: View.Folder["pk"];
     selectedMail?: Mail;
@@ -58,12 +61,6 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
             };
             const selectedFolder = instance.folders.system.concat(instance.folders.custom)
                 .find(({pk}) => pk === instance.selectedFolderPk);
-            const matchesSelectedMailByPk = ((selectedMailPk) => {
-                return selectedMailPk
-                    ? ({pk}: View.Mail) => pk === selectedMailPk
-                    : () => false;
-            })(instance.selectedMail && instance.selectedMail.pk);
-            let keepSelectedMail: boolean = false;
 
             // TODO delete non existing folders from "instance.foldersMeta"
 
@@ -71,51 +68,64 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
                 // TODO consider caching this block calculations result, so no recalculation on repeatable same folder selection
                 // TODO consider initializing "foldersMeta" at the backend side once before serving the response
                 const folderMeta: Instance["foldersMeta"][typeof selectedFolder.pk] = {
-                    collapsibleNodes: {},
-                    rootNodesCollapsed: {},
                     mails: [],
+                    matchedMailsCount: {},
+                    expanded: (instance.foldersMeta[selectedFolder.pk] || ({expanded: {}})).expanded,
+                    unmatchedNodes: {},
+                    unmatchedNodesCollapsed: {},
+                    mostRecentMatchedMails: {},
                 };
-                const {rootNodesCollapsed} = (instance.foldersMeta[selectedFolder.pk] || ({rootNodesCollapsed: {}}));
+                const {unmatchedNodesCollapsed} = (instance.foldersMeta[selectedFolder.pk] || ({unmatchedNodesCollapsed: {}}));
+                const selectedMailPk = instance.selectedMail && instance.selectedMail.pk;
 
                 for (const rootNode of selectedFolder.rootConversationNodes) {
-                    const collapsibleNodes: typeof folderMeta.collapsibleNodes = {};
+                    const matchedMails: typeof folderMeta.mails = [];
+                    const unmatchedNodes: typeof folderMeta.unmatchedNodes = {};
 
                     walkConversationNodesTree([rootNode], ({mail, entryPk}) => {
                         if (!mail) {
                             return;
                         }
 
-                        keepSelectedMail = keepSelectedMail || matchesSelectedMailByPk(mail);
-
                         if (mail.folders.includes(selectedFolder)) {
-                            folderMeta.mails.push(mail);
+                            matchedMails.push(mail);
                         } else {
-                            collapsibleNodes[entryPk] = true;
+                            unmatchedNodes[entryPk] = true;
                         }
                     });
 
-                    folderMeta.collapsibleNodes = {
-                        ...folderMeta.collapsibleNodes,
-                        ...collapsibleNodes,
-                    };
+                    // matched mails handling
+                    folderMeta.mails.push(...matchedMails);
+                    folderMeta.matchedMailsCount[rootNode.entryPk] = matchedMails.length;
+                    folderMeta.mostRecentMatchedMails[rootNode.entryPk] = sortMails(matchedMails)[0];
 
-                    if (!Object.keys(collapsibleNodes).length) {
+                    // unmatched mails handling
+                    folderMeta.unmatchedNodes = {
+                        ...folderMeta.unmatchedNodes,
+                        ...unmatchedNodes,
+                    };
+                    if (!Object.keys(unmatchedNodes).length) {
+                        delete folderMeta.unmatchedNodesCollapsed[rootNode.entryPk];
                         continue;
                     }
-
-                    folderMeta.rootNodesCollapsed[rootNode.entryPk] = rootNode.entryPk in rootNodesCollapsed
-                        ? rootNodesCollapsed[rootNode.entryPk] // preserve previously defined value
+                    folderMeta.unmatchedNodesCollapsed[rootNode.entryPk] = rootNode.entryPk in unmatchedNodesCollapsed
+                        ? unmatchedNodesCollapsed[rootNode.entryPk] // preserve previously defined value
                         : true;
                 }
 
-                folderMeta.mails = sortMails(folderMeta.mails);
+                // conversations need to be sorted based on the matched mails, backend returns it sorted by all the mails
+                selectedFolder.rootConversationNodes.sort((o1, o2) => {
+                    return folderMeta.mostRecentMatchedMails[o2.entryPk].sentDate - folderMeta.mostRecentMatchedMails[o1.entryPk].sentDate;
+                });
 
+                folderMeta.mails = sortMails(folderMeta.mails);
                 instance.foldersMeta[selectedFolder.pk] = folderMeta;
+
+                if (selectedMailPk && !folderMeta.mails.find(({pk}) => pk === selectedMailPk)) {
+                    delete instance.selectedMail;
+                }
             } else {
                 delete instance.selectedFolderPk;
-            }
-
-            if (!keepSelectedMail) {
                 delete instance.selectedMail;
             }
 
@@ -142,13 +152,13 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
                 },
             };
         },
-        ToggleRootNodesCollapsing: ({dbAccountPk, entryPk}) => {
+        ToggleFolderMetadataProp: ({dbAccountPk, prop, entryPk}) => {
             const key = instanceKey(dbAccountPk);
             const instance = state.instances[key];
             const selectedFolderPk: string | undefined = instance && instance.selectedFolderPk || undefined;
             const folderMeta = selectedFolderPk && instance && instance.foldersMeta[selectedFolderPk];
 
-            if (!selectedFolderPk || !instance || !folderMeta || !(entryPk in folderMeta.rootNodesCollapsed)) {
+            if (!selectedFolderPk || !instance || !folderMeta/* || !(entryPk in folderMeta[prop])*/) {
                 return state;
             }
 
@@ -162,9 +172,9 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
                             ...instance.foldersMeta,
                             [selectedFolderPk]: {
                                 ...folderMeta,
-                                rootNodesCollapsed: {
-                                    ...folderMeta.rootNodesCollapsed,
-                                    [entryPk]: !folderMeta.rootNodesCollapsed[entryPk],
+                                [prop]: {
+                                    ...folderMeta[prop],
+                                    [entryPk]: !folderMeta[prop][entryPk],
                                 },
                             },
                         },

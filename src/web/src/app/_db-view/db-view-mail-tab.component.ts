@@ -8,6 +8,7 @@ import {DbAccountPk, MAIL_FOLDER_TYPE, Mail, View} from "src/shared/model/databa
 import {FEATURED} from "src/web/src/app/store/selectors/db-view";
 import {NgChangesObservableComponent} from "src/web/src/app/components/ng-changes-observable.component";
 import {State} from "src/web/src/app/store/reducers/db-view";
+import {ToggleFolderMetadataPropEmitter} from "./db-view-mails.component";
 
 @Component({
     selector: "email-securely-app-db-view-mail-tab",
@@ -75,7 +76,7 @@ export class DbViewMailTabComponent extends NgChangesObservableComponent {
         this.store.dispatch(DB_VIEW_ACTIONS.SelectMailRequest({dbAccountPk: this.dbAccountPk, mailPk}));
     }
 
-    toggleRootNodesCollapsingHandler({entryPk}: View.RootConversationNode) {
-        this.store.dispatch(DB_VIEW_ACTIONS.ToggleRootNodesCollapsing({dbAccountPk: this.dbAccountPk, entryPk}));
+    toggleFolderMetadataPropHandler({entryPk, prop}: ToggleFolderMetadataPropEmitter) {
+        this.store.dispatch(DB_VIEW_ACTIONS.ToggleFolderMetadataProp({dbAccountPk: this.dbAccountPk, prop, entryPk}));
     }
 }

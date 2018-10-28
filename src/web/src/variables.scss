@@ -11,6 +11,7 @@ $app-color-bg-dark: #5a6786;
 $app-color-warning-light-text: theme-color-level("warning", 6);
 
 $app-font-size-base-small: $font-size-base * 0.75;
+$app-font-size-base-medium: $font-size-base * 0.85;
 
 @mixin app-unread-badge {
     @include badge-variant(lighten(theme-color("danger"), 3%));

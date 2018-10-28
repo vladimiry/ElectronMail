@@ -47,22 +47,27 @@
     }
 
     .conversation {
-        &.collapsed {
-            .conversation-node {
-                padding-left: 0 !important; // sass-lint:disable-line no-important
+        > .toggler {
+            font-size: $app-font-size-base-small;
+            color: $gray-600;
+            background-color: $white;
+            border-style: solid;
+            border-color: $list-group-border-color;
+            border-width: 0 1px 1px;
+            border-radius: 0 0 5px 5px;
+            padding: 0.2em;
+            cursor: pointer;
+
+            &.align-self-start {
+                border-width: 1px 1px 0;
+                border-radius: 5px 5px 0 0;
             }
         }
 
-        > .toggler {
-            background-color: $white;
-            border: 1px solid $list-group-border-color;
-            border-width: 1px 1px 0;
-            border-radius: 5px 5px 0 0;
-            font-size: $app-font-size-base-small;
-            color: $gray-600;
-            display: inline-block;
-            padding: 0.25em;
-            cursor: pointer;
+        &.unmatched-collapsed {
+            .conversation-node {
+                padding-left: 0 !important; // sass-lint:disable-line no-important
+            }
         }
 
         .conversation-node {
@@ -71,10 +76,10 @@
             border: 0;
             cursor: pointer;
 
-            &.collapsible {
-                // opacity: 0.5;
+            &.unmatched-collapsible {
+                opacity: 0.55;
 
-                &.collapsed {
+                &.unmatched-collapsed {
                     display: none;
                 }
             }

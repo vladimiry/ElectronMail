@@ -11,6 +11,7 @@
   },
   "main": "./app/electron-main.js",
   "scripts": {
+    "generate-npm-lockfile": "synp --source-file yarn.lock",
     "precommit": "lint-staged",
     "app:dist": "npm-run-all lint test:electron-main test:web clean:app build assets electron-builder:install-app-deps test:e2e",
     "build": "npm-run-all build:electron-main build:electron-preload build:web",
@@ -216,6 +217,7 @@
     "spectron": "4.0.0",
     "style-loader": "0.23.1",
     "stylus-loader": "3.0.2",
+    "synp": "1.3.2",
     "to-string-loader": "1.1.5",
     "ts-deferred": "1.0.4",
     "ts-node": "7.0.1",

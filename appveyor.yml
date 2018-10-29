@@ -19,7 +19,7 @@ install:
 - npm --version
 - yarn --version
 - yarn install --mutex file
-- npm i --package-lock-only
+- yarn generate-npm-lockfile
 - npm audit
 build_script:
 - yarn run app:dist

@@ -35,7 +35,7 @@ env:
 cache: false
 install:
 - yarn install
-- npm i --package-lock-only
+- yarn generate-npm-lockfile
 - npm audit
 before_script:
 - |

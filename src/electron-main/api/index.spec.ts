@@ -231,6 +231,11 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.pass();
     },
 
+    // TODO test "dbExport" API
+    dbExport: (t) => {
+        t.pass();
+    },
+
     init: async (t) => {
         const result = await t.context.endpoints.init().toPromise();
 

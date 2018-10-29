@@ -3,6 +3,7 @@ import {UnionOf} from "@vladimiry/unionize";
 import * as fromRoot from "./root";
 import {Config, Settings} from "src/shared/model/options";
 import {ElectronContextLocations} from "src/shared/model/electron";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
 
 export const featureName = "options";
@@ -27,14 +28,14 @@ export interface State extends fromRoot.State {
     progress: ProgressPatch;
     electronLocations?: ElectronContextLocations;
     hasSavedPassword?: boolean;
-    activateBrowserWindowCounter: number;
+    mainProcessNotification: UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>;
 }
 
 const initialState: State = {
     config: {} as Config,
     settings: {} as Settings,
     progress: {},
-    activateBrowserWindowCounter: 0,
+    mainProcessNotification: {type: "ActivateBrowserWindow", payload: {}},
 };
 
 export function reducer(state = initialState, action: UnionOf<typeof OPTIONS_ACTIONS>): State {
@@ -43,7 +44,7 @@ export function reducer(state = initialState, action: UnionOf<typeof OPTIONS_ACT
         GetConfigResponse: (config) => ({...state, config}),
         GetSettingsResponse: (settings) => ({...state, settings}),
         PatchProgress: (progressPatch) => ({...state, progress: {...state.progress, ...progressPatch}}),
-        ActivateBrowserWindow: () => ({...state, activateBrowserWindowCounter: (state.activateBrowserWindowCounter || 0) + 1}),
+        PatchMainProcessNotification: (mainProcessNotification) => ({...state, mainProcessNotification}),
         default: () => state,
     });
 }

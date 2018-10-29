@@ -25,6 +25,7 @@ import {AccountConfig} from "src/shared/model/account";
 import {AccountsSelectors, OptionsSelectors} from "src/web/src/app/store/selectors";
 import {BuildEnvironment} from "src/shared/model/common";
 import {DbViewModuleResolve} from "./db-view-module-resolve.service";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {NgChangesObservableComponent} from "src/web/src/app/components/ng-changes-observable.component";
 import {State} from "src/web/src/app/store/reducers/accounts";
 import {Unpacked} from "src/shared/types";
@@ -130,7 +131,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         this.webViewHiddenByDatabaseView = Boolean(databaseView);
 
                         if (!this.webViewHiddenByDatabaseView) {
-                            setTimeout(() => this.focusWebView, 0);
+                            setTimeout(() => this.focusWebView(), 0);
                         }
                     });
             })(),
@@ -212,8 +213,13 @@ export class AccountComponent extends NgChangesObservableComponent implements On
 
         this.subscription.add(
             combineLatest(
-                this.store.pipe(select(AccountsSelectors.FEATURED.selectedLogin)),
-                this.store.pipe(select(OptionsSelectors.FEATURED.activateBrowserWindowCounter)),
+                this.store.pipe(
+                    select(AccountsSelectors.FEATURED.selectedLogin),
+                ),
+                this.store.pipe(
+                    select(OptionsSelectors.FEATURED.mainProcessNotification),
+                    filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.ActivateBrowserWindow),
+                ),
             ).pipe(
                 filter(([selectedLogin]) => this.account.accountConfig.login === selectedLogin),
                 debounceTime(300),
@@ -234,6 +240,12 @@ export class AccountComponent extends NgChangesObservableComponent implements On
 
         if (!webView) {
             return;
+        }
+
+        const activeElement = document.activeElement as any;
+
+        if (activeElement && typeof activeElement.blur === "function") {
+            activeElement.blur();
         }
 
         webView.blur();

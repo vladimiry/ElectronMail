@@ -10,7 +10,7 @@ import {DbAccountPk, FsDb, FsDbAccount, MemoryDb, MemoryDbAccount} from "src/sha
 import {EntityMap} from "./entity-map";
 import {curryFunctionMembers} from "src/shared/util";
 
-const logger = curryFunctionMembers(_logger, "[database]");
+const logger = curryFunctionMembers(_logger, "[electron-main/database]");
 
 // TODO consider dropping Map-based databse use ("MemoryDb"), ie use ony pupe JSON-based "FsDb"
 export class Database {

@@ -14,6 +14,21 @@
                 </li>
             </ul>
         </ng-template>
+        <div class="py-2 d-flex">
+            <a class="d-flex flex-grow-1" href="javascript:void(0)" (click)="export()">Export</a>
+            <i class="fa fa-info-circle text-danger d-flex pt-1 ml-1"
+               [popover]="dangerPopupTemplate" placement="top" container="body" triggers="mouseenter:mouseleave"
+            ></i>
+            <i class="fa fa-info-circle text-warning d-flex pt-1 ml-1"
+               [popover]="warningPopupTemplate" placement="top" container="body" triggers="mouseenter:mouseleave"
+            ></i>
+            <ng-template #dangerPopupTemplate>
+                App exports emails in their original <br>form, <span class="text-danger">unencrypted</span> and <span class="text-danger">unsanitized</span>!
+            </ng-template>
+            <ng-template #warningPopupTemplate>
+                Attachments are ignored during export.
+            </ng-template>
+        </div>
     </div>
     <email-securely-app-db-view-mails
         [input]="{

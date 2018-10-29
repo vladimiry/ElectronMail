@@ -12,6 +12,7 @@ import {Context, ContextInitOptions, ContextInitOptionsPaths, RuntimeEnvironment
 import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {INITIAL_STORES, configEncryptionPresetValidator, settingsAccountLoginUniquenessValidator} from "./constants";
+import {NOTIFICATION_SUBJECT} from "./api/constants";
 import {RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
 
 export function initContext(options: ContextInitOptions = {}): Context {
@@ -49,6 +50,10 @@ export function initContext(options: ContextInitOptions = {}): Context {
             validators: [settingsAccountLoginUniquenessValidator],
         }),
     };
+
+    NOTIFICATION_SUBJECT.subscribe((action) => {
+        logger.info("notification", JSON.stringify(action));
+    });
 
     return ctx;
 }

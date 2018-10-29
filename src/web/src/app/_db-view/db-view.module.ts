@@ -1,5 +1,6 @@
 import {EffectsModule} from "@ngrx/effects";
 import {NgModule} from "@angular/core";
+import {PopoverModule} from "ngx-bootstrap/popover";
 
 import {DBVIEW_MODULE_ENTRY_COMPONENT_TOKEN} from "src/web/src/app/app.constants";
 import {DbViewEffects} from "./db-view.effects";
@@ -14,6 +15,7 @@ import {SharedModule} from "src/web/src/app/_shared/shared.module";
 
 @NgModule({
     imports: [
+        PopoverModule,
         SharedModule,
         EffectsModule.forFeature([DbViewEffects]),
     ],

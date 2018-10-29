@@ -11,7 +11,7 @@ import {
 } from "src/shared/model/container";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {ElectronContextLocations} from "src/shared/model/electron";
-import {ProgressPatch} from "src/web/src/app/store/reducers/options";
+import {ProgressPatch, State} from "src/web/src/app/store/reducers/options";
 
 export const OPTIONS_ACTIONS = unionize({
         AddAccountRequest: ofType<AccountConfigCreatePatch>(),
@@ -31,7 +31,8 @@ export const OPTIONS_ACTIONS = unionize({
         ReEncryptSettings: ofType<{ password: string, encryptionPreset: PasswordBasedPreset }>(),
         SignInRequest: ofType<Partial<PasswordFieldContainer> & { savePassword?: boolean; }>(),
         ToggleCompactRequest: ofType<{}>(),
-        ActivateBrowserWindow: ofType<{}>(),
+        SetupMainProcessNotification: ofType<{}>(),
+        PatchMainProcessNotification: ofType<State["mainProcessNotification"]>(),
     },
     {
         tag: "type",

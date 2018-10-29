@@ -1,7 +1,8 @@
 import electronLog from "electron-log";
 import sanitizeHtml from "sanitize-html";
+import {Observable, from} from "rxjs";
+import {app, dialog} from "electron";
 import {equals, mergeDeepRight, omit} from "ramda";
-import {from} from "rxjs";
 
 import {Arguments, Unpacked} from "src/shared/types";
 import {Context} from "src/electron-main/model";
@@ -10,14 +11,16 @@ import {EntityMap, MemoryDbAccount} from "src/shared/model/database";
 import {NOTIFICATION_SUBJECT} from "src/electron-main/api/constants";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {prepareFoldersView} from "./folders-view";
+import {writeEmlFile} from "./export";
 
-const _logger = curryFunctionMembers(electronLog, "[database api]");
+const _logger = curryFunctionMembers(electronLog, "[electron-main/api/endpoints-builders/database]");
 
 type Methods =
     | "dbPatch"
     | "dbGetAccountMetadata"
     | "dbGetAccountDataView"
-    | "dbGetAccountMail";
+    | "dbGetAccountMail"
+    | "dbExport";
 
 export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Methods>> {
     return {
@@ -73,7 +76,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
         dbGetAccountDataView: ({type, login}) => from((async (
             logger = curryFunctionMembers(_logger, "dbGetAccountDataView()"),
         ) => {
-            logger.info("dbGetAccountDataView()");
+            logger.info();
 
             const account = ctx.db.getFsAccount({type, login});
 
@@ -88,28 +91,74 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
         })()),
 
         dbGetAccountMail: ({type, login, pk}) => from((async (
-            logger = curryFunctionMembers(_logger, "dbGetAccountDataView()"),
+            logger = curryFunctionMembers(_logger, "dbGetAccountMail()"),
         ) => {
-            logger.info("dbGetAccountMail()");
+            logger.info();
 
             const account = ctx.db.getFsAccount({type, login});
 
             if (!account) {
-                throw new Error(`Database access error: failed to resolve account by the provided "type/login"`);
+                throw new Error(`Failed to resolve account by the provided "type/login"`);
             }
 
             const mail = account.mails[pk];
 
             if (!mail) {
-                throw new Error(`Database access error: failed to resolve mail by the provided "pk"`);
+                throw new Error(`Failed to resolve mail by the provided "pk"`);
             }
 
             return {
                 ...omit(["body"], mail),
-                // TODO test "dbGetAccountMail" sets "mail.body" through the "sanitizeHtml" call
+                // TODO test "dbGetAccountMail" setting "mail.body" through the "sanitizeHtml" call
                 body: sanitizeHtml(mail.body),
             };
         })()),
+
+        dbExport: ({type, login}) => ((
+            logger = curryFunctionMembers(_logger, "dbExport()"),
+        ) => new Observable<Unpacked<ReturnType<Endpoints["dbExport"]>>>((subscriber) => {
+            logger.info();
+
+            const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
+            if (!browserWindow) {
+                return subscriber.error(new Error(`Failed to resolve main app window`));
+            }
+
+            const [dir]: Array<string | undefined> = dialog.showOpenDialog(
+                browserWindow,
+                {
+                    title: "Select directory to export emails to the EML files",
+                    defaultPath: app.getPath("home"),
+                    properties: ["openDirectory"],
+                },
+            ) || [];
+
+            if (!dir) {
+                return subscriber.complete();
+            }
+
+            const account = ctx.db.getFsAccount({type, login});
+
+            if (!account) {
+                return subscriber.error(new Error(`Failed to resolve account by the provided "type/login"`));
+            }
+
+            const mails = Object.values(account.mails);
+            const count = mails.length;
+
+            subscriber.next({count});
+
+            const promise = (async () => {
+                for (let index = 0; index < count; index++) {
+                    const {file} = await writeEmlFile(mails[index], dir);
+                    subscriber.next({file, progress: +((index + 1) / count * 100).toFixed(2)});
+                }
+            })();
+
+            promise
+                .then(() => subscriber.complete())
+                .catch((error) => subscriber.error(error));
+        }))(),
     };
 }
 

@@ -6,7 +6,7 @@ import {flatten} from "ramda";
 import {Entity, EntityMap as EntityMapInterface} from "src/shared/model/database";
 import {curryFunctionMembers} from "src/shared/util";
 
-const logger = curryFunctionMembers(_logger, "[entity map]");
+const logger = curryFunctionMembers(_logger, "[src/electron-main/database/entity-map]");
 
 export class EntityMap<V extends Entity, K extends V["pk"] = V["pk"]> implements EntityMapInterface<V, K> {
     private static readonly transformValidationOptions: TransformValidationOptions = {

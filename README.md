@@ -14,11 +14,11 @@ is built with Electron unofficial desktop app for [ProtonMail](https://protonmai
 - Automatic login into mail provider accounts using either saved in the settings password or KeePass password manager. Two-factor authentication (2FA) is supported, only TOTP tokens format, [original issue](https://github.com/vladimiry/email-securely-app/issues/10).
 - Encrypted settings storage with switchable predefined key derivation and encryption presets. Argon2 is used as the default key derivation function.
 - Native notifications for individual accounts clicking on which focuses the app window and selects respective account in the accounts list.
-- System tray icon with a total number of unread messages shown on top of it. Checking unread emails count for Tutanota is currently not efficient enough, respective [issue](https://github.com/vladimiry/email-securely-app/issues/30) has been placed.
+- System tray icon with a total number of unread messages shown on top of it. Enabling [local messages store](https://github.com/vladimiry/email-securely-app/issues/32) improves this feature ([how to enable](https://github.com/vladimiry/email-securely-app/releases/tag/v2.0.0-beta.1)), see respective [issue](https://github.com/vladimiry/email-securely-app/issues/30).
 - Full, tabs and dropdown view modes. See details [here](https://github.com/vladimiry/email-securely-app/issues/36) and screenshots in [images](images) folder.
+- Batch emails export to EML files. Feature released with [v2.0.0-beta.4](https://github.com/vladimiry/email-securely-app/releases/tag/v2.0.0-beta.4) version, requires `local messages store` feature to be enabled ([how to enable](https://github.com/vladimiry/email-securely-app/releases/tag/v2.0.0-beta.1)).
 - Start minimized to tray.
 - Close to tray.
-
 
 ## Build your own package
 

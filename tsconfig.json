@@ -36,6 +36,7 @@
     "lib": [
       "es2015",
       "es2017.object",
+      "es2017.string",
       "es2016.array.include",
       "dom"
     ],

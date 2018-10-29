@@ -16,8 +16,8 @@ import {
     tap,
     withLatestFrom,
 } from "rxjs/operators";
-import {equals} from "ramda";
 
+import * as OptionsSelectors from "../store/selectors/options";
 import {ACCOUNTS_ACTIONS, CORE_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
 import {AccountTypeAndLoginFieldContainer} from "src/shared/model/container";
 import {AccountsSelectors} from "src/web/src/app/store/selectors";
@@ -113,11 +113,12 @@ export class AccountsEffects {
                     this.api.webViewClient(webView, type, {finishPromise}).pipe(
                         mergeMap((webViewClient) => merge(
                             of(ACCOUNTS_ACTIONS.Patch({login, patch: {syncingActivated: true}})),
-                            this.api.ipcMainClient({finishPromise})("notification")().pipe(
+                            this.store.pipe(
+                                select(OptionsSelectors.FEATURED.mainProcessNotification),
                                 filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbPatchAccount),
-                                filter(({payload: data}) => equals(data.key, {type, login})),
-                                mergeMap(({payload: data}) => {
-                                    return of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread: data.stat.unread}}}));
+                                filter(({payload: p}) => p.key.type === type && p.key.login === login),
+                                mergeMap(({payload: p}) => {
+                                    return of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread: p.stat.unread}}}));
                                 }),
                             ),
                             merge(

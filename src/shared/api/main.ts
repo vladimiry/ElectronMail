@@ -57,6 +57,8 @@ export interface Endpoints {
 
     dbGetAccountMail: ApiMethod<DbAccountPk & { pk: DatabaseModel.Mail["pk"] }, DatabaseModel.Mail>;
 
+    dbExport: ApiMethod<DbAccountPk, { count: number; } | { progress: number; file: string; }>;
+
     init: ApiMethodNoArgument<{ electronLocations: ElectronContextLocations; hasSavedPassword: boolean; }>;
 
     keePassRecordRequest: ApiMethod<KeePassRefFieldContainer & KeePassClientConfFieldContainer

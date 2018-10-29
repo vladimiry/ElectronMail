@@ -1,11 +1,14 @@
 import {Actions, Effect} from "@ngrx/effects";
 import {EMPTY, from, merge, of} from "rxjs";
 import {Injectable} from "@angular/core";
+import {Store, select} from "@ngrx/store";
 import {concatMap, debounceTime, filter, map, mergeMap, switchMap, takeUntil, tap} from "rxjs/operators";
 
 import {DB_VIEW_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
 import {ElectronService} from "src/web/src/app/_core/electron.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {OptionsSelectors} from "src/web/src/app/store/selectors";
+import {State} from "src/web/src/app/store/reducers/db-view";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/src/util";
 
 const _logger = getZoneNameBoundWebLogger("[db-view.effects]");
@@ -25,8 +28,10 @@ export class DbViewEffects {
                 const apiClient = this.api.ipcMainClient({finishPromise, serialization: "jsan"});
                 const observable$ = merge(
                     apiClient("dbGetAccountDataView")(dbAccountPk), // initial load
-                    apiClient("notification")().pipe(
+                    this.store.pipe(
+                        select(OptionsSelectors.FEATURED.mainProcessNotification),
                         filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbPatchAccount),
+                        filter(({payload: p}) => p.key.type === dbAccountPk.type && p.key.login === dbAccountPk.login),
                         filter(({payload: patchPayload}) => patchPayload.entitiesModified),
                         // tslint:disable-next-line:ban
                         switchMap(() => apiClient("dbGetAccountDataView")(dbAccountPk)),
@@ -59,6 +64,7 @@ export class DbViewEffects {
 
     constructor(
         private api: ElectronService,
+        private store: Store<State>,
         private actions$: Actions<{ type: string; payload: any }>,
     ) {}
 }

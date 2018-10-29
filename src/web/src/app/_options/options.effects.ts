@@ -1,14 +1,12 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {Deferred} from "ts-deferred";
 import {EMPTY, merge, of} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store} from "@ngrx/store";
-import {catchError, concatMap, filter, finalize, map, mergeMap, withLatestFrom} from "rxjs/operators";
+import {catchError, concatMap, finalize, map, mergeMap, startWith, withLatestFrom} from "rxjs/operators";
 
 import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
 import {CORE_ACTIONS, NAVIGATION_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
 import {ElectronService} from "src/web/src/app/_core/electron.service";
-import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {OptionsService} from "./options.service";
@@ -19,8 +17,17 @@ const _logger = getZoneNameBoundWebLogger("[options.effects]");
 
 @Injectable()
 export class OptionsEffects {
-    disposeNotificationDeferred?: Deferred<void>;
     ipcMainClient = this.api.ipcMainClient();
+
+    @Effect()
+    setupMainProcessNotification$ = this.actions$.pipe(
+        unionizeActionFilter(OPTIONS_ACTIONS.is.SetupMainProcessNotification),
+        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+        startWith(OPTIONS_ACTIONS.SetupMainProcessNotification()),
+        mergeMap(() => this.ipcMainClient("notification")().pipe(
+            mergeMap((value) => of(OPTIONS_ACTIONS.PatchMainProcessNotification(value))),
+            catchError((error) => of(CORE_ACTIONS.Fail(error))),
+        )));
 
     @Effect()
     initRequest$ = this.actions$.pipe(
@@ -30,18 +37,6 @@ export class OptionsEffects {
             mergeMap((payload) => merge(
                 of(OPTIONS_ACTIONS.InitResponse(payload)),
                 of(this.optionsService.settingsNavigationAction({path: ""})),
-                (() => {
-                    if (this.disposeNotificationDeferred) {
-                        this.disposeNotificationDeferred.resolve();
-                    }
-                    return this.api.ipcMainClient({
-                        finishPromise: (this.disposeNotificationDeferred = new Deferred<void>()).promise,
-                    })("notification")().pipe(
-                        filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.ActivateBrowserWindow),
-                        mergeMap(() => of(OPTIONS_ACTIONS.ActivateBrowserWindow())),
-                        catchError((error) => of(CORE_ACTIONS.Fail(error))),
-                    );
-                })(),
             )),
             catchError((error) => of(CORE_ACTIONS.Fail(error))),
         )));

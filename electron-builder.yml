@@ -47,12 +47,8 @@ win:
   icon: ./app/assets/icons/win/icon.ico
   target:
   - {target: nsis}
-  - {target: portable}
 
 nsis:
   artifactName: ${name}-${version}-windows-${arch}-nsis-installer.${ext}
   oneClick: false
   perMachine: false
-
-portable:
-  artifactName: ${name}-${version}-windows-${arch}-portable.${ext}

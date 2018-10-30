@@ -23,7 +23,7 @@ export class DbViewMailsComponent {
         & { folderMeta: Instance["foldersMeta"][string] }
         & { uid: string }
         & { plainListViewMode: boolean }
-        & { paging: { size: number; endIndex: number; nextPageSize: number; } };
+        & { paging: { size: number; page: number; end: number; nextPageSize: number; } };
     @Output()
     selectMailPkHandler = new EventEmitter<Mail["pk"]>();
     @Output()
@@ -143,21 +143,15 @@ export class DbViewMailsComponent {
         const size = (state.plainListViewMode
             ? state.folderMeta.mails
             : state.rootConversationNodes).length;
-        const paging: { endIndex: number; nextPageSize: number; } = this.state && !reset
+        const paging: { page: number; nextPageSize: number; } = this.state && !reset
             ? {...this.state.paging}
-            : {endIndex: 0, nextPageSize: 0};
-        // const add = !this.state || this.state.uid === state.uid || this.state.plainListViewMode !== state.plainListViewMode || reset
-        const add = increase
-            ? this.pageSize
-            : 0;
-        const maxIndex = size;
-        const endIndex = Math.min(
-            (paging.endIndex > 0 ? Math.min(paging.endIndex, maxIndex) : paging.endIndex) + add,
-            maxIndex,
-        );
-        const nextPageSize = Math.min(maxIndex - endIndex, this.pageSize);
+            : {page: 0, nextPageSize: 0};
+        const maxPage = Math.ceil(size / this.pageSize);
+        const page = Math.min(paging.page + Number(increase), maxPage);
+        const end = Math.min(page * this.pageSize, size);
+        const nextPageSize = Math.min(size - end, this.pageSize);
 
-        return {size, endIndex, nextPageSize};
+        return {size, page, end, nextPageSize};
     }
 
     private resolveMailComponentElement(element: Element | null): Element | null {

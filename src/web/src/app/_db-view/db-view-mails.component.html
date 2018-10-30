@@ -10,7 +10,7 @@
         }"></i>
     </a>
     <div class="badge ml-2">
-        {{ state.plainListViewMode ? "mails" : "conversations" }}<span *ngIf="state.paging.size">: {{ state.paging.endIndex }}
+        {{ state.plainListViewMode ? "mails" : "conversations" }}<span *ngIf="state.paging.size">: {{ state.paging.end }}
         of {{ state.paging.size }}</span>
     </div>
 </div>
@@ -19,7 +19,7 @@
         <div class="overflow-auto">
             <ng-container *ngIf="state.plainListViewMode; else conversationViewModeTemplate">
                 <email-securely-app-db-view-mail
-                    *ngFor="let mail of state.folderMeta.mails.slice(0, state.paging.endIndex); trackBy: trackByMailPk"
+                    *ngFor="let mail of state.folderMeta.mails.slice(0, state.paging.end); trackBy: trackByMailPk"
                     [attr.selected]="mail.pk === state.selectedMail?.pk"
                     [attr.data-pk]="mail.pk"
                     [mail]="mail"
@@ -28,7 +28,7 @@
             <ng-template #conversationViewModeTemplate>
                 <div
                     class="conversation d-flex flex-column mb-2"
-                    *ngFor="let rootNode of state.rootConversationNodes.slice(0, state.paging.endIndex); trackBy: trackByNodeMailPk"
+                    *ngFor="let rootNode of state.rootConversationNodes.slice(0, state.paging.end); trackBy: trackByNodeMailPk"
                     [ngClass]="{'unmatched-collapsed': unmatchedNodesCollapsed(rootNode)}">
                     <ng-container *ngIf="expanded(rootNode); else mostRecentMatchedMailTemplate">
                         <a href="javascript:void(0);" class="toggler d-flex align-self-start"

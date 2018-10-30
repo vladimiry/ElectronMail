@@ -15,7 +15,16 @@
             </ul>
         </ng-template>
         <div class="py-2 d-flex">
-            <a class="d-flex flex-grow-1" href="javascript:void(0)" (click)="export()">Export</a>
+            <a class="d-flex flex-grow-1" href="javascript:void(0)"
+               *ngIf="!exporting; else progressTemplate"
+               (click)="export()"
+            >Export</a>
+            <ng-template #progressTemplate>
+                <div class="text-primary d-flex flex-grow-1" style="cursor: not-allowed">
+                    Export
+                    <small><i class="fa fa-spinner fa-pulse fa-fw ml-1"></i></small>
+                </div>
+            </ng-template>
             <i class="fa fa-info-circle text-danger d-flex pt-1 ml-1"
                [popover]="dangerPopupTemplate" placement="top" container="body" triggers="mouseenter:mouseleave"
             ></i>
@@ -23,10 +32,16 @@
                [popover]="warningPopupTemplate" placement="top" container="body" triggers="mouseenter:mouseleave"
             ></i>
             <ng-template #dangerPopupTemplate>
-                App exports emails in their original <br>form, <span class="text-danger">unencrypted</span> and <span class="text-danger">unsanitized</span>!
+                <div class="text-center">
+                    App exports emails<br>in their original form,<br>
+                    <span class="text-danger">unencrypted</span> and <span class="text-danger">unsanitized</span>!
+                </div>
             </ng-template>
             <ng-template #warningPopupTemplate>
-                Attachments are ignored during export.
+                <div class="text-center">
+                    Attachments are ignored<br>
+                    during export.
+                </div>
             </ng-template>
         </div>
     </div>

@@ -1,7 +1,7 @@
-import {ChangeDetectionStrategy, Component, Input, OnDestroy} from "@angular/core";
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy} from "@angular/core";
 import {EMPTY, Subject} from "rxjs";
 import {Store, select} from "@ngrx/store";
-import {concatMap, mergeMap, takeUntil} from "rxjs/operators";
+import {concatMap, filter, finalize, mergeMap, takeUntil, throttleTime} from "rxjs/operators";
 
 import {CORE_ACTIONS, DB_VIEW_ACTIONS} from "src/web/src/app/store/actions";
 import {DbAccountPk, MAIL_FOLDER_TYPE, Mail, View} from "src/shared/model/database";
@@ -19,6 +19,8 @@ import {ToggleFolderMetadataPropEmitter} from "./db-view-mails.component";
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DbViewMailTabComponent extends NgChangesObservableComponent implements OnDestroy {
+    exporting?: boolean;
+
     @Input()
     dbAccountPk!: DbAccountPk;
 
@@ -65,6 +67,7 @@ export class DbViewMailTabComponent extends NgChangesObservableComponent impleme
     constructor(
         private store: Store<State>,
         private api: ElectronService,
+        private changeDetectorRef: ChangeDetectorRef,
     ) {
         super();
     }
@@ -87,9 +90,23 @@ export class DbViewMailTabComponent extends NgChangesObservableComponent impleme
 
     export() {
         this.api.ipcMainClient({timeoutMs: ONE_SECOND_MS * 60 * 5})("dbExport")(this.dbAccountPk)
-            .pipe(takeUntil(this.unSubscribe$))
+            .pipe(
+                takeUntil(this.unSubscribe$),
+                filter((value) => "progress" in value),
+                throttleTime(ONE_SECOND_MS / 2),
+                finalize(() => {
+                    delete this.exporting;
+                    this.changeDetectorRef.detectChanges();
+                }),
+            )
             .subscribe(
-                () => {},
+                () => {
+                    if (this.exporting) {
+                        return;
+                    }
+                    this.exporting = true;
+                    this.changeDetectorRef.detectChanges();
+                },
                 (error) => this.store.dispatch(CORE_ACTIONS.Fail(error)),
             );
     }

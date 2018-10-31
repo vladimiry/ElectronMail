@@ -148,7 +148,7 @@ export class DbViewMailsComponent {
             : {page: 0, nextPageSize: 0};
         const maxPage = Math.ceil(size / this.pageSize);
         const page = Math.min(paging.page + Number(increase), maxPage);
-        const end = Math.min(page * this.pageSize, size);
+        const end = Math.min((page * this.pageSize) || this.pageSize, size);
         const nextPageSize = Math.min(size - end, this.pageSize);
 
         return {size, page, end, nextPageSize};

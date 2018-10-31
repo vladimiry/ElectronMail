@@ -27,6 +27,7 @@ const WINDOW = window as any; // TODO remove "as any" casting on https://github.
 const twoFactorCodeElementId = "twoFactorCode";
 const ajaxSendNotificationSkipParam = `ajax-send-notification-skip-${Number(new Date())}`;
 const ajaxSendNotification$ = new Observable<XMLHttpRequest>((subscriber) => {
+    const successHttpStatus = (status: number) => status >= 200 && status < 300;
     const ajaxSendNotificationSkipSymbol = Symbol(ajaxSendNotificationSkipParam);
     type XMLHttpRequestType = XMLHttpRequest & { [ajaxSendNotificationSkipSymbol]?: true };
 
@@ -49,7 +50,14 @@ const ajaxSendNotification$ = new Observable<XMLHttpRequest>((subscriber) => {
             if (this[ajaxSendNotificationSkipSymbol]) {
                 return;
             }
-            subscriber.next(this);
+            if (successHttpStatus(this.status)) {
+                subscriber.next(this);
+                return;
+            }
+            _logger.error(
+                "[XMLHttpRequest.load handler]",
+                JSON.stringify({status: this.status, statusText: this.statusText, responseURL: this.responseURL}),
+            );
         },
         loadEndHandler = function(this: XMLHttpRequestType) {
             delete this[ajaxSendNotificationSkipSymbol];

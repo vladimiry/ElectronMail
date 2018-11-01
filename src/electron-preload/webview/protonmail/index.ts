@@ -1,7 +1,7 @@
 import * as Throttle from "promise-parallel-throttle";
-import {EMPTY, Observable, from, interval, merge, of, throwError} from "rxjs";
+import {EMPTY, Observable, defer, from, interval, merge, of} from "rxjs";
 import {authenticator} from "otplib";
-import {buffer, concatMap, debounceTime, delay, distinctUntilChanged, filter, map, mergeMap, retryWhen, take, tap} from "rxjs/operators";
+import {buffer, catchError, concatMap, debounceTime, distinctUntilChanged, filter, map, mergeMap, tap} from "rxjs/operators";
 import {omit} from "ramda";
 
 import * as Database from "./lib/database";
@@ -15,12 +15,20 @@ import {
 } from "src/electron-preload/webview/constants";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {PROTONMAIL_IPC_WEBVIEW_API, ProtonmailApi, ProtonmailNotificationOutput} from "src/shared/api/webview/protonmail";
+import {StatusCodeError} from "src/shared/model/error";
 import {Unpacked} from "src/shared/types";
+import {angularJsHttpResponseTypeGuard, isUpsertOperationType, preprocessError} from "./lib/uilt";
 import {buildContact, buildFolder, buildMail} from "./lib/database";
+import {
+    buildDbPatchRetryPipeline,
+    buildEmptyDbPatch,
+    fillInputValue,
+    getLocationHref,
+    submitTotpToken,
+    waitElements,
+} from "src/electron-preload/webview/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
-import {fillInputValue, getLocationHref, submitTotpToken, waitElements} from "src/electron-preload/webview/util";
-import {isAngularJsHttpResponse, isUpsertOperationType} from "./lib/uilt";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[index]");
 const WINDOW = window as any; // TODO remove "as any" casting on https://github.com/Microsoft/TypeScript/issues/14701 resolving
@@ -76,7 +84,7 @@ delete WINDOW.Notification;
 const endpoints: ProtonmailApi = {
     ping: () => of(null),
 
-    buildDbPatch: (input) => from((async (logger = curryFunctionMembers(_logger, "api:buildDbPatch()", input.zoneName)) => {
+    buildDbPatch: (input) => defer(() => (async (logger = curryFunctionMembers(_logger, "api:buildDbPatch()", input.zoneName)) => {
         logger.info();
 
         if (!isLoggedIn()) {
@@ -87,45 +95,31 @@ const endpoints: ProtonmailApi = {
             return await bootstrapDbPatch();
         }
 
-        const {missedEvents, latestEventId, hasMoreEvents} = await (async (
+        const {missedEvents, latestEventId} = await (async (
             {events, $http}: Api,
             id: Rest.Model.Event["EventID"],
         ) => {
-            const bufferSize = 50;
             const fetchedEvents: Rest.Model.Event[] = [];
-            const state: { iteration: number; hasMoreEvents?: boolean; } = {iteration: 0};
-
             do {
-                state.iteration++;
-
                 const response = await events.get(id, {params: {[ajaxSendNotificationSkipParam]: ""}});
+                const hasMoreEvents = response.More === 1;
                 const sameNextId = id === response.EventID;
-
                 fetchedEvents.push(response);
                 id = response.EventID;
-
-                if (response.More !== 1) {
+                if (!hasMoreEvents) {
                     break;
                 }
-                if (sameNextId) {
-                    throw new Error(
-                        `Events API indicates that there is next event in the queue, but responses with the same "next event id"`,
-                    );
-                }
-                if (state.iteration < bufferSize) {
+                if (!sameNextId) {
                     continue;
                 }
-
-                state.hasMoreEvents = true;
-                logger.verbose(`breaking after ${state.iteration} iterations`);
+                throw new Error(
+                    `Events API indicates that there is a next event in the queue, but responses with the same "next event id"`,
+                );
             } while (true);
-
             logger.info(`fetched ${fetchedEvents.length} missed events`);
-
             return {
                 latestEventId: id,
                 missedEvents: fetchedEvents,
-                hasMoreEvents: state.hasMoreEvents,
             };
         })(await resolveApi(), input.metadata.latestEventId);
 
@@ -135,20 +129,18 @@ const endpoints: ProtonmailApi = {
         return {
             patch,
             metadata,
-            hasMoreEvents,
         };
     })()).pipe(
-        retryWhen((errors) => errors.pipe(
-            mergeMap((error) => {
-                if (isAngularJsHttpResponse(error) && error.status === -1) {
-                    _logger.verbose(`retry "buildDbPatch" on network -1 error`);
-                    return of(error);
-                }
-                return throwError(error);
-            }),
-            delay(ONE_SECOND_MS * 3),
-            take(3),
-        )),
+        buildDbPatchRetryPipeline<Unpacked<ReturnType<ProtonmailApi["buildDbPatch"]>>>(preprocessError, _logger),
+        catchError((error) => {
+            if (StatusCodeError.hasStatusCodeValue(error, "SkipDbPatch")) {
+                return of({
+                    patch: buildEmptyDbPatch(),
+                    metadata: {},
+                });
+            }
+            throw error;
+        }),
     ),
 
     fillLogin: ({login, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "api:fillLogin()", zoneName)) => {
@@ -361,7 +353,7 @@ PROTONMAIL_IPC_WEBVIEW_API.registerApi(
         logger: {
             error: (args: any[]) => {
                 _logger.error(...args.map((arg) => {
-                    if (isAngularJsHttpResponse(arg)) {
+                    if (angularJsHttpResponseTypeGuard(arg)) {
                         return {
                             // omitting possibly sensitive properties
                             ...omit(["config", "headers", "data"], arg),

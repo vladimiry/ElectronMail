@@ -17,10 +17,9 @@ import {
     withLatestFrom,
 } from "rxjs/operators";
 
-import * as OptionsSelectors from "../store/selectors/options";
 import {ACCOUNTS_ACTIONS, CORE_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
 import {AccountTypeAndLoginFieldContainer} from "src/shared/model/container";
-import {AccountsSelectors} from "src/web/src/app/store/selectors";
+import {AccountsSelectors, OptionsSelectors} from "src/web/src/app/store/selectors";
 import {ElectronService} from "src/web/src/app/_core/electron.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
@@ -150,11 +149,7 @@ export class AccountsEffects {
                                             zoneName,
                                         });
                                     }),
-                                    concatMap((data) => {
-                                        const {patch, metadata, hasMoreEvents} = data;
-                                        if (hasMoreEvents) {
-                                            this.fireSyncingIteration$.next({type, login});
-                                        }
+                                    concatMap(({patch, metadata}) => {
                                         return ipcMainClient("dbPatch")({type, login, metadata, patch, forceFlush: false});
                                     }),
                                     concatMap(() => EMPTY),

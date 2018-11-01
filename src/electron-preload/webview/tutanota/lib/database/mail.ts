@@ -5,7 +5,7 @@ import * as Rest from "src/electron-preload/webview/tutanota/lib/rest";
 import {buildBaseEntity, buildPk} from ".";
 import {fetchMultipleEntities} from "src/electron-preload/webview/tutanota/lib/rest";
 import {mapBy} from "src/shared/util";
-import {resolveInstanceId, resolveListId} from "src/electron-preload/webview/tutanota/lib/rest/util";
+import {resolveInstanceId, resolveListId} from "src/electron-preload/webview/tutanota/lib/util";
 
 export async function buildMails(mails: Rest.Model.Mail[]): Promise<DatabaseModel.Mail[]> {
     const [bodies, files] = await Promise.all([

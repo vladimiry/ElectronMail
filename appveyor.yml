@@ -18,7 +18,7 @@ install:
 - node --version
 - npm --version
 - yarn --version
-- yarn install --mutex file
+- yarn install --pure-lockfile --mutex file
 - yarn generate-npm-lockfile
 - npm audit
 build_script:

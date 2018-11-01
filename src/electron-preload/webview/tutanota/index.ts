@@ -1,6 +1,6 @@
-import {EMPTY, Observable, from, interval, merge, of} from "rxjs";
+import {EMPTY, Observable, defer, from, interval, merge, of} from "rxjs";
 import {authenticator} from "otplib";
-import {buffer, concatMap, debounceTime, distinctUntilChanged, map, tap} from "rxjs/operators";
+import {buffer, catchError, concatMap, debounceTime, distinctUntilChanged, map, tap} from "rxjs/operators";
 import {pick} from "ramda";
 
 import * as Database from "./lib/database";
@@ -14,13 +14,21 @@ import {
     WEBVIEW_LOGGERS,
 } from "src/electron-preload/webview/constants";
 import {ONE_SECOND_MS} from "src/shared/constants";
+import {StatusCodeError} from "src/shared/model/error";
 import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi, TutanotaNotificationOutput} from "src/shared/api/webview/tutanota";
 import {Unpacked} from "src/shared/types";
+import {
+    buildDbPatchRetryPipeline,
+    buildEmptyDbPatch,
+    fillInputValue,
+    getLocationHref,
+    submitTotpToken,
+    waitElements,
+} from "src/electron-preload/webview/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {fetchAllEntities, fetchEntitiesRange, fetchMultipleEntities} from "src/electron-preload/webview/tutanota/lib/rest";
-import {fillInputValue, getLocationHref, submitTotpToken, waitElements} from "src/electron-preload/webview/util";
-import {isUpsertOperationType} from "./lib/rest/util";
+import {isUpsertOperationType, preprocessError} from "./lib/util";
 import {resolveApi} from "src/electron-preload/webview/tutanota/lib/api";
 
 type BuildDbPatchInputMetadata = Unpacked<ReturnType<TutanotaApi["buildDbPatch"]>>["metadata"];
@@ -42,7 +50,7 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
     const endpoints: TutanotaApi = {
         ping: () => of(null),
 
-        buildDbPatch: (input) => from((async (logger = curryFunctionMembers(_logger, "api:buildDbPatch()", input.zoneName)) => {
+        buildDbPatch: (input) => defer(() => (async (logger = curryFunctionMembers(_logger, "api:buildDbPatch()", input.zoneName)) => {
             const controller = getUserController();
 
             if (!controller || !isLoggedIn()) {
@@ -83,7 +91,18 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
                 patch,
                 metadata,
             };
-        })()),
+        })()).pipe(
+            buildDbPatchRetryPipeline<Unpacked<ReturnType<TutanotaApi["buildDbPatch"]>>>(preprocessError, _logger),
+            catchError((error) => {
+                if (StatusCodeError.hasStatusCodeValue(error, "SkipDbPatch")) {
+                    return of({
+                        patch: buildEmptyDbPatch(),
+                        metadata: {groupEntityEventBatchIds: {}},
+                    });
+                }
+                throw error;
+            }),
+        ),
 
         fillLogin: ({login, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "api:fillLogin()", zoneName)) => {
             logger.info();
@@ -262,7 +281,7 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
                             ) {
                                 entityUpdates
                                     .map((entityUpdate) => pick(["application", "type", "operation"], entityUpdate))
-                                    .forEach((entityUpdate) => innerLogger.verbose(JSON.stringify(entityUpdate)));
+                                    .forEach((entityUpdate) => innerLogger.debug(JSON.stringify(entityUpdate)));
                                 notificationReceivedSubscriber.next({events: entityUpdates});
                                 return original.apply(this, [entityUpdates, ...args]);
                             };

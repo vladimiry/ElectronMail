@@ -1,6 +1,10 @@
 import {Keyboard} from "keysim";
+import {concatMap, delay, retryWhen} from "rxjs/operators";
+import {of, throwError} from "rxjs";
 
+import {DbPatch} from "src/shared/api/common";
 import {ONE_SECOND_MS} from "src/shared/constants";
+import {StatusCodeError} from "src/shared/model/error";
 import {asyncDelay, curryFunctionMembers} from "src/shared/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
 
@@ -116,4 +120,43 @@ export async function submitTotpToken(
 
         logger.verbose("submit - success");
     }
+}
+
+export function buildEmptyDbPatch(): DbPatch {
+    return {
+        conversationEntries: {remove: [], upsert: []},
+        mails: {remove: [], upsert: []},
+        folders: {remove: [], upsert: []},
+        contacts: {remove: [], upsert: []},
+    };
+}
+
+export function buildDbPatchRetryPipeline<T>(
+    preprocessError: (rawError: any) => { error: any; retriable: boolean; skippable: boolean; },
+    logger: ReturnType<typeof buildLoggerBundle>,
+    {retriesDelay = ONE_SECOND_MS * 5, retriesLimit = 3}: { retriesDelay?: number, retriesLimit?: number } = {},
+) {
+    return retryWhen<T>((errors) => errors.pipe(
+        concatMap((rawError, index) => {
+            const {error, retriable, skippable} = preprocessError(rawError);
+
+            if (index >= retriesLimit) {
+                if (skippable) {
+                    const message = `Skipping "buildDbPatch" call`;
+                    logger.error(message, JSON.stringify(error));
+                    return throwError(new StatusCodeError(message, "SkipDbPatch"));
+                }
+                return throwError(error);
+            }
+
+            if (retriable) {
+                logger.error(`Retrying "buildDbPatch" call (attempt: "${index}")`, JSON.stringify(error));
+                return of(error).pipe(
+                    delay(retriesDelay),
+                );
+            }
+
+            return throwError(error);
+        }),
+    ));
 }

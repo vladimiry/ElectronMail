@@ -1,9 +1,10 @@
-import * as DatabaseModel from "src/shared/model/database/index";
-import * as Rest from ".";
-import {BaseEntity, Id, IdTuple} from "./model";
-import {GROUP_TYPE} from "./model/constants";
-import {Unpacked} from "src/shared/types";
+import * as DatabaseModel from "src/shared/model/database";
+import * as Rest from "./rest";
+import {Arguments, Unpacked} from "src/shared/types";
+import {BaseEntity, Id, IdTuple} from "./rest/model";
+import {GROUP_TYPE} from "./rest/model/constants";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
+import {buildDbPatchRetryPipeline} from "src/electron-preload/webview/util";
 import {curryFunctionMembers} from "src/shared/util";
 import {resolveApi} from "src/electron-preload/webview/tutanota/lib/api";
 
@@ -71,3 +72,17 @@ export function resolveListId<T extends BaseEntity<IdTuple>>(entity: T): Id {
     }
     return entity._id[0];
 }
+
+export const preprocessError: Arguments<typeof buildDbPatchRetryPipeline>[0] = (rawError: any) => {
+    const error = Object(rawError);
+    const {name = "", message = ""} = error;
+    const retriable = !navigator.onLine
+        || name === "ConnectionError"
+        || message.indexOf("ConnectionError:") !== -1
+        || message.indexOf("Reached timeout") !== -1;
+    return {
+        error,
+        retriable,
+        skippable: retriable,
+    };
+};

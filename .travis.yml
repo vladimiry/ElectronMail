@@ -34,7 +34,7 @@ env:
   - MOZ_HEADLESS=1
 cache: false
 install:
-- yarn install
+- yarn --pure-lockfile install
 - yarn generate-npm-lockfile
 - npm audit
 before_script:

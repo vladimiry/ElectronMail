@@ -20,7 +20,7 @@ export interface CommonWebViewApi<T extends AccountType, M extends MemoryDbAccou
     login: ApiMethod<LoginFieldContainer & PasswordFieldContainer & ZoneApiParameter, null>;
     login2fa: ApiMethod<{ secret: string } & ZoneApiParameter, null>;
     buildDbPatch: ApiMethod<{ metadata: M | null; iteration?: number; } & ZoneApiParameter,
-        & { patch: DbPatch; metadata: Omit<M, "type">; hasMoreEvents?: boolean; }>;
+        & { patch: DbPatch; metadata: Omit<M, "type">; }>;
 }
 
 export type WebViewApi<T extends AccountType, A = T extends "tutanota" ? TutanotaApi : ProtonmailApi>

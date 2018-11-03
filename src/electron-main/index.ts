@@ -43,7 +43,7 @@ app.on("ready", async () => {
     const endpoints = await initApi(ctx);
     const {checkForUpdatesAndNotify} = await endpoints.readConfig().toPromise();
 
-    initWebContentContextMenu(ctx);
+    initWebContentContextMenu();
 
     const uiContext = ctx.uiContext = {
         browserWindow: await initBrowserWindow(ctx, endpoints),

@@ -39,7 +39,7 @@ test.serial("workflow", async (t) => {
     t.true(m["./api"].initApi.calledWithExactly(t.context.ctx), `"initApi" called`);
     t.true(m["./api"].initApi.calledAfter(m["./session"].clearDefaultSessionCaches), `"initApi" called after "clearDefaultSessionCaches"`);
 
-    t.true(m["./web-content-context-menu"].initWebContentContextMenu.calledWithExactly(t.context.ctx), `"initWebContentContextMenu" called`);
+    t.true(m["./web-content-context-menu"].initWebContentContextMenu.calledWithExactly(), `"initWebContentContextMenu" called`);
     t.true(m["./web-content-context-menu"].initWebContentContextMenu.calledBefore(m["./window"].initBrowserWindow), `"initWebContentContextMenu" called before "initBrowserWindow"`);
     t.true(m["./web-content-context-menu"].initWebContentContextMenu.calledBefore(m["./tray"].initTray), `"initWebContentContextMenu" called before "initTray"`);
 

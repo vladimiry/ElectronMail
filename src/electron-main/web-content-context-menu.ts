@@ -1,66 +1,54 @@
-import {ContextMenuParams, Event, Menu, PopupOptions, WebContents, app, clipboard} from "electron";
+import {ContextMenuParams, Event, Menu, MenuItemConstructorOptions, WebContents, app, clipboard} from "electron";
 import {platform} from "os";
 
-import {Context} from "./model";
+const emptyArray = Object.freeze([]);
 
-const selectionMenu = Menu.buildFromTemplate([
-    {role: "copy"},
-    {type: "separator"},
-    {role: "selectall"},
-]);
-const inputMenu = Menu.buildFromTemplate([
-    {role: "undo"},
-    {role: "redo"},
-    {type: "separator"},
-    {role: "cut"},
-    {role: "copy"},
-    {role: "paste"},
-    {type: "separator"},
-    {role: "selectall"},
-]);
+const contextMenuEventSubscriptionArgs = [
+    "context-menu",
+    ({sender: webContents}: Event, {editFlags, linkURL, linkText}: ContextMenuParams) => {
+        const template: MenuItemConstructorOptions[] = [];
 
-export function initWebContentContextMenu(ctx: Context) {
-    const contextMenuEventArgs = [
-        "context-menu",
-        (e: Event, props: ContextMenuParams) => {
-            const {selectionText, isEditable, linkURL, linkText} = props;
-            const popupOptions: PopupOptions = {window: ctx.uiContext && ctx.uiContext.browserWindow};
+        if (linkURL) {
+            template.push({
+                label: isEmailHref(linkURL) ? "Copy Email Address" : "Copy Link Address",
+                click() {
+                    if (platform() === "darwin") {
+                        clipboard.writeBookmark(linkText, extractEmailIfEmailHref(linkURL));
+                    } else {
+                        clipboard.writeText(extractEmailIfEmailHref(linkURL));
+                    }
+                },
+            });
+        } else {
+            template.push(...[
+                // TODO use "role" based "cut/copy/paste" actions, currently these actions don't work properly
+                // track the respective issue https://github.com/electron/electron/issues/15219
+                ...(editFlags.canCut ? [{label: "Cut", click: () => webContents.cut()}] : emptyArray),
+                ...(editFlags.canCopy ? [{label: "Copy", click: () => webContents.copy()}] : emptyArray),
+                ...(editFlags.canPaste ? [{label: "Paste", click: () => webContents.paste()}] : emptyArray),
+            ]);
 
-            if (!popupOptions.window) {
-                return;
-            }
+            // TODO "selectall" context menu action doesn't work properly (works well only on login page)
+            // if (editFlags.canSelectAll) {
+            //     if (template.length) {
+            //         template.push(separatorItem);
+            //     }
+            //     template.push({role: "selectall"});
+            // }
+        }
 
-            if (isEditable) {
-                inputMenu.popup(popupOptions);
-                return;
-            }
+        if (template.length) {
+            Menu.buildFromTemplate(template).popup({});
+        }
+    },
+];
 
-            if (linkURL) {
-                const linkMenu = Menu.buildFromTemplate([{
-                    label: isEmailHref(linkURL) ? "Copy Email Address" : "Copy Link Address",
-                    click() {
-                        const url = extractEmailIfEmailHref(linkURL);
-                        if (platform() === "darwin") {
-                            clipboard.writeBookmark(linkText, url);
-                        } else {
-                            clipboard.writeText(url);
-                        }
-                    },
-                }]);
-                linkMenu.popup(popupOptions);
-                return;
-            }
+const webContentsCreatedHandler = (webContents: WebContents) => {
+    webContents.removeListener.apply(webContents, contextMenuEventSubscriptionArgs);
+    webContents.on.apply(webContents, contextMenuEventSubscriptionArgs);
+};
 
-            if (selectionText && selectionText.trim()) {
-                selectionMenu.popup(popupOptions);
-            }
-        },
-    ];
-    const webContentsCreatedHandler = (webContents: WebContents) => {
-        webContents.removeListener.apply(webContents, contextMenuEventArgs);
-        webContents.on.apply(webContents, contextMenuEventArgs);
-    };
-
+export function initWebContentContextMenu() {
     app.on("browser-window-created", (event, {webContents}) => webContentsCreatedHandler(webContents));
     app.on("web-contents-created", (webContentsCreatedEvent, webContents) => webContentsCreatedHandler(webContents));
 }

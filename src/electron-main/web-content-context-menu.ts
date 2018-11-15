@@ -3,7 +3,7 @@ import {platform} from "os";
 
 const emptyArray = Object.freeze([]);
 
-const contextMenuEventSubscriptionArgs = [
+const contextMenuEventSubscriptionArgs: ["context-menu", (event: Event, params: ContextMenuParams) => void] = [
     "context-menu",
     ({sender: webContents}: Event, {editFlags, linkURL, linkText}: ContextMenuParams) => {
         const template: MenuItemConstructorOptions[] = [];
@@ -44,8 +44,8 @@ const contextMenuEventSubscriptionArgs = [
 ];
 
 const webContentsCreatedHandler = (webContents: WebContents) => {
-    webContents.removeListener.apply(webContents, contextMenuEventSubscriptionArgs);
-    webContents.on.apply(webContents, contextMenuEventSubscriptionArgs);
+    webContents.removeListener(...contextMenuEventSubscriptionArgs);
+    webContents.on(...contextMenuEventSubscriptionArgs);
 };
 
 export function initWebContentContextMenu() {

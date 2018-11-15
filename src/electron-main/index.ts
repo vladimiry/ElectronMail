@@ -12,7 +12,10 @@ import {initTray} from "./tray";
 import {initWebContentContextMenu} from "./web-content-context-menu";
 import {isWebViewSrcWhitelisted} from "src/shared/util";
 
-electronUnhandled({logger: logger.error});
+electronUnhandled({
+    logger: logger.error,
+    showDialog: true,
+});
 
 // needed for desktop notifications properly working on Win 10, details https://www.electron.build/configuration/nsis
 app.setAppUserModelId(`com.github.vladimiry.${APP_NAME}`);

@@ -49,7 +49,7 @@ const ajaxSendNotification$ = new Observable<XMLHttpRequest>((subscriber) => {
             this[ajaxSendNotificationSkipSymbol] = true;
             args[urlArgIndex] = args[urlArgIndex].replace(removeAjaxNotificationSkipParamRe, "");
         }
-        return original.apply(this, args);
+        return original.apply(this, arguments as any);
     })();
 
     XMLHttpRequest.prototype.send = ((
@@ -75,7 +75,7 @@ const ajaxSendNotification$ = new Observable<XMLHttpRequest>((subscriber) => {
     ) => function(this: XMLHttpRequestType) {
         this.addEventListener("load", loadHandler);
         this.addEventListener("loadend", loadEndHandler);
-        return original.apply(this, arguments);
+        return original.apply(this, arguments as any);
     })();
 });
 

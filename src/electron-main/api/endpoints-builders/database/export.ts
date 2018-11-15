@@ -1,4 +1,4 @@
-import {encode as base64Encode} from "base64-arraybuffer";
+import {Base64} from "js-base64";
 import {join} from "path";
 import {promisify} from "util";
 import {v4 as uuid} from "uuid";
@@ -47,8 +47,8 @@ export async function writeEmlFile(mail: Mail, dir: string): Promise<{ file: str
 // TODO consider sanitizing "mail.body"
 function buildEml(mail: Mail): string {
     const boundary = `----=${uuid()}@${APP_NAME}`;
-    const subject = mail.subject && `=?UTF-8?B?${base64Encode(stringToArrayBuffer(mail.subject))}?=`;
-    const body = (base64Encode(stringToArrayBuffer(mail.body)).match(lineSplittingRe) || emptyArray).join(eol);
+    const subject = mail.subject && `=?UTF-8?B?${Base64.encode(mail.subject)}?=`;
+    const body = (Base64.encode(mail.body).match(lineSplittingRe) || emptyArray).join(eol);
     const lines = [
         `MIME-Version: 1.0`, eol,
         ...formatAddresses(`From`, [mail.sender]),
@@ -109,14 +109,6 @@ function buildSortableDate(date: Date): string {
     const seconds = padStart(date.getSeconds());
 
     return `${year}-${month}-${day} ${hours}h${minutes}m${seconds}s`;
-}
-
-function stringToArrayBuffer(input: string): ArrayBuffer {
-    return new Uint8Array(
-        unescape(encodeURIComponent(input))
-            .split(``)
-            .map((v) => v.charCodeAt(0)),
-    ).buffer;
 }
 
 function padStart(value: number, args: [number, string] = [2, `0`]) {

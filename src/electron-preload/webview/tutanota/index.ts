@@ -277,13 +277,13 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
                                 this: typeof EntityEventController,
                                 entityUpdates,
                                 // tslint:disable-next-line:trailing-comma
-                                ...args
+                                ...rest
                             ) {
                                 entityUpdates
                                     .map((entityUpdate) => pick(["application", "type", "operation"], entityUpdate))
                                     .forEach((entityUpdate) => innerLogger.debug(JSON.stringify(entityUpdate)));
                                 notificationReceivedSubscriber.next({events: entityUpdates});
-                                return original.apply(this, [entityUpdates, ...args]);
+                                return original.call(this, entityUpdates, ...rest);
                             };
                             return overridden;
                         })();

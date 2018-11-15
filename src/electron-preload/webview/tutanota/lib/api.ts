@@ -1,6 +1,6 @@
 import * as Rest from "./rest";
+import {Arguments, Timestamp} from "src/shared/types";
 import {StatusCodeError} from "src/shared/model/error";
-import {Timestamp} from "src/shared/types";
 
 type ModuleFiles =
     | "src/api/common/EntityFunctions"
@@ -72,10 +72,13 @@ export async function resolveApi(): Promise<Api> {
 
     // tslint:disable-next-line:variable-name
     const SystemJS: SystemJSLoader.System = await new Promise<SystemJSLoader.System>((resolveSystemJS) => {
-        const args = ["DOMContentLoaded", () => {
-            resolveSystemJS((window as any).SystemJS);
-            document.removeEventListener.apply(document, args);
-        }];
+        const args: Arguments<typeof document.removeEventListener> = [
+            "DOMContentLoaded",
+            () => {
+                resolveSystemJS((window as any).SystemJS);
+                document.removeEventListener(...args);
+            },
+        ];
         document.addEventListener.apply(document, args);
         // TODO reject with timeout
     });

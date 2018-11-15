@@ -255,61 +255,63 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     private configureWebView(webView: Electron.WebviewTag) {
         this.logger.info(`configureWebView()`);
 
-        const domReadyEventHandler = () => {
-            this.logger.verbose(`webview.domReadyEventHandler(): "${webView.src}"`);
+        const arrayOfDomReadyEvenNameAndHandler: ["dom-ready", (event: Electron.Event) => void] = [
+            "dom-ready",
+            () => {
+                this.logger.verbose(`webview.domReadyEventHandler(): "${webView.src}"`);
 
-            this.resolveOnWebViewDomReadyDeferreds();
-            this.domReadySubscription.unsubscribe();
-            this.domReadySubscription = new Subscription();
+                this.resolveOnWebViewDomReadyDeferreds();
+                this.domReadySubscription.unsubscribe();
+                this.domReadySubscription = new Subscription();
 
-            this.domReadySubscription.add(
-                this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.SetupNotificationChannel({
-                    account: this.account, webView, finishPromise: this.setupOnWebViewDomReadyDeferred().promise,
-                })),
-            );
+                this.domReadySubscription.add(
+                    this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.SetupNotificationChannel({
+                        account: this.account, webView, finishPromise: this.setupOnWebViewDomReadyDeferred().promise,
+                    })),
+                );
 
-            if ((process.env.NODE_ENV as BuildEnvironment) !== "development") {
-                return;
-            }
+                if ((process.env.NODE_ENV as BuildEnvironment) !== "development") {
+                    return;
+                }
 
-            this.domReadySubscription.add(
-                ((state: { stopSyncingDeferred?: Deferred<void> } = {}) => {
-                    return this.account$
-                        .pipe(
-                            map(({notifications, accountConfig}) => ({
-                                pk: {type: accountConfig.type, login: accountConfig.login},
-                                data: {loggedIn: notifications.loggedIn, database: accountConfig.database},
-                            })),
-                            distinctUntilChanged((prev, curr) => equals(prev.data, curr.data)),
-                        )
-                        .subscribe(async ({pk, data}) => {
-                            const disabled = !data.loggedIn || !data.database;
+                this.domReadySubscription.add(
+                    ((state: { stopSyncingDeferred?: Deferred<void> } = {}) => {
+                        return this.account$
+                            .pipe(
+                                map(({notifications, accountConfig}) => ({
+                                    pk: {type: accountConfig.type, login: accountConfig.login},
+                                    data: {loggedIn: notifications.loggedIn, database: accountConfig.database},
+                                })),
+                                distinctUntilChanged((prev, curr) => equals(prev.data, curr.data)),
+                            )
+                            .subscribe(async ({pk, data}) => {
+                                const disabled = !data.loggedIn || !data.database;
 
-                            if (state.stopSyncingDeferred) {
-                                state.stopSyncingDeferred.resolve();
-                            }
+                                if (state.stopSyncingDeferred) {
+                                    state.stopSyncingDeferred.resolve();
+                                }
 
-                            if (disabled) {
-                                return;
-                            }
+                                if (disabled) {
+                                    return;
+                                }
 
-                            state.stopSyncingDeferred = this.setupOnWebViewDomReadyDeferred();
+                                state.stopSyncingDeferred = this.setupOnWebViewDomReadyDeferred();
 
-                            this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.ToggleSyncing({
-                                pk, webView, finishPromise: state.stopSyncingDeferred.promise,
-                            }));
-                        });
-                })(),
-            );
-        };
-        const arrayOfDomReadyEvenNameAndHandler = ["dom-ready", domReadyEventHandler];
+                                this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.ToggleSyncing({
+                                    pk, webView, finishPromise: state.stopSyncingDeferred.promise,
+                                }));
+                            });
+                    })(),
+                );
+            },
+        ];
         const subscribeDomReadyHandler = () => {
             this.logger.info(`webview.subscribeDomReadyHandler()`);
-            webView.addEventListener.apply(webView, arrayOfDomReadyEvenNameAndHandler);
+            webView.addEventListener(...arrayOfDomReadyEvenNameAndHandler);
         };
         const unsubscribeDomReadyHandler = () => {
             this.logger.info(`webview.unsubscribeDomReadyHandler()`);
-            webView.removeEventListener.apply(webView, arrayOfDomReadyEvenNameAndHandler);
+            webView.removeEventListener(...arrayOfDomReadyEvenNameAndHandler);
         };
 
         subscribeDomReadyHandler();

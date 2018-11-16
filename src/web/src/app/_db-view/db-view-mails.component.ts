@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, Output} from "@angular/core";
 
-import {DB_VIEW_ACTIONS} from "../store/actions";
+import {DB_VIEW_ACTIONS} from "src/web/src/app/store/actions";
 import {DbViewMailTabComponent} from "./db-view-mail-tab.component";
 import {Instance} from "src/web/src/app/store/reducers/db-view";
 import {Mail, View} from "src/shared/model/database";
@@ -34,7 +34,7 @@ export class DbViewMailsComponent {
     set input(input: Omit<typeof DbViewMailsComponent.prototype.state, "paging" | "selectedMail">) {
         const state = {
             uid: input.uid,
-            plainListViewMode: this.state ? this.state.plainListViewMode : true,
+            plainListViewMode: this.state ? this.state.plainListViewMode : false,
             selectedMail: this.state
                 ? this.state.selectedMail
                 : undefined,

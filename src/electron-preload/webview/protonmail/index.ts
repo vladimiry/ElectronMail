@@ -426,8 +426,7 @@ async function bootstrapDbPatch(): Promise<Unpacked<ReturnType<ProtonmailApi["bu
         })(),
         // labels
         (async () => {
-            const response = await api.label.query({Type: Rest.Model.LABEL_TYPE.MESSAGE}); // fetch all the entities
-            return response.data.Labels;
+            return await api.label.query({Type: Rest.Model.LABEL_TYPE.MESSAGE}); // fetch all the entities
         })(),
     ]);
 
@@ -528,8 +527,8 @@ async function buildDbPatch(
             patch.mails.upsert.push(await Database.buildMail(response.data.Message, api));
         }
         await (async () => {
-            const response = await api.label.query();
-            const folders = response.data.Labels
+            const labels = await api.label.query();
+            const folders = labels
                 .filter(({ID}) => mapping.folders.upsertIds.includes(ID))
                 .map(Database.buildFolder);
             patch.folders.upsert.push(...folders);

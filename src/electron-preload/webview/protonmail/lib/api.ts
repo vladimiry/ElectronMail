@@ -30,7 +30,7 @@ export interface Api {
         all: () => Promise<Rest.Model.ContactsResponse["Contacts"]>;
     };
     label: {
-        query: (params?: { Type?: Rest.Model.Label["Type"] }) => Promise<{ data: Rest.Model.LabelsResponse }>;
+        query: (params?: { Type?: Rest.Model.Label["Type"] }) => Promise<Rest.Model.LabelsResponse["Labels"]>;
     };
     events: {
         get: (id: Rest.Model.Event["EventID"], config?: ng.IRequestShortcutConfig) => Promise<Rest.Model.EventResponse>;

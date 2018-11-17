@@ -35,7 +35,7 @@ export class DbViewMailComponent {
             return;
         }
 
-        this.mailAddress = mail.toRecipients[0];
+        this.mailAddress = mail.toRecipients.length ? mail.toRecipients[0] : undefined;
         this.mailAddressTotal = [mail.toRecipients, mail.ccRecipients, mail.bccRecipients].reduce((sum, {length}) => sum + length, 0);
     }
 

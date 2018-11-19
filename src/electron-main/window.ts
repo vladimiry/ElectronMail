@@ -1,4 +1,4 @@
-import {BrowserWindow, BrowserWindowConstructorOptions, Menu, app} from "electron";
+import {BrowserWindow, BrowserWindowConstructorOptions, app} from "electron";
 import {Store} from "fs-json-store";
 import {equals} from "ramda";
 import {platform} from "os";
@@ -8,6 +8,11 @@ import {Context} from "./model";
 import {Endpoints} from "src/shared/api/main";
 
 const developmentEnvironment = (process.env.NODE_ENV as BuildEnvironment) === "development";
+const browserWindowState: { forceClose: boolean } = {forceClose: false};
+const appBeforeQuitEventArgs: ["before-quit", (event: Electron.Event) => void] = [
+    "before-quit",
+    () => browserWindowState.forceClose = true,
+];
 
 export async function initBrowserWindow(ctx: Context, endpoints: Endpoints): Promise<BrowserWindow> {
     const e2eRuntimeEnvironment = ctx.runtimeEnvironment === "e2e"
@@ -30,11 +35,9 @@ export async function initBrowserWindow(ctx: Context, endpoints: Endpoints): Pro
         autoHideMenuBar: true,
     };
     const browserWindow = new BrowserWindow(browserWindowConstructorOptions);
-    const appBeforeQuitEventHandler = () => forceClose = true;
-    let forceClose = false;
 
-    app.removeListener("before-quit", appBeforeQuitEventHandler);
-    app.on("before-quit", appBeforeQuitEventHandler);
+    app.removeListener(...appBeforeQuitEventArgs);
+    app.on(...appBeforeQuitEventArgs);
 
     browserWindow.on("ready-to-show", async () => {
         const settingsConfigured = await ctx.settingsStore.readable();
@@ -46,7 +49,7 @@ export async function initBrowserWindow(ctx: Context, endpoints: Endpoints): Pro
     });
     browserWindow.on("closed", () => {
         browserWindow.destroy();
-        forceClose = false;
+        browserWindowState.forceClose = false;
 
         // On macOS it is common for applications and their menu bar to stay active until the user quits explicitly with Cmd + Q
         if (platform() !== "darwin") {
@@ -54,7 +57,7 @@ export async function initBrowserWindow(ctx: Context, endpoints: Endpoints): Pro
         }
     });
     browserWindow.on("close", async (event) => {
-        if (forceClose) {
+        if (browserWindowState.forceClose) {
             return event.returnValue = true;
         }
 
@@ -62,10 +65,12 @@ export async function initBrowserWindow(ctx: Context, endpoints: Endpoints): Pro
         event.preventDefault();
 
         if ((await ctx.configStore.readExisting()).closeToTray) {
+            // TODO figure why "BrowserWindow.fromWebContents(event.sender).hide()" doesn't properly work (window gets closed)
+            // BrowserWindow.fromWebContents(event.sender).hide();
             const sender: BrowserWindow = (event as any).sender;
             sender.hide();
         } else {
-            forceClose = true;
+            browserWindowState.forceClose = true;
             browserWindow.close();
         }
 
@@ -77,57 +82,6 @@ export async function initBrowserWindow(ctx: Context, endpoints: Endpoints): Pro
 
     // execute after handlers subscriptions
     await keepState(ctx, browserWindow);
-
-    Menu.setApplicationMenu(Menu.buildFromTemplate(platform() === "darwin" ? [{
-        label: app.getName(),
-        submenu: [
-            {
-                label: "About",
-                async click() {
-                    await endpoints.openAboutWindow().toPromise();
-                },
-            },
-            {
-                type: "separator",
-            },
-            {
-                role: "hide",
-                accelerator: "Command+H",
-            },
-            {
-                role: "hideothers",
-                accelerator: "Command+Alt+H",
-            },
-            {
-                label: "Show All",
-                role: "unhide",
-            },
-            {
-                type: "separator",
-            },
-            {
-                label: "Quit",
-                async click() {
-                    await endpoints.quit().toPromise();
-                },
-            },
-        ],
-    }] : [
-        {
-            label: "File",
-            submenu: [
-                {
-                    type: "separator",
-                },
-                {
-                    label: "Quit",
-                    async click() {
-                        await endpoints.quit().toPromise();
-                    },
-                },
-            ],
-        },
-    ]));
 
     if (developmentEnvironment) {
         browserWindow.webContents.openDevTools();

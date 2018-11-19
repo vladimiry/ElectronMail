@@ -1,12 +1,11 @@
-import logger from "electron-log";
 import {IpcRenderer} from "electron";
 
 import {AccountType} from "src/shared/model/account";
-import {Omit} from "src/shared/types";
+import {Logger} from "src/shared/types";
 
 export interface ElectronExposure {
     ipcRendererTransport: Pick<IpcRenderer, "on" | "removeListener" | "send" | "sendToHost">;
-    webLogger: Omit<typeof logger, "transports">;
+    webLogger: Logger;
     require: {
         "rolling-rate-limiter": () => (...args: any[]) => (key: string) => number,
     };

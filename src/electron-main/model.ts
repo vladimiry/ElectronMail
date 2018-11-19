@@ -34,4 +34,5 @@ export interface Context {
 export interface UIContext {
     browserWindow: Electron.BrowserWindow;
     tray: Electron.Tray;
+    appMenu: Electron.Menu;
 }

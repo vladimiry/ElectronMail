@@ -29,6 +29,7 @@ import {buildLoggerBundle} from "src/electron-preload/util";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {fetchAllEntities, fetchEntitiesRange, fetchMultipleEntities} from "src/electron-preload/webview/tutanota/lib/rest";
 import {isUpsertOperationType, preprocessError} from "./lib/util";
+import {registerDocumentKeyDownEventListener} from "src/shared/web/key-binding";
 import {resolveApi} from "src/electron-preload/webview/tutanota/lib/api";
 
 type BuildDbPatchInputMetadata = Unpacked<ReturnType<TutanotaApi["buildDbPatch"]>>["metadata"];
@@ -314,6 +315,11 @@ function bootstrapApi(api: Unpacked<ReturnType<typeof resolveApi>>) {
 
     TUTANOTA_IPC_WEBVIEW_API.registerApi(endpoints, {logger: {error: _logger.error, info: () => {}}});
     _logger.verbose(`api registered, url: ${getLocationHref()}`);
+
+    registerDocumentKeyDownEventListener(
+        document,
+        _logger,
+    );
 }
 
 async function bootstrapDbPatch(

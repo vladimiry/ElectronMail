@@ -5,6 +5,7 @@ import {app} from "electron";
 import {APP_NAME} from "src/shared/constants";
 import {clearDefaultSessionCaches} from "./session";
 import {initApi} from "./api";
+import {initApplicationMenu} from "./menu";
 import {initAutoUpdate} from "./app-update";
 import {initBrowserWindow} from "./window";
 import {initContext} from "./util";
@@ -51,6 +52,7 @@ app.on("ready", async () => {
     const uiContext = ctx.uiContext = {
         browserWindow: await initBrowserWindow(ctx, endpoints),
         tray: initTray(endpoints),
+        appMenu: await initApplicationMenu(endpoints),
     };
 
     await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0}).toPromise();

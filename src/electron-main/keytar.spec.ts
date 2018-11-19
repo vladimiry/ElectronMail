@@ -71,19 +71,19 @@ async function bootstrap() {
     const store = new Map<string, string>();
     const keytarModuleMocks = {
         getPassword: sinon.stub().callsFake(
-            (async (service, account) => {
+            ((async (service, account) => {
                 return store.get(JSON.stringify({service, account})) || null;
-            }) as typeof keytar.getPassword,
+            }) as typeof keytar.getPassword) as any,
         ),
         setPassword: sinon.stub().callsFake(
-            (async (service, account, password) => {
+            ((async (service, account, password) => {
                 store.set(JSON.stringify({service, account}), password);
-            }) as typeof keytar.setPassword,
+            }) as typeof keytar.setPassword) as any,
         ),
         deletePassword: sinon.stub().callsFake(
-            (async (service, account) => {
+            ((async (service, account) => {
                 return store.delete(JSON.stringify({service, account}));
-            }) as typeof keytar.deletePassword,
+            }) as typeof keytar.deletePassword) as any,
         ),
     };
     return {

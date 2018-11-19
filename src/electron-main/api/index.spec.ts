@@ -443,8 +443,13 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.is(updated.compactLayout, false);
     },
 
+    // TODO test "updateOverlayIcon" API
     updateOverlayIcon: async (t) => {
-        // TODO test "updateOverlayIcon" API
+        t.pass();
+    },
+
+    // TODO test "hotkey" API
+    hotkey: (t) => {
         t.pass();
     },
 

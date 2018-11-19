@@ -3,6 +3,7 @@ import {ipcRenderer} from "electron";
 
 import {ElectronWindow} from "src/shared/model/electron";
 import {buildLoggerBundle} from "src/electron-preload/util";
+import {registerDocumentKeyDownEventListener} from "src/shared/web/key-binding";
 
 // tslint:disable-next-line:no-eval
 const _require = eval("require");
@@ -23,3 +24,8 @@ const exposure: ElectronWindow = {
 };
 
 Object.assign(window, exposure);
+
+registerDocumentKeyDownEventListener(
+    document,
+    exposure.__ELECTRON_EXPOSURE__.webLogger,
+);

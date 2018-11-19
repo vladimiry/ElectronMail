@@ -1,3 +1,5 @@
+// tslint:disable-next-line:no-import-zones
+import logger from "electron-log";
 import {Observable} from "rxjs";
 
 export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
@@ -19,3 +21,5 @@ export interface EntryUrlItem {
 }
 
 export type NumberString = string;
+
+export type Logger = Omit<typeof logger, "transports">;

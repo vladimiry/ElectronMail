@@ -29,6 +29,7 @@ import {
 } from "src/electron-preload/webview/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
+import {registerDocumentKeyDownEventListener} from "src/shared/web/key-binding";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[index]");
 const WINDOW = window as any; // TODO remove "as any" casting on https://github.com/Microsoft/TypeScript/issues/14701 resolving
@@ -368,6 +369,41 @@ PROTONMAIL_IPC_WEBVIEW_API.registerApi(
     },
 );
 _logger.verbose(`api registered, url: ${getLocationHref()}`);
+
+registerDocumentKeyDownEventListener(
+    document,
+    _logger,
+);
+
+// message editing is happening inside an iframe
+// so we call "registerDocumentKeyDownEventListener" on every dynamically created editing iframe
+(() => {
+    const processAddedNode: (node: Node | Element) => void = (node) => {
+        if (
+            !("tagName" in node)
+            || node.tagName !== "DIV"
+            || !node.classList.contains("composer-editor")
+            || !node.classList.contains("angular-squire")
+            || !node.classList.contains("squire-container")
+        ) {
+            return;
+        }
+        const iframe = node.querySelector("iframe");
+        const iframeDocument = iframe && (iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document));
+        if (!iframeDocument) {
+            return;
+        }
+        registerDocumentKeyDownEventListener(
+            iframeDocument,
+            _logger,
+        );
+    };
+    new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            mutation.addedNodes.forEach(processAddedNode);
+        }
+    }).observe(document, {childList: true, subtree: true});
+})();
 
 function isLoggedIn(): boolean {
     const angular: angular.IAngularStatic | undefined = WINDOW.angular;

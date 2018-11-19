@@ -92,6 +92,8 @@ export interface Endpoints {
 
     updateOverlayIcon: ApiMethod<{ hasLoggedOut: boolean, unread: number }, null>;
 
+    hotkey: ApiMethod<{ type: "copy" | "paste" }, null>;
+
     notification: ApiMethodNoArgument<UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>>;
 }
 

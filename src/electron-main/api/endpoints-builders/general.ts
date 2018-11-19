@@ -1,8 +1,10 @@
 import aboutWindow from "about-window";
 import path from "path";
-import {EMPTY, from, of} from "rxjs";
+import {EMPTY, from, of, throwError} from "rxjs";
+import {IpcMainApiActionContext, IpcMainApiService} from "electron-rpc-api";
 import {app, shell} from "electron";
 import {isWebUri} from "valid-url";
+import {platform} from "os";
 import {promisify} from "util";
 
 import {Context} from "src/electron-main/model";
@@ -16,6 +18,7 @@ type ApiMethods =
     | "quit"
     | "activateBrowserWindow"
     | "toggleBrowserWindow"
+    | "hotkey"
     | "notification";
 
 const notificationObservable = NOTIFICATION_SUBJECT.asObservable();
@@ -91,6 +94,26 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
 
             return null;
         })()),
+
+        hotkey(this: IpcMainApiActionContext, {type}) {
+            const result = of(null);
+            const [event] = IpcMainApiService.resolveActionContext(this).args;
+            const {sender: webContents} = event;
+            if (platform() !== "darwin") {
+                return result;
+            }
+            switch (type) {
+                case "copy":
+                    webContents.copy();
+                    break;
+                case "paste":
+                    webContents.paste();
+                    break;
+                default:
+                    return throwError(new Error(`Unknown hotkey "type" value:  "${type}"`));
+            }
+            return result;
+        },
 
         notification: () => notificationObservable,
     };

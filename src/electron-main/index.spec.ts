@@ -47,8 +47,11 @@ test.serial("workflow", async (t) => {
 
     t.true(m["./tray"].initTray.calledWithExactly(endpoints), `"initTray" called`);
 
+    t.true(m["./menu"].initApplicationMenu.calledWithExactly(endpoints), `"initApplicationMenu" called`);
+    t.true(m["./menu"].initApplicationMenu.calledAfter(m["./tray"].initTray), `"initApplicationMenu" called after "initTray"`);
+
     t.true(endpoints.updateOverlayIcon.calledWithExactly({hasLoggedOut: false, unread: 0}), `"updateOverlayIcon" called`);
-    t.true(endpoints.updateOverlayIcon.calledAfter(m["./tray"].initTray), `"updateOverlayIcon" called after "initTray"`);
+    t.true(endpoints.updateOverlayIcon.calledAfter(m["./menu"].initApplicationMenu), `"updateOverlayIcon" called after "initApplicationMenu"`);
 
     t.true(m["./app-update"].initAutoUpdate.calledWithExactly(), `"initAutoUpdate" called`);
 });
@@ -82,6 +85,7 @@ test.beforeEach(async (t) => {
             mock(() => import("./util")).callThrough().with(mocks["./util"]);
             mock(() => import("./window")).callThrough().with(mocks["./window"]);
             mock(() => import("./tray")).callThrough().with(mocks["./tray"]);
+            mock(() => import("./menu")).callThrough().with(mocks["./menu"]);
             mock(() => import("./web-content-context-menu")).with(mocks["./web-content-context-menu"]);
             mock(() => import("./app-update")).callThrough().with(mocks["./app-update"]);
             mock(() => import("./keytar")).with({
@@ -113,6 +117,9 @@ function buildMocks(testContext: TestContext) {
             },
             "./tray": {
                 initTray: sinon.spy(),
+            },
+            "./menu": {
+                initApplicationMenu: sinon.spy(),
             },
             "./web-content-context-menu": {
                 initWebContentContextMenu: sinon.spy(),

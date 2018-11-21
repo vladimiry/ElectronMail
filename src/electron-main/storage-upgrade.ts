@@ -24,8 +24,11 @@ const SETTINGS_UPGRADES: Record<string, (settings: Settings) => void> = {
             if (typeof account.credentials === "undefined") {
                 account.credentials = {};
             }
-            if (typeof account.credentialsKeePass === "undefined") {
-                account.credentialsKeePass = {};
+            if (!isAppVersionLessThan("2.0.0")) {
+                return;
+            }
+            if (!("credentialsKeePass" in account)) {
+                (account as any).credentialsKeePass = {};
             }
         });
     },
@@ -69,4 +72,8 @@ function upgrade<T extends Config | Settings>(entity: T, upgrades: Record<string
         .forEach((version) => upgrades[version](entity));
 
     return JSON.stringify(entity) !== input;
+}
+
+function isAppVersionLessThan(version: string): boolean {
+    return compareVersions(APP_VERSION, version) === -1;
 }

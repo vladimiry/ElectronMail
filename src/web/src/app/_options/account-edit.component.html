@@ -67,47 +67,4 @@
             </button>
         </div>
     </form>
-    <div *ngIf="account">
-        <div>
-            <a href="javascript:void(0)" (click)="keePassRefCollapsed = !keePassRefCollapsed">KeePass References</a>
-            <i class="fa" [ngClass]="{
-                'fa-caret-up': !keePassRefCollapsed,
-                'fa-caret-down': keePassRefCollapsed
-            }"></i>
-        </div>
-        <div [collapse]="keePassRefCollapsed">
-            <hr>
-            <div class="form-group">
-                <label>Password</label>
-                <email-securely-app-keepass-reference
-                    [keePassClientConf$]="keePassClientConf$"
-                    [reference$]="passwordKeePassRef$"
-                    (linkHandler)="onPasswordKeePassLink($event)"
-                    (unlinkHandler)="onPasswordKeePassUnlink()"
-                ></email-securely-app-keepass-reference>
-            </div>
-            <hr>
-            <div class="form-group">
-                <label>Two Factor Secret Key</label>
-                <email-securely-app-keepass-reference
-                    [keePassClientConf$]="keePassClientConf$"
-                    [reference$]="twoFactorCodeKeePassRef$"
-                    (linkHandler)="onTwoFactorCodeKeePassLink($event)"
-                    (unlinkHandler)="onTwoFactorCodeKeePassUnlink()"
-                ></email-securely-app-keepass-reference>
-            </div>
-            <div *ngIf="account?.type == 'protonmail'">
-                <hr>
-                <div class="form-group">
-                    <label>Mail Password</label>
-                    <email-securely-app-keepass-reference
-                        [keePassClientConf$]="keePassClientConf$"
-                        [reference$]="mailPasswordKeePassRef$"
-                        (linkHandler)="onMailPasswordKeePassLink($event)"
-                        (unlinkHandler)="onMailPasswordKeePassUnlink()"
-                    ></email-securely-app-keepass-reference>
-                </div>
-            </div>
-        </div>
-    </div>
 </fieldset>

@@ -1,17 +1,8 @@
 import {AccountConfig, AccountType} from "src/shared/model/account";
-import {KeePassClientConf, KeePassRef} from "src/shared/model/keepasshttp";
 
 export type AccountTypeAndLoginFieldContainer = Pick<AccountConfig, "type" | "login">;
 
 export type LoginFieldContainer = Pick<AccountTypeAndLoginFieldContainer, "login">;
-
-export interface KeePassRefFieldContainer {
-    keePassRef: KeePassRef;
-}
-
-export interface KeePassClientConfFieldContainer {
-    keePassClientConf: KeePassClientConf;
-}
 
 export interface UrlFieldContainer {
     url: string;
@@ -38,4 +29,4 @@ export interface PasswordChangeContainer extends PasswordFieldContainer, NewPass
 export type AccountConfigCreatePatch<T extends AccountType = AccountType> = AccountConfig<T>;
 
 export type AccountConfigUpdatePatch<T extends AccountType = AccountType> = Pick<AccountConfig<T>, "login">
-    & Partial<Pick<AccountConfig, "login" | "entryUrl" | "database" | "credentials" | "credentialsKeePass">>;
+    & Partial<Pick<AccountConfig, "login" | "entryUrl" | "database" | "credentials">>;

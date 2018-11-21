@@ -13,9 +13,7 @@ import {
     ViewContainerRef,
 } from "@angular/core";
 import {Deferred} from "ts-deferred";
-// tslint:disable-next-line:no-import-zones
-import {DidFailLoadEvent} from "electron";
-import {EMPTY, Subscription, combineLatest, of} from "rxjs";
+import {Subscription, combineLatest} from "rxjs";
 import {debounceTime, distinctUntilChanged, filter, map, mergeMap, pairwise} from "rxjs/operators";
 import {equals, pick} from "ramda";
 
@@ -36,7 +34,6 @@ let componentIndex = 0;
 
 const pickCredentialFields = ((fields: Array<keyof AccountConfig>) => (ac: AccountConfig) => pick(fields, ac))([
     "credentials",
-    "credentialsKeePass",
 ]);
 
 @Component({
@@ -55,12 +52,6 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     @HostBinding("class.webview-hidden-offline")
     afterFailedLoadWait: number = 0;
     didFailLoadErrorDescription?: string;
-    keePassClientConf$ = this.store.pipe(select(OptionsSelectors.SETTINGS.keePassClientConf));
-    passwordKeePassRef$ = this.account$.pipe(map(({accountConfig}) => accountConfig.credentialsKeePass.password));
-    twoFactorCodeKeePassRef$ = this.account$.pipe(map(({accountConfig}) => accountConfig.credentialsKeePass.twoFactorCode));
-    mailPasswordKeePassRef$ = this.account$.pipe(mergeMap(({accountConfig}) => {
-        return accountConfig.type === "protonmail" ? of(accountConfig.credentialsKeePass.mailPassword) : EMPTY;
-    }));
     private logger: ReturnType<typeof getZoneNameBoundWebLogger>;
     private loggerZone: Zone;
     @ViewChild("webViewRef", {read: ElementRef})
@@ -170,15 +161,6 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         this.logger.info(`ngOnDestroy()`);
         this.subscription.unsubscribe();
         this.resolveOnWebViewDomReadyDeferreds();
-    }
-
-    onKeePassPassword(password: string) {
-        this.logger.info(`onKeePassPassword()`);
-        // tslint:disable-next-line:no-floating-promises
-        this.webViewDeferred.promise.then((webView) => {
-            this.logger.info(`dispatch "TryToLogin" from onKeePassPassword()`);
-            this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.TryToLogin({webView, account: this.account, password}));
-        });
     }
 
     private dispatchInLoggerZone<A extends Action = Action>(action: A) {
@@ -324,7 +306,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         webView.addEventListener("did-fail-load", ((options: { iteration: number, stepSeconds: number }) => {
             let intervalId: any = null;
 
-            return ({errorDescription}: DidFailLoadEvent) => {
+            return ({errorDescription}: Electron.DidFailLoadEvent) => {
                 this.logger.verbose(`webview:did-fail-load: "${webView.src}"`);
 
                 // TODO figure ERR_NOT_IMPLEMENTED error cause, happening on password/2fa code submitting, tutanota only issue

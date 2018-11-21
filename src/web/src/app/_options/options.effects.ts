@@ -176,19 +176,6 @@ export class OptionsEffects {
         )));
 
     @Effect()
-    associateSettingsWithKeePassRequest$ = this.actions$.pipe(
-        unionizeActionFilter(OPTIONS_ACTIONS.is.AssociateSettingsWithKeePassRequest),
-        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-        concatMap(({payload}) => merge(
-            of(this.buildPatchProgress({keePassReferencing: true})),
-            this.ipcMainClient("associateSettingsWithKeePass")(payload).pipe(
-                map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
-                catchError((error) => of(CORE_ACTIONS.Fail(error))),
-                finalize(() => this.dispatchProgress({keePassReferencing: false})),
-            ),
-        )));
-
-    @Effect()
     toggleCompactLayout$ = this.actions$.pipe(
         unionizeActionFilter(OPTIONS_ACTIONS.is.ToggleCompactRequest),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),

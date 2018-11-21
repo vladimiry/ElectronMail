@@ -1,5 +1,3 @@
-import {KeePassRef} from "./keepasshttp";
-
 export type AccountType = "protonmail" | "tutanota";
 
 export interface GenericAccountConfig<Type extends AccountType, CredentialFields extends string> {
@@ -8,7 +6,6 @@ export interface GenericAccountConfig<Type extends AccountType, CredentialFields
     entryUrl: string;
     database?: boolean;
     credentials: Partial<Record<CredentialFields, string>>;
-    credentialsKeePass: Partial<Record<CredentialFields, KeePassRef>>;
 }
 
 export type AccountConfigProtonmail = GenericAccountConfig<"protonmail", "password" | "twoFactorCode" | "mailPassword">;

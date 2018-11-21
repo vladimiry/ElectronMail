@@ -1,22 +1,3 @@
-<email-securely-app-keepass-request
-    *ngIf="account.notifications.pageType.type == 'login'"
-    [keePassRef$]="passwordKeePassRef$"
-    [keePassClientConf$]="keePassClientConf$"
-    (passwordHandler)="onKeePassPassword($event)"
-></email-securely-app-keepass-request>
-<email-securely-app-keepass-request
-    *ngIf="account.notifications.pageType.type == 'login2fa'"
-    [keePassRef$]="twoFactorCodeKeePassRef$"
-    [keePassClientConf$]="keePassClientConf$"
-    (passwordHandler)="onKeePassPassword($event)"
-></email-securely-app-keepass-request>
-<email-securely-app-keepass-request
-    *ngIf="account.notifications.pageType.type == 'unlock' && account.accountConfig.type == 'protonmail'"
-    [keePassRef$]="mailPasswordKeePassRef$"
-    [keePassClientConf$]="keePassClientConf$"
-    (passwordHandler)="onKeePassPassword($event)"
-></email-securely-app-keepass-request>
-
 <webview
     #webViewRef
     *ngIf="webViewAttributes"

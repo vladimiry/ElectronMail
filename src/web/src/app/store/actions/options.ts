@@ -7,7 +7,6 @@ import {
     LoginFieldContainer,
     PasswordChangeContainer,
     PasswordFieldContainer,
-    UrlFieldContainer,
 } from "src/shared/model/container";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {ElectronContextLocations} from "src/shared/model/electron";
@@ -18,7 +17,6 @@ export const OPTIONS_ACTIONS = unionize({
         UpdateAccountRequest: ofType<AccountConfigUpdatePatch>(),
         ChangeAccountOrderRequest: ofType<LoginFieldContainer & { index: number }>(),
         RemoveAccountRequest: ofType<{ login: string }>(),
-        AssociateSettingsWithKeePassRequest: ofType<UrlFieldContainer>(),
         ChangeMasterPasswordRequest: ofType<PasswordChangeContainer>(),
         GetConfigRequest: ofType<{}>(),
         GetConfigResponse: ofType<Config>(),

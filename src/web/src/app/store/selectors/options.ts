@@ -30,7 +30,5 @@ export const SETTINGS = (() => {
             accountsSelector,
             (accounts) => accounts.find(accountPickingPredicate(criteria)),
         ),
-        keePassClientConf: createSelector(FEATURED.settings, ({keePassClientConf}) => keePassClientConf),
-        keePassRef: createSelector(FEATURED.settings, ({keePassRef}) => keePassRef),
     };
 })();

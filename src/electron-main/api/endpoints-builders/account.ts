@@ -9,14 +9,13 @@ export async function buildEndpoints(
     ctx: Context,
 ): Promise<Pick<Endpoints, "addAccount" | "updateAccount" | "changeAccountOrder" | "removeAccount">> {
     return {
-        addAccount: ({type, login, entryUrl, database, credentials, credentialsKeePass}) => from((async () => {
+        addAccount: ({type, login, entryUrl, database, credentials}) => from((async () => {
             const account = {
                 type,
                 login,
                 entryUrl,
                 database,
                 credentials,
-                credentialsKeePass,
             } as AccountConfig; // TODO ger rid of "TS as" casting
             const settings = await ctx.settingsStore.readExisting();
 
@@ -26,10 +25,10 @@ export async function buildEndpoints(
         })()),
 
         // TODO update "updateAccount" api method test (entryUrl, changed credentials structure)
-        updateAccount: ({login, entryUrl, database, credentials, credentialsKeePass}) => from((async () => {
+        updateAccount: ({login, entryUrl, database, credentials}) => from((async () => {
             const settings = await ctx.settingsStore.readExisting();
             const account = pickAccountStrict(settings.accounts, {login});
-            const {credentials: existingCredentials, credentialsKeePass: existingCredentialsKeePass} = account;
+            const {credentials: existingCredentials} = account;
 
             if (typeof database !== "undefined") {
                 account.database = database;
@@ -48,18 +47,6 @@ export async function buildEndpoints(
                 }
                 if (account.type === "protonmail" && "mailPassword" in credentials) {
                     account.credentials.mailPassword = credentials.mailPassword;
-                }
-            }
-
-            if (credentialsKeePass) {
-                if ("password" in credentialsKeePass) {
-                    existingCredentialsKeePass.password = credentialsKeePass.password;
-                }
-                if ("twoFactorCode" in credentialsKeePass) {
-                    existingCredentialsKeePass.twoFactorCode = credentialsKeePass.twoFactorCode;
-                }
-                if (account.type === "protonmail" && "mailPassword" in credentialsKeePass) {
-                    account.credentialsKeePass.mailPassword = credentialsKeePass.mailPassword;
                 }
             }
 

@@ -24,10 +24,6 @@
         }
     }
 
-    &::ng-deep #{$app-prefix}-keepass-request {
-        margin: $app-spacer-2;
-    }
-
     > webview {
         flex: 1;
         height: 100%;

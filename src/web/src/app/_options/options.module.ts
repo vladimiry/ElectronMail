@@ -9,9 +9,6 @@ import {AccountEditComponent} from "./account-edit.component";
 import {AccountsComponent} from "./accounts.component";
 import {BaseSettingsComponent} from "./base-settings.component";
 import {EncryptionPresetsComponent} from "./encryption-presets.component";
-import {KeePassReferenceComponent} from "./keepass-reference.component";
-import {KeepassAssociateComponent} from "./keepass-associate.component";
-import {KeepassAssociateSettingsComponent} from "./keepass-associate-settings.component";
 import {LoginComponent} from "./login.component";
 import {OptionsEffects} from "./options.effects";
 import {OptionsRoutingModule} from "./options.routing.module";
@@ -42,9 +39,6 @@ import {StorageComponent} from "./storage.component";
         SettingsSetupComponent,
         AccountEditComponent,
         AccountsComponent,
-        KeepassAssociateComponent,
-        KeepassAssociateSettingsComponent,
-        KeePassReferenceComponent,
         BaseSettingsComponent,
         EncryptionPresetsComponent,
         StorageComponent,

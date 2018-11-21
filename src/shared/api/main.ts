@@ -9,13 +9,9 @@ import {APP_NAME} from "src/shared/constants";
 import {
     AccountConfigCreatePatch,
     AccountConfigUpdatePatch,
-    KeePassClientConfFieldContainer,
-    KeePassRefFieldContainer,
     LoginFieldContainer,
-    MessageFieldContainer,
     NewPasswordFieldContainer,
     PasswordFieldContainer,
-    UrlFieldContainer,
 } from "src/shared/model/container";
 import {AccountType} from "src/shared/model/account";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
@@ -33,8 +29,6 @@ export interface Endpoints {
     changeAccountOrder: ApiMethod<LoginFieldContainer & { index: number }, Settings>;
 
     removeAccount: ApiMethod<LoginFieldContainer, Settings>;
-
-    associateSettingsWithKeePass: ApiMethod<UrlFieldContainer, Settings>;
 
     changeMasterPassword: ApiMethod<PasswordFieldContainer & NewPasswordFieldContainer, Settings>;
 
@@ -60,9 +54,6 @@ export interface Endpoints {
     dbExport: ApiMethod<DbAccountPk, { count: number; } | { progress: number; file: string; }>;
 
     init: ApiMethodNoArgument<{ electronLocations: ElectronContextLocations; hasSavedPassword: boolean; }>;
-
-    keePassRecordRequest: ApiMethod<KeePassRefFieldContainer & KeePassClientConfFieldContainer
-        & { suppressErrors: boolean }, Partial<PasswordFieldContainer & MessageFieldContainer>>;
 
     logout: ApiMethodNoArgument<null>;
 

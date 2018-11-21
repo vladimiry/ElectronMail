@@ -4,7 +4,6 @@ import {RouterModule, Routes} from "@angular/router";
 import {AccountEditComponent} from "./account-edit.component";
 import {AccountsComponent} from "./accounts.component";
 import {BaseSettingsComponent} from "./base-settings.component";
-import {KeepassAssociateSettingsComponent} from "./keepass-associate-settings.component";
 import {LoginComponent} from "./login.component";
 import {SettingsComponent} from "./settings.component";
 import {SettingsConfigureGuard} from "./settings-configure.guard";
@@ -49,10 +48,6 @@ const routes: Routes = [
             {
                 path: "storage",
                 component: StorageComponent,
-            },
-            {
-                path: "keepass-associate-settings",
-                component: KeepassAssociateSettingsComponent,
             },
         ],
     },

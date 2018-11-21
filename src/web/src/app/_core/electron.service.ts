@@ -5,7 +5,6 @@ import {from, of, throwError} from "rxjs";
 
 import {AccountType} from "src/shared/model/account";
 import {IPC_MAIN_API} from "src/shared/api/main";
-import {KeePassClientConf, KeePassRef} from "src/shared/model/keepasshttp";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {PROTONMAIL_IPC_WEBVIEW_API} from "src/shared/api/webview/protonmail";
 import {TUTANOTA_IPC_WEBVIEW_API} from "src/shared/api/webview/tutanota";
@@ -50,10 +49,6 @@ export class ElectronService {
             ipcRenderer: __ELECTRON_EXPOSURE__.ipcRendererTransport,
             options: this.buildApiCallOptions(options),
         });
-    }
-
-    keePassPassword(keePassClientConf: KeePassClientConf, keePassRef: KeePassRef, suppressErrors = false) {
-        return this.ipcMainClient()("keePassRecordRequest")({keePassClientConf, keePassRef, suppressErrors});
     }
 
     private buildApiCallOptions(options: CallOptions = {}): Model.CallOptions {

@@ -1,7 +1,7 @@
 import logger from "electron-log";
 import {from} from "rxjs";
 
-import {Account, Database, General, KeePass, TrayIcon} from "./endpoints-builders";
+import {Account, Database, General, TrayIcon} from "./endpoints-builders";
 import {Context} from "src/electron-main/model";
 import {DbAccountPk} from "src/shared/model/database";
 import {Endpoints, IPC_MAIN_API} from "src/shared/api/main";
@@ -15,7 +15,6 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
         ...await Account.buildEndpoints(ctx),
         ...await Database.buildEndpoints(ctx),
         ...await General.buildEndpoints(ctx),
-        ...await KeePass.buildEndpoints(ctx),
         ...await TrayIcon.buildEndpoints(ctx),
 
         changeMasterPassword: ({password, newPassword}) => from((async () => {

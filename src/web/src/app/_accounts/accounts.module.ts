@@ -9,7 +9,6 @@ import {AccountsEffects} from "./accounts.effects";
 import {AccountsGuard} from "./accounts.guard";
 import {AccountsRoutingModule} from "./accounts.routing.module";
 import {DbViewModuleResolve} from "./db-view-module-resolve.service";
-import {KeePassRequestComponent} from "./keepass-request.component";
 import {SharedModule} from "src/web/src/app/_shared/shared.module";
 
 @NgModule({
@@ -23,7 +22,6 @@ import {SharedModule} from "src/web/src/app/_shared/shared.module";
         AccountsComponent,
         AccountComponent,
         AccountTitleComponent,
-        KeePassRequestComponent,
     ],
     providers: [
         DbViewModuleResolve,

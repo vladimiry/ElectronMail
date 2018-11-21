@@ -1,15 +1,14 @@
 import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/forms";
 import {ActivatedRoute} from "@angular/router";
 import {Component, OnDestroy, OnInit} from "@angular/core";
-import {EMPTY, Observable, Subject, merge, of} from "rxjs";
+import {Observable, Subject, merge} from "rxjs";
 import {Store} from "@ngrx/store";
 import {concatMap, filter, map, mergeMap, pairwise, takeUntil} from "rxjs/operators";
 
 import {ACCOUNTS_CONFIG} from "src/shared/constants";
-import {AccountConfig, AccountConfigProtonmail, AccountConfigTutanota, AccountType} from "src/shared/model/account";
+import {AccountConfig, AccountConfigProtonmail, AccountType} from "src/shared/model/account";
 import {AccountConfigCreatePatch, AccountConfigUpdatePatch} from "src/shared/model/container";
 import {EntryUrlItem} from "src/shared/types";
-import {KeePassRef} from "src/shared/model/keepasshttp";
 import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {OptionsService} from "./options.service";
@@ -44,14 +43,6 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         mergeMap(({login}) => login ? [String(login)] : []),
         concatMap((login) => this.store.select(OptionsSelectors.SETTINGS.pickAccount({login}))),
         mergeMap((account) => account ? [account] : []),
-    );
-    // keepass
-    keePassRefCollapsed = true;
-    keePassClientConf$ = this.store.select(OptionsSelectors.SETTINGS.keePassClientConf);
-    passwordKeePassRef$ = this.account$.pipe(map(({credentialsKeePass}) => credentialsKeePass.password));
-    twoFactorCodeKeePassRef$ = this.account$.pipe(map(({credentialsKeePass}) => credentialsKeePass.twoFactorCode));
-    mailPasswordKeePassRef$ = this.account$.pipe(
-        concatMap((account) => (account.type === "protonmail") ? of(account.credentialsKeePass.mailPassword) : EMPTY),
     );
     // progress
     processing$ = this.store.select(OptionsSelectors.FEATURED.progress).pipe(map((p) => p.addingAccount || p.updatingAccount));
@@ -129,7 +120,6 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                 password: controls.password.value,
                 twoFactorCode: controls.twoFactorCode.value,
             },
-            credentialsKeePass: {},
         };
         const accountType: AccountType = account ? account.type : controls.type.value;
 
@@ -156,50 +146,6 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         }
 
         this.store.dispatch(OPTIONS_ACTIONS.RemoveAccountRequest(account));
-    }
-
-    onPasswordKeePassLink(keePassRef: KeePassRef) {
-        this.dispatchKeePassRefUpdate("password", keePassRef);
-    }
-
-    onPasswordKeePassUnlink() {
-        this.dispatchKeePassRefUpdate("password", null);
-    }
-
-    onTwoFactorCodeKeePassLink(keePassRef: KeePassRef) {
-        this.dispatchKeePassRefUpdate("twoFactorCode", keePassRef);
-    }
-
-    onTwoFactorCodeKeePassUnlink() {
-        this.dispatchKeePassRefUpdate("twoFactorCode", null);
-    }
-
-    onMailPasswordKeePassLink(keePassRef: KeePassRef) {
-        this.dispatchKeePassRefUpdate("mailPassword", keePassRef);
-    }
-
-    onMailPasswordKeePassUnlink() {
-        this.dispatchKeePassRefUpdate("mailPassword", null);
-    }
-
-    dispatchKeePassRefUpdate(
-        // TODO simplify type definition of "refType"
-        refType: keyof Pick<AccountConfigProtonmail, "credentialsKeePass">["credentialsKeePass"]
-            | keyof Pick<AccountConfigTutanota, "credentialsKeePass">["credentialsKeePass"],
-        refValue: KeePassRef | null,
-    ) {
-        const account = this.account;
-
-        if (!account) {
-            throw new Error(`No "Account" to link/unlink KeePass record with`);
-        }
-
-        this.store.dispatch(OPTIONS_ACTIONS.UpdateAccountRequest({
-            login: account.login,
-            credentialsKeePass: {
-                [refType]: refValue,
-            },
-        }));
     }
 
     ngOnDestroy() {

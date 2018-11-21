@@ -5,7 +5,6 @@ import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import {Model as StoreModel} from "fs-json-store";
 
 import {AccountConfig} from "src/shared/model/account";
-import {KeePassClientConfFieldContainer, KeePassRefFieldContainer} from "src/shared/model/container";
 
 export type BaseConfig = Partial<Pick<Config,
     | "closeToTray"
@@ -25,9 +24,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     };
 }
 
-export interface Settings extends Partial<StoreModel.StoreEntity>,
-    Partial<KeePassClientConfFieldContainer>,
-    Partial<KeePassRefFieldContainer> {
+export interface Settings extends Partial<StoreModel.StoreEntity> {
     accounts: AccountConfig[];
     databaseEncryptionKey: string;
 }

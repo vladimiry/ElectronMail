@@ -11,7 +11,6 @@ export const featureName = "options";
 export type ProgressPatch = Partial<{
     addingAccount: boolean;
     changingPassword: boolean;
-    keePassReferencing: boolean;
     reEncryptingSettings: boolean;
     removingAccount: boolean;
     signingIn: boolean;

@@ -170,11 +170,6 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.deepEqual(expectedSettings2, settings);
     },
 
-    // TODO test "associateSettingsWithKeePass" API
-    associateSettingsWithKeePass: async (t) => {
-        t.pass();
-    },
-
     changeMasterPassword: async (t) => {
         const {endpoints} = t.context;
         const {changeMasterPassword} = endpoints;
@@ -241,11 +236,6 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
 
         t.deepEqual(result.electronLocations, t.context.ctx.locations);
         t.is(typeof result.hasSavedPassword, "boolean");
-    },
-
-    keePassRecordRequest: async (t) => {
-        // TODO test "keePassRecordRequest" API
-        t.pass();
     },
 
     logout: async (t) => {
@@ -608,7 +598,6 @@ function buildProtonmailAccountData(): Readonly<AccountConfigCreatePatch<"proton
             twoFactorCode: generateRandomString(),
             mailPassword: generateRandomString(),
         },
-        credentialsKeePass: {},
     };
 }
 
@@ -621,6 +610,5 @@ function buildTutanotaAccountData(): Readonly<AccountConfigCreatePatch<"tutanota
             password: generateRandomString(),
             twoFactorCode: generateRandomString(),
         },
-        credentialsKeePass: {},
     };
 }

@@ -5,6 +5,7 @@ import {Model as StoreModel} from "fs-json-store";
 import {randomBytes} from "crypto";
 
 import {Config, ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS, Settings} from "src/shared/model/options";
+import {ONE_SECOND_MS} from "src/shared/constants";
 
 export const INITIAL_STORES: Readonly<{
     config: () => Config;
@@ -27,6 +28,14 @@ export const INITIAL_STORES: Readonly<{
             checkForUpdatesAndNotify: true,
             window: {
                 bounds: {width: 1024, height: 768},
+            },
+            fetchingRateLimiting: { // 250 requests in 60 seconds
+                intervalMs: ONE_SECOND_MS * 60,
+                maxInInterval: 250,
+            },
+            timeouts: {
+                // "fetchingRateLimiting" values need to be taking into the account defining the "fetching" timeout
+                fetching: ONE_SECOND_MS * 60 * 10, // 10 minutes
             },
         };
     },

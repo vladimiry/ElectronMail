@@ -110,7 +110,8 @@ export class AccountsEffects {
                 return merge(
                     merged$,
                     this.api.webViewClient(webView, type, {finishPromise}).pipe(
-                        mergeMap((webViewClient) => merge(
+                        withLatestFrom(this.store.pipe(select(OptionsSelectors.CONFIG.timeouts))),
+                        mergeMap(([webViewClient, timeouts]) => merge(
                             of(ACCOUNTS_ACTIONS.Patch({login, patch: {syncingActivated: true}})),
                             this.store.pipe(
                                 select(OptionsSelectors.FEATURED.mainProcessNotification),
@@ -144,7 +145,7 @@ export class AccountsEffects {
                                         const client = type === "protonmail"
                                             ? webViewClient as ReturnType<WebViewApi<typeof type>["buildClient"]>
                                             : webViewClient as ReturnType<WebViewApi<typeof type>["buildClient"]>;
-                                        return client("buildDbPatch", {timeoutMs: ONE_SECOND_MS * 60 * 3})({
+                                        return client("buildDbPatch", {timeoutMs: timeouts.fetching})({
                                             metadata: metadata as any, // TODO TS: get rid of "as any" casting
                                             zoneName,
                                         });

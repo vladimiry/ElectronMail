@@ -424,7 +424,7 @@ async function bootstrapDbPatch(): Promise<Unpacked<ReturnType<ProtonmailApi["bu
     }
     const [messages, contacts, labels] = await Promise.all([
         // messages
-        (async (query = {Page: 0, PageSize: 150}, throttleOptions = {maxInProgress: 3, failFast: true}) => {
+        (async (query = {Page: 0, PageSize: 150}, throttleOptions = {maxInProgress: 1, failFast: true}) => {
             type Response = Unpacked<ReturnType<typeof api.conversation.query>>;
             const responseItems: Response["data"]["Conversations"] = [];
             let response: Response | undefined;

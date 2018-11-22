@@ -1,7 +1,12 @@
+import PQueue from "p-queue";
+import rateLimiter from "rolling-rate-limiter";
+import {v4 as uuid} from "uuid";
+
 import * as Rest from "./rest";
+import {IPC_MAIN_API} from "src/shared/api/main";
 import {Unpacked} from "src/shared/types";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
-import {curryFunctionMembers} from "src/shared/util";
+import {asyncDelay, curryFunctionMembers} from "src/shared/util";
 
 // TODO consider executing direct $http calls
 // in order to not depend on Protonmail WebClient's AngularJS factories/services
@@ -9,6 +14,9 @@ export interface Api {
     $http: ng.IHttpService;
     url: {
         build: (module: string) => () => string;
+    };
+    lazyLoader: {
+        app: () => Promise<void>;
     };
     messageModel: (message: Rest.Model.Message) => {
         clearTextBody: () => Promise<string>;
@@ -43,12 +51,36 @@ export interface Api {
 }
 
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[lib/api]");
+const resolveServiceLogger = curryFunctionMembers(logger, "resolveService()");
+const rateLimitedApiCallingQueue: PQueue<PQueue.DefaultAddOptions> = new PQueue({concurrency: 1});
+const ipcMainApiClient = IPC_MAIN_API.buildClient();
 const state: { api?: Promise<Api> } = {};
 
+let rateLimitedMethodsCallCount = 0;
+
 export async function resolveApi(): Promise<Api> {
+    logger.info(`resolveApi()`);
     if (state.api) {
         return state.api;
     }
+
+    const rateLimiting = {
+        rateLimiterTick: await (async () => {
+            const {fetchingRateLimiting: config} = await ipcMainApiClient("readConfig")().toPromise();
+            logger.debug(JSON.stringify({
+                fetchingRateLimiter_111: {
+                    interval: config.intervalMs,
+                    maxInInterval: config.maxInInterval,
+                },
+            }));
+            const limiter = rateLimiter({
+                interval: config.intervalMs,
+                maxInInterval: config.maxInInterval,
+            });
+            const key = `webview:protonmail-api:${uuid()}`;
+            return () => limiter(key);
+        })(),
+    };
 
     return state.api = (async () => {
         const angular: angular.IAngularStatic | undefined = (window as any).angular;
@@ -58,34 +90,99 @@ export async function resolveApi(): Promise<Api> {
             throw new Error(`Failed to resolve "injector" variable`);
         }
 
-        await injectorGet<{ app: () => Promise<void> }>(injector, "lazyLoader").app();
+        const lazyLoader = resolveService<Api["lazyLoader"]>(injector, "lazyLoader");
+
+        await lazyLoader.app();
 
         // TODO validate types of all the described constants/functions in a declarative way
         // so app gets protonmail breaking changes noticed on early stage
 
         return {
-            $http: injectorGet<Api["$http"]>(injector, "$http"),
-            url: injectorGet<Api["url"]>(injector, "url"),
-            messageModel: injectorGet<Api["messageModel"]>(injector, "messageModel"),
-            conversation: injectorGet<Api["conversation"]>(injector, "conversationApi"),
-            message: injectorGet<Api["message"]>(injector, "messageApi"),
-            contact: injectorGet<Api["contact"]>(injector, "Contact"),
-            label: injectorGet<Api["label"]>(injector, "Label"),
-            events: injectorGet<Api["events"]>(injector, "Events"),
-            vcard: injectorGet<Api["vcard"]>(injector, "vcard"),
+            lazyLoader,
+            $http: resolveService<Api["$http"]>(injector, "$http"),
+            url: resolveService<Api["url"]>(injector, "url"),
+            messageModel: resolveService<Api["messageModel"]>(injector, "messageModel"),
+            conversation: resolveService<Api["conversation"]>(injector, "conversationApi", {...rateLimiting, methods: ["get", "query"]}),
+            message: resolveService<Api["message"]>(injector, "messageApi", {...rateLimiting, methods: ["get", "query"]}),
+            contact: resolveService<Api["contact"]>(injector, "Contact", {...rateLimiting, methods: ["get", "all"]}),
+            label: resolveService<Api["label"]>(injector, "Label", {...rateLimiting, methods: ["query"]}),
+            events: resolveService<Api["events"]>(injector, "Events", {...rateLimiting, methods: ["get", "getLatestID"]}),
+            vcard: resolveService<Api["vcard"]>(injector, "vcard"),
         };
     })();
 }
 
-function injectorGet<T>(injector: ng.auto.IInjectorService, name: string): T {
-    logger.info(`injectorGet()`);
-    const result = injector.get<T | undefined>(name);
+type KeepAsyncFunctionsProps<T> = {
+    [K in keyof T]: T[K] extends (args: any) => Promise<infer U> ? T[K] : never
+};
 
-    if (!result) {
-        throw new Error(`Failed to resolve "${name}" service`);
+function resolveService<T extends Api[keyof Api]>(
+    injector: ng.auto.IInjectorService,
+    serviceName: string,
+    rateLimiting?: {
+        rateLimiterTick: () => number;
+        methods: Array<keyof KeepAsyncFunctionsProps<T>>,
+    },
+): T {
+    resolveServiceLogger.info();
+    const service = injector.get<T | undefined>(serviceName);
+
+    if (!service) {
+        throw new Error(`Failed to resolve "${serviceName}" service`);
     }
 
-    logger.verbose(`injectorGet()`, `"${name}" keys`, JSON.stringify(Object.keys(result)));
+    resolveServiceLogger.verbose(`"${serviceName}" keys`, JSON.stringify(Object.keys(service)));
 
-    return result;
+    if (!rateLimiting) {
+        return service;
+    }
+
+    const clonedService = {...service} as T;
+
+    for (const method of rateLimiting.methods) {
+        const originalMethod = clonedService[method];
+        const _fullMethodName = `${serviceName}.${method}`;
+
+        if (typeof originalMethod !== "function") {
+            throw new Error(`Not a function: "${_fullMethodName}"`);
+        }
+
+        clonedService[method] = async function(this: typeof service) {
+            const originalMethodArgs = arguments;
+            const timeLeftUntilAllowed = rateLimiting.rateLimiterTick();
+            const limitExceeded = timeLeftUntilAllowed > 0;
+
+            if (limitExceeded) {
+                resolveServiceLogger.info([
+                    `delaying rate limited method calling: `,
+                    JSON.stringify({
+                        method: _fullMethodName,
+                        timeLeftUntilAllowed,
+                        rateLimitedMethodsCallCount,
+                    }),
+                ].join(""));
+
+                await asyncDelay(timeLeftUntilAllowed);
+            }
+
+            resolveServiceLogger.debug(`queueing rate limited method: "${_fullMethodName}"`);
+
+            return rateLimitedApiCallingQueue.add(() => {
+                resolveServiceLogger.verbose([
+                    `calling rate limited method: `,
+                    JSON.stringify({
+                        method: _fullMethodName,
+                        timeLeftUntilAllowed,
+                        rateLimitedMethodsCallCount,
+                    }),
+                ].join(""));
+
+                const result = originalMethod.apply(service, originalMethodArgs);
+                rateLimitedMethodsCallCount++;
+                return result;
+            });
+        } as any;
+    }
+
+    return clonedService;
 }

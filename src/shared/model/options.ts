@@ -22,6 +22,13 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
         maximized?: boolean;
         bounds: { x?: number; y?: number; width: number; height: number; };
     };
+    fetchingRateLimiting: {
+        intervalMs: number;
+        maxInInterval: number;
+    };
+    timeouts: {
+        fetching: number;
+    };
 }
 
 export interface Settings extends Partial<StoreModel.StoreEntity> {

@@ -16,6 +16,14 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.logLevel = INITIAL_STORES.config().logLevel;
         }
     },
+    "2.0.0-beta.7": (config) => {
+        if (typeof config.fetchingRateLimiting === "undefined") {
+            config.fetchingRateLimiting = INITIAL_STORES.config().fetchingRateLimiting;
+        }
+        if (typeof config.timeouts === "undefined") {
+            config.timeouts = INITIAL_STORES.config().timeouts;
+        }
+    },
 };
 
 const SETTINGS_UPGRADES: Record<string, (settings: Settings) => void> = {

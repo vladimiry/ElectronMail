@@ -17,8 +17,9 @@ export const FEATURED = {
 
 export const CONFIG = {
     base: createSelector(FEATURED.config, pickBaseConfigProperties),
-    compactLayout: createSelector(FEATURED.config, ({compactLayout}) => compactLayout),
-    unreadNotifications: createSelector(FEATURED.config, ({unreadNotifications}) => unreadNotifications),
+    compactLayout: createSelector(FEATURED.config, (c) => c.compactLayout),
+    unreadNotifications: createSelector(FEATURED.config, (c) => c.unreadNotifications),
+    timeouts: createSelector(FEATURED.config, (c) => c.timeouts),
 };
 
 export const SETTINGS = (() => {

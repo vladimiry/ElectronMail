@@ -1,3 +1,4 @@
+import {InMemoryOptions, SyncOrAsyncLimiter} from "rolling-rate-limiter";
 import {IpcRenderer} from "electron";
 
 import {AccountType} from "src/shared/model/account";
@@ -7,7 +8,7 @@ export interface ElectronExposure {
     ipcRendererTransport: Pick<IpcRenderer, "on" | "removeListener" | "send" | "sendToHost">;
     webLogger: Logger;
     require: {
-        "rolling-rate-limiter": () => (...args: any[]) => (key: string) => number,
+        "rolling-rate-limiter": () => (options: InMemoryOptions) => SyncOrAsyncLimiter;
     };
 }
 

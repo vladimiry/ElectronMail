@@ -422,15 +422,15 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         const endpoints = t.context.endpoints;
         const action = endpoints.toggleCompactLayout;
 
-        const initial = await readConfig(endpoints);
-        t.true(!initial.compactLayout);
+        const config1 = await readConfig(endpoints);
+        t.true(config1.compactLayout);
 
-        let updated = await action().toPromise();
-        t.is(updated.compactLayout, true);
+        const config2 = await action().toPromise();
+        t.is(config2.compactLayout, !config1.compactLayout);
 
         await action().toPromise();
-        updated = await t.context.ctx.configStore.readExisting();
-        t.is(updated.compactLayout, false);
+        const config3 = await t.context.ctx.configStore.readExisting();
+        t.is(config3.compactLayout, !config2.compactLayout);
     },
 
     // TODO test "updateOverlayIcon" API

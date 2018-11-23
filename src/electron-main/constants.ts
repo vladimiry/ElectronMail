@@ -22,7 +22,7 @@ export const INITIAL_STORES: Readonly<{
             encryptionPreset,
             logLevel,
             startMinimized: true,
-            compactLayout: false,
+            compactLayout: true,
             closeToTray: true,
             unreadNotifications: true,
             checkForUpdatesAndNotify: true,

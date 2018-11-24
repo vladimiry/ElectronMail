@@ -1,4 +1,3 @@
-import {Keyboard} from "keysim";
 import {concatMap, delay, retryWhen} from "rxjs/operators";
 import {of, throwError} from "rxjs";
 
@@ -67,7 +66,7 @@ export function getLocationHref(): string {
 
 export async function fillInputValue(input: HTMLInputElement, value: string) {
     input.value = value;
-    Keyboard.US_ENGLISH.dispatchEventsForInput(value, input);
+    triggerChangeEvent(input);
 }
 
 export async function submitTotpToken(
@@ -159,4 +158,15 @@ export function buildDbPatchRetryPipeline<T>(
             return throwError(error);
         }),
     ));
+}
+
+function triggerChangeEvent(input: HTMLInputElement) {
+    // protonmail (angularjs)
+    const changeEvent = document.createEvent("HTMLEvents");
+    changeEvent.initEvent("change", true, false);
+    input.dispatchEvent(changeEvent);
+    // tutanota (mithril)
+    const inputEvent = document.createEvent("Event");
+    inputEvent.initEvent("input", true, false);
+    input.dispatchEvent(inputEvent);
 }

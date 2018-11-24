@@ -6747,11 +6747,6 @@ karma@3.1.1:
     tmp "0.0.33"
     useragent "2.2.1"
 
-keysim@2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/keysim/-/keysim-2.1.0.tgz#5ff8d671618caea81472b3d80ed7e251cfde6dbf"
-  integrity sha512-QLrBscwDtm+xL4RXY1PIuaq7UJhZaSx0cp0pzl+vlMnQ+8tHCg4FqFi7vsfkaWeaOMs7iCKWaGXXnMe1Q92oVA==
-
 keytar@4.3.0:
   version "4.3.0"
   resolved "https://registry.yarnpkg.com/keytar/-/keytar-4.3.0.tgz#4a3afd64fdeec300716ccf3985fdcf1cfd6e77e9"

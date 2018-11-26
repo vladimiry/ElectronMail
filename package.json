@@ -237,6 +237,7 @@
     "zone.js": "0.8.26"
   },
   "resolutions": {
-    "spectron/**/electron-chromedriver": "^3.0.0"
+    "spectron/**/electron-chromedriver": "^3.0.0",
+    "event-stream": "3.3.4"
   }
 }

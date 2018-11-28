@@ -20,6 +20,7 @@ import {
 import {ACCOUNTS_ACTIONS, CORE_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
 import {AccountTypeAndLoginFieldContainer} from "src/shared/model/container";
 import {AccountsSelectors, OptionsSelectors} from "src/web/src/app/store/selectors";
+import {CoreService} from "src/web/src/app/_core/core.service";
 import {ElectronService} from "src/web/src/app/_core/electron.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
@@ -52,17 +53,24 @@ export class AccountsEffects {
         return this.actions$.pipe(
             unionizeActionFilter(ACCOUNTS_ACTIONS.is.SetupNotificationChannel),
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-            mergeMap(({payload, logger}) => {
+            withLatestFrom(this.store.pipe(select(OptionsSelectors.FEATURED.electronLocations))),
+            mergeMap(([{payload, logger}, electronLocations]) => {
                 const {webView, finishPromise} = payload;
-                const {type, login, entryUrl} = payload.account.accountConfig;
+                const {type, login} = payload.account.accountConfig;
                 const dispose$ = from(finishPromise).pipe(tap(() => logger.info("dispose")));
+
+                if (!electronLocations) {
+                    throw new Error(`Undefined electron context locations`);
+                }
+
+                const parsedEntryUrl = this.core.parseEntryUrl(payload.account.accountConfig, electronLocations);
 
                 logger.info("setup");
 
                 return merge(
                     merged$,
                     this.api.webViewClient(webView, type, {finishPromise}).pipe(
-                        mergeMap((webViewClient) => webViewClient("notification")({entryUrl, zoneName: logger.zoneName()})),
+                        mergeMap((webViewClient) => webViewClient("notification")({...parsedEntryUrl, zoneName: logger.zoneName()})),
                         withLatestFrom(this.store.pipe(select(AccountsSelectors.ACCOUNTS.pickAccount({login})))),
                         mergeMap(([notification, account]) => {
                             if (typeof notification.batchEntityUpdatesCounter === "number") {
@@ -284,6 +292,7 @@ export class AccountsEffects {
 
     constructor(
         private api: ElectronService,
+        private core: CoreService,
         private actions$: Actions<{ type: string; payload: any }>,
         private store: Store<State>,
     ) {}

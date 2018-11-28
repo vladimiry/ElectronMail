@@ -28,6 +28,7 @@ import {
     waitElements,
 } from "src/electron-preload/webview/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
+import {configureAngularApp} from "./configure-angular-app";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {registerDocumentKeyDownEventListener} from "src/shared/web/key-binding";
 
@@ -81,6 +82,8 @@ const ajaxSendNotification$ = new Observable<XMLHttpRequest>((subscriber) => {
 });
 
 delete WINDOW.Notification;
+
+configureAngularApp();
 
 const endpoints: ProtonmailApi = {
     ping: () => of(null),
@@ -216,7 +219,7 @@ const endpoints: ProtonmailApi = {
         return null;
     })()),
 
-    notification: ({entryUrl, zoneName}) => {
+    notification: ({entryUrl, entryApiUrl, zoneName}) => {
         const logger = curryFunctionMembers(_logger, "api:notification()", zoneName);
         logger.info();
 
@@ -273,7 +276,7 @@ const endpoints: ProtonmailApi = {
             (() => {
                 const responseListeners = [
                     {
-                        re: new RegExp(`${entryUrl}/api/messages/count`),
+                        re: new RegExp(`${entryApiUrl}/api/messages/count`),
                         handler: ({Counts}: { Counts?: Array<{ LabelID: string; Unread: number; }> }) => {
                             if (!Counts) {
                                 return;
@@ -284,7 +287,7 @@ const endpoints: ProtonmailApi = {
                         },
                     },
                     {
-                        re: new RegExp(`${entryUrl}/api/events/.*==`),
+                        re: new RegExp(`${entryApiUrl}/api/events/.*==`),
                         handler: ({MessageCounts}: Rest.Model.EventResponse) => {
                             if (!MessageCounts) {
                                 return;
@@ -318,7 +321,7 @@ const endpoints: ProtonmailApi = {
 
             (() => {
                 const innerLogger = curryFunctionMembers(logger, `[entity update notification]`);
-                const eventsUrlRe = new RegExp(`${entryUrl}/api/events/.*==`);
+                const eventsUrlRe = new RegExp(`${entryApiUrl}/api/events/.*==`);
                 const notification = {batchEntityUpdatesCounter: 0};
                 const notificationReceived$: Observable<Rest.Model.EventResponse> = ajaxSendNotification$.pipe(
                     filter((request) => eventsUrlRe.test(request.responseURL)),

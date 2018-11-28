@@ -19,9 +19,23 @@ export const RUNTIME_ENV_E2E = `EMAIL_SECURELY_APP_E2E`;
 
 export const ONE_SECOND_MS = 1000;
 
+export const PROVIDER_REPO: Record<Extract<AccountType, "protonmail">, { repo: string, version: string; hash: string; }> = {
+    protonmail: {
+        repo: "git@github.com:ProtonMail/WebClient.git",
+        hash: "bfe41b6e47fea631c678adaf9371c894c7b09b8f",
+        version: "3.15.3",
+    },
+};
+
+export const ACCOUNTS_CONFIG_ENTRY_URL_SEPARATOR = ":::";
+export const ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX = "local";
 export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlItem[]>> = {
     protonmail: {
         entryUrl: [
+            {
+                value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}${ACCOUNTS_CONFIG_ENTRY_URL_SEPARATOR}https://mail.protonmail.com`,
+                title: `https://mail.protonmail.com (Built-in WebClient v${PROVIDER_REPO.protonmail.version})`,
+            },
             {value: "https://app.protonmail.ch", title: "https://app.protonmail.ch"},
             {value: "https://mail.protonmail.com", title: "https://mail.protonmail.com"},
             {value: "https://beta.protonmail.com", title: "https://beta.protonmail.com (Beta)"},
@@ -34,11 +48,6 @@ export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlIte
         ],
     },
 };
-
-export const WEBVIEW_SRC_WHITELIST: string[] = Object
-    .entries(ACCOUNTS_CONFIG)
-    .reduce((list, [accountType, {entryUrl}]) => list.concat(entryUrl), [] as EntryUrlItem[])
-    .map(({value}) => value);
 
 export const LOG_LEVELS: LogLevel[] = Object.keys(((stub: Record<LogLevel, null>) => stub)({
     error: null,

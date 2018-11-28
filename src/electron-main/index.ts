@@ -1,17 +1,18 @@
 import electronUnhandled from "electron-unhandled";
 import logger from "electron-log";
-import {app} from "electron";
+import {Event, WebContents, app} from "electron";
 
-import {APP_NAME} from "src/shared/constants";
+import {ACCOUNTS_CONFIG, ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX, APP_NAME} from "src/shared/constants";
+import {EntryUrlItem} from "src/shared/types";
 import {clearDefaultSessionCaches} from "./session";
 import {initApi} from "./api";
 import {initApplicationMenu} from "./menu";
 import {initAutoUpdate} from "./app-update";
 import {initBrowserWindow} from "./window";
 import {initContext} from "./util";
+import {initProtocolInterceptor} from "./protocol";
 import {initTray} from "./tray";
 import {initWebContentContextMenu} from "./web-content-context-menu";
-import {isWebViewSrcWhitelisted} from "src/shared/util";
 
 electronUnhandled({
     logger: logger.error,
@@ -31,18 +32,9 @@ if (!singleInstanceLock) {
 
 const ctx = initContext();
 
-app.on("web-contents-created", (webContentsCreatedEvent, contents) => {
-    contents.on("will-attach-webview", (willAttachWebviewEvent, webPreferences, params) => {
-        webPreferences.nodeIntegration = false;
-
-        if (!isWebViewSrcWhitelisted(params.src)) {
-            willAttachWebviewEvent.preventDefault();
-        }
-    });
-});
-
 app.on("ready", async () => {
     await clearDefaultSessionCaches();
+    await initProtocolInterceptor(ctx);
 
     const endpoints = await initApi(ctx);
     const {checkForUpdatesAndNotify} = await endpoints.readConfig().toPromise();
@@ -78,3 +70,31 @@ app.on("ready", async () => {
         await endpoints.activateBrowserWindow();
     });
 });
+
+app.on("web-contents-created", (() => {
+    const srcWhitelist: string[] = Object
+        .values(ACCOUNTS_CONFIG)
+        .reduce((list: EntryUrlItem[], {entryUrl}) => list.concat(entryUrl), [])
+        .filter((item) => !item.value.startsWith(ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX))
+        .map(({value}) => value)
+        .concat(
+            Object
+                .values(ctx.locations.webClients)
+                .map((locationsMap) => Object.values(locationsMap))
+                .reduce((list: typeof entryUrls, entryUrls) => list.concat(entryUrls), [])
+                .map(({entryUrl}) => entryUrl),
+        );
+
+    return (webContentsCreatedEvent: Event, webContents: WebContents) => {
+        webContents.on("will-attach-webview", (willAttachWebviewEvent, webPreferences, {src}) => {
+            const allowedSrc = srcWhitelist.some((allowedPrefix) => src.startsWith(allowedPrefix));
+
+            webPreferences.nodeIntegration = false;
+
+            if (!allowedSrc) {
+                willAttachWebviewEvent.preventDefault();
+                logger.error(new Error(`Forbidden webview.src: "${allowedSrc}"`));
+            }
+        });
+    };
+})());

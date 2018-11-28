@@ -22,6 +22,7 @@ import {APP_NAME, ONE_SECOND_MS} from "src/shared/constants";
 import {AccountConfig} from "src/shared/model/account";
 import {AccountsSelectors, OptionsSelectors} from "src/web/src/app/store/selectors";
 import {BuildEnvironment} from "src/shared/model/common";
+import {CoreService} from "src/web/src/app/_core/core.service";
 import {DbViewModuleResolve} from "./db-view-module-resolve.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {NgChangesObservableComponent} from "src/web/src/app/components/ng-changes-observable.component";
@@ -65,6 +66,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
 
     constructor(
         private dbViewModuleResolve: DbViewModuleResolve,
+        private core: CoreService,
         private store: Store<State>,
         private zone: NgZone,
         private changeDetectorRef: ChangeDetectorRef,
@@ -131,22 +133,23 @@ export class AccountComponent extends NgChangesObservableComponent implements On
             combineLatest(
                 this.store.pipe(
                     select(OptionsSelectors.FEATURED.electronLocations),
-                    mergeMap((value) => value ? [value.preload.webView] : []),
+                    mergeMap((electronLocations) => electronLocations ? [electronLocations] : []),
                 ),
                 this.account$.pipe(
                     distinctUntilChanged((prev, curr) => prev.accountConfig.entryUrl === curr.accountConfig.entryUrl),
                 ),
-            ).subscribe(([webViewPreloadsRecord, {accountConfig}]) => {
-                const {entryUrl, type} = accountConfig;
+            ).subscribe(([electronLocations, {accountConfig}]) => {
+                const {type} = accountConfig;
+                const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, electronLocations);
 
                 if (this.webViewAttributes) {
-                    this.webViewAttributes.src = entryUrl;
-                    this.logger.verbose(`webview.attrs (src update): "${entryUrl}"`);
+                    this.webViewAttributes.src = parsedEntryUrl.entryUrl;
+                    this.logger.verbose(`webview.attrs (src update): "${parsedEntryUrl}"`);
                     this.changeDetectorRef.detectChanges();
                     return;
                 }
 
-                this.webViewAttributes = {src: entryUrl, preload: webViewPreloadsRecord[type]};
+                this.webViewAttributes = {src: parsedEntryUrl.entryUrl, preload: electronLocations.preload.webView[type]};
                 this.logger.verbose(`webview.attrs (initialize): "${this.webViewAttributes.src}"`);
                 this.changeDetectorRef.detectChanges();
                 if (!this.webViewElementRef) {

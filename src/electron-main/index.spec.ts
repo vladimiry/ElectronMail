@@ -36,6 +36,9 @@ test.serial("workflow", async (t) => {
     t.true(m["./session"].clearDefaultSessionCaches.calledWithExactly(), `"clearDefaultSessionCaches" called`);
     t.true(m["./session"].clearDefaultSessionCaches.calledAfter(m["./util"].initContext), `"clearDefaultSessionCaches" called after "initContext"`);
 
+    t.true(m["./protocol"].initProtocolInterceptor.calledWithExactly(t.context.ctx), `"initProtocolInterceptor" called`);
+    t.true(m["./protocol"].initProtocolInterceptor.calledAfter(m["./session"].clearDefaultSessionCaches), `"initProtocolInterceptor" called after "clearDefaultSessionCaches"`);
+
     t.true(m["./api"].initApi.calledWithExactly(t.context.ctx), `"initApi" called`);
     t.true(m["./api"].initApi.calledAfter(m["./session"].clearDefaultSessionCaches), `"initApi" called after "clearDefaultSessionCaches"`);
 
@@ -83,6 +86,7 @@ test.beforeEach(async (t) => {
             mock(() => import("./session")).callThrough().with(mocks["./session"]);
             mock(() => import("./api")).callThrough().with(mocks["./api"]);
             mock(() => import("./util")).callThrough().with(mocks["./util"]);
+            mock(() => import("./protocol")).callThrough().with(mocks["./protocol"]);
             mock(() => import("./window")).callThrough().with(mocks["./window"]);
             mock(() => import("./tray")).callThrough().with(mocks["./tray"]);
             mock(() => import("./menu")).callThrough().with(mocks["./menu"]);
@@ -111,6 +115,9 @@ function buildMocks(testContext: TestContext) {
             "./util": {
                 initContext: sinon.stub().returns(testContext.ctx),
                 activateBrowserWindow: sinon.spy(),
+            },
+            "./protocol": {
+                initProtocolInterceptor: sinon.stub().returns(Promise.resolve({})),
             },
             "./window": {
                 initBrowserWindow: sinon.stub().returns(Promise.resolve({isDestroyed: sinon.spy()})),

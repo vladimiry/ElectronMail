@@ -4,17 +4,12 @@ import {DbPatch} from "./api/common";
 import {LoginFieldContainer} from "./model/container";
 import {StatusCodeError} from "./model/error";
 import {View} from "src/shared/model/database";
-import {WEBVIEW_SRC_WHITELIST} from "./constants";
 
 export function pickBaseConfigProperties(
     {closeToTray, compactLayout, startMinimized, unreadNotifications, checkForUpdatesAndNotify, logLevel}: Config,
 ): BaseConfig {
     return {closeToTray, compactLayout, startMinimized, unreadNotifications, checkForUpdatesAndNotify, logLevel};
 }
-
-export const isWebViewSrcWhitelisted = (src: string) => WEBVIEW_SRC_WHITELIST.some((allowedPrefix) => {
-    return src.startsWith(allowedPrefix);
-});
 
 export const accountPickingPredicate = (criteria: LoginFieldContainer): (account: AccountConfig) => boolean => {
     return ({login}) => login === criteria.login;

@@ -1,3 +1,4 @@
+import electronServe from "electron-serve";
 import fs from "fs";
 import logger from "electron-log";
 import path from "path";
@@ -68,6 +69,8 @@ function initLocations(runtimeEnvironment: RuntimeEnvironment, paths?: ContextIn
     };
     const appRelativePath = (...value: string[]) => path.join(appDir, ...value);
     const icon = appRelativePath("./assets/icons/icon.png");
+    const protonmailWebClientsDir = path.join(appDir, "./webclient/protonmail");
+    let webclientIdx = 0;
 
     return {
         appDir,
@@ -85,11 +88,33 @@ function initLocations(runtimeEnvironment: RuntimeEnvironment, paths?: ContextIn
                 tutanota: formatFileUrl(appRelativePath("./electron-preload/webview/tutanota.js")),
             },
         },
+        webClients: {
+            protonmail: listDirs(protonmailWebClientsDir).map((dirName) => {
+                const directory = path.join(protonmailWebClientsDir, dirName);
+                const scheme = `webclient${webclientIdx++}`;
+
+                electronServe({scheme, directory});
+
+                return {
+                    entryUrl: `${scheme}://${dirName}`,
+                    entryApiUrl: `https://${dirName}`,
+                };
+            }),
+        },
     };
 }
 
 function formatFileUrl(pathname: string) {
     return url.format({pathname, protocol: "file:", slashes: true});
+}
+
+function listDirs(dir: string): string[] {
+    return fs
+        .readdirSync(dir)
+        .filter((file) => fs
+            .statSync(path.join(dir, file))
+            .isDirectory(),
+        );
 }
 
 export async function buildSettingsAdapter({configStore}: Context, password: string): Promise<StoreModel.StoreAdapter> {

@@ -9,7 +9,7 @@ import {channel} from "./common";
 export type ProtonmailNotificationOutput = Partial<NotificationsProtonmail> & Partial<{ batchEntityUpdatesCounter: number }>;
 
 export interface ProtonmailApi extends CommonWebViewApi<"protonmail"> {
-    notification: ApiMethod<{ entryUrl: string } & ZoneApiParameter, ProtonmailNotificationOutput>;
+    notification: ApiMethod<{ entryUrl: string; entryApiUrl: string; } & ZoneApiParameter, ProtonmailNotificationOutput>;
     unlock: ApiMethod<MailPasswordFieldContainer & ZoneApiParameter, null>;
 }
 

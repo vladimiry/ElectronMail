@@ -18,8 +18,8 @@ const logger = getZoneNameBoundWebLogger("[accounts.effects]");
 @Injectable()
 export class ElectronService {
     readonly webViewPingIntervalMs = ONE_SECOND_MS / 2;
-    readonly webViewPingTimeoutMs = ONE_SECOND_MS * 10;
-    readonly apiCallTimeoutMs = ONE_SECOND_MS * 10;
+    readonly webViewPingTimeoutMs = ONE_SECOND_MS * 20;
+    readonly apiCallTimeoutMs = ONE_SECOND_MS * 15;
 
     constructor() {}
 

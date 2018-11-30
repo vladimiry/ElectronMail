@@ -29,13 +29,13 @@ export const INITIAL_STORES: Readonly<{
             window: {
                 bounds: {width: 1024, height: 768},
             },
-            fetchingRateLimiting: { // 250 requests in 60 seconds
+            fetchingRateLimiting: { // 275 requests in 60 seconds
                 intervalMs: ONE_SECOND_MS * 60,
-                maxInInterval: 250,
+                maxInInterval: 275,
             },
             timeouts: {
                 // "fetchingRateLimiting" values need to be taking into the account defining the "fetching" timeout
-                fetching: ONE_SECOND_MS * 60 * 10, // 10 minutes
+                fetching: ONE_SECOND_MS * 60 * 60, // 60 minutes
             },
         };
     },

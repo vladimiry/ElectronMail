@@ -19,7 +19,7 @@ test.serial(`"Context.db" resolves encryption key calling "Context.settingsStore
             mock(() => import("./constants")).callThrough();
         },
     );
-    const ctx = await initContext({
+    const ctx = initContext({
         storeFs: memFsVolume,
     });
 
@@ -67,7 +67,7 @@ test.serial([
         },
     );
 
-    const ctx = await initContext({
+    const ctx = initContext({
         storeFs: memFsVolume,
     });
 

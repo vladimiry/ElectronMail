@@ -4882,17 +4882,17 @@ fs-json-store-encryption-adapter@1.3.2:
     sodium-native "^2.2.1"
     tslib "^1.9.3"
 
-fs-json-store@2.0.4:
-  version "2.0.4"
-  resolved "https://registry.yarnpkg.com/fs-json-store/-/fs-json-store-2.0.4.tgz#3f1bd87183a05c6ea2488705a8f4b24e4c4848c1"
-  integrity sha512-LYi3txx856m5UTfvO9MKdj9BXhidlZMeMj1jmOPIe8k6XDpHbYZAKBIxgsb/kmU82mCLDbPPxVK+rZtbiZDeqg==
+fs-json-store@2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/fs-json-store/-/fs-json-store-2.1.0.tgz#fa14f06b7a99bdc7e43e1f48d1c7aa5f20eb6bb4"
+  integrity sha512-hMeRntitMXhGldCGU4Z2+Yk1wJfh/qc18J7mYy0CeK0cjjtmj0us4dsJ63JZ3uGgKPvlYoujCjfDJUktWOlvGQ==
   dependencies:
     combine-errors "^3.0.3"
     fs-no-eperm-anymore "^2.0.2"
     imurmurhash "^0.1.4"
     kind-of "^6.0.2"
-    memfs "^2.9.4"
-    proper-lockfile "^3.0.2"
+    memfs "^2.14.1"
+    proper-lockfile "^3.2.0"
     tslib "^1.9.3"
 
 fs-minipass@^1.2.5:
@@ -7220,7 +7220,7 @@ mem@^4.0.0:
     mimic-fn "^1.0.0"
     p-is-promise "^1.1.0"
 
-memfs@^2.9.4:
+memfs@^2.14.1:
   version "2.14.1"
   resolved "https://registry.yarnpkg.com/memfs/-/memfs-2.14.1.tgz#2324fdad685697c18fb0d0a4d43b3d972b2529d0"
   integrity sha512-lTts32q0cfwIZ7MHK3GjGcpGhp5Nj4LXtc6njEjFj5wQHNNdOYVN/JXeW7PpExa11c6QW+mDPSRuB6EWnoiDMQ==
@@ -8995,7 +8995,7 @@ promise-parallel-throttle@3.2.0:
   resolved "https://registry.yarnpkg.com/promise-parallel-throttle/-/promise-parallel-throttle-3.2.0.tgz#6557a103b61e81bf76ca685c441345f91431c2c8"
   integrity sha512-htoKw8BANvNnTmRoA1VBk1wB2iJcsTTrgG/KXPXqVecr4aJ7zq9noucVUmADBzpNX54ZMGK9gd1OBBBE8hhf0A==
 
-proper-lockfile@^3.0.2:
+proper-lockfile@^3.2.0:
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/proper-lockfile/-/proper-lockfile-3.2.0.tgz#89ca420eea1d55d38ca552578851460067bcda66"
   integrity sha512-iMghHHXv2bsxl6NchhEaFck8tvX3F9cknEEh1SUpguUOBjN7PAAW9BLzmbc1g/mCD1gY3EE2EABBHPJfFdHFmA==

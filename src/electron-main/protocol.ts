@@ -5,7 +5,7 @@ import {InterceptStreamProtocolRequest, StreamProtocolResponse, protocol} from "
 import {URL} from "url";
 
 import {BuildEnvironment} from "src/shared/model/common";
-import {Context} from "./model";
+import {LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN} from "src/shared/constants";
 import {getDefaultSession} from "./session";
 
 interface HeadersMap {
@@ -13,6 +13,7 @@ interface HeadersMap {
 }
 
 const fakeOrigin = "https://localhost:2015";
+const localWebClientLocationProtocolRe = new RegExp(`^${LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN}`);
 const headerNames = {
     origin: "origin",
     accessControlAllowOriginHeader: "access-control-allow-origin",
@@ -31,14 +32,10 @@ const resolveCookieJar: (req: InterceptStreamProtocolRequest) => CookieJar = (()
     };
 })();
 
-export function initProtocolInterceptor(ctx: Context): Promise<void> {
+export function initProtocolInterceptor(): Promise<void> {
     if ((process.env.NODE_ENV as BuildEnvironment) !== "development") {
         return Promise.resolve();
     }
-
-    const protonmailWebClientOrigins = Object
-        .values(ctx.locations.webClients.protonmail)
-        .map(({entryUrl}) => buildOrigin(new URL(entryUrl)));
 
     return new Promise((resolveInterception, rejectInterception) => {
         protocol.interceptStreamProtocol(
@@ -49,7 +46,7 @@ export function initProtocolInterceptor(ctx: Context): Promise<void> {
                 const requestOrigin = requestOriginHeader
                     ? buildOrigin(new URL(requestOriginHeader.value))
                     : null;
-                const needToTrickOrigin = requestOrigin && protonmailWebClientOrigins.some((p) => p === requestOrigin);
+                const needToTrickOrigin = requestOrigin && localWebClientLocationProtocolRe.exec(requestOrigin);
                 const {response} = await new Promise<{ response: Response }>(async (resolveRequest, rejectRequest) => request(
                     {
                         url: req.url,

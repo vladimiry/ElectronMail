@@ -5,7 +5,6 @@ import url from "url";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Fs as StoreFs, Model as StoreModel, Store} from "fs-json-store";
 import {app} from "electron";
-import {promisify} from "util";
 
 import {BuildEnvironment} from "src/shared/model/common";
 import {Config, Settings} from "src/shared/model/options";
@@ -15,10 +14,10 @@ import {ElectronContextLocations} from "src/shared/model/electron";
 import {INITIAL_STORES, configEncryptionPresetValidator, settingsAccountLoginUniquenessValidator} from "./constants";
 import {LOCAL_WEBCLIENT_PROTOCOL_PREFIX, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
 
-export async function initContext(options: ContextInitOptions = {}): Promise<Context> {
+export function initContext(options: ContextInitOptions = {}): Context {
     const storeFs = options.storeFs ? options.storeFs : StoreFs.Fs.fs;
     const runtimeEnvironment: RuntimeEnvironment = Boolean(process.env[RUNTIME_ENV_E2E]) ? "e2e" : "production";
-    const locations = await initLocations(runtimeEnvironment, storeFs, options.paths);
+    const locations = initLocations(runtimeEnvironment, storeFs, options.paths);
 
     logger.transports.file.file = path.join(locations.userDataDir, "log.log");
     logger.transports.file.level = false;
@@ -54,14 +53,14 @@ export async function initContext(options: ContextInitOptions = {}): Promise<Con
     return ctx;
 }
 
-async function initLocations(
+function initLocations(
     runtimeEnvironment: RuntimeEnvironment,
     storeFs: StoreModel.StoreFs,
     paths?: ContextInitOptionsPaths,
-): Promise<ElectronContextLocations> {
+): ElectronContextLocations {
     const userDataDirRuntimeVal = process.env[RUNTIME_ENV_USER_DATA_DIR];
 
-    if (userDataDirRuntimeVal && !(await directoryExists(userDataDirRuntimeVal, storeFs))) {
+    if (userDataDirRuntimeVal && !directoryExists(userDataDirRuntimeVal, storeFs)) {
         throw new Error(
             `Make sure that custom "userData" dir exists before passing the "${RUNTIME_ENV_USER_DATA_DIR}" environment variable`,
         );
@@ -74,10 +73,12 @@ async function initLocations(
     const appRelativePath = (...value: string[]) => path.join(appDir, ...value);
     const icon = appRelativePath("./assets/icons/icon.png");
     const protonmailWebClientsDir = path.join(appDir, "./webclient/protonmail");
-    const webClients = await (async () => {
+    const webClients = (() => {
+        const foldersAsDomains = listDirsNames(storeFs, protonmailWebClientsDir);
         let index = 0;
+
         return {
-            protonmail: (await listDirs(storeFs, protonmailWebClientsDir)).map((dirName) => {
+            protonmail: foldersAsDomains.map((dirName) => {
                 const directory = path.join(protonmailWebClientsDir, dirName);
                 const scheme = `${LOCAL_WEBCLIENT_PROTOCOL_PREFIX}${index++}`;
 
@@ -115,15 +116,16 @@ function formatFileUrl(pathname: string) {
     return url.format({pathname, protocol: "file:", slashes: true});
 }
 
-async function listDirs(storeFs: StoreModel.StoreFs, dir: string): Promise<string[]> {
+function listDirsNames(storeFs: StoreModel.StoreFs, dir: string): string[] {
     const result: string[] = [];
-    if (!(await exists(dir, storeFs))) {
+    if (!(exists(dir, storeFs))) {
         return result;
     }
-    const files: string[] = await promisify(storeFs._impl.readdir)(dir);
-    for (const file of files) {
-        if (await directoryExists(file, storeFs)) {
-            result.push(file);
+    const files: string[] = storeFs._impl.readdirSync(dir);
+    for (const dirName of files) {
+        const dirPath = path.join(dir, dirName);
+        if (directoryExists(dirPath, storeFs)) {
+            result.push(dirName);
         }
     }
     return result;
@@ -136,9 +138,9 @@ export async function buildSettingsAdapter({configStore}: Context, password: str
     );
 }
 
-async function exists(file: string, storeFs: StoreModel.StoreFs): Promise<boolean> {
+function exists(file: string, storeFs: StoreModel.StoreFs): boolean {
     try {
-        await promisify(storeFs._impl.stat)(file);
+        storeFs._impl.statSync(file);
         return true;
     } catch (error) {
         if (error.code === "ENOENT") {
@@ -148,10 +150,10 @@ async function exists(file: string, storeFs: StoreModel.StoreFs): Promise<boolea
     }
 }
 
-async function directoryExists(file: string, storeFs: StoreModel.StoreFs): Promise<boolean> {
-    if (!(await exists(file, storeFs))) {
+function directoryExists(file: string, storeFs: StoreModel.StoreFs): boolean {
+    if (!(exists(file, storeFs))) {
         return false;
     }
-    const stat = await promisify(storeFs._impl.stat)(file);
+    const stat = storeFs._impl.statSync(file);
     return stat.isDirectory;
 }

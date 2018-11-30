@@ -38,7 +38,7 @@ test.serial("workflow", async (t) => {
     t.true(m["./session"].clearDefaultSessionCaches.calledWithExactly(), `"clearDefaultSessionCaches" called`);
     t.true(m["./session"].clearDefaultSessionCaches.calledAfter(m["./util"].initContext), `"clearDefaultSessionCaches" called after "initContext"`);
 
-    t.true(m["./protocol"].initProtocolInterceptor.calledWithExactly(t.context.ctx), `"initProtocolInterceptor" called`);
+    t.true(m["./protocol"].initProtocolInterceptor.calledWithExactly(), `"initProtocolInterceptor" called`);
     t.true(m["./protocol"].initProtocolInterceptor.calledAfter(m["./session"].clearDefaultSessionCaches), `"initProtocolInterceptor" called after "clearDefaultSessionCaches"`);
 
     t.true(m["./api"].initApi.calledWithExactly(t.context.ctx), `"initApi" called`);
@@ -118,7 +118,7 @@ function buildMocks(testContext: TestContext) {
                 initApi: sinon.stub().returns(Promise.resolve(testContext.endpoints)),
             },
             "./util": {
-                initContext: sinon.stub().returns(Promise.resolve(testContext.ctx)),
+                initContext: sinon.stub().returns(testContext.ctx),
                 activateBrowserWindow: sinon.spy(),
             },
             "./protocol": {

@@ -38,8 +38,8 @@ test.serial("workflow", async (t) => {
     t.true(m["./session"].clearDefaultSessionCaches.calledWithExactly(), `"clearDefaultSessionCaches" called`);
     t.true(m["./session"].clearDefaultSessionCaches.calledAfter(m["./util"].initContext), `"clearDefaultSessionCaches" called after "initContext"`);
 
-    t.true(m["./protocol"].initProtocolInterceptor.calledWithExactly(), `"initProtocolInterceptor" called`);
-    t.true(m["./protocol"].initProtocolInterceptor.calledAfter(m["./session"].clearDefaultSessionCaches), `"initProtocolInterceptor" called after "clearDefaultSessionCaches"`);
+    t.true(m["./web-request"].initWebRequestListeners.calledWithExactly(t.context.ctx), `"initWebRequestListeners" called`);
+    t.true(m["./web-request"].initWebRequestListeners.calledAfter(m["./session"].clearDefaultSessionCaches), `"initWebRequestListeners" called after "clearDefaultSessionCaches"`);
 
     t.true(m["./api"].initApi.calledWithExactly(t.context.ctx), `"initApi" called`);
     t.true(m["./api"].initApi.calledAfter(m["./session"].clearDefaultSessionCaches), `"initApi" called after "clearDefaultSessionCaches"`);
@@ -91,7 +91,7 @@ test.beforeEach(async (t) => {
             mock(() => import("./session")).callThrough().with(mocks["./session"]);
             mock(() => import("./api")).callThrough().with(mocks["./api"]);
             mock(() => import("./util")).callThrough().with(mocks["./util"]);
-            mock(() => import("./protocol")).callThrough().with(mocks["./protocol"]);
+            mock(() => import("./web-request")).callThrough().with(mocks["./web-request"]);
             mock(() => import("./window")).callThrough().with(mocks["./window"]);
             mock(() => import("./tray")).callThrough().with(mocks["./tray"]);
             mock(() => import("./menu")).callThrough().with(mocks["./menu"]);
@@ -121,8 +121,8 @@ function buildMocks(testContext: TestContext) {
                 initContext: sinon.stub().returns(testContext.ctx),
                 activateBrowserWindow: sinon.spy(),
             },
-            "./protocol": {
-                initProtocolInterceptor: sinon.stub().returns(Promise.resolve({})),
+            "./web-request": {
+                initWebRequestListeners: sinon.stub(),
             },
             "./window": {
                 initBrowserWindow: sinon.stub().returns(Promise.resolve({isDestroyed: sinon.spy()})),

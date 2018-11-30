@@ -10,9 +10,9 @@ import {initApplicationMenu} from "./menu";
 import {initAutoUpdate} from "./app-update";
 import {initBrowserWindow} from "./window";
 import {initContext} from "./util";
-import {initProtocolInterceptor} from "./protocol";
 import {initTray} from "./tray";
 import {initWebContentContextMenu} from "./web-content-context-menu";
+import {initWebRequestListeners} from "./web-request";
 
 electronUnhandled({
     logger: logger.error,
@@ -32,7 +32,8 @@ const ctx = initContext();
 
 app.on("ready", async () => {
     await clearDefaultSessionCaches();
-    await initProtocolInterceptor();
+
+    initWebRequestListeners(ctx);
 
     const endpoints = await initApi(ctx);
     const {checkForUpdatesAndNotify} = await endpoints.readConfig().toPromise();

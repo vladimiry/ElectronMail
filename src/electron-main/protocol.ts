@@ -4,6 +4,7 @@ import request, {CookieJar, Response} from "request";
 import {InterceptStreamProtocolRequest, StreamProtocolResponse, protocol} from "electron";
 import {URL} from "url";
 
+import {BuildEnvironment} from "src/shared/model/common";
 import {Context} from "./model";
 import {getDefaultSession} from "./session";
 
@@ -31,6 +32,10 @@ const resolveCookieJar: (req: InterceptStreamProtocolRequest) => CookieJar = (()
 })();
 
 export function initProtocolInterceptor(ctx: Context): Promise<void> {
+    if ((process.env.NODE_ENV as BuildEnvironment) !== "development") {
+        return Promise.resolve();
+    }
+
     const protonmailWebClientOrigins = Object
         .values(ctx.locations.webClients.protonmail)
         .map(({entryUrl}) => buildOrigin(new URL(entryUrl)));

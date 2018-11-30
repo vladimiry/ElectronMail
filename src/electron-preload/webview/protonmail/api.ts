@@ -1,4 +1,3 @@
-import * as Throttle from "promise-parallel-throttle";
 import {EMPTY, Observable, defer, from, interval, merge, of} from "rxjs";
 import {authenticator} from "otplib";
 import {buffer, catchError, concatMap, debounceTime, distinctUntilChanged, filter, map, mergeMap, tap} from "rxjs/operators";
@@ -380,63 +379,100 @@ function isLoggedIn(): boolean {
 }
 
 async function bootstrapDbPatch(): Promise<Unpacked<ReturnType<ProtonmailApi["buildDbPatch"]>>> {
+    const logger = curryFunctionMembers(_logger, "bootstrapDbPatch()");
     const api = await resolveApi();
-    // WARN "getLatestID" should be called before any other fetching
-    // so app gets any potentially missed changes happening during the function execution
+    // WARN: "getLatestID" should be called on top of the function, ie before any other fetching
+    // so app is able to get any potentially missed changes happened during this function execution
     const latestEventId = await api.events.getLatestID();
+
     if (!latestEventId) {
         throw new Error(`"getLatestID" call returned empty value`);
     }
-    const [messages, contacts, labels] = await Promise.all([
-        // messages
-        (async (query = {Page: 0, PageSize: 150}, throttleOptions = {maxInProgress: 1, failFast: true}) => {
-            type Response = Unpacked<ReturnType<typeof api.conversation.query>>;
-            const responseItems: Response["data"]["Conversations"] = [];
-            let response: Response | undefined;
-            while (!response || response.data.Conversations.length) { // fetch all the entities, ie until the end
-                response = await api.conversation.query(query);
-                responseItems.push(...response.data.Conversations);
-                query.Page++;
-            }
-            const conversationMessages = await Throttle.all(
-                responseItems.map(({ID}) => async () => (await api.conversation.get(ID)).data.Messages),
-                throttleOptions,
-            );
-            return await Throttle.all(
-                conversationMessages
-                    .reduce((accumulator, array) => accumulator.concat(array), [])
-                    .map((mail) => async () => {
-                        if (mail.Body) {
-                            return mail;
-                        }
-                        return (await api.message.get(mail.ID)).data.Message;
-                    }),
-                throttleOptions,
-            );
-        })(),
-        // contacts
-        (async () => {
-            const responseItems = await api.contact.all();
-            const result: Rest.Model.Contact[] = [];
-            for (const responseItem of responseItems) {
-                // TODO consider accumulating fetch requests to array, split array to chunks and fetch them in parallel then
-                const item = await api.contact.get(responseItem.ID);
-                result.push(item);
-            }
-            return result;
-        })(),
-        // labels
-        (async () => {
-            return await api.label.query({Type: Rest.Model.LABEL_TYPE.MESSAGE}); // fetch all the entities
-        })(),
-    ]);
 
+    logger.verbose("start fetching contacts");
+    const contacts = await (async () => {
+        const items = await api.contact.all();
+        const result: Rest.Model.Contact[] = [];
+        for (const item of items) {
+            result.push(await api.contact.get(item.ID));
+        }
+        return result;
+    })();
+    logger.info(`fetched ${contacts.length} contacts`);
+
+    logger.verbose(`start fetching labels`);
+    const labels = await api.label.query({Type: Rest.Model.LABEL_TYPE.MESSAGE}); // fetching all the entities;
+    logger.info(`fetched ${labels.length} labels`);
+
+    logger.verbose("start fetching messages");
+    const messages = await (async (query = {Page: 0, PageSize: 150}) => {
+        type Response = Unpacked<ReturnType<typeof api.conversation.query>>;
+        const conversations: Response["data"]["Conversations"] = [];
+        let response: Response | undefined;
+
+        logger.verbose("start fetching conversations");
+        while (!response || response.data.Conversations.length) { // fetch all the entities, ie until the end
+            response = await api.conversation.query(query);
+            conversations.push(...response.data.Conversations);
+            logger.verbose(`conversations fetch progress: ${conversations.length}`);
+            query.Page++;
+        }
+        logger.info(`fetched ${conversations.length} conversations`);
+
+        logger.verbose("start fetching mails");
+        const mails: Rest.Model.Message[] = [];
+        for (let conversationIndex = 0; conversationIndex < conversations.length; conversationIndex++) {
+            logger.verbose(`processing conversation with index: ${conversationIndex} of ${conversations.length}`);
+            const conversation = conversations[conversationIndex];
+            const fetched = await api.conversation.get(conversation.ID);
+            mails.push(...fetched.data.Messages);
+            logger.verbose(`mails fetch progress: ${mails.length}`);
+        }
+        logger.info(`fetched ${mails.length} mails`);
+
+        logger.verbose("start fetching missed mails bodies");
+        for (let mailIndex = 0; mailIndex < mails.length; mailIndex++) {
+            const mail = mails[mailIndex];
+            if (mail.Body) {
+                logger.verbose(`skip mail with index: ${mailIndex} of ${mails.length}`);
+                continue;
+            }
+            logger.verbose(`fetch mail with index: ${mailIndex} of ${mails.length}`);
+            const fetched = await api.message.get(mail.ID);
+            mails[mailIndex] = fetched.data.Message;
+        }
+        logger.info("fetched missed mails bodies");
+
+        return mails;
+    })();
+    logger.info(`fetched ${messages.length} messages`);
+
+    logger.verbose("start preparing database patch");
     const patch: DbPatch = {
         conversationEntries: {remove: [], upsert: []},
-        mails: {remove: [], upsert: await Promise.all(messages.map((message) => buildMail(message, api)))},
-        folders: {remove: [], upsert: labels.map(buildFolder)},
-        contacts: {remove: [], upsert: contacts.map(buildContact)},
+        mails: {
+            remove: [],
+            upsert: await (async () => {
+                logger.verbose("start preparing mails database items");
+                const result: DbPatch["mails"]["upsert"] = [];
+                for (const message of messages) {
+                    result.push(await buildMail(message, api));
+                    logger.verbose(`mails database items preparing progress: ${result.length} of ${messages.length}`);
+                }
+                logger.info(`mails database items prepared`);
+                return result;
+            })(),
+        },
+        folders: {
+            remove: [],
+            upsert: labels.map(buildFolder),
+        },
+        contacts: {
+            remove: [],
+            upsert: contacts.map(buildContact),
+        },
     };
+    logger.info("database patch prepared");
 
     return {
         patch,

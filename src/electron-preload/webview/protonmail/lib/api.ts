@@ -151,33 +151,23 @@ function resolveService<T extends Api[keyof Api]>(
 
         clonedService[method] = async function(this: typeof service) {
             const originalMethodArgs = arguments;
-            const timeLeftUntilAllowed = rateLimiting.rateLimiterTick();
-            const limitExceeded = timeLeftUntilAllowed > 0;
+            const waitTime = rateLimiting.rateLimiterTick();
+            const limitExceeded = waitTime > 0;
 
             if (limitExceeded) {
-                resolveServiceLogger.info([
-                    `delaying rate limited method calling: `,
-                    JSON.stringify({
-                        method: _fullMethodName,
-                        timeLeftUntilAllowed,
-                        rateLimitedMethodsCallCount,
-                    }),
-                ].join(""));
+                resolveServiceLogger.info(
+                    `delaying rate limited method calling: ${_fullMethodName} ${JSON.stringify({waitTime, rateLimitedMethodsCallCount})}`,
+                );
 
-                await asyncDelay(timeLeftUntilAllowed);
+                await asyncDelay(waitTime);
             }
 
             resolveServiceLogger.debug(`queueing rate limited method: "${_fullMethodName}"`);
 
             return rateLimitedApiCallingQueue.add(() => {
-                resolveServiceLogger.verbose([
-                    `calling rate limited method: `,
-                    JSON.stringify({
-                        method: _fullMethodName,
-                        timeLeftUntilAllowed,
-                        rateLimitedMethodsCallCount,
-                    }),
-                ].join(""));
+                resolveServiceLogger.verbose(
+                    `calling rate limited method: ${_fullMethodName} ${JSON.stringify({waitTime, rateLimitedMethodsCallCount})}`,
+                );
 
                 const result = originalMethod.apply(service, originalMethodArgs);
                 rateLimitedMethodsCallCount++;

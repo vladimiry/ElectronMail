@@ -13,7 +13,7 @@ import {Context, ContextInitOptions, ContextInitOptionsPaths, RuntimeEnvironment
 import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {INITIAL_STORES, configEncryptionPresetValidator, settingsAccountLoginUniquenessValidator} from "./constants";
-import {RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
+import {LOCAL_WEBCLIENT_PROTOCOL_PREFIX, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
 
 export function initContext(options: ContextInitOptions = {}): Context {
     const storeFs = options.storeFs ? options.storeFs : StoreFs.Fs.fs;
@@ -91,7 +91,7 @@ function initLocations(runtimeEnvironment: RuntimeEnvironment, paths?: ContextIn
         webClients: {
             protonmail: listDirs(protonmailWebClientsDir).map((dirName) => {
                 const directory = path.join(protonmailWebClientsDir, dirName);
-                const scheme = `webclient${webclientIdx++}`;
+                const scheme = `${LOCAL_WEBCLIENT_PROTOCOL_PREFIX}${webclientIdx++}`;
 
                 electronServe({scheme, directory});
 

@@ -59,10 +59,12 @@ const state: { api?: Promise<Api> } = {};
 let rateLimitedMethodsCallCount = 0;
 
 export async function resolveApi(): Promise<Api> {
-    logger.info(`resolveApi()`);
     if (state.api) {
+        logger.debug(`resolveApi()`);
         return state.api;
     }
+
+    logger.info(`resolveApi()`);
 
     const rateLimiting = {
         rateLimiterTick: await (async () => {

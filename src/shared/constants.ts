@@ -28,6 +28,9 @@ export const PROVIDER_REPO: Record<Extract<AccountType, "protonmail">, { repo: s
     },
 };
 
+export const LOCAL_WEBCLIENT_PROTOCOL_PREFIX = "webclient";
+export const LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN = `${LOCAL_WEBCLIENT_PROTOCOL_PREFIX}[\\d]+`;
+
 export const ACCOUNTS_CONFIG_ENTRY_URL_SEPARATOR = ":::";
 export const ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX = "local";
 export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlItem[]>> = {

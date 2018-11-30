@@ -25,13 +25,15 @@ test.serial("workflow", async (t) => {
     t.true(m["electron-unhandled"].calledWithExactly(sinon.match.hasOwn("logger")), `"electronUnhandled" called`);
     t.true(m["electron-unhandled"].calledBefore(m.electron.app.setAppUserModelId), `"electronUnhandled" called before "requestSingleInstanceLock"`);
 
-    t.true(m.electron.app.setAppUserModelId.calledWithExactly(`com.github.vladimiry.${APP_NAME}`));
-    t.true(m.electron.app.setAppUserModelId.calledBefore(m.electron.app.requestSingleInstanceLock));
-
     t.true(m.electron.app.requestSingleInstanceLock.called, `"requestSingleInstanceLock" called`);
-    t.true(m.electron.app.requestSingleInstanceLock.calledBefore(m["./util"].initContext), `"requestSingleInstanceLock" called before "initContext"`);
+    t.true(m.electron.app.requestSingleInstanceLock.calledAfter(m["electron-unhandled"]), `"requestSingleInstanceLock" called after "electron-unhandled"`);
+
+    t.true(m.electron.app.setAppUserModelId.calledWithExactly(`com.github.vladimiry.${APP_NAME}`));
+    t.true(m.electron.app.setAppUserModelId.calledWithExactly(`com.github.vladimiry.email-securely-app`));
+    t.true(m.electron.app.setAppUserModelId.calledAfter(m.electron.app.requestSingleInstanceLock));
 
     t.true(m["./util"].initContext.calledWithExactly(), `"initContext" called`);
+    t.true(m["./util"].initContext.calledAfter(m.electron.app.setAppUserModelId));
 
     t.true(m["./session"].clearDefaultSessionCaches.calledWithExactly(), `"clearDefaultSessionCaches" called`);
     t.true(m["./session"].clearDefaultSessionCaches.calledAfter(m["./util"].initContext), `"clearDefaultSessionCaches" called after "initContext"`);
@@ -75,6 +77,9 @@ test.beforeEach(async (t) => {
 
     t.context.ctx = {
         on: sinon.spy(),
+        locations: {
+            webClients: [],
+        },
     };
 
     t.context.mocks = buildMocks(t.context);
@@ -113,7 +118,7 @@ function buildMocks(testContext: TestContext) {
                 initApi: sinon.stub().returns(Promise.resolve(testContext.endpoints)),
             },
             "./util": {
-                initContext: sinon.stub().returns(testContext.ctx),
+                initContext: sinon.stub().returns(Promise.resolve(testContext.ctx)),
                 activateBrowserWindow: sinon.spy(),
             },
             "./protocol": {

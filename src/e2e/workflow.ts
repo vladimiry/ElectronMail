@@ -63,7 +63,7 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
     // const webdriverLogDirPath = path.join(outputDirPath, "webdriver-driver-log");
     // const chromeDriverLogFilePath = path.join(outputDirPath, "chrome-driver.log");
 
-    await mkOutputDirs([
+    mkOutputDirs([
         outputDirPath,
         userDataDirPath,
         // webdriverLogDirPath,
@@ -392,6 +392,6 @@ export function accountBadgeCssSelector(zeroStartedAccountIndex = 0) {
     return `${accountCssSelector(zeroStartedAccountIndex)} .badge`;
 }
 
-async function mkOutputDirs(dirs: string[]) {
-    dirs.forEach((dir) => fsExtra.ensureDir(dir));
+function mkOutputDirs(dirs: string[]) {
+    dirs.forEach((dir) => fsExtra.ensureDirSync(dir));
 }

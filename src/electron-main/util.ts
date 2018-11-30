@@ -1,11 +1,11 @@
 import electronServe from "electron-serve";
-import fs from "fs";
 import logger from "electron-log";
 import path from "path";
 import url from "url";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Fs as StoreFs, Model as StoreModel, Store} from "fs-json-store";
 import {app} from "electron";
+import {promisify} from "util";
 
 import {BuildEnvironment} from "src/shared/model/common";
 import {Config, Settings} from "src/shared/model/options";
@@ -15,10 +15,10 @@ import {ElectronContextLocations} from "src/shared/model/electron";
 import {INITIAL_STORES, configEncryptionPresetValidator, settingsAccountLoginUniquenessValidator} from "./constants";
 import {LOCAL_WEBCLIENT_PROTOCOL_PREFIX, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
 
-export function initContext(options: ContextInitOptions = {}): Context {
+export async function initContext(options: ContextInitOptions = {}): Promise<Context> {
     const storeFs = options.storeFs ? options.storeFs : StoreFs.Fs.fs;
     const runtimeEnvironment: RuntimeEnvironment = Boolean(process.env[RUNTIME_ENV_E2E]) ? "e2e" : "production";
-    const locations = initLocations(runtimeEnvironment, options.paths);
+    const locations = await initLocations(runtimeEnvironment, storeFs, options.paths);
 
     logger.transports.file.file = path.join(locations.userDataDir, "log.log");
     logger.transports.file.level = false;
@@ -54,10 +54,14 @@ export function initContext(options: ContextInitOptions = {}): Context {
     return ctx;
 }
 
-function initLocations(runtimeEnvironment: RuntimeEnvironment, paths?: ContextInitOptionsPaths): ElectronContextLocations {
+async function initLocations(
+    runtimeEnvironment: RuntimeEnvironment,
+    storeFs: StoreModel.StoreFs,
+    paths?: ContextInitOptionsPaths,
+): Promise<ElectronContextLocations> {
     const userDataDirRuntimeVal = process.env[RUNTIME_ENV_USER_DATA_DIR];
 
-    if (userDataDirRuntimeVal && (!fs.existsSync(userDataDirRuntimeVal) || !fs.statSync(userDataDirRuntimeVal).isDirectory())) {
+    if (userDataDirRuntimeVal && !(await directoryExists(userDataDirRuntimeVal, storeFs))) {
         throw new Error(
             `Make sure that custom "userData" dir exists before passing the "${RUNTIME_ENV_USER_DATA_DIR}" environment variable`,
         );
@@ -70,7 +74,22 @@ function initLocations(runtimeEnvironment: RuntimeEnvironment, paths?: ContextIn
     const appRelativePath = (...value: string[]) => path.join(appDir, ...value);
     const icon = appRelativePath("./assets/icons/icon.png");
     const protonmailWebClientsDir = path.join(appDir, "./webclient/protonmail");
-    let webclientIdx = 0;
+    const webClients = await (async () => {
+        let index = 0;
+        return {
+            protonmail: (await listDirs(storeFs, protonmailWebClientsDir)).map((dirName) => {
+                const directory = path.join(protonmailWebClientsDir, dirName);
+                const scheme = `${LOCAL_WEBCLIENT_PROTOCOL_PREFIX}${index++}`;
+
+                electronServe({scheme, directory});
+
+                return {
+                    entryUrl: `${scheme}://${dirName}`,
+                    entryApiUrl: `https://${dirName}`,
+                };
+            }),
+        };
+    })();
 
     return {
         appDir,
@@ -88,19 +107,7 @@ function initLocations(runtimeEnvironment: RuntimeEnvironment, paths?: ContextIn
                 tutanota: formatFileUrl(appRelativePath("./electron-preload/webview/tutanota.js")),
             },
         },
-        webClients: {
-            protonmail: listDirs(protonmailWebClientsDir).map((dirName) => {
-                const directory = path.join(protonmailWebClientsDir, dirName);
-                const scheme = `${LOCAL_WEBCLIENT_PROTOCOL_PREFIX}${webclientIdx++}`;
-
-                electronServe({scheme, directory});
-
-                return {
-                    entryUrl: `${scheme}://${dirName}`,
-                    entryApiUrl: `https://${dirName}`,
-                };
-            }),
-        },
+        webClients,
     };
 }
 
@@ -108,13 +115,18 @@ function formatFileUrl(pathname: string) {
     return url.format({pathname, protocol: "file:", slashes: true});
 }
 
-function listDirs(dir: string): string[] {
-    return fs
-        .readdirSync(dir)
-        .filter((file) => fs
-            .statSync(path.join(dir, file))
-            .isDirectory(),
-        );
+async function listDirs(storeFs: StoreModel.StoreFs, dir: string): Promise<string[]> {
+    const result: string[] = [];
+    if (!(await exists(dir, storeFs))) {
+        return result;
+    }
+    const files: string[] = await promisify(storeFs._impl.readdir)(dir);
+    for (const file of files) {
+        if (await directoryExists(file, storeFs)) {
+            result.push(file);
+        }
+    }
+    return result;
 }
 
 export async function buildSettingsAdapter({configStore}: Context, password: string): Promise<StoreModel.StoreAdapter> {
@@ -122,4 +134,24 @@ export async function buildSettingsAdapter({configStore}: Context, password: str
         {password, preset: (await configStore.readExisting()).encryptionPreset},
         {keyDerivationCache: true, keyDerivationCacheLimit: 3},
     );
+}
+
+async function exists(file: string, storeFs: StoreModel.StoreFs): Promise<boolean> {
+    try {
+        await promisify(storeFs._impl.stat)(file);
+        return true;
+    } catch (error) {
+        if (error.code === "ENOENT") {
+            return false;
+        }
+        throw error;
+    }
+}
+
+async function directoryExists(file: string, storeFs: StoreModel.StoreFs): Promise<boolean> {
+    if (!(await exists(file, storeFs))) {
+        return false;
+    }
+    const stat = await promisify(storeFs._impl.stat)(file);
+    return stat.isDirectory;
 }

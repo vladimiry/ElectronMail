@@ -567,7 +567,7 @@ test.beforeEach(async (t) => {
         logger.transports.console(msg);
     }) as any;
 
-    const ctx = initContext({
+    const ctx = await initContext({
         paths: {
             userDataDir: directory,
             appDir: directory,

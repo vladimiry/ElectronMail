@@ -13,7 +13,7 @@
   "scripts": {
     "generate-npm-lockfile": "synp --source-file yarn.lock",
     "precommit": "lint-staged",
-    "app:dist": "npm-run-all lint test:electron-main test:web clean:app clean:output build assets electron-builder:install-app-deps test:e2e",
+    "app:dist": "npm-run-all lint test:electron-main test:web clean:app build assets:protonmail-webclient assets electron-builder:install-app-deps test:e2e",
     "build": "npm-run-all build:electron-main build:electron-preload build:web",
     "build:dev": "cross-env NODE_ENV=development npm-run-all build",
     "build:electron-main": "webpack --config ./src/webpack/electron-main.ts",
@@ -29,7 +29,6 @@
     "build:web:watch": "webpack --config ./src/webpack/web.ts -w",
     "build:web:watch:dev": "cross-env NODE_ENV=development webpack --config ./src/webpack/web.ts -w",
     "build:web:server:dev": "cross-env NODE_ENV=development webpack-dev-server --config ./src/webpack/web.ts",
-    "clean": "npm-run-all clean:app clean:app-dev",
     "clean:app": "rimraf ./app/",
     "clean:app-dev": "rimraf ./app-dev/",
     "clean:output": "rimraf ./output/",

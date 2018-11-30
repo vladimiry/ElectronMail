@@ -12,8 +12,8 @@ import ava, {ExecutionContext, TestInterface} from "ava";
 import {Application} from "spectron";
 import {promisify} from "util";
 
-import {ACCOUNTS_CONFIG, ONE_SECOND_MS, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
 import {AccountType} from "src/shared/model/account";
+import {ONE_SECOND_MS, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
 
 export interface TestContext {
     app: Application;
@@ -210,7 +210,9 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             );
         },
 
-        async addAccount(account: { type: AccountType, login?: string; password?: string; twoFactorCode?: string; }) {
+        async addAccount(
+            account: { type: AccountType, login?: string; password?: string; twoFactorCode?: string; entryUrlIndex?: number; },
+        ) {
             const client = t.context.app.client;
             const login = account.login
                 ? account.login
@@ -230,7 +232,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             // required: entryUrl
             await client.click(`#accountEditFormEntryUrlField`);
             await client.pause(CONF.timeouts.elementTouched);
-            await client.click(`.ng-option-label=${ACCOUNTS_CONFIG[account.type].entryUrl[0].value}`);
+            await client.click(`[entry-url-option-index="${account.entryUrlIndex || 0}"]`);
             await client.pause(CONF.timeouts.elementTouched);
 
             // required: login

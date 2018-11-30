@@ -19,10 +19,10 @@ export const RUNTIME_ENV_E2E = `EMAIL_SECURELY_APP_E2E`;
 
 export const ONE_SECOND_MS = 1000;
 
-export const PROVIDER_REPO: Record<Extract<AccountType, "protonmail">, { repo: string, version: string; hash: string; }> = {
+export const PROVIDER_REPO: Record<Extract<AccountType, "protonmail">, { repo: string, version: string; commit: string; }> = {
     protonmail: {
-        repo: "git@github.com:ProtonMail/WebClient.git",
-        hash: "bfe41b6e47fea631c678adaf9371c894c7b09b8f",
+        repo: "https://github.com/ProtonMail/WebClient.git",
+        commit: "9b224b2ac01f9d4258979674d9151bc42677a8b9",
         version: "3.15.3",
     },
 };

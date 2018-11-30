@@ -4,7 +4,7 @@
 
 import electron from "electron";
 import fs from "fs";
-import mkdirp from "mkdirp";
+import fsExtra from "fs-extra";
 import path from "path";
 import randomString from "randomstring";
 import sinon from "sinon";
@@ -393,5 +393,5 @@ export function accountBadgeCssSelector(zeroStartedAccountIndex = 0) {
 }
 
 async function mkOutputDirs(dirs: string[]) {
-    dirs.forEach((dir) => promisify(mkdirp)(dir));
+    dirs.forEach((dir) => fsExtra.ensureDir(dir));
 }

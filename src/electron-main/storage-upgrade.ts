@@ -24,6 +24,11 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.timeouts = INITIAL_STORES.config().timeouts;
         }
     },
+    "2.0.0-beta.8": (config) => {
+        if (typeof config.timeouts.webViewApiPing === "undefined") {
+            config.timeouts.webViewApiPing = INITIAL_STORES.config().timeouts.webViewApiPing;
+        }
+    },
 };
 
 const SETTINGS_UPGRADES: Record<string, (settings: Settings) => void> = {

@@ -36,6 +36,7 @@ export const INITIAL_STORES: Readonly<{
             timeouts: {
                 // "fetchingRateLimiting" values need to be taking into the account defining the "fetching" timeout
                 fetching: ONE_SECOND_MS * 60 * 60, // 60 minutes
+                webViewApiPing: ONE_SECOND_MS * 15,
             },
         };
     },

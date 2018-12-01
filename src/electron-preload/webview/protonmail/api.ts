@@ -17,6 +17,7 @@ import {PROTONMAIL_IPC_WEBVIEW_API, ProtonmailApi, ProtonmailNotificationOutput}
 import {StatusCodeError} from "src/shared/model/error";
 import {Unpacked} from "src/shared/types";
 import {angularJsHttpResponseTypeGuard, isUpsertOperationType, preprocessError} from "./lib/uilt";
+import {asyncDelay, curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {buildContact, buildFolder, buildMail} from "./lib/database";
 import {
     buildDbPatchRetryPipeline,
@@ -27,7 +28,6 @@ import {
     waitElements,
 } from "src/electron-preload/webview/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
-import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[api]");
 const twoFactorCodeElementId = "twoFactorCode";
@@ -84,7 +84,14 @@ const endpoints: ProtonmailApi = {
         logger.info();
 
         if (!isLoggedIn()) {
-            throw new Error("protonmail:buildDbPatch(): user is supposed to be logged-in");
+            // TODO handle switching from built-in webclient to remote and back more properly
+            // the account state keeps the "signed-in" state despite of page still being reloded
+            // so we need to reset "signed-in" state with "account.entryUrl" value change
+            await asyncDelay(ONE_SECOND_MS * 5);
+
+            if (!isLoggedIn()) {
+                throw new Error("protonmail:buildDbPatch(): user is supposed to be logged-in");
+            }
         }
 
         if (!input.metadata || !input.metadata.latestEventId) {

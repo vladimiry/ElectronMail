@@ -28,6 +28,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     };
     timeouts: {
         fetching: number;
+        webViewApiPing: number;
     };
 }
 

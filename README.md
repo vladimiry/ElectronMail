@@ -16,6 +16,7 @@ is built with Electron unofficial desktop app for [ProtonMail](https://protonmai
 - System tray icon with a total number of unread messages shown on top of it. Enabling [local messages store](https://github.com/vladimiry/email-securely-app/issues/32) improves this feature ([how to enable](https://github.com/vladimiry/email-securely-app/releases/tag/v2.0.0-beta.1)), see respective [issue](https://github.com/vladimiry/email-securely-app/issues/30).
 - Full, tabs and dropdown view modes. See details [here](https://github.com/vladimiry/email-securely-app/issues/36) and screenshots in [images](images) folder.
 - Batch emails export to EML files. Feature released with [v2.0.0-beta.4](https://github.com/vladimiry/email-securely-app/releases/tag/v2.0.0-beta.4) version, requires `local messages store` feature to be enabled ([how to enable](https://github.com/vladimiry/email-securely-app/releases/tag/v2.0.0-beta.1)).
+- Built-in [official web client](https://github.com/ProtonMail/WebClient) can be optionally chosen. Feature released with [v2.0.0-beta.8](https://github.com/vladimiry/email-securely-app/releases/tag/v2.0.0-beta.8) version and so far enabled only for the ProtonMail account types. See [respective](https://github.com/vladimiry/email-securely-app/issues/79) issue for details.
 - Start minimized to tray.
 - Close to tray.
 

@@ -1,33 +1,59 @@
 import byline from "byline";
 import chalk from "chalk";
+import fs from "fs";
 import fsExtra from "fs-extra";
 import path from "path";
 import spawnAsync from "@expo/spawn-async";
 import {GitProcess} from "dugite";
+import {promisify} from "util";
 
 import {Arguments} from "src/shared/types";
 import {PROVIDER_REPO} from "src/shared/constants";
+
+type ApiParam =
+    | "email-securely-app:mail.protonmail.com"
+    | "email-securely-app:protonirockerxow.onion";
+
+interface FolderAsDomainEntry {
+    configApiParam: ApiParam;
+    folderNameAsDomain: string;
+}
 
 // tslint:disable-next-line:no-console
 const consoleLog = console.log;
 // tslint:disable-next-line:no-console
 const consoleError = console.error;
+const chalkConsoleValue = (value: string) => chalk.cyan(value);
+
 const distDir = process.argv[2];
-const repoDir = path.resolve(process.cwd(), `./output/git/protonmail/webclient/${PROVIDER_REPO.protonmail.commit}`);
-const repoDistDir = path.resolve(repoDir, "./dist");
-const foldersAsDomains = [
-    "mail.protonmail.com",
+const baseRepoDir = path.resolve(process.cwd(), `./output/git/protonmail/webclient/${PROVIDER_REPO.protonmail.commit}`);
+
+const folderAsDomainEntries: FolderAsDomainEntry[] = [
+    {
+        configApiParam: "email-securely-app:mail.protonmail.com",
+        folderNameAsDomain: "mail.protonmail.com",
+    },
+    {
+        configApiParam: "email-securely-app:protonirockerxow.onion",
+        folderNameAsDomain: "protonirockerxow.onion",
+    },
 ];
 
 (async () => {
-    for (const folder of foldersAsDomains) {
-        const resolvedDistDir = path.resolve(distDir, folder);
-        consoleLog(chalk.magenta(`Preparing built-in WebClient build:`), resolvedDistDir);
+    for (const folderAsDomainEntry of folderAsDomainEntries) {
+        const resolvedDistDir = path.resolve(distDir, folderAsDomainEntry.folderNameAsDomain);
+        consoleLog(
+            chalk.magenta(`Preparing built-in WebClient build:`),
+            chalkConsoleValue(JSON.stringify({...folderAsDomainEntry, resolvedDistDir})),
+        );
 
         if (await fsExtra.pathExists(resolvedDistDir)) {
-            consoleLog(chalk.yellow(`Skipping as directory already exists:`), resolvedDistDir);
+            consoleLog(chalk.yellow(`Skipping as directory already exists:`), chalkConsoleValue(resolvedDistDir));
             continue;
         }
+
+        const repoDir = path.resolve(baseRepoDir, folderAsDomainEntry.folderNameAsDomain);
+        const repoDistDir = path.resolve(repoDir, "./dist");
 
         if (await fsExtra.pathExists(repoDir)) {
             consoleLog(chalk.yellow(`Skipping cloning`));
@@ -45,10 +71,10 @@ const foldersAsDomains = [
         if (await fsExtra.pathExists(repoDistDir)) {
             consoleLog(chalk.yellow(`Skipping building`));
         } else {
-            await build(repoDir);
+            await build({dir: repoDir, ...folderAsDomainEntry});
         }
 
-        consoleLog(chalk.magenta(`Copying:`), `${repoDistDir}" to "${resolvedDistDir}`);
+        consoleLog(chalk.magenta(`Copying:`), chalkConsoleValue(`${repoDistDir}" to "${resolvedDistDir}`));
         await fsExtra.copy(repoDistDir, resolvedDistDir);
     }
 })().catch((error) => {
@@ -56,8 +82,19 @@ const foldersAsDomains = [
     process.exit(1);
 });
 
-async function build(dir: string) {
-    await _exec(["npm", ["run", "config"], {cwd: dir}]);
+async function build({dir, configApiParam, folderNameAsDomain}: { dir: string; } & FolderAsDomainEntry) {
+    const file = path.join(dir, "./env/env.json");
+    const data = JSON.stringify({
+        [configApiParam]: {
+            api: `https://${folderNameAsDomain}/api`,
+            sentry: {},
+        },
+    });
+
+    consoleLog(chalk.magenta(`Writing file: `), chalkConsoleValue(JSON.stringify({file, data})));
+    await promisify(fs.writeFile)(file, data);
+
+    await _exec(["npm", ["run", "config", "--", `--api`, configApiParam, `--debug`, "true"], {cwd: dir}]);
     await _exec(["npm", ["run", "dist"], {cwd: dir}]);
 }
 
@@ -91,7 +128,7 @@ async function _execGit([commands, pathArg, options]: Arguments<typeof GitProces
             ...options,
         },
     ];
-    consoleLog(chalk.magenta(`Executing Git command:`), JSON.stringify(args));
+    consoleLog(chalk.magenta(`Executing Git command:`), chalkConsoleValue(JSON.stringify(args)));
     const result = await GitProcess.exec(...args);
 
     if (result.exitCode) {
@@ -100,7 +137,7 @@ async function _execGit([commands, pathArg, options]: Arguments<typeof GitProces
 }
 
 async function _exec(args: Arguments<typeof spawnAsync>) {
-    consoleLog(chalk.magenta(`Executing Shell command: `), JSON.stringify(args));
+    consoleLog(chalk.magenta(`Executing Shell command:`), chalkConsoleValue(JSON.stringify(args)));
 
     const taskPromise = spawnAsync(...args);
 

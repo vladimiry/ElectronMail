@@ -1,4 +1,3 @@
-import electronServe from "electron-serve";
 import logger from "electron-log";
 import path from "path";
 import url from "url";
@@ -13,6 +12,7 @@ import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {INITIAL_STORES, configEncryptionPresetValidator, settingsAccountLoginUniquenessValidator} from "./constants";
 import {LOCAL_WEBCLIENT_PROTOCOL_PREFIX, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
+import {registerFileProtocols} from "./protocol";
 
 export function initContext(options: ContextInitOptions = {}): Context {
     const storeFs = options.storeFs ? options.storeFs : StoreFs.Fs.fs;
@@ -73,24 +73,31 @@ function initLocations(
     const appRelativePath = (...value: string[]) => path.join(appDir, ...value);
     const icon = appRelativePath("./assets/icons/icon.png");
     const protonmailWebClientsDir = path.join(appDir, "./webclient/protonmail");
-    const webClients = (() => {
-        const foldersAsDomains = listDirsNames(storeFs, protonmailWebClientsDir);
-        let index = 0;
+    const webClients = {
+        protonmail: (() => {
+            let schemeIndex = 0;
 
-        return {
-            protonmail: foldersAsDomains.map((dirName) => {
-                const directory = path.join(protonmailWebClientsDir, dirName);
-                const scheme = `${LOCAL_WEBCLIENT_PROTOCOL_PREFIX}${index++}`;
-
-                electronServe({scheme, directory});
+            const items = listDirsNames(storeFs, protonmailWebClientsDir).map((dirName) => {
+                const directory = path.resolve(protonmailWebClientsDir, dirName);
+                const scheme = `${LOCAL_WEBCLIENT_PROTOCOL_PREFIX}${schemeIndex++}`;
 
                 return {
-                    entryUrl: `${scheme}://${dirName}`,
-                    entryApiUrl: `https://${dirName}`,
+                    protocolBundle: {
+                        scheme,
+                        directory,
+                    },
+                    result: {
+                        entryUrl: `${scheme}://${dirName}`,
+                        entryApiUrl: `https://${dirName}`,
+                    },
                 };
-            }),
-        };
-    })();
+            });
+
+            registerFileProtocols(items.map(({protocolBundle}) => protocolBundle));
+
+            return items.map(({result}) => result);
+        })(),
+    };
 
     return {
         appDir,

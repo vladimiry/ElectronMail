@@ -19,7 +19,7 @@ import {INITIAL_STORES} from "src/electron-main/constants";
 import {StatusCodeError} from "src/shared/model/error";
 import {Unpacked} from "src/shared/types";
 import {accountPickingPredicate, pickBaseConfigProperties} from "src/shared/util";
-import {buildSettingsAdapter, initContext} from "src/electron-main/util";
+import {buildSettingsAdapter} from "src/electron-main/util";
 
 // TODO "immer" instead of cloning with "..."
 
@@ -537,7 +537,7 @@ test.beforeEach(async (t) => {
         (mock) => {
             const {mocks} = t.context;
             mock("electron").with(mocks.electron);
-            mock(() => import("src/electron-main/keytar"))/*.callThrough()*/.with(mocks["src/electron-main/keytar"]);
+            mock(/*() => import*/("src/electron-main/keytar"))/*.callThrough()*/.with(mocks["src/electron-main/keytar"]);
             mock(() => import("about-window")).callThrough().with(mocks["about-window"] as any);
             mock(() => import("src/shared/api/main")).callThrough().with(mocks["src/shared/api/main"]);
             mock(() => import("src/electron-main/session")).callThrough().with(mocks["src/electron-main/session"]);
@@ -566,6 +566,13 @@ test.beforeEach(async (t) => {
     logger.transports.file = ((msg: any) => {
         logger.transports.console(msg);
     }) as any;
+
+    const {initContext} = await rewiremock.around(
+        () => import("src/electron-main/util"),
+        (mock) => {
+            mock(() => import("src/electron-main/protocol")).append({registerFileProtocols: sinon.stub()});
+        },
+    );
 
     const ctx = initContext({
         paths: {

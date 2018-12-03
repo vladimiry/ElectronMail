@@ -36,10 +36,16 @@ export const ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX = "local";
 export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlItem[]>> = {
     protonmail: {
         entryUrl: [
-            ...((process.env.NODE_ENV as BuildEnvironment) === "development" ? [{
-                value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}${ACCOUNTS_CONFIG_ENTRY_URL_SEPARATOR}https://mail.protonmail.com`,
-                title: `https://mail.protonmail.com (Built-in WebClient v${PROVIDER_REPO.protonmail.version})`,
-            }] : []),
+            ...((process.env.NODE_ENV as BuildEnvironment) === "development" ? [
+                {
+                    value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}${ACCOUNTS_CONFIG_ENTRY_URL_SEPARATOR}https://mail.protonmail.com`,
+                    title: `https://mail.protonmail.com (Built-in WebClient v${PROVIDER_REPO.protonmail.version})`,
+                },
+                {
+                    value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}${ACCOUNTS_CONFIG_ENTRY_URL_SEPARATOR}https://protonirockerxow.onion`,
+                    title: `https://protonirockerxow.onion (Built-in WebClient v${PROVIDER_REPO.protonmail.version})`,
+                },
+            ] : []),
             {value: "https://app.protonmail.ch", title: "https://app.protonmail.ch"},
             {value: "https://mail.protonmail.com", title: "https://mail.protonmail.com"},
             {value: "https://beta.protonmail.com", title: "https://beta.protonmail.com (Beta)"},

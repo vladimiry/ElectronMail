@@ -17,6 +17,7 @@ test.serial(`"Context.db" resolves encryption key calling "Context.settingsStore
                 app: {getPath: sinon.stub().returns(memFsPath)},
             } as any);
             mock(() => import("./constants")).callThrough();
+            mock(() => import("./protocol")).append({registerFileProtocols: sinon.stub()});
         },
     );
     const ctx = initContext({
@@ -64,6 +65,7 @@ test.serial([
                     settings: settingsStub,
                 },
             });
+            mock(() => import("./protocol")).append({registerFileProtocols: sinon.stub()});
         },
     );
 

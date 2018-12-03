@@ -67,7 +67,7 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveApi>>): Tutan
             if (!input.metadata || !Object.keys(input.metadata.groupEntityEventBatchIds || {}).length) {
                 return await persistDatabasePatch(
                     {
-                        ...await bootstrapDbPatch({api, zoneName: input.zoneName}),
+                        ...await bootstrapDbPatch({api}, logger),
                         type: input.type,
                         login: input.login,
                     },
@@ -100,7 +100,7 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveApi>>): Tutan
                 };
             })(input.metadata.groupEntityEventBatchIds);
             const metadata: BuildDbPatchReturn["metadata"] = preFetch.metadata;
-            const patch = await buildDbPatch({eventBatches: preFetch.missedEventBatches, _logger: logger});
+            const patch = await buildDbPatch({eventBatches: preFetch.missedEventBatches, parentLogger: logger});
 
             return await persistDatabasePatch(
                 {
@@ -310,7 +310,7 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveApi>>): Tutan
                         buffer(notificationReceived$.pipe(
                             debounceTime(ONE_SECOND_MS * 1.5),
                         )),
-                        concatMap((eventBatches) => from(buildDbPatch({eventBatches}, true))),
+                        concatMap((eventBatches) => from(buildDbPatch({eventBatches, parentLogger: innerLogger}, true))),
                         concatMap((patch) => {
                             if (!isEntityUpdatesPatchNotEmpty(patch)) {
                                 return EMPTY;
@@ -333,9 +333,10 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveApi>>): Tutan
 }
 
 async function bootstrapDbPatch(
-    {zoneName, api}: { api: Unpacked<ReturnType<typeof resolveApi>>, zoneName: string },
-    logger = curryFunctionMembers(_logger, "bootstrapDbPatch()", zoneName),
+    {api}: { api: Unpacked<ReturnType<typeof resolveApi>> },
+    parentLogger: ReturnType<typeof buildLoggerBundle>,
 ): Promise<BuildDbPatchReturn> {
+    const logger = curryFunctionMembers(parentLogger, "bootstrapDbPatch()");
     const controller = getUserController();
 
     if (!controller) {
@@ -408,13 +409,11 @@ async function bootstrapDbPatch(
 async function buildDbPatch(
     input: {
         eventBatches: Array<Pick<Rest.Model.EntityEventBatch, "events">>;
-        _logger?: ReturnType<typeof buildLoggerBundle>;
+        parentLogger: ReturnType<typeof buildLoggerBundle>;
     },
     nullUpsert: boolean = false,
 ): Promise<DbPatch> {
-    const logger = input._logger
-        ? curryFunctionMembers(input._logger, "buildDbPatch()")
-        : {info: (...args: any[]) => {}, verbose: (...args: any[]) => {}};
+    const logger = curryFunctionMembers(input.parentLogger, "buildDbPatch()");
     const mappingItem = () => ({updatesMappedByInstanceId: new Map(), remove: [], upsertIds: new Map()});
     const mapping: Record<"conversationEntries" | "mails" | "folders" | "contacts", {
         updatesMappedByInstanceId: Map<Rest.Model.Id, Rest.Model.EntityUpdate[]>;

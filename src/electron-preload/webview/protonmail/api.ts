@@ -103,7 +103,7 @@ const endpoints: ProtonmailApi = {
         if (!input.metadata || !input.metadata.latestEventId) {
             return await persistDatabasePatch(
                 {
-                    ...await bootstrapDbPatch(),
+                    ...await bootstrapDbPatch(logger),
                     type: input.type,
                     login: input.login,
                 },
@@ -139,7 +139,7 @@ const endpoints: ProtonmailApi = {
             };
         })(await resolveApi(), input.metadata.latestEventId);
         const metadata: BuildDbPatchReturn["metadata"] = {latestEventId: preFetch.latestEventId};
-        const patch = await buildDbPatch({events: preFetch.missedEvents, _logger: logger});
+        const patch = await buildDbPatch({events: preFetch.missedEvents, parentLogger: logger});
 
         return await persistDatabasePatch(
             {
@@ -345,7 +345,7 @@ const endpoints: ProtonmailApi = {
                     buffer(notificationReceived$.pipe(
                         debounceTime(ONE_SECOND_MS * 1.5),
                     )),
-                    concatMap((events) => from(buildDbPatch({events}, true))),
+                    concatMap((events) => from(buildDbPatch({events, parentLogger: innerLogger}, true))),
                     concatMap((patch) => {
                         if (!isEntityUpdatesPatchNotEmpty(patch)) {
                             return EMPTY;
@@ -399,8 +399,8 @@ function isLoggedIn(): boolean {
     return authentication && authentication.isLoggedIn();
 }
 
-async function bootstrapDbPatch(): Promise<BuildDbPatchReturn> {
-    const logger = curryFunctionMembers(_logger, "bootstrapDbPatch()");
+async function bootstrapDbPatch(parentLogger: ReturnType<typeof buildLoggerBundle>): Promise<BuildDbPatchReturn> {
+    const logger = curryFunctionMembers(parentLogger, "bootstrapDbPatch()");
     const api = await resolveApi();
     // WARN: "getLatestID" should be called on top of the function, ie before any other fetching
     // so app is able to get any potentially missed changes happened during this function execution
@@ -504,14 +504,12 @@ async function bootstrapDbPatch(): Promise<BuildDbPatchReturn> {
 async function buildDbPatch(
     input: {
         events: Rest.Model.Event[];
-        _logger?: ReturnType<typeof buildLoggerBundle>;
+        parentLogger: ReturnType<typeof buildLoggerBundle>;
     },
     nullUpsert: boolean = false,
 ): Promise<DbPatch> {
     const api = await resolveApi();
-    const logger = input._logger
-        ? curryFunctionMembers(input._logger, "buildDbPatch()")
-        : {info: (...args: any[]) => {}, verbose: (...args: any[]) => {}};
+    const logger = curryFunctionMembers(input.parentLogger, "buildDbPatch()");
     const mappingItem = () => ({updatesMappedByInstanceId: new Map(), remove: [], upsertIds: []});
     const mapping: Record<"mails" | "folders" | "contacts", {
         remove: Array<{ pk: string }>;

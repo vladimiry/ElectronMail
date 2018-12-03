@@ -7,21 +7,21 @@ import * as Database from "./lib/database";
 import * as DatabaseModel from "src/shared/model/database";
 import * as Rest from "./lib/rest";
 import {DbPatch} from "src/shared/api/common";
-import {MAIL_FOLDER_TYPE} from "src/shared/model/database";
+import {MAIL_FOLDER_TYPE, MemoryDbAccount} from "src/shared/model/database";
 import {
     NOTIFICATION_LOGGED_IN_POLLING_INTERVAL,
     NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL,
     WEBVIEW_LOGGERS,
 } from "src/electron-preload/webview/constants";
 import {ONE_SECOND_MS} from "src/shared/constants";
+import {Omit, Unpacked} from "src/shared/types";
 import {StatusCodeError} from "src/shared/model/error";
 import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi, TutanotaNotificationOutput} from "src/shared/api/webview/tutanota";
-import {Unpacked} from "src/shared/types";
 import {
     buildDbPatchRetryPipeline,
-    buildEmptyDbPatch,
     fillInputValue,
     getLocationHref,
+    persistDatabasePatch,
     submitTotpToken,
     waitElements,
 } from "src/electron-preload/webview/util";
@@ -31,7 +31,13 @@ import {fetchAllEntities, fetchEntitiesRange, fetchMultipleEntities} from "src/e
 import {isUpsertOperationType, preprocessError} from "./lib/util";
 import {resolveApi} from "src/electron-preload/webview/tutanota/lib/api";
 
-type BuildDbPatchInputMetadata = Unpacked<ReturnType<TutanotaApi["buildDbPatch"]>>["metadata"];
+interface BuildDbPatchReturn {
+    patch: DbPatch;
+    metadata: Omit<MemoryDbAccount<"tutanota">["metadata"], "type">;
+}
+
+type BuildDbPatchInputMetadata = BuildDbPatchReturn["metadata"];
+
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[api]");
 
 export async function registerApi(): Promise<void> {
@@ -59,10 +65,17 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveApi>>): Tutan
             }
 
             if (!input.metadata || !Object.keys(input.metadata.groupEntityEventBatchIds || {}).length) {
-                return await bootstrapDbPatch({api, zoneName: input.zoneName});
+                return await persistDatabasePatch(
+                    {
+                        ...await bootstrapDbPatch({api, zoneName: input.zoneName}),
+                        type: input.type,
+                        login: input.login,
+                    },
+                    logger,
+                );
             }
 
-            const {missedEventBatches, metadata} = await (async (
+            const preFetch = await (async (
                 inputGroupEntityEventBatchIds: BuildDbPatchInputMetadata["groupEntityEventBatchIds"],
                 fetchedEventBatches: Rest.Model.EntityEventBatch[] = [],
                 memberships = Rest.Util.filterSyncingMemberships(controller.user),
@@ -86,20 +99,23 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveApi>>): Tutan
                     metadata: {groupEntityEventBatchIds},
                 };
             })(input.metadata.groupEntityEventBatchIds);
-            const patch = await buildDbPatch({eventBatches: missedEventBatches, _logger: logger});
+            const metadata: BuildDbPatchReturn["metadata"] = preFetch.metadata;
+            const patch = await buildDbPatch({eventBatches: preFetch.missedEventBatches, _logger: logger});
 
-            return {
-                patch,
-                metadata,
-            };
+            return await persistDatabasePatch(
+                {
+                    patch,
+                    metadata,
+                    type: input.type,
+                    login: input.login,
+                },
+                logger,
+            );
         })()).pipe(
             buildDbPatchRetryPipeline<Unpacked<ReturnType<TutanotaApi["buildDbPatch"]>>>(preprocessError, _logger),
             catchError((error) => {
                 if (StatusCodeError.hasStatusCodeValue(error, "SkipDbPatch")) {
-                    return of({
-                        patch: buildEmptyDbPatch(),
-                        metadata: {groupEntityEventBatchIds: {}},
-                    });
+                    return of(null);
                 }
                 throw error;
             }),
@@ -319,7 +335,7 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveApi>>): Tutan
 async function bootstrapDbPatch(
     {zoneName, api}: { api: Unpacked<ReturnType<typeof resolveApi>>, zoneName: string },
     logger = curryFunctionMembers(_logger, "bootstrapDbPatch()", zoneName),
-): Promise<Unpacked<ReturnType<TutanotaApi["buildDbPatch"]>>> {
+): Promise<BuildDbPatchReturn> {
     const controller = getUserController();
 
     if (!controller) {

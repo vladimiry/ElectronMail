@@ -154,12 +154,11 @@ export class AccountsEffects {
                                             ? webViewClient as ReturnType<WebViewApi<typeof type>["buildClient"]>
                                             : webViewClient as ReturnType<WebViewApi<typeof type>["buildClient"]>;
                                         return client("buildDbPatch", {timeoutMs: timeouts.fetching})({
+                                            type,
+                                            login,
                                             metadata: metadata as any, // TODO TS: get rid of "as any" casting
                                             zoneName,
                                         });
-                                    }),
-                                    concatMap(({patch, metadata}) => {
-                                        return ipcMainClient("dbPatch")({type, login, metadata, patch, forceFlush: false});
                                     }),
                                     concatMap(() => EMPTY),
                                     catchError((error) => of(CORE_ACTIONS.Fail(error))),

@@ -13,13 +13,11 @@ import {
     NewPasswordFieldContainer,
     PasswordFieldContainer,
 } from "src/shared/model/container";
-import {AccountType} from "src/shared/model/account";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
-import {CommonWebViewApi} from "./webview/common";
-import {DbAccountPk, DbEntitiesRecordContainer, FsDbAccount} from "src/shared/model/database";
+import {DbAccountPk, DbEntitiesRecordContainer, FsDbAccount, MemoryDbAccount} from "src/shared/model/database";
 import {DbPatch} from "./common";
 import {ElectronContextLocations} from "src/shared/model/electron";
-import {Unpacked} from "src/shared/types";
+import {Omit} from "src/shared/types";
 
 export interface Endpoints {
     addAccount: ApiMethod<AccountConfigCreatePatch, Settings>;
@@ -35,7 +33,7 @@ export interface Endpoints {
     dbPatch: ApiMethod<DbAccountPk
         & { patch: DbPatch }
         & { forceFlush?: boolean }
-        & { metadata: Unpacked<ReturnType<CommonWebViewApi<AccountType>["buildDbPatch"]>>["metadata"] },
+        & { metadata: Omit<MemoryDbAccount["metadata"], "type"> },
         FsDbAccount["metadata"]>;
 
     dbGetAccountMetadata: ApiMethod<DbAccountPk, FsDbAccount["metadata"] | null>;

@@ -7,27 +7,33 @@ import * as Database from "./lib/database";
 import * as Rest from "./lib/rest";
 import {Api, resolveApi} from "./lib/api";
 import {DbPatch} from "src/shared/api/common";
+import {MemoryDbAccount} from "src/shared/model/database";
 import {
     NOTIFICATION_LOGGED_IN_POLLING_INTERVAL,
     NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL,
     WEBVIEW_LOGGERS,
 } from "src/electron-preload/webview/constants";
 import {ONE_SECOND_MS} from "src/shared/constants";
+import {Omit, Unpacked} from "src/shared/types";
 import {PROTONMAIL_IPC_WEBVIEW_API, ProtonmailApi, ProtonmailNotificationOutput} from "src/shared/api/webview/protonmail";
 import {StatusCodeError} from "src/shared/model/error";
-import {Unpacked} from "src/shared/types";
 import {angularJsHttpResponseTypeGuard, isUpsertOperationType, preprocessError} from "./lib/uilt";
 import {asyncDelay, curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {buildContact, buildFolder, buildMail} from "./lib/database";
 import {
     buildDbPatchRetryPipeline,
-    buildEmptyDbPatch,
     fillInputValue,
     getLocationHref,
+    persistDatabasePatch,
     submitTotpToken,
     waitElements,
 } from "src/electron-preload/webview/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
+
+interface BuildDbPatchReturn {
+    patch: DbPatch;
+    metadata: Omit<MemoryDbAccount<"protonmail">["metadata"], "type">;
+}
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[api]");
 const twoFactorCodeElementId = "twoFactorCode";
@@ -95,10 +101,17 @@ const endpoints: ProtonmailApi = {
         }
 
         if (!input.metadata || !input.metadata.latestEventId) {
-            return await bootstrapDbPatch();
+            return await persistDatabasePatch(
+                {
+                    ...await bootstrapDbPatch(),
+                    type: input.type,
+                    login: input.login,
+                },
+                logger,
+            );
         }
 
-        const {missedEvents, latestEventId} = await (async (
+        const preFetch = await (async (
             {events, $http}: Api,
             id: Rest.Model.Event["EventID"],
         ) => {
@@ -125,22 +138,23 @@ const endpoints: ProtonmailApi = {
                 missedEvents: fetchedEvents,
             };
         })(await resolveApi(), input.metadata.latestEventId);
+        const metadata: BuildDbPatchReturn["metadata"] = {latestEventId: preFetch.latestEventId};
+        const patch = await buildDbPatch({events: preFetch.missedEvents, _logger: logger});
 
-        const patch = await buildDbPatch({events: missedEvents, _logger: logger});
-        const metadata: Unpacked<ReturnType<ProtonmailApi["buildDbPatch"]>>["metadata"] = {latestEventId};
-
-        return {
-            patch,
-            metadata,
-        };
+        return await persistDatabasePatch(
+            {
+                patch,
+                metadata,
+                type: input.type,
+                login: input.login,
+            },
+            logger,
+        );
     })()).pipe(
         buildDbPatchRetryPipeline<Unpacked<ReturnType<ProtonmailApi["buildDbPatch"]>>>(preprocessError, _logger),
         catchError((error) => {
             if (StatusCodeError.hasStatusCodeValue(error, "SkipDbPatch")) {
-                return of({
-                    patch: buildEmptyDbPatch(),
-                    metadata: {},
-                });
+                return of(null);
             }
             throw error;
         }),
@@ -385,7 +399,7 @@ function isLoggedIn(): boolean {
     return authentication && authentication.isLoggedIn();
 }
 
-async function bootstrapDbPatch(): Promise<Unpacked<ReturnType<ProtonmailApi["buildDbPatch"]>>> {
+async function bootstrapDbPatch(): Promise<BuildDbPatchReturn> {
     const logger = curryFunctionMembers(_logger, "bootstrapDbPatch()");
     const api = await resolveApi();
     // WARN: "getLatestID" should be called on top of the function, ie before any other fetching

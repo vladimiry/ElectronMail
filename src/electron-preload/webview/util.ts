@@ -1,7 +1,8 @@
 import {concatMap, delay, retryWhen} from "rxjs/operators";
 import {of, throwError} from "rxjs";
 
-import {DbPatch} from "src/shared/api/common";
+import {Arguments} from "../../shared/types";
+import {Endpoints, IPC_MAIN_API} from "../../shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {StatusCodeError} from "src/shared/model/error";
 import {asyncDelay, curryFunctionMembers} from "src/shared/util";
@@ -121,15 +122,6 @@ export async function submitTotpToken(
     }
 }
 
-export function buildEmptyDbPatch(): DbPatch {
-    return {
-        conversationEntries: {remove: [], upsert: []},
-        mails: {remove: [], upsert: []},
-        folders: {remove: [], upsert: []},
-        contacts: {remove: [], upsert: []},
-    };
-}
-
 export function buildDbPatchRetryPipeline<T>(
     preprocessError: (rawError: any) => { error: any; retriable: boolean; skippable: boolean; },
     logger: ReturnType<typeof buildLoggerBundle>,
@@ -169,4 +161,25 @@ function triggerChangeEvent(input: HTMLInputElement) {
     const inputEvent = document.createEvent("Event");
     inputEvent.initEvent("input", true, false);
     input.dispatchEvent(inputEvent);
+}
+
+export async function persistDatabasePatch(
+    data: Arguments<Endpoints["dbPatch"]>[0],
+    logger: ReturnType<typeof buildLoggerBundle>,
+): Promise<null> {
+    logger.info("persist() start");
+
+    const client = IPC_MAIN_API.buildClient();
+    const method = client("dbPatch");
+
+    method({
+        type: data.type,
+        login: data.login,
+        metadata: data.metadata,
+        patch: data.patch,
+    }).toPromise();
+
+    logger.info("persist() end");
+
+    return null;
 }

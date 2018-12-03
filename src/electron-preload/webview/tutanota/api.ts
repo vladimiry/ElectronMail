@@ -22,8 +22,8 @@ import {
     fillInputValue,
     getLocationHref,
     persistDatabasePatch,
+    resolveDomElements,
     submitTotpToken,
-    waitElements,
 } from "src/electron-preload/webview/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
@@ -128,7 +128,7 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveApi>>): Tutan
                 event.preventDefault();
                 event.stopPropagation();
             };
-            const elements = await waitElements({
+            const elements = await resolveDomElements({
                 username: () => document.querySelector("form [type=email]") as HTMLInputElement,
                 storePasswordCheckbox: () => document.querySelector("form .items-center [type=checkbox]") as HTMLInputElement,
                 storePasswordCheckboxBlock: () => document.querySelector("form .checkbox.pt.click") as HTMLInputElement,
@@ -154,7 +154,7 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveApi>>): Tutan
             await endpoints.fillLogin({login, zoneName}).toPromise();
             logger.verbose(`fillLogin() executed`);
 
-            const elements = await waitElements({
+            const elements = await resolveDomElements({
                 password: () => document.querySelector("form [type=password]") as HTMLInputElement,
                 submit: () => document.querySelector("form button") as HTMLElement,
             });
@@ -177,7 +177,7 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveApi>>): Tutan
             const logger = curryFunctionMembers(_logger, "api:login2fa()", zoneName);
             logger.info();
 
-            const elements = await waitElements(login2FaWaitElementsConfig);
+            const elements = await resolveDomElements(login2FaWaitElementsConfig);
             logger.verbose(`elements resolved`);
 
             const spacesLessSecret = secret.replace(/\s/g, "");
@@ -225,7 +225,7 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveApi>>): Tutan
                             let twoFactorElements;
 
                             try {
-                                twoFactorElements = await waitElements(login2FaWaitElementsConfig, {iterationsLimit: 1});
+                                twoFactorElements = await resolveDomElements(login2FaWaitElementsConfig, {iterationsLimit: 1});
                             } catch (e) {
                                 // NOOP
                             }

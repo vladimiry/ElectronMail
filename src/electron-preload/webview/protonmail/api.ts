@@ -25,8 +25,8 @@ import {
     fillInputValue,
     getLocationHref,
     persistDatabasePatch,
+    resolveDomElements,
     submitTotpToken,
-    waitElements,
 } from "src/electron-preload/webview/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
 
@@ -163,7 +163,7 @@ const endpoints: ProtonmailApi = {
     fillLogin: ({login, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "api:fillLogin()", zoneName)) => {
         logger.info();
 
-        const elements = await waitElements({
+        const elements = await resolveDomElements({
             username: () => document.getElementById("username") as HTMLInputElement,
         });
         logger.verbose(`elements resolved`);
@@ -182,7 +182,7 @@ const endpoints: ProtonmailApi = {
         await endpoints.fillLogin({login, zoneName}).toPromise();
         logger.verbose(`fillLogin() executed`);
 
-        const elements = await waitElements({
+        const elements = await resolveDomElements({
             password: () => document.getElementById("password") as HTMLInputElement,
             submit: () => document.getElementById("login_btn") as HTMLElement,
         });
@@ -204,7 +204,7 @@ const endpoints: ProtonmailApi = {
     login2fa: ({secret, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "api:login2fa()", zoneName)) => {
         logger.info();
 
-        const elements = await waitElements({
+        const elements = await resolveDomElements({
             input: () => document.getElementById(twoFactorCodeElementId) as HTMLInputElement,
             button: () => document.getElementById("login_btn_2fa") as HTMLElement,
         });
@@ -221,7 +221,7 @@ const endpoints: ProtonmailApi = {
     unlock: ({mailPassword, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "api:unlock()", zoneName)) => {
         logger.info();
 
-        const elements = await waitElements({
+        const elements = await resolveDomElements({
             mailboxPassword: () => document.getElementById("password") as HTMLInputElement,
             submit: () => document.getElementById("unlock_btn") as HTMLElement,
         });

@@ -1,25 +1,41 @@
 import {concatMap, delay, retryWhen} from "rxjs/operators";
 import {of, throwError} from "rxjs";
 
-import {Arguments} from "../../shared/types";
-import {Endpoints, IPC_MAIN_API} from "../../shared/api/main";
+import {Arguments} from "src/shared/types";
+import {Endpoints, IPC_MAIN_API} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {StatusCodeError} from "src/shared/model/error";
 import {asyncDelay, curryFunctionMembers} from "src/shared/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
 
-export const waitElements = <E extends Element,
+const ipcMainApiClient = IPC_MAIN_API.buildClient();
+const ipcMainApiClientMethods = Object.freeze({
+    dbPatch: ipcMainApiClient("dbPatch"),
+    readConfig: ipcMainApiClient("readConfig"),
+});
+
+export const resolveDomElements = <E extends Element,
     Q extends Readonly<Record<string, () => E>>,
     K extends keyof Q,
     R extends { [key in K]: ReturnType<Q[key]> }>(
     query: Q,
     opts: { timeoutMs?: number, iterationsLimit?: number } = {},
-): Promise<Readonly<R>> => new Promise((resolve, reject) => {
+): Promise<Readonly<R>> => new Promise(async (resolve, reject) => {
+    let configTimeout: number | undefined;
+
+    try {
+        const config = await ipcMainApiClientMethods.readConfig().toPromise();
+        configTimeout = config.timeouts.domElementsResolving;
+    } catch (error) {
+        return reject(error);
+    }
+
     const OPTS = {
-        timeoutMs: opts.timeoutMs || ONE_SECOND_MS * 10,
+        timeoutMs: opts.timeoutMs || configTimeout || ONE_SECOND_MS * 10,
         iterationsLimit: opts.iterationsLimit || 0, // 0 - unlimited
         delayMinMs: 300,
     };
+
     const startTime = Number(new Date());
     const delayMs = OPTS.timeoutMs / 50;
     const queryKeys: K[] = Object.keys(query) as K[];
@@ -169,10 +185,7 @@ export async function persistDatabasePatch(
 ): Promise<null> {
     logger.info("persist() start");
 
-    const client = IPC_MAIN_API.buildClient();
-    const method = client("dbPatch");
-
-    method({
+    await ipcMainApiClientMethods.dbPatch({
         type: data.type,
         login: data.login,
         metadata: data.metadata,

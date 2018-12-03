@@ -23,8 +23,8 @@ export const ONE_SECOND_MS = 1000;
 export const PROVIDER_REPO: Record<Extract<AccountType, "protonmail">, { repo: string, version: string; commit: string; }> = {
     protonmail: {
         repo: "https://github.com/ProtonMail/WebClient.git",
-        commit: "9b224b2ac01f9d4258979674d9151bc42677a8b9",
-        version: "3.15.3",
+        commit: "31df90fcb0f15bb68423ab91d2d9df9310b9a202",
+        version: "3.15.5",
     },
 };
 

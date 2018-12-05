@@ -37,6 +37,19 @@
           {
             "patterns": [
               {
+                "target": [
+                  "src/electron-preload/webview/**/*",
+                  "!src/electron-preload/webview/util.ts"
+                ],
+                "from": [
+                  "src/shared/api/main"
+                ]
+              }
+            ]
+          },
+          {
+            "patterns": [
+              {
                 "target": "src/web/src/**/*",
                 "from": [
                   "electron",

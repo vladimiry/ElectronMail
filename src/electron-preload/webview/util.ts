@@ -9,11 +9,22 @@ import {StatusCodeError} from "src/shared/model/error";
 import {asyncDelay, curryFunctionMembers} from "src/shared/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
 
-const ipcMainApiClient = IPC_MAIN_API.buildClient();
-const ipcMainApiClientMethods = Object.freeze({
-    dbPatch: ipcMainApiClient("dbPatch"),
-    readConfig: ipcMainApiClient("readConfig"),
-});
+export const resolveIpcMainApi: () => Promise<ReturnType<typeof IPC_MAIN_API.buildClient>> = (() => {
+    let ipcMainApiClient: ReturnType<typeof IPC_MAIN_API.buildClient> | undefined;
+
+    return async () => {
+        if (ipcMainApiClient) {
+            return ipcMainApiClient;
+        }
+
+        const {timeouts: {defaultApiCall: timeoutMs}}
+            = await IPC_MAIN_API.buildClient({options: {timeoutMs: 3000}})("readConfig")().toPromise();
+
+        ipcMainApiClient = IPC_MAIN_API.buildClient({options: {timeoutMs}});
+
+        return ipcMainApiClient;
+    };
+})();
 
 export const resolveDomElements = <E extends Element,
     Q extends Readonly<Record<string, () => E>>,
@@ -25,8 +36,9 @@ export const resolveDomElements = <E extends Element,
     let configTimeout: number | undefined;
 
     try {
-        const config = await ipcMainApiClientMethods.readConfig().toPromise();
-        configTimeout = config.timeouts.domElementsResolving;
+        const api = await resolveIpcMainApi();
+        const {timeouts} = await api("readConfig")().toPromise();
+        configTimeout = timeouts.domElementsResolving;
     } catch (error) {
         return reject(error);
     }
@@ -186,7 +198,7 @@ export async function persistDatabasePatch(
 ): Promise<null> {
     logger.info("persist() start");
 
-    await ipcMainApiClientMethods.dbPatch({
+    (await resolveIpcMainApi())("dbPatch")({
         type: data.type,
         login: data.login,
         metadata: data.metadata,

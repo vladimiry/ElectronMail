@@ -8,7 +8,6 @@ import * as DatabaseModel from "src/shared/model/database";
 import * as Rest from "./lib/rest";
 import {Api, resolveApi} from "./lib/api";
 import {DbPatch} from "src/shared/api/common";
-import {IPC_MAIN_API} from "src/shared/api/main";
 import {MemoryDbAccount} from "src/shared/model/database";
 import {
     NOTIFICATION_LOGGED_IN_POLLING_INTERVAL,
@@ -29,6 +28,7 @@ import {
     getLocationHref,
     persistDatabasePatch,
     resolveDomElements,
+    resolveIpcMainApi,
     submitTotpToken,
 } from "src/electron-preload/webview/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
@@ -85,7 +85,6 @@ const ajaxSendNotification$ = new Observable<XMLHttpRequest>((subscriber) => {
         return original.apply(this, arguments as any);
     })();
 });
-const ipcMainApiClient = IPC_MAIN_API.buildClient();
 
 const endpoints: ProtonmailApi = {
     ping: () => of(null),
@@ -458,7 +457,7 @@ async function bootstrapDbPatch(
     logger.verbose("start fetching messages");
     const remainingMails: DatabaseModel.Mail[] = await (async () => {
         const conversationsQuery = {Page: 0, PageSize: 150};
-        const {fetching: {messagesStorePortionSize = 550}} = await ipcMainApiClient("readConfig")().toPromise();
+        const {fetching: {messagesStorePortionSize = 550}} = await (await resolveIpcMainApi())("readConfig")().toPromise();
 
         logger.info(JSON.stringify({messagesStorePortionSize}));
 

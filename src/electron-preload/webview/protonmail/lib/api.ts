@@ -3,10 +3,10 @@ import rateLimiter from "rolling-rate-limiter";
 import {v4 as uuid} from "uuid";
 
 import * as Rest from "./rest";
-import {IPC_MAIN_API} from "src/shared/api/main";
 import {Unpacked} from "src/shared/types";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {asyncDelay, curryFunctionMembers} from "src/shared/util";
+import {resolveIpcMainApi} from "src/electron-preload/webview/util";
 
 // TODO consider executing direct $http calls
 // in order to not depend on Protonmail WebClient's AngularJS factories/services
@@ -53,7 +53,6 @@ export interface Api {
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[lib/api]");
 const resolveServiceLogger = curryFunctionMembers(logger, "resolveService()");
 const rateLimitedApiCallingQueue: PQueue<PQueue.DefaultAddOptions> = new PQueue({concurrency: 1});
-const ipcMainApiClient = IPC_MAIN_API.buildClient();
 const state: { api?: Promise<Api> } = {};
 
 let rateLimitedMethodsCallCount = 0;
@@ -68,7 +67,7 @@ export async function resolveApi(): Promise<Api> {
 
     const rateLimiting = {
         rateLimiterTick: await (async () => {
-            const {fetching: {rateLimit: rateLimitConfig}} = await ipcMainApiClient("readConfig")().toPromise();
+            const {fetching: {rateLimit: rateLimitConfig}} = await (await resolveIpcMainApi())("readConfig")().toPromise();
             logger.debug(JSON.stringify({rateLimitConfig}));
             const limiter = rateLimiter({
                 interval: rateLimitConfig.intervalMs,

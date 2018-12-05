@@ -48,10 +48,6 @@ before_script:
     /usr/bin/python -c "import gnomekeyring;gnomekeyring.create_sync('login', '');";
   fi
 script: ./scripts/travis.sh
-after_failure:
-- $(git ls-files -o | grep -Fv -e node_modules -e app -e dist >> failure-files.list)
-- tar cvzf $FAILURE_ARCHIVE_FILE $(cat failure-files.list)
-- aws --endpoint=$AWS_ENDPOINT_URL s3 cp $FAILURE_ARCHIVE_FILE s3://$AWS_BUCKET
 notifications:
   email:
     on_success: never

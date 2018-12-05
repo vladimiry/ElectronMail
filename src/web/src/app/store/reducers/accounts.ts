@@ -68,13 +68,13 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
 
             const {account} = pickAccountBundle(draftState.accounts, {login});
 
-            if (patch.notifications) {
+            if ("notifications" in patch) {
                 account.notifications = {...account.notifications, ...patch.notifications};
             }
-            if (patch.syncingActivated) {
+            if ("syncingActivated" in patch) {
                 account.syncingActivated = patch.syncingActivated;
             }
-            if (patch.loginFilledOnce) {
+            if ("loginFilledOnce" in patch) {
                 account.loginFilledOnce = patch.loginFilledOnce;
             }
         },

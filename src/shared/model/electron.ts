@@ -28,5 +28,5 @@ export interface ElectronContextLocations {
         browserWindowE2E: string;
         webView: Record<AccountType, string>;
     };
-    readonly webClients: Record<Extract<AccountType, "protonmail">, Array<{ entryUrl: string; entryApiUrl: string; }>>;
+    readonly webClients: Record<AccountType, Array<{ entryUrl: string; entryApiUrl: string; }>>;
 }

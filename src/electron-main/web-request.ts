@@ -1,75 +1,258 @@
 import {URL} from "url";
 
-import {BuildEnvironment} from "src/shared/model/common";
+import {AccountType} from "src/shared/model/account";
 import {Context} from "./model";
+import {ElectronContextLocations} from "src/shared/model/electron";
 import {getDefaultSession} from "./session";
 
-const headerNames = {
-    origin: "origin",
-    accessControlAllowOrigin: "access-control-allow-origin",
+interface Details {
+    id: number;
+    url: string;
+    method: string;
+    resourceType?: string;
+}
+
+type RequestDetails = Details & { requestHeaders: HeadersMap };
+
+type ResponseDetails = Details & { responseHeaders: HeadersMap<string[]> };
+
+interface HeadersMap<V extends string | string[] = string | string[]> {
+    [k: string]: V;
+}
+
+interface RequestProxy {
+    accountType: AccountType;
+    headers: {
+        origin: Exclude<ReturnType<typeof getHeader>, null>,
+        accessControlRequestHeaders: ReturnType<typeof getHeader>,
+        accessControlRequestMethod: ReturnType<typeof getHeader>,
+    };
+}
+
+const HEADERS = {
+    request: {
+        origin: "Origin",
+        accessControlRequestHeaders: "Access-Control-Request-Headers",
+        accessControlRequestMethod: "Access-Control-Request-Method",
+    },
+    response: {
+        accessControlAllowCredentials: "Access-Control-Allow-Credentials",
+        accessControlAllowHeaders: "Access-Control-Allow-Headers",
+        accessControlAllowMethods: "Access-Control-Allow-Methods",
+        accessControlAllowOrigin: "Access-Control-Allow-Origin",
+        accessControlExposeHeaders: "Access-Control-Expose-Headers",
+    },
 };
-const originsToRestoreMap = new Map<number, string>();
+const PROXIES = new Map<number, RequestProxy>();
 
-export function initWebRequestListeners(ctx: Context) {
-    if ((process.env.NODE_ENV as BuildEnvironment) !== "development") {
-        return;
-    }
+export function initWebRequestListeners({locations}: Context) {
+    const resolveProxy: (details: RequestDetails) => RequestProxy | null = (() => {
+        const origins: { [k in AccountType]: string[] } = {
+            ...resolveLocalWebClientOrigins("protonmail", locations),
+            ...resolveLocalWebClientOrigins("tutanota", locations),
+        };
 
-    const isLocalWebClientOrigin: (origin: string) => boolean = (() => {
-        const localOrigins = Object
-            .values(ctx.locations.webClients.protonmail)
-            .map(({entryUrl}) => buildOrigin(new URL(entryUrl)));
-        return (origin: string) => localOrigins.some((localOrigin) => origin === localOrigin);
+        return (details: RequestDetails) => {
+            const proxies: { [k in AccountType]: ReturnType<typeof resolveRequestProxy> } = {
+                protonmail: resolveRequestProxy("protonmail", details, origins),
+                tutanota: resolveRequestProxy("tutanota", details, origins),
+            };
+            const [accountType]: Array<AccountType | undefined> = Object.keys(proxies) as any;
+
+            return accountType
+                ? proxies[accountType]
+                : null;
+        };
     })();
 
-    // TODO (TS / electron.d.ts) "webRequest.onBeforeSendHeaders" signature is not properly declared
     getDefaultSession().webRequest.onBeforeSendHeaders(
         {urls: []},
+        // TODO TS/electron.d.ts: "webRequest.onBeforeSendHeaders" listener signature is not declared properly
         (
-            details: Details & { requestHeaders: HeadersMap; },
-            callback: (arg: { cancel: boolean; requestHeaders: typeof details.requestHeaders; }) => void,
+            requestDetails: RequestDetails,
+            callback: (arg: { cancel: boolean; requestHeaders: typeof requestDetails.requestHeaders; }) => void,
         ) => {
-            const headers = details.requestHeaders;
-            const originHeader = getHeader(headers, headerNames.origin);
-            const origin = originHeader && buildOrigin(new URL(originHeader.value[0]));
+            const {requestHeaders} = requestDetails;
+            const requestProxy = resolveProxy(requestDetails);
 
-            if (
-                String(details.resourceType).toLowerCase() === "xhr" &&
-                origin &&
-                isLocalWebClientOrigin(origin)
-            ) {
-                const {name} = getHeader(headers, headerNames.origin) || {name: headerNames.origin};
-                headers[name] = buildOrigin(new URL(details.url));
-                originsToRestoreMap.set(details.id, origin);
+            if (requestProxy) {
+                const {name} = getHeader(requestHeaders, HEADERS.request.origin) || {name: HEADERS.request.origin};
+                requestHeaders[name] = buildOrigin(new URL(requestDetails.url));
+                PROXIES.set(requestDetails.id, requestProxy);
             }
 
-            callback({cancel: false, requestHeaders: details.requestHeaders});
+            callback({cancel: false, requestHeaders});
         },
     );
 
-    // TODO (TS / electron.d.ts) "webRequest.onHeadersReceived" signature is not properly declared
     getDefaultSession().webRequest.onHeadersReceived(
+        // TODO TS/electron.d.ts: "webRequest.onHeadersReceived" listener signature is not declared properly
         (
-            details: Details & { responseHeaders: HeadersMap; },
-            callback: (arg: { responseHeaders: typeof details.responseHeaders }) => void,
+            responseDetails: ResponseDetails,
+            callback: (arg: { responseHeaders: typeof responseDetails.responseHeaders }) => void,
         ) => {
-            const headers = details.responseHeaders;
-            const originToRestore = originsToRestoreMap.get(details.id);
+            const requestProxy = PROXIES.get(responseDetails.id);
+            const responseHeaders = requestProxy
+                ? responseHeadersPatchHandlers[requestProxy.accountType]({responseDetails, requestProxy})
+                : responseDetails.responseHeaders;
 
-            if (originToRestore) {
-                const {name} = getHeader(headers, headerNames.accessControlAllowOrigin) || {name: headerNames.accessControlAllowOrigin};
-                headers[name] = [originToRestore];
-                originsToRestoreMap.delete(details.id);
-            }
-
-            callback({responseHeaders: headers});
+            callback({responseHeaders});
         },
     );
 }
 
-function getHeader(headers: HeadersMap, headerName: string): { name: string, value: string[]; } | null {
+function resolveLocalWebClientOrigins<T extends AccountType>(
+    accountType: T,
+    {webClients}: ElectronContextLocations,
+): { [k in T]: string[]; } {
+    return {
+        [accountType]: Object
+            .values(webClients[accountType])
+            .map(({entryUrl}) => buildOrigin(new URL(entryUrl))),
+    };
+}
+
+function resolveRequestProxy<T extends AccountType>(
+    accountType: T,
+    {requestHeaders, resourceType}: RequestDetails,
+    origins: Record<AccountType, string[]>,
+): RequestProxy | null {
+    const originHeader = (
+        String(resourceType).toUpperCase() === "XHR" &&
+        getHeader(requestHeaders, HEADERS.request.origin)
+    );
+    const originValue = (
+        originHeader &&
+        buildOrigin(new URL(originHeader.values[0]))
+    );
+
+    if (!originValue) {
+        return null;
+    }
+
+    return origins[accountType].some((localOrigin) => originValue === localOrigin)
+        ? {
+            accountType,
+            headers: {
+                origin: (() => {
+                    const result = getHeader(requestHeaders, HEADERS.request.origin);
+                    if (!result) {
+                        throw new Error(``);
+                    }
+                    return result;
+                })(),
+                accessControlRequestHeaders: getHeader(requestHeaders, HEADERS.request.accessControlRequestHeaders),
+                accessControlRequestMethod: getHeader(requestHeaders, HEADERS.request.accessControlRequestMethod),
+            },
+        }
+        : null;
+}
+
+// TODO consider doing initial preflight/OPTIONS call to https://mail.protonmail.com
+// and then pick all the "Access-Control-*" header names as a template instead of hardcoding the default headers
+// since over time the server may start giving other headers
+const responseHeadersPatchHandlers: {
+    [k in AccountType]: (
+        arg: { requestProxy: RequestProxy, responseDetails: ResponseDetails; },
+    ) => ResponseDetails["responseHeaders"];
+} = {
+    protonmail: ({requestProxy, responseDetails}) => {
+        const {responseHeaders} = responseDetails;
+
+        patchResponseHeader(
+            responseHeaders,
+            {
+                name: HEADERS.response.accessControlAllowCredentials,
+                values: ["true"],
+            },
+            {extend: false},
+        );
+        patchResponseHeader(
+            responseHeaders,
+            {
+                name: HEADERS.response.accessControlAllowHeaders,
+                values: [
+                    ...(requestProxy.headers.accessControlRequestHeaders || {values: []}).values,
+                    "authorization",
+                    "cache-control",
+                    "content-type",
+                    "Date",
+                    "x-eo-uid",
+                    "x-pm-apiversion",
+                    "x-pm-appversion",
+                    "x-pm-session",
+                    "x-pm-uid",
+                ],
+            },
+        );
+        patchResponseHeader(
+            responseHeaders,
+            {
+                name: HEADERS.response.accessControlAllowMethods,
+                values: [
+                    ...(requestProxy.headers.accessControlRequestMethod || {
+                        values: [
+                            "HEAD",
+                            "OPTIONS",
+                            "POST",
+                            "PUT",
+                            "DELETE",
+                            "GET",
+                        ],
+                    }).values,
+                ],
+            },
+        );
+        patchResponseHeader(
+            responseHeaders,
+            {
+                name: HEADERS.response.accessControlAllowOrigin,
+                values: requestProxy.headers.origin.values,
+            },
+            {replace: true},
+        );
+        patchResponseHeader(
+            responseHeaders,
+            {
+                name: HEADERS.response.accessControlExposeHeaders,
+                values: ["Date"],
+            },
+        );
+
+        return responseHeaders;
+    },
+    tutanota: ({responseDetails}) => {
+        return responseDetails.responseHeaders;
+    },
+};
+
+function patchResponseHeader(
+    headers: ResponseDetails["responseHeaders"],
+    patch: ReturnType<typeof getHeader>,
+    {replace, extend = true, _default = true}: { replace?: boolean; extend?: boolean; _default?: boolean } = {},
+): void {
+    if (!patch) {
+        return;
+    }
+
+    const header: Exclude<ReturnType<typeof getHeader>, null> =
+        getHeader(headers, patch.name) || {name: patch.name, values: []};
+
+    if (_default && !header.values.length) {
+        headers[header.name] = patch.values;
+        return;
+    }
+
+    headers[header.name] = replace
+        ? patch.values
+        : extend
+            ? [...header.values, ...patch.values]
+            : header.values;
+}
+
+function getHeader(headers: HeadersMap, nameCriteria: string): { name: string, values: string[]; } | null {
     const names = Object.keys(headers);
-    const resolvedIndex = names.findIndex((name) => name.toLowerCase() === headerName);
+    const resolvedIndex = names.findIndex((name) => name.toLowerCase() === nameCriteria.toLowerCase());
     const resolvedName = resolvedIndex !== -1
         ? names[resolvedIndex]
         : null;
@@ -82,7 +265,7 @@ function getHeader(headers: HeadersMap, headerName: string): { name: string, val
 
     return {
         name: resolvedName,
-        value: Array.isArray(value)
+        values: Array.isArray(value)
             ? value
             : [value],
     };
@@ -90,15 +273,4 @@ function getHeader(headers: HeadersMap, headerName: string): { name: string, val
 
 function buildOrigin(url: URL): string {
     return `${url.protocol}//${url.host}${url.port ? ":" + url.port : ""}`;
-}
-
-interface Details {
-    id: number;
-    url: string;
-    method: string;
-    resourceType?: string;
-}
-
-interface HeadersMap {
-    [k: string]: string | string[];
 }

@@ -31,30 +31,46 @@ export const PROVIDER_REPO: Record<Extract<AccountType, "protonmail">, { repo: s
 export const LOCAL_WEBCLIENT_PROTOCOL_PREFIX = "webclient";
 export const LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN = `${LOCAL_WEBCLIENT_PROTOCOL_PREFIX}[\\d]+`;
 
-export const ACCOUNTS_CONFIG_ENTRY_URL_SEPARATOR = ":::";
-export const ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX = "local";
+export const ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX = "local:::";
 export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlItem[]>> = {
     protonmail: {
         entryUrl: [
+            {
+                value: "https://app.protonmail.ch",
+                title: "https://app.protonmail.ch",
+            },
+            {
+                value: "https://mail.protonmail.com",
+                title: "https://mail.protonmail.com",
+            },
             ...((process.env.NODE_ENV as BuildEnvironment) === "development" ? [
                 {
-                    value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}${ACCOUNTS_CONFIG_ENTRY_URL_SEPARATOR}https://mail.protonmail.com`,
+                    value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.protonmail.com`,
                     title: `https://mail.protonmail.com (Built-in WebClient v${PROVIDER_REPO.protonmail.version})`,
                 },
+            ] : []),
+            {
+                value: "https://beta.protonmail.com",
+                title: "https://beta.protonmail.com",
+            },
+            {
+                value: "https://protonirockerxow.onion",
+                title: "https://protonirockerxow.onion",
+            },
+            ...((process.env.NODE_ENV as BuildEnvironment) === "development" ? [
                 {
-                    value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}${ACCOUNTS_CONFIG_ENTRY_URL_SEPARATOR}https://protonirockerxow.onion`,
+                    value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://protonirockerxow.onion`,
                     title: `https://protonirockerxow.onion (Built-in WebClient v${PROVIDER_REPO.protonmail.version})`,
                 },
             ] : []),
-            {value: "https://app.protonmail.ch", title: "https://app.protonmail.ch"},
-            {value: "https://mail.protonmail.com", title: "https://mail.protonmail.com"},
-            {value: "https://beta.protonmail.com", title: "https://beta.protonmail.com (Beta)"},
-            {value: "https://protonirockerxow.onion", title: "https://protonirockerxow.onion (Tor)"},
         ],
     },
     tutanota: {
         entryUrl: [
-            {value: "https://mail.tutanota.com", title: "https://mail.tutanota.com"},
+            {
+                value: "https://mail.tutanota.com",
+                title: "https://mail.tutanota.com",
+            },
         ],
     },
 };

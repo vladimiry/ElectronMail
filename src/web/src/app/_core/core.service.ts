@@ -1,20 +1,16 @@
 import {Injectable} from "@angular/core";
 
-import {ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX, ACCOUNTS_CONFIG_ENTRY_URL_SEPARATOR} from "src/shared/constants";
+import {ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX} from "src/shared/constants";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {WebAccount} from "src/web/src/app/model";
 
 @Injectable()
 export class CoreService {
-    private localEntryUrlPrefix = `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}${ACCOUNTS_CONFIG_ENTRY_URL_SEPARATOR}`;
-
-    constructor() {}
-
     parseEntryUrl(
         config: WebAccount["accountConfig"],
         {webClients}: ElectronContextLocations,
     ): { entryUrl: string; entryApiUrl: string; } {
-        if (!config.entryUrl.startsWith(this.localEntryUrlPrefix)) {
+        if (!config.entryUrl.startsWith(ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX)) {
             return {
                 entryUrl: config.entryUrl,
                 entryApiUrl: config.entryUrl,
@@ -25,7 +21,7 @@ export class CoreService {
             throw new Error(`Can't parse entry url for the unsupported account type: "${config.type}"`);
         }
 
-        const entryApiUrl = config.entryUrl.split(ACCOUNTS_CONFIG_ENTRY_URL_SEPARATOR).pop();
+        const entryApiUrl = config.entryUrl.split(ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX).pop();
         if (!entryApiUrl || !entryApiUrl.startsWith("https://")) {
             throw new Error(`Invalid "entryApiUrl" value: "${entryApiUrl}"`);
         }

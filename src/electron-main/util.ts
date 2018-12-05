@@ -97,6 +97,7 @@ function initLocations(
 
             return items.map(({result}) => result);
         })(),
+        tutanota: [],
     };
 
     return {

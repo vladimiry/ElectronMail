@@ -20,6 +20,8 @@ export const RUNTIME_ENV_E2E = `EMAIL_SECURELY_APP_E2E`;
 
 export const ONE_SECOND_MS = 1000;
 
+export const DEFAULT_API_CALL_TIMEOUT = ONE_SECOND_MS * 25;
+
 export const PROVIDER_REPO: Record<Extract<AccountType, "protonmail">, { repo: string, version: string; commit: string; }> = {
     protonmail: {
         repo: "https://github.com/ProtonMail/WebClient.git",

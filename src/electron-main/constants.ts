@@ -5,7 +5,7 @@ import {Model as StoreModel} from "fs-json-store";
 import {randomBytes} from "crypto";
 
 import {Config, ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS, Settings} from "src/shared/model/options";
-import {ONE_SECOND_MS} from "src/shared/constants";
+import {DEFAULT_API_CALL_TIMEOUT, ONE_SECOND_MS} from "src/shared/constants";
 
 export const INITIAL_STORES: Readonly<{
     config: () => Config;
@@ -38,6 +38,7 @@ export const INITIAL_STORES: Readonly<{
                 fetching: ONE_SECOND_MS * 60 * 60, // 60 minutes
                 webViewApiPing: ONE_SECOND_MS * 15,
                 domElementsResolving: ONE_SECOND_MS * 20,
+                defaultApiCall: DEFAULT_API_CALL_TIMEOUT,
             },
         };
     },

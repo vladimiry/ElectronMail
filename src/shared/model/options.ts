@@ -30,6 +30,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
         fetching: number;
         webViewApiPing: number;
         domElementsResolving: number;
+        defaultApiCall: number;
     };
 }
 

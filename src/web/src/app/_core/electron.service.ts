@@ -1,12 +1,13 @@
-import {Injectable} from "@angular/core";
+import {Injectable, OnDestroy} from "@angular/core";
 import {Model} from "pubsub-to-stream-api";
 import {Store, select} from "@ngrx/store";
-import {concat, concatMap, delay, retryWhen, switchMap, take, takeWhile} from "rxjs/operators";
+import {Subscription} from "rxjs/Subscription";
+import {concat, concatMap, delay, mergeMap, retryWhen, switchMap, take, takeWhile} from "rxjs/operators";
 import {from, of, throwError} from "rxjs";
 
 import {AccountType} from "src/shared/model/account";
+import {DEFAULT_API_CALL_TIMEOUT, ONE_SECOND_MS} from "src/shared/constants";
 import {IPC_MAIN_API} from "src/shared/api/main";
-import {ONE_SECOND_MS} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {PROTONMAIL_IPC_WEBVIEW_API} from "src/shared/api/webview/protonmail";
 import {State} from "src/web/src/app/store/reducers/options";
@@ -16,17 +17,42 @@ import {getZoneNameBoundWebLogger} from "src/web/src/util";
 
 type CallOptions = Partial<Pick<Model.CallOptions, "timeoutMs" | "finishPromise" | "serialization">>;
 
-const logger = getZoneNameBoundWebLogger("[accounts.effects]");
+const logger = getZoneNameBoundWebLogger("[_core/electron.service]");
 
 @Injectable()
-export class ElectronService {
-    readonly defaultCommonApiCallTimeoutMs = ONE_SECOND_MS * 15;
-    readonly webViewApiPingIntervalMs = ONE_SECOND_MS / 2;
-    readonly timeouts$ = this.store.pipe(select(OptionsSelectors.CONFIG.timeouts));
+export class ElectronService implements OnDestroy {
+    private defaultApiCallTimeoutMs = DEFAULT_API_CALL_TIMEOUT;
+    private readonly webViewApiPingIntervalMs = ONE_SECOND_MS / 2;
+    private readonly timeouts$ = this.store.pipe(select(OptionsSelectors.CONFIG.timeouts));
+    private readonly subscription = new Subscription();
 
     constructor(
         private store: Store<State>,
-    ) {}
+    ) {
+        this.subscription.add(
+            this.store
+                .pipe(
+                    select(OptionsSelectors.FEATURED.config),
+                    mergeMap((config) => {
+                        const defined = (
+                            config &&
+                            typeof config.timeouts === "object" &&
+                            typeof config.timeouts.defaultApiCall === "number"
+                        );
+                        return defined
+                            ? [config.timeouts.defaultApiCall]
+                            : [];
+                    }),
+                )
+                .subscribe((value) => {
+                    if (this.defaultApiCallTimeoutMs === value) {
+                        return;
+                    }
+                    logger.info(`changing "defaultApiCallTimeoutMs" from ${this.defaultApiCallTimeoutMs} to ${value}`);
+                    this.defaultApiCallTimeoutMs = value;
+                }),
+        );
+    }
 
     webViewClient<T extends AccountType>(webView: Electron.WebviewTag, type: T, options?: CallOptions) {
         // TODO TS: get rid of "as any"
@@ -62,9 +88,13 @@ export class ElectronService {
         });
     }
 
+    ngOnDestroy(): void {
+        this.subscription.unsubscribe();
+    }
+
     private buildApiCallOptions(options: CallOptions = {}): Model.CallOptions {
         return Object.assign(
-            {timeoutMs: this.defaultCommonApiCallTimeoutMs, notificationWrapper: Zone.current.run.bind(Zone.current)},
+            {timeoutMs: this.defaultApiCallTimeoutMs, notificationWrapper: Zone.current.run.bind(Zone.current)},
             options,
         );
     }

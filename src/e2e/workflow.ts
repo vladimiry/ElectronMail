@@ -43,6 +43,7 @@ const CONF = {
         elementTouched: ONE_SECOND_MS * 0.3,
         encryption: ONE_SECOND_MS * (CI ? 5 : 1.5),
         transition: ONE_SECOND_MS * (CI ? 1 : 0.3),
+        logout: ONE_SECOND_MS * (CI ? 9 : 3),
     },
 };
 const GLOBAL_STATE = {
@@ -316,7 +317,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
 
             await client.click(`.controls .dropdown-toggle`);
             await client.click(`#logoutMenuItem`);
-            await client.pause(ONE_SECOND_MS * 2);
+            await client.pause(CONF.timeouts.logout);
 
             t.is(
                 (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/login)",

@@ -58,6 +58,7 @@ export class AccountsEffects {
                 const {webView, finishPromise} = payload;
                 const {type, login} = payload.account.accountConfig;
                 const dispose$ = from(finishPromise).pipe(tap(() => logger.info("dispose")));
+                const resetNotificationsState$ = of(this.generateNotificationsStateResetAction(login));
 
                 if (!electronLocations) {
                     throw new Error(`Undefined electron context locations`);
@@ -69,6 +70,9 @@ export class AccountsEffects {
 
                 return merge(
                     merged$,
+                    // app set's app notification channel on webview.dom-ready event
+                    // which means user is not logged-in yet at this moment, so resetting the state
+                    resetNotificationsState$,
                     this.api.webViewClient(webView, type, {finishPromise}).pipe(
                         mergeMap((webViewClient) => webViewClient("notification")({...parsedEntryUrl, zoneName: logger.zoneName()})),
                         withLatestFrom(this.store.pipe(select(AccountsSelectors.ACCOUNTS.pickAccount({login})))),
@@ -185,7 +189,7 @@ export class AccountsEffects {
             const {accountConfig, notifications} = account;
             const {type, login, credentials} = accountConfig;
             const pageType = notifications.pageType.type;
-            const unreadReset = of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread: 0}}}));
+            const resetNotificationsState$ = of(this.generateNotificationsStateResetAction(login));
             const zoneName = logger.zoneName();
 
             // TODO make sure passwords submitting looping doesn't happen, until then a workaround is enabled below
@@ -216,7 +220,7 @@ export class AccountsEffects {
                         logger.info("login");
                         return merge(
                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: true}})),
-                            unreadReset,
+                            resetNotificationsState$,
                             this.api.webViewClient(webView, type).pipe(
                                 mergeMap((webViewClient) => webViewClient("login")({login, password, zoneName})),
                                 mergeMap(() => EMPTY),
@@ -243,7 +247,7 @@ export class AccountsEffects {
                         logger.info("login2fa");
                         return merge(
                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {twoFactorCode: true}})),
-                            unreadReset,
+                            resetNotificationsState$,
                             this.api.webViewClient(webView, type).pipe(
                                 mergeMap((webViewClient) => webViewClient("login2fa")({secret, zoneName})),
                                 mergeMap(() => EMPTY),
@@ -270,7 +274,7 @@ export class AccountsEffects {
 
                         return merge(
                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: true}})),
-                            unreadReset,
+                            resetNotificationsState$,
                             this.api.webViewClient(webView, type).pipe(
                                 mergeMap((webViewClient) => webViewClient("unlock")({mailPassword, zoneName})),
                                 mergeMap(() => EMPTY),
@@ -295,4 +299,8 @@ export class AccountsEffects {
         private actions$: Actions<{ type: string; payload: any }>,
         private store: Store<State>,
     ) {}
+
+    private generateNotificationsStateResetAction(login: string) {
+        return ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread: 0, loggedIn: false}}});
+    }
 }

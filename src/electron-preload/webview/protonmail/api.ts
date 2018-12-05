@@ -4,9 +4,11 @@ import {buffer, catchError, concatMap, debounceTime, distinctUntilChanged, filte
 import {omit} from "ramda";
 
 import * as Database from "./lib/database";
+import * as DatabaseModel from "src/shared/model/database";
 import * as Rest from "./lib/rest";
 import {Api, resolveApi} from "./lib/api";
 import {DbPatch} from "src/shared/api/common";
+import {IPC_MAIN_API} from "src/shared/api/main";
 import {MemoryDbAccount} from "src/shared/model/database";
 import {
     NOTIFICATION_LOGGED_IN_POLLING_INTERVAL,
@@ -22,6 +24,7 @@ import {asyncDelay, curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "sr
 import {buildContact, buildFolder, buildMail} from "./lib/database";
 import {
     buildDbPatchRetryPipeline,
+    buildEmptyDbPatch,
     fillInputValue,
     getLocationHref,
     persistDatabasePatch,
@@ -82,6 +85,7 @@ const ajaxSendNotification$ = new Observable<XMLHttpRequest>((subscriber) => {
         return original.apply(this, arguments as any);
     })();
 });
+const ipcMainApiClient = IPC_MAIN_API.buildClient();
 
 const endpoints: ProtonmailApi = {
     ping: () => of(null),
@@ -101,14 +105,21 @@ const endpoints: ProtonmailApi = {
         }
 
         if (!input.metadata || !input.metadata.latestEventId) {
-            return await persistDatabasePatch(
-                {
-                    ...await bootstrapDbPatch(logger),
-                    type: input.type,
-                    login: input.login,
-                },
+            await bootstrapDbPatch(
                 logger,
+                async (dbPatch) => {
+                    await persistDatabasePatch(
+                        {
+                            ...dbPatch,
+                            type: input.type,
+                            login: input.login,
+                        },
+                        logger,
+                    );
+                },
             );
+
+            return null;
         }
 
         const preFetch = await (async (
@@ -141,7 +152,7 @@ const endpoints: ProtonmailApi = {
         const metadata: BuildDbPatchReturn["metadata"] = {latestEventId: preFetch.latestEventId};
         const patch = await buildDbPatch({events: preFetch.missedEvents, parentLogger: logger});
 
-        return await persistDatabasePatch(
+        await persistDatabasePatch(
             {
                 patch,
                 metadata,
@@ -150,6 +161,8 @@ const endpoints: ProtonmailApi = {
             },
             logger,
         );
+
+        return null;
     })()).pipe(
         buildDbPatchRetryPipeline<Unpacked<ReturnType<ProtonmailApi["buildDbPatch"]>>>(preprocessError, _logger),
         catchError((error) => {
@@ -399,7 +412,10 @@ function isLoggedIn(): boolean {
     return authentication && authentication.isLoggedIn();
 }
 
-async function bootstrapDbPatch(parentLogger: ReturnType<typeof buildLoggerBundle>): Promise<BuildDbPatchReturn> {
+async function bootstrapDbPatch(
+    parentLogger: ReturnType<typeof buildLoggerBundle>,
+    triggerStoreCallback: (path: BuildDbPatchReturn) => Promise<void>,
+): Promise<void> {
     const logger = curryFunctionMembers(parentLogger, "bootstrapDbPatch()");
     const api = await resolveApi();
     // WARN: "getLatestID" should be called on top of the function, ie before any other fetching
@@ -409,6 +425,9 @@ async function bootstrapDbPatch(parentLogger: ReturnType<typeof buildLoggerBundl
     if (!latestEventId) {
         throw new Error(`"getLatestID" call returned empty value`);
     }
+
+    // WARN: "labels" need to be stored first of all to allow "database expolrer UI" show the intermediate data
+    // so we include "labels/contacts" to the initial database patch
 
     logger.verbose("start fetching contacts");
     const contacts = await (async () => {
@@ -425,80 +444,96 @@ async function bootstrapDbPatch(parentLogger: ReturnType<typeof buildLoggerBundl
     const labels = await api.label.query({Type: Rest.Model.LABEL_TYPE.MESSAGE}); // fetching all the entities;
     logger.info(`fetched ${labels.length} labels`);
 
+    logger.verbose(`construct initial database patch`);
+    const initialPatch = buildEmptyDbPatch();
+    initialPatch.folders.upsert = labels.map(buildFolder);
+    initialPatch.contacts.upsert = contacts.map(buildContact);
+
+    logger.verbose(`trigger initial storing`);
+    await triggerStoreCallback({
+        patch: initialPatch,
+        metadata: {latestEventId},
+    });
+
     logger.verbose("start fetching messages");
-    const messages = await (async (query = {Page: 0, PageSize: 150}) => {
-        type Response = Unpacked<ReturnType<typeof api.conversation.query>>;
-        const conversations: Response["data"]["Conversations"] = [];
-        let response: Response | undefined;
+    const remainingMails: DatabaseModel.Mail[] = await (async () => {
+        const conversationsQuery = {Page: 0, PageSize: 150};
+        const {fetching: {messagesStorePortionSize = 550}} = await ipcMainApiClient("readConfig")().toPromise();
+
+        logger.info(JSON.stringify({messagesStorePortionSize}));
+
+        let conversationsFetchResponse: Unpacked<ReturnType<typeof api.conversation.query>> | undefined;
+        let mailsPortion: DatabaseModel.Mail[] = [];
+        let conversationsFetched = 0;
+        let mailsFetched = 0;
 
         logger.verbose("start fetching conversations");
-        while (!response || response.data.Conversations.length) { // fetch all the entities, ie until the end
-            response = await api.conversation.query(query);
-            conversations.push(...response.data.Conversations);
-            logger.verbose(`conversations fetch progress: ${conversations.length}`);
-            query.Page++;
-        }
-        logger.info(`fetched ${conversations.length} conversations`);
+        while (!conversationsFetchResponse || conversationsFetchResponse.data.Conversations.length) {
+            conversationsFetchResponse = await api.conversation.query(conversationsQuery);
+            const conversations = conversationsFetchResponse.data.Conversations;
 
-        logger.verbose("start fetching mails");
-        const mails: Rest.Model.Message[] = [];
-        for (let conversationIndex = 0; conversationIndex < conversations.length; conversationIndex++) {
-            logger.verbose(`processing conversation with index: ${conversationIndex} of ${conversations.length}`);
-            const conversation = conversations[conversationIndex];
-            const fetched = await api.conversation.get(conversation.ID);
-            mails.push(...fetched.data.Messages);
-            logger.verbose(`mails fetch progress: ${mails.length}`);
-        }
-        logger.info(`fetched ${mails.length} mails`);
+            conversationsFetched += conversations.length;
+            logger.verbose(`conversations fetch progress: ${conversationsFetched}`);
 
-        logger.verbose("start fetching missed mails bodies");
-        for (let mailIndex = 0; mailIndex < mails.length; mailIndex++) {
-            const mail = mails[mailIndex];
-            if (mail.Body) {
-                logger.verbose(`skip mail with index: ${mailIndex} of ${mails.length}`);
-                continue;
-            }
-            logger.verbose(`fetch mail with index: ${mailIndex} of ${mails.length}`);
-            const fetched = await api.message.get(mail.ID);
-            mails[mailIndex] = fetched.data.Message;
-        }
-        logger.info("fetched missed mails bodies");
+            for (const conversation of conversations) {
+                const dbMails = await buildConversationDbMails(conversation, api);
 
-        return mails;
-    })();
-    logger.info(`fetched ${messages.length} messages`);
+                mailsFetched += dbMails.length;
+                logger.verbose(`mails fetch progress: ${mailsFetched}`);
 
-    logger.verbose("start preparing database patch");
-    const patch: DbPatch = {
-        conversationEntries: {remove: [], upsert: []},
-        mails: {
-            remove: [],
-            upsert: await (async () => {
-                logger.verbose("start preparing mails database items");
-                const result: DbPatch["mails"]["upsert"] = [];
-                for (const message of messages) {
-                    result.push(await buildMail(message, api));
-                    logger.verbose(`mails database items preparing progress: ${result.length} of ${messages.length}`);
+                mailsPortion.push(...dbMails);
+
+                const flushThePortion = mailsPortion.length >= messagesStorePortionSize;
+
+                if (!flushThePortion) {
+                    continue;
                 }
-                logger.info(`mails database items prepared`);
-                return result;
-            })(),
-        },
-        folders: {
-            remove: [],
-            upsert: labels.map(buildFolder),
-        },
-        contacts: {
-            remove: [],
-            upsert: contacts.map(buildContact),
-        },
-    };
-    logger.info("database patch prepared");
 
-    return {
-        patch,
+                const mailsPortionDbPatch = buildEmptyDbPatch();
+
+                mailsPortionDbPatch.mails.upsert = mailsPortion;
+                mailsPortion = [];
+
+                logger.verbose(`trigger intermediate ${mailsPortionDbPatch.mails.upsert.length} mails storing`);
+                await triggerStoreCallback({
+                    patch: mailsPortionDbPatch,
+                    // WARN: don't persist the "latestEventId" value yet as this is intermediate storing
+                    metadata: {},
+                });
+            }
+
+            conversationsQuery.Page++;
+        }
+        logger.info(`fetched ${conversationsFetched} conversations`);
+        logger.info(`fetched ${mailsFetched} messages`);
+
+        return mailsPortion;
+    })();
+
+    logger.verbose(`trigger final storing`);
+    const finalPatch = buildEmptyDbPatch();
+    finalPatch.mails.upsert = remainingMails;
+    await triggerStoreCallback({
+        patch: finalPatch,
         metadata: {latestEventId},
-    };
+    });
+}
+
+async function buildConversationDbMails(briefConversation: Rest.Model.Conversation, api: Api): Promise<DatabaseModel.Mail[]> {
+    const result: DatabaseModel.Mail[] = [];
+    const conversationFetchResponse = await api.conversation.get(briefConversation.ID);
+    const conversationMessages = conversationFetchResponse.data.Messages;
+
+    for (const mail of conversationMessages) {
+        if (mail.Body) {
+            result.push(await buildMail(mail, api));
+            continue;
+        }
+        const mailFetchResponse = await api.message.get(mail.ID);
+        result.push(await buildMail(mailFetchResponse.data.Message, api));
+    }
+
+    return result;
 }
 
 async function buildDbPatch(

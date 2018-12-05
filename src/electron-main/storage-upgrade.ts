@@ -17,11 +17,15 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         }
     },
     "2.0.0-beta.7": (config) => {
-        if (typeof config.fetchingRateLimiting === "undefined") {
-            config.fetchingRateLimiting = INITIAL_STORES.config().fetchingRateLimiting;
-        }
         if (typeof config.timeouts === "undefined") {
             config.timeouts = INITIAL_STORES.config().timeouts;
+        }
+        if (!isAppVersionLessThan("2.0.0-beta.9")) {
+            // "fetchingRateLimiting" for rename to "fetching.rateLimit" since "2.0.0-beta.9"
+            return;
+        }
+        if (typeof (config as any).fetchingRateLimiting === "undefined") {
+            (config as any).fetchingRateLimiting = INITIAL_STORES.config().fetching.rateLimit;
         }
     },
     "2.0.0-beta.8": (config) => {
@@ -33,6 +37,21 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         if (typeof config.timeouts.domElementsResolving === "undefined") {
             config.timeouts.domElementsResolving = INITIAL_STORES.config().timeouts.domElementsResolving;
         }
+        if (typeof config.timeouts.defaultApiCall === "undefined") {
+            config.timeouts.defaultApiCall = INITIAL_STORES.config().timeouts.defaultApiCall;
+        }
+        if (!config.fetching) {
+            config.fetching = {} as any;
+        }
+        if (!config.fetching.rateLimit) {
+            const fetchingRateLimiting = (config as any).fetchingRateLimiting;
+            config.fetching.rateLimit = typeof fetchingRateLimiting === "object"
+                ? fetchingRateLimiting
+                : INITIAL_STORES.config().fetching.rateLimit;
+        }
+        if (!config.fetching.messagesStorePortionSize) {
+            config.fetching.messagesStorePortionSize = INITIAL_STORES.config().fetching.messagesStorePortionSize;
+        }
     },
 };
 
@@ -43,6 +62,7 @@ const SETTINGS_UPGRADES: Record<string, (settings: Settings) => void> = {
                 account.credentials = {};
             }
             if (!isAppVersionLessThan("2.0.0")) {
+                // keepass support got dropped since "2.0.0*"
                 return;
             }
             if (!("credentialsKeePass" in account)) {

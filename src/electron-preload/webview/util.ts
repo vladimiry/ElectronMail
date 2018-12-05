@@ -2,6 +2,7 @@ import {concatMap, delay, retryWhen} from "rxjs/operators";
 import {of, throwError} from "rxjs";
 
 import {Arguments} from "src/shared/types";
+import {DbPatch} from "src/shared/api/common";
 import {Endpoints, IPC_MAIN_API} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {StatusCodeError} from "src/shared/model/error";
@@ -195,4 +196,13 @@ export async function persistDatabasePatch(
     logger.info("persist() end");
 
     return null;
+}
+
+export function buildEmptyDbPatch(): DbPatch {
+    return {
+        conversationEntries: {remove: [], upsert: []},
+        mails: {remove: [], upsert: []},
+        folders: {remove: [], upsert: []},
+        contacts: {remove: [], upsert: []},
+    };
 }

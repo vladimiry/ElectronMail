@@ -29,9 +29,13 @@ export const INITIAL_STORES: Readonly<{
             window: {
                 bounds: {width: 1024, height: 768},
             },
-            fetchingRateLimiting: { // 275 requests in 60 seconds
-                intervalMs: ONE_SECOND_MS * 60,
-                maxInInterval: 275,
+            fetching: {
+                rateLimit: {
+                    // 275 requests in 60 seconds
+                    intervalMs: ONE_SECOND_MS * 60,
+                    maxInInterval: 275,
+                },
+                messagesStorePortionSize: 500,
             },
             timeouts: {
                 // "fetchingRateLimiting" values need to be taking into the account defining the "fetching" timeout

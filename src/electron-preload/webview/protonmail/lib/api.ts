@@ -68,16 +68,11 @@ export async function resolveApi(): Promise<Api> {
 
     const rateLimiting = {
         rateLimiterTick: await (async () => {
-            const {fetchingRateLimiting: config} = await ipcMainApiClient("readConfig")().toPromise();
-            logger.debug(JSON.stringify({
-                fetchingRateLimiter_111: {
-                    interval: config.intervalMs,
-                    maxInInterval: config.maxInInterval,
-                },
-            }));
+            const {fetching: {rateLimit: rateLimitConfig}} = await ipcMainApiClient("readConfig")().toPromise();
+            logger.debug(JSON.stringify({rateLimitConfig}));
             const limiter = rateLimiter({
-                interval: config.intervalMs,
-                maxInInterval: config.maxInInterval,
+                interval: rateLimitConfig.intervalMs,
+                maxInInterval: rateLimitConfig.maxInInterval,
             });
             const key = `webview:protonmail-api:${uuid()}`;
             return () => limiter(key);

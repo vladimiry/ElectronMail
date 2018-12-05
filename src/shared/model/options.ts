@@ -22,9 +22,12 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
         maximized?: boolean;
         bounds: { x?: number; y?: number; width: number; height: number; };
     };
-    fetchingRateLimiting: {
-        intervalMs: number;
-        maxInInterval: number;
+    fetching: {
+        rateLimit: {
+            intervalMs: number;
+            maxInInterval: number;
+        },
+        messagesStorePortionSize: number;
     };
     timeouts: {
         fetching: number;

@@ -44,7 +44,7 @@ const CONF = {
         encryption: ONE_SECOND_MS * (CI ? 5 : 1.5),
         transition: ONE_SECOND_MS * (CI ? 1 : 0.3),
         logout: ONE_SECOND_MS * (CI ? 10 : 3),
-        loginFilledOnce: ONE_SECOND_MS * (CI ? 10 : 3),
+        loginFilledOnce: ONE_SECOND_MS * (CI ? 20 : 5),
     },
 };
 const GLOBAL_STATE = {

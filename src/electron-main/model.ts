@@ -32,7 +32,7 @@ export interface Context {
 }
 
 export interface UIContext {
-    browserWindow: Electron.BrowserWindow;
-    tray: Electron.Tray;
-    appMenu: Electron.Menu;
+    readonly browserWindow: Electron.BrowserWindow;
+    readonly tray: Electron.Tray;
+    readonly appMenu: Electron.Menu;
 }

@@ -1,7 +1,6 @@
 import {BrowserWindow, BrowserWindowConstructorOptions, app} from "electron";
 import {Store} from "fs-json-store";
 import {equals} from "ramda";
-import {platform} from "os";
 
 import {BuildEnvironment} from "src/shared/model/common";
 import {Context} from "./model";
@@ -50,11 +49,7 @@ export async function initBrowserWindow(ctx: Context, endpoints: Endpoints): Pro
     browserWindow.on("closed", () => {
         browserWindow.destroy();
         browserWindowState.forceClose = false;
-
-        // On macOS it is common for applications and their menu bar to stay active until the user quits explicitly with Cmd + Q
-        if (platform() !== "darwin") {
-            app.quit();
-        }
+        app.quit();
     });
     browserWindow.on("close", async (event) => {
         if (browserWindowState.forceClose) {

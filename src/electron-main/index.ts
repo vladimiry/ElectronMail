@@ -41,7 +41,7 @@ app.on("ready", async () => {
 
     initWebContentContextMenu();
 
-    const uiContext = ctx.uiContext = {
+    ctx.uiContext = {
         browserWindow: await initBrowserWindow(ctx, endpoints),
         tray: initTray(endpoints),
         appMenu: await initApplicationMenu(endpoints),
@@ -63,10 +63,6 @@ app.on("ready", async () => {
     });
 
     app.on("activate", async () => {
-        // on macOS it's common to re-create a window in the app when the dock icon is clicked and there are no other windows open
-        if (!uiContext.browserWindow || uiContext.browserWindow.isDestroyed()) {
-            uiContext.browserWindow = await initBrowserWindow(ctx, endpoints);
-        }
         await endpoints.activateBrowserWindow();
     });
 });

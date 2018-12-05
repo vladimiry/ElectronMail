@@ -1,7 +1,7 @@
 <div
     class="btn-group"
     *ngIf="state$ | async; let state"
-    [ngClass]="{'selected': state.selected}"
+    [ngClass]="{'selected': state.selected, 'login-filled-once': state.account.loginFilledOnce}"
 >
     <a href="mailto:{{ state.account.accountConfig.login }}" class="btn b-primary">
         <email-securely-app-type-symbol [type]="state.account.accountConfig.type"></email-securely-app-type-symbol>

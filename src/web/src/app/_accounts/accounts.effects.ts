@@ -233,7 +233,7 @@ export class AccountsEffects {
                     logger.info("fillLogin");
                     return this.api.webViewClient(webView, type).pipe(
                         mergeMap((webViewClient) => webViewClient("fillLogin")({login, zoneName})),
-                        mergeMap(() => EMPTY),
+                        mergeMap(() => of(ACCOUNTS_ACTIONS.Patch({login, patch: {loginFilledOnce: true}}))),
                         catchError((error) => of(CORE_ACTIONS.Fail(error))),
                     );
                 }

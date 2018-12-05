@@ -68,11 +68,14 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
 
             const {account} = pickAccountBundle(draftState.accounts, {login});
 
-            if ("notifications" in patch) {
+            if (patch.notifications) {
                 account.notifications = {...account.notifications, ...patch.notifications};
             }
-            if ("syncingActivated" in patch) {
+            if (patch.syncingActivated) {
                 account.syncingActivated = patch.syncingActivated;
+            }
+            if (patch.loginFilledOnce) {
+                account.loginFilledOnce = patch.loginFilledOnce;
             }
         },
         ToggleDatabaseView: ({login, forced}) => {

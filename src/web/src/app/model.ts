@@ -13,6 +13,7 @@ interface GenericWebAccount<C extends AccountConfig, NS extends Notifications> {
     notifications: NS;
     syncingActivated?: boolean;
     databaseView?: boolean;
+    loginFilledOnce?: boolean;
 }
 
 export type WebAccountProtonmail = GenericWebAccount<AccountConfigProtonmail, NotificationsProtonmail>;

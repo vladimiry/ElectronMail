@@ -15,9 +15,18 @@ test.serial("general actions: app start, master password setup, add accounts, lo
 
         // setup and logout
         await workflow.login({setup: true, savePassword: false});
-        await workflow.addAccount({type: "protonmail", entryUrlIndex: 0});
-        await workflow.addAccount({type: "protonmail", entryUrlIndex: 1});
-        await workflow.addAccount({type: "tutanota"});
+        await workflow.addAccount({
+            type: "protonmail",
+            entryUrlValue: "https://app.protonmail.ch",
+        });
+        await workflow.addAccount({
+            type: "protonmail",
+            entryUrlValue: "https://mail.protonmail.com",
+        });
+        await workflow.addAccount({
+            type: "tutanota",
+            entryUrlValue: "https://mail.tutanota.com",
+        });
         await workflow.logout();
 
         // login with password saving

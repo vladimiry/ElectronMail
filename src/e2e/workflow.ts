@@ -12,8 +12,8 @@ import ava, {ExecutionContext, TestInterface} from "ava";
 import {Application} from "spectron";
 import {promisify} from "util";
 
+import {ACCOUNTS_CONFIG, ONE_SECOND_MS, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
 import {AccountType} from "src/shared/model/account";
-import {ONE_SECOND_MS, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
 
 export interface TestContext {
     app: Application;
@@ -43,7 +43,8 @@ const CONF = {
         elementTouched: ONE_SECOND_MS * 0.3,
         encryption: ONE_SECOND_MS * (CI ? 5 : 1.5),
         transition: ONE_SECOND_MS * (CI ? 1 : 0.3),
-        logout: ONE_SECOND_MS * (CI ? 9 : 3),
+        logout: ONE_SECOND_MS * (CI ? 10 : 3),
+        loginFilledOnce: ONE_SECOND_MS * (CI ? 10 : 3),
     },
 };
 const GLOBAL_STATE = {
@@ -212,7 +213,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
         },
 
         async addAccount(
-            account: { type: AccountType, login?: string; password?: string; twoFactorCode?: string; entryUrlIndex?: number; },
+            account: { type: AccountType, login?: string; password?: string; twoFactorCode?: string; entryUrlValue?: string; },
         ) {
             const client = t.context.app.client;
             const login = account.login
@@ -233,7 +234,10 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             // required: entryUrl
             await client.click(`#accountEditFormEntryUrlField`);
             await client.pause(CONF.timeouts.elementTouched);
-            await client.click(`[entry-url-option-index="${account.entryUrlIndex || 0}"]`);
+            const entryUrlIndex = account.entryUrlValue
+                ? resolveEntryUrlIndexByValue(account.type, account.entryUrlValue)
+                : 0;
+            await client.click(`[entry-url-option-index="${entryUrlIndex}"]`);
             await client.pause(CONF.timeouts.elementTouched);
 
             // required: login
@@ -260,6 +264,16 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             );
             await workflow.closeSettingsModal();
             await client.pause(CONF.timeouts.encryption);
+
+            // make sure webview api got initialized (page loaded and login auto-filled)
+            const accountIndex = await workflow.accountsCount() - 1;
+            const selector = `${accountCssSelector(accountIndex)} > .login-filled-once`;
+            try {
+                await t.context.app.client.waitForVisible(selector, CONF.timeouts.loginFilledOnce);
+            } catch (error) {
+                t.fail(`Failed to resolve "${selector}" element within ${CONF.timeouts.loginFilledOnce}ms`);
+                throw error;
+            }
         },
 
         async selectAccount(zeroStartedAccountIndex = 0) {
@@ -397,4 +411,14 @@ export function accountBadgeCssSelector(zeroStartedAccountIndex = 0) {
 
 function mkOutputDirs(dirs: string[]) {
     dirs.forEach((dir) => fsExtra.ensureDirSync(dir));
+}
+
+function resolveEntryUrlIndexByValue(accountType: AccountType, valueCriteria: string): number {
+    const index = ACCOUNTS_CONFIG[accountType].entryUrl.findIndex(({value}) => value === valueCriteria);
+
+    if (index === -1) {
+        throw new Error(`Failed to resolve entry url index by "${valueCriteria}" value and "${accountType}" account type`);
+    }
+
+    return index;
 }

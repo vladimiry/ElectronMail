@@ -13,6 +13,7 @@ export const ACCOUNTS_ACTIONS = unionize({
             patch: Partial<{
                 notifications: Partial<WebAccount["notifications"]>,
                 syncingActivated: Partial<WebAccount["syncingActivated"]>,
+                loginFilledOnce: Partial<WebAccount["loginFilledOnce"]>,
             }>;
         }>(),
         ToggleDatabaseView: ofType<{ login: string; forced?: Pick<WebAccount, "databaseView"> }>(),

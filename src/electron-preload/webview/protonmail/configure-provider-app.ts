@@ -1,20 +1,26 @@
 import {LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN} from "src/shared/constants";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {curryFunctionMembers} from "src/shared/util";
+import {disableBrowserNotificationFeature, isBuiltInWebClient} from "src/electron-preload/webview/util";
 
-const logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, `[configure-angular-app]`);
+const logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, `[configure-angular-app]`);
 const targetModuleName = "proton";
 const imgSrcSanitizationWhitelistRe = new RegExp(`^\\s*((https?|ftp|file|blob|${LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN}):|data:image\\/)`);
-const localWebClientLocationProtocolRe = new RegExp(`^(${LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN}:)`);
 
-export function configureAngularApp() {
-    logger.info(`configureAngularApp()`, JSON.stringify({location: location.href}));
+export function configureProviderApp() {
+    logger.info(`configureProviderApp()`, JSON.stringify({location: location.href}));
 
-    if (!localWebClientLocationProtocolRe.exec(location.protocol)) {
-        logger.info("configureAngularApp()", `No need for configuring the app as online WebClient is used`);
+    disableBrowserNotificationFeature(logger);
+
+    if (!isBuiltInWebClient()) {
+        logger.info("configureProviderApp()", `No need for configuring the SPA as no built-in web client is used`);
         return;
     }
 
+    configureAngularApp();
+}
+
+function configureAngularApp() {
     const state: { value?: angular.IAngularStatic, initialized?: boolean } = {};
 
     Object.defineProperty(window, "angular", {

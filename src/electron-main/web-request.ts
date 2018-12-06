@@ -57,7 +57,9 @@ export function initWebRequestListeners({locations}: Context) {
                 protonmail: resolveRequestProxy("protonmail", details, origins),
                 tutanota: resolveRequestProxy("tutanota", details, origins),
             };
-            const [accountType]: Array<AccountType | undefined> = Object.keys(proxies) as any;
+            const [accountType] = Object.entries(proxies)
+                .filter((([key, value]) => Boolean(value)))
+                .map((([key]) => key as AccountType | undefined));
 
             return accountType
                 ? proxies[accountType]
@@ -77,7 +79,7 @@ export function initWebRequestListeners({locations}: Context) {
 
             if (requestProxy) {
                 const {name} = getHeader(requestHeaders, HEADERS.request.origin) || {name: HEADERS.request.origin};
-                requestHeaders[name] = buildOrigin(new URL(requestDetails.url));
+                requestHeaders[name] = resolveFakeOrigin(requestProxy.accountType, requestDetails);
                 PROXIES.set(requestDetails.id, requestProxy);
             }
 
@@ -99,6 +101,17 @@ export function initWebRequestListeners({locations}: Context) {
             callback({responseHeaders});
         },
     );
+}
+
+function resolveFakeOrigin(accountType: AccountType, requestDetails: RequestDetails): string {
+    if (accountType === "tutanota") {
+        // WARN: tutanota responds to the specific origins only
+        // it will not work for example with http://localhost:2015 origin, so they go with a whitelisting
+        return "http://localhost:9000";
+    }
+
+    // protonmail doesn't care much, so we generate the origin from request
+    return buildOrigin(new URL(requestDetails.url));
 }
 
 function resolveLocalWebClientOrigins<T extends AccountType>(
@@ -126,7 +139,7 @@ function resolveRequestProxy<T extends AccountType>(
         buildOrigin(new URL(originHeader.values[0]))
     );
 
-    if (!originValue) {
+    if (!originValue || !originHeader) {
         return null;
     }
 
@@ -134,13 +147,7 @@ function resolveRequestProxy<T extends AccountType>(
         ? {
             accountType,
             headers: {
-                origin: (() => {
-                    const result = getHeader(requestHeaders, HEADERS.request.origin);
-                    if (!result) {
-                        throw new Error(``);
-                    }
-                    return result;
-                })(),
+                origin: originHeader,
                 accessControlRequestHeaders: getHeader(requestHeaders, HEADERS.request.accessControlRequestHeaders),
                 accessControlRequestMethod: getHeader(requestHeaders, HEADERS.request.accessControlRequestMethod),
             },
@@ -148,61 +155,13 @@ function resolveRequestProxy<T extends AccountType>(
         : null;
 }
 
-// TODO consider doing initial preflight/OPTIONS call to https://mail.protonmail.com
+// TODO consider doing initial preflight/OPTIONS call to https://mail.protonmail.com / https://mail.tutanota.com
 // and then pick all the "Access-Control-*" header names as a template instead of hardcoding the default headers
 // since over time the server may start giving other headers
 const responseHeadersPatchHandlers: {
-    [k in AccountType]: (
-        arg: { requestProxy: RequestProxy, responseDetails: ResponseDetails; },
-    ) => ResponseDetails["responseHeaders"];
-} = {
-    protonmail: ({requestProxy, responseDetails}) => {
-        const {responseHeaders} = responseDetails;
-
-        patchResponseHeader(
-            responseHeaders,
-            {
-                name: HEADERS.response.accessControlAllowCredentials,
-                values: ["true"],
-            },
-            {extend: false},
-        );
-        patchResponseHeader(
-            responseHeaders,
-            {
-                name: HEADERS.response.accessControlAllowHeaders,
-                values: [
-                    ...(requestProxy.headers.accessControlRequestHeaders || {values: []}).values,
-                    "authorization",
-                    "cache-control",
-                    "content-type",
-                    "Date",
-                    "x-eo-uid",
-                    "x-pm-apiversion",
-                    "x-pm-appversion",
-                    "x-pm-session",
-                    "x-pm-uid",
-                ],
-            },
-        );
-        patchResponseHeader(
-            responseHeaders,
-            {
-                name: HEADERS.response.accessControlAllowMethods,
-                values: [
-                    ...(requestProxy.headers.accessControlRequestMethod || {
-                        values: [
-                            "HEAD",
-                            "OPTIONS",
-                            "POST",
-                            "PUT",
-                            "DELETE",
-                            "GET",
-                        ],
-                    }).values,
-                ],
-            },
-        );
+    [k in AccountType]: (arg: { requestProxy: RequestProxy, responseDetails: ResponseDetails; }) => ResponseDetails["responseHeaders"];
+} = (() => {
+    const commonPatch: typeof responseHeadersPatchHandlers[AccountType] = ({requestProxy, responseDetails: {responseHeaders}}) => {
         patchResponseHeader(
             responseHeaders,
             {
@@ -214,17 +173,95 @@ const responseHeadersPatchHandlers: {
         patchResponseHeader(
             responseHeaders,
             {
-                name: HEADERS.response.accessControlExposeHeaders,
-                values: ["Date"],
+                name: HEADERS.response.accessControlAllowMethods,
+                values: [
+                    ...(requestProxy.headers.accessControlRequestMethod || {
+                        values: [
+                            "DELETE",
+                            "GET",
+                            "HEAD",
+                            "OPTIONS",
+                            "POST",
+                            "PUT",
+                        ],
+                    }).values,
+                ],
             },
         );
-
         return responseHeaders;
-    },
-    tutanota: ({responseDetails}) => {
-        return responseDetails.responseHeaders;
-    },
-};
+    };
+
+    const result: typeof responseHeadersPatchHandlers = {
+        protonmail: ({requestProxy, responseDetails}) => {
+            const {responseHeaders} = responseDetails;
+
+            commonPatch({requestProxy, responseDetails});
+
+            patchResponseHeader(
+                responseHeaders,
+                {
+                    name: HEADERS.response.accessControlAllowCredentials,
+                    values: ["true"],
+                },
+                {extend: false},
+            );
+            patchResponseHeader(
+                responseHeaders,
+                {
+                    name: HEADERS.response.accessControlAllowHeaders,
+                    values: [
+                        ...(requestProxy.headers.accessControlRequestHeaders || {
+                            values: [
+                                "authorization",
+                                "cache-control",
+                                "content-type",
+                                "Date",
+                                "x-eo-uid",
+                                "x-pm-apiversion",
+                                "x-pm-appversion",
+                                "x-pm-session",
+                                "x-pm-uid",
+                            ],
+                        }).values,
+                    ],
+                },
+            );
+            patchResponseHeader(
+                responseHeaders,
+                {
+                    name: HEADERS.response.accessControlExposeHeaders,
+                    values: ["Date"],
+                },
+            );
+
+            return responseHeaders;
+        },
+        tutanota: ({requestProxy, responseDetails}) => {
+            const {responseHeaders} = responseDetails;
+
+            commonPatch({requestProxy, responseDetails});
+
+            patchResponseHeader(
+                responseHeaders,
+                {
+                    name: HEADERS.response.accessControlAllowHeaders,
+                    values: [
+                        ...(requestProxy.headers.accessControlRequestHeaders || {
+                            values: [
+                                "content-type",
+                                "v",
+                            ],
+                        }).values,
+                    ],
+                },
+            );
+
+            return responseHeaders;
+        },
+    };
+
+    return result;
+})();
 
 function patchResponseHeader(
     headers: ResponseDetails["responseHeaders"],

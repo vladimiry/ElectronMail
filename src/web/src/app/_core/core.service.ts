@@ -17,10 +17,6 @@ export class CoreService {
             };
         }
 
-        if (config.type !== "protonmail") {
-            throw new Error(`Can't parse entry url for the unsupported account type: "${config.type}"`);
-        }
-
         const entryApiUrl = config.entryUrl.split(ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX).pop();
         if (!entryApiUrl || !entryApiUrl.startsWith("https://")) {
             throw new Error(`Invalid "entryApiUrl" value: "${entryApiUrl}"`);
@@ -38,6 +34,5 @@ export class CoreService {
             entryUrl,
             entryApiUrl,
         };
-
     }
 }

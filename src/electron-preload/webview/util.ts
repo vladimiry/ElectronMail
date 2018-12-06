@@ -4,7 +4,7 @@ import {of, throwError} from "rxjs";
 import {Arguments} from "src/shared/types";
 import {DbPatch} from "src/shared/api/common";
 import {Endpoints, IPC_MAIN_API} from "src/shared/api/main";
-import {ONE_SECOND_MS} from "src/shared/constants";
+import {LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN, ONE_SECOND_MS} from "src/shared/constants";
 import {StatusCodeError} from "src/shared/model/error";
 import {asyncDelay, curryFunctionMembers} from "src/shared/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
@@ -24,6 +24,12 @@ export const resolveIpcMainApi: () => Promise<ReturnType<typeof IPC_MAIN_API.bui
 
         return ipcMainApiClient;
     };
+})();
+
+export const isBuiltInWebClient: () => boolean = (() => {
+    const re = new RegExp(`^(${LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN}:)`);
+
+    return () => Boolean(re.exec(location.protocol));
 })();
 
 export const resolveDomElements = <E extends Element,
@@ -217,4 +223,35 @@ export function buildEmptyDbPatch(): DbPatch {
         folders: {remove: [], upsert: []},
         contacts: {remove: [], upsert: []},
     };
+}
+
+export function disableBrowserNotificationFeature(parentLogger: ReturnType<typeof buildLoggerBundle>) {
+    // TODO remove "as any" casting on https://github.com/Microsoft/TypeScript/issues/14701 resolving
+    delete (window as any).Notification;
+    parentLogger.info(`browser "notification" feature disabled`);
+}
+
+export function disableBrowserServiceWorkerFeature(parentLogger: ReturnType<typeof buildLoggerBundle>) {
+    if (!("serviceWorker" in navigator)) {
+        parentLogger.warn(`browser "serviceWorker" feature is not supported, nothing to disable`);
+        return;
+    }
+
+    try {
+        // "navigator.serviceWorker" is unremovable, so hacking the "register" method
+        navigator.serviceWorker.register = (...args) => {
+            const msg = `"navigator.serviceWorker.register" method has been disabled, called with args: ${JSON.stringify(args)}`;
+            parentLogger.info(msg);
+            // tslint:disable-next-line:no-console
+            console.log(msg);
+
+            // WANR: never resolvable
+            return new Promise<ServiceWorkerRegistration>(() => {});
+        };
+        delete (navigator as any).serviceWorker;
+    } catch (error) {
+        parentLogger.error(error);
+    }
+
+    parentLogger.info(`browser "serviceWorker" feature disabled`);
 }

@@ -22,11 +22,16 @@ export const ONE_SECOND_MS = 1000;
 
 export const DEFAULT_API_CALL_TIMEOUT = ONE_SECOND_MS * 25;
 
-export const PROVIDER_REPO: Record<Extract<AccountType, "protonmail">, { repo: string, version: string; commit: string; }> = {
+export const PROVIDER_REPO: Record<AccountType, { repo: string, version: string; commit: string; }> = {
     protonmail: {
         repo: "https://github.com/ProtonMail/WebClient.git",
         commit: "31df90fcb0f15bb68423ab91d2d9df9310b9a202",
         version: "3.15.5",
+    },
+    tutanota: {
+        repo: "https://github.com/tutao/tutanota.git",
+        commit: "3ab81bf4dcb3246fde0a2ba0b52996f9d9389267",
+        version: "3.42.2",
     },
 };
 
@@ -48,7 +53,7 @@ export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlIte
             ...((process.env.NODE_ENV as BuildEnvironment) === "development" ? [
                 {
                     value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.protonmail.com`,
-                    title: `https://mail.protonmail.com (Built-in WebClient v${PROVIDER_REPO.protonmail.version})`,
+                    title: `https://mail.protonmail.com (${getBuiltInWebClientTitle("protonmail")})`,
                 },
             ] : []),
             {
@@ -62,7 +67,7 @@ export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlIte
             ...((process.env.NODE_ENV as BuildEnvironment) === "development" ? [
                 {
                     value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://protonirockerxow.onion`,
-                    title: `https://protonirockerxow.onion (Built-in WebClient v${PROVIDER_REPO.protonmail.version})`,
+                    title: `https://protonirockerxow.onion (${getBuiltInWebClientTitle("protonmail")})`,
                 },
             ] : []),
         ],
@@ -73,9 +78,19 @@ export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlIte
                 value: "https://mail.tutanota.com",
                 title: "https://mail.tutanota.com",
             },
+            ...((process.env.NODE_ENV as BuildEnvironment) === "development" ? [
+                {
+                    value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.tutanota.com`,
+                    title: `https://mail.tutanota.com (${getBuiltInWebClientTitle("tutanota")})`,
+                },
+            ] : []),
         ],
     },
 };
+
+function getBuiltInWebClientTitle(accountType: AccountType): string {
+    return `Built-in Web Client v${PROVIDER_REPO[accountType].version}-${PROVIDER_REPO[accountType].commit.substr(0, 7)}`;
+}
 
 export const LOG_LEVELS: LogLevel[] = Object.keys(((stub: Record<LogLevel, null>) => stub)({
     error: null,

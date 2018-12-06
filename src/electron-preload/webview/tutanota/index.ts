@@ -1,12 +1,12 @@
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
+import {configureProviderApp} from "./configure-provider-app";
 import {curryFunctionMembers} from "src/shared/util";
 import {registerApi} from "./api";
 import {registerDocumentKeyDownEventListener} from "src/shared/web/key-binding";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[index]");
 
-// TODO remove "as any" casting on https://github.com/Microsoft/TypeScript/issues/14701 resolving
-delete (window as any).Notification;
+configureProviderApp();
 
 registerApi()
     .then(() => {

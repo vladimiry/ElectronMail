@@ -5,6 +5,8 @@ import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Fs as StoreFs, Model as StoreModel, Store} from "fs-json-store";
 import {app} from "electron";
 
+import {AccountType} from "../shared/model/account";
+import {Arguments} from "../shared/types";
 import {BuildEnvironment} from "src/shared/model/common";
 import {Config, Settings} from "src/shared/model/options";
 import {Context, ContextInitOptions, ContextInitOptionsPaths, RuntimeEnvironment} from "./model";
@@ -72,33 +74,39 @@ function initLocations(
     };
     const appRelativePath = (...value: string[]) => path.join(appDir, ...value);
     const icon = appRelativePath("./assets/icons/icon.png");
-    const protonmailWebClientsDir = path.join(appDir, "./webclient/protonmail");
-    const webClients = {
-        protonmail: (() => {
-            let schemeIndex = 0;
+    const webClients = (() => {
+        const protocolBundles: Arguments<typeof registerFileProtocols>[0] = [];
+        const result: ElectronContextLocations["webClients"] = {
+            protonmail: [],
+            tutanota: [],
+        };
 
-            const items = listDirsNames(storeFs, protonmailWebClientsDir).map((dirName) => {
-                const directory = path.resolve(protonmailWebClientsDir, dirName);
-                const scheme = `${LOCAL_WEBCLIENT_PROTOCOL_PREFIX}${schemeIndex++}`;
+        let schemeIndex = 0;
 
-                return {
-                    protocolBundle: {
-                        scheme,
-                        directory,
-                    },
-                    result: {
+        (Object.keys(result) as AccountType[]).map((accountType) => {
+            const webClientsDir = path.join(appDir, "./webclient", `./${accountType}`);
+
+            listDirsNames(storeFs, webClientsDir)
+                .map((dirName) => {
+                    const directory = path.resolve(webClientsDir, dirName);
+                    const scheme = `${LOCAL_WEBCLIENT_PROTOCOL_PREFIX}${schemeIndex++}`;
+
+                    result[accountType].push({
                         entryUrl: `${scheme}://${dirName}`,
                         entryApiUrl: `https://${dirName}`,
-                    },
-                };
-            });
+                    });
 
-            registerFileProtocols(items.map(({protocolBundle}) => protocolBundle));
+                    protocolBundles.push({
+                        scheme,
+                        directory,
+                    });
+                });
+        });
 
-            return items.map(({result}) => result);
-        })(),
-        tutanota: [],
-    };
+        registerFileProtocols(protocolBundles);
+
+        return result;
+    })();
 
     return {
         appDir,

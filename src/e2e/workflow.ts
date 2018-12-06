@@ -34,6 +34,9 @@ export const ENV = {
 };
 export const {CI} = process.env;
 
+// tslint:disable-next-line:no-var-requires no-import-zones
+const {name: APP_NAME, version: APP_VERSION, description: APP_TITLE} = require("package.json");
+
 const rootDirPath = path.resolve(__dirname, process.cwd());
 const appDirPath = path.join(rootDirPath, "./app");
 const mainScriptFilePath = path.join(appDirPath, "./electron-main.js");
@@ -119,6 +122,24 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
 
     // test window state
     const {browserWindow} = t.context.app;
+
+    await (async () => {
+        const stubElement = t.context.app.client.$(".e2e-stub-element");
+        const text = await stubElement.getText();
+        const {title, userAgent}: { title: string; userAgent: string; } = JSON.parse(text);
+
+        t.truthy(title, `title should be filled`);
+        t.truthy(userAgent, `user agent should be filled`);
+
+        t.is(title, await browserWindow.getTitle(), `title value test (by "browserWindow")`);
+        t.is(title, "Unofficial desktop app for E2E encrypted email providers", `title value test (by document.title)`);
+        t.is(title, APP_TITLE, `title is same as in package.json`);
+
+        t.is(userAgent.toLowerCase().indexOf(APP_NAME.toLowerCase()), -1, `should be no "app name" in user agent header, v: ${userAgent}`);
+        t.is(userAgent.toLowerCase().indexOf(APP_VERSION), -1, `should be no "app version" in user agent header, v: ${userAgent}`);
+        t.is(userAgent.toLowerCase().indexOf("electron"), -1, `should be no "electron" mention in user agent header, v: ${userAgent}`);
+    })();
+
     // t.false(await browserWindow.webContents.isDevToolsOpened(), "browserWindow's dev tools should be closed");
     t.false(await (browserWindow as any).isDevToolsOpened(), "window'd dev tools should be closed");
     t.false(await browserWindow.isMinimized(), "window should not be not minimized");

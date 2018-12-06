@@ -1,5 +1,7 @@
 import {Session, session} from "electron";
 
+import {APP_NAME} from "src/shared/constants";
+
 const storagesToClear = [
     "appcache",
     "cookies",
@@ -11,6 +13,11 @@ const storagesToClear = [
     "serviceworkers",
     "cachestorage",
 ];
+
+export async function initDefaultSession(): Promise<void> {
+    await clearDefaultSessionCaches();
+    purifyUserAgentHeader();
+}
 
 export async function clearDefaultSessionCaches(): Promise<void> {
     const defaultSession = getDefaultSession();
@@ -30,4 +37,18 @@ export function getDefaultSession(): Session {
     }
 
     return defaultSession;
+}
+
+function purifyUserAgentHeader() {
+    const appNameRe = new RegExp(`${APP_NAME}[\\/\\S]+`, "i");
+    const electronRe = new RegExp("electron", "i");
+    const currentUserAgent = String(getDefaultSession().getUserAgent());
+    const purifiedUserAgent = currentUserAgent
+        .split(appNameRe)
+        .join("")
+        .split(/\s+/)
+        .filter((chunk) => !electronRe.exec(chunk))
+        .join(" ");
+
+    getDefaultSession().setUserAgent(purifiedUserAgent);
 }

@@ -35,14 +35,14 @@ test.serial("workflow", async (t) => {
     t.true(m["./util"].initContext.calledWithExactly(), `"initContext" called`);
     t.true(m["./util"].initContext.calledAfter(m.electron.app.setAppUserModelId));
 
-    t.true(m["./session"].clearDefaultSessionCaches.calledWithExactly(), `"clearDefaultSessionCaches" called`);
-    t.true(m["./session"].clearDefaultSessionCaches.calledAfter(m["./util"].initContext), `"clearDefaultSessionCaches" called after "initContext"`);
+    t.true(m["./session"].initDefaultSession.calledWithExactly(), `"initDefaultSession" called`);
+    t.true(m["./session"].initDefaultSession.calledAfter(m["./util"].initContext), `"initDefaultSession" called after "initContext"`);
 
     t.true(m["./web-request"].initWebRequestListeners.calledWithExactly(t.context.ctx), `"initWebRequestListeners" called`);
-    t.true(m["./web-request"].initWebRequestListeners.calledAfter(m["./session"].clearDefaultSessionCaches), `"initWebRequestListeners" called after "clearDefaultSessionCaches"`);
+    t.true(m["./web-request"].initWebRequestListeners.calledAfter(m["./session"].initDefaultSession), `"initWebRequestListeners" called after "initDefaultSession"`);
 
     t.true(m["./api"].initApi.calledWithExactly(t.context.ctx), `"initApi" called`);
-    t.true(m["./api"].initApi.calledAfter(m["./session"].clearDefaultSessionCaches), `"initApi" called after "clearDefaultSessionCaches"`);
+    t.true(m["./api"].initApi.calledAfter(m["./web-request"].initWebRequestListeners), `"initApi" called after "initWebRequestListeners"`);
 
     t.true(m["./web-content-context-menu"].initWebContentContextMenu.calledWithExactly(), `"initWebContentContextMenu" called`);
     t.true(m["./web-content-context-menu"].initWebContentContextMenu.calledBefore(m["./window"].initBrowserWindow), `"initWebContentContextMenu" called before "initBrowserWindow"`);
@@ -112,7 +112,7 @@ function buildMocks(testContext: TestContext) {
     return {
         "~index": {
             "./session": {
-                clearDefaultSessionCaches: sinon.stub().returns(Promise.resolve({})),
+                initDefaultSession: sinon.stub().returns(Promise.resolve({})),
             },
             "./api": {
                 initApi: sinon.stub().returns(Promise.resolve(testContext.endpoints)),

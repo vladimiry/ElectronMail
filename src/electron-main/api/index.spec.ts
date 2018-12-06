@@ -537,7 +537,7 @@ test.beforeEach(async (t) => {
         (mock) => {
             const {mocks} = t.context;
             mock("electron").with(mocks.electron);
-            mock(/*() => import*/("src/electron-main/keytar"))/*.callThrough()*/.with(mocks["src/electron-main/keytar"]);
+            mock(() => import("src/electron-main/keytar"))/*.callThrough()*/.with(mocks["src/electron-main/keytar"]);
             mock(() => import("about-window")).callThrough().with(mocks["about-window"] as any);
             mock(() => import("src/shared/api/main")).callThrough().with(mocks["src/shared/api/main"]);
             mock(() => import("src/electron-main/session")).callThrough().with(mocks["src/electron-main/session"]);

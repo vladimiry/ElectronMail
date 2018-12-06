@@ -4,12 +4,12 @@ import {WebContents, app} from "electron";
 
 import {ACCOUNTS_CONFIG, ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX, APP_NAME} from "src/shared/constants";
 import {EntryUrlItem} from "src/shared/types";
-import {clearDefaultSessionCaches} from "./session";
 import {initApi} from "./api";
 import {initApplicationMenu} from "./menu";
 import {initAutoUpdate} from "./app-update";
 import {initBrowserWindow} from "./window";
 import {initContext} from "./util";
+import {initDefaultSession} from "./session";
 import {initTray} from "./tray";
 import {initWebContentContextMenu} from "./web-content-context-menu";
 import {initWebRequestListeners} from "./web-request";
@@ -32,7 +32,7 @@ app.setAppUserModelId(`com.github.vladimiry.${APP_NAME}`);
 const ctx = initContext();
 
 app.on("ready", async () => {
-    await clearDefaultSessionCaches();
+    await initDefaultSession();
 
     initWebRequestListeners(ctx);
 

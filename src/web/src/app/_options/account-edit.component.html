@@ -14,33 +14,41 @@
             </div>
         </div>
         <div class="form-group required" *ngIf="!account">
+            <ng-template #typeItemTemplate let-item="item" let-index="index">
+                <email-securely-app-type-symbol [type]="item"></email-securely-app-type-symbol>
+                {{ item }}
+            </ng-template>
             <label>Type</label>
             <ng-select [items]="typeValues" [clearable]="false" formControlName="type" id="accountEditFormTypeField">
                 <ng-template ng-label-tmp let-item="item">
-                    <email-securely-app-type-symbol [type]="item"></email-securely-app-type-symbol>
-                    {{ item }}
+                    <ng-container
+                        [ngTemplateOutlet]="typeItemTemplate" [ngTemplateOutletContext]="{item: item}"
+                    ></ng-container>
+                </ng-template>
+                <ng-template ng-option-tmp let-item="item">
+                    <ng-container
+                        [ngTemplateOutlet]="typeItemTemplate" [ngTemplateOutletContext]="{item: item}"
+                    ></ng-container>
                 </ng-template>
             </ng-select>
         </div>
         <div class="form-group required">
             <ng-template #entryUrlItemTemplate let-item="item" let-index="index">
                 {{ item.title }}
-                <span class="badge badge-danger" *ngIf="item.value.startsWith('local')">experimental</span>
+                <span class="badge badge-secondary" *ngIf="isLocalWebClient(item)">experimental</span>
             </ng-template>
             <label>Domain</label>
             <ng-select [items]="entryUrlItems" [clearable]="false" formControlName="entryUrl" id="accountEditFormEntryUrlField"
                        bindLabel="title" bindValue="value">
                 <ng-template ng-label-tmp let-item="item" let-index="index">
                     <ng-container
-                        [ngTemplateOutlet]="entryUrlItemTemplate"
-                        [ngTemplateOutletContext]="{item: item, index: index}"
+                        [ngTemplateOutlet]="entryUrlItemTemplate" [ngTemplateOutletContext]="{item: item, index: index}"
                     ></ng-container>
                 </ng-template>
                 <ng-template ng-option-tmp let-item="item" let-index="index">
                     <div [attr.entry-url-option-index]="index">
                         <ng-container
-                            [ngTemplateOutlet]="entryUrlItemTemplate"
-                            [ngTemplateOutletContext]="{item: item, index: index}"
+                            [ngTemplateOutlet]="entryUrlItemTemplate" [ngTemplateOutletContext]="{item: item, index: index}"
                         ></ng-container>
                     </div>
                 </ng-template>

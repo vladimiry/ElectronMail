@@ -5,7 +5,7 @@ import {Observable, Subject, merge} from "rxjs";
 import {Store} from "@ngrx/store";
 import {concatMap, filter, map, mergeMap, pairwise, takeUntil} from "rxjs/operators";
 
-import {ACCOUNTS_CONFIG} from "src/shared/constants";
+import {ACCOUNTS_CONFIG, ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX} from "src/shared/constants";
 import {AccountConfig, AccountConfigProtonmail, AccountType} from "src/shared/model/account";
 import {AccountConfigCreatePatch, AccountConfigUpdatePatch} from "src/shared/model/container";
 import {EntryUrlItem} from "src/shared/types";
@@ -146,6 +146,10 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         }
 
         this.store.dispatch(OPTIONS_ACTIONS.RemoveAccountRequest(account));
+    }
+
+    isLocalWebClient({value}: EntryUrlItem): boolean {
+        return value.startsWith(ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX);
     }
 
     ngOnDestroy() {

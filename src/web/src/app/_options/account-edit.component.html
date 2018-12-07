@@ -26,9 +26,11 @@
                     ></ng-container>
                 </ng-template>
                 <ng-template ng-option-tmp let-item="item">
-                    <ng-container
-                        [ngTemplateOutlet]="typeItemTemplate" [ngTemplateOutletContext]="{item: item}"
-                    ></ng-container>
+                    <div [attr.type-option-value]="item">
+                        <ng-container
+                            [ngTemplateOutlet]="typeItemTemplate" [ngTemplateOutletContext]="{item: item}"
+                        ></ng-container>
+                    </div>
                 </ng-template>
             </ng-select>
         </div>

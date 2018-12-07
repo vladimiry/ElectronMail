@@ -249,7 +249,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             // required: type
             await client.click(`#accountEditFormTypeField`);
             await client.pause(CONF.timeouts.elementTouched);
-            await client.click(`.ng-option-label=${account.type}`);
+            await client.click(`[type-option-value="${account.type}"`);
             await client.pause(CONF.timeouts.elementTouched);
 
             // required: entryUrl

@@ -6,8 +6,12 @@ is built with Electron unofficial desktop app for [ProtonMail](https://protonmai
 
 ![view-toggling](images/toggling.gif)
 
+## Download
+
+Linux/OSX/Windows installation packages download page is [here](https://github.com/vladimiry/email-securely-app/releases).
+
 ## Features
-- Cross platform, Linux/OSX/Windows installation packages [provided](https://github.com/vladimiry/email-securely-app/releases).
+- Cross platform, Linux/OSX/Windows.
 - Multi email providers support.
 - Multi accounts support per each email provider. Individual entry point domain selection is [enabled](https://github.com/vladimiry/email-securely-app/issues/29).
 - Automatic login into the app with remembered master password using [keytar](https://github.com/atom/node-keytar) module ("Keep me signed in" feature).
@@ -16,11 +20,11 @@ is built with Electron unofficial desktop app for [ProtonMail](https://protonmai
 - System tray icon with a total number of unread messages shown on top of it. Enabling [local messages store](https://github.com/vladimiry/email-securely-app/issues/32) improves this feature ([how to enable](https://github.com/vladimiry/email-securely-app/releases/tag/v2.0.0-beta.1)), see respective [issue](https://github.com/vladimiry/email-securely-app/issues/30).
 - Full, tabs and dropdown view modes. See details [here](https://github.com/vladimiry/email-securely-app/issues/36) and screenshots in [images](images) folder.
 - Batch emails export to EML files. Feature released with [v2.0.0-beta.4](https://github.com/vladimiry/email-securely-app/releases/tag/v2.0.0-beta.4) version, requires `local messages store` feature to be enabled ([how to enable](https://github.com/vladimiry/email-securely-app/releases/tag/v2.0.0-beta.1)).
-- Built-in [official web client](https://github.com/ProtonMail/WebClient) can be optionally chosen. Feature released with [v2.0.0-beta.8](https://github.com/vladimiry/email-securely-app/releases/tag/v2.0.0-beta.8) version and so far enabled only for the ProtonMail account types. See [respective](https://github.com/vladimiry/email-securely-app/issues/79) issue for details.
+- Option to use a built-in/prepackaged web client instead of loading the online page. The built-in web clients are built from source code, see respective official [Protonmail](https://github.com/ProtonMail/WebClient) and [Tutanota](https://github.com/tutao/tutanota) repositories. See [original](https://github.com/vladimiry/email-securely-app/issues/79) issue for details.
 - Start minimized to tray.
 - Close to tray.
 
-## Build your own package
+## How to build package from source code
 
 - Regardless of the platform you are working on, you will need to have Node.js v10 installed. v10 as it's recommended to go with the same Node.js version Electron comes with. If you already have Node.js installed, but not the version 10, then you might want to use [Node Version Manager](https://github.com/creationix/nvm) to be able to switch between multiple Node.js versions:
   - Install [NVM](https://github.com/creationix/nvm).
@@ -42,3 +46,5 @@ is built with Electron unofficial desktop app for [ProtonMail](https://protonmai
   - `yarn run electron-builder:dist:linux:snap`
 - If you don't need a package to install, but a folder to execute app from, simply run `yarn run electron-builder:dir` command.  
 - Binary executable, whether it's a folder or package to install, comes into the `./dist` folder.
+
+To summarize, considering that all the described build requirements are met, the short build command to build let's say Arch Linux package will be `yarn install && yarn run app:dist && yarn run electron-builder:dist:linux:pacman`.

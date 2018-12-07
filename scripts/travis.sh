@@ -20,3 +20,5 @@ if [ "$TRAVIS_OS_NAME" == "linux" ]; then
         electronuserland/builder \
         /bin/bash -c "yarn --pure-lockfile install && yarn run electron-builder:publish:x64:linux"
 fi
+
+yarn run print-dist-packages-hashes

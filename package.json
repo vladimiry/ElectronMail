@@ -68,7 +68,8 @@
     "test:e2e": "ava --verbose \"./src/e2e/**/*.{spec,test}.ts\"",
     "test:electron-main": "cross-env TS_NODE_PROJECT=./src/electron-main/tsconfig.json ava --verbose \"./src/electron-main/**/*.{spec,test}.ts\"",
     "test:web": "cross-env NODE_ENV=test karma start ./src/web/test/karma.conf.ts --single-run",
-    "test:web:watch": "cross-env NODE_ENV=test karma start ./src/web/test/karma.conf.ts"
+    "test:web:watch": "cross-env NODE_ENV=test karma start ./src/web/test/karma.conf.ts",
+    "print-dist-packages-hashes": "ts-node -r tsconfig-paths/register ./scripts/print-dist-packages-hashes.ts ./dist"
   },
   "ava": {
     "compileEnhancements": false,

@@ -24,3 +24,4 @@ install:
 build_script:
 - yarn run app:dist
 - yarn run electron-builder:publish:x64
+- yarn run print-dist-packages-hashes

@@ -23,19 +23,21 @@ files: [
 compression: maximum
 asar: true
 asarUnpack:
-- "**/node_modules/sodium-native/**/*"
-- "**/node_modules/keytar/**/*"
+  - "**/node_modules/sodium-native/**/*"
+  - "**/node_modules/keytar/**/*"
 
 mac:
   icon: ./app/assets/icons/mac/icon.icns
   category: public.app-category.productivity
+  target:
+    - {target: dmg}
 
 dmg:
   icon: ./app/assets/icons/mac/icon.icns
   iconSize: 128
   contents:
-  - {x: 380, y: 240, type: link, path: /Applications}
-  - {x: 122, y: 240, type: file}
+    - {x: 380, y: 240, type: link, path: /Applications}
+    - {x: 122, y: 240, type: file}
 
 linux:
   icon: ./app/assets/icons/png
@@ -46,7 +48,7 @@ win:
   artifactName: ${name}-${version}-windows-${arch}.${ext}
   icon: ./app/assets/icons/win/icon.ico
   target:
-  - {target: nsis}
+    - {target: nsis}
 
 nsis:
   artifactName: ${name}-${version}-windows-${arch}-nsis-installer.${ext}

@@ -10,7 +10,7 @@ import {resolveIpcMainApi} from "src/electron-preload/webview/util";
 
 // TODO consider executing direct $http calls
 // in order to not depend on Protonmail WebClient's AngularJS factories/services
-export interface Api {
+export interface ProviderApi {
     $http: ng.IHttpService;
     url: {
         build: (module: string) => () => string;
@@ -53,17 +53,17 @@ export interface Api {
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[lib/api]");
 const resolveServiceLogger = curryFunctionMembers(logger, "resolveService()");
 const rateLimitedApiCallingQueue: PQueue<PQueue.DefaultAddOptions> = new PQueue({concurrency: 1});
-const state: { api?: Promise<Api> } = {};
+const state: { api?: Promise<ProviderApi> } = {};
 
 let rateLimitedMethodsCallCount = 0;
 
-export async function resolveApi(): Promise<Api> {
+export async function resolveProviderApi(): Promise<ProviderApi> {
     if (state.api) {
-        logger.debug(`resolveApi()`);
+        logger.debug(`resolveProviderApi()`);
         return state.api;
     }
 
-    logger.info(`resolveApi()`);
+    logger.info(`resolveProviderApi()`);
 
     const rateLimiting = {
         rateLimiterTick: await (async () => {
@@ -86,7 +86,7 @@ export async function resolveApi(): Promise<Api> {
             throw new Error(`Failed to resolve "injector" variable`);
         }
 
-        const lazyLoader = resolveService<Api["lazyLoader"]>(injector, "lazyLoader");
+        const lazyLoader = resolveService<ProviderApi["lazyLoader"]>(injector, "lazyLoader");
 
         await lazyLoader.app();
 
@@ -95,15 +95,30 @@ export async function resolveApi(): Promise<Api> {
 
         return {
             lazyLoader,
-            $http: resolveService<Api["$http"]>(injector, "$http"),
-            url: resolveService<Api["url"]>(injector, "url"),
-            messageModel: resolveService<Api["messageModel"]>(injector, "messageModel"),
-            conversation: resolveService<Api["conversation"]>(injector, "conversationApi", {...rateLimiting, methods: ["get", "query"]}),
-            message: resolveService<Api["message"]>(injector, "messageApi", {...rateLimiting, methods: ["get", "query"]}),
-            contact: resolveService<Api["contact"]>(injector, "Contact", {...rateLimiting, methods: ["get", "all"]}),
-            label: resolveService<Api["label"]>(injector, "Label", {...rateLimiting, methods: ["query"]}),
-            events: resolveService<Api["events"]>(injector, "Events", {...rateLimiting, methods: ["get", "getLatestID"]}),
-            vcard: resolveService<Api["vcard"]>(injector, "vcard"),
+            $http: resolveService<ProviderApi["$http"]>(injector, "$http"),
+            url: resolveService<ProviderApi["url"]>(injector, "url"),
+            messageModel: resolveService<ProviderApi["messageModel"]>(injector, "messageModel"),
+            conversation: resolveService<ProviderApi["conversation"]>(injector, "conversationApi", {
+                ...rateLimiting,
+                methods: ["get", "query"],
+            }),
+            message: resolveService<ProviderApi["message"]>(injector, "messageApi", {
+                ...rateLimiting,
+                methods: ["get", "query"],
+            }),
+            contact: resolveService<ProviderApi["contact"]>(injector, "Contact", {
+                ...rateLimiting,
+                methods: ["get", "all"],
+            }),
+            label: resolveService<ProviderApi["label"]>(injector, "Label", {
+                ...rateLimiting,
+                methods: ["query"],
+            }),
+            events: resolveService<ProviderApi["events"]>(injector, "Events", {
+                ...rateLimiting,
+                methods: ["get", "getLatestID"],
+            }),
+            vcard: resolveService<ProviderApi["vcard"]>(injector, "vcard"),
         };
     })();
 }
@@ -112,7 +127,7 @@ type KeepAsyncFunctionsProps<T> = {
     [K in keyof T]: T[K] extends (args: any) => Promise<infer U> ? T[K] : never
 };
 
-function resolveService<T extends Api[keyof Api]>(
+function resolveService<T extends ProviderApi[keyof ProviderApi]>(
     injector: ng.auto.IInjectorService,
     serviceName: string,
     rateLimiting?: {

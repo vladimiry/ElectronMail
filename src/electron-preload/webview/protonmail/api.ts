@@ -6,7 +6,6 @@ import {omit} from "ramda";
 import * as Database from "./lib/database";
 import * as DatabaseModel from "src/shared/model/database";
 import * as Rest from "./lib/rest";
-import {Api, resolveApi} from "./lib/api";
 import {DbPatch} from "src/shared/api/common";
 import {MemoryDbAccount} from "src/shared/model/database";
 import {
@@ -17,6 +16,7 @@ import {
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {Omit, Unpacked} from "src/shared/types";
 import {PROTONMAIL_IPC_WEBVIEW_API, ProtonmailApi, ProtonmailNotificationOutput} from "src/shared/api/webview/protonmail";
+import {ProviderApi, resolveProviderApi} from "./lib/provider-api";
 import {StatusCodeError} from "src/shared/model/error";
 import {angularJsHttpResponseTypeGuard, isUpsertOperationType, preprocessError} from "./lib/uilt";
 import {asyncDelay, curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
@@ -69,8 +69,8 @@ const ajaxSendNotification$ = new Observable<XMLHttpRequest>((subscriber) => {
                 subscriber.next(this);
                 return;
             }
-            _logger.error(
-                "[XMLHttpRequest.load handler]",
+            _logger.warn(
+                "XMLHttpRequest error",
                 JSON.stringify({status: this.status, statusText: this.statusText, responseURL: this.responseURL}),
             );
         },
@@ -122,7 +122,7 @@ const endpoints: ProtonmailApi = {
         }
 
         const preFetch = await (async (
-            {events, $http}: Api,
+            {events, $http}: ProviderApi,
             id: Rest.Model.Event["EventID"],
         ) => {
             const fetchedEvents: Rest.Model.Event[] = [];
@@ -147,7 +147,7 @@ const endpoints: ProtonmailApi = {
                 latestEventId: id,
                 missedEvents: fetchedEvents,
             };
-        })(await resolveApi(), input.metadata.latestEventId);
+        })(await resolveProviderApi(), input.metadata.latestEventId);
         const metadata: BuildDbPatchReturn["metadata"] = {latestEventId: preFetch.latestEventId};
         const patch = await buildDbPatch({events: preFetch.missedEvents, parentLogger: logger});
 
@@ -416,7 +416,7 @@ async function bootstrapDbPatch(
     triggerStoreCallback: (path: BuildDbPatchReturn) => Promise<void>,
 ): Promise<void> {
     const logger = curryFunctionMembers(parentLogger, "bootstrapDbPatch()");
-    const api = await resolveApi();
+    const api = await resolveProviderApi();
     // WARN: "getLatestID" should be called on top of the function, ie before any other fetching
     // so app is able to get any potentially missed changes happened during this function execution
     const latestEventId = await api.events.getLatestID();
@@ -518,7 +518,7 @@ async function bootstrapDbPatch(
     });
 }
 
-async function buildConversationDbMails(briefConversation: Rest.Model.Conversation, api: Api): Promise<DatabaseModel.Mail[]> {
+async function buildConversationDbMails(briefConversation: Rest.Model.Conversation, api: ProviderApi): Promise<DatabaseModel.Mail[]> {
     const result: DatabaseModel.Mail[] = [];
     const conversationFetchResponse = await api.conversation.get(briefConversation.ID);
     const conversationMessages = conversationFetchResponse.data.Messages;
@@ -542,7 +542,7 @@ async function buildDbPatch(
     },
     nullUpsert: boolean = false,
 ): Promise<DbPatch> {
-    const api = await resolveApi();
+    const api = await resolveProviderApi();
     const logger = curryFunctionMembers(input.parentLogger, "buildDbPatch()");
     const mappingItem = () => ({updatesMappedByInstanceId: new Map(), remove: [], upsertIds: []});
     const mapping: Record<"mails" | "folders" | "contacts", {
@@ -604,14 +604,12 @@ async function buildDbPatch(
         }
     }
 
-    const patch: DbPatch = {
-        conversationEntries: {remove: [], upsert: []},
-        mails: {remove: mapping.mails.remove, upsert: []},
-        folders: {remove: mapping.folders.remove, upsert: []},
-        contacts: {remove: mapping.contacts.remove, upsert: []},
-    };
+    const patch: DbPatch = buildEmptyDbPatch();
 
     if (!nullUpsert) {
+        // TODO process 404 error of fetching individual entity
+        // so we could catch the individual entity fetching error
+        // 404 error can be ignored as if it occurs because user was moved stuff from here to there while syncing cycle was in progress
         for (const id of mapping.mails.upsertIds) {
             const response = await api.message.get(id);
             patch.mails.upsert.push(await Database.buildMail(response.data.Message, api));

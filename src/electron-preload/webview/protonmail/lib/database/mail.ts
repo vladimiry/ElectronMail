@@ -1,7 +1,7 @@
 import * as DatabaseModel from "src/shared/model/database";
 import * as Rest from "src/electron-preload/webview/protonmail/lib/rest";
-import {Api} from "src/electron-preload/webview/protonmail/lib/api";
 import {ONE_SECOND_MS} from "src/shared/constants";
+import {ProviderApi} from "src/electron-preload/webview/protonmail/lib/provider-api";
 import {buildBaseEntity, buildPk} from ".";
 
 const directTypeMapping: Record<keyof typeof Rest.Model.MAIL_TYPE._.nameValueMap, DatabaseModel.Mail["state"]> = {
@@ -26,7 +26,7 @@ const isConfindencial = ((encryptedValues: Array<Rest.Model.Message["IsEncrypted
     // Rest.Model.ENCRYPTED_STATUS.AUTOREPLY,
 ]);
 
-export async function buildMail(input: Rest.Model.Message, api: Api): Promise<DatabaseModel.Mail> {
+export async function buildMail(input: Rest.Model.Message, api: ProviderApi): Promise<DatabaseModel.Mail> {
     return {
         ...buildBaseEntity(input),
         conversationEntryPk: buildPk(input.ConversationID),

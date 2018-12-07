@@ -5,8 +5,8 @@ import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Fs as StoreFs, Model as StoreModel, Store} from "fs-json-store";
 import {app} from "electron";
 
-import {AccountType} from "../shared/model/account";
-import {Arguments} from "../shared/types";
+import {AccountType} from "src/shared/model/account";
+import {Arguments} from "src/shared/types";
 import {BuildEnvironment} from "src/shared/model/common";
 import {Config, Settings} from "src/shared/model/options";
 import {Context, ContextInitOptions, ContextInitOptionsPaths, RuntimeEnvironment} from "./model";

@@ -6,7 +6,7 @@ import {GROUP_TYPE} from "./rest/model/constants";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {buildDbPatchRetryPipeline} from "src/electron-preload/webview/util";
 import {curryFunctionMembers} from "src/shared/util";
-import {resolveApi} from "src/electron-preload/webview/tutanota/lib/api";
+import {resolveProviderApi} from "src/electron-preload/webview/tutanota/lib/provider-api";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[lib/util]");
 
@@ -47,7 +47,7 @@ export async function fetchMailFoldersWithSubFolders(user: Rest.Model.User): Pro
 }
 
 export async function generateStartId(id?: Rest.Model.Id): Promise<Rest.Model.Id> {
-    const api = await resolveApi();
+    const api = await resolveProviderApi();
     const {FULL_INDEXED_TIMESTAMP: TIMESTAMP_MIN} = api["src/api/common/TutanotaConstants"];
     const {timestampToGeneratedId, generatedIdToTimestamp} = api["src/api/common/utils/Encoding"];
     const startTimestamp = typeof id === "undefined" ? TIMESTAMP_MIN : generatedIdToTimestamp(id) + 1;

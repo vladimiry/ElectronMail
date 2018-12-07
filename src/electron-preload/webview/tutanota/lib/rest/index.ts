@@ -2,13 +2,13 @@ import * as Model from "./model";
 import * as Util from "src/electron-preload/webview/tutanota/lib/util";
 import {BaseEntity, Id, IdTuple, RequestParams, TypeRef} from "./model";
 import {Omit} from "src/shared/types";
-import {resolveApi} from "src/electron-preload/webview/tutanota/lib/api";
+import {resolveProviderApi} from "src/electron-preload/webview/tutanota/lib/provider-api";
 
 export async function fetchEntity<T extends BaseEntity<Id | IdTuple>, TypeRefType extends TypeRef<T>>(
     typeRef: TypeRef<T>,
     id: T["_id"],
 ): Promise<T> {
-    const {load} = (await resolveApi())["src/api/main/Entity"];
+    const {load} = (await resolveProviderApi())["src/api/main/Entity"];
     return load(typeRef, id);
 }
 
@@ -16,7 +16,7 @@ export async function fetchAllEntities<T extends BaseEntity<IdTuple>, TypeRefTyp
     typeRef: TypeRef<T>,
     listId: T["_id"][0],
 ): Promise<T[]> {
-    const {loadAll} = (await resolveApi())["src/api/main/Entity"];
+    const {loadAll} = (await resolveProviderApi())["src/api/main/Entity"];
     return loadAll(typeRef, listId);
 }
 
@@ -26,7 +26,7 @@ export async function fetchMultipleEntities<T extends BaseEntity<Id | IdTuple>, 
     listId: T["_id"] extends IdTuple ? T["_id"][0] : null,
     instanceIds: Array<T["_id"] extends IdTuple ? T["_id"][1] : T["_id"]>,
 ): Promise<T[]> {
-    const {loadMultiple} = (await resolveApi())["src/api/main/Entity"];
+    const {loadMultiple} = (await resolveProviderApi())["src/api/main/Entity"];
     return loadMultiple(typeRef, listId, instanceIds);
 }
 
@@ -35,7 +35,7 @@ export async function fetchEntitiesRange<T extends BaseEntity<IdTuple>, TypeRefT
     listId: T["_id"][0],
     queryParams: Required<Omit<RequestParams, "ids">>,
 ): Promise<T[]> {
-    const {loadRange} = (await resolveApi())["src/api/main/Entity"];
+    const {loadRange} = (await resolveProviderApi())["src/api/main/Entity"];
     return loadRange(typeRef, listId, queryParams.start, queryParams.count, queryParams.reverse);
 }
 
@@ -46,7 +46,7 @@ export async function fetchEntitiesRangeUntilTheEnd<T extends BaseEntity<IdTuple
 ): Promise<T[]> {
     count = Math.max(1, Math.min(count, 500));
 
-    const {timestampToGeneratedId, generatedIdToTimestamp} = (await resolveApi())["src/api/common/utils/Encoding"];
+    const {timestampToGeneratedId, generatedIdToTimestamp} = (await resolveProviderApi())["src/api/common/utils/Encoding"];
     const entities = await fetchEntitiesRange(typeRef, listId, {start, count, reverse: false});
     const fullPortionFetched = entities.length === count;
 

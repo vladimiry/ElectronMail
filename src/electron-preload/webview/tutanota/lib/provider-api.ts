@@ -13,7 +13,7 @@ class EntityEventController {
     notificationReceived(entityUpdates: Rest.Model.EntityUpdate[]): void {}
 }
 
-interface Api extends Record<ModuleFiles, any> {
+interface ProviderApi extends Record<ModuleFiles, any> {
     "src/api/common/EntityFunctions": {
         GENERATED_MIN_ID: Rest.Model.Id;
         GENERATED_MAX_ID: Rest.Model.Id;
@@ -59,15 +59,15 @@ interface Api extends Record<ModuleFiles, any> {
     };
 }
 
-const state: { bundle?: Api } = {};
+const state: { bundle?: ProviderApi } = {};
 
-export async function resolveApi(): Promise<Api> {
+export async function resolveProviderApi(): Promise<ProviderApi> {
     if (state.bundle) {
         return state.bundle;
     }
 
     if (!navigator.onLine) {
-        throw new StatusCodeError(`"resolveApi" failed due to the offline status`, "NoNetworkConnection");
+        throw new StatusCodeError(`"resolveProviderApi" failed due to the offline status`, "NoNetworkConnection");
     }
 
     // tslint:disable-next-line:variable-name
@@ -83,7 +83,7 @@ export async function resolveApi(): Promise<Api> {
         // TODO reject with timeout
     });
     const baseURL = String(SystemJS.getConfig().baseURL).replace(/(.*)\/$/, "$1");
-    const bundle: Record<keyof Api, any> = {
+    const bundle: Record<keyof ProviderApi, any> = {
         "src/api/common/EntityFunctions": null,
         "src/api/common/TutanotaConstants": null,
         "src/api/common/utils/Encoding": null,
@@ -91,11 +91,11 @@ export async function resolveApi(): Promise<Api> {
         "src/api/main/EntityEventController": null,
     };
 
-    for (const key of Object.keys(bundle) as Array<keyof Api>) {
+    for (const key of Object.keys(bundle) as Array<keyof ProviderApi>) {
         bundle[key] = await SystemJS.import(`${baseURL}/${key}.js`);
     }
 
-    state.bundle = bundle as Api;
+    state.bundle = bundle as ProviderApi;
 
     // TODO validate types of all the described constants/functions in a declarative way
     // so app gets tutanota breaking changes noticed on early stage

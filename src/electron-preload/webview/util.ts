@@ -163,10 +163,10 @@ export function buildDbPatchRetryPipeline<T>(
     {retriesDelay = ONE_SECOND_MS * 5, retriesLimit = 3}: { retriesDelay?: number, retriesLimit?: number } = {},
 ) {
     return retryWhen<T>((errors) => errors.pipe(
-        concatMap((rawError, index) => {
+        concatMap((rawError, retryIndex) => {
             const {error, retriable, skippable} = preprocessError(rawError);
 
-            if (index >= retriesLimit) {
+            if (retryIndex >= retriesLimit) {
                 if (skippable) {
                     const message = `Skipping "buildDbPatch" call`;
                     logger.error(message, JSON.stringify(error));
@@ -176,7 +176,7 @@ export function buildDbPatchRetryPipeline<T>(
             }
 
             if (retriable) {
-                logger.error(`Retrying "buildDbPatch" call (attempt: "${index}")`, JSON.stringify(error));
+                logger.error(`Retrying "buildDbPatch" call (attempt: "${retryIndex}")`, JSON.stringify(error));
                 return of(error).pipe(
                     delay(retriesDelay),
                 );
@@ -233,7 +233,7 @@ export function disableBrowserNotificationFeature(parentLogger: ReturnType<typeo
 
 export function disableBrowserServiceWorkerFeature(parentLogger: ReturnType<typeof buildLoggerBundle>) {
     if (!("serviceWorker" in navigator)) {
-        parentLogger.warn(`browser "serviceWorker" feature is not supported, nothing to disable`);
+        parentLogger.info(`browser "serviceWorker" feature is not supported, nothing to disable`);
         return;
     }
 

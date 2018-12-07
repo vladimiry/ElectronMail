@@ -25,7 +25,6 @@ import {ElectronService} from "src/web/src/app/_core/electron.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {State} from "src/web/src/app/store/reducers/accounts";
-import {WebViewApi} from "src/shared/api/webview/common";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/src/util";
 
 const rateLimiter = __ELECTRON_EXPOSURE__.require["rolling-rate-limiter"]();
@@ -116,6 +115,11 @@ export class AccountsEffects {
                 }));
                 const ipcMainClient = this.api.ipcMainClient();
                 const zoneName = logger.zoneName();
+                const errorCatcher = (error: Error) => {
+                    this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: false}}));
+                    this.store.dispatch(CORE_ACTIONS.Fail(error));
+                    return EMPTY;
+                };
 
                 logger.info("setup");
 
@@ -140,10 +144,13 @@ export class AccountsEffects {
                                 this.fireSyncingIteration$.pipe(
                                     filter((value) => value.type === type && value.login === login),
                                     tap(() => logger.verbose(`triggered by: fireSyncingIteration$`)),
+                                    // user might be moving emails from here to there while syncing/"buildDbPatch" cycle is in progress
+                                    // debounce call reduces 404 fetch errors as we don't trigger fetching until user got settled down
+                                    debounceTime(ONE_SECOND_MS * 3),
                                 ),
                                 fromEvent(window, "online").pipe(
                                     tap(() => logger.verbose(`triggered by: "window.online" event`)),
-                                    delay(ONE_SECOND_MS * 2),
+                                    delay(ONE_SECOND_MS * 3),
                                 ),
                             ).pipe(
                                 debounceTime(ONE_SECOND_MS),
@@ -151,26 +158,17 @@ export class AccountsEffects {
                                 tap(() => {
                                     this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: true}}));
                                 }),
-                                concatMap(() => ipcMainClient("dbGetAccountMetadata")({type, login}).pipe(
-                                    concatMap((metadata) => {
-                                        // TODO TS: simplify "client" type casting
-                                        const client = type === "protonmail"
-                                            ? webViewClient as ReturnType<WebViewApi<typeof type>["buildClient"]>
-                                            : webViewClient as ReturnType<WebViewApi<typeof type>["buildClient"]>;
-                                        return client("buildDbPatch", {timeoutMs: timeouts.fetching})({
-                                            type,
-                                            login,
-                                            metadata: metadata as any, // TODO TS: get rid of "as any" casting
-                                            zoneName,
-                                        });
-                                    }),
-                                    concatMap(() => EMPTY),
-                                    catchError((error) => of(CORE_ACTIONS.Fail(error))),
-                                    finalize(() => {
-                                        this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: false}}));
-                                    }),
-                                )),
-                                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                                concatMap(() => ipcMainClient("dbGetAccountMetadata")({type, login})),
+                                // TODO consider replacing concatMap=>mergeMap with per account debouncing based on "syncing" state
+                                concatMap((metadata) => {
+                                    return webViewClient("buildDbPatch", {timeoutMs: timeouts.fetching})(
+                                        {type, login, zoneName, metadata},
+                                    ).pipe(
+                                        catchError(errorCatcher),
+                                    );
+                                }),
+                                mergeMap(() => of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: false}}))),
+                                catchError(errorCatcher),
                             ),
                         )),
                         takeUntil(dispose$),

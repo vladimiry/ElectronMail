@@ -19,6 +19,7 @@ import {StatusCodeError} from "src/shared/model/error";
 import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi, TutanotaNotificationOutput} from "src/shared/api/webview/tutanota";
 import {
     buildDbPatchRetryPipeline,
+    buildEmptyDbPatch,
     fillInputValue,
     getLocationHref,
     persistDatabasePatch,
@@ -29,7 +30,7 @@ import {buildLoggerBundle} from "src/electron-preload/util";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {fetchAllEntities, fetchEntitiesRange, fetchMultipleEntities} from "src/electron-preload/webview/tutanota/lib/rest";
 import {isUpsertOperationType, preprocessError} from "./lib/util";
-import {resolveApi} from "src/electron-preload/webview/tutanota/lib/api";
+import {resolveProviderApi} from "src/electron-preload/webview/tutanota/lib/provider-api";
 
 interface BuildDbPatchReturn {
     patch: DbPatch;
@@ -41,14 +42,14 @@ type BuildDbPatchInputMetadata = BuildDbPatchReturn["metadata"];
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[api]");
 
 export async function registerApi(): Promise<void> {
-    return resolveApi()
+    return resolveProviderApi()
         .then(bootstrapEndpoints)
         .then((endpoints) => {
             TUTANOTA_IPC_WEBVIEW_API.registerApi(endpoints, {logger: {error: _logger.error, info: () => {}}});
         });
 }
 
-function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveApi>>): TutanotaApi {
+function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>): TutanotaApi {
     const {GENERATED_MAX_ID} = api["src/api/common/EntityFunctions"];
     const login2FaWaitElementsConfig = {
         input: () => document.querySelector("#modal input.input") as HTMLInputElement,
@@ -333,7 +334,7 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveApi>>): Tutan
 }
 
 async function bootstrapDbPatch(
-    {api}: { api: Unpacked<ReturnType<typeof resolveApi>> },
+    {api}: { api: Unpacked<ReturnType<typeof resolveProviderApi>> },
     parentLogger: ReturnType<typeof buildLoggerBundle>,
 ): Promise<BuildDbPatchReturn> {
     const logger = curryFunctionMembers(parentLogger, "bootstrapDbPatch()");
@@ -467,14 +468,13 @@ async function buildDbPatch(
         }
     }
 
-    const patch: DbPatch = {
-        conversationEntries: {remove: mapping.conversationEntries.remove, upsert: []},
-        mails: {remove: mapping.mails.remove, upsert: []},
-        folders: {remove: mapping.folders.remove, upsert: []},
-        contacts: {remove: mapping.contacts.remove, upsert: []},
-    };
+    const patch: DbPatch = buildEmptyDbPatch();
 
     if (!nullUpsert) {
+        // TODO process 404 error of fetching individual entity
+        // so we could catch the individual entity fetching error
+        // 404 error can be ignored as if it occurs because user was moved stuff from here to there while syncing cycle was in progress
+        // in order to handle the case there will be a need to switch back to the per entity fetch requests
         for (const [listId, instanceIds] of mapping.conversationEntries.upsertIds.entries()) {
             const entities = await fetchMultipleEntities(mapping.conversationEntries.refType, listId, instanceIds);
             for (const entity of entities) {

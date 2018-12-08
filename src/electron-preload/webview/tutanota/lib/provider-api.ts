@@ -1,6 +1,8 @@
 import * as Rest from "./rest";
-import {Arguments, Timestamp} from "src/shared/types";
 import {StatusCodeError} from "src/shared/model/error";
+import {Timestamp} from "src/shared/types";
+import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
+import {curryFunctionMembers} from "src/shared/util";
 
 type ModuleFiles =
     | "src/api/common/EntityFunctions"
@@ -8,6 +10,11 @@ type ModuleFiles =
     | "src/api/common/utils/Encoding"
     | "src/api/main/Entity"
     | "src/api/main/EntityEventController";
+
+const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[lib/provider-api]");
+const domContentLoadedPromise = new Promise<void>((resolve) => {
+    document.addEventListener("DOMContentLoaded", () => resolve());
+});
 
 class EntityEventController {
     notificationReceived(entityUpdates: Rest.Model.EntityUpdate[]): void {}
@@ -66,22 +73,17 @@ export async function resolveProviderApi(): Promise<ProviderApi> {
         return state.bundle;
     }
 
+    _logger.info("resolveProviderApi");
+
     if (!navigator.onLine) {
         throw new StatusCodeError(`"resolveProviderApi" failed due to the offline status`, "NoNetworkConnection");
     }
 
+    // TODO reject with timeout
+    await domContentLoadedPromise;
+
     // tslint:disable-next-line:variable-name
-    const SystemJS: SystemJSLoader.System = await new Promise<SystemJSLoader.System>((resolveSystemJS) => {
-        const args: Arguments<typeof document.removeEventListener> = [
-            "DOMContentLoaded",
-            () => {
-                resolveSystemJS((window as any).SystemJS);
-                document.removeEventListener(...args);
-            },
-        ];
-        document.addEventListener.apply(document, args);
-        // TODO reject with timeout
-    });
+    const SystemJS: SystemJSLoader.System = (window as any).SystemJS;
     const baseURL = String(SystemJS.getConfig().baseURL).replace(/(.*)\/$/, "$1");
     const bundle: Record<keyof ProviderApi, any> = {
         "src/api/common/EntityFunctions": null,

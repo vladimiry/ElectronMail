@@ -48,6 +48,8 @@ export async function registerApi(): Promise<void> {
 }
 
 function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>): TutanotaApi {
+    _logger.info("bootstrapEndpoints");
+
     const {GENERATED_MAX_ID} = api["src/api/common/EntityFunctions"];
     const login2FaWaitElementsConfig = {
         input: () => document.querySelector("#modal input.input") as HTMLInputElement,

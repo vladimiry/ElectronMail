@@ -2,8 +2,8 @@ import {Injectable, OnDestroy} from "@angular/core";
 import {Model} from "pubsub-to-stream-api";
 import {Store, select} from "@ngrx/store";
 import {Subscription} from "rxjs/Subscription";
-import {concat, concatMap, delay, mergeMap, retryWhen, switchMap, take, takeWhile} from "rxjs/operators";
-import {from, of, throwError} from "rxjs";
+import {concat, concatMap, delay, filter, map, mergeMap, retryWhen, switchMap, take, takeWhile, withLatestFrom} from "rxjs/operators";
+import {from, of, throwError, timer} from "rxjs";
 
 import {AccountType} from "src/shared/model/account";
 import {DEFAULT_API_CALL_TIMEOUT, ONE_SECOND_MS} from "src/shared/constants";
@@ -23,8 +23,13 @@ const logger = getZoneNameBoundWebLogger("[_core/electron.service]");
 export class ElectronService implements OnDestroy {
     private defaultApiCallTimeoutMs = DEFAULT_API_CALL_TIMEOUT;
     private readonly webViewApiPingIntervalMs = ONE_SECOND_MS / 2;
-    private readonly timeouts$ = this.store.pipe(select(OptionsSelectors.CONFIG.timeouts));
     private readonly subscription = new Subscription();
+    private readonly onlinePingWithTimeouts$ = timer(0, ONE_SECOND_MS).pipe(
+        filter(() => navigator.onLine),
+        take(1),
+        withLatestFrom(this.store.pipe(select(OptionsSelectors.CONFIG.timeouts))),
+        map(([, timeouts]) => timeouts),
+    );
 
     constructor(
         private store: Store<State>,
@@ -60,15 +65,14 @@ export class ElectronService implements OnDestroy {
         const apiClient = api.buildClient(webView, {options: this.buildApiCallOptions(options)});
 
         // TODO consider removing "ping" API
-        // TODO it's sufficient to "ping" API initialization only once since there is no dynamic api de-registration enabled
-        const pingStart = Number(new Date());
-        const ping$ = this.timeouts$.pipe(
-            take(1),
+        // TODO it's sufficient to "ping" API initialization only once since there is no dynamic webview api de-registration happening
+        const ping$ = this.onlinePingWithTimeouts$.pipe(
             // tslint:disable-next-line:ban
-            switchMap((timeouts) => {
+            switchMap(({webViewApiPing}) => {
+                const pingStart = Number(new Date());
                 return from(apiClient("ping", {timeoutMs: 1})({zoneName: logger.zoneName()}).pipe(
                     retryWhen((errors) => errors.pipe(
-                        takeWhile(() => (Number(new Date()) - pingStart) < timeouts.webViewApiPing),
+                        takeWhile(() => (Number(new Date()) - pingStart) < webViewApiPing),
                         delay(this.webViewApiPingIntervalMs),
                         concat(throwError(new Error(`Failed to wait for "webview:${type}" service provider initialization`))),
                     )),

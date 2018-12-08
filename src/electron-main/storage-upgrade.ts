@@ -4,7 +4,7 @@ import {APP_VERSION} from "src/shared/constants";
 import {AccountConfig} from "src/shared/model/account";
 import {Config, Settings} from "src/shared/model/options";
 import {Database} from "./database";
-import {DbAccountPk} from "../shared/model/database";
+import {DbAccountPk} from "src/shared/model/database";
 import {INITIAL_STORES} from "./constants";
 
 const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {

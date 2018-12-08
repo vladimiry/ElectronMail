@@ -922,6 +922,21 @@
     "@types/uglify-js" "*"
     source-map "^0.6.0"
 
+"@vladimiry/electron-updater@4.0.5":
+  version "4.0.5"
+  resolved "https://registry.yarnpkg.com/@vladimiry/electron-updater/-/electron-updater-4.0.5.tgz#070f185bb4e14afe034d7515eccf9340449c9f06"
+  integrity sha512-zUM4lDBf4LAzmoqTnWIcbwT4ChnX6OA3shMTRp/Xj4W2PPormMQ+AZ+dTess1NNSOVY+LfuLOkX9sEyqLszdRQ==
+  dependencies:
+    bluebird-lst "^1.0.6"
+    builder-util-runtime "~8.0.2"
+    fs-extra-p "^7.0.0"
+    js-yaml "^3.12.0"
+    lazy-val "^1.0.3"
+    lodash.isequal "^4.5.0"
+    pako "^1.0.6"
+    semver "^5.6.0"
+    source-map-support "^0.5.9"
+
 "@vladimiry/unionize@2.1.2-add-tagprefix-option":
   version "2.1.2-add-tagprefix-option"
   resolved "https://registry.yarnpkg.com/@vladimiry/unionize/-/unionize-2.1.2-add-tagprefix-option.tgz#56e15097261a68fc00eca259b28b6e4ee195c054"
@@ -3854,21 +3869,6 @@ electron-unhandled@2.1.0:
     electron-is-dev "^1.0.1"
     ensure-error "^1.0.0"
     lodash.debounce "^4.0.8"
-
-electron-updater@4.0.5:
-  version "4.0.5"
-  resolved "https://registry.yarnpkg.com/electron-updater/-/electron-updater-4.0.5.tgz#0d35f13b539d0dde5a1ee18f676ea87c37bf5f4a"
-  integrity sha512-2w93987YlPNMbhYQe6+EsSpkhtgYtLyYuAMttqQckwFdBJJat4Jo8ja/gmBk2Aa760g2Jt7aIBPQvlJDiXGPgg==
-  dependencies:
-    bluebird-lst "^1.0.6"
-    builder-util-runtime "~8.0.2"
-    fs-extra-p "^7.0.0"
-    js-yaml "^3.12.0"
-    lazy-val "^1.0.3"
-    lodash.isequal "^4.5.0"
-    pako "^1.0.6"
-    semver "^5.6.0"
-    source-map-support "^0.5.9"
 
 electron@3.1.0-beta.2:
   version "3.1.0-beta.2"

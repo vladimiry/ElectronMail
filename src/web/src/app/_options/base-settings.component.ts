@@ -5,7 +5,7 @@ import {map, take} from "rxjs/operators";
 
 import {BaseConfig} from "src/shared/model/options";
 import {LOG_LEVELS} from "src/shared/constants";
-import {NAVIGATION_ACTIONS} from "../store/actions";
+import {NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
 import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {State} from "src/web/src/app/store/reducers/options";

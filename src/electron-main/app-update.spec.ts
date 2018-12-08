@@ -6,14 +6,14 @@ test.serial("initAutoUpdate", async (t) => {
     const loggerSpy = sinon.spy();
     const electronUpdaterLibrary = {
         autoUpdater: {
-            checkForUpdatesAndNotify: sinon.spy(),
+            checkForUpdatesAndNotify: sinon.stub().returns(Promise.resolve({checkForUpdatesAndNotify: () => {}})),
             logger: undefined,
         },
     };
     const library = await rewiremock.around(
         () => import("./app-update"),
         (mock) => {
-            mock("electron-updater")
+            mock("@vladimiry/electron-updater")
                 .with(electronUpdaterLibrary);
             mock("electron-log")
                 .with(loggerSpy);

@@ -3,6 +3,8 @@ import compareVersions from "compare-versions";
 import {APP_VERSION} from "src/shared/constants";
 import {AccountConfig} from "src/shared/model/account";
 import {Config, Settings} from "src/shared/model/options";
+import {Database} from "./database";
+import {DbAccountPk} from "../shared/model/database";
 import {INITIAL_STORES} from "./constants";
 
 const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
@@ -114,4 +116,32 @@ function upgrade<T extends Config | Settings>(entity: T, upgrades: Record<string
 
 function isAppVersionLessThan(version: string): boolean {
     return compareVersions(APP_VERSION, version) === -1;
+}
+
+export async function upgradeDatabase(db: Database, settings: Settings) {
+    if (db.getVersion() === "1") {
+        db.reset();
+        await db.saveToFile();
+        return;
+    }
+
+    // removing nonexistent accounts
+    await (async () => {
+        const removePks: DbAccountPk[] = [];
+
+        db.iterateAccounts(({pk}) => {
+            if (settings.accounts.some((a) => Boolean(a.database) && a.type === pk.type && a.login === pk.login)) {
+                return;
+            }
+            removePks.push(pk);
+        });
+
+        for (const pk of removePks) {
+            db.deleteAccount(pk);
+        }
+
+        if (removePks.length) {
+            await db.saveToFile();
+        }
+    })();
 }

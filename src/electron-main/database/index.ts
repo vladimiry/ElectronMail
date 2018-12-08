@@ -47,6 +47,10 @@ export class Database {
         return metadata[type];
     }
 
+    getVersion(): string {
+        return this.memoryDb.version;
+    }
+
     getFsAccount<TL extends DbAccountPk>({type, login}: TL): FsDbAccount<TL["type"]> | undefined {
         const account = this.getAccount({type, login});
 

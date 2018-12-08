@@ -604,7 +604,12 @@ async function buildDbPatch(
         }
     }
 
-    const patch: DbPatch = buildEmptyDbPatch();
+    const patch: DbPatch = {
+        conversationEntries: {remove: [], upsert: []},
+        mails: {remove: mapping.mails.remove, upsert: []},
+        folders: {remove: mapping.folders.remove, upsert: []},
+        contacts: {remove: mapping.contacts.remove, upsert: []},
+    };
 
     if (!nullUpsert) {
         // TODO process 404 error of fetching individual entity

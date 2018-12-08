@@ -19,7 +19,6 @@ import {StatusCodeError} from "src/shared/model/error";
 import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi, TutanotaNotificationOutput} from "src/shared/api/webview/tutanota";
 import {
     buildDbPatchRetryPipeline,
-    buildEmptyDbPatch,
     fillInputValue,
     getLocationHref,
     persistDatabasePatch,
@@ -28,7 +27,6 @@ import {
 } from "src/electron-preload/webview/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
-import {fetchAllEntities, fetchEntitiesRange, fetchMultipleEntities} from "src/electron-preload/webview/tutanota/lib/rest";
 import {isUpsertOperationType, preprocessError} from "./lib/util";
 import {resolveProviderApi} from "src/electron-preload/webview/tutanota/lib/provider-api";
 
@@ -264,7 +262,7 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
                             return;
                         }
 
-                        const emails = await fetchEntitiesRange(
+                        const emails = await Rest.fetchEntitiesRange(
                             Rest.Model.MailTypeRef,
                             inboxFolder.mails,
                             {count: 50, reverse: true, start: GENERATED_MAX_ID},
@@ -383,7 +381,7 @@ async function bootstrapDbPatch(
             new Set<Rest.Model.ConversationEntry["_id"][0]>(),
         );
         for (const listId of conversationEntryListIds.values()) {
-            const fetched = await fetchAllEntities(Rest.Model.ConversationEntryTypeRef, listId);
+            const fetched = await Rest.fetchAllEntities(Rest.Model.ConversationEntryTypeRef, listId);
             items.push(...fetched);
         }
         return items;
@@ -468,7 +466,12 @@ async function buildDbPatch(
         }
     }
 
-    const patch: DbPatch = buildEmptyDbPatch();
+    const patch: DbPatch = {
+        conversationEntries: {remove: mapping.conversationEntries.remove, upsert: []},
+        mails: {remove: mapping.mails.remove, upsert: []},
+        folders: {remove: mapping.folders.remove, upsert: []},
+        contacts: {remove: mapping.contacts.remove, upsert: []},
+    };
 
     if (!nullUpsert) {
         // TODO process 404 error of fetching individual entity
@@ -476,23 +479,23 @@ async function buildDbPatch(
         // 404 error can be ignored as if it occurs because user was moved stuff from here to there while syncing cycle was in progress
         // in order to handle the case there will be a need to switch back to the per entity fetch requests
         for (const [listId, instanceIds] of mapping.conversationEntries.upsertIds.entries()) {
-            const entities = await fetchMultipleEntities(mapping.conversationEntries.refType, listId, instanceIds);
+            const entities = await Rest.fetchMultipleEntities(mapping.conversationEntries.refType, listId, instanceIds);
             for (const entity of entities) {
                 patch.conversationEntries.upsert.push(Database.buildConversationEntry(entity));
             }
         }
         for (const [listId, instanceIds] of mapping.mails.upsertIds.entries()) {
-            const entities = await fetchMultipleEntities(mapping.mails.refType, listId, instanceIds);
+            const entities = await Rest.fetchMultipleEntities(mapping.mails.refType, listId, instanceIds);
             patch.mails.upsert.push(...await Database.buildMails(entities));
         }
         for (const [listId, instanceIds] of mapping.folders.upsertIds.entries()) {
-            const entities = await fetchMultipleEntities(mapping.folders.refType, listId, instanceIds);
+            const entities = await Rest.fetchMultipleEntities(mapping.folders.refType, listId, instanceIds);
             for (const entity of entities) {
                 patch.folders.upsert.push(Database.buildFolder(entity));
             }
         }
         for (const [listId, instanceIds] of mapping.contacts.upsertIds.entries()) {
-            const entities = await fetchMultipleEntities(mapping.contacts.refType, listId, instanceIds);
+            const entities = await Rest.fetchMultipleEntities(mapping.contacts.refType, listId, instanceIds);
             for (const entity of entities) {
                 patch.contacts.upsert.push(Database.buildContact(entity));
             }

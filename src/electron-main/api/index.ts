@@ -3,12 +3,11 @@ import {from} from "rxjs";
 
 import {Account, Database, General, TrayIcon} from "./endpoints-builders";
 import {Context} from "src/electron-main/model";
-import {DbAccountPk} from "src/shared/model/database";
 import {Endpoints, IPC_MAIN_API} from "src/shared/api/main";
 import {buildSettingsAdapter} from "src/electron-main/util";
 import {clearDefaultSessionCaches} from "src/electron-main/session";
 import {deletePassword, getPassword, setPassword} from "src/electron-main/keytar";
-import {upgradeConfig, upgradeSettings} from "src/electron-main/storage-upgrade";
+import {upgradeConfig, upgradeDatabase, upgradeSettings} from "src/electron-main/storage-upgrade";
 
 export const initApi = async (ctx: Context): Promise<Endpoints> => {
     const endpoints: Endpoints = {
@@ -109,23 +108,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
             // TODO ensure by tests that database loaded occurs after the "ctx.settingsStore = store" assignment (see above)
             if (await ctx.db.persisted()) {
                 await ctx.db.loadFromFile();
-
-                const removePks: DbAccountPk[] = [];
-
-                ctx.db.iterateAccounts(({pk}) => {
-                    if (settings.accounts.some((a) => Boolean(a.database) && a.type === pk.type && a.login === pk.login)) {
-                        return;
-                    }
-                    removePks.push(pk);
-                });
-
-                for (const pk of removePks) {
-                    ctx.db.deleteAccount(pk);
-                }
-
-                if (removePks.length) {
-                    await ctx.db.saveToFile();
-                }
+                await upgradeDatabase(ctx.db, settings);
             }
 
             return settings;

@@ -1,3 +1,5 @@
+import {splitEvery} from "ramda";
+
 import * as Model from "./model";
 import * as Util from "src/electron-preload/webview/tutanota/lib/util";
 import {BaseEntity, Id, IdTuple, RequestParams, TypeRef} from "./model";
@@ -20,14 +22,21 @@ export async function fetchAllEntities<T extends BaseEntity<IdTuple>, TypeRefTyp
     return loadAll(typeRef, listId);
 }
 
-// TODO "fetchMultipleEntities": allow optional fetching by chunks/portions, "chinkSize" argument
 export async function fetchMultipleEntities<T extends BaseEntity<Id | IdTuple>, TypeRefType extends TypeRef<T>>(
     typeRef: TypeRef<T>,
     listId: T["_id"] extends IdTuple ? T["_id"][0] : null,
     instanceIds: Array<T["_id"] extends IdTuple ? T["_id"][1] : T["_id"]>,
+    chunkSize = 100,
 ): Promise<T[]> {
     const {loadMultiple} = (await resolveProviderApi())["src/api/main/Entity"];
-    return loadMultiple(typeRef, listId, instanceIds);
+    const instanceIdsChunks = splitEvery(chunkSize, instanceIds);
+    const result: T[] = [];
+
+    for (const instanceIdsChunk of instanceIdsChunks) {
+        result.push(...await loadMultiple(typeRef, listId, instanceIdsChunk));
+    }
+
+    return result;
 }
 
 export async function fetchEntitiesRange<T extends BaseEntity<IdTuple>, TypeRefType extends TypeRef<T>>(

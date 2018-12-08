@@ -3,13 +3,14 @@ import {equals} from "ramda";
 import * as DatabaseModel from "src/shared/model/database";
 import * as Rest from "src/electron-preload/webview/tutanota/lib/rest";
 import {buildBaseEntity, buildPk} from ".";
-import {fetchMultipleEntities} from "src/electron-preload/webview/tutanota/lib/rest";
 import {mapBy} from "src/shared/util";
 import {resolveInstanceId, resolveListId} from "src/electron-preload/webview/tutanota/lib/util";
 
 export async function buildMails(mails: Rest.Model.Mail[]): Promise<DatabaseModel.Mail[]> {
     const [bodies, files] = await Promise.all([
-        await fetchMultipleEntities(Rest.Model.MailBodyTypeRef, null, mails.map(({body}) => body)),
+        // WARN: don't set huge chunk size for mails body loading
+        // or server will response with timeout error on "/rest/tutanota/mailbody/" request
+        await Rest.fetchMultipleEntities(Rest.Model.MailBodyTypeRef, null, mails.map(({body}) => body), 50),
         await (async () => {
             const attachmentsIds = mails.reduce((accumulator: typeof mail.attachments, mail) => [...accumulator, ...mail.attachments], []);
             const attachmentsMap = mapBy(attachmentsIds, (_id) => resolveListId({_id}));
@@ -17,7 +18,7 @@ export async function buildMails(mails: Rest.Model.Mail[]): Promise<DatabaseMode
 
             for (const [listId, fileIds] of attachmentsMap.entries()) {
                 const instanceIds = fileIds.map(((_id) => resolveInstanceId({_id})));
-                attachments.push(...await fetchMultipleEntities(Rest.Model.FileTypeRef, listId, instanceIds));
+                attachments.push(...await Rest.fetchMultipleEntities(Rest.Model.FileTypeRef, listId, instanceIds));
             }
 
             return attachments;

@@ -10,6 +10,12 @@
                 <label class="form-check-label">
                     <input type="checkbox" class="form-check-input" formControlName="database">
                     Local store
+                    <i class="fa fa-info-circle text-primary"
+                       [popover]="localStorePopoverTemplate" placement="bottom" container="body" triggers="mouseenter:mouseleave"
+                    ></i>
+                    <ng-template #localStorePopoverTemplate>
+                        The "local store" feature enables storing your messages in the encrypted "database.bin" file, so you could view your messages offline and export them to EML files.
+                    </ng-template>
                 </label>
             </div>
         </div>

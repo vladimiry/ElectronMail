@@ -56,62 +56,42 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
         const distDir = path.resolve(baseDestDir, accountType);
         const baseRepoDir = path.resolve(process.cwd(), `./output/git/${accountType}/webclient/${PROVIDER_REPO[accountType].commit}`);
 
-        await execFlow({accountType, distDir, baseRepoDir, repoRelativeDistDir, folderAsDomainEntries, flow});
+        for (const folderAsDomainEntry of folderAsDomainEntries) {
+            const resolvedDistDir = path.resolve(distDir, folderAsDomainEntry.folderNameAsDomain);
+            consoleLog(
+                chalk.magenta(`Preparing built-in WebClient build [${accountType}]:`),
+                chalkConsoleValue(JSON.stringify({...folderAsDomainEntry, resolvedDistDir})),
+            );
+
+            if (await fsExtra.pathExists(resolvedDistDir)) {
+                consoleLog(chalk.yellow(`Skipping as directory already exists:`), chalkConsoleValue(resolvedDistDir));
+                continue;
+            }
+
+            const repoDir = path.resolve(baseRepoDir, folderAsDomainEntry.folderNameAsDomain);
+            const repoDistDir = path.resolve(repoDir, repoRelativeDistDir);
+
+            if (await fsExtra.pathExists(repoDir)) {
+                consoleLog(chalk.yellow(`Skipping cloning`));
+            } else {
+                await fsExtra.ensureDir(repoDir);
+                await clone(accountType, repoDir);
+            }
+
+            if (await fsExtra.pathExists(path.resolve(repoDir, "node_modules"))) {
+                consoleLog(chalk.yellow(`Skipping dependencies installing`));
+            } else {
+                await installDependencies(repoDir);
+            }
+
+            await flow({repoDir, repoDistDir, folderAsDomainEntry});
+
+            consoleLog(chalk.magenta(`Copying:`), chalkConsoleValue(`${repoDistDir}" to "${resolvedDistDir}`));
+            await fsExtra.copy(repoDistDir, resolvedDistDir);
+        }
     } catch (error) {
         consoleError("Uncaught exception", error);
         process.exit(1);
-    }
-}
-
-async function execFlow<T extends FolderAsDomainEntry[], O = Unpacked<T>["options"]>(
-    {
-        accountType,
-        distDir,
-        baseRepoDir,
-        folderAsDomainEntries,
-        repoRelativeDistDir,
-        flow,
-    }: {
-        accountType: AccountType,
-        distDir: string;
-        baseRepoDir: string;
-        repoRelativeDistDir: string;
-        folderAsDomainEntries: T;
-        flow: Flow<O>;
-    },
-) {
-    for (const folderAsDomainEntry of folderAsDomainEntries) {
-        const resolvedDistDir = path.resolve(distDir, folderAsDomainEntry.folderNameAsDomain);
-        consoleLog(
-            chalk.magenta(`Preparing built-in WebClient build [${accountType}]:`),
-            chalkConsoleValue(JSON.stringify({...folderAsDomainEntry, resolvedDistDir})),
-        );
-
-        if (await fsExtra.pathExists(resolvedDistDir)) {
-            consoleLog(chalk.yellow(`Skipping as directory already exists:`), chalkConsoleValue(resolvedDistDir));
-            continue;
-        }
-
-        const repoDir = path.resolve(baseRepoDir, folderAsDomainEntry.folderNameAsDomain);
-        const repoDistDir = path.resolve(repoDir, repoRelativeDistDir);
-
-        if (await fsExtra.pathExists(repoDir)) {
-            consoleLog(chalk.yellow(`Skipping cloning`));
-        } else {
-            await fsExtra.ensureDir(repoDir);
-            await clone(accountType, repoDir);
-        }
-
-        if (await fsExtra.pathExists(path.resolve(repoDir, "node_modules"))) {
-            consoleLog(chalk.yellow(`Skipping dependencies installing`));
-        } else {
-            await installDependencies(repoDir);
-        }
-
-        await flow({repoDir, repoDistDir, folderAsDomainEntry});
-
-        consoleLog(chalk.magenta(`Copying:`), chalkConsoleValue(`${repoDistDir}" to "${resolvedDistDir}`));
-        await fsExtra.copy(repoDistDir, resolvedDistDir);
     }
 }
 

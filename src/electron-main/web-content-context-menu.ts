@@ -27,14 +27,6 @@ const contextMenuEventSubscriptionArgs: ["context-menu", (event: Event, params: 
                 ...(editFlags.canCopy ? [{label: "Copy", click: () => webContents.copy()}] : emptyArray),
                 ...(editFlags.canPaste ? [{label: "Paste", click: () => webContents.paste()}] : emptyArray),
             ]);
-
-            // TODO "selectall" context menu action doesn't work properly (works well only on login page)
-            // if (editFlags.canSelectAll) {
-            //     if (template.length) {
-            //         template.push(separatorItem);
-            //     }
-            //     template.push({role: "selectall"});
-            // }
         }
 
         if (template.length) {

@@ -19,41 +19,6 @@ const staticDarwinItems: MenuItemConstructorOptions[] = [
         label: "Show All",
         role: "unhide",
     },
-    // {
-    //     type: "separator",
-    // },
-    // {
-    //     // TODO consider making "edit" app menu hidden as it's only needed to register the cut/copy/paste hotkeys on macOS
-    //     label: "Edit",
-    //     submenu: [
-    //         // TODO use "role" based "cut/copy/paste" actions, currently these actions don't work properly
-    //         // track the respective issue https://github.com/electron/electron/issues/15219
-    //         {
-    //             label: "Cut",
-    //             accelerator: "CmdOrCtrl+X",
-    //             // role: "cut",
-    //             click: (menuItem, {webContents}) => {
-    //                 webContents.cut();
-    //             },
-    //         },
-    //         {
-    //             label: "Copy",
-    //             accelerator: "CmdOrCtrl+C",
-    //             // role: "copy",
-    //             click: (menuItem, {webContents}) => {
-    //                 webContents.copy();
-    //             },
-    //         },
-    //         {
-    //             label: "Paste",
-    //             accelerator: "CmdOrCtrl+V",
-    //             // role: "paste",
-    //             click: (menuItem, {webContents}) => {
-    //                 webContents.paste();
-    //             },
-    //         },
-    //     ],
-    // },
     {
         type: "separator",
     },

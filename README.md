@@ -47,4 +47,10 @@ Linux/OSX/Windows installation packages download page is [here](https://github.c
 - If you don't need a package to install, but a folder to execute app from, simply run `yarn run electron-builder:dir` command.  
 - Binary executable, whether it's a folder or package to install, comes into the `./dist` folder.
 
-To summarize, considering that all the described build requirements are met, the short build command to build let's say Arch Linux package will be `yarn install && yarn run app:dist && yarn run electron-builder:dist:linux:pacman`.
+To recap, considering that all the described build requirements are met, the short command to build let's say Arch Linux package will be `yarn install && yarn run app:dist && yarn run electron-builder:dist:linux:pacman`.
+
+## Removing the app
+
+It's recommended to perform the following actions before uninstalling the app:
+- If you had the `Keep me signed in` feature enabled (see [screenshot](images/keep-me-signed-in.png)), click `Log-out` action in the app menu (see [screenshot](images/logout.png)). That will remove locally stored master password (done with [node-keytar](https://github.com/atom/node-keytar)). You can also remove it having the app already uninstalled, but that would be a more complicated way as you will have to manually edit the system's keychain.
+- Remove settings folder manually. You can locate settings folder path clicking `Open setting folder` app/tray menu item (see [screenshot](images/open-settings-folder.jpg)) or reading `app.getPath(name ="userData")` related `app.getPath(name)` section [here](https://electronjs.org/docs/api/app#appgetpathname). 

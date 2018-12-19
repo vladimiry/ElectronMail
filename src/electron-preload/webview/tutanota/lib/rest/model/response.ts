@@ -59,6 +59,7 @@ export interface ConversationEntry<TypeRecord = typeof CONVERSATION_TYPE._.nameV
 export interface Mail<StateRecord = typeof MAIL_STATE._.nameValueMap, ReplyRecord = typeof REPLY_TYPE._.nameValueMap> extends BaseEntity<[MailList["_id"], Id]> {
     sentDate: NumberString; // timestamp;
     receivedDate: NumberString; // timestamp;
+    movedTime?: NumberString; // timestamp;
     subject: string;
     body: MailBody["_id"];
     sender: MailAddress;

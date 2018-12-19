@@ -3839,12 +3839,12 @@ electron-publish@20.38.3:
     lazy-val "^1.0.3"
     mime "^2.4.0"
 
-electron-rpc-api@3.3.1:
-  version "3.3.1"
-  resolved "https://registry.yarnpkg.com/electron-rpc-api/-/electron-rpc-api-3.3.1.tgz#a8a49e5122f9c79356078922e7cc619f22d1426d"
-  integrity sha512-s4hurHxDLrev23fwexB4ScpDMJRb4eje4y0R+2basfEo51fBxGq/dmLEheCJqIkCqd4Bqkf4DEapN9Em1KK36A==
+electron-rpc-api@4.0.0-beta.2:
+  version "4.0.0-beta.2"
+  resolved "https://registry.yarnpkg.com/electron-rpc-api/-/electron-rpc-api-4.0.0-beta.2.tgz#e8a22ae7268d97171de0e90feb95818d745e9cc7"
+  integrity sha512-yAR09Pg1iQ6RtNG//A7GMJDOY1JCG9xvfGlW/HiKmW2Zis88hBkuyeOtaonFUryI86VI1hlpYgKcpKviGM9jWg==
   dependencies:
-    pubsub-to-stream-api "^3.3.1"
+    pubsub-to-stream-api "^4.0.0-beta.2"
     tslib "^1.9.2"
 
 electron-to-chromium@^1.3.86:
@@ -9019,10 +9019,10 @@ public-encrypt@^4.0.0:
     randombytes "^2.0.1"
     safe-buffer "^5.1.2"
 
-pubsub-to-stream-api@^3.3.1:
-  version "3.3.1"
-  resolved "https://registry.yarnpkg.com/pubsub-to-stream-api/-/pubsub-to-stream-api-3.3.1.tgz#0a50289f4d99861d9266dbfcf43772e476311a99"
-  integrity sha512-7BtQIVrQwedrBttlAU0SMN3ECfc2W2cCcRQzQwbva5HmyqHxpA8ZjUKvp4NgRzy8TVQMU/0WAGRFbAgkXJS1Aw==
+pubsub-to-stream-api@^4.0.0-beta.2:
+  version "4.0.0-beta.2"
+  resolved "https://registry.yarnpkg.com/pubsub-to-stream-api/-/pubsub-to-stream-api-4.0.0-beta.2.tgz#e1b186264de4b7b64a7ad1513fbb2b1a3a2351ce"
+  integrity sha512-56tMo+lPQxOkpGHDD/9fhYQPq7Nm2/jIbV/CssFebrmS5kx00qq+e1mUE36GMb9BVM5GxDkDHqSGtgSRPB759g==
   dependencies:
     deserialize-error "^0.0.3"
     jsan "^3.1.13"

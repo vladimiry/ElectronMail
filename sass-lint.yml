@@ -2,7 +2,7 @@ options:
   formatter: stylish
 files:
   include:
-  - "./src/web/src/**/*.s+(a|c)ss"
+    - "./src/web/src/**/*.s+(a|c)ss"
 rules:
   # extends
   extends-before-mixins: 1
@@ -58,24 +58,24 @@ rules:
   clean-import-paths: 1
   empty-args: 1
   hex-length:
-  - 1
-  - style: long
+    - 1
+    - style: long
   hex-notation:
-  - 1
-  - style: lowercase
+    - 1
+    - style: lowercase
   indentation:
-  - 1
-  - size: 4
+    - 1
+    - size: 4
   leading-zero:
-  - 1
-  - include: true
+    - 1
+    - include: true
   nesting-depth:
-  - 1
-  - max-depth: 10
+    - 1
+    - max-depth: 10
   property-sort-order: 0
   quotes:
-  - 1
-  - style: double
+    - 1
+    - style: double
   shorthand-values: 1
   url-quotes: 1
   variable-for-property: 1

@@ -3,7 +3,6 @@ artifactName: ${name}-${version}-${os}-${arch}.${ext}
 
 publish: {provider: github, releaseType: draft, vPrefixedTagName: true}
 forceCodeSigning: false
-generateUpdatesFilesForAllChannels: true
 
 # TODO consider moving fully bundable "dependencies" to "devDependencies" to reduce final package size
 

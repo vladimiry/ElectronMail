@@ -1,7 +1,7 @@
 {
   "name": "email-securely-app",
   "description": "Unofficial desktop app for E2E encrypted email providers",
-  "version": "2.0.0-beta.10",
+  "version": "2.0.0",
   "author": "Vladimir Yakovlev <desktop-app@protonmail.ch>",
   "license": "MIT",
   "homepage": "https://github.com/vladimiry/email-securely-app",

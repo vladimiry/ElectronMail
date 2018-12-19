@@ -13,7 +13,7 @@ test.serial("initAutoUpdate", async (t) => {
     const library = await rewiremock.around(
         () => import("./app-update"),
         (mock) => {
-            mock("@vladimiry/electron-updater")
+            mock("electron-updater")
                 .with(electronUpdaterLibrary);
             mock("electron-log")
                 .with(loggerSpy);

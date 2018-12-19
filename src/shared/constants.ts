@@ -44,11 +44,11 @@ export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlIte
         entryUrl: [
             {
                 value: "https://app.protonmail.ch",
-                title: "https://app.protonmail.ch",
+                title: "https://app.protonmail.ch (deprecated)",
             },
             {
                 value: "https://mail.protonmail.com",
-                title: "https://mail.protonmail.com",
+                title: "https://mail.protonmail.com (deprecated)",
             },
             ...((process.env.NODE_ENV as BuildEnvironment) === "development" ? [
                 {
@@ -58,11 +58,11 @@ export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlIte
             ] : []),
             {
                 value: "https://beta.protonmail.com",
-                title: "https://beta.protonmail.com",
+                title: "https://beta.protonmail.com (deprecated)",
             },
             {
                 value: "https://protonirockerxow.onion",
-                title: "https://protonirockerxow.onion",
+                title: "https://protonirockerxow.onion (deprecated)",
             },
             ...((process.env.NODE_ENV as BuildEnvironment) === "development" ? [
                 {
@@ -76,7 +76,7 @@ export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlIte
         entryUrl: [
             {
                 value: "https://mail.tutanota.com",
-                title: "https://mail.tutanota.com",
+                title: "https://mail.tutanota.com (deprecated)",
             },
             ...((process.env.NODE_ENV as BuildEnvironment) === "development" ? [
                 {
@@ -89,7 +89,7 @@ export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlIte
 };
 
 function getBuiltInWebClientTitle(accountType: AccountType): string {
-    return `Built-in Web Client v${PROVIDER_REPO[accountType].version}-${PROVIDER_REPO[accountType].commit.substr(0, 7)}`;
+    return `built-in "web client" v${PROVIDER_REPO[accountType].version}-${PROVIDER_REPO[accountType].commit.substr(0, 7)}`;
 }
 
 export const LOG_LEVELS: LogLevel[] = Object.keys(((stub: Record<LogLevel, null>) => stub)({

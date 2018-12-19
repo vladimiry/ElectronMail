@@ -43,7 +43,6 @@
         <div class="form-group required">
             <ng-template #entryUrlItemTemplate let-item="item" let-index="index">
                 {{ item.title }}
-                <span class="badge badge-secondary" *ngIf="isLocalWebClient(item)">experimental</span>
             </ng-template>
             <label>Domain</label>
             <ng-select [items]="entryUrlItems" [clearable]="false" formControlName="entryUrl" id="accountEditFormEntryUrlField"

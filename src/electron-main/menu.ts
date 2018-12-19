@@ -3,27 +3,6 @@ import {platform} from "os";
 
 import {Endpoints} from "src/shared/api/main";
 
-const staticDarwinItems: MenuItemConstructorOptions[] = [
-    {
-        type: "separator",
-    },
-    {
-        role: "hide",
-        accelerator: "Command+H",
-    },
-    {
-        role: "hideothers",
-        accelerator: "Command+Alt+H",
-    },
-    {
-        label: "Show All",
-        role: "unhide",
-    },
-    {
-        type: "separator",
-    },
-];
-
 export async function initApplicationMenu(endpoints: Endpoints): Promise<Menu> {
     const aboutItem: MenuItemConstructorOptions = {
         label: "About",
@@ -42,7 +21,24 @@ export async function initApplicationMenu(endpoints: Endpoints): Promise<Menu> {
             label: app.getName(),
             submenu: [
                 aboutItem,
-                ...staticDarwinItems,
+                {
+                    type: "separator",
+                },
+                {
+                    role: "hide",
+                    accelerator: "Command+H",
+                },
+                {
+                    role: "hideothers",
+                    accelerator: "Command+Alt+H",
+                },
+                {
+                    label: "Show All",
+                    role: "unhide",
+                },
+                {
+                    type: "separator",
+                },
                 quitItem,
             ],
         }]

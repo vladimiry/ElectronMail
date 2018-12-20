@@ -2,6 +2,9 @@
 
 set -ev
 
+yarn run ci:travis:download-artifact
+unzip $EMAIL_SECURELY_APP_GITHUB_ARTIFACT_NAME
+
 yarn run app:dist
 
 if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then

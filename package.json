@@ -69,7 +69,9 @@
     "test:electron-main": "cross-env TS_NODE_PROJECT=./src/electron-main/tsconfig.json ava --verbose \"./src/electron-main/**/*.{spec,test}.ts\"",
     "test:web": "cross-env NODE_ENV=test karma start ./src/web/test/karma.conf.ts --single-run",
     "test:web:watch": "cross-env NODE_ENV=test karma start ./src/web/test/karma.conf.ts",
-    "print-dist-packages-hashes": "ts-node -r tsconfig-paths/register ./scripts/print-dist-packages-hashes.ts ./dist"
+    "print-dist-packages-hashes": "ts-node -r tsconfig-paths/register ./scripts/print-dist-packages-hashes.ts ./dist",
+    "ci:travis:upload-artifact": "ts-node -r tsconfig-paths/register ./scripts/travis-github-artifacts.ts upload",
+    "ci:travis:download-artifact": "ts-node -r tsconfig-paths/register ./scripts/travis-github-artifacts.ts download"
   },
   "ava": {
     "compileEnhancements": false,
@@ -132,6 +134,7 @@
     "@ngrx/router-store": "6.1.2",
     "@ngrx/store": "6.1.2",
     "@ngtools/webpack": "7.1.4",
+    "@octokit/rest": "16.3.0",
     "@types/angular": "1.6.52",
     "@types/byline": "4.2.31",
     "@types/chalk": "2.2.0",

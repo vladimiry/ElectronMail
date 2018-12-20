@@ -2,6 +2,7 @@
 
 set -ev
 
+rm -rf ./output
 yarn run ci:travis:download-artifact
 unzip $EMAIL_SECURELY_APP_GITHUB_ARTIFACT_NAME
 

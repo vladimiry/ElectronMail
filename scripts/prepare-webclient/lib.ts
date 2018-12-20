@@ -1,21 +1,15 @@
 import byline from "byline";
 import chalk from "chalk";
-import fastGlob from "fast-glob";
 import fsExtra from "fs-extra";
 import path from "path";
 import pathIsInside from "path-is-inside";
-import rimraf from "rimraf";
 import spawnAsync from "@expo/spawn-async";
 import {GitProcess} from "dugite";
-import {IPartialOptions} from "fast-glob/out/managers/options";
-import {Pattern} from "fast-glob/out/types/patterns";
-import {promisify} from "util";
 
 import {AccountType} from "src/shared/model/account";
 import {Arguments, Unpacked} from "src/shared/types";
 import {PROVIDER_REPO} from "src/shared/constants";
 
-const promisifiedRimraf = promisify(rimraf);
 // tslint:disable-next-line:no-console
 export const consoleLog = console.log;
 // tslint:disable-next-line:no-console
@@ -59,7 +53,12 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
 ) {
     try {
         const distDir = path.resolve(baseDestDir, accountType);
-        const baseRepoDir = path.resolve(process.cwd(), `./output/git/${accountType}/webclient/${PROVIDER_REPO[accountType].commit}`);
+        const webClientDir = path.resolve(process.cwd(), `./output/git/${accountType}/webclient`);
+        const distFoldersFile = path.resolve(process.cwd(), webClientDir, `./dist-folders.txt`);
+        const baseRepoDir = path.resolve(process.cwd(), webClientDir, `./${PROVIDER_REPO[accountType].commit}`);
+
+        await fsExtra.ensureDir(webClientDir);
+        await fsExtra.writeFile(distFoldersFile, "", {flag: "w"});
 
         for (const folderAsDomainEntry of folderAsDomainEntries) {
             const resolvedDistDir = path.resolve(distDir, folderAsDomainEntry.folderNameAsDomain);
@@ -98,21 +97,7 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
             consoleLog(chalk.magenta(`Copying:`), chalkConsoleValue(`${repoDistDir}" to "${resolvedDistDir}`));
             await fsExtra.copy(repoDistDir, resolvedDistDir);
 
-            const globPatternToRemove: [Pattern[], IPartialOptions<string>] = [
-                [`*/**`],
-                {
-                    cwd: repoDir,
-                    deep: true,
-                    ignore: [path.relative(repoDir, repoDistDir)],
-                    transform: (entry) => typeof entry === "string" ? entry : entry.path,
-                },
-            ];
-            const pathsToRemove = await fastGlob<string>(...globPatternToRemove);
-            consoleLog(chalk.magenta(`Remove by glob pattern:`), (JSON.stringify(globPatternToRemove)));
-            consoleLog(chalk.magenta(`Items to remove:`), (String(pathsToRemove.length)));
-            await Promise.all(
-                pathsToRemove.map((pathToRemove) => promisifiedRimraf(pathToRemove)),
-            );
+            await fsExtra.writeFile(distFoldersFile, `${path.relative(process.cwd(), repoDistDir)}\n`, {flag: "a"});
         }
     } catch (error) {
         consoleError("Uncaught exception", error);

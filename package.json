@@ -190,7 +190,6 @@
     "electron": "3.0.13",
     "electron-builder": "20.38.4",
     "exports-loader": "0.7.0",
-    "fast-glob": "2.2.4",
     "file-loader": "2.0.0",
     "font-awesome": "4.7.0",
     "fs-extra": "7.0.1",

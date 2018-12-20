@@ -16,8 +16,6 @@ platform:
   - x64
 build: off
 test: off
-cache:
-  - '%LOCALAPPDATA%/Yarn'
 matrix:
   fast_finish: true
 environment:
@@ -28,6 +26,9 @@ for:
   - matrix:
       only:
         - image: Ubuntu1804
+    cache:
+      - $HOME/.cache/yarn
+      - ./output/git
     install:
       - sudo apt-get --yes install gnome-keyring libgnome-keyring-dev libsecret-1-dev nasm
       - cmd: powershell Install-Product node $env:nodejs_version
@@ -42,9 +43,13 @@ for:
       - zip -r $linuxJobArtifactFile ./app
       - ls
       - appveyor PushArtifact $linuxJobArtifactFile
+      - ./scripts/ci-before-cache.sh
   - matrix:
       only:
         - image: Visual Studio 2017
+    cache:
+      - '%LOCALAPPDATA%\\Yarn'
+      - output\git
     install:
       - ps: Install-Product node $env:nodejs_version
       - SET CI=true

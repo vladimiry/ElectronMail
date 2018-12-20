@@ -9,6 +9,7 @@ cache:
   directories:
     - $HOME/.cache/yarn
     - ./output/git
+before_cache: ./scripts/ci-before-cache.sh
 env:
   global:
     - CI=true

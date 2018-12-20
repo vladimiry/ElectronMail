@@ -46,6 +46,12 @@ export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlIte
                 value: "https://app.protonmail.ch",
                 title: "https://app.protonmail.ch (deprecated)",
             },
+            ...((process.env.NODE_ENV as BuildEnvironment) === "development" ? [
+                {
+                    value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://app.protonmail.ch`,
+                    title: `https://app.protonmail.ch (${getBuiltInWebClientTitle("protonmail")})`,
+                },
+            ] : []),
             {
                 value: "https://mail.protonmail.com",
                 title: "https://mail.protonmail.com (deprecated)",
@@ -58,7 +64,7 @@ export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlIte
             ] : []),
             {
                 value: "https://beta.protonmail.com",
-                title: "https://beta.protonmail.com (deprecated)",
+                title: "https://beta.protonmail.com",
             },
             {
                 value: "https://protonirockerxow.onion",

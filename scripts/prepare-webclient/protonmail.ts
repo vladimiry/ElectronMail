@@ -9,9 +9,16 @@ import {Unpacked} from "src/shared/types";
 
 const folderAsDomainEntries: Array<FolderAsDomainEntry<{
     configApiParam:
+        | "email-securely-app:app.protonmail.ch"
         | "email-securely-app:mail.protonmail.com"
         | "email-securely-app:protonirockerxow.onion";
 }>> = [
+    {
+        folderNameAsDomain: "app.protonmail.ch",
+        options: {
+            configApiParam: "email-securely-app:app.protonmail.ch",
+        },
+    },
     {
         folderNameAsDomain: "mail.protonmail.com",
         options: {

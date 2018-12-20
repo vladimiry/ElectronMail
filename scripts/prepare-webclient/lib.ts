@@ -1,15 +1,21 @@
 import byline from "byline";
 import chalk from "chalk";
+import fastGlob from "fast-glob";
 import fsExtra from "fs-extra";
 import path from "path";
 import pathIsInside from "path-is-inside";
+import rimraf from "rimraf";
 import spawnAsync from "@expo/spawn-async";
 import {GitProcess} from "dugite";
+import {IPartialOptions} from "fast-glob/out/managers/options";
+import {Pattern} from "fast-glob/out/types/patterns";
+import {promisify} from "util";
 
 import {AccountType} from "src/shared/model/account";
 import {Arguments, Unpacked} from "src/shared/types";
 import {PROVIDER_REPO} from "src/shared/constants";
 
+const promisifiedRimraf = promisify(rimraf);
 // tslint:disable-next-line:no-console
 export const consoleLog = console.log;
 // tslint:disable-next-line:no-console
@@ -34,7 +40,6 @@ export interface FolderAsDomainEntry<T extends any = any> {
 export type Flow<O> = (
     arg: {
         repoDir: string;
-        repoDistDir: string;
         folderAsDomainEntry: FolderAsDomainEntry<O>;
     },
 ) => Promise<void>;
@@ -78,16 +83,36 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
                 await clone(accountType, repoDir);
             }
 
-            if (await fsExtra.pathExists(path.resolve(repoDir, "node_modules"))) {
-                consoleLog(chalk.yellow(`Skipping dependencies installing`));
+            if (await fsExtra.pathExists(path.join(repoDistDir, "index.html"))) {
+                consoleLog(chalk.yellow(`Skipping building`));
             } else {
-                await installDependencies(repoDir);
-            }
+                if (await fsExtra.pathExists(path.resolve(repoDir, "node_modules"))) {
+                    consoleLog(chalk.yellow(`Skipping dependencies installing`));
+                } else {
+                    await installDependencies(repoDir);
+                }
 
-            await flow({repoDir, repoDistDir, folderAsDomainEntry});
+                await flow({repoDir, folderAsDomainEntry});
+            }
 
             consoleLog(chalk.magenta(`Copying:`), chalkConsoleValue(`${repoDistDir}" to "${resolvedDistDir}`));
             await fsExtra.copy(repoDistDir, resolvedDistDir);
+
+            const globPatternToRemove: [Pattern[], IPartialOptions<string>] = [
+                [`*/**`],
+                {
+                    cwd: repoDir,
+                    deep: true,
+                    ignore: [path.relative(repoDir, repoDistDir)],
+                    transform: (entry) => typeof entry === "string" ? entry : entry.path,
+                },
+            ];
+            const pathsToRemove = await fastGlob<string>(...globPatternToRemove);
+            consoleLog(chalk.magenta(`Remove by glob pattern:`), (JSON.stringify(globPatternToRemove)));
+            consoleLog(chalk.magenta(`Items to remove:`), (String(pathsToRemove.length)));
+            await Promise.all(
+                pathsToRemove.map((pathToRemove) => promisifiedRimraf(pathToRemove)),
+            );
         }
     } catch (error) {
         consoleError("Uncaught exception", error);

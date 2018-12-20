@@ -16,7 +16,8 @@ platform:
   - x64
 build: off
 test: off
-cache: false
+cache:
+  - '%LOCALAPPDATA%/Yarn'
 matrix:
   fast_finish: true
 environment:

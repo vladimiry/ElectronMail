@@ -1,6 +1,5 @@
 import chalk from "chalk";
 import fs from "fs";
-import fsExtra from "fs-extra";
 import path from "path";
 import {promisify} from "util";
 
@@ -37,12 +36,7 @@ execAccountTypeFlow({
     accountType: "protonmail",
     folderAsDomainEntries,
     repoRelativeDistDir: "./dist",
-    flow: async ({repoDir, repoDistDir, folderAsDomainEntry}) => {
-        if (await fsExtra.pathExists(repoDistDir)) {
-            consoleLog(chalk.yellow(`Skipping building`));
-            return;
-        }
-
+    flow: async ({repoDir, folderAsDomainEntry}) => {
         await build({repoDir, ...folderAsDomainEntry});
     },
 }).catch(consoleError);

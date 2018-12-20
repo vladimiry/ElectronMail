@@ -5,14 +5,17 @@ branches:
     - master
 language: node_js
 node_js: 10
-cache: false
+cache:
+  directories:
+    - $HOME/.cache/yarn
+    - ./output/git
 env:
   global:
     - CI=true
     - NO_AT_BRIDGE=1
+    - MOZ_HEADLESS=1
     - ELECTRON_CACHE=$HOME/.cache/electron
     - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
-    - MOZ_HEADLESS=1
     - EMAIL_SECURELY_APP_GITHUB_ARTIFACT_NAME=travis-${TRAVIS_BUILD_NUMBER}-id-${TRAVIS_BUILD_ID}-commit-${TRAVIS_COMMIT}.zip
 addons:
   firefox: latest
@@ -23,10 +26,7 @@ jobs:
       addons:
         apt:
           packages:
-            - gnome-keyring
-            - libgnome-keyring-dev
             - libsecret-1-dev
-            - python-gnomekeyring
             - nasm
       script:
         - yarn run assets:tutanota-webclient

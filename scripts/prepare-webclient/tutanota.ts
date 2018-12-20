@@ -1,7 +1,4 @@
-import chalk from "chalk";
-import fsExtra from "fs-extra";
-
-import {FolderAsDomainEntry, consoleError, consoleLog, execAccountTypeFlow, execShell} from "./lib";
+import {FolderAsDomainEntry, consoleError, execAccountTypeFlow, execShell} from "./lib";
 import {Unpacked} from "src/shared/types";
 
 const folderAsDomainEntries: Array<FolderAsDomainEntry<{}>> = [
@@ -15,12 +12,7 @@ execAccountTypeFlow({
     accountType: "tutanota",
     folderAsDomainEntries,
     repoRelativeDistDir: "./build/dist",
-    flow: async ({repoDir, repoDistDir, folderAsDomainEntry}) => {
-        if (await fsExtra.pathExists(repoDistDir)) {
-            consoleLog(chalk.yellow(`Skipping building`));
-            return;
-        }
-
+    flow: async ({repoDir, folderAsDomainEntry}) => {
         await build({repoDir, ...folderAsDomainEntry});
     },
 }).catch(consoleError);

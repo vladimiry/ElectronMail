@@ -18,6 +18,7 @@ export async function initBrowserWindow(ctx: Context, endpoints: Endpoints): Pro
         && await new Store({file: ctx.locations.preload.browserWindowE2E, fs: ctx.storeFs}).readable();
     const browserWindowConstructorOptions: BrowserWindowConstructorOptions = {
         webPreferences: {
+            // enableRemoteModule: false, // TODO disable "remote" module on https://github.com/electron/electron/issues/15112 resolving
             nodeIntegration: developmentEnvironment,
             nodeIntegrationInWorker: false,
             webviewTag: true,

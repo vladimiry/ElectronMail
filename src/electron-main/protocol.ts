@@ -4,7 +4,6 @@ import mimeTypes from "mime-types";
 import path from "path";
 import pathIsInside from "path-is-inside";
 import url from "url";
-import {PassThrough} from "stream";
 import {RegisterFileProtocolRequest, app, protocol} from "electron";
 import {promisify} from "util";
 
@@ -12,7 +11,10 @@ import {curryFunctionMembers} from "src/shared/util";
 import {getDefaultSession} from "./session";
 
 const logger = curryFunctionMembers(_logger, "[electron-main/protocol]");
-const fsStatAsync = promisify(fs.stat);
+const fsAsync = {
+    stat: promisify(fs.stat),
+    readFile: promisify(fs.readFile),
+};
 
 export function registerProtocols(protocolBundles: Array<{ scheme: string; directory: string }>) {
     // WARN: "protocol.registerStandardSchemes" needs to be called once, see https://github.com/electron/electron/issues/15943
@@ -22,39 +24,17 @@ export function registerProtocols(protocolBundles: Array<{ scheme: string; direc
         const {protocol: sessionProtocol} = getDefaultSession();
 
         for (const {scheme, directory} of protocolBundles) {
-            sessionProtocol.registerStreamProtocol(
+            sessionProtocol.registerBufferProtocol(
                 scheme,
                 async (request, callback) => {
                     const file = await resolveFileSystemResourceLocation(directory, request);
-                    const contentType = mimeTypes.contentType(path.basename(file));
-                    const callbackReader = new PassThrough();
+                    const data = await fsAsync.readFile(file);
+                    const mimeType = mimeTypes.lookup(path.basename(file));
+                    const result = mimeType ?
+                        {data, mimeType}
+                        : data;
 
-                    callback({
-                        statusCode: 200,
-                        headers: {
-                            ...(contentType && {"Content-Type": contentType}),
-                        },
-                        data: callbackReader,
-                    });
-
-                    fs.createReadStream(file)
-                        .on("error", (error) => {
-                            logger.error(`Error "${file}" file reading`, error);
-                        })
-                        .on("data", (data) => {
-                            callbackReader.push(data);
-                        })
-                        .on("close", () => {
-                            // TODO get rid of "setTimeout" call, see https://github.com/electron/electron/issues/13519
-                            setTimeout(
-                                () => {
-                                    callbackReader.end();
-                                },
-                                // some value > 50 usually works (tested on up to 4Mb files)
-                                // but increasing might be needed if serving large files
-                                350,
-                            );
-                        });
+                    callback(result);
                 },
                 (error) => {
                     if (error) {
@@ -74,7 +54,7 @@ async function resolveFileSystemResourceLocation(directory: string, request: Reg
     }
 
     try {
-        const stat = await fsStatAsync(resource);
+        const stat = await fsAsync.stat(resource);
 
         if (stat.isFile()) {
             return resource;

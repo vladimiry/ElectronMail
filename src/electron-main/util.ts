@@ -14,7 +14,7 @@ import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {INITIAL_STORES, configEncryptionPresetValidator, settingsAccountLoginUniquenessValidator} from "./constants";
 import {LOCAL_WEBCLIENT_PROTOCOL_PREFIX, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
-import {registerFileProtocols} from "./protocol";
+import {registerProtocols} from "./protocol";
 
 export function initContext(options: ContextInitOptions = {}): Context {
     const storeFs = options.storeFs ? options.storeFs : StoreFs.Fs.fs;
@@ -75,7 +75,7 @@ function initLocations(
     const appRelativePath = (...value: string[]) => path.join(appDir, ...value);
     const icon = appRelativePath("./assets/icons/icon.png");
     const webClients = (() => {
-        const protocolBundles: Arguments<typeof registerFileProtocols>[0] = [];
+        const protocolBundles: Arguments<typeof registerProtocols>[0] = [];
         const result: ElectronContextLocations["webClients"] = {
             protonmail: [],
             tutanota: [],
@@ -103,7 +103,7 @@ function initLocations(
                 });
         });
 
-        registerFileProtocols(protocolBundles);
+        registerProtocols(protocolBundles);
 
         return result;
     })();

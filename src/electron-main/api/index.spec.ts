@@ -570,7 +570,7 @@ test.beforeEach(async (t) => {
     const {initContext} = await rewiremock.around(
         () => import("src/electron-main/util"),
         (mock) => {
-            mock(() => import("src/electron-main/protocol")).append({registerFileProtocols: sinon.stub()});
+            mock(() => import("src/electron-main/protocol")).append({registerProtocols: sinon.stub()});
         },
     );
 

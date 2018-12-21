@@ -21,48 +21,49 @@ export function configureProviderApp() {
 }
 
 function configureAngularApp() {
-    const state: { value?: angular.IAngularStatic, initialized?: boolean } = {};
+    type ValueType = angular.IAngularStatic;
+    let value: ValueType | undefined;
 
     Object.defineProperty(window, "angular", {
-        get() {
-            return state.value;
-        },
-        set(v) {
-            state.value = v;
-
-            if (!state.value || state.initialized) {
-                return;
+        get: () => value,
+        set(original: ValueType) {
+            if (!value) {
+                angularObjectWiredUpHandler(original);
             }
-
-            state.initialized = true;
-
-            setTimeout(
-                () => {
-                    angularInitializedHandler(state.value as angular.IAngularStatic);
-                },
-                0,
-            );
+            value = original;
         },
     });
 }
 
-function angularInitializedHandler(angular: angular.IAngularStatic) {
+function angularObjectWiredUpHandler(
+    // not the "angular.IAngularStatic" but "object" as an this point object is still empty (like no "module" method linked yet)
+    angular: object,
+) {
     logger.info(`angularInitializedHandler()`);
 
-    const original = angular.module;
-    const overridden: typeof original = function(this: typeof angular, ...args) {
-        const [moduleName] = args;
-        const creating = args.length > 1;
-        const module = original.apply(this, args);
+    type ValueType = angular.IAngularStatic["module"];
+    let value: ValueType | undefined;
 
-        if (creating && moduleName === targetModuleName) {
-            return tweakModule(module);
-        }
+    Object.defineProperty(angular, "module", {
+        get: () => value,
+        set(original: ValueType) {
+            if (value) {
+                return;
+            }
 
-        return module;
-    };
+            value = function(this: angular.IAngularStatic, ...args) {
+                const [moduleName] = args;
+                const creating = args.length > 1;
+                const result = original.apply(this, args);
 
-    angular.module = overridden;
+                if (creating && moduleName === targetModuleName) {
+                    return tweakModule(result);
+                }
+
+                return result;
+            };
+        },
+    });
 }
 
 function tweakModule(module: angular.IModule): typeof module {

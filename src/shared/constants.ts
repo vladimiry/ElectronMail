@@ -24,13 +24,13 @@ export const DEFAULT_API_CALL_TIMEOUT = ONE_SECOND_MS * 25;
 export const PROVIDER_REPO: Record<AccountType, { repo: string, version: string; commit: string; }> = {
     protonmail: {
         repo: "https://github.com/ProtonMail/WebClient.git",
-        commit: "31df90fcb0f15bb68423ab91d2d9df9310b9a202",
-        version: "3.15.5",
+        commit: "dd472c7eeaa94b8b16895371012234b25771d812",
+        version: "3.15.7",
     },
     tutanota: {
         repo: "https://github.com/tutao/tutanota.git",
-        commit: "4909372fb038a09cc024e5aacfabcfcd581f0868",
-        version: "3.44.1",
+        commit: "0f6f05db6063265944ea353c3e6d5cf45ee635df",
+        version: "3.44.9",
     },
 };
 

@@ -404,8 +404,8 @@ export function registerApi() {
 function isLoggedIn(): boolean {
     // TODO remove "as any" casting on https://github.com/Microsoft/TypeScript/issues/14701 resolving
     const angular: angular.IAngularStatic | undefined = (window as any).angular;
-    const htmlElement = angular && typeof angular.element === "function" && angular.element("html");
-    const $injector = htmlElement && typeof htmlElement.data === "function" && htmlElement.data("$injector");
+    const angularAppElement = angular && typeof angular.element === "function" && angular.element(document);
+    const $injector = angularAppElement && typeof angularAppElement.data === "function" && angularAppElement.data("$injector");
     const authentication = $injector && $injector.get("authentication");
 
     return authentication && authentication.isLoggedIn();

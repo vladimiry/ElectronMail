@@ -2,18 +2,6 @@ import {Session, session} from "electron";
 
 import {APP_NAME} from "src/shared/constants";
 
-const storagesToClear = [
-    "appcache",
-    "cookies",
-    "filesystem",
-    // "indexdb", // Tutanota stores search index ans some settings in IndexedDB
-    "localstorage",
-    "shadercache",
-    "websql",
-    "serviceworkers",
-    "cachestorage",
-];
-
 export async function initDefaultSession(): Promise<void> {
     await clearDefaultSessionCaches();
     purifyUserAgentHeader();
@@ -25,7 +13,7 @@ export async function clearDefaultSessionCaches(): Promise<void> {
     await Promise.all([
         new Promise((resolve) => defaultSession.clearAuthCache({type: "password"}, resolve)),
         new Promise((resolve) => defaultSession.clearCache(resolve)),
-        new Promise((resolve) => defaultSession.clearStorageData({storages: storagesToClear}, resolve)),
+        new Promise((resolve) => defaultSession.clearStorageData({}, resolve)),
     ]);
 }
 

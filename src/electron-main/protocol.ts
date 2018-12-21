@@ -30,8 +30,8 @@ export function registerProtocols(protocolBundles: Array<{ scheme: string; direc
                     const file = await resolveFileSystemResourceLocation(directory, request);
                     const data = await fsAsync.readFile(file);
                     const mimeType = mimeTypes.lookup(path.basename(file));
-                    const result = mimeType ?
-                        {data, mimeType}
+                    const result = mimeType
+                        ? {data, mimeType}
                         : data;
 
                     callback(result);

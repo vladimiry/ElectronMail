@@ -17,6 +17,6 @@ execAccountTypeFlow({
     },
 }).catch(consoleError);
 
-async function build({repoDir}: { repoDir: string; } & Unpacked<typeof folderAsDomainEntries>) {
-    await execShell(["node", ["dist", "prod"], {cwd: repoDir}]);
+async function build({repoDir: cwd}: { repoDir: string; } & Unpacked<typeof folderAsDomainEntries>) {
+    await execShell(["node", ["dist", "prod"], {cwd}]);
 }

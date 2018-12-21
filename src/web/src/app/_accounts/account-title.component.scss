@@ -57,6 +57,7 @@
     .b-toggle-view {
         @include app-dropdown-toggle-split;
         margin-left: 0;
+        flex-grow: 0;
 
         .fa {
             font-size: 78%;

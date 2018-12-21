@@ -3,8 +3,11 @@ import fs from "fs";
 import path from "path";
 import {promisify} from "util";
 
-import {FolderAsDomainEntry, chalkConsoleValue, consoleError, consoleLog, execAccountTypeFlow, execShell} from "./lib";
+import {FolderAsDomainEntry, chalkValue, consoleError, consoleLog, execAccountTypeFlow, execShell} from "./lib";
 import {Unpacked} from "src/shared/types";
+
+// tslint:disable-next-line:no-var-requires no-import-zones
+const {name: APP_NAME} = require("package.json");
 
 const folderAsDomainEntries: Array<FolderAsDomainEntry<{
     configApiParam:
@@ -41,19 +44,56 @@ execAccountTypeFlow({
     },
 }).catch(consoleError);
 
-async function build({repoDir, options, folderNameAsDomain}: { repoDir: string; } & Unpacked<typeof folderAsDomainEntries>) {
-    const {configApiParam} = options;
-    const file = path.join(repoDir, "./env/env.json");
-    const data = JSON.stringify({
-        [configApiParam]: {
-            api: `https://${folderNameAsDomain}/api`,
-            sentry: {},
-        },
-    });
+async function build({repoDir: cwd, options, folderNameAsDomain}: { repoDir: string; } & Unpacked<typeof folderAsDomainEntries>) {
+    // configuring
+    await (async () => {
+        const {configApiParam} = options;
+        const envFile = path.join(cwd, "./env/env.json");
+        const envFileContent = JSON.stringify({
+            [configApiParam]: {
+                api: `https://${folderNameAsDomain}/api`,
+                sentry: {},
+            },
+        }, null, 2);
 
-    consoleLog(chalk.magenta(`Writing file: `), chalkConsoleValue(JSON.stringify({file, data})));
-    await promisify(fs.writeFile)(file, data);
+        consoleLog(chalk.magenta(`Writing "${chalkValue(envFile)}" file:`), chalkValue(envFileContent));
+        await promisify(fs.writeFile)(envFile, envFileContent);
 
-    await execShell(["npm", ["run", "config", "--", `--api`, configApiParam, `--debug`, "true"], {cwd: repoDir}]);
-    await execShell(["npm", ["run", "dist"], {cwd: repoDir}]);
+        await execShell(["npm", ["run", "config", "--", "--api", configApiParam, "--debug", "true"], {cwd}]);
+    })();
+
+    // building
+    await (async () => {
+        const webpackFile = path.join(cwd, `./webpack.config.${APP_NAME}.js`);
+        // tslint:disable:no-trailing-whitespace
+        const webpackFileContent = `
+            const config = require("./webpack.config");
+            
+            config.devtool = "source-map";
+            
+            config.optimization.minimize = false;
+            delete config.optimization.minimizer;
+            
+            config.plugins = config.plugins.filter((plugin) => {
+                switch (plugin.constructor.name) {
+                    case "HtmlWebpackPlugin":
+                        plugin.options.minify = false;
+                        break;
+                    case "OptimizeCSSAssetsPlugin":
+                        return false;
+                    case "ImageminPlugin":
+                        return false;
+                }
+                return true;
+            })
+            
+            module.exports = config;
+        `;
+        // tslint:enable:no-trailing-whitespace
+
+        consoleLog(chalk.magenta(`Writing "${chalkValue(webpackFile)}" file:`), chalkValue(webpackFileContent));
+        await promisify(fs.writeFile)(webpackFile, webpackFileContent);
+
+        await execShell(["npm", ["run", "dist", "--", "--progress", "false", "--config", webpackFile], {cwd}]);
+    })();
 }

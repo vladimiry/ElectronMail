@@ -14,9 +14,9 @@ import {PROVIDER_REPO} from "src/shared/constants";
 export const consoleLog = console.log;
 // tslint:disable-next-line:no-console
 export const consoleError = console.error;
-export const chalkConsoleValue = (value: string) => chalk.cyan(value);
+export const chalkValue = (value: string) => chalk.cyan(value);
 
-const baseDestDir = process.argv[2];
+const [, , baseDestDir] = process.argv;
 
 if (!baseDestDir) {
     throw new Error(`Empty base destination directory argument`);
@@ -64,11 +64,11 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
             const resolvedDistDir = path.resolve(distDir, folderAsDomainEntry.folderNameAsDomain);
             consoleLog(
                 chalk.magenta(`Preparing built-in WebClient build [${accountType}]:`),
-                chalkConsoleValue(JSON.stringify({...folderAsDomainEntry, resolvedDistDir})),
+                chalkValue(JSON.stringify({...folderAsDomainEntry, resolvedDistDir})),
             );
 
             if (await fsExtra.pathExists(resolvedDistDir)) {
-                consoleLog(chalk.yellow(`Skipping as directory already exists:`), chalkConsoleValue(resolvedDistDir));
+                consoleLog(chalk.yellow(`Skipping as directory already exists:`), chalkValue(resolvedDistDir));
                 continue;
             }
 
@@ -94,7 +94,7 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
                 await flow({repoDir, folderAsDomainEntry});
             }
 
-            consoleLog(chalk.magenta(`Copying:`), chalkConsoleValue(`${repoDistDir}" to "${resolvedDistDir}`));
+            consoleLog(chalk.magenta(`Copying:`), chalkValue(`${repoDistDir}" to "${resolvedDistDir}`));
             await fsExtra.copy(repoDistDir, resolvedDistDir);
 
             await fsExtra.writeFile(distFoldersFile, `${path.relative(process.cwd(), repoDistDir)}\n`, {flag: "a"});
@@ -135,7 +135,7 @@ export async function execGit([commands, pathArg, options]: Arguments<typeof Git
             ...options,
         },
     ];
-    consoleLog(chalk.magenta(`Executing Git command:`), chalkConsoleValue(JSON.stringify(args)));
+    consoleLog(chalk.magenta(`Executing Git command:`), chalkValue(JSON.stringify(args)));
     const result = await GitProcess.exec(...args);
 
     if (result.exitCode) {
@@ -144,7 +144,7 @@ export async function execGit([commands, pathArg, options]: Arguments<typeof Git
 }
 
 export async function execShell(args: Arguments<typeof spawnAsync>) {
-    consoleLog(chalk.magenta(`Executing Shell command:`), chalkConsoleValue(JSON.stringify(args)));
+    consoleLog(chalk.magenta(`Executing Shell command:`), chalkValue(JSON.stringify(args)));
 
     const taskPromise = spawnAsync(...args);
 

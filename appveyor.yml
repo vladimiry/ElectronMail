@@ -10,8 +10,8 @@ branches:
 skip_tags: true
 image:
   # WARN "image" items ordering matters
-  - Ubuntu1804
-  - Visual Studio 2017
+  - 'Ubuntu1804'
+  - 'Visual Studio 2017'
 platform:
   - x64
 build: off
@@ -19,39 +19,39 @@ test: off
 matrix:
   fast_finish: true
 environment:
-  nodejs_version: 10
-  linuxJobNamePattern: 'image: Ubuntu1804'
-  linuxJobArtifactFile: 'app.zip'
+  nodejs_version: 10.11.0
+  nodejs_arch: x64
+  APP_LINUX_JOB_NAME_PATTERN: 'image: Ubuntu1804'
+  APP_GITHUB_ARTIFACT_WEBCLIENTS: appveyor-%APPVEYOR_BUILD_VERSION%-%APPVEYOR_REPO_COMMIT%-app-webclients.zip
 for:
   - matrix:
       only:
-        - image: Ubuntu1804
-    cache:
-      - $HOME/.cache/yarn
-      - ./output/git
+        - image: 'Ubuntu1804'
     install:
       - sudo apt-get --yes install gnome-keyring libgnome-keyring-dev libsecret-1-dev nasm
-      - cmd: powershell Install-Product node $env:nodejs_version
+      - cmd: powershell Install-Product node $env:nodejs_version $env:nodejs_arch
+      - curl -o- -L https://yarnpkg.com/install.sh | bash
+      - export PATH="$HOME/.yarn/bin:$PATH"
       - nvm install $nodejs_version
       - npm install --global yarn
       - node --version
       - npm --version
+      - yarn --version
       - yarn install --pure-lockfile
     build_script:
-      - yarn run assets:protonmail-webclient
-      - yarn run assets:tutanota-webclient
-      - zip -r $linuxJobArtifactFile ./app
+      - yarn assets:protonmail-webclient
+      - yarn assets:tutanota-webclient
+      - zip -r $APP_GITHUB_ARTIFACT_WEBCLIENTS ./app
       - ls
-      - appveyor PushArtifact $linuxJobArtifactFile
-      - ./scripts/ci-before-cache.sh
+      - yarn github-artifact:upload $APP_GITHUB_ARTIFACT_WEBCLIENTS
   - matrix:
       only:
-        - image: Visual Studio 2017
-    cache:
-      - '%LOCALAPPDATA%\\Yarn'
-      - output\git
+        - image: 'Visual Studio 2017'
     install:
-      - ps: Install-Product node $env:nodejs_version
+      - ps: Install-Product node $env:nodejs_version $env:nodejs_arch
+      - ps: | # installing the most recent yarn version
+          (New-Object Net.WebClient).DownloadFile("https://yarnpkg.com/latest.msi", "$env:temp\yarn.msi")
+          cmd /c start /wait msiexec.exe /i $env:temp\yarn.msi /quiet /qn /norestart
       - SET CI=true
       - npm install --global yarn
       - set PATH=%PATH%;C:\.yarn\bin
@@ -59,29 +59,17 @@ for:
       - npm --version
       - yarn --version
       - yarn install --pure-lockfile --mutex file
-      - yarn generate-npm-lockfile
-      - npm audit
     build_script:
       - ps: |
-          $headers = @{
-              "Authorization" = "Bearer $EMAIL_SECURELY_APP_APPVEYOR_API_KEY"
-              "Content-type" = "application/json"
-          }
-
-          $project = Invoke-RestMethod -Uri "https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG" -Headers $headers -Method GET
-          $linuxJob = $project.build.jobs | where {$_.name -eq $env:linuxJobNamePattern}
-          $linuxJobId = $linuxJob.jobId;
-          $linuxJobCompleted = $linuxJob.status -eq "success"
-
-          if (!$linuxJobCompleted) {
-              throw "Job `"$env:linuxJobNamePattern`" has been finished with `"$linuxJob.status`" status"
-          }
-          if (!$linuxJobId) {
-              throw "Failed to resolve i`"$env:linuxJobNamePattern`" job id"
-          }
-
-          Start-FileDownload https://ci.appveyor.com/api/buildjobs/$linuxJobId/artifacts/$env:linuxJobArtifactFile
-          7z.exe x $env:linuxJobArtifactFile
-      - yarn run app:dist
-      - yarn run electron-builder:publish:x64
-      - yarn run print-dist-packages-hashes
+          yarn github-artifact:download $env:APP_GITHUB_ARTIFACT_WEBCLIENTS
+          7z.exe x $env:APP_GITHUB_ARTIFACT_WEBCLIENTS
+      - yarn app:dist
+      - yarn electron-builder:publish:x64
+      - yarn print-dist-packages-hashes
+    on_finish:
+      - ps: Get-Process
+      - SET APP_GITHUB_ARTIFACT_LOG=appveyor-%APPVEYOR_BUILD_VERSION%-%APPVEYOR_REPO_COMMIT%-%APPVEYOR_JOB_NUMBER%-log.zip
+      - 7z a %APP_GITHUB_ARTIFACT_LOG% output\e2e\*
+      - dir
+      - appveyor PushArtifact %APP_GITHUB_ARTIFACT_LOG%
+      - yarn github-artifact:upload %APP_GITHUB_ARTIFACT_LOG%

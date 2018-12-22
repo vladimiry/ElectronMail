@@ -4,7 +4,7 @@
         <fieldset [disabled]="processing$ | async" class="form-group">
             <div class="form-group">
                 <input type="password" class="form-control form-control-lg" formControlName="password" #passwordRef
-                       placeholder="Password" autocorrect="off" autocapitalize="off" spellcheck="off"
+                       placeholder="Password" autocorrect="off" autocapitalize="off" spellcheck="off" id="loginFormPasswordControl"
                        [ngClass]="password.dirty ? {'is-invalid': password.invalid, 'is-valid': password.valid} : {}">
             </div>
             <button class="btn btn-primary btn-lg btn-block" type="submit" [disabled]="form.invalid">

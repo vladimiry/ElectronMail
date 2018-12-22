@@ -1,5 +1,6 @@
-import {FolderAsDomainEntry, consoleError, execAccountTypeFlow, execShell} from "./lib";
+import {FolderAsDomainEntry, execAccountTypeFlow} from "./lib";
 import {Unpacked} from "src/shared/types";
+import {consoleLevels, consoleLog, execShell} from "scripts/lib";
 
 const folderAsDomainEntries: Array<FolderAsDomainEntry<{}>> = [
     {
@@ -15,7 +16,10 @@ execAccountTypeFlow({
     flow: async ({repoDir, folderAsDomainEntry}) => {
         await build({repoDir, ...folderAsDomainEntry});
     },
-}).catch(consoleError);
+}).catch((error) => {
+    consoleLog(consoleLevels.error(error));
+    process.exit(1);
+});
 
 async function build({repoDir: cwd}: { repoDir: string; } & Unpacked<typeof folderAsDomainEntries>) {
     await execShell(["node", ["dist", "prod"], {cwd}]);

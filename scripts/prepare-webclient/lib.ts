@@ -1,20 +1,13 @@
 import byline from "byline";
-import chalk from "chalk";
 import fsExtra from "fs-extra";
 import path from "path";
 import pathIsInside from "path-is-inside";
-import spawnAsync from "@expo/spawn-async";
 import {GitProcess} from "dugite";
 
 import {AccountType} from "src/shared/model/account";
 import {Arguments, Unpacked} from "src/shared/types";
 import {PROVIDER_REPO} from "src/shared/constants";
-
-// tslint:disable-next-line:no-console
-export const consoleLog = console.log;
-// tslint:disable-next-line:no-console
-export const consoleError = console.error;
-export const chalkValue = (value: string) => chalk.cyan(value);
+import {consoleLevels, consoleLog, execShell, formatStreamChunk, processCwd} from "scripts/lib";
 
 const [, , baseDestDir] = process.argv;
 
@@ -22,8 +15,8 @@ if (!baseDestDir) {
     throw new Error(`Empty base destination directory argument`);
 }
 
-if (!pathIsInside(path.resolve(process.cwd(), baseDestDir), process.cwd())) {
-    throw new Error(`Invalid base destination directory argument value: "${baseDestDir}"`);
+if (!pathIsInside(path.resolve(processCwd, baseDestDir), processCwd)) {
+    throw new Error(`Invalid base destination directory argument value: ${consoleLevels.value(baseDestDir)}`);
 }
 
 export interface FolderAsDomainEntry<T extends any = any> {
@@ -53,22 +46,20 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
 ) {
     try {
         const distDir = path.resolve(baseDestDir, accountType);
-        const webClientDir = path.resolve(process.cwd(), `./output/git/${accountType}/webclient`);
-        const distFoldersFile = path.resolve(process.cwd(), webClientDir, `./dist-folders.txt`);
-        const baseRepoDir = path.resolve(process.cwd(), webClientDir, `./${PROVIDER_REPO[accountType].commit}`);
+        const webClientDir = path.resolve(processCwd, `./output/git/${accountType}/webclient`);
+        const baseRepoDir = path.resolve(processCwd, webClientDir, `./${PROVIDER_REPO[accountType].commit}`);
 
         await fsExtra.ensureDir(webClientDir);
-        await fsExtra.writeFile(distFoldersFile, "", {flag: "w"});
 
         for (const folderAsDomainEntry of folderAsDomainEntries) {
             const resolvedDistDir = path.resolve(distDir, folderAsDomainEntry.folderNameAsDomain);
             consoleLog(
-                chalk.magenta(`Preparing built-in WebClient build [${accountType}]:`),
-                chalkValue(JSON.stringify({...folderAsDomainEntry, resolvedDistDir})),
+                consoleLevels.title(`Preparing built-in WebClient build [${accountType}]:`),
+                consoleLevels.value(JSON.stringify({...folderAsDomainEntry, resolvedDistDir})),
             );
 
             if (await fsExtra.pathExists(resolvedDistDir)) {
-                consoleLog(chalk.yellow(`Skipping as directory already exists:`), chalkValue(resolvedDistDir));
+                consoleLog(consoleLevels.warning(`Skipping as directory already exists:`), consoleLevels.value(resolvedDistDir));
                 continue;
             }
 
@@ -76,17 +67,17 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
             const repoDistDir = path.resolve(repoDir, repoRelativeDistDir);
 
             if (await fsExtra.pathExists(repoDir)) {
-                consoleLog(chalk.yellow(`Skipping cloning`));
+                consoleLog(consoleLevels.warning(`Skipping cloning`));
             } else {
                 await fsExtra.ensureDir(repoDir);
                 await clone(accountType, repoDir);
             }
 
             if (await fsExtra.pathExists(path.join(repoDistDir, "index.html"))) {
-                consoleLog(chalk.yellow(`Skipping building`));
+                consoleLog(consoleLevels.warning(`Skipping building`));
             } else {
                 if (await fsExtra.pathExists(path.resolve(repoDir, "node_modules"))) {
-                    consoleLog(chalk.yellow(`Skipping dependencies installing`));
+                    consoleLog(consoleLevels.warning(`Skipping dependencies installing`));
                 } else {
                     await installDependencies(repoDir);
                 }
@@ -94,13 +85,11 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
                 await flow({repoDir, folderAsDomainEntry});
             }
 
-            consoleLog(chalk.magenta(`Copying:`), chalkValue(`${repoDistDir}" to "${resolvedDistDir}`));
+            consoleLog(consoleLevels.title(`Copying: ${consoleLevels.value(repoDistDir)} to ${consoleLevels.value(resolvedDistDir)}`));
             await fsExtra.copy(repoDistDir, resolvedDistDir);
-
-            await fsExtra.writeFile(distFoldersFile, `${path.relative(process.cwd(), repoDistDir)}\n`, {flag: "a"});
         }
     } catch (error) {
-        consoleError("Uncaught exception", error);
+        consoleLog(consoleLevels.error("Uncaught exception"), consoleLevels.error(error));
         process.exit(1);
     }
 }
@@ -135,39 +124,10 @@ export async function execGit([commands, pathArg, options]: Arguments<typeof Git
             ...options,
         },
     ];
-    consoleLog(chalk.magenta(`Executing Git command:`), chalkValue(JSON.stringify(args)));
+    consoleLog(consoleLevels.title(`Executing Git command:`), consoleLevels.value(JSON.stringify(args)));
     const result = await GitProcess.exec(...args);
 
     if (result.exitCode) {
         throw new Error(String(result.stderr).trim());
     }
-}
-
-export async function execShell(args: Arguments<typeof spawnAsync>) {
-    consoleLog(chalk.magenta(`Executing Shell command:`), chalkValue(JSON.stringify(args)));
-
-    const taskPromise = spawnAsync(...args);
-
-    byline(taskPromise.child.stdout).on("data", (chunk) => consoleLog(formatStreamChunk(chunk)));
-    byline(taskPromise.child.stderr).on("data", (chunk) => consoleError(formatStreamChunk(chunk)));
-    taskPromise.child.on("uncaughtException", (error) => {
-        consoleError(`Failed Shell command execution (uncaught exception): ${JSON.stringify(args)}`, error);
-        process.exit(1);
-    });
-
-    try {
-        const {status: exitCode} = await taskPromise;
-
-        if (exitCode) {
-            consoleError(`Failed Shell command execution (${exitCode} exit code): ${JSON.stringify(args)}`);
-            process.exit(exitCode);
-        }
-    } catch (error) {
-        consoleError(`Failed Shell command execution: ${JSON.stringify(args)}`, error.stack);
-        process.exit(1);
-    }
-}
-
-function formatStreamChunk(chunk: any): string {
-    return Buffer.from(chunk, "UTF-8").toString();
 }

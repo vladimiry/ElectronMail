@@ -14,4 +14,34 @@
             }
         }
     }
+
+    #accountEditFormEntryUrlField {
+        .badge {
+            $local-color: theme-color("primary");
+            $online-color: theme-color("danger");
+
+            display: inline-block;
+            font-weight: normal;
+            font-size: $app-font-size-base-small;
+            background-color: transparent;
+            color: $online-color;
+            border: 1px solid $online-color;
+            min-width: 3.8em;
+            vertical-align: middle;
+
+            &::before {
+                display: inline-block;
+                content: "online";
+            }
+
+            &.badge-local {
+                color: $local-color;
+                border: 1px solid $local-color;
+
+                &::before {
+                    content: "built-in";
+                }
+            }
+        }
+    }
 }

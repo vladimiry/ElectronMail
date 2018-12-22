@@ -3,7 +3,7 @@
         <div class="rounded mb-2">
             <email-securely-app-type-symbol [type]="account.type" *ngIf="account"></email-securely-app-type-symbol>
             <div class="d-inline-block">
-                <span *ngIf="account; else label">{{ account.login }}</span>
+                <span *ngIf="account; else label" [attr.data-login]="account.login">{{ account.login }}</span>
                 <ng-template #label>Add Account</ng-template>
             </div>
             <div class="form-check float-md-right">

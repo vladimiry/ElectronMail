@@ -3,8 +3,9 @@ import fs from "fs";
 import path from "path";
 import {promisify} from "util";
 
-import {FolderAsDomainEntry, chalkValue, consoleError, consoleLog, execAccountTypeFlow, execShell} from "./lib";
+import {FolderAsDomainEntry, execAccountTypeFlow} from "./lib";
 import {Unpacked} from "src/shared/types";
+import {consoleLevels, consoleLog, execShell} from "scripts/lib";
 
 // tslint:disable-next-line:no-var-requires no-import-zones
 const {name: APP_NAME} = require("package.json");
@@ -42,7 +43,10 @@ execAccountTypeFlow({
     flow: async ({repoDir, folderAsDomainEntry}) => {
         await build({repoDir, ...folderAsDomainEntry});
     },
-}).catch(consoleError);
+}).catch((error) => {
+    consoleLog(consoleLevels.error(error));
+    process.exit(1);
+});
 
 async function build({repoDir: cwd, options, folderNameAsDomain}: { repoDir: string; } & Unpacked<typeof folderAsDomainEntries>) {
     // configuring
@@ -56,7 +60,10 @@ async function build({repoDir: cwd, options, folderNameAsDomain}: { repoDir: str
             },
         }, null, 2);
 
-        consoleLog(chalk.magenta(`Writing "${chalkValue(envFile)}" file:`), chalkValue(envFileContent));
+        consoleLog(
+            chalk.magenta(`Writing ${consoleLevels.value(envFile)} file with content:`),
+            consoleLevels.value(envFileContent),
+        );
         await promisify(fs.writeFile)(envFile, envFileContent);
 
         await execShell(["npm", ["run", "config", "--", "--api", configApiParam, "--debug", "true"], {cwd}]);
@@ -91,7 +98,10 @@ async function build({repoDir: cwd, options, folderNameAsDomain}: { repoDir: str
         `;
         // tslint:enable:no-trailing-whitespace
 
-        consoleLog(chalk.magenta(`Writing "${chalkValue(webpackFile)}" file:`), chalkValue(webpackFileContent));
+        consoleLog(
+            chalk.magenta(`Writing ${consoleLevels.value(webpackFile)} file with content:`),
+            consoleLevels.value(webpackFileContent),
+        );
         await promisify(fs.writeFile)(webpackFile, webpackFileContent);
 
         await execShell(["npm", ["run", "dist", "--", "--progress", "false", "--config", webpackFile], {cwd}]);

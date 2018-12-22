@@ -3,13 +3,13 @@
 set -ev
 
 rm -rf ./output
-yarn run ci:travis:download-artifact
-unzip $EMAIL_SECURELY_APP_GITHUB_ARTIFACT_NAME
+yarn github-artifact:download $APP_GITHUB_ARTIFACT_WEBCLIENTS
+unzip $APP_GITHUB_ARTIFACT_WEBCLIENTS
 
-yarn run app:dist
+yarn app:dist
 
 if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-    yarn run electron-builder:publish:x64
+    yarn electron-builder:publish:x64
 fi
 
 if [ "$TRAVIS_OS_NAME" == "linux" ]; then
@@ -22,7 +22,7 @@ if [ "$TRAVIS_OS_NAME" == "linux" ]; then
         -v ~/.cache/electron:/root/.cache/electron \
         -v ~/.cache/electron-builder:/root/.cache/electron-builder \
         electronuserland/builder \
-        /bin/bash -c "yarn --pure-lockfile install && yarn run electron-builder:publish:x64:linux"
+        /bin/bash -c "yarn --pure-lockfile install && yarn clean:prebuilds && apt-get install --yes libtool autoconf automake && yarn electron-builder:publish:x64:linux"
 fi
 
-yarn run print-dist-packages-hashes
+yarn print-dist-packages-hashes

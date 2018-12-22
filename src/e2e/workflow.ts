@@ -14,6 +14,7 @@ import {promisify} from "util";
 
 import {ACCOUNTS_CONFIG, ONE_SECOND_MS, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
 import {AccountType} from "src/shared/model/account";
+import {CI_ENV_LOGOUT_ACTION_TIMEOUT_MS} from "./shared-constants";
 
 export interface TestContext {
     app: Application;
@@ -32,10 +33,10 @@ export const ENV = {
     masterPassword: `master-password-${randomString.generate({length: 8})}`,
     loginPrefix: `login-${randomString.generate({length: 8})}`,
 };
-export const {CI} = process.env;
+export const CI = Boolean(process.env.CI && (process.env.APPVEYOR || process.env.TRAVIS));
 
 // tslint:disable-next-line:no-var-requires no-import-zones
-const {name: APP_NAME, version: APP_VERSION, description: APP_TITLE} = require("package.json");
+export const {name: APP_NAME, version: APP_VERSION, description: APP_TITLE} = require("package.json");
 
 const rootDirPath = path.resolve(__dirname, process.cwd());
 const appDirPath = path.join(rootDirPath, "./app");
@@ -43,11 +44,11 @@ const mainScriptFilePath = path.join(appDirPath, "./electron-main.js");
 const CONF = {
     timeouts: {
         element: ONE_SECOND_MS,
-        elementTouched: ONE_SECOND_MS * 0.3,
+        elementTouched: ONE_SECOND_MS * (CI ? 1 : 0.3),
         encryption: ONE_SECOND_MS * (CI ? 5 : 1.5),
         transition: ONE_SECOND_MS * (CI ? 1 : 0.3),
-        logout: ONE_SECOND_MS * (CI ? 10 : 3),
-        loginFilledOnce: ONE_SECOND_MS * (CI ? 20 : 5),
+        logout: (CI ? CI_ENV_LOGOUT_ACTION_TIMEOUT_MS : ONE_SECOND_MS * 3),
+        loginFilledOnce: ONE_SECOND_MS * (CI ? 30 : 5),
     },
 };
 const GLOBAL_STATE = {
@@ -65,13 +66,13 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
         || path.join(rootDirPath, "./output/e2e", String(Number(new Date())));
     const userDataDirPath = path.join(outputDirPath, "./app-data");
     const logFilePath = path.join(userDataDirPath, "log.log");
-    // const webdriverLogDirPath = path.join(outputDirPath, "webdriver-driver-log");
-    // const chromeDriverLogFilePath = path.join(outputDirPath, "chrome-driver.log");
+    const webdriverLogDirPath = path.join(outputDirPath, "webdriver-driver-log");
+    const chromeDriverLogFilePath = path.join(outputDirPath, "chrome-driver.log");
 
     mkOutputDirs([
         outputDirPath,
         userDataDirPath,
-        // webdriverLogDirPath,
+        webdriverLogDirPath,
     ]);
 
     t.context.appDirPath = appDirPath;
@@ -86,8 +87,7 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
     }
 
     t.context.app = new Application({
-        // TODO consider running e2e tests on compiled/binary app too
-        // path: path.join(rootPath, "./dist/linux-unpacked/email-securely-app"),
+        // TODO consider running e2e tests on compiled/binary app too: path.join(rootPath, "./dist/linux-unpacked/email-securely-app")
         path: electron as any,
         requireName: "electronRequire",
         env: {
@@ -96,17 +96,17 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
         },
         args: [mainScriptFilePath],
 
-        // ...(CI ? {
-        //     startTimeout: 30000,
-        //     chromeDriverArgs: [/*"headless",*/"no-sandbox", "disable-gpu"],
-        // } : {}),
+        // ...(CI && {
+        //     startTimeout: ONE_SECOND_MS * 15,
+        //     chromeDriverArgs: [/*"no-sandbox", */"headless", "disable-gpu"],
+        // }),
 
         // TODO setting path chromedriver config parameters might cause the following errors happening:
         // - ChromeDriver did not start within 5000ms
         // - Failed to redirect stderr to log file.
         // - Unable to initialize logging. Exiting...
-        // webdriverLogPath: webdriverLogDirPath,
-        // chromeDriverLogPath: chromeDriverLogFilePath,
+        webdriverLogPath: webdriverLogDirPath,
+        chromeDriverLogPath: chromeDriverLogFilePath,
     });
 
     // start
@@ -176,7 +176,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
         },
 
         async login(options: { setup: boolean, savePassword: boolean }) {
-            const client = t.context.app.client;
+            const {client} = t.context.app;
             let selector: string | null = null;
 
             await client.pause(CONF.timeouts.transition);
@@ -207,7 +207,17 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             }
 
             await client.click(selector = `button[type="submit"]`);
-            await client.pause(CONF.timeouts.encryption);
+
+            await (async () => {
+                selector = `email-securely-app-accounts .list-group.accounts-list`;
+                const timeout = CONF.timeouts.encryption * 2;
+                try {
+                    await t.context.app.client.waitForVisible(selector, timeout);
+                } catch (error) {
+                    t.fail(`Failed to resolve "${selector}" element within ${timeout}ms`);
+                    throw error;
+                }
+            })();
 
             if (options.setup) {
                 t.is(
@@ -236,10 +246,11 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
         async addAccount(
             account: { type: AccountType, login?: string; password?: string; twoFactorCode?: string; entryUrlValue?: string; },
         ) {
-            const client = t.context.app.client;
+            const {client} = t.context.app;
             const login = account.login
                 ? account.login
                 : `${ENV.loginPrefix}-${GLOBAL_STATE.loginPrefixCount++}`;
+            let selector = "";
 
             await workflow.openSettingsModal(0);
 
@@ -248,64 +259,77 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
 
             // required: type
             await client.click(`#accountEditFormTypeField`);
-            await client.pause(CONF.timeouts.elementTouched);
-            await client.click(`[type-option-value="${account.type}"`);
+            await client.waitForVisible(selector = `[type-option-value="${account.type}"`);
+            await client.click(selector);
             await client.pause(CONF.timeouts.elementTouched);
 
             // required: entryUrl
             await client.click(`#accountEditFormEntryUrlField`);
-            await client.pause(CONF.timeouts.elementTouched);
             const entryUrlIndex = account.entryUrlValue
                 ? resolveEntryUrlIndexByValue(account.type, account.entryUrlValue)
                 : 0;
-            await client.click(`[entry-url-option-index="${entryUrlIndex}"]`);
-            await client.pause(CONF.timeouts.elementTouched);
+            await client.waitForVisible(selector = `[entry-url-option-index="${entryUrlIndex}"]`);
+            await client.click(selector);
 
             // required: login
             await client.setValue(`[formcontrolname=login]`, login);
-            await client.pause(CONF.timeouts.elementTouched);
 
             if (account.password) {
                 await client.setValue(`[formcontrolname=password]`, account.password);
-                await client.pause(CONF.timeouts.elementTouched);
             }
 
             if (account.twoFactorCode) {
                 await client.setValue(`[formcontrolname=twoFactorCode]`, account.twoFactorCode);
-                await client.pause(CONF.timeouts.elementTouched);
             }
+
+            const expectedAccountsCount = await workflow.accountsCount() + 1;
 
             await client.click(`button[type="submit"]`);
-            await client.pause(CONF.timeouts.encryption);
 
-            t.is(
-                (await client.getUrl()).split("#").pop(),
-                `/(settings-outlet:settings/account-edit//accounts-outlet:accounts)?login=${login}`,
-                `addAccount: "accounts?login=${login}" page url`,
-            );
+            // account got added to the settings modal account list
+            await (async () => {
+                selector = `.modal-body email-securely-app-type-symbol ~ .d-inline-block > span[data-login='${login}']`;
+                const timeout = CONF.timeouts.encryption;
+                try {
+                    await t.context.app.client.waitForVisible(selector, timeout);
+                } catch (error) {
+                    t.fail(`Failed to resolve "${selector}" element within ${timeout}ms`);
+                    throw error;
+                }
+            })();
+
             await workflow.closeSettingsModal();
-            await client.pause(CONF.timeouts.encryption);
+
+            t.is(expectedAccountsCount, await workflow.accountsCount(), "test expected accounts count");
+
+            await workflow.selectAccount(expectedAccountsCount - 1);
 
             // make sure webview api got initialized (page loaded and login auto-filled)
-            const accountIndex = await workflow.accountsCount() - 1;
-            const selector = `${accountCssSelector(accountIndex)} > .login-filled-once`;
-            try {
-                await t.context.app.client.waitForVisible(selector, CONF.timeouts.loginFilledOnce);
-            } catch (error) {
-                t.fail(`Failed to resolve "${selector}" element within ${CONF.timeouts.loginFilledOnce}ms`);
-                throw error;
-            }
+            await (async () => {
+                const accountIndex = expectedAccountsCount - 1;
+                selector = `${accountCssSelector(accountIndex)} > .login-filled-once`;
+                const timeout = CONF.timeouts.loginFilledOnce;
+                try {
+                    await t.context.app.client.waitForVisible(selector, timeout);
+                } catch (error) {
+                    await saveScreenshot(t);
+                    t.fail(`Failed to resolve "${selector}" element within ${timeout}ms`);
+                    throw error;
+                }
+                await saveScreenshot(t);
+            })();
         },
 
         async selectAccount(zeroStartedAccountIndex = 0) {
-            const client = t.context.app.client;
+            const {client} = t.context.app;
 
             await client.click(accountCssSelector(zeroStartedAccountIndex));
-            // TODO make sure account is selected and loaded
+            await client.pause(CONF.timeouts.elementTouched);
+            // TODO make sure account is selected
         },
 
         async accountsCount() {
-            const client = t.context.app.client;
+            const {client} = t.context.app;
             const els = await client.elements(`.list-group.accounts-list > email-securely-app-account-title`);
 
             return els.value.length;
@@ -313,13 +337,17 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
 
         async openSettingsModal(index?: number) {
             const listGroupSelector = `.modal-body .list-group`;
-            const client = t.context.app.client;
+            const {client} = t.context.app;
 
-            await client.click(`.controls .dropdown-toggle`);
-            await client.click(`#optionsMenuItem`);
-            await client.pause(CONF.timeouts.elementTouched);
+            // open modal if not yet opened
+            try {
+                await client.waitForVisible(listGroupSelector, ONE_SECOND_MS);
+            } catch (e) {
+                await client.click(`.controls .dropdown-toggle`);
+                await client.click(`#optionsMenuItem`);
+            }
 
-            // making sure modal is opened (consider testing by url)
+            // making sure modal is opened TODO consider test by url too
             await client.waitForVisible(listGroupSelector);
 
             if (typeof index === "undefined") {
@@ -334,7 +362,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
         },
 
         async closeSettingsModal() {
-            const client = t.context.app.client;
+            const {client} = t.context.app;
 
             await client.click(`button.close`);
             await client.pause(CONF.timeouts.elementTouched);
@@ -348,11 +376,24 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
         },
 
         async logout() {
-            const client = t.context.app.client;
+            const {client} = t.context.app;
+            let selector = "";
 
-            await client.click(`.controls .dropdown-toggle`);
-            await client.click(`#logoutMenuItem`);
-            await client.pause(CONF.timeouts.logout);
+            await client.click(`email-securely-app-accounts .controls .dropdown-toggle`);
+            await client.waitForVisible(selector = `#logoutMenuItem`);
+            await client.click(selector);
+
+            await (async () => {
+                selector = `#loginFormPasswordControl`;
+                const timeout = CONF.timeouts.logout;
+                try {
+                    await t.context.app.client.waitForVisible(selector, timeout);
+                } catch (error) {
+                    await saveScreenshot(t);
+                    t.fail(`Failed to resolve "${selector}" element within ${timeout}ms`);
+                    throw error;
+                }
+            })();
 
             t.is(
                 (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/login)",
@@ -368,14 +409,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
 
 export async function catchError(t: ExecutionContext<TestContext>, error?: Error) {
     try {
-        await t.context.app.client.waitForVisible(`.alert-link`, CONF.timeouts.element);
-        await t.context.app.client.click(`.alert-link`);
-    } catch {
-        // NOOP
-    }
-
-    try {
-        await saveShot(t);
+        await saveScreenshot(t);
     } catch {
         // NOOP
     }
@@ -387,7 +421,7 @@ export async function catchError(t: ExecutionContext<TestContext>, error?: Error
     }
 }
 
-export async function saveShot(t: ExecutionContext<TestContext>) {
+export async function saveScreenshot(t: ExecutionContext<TestContext>) {
     const file = path.join(
         t.context.outputDirPath,
         `sreenshot-${t.title}-${new Date().toISOString()}.png`.replace(/[^A-Za-z0-9\.]/g, "_"),
@@ -397,7 +431,7 @@ export async function saveShot(t: ExecutionContext<TestContext>) {
     await promisify(fs.writeFile)(file, image);
 
     // tslint:disable-next-line:no-console
-    console.info(`ErrorShot produced: ${file}`);
+    console.info(`Screenshot produced: ${file}`);
 
     return file;
 }

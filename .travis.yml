@@ -4,22 +4,19 @@ branches:
   only:
     - master
 language: node_js
-node_js: 10
-cache:
-  directories:
-    - $HOME/.cache/yarn
-    - ./output/git
-before_cache: ./scripts/ci-before-cache.sh
+node_js: 10.11.0
 env:
   global:
     - CI=true
-    - NO_AT_BRIDGE=1
-    - MOZ_HEADLESS=1
+    - NO_AT_BRIDGE=1 # needed for "dbus" initializing, see "eval $(dbus-launch --sh-syntax);" call below
+    - MOZ_HEADLESS=1 # needed for karma tests running in headless mode
     - ELECTRON_CACHE=$HOME/.cache/electron
     - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
-    - EMAIL_SECURELY_APP_GITHUB_ARTIFACT_NAME=travis-${TRAVIS_BUILD_NUMBER}-id-${TRAVIS_BUILD_ID}-commit-${TRAVIS_COMMIT}.zip
+    - APP_GITHUB_ARTIFACT_WEBCLIENTS=travis-${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT}-app-webclients.zip
 addons:
   firefox: latest
+matrix:
+  fast_finish: true
 jobs:
   include:
     - stage: prepare web clients artifact
@@ -27,14 +24,18 @@ jobs:
       addons:
         apt:
           packages:
-            - libsecret-1-dev
-            - nasm
+            - libsecret-1-dev # needed for "keytar" native dependency installing/rebuilding
+            - nasm # needed for protonmail/tutanota building (don't remember which one)
+      before_script:
+        - export APP_GITHUB_ARTIFACT_LOG_DISABLED=1
       script:
-        - yarn run assets:tutanota-webclient
-        - yarn run assets:protonmail-webclient
-        - zip -r $EMAIL_SECURELY_APP_GITHUB_ARTIFACT_NAME ./app
+        - yarn assets:tutanota-webclient
+        - yarn assets:protonmail-webclient
+        - | # prepare $APP_GITHUB_ARTIFACT_WEBCLIENTS archive
+          zip -r $APP_GITHUB_ARTIFACT_WEBCLIENTS ./app;
         - ls
-        - yarn run ci:travis:upload-artifact
+        - | # upload $APP_GITHUB_ARTIFACT_WEBCLIENTS archive
+          yarn github-artifact:upload $APP_GITHUB_ARTIFACT_WEBCLIENTS;
     - stage: build app
       os: osx
       osx_image: xcode9.4
@@ -48,23 +49,45 @@ jobs:
         - docker
       addons:
         apt:
+          sources:
+            - ubuntu-toolchain-r-test # upgrade GCC to a more recent version, see https://docs.travis-ci.com/user/languages/cpp/#gcc-on-linux
           packages:
-            - gnome-keyring
-            - libgnome-keyring-dev
-            - libsecret-1-dev
-            - python-gnomekeyring
+            - g++-7 # needed for native modules compiling/rebuilding
+            - libsecret-1-dev # needed for "keytar" native dependency installing/rebuilding
+            - gnome-keyring # needed for initializing keychain for running e2e tests that use "keytar"
+            - libgnome-keyring-dev # needed for initializing keychain for running e2e tests that use "keytar"
+            - python-gnomekeyring # needed for initializing keychain for running e2e tests that use "keytar"
       before_script:
-        - |
-          export DISPLAY=:99.0; sh -e /etc/init.d/xvfb start; sleep 3;
+        - | # init env variables
+          export CC=gcc-7; # needed for native modules compiling/rebuilding
+          export CXX=g++-7; # needed for native modules compiling/rebuilding
+        - | # init xvfb
+          export DISPLAY=:99.0;
+          sh -e /etc/init.d/xvfb start;
+          sleep 3;
+        - | # init dbus
           eval $(dbus-launch --sh-syntax);
+        - | # init keychain
           eval $(echo -n "" | /usr/bin/gnome-keyring-daemon --login);
           eval $(/usr/bin/gnome-keyring-daemon --components=secrets --start);
           /usr/bin/python -c "import gnomekeyring;gnomekeyring.create_sync('login', '');";
       script: ./scripts/travis-build-app.sh
+before_install:
+  - | # installing the most recent yarn version
+    curl -o- -L https://yarnpkg.com/install.sh | bash;
+    export PATH="$HOME/.yarn/bin:$PATH";
 install:
+  - node --version
+  - npm --version
+  - yarn --version
   - yarn --pure-lockfile install
-  - yarn generate-npm-lockfile
-  - npm audit
+after_script:
+  - | # upload logs
+    if [ -z "$APP_GITHUB_ARTIFACT_LOG_DISABLED" ]; then
+      export APP_GITHUB_ARTIFACT_LOG=travis-${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT}-${TRAVIS_JOB_NUMBER}-log.zip;
+      zip -r $APP_GITHUB_ARTIFACT_LOG ./output/e2e;
+      yarn github-artifact:upload $APP_GITHUB_ARTIFACT_LOG;
+    fi
 notifications:
   email:
     on_success: never

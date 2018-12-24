@@ -40,8 +40,10 @@ execAccountTypeFlow({
     accountType: "protonmail",
     folderAsDomainEntries,
     repoRelativeDistDir: "./dist",
-    flow: async ({repoDir, folderAsDomainEntry}) => {
-        await build({repoDir, ...folderAsDomainEntry});
+    flows: {
+        build: async ({repoDir, folderAsDomainEntry}) => {
+            await build({repoDir, ...folderAsDomainEntry});
+        },
     },
 }).catch((error) => {
     consoleLog(consoleLevels.error(error));
@@ -74,12 +76,16 @@ async function build({repoDir: cwd, options, folderNameAsDomain}: { repoDir: str
         const webpackFile = path.join(cwd, `./webpack.config.${APP_NAME}.js`);
         // tslint:disable:no-trailing-whitespace
         const webpackFileContent = `
+            const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
             const config = require("./webpack.config");
             
-            config.devtool = "source-map";
-            
-            config.optimization.minimize = false;
-            delete config.optimization.minimizer;
+            config.optimization.minimizer.forEach((minimizer) => {
+                if (minimizer.constructor.name === "TerserPlugin") {
+                    minimizer.options.include = "./src";
+                    minimizer.options.parallel = false;
+                    minimizer.options.cache = false;
+                }
+            });
             
             config.plugins = config.plugins.filter((plugin) => {
                 switch (plugin.constructor.name) {
@@ -88,8 +94,8 @@ async function build({repoDir: cwd, options, folderNameAsDomain}: { repoDir: str
                         break;
                     case "OptimizeCSSAssetsPlugin":
                         return false;
-                    case "ImageminPlugin":
-                        return false;
+                    // case "ImageminPlugin":
+                    //     return false;
                 }
                 return true;
             })

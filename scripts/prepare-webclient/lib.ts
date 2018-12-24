@@ -36,12 +36,15 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
         accountType,
         folderAsDomainEntries,
         repoRelativeDistDir,
-        flow,
+        flows,
     }: {
         accountType: AccountType,
         folderAsDomainEntries: T,
         repoRelativeDistDir: string,
-        flow: Flow<O>,
+        flows: {
+            preInstall?: Flow<O>;
+            build: Flow<O>;
+        },
     },
 ) {
     try {
@@ -65,6 +68,7 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
 
             const repoDir = path.resolve(baseRepoDir, folderAsDomainEntry.folderNameAsDomain);
             const repoDistDir = path.resolve(repoDir, repoRelativeDistDir);
+            const flowArg = {repoDir, folderAsDomainEntry};
 
             if (await fsExtra.pathExists(repoDir)) {
                 consoleLog(consoleLevels.warning(`Skipping cloning`));
@@ -79,10 +83,13 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
                 if (await fsExtra.pathExists(path.resolve(repoDir, "node_modules"))) {
                     consoleLog(consoleLevels.warning(`Skipping dependencies installing`));
                 } else {
+                    if (flows.preInstall) {
+                        await flows.preInstall(flowArg);
+                    }
                     await installDependencies(repoDir);
                 }
 
-                await flow({repoDir, folderAsDomainEntry});
+                await flows.build(flowArg);
             }
 
             consoleLog(consoleLevels.title(`Copying: ${consoleLevels.value(repoDistDir)} to ${consoleLevels.value(resolvedDistDir)}`));
@@ -95,7 +102,7 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
 }
 
 async function installDependencies(dir: string) {
-    await execShell(["npm", ["install"], {cwd: dir}]);
+    await execShell(["npm", ["install", "--no-package-lock"], {cwd: dir}]);
 }
 
 async function clone(accountType: AccountType, destDir: string) {

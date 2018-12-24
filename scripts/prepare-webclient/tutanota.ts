@@ -13,8 +13,10 @@ execAccountTypeFlow({
     accountType: "tutanota",
     folderAsDomainEntries,
     repoRelativeDistDir: "./build/dist",
-    flow: async ({repoDir, folderAsDomainEntry}) => {
-        await build({repoDir, ...folderAsDomainEntry});
+    flows: {
+        build: async ({repoDir, folderAsDomainEntry}) => {
+            await build({repoDir, ...folderAsDomainEntry});
+        },
     },
 }).catch((error) => {
     consoleLog(consoleLevels.error(error));

@@ -185,6 +185,7 @@ const configPatch: Record<BuildEnvironment, Configuration> = {
     },
     development: {
         devServer: {
+            host: "127.0.0.1",
             hot: true,
             inline: true,
             stats: "minimal",

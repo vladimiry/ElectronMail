@@ -42,41 +42,29 @@ export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlIte
     protonmail: {
         entryUrl: [
             {
-                value: "https://app.protonmail.ch",
-                title: "https://app.protonmail.ch (deprecated)",
+                value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.protonmail.com`,
+                title: `https://mail.protonmail.com (${getBuiltInWebClientTitle("protonmail")})`,
             },
             {
                 value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://app.protonmail.ch`,
                 title: `https://app.protonmail.ch (${getBuiltInWebClientTitle("protonmail")})`,
             },
             {
-                value: "https://mail.protonmail.com",
-                title: "https://mail.protonmail.com (deprecated)",
-            },
-            {
-                value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.protonmail.com`,
-                title: `https://mail.protonmail.com (${getBuiltInWebClientTitle("protonmail")})`,
-            },
-            {
-                value: "https://beta.protonmail.com",
-                title: "https://beta.protonmail.com",
+                value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://protonirockerxow.onion`,
+                title: `https://protonirockerxow.onion (${getBuiltInWebClientTitle("protonmail")})`,
             },
             {
                 value: "https://protonirockerxow.onion",
                 title: "https://protonirockerxow.onion (deprecated)",
             },
             {
-                value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://protonirockerxow.onion`,
-                title: `https://protonirockerxow.onion (${getBuiltInWebClientTitle("protonmail")})`,
+                value: "https://beta.protonmail.com",
+                title: "https://beta.protonmail.com (deprecated)",
             },
         ],
     },
     tutanota: {
         entryUrl: [
-            {
-                value: "https://mail.tutanota.com",
-                title: "https://mail.tutanota.com (deprecated)",
-            },
             {
                 value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.tutanota.com`,
                 title: `https://mail.tutanota.com (${getBuiltInWebClientTitle("tutanota")})`,
@@ -86,7 +74,7 @@ export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlIte
 };
 
 function getBuiltInWebClientTitle(accountType: AccountType): string {
-    return `built-in "web client" v${PROVIDER_REPO[accountType].version}-${PROVIDER_REPO[accountType].commit.substr(0, 7)}`;
+    return `v${PROVIDER_REPO[accountType].version}-${PROVIDER_REPO[accountType].commit.substr(0, 7)}`;
 }
 
 export const LOG_LEVELS: LogLevel[] = Object.keys(((stub: Record<LogLevel, null>) => stub)({

@@ -1,10 +1,11 @@
 import compareVersions from "compare-versions";
 
-import {APP_VERSION} from "src/shared/constants";
+import {ACCOUNTS_CONFIG, ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX, APP_VERSION} from "src/shared/constants";
 import {AccountConfig} from "src/shared/model/account";
 import {Config, Settings} from "src/shared/model/options";
 import {Database} from "./database";
 import {DbAccountPk} from "src/shared/model/database";
+import {EntryUrlItem} from "src/shared/types";
 import {INITIAL_STORES} from "./constants";
 
 const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
@@ -88,6 +89,22 @@ const SETTINGS_UPGRADES: Record<string, (settings: Settings) => void> = {
             }
             account.database = account.storeMails;
             delete account.storeMails;
+        });
+    },
+    "2.0.0": (settings) => {
+        // dropping "online web clients" support, see https://github.com/vladimiry/email-securely-app/issues/80
+        const possibleEntryUrls: string[] = Object
+            .values(ACCOUNTS_CONFIG)
+            .reduce((list: EntryUrlItem[], {entryUrl}) => list.concat(entryUrl), [])
+            .map(({value}) => value);
+        settings.accounts.forEach((account) => {
+            if (possibleEntryUrls.includes(account.entryUrl)) {
+                return;
+            }
+            account.entryUrl = `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}${account.entryUrl}`;
+            if (!possibleEntryUrls.includes(account.entryUrl)) {
+                throw new Error(`Invalid entry url value "${account.entryUrl}"`);
+            }
         });
     },
 };

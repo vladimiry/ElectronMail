@@ -3917,10 +3917,10 @@ electron-publish@20.38.3:
     lazy-val "^1.0.3"
     mime "^2.4.0"
 
-electron-rpc-api@4.0.0-beta.2:
-  version "4.0.0-beta.2"
-  resolved "https://registry.yarnpkg.com/electron-rpc-api/-/electron-rpc-api-4.0.0-beta.2.tgz#e8a22ae7268d97171de0e90feb95818d745e9cc7"
-  integrity sha512-yAR09Pg1iQ6RtNG//A7GMJDOY1JCG9xvfGlW/HiKmW2Zis88hBkuyeOtaonFUryI86VI1hlpYgKcpKviGM9jWg==
+electron-rpc-api@4.0.0-beta.3:
+  version "4.0.0-beta.3"
+  resolved "https://registry.yarnpkg.com/electron-rpc-api/-/electron-rpc-api-4.0.0-beta.3.tgz#d50824c2ed9c5b55e4b50b9cd9f4ab7a4420ba11"
+  integrity sha512-24s1/gdPTco8LBMSictUP+GOd8T0uUK2yzwcZHFTbKgLoAlifXdSClrlw6k4brzP1En1VnWGuHOs8yDV0SwRfw==
   dependencies:
     pubsub-to-stream-api "^4.0.0-beta.2"
     tslib "^1.9.2"
@@ -10107,9 +10107,9 @@ serialize-error@^2.1.0:
   integrity sha1-ULZ51WNc34Rme9yOWa9OW4HV9go=
 
 serialize-javascript@^1.4.0:
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/serialize-javascript/-/serialize-javascript-1.5.0.tgz#1aa336162c88a890ddad5384baebc93a655161fe"
-  integrity sha512-Ga8c8NjAAp46Br4+0oZ2WxJCwIzwP60Gq1YPgU+39PiTVxyed/iKE/zyZI6+UlVYH5Q4PaQdHhcegIFPZTUfoQ==
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/serialize-javascript/-/serialize-javascript-1.6.0.tgz#b30ce5ddd6517f2c445e129ff5834a399fb5861e"
+  integrity sha512-AQxrNqu4EXWt03dJdgKXI+Au9+pvEuM5+Nk5g6+TmuxMCkEL03VhZ31HM+VKeaaZbFpDHaoSruiHq4PW9AIrOQ==
 
 serializerr@^1.0.3:
   version "1.0.3"

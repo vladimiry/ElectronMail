@@ -96,7 +96,7 @@
     "class-validator": "0.9.1",
     "compare-versions": "3.4.0",
     "electron-log": "2.2.17",
-    "electron-rpc-api": "4.0.0-beta.2",
+    "electron-rpc-api": "4.0.0-beta.3",
     "electron-unhandled": "2.1.0",
     "electron-updater": "4.0.7",
     "fs-json-store": "2.1.1",

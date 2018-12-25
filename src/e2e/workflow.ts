@@ -17,6 +17,7 @@ import {AccountType} from "src/shared/model/account";
 import {CI_ENV_LOGOUT_ACTION_TIMEOUT_MS} from "./shared-constants";
 
 export interface TestContext {
+    testStatus: "initial" | "success" | "fail";
     app: Application;
     outputDirPath: string;
     userDataDirPath: string;
@@ -57,7 +58,6 @@ const GLOBAL_STATE = {
 
 export async function initApp(t: ExecutionContext<TestContext>, options: { initial: boolean }): Promise<TestContext["workflow"]> {
     t.context.workflow = buildWorkflow(t);
-
     t.context.sinon = {
         addAccountSpy: sinon.spy(t.context.workflow, "addAccount"),
     };
@@ -165,13 +165,17 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
 function buildWorkflow(t: ExecutionContext<TestContext>) {
     const workflow = {
         async destroyApp() {
+            await saveScreenshot(t);
+
             // TODO update to electron 2: app.isRunning() returns undefined, uncomment as soon as it's fixed
             if (!t.context.app || !t.context.app.isRunning()) {
                 t.pass("app is not running");
                 return;
             }
+
             await t.context.app.stop();
             t.is(t.context.app.isRunning(), false);
+
             delete t.context.app;
         },
 
@@ -422,6 +426,10 @@ export async function catchError(t: ExecutionContext<TestContext>, error?: Error
 }
 
 export async function saveScreenshot(t: ExecutionContext<TestContext>) {
+    if (!t.context.app || !t.context.app.browserWindow) {
+        return;
+    }
+
     const file = path.join(
         t.context.outputDirPath,
         `sreenshot-${t.title}-${new Date().toISOString()}.png`.replace(/[^A-Za-z0-9\.]/g, "_"),

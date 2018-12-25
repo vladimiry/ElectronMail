@@ -96,7 +96,6 @@ async function build({repoDir: cwd, options, folderNameAsDomain}: { repoDir: str
         const webpackFile = path.join(cwd, `./webpack.config.${APP_NAME}.js`);
         // tslint:disable:no-trailing-whitespace
         const webpackFileContent = `
-            const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
             const config = require("./webpack.config");
             
             config.optimization.minimizer.forEach((minimizer) => {

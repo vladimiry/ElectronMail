@@ -15,7 +15,7 @@ const directTypeMapping: Record<keyof typeof Rest.Model.MAIL_TYPE._.nameValueMap
     [Rest.Model.MAIL_TYPE.INBOX_AND_SENT]: DatabaseModel.MAIL_STATE.INBOX_AND_SENT,
 };
 
-const isConfindencial = ((encryptedValues: Array<Rest.Model.Message["IsEncrypted"]>) => {
+const isConfidential = ((encryptedValues: Array<Rest.Model.Message["IsEncrypted"]>) => {
     return ({IsEncrypted}: Pick<Rest.Model.Message, "IsEncrypted">) => encryptedValues.includes(IsEncrypted);
 })([
     // Rest.Model.ENCRYPTED_STATUS.NONE,
@@ -52,7 +52,7 @@ export async function buildMail(input: Rest.Model.Message, api: ProviderApi): Pr
         attachments: input.Attachments.map(File),
         unread: Boolean(input.Unread),
         state: directTypeMapping[input.Type],
-        confidential: isConfindencial(input),
+        confidential: isConfidential(input),
         replyType: (input.IsReplied || input.IsRepliedAll) && input.IsForwarded
             ? DatabaseModel.REPLY_TYPE.REPLY_FORWARD
             : input.IsReplied || input.IsRepliedAll

@@ -2,7 +2,11 @@ import * as DatabaseModel from "src/shared/model/database";
 import * as Rest from "src/electron-preload/webview/protonmail/lib/rest";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {ProviderApi} from "src/electron-preload/webview/protonmail/lib/provider-api";
+import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {buildBaseEntity, buildPk} from ".";
+import {curryFunctionMembers} from "src/shared/util";
+
+const logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[lib/database/mail]");
 
 const directTypeMapping: Record<keyof typeof Rest.Model.MAIL_TYPE._.nameValueMap, DatabaseModel.Mail["state"]> = {
     [Rest.Model.MAIL_TYPE.INBOX]: DatabaseModel.MAIL_STATE.RECEIVED,
@@ -33,7 +37,14 @@ export async function buildMail(input: Rest.Model.Message, api: ProviderApi): Pr
         mailFolderIds: input.LabelIDs,
         sentDate: input.Time * ONE_SECOND_MS,
         subject: input.Subject,
-        body: await api.messageModel(input).clearTextBody(),
+        body: await (async () => {
+            try {
+                return await api.messageModel(input).clearTextBody();
+            } catch (error) {
+                logger.error(`"messageModel.clearTextBody()" failed on email with the following subject: ${input.Subject}`);
+                throw error;
+            }
+        })(),
         sender: Address({...input.Sender, ...buildAddressId(input, "Sender")}),
         toRecipients: input.ToList.map((address, i) => Address({...address, ...buildAddressId(input, "ToList", i)})),
         ccRecipients: input.CCList.map((address, i) => Address({...address, ...buildAddressId(input, "CCList", i)})),

@@ -2,11 +2,11 @@ import _logger from "electron-log";
 import PQueue from "p-queue";
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/private/constants";
 import {EncryptionAdapter, KeyBasedPreset} from "fs-json-store-encryption-adapter";
-import {Model, Store} from "fs-json-store";
+import {Model as FsJsonStoreModel, Store as FsJsonStore} from "fs-json-store";
 
 import * as Entity from "./entity";
 import {DATABASE_VERSION} from "./constants";
-import {DbAccountPk, FsDb, FsDbAccount, MemoryDb, MemoryDbAccount} from "src/shared/model/database";
+import {DbAccountPk, FsDb, FsDbAccount, MAIL_FOLDER_TYPE, Mail, MemoryDb, MemoryDbAccount} from "src/shared/model/database";
 import {EntityMap} from "./entity-map";
 import {curryFunctionMembers} from "src/shared/util";
 
@@ -22,7 +22,7 @@ export class Database {
     constructor(
         public readonly options: Readonly<{
             file: string;
-            fileFs?: Model.StoreFs;
+            fileFs?: FsJsonStoreModel.StoreFs;
             encryption: Readonly<{
                 keyResolver: () => Promise<string>;
                 presetResolver: () => Promise<KeyBasedPreset>;
@@ -185,12 +185,23 @@ export class Database {
     accountStat(
         account: MemoryDbAccount,
     ): { conversationEntries: number, mails: number, folders: number; contacts: number; unread: number } {
+        const spamFolder = [...account.folders.values()].find(({folderType}) => folderType === MAIL_FOLDER_TYPE.SPAM);
+        const spamFolderMailFolderId = spamFolder && spamFolder.mailFolderId;
+        const isSpamEmail: (mail: Mail) => boolean = typeof spamFolderMailFolderId !== "undefined"
+            ? ({mailFolderIds}) => mailFolderIds.includes(spamFolderMailFolderId)
+            : () => false;
+
         return {
             conversationEntries: account.conversationEntries.size,
             mails: account.mails.size,
             folders: account.folders.size,
             contacts: account.contacts.size,
-            unread: [...account.mails.values()].reduce((unread, mail) => unread += Number(mail.unread), 0),
+            unread: [...account.mails.values()].reduce(
+                (unread, mail) => isSpamEmail(mail)
+                    ? unread
+                    : unread + Number(mail.unread),
+                0,
+            ),
         };
     }
 
@@ -214,14 +225,14 @@ export class Database {
         };
     }
 
-    private async resolveStore(): Promise<Store<FsDb>> {
+    private async resolveStore(): Promise<FsJsonStore<FsDb>> {
         const key = Buffer.from(await this.options.encryption.keyResolver(), BASE64_ENCODING);
 
         if (key.length !== KEY_BYTES_32) {
             throw new Error(`Invalid encryption key length, expected: ${KEY_BYTES_32}, actual: ${key.length}`);
         }
 
-        return new Store<FsDb>({
+        return new FsJsonStore<FsDb>({
             file: this.options.file,
             adapter: new EncryptionAdapter({
                 key,

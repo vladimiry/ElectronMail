@@ -152,8 +152,10 @@ export class OptionsEffects {
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({removingAccount: true})),
             this.ipcMainClient("removeAccount")({login: payload.login}).pipe(
-                map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
-                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                concatMap((settings) => [
+                    OPTIONS_ACTIONS.GetSettingsResponse(settings),
+                    this.optionsService.settingsNavigationAction({path: "accounts"}),
+                ]), catchError((error) => of(CORE_ACTIONS.Fail(error))),
                 finalize(() => this.dispatchProgress({removingAccount: false})),
             ),
         )));

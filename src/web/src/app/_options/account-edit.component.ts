@@ -2,8 +2,8 @@ import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/form
 import {ActivatedRoute} from "@angular/router";
 import {Component, OnDestroy, OnInit} from "@angular/core";
 import {Observable, Subject, merge} from "rxjs";
-import {Store} from "@ngrx/store";
-import {concatMap, filter, map, mergeMap, pairwise, takeUntil} from "rxjs/operators";
+import {Store, select} from "@ngrx/store";
+import {concatMap, distinctUntilChanged, map, mergeMap, takeUntil} from "rxjs/operators";
 
 import {ACCOUNTS_CONFIG, ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX} from "src/shared/constants";
 import {AccountConfig, AccountConfigProtonmail, AccountType} from "src/shared/model/account";
@@ -11,7 +11,6 @@ import {AccountConfigCreatePatch, AccountConfigUpdatePatch} from "src/shared/mod
 import {EntryUrlItem} from "src/shared/types";
 import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
-import {OptionsService} from "./options.service";
 import {State} from "src/web/src/app/store/reducers/options";
 
 @Component({
@@ -43,13 +42,21 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         mergeMap((account) => account ? [account] : []),
     );
     // progress
-    processing$ = this.store.select(OptionsSelectors.FEATURED.progress).pipe(map((p) => p.addingAccount || p.updatingAccount));
-    removing$ = this.store.select(OptionsSelectors.FEATURED.progress).pipe(map((p) => p.removingAccount));
+    processing$ = this.store.pipe(
+        select(OptionsSelectors.FEATURED.progress),
+        map((p) => Boolean(p.addingAccount || p.updatingAccount)),
+        distinctUntilChanged(),
+    );
+    removing$ = this.store.pipe(
+        select(OptionsSelectors.FEATURED.progress),
+        map((p) => Boolean(p.removingAccount)),
+        distinctUntilChanged(),
+    );
+
     // other
     unSubscribe$ = new Subject();
 
-    constructor(private optionsService: OptionsService,
-                private store: Store<State>,
+    constructor(private store: Store<State>,
                 private activatedRoute: ActivatedRoute) {}
 
     ngOnInit() {
@@ -71,21 +78,6 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                     controls.mailPassword.patchValue(account.credentials.mailPassword);
                 }
             });
-
-        this.store.select(OptionsSelectors.SETTINGS.accounts).pipe(
-            pairwise(),
-            filter(([prevAccounts, currAccounts]) => currAccounts.length !== prevAccounts.length),
-            takeUntil(this.unSubscribe$),
-        ).subscribe(([{length: prevAccountsCount}, accounts]) => {
-            const removed = accounts.length < prevAccountsCount;
-            const added = accounts.length > prevAccountsCount;
-            const goTo = removed ? {path: "accounts"}
-                : added ? {path: "account-edit", queryParams: {login: accounts[accounts.length - 1].login}}
-                    : false; // "false" is not really possibel due to the above "currAccounts.length !== prevAccounts.length" filtering
-            if (goTo) {
-                this.store.dispatch(this.optionsService.settingsNavigationAction(goTo));
-            }
-        });
 
         controls.type.valueChanges
             .pipe(takeUntil(this.unSubscribe$))

@@ -9,13 +9,13 @@
                 The encryption work factor can be adjusted by this option.
             </p>
             <p>
-                <strong>sensitive</strong> kinds of presets generally enable the highest work factor, so it's the most
+                <code>sensitive</code> kinds of presets generally enable the highest work factor, so it's the most
                 secure option from the list, but its execution takes significantly longer than other kinds of presets.
-                <strong>moderate</strong> is in the middle and <strong>interactive</strong> is the least secure option, but it works faster.
+                <code>moderate</code> is in the middle and <code>interactive</code> is the least secure option, but it works faster.
             </p>
             <p>
-                <strong>sodium.crypto_pwhash</strong> is considered as a more secure key derivation function than
-                <strong>node.pbkdf2</strong> as it goes with the Argon2 algorithm.
+                <code>sodium.crypto_pwhash</code> is considered as a more secure key derivation function than
+                <code>node.pbkdf2</code> as it goes with the Argon2 algorithm.
             </p>
         </ng-template>
         <select class="form-control" formControlName="keyDerivation" id="keyDerivationSelect">

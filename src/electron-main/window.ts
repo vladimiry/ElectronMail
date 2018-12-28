@@ -95,12 +95,20 @@ export async function initBrowserWindow(
 }
 
 export function initFindInPageBrowserView(ctx: Context): BrowserView {
+    if (!ctx.uiContext) {
+        throw new Error(`UI Context has not been initialized`);
+    }
+
     const browserView = new BrowserView({
         webPreferences: {
             ...commonWebPreferences,
             preload: ctx.locations.preload.searchInPageBrowserView,
         },
     });
+
+    // WARN: "setBrowserView" needs to be called before "setBounds" call
+    // otherwise BrowserView is invisible on macOS as "setBounds" call takes no effect
+    ctx.uiContext.browserWindow.setBrowserView(browserView);
 
     browserView.setAutoResize({width: false, height: true});
     browserView.webContents.loadURL(ctx.locations.searchInPageBrowserViewPage);
@@ -138,7 +146,6 @@ function syncFindInPageBrowserViewSize(ctx: Context, findInPageBrowserView?: Bro
         ...boundsSize,
     };
 
-    browserWindow.getBounds();
     browserView.setBounds(bounds);
 }
 

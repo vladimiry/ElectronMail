@@ -26,7 +26,7 @@ export async function buildEndpoints(
 ): Promise<Pick<Endpoints, ApiMethods>> {
     const resolveContext = () => {
         if (!ctx.uiContext) {
-            throw new Error(`UI Context has not been defined`);
+            throw new Error(`UI Context has not been initialized`);
         }
         return ctx.uiContext;
     };
@@ -44,7 +44,6 @@ export async function buildEndpoints(
             if (visible) {
                 if (!uiContext.findInPageBrowserView || uiContext.findInPageBrowserView.isDestroyed()) {
                     uiContext.findInPageBrowserView = initFindInPageBrowserView(ctx);
-                    uiContext.browserWindow.setBrowserView(uiContext.findInPageBrowserView);
                     setTimeout(
                         () => {
                             if (uiContext.findInPageBrowserView) {

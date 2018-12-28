@@ -12,6 +12,12 @@ const configs = [
     ),
     buildRendererConfig(
         {
+            "electron-preload/search-in-page-browser-view": srcRelateivePath(`./electron-preload/search-in-page-browser-view/index.ts`),
+        },
+        srcRelateivePath("./electron-preload/search-in-page-browser-view/tsconfig.json"),
+    ),
+    buildRendererConfig(
+        {
             "electron-preload/webview/protonmail": srcRelateivePath("./electron-preload/webview/protonmail/index.ts"),
         },
         srcRelateivePath("./electron-preload/webview/protonmail/tsconfig.json"),

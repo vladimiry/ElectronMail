@@ -443,6 +443,26 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.pass();
     },
 
+    // TODO test "findInPageDisplay" API
+    findInPageDisplay: (t) => {
+        t.pass();
+    },
+
+    // TODO test "findInPage" API
+    findInPage: (t) => {
+        t.pass();
+    },
+
+    // TODO test "findInPageStop" API
+    findInPageStop: (t) => {
+        t.pass();
+    },
+
+    // TODO test "findInPageNotification" API
+    findInPageNotification: (t) => {
+        t.pass();
+    },
+
     // TODO test "notification" API
     notification: (t) => {
         t.pass();

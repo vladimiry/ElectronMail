@@ -7,6 +7,7 @@ import {Model as StoreModel} from "fs-json-store";
 import {AccountConfig} from "src/shared/model/account";
 
 export type BaseConfig = Partial<Pick<Config,
+    | "findInPage"
     | "closeToTray"
     | "compactLayout"
     | "startMinimized"

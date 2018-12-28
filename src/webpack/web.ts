@@ -67,10 +67,11 @@ const baseConfig = buildBaseConfig(
     {
         target: "electron-renderer",
         entry: {
-            app: [
+            "app": [
                 ...(aot ? [] : ["core-js/es7/reflect"]),
                 webSrcPath("./index.ts"),
             ],
+            "search-in-page-browser-view": webSrcPath("./search-in-page-browser-view/index.ts"),
         },
         output: {path: outputRelateivePath("./web")},
         module: {
@@ -134,11 +135,19 @@ const baseConfig = buildBaseConfig(
             }),
             new MiniCssExtractPlugin(),
             new HtmlWebpackPlugin({
-                template: webSrcPath("index.ejs"),
+                template: webSrcPath("./index.ejs"),
                 filename: "index.html",
                 title: packageJson.description,
                 hash: environmentSate.production,
                 minify: false,
+                excludeChunks: ["search-in-page-browser-view"],
+            }),
+            new HtmlWebpackPlugin({
+                template: webSrcPath("./search-in-page-browser-view/index.ejs"),
+                filename: "search-in-page-browser-view.html",
+                hash: environmentSate.production,
+                minify: false,
+                chunks: ["search-in-page-browser-view"],
             }),
             new AngularCompilerPlugin({
                 entryModule: `${webSrcEnvPath("app.module")}#AppModule`,

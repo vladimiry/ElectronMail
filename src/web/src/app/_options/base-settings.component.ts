@@ -5,8 +5,7 @@ import {map, take} from "rxjs/operators";
 
 import {BaseConfig} from "src/shared/model/options";
 import {LOG_LEVELS} from "src/shared/constants";
-import {NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
-import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
+import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {State} from "src/web/src/app/store/reducers/options";
 
@@ -20,6 +19,7 @@ export class BaseSettingsComponent implements OnInit {
     processing$ = this.store.select(OptionsSelectors.FEATURED.progress).pipe(map((p) => p.updatingBaseSettings));
     logLevels = LOG_LEVELS;
     controls: Record<keyof BaseConfig, AbstractControl> = {
+        findInPage: new FormControl(),
         closeToTray: new FormControl(),
         compactLayout: new FormControl(),
         startMinimized: new FormControl(),
@@ -41,6 +41,12 @@ export class BaseSettingsComponent implements OnInit {
         this.form.valueChanges.subscribe(() => {
             this.store.dispatch(OPTIONS_ACTIONS.PatchBaseSettingsRequest(this.form.getRawValue()));
         });
+    }
+
+    openFindInPageIssue(event: Event) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.store.dispatch(NAVIGATION_ACTIONS.OpenExternal({url: "https://github.com/vladimiry/email-securely-app/issues/87"}));
     }
 
     openSettingsFolder(event: Event) {

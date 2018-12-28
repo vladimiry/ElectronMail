@@ -84,7 +84,7 @@ function initLocations(
         let schemeIndex = 0;
 
         (Object.keys(result) as AccountType[]).map((accountType) => {
-            const webClientsDir = path.join(appDir, "./webclient", `./${accountType}`);
+            const webClientsDir = appRelativePath("./webclient", `./${accountType}`);
 
             listDirsNames(storeFs, webClientsDir)
                 .map((dirName) => {
@@ -114,11 +114,16 @@ function initLocations(
         icon,
         trayIcon: icon,
         numbersFont: appRelativePath("./assets/numbers.ttf"),
-        browserWindowPage: (process.env.NODE_ENV as BuildEnvironment) === "development" ? "http://localhost:8080/index.html"
-            : formatFileUrl(path.join(appDir, "./web/index.html")),
+        browserWindowPage: (process.env.NODE_ENV as BuildEnvironment) === "development"
+            ? "http://localhost:8080/index.html"
+            : formatFileUrl(appRelativePath("./web/index.html")),
+        searchInPageBrowserViewPage: (process.env.NODE_ENV as BuildEnvironment) === "development"
+            ? "http://localhost:8080/search-in-page-browser-view.html"
+            : formatFileUrl(appRelativePath("./web/search-in-page-browser-view.html")),
         preload: {
             browserWindow: appRelativePath("./electron-preload/browser-window.js"),
             browserWindowE2E: appRelativePath("./electron-preload/browser-window-e2e.js"),
+            searchInPageBrowserView: appRelativePath("./electron-preload/search-in-page-browser-view.js"),
             webView: {
                 protonmail: formatFileUrl(appRelativePath("./electron-preload/webview/protonmail.js")),
                 tutanota: formatFileUrl(appRelativePath("./electron-preload/webview/tutanota.js")),

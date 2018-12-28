@@ -1,4 +1,4 @@
-import {BrowserWindow, BrowserWindowConstructorOptions, app} from "electron";
+import {BrowserView, BrowserWindow, BrowserWindowConstructorOptions, app} from "electron";
 import {Store} from "fs-json-store";
 import {equals} from "ramda";
 
@@ -12,19 +12,28 @@ const appBeforeQuitEventArgs: ["before-quit", (event: Electron.Event) => void] =
     "before-quit",
     () => browserWindowState.forceClose = true,
 ];
+const commonWebPreferences: BrowserWindowConstructorOptions["webPreferences"] = {
+    // enableRemoteModule: false, // TODO disable "remote" module on https://github.com/electron/electron/issues/15112 resolving
+    nodeIntegration: developmentEnvironment,
+    nodeIntegrationInWorker: false,
+    webviewTag: true,
+    webSecurity: true,
+    // sandbox: true, // TODO explore "sandbox" mode
+    disableBlinkFeatures: "Auxclick",
+};
 
-export async function initBrowserWindow(ctx: Context, endpoints: Endpoints): Promise<BrowserWindow> {
-    const e2eRuntimeEnvironment = ctx.runtimeEnvironment === "e2e"
-        && await new Store({file: ctx.locations.preload.browserWindowE2E, fs: ctx.storeFs}).readable();
+export async function initBrowserWindow(
+    ctx: Context,
+    endpoints: Endpoints,
+): Promise<BrowserWindow> {
+    const e2eRuntimeEnvironment = (
+        ctx.runtimeEnvironment === "e2e"
+        &&
+        await new Store({file: ctx.locations.preload.browserWindowE2E, fs: ctx.storeFs}).readable()
+    );
     const browserWindowConstructorOptions: BrowserWindowConstructorOptions = {
         webPreferences: {
-            // enableRemoteModule: false, // TODO disable "remote" module on https://github.com/electron/electron/issues/15112 resolving
-            nodeIntegration: developmentEnvironment,
-            nodeIntegrationInWorker: false,
-            webviewTag: true,
-            webSecurity: true,
-            // sandbox: true, // TODO explore "sandbox" mode
-            disableBlinkFeatures: "Auxclick",
+            ...commonWebPreferences,
             preload: e2eRuntimeEnvironment
                 ? ctx.locations.preload.browserWindowE2E
                 : ctx.locations.preload.browserWindow,
@@ -62,7 +71,6 @@ export async function initBrowserWindow(ctx: Context, endpoints: Endpoints): Pro
 
         if ((await ctx.configStore.readExisting()).closeToTray) {
             // TODO figure why "BrowserWindow.fromWebContents(event.sender).hide()" doesn't properly work (window gets closed)
-            // BrowserWindow.fromWebContents(event.sender).hide();
             const sender: BrowserWindow = (event as any).sender;
             sender.hide();
         } else {
@@ -86,12 +94,60 @@ export async function initBrowserWindow(ctx: Context, endpoints: Endpoints): Pro
     return browserWindow;
 }
 
+export function initFindInPageBrowserView(ctx: Context): BrowserView {
+    const browserView = new BrowserView({
+        webPreferences: {
+            ...commonWebPreferences,
+            preload: ctx.locations.preload.searchInPageBrowserView,
+        },
+    });
+
+    browserView.setAutoResize({width: false, height: true});
+    browserView.webContents.loadURL(ctx.locations.searchInPageBrowserViewPage);
+
+    syncFindInPageBrowserViewSize(ctx, browserView);
+
+    return browserView;
+}
+
+function syncFindInPageBrowserViewSize(ctx: Context, findInPageBrowserView?: BrowserView) {
+    if (!ctx.uiContext) {
+        return;
+    }
+
+    const browserView = findInPageBrowserView || ctx.uiContext.findInPageBrowserView;
+
+    if (!browserView) {
+        return;
+    }
+
+    const {browserWindow} = ctx.uiContext;
+    const browserWindowBounds = browserWindow.getBounds();
+    const alignCenter = browserWindowBounds.width < 600;
+    const boundsSize = {
+        width: alignCenter
+            ? Math.trunc(browserWindowBounds.width * 0.9)
+            : 400,
+        height: 38,
+    };
+    const bounds = {
+        x: alignCenter
+            ? Math.trunc((browserWindowBounds.width - boundsSize.width) / 2)
+            : browserWindowBounds.width - boundsSize.width - 25,
+        y: 0,
+        ...boundsSize,
+    };
+
+    browserWindow.getBounds();
+    browserView.setBounds(bounds);
+}
+
 async function keepState(ctx: Context, browserWindow: Electron.BrowserWindow) {
     const {bounds} = (await ctx.configStore.readExisting()).window;
     const debounce = 500;
     let timeoutId: any;
 
-    if (!("x" in bounds) || !("y" in bounds)) {
+    if (!("x" in bounds && "y" in bounds)) {
         browserWindow.center();
     }
 
@@ -103,6 +159,7 @@ async function keepState(ctx: Context, browserWindow: Electron.BrowserWindow) {
     function saveWindowStateHandlerDebounced() {
         clearTimeout(timeoutId);
         timeoutId = setTimeout(saveWindowStateHandler, debounce);
+        syncFindInPageBrowserViewSize(ctx);
     }
 
     async function saveWindowStateHandler() {
@@ -117,7 +174,7 @@ async function keepState(ctx: Context, browserWindow: Electron.BrowserWindow) {
                 newWindowConfig.bounds = browserWindow.getBounds();
             }
         } catch {
-            // it might potentially be that "browserWindow" has already been destroyed on this stage
+            // "browserWindow" might be destroyed at this point
             return;
         }
 

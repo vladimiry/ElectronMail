@@ -83,6 +83,14 @@ export interface Endpoints {
 
     hotkey: ApiMethod<{ type: "copy" | "paste" }, null>;
 
+    findInPageDisplay: ApiMethod<{ visible: boolean; }, null>;
+
+    findInPage: ApiMethod<{ query: string; options?: Electron.FindInPageOptions; }, Pick<Electron.FoundInPageResult, "requestId">>;
+
+    findInPageStop: ApiMethod<{ action: "clearSelection" | "keepSelection" | "activateSelection" }, null>;
+
+    findInPageNotification: ApiMethod<{}, Electron.FoundInPageResult | { requestId: null }>;
+
     notification: ApiMethodNoArgument<UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>>;
 }
 

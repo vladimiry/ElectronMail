@@ -33,6 +33,7 @@ export interface Context {
 
 export interface UIContext {
     readonly browserWindow: Electron.BrowserWindow;
+    findInPageBrowserView?: Electron.BrowserView;
     readonly tray: Electron.Tray;
     readonly appMenu: Electron.Menu;
 }

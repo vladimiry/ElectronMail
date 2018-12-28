@@ -6,9 +6,9 @@ import {StatusCodeError} from "./model/error";
 import {View} from "src/shared/model/database";
 
 export function pickBaseConfigProperties(
-    {closeToTray, compactLayout, startMinimized, unreadNotifications, checkForUpdatesAndNotify, logLevel}: Config,
-): BaseConfig {
-    return {closeToTray, compactLayout, startMinimized, unreadNotifications, checkForUpdatesAndNotify, logLevel};
+    {closeToTray, compactLayout, startMinimized, unreadNotifications, checkForUpdatesAndNotify, logLevel, findInPage}: Config,
+): Required<BaseConfig> {
+    return {closeToTray, compactLayout, startMinimized, unreadNotifications, checkForUpdatesAndNotify, logLevel, findInPage};
 }
 
 export const accountPickingPredicate = (criteria: LoginFieldContainer): (account: AccountConfig) => boolean => {

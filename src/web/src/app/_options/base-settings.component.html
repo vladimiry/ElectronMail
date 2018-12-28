@@ -36,6 +36,14 @@
                 Unread messages desktop notifications
             </label>
         </div>
+        <div class="form-check">
+            <label class="form-check-label">
+                <input type="checkbox" class="form-check-input" formControlName="findInPage">
+                Enable "Find in page / Ctrl+F" feature.
+                <span class="badge badge-secondary align-middle">experimental</span>
+                <a href="https://github.com/vladimiry/email-securely-app/issues/87" (click)="openFindInPageIssue($event)">#87</a>
+            </label>
+        </div>
         <hr>
         <div class="form-group">
             <label for="logLevelSelect">Log Level</label>

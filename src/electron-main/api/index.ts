@@ -1,7 +1,7 @@
 import logger from "electron-log";
 import {from} from "rxjs";
 
-import {Account, Database, General, TrayIcon} from "./endpoints-builders";
+import {Account, Database, FindInPage, General, TrayIcon} from "./endpoints-builders";
 import {Context} from "src/electron-main/model";
 import {Endpoints, IPC_MAIN_API} from "src/shared/api/main";
 import {buildSettingsAdapter} from "src/electron-main/util";
@@ -13,6 +13,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
     const endpoints: Endpoints = {
         ...await Account.buildEndpoints(ctx),
         ...await Database.buildEndpoints(ctx),
+        ...await FindInPage.buildEndpoints(ctx, () => endpoints),
         ...await General.buildEndpoints(ctx),
         ...await TrayIcon.buildEndpoints(ctx),
 

@@ -19,6 +19,7 @@ export interface ElectronWindow {
 export interface ElectronContextLocations {
     readonly appDir: string;
     readonly browserWindowPage: string;
+    readonly searchInPageBrowserViewPage: string;
     readonly icon: string;
     readonly numbersFont: string;
     readonly trayIcon: string;
@@ -26,6 +27,7 @@ export interface ElectronContextLocations {
     readonly preload: {
         browserWindow: string;
         browserWindowE2E: string;
+        searchInPageBrowserView: string;
         webView: Record<AccountType, string>;
     };
     readonly webClients: Record<AccountType, Array<{ entryUrl: string; entryApiUrl: string; }>>;

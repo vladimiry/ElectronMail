@@ -3,8 +3,6 @@ import {Logger} from "src/shared/types";
 
 type ObservableElement = Pick<HTMLElement, "addEventListener">;
 
-const keyV = 86;
-const keyC = 67;
 const processedElements = new WeakSet<ObservableElement>();
 
 export function registerDocumentKeyDownEventListener<E extends ObservableElement>(
@@ -16,21 +14,34 @@ export function registerDocumentKeyDownEventListener<E extends ObservableElement
     }
 
     try {
-        const client = IPC_MAIN_API.buildClient();
-        const method = client("hotkey");
+        const apiClient = IPC_MAIN_API.buildClient();
+        const apiMethods = {
+            hotkey: apiClient("hotkey"),
+            findInPageDisplay: apiClient("findInPageDisplay"),
+        };
 
-        element.addEventListener("keydown", (event) => {
+        element.addEventListener("keydown", async (event) => {
             const el: Element | null = (event.target as any);
             const cmdOrCtrl = event.ctrlKey || event.metaKey;
-            let type: "copy" | "paste" | undefined;
 
-            if (!el || !cmdOrCtrl) {
+            const cmdOrCtrlPlusC = cmdOrCtrl && event.keyCode === 67;
+            const cmdOrCtrlPlusV = cmdOrCtrl && event.keyCode === 86;
+            const cmdOrCtrlPlusF = cmdOrCtrl && event.keyCode === 70;
+
+            if (cmdOrCtrlPlusF) {
+                apiMethods.findInPageDisplay({visible: true}).toPromise().catch(logger.error);
                 return;
             }
 
-            if (event.keyCode === keyC && !isPasswordInput(el)) {
+            if (!el) {
+                return;
+            }
+
+            let type: "copy" | "paste" | undefined;
+
+            if (cmdOrCtrlPlusC && !isPasswordInput(el)) {
                 type = "copy";
-            } else if (event.keyCode === keyV && isWritable(el)) {
+            } else if (cmdOrCtrlPlusV && isWritable(el)) {
                 type = "paste";
             }
 
@@ -38,7 +49,7 @@ export function registerDocumentKeyDownEventListener<E extends ObservableElement
                 return;
             }
 
-            method({type}).toPromise().catch(logger.error);
+            apiMethods.hotkey({type}).toPromise().catch(logger.error);
         });
 
         processedElements.add(element);

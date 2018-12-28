@@ -18,6 +18,9 @@ test.serial("general actions: app start, master password setup, add accounts, lo
     await (async () => {
         const workflow = await initApp(t, {initial: true});
 
+        // screenshot with user agent clearly displayed
+        await saveScreenshot(t);
+
         // setup and logout
         await workflow.login({setup: true, savePassword: false});
         await workflow.addAccount({

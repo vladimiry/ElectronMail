@@ -14,12 +14,6 @@
         </div>
         <div class="form-check">
             <label class="form-check-label">
-                <input type="checkbox" class="form-check-input" formControlName="startMinimized">
-                Start minimized to tray
-            </label>
-        </div>
-        <div class="form-check">
-            <label class="form-check-label">
                 <input type="checkbox" class="form-check-input" formControlName="checkForUpdatesAndNotify">
                 Automatic update
                 <i class="fa fa-info-circle text-primary"
@@ -28,6 +22,12 @@
                 <ng-template #checkForUpdatesAndNotifyPopoverTemplate>
                     <code>.AppImage</code> and <code>.exe</code> are only supported installation package formats at this time.
                 </ng-template>
+            </label>
+        </div>
+        <div class="form-check">
+            <label class="form-check-label">
+                <input type="checkbox" class="form-check-input" formControlName="startMinimized">
+                Start minimized to tray
             </label>
         </div>
         <div class="form-check">

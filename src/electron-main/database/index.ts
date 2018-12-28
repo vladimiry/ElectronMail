@@ -9,10 +9,11 @@ import {DATABASE_VERSION} from "./constants";
 import {DbAccountPk, FsDb, FsDbAccount, MAIL_FOLDER_TYPE, Mail, MemoryDb, MemoryDbAccount} from "src/shared/model/database";
 import {EntityMap} from "./entity-map";
 import {curryFunctionMembers} from "src/shared/util";
+import {resolveMemoryAccountFolders} from "./util";
 
 const logger = curryFunctionMembers(_logger, "[electron-main/database]");
 
-// TODO consider dropping Map-based databse use ("MemoryDb"), ie use ony pupe JSON-based "FsDb"
+// TODO consider dropping Map-based database use ("MemoryDb"), ie use ony pupe JSON-based "FsDb"
 export class Database {
 
     private memoryDb: MemoryDb = this.buildEmptyDatabase();
@@ -185,7 +186,7 @@ export class Database {
     accountStat(
         account: MemoryDbAccount,
     ): { conversationEntries: number, mails: number, folders: number; contacts: number; unread: number } {
-        const spamFolder = [...account.folders.values()].find(({folderType}) => folderType === MAIL_FOLDER_TYPE.SPAM);
+        const spamFolder = resolveMemoryAccountFolders(account).find(({folderType}) => folderType === MAIL_FOLDER_TYPE.SPAM);
         const spamFolderMailFolderId = spamFolder && spamFolder.mailFolderId;
         const isSpamEmail: (mail: Mail) => boolean = typeof spamFolderMailFolderId !== "undefined"
             ? ({mailFolderIds}) => mailFolderIds.includes(spamFolderMailFolderId)

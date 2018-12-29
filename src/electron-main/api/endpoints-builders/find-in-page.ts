@@ -1,9 +1,9 @@
 import {IpcMainApiActionContext, IpcMainApiService} from "electron-rpc-api";
 import {Observable, Subject, from, of} from "rxjs";
+import {startWith} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
 import {Endpoints} from "src/shared/api/main";
-import {ONE_SECOND_MS} from "src/shared/constants";
 import {Unpacked} from "src/shared/types";
 import {initFindInPageBrowserView} from "src/electron-main/window";
 
@@ -43,41 +43,32 @@ export async function buildEndpoints(
 
             if (visible) {
                 if (!uiContext.findInPageBrowserView || uiContext.findInPageBrowserView.isDestroyed()) {
-                    uiContext.findInPageBrowserView = initFindInPageBrowserView(ctx);
-                    setTimeout(
-                        () => {
-                            if (uiContext.findInPageBrowserView) {
-                                uiContext.findInPageBrowserView.webContents.focus();
-                            }
-                        },
-                        ONE_SECOND_MS * 0.25,
-                    );
+                    const view = uiContext.findInPageBrowserView = initFindInPageBrowserView(ctx);
+                    setTimeout(() => view.webContents.focus());
                 }
             } else {
-                // WARN: "findInPageBrowserView.webContents" is needed to send API response, so we don't destroy it immediately
-                setTimeout(
-                    () => {
-                        if (!uiContext.findInPageBrowserView) {
-                            return;
-                        }
+                // WARN: "findInPageBrowserView.webContents" is needed to send API response
+                // so we don't destroy it immediately but with timeout letting API respond to request first (see "electron-rpc-api" module)
+                setTimeout(() => {
+                    if (!uiContext.findInPageBrowserView) {
+                        return;
+                    }
 
-                        // TODO TS: get rid of any cast, see https://github.com/electron/electron/issues/13581
-                        uiContext.browserWindow.setBrowserView(null as any);
+                    // reset/complete the notification
+                    const {webContents: browserViewWebContents} = uiContext.findInPageBrowserView;
+                    const notification = findInPageNotifications.get(browserViewWebContents);
+                    if (notification) {
+                        notification.subject.complete();
+                        findInPageNotifications.delete(browserViewWebContents);
+                    }
 
-                        // notification reset
-                        const {webContents: browserViewWebContents} = uiContext.findInPageBrowserView;
-                        const notification = findInPageNotifications.get(browserViewWebContents);
-                        if (notification) {
-                            notification.subject.complete();
-                            findInPageNotifications.delete(browserViewWebContents);
-                        }
-
-                        // destroy
-                        uiContext.findInPageBrowserView.destroy();
-                        delete uiContext.findInPageBrowserView;
-                    },
-                    ONE_SECOND_MS * 0.25,
-                );
+                    // destroy
+                    // WARN "setBrowserView" needs to be called with null, see https://github.com/electron/electron/issues/13581
+                    // TODO TS: get rid of any cast, see https://github.com/electron/electron/issues/13581
+                    uiContext.browserWindow.setBrowserView(null as any);
+                    uiContext.findInPageBrowserView.destroy();
+                    delete uiContext.findInPageBrowserView;
+                });
 
                 uiContext.browserWindow.webContents.focus();
             }
@@ -118,17 +109,15 @@ export async function buildEndpoints(
                 })()
             );
 
-            setImmediate(() => {
-                // initial/fake response resets the timeout
-                notification.subject.next({requestId: null});
-            });
-
             browserWindowWebContents.addListener("found-in-page", (...args) => {
                 const [, result] = args;
                 notification.subject.next(result);
             });
 
-            return notification.observable;
+            return notification.observable.pipe(
+                // initial/fake response resets the timeout
+                startWith({requestId: null}),
+            );
         },
     };
 

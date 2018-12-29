@@ -1,3 +1,4 @@
+import PQueue from "p-queue";
 import {Subscription, from, fromEvent} from "rxjs";
 import {debounceTime, filter, switchMap} from "rxjs/operators";
 
@@ -23,6 +24,7 @@ export class SearchInPageWidget {
         readonly findNext: HTMLButtonElement;
         readonly close: HTMLButtonElement;
     };
+    private readonly queryQueue = new PQueue({concurrency: 1});
     private readonly subscription = new Subscription();
 
     private requestId?: number;
@@ -52,19 +54,21 @@ export class SearchInPageWidget {
         await this.stopFind();
     }
 
-    protected async onQuery(forward: boolean, continueRequested: boolean = true) {
-        const {value: query} = this.els.input;
-        const isSearchingWithSameQuery = this.isSearching() && query === this.query;
+    protected async find(forward: boolean, continueRequested: boolean = true) {
+        return await this.queryQueue.add(async () => {
+            const {value: query} = this.els.input;
+            const isSearchingWithSameQuery = this.isSearching() && query === this.query;
 
-        if (isSearchingWithSameQuery) {
-            if (continueRequested) {
-                await this.continueFind({forward});
+            if (isSearchingWithSameQuery) {
+                if (continueRequested) {
+                    await this.continueFind({forward});
+                }
+            } else if (query) {
+                await this.startFind(query);
+            } else {
+                await this.stopFind();
             }
-        } else if (query) {
-            await this.startFind(query);
-        } else {
-            await this.stopFind();
-        }
+        });
     }
 
     protected initEvents() {
@@ -73,7 +77,7 @@ export class SearchInPageWidget {
                 .pipe(
                     debounceTime(150),
                     // tslint:disable-next-line ban
-                    switchMap(({shiftKey, code}) => from(this.onQuery(!shiftKey, ["Enter", "NumpadEnter"].includes(code)))),
+                    switchMap(({shiftKey, code}) => from(this.find(!shiftKey, ["Enter", "NumpadEnter"].includes(code)))),
                 )
                 .subscribe(async () => {
                     // setTimeout(() => this.els.input.focus());
@@ -82,13 +86,13 @@ export class SearchInPageWidget {
 
         this.subscription.add(
             fromEvent(this.els.findPrev, "click").subscribe(async () => {
-                await this.onQuery(false);
+                await this.find(false);
             }),
         );
 
         this.subscription.add(
             fromEvent(this.els.findNext, "click").subscribe(async () => {
-                await this.onQuery(true);
+                await this.find(true);
             }),
         );
 

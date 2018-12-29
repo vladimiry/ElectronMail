@@ -11,21 +11,21 @@
     overflow-y: auto;
     background-color: $gray-200;
 
-    &.webview-hidden-offline,
-    &.webview-hidden-database {
-        webview {
-            height: 0;
-        }
+    &.account-hidden {
+        display: none;
     }
 
-    &.webview-hidden-database {
-        .network-unreachable-msg {
+    &.webview-hidden {
+        .webview-wrapper {
             display: none;
         }
     }
 
-    > webview {
-        flex: 1;
-        height: 100%;
+    .webview-wrapper {
+        &,
+        webview {
+            flex: 1;
+            height: 100%;
+        }
     }
 }

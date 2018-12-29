@@ -76,7 +76,7 @@
             <email-securely-app-account
                 *ngFor="let login of (loginsSet$ | async); let index = index"
                 [account]="getAccountByLogin(login)"
-                [ngStyle]="login != selectedAccount?.accountConfig.login && {'opacity': '0', 'width': '0', 'height': '0'}"
+                [ngClass]="{'account-hidden': login != selectedAccount?.accountConfig.login}"
             ></email-securely-app-account>
         </ng-template>
         <ng-template #accountsUndefined>

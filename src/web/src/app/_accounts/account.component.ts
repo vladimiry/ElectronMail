@@ -1,19 +1,21 @@
 import {Action, Store, select} from "@ngrx/store";
 import {
+    AfterViewInit,
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
     ElementRef,
-    HostBinding,
     Input,
     NgZone,
     OnDestroy,
     OnInit,
+    TemplateRef,
     ViewChild,
     ViewContainerRef,
+    ViewRef,
 } from "@angular/core";
 import {Deferred} from "ts-deferred";
-import {Subscription, combineLatest} from "rxjs";
+import {Subject, Subscription, combineLatest} from "rxjs";
 import {debounceTime, distinctUntilChanged, filter, map, mergeMap, pairwise} from "rxjs/operators";
 import {equals, pick} from "ramda";
 
@@ -30,6 +32,10 @@ import {Unpacked} from "src/shared/types";
 import {WebAccount} from "src/web/src/app/model";
 import {getZoneNameBoundWebLogger} from "src/web/src/util";
 
+type WebViewSubjectState =
+    | { action: "attrs"; src: string; preload: string; }
+    | { action: "visibility"; visible: boolean; };
+
 let componentIndex = 0;
 
 const pickCredentialFields = ((fields: Array<keyof AccountConfig>) => (ac: AccountConfig) => pick(fields, ac))([
@@ -42,26 +48,24 @@ const pickCredentialFields = ((fields: Array<keyof AccountConfig>) => (ac: Accou
     styleUrls: ["./account.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AccountComponent extends NgChangesObservableComponent implements OnDestroy, OnInit {
+export class AccountComponent extends NgChangesObservableComponent implements OnInit, AfterViewInit, OnDestroy {
     @Input()
     account!: WebAccount;
     account$ = this.ngChangesObservable("account");
-    @HostBinding("class.webview-hidden-database")
-    webViewHiddenByDatabaseView: boolean = false;
-    webViewAttributes?: { src: string; preload: string; };
-    @HostBinding("class.webview-hidden-offline")
     afterFailedLoadWait: number = 0;
     didFailLoadErrorDescription?: string;
     private logger: ReturnType<typeof getZoneNameBoundWebLogger>;
     private loggerZone: Zone;
-    @ViewChild("webViewRef", {read: ElementRef})
-    private webViewElementRef?: ElementRef;
-    private webViewDeferred = new Deferred<Electron.WebviewTag>();
+    @ViewChild("dbViewContainer", {read: ViewContainerRef})
+    private dbViewContainerRef!: ViewContainerRef;
+    @ViewChild("webViewTemplate", {read: TemplateRef})
+    private webViewTemplate!: TemplateRef<null>;
+    @ViewChild("webviewContainer", {read: ViewContainerRef})
+    private webViewContainerRef!: ViewContainerRef;
+    private webViewState$ = new Subject<WebViewSubjectState>();
     private subscription = new Subscription();
     private domReadySubscription = new Subscription();
     private onWebViewDomReadyDeferreds: Array<Deferred<void>> = [];
-    @ViewChild("dbViewContainer", {read: ViewContainerRef})
-    private dbViewContainerRef!: ViewContainerRef;
 
     constructor(
         private dbViewModuleResolve: DbViewModuleResolve,
@@ -69,6 +73,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         private store: Store<State>,
         private zone: NgZone,
         private changeDetectorRef: ChangeDetectorRef,
+        private elementRef: ElementRef,
     ) {
         super();
         const loggerPrefix = `[account.component][${componentIndex++}]`;
@@ -93,13 +98,84 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         : [];
                 }),
             ).subscribe(({login, unread}) => {
-                const body = `Account "${login}" has ${unread} unread email${unread > 1 ? "s" : ""}.`;
-                new Notification(APP_NAME, {body}).onclick = () => this.zone.run(() => {
+                new Notification(
+                    APP_NAME,
+                    {
+                        body: `Account "${login}" has ${unread} unread email${unread > 1 ? "s" : ""}.`,
+                    },
+                ).onclick = () => this.zone.run(() => {
                     this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.Activate({login}));
                     this.dispatchInLoggerZone(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));
                 });
             }),
         );
+    }
+
+    ngAfterViewInit() {
+        this.logger.info(`ngAfterViewInit()`);
+
+        this.subscription.add(
+            (() => {
+                const hideClass = "webview-hidden";
+                let view: ViewRef | undefined;
+
+                return this.webViewState$.subscribe((value) => {
+                    if (value.action === "attrs") {
+                        if (!view) {
+                            view = this.webViewTemplate.createEmbeddedView(null);
+                            this.webViewContainerRef.insert(view);
+                            this.onWebViewMounted(this.resolveWebView());
+                        }
+
+                        const webView = this.resolveWebView();
+
+                        webView.preload = value.preload;
+                        webView.src = value.src;
+
+                        if (!webView.src) {
+                            this.logger.verbose(`webview.attrs (initialize): "${webView.src}"`);
+                        } else {
+                            this.logger.verbose(`webview.attrs (update): "${webView.src}"`);
+                        }
+
+                        return;
+                    }
+
+                    // TODO webview gets reloaded on re-inserting to DOM, so we show/hide parent element for now
+
+                    if (value.visible) {
+                        // this.view.insert(view);
+                        this.elementRef.nativeElement.classList.remove(hideClass);
+                        return;
+                    }
+
+                    // view = this.webViewContainerRef.detach();
+                    this.elementRef.nativeElement.classList.add(hideClass);
+                });
+            })(),
+        );
+
+        this.subscription.add(
+            combineLatest(
+                this.store.pipe(
+                    select(OptionsSelectors.FEATURED.electronLocations),
+                    mergeMap((electronLocations) => electronLocations ? [electronLocations] : []),
+                ),
+                this.account$.pipe(
+                    distinctUntilChanged((prev, curr) => prev.accountConfig.entryUrl === curr.accountConfig.entryUrl),
+                ),
+            ).subscribe(([electronLocations, {accountConfig}]) => {
+                const {type} = accountConfig;
+                const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, electronLocations);
+
+                this.webViewState$.next({
+                    action: "attrs",
+                    src: parsedEntryUrl.entryUrl,
+                    preload: electronLocations.preload.webView[type],
+                });
+            }),
+        );
+
         this.subscription.add(
             ((state: { dbViewComponentRef?: Unpacked<ReturnType<typeof DbViewModuleResolve.prototype.buildComponentRef>> } = {}) => {
                 return this.account$
@@ -120,42 +196,13 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                             state.dbViewComponentRef.changeDetectorRef.detectChanges();
                         }
 
-                        this.webViewHiddenByDatabaseView = Boolean(databaseView);
+                        this.webViewState$.next({action: "visibility", visible: !databaseView});
 
-                        if (!this.webViewHiddenByDatabaseView) {
-                            setTimeout(() => this.focusWebView(), 0);
+                        if (!databaseView) {
+                            setTimeout(() => this.focusWebView());
                         }
                     });
             })(),
-        );
-        this.subscription.add(
-            combineLatest(
-                this.store.pipe(
-                    select(OptionsSelectors.FEATURED.electronLocations),
-                    mergeMap((electronLocations) => electronLocations ? [electronLocations] : []),
-                ),
-                this.account$.pipe(
-                    distinctUntilChanged((prev, curr) => prev.accountConfig.entryUrl === curr.accountConfig.entryUrl),
-                ),
-            ).subscribe(([electronLocations, {accountConfig}]) => {
-                const {type} = accountConfig;
-                const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, electronLocations);
-
-                if (this.webViewAttributes) {
-                    this.webViewAttributes.src = parsedEntryUrl.entryUrl;
-                    this.logger.verbose(`webview.attrs (src update): "${parsedEntryUrl}"`);
-                    this.changeDetectorRef.detectChanges();
-                    return;
-                }
-
-                this.webViewAttributes = {src: parsedEntryUrl.entryUrl, preload: electronLocations.preload.webView[type]};
-                this.logger.verbose(`webview.attrs (initialize): "${this.webViewAttributes.src}"`);
-                this.changeDetectorRef.detectChanges();
-                if (!this.webViewElementRef) {
-                    throw new Error(`"this.webViewElementRef" is supposed to be initialized at this stage`);
-                }
-                this.onWebViewMounted(this.webViewElementRef.nativeElement);
-            }),
         );
     }
 
@@ -165,16 +212,8 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         this.resolveOnWebViewDomReadyDeferreds();
     }
 
-    private dispatchInLoggerZone<A extends Action = Action>(action: A) {
-        this.loggerZone.run(() => {
-            this.store.dispatch(action);
-        });
-    }
-
     private onWebViewMounted(webView: Electron.WebviewTag) {
         this.logger.info(`onWebViewMounted()`);
-
-        this.webViewDeferred.resolve(webView);
 
         this.subscription.add(
             this.account$.pipe(
@@ -190,7 +229,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                 }),
                 map(([prev, curr]) => curr),
             ).subscribe((account) => {
-                this.logger.info(`dispatch "TryToLogin"`);
+                this.logger.info(`onWebViewMounted(): dispatch "TryToLogin"`);
                 this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.TryToLogin({account, webView}));
             }),
         );
@@ -206,7 +245,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                 ),
             ).pipe(
                 filter(([selectedLogin]) => this.account.accountConfig.login === selectedLogin),
-                debounceTime(300),
+                debounceTime(ONE_SECOND_MS * 0.3),
             ).subscribe(() => {
                 this.focusWebView();
             }),
@@ -216,28 +255,11 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         //     webView.addEventListener("dom-ready", () => webView.openDevTools());
         // }
 
-        this.configureWebView(webView);
+        this.registerWebViewEvents(webView);
     }
 
-    private focusWebView(webView?: Electron.WebviewTag) {
-        webView = webView || (this.webViewElementRef && this.webViewElementRef.nativeElement);
-
-        if (!webView) {
-            return;
-        }
-
-        const activeElement = document.activeElement as any;
-
-        if (activeElement && typeof activeElement.blur === "function") {
-            activeElement.blur();
-        }
-
-        webView.blur();
-        webView.focus();
-    }
-
-    private configureWebView(webView: Electron.WebviewTag) {
-        this.logger.info(`configureWebView()`);
+    private registerWebViewEvents(webView: Electron.WebviewTag) {
+        this.logger.info(`registerWebViewEvents()`);
 
         const arrayOfDomReadyEvenNameAndHandler: ["dom-ready", (event: Electron.Event) => void] = [
             "dom-ready",
@@ -322,6 +344,8 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                 this.afterFailedLoadWait = Math.min(options.stepSeconds * options.iteration, 60);
                 this.changeDetectorRef.detectChanges();
 
+                this.webViewState$.next({action: "visibility", visible: false});
+
                 intervalId = setInterval(() => {
                     this.afterFailedLoadWait += -1;
                     this.changeDetectorRef.detectChanges();
@@ -330,6 +354,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         return;
                     }
 
+                    this.webViewState$.next({action: "visibility", visible: true});
                     clearInterval(intervalId);
                     subscribeDomReadyHandler();
                     webView.reloadIgnoringCache();
@@ -349,5 +374,33 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         this.logger.info(`resolveOnWebViewDomReadyDeferredes()`);
         this.onWebViewDomReadyDeferreds.forEach((deferred) => deferred.resolve());
         // TODO remove executed items form the array
+    }
+
+    private dispatchInLoggerZone<A extends Action = Action>(action: A) {
+        this.loggerZone.run(() => {
+            this.store.dispatch(action);
+        });
+    }
+
+    private resolveWebView(): Electron.WebviewTag {
+        const webView: Electron.WebviewTag | undefined = this.elementRef.nativeElement.querySelector("webview");
+
+        if (!webView) {
+            throw new Error(`"webview" element is supposed to be initialized at this stage`);
+        }
+
+        return webView;
+    }
+
+    private focusWebView() {
+        const webView = this.resolveWebView();
+        const activeElement = document.activeElement as any;
+
+        if (activeElement && typeof activeElement.blur === "function") {
+            activeElement.blur();
+        }
+
+        webView.blur();
+        webView.focus();
     }
 }

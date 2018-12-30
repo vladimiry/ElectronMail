@@ -149,6 +149,9 @@ export async function buildEndpoints(
                 case "paste":
                     webContents.paste();
                     break;
+                case "selectAll":
+                    webContents.selectAll();
+                    break;
                 default:
                     return throwError(new Error(`Unknown hotkey "type" value:  "${type}"`));
             }

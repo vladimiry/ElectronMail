@@ -81,7 +81,7 @@ export interface Endpoints {
 
     updateOverlayIcon: ApiMethod<{ hasLoggedOut: boolean, unread: number }, null>;
 
-    hotkey: ApiMethod<{ type: "copy" | "paste" }, null>;
+    hotkey: ApiMethod<{ type: "copy" | "paste" | "selectAll" }, null>;
 
     findInPageDisplay: ApiMethod<{ visible: boolean; }, null>;
 

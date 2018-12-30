@@ -24,6 +24,7 @@ export function registerDocumentKeyDownEventListener<E extends ObservableElement
             const el: Element | null = (event.target as any);
             const cmdOrCtrl = event.ctrlKey || event.metaKey;
 
+            const cmdOrCtrlPlusA = cmdOrCtrl && event.keyCode === 65;
             const cmdOrCtrlPlusC = cmdOrCtrl && event.keyCode === 67;
             const cmdOrCtrlPlusV = cmdOrCtrl && event.keyCode === 86;
             const cmdOrCtrlPlusF = cmdOrCtrl && event.keyCode === 70;
@@ -37,9 +38,11 @@ export function registerDocumentKeyDownEventListener<E extends ObservableElement
                 return;
             }
 
-            let type: "copy" | "paste" | undefined;
+            let type: "copy" | "paste" | "selectAll" | undefined;
 
-            if (cmdOrCtrlPlusC && !isPasswordInput(el)) {
+            if (cmdOrCtrlPlusA) {
+                type = "selectAll";
+            } else if (cmdOrCtrlPlusC && !isPasswordInput(el)) {
                 type = "copy";
             } else if (cmdOrCtrlPlusV && isWritable(el)) {
                 type = "paste";

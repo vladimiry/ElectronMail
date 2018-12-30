@@ -26,6 +26,7 @@ const contextMenuEventSubscriptionArgs: ["context-menu", (event: Event, params: 
                 ...(editFlags.canCut ? [{label: "Cut", click: () => webContents.cut()}] : emptyArray),
                 ...(editFlags.canCopy ? [{label: "Copy", click: () => webContents.copy()}] : emptyArray),
                 ...(editFlags.canPaste ? [{label: "Paste", click: () => webContents.paste()}] : emptyArray),
+                ...(editFlags.canSelectAll ? [{label: "Select All", click: () => webContents.selectAll()}] : emptyArray),
             ]);
         }
 

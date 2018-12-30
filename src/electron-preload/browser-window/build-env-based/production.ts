@@ -1,5 +1,5 @@
 import {__ELECTRON_EXPOSURE__} from "src/electron-preload/browser-window/electron-exposure";
-import {registerDocumentKeyDownEventListener} from "src/shared/web/key-binding";
+import {registerDocumentKeyDownEventListener} from "src/electron-preload/key-binding";
 
 registerDocumentKeyDownEventListener(
     document,

@@ -2,7 +2,7 @@ import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {configureProviderApp} from "./configure-provider-app";
 import {curryFunctionMembers} from "src/shared/util";
 import {registerApi} from "./api";
-import {registerDocumentKeyDownEventListener} from "src/shared/web/key-binding";
+import {registerDocumentKeyDownEventListener} from "src/electron-preload/key-binding";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[index]");
 

@@ -6,6 +6,7 @@ import {equals} from "ramda";
 
 import {ACCOUNTS_ACTIONS, CORE_ACTIONS, NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/src/app/store/selectors";
+import {ElectronService} from "src/web/src/app/_core/electron.service";
 import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
 import {State} from "src/web/src/app/store/reducers/accounts";
 import {WebAccount} from "src/web/src/app/model";
@@ -27,6 +28,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
     private subscription = new Subscription();
 
     constructor(
+        private api: ElectronService,
         private store: Store<State>,
     ) {
         this.loginsSet$ = this.accounts$.pipe(
@@ -67,8 +69,12 @@ export class AccountsComponent implements OnInit, OnDestroy {
             this.store.pipe(
                 select(AccountsSelectors.FEATURED.selectedAccount),
                 // distinctUntilChanged((prev, curr) => Boolean(prev && curr && prev.accountConfig.login === curr.accountConfig.login)),
-            ).subscribe((selectedAccount) => {
+            ).subscribe(async (selectedAccount) => {
                 this.selectedAccount = selectedAccount;
+
+                if (!this.selectedAccount) {
+                    await this.api.ipcMainClient()("selectAccount")({reset: true}).toPromise();
+                }
             }),
         );
     }

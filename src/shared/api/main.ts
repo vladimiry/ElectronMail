@@ -85,11 +85,13 @@ export interface Endpoints {
 
     findInPageDisplay: ApiMethod<{ visible: boolean; }, null>;
 
-    findInPage: ApiMethod<{ query: string; options?: Electron.FindInPageOptions; }, Pick<Electron.FoundInPageResult, "requestId">>;
+    findInPage: ApiMethod<{ query: string; options?: Electron.FindInPageOptions; }, Pick<Electron.FoundInPageResult, "requestId"> | null>;
 
-    findInPageStop: ApiMethod<{ action: "clearSelection" | "keepSelection" | "activateSelection" }, null>;
+    findInPageStop: ApiMethodNoArgument<null>;
 
-    findInPageNotification: ApiMethod<{}, Electron.FoundInPageResult | { requestId: null }>;
+    findInPageNotification: ApiMethodNoArgument<Electron.FoundInPageResult | { requestId: null }>;
+
+    selectAccount: ApiMethod<{ databaseView?: boolean; reset?: boolean }, null>;
 
     notification: ApiMethodNoArgument<UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>>;
 }

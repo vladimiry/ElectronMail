@@ -439,6 +439,11 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
     },
 
     // TODO test "hotkey" API
+    selectAccount: (t) => {
+        t.pass();
+    },
+
+    // TODO test "hotkey" API
     hotkey: (t) => {
         t.pass();
     },

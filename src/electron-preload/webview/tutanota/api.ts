@@ -23,6 +23,7 @@ import {
     getLocationHref,
     persistDatabasePatch,
     resolveDomElements,
+    resolveIpcMainApi,
     submitTotpToken,
 } from "src/electron-preload/webview/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
@@ -57,6 +58,14 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
     };
     const endpoints: TutanotaApi = {
         ping: () => of(null),
+
+        selectAccount: ({databaseView, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "api:select()", zoneName)) => {
+            logger.info();
+
+            await (await resolveIpcMainApi())("selectAccount")({databaseView}).toPromise();
+
+            return null;
+        })()),
 
         buildDbPatch: (input) => defer(() => (async (logger = curryFunctionMembers(_logger, "api:buildDbPatch()", input.zoneName)) => {
             const controller = getUserController();

@@ -29,6 +29,10 @@ export interface Context {
     readonly configStore: StoreModel.Store<Config>;
     settingsStore: StoreModel.Store<Settings>;
     uiContext?: UIContext;
+    selectedAccount?: {
+        webContentId: number;
+        databaseView?: boolean;
+    };
 }
 
 export interface UIContext {

@@ -1,31 +1,7 @@
-// tslint:disable-next-line:no-import-zones
-import {ipcRenderer} from "electron";
-
-import {ElectronWindow} from "src/shared/model/electron";
-import {buildLoggerBundle} from "src/electron-preload/util";
+import {__ELECTRON_EXPOSURE__} from "src/electron-preload/browser-window/electron-exposure";
 import {registerDocumentKeyDownEventListener} from "src/shared/web/key-binding";
-
-// tslint:disable-next-line:no-eval
-const _require = eval("require");
-
-const exposure: ElectronWindow = {
-    __ELECTRON_EXPOSURE__: {
-        ipcRendererTransport: {
-            on: ipcRenderer.on.bind(ipcRenderer),
-            removeListener: ipcRenderer.removeListener.bind(ipcRenderer),
-            send: ipcRenderer.send.bind(ipcRenderer),
-            sendToHost: ipcRenderer.sendToHost.bind(ipcRenderer),
-        },
-        webLogger: buildLoggerBundle("[WEB]"),
-        require: {
-            "rolling-rate-limiter": () => _require("rolling-rate-limiter"),
-        },
-    },
-};
-
-Object.assign(window, exposure);
 
 registerDocumentKeyDownEventListener(
     document,
-    exposure.__ELECTRON_EXPOSURE__.webLogger,
+    __ELECTRON_EXPOSURE__.__ELECTRON_EXPOSURE__.webLogger,
 );

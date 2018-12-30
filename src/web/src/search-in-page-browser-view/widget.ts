@@ -115,7 +115,7 @@ export class SearchInPageWidget {
 
     protected initFoundNotification() {
         this.subscription.add(
-            this.apiMethods.findInPageNotification({}).subscribe((result) => {
+            this.apiMethods.findInPageNotification().subscribe((result) => {
                 if (!result.requestId || result.requestId !== this.requestId) {
                     return;
                 }
@@ -141,8 +141,14 @@ export class SearchInPageWidget {
             .apiMethods
             .findInPage({query})
             .toPromise();
+
+        if (!result) {
+            return await this.close();
+        }
+
         this.requestId = result.requestId;
         this.query = query;
+
         delete this.activeIdx;
         delete this.maxIdx;
     }
@@ -151,10 +157,16 @@ export class SearchInPageWidget {
         if (!this.isSearching()) {
             throw new Error(`Search has not been started yet`);
         }
+
         const result = await this
             .apiMethods
             .findInPage({query: this.query || "", options})
             .toPromise();
+
+        if (!result) {
+            return await this.close();
+        }
+
         this.requestId = result.requestId;
     }
 
@@ -168,7 +180,7 @@ export class SearchInPageWidget {
 
         this.syncElements();
 
-        await this.apiMethods.findInPageStop({action: "clearSelection"}).toPromise();
+        await this.apiMethods.findInPageStop().toPromise();
     }
 
     protected syncElements() {

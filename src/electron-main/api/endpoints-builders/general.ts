@@ -19,11 +19,15 @@ type ApiMethods =
     | "activateBrowserWindow"
     | "toggleBrowserWindow"
     | "hotkey"
+    | "selectAccount"
     | "notification";
 
 const notificationObservable = NOTIFICATION_SUBJECT.asObservable();
 
-export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiMethods>> {
+export async function buildEndpoints(
+    ctx: Context,
+    resolveEndpoints: () => Endpoints,
+): Promise<Pick<Endpoints, ApiMethods>> {
     const endpoints: Pick<Endpoints, ApiMethods> = {
         openAboutWindow: () => {
             aboutWindow({
@@ -95,13 +99,49 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
             return null;
         })()),
 
+        selectAccount(this: IpcMainApiActionContext, {databaseView, reset}) {
+            return from((async () => {
+                const [{sender: webContents}] = IpcMainApiService.resolveActionContext(this).args;
+
+                const prevSelectedAccount = ctx.selectedAccount;
+                const newSelectedAccount = reset
+                    ? undefined
+                    : {
+                        webContentId: webContents.id,
+                        databaseView,
+                    };
+                const needToCloseFindInPageWindow = (
+                    // reset - no accounts in the list
+                    !newSelectedAccount
+                    ||
+                    // TODO figure how to hide webview from search while in database view mode
+                    //      webview can't be detached from DOM as it gets reloaded when reattached
+                    //      search is not available in database view mode until then
+                    newSelectedAccount.databaseView
+                    ||
+                    // changed selected account
+                    prevSelectedAccount && prevSelectedAccount.webContentId !== newSelectedAccount.webContentId
+                );
+
+                if (needToCloseFindInPageWindow) {
+                    await resolveEndpoints().findInPageStop().toPromise();
+                    await resolveEndpoints().findInPageDisplay({visible: false}).toPromise();
+                }
+
+                ctx.selectedAccount = newSelectedAccount;
+
+                return null;
+            })());
+        },
+
         hotkey(this: IpcMainApiActionContext, {type}) {
             const result = of(null);
-            const [event] = IpcMainApiService.resolveActionContext(this).args;
-            const {sender: webContents} = event;
+            const [{sender: webContents}] = IpcMainApiService.resolveActionContext(this).args;
+
             if (platform() !== "darwin") {
                 return result;
             }
+
             switch (type) {
                 case "copy":
                     webContents.copy();
@@ -112,6 +152,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
                 default:
                     return throwError(new Error(`Unknown hotkey "type" value:  "${type}"`));
             }
+
             return result;
         },
 

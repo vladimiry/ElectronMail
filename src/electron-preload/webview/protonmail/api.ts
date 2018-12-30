@@ -89,6 +89,14 @@ const ajaxSendNotification$ = new Observable<XMLHttpRequest>((subscriber) => {
 const endpoints: ProtonmailApi = {
     ping: () => of(null),
 
+    selectAccount: ({databaseView, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "api:select()", zoneName)) => {
+        logger.info();
+
+        await (await resolveIpcMainApi())("selectAccount")({databaseView}).toPromise();
+
+        return null;
+    })()),
+
     buildDbPatch: (input) => defer(() => (async (logger = curryFunctionMembers(_logger, "api:buildDbPatch()", input.zoneName)) => {
         logger.info();
 

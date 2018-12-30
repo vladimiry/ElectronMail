@@ -14,7 +14,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
         ...await Account.buildEndpoints(ctx),
         ...await Database.buildEndpoints(ctx),
         ...await FindInPage.buildEndpoints(ctx, () => endpoints),
-        ...await General.buildEndpoints(ctx),
+        ...await General.buildEndpoints(ctx, () => endpoints),
         ...await TrayIcon.buildEndpoints(ctx),
 
         changeMasterPassword: ({password, newPassword}) => from((async () => {
@@ -47,6 +47,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
             await deletePassword();
             ctx.settingsStore = ctx.settingsStore.clone({adapter: undefined});
             ctx.db.reset();
+            delete ctx.selectedAccount; // TODO extend "logout" api test: "delete ctx.selectedAccount"
             await clearDefaultSessionCaches();
             await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0}).toPromise();
             return null;

@@ -16,7 +16,7 @@ import {
 } from "@angular/core";
 import {Deferred} from "ts-deferred";
 import {Subject, Subscription, combineLatest} from "rxjs";
-import {debounceTime, distinctUntilChanged, filter, map, mergeMap, pairwise} from "rxjs/operators";
+import {debounceTime, distinctUntilChanged, filter, map, mergeMap, pairwise, withLatestFrom} from "rxjs/operators";
 import {equals, pick} from "ramda";
 
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
@@ -25,6 +25,7 @@ import {AccountConfig} from "src/shared/model/account";
 import {AccountsSelectors, OptionsSelectors} from "src/web/src/app/store/selectors";
 import {CoreService} from "src/web/src/app/_core/core.service";
 import {DbViewModuleResolve} from "./db-view-module-resolve.service";
+import {ElectronService} from "src/web/src/app/_core/electron.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {NgChangesObservableComponent} from "src/web/src/app/components/ng-changes-observable.component";
 import {State} from "src/web/src/app/store/reducers/accounts";
@@ -69,6 +70,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
 
     constructor(
         private dbViewModuleResolve: DbViewModuleResolve,
+        private api: ElectronService,
         private core: CoreService,
         private store: Store<State>,
         private zone: NgZone,
@@ -186,8 +188,9 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                             databaseView: account.databaseView,
                         })),
                         distinctUntilChanged(({databaseView: prev}, {databaseView: curr}) => prev === curr),
+                        withLatestFrom(this.store.pipe(select(AccountsSelectors.FEATURED.selectedLogin))),
                     )
-                    .subscribe(async ({type, login, databaseView}) => {
+                    .subscribe(async ([{type, login, databaseView}, selectedLogin]) => {
                         if (state.dbViewComponentRef) {
                             state.dbViewComponentRef.instance.setVisibility(Boolean(databaseView));
                         } else if (databaseView) {
@@ -200,6 +203,10 @@ export class AccountComponent extends NgChangesObservableComponent implements On
 
                         if (!databaseView) {
                             setTimeout(() => this.focusWebView());
+                        }
+
+                        if (this.account.accountConfig.login === selectedLogin) {
+                            await this.sendSelectAccountNotification();
                         }
                     });
             })(),
@@ -246,8 +253,9 @@ export class AccountComponent extends NgChangesObservableComponent implements On
             ).pipe(
                 filter(([selectedLogin]) => this.account.accountConfig.login === selectedLogin),
                 debounceTime(ONE_SECOND_MS * 0.3),
-            ).subscribe(() => {
+            ).subscribe(async () => {
                 this.focusWebView();
+                await this.sendSelectAccountNotification();
             }),
         );
 
@@ -402,5 +410,12 @@ export class AccountComponent extends NgChangesObservableComponent implements On
 
         webView.blur();
         webView.focus();
+    }
+
+    private async sendSelectAccountNotification() {
+        const webView = this.resolveWebView();
+        const webViewClient = await this.api.webViewClient(webView, this.account.accountConfig.type).toPromise();
+
+        await webViewClient("selectAccount")({zoneName: this.loggerZone, databaseView: this.account.databaseView}).toPromise();
     }
 }

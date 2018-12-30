@@ -2,12 +2,15 @@ import {concatMap, delay, retryWhen} from "rxjs/operators";
 import {of, throwError} from "rxjs";
 
 import {Arguments} from "src/shared/types";
+import {Config} from "src/shared/model/options";
 import {DbPatch} from "src/shared/api/common";
 import {Endpoints, IPC_MAIN_API} from "src/shared/api/main";
 import {LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN, ONE_SECOND_MS} from "src/shared/constants";
 import {StatusCodeError} from "src/shared/model/error";
 import {asyncDelay, curryFunctionMembers} from "src/shared/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
+
+const configsCache: { resolveDomElements?: Config } = {};
 
 export const resolveIpcMainApi: () => Promise<ReturnType<typeof IPC_MAIN_API.buildClient>> = (() => {
     let ipcMainApiClient: ReturnType<typeof IPC_MAIN_API.buildClient> | undefined;
@@ -43,8 +46,10 @@ export const resolveDomElements = <E extends Element,
 
     try {
         const api = await resolveIpcMainApi();
-        const {timeouts} = await api("readConfig")().toPromise();
-        configTimeout = timeouts.domElementsResolving;
+        if (!configsCache.resolveDomElements) {
+            configsCache.resolveDomElements = await api("readConfig")().toPromise();
+        }
+        configTimeout = configsCache.resolveDomElements.timeouts.domElementsResolving;
     } catch (error) {
         return reject(error);
     }

@@ -21,11 +21,14 @@ import {State} from "src/web/src/app/store/reducers/options";
 })
 export class AccountEditComponent implements OnInit, OnDestroy {
     // form
-    typeValues: AccountType[] = ["protonmail", "tutanota"];
+    typeValues: Array<{ value: AccountType; title: string; }> = [
+        {value: "protonmail", title: "ProtonMail"},
+        {value: "tutanota", title: "Tutanota"},
+    ];
     entryUrlItems: EntryUrlItem[] = [];
     controls: Record<keyof Pick<AccountConfig, "type" | "login" | "database" | "entryUrl">
         | keyof AccountConfigProtonmail["credentials"], AbstractControl> = {
-        type: new FormControl(this.typeValues[0], Validators.required),
+        type: new FormControl(this.typeValues[0].value, Validators.required),
         login: new FormControl(null, Validators.required),
         database: new FormControl(null),
         entryUrl: new FormControl(null, Validators.required),

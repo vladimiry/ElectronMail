@@ -14,24 +14,26 @@
                        [popover]="localStorePopoverTemplate" placement="bottom" container="body" triggers="mouseenter:mouseleave"
                     ></i>
                     <ng-template #localStorePopoverTemplate>
-                        The <code>local store</code> feature enables storing your messages in the encrypted <code>database.bin</code> file, so you could view your messages offline and export them to EML files.
+                        The <code>local store</code> feature enables storing your messages in the encrypted <code>database.bin</code> file,
+                        so you could view your messages offline and export them to EML files.
                     </ng-template>
                 </label>
             </div>
         </div>
         <div class="form-group required" *ngIf="!account">
             <ng-template #typeItemTemplate let-item="item" let-index="index">
-                <email-securely-app-type-symbol [type]="item"></email-securely-app-type-symbol>
-                {{ item }}
+                <email-securely-app-type-symbol [type]="item.value"></email-securely-app-type-symbol>
+                {{ item.title }}
             </ng-template>
             <label>Type</label>
-            <ng-select [items]="typeValues" [clearable]="false" formControlName="type" id="accountEditFormTypeField">
+            <ng-select [items]="typeValues" [clearable]="false" formControlName="type" id="accountEditFormTypeField"
+                       bindLabel="title" bindValue="value">
                 <ng-template ng-label-tmp let-item="item">
                     <ng-container
                         [ngTemplateOutlet]="typeItemTemplate" [ngTemplateOutletContext]="{item: item}"
                     ></ng-container>
                 </ng-template>
-                <ng-template ng-option-tmp let-item="item">
+                <ng-template ng-option-tmp let-item="item.value">
                     <div [attr.type-option-value]="item">
                         <ng-container
                             [ngTemplateOutlet]="typeItemTemplate" [ngTemplateOutletContext]="{item: item}"

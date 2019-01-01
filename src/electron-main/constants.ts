@@ -26,6 +26,7 @@ export const INITIAL_STORES: Readonly<{
             closeToTray: true,
             unreadNotifications: true,
             checkForUpdatesAndNotify: true,
+            findInPage: true,
             window: {
                 bounds: {width: 1024, height: 768},
             },

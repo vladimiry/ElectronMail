@@ -54,10 +54,6 @@ export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlIte
                 title: `https://protonirockerxow.onion (${getBuiltInWebClientTitle("protonmail")})`,
             },
             {
-                value: "https://protonirockerxow.onion",
-                title: "https://protonirockerxow.onion (deprecated)",
-            },
-            {
                 value: "https://beta.protonmail.com",
                 title: "https://beta.protonmail.com (deprecated)",
             },

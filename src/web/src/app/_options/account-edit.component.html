@@ -34,7 +34,7 @@
                     ></ng-container>
                 </ng-template>
                 <ng-template ng-option-tmp let-item="item">
-                    <div [attr.type-option-value]="item">
+                    <div [attr.type-option-value]="item.value">
                         <ng-container
                             [ngTemplateOutlet]="typeItemTemplate" [ngTemplateOutletContext]="{item: item}"
                         ></ng-container>

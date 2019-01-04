@@ -14,7 +14,7 @@
         of {{ state.paging.size }}</span>
     </div>
 </div>
-<div class="d-flex flex-row">
+<div class="d-flex flex-row flex-grow-1">
     <div class="mails d-flex flex-column" [ngClass]="{'flex-basis-half': state.selectedMail}">
         <div class="overflow-auto">
             <ng-container *ngIf="state.plainListViewMode; else conversationViewModeTemplate">

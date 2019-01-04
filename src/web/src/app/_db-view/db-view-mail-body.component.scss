@@ -4,13 +4,6 @@
     $border-color: $list-group-border-color;
     $font-size-small: $app-font-size-base-small * 1.2;
 
-    @mixin no-wrap {
-        max-width: 100%;
-        word-break: break-word;
-        word-wrap: break-word;
-        white-space: normal;
-    }
-
     position: relative;
     display: flex;
     flex-direction: column;
@@ -20,7 +13,6 @@
     .addresses,
     .attachments {
         .badge {
-            @include no-wrap;
             font-weight: normal;
             font-size: $font-size-small;
             color: $gray-700;
@@ -39,11 +31,20 @@
         }
     }
 
-    // TODO consider rendering body in dynamic iframe
     .body {
+        position: relative;
+
         &::ng-deep {
-            * {
-                @include no-wrap;
+            iframe {
+                display: block;
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: 0;
+                bottom: 0;
+                width: 100%;
+                height: 100%;
+                border: 0;
             }
         }
     }

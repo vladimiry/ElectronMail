@@ -33,7 +33,7 @@ export async function buildEndpoints(
                 tray.setImage(icon);
                 app.setBadgeCount(unread);
             } else {
-                browserWindow.setOverlayIcon(null as any, "");
+                browserWindow.setOverlayIcon(null, "");
                 tray.setImage(canvas.native);
                 app.setBadgeCount(0);
             }

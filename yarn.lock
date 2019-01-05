@@ -5023,7 +5023,7 @@ fs-monkey@^0.3.3:
   resolved "https://registry.yarnpkg.com/fs-monkey/-/fs-monkey-0.3.3.tgz#7960bb2b1fa2653731b9d0e2e84812a7e8b3664a"
   integrity sha512-FNUvuTAJ3CqCQb5ELn+qCbGR/Zllhf2HtwsdAtBi59s1WeCjKMT81fHcSu7dwIskqGVK+MmOrb7VOBlq3/SItw==
 
-fs-no-eperm-anymore@2.0.5, fs-no-eperm-anymore@^2.0.5:
+fs-no-eperm-anymore@^2.0.5:
   version "2.0.5"
   resolved "https://registry.yarnpkg.com/fs-no-eperm-anymore/-/fs-no-eperm-anymore-2.0.5.tgz#de5e7e9ae03af8926a5712f124e82b5ee15952b3"
   integrity sha512-xXTThvn+lvGLtcFRLJRMHAPq9nBj4kXZlea3WZkP4gFInH6swt8PSYVdQkiv4G+lUtkDf/2dMjQBjQ7NTlCN0Q==
@@ -9233,11 +9233,6 @@ promise-inflight@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/promise-inflight/-/promise-inflight-1.0.1.tgz#98472870bf228132fcbdd868129bad12c3c029e3"
   integrity sha1-mEcocL8igTL8vdhoEputEsPAKeM=
-
-promise-parallel-throttle@3.3.0:
-  version "3.3.0"
-  resolved "https://registry.yarnpkg.com/promise-parallel-throttle/-/promise-parallel-throttle-3.3.0.tgz#8fc4a0131a0b9c12470bd27c0732bc4c4ffd68a0"
-  integrity sha512-tThe11SfFXlGMhuO2D+Nba6L8FJFM17w2zwlMV1kqaLfuT2E8NMtMF1WhJBZaSpWz6V76pP/bGAj8BXTAMOncw==
 
 proper-lockfile@^3.2.0:
   version "3.2.0"

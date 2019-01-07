@@ -29,12 +29,12 @@ test(`"keyResolver" should be called during save/load`, async (t) => {
 });
 
 test(`save to file call should write through the "EncryptionAdapter.prototype.write" call`, async (t) => {
-    let writtenByAdapter: Buffer = Buffer.from([]);
+    let writtenByMockedAdapter: Buffer = Buffer.from([]);
 
     class MockedEncryptionAdapter extends EncryptionAdapter {
         async write(data: Buffer) {
-            writtenByAdapter = await super.write(data);
-            return writtenByAdapter;
+            writtenByMockedAdapter = await super.write(data);
+            return writtenByMockedAdapter;
         }
     }
 
@@ -48,6 +48,7 @@ test(`save to file call should write through the "EncryptionAdapter.prototype.wr
         },
     );
     const db = new databaseModule.Database(buildDatabaseOptions());
+
     // "stringify" parameters taken from the "fs-json-store/private/store.write" method
     const dump = Buffer.from(JSON.stringify(db.dump(), null, 4));
 
@@ -63,9 +64,22 @@ test(`save to file call should write through the "EncryptionAdapter.prototype.wr
         return;
     }
 
-    const written = await db.options.fileFs.readFile(db.options.file);
-    t.true(written.length > 10);
-    t.deepEqual(writtenByAdapter, written, `written to file data must be actually encrypted by the encryption adapter's "write" call`);
+    const writtenByDb = await db.options.fileFs.readFile(db.options.file);
+    const writtenByNewAdapterInstance = await new EncryptionAdapter({
+        key: Buffer.from(await db.options.encryption.keyResolver(), BASE64_ENCODING),
+        preset: await db.options.encryption.presetResolver(),
+    }).write(dump);
+    t.true(writtenByDb.length > 10);
+    t.deepEqual(
+        writtenByMockedAdapter,
+        writtenByDb,
+        `written to file data must be passed through the "store.adapter.write" call`,
+    );
+    t.notDeepEqual( // not equal, so random salt has been applied
+        writtenByNewAdapterInstance,
+        writtenByDb,
+        `written to file data must match the data passed through the "new EncryptionAdapter().write" call`,
+    );
 });
 
 test("saved/saved immutability", async (t) => {

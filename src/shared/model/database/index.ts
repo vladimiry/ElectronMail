@@ -110,21 +110,21 @@ export interface EntityMap<V extends Entity, K extends V["pk"] = V["pk"]> extend
     toObject(): Record<K, V>;
 }
 
-export interface DbEntitiesMapContainer {
+export interface DbMemoryDataContainer {
     conversationEntries: EntityMap<ConversationEntry>;
     mails: EntityMap<Mail>;
     folders: EntityMap<Folder>;
     contacts: EntityMap<Contact>;
 }
 
-export interface DbEntitiesRecordContainer {
+export interface DbFsDataContainer {
     conversationEntries: Record<ConversationEntry["pk"], ConversationEntry>;
     mails: Record<Mail["pk"], Mail>;
     folders: Record<Folder["pk"], Folder>;
     contacts: Record<Contact["pk"], Contact>;
 }
 
-interface GenericDb<T extends AccountType, M, EntitiesContainer extends DbEntitiesMapContainer | DbEntitiesRecordContainer> {
+interface GenericDb<T extends AccountType, M, EntitiesContainer extends DbMemoryDataContainer | DbFsDataContainer> {
     version: string;
     accounts: Record<T,
         Record<AccountConfig<T>["login"],
@@ -140,14 +140,14 @@ interface ProtonmailMetadataPart {
 }
 
 export type MemoryDb =
-    GenericDb<"tutanota", TutanotaMetadataPart, DbEntitiesMapContainer>
+    GenericDb<"tutanota", TutanotaMetadataPart, DbMemoryDataContainer>
     &
-    GenericDb<"protonmail", ProtonmailMetadataPart, DbEntitiesMapContainer>;
+    GenericDb<"protonmail", ProtonmailMetadataPart, DbMemoryDataContainer>;
 
 export type FsDb = Partial<StoreModel.StoreEntity> &
-    (GenericDb<"tutanota", TutanotaMetadataPart, DbEntitiesRecordContainer>
+    (GenericDb<"tutanota", TutanotaMetadataPart, DbFsDataContainer>
         &
-        GenericDb<"protonmail", ProtonmailMetadataPart, DbEntitiesRecordContainer>);
+        GenericDb<"protonmail", ProtonmailMetadataPart, DbFsDataContainer>);
 
 export type MemoryDbAccount<T extends keyof MemoryDb["accounts"] = keyof MemoryDb["accounts"]> = MemoryDb["accounts"][T][string];
 
@@ -157,3 +157,15 @@ export interface DbAccountPk {
     type: keyof MemoryDb["accounts"];
     login: string;
 }
+
+type IndexableMailField = keyof Pick<Mail,
+    | "pk"
+    | "subject"
+    | "body"
+    | "sender"
+    | "toRecipients"
+    | "ccRecipients"
+    | "bccRecipients"
+    | "attachments">;
+
+export type IndexableMail = Pick<Mail, IndexableMailField>;

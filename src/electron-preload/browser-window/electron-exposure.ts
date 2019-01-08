@@ -7,7 +7,7 @@ import {buildLoggerBundle} from "src/electron-preload/util";
 // tslint:disable-next-line:no-eval
 const _require = eval("require");
 
-export const __ELECTRON_EXPOSURE__: ElectronWindow = {
+export const ELECTRON_WINDOW: ElectronWindow = {
     __ELECTRON_EXPOSURE__: {
         ipcRendererTransport: {
             on: ipcRenderer.on.bind(ipcRenderer),
@@ -22,4 +22,4 @@ export const __ELECTRON_EXPOSURE__: ElectronWindow = {
     },
 };
 
-Object.assign(window, __ELECTRON_EXPOSURE__);
+Object.assign(window, ELECTRON_WINDOW);

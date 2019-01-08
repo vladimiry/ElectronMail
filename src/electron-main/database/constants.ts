@@ -1,6 +1,6 @@
 import {Folder, MAIL_FOLDER_TYPE, PROTONMAIL_MAILBOX_IDENTIFIERS} from "src/shared/model/database";
 
-export const DATABASE_VERSION = "2";
+export const DATABASE_VERSION = "3";
 
 export const PROTONMAIL_STATIC_FOLDERS = ([
     [PROTONMAIL_MAILBOX_IDENTIFIERS.Inbox, MAIL_FOLDER_TYPE.INBOX],

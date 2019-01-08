@@ -1,6 +1,17 @@
 @import "~src/web/src/variables";
 
 :host {
+    position: relative;
+
+    > .info {
+        position: absolute;
+        left: 1em;
+        right: 1em;
+        top: 1em;
+        z-index: 30000;
+        text-align: center;
+    }
+
     > .m-3 {
         position: fixed;
         left: 0;

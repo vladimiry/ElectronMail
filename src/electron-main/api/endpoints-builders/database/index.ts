@@ -1,26 +1,33 @@
+import PQueue from "p-queue";
 import electronLog from "electron-log";
 import sanitizeHtml from "sanitize-html";
-import {Observable, from} from "rxjs";
+import {Observable, from, of} from "rxjs";
 import {app, dialog} from "electron";
 import {equals, mergeDeepRight, omit} from "ramda";
 
 import {Arguments, Unpacked} from "src/shared/types";
 import {Context} from "src/electron-main/model";
-import {Endpoints, IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {DB_INDEXER_NOTIFICATION_SUBJECT, NOTIFICATION_SUBJECT} from "src/electron-main/api/constants";
+import {Endpoints, IPC_MAIN_API_DB_INDEXER_ON, IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {EntityMap, MemoryDbAccount} from "src/shared/model/database";
-import {NOTIFICATION_SUBJECT} from "src/electron-main/api/constants";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {prepareFoldersView} from "./folders-view";
 import {writeEmlFile} from "./export";
 
 const _logger = curryFunctionMembers(electronLog, "[electron-main/api/endpoints-builders/database]");
 
+// TODO full-text search also needs to be queued in this queue
+const databaseAlterQueue: PQueue<PQueue.DefaultAddOptions> = new PQueue({concurrency: 1});
+const indexerNotificationObservable = DB_INDEXER_NOTIFICATION_SUBJECT.asObservable();
+
 type Methods =
     | "dbPatch"
     | "dbGetAccountMetadata"
     | "dbGetAccountDataView"
     | "dbGetAccountMail"
-    | "dbExport";
+    | "dbExport"
+    | "dbIndexerOn"
+    | "dbIndexerNotification";
 
 export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Methods>> {
     return {
@@ -33,32 +40,52 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
             const account = ctx.db.getAccount(key) || ctx.db.initAccount(key);
             const entityTypes: ["conversationEntries", "mails", "folders", "contacts"]
                 = ["conversationEntries", "mails", "folders", "contacts"];
+            const modifiedState: { entitiesModified: boolean, metadataModified: boolean, modified?: boolean } = {
+                entitiesModified: false,
+                metadataModified: false,
+            };
 
-            for (const entityType of entityTypes) {
-                const source = entityUpdatesPatch[entityType];
-                const destinationMap = account[entityType];
+            // TODO indexing: drop "databaseAlterQueue" use
+            await databaseAlterQueue.add(async () => {
+                for (const entityType of entityTypes) {
+                    const source = entityUpdatesPatch[entityType];
+                    const destinationMap = account[entityType];
+                    // const mailEntityType = entityType === "mails";
 
-                source.remove.forEach(({pk}) => destinationMap.delete(pk));
+                    // remove
+                    source.remove.forEach(({pk}) => {
+                        destinationMap.delete(pk);
+                    });
+                    // TODO indexing
+                    // if (mailEntityType) {
+                    //     await removeMailsFromIndex(account.mailsIndex, source.remove as Array<Pick<Mail, "pk">>);
+                    // }
 
-                for (const entity of source.upsert) {
-                    await (destinationMap as EntityMap<typeof entity>).validateAndSet(entity);
+                    // add
+                    for (const entity of source.upsert) {
+                        await (destinationMap as EntityMap<typeof entity>).validateAndSet(entity);
+                    }
+                    // TODO indexing
+                    // if (mailEntityType) {
+                    //     await addToMailsIndex(account.mailsIndex, source.upsert as Mail[]);
+                    // }
                 }
-            }
 
-            const entitiesModified = isEntityUpdatesPatchNotEmpty(entityUpdatesPatch);
-            const metadataModified = patchMetadata(account.metadata, metadataPatch);
-            const modified = entitiesModified || metadataModified;
+                modifiedState.entitiesModified = isEntityUpdatesPatchNotEmpty(entityUpdatesPatch);
+                modifiedState.metadataModified = patchMetadata(account.metadata, metadataPatch);
+                modifiedState.modified = modifiedState.entitiesModified || modifiedState.metadataModified;
 
-            logger.verbose(JSON.stringify({entitiesModified, metadataModified, modified, forceFlush}));
+                logger.verbose(JSON.stringify({...modifiedState, forceFlush}));
 
-            if (modified || forceFlush) {
-                await ctx.db.saveToFile();
-            }
+                if (modifiedState.modified || forceFlush) {
+                    await ctx.db.saveToFile();
+                }
+            });
 
             NOTIFICATION_SUBJECT.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount({
                 key,
-                entitiesModified,
-                metadataModified,
+                entitiesModified: modifiedState.entitiesModified,
+                metadataModified: modifiedState.metadataModified,
                 stat: ctx.db.accountStat(account),
             }));
 
@@ -159,6 +186,22 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
                 .then(() => subscriber.complete())
                 .catch((error) => subscriber.error(error));
         }))(),
+
+        dbIndexerOn: (action) => ((
+            logger = curryFunctionMembers(_logger, "dbIndexerOn()"),
+        ) => {
+            logger.info(`action.type: ${action.type}`);
+
+            IPC_MAIN_API_DB_INDEXER_ON.match(action, {
+                Bootstrapped: () => {
+
+                },
+            });
+
+            return of(null);
+        })(),
+
+        dbIndexerNotification: () => indexerNotificationObservable,
     };
 }
 

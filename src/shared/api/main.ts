@@ -14,7 +14,7 @@ import {
     PasswordFieldContainer,
 } from "src/shared/model/container";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
-import {DbAccountPk, DbEntitiesRecordContainer, FsDbAccount, MemoryDbAccount} from "src/shared/model/database";
+import {DbAccountPk, DbFsDataContainer, FsDbAccount, IndexableMail, MemoryDbAccount} from "src/shared/model/database";
 import {DbPatch} from "./common";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {Omit} from "src/shared/types";
@@ -44,12 +44,16 @@ export interface Endpoints {
                 system: DatabaseModel.View.Folder[];
                 custom: DatabaseModel.View.Folder[];
             };
-            contacts: DbEntitiesRecordContainer["contacts"];
+            contacts: DbFsDataContainer["contacts"];
         } | undefined>;
 
     dbGetAccountMail: ApiMethod<DbAccountPk & { pk: DatabaseModel.Mail["pk"] }, DatabaseModel.Mail>;
 
     dbExport: ApiMethod<DbAccountPk, { count: number; } | { progress: number; file: string; }>;
+
+    dbIndexerOn: ApiMethod<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_ON>, null>;
+
+    dbIndexerNotification: ApiMethodNoArgument<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>>;
 
     init: ApiMethodNoArgument<{ electronLocations: ElectronContextLocations; hasSavedPassword: boolean; }>;
 
@@ -100,6 +104,7 @@ export const IPC_MAIN_API = new IpcMainApiService<Endpoints>({channel: `${APP_NA
 
 // WARN: do not put sensitive data into the main process notification stream
 export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
+        Stub: ofType<{}>(),
         ActivateBrowserWindow: ofType<{}>(),
         DbPatchAccount: ofType<{
             key: DbAccountPk;
@@ -112,5 +117,29 @@ export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
         tag: "type",
         value: "payload",
         tagPrefix: "ipc_main_api_notification:",
+    },
+);
+
+export const IPC_MAIN_API_DB_INDEXER_ON = unionize({
+        Bootstrapped: ofType<{}>(),
+    },
+    {
+        tag: "type",
+        value: "payload",
+        tagPrefix: "ipc_main_api_db_indexer_on:",
+    },
+);
+
+export const IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS = unionize({
+        Stub: ofType<{}>(),
+        Index: ofType<{
+            remove: Array<Pick<IndexableMail, "pk">>;
+            add: IndexableMail[]
+        }>(),
+    },
+    {
+        tag: "type",
+        value: "payload",
+        tagPrefix: "ipc_main_api_db_indexer_notification_actions:",
     },
 );

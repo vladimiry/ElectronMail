@@ -136,10 +136,16 @@ function isAppVersionLessThan(version: string): boolean {
 }
 
 export async function upgradeDatabase(db: Database, settings: Settings) {
+    let needToSave = false;
+
     if (db.getVersion() === "1") {
         db.reset();
         await db.saveToFile();
         return;
+    }
+
+    if (db.getVersion() === "2") {
+        needToSave = true;
     }
 
     // removing nonexistent accounts
@@ -158,7 +164,11 @@ export async function upgradeDatabase(db: Database, settings: Settings) {
         }
 
         if (removePks.length) {
-            await db.saveToFile();
+            needToSave = true;
         }
     })();
+
+    if (needToSave) {
+        await db.saveToFile();
+    }
 }

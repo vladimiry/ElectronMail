@@ -19,6 +19,7 @@ export type ProgressPatch = Partial<{
     updatingAccount: boolean;
     changingAccountOrder: boolean;
     updatingBaseSettings: boolean;
+    bootStrappingIndex: boolean;
 }>;
 
 export interface State extends fromRoot.State {

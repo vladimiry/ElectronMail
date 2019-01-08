@@ -13,6 +13,8 @@ export type Unpacked<T> =
             T extends Observable<infer U3> ? U3 :
                 T;
 
+export type Mutable<T> = { -readonly [K in keyof T]: T[K]; };
+
 export type Timestamp = ReturnType<typeof Date.prototype.getTime>;
 
 export interface EntryUrlItem {

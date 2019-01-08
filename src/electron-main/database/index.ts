@@ -3,22 +3,61 @@ import PQueue from "p-queue";
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/private/constants";
 import {EncryptionAdapter, KeyBasedPreset} from "fs-json-store-encryption-adapter";
 import {Model as FsJsonStoreModel, Store as FsJsonStore} from "fs-json-store";
+import {deserialize, serialize} from "@vladimiry/ndx";
 
 import * as Entity from "./entity";
-import {DATABASE_VERSION} from "./constants";
+import {DATABASE_VERSION, MAILS_INDEX_DESERIALIZE_OPTIONS} from "./constants";
 import {DbAccountPk, FsDb, FsDbAccount, MAIL_FOLDER_TYPE, Mail, MemoryDb, MemoryDbAccount} from "src/shared/model/database";
 import {EntityMap} from "./entity-map";
+import {buildMailsIndex, resolveMemoryAccountFolders} from "./util";
 import {curryFunctionMembers} from "src/shared/util";
-import {resolveMemoryAccountFolders} from "./util";
 
 const logger = curryFunctionMembers(_logger, "[electron-main/database]");
 
 // TODO consider dropping Map-based database use ("MemoryDb"), ie use ony pupe JSON-based "FsDb"
 export class Database {
+    static buildEmptyDatabase<T extends MemoryDb | FsDb>(): T {
+        return {
+            version: DATABASE_VERSION,
+            accounts: {tutanota: {}, protonmail: {}},
+        } as T;
+    }
 
-    private memoryDb: MemoryDb = this.buildEmptyDatabase();
+    static buildEmptyAccountMetadata<T extends keyof MemoryDb["accounts"]>(type: T): MemoryDbAccount<T>["metadata"] {
+        const metadata: { [key in keyof MemoryDb["accounts"]]: MemoryDbAccount<key>["metadata"] } = {
+            tutanota: {type: "tutanota", groupEntityEventBatchIds: {}},
+            protonmail: {type: "protonmail"},
+        };
+        return metadata[type];
+    }
 
-    private saveToFileQueue: PQueue<PQueue.DefaultAddOptions>;
+    private static memoryAccountToFsAccount<T extends keyof MemoryDb["accounts"]>(source: MemoryDbAccount<T>): FsDbAccount<T> {
+        return {
+            conversationEntries: source.conversationEntries.toObject(),
+            mails: source.mails.toObject(),
+            folders: source.folders.toObject(),
+            contacts: source.contacts.toObject(),
+            metadata: source.metadata as any,
+            mailsIndex: serialize(source.mailsIndex),
+        };
+    }
+
+    private static fsAccountToMemoryAccount<T extends keyof FsDb["accounts"]>(source: FsDbAccount<T>): MemoryDbAccount<T> {
+        return {
+            conversationEntries: new EntityMap(Entity.ConversationEntry, source.conversationEntries),
+            mails: new EntityMap(Entity.Mail, source.mails),
+            folders: new EntityMap(Entity.Folder, source.folders),
+            contacts: new EntityMap(Entity.Contact, source.contacts),
+            metadata: source.metadata as any,
+            mailsIndex: source.mailsIndex
+                ? deserialize(source.mailsIndex, MAILS_INDEX_DESERIALIZE_OPTIONS)
+                : buildMailsIndex(),
+        };
+    }
+
+    private memoryDb: MemoryDb = Database.buildEmptyDatabase();
+
+    private saveToFileQueue: PQueue<PQueue.DefaultAddOptions> = new PQueue({concurrency: 1});
 
     constructor(
         public readonly options: Readonly<{
@@ -29,24 +68,7 @@ export class Database {
                 presetResolver: () => Promise<KeyBasedPreset>;
             }>
         }>,
-    ) {
-        this.saveToFileQueue = new PQueue({concurrency: 1});
-    }
-
-    buildEmptyDatabase<T extends MemoryDb | FsDb>(): T {
-        return {
-            version: DATABASE_VERSION,
-            accounts: {tutanota: {}, protonmail: {}},
-        } as T;
-    }
-
-    buildEmptyAccountMetadata<T extends keyof MemoryDb["accounts"]>(type: T): MemoryDbAccount<T>["metadata"] {
-        const metadata: { [key in keyof MemoryDb["accounts"]]: MemoryDbAccount<key>["metadata"] } = {
-            tutanota: {type: "tutanota", groupEntityEventBatchIds: {}},
-            protonmail: {type: "protonmail"},
-        };
-        return metadata[type];
-    }
+    ) {}
 
     getVersion(): string {
         return this.memoryDb.version;
@@ -59,7 +81,7 @@ export class Database {
             return;
         }
 
-        return this.memoryAccountToFsAccount(account);
+        return Database.memoryAccountToFsAccount(account);
     }
 
     getAccount<TL extends DbAccountPk>({type, login}: TL): MemoryDbAccount<TL["type"]> | undefined {
@@ -78,7 +100,8 @@ export class Database {
             mails: new EntityMap(Entity.Mail),
             folders: new EntityMap(Entity.Folder),
             contacts: new EntityMap(Entity.Contact),
-            metadata: this.buildEmptyAccountMetadata(type) as any,
+            metadata: Database.buildEmptyAccountMetadata(type) as any,
+            mailsIndex: buildMailsIndex(),
         };
 
         this.memoryDb.accounts[type][login] = account;
@@ -108,10 +131,10 @@ export class Database {
     async loadFromFile(): Promise<void> {
         logger.info("loadFromFile()");
 
-        const startTime = Number(new Date());
+        const start = process.hrtime();
         const store = await this.resolveStore();
         const source = await store.readExisting();
-        const target: MemoryDb = this.buildEmptyDatabase();
+        const target: MemoryDb = Database.buildEmptyDatabase();
 
         target.version = source.version;
 
@@ -119,13 +142,18 @@ export class Database {
         for (const type of Object.keys(source.accounts) as Array<keyof typeof source.accounts>) {
             const loginBundle = source.accounts[type];
             Object.keys(loginBundle).map((login) => {
-                target.accounts[type][login] = this.fsAccountToMemoryAccount(loginBundle[login]);
+                target.accounts[type][login] = Database.fsAccountToMemoryAccount(loginBundle[login]);
             });
         }
 
         this.memoryDb = target;
 
-        logger.verbose(`loadFromFile().stat: ${JSON.stringify({...this.stat(), time: Number(new Date()) - startTime})}`);
+        const time = process.hrtime(start);
+
+        logger.verbose(`loadFromFile().stat: ${JSON.stringify({
+            ...this.stat(),
+            time: Math.round((time[0] * 1000) + (time[1] / 1000000)),
+        })}`);
     }
 
     async saveToFile(): Promise<FsDb> {
@@ -150,20 +178,20 @@ export class Database {
         logger.info("dump()");
 
         const {memoryDb: source} = this;
-        const target: FsDb = this.buildEmptyDatabase();
+        const target: FsDb = Database.buildEmptyDatabase();
 
         target.version = source.version;
 
         // memory => fs
         this.iterateAccounts(({account, pk}) => {
-            target.accounts[pk.type][pk.login] = this.memoryAccountToFsAccount(account);
+            target.accounts[pk.type][pk.login] = Database.memoryAccountToFsAccount(account);
         });
 
         return target;
     }
 
     reset() {
-        this.memoryDb = this.buildEmptyDatabase();
+        this.memoryDb = Database.buildEmptyDatabase();
     }
 
     stat(): { records: number, conversationEntries: number, mails: number, folders: number, contacts: number } {
@@ -203,26 +231,6 @@ export class Database {
                     : unread + Number(mail.unread),
                 0,
             ),
-        };
-    }
-
-    private memoryAccountToFsAccount<T extends keyof MemoryDb["accounts"]>(source: MemoryDbAccount<T>): FsDbAccount<T> {
-        return {
-            conversationEntries: source.conversationEntries.toObject(),
-            mails: source.mails.toObject(),
-            folders: source.folders.toObject(),
-            contacts: source.contacts.toObject(),
-            metadata: source.metadata as any,
-        };
-    }
-
-    private fsAccountToMemoryAccount<T extends keyof FsDb["accounts"]>(source: FsDbAccount<T>): MemoryDbAccount<T> {
-        return {
-            conversationEntries: new EntityMap(Entity.ConversationEntry, source.conversationEntries),
-            mails: new EntityMap(Entity.Mail, source.mails),
-            folders: new EntityMap(Entity.Folder, source.folders),
-            contacts: new EntityMap(Entity.Contact, source.contacts),
-            metadata: source.metadata as any,
         };
     }
 

@@ -43,6 +43,7 @@ export function initContext(options: ContextInitOptions = {}): Context {
             optimisticLocking: true,
             file: path.join(locations.userDataDir, "config.json"),
             validators: [configEncryptionPresetValidator],
+            serialize: (data) => Buffer.from(JSON.stringify(data, null, 2)),
         }),
         settingsStore: new Store<Settings>({
             fs: storeFs,

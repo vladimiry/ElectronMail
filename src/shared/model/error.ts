@@ -1,6 +1,12 @@
 import {APP_NAME} from "src/shared/constants";
 
-const statusCodesMap: Record<"NotFoundAccount" | "InvalidArgument" | "NoNetworkConnection" | "SkipDbPatch", string> = {
+type Code =
+    | "NotFoundAccount"
+    | "InvalidArgument"
+    | "NoNetworkConnection"
+    | "SkipDbPatch";
+
+const statusCodesMap: Record<Code, string> = {
     NotFoundAccount: `${APP_NAME}:NotFoundAccount`,
     InvalidArgument: `${APP_NAME}:InvalidArgument`,
     NoNetworkConnection: `${APP_NAME}:NoNetworkConnection`,

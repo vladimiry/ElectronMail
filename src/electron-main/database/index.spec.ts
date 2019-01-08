@@ -142,13 +142,13 @@ test("nonexistent file", async (t) => {
 
 test("reset", async (t) => {
     const db = buildDatabase();
-    const initial = db.buildEmptyDatabase();
-    const buildEmptyDatabaseSpy = sinon.spy(db, "buildEmptyDatabase");
+    const initial = Database.buildEmptyDatabase();
 
     t.deepEqual(db.dump(), initial);
     await db.initAccount({type: "tutanota", login: "login1"}).folders.validateAndSet(buildFolder());
     t.notDeepEqual(db.dump(), initial);
 
+    const buildEmptyDatabaseSpy = sinon.spy(Database, "buildEmptyDatabase");
     const buildEmptyDatabaseCallCount = buildEmptyDatabaseSpy.callCount;
     db.reset();
     t.is(buildEmptyDatabaseCallCount + 1, buildEmptyDatabaseSpy.callCount);

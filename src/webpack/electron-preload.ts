@@ -18,6 +18,12 @@ const configs = [
     ),
     buildRendererConfig(
         {
+            "electron-preload/database-indexer": srcRelateivePath(`./electron-preload/database-indexer/index.ts`),
+        },
+        srcRelateivePath("./electron-preload/database-indexer/tsconfig.json"),
+    ),
+    buildRendererConfig(
+        {
             "electron-preload/webview/protonmail": srcRelateivePath("./electron-preload/webview/protonmail/index.ts"),
         },
         srcRelateivePath("./electron-preload/webview/protonmail/tsconfig.json"),

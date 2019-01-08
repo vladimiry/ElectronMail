@@ -41,7 +41,7 @@ export async function buildMail(input: Rest.Model.Message, api: ProviderApi): Pr
             try {
                 return await api.messageModel(input).clearTextBody();
             } catch (error) {
-                logger.error(`"messageModel.clearTextBody()" failed on email with the following subject: ${input.Subject}`);
+                logger.error(`"messageModel.clearTextBody()" failed on email with the following subject: ${input.Subject}`, error);
                 throw error;
             }
         })(),

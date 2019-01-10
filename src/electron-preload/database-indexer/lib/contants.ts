@@ -1,18 +1,15 @@
 import {DeserializeOptions, FieldOptions} from "@vladimiry/ndx";
 
-import {IndexableMail, MailAddress} from "src/shared/model/database";
-import {Omit} from "src/shared/types";
+import {INDEXABLE_MAIL_FIELDS_STUB_CONTAINER, IndexableMail, MailAddress} from "src/shared/model/database";
 import {buildLoggerBundle} from "src/electron-preload/util";
 
-export const LOGGER = buildLoggerBundle("[database-indexer]");
+export const LOGGER = buildLoggerBundle("[preload: database-indexer]");
 
 export const MAILS_INDEX_DESERIALIZE_OPTIONS: Pick<Required<DeserializeOptions<IndexableMail["pk"], IndexableMail>>, "fieldsGetters">
     = (() => {
-    type IndexableField = keyof Omit<IndexableMail, "pk">;
-
     const buildMailAddressGetter: (address: MailAddress) => string = (address) => address.address;
     const joinListBy = ", ";
-    const fieldsGetters: Record<IndexableField, FieldOptions<IndexableMail>["getter"]> = {
+    const fieldsGetters: Record<keyof typeof INDEXABLE_MAIL_FIELDS_STUB_CONTAINER, FieldOptions<IndexableMail>["getter"]> = {
         subject: ({subject}) => subject,
         body: ({body}) => body,
         sender: ({sender}) => buildMailAddressGetter(sender),

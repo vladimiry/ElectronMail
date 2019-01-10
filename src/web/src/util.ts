@@ -4,14 +4,16 @@ import {LogLevel} from "electron-log";
 import {LOG_LEVELS} from "src/shared/constants";
 import {curryFunctionMembers} from "src/shared/util";
 
-// TODO ban direct "__ELECTRON_EXPOSURE__.webLogger" referencing (using tslint), but only via "getZoneNameBoundWebLogger" call
+// TODO ban direct "__ELECTRON_EXPOSURE__.buildLoggerBundle" referencing in tslint, but only via "getZoneNameBoundWebLogger" call
 
-export type ZoneNameBoundWebLogger = typeof __ELECTRON_EXPOSURE__.webLogger & { zoneName: () => string };
+export type ZoneNameBoundWebLogger = typeof LOGGER & { zoneName: () => string };
+
+export const LOGGER = __ELECTRON_EXPOSURE__.buildLoggerBundle("[WEB]");
 
 export const formatZoneName = () => `<${Zone.current.name}>`;
 
 export const getZoneNameBoundWebLogger = (...args: string[]): ZoneNameBoundWebLogger => {
-    const logger = curryFunctionMembers(__ELECTRON_EXPOSURE__.webLogger, ...args);
+    const logger = curryFunctionMembers(LOGGER, ...args);
     const zoneName = formatZoneName;
     for (const level of LOG_LEVELS) {
         logger[level] = ((original) => {

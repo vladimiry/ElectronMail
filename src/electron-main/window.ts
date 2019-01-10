@@ -31,7 +31,7 @@ export async function initBrowserWindow(
         &&
         await new Store({file: ctx.locations.preload.browserWindowE2E, fs: ctx.storeFs}).readable()
     );
-    const browserWindowConstructorOptions: BrowserWindowConstructorOptions = {
+    const browserWindow = new BrowserWindow({
         webPreferences: {
             ...commonWebPreferences,
             preload: e2eRuntimeEnvironment
@@ -42,8 +42,7 @@ export async function initBrowserWindow(
         ...(await ctx.configStore.readExisting()).window.bounds,
         show: false,
         autoHideMenuBar: true,
-    };
-    const browserWindow = new BrowserWindow(browserWindowConstructorOptions);
+    });
 
     app.removeListener(...appBeforeQuitEventArgs);
     app.on(...appBeforeQuitEventArgs);
@@ -85,13 +84,55 @@ export async function initBrowserWindow(
     browserWindow.loadURL(ctx.locations.browserWindowPage);
 
     // execute after handlers subscriptions
-    await keepState(ctx, browserWindow);
+    await keepBrowserWindowState(ctx, browserWindow);
 
     if (developmentEnvironment) {
         browserWindow.webContents.openDevTools();
     }
 
     return browserWindow;
+}
+
+async function keepBrowserWindowState(ctx: Context, browserWindow: Electron.BrowserWindow) {
+    const {bounds} = (await ctx.configStore.readExisting()).window;
+    const debounce = 500;
+    let timeoutId: any;
+
+    if (!("x" in bounds && "y" in bounds)) {
+        browserWindow.center();
+    }
+
+    browserWindow.on("close", saveWindowStateHandler);
+    browserWindow.on("resize", saveWindowStateHandlerDebounced);
+    browserWindow.on("move", saveWindowStateHandlerDebounced);
+
+    // debounce
+    function saveWindowStateHandlerDebounced() {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(saveWindowStateHandler, debounce);
+        syncFindInPageBrowserViewSize(ctx);
+    }
+
+    async function saveWindowStateHandler() {
+        const config = Object.freeze(await ctx.configStore.readExisting());
+        const storedWindowConfig = Object.freeze(config.window);
+        const newWindowConfig = {...config.window};
+
+        try {
+            newWindowConfig.maximized = browserWindow.isMaximized();
+
+            if (!newWindowConfig.maximized) {
+                newWindowConfig.bounds = browserWindow.getBounds();
+            }
+        } catch {
+            // "browserWindow" might be destroyed at this point
+            return;
+        }
+
+        if (!equals(storedWindowConfig, newWindowConfig)) {
+            await ctx.configStore.write({...config, window: newWindowConfig});
+        }
+    }
 }
 
 export function initFindInPageBrowserView(ctx: Context): BrowserView {
@@ -149,44 +190,42 @@ function syncFindInPageBrowserViewSize(ctx: Context, findInPageBrowserView?: Bro
     browserView.setBounds(bounds);
 }
 
-async function keepState(ctx: Context, browserWindow: Electron.BrowserWindow) {
-    const {bounds} = (await ctx.configStore.readExisting()).window;
-    const debounce = 500;
-    let timeoutId: any;
-
-    if (!("x" in bounds && "y" in bounds)) {
-        browserWindow.center();
+export async function attachFullTextIndexWindow(ctx: Context): Promise<BrowserWindow> {
+    if (!ctx.uiContext) {
+        throw new Error(`UI Context has not been initialized`);
     }
 
-    browserWindow.on("close", saveWindowStateHandler);
-    browserWindow.on("resize", saveWindowStateHandlerDebounced);
-    browserWindow.on("move", saveWindowStateHandlerDebounced);
-
-    // debounce
-    function saveWindowStateHandlerDebounced() {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(saveWindowStateHandler, debounce);
-        syncFindInPageBrowserViewSize(ctx);
+    if (ctx.uiContext.fullTextSearchBrowserWindow) {
+        throw new Error(`Full-text search process has already been spawned`);
     }
 
-    async function saveWindowStateHandler() {
-        const config = Object.freeze(await ctx.configStore.readExisting());
-        const storedWindowConfig = Object.freeze(config.window);
-        const newWindowConfig = {...config.window};
+    // WARN: "fullTextSearchBrowserWindow" starts communicating with main process straight away on preload script loading
+    // so main process api needs to be registered before "fullTextSearchBrowserWindow" creating
+    await ctx.endpoints.promise;
 
-        try {
-            newWindowConfig.maximized = browserWindow.isMaximized();
+    const browserWindow = new BrowserWindow({
+        webPreferences: {
+            ...commonWebPreferences,
+            preload: ctx.locations.preload.fullTextSearchBrowserWindow,
+        },
+        show: false,
+        autoHideMenuBar: true,
+    });
 
-            if (!newWindowConfig.maximized) {
-                newWindowConfig.bounds = browserWindow.getBounds();
-            }
-        } catch {
-            // "browserWindow" might be destroyed at this point
-            return;
-        }
+    browserWindow.setMenu(null);
+    browserWindow.loadURL("data:text/html,<html><body></body></html>");
 
-        if (!equals(storedWindowConfig, newWindowConfig)) {
-            await ctx.configStore.write({...config, window: newWindowConfig});
-        }
+    ctx.uiContext.fullTextSearchBrowserWindow = browserWindow;
+
+    return browserWindow;
+}
+
+export async function detachFullTextIndexWindow(ctx: Context) {
+    if (!ctx.uiContext || !ctx.uiContext.fullTextSearchBrowserWindow) {
+        return;
     }
+
+    // WARN: don't call "destroy" since app needs "window.onbeforeunload" to be triggered, see cleanup logic in preload script
+    ctx.uiContext.fullTextSearchBrowserWindow.close();
+    delete ctx.uiContext.fullTextSearchBrowserWindow;
 }

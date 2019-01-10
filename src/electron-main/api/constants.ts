@@ -7,7 +7,7 @@ type Notification = Unpacked<ReturnType<Endpoints["notification"]>>;
 type DbIndexerNotification = Unpacked<ReturnType<Endpoints["dbIndexerNotification"]>>;
 
 export const NOTIFICATION_SUBJECT = new BehaviorSubject<Notification>(
-    IPC_MAIN_API_NOTIFICATION_ACTIONS.Stub(),
+    IPC_MAIN_API_NOTIFICATION_ACTIONS.DbIndexingState({status: "undefined"}),
 );
 
 export const DB_INDEXER_NOTIFICATION_SUBJECT = new BehaviorSubject<DbIndexerNotification>(

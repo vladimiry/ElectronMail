@@ -30,9 +30,14 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
         stored: false,
     } as ComponentState);
 
-    // TODO consider replace observable with just an object explicitly triggering ChangeDetectorRef.detectChanges() after its mutation
+    // TODO consider replacing observable with just an object explicitly triggering ChangeDetectorRef.detectChanges() after its mutation
     // tslint:disable-next-line:member-ordering
-    state$ = this.stateSubject$.asObservable().pipe(filter((s) => Boolean(s.account))); // .pipe(debounceTime(200))
+    state$ = this.stateSubject$
+        .asObservable()
+        .pipe(
+            filter((s) => Boolean(s.account)),
+            // .pipe(debounceTime(200)),
+        );
 
     private accountLogin!: string;
 
@@ -64,7 +69,9 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
                     filter((selectedLogin) => Boolean(selectedLogin)),
                     distinctUntilChanged(),
                 )
-                .subscribe((selectedLogin) => this.patchState({selected: selectedLogin === this.accountLogin})),
+                .subscribe((selectedLogin) => {
+                    this.patchState({selected: selectedLogin === this.accountLogin});
+                }),
         );
     }
 

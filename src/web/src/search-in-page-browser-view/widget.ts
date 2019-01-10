@@ -2,12 +2,10 @@ import PQueue from "p-queue";
 import {Subscription, from, fromEvent} from "rxjs";
 import {debounceTime, filter, switchMap} from "rxjs/operators";
 
-import {IPC_MAIN_API} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
 
 export class SearchInPageWidget {
-    private readonly apiClient = IPC_MAIN_API.buildClient({
-        ipcRenderer: __ELECTRON_EXPOSURE__.ipcRendererTransport,
+    private readonly apiClient = __ELECTRON_EXPOSURE__.buildIpcMainClient({
         options: {timeoutMs: ONE_SECOND_MS},
     });
     private readonly apiMethods = {

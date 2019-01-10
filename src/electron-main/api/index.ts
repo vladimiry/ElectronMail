@@ -4,6 +4,7 @@ import {from} from "rxjs";
 import {Account, Database, FindInPage, General, TrayIcon} from "./endpoints-builders";
 import {Context} from "src/electron-main/model";
 import {Endpoints, IPC_MAIN_API} from "src/shared/api/main";
+import {attachFullTextIndexWindow, detachFullTextIndexWindow} from "src/electron-main/window";
 import {buildSettingsAdapter} from "src/electron-main/util";
 import {clearDefaultSessionCaches} from "src/electron-main/session";
 import {deletePassword, getPassword, setPassword} from "src/electron-main/keytar";
@@ -13,8 +14,8 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
     const endpoints: Endpoints = {
         ...await Account.buildEndpoints(ctx),
         ...await Database.buildEndpoints(ctx),
-        ...await FindInPage.buildEndpoints(ctx, () => endpoints),
-        ...await General.buildEndpoints(ctx, () => endpoints),
+        ...await FindInPage.buildEndpoints(ctx),
+        ...await General.buildEndpoints(ctx),
         ...await TrayIcon.buildEndpoints(ctx),
 
         changeMasterPassword: ({password, newPassword}) => from((async () => {
@@ -50,19 +51,30 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
             delete ctx.selectedAccount; // TODO extend "logout" api test: "delete ctx.selectedAccount"
             await clearDefaultSessionCaches();
             await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0}).toPromise();
+            await detachFullTextIndexWindow(ctx);
             return null;
         })()),
 
-        // TODO update "patchBaseConfig" api method test ("logLevel" value, "logger.transports.file.level" updpate)
         patchBaseConfig: (patch) => from((async () => {
-            const config = await ctx.configStore.write({
-                ...(await ctx.configStore.readExisting()),
+            const savedConfig = await ctx.configStore.readExisting();
+            const newConfig = await ctx.configStore.write({
+                ...savedConfig,
                 ...JSON.parse(JSON.stringify(patch)), // parse => stringify call strips out undefined values from the object
             });
 
-            logger.transports.file.level = config.logLevel;
+            // TODO update "patchBaseConfig" api method: test "logLevel" value, "logger.transports.file.level" update
+            logger.transports.file.level = newConfig.logLevel;
 
-            return config;
+            // TODO update "patchBaseConfig" api method: test "attachFullTextIndexWindow" / "detachFullTextIndexWindow" calls
+            if (Boolean(newConfig.fullTextSearch) !== Boolean(savedConfig.fullTextSearch)) {
+                if (newConfig.fullTextSearch) {
+                    await attachFullTextIndexWindow(ctx);
+                } else {
+                    await detachFullTextIndexWindow(ctx);
+                }
+            }
+
+            return newConfig;
         })()),
 
         // TODO update "readConfig" api method test ("upgradeConfig" call, "logger.transports.file.level" updpate)
@@ -113,6 +125,12 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
                 await upgradeDatabase(ctx.db, settings);
             }
 
+            if ((await endpoints.readConfig().toPromise()).fullTextSearch) {
+                await attachFullTextIndexWindow(ctx);
+            } else {
+                await detachFullTextIndexWindow(ctx);
+            }
+
             return settings;
         })()),
 
@@ -133,6 +151,8 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
     };
 
     IPC_MAIN_API.registerApi(endpoints, {logger: {error: logger.error, info: () => {}}});
+
+    ctx.endpoints.resolve(endpoints);
 
     return endpoints;
 };

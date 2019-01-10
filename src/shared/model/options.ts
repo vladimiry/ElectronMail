@@ -11,6 +11,7 @@ export type BaseConfig = Partial<Pick<Config,
     | "closeToTray"
     | "compactLayout"
     | "startMinimized"
+    | "fullTextSearch"
     | "unreadNotifications"
     | "checkForUpdatesAndNotify">>
     &

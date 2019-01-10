@@ -43,6 +43,7 @@ $webview-border: darken($app-color-bg-dark, 10%);
 
             > .btn:first-child {
                 width: 100%;
+                white-space: nowrap;
             }
         }
 

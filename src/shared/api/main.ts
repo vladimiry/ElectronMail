@@ -51,7 +51,7 @@ export interface Endpoints {
 
     dbExport: ApiMethod<DbAccountPk, { count: number; } | { progress: number; file: string; }>;
 
-    dbIndexerOn: ApiMethod<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_ON>, null>;
+    dbIndexerOn: ApiMethod<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_ON_ACTIONS>, null>;
 
     dbIndexerNotification: ApiMethodNoArgument<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>>;
 
@@ -104,13 +104,16 @@ export const IPC_MAIN_API = new IpcMainApiService<Endpoints>({channel: `${APP_NA
 
 // WARN: do not put sensitive data into the main process notification stream
 export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
-        Stub: ofType<{}>(),
         ActivateBrowserWindow: ofType<{}>(),
         DbPatchAccount: ofType<{
             key: DbAccountPk;
             entitiesModified: boolean;
             metadataModified: boolean;
             stat: { mails: number, folders: number; contacts: number; unread: number; };
+        }>(),
+        DbIndexingState: ofType<{
+            key: DbAccountPk;
+            status: "undefined" | "indexing" | "done";
         }>(),
     },
     {
@@ -120,8 +123,9 @@ export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
     },
 );
 
-export const IPC_MAIN_API_DB_INDEXER_ON = unionize({
+export const IPC_MAIN_API_DB_INDEXER_ON_ACTIONS = unionize({
         Bootstrapped: ofType<{}>(),
+        IndexingState: ofType<Extract<UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>, { type: "DbIndexingState" }>["payload"]>(),
     },
     {
         tag: "type",
@@ -132,7 +136,9 @@ export const IPC_MAIN_API_DB_INDEXER_ON = unionize({
 
 export const IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS = unionize({
         Stub: ofType<{}>(),
+        // TODO consider splitting huge data portion to chunks, see "ramda.splitEvery"
         Index: ofType<{
+            key: DbAccountPk;
             remove: Array<Pick<IndexableMail, "pk">>;
             add: IndexableMail[]
         }>(),

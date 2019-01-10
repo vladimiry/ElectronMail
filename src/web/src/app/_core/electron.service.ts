@@ -7,7 +7,6 @@ import {from, of, throwError, timer} from "rxjs";
 
 import {AccountType} from "src/shared/model/account";
 import {DEFAULT_API_CALL_TIMEOUT, ONE_SECOND_MS} from "src/shared/constants";
-import {IPC_MAIN_API} from "src/shared/api/main";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {PROTONMAIL_IPC_WEBVIEW_API} from "src/shared/api/webview/protonmail";
 import {State} from "src/web/src/app/store/reducers/options";
@@ -86,8 +85,7 @@ export class ElectronService implements OnDestroy {
     }
 
     ipcMainClient(options?: CallOptions) {
-        return IPC_MAIN_API.buildClient({
-            ipcRenderer: __ELECTRON_EXPOSURE__.ipcRendererTransport,
+        return __ELECTRON_EXPOSURE__.buildIpcMainClient({
             options: this.buildApiCallOptions(options),
         });
     }

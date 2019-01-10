@@ -56,6 +56,11 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.fetching.messagesStorePortionSize = INITIAL_STORES.config().fetching.messagesStorePortionSize;
         }
     },
+    "2.2.0": (config) => {
+        if (typeof config.fullTextSearch === "undefined") {
+            config.fullTextSearch = INITIAL_STORES.config().fullTextSearch;
+        }
+    },
 };
 
 const SETTINGS_UPGRADES: Record<string, (settings: Settings) => void> = {

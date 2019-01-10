@@ -50,7 +50,7 @@ test(`save to file call should write through the "EncryptionAdapter.prototype.wr
     const db = new databaseModule.Database(buildDatabaseOptions());
 
     // "stringify" parameters taken from the "fs-json-store/private/store.write" method
-    const dump = Buffer.from(JSON.stringify(db.dump(), null, 4));
+    const dump = Buffer.from(JSON.stringify(db.dump()));
 
     t.false(adapterWriteSpy.called);
 

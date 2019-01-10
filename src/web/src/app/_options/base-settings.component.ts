@@ -1,7 +1,7 @@
 import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/forms";
 import {Component, OnInit} from "@angular/core";
 import {Store} from "@ngrx/store";
-import {map, take} from "rxjs/operators";
+import {distinctUntilChanged, map, take} from "rxjs/operators";
 
 import {BaseConfig} from "src/shared/model/options";
 import {LOG_LEVELS} from "src/shared/constants";
@@ -16,16 +16,27 @@ import {State} from "src/web/src/app/store/reducers/options";
 })
 export class BaseSettingsComponent implements OnInit {
     baseConfig$ = this.store.select(OptionsSelectors.CONFIG.base);
+
     processing$ = this.store.select(OptionsSelectors.FEATURED.progress).pipe(map((p) => p.updatingBaseSettings));
+
+    fullTextSearchDisabled$ = this.store
+        .select(OptionsSelectors.SETTINGS.localStoreEnabledCount)
+        .pipe(
+            distinctUntilChanged(),
+            map((value) => value < 1),
+        );
+
     logLevels = LOG_LEVELS;
+
     controls: Record<keyof BaseConfig, AbstractControl> = {
-        findInPage: new FormControl(),
+        checkForUpdatesAndNotify: new FormControl(),
         closeToTray: new FormControl(),
         compactLayout: new FormControl(),
+        findInPage: new FormControl(),
+        fullTextSearch: new FormControl(),
+        logLevel: new FormControl(null, Validators.required),
         startMinimized: new FormControl(),
         unreadNotifications: new FormControl(),
-        checkForUpdatesAndNotify: new FormControl(),
-        logLevel: new FormControl(null, Validators.required),
     };
     form = new FormGroup(this.controls);
 

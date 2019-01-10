@@ -24,10 +24,7 @@ interface NotificationMapValue {
 
 const _logger = curryFunctionMembers(electronLog, "[electron-main/api/endpoints-builders/find-in-page]");
 
-export async function buildEndpoints(
-    ctx: Context,
-    resolveEndpoints: () => Endpoints,
-): Promise<Pick<Endpoints, ApiMethods>> {
+export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiMethods>> {
     let findInPageNotification: NotificationMapValue | null = null;
     const resolveContext = () => {
         if (!ctx.uiContext) {
@@ -53,7 +50,7 @@ export async function buildEndpoints(
                     return null;
                 }
 
-                const {findInPage} = await resolveEndpoints().readConfig().toPromise();
+                const {findInPage} = await (await ctx.endpoints.promise).readConfig().toPromise();
 
                 if (!findInPage) {
                     logger.debug(`skipping as "findInPage" config option disabled`);

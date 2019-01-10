@@ -9,7 +9,7 @@ import {
 
 interface GenericWebAccount<C extends AccountConfig, NS extends Notifications> {
     accountConfig: C;
-    progress: Partial<Record<keyof C["credentials"], boolean>> & Partial<{ syncing: boolean }>;
+    progress: Partial<Record<keyof C["credentials"], boolean>> & Partial<{ syncing: boolean; indexing: boolean; }>;
     notifications: NS;
     syncingActivated?: boolean;
     databaseView?: boolean;

@@ -31,5 +31,11 @@ export const SETTINGS = (() => {
             accountsSelector,
             (accounts) => accounts.find(accountPickingPredicate(criteria)),
         ),
+        localStoreEnabledCount: createSelector(accountsSelector, (accounts) => {
+            return accounts.reduce(
+                (accumulator, {database}) => accumulator + Number(Boolean(database)),
+                0,
+            );
+        }),
     };
 })();

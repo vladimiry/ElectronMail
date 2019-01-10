@@ -1,24 +1,28 @@
-import PQueue from "p-queue";
 import electronLog from "electron-log";
 import sanitizeHtml from "sanitize-html";
 import {Observable, from, of} from "rxjs";
+import {UnionOf} from "@vladimiry/unionize";
 import {app, dialog} from "electron";
-import {equals, mergeDeepRight, omit} from "ramda";
+import {equals, mergeDeepRight, omit, pick} from "ramda";
 
 import {Arguments, Unpacked} from "src/shared/types";
 import {Context} from "src/electron-main/model";
 import {DB_INDEXER_NOTIFICATION_SUBJECT, NOTIFICATION_SUBJECT} from "src/electron-main/api/constants";
-import {Endpoints, IPC_MAIN_API_DB_INDEXER_ON, IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
-import {EntityMap, MemoryDbAccount} from "src/shared/model/database";
+import {
+    Endpoints,
+    IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS,
+    IPC_MAIN_API_DB_INDEXER_ON_ACTIONS,
+    IPC_MAIN_API_NOTIFICATION_ACTIONS,
+} from "src/shared/api/main";
+import {EntityMap, INDEXABLE_MAIL_FIELDS_STUB_CONTAINER, IndexableMail, MemoryDbAccount} from "src/shared/model/database";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {prepareFoldersView} from "./folders-view";
 import {writeEmlFile} from "./export";
 
 const _logger = curryFunctionMembers(electronLog, "[electron-main/api/endpoints-builders/database]");
+const dbIndexerNotificationObservable = DB_INDEXER_NOTIFICATION_SUBJECT.asObservable();
 
-// TODO full-text search also needs to be queued in this queue
-const databaseAlterQueue: PQueue<PQueue.DefaultAddOptions> = new PQueue({concurrency: 1});
-const indexerNotificationObservable = DB_INDEXER_NOTIFICATION_SUBJECT.asObservable();
+type IndexActionPayload = Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>, { type: "Index" }>["payload"];
 
 type Methods =
     | "dbPatch"
@@ -45,42 +49,44 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
                 metadataModified: false,
             };
 
-            // TODO indexing: drop "databaseAlterQueue" use
-            await databaseAlterQueue.add(async () => {
-                for (const entityType of entityTypes) {
-                    const source = entityUpdatesPatch[entityType];
-                    const destinationMap = account[entityType];
-                    // const mailEntityType = entityType === "mails";
+            for (const entityType of entityTypes) {
+                const source = entityUpdatesPatch[entityType];
+                const destinationMap = account[entityType];
 
-                    // remove
-                    source.remove.forEach(({pk}) => {
-                        destinationMap.delete(pk);
-                    });
-                    // TODO indexing
-                    // if (mailEntityType) {
-                    //     await removeMailsFromIndex(account.mailsIndex, source.remove as Array<Pick<Mail, "pk">>);
-                    // }
+                // remove
+                source.remove.forEach(({pk}) => {
+                    destinationMap.delete(pk);
+                });
 
-                    // add
-                    for (const entity of source.upsert) {
-                        await (destinationMap as EntityMap<typeof entity>).validateAndSet(entity);
-                    }
-                    // TODO indexing
-                    // if (mailEntityType) {
-                    //     await addToMailsIndex(account.mailsIndex, source.upsert as Mail[]);
-                    // }
+                // add
+                for (const entity of source.upsert) {
+                    await (destinationMap as EntityMap<typeof entity>).validateAndSet(entity);
                 }
 
-                modifiedState.entitiesModified = isEntityUpdatesPatchNotEmpty(entityUpdatesPatch);
-                modifiedState.metadataModified = patchMetadata(account.metadata, metadataPatch);
-                modifiedState.modified = modifiedState.entitiesModified || modifiedState.metadataModified;
-
-                logger.verbose(JSON.stringify({...modifiedState, forceFlush}));
-
-                if (modifiedState.modified || forceFlush) {
-                    await ctx.db.saveToFile();
+                if (entityType !== "mails") {
+                    continue;
                 }
-            });
+
+                DB_INDEXER_NOTIFICATION_SUBJECT.next(
+                    IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Index(
+                        narrowIndexActionPayload({
+                            key,
+                            add: source.upsert as IndexableMail[],
+                            remove: source.remove,
+                        }),
+                    ),
+                );
+            }
+
+            modifiedState.entitiesModified = isEntityUpdatesPatchNotEmpty(entityUpdatesPatch);
+            modifiedState.metadataModified = patchMetadata(account.metadata, metadataPatch);
+            modifiedState.modified = modifiedState.entitiesModified || modifiedState.metadataModified;
+
+            logger.verbose(JSON.stringify({...modifiedState, forceFlush}));
+
+            if (modifiedState.modified || forceFlush) {
+                await ctx.db.saveToFile();
+            }
 
             NOTIFICATION_SUBJECT.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount({
                 key,
@@ -192,16 +198,34 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
         ) => {
             logger.info(`action.type: ${action.type}`);
 
-            IPC_MAIN_API_DB_INDEXER_ON.match(action, {
+            IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.match(action, {
                 Bootstrapped: () => {
+                    ctx.db.iterateAccounts(({pk: key, account}) => {
+                        DB_INDEXER_NOTIFICATION_SUBJECT.next(
+                            IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Index(
+                                narrowIndexActionPayload({
+                                    key,
+                                    remove: [],
+                                    add: [...account.mails.values()],
+                                }),
+                            ),
+                        );
+                    });
+                },
+                IndexingState: ({key, status}) => {
+                    logger.verbose(`IndexingState.status: ${status}`);
 
+                    // propagating status to UI process
+                    NOTIFICATION_SUBJECT.next(
+                        IPC_MAIN_API_NOTIFICATION_ACTIONS.DbIndexingState({key, status}),
+                    );
                 },
             });
 
             return of(null);
         })(),
 
-        dbIndexerNotification: () => indexerNotificationObservable,
+        dbIndexerNotification: () => dbIndexerNotificationObservable,
     };
 }
 
@@ -225,4 +249,17 @@ function patchMetadata(
     logger.verbose(`metadata patched with ${JSON.stringify(Object.keys(patch))} properties`);
 
     return true;
+}
+
+function narrowIndexActionPayload({key, add, remove}: IndexActionPayload): IndexActionPayload {
+    const mailFieldsToSelect = [
+        ((name: keyof Pick<Unpacked<typeof add>, "pk">) => name)("pk"),
+        ...Object.keys(INDEXABLE_MAIL_FIELDS_STUB_CONTAINER),
+    ] as Array<keyof Unpacked<typeof add>>;
+
+    return {
+        key,
+        remove,
+        add: add.map((mail) => pick(mailFieldsToSelect, mail)),
+    };
 }

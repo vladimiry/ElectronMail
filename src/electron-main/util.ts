@@ -1,6 +1,7 @@
 import logger from "electron-log";
 import path from "path";
 import url from "url";
+import {Deferred} from "ts-deferred";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Fs as StoreFs, Model as StoreModel, Store} from "fs-json-store";
 import {app} from "electron";
@@ -29,6 +30,7 @@ export function initContext(options: ContextInitOptions = {}): Context {
         storeFs,
         runtimeEnvironment,
         locations,
+        endpoints: new Deferred(),
         db: new Database({
             file: path.join(locations.userDataDir, "database.bin"),
             fileFs: storeFs,
@@ -125,6 +127,7 @@ function initLocations(
             browserWindow: appRelativePath("./electron-preload/browser-window.js"),
             browserWindowE2E: appRelativePath("./electron-preload/browser-window-e2e.js"),
             searchInPageBrowserView: appRelativePath("./electron-preload/search-in-page-browser-view.js"),
+            fullTextSearchBrowserWindow: appRelativePath("./electron-preload/database-indexer.js"),
             webView: {
                 protonmail: formatFileUrl(appRelativePath("./electron-preload/webview/protonmail.js")),
                 tutanota: formatFileUrl(appRelativePath("./electron-preload/webview/tutanota.js")),

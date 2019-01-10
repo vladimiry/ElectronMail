@@ -1,12 +1,12 @@
 import {InMemoryOptions, SyncOrAsyncLimiter} from "rolling-rate-limiter";
-import {IpcRenderer} from "electron";
 
 import {AccountType} from "src/shared/model/account";
-import {Logger} from "src/shared/types";
+import {IPC_MAIN_API} from "src/shared/api/main";
+import {buildLoggerBundle} from "src/electron-preload/util";
 
 export interface ElectronExposure {
-    ipcRendererTransport: Pick<IpcRenderer, "on" | "removeListener" | "send" | "sendToHost">;
-    webLogger: Logger;
+    buildLoggerBundle: typeof buildLoggerBundle;
+    buildIpcMainClient: typeof IPC_MAIN_API.buildClient;
     require: {
         "rolling-rate-limiter": () => (options: InMemoryOptions) => SyncOrAsyncLimiter;
     };
@@ -28,6 +28,7 @@ export interface ElectronContextLocations {
         browserWindow: string;
         browserWindowE2E: string;
         searchInPageBrowserView: string;
+        fullTextSearchBrowserWindow: string;
         webView: Record<AccountType, string>;
     };
     readonly webClients: Record<AccountType, Array<{ entryUrl: string; entryApiUrl: string; }>>;

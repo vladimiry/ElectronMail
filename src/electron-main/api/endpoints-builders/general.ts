@@ -24,10 +24,7 @@ type ApiMethods =
 
 const notificationObservable = NOTIFICATION_SUBJECT.asObservable();
 
-export async function buildEndpoints(
-    ctx: Context,
-    resolveEndpoints: () => Endpoints,
-): Promise<Pick<Endpoints, ApiMethods>> {
+export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiMethods>> {
     const endpoints: Pick<Endpoints, ApiMethods> = {
         openAboutWindow: () => {
             aboutWindow({
@@ -124,8 +121,8 @@ export async function buildEndpoints(
                 );
 
                 if (needToCloseFindInPageWindow) {
-                    await resolveEndpoints().findInPageStop().toPromise();
-                    await resolveEndpoints().findInPageDisplay({visible: false}).toPromise();
+                    (await ctx.endpoints.promise).findInPageStop().toPromise();
+                    (await ctx.endpoints.promise).findInPageDisplay({visible: false}).toPromise();
                 }
 
                 ctx.selectedAccount = newSelectedAccount;

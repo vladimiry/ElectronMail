@@ -1,8 +1,10 @@
+import {Deferred} from "ts-deferred";
 import {Model as StoreModel} from "fs-json-store";
 
 import {Config, Settings} from "src/shared/model/options";
 import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
+import {Endpoints} from "src/shared/api/main";
 
 export type RuntimeEnvironment = "e2e" | "production";
 
@@ -22,6 +24,7 @@ export interface Context {
     readonly storeFs: StoreModel.StoreFs;
     readonly runtimeEnvironment: RuntimeEnvironment;
     readonly locations: ElectronContextLocations;
+    readonly endpoints: Deferred<Endpoints>;
     readonly initialStores: {
         config: Config;
         settings: Settings;
@@ -37,6 +40,7 @@ export interface Context {
 
 export interface UIContext {
     readonly browserWindow: Electron.BrowserWindow;
+    fullTextSearchBrowserWindow?: Electron.BrowserWindow;
     findInPageBrowserView?: Electron.BrowserView;
     readonly tray: Electron.Tray;
     readonly appMenu: Electron.Menu;

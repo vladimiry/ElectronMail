@@ -14,6 +14,19 @@
         </div>
         <div class="form-check">
             <label class="form-check-label">
+                <input type="checkbox" class="form-check-input" formControlName="fullTextSearch">
+                Full-text search
+                <i class="fa fa-info-circle text-warning"
+                   *ngIf="fullTextSearchDisabled$ | async"
+                   [popover]="fullTextSearchPopoverTemplate" placement="bottom" container="body" triggers="mouseenter:mouseleave"
+                ></i>
+                <ng-template #fullTextSearchPopoverTemplate>
+                    This feature works together with <code>local store</code> feature which you can enable per account.
+                </ng-template>
+            </label>
+        </div>
+        <div class="form-check">
+            <label class="form-check-label">
                 <input type="checkbox" class="form-check-input" formControlName="checkForUpdatesAndNotify">
                 Automatic update
                 <i class="fa fa-info-circle text-primary"

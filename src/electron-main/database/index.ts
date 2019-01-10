@@ -3,14 +3,13 @@ import PQueue from "p-queue";
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/private/constants";
 import {EncryptionAdapter, KeyBasedPreset} from "fs-json-store-encryption-adapter";
 import {Model as FsJsonStoreModel, Store as FsJsonStore} from "fs-json-store";
-import {deserialize, serialize} from "@vladimiry/ndx";
 
 import * as Entity from "./entity";
-import {DATABASE_VERSION, MAILS_INDEX_DESERIALIZE_OPTIONS} from "./constants";
+import {DATABASE_VERSION} from "./constants";
 import {DbAccountPk, FsDb, FsDbAccount, MAIL_FOLDER_TYPE, Mail, MemoryDb, MemoryDbAccount} from "src/shared/model/database";
 import {EntityMap} from "./entity-map";
-import {buildMailsIndex, resolveMemoryAccountFolders} from "./util";
 import {curryFunctionMembers} from "src/shared/util";
+import {resolveMemoryAccountFolders} from "./util";
 
 const logger = curryFunctionMembers(_logger, "[electron-main/database]");
 
@@ -38,7 +37,6 @@ export class Database {
             folders: source.folders.toObject(),
             contacts: source.contacts.toObject(),
             metadata: source.metadata as any,
-            mailsIndex: serialize(source.mailsIndex),
         };
     }
 
@@ -49,9 +47,6 @@ export class Database {
             folders: new EntityMap(Entity.Folder, source.folders),
             contacts: new EntityMap(Entity.Contact, source.contacts),
             metadata: source.metadata as any,
-            mailsIndex: source.mailsIndex
-                ? deserialize(source.mailsIndex, MAILS_INDEX_DESERIALIZE_OPTIONS)
-                : buildMailsIndex(),
         };
     }
 
@@ -101,7 +96,6 @@ export class Database {
             folders: new EntityMap(Entity.Folder),
             contacts: new EntityMap(Entity.Contact),
             metadata: Database.buildEmptyAccountMetadata(type) as any,
-            mailsIndex: buildMailsIndex(),
         };
 
         this.memoryDb.accounts[type][login] = account;

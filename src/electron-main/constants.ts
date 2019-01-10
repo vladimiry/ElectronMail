@@ -27,6 +27,7 @@ export const INITIAL_STORES: Readonly<{
             unreadNotifications: true,
             checkForUpdatesAndNotify: true,
             findInPage: true,
+            fullTextSearch: true,
             window: {
                 bounds: {width: 1024, height: 768},
             },

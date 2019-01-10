@@ -1,3 +1,5 @@
+import {IndexableMail} from "src/shared/model/database/index";
+import {Omit} from "src/shared/types";
 import {buildEnumBundle} from "src/shared/util";
 
 export const PROTONMAIL_MAILBOX_IDENTIFIERS = buildEnumBundle({
@@ -79,4 +81,14 @@ export const CONTACT_SOCIAL_TYPE = buildEnumBundle({
     LINKED_IN: "3",
     OTHER: "4",
     CUSTOM: "5",
+});
+
+export const INDEXABLE_MAIL_FIELDS_STUB_CONTAINER: Record<keyof Omit<IndexableMail, "pk">, null> = Object.freeze({
+    subject: null,
+    body: null,
+    sender: null,
+    toRecipients: null,
+    ccRecipients: null,
+    bccRecipients: null,
+    attachments: null,
 });

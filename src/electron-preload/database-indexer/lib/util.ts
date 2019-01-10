@@ -15,19 +15,19 @@ export function buildMailsIndex(): MailsIndex {
     return index;
 }
 
-export async function addToMailsIndex(
+export function addToMailsIndex(
     index: MailsIndex,
     mails: IndexableMail[],
-): Promise<void> {
+): void {
     for (const mail of mails) {
         index.add(mail.pk, mail);
     }
 }
 
-export async function removeMailsFromIndex(
+export function removeMailsFromIndex(
     index: MailsIndex,
     pks: Array<Pick<IndexableMail, "pk">>,
-): Promise<void> {
+): void {
     for (const {pk} of pks) {
         index.remove(pk);
     }

@@ -1,35 +1,66 @@
-import "src/electron-preload/browser-window/electron-exposure";
-import {IPC_MAIN_API, IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_DB_INDEXER_ON} from "src/shared/api/main";
-import {LOGGER} from "src/electron-preload/database-indexer/lib/contants";
+import PQueue from "p-queue";
+import {Deferred} from "ts-deferred";
+import {Subscription} from "rxjs";
+
+import {IPC_MAIN_API, IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_DB_INDEXER_ON_ACTIONS} from "src/shared/api/main";
+import {LOGGER} from "./lib/contants";
+import {ONE_SECOND_MS} from "src/shared/constants";
+import {addToMailsIndex, buildMailsIndex, removeMailsFromIndex} from "./lib/util";
 import {curryFunctionMembers} from "src/shared/util";
 
-const logger = curryFunctionMembers(LOGGER, ["index"]);
+const cleanupSubscription = new Subscription();
+const cleanupDeferred = new Deferred();
+const cleanupPromise = cleanupDeferred.promise;
+
+window.onbeforeunload = () => {
+    cleanupSubscription.unsubscribe();
+    cleanupDeferred.resolve();
+    logger.info(`"window.beforeunload" handler executed`);
+};
+
+const logger = curryFunctionMembers(LOGGER, "[index]");
+const indexingQueue = new PQueue({concurrency: 1});
+const index = buildMailsIndex();
 
 (async () => {
-    const apiClient = IPC_MAIN_API.buildClient();
-    const apiMethods = {
-        dbIndexerOn: apiClient("dbIndexerOn"),
-        dbIndexerNotification: apiClient("dbIndexerNotification"),
-    };
+    const api = (() => {
+        const client = IPC_MAIN_API.buildClient();
+        const callOptions = {timeoutMs: ONE_SECOND_MS, finishPromise: cleanupPromise};
+        return {
+            dbIndexerOn: client("dbIndexerOn", callOptions),
+            dbIndexerNotification: client("dbIndexerNotification", callOptions),
+        };
+    })();
 
-    await apiMethods.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON.Bootstrapped()).toPromise();
+    await api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.Bootstrapped()).toPromise();
 
-    apiMethods
-        .dbIndexerNotification()
-        .subscribe((action) => {
+    cleanupSubscription.add(
+        api.dbIndexerNotification().subscribe((action) => {
             IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.match(action, {
-                Index: ({add, remove}) => {
-                    // tslint:disable-next-line
-                    console.log({add, remove});
+                Index: async ({remove, add}) => {
+                    logger.info(`Received mails to remove/add: ${remove.length}/${add.length}`);
+
+                    await indexingQueue.add(async () => {
+                        await api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.IndexingState({status: "indexing"})).toPromise();
+
+                        removeMailsFromIndex(index, remove);
+                        addToMailsIndex(index, add);
+
+                        await api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.IndexingState({status: "done"})).toPromise();
+                    });
+
                     // TODO indexing: drop next line
                     return {};
                 },
                 default: () => {
-                    // TODO indexing: drop next line
-                    return {};
+                    // TODO transfer error to main process, log it and display it to the user
+                    const error = new Error(`Unsupported "dbIndexerNotification" action type: ${action.type}`);
+                    logger.error(error);
+                    throw error;
                 },
             });
-        });
+        }),
+    );
 })().catch((error) => {
     logger.error("uncaught promise rejection", error);
 });

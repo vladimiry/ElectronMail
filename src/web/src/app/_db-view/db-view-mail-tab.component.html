@@ -1,35 +1,37 @@
 <ng-container *ngIf="(state$ | async); let state; else loadingTemplate">
     <div class="folders-container d-flex flex-column flex-shrink-0">
         <div class="overflow-auto">
-            <ng-container [ngTemplateOutlet]="foldersGroup" [ngTemplateOutletContext]="{folders: state.folders.system}"></ng-container>
-            <ng-container [ngTemplateOutlet]="foldersGroup" [ngTemplateOutletContext]="{folders: state.folders.custom}"></ng-container>
+            <ng-container [ngTemplateOutletContext]="{folders: state.folders.system}" [ngTemplateOutlet]="foldersGroup"></ng-container>
+            <ng-container [ngTemplateOutletContext]="{folders: state.folders.custom}" [ngTemplateOutlet]="foldersGroup"></ng-container>
         </div>
         <ng-template #foldersGroup let-folders="folders">
             <ul class="list-group">
-                <li class="list-group-item list-group-item-action"
+                <li (click)="selectFolder(folder)"
                     *ngFor="let folder of folders; trackBy: trackFolderByPk"
                     [ngClass]="{'list-group-item-warning': state.selectedFolderPk === folder.pk}"
-                    (click)="selectFolder(folder)">
+                    class="list-group-item list-group-item-action">
                     <email-securely-app-db-view-folder [folder]="folder"></email-securely-app-db-view-folder>
                 </li>
             </ul>
         </ng-template>
         <div class="py-2 d-flex">
-            <a class="d-flex flex-grow-1" href="javascript:void(0)"
-               *ngIf="!exporting; else progressTemplate"
-               (click)="export()"
-            >Export</a>
+            <a (click)="export()" *ngIf="!exporting; else progressTemplate"
+               class="d-flex flex-grow-1"
+               href="javascript:void(0)"
+            >
+                <small>Export All Mails</small>
+            </a>
             <ng-template #progressTemplate>
                 <div class="text-primary d-flex flex-grow-1" style="cursor: not-allowed">
                     Export
                     <small><i class="fa fa-spinner fa-pulse fa-fw ml-1"></i></small>
                 </div>
             </ng-template>
-            <i class="fa fa-info-circle text-danger d-flex pt-1 ml-1"
-               [popover]="dangerPopupTemplate" placement="top" container="body" triggers="mouseenter:mouseleave"
+            <i [popover]="dangerPopupTemplate"
+               class="fa fa-info-circle text-danger d-flex pt-1 ml-1" container="body" placement="top" triggers="mouseenter:mouseleave"
             ></i>
-            <i class="fa fa-info-circle text-warning d-flex pt-1 ml-1"
-               [popover]="warningPopupTemplate" placement="top" container="body" triggers="mouseenter:mouseleave"
+            <i [popover]="warningPopupTemplate"
+               class="fa fa-info-circle text-warning d-flex pt-1 ml-1" container="body" placement="top" triggers="mouseenter:mouseleave"
             ></i>
             <ng-template #dangerPopupTemplate>
                 <div class="text-center">
@@ -45,16 +47,26 @@
             </ng-template>
         </div>
     </div>
-    <email-securely-app-db-view-mails
-        [input]="{
-            uid: state.selectedFolderPk,
-            folderMeta: state.folderMeta,
-            rootConversationNodes: state.rootConversationNodes
-        }"
-        [selectedMail]="state.selectedMail"
-        (selectMailPkHandler)="selectMailPkHandler($event)"
-        (toggleFolderMetadataPropHandler)="toggleFolderMetadataPropHandler($event)"
-    ></email-securely-app-db-view-mails>
+    <div class="d-flex flex-row flex-grow-1">
+        <div [ngClass]="{'flex-basis-half': state.selectedMailData}" class="px-2 d-flex flex-column flex-grow-1">
+            <email-securely-app-db-view-mails
+                (selectListMailToDisplayHandler)="selectListMailToDisplayRequest($event)"
+                [input]="{
+                    uid: state.selectedFolderPk,
+                    mails: state.selectedFolderMails
+                }"
+                [selectedMailData]="state.selectedMailData"
+            ></email-securely-app-db-view-mails>
+        </div>
+        <div *ngIf="state.selectedMailData" class="flex-basis-half pr-2 d-flex flex-column">
+            <div class="overflow-auto">
+                <email-securely-app-db-view-mail-body
+                    (selectRootNodeMailToDisplayHandler)="selectRootNodeMailToDisplayRequest($event)"
+                    [mailData]="state.selectedMailData"
+                ></email-securely-app-db-view-mail-body>
+            </div>
+        </div>
+    </div>
 </ng-container>
 <ng-template #loadingTemplate>
     <div class="progress d-flex flex-grow-1">

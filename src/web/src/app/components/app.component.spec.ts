@@ -17,7 +17,6 @@ const moduleDef: TestModuleMetadata = Object.freeze({
     declarations: [AppComponent],
 });
 
-// TODO test bootStrappingIndex$ observable use
 describe(AppComponent.name, () => {
     let testBed: TestBed;
     let fixture: ComponentFixture<AppComponent>;

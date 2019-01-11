@@ -3,13 +3,6 @@
 :host {
     display: flex;
 
-    &::ng-deep {
-        .overflow-auto {
-            overflow: auto;
-            height: 100%;
-        }
-    }
-
     .folders-container {
         > .overflow-auto > .list-group {
             &:not(:first-of-type) {
@@ -24,5 +17,21 @@
 
     > #{$app-prefix}-db-view-mails {
         margin-left: $app-spacer-2;
+    }
+
+    &::ng-deep {
+        .overflow-auto {
+            overflow: auto;
+            height: 100%;
+        }
+
+        .flex-basis-half {
+            flex-basis: 50%;
+        }
+
+        #{$app-prefix}-db-view-mail-body {
+            min-height: 100%;
+            background-color: $white;
+        }
     }
 }

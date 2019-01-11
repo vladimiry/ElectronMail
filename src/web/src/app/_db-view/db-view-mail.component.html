@@ -2,12 +2,13 @@
     <div class="c-auto">
         <div class="d-flex">
             <div class="state mr-2 badge badge-pill" title="{{ stateTitle }}"></div>
-            <a class="prevent-default-event address badge flex-row mr-2"
+            <div class="conversation-size mr-2 badge" *ngIf="conversationSize">{{ conversationSize }}</div>
+            <a *ngIf="mailAddress"
+               class="prevent-default-event address badge flex-row mr-2"
                href="mailto:{{ mailAddress.address }}"
-               title="{{ mailAddress.name ? mailAddress.name + ' <' + mailAddress.address + '>': '' }}"
-               *ngIf="mailAddress">
+               title="{{ mailAddress.name ? mailAddress.name + ' <' + mailAddress.address + '>': '' }}">
                 {{ mailAddress.name || mailAddress.address }}
-                <span class="prevent-default-event d-flex ml-1" *ngIf="mailAddressTotal > 1">(+{{ mailAddressTotal - 1 }})</span>
+                <span *ngIf="mailAddressTotal > 1" class="prevent-default-event d-flex ml-1">(+{{ mailAddressTotal - 1 }})</span>
             </a>
         </div>
     </div>
@@ -19,12 +20,12 @@
                 </div>
             </div>
         </div>
-        <i class="fa fa-lock d-flex text-primary ml-2" *ngIf="mail.confidential"></i>
+        <i *ngIf="mail.confidential" class="fa fa-lock d-flex text-primary ml-2"></i>
     </div>
     <div class="c-auto">
         <div class="d-flex">
             <div class="folders flex-row ml-2">
-                <div class="d-flex badge badge-pill mr-2" *ngFor="let folder of mail.folders; trackBy: trackFolderByPk">
+                <div *ngFor="let folder of mail.folders; trackBy: trackFolderByPk" class="d-flex badge badge-pill mr-2">
                     {{ folder.name }}
                 </div>
             </div>

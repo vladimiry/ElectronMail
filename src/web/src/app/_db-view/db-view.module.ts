@@ -1,3 +1,4 @@
+import {CollapseModule} from "ngx-bootstrap/collapse";
 import {EffectsModule} from "@ngrx/effects";
 import {NgModule} from "@angular/core";
 import {PopoverModule} from "ngx-bootstrap/popover";
@@ -15,6 +16,7 @@ import {SharedModule} from "src/web/src/app/_shared/shared.module";
 
 @NgModule({
     imports: [
+        CollapseModule,
         PopoverModule,
         SharedModule,
         EffectsModule.forFeature([DbViewEffects]),

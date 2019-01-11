@@ -7,7 +7,7 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    padding: $app-spacer-2;
+    padding: 0 $app-spacer-2 $app-spacer-2;
     border: 1px solid $border-color;
 
     .addresses,
@@ -31,7 +31,7 @@
         }
     }
 
-    .body {
+    .body-container {
         position: relative;
 
         &::ng-deep {
@@ -63,5 +63,33 @@
         border: 1px solid $gray-800;
         padding: 0.25em;
         font-size: $font-size-small;
+    }
+
+    .conversation-view-toggler {
+        font-size: $app-font-size-base-small;
+        border-radius: 0 0 5px 5px;
+        align-self: center;
+    }
+
+    .root-node-container {
+        max-height: 200px;
+        overflow-y: auto !important; // sass-lint:disable-line no-important // interferes with ngx-bootstrap'a "collapse" module
+        display: flex;
+    }
+
+    .root-node {
+        &:not(:first-of-type) {
+            #{$app-prefix}-db-view-mail {
+                border-top-width: 0;
+            }
+        }
+    }
+
+    #{$app-prefix}-db-view-mail {
+        cursor: pointer;
+
+        &[selected="1"] {
+            background-color: theme-color("warning-light");
+        }
     }
 }

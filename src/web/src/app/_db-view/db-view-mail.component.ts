@@ -9,9 +9,15 @@ import {MAIL_STATE, MailAddress, View} from "src/shared/model/database";
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DbViewMailComponent {
+    @Input()
+    conversationSize?: number;
+
     state: Partial<Record<keyof typeof MAIL_STATE._.nameValueMap, boolean>> = {};
+
     stateTitle?: string;
+
     mailAddress?: MailAddress;
+
     mailAddressTotal!: number;
 
     private _mail!: View.Mail;

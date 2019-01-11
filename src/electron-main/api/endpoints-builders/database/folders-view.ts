@@ -1,113 +1,136 @@
 import R from "ramda";
 
 import {CONVERSATION_TYPE, ConversationEntry, FsDb, FsDbAccount, MAIL_FOLDER_TYPE, View} from "src/shared/model/database";
+import {mailDateComparatorDefaultsToDesc, walkConversationNodesTree} from "src/shared/util";
 import {resolveFsAccountFolders} from "src/electron-main/database/util";
-import {walkConversationNodesTree} from "src/shared/util";
 
-const splitAndFormatFolders: (folders: View.Folder[]) => {
-    system: View.Folder[];
-    custom: View.Folder[];
-} = ((customizers: Record<keyof typeof MAIL_FOLDER_TYPE._.nameValueMap, { title: (f: View.Folder) => string; order: number; }>) => {
+export const FOLDER_UTILS: {
+    splitAndFormatFolders: (folders: View.Folder[]) => { system: View.Folder[]; custom: View.Folder[]; },
+} = (() => {
+    const customizers: Record<keyof typeof MAIL_FOLDER_TYPE._.nameValueMap, { title: (f: View.Folder) => string; order: number; }> = {
+        CUSTOM: {
+            title: ({name}) => name,
+            order: 0,
+        },
+        INBOX: {
+            title: () => "Inbox",
+            order: 1,
+        },
+        DRAFT: {
+            title: () => "Draft",
+            order: 2,
+        },
+        SENT: {
+            title: () => "Sent",
+            order: 3,
+        },
+        STARRED: {
+            title: () => "Starred",
+            order: 4,
+        },
+        ARCHIVE: {
+            title: () => "Archive",
+            order: 5,
+        },
+        SPAM: {
+            title: () => "Spam",
+            order: 6,
+        },
+        ALL: {
+            title: () => "All Mail",
+            order: 7,
+        },
+        TRASH: {
+            title: () => "Trash",
+            order: 8,
+        },
+    };
+
     type Customizer = typeof customizers[keyof typeof MAIL_FOLDER_TYPE._.nameValueMap];
     type CustomizerResolver = (folder: View.Folder) => Customizer;
 
-    const sortByName = R.sortBy(R.prop(((prop: keyof Pick<View.Folder, "name">) => prop)("name")));
+    const sortByName = R.sortBy(
+        R.prop(((prop: keyof Pick<View.Folder, "name">) => prop)("name")),
+    );
     const customizerBasedComparator = (customizer: CustomizerResolver) => (o1: View.Folder, o2: View.Folder) => {
         return customizer(o1).order - customizer(o2).order;
     };
 
-    return (folders: View.Folder[]) => {
-        const customizer: CustomizerResolver = ((map) => (folder: View.Folder): Customizer => map.get(folder) as Customizer)(
-            new Map(folders.map((folder) => [
-                folder, customizers[MAIL_FOLDER_TYPE._.resolveNameByValue(folder.folderType)],
-            ] as [View.Folder, Customizer])),
-        );
-        const result = {
-            system: R.sort(customizerBasedComparator(customizer), folders.filter((f) => f.folderType !== MAIL_FOLDER_TYPE.CUSTOM)),
-            custom: sortByName(folders.filter((f) => f.folderType === MAIL_FOLDER_TYPE.CUSTOM)),
-        };
+    return {
+        splitAndFormatFolders: (folders: View.Folder[]) => {
+            const customizer: CustomizerResolver = ((map) => (folder: View.Folder): Customizer => map.get(folder) as Customizer)(
+                new Map(folders.map((folder) => [
+                    folder, customizers[MAIL_FOLDER_TYPE._.resolveNameByValue(folder.folderType)],
+                ] as [View.Folder, Customizer])),
+            );
+            const bundle = {
+                system: R.sort(customizerBasedComparator(customizer), folders.filter((f) => f.folderType !== MAIL_FOLDER_TYPE.CUSTOM)),
+                custom: sortByName(folders.filter((f) => f.folderType === MAIL_FOLDER_TYPE.CUSTOM)),
+            };
 
-        result.system.forEach((folder) => folder.name = customizer(folder).title(folder));
+            bundle.system.forEach((folder) => folder.name = customizer(folder).title(folder));
 
-        return result;
+            return bundle;
+        },
     };
-})({
-    CUSTOM: {
-        title: ({name}) => name,
-        order: 0,
-    },
-    INBOX: {
-        title: () => "Inbox",
-        order: 1,
-    },
-    DRAFT: {
-        title: () => "Draft",
-        order: 2,
-    },
-    SENT: {
-        title: () => "Sent",
-        order: 3,
-    },
-    STARRED: {
-        title: () => "Starred",
-        order: 4,
-    },
-    ARCHIVE: {
-        title: () => "Archive",
-        order: 5,
-    },
-    SPAM: {
-        title: () => "Spam",
-        order: 6,
-    },
-    ALL: {
-        title: () => "All Mail",
-        order: 7,
-    },
-    TRASH: {
-        title: () => "Trash",
-        order: 8,
-    },
-});
+})();
 
-function buildRootNodes<T extends keyof FsDb["accounts"]>(
+function resolveAccountConversationNodes<T extends keyof FsDb["accounts"]>(account: FsDbAccount<T>): ConversationEntry[] {
+    if (account.metadata.type === "tutanota") {
+        return Object.values(account.conversationEntries);
+    }
+
+    const buildEntry = ({pk, mailPk}: Pick<ConversationEntry, "pk" | "mailPk">) => ({
+        pk,
+        id: pk,
+        raw: "{}",
+        messageId: "",
+        // TODO consider filling "conversationType" based on "mail.replyType"
+        conversationType: CONVERSATION_TYPE.UNEXPECTED,
+        mailPk,
+    });
+    const entriesMappedByPk = new Map<ConversationEntry["pk"], ConversationEntry>();
+
+    for (const mail of Object.values(account.mails)) {
+        const rootEntryPk = mail.conversationEntryPk;
+        const mailEntryPk = `${rootEntryPk}:${mail.pk}`;
+
+        entriesMappedByPk.set(
+            rootEntryPk,
+            // root entry is virtual one, so it doesn't have mail attached
+            entriesMappedByPk.get(rootEntryPk) || buildEntry({pk: rootEntryPk}),
+        );
+        entriesMappedByPk.set(
+            mailEntryPk,
+            {
+                ...buildEntry({pk: mailEntryPk, mailPk: mail.pk}),
+                previousPk: rootEntryPk,
+            },
+        );
+    }
+
+    return [...entriesMappedByPk.values()];
+}
+
+export function buildFoldersAndRootNodePrototypes<T extends keyof FsDb["accounts"]>(
     account: FsDbAccount<T>,
-): { rootNodes: View.ConversationNode[]; folders: View.Folder[]; } {
-    const conversationEntries: ConversationEntry[] = account.metadata.type === "tutanota"
-        ? Object.values(account.conversationEntries)
-        // building virtual conversation entries for protonmail
-        : ((
-            buildEntry = ({pk, mailPk}: Pick<ConversationEntry, "pk" | "mailPk">) => ({
-                pk,
-                id: pk,
-                raw: "{}",
-                messageId: "",
-                // TODO consider filling "conversationType" based on "mail.replyType"
-                conversationType: CONVERSATION_TYPE.UNEXPECTED,
-                mailPk,
-            }),
-            entriesMappedByPk = new Map<ConversationEntry["pk"], ConversationEntry>(),
-        ) => {
-            for (const mail of Object.values(account.mails)) {
-                const rootEntryPk = mail.conversationEntryPk;
-                const mailEntryPk = `${rootEntryPk}:${mail.pk}`;
-                entriesMappedByPk.set(rootEntryPk, entriesMappedByPk.get(rootEntryPk) || buildEntry({pk: rootEntryPk}));
-                entriesMappedByPk.set(mailEntryPk, {
-                    ...buildEntry({pk: mailEntryPk, mailPk: mail.pk}),
-                    previousPk: rootEntryPk,
-                });
+): {
+    folders: View.Folder[];
+    rootNodePrototypes: View.ConversationNode[];
+} {
+    const conversationEntries = resolveAccountConversationNodes(account);
+    const nodeLookup = (() => {
+        const nodeLookupMap = new Map<ConversationEntry["pk"], View.ConversationNode>();
+        return (
+            pk: ConversationEntry["pk"] | Required<ConversationEntry>["previousPk"],
+            node: View.ConversationNode = {entryPk: pk, children: []},
+        ): View.ConversationNode => {
+            node = nodeLookupMap.get(pk) || node;
+            if (!nodeLookupMap.has(pk)) {
+                nodeLookupMap.set(pk, node);
             }
-            return [...entriesMappedByPk.values()];
-        })();
-    const nodeLookup = ((nodeLookupMap = new Map<ConversationEntry["pk"], View.ConversationNode>()) => (
-        pk: ConversationEntry["pk"] | Required<ConversationEntry>["previousPk"],
-        node: View.ConversationNode = {entryPk: pk, children: []},
-    ): View.ConversationNode => {
-        node = nodeLookupMap.get(pk) || node;
-        if (!nodeLookupMap.has(pk)) {
-            nodeLookupMap.set(pk, node);
-        }
-        return node;
+            return node;
+        };
     })();
     const folders: View.Folder[] = Array.from(
         resolveFsAccountFolders(account),
@@ -117,32 +140,29 @@ function buildRootNodes<T extends keyof FsDb["accounts"]>(
         (entries: Array<[View.Folder["mailFolderId"], View.Folder]>, folder) => entries.concat([[folder.mailFolderId, folder]]),
         [],
     ))) => ({mailFolderId}: Pick<View.Folder, "mailFolderId">) => map.get(mailFolderId))();
-    const rootNodes: View.ConversationNode[] = [];
+    const rootNodePrototypes: View.ConversationNode[] = [];
 
     for (const entry of conversationEntries) {
         const node = nodeLookup(entry.pk);
         const resolvedMail = entry.mailPk && account.mails[entry.mailPk];
 
-        node.mail = resolvedMail
-            ? {
+        if (resolvedMail) {
+            node.mail = {
                 // TODO use "pick" instead of "omit", ie prefer whitelisting over blacklisting
                 ...R.omit(["raw", "body", "attachments"], resolvedMail),
                 folders: [],
-            }
-            : undefined;
+            };
 
-        if (node.mail) {
             for (const mailFolderId of node.mail.mailFolderIds) {
                 const folder = resolveFolder({mailFolderId});
-                if (!folder) {
-                    continue;
+                if (folder) {
+                    node.mail.folders.push(folder);
                 }
-                node.mail.folders.push(folder);
             }
         }
 
         if (!entry.previousPk) {
-            rootNodes.push(node);
+            rootNodePrototypes.push(node);
             continue;
         }
 
@@ -150,15 +170,15 @@ function buildRootNodes<T extends keyof FsDb["accounts"]>(
     }
 
     return {
-        rootNodes,
         folders,
+        rootNodePrototypes,
     };
 }
 
-function fillRootNodesSummary(rootNodes: View.ConversationNode[]) {
-    for (const rawRootNode of rootNodes) {
+export function fillFoldersAndReturnRootConversationNodes(rootNodePrototypes: View.ConversationNode[]): View.RootConversationNode[] {
+    return rootNodePrototypes.map((rootNodePrototype) => {
         const rootNode: View.RootConversationNode = {
-            ...rawRootNode,
+            ...rootNodePrototype,
             summary: {
                 size: 0,
                 unread: 0,
@@ -167,7 +187,7 @@ function fillRootNodesSummary(rootNodes: View.ConversationNode[]) {
         };
         const rootNodeFolders = new Set<View.Folder>();
 
-        walkConversationNodesTree([rootNode], (node) => {
+        walkConversationNodesTree([rootNode], ({node}) => {
             node.children.sort((o1, o2) => {
                 if (!o1.mail) {
                     return -1;
@@ -175,7 +195,7 @@ function fillRootNodesSummary(rootNodes: View.ConversationNode[]) {
                 if (!o2.mail) {
                     return 1;
                 }
-                return o1.mail.sentDate - o2.mail.sentDate;
+                return mailDateComparatorDefaultsToDesc(o1.mail, o2.mail, "asc");
             });
 
             if (!node.mail) {
@@ -192,13 +212,15 @@ function fillRootNodesSummary(rootNodes: View.ConversationNode[]) {
         for (const rootNodeFolder of rootNodeFolders) {
             rootNodeFolder.rootConversationNodes.push(rootNode);
         }
-    }
+
+        return rootNode;
+    });
 }
 
 function buildFoldersView<T extends keyof FsDb["accounts"]>(account: FsDbAccount<T>): View.Folder[] {
-    const {folders, rootNodes} = buildRootNodes(R.clone(account));
+    const {folders, rootNodePrototypes} = buildFoldersAndRootNodePrototypes(R.clone(account));
 
-    fillRootNodesSummary(rootNodes);
+    fillFoldersAndReturnRootConversationNodes(rootNodePrototypes);
 
     folders.forEach(({rootConversationNodes}) => {
         rootConversationNodes.sort((o1, o2) => o2.summary.maxDate - o1.summary.maxDate);
@@ -207,10 +229,11 @@ function buildFoldersView<T extends keyof FsDb["accounts"]>(account: FsDbAccount
     return folders;
 }
 
-// TODO consider moving performance expensive "prepareFoldersView" function call to the background thread (window.Worker)
+// TODO consider moving performance expensive "prepareFoldersView" function call to the background process
 // WARN make sure input "account" is not mutated
+// to reduce accidental database mutation possibility FsDbAccount argument is used but not the MemoryDbAccount
 export function prepareFoldersView<T extends keyof FsDb["accounts"]>(account: FsDbAccount<T>) {
-    return splitAndFormatFolders(
+    return FOLDER_UTILS.splitAndFormatFolders(
         buildFoldersView(account),
     );
 }

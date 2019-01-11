@@ -231,6 +231,11 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.pass();
     },
 
+    // TODO test "dbSearchRootNodes" API
+    dbSearchRootNodes: (t) => {
+        t.pass();
+    },
+
     // TODO test "dbIndexerOn" API
     dbIndexerOn: (t) => {
         t.pass();

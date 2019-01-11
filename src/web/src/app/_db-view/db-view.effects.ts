@@ -1,5 +1,5 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {EMPTY, from, merge, of} from "rxjs";
+import {EMPTY, forkJoin, from, merge, of} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {concatMap, debounceTime, filter, map, mergeMap, switchMap, takeUntil, tap} from "rxjs/operators";
@@ -50,14 +50,43 @@ export class DbViewEffects {
     })();
 
     @Effect()
-    selectMail$ = this.actions$.pipe(
-        unionizeActionFilter(DB_VIEW_ACTIONS.is.SelectMailRequest),
+    selectListMailToDisplayRequest$ = this.actions$.pipe(
+        unionizeActionFilter(DB_VIEW_ACTIONS.is.SelectListMailToDisplayRequest),
+        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+        mergeMap(({payload}) => {
+            const {dbAccountPk, mailPk} = payload;
+            const client = this.api.ipcMainClient();
+
+            return forkJoin(
+                client("dbGetAccountMail")({...dbAccountPk, pk: mailPk}),
+                client("dbSearchRootNodes")({...dbAccountPk, mailPks: [mailPk]}).pipe(
+                    map((rootNodes) => {
+                        if (rootNodes.length !== 1) {
+                            throw new Error(`Failed to resolve mail's root conversation node`);
+                        }
+                        return rootNodes[0];
+                    }),
+                ),
+            ).pipe(
+                mergeMap(([mail, rootNode]) => of(DB_VIEW_ACTIONS.SelectListMailToDisplay({
+                    dbAccountPk,
+                    listMailPk: mail.pk,
+                    rootNode,
+                    rootNodeMail: mail,
+                }))),
+            );
+        }),
+    );
+
+    @Effect()
+    selectRootNodeMailToDisplayRequest$ = this.actions$.pipe(
+        unionizeActionFilter(DB_VIEW_ACTIONS.is.SelectRootNodeMailToDisplayRequest),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         mergeMap(({payload}) => {
             const {dbAccountPk, mailPk} = payload;
 
             return this.api.ipcMainClient()("dbGetAccountMail")({...dbAccountPk, pk: mailPk}).pipe(
-                mergeMap((mail) => of(DB_VIEW_ACTIONS.SelectMail({dbAccountPk, mail}))),
+                mergeMap((rootNodeMail) => of(DB_VIEW_ACTIONS.SelectRootNodeMailToDisplay({dbAccountPk, rootNodeMail}))),
             );
         }),
     );

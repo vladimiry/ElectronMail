@@ -17,6 +17,7 @@ import {
 import {EntityMap, INDEXABLE_MAIL_FIELDS_STUB_CONTAINER, IndexableMail, MemoryDbAccount} from "src/shared/model/database";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {prepareFoldersView} from "./folders-view";
+import {search} from "src/electron-main/api/endpoints-builders/database/search";
 import {writeEmlFile} from "./export";
 
 const _logger = curryFunctionMembers(electronLog, "[electron-main/api/endpoints-builders/database]");
@@ -30,6 +31,7 @@ type Methods =
     | "dbGetAccountDataView"
     | "dbGetAccountMail"
     | "dbExport"
+    | "dbSearchRootNodes"
     | "dbIndexerOn"
     | "dbIndexerNotification";
 
@@ -192,6 +194,26 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
                 .then(() => subscriber.complete())
                 .catch((error) => subscriber.error(error));
         }))(),
+
+        dbSearchRootNodes: ({type, login, folderPks, ...rest}) => from((async (
+            logger = curryFunctionMembers(_logger, "dbSearchRootNodes()"),
+        ) => {
+            logger.info();
+
+            const account = ctx.db.getFsAccount({type, login});
+
+            if (!account) {
+                throw new Error(`Failed to resolve account by the provided "type/login"`);
+            }
+
+            // TODO fill "mailPks" array based on the execute search with "query" argument
+
+            const mailPks = "query" in rest
+                ? [] //  TODO execute the actual search
+                : rest.mailPks;
+
+            return search(account, {folderPks, mailPks});
+        })()),
 
         dbIndexerOn: (action) => ((
             logger = curryFunctionMembers(_logger, "dbIndexerOn()"),

@@ -14,7 +14,7 @@ import {
     PasswordFieldContainer,
 } from "src/shared/model/container";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
-import {DbAccountPk, DbFsDataContainer, FsDbAccount, IndexableMail, MemoryDbAccount} from "src/shared/model/database";
+import {DbAccountPk, DbFsDataContainer, Folder, FsDbAccount, IndexableMail, MemoryDbAccount, View} from "src/shared/model/database";
 import {DbPatch} from "./common";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {Omit} from "src/shared/types";
@@ -50,6 +50,9 @@ export interface Endpoints {
     dbGetAccountMail: ApiMethod<DbAccountPk & { pk: DatabaseModel.Mail["pk"] }, DatabaseModel.Mail>;
 
     dbExport: ApiMethod<DbAccountPk, { count: number; } | { progress: number; file: string; }>;
+
+    dbSearchRootNodes: ApiMethod<DbAccountPk & { folderPks?: Array<Folder["pk"]> } & ({ query: string } | { mailPks: Array<Folder["pk"]> })
+        , View.RootConversationNode[]>;
 
     dbIndexerOn: ApiMethod<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_ON_ACTIONS>, null>;
 
@@ -112,7 +115,7 @@ export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
             stat: { mails: number, folders: number; contacts: number; unread: number; };
         }>(),
         DbIndexingState: ofType<{
-            key: DbAccountPk;
+            key?: DbAccountPk;
             status: "undefined" | "indexing" | "done";
         }>(),
     },

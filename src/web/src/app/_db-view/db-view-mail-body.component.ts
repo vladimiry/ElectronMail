@@ -1,11 +1,30 @@
-import {ChangeDetectionStrategy, Component, ElementRef, HostListener, Input, NgZone, OnDestroy, OnInit} from "@angular/core";
-import {Observable, Subject, Subscription, fromEvent, merge} from "rxjs";
+import {
+    AfterViewInit,
+    ChangeDetectionStrategy,
+    Component,
+    ElementRef,
+    EventEmitter,
+    HostListener,
+    Input,
+    NgZone,
+    OnDestroy,
+    OnInit,
+    Output,
+    QueryList,
+    ViewChildren,
+} from "@angular/core";
+import {BehaviorSubject} from "rxjs/BehaviorSubject";
+import {Observable, Subject, Subscription, combineLatest, fromEvent, merge} from "rxjs";
 import {Store} from "@ngrx/store";
-import {distinctUntilChanged, filter, map} from "rxjs/operators";
+import {UnionOf} from "@vladimiry/unionize";
+import {delay, distinctUntilChanged, filter, map} from "rxjs/operators";
 
-import {Mail} from "src/shared/model/database";
-import {NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
+import {DB_VIEW_ACTIONS, NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
+import {DbViewMailComponent} from "src/web/src/app/_db-view/db-view-mail.component";
+import {Mail, View} from "src/shared/model/database";
 import {NgChangesObservableComponent} from "src/web/src/app/components/ng-changes-observable.component";
+import {ONE_SECOND_MS} from "src/shared/constants";
+import {Omit} from "src/shared/types";
 import {State} from "src/web/src/app/store/reducers/db-view";
 
 @Component({
@@ -14,16 +33,30 @@ import {State} from "src/web/src/app/store/reducers/db-view";
     styleUrls: ["./db-view-mail-body.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DbViewMailBodyComponent extends NgChangesObservableComponent implements OnDestroy, OnInit {
+export class DbViewMailBodyComponent extends NgChangesObservableComponent implements OnDestroy, OnInit, AfterViewInit {
     @Input()
-    mail!: Mail;
+    mailData!: Omit<Extract<UnionOf<typeof DB_VIEW_ACTIONS>, { type: "SelectListMailToDisplay" }>["payload"], "dbAccountPk">;
+
     hoveredHref$?: Observable<string | boolean>;
+
+    conversationCollapsed$: BehaviorSubject<boolean> = new BehaviorSubject(true);
+
+    @Output()
+    selectRootNodeMailToDisplayHandler = new EventEmitter<Mail["pk"]>();
+
+    @ViewChildren(DbViewMailComponent, {read: ElementRef})
+    dbViewMailElementRefs!: QueryList<ElementRef>;
+
     private bodyIframe?: HTMLIFrameElement;
+
     private readonly subscription = new Subscription();
+
     private readonly bodyIframeEventSubject$ = new Subject<Event>();
+
     private readonly bodyIframeEventHandler = ((event: Event) => {
         this.zone.run(() => this.bodyIframeEventSubject$.next(event));
     });
+
     private readonly bodyIframeEventArgs = ["click", "mouseover", "mouseout"].map((event) => ({
         event,
         handler: this.bodyIframeEventHandler,
@@ -76,8 +109,32 @@ export class DbViewMailBodyComponent extends NgChangesObservableComponent implem
         );
 
         this.subscription.add(
-            this.ngChangesObservable("mail").subscribe((mail) => {
-                this.renderBody(mail);
+            this.ngChangesObservable("mailData").subscribe(({rootNode, rootNodeMail}) => {
+                this.renderBody(rootNodeMail);
+            }),
+        );
+    }
+
+    ngAfterViewInit() {
+        this.subscription.add(
+            combineLatest(
+                this.conversationCollapsed$.pipe(
+                    distinctUntilChanged(),
+                ),
+                this.ngChangesObservable("mailData").pipe(
+                    map((value) => value.rootNode),
+                    distinctUntilChanged(),
+                ),
+            ).pipe(
+                filter(([conversationCollapsed]) => !conversationCollapsed),
+                delay(ONE_SECOND_MS * 0.2),
+            ).subscribe(() => {
+                const selectedRef = this.dbViewMailElementRefs.find((ref) => {
+                    return ref.nativeElement.offsetParent && String(ref.nativeElement.getAttribute("selected")) === "1";
+                });
+                if (selectedRef) {
+                    selectedRef.nativeElement.scrollIntoView({behavior: "smooth", block: "start"});
+                }
             }),
         );
     }
@@ -99,6 +156,18 @@ export class DbViewMailBodyComponent extends NgChangesObservableComponent implem
         this.store.dispatch(NAVIGATION_ACTIONS.OpenExternal({url: href}));
     }
 
+    isEmptyNodes(nodes: View.ConversationNode[]): boolean {
+        return nodes.length === 1 && !nodes[0].mail;
+    }
+
+    selectRootNodeMail({pk}: Pick<Mail, "pk">) {
+        this.selectRootNodeMailToDisplayHandler.emit(pk);
+    }
+
+    toggleConversationCollapsing() {
+        this.conversationCollapsed$.next(!this.conversationCollapsed$.value);
+    }
+
     ngOnDestroy() {
         super.ngOnDestroy();
         this.subscription.unsubscribe();
@@ -111,7 +180,7 @@ export class DbViewMailBodyComponent extends NgChangesObservableComponent implem
 
         // TODO cache resolved DOM elements
         const iframe = this.bodyIframe = document.createElement("iframe");
-        const container = this.elementRef.nativeElement.querySelector(".body");
+        const container = this.elementRef.nativeElement.getElementsByClassName("body-container")[0];
 
         container.innerHTML = "";
         container.appendChild(iframe);

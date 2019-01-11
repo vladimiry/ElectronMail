@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy} from "@angular/core";
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, Input, OnDestroy} from "@angular/core";
 import {EMPTY, Subject} from "rxjs";
 import {Store, select} from "@ngrx/store";
 import {concatMap, filter, finalize, mergeMap, takeUntil, throttleTime} from "rxjs/operators";
@@ -10,7 +10,6 @@ import {FEATURED} from "src/web/src/app/store/selectors/db-view";
 import {NgChangesObservableComponent} from "src/web/src/app/components/ng-changes-observable.component";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {State} from "src/web/src/app/store/reducers/db-view";
-import {ToggleFolderMetadataPropEmitter} from "./db-view-mails.component";
 
 @Component({
     selector: "email-securely-app-db-view-mail-tab",
@@ -37,7 +36,7 @@ export class DbViewMailTabComponent extends NgChangesObservableComponent impleme
                         return EMPTY;
                     }
 
-                    const {folders, selectedMail, selectedFolderPk, foldersMeta} = instance;
+                    const {folders, selectedMailData, selectedFolderPk, selectedFolderMails} = instance;
 
                     if (!selectedFolderPk) {
                         const inbox = folders.system.find((f) => f.folderType === MAIL_FOLDER_TYPE.INBOX);
@@ -52,10 +51,11 @@ export class DbViewMailTabComponent extends NgChangesObservableComponent impleme
 
                     return [{
                         folders,
-                        folderMeta: selectedFolder && selectedFolder.pk in foldersMeta ? foldersMeta[selectedFolder.pk] : undefined,
-                        selectedMail,
+                        selectedFolderMails: selectedFolder && selectedFolder.pk in selectedFolderMails
+                            ? selectedFolderMails[selectedFolder.pk]
+                            : undefined,
+                        selectedMailData,
                         selectedFolderPk,
-                        rootConversationNodes: selectedFolder ? selectedFolder.rootConversationNodes : [],
                     }];
                 }),
             );
@@ -72,6 +72,15 @@ export class DbViewMailTabComponent extends NgChangesObservableComponent impleme
         super();
     }
 
+    @HostListener("click", ["$event"])
+    onClick(event: MouseEvent) {
+        const element = event.target as Element | undefined;
+
+        if (element && element.classList.contains("prevent-default-event")) {
+            event.preventDefault();
+        }
+    }
+
     trackFolderByPk(index: number, {pk}: View.Folder) {
         return pk;
     }
@@ -80,12 +89,12 @@ export class DbViewMailTabComponent extends NgChangesObservableComponent impleme
         this.store.dispatch(DB_VIEW_ACTIONS.SelectFolder({dbAccountPk: this.dbAccountPk, folderPk}));
     }
 
-    selectMailPkHandler(mailPk: Mail["pk"]) {
-        this.store.dispatch(DB_VIEW_ACTIONS.SelectMailRequest({dbAccountPk: this.dbAccountPk, mailPk}));
+    selectListMailToDisplayRequest(mailPk: Mail["pk"]) {
+        this.store.dispatch(DB_VIEW_ACTIONS.SelectListMailToDisplayRequest({dbAccountPk: this.dbAccountPk, mailPk}));
     }
 
-    toggleFolderMetadataPropHandler({entryPk, prop}: ToggleFolderMetadataPropEmitter) {
-        this.store.dispatch(DB_VIEW_ACTIONS.ToggleFolderMetadataProp({dbAccountPk: this.dbAccountPk, prop, entryPk}));
+    selectRootNodeMailToDisplayRequest(mailPk: Mail["pk"]) {
+        this.store.dispatch(DB_VIEW_ACTIONS.SelectRootNodeMailToDisplayRequest({dbAccountPk: this.dbAccountPk, mailPk}));
     }
 
     export() {

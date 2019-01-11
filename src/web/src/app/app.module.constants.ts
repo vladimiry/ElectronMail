@@ -3,6 +3,7 @@ import {AccordionModule} from "ngx-bootstrap/accordion";
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 import {BrowserModule} from "@angular/platform-browser";
 import {BsDropdownModule} from "ngx-bootstrap/dropdown";
+import {CollapseModule} from "ngx-bootstrap/collapse";
 import {DragulaModule} from "ng2-dragula";
 import {EffectsModule} from "@ngrx/effects";
 import {NgModule} from "@angular/core";
@@ -29,6 +30,7 @@ export const APP_MODULE_NG_CONF: NgModule = {
         BrowserAnimationsModule,
         CoreModule,
         AccordionModule.forRoot(),
+        CollapseModule.forRoot(),
         BsDropdownModule.forRoot(),
         PopoverModule.forRoot(),
         DragulaModule.forRoot(),

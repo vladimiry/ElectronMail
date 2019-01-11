@@ -73,7 +73,10 @@ export function isEntityUpdatesPatchNotEmpty({conversationEntries, folders, mail
     ].some(({length}) => Boolean(length));
 }
 
-export function walkConversationNodesTree(rootNodes: View.ConversationNode[], fn: (node: View.ConversationNode) => void): void {
+export function walkConversationNodesTree(
+    rootNodes: View.ConversationNode[],
+    fn: (arg: { node: View.ConversationNode; mail?: View.ConversationNode["mail"]; }) => void | "break",
+): void {
     const state: { nodes: View.ConversationNode[]; } = {nodes: [...rootNodes]};
 
     while (state.nodes.length) {
@@ -83,37 +86,35 @@ export function walkConversationNodesTree(rootNodes: View.ConversationNode[], fn
             continue;
         }
 
-        fn(node);
+        const called = fn({node, mail: node.mail});
+
+        if (typeof called === "string" && called === "break") {
+            return;
+        }
 
         state.nodes.unshift(...[...node.children]);
     }
 }
 
-export function mailDateDescComparator(o1: View.Mail, o2: View.Mail) {
-    return o2.sentDate - o1.sentDate;
-}
-
-export function sortMails(
-    mails: View.Mail[],
-    comparator: (o1: View.Mail, o2: View.Mail) => number = mailDateDescComparator,
-): typeof mails {
-    return [...mails].sort(comparator);
-}
-
-export function reduceNodesMails(
-    nodes: View.ConversationNode[],
-    mailFilter: (mail: View.Mail) => boolean = () => true,
+export function filterConversationNodesMails(
+    rootNodes: View.ConversationNode[],
+    filter: (mail: View.Mail) => boolean = () => true,
 ): View.Mail[] {
-    const mails: View.Mail[] = [];
+    const result: View.Mail[] = [];
 
-    walkConversationNodesTree(nodes, (node) => {
-        if (!node.mail || !mailFilter(node.mail)) {
-            return;
+    walkConversationNodesTree(rootNodes, ({mail}) => {
+        if (mail && filter(mail)) {
+            result.push(mail);
         }
-        mails.push(node.mail);
     });
 
-    return mails;
+    return result;
+}
+
+export function mailDateComparatorDefaultsToDesc(o1: View.Mail, o2: View.Mail, order: "desc" | "asc" = "desc") {
+    return order === "desc"
+        ? o2.sentDate - o1.sentDate
+        : o1.sentDate - o2.sentDate;
 }
 
 export function mapBy<T, K>(iterable: Iterable<T>, by: (t: T) => K): Map<K, T[]> {

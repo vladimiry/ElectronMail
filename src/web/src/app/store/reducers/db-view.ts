@@ -3,7 +3,7 @@ import {UnionOf} from "@vladimiry/unionize";
 import * as fromRoot from "src/web/src/app/store/reducers/root";
 import {DB_VIEW_ACTIONS} from "src/web/src/app/store/actions";
 import {DbAccountPk, Mail, View} from "src/shared/model/database";
-import {sortMails, walkConversationNodesTree} from "src/shared/util";
+import {mailDateComparatorDefaultsToDesc, walkConversationNodesTree} from "src/shared/util";
 
 export const featureName = "db-view";
 
@@ -12,16 +12,16 @@ export interface Instance {
         system: View.Folder[];
         custom: View.Folder[];
     };
-    foldersMeta: Record<View.Folder["pk"], {
-        mails: View.Mail[];
-        matchedMailsCount: Record<View.RootConversationNode["entryPk"], number>;
-        expanded: Record<View.RootConversationNode["entryPk"], boolean>;
-        unmatchedNodes: Record<View.ConversationNode["entryPk"], boolean>;
-        unmatchedNodesCollapsed: Record<View.RootConversationNode["entryPk"], boolean>;
-        mostRecentMatchedMails: Record<View.RootConversationNode["entryPk"], View.Mail>;
+    selectedFolderMails: Record<View.Folder["pk"], {
+        mailsView: Array<{ mail: View.Mail; conversationSize: number; }>;
+        conversationsView: Array<{ mail: View.Mail; conversationSize: number; }>;
     }>;
     selectedFolderPk?: View.Folder["pk"];
-    selectedMail?: Mail;
+    selectedMailData?: {
+        listMailPk: Mail["pk"];
+        rootNode: View.RootConversationNode;
+        rootNodeMail: Mail;
+    };
 }
 
 export interface State extends fromRoot.State {
@@ -36,7 +36,7 @@ const initialState: State = {
 export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACTIONS>): State {
     return DB_VIEW_ACTIONS.match(action, {
         SetFolders: ({dbAccountPk, folders}) => {
-            const key = instanceKey(dbAccountPk);
+            const key = resolveInstanceKey(dbAccountPk);
             const instance: Instance = {
                 ...(state.instances[key] || initInstance()),
                 folders,
@@ -54,7 +54,7 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
             );
         },
         SelectFolder: ({dbAccountPk, folderPk}) => {
-            const key = instanceKey(dbAccountPk);
+            const key = resolveInstanceKey(dbAccountPk);
             const instance: Instance = {
                 ...(state.instances[key] || initInstance()),
                 selectedFolderPk: folderPk,
@@ -62,71 +62,76 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
             const selectedFolder = instance.folders.system.concat(instance.folders.custom)
                 .find(({pk}) => pk === instance.selectedFolderPk);
 
-            // TODO delete non existing folders from "instance.foldersMeta"
+            // TODO delete non existing folders from "instance.selectedFolderMails"
 
             if (selectedFolder) {
                 // TODO consider caching this block calculations result, so no recalculation on repeatable same folder selection
-                // TODO consider initializing "foldersMeta" at the backend side once before serving the response
-                const folderMeta: Instance["foldersMeta"][typeof selectedFolder.pk] = {
-                    mails: [],
-                    matchedMailsCount: {},
-                    expanded: (instance.foldersMeta[selectedFolder.pk] || ({expanded: {}})).expanded,
-                    unmatchedNodes: {},
-                    unmatchedNodesCollapsed: {},
-                    mostRecentMatchedMails: {},
+                // TODO consider initializing "selectedFolderMails" at the backend side once before serving the response
+                const {
+                    mailsView,
+                    conversationsView,
+                }: Instance["selectedFolderMails"][typeof selectedFolder.pk] = instance.selectedFolderMails[selectedFolder.pk] = {
+                    mailsView: [],
+                    conversationsView: [],
                 };
-                const {unmatchedNodesCollapsed} = (instance.foldersMeta[selectedFolder.pk] || ({unmatchedNodesCollapsed: {}}));
-                const selectedMailPk = instance.selectedMail && instance.selectedMail.pk;
+                const allMailsPks: Array<View.Mail["pk"]> = [];
 
                 for (const rootNode of selectedFolder.rootConversationNodes) {
-                    const matchedMails: typeof folderMeta.mails = [];
-                    const unmatchedNodes: typeof folderMeta.unmatchedNodes = {};
+                    const allNodeMails: View.Mail[] = [];
+                    const matchedNodeMails: View.Mail[] = [];
 
-                    walkConversationNodesTree([rootNode], ({mail, entryPk}) => {
+                    walkConversationNodesTree([rootNode], ({mail}) => {
                         if (!mail) {
                             return;
                         }
 
+                        allMailsPks.push(mail.pk);
+                        allNodeMails.push(mail);
+
                         if (mail.folders.includes(selectedFolder)) {
-                            matchedMails.push(mail);
-                        } else {
-                            unmatchedNodes[entryPk] = true;
+                            matchedNodeMails.push(mail);
                         }
                     });
 
-                    // matched mails handling
-                    folderMeta.mails.push(...matchedMails);
-                    folderMeta.matchedMailsCount[rootNode.entryPk] = matchedMails.length;
-                    folderMeta.mostRecentMatchedMails[rootNode.entryPk] = sortMails(matchedMails)[0];
-
-                    // unmatched mails handling
-                    folderMeta.unmatchedNodes = {
-                        ...folderMeta.unmatchedNodes,
-                        ...unmatchedNodes,
-                    };
-                    if (!Object.keys(unmatchedNodes).length) {
-                        delete folderMeta.unmatchedNodesCollapsed[rootNode.entryPk];
+                    if (!matchedNodeMails.length) {
                         continue;
                     }
-                    folderMeta.unmatchedNodesCollapsed[rootNode.entryPk] = rootNode.entryPk in unmatchedNodesCollapsed
-                        ? unmatchedNodesCollapsed[rootNode.entryPk] // preserve previously defined value
-                        : true;
+
+                    const conversationSize = allNodeMails.length;
+
+                    mailsView.push(
+                        ...matchedNodeMails.map((mail) => ({
+                            mail,
+                            conversationSize,
+                        })),
+                    );
+
+                    conversationsView.push({
+                        mail: [...matchedNodeMails].sort(mailDateComparatorDefaultsToDesc)[0],
+                        conversationSize,
+                    });
                 }
 
-                // conversations need to be sorted based on the matched mails, backend returns it sorted by all the mails
-                selectedFolder.rootConversationNodes.sort((o1, o2) => {
-                    return folderMeta.mostRecentMatchedMails[o2.entryPk].sentDate - folderMeta.mostRecentMatchedMails[o1.entryPk].sentDate;
+                [mailsView, conversationsView].forEach((array) => {
+                    array.sort((o1, o2) => mailDateComparatorDefaultsToDesc(o1.mail, o2.mail));
                 });
 
-                folderMeta.mails = sortMails(folderMeta.mails);
-                instance.foldersMeta[selectedFolder.pk] = folderMeta;
+                const {selectedMailData} = instance;
 
-                if (selectedMailPk && !folderMeta.mails.find(({pk}) => pk === selectedMailPk)) {
-                    delete instance.selectedMail;
+                if (
+                    selectedMailData
+                    &&
+                    (
+                        !conversationsView.find(({mail: {pk}}) => pk === selectedMailData.listMailPk)
+                        ||
+                        !allMailsPks.includes(selectedMailData.rootNodeMail.pk)
+                    )
+                ) {
+                    delete instance.selectedMailData;
                 }
             } else {
                 delete instance.selectedFolderPk;
-                delete instance.selectedMail;
+                delete instance.selectedMailData;
             }
 
             return {
@@ -137,11 +142,11 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
                 },
             };
         },
-        SelectMail: ({dbAccountPk, mail}) => {
-            const key = instanceKey(dbAccountPk);
+        SelectListMailToDisplay: ({dbAccountPk, listMailPk, rootNode, rootNodeMail}) => {
+            const key = resolveInstanceKey(dbAccountPk);
             const instance: Instance = {
                 ...(state.instances[key] || initInstance()),
-                selectedMail: mail,
+                selectedMailData: {listMailPk, rootNode, rootNodeMail},
             };
 
             return {
@@ -152,40 +157,34 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
                 },
             };
         },
-        ToggleFolderMetadataProp: ({dbAccountPk, prop, entryPk}) => {
-            const key = instanceKey(dbAccountPk);
-            const instance = state.instances[key];
-            const selectedFolderPk: string | undefined = instance && instance.selectedFolderPk || undefined;
-            const folderMeta = selectedFolderPk && instance && instance.foldersMeta[selectedFolderPk];
+        SelectRootNodeMailToDisplay: ({dbAccountPk, rootNodeMail}) => {
+            const instanceKey = resolveInstanceKey(dbAccountPk);
+            const currentInstance = state.instances[instanceKey] || initInstance();
 
-            if (!selectedFolderPk || !instance || !folderMeta/* || !(entryPk in folderMeta[prop])*/) {
-                return state;
+            if (!currentInstance.selectedMailData) {
+                throw new Error(`Failed to resolve "selectedMailData" for patching "rootNodeMail" value`);
             }
+
+            const instance: Instance = {
+                ...currentInstance,
+                selectedMailData: {
+                    ...currentInstance.selectedMailData,
+                    rootNodeMail,
+                },
+            };
 
             return {
                 ...state,
                 instances: {
                     ...state.instances,
-                    [key]: {
-                        ...instance,
-                        foldersMeta: {
-                            ...instance.foldersMeta,
-                            [selectedFolderPk]: {
-                                ...folderMeta,
-                                [prop]: {
-                                    ...folderMeta[prop],
-                                    [entryPk]: !folderMeta[prop][entryPk],
-                                },
-                            },
-                        },
-                    },
+                    [instanceKey]: instance,
                 },
             };
         },
         UnmountInstance: ({dbAccountPk}) => {
             const instances = {...state.instances};
 
-            delete instances[instanceKey(dbAccountPk)];
+            delete instances[resolveInstanceKey(dbAccountPk)];
 
             return {
                 ...state,
@@ -196,7 +195,7 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
     });
 }
 
-function instanceKey(dbAccountPk: DbAccountPk): string {
+function resolveInstanceKey(dbAccountPk: DbAccountPk): string {
     return JSON.stringify(dbAccountPk);
 }
 
@@ -206,6 +205,6 @@ function initInstance(): Instance {
             system: [],
             custom: [],
         },
-        foldersMeta: {},
+        selectedFolderMails: {},
     };
 }

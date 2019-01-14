@@ -4,7 +4,7 @@ import {ApiMethod, ApiMethodNoArgument, IpcMainApiService} from "electron-rpc-ap
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import {UnionOf, ofType, unionize} from "@vladimiry/unionize";
 
-import * as DatabaseModel from "src/shared/model/database";
+import * as DbModel from "src/shared/model/database";
 import {APP_NAME} from "src/shared/constants";
 import {
     AccountConfigCreatePatch,
@@ -14,7 +14,6 @@ import {
     PasswordFieldContainer,
 } from "src/shared/model/container";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
-import {DbAccountPk, DbFsDataContainer, Folder, FsDbAccount, IndexableMail, MemoryDbAccount, View} from "src/shared/model/database";
 import {DbPatch} from "./common";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {Omit} from "src/shared/types";
@@ -30,29 +29,39 @@ export interface Endpoints {
 
     changeMasterPassword: ApiMethod<PasswordFieldContainer & NewPasswordFieldContainer, Settings>;
 
-    dbPatch: ApiMethod<DbAccountPk
+    dbPatch: ApiMethod<DbModel.DbAccountPk
         & { patch: DbPatch }
         & { forceFlush?: boolean }
-        & { metadata: Omit<MemoryDbAccount["metadata"], "type"> },
-        FsDbAccount["metadata"]>;
+        & { metadata: Omit<DbModel.MemoryDbAccount["metadata"], "type"> },
+        DbModel.FsDbAccount["metadata"]>;
 
-    dbGetAccountMetadata: ApiMethod<DbAccountPk, FsDbAccount["metadata"] | null>;
+    dbGetAccountMetadata: ApiMethod<DbModel.DbAccountPk, DbModel.FsDbAccount["metadata"] | null>;
 
-    dbGetAccountDataView: ApiMethod<DbAccountPk,
+    dbGetAccountDataView: ApiMethod<DbModel.DbAccountPk,
         {
             folders: {
-                system: DatabaseModel.View.Folder[];
-                custom: DatabaseModel.View.Folder[];
+                system: DbModel.View.Folder[];
+                custom: DbModel.View.Folder[];
             };
-            contacts: DbFsDataContainer["contacts"];
+            contacts: DbModel.DbFsDataContainer["contacts"];
         } | undefined>;
 
-    dbGetAccountMail: ApiMethod<DbAccountPk & { pk: DatabaseModel.Mail["pk"] }, DatabaseModel.Mail>;
+    dbGetAccountMail: ApiMethod<DbModel.DbAccountPk & { pk: DbModel.Mail["pk"] }, DbModel.Mail>;
 
-    dbExport: ApiMethod<DbAccountPk, { count: number; } | { progress: number; file: string; }>;
+    dbExport: ApiMethod<DbModel.DbAccountPk, { count: number; } | { progress: number; file: string; }>;
 
-    dbSearchRootNodes: ApiMethod<DbAccountPk & { folderPks?: Array<Folder["pk"]> } & ({ query: string } | { mailPks: Array<Folder["pk"]> })
-        , View.RootConversationNode[]>;
+    dbSearchRootConversationNodes:
+        ApiMethod<DbModel.DbAccountPk
+            & { folderPks?: Array<DbModel.Folder["pk"]> }
+            & ({ query: string } | { mailPks: Array<DbModel.Folder["pk"]> }),
+            DbModel.View.RootConversationNode[]>;
+
+    dbFullTextSearch
+        : ApiMethod<DbModel.DbAccountPk & { query: string; folderPks?: Array<DbModel.Folder["pk"]>; },
+        {
+            uid: string;
+            mailsBundleItems: Array<{ mail: DbModel.View.Mail & { score: number; }; conversationSize: number; }>;
+        } & Pick<ReturnType<DbModel.MailsIndex["search"]>, "expandedTerms">>;
 
     dbIndexerOn: ApiMethod<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_ON_ACTIONS>, null>;
 
@@ -105,30 +114,23 @@ export interface Endpoints {
 
 export const IPC_MAIN_API = new IpcMainApiService<Endpoints>({channel: `${APP_NAME}:ipcMain-api`});
 
-// WARN: do not put sensitive data into the main process notification stream
-export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
-        ActivateBrowserWindow: ofType<{}>(),
-        DbPatchAccount: ofType<{
-            key: DbAccountPk;
-            entitiesModified: boolean;
-            metadataModified: boolean;
-            stat: { mails: number, folders: number; contacts: number; unread: number; };
-        }>(),
-        DbIndexingState: ofType<{
-            key?: DbAccountPk;
-            status: "undefined" | "indexing" | "done";
-        }>(),
-    },
-    {
-        tag: "type",
-        value: "payload",
-        tagPrefix: "ipc_main_api_notification:",
-    },
-);
-
 export const IPC_MAIN_API_DB_INDEXER_ON_ACTIONS = unionize({
         Bootstrapped: ofType<{}>(),
-        IndexingState: ofType<Extract<UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>, { type: "DbIndexingState" }>["payload"]>(),
+        ProgressState: ofType<{
+            key: DbModel.DbAccountPk;
+            status: {
+                indexing?: boolean;
+                searching?: boolean;
+            };
+        } | {
+            status: {
+                indexing?: boolean;
+            };
+        }>(),
+        SearchResult: ofType<{
+            data: ReturnType<DbModel.MailsIndex["search"]>;
+            uid: string;
+        }>(),
     },
     {
         tag: "type",
@@ -138,17 +140,41 @@ export const IPC_MAIN_API_DB_INDEXER_ON_ACTIONS = unionize({
 );
 
 export const IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS = unionize({
-        Stub: ofType<{}>(),
+        Bootstrap: ofType<{}>(),
         // TODO consider splitting huge data portion to chunks, see "ramda.splitEvery"
         Index: ofType<{
-            key: DbAccountPk;
-            remove: Array<Pick<IndexableMail, "pk">>;
-            add: IndexableMail[]
+            key: DbModel.DbAccountPk;
+            remove: Array<Pick<DbModel.IndexableMail, "pk">>;
+            add: DbModel.IndexableMail[]
+        }>(),
+        Search: ofType<{
+            key: DbModel.DbAccountPk;
+            query: string;
+            uid: string;
         }>(),
     },
     {
         tag: "type",
         value: "payload",
         tagPrefix: "ipc_main_api_db_indexer_notification_actions:",
+    },
+);
+
+// WARN: do not put sensitive data or any data to the main process notification stream, only status-like signals
+export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
+        Bootstrap: ofType<{}>(),
+        ActivateBrowserWindow: ofType<{}>(),
+        DbPatchAccount: ofType<{
+            key: DbModel.DbAccountPk;
+            entitiesModified: boolean;
+            metadataModified: boolean;
+            stat: { mails: number, folders: number; contacts: number; unread: number; };
+        }>(),
+        DbIndexerProgressState: ofType<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_ON_ACTIONS>, { type: "ProgressState" }>["payload"]>(),
+    },
+    {
+        tag: "type",
+        value: "payload",
+        tagPrefix: "ipc_main_api_notification:",
     },
 );

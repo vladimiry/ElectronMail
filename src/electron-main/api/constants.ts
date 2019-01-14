@@ -1,15 +1,11 @@
-import {BehaviorSubject} from "rxjs";
+import {Subject} from "rxjs";
+import {UnionOf} from "@vladimiry/unionize";
 
-import {Endpoints, IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {Endpoints, IPC_MAIN_API_DB_INDEXER_ON_ACTIONS} from "src/shared/api/main";
 import {Unpacked} from "src/shared/types";
 
-type Notification = Unpacked<ReturnType<Endpoints["notification"]>>;
-type DbIndexerNotification = Unpacked<ReturnType<Endpoints["dbIndexerNotification"]>>;
+export const IPC_MAIN_API_NOTIFICATION$ = new Subject<Unpacked<ReturnType<Endpoints["notification"]>>>();
 
-export const NOTIFICATION_SUBJECT = new BehaviorSubject<Notification>(
-    IPC_MAIN_API_NOTIFICATION_ACTIONS.DbIndexingState({status: "undefined"}),
-);
+export const IPC_MAIN_API_DB_INDEXER_NOTIFICATION$ = new Subject<Unpacked<ReturnType<Endpoints["dbIndexerNotification"]>>>();
 
-export const DB_INDEXER_NOTIFICATION_SUBJECT = new BehaviorSubject<DbIndexerNotification>(
-    IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Stub(),
-);
+export const IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$ = new Subject<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_ON_ACTIONS>>();

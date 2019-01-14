@@ -9,13 +9,23 @@
         border: 1px solid $list-group-border-color;
         border-radius: $list-group-border-radius;
         background-color: $white;
-        padding: $list-group-item-padding-y $list-group-item-padding-x;
+        padding: $btn-padding-y $btn-padding-x;
 
         .badge {
+            display: flex;
+            align-self: center;
             font-weight: normal;
             font-size: $app-font-size-base-small;
             color: $gray-700;
             border: 1px solid $border-color;
+        }
+
+        select {
+            display: flex;
+            align-self: center;
+            height: auto;
+            padding-top: 0;
+            padding-bottom: 0;
         }
     }
 
@@ -26,7 +36,7 @@
             border-bottom-width: 0;
         }
 
-        &[selected="true"] {
+        &.selected {
             background-color: theme-color("warning-light");
         }
     }

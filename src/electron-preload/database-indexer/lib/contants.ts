@@ -1,33 +1,58 @@
-import {DeserializeOptions, FieldOptions} from "@vladimiry/ndx";
+import htmlToText from "html-to-text";
 
 import {INDEXABLE_MAIL_FIELDS_STUB_CONTAINER, IndexableMail, MailAddress} from "src/shared/model/database";
 import {buildLoggerBundle} from "src/electron-preload/util";
 
 export const LOGGER = buildLoggerBundle("[preload: database-indexer]");
 
-export const MAILS_INDEX_DESERIALIZE_OPTIONS: Pick<Required<DeserializeOptions<IndexableMail["pk"], IndexableMail>>, "fieldsGetters">
-    = (() => {
-    const buildMailAddressGetter: (address: MailAddress) => string = (address) => address.address;
-    const joinListBy = ", ";
-    const fieldsGetters: Record<keyof typeof INDEXABLE_MAIL_FIELDS_STUB_CONTAINER, FieldOptions<IndexableMail>["getter"]> = {
-        subject: ({subject}) => subject,
-        body: ({body}) => body,
-        sender: ({sender}) => buildMailAddressGetter(sender),
-        toRecipients: ({toRecipients}) => toRecipients
-            .map(buildMailAddressGetter)
-            .join(joinListBy),
-        ccRecipients: ({ccRecipients}) => ccRecipients
-            .map(buildMailAddressGetter)
-            .join(joinListBy),
-        bccRecipients: ({bccRecipients}) => bccRecipients
-            .map(buildMailAddressGetter)
-            .join(joinListBy),
-        attachments: ({attachments}) => attachments
-            .map(({name}) => name)
-            .join(joinListBy),
+export const FIELD_DESCRIPTION: Record<keyof typeof INDEXABLE_MAIL_FIELDS_STUB_CONTAINER, {
+    accessor: (doc: IndexableMail) => string,
+    boost: number;
+}> = (() => {
+    const joinListBy = " ";
+    const buildMailAddressGetter: (address: MailAddress) => string = (address) => {
+        return [
+            ...(address.name ? [address.name] : []),
+            address.address,
+        ].join(joinListBy);
     };
-    const result: typeof MAILS_INDEX_DESERIALIZE_OPTIONS = {
-        fieldsGetters,
+    const result: typeof FIELD_DESCRIPTION = {
+        subject: {
+            accessor: ({subject}) => subject,
+            boost: 7,
+        },
+        body: {
+            accessor: ({body}) => htmlToText.fromString(body),
+            boost: 5,
+        },
+        sender: {
+            accessor: ({sender}) => buildMailAddressGetter(sender),
+            boost: 1,
+        },
+        toRecipients: {
+            accessor: ({toRecipients}) => toRecipients
+                .map(buildMailAddressGetter)
+                .join(joinListBy),
+            boost: 1,
+        },
+        ccRecipients: {
+            accessor: ({ccRecipients}) => ccRecipients
+                .map(buildMailAddressGetter)
+                .join(joinListBy),
+            boost: 1,
+        },
+        bccRecipients: {
+            accessor: ({bccRecipients}) => bccRecipients
+                .map(buildMailAddressGetter)
+                .join(joinListBy),
+            boost: 1,
+        },
+        attachments: {
+            accessor: ({attachments}) => attachments
+                .map(({name}) => name)
+                .join(joinListBy),
+            boost: 1,
+        },
     };
 
     return result;

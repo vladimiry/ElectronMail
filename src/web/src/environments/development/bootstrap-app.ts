@@ -7,7 +7,6 @@ import {AppModule} from "./app.module";
 
 bootloader(async () => {
     const ngModuleRef = await platformBrowserDynamic().bootstrapModule(AppModule);
-
     const applicationRef = ngModuleRef.injector.get(ApplicationRef);
     const componentRef = applicationRef.components[0];
 

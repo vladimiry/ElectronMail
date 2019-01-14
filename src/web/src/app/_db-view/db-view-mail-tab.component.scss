@@ -3,7 +3,19 @@
 :host {
     display: flex;
 
-    .folders-container {
+    &.search-view {
+        .left-column,
+        .right-column {
+            display: none;
+        }
+    }
+
+    .left-column,
+    .right-column {
+        display: flex;
+    }
+
+    .left-column {
         > .overflow-auto > .list-group {
             &:not(:first-of-type) {
                 margin-top: $app-spacer-2;
@@ -33,5 +45,9 @@
             min-height: 100%;
             background-color: $white;
         }
+    }
+
+    .export-link {
+        font-size: $app-font-size-base-small;
     }
 }

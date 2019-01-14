@@ -201,7 +201,7 @@ export async function attachFullTextIndexWindow(ctx: Context): Promise<BrowserWi
 
     // WARN: "fullTextSearchBrowserWindow" starts communicating with main process straight away on preload script loading
     // so main process api needs to be registered before "fullTextSearchBrowserWindow" creating
-    await ctx.endpoints.promise;
+    await ctx.deferredEndpoints.promise;
 
     const browserWindow = new BrowserWindow({
         webPreferences: {

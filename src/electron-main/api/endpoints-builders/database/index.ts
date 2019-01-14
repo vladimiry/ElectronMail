@@ -1,29 +1,33 @@
 import electronLog from "electron-log";
 import sanitizeHtml from "sanitize-html";
-import {Observable, from, of} from "rxjs";
+import {Observable, from, of, race, throwError, timer} from "rxjs";
 import {UnionOf} from "@vladimiry/unionize";
 import {app, dialog} from "electron";
+import {concatMap, filter, map, mergeMap, startWith} from "rxjs/operators";
 import {equals, mergeDeepRight, omit, pick} from "ramda";
+import {v4 as uuid} from "uuid";
 
 import {Arguments, Unpacked} from "src/shared/types";
 import {Context} from "src/electron-main/model";
-import {DB_INDEXER_NOTIFICATION_SUBJECT, NOTIFICATION_SUBJECT} from "src/electron-main/api/constants";
+import {DEFAULT_API_CALL_TIMEOUT} from "src/shared/constants";
 import {
     Endpoints,
     IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS,
     IPC_MAIN_API_DB_INDEXER_ON_ACTIONS,
     IPC_MAIN_API_NOTIFICATION_ACTIONS,
 } from "src/shared/api/main";
-import {EntityMap, INDEXABLE_MAIL_FIELDS_STUB_CONTAINER, IndexableMail, MemoryDbAccount} from "src/shared/model/database";
-import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
+import {EntityMap, INDEXABLE_MAIL_FIELDS_STUB_CONTAINER, IndexableMail, IndexableMailId, MemoryDbAccount} from "src/shared/model/database";
+import {
+    IPC_MAIN_API_DB_INDEXER_NOTIFICATION$,
+    IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$,
+    IPC_MAIN_API_NOTIFICATION$,
+} from "src/electron-main/api/constants";
+import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty, walkConversationNodesTree} from "src/shared/util";
 import {prepareFoldersView} from "./folders-view";
-import {search} from "src/electron-main/api/endpoints-builders/database/search";
+import {searchRootConversationNodes} from "./search";
 import {writeEmlFile} from "./export";
 
 const _logger = curryFunctionMembers(electronLog, "[electron-main/api/endpoints-builders/database]");
-const dbIndexerNotificationObservable = DB_INDEXER_NOTIFICATION_SUBJECT.asObservable();
-
-type IndexActionPayload = Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>, { type: "Index" }>["payload"];
 
 type Methods =
     | "dbPatch"
@@ -31,7 +35,8 @@ type Methods =
     | "dbGetAccountDataView"
     | "dbGetAccountMail"
     | "dbExport"
-    | "dbSearchRootNodes"
+    | "dbSearchRootConversationNodes"
+    | "dbFullTextSearch"
     | "dbIndexerOn"
     | "dbIndexerNotification";
 
@@ -69,7 +74,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
                     continue;
                 }
 
-                DB_INDEXER_NOTIFICATION_SUBJECT.next(
+                IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.next(
                     IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Index(
                         narrowIndexActionPayload({
                             key,
@@ -90,7 +95,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
                 await ctx.db.saveToFile();
             }
 
-            NOTIFICATION_SUBJECT.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount({
+            IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount({
                 key,
                 entitiesModified: modifiedState.entitiesModified,
                 metadataModified: modifiedState.metadataModified,
@@ -195,8 +200,8 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
                 .catch((error) => subscriber.error(error));
         }))(),
 
-        dbSearchRootNodes: ({type, login, folderPks, ...rest}) => from((async (
-            logger = curryFunctionMembers(_logger, "dbSearchRootNodes()"),
+        dbSearchRootConversationNodes: ({type, login, folderPks, ...restOptions}) => from((async (
+            logger = curryFunctionMembers(_logger, "dbSearchRootConversationNodes()"),
         ) => {
             logger.info();
 
@@ -208,46 +213,147 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
 
             // TODO fill "mailPks" array based on the execute search with "query" argument
 
-            const mailPks = "query" in rest
+            const mailPks = "query" in restOptions
                 ? [] //  TODO execute the actual search
-                : rest.mailPks;
+                : restOptions.mailPks;
 
-            return search(account, {folderPks, mailPks});
+            return searchRootConversationNodes(account, {folderPks, mailPks});
         })()),
 
-        dbIndexerOn: (action) => ((
-            logger = curryFunctionMembers(_logger, "dbIndexerOn()"),
-        ) => {
-            logger.info(`action.type: ${action.type}`);
+        dbFullTextSearch: (() => {
+            const logger = curryFunctionMembers(_logger, "dbFullTextSearch()");
+            const timeoutMs = DEFAULT_API_CALL_TIMEOUT;
+            const method: Pick<Endpoints, "dbFullTextSearch">["dbFullTextSearch"] = ({type, login, query, folderPks}) => {
+                logger.info();
 
-            IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.match(action, {
-                Bootstrapped: () => {
-                    ctx.db.iterateAccounts(({pk: key, account}) => {
-                        DB_INDEXER_NOTIFICATION_SUBJECT.next(
-                            IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Index(
-                                narrowIndexActionPayload({
-                                    key,
-                                    remove: [],
-                                    add: [...account.mails.values()],
-                                }),
-                            ),
-                        );
-                    });
-                },
-                IndexingState: ({key, status}) => {
-                    logger.verbose(`IndexingState.status: ${status}`);
+                const account = ctx.db.getFsAccount({type, login});
 
-                    // propagating status to UI process
-                    NOTIFICATION_SUBJECT.next(
-                        IPC_MAIN_API_NOTIFICATION_ACTIONS.DbIndexingState({key, status}),
-                    );
-                },
-            });
+                if (!account) {
+                    throw new Error(`Failed to resolve account by the provided "type/login"`);
+                }
 
-            return of(null);
+                const uid = uuid();
+                const result$ = race(
+                    IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$.pipe(
+                        filter(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.is.SearchResult),
+                        filter(({payload}) => payload.uid === uid),
+                        mergeMap(({payload: {data: {items, expandedTerms}}}) => {
+                            const mailScoresByPk = new Map<IndexableMailId, number>(
+                                items.map(({docId, score}) => [docId, score] as [IndexableMailId, number]),
+                            );
+                            const rootConversationNodes = searchRootConversationNodes(
+                                account,
+                                {
+                                    mailPks: [...mailScoresByPk.keys()],
+                                    folderPks,
+                                },
+                            );
+                            const mailsBundleItems: Unpacked<ReturnType<Endpoints["dbFullTextSearch"]>>["mailsBundleItems"] = [];
+
+                            for (const rootConversationNode of rootConversationNodes) {
+                                let allNodeMailsCount = 0;
+                                const matchedScoredNodeMails: Array<Unpacked<typeof mailsBundleItems>["mail"]> = [];
+
+                                walkConversationNodesTree([rootConversationNode], ({mail}) => {
+                                    if (!mail) {
+                                        return;
+                                    }
+
+                                    allNodeMailsCount++;
+
+                                    const score = mailScoresByPk.get(mail.pk);
+
+                                    if (typeof score !== "undefined") {
+                                        matchedScoredNodeMails.push({...mail, score});
+                                    }
+                                });
+
+                                if (!matchedScoredNodeMails.length) {
+                                    continue;
+                                }
+
+                                mailsBundleItems.push(
+                                    ...matchedScoredNodeMails.map((mail) => ({
+                                        mail,
+                                        conversationSize: allNodeMailsCount,
+                                    })),
+                                );
+                            }
+
+                            return [{
+                                uid,
+                                mailsBundleItems,
+                                expandedTerms,
+                            }];
+                        }),
+                    ),
+                    timer(timeoutMs).pipe(
+                        concatMap(() => throwError(new Error(`Failed to complete the search in ${timeoutMs}ms`))),
+                    ),
+                ).pipe(
+                    map((value) => {
+                        return value;
+                    }),
+                );
+
+                IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.next(
+                    IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Search({
+                        key: {type, login},
+                        query,
+                        uid,
+                    }),
+                );
+
+                return result$;
+            };
+
+            return method;
         })(),
 
-        dbIndexerNotification: () => dbIndexerNotificationObservable,
+        dbIndexerOn: (() => {
+            const logger = curryFunctionMembers(_logger, "dbIndexerOn()");
+            const method: Pick<Endpoints, "dbIndexerOn">["dbIndexerOn"] = (action) => {
+                logger.info(`action.type: ${action.type}`);
+
+                // propagating action to custom stream
+                IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$.next(action);
+
+                IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.match(action, {
+                    Bootstrapped: () => {
+                        ctx.db.iterateAccounts(({pk: key, account}) => {
+                            IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.next(
+                                IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Index(
+                                    narrowIndexActionPayload({
+                                        key,
+                                        remove: [],
+                                        add: [...account.mails.values()],
+                                    }),
+                                ),
+                            );
+                        });
+                    },
+                    ProgressState: (payload) => {
+                        logger.verbose(`ProgressState.status: ${payload.status}`);
+
+                        // propagating status to main channel which streams data to UI process
+                        IPC_MAIN_API_NOTIFICATION$.next(
+                            IPC_MAIN_API_NOTIFICATION_ACTIONS.DbIndexerProgressState(payload),
+                        );
+                    },
+                    default: () => {
+                        // NOOP
+                    },
+                });
+
+                return of(null);
+            };
+
+            return method;
+        })(),
+
+        dbIndexerNotification: () => IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.asObservable().pipe(
+            startWith(IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Bootstrap({})),
+        ),
     };
 }
 
@@ -272,6 +378,8 @@ function patchMetadata(
 
     return true;
 }
+
+type IndexActionPayload = Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>, { type: "Index" }>["payload"];
 
 function narrowIndexActionPayload({key, add, remove}: IndexActionPayload): IndexActionPayload {
     const mailFieldsToSelect = [

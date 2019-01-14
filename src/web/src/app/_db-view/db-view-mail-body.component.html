@@ -1,95 +1,126 @@
-<ng-template #nodesTemplate let-level="level" let-nodes="nodes">
-    <ng-container *ngFor="let node of nodes">
-        <div *ngIf="!isEmptyNodes(nodes)" [ngStyle]="{'padding-left': level + 'em'}" class="root-node">
-            <email-securely-app-db-view-mail
-                (click)="selectRootNodeMail(node.mail)"
-                *ngIf="node.mail"
-                [attr.selected]="node.mail.pk === mailData.rootNodeMail?.pk ? 1 : 0"
-                [mail]="node.mail"
-            ></email-securely-app-db-view-mail>
-        </div>
-        <ng-container
-            [ngTemplateOutletContext]="{nodes: node.children, level: level + (isEmptyNodes(nodes) ? 0 : 0.65)}"
-            [ngTemplateOutlet]="nodesTemplate"
-        ></ng-container>
-    </ng-container>
-</ng-template>
-
-<ng-container *ngIf="mailData.rootNode.summary.size > 1">
-    <div
-        *ngFor="let rootNode of [mailData.rootNode]"
-        [collapse]="conversationCollapsed$ | async"
-        class="flex-column root-node-container"
+<ng-container *ngIf="selectedMail$ | async; let selectedMail">
+    <ng-template
+        #nodesTemplate
+        let-level="level"
+        let-nodes="nodes"
     >
-        <ng-container
-            [ngTemplateOutletContext]="{nodes: [rootNode], level: 0}"
-            [ngTemplateOutlet]="nodesTemplate"
-        ></ng-container>
+        <ng-container *ngFor="let node of nodes">
+            <div
+                *ngIf="!isEmptyNodes(nodes)"
+                [ngStyle]="{'padding-left': level + 'em'}"
+                class="root-node"
+            >
+                <email-securely-app-db-view-mail
+                    (click)="selectConversationMail(node.mail)"
+                    *ngIf="node.mail"
+                    [attr.selected]="node.mail.pk === selectedMail.conversationMail?.pk ? 1 : 0"
+                    [mail]="node.mail"
+                ></email-securely-app-db-view-mail>
+            </div>
+            <ng-container
+                [ngTemplateOutletContext]="{nodes: node.children, level: level + (isEmptyNodes(nodes) ? 0 : 0.75)}"
+                [ngTemplateOutlet]="nodesTemplate"
+            ></ng-container>
+        </ng-container>
+    </ng-template>
+
+    <ng-container *ngIf="selectedMail.rootNode.summary.size > 1">
+        <div
+            *ngFor="let rootNode of [selectedMail.rootNode]"
+            [collapse]="conversationCollapsed$ | async"
+            class="flex-column root-node-container"
+        >
+            <ng-container
+                [ngTemplateOutletContext]="{nodes: [rootNode], level: 0}"
+                [ngTemplateOutlet]="nodesTemplate"
+            ></ng-container>
+        </div>
+    </ng-container>
+
+    <div
+        (click)="toggleConversationCollapsing()"
+        *ngIf="selectedMail.rootNode.summary.size > 1"
+        class="btn btn-secondary btn-sm conversation-view-toggler"
+    >
+        Conversation ({{ selectedMail.rootNode.summary.size }})
+    </div>
+
+    <div class="d-flex mt-2">
+        <h5>{{ selectedMail.conversationMail.subject }}</h5>
+    </div>
+
+    <div class="addresses pb-2 mb-2">
+        <div class="badge mr-2">
+            Sender:
+            <ng-container
+                [ngTemplateOutletContext]="{address: selectedMail.conversationMail.sender}"
+                [ngTemplateOutlet]="addressTemplate"
+            ></ng-container>
+        </div>
+        <div
+            *ngIf="selectedMail.conversationMail.toRecipients.length"
+            class="badge flex-row mr-2"
+        >
+            To:
+            <ng-container
+                *ngFor="let address of selectedMail.conversationMail.toRecipients"
+                [ngTemplateOutletContext]="{address: address}"
+                [ngTemplateOutlet]="addressTemplate"
+            ></ng-container>
+        </div>
+        <div
+            *ngIf="selectedMail.conversationMail.ccRecipients.length"
+            class="badge flex-row mr-2"
+        >
+            Cc:
+            <ng-container
+                *ngFor="let address of selectedMail.conversationMail.ccRecipients"
+                [ngTemplateOutletContext]="{address: address}"
+                [ngTemplateOutlet]="addressTemplate"
+            ></ng-container>
+        </div>
+        <div
+            *ngIf="selectedMail.conversationMail.bccRecipients.length"
+            class="badge flex-row mr-2"
+        >
+            Bcc:
+            <ng-container
+                *ngFor="let address of selectedMail.conversationMail.bccRecipients"
+                [ngTemplateOutletContext]="{address: address}"
+                [ngTemplateOutlet]="addressTemplate"
+            ></ng-container>
+        </div>
+        <ng-template
+            #addressTemplate
+            let-address="address"
+        >
+            <div class="address d-inline-block">
+                <a
+                    class="prevent-default-event"
+                    href="mailto:{{ address.address }}"
+                >{{ address.name || address.address }}</a>
+            </div>
+        </ng-template>
+    </div>
+
+    <div class="body-container d-flex flex-grow-1"></div>
+
+    <div
+        *ngIf="hoveredHref$ | async; let hoveredHref;"
+        [innerText]="hoveredHref"
+        class="d-flex hovered-href rounded"
+    ></div>
+
+    <div
+        *ngIf="selectedMail.conversationMail.attachments.length"
+        class="attachments pt-2 mt-2"
+    >
+        <div
+            *ngFor="let attachment of selectedMail.conversationMail.attachments"
+            class="attachment badge mr-2"
+        >
+            {{ attachment.name }}
+            <span *ngIf="attachment.size">({{ attachment.size }})</span>
+        </div>
     </div>
 </ng-container>
-
-<div
-    (click)="toggleConversationCollapsing()" *ngIf="mailData.rootNode.summary.size > 1"
-    class="btn btn-secondary btn-sm conversation-view-toggler"
->
-    Conversation ({{ mailData.rootNode.summary.size }})
-</div>
-
-<div class="d-flex mt-2">
-    <h5>{{ mailData.rootNodeMail.subject }}</h5>
-</div>
-
-<div class="addresses pb-2 mb-2">
-    <div class="badge mr-2">
-        Sender:
-        <ng-container
-            [ngTemplateOutletContext]="{address: mailData.rootNodeMail.sender}"
-            [ngTemplateOutlet]="addressTemplate"
-        ></ng-container>
-    </div>
-    <div *ngIf="mailData.rootNodeMail.toRecipients.length" class="badge flex-row mr-2">
-        To:
-        <ng-container
-            *ngFor="let address of mailData.rootNodeMail.toRecipients"
-            [ngTemplateOutletContext]="{address: address}"
-            [ngTemplateOutlet]="addressTemplate"
-        ></ng-container>
-    </div>
-    <div *ngIf="mailData.rootNodeMail.ccRecipients.length" class="badge flex-row mr-2">
-        Cc:
-        <ng-container
-            *ngFor="let address of mailData.rootNodeMail.ccRecipients"
-            [ngTemplateOutletContext]="{address: address}"
-            [ngTemplateOutlet]="addressTemplate"
-        ></ng-container>
-    </div>
-    <div *ngIf="mailData.rootNodeMail.bccRecipients.length" class="badge flex-row mr-2">
-        Bcc:
-        <ng-container
-            *ngFor="let address of mailData.rootNodeMail.bccRecipients"
-            [ngTemplateOutletContext]="{address: address}"
-            [ngTemplateOutlet]="addressTemplate"
-        ></ng-container>
-    </div>
-    <ng-template #addressTemplate let-address="address">
-        <div class="address d-inline-block">
-            <a class="prevent-default-event"
-               href="mailto:{{ address.address }}">{{ address.name || address.address }}</a>
-        </div>
-    </ng-template>
-</div>
-
-<div class="body-container d-flex flex-grow-1"></div>
-
-<div
-    *ngIf="hoveredHref$ | async; let hoveredHref;"
-    [innerText]="hoveredHref"
-    class="d-flex hovered-href rounded"
-></div>
-
-<div *ngIf="mailData.rootNodeMail.attachments.length" class="attachments pt-2 mt-2">
-    <div *ngFor="let attachment of mailData.rootNodeMail.attachments" class="attachment badge mr-2">
-        {{ attachment.name }}
-        <span *ngIf="attachment.size">({{ attachment.size }})</span>
-    </div>
-</div>

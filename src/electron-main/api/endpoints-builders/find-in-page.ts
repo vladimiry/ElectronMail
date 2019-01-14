@@ -50,7 +50,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
                     return null;
                 }
 
-                const {findInPage} = await (await ctx.endpoints.promise).readConfig().toPromise();
+                const {findInPage} = await (await ctx.deferredEndpoints.promise).readConfig().toPromise();
 
                 if (!findInPage) {
                     logger.debug(`skipping as "findInPage" config option disabled`);

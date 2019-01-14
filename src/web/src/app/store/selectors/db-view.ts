@@ -6,7 +6,7 @@ import {State, featureName} from "src/web/src/app/store/reducers/db-view";
 export const STATE = createFeatureSelector<State>(featureName);
 
 export const FEATURED = {
-    accountRecord: () => createSelector(
+    instance: () => createSelector(
         STATE,
         ({instances}: State, {pk}: { pk: DbAccountPk }) => instances[JSON.stringify(pk)],
     ),

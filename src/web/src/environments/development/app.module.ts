@@ -9,8 +9,10 @@ import {State} from "src/web/src/app/store/reducers/root";
 
 @NgModule(APP_MODULE_NG_CONF)
 export class AppModule {
-    constructor(private appRef: ApplicationRef,
-                private store: Store<any>) {}
+    constructor(
+        private appRef: ApplicationRef,
+        private store: Store<any>,
+    ) {}
 
     hmrOnInit(store: HrmStore) {
         if (!store || !store.state) {
@@ -26,6 +28,7 @@ export class AppModule {
         }
 
         this.appRef.tick();
+
         delete store.state;
         delete store.restoreInputValues;
     }

@@ -194,7 +194,7 @@ export class Database {
         const stat = {records: 0, conversationEntries: 0, mails: 0, folders: 0, contacts: 0};
 
         this.iterateAccounts(({account}) => {
-            const {conversationEntries, mails, folders, contacts} = this.accountStat(account);
+            const {conversationEntries, mails, folders, contacts} = this.accountStat(account, true);
             stat.records++;
             stat.conversationEntries += conversationEntries;
             stat.mails += mails;
@@ -207,12 +207,11 @@ export class Database {
 
     accountStat(
         account: MemoryDbAccount,
+        includingSpam: boolean = false,
     ): { conversationEntries: number, mails: number, folders: number; contacts: number; unread: number } {
-        const spamFolder = resolveMemoryAccountFolders(account).find(({folderType}) => folderType === MAIL_FOLDER_TYPE.SPAM);
-        const spamFolderMailFolderId = spamFolder && spamFolder.mailFolderId;
-        const isSpamEmail: (mail: Mail) => boolean = typeof spamFolderMailFolderId !== "undefined"
-            ? ({mailFolderIds}) => mailFolderIds.includes(spamFolderMailFolderId)
-            : () => false;
+        const hasSpamEmail: (mail: Mail) => boolean = includingSpam
+            ? () => false
+            : this.spamFolderTester(account);
 
         return {
             conversationEntries: account.conversationEntries.size,
@@ -220,12 +219,22 @@ export class Database {
             folders: account.folders.size,
             contacts: account.contacts.size,
             unread: [...account.mails.values()].reduce(
-                (unread, mail) => isSpamEmail(mail)
+                (unread, mail) => hasSpamEmail(mail)
                     ? unread
                     : unread + Number(mail.unread),
                 0,
             ),
         };
+    }
+
+    private spamFolderTester(account: MemoryDbAccount): (mail: Mail) => boolean {
+        const folder = resolveMemoryAccountFolders(account).find(({folderType}) => folderType === MAIL_FOLDER_TYPE.SPAM);
+        const mailFolderId = folder && folder.mailFolderId;
+        const result: (mail: Mail) => boolean = typeof mailFolderId !== "undefined"
+            ? ({mailFolderIds}) => mailFolderIds.includes(mailFolderId)
+            : () => false;
+
+        return result;
     }
 
     private async resolveStore(): Promise<FsJsonStore<FsDb>> {

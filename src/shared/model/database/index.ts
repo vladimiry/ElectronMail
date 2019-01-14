@@ -1,3 +1,4 @@
+import {QueryResult} from "ndx-query";
 import {Model as StoreModel} from "fs-json-store";
 
 import * as Constants from "./constants";
@@ -158,7 +159,7 @@ export interface DbAccountPk {
     login: string;
 }
 
-type IndexableMailField = keyof Pick<Mail,
+export type IndexableMail = Pick<Mail, keyof Pick<Mail,
     | "pk"
     | "subject"
     | "body"
@@ -166,6 +167,15 @@ type IndexableMailField = keyof Pick<Mail,
     | "toRecipients"
     | "ccRecipients"
     | "bccRecipients"
-    | "attachments">;
+    | "attachments">>;
 
-export type IndexableMail = Pick<Mail, IndexableMailField>;
+export type IndexableMailId = IndexableMail["pk"];
+
+export interface MailsIndex {
+    add: (mail: IndexableMail) => void;
+    remove: (id: IndexableMailId) => void;
+    search: (q: string) => {
+        items: Array<QueryResult<IndexableMailId>>;
+        expandedTerms: string[],
+    };
+}

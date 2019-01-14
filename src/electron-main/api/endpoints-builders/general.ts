@@ -6,10 +6,11 @@ import {app, shell} from "electron";
 import {isWebUri} from "valid-url";
 import {platform} from "os";
 import {promisify} from "util";
+import {startWith} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
 import {Endpoints, IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
-import {NOTIFICATION_SUBJECT} from "src/electron-main/api/constants";
+import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 
 type ApiMethods =
     | "openAboutWindow"
@@ -21,8 +22,6 @@ type ApiMethods =
     | "hotkey"
     | "selectAccount"
     | "notification";
-
-const notificationObservable = NOTIFICATION_SUBJECT.asObservable();
 
 export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiMethods>> {
     const endpoints: Pick<Endpoints, ApiMethods> = {
@@ -75,7 +74,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
 
             browserWindow.focus();
 
-            NOTIFICATION_SUBJECT.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.ActivateBrowserWindow());
+            IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.ActivateBrowserWindow());
 
             return null;
         })()),
@@ -121,8 +120,8 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
                 );
 
                 if (needToCloseFindInPageWindow) {
-                    (await ctx.endpoints.promise).findInPageStop().toPromise();
-                    (await ctx.endpoints.promise).findInPageDisplay({visible: false}).toPromise();
+                    (await ctx.deferredEndpoints.promise).findInPageStop().toPromise();
+                    (await ctx.deferredEndpoints.promise).findInPageDisplay({visible: false}).toPromise();
                 }
 
                 ctx.selectedAccount = newSelectedAccount;
@@ -156,7 +155,9 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
             return result;
         },
 
-        notification: () => notificationObservable,
+        notification: () => IPC_MAIN_API_NOTIFICATION$.asObservable().pipe(
+            startWith(IPC_MAIN_API_NOTIFICATION_ACTIONS.Bootstrap({})),
+        ),
     };
 
     return endpoints;

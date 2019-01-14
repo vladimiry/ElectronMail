@@ -30,7 +30,7 @@ for:
     install:
       - sudo apt-get --yes install gnome-keyring libgnome-keyring-dev libsecret-1-dev nasm
       - cmd: powershell Install-Product node $env:nodejs_version $env:nodejs_arch
-      - curl -o- -L https://yarnpkg.com/install.sh | bash
+      - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.12.3
       - export PATH="$HOME/.yarn/bin:$PATH"
       - nvm install $nodejs_version
       - npm install --global yarn

@@ -1,18 +1,6 @@
 {
+  "extends": "./tsconfig.checks.json",
   "compilerOptions": {
-    /*
-    strictness
-    */
-    "strict": true,
-    "noFallthroughCasesInSwitch": true,
-    // "noImplicitAny": true, // comes with "strict" flag
-    "noImplicitReturns": true,
-    // "noImplicitThis": true, // comes with "strict" flag
-    "noUnusedLocals": true,
-    // "noUnusedParameters": true,
-    // "strictFunctionTypes": true, // comes with "strict" flag
-    // "strictNullChecks": true, // comes with "strict" flag
-    // "strictPropertyInitialization": true, // comes with "strict" flag
     /*
     resolving & capabilities
     */

@@ -2,7 +2,7 @@ import {FOLDER_UTILS, buildFoldersAndRootNodePrototypes, fillFoldersAndReturnRoo
 import {Folder, FsDb, FsDbAccount, Mail, View} from "src/shared/model/database";
 import {walkConversationNodesTree} from "src/shared/util";
 
-export function search<T extends keyof FsDb["accounts"]>(
+export function searchRootConversationNodes<T extends keyof FsDb["accounts"]>(
     account: FsDbAccount<T>,
     {mailPks, folderPks}: { mailPks?: Array<Mail["pk"]>; folderPks?: Array<Folder["pk"]>; } = {},
 ): View.RootConversationNode[] {
@@ -39,7 +39,7 @@ export function search<T extends keyof FsDb["accounts"]>(
         : filteredByMailsWithFoldersAttached;
 
     // TODO use separate function to fill the system folders names
-    FOLDER_UTILS.splitAndFormatFolders(folders);
+    FOLDER_UTILS.splitAndFormatAndFillSummaryFolders(folders);
 
     return result;
 }

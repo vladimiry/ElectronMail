@@ -1,3 +1,4 @@
+import {BsDropdownModule} from "ngx-bootstrap/dropdown";
 import {CollapseModule} from "ngx-bootstrap/collapse";
 import {EffectsModule} from "@ngrx/effects";
 import {NgModule} from "@angular/core";
@@ -9,13 +10,14 @@ import {DbViewEntryComponent} from "./db-view-entry.component";
 import {DbViewFolderComponent} from "./db-view-folder.component";
 import {DbViewMailBodyComponent} from "./db-view-mail-body.component";
 import {DbViewMailComponent} from "./db-view-mail.component";
+import {DbViewMailSearchComponent} from "./db-view-mail-search.component";
 import {DbViewMailTabComponent} from "./db-view-mail-tab.component";
 import {DbViewMailsComponent} from "./db-view-mails.component";
-import {DbViewService} from "./db-view.service";
 import {SharedModule} from "src/web/src/app/_shared/shared.module";
 
 @NgModule({
     imports: [
+        BsDropdownModule,
         CollapseModule,
         PopoverModule,
         SharedModule,
@@ -24,16 +26,16 @@ import {SharedModule} from "src/web/src/app/_shared/shared.module";
     declarations: [
         DbViewEntryComponent,
         DbViewFolderComponent,
+        DbViewMailBodyComponent,
         DbViewMailComponent,
         DbViewMailsComponent,
+        DbViewMailSearchComponent,
         DbViewMailTabComponent,
-        DbViewMailBodyComponent,
     ],
     entryComponents: [
         DbViewEntryComponent,
     ],
     providers: [
-        DbViewService,
         {provide: DBVIEW_MODULE_ENTRY_COMPONENT_TOKEN, useValue: DbViewEntryComponent},
     ],
 })

@@ -5,7 +5,8 @@ import {mailDateComparatorDefaultsToDesc, walkConversationNodesTree} from "src/s
 import {resolveFsAccountFolders} from "src/electron-main/database/util";
 
 export const FOLDER_UTILS: {
-    splitAndFormatFolders: (folders: View.Folder[]) => { system: View.Folder[]; custom: View.Folder[]; },
+    // TODO split "splitAndFormatAndFillSummaryFolders" function to pieces
+    splitAndFormatAndFillSummaryFolders: (folders: View.Folder[]) => { system: View.Folder[]; custom: View.Folder[]; },
 } = (() => {
     const customizers: Record<keyof typeof MAIL_FOLDER_TYPE._.nameValueMap, { title: (f: View.Folder) => string; order: number; }> = {
         CUSTOM: {
@@ -57,7 +58,7 @@ export const FOLDER_UTILS: {
     };
 
     return {
-        splitAndFormatFolders: (folders: View.Folder[]) => {
+        splitAndFormatAndFillSummaryFolders: (folders: View.Folder[]) => {
             const customizer: CustomizerResolver = ((map) => (folder: View.Folder): Customizer => map.get(folder) as Customizer)(
                 new Map(folders.map((folder) => [
                     folder, customizers[MAIL_FOLDER_TYPE._.resolveNameByValue(folder.folderType)],
@@ -69,6 +70,20 @@ export const FOLDER_UTILS: {
             };
 
             bundle.system.forEach((folder) => folder.name = customizer(folder).title(folder));
+
+            [...bundle.system, ...bundle.custom].forEach((folder) => {
+                folder.size = 0;
+                folder.unread = 0;
+
+                walkConversationNodesTree(folder.rootConversationNodes, ({mail}) => {
+                    if (!mail || !mail.folders.includes(folder)) {
+                        return;
+                    }
+
+                    folder.size++;
+                    folder.unread += Number(mail.unread);
+                });
+            });
 
             return bundle;
         },
@@ -134,7 +149,7 @@ export function buildFoldersAndRootNodePrototypes<T extends keyof FsDb["accounts
     })();
     const folders: View.Folder[] = Array.from(
         resolveFsAccountFolders(account),
-        (folder) => ({...folder, rootConversationNodes: []}),
+        (folder) => ({...folder, rootConversationNodes: [], size: 0, unread: 0}),
     );
     const resolveFolder = ((map = new Map(folders.reduce(
         (entries: Array<[View.Folder["mailFolderId"], View.Folder]>, folder) => entries.concat([[folder.mailFolderId, folder]]),
@@ -233,7 +248,7 @@ function buildFoldersView<T extends keyof FsDb["accounts"]>(account: FsDbAccount
 // WARN make sure input "account" is not mutated
 // to reduce accidental database mutation possibility FsDbAccount argument is used but not the MemoryDbAccount
 export function prepareFoldersView<T extends keyof FsDb["accounts"]>(account: FsDbAccount<T>) {
-    return FOLDER_UTILS.splitAndFormatFolders(
+    return FOLDER_UTILS.splitAndFormatAndFillSummaryFolders(
         buildFoldersView(account),
     );
 }

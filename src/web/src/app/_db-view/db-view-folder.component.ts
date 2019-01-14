@@ -1,6 +1,5 @@
 import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
 
-import {DbViewService} from "./db-view.service";
 import {View} from "src/shared/model/database";
 
 @Component({
@@ -10,23 +9,6 @@ import {View} from "src/shared/model/database";
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DbViewFolderComponent {
-    state: {
-        size?: number;
-        title?: string;
-        unread?: number;
-        folderType?: string;
-    } = {};
-
-    constructor(
-        private dbVieService: DbViewService,
-    ) {}
-
     @Input()
-    set folder(folder: View.Folder) {
-        this.state = {
-            folderType: folder.folderType,
-            title: folder.name,
-            ...this.dbVieService.calculateFolderSummary(folder),
-        };
-    }
+    folder!: View.Folder;
 }

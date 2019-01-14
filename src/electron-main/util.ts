@@ -30,7 +30,7 @@ export function initContext(options: ContextInitOptions = {}): Context {
         storeFs,
         runtimeEnvironment,
         locations,
-        endpoints: new Deferred(),
+        deferredEndpoints: new Deferred(),
         db: new Database({
             file: path.join(locations.userDataDir, "database.bin"),
             fileFs: storeFs,

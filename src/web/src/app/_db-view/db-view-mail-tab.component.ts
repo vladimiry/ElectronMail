@@ -1,15 +1,15 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, Input, OnDestroy} from "@angular/core";
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, HostBinding, HostListener, OnDestroy} from "@angular/core";
 import {EMPTY, Subject} from "rxjs";
 import {Store, select} from "@ngrx/store";
-import {concatMap, filter, finalize, mergeMap, takeUntil, throttleTime} from "rxjs/operators";
+import {filter, finalize, map, mergeMap, takeUntil, throttleTime} from "rxjs/operators";
 
 import {CORE_ACTIONS, DB_VIEW_ACTIONS} from "src/web/src/app/store/actions";
-import {DbAccountPk, MAIL_FOLDER_TYPE, Mail, View} from "src/shared/model/database";
-import {ElectronService} from "../_core/electron.service";
-import {FEATURED} from "src/web/src/app/store/selectors/db-view";
-import {NgChangesObservableComponent} from "src/web/src/app/components/ng-changes-observable.component";
+import {DbViewAbstractComponent} from "src/web/src/app/_db-view/db-view-abstract.component";
+import {ElectronService} from "src/web/src/app/_core/electron.service";
+import {MAIL_FOLDER_TYPE, View} from "src/shared/model/database";
+import {MailsBundleKey, State} from "src/web/src/app/store/reducers/db-view";
 import {ONE_SECOND_MS} from "src/shared/constants";
-import {State} from "src/web/src/app/store/reducers/db-view";
+import {OptionsSelectors} from "src/web/src/app/store/selectors";
 
 @Component({
     selector: "email-securely-app-db-view-mail-tab",
@@ -17,59 +17,71 @@ import {State} from "src/web/src/app/store/reducers/db-view";
     styleUrls: ["./db-view-mail-tab.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DbViewMailTabComponent extends NgChangesObservableComponent implements OnDestroy {
+export class DbViewMailTabComponent extends DbViewAbstractComponent implements OnDestroy {
     exporting?: boolean;
 
-    @Input()
-    dbAccountPk!: DbAccountPk;
+    mailsBundleKey: Extract<MailsBundleKey, "folderMailsBundle" | "folderConversationsBundle"> = "folderConversationsBundle";
 
-    state$ = this.ngChangesObservable("dbAccountPk").pipe(
-        mergeMap((pk) => {
-            if (!pk) {
+    @HostBinding("class.search-view")
+    searchView: boolean = false;
+
+    searchViewEnabled$ = this.store.pipe(
+        select(OptionsSelectors.CONFIG.base),
+        map((baseConfig) => {
+            if (!baseConfig.fullTextSearch) {
+                this.searchView = false;
+            }
+            return baseConfig.fullTextSearch;
+        }),
+    );
+
+    state$ = this.instance$.pipe(
+        mergeMap((instance) => {
+            const {folders, selectedFolderPk, selectedMail} = instance;
+
+            if (!selectedFolderPk) {
+                const inbox = folders.system.find((f) => f.folderType === MAIL_FOLDER_TYPE.INBOX);
+
+                if (!inbox) {
+                    throw new Error(`Failed to resolve "inbox" folder`);
+                }
+
+                this.store.dispatch(DB_VIEW_ACTIONS.SelectFolder({dbAccountPk: this.dbAccountPk, folderPk: inbox.pk}));
+
                 return EMPTY;
             }
 
-            return this.store.pipe(
-                select(FEATURED.accountRecord(), {pk}),
-                concatMap((instance) => {
-                    if (!instance) {
-                        return EMPTY;
-                    }
-
-                    const {folders, selectedMailData, selectedFolderPk, selectedFolderMails} = instance;
-
-                    if (!selectedFolderPk) {
-                        const inbox = folders.system.find((f) => f.folderType === MAIL_FOLDER_TYPE.INBOX);
-                        if (!inbox) {
-                            throw new Error(`Failed to resolve "inbox" folder`);
-                        }
-                        this.store.dispatch(DB_VIEW_ACTIONS.SelectFolder({dbAccountPk: this.dbAccountPk, folderPk: inbox.pk}));
-                        return EMPTY;
-                    }
-
-                    const selectedFolder = [...folders.system, ...folders.custom].find((f) => f.pk === selectedFolderPk);
-
-                    return [{
-                        folders,
-                        selectedFolderMails: selectedFolder && selectedFolder.pk in selectedFolderMails
-                            ? selectedFolderMails[selectedFolder.pk]
-                            : undefined,
-                        selectedMailData,
-                        selectedFolderPk,
-                    }];
-                }),
-            );
+            return [{
+                folders,
+                selectedMail,
+                selectedFolderPk,
+            }];
         }),
     );
 
     private unSubscribe$ = new Subject();
 
     constructor(
-        private store: Store<State>,
+        store: Store<State>,
         private api: ElectronService,
         private changeDetectorRef: ChangeDetectorRef,
     ) {
-        super();
+        super(store);
+    }
+
+    toggleSearchView() {
+        this.searchView = !this.searchView;
+
+        if (this.searchView) {
+            this.store.dispatch(DB_VIEW_ACTIONS.SelectMail({dbAccountPk: this.dbAccountPk}));
+            this.store.dispatch(DB_VIEW_ACTIONS.ResetSearchMailsBundleItems({dbAccountPk: this.dbAccountPk}));
+        }
+    }
+
+    toggleMailsBundleKey() {
+        this.mailsBundleKey = this.mailsBundleKey === "folderConversationsBundle"
+            ? "folderMailsBundle"
+            : "folderConversationsBundle";
     }
 
     @HostListener("click", ["$event"])
@@ -81,7 +93,7 @@ export class DbViewMailTabComponent extends NgChangesObservableComponent impleme
         }
     }
 
-    trackFolderByPk(index: number, {pk}: View.Folder) {
+    trackFolder(index: number, {pk}: View.Folder) {
         return pk;
     }
 
@@ -89,14 +101,7 @@ export class DbViewMailTabComponent extends NgChangesObservableComponent impleme
         this.store.dispatch(DB_VIEW_ACTIONS.SelectFolder({dbAccountPk: this.dbAccountPk, folderPk}));
     }
 
-    selectListMailToDisplayRequest(mailPk: Mail["pk"]) {
-        this.store.dispatch(DB_VIEW_ACTIONS.SelectListMailToDisplayRequest({dbAccountPk: this.dbAccountPk, mailPk}));
-    }
-
-    selectRootNodeMailToDisplayRequest(mailPk: Mail["pk"]) {
-        this.store.dispatch(DB_VIEW_ACTIONS.SelectRootNodeMailToDisplayRequest({dbAccountPk: this.dbAccountPk, mailPk}));
-    }
-
+    // TODO move export to separate component
     export() {
         this.api.ipcMainClient({timeoutMs: ONE_SECOND_MS * 60 * 5})("dbExport")(this.dbAccountPk)
             .pipe(
@@ -121,6 +126,7 @@ export class DbViewMailTabComponent extends NgChangesObservableComponent impleme
     }
 
     ngOnDestroy() {
+        super.ngOnDestroy();
         this.unSubscribe$.next();
         this.unSubscribe$.complete();
     }

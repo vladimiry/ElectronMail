@@ -1,29 +1,65 @@
 import {ofType, unionize} from "@vladimiry/unionize";
 
+import {Arguments, Unpacked} from "src/shared/types";
 import {DbAccountPk, Folder, Mail, View} from "src/shared/model/database";
+import {Endpoints} from "src/shared/api/main";
+import {MailsBundleKey} from "src/web/src/app/store/reducers/db-view";
 
 export const DB_VIEW_ACTIONS = unionize({
-        MountInstance: ofType<{ dbAccountPk: DbAccountPk; finishPromise: Promise<void>; }>(),
-        UnmountInstance: ofType<{ dbAccountPk: DbAccountPk; }>(),
-        SetFolders: ofType<{ dbAccountPk: DbAccountPk; folders: { system: View.Folder[]; custom: View.Folder[]; } }>(),
-        SelectFolder: ofType<{ dbAccountPk: DbAccountPk; folderPk?: Folder["pk"]; distinct?: boolean; }>(),
-        SelectListMailToDisplayRequest: ofType<{
+        MountInstance: ofType<{
+            dbAccountPk: DbAccountPk;
+            finishPromise: Promise<void>;
+        }>(),
+        UnmountInstance: ofType<{
+            dbAccountPk: DbAccountPk;
+        }>(),
+        SetFolders: ofType<{
+            dbAccountPk: DbAccountPk;
+            folders: { system: View.Folder[]; custom: View.Folder[]; };
+        }>(),
+        SelectFolder: ofType<{
+            dbAccountPk: DbAccountPk;
+            folderPk?: Folder["pk"];
+            distinct?: boolean;
+        }>(),
+        SelectMailRequest: ofType<{
             dbAccountPk: DbAccountPk;
             mailPk: Mail["pk"];
         }>(),
-        SelectListMailToDisplay: ofType<{
+        SelectMail: ofType<{
             dbAccountPk: DbAccountPk;
-            listMailPk: Mail["pk"];
-            rootNode: View.RootConversationNode;
-            rootNodeMail: Mail;
+            value?: {
+                listMailPk: Mail["pk"];
+                rootNode: View.RootConversationNode;
+                conversationMail: Mail;
+            };
         }>(),
-        SelectRootNodeMailToDisplayRequest: ofType<{
+        SelectConversationMailRequest: ofType<{
             dbAccountPk: DbAccountPk;
             mailPk: Mail["pk"];
         }>(),
-        SelectRootNodeMailToDisplay: ofType<{
+        SelectConversationMail: ofType<{
             dbAccountPk: DbAccountPk;
-            rootNodeMail: Mail;
+            conversationMail: Mail;
+        }>(),
+        SortMails: ofType<{
+            dbAccountPk: DbAccountPk;
+            mailsBundleKey: MailsBundleKey;
+            sorterIndex: number;
+        }>(),
+        Paging: ofType<{
+            dbAccountPk: DbAccountPk;
+            mailsBundleKey: MailsBundleKey;
+            reset?: boolean;
+            noIncrement?: boolean;
+        }>(),
+        FullTextSearchRequest: ofType<Arguments<Endpoints["dbFullTextSearch"]>[0]>(),
+        FullTextSearch: ofType<{
+            dbAccountPk: DbAccountPk;
+            value: Unpacked<ReturnType<Endpoints["dbFullTextSearch"]>>;
+        }>(),
+        ResetSearchMailsBundleItems: ofType<{
+            dbAccountPk: DbAccountPk;
         }>(),
     },
     {

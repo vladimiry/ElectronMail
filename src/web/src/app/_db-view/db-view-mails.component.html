@@ -1,30 +1,44 @@
-<div class="controls mb-2">
-    <a
-        (click)="toggleViewMode()"
-        href="javascript:void(0)"
-        title="Toggle Conversation/Plain View Mode"
-    >
-        <i [ngClass]="{
-            'fa-align-justify': state.viewMode == 'conversationsView',
-            'fa-align-right fa-flip-vertical': state.viewMode == 'mailsView'
-        }" class="fa"></i>
-    </a>
-    <div class="badge ml-2">
-        {{ state.viewMode == 'mailsView' ? 'mails' : 'conversations' }}<span *ngIf="state.paging.size">: {{ state.paging.end }}
-        of {{ state.paging.size }}</span>
+<div class="controls d-flex align-items-center flex-shrink-0 mb-2">
+    <div class="d-flex flex-grow-1">
+        <ng-content select="[controls]"></ng-content>
+        <div class="badge">
+            {{ title$ | async }}<span *ngIf="(items$ | async)?.length; let length;">: {{ (paging$ | async)?.end }} of {{ length }}</span>
+        </div>
+    </div>
+    <div class="d-flex">
+        <select
+            #sortSelect
+            (change)="sortChange(sortSelect.value)"
+            *ngIf="sorting$ | async; let sorting;"
+            class="form-control form-control-sm"
+        >
+            <option
+                *ngFor="let sorter of sorting.sorters; index as i;"
+                [selected]="i == sorting.sorterIndex"
+                [value]="i"
+            >
+                {{ sorter.title }}
+            </option>
+        </select>
     </div>
 </div>
-<div class="overflow-auto">
-    <!-- TODO consider using "virtual list", ie rendering only visible data -->
+<div
+    class="overflow-auto"
+    *ngIf="items$ | async; let items;"
+>
+    <!-- TODO consider using "virtual list", ie render only visible data -->
     <email-securely-app-db-view-mail
-        *ngFor="let mailItem of state.mails[state.viewMode].slice(0, state.paging.end); trackBy: trackByMailPk"
-        [attr.selected]="mailItem.mail.pk === state.selectedMailData?.listMailPk"
-        [attr.data-pk]="mailItem.mail.pk"
-        [mail]="mailItem.mail"
-        [conversationSize]="mailItem.conversationSize"
+        *ngFor="let item of items.slice(0, (paging$ | async)?.end); trackBy: trackByMailBundleItem"
+        [attr.data-pk]="item.mail.pk"
+        [mail]="item.mail"
+        [conversationSize]="item.conversationSize"
     ></email-securely-app-db-view-mail>
-    <button class="btn btn-secondary load-more my-3" *ngIf="state.paging.nextPageSize" (click)="loadMore()">
+    <button
+        (click)="loadMore()"
+        *ngIf="(paging$ | async)?.nextPageSize; let nextPageSize;"
+        class="btn btn-secondary load-more my-3"
+    >
         More
-        <small>(+{{ state.paging.nextPageSize }})</small>
+        <small>(+{{ nextPageSize }})</small>
     </button>
 </div>

@@ -162,6 +162,7 @@ const baseConfig = buildBaseConfig(
         ],
         ...(environment !== "test" && {
             optimization: {
+                runtimeChunk: environmentSate.development,
                 splitChunks: {
                     chunks: "all",
                     name: true,

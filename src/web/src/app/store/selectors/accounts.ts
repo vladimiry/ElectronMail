@@ -12,6 +12,7 @@ export const FEATURED = {
     initialized: createSelector(STATE, ({initialized}) => initialized),
     accounts: accountsSelector,
     selectedLogin: createSelector(STATE, ({selectedLogin}) => selectedLogin),
+    progress: createSelector(STATE, ({progress}) => progress),
     selectedAccount: createSelector(
         STATE,
         ({selectedLogin, accounts}) => accounts.find(({accountConfig}) => accountConfig.login === selectedLogin),

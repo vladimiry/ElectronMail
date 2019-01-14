@@ -24,7 +24,7 @@ export interface Context {
     readonly storeFs: StoreModel.StoreFs;
     readonly runtimeEnvironment: RuntimeEnvironment;
     readonly locations: ElectronContextLocations;
-    readonly endpoints: Deferred<Endpoints>;
+    readonly deferredEndpoints: Deferred<Endpoints>;
     readonly initialStores: {
         config: Config;
         settings: Settings;

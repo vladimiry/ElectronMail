@@ -1,63 +1,82 @@
 import PQueue from "p-queue";
-import {Deferred} from "ts-deferred";
-import {Subscription} from "rxjs";
 
-import {IPC_MAIN_API, IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_DB_INDEXER_ON_ACTIONS} from "src/shared/api/main";
+import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_DB_INDEXER_ON_ACTIONS} from "src/shared/api/main";
 import {LOGGER} from "./lib/contants";
-import {ONE_SECOND_MS} from "src/shared/constants";
-import {addToMailsIndex, buildMailsIndex, removeMailsFromIndex} from "./lib/util";
+import {SERVICES_FACTORY, addToMailsIndex, createMailsIndex, removeMailsFromIndex} from "./lib/util";
+import {Unpacked} from "src/shared/types";
 import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(LOGGER, "[index]");
 
-const cleanupSubscription = new Subscription();
-const cleanupDeferred = new Deferred();
-const cleanupPromise = cleanupDeferred.promise;
+// TODO drop "emptyObject"
+const emptyObject = {};
 
-window.onbeforeunload = () => {
-    cleanupSubscription.unsubscribe();
-    cleanupDeferred.resolve();
-    logger.info(`"window.beforeunload" handler executed`);
-};
+const cleanup = SERVICES_FACTORY.cleanup();
+const api = SERVICES_FACTORY.api(cleanup.promise);
+const index = createMailsIndex();
+const indexingQueue = new PQueue({concurrency: 1});
 
-(async () => {
-    const indexingQueue = new PQueue({concurrency: 1});
-    const index = buildMailsIndex();
-    const api = (() => {
-        const client = IPC_MAIN_API.buildClient();
-        const callOptions = {timeoutMs: ONE_SECOND_MS * 3, finishPromise: cleanupPromise};
-        return {
-            dbIndexerOn: client("dbIndexerOn", callOptions),
-            dbIndexerNotification: client("dbIndexerNotification", callOptions),
-        };
-    })();
+document.addEventListener("DOMContentLoaded", bootstrap);
 
-    cleanupSubscription.add(
-        api.dbIndexerNotification().subscribe((action) => {
-            IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.match(action, {
-                Index: async ({key, remove, add}) => {
-                    logger.info(`Received mails to remove/add: ${remove.length}/${add.length}`);
-
-                    await indexingQueue.add(async () => {
-                        await api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.IndexingState({key, status: "indexing"})).toPromise();
-
-                        removeMailsFromIndex(index, remove);
-                        addToMailsIndex(index, add);
-
-                        await api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.IndexingState({key, status: "done"})).toPromise();
-                    });
-
-                    // TODO indexing: drop next line
-                    return {};
+function bootstrap() {
+    (async () => {
+        cleanup.subscription.add(
+            api.dbIndexerNotification().subscribe(
+                dbIndexerNotificationHandler,
+                (error) => {
+                    logger.error(`dbIndexerNotification.error`, error);
+                    throw error;
                 },
-                Stub: () => {
-                    // NOOP
+                () => {
+                    logger.info(`dbIndexerNotification.complete`);
                 },
+            ),
+        );
+
+        logger.info(`dbIndexerNotification.subscribed`);
+    })().catch((error) => {
+        logger.error("uncaught promise rejection", error);
+    });
+}
+
+function dbIndexerNotificationHandler(action: Unpacked<ReturnType<typeof api.dbIndexerNotification>>): void {
+    logger.verbose(`dbIndexerNotification.next, action.type:`, action.type);
+
+    IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.match(action, {
+        Bootstrap: async () => {
+            logger.info("action.Bootstrap()");
+            await api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.Bootstrapped()).toPromise();
+            return emptyObject;
+        },
+        Index: async ({key, remove, add}) => {
+            logger.info(`action.Index()`, `Received mails to remove/add: ${remove.length}/${add.length}`);
+
+            await api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.ProgressState({key, status: {indexing: true}})).toPromise();
+
+            await indexingQueue.add(async () => {
+                removeMailsFromIndex(index, remove);
+                addToMailsIndex(index, add);
             });
-        }),
-    );
 
-    await api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.Bootstrapped()).toPromise();
-})().catch((error) => {
-    logger.error("uncaught promise rejection", error);
-});
+            await api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.ProgressState({key, status: {indexing: false}})).toPromise();
+
+            return emptyObject;
+        },
+        Search: async ({key, uid, query}) => {
+            logger.info(`action.Search()`);
+
+            await api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.ProgressState({key, status: {searching: true}})).toPromise();
+
+            const {items, expandedTerms} = await indexingQueue.add(async () => {
+                return index.search(query);
+            });
+
+            await Promise.all([
+                api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.ProgressState({key, status: {searching: false}})).toPromise(),
+                api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.SearchResult({uid, data: {items, expandedTerms}})).toPromise(),
+            ]);
+
+            return emptyObject;
+        },
+    });
+}

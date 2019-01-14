@@ -1,0 +1,89 @@
+<div
+    [ngClass]="{'flex-basis-half': selectedMail$ | async}"
+    class="d-flex flex-column flex-grow-1 pr-2"
+>
+    <div class="d-flex flex-row flex-shrink-0">
+        <button
+            (click)="backToList()"
+            class="btn btn-secondary d-flex align-items-center mb-2"
+            style="min-width: 144px"
+        >
+            <i class="fa fa-angle-left d-flex"></i>
+            <span class="d-flex flex-grow-1 flex-column">Folders</span>
+        </button>
+        <fieldset [disabled]="(searching$ | async) || (indexing$ | async)">
+            <form
+                (ngSubmit)="submit()"
+                [formGroup]="form"
+                class="form-inline"
+                novalidate
+            >
+                <div
+                    *ngIf="folders$ | async; let folders;"
+                    [autoClose]="false"
+                    class="mx-2"
+                    dropdown
+                    style="position: relative"
+                >
+                    <a
+                        (click)="false"
+                        dropdownToggle
+                        href
+                    >
+                        Folders: {{ foldersInfo.selectedPks.length }} of {{ foldersInfo.allPks.length }}
+                    </a>
+                    <ul
+                        *dropdownMenu
+                        class="dropdown-menu"
+                        formGroupName="folders"
+                        role="menu"
+                    >
+                        <label
+                            *ngFor="let folderPk of foldersInfo.allPks"
+                            class="d-block px-2 py-1"
+                        >
+                            <input
+                                [formControlName]="folderPk"
+                                type="checkbox"
+                            >
+                            {{ foldersInfo.names[folderPk] }}
+                        </label>
+                    </ul>
+                </div>
+                <input
+                    #query
+                    [ngClass]="formControls.query.dirty ? {'is-invalid': formControls.query.invalid, 'is-valid': formControls.query.valid} : {}"
+                    class="form-control mr-2"
+                    formControlName="query"
+                    required
+                    type="text"
+                >
+                <button
+                    [disabled]="form.invalid"
+                    class="btn btn-primary pull-right"
+                    type="submit"
+                >
+                    <i class="fa fa-spinner fa-pulse fa-fw"></i>
+                    <i class="fa fa-search"></i>
+                    {{ (indexing$ | async) ? "Indexing" : "Search" }}
+                </button>
+            </form>
+        </fieldset>
+    </div>
+    <div class="d-flex flex-row flex-grow-1">
+        <email-securely-app-db-view-mails
+            [dbAccountPk]="dbAccountPk"
+            [mailsBundleKey]="'searchMailsBundle'"
+        ></email-securely-app-db-view-mails>
+    </div>
+</div>
+<div
+    *ngIf="selectedMail$ | async"
+    class="flex-basis-half pr-2 d-flex flex-column"
+>
+    <div class="overflow-auto">
+        <email-securely-app-db-view-mail-body
+            [dbAccountPk]="dbAccountPk"
+        ></email-securely-app-db-view-mail-body>
+    </div>
+</div>

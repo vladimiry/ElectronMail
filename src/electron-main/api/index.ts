@@ -152,7 +152,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
 
     IPC_MAIN_API.registerApi(endpoints, {logger: {error: logger.error, info: () => {}}});
 
-    ctx.endpoints.resolve(endpoints);
+    ctx.deferredEndpoints.resolve(endpoints);
 
     return endpoints;
 };

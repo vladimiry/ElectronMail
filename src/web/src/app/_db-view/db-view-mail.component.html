@@ -5,11 +5,8 @@
                 class="state mr-1 badge badge-pill"
                 title="{{ stateTitle }}"
             ></div>
-            <div
-                *ngIf="conversationSize"
-                class="conversation-size mr-1 badge"
-            >
-                <!-- TODO render "conversationSize" using transcluding -->
+            <!-- TODO render "conversationSize" using transcluding -->
+            <div *ngIf="conversationSize" class="conversation-size mr-1 badge">
                 {{ conversationSize }}
             </div>
             <a
@@ -19,10 +16,7 @@
                 title="{{ mailAddress.name ? mailAddress.name + ' <' + mailAddress.address + '>': '' }}"
             >
                 {{ mailAddress.name || mailAddress.address }}
-                <span
-                    *ngIf="mailAddressTotal && mailAddressTotal  > 1"
-                    class="prevent-default-event d-flex ml-1"
-                >
+                <span *ngIf="mailAddressTotal && mailAddressTotal  > 1" class="d-flex ml-1">
                     (+{{ mailAddressTotal - 1 }})
                 </span>
             </a>
@@ -36,10 +30,7 @@
                 </div>
             </div>
         </div>
-        <i
-            *ngIf="mail.confidential"
-            class="fa fa-lock d-flex text-primary ml-2"
-        ></i>
+        <i *ngIf="mail.confidential" class="fa fa-lock d-flex text-primary ml-2"></i>
     </div>
     <div class="c-auto">
         <div class="d-flex">
@@ -51,10 +42,7 @@
                 score: {{ mail.score.toFixed(2) }}
             </div>
             <div class="folders flex-row ml-2">
-                <div
-                    *ngFor="let folder of mail.folders; trackBy: trackFolderByPk"
-                    class="d-flex badge mr-2"
-                >
+                <div *ngFor="let folder of mail.folders; trackBy: trackFolderByPk" class="d-flex badge mr-2">
                     {{ folder.name }}
                 </div>
             </div>

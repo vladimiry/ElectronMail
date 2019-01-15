@@ -1,40 +1,40 @@
-<div class="wrapper" *ngIf="initialized$ | async" [ngClass]="{'compact-layout': compactLayout$ | async}">
+<div *ngIf="initialized$ | async" [ngClass]="{'compact-layout': compactLayout$ | async}" class="wrapper">
     <div class="accounts-block px-2 pt-2">
         <div class="controls">
             <div class="btn-group" dropdown>
-                <button type="button" class="btn btn-light" (click)="openSettingsView()" id="optionsMenuItem">
+                <button (click)="openSettingsView()" class="btn btn-light" id="optionsMenuItem" type="button">
                     <i class="fa fa-cog"></i>
                     Options
                 </button>
-                <button type="button" dropdownToggle class="btn btn-light dropdown-toggle dropdown-toggle-split">
+                <button class="btn btn-light dropdown-toggle dropdown-toggle-split" dropdownToggle type="button">
                     <span class="caret"></span>
                 </button>
                 <ul *dropdownMenu class="dropdown-menu" role="menu">
                     <li role="menuitem">
-                        <button class="dropdown-item toggle-layout-view" type="button" (click)="toggleCompactLayout()">
+                        <button (click)="toggleCompactLayout()" class="dropdown-item toggle-layout-view" type="button">
                             Toggle View Mode
                         </button>
                     </li>
                     <li role="menuitem">
-                        <button class="dropdown-item" type="button" (click)="openSettingsFolder()">
+                        <button (click)="openSettingsFolder()" class="dropdown-item" type="button">
                             Open Settings Folder
                         </button>
                     </li>
                     <li class="divider dropdown-divider"></li>
                     <li role="menuitem">
-                        <button class="dropdown-item" type="button" (click)="openAboutWindow()">
+                        <button (click)="openAboutWindow()" class="dropdown-item" type="button">
                             About
                         </button>
                     </li>
                     <li class="divider dropdown-divider"></li>
                     <li role="menuitem">
-                        <button class="dropdown-item" type="button" (click)="logout()" id="logoutMenuItem">
+                        <button (click)="logout()" class="dropdown-item" id="logoutMenuItem" type="button">
                             <i class="fa fa-sign-out"></i>
                             Log out
                         </button>
                     </li>
                     <li role="menuitem">
-                        <button class="dropdown-item text-danger" type="button" (click)="quit()">
+                        <button (click)="quit()" class="dropdown-item text-danger" type="button">
                             <i class="fa fa-times"></i>
                             Exit
                         </button>
@@ -42,30 +42,35 @@
                 </ul>
             </div>
         </div>
-        <div class="btn-group accounts-list d-lg-none" dropdown placement="bottom right"
-             [ngStyle]="!accounts.length && {'visibility': 'hidden'}">
-            <div class="unread-summary" *ngIf="unreadSummary && accounts.length > 1">
-                <span class="badge">{{ unreadSummary }}</span>
+        <div
+            [ngStyle]="!accounts.length && {'visibility': 'hidden'}" class="btn-group accounts-list d-lg-none" dropdown
+            placement="bottom right"
+        >
+            <div *ngIf="unreadSummary && accounts.length > 1" class="unread-summary">
+                <email-securely-app-unread-badge
+                    *ngIf="unreadSummary && accounts.length > 1"
+                    [value]="unreadSummary"
+                ></email-securely-app-unread-badge>
             </div>
             <email-securely-app-account-title
+                (click)="cancelEvent($event)"
                 *ngIf="selectedAccount"
                 [account]="selectedAccount"
                 [highlighting]="false"
                 dropdownToggle
-                (click)="cancelEvent($event)"
             ></email-securely-app-account-title>
             <ul *dropdownMenu class="dropdown-menu dropdown-menu-right" role="menu">
-                <li role="menuitem" *ngFor="let account of accounts; trackBy: trackAccount">
+                <li *ngFor="let account of accounts; trackBy: trackAccount" role="menuitem">
                     <email-securely-app-account-title
-                        [account]="account"
                         (click)="activateAccount($event, account)"
+                        [account]="account"
                     ></email-securely-app-account-title>
                 </li>
             </ul>
         </div>
         <ul class="list-group accounts-list d-none d-lg-flex">
             <email-securely-app-account-title
-                *ngFor="let account of accounts; trackBy: trackAccount" (click)="activateAccount($event, account)"
+                (click)="activateAccount($event, account)" *ngFor="let account of accounts; trackBy: trackAccount"
                 [account]="account"
             ></email-securely-app-account-title>
         </ul>
@@ -81,7 +86,7 @@
         </ng-template>
         <ng-template #accountsUndefined>
             <div class="d-flex justify-content-center align-items-center p-3 no-accounts-block">
-                <button type="button" class="btn btn-primary btn-lg" (click)="openAddingAccountView()">
+                <button (click)="openAddingAccountView()" class="btn btn-primary btn-lg" type="button">
                     <i class="fa fa-plus"></i>
                     Add Account
                 </button>

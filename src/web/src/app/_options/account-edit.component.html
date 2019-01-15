@@ -6,9 +6,9 @@
                 <span *ngIf="account; else label" [attr.data-login]="account.login">{{ account.login }}</span>
                 <ng-template #label>Add Account</ng-template>
             </div>
-            <div class="form-check float-md-right">
-                <label class="form-check-label">
-                    <input type="checkbox" class="form-check-input" formControlName="database">
+            <div class="custom-control custom-switch float-md-right">
+                <input type="checkbox" class="custom-control-input" formControlName="database" id="databaseCheckbox">
+                <label class="custom-control-label" for="databaseCheckbox">
                     Local store
                     <i class="fa fa-info-circle text-primary"
                        [popover]="localStorePopoverTemplate" placement="bottom" container="body" triggers="mouseenter:mouseleave"

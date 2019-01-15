@@ -44,9 +44,9 @@ export const APP_MODULE_NG_CONF: NgModule = {
     ],
     declarations: [
         AppComponent,
-        RouterProxyComponent,
-        ErrorListComponent,
         ErrorItemComponent,
+        ErrorListComponent,
+        RouterProxyComponent,
     ],
     providers: [
         {provide: APP_BASE_HREF, useValue: "/"},

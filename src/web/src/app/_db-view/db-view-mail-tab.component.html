@@ -55,19 +55,20 @@
                     class="d-inline-block mr-2"
                     controls
                 >
-                    <a
-                        (click)="toggleMailsBundleKey()"
-                        href="javascript:void(0)"
-                        title="Toggle Conversation/Plain View Mode"
+                    <button
+                        (click)="toggleMailsBundleKey();"
+                        class="btn btn-link p-0"
+                        title="Toggle mails/conversations view mode"
+                        type="button"
                     >
                         <i
                             [ngClass]="{
-                                'fa-align-justify': mailsBundleKey == 'folderConversationsBundle',
-                                'fa-align-right fa-flip-vertical': mailsBundleKey == 'folderMailsBundle'
+                                'fa-align-right fa-flip-vertical': mailsBundleKey == 'folderConversationsBundle',
+                                'fa-align-justify': mailsBundleKey == 'folderMailsBundle'
                             }"
                             class="fa"
                         ></i>
-                    </a>
+                    </button>
                 </div>
             </email-securely-app-db-view-mails>
         </div>
@@ -84,7 +85,7 @@
     </div>
 </ng-container>
 <ng-template #loadingTemplate>
-    <div class="progress d-flex flex-grow-1">
+    <div class="progress d-flex flex-grow-1 mr-2">
         <div
             class="progress-bar progress-bar-striped progress-bar-animated bg-secondary"
             style="width: 100%"

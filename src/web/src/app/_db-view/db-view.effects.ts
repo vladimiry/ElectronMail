@@ -113,7 +113,10 @@ export class DbViewEffects {
             return this.api.ipcMainClient()("dbFullTextSearch", {timeoutMs: ONE_SECOND_MS * 5, serialization: "jsan"})({
                 type, login, query, folderPks,
             }).pipe(
-                mergeMap((value) => of(DB_VIEW_ACTIONS.FullTextSearch({dbAccountPk: {type, login}, value}))),
+                mergeMap((value) => [
+                    DB_VIEW_ACTIONS.SelectMail({dbAccountPk: {type, login}}),
+                    DB_VIEW_ACTIONS.FullTextSearch({dbAccountPk: {type, login}, value}),
+                ]),
             );
         }),
     );

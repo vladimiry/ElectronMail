@@ -49,6 +49,7 @@
             [dbAccountPk]="dbAccountPk"
             [rootConversationNode]="selectedMail.rootNode"
             [title]="'Export (' + selectedMail.rootNode.summary.size + ')'"
+            [ngClass]="{'pt-0': selectedMail.rootNode.summary.size > 1}"
         ></email-securely-app-db-view-mails-export>
     </div>
 

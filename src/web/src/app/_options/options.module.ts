@@ -1,5 +1,6 @@
 import {AccordionModule} from "ngx-bootstrap/accordion";
 import {CollapseModule} from "ngx-bootstrap/collapse";
+import {ColorPickerModule} from "ngx-color-picker";
 import {DragulaModule} from "ng2-dragula";
 import {EffectsModule} from "@ngrx/effects";
 import {NgModule} from "@angular/core";
@@ -22,6 +23,7 @@ import {StorageComponent} from "./storage.component";
 @NgModule({
     imports: [
         CollapseModule,
+        ColorPickerModule,
         AccordionModule,
         PopoverModule,
         DragulaModule,

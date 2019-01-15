@@ -86,30 +86,27 @@ export class AccountComponent extends NgChangesObservableComponent implements On
 
     ngOnInit() {
         this.subscription.add(
-            this.store.pipe(
-                select(OptionsSelectors.CONFIG.unreadNotifications),
-                distinctUntilChanged(),
-                mergeMap((unreadNotifications) => {
-                    return unreadNotifications
-                        ? this.account$.pipe(
-                            map((a) => ({login: a.accountConfig.login, unread: a.notifications.unread})),
-                            pairwise(),
-                            filter(([prev, curr]) => curr.unread > prev.unread),
-                            map(([prev, curr]) => curr),
-                        )
-                        : [];
+            this.account$
+                .pipe(
+                    withLatestFrom(this.store.pipe(select(OptionsSelectors.CONFIG.unreadNotifications))),
+                    filter(([, unreadNotifications]) => Boolean(unreadNotifications)),
+                    map(([account]) => account),
+                    map((a) => ({login: a.accountConfig.login, unread: a.notifications.unread})),
+                    pairwise(),
+                    filter(([prev, curr]) => curr.unread > prev.unread),
+                    map(([prev, curr]) => curr),
+                )
+                .subscribe(({login, unread}) => {
+                    new Notification(
+                        APP_NAME,
+                        {
+                            body: `Account "${login}" has ${unread} unread email${unread > 1 ? "s" : ""}.`,
+                        },
+                    ).onclick = () => this.zone.run(() => {
+                        this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.Activate({login}));
+                        this.dispatchInLoggerZone(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));
+                    });
                 }),
-            ).subscribe(({login, unread}) => {
-                new Notification(
-                    APP_NAME,
-                    {
-                        body: `Account "${login}" has ${unread} unread email${unread > 1 ? "s" : ""}.`,
-                    },
-                ).onclick = () => this.zone.run(() => {
-                    this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.Activate({login}));
-                    this.dispatchInLoggerZone(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));
-                });
-            }),
         );
     }
 

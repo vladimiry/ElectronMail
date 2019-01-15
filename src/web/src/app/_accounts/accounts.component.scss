@@ -83,8 +83,7 @@ $webview-border: darken($app-color-bg-dark, 10%);
                 padding-left: $padding-x-addition;
                 padding-right: ($app-spacer-2 + $padding-x-addition);
 
-                .badge {
-                    @include app-unread-badge;
+                #{$app-prefix}-unread-badge {
                     font-size: 100%;
                 }
             }

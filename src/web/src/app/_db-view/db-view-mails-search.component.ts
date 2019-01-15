@@ -34,6 +34,7 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
     formControls = {
         query: new FormControl(null, Validators.required),
         folders: new FormGroup({}),
+        allFoldersToggled: new FormControl(false),
     };
 
     form = new FormGroup(this.formControls);
@@ -43,7 +44,6 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
 
     selectedMail$ = this.instance$.pipe(
         map((value) => value.selectedMail),
-        mergeMap((value) => value ? [value] : EMPTY),
     );
 
     accountProgress$ = this.dbAccountPk$.pipe(
@@ -121,6 +121,15 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
             .pipe(takeUntil(this.unSubscribe$))
             .subscribe(() => {
                 this.foldersInfo.selectedPks = this.resolveSelectedPks();
+            });
+
+        this.formControls.allFoldersToggled.valueChanges
+            .pipe(takeUntil(this.unSubscribe$))
+            .subscribe(() => {
+                const {value} = this.formControls.allFoldersToggled;
+                Object.values(this.formControls.folders.controls).forEach((control) => {
+                    control.patchValue(value);
+                });
             });
     }
 

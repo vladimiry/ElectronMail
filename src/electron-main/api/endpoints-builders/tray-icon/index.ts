@@ -2,12 +2,13 @@ import {app} from "electron";
 import {from} from "rxjs";
 
 import {Context} from "src/electron-main/model";
+import {DEFAULT_UNREAD_BADGE_BG_COLOR} from "src/shared/constants";
 import {Endpoints} from "src/shared/api/main";
 import {loggedOutBundle, trayIconBundleFromPath, unreadNative} from "./icon-builder";
 
 const config = {
     loggedOut: {scale: .25, color: "#F9C83E"},
-    unread: {scale: .75, color: "#EE3F3B", textColor: "#FFFFFF"},
+    unread: {scale: .75, color: DEFAULT_UNREAD_BADGE_BG_COLOR, textColor: "#FFFFFF"},
 };
 
 export async function buildEndpoints(
@@ -17,7 +18,7 @@ export async function buildEndpoints(
     const loggedOutCanvas = await loggedOutBundle(defaultCanvas, config.loggedOut);
 
     return {
-        updateOverlayIcon: ({hasLoggedOut, unread}) => from((async () => {
+        updateOverlayIcon: ({hasLoggedOut, unread, unreadBgColor}) => from((async () => {
             const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
             const tray = ctx.uiContext && ctx.uiContext.tray;
 
@@ -28,7 +29,19 @@ export async function buildEndpoints(
             const canvas = hasLoggedOut ? loggedOutCanvas : defaultCanvas;
 
             if (unread > 0) {
-                const {icon, overlay} = await unreadNative(unread, ctx.locations.numbersFont, canvas, config.unread);
+                const {
+                    icon,
+                    overlay,
+                } = await unreadNative(
+                    unread,
+                    ctx.locations.numbersFont,
+                    canvas,
+                    {
+                        ...config.unread,
+                        ...(unreadBgColor && {color: unreadBgColor}),
+                    },
+                );
+
                 browserWindow.setOverlayIcon(overlay, `Unread messages count: ${unread}`);
                 tray.setImage(icon);
                 app.setBadgeCount(unread);

@@ -1,5 +1,5 @@
 import {Component, OnDestroy, OnInit} from "@angular/core";
-import {Observable, Subscription} from "rxjs";
+import {Observable, Subscription, combineLatest} from "rxjs";
 import {Store, select} from "@ngrx/store";
 import {distinctUntilChanged, map} from "rxjs/operators";
 import {equals} from "ramda";
@@ -27,6 +27,10 @@ export class AccountsComponent implements OnInit, OnDestroy {
     private accounts$ = this.store.pipe(select(AccountsSelectors.FEATURED.accounts));
     private subscription = new Subscription();
 
+    get accounts(): WebAccount[] {
+        return [...this.accountsMap.values()];
+    }
+
     constructor(
         private api: ElectronService,
         private store: Store<State>,
@@ -35,10 +39,6 @@ export class AccountsComponent implements OnInit, OnDestroy {
             map((accounts) => accounts.map((account) => account.accountConfig.login)),
             distinctUntilChanged((prev, curr) => equals([...prev].sort(), [...curr].sort())),
         );
-    }
-
-    get accounts(): WebAccount[] {
-        return [...this.accountsMap.values()];
     }
 
     getAccountByLogin(login: string): WebAccount {
@@ -58,12 +58,17 @@ export class AccountsComponent implements OnInit, OnDestroy {
             }),
         );
         this.subscription.add(
-            this.store.select(AccountsSelectors.ACCOUNTS.loggedInAndUnreadSummary)
-                .pipe(distinctUntilChanged((prev, curr) => equals(prev, curr))) // TODO => "distinctUntilChanged(equals)"
-                .subscribe(({hasLoggedOut, unread}) => {
-                    this.unreadSummary = unread;
-                    this.store.dispatch(CORE_ACTIONS.UpdateOverlayIcon({hasLoggedOut, unread}));
-                }),
+            combineLatest(
+                this.store.select(AccountsSelectors.ACCOUNTS.loggedInAndUnreadSummary).pipe(
+                    distinctUntilChanged((prev, curr) => equals(prev, curr)), // TODO => "distinctUntilChanged(equals)"
+                ),
+                this.store.pipe(select(OptionsSelectors.CONFIG.unreadBgColor)).pipe(
+                    distinctUntilChanged(),
+                ),
+            ).subscribe(([{hasLoggedOut, unread}, unreadBgColor]) => {
+                this.unreadSummary = unread;
+                this.store.dispatch(CORE_ACTIONS.UpdateOverlayIcon({hasLoggedOut, unread, unreadBgColor}));
+            }),
         );
         this.subscription.add(
             this.store.pipe(

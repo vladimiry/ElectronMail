@@ -3,10 +3,6 @@
 :host {
     display: flex;
 
-    .badge {
-        @include app-unread-badge;
-    }
-
     .fa {
         line-height: inherit;
     }

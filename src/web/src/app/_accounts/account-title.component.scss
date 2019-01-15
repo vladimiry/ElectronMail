@@ -73,8 +73,4 @@
     .fa {
         line-height: $line-height-base;
     }
-
-    .badge {
-        @include app-unread-badge;
-    }
 }

@@ -1,99 +1,203 @@
 <fieldset [disabled]="(processing$ | async)">
-    <form [formGroup]="form" novalidate class="form-group">
-        <div class="form-check">
-            <label class="form-check-label">
-                <input type="checkbox" class="form-check-input" formControlName="closeToTray">
+    <form
+        [formGroup]="form"
+        class="form-group m-0"
+        novalidate
+    >
+        <div class="custom-control custom-switch">
+            <input
+                class="custom-control-input"
+                formControlName="closeToTray"
+                id="closeToTrayCheckbox"
+                type="checkbox"
+            >
+            <label class="custom-control-label" for="closeToTrayCheckbox">
                 Close to tray
             </label>
         </div>
-        <div class="form-check">
-            <label class="form-check-label">
-                <input type="checkbox" class="form-check-input" formControlName="compactLayout">
+        <div class="custom-control custom-switch">
+            <input
+                class="custom-control-input"
+                formControlName="compactLayout"
+                id="compactLayoutCheckbox"
+                type="checkbox"
+            >
+            <label class="custom-control-label" for="compactLayoutCheckbox">
                 Tabs view mode
             </label>
         </div>
-        <div class="form-check">
-            <label class="form-check-label">
-                <input type="checkbox" class="form-check-input" formControlName="fullTextSearch">
+        <div class="custom-control custom-switch">
+            <input
+                class="custom-control-input"
+                formControlName="fullTextSearch"
+                id="fullTextSearchCheckbox"
+                type="checkbox"
+            >
+            <label class="custom-control-label" for="fullTextSearchCheckbox">
                 Full-text search
-                <i class="fa fa-info-circle text-warning"
-                   *ngIf="fullTextSearchDisabled$ | async"
-                   [popover]="fullTextSearchPopoverTemplate" placement="bottom" container="body" triggers="mouseenter:mouseleave"
+                <i
+                    *ngIf="fullTextSearchDisabled$ | async"
+                    [popover]="fullTextSearchPopoverTemplate"
+                    class="fa fa-info-circle text-warning"
+                    container="body"
+                    placement="bottom"
+                    triggers="mouseenter:mouseleave"
                 ></i>
                 <ng-template #fullTextSearchPopoverTemplate>
                     This feature works together with <code>local store</code> feature which you can enable per account.
                 </ng-template>
             </label>
         </div>
-        <div class="form-check">
-            <label class="form-check-label">
-                <input type="checkbox" class="form-check-input" formControlName="checkForUpdatesAndNotify">
+        <div class="custom-control custom-switch">
+            <input
+                class="custom-control-input"
+                formControlName="checkForUpdatesAndNotify"
+                id="checkForUpdatesAndNotifyCheckbox"
+                type="checkbox"
+            >
+            <label class="custom-control-label" for="checkForUpdatesAndNotifyCheckbox">
                 Automatic update
-                <i class="fa fa-info-circle text-primary"
-                   [popover]="checkForUpdatesAndNotifyPopoverTemplate" placement="bottom" container="body" triggers="mouseenter:mouseleave"
+                <i
+                    [popover]="checkForUpdatesAndNotifyPopoverTemplate"
+                    class="fa fa-info-circle text-primary"
+                    container="body"
+                    placement="bottom"
+                    triggers="mouseenter:mouseleave"
                 ></i>
                 <ng-template #checkForUpdatesAndNotifyPopoverTemplate>
                     <code>.AppImage</code> and <code>.exe</code> are only supported installation package formats at this time.
                 </ng-template>
             </label>
         </div>
-        <div class="form-check">
-            <label class="form-check-label">
-                <input type="checkbox" class="form-check-input" formControlName="startMinimized">
+        <div class="custom-control custom-switch">
+            <input
+                class="custom-control-input"
+                formControlName="startMinimized"
+                id="startMinimizedCheckbox"
+                type="checkbox"
+            >
+            <label class="custom-control-label" for="startMinimizedCheckbox">
                 Start minimized to tray
             </label>
         </div>
-        <div class="form-check">
-            <label class="form-check-label">
-                <input type="checkbox" class="form-check-input" formControlName="findInPage">
+        <div class="custom-control custom-switch">
+            <input
+                class="custom-control-input"
+                formControlName="findInPage"
+                id="findInPageCheckbox"
+                type="checkbox"
+            >
+            <label class="custom-control-label" for="findInPageCheckbox">
                 Find in page (Ctrl+F)
-                <i class="fa fa-info-circle text-primary"
-                   [popover]="findInPagePopoverTemplate" placement="bottom" container="body" triggers="mouseenter:mouseleave"
+                <i
+                    [popover]="findInPagePopoverTemplate"
+                    class="fa fa-info-circle text-primary"
+                    container="body"
+                    placement="bottom"
+                    triggers="mouseenter:mouseleave"
                 ></i>
                 <ng-template #findInPagePopoverTemplate>
                     <ul class="pl-3 m-0">
                         <li>
-                            The in page search is only available within accounts page. So if you have no accounts added to the app then
+                            The <code>in page search</code> is only available within accounts page. So if you have no accounts added to the app then
                             Ctrl+F hotkey will take no effect.
                         </li>
                         <li>
                             The search window will be automatically closed on switching between accounts.
                         </li>
                         <li>
-                            Search window will be automatically closed on switching to the database view mode. Ctrl+F hotkey takes no effect
-                            while in database view mode.
+                            Search window will be automatically closed on switching to the <code>database view</code> mode. Ctrl+F hotkey takes no effect
+                            while in <code>database view</code> mode.
                         </li>
                     </ul>
                 </ng-template>
             </label>
         </div>
-        <div class="form-check">
-            <label class="form-check-label">
-                <input type="checkbox" class="form-check-input" formControlName="disableSpamNotifications">
+        <div class="custom-control custom-switch">
+            <input
+                class="custom-control-input"
+                formControlName="disableSpamNotifications"
+                id="disableSpamNotificationsCheckbox"
+                type="checkbox"
+            >
+            <label class="custom-control-label" for="disableSpamNotificationsCheckbox">
                 Disable notifications on spam folders
             </label>
+            <i
+                [popover]="disableSpamNotificationsPopoverTemplate"
+                class="fa fa-info-circle text-primary align-self-center"
+                container="body"
+                placement="bottom"
+                triggers="mouseenter:mouseleave"
+            ></i>
+            <ng-template #disableSpamNotificationsPopoverTemplate>
+                This option only makes sense if <code>local store</code> feature is enabled for account.
+            </ng-template>
         </div>
-        <div class="form-check">
-            <label class="form-check-label">
-                <input type="checkbox" class="form-check-input" formControlName="unreadNotifications">
+        <div class="custom-control custom-switch">
+            <input
+                class="custom-control-input"
+                formControlName="unreadNotifications"
+                id="unreadNotificationsCheckbox"
+                type="checkbox"
+            >
+            <label class="custom-control-label" for="unreadNotificationsCheckbox">
                 Desktop notifications for unread messages
             </label>
         </div>
         <hr>
-        <div class="form-group">
-            <label for="logLevelSelect">Log Level</label>
-            <i class="fa fa-info-circle text-warning"
-               [popover]="popoverTemplate" placement="bottom" container="body" triggers="mouseenter:mouseleave"
-            ></i>
-            <ng-template #popoverTemplate>Think twice before selecting a value other than <code>error</code>.</ng-template>
-            <select class="form-control" formControlName="logLevel" id="logLevelSelect">
+        <div class="d-flex">
+            <select
+                class="form-control form-control-sm w-25 mr-2"
+                formControlName="logLevel"
+                id="logLevelSelect"
+            >
                 <option
-                    *ngFor="let logLevel of logLevels" [value]="logLevel">{{ logLevel }}
+                    *ngFor="let logLevel of logLevels"
+                    [value]="logLevel"
+                >{{ logLevel }}
                 </option>
             </select>
-            <div class="text-muted mt-2">
-                Log files located in the <a href (click)="openSettingsFolder($event)">Settings Folder</a>.
-            </div>
+            <label class="d-flex flex-shrink-0 align-self-center m-0 flex-grow-1" for="logLevelSelect">
+                Log level
+                <i
+                    [popover]="logLevelSelectPopoverTemplate"
+                    class="fa fa-info-circle text-warning align-self-center ml-1"
+                    container="body"
+                    placement="bottom"
+                    triggers="mouseenter:mouseleave"
+                ></i>
+                <ng-template #logLevelSelectPopoverTemplate>
+                    Think twice before selecting a value other than <code>error</code>.
+                </ng-template>
+            </label>
+        </div>
+        <div class="text-muted mt-2">
+            Log files located in the <a (click)="openSettingsFolder($event)" href>Settings Folder</a>.
+        </div>
+        <hr>
+        <div class="d-flex">
+            <input
+                (colorPickerChange)="colorPickerChangeHandler($event)"
+                [colorPicker]="$unreadBgColor | async"
+                [cpOutputFormat]="'hex'"
+                [cpPosition]="'top'"
+                [cpToggle]="colorPickerOpened"
+                [value]="$unreadBgColor | async"
+                class="form-control form-control-sm mr-2 w-25"
+                readonly
+                style="cursor: pointer;"
+                type="text"
+            />
+            <email-securely-app-unread-badge
+                (click)="colorPickerOpened = !colorPickerOpened"
+                [value]="$unreadSummary | async"
+                class="mr-2"
+                style="cursor: pointer;"
+            ></email-securely-app-unread-badge>
+            <label class="d-flex flex-shrink-0 align-self-center m-0 flex-grow-1">
+                Background color of the "unread" notification badge
+            </label>
         </div>
     </form>
 </fieldset>

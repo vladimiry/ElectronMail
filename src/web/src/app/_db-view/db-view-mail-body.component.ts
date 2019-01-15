@@ -9,8 +9,7 @@ import {
     QueryList,
     ViewChildren,
 } from "@angular/core";
-import {BehaviorSubject, Subject, Subscription, combineLatest, fromEvent, merge} from "rxjs";
-import {EMPTY} from "rxjs/internal/observable/empty";
+import {BehaviorSubject, EMPTY, Subject, Subscription, combineLatest, fromEvent, merge} from "rxjs";
 import {Store} from "@ngrx/store";
 import {delay, distinctUntilChanged, filter, map, mergeMap} from "rxjs/operators";
 

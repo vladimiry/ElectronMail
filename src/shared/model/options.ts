@@ -6,21 +6,20 @@ import {Model as StoreModel} from "fs-json-store";
 
 import {AccountConfig} from "src/shared/model/account";
 
-export type BaseConfig = Partial<Pick<Config,
-    | "findInPage"
+export type BaseConfig = Pick<Config,
+    | "checkForUpdatesAndNotify"
     | "closeToTray"
     | "compactLayout"
-    | "startMinimized"
-    | "fullTextSearch"
-    | "unreadNotifications"
+    | "customUnreadBgColor"
     | "disableSpamNotifications"
-    | "checkForUpdatesAndNotify">>
-    &
-    Pick<Config, "logLevel">;
+    | "findInPage"
+    | "fullTextSearch"
+    | "logLevel"
+    | "startMinimized"
+    | "unreadNotifications">;
 
 export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     encryptionPreset: PasswordBasedPreset;
-    logLevel: LogLevel;
     window: {
         maximized?: boolean;
         bounds: { x?: number; y?: number; width: number; height: number; };
@@ -38,6 +37,17 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
         domElementsResolving: number;
         defaultApiCall: number;
     };
+    // base
+    checkForUpdatesAndNotify?: boolean;
+    closeToTray?: boolean;
+    compactLayout?: boolean;
+    customUnreadBgColor?: string;
+    disableSpamNotifications?: boolean;
+    findInPage?: boolean;
+    fullTextSearch?: boolean;
+    logLevel: LogLevel;
+    startMinimized?: boolean;
+    unreadNotifications?: boolean;
 }
 
 export interface Settings extends Partial<StoreModel.StoreEntity> {

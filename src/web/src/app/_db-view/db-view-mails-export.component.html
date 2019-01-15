@@ -1,0 +1,33 @@
+<ng-container *ngIf="!(($state | async).exporting); else progressTemplate">
+    <a
+        (click)="export()"
+        class="d-flex flex-grow-1 prevent-default-event"
+        href="javascript:void(0)"
+        title="App exports emails in the original unsanitized form. Attachments are ignored."
+    >
+        <span class="text">{{ title }}</span>
+    </a>
+    <i
+        [placement]="popupPlacement"
+        [popover]="popupTemplate"
+        class="fa fa-info-circle text-warning d-flex ml-2"
+        container="body"
+        triggers="mouseenter:mouseleave"
+    ></i>
+    <ng-template #popupTemplate>
+        <div class="text-center">
+            App exports emails in the<br>
+            original unsanitized form.<br>
+            Attachments are ignored.
+        </div>
+    </ng-template>
+</ng-container>
+<ng-template #progressTemplate>
+    <div
+        class="text-primary d-flex flex-grow-1"
+        style="cursor: not-allowed"
+    >
+        <span class="text">Export</span>
+        <small><i class="fa fa-spinner fa-pulse fa-fw ml-2"></i></small>
+    </div>
+</ng-template>

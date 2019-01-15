@@ -1,16 +1,25 @@
-<div class="controls d-flex align-items-center flex-shrink-0 mb-2">
+<div
+    *ngIf="(items$ | async) as items"
+    class="controls d-flex align-items-center flex-shrink-0 mb-2"
+>
     <div class="d-flex flex-grow-1">
         <ng-content select="[controls]"></ng-content>
         <div class="badge">
-            {{ title$ | async }}<span *ngIf="(items$ | async)?.length; let length;">: {{ (paging$ | async)?.end }} of {{ length }}</span>
+            {{ title$ | async }}<span *ngIf="items.length">: {{ (paging$ | async)?.end }} of {{ items.length }}</span>
         </div>
     </div>
     <div class="d-flex">
+        <email-securely-app-db-view-mails-export
+            *ngIf="items.length"
+            [dbAccountPk]="dbAccountPk"
+            [mailsBundleItems]="items"
+            [title]="'Export (' + items.length + ')'"
+        ></email-securely-app-db-view-mails-export>
         <select
             #sortSelect
             (change)="sortChange(sortSelect.value)"
             *ngIf="sorting$ | async; let sorting;"
-            class="form-control form-control-sm"
+            class="form-control form-control-sm ml-2"
         >
             <option
                 *ngFor="let sorter of sorting.sorters; index as i;"

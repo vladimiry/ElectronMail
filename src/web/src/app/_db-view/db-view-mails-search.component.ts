@@ -10,10 +10,9 @@ import {
     QueryList,
     ViewChildren,
 } from "@angular/core";
-import {EMPTY} from "rxjs/internal/observable/empty";
+import {EMPTY, Subject, combineLatest} from "rxjs";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store, select} from "@ngrx/store";
-import {Subject, combineLatest} from "rxjs";
 import {distinctUntilChanged, map, mergeMap, takeUntil} from "rxjs/operators";
 
 import {AccountsSelectors} from "src/web/src/app/store/selectors";
@@ -23,12 +22,12 @@ import {MAIL_FOLDER_TYPE, View} from "src/shared/model/database";
 import {State} from "src/web/src/app/store/reducers/db-view";
 
 @Component({
-    selector: "email-securely-app-db-view-mail-search",
-    templateUrl: "./db-view-mail-search.component.html",
-    styleUrls: ["./db-view-mail-search.component.scss"],
+    selector: "email-securely-app-db-view-mails-search",
+    templateUrl: "./db-view-mails-search.component.html",
+    styleUrls: ["./db-view-mails-search.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DbViewMailSearchComponent extends DbViewAbstractComponent implements OnInit, AfterViewInit, OnDestroy {
+export class DbViewMailsSearchComponent extends DbViewAbstractComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChildren("query")
     queryElementRefQuery!: QueryList<ElementRef>;
 
@@ -36,6 +35,7 @@ export class DbViewMailSearchComponent extends DbViewAbstractComponent implement
         query: new FormControl(null, Validators.required),
         folders: new FormGroup({}),
     };
+
     form = new FormGroup(this.formControls);
 
     @Output()
@@ -124,7 +124,7 @@ export class DbViewMailSearchComponent extends DbViewAbstractComponent implement
             });
     }
 
-    resolveSelectedPks(): typeof DbViewMailSearchComponent.prototype.foldersInfo.selectedPks {
+    resolveSelectedPks(): typeof DbViewMailsSearchComponent.prototype.foldersInfo.selectedPks {
         const value: Record<View.Folder["pk"], boolean> = this.formControls.folders.value;
 
         return Object.entries(value)

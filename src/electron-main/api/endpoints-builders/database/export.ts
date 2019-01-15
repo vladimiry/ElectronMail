@@ -1,11 +1,16 @@
+import fs from "fs";
 import {Base64} from "js-base64";
 import {join} from "path";
 import {promisify} from "util";
 import {v4 as uuid} from "uuid";
-import {writeFile} from "fs";
 
 import {APP_NAME} from "src/shared/constants";
 import {File, Mail, MailAddress} from "src/shared/model/database";
+
+const fsAsync = {
+    stat: promisify(fs.stat),
+    writeFile: promisify(fs.writeFile),
+};
 
 const eol = `\r\n`;
 const emlExtension = `.eml`;
@@ -13,7 +18,6 @@ const maxFileNameLength = 256 - emlExtension.length;
 const safeFileNameRe = /[^A-Za-z0-9.]+/g;
 const lineSplittingRe = /.{1,78}/g;
 const emptyArray = Object.freeze([]);
-const writeFileAsync = promisify(writeFile);
 
 const formatEmlDate: (mail: Mail) => string = (() => {
     const dayNames = Object.freeze([`Mon`, `Tue`, `Wed`, `Thu`, `Fri`, `Sat`, `Sun`]);
@@ -34,12 +38,10 @@ const formatEmlDate: (mail: Mail) => string = (() => {
 })();
 
 export async function writeEmlFile(mail: Mail, dir: string): Promise<{ file: string }> {
-    const fileNamePrefix = buildSortableDate(new Date(mail.sentDate));
-    const fileName = `${fileNamePrefix} ${mail.subject}`.substr(0, maxFileNameLength) + emlExtension;
-    const file = join(dir, fileName.replace(safeFileNameRe, `_`));
+    const file = await generateFileName(mail, dir);
     const eml = buildEml(mail);
 
-    await writeFileAsync(file, eml);
+    await fsAsync.writeFile(file, eml);
 
     return {file};
 }
@@ -113,4 +115,36 @@ function buildSortableDate(date: Date): string {
 
 function padStart(value: number, args: [number, string] = [2, `0`]) {
     return String.prototype.padStart.apply(value, args);
+}
+
+async function generateFileName(mail: Mail, dir: string): Promise<string> {
+    const limit = 10;
+
+    for (let i = 0; i < limit; i++) {
+        const fileNamePrefixEnding: string = i
+            ? `_${i}`
+            : "";
+        const fileNamePrefix: string = buildSortableDate(new Date(mail.sentDate)) + fileNamePrefixEnding;
+        const fileName: string = `${fileNamePrefix} ${mail.subject}`.substr(0, maxFileNameLength) + emlExtension;
+        const file: string = join(dir, fileName.replace(safeFileNameRe, `_`));
+
+        if (await fileExists(file)) {
+            continue;
+        }
+
+        return file;
+    }
+
+    throw new Error(`Failed to generate unique file name for email with "${mail.subject}" subject after ${limit} iterations`);
+}
+
+async function fileExists(file: string): Promise<boolean> {
+    try {
+        return (await fsAsync.stat(file)).isFile();
+    } catch (error) {
+        if (error.code === "ENOENT") {
+            return false;
+        }
+        throw error;
+    }
 }

@@ -34,24 +34,11 @@
             </ul>
         </ng-template>
         <div class="py-2 d-flex">
-            <a
-                (click)="export()"
-                *ngIf="!exporting; else progressTemplate"
-                class="d-flex flex-grow-1 export-link"
-                href="javascript:void(0)"
-                title="App exports emails in the unencrypted and unsanitized form. Attachments are ignored."
-            >
-                Export All Mails
-            </a>
-            <ng-template #progressTemplate>
-                <div
-                    class="text-primary d-flex flex-grow-1"
-                    style="cursor: not-allowed"
-                >
-                    Export
-                    <small><i class="fa fa-spinner fa-pulse fa-fw ml-1"></i></small>
-                </div>
-            </ng-template>
+            <email-securely-app-db-view-mails-export
+                [dbAccountPk]="dbAccountPk"
+                [popupPlacement]="'top'"
+                [title]="'Export All Mails'"
+            ></email-securely-app-db-view-mails-export>
         </div>
     </div>
     <div class="right-column flex-row flex-grow-1">
@@ -106,8 +93,8 @@
         </div>
     </div>
 </ng-template>
-<email-securely-app-db-view-mail-search
+<email-securely-app-db-view-mails-search
     *ngIf="searchView"
     [dbAccountPk]="dbAccountPk"
     (backToListHandler)="toggleSearchView()"
-></email-securely-app-db-view-mail-search>
+></email-securely-app-db-view-mails-search>

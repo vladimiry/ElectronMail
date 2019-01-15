@@ -65,10 +65,20 @@
         font-size: $font-size-small;
     }
 
-    .conversation-view-toggler {
-        font-size: $app-font-size-base-small;
-        border-radius: 0 0 5px 5px;
-        align-self: center;
+    .controls {
+        padding: 0 $btn-padding-x ($btn-padding-y * 2) 0;
+        justify-content: center;
+
+        #{$app-prefix}-db-view-mails-export {
+            border-top: 1px solid transparent;
+            padding-top: $btn-padding-y;
+        }
+
+        .btn {
+            font-size: $app-font-size-base-small;
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+        }
     }
 
     .root-node-container {

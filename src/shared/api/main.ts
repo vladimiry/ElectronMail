@@ -48,7 +48,8 @@ export interface Endpoints {
 
     dbGetAccountMail: ApiMethod<DbModel.DbAccountPk & { pk: DbModel.Mail["pk"] }, DbModel.Mail>;
 
-    dbExport: ApiMethod<DbModel.DbAccountPk, { count: number; } | { progress: number; file: string; }>;
+    dbExport: ApiMethod<DbModel.DbAccountPk & { mailPks?: Array<DbModel.Mail["pk"]> },
+        { count: number; } | { progress: number; file: string; }>;
 
     dbSearchRootConversationNodes:
         ApiMethod<DbModel.DbAccountPk

@@ -154,7 +154,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
             };
         })()),
 
-        dbExport: ({type, login}) => ((
+        dbExport: ({type, login, mailPks}) => ((
             logger = curryFunctionMembers(_logger, "dbExport()"),
         ) => new Observable<Unpacked<ReturnType<Endpoints["dbExport"]>>>((subscriber) => {
             logger.info();
@@ -183,7 +183,9 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
                 return subscriber.error(new Error(`Failed to resolve account by the provided "type/login"`));
             }
 
-            const mails = Object.values(account.mails);
+            const mails = mailPks
+                ? Object.values(account.mails).filter(({pk}) => mailPks.includes(pk))
+                : Object.values(account.mails);
             const count = mails.length;
 
             subscriber.next({count});

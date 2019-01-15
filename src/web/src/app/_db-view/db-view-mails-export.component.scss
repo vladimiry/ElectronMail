@@ -1,0 +1,10 @@
+@import "~src/web/src/variables";
+
+:host {
+    display: flex;
+    flex-shrink: 0;
+
+    span.text {
+        font-size: $app-font-size-base-small;
+    }
+}

@@ -1,4 +1,17 @@
-<ng-container *ngIf="selectedMail$ | async; let selectedMail">
+<ng-container *ngIf="(selectedMail$ | async) as selectedMail">
+    <ng-container *ngIf="selectedMail.rootNode.summary.size > 1">
+        <div
+            *ngFor="let rootNode of [selectedMail.rootNode]"
+            [collapse]="conversationCollapsed$ | async"
+            class="flex-column root-node-container"
+        >
+            <ng-container
+                [ngTemplateOutletContext]="{nodes: [rootNode], level: 0}"
+                [ngTemplateOutlet]="nodesTemplate"
+            ></ng-container>
+        </div>
+    </ng-container>
+
     <ng-template
         #nodesTemplate
         let-level="level"
@@ -24,28 +37,22 @@
         </ng-container>
     </ng-template>
 
-    <ng-container *ngIf="selectedMail.rootNode.summary.size > 1">
+    <div class="d-flex controls">
         <div
-            *ngFor="let rootNode of [selectedMail.rootNode]"
-            [collapse]="conversationCollapsed$ | async"
-            class="flex-column root-node-container"
+            (click)="toggleConversationCollapsing()"
+            *ngIf="selectedMail.rootNode.summary.size > 1"
+            class="btn btn-secondary mr-2"
         >
-            <ng-container
-                [ngTemplateOutletContext]="{nodes: [rootNode], level: 0}"
-                [ngTemplateOutlet]="nodesTemplate"
-            ></ng-container>
+            Conversation ({{ selectedMail.rootNode.summary.size }})
         </div>
-    </ng-container>
-
-    <div
-        (click)="toggleConversationCollapsing()"
-        *ngIf="selectedMail.rootNode.summary.size > 1"
-        class="btn btn-secondary btn-sm conversation-view-toggler"
-    >
-        Conversation ({{ selectedMail.rootNode.summary.size }})
+        <email-securely-app-db-view-mails-export
+            [dbAccountPk]="dbAccountPk"
+            [rootConversationNode]="selectedMail.rootNode"
+            [title]="'Export (' + selectedMail.rootNode.summary.size + ')'"
+        ></email-securely-app-db-view-mails-export>
     </div>
 
-    <div class="d-flex mt-2">
+    <div class="d-flex">
         <h5>{{ selectedMail.conversationMail.subject }}</h5>
     </div>
 

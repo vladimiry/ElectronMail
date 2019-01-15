@@ -60,6 +60,9 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         if (typeof config.fullTextSearch === "undefined") {
             config.fullTextSearch = INITIAL_STORES.config().fullTextSearch;
         }
+        if (typeof config.disableSpamNotifications === "undefined") {
+            config.disableSpamNotifications = INITIAL_STORES.config().disableSpamNotifications;
+        }
     },
 };
 

@@ -7,6 +7,7 @@ export function searchRootConversationNodes<T extends keyof FsDb["accounts"]>(
     {mailPks, folderPks}: { mailPks?: Array<Mail["pk"]>; folderPks?: Array<Folder["pk"]>; } = {},
 ): View.RootConversationNode[] {
     // TODO optimize search: implement custom search instead of getting all the mails first and then narrowing the list down
+    // TODO don't create functions inside iterations so extensively, "filter" / "walkConversationNodesTree" calls
     const {rootNodePrototypes, folders} = buildFoldersAndRootNodePrototypes(account);
     const filteredByMails = mailPks
         ? rootNodePrototypes.filter((rootNodePrototype) => {

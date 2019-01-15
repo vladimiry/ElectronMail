@@ -15,6 +15,7 @@ export function pickBaseConfigProperties(
         logLevel,
         startMinimized,
         unreadNotifications,
+        disableSpamNotifications,
     }: Config,
 ): Required<BaseConfig> {
     return {
@@ -26,6 +27,7 @@ export function pickBaseConfigProperties(
         logLevel,
         startMinimized,
         unreadNotifications,
+        disableSpamNotifications,
     };
 }
 

@@ -25,6 +25,7 @@ export const INITIAL_STORES: Readonly<{
             compactLayout: true,
             closeToTray: true,
             unreadNotifications: true,
+            disableSpamNotifications: true,
             checkForUpdatesAndNotify: true,
             findInPage: true,
             fullTextSearch: true,

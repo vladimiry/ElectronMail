@@ -13,6 +13,7 @@ export type BaseConfig = Partial<Pick<Config,
     | "startMinimized"
     | "fullTextSearch"
     | "unreadNotifications"
+    | "disableSpamNotifications"
     | "checkForUpdatesAndNotify">>
     &
     Pick<Config, "logLevel">;

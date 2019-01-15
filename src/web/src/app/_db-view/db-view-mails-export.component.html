@@ -1,7 +1,7 @@
 <ng-container *ngIf="!(($state | async).exporting); else progressTemplate">
     <a
-        (click)="export()"
-        class="d-flex flex-grow-1 prevent-default-event"
+        (click)="export($event)"
+        class="d-flex flex-grow-1"
         href="javascript:void(0)"
         title="App exports emails in the original unsanitized form. Attachments are ignored."
     >

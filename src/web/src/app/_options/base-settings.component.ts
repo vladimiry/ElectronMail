@@ -37,7 +37,9 @@ export class BaseSettingsComponent implements OnInit {
         logLevel: new FormControl(null, Validators.required),
         startMinimized: new FormControl(),
         unreadNotifications: new FormControl(),
+        disableSpamNotifications: new FormControl(),
     };
+
     form = new FormGroup(this.controls);
 
     constructor(private store: Store<State>) {}
@@ -52,12 +54,6 @@ export class BaseSettingsComponent implements OnInit {
         this.form.valueChanges.subscribe(() => {
             this.store.dispatch(OPTIONS_ACTIONS.PatchBaseSettingsRequest(this.form.getRawValue()));
         });
-    }
-
-    openFindInPageIssue(event: Event) {
-        event.preventDefault();
-        event.stopPropagation();
-        this.store.dispatch(NAVIGATION_ACTIONS.OpenExternal({url: "https://github.com/vladimiry/email-securely-app/issues/87"}));
     }
 
     openSettingsFolder(event: Event) {

@@ -16,7 +16,14 @@ import {
     IPC_MAIN_API_DB_INDEXER_ON_ACTIONS,
     IPC_MAIN_API_NOTIFICATION_ACTIONS,
 } from "src/shared/api/main";
-import {EntityMap, INDEXABLE_MAIL_FIELDS_STUB_CONTAINER, IndexableMail, IndexableMailId, MemoryDbAccount} from "src/shared/model/database";
+import {
+    EntityMap,
+    INDEXABLE_MAIL_FIELDS_STUB_CONTAINER,
+    IndexableMail,
+    IndexableMailId,
+    MemoryDbAccount,
+    View,
+} from "src/shared/model/database";
 import {
     IPC_MAIN_API_DB_INDEXER_NOTIFICATION$,
     IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$,
@@ -95,11 +102,14 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
                 await ctx.db.saveToFile();
             }
 
+            // TODO consider caching the config
+            const {disableSpamNotifications} = await (await ctx.deferredEndpoints.promise).readConfig().toPromise();
+
             IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount({
                 key,
                 entitiesModified: modifiedState.entitiesModified,
                 metadataModified: modifiedState.metadataModified,
-                stat: ctx.db.accountStat(account),
+                stat: ctx.db.accountStat(account, !disableSpamNotifications),
             }));
 
             return account.metadata;
@@ -245,12 +255,12 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
                             );
                             const rootConversationNodes = searchRootConversationNodes(
                                 account,
-                                {
-                                    mailPks: [...mailScoresByPk.keys()],
-                                    folderPks,
-                                },
+                                {mailPks: [...mailScoresByPk.keys()], folderPks},
                             );
                             const mailsBundleItems: Unpacked<ReturnType<Endpoints["dbFullTextSearch"]>>["mailsBundleItems"] = [];
+                            const findByFolder = folderPks
+                                ? ({pk}: View.Folder) => folderPks.includes(pk)
+                                : () => true;
 
                             for (const rootConversationNode of rootConversationNodes) {
                                 let allNodeMailsCount = 0;
@@ -265,7 +275,11 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
 
                                     const score = mailScoresByPk.get(mail.pk);
 
-                                    if (typeof score !== "undefined") {
+                                    if (
+                                        typeof score !== "undefined"
+                                        &&
+                                        mail.folders.find(findByFolder)
+                                    ) {
                                         matchedScoredNodeMails.push({...mail, score});
                                     }
                                 });

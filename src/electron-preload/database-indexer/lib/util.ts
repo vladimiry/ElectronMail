@@ -35,8 +35,11 @@ export const SERVICES_FACTORY = {
 };
 
 const trimNonLetterCharactersFilter: (value: string) => string = (() => {
-    const re = /(^\P{L}+)|(\P{L}+$)/gu;
-    return (value: string) => value.replace(re, "");
+    // TODO make sure all the possible unicode categories listed here except {L} and {N}
+    const toTrim = "[\\p{M}\\p{Z}\\p{S}\\p{P}\\p{C}]+";
+    const startEndTrimmingRe = new RegExp(`(^${toTrim})|(${toTrim}$)`, "gu");
+
+    return (value: string) => value.replace(startEndTrimmingRe, "");
 })();
 
 export function createMailsIndex(): MailsIndex {

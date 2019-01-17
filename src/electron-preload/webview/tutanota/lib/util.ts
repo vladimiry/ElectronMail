@@ -76,10 +76,17 @@ export function resolveListId<T extends BaseEntity<IdTuple>>(entity: T): Id {
 export const preprocessError: Arguments<typeof buildDbPatchRetryPipeline>[0] = (rawError: any) => {
     const error = Object(rawError);
     const {name = "", message = ""} = error;
-    const retriable = !navigator.onLine
-        || name === "ConnectionError"
-        || message.indexOf("ConnectionError:") !== -1
-        || message.indexOf("Reached timeout") !== -1;
+    const retriable = (
+        !navigator.onLine
+        ||
+        name === "ConnectionError"
+        ||
+        message.includes("ConnectionError:")
+        ||
+        message.includes("Reached timeout")
+        ||
+        (name === "ServiceUnavailableError" && message.startsWith("503"))
+    );
     return {
         error,
         retriable,

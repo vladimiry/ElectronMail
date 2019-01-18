@@ -37,14 +37,24 @@ export const preprocessError: Arguments<typeof buildDbPatchRetryPipeline>[0] = (
             message: rawError.statusText || `HTTP request error`,
         }
         : rawError;
-    const retriable = !navigator.onLine || (error !== rawError && (
-        // network connection error, connection abort, etc
-        error.status === -1
+    const retriable = (
+        !navigator.onLine
         ||
-        // requests to Protonmail's API end up with "503 service unavailable" error quite often during the day
-        // so we retry/skip such errors in addition to the network errors with -1 status
-        (error.status === 503 && error.statusText === "Service Unavailable")
-    ));
+        (
+            error !== rawError
+            &&
+            (
+                // network connection error, connection abort, etc
+                error.status === -1
+                ||
+                // requests to Protonmail's API end up with "503 service unavailable" error quite often during the day
+                // so we retry/skip such errors in addition to the network errors with -1 status
+                (error.status === 503 && error.statusText === "Service Unavailable")
+                ||
+                (error.status === 504 && error.statusText === "Gateway Time-out")
+            )
+        )
+    );
 
     return {
         error,

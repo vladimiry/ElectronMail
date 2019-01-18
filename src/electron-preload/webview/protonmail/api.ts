@@ -410,13 +410,20 @@ export function registerApi() {
 }
 
 function isLoggedIn(): boolean {
-    // TODO remove "as any" casting on https://github.com/Microsoft/TypeScript/issues/14701 resolving
-    const angular: angular.IAngularStatic | undefined = (window as any).angular;
-    const angularAppElement = angular && typeof angular.element === "function" && angular.element(document);
-    const $injector = angularAppElement && typeof angularAppElement.data === "function" && angularAppElement.data("$injector");
-    const authentication = $injector && $injector.get("authentication");
+    const {angular} = window as unknown as { angular?: angular.IAngularStatic };
+    const appElement = angular && typeof angular.element === "function" && angular.element(document);
+    const $injector = appElement && typeof appElement.data === "function" && appElement.data("$injector");
+    const authentication: undefined | { user?: object; isLoggedIn: () => boolean; } = $injector && $injector.get("authentication");
 
-    return authentication && authentication.isLoggedIn();
+    return Boolean(
+        authentication
+        &&
+        authentication.isLoggedIn()
+        &&
+        authentication.user
+        &&
+        Object.keys(authentication.user).length,
+    );
 }
 
 async function bootstrapDbPatch(

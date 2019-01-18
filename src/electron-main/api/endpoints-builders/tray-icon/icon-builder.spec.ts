@@ -1,4 +1,5 @@
 import test from "ava";
+
 import {IMAGE_PROCESSOR} from "./icon-builder";
 
 test("dependency:image-processing-js", (t) => {

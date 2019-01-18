@@ -251,7 +251,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
                         filter(({payload}) => payload.uid === uid),
                         mergeMap(({payload: {data: {items, expandedTerms}}}) => {
                             const mailScoresByPk = new Map<IndexableMailId, number>(
-                                items.map(({docId, score}) => [docId, score] as [IndexableMailId, number]),
+                                items.map(({key, score}) => [key, score] as [IndexableMailId, number]),
                             );
                             const rootConversationNodes = searchRootConversationNodes(
                                 account,

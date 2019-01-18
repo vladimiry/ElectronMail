@@ -1,6 +1,5 @@
 import {Subscription} from "rxjs";
-import {addDocumentToIndex, removeDocumentFromIndex, vacuumIndex} from "ndx-index";
-import {createIndex} from "ndx";
+import {addDocumentToIndex, createIndex, removeDocumentFromIndex, vacuumIndex} from "ndx";
 import {expandTerm, query} from "ndx-query";
 import {lowerCaseFilter, whitespaceTokenizer} from "ndx-utils";
 

@@ -19,24 +19,20 @@ const indexingQueue = new PQueue({concurrency: 1});
 document.addEventListener("DOMContentLoaded", bootstrap);
 
 function bootstrap() {
-    (async () => {
-        cleanup.subscription.add(
-            api.dbIndexerNotification().subscribe(
-                dbIndexerNotificationHandler,
-                (error) => {
-                    logger.error(`dbIndexerNotification.error`, error);
-                    throw error;
-                },
-                () => {
-                    logger.info(`dbIndexerNotification.complete`);
-                },
-            ),
-        );
+    cleanup.subscription.add(
+        api.dbIndexerNotification().subscribe(
+            dbIndexerNotificationHandler,
+            (error) => {
+                logger.error(`dbIndexerNotification.error`, error);
+                throw error;
+            },
+            () => {
+                logger.info(`dbIndexerNotification.complete`);
+            },
+        ),
+    );
 
-        logger.info(`dbIndexerNotification.subscribed`);
-    })().catch((error) => {
-        logger.error("uncaught promise rejection", error);
-    });
+    logger.info(`dbIndexerNotification.subscribed`);
 }
 
 function dbIndexerNotificationHandler(action: Unpacked<ReturnType<typeof api.dbIndexerNotification>>): void {

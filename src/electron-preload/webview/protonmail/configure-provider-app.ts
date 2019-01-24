@@ -1,7 +1,7 @@
 import {LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN} from "src/shared/constants";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {curryFunctionMembers} from "src/shared/util";
-import {disableBrowserNotificationFeature, isBuiltInWebClient} from "src/electron-preload/webview/util";
+import {disableBrowserFetchFeature, disableBrowserNotificationFeature, isBuiltInWebClient} from "src/electron-preload/webview/util";
 
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, `[configure-angular-app]`);
 const targetModuleName = "proton";
@@ -9,6 +9,13 @@ const imgSrcSanitizationWhitelistRe = new RegExp(`^\\s*((https?|ftp|file|blob|${
 
 export function configureProviderApp() {
     logger.info(`configureProviderApp()`, JSON.stringify({location: location.href}));
+
+    // TODO figure how to make window.fetch work with Electron's custom protocols
+    // disabling window.fetch as currently it's unsupported by Electron's custom protocols
+    // so protonmail will use XMLHttpRequest based polyfill
+    // tslint:disable-next-line:max-line-length
+    // commit caused a need to disable window.fetch: https://github.com/ProtonMail/WebClient/commit/532cec3814679cbbefdda704c00de22745948cbc#diff-9bdcd2e2ab4c086aa80d17b171b80e26
+    disableBrowserFetchFeature(logger);
 
     disableBrowserNotificationFeature(logger);
 

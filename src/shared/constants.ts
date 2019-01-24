@@ -26,8 +26,8 @@ export const DEFAULT_UNREAD_BADGE_BG_COLOR = "#DE4251";
 export const PROVIDER_REPO: Record<AccountType, { repo: string, version: string; commit: string; }> = {
     protonmail: {
         repo: "https://github.com/ProtonMail/WebClient.git",
-        commit: "0c01a5fc42ab250bb756cb2e3d9f05a81191a6b1",
-        version: "3.15.12",
+        commit: "b606422bba683c8bb3dfd4fa898fbf5cff0fdd46",
+        version: "3.15.14",
     },
     tutanota: {
         repo: "https://github.com/tutao/tutanota.git",

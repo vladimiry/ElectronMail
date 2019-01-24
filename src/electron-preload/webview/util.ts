@@ -230,6 +230,12 @@ export function buildEmptyDbPatch(): DbPatch {
     };
 }
 
+export function disableBrowserFetchFeature(parentLogger: ReturnType<typeof buildLoggerBundle>) {
+    // TODO remove "as any" casting on https://github.com/Microsoft/TypeScript/issues/14701 resolving
+    delete (window as any).fetch;
+    parentLogger.info(`browser "fetch" feature disabled`);
+}
+
 export function disableBrowserNotificationFeature(parentLogger: ReturnType<typeof buildLoggerBundle>) {
     // TODO remove "as any" casting on https://github.com/Microsoft/TypeScript/issues/14701 resolving
     delete (window as any).Notification;

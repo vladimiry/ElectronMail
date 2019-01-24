@@ -41,26 +41,6 @@ execAccountTypeFlow({
     folderAsDomainEntries,
     repoRelativeDistDir: "./dist",
     flows: {
-        preInstall: async ({repoDir: cwd}) => {
-            const problematicModule = {name: "loader-utils", workingVersion: "1.1.0"};
-            const packageJsonFile = path.join(cwd, "./package.json");
-            const packageJson: { devDependencies: Record<string, string> } = JSON.parse(
-                (await promisify(fs.readFile)(packageJsonFile)).toString(),
-            );
-
-            if (problematicModule.name in packageJson.devDependencies) {
-                return;
-            }
-
-            packageJson.devDependencies[problematicModule.name] = problematicModule.workingVersion;
-            const packageJsonContent = JSON.stringify(packageJson, null, 2);
-
-            consoleLog(
-                chalk.magenta(`Writing ${consoleLevels.value(packageJsonFile)} file with content:`),
-                consoleLevels.value(packageJsonContent),
-            );
-            await promisify(fs.writeFile)(packageJsonFile, packageJsonContent);
-        },
         build: async ({repoDir, folderAsDomainEntry}) => {
             await build({repoDir, ...folderAsDomainEntry});
         },

@@ -41,11 +41,8 @@ const CONST = {
     })(),
 };
 
-const CLIENT = new Octokit();
-
-CLIENT.authenticate({
-    type: "oauth",
-    token: CONST.params.GH_TOKEN,
+const CLIENT = new Octokit({
+    auth: `token ${CONST.params.GH_TOKEN}`,
 });
 
 (async () => {

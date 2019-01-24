@@ -3,9 +3,9 @@ import {authenticator} from "otplib";
 import {buffer, catchError, concatMap, debounceTime, distinctUntilChanged, map, tap} from "rxjs/operators";
 import {pick} from "ramda";
 
-import * as Database from "./lib/database";
+import * as Database from "src/electron-preload/webview/tutanota/lib/database";
 import * as DatabaseModel from "src/shared/model/database";
-import * as Rest from "./lib/rest";
+import * as Rest from "src/electron-preload/webview/tutanota/lib/rest";
 import {DbPatch} from "src/shared/api/common";
 import {MAIL_FOLDER_TYPE, MemoryDbAccount} from "src/shared/model/database";
 import {
@@ -28,7 +28,7 @@ import {
 } from "src/electron-preload/webview/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
-import {isUpsertOperationType, preprocessError} from "./lib/util";
+import {isUpsertOperationType, preprocessError} from "src/electron-preload/webview/tutanota/lib/util";
 import {resolveProviderApi} from "src/electron-preload/webview/tutanota/lib/provider-api";
 
 interface BuildDbPatchReturn {
@@ -38,7 +38,7 @@ interface BuildDbPatchReturn {
 
 type BuildDbPatchInputMetadata = BuildDbPatchReturn["metadata"];
 
-const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[api]");
+const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[api/index]");
 
 export async function registerApi(): Promise<void> {
     return resolveProviderApi()

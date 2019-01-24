@@ -3,9 +3,9 @@ import {authenticator} from "otplib";
 import {buffer, catchError, concatMap, debounceTime, distinctUntilChanged, filter, map, mergeMap, tap} from "rxjs/operators";
 import {omit} from "ramda";
 
-import * as Database from "./lib/database";
+import * as Database from "src/electron-preload/webview/protonmail/lib/database";
 import * as DatabaseModel from "src/shared/model/database";
-import * as Rest from "./lib/rest";
+import * as Rest from "src/electron-preload/webview/protonmail/lib/rest";
 import {DbPatch} from "src/shared/api/common";
 import {MemoryDbAccount} from "src/shared/model/database";
 import {
@@ -16,11 +16,10 @@ import {
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {Omit, Unpacked} from "src/shared/types";
 import {PROTONMAIL_IPC_WEBVIEW_API, ProtonmailApi, ProtonmailNotificationOutput} from "src/shared/api/webview/protonmail";
-import {ProviderApi, resolveProviderApi} from "./lib/provider-api";
+import {ProviderApi, resolveProviderApi} from "src/electron-preload/webview/protonmail/lib/provider-api";
 import {StatusCodeError} from "src/shared/model/error";
-import {angularJsHttpResponseTypeGuard, isUpsertOperationType, preprocessError} from "./lib/uilt";
+import {angularJsHttpResponseTypeGuard, isUpsertOperationType, preprocessError} from "src/electron-preload/webview/protonmail/lib/util";
 import {asyncDelay, curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
-import {buildContact, buildFolder, buildMail} from "./lib/database";
 import {
     buildDbPatchRetryPipeline,
     buildEmptyDbPatch,
@@ -38,7 +37,7 @@ interface BuildDbPatchReturn {
     metadata: Omit<MemoryDbAccount<"protonmail">["metadata"], "type">;
 }
 
-const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[api]");
+const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[api/index]");
 const twoFactorCodeElementId = "twoFactorCode";
 const ajaxSendNotificationSkipParam = `ajax-send-notification-skip-${Number(new Date())}`;
 const ajaxSendNotification$ = new Observable<XMLHttpRequest>((subscriber) => {
@@ -460,8 +459,8 @@ async function bootstrapDbPatch(
 
     logger.verbose(`construct initial database patch`);
     const initialPatch = buildEmptyDbPatch();
-    initialPatch.folders.upsert = labels.map(buildFolder);
-    initialPatch.contacts.upsert = contacts.map(buildContact);
+    initialPatch.folders.upsert = labels.map(Database.buildFolder);
+    initialPatch.contacts.upsert = contacts.map(Database.buildContact);
 
     logger.verbose(`trigger initial storing`);
     await triggerStoreCallback({
@@ -540,11 +539,11 @@ async function buildConversationDbMails(briefConversation: Rest.Model.Conversati
 
     for (const mail of conversationMessages) {
         if (mail.Body) {
-            result.push(await buildMail(mail, api));
+            result.push(await Database.buildMail(mail, api));
             continue;
         }
         const mailFetchResponse = await api.message.get(mail.ID);
-        result.push(await buildMail(mailFetchResponse.data.Message, api));
+        result.push(await Database.buildMail(mailFetchResponse.data.Message, api));
     }
 
     return result;

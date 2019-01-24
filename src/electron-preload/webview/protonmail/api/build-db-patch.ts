@@ -13,7 +13,7 @@ import {ProtonmailApi} from "src/shared/api/webview/protonmail";
 import {ProviderApi, resolveProviderApi} from "src/electron-preload/webview/protonmail/lib/provider-api";
 import {StatusCodeError} from "src/shared/model/error";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
-import {asyncDelay, curryFunctionMembers} from "src/shared/util";
+import {asyncDelay, curryFunctionMembers, isDatabaseBootstrapped} from "src/shared/util";
 import {buildDbPatchRetryPipeline, buildEmptyDbPatch, persistDatabasePatch, resolveIpcMainApi} from "src/electron-preload/webview/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
 import {isLoggedIn, isUpsertOperationType, preprocessError} from "src/electron-preload/webview/protonmail/lib/util";
@@ -40,7 +40,9 @@ const buildDbPatchEndpoint: Pick<ProtonmailApi, "buildDbPatch"> = {
             }
         }
 
-        if (!input.metadata || !input.metadata.latestEventId) {
+        const inputMetadata = input.metadata;
+
+        if (!isDatabaseBootstrapped(inputMetadata)) {
             await bootstrapDbPatch(
                 logger,
                 async (dbPatch) => {
@@ -76,7 +78,7 @@ const buildDbPatchEndpoint: Pick<ProtonmailApi, "buildDbPatch"> = {
                     continue;
                 }
                 throw new Error(
-                    `Events API indicates that there is a next event in the queue, but responses with the same "next event id"`,
+                    `Events API indicates that there is a next event in the queue but responded with the same "next event id"`,
                 );
             } while (true);
             logger.info(`fetched ${fetchedEvents.length} missed events`);
@@ -84,7 +86,8 @@ const buildDbPatchEndpoint: Pick<ProtonmailApi, "buildDbPatch"> = {
                 latestEventId: id,
                 missedEvents: fetchedEvents,
             };
-        })(await resolveProviderApi(), input.metadata.latestEventId);
+        })(await resolveProviderApi(), inputMetadata.latestEventId);
+
         const metadata: BuildDbPatchReturn["metadata"] = {latestEventId: preFetch.latestEventId};
         const patch = await buildDbPatch({events: preFetch.missedEvents, parentLogger: logger});
 
@@ -196,7 +199,9 @@ async function bootstrapDbPatch(
                 await triggerStoreCallback({
                     patch: mailsPortionDbPatch,
                     // WARN: don't persist the "latestEventId" value yet as this is intermediate storing
-                    metadata: {},
+                    metadata: {
+                        latestEventId: "",
+                    },
                 });
             }
 

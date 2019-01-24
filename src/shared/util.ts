@@ -2,8 +2,8 @@ import {AccountConfig} from "./model/account";
 import {BaseConfig, Config} from "./model/options";
 import {DbPatch} from "./api/common";
 import {LoginFieldContainer} from "./model/container";
+import {MemoryDbAccount, View} from "src/shared/model/database";
 import {StatusCodeError} from "./model/error";
-import {View} from "src/shared/model/database";
 
 export function pickBaseConfigProperties(
     {
@@ -178,4 +178,16 @@ export function buildEnumBundle<V extends string | number = string>(
         },
         nameValueMap,
     );
+}
+
+export function isDatabaseBootstrapped(
+    metadata: MemoryDbAccount["metadata"] | null,
+): metadata is Readonly<Exclude<typeof metadata, null>> {
+    if (!metadata) {
+        return false;
+    }
+
+    return metadata.type === "protonmail"
+        ? Boolean(metadata.latestEventId)
+        : Boolean(Object.keys(metadata.groupEntityEventBatchIds || {}).length);
 }

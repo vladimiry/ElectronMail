@@ -64,6 +64,11 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.disableSpamNotifications = INITIAL_STORES.config().disableSpamNotifications;
         }
     },
+    "2.2.1": (config) => {
+        if (typeof config.timeouts.syncing !== "number") {
+            config.timeouts.syncing = INITIAL_STORES.config().timeouts.syncing;
+        }
+    },
 };
 
 const SETTINGS_UPGRADES: Record<string, (settings: Settings) => void> = {

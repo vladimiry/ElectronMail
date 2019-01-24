@@ -33,6 +33,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     };
     timeouts: {
         fetching: number;
+        syncing: number;
         webViewApiPing: number;
         domElementsResolving: number;
         defaultApiCall: number;

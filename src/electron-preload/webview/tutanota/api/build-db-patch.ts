@@ -12,7 +12,7 @@ import {TutanotaApi} from "src/shared/api/webview/tutanota";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {buildDbPatchRetryPipeline, persistDatabasePatch} from "src/electron-preload/webview/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
-import {curryFunctionMembers} from "src/shared/util";
+import {curryFunctionMembers, isDatabaseBootstrapped} from "src/shared/util";
 import {getUserController, isLoggedIn, isUpsertUpdate, preprocessError} from "src/electron-preload/webview/tutanota/lib/util";
 import {resolveProviderApi} from "src/electron-preload/webview/tutanota/lib/provider-api";
 
@@ -29,12 +29,13 @@ const buildDbPatchEndpoint: Pick<TutanotaApi, "buildDbPatch"> = {
     buildDbPatch: (input) => defer(() => (async (logger = curryFunctionMembers(_logger, input.zoneName)) => {
         const api = await resolveProviderApi();
         const controller = getUserController();
+        const inputMetadata = input.metadata;
 
         if (!controller || !isLoggedIn()) {
             throw new Error("tutanota:buildDbPatch(): user is supposed to be logged-in");
         }
 
-        if (!input.metadata || !Object.keys(input.metadata.groupEntityEventBatchIds || {}).length) {
+        if (!isDatabaseBootstrapped(inputMetadata)) {
             return await persistDatabasePatch(
                 {
                     ...await bootstrapDbPatch({api}, logger),
@@ -47,10 +48,11 @@ const buildDbPatchEndpoint: Pick<TutanotaApi, "buildDbPatch"> = {
 
         const preFetch = await (async (
             inputGroupEntityEventBatchIds: BuildDbPatchInputMetadata["groupEntityEventBatchIds"],
-            fetchedEventBatches: Rest.Model.EntityEventBatch[] = [],
-            memberships = Rest.Util.filterSyncingMemberships(controller.user),
         ) => {
+            const fetchedEventBatches: Rest.Model.EntityEventBatch[] = [];
+            const memberships = Rest.Util.filterSyncingMemberships(controller.user);
             const {groupEntityEventBatchIds}: BuildDbPatchInputMetadata = {groupEntityEventBatchIds: {}};
+            logger.verbose(`start fetching entity event batches of ${memberships.length} memberships`);
             for (const {group} of memberships) {
                 const startId = await Rest.Util.generateStartId(inputGroupEntityEventBatchIds[group]);
                 const fetched = await Rest.fetchEntitiesRangeUntilTheEnd(
@@ -68,7 +70,7 @@ const buildDbPatchEndpoint: Pick<TutanotaApi, "buildDbPatch"> = {
                 missedEventBatches: fetchedEventBatches,
                 metadata: {groupEntityEventBatchIds},
             };
-        })(input.metadata.groupEntityEventBatchIds);
+        })(inputMetadata.groupEntityEventBatchIds);
         const metadata: BuildDbPatchReturn["metadata"] = preFetch.metadata;
         const patch = await buildDbPatch({eventBatches: preFetch.missedEventBatches, parentLogger: logger});
 

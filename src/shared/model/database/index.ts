@@ -125,11 +125,11 @@ export interface DbFsDataContainer {
     contacts: Record<Contact["pk"], Contact>;
 }
 
-interface GenericDb<T extends AccountType, M, EntitiesContainer extends DbMemoryDataContainer | DbFsDataContainer> {
+interface GenericDb<T extends AccountType, MetadataPart, EntitiesContainer extends DbMemoryDataContainer | DbFsDataContainer> {
     version: string;
     accounts: Record<T,
         Record<AccountConfig<T>["login"],
-            Readonly<EntitiesContainer & { metadata: { type: T } & M }>>>;
+            Readonly<EntitiesContainer & { metadata: { type: T } & MetadataPart }>>>;
 }
 
 interface TutanotaMetadataPart {
@@ -137,7 +137,7 @@ interface TutanotaMetadataPart {
 }
 
 interface ProtonmailMetadataPart {
-    latestEventId?: string; // Rest.Model.Event["EventID"]
+    latestEventId: string; // Rest.Model.Event["EventID"]
 }
 
 export type MemoryDb =

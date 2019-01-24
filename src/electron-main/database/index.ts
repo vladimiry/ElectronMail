@@ -25,7 +25,7 @@ export class Database {
     static buildEmptyAccountMetadata<T extends keyof MemoryDb["accounts"]>(type: T): MemoryDbAccount<T>["metadata"] {
         const metadata: { [key in keyof MemoryDb["accounts"]]: MemoryDbAccount<key>["metadata"] } = {
             tutanota: {type: "tutanota", groupEntityEventBatchIds: {}},
-            protonmail: {type: "protonmail"},
+            protonmail: {type: "protonmail", latestEventId: ""},
         };
         return metadata[type];
     }

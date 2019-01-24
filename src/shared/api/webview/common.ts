@@ -13,12 +13,12 @@ import {ZoneApiParameter} from "src/shared/api/common";
 
 export const channel = `${APP_NAME}:webview-api`;
 
-export interface CommonWebViewApi<T extends AccountType, M extends MemoryDbAccount<T>["metadata"] = MemoryDbAccount<T>["metadata"]> {
+export interface CommonWebViewApi<T extends AccountType> {
     ping: ApiMethod<ZoneApiParameter, null>;
     fillLogin: ApiMethod<LoginFieldContainer & ZoneApiParameter, null>;
     login: ApiMethod<LoginFieldContainer & PasswordFieldContainer & ZoneApiParameter, null>;
     login2fa: ApiMethod<{ secret: string } & ZoneApiParameter, null>;
-    buildDbPatch: ApiMethod<DbAccountPk & { metadata: M | null; iteration?: number; } & ZoneApiParameter, null>;
+    buildDbPatch: ApiMethod<DbAccountPk & { metadata: Readonly<MemoryDbAccount<T>["metadata"]> | null; } & ZoneApiParameter, null>;
     selectAccount: ApiMethod<{ databaseView?: boolean } & ZoneApiParameter, null>;
 }
 

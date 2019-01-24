@@ -26,6 +26,7 @@ import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {State} from "src/web/src/app/store/reducers/accounts";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/src/util";
+import {isDatabaseBootstrapped} from "src/shared/util";
 
 const rateLimiter = __ELECTRON_EXPOSURE__.require["rolling-rate-limiter"]();
 const _logger = getZoneNameBoundWebLogger("[accounts.effects]");
@@ -161,9 +162,15 @@ export class AccountsEffects {
                                 concatMap(() => ipcMainClient("dbGetAccountMetadata")({type, login})),
                                 // TODO consider replacing concatMap=>mergeMap with per account debouncing based on "syncing" state
                                 concatMap((metadata) => {
-                                    return webViewClient("buildDbPatch", {timeoutMs: timeouts.fetching})(
-                                        {type, login, zoneName, metadata},
-                                    ).pipe(
+                                    const bootstrapped = isDatabaseBootstrapped(metadata);
+                                    const {timeoutMs, logPrefix} = bootstrapped
+                                        ? {timeoutMs: timeouts.syncing, logPrefix: "syncing"}
+                                        : {timeoutMs: timeouts.fetching, logPrefix: "fetching"};
+
+                                    logger.verbose(`${logPrefix} with ${timeoutMs} timeout`);
+
+                                    // TODO consider limiting the events list size being processed per syncing cycle
+                                    return webViewClient("buildDbPatch", {timeoutMs})({type, login, zoneName, metadata}).pipe(
                                         catchError(errorCatcher),
                                     );
                                 }),

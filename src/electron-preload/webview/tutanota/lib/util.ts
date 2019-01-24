@@ -73,6 +73,27 @@ export function resolveListId<T extends BaseEntity<IdTuple>>(entity: T): Id {
     return entity._id[0];
 }
 
+export function getUserController(): { accessToken: string, user: Rest.Model.User } | null {
+    const WINDOW = window as any; // TODO remove "as any" casting on https://github.com/Microsoft/TypeScript/issues/14701 resolving
+    return WINDOW.tutao
+    && WINDOW.tutao.logins
+    && typeof WINDOW.tutao.logins.getUserController === "function"
+    && WINDOW.tutao.logins.getUserController() ? WINDOW.tutao.logins.getUserController()
+        : null;
+}
+
+export function isLoggedIn(): boolean {
+    const controller = getUserController();
+    return !!(controller
+        && controller.accessToken
+        && controller.accessToken.length
+    );
+}
+
+export function isUpsertUpdate(update: Rest.Model.EntityUpdate) {
+    return isUpsertOperationType(update.operation);
+}
+
 export const preprocessError: Arguments<typeof buildDbPatchRetryPipeline>[0] = (rawError: any) => {
     const error = Object(rawError);
     const {name = "", message = ""} = error;

@@ -26,6 +26,23 @@ export const angularJsHttpResponseTypeGuard: (data: ng.IHttpResponse<any> | any)
     }) as typeof angularJsHttpResponseTypeGuard;
 })();
 
+export function isLoggedIn(): boolean {
+    const {angular} = window as unknown as { angular?: angular.IAngularStatic };
+    const appElement = angular && typeof angular.element === "function" && angular.element(document);
+    const $injector = appElement && typeof appElement.data === "function" && appElement.data("$injector");
+    const authentication: undefined | { user?: object; isLoggedIn: () => boolean; } = $injector && $injector.get("authentication");
+
+    return Boolean(
+        authentication
+        &&
+        authentication.isLoggedIn()
+        &&
+        authentication.user
+        &&
+        Object.keys(authentication.user).length,
+    );
+}
+
 export const preprocessError: Arguments<typeof buildDbPatchRetryPipeline>[0] = (rawError: any) => {
     const error = angularJsHttpResponseTypeGuard(rawError)
         ? { // TODO add tests to validate that "angularJsHttpResponseTypeGuard" call on this error still return "true"

@@ -150,7 +150,7 @@ export class AccountsEffects {
                                 ),
                                 fromEvent(window, "online").pipe(
                                     tap(() => logger.verbose(`triggered by: "window.online" event`)),
-                                    delay(ONE_SECOND_MS * 3),
+                                    delay(ONE_SECOND_MS * 5),
                                 ),
                             ).pipe(
                                 debounceTime(ONE_SECOND_MS),

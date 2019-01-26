@@ -5,7 +5,6 @@ import {UnionOf} from "@vladimiry/unionize";
 import {AppErrorHandler} from "src/web/src/app/app.error-handler.service";
 import {BuildEnvironment} from "src/shared/model/common";
 import {CORE_ACTIONS, NAVIGATION_ACTIONS, ROOT_ACTIONS} from "src/web/src/app/store/actions";
-import {State as ErrorsState} from "src/web/src/app/store/reducers/errors";
 import {getZoneNameBoundWebLogger} from "src/web/src/util";
 
 const logger = getZoneNameBoundWebLogger("[reducers/root]");
@@ -21,16 +20,13 @@ export const reducers = {
     router: routerReducer,
 };
 
-export function getMetaReducers(appErrorHandler: AppErrorHandler): Array<MetaReducer<State | ErrorsState, Actions>> {
+export function getMetaReducers(appErrorHandler: AppErrorHandler): Array<MetaReducer<State, Actions>> {
     const result: Array<MetaReducer<State, Actions>> = [
         (reducer) => {
             return (state, action) => {
                 try {
                     return reducer(state, action);
                 } catch (error) {
-                    // console.log(error);
-                    // return errorReducer(state as ErrorsState, CORE_ACTIONS.Fail(error));
-                    // store.dispatch(CORE_ACTIONS.Fail(error));
                     appErrorHandler.handleError(error);
                 }
                 return state as State;

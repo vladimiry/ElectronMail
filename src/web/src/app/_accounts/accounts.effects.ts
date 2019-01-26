@@ -105,7 +105,7 @@ export class AccountsEffects {
             const {type, login} = pk;
             const dispose$ = from(finishPromise).pipe(
                 tap(() => {
-                    this.store.dispatch(ACCOUNTS_ACTIONS.Patch({login, patch: {syncingActivated: false}}));
+                    this.store.dispatch(ACCOUNTS_ACTIONS.Patch({login, patch: {syncingActivated: false}, ignoreNoAccount: true}));
                     logger.info("dispose");
                 }),
             );

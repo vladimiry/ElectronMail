@@ -22,6 +22,8 @@ export interface State extends fromRoot.State {
     };
 }
 
+const notFoundAccountError = new Error(`Failed to resolve account`);
+
 const initialState: State = {
     accounts: [],
     progress: {},
@@ -75,10 +77,20 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
             const {account} = pickAccountBundle(draftState.accounts, payload);
             account.progress = {...account.progress, ...payload.patch};
         },
-        Patch: ({login, patch}) => {
+        Patch: ({login, patch, ignoreNoAccount}) => {
             logger.verbose("(Patch)", JSON.stringify({patch}));
 
-            const {account} = pickAccountBundle(draftState.accounts, {login});
+            let account: WebAccount | undefined;
+
+            try {
+                const bundle = pickAccountBundle(draftState.accounts, {login});
+                account = bundle.account;
+            } catch (error) {
+                if (error === notFoundAccountError && ignoreNoAccount) {
+                    return;
+                }
+                throw error;
+            }
 
             if ("notifications" in patch) {
                 account.notifications = {...account.notifications, ...patch.notifications};
@@ -113,7 +125,7 @@ function pickAccountBundle(accounts: WebAccount[], criteria: LoginFieldContainer
         .findIndex(accountPickingPredicate(criteria));
 
     if (strict && index === -1) {
-        throw new Error(`Account to process has not been found (login - "${criteria.login}")`);
+        throw notFoundAccountError;
     }
 
     return {index, account: accounts[index]};

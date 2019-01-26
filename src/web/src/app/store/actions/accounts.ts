@@ -17,6 +17,7 @@ export const ACCOUNTS_ACTIONS = unionize({
                 loginFilledOnce: Partial<WebAccount["loginFilledOnce"]>,
                 indexing: Partial<WebAccount["indexing"]>,
             }>;
+            ignoreNoAccount?: boolean
         }>(),
         ToggleDatabaseView: ofType<{ login: string; forced?: Pick<WebAccount, "databaseView"> }>(),
         ToggleSyncing: ofType<{ pk: DbAccountPk; webView: Electron.WebviewTag; finishPromise: Promise<void>; }>(),

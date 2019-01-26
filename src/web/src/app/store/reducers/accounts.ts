@@ -30,11 +30,18 @@ const initialState: State = {
 export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_ACTIONS>): State {
     return produce(state, (draftState) => ACCOUNTS_ACTIONS.match(action, {
         WireUpConfigs: ({accountConfigs}) => {
-            const needToPickNewLogin = typeof draftState.selectedLogin === "undefined"
-                || !accountConfigs.map(({login}) => login).includes(draftState.selectedLogin);
+            const needToPickNewLogin = (
+                typeof draftState.selectedLogin === "undefined"
+                ||
+                !accountConfigs.map(({login}) => login).includes(draftState.selectedLogin)
+            );
 
-            draftState.selectedLogin = needToPickNewLogin ? (accountConfigs.length ? accountConfigs[0].login : undefined)
-                : draftState.selectedLogin;
+            if (needToPickNewLogin) {
+                draftState.selectedLogin = accountConfigs.length
+                    ? accountConfigs[0].login
+                    : undefined;
+            }
+
             draftState.accounts = accountConfigs.reduce((accounts: WebAccount[], accountConfig) => {
                 const {account} = pickAccountBundle(draftState.accounts, accountConfig, false);
 
@@ -58,6 +65,7 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
 
                 return accounts;
             }, []);
+
             draftState.initialized = true;
         },
         Activate: ({login}) => {

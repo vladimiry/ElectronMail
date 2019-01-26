@@ -26,13 +26,16 @@ import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {State} from "src/web/src/app/store/reducers/accounts";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/src/util";
-import {isDatabaseBootstrapped} from "src/shared/util";
 
 const rateLimiter = __ELECTRON_EXPOSURE__.require["rolling-rate-limiter"]();
 const _logger = getZoneNameBoundWebLogger("[accounts.effects]");
 
 @Injectable()
 export class AccountsEffects {
+    private static generateNotificationsStateResetAction(login: string) {
+        return ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread: 0, loggedIn: false}}});
+    }
+
     twoPerTenSecLimiter = rateLimiter({
         interval: ONE_SECOND_MS * 10,
         maxInInterval: 2,
@@ -47,143 +50,118 @@ export class AccountsEffects {
     );
 
     @Effect()
-    setupNotificationChannel$ = (() => {
-        const merged$ = EMPTY;
+    setupNotificationChannel$ = this.actions$.pipe(
+        unionizeActionFilter(ACCOUNTS_ACTIONS.is.SetupNotificationChannel),
+        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+        withLatestFrom(this.store.pipe(select(OptionsSelectors.FEATURED.electronLocations))),
+        mergeMap(([{payload, logger}, electronLocations]) => {
+            const {webView, finishPromise} = payload;
+            const {type, login} = payload.account.accountConfig;
+            const resetNotificationsState$ = of(AccountsEffects.generateNotificationsStateResetAction(login));
+            const dispose$ = from(finishPromise).pipe(tap(() => logger.info("dispose")));
 
-        return this.actions$.pipe(
-            unionizeActionFilter(ACCOUNTS_ACTIONS.is.SetupNotificationChannel),
-            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-            withLatestFrom(this.store.pipe(select(OptionsSelectors.FEATURED.electronLocations))),
-            mergeMap(([{payload, logger}, electronLocations]) => {
-                const {webView, finishPromise} = payload;
-                const {type, login} = payload.account.accountConfig;
-                const dispose$ = from(finishPromise).pipe(tap(() => logger.info("dispose")));
-                const resetNotificationsState$ = of(this.generateNotificationsStateResetAction(login));
+            if (!electronLocations) {
+                throw new Error(`Undefined electron context locations`);
+            }
 
-                if (!electronLocations) {
-                    throw new Error(`Undefined electron context locations`);
-                }
+            const parsedEntryUrl = this.core.parseEntryUrl(payload.account.accountConfig, electronLocations);
 
-                const parsedEntryUrl = this.core.parseEntryUrl(payload.account.accountConfig, electronLocations);
+            logger.info("setup");
 
-                logger.info("setup");
+            return merge(
+                // app set's app notification channel on webview.dom-ready event
+                // which means user is not logged-in yet at this moment, so resetting the state
+                resetNotificationsState$,
+                this.api.webViewClient(webView, type, {finishPromise}).pipe(
+                    mergeMap((webViewClient) => webViewClient("notification")({...parsedEntryUrl, zoneName: logger.zoneName()})),
+                    withLatestFrom(this.store.pipe(select(AccountsSelectors.ACCOUNTS.pickAccount({login})))),
+                    mergeMap(([notification, account]) => {
+                        if (typeof notification.batchEntityUpdatesCounter === "number") {
+                            this.fireSyncingIteration$.next({type, login});
+                            return EMPTY;
+                        }
 
-                return merge(
-                    merged$,
-                    // app set's app notification channel on webview.dom-ready event
-                    // which means user is not logged-in yet at this moment, so resetting the state
-                    resetNotificationsState$,
-                    this.api.webViewClient(webView, type, {finishPromise}).pipe(
-                        mergeMap((webViewClient) => webViewClient("notification")({...parsedEntryUrl, zoneName: logger.zoneName()})),
-                        withLatestFrom(this.store.pipe(select(AccountsSelectors.ACCOUNTS.pickAccount({login})))),
-                        mergeMap(([notification, account]) => {
-                            if (typeof notification.batchEntityUpdatesCounter === "number") {
-                                this.fireSyncingIteration$.next({type, login});
-                                return EMPTY;
-                            }
+                        // app derives "unread" value form the database in case of activated database syncing
+                        // so "unread" notification should be ignored
+                        if (account && account.syncingActivated && typeof notification.unread === "number") {
+                            return EMPTY;
+                        }
 
-                            // app derives "unread" value form the database in case of activated database syncing
-                            // so "unread" notification should be ignored
-                            if (account && account.syncingActivated && typeof notification.unread === "number") {
-                                return EMPTY;
-                            }
-
-                            return of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: notification}}));
-                        }),
-                        takeUntil(dispose$),
-                    ),
-                );
-            }),
-        );
-    })();
+                        return of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: notification}}));
+                    }),
+                ),
+            ).pipe(
+                takeUntil(dispose$),
+            );
+        }),
+    );
 
     @Effect()
-    toggleSyncing$ = (() => {
-        const merged$ = EMPTY;
-        const onlinePing$ = timer(0, ONE_SECOND_MS).pipe(
-            filter(() => navigator.onLine),
-        );
-
-        return this.actions$.pipe(
-            unionizeActionFilter(ACCOUNTS_ACTIONS.is.ToggleSyncing),
-            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-            mergeMap(({payload, logger}) => {
-                const {pk, webView, finishPromise} = payload;
-                const {type, login} = pk;
-                const dispose$ = from(finishPromise).pipe(tap(() => {
+    toggleSyncing$ = this.actions$.pipe(
+        unionizeActionFilter(ACCOUNTS_ACTIONS.is.ToggleSyncing),
+        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+        mergeMap(({payload, logger}) => {
+            const {pk, webView, finishPromise} = payload;
+            const {type, login} = pk;
+            const dispose$ = from(finishPromise).pipe(
+                tap(() => {
                     this.store.dispatch(ACCOUNTS_ACTIONS.Patch({login, patch: {syncingActivated: false}}));
                     logger.info("dispose");
-                }));
-                const ipcMainClient = this.api.ipcMainClient();
-                const zoneName = logger.zoneName();
-                const errorCatcher = (error: Error) => {
-                    this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: false}}));
-                    this.store.dispatch(CORE_ACTIONS.Fail(error));
-                    return EMPTY;
-                };
+                }),
+            );
+            const onlinePing$ = timer(0, ONE_SECOND_MS).pipe(
+                filter(() => navigator.onLine),
+            );
+            const ipcMainClient = this.api.ipcMainClient();
+            const zoneName = logger.zoneName();
 
-                logger.info("setup");
+            logger.info("setup");
 
-                return merge(
-                    merged$,
-                    this.api.webViewClient(webView, type, {finishPromise}).pipe(
+            return merge(
+                of(ACCOUNTS_ACTIONS.Patch({login, patch: {syncingActivated: true}})),
+                this.store.pipe(
+                    select(OptionsSelectors.FEATURED.mainProcessNotification),
+                    filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbPatchAccount),
+                    filter(({payload: {key}}) => key.type === type && key.login === login),
+                    mergeMap(({payload: {stat: {unread}}}) => of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread}}}))),
+                ),
+                this.api.webViewClient(webView, type, {finishPromise}).pipe(
+                    mergeMap((webViewClient) => merge(
+                        timer(0, ONE_SECOND_MS * 60 * 3).pipe(
+                            tap(() => logger.verbose(`triggered by: timer`)),
+                        ),
+                        this.fireSyncingIteration$.pipe(
+                            filter((value) => value.type === type && value.login === login),
+                            tap(() => logger.verbose(`triggered by: fireSyncingIteration$`)),
+                            // user might be moving emails from here to there while syncing/"buildDbPatch" cycle is in progress
+                            // debounce call reduces 404 fetch errors as we don't trigger fetching until user got settled down
+                            debounceTime(ONE_SECOND_MS * 3),
+                        ),
+                        fromEvent(window, "online").pipe(
+                            tap(() => logger.verbose(`triggered by: "window.online" event`)),
+                            delay(ONE_SECOND_MS * 3),
+                        ),
+                    ).pipe(
+                        debounceTime(ONE_SECOND_MS),
+                        debounce(() => onlinePing$),
+                        tap(() => {
+                            this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: true}}));
+                        }),
+                        concatMap(() => ipcMainClient("dbGetAccountMetadata")({type, login})),
                         withLatestFrom(this.store.pipe(select(OptionsSelectors.CONFIG.timeouts))),
-                        mergeMap(([webViewClient, timeouts]) => merge(
-                            of(ACCOUNTS_ACTIONS.Patch({login, patch: {syncingActivated: true}})),
-                            this.store.pipe(
-                                select(OptionsSelectors.FEATURED.mainProcessNotification),
-                                filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbPatchAccount),
-                                filter(({payload: p}) => p.key.type === type && p.key.login === login),
-                                mergeMap(({payload: p}) => {
-                                    return of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread: p.stat.unread}}}));
-                                }),
-                            ),
-                            merge(
-                                timer(0, ONE_SECOND_MS * 60 * 3).pipe(
-                                    tap(() => logger.verbose(`triggered by: timer`)),
-                                ),
-                                this.fireSyncingIteration$.pipe(
-                                    filter((value) => value.type === type && value.login === login),
-                                    tap(() => logger.verbose(`triggered by: fireSyncingIteration$`)),
-                                    // user might be moving emails from here to there while syncing/"buildDbPatch" cycle is in progress
-                                    // debounce call reduces 404 fetch errors as we don't trigger fetching until user got settled down
-                                    debounceTime(ONE_SECOND_MS * 3),
-                                ),
-                                fromEvent(window, "online").pipe(
-                                    tap(() => logger.verbose(`triggered by: "window.online" event`)),
-                                    delay(ONE_SECOND_MS * 5),
-                                ),
-                            ).pipe(
-                                debounceTime(ONE_SECOND_MS),
-                                debounce(() => onlinePing$),
-                                tap(() => {
-                                    this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: true}}));
-                                }),
-                                concatMap(() => ipcMainClient("dbGetAccountMetadata")({type, login})),
-                                // TODO consider replacing concatMap=>mergeMap with per account debouncing based on "syncing" state
-                                concatMap((metadata) => {
-                                    const bootstrapped = isDatabaseBootstrapped(metadata);
-                                    const {timeoutMs, logPrefix} = bootstrapped
-                                        ? {timeoutMs: timeouts.syncing, logPrefix: "syncing"}
-                                        : {timeoutMs: timeouts.fetching, logPrefix: "fetching"};
-
-                                    logger.verbose(`${logPrefix} with ${timeoutMs} timeout`);
-
-                                    // TODO consider limiting the events list size being processed per syncing cycle
-                                    return webViewClient("buildDbPatch", {timeoutMs})({type, login, zoneName, metadata}).pipe(
-                                        catchError(errorCatcher),
-                                    );
-                                }),
-                                mergeMap(() => of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: false}}))),
-                                catchError(errorCatcher),
-                            ),
-                        )),
-                        takeUntil(dispose$),
-                    ),
-                );
-            }),
-        );
-    })();
+                        concatMap(([metadata, timeouts]) => {
+                            return webViewClient("buildDbPatch", {timeoutMs: timeouts.fetching})({type, login, zoneName, metadata}).pipe(
+                                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                            );
+                        }),
+                        mergeMap(() => of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: false}}))),
+                    )),
+                ),
+            ).pipe(
+                takeUntil(dispose$),
+            );
+        }),
+    );
 
     @Effect()
     tryToLogin$ = this.actions$.pipe(
@@ -194,7 +172,7 @@ export class AccountsEffects {
             const {accountConfig, notifications} = account;
             const {type, login, credentials} = accountConfig;
             const pageType = notifications.pageType.type;
-            const resetNotificationsState$ = of(this.generateNotificationsStateResetAction(login));
+            const resetNotificationsState$ = of(AccountsEffects.generateNotificationsStateResetAction(login));
             const zoneName = logger.zoneName();
 
             // TODO make sure passwords submitting looping doesn't happen, until then a workaround is enabled below
@@ -304,8 +282,4 @@ export class AccountsEffects {
         private actions$: Actions<{ type: string; payload: any }>,
         private store: Store<State>,
     ) {}
-
-    private generateNotificationsStateResetAction(login: string) {
-        return ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread: 0, loggedIn: false}}});
-    }
 }

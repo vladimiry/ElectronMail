@@ -17,51 +17,46 @@ const _logger = getZoneNameBoundWebLogger("[db-view.effects]");
 @Injectable()
 export class DbViewEffects {
     @Effect()
-    mountInstance$ = (() => {
-        const merged$ = EMPTY;
+    mountInstance$ = this.actions$.pipe(
+        unionizeActionFilter(DB_VIEW_ACTIONS.is.MountInstance),
+        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+        mergeMap(({payload: {finishPromise, dbAccountPk}, logger}) => {
+            const dispose$ = from(finishPromise).pipe(tap(() => logger.info("dispose")));
+            const apiClient = this.api.ipcMainClient({finishPromise, serialization: "jsan"});
 
-        return this.actions$.pipe(
-            unionizeActionFilter(DB_VIEW_ACTIONS.is.MountInstance),
-            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-            mergeMap(({payload: {finishPromise, dbAccountPk}, logger}) => {
-                const dispose$ = from(finishPromise).pipe(tap(() => logger.info("dispose")));
-                const apiClient = this.api.ipcMainClient({finishPromise, serialization: "jsan"});
-                const observable$ = merge(
-                    apiClient("dbGetAccountDataView")(dbAccountPk), // initial load
-                    this.store.pipe(
-                        select(OptionsSelectors.FEATURED.mainProcessNotification),
-                        filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbPatchAccount),
-                        filter(({payload: {key}}) => key.type === dbAccountPk.type && key.login === dbAccountPk.login),
-                        filter(({payload: {entitiesModified}}) => entitiesModified),
-                        // tslint:disable-next-line:ban
-                        switchMap(() => apiClient("dbGetAccountDataView")(dbAccountPk)),
-                    ),
-                    this.store.pipe(
-                        select(OptionsSelectors.FEATURED.mainProcessNotification),
-                        filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbIndexerProgressState),
-                        mergeMap(({payload}) => {
-                            if ("key" in payload) {
-                                this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login: payload.key.login, patch: payload.status}));
-                            } else {
-                                ACCOUNTS_ACTIONS.PatchGlobalProgress({patch: payload.status});
-                            }
-                            return EMPTY;
-                        }),
-                    ),
-                ).pipe(
-                    mergeMap((value) => {
-                        return value ? [DB_VIEW_ACTIONS.SetFolders({dbAccountPk, folders: value.folders})] : [];
+            logger.info("setup");
+
+            return merge(
+                apiClient("dbGetAccountDataView")(dbAccountPk), // initial load
+                this.store.pipe(
+                    select(OptionsSelectors.FEATURED.mainProcessNotification),
+                    filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbPatchAccount),
+                    filter(({payload: {key}}) => key.type === dbAccountPk.type && key.login === dbAccountPk.login),
+                    filter(({payload: {entitiesModified}}) => entitiesModified),
+                    // tslint:disable-next-line:ban
+                    switchMap(() => apiClient("dbGetAccountDataView")(dbAccountPk)),
+                ),
+                this.store.pipe(
+                    select(OptionsSelectors.FEATURED.mainProcessNotification),
+                    filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbIndexerProgressState),
+                    mergeMap(({payload}) => {
+                        if ("key" in payload) {
+                            this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login: payload.key.login, patch: payload.status}));
+                        } else {
+                            ACCOUNTS_ACTIONS.PatchGlobalProgress({patch: payload.status});
+                        }
+                        return EMPTY;
                     }),
-                    debounceTime(300),
-                    takeUntil(dispose$),
-                );
-
-                logger.info("setup");
-
-                return merge(merged$, observable$);
-            }),
-        );
-    })();
+                ),
+            ).pipe(
+                mergeMap((value) => {
+                    return value ? [DB_VIEW_ACTIONS.SetFolders({dbAccountPk, folders: value.folders})] : [];
+                }),
+                debounceTime(300),
+                takeUntil(dispose$),
+            );
+        }),
+    );
 
     @Effect()
     selectMailRequest$ = this.actions$.pipe(

@@ -99,14 +99,16 @@
                 <ng-template #findInPagePopoverTemplate>
                     <ul class="pl-3 m-0">
                         <li>
-                            The <code>in page search</code> is only available within accounts page. So if you have no accounts added to the app then
+                            The <code>in page search</code> is only available within accounts page. So if you have no accounts added to the
+                            app then
                             Ctrl+F hotkey will take no effect.
                         </li>
                         <li>
                             The search window will be automatically closed on switching between accounts.
                         </li>
                         <li>
-                            Search window will be automatically closed on switching to the <code>database view</code> mode. Ctrl+F hotkey takes no effect
+                            Search window will be automatically closed on switching to the <code>database view</code> mode. Ctrl+F hotkey
+                            takes no effect
                             while in <code>database view</code> mode.
                         </li>
                     </ul>
@@ -146,58 +148,67 @@
             </label>
         </div>
         <hr>
-        <div class="d-flex">
-            <select
-                class="form-control form-control-sm w-25 mr-2"
-                formControlName="logLevel"
-                id="logLevelSelect"
-            >
-                <option
-                    *ngFor="let logLevel of logLevels"
-                    [value]="logLevel"
-                >{{ logLevel }}
-                </option>
-            </select>
-            <label class="d-flex flex-shrink-0 align-self-center m-0 flex-grow-1" for="logLevelSelect">
-                Log level
-                <i
-                    [popover]="logLevelSelectPopoverTemplate"
-                    class="fa fa-info-circle text-warning align-self-center ml-1"
-                    container="body"
-                    placement="bottom"
-                    triggers="mouseenter:mouseleave"
-                ></i>
-                <ng-template #logLevelSelectPopoverTemplate>
-                    Think twice before selecting a value other than <code>error</code>.
-                </ng-template>
-            </label>
-        </div>
-        <div class="text-muted mt-2">
-            Log files located in the <a (click)="openSettingsFolder($event)" href>Settings Folder</a>.
+        <label class="d-block mb-2">
+            Notification badge appearance
+            <email-securely-app-unread-badge
+                [value]="$unreadSummary | async"
+            ></email-securely-app-unread-badge>
+        </label>
+        <div class="row">
+            <div class="col-sm-6">
+                <input
+                    (colorPickerChange)="bgColorPickerChangeHandler($event)"
+                    [colorPicker]="$unreadBgColor | async"
+                    [cpOutputFormat]="'hex'"
+                    [cpPosition]="'bottom'"
+                    [cpToggle]="colorPickerOpened.bg"
+                    [value]="'background: ' + ($unreadBgColor | async)"
+                    class="form-control form-control-sm"
+                    readonly
+                    style="cursor: pointer;"
+                    type="text"
+                />
+            </div>
+            <div class="col-sm-6">
+                <input
+                    (colorPickerChange)="textColorPickerChangeHandler($event)"
+                    [colorPicker]="$unreadTextColor | async"
+                    [cpOutputFormat]="'hex'"
+                    [cpPosition]="'bottom'"
+                    [cpToggle]="colorPickerOpened.text"
+                    [value]="'text: ' + ($unreadTextColor | async)"
+                    class="form-control form-control-sm"
+                    readonly
+                    style="cursor: pointer;"
+                    type="text"
+                />
+            </div>
         </div>
         <hr>
-        <div class="d-flex">
-            <input
-                (colorPickerChange)="colorPickerChangeHandler($event)"
-                [colorPicker]="$unreadBgColor | async"
-                [cpOutputFormat]="'hex'"
-                [cpPosition]="'top'"
-                [cpToggle]="colorPickerOpened"
-                [value]="$unreadBgColor | async"
-                class="form-control form-control-sm mr-2 w-25"
-                readonly
-                style="cursor: pointer;"
-                type="text"
-            />
-            <email-securely-app-unread-badge
-                (click)="colorPickerOpened = !colorPickerOpened"
-                [value]="$unreadSummary | async"
-                class="mr-2"
-                style="cursor: pointer;"
-            ></email-securely-app-unread-badge>
-            <label class="d-flex flex-shrink-0 align-self-center m-0 flex-grow-1">
-                Background color of the "unread" notification badge
-            </label>
+        <label class="d-block mb-2" for="logLevelSelect">
+            Log level
+            <i
+                [popover]="logLevelSelectPopoverTemplate"
+                class="fa fa-info-circle text-warning align-self-center ml-1"
+                container="body"
+                placement="bottom"
+                triggers="mouseenter:mouseleave"
+            ></i>
+            <ng-template #logLevelSelectPopoverTemplate>
+                Think twice before selecting a value other than <code>error</code>.
+            </ng-template>
+        </label>
+        <div class="row">
+            <div class="col-sm-6">
+                <select class="form-control form-control-sm w-100" formControlName="logLevel" id="logLevelSelect">
+                    <option *ngFor="let logLevel of logLevels" [value]="logLevel">
+                        {{ logLevel }}
+                    </option>
+                </select>
+            </div>
+        </div>
+        <div class="text-muted mt-2">
+            Log files located in the <a (click)="openSettingsFolder($event)" href>Settings Folder</a>
         </div>
     </form>
 </fieldset>

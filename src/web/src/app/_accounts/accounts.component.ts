@@ -65,9 +65,12 @@ export class AccountsComponent implements OnInit, OnDestroy {
                 this.store.pipe(select(OptionsSelectors.CONFIG.unreadBgColor)).pipe(
                     distinctUntilChanged(),
                 ),
-            ).subscribe(([{hasLoggedOut, unread}, unreadBgColor]) => {
+                this.store.pipe(select(OptionsSelectors.CONFIG.unreadTextColor)).pipe(
+                    distinctUntilChanged(),
+                ),
+            ).subscribe(([{hasLoggedOut, unread}, unreadBgColor, unreadTextColor]) => {
                 this.unreadSummary = unread;
-                this.store.dispatch(CORE_ACTIONS.UpdateOverlayIcon({hasLoggedOut, unread, unreadBgColor}));
+                this.store.dispatch(CORE_ACTIONS.UpdateOverlayIcon({hasLoggedOut, unread, unreadBgColor, unreadTextColor}));
             }),
         );
         this.subscription.add(

@@ -1,6 +1,6 @@
 import {createFeatureSelector, createSelector} from "@ngrx/store";
 
-import {DEFAULT_UNREAD_BADGE_BG_COLOR} from "src/shared/constants";
+import {DEFAULT_UNREAD_BADGE_BG_COLOR, DEFAULT_UNREAD_BADGE_BG_TEXT} from "src/shared/constants";
 import {LoginFieldContainer} from "src/shared/model/container";
 import {State, featureName} from "src/web/src/app/store/reducers/options";
 import {accountPickingPredicate, pickBaseConfigProperties} from "src/shared/util";
@@ -21,6 +21,7 @@ export const CONFIG = {
     compactLayout: createSelector(FEATURED.config, (c) => c.compactLayout),
     unreadNotifications: createSelector(FEATURED.config, (c) => c.unreadNotifications),
     unreadBgColor: createSelector(FEATURED.config, (c) => c.customUnreadBgColor || DEFAULT_UNREAD_BADGE_BG_COLOR),
+    unreadTextColor: createSelector(FEATURED.config, (c) => c.customUnreadTextColor || DEFAULT_UNREAD_BADGE_BG_TEXT),
     timeouts: createSelector(FEATURED.config, (c) => c.timeouts),
 };
 

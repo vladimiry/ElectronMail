@@ -33,6 +33,7 @@ export class BaseSettingsComponent implements OnInit {
         closeToTray: new FormControl(),
         compactLayout: new FormControl(),
         customUnreadBgColor: new FormControl(),
+        customUnreadTextColor: new FormControl(),
         disableSpamNotifications: new FormControl(),
         findInPage: new FormControl(),
         fullTextSearch: new FormControl(),
@@ -43,30 +44,36 @@ export class BaseSettingsComponent implements OnInit {
 
     form = new FormGroup(this.controls);
 
-    colorPickerOpened: boolean = false;
+    colorPickerOpened: { bg: boolean; text: boolean } = {bg: false, text: false};
 
     $unreadBgColor = this.store.pipe(select(OptionsSelectors.CONFIG.unreadBgColor));
+
+    $unreadTextColor = this.store.pipe(select(OptionsSelectors.CONFIG.unreadTextColor));
 
     $unreadSummary = this.store.select(AccountsSelectors.ACCOUNTS.loggedInAndUnreadSummary).pipe(
         map(({unread}) => unread),
     );
 
-    constructor(private store: Store<State>) {}
+    constructor(
+        private store: Store<State>,
+    ) {}
 
     ngOnInit() {
         this.baseConfig$
             .pipe(take(1))
-            .subscribe((data) => {
-                this.form.patchValue(data);
-            });
+            .subscribe((data) => this.form.patchValue(data));
 
         this.form.valueChanges.subscribe(() => {
             this.store.dispatch(OPTIONS_ACTIONS.PatchBaseSettingsRequest(this.form.getRawValue()));
         });
     }
 
-    colorPickerChangeHandler(color: string) {
+    bgColorPickerChangeHandler(color: string) {
         this.controls.customUnreadBgColor.patchValue(color);
+    }
+
+    textColorPickerChangeHandler(color: string) {
+        this.controls.customUnreadTextColor.patchValue(color);
     }
 
     openSettingsFolder(event: Event) {

@@ -11,6 +11,7 @@ export type BaseConfig = Pick<Config,
     | "closeToTray"
     | "compactLayout"
     | "customUnreadBgColor"
+    | "customUnreadTextColor"
     | "disableSpamNotifications"
     | "findInPage"
     | "fullTextSearch"
@@ -43,6 +44,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     closeToTray?: boolean;
     compactLayout?: boolean;
     customUnreadBgColor?: string;
+    customUnreadTextColor?: string;
     disableSpamNotifications?: boolean;
     findInPage?: boolean;
     fullTextSearch?: boolean;

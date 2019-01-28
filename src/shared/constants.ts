@@ -21,7 +21,9 @@ export const ONE_SECOND_MS = 1000;
 
 export const DEFAULT_API_CALL_TIMEOUT = ONE_SECOND_MS * 25;
 
-export const DEFAULT_UNREAD_BADGE_BG_COLOR = "#DE4251";
+export const DEFAULT_UNREAD_BADGE_BG_COLOR = "#de4251";
+
+export const DEFAULT_UNREAD_BADGE_BG_TEXT = "#ffffff";
 
 export const PROVIDER_REPO: Record<AccountType, { repo: string, version: string; commit: string; }> = {
     protonmail: {

@@ -15,8 +15,8 @@ export class CoreEffects {
     updateOverlayIcon$ = this.actions$.pipe(
         unionizeActionFilter(CORE_ACTIONS.is.UpdateOverlayIcon),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-        concatMap(({payload: {hasLoggedOut, unread, unreadBgColor}}) => this.electronService
-            .ipcMainClient()("updateOverlayIcon")({hasLoggedOut, unread, unreadBgColor})
+        concatMap(({payload: {hasLoggedOut, unread, unreadBgColor, unreadTextColor}}) => this.electronService
+            .ipcMainClient()("updateOverlayIcon")({hasLoggedOut, unread, unreadBgColor, unreadTextColor})
             .pipe(
                 mergeMap(() => []),
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),

@@ -96,7 +96,7 @@ export interface Endpoints {
 
     toggleCompactLayout: ApiMethodNoArgument<Config>;
 
-    updateOverlayIcon: ApiMethod<{ hasLoggedOut: boolean, unread: number; unreadBgColor?: string; }, null>;
+    updateOverlayIcon: ApiMethod<{ hasLoggedOut: boolean, unread: number; unreadBgColor?: string; unreadTextColor?: string; }, null>;
 
     hotkey: ApiMethod<{ type: "copy" | "paste" | "selectAll" }, null>;
 

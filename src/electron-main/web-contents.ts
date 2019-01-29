@@ -14,7 +14,7 @@ const logger = curryFunctionMembers(_logger, "[web-contents]");
 
 // WARN: needs to be called before "BrowserWindow" creating
 export function initWebContentsCreatingHandlers(ctx: Context) {
-    const eventSubscriptions: {
+    const subscriptions: {
         "context-menu": (event: Event, params: ContextMenuParams) => void;
         "update-target-url": (event: Event, url: string) => void;
         "will-attach-webview": (event: Event, webPreferences: any, params: any) => void;
@@ -64,7 +64,7 @@ export function initWebContentsCreatingHandlers(ctx: Context) {
                         .reduce((list: typeof entryUrls, entryUrls) => list.concat(entryUrls), [])
                         .map(({entryUrl}) => entryUrl),
                 );
-            const result: (typeof eventSubscriptions)["will-attach-webview"] = (willAttachWebviewEvent, webPreferences, {src}) => {
+            const result: (typeof subscriptions)["will-attach-webview"] = (willAttachWebviewEvent, webPreferences, {src}) => {
                 const allowedSrc = srcWhitelist.some((allowedPrefix) => src.startsWith(allowedPrefix));
 
                 webPreferences.nodeIntegration = false;
@@ -80,13 +80,25 @@ export function initWebContentsCreatingHandlers(ctx: Context) {
     };
 
     const webContentsCreatedHandler = (webContents: WebContents) => {
-        Object
-            .entries(eventSubscriptions)
-            .map(([event, handler]) => {
-                // TODO TS: get rid of any casting
-                webContents.removeListener(event as any, handler);
-                webContents.on(event as any, handler);
-            });
+        // TODO TS doesn't allow yet narrowing the overloaded function implementations like based on argument types
+        //      it always picks the latest overloaded function's declaration in the case of just trying referencing the function
+        //      track the following related issues resolving:
+        //          https://github.com/Microsoft/TypeScript/issues/26591
+        //          https://github.com/Microsoft/TypeScript/issues/25352
+        //      so for now we have to call "removeListener / on" explicitly for all the events
+        let event: keyof typeof subscriptions | undefined;
+
+        event = "context-menu";
+        webContents.removeListener(event, subscriptions[event]);
+        webContents.on(event, subscriptions[event]);
+
+        event = "update-target-url";
+        webContents.removeListener(event, subscriptions[event]);
+        webContents.on(event, subscriptions[event]);
+
+        event = "will-attach-webview";
+        webContents.removeListener(event, subscriptions[event]);
+        webContents.on(event, subscriptions[event]);
     };
 
     app.on("browser-window-created", (event, {webContents}) => webContentsCreatedHandler(webContents));

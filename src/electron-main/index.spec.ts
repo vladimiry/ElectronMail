@@ -44,7 +44,7 @@ test.serial("workflow", async (t) => {
     t.true(m["./api"].initApi.calledWithExactly(t.context.ctx), `"initApi" called`);
     t.true(m["./api"].initApi.calledAfter(m["./web-request"].initWebRequestListeners), `"initApi" called after "initWebRequestListeners"`);
 
-    t.true(m["./web-contents"].initWebContentsCreatingHandlers.calledWithExactly(), `"initWebContentsCreatingHandlers" called`);
+    t.true(m["./web-contents"].initWebContentsCreatingHandlers.calledWithExactly(t.context.ctx), `"initWebContentsCreatingHandlers" called`);
     t.true(m["./web-contents"].initWebContentsCreatingHandlers.calledBefore(m["./window"].initBrowserWindow), `"initWebContentsCreatingHandlers" called before "initBrowserWindow"`);
     t.true(m["./web-contents"].initWebContentsCreatingHandlers.calledBefore(m["./tray"].initTray), `"initWebContentsCreatingHandlers" called before "initTray"`);
 

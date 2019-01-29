@@ -13,7 +13,6 @@
                 *ngIf="mailAddress"
                 class="prevent-default-event address badge flex-row mr-2"
                 href="mailto:{{ mailAddress.address }}"
-                title="{{ mailAddress.name ? mailAddress.name + ' <' + mailAddress.address + '>': '' }}"
             >
                 {{ mailAddress.name || mailAddress.address }}
                 <span *ngIf="mailAddressTotal && mailAddressTotal  > 1" class="d-flex ml-1">

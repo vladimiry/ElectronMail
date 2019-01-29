@@ -165,6 +165,7 @@ export const IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS = unionize({
 export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
         Bootstrap: ofType<{}>(),
         ActivateBrowserWindow: ofType<{}>(),
+        TargetUrl: ofType<{ url: string }>(),
         DbPatchAccount: ofType<{
             key: DbModel.DbAccountPk;
             entitiesModified: boolean;

@@ -1,11 +1,16 @@
 import {ContextMenuParams, Event, Menu, MenuItemConstructorOptions, WebContents, app, clipboard} from "electron";
 import {platform} from "os";
 
+import {IPC_MAIN_API_NOTIFICATION$} from "./api/constants";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+
 const emptyArray = Object.freeze([]);
 
-const contextMenuEventSubscriptionArgs: ["context-menu", (event: Event, params: ContextMenuParams) => void] = [
-    "context-menu",
-    ({sender: webContents}: Event, {editFlags, linkURL, linkText}: ContextMenuParams) => {
+const eventSubscriptions: {
+    "context-menu": (event: Event, params: ContextMenuParams) => void;
+    "update-target-url": (event: Event, url: string) => void;
+} = {
+    "context-menu": ({sender: webContents}: Event, {editFlags, linkURL, linkText}) => {
         const template: MenuItemConstructorOptions[] = [];
 
         if (linkURL) {
@@ -34,14 +39,23 @@ const contextMenuEventSubscriptionArgs: ["context-menu", (event: Event, params: 
             Menu.buildFromTemplate(template).popup({});
         }
     },
-];
-
-const webContentsCreatedHandler = (webContents: WebContents) => {
-    webContents.removeListener(...contextMenuEventSubscriptionArgs);
-    webContents.on(...contextMenuEventSubscriptionArgs);
+    "update-target-url": (event, url) => {
+        IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.TargetUrl({url}));
+    },
 };
 
-export function initWebContentContextMenu() {
+const webContentsCreatedHandler = (webContents: WebContents) => {
+    Object
+        .entries(eventSubscriptions)
+        .map(([event, handler]) => {
+            // TODO TS: get rid of any casting
+            webContents.removeListener(event as any, handler);
+            webContents.on(event as any, handler);
+        });
+};
+
+// WARN: needs to be called before "BrowserWindow" creating
+export function initWebContentsCreatingHandlers() {
     app.on("browser-window-created", (event, {webContents}) => webContentsCreatedHandler(webContents));
     app.on("web-contents-created", (webContentsCreatedEvent, webContents) => webContentsCreatedHandler(webContents));
 }
@@ -51,5 +65,7 @@ function isEmailHref(href: string): boolean {
 }
 
 function extractEmailIfEmailHref(href: string): string {
-    return isEmailHref(href) ? String(href.split("mailto:").pop()) : href;
+    return isEmailHref(href)
+        ? String(href.split("mailto:").pop())
+        : href;
 }

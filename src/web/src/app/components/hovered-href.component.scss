@@ -1,0 +1,21 @@
+@import "~src/web/src/variables";
+
+:host {
+    $bg-color: theme-color("secondary");
+    $padding: 0.2em;
+    $padding-l: 0.25em;
+
+    > div {
+        @include border-radius;
+        display: flex;
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        background-color: $bg-color;
+        border: 1px solid darken($bg-color, 10%);
+        color: $white;
+        font-size: $app-font-size-base-medium;
+        margin: $padding-l $padding;
+        padding: $padding $padding-l;
+    }
+}

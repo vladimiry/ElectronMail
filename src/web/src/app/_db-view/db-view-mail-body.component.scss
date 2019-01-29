@@ -2,7 +2,6 @@
 
 :host {
     $border-color: $list-group-border-color;
-    $font-size-small: $app-font-size-base-small * 1.2;
 
     position: relative;
     display: flex;
@@ -14,7 +13,7 @@
     .attachments {
         .badge {
             font-weight: normal;
-            font-size: $font-size-small;
+            font-size: $app-font-size-base-medium;
             color: $gray-700;
             border: 1px solid $border-color;
         }
@@ -51,18 +50,6 @@
 
     .attachments {
         border-top: 1px solid $border-color;
-    }
-
-    .hovered-href {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        margin: $app-spacer-1;
-        background-color: $gray-700;
-        color: $white;
-        border: 1px solid $gray-800;
-        padding: 0.25em;
-        font-size: $font-size-small;
     }
 
     .controls {

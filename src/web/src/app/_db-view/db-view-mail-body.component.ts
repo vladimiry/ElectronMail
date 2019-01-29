@@ -9,7 +9,7 @@ import {
     QueryList,
     ViewChildren,
 } from "@angular/core";
-import {BehaviorSubject, EMPTY, Subject, Subscription, combineLatest, fromEvent, merge} from "rxjs";
+import {BehaviorSubject, EMPTY, Subject, Subscription, combineLatest} from "rxjs";
 import {Store} from "@ngrx/store";
 import {delay, distinctUntilChanged, filter, map, mergeMap} from "rxjs/operators";
 
@@ -30,45 +30,14 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
     selectedMail$ = this.instance$.pipe(
         map((value) => value.selectedMail),
         mergeMap((value) => value ? [value] : EMPTY),
-        distinctUntilChanged((prev, curr) => {
-            return (
-                prev.rootNode.entryPk === curr.rootNode.entryPk
-                &&
-                prev.conversationMail.pk === curr.conversationMail.pk
-            );
-        }),
+        distinctUntilChanged((prev, curr) => (
+            prev.rootNode.entryPk === curr.rootNode.entryPk
+            &&
+            prev.conversationMail.pk === curr.conversationMail.pk
+        )),
     );
 
     iframeBodyEventSubject$ = new Subject<Event>();
-
-    hoveredHref$ = merge(
-        merge(
-            fromEvent(this.elementRef.nativeElement as HTMLElement, "mouseover"),
-            this.iframeBodyEventSubject$.pipe(
-                filter(({type}) => type === "mouseover"),
-            ),
-        ).pipe(
-            map((event) => {
-                const {link, href} = this.resolveLinkHref(event.target as Element);
-
-                if (!link || !href) {
-                    return false;
-                }
-
-                return href;
-            }),
-        ),
-        merge(
-            fromEvent(this.elementRef.nativeElement as HTMLElement, "mouseout"),
-            this.iframeBodyEventSubject$.pipe(
-                filter(({type}) => type === "mouseout"),
-            ),
-        ).pipe(
-            map(() => false),
-        ),
-    ).pipe(
-        distinctUntilChanged(),
-    );
 
     conversationCollapsed$: BehaviorSubject<boolean> = new BehaviorSubject(true);
 
@@ -83,7 +52,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         this.zone.run(() => this.iframeBodyEventSubject$.next(event));
     });
 
-    private readonly bodyIframeEventArgs = ["click", "mouseover", "mouseout"].map((event) => ({
+    private readonly bodyIframeEventArgs = ["click"].map((event) => ({
         event,
         handler: this.bodyIframeEventHandler,
     }));

@@ -44,9 +44,9 @@ test.serial("workflow", async (t) => {
     t.true(m["./api"].initApi.calledWithExactly(t.context.ctx), `"initApi" called`);
     t.true(m["./api"].initApi.calledAfter(m["./web-request"].initWebRequestListeners), `"initApi" called after "initWebRequestListeners"`);
 
-    t.true(m["./web-content-context-menu"].initWebContentContextMenu.calledWithExactly(), `"initWebContentContextMenu" called`);
-    t.true(m["./web-content-context-menu"].initWebContentContextMenu.calledBefore(m["./window"].initBrowserWindow), `"initWebContentContextMenu" called before "initBrowserWindow"`);
-    t.true(m["./web-content-context-menu"].initWebContentContextMenu.calledBefore(m["./tray"].initTray), `"initWebContentContextMenu" called before "initTray"`);
+    t.true(m["./web-contents"].initWebContentsCreatingHandlers.calledWithExactly(), `"initWebContentsCreatingHandlers" called`);
+    t.true(m["./web-contents"].initWebContentsCreatingHandlers.calledBefore(m["./window"].initBrowserWindow), `"initWebContentsCreatingHandlers" called before "initBrowserWindow"`);
+    t.true(m["./web-contents"].initWebContentsCreatingHandlers.calledBefore(m["./tray"].initTray), `"initWebContentsCreatingHandlers" called before "initTray"`);
 
     t.true(m["./window"].initBrowserWindow.calledWithExactly(t.context.ctx, t.context.endpoints), `"initBrowserWindow" called`);
 
@@ -95,7 +95,7 @@ test.beforeEach(async (t) => {
             mock(() => import("./window")).callThrough().with(mocks["./window"]);
             mock(() => import("./tray")).callThrough().with(mocks["./tray"]);
             mock(() => import("./menu")).callThrough().with(mocks["./menu"]);
-            mock(() => import("./web-content-context-menu")).with(mocks["./web-content-context-menu"]);
+            mock(() => import("./web-contents")).with(mocks["./web-contents"]);
             mock(() => import("./app-update")).callThrough().with(mocks["./app-update"]);
             mock(() => import("./keytar")).with({
                 getPassword: sinon.spy(),
@@ -133,8 +133,8 @@ function buildMocks(testContext: TestContext) {
             "./menu": {
                 initApplicationMenu: sinon.spy(),
             },
-            "./web-content-context-menu": {
-                initWebContentContextMenu: sinon.spy(),
+            "./web-contents": {
+                initWebContentsCreatingHandlers: sinon.spy(),
             },
             "./app-update": {
                 initAutoUpdate: sinon.spy(),

@@ -6,15 +6,16 @@ import {curryFunctionMembers} from "src/shared/util";
 
 // TODO ban direct "__ELECTRON_EXPOSURE__.buildLoggerBundle" referencing in tslint, but only via "getZoneNameBoundWebLogger" call
 
-export type ZoneNameBoundWebLogger = typeof LOGGER & { zoneName: () => string };
+type ZoneNameBoundWebLogger = typeof LOGGER & { zoneName: () => string };
 
-export const LOGGER = __ELECTRON_EXPOSURE__.buildLoggerBundle("[WEB]");
+const LOGGER = __ELECTRON_EXPOSURE__.buildLoggerBundle("[WEB]");
 
-export const formatZoneName = () => `<${Zone.current.name}>`;
+const formatZoneName = () => `<${Zone.current.name}>`;
 
 export const getZoneNameBoundWebLogger = (...args: string[]): ZoneNameBoundWebLogger => {
     const logger = curryFunctionMembers(LOGGER, ...args);
     const zoneName = formatZoneName;
+
     for (const level of LOG_LEVELS) {
         logger[level] = ((original) => {
             return function(this: typeof logger) {
@@ -22,6 +23,7 @@ export const getZoneNameBoundWebLogger = (...args: string[]): ZoneNameBoundWebLo
             };
         })(logger[level]);
     }
+
     return {...logger, zoneName};
 };
 
@@ -31,7 +33,9 @@ export const logActionTypeAndBoundLoggerWithActionType = <P extends object, T ex
 ): (pipeInput: { type: string; payload: P }) => { type: string; payload: P } & { logger: ZoneNameBoundWebLogger } => {
     return (aciton) => {
         const logger = curryFunctionMembers(_logger, JSON.stringify({actionType: aciton.type}));
+
         logger[level]();
+
         return {
             ...aciton,
             logger,

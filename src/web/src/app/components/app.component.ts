@@ -14,6 +14,7 @@ export type CloseableOutletsType = typeof ERRORS_OUTLET | typeof SETTINGS_OUTLET
         <router-outlet name="${ACCOUNTS_OUTLET}"></router-outlet>
         <router-outlet name="${SETTINGS_OUTLET}"></router-outlet>
         <router-outlet name="${ERRORS_OUTLET}"></router-outlet>
+        <email-securely-app-hovered-href></email-securely-app-hovered-href>
     `,
     styleUrls: ["./app.component.scss"],
 })

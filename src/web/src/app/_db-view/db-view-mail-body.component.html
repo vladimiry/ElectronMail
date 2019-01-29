@@ -114,12 +114,6 @@
     <div class="body-container d-flex flex-grow-1"></div>
 
     <div
-        *ngIf="hoveredHref$ | async; let hoveredHref;"
-        [innerText]="hoveredHref"
-        class="d-flex hovered-href rounded"
-    ></div>
-
-    <div
         *ngIf="selectedMail.conversationMail.attachments.length"
         class="attachments pt-2 mt-2"
     >

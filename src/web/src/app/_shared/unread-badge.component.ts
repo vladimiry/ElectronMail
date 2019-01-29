@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy, Component, ElementRef, Input, OnDestroy, OnInit, Renderer2} from "@angular/core";
 import {Store, select} from "@ngrx/store";
-import {Subscription} from "rxjs/Subscription";
+import {Subscription} from "rxjs";
 
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {State} from "src/web/src/app/store/reducers/options";

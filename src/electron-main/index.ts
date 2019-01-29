@@ -11,7 +11,7 @@ import {initBrowserWindow} from "./window";
 import {initContext} from "./util";
 import {initDefaultSession} from "./session";
 import {initTray} from "./tray";
-import {initWebContentContextMenu} from "./web-content-context-menu";
+import {initWebContentsCreatingHandlers} from "./web-contents";
 import {initWebRequestListeners} from "./web-request";
 
 electronUnhandled({
@@ -39,7 +39,7 @@ app.on("ready", async () => {
     const endpoints = await initApi(ctx);
     const {checkForUpdatesAndNotify} = await endpoints.readConfig().toPromise();
 
-    initWebContentContextMenu();
+    initWebContentsCreatingHandlers();
 
     ctx.uiContext = {
         browserWindow: await initBrowserWindow(ctx, endpoints),

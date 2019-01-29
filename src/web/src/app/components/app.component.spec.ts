@@ -4,8 +4,10 @@ import {RouterTestingModule} from "@angular/router/testing";
 import {Store, StoreModule} from "@ngrx/store";
 import {produce} from "immer";
 
+import * as OptionsReducer from "src/web/src/app/store/reducers/options";
 import {AppComponent} from "./app.component";
 import {ESC_KEY, SETTINGS_OUTLET as outlet} from "src/web/src/app/app.constants";
+import {HoveredHrefComponent} from "./hovered-href.component";
 import {NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
 import {initTestEnvironment} from "src/web/test/util";
 
@@ -13,8 +15,12 @@ const moduleDef: TestModuleMetadata = Object.freeze({
     imports: [
         RouterTestingModule,
         StoreModule.forRoot({}),
+        StoreModule.forFeature(OptionsReducer.featureName, OptionsReducer.reducer),
     ],
-    declarations: [AppComponent],
+    declarations: [
+        AppComponent,
+        HoveredHrefComponent,
+    ],
 });
 
 describe(AppComponent.name, () => {
@@ -65,8 +71,18 @@ describe(AppComponent.name, () => {
         testBed.resetTestingModule();
         testBed = initTestEnvironment((tb) => tb.configureTestingModule(produce(moduleDef, (draftState) => {
             draftState.providers = [
-                {provide: Location, useValue: {path: locationPathStub}},
-                {provide: Store, useValue: {dispatch: storeDispatchStub}},
+                {
+                    provide: Location, useValue: {
+                        path: locationPathStub,
+                    },
+                },
+                {
+                    provide: Store, useValue: {
+                        dispatch: storeDispatchStub,
+                        // TODO mock "pipe" with sinon stub
+                        pipe: () => {},
+                    },
+                },
             ];
         })));
 

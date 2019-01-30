@@ -3,7 +3,7 @@ import sanitizeHtml from "sanitize-html";
 import {Observable, from, of, race, throwError, timer} from "rxjs";
 import {UnionOf} from "@vladimiry/unionize";
 import {app, dialog} from "electron";
-import {concatMap, filter, map, mergeMap, startWith} from "rxjs/operators";
+import {concatMap, filter, mergeMap, startWith} from "rxjs/operators";
 import {equals, mergeDeepRight, omit, pick} from "ramda";
 import {v4 as uuid} from "uuid";
 
@@ -306,10 +306,6 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
                     timer(timeoutMs).pipe(
                         concatMap(() => throwError(new Error(`Failed to complete the search in ${timeoutMs}ms`))),
                     ),
-                ).pipe(
-                    map((value) => {
-                        return value;
-                    }),
                 );
 
                 IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.next(

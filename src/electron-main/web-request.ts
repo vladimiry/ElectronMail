@@ -1,3 +1,4 @@
+import {OnBeforeSendHeadersDetails, OnHeadersReceivedDetails} from "electron";
 import {URL} from "url";
 
 import {AccountType} from "src/shared/model/account";
@@ -5,16 +6,9 @@ import {Context} from "./model";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {getDefaultSession} from "./session";
 
-interface Details {
-    id: number;
-    url: string;
-    method: string;
-    resourceType?: string;
-}
-
-type RequestDetails = Details & { requestHeaders: HeadersMap };
-
-type ResponseDetails = Details & { responseHeaders: HeadersMap<string[]> };
+// TODO drop these types when "requestHeaders / responseHeaders" get proper types
+type RequestDetails = OnBeforeSendHeadersDetails & { requestHeaders: HeadersMap };
+type ResponseDetails = OnHeadersReceivedDetails & { responseHeaders: HeadersMap<string[]> };
 
 interface HeadersMap<V extends string | string[] = string | string[]> {
     [k: string]: V;
@@ -69,11 +63,11 @@ export function initWebRequestListeners({locations}: Context) {
 
     getDefaultSession().webRequest.onBeforeSendHeaders(
         {urls: []},
-        // TODO TS/electron.d.ts: "webRequest.onBeforeSendHeaders" listener signature is not declared properly
         (
-            requestDetails: RequestDetails,
-            callback: (arg: { cancel: boolean; requestHeaders: typeof requestDetails.requestHeaders; }) => void,
+            requestDetailsArg,
+            callback,
         ) => {
+            const requestDetails = requestDetailsArg as RequestDetails;
             const {requestHeaders} = requestDetails;
             const requestProxy = resolveProxy(requestDetails);
 
@@ -88,17 +82,17 @@ export function initWebRequestListeners({locations}: Context) {
     );
 
     getDefaultSession().webRequest.onHeadersReceived(
-        // TODO TS/electron.d.ts: "webRequest.onHeadersReceived" listener signature is not declared properly
         (
-            responseDetails: ResponseDetails,
-            callback: (arg: { responseHeaders: typeof responseDetails.responseHeaders }) => void,
+            responseDetailsArg,
+            callback,
         ) => {
+            const responseDetails = responseDetailsArg as ResponseDetails;
             const requestProxy = PROXIES.get(responseDetails.id);
             const responseHeaders = requestProxy
                 ? responseHeadersPatchHandlers[requestProxy.accountType]({responseDetails, requestProxy})
                 : responseDetails.responseHeaders;
 
-            callback({responseHeaders});
+            callback({responseHeaders, cancel: false});
         },
     );
 }
@@ -159,7 +153,9 @@ function resolveRequestProxy<T extends AccountType>(
 // and then pick all the "Access-Control-*" header names as a template instead of hardcoding the default headers
 // since over time the server may start giving other headers
 const responseHeadersPatchHandlers: {
-    [k in AccountType]: (arg: { requestProxy: RequestProxy, responseDetails: ResponseDetails; }) => ResponseDetails["responseHeaders"];
+    [k in AccountType]: (
+        arg: { requestProxy: RequestProxy, responseDetails: ResponseDetails; },
+    ) => ResponseDetails["responseHeaders"];
 } = (() => {
     const commonPatch: typeof responseHeadersPatchHandlers[AccountType] = ({requestProxy, responseDetails: {responseHeaders}}) => {
         patchResponseHeader(

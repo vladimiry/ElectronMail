@@ -1,9 +1,8 @@
 import {Injectable, OnDestroy} from "@angular/core";
 import {Model} from "pubsub-to-stream-api";
 import {Store, select} from "@ngrx/store";
-import {Subscription} from "rxjs/Subscription";
+import {Subscription, from, of, throwError, timer} from "rxjs";
 import {concat, concatMap, delay, filter, map, mergeMap, retryWhen, switchMap, take, takeWhile, withLatestFrom} from "rxjs/operators";
-import {from, of, throwError, timer} from "rxjs";
 
 import {AccountType} from "src/shared/model/account";
 import {DEFAULT_API_CALL_TIMEOUT, ONE_SECOND_MS} from "src/shared/constants";

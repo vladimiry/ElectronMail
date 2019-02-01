@@ -12,6 +12,7 @@ import {
     finalize,
     map,
     mergeMap,
+    switchMap,
     takeUntil,
     tap,
     withLatestFrom,
@@ -112,6 +113,13 @@ export class AccountsEffects {
             const onlinePing$ = timer(0, ONE_SECOND_MS).pipe(
                 filter(() => navigator.onLine),
             );
+            const notSyncingPing$ = timer(0, ONE_SECOND_MS).pipe(
+                // tslint:disable-next-line:ban
+                switchMap(() => this.store.pipe(
+                    select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
+                    filter((account) => Boolean(account && !account.progress.syncing)),
+                )),
+            );
             const ipcMainClient = this.api.ipcMainClient();
             const zoneName = logger.zoneName();
 
@@ -144,6 +152,7 @@ export class AccountsEffects {
                     ).pipe(
                         debounceTime(ONE_SECOND_MS),
                         debounce(() => onlinePing$),
+                        debounce(() => notSyncingPing$),
                         tap(() => {
                             this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: true}}));
                         }),

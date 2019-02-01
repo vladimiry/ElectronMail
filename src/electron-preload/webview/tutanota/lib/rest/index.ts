@@ -14,7 +14,7 @@ export async function fetchEntity<T extends BaseEntity<Id | IdTuple>, TypeRefTyp
     typeRef: TypeRef<T>,
     id: T["_id"],
 ): Promise<T> {
-    logger.verbose("fetchEntity()");
+    logger.debug("fetchEntity()");
 
     const {load} = (await resolveProviderApi())["src/api/main/Entity"];
 
@@ -25,7 +25,7 @@ export async function fetchAllEntities<T extends BaseEntity<IdTuple>, TypeRefTyp
     typeRef: TypeRef<T>,
     listId: T["_id"][0],
 ): Promise<T[]> {
-    logger.verbose("fetchAllEntities()");
+    logger.debug("fetchAllEntities()");
 
     const {loadAll} = (await resolveProviderApi())["src/api/main/Entity"];
 
@@ -38,7 +38,7 @@ export async function fetchMultipleEntities<T extends BaseEntity<Id | IdTuple>, 
     instanceIds: Array<T["_id"] extends IdTuple ? T["_id"][1] : T["_id"]>,
     chunkSize = 100,
 ): Promise<T[]> {
-    logger.verbose("fetchMultipleEntities()");
+    logger.debug("fetchMultipleEntities()");
 
     const {loadMultiple} = (await resolveProviderApi())["src/api/main/Entity"];
     const instanceIdsChunks = splitEvery(chunkSize, instanceIds);
@@ -56,38 +56,43 @@ export async function fetchEntitiesRange<T extends BaseEntity<IdTuple>, TypeRefT
     listId: T["_id"][0],
     queryParams: Required<Omit<RequestParams, "ids">>,
 ): Promise<T[]> {
-    logger.verbose("fetchEntitiesRange()");
+    logger.debug("fetchEntitiesRange()");
 
     const {loadRange} = (await resolveProviderApi())["src/api/main/Entity"];
 
     return loadRange(typeRef, listId, queryParams.start, queryParams.count, queryParams.reverse);
 }
 
+// TODO consider streaming fetched entities portion to Observable instead of "portionCallback"
 export async function fetchEntitiesRangeUntilTheEnd<T extends BaseEntity<IdTuple>, TypeRefType extends TypeRef<T>>(
     typeRef: TypeRef<T>,
     listId: T["_id"][0],
     {start, count}: Required<Omit<RequestParams, "ids" | "reverse">>,
-): Promise<T[]> {
-    logger.verbose("fetchEntitiesRangeUntilTheEnd()");
+    portionCallback: (entities: T[]) => Promise<void>,
+): Promise<void> {
+    logger.debug("fetchEntitiesRangeUntilTheEnd()");
 
     count = Math.max(1, Math.min(count, 500));
 
     const {timestampToGeneratedId, generatedIdToTimestamp} = (await resolveProviderApi())["src/api/common/utils/Encoding"];
-    const entities = await fetchEntitiesRange(typeRef, listId, {start, count, reverse: false});
-    const fullPortionFetched = entities.length === count;
 
-    if (fullPortionFetched) {
+    while (true) {
+        const entities = await fetchEntitiesRange(typeRef, listId, {start, count, reverse: false});
+
+        await portionCallback(entities);
+
+        const fetchingCompleted = entities.length < count;
+
+        if (fetchingCompleted) {
+            break;
+        }
+
         const lastEntity = entities[entities.length - 1];
         const currentPortionEndId = Util.resolveInstanceId(lastEntity);
         const currentPortionEndTimestamp = generatedIdToTimestamp(currentPortionEndId);
-        const nextPortionStartId = timestampToGeneratedId(currentPortionEndTimestamp + 1);
 
-        entities.push(
-            ...await fetchEntitiesRangeUntilTheEnd(typeRef, listId, {start: nextPortionStartId, count}),
-        );
+        start = timestampToGeneratedId(currentPortionEndTimestamp + 1);
     }
-
-    return entities;
 }
 
 export {

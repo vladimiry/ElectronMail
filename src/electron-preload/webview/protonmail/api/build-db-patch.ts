@@ -5,9 +5,9 @@ import * as Database from "src/electron-preload/webview/protonmail/lib/database"
 import * as DatabaseModel from "src/shared/model/database";
 import * as Rest from "src/electron-preload/webview/protonmail/lib/rest";
 import {AJAX_SEND_NOTIFICATION_SKIP_PARAM} from "./ajax-send-notification";
+import {DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_SECOND_MS} from "src/shared/constants";
 import {DbPatch} from "src/shared/api/common";
 import {MemoryDbAccount} from "src/shared/model/database";
-import {ONE_SECOND_MS} from "src/shared/constants";
 import {Omit, Unpacked} from "src/shared/types";
 import {ProtonmailApi} from "src/shared/api/webview/protonmail";
 import {ProviderApi, resolveProviderApi} from "src/electron-preload/webview/protonmail/lib/provider-api";
@@ -141,30 +141,34 @@ async function bootstrapDbPatch(
     })();
     logger.info(`fetched ${contacts.length} contacts`);
 
-    logger.verbose(`start fetching labels`);
-    const labels = await api.label.query({Type: Rest.Model.LABEL_TYPE.MESSAGE}); // fetching all the entities;
-    logger.info(`fetched ${labels.length} labels`);
+    logger.verbose(`start fetching folders`);
+    const folders = await api.label.query({Type: Rest.Model.LABEL_TYPE.MESSAGE}); // fetching all the entities;
+    logger.info(`fetched ${folders.length} folders`);
 
     logger.verbose(`construct initial database patch`);
     const initialPatch = buildEmptyDbPatch();
-    initialPatch.folders.upsert = labels.map(Database.buildFolder);
+    initialPatch.folders.upsert = folders.map(Database.buildFolder);
     initialPatch.contacts.upsert = contacts.map(Database.buildContact);
 
     logger.verbose(`trigger initial storing`);
     await triggerStoreCallback({
         patch: initialPatch,
-        metadata: {latestEventId},
+        metadata: {
+            // WARN: don't persist the "latestEventId" value yet as this is intermediate storing
+            latestEventId: "",
+        },
     });
 
     logger.verbose("start fetching messages");
     const remainingMails: DatabaseModel.Mail[] = await (async () => {
         const conversationsQuery = {Page: 0, PageSize: 150};
-        const {fetching: {messagesStorePortionSize = 550}} = await (await resolveIpcMainApi())("readConfig")().toPromise();
+        const {fetching: {messagesStorePortionSize = DEFAULT_MESSAGES_STORE_PORTION_SIZE}}
+            = await (await resolveIpcMainApi())("readConfig")().toPromise();
 
         logger.info(JSON.stringify({messagesStorePortionSize}));
 
         let conversationsFetchResponse: Unpacked<ReturnType<typeof api.conversation.query>> | undefined;
-        let mailsPortion: DatabaseModel.Mail[] = [];
+        let mailsPersistencePortion: DatabaseModel.Mail[] = [];
         let conversationsFetched = 0;
         let mailsFetched = 0;
 
@@ -182,24 +186,27 @@ async function bootstrapDbPatch(
                 mailsFetched += dbMails.length;
                 logger.verbose(`mails fetch progress: ${mailsFetched}`);
 
-                mailsPortion.push(...dbMails);
+                mailsPersistencePortion.push(...dbMails);
 
-                const flushThePortion = mailsPortion.length >= messagesStorePortionSize;
+                const flushThePortion = mailsPersistencePortion.length >= messagesStorePortionSize;
 
                 if (!flushThePortion) {
                     continue;
                 }
 
-                const mailsPortionDbPatch = buildEmptyDbPatch();
+                const intermediatePatch = buildEmptyDbPatch();
 
-                mailsPortionDbPatch.mails.upsert = mailsPortion;
-                mailsPortion = [];
+                intermediatePatch.mails.upsert = mailsPersistencePortion;
+                mailsPersistencePortion = [];
 
-                logger.verbose(`trigger intermediate ${mailsPortionDbPatch.mails.upsert.length} mails storing`);
+                logger.verbose([
+                    `trigger intermediate storing,`,
+                    `mails: ${intermediatePatch.mails.upsert.length},`,
+                ].join(" "));
                 await triggerStoreCallback({
-                    patch: mailsPortionDbPatch,
-                    // WARN: don't persist the "latestEventId" value yet as this is intermediate storing
+                    patch: intermediatePatch,
                     metadata: {
+                        // WARN: don't persist the "latestEventId" value yet as this is intermediate storing
                         latestEventId: "",
                     },
                 });
@@ -210,12 +217,17 @@ async function bootstrapDbPatch(
         logger.info(`fetched ${conversationsFetched} conversations`);
         logger.info(`fetched ${mailsFetched} messages`);
 
-        return mailsPortion;
+        return mailsPersistencePortion;
     })();
 
-    logger.verbose(`trigger final storing`);
     const finalPatch = buildEmptyDbPatch();
     finalPatch.mails.upsert = remainingMails;
+
+    logger.verbose([
+        `trigger final storing,`,
+        `mails: ${finalPatch.mails.upsert.length},`,
+    ].join(" "));
+
     await triggerStoreCallback({
         patch: finalPatch,
         metadata: {latestEventId},

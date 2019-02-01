@@ -5,7 +5,7 @@ import {Model as StoreModel} from "fs-json-store";
 import {randomBytes} from "crypto";
 
 import {Config, ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS, Settings} from "src/shared/model/options";
-import {DEFAULT_API_CALL_TIMEOUT, ONE_SECOND_MS} from "src/shared/constants";
+import {DEFAULT_API_CALL_TIMEOUT, DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_SECOND_MS} from "src/shared/constants";
 
 export const INITIAL_STORES: Readonly<{
     config: () => Config;
@@ -38,7 +38,7 @@ export const INITIAL_STORES: Readonly<{
                     intervalMs: ONE_SECOND_MS * 60,
                     maxInInterval: 275,
                 },
-                messagesStorePortionSize: 500,
+                messagesStorePortionSize: DEFAULT_MESSAGES_STORE_PORTION_SIZE,
             },
             timeouts: {
                 // "fetchingRateLimiting" values need to be taking into the account defining the "fetching" timeout

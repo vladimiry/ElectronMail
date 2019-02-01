@@ -118,7 +118,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
         dbGetAccountMetadata: ({type, login}) => from((async (
             logger = curryFunctionMembers(_logger, "dbGetAccountMetadata()"),
         ) => {
-            logger.info("dbGetAccountMetadata()");
+            logger.info();
             const account = ctx.db.getAccount({type, login});
             return account ? account.metadata : null;
         })()),
@@ -345,7 +345,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
                         });
                     },
                     ProgressState: (payload) => {
-                        logger.verbose(`ProgressState.status: ${payload.status}`);
+                        logger.verbose(`ProgressState.status: ${JSON.stringify(payload.status)}`);
 
                         // propagating status to main channel which streams data to UI process
                         IPC_MAIN_API_NOTIFICATION$.next(

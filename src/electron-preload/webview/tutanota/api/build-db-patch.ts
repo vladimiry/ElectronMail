@@ -4,13 +4,14 @@ import {defer, of} from "rxjs";
 import * as Database from "src/electron-preload/webview/tutanota/lib/database";
 import * as DatabaseModel from "src/shared/model/database";
 import * as Rest from "src/electron-preload/webview/tutanota/lib/rest";
+import {DEFAULT_MESSAGES_STORE_PORTION_SIZE} from "src/shared/constants";
 import {DbPatch} from "src/shared/api/common";
 import {MemoryDbAccount} from "src/shared/model/database";
 import {Omit, Unpacked} from "src/shared/types";
 import {StatusCodeError} from "src/shared/model/error";
 import {TutanotaApi} from "src/shared/api/webview/tutanota";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
-import {buildDbPatchRetryPipeline, persistDatabasePatch} from "src/electron-preload/webview/util";
+import {buildDbPatchRetryPipeline, buildEmptyDbPatch, persistDatabasePatch, resolveIpcMainApi} from "src/electron-preload/webview/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
 import {curryFunctionMembers, isDatabaseBootstrapped} from "src/shared/util";
 import {getUserController, isLoggedIn, isUpsertUpdate, preprocessError} from "src/electron-preload/webview/tutanota/lib/util";
@@ -27,7 +28,6 @@ const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[api/build-db-pa
 
 const buildDbPatchEndpoint: Pick<TutanotaApi, "buildDbPatch"> = {
     buildDbPatch: (input) => defer(() => (async (logger = curryFunctionMembers(_logger, input.zoneName)) => {
-        const api = await resolveProviderApi();
         const controller = getUserController();
         const inputMetadata = input.metadata;
 
@@ -36,14 +36,21 @@ const buildDbPatchEndpoint: Pick<TutanotaApi, "buildDbPatch"> = {
         }
 
         if (!isDatabaseBootstrapped(inputMetadata)) {
-            return await persistDatabasePatch(
-                {
-                    ...await bootstrapDbPatch({api}, logger),
-                    type: input.type,
-                    login: input.login,
-                },
+            await bootstrapDbPatch(
                 logger,
+                async (dbPatch) => {
+                    await persistDatabasePatch(
+                        {
+                            ...dbPatch,
+                            type: input.type,
+                            login: input.login,
+                        },
+                        logger,
+                    );
+                },
             );
+
+            return null;
         }
 
         const preFetch = await (async (
@@ -55,12 +62,15 @@ const buildDbPatchEndpoint: Pick<TutanotaApi, "buildDbPatch"> = {
             logger.verbose(`start fetching entity event batches of ${memberships.length} memberships`);
             for (const {group} of memberships) {
                 const startId = await Rest.Util.generateStartId(inputGroupEntityEventBatchIds[group]);
-                const fetched = await Rest.fetchEntitiesRangeUntilTheEnd(
-                    Rest.Model.EntityEventBatchTypeRef, group, {start: startId, count: 500},
+                const entityEventBatches: Rest.Model.EntityEventBatch[] = [];
+                await Rest.fetchEntitiesRangeUntilTheEnd(
+                    Rest.Model.EntityEventBatchTypeRef, group, {start: startId, count: 100}, async (fetched) => {
+                        entityEventBatches.push(...fetched);
+                    },
                 );
-                fetchedEventBatches.push(...fetched);
-                if (fetched.length) {
-                    groupEntityEventBatchIds[group] = Rest.Util.resolveInstanceId(fetched[fetched.length - 1]);
+                fetchedEventBatches.push(...entityEventBatches);
+                if (entityEventBatches.length) {
+                    groupEntityEventBatchIds[group] = Rest.Util.resolveInstanceId(entityEventBatches[entityEventBatches.length - 1]);
                 }
             }
             logger.verbose(
@@ -95,10 +105,11 @@ const buildDbPatchEndpoint: Pick<TutanotaApi, "buildDbPatch"> = {
 };
 
 async function bootstrapDbPatch(
-    {api}: { api: Unpacked<ReturnType<typeof resolveProviderApi>> },
     parentLogger: ReturnType<typeof buildLoggerBundle>,
-): Promise<BuildDbPatchReturn> {
+    triggerStoreCallback: (path: BuildDbPatchReturn) => Promise<void>,
+): Promise<void> {
     const logger = curryFunctionMembers(parentLogger, "bootstrapDbPatch()");
+    const api = await resolveProviderApi();
     const controller = getUserController();
 
     if (!controller) {
@@ -126,46 +137,128 @@ async function bootstrapDbPatch(
         ].join(" "));
         return {metadata: {groupEntityEventBatchIds}};
     })();
-    const rangeFetchParams = {start: await Rest.Util.generateStartId(), count: 100};
-    const folders = await Rest.Util.fetchMailFoldersWithSubFolders(controller.user);
-    const mails = await (async (items: Rest.Model.Mail[] = []) => {
-        for (const folder of folders) {
-            const fetched = await Rest.fetchEntitiesRangeUntilTheEnd(Rest.Model.MailTypeRef, folder.mails, rangeFetchParams);
-            items.push(...fetched);
-        }
-        return items;
-    })();
-    const conversationEntries = await (async (items: Rest.Model.ConversationEntry[] = []) => {
-        const conversationEntryListIds = mails.reduce(
-            (accumulator, mail) => {
-                accumulator.add(Rest.Util.resolveListId({_id: mail.conversationEntry}));
-                return accumulator;
-            },
-            new Set<Rest.Model.ConversationEntry["_id"][0]>(),
-        );
-        for (const listId of conversationEntryListIds.values()) {
-            const fetched = await Rest.fetchAllEntities(Rest.Model.ConversationEntryTypeRef, listId);
-            items.push(...fetched);
-        }
-        return items;
-    })();
+
+    logger.verbose("start fetching contacts");
     const contacts = await (async () => {
         const {group} = controller.user.userGroup;
         const contactList = await api["src/api/main/Entity"].loadRoot(Rest.Model.ContactListTypeRef, group);
         return await Rest.fetchAllEntities(Rest.Model.ContactTypeRef, contactList.contacts);
     })();
+    logger.info(`fetched ${contacts.length} contacts`);
 
-    const patch: DbPatch = {
-        conversationEntries: {remove: [], upsert: conversationEntries.map(Database.buildConversationEntry)},
-        mails: {remove: [], upsert: await Database.buildMails(mails)},
-        folders: {remove: [], upsert: folders.map(Database.buildFolder)},
-        contacts: {remove: [], upsert: contacts.map(Database.buildContact)},
-    };
+    logger.verbose(`start fetching folders`);
+    const folders = await Rest.Util.fetchMailFoldersWithSubFolders(controller.user);
+    logger.info(`fetched ${folders.length} folders`);
 
-    return {
-        patch,
+    logger.verbose(`construct initial database patch`);
+    const initialPatch = buildEmptyDbPatch();
+    initialPatch.folders.upsert = folders.map(Database.buildFolder);
+    initialPatch.contacts.upsert = contacts.map(Database.buildContact);
+
+    logger.verbose(`trigger initial storing`);
+    await triggerStoreCallback({
+        patch: initialPatch,
+        metadata: {
+            // WARN: don't persist the "latestEventId" value yet as this is intermediate storing
+            groupEntityEventBatchIds: {},
+        },
+    });
+
+    const remainingMails: Rest.Model.Mail[] = await (async () => {
+        const {fetching: {messagesStorePortionSize = DEFAULT_MESSAGES_STORE_PORTION_SIZE}}
+            = await (await resolveIpcMainApi())("readConfig")().toPromise();
+        const fetchParams = {start: await Rest.Util.generateStartId(), count: 100, reverse: false};
+
+        let mailsPersistencePortion: Rest.Model.Mail[] = [];
+        let mailsFetched = 0;
+
+        for (const folder of folders) {
+            await Rest.fetchEntitiesRangeUntilTheEnd(Rest.Model.MailTypeRef, folder.mails, fetchParams, async (mails) => {
+                mailsFetched += mails.length;
+                logger.verbose(`mails fetch progress: ${mailsFetched}`);
+
+                mailsPersistencePortion.push(...mails);
+
+                const flushThePortion = mailsPersistencePortion.length >= messagesStorePortionSize;
+
+                if (!flushThePortion) {
+                    return;
+                }
+
+                const intermediatePatch = await buildMailsAndConversationEntriesDbPatch(mailsPersistencePortion, logger);
+
+                mailsPersistencePortion = [];
+
+                logger.verbose([
+                    `trigger intermediate storing,`,
+                    `mails: ${intermediatePatch.mails.upsert.length},`,
+                    `conversationEntries: ${intermediatePatch.conversationEntries.upsert.length}`,
+                ].join(" "));
+
+                await triggerStoreCallback({
+                    patch: intermediatePatch,
+                    metadata: {
+                        // WARN: don't persist the "latestEventId" value yet as this is intermediate storing
+                        groupEntityEventBatchIds: {},
+                    },
+                });
+            });
+        }
+
+        logger.info(`fetched ${mailsFetched} messages`);
+
+        return mailsPersistencePortion;
+    })();
+
+    const finalPatch = await buildMailsAndConversationEntriesDbPatch(remainingMails, logger);
+
+    logger.verbose([
+        `trigger final storing,`,
+        `mails: ${finalPatch.mails.upsert.length},`,
+        `conversationEntries: ${finalPatch.conversationEntries.upsert.length}`,
+    ].join(" "));
+
+    await triggerStoreCallback({
+        patch: finalPatch,
         metadata,
-    };
+    });
+}
+
+async function buildMailsAndConversationEntriesDbPatch(
+    mails: Rest.Model.Mail[],
+    logger: ReturnType<typeof buildLoggerBundle>,
+): Promise<DbPatch> {
+    const conversationEntries = await fetchConversationEntries(mails, logger);
+    const patch = buildEmptyDbPatch();
+
+    patch.mails.upsert = await Database.buildMails(mails);
+    patch.conversationEntries.upsert = conversationEntries.map(Database.buildConversationEntry);
+
+    return patch;
+}
+
+async function fetchConversationEntries(
+    mails: Rest.Model.Mail[],
+    logger: ReturnType<typeof buildLoggerBundle>,
+): Promise<Rest.Model.ConversationEntry[]> {
+    const items: Rest.Model.ConversationEntry[] = [];
+    const conversationEntryListIds = mails.reduce(
+        (accumulator, mail) => {
+            accumulator.add(Rest.Util.resolveListId({_id: mail.conversationEntry}));
+            return accumulator;
+        },
+        new Set<Rest.Model.ConversationEntry["_id"][0]>(),
+    );
+
+    // TODO figure how to load all the entities in a single/few requests having only the array of "listId" values
+    logger.verbose(`start fetching conversation entries, iterations count: ${conversationEntryListIds.size}`);
+    for (const listId of conversationEntryListIds.values()) {
+        const fetched = await Rest.fetchAllEntities(Rest.Model.ConversationEntryTypeRef, listId);
+        items.push(...fetched);
+        logger.verbose(`conversation entries fetch progress: ${fetched.length}`);
+    }
+
+    return items;
 }
 
 async function buildDbPatch(

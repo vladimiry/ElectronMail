@@ -209,7 +209,7 @@ export async function persistDatabasePatch(
 ): Promise<null> {
     logger.info("persist() start");
 
-    (await resolveIpcMainApi())("dbPatch")({
+    await (await resolveIpcMainApi())("dbPatch")({
         type: data.type,
         login: data.login,
         metadata: data.metadata,

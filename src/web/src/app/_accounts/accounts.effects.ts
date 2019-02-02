@@ -1,5 +1,5 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {EMPTY, Subject, from, fromEvent, merge, of, timer} from "rxjs";
+import {EMPTY, Subject, concat, from, fromEvent, merge, of, timer} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {
@@ -132,6 +132,24 @@ export class AccountsEffects {
                     filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbPatchAccount),
                     filter(({payload: {key}}) => key.type === type && key.login === login),
                     mergeMap(({payload: {stat: {unread}}}) => of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread}}}))),
+                ),
+                this.actions$.pipe(
+                    unionizeActionFilter(ACCOUNTS_ACTIONS.is.SelectMailOnline),
+                    map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+                    filter(({payload: {pk: key}}) => key.type === type && key.login === login),
+                    mergeMap(({payload: p}) => concat(
+                        of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {selectingMailOnline: true}})),
+                        this.api.webViewClient(webView, type, {finishPromise}).pipe(
+                            mergeMap((client) => client("selectMailOnline", {timeoutMs: ONE_SECOND_MS * 5})(p).pipe(
+                                mergeMap(() => EMPTY),
+                                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                                finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({
+                                    login,
+                                    patch: {selectingMailOnline: false},
+                                }))),
+                            )),
+                        ),
+                    )),
                 ),
                 this.api.webViewClient(webView, type, {finishPromise}).pipe(
                     mergeMap((webViewClient) => merge(

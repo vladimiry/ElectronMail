@@ -8,6 +8,8 @@ import * as WebviewConstants from "src/electron-preload/webview/constants";
 import {AJAX_SEND_NOTIFICATION$} from "./ajax-send-notification";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {PROTONMAIL_IPC_WEBVIEW_API, ProtonmailApi, ProtonmailNotificationOutput} from "src/shared/api/webview/protonmail";
+import {PROTONMAIL_MAILBOX_IDENTIFIERS} from "src/shared/model/database";
+import {PROTONMAIL_MAILBOX_ROUTE_NAMES} from "./constants";
 import {angularJsHttpResponseTypeGuard, isLoggedIn} from "src/electron-preload/webview/protonmail/lib/util";
 import {buildDbPatch, buildDbPatchEndpoint} from "src/electron-preload/webview/protonmail/api/build-db-patch";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
@@ -20,7 +22,7 @@ const endpoints: ProtonmailApi = {
 
     ping: () => of(null),
 
-    selectAccount: ({databaseView, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "api:select()", zoneName)) => {
+    selectAccount: ({databaseView, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "select()", zoneName)) => {
         logger.info();
 
         await (await resolveIpcMainApi())("selectAccount")({databaseView}).toPromise();
@@ -28,7 +30,62 @@ const endpoints: ProtonmailApi = {
         return null;
     })()),
 
-    fillLogin: ({login, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "api:fillLogin()", zoneName)) => {
+    selectMailOnline: (input) => from((async (logger = curryFunctionMembers(_logger, "selectMailOnline()", input.zoneName)) => {
+        logger.info();
+
+        // TODO reduce the "mailFolderId" value that contains a minimum items count
+        const $state: { go: (v: string, d: Record<string, string>) => Promise<void> }
+            = window.angular.element(document).data().$injector.get("$state");
+        const {system, custom} = input.mail.mailFolderIds.reduce(
+            (accumulator: { system: typeof input.mail.mailFolderIds, custom: typeof input.mail.mailFolderIds }, id) => {
+                if (id in PROTONMAIL_MAILBOX_ROUTE_NAMES) {
+                    accumulator.system.push(id);
+                } else {
+                    accumulator.custom.push(id);
+                }
+                return accumulator;
+            },
+            {system: [], custom: []},
+        );
+        const {id: mailId, conversationEntryPk: mailConversationId} = input.mail;
+
+        if (custom.length) {
+            const [folderId] = custom;
+
+            await $state.go("secured.label", {
+                label: folderId,
+            });
+            await $state.go("secured.label.element", {
+                id: mailConversationId,
+                messageID: mailId,
+            });
+
+            return null;
+        }
+
+        const folderRouteName = system.length > 1
+            ? (() => {
+                const folderId = system.find((id) => id !== PROTONMAIL_MAILBOX_IDENTIFIERS["All Mail"]);
+                if (!folderId) {
+                    throw new Error(`Failed to resolve folder`);
+                }
+                return PROTONMAIL_MAILBOX_ROUTE_NAMES[folderId];
+            })()
+            : PROTONMAIL_MAILBOX_ROUTE_NAMES[system[0]];
+
+        if (!folderRouteName) {
+            throw new Error(`Failed to resolve folder route name`);
+        }
+
+        await $state.go(`secured.${folderRouteName}.element`, {
+            id: mailConversationId,
+            messageID: mailId,
+        });
+
+        return null;
+    })()),
+
+    fillLogin: ({login, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "fillLogin()", zoneName)) => {
         logger.info();
 
         const elements = await resolveDomElements({
@@ -44,7 +101,7 @@ const endpoints: ProtonmailApi = {
         return null;
     })()),
 
-    login: ({login, password, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "api:login()", zoneName)) => {
+    login: ({login, password, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "login()", zoneName)) => {
         logger.info();
 
         await endpoints.fillLogin({login, zoneName}).toPromise();
@@ -69,7 +126,7 @@ const endpoints: ProtonmailApi = {
         return null;
     })()),
 
-    login2fa: ({secret, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "api:login2fa()", zoneName)) => {
+    login2fa: ({secret, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "login2fa()", zoneName)) => {
         logger.info();
 
         const elements = await resolveDomElements({
@@ -86,7 +143,7 @@ const endpoints: ProtonmailApi = {
         );
     })()),
 
-    unlock: ({mailPassword, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "api:unlock()", zoneName)) => {
+    unlock: ({mailPassword, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "unlock()", zoneName)) => {
         logger.info();
 
         const elements = await resolveDomElements({
@@ -101,7 +158,7 @@ const endpoints: ProtonmailApi = {
     })()),
 
     notification: ({entryUrl, entryApiUrl, zoneName}) => {
-        const logger = curryFunctionMembers(_logger, "api:notification()", zoneName);
+        const logger = curryFunctionMembers(_logger, "notification()", zoneName);
         logger.info();
 
         type LoggedInOutput = Required<Pick<ProtonmailNotificationOutput, "loggedIn">>;

@@ -17,7 +17,7 @@ export interface State extends fromRoot.State {
     initialized?: boolean;
     // TODO consider using "@ngrx/entity" library instead of dealing with a raw array
     accounts: WebAccount[];
-    progress: {
+    globalProgress: {
         indexing?: boolean;
     };
 }
@@ -26,7 +26,7 @@ const notFoundAccountError = new Error(`Failed to resolve account`);
 
 const initialState: State = {
     accounts: [],
-    progress: {},
+    globalProgress: {},
 };
 
 export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_ACTIONS>): State {
@@ -101,9 +101,6 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
             if ("loginFilledOnce" in patch) {
                 account.loginFilledOnce = patch.loginFilledOnce;
             }
-            if ("indexing" in patch) {
-                account.indexing = patch.indexing;
-            }
         },
         ToggleDatabaseView: ({login, forced}) => {
             const {account} = pickAccountBundle(draftState.accounts, {login});
@@ -113,7 +110,7 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                 : !account.databaseView;
         },
         PatchGlobalProgress: ({patch}) => {
-            draftState.progress = {...draftState.progress, ...patch};
+            draftState.globalProgress = {...draftState.globalProgress, ...patch};
         },
         default: () => draftState,
     }));

@@ -60,7 +60,7 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
 
     indexing$ = combineLatest(
         this.store.pipe(
-            select(AccountsSelectors.FEATURED.progress),
+            select(AccountsSelectors.FEATURED.globalProgress),
             distinctUntilChanged(),
         ),
         this.accountProgress$,

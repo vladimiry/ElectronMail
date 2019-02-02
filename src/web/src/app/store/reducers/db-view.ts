@@ -1,4 +1,5 @@
 import {UnionOf} from "@vladimiry/unionize";
+import {pick} from "ramda";
 
 import * as fromRoot from "src/web/src/app/store/reducers/root";
 import {DB_VIEW_ACTIONS} from "src/web/src/app/store/actions";
@@ -28,7 +29,7 @@ export interface Instance {
         system: View.Folder[];
         custom: View.Folder[];
     };
-    selectedFolderPk?: View.Folder["pk"];
+    selectedFolderData?: Pick<View.Folder, "pk" | "mailFolderId">;
     folderMailsBundle: MailsBundle;
     folderConversationsBundle: MailsBundle;
     searchMailsBundle: MailsBundle;
@@ -95,7 +96,7 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
                         [instanceKey]: instance,
                     },
                 },
-                DB_VIEW_ACTIONS.SelectFolder({dbAccountPk, folderPk: instance.selectedFolderPk}),
+                DB_VIEW_ACTIONS.SelectFolder({dbAccountPk, selectedFolderData: instance.selectedFolderData}),
             );
 
             return searchMailsBundleItemsRemoved
@@ -105,14 +106,16 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
                 )
                 : result;
         },
-        SelectFolder: ({dbAccountPk, folderPk}) => {
+        SelectFolder: ({dbAccountPk, selectedFolderData}) => {
             const instanceKey = resolveInstanceKey(dbAccountPk);
             const instance: Instance = {
                 ...(state.instances[instanceKey] || initInstance()),
-                selectedFolderPk: folderPk,
+                selectedFolderData: selectedFolderData
+                    ? pick(["pk", "mailFolderId"], selectedFolderData)
+                    : selectedFolderData,
             };
             const selectedFolder = [...instance.folders.system, ...instance.folders.custom]
-                .find(({pk}) => pk === instance.selectedFolderPk);
+                .find(({pk}) => pk === (instance.selectedFolderData && instance.selectedFolderData.pk));
 
             if (selectedFolder) {
                 // TODO consider caching this block calculations result, so no recalculation on repeatable same folder selection
@@ -179,7 +182,7 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
                     delete instance.selectedMail;
                 }
             } else {
-                delete instance.selectedFolderPk;
+                delete instance.selectedFolderData;
                 delete instance.selectedMail;
             }
 

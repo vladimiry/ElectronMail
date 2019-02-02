@@ -63,8 +63,17 @@
 
         .btn {
             font-size: $app-font-size-base-small;
+            border-top-width: 0;
             border-top-left-radius: 0;
             border-top-right-radius: 0;
+
+            &:not([disabled]) .fa-spinner {
+                display: none;
+            }
+        }
+
+        .btn + #{$app-prefix}-db-view-mails-export {
+            padding-top: 0;
         }
     }
 

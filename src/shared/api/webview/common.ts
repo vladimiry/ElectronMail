@@ -5,7 +5,7 @@ import {Model} from "pubsub-to-stream-api";
 
 import {APP_NAME} from "src/shared/constants";
 import {AccountType} from "src/shared/model/account";
-import {DbAccountPk, MemoryDbAccount} from "src/shared/model/database";
+import {DbAccountPk, Mail, MemoryDbAccount} from "src/shared/model/database";
 import {LoginFieldContainer, PasswordFieldContainer} from "src/shared/model/container";
 import {ProtonmailApi} from "./protonmail";
 import {TutanotaApi} from "./tutanota";
@@ -20,6 +20,11 @@ export interface CommonWebViewApi<T extends AccountType> {
     login2fa: ApiMethod<{ secret: string } & ZoneApiParameter, null>;
     buildDbPatch: ApiMethod<DbAccountPk & { metadata: Readonly<MemoryDbAccount<T>["metadata"]> | null; } & ZoneApiParameter, null>;
     selectAccount: ApiMethod<{ databaseView?: boolean } & ZoneApiParameter, null>;
+    selectMailOnline: ApiMethod<{
+        pk: DbAccountPk;
+        mail: Pick<Mail, "id" | "mailFolderIds" | "conversationEntryPk">;
+    } & ZoneApiParameter,
+        null>;
 }
 
 export type WebViewApi<T extends AccountType, A = T extends "tutanota" ? TutanotaApi : ProtonmailApi>

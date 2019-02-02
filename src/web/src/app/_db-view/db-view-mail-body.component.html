@@ -38,18 +38,28 @@
     </ng-template>
 
     <div class="d-flex controls">
-        <div
+        <button
             (click)="toggleConversationCollapsing()"
             *ngIf="selectedMail.rootNode.summary.size > 1"
             class="btn btn-secondary mr-2"
+            type="button"
         >
             Conversation ({{ selectedMail.rootNode.summary.size }})
-        </div>
+        </button>
+        <button
+            (click)="selectMailOnline()"
+            *ngIf="selectingMailOnlineAvailable$ | async"
+            [disabled]="selectingMailOnline$ | async"
+            class="btn btn-primary mr-2"
+            type="button"
+        >
+            <i class="fa fa-spinner fa-pulse fa-fw"></i>
+            View Online
+        </button>
         <email-securely-app-db-view-mails-export
             [dbAccountPk]="dbAccountPk"
             [rootConversationNode]="selectedMail.rootNode"
             [title]="'Export (' + selectedMail.rootNode.summary.size + ')'"
-            [ngClass]="{'pt-0': selectedMail.rootNode.summary.size > 1}"
         ></email-securely-app-db-view-mails-export>
     </div>
 

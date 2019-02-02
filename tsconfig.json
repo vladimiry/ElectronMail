@@ -32,7 +32,6 @@
     "baseUrl": ".",
     "typeRoots": [
       "./node_modules/@types",
-      "./src/monkey-patching",
       "./src/@types"
     ]
   },

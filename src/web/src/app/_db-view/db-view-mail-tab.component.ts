@@ -33,16 +33,16 @@ export class DbViewMailTabComponent extends DbViewAbstractComponent implements O
 
     state$ = this.instance$.pipe(
         mergeMap((instance) => {
-            const {folders, selectedFolderPk, selectedMail} = instance;
+            const {folders, selectedFolderData, selectedMail} = instance;
 
-            if (!selectedFolderPk) {
+            if (!selectedFolderData) {
                 const inbox = folders.system.find((f) => f.folderType === MAIL_FOLDER_TYPE.INBOX);
 
                 if (!inbox) {
                     throw new Error(`Failed to resolve "inbox" folder`);
                 }
 
-                this.store.dispatch(DB_VIEW_ACTIONS.SelectFolder({dbAccountPk: this.dbAccountPk, folderPk: inbox.pk}));
+                this.store.dispatch(DB_VIEW_ACTIONS.SelectFolder({dbAccountPk: this.dbAccountPk, selectedFolderData: inbox}));
 
                 return EMPTY;
             }
@@ -50,7 +50,7 @@ export class DbViewMailTabComponent extends DbViewAbstractComponent implements O
             return [{
                 folders,
                 selectedMail,
-                selectedFolderPk,
+                selectedFolderData,
             }];
         }),
     );
@@ -90,7 +90,7 @@ export class DbViewMailTabComponent extends DbViewAbstractComponent implements O
         return pk;
     }
 
-    selectFolder({pk: folderPk}: View.Folder) {
-        this.store.dispatch(DB_VIEW_ACTIONS.SelectFolder({dbAccountPk: this.dbAccountPk, folderPk}));
+    selectFolder(folder: View.Folder) {
+        this.store.dispatch(DB_VIEW_ACTIONS.SelectFolder({dbAccountPk: this.dbAccountPk, selectedFolderData: folder}));
     }
 }

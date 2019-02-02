@@ -13,12 +13,12 @@ interface GenericWebAccount<C extends AccountConfig, NS extends Notifications> {
         syncing: boolean;
         indexing: boolean;
         searching: boolean;
+        selectingMailOnline: boolean;
     }>;
     notifications: NS;
     syncingActivated?: boolean;
     databaseView?: boolean;
     loginFilledOnce?: boolean;
-    indexing?: boolean;
 }
 
 export type WebAccountProtonmail = GenericWebAccount<AccountConfigProtonmail, NotificationsProtonmail>;

@@ -74,19 +74,31 @@ export function resolveListId<T extends BaseEntity<IdTuple>>(entity: T): Id {
 }
 
 export function getUserController(): { accessToken: string, user: Rest.Model.User } | null {
-    const WINDOW = window as any; // TODO remove "as any" casting on https://github.com/Microsoft/TypeScript/issues/14701 resolving
-    return WINDOW.tutao
-    && WINDOW.tutao.logins
-    && typeof WINDOW.tutao.logins.getUserController === "function"
-    && WINDOW.tutao.logins.getUserController() ? WINDOW.tutao.logins.getUserController()
+    const {tutao} = window;
+    const userController = (
+        tutao
+        &&
+        tutao.logins
+        &&
+        tutao.logins.getUserController
+        &&
+        tutao.logins.getUserController()
+    );
+
+    return userController
+        ? userController
         : null;
 }
 
 export function isLoggedIn(): boolean {
-    const controller = getUserController();
-    return !!(controller
-        && controller.accessToken
-        && controller.accessToken.length
+    const userController = getUserController();
+
+    return !!(
+        userController
+        &&
+        userController.accessToken
+        &&
+        userController.accessToken.length
     );
 }
 

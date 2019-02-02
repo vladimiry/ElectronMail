@@ -38,7 +38,7 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
 
         ping: () => of(null),
 
-        selectAccount: ({databaseView, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "api:select()", zoneName)) => {
+        selectAccount: ({databaseView, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "select()", zoneName)) => {
             logger.info();
 
             await (await resolveIpcMainApi())("selectAccount")({databaseView}).toPromise();
@@ -46,7 +46,23 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
             return null;
         })()),
 
-        fillLogin: ({login, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "api:fillLogin()", zoneName)) => {
+        selectMailOnline: (input) => from((async (logger = curryFunctionMembers(_logger, "selectMailOnline()", input.zoneName)) => {
+            logger.info();
+
+            const {tutao} = window;
+            const mailId = input.mail.id;
+            const [folderId] = input.mail.mailFolderIds;
+
+            if (!tutao) {
+                throw new Error(`Failed to resolve "tutao" service`);
+            }
+
+            tutao.m.route.set(`/mail/${folderId}/${mailId}`);
+
+            return null;
+        })()),
+
+        fillLogin: ({login, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "fillLogin()", zoneName)) => {
             logger.info();
 
             const cancelEvenHandler = (event: MouseEvent) => {
@@ -73,7 +89,7 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
             return null;
         })()),
 
-        login: ({login, password, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "api:login()", zoneName)) => {
+        login: ({login, password, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "login()", zoneName)) => {
             logger.info();
 
             await endpoints.fillLogin({login, zoneName}).toPromise();
@@ -99,7 +115,7 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
         })()),
 
         login2fa: ({secret, zoneName}) => from((async () => {
-            const logger = curryFunctionMembers(_logger, "api:login2fa()", zoneName);
+            const logger = curryFunctionMembers(_logger, "login2fa()", zoneName);
             logger.info();
 
             const elements = await resolveDomElements(login2FaWaitElementsConfig);
@@ -116,7 +132,7 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
         })()),
 
         notification: ({entryUrl, zoneName}) => {
-            const logger = curryFunctionMembers(_logger, "api:notification()", zoneName);
+            const logger = curryFunctionMembers(_logger, "notification()", zoneName);
             logger.info();
 
             type LoggedInOutput = Required<Pick<TutanotaNotificationOutput, "loggedIn">>;

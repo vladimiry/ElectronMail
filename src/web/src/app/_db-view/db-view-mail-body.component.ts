@@ -4,16 +4,18 @@ import {
     Component,
     ElementRef,
     HostListener,
+    Input,
     NgZone,
     OnDestroy,
     QueryList,
     ViewChildren,
 } from "@angular/core";
-import {BehaviorSubject, EMPTY, Subject, Subscription, combineLatest} from "rxjs";
-import {Store} from "@ngrx/store";
-import {delay, distinctUntilChanged, filter, map, mergeMap} from "rxjs/operators";
+import {BehaviorSubject, EMPTY, Subject, Subscription, combineLatest, fromEvent, merge} from "rxjs";
+import {Store, select} from "@ngrx/store";
+import {delay, distinctUntilChanged, filter, map, mergeMap, pairwise, startWith, take} from "rxjs/operators";
 
-import {DB_VIEW_ACTIONS, NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
+import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS, NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
+import {AccountsSelectors} from "src/web/src/app/store/selectors";
 import {DbViewAbstractComponent} from "src/web/src/app/_db-view/db-view-abstract.component";
 import {DbViewMailComponent} from "src/web/src/app/_db-view/db-view-mail.component";
 import {Mail, View} from "src/shared/model/database";
@@ -27,6 +29,9 @@ import {State} from "src/web/src/app/store/reducers/db-view";
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DbViewMailBodyComponent extends DbViewAbstractComponent implements OnDestroy, AfterViewInit {
+    @Input()
+    selectedFolderData?: View.Folder;
+
     selectedMail$ = this.instance$.pipe(
         map((value) => value.selectedMail),
         mergeMap((value) => value ? [value] : EMPTY),
@@ -43,6 +48,37 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
 
     @ViewChildren(DbViewMailComponent, {read: ElementRef})
     dbViewMailElementRefs!: QueryList<ElementRef>;
+
+    account$ = this.dbAccountPk$.pipe(
+        mergeMap(({login}) => this.store.pipe(
+            select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
+            mergeMap((value) => value ? [value] : EMPTY),
+            distinctUntilChanged(),
+        )),
+    );
+
+    selectingMailOnlineAvailable$ = combineLatest(
+        this.account$.pipe(
+            map(({notifications}) => notifications.loggedIn),
+            distinctUntilChanged(),
+        ),
+        merge(
+            fromEvent(window, "online"),
+            fromEvent(window, "offline"),
+        ).pipe(
+            map(() => navigator.onLine),
+            startWith(navigator.onLine),
+        ),
+    ).pipe(
+        map(([loggedIn, online]) => {
+            return loggedIn && online;
+        }),
+    );
+
+    selectingMailOnline$ = this.account$.pipe(
+        map(({progress}) => progress.selectingMailOnline),
+        distinctUntilChanged(),
+    );
 
     private bodyIframe?: HTMLIFrameElement;
 
@@ -130,6 +166,33 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
 
     toggleConversationCollapsing() {
         this.conversationCollapsed$.next(!this.conversationCollapsed$.value);
+    }
+
+    selectMailOnline() {
+        // TODO consider introducing unique id of the selecting operation
+        this.selectingMailOnline$.pipe(
+            pairwise(),
+            filter((prev, curr) => Boolean(prev) && !Boolean(curr)),
+            take(1),
+        ).subscribe(() => {
+            this.store.dispatch(ACCOUNTS_ACTIONS.ToggleDatabaseView({login: this.dbAccountPk.login, forced: {databaseView: false}}));
+        });
+
+        this.selectedMail$
+            .pipe(take(1))
+            .subscribe(({conversationMail: {id, mailFolderIds, conversationEntryPk}}) => {
+                const {selectedFolderData} = this;
+
+                if (selectedFolderData && mailFolderIds.includes(selectedFolderData.mailFolderId)) {
+                    mailFolderIds = [selectedFolderData.mailFolderId];
+                }
+
+                // TODO send only one "mailFolderId" value that contains a minimum items count
+                this.store.dispatch(ACCOUNTS_ACTIONS.SelectMailOnline({
+                    pk: this.dbAccountPk,
+                    mail: {id, mailFolderIds, conversationEntryPk},
+                }));
+            });
     }
 
     ngOnDestroy() {

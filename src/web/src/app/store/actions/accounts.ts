@@ -1,6 +1,8 @@
 import {ofType, unionize} from "@vladimiry/unionize";
 
-import {AccountConfig} from "src/shared/model/account";
+import {AccountConfig, AccountType} from "src/shared/model/account";
+import {Arguments, Omit} from "src/shared/types";
+import {CommonWebViewApi} from "src/shared/api/webview/common";
 import {DbAccountPk} from "src/shared/model/database";
 import {State} from "src/web/src/app/store/reducers/accounts";
 import {WebAccount, WebAccountProgress} from "src/web/src/app/model";
@@ -15,7 +17,6 @@ export const ACCOUNTS_ACTIONS = unionize({
                 notifications: Partial<WebAccount["notifications"]>,
                 syncingActivated: Partial<WebAccount["syncingActivated"]>,
                 loginFilledOnce: Partial<WebAccount["loginFilledOnce"]>,
-                indexing: Partial<WebAccount["indexing"]>,
             }>;
             ignoreNoAccount?: boolean
         }>(),
@@ -24,7 +25,8 @@ export const ACCOUNTS_ACTIONS = unionize({
         SetupNotificationChannel: ofType<{ account: WebAccount; webView: Electron.WebviewTag; finishPromise: Promise<void>; }>(),
         TryToLogin: ofType<{ account: WebAccount; webView: Electron.WebviewTag; password?: string; }>(),
         WireUpConfigs: ofType<{ accountConfigs: AccountConfig[] }>(),
-        PatchGlobalProgress: ofType<{ patch: State["progress"]; }>(),
+        PatchGlobalProgress: ofType<{ patch: State["globalProgress"]; }>(),
+        SelectMailOnline: ofType<Omit<Arguments<CommonWebViewApi<AccountType>["selectMailOnline"]>[0], "zoneName">>(),
     },
     {
         tag: "type",

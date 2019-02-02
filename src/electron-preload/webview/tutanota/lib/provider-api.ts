@@ -82,8 +82,7 @@ export async function resolveProviderApi(): Promise<ProviderApi> {
     // TODO reject with timeout
     await domContentLoadedPromise;
 
-    // tslint:disable-next-line:variable-name
-    const SystemJS: SystemJSLoader.System = (window as any).SystemJS;
+    const {SystemJS} = window;
     const baseURL = String(SystemJS.getConfig().baseURL).replace(/(.*)\/$/, "$1");
     const bundle: Record<keyof ProviderApi, any> = {
         "src/api/common/EntityFunctions": null,

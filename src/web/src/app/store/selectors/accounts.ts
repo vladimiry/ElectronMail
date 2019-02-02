@@ -6,16 +6,16 @@ import {accountPickingPredicate} from "src/shared/util";
 
 export const STATE = createFeatureSelector<State>(featureName);
 
-const accountsSelector = createSelector(STATE, ({accounts}) => accounts);
+const accountsSelector = createSelector(STATE, (s) => s.accounts);
 
 export const FEATURED = {
-    initialized: createSelector(STATE, ({initialized}) => initialized),
     accounts: accountsSelector,
-    selectedLogin: createSelector(STATE, ({selectedLogin}) => selectedLogin),
-    progress: createSelector(STATE, ({progress}) => progress),
+    initialized: createSelector(STATE, (s) => s.initialized),
+    selectedLogin: createSelector(STATE, (s) => s.selectedLogin),
+    globalProgress: createSelector(STATE, (s) => s.globalProgress),
     selectedAccount: createSelector(
         STATE,
-        ({selectedLogin, accounts}) => accounts.find(({accountConfig}) => accountConfig.login === selectedLogin),
+        (s) => s.accounts.find((a) => a.accountConfig.login === s.selectedLogin),
     ),
 };
 
@@ -23,7 +23,7 @@ export const ACCOUNTS = {
     pickAccount: (criteria: LoginFieldContainer) => createSelector(
         accountsSelector,
         (accounts) => {
-            const configs = accounts.map(({accountConfig}) => accountConfig);
+            const configs = accounts.map((a) => a.accountConfig);
             const index = configs.findIndex(accountPickingPredicate(criteria));
             return index === -1 ? null : accounts[index];
         },

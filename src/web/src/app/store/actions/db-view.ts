@@ -1,7 +1,7 @@
 import {ofType, unionize} from "@vladimiry/unionize";
 
 import {Arguments, Unpacked} from "src/shared/types";
-import {DbAccountPk, Folder, Mail, View} from "src/shared/model/database";
+import {DbAccountPk, Mail, View} from "src/shared/model/database";
 import {Endpoints} from "src/shared/api/main";
 import {MailsBundleKey} from "src/web/src/app/store/reducers/db-view";
 
@@ -19,7 +19,7 @@ export const DB_VIEW_ACTIONS = unionize({
         }>(),
         SelectFolder: ofType<{
             dbAccountPk: DbAccountPk;
-            folderPk?: Folder["pk"];
+            selectedFolderData?: Pick<View.Folder, "pk" | "mailFolderId">;
             distinct?: boolean;
         }>(),
         SelectMailRequest: ofType<{

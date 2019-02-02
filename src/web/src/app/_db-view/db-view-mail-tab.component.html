@@ -26,7 +26,7 @@
                 <li
                     (click)="selectFolder(folder)"
                     *ngFor="let folder of folders; trackBy: trackFolder"
-                    [ngClass]="{'list-group-item-warning': state.selectedFolderPk === folder.pk}"
+                    [ngClass]="{'list-group-item-warning': state.selectedFolderData.pk === folder.pk}"
                     class="list-group-item list-group-item-action"
                 >
                     <email-securely-app-db-view-folder [folder]="folder"></email-securely-app-db-view-folder>
@@ -49,7 +49,7 @@
             <email-securely-app-db-view-mails
                 [dbAccountPk]="dbAccountPk"
                 [mailsBundleKey]="mailsBundleKey"
-                [uid]="state.selectedFolderPk"
+                [uid]="state.selectedFolderData?.pk"
             >
                 <div
                     class="d-inline-block mr-2"
@@ -79,6 +79,7 @@
             <div class="overflow-auto">
                 <email-securely-app-db-view-mail-body
                     [dbAccountPk]="dbAccountPk"
+                    [selectedFolderData]="state.selectedFolderData"
                 ></email-securely-app-db-view-mail-body>
             </div>
         </div>
@@ -95,7 +96,7 @@
     </div>
 </ng-template>
 <email-securely-app-db-view-mails-search
+    (backToListHandler)="toggleSearchView()"
     *ngIf="searchView"
     [dbAccountPk]="dbAccountPk"
-    (backToListHandler)="toggleSearchView()"
 ></email-securely-app-db-view-mails-search>

@@ -79,8 +79,7 @@ export async function resolveProviderApi(): Promise<ProviderApi> {
     };
 
     return state.api = (async () => {
-        const angular: angular.IAngularStatic | undefined = (window as any).angular;
-        const injector = angular && angular.element(document.body).injector();
+        const injector = window.angular.element(document.body).injector();
 
         if (!injector) {
             throw new Error(`Failed to resolve "injector" variable`);

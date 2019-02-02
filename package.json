@@ -274,5 +274,8 @@
     "webpack-merge": "4.2.1",
     "webpack-node-externals": "1.7.2",
     "zone.js": "0.8.29"
+  },
+  "resolutions": {
+    "webpack/terser-webpack-plugin/terser": "3.14.1"
   }
 }

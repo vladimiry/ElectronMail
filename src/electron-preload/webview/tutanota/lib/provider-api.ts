@@ -9,14 +9,14 @@ type ModuleFiles =
     | "src/api/common/TutanotaConstants"
     | "src/api/common/utils/Encoding"
     | "src/api/main/Entity"
-    | "src/api/main/EntityEventController";
+    | "src/api/main/EventController";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[lib/provider-api]");
 const domContentLoadedPromise = new Promise<void>((resolve) => {
     document.addEventListener("DOMContentLoaded", () => resolve());
 });
 
-class EntityEventController {
+class EventController {
     notificationReceived(entityUpdates: Rest.Model.EntityUpdate[]): void {}
 }
 
@@ -61,8 +61,8 @@ interface ProviderApi extends Record<ModuleFiles, any> {
             reverse: boolean,
         ) => Promise<T[]>;
     };
-    "src/api/main/EntityEventController": {
-        EntityEventController: typeof EntityEventController;
+    "src/api/main/EventController": {
+        EventController: typeof EventController;
     };
 }
 
@@ -89,7 +89,7 @@ export async function resolveProviderApi(): Promise<ProviderApi> {
         "src/api/common/TutanotaConstants": null,
         "src/api/common/utils/Encoding": null,
         "src/api/main/Entity": null,
-        "src/api/main/EntityEventController": null,
+        "src/api/main/EventController": null,
     };
 
     for (const key of Object.keys(bundle) as Array<keyof ProviderApi>) {

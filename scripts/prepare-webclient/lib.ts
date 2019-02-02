@@ -102,7 +102,7 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
 }
 
 async function installDependencies(dir: string) {
-    await execShell(["npm", ["install", "--no-package-lock"], {cwd: dir}]);
+    await execShell(["npm", ["ci"], {cwd: dir}]);
 }
 
 async function clone(accountType: AccountType, destDir: string) {

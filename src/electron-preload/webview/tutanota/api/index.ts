@@ -227,12 +227,12 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
                     const notificationReceived$ = new Observable<Pick<Rest.Model.EntityEventBatch, "events">>((
                         notificationReceivedSubscriber,
                     ) => {
-                        const {EntityEventController} = api["src/api/main/EntityEventController"];
-                        EntityEventController.prototype.notificationReceived = ((
-                            original = EntityEventController.prototype.notificationReceived,
+                        const {EventController} = api["src/api/main/EventController"];
+                        EventController.prototype.notificationReceived = ((
+                            original = EventController.prototype.notificationReceived,
                         ) => {
-                            const overridden: typeof EntityEventController.prototype.notificationReceived = function(
-                                this: typeof EntityEventController,
+                            const overridden: typeof EventController.prototype.notificationReceived = function(
+                                this: typeof EventController,
                                 entityUpdates,
                                 // tslint:disable-next-line:trailing-comma
                                 ...rest

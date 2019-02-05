@@ -9,7 +9,12 @@ unzip $APP_GITHUB_ARTIFACT_WEBCLIENTS
 yarn app:dist
 
 if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    # see https://github.com/travis-ci/travis-ci/issues/4190#issuecomment-353342526
+    # output something every 9 minutes (540 seconds) to prevent Travis killing the job
+    while sleep 540; do echo "=====[ $SECONDS seconds still running ]====="; done &
     yarn electron-builder:publish:x64
+    # killing background sleep loop
+    kill %1
 fi
 
 if [ "$TRAVIS_OS_NAME" == "linux" ]; then

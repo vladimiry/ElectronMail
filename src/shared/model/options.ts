@@ -6,19 +6,6 @@ import {Model as StoreModel} from "fs-json-store";
 
 import {AccountConfig} from "src/shared/model/account";
 
-export type BaseConfig = Pick<Config,
-    | "checkForUpdatesAndNotify"
-    | "closeToTray"
-    | "compactLayout"
-    | "customUnreadBgColor"
-    | "customUnreadTextColor"
-    | "disableSpamNotifications"
-    | "findInPage"
-    | "fullTextSearch"
-    | "logLevel"
-    | "startMinimized"
-    | "unreadNotifications">;
-
 export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     encryptionPreset: PasswordBasedPreset;
     window: {
@@ -41,6 +28,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     };
     // base
     checkForUpdatesAndNotify?: boolean;
+    clearSession?: boolean;
     closeToTray?: boolean;
     compactLayout?: boolean;
     customUnreadBgColor?: string;
@@ -52,6 +40,20 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     startMinimized?: boolean;
     unreadNotifications?: boolean;
 }
+
+export type BaseConfig = Pick<Config,
+    | "checkForUpdatesAndNotify"
+    | "clearSession"
+    | "closeToTray"
+    | "compactLayout"
+    | "customUnreadBgColor"
+    | "customUnreadTextColor"
+    | "disableSpamNotifications"
+    | "findInPage"
+    | "fullTextSearch"
+    | "logLevel"
+    | "startMinimized"
+    | "unreadNotifications">;
 
 export interface Settings extends Partial<StoreModel.StoreEntity> {
     accounts: AccountConfig[];

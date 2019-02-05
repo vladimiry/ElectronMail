@@ -35,7 +35,7 @@ test.serial("workflow", async (t) => {
     t.true(m["./util"].initContext.calledWithExactly(), `"initContext" called`);
     t.true(m["./util"].initContext.calledAfter(m.electron.app.setAppUserModelId));
 
-    t.true(m["./session"].initDefaultSession.calledWithExactly(), `"initDefaultSession" called`);
+    t.true(m["./session"].initDefaultSession.calledWithExactly(t.context.ctx), `"initDefaultSession" called`);
     t.true(m["./session"].initDefaultSession.calledAfter(m["./util"].initContext), `"initDefaultSession" called after "initContext"`);
 
     t.true(m["./web-request"].initWebRequestListeners.calledWithExactly(t.context.ctx), `"initWebRequestListeners" called`);

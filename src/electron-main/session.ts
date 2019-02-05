@@ -5,17 +5,29 @@ import {from, race} from "rxjs";
 import {APP_NAME} from "src/shared/constants";
 // tslint:disable-next-line no-import-zones
 import {CI_ENV_LOGOUT_ACTION_TIMEOUT_MS} from "src/e2e/shared-constants";
+import {Context} from "./model";
+import {INITIAL_STORES} from "./constants";
 import {asyncDelay, curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[src/electron-main/session]");
 
-export async function initDefaultSession(): Promise<void> {
-    await clearDefaultSessionCaches();
+export async function initDefaultSession(ctx: Context): Promise<void> {
+    await clearDefaultSessionCaches(ctx);
     purifyUserAgentHeader();
 }
 
-export async function clearDefaultSessionCaches(): Promise<void> {
+export async function clearDefaultSessionCaches(ctx: Context): Promise<void> {
     logger.info("clearDefaultSessionCaches()", "start");
+
+    const config = await ctx.configStore.read();
+
+    if (
+        config && !config.clearSession
+        ||
+        !INITIAL_STORES.config().clearSession
+    ) {
+        return;
+    }
 
     const defaultSession = getDefaultSession();
     const clearStorageDataPromise = new Promise((resolve) => defaultSession.clearStorageData({}, resolve));
@@ -31,7 +43,7 @@ export async function clearDefaultSessionCaches(): Promise<void> {
                 from(clearStorageDataPromise),
                 from(
                     asyncDelay(CI_ENV_LOGOUT_ACTION_TIMEOUT_MS * 0.5).then(() => {
-                        logger.warn(clearDefaultSessionCaches(), `skipping "clearStorageData" call`);
+                        logger.warn(clearDefaultSessionCaches(ctx), `skipping "clearStorageData" call`);
                         return {};
                     }),
                 ),

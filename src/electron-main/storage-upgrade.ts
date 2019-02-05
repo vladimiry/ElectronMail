@@ -69,6 +69,11 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.timeouts.syncing = INITIAL_STORES.config().timeouts.syncing;
         }
     },
+    "2.3.1": (config) => {
+        if (typeof config.clearSession === "undefined") {
+            config.clearSession = INITIAL_STORES.config().clearSession;
+        }
+    },
 };
 
 const SETTINGS_UPGRADES: Record<string, (settings: Settings) => void> = {

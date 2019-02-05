@@ -19,16 +19,19 @@ export const INITIAL_STORES: Readonly<{
         const logLevel: LogLevel = "error";
 
         return {
-            encryptionPreset,
-            logLevel,
-            startMinimized: true,
-            compactLayout: true,
-            closeToTray: true,
-            unreadNotifications: true,
-            disableSpamNotifications: true,
+            // base
             checkForUpdatesAndNotify: true,
+            clearSession: true,
+            closeToTray: true,
+            compactLayout: true,
+            disableSpamNotifications: true,
             findInPage: true,
             fullTextSearch: true,
+            logLevel,
+            startMinimized: true,
+            unreadNotifications: true,
+            //
+            encryptionPreset,
             window: {
                 bounds: {width: 1024, height: 768},
             },

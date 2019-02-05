@@ -31,7 +31,7 @@ app.setAppUserModelId(`com.github.vladimiry.${APP_NAME}`);
 const ctx = initContext();
 
 app.on("ready", async () => {
-    await initDefaultSession();
+    await initDefaultSession(ctx);
 
     initWebRequestListeners(ctx);
 

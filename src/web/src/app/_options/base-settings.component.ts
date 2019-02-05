@@ -30,6 +30,7 @@ export class BaseSettingsComponent implements OnInit {
 
     controls: Record<keyof BaseConfig, AbstractControl> = {
         checkForUpdatesAndNotify: new FormControl(),
+        clearSession: new FormControl(),
         closeToTray: new FormControl(),
         compactLayout: new FormControl(),
         customUnreadBgColor: new FormControl(),

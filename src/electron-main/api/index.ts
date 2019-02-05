@@ -49,7 +49,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
             ctx.settingsStore = ctx.settingsStore.clone({adapter: undefined});
             ctx.db.reset();
             delete ctx.selectedAccount; // TODO extend "logout" api test: "delete ctx.selectedAccount"
-            await clearDefaultSessionCaches();
+            await clearDefaultSessionCaches(ctx);
             await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0}).toPromise();
             await detachFullTextIndexWindow(ctx);
             return null;

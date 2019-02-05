@@ -27,8 +27,8 @@ export const angularJsHttpResponseTypeGuard: (data: ng.IHttpResponse<any> | any)
 })();
 
 export function isLoggedIn(): boolean {
-    const appElement = window.angular.element(document);
-    const $injector = appElement.data("$injector");
+    const appElement = window.angular && window.angular.element(document);
+    const $injector = appElement && appElement.data("$injector");
     const authentication: undefined | { user?: object; isLoggedIn: () => boolean; } = $injector && $injector.get("authentication");
 
     return Boolean(

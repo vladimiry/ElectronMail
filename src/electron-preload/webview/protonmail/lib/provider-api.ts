@@ -79,10 +79,10 @@ export async function resolveProviderApi(): Promise<ProviderApi> {
     };
 
     return state.api = (async () => {
-        const injector = window.angular.element(document.body).injector();
+        const injector = window.angular && window.angular.element(document.body).injector();
 
         if (!injector) {
-            throw new Error(`Failed to resolve "injector" variable`);
+            throw new Error(`Failed to resolve "$injector" service`);
         }
 
         const lazyLoader = resolveService<ProviderApi["lazyLoader"]>(injector, "lazyLoader");

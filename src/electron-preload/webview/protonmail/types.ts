@@ -1,3 +1,3 @@
 export interface ProtonmailWindow {
-    angular: angular.IAngularStatic;
+    angular?: angular.IAngularStatic;
 }

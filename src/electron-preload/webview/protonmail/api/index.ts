@@ -34,8 +34,13 @@ const endpoints: ProtonmailApi = {
         logger.info();
 
         // TODO reduce the "mailFolderId" value that contains a minimum items count
-        const $state: { go: (v: string, d: Record<string, string>) => Promise<void> }
-            = window.angular.element(document).data().$injector.get("$state");
+        const $state: { go: (v: string, d: Record<string, string>) => Promise<void> } | undefined
+            = window.angular && window.angular.element(document).data().$injector.get("$state");
+
+        if (!$state) {
+            throw new Error(`Failed to resolve "$state" service`);
+        }
+
         const {system, custom} = input.mail.mailFolderIds.reduce(
             (accumulator: { system: typeof input.mail.mailFolderIds, custom: typeof input.mail.mailFolderIds }, id) => {
                 if (id in PROTONMAIL_MAILBOX_ROUTE_NAMES) {

@@ -294,17 +294,19 @@ export function registerApi() {
         endpoints,
         {
             logger: {
-                error: (args: any[]) => {
-                    _logger.error(...args.map((arg) => {
-                        if (angularJsHttpResponseTypeGuard(arg)) {
-                            return {
-                                // omitting possibly sensitive properties
-                                ...omit(["config", "headers", "data"], arg),
-                                url: arg.config && arg.config.url,
-                            };
-                        }
-                        return arg;
-                    }));
+                error: (...args: any[]) => {
+                    _logger.error(
+                        ...args.map((arg) => {
+                            if (angularJsHttpResponseTypeGuard(arg)) {
+                                return {
+                                    // omitting possibly sensitive properties
+                                    ...omit(["config", "headers", "data"], arg),
+                                    url: arg.config && arg.config.url,
+                                };
+                            }
+                            return arg;
+                        }),
+                    );
                 },
                 info: () => {},
             },

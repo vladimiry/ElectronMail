@@ -33,8 +33,6 @@ asarUnpack:
 mac:
   icon: ./app/assets/icons/mac/icon.icns
   category: public.app-category.productivity
-  target:
-    - {target: dmg}
 
 dmg:
   icon: ./app/assets/icons/mac/icon.icns

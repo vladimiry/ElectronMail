@@ -39,8 +39,8 @@ for:
       - yarn --version
       - yarn install --pure-lockfile
     build_script:
-      - yarn assets:protonmail-webclient
-      - yarn assets:tutanota-webclient
+      - yarn assets:webclient:tutanota
+      - yarn assets:webclient:protonmail
       - zip -r $APP_GITHUB_ARTIFACT_WEBCLIENTS ./app
       - ls
       - yarn github-artifact:upload $APP_GITHUB_ARTIFACT_WEBCLIENTS

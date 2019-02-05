@@ -29,8 +29,8 @@ jobs:
       before_script:
         - export APP_GITHUB_ARTIFACT_LOG_DISABLED=1
       script:
-        - yarn assets:protonmail-webclient
-        - yarn assets:tutanota-webclient
+        - yarn assets:webclient:tutanota
+        - yarn assets:webclient:protonmail
         - | # prepare $APP_GITHUB_ARTIFACT_WEBCLIENTS archive
           zip -r $APP_GITHUB_ARTIFACT_WEBCLIENTS ./app;
         - ls

@@ -22,7 +22,7 @@ if [ "$TRAVIS_OS_NAME" == "linux" ]; then
         -v ~/.cache/electron:/root/.cache/electron \
         -v ~/.cache/electron-builder:/root/.cache/electron-builder \
         electronuserland/builder \
-        /bin/bash -c "yarn --pure-lockfile install && yarn clean:prebuilds && apt-get install --yes libtool autoconf automake && yarn electron-builder:publish:x64:linux"
+        /bin/bash -c "yarn --pure-lockfile install && yarn electron-builder:publish:x64:linux"
 fi
 
 yarn print-dist-packages-hashes

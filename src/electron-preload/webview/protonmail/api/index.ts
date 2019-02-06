@@ -14,6 +14,7 @@ import {angularJsHttpResponseTypeGuard, isLoggedIn} from "src/electron-preload/w
 import {buildDbPatch, buildDbPatchEndpoint} from "src/electron-preload/webview/protonmail/api/build-db-patch";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {fillInputValue, getLocationHref, resolveDomElements, resolveIpcMainApi, submitTotpToken} from "src/electron-preload/webview/util";
+import {resolveProviderApi} from "src/electron-preload/webview/protonmail/lib/provider-api";
 
 const _logger = curryFunctionMembers(WebviewConstants.WEBVIEW_LOGGERS.protonmail, "[api/index]");
 const twoFactorCodeElementId = "twoFactorCode";
@@ -34,13 +35,19 @@ const endpoints: ProtonmailApi = {
         logger.info();
 
         // TODO reduce the "mailFolderId" value that contains a minimum items count
-        const $state: { go: (v: string, d: Record<string, string>) => Promise<void> } | undefined
-            = window.angular && window.angular.element(document).data().$injector.get("$state");
+        const $state: undefined | {
+            go: (
+                path: string,
+                params?: Partial<Record<"label" | "id" | "messageID", string>>,
+            ) => Promise<void>;
+        } = window.angular && window.angular.element(document).data().$injector.get("$state");
 
         if (!$state) {
             throw new Error(`Failed to resolve "$state" service`);
         }
 
+        const api = await resolveProviderApi();
+        const messagesViewMode = api.mailSettingsModel.get().ViewMode === api.constants.MESSAGE_VIEW_MODE;
         const {system, custom} = input.mail.mailFolderIds.reduce(
             (accumulator: { system: typeof input.mail.mailFolderIds, custom: typeof input.mail.mailFolderIds }, id) => {
                 if (id in PROTONMAIL_MAILBOX_ROUTE_NAMES) {
@@ -57,13 +64,20 @@ const endpoints: ProtonmailApi = {
         if (custom.length) {
             const [folderId] = custom;
 
-            await $state.go("secured.label", {
-                label: folderId,
-            });
-            await $state.go("secured.label.element", {
-                id: mailConversationId,
-                messageID: mailId,
-            });
+            if (messagesViewMode) {
+                await $state.go(`secured.label.element`, {
+                    id: mailId,
+                    label: folderId,
+                });
+            } else {
+                await $state.go("secured.label", {
+                    label: folderId,
+                });
+                await $state.go("secured.label.element", {
+                    id: mailConversationId,
+                    messageID: mailId,
+                });
+            }
 
             return null;
         }
@@ -82,10 +96,16 @@ const endpoints: ProtonmailApi = {
             throw new Error(`Failed to resolve folder route name`);
         }
 
-        await $state.go(`secured.${folderRouteName}.element`, {
-            id: mailConversationId,
-            messageID: mailId,
-        });
+        if (messagesViewMode) {
+            await $state.go(`secured.${folderRouteName}.element`, {
+                id: mailId,
+            });
+        } else {
+            await $state.go(`secured.${folderRouteName}.element`, {
+                id: mailConversationId,
+                messageID: mailId,
+            });
+        }
 
         return null;
     })()),

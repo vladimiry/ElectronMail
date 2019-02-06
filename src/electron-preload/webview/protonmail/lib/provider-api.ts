@@ -11,12 +11,23 @@ import {resolveIpcMainApi} from "src/electron-preload/webview/util";
 // TODO consider executing direct $http calls
 // in order to not depend on Protonmail WebClient's AngularJS factories/services
 export interface ProviderApi {
+    constants: {
+        MESSAGE_VIEW_MODE: 1;
+        CONVERSATION_VIEW_MODE: 0;
+    };
     $http: ng.IHttpService;
     url: {
         build: (module: string) => () => string;
     };
     lazyLoader: {
         app: () => Promise<void>;
+    };
+    mailSettingsModel: {
+        get: () => {
+            ViewMode:
+                | ProviderApi["constants"]["MESSAGE_VIEW_MODE"]
+                | ProviderApi["constants"]["CONVERSATION_VIEW_MODE"];
+        };
     };
     messageModel: (message: Rest.Model.Message) => {
         clearTextBody: () => Promise<string>;
@@ -93,7 +104,13 @@ export async function resolveProviderApi(): Promise<ProviderApi> {
         // so app gets protonmail breaking changes noticed on early stage
 
         return {
+            constants: {
+                // TODO TS: get rid of type casting
+                MESSAGE_VIEW_MODE: 1 as ProviderApi["constants"]["MESSAGE_VIEW_MODE"],
+                CONVERSATION_VIEW_MODE: 0 as ProviderApi["constants"]["CONVERSATION_VIEW_MODE"],
+            },
             lazyLoader,
+            mailSettingsModel: resolveService<ProviderApi["mailSettingsModel"]>(injector, "mailSettingsModel"),
             $http: resolveService<ProviderApi["$http"]>(injector, "$http"),
             url: resolveService<ProviderApi["url"]>(injector, "url"),
             messageModel: resolveService<ProviderApi["messageModel"]>(injector, "messageModel"),

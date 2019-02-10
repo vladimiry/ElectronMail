@@ -8,21 +8,22 @@ import {accountPickingPredicate, pickBaseConfigProperties} from "src/shared/util
 export const STATE = createFeatureSelector<State>(featureName);
 
 export const FEATURED = {
-    config: createSelector(STATE, ({config}) => config),
-    settings: createSelector(STATE, ({settings}) => settings),
-    progress: createSelector(STATE, ({progress}) => progress),
-    electronLocations: createSelector(STATE, ({electronLocations}) => electronLocations),
-    hasSavedPassword: createSelector(STATE, ({hasSavedPassword}) => hasSavedPassword),
-    mainProcessNotification: createSelector(STATE, ({mainProcessNotification}) => mainProcessNotification),
+    config: createSelector(STATE, (state) => state.config),
+    settings: createSelector(STATE, (state) => state.settings),
+    progress: createSelector(STATE, (state) => state.progress),
+    electronLocations: createSelector(STATE, (state) => state.electronLocations),
+    hasSavedPassword: createSelector(STATE, (state) => state.hasSavedPassword),
+    keytarSupport: createSelector(STATE, (state) => state.keytarSupport),
+    mainProcessNotification: createSelector(STATE, (state) => state.mainProcessNotification),
 };
 
 export const CONFIG = {
     base: createSelector(FEATURED.config, pickBaseConfigProperties),
-    compactLayout: createSelector(FEATURED.config, (c) => c.compactLayout),
-    unreadNotifications: createSelector(FEATURED.config, (c) => c.unreadNotifications),
-    unreadBgColor: createSelector(FEATURED.config, (c) => c.customUnreadBgColor || DEFAULT_UNREAD_BADGE_BG_COLOR),
-    unreadTextColor: createSelector(FEATURED.config, (c) => c.customUnreadTextColor || DEFAULT_UNREAD_BADGE_BG_TEXT),
-    timeouts: createSelector(FEATURED.config, (c) => c.timeouts),
+    compactLayout: createSelector(FEATURED.config, (config) => config.compactLayout),
+    unreadNotifications: createSelector(FEATURED.config, (config) => config.unreadNotifications),
+    unreadBgColor: createSelector(FEATURED.config, (config) => config.customUnreadBgColor || DEFAULT_UNREAD_BADGE_BG_COLOR),
+    unreadTextColor: createSelector(FEATURED.config, (config) => config.customUnreadTextColor || DEFAULT_UNREAD_BADGE_BG_TEXT),
+    timeouts: createSelector(FEATURED.config, (config) => config.timeouts),
 };
 
 export const SETTINGS = (() => {

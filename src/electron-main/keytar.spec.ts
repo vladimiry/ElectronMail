@@ -1,5 +1,3 @@
-// tslint:disable-next-line:no-import-zones
-import keytar from "keytar";
 import randomstring from "randomstring";
 import rewiremock from "rewiremock";
 import sinon from "sinon";
@@ -73,27 +71,35 @@ async function bootstrap() {
         getPassword: sinon.stub().callsFake(
             ((async (service, account) => {
                 return store.get(JSON.stringify({service, account})) || null;
-            }) as typeof keytar.getPassword) as any,
+            }) as (typeof import("keytar"))["getPassword"]) as any, // tslint:disable-line:no-import-zones
         ),
         setPassword: sinon.stub().callsFake(
             ((async (service, account, password) => {
                 store.set(JSON.stringify({service, account}), password);
-            }) as typeof keytar.setPassword) as any,
+            }) as (typeof import("keytar"))["setPassword"]) as any, // tslint:disable-line:no-import-zones
         ),
         deletePassword: sinon.stub().callsFake(
             ((async (service, account) => {
                 return store.delete(JSON.stringify({service, account}));
-            }) as typeof keytar.deletePassword) as any,
+            }) as (typeof import("keytar"))["deletePassword"]) as any, // tslint:disable-line:no-import-zones
         ),
     };
-    return {
+    const result = {
         ...(await rewiremock.around(
             () => import("./keytar"),
-            (mock) => {
-                // tslint:disable-next-line:no-import-zones
-                mock(() => import("keytar")).with(keytarModuleMocks);
-            },
+            // (mock) => {
+            //     // tslint:disable-next-line:no-import-zones
+            //     mock(() => import("keytar"))
+            //         .with(keytarModuleMocks)
+            //         .dynamic();
+            // },
         )),
         keytarModuleMocks,
     };
+
+    result.STATE.resolveKeytar = async () => {
+        return keytarModuleMocks;
+    };
+
+    return result;
 }

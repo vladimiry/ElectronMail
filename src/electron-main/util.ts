@@ -53,6 +53,7 @@ export function initContext(options: ContextInitOptions = {}): Context {
             file: path.join(locations.userDataDir, "settings.bin"),
             validators: [settingsAccountLoginUniquenessValidator],
         }),
+        keytarSupport: true,
     };
 
     return ctx;

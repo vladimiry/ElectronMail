@@ -30,6 +30,7 @@ export interface Context {
         settings: Settings;
     };
     readonly configStore: StoreModel.Store<Config>;
+    keytarSupport?: boolean;
     settingsStore: StoreModel.Store<Settings>;
     uiContext?: UIContext;
     selectedAccount?: {

@@ -27,6 +27,7 @@ export interface State extends fromRoot.State {
     progress: ProgressPatch;
     electronLocations?: ElectronContextLocations;
     hasSavedPassword?: boolean;
+    keytarSupport?: boolean;
     mainProcessNotification: UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>;
 }
 

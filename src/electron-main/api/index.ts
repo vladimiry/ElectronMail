@@ -26,26 +26,39 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
 
             ctx.settingsStore = newStore;
 
-            if (await getPassword() === password) {
-                await setPassword(newPassword);
-            } else {
-                await deletePassword();
+            if (ctx.keytarSupport) {
+                if (await getPassword() === password) {
+                    await setPassword(newPassword);
+                } else {
+                    await deletePassword();
+                }
             }
 
             return newData;
         })()),
 
         init: () => from((async () => {
-            const hasSavedPassword = Boolean(await getPassword());
+            let hasSavedPassword: boolean | undefined;
+
+            try {
+                hasSavedPassword = Boolean(await getPassword());
+                ctx.keytarSupport = true;
+            } catch (error) {
+                logger.error(`"keytar" module is unsupported by the system`, error);
+                ctx.keytarSupport = false;
+            }
 
             return {
                 electronLocations: ctx.locations,
+                keytarSupport: ctx.keytarSupport,
                 hasSavedPassword,
             };
         })()),
 
         logout: () => from((async () => {
-            await deletePassword();
+            if (ctx.keytarSupport) {
+                await deletePassword();
+            }
             ctx.settingsStore = ctx.settingsStore.clone({adapter: undefined});
             ctx.db.reset();
             delete ctx.selectedAccount; // TODO extend "logout" api test: "delete ctx.selectedAccount"
@@ -90,10 +103,13 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
             return config;
         })()),
 
-        // TODO update "readSettings" api method test ("no password provided" case, database loading)
+        // TODO update "readSettings" api method test ("no password provided" case, database loading, "keytarSupport")
         readSettings: ({password, savePassword}) => from((async () => {
-            // trying to auto login
+            // trying to auto-login
             if (!password) {
+                if (!ctx.keytarSupport) {
+                    throw new Error(`Wrong password saving call as unsupported by the system`);
+                }
                 const storedPassword = await getPassword();
                 if (!storedPassword) {
                     throw new Error("No password provided to decrypt settings with");
@@ -108,8 +124,8 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
                 ? (upgradeSettings(existingSettings) ? await store.write(existingSettings) : existingSettings)
                 : await store.write(ctx.initialStores.settings);
 
-            // "savePassword" is unset in auto login case
-            if (typeof savePassword !== "undefined") {
+            // "savePassword" is unset in auto-login case
+            if (typeof savePassword !== "undefined" && ctx.keytarSupport) {
                 if (savePassword) {
                     await setPassword(password);
                 } else {

@@ -23,7 +23,7 @@ export const OPTIONS_ACTIONS = unionize({
         GetSettingsRequest: ofType<{}>(),
         GetSettingsResponse: ofType<Settings>(),
         InitRequest: ofType<{}>(),
-        InitResponse: ofType<{ electronLocations: ElectronContextLocations; hasSavedPassword: boolean; }>(),
+        InitResponse: ofType<{ electronLocations: ElectronContextLocations; hasSavedPassword?: boolean; keytarSupport: boolean; }>(),
         PatchBaseSettingsRequest: ofType<BaseConfig>(),
         PatchProgress: ofType<ProgressPatch>(),
         ReEncryptSettings: ofType<{ password: string, encryptionPreset: PasswordBasedPreset }>(),

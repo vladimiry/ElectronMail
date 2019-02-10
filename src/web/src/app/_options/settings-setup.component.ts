@@ -1,10 +1,8 @@
-import {AfterViewInit, Component, ElementRef, QueryList, ViewChildren} from "@angular/core";
+import {Component} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";
-import {map} from "rxjs/operators";
 
-import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
-import {OptionsSelectors} from "src/web/src/app/store/selectors";
+import {LoginBaseComponent} from "./login-base.component";
 import {State} from "src/web/src/app/store/reducers/options";
 
 @Component({
@@ -13,9 +11,7 @@ import {State} from "src/web/src/app/store/reducers/options";
     styleUrls: ["./settings-setup.component.scss"],
     preserveWhitespaces: true,
 })
-export class SettingsSetupComponent implements AfterViewInit {
-    savePassword = new FormControl(false);
-    password = new FormControl(null, Validators.required);
+export class SettingsSetupComponent extends LoginBaseComponent {
     passwordConfirm = new FormControl(null, [
         Validators.required,
         // TODO make "controls match" to be "common/util" validator
@@ -29,28 +25,16 @@ export class SettingsSetupComponent implements AfterViewInit {
             return null;
         },
     ]);
+
     form = new FormGroup({
         savePassword: this.savePassword,
         password: this.password,
         passwordConfirm: this.passwordConfirm,
     });
-    processing$ = this.store.select(OptionsSelectors.FEATURED.progress)
-        .pipe(map(({signingIn}) => signingIn));
-    @ViewChildren("passwordRef")
-    passwordElementRefQuery!: QueryList<ElementRef>;
 
-    constructor(private store: Store<State>) {}
-
-    ngAfterViewInit() {
-        if (this.passwordElementRefQuery.length) {
-            this.passwordElementRefQuery.first.nativeElement.focus();
-        }
-    }
-
-    submit() {
-        this.store.dispatch(OPTIONS_ACTIONS.SignInRequest({
-            password: String(this.password.value),
-            savePassword: Boolean(this.savePassword.value),
-        }));
+    constructor(
+        store: Store<State>,
+    ) {
+        super(store);
     }
 }

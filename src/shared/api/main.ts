@@ -68,7 +68,7 @@ export interface Endpoints {
 
     dbIndexerNotification: ApiMethodNoArgument<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>>;
 
-    init: ApiMethodNoArgument<{ electronLocations: ElectronContextLocations; hasSavedPassword: boolean; }>;
+    init: ApiMethodNoArgument<{ electronLocations: ElectronContextLocations; hasSavedPassword?: boolean; keytarSupport: boolean; }>;
 
     logout: ApiMethodNoArgument<null>;
 

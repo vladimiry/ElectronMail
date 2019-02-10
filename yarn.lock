@@ -5060,16 +5060,16 @@ fs-json-store-encryption-adapter@1.3.5:
     sodium-native "^2.2.6"
     tslib "^1.9.3"
 
-fs-json-store@2.2.0:
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/fs-json-store/-/fs-json-store-2.2.0.tgz#7a77f672105d8d51dff1a8a7b55084a0d390571e"
-  integrity sha512-eATH5eb8QfjmvzfDBC656BOqhu+K6abcNQyh3FJxVBsqtaSfbDlvSYweSxohbBmYcnDZZeJsaOyot/qnN2xIAA==
+fs-json-store@2.3.0:
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/fs-json-store/-/fs-json-store-2.3.0.tgz#0f2ee3d854441f3fb7f47a4d96fe21e8b23e6629"
+  integrity sha512-ePbNjMfowiZYEkPb4UkrRxsyXbjSQTdbq4ClOWFWREYA9ven8nOTHWq5447QQTJeIUPCbDFpAb5UKwEUUgnYpA==
   dependencies:
     combine-errors "^3.0.3"
     fs-no-eperm-anymore "^2.0.5"
     imurmurhash "^0.1.4"
     kind-of "^6.0.2"
-    memfs "^2.14.1"
+    memfs "^2.15.1"
     proper-lockfile "^3.2.0"
     tslib "^1.9.3"
 
@@ -7435,7 +7435,7 @@ mem@^4.0.0:
     mimic-fn "^1.0.0"
     p-is-promise "^2.0.0"
 
-memfs@^2.14.1:
+memfs@^2.15.1:
   version "2.15.1"
   resolved "https://registry.yarnpkg.com/memfs/-/memfs-2.15.1.tgz#ed8cc72efbefb884b2035e61557186e06058d516"
   integrity sha512-FsQZKnGT1ncqSMz+uKvdPtJikI3YGpi2O+tR4ywjmOHL/5XHNoIPVQ3CnUKvMgAg0QED5jb8F4XzG1XrxGtEjA==

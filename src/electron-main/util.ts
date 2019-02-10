@@ -18,7 +18,27 @@ import {LOCAL_WEBCLIENT_PROTOCOL_PREFIX, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_
 import {registerProtocols} from "./protocol";
 
 export function initContext(options: ContextInitOptions = {}): Context {
-    const storeFs = options.storeFs ? options.storeFs : StoreFs.Fs.fs;
+    const storeFs = options.storeFs
+        ? options.storeFs
+        : StoreFs.Fs.volume({
+            writeFileAtomicOptions: {
+                fsync: false,
+                disableChmod: true,
+                disableChown: true,
+            },
+            fsNoEpermAnymore: {
+                items: [
+                    {
+                        platforms: ["win32"],
+                        errorCodes: ["EPERM", "EBUSY"],
+                        options: {
+                            retryIntervalMs: 100, // every 100 ms
+                            retryTimeoutMs: 5 * 1000, // 5 seconds
+                        },
+                    },
+                ],
+            },
+        });
     const runtimeEnvironment: RuntimeEnvironment = Boolean(process.env[RUNTIME_ENV_E2E]) ? "e2e" : "production";
     const locations = initLocations(runtimeEnvironment, storeFs, options.paths);
 

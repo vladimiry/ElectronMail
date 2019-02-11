@@ -14,6 +14,7 @@ export const FEATURED = {
     electronLocations: createSelector(STATE, (state) => state.electronLocations),
     hasSavedPassword: createSelector(STATE, (state) => state.hasSavedPassword),
     keytarSupport: createSelector(STATE, (state) => state.keytarSupport),
+    snapPasswordManagerServiceHint: createSelector(STATE, (state) => state.snapPasswordManagerServiceHint),
     mainProcessNotification: createSelector(STATE, (state) => state.mainProcessNotification),
 };
 

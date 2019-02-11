@@ -4,11 +4,16 @@ import {Store, select} from "@ngrx/store";
 import {Subject} from "rxjs";
 import {map, takeUntil} from "rxjs/operators";
 
-import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
+import {APP_NAME} from "src/shared/constants";
+import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {State} from "src/web/src/app/store/reducers/options";
 
 export abstract class LoginBaseComponent implements AfterViewInit, OnInit, OnDestroy {
+    appName = APP_NAME;
+
+    keytarUnsupportedDetails: boolean = false;
+
     password = new FormControl(null, Validators.required);
 
     savePassword = new FormControl(false);
@@ -20,6 +25,10 @@ export abstract class LoginBaseComponent implements AfterViewInit, OnInit, OnDes
 
     keytarSupport$ = this.store.pipe(
         select(OptionsSelectors.FEATURED.keytarSupport),
+    );
+
+    snapPasswordManagerServiceHint$ = this.store.pipe(
+        select(OptionsSelectors.FEATURED.snapPasswordManagerServiceHint),
     );
 
     @ViewChildren("passwordRef")
@@ -50,6 +59,17 @@ export abstract class LoginBaseComponent implements AfterViewInit, OnInit, OnDes
             password: String(this.password.value),
             savePassword: Boolean(this.savePassword.value),
         }));
+    }
+
+    openSettingsFolder(event: Event) {
+        event.preventDefault();
+        this.store.dispatch(NAVIGATION_ACTIONS.OpenSettingsFolder());
+    }
+
+    toggleKeytarUnsupportedDetails(event: Event) {
+        event.preventDefault();
+        this.keytarUnsupportedDetails = !this.keytarUnsupportedDetails;
+
     }
 
     ngOnDestroy() {

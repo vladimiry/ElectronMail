@@ -28,6 +28,7 @@ export interface State extends fromRoot.State {
     electronLocations?: ElectronContextLocations;
     hasSavedPassword?: boolean;
     keytarSupport?: boolean;
+    snapPasswordManagerServiceHint?: boolean;
     mainProcessNotification: UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>;
 }
 

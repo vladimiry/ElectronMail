@@ -1,6 +1,7 @@
 import logger from "electron-log";
 import {from} from "rxjs";
 
+import {APP_NAME} from "src/shared/constants";
 import {Account, Database, FindInPage, General, TrayIcon} from "./endpoints-builders";
 import {Context} from "src/electron-main/model";
 import {Endpoints, IPC_MAIN_API} from "src/shared/api/main";
@@ -45,12 +46,27 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
                 ctx.keytarSupport = true;
             } catch (error) {
                 logger.error(`"keytar" module is unsupported by the system`, error);
+
                 ctx.keytarSupport = false;
+
+                const errorMessage = String(error.message).toLowerCase();
+
+                ctx.snapPasswordManagerServiceHint = (
+                    errorMessage.includes(APP_NAME)
+                    &&
+                    errorMessage.includes("snap")
+                    && (
+                        errorMessage.includes("org.freedesktop.secret.")
+                        ||
+                        errorMessage.includes("gnome-keyring")
+                    )
+                );
             }
 
             return {
                 electronLocations: ctx.locations,
                 keytarSupport: ctx.keytarSupport,
+                snapPasswordManagerServiceHint: ctx.snapPasswordManagerServiceHint,
                 hasSavedPassword,
             };
         })()),

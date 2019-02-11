@@ -79,7 +79,6 @@ export class BaseSettingsComponent implements OnInit {
 
     openSettingsFolder(event: Event) {
         event.preventDefault();
-        event.stopPropagation();
         this.store.dispatch(NAVIGATION_ACTIONS.OpenSettingsFolder());
     }
 }

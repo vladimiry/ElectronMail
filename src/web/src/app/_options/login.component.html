@@ -23,24 +23,36 @@
             <div class="form-check text-right">
                 <label class="form-check-label">
                     <input class="form-check-input" formControlName="savePassword" type="checkbox">
-                    Keep me signed in
+                    <ng-container *ngIf="keytarSupport$ | async; else keytarUnsupportedTemplate">
+                        Keep me signed in
+                        <i
+                            *ngIf="savePassword.value" [popover]="popTemplate"
+                            class="fa fa-info-circle text-danger" container="body" placement="bottom" triggers="mouseenter:mouseleave"
+                        ></i>
+                        <ng-template #popTemplate>
+                            Choosing <code>Keep me signed in</code> option enables saving the master password on your computer. It weakens
+                            the security.
+                        </ng-template>
+                    </ng-container>
+                    <ng-template #keytarUnsupportedTemplate>
+                        <code>Keep me signed in</code> feature is unsupported by the system,
+                        <a (click)="toggleKeytarUnsupportedDetails($event)" href>toggle details</a>.
+                        <div [collapse]="!keytarUnsupportedDetails" class="text-left">
+                            <ul>
+                                <li>
+                                    See log file in
+                                    <a (click)="openSettingsFolder($event)" href>settings folder</a>
+                                    for details.
+                                </li>
+                                <li *ngIf="snapPasswordManagerServiceHint$ | async">
+                                    Try executing <code>sudo snap connect {{ appName }}:password-manager-service</code>
+                                    <br>
+                                    and restart the app.
+                                </li>
+                            </ul>
+                        </div>
+                    </ng-template>
                 </label>
-                <i
-                    *ngIf="!(keytarSupport$ | async)"
-                    [popover]="popUnsupportedTemplate"
-                    class="fa fa-info-circle text-warning mr-1" container="body" placement="bottom" triggers="mouseenter:mouseleave"
-                ></i>
-                <ng-template #popUnsupportedTemplate>
-                    <code>Keep me signed in</code> feature is unsupported by the system.
-                </ng-template>
-                <i
-                    *ngIf="savePassword.value" [popover]="popTemplate"
-                    class="fa fa-info-circle text-danger" container="body" placement="bottom" triggers="mouseenter:mouseleave"
-                ></i>
-                <ng-template #popTemplate>
-                    Choosing <code>Keep me signed in</code> option enables saving the master password on your computer. It weakens
-                    the security.
-                </ng-template>
             </div>
         </fieldset>
     </form>

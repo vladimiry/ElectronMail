@@ -31,6 +31,7 @@ export interface Context {
     };
     readonly configStore: StoreModel.Store<Config>;
     keytarSupport?: boolean;
+    snapPasswordManagerServiceHint?: boolean;
     settingsStore: StoreModel.Store<Settings>;
     uiContext?: UIContext;
     selectedAccount?: {

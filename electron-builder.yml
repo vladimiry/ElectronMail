@@ -74,6 +74,8 @@ snap:
   plugs:
     - default
     - password-manager-service
+  environment:
+    DISABLE_WAYLAND: 1
 
 win:
   artifactName: ${name}-${version}-windows-${arch}.${ext}

@@ -270,5 +270,10 @@
     "webpack-merge": "4.2.1",
     "webpack-node-externals": "1.7.2",
     "zone.js": "0.8.29"
+  },
+  "resolutions": {
+    "@angular/compiler-cli/**/braces": "^2.3.2",
+    "karma/**/braces": "^2.3.2",
+    "npx/**/braces": "^2.3.2"
   }
 }

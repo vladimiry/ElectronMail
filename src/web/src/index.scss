@@ -11,6 +11,13 @@ body {
     color: theme-color("danger");
 }
 
+.form-control {
+    &.is-valid,
+    &.is-invalid {
+        background-position-x: 98%;
+    }
+}
+
 // "bootstrap"
 .dropdown-toggle-split {
     @include app-dropdown-toggle-split;

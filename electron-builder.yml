@@ -23,7 +23,7 @@ files: [
   "!node_modules/sodium-native/prebuilds/linux-arm",
   "!node_modules/sodium-native/prebuilds/win32-ia32",
   # TODO exclude not needed stuff in "files:" section to reduce app packages size, can save megabytes, so a significant improvement
-]
+ ]
 compression: maximum
 asar: true
 asarUnpack:
@@ -74,6 +74,10 @@ snap:
   plugs:
     - default
     - password-manager-service
+    # additional plugs to pick up the GTK theme and icons from the system, mouse cursor theme still not fixed
+    - { "gtk-3-themes": { "interface": "content", "target": "$SNAP/data-dir/themes", "default-provider": "gtk-common-themes:gtk-3-themes" }, }
+    - { "icon-themes": { "interface": "content", "target": "$SNAP/data-dir/icons", "default-provider": "gtk-common-themes:icon-themes" }, }
+    - { "sound-themes": { "interface": "content", "target": "$SNAP/data-dir/sounds", "default-provider": "gtk-common-themes:sounds-themes" }, }
   environment:
     DISABLE_WAYLAND: 1
 

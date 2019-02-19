@@ -6,9 +6,10 @@ import {randomBytes} from "crypto";
 
 import {Config, ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS, Settings} from "src/shared/model/options";
 import {DEFAULT_API_CALL_TIMEOUT, DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_SECOND_MS} from "src/shared/constants";
+import {Omit} from "src/shared/types";
 
 export const INITIAL_STORES: Readonly<{
-    config: () => Config;
+    config: () => Omit<Config, "jsFlags"> & Required<Pick<Config, "jsFlags">>;
     settings: () => Settings;
 }> = Object.freeze({
     config: () => {
@@ -19,18 +20,6 @@ export const INITIAL_STORES: Readonly<{
         const logLevel: LogLevel = "error";
 
         return {
-            // base
-            checkForUpdatesAndNotify: true,
-            clearSession: true,
-            closeToTray: true,
-            compactLayout: true,
-            disableSpamNotifications: true,
-            findInPage: true,
-            fullTextSearch: true,
-            logLevel,
-            startMinimized: true,
-            unreadNotifications: true,
-            //
             encryptionPreset,
             window: {
                 bounds: {width: 1024, height: 768},
@@ -51,6 +40,20 @@ export const INITIAL_STORES: Readonly<{
                 domElementsResolving: ONE_SECOND_MS * 20,
                 defaultApiCall: DEFAULT_API_CALL_TIMEOUT,
             },
+            jsFlags: [
+                "--max-old-space-size=2048",
+            ],
+            // base
+            checkForUpdatesAndNotify: true,
+            clearSession: true,
+            closeToTray: true,
+            compactLayout: true,
+            disableSpamNotifications: true,
+            findInPage: true,
+            fullTextSearch: true,
+            logLevel,
+            startMinimized: true,
+            unreadNotifications: true,
         };
     },
     settings: () => {

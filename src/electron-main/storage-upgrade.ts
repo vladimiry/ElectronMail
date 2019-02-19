@@ -74,6 +74,12 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.clearSession = INITIAL_STORES.config().clearSession;
         }
     },
+    "2.3.3": (config) => {
+        if (Array.isArray(config.jsFlags)) {
+            return;
+        }
+        config.jsFlags = INITIAL_STORES.config().jsFlags;
+    },
 };
 
 const SETTINGS_UPGRADES: Record<string, (settings: Settings) => void> = {

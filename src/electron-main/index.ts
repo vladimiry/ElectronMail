@@ -3,6 +3,8 @@ import logger from "electron-log";
 import {app} from "electron";
 
 import {APP_NAME} from "src/shared/constants";
+import {Config} from "src/shared/model/options";
+import {INITIAL_STORES} from "src/electron-main/constants";
 import {initApi} from "./api";
 import {initApplicationMenu} from "./menu";
 import {initAutoUpdate} from "./app-update";
@@ -12,6 +14,8 @@ import {initDefaultSession} from "./session";
 import {initTray} from "./tray";
 import {initWebContentsCreatingHandlers} from "./web-contents";
 import {initWebRequestListeners} from "./web-request";
+
+// WARN calling asynchronous functions is only allowed after the "app.ready" handler got triggered
 
 electronUnhandled({
     logger: logger.error,
@@ -29,6 +33,25 @@ app.setAppUserModelId(`com.github.vladimiry.${APP_NAME}`);
 
 // TODO consider sharing "Context" using dependency injection approach
 const ctx = initContext();
+
+// TODO add synchronous "read" method to "fs-json-store"
+(() => {
+    let configFile: Buffer | string | undefined;
+
+    try {
+        configFile = ctx.configStore.fs._impl.readFileSync(ctx.configStore.file);
+    } catch (error) {
+        if (error.code !== "ENOENT") {
+            throw error;
+        }
+    }
+
+    const {jsFlags = INITIAL_STORES.config().jsFlags}: Pick<Config, "jsFlags"> = configFile
+        ? JSON.parse(configFile.toString())
+        : {};
+
+    app.commandLine.appendSwitch("js-flags", jsFlags.join(" "));
+})();
 
 app.on("ready", async () => {
     await initDefaultSession(ctx);

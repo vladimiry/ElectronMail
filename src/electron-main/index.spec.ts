@@ -1,8 +1,13 @@
+// tslint:disable:max-line-length
+
 import rewiremock from "rewiremock";
 import ava, {TestInterface} from "ava";
 import sinon, {SinonStub} from "sinon";
+import {Fs, Store} from "fs-json-store";
 
 import {APP_NAME, ONE_SECOND_MS} from "src/shared/constants";
+import {Config} from "src/shared/model/options";
+import {Context} from "./model";
 import {Endpoints} from "src/shared/api/main";
 import {INITIAL_STORES} from "./constants";
 import {asyncDelay} from "src/shared/util";
@@ -15,8 +20,9 @@ interface TestContext {
 
 const test = ava as TestInterface<TestContext>;
 
-// tslint:disable:max-line-length
 test.serial("workflow", async (t) => {
+    await bootstrap(t.context);
+
     await asyncDelay(ONE_SECOND_MS);
 
     const m = t.context.mocks["~index"];
@@ -34,6 +40,10 @@ test.serial("workflow", async (t) => {
 
     t.true(m["./util"].initContext.calledWithExactly(), `"initContext" called`);
     t.true(m["./util"].initContext.calledAfter(m.electron.app.setAppUserModelId));
+
+    t.true(m.electron.app.commandLine.appendSwitch.calledWithExactly("js-flags", INITIAL_STORES.config().jsFlags.join(" ")), `"app.commandLine.appendSwitch" called`);
+    t.true(m.electron.app.commandLine.appendSwitch.calledAfter(m["./util"].initContext));
+    t.true(m.electron.app.commandLine.appendSwitch.calledBefore(m["./session"].initDefaultSession));
 
     t.true(m["./session"].initDefaultSession.calledWithExactly(t.context.ctx), `"initDefaultSession" called`);
     t.true(m["./session"].initDefaultSession.calledAfter(m["./util"].initContext), `"initDefaultSession" called after "initContext"`);
@@ -60,10 +70,50 @@ test.serial("workflow", async (t) => {
 
     t.true(m["./app-update"].initAutoUpdate.calledWithExactly(), `"initAutoUpdate" called`);
 });
-// tslint:enable:max-line-length
 
-test.beforeEach(async (t) => {
-    t.context.endpoints = {
+test.serial("electron.app.commandLine.appendSwitch: empty values", async (t) => {
+    const jsFlags: Exclude<Config["jsFlags"], undefined> = [];
+
+    await bootstrap(
+        t.context,
+        {
+            configStore: (() => {
+                const configStore = buildDefaultConfigStore();
+                configStore.fs._impl.readFileSync = () => JSON.stringify({jsFlags});
+                return configStore;
+            })(),
+        },
+    );
+
+    t.true(t.context.mocks["~index"].electron.app.commandLine.appendSwitch.calledWithExactly("js-flags", ""));
+});
+
+test.serial("electron.app.commandLine.appendSwitch: custom values", async (t) => {
+    const jsFlags: Exclude<Config["jsFlags"], undefined> = [
+        "--some-val-1=111",
+        "--some-val-2",
+        "--some-val-3=333",
+    ];
+
+    await bootstrap(
+        t.context,
+        {
+            configStore: (() => {
+                const configStore = buildDefaultConfigStore();
+                configStore.fs._impl.readFileSync = () => JSON.stringify({jsFlags});
+                return configStore;
+            })(),
+        },
+    );
+
+    t.true(t.context.mocks["~index"].electron.app.commandLine.appendSwitch.calledWithExactly("js-flags", jsFlags.join(" ")));
+});
+
+async function bootstrap(
+    testContext: TestContext,
+    contextAugmentation: Partial<Context> = {},
+) {
+    testContext.endpoints = {
         readConfig: sinon.stub().returns({
             toPromise: () => Promise.resolve(INITIAL_STORES.config()),
         }),
@@ -75,19 +125,21 @@ test.beforeEach(async (t) => {
         }),
     };
 
-    t.context.ctx = {
+    testContext.ctx = {
         on: sinon.spy(),
         locations: {
             webClients: [],
         },
+        configStore: buildDefaultConfigStore(),
+        ...contextAugmentation,
     };
 
-    t.context.mocks = buildMocks(t.context);
+    testContext.mocks = buildMocks(testContext);
 
     await rewiremock.around(
         () => import("./index"),
         (mock) => {
-            const mocks = t.context.mocks["~index"];
+            const mocks = testContext.mocks["~index"];
             mock(() => import("./session")).callThrough().with(mocks["./session"]);
             mock(() => import("./api")).callThrough().with(mocks["./api"]);
             mock(() => import("./util")).callThrough().with(mocks["./util"]);
@@ -106,7 +158,18 @@ test.beforeEach(async (t) => {
             mock(() => import("electron")).with(mocks.electron as any);
         },
     );
-});
+}
+
+function buildDefaultConfigStore(): Store<Config> {
+    const memFsVolume = Fs.MemFs.volume();
+
+    memFsVolume._impl.mkdirpSync(process.cwd());
+
+    return new Store<Config>({
+        fs: memFsVolume,
+        file: "./config.json",
+    });
+}
 
 function buildMocks(testContext: TestContext) {
     return {
@@ -149,6 +212,9 @@ function buildMocks(testContext: TestContext) {
                         .callsArg(1)
                         .withArgs("web-contents-created")
                         .callsArgWith(1, {}, {on: sinon.spy()}),
+                    commandLine: {
+                        appendSwitch: sinon.spy(),
+                    },
                 },
             },
         },

@@ -26,6 +26,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
         domElementsResolving: number;
         defaultApiCall: number;
     };
+    jsFlags?: string[];
     // base
     checkForUpdatesAndNotify?: boolean;
     clearSession?: boolean;

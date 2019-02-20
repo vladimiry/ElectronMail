@@ -51,14 +51,16 @@ export function initContext(options: ContextInitOptions = {}): Context {
         runtimeEnvironment,
         locations,
         deferredEndpoints: new Deferred(),
-        db: new Database({
-            file: path.join(locations.userDataDir, "database.bin"),
-            fileFs: storeFs,
-            encryption: {
-                keyResolver: async () => (await ctx.settingsStore.readExisting()).databaseEncryptionKey,
-                presetResolver: async () => ({encryption: {type: "sodium.crypto_secretbox_easy", preset: "algorithm:default"}}),
+        db: new Database(
+            {
+                file: path.join(locations.userDataDir, "database.bin"),
+                encryption: {
+                    keyResolver: async () => (await ctx.settingsStore.readExisting()).databaseEncryptionKey,
+                    presetResolver: async () => ({encryption: {type: "sodium.crypto_secretbox_easy", preset: "algorithm:default"}}),
+                },
             },
-        }),
+            storeFs,
+        ),
         initialStores: options.initialStores || {config: INITIAL_STORES.config(), settings: INITIAL_STORES.settings()},
         configStore: new Store<Config>({
             fs: storeFs,

@@ -1,3 +1,5 @@
+import * as EncryptionAdapterBundle from "fs-json-store-encryption-adapter";
+import * as msgpack from "msgpack-lite";
 import logger from "electron-log";
 import randomstring from "randomstring";
 import rewiremock from "rewiremock";
@@ -11,6 +13,7 @@ import {AccountType} from "src/shared/model/account";
 import {Database} from ".";
 import {Folder, MAIL_FOLDER_TYPE} from "src/shared/model/database";
 import {INITIAL_STORES} from "src/electron-main/constants";
+import {SerializationAdapter} from "src/electron-main/database/serialization";
 
 logger.transports.console.level = false;
 
@@ -28,17 +31,10 @@ test(`"keyResolver" should be called during save/load`, async (t) => {
     t.deepEqual([key, key, key, key], await Promise.all(keyResolverSpy.returnValues));
 });
 
-test(`save to file call should write through the "EncryptionAdapter.prototype.write" call`, async (t) => {
-    let writtenByMockedAdapter: Buffer = Buffer.from([]);
+test.serial(`save to file call should write through the "EncryptionAdapter.prototype.write" call`, async (t) => {
+    class MockedEncryptionAdapter extends EncryptionAdapter {}
 
-    class MockedEncryptionAdapter extends EncryptionAdapter {
-        async write(data: Buffer) {
-            writtenByMockedAdapter = await super.write(data);
-            return writtenByMockedAdapter;
-        }
-    }
-
-    const adapterWriteSpy = sinon.spy(MockedEncryptionAdapter.prototype, "write");
+    const encryptionAdapterWriteSpy = sinon.spy(MockedEncryptionAdapter.prototype, "write");
     const databaseModule = await rewiremock.around(
         () => import("."),
         (mock) => {
@@ -47,38 +43,65 @@ test(`save to file call should write through the "EncryptionAdapter.prototype.wr
                 .with({EncryptionAdapter: MockedEncryptionAdapter});
         },
     );
-    const db = new databaseModule.Database(buildDatabaseOptions());
+    const {options, fileFs} = buildDatabase();
+    const db = new databaseModule.Database(options, fileFs);
 
-    // "stringify" parameters taken from the "fs-json-store/private/store.write" method
-    const dump = Buffer.from(JSON.stringify(db.dump()));
+    await db.initAccount({type: "tutanota", login: "login1"}).folders.validateAndSet(buildFolder());
 
-    t.false(adapterWriteSpy.called);
+    t.false(encryptionAdapterWriteSpy.called);
+
+    await db.saveToFile();
+    const dump = db.dumpToFsDb();
+
+    t.is(1, encryptionAdapterWriteSpy.callCount);
+    t.deepEqual(msgpack.encode(dump), encryptionAdapterWriteSpy.getCall(0).args[0]);
+});
+
+test.serial(`save to file call should write through the "SerializationAdapter.write" call`, async (t) => {
+    let serializationAdapterWriteSpy: any;
+
+    class MockedSerializationAdapter extends SerializationAdapter {
+        constructor(input: { key: Buffer, preset: EncryptionAdapterBundle.KeyBasedPreset }) {
+            super(input);
+            serializationAdapterWriteSpy = sinon.spy(this, "write");
+        }
+    }
+
+    const databaseModule = await rewiremock.around(
+        () => import("."),
+        async (rw) => {
+            rw(() => import("./serialization"))
+                .callThrough()
+                .with({SerializationAdapter: MockedSerializationAdapter});
+        },
+    );
+    const {options, fileFs} = buildDatabase();
+    const db = new databaseModule.Database(options, fileFs);
+
+    await db.initAccount({type: "tutanota", login: "login1"}).folders.validateAndSet(buildFolder());
+
+    const dump = db.dumpToFsDb();
 
     await db.saveToFile();
 
-    t.is(1, adapterWriteSpy.callCount);
-    t.true(adapterWriteSpy.calledWithExactly(dump));
+    const writtenByDb = await db.fileFs.readFile(db.options.file);
 
-    if (!db.options.fileFs) {
-        t.fail(`"options.fileFs" should be defined`);
-        return;
-    }
+    const writtenBySerializationAdapter = await serializationAdapterWriteSpy.returnValues[0];
+    t.true(writtenByDb.length > 10);
+    t.deepEqual(
+        writtenBySerializationAdapter,
+        writtenByDb,
+        `written to file data must be passed through the "SerializationAdapter.write" call`,
+    );
 
-    const writtenByDb = await db.options.fileFs.readFile(db.options.file);
-    const writtenByNewAdapterInstance = await new EncryptionAdapter({
+    const writtenByNewAdapterInstance = await new SerializationAdapter({
         key: Buffer.from(await db.options.encryption.keyResolver(), BASE64_ENCODING),
         preset: await db.options.encryption.presetResolver(),
     }).write(dump);
-    t.true(writtenByDb.length > 10);
-    t.deepEqual(
-        writtenByMockedAdapter,
-        writtenByDb,
-        `written to file data must be passed through the "store.adapter.write" call`,
-    );
     t.notDeepEqual( // not equal, so random salt has been applied
         writtenByNewAdapterInstance,
         writtenByDb,
-        `written to file data must match the data passed through the "new EncryptionAdapter().write" call`,
+        `written to file data must not match the data passed through the "new SerializationAdapter.write" call`,
     );
 });
 
@@ -87,8 +110,11 @@ test("saved/saved immutability", async (t) => {
     const type: AccountType = "tutanota";
     const login = "login";
     await db.initAccount({type, login}).folders.validateAndSet(buildFolder());
-    const persisted1 = await db.saveToFile();
-    const persisted2 = await db.saveToFile();
+    await db.saveToFile();
+    const persisted1 = db.dumpToFsDb();
+    await db.saveToFile();
+    const persisted2 = db.dumpToFsDb();
+    t.truthy(persisted1);
     t.deepEqual(persisted1, persisted2);
 });
 
@@ -98,11 +124,14 @@ test("save => load => save immutability", async (t) => {
     const login = "login";
     const account1 = db.initAccount({type, login});
     await account1.folders.validateAndSet(buildFolder());
-    const persisted1 = await db.saveToFile();
-    await db.loadFromFile();
+    await db.saveToFile();
+    const persisted1 = db.dumpToFsDb();
     const account2 = db.getAccount({type, login});
-    const persisted2 = await db.saveToFile();
+    await db.saveToFile();
+    const persisted2 = db.dumpToFsDb();
+    t.truthy(persisted1);
     t.deepEqual(persisted1, persisted2);
+    t.truthy(account1);
     t.deepEqual(account1, account2);
 });
 
@@ -115,10 +144,14 @@ test("several sequence save calls should persist the same data", async (t) => {
 
 test("getting nonexistent account should initialize its content", async (t) => {
     const db = buildDatabase();
-    const persisted = await db.saveToFile();
+    await db.saveToFile();
+    const persisted1 = db.dumpToFsDb();
     db.initAccount({type: "tutanota", login: "login1"});
-    const persisted2 = await db.saveToFile();
-    t.notDeepEqual(persisted, persisted2);
+    await db.saveToFile();
+    const persisted2 = db.dumpToFsDb();
+    t.truthy(persisted1);
+    t.truthy(persisted2);
+    t.notDeepEqual(persisted1, persisted2);
 });
 
 test("wrong encryption key", async (t) => {
@@ -134,7 +167,7 @@ test("wrong encryption key", async (t) => {
 test("nonexistent file", async (t) => {
     const db = buildDatabase();
     if (await db.persisted()) {
-        await new Store({file: db.options.file, fs: db.options.fileFs}).remove();
+        await new Store({file: db.options.file, fs: db.fileFs}).remove();
     }
     t.false(await db.persisted());
     await t.throwsAsync(db.loadFromFile(), `${db.options.file} does not exist`);
@@ -144,22 +177,18 @@ test("reset", async (t) => {
     const db = buildDatabase();
     const initial = Database.buildEmptyDatabase();
 
-    t.deepEqual(db.dump(), initial);
+    t.deepEqual(db.dumpToFsDb(), initial);
     await db.initAccount({type: "tutanota", login: "login1"}).folders.validateAndSet(buildFolder());
-    t.notDeepEqual(db.dump(), initial);
+    t.notDeepEqual(db.dumpToFsDb(), initial);
 
     const buildEmptyDatabaseSpy = sinon.spy(Database, "buildEmptyDatabase");
     const buildEmptyDatabaseCallCount = buildEmptyDatabaseSpy.callCount;
     db.reset();
     t.is(buildEmptyDatabaseCallCount + 1, buildEmptyDatabaseSpy.callCount);
-    t.deepEqual(db.dump(), initial);
+    t.deepEqual(db.dumpToFsDb(), initial);
 });
 
-function buildDatabase(keyResolver?: () => Promise<string>) {
-    return new Database(buildDatabaseOptions(keyResolver));
-}
-
-function buildDatabaseOptions(keyResolver?: () => Promise<string>) {
+function buildDatabase(keyResolver?: () => Promise<string>): Database {
     if (!keyResolver) {
         const key = INITIAL_STORES.settings().databaseEncryptionKey;
         keyResolver = async () => key;
@@ -169,14 +198,16 @@ function buildDatabaseOptions(keyResolver?: () => Promise<string>) {
 
     fileFs._impl.mkdirpSync(process.cwd());
 
-    return new Database({
-        file: `database-${randomstring.generate()}.bin`,
-        fileFs,
-        encryption: {
-            keyResolver,
-            presetResolver: async () => ({encryption: {type: "sodium.crypto_secretbox_easy", preset: "algorithm:default"}}),
+    return new Database(
+        {
+            file: `database-${randomstring.generate()}.bin`,
+            encryption: {
+                keyResolver,
+                presetResolver: async () => ({encryption: {type: "sodium.crypto_secretbox_easy", preset: "algorithm:default"}}),
+            },
         },
-    }).options;
+        fileFs,
+    );
 }
 
 // TODO use "cooky-cutter" to build complete entities factories

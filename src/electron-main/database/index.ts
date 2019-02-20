@@ -1,13 +1,14 @@
+import * as FsJsonStore from "fs-json-store";
 import _logger from "electron-log";
 import PQueue from "p-queue";
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/private/constants";
-import {EncryptionAdapter, KeyBasedPreset} from "fs-json-store-encryption-adapter";
-import {Model as FsJsonStoreModel, Store as FsJsonStore} from "fs-json-store";
+import {KeyBasedPreset} from "fs-json-store-encryption-adapter";
 
 import * as Entity from "./entity";
 import {DATABASE_VERSION} from "./constants";
 import {DbAccountPk, FsDb, FsDbAccount, MAIL_FOLDER_TYPE, Mail, MemoryDb, MemoryDbAccount} from "src/shared/model/database";
 import {EntityMap} from "./entity-map";
+import {SerializationAdapter} from "./serialization";
 import {curryFunctionMembers} from "src/shared/util";
 import {resolveMemoryAccountFolders} from "./util";
 
@@ -57,12 +58,12 @@ export class Database {
     constructor(
         public readonly options: Readonly<{
             file: string;
-            fileFs?: FsJsonStoreModel.StoreFs;
             encryption: Readonly<{
                 keyResolver: () => Promise<string>;
                 presetResolver: () => Promise<KeyBasedPreset>;
             }>
         }>,
+        public readonly fileFs: FsJsonStore.Model.StoreFs = FsJsonStore.Fs.Fs.fs,
     ) {}
 
     getVersion(): string {
@@ -119,15 +120,24 @@ export class Database {
     }
 
     async persisted(): Promise<boolean> {
-        return (await this.resolveStore()).readable();
+        // TODO get rid of "fs-json-store"
+        return await new FsJsonStore.Store<FsDb>({
+            file: this.options.file,
+            fs: this.fileFs,
+        }).readable();
     }
 
     async loadFromFile(): Promise<void> {
         logger.info("loadFromFile()");
 
+        if (!(await this.persisted())) {
+            throw new Error(`${this.options.file} does not exist`);
+        }
+
         const start = process.hrtime();
-        const store = await this.resolveStore();
-        const source = await store.readExisting();
+        const serializationAdapter = await this.buildSerializationAdapter();
+        const data = await this.fileFs.readFile(this.options.file);
+        const source = await serializationAdapter.read(data);
         const target: MemoryDb = Database.buildEmptyDatabase();
 
         target.version = source.version;
@@ -150,26 +160,28 @@ export class Database {
         })}`);
     }
 
-    async saveToFile(): Promise<FsDb> {
+    async saveToFile(): Promise<void> {
         logger.info("saveToFile()");
 
         return this.saveToFileQueue.add(async () => {
             const startTime = Number(new Date());
-            const store = await this.resolveStore();
+            const serializationAdapter = await this.buildSerializationAdapter();
             const dump = {
-                ...this.dump(),
+                ...this.dumpToFsDb(),
                 version: DATABASE_VERSION,
             };
-            const result = await store.write(dump);
+
+            await this.fileFs.writeFile(
+                this.options.file,
+                await serializationAdapter.write(dump),
+            );
 
             logger.verbose(`saveToFile().stat: ${JSON.stringify({...this.stat(), time: Number(new Date()) - startTime})}`);
-
-            return result;
         });
     }
 
-    dump(): FsDb {
-        logger.info("dump()");
+    dumpToFsDb(): FsDb {
+        logger.info("dumpToFsDb()");
 
         const {memoryDb: source} = this;
         const target: FsDb = Database.buildEmptyDatabase();
@@ -237,20 +249,16 @@ export class Database {
         return result;
     }
 
-    private async resolveStore(): Promise<FsJsonStore<FsDb>> {
+    private async buildSerializationAdapter(): Promise<SerializationAdapter> {
         const key = Buffer.from(await this.options.encryption.keyResolver(), BASE64_ENCODING);
 
         if (key.length !== KEY_BYTES_32) {
             throw new Error(`Invalid encryption key length, expected: ${KEY_BYTES_32}, actual: ${key.length}`);
         }
 
-        return new FsJsonStore<FsDb>({
-            file: this.options.file,
-            adapter: new EncryptionAdapter({
-                key,
-                preset: await this.options.encryption.presetResolver(),
-            }),
-            fs: this.options.fileFs,
+        return new SerializationAdapter({
+            key,
+            preset: await this.options.encryption.presetResolver(),
         });
     }
 }

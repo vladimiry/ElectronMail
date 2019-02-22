@@ -90,6 +90,7 @@ export const FOLDER_UTILS: {
     };
 })();
 
+// WARN don't mutate "account" argument
 function resolveAccountConversationNodes<T extends keyof FsDb["accounts"]>(account: FsDbAccount<T>): ConversationEntry[] {
     if (account.metadata.type === "tutanota") {
         return Object.values(account.conversationEntries);
@@ -127,6 +128,7 @@ function resolveAccountConversationNodes<T extends keyof FsDb["accounts"]>(accou
     return [...entriesMappedByPk.values()];
 }
 
+// WARN don't mutate "account" argument
 export function buildFoldersAndRootNodePrototypes<T extends keyof FsDb["accounts"]>(
     account: FsDbAccount<T>,
 ): {
@@ -159,6 +161,7 @@ export function buildFoldersAndRootNodePrototypes<T extends keyof FsDb["accounts
 
     for (const entry of conversationEntries) {
         const node = nodeLookup(entry.pk);
+        // WARN don't mutate "resolvedMail"
         const resolvedMail = entry.mailPk && account.mails[entry.mailPk];
 
         if (resolvedMail) {
@@ -233,7 +236,7 @@ export function fillFoldersAndReturnRootConversationNodes(rootNodePrototypes: Vi
 }
 
 function buildFoldersView<T extends keyof FsDb["accounts"]>(account: FsDbAccount<T>): View.Folder[] {
-    const {folders, rootNodePrototypes} = buildFoldersAndRootNodePrototypes(R.clone(account));
+    const {folders, rootNodePrototypes} = buildFoldersAndRootNodePrototypes(account);
 
     fillFoldersAndReturnRootConversationNodes(rootNodePrototypes);
 

@@ -75,10 +75,13 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         }
     },
     "2.3.3": (config) => {
-        if (Array.isArray(config.jsFlags)) {
-            return;
+        if (!Array.isArray(config.jsFlags)) {
+            config.jsFlags = INITIAL_STORES.config().jsFlags;
         }
-        config.jsFlags = INITIAL_STORES.config().jsFlags;
+
+        if (typeof config.timeouts.databaseLoading !== "number") {
+            config.timeouts.databaseLoading = INITIAL_STORES.config().timeouts.databaseLoading;
+        }
     },
 };
 
@@ -159,7 +162,7 @@ function isAppVersionLessThan(version: string): boolean {
     return compareVersions(APP_VERSION, version) === -1;
 }
 
-export async function upgradeDatabase(db: Database, settings: Settings) {
+export async function upgradeDatabase(db: Database, accounts: Settings["accounts"]) {
     let needToSave = false;
 
     if (db.getVersion() === "1") {
@@ -177,7 +180,7 @@ export async function upgradeDatabase(db: Database, settings: Settings) {
         const removePks: DbAccountPk[] = [];
 
         db.iterateAccounts(({pk}) => {
-            if (settings.accounts.some((a) => Boolean(a.database) && a.type === pk.type && a.login === pk.login)) {
+            if (accounts.some((a) => Boolean(a.database) && a.type === pk.type && a.login === pk.login)) {
                 return;
             }
             removePks.push(pk);

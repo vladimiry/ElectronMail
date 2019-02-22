@@ -95,6 +95,8 @@ export interface Endpoints {
 
     settingsExists: ApiMethodNoArgument<boolean>;
 
+    loadDatabase: ApiMethod<Pick<Settings, "accounts">, null>;
+
     activateBrowserWindow: ApiMethodNoArgument<null>;
 
     toggleBrowserWindow: ApiMethod<{ forcedState?: boolean }, null>;

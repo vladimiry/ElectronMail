@@ -14,6 +14,7 @@ export type ProgressPatch = Partial<{
     reEncryptingSettings: boolean;
     removingAccount: boolean;
     signingIn: boolean;
+    loadingDatabase: boolean;
     togglingStore: boolean;
     togglingCompactLayout: boolean;
     updatingAccount: boolean;

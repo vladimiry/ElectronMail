@@ -4,7 +4,7 @@ import {Store, select} from "@ngrx/store";
 import {Subject} from "rxjs";
 import {map, takeUntil} from "rxjs/operators";
 
-import {APP_NAME} from "src/shared/constants";
+import {APP_NAME, ONE_SECOND_MS} from "src/shared/constants";
 import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {State} from "src/web/src/app/store/reducers/options";
@@ -18,9 +18,19 @@ export abstract class LoginBaseComponent implements AfterViewInit, OnInit, OnDes
 
     savePassword = new FormControl(false);
 
-    processing$ = this.store.pipe(
+    signingIn$ = this.store.pipe(
         select(OptionsSelectors.FEATURED.progress),
         map((progress) => progress.signingIn),
+    );
+
+    loadingDatabase$ = this.store.pipe(
+        select(OptionsSelectors.FEATURED.progress),
+        map((progress) => progress.loadingDatabase),
+    );
+
+    databaseLoadingTimeoutSeconds$ = this.store.pipe(
+        select(OptionsSelectors.FEATURED.config),
+        map((config) => (config.timeouts.databaseLoading || 0) / ONE_SECOND_MS),
     );
 
     keytarSupport$ = this.store.pipe(

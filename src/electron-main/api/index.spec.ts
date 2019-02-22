@@ -428,6 +428,11 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.true(await t.context.ctx.settingsStore.readable(), "store: settings file exists");
     },
 
+    // TODO test "loadDatabase" API
+    loadDatabase: (t) => {
+        t.pass();
+    },
+
     // TODO test "activateBrowserWindow" API
     activateBrowserWindow: (t) => {
         t.pass();

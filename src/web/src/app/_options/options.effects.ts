@@ -1,7 +1,7 @@
 import {Actions, Effect} from "@ngrx/effects";
 import {EMPTY, merge, of} from "rxjs";
 import {Injectable} from "@angular/core";
-import {Store} from "@ngrx/store";
+import {Store, select} from "@ngrx/store";
 import {catchError, concatMap, finalize, map, mergeMap, startWith, withLatestFrom} from "rxjs/operators";
 
 import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
@@ -81,17 +81,28 @@ export class OptionsEffects {
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({signingIn: true})),
             this.ipcMainClient("readSettings")(payload).pipe(
-                concatMap((settings) => [
-                    OPTIONS_ACTIONS.GetSettingsResponse(settings),
-                    NAVIGATION_ACTIONS.Go({
-                        path: [{
-                            outlets: {
-                                [SETTINGS_OUTLET]: settings.accounts.length ? null : `${SETTINGS_PATH}/account-edit`,
-                                [ACCOUNTS_OUTLET]: ACCOUNTS_PATH,
-                            },
-                        }],
-                    }),
-                ]),
+                withLatestFrom(this.store.pipe(
+                    select(OptionsSelectors.FEATURED.config),
+                    map((config) => config.timeouts),
+                )),
+                concatMap(([settings, timeouts]) => merge(
+                    of(this.buildPatchProgress({loadingDatabase: true})),
+                    this.ipcMainClient("loadDatabase", {timeoutMs: timeouts.databaseLoading})({accounts: settings.accounts}).pipe(
+                        concatMap(() => [
+                            OPTIONS_ACTIONS.GetSettingsResponse(settings),
+                            NAVIGATION_ACTIONS.Go({
+                                path: [{
+                                    outlets: {
+                                        [SETTINGS_OUTLET]: settings.accounts.length ? null : `${SETTINGS_PATH}/account-edit`,
+                                        [ACCOUNTS_OUTLET]: ACCOUNTS_PATH,
+                                    },
+                                }],
+                            }),
+                        ]),
+                        catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                        finalize(() => this.dispatchProgress({loadingDatabase: false})),
+                    ),
+                )),
                 catchError((error) => {
                     if (
                         String(error.message)

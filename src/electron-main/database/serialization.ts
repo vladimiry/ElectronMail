@@ -1,9 +1,11 @@
 import * as EncryptionAdapterBundle from "fs-json-store-encryption-adapter";
 import * as msgpack from "msgpack-lite";
+import _logger from "electron-log";
 import oboe from "oboe";
 import {Readable} from "stream";
 
 import {FsDb} from "src/shared/model/database";
+import {curryFunctionMembers} from "src/shared/util";
 
 interface Header extends EncryptionAdapterBundle.KeyBasedFileHeader {
     serialization?: {
@@ -11,12 +13,12 @@ interface Header extends EncryptionAdapterBundle.KeyBasedFileHeader {
     };
 }
 
-const util: {
+const persistencePartsUtil: {
     split: (data: Buffer) => { header: Header; cipher: Buffer; };
-    merge: (header: Header, cipher: Buffer) => Buffer;
+    concat: (header: Header, cipher: Buffer) => Buffer;
 } = (() => {
     const separator = Buffer.from([0o0]);
-    const result: typeof util = {
+    const result: typeof persistencePartsUtil = {
         split(data) {
             const headerBytesSize = data.indexOf(separator);
             const headerBuffer = data.slice(0, headerBytesSize);
@@ -26,7 +28,7 @@ const util: {
             return {header, cipher};
         },
 
-        merge(header, cipher) {
+        concat(header, cipher) {
             return Buffer.concat([
                 Buffer.from(JSON.stringify(header)),
                 separator,
@@ -52,34 +54,61 @@ export class SerializationAdapter {
 
     public readonly write: (data: FsDb) => Promise<Buffer>;
 
+    private logger = curryFunctionMembers(_logger, "[src/electron-main/database/serialization]", "[SerializationAdapter]");
+
     constructor(input: { key: Buffer, preset: EncryptionAdapterBundle.KeyBasedPreset }) {
+        this.logger.info("constructor()");
+
         const encryptionAdapter = new EncryptionAdapterBundle.EncryptionAdapter(input);
 
         this.read = async (data) => {
-            const {header: {serialization}} = util.split(data);
+            this.logger.info(`read() buffer.length: ${data.length}`);
+
+            const {header: {serialization}} = persistencePartsUtil.split(data);
             const decryptedData = await encryptionAdapter.read(data);
 
             if (serialization && serialization.type === "msgpack") {
-                return msgpack.decode(decryptedData);
+                this.logger.verbose(`"msgpack.decode" start`);
+                const decoded = msgpack.decode(decryptedData);
+                this.logger.verbose(`"msgpack.decode" end`);
+                return decoded;
             }
 
             const readableStream = bufferToStream(decryptedData);
 
             return new Promise((resolve, reject) => {
+                this.logger.verbose(`"oboe" start`);
+
+                // TODO replace "oboe" with alternative library that doesn't block the Event Loop so heavily
+                //      review the following libraries:
+                //      - https://gitlab.com/philbooth/bfj
+                //      - https://github.com/ibmruntimes/yieldable-json
+                //      or consider moving parsing to a separate Worker/Process
                 oboe(readableStream)
-                    .done(resolve)
-                    .fail(reject);
+                    .done((parsed) => {
+                        this.logger.verbose(`"oboe" end`);
+                        resolve(parsed);
+                    })
+                    .fail((error) => {
+                        this.logger.error(`"oboe" fail`, error);
+                        reject(error);
+                    });
             });
         };
 
         this.write = async (data) => {
+            this.logger.info("write()");
+
+            this.logger.verbose(`"msgpack.encode" start`);
             const serializedData = msgpack.encode(data);
+            this.logger.verbose(`"msgpack.encode" start`);
+
             const encryptedData = await encryptionAdapter.write(serializedData);
-            const {header, cipher} = util.split(encryptedData);
+            const {header, cipher} = persistencePartsUtil.split(encryptedData);
 
             header.serialization = {type: "msgpack"};
 
-            return util.merge(header, cipher);
+            return persistencePartsUtil.concat(header, cipher);
         };
     }
 }

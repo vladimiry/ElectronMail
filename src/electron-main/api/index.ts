@@ -119,7 +119,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
             return config;
         })()),
 
-        // TODO update "readSettings" api method test ("no password provided" case, database loading, "keytarSupport")
+        // TODO update "readSettings" api method test ("no password provided" case, keytar support)
         readSettings: ({password, savePassword}) => from((async () => {
             // trying to auto-login
             if (!password) {
@@ -151,18 +151,6 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
 
             ctx.settingsStore = store;
 
-            // TODO ensure by tests that database loaded occurs after the "ctx.settingsStore = store" assignment (see above)
-            if (await ctx.db.persisted()) {
-                await ctx.db.loadFromFile();
-                await upgradeDatabase(ctx.db, settings);
-            }
-
-            if ((await endpoints.readConfig().toPromise()).fullTextSearch) {
-                await attachFullTextIndexWindow(ctx);
-            } else {
-                await detachFullTextIndexWindow(ctx);
-            }
-
             return settings;
         })()),
 
@@ -172,6 +160,25 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
                 encryptionPreset,
             });
             return await endpoints.changeMasterPassword({password, newPassword: password}).toPromise();
+        })()),
+
+        loadDatabase: ({accounts}) => from((async () => {
+            logger.info("loadDatabase() start");
+
+            if (await ctx.db.persisted()) {
+                await ctx.db.loadFromFile();
+                await upgradeDatabase(ctx.db, accounts);
+            }
+
+            if ((await endpoints.readConfig().toPromise()).fullTextSearch) {
+                await attachFullTextIndexWindow(ctx);
+            } else {
+                await detachFullTextIndexWindow(ctx);
+            }
+
+            logger.info("loadDatabase() end");
+
+            return null;
         })()),
 
         settingsExists: () => from(ctx.settingsStore.readable()),

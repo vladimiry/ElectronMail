@@ -1,7 +1,7 @@
 <div class="d-flex justify-content-center">
-    <form (ngSubmit)="submit()" [formGroup]="form" novalidate>
+    <form (ngSubmit)="submit()" *ngIf="!(loadingDatabase$ | async); else loadingDatabaseTemplate" [formGroup]="form" novalidate>
         <h2>Log in</h2>
-        <fieldset [disabled]="processing$ | async" class="form-group">
+        <fieldset [disabled]="signingIn$ | async" class="form-group">
             <div class="form-group">
                 <input
                     #passwordRef
@@ -17,7 +17,7 @@
                 >
             </div>
             <button [disabled]="form.invalid" class="btn btn-primary btn-lg btn-block" type="submit">
-                <i *ngIf="processing$ | async" class="fa fa-spinner fa-pulse fa-fw"></i>
+                <i *ngIf="signingIn$ | async" class="fa fa-spinner fa-pulse fa-fw"></i>
                 Submit
             </button>
             <div class="form-check text-right">
@@ -56,4 +56,7 @@
             </div>
         </fieldset>
     </form>
+    <ng-template #loadingDatabaseTemplate>
+        Local database is being loaded... Please wait up to {{ databaseLoadingTimeoutSeconds$ | async }} seconds.
+    </ng-template>
 </div>

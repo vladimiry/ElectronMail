@@ -20,6 +20,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
         messagesStorePortionSize: number;
     };
     timeouts: {
+        databaseLoading: number;
         fetching: number;
         syncing: number;
         webViewApiPing: number;

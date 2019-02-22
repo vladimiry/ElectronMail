@@ -39,6 +39,7 @@ export const INITIAL_STORES: Readonly<{
                 webViewApiPing: ONE_SECOND_MS * 15,
                 domElementsResolving: ONE_SECOND_MS * 20,
                 defaultApiCall: DEFAULT_API_CALL_TIMEOUT,
+                databaseLoading: ONE_SECOND_MS * 60 * 5, // 5 minutes
             },
             jsFlags: [
                 "--max-old-space-size=2048",

@@ -10,6 +10,12 @@ is built with Electron unofficial desktop app for [ProtonMail](https://protonmai
 
 Linux/OSX/Windows installation packages download page is [here](https://github.com/vladimiry/email-securely-app/releases).
 
+`Snap` and `Pacman` packages are also available for installing from the following repositories (both installation packages are being maintained by [@joshirio](https://github.com/joshirio)):
+
+[![Get it from the AUR](images/aurlogo.png)](https://aur.archlinux.org/packages/email-securely-app-bin)
+
+[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-white.svg)](https://snapcraft.io/email-securely-app)
+
 ## Features
 - **Cross platform**, Linux/OSX/Windows.
 - **Multi email providers** support.

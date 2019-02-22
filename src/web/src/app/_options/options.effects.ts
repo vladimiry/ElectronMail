@@ -93,7 +93,13 @@ export class OptionsEffects {
                     }),
                 ]),
                 catchError((error) => {
-                    error.message = "Failed to log in";
+                    if (
+                        String(error.message)
+                            .toLowerCase()
+                            .includes("decryption failed")
+                    ) {
+                        error.message = "Failed to decrypt the settings storage";
+                    }
                     return of(CORE_ACTIONS.Fail(error));
                 }),
                 finalize(() => this.dispatchProgress({signingIn: false})),

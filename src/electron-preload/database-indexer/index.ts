@@ -44,7 +44,7 @@ function dbIndexerNotificationHandler(action: Unpacked<ReturnType<typeof api.dbI
             await api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.Bootstrapped()).toPromise();
             return emptyObject;
         },
-        Index: async ({key, remove, add}) => {
+        Index: async ({uid, key, remove, add}) => {
             logger.info(`action.Index()`, `Received mails to remove/add: ${remove.length}/${add.length}`);
 
             await api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.ProgressState({key, status: {indexing: true}})).toPromise();
@@ -54,7 +54,10 @@ function dbIndexerNotificationHandler(action: Unpacked<ReturnType<typeof api.dbI
                 addToMailsIndex(index, add);
             });
 
-            await api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.ProgressState({key, status: {indexing: false}})).toPromise();
+            await Promise.all([
+                api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.ProgressState({key, status: {indexing: false}})).toPromise(),
+                api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.IndexingResult({uid})).toPromise(),
+            ]);
 
             return emptyObject;
         },

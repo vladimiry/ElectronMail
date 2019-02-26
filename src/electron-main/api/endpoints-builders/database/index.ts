@@ -1,10 +1,9 @@
 import electronLog from "electron-log";
 import sanitizeHtml from "sanitize-html";
 import {Observable, from, of, race, throwError, timer} from "rxjs";
-import {UnionOf} from "@vladimiry/unionize";
 import {app, dialog} from "electron";
-import {concatMap, filter, mergeMap, startWith} from "rxjs/operators";
-import {equals, mergeDeepRight, omit, pick} from "ramda";
+import {concatMap, filter, mergeMap, startWith, take} from "rxjs/operators";
+import {equals, mergeDeepRight, omit} from "ramda";
 import {v4 as uuid} from "uuid";
 
 import {Arguments, Unpacked} from "src/shared/types";
@@ -16,20 +15,14 @@ import {
     IPC_MAIN_API_DB_INDEXER_ON_ACTIONS,
     IPC_MAIN_API_NOTIFICATION_ACTIONS,
 } from "src/shared/api/main";
-import {
-    EntityMap,
-    INDEXABLE_MAIL_FIELDS_STUB_CONTAINER,
-    IndexableMail,
-    IndexableMailId,
-    MemoryDbAccount,
-    View,
-} from "src/shared/model/database";
+import {EntityMap, IndexableMail, IndexableMailId, MemoryDbAccount, View} from "src/shared/model/database";
 import {
     IPC_MAIN_API_DB_INDEXER_NOTIFICATION$,
     IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$,
     IPC_MAIN_API_NOTIFICATION$,
 } from "src/electron-main/api/constants";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty, walkConversationNodesTree} from "src/shared/util";
+import {indexAccount, narrowIndexActionPayload} from "./indexing";
 import {prepareFoldersView} from "./folders-view";
 import {searchRootConversationNodes} from "./search";
 import {writeEmlFile} from "./export";
@@ -83,11 +76,14 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
 
                 IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.next(
                     IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Index(
-                        narrowIndexActionPayload({
-                            key,
-                            add: source.upsert as IndexableMail[],
-                            remove: source.remove,
-                        }),
+                        {
+                            uid: uuid(),
+                            ...narrowIndexActionPayload({
+                                key,
+                                add: source.upsert as IndexableMail[], // TODO send data as chunks
+                                remove: source.remove,
+                            }),
+                        },
                     ),
                 );
             }
@@ -249,6 +245,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
                     IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$.pipe(
                         filter(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.is.SearchResult),
                         filter(({payload}) => payload.uid === uid),
+                        take(1),
                         mergeMap(({payload: {data: {items, expandedTerms}}}) => {
                             const mailScoresByPk = new Map<IndexableMailId, number>(
                                 items.map(({key, score}) => [key, score] as [IndexableMailId, number]),
@@ -332,16 +329,12 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
 
                 IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.match(action, {
                     Bootstrapped: () => {
-                        ctx.db.iterateAccounts(({pk: key, account}) => {
-                            IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.next(
-                                IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Index(
-                                    narrowIndexActionPayload({
-                                        key,
-                                        remove: [],
-                                        add: [...account.mails.values()],
-                                    }),
-                                ),
-                            );
+                        setTimeout(async () => {
+                            const config = await (await ctx.deferredEndpoints.promise).readConfig().toPromise();
+
+                            for (const {account, pk} of ctx.db.accountsIterator()) {
+                                await indexAccount(account, pk, config);
+                            }
                         });
                     },
                     ProgressState: (payload) => {
@@ -389,19 +382,4 @@ function patchMetadata(
     logger.verbose(`metadata patched with ${JSON.stringify(Object.keys(patch))} properties`);
 
     return true;
-}
-
-type IndexActionPayload = Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>, { type: "Index" }>["payload"];
-
-function narrowIndexActionPayload({key, add, remove}: IndexActionPayload): IndexActionPayload {
-    const mailFieldsToSelect = [
-        ((name: keyof Pick<Unpacked<typeof add>, "pk">) => name)("pk"),
-        ...Object.keys(INDEXABLE_MAIL_FIELDS_STUB_CONTAINER),
-    ] as Array<keyof Unpacked<typeof add>>;
-
-    return {
-        key,
-        remove,
-        add: add.map((mail) => pick(mailFieldsToSelect, mail)),
-    };
 }

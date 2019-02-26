@@ -82,6 +82,14 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         if (typeof config.timeouts.databaseLoading !== "number") {
             config.timeouts.databaseLoading = INITIAL_STORES.config().timeouts.databaseLoading;
         }
+
+        if (typeof config.timeouts.indexingBootstrap !== "number") {
+            config.timeouts.indexingBootstrap = INITIAL_STORES.config().timeouts.indexingBootstrap;
+        }
+
+        if (typeof config.indexingBootstrapBufferSize !== "number") {
+            config.indexingBootstrapBufferSize = INITIAL_STORES.config().indexingBootstrapBufferSize;
+        }
     },
 };
 
@@ -179,12 +187,12 @@ export async function upgradeDatabase(db: Database, accounts: Settings["accounts
     await (async () => {
         const removePks: DbAccountPk[] = [];
 
-        db.iterateAccounts(({pk}) => {
+        for (const {pk} of db.accountsIterator()) {
             if (accounts.some((a) => Boolean(a.database) && a.type === pk.type && a.login === pk.login)) {
                 return;
             }
             removePks.push(pk);
-        });
+        }
 
         for (const pk of removePks) {
             db.deleteAccount(pk);

@@ -40,9 +40,11 @@ export const INITIAL_STORES: Readonly<{
                 domElementsResolving: ONE_SECOND_MS * 20,
                 defaultApiCall: DEFAULT_API_CALL_TIMEOUT,
                 databaseLoading: ONE_SECOND_MS * 60 * 5, // 5 minutes
+                indexingBootstrap: ONE_SECOND_MS * 15, // 15 seconds
             },
+            indexingBootstrapBufferSize: 1000,
             jsFlags: [
-                "--max-old-space-size=2048",
+                "--max-old-space-size=3072",
             ],
             // base
             checkForUpdatesAndNotify: true,

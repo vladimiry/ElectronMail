@@ -135,6 +135,9 @@ export const IPC_MAIN_API_DB_INDEXER_ON_ACTIONS = unionize({
                 indexing?: boolean;
             };
         }>(),
+        IndexingResult: ofType<{
+            uid: string;
+        }>(),
         SearchResult: ofType<{
             data: ReturnType<DbModel.MailsIndex["search"]>;
             uid: string;
@@ -153,7 +156,8 @@ export const IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS = unionize({
         Index: ofType<{
             key: DbModel.DbAccountPk;
             remove: Array<Pick<DbModel.IndexableMail, "pk">>;
-            add: DbModel.IndexableMail[]
+            add: DbModel.IndexableMail[];
+            uid: string;
         }>(),
         Search: ofType<{
             key: DbModel.DbAccountPk;

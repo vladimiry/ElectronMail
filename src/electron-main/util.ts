@@ -186,6 +186,18 @@ export async function buildSettingsAdapter({configStore}: Context, password: str
     );
 }
 
+export function hrtimeDuration(): { end: () => number } {
+    const start = process.hrtime();
+
+    return {
+        end() {
+            const time = process.hrtime(start);
+
+            return Math.round((time[0] * 1000) + (time[1] / 1000000));
+        },
+    };
+}
+
 function exists(file: string, storeFs: StoreModel.StoreFs): boolean {
     try {
         storeFs._impl.statSync(file);

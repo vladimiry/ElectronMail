@@ -10,6 +10,7 @@ import {DbAccountPk, FsDb, FsDbAccount, MAIL_FOLDER_TYPE, Mail, MemoryDb, Memory
 import {EntityMap} from "./entity-map";
 import {SerializationAdapter} from "./serialization";
 import {curryFunctionMembers} from "src/shared/util";
+import {hrtimeDuration} from "src/electron-main/util";
 import {resolveMemoryAccountFolders} from "./util";
 
 const logger = curryFunctionMembers(_logger, "[electron-main/database]");
@@ -104,15 +105,36 @@ export class Database {
         return account;
     }
 
-    iterateAccounts(cb: (data: { account: MemoryDbAccount; pk: DbAccountPk }) => void): void {
-        logger.info("iterateAccounts()");
+    accountsIterator(): {
+        [Symbol.iterator]: () => Iterator<{ account: MemoryDbAccount; pk: DbAccountPk }>;
+    } {
+        logger.info("accountsIterator()");
 
         const accounts = this.memoryDb.accounts;
+        const pks = this.getPks();
 
-        for (const type of Object.keys(accounts) as Array<keyof typeof accounts>) {
-            const loginBundle = accounts[type];
-            Object.keys(loginBundle).forEach((login) => cb({account: loginBundle[login], pk: {type, login}}));
-        }
+        let pkPointer = 0;
+
+        return {
+            [Symbol.iterator]: () => ({
+                next(): IteratorResult<{ account: MemoryDbAccount; pk: DbAccountPk }> {
+                    if (pkPointer >= pks.length) {
+                        return {
+                            done: true,
+                            value: null as any,
+                        };
+                    }
+
+                    const pk = pks[pkPointer++];
+                    const account = accounts[pk.type][pk.login];
+
+                    return {
+                        done: false,
+                        value: {pk, account},
+                    };
+                },
+            }),
+        };
     }
 
     deleteAccount<TL extends DbAccountPk>({type, login}: TL): void {
@@ -134,7 +156,7 @@ export class Database {
             throw new Error(`${this.options.file} does not exist`);
         }
 
-        const start = process.hrtime();
+        const duration = hrtimeDuration();
         const serializationAdapter = await this.buildSerializationAdapter();
         const data = await this.fileFs.readFile(this.options.file);
         const source = await serializationAdapter.read(data);
@@ -152,11 +174,9 @@ export class Database {
 
         this.memoryDb = target;
 
-        const time = process.hrtime(start);
-
         logger.verbose(`loadFromFile().stat: ${JSON.stringify({
             ...this.stat(),
-            time: Math.round((time[0] * 1000) + (time[1] / 1000000)),
+            time: duration.end(),
         })}`);
     }
 
@@ -189,9 +209,9 @@ export class Database {
         target.version = source.version;
 
         // memory => fs
-        this.iterateAccounts(({account, pk}) => {
+        for (const {account, pk} of this.accountsIterator()) {
             target.accounts[pk.type][pk.login] = Database.memoryAccountToFsAccount(account);
-        });
+        }
 
         return target;
     }
@@ -205,14 +225,14 @@ export class Database {
 
         const stat = {records: 0, conversationEntries: 0, mails: 0, folders: 0, contacts: 0};
 
-        this.iterateAccounts(({account}) => {
+        for (const {account} of this.accountsIterator()) {
             const {conversationEntries, mails, folders, contacts} = this.accountStat(account, true);
             stat.records++;
             stat.conversationEntries += conversationEntries;
             stat.mails += mails;
             stat.folders += folders;
             stat.contacts += contacts;
-        });
+        }
 
         return stat;
     }
@@ -237,6 +257,20 @@ export class Database {
                 0,
             ),
         };
+    }
+
+    private getPks(): DbAccountPk[] {
+        const accounts = this.memoryDb.accounts;
+
+        return (Object.keys(accounts) as Array<keyof typeof accounts>).reduce(
+            (keys: DbAccountPk[], type) => {
+                Object
+                    .keys(accounts[type])
+                    .forEach((login) => keys.push({type, login}));
+                return keys;
+            },
+            [],
+        );
     }
 
     private spamFolderTester(account: MemoryDbAccount): (mail: Mail) => boolean {

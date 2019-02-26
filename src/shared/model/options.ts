@@ -26,7 +26,9 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
         webViewApiPing: number;
         domElementsResolving: number;
         defaultApiCall: number;
+        indexingBootstrap: number;
     };
+    indexingBootstrapBufferSize: number;
     jsFlags?: string[];
     // base
     checkForUpdatesAndNotify?: boolean;

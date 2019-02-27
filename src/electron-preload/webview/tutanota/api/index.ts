@@ -31,7 +31,7 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
     const {GENERATED_MAX_ID} = api["src/api/common/EntityFunctions"];
     const login2FaWaitElementsConfig = {
         input: () => document.querySelector("#modal input.input") as HTMLInputElement,
-        button: () => document.querySelector("#modal .flex-half.justify-end > button") as HTMLElement,
+        button: () => document.querySelector("#modal .dialog-header .justify-end button") as HTMLElement,
     };
     const endpoints: TutanotaApi = {
         ...buildDbPatchEndpoint,

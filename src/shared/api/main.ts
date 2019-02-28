@@ -43,7 +43,6 @@ export interface Endpoints {
                 system: DbModel.View.Folder[];
                 custom: DbModel.View.Folder[];
             };
-            contacts: DbModel.DbFsDataContainer["contacts"];
         } | undefined>;
 
     dbGetAccountMail: ApiMethod<DbModel.DbAccountPk & { pk: DbModel.Mail["pk"] }, DbModel.Mail>;

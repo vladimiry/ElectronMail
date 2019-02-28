@@ -132,7 +132,6 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
 
             return {
                 folders: prepareFoldersView(account),
-                contacts: account.contacts,
             };
         })()),
 

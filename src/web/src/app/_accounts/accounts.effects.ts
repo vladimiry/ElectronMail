@@ -177,11 +177,10 @@ export class AccountsEffects {
                         concatMap(() => ipcMainClient("dbGetAccountMetadata")({type, login})),
                         withLatestFrom(this.store.pipe(select(OptionsSelectors.CONFIG.timeouts))),
                         concatMap(([metadata, timeouts]) => {
-                            return webViewClient("buildDbPatch", {timeoutMs: timeouts.fetching})({type, login, zoneName, metadata}).pipe(
-                                catchError((error) => of(CORE_ACTIONS.Fail(error))),
-                            );
+                            return webViewClient("buildDbPatch", {timeoutMs: timeouts.fetching})({type, login, zoneName, metadata});
                         }),
-                        mergeMap(() => of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: false}}))),
+                        catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                        finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: false}}))),
                     )),
                 ),
             ).pipe(

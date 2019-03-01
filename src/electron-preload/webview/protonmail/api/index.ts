@@ -333,7 +333,8 @@ export function registerApi() {
                         }),
                     );
                 },
-                info: () => {},
+                info: _logger.info,
+                verbose: _logger.verbose,
             },
         },
     );

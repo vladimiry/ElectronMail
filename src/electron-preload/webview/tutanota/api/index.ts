@@ -21,7 +21,7 @@ export async function registerApi(): Promise<void> {
     return resolveProviderApi()
         .then(bootstrapEndpoints)
         .then((endpoints) => {
-            TUTANOTA_IPC_WEBVIEW_API.registerApi(endpoints, {logger: {error: _logger.error, info: () => {}}});
+            TUTANOTA_IPC_WEBVIEW_API.registerApi(endpoints, {logger: _logger});
         });
 }
 

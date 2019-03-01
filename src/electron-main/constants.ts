@@ -43,7 +43,7 @@ export const INITIAL_STORES: Readonly<{
                 indexingBootstrap: ONE_SECOND_MS * 15, // 15 seconds
             },
             indexingBootstrapBufferSize: 1000,
-            disableHardwareAcceleration: false,
+            disableGpuProcess: false,
             jsFlags: [
                 "--max-old-space-size=3072",
             ],

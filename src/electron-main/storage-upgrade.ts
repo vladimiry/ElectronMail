@@ -93,8 +93,8 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.indexingBootstrapBufferSize = defaultConfig.indexingBootstrapBufferSize;
         }
 
-        if (typeof config.disableHardwareAcceleration !== "boolean") {
-            config.disableHardwareAcceleration = defaultConfig.disableHardwareAcceleration;
+        if (typeof config.disableGpuProcess !== "boolean") {
+            config.disableGpuProcess = defaultConfig.disableGpuProcess;
         }
 
         (() => {

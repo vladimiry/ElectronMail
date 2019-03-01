@@ -101,26 +101,26 @@ test.serial("electron.app.commandLine.appendSwitch: custom values", async (t) =>
     t.true(t.context.mocks["~index"].electron.app.commandLine.appendSwitch.calledWithExactly("js-flags", jsFlags.join(" ")));
 });
 
-test.serial("app.disableHardwareAcceleration (false)", async (t) => {
-    const {disableHardwareAcceleration}: Pick<Config, "disableHardwareAcceleration"> = {disableHardwareAcceleration: false};
+test.serial("app.disableGpuProcess (false)", async (t) => {
+    const {disableGpuProcess}: Pick<Config, "disableGpuProcess"> = {disableGpuProcess: false};
 
     await bootstrap(
         t.context,
         {
-            configStore: buildDefaultConfigStore({readFileSync: () => JSON.stringify({disableHardwareAcceleration})}),
+            configStore: buildDefaultConfigStore({readFileSync: () => JSON.stringify({disableGpuProcess})}),
         },
     );
 
     t.true(t.context.mocks["~index"].electron.app.disableHardwareAcceleration.notCalled);
 });
 
-test.serial("app.disableHardwareAcceleration (true)", async (t) => {
-    const {disableHardwareAcceleration}: Pick<Config, "disableHardwareAcceleration"> = {disableHardwareAcceleration: true};
+test.serial("app.disableGpuProcess (true)", async (t) => {
+    const {disableGpuProcess}: Pick<Config, "disableGpuProcess"> = {disableGpuProcess: true};
 
     await bootstrap(
         t.context,
         {
-            configStore: buildDefaultConfigStore({readFileSync: () => JSON.stringify({disableHardwareAcceleration})}),
+            configStore: buildDefaultConfigStore({readFileSync: () => JSON.stringify({disableGpuProcess})}),
         },
     );
 

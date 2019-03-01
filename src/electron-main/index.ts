@@ -46,7 +46,7 @@ const ctx = initContext();
     }
 
     const {
-        disableHardwareAcceleration,
+        disableGpuProcess,
         jsFlags = INITIAL_STORES.config().jsFlags,
     }: Config = configFile
         ? JSON.parse(configFile.toString())
@@ -54,9 +54,16 @@ const ctx = initContext();
 
     app.commandLine.appendSwitch("js-flags", jsFlags.join(" "));
 
-    if (disableHardwareAcceleration) {
+    (() => {
+        if (!disableGpuProcess) {
+            return;
+        }
+        // TODO just this call doesn't completely disable the gpu process, track https://github.com/electron/electron/issues/14273
         app.disableHardwareAcceleration();
-    }
+        // app.commandLine.appendSwitch("disable-gpu"); // doesn't take an affect
+        // app.commandLine.appendSwitch("in-process-gpu"); // app fails with this flag
+        app.commandLine.appendSwitch("disable-software-rasterizer"); // seems to be taking some effect
+    })();
 })();
 
 app.on("ready", async () => {

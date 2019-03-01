@@ -21,8 +21,8 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     };
     timeouts: {
         databaseLoading: number;
-        fetching: number;
-        syncing: number;
+        dbBootstrapping: number;
+        dbSyncing: number;
         webViewApiPing: number;
         domElementsResolving: number;
         defaultApiCall: number;

@@ -1,5 +1,5 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {EMPTY, Subject, concat, from, fromEvent, merge, of, timer} from "rxjs";
+import {EMPTY, Subject, concat, from, fromEvent, merge, of, throwError, timer} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {
@@ -27,6 +27,7 @@ import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {State} from "src/web/src/app/store/reducers/accounts";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/src/util";
+import {isDatabaseBootstrapped} from "src/shared/util";
 
 const rateLimiter = __ELECTRON_EXPOSURE__.require["rolling-rate-limiter"]();
 const _logger = getZoneNameBoundWebLogger("[accounts.effects]");
@@ -122,6 +123,7 @@ export class AccountsEffects {
             );
             const ipcMainClient = this.api.ipcMainClient();
             const zoneName = logger.zoneName();
+            let bootstrappedOnce = false;
 
             logger.info("setup");
 
@@ -171,16 +173,45 @@ export class AccountsEffects {
                         debounceTime(ONE_SECOND_MS),
                         debounce(() => onlinePing$),
                         debounce(() => notSyncingPing$),
-                        tap(() => {
-                            this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: true}}));
-                        }),
                         concatMap(() => ipcMainClient("dbGetAccountMetadata")({type, login})),
                         withLatestFrom(this.store.pipe(select(OptionsSelectors.CONFIG.timeouts))),
                         concatMap(([metadata, timeouts]) => {
-                            return webViewClient("buildDbPatch", {timeoutMs: timeouts.fetching})({type, login, zoneName, metadata});
+                            const bootstrapping = !isDatabaseBootstrapped(metadata);
+
+                            if (bootstrapping && bootstrappedOnce) {
+                                return throwError(
+                                    new Error(`Database bootstrap fetch has already been called once for the account, ${zoneName}`),
+                                );
+                            }
+
+                            const timeoutMs = bootstrapping
+                                ? timeouts.dbBootstrapping
+                                : timeouts.dbSyncing;
+
+                            logger.verbose(
+                                `calling "buildDbPatch" api`,
+                                JSON.stringify({
+                                    timeoutMs,
+                                    bootstrapping,
+                                    bootstrappedOnce,
+                                }),
+                            );
+
+                            this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: true}}));
+
+                            const result$ = webViewClient("buildDbPatch", {timeoutMs})({type, login, zoneName, metadata}).pipe(
+                                // "buildDbPatch" returns null which won't be accept by @nrgx as valid action with "type" property
+                                concatMap(() => of(CORE_ACTIONS.Stub())),
+                                finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: false}}))),
+                            );
+
+                            if (bootstrapping) {
+                                bootstrappedOnce = true;
+                            }
+
+                            return result$;
                         }),
                         catchError((error) => of(CORE_ACTIONS.Fail(error))),
-                        finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: false}}))),
                     )),
                 ),
             ).pipe(

@@ -19,6 +19,8 @@ export const RUNTIME_ENV_E2E = `EMAIL_SECURELY_APP_E2E`;
 
 export const ONE_SECOND_MS = 1000;
 
+export const ONE_MINUTE_MS = ONE_SECOND_MS * 60;
+
 export const DEFAULT_API_CALL_TIMEOUT = ONE_SECOND_MS * 25;
 
 export const DEFAULT_UNREAD_BADGE_BG_COLOR = "#de4251";

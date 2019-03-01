@@ -64,9 +64,9 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.disableSpamNotifications = INITIAL_STORES.config().disableSpamNotifications;
         }
     },
-    "2.2.1": (config) => {
+    "2.2.1": (_, config = _ as Config & { timeouts: { syncing?: number } }) => {
         if (typeof config.timeouts.syncing !== "number") {
-            config.timeouts.syncing = INITIAL_STORES.config().timeouts.syncing;
+            config.timeouts.syncing = INITIAL_STORES.config().timeouts.dbSyncing;
         }
     },
     "2.3.1": (config) => {
@@ -74,26 +74,41 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.clearSession = INITIAL_STORES.config().clearSession;
         }
     },
-    "2.3.3": (config) => {
+    "2.3.3": (_, config = _ as Config & { timeouts: { fetching?: number; syncing?: number; } }) => {
+        const defaultConfig = INITIAL_STORES.config();
+
         if (!Array.isArray(config.jsFlags)) {
-            config.jsFlags = INITIAL_STORES.config().jsFlags;
+            config.jsFlags = defaultConfig.jsFlags;
         }
 
         if (typeof config.timeouts.databaseLoading !== "number") {
-            config.timeouts.databaseLoading = INITIAL_STORES.config().timeouts.databaseLoading;
+            config.timeouts.databaseLoading = defaultConfig.timeouts.databaseLoading;
         }
 
         if (typeof config.timeouts.indexingBootstrap !== "number") {
-            config.timeouts.indexingBootstrap = INITIAL_STORES.config().timeouts.indexingBootstrap;
+            config.timeouts.indexingBootstrap = defaultConfig.timeouts.indexingBootstrap;
         }
 
         if (typeof config.indexingBootstrapBufferSize !== "number") {
-            config.indexingBootstrapBufferSize = INITIAL_STORES.config().indexingBootstrapBufferSize;
+            config.indexingBootstrapBufferSize = defaultConfig.indexingBootstrapBufferSize;
         }
 
         if (typeof config.disableHardwareAcceleration !== "boolean") {
-            config.disableHardwareAcceleration = INITIAL_STORES.config().disableHardwareAcceleration;
+            config.disableHardwareAcceleration = defaultConfig.disableHardwareAcceleration;
         }
+
+        (() => {
+            if (typeof config.timeouts.dbBootstrapping !== "number") {
+                config.timeouts.dbBootstrapping = defaultConfig.timeouts.dbBootstrapping;
+            }
+
+            if (typeof config.timeouts.dbSyncing !== "number") {
+                config.timeouts.dbSyncing = defaultConfig.timeouts.dbSyncing;
+            }
+
+            delete config.timeouts.fetching;
+            delete config.timeouts.syncing;
+        })();
     },
 };
 

@@ -5,7 +5,7 @@ import {Model as StoreModel} from "fs-json-store";
 import {randomBytes} from "crypto";
 
 import {Config, ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS, Settings} from "src/shared/model/options";
-import {DEFAULT_API_CALL_TIMEOUT, DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_SECOND_MS} from "src/shared/constants";
+import {DEFAULT_API_CALL_TIMEOUT, DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_MINUTE_MS, ONE_SECOND_MS} from "src/shared/constants";
 import {Omit} from "src/shared/types";
 
 export const INITIAL_STORES: Readonly<{
@@ -27,19 +27,19 @@ export const INITIAL_STORES: Readonly<{
             fetching: {
                 rateLimit: {
                     // 275 requests in 60 seconds
-                    intervalMs: ONE_SECOND_MS * 60,
+                    intervalMs: ONE_MINUTE_MS,
                     maxInInterval: 275,
                 },
                 messagesStorePortionSize: DEFAULT_MESSAGES_STORE_PORTION_SIZE,
             },
             timeouts: {
                 // "fetchingRateLimiting" values need to be taking into the account defining the "fetching" timeout
-                fetching: ONE_SECOND_MS * 60 * 60, // 60 minutes
-                syncing: ONE_SECOND_MS * 60 * 3, // 3 minutes
+                dbBootstrapping: ONE_MINUTE_MS * 60 * 12, // 12 hours
+                dbSyncing: ONE_MINUTE_MS * 30, // 30 minutes
                 webViewApiPing: ONE_SECOND_MS * 15,
                 domElementsResolving: ONE_SECOND_MS * 20,
                 defaultApiCall: DEFAULT_API_CALL_TIMEOUT,
-                databaseLoading: ONE_SECOND_MS * 60 * 5, // 5 minutes
+                databaseLoading: ONE_MINUTE_MS * 5, // 5 minutes
                 indexingBootstrap: ONE_SECOND_MS * 15, // 15 seconds
             },
             indexingBootstrapBufferSize: 1000,

@@ -94,9 +94,10 @@ export class ElectronService implements OnDestroy {
     }
 
     private buildApiCallOptions(options: CallOptions = {}): Model.CallOptions {
-        return Object.assign(
-            {timeoutMs: this.defaultApiCallTimeoutMs, notificationWrapper: Zone.current.run.bind(Zone.current)},
-            options,
-        );
+        return {
+            timeoutMs: this.defaultApiCallTimeoutMs,
+            notificationWrapper: Zone.current.run.bind(Zone.current),
+            ...options,
+        };
     }
 }

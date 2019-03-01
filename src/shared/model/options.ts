@@ -29,6 +29,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
         indexingBootstrap: number;
     };
     indexingBootstrapBufferSize: number;
+    disableHardwareAcceleration: boolean;
     jsFlags?: string[];
     // base
     checkForUpdatesAndNotify?: boolean;

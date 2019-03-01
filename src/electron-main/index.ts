@@ -15,8 +15,6 @@ import {initTray} from "./tray";
 import {initWebContentsCreatingHandlers} from "./web-contents";
 import {initWebRequestListeners} from "./web-request";
 
-// WARN calling asynchronous functions is only allowed after the "app.ready" handler got triggered
-
 electronUnhandled({
     logger: logger.error,
     showDialog: true,
@@ -34,6 +32,7 @@ app.setAppUserModelId(`com.github.vladimiry.${APP_NAME}`);
 // TODO consider sharing "Context" using dependency injection approach
 const ctx = initContext();
 
+// WARN needs to be called before app is ready, so synchronous mode
 // TODO add synchronous "read" method to "fs-json-store"
 (() => {
     let configFile: Buffer | string | undefined;
@@ -46,11 +45,18 @@ const ctx = initContext();
         }
     }
 
-    const {jsFlags = INITIAL_STORES.config().jsFlags}: Pick<Config, "jsFlags"> = configFile
+    const {
+        disableHardwareAcceleration,
+        jsFlags = INITIAL_STORES.config().jsFlags,
+    }: Config = configFile
         ? JSON.parse(configFile.toString())
         : {};
 
     app.commandLine.appendSwitch("js-flags", jsFlags.join(" "));
+
+    if (disableHardwareAcceleration) {
+        app.disableHardwareAcceleration();
+    }
 })();
 
 app.on("ready", async () => {

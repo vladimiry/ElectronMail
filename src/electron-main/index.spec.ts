@@ -77,11 +77,7 @@ test.serial("electron.app.commandLine.appendSwitch: empty values", async (t) => 
     await bootstrap(
         t.context,
         {
-            configStore: (() => {
-                const configStore = buildDefaultConfigStore();
-                configStore.fs._impl.readFileSync = () => JSON.stringify({jsFlags});
-                return configStore;
-            })(),
+            configStore: buildDefaultConfigStore({readFileSync: () => JSON.stringify({jsFlags})}),
         },
     );
 
@@ -98,15 +94,37 @@ test.serial("electron.app.commandLine.appendSwitch: custom values", async (t) =>
     await bootstrap(
         t.context,
         {
-            configStore: (() => {
-                const configStore = buildDefaultConfigStore();
-                configStore.fs._impl.readFileSync = () => JSON.stringify({jsFlags});
-                return configStore;
-            })(),
+            configStore: buildDefaultConfigStore({readFileSync: () => JSON.stringify({jsFlags})}),
         },
     );
 
     t.true(t.context.mocks["~index"].electron.app.commandLine.appendSwitch.calledWithExactly("js-flags", jsFlags.join(" ")));
+});
+
+test.serial("app.disableHardwareAcceleration (false)", async (t) => {
+    const {disableHardwareAcceleration}: Pick<Config, "disableHardwareAcceleration"> = {disableHardwareAcceleration: false};
+
+    await bootstrap(
+        t.context,
+        {
+            configStore: buildDefaultConfigStore({readFileSync: () => JSON.stringify({disableHardwareAcceleration})}),
+        },
+    );
+
+    t.true(t.context.mocks["~index"].electron.app.disableHardwareAcceleration.notCalled);
+});
+
+test.serial("app.disableHardwareAcceleration (true)", async (t) => {
+    const {disableHardwareAcceleration}: Pick<Config, "disableHardwareAcceleration"> = {disableHardwareAcceleration: true};
+
+    await bootstrap(
+        t.context,
+        {
+            configStore: buildDefaultConfigStore({readFileSync: () => JSON.stringify({disableHardwareAcceleration})}),
+        },
+    );
+
+    t.true(t.context.mocks["~index"].electron.app.disableHardwareAcceleration.calledWithExactly());
 });
 
 async function bootstrap(
@@ -160,15 +178,21 @@ async function bootstrap(
     );
 }
 
-function buildDefaultConfigStore(): Store<Config> {
+function buildDefaultConfigStore(fsImplPatch?: Partial<Store<Config>["fs"]["_impl"]>): Store<Config> {
     const memFsVolume = Fs.MemFs.volume();
 
     memFsVolume._impl.mkdirpSync(process.cwd());
 
-    return new Store<Config>({
+    const store = new Store<Config>({
         fs: memFsVolume,
         file: "./config.json",
     });
+
+    if (fsImplPatch) {
+        Object.assign(store.fs._impl, fsImplPatch);
+    }
+
+    return store;
 }
 
 function buildMocks(testContext: TestContext) {
@@ -215,6 +239,7 @@ function buildMocks(testContext: TestContext) {
                     commandLine: {
                         appendSwitch: sinon.spy(),
                     },
+                    disableHardwareAcceleration: sinon.spy(),
                 },
             },
         },

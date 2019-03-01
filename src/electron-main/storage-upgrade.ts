@@ -90,6 +90,10 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         if (typeof config.indexingBootstrapBufferSize !== "number") {
             config.indexingBootstrapBufferSize = INITIAL_STORES.config().indexingBootstrapBufferSize;
         }
+
+        if (typeof config.disableHardwareAcceleration !== "boolean") {
+            config.disableHardwareAcceleration = INITIAL_STORES.config().disableHardwareAcceleration;
+        }
     },
 };
 

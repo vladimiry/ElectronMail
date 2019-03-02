@@ -127,6 +127,17 @@ const baseConfig = buildBaseConfig(
                         },
                     },
                 },
+                {
+                    // TODO explore runtime dependency-less "p-queue" alternatives:
+                    //      promise-work-queue (TS), queue-ts (TS), queueable (TS), task-queue (TS), run-queue, async-limiter, etc
+                    test: /node_modules\/p-queue\/index\.js/,
+                    loader: "string-replace-loader",
+                    options: {
+                        search: "require('events')",
+                        replace: "require('eventemitter3')",
+                        strict: true,
+                    },
+                },
             ],
         },
         plugins: [

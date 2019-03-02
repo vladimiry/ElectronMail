@@ -120,8 +120,8 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
                 );
 
                 if (needToCloseFindInPageWindow) {
-                    (await ctx.deferredEndpoints.promise).findInPageStop().toPromise();
-                    (await ctx.deferredEndpoints.promise).findInPageDisplay({visible: false}).toPromise();
+                    await (await ctx.deferredEndpoints.promise).findInPageStop().toPromise();
+                    await (await ctx.deferredEndpoints.promise).findInPageDisplay({visible: false}).toPromise();
                 }
 
                 ctx.selectedAccount = newSelectedAccount;

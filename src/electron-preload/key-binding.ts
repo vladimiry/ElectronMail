@@ -30,7 +30,7 @@ export function registerDocumentKeyDownEventListener<E extends ObservableElement
             const cmdOrCtrlPlusF = cmdOrCtrl && event.keyCode === 70;
 
             if (cmdOrCtrlPlusF) {
-                apiMethods.findInPageDisplay({visible: true}).toPromise().catch(logger.error);
+                await apiMethods.findInPageDisplay({visible: true}).toPromise();
                 return;
             }
 
@@ -52,7 +52,7 @@ export function registerDocumentKeyDownEventListener<E extends ObservableElement
                 return;
             }
 
-            apiMethods.hotkey({type}).toPromise().catch(logger.error);
+            await apiMethods.hotkey({type}).toPromise();
         });
 
         processedElements.add(element);

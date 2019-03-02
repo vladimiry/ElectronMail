@@ -16,7 +16,7 @@ import {
 } from "@angular/core";
 import {Deferred} from "ts-deferred";
 import {Subject, Subscription, combineLatest} from "rxjs";
-import {debounceTime, distinctUntilChanged, filter, map, mergeMap, pairwise, withLatestFrom} from "rxjs/operators";
+import {debounceTime, distinctUntilChanged, filter, map, mergeMap, pairwise, startWith, withLatestFrom} from "rxjs/operators";
 import {equals, pick} from "ramda";
 
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
@@ -245,6 +245,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                 ),
                 this.store.pipe(
                     select(OptionsSelectors.FEATURED.mainProcessNotification),
+                    startWith(IPC_MAIN_API_NOTIFICATION_ACTIONS.ActivateBrowserWindow()),
                     filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.ActivateBrowserWindow),
                 ),
             ).pipe(

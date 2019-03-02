@@ -319,6 +319,7 @@ export function registerApi() {
         endpoints,
         {
             logger: {
+                ..._logger,
                 error: (...args: any[]) => {
                     _logger.error(
                         ...args.map((arg) => {
@@ -333,8 +334,6 @@ export function registerApi() {
                         }),
                     );
                 },
-                info: _logger.info,
-                verbose: _logger.verbose,
             },
         },
     );

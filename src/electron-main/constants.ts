@@ -43,7 +43,6 @@ export const INITIAL_STORES: Readonly<{
                 indexingBootstrap: ONE_SECOND_MS * 15, // 15 seconds
             },
             indexingBootstrapBufferSize: 1000,
-            disableGpuProcess: false,
             jsFlags: [
                 "--max-old-space-size=3072",
             ],
@@ -52,6 +51,7 @@ export const INITIAL_STORES: Readonly<{
             clearSession: true,
             closeToTray: true,
             compactLayout: true,
+            disableGpuProcess: false,
             disableSpamNotifications: true,
             findInPage: true,
             fullTextSearch: true,

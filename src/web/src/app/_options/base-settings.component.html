@@ -65,7 +65,7 @@
                     triggers="mouseenter:mouseleave"
                 ></i>
                 <ng-template #checkForUpdatesAndNotifyPopoverTemplate>
-                    <code>.AppImage</code> and <code>.exe</code> are only supported installation package formats at this time.
+                    <code>Windows/.exe</code> is only supported installation package format at this time.
                 </ng-template>
             </label>
         </div>
@@ -147,17 +147,6 @@
                 Desktop notifications for unread messages
             </label>
         </div>
-        <div class="custom-control custom-switch">
-            <input
-                class="custom-control-input"
-                formControlName="clearSession"
-                id="clearSessionCheckbox"
-                type="checkbox"
-            >
-            <label class="custom-control-label" for="clearSessionCheckbox">
-                Clear Electron's cache storage on start and logout
-            </label>
-        </div>
         <hr>
         <label class="d-block mb-2">
             Notification badge appearance
@@ -165,7 +154,7 @@
                 [value]="$unreadSummary | async"
             ></email-securely-app-unread-badge>
         </label>
-        <div class="row">
+        <div class="row pb-1">
             <div class="col-sm-6">
                 <input
                     (colorPickerChange)="bgColorPickerChangeHandler($event)"
@@ -194,6 +183,49 @@
                     type="text"
                 />
             </div>
+        </div>
+        <hr>
+        <div class="custom-control custom-switch">
+            <input
+                class="custom-control-input"
+                formControlName="disableGpuProcess"
+                id="disableGpuProcessCheckbox"
+                type="checkbox"
+            >
+            <label class="custom-control-label" for="disableGpuProcessCheckbox">
+                Disable page rendering GPU acceleration
+            </label>
+            <i
+                [popover]="disableGpuProcessPopoverTemplate"
+                class="fa fa-info-circle text-primary align-self-center"
+                container="body"
+                placement="bottom"
+                triggers="mouseenter:mouseleave"
+            ></i>
+            <ng-template #disableGpuProcessPopoverTemplate>
+                Enabling this option will allow you to save some memory but will likely slow down the page rendering a little.
+            </ng-template>
+            <i
+                [popover]="disableGpuProcessRestartPopoverTemplate"
+                class="fa fa-info-circle text-warning align-self-center"
+                container="body"
+                placement="bottom"
+                triggers="mouseenter:mouseleave"
+            ></i>
+            <ng-template #disableGpuProcessRestartPopoverTemplate>
+                App restart needed for option to take effect.
+            </ng-template>
+        </div>
+        <div class="custom-control custom-switch">
+            <input
+                class="custom-control-input"
+                formControlName="clearSession"
+                id="clearSessionCheckbox"
+                type="checkbox"
+            >
+            <label class="custom-control-label" for="clearSessionCheckbox">
+                Clear Electron's cache storage on start and logout
+            </label>
         </div>
         <hr>
         <label class="d-block mb-2" for="logLevelSelect">

@@ -29,7 +29,6 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
         indexingBootstrap: number;
     };
     indexingBootstrapBufferSize: number;
-    disableGpuProcess: boolean;
     jsFlags?: string[];
     // base
     checkForUpdatesAndNotify?: boolean;
@@ -38,6 +37,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     compactLayout?: boolean;
     customUnreadBgColor?: string;
     customUnreadTextColor?: string;
+    disableGpuProcess?: boolean;
     disableSpamNotifications?: boolean;
     findInPage?: boolean;
     fullTextSearch?: boolean;
@@ -53,6 +53,7 @@ export type BaseConfig = Pick<Config,
     | "compactLayout"
     | "customUnreadBgColor"
     | "customUnreadTextColor"
+    | "disableGpuProcess"
     | "disableSpamNotifications"
     | "findInPage"
     | "fullTextSearch"

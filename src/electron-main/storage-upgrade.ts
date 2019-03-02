@@ -93,10 +93,6 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.indexingBootstrapBufferSize = defaultConfig.indexingBootstrapBufferSize;
         }
 
-        if (typeof config.disableGpuProcess !== "boolean") {
-            config.disableGpuProcess = defaultConfig.disableGpuProcess;
-        }
-
         (() => {
             if (typeof config.timeouts.dbBootstrapping !== "number") {
                 config.timeouts.dbBootstrapping = defaultConfig.timeouts.dbBootstrapping;

@@ -1,0 +1,8 @@
+@import "~src/web/src/variables";
+
+:host {
+    hr {
+        margin-top: $app-spacer-2;
+        margin-bottom: $app-spacer-2;
+    }
+}

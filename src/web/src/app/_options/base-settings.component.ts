@@ -12,6 +12,7 @@ import {State} from "src/web/src/app/store/reducers/options";
 @Component({
     selector: "email-securely-app-base-settings",
     templateUrl: "./base-settings.component.html",
+    styleUrls: ["./base-settings.component.scss"],
     preserveWhitespaces: true,
 })
 export class BaseSettingsComponent implements OnInit {
@@ -35,6 +36,7 @@ export class BaseSettingsComponent implements OnInit {
         compactLayout: new FormControl(),
         customUnreadBgColor: new FormControl(),
         customUnreadTextColor: new FormControl(),
+        disableGpuProcess: new FormControl(),
         disableSpamNotifications: new FormControl(),
         findInPage: new FormControl(),
         fullTextSearch: new FormControl(),

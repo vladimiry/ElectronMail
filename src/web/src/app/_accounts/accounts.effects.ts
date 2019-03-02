@@ -202,6 +202,7 @@ export class AccountsEffects {
                             const result$ = webViewClient("buildDbPatch", {timeoutMs})({type, login, zoneName, metadata}).pipe(
                                 // "buildDbPatch" returns null which won't be accept by @nrgx as valid action with "type" property
                                 concatMap(() => of(CORE_ACTIONS.Stub())),
+                                catchError((error) => of(CORE_ACTIONS.Fail(error))),
                                 finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: false}}))),
                             );
 
@@ -211,7 +212,6 @@ export class AccountsEffects {
 
                             return result$;
                         }),
-                        catchError((error) => of(CORE_ACTIONS.Fail(error))),
                     )),
                 ),
             ).pipe(

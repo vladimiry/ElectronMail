@@ -9,13 +9,13 @@ It is written in [TypeScript](http://www.typescriptlang.org) and uses [Angular](
 
 ## Download
 
-Linux/OSX/Windows installation packages download page is [here](https://github.com/vladimiry/email-securely-app/releases).
+The download page with Linux/OSX/Windows installation packages is [here](https://github.com/vladimiry/email-securely-app/releases).
 
-`Snap` and `Pacman` packages are also available for installing from the following repositories (both repositories are being maintained by [@joshirio](https://github.com/joshirio)):
+`Pacman` and `Snap` packages are also available for installing from the following repositories (both repositories are being maintained by [@joshirio](https://github.com/joshirio)):
 
 [![Get it from the AUR](images/aurlogo.png)](https://aur.archlinux.org/packages/email-securely-app-bin)
 
-[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-white.svg)](https://snapcraft.io/email-securely-app)
+[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/email-securely-app)
 
 ## Features
 - **Cross platform**, Linux/OSX/Windows.

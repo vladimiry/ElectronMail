@@ -1,6 +1,6 @@
 import * as FsJsonStore from "fs-json-store";
 import _logger from "electron-log";
-import PQueue from "p-queue";
+import asap from "asap-es";
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/private/constants";
 import {KeyBasedPreset} from "fs-json-store-encryption-adapter";
 
@@ -54,7 +54,7 @@ export class Database {
 
     private memoryDb: MemoryDb = Database.buildEmptyDatabase();
 
-    private saveToFileQueue: PQueue<PQueue.DefaultAddOptions> = new PQueue({concurrency: 1});
+    private saveToFileQueue = new asap();
 
     constructor(
         public readonly options: Readonly<{
@@ -183,7 +183,7 @@ export class Database {
     async saveToFile(): Promise<void> {
         logger.info("saveToFile()");
 
-        return this.saveToFileQueue.add(async () => {
+        return this.saveToFileQueue.q(async () => {
             const startTime = Number(new Date());
             const serializationAdapter = await this.buildSerializationAdapter();
             const dump = {

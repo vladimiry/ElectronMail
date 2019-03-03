@@ -1,4 +1,4 @@
-import PQueue from "p-queue";
+import asap from "asap-es";
 import {Subscription, from, fromEvent} from "rxjs";
 import {debounceTime, filter, switchMap} from "rxjs/operators";
 
@@ -22,7 +22,7 @@ export class SearchInPageWidget {
         readonly findNext: HTMLButtonElement;
         readonly close: HTMLButtonElement;
     };
-    private readonly queryQueue = new PQueue({concurrency: 1});
+    private readonly queryQueue = new asap();
     private readonly subscription = new Subscription();
 
     private requestId?: number;
@@ -53,7 +53,7 @@ export class SearchInPageWidget {
     }
 
     protected async find(forward: boolean, continueRequested: boolean = true) {
-        return await this.queryQueue.add(async () => {
+        return await this.queryQueue.q(async () => {
             const {value: query} = this.els.input;
             const isSearchingWithSameQuery = this.isSearching() && query === this.query;
 
@@ -183,13 +183,12 @@ export class SearchInPageWidget {
 
     protected syncElements() {
         const disabledButtons = typeof this.maxIdx !== "number" || this.maxIdx < 2;
+        const {els} = this;
 
-        this.els.findPrev.disabled = disabledButtons;
-        this.els.findNext.disabled = disabledButtons;
+        els.findPrev.disabled = disabledButtons;
+        els.findNext.disabled = disabledButtons;
 
-        this.els.status.innerText = this.query
-            ? `${this.activeIdx}/${this.maxIdx}`
-            : "";
-        this.els.status.classList[this.query ? "remove" : "add"]("d-none");
+        els.status.classList[this.query ? "remove" : "add"]("d-none");
+        els.status.innerText = this.query ? `${this.activeIdx}/${this.maxIdx}` : "";
     }
 }

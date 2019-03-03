@@ -1,4 +1,4 @@
-import PQueue from "p-queue";
+import asap from "asap-es";
 import rateLimiter from "rolling-rate-limiter";
 import {v4 as uuid} from "uuid";
 
@@ -63,7 +63,7 @@ export interface ProviderApi {
 
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[lib/api]");
 const resolveServiceLogger = curryFunctionMembers(logger, "resolveService()");
-const rateLimitedApiCallingQueue: PQueue<PQueue.DefaultAddOptions> = new PQueue({concurrency: 1});
+const rateLimitedApiCallingQueue = new asap();
 const state: { api?: Promise<ProviderApi> } = {};
 
 let rateLimitedMethodsCallCount = 0;
@@ -79,12 +79,14 @@ export async function resolveProviderApi(): Promise<ProviderApi> {
     const rateLimiting = {
         rateLimiterTick: await (async () => {
             const {fetching: {rateLimit: rateLimitConfig}} = await (await resolveIpcMainApi())("readConfig")().toPromise();
-            logger.debug(JSON.stringify({rateLimitConfig}));
             const limiter = rateLimiter({
                 interval: rateLimitConfig.intervalMs,
                 maxInInterval: rateLimitConfig.maxInInterval,
             });
             const key = `webview:protonmail-api:${uuid()}`;
+
+            logger.verbose(JSON.stringify({rateLimitConfig}));
+
             return () => limiter(key);
         })(),
     };
@@ -189,13 +191,15 @@ function resolveService<T extends ProviderApi[keyof ProviderApi]>(
 
             resolveServiceLogger.debug(`queueing rate limited method: "${_fullMethodName}"`);
 
-            return rateLimitedApiCallingQueue.add(() => {
+            return rateLimitedApiCallingQueue.q(() => {
                 resolveServiceLogger.verbose(
                     `calling rate limited method: ${_fullMethodName} ${JSON.stringify({waitTime, rateLimitedMethodsCallCount})}`,
                 );
 
                 const result = originalMethod.apply(service, originalMethodArgs);
+
                 rateLimitedMethodsCallCount++;
+
                 return result;
             });
         } as any;

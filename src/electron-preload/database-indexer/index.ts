@@ -1,4 +1,4 @@
-import PQueue from "p-queue";
+import asap from "asap-es";
 
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_DB_INDEXER_ON_ACTIONS} from "src/shared/api/main";
 import {LOGGER} from "./lib/contants";
@@ -14,7 +14,7 @@ const emptyObject = {};
 const cleanup = SERVICES_FACTORY.cleanup();
 const api = SERVICES_FACTORY.api(cleanup.promise);
 const index = createMailsIndex();
-const indexingQueue = new PQueue({concurrency: 1});
+const indexingQueue = new asap();
 
 document.addEventListener("DOMContentLoaded", bootstrap);
 
@@ -49,7 +49,7 @@ function dbIndexerNotificationHandler(action: Unpacked<ReturnType<typeof api.dbI
 
             await api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.ProgressState({key, status: {indexing: true}})).toPromise();
 
-            await indexingQueue.add(async () => {
+            await indexingQueue.q(async () => {
                 removeMailsFromIndex(index, remove);
                 addToMailsIndex(index, add);
             });
@@ -66,7 +66,7 @@ function dbIndexerNotificationHandler(action: Unpacked<ReturnType<typeof api.dbI
 
             await api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.ProgressState({key, status: {searching: true}})).toPromise();
 
-            const {items, expandedTerms} = await indexingQueue.add(async () => {
+            const {items, expandedTerms} = await indexingQueue.q(async () => {
                 return index.search(query);
             });
 

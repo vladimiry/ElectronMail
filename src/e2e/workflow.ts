@@ -14,6 +14,7 @@ import {promisify} from "util";
 
 import {ACCOUNTS_CONFIG, ONE_SECOND_MS, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
 import {AccountType} from "src/shared/model/account";
+import {Arguments} from "src/shared/types";
 import {CI_ENV_LOGOUT_ACTION_TIMEOUT_MS} from "./shared-constants";
 
 export interface TestContext {
@@ -25,7 +26,7 @@ export interface TestContext {
     logFilePath: string;
     workflow: ReturnType<typeof buildWorkflow>;
     sinon: {
-        addAccountSpy: sinon.SinonSpy;
+        addAccountSpy: sinon.SinonSpy<[Arguments<ReturnType<typeof buildWorkflow>["addAccount"]>[0]], Promise<void>>;
     };
 }
 

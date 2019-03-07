@@ -16,7 +16,6 @@ const eol = `\r\n`;
 const emlExtension = `.eml`;
 const maxFileNameLength = 256 - emlExtension.length;
 const safeFileNameRe = /[^A-Za-z0-9.]+/g;
-const lineSplittingRe = /.{1,78}/g;
 const emptyArray = Object.freeze([]);
 
 const formatEmlDate: (mail: Mail) => string = (() => {
@@ -50,7 +49,7 @@ export async function writeEmlFile(mail: Mail, dir: string): Promise<{ file: str
 function buildEml(mail: Mail): string {
     const boundary = `----=${uuid()}@${APP_NAME}`;
     const subject = mail.subject && `=?UTF-8?B?${Base64.encode(mail.subject)}?=`;
-    const body = (Base64.encode(mail.body).match(lineSplittingRe) || emptyArray).join(eol);
+    const body = Base64.encode(mail.body);
     const lines = [
         `MIME-Version: 1.0`, eol,
         ...formatAddresses(`From`, [mail.sender]),

@@ -17,7 +17,6 @@ test.serial(`"Context.db" resolves encryption key calling "Context.settingsStore
                 app: {getPath: sinon.stub().returns(memFsPath)},
             } as any);
             mock(() => import("./constants")).callThrough();
-            mock(() => import("./protocol")).append({registerProtocols: sinon.stub()});
         },
     );
     const ctx = initContext({
@@ -65,7 +64,6 @@ test.serial([
                     settings: settingsStub,
                 },
             });
-            mock(() => import("./protocol")).append({registerProtocols: sinon.stub()});
         },
     );
 
@@ -78,6 +76,14 @@ test.serial([
     const {initApi} = await rewiremock.around(
         () => import("./api"),
         (mock) => {
+            mock(() => import("electron")).with({
+                app: {
+                    on: sinon.stub()
+                        .callsArg(1)
+                        .withArgs("ready")
+                        .callsArgWith(1, {}, {on: sinon.spy()}),
+                },
+            } as any);
             mock(() => import("src/electron-main/api/endpoints-builders")).callThrough().with({
                 TrayIcon: {buildEndpoints: sinon.stub()},
             });

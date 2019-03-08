@@ -1,30 +1,34 @@
-import _logger from "electron-log";
 import fs from "fs";
 import mimeTypes from "mime-types";
 import path from "path";
 import pathIsInside from "path-is-inside";
 import url from "url";
-import {RegisterFileProtocolRequest, app, protocol} from "electron";
+import {RegisterFileProtocolRequest, Session, app, protocol} from "electron";
 import {promisify} from "util";
 
-import {curryFunctionMembers} from "src/shared/util";
-import {getDefaultSession} from "./session";
+import {Context} from "src/electron-main/model";
 
-const logger = curryFunctionMembers(_logger, "[electron-main/protocol]");
 const fsAsync = {
     stat: promisify(fs.stat),
     readFile: promisify(fs.readFile),
 };
 
-export function registerProtocols(protocolBundles: Array<{ scheme: string; directory: string }>) {
+const appReadyPromise = new Promise((resolve) => app.on("ready", resolve));
+
+export function registerStandardSchemes(ctx: Context) {
     // WARN: "protocol.registerStandardSchemes" needs to be called once, see https://github.com/electron/electron/issues/15943
-    protocol.registerStandardSchemes(protocolBundles.map(({scheme}) => scheme), {secure: true});
+    protocol.registerStandardSchemes(
+        ctx.locations.protocolBundles.map(({scheme}) => scheme),
+        {secure: true},
+    );
+}
 
-    app.on("ready", () => {
-        const {protocol: sessionProtocol} = getDefaultSession();
+export async function registerSessionProtocols(ctx: Context, session: Session): Promise<void> {
+    await appReadyPromise;
 
-        for (const {scheme, directory} of protocolBundles) {
-            sessionProtocol.registerBufferProtocol(
+    for (const {scheme, directory} of ctx.locations.protocolBundles) {
+        await new Promise((resolve, reject) => {
+            session.protocol.registerBufferProtocol(
                 scheme,
                 async (request, callback) => {
                     const file = await resolveFileSystemResourceLocation(directory, request);
@@ -38,12 +42,15 @@ export function registerProtocols(protocolBundles: Array<{ scheme: string; direc
                 },
                 (error) => {
                     if (error) {
-                        logger.error(error);
-                        throw error;
+                        reject(error);
+                        return;
                     }
-                });
-        }
-    });
+
+                    resolve();
+                },
+            );
+        });
+    }
 }
 
 async function resolveFileSystemResourceLocation(directory: string, request: RegisterFileProtocolRequest): Promise<string> {

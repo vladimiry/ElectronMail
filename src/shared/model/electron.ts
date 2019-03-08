@@ -31,5 +31,6 @@ export interface ElectronContextLocations {
         fullTextSearchBrowserWindow: string;
         webView: Record<AccountType, string>;
     };
+    readonly protocolBundles: Array<{ scheme: string; directory: string }>;
     readonly webClients: Record<AccountType, Array<{ entryUrl: string; entryApiUrl: string; }>>;
 }

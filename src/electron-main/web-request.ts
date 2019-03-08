@@ -1,10 +1,9 @@
-import {OnBeforeSendHeadersDetails, OnHeadersReceivedDetails} from "electron";
+import {OnBeforeSendHeadersDetails, OnHeadersReceivedDetails, Session} from "electron";
 import {URL} from "url";
 
 import {AccountType} from "src/shared/model/account";
 import {Context} from "./model";
 import {ElectronContextLocations} from "src/shared/model/electron";
-import {getDefaultSession} from "./session";
 
 // TODO drop these types when "requestHeaders / responseHeaders" get proper types
 type RequestDetails = OnBeforeSendHeadersDetails & { requestHeaders: HeadersMap };
@@ -39,11 +38,12 @@ const HEADERS = {
 };
 const PROXIES = new Map<number, RequestProxy>();
 
-export function initWebRequestListeners({locations}: Context) {
+// TODO pass additional "account type" argument and apply only respective listeners
+export function initWebRequestListeners(ctx: Context, session: Session) {
     const resolveProxy: (details: RequestDetails) => RequestProxy | null = (() => {
         const origins: { [k in AccountType]: string[] } = {
-            ...resolveLocalWebClientOrigins("protonmail", locations),
-            ...resolveLocalWebClientOrigins("tutanota", locations),
+            ...resolveLocalWebClientOrigins("protonmail", ctx.locations),
+            ...resolveLocalWebClientOrigins("tutanota", ctx.locations),
         };
 
         return (details: RequestDetails) => {
@@ -61,7 +61,7 @@ export function initWebRequestListeners({locations}: Context) {
         };
     })();
 
-    getDefaultSession().webRequest.onBeforeSendHeaders(
+    session.webRequest.onBeforeSendHeaders(
         {urls: []},
         (
             requestDetailsArg,
@@ -81,7 +81,7 @@ export function initWebRequestListeners({locations}: Context) {
         },
     );
 
-    getDefaultSession().webRequest.onHeadersReceived(
+    session.webRequest.onHeadersReceived(
         (
             responseDetailsArg,
             callback,

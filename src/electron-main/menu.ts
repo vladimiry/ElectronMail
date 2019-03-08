@@ -1,9 +1,10 @@
 import {Menu, MenuItemConstructorOptions, app} from "electron";
 import {platform} from "os";
 
-import {Endpoints} from "src/shared/api/main";
+import {Context} from "src/electron-main/model";
 
-export async function initApplicationMenu(endpoints: Endpoints): Promise<Menu> {
+export async function initApplicationMenu(ctx: Context): Promise<Menu> {
+    const endpoints = await ctx.deferredEndpoints.promise;
     const aboutItem: MenuItemConstructorOptions = {
         label: "About",
         async click() {

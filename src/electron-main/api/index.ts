@@ -7,7 +7,7 @@ import {Context} from "src/electron-main/model";
 import {Endpoints, IPC_MAIN_API} from "src/shared/api/main";
 import {attachFullTextIndexWindow, detachFullTextIndexWindow} from "src/electron-main/window";
 import {buildSettingsAdapter} from "src/electron-main/util";
-import {clearDefaultSessionCaches} from "src/electron-main/session";
+import {clearSessionsCache, initSessionByLogin} from "src/electron-main/session";
 import {deletePassword, getPassword, setPassword} from "src/electron-main/keytar";
 import {upgradeConfig, upgradeDatabase, upgradeSettings} from "src/electron-main/storage-upgrade";
 
@@ -78,7 +78,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
             ctx.settingsStore = ctx.settingsStore.clone({adapter: undefined});
             ctx.db.reset();
             delete ctx.selectedAccount; // TODO extend "logout" api test: "delete ctx.selectedAccount"
-            await clearDefaultSessionCaches(ctx);
+            await clearSessionsCache(ctx);
             await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0}).toPromise();
             await detachFullTextIndexWindow(ctx);
             return null;
@@ -150,6 +150,10 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
             }
 
             ctx.settingsStore = store;
+
+            for (const {login} of settings.accounts) {
+                await initSessionByLogin(ctx, login);
+            }
 
             return settings;
         })()),

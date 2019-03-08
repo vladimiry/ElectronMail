@@ -1,5 +1,3 @@
-// tslint:disable:max-line-length
-
 import rewiremock from "rewiremock";
 import ava, {TestInterface} from "ava";
 import sinon, {SinonStub} from "sinon";
@@ -20,55 +18,72 @@ interface TestContext {
 
 const test = ava as TestInterface<TestContext>;
 
-test.serial("workflow", async (t) => {
+test.serial("workflow: root", async (t) => {
     await bootstrap(t.context);
 
     await asyncDelay(ONE_SECOND_MS);
 
-    const m = t.context.mocks["~index"];
-    const {endpoints} = t.context;
+    const m = t.context.mocks["~import"];
 
-    t.true(m["electron-unhandled"].calledWithExactly(sinon.match.hasOwn("logger")), `"electronUnhandled" called`);
-    t.true(m["electron-unhandled"].calledBefore(m.electron.app.setAppUserModelId), `"electronUnhandled" called before "requestSingleInstanceLock"`);
+    t.true(m["electron-unhandled"].calledWithExactly(sinon.match.hasOwn("logger")));
+    t.true(m["electron-unhandled"].calledBefore(m.electron.app.setAppUserModelId));
 
-    t.true(m.electron.app.requestSingleInstanceLock.called, `"requestSingleInstanceLock" called`);
-    t.true(m.electron.app.requestSingleInstanceLock.calledAfter(m["electron-unhandled"]), `"requestSingleInstanceLock" called after "electron-unhandled"`);
+    t.true(m.electron.app.requestSingleInstanceLock.called);
+    t.true(m.electron.app.requestSingleInstanceLock.calledAfter(m["electron-unhandled"]));
 
-    t.true(m.electron.app.setAppUserModelId.calledWithExactly(`com.github.vladimiry.${APP_NAME}`));
-    t.true(m.electron.app.setAppUserModelId.calledWithExactly(`com.github.vladimiry.email-securely-app`));
+    const expectedAppId = "com.github.vladimiry.email-securely-app";
+    t.is(`com.github.vladimiry.${APP_NAME}`, expectedAppId);
+    t.true(m.electron.app.setAppUserModelId.calledWithExactly(expectedAppId));
     t.true(m.electron.app.setAppUserModelId.calledAfter(m.electron.app.requestSingleInstanceLock));
 
-    t.true(m["./util"].initContext.calledWithExactly(), `"initContext" called`);
+    t.true(m["./util"].initContext.calledWithExactly());
     t.true(m["./util"].initContext.calledAfter(m.electron.app.setAppUserModelId));
 
-    t.true(m.electron.app.commandLine.appendSwitch.calledWithExactly("js-flags", INITIAL_STORES.config().jsFlags.join(" ")), `"app.commandLine.appendSwitch" called`);
     t.true(m.electron.app.commandLine.appendSwitch.calledAfter(m["./util"].initContext));
-    t.true(m.electron.app.commandLine.appendSwitch.calledBefore(m["./session"].initDefaultSession));
 
-    t.true(m["./session"].initDefaultSession.calledWithExactly(t.context.ctx), `"initDefaultSession" called`);
-    t.true(m["./session"].initDefaultSession.calledAfter(m["./util"].initContext), `"initDefaultSession" called after "initContext"`);
+    t.true(m["./protocol"].registerStandardSchemes.calledWithExactly(t.context.ctx));
+    t.true(m["./protocol"].registerStandardSchemes.calledAfter(m.electron.app.commandLine.appendSwitch));
 
-    t.true(m["./web-request"].initWebRequestListeners.calledWithExactly(t.context.ctx), `"initWebRequestListeners" called`);
-    t.true(m["./web-request"].initWebRequestListeners.calledAfter(m["./session"].initDefaultSession), `"initWebRequestListeners" called after "initDefaultSession"`);
+    t.true(m["./session"].initSession.calledAfter(m["./protocol"].registerStandardSchemes));
+});
 
-    t.true(m["./api"].initApi.calledWithExactly(t.context.ctx), `"initApi" called`);
-    t.true(m["./api"].initApi.calledAfter(m["./web-request"].initWebRequestListeners), `"initApi" called after "initWebRequestListeners"`);
+test.serial("workflow: preAppReady", async (t) => {
+    await bootstrap(t.context);
 
-    t.true(m["./web-contents"].initWebContentsCreatingHandlers.calledWithExactly(t.context.ctx), `"initWebContentsCreatingHandlers" called`);
-    t.true(m["./web-contents"].initWebContentsCreatingHandlers.calledBefore(m["./window"].initBrowserWindow), `"initWebContentsCreatingHandlers" called before "initBrowserWindow"`);
-    t.true(m["./web-contents"].initWebContentsCreatingHandlers.calledBefore(m["./tray"].initTray), `"initWebContentsCreatingHandlers" called before "initTray"`);
+    const m = t.context.mocks["~import"];
 
-    t.true(m["./window"].initBrowserWindow.calledWithExactly(t.context.ctx, t.context.endpoints), `"initBrowserWindow" called`);
+    t.true(m.electron.app.commandLine.appendSwitch.calledWithExactly("js-flags", INITIAL_STORES.config().jsFlags.join(" ")));
+});
 
-    t.true(m["./tray"].initTray.calledWithExactly(endpoints), `"initTray" called`);
+test.serial("workflow: appReadyHandler", async (t) => {
+    await bootstrap(t.context);
 
-    t.true(m["./menu"].initApplicationMenu.calledWithExactly(endpoints), `"initApplicationMenu" called`);
-    t.true(m["./menu"].initApplicationMenu.calledAfter(m["./tray"].initTray), `"initApplicationMenu" called after "initTray"`);
+    await asyncDelay(ONE_SECOND_MS);
 
-    t.true(endpoints.updateOverlayIcon.calledWithExactly({hasLoggedOut: false, unread: 0}), `"updateOverlayIcon" called`);
-    t.true(endpoints.updateOverlayIcon.calledAfter(m["./menu"].initApplicationMenu), `"updateOverlayIcon" called after "initApplicationMenu"`);
+    const m = t.context.mocks["~import"];
+    const {endpoints} = t.context;
 
-    t.true(m["./app-update"].initAutoUpdate.calledWithExactly(), `"initAutoUpdate" called`);
+    t.true(m["./session"].initSession.calledWithExactly(t.context.ctx, t.context.ctx.getDefaultSession));
+    t.true(m["./session"].initSession.calledAfter(m["./util"].initContext));
+
+    t.true(m["./api"].initApi.calledWithExactly(t.context.ctx));
+    t.true(m["./api"].initApi.calledAfter(m["./session"].initSession));
+
+    t.true(m["./web-contents"].initWebContentsCreatingHandlers.calledWithExactly(t.context.ctx));
+    t.true(m["./web-contents"].initWebContentsCreatingHandlers.calledBefore(m["./window"].initBrowserWindow));
+    t.true(m["./web-contents"].initWebContentsCreatingHandlers.calledBefore(m["./tray"].initTray));
+
+    t.true(m["./window"].initBrowserWindow.calledWithExactly(t.context.ctx));
+
+    t.true(m["./tray"].initTray.calledWithExactly(t.context.ctx));
+
+    t.true(m["./menu"].initApplicationMenu.calledWithExactly(t.context.ctx));
+    t.true(m["./menu"].initApplicationMenu.calledAfter(m["./tray"].initTray));
+
+    t.true(endpoints.updateOverlayIcon.calledWithExactly({hasLoggedOut: false, unread: 0}));
+    t.true(endpoints.updateOverlayIcon.calledAfter(m["./menu"].initApplicationMenu));
+
+    t.true(m["./app-update"].initAutoUpdate.calledWithExactly());
 });
 
 test.serial("electron.app.commandLine.appendSwitch: empty values", async (t) => {
@@ -81,7 +96,7 @@ test.serial("electron.app.commandLine.appendSwitch: empty values", async (t) => 
         },
     );
 
-    t.true(t.context.mocks["~index"].electron.app.commandLine.appendSwitch.calledWithExactly("js-flags", ""));
+    t.true(t.context.mocks["~import"].electron.app.commandLine.appendSwitch.calledWithExactly("js-flags", ""));
 });
 
 test.serial("electron.app.commandLine.appendSwitch: custom values", async (t) => {
@@ -98,7 +113,7 @@ test.serial("electron.app.commandLine.appendSwitch: custom values", async (t) =>
         },
     );
 
-    t.true(t.context.mocks["~index"].electron.app.commandLine.appendSwitch.calledWithExactly("js-flags", jsFlags.join(" ")));
+    t.true(t.context.mocks["~import"].electron.app.commandLine.appendSwitch.calledWithExactly("js-flags", jsFlags.join(" ")));
 });
 
 test.serial("app.disableGpuProcess (false)", async (t) => {
@@ -111,7 +126,7 @@ test.serial("app.disableGpuProcess (false)", async (t) => {
         },
     );
 
-    t.true(t.context.mocks["~index"].electron.app.disableHardwareAcceleration.notCalled);
+    t.true(t.context.mocks["~import"].electron.app.disableHardwareAcceleration.notCalled);
 });
 
 test.serial("app.disableGpuProcess (true)", async (t) => {
@@ -124,7 +139,7 @@ test.serial("app.disableGpuProcess (true)", async (t) => {
         },
     );
 
-    t.true(t.context.mocks["~index"].electron.app.disableHardwareAcceleration.calledWithExactly());
+    t.true(t.context.mocks["~import"].electron.app.disableHardwareAcceleration.calledWithExactly());
 });
 
 async function bootstrap(
@@ -144,6 +159,7 @@ async function bootstrap(
     };
 
     testContext.ctx = {
+        getDefaultSession: {},
         on: sinon.spy(),
         locations: {
             webClients: [],
@@ -157,16 +173,16 @@ async function bootstrap(
     await rewiremock.around(
         () => import("./index"),
         (mock) => {
-            const mocks = testContext.mocks["~index"];
+            const mocks = testContext.mocks["~import"];
             mock(() => import("./session")).callThrough().with(mocks["./session"]);
             mock(() => import("./api")).callThrough().with(mocks["./api"]);
             mock(() => import("./util")).callThrough().with(mocks["./util"]);
-            mock(() => import("./web-request")).callThrough().with(mocks["./web-request"]);
             mock(() => import("./window")).callThrough().with(mocks["./window"]);
             mock(() => import("./tray")).callThrough().with(mocks["./tray"]);
             mock(() => import("./menu")).callThrough().with(mocks["./menu"]);
             mock(() => import("./web-contents")).with(mocks["./web-contents"]);
             mock(() => import("./app-update")).callThrough().with(mocks["./app-update"]);
+            mock(() => import("./protocol")).callThrough().with(mocks["./protocol"]);
             mock(() => import("./keytar")).with({
                 getPassword: sinon.spy(),
                 deletePassword: sinon.spy(),
@@ -197,9 +213,10 @@ function buildDefaultConfigStore(fsImplPatch?: Partial<Store<Config>["fs"]["_imp
 
 function buildMocks(testContext: TestContext) {
     return {
-        "~index": {
+        "~import": {
             "./session": {
-                initDefaultSession: sinon.stub().returns(Promise.resolve({})),
+                getDefaultSession: sinon.stub().returns(testContext.ctx.getDefaultSession),
+                initSession: sinon.stub().returns(Promise.resolve({})),
             },
             "./api": {
                 initApi: sinon.stub().returns(Promise.resolve(testContext.endpoints)),
@@ -208,23 +225,23 @@ function buildMocks(testContext: TestContext) {
                 initContext: sinon.stub().returns(testContext.ctx),
                 activateBrowserWindow: sinon.spy(),
             },
-            "./web-request": {
-                initWebRequestListeners: sinon.stub(),
-            },
             "./window": {
                 initBrowserWindow: sinon.stub().returns(Promise.resolve({isDestroyed: sinon.spy()})),
             },
             "./tray": {
-                initTray: sinon.spy(),
+                initTray: sinon.stub().returns(Promise.resolve({})),
             },
             "./menu": {
-                initApplicationMenu: sinon.spy(),
+                initApplicationMenu: sinon.stub().returns(Promise.resolve({})),
             },
             "./web-contents": {
                 initWebContentsCreatingHandlers: sinon.spy(),
             },
             "./app-update": {
                 initAutoUpdate: sinon.spy(),
+            },
+            "./protocol": {
+                registerStandardSchemes: sinon.spy(),
             },
             "electron-unhandled": sinon.spy(),
             "electron": {

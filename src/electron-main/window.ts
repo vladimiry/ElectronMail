@@ -4,7 +4,6 @@ import {equals} from "ramda";
 
 import {BuildEnvironment} from "src/shared/model/common";
 import {Context} from "./model";
-import {Endpoints} from "src/shared/api/main";
 
 const developmentEnvironment = (process.env.NODE_ENV as BuildEnvironment) === "development";
 const browserWindowState: { forceClose: boolean } = {forceClose: false};
@@ -22,10 +21,7 @@ const commonWebPreferences: BrowserWindowConstructorOptions["webPreferences"] = 
     disableBlinkFeatures: "Auxclick",
 };
 
-export async function initBrowserWindow(
-    ctx: Context,
-    endpoints: Endpoints,
-): Promise<BrowserWindow> {
+export async function initBrowserWindow(ctx: Context): Promise<BrowserWindow> {
     const e2eRuntimeEnvironment = (
         ctx.runtimeEnvironment === "e2e"
         &&
@@ -52,7 +48,7 @@ export async function initBrowserWindow(
         const {startMinimized} = await ctx.configStore.readExisting();
 
         if (!settingsConfigured || !startMinimized) {
-            await endpoints.activateBrowserWindow().toPromise();
+            await (await ctx.deferredEndpoints.promise).activateBrowserWindow().toPromise();
         }
     });
     browserWindow.on("closed", () => {

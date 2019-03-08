@@ -1,17 +1,16 @@
 import {Menu, Tray, app, nativeImage} from "electron";
 
-import {Endpoints} from "src/shared/api/main";
+import {Context} from "src/electron-main/model";
 
-export function initTray(endpoints: Endpoints): Tray {
-    const toggleWindow = () => endpoints.toggleBrowserWindow({}).toPromise();
+export async function initTray(ctx: Context): Promise<Tray> {
+    const endpoints = await ctx.deferredEndpoints.promise;
+    const toggleWindow = async () => await endpoints.toggleBrowserWindow({}).toPromise();
     const tray = new Tray(nativeImage.createEmpty());
 
     tray.setContextMenu(Menu.buildFromTemplate([
         {
             label: "Toggle Window",
-            async click() {
-                await toggleWindow();
-            },
+            click: toggleWindow,
         },
         {
             label: "Open Settings Folder",
@@ -39,9 +38,7 @@ export function initTray(endpoints: Endpoints): Tray {
         },
     ]));
 
-    tray.on("click", async () => {
-        await toggleWindow();
-    });
+    tray.on("click", toggleWindow);
 
     app.on("before-quit", () => tray.destroy());
 

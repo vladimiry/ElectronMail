@@ -3,6 +3,7 @@ import {from} from "rxjs";
 import {AccountConfig} from "src/shared/model/account";
 import {Context} from "src/electron-main/model";
 import {Endpoints} from "src/shared/api/main";
+import {initSessionByLogin} from "src/electron-main/session";
 import {pickAccountStrict} from "src/shared/util";
 
 export async function buildEndpoints(
@@ -21,7 +22,11 @@ export async function buildEndpoints(
 
             settings.accounts.push(account);
 
-            return await ctx.settingsStore.write(settings);
+            const result = await ctx.settingsStore.write(settings);
+
+            await initSessionByLogin(ctx, account.login, {skipClearSessionCaches: true});
+
+            return result;
         })()),
 
         // TODO update "updateAccount" api method test (entryUrl, changed credentials structure)
@@ -79,6 +84,8 @@ export async function buildEndpoints(
             const index = settings.accounts.indexOf(account);
 
             settings.accounts.splice(index, 1);
+
+            // TODO remove session, not yet supported by Electron?
 
             return await ctx.settingsStore.write(settings);
         })()),

@@ -42,10 +42,17 @@ const OPTIONS = Object.freeze({
 
 const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => ImplementationResult> = {
     addAccount: async (t) => {
-        const {endpoints} = t.context;
+        const {
+            endpoints,
+            mocks: {"src/electron-main/session": {initSessionByLogin: initSessionByLoginMock}},
+        } = t.context;
         const {addAccount} = endpoints;
         const payload = buildProtonmailAccountData();
         const settings = await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
+        const initSessionByLoginOptions = {skipClearSessionCaches: true};
+
+        t.is(0, initSessionByLoginMock.callCount);
+
         const updatedSettings = await addAccount(payload).toPromise();
         const expectedSettings = produce(settings, (draft) => {
             (draft._rev as number)++;
@@ -55,6 +62,8 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.is(updatedSettings.accounts.length, 1, `1 account`);
         t.deepEqual(updatedSettings, expectedSettings, `settings with added account is returned`);
         t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings, `settings with added account is persisted`);
+        t.is(1, initSessionByLoginMock.callCount);
+        initSessionByLoginMock.calledWithExactly(t.context.ctx, payload.login, initSessionByLoginOptions);
 
         try {
             await addAccount(payload).toPromise();
@@ -73,6 +82,8 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.is(updatedSettings2.accounts.length, 2, `2 accounts`);
         t.deepEqual(updatedSettings2, expectedSettings2, `settings with added account is returned`);
         t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings2, `settings with added account is persisted`);
+        t.is(2, initSessionByLoginMock.callCount);
+        initSessionByLoginMock.calledWithExactly(t.context.ctx, payload2.login, initSessionByLoginOptions);
     },
 
     updateAccount: async (t) => {
@@ -260,7 +271,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
 
     logout: async (t) => {
         const {deletePassword: deletePasswordSpy} = t.context.mocks["src/electron-main/keytar"];
-        const {clearDefaultSessionCaches: clearDefaultSessionCachesSpy} = t.context.mocks["src/electron-main/session"];
+        const {clearSessionsCache} = t.context.mocks["src/electron-main/session"];
         const {endpoints} = t.context;
         const resetSpy = sinon.spy(t.context.ctx.db, "reset");
         const updateOverlayIconSpy = sinon.spy(endpoints, "updateOverlayIcon");
@@ -282,7 +293,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.is(deletePasswordSpy.callCount, 3);
 
         t.is(2, resetSpy.callCount);
-        t.is(2, clearDefaultSessionCachesSpy.callCount);
+        t.is(2, clearSessionsCache.callCount);
         t.is(2, updateOverlayIconSpy.callCount);
     },
 
@@ -386,9 +397,14 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
     },
 
     readSettings: async (t) => {
-        const {setPassword: setPasswordSpy, deletePassword: deletePasswordSpy} = t.context.mocks["src/electron-main/keytar"];
-        const upgradeSettingsSpy = t.context.mocks["src/electron-main/storage-upgrade"].upgradeSettings;
-        const endpoints = t.context.endpoints;
+        const {
+            endpoints,
+            mocks: {
+                "src/electron-main/keytar": {setPassword: setPasswordSpy, deletePassword: deletePasswordSpy},
+                "src/electron-main/storage-upgrade": {upgradeSettings: upgradeSettingsSpy},
+                "src/electron-main/session": {initSessionByLogin: initSessionByLoginMock},
+            },
+        } = t.context;
 
         t.false(await t.context.ctx.settingsStore.readable(), "settings file does not exist");
         t.falsy(t.context.ctx.settingsStore.adapter, "adapter is not set");
@@ -404,17 +420,25 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.is(setPasswordSpy.callCount, 0);
         t.is(deletePasswordSpy.callCount, 1);
         t.true(deletePasswordSpy.alwaysCalledWithExactly());
+        t.is(initial.accounts.length, initSessionByLoginMock.callCount);
+        for (const {login} of initial.accounts) {
+            t.true(initSessionByLoginMock.calledWithExactly(t.context.ctx, login));
+        }
 
         const initialUpdated = await t.context.ctx.settingsStore.write(initial);
         const initialUpdatedExpected = {...initial, ...initialExpected, ...{_rev: initialExpected._rev + 1}};
         t.deepEqual(initialUpdated, initialUpdatedExpected, "saved initial settings file");
         t.deepEqual(await t.context.ctx.settingsStore.read(), initialUpdatedExpected, "loaded initial settings file");
 
-        await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword, savePassword: true});
+        const final = await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword, savePassword: true});
         t.is(1, upgradeSettingsSpy.callCount);
         t.is(setPasswordSpy.callCount, 1);
         t.is(deletePasswordSpy.callCount, 1);
         setPasswordSpy.calledWithExactly(OPTIONS.masterPassword);
+        for (const {login} of final.accounts) {
+            t.true(initSessionByLoginMock.calledWithExactly(t.context.ctx, login));
+        }
+        t.is(initial.accounts.length + final.accounts.length, initSessionByLoginMock.callCount);
     },
 
     // TODO test "reEncryptSettings" API
@@ -524,7 +548,11 @@ async function buildMocks() {
             },
         } as any,
         "src/electron-main/session": {
-            clearDefaultSessionCaches: sinon.stub().returns(Promise.resolve({})),
+            initSessionByLogin: sinon.stub().returns(Promise.resolve()),
+            initSession: sinon.stub().returns(Promise.resolve()),
+            clearSessionsCache: sinon.stub().returns(Promise.resolve()),
+            clearSessionCaches: sinon.stub().returns(Promise.resolve()),
+            getDefaultSession: sinon.stub().returns({}),
         },
         "src/electron-main/util": {
             buildSettingsAdapter,
@@ -554,6 +582,10 @@ async function buildMocks() {
             app: {
                 exit: sinon.spy(),
                 setAppUserModelId: sinon.spy(),
+                on: sinon.stub()
+                    .callsArg(1)
+                    .withArgs("ready")
+                    .callsArgWith(1, {}, {on: sinon.spy()}),
             },
             remote: {
                 BrowserWindow: sinon.spy(),
@@ -625,7 +657,10 @@ test.beforeEach(async (t) => {
     const {initContext} = await rewiremock.around(
         () => import("src/electron-main/util"),
         (mock) => {
-            mock(() => import("src/electron-main/protocol")).append({registerProtocols: sinon.stub()});
+            mock(() => import("src/electron-main/protocol")).append({
+                registerStandardSchemes: sinon.stub(),
+                registerSessionProtocols: sinon.stub().returns(Promise.resolve({})),
+            });
         },
     );
 

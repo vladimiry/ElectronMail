@@ -31,6 +31,7 @@ import {NgChangesObservableComponent} from "src/web/src/app/components/ng-change
 import {State} from "src/web/src/app/store/reducers/accounts";
 import {Unpacked} from "src/shared/types";
 import {WebAccount} from "src/web/src/app/model";
+import {getWebViewPartition} from "src/shared/util";
 import {getZoneNameBoundWebLogger} from "src/web/src/util";
 
 type WebViewSubjectState =
@@ -128,13 +129,19 @@ export class AccountComponent extends NgChangesObservableComponent implements On
 
                         const webView = this.resolveWebView();
 
-                        webView.preload = value.preload;
-                        webView.src = value.src;
-
                         if (!webView.src) {
-                            this.logger.verbose(`webview.attrs (initialize): "${webView.src}"`);
+                            // WARN: partition setting needs to occur before first navigation (before "src" setting)
+                            webView.partition = getWebViewPartition(this.account.accountConfig.login);
+                            webView.preload = value.preload;
+                            webView.src = value.src;
+
+                            this.logger.verbose(
+                                `webview.attrs (initialize):`,
+                                JSON.stringify(pick(["src", "preload", "partition"], webView)),
+                            );
                         } else {
-                            this.logger.verbose(`webview.attrs (update): "${webView.src}"`);
+                            webView.src = value.src;
+                            this.logger.verbose(`webview.attrs (update):`, webView.src);
                         }
 
                         return;

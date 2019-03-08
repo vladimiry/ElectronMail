@@ -5,15 +5,15 @@ import {app} from "electron";
 import {APP_NAME} from "src/shared/constants";
 import {Config} from "src/shared/model/options";
 import {INITIAL_STORES} from "src/electron-main/constants";
+import {getDefaultSession, initSession} from "./session";
 import {initApi} from "./api";
 import {initApplicationMenu} from "./menu";
 import {initAutoUpdate} from "./app-update";
 import {initBrowserWindow} from "./window";
 import {initContext} from "./util";
-import {initDefaultSession} from "./session";
 import {initTray} from "./tray";
 import {initWebContentsCreatingHandlers} from "./web-contents";
-import {initWebRequestListeners} from "./web-request";
+import {registerStandardSchemes} from "src/electron-main/protocol";
 
 electronUnhandled({
     logger: logger.error,
@@ -32,9 +32,13 @@ app.setAppUserModelId(`com.github.vladimiry.${APP_NAME}`);
 // TODO consider sharing "Context" using dependency injection approach
 const ctx = initContext();
 
+preAppReady();
+registerStandardSchemes(ctx);
+app.on("ready", appReadyHandler);
+
 // WARN needs to be called before app is ready, so synchronous mode
 // TODO add synchronous "read" method to "fs-json-store"
-(() => {
+function preAppReady() {
     let configFile: Buffer | string | undefined;
 
     try {
@@ -64,12 +68,10 @@ const ctx = initContext();
         // app.commandLine.appendSwitch("in-process-gpu"); // app fails with this flag
         app.commandLine.appendSwitch("disable-software-rasterizer"); // seems to be taking some effect
     })();
-})();
+}
 
-app.on("ready", async () => {
-    await initDefaultSession(ctx);
-
-    initWebRequestListeners(ctx);
+async function appReadyHandler() {
+    await initSession(ctx, getDefaultSession());
 
     const endpoints = await initApi(ctx);
     const {checkForUpdatesAndNotify} = await endpoints.readConfig().toPromise();
@@ -77,9 +79,9 @@ app.on("ready", async () => {
     initWebContentsCreatingHandlers(ctx);
 
     ctx.uiContext = {
-        browserWindow: await initBrowserWindow(ctx, endpoints),
-        tray: initTray(endpoints),
-        appMenu: await initApplicationMenu(endpoints),
+        browserWindow: await initBrowserWindow(ctx),
+        tray: await initTray(ctx),
+        appMenu: await initApplicationMenu(ctx),
     };
 
     await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0}).toPromise();
@@ -88,11 +90,6 @@ app.on("ready", async () => {
         initAutoUpdate();
     }
 
-    app.on("second-instance", async () => {
-        await endpoints.activateBrowserWindow().toPromise();
-    });
-
-    app.on("activate", async () => {
-        await endpoints.activateBrowserWindow();
-    });
-});
+    app.on("second-instance", async () => await endpoints.activateBrowserWindow().toPromise());
+    app.on("activate", async () => await endpoints.activateBrowserWindow());
+}

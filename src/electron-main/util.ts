@@ -7,7 +7,6 @@ import {Fs as StoreFs, Model as StoreModel, Store} from "fs-json-store";
 import {app} from "electron";
 
 import {AccountType} from "src/shared/model/account";
-import {Arguments} from "src/shared/types";
 import {BuildEnvironment} from "src/shared/model/common";
 import {Config, Settings} from "src/shared/model/options";
 import {Context, ContextInitOptions, ContextInitOptionsPaths, RuntimeEnvironment} from "./model";
@@ -15,7 +14,6 @@ import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {INITIAL_STORES, configEncryptionPresetValidator, settingsAccountLoginUniquenessValidator} from "./constants";
 import {LOCAL_WEBCLIENT_PROTOCOL_PREFIX, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
-import {registerProtocols} from "./protocol";
 
 export function initContext(options: ContextInitOptions = {}): Context {
     const storeFs = options.storeFs
@@ -101,39 +99,6 @@ function initLocations(
     };
     const appRelativePath = (...value: string[]) => path.join(appDir, ...value);
     const icon = appRelativePath("./assets/icons/icon.png");
-    const webClients = (() => {
-        const protocolBundles: Arguments<typeof registerProtocols>[0] = [];
-        const result: ElectronContextLocations["webClients"] = {
-            protonmail: [],
-            tutanota: [],
-        };
-
-        let schemeIndex = 0;
-
-        (Object.keys(result) as AccountType[]).map((accountType) => {
-            const webClientsDir = appRelativePath("./webclient", `./${accountType}`);
-
-            listDirsNames(storeFs, webClientsDir)
-                .map((dirName) => {
-                    const directory = path.resolve(webClientsDir, dirName);
-                    const scheme = `${LOCAL_WEBCLIENT_PROTOCOL_PREFIX}${schemeIndex++}`;
-
-                    result[accountType].push({
-                        entryUrl: `${scheme}://${dirName}`,
-                        entryApiUrl: `https://${dirName}`,
-                    });
-
-                    protocolBundles.push({
-                        scheme,
-                        directory,
-                    });
-                });
-        });
-
-        registerProtocols(protocolBundles);
-
-        return result;
-    })();
 
     return {
         appDir,
@@ -157,7 +122,39 @@ function initLocations(
                 tutanota: formatFileUrl(appRelativePath("./electron-preload/webview/tutanota.js")),
             },
         },
-        webClients,
+        ...(() => {
+            const {protocolBundles, webClients}: Pick<ElectronContextLocations, "protocolBundles" | "webClients"> = {
+                protocolBundles: [],
+                webClients: {
+                    protonmail: [],
+                    tutanota: [],
+                },
+            };
+
+            let schemeIndex = 0;
+
+            (Object.keys(webClients) as AccountType[]).map((accountType) => {
+                const webClientsDir = appRelativePath("./webclient", `./${accountType}`);
+
+                listDirsNames(storeFs, webClientsDir)
+                    .map((dirName) => {
+                        const directory = path.resolve(webClientsDir, dirName);
+                        const scheme = `${LOCAL_WEBCLIENT_PROTOCOL_PREFIX}${schemeIndex++}`;
+
+                        webClients[accountType].push({
+                            entryUrl: `${scheme}://${dirName}`,
+                            entryApiUrl: `https://${dirName}`,
+                        });
+
+                        protocolBundles.push({
+                            scheme,
+                            directory,
+                        });
+                    });
+            });
+
+            return {protocolBundles, webClients};
+        })(),
     };
 }
 

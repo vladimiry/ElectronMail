@@ -1,4 +1,4 @@
-import {AccountConfig} from "./model/account";
+import {AccountConfig, AccountType} from "./model/account";
 import {BaseConfig, Config} from "./model/options";
 import {DbPatch} from "./api/common";
 import {LoginFieldContainer} from "./model/container";
@@ -197,3 +197,10 @@ export function isDatabaseBootstrapped(
         ? Boolean(metadata.latestEventId)
         : Boolean(Object.keys(metadata.groupEntityEventBatchIds || {}).length);
 }
+
+export const getWebViewPartition: (login: AccountConfig<AccountType>["login"]) => string = (() => {
+    const prefix = "memory/";
+    const result: typeof getWebViewPartition = (login) => `${prefix}${login}`;
+
+    return result;
+})();

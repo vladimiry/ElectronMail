@@ -1,15 +1,13 @@
 import _logger from "electron-log";
 import {Session, session} from "electron";
-import {from, race} from "rxjs";
 
 import {APP_NAME} from "src/shared/constants";
 import {AccountConfig, AccountType} from "src/shared/model/account";
 import {Arguments} from "src/shared/types";
-import {CI_ENV_LOGOUT_ACTION_TIMEOUT_MS} from "src/e2e/shared-constants"; // tslint:disable-line no-import-zones
 import {Config} from "src/shared/model/options";
 import {Context} from "./model";
 import {INITIAL_STORES} from "./constants";
-import {asyncDelay, curryFunctionMembers, getWebViewPartition} from "src/shared/util";
+import {curryFunctionMembers, getWebViewPartition} from "src/shared/util";
 import {initWebRequestListeners} from "src/electron-main/web-request";
 import {registerSessionProtocols} from "src/electron-main/protocol";
 
@@ -69,25 +67,10 @@ export async function clearSessionCaches(ctx: Context, instance: Session, config
         return;
     }
 
-    const clearStorageDataPromise = new Promise((resolve) => instance.clearStorageData({}, resolve));
-
     await Promise.all([
         new Promise((resolve) => instance.clearAuthCache({type: "password"}, resolve)),
-
         new Promise((resolve) => instance.clearCache(resolve)),
-
-        isContinuousIntegrationEnv()
-            ? // TODO electron@v4: "clearStorageData()" promise doesn't resolve if running on CI server, so "logout" action gets blocked
-            race(
-                from(clearStorageDataPromise),
-                from(
-                    asyncDelay(CI_ENV_LOGOUT_ACTION_TIMEOUT_MS * 0.5).then(() => {
-                        logger.warn(`clearSessionCaches(): skipping "clearStorageData" call`);
-                        return {};
-                    }),
-                ),
-            ).toPromise()
-            : clearStorageDataPromise,
+        new Promise((resolve) => instance.clearStorageData({}, resolve)),
     ]);
 
     logger.info("clearDefaultSessionCaches()", "end");
@@ -115,12 +98,4 @@ function purifyUserAgentHeader(instance: Session) {
         .join(" ");
 
     instance.setUserAgent(purifiedUserAgent);
-}
-
-function isContinuousIntegrationEnv(): boolean {
-    return Boolean(
-        process.env.CI
-        &&
-        (process.env.APPVEYOR || process.env.TRAVIS),
-    );
 }

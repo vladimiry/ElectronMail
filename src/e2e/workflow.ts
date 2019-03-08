@@ -10,12 +10,13 @@ import randomString from "randomstring";
 import sinon from "sinon";
 import ava, {ExecutionContext, TestInterface} from "ava";
 import {Application} from "spectron";
+import {Store} from "fs-json-store";
 import {promisify} from "util";
 
 import {ACCOUNTS_CONFIG, ONE_SECOND_MS, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
 import {AccountType} from "src/shared/model/account";
 import {Arguments} from "src/shared/types";
-import {CI_ENV_LOGOUT_ACTION_TIMEOUT_MS} from "./shared-constants";
+import {Config} from "src/shared/model/options";
 
 export interface TestContext {
     testStatus: "initial" | "success" | "fail";
@@ -49,7 +50,7 @@ const CONF = {
         elementTouched: ONE_SECOND_MS * (CI ? 1 : 0.3),
         encryption: ONE_SECOND_MS * (CI ? 5 : 1.5),
         transition: ONE_SECOND_MS * (CI ? 1 : 0.3),
-        logout: (CI ? CI_ENV_LOGOUT_ACTION_TIMEOUT_MS : ONE_SECOND_MS * 3),
+        logout: ONE_SECOND_MS * (CI ? 6 : 3),
         loginFilledOnce: ONE_SECOND_MS * (CI ? 45 : 15),
     },
 };
@@ -159,6 +160,15 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
     // await t.context.app.client.pause(2000);
 
     await t.context.app.client.pause(CONF.timeouts.encryption);
+
+    if (options.initial) {
+        const configStore = new Store<Config>({file: path.join(userDataDirPath, "config.json")});
+        const config = await configStore.readExisting();
+        await configStore.write({
+            ...config,
+            clearSession: false,
+        });
+    }
 
     return t.context.workflow;
 }

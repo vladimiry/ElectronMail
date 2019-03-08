@@ -57,6 +57,12 @@ export async function clearSessionsCache(ctx: Context): Promise<void> {
 export async function clearSessionCaches(ctx: Context, instance: Session, configArg?: Config | null): Promise<void> {
     logger.info("clearSessionCaches()", "start");
 
+    if (Boolean(1)) {
+        // TODO figure why session.clearStorageData() hangs quite often
+        logger.warn(`clearSessionCaches() han been disabled as session.clearStorageData() hangs quite often`);
+        return;
+    }
+
     const config = configArg || await ctx.configStore.read();
 
     if (

@@ -99,7 +99,7 @@
                     <label>
                         Proxy Rules
                         <i
-                            popover="Relogin to account or app restart needed for option to take effect."
+                            popover="Rules indicating which proxies to use."
                             class="fa fa-info-circle text-primary align-self-center"
                             container="body"
                             placement="bottom"
@@ -109,7 +109,8 @@
                     <input type="text" class="form-control" formControlName="proxyRules">
                     <div class="text-muted mt-2">
                         <code>address:80</code>, or <code>socks4://192.30.213.112</code>, see
-                        <button type="button" class="btn btn-link p-0" (click)="openProxyDocsPage()">
+                        <button type="button" class="btn btn-link p-0" (click)="openProxyDocsPage()"
+                            title="session.setProxy(config, callback)">
                             documentation
                         </button>
                     </div>
@@ -118,7 +119,7 @@
                     <label>
                         Proxy Bypass Rules
                         <i
-                            popover="Relogin to account or app restart needed for option to take effect."
+                            popover="Rules indicating which URLs should bypass the proxy settings."
                             class="fa fa-info-circle text-primary align-self-center"
                             container="body"
                             placement="bottom"
@@ -128,7 +129,8 @@
                     <input type="text" class="form-control" formControlName="proxyBypassRules">
                     <div class="text-muted mt-2">
                         <code>&#x3C;local&#x3E;</code>, or <code>"foobar.com:99", "x..y.com:99", ".com"</code>, see
-                        <button type="button" class="btn btn-link p-0" (click)="openProxyDocsPage()">
+                        <button type="button" class="btn btn-link p-0" (click)="openProxyDocsPage()"
+                            title="session.setProxy(config, callback)">
                             documentation
                         </button>
                     </div>

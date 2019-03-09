@@ -1,22 +1,24 @@
 import {from} from "rxjs";
+import {pick} from "ramda";
 
 import {AccountConfig} from "src/shared/model/account";
 import {Context} from "src/electron-main/model";
 import {Endpoints} from "src/shared/api/main";
-import {initSessionByLogin} from "src/electron-main/session";
+import {configureSessionByAccount, initSessionByAccount} from "src/electron-main/session";
 import {pickAccountStrict} from "src/shared/util";
 
 export async function buildEndpoints(
     ctx: Context,
 ): Promise<Pick<Endpoints, "addAccount" | "updateAccount" | "changeAccountOrder" | "removeAccount">> {
     return {
-        addAccount: ({type, login, entryUrl, database, credentials}) => from((async () => {
+        addAccount: ({type, login, entryUrl, database, credentials, proxy}) => from((async () => {
             const account = {
                 type,
                 login,
                 entryUrl,
                 database,
                 credentials,
+                proxy: proxy || undefined,
             } as AccountConfig; // TODO ger rid of "TS as" casting
             const settings = await ctx.settingsStore.readExisting();
 
@@ -24,13 +26,13 @@ export async function buildEndpoints(
 
             const result = await ctx.settingsStore.write(settings);
 
-            await initSessionByLogin(ctx, account.login, {skipClearSessionCaches: true});
+            await initSessionByAccount(ctx, pick(["login", "proxy"], account), {skipClearSessionCaches: true});
 
             return result;
         })()),
 
         // TODO update "updateAccount" api method test (entryUrl, changed credentials structure)
-        updateAccount: ({login, entryUrl, database, credentials}) => from((async () => {
+        updateAccount: ({login, entryUrl, database, credentials, proxy}) => from((async () => {
             const settings = await ctx.settingsStore.readExisting();
             const account = pickAccountStrict(settings.accounts, {login});
             const {credentials: existingCredentials} = account;
@@ -54,6 +56,10 @@ export async function buildEndpoints(
                     account.credentials.mailPassword = credentials.mailPassword;
                 }
             }
+
+            account.proxy = proxy || undefined;
+
+            await configureSessionByAccount(pick(["login", "proxy"], account));
 
             return await ctx.settingsStore.write(settings);
         })()),

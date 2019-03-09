@@ -7,7 +7,7 @@ import {Context} from "src/electron-main/model";
 import {Endpoints, IPC_MAIN_API} from "src/shared/api/main";
 import {attachFullTextIndexWindow, detachFullTextIndexWindow} from "src/electron-main/window";
 import {buildSettingsAdapter} from "src/electron-main/util";
-import {clearSessionsCache, initSessionByLogin} from "src/electron-main/session";
+import {clearSessionsCache, initSessionByAccount} from "src/electron-main/session";
 import {deletePassword, getPassword, setPassword} from "src/electron-main/keytar";
 import {upgradeConfig, upgradeDatabase, upgradeSettings} from "src/electron-main/storage-upgrade";
 
@@ -151,8 +151,8 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
 
             ctx.settingsStore = store;
 
-            for (const {login} of settings.accounts) {
-                await initSessionByLogin(ctx, login);
+            for (const {login, proxy} of settings.accounts) {
+                await initSessionByAccount(ctx, {login, proxy});
             }
 
             return settings;

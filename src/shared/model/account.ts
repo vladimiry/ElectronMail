@@ -6,6 +6,10 @@ export interface GenericAccountConfig<Type extends AccountType, CredentialFields
     entryUrl: string;
     database?: boolean;
     credentials: Partial<Record<CredentialFields, string>>;
+    proxy?: {
+        proxyRules?: string;
+        proxyBypassRules?: string;
+    };
 }
 
 export type AccountConfigProtonmail = GenericAccountConfig<"protonmail", "password" | "twoFactorCode" | "mailPassword">;

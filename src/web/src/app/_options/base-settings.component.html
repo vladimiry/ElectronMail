@@ -159,25 +159,19 @@
                 Disable page rendering GPU acceleration
             </label>
             <i
-                [popover]="disableGpuProcessPopoverTemplate"
+                popover="Enabling this option will allow you to save some memory but will likely slow down the page rendering a little."
                 class="fa fa-info-circle text-primary align-self-center"
                 container="body"
                 placement="bottom"
                 triggers="mouseenter:mouseleave"
             ></i>
-            <ng-template #disableGpuProcessPopoverTemplate>
-                Enabling this option will allow you to save some memory but will likely slow down the page rendering a little.
-            </ng-template>
             <i
-                [popover]="disableGpuProcessRestartPopoverTemplate"
+                popover="App restart needed for option to take effect."
                 class="fa fa-info-circle text-warning align-self-center"
                 container="body"
                 placement="bottom"
                 triggers="mouseenter:mouseleave"
             ></i>
-            <ng-template #disableGpuProcessRestartPopoverTemplate>
-                App restart needed for option to take effect.
-            </ng-template>
         </div>
         <div class="custom-control custom-switch" style="display: none;">
             <input

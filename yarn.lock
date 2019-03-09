@@ -775,10 +775,10 @@
     "@types/node" "*"
     log4js "^3.0.0"
 
-"@types/keytar@4.0.1":
-  version "4.0.1"
-  resolved "https://registry.yarnpkg.com/@types/keytar/-/keytar-4.0.1.tgz#e2cf6405dc33861424e59b67516c66d2cf7bc21b"
-  integrity sha512-loKBID6UL4QjhD2scuvv6oAPlQ/WAY7aYTDyKlKo7fIgriLS8EZExqT567cHL5CY6si51MRoX1+r3mitD3eYrA==
+"@types/keytar@4.4.0":
+  version "4.4.0"
+  resolved "https://registry.yarnpkg.com/@types/keytar/-/keytar-4.4.0.tgz#ca24e6ee6d0df10c003aafe26e93113b8faf0d8e"
+  integrity sha512-cq/NkUUy6rpWD8n7PweNQQBpw2o0cf5v6fbkUVEpOB9VzzIvyPvSEId1/goIj+MciW2v1Lw5mRimKO01XgE9EA==
 
 "@types/mime-types@2.1.0":
   version "2.1.0"
@@ -835,10 +835,10 @@
   dependencies:
     "@types/node" "*"
 
-"@types/node@*":
-  version "11.10.5"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-11.10.5.tgz#fbaca34086bdc118011e1f05c47688d432f2d571"
-  integrity sha512-DuIRlQbX4K+d5I+GMnv+UfnGh+ist0RdlvOp+JZ7ePJ6KQONCFQv/gKYSU1ZzbVdFSUCKZOltjmpFAGGv5MdYA==
+"@types/node@*", "@types/node@^11.10.5":
+  version "11.11.0"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-11.11.0.tgz#070e9ce7c90e727aca0e0c14e470f9a93ffe9390"
+  integrity sha512-D5Rt+HXgEywr3RQJcGlZUCTCx1qVbCZpVk3/tOOA6spLNZdGm8BU+zRgdRYDoF1pO3RuXLxADzMrF903JlQXqg==
 
 "@types/node@10.12.24":
   version "10.12.24"
@@ -879,10 +879,10 @@
   resolved "https://registry.yarnpkg.com/@types/q/-/q-1.5.1.tgz#48fd98c1561fe718b61733daed46ff115b496e18"
   integrity sha512-eqz8c/0kwNi/OEHQfvIuJVLTst3in0e7uTKeuY+WL/zfKn0xVujOTp42bS/vUUokhK5P2BppLd9JXMOMHcgbjA==
 
-"@types/ramda@0.26.0":
-  version "0.26.0"
-  resolved "https://registry.yarnpkg.com/@types/ramda/-/ramda-0.26.0.tgz#ce45c2c61b3e510f907cc84941c8cdb99f089b6a"
-  integrity sha512-6FCz2E3SrkgbuV3piRNfjThSRyMbcIxHknnGYPfrg4k55PHnNRR80boVdl1AME/KfDW+FBVmKrKPyRbFo8HjaQ==
+"@types/ramda@0.26.1":
+  version "0.26.1"
+  resolved "https://registry.yarnpkg.com/@types/ramda/-/ramda-0.26.1.tgz#767ca00d1b78ee8f77700fd5840e4259806d04f6"
+  integrity sha512-rvHuym7ZBYntRnA7W0qoBIQsomVYCamgKz5KD55Y1e94FeJv8UgBH102PylOUUCcyeEdQ1MwnsnP7K8yKlMstA==
 
 "@types/randomstring@1.1.6":
   version "1.1.6"
@@ -4390,9 +4390,9 @@ eslint@^5.0.0:
     text-table "^0.2.0"
 
 esm@^3.2.10:
-  version "3.2.13"
-  resolved "https://registry.yarnpkg.com/esm/-/esm-3.2.13.tgz#c03a5a5fa35107425dd89b64c016cfbd18bb2a05"
-  integrity sha512-0KGE/BOvS4MIjsalY3GfbhAgy+wJ7OO/JXrpTm0KnajE9np5s4fuEkyplaF5xLnN7/3h9jZAvTnnMynK39wG4g==
+  version "3.2.14"
+  resolved "https://registry.yarnpkg.com/esm/-/esm-3.2.14.tgz#567f65e9433bb0873eb92ed5e92e876c3ec2a212"
+  integrity sha512-uQq8DK0HB0n2Ze9gshhxGQa60caKmwNH7tKxALAT6wxYGfQCdEMXA3MV3z1rh8TSmQIVFYbltm9Xe1ghusnCqw==
 
 espower-location-detector@^1.0.0:
   version "1.0.0"
@@ -5247,9 +5247,11 @@ get-caller-file@^1.0.1:
   integrity sha512-3t6rVToeoZfYSGd8YoLFR2DJkiQrIiUrGcjvFX2mDw3bn6k2OtwHN0TNCLbBO+w8qTvimhDkv+LSscbJY1vE6w==
 
 get-caller-file@^2.0.0:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/get-caller-file/-/get-caller-file-2.0.1.tgz#25835260d3a2b9665fcdbb08cb039a7bbf7011c0"
-  integrity sha512-SpOZHfz845AH0wJYVuZk2jWDqFmu7Xubsx+ldIpwzy5pDUpu7OJHK7QYNSA2NPlDSKQwM1GFaAkciOWjjW92Sg==
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/get-caller-file/-/get-caller-file-2.0.4.tgz#b096b4a108afa0a955d62e0572ef3e9fa6c729b9"
+  integrity sha512-asZ7znBEyqkVHAjMI14GLeskxIJjn1Gplsvh1neaiHXgqRasKDR4uFnkMQXLMb7+0wn221u5vdY6QBkhgxkx0Q==
+  dependencies:
+    "@types/node" "^11.10.5"
 
 get-own-enumerable-property-symbols@^3.0.0:
   version "3.0.0"
@@ -8018,9 +8020,9 @@ node-pre-gyp@^0.10.0:
     tar "^4"
 
 node-releases@^1.1.8:
-  version "1.1.9"
-  resolved "https://registry.yarnpkg.com/node-releases/-/node-releases-1.1.9.tgz#70d0985ec4bf7de9f08fc481f5dae111889ca482"
-  integrity sha512-oic3GT4OtbWWKfRolz5Syw0Xus0KRFxeorLNj0s93ofX6PWyuzKjsiGxsCtWktBwwmTF6DdRRf2KreGqeOk5KA==
+  version "1.1.10"
+  resolved "https://registry.yarnpkg.com/node-releases/-/node-releases-1.1.10.tgz#5dbeb6bc7f4e9c85b899e2e7adcc0635c9b2adf7"
+  integrity sha512-KbUPCpfoBvb3oBkej9+nrU0/7xPlVhmhhUJ1PZqwIP5/1dJkRWKWD3OONjo6M2J7tSCBtDCumLwwqeI+DWWaLQ==
   dependencies:
     semver "^5.3.0"
 

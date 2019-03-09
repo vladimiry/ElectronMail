@@ -9,7 +9,7 @@ import {ACCOUNTS_CONFIG, ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX} from "src/share
 import {AccountConfig, AccountConfigProtonmail, AccountType} from "src/shared/model/account";
 import {AccountConfigCreatePatch, AccountConfigUpdatePatch} from "src/shared/model/container";
 import {EntryUrlItem} from "src/shared/types";
-import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
+import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {State} from "src/web/src/app/store/reducers/options";
 
@@ -21,17 +21,21 @@ import {State} from "src/web/src/app/store/reducers/options";
 })
 export class AccountEditComponent implements OnInit, OnDestroy {
     // form
+    advancedBlockCollapsed: boolean = true;
     typeValues: Array<{ value: AccountType; title: string; }> = [
         {value: "protonmail", title: "ProtonMail"},
         {value: "tutanota", title: "Tutanota"},
     ];
     entryUrlItems: EntryUrlItem[] = [];
     controls: Record<keyof Pick<AccountConfig, "type" | "login" | "database" | "entryUrl">
+        | "proxyRules" | "proxyBypassRules"
         | keyof AccountConfigProtonmail["credentials"], AbstractControl> = {
         type: new FormControl(this.typeValues[0].value, Validators.required),
         login: new FormControl(null, Validators.required),
         database: new FormControl(null),
         entryUrl: new FormControl(null, Validators.required),
+        proxyRules: new FormControl(null),
+        proxyBypassRules: new FormControl(null),
         password: new FormControl(null),
         twoFactorCode: new FormControl(null),
         mailPassword: new FormControl(null),
@@ -72,14 +76,25 @@ export class AccountEditComponent implements OnInit, OnDestroy {
 
                 this.form.removeControl(((name: keyof Pick<typeof AccountEditComponent.prototype.controls, "login">) => name)("login"));
 
-                controls.type.patchValue(account.type);
-                controls.entryUrl.patchValue(account.entryUrl);
-                controls.database.patchValue(account.database);
-                controls.password.patchValue(account.credentials.password);
-                controls.twoFactorCode.patchValue(account.credentials.twoFactorCode);
-                if (account.type === "protonmail") {
-                    controls.mailPassword.patchValue(account.credentials.mailPassword);
-                }
+                (() => {
+                    controls.type.patchValue(account.type);
+                    controls.database.patchValue(account.database);
+                    controls.entryUrl.patchValue(account.entryUrl);
+
+                    if (account.proxy) {
+                        controls.proxyRules.patchValue(account.proxy.proxyRules);
+                        controls.proxyBypassRules.patchValue(account.proxy.proxyBypassRules);
+                    } else {
+                        controls.proxyRules.patchValue(null);
+                        controls.proxyBypassRules.patchValue(null);
+                    }
+
+                    controls.password.patchValue(account.credentials.password);
+                    controls.twoFactorCode.patchValue(account.credentials.twoFactorCode);
+                    if (account.type === "protonmail") {
+                        controls.mailPassword.patchValue(account.credentials.mailPassword);
+                    }
+                })();
             });
 
         controls.type.valueChanges
@@ -101,16 +116,25 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     submit() {
         const {controls} = this;
         const account = this.account;
+        const proxy: AccountConfig<AccountType>["proxy"] = {
+            proxyRules: controls.proxyRules.value && controls.proxyRules.value.trim(),
+            proxyBypassRules: controls.proxyBypassRules.value && controls.proxyBypassRules.value.trim(),
+        };
         const patch: Readonly<AccountConfigUpdatePatch> = {
-            login: account ? account.login : controls.login.value,
+            login: account
+                ? account.login :
+                controls.login.value,
             entryUrl: controls.entryUrl.value,
             database: Boolean(controls.database.value),
             credentials: {
                 password: controls.password.value,
                 twoFactorCode: controls.twoFactorCode.value,
             },
+            ...((proxy.proxyRules || proxy.proxyBypassRules) && {proxy}),
         };
-        const accountType: AccountType = account ? account.type : controls.type.value;
+        const accountType: AccountType = account
+            ? account.type
+            : controls.type.value;
 
         if (accountType === "protonmail") {
             // TODO ger rid of "TS as" casting
@@ -139,6 +163,12 @@ export class AccountEditComponent implements OnInit, OnDestroy {
 
     isLocalWebClient({value}: EntryUrlItem): boolean {
         return value.startsWith(ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX);
+    }
+
+    openProxyDocsPage() {
+        this.store.dispatch(NAVIGATION_ACTIONS.OpenExternal({
+            url: "https://electronjs.org/docs/api/session#sessetproxyconfig-callback",
+        }));
     }
 
     ngOnDestroy() {

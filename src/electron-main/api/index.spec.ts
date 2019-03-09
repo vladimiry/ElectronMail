@@ -7,7 +7,7 @@ import ava, {ExecutionContext, ImplementationResult, TestInterface} from "ava";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Fs} from "fs-json-store";
 import {generate as generateRandomString} from "randomstring";
-import {mergeDeepRight, omit} from "ramda";
+import {mergeDeepRight, omit, pick} from "ramda";
 import {of} from "rxjs";
 import {produce} from "immer";
 
@@ -44,14 +44,14 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
     addAccount: async (t) => {
         const {
             endpoints,
-            mocks: {"src/electron-main/session": {initSessionByLogin: initSessionByLoginMock}},
+            mocks: {"src/electron-main/session": {initSessionByAccount: initSessionByAccountMock}},
         } = t.context;
         const {addAccount} = endpoints;
         const payload = buildProtonmailAccountData();
         const settings = await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
-        const initSessionByLoginOptions = {skipClearSessionCaches: true};
+        const initSessionByAccountOptions = {skipClearSessionCaches: true};
 
-        t.is(0, initSessionByLoginMock.callCount);
+        t.is(0, initSessionByAccountMock.callCount);
 
         const updatedSettings = await addAccount(payload).toPromise();
         const expectedSettings = produce(settings, (draft) => {
@@ -62,8 +62,9 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.is(updatedSettings.accounts.length, 1, `1 account`);
         t.deepEqual(updatedSettings, expectedSettings, `settings with added account is returned`);
         t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings, `settings with added account is persisted`);
-        t.is(1, initSessionByLoginMock.callCount);
-        initSessionByLoginMock.calledWithExactly(t.context.ctx, payload.login, initSessionByLoginOptions);
+        const initSessionByAccount1Arg = pick(["login", "proxy"], payload);
+        t.is(1, initSessionByAccountMock.callCount);
+        initSessionByAccountMock.calledWithExactly(t.context.ctx, initSessionByAccount1Arg, initSessionByAccountOptions);
 
         try {
             await addAccount(payload).toPromise();
@@ -72,7 +73,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
             t.is(messageEnd, message.substr(message.indexOf(messageEnd)), "Account.login unique constraint");
         }
 
-        const payload2 = {...payload, ...{login: "login2"}};
+        const payload2: AccountConfigCreatePatch = {...payload, ...{login: "login2", proxy: {proxyRules: "http=foopy:80;ftp=foopy2"}}};
         const updatedSettings2 = await addAccount(payload2).toPromise();
         const expectedSettings2 = produce(updatedSettings, (draft) => {
             (draft._rev as number)++;
@@ -82,12 +83,16 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.is(updatedSettings2.accounts.length, 2, `2 accounts`);
         t.deepEqual(updatedSettings2, expectedSettings2, `settings with added account is returned`);
         t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings2, `settings with added account is persisted`);
-        t.is(2, initSessionByLoginMock.callCount);
-        initSessionByLoginMock.calledWithExactly(t.context.ctx, payload2.login, initSessionByLoginOptions);
+        const initSessionByAccount2Arg = pick(["login", "proxy"], payload2);
+        t.is(2, initSessionByAccountMock.callCount);
+        initSessionByAccountMock.calledWithExactly(t.context.ctx, initSessionByAccount2Arg, initSessionByAccountOptions);
     },
 
     updateAccount: async (t) => {
-        const {endpoints} = t.context;
+        const {
+            endpoints,
+            mocks: {"src/electron-main/session": {configureSessionByAccount: configureSessionByAccountMock}},
+        } = t.context;
         const {addAccount, updateAccount} = endpoints;
         const addPayload = buildProtonmailAccountData();
         const updatePayload: AccountConfigUpdatePatch = produce(omit(["type"], addPayload), (draft) => {
@@ -95,6 +100,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
             (draft.database as any) = Boolean(!draft.database);
             draft.credentials.password = generateRandomString();
             draft.credentials.mailPassword = generateRandomString();
+            draft.proxy = {proxyRules: "http=foopy:80;ftp=foopy2", proxyBypassRules: "<local>"};
         });
 
         await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
@@ -116,6 +122,9 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.is(updatedSettings.accounts.length, 1, `1 account`);
         t.deepEqual(updatedSettings, expectedSettings, `settings with updated account is returned`);
         t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings, `settings with updated account is persisted`);
+        const configureSessionByAccountArg = pick(["login", "proxy"], updatePayload);
+        t.is(1, configureSessionByAccountMock.callCount);
+        configureSessionByAccountMock.calledWithExactly(configureSessionByAccountArg);
     },
 
     removeAccount: async (t) => {
@@ -402,7 +411,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
             mocks: {
                 "src/electron-main/keytar": {setPassword: setPasswordSpy, deletePassword: deletePasswordSpy},
                 "src/electron-main/storage-upgrade": {upgradeSettings: upgradeSettingsSpy},
-                "src/electron-main/session": {initSessionByLogin: initSessionByLoginMock},
+                "src/electron-main/session": {initSessionByAccount: initSessionByAccountMock},
             },
         } = t.context;
 
@@ -420,9 +429,9 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.is(setPasswordSpy.callCount, 0);
         t.is(deletePasswordSpy.callCount, 1);
         t.true(deletePasswordSpy.alwaysCalledWithExactly());
-        t.is(initial.accounts.length, initSessionByLoginMock.callCount);
+        t.is(initial.accounts.length, initSessionByAccountMock.callCount);
         for (const {login} of initial.accounts) {
-            t.true(initSessionByLoginMock.calledWithExactly(t.context.ctx, login));
+            t.true(initSessionByAccountMock.calledWithExactly(t.context.ctx, login));
         }
 
         const initialUpdated = await t.context.ctx.settingsStore.write(initial);
@@ -436,9 +445,9 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.is(deletePasswordSpy.callCount, 1);
         setPasswordSpy.calledWithExactly(OPTIONS.masterPassword);
         for (const {login} of final.accounts) {
-            t.true(initSessionByLoginMock.calledWithExactly(t.context.ctx, login));
+            t.true(initSessionByAccountMock.calledWithExactly(t.context.ctx, login));
         }
-        t.is(initial.accounts.length + final.accounts.length, initSessionByLoginMock.callCount);
+        t.is(initial.accounts.length + final.accounts.length, initSessionByAccountMock.callCount);
     },
 
     // TODO test "reEncryptSettings" API
@@ -548,7 +557,8 @@ async function buildMocks() {
             },
         } as any,
         "src/electron-main/session": {
-            initSessionByLogin: sinon.stub().returns(Promise.resolve()),
+            initSessionByAccount: sinon.stub().returns(Promise.resolve()),
+            configureSessionByAccount: sinon.stub().returns(Promise.resolve()),
             initSession: sinon.stub().returns(Promise.resolve()),
             clearSessionsCache: sinon.stub().returns(Promise.resolve()),
             clearSessionCaches: sinon.stub().returns(Promise.resolve()),

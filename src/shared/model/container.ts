@@ -29,4 +29,4 @@ export interface PasswordChangeContainer extends PasswordFieldContainer, NewPass
 export type AccountConfigCreatePatch<T extends AccountType = AccountType> = AccountConfig<T>;
 
 export type AccountConfigUpdatePatch<T extends AccountType = AccountType> = Pick<AccountConfig<T>, "login">
-    & Partial<Pick<AccountConfig, "login" | "entryUrl" | "database" | "credentials">>;
+    & Partial<Pick<AccountConfig, "login" | "entryUrl" | "database" | "credentials" | "proxy">>;

@@ -1,7 +1,7 @@
 import _logger from "electron-log";
 import {Session, session} from "electron";
 
-import {APP_NAME} from "src/shared/constants";
+import {APP_NAME, ONE_SECOND_MS} from "src/shared/constants";
 import {AccountConfig, AccountType} from "src/shared/model/account";
 import {Arguments} from "src/shared/types";
 import {Config} from "src/shared/model/options";
@@ -12,20 +12,21 @@ import {initWebRequestListeners} from "src/electron-main/web-request";
 import {registerSessionProtocols} from "src/electron-main/protocol";
 
 const logger = curryFunctionMembers(_logger, "[src/electron-main/session]");
-const usedPartitions: Set<Arguments<typeof initSessionByLogin>[1]> = new Set();
+const usedPartitions: Set<Arguments<typeof initSessionByAccount>[1]["login"]> = new Set();
 
-export async function initSessionByLogin(
+export async function initSessionByAccount(
     ctx: Context,
-    login: AccountConfig<AccountType>["login"],
+    account: Pick<AccountConfig<AccountType>, "login" | "proxy">,
     options: { skipClearSessionCaches?: boolean } = {},
 ): Promise<void> {
-    const partition = getWebViewPartition(login);
+    const partition = getWebViewPartition(account.login);
 
     if (usedPartitions.has(partition)) {
         return;
     }
 
     await initSession(ctx, session.fromPartition(partition), options);
+    await configureSessionByAccount(account);
 
     usedPartitions.add(partition);
 }
@@ -42,6 +43,37 @@ export async function initSession(
     if (!skipClearSessionCaches) {
         await clearSessionCaches(ctx, instance);
     }
+}
+
+export async function configureSessionByAccount(
+    account: Pick<AccountConfig<AccountType>, "login" | "proxy">,
+): Promise<void> {
+    const {proxy} = account;
+    const partition = getWebViewPartition(account.login);
+    const instance = session.fromPartition(partition);
+    const proxyConfig = {
+        ...{
+            pacScript: "",
+            proxyRules: "",
+            proxyBypassRules: "",
+        },
+        ...(proxy && proxy.proxyRules && proxy.proxyRules.trim() && {
+            proxyRules: proxy.proxyRules.trim(),
+            proxyBypassRules: (proxy.proxyBypassRules && proxy.proxyRules.trim()) || "",
+        }),
+    };
+
+    return new Promise((resolve, reject) => {
+        const timeoutId = setTimeout(
+            () => reject(new Error("Failed to configure proxy settings")),
+            ONE_SECOND_MS * 2,
+        );
+
+        instance.setProxy(proxyConfig, () => {
+            clearTimeout(timeoutId);
+            resolve();
+        });
+    });
 }
 
 export async function clearSessionsCache(ctx: Context): Promise<void> {

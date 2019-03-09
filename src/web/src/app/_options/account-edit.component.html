@@ -88,6 +88,53 @@
             <input type="password" class="form-control" formControlName="mailPassword"
                    [ngClass]="controls.mailPassword.dirty ? {'is-invalid': controls.mailPassword.invalid, 'is-valid': controls.mailPassword.valid} : {}">
         </div>
+        <div class="card mb-3">
+            <div class="card-header">
+                <button type="button" class="btn btn-link p-0" (click)="advancedBlockCollapsed = !advancedBlockCollapsed">
+                    Advanced
+                </button>
+            </div>
+            <div class="card-body" [collapse]="advancedBlockCollapsed">
+                <div class="form-group">
+                    <label>
+                        Proxy Rules
+                        <i
+                            popover="Relogin to account or app restart needed for option to take effect."
+                            class="fa fa-info-circle text-primary align-self-center"
+                            container="body"
+                            placement="bottom"
+                            triggers="mouseenter:mouseleave"
+                        ></i>
+                    </label>
+                    <input type="text" class="form-control" formControlName="proxyRules">
+                    <div class="text-muted mt-2">
+                        <code>address:80</code>, or <code>socks4://192.30.213.112</code>, see
+                        <button type="button" class="btn btn-link p-0" (click)="openProxyDocsPage()">
+                            documentation
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label>
+                        Proxy Bypass Rules
+                        <i
+                            popover="Relogin to account or app restart needed for option to take effect."
+                            class="fa fa-info-circle text-primary align-self-center"
+                            container="body"
+                            placement="bottom"
+                            triggers="mouseenter:mouseleave"
+                        ></i>
+                    </label>
+                    <input type="text" class="form-control" formControlName="proxyBypassRules">
+                    <div class="text-muted mt-2">
+                        <code>&#x3C;local&#x3E;</code>, or <code>"foobar.com:99", "x..y.com:99", ".com"</code>, see
+                        <button type="button" class="btn btn-link p-0" (click)="openProxyDocsPage()">
+                            documentation
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="clearfix">
             <button class="btn btn-outline-danger pull-left" type="button" *ngIf="account" (click)="remove()">
                 <i class="fa" [ngClass]="{

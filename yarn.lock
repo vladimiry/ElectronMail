@@ -8458,10 +8458,10 @@ osenv@0, osenv@^0.1.4:
     os-homedir "^1.0.0"
     os-tmpdir "^1.0.0"
 
-otplib@10.0.1:
-  version "10.0.1"
-  resolved "https://registry.yarnpkg.com/otplib/-/otplib-10.0.1.tgz#d37fcd13203298c0b94937d55c5a3527ed877875"
-  integrity sha512-FtbKelYtio2af5LDBWz3bWS6T03taHJAIv3evMrXuvoM50z5jbWoEMabPCk0A0JqiLGBzAIDJWfR9gSsvRYZHA==
+otplib@11.0.0:
+  version "11.0.0"
+  resolved "https://registry.yarnpkg.com/otplib/-/otplib-11.0.0.tgz#1b8b8691184e6022dac0b569ebd104c1e5451498"
+  integrity sha512-B9qxrYj0FU22nF39XOcKiK+yHdeg4uoensQQsRRlVnGJ26jugZNmJS2Wc9VinR+SjTfVpjDhzxZzpcXzlRkk5Q==
   dependencies:
     thirty-two "1.0.2"
 

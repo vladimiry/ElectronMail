@@ -2,10 +2,16 @@ import {InMemoryOptions, SyncOrAsyncLimiter} from "rolling-rate-limiter";
 
 import {AccountType} from "src/shared/model/account";
 import {IPC_MAIN_API} from "src/shared/api/main";
-import {buildLoggerBundle} from "src/electron-preload/util";
+import {PROTONMAIL_IPC_WEBVIEW_API} from "src/shared/api/webview/protonmail";
+import {TUTANOTA_IPC_WEBVIEW_API} from "src/shared/api/webview/tutanota";
+import {registerDocumentClickEventListener} from "src/electron-preload/events-handling";
+
+type ProtonmailWebViewClient = { [k in Extract<AccountType, "protonmail">]: typeof PROTONMAIL_IPC_WEBVIEW_API.buildClient };
+type TutanotaWebViewClient = { [k in Extract<AccountType, "tutanota">]: typeof TUTANOTA_IPC_WEBVIEW_API.buildClient };
 
 export interface ElectronExposure {
-    buildLoggerBundle: typeof buildLoggerBundle;
+    registerDocumentClickEventListener: typeof registerDocumentClickEventListener;
+    buildIpcWebViewClient: ProtonmailWebViewClient & TutanotaWebViewClient;
     buildIpcMainClient: typeof IPC_MAIN_API.buildClient;
     require: {
         "rolling-rate-limiter": () => (options: InMemoryOptions) => SyncOrAsyncLimiter;

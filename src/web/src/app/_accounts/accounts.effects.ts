@@ -29,7 +29,7 @@ import {State} from "src/web/src/app/store/reducers/accounts";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/src/util";
 import {isDatabaseBootstrapped} from "src/shared/util";
 
-const rateLimiter = __ELECTRON_EXPOSURE__.require["rolling-rate-limiter"]();
+const rollingRateLimiter = __ELECTRON_EXPOSURE__.require["rolling-rate-limiter"]();
 const _logger = getZoneNameBoundWebLogger("[accounts.effects]");
 
 @Injectable()
@@ -38,7 +38,7 @@ export class AccountsEffects {
         return ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread: 0, loggedIn: false}}});
     }
 
-    twoPerTenSecLimiter = rateLimiter({
+    twoPerTenSecLimiter = rollingRateLimiter({
         interval: ONE_SECOND_MS * 10,
         maxInInterval: 2,
     });

@@ -1,6 +1,6 @@
 import {Configuration} from "webpack";
 
-import {buildBaseConfig, environment, environmentSate, rootRelateivePath, srcRelateivePath} from "./lib";
+import {buildBaseConfig, environment, srcRelateivePath} from "./lib";
 
 const configs = [
     buildRendererConfig(
@@ -54,14 +54,6 @@ function buildRendererConfig(entry: Configuration["entry"], tsConfigFile: string
                     },
                 ],
             },
-            ...(environmentSate.development && {
-                resolve: {
-                    alias: {
-                        [rootRelateivePath("./node_modules/electron-log/lib/original-console.js")]:
-                            srcRelateivePath("./webpack/lib/electron-log/console-stub.ts"),
-                    },
-                },
-            }),
         },
         {
             tsConfigFile,

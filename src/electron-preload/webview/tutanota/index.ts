@@ -6,7 +6,7 @@ import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {configureProviderApp} from "./configure-provider-app";
 import {curryFunctionMembers} from "src/shared/util";
 import {registerApi} from "./api";
-import {registerDocumentKeyDownEventListener} from "src/electron-preload/key-binding";
+import {registerDocumentClickEventListener, registerDocumentKeyDownEventListener} from "src/electron-preload/events-handling";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[index]");
 
@@ -24,3 +24,4 @@ timer(0, ONE_SECOND_MS).pipe(
 });
 
 registerDocumentKeyDownEventListener(document, _logger);
+registerDocumentClickEventListener(document, _logger);

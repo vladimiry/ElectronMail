@@ -79,7 +79,10 @@
             </div>
         </div>
         <div class="form-group">
-            <label>Two Factor Secret Key</label>
+            <label class="d-block">
+                Two Factor Secret Key
+                <button type="button" class="btn btn-link p-0 d-block pull-right" (click)="open2faEnablingIssue()">description</button>
+            </label>
             <input type="password" class="form-control" formControlName="twoFactorCode"
                    [ngClass]="controls.twoFactorCode.dirty ? {'is-invalid': controls.twoFactorCode.invalid, 'is-valid': controls.twoFactorCode.valid} : {}">
         </div>

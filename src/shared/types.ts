@@ -24,4 +24,4 @@ export interface EntryUrlItem {
 
 export type NumberString = string;
 
-export type Logger = Omit<typeof logger, "transports">;
+export type Logger = Omit<typeof logger, "transports" | "log">;

@@ -65,7 +65,7 @@ const tsConfigCompilerOptions: ts.CompilerOptions = (() => {
 })();
 const baseConfig = buildBaseConfig(
     {
-        target: "electron-renderer",
+        target: "web",
         entry: {
             "app": [
                 ...(aot ? [] : ["core-js/es7/reflect"]),
@@ -73,7 +73,19 @@ const baseConfig = buildBaseConfig(
             ],
             "search-in-page-browser-view": webSrcPath("./search-in-page-browser-view/index.ts"),
         },
-        output: {path: outputRelateivePath("./web")},
+        output: {
+            path: outputRelateivePath("./web"),
+        },
+        node: {
+            path: "empty",
+            fs: "empty",
+            __dirname: false,
+            __filename: false,
+            Buffer: false,
+            global: false,
+            process: false,
+            setImmediate: false,
+        },
         module: {
             rules: [
                 {

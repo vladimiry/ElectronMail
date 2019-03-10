@@ -3,10 +3,10 @@ import {
     ChangeDetectionStrategy,
     Component,
     ElementRef,
-    HostListener,
     Input,
     NgZone,
     OnDestroy,
+    OnInit,
     QueryList,
     ViewChildren,
 } from "@angular/core";
@@ -14,13 +14,14 @@ import {BehaviorSubject, EMPTY, Subject, Subscription, combineLatest, fromEvent,
 import {Store, select} from "@ngrx/store";
 import {delay, distinctUntilChanged, filter, map, mergeMap, pairwise, startWith, take} from "rxjs/operators";
 
-import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS, NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
+import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS} from "src/web/src/app/store/actions";
 import {AccountsSelectors} from "src/web/src/app/store/selectors";
 import {DbViewAbstractComponent} from "src/web/src/app/_db-view/db-view-abstract.component";
 import {DbViewMailComponent} from "src/web/src/app/_db-view/db-view-mail.component";
 import {Mail, View} from "src/shared/model/database";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {State} from "src/web/src/app/store/reducers/db-view";
+import {getZoneNameBoundWebLogger} from "src/web/src/util";
 
 @Component({
     selector: "email-securely-app-db-view-mail-body",
@@ -28,7 +29,7 @@ import {State} from "src/web/src/app/store/reducers/db-view";
     styleUrls: ["./db-view-mail-body.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DbViewMailBodyComponent extends DbViewAbstractComponent implements OnDestroy, AfterViewInit {
+export class DbViewMailBodyComponent extends DbViewAbstractComponent implements OnInit, OnDestroy, AfterViewInit {
     @Input()
     selectedFolderData?: View.Folder;
 
@@ -82,6 +83,8 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
 
     private bodyIframe?: HTMLIFrameElement;
 
+    private elementRefClickSubscription?: ReturnType<typeof __ELECTRON_EXPOSURE__.registerDocumentClickEventListener>;
+
     private readonly subscription = new Subscription();
 
     private readonly bodyIframeEventHandler = ((event: Event) => {
@@ -93,6 +96,8 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         handler: this.bodyIframeEventHandler,
     }));
 
+    private readonly logger = getZoneNameBoundWebLogger();
+
     constructor(
         store: Store<State>,
         private elementRef: ElementRef,
@@ -101,12 +106,23 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         super(store);
     }
 
+    ngOnInit() {
+        this.elementRefClickSubscription = __ELECTRON_EXPOSURE__.registerDocumentClickEventListener(
+            this.elementRef.nativeElement,
+            this.logger,
+        );
+        this.subscription.add({unsubscribe: this.elementRefClickSubscription.unsubscribe});
+    }
+
     ngAfterViewInit() {
         this.subscription.add(
             this.iframeBodyEventSubject$.pipe(
                 filter(({type}) => type === "click"),
-            ).subscribe((event) => {
-                this.click(event);
+                map((event) => event as MouseEvent),
+            ).subscribe(async (event) => {
+                if (this.elementRefClickSubscription) {
+                    await this.elementRefClickSubscription.eventHandler(event);
+                }
             }),
         );
 
@@ -137,23 +153,6 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
                 }
             }),
         );
-    }
-
-    @HostListener("click", ["$event"])
-    click(event: Event) {
-        const {element, link, href} = this.resolveLinkHref(event.target as Element);
-
-        if (!link || element.classList.contains("prevent-default-event")) {
-            return;
-        }
-
-        event.preventDefault();
-
-        if (!href) {
-            return;
-        }
-
-        this.store.dispatch(NAVIGATION_ACTIONS.OpenExternal({url: href}));
     }
 
     isEmptyNodes(nodes: View.ConversationNode[]): boolean {
@@ -260,39 +259,5 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         // TODO cache resolved DOM elements
         return ([].slice.call(document.querySelectorAll("html > head > link[rel='stylesheet']")) as HTMLLinkElement[])
             .find((link) => link.href.includes("vendors~app.css"));
-    }
-
-    private resolveLinkHref(element: Element): { element: Element, link?: boolean; href?: string } {
-        const parentScanState: {
-            element: (Node & ParentNode) | null | Element;
-            link?: boolean;
-            iterationAllowed: number;
-        } = {element, iterationAllowed: 3};
-
-        while (parentScanState.element && parentScanState.iterationAllowed) {
-            if (
-                parentScanState.element.nodeType === Node.ELEMENT_NODE
-                &&
-                ("tagName" in parentScanState.element && parentScanState.element.tagName.toLowerCase() === "a")
-            ) {
-                parentScanState.link = true;
-                break;
-            }
-            parentScanState.element = parentScanState.element.parentNode;
-            parentScanState.iterationAllowed--;
-        }
-
-        const result: ReturnType<typeof DbViewMailBodyComponent.prototype.resolveLinkHref> = {
-            element: parentScanState.element as Element,
-            link: parentScanState.link,
-        };
-
-        if (!result.link) {
-            return result;
-        }
-
-        result.href = (result.element as HTMLLinkElement).href;
-
-        return result;
     }
 }

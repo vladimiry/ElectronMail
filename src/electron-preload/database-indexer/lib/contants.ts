@@ -1,7 +1,9 @@
-import htmlToText from "html-to-text";
+import {remote} from "electron"; // tslint:disable-line:no-import-zones
 
 import {INDEXABLE_MAIL_FIELDS_STUB_CONTAINER, IndexableMail, MailAddress} from "src/shared/model/database";
 import {buildLoggerBundle} from "src/electron-preload/util";
+
+const htmlToText: { fromString: (value: string) => string } = remote.require("html-to-text");
 
 export const LOGGER = buildLoggerBundle("[preload: database-indexer]");
 

@@ -171,6 +171,12 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         }));
     }
 
+    open2faEnablingIssue() {
+        this.store.dispatch(NAVIGATION_ACTIONS.OpenExternal({
+            url: "https://github.com/vladimiry/email-securely-app/issues/10",
+        }));
+    }
+
     ngOnDestroy() {
         this.unSubscribe$.next();
         this.unSubscribe$.complete();

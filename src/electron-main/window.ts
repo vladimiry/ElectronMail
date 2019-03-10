@@ -5,19 +5,23 @@ import {equals} from "ramda";
 import {BuildEnvironment} from "src/shared/model/common";
 import {Context} from "./model";
 
-const developmentEnvironment = (process.env.NODE_ENV as BuildEnvironment) === "development";
 const browserWindowState: { forceClose: boolean } = {forceClose: false};
 const appBeforeQuitEventArgs: ["before-quit", (event: Electron.Event) => void] = [
     "before-quit",
     () => browserWindowState.forceClose = true,
 ];
 const commonWebPreferences: BrowserWindowConstructorOptions["webPreferences"] = {
-    // enableRemoteModule: false, // TODO disable "remote" module on https://github.com/electron/electron/issues/15112 resolving
-    nodeIntegration: developmentEnvironment,
+    // TODO disable "remote" module
+    //      currently these things depend on it:
+    //      - "rolling-rate-limiter" module
+    //      - "html-to-text" module
+    //      - e2e tests preload script
+    // enableRemoteModule: false,
+    nodeIntegration: false,
     nodeIntegrationInWorker: false,
     webviewTag: true,
     webSecurity: true,
-    // sandbox: true, // TODO explore "sandbox" mode
+    sandbox: true,
     disableBlinkFeatures: "Auxclick",
 };
 
@@ -82,7 +86,7 @@ export async function initBrowserWindow(ctx: Context): Promise<BrowserWindow> {
     // execute after handlers subscriptions
     await keepBrowserWindowState(ctx, browserWindow);
 
-    if (developmentEnvironment) {
+    if ((process.env.NODE_ENV as BuildEnvironment) === "development") {
         browserWindow.webContents.openDevTools();
     }
 

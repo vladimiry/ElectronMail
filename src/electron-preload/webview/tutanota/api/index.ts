@@ -1,5 +1,5 @@
 import {EMPTY, Observable, from, interval, merge, of} from "rxjs";
-import {authenticator} from "otplib";
+import {authenticator} from "otplib/otplib-browser";
 import {buffer, concatMap, debounceTime, distinctUntilChanged, map, tap} from "rxjs/operators";
 import {pick} from "ramda";
 

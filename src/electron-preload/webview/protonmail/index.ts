@@ -2,7 +2,7 @@ import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {configureProviderApp} from "./configure-provider-app";
 import {curryFunctionMembers} from "src/shared/util";
 import {registerApi} from "./api";
-import {registerDocumentKeyDownEventListener} from "src/electron-preload/key-binding";
+import {registerDocumentClickEventListener, registerDocumentKeyDownEventListener} from "src/electron-preload/events-handling";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[index]");
 
@@ -12,6 +12,7 @@ registerApi();
 
 (() => {
     registerDocumentKeyDownEventListener(document, _logger);
+    registerDocumentClickEventListener(document, _logger);
 
     // message editing is happening inside an iframe
     // so we call "registerDocumentKeyDownEventListener" on every dynamically created editing iframe
@@ -25,16 +26,24 @@ registerApi();
         ) {
             return;
         }
+
         const iframe = node.querySelector("iframe");
         const iframeDocument = iframe && (iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document));
+
         if (!iframeDocument) {
             return;
         }
+
         registerDocumentKeyDownEventListener(iframeDocument, _logger);
+        registerDocumentClickEventListener(iframeDocument, _logger);
     };
+
     new MutationObserver((mutations) => {
         for (const mutation of mutations) {
             mutation.addedNodes.forEach(processAddedNode);
         }
-    }).observe(document, {childList: true, subtree: true});
+    }).observe(
+        document,
+        {childList: true, subtree: true},
+    );
 })();

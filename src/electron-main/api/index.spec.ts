@@ -41,6 +41,10 @@ const OPTIONS = Object.freeze({
 });
 
 const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => ImplementationResult> = {
+    log: async (t) => {
+        t.pass(`TODO test "log" endpoint`);
+    },
+
     addAccount: async (t) => {
         const {
             endpoints,
@@ -226,49 +230,40 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         setPasswordSpy.calledWithExactly(payload.newPassword);
     },
 
-    // TODO test "dbPatch" API
     dbPatch: (t) => {
-        t.pass();
+        t.pass(`TODO test "dbPatch" endpoint`);
     },
 
-    // TODO test "dbGetAccountMetadata" API
     dbGetAccountMetadata: (t) => {
-        t.pass();
+        t.pass(`TODO test "dbGetAccountMetadata" endpoint`);
     },
 
-    // TODO test "dbGetAccountMetadata" API
     dbGetAccountDataView: (t) => {
-        t.pass();
+        t.pass(`TODO test "dbGetAccountMetadata" endpoint`);
     },
 
-    // TODO test "dbGetAccountMail" API
     dbGetAccountMail: (t) => {
-        t.pass();
+        t.pass(`TODO test "dbGetAccountMail" endpoint`);
     },
 
-    // TODO test "dbExport" API
     dbExport: (t) => {
-        t.pass();
+        t.pass(`TODO test "dbExport" endpoint`);
     },
 
-    // TODO test "dbSearchRootConversationNodes" API
     dbSearchRootConversationNodes: (t) => {
-        t.pass();
+        t.pass(`TODO test "dbSearchRootConversationNodes" endpoint`);
     },
 
-    // TODO test "dbFullTextSearch" API
     dbFullTextSearch: (t) => {
-        t.pass();
+        t.pass(`TODO test "dbFullTextSearch" endpoint`);
     },
 
-    // TODO test "dbIndexerOn" API
     dbIndexerOn: (t) => {
-        t.pass();
+        t.pass(`TODO test "dbIndexerOn" endpoint`);
     },
 
-    // TODO test "dbIndexerNotification" API
     dbIndexerNotification: (t) => {
-        t.pass();
+        t.pass(`TODO test "dbIndexerNotification" endpoint`);
     },
 
     init: async (t) => {

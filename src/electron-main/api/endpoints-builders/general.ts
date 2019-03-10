@@ -1,4 +1,5 @@
 import aboutWindow from "about-window";
+import electronLog from "electron-log";
 import path from "path";
 import {EMPTY, from, of, throwError} from "rxjs";
 import {IpcMainApiActionContext, IpcMainApiService} from "electron-rpc-api";
@@ -13,6 +14,7 @@ import {Endpoints, IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main"
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 
 type ApiMethods =
+    | "log"
     | "openAboutWindow"
     | "openExternal"
     | "openSettingsFolder"
@@ -25,6 +27,11 @@ type ApiMethods =
 
 export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiMethods>> {
     const endpoints: Pick<Endpoints, ApiMethods> = {
+        log: ({level, dataArgs}) => {
+            electronLog[level](...dataArgs);
+            return of(null);
+        },
+
         openAboutWindow: () => {
             aboutWindow({
                 icon_path: ctx.locations.icon,

@@ -7,9 +7,7 @@ import {concat, concatMap, delay, filter, map, mergeMap, retryWhen, switchMap, t
 import {AccountType} from "src/shared/model/account";
 import {DEFAULT_API_CALL_TIMEOUT, ONE_SECOND_MS} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
-import {PROTONMAIL_IPC_WEBVIEW_API} from "src/shared/api/webview/protonmail";
 import {State} from "src/web/src/app/store/reducers/options";
-import {TUTANOTA_IPC_WEBVIEW_API} from "src/shared/api/webview/tutanota";
 import {WebViewApi} from "src/shared/api/webview/common";
 import {getZoneNameBoundWebLogger} from "src/web/src/util";
 
@@ -58,9 +56,12 @@ export class ElectronService implements OnDestroy {
     }
 
     webViewClient<T extends AccountType>(webView: Electron.WebviewTag, type: T, options?: CallOptions) {
-        // TODO TS: get rid of "as any"
-        const api: WebViewApi<T> = type === "protonmail" ? PROTONMAIL_IPC_WEBVIEW_API : TUTANOTA_IPC_WEBVIEW_API as any;
-        const apiClient = api.buildClient(webView, {options: this.buildApiCallOptions(options)});
+        const client: ReturnType<WebViewApi<T>["buildClient"]> = __ELECTRON_EXPOSURE__.buildIpcWebViewClient[type](
+            webView,
+            {
+                options: this.buildApiCallOptions(options),
+            },
+        );
 
         // TODO consider removing "ping" API
         // TODO it's sufficient to "ping" API initialization only once since there is no dynamic webview api de-registration happening
@@ -68,7 +69,8 @@ export class ElectronService implements OnDestroy {
             // tslint:disable-next-line:ban
             switchMap(({webViewApiPing}) => {
                 const pingStart = Number(new Date());
-                return from(apiClient("ping", {timeoutMs: 1})({zoneName: logger.zoneName()}).pipe(
+
+                return from(client("ping", {timeoutMs: 1})({zoneName: logger.zoneName()}).pipe(
                     retryWhen((errors) => errors.pipe(
                         takeWhile(() => (Number(new Date()) - pingStart) < webViewApiPing),
                         delay(this.webViewApiPingIntervalMs),
@@ -79,7 +81,7 @@ export class ElectronService implements OnDestroy {
         );
 
         return ping$.pipe(
-            concatMap(() => of(apiClient)),
+            concatMap(() => of(client)),
         );
     }
 

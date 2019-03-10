@@ -1,6 +1,7 @@
 // tslint:disable:no-unused-variable // TODO figure why tslint detects some imports as unused
 
 import {ApiMethod, ApiMethodNoArgument, IpcMainApiService} from "electron-rpc-api";
+import {LogLevel} from "electron-log";
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import {UnionOf, ofType, unionize} from "@vladimiry/unionize";
 
@@ -19,6 +20,8 @@ import {ElectronContextLocations} from "src/shared/model/electron";
 import {Omit} from "src/shared/types";
 
 export interface Endpoints {
+    log: ApiMethod<{ level: LogLevel; dataArgs: any[]; }, null>;
+
     addAccount: ApiMethod<AccountConfigCreatePatch, Settings>;
 
     updateAccount: ApiMethod<AccountConfigUpdatePatch, Settings>;

@@ -1,7 +1,12 @@
+import electron from "electron"; // tslint:disable-line:no-import-zones
+
 import "./build-env-based/production";
 
-// tslint:disable-next-line:no-eval
-(window as any).electronRequire = eval("require");
+(window as any).electronRequire = (name: string): any => {
+    return name === "electron"
+        ? electron
+        : electron.remote.require(name);
+};
 
 document.addEventListener("DOMContentLoaded", () => {
     const content = JSON.stringify({

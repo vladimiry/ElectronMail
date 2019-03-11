@@ -81,6 +81,13 @@
         <div class="form-group">
             <label class="d-block pull-left">
                 Two Factor Secret Key
+                <i
+                    popover="This is not the one time password your phone generates for you but a secret seed. Please follow the description link for details."
+                    class="fa fa-info-circle text-warning align-self-center"
+                    container="body"
+                    placement="bottom"
+                    triggers="mouseenter:mouseleave"
+                ></i>
             </label>
             <button type="button" class="btn btn-link p-0 d-block pull-right" (click)="open2faEnablingIssue()">description</button>
             <input type="password" class="form-control" formControlName="twoFactorCode"

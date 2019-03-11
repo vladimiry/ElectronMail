@@ -94,7 +94,8 @@
                    [ngClass]="controls.twoFactorCode.dirty ? {'is-invalid': controls.twoFactorCode.invalid, 'is-valid': controls.twoFactorCode.valid} : {}">
         </div>
         <div class="form-group" *ngIf="controls.type.value == 'protonmail'">
-            <label>Mail Password</label>
+            <label class="d-block pull-left">Mail Password</label>
+            <button type="button" class="btn btn-link p-0 d-block pull-right" (click)="openMailPasswordDescription()">description</button>
             <input type="password" class="form-control" formControlName="mailPassword"
                    [ngClass]="controls.mailPassword.dirty ? {'is-invalid': controls.mailPassword.invalid, 'is-valid': controls.mailPassword.valid} : {}">
         </div>

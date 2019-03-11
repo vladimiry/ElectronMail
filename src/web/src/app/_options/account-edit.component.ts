@@ -177,6 +177,12 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         }));
     }
 
+    openMailPasswordDescription() {
+        this.store.dispatch(NAVIGATION_ACTIONS.OpenExternal({
+            url: "https://protonmail.com/support/knowledge-base/what-is-the-mailbox-password/",
+        }));
+    }
+
     ngOnDestroy() {
         this.unSubscribe$.next();
         this.unSubscribe$.complete();

@@ -100,7 +100,7 @@
                    [ngClass]="controls.mailPassword.dirty ? {'is-invalid': controls.mailPassword.invalid, 'is-valid': controls.mailPassword.valid} : {}">
         </div>
         <div class="card mb-3">
-            <div class="card-header">
+            <div class="card-header" [ngStyle]="advancedBlockCollapsed && {'border-bottom-width': '0'}">
                 <button type="button" class="btn btn-link p-0" (click)="advancedBlockCollapsed = !advancedBlockCollapsed">
                     Advanced
                 </button>

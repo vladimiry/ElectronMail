@@ -4,7 +4,7 @@ import {from} from "rxjs";
 import {Account, Database, FindInPage, General, TrayIcon} from "./endpoints-builders";
 import {Context} from "src/electron-main/model";
 import {Endpoints, IPC_MAIN_API} from "src/shared/api/main";
-import {PROJECT_NAME} from "src/shared/constants";
+import {PACKAGE_NAME} from "src/shared/constants";
 import {attachFullTextIndexWindow, detachFullTextIndexWindow} from "src/electron-main/window/full-text-search";
 import {buildSettingsAdapter} from "src/electron-main/util";
 import {clearSessionsCache, initSessionByAccount} from "src/electron-main/session";
@@ -52,7 +52,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
                 const errorMessage = String(error.message).toLowerCase();
 
                 ctx.snapPasswordManagerServiceHint = (
-                    errorMessage.includes(PROJECT_NAME)
+                    errorMessage.includes(PACKAGE_NAME)
                     &&
                     errorMessage.includes("snap")
                     && (

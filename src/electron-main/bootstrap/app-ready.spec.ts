@@ -7,7 +7,7 @@ import {of} from "rxjs";
 import {Config} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
 import {INITIAL_STORES} from "src/electron-main/constants";
-import {PROJECT_NAME} from "src/shared/constants";
+import {PACKAGE_NAME} from "src/shared/constants";
 
 test.serial("appReadyHandler(): default", async (t) => {
     const ctx = buildContext();
@@ -77,7 +77,7 @@ function buildMocks() {
             },
         },
         "src/electron-main/session": {
-            getDefaultSession: sinon.stub().returns({[`${PROJECT_NAME}_session_id`]: 123}),
+            getDefaultSession: sinon.stub().returns({[`${PACKAGE_NAME}_session_id`]: 123}),
             initSession: sinon.spy(),
         },
         "src/electron-main/api": {

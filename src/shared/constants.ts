@@ -4,8 +4,8 @@ import {AccountType} from "src/shared/model/account";
 import {EntryUrlItem} from "./types";
 
 const {
-    name: PROJECT_NAME,
-    version: PROJECT_VERSION,
+    name: PACKAGE_NAME,
+    version: PACKAGE_VERSION,
 } = require("package.json"); // tslint:disable-line:no-var-requires no-import-zones
 
 export const PRODUCT_NAME = "ElectronMail";
@@ -13,8 +13,8 @@ export const PRODUCT_NAME = "ElectronMail";
 export const REPOSITORY_NAME = PRODUCT_NAME;
 
 export {
-    PROJECT_NAME,
-    PROJECT_VERSION,
+    PACKAGE_NAME,
+    PACKAGE_VERSION,
 };
 
 // user data dir, defaults to app.getPath("userData")

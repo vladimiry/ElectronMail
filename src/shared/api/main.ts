@@ -17,7 +17,7 @@ import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {DbPatch} from "./common";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {Omit} from "src/shared/types";
-import {PROJECT_NAME} from "src/shared/constants";
+import {PACKAGE_NAME} from "src/shared/constants";
 
 export interface Endpoints {
     log: ApiMethod<{ level: LogLevel; dataArgs: any[]; }, null>;
@@ -122,7 +122,7 @@ export interface Endpoints {
     notification: ApiMethodNoArgument<UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>>;
 }
 
-export const IPC_MAIN_API = new IpcMainApiService<Endpoints>({channel: `${PROJECT_NAME}:ipcMain-api`});
+export const IPC_MAIN_API = new IpcMainApiService<Endpoints>({channel: `${PACKAGE_NAME}:ipcMain-api`});
 
 export const IPC_MAIN_API_DB_INDEXER_ON_ACTIONS = unionize({
         Bootstrapped: ofType<{}>(),

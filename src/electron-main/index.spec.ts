@@ -2,7 +2,7 @@ import rewiremock from "rewiremock";
 import sinon from "sinon";
 import test from "ava";
 
-import {PROJECT_NAME} from "src/shared/constants";
+import {PACKAGE_NAME} from "src/shared/constants";
 
 test.serial("flow", async (t) => {
     const mocks = buildMocks();
@@ -54,7 +54,7 @@ function buildMocks() {
             bootstrapInit: sinon.spy(),
         },
         "./util": {
-            initContext: sinon.stub().returns({[`${PROJECT_NAME}_context_id`]: 123}),
+            initContext: sinon.stub().returns({[`${PACKAGE_NAME}_context_id`]: 123}),
         },
         "./protocol": {
             registerStandardSchemes: sinon.spy(),

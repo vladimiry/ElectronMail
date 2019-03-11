@@ -5,12 +5,12 @@ import {Subject} from "rxjs";
 import {map, takeUntil} from "rxjs/operators";
 
 import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
-import {ONE_SECOND_MS, PROJECT_NAME} from "src/shared/constants";
+import {ONE_SECOND_MS, PACKAGE_NAME} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {State} from "src/web/src/app/store/reducers/options";
 
 export abstract class LoginBaseComponent implements AfterViewInit, OnInit, OnDestroy {
-    projectName = PROJECT_NAME;
+    projectName = PACKAGE_NAME;
 
     keytarUnsupportedDetails: boolean = false;
 

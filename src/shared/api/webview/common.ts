@@ -6,12 +6,12 @@ import {Model} from "pubsub-to-stream-api";
 import {AccountType} from "src/shared/model/account";
 import {DbAccountPk, Mail, MemoryDbAccount} from "src/shared/model/database";
 import {LoginFieldContainer, PasswordFieldContainer} from "src/shared/model/container";
-import {PROJECT_NAME} from "src/shared/constants";
+import {PACKAGE_NAME} from "src/shared/constants";
 import {ProtonmailApi} from "./protonmail";
 import {TutanotaApi} from "./tutanota";
 import {ZoneApiParameter} from "src/shared/api/common";
 
-export const channel = `${PROJECT_NAME}:webview-api`;
+export const channel = `${PACKAGE_NAME}:webview-api`;
 
 export interface CommonWebViewApi<T extends AccountType> {
     ping: ApiMethod<ZoneApiParameter, null>;

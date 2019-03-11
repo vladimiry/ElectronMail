@@ -79,10 +79,10 @@
             </div>
         </div>
         <div class="form-group">
-            <label class="d-block">
+            <label class="d-block pull-left">
                 Two Factor Secret Key
-                <button type="button" class="btn btn-link p-0 d-block pull-right" (click)="open2faEnablingIssue()">description</button>
             </label>
+            <button type="button" class="btn btn-link p-0 d-block pull-right" (click)="open2faEnablingIssue()">description</button>
             <input type="password" class="form-control" formControlName="twoFactorCode"
                    [ngClass]="controls.twoFactorCode.dirty ? {'is-invalid': controls.twoFactorCode.invalid, 'is-valid': controls.twoFactorCode.valid} : {}">
         </div>
@@ -99,7 +99,7 @@
             </div>
             <div class="card-body" [collapse]="advancedBlockCollapsed">
                 <div class="form-group">
-                    <label>
+                    <label class="d-block pull-left">
                         Proxy Rules
                         <i
                             popover="Rules indicating which proxies to use."
@@ -109,17 +109,14 @@
                             triggers="mouseenter:mouseleave"
                         ></i>
                     </label>
-                    <input type="text" class="form-control" formControlName="proxyRules">
-                    <div class="text-muted mt-2">
-                        <code>address:80</code>, or <code>socks4://192.30.213.112</code>, see
-                        <button type="button" class="btn btn-link p-0" (click)="openProxyDocsPage()"
+                    <button type="button" class="btn btn-link p-0 d-block pull-right" (click)="openProxyDocsPage()"
                             title="session.setProxy(config, callback)">
-                            documentation
-                        </button>
-                    </div>
+                        documentation
+                    </button>
+                    <input type="text" class="form-control" formControlName="proxyRules">
                 </div>
                 <div>
-                    <label>
+                    <label class="d-block pull-left">
                         Proxy Bypass Rules
                         <i
                             popover="Rules indicating which URLs should bypass the proxy settings."
@@ -129,14 +126,11 @@
                             triggers="mouseenter:mouseleave"
                         ></i>
                     </label>
-                    <input type="text" class="form-control" formControlName="proxyBypassRules">
-                    <div class="text-muted mt-2">
-                        <code>&#x3C;local&#x3E;</code>, or <code>"foobar.com:99", "x..y.com:99", ".com"</code>, see
-                        <button type="button" class="btn btn-link p-0" (click)="openProxyDocsPage()"
+                    <button type="button" class="btn btn-link p-0 d-block pull-right" (click)="openProxyDocsPage()"
                             title="session.setProxy(config, callback)">
-                            documentation
-                        </button>
-                    </div>
+                        documentation
+                    </button>
+                    <input type="text" class="form-control" formControlName="proxyBypassRules">
                 </div>
             </div>
         </div>

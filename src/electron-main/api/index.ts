@@ -5,7 +5,7 @@ import {Account, Database, FindInPage, General, TrayIcon} from "./endpoints-buil
 import {Context} from "src/electron-main/model";
 import {Endpoints, IPC_MAIN_API} from "src/shared/api/main";
 import {PROJECT_NAME} from "src/shared/constants";
-import {attachFullTextIndexWindow, detachFullTextIndexWindow} from "src/electron-main/window";
+import {attachFullTextIndexWindow, detachFullTextIndexWindow} from "src/electron-main/window/full-text-search";
 import {buildSettingsAdapter} from "src/electron-main/util";
 import {clearSessionsCache, initSessionByAccount} from "src/electron-main/session";
 import {deletePassword, getPassword, setPassword} from "src/electron-main/keytar";

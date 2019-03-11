@@ -7,7 +7,7 @@ import {Context} from "src/electron-main/model";
 import {Endpoints} from "src/shared/api/main";
 import {Unpacked} from "src/shared/types";
 import {curryFunctionMembers} from "src/shared/util";
-import {initFindInPageBrowserView} from "src/electron-main/window";
+import {initFindInPageBrowserView} from "src/electron-main/window/find-in-page";
 
 type ApiMethods =
     | "findInPageDisplay"

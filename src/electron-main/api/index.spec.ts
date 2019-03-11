@@ -576,7 +576,7 @@ async function buildMocks() {
             deletePassword: sinon.spy(),
             setPassword: sinon.spy(),
         },
-        "src/electron-main/window": {
+        "src/electron-main/window/full-text-search": {
             attachFullTextIndexWindow: sinon.stub().returns(Promise.resolve()),
             detachFullTextIndexWindow: sinon.stub().returns(Promise.resolve()),
         },
@@ -629,7 +629,7 @@ test.beforeEach(async (t) => {
             const {mocks} = t.context;
             mock("electron").with(mocks.electron);
             mock(() => import("src/electron-main/keytar"))/*.callThrough()*/.with(mocks["src/electron-main/keytar"]);
-            mock(() => import("src/electron-main/window")).callThrough().with(mocks["src/electron-main/window"]);
+            mock(() => import("src/electron-main/window/full-text-search")).callThrough().with(mocks["src/electron-main/window/full-text-search"]); // tslint:disable-line:max-line-length
             mock(() => import("about-window")).callThrough().with(mocks["about-window"] as any);
             mock(() => import("src/shared/api/main")).callThrough().with(mocks["src/shared/api/main"]);
             mock(() => import("src/electron-main/session")).callThrough().with(mocks["src/electron-main/session"]);

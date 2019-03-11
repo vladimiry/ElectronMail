@@ -90,7 +90,7 @@ test.serial([
             mock(() => import("src/shared/api/main")).callThrough().with({
                 IPC_MAIN_API: {registerApi: sinon.stub()} as any,
             });
-            mock(() => import("src/electron-main/window")).callThrough().with({
+            mock(() => import("src/electron-main/window/full-text-search")).callThrough().with({
                 attachFullTextIndexWindow: sinon.stub().returns(Promise.resolve()),
                 detachFullTextIndexWindow: sinon.stub().returns(Promise.resolve()),
             });

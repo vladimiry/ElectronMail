@@ -9,8 +9,8 @@ import {getDefaultSession, initSession} from "./session";
 import {initApi} from "./api";
 import {initApplicationMenu} from "./menu";
 import {initAutoUpdate} from "./app-update";
-import {initBrowserWindow} from "./window";
 import {initContext} from "./util";
+import {initMainBrowserWindow} from "src/electron-main/window/main";
 import {initTray} from "./tray";
 import {initWebContentsCreatingHandlers} from "./web-contents";
 import {registerStandardSchemes} from "src/electron-main/protocol";
@@ -79,7 +79,7 @@ async function appReadyHandler() {
     initWebContentsCreatingHandlers(ctx);
 
     ctx.uiContext = {
-        browserWindow: await initBrowserWindow(ctx),
+        browserWindow: await initMainBrowserWindow(ctx),
         tray: await initTray(ctx),
         appMenu: await initApplicationMenu(ctx),
     };

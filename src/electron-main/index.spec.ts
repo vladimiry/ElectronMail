@@ -71,10 +71,10 @@ test.serial("workflow: appReadyHandler", async (t) => {
     t.true(m["./api"].initApi.calledAfter(m["./session"].initSession));
 
     t.true(m["./web-contents"].initWebContentsCreatingHandlers.calledWithExactly(t.context.ctx));
-    t.true(m["./web-contents"].initWebContentsCreatingHandlers.calledBefore(m["./window"].initBrowserWindow));
+    t.true(m["./web-contents"].initWebContentsCreatingHandlers.calledBefore(m["./window/main"].initMainBrowserWindow));
     t.true(m["./web-contents"].initWebContentsCreatingHandlers.calledBefore(m["./tray"].initTray));
 
-    t.true(m["./window"].initBrowserWindow.calledWithExactly(t.context.ctx));
+    t.true(m["./window/main"].initMainBrowserWindow.calledWithExactly(t.context.ctx));
 
     t.true(m["./tray"].initTray.calledWithExactly(t.context.ctx));
 
@@ -178,7 +178,7 @@ async function bootstrap(
             mock(() => import("./session")).callThrough().with(mocks["./session"]);
             mock(() => import("./api")).callThrough().with(mocks["./api"]);
             mock(() => import("./util")).callThrough().with(mocks["./util"]);
-            mock(() => import("./window")).callThrough().with(mocks["./window"]);
+            mock(() => import("./window/main")).callThrough().with(mocks["./window/main"]);
             mock(() => import("./tray")).callThrough().with(mocks["./tray"]);
             mock(() => import("./menu")).callThrough().with(mocks["./menu"]);
             mock(() => import("./web-contents")).with(mocks["./web-contents"]);
@@ -226,8 +226,8 @@ function buildMocks(testContext: TestContext) {
                 initContext: sinon.stub().returns(testContext.ctx),
                 activateBrowserWindow: sinon.spy(),
             },
-            "./window": {
-                initBrowserWindow: sinon.stub().returns(Promise.resolve({isDestroyed: sinon.spy()})),
+            "./window/main": {
+                initMainBrowserWindow: sinon.stub().returns(Promise.resolve({isDestroyed: sinon.spy()})),
             },
             "./tray": {
                 initTray: sinon.stub().returns(Promise.resolve({})),

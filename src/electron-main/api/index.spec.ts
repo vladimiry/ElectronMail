@@ -21,6 +21,7 @@ import {Unpacked} from "src/shared/types";
 import {accountPickingPredicate, pickBaseConfigProperties} from "src/shared/util";
 import {buildSettingsAdapter} from "src/electron-main/util";
 
+// TODO split this huge test file to pieces (test endpoints builders or even individual endpoints/methods)
 // TODO "immer" instead of cloning with "..."
 
 interface TestContext {

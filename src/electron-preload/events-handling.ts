@@ -107,8 +107,6 @@ export function registerDocumentClickEventListener<E extends ObservableElement>(
                 return;
             }
 
-            event.preventDefault();
-
             if (
                 !href
                 ||
@@ -116,6 +114,8 @@ export function registerDocumentClickEventListener<E extends ObservableElement>(
             ) {
                 return;
             }
+
+            event.preventDefault();
 
             await apiMethods.openExternal({url: href}).toPromise();
         };

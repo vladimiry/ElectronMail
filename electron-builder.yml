@@ -1,5 +1,6 @@
-appId: com.github.vladimiry.email-securely-app
+appId: "github.com/vladimiry/ElectronMail"
 artifactName: ${name}-${version}-${os}-${arch}.${ext}
+productName: "ElectronMail"
 
 publish: {provider: github, releaseType: draft, vPrefixedTagName: true}
 forceCodeSigning: false

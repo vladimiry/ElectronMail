@@ -3,19 +3,25 @@ import {LogLevel} from "electron-log";
 import {AccountType} from "src/shared/model/account";
 import {EntryUrlItem} from "./types";
 
-// tslint:disable-next-line:no-var-requires no-import-zones
-const {name: APP_NAME, version: APP_VERSION} = require("package.json");
+const {
+    name: PROJECT_NAME,
+    version: PROJECT_VERSION,
+} = require("package.json"); // tslint:disable-line:no-var-requires no-import-zones
+
+export const PRODUCT_NAME = "ElectronMail";
+
+export const REPOSITORY_NAME = PRODUCT_NAME;
 
 export {
-    APP_NAME,
-    APP_VERSION,
+    PROJECT_NAME,
+    PROJECT_VERSION,
 };
 
 // user data dir, defaults to app.getPath("userData")
-export const RUNTIME_ENV_USER_DATA_DIR = `EMAIL_SECURELY_APP_USER_DATA_DIR`;
+export const RUNTIME_ENV_USER_DATA_DIR = `ELECTRON_MAIL_USER_DATA_DIR`;
 
 // boolean
-export const RUNTIME_ENV_E2E = `EMAIL_SECURELY_APP_E2E`;
+export const RUNTIME_ENV_E2E = `ELECTRON_MAIL_E2E`;
 
 export const ONE_SECOND_MS = 1000;
 

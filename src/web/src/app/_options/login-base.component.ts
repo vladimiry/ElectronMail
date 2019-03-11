@@ -4,13 +4,13 @@ import {Store, select} from "@ngrx/store";
 import {Subject} from "rxjs";
 import {map, takeUntil} from "rxjs/operators";
 
-import {APP_NAME, ONE_SECOND_MS} from "src/shared/constants";
 import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
+import {ONE_SECOND_MS, PROJECT_NAME} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {State} from "src/web/src/app/store/reducers/options";
 
 export abstract class LoginBaseComponent implements AfterViewInit, OnInit, OnDestroy {
-    appName = APP_NAME;
+    projectName = PROJECT_NAME;
 
     keytarUnsupportedDetails: boolean = false;
 

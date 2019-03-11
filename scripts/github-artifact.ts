@@ -6,6 +6,7 @@ import Octokit, {ReposListReleasesParams, ReposListReleasesResponseItem} from "@
 import {equals, pick} from "ramda";
 import {promisify} from "util";
 
+import {REPOSITORY_NAME} from "src/shared/constants";
 import {consoleLevels, consoleLog} from "./lib";
 
 const [, , ACTION_TYPE_ARG, ARTIFACT_NAME]: Array<"upload" | "download" | string> = process.argv;
@@ -27,7 +28,7 @@ const CONST = {
     baseGitHubClientParams: (() => {
         const value: ReposListReleasesParams = {
             owner: "vladimiry",
-            repo: "email-securely-app",
+            repo: REPOSITORY_NAME,
         };
         return value;
     })(),
@@ -111,15 +112,15 @@ const CLIENT = new Octokit({
 });
 
 async function findArtifactsRelease(): Promise<ReposListReleasesResponseItem> {
-    const {data} = await CLIENT.repos.listReleases({...CONST.baseGitHubClientParams, per_page: 100});
+    const {data: releases} = await CLIENT.repos.listReleases({...CONST.baseGitHubClientParams, per_page: 100});
     const releaseSearchCriteriaKeys = Object.keys(CONST.releaseSearchCriteria);
-    const release = data.find((r) => {
-        return equals(pick(releaseSearchCriteriaKeys, r), CONST.releaseSearchCriteria);
+    const foundRelease = releases.find((release) => {
+        return equals(pick(releaseSearchCriteriaKeys, release), CONST.releaseSearchCriteria);
     });
 
-    if (!release) {
+    if (!foundRelease) {
         throw new Error(`Failed to find release artifacts release`);
     }
 
-    return release;
+    return foundRelease;
 }

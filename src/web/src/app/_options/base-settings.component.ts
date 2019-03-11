@@ -10,7 +10,7 @@ import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions
 import {State} from "src/web/src/app/store/reducers/options";
 
 @Component({
-    selector: "email-securely-app-base-settings",
+    selector: "electron-mail-base-settings",
     templateUrl: "./base-settings.component.html",
     styleUrls: ["./base-settings.component.scss"],
     preserveWhitespaces: true,

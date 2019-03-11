@@ -3,11 +3,11 @@ import ava, {TestInterface} from "ava";
 import sinon, {SinonStub} from "sinon";
 import {Fs, Store} from "fs-json-store";
 
-import {APP_NAME, ONE_SECOND_MS} from "src/shared/constants";
 import {Config} from "src/shared/model/options";
 import {Context} from "./model";
 import {Endpoints} from "src/shared/api/main";
 import {INITIAL_STORES} from "./constants";
+import {ONE_SECOND_MS, PRODUCT_NAME, REPOSITORY_NAME} from "src/shared/constants";
 import {asyncDelay} from "src/shared/util";
 
 interface TestContext {
@@ -31,8 +31,9 @@ test.serial("workflow: root", async (t) => {
     t.true(m.electron.app.requestSingleInstanceLock.called);
     t.true(m.electron.app.requestSingleInstanceLock.calledAfter(m["electron-unhandled"]));
 
-    const expectedAppId = "com.github.vladimiry.email-securely-app";
-    t.is(`com.github.vladimiry.${APP_NAME}`, expectedAppId);
+    const expectedAppId = "github.com/vladimiry/ElectronMail";
+    t.is(`github.com/vladimiry/${PRODUCT_NAME}`, expectedAppId);
+    t.is(`github.com/vladimiry/${REPOSITORY_NAME}`, expectedAppId);
     t.true(m.electron.app.setAppUserModelId.calledWithExactly(expectedAppId));
     t.true(m.electron.app.setAppUserModelId.calledAfter(m.electron.app.requestSingleInstanceLock));
 

@@ -10,7 +10,7 @@ import {State} from "src/web/src/app/store/reducers/db-view";
 type ComponentInterface = Pick<DbViewEntryComponentInterface, Extract<keyof DbViewEntryComponentInterface, string>>;
 
 @Component({
-    selector: "email-securely-app-db-view-entry",
+    selector: "electron-mail-db-view-entry",
     templateUrl: "./db-view-entry.component.html",
     styleUrls: ["./db-view-entry.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,

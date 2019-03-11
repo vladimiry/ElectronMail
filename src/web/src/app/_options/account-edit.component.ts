@@ -5,7 +5,7 @@ import {Observable, Subject, merge} from "rxjs";
 import {Store, select} from "@ngrx/store";
 import {concatMap, distinctUntilChanged, map, mergeMap, takeUntil} from "rxjs/operators";
 
-import {ACCOUNTS_CONFIG, ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX} from "src/shared/constants";
+import {ACCOUNTS_CONFIG, ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX, REPOSITORY_NAME} from "src/shared/constants";
 import {AccountConfig, AccountConfigProtonmail, AccountType} from "src/shared/model/account";
 import {AccountConfigCreatePatch, AccountConfigUpdatePatch} from "src/shared/model/container";
 import {EntryUrlItem} from "src/shared/types";
@@ -14,7 +14,7 @@ import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {State} from "src/web/src/app/store/reducers/options";
 
 @Component({
-    selector: "email-securely-app-account-edit",
+    selector: "electron-mail-account-edit",
     templateUrl: "./account-edit.component.html",
     styleUrls: ["./account-edit.component.scss"],
     preserveWhitespaces: true,
@@ -173,7 +173,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
 
     open2faEnablingIssue() {
         this.store.dispatch(NAVIGATION_ACTIONS.OpenExternal({
-            url: "https://github.com/vladimiry/email-securely-app/issues/10",
+            url: `https://github.com/vladimiry/${REPOSITORY_NAME}/issues/10`,
         }));
     }
 

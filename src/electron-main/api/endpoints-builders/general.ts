@@ -12,6 +12,7 @@ import {startWith} from "rxjs/operators";
 import {Context} from "src/electron-main/model";
 import {Endpoints, IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
+import {PRODUCT_NAME} from "src/shared/constants";
 
 type ApiMethods =
     | "log"
@@ -34,6 +35,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
 
         openAboutWindow: () => {
             aboutWindow({
+                product_name: PRODUCT_NAME,
                 icon_path: ctx.locations.icon,
                 package_json_dir: path.join(ctx.locations.appDir, ".."),
             });

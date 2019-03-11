@@ -74,16 +74,16 @@
         </fieldset>
     </div>
     <div class="d-flex flex-row flex-grow-1">
-        <email-securely-app-db-view-mails
+        <electron-mail-db-view-mails
             [dbAccountPk]="dbAccountPk"
             [mailsBundleKey]="'searchMailsBundle'"
-        ></email-securely-app-db-view-mails>
+        ></electron-mail-db-view-mails>
     </div>
 </div>
 <div *ngIf="selectedMail$ | async" class="flex-basis-half pr-2 d-flex flex-column">
     <div class="overflow-auto">
-        <email-securely-app-db-view-mail-body
+        <electron-mail-db-view-mail-body
             [dbAccountPk]="dbAccountPk"
-        ></email-securely-app-db-view-mail-body>
+        ></electron-mail-db-view-mail-body>
     </div>
 </div>

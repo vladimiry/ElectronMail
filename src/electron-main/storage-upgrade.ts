@@ -1,6 +1,6 @@
 import compareVersions from "compare-versions";
 
-import {ACCOUNTS_CONFIG, ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX, APP_VERSION} from "src/shared/constants";
+import {ACCOUNTS_CONFIG, ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX, PROJECT_VERSION} from "src/shared/constants";
 import {AccountConfig} from "src/shared/model/account";
 import {Config, Settings} from "src/shared/model/options";
 import {Database} from "./database";
@@ -142,7 +142,7 @@ const SETTINGS_UPGRADES: Record<string, (settings: Settings) => void> = {
         });
     },
     "2.0.0": (settings) => {
-        // dropping "online web clients" support, see https://github.com/vladimiry/email-securely-app/issues/80
+        // dropping "online web clients" support, see https://github.com/vladimiry/ElectronMail/issues/80
         const possibleEntryUrls: string[] = Object
             .values(ACCOUNTS_CONFIG)
             .reduce((list: EntryUrlItem[], {entryUrl}) => list.concat(entryUrl), [])
@@ -174,7 +174,7 @@ function upgrade<T extends Config | Settings>(entity: T, upgrades: Record<string
 
     Object
         .keys(upgrades)
-        .filter((upgraderVersion) => compareVersions(upgraderVersion, APP_VERSION) <= 0)
+        .filter((upgraderVersion) => compareVersions(upgraderVersion, PROJECT_VERSION) <= 0)
         .sort(compareVersions)
         .forEach((version) => upgrades[version](entity));
 
@@ -182,7 +182,7 @@ function upgrade<T extends Config | Settings>(entity: T, upgrades: Record<string
 }
 
 function isAppVersionLessThan(version: string): boolean {
-    return compareVersions(APP_VERSION, version) === -1;
+    return compareVersions(PROJECT_VERSION, version) === -1;
 }
 
 export async function upgradeDatabase(db: Database, accounts: Settings["accounts"]) {

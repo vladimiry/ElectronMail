@@ -9,7 +9,7 @@ import {ErrorsSelectors} from "src/web/src/app/store/selectors";
 import {State} from "src/web/src/app/store/reducers/errors";
 
 @Component({
-    selector: "email-securely-app-error-list-request",
+    selector: "electron-mail-error-list-request",
     templateUrl: "./error-list.component.html",
     styleUrls: ["./error-list.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,

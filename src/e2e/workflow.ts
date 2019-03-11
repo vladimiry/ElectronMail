@@ -13,7 +13,7 @@ import {Application} from "spectron";
 import {Store} from "fs-json-store";
 import {promisify} from "util";
 
-import {ACCOUNTS_CONFIG, ONE_SECOND_MS, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
+import {ACCOUNTS_CONFIG, ONE_SECOND_MS, PRODUCT_NAME, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
 import {AccountType} from "src/shared/model/account";
 import {Arguments} from "src/shared/types";
 import {Config} from "src/shared/model/options";
@@ -39,7 +39,7 @@ export const ENV = {
 export const CI = Boolean(process.env.CI && (process.env.APPVEYOR || process.env.TRAVIS));
 
 // tslint:disable-next-line:no-var-requires no-import-zones
-export const {name: APP_NAME, version: APP_VERSION, description: APP_TITLE} = require("package.json");
+export const {name: PROJECT_NAME, version: PROJECT_VERSION, description: APP_TITLE} = require("package.json");
 
 const rootDirPath = path.resolve(__dirname, process.cwd());
 const appDirPath = path.join(rootDirPath, "./app");
@@ -89,7 +89,7 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
     }
 
     t.context.app = new Application({
-        // TODO consider running e2e tests on compiled/binary app too: path.join(rootPath, "./dist/linux-unpacked/email-securely-app")
+        // TODO consider running e2e tests on compiled/binary app too: path.join(rootPath, "./dist/linux-unpacked/electron-mail")
         path: electron as any,
         requireName: "electronRequire",
         env: {
@@ -128,18 +128,30 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
     await (async () => {
         const stubElement = t.context.app.client.$(".e2e-stub-element");
         const text = await stubElement.getText();
-        const {title, userAgent}: { title: string; userAgent: string; } = JSON.parse(text);
+        const {title: pageTitle, userAgent}: { title: string; userAgent: string; } = JSON.parse(text);
 
-        t.truthy(title, `title should be filled`);
+        t.is(pageTitle, "", `page title should be empty`);
         t.truthy(userAgent, `user agent should be filled`);
 
-        t.is(title, await browserWindow.getTitle(), `title value test (by "browserWindow")`);
-        t.is(title, "Unofficial desktop app for E2E encrypted email providers", `title value test (by document.title)`);
-        t.is(title, APP_TITLE, `title is same as in package.json`);
+        t.truthy(await browserWindow.getTitle(), `browserWindow.getTitle() is not empty`);
+        t.is(await browserWindow.getTitle(), PRODUCT_NAME, `browserWindow.getTitle() matches product name`);
 
-        t.is(userAgent.toLowerCase().indexOf(APP_NAME.toLowerCase()), -1, `should be no "app name" in user agent header, v: ${userAgent}`);
-        t.is(userAgent.toLowerCase().indexOf(APP_VERSION), -1, `should be no "app version" in user agent header, v: ${userAgent}`);
-        t.is(userAgent.toLowerCase().indexOf("electron"), -1, `should be no "electron" mention in user agent header, v: ${userAgent}`);
+        t.false(
+            userAgent.toLowerCase().includes(PROJECT_NAME.toLowerCase()),
+            `should be no "app name" in user agent header, v: ${userAgent}`,
+        );
+        t.false(
+            userAgent.toLowerCase().includes(PRODUCT_NAME.toLowerCase()),
+            `should be no "app name" in user agent header, v: ${userAgent}`,
+        );
+        t.false(
+            userAgent.toLowerCase().includes(PROJECT_VERSION),
+            `should be no "app version" in user agent header, v: ${userAgent}`,
+        );
+        t.false(
+            userAgent.toLowerCase().includes("electron"),
+            `should be no "electron" mention in user agent header, v: ${userAgent}`,
+        );
     })();
 
     // t.false(await browserWindow.webContents.isDevToolsOpened(), "browserWindow's dev tools should be closed");
@@ -224,7 +236,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             await client.click(selector = `button[type="submit"]`);
 
             await (async () => {
-                selector = `email-securely-app-accounts .list-group.accounts-list`;
+                selector = `electron-mail-accounts .list-group.accounts-list`;
                 const timeout = CONF.timeouts.encryption * 2;
                 try {
                     await t.context.app.client.waitForVisible(selector, timeout);
@@ -303,7 +315,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
 
             // account got added to the settings modal account list
             await (async () => {
-                selector = `.modal-body email-securely-app-type-symbol ~ .d-inline-block > span[data-login='${login}']`;
+                selector = `.modal-body electron-mail-type-symbol ~ .d-inline-block > span[data-login='${login}']`;
                 const timeout = CONF.timeouts.encryption;
                 try {
                     await t.context.app.client.waitForVisible(selector, timeout);
@@ -345,7 +357,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
 
         async accountsCount() {
             const {client} = t.context.app;
-            const els = await client.elements(`.list-group.accounts-list > email-securely-app-account-title`);
+            const els = await client.elements(`.list-group.accounts-list > electron-mail-account-title`);
 
             return els.value.length;
         },
@@ -372,7 +384,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             await client.click(`${listGroupSelector} .list-group-item-action:nth-child(${index + 1})`);
 
             if (index === 0) {
-                await client.waitForVisible(`.modal-body email-securely-app-accounts`);
+                await client.waitForVisible(`.modal-body electron-mail-accounts`);
             }
         },
 
@@ -394,7 +406,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             const {client} = t.context.app;
             let selector = "";
 
-            await client.click(`email-securely-app-accounts .controls .dropdown-toggle`);
+            await client.click(`electron-mail-accounts .controls .dropdown-toggle`);
             await client.waitForVisible(selector = `#logoutMenuItem`);
             await client.click(selector);
 
@@ -476,7 +488,7 @@ export async function printElectronLogs(t: ExecutionContext<TestContext>) {
 }
 
 export function accountCssSelector(zeroStartedAccountIndex = 0) {
-    return `.list-group.accounts-list > email-securely-app-account-title:nth-child(${zeroStartedAccountIndex + 1})`;
+    return `.list-group.accounts-list > electron-mail-account-title:nth-child(${zeroStartedAccountIndex + 1})`;
 }
 
 export function accountBadgeCssSelector(zeroStartedAccountIndex = 0) {

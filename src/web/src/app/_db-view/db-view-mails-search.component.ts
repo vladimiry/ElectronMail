@@ -22,7 +22,7 @@ import {MAIL_FOLDER_TYPE, View} from "src/shared/model/database";
 import {State} from "src/web/src/app/store/reducers/db-view";
 
 @Component({
-    selector: "email-securely-app-db-view-mails-search",
+    selector: "electron-mail-db-view-mails-search",
     templateUrl: "./db-view-mails-search.component.html",
     styleUrls: ["./db-view-mails-search.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,

@@ -34,7 +34,7 @@ const test = ava as TestInterface<TestContext>;
 const OPTIONS = Object.freeze({
     dataDirectory: path.join(
         process.cwd(),
-        `email-securely-app.spec`,
+        `electron-mail.spec`,
         `${path.basename(__filename)}-${Number(new Date())}`,
     ),
     masterPassword: "masterPassword123",

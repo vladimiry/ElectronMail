@@ -1,13 +1,13 @@
 {
-  "name": "email-securely-app",
+  "name": "electron-mail",
   "description": "Unofficial desktop app for E2E encrypted email providers",
-  "version": "2.4.0",
+  "version": "3.0.0",
   "author": "Vladimir Yakovlev <desktop-app@protonmail.ch>",
   "license": "MIT",
-  "homepage": "https://github.com/vladimiry/email-securely-app",
-  "repository": "git@github.com:vladimiry/email-securely-app.git",
+  "homepage": "https://github.com/vladimiry/ElectronMail",
+  "repository": "git@github.com:vladimiry/ElectronMail.git",
   "bugs": {
-    "url": "https://github.com/vladimiry/email-securely-app/issues"
+    "url": "https://github.com/vladimiry/ElectronMail/issues"
   },
   "main": "./app/electron-main.js",
   "scripts": {
@@ -164,6 +164,7 @@
     "@types/oboe": "2.0.28",
     "@types/p-queue": "3.2.1",
     "@types/path-is-inside": "1.0.0",
+    "@types/postcss-url": "8.0.1",
     "@types/ps-tree": "1.1.0",
     "@types/ramda": "0.26.1",
     "@types/randomstring": "1.1.6",

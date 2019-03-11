@@ -49,9 +49,9 @@
                        'is-valid': encryptionPresetForm.controls.password.valid
                    } : {}">
                 </div>
-                <email-securely-app-encryption-presets
+                <electron-mail-encryption-presets
                     [formGroup]="encryptionPresetForm"
-                ></email-securely-app-encryption-presets>
+                ></electron-mail-encryption-presets>
                 <div class="clearfix">
                     <button class="btn btn-primary pull-right" type="submit" [disabled]="encryptionPresetForm.invalid">
                         <i class="fa fa-spinner fa-pulse fa-fw" *ngIf="reEncryptingSettings$ | async"></i>

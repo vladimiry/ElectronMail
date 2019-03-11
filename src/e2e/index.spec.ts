@@ -11,7 +11,7 @@ import {platform} from "os";
 import {promisify} from "util";
 
 import {ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX} from "src/shared/constants";
-import {APP_NAME, CI, ENV, initApp, saveScreenshot, test} from "./workflow";
+import {CI, ENV, PROJECT_NAME, initApp, saveScreenshot, test} from "./workflow";
 
 test.serial("general actions: app start, master password setup, add accounts, logout, auto login", async (t) => {
     // setup and login
@@ -117,7 +117,7 @@ test.afterEach.always(async (t) => {
         // HINT: add "- ps: Get-Process" line to appveyor.yml to list the processes
         const processes: Array<{ pid: number }> = await Promise.all(
             [
-                {command: APP_NAME}, {arguments: APP_NAME},
+                {command: PROJECT_NAME}, {arguments: PROJECT_NAME},
                 {command: "electron"}, {arguments: "electron"},
                 {command: "chrome"}, {arguments: "chrome"},
                 {command: "webdriver"}, {arguments: "webdriver"},

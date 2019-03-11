@@ -15,7 +15,7 @@ interface ComponentState {
 }
 
 @Component({
-    selector: "email-securely-app-account-title",
+    selector: "electron-mail-account-title",
     templateUrl: "./account-title.component.html",
     styleUrls: ["./account-title.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,

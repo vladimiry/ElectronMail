@@ -5,7 +5,7 @@ import {OptionsService} from "./options.service";
 import {State} from "src/web/src/app/store/reducers/options";
 
 @Component({
-    selector: "email-securely-app-settings",
+    selector: "electron-mail-settings",
     templateUrl: "./settings.component.html",
     styleUrls: ["./settings.component.scss"],
 })

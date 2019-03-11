@@ -23,12 +23,12 @@
                 [ngStyle]="{'padding-left': level + 'em'}"
                 class="root-node"
             >
-                <email-securely-app-db-view-mail
+                <electron-mail-db-view-mail
                     (click)="selectConversationMail(node.mail)"
                     *ngIf="node.mail"
                     [attr.selected]="node.mail.pk === selectedMail.conversationMail?.pk ? 1 : 0"
                     [mail]="node.mail"
-                ></email-securely-app-db-view-mail>
+                ></electron-mail-db-view-mail>
             </div>
             <ng-container
                 [ngTemplateOutletContext]="{nodes: node.children, level: level + (isEmptyNodes(nodes) ? 0 : 0.75)}"
@@ -56,11 +56,11 @@
             <i class="fa fa-spinner fa-pulse fa-fw"></i>
             View Online
         </button>
-        <email-securely-app-db-view-mails-export
+        <electron-mail-db-view-mails-export
             [dbAccountPk]="dbAccountPk"
             [rootConversationNode]="selectedMail.rootNode"
             [title]="'Export (' + selectedMail.rootNode.summary.size + ')'"
-        ></email-securely-app-db-view-mails-export>
+        ></electron-mail-db-view-mails-export>
     </div>
 
     <div class="d-flex">

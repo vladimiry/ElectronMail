@@ -4,6 +4,7 @@ import {equals} from "ramda";
 
 import {BuildEnvironment} from "src/shared/model/common";
 import {Context} from "./model";
+import {PRODUCT_NAME} from "src/shared/constants";
 
 const browserWindowState: { forceClose: boolean } = {forceClose: false};
 const appBeforeQuitEventArgs: ["before-quit", (event: Electron.Event) => void] = [
@@ -11,18 +12,18 @@ const appBeforeQuitEventArgs: ["before-quit", (event: Electron.Event) => void] =
     () => browserWindowState.forceClose = true,
 ];
 const commonWebPreferences: BrowserWindowConstructorOptions["webPreferences"] = {
-    // TODO disable "remote" module
-    //      currently these things depend on it:
-    //      - "rolling-rate-limiter" module
-    //      - "html-to-text" module
-    //      - e2e tests preload script
-    // enableRemoteModule: false,
     nodeIntegration: false,
     nodeIntegrationInWorker: false,
     webviewTag: true,
     webSecurity: true,
     sandbox: true,
     disableBlinkFeatures: "Auxclick",
+    // TODO disable "remote" module by disabling "enableRemoteModule" option
+    //      currently these things depend on it:
+    //      - "rolling-rate-limiter" module
+    //      - "html-to-text" module
+    //      - e2e tests preload script
+    // enableRemoteModule: false,
 };
 
 export async function initBrowserWindow(ctx: Context): Promise<BrowserWindow> {
@@ -38,6 +39,7 @@ export async function initBrowserWindow(ctx: Context): Promise<BrowserWindow> {
                 ? ctx.locations.preload.browserWindowE2E
                 : ctx.locations.preload.browserWindow,
         },
+        title: PRODUCT_NAME,
         icon: ctx.locations.icon,
         ...(await ctx.configStore.readExisting()).window.bounds,
         show: false,

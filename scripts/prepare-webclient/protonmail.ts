@@ -8,30 +8,30 @@ import {Unpacked} from "src/shared/types";
 import {consoleLevels, consoleLog, execShell} from "scripts/lib";
 
 // tslint:disable-next-line:no-var-requires no-import-zones
-const {name: APP_NAME} = require("package.json");
+const {name: PROJECT_NAME} = require("package.json");
 
 const folderAsDomainEntries: Array<FolderAsDomainEntry<{
     configApiParam:
-        | "email-securely-app:app.protonmail.ch"
-        | "email-securely-app:mail.protonmail.com"
-        | "email-securely-app:protonirockerxow.onion";
+        | "electron-mail:app.protonmail.ch"
+        | "electron-mail:mail.protonmail.com"
+        | "electron-mail:protonirockerxow.onion";
 }>> = [
     {
         folderNameAsDomain: "app.protonmail.ch",
         options: {
-            configApiParam: "email-securely-app:app.protonmail.ch",
+            configApiParam: "electron-mail:app.protonmail.ch",
         },
     },
     {
         folderNameAsDomain: "mail.protonmail.com",
         options: {
-            configApiParam: "email-securely-app:mail.protonmail.com",
+            configApiParam: "electron-mail:mail.protonmail.com",
         },
     },
     {
         folderNameAsDomain: "protonirockerxow.onion",
         options: {
-            configApiParam: "email-securely-app:protonirockerxow.onion",
+            configApiParam: "electron-mail:protonirockerxow.onion",
         },
     },
 ];
@@ -73,7 +73,7 @@ async function build({repoDir: cwd, options, folderNameAsDomain}: { repoDir: str
 
     // building
     await (async () => {
-        const webpackFile = path.join(cwd, `./webpack.config.${APP_NAME}.js`);
+        const webpackFile = path.join(cwd, `./webpack.config.${PROJECT_NAME}.js`);
         // tslint:disable:no-trailing-whitespace
         const webpackFileContent = `
             const config = require("./webpack.config");

@@ -6,13 +6,13 @@
     "directive-selector": [
       true,
       "attribute",
-      "email-securely-app",
+      "electron-mail",
       "camelCase"
     ],
     "component-selector": [
       true,
       "element",
-      "email-securely-app",
+      "electron-mail",
       "kebab-case"
     ],
     "angular-whitespace": [

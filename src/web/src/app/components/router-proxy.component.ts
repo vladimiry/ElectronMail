@@ -4,7 +4,7 @@ import {Subject} from "rxjs";
 import {filter, map, takeUntil} from "rxjs/operators";
 
 @Component({
-    selector: "email-securely-app-router-proxy",
+    selector: "electron-mail-router-proxy",
     template: "<router-outlet></router-outlet>",
     styleUrls: ["./router-proxy.component.scss"],
 })

@@ -4,13 +4,13 @@ import {createHash} from "crypto";
 import {promisify} from "util";
 
 // tslint:disable-next-line:no-var-requires no-import-zones
-const {name: APP_NAME} = require("package.json");
+const {name: PROJECT_NAME} = require("package.json");
 
 // tslint:disable-next-line:no-console
 export const consoleLog = console.log;
 
 const distDirectory = path.resolve(process.argv[2]);
-const appNameRe = new RegExp(APP_NAME, "i");
+const appNameRe = new RegExp(PROJECT_NAME, "i");
 const algorithms = ["sha1", "md5"];
 
 // tslint:disable-next-line:no-floating-promises

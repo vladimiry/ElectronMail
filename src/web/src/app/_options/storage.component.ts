@@ -9,7 +9,7 @@ import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {State} from "src/web/src/app/store/reducers/options";
 
 @Component({
-    selector: "email-securely-app-storage",
+    selector: "electron-mail-storage",
     templateUrl: "./storage.component.html",
     styleUrls: ["./storage.component.scss"],
     preserveWhitespaces: true,

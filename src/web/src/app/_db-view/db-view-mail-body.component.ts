@@ -24,7 +24,7 @@ import {State} from "src/web/src/app/store/reducers/db-view";
 import {getZoneNameBoundWebLogger} from "src/web/src/util";
 
 @Component({
-    selector: "email-securely-app-db-view-mail-body",
+    selector: "electron-mail-db-view-mail-body",
     templateUrl: "./db-view-mail-body.component.html",
     styleUrls: ["./db-view-mail-body.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,

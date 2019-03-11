@@ -4,12 +4,12 @@
     class="btn-group"
 >
     <a class="btn b-primary" href="mailto:{{ state.account.accountConfig.login }}">
-        <email-securely-app-type-symbol [type]="state.account.accountConfig.type"></email-securely-app-type-symbol>
-        <email-securely-app-unread-badge
+        <electron-mail-type-symbol [type]="state.account.accountConfig.type"></electron-mail-type-symbol>
+        <electron-mail-unread-badge
             *ngIf="state.account.notifications.unread"
             [value]="state.account.notifications.unread"
             class="ml-2"
-        ></email-securely-app-unread-badge>
+        ></electron-mail-unread-badge>
         <div class="d-flex ml-2">
             <i [class]="state.account.notifications.loggedIn ? 'fa fa-unlock' : 'fa fa-lock'"></i>
         </div>

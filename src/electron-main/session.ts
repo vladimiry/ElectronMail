@@ -1,12 +1,12 @@
 import _logger from "electron-log";
 import {Session, session} from "electron";
 
-import {APP_NAME, ONE_SECOND_MS} from "src/shared/constants";
 import {AccountConfig, AccountType} from "src/shared/model/account";
 import {Arguments} from "src/shared/types";
 import {Config} from "src/shared/model/options";
 import {Context} from "./model";
 import {INITIAL_STORES} from "./constants";
+import {ONE_SECOND_MS, PROJECT_NAME} from "src/shared/constants";
 import {curryFunctionMembers, getWebViewPartition} from "src/shared/util";
 import {initWebRequestListeners} from "src/electron-main/web-request";
 import {registerSessionProtocols} from "src/electron-main/protocol";
@@ -125,7 +125,7 @@ export function getDefaultSession(): Session {
 }
 
 function purifyUserAgentHeader(instance: Session) {
-    const appNameRe = new RegExp(`${APP_NAME}[\\/\\S]+`, "i");
+    const appNameRe = new RegExp(`${PROJECT_NAME}[\\/\\S]+`, "i");
     const electronRe = new RegExp("electron", "i");
     const currentUserAgent = String(instance.getUserAgent());
     const purifiedUserAgent = currentUserAgent

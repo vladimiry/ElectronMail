@@ -3,8 +3,8 @@
     <span class="mr-1">{{ folder.name }}</span>
     <span *ngIf="folder.size">({{ folder.size }})</span>
 </div>
-<email-securely-app-unread-badge
+<electron-mail-unread-badge
     *ngIf="folder.unread"
     [value]="folder.unread"
     class="flex-grow-0"
-></email-securely-app-unread-badge>
+></electron-mail-unread-badge>

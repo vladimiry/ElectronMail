@@ -29,16 +29,16 @@
                     [ngClass]="{'list-group-item-warning': state.selectedFolderData.pk === folder.pk}"
                     class="list-group-item list-group-item-action"
                 >
-                    <email-securely-app-db-view-folder [folder]="folder"></email-securely-app-db-view-folder>
+                    <electron-mail-db-view-folder [folder]="folder"></electron-mail-db-view-folder>
                 </li>
             </ul>
         </ng-template>
         <div class="py-2 d-flex">
-            <email-securely-app-db-view-mails-export
+            <electron-mail-db-view-mails-export
                 [dbAccountPk]="dbAccountPk"
                 [popupPlacement]="'top'"
                 [title]="'Export All Mails'"
-            ></email-securely-app-db-view-mails-export>
+            ></electron-mail-db-view-mails-export>
         </div>
     </div>
     <div class="right-column flex-row flex-grow-1">
@@ -46,7 +46,7 @@
             [ngClass]="{'flex-basis-half': state.selectedMail}"
             class="px-2 d-flex flex-column flex-grow-1"
         >
-            <email-securely-app-db-view-mails
+            <electron-mail-db-view-mails
                 [dbAccountPk]="dbAccountPk"
                 [mailsBundleKey]="mailsBundleKey"
                 [uid]="state.selectedFolderData?.pk"
@@ -70,17 +70,17 @@
                         ></i>
                     </button>
                 </div>
-            </email-securely-app-db-view-mails>
+            </electron-mail-db-view-mails>
         </div>
         <div
             *ngIf="state.selectedMail"
             class="flex-basis-half pr-2 d-flex flex-column"
         >
             <div class="overflow-auto">
-                <email-securely-app-db-view-mail-body
+                <electron-mail-db-view-mail-body
                     [dbAccountPk]="dbAccountPk"
                     [selectedFolderData]="state.selectedFolderData"
-                ></email-securely-app-db-view-mail-body>
+                ></electron-mail-db-view-mail-body>
             </div>
         </div>
     </div>
@@ -95,8 +95,8 @@
         </div>
     </div>
 </ng-template>
-<email-securely-app-db-view-mails-search
+<electron-mail-db-view-mails-search
     (backToListHandler)="toggleSearchView()"
     *ngIf="searchView"
     [dbAccountPk]="dbAccountPk"
-></email-securely-app-db-view-mails-search>
+></electron-mail-db-view-mails-search>

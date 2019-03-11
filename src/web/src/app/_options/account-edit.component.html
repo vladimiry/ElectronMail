@@ -1,7 +1,7 @@
 <fieldset [disabled]="(processing$ | async) || (removing$ | async)">
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="form-group">
         <div class="rounded mb-2">
-            <email-securely-app-type-symbol [type]="account.type" *ngIf="account"></email-securely-app-type-symbol>
+            <electron-mail-type-symbol [type]="account.type" *ngIf="account"></electron-mail-type-symbol>
             <div class="d-inline-block">
                 <span *ngIf="account; else label" [attr.data-login]="account.login">{{ account.login }}</span>
                 <ng-template #label>Add Account</ng-template>
@@ -22,7 +22,7 @@
         </div>
         <div class="form-group required" *ngIf="!account">
             <ng-template #typeItemTemplate let-item="item" let-index="index">
-                <email-securely-app-type-symbol [type]="item.value"></email-securely-app-type-symbol>
+                <electron-mail-type-symbol [type]="item.value"></electron-mail-type-symbol>
                 {{ item.title }}
             </ng-template>
             <label>Type</label>

@@ -9,11 +9,11 @@ import {Mail} from "src/shared/model/database";
 import {MailsBundleKey, State} from "src/web/src/app/store/reducers/db-view";
 import {Unpacked} from "src/shared/types";
 
-// TODO read "email-securely-app-db-view-mail" from the DbViewMailComponent.selector property
-const mailComponentTagName = "email-securely-app-db-view-mail";
+// TODO read "electron-mail-db-view-mail" from the DbViewMailComponent.selector property
+const mailComponentTagName = "electron-mail-db-view-mail";
 
 @Component({
-    selector: "email-securely-app-db-view-mails",
+    selector: "electron-mail-db-view-mails",
     templateUrl: "./db-view-mails.component.html",
     styleUrls: ["./db-view-mails.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,

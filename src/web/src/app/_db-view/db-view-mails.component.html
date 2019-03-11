@@ -9,12 +9,12 @@
         </div>
     </div>
     <div class="d-flex">
-        <email-securely-app-db-view-mails-export
+        <electron-mail-db-view-mails-export
             *ngIf="items.length"
             [dbAccountPk]="dbAccountPk"
             [mailsBundleItems]="items"
             [title]="'Export (' + items.length + ')'"
-        ></email-securely-app-db-view-mails-export>
+        ></electron-mail-db-view-mails-export>
         <select
             #sortSelect
             (change)="sortChange(sortSelect.value)"
@@ -36,12 +36,12 @@
     *ngIf="items$ | async; let items;"
 >
     <!-- TODO consider using "virtual list", ie render only visible data -->
-    <email-securely-app-db-view-mail
+    <electron-mail-db-view-mail
         *ngFor="let item of items.slice(0, (paging$ | async)?.end); trackBy: trackByMailBundleItem"
         [attr.data-pk]="item.mail.pk"
         [mail]="item.mail"
         [conversationSize]="item.conversationSize"
-    ></email-securely-app-db-view-mail>
+    ></electron-mail-db-view-mail>
     <button
         (click)="loadMore()"
         *ngIf="(paging$ | async)?.nextPageSize; let nextPageSize;"

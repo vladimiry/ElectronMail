@@ -4,8 +4,8 @@
   "description": "Custom \"import-sort\" style rule built for use by \"email-securely-app\"",
   "author": "Vladimir Yakovlev <dev.vladimir.y@gmail.com> (https://github.com/vladimiry)",
   "license": "MIT",
-  "homepage": "https://github.com/vladimiry/email-securely-app",
-  "repository": "git@github.com:vladimiry/email-securely-app.git",
+  "homepage": "https://github.com/vladimiry/ElectronMail",
+  "repository": "git@github.com:vladimiry/ElectronMail.git",
   "keywords": [
     "import-sort",
     "typescript",

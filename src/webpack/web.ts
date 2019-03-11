@@ -1,18 +1,19 @@
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
-import ts from "typescript";
+import postCssUrl from "postcss-url";
+import webpackMerge from "webpack-merge";
 import webpack, {Configuration} from "webpack";
 import {AngularCompilerPlugin, PLATFORM} from "@ngtools/webpack";
+import {CompilerOptions} from "typescript";
 
 import {BuildEnvironment} from "src/shared/model/common";
-import {buildBaseConfig, environment, environmentSate, outputRelateivePath, rootRelateivePath, srcRelateivePath} from "./lib";
-
-import webpackMerge = require("webpack-merge");
+import {buildBaseConfig, environment, environmentSate, outputRelateivePath, srcRelateivePath} from "./lib";
 
 // tslint:disable:no-var-requires
+// TODO use ES6 import format
 const cssNano = require("cssnano");
 const customProperties = require("postcss-custom-properties");
-const postCssUrl = require("postcss-url");
+// TODO import "@angular/compiler-cli" using ES6 import format on  https://github.com/angular/angular/issues/29220 resolving
 const {readConfiguration} = require("@angular/compiler-cli");
 // tslint:enable:no-var-requires
 
@@ -23,8 +24,6 @@ const webSrcEnvPath = (...value: string[]) => webSrcPath(
     ...value,
 );
 
-// tslint:disable:no-var-requires
-const packageJson = require(rootRelateivePath("./package.json"));
 const aot = environmentSate.production;
 const cssRuleUse = [
     "css-loader",
@@ -53,7 +52,7 @@ const tsConfigFile = srcRelateivePath(({
     development: "./web/tsconfig.development.json",
     test: "./web/test/tsconfig.json",
 } as Record<BuildEnvironment, string>)[environment]);
-const tsConfigCompilerOptions: ts.CompilerOptions = (() => {
+const tsConfigCompilerOptions: CompilerOptions = (() => {
     const tsConfig = readConfiguration(tsConfigFile);
 
     if (!tsConfig.options.paths) {
@@ -149,7 +148,6 @@ const baseConfig = buildBaseConfig(
             new HtmlWebpackPlugin({
                 template: webSrcPath("./index.ejs"),
                 filename: "index.html",
-                title: packageJson.description,
                 hash: environmentSate.production,
                 minify: false,
                 excludeChunks: ["search-in-page-browser-view"],

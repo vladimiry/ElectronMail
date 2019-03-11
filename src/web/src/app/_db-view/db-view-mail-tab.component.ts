@@ -10,7 +10,7 @@ import {MailsBundleKey, State} from "src/web/src/app/store/reducers/db-view";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
 
 @Component({
-    selector: "email-securely-app-db-view-mail-tab",
+    selector: "electron-mail-db-view-mail-tab",
     templateUrl: "./db-view-mail-tab.component.html",
     styleUrls: ["./db-view-mail-tab.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,

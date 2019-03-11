@@ -47,42 +47,42 @@
             placement="bottom right"
         >
             <div *ngIf="unreadSummary && accounts.length > 1" class="unread-summary">
-                <email-securely-app-unread-badge
+                <electron-mail-unread-badge
                     *ngIf="unreadSummary && accounts.length > 1"
                     [value]="unreadSummary"
-                ></email-securely-app-unread-badge>
+                ></electron-mail-unread-badge>
             </div>
-            <email-securely-app-account-title
+            <electron-mail-account-title
                 (click)="cancelEvent($event)"
                 *ngIf="selectedAccount"
                 [account]="selectedAccount"
                 [highlighting]="false"
                 dropdownToggle
-            ></email-securely-app-account-title>
+            ></electron-mail-account-title>
             <ul *dropdownMenu class="dropdown-menu dropdown-menu-right" role="menu">
                 <li *ngFor="let account of accounts; trackBy: trackAccount" role="menuitem">
-                    <email-securely-app-account-title
+                    <electron-mail-account-title
                         (click)="activateAccount($event, account)"
                         [account]="account"
-                    ></email-securely-app-account-title>
+                    ></electron-mail-account-title>
                 </li>
             </ul>
         </div>
         <ul class="list-group accounts-list d-none d-lg-flex">
-            <email-securely-app-account-title
+            <electron-mail-account-title
                 (click)="activateAccount($event, account)" *ngFor="let account of accounts; trackBy: trackAccount"
                 [account]="account"
-            ></email-securely-app-account-title>
+            ></electron-mail-account-title>
         </ul>
     </div>
     <div class="account-block">
         <div *ngIf="accounts.length; then accountsDefined else accountsUndefined"></div>
         <ng-template #accountsDefined>
-            <email-securely-app-account
+            <electron-mail-account
                 *ngFor="let login of (loginsSet$ | async); let index = index"
                 [account]="getAccountByLogin(login)"
                 [ngClass]="{'account-hidden': login != selectedAccount?.accountConfig.login}"
-            ></email-securely-app-account>
+            ></electron-mail-account>
         </ng-template>
         <ng-template #accountsUndefined>
             <div class="d-flex justify-content-center align-items-center p-3 no-accounts-block">

@@ -1,9 +1,9 @@
 import {pick} from "ramda";
 
-import {APP_NAME} from "src/shared/constants";
+import {PROJECT_NAME} from "src/shared/constants";
 import {Unpacked} from "src/shared/types";
 
-const service = APP_NAME;
+const service = PROJECT_NAME;
 const account = "master-password";
 
 type Keytar = Pick<typeof import("keytar"), "getPassword" | "setPassword" | "deletePassword">;  // tslint:disable-line:no-import-zones

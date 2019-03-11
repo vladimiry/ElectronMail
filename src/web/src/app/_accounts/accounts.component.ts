@@ -12,7 +12,7 @@ import {State} from "src/web/src/app/store/reducers/accounts";
 import {WebAccount} from "src/web/src/app/model";
 
 @Component({
-    selector: "email-securely-app-accounts",
+    selector: "electron-mail-accounts",
     templateUrl: "./accounts.component.html",
     styleUrls: ["./accounts.component.scss"],
     preserveWhitespaces: true,

@@ -6,7 +6,7 @@ import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {State} from "src/web/src/app/store/reducers/options";
 
 @Component({
-    selector: "email-securely-app-unread-badge",
+    selector: "electron-mail-unread-badge",
     templateUrl: "./unread-badge.component.html",
     styleUrls: ["./unread-badge.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,

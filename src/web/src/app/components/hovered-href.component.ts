@@ -7,7 +7,7 @@ import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {State} from "src/web/src/app/store/reducers/root";
 
 @Component({
-    selector: "email-securely-app-hovered-href",
+    selector: "electron-mail-hovered-href",
     templateUrl: "./hovered-href.component.html",
     styleUrls: ["./hovered-href.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,

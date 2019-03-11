@@ -5,7 +5,7 @@
 <ul class="list-group" [dragula]="reorderingGroup">
     <li class="list-group-item pl-0 pr-3" *ngFor="let account of accounts$ | async" [attr.data-login]="account.login">
         <i class="fa fa-bars drag-hover px-3"></i>
-        <email-securely-app-type-symbol [type]="account.type" class="mr-1"></email-securely-app-type-symbol>
+        <electron-mail-type-symbol [type]="account.type" class="mr-1"></electron-mail-type-symbol>
         {{ account.login }}
         <a [routerLink]="['./../account-edit', account.login]" class="float-right">
             Edit

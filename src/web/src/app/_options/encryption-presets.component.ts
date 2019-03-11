@@ -9,7 +9,7 @@ import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {State} from "src/web/src/app/store/reducers/options";
 
 @Component({
-    selector: "email-securely-app-encryption-presets",
+    selector: "electron-mail-encryption-presets",
     templateUrl: "./encryption-presets.component.html",
     preserveWhitespaces: true,
 })

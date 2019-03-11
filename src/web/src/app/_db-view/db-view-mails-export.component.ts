@@ -12,7 +12,7 @@ import {View} from "src/shared/model/database";
 import {filterConversationNodesMails} from "src/shared/util";
 
 @Component({
-    selector: "email-securely-app-db-view-mails-export",
+    selector: "electron-mail-db-view-mails-export",
     templateUrl: "./db-view-mails-export.component.html",
     styleUrls: ["./db-view-mails-export.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,

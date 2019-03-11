@@ -4,8 +4,8 @@ import {join} from "path";
 import {promisify} from "util";
 import {v4 as uuid} from "uuid";
 
-import {APP_NAME} from "src/shared/constants";
 import {File, Mail, MailAddress} from "src/shared/model/database";
+import {PROJECT_NAME} from "src/shared/constants";
 
 const fsAsync = {
     stat: promisify(fs.stat),
@@ -47,7 +47,7 @@ export async function writeEmlFile(mail: Mail, dir: string): Promise<{ file: str
 
 // TODO consider sanitizing "mail.body"
 function buildEml(mail: Mail): string {
-    const boundary = `----=${uuid()}@${APP_NAME}`;
+    const boundary = `----=${uuid()}@${PROJECT_NAME}`;
     const subject = mail.subject && `=?UTF-8?B?${Base64.encode(mail.subject)}?=`;
     const body = Base64.encode(mail.body);
     const lines = [

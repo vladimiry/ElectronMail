@@ -3,7 +3,7 @@ import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
 import {AccountType} from "src/shared/model/account";
 
 @Component({
-    selector: "email-securely-app-type-symbol",
+    selector: "electron-mail-type-symbol",
     template: `<span [class]="type">{{ type }}</span>`,
     styleUrls: ["./type-symbol.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,

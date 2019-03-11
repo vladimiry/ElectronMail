@@ -2,9 +2,9 @@ import electronUnhandled from "electron-unhandled";
 import logger from "electron-log";
 import {app} from "electron";
 
-import {APP_NAME} from "src/shared/constants";
 import {Config} from "src/shared/model/options";
 import {INITIAL_STORES} from "src/electron-main/constants";
+import {REPOSITORY_NAME} from "src/shared/constants";
 import {getDefaultSession, initSession} from "./session";
 import {initApi} from "./api";
 import {initApplicationMenu} from "./menu";
@@ -27,7 +27,7 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 // needed for desktop notifications properly working on Win 10, details https://www.electron.build/configuration/nsis
-app.setAppUserModelId(`com.github.vladimiry.${APP_NAME}`);
+app.setAppUserModelId(`github.com/vladimiry/${REPOSITORY_NAME}`);
 
 // TODO consider sharing "Context" using dependency injection approach
 const ctx = initContext();

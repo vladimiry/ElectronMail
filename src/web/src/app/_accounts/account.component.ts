@@ -20,7 +20,6 @@ import {debounceTime, distinctUntilChanged, filter, map, mergeMap, pairwise, sta
 import {equals, pick} from "ramda";
 
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
-import {APP_NAME, ONE_SECOND_MS} from "src/shared/constants";
 import {AccountConfig} from "src/shared/model/account";
 import {AccountsSelectors, OptionsSelectors} from "src/web/src/app/store/selectors";
 import {CoreService} from "src/web/src/app/_core/core.service";
@@ -28,6 +27,7 @@ import {DbViewModuleResolve} from "./db-view-module-resolve.service";
 import {ElectronService} from "src/web/src/app/_core/electron.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {NgChangesObservableComponent} from "src/web/src/app/components/ng-changes-observable.component";
+import {ONE_SECOND_MS, PROJECT_NAME} from "src/shared/constants";
 import {State} from "src/web/src/app/store/reducers/accounts";
 import {Unpacked} from "src/shared/types";
 import {WebAccount} from "src/web/src/app/model";
@@ -45,7 +45,7 @@ const pickCredentialFields = ((fields: Array<keyof AccountConfig>) => (ac: Accou
 ]);
 
 @Component({
-    selector: "email-securely-app-account",
+    selector: "electron-mail-account",
     templateUrl: "./account.component.html",
     styleUrls: ["./account.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -99,7 +99,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                 )
                 .subscribe(({login, unread}) => {
                     new Notification(
-                        APP_NAME,
+                        PROJECT_NAME,
                         {
                             body: `Account "${login}" has ${unread} unread email${unread > 1 ? "s" : ""}.`,
                         },

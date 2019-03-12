@@ -70,12 +70,9 @@ export interface Endpoints {
 
     dbIndexerNotification: ApiMethodNoArgument<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>>;
 
-    init: ApiMethodNoArgument<{
-        electronLocations: ElectronContextLocations;
-        hasSavedPassword?: boolean;
-        snapPasswordManagerServiceHint?: boolean;
-        keytarSupport: boolean;
-    }>;
+    init: ApiMethodNoArgument<InitResponse>;
+
+    migrate: ApiMethod<Required<InitResponse>["copyV2AppData"], null>;
 
     logout: ApiMethodNoArgument<null>;
 
@@ -120,6 +117,20 @@ export interface Endpoints {
     selectAccount: ApiMethod<{ databaseView?: boolean; reset?: boolean }, null>;
 
     notification: ApiMethodNoArgument<UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>>;
+}
+
+export interface InitResponse {
+    electronLocations: ElectronContextLocations;
+    hasSavedPassword?: boolean;
+    snapPasswordManagerServiceHint?: boolean;
+    keytarSupport: boolean;
+    copyV2AppData?: Record<"config" | "settings" | "database",
+        {
+            src: string;
+            dest: string;
+            skip?: "source doesn't exist" | "destination exists";
+            override?: boolean;
+        }>;
 }
 
 export const IPC_MAIN_API = new IpcMainApiService<Endpoints>({channel: `${PACKAGE_NAME}:ipcMain-api`});

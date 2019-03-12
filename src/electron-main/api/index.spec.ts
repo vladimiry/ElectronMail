@@ -267,11 +267,16 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.pass(`TODO test "dbIndexerNotification" endpoint`);
     },
 
+    // TODO actualize "init" endpoint test
     init: async (t) => {
         const result = await t.context.endpoints.init().toPromise();
 
         t.deepEqual(result.electronLocations, t.context.ctx.locations);
         t.is(typeof result.hasSavedPassword, "boolean");
+    },
+
+    migrate: (t) => {
+        t.pass(`TODO test "migrate" endpoint`);
     },
 
     logout: async (t) => {

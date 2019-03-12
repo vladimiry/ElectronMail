@@ -22,7 +22,7 @@ export const INITIAL_STORES: Readonly<{
         return {
             encryptionPreset,
             window: {
-                bounds: {width: 1024, height: 768},
+                bounds: {width: 1360, height: 768},
             },
             fetching: {
                 rateLimit: {

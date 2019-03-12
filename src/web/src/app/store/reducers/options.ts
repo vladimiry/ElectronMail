@@ -2,9 +2,9 @@ import {UnionOf} from "@vladimiry/unionize";
 
 import * as fromRoot from "./root";
 import {Config, Settings} from "src/shared/model/options";
-import {ElectronContextLocations} from "src/shared/model/electron";
-import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS, InitResponse} from "src/shared/api/main";
 import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
+import {Omit} from "src/shared/types";
 
 export const featureName = "options";
 
@@ -20,16 +20,16 @@ export type ProgressPatch = Partial<{
     updatingAccount: boolean;
     changingAccountOrder: boolean;
     updatingBaseSettings: boolean;
+    migrating: boolean;
 }>;
 
-export interface State extends fromRoot.State {
+type OptionalProps = "keytarSupport" | "electronLocations";
+
+export interface State extends fromRoot.State, Partial<Pick<InitResponse, OptionalProps>>, Omit<InitResponse, OptionalProps> {
     config: Config;
     settings: Settings;
     progress: ProgressPatch;
-    electronLocations?: ElectronContextLocations;
     hasSavedPassword?: boolean;
-    keytarSupport?: boolean;
-    snapPasswordManagerServiceHint?: boolean;
     mainProcessNotification: UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>;
 }
 

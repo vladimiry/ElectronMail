@@ -8,8 +8,9 @@ import {
     PasswordChangeContainer,
     PasswordFieldContainer,
 } from "src/shared/model/container";
+import {Arguments} from "src/shared/types";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
-import {ElectronContextLocations} from "src/shared/model/electron";
+import {Endpoints, InitResponse} from "src/shared/api/main";
 import {ProgressPatch, State} from "src/web/src/app/store/reducers/options";
 
 export const OPTIONS_ACTIONS = unionize({
@@ -23,12 +24,7 @@ export const OPTIONS_ACTIONS = unionize({
         GetSettingsRequest: ofType<{}>(),
         GetSettingsResponse: ofType<Settings>(),
         InitRequest: ofType<{}>(),
-        InitResponse: ofType<{
-            electronLocations: ElectronContextLocations;
-            hasSavedPassword?: boolean;
-            snapPasswordManagerServiceHint?: boolean;
-            keytarSupport: boolean;
-        }>(),
+        InitResponse: ofType<InitResponse>(),
         PatchBaseSettingsRequest: ofType<BaseConfig>(),
         PatchProgress: ofType<ProgressPatch>(),
         ReEncryptSettings: ofType<{ password: string, encryptionPreset: PasswordBasedPreset }>(),
@@ -36,6 +32,7 @@ export const OPTIONS_ACTIONS = unionize({
         ToggleCompactRequest: ofType<{}>(),
         SetupMainProcessNotification: ofType<{}>(),
         PatchMainProcessNotification: ofType<State["mainProcessNotification"]>(),
+        Migrate: ofType<Arguments<Endpoints["migrate"]>[0]>(),
     },
     {
         tag: "type",

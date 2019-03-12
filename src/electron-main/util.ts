@@ -15,6 +15,8 @@ import {ElectronContextLocations} from "src/shared/model/electron";
 import {INITIAL_STORES, configEncryptionPresetValidator, settingsAccountLoginUniquenessValidator} from "./constants";
 import {LOCAL_WEBCLIENT_PROTOCOL_PREFIX, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
 
+const developmentEnv = (process.env.NODE_ENV as BuildEnvironment) === "development";
+
 export function initContext(options: ContextInitOptions = {}): Context {
     const storeFs = options.storeFs
         ? options.storeFs
@@ -85,17 +87,17 @@ function initLocations(
     storeFs: StoreModel.StoreFs,
     paths?: ContextInitOptionsPaths,
 ): ElectronContextLocations {
-    const userDataDirRuntimeVal = process.env[RUNTIME_ENV_USER_DATA_DIR];
+    const customUserDataDir = process.env[RUNTIME_ENV_USER_DATA_DIR];
 
-    if (userDataDirRuntimeVal && !directoryExists(userDataDirRuntimeVal, storeFs)) {
+    if (customUserDataDir && !directoryExists(customUserDataDir, storeFs)) {
         throw new Error(
             `Make sure that custom "userData" dir exists before passing the "${RUNTIME_ENV_USER_DATA_DIR}" environment variable`,
         );
     }
 
     const {appDir, userDataDir} = paths || {
-        appDir: path.resolve(__dirname, (process.env.NODE_ENV as BuildEnvironment) === "development" ? "../app-dev" : "../app"),
-        userDataDir: userDataDirRuntimeVal || app.getPath("userData"),
+        appDir: path.resolve(__dirname, developmentEnv ? "../app-dev" : "../app"),
+        userDataDir: customUserDataDir || app.getPath("userData"),
     };
     const appRelativePath = (...value: string[]) => path.join(appDir, ...value);
     const icon = appRelativePath("./assets/icons/icon.png");
@@ -106,10 +108,10 @@ function initLocations(
         icon,
         trayIcon: icon,
         numbersFont: appRelativePath("./assets/numbers.ttf"),
-        browserWindowPage: (process.env.NODE_ENV as BuildEnvironment) === "development"
+        browserWindowPage: developmentEnv
             ? "http://localhost:8080/index.html"
             : formatFileUrl(appRelativePath("./web/index.html")),
-        searchInPageBrowserViewPage: (process.env.NODE_ENV as BuildEnvironment) === "development"
+        searchInPageBrowserViewPage: developmentEnv
             ? "http://localhost:8080/search-in-page-browser-view.html"
             : formatFileUrl(appRelativePath("./web/search-in-page-browser-view.html")),
         preload: {
@@ -199,19 +201,23 @@ export function hrtimeDuration(): { end: () => number } {
 function exists(file: string, storeFs: StoreModel.StoreFs): boolean {
     try {
         storeFs._impl.statSync(file);
-        return true;
     } catch (error) {
         if (error.code === "ENOENT") {
             return false;
         }
+
         throw error;
     }
+
+    return true;
 }
 
-function directoryExists(file: string, storeFs: StoreModel.StoreFs): boolean {
+function directoryExists(file: string, storeFs: StoreModel.StoreFs = StoreFs.Fs.fs): boolean {
     if (!(exists(file, storeFs))) {
         return false;
     }
+
     const stat = storeFs._impl.statSync(file);
+
     return stat.isDirectory;
 }

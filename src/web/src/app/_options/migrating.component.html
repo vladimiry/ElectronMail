@@ -1,0 +1,37 @@
+<div class="d-flex">
+    <div class="card" *ngIf="copyV2App$ | async; let copyV2App;">
+        <div class="card-header text-center">
+            Would you like the app to pick up existing settings?
+        </div>
+        <div class="card-body">
+            <ul>
+                <li *ngFor="let key of copyV2App.keys" [ngClass]="{'skip': copyV2App.data[key].skip}">
+                    <div class="badge">{{ copyV2App.data[key].skip ? "skip" : "copy" }}</div>
+                    <code>{{ copyV2App.data[key].src }}</code>
+                    <i class="fa fa-long-arrow-right"></i>
+                    <code>{{ copyV2App.data[key].dest }}</code>
+                    <ng-container *ngIf="copyV2App.data[key].skip">
+                        <span>({{ copyV2App.data[key].skip }})</span>
+                    </ng-container>
+                    <ng-container *ngIf="copyV2App.data[key].override && !copyV2App.data[key].skip">
+                        <span>(override)</span>
+                    </ng-container>
+                </li>
+            </ul>
+            <p class="m-0">
+                By the way, the recommended way of removing the app is described in the
+                <button type="button" class="btn btn-link p-0" (click)="openProjectReadme()">readme</button>
+                file (scroll down the page).
+            </p>
+        </div>
+        <div class="card-footer">
+            <button type="button" class="btn btn-secondary pull-left" (click)="continue()">
+                No
+            </button>
+            <button type="button" class="btn btn-primary pull-right" [disabled]="migrating$ | async" (click)="migrate()">
+                <i *ngIf="migrating$ | async" class="fa fa-spinner fa-pulse fa-fw"></i>
+                Yes
+            </button>
+        </div>
+    </div>
+</div>

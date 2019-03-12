@@ -1,0 +1,42 @@
+@import "~src/web/src/variables";
+
+:host {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: #ffffff;
+    color: $text-muted;
+
+    > .d-flex {
+        height: 100%;
+        align-items: center;
+        justify-content: center;
+    }
+
+    span {
+        margin-left: $app-spacer-1;
+    }
+
+    code {
+        font-size: $app-font-size-base-small;
+    }
+
+    .fa-long-arrow-right {
+        padding: $app-spacer-2;
+    }
+
+    .badge {
+        color: #ffffff;
+        background-color: theme-color("primary");
+        margin-right: $app-spacer-1;
+    }
+
+    .skip {
+        .badge {
+            background-color: theme-color("secondary");
+        }
+    }
+}

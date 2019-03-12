@@ -1,10 +1,15 @@
+import fsExtra from "fs-extra";
 import logger from "electron-log";
+import path from "path";
+import {constants as FsConstants} from "fs";
+import {Model, Store} from "fs-json-store";
 import {from} from "rxjs";
 
 import {Account, Database, FindInPage, General, TrayIcon} from "./endpoints-builders";
 import {Context} from "src/electron-main/model";
-import {Endpoints, IPC_MAIN_API} from "src/shared/api/main";
-import {PACKAGE_NAME} from "src/shared/constants";
+import {Endpoints, IPC_MAIN_API, InitResponse} from "src/shared/api/main";
+import {PACKAGE_NAME, PRODUCT_NAME} from "src/shared/constants";
+import {USED_DATA_FOLDER_NAME_V2} from "src/electron-main/api/constants";
 import {attachFullTextIndexWindow, detachFullTextIndexWindow} from "src/electron-main/window/full-text-search";
 import {buildSettingsAdapter} from "src/electron-main/util";
 import {clearSessionsCache, initSessionByAccount} from "src/electron-main/session";
@@ -52,10 +57,15 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
                 const errorMessage = String(error.message).toLowerCase();
 
                 ctx.snapPasswordManagerServiceHint = (
-                    errorMessage.includes(PACKAGE_NAME)
-                    &&
                     errorMessage.includes("snap")
-                    && (
+                    &&
+                    (
+                        errorMessage.includes(PACKAGE_NAME)
+                        ||
+                        errorMessage.includes(PRODUCT_NAME)
+                    )
+                    &&
+                    (
                         errorMessage.includes("org.freedesktop.secret.")
                         ||
                         errorMessage.includes("gnome-keyring")
@@ -63,12 +73,65 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
                 );
             }
 
+            const copyV2AppData: Required<InitResponse>["copyV2AppData"] = await (async () => {
+                const userDataDirV2 = path.join(path.dirname(ctx.locations.userDataDir), USED_DATA_FOLDER_NAME_V2);
+                const stores: Record<keyof typeof copyV2AppData, { src: Model.Store<any>; dest: Model.Store<any> }> = {
+                    // TODO take "fs" type into account instantiating the stores
+                    config: {
+                        src: new Store({file: path.join(userDataDirV2, path.basename(ctx.configStore.file))}),
+                        dest: ctx.configStore,
+                    },
+                    settings: {
+                        src: new Store({file: path.join(userDataDirV2, path.basename(ctx.settingsStore.file))}),
+                        dest: ctx.settingsStore,
+                    },
+                    database: {
+                        src: new Store({file: path.join(userDataDirV2, path.basename(ctx.db.options.file))}),
+                        dest: new Store({file: ctx.db.options.file}),
+                    },
+                };
+                const result: typeof copyV2AppData = {} as any;
+
+                for (const [name, value] of Object.entries(stores)) {
+                    // overriding the config file even if it exists
+                    const override = (await value.dest.readable() && name === "config") || undefined;
+
+                    result[name as keyof typeof stores] = {
+                        src: value.src.file,
+                        dest: value.dest.file,
+                        skip: await value.src.readable() !== true
+                            ? "source doesn't exist"
+                            : await value.dest.readable() !== true || override
+                                ? undefined
+                                : "destination exists",
+                        override,
+                    };
+                }
+
+                return result;
+            })();
+
             return {
                 electronLocations: ctx.locations,
                 keytarSupport: ctx.keytarSupport,
                 snapPasswordManagerServiceHint: ctx.snapPasswordManagerServiceHint,
                 hasSavedPassword,
+                copyV2AppData: copyV2AppData.settings.skip
+                    ? undefined
+                    : copyV2AppData,
             };
+        })()),
+
+        migrate: ({config, settings, database}) => from((async () => {
+            for (const {skip, src, dest, override} of [config, settings, database]) {
+                if (skip) {
+                    continue;
+                }
+
+                await fsExtra.copyFile(src, dest, override ? 0 : FsConstants.COPYFILE_EXCL);
+            }
+
+            return null;
         })()),
 
         logout: () => from((async () => {

@@ -5,12 +5,22 @@ import {AccountEditComponent} from "./account-edit.component";
 import {AccountsComponent} from "./accounts.component";
 import {BaseSettingsComponent} from "./base-settings.component";
 import {LoginComponent} from "./login.component";
+import {MigratingComponent} from "./migrating.component";
 import {SettingsComponent} from "./settings.component";
 import {SettingsConfigureGuard} from "./settings-configure.guard";
 import {SettingsSetupComponent} from "./settings-setup.component";
 import {StorageComponent} from "./storage.component";
 
+export const PATHS = {
+    migrating: "migrating",
+};
+
+// TODO define path names as constants and trigger navigation using them
 const routes: Routes = [
+    {
+        path: PATHS.migrating,
+        component: MigratingComponent,
+    },
     {
         path: "login",
         component: LoginComponent,

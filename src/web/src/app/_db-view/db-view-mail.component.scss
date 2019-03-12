@@ -45,6 +45,30 @@
     }
 
     &.state- {
+        &inbox_and_sent { // sass-lint:disable-line class-name-format
+            border-left-color: $state-received;
+            position: relative;
+
+            &::before {
+                display: block;
+                content: "";
+                position: absolute;
+                left: 0;
+                width: 2px;
+                top: 0;
+                bottom: 0;
+                background-color: $state-sent;
+            }
+
+            .state {
+                background-color: $state-received;
+
+                &::after {
+                    content: "Y";
+                }
+            }
+        }
+
         &sent {
             border-left-color: $state-sent;
 

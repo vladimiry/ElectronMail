@@ -1,105 +1,99 @@
 import randomstring from "randomstring";
-import rewiremock from "rewiremock";
 import sinon from "sinon";
 import test, {ExecutionContext} from "ava";
 
-import {Unpacked} from "src/shared/types";
-
-// tslint:disable-next-line:no-var-requires no-import-zones
-const {name: SERVICE} = require("package.json");
+const {name: SERVICE} = require("package.json"); // tslint:disable-line:no-var-requires no-import-zones
 const ACCOUNT = "master-password";
 
 test.serial("getPassword", async (t) => {
-    const {keytarModuleMocks, getPassword, setPassword} = await bootstrap();
+    const mocks = buildMocks();
+    const library = await loadLibrary(mocks);
     const password = randomstring.generate();
 
-    t.is(0, keytarModuleMocks.getPassword.callCount);
-    t.falsy(await getPassword());
-    await setPassword(password);
-    t.is(password, await getPassword());
-    t.is(2, keytarModuleMocks.getPassword.callCount);
+    t.is(mocks.keytar.getPassword.callCount, 0);
+    t.falsy(await library.getPassword());
+    await library.setPassword(password);
+    t.is(await library.getPassword(), password);
+    t.is(mocks.keytar.getPassword.callCount, 2);
 
-    testAlwaysCalledWith(t, keytarModuleMocks, {password});
+    testAlwaysCalledWith(t, mocks, {password});
 });
 
 test.serial("setPassword", async (t) => {
-    const {keytarModuleMocks, getPassword, setPassword} = await bootstrap();
+    const mocks = buildMocks();
+    const library = await loadLibrary(mocks);
     const password = randomstring.generate();
 
-    t.is(0, keytarModuleMocks.setPassword.callCount);
-    await setPassword(password);
-    t.is(password, await getPassword());
-    t.is(1, keytarModuleMocks.setPassword.callCount);
+    t.is(mocks.keytar.setPassword.callCount, 0);
+    await library.setPassword(password);
+    t.is(await library.getPassword(), password);
+    t.is(mocks.keytar.setPassword.callCount, 1);
 
-    testAlwaysCalledWith(t, keytarModuleMocks, {password});
+    testAlwaysCalledWith(t, mocks, {password});
 });
 
 test.serial("deletePassword", async (t) => {
-    const {keytarModuleMocks, getPassword, setPassword, deletePassword} = await bootstrap();
+    const mocks = buildMocks();
+    const library = await loadLibrary(mocks);
     const password = randomstring.generate();
 
-    await setPassword(password);
-    t.is(password, await getPassword());
-    t.is(0, keytarModuleMocks.deletePassword.callCount);
-    t.true(await deletePassword());
-    t.is(1, keytarModuleMocks.deletePassword.callCount);
-    t.falsy(await getPassword());
-    t.not(password, await getPassword());
+    await library.setPassword(password);
+    t.is(await library.getPassword(), password);
+    t.is(mocks.keytar.deletePassword.callCount, 0);
+    t.true(await library.deletePassword());
+    t.is(mocks.keytar.deletePassword.callCount, 1);
+    t.falsy(await library.getPassword());
+    t.not(password, await library.getPassword());
 
-    testAlwaysCalledWith(t, keytarModuleMocks, {password});
+    testAlwaysCalledWith(t, mocks, {password});
 });
 
 function testAlwaysCalledWith(
     t: ExecutionContext,
-    {getPassword, setPassword, deletePassword}: Unpacked<ReturnType<typeof bootstrap>>["keytarModuleMocks"],
+    {keytar}: ReturnType<typeof buildMocks>,
     data: { password: string },
 ) {
-    if (getPassword.called) {
-        t.true(getPassword.alwaysCalledWith(SERVICE, ACCOUNT));
+    if (keytar.getPassword.called) {
+        t.true(keytar.getPassword.alwaysCalledWith(SERVICE, ACCOUNT));
     }
-    if (setPassword.called) {
-        t.true(setPassword.alwaysCalledWith(SERVICE, ACCOUNT, data.password));
+    if (keytar.setPassword.called) {
+        t.true(keytar.setPassword.alwaysCalledWith(SERVICE, ACCOUNT, data.password));
     }
-    if (deletePassword.called) {
-        t.true(deletePassword.alwaysCalledWith(SERVICE, ACCOUNT));
+    if (keytar.deletePassword.called) {
+        t.true(keytar.deletePassword.alwaysCalledWith(SERVICE, ACCOUNT));
     }
 }
 
-async function bootstrap() {
+function buildMocks() {
     const store = new Map<string, string>();
-    const keytarModuleMocks = {
-        getPassword: sinon.stub().callsFake(
-            ((async (service, account) => {
-                return store.get(JSON.stringify({service, account})) || null;
-            }) as (typeof import("keytar"))["getPassword"]) as any, // tslint:disable-line:no-import-zones
-        ),
-        setPassword: sinon.stub().callsFake(
-            ((async (service, account, password) => {
-                store.set(JSON.stringify({service, account}), password);
-            }) as (typeof import("keytar"))["setPassword"]) as any, // tslint:disable-line:no-import-zones
-        ),
-        deletePassword: sinon.stub().callsFake(
-            ((async (service, account) => {
-                return store.delete(JSON.stringify({service, account}));
-            }) as (typeof import("keytar"))["deletePassword"]) as any, // tslint:disable-line:no-import-zones
-        ),
+
+    return {
+        keytar: {
+            getPassword: sinon.stub().callsFake(
+                ((async (service, account) => {
+                    return store.get(JSON.stringify({service, account})) || null;
+                }) as (typeof import("keytar"))["getPassword"]) as any, // tslint:disable-line:no-import-zones
+            ),
+            setPassword: sinon.stub().callsFake(
+                ((async (service, account, password) => {
+                    store.set(JSON.stringify({service, account}), password);
+                }) as (typeof import("keytar"))["setPassword"]) as any, // tslint:disable-line:no-import-zones
+            ),
+            deletePassword: sinon.stub().callsFake(
+                ((async (service, account) => {
+                    return store.delete(JSON.stringify({service, account}));
+                }) as (typeof import("keytar"))["deletePassword"]) as any, // tslint:disable-line:no-import-zones
+            ),
+        },
     };
-    const result = {
-        ...(await rewiremock.around(
-            () => import("./keytar"),
-            // (mock) => {
-            //     // tslint:disable-next-line:no-import-zones
-            //     mock(() => import("keytar"))
-            //         .with(keytarModuleMocks)
-            //         .dynamic();
-            // },
-        )),
-        keytarModuleMocks,
+}
+
+async function loadLibrary(mocks: ReturnType<typeof buildMocks>) {
+    const library = await import("./keytar");
+
+    library.STATE.resolveKeytar = async () => {
+        return mocks.keytar;
     };
 
-    result.STATE.resolveKeytar = async () => {
-        return keytarModuleMocks;
-    };
-
-    return result;
+    return library;
 }

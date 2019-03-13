@@ -25,7 +25,7 @@ export class MigratingComponent {
                 throw new Error(`"copyV2AppData" is supposed to be initialized at this stage`);
             }
             return {
-                keys: Object.keys(value),
+                itemsKeys: Object.keys(value.items),
                 data: value,
             };
         }),
@@ -39,11 +39,15 @@ export class MigratingComponent {
     migrate() {
         this.copyV2App$
             .pipe(take(1))
-            .subscribe(({data}) => this.store.dispatch(OPTIONS_ACTIONS.Migrate(data)));
+            .subscribe(({data}) => this.store.dispatch(OPTIONS_ACTIONS.Migrate(data.items)));
     }
 
     continue() {
         this.store.dispatch(this.optionsService.settingsNavigationAction({path: ""}));
+    }
+
+    quit() {
+        this.store.dispatch(NAVIGATION_ACTIONS.Quit());
     }
 
     openProjectReadme() {

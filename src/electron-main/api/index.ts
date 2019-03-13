@@ -4,12 +4,13 @@ import path from "path";
 import {constants as FsConstants} from "fs";
 import {Model, Store} from "fs-json-store";
 import {from} from "rxjs";
+import {platform} from "os";
 
 import {Account, Database, FindInPage, General, TrayIcon} from "./endpoints-builders";
 import {Context} from "src/electron-main/model";
 import {Endpoints, IPC_MAIN_API, InitResponse} from "src/shared/api/main";
 import {PACKAGE_NAME, PRODUCT_NAME} from "src/shared/constants";
-import {USED_DATA_FOLDER_NAME_V2} from "src/electron-main/api/constants";
+import {PACKAGE_NAME_V2} from "src/electron-main/api/constants";
 import {attachFullTextIndexWindow, detachFullTextIndexWindow} from "src/electron-main/window/full-text-search";
 import {buildSettingsAdapter} from "src/electron-main/util";
 import {clearSessionsCache, initSessionByAccount} from "src/electron-main/session";
@@ -73,10 +74,19 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
                 );
             }
 
-            const copyV2AppData: Required<InitResponse>["copyV2AppData"] = await (async () => {
-                const userDataDirV2 = path.join(path.dirname(ctx.locations.userDataDir), USED_DATA_FOLDER_NAME_V2);
-                const stores: Record<keyof typeof copyV2AppData, { src: Model.Store<any>; dest: Model.Store<any> }> = {
-                    // TODO take "fs" type into account instantiating the stores
+            type CopyV2AppData = Required<InitResponse>["copyV2AppData"];
+
+            const copyV2AppData: CopyV2AppData | undefined = await (async () => {
+                // TODO take "fs" type into account working with files
+                const snapUserDataDirRelativeToHomeRe = new RegExp(`snap\/${PACKAGE_NAME}\/x?\\d+\/\\.config\/${PACKAGE_NAME}$`);
+                const isSnapPackage = platform() === "linux" && snapUserDataDirRelativeToHomeRe.test(ctx.locations.userDataDir);
+                const userDataDirV2 = isSnapPackage
+                    ? (() => {
+                        const [homeDir] = ctx.locations.userDataDir.split(snapUserDataDirRelativeToHomeRe);
+                        return path.join(homeDir, "snap", PACKAGE_NAME_V2, "current", ".config", PACKAGE_NAME_V2);
+                    })()
+                    : path.join(path.dirname(ctx.locations.userDataDir), PACKAGE_NAME_V2);
+                const stores: Record<keyof CopyV2AppData["items"], { src: Model.Store<any>; dest: Model.Store<any> }> = {
                     config: {
                         src: new Store({file: path.join(userDataDirV2, path.basename(ctx.configStore.file))}),
                         dest: ctx.configStore,
@@ -90,17 +100,29 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
                         dest: new Store({file: ctx.db.options.file}),
                     },
                 };
-                const result: typeof copyV2AppData = {} as any;
+                const items: CopyV2AppData["items"] = {} as any;
 
                 for (const [name, value] of Object.entries(stores)) {
                     // overriding the config file even if it exists
                     const override = (await value.dest.readable() && name === "config") || undefined;
+                    const srcReadable: boolean | "denied read access" = isSnapPackage
+                        ? await (async () => {
+                            try {
+                                return await value.src.readable();
+                            } catch (error) {
+                                if (error.code === "EACCES") {
+                                    return "denied read access";
+                                }
+                                throw error;
+                            }
+                        })()
+                        : await value.src.readable();
 
-                    result[name as keyof typeof stores] = {
+                    items[name as keyof typeof stores] = {
                         src: value.src.file,
                         dest: value.dest.file,
-                        skip: await value.src.readable() !== true
-                            ? "source doesn't exist"
+                        skip: srcReadable !== true
+                            ? srcReadable || "source doesn't exist"
                             : await value.dest.readable() !== true || override
                                 ? undefined
                                 : "destination exists",
@@ -108,7 +130,19 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
                     };
                 }
 
-                return result;
+                const v2SnapDeniedRead = (
+                    isSnapPackage
+                    &&
+                    // denied to read at least one file
+                    Boolean(
+                        Object.values(items)
+                            .find(({skip}) => skip === "denied read access"),
+                    )
+                );
+
+                return !items.settings.skip || v2SnapDeniedRead
+                    ? {items, v2SnapDeniedRead}
+                    : undefined;
             })();
 
             return {
@@ -116,9 +150,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
                 keytarSupport: ctx.keytarSupport,
                 snapPasswordManagerServiceHint: ctx.snapPasswordManagerServiceHint,
                 hasSavedPassword,
-                copyV2AppData: copyV2AppData.settings.skip
-                    ? undefined
-                    : copyV2AppData,
+                copyV2AppData,
             };
         })()),
 

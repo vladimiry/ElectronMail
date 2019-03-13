@@ -72,7 +72,7 @@ export interface Endpoints {
 
     init: ApiMethodNoArgument<InitResponse>;
 
-    migrate: ApiMethod<Required<InitResponse>["copyV2AppData"], null>;
+    migrate: ApiMethod<Required<InitResponse>["copyV2AppData"]["items"], null>;
 
     logout: ApiMethodNoArgument<null>;
 
@@ -124,13 +124,16 @@ export interface InitResponse {
     hasSavedPassword?: boolean;
     snapPasswordManagerServiceHint?: boolean;
     keytarSupport: boolean;
-    copyV2AppData?: Record<"config" | "settings" | "database",
-        {
-            src: string;
-            dest: string;
-            skip?: "source doesn't exist" | "destination exists";
-            override?: boolean;
-        }>;
+    copyV2AppData?: {
+        v2SnapDeniedRead: boolean;
+        items: Record<"config" | "settings" | "database",
+            {
+                src: string;
+                dest: string;
+                skip?: "source doesn't exist" | "destination exists" | "denied read access";
+                override?: boolean;
+            }>;
+    };
 }
 
 export const IPC_MAIN_API = new IpcMainApiService<Endpoints>({channel: `${PACKAGE_NAME}:ipcMain-api`});

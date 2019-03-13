@@ -13,9 +13,6 @@
                     <ng-container *ngIf="copyV2App.data.items[itemKey].skip">
                         <span>({{ copyV2App.data.items[itemKey].skip }})</span>
                     </ng-container>
-                    <ng-container *ngIf="copyV2App.data.items[itemKey].override && !copyV2App.data.items[itemKey].skip">
-                        <span>(override)</span>
-                    </ng-container>
                 </li>
             </ul>
             <p *ngIf="copyV2App.data.v2SnapDeniedRead">

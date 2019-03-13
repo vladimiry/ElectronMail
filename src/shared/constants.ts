@@ -39,12 +39,12 @@ export const PROVIDER_REPO: Record<AccountType, { repo: string, version: string;
     protonmail: {
         repo: "https://github.com/ProtonMail/WebClient.git",
         commit: "9ba3d434268720a83803910c58bd79b38f5cfd1b",
-        version: "3.15.20+",
+        version: "3.15.20",
     },
     tutanota: {
         repo: "https://github.com/tutao/tutanota.git",
         commit: "d4e695a79c56ca047c0dee292428b3b53e946e63",
-        version: "3.48.1+",
+        version: "3.48.1",
     },
 };
 

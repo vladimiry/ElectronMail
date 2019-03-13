@@ -131,7 +131,7 @@ export interface InitResponse {
                 src: string;
                 dest: string;
                 skip?: "source doesn't exist" | "destination exists" | "denied read access";
-                override?: boolean;
+                overwrite?: boolean;
             }>;
     };
 }

@@ -104,7 +104,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
 
                 for (const [name, value] of Object.entries(stores)) {
                     // overriding the config file even if it exists
-                    const override = (await value.dest.readable() && name === "config") || undefined;
+                    const overwrite = (await value.dest.readable() && name === "config") || undefined;
                     const srcReadable: boolean | "denied read access" = isSnapPackage
                         ? await (async () => {
                             try {
@@ -123,10 +123,10 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
                         dest: value.dest.file,
                         skip: srcReadable !== true
                             ? srcReadable || "source doesn't exist"
-                            : await value.dest.readable() !== true || override
+                            : await value.dest.readable() !== true || overwrite
                                 ? undefined
                                 : "destination exists",
-                        override,
+                        overwrite,
                     };
                 }
 
@@ -155,12 +155,12 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
         })()),
 
         migrate: ({config, settings, database}) => from((async () => {
-            for (const {skip, src, dest, override} of [config, settings, database]) {
+            for (const {skip, src, dest, overwrite} of [config, settings, database]) {
                 if (skip) {
                     continue;
                 }
 
-                await fsExtra.copyFile(src, dest, override ? 0 : FsConstants.COPYFILE_EXCL);
+                await fsExtra.copyFile(src, dest, overwrite ? 0 : FsConstants.COPYFILE_EXCL);
             }
 
             return null;

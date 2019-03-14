@@ -1,6 +1,6 @@
 # ElectronMail
 
-is [Electron](https://electronjs.org)-based unofficial desktop client for [ProtonMail](https://protonmail.com/) and [Tutanota](https://tutanota.com/) end-to-end encrypted email providers. The app aims to provide enhanced desktop user experience enabling features that are not supported by the official in-browser web clients. 
+is an [Electron](https://electronjs.org)-based unofficial desktop client for [ProtonMail](https://protonmail.com/) and [Tutanota](https://tutanota.com/) end-to-end encrypted email providers. The app aims to provide enhanced desktop user experience enabling features that are not supported by the official in-browser web clients. 
 It is written in [TypeScript](http://www.typescriptlang.org) and uses [Angular](https://angular.io).
 
 [![Build Status: Linux / MacOS](https://travis-ci.org/vladimiry/ElectronMail.svg?branch=master)](https://travis-ci.org/vladimiry/ElectronMail) [![Build status: Windows](https://ci.appveyor.com/api/projects/status/vex909uhwadrse27?svg=true)](https://ci.appveyor.com/project/vladimiry/ElectronMail)
@@ -13,9 +13,9 @@ The download page with Linux/OSX/Windows installation packages is [here](https:/
 
 `Pacman` and `Snap` packages are also available for installing from the following repositories (both repositories are being maintained by [@joshirio](https://github.com/joshirio)):
 
-[![Get it from the AUR](images/aurlogo.png)](https://aur.archlinux.org/packages/email-securely-app-bin)
+[![Get it from the AUR](images/aurlogo.png)](https://aur.archlinux.org/packages/electronmail-bin)
 
-[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/email-securely-app)
+[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/electron-mail)
 
 ## <a name="features"></a>Features
 

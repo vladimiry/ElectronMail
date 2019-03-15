@@ -9,19 +9,19 @@ test.serial("flow", async (t) => {
 
     await loadLibrary(mocks);
 
-    const ctx = mocks["./util"].initContext.firstCall.returnValue;
+    const ctx = mocks["./context"].initContext.firstCall.returnValue;
 
     t.truthy(ctx);
 
     t.true(mocks["./bootstrap/init"].bootstrapInit.alwaysCalledWithExactly());
     t.is(mocks["./bootstrap/init"].bootstrapInit.callCount, 1);
 
-    t.true(mocks["./util"].initContext.alwaysCalledWithExactly());
-    t.true(mocks["./util"].initContext.calledAfter(mocks["./bootstrap/init"].bootstrapInit));
-    t.is(mocks["./util"].initContext.callCount, 1);
+    t.true(mocks["./context"].initContext.alwaysCalledWithExactly());
+    t.true(mocks["./context"].initContext.calledAfter(mocks["./bootstrap/init"].bootstrapInit));
+    t.is(mocks["./context"].initContext.callCount, 1);
 
     t.true(mocks["./bootstrap/command-line"].bootstrapCommandLine.alwaysCalledWithExactly(ctx));
-    t.true(mocks["./bootstrap/command-line"].bootstrapCommandLine.calledAfter(mocks["./util"].initContext));
+    t.true(mocks["./bootstrap/command-line"].bootstrapCommandLine.calledAfter(mocks["./context"].initContext));
     t.is(mocks["./bootstrap/command-line"].bootstrapCommandLine.callCount, 1);
 
     t.true(mocks["./protocol"].registerStandardSchemes.alwaysCalledWithExactly(ctx));
@@ -53,7 +53,7 @@ function buildMocks() {
         "./bootstrap/init": {
             bootstrapInit: sinon.spy(),
         },
-        "./util": {
+        "./context": {
             initContext: sinon.stub().returns({[`${PACKAGE_NAME}_context_id`]: 123}),
         },
         "./protocol": {

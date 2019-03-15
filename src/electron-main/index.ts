@@ -3,7 +3,7 @@ import {app} from "electron";
 import {appReadyHandler} from "./bootstrap/app-ready";
 import {bootstrapCommandLine} from "./bootstrap/command-line";
 import {bootstrapInit} from "./bootstrap/init";
-import {initContext} from "./util";
+import {initContext} from "./context";
 import {registerStandardSchemes} from "./protocol";
 
 bootstrapInit();

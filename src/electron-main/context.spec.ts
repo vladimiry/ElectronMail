@@ -11,7 +11,7 @@ test.serial(`"Context.db" resolves encryption key calling "Context.settingsStore
     memFsVolume._impl.mkdirpSync(memFsPath);
 
     const {initContext} = await rewiremock.around(
-        () => import("./util"),
+        () => import("./context"),
         (mock) => {
             mock(() => import("electron")).with({
                 app: {getPath: sinon.stub().returns(memFsPath)},
@@ -53,7 +53,7 @@ test.serial([
     const initialSettings = INITIAL_STORES.settings();
     const settingsStub = sinon.stub().returns(initialSettings);
     const {initContext} = await rewiremock.around(
-        () => import("./util"),
+        () => import("./context"),
         (mock) => {
             mock(() => import("electron")).with({
                 app: {getPath: sinon.stub().returns(memFsPath)},

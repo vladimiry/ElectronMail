@@ -666,7 +666,7 @@ test.beforeEach(async (t) => {
     }) as any;
 
     const {initContext} = await rewiremock.around(
-        () => import("src/electron-main/util"),
+        () => import("src/electron-main/context"),
         (mock) => {
             mock(() => import("src/electron-main/protocol")).append({
                 registerStandardSchemes: sinon.stub(),

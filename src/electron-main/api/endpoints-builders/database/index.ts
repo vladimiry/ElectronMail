@@ -329,10 +329,13 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
                 IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.match(action, {
                     Bootstrapped: () => {
                         setTimeout(async () => {
+                            const logins = (await ctx.settingsStore.readExisting()).accounts.map((account) => account.login);
                             const config = await (await ctx.deferredEndpoints.promise).readConfig().toPromise();
 
                             for (const {account, pk} of ctx.db.accountsIterator()) {
-                                await indexAccount(account, pk, config);
+                                if (logins.includes(pk.login)) {
+                                    await indexAccount(account, pk, config);
+                                }
                             }
                         });
                     },

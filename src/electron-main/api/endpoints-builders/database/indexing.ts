@@ -61,7 +61,7 @@ export async function indexAccount(account: MemoryDbAccount, key: DbAccountPk, c
     logger.verbose("indexAccount() end", {indexed: account.mails.size, duration: duration.end()});
 }
 
-export async function indexMails(
+async function indexMails(
     mails: Mail[],
     key: DbAccountPk,
     timeoutMs: number,

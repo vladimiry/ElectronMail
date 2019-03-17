@@ -198,15 +198,22 @@ export async function upgradeDatabase(db: Database, accounts: Settings["accounts
         needToSave = true;
     }
 
-    // removing nonexistent accounts
+    // removing non existent accounts
     await (async () => {
         const removePks: DbAccountPk[] = [];
 
         for (const {pk} of db.accountsIterator()) {
-            if (accounts.some((a) => Boolean(a.database) && a.type === pk.type && a.login === pk.login)) {
-                return;
+            const accountWithEnabledLocalStoreExists = accounts.some(({database, type, login}) => (
+                Boolean(database)
+                &&
+                pk.type === type
+                &&
+                pk.login === login
+            ));
+
+            if (!accountWithEnabledLocalStoreExists) {
+                removePks.push(pk);
             }
-            removePks.push(pk);
         }
 
         for (const pk of removePks) {

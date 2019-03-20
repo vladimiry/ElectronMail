@@ -128,6 +128,7 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
                 elements.button,
                 () => authenticator.generate(spacesLessSecret),
                 logger,
+                {submitTimeoutMs: ONE_SECOND_MS * 8},
             );
         })()),
 

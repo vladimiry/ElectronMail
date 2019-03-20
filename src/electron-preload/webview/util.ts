@@ -115,12 +115,16 @@ export async function submitTotpToken(
     button: HTMLElement,
     tokenResolver: () => string,
     _logger: ReturnType<typeof buildLoggerBundle>,
+    {
+        submitTimeoutMs = ONE_SECOND_MS * 4,
+        newTokenDelayMs = ONE_SECOND_MS * 2,
+    }: {
+        submitTimeoutMs?: number;
+        newTokenDelayMs?: number;
+    } = {},
 ): Promise<null> {
     const logger = curryFunctionMembers(_logger, "submitTotpToken()");
     logger.info();
-
-    const submitTimeoutMs = ONE_SECOND_MS * 4;
-    const newTokenDelayMs = ONE_SECOND_MS * 2;
 
     if (input.value) {
         throw new Error("2FA TOTP token is not supposed to be pre-filled on this stage");

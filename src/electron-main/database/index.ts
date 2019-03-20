@@ -191,7 +191,7 @@ export class Database {
                 version: DATABASE_VERSION,
             };
 
-            await this.fileFs.writeFile(
+            await this.fileFs.writeFileAtomic(
                 this.options.file,
                 await serializationAdapter.write(dump),
             );

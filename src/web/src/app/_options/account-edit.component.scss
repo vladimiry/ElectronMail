@@ -30,7 +30,7 @@
 
             &::after {
                 display: inline-block;
-                content: "online";
+                content: "online/live";
                 font-weight: normal;
             }
 
@@ -39,7 +39,7 @@
                 border: 1px solid $local-color;
 
                 &::after {
-                    content: "built-in";
+                    content: "prepackaged";
                 }
             }
         }

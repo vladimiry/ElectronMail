@@ -34,10 +34,17 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
         },
 
         openAboutWindow: () => {
+            // TODO get rid of "about-window" module
             aboutWindow({
                 product_name: PRODUCT_NAME,
                 icon_path: ctx.locations.icon,
                 package_json_dir: path.join(ctx.locations.appDir, ".."),
+                win_options: {
+                    // TODO get rid of "autoHideMenuBar", see:
+                    //      https://github.com/electron/electron/issues/16521
+                    //      https://github.com/electron/electron/issues/15901
+                    autoHideMenuBar: true,
+                },
             });
             return of(null);
         },

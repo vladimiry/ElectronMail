@@ -11,14 +11,18 @@ export async function buildEndpoints(
     ctx: Context,
 ): Promise<Pick<Endpoints, "addAccount" | "updateAccount" | "changeAccountOrder" | "removeAccount">> {
     return {
-        addAccount: ({type, login, entryUrl, database, credentials, proxy}) => from((async () => {
+        addAccount: (
+            {type, login, entryUrl, database, credentials, proxy, loginDelayOnSelect, loginDelaySecondsRange},
+        ) => from((async () => {
             const account = {
                 type,
                 login,
                 entryUrl,
                 database,
                 credentials,
-                proxy: proxy || undefined,
+                proxy,
+                loginDelayOnSelect,
+                loginDelaySecondsRange,
             } as AccountConfig; // TODO ger rid of "TS as" casting
             const settings = await ctx.settingsStore.readExisting();
 
@@ -31,19 +35,19 @@ export async function buildEndpoints(
             return result;
         })()),
 
-        // TODO update "updateAccount" api method test (entryUrl, changed credentials structure)
-        updateAccount: ({login, entryUrl, database, credentials, proxy}) => from((async () => {
+        updateAccount: (
+            {login, entryUrl, database, credentials, proxy, loginDelayOnSelect, loginDelaySecondsRange},
+        ) => from((async () => {
             const settings = await ctx.settingsStore.readExisting();
             const account = pickAccountStrict(settings.accounts, {login});
             const {credentials: existingCredentials} = account;
 
-            if (typeof database !== "undefined") {
-                account.database = database;
-            }
+            account.database = database;
 
-            if (typeof entryUrl !== "undefined") {
-                account.entryUrl = entryUrl;
+            if (typeof entryUrl === "undefined") {
+                throw new Error('"entryUrl" is undefined');
             }
+            account.entryUrl = entryUrl;
 
             if (credentials) {
                 if ("password" in credentials) {
@@ -57,9 +61,11 @@ export async function buildEndpoints(
                 }
             }
 
-            account.proxy = proxy || undefined;
-
+            account.proxy = proxy;
             await configureSessionByAccount(pick(["login", "proxy"], account));
+
+            account.loginDelayOnSelect = loginDelayOnSelect;
+            account.loginDelaySecondsRange = loginDelaySecondsRange;
 
             return await ctx.settingsStore.write(settings);
         })()),

@@ -150,6 +150,24 @@
                     </button>
                     <input type="text" class="form-control" formControlName="proxyBypassRules">
                 </div>
+                <div class="mt-3">
+                    <label class="d-block pull-left">Login delay range (seconds)</label>
+                    <div class="custom-control custom-switch float-md-right">
+                        <input type="checkbox" class="custom-control-input" formControlName="loginDelayOnSelect" id="loginDelayOnSelectCheckbox">
+                        <label class="custom-control-label" for="loginDelayOnSelectCheckbox">
+                            Login on account selection
+                        </label>
+                    </div>
+                    <input type="text" class="form-control" formControlName="loginDelaySecondsRange" placeholder="15-65"
+                           [ngClass]="controls.loginDelaySecondsRange.dirty
+                               ? {'is-invalid': controls.loginDelaySecondsRange.invalid, 'is-valid': controls.loginDelaySecondsRange.valid}
+                               : {}">
+                    <div
+                        *ngIf="controls.loginDelaySecondsRange.invalid && controls.loginDelaySecondsRange.errors?.errorMsg"
+                        [innerText]="controls.loginDelaySecondsRange.errors?.errorMsg"
+                        class="invalid-feedback"
+                    ></div>
+                </div>
             </div>
         </div>
         <div class="clearfix">

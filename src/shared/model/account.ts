@@ -10,6 +10,8 @@ export interface GenericAccountConfig<Type extends AccountType, CredentialFields
         proxyRules?: string;
         proxyBypassRules?: string;
     };
+    loginDelayOnSelect?: boolean;
+    loginDelaySecondsRange?: { start: number; end: number; };
 }
 
 export type AccountConfigProtonmail = GenericAccountConfig<"protonmail", "password" | "twoFactorCode" | "mailPassword">;

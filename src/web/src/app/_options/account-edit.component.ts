@@ -12,6 +12,7 @@ import {EntryUrlItem} from "src/shared/types";
 import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {State} from "src/web/src/app/store/reducers/options";
+import {validateLoginDelaySecondsRange} from "src/shared/util";
 
 @Component({
     selector: "electron-mail-account-edit",
@@ -27,9 +28,11 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         {value: "tutanota", title: "Tutanota"},
     ];
     entryUrlItems: EntryUrlItem[] = [];
-    controls: Record<keyof Pick<AccountConfig, "type" | "login" | "database" | "entryUrl">
-        | "proxyRules" | "proxyBypassRules"
-        | keyof AccountConfigProtonmail["credentials"], AbstractControl> = {
+    controls: Record<keyof Pick<AccountConfig,
+        | "type" | "login" | "database" | "entryUrl" | "loginDelayOnSelect" | "loginDelaySecondsRange">
+        | keyof Pick<Required<Required<AccountConfig>["proxy"]>, "proxyRules" | "proxyBypassRules">
+        | keyof AccountConfigProtonmail["credentials"],
+        AbstractControl> = {
         type: new FormControl(this.typeValues[0].value, Validators.required),
         login: new FormControl(null, Validators.required),
         database: new FormControl(null),
@@ -39,6 +42,30 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         password: new FormControl(null),
         twoFactorCode: new FormControl(null),
         mailPassword: new FormControl(null),
+        loginDelayOnSelect: new FormControl(null),
+        loginDelaySecondsRange: new FormControl(
+            null,
+            () => {
+                const control: AbstractControl | undefined = this.controls && this.controls.loginDelaySecondsRange;
+                const value = control && control.value;
+
+                if (!value) {
+                    return null;
+                }
+
+                const validated = value
+                    ? validateLoginDelaySecondsRange(value)
+                    : undefined;
+
+                if (validated && "validationError" in validated) {
+                    return {
+                        errorMsg: validated.validationError,
+                    };
+                }
+
+                return null;
+            },
+        ),
     };
     form = new FormGroup(this.controls);
     // account
@@ -81,19 +108,21 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                     controls.database.patchValue(account.database);
                     controls.entryUrl.patchValue(account.entryUrl);
 
-                    if (account.proxy) {
-                        controls.proxyRules.patchValue(account.proxy.proxyRules);
-                        controls.proxyBypassRules.patchValue(account.proxy.proxyBypassRules);
-                    } else {
-                        controls.proxyRules.patchValue(null);
-                        controls.proxyBypassRules.patchValue(null);
-                    }
+                    controls.proxyRules.patchValue(account.proxy ? account.proxy.proxyRules : null);
+                    controls.proxyBypassRules.patchValue(account.proxy ? account.proxy.proxyBypassRules : null);
 
                     controls.password.patchValue(account.credentials.password);
                     controls.twoFactorCode.patchValue(account.credentials.twoFactorCode);
                     if (account.type === "protonmail") {
                         controls.mailPassword.patchValue(account.credentials.mailPassword);
                     }
+
+                    controls.loginDelayOnSelect.patchValue(account.loginDelayOnSelect);
+                    controls.loginDelaySecondsRange.patchValue(
+                        account.loginDelaySecondsRange
+                            ? `${account.loginDelaySecondsRange.start}-${account.loginDelaySecondsRange.end}`
+                            : undefined,
+                    );
                 })();
             });
 
@@ -131,6 +160,18 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                 twoFactorCode: controls.twoFactorCode.value,
             },
             ...((proxy.proxyRules || proxy.proxyBypassRules) && {proxy}),
+            loginDelayOnSelect: Boolean(controls.loginDelayOnSelect.value),
+            loginDelaySecondsRange: (() => {
+                const validated = this.controls.loginDelaySecondsRange.value
+                    ? validateLoginDelaySecondsRange(this.controls.loginDelaySecondsRange.value)
+                    : undefined;
+
+                if (validated && "validationError" in validated) {
+                    throw new Error(validated.validationError);
+                }
+
+                return validated;
+            })(),
         };
         const accountType: AccountType = account
             ? account.type

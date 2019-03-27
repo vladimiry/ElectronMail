@@ -204,3 +204,37 @@ export const getWebViewPartition: (login: AccountConfig<AccountType>["login"]) =
 
     return result;
 })();
+
+export const validateLoginDelaySecondsRange: (
+    loginDelaySecondsRange: string,
+) => { validationError: string } | Required<AccountConfig>["loginDelaySecondsRange"] = (() => {
+    const re = /^(\d+)-(\d+)$/;
+    const result: typeof validateLoginDelaySecondsRange = (loginDelaySecondsRange) => {
+        const match = loginDelaySecondsRange.match(re) || [];
+        const end = Number(match.pop());
+        const start = Number(match.pop());
+
+        if (isNaN(start) || isNaN(end)) {
+            return {validationError: `Invalid data format, "number-number" format is expected.`};
+        }
+        if (start > end) {
+            return {validationError: `"Start" value is bigger than "end" value.`};
+        }
+
+        return {start, end};
+    };
+
+    return result;
+})();
+
+export const parseLoginDelaySecondsRange: (
+    loginDelaySecondsRange: string,
+) => Required<AccountConfig>["loginDelaySecondsRange"] | undefined = (loginDelaySecondsRange) => {
+    const validation = validateLoginDelaySecondsRange(loginDelaySecondsRange);
+
+    if ("validationError" in validation) {
+        return;
+    }
+
+    return validation;
+};

@@ -46,6 +46,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.pass(`TODO test "log" endpoint`);
     },
 
+    // TODO update "updateAccount" api method test (verify more fields)
     addAccount: async (t) => {
         const {
             endpoints,
@@ -93,6 +94,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         initSessionByAccountMock.calledWithExactly(t.context.ctx, initSessionByAccount2Arg, initSessionByAccountOptions);
     },
 
+    // TODO update "updateAccount" api method test (verify more fields)
     updateAccount: async (t) => {
         const {
             endpoints,

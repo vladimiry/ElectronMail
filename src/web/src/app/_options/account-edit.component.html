@@ -15,8 +15,7 @@
                     ></i>
                     <ng-template #localStorePopoverTemplate>
                         The <code>local store</code> feature enables storing your messages in the encrypted <code>database.bin</code> file,
-                        so you could view your messages offline, export them to EML files and perform full-text search against your
-                        messages.
+                        so you could view your messages offline, perform full-text search against them and export them to EML files.
                     </ng-template>
                 </label>
             </div>
@@ -50,7 +49,15 @@
                     web client:
                 </div>
             </ng-template>
-            <label>Domain</label>
+            <div class="clearfix">
+                <label class="d-block pull-left">Domain</label>
+                <div class="pull-right text-muted">
+                    description:
+                    <button type="button" class="btn btn-link p-0" (click)="openIssue29()" title="Issue 29">29</button>,
+                    <button type="button" class="btn btn-link p-0" (click)="openIssue79()" title="Issue 79">79</button>,
+                    <button type="button" class="btn btn-link p-0" (click)="openIssue80()" title="Issue 80">80</button>
+                </div>
+            </div>
             <ng-select [items]="entryUrlItems" [clearable]="false" formControlName="entryUrl" id="accountEditFormEntryUrlField"
                        bindLabel="title" bindValue="value">
                 <ng-template ng-label-tmp let-item="item" let-index="index">
@@ -90,7 +97,9 @@
                     triggers="mouseenter:mouseleave"
                 ></i>
             </label>
-            <button type="button" class="btn btn-link p-0 d-block pull-right" (click)="open2faEnablingIssue()">description</button>
+            <button type="button" class="btn btn-link p-0 d-block pull-right" (click)="open2faEnablingIssue()" title="Issue 10">
+                description
+            </button>
             <input type="password" class="form-control" formControlName="twoFactorCode"
                    [ngClass]="controls.twoFactorCode.dirty ? {'is-invalid': controls.twoFactorCode.invalid, 'is-valid': controls.twoFactorCode.valid} : {}">
         </div>

@@ -165,6 +165,18 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         return value.startsWith(ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX);
     }
 
+    openIssue29() {
+        this.openIssue(29);
+    }
+
+    openIssue79() {
+        this.openIssue(79);
+    }
+
+    openIssue80() {
+        this.openIssue(80);
+    }
+
     openProxyDocsPage() {
         this.store.dispatch(NAVIGATION_ACTIONS.OpenExternal({
             url: "https://electronjs.org/docs/api/session#sessetproxyconfig-callback",
@@ -172,9 +184,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     }
 
     open2faEnablingIssue() {
-        this.store.dispatch(NAVIGATION_ACTIONS.OpenExternal({
-            url: `https://github.com/vladimiry/${REPOSITORY_NAME}/issues/10`,
-        }));
+        this.openIssue(10);
     }
 
     openMailPasswordDescription() {
@@ -186,5 +196,11 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.unSubscribe$.next();
         this.unSubscribe$.complete();
+    }
+
+    private openIssue(issueNumber: number) {
+        this.store.dispatch(NAVIGATION_ACTIONS.OpenExternal({
+            url: `https://github.com/vladimiry/${REPOSITORY_NAME}/issues/${issueNumber}`,
+        }));
     }
 }

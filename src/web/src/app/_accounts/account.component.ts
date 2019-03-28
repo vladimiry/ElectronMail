@@ -40,9 +40,13 @@ type WebViewSubjectState =
 
 let componentIndex = 0;
 
-const pickCredentialFields = ((fields: Array<keyof AccountConfig>) => (ac: AccountConfig) => pick(fields, ac))([
-    "credentials",
-]);
+const pickCredentialFields = ((fields: Array<keyof AccountConfig>) => {
+    return (accountConfig: AccountConfig) => pick(fields, accountConfig);
+})(["credentials"]);
+
+const pickLoginDelayFields = ((fields: Array<keyof AccountConfig>) => {
+    return (accountConfig: AccountConfig) => pick(fields, accountConfig);
+})(["loginDelayUntilSelected", "loginDelaySecondsRange"]);
 
 @Component({
     selector: "electron-mail-account",
@@ -236,9 +240,12 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     ) || (
                         // creds changed
                         !equals(pickCredentialFields(prev.accountConfig), pickCredentialFields(curr.accountConfig))
+                    ) || (
+                        // login delay values changed
+                        !equals(pickLoginDelayFields(prev.accountConfig), pickLoginDelayFields(curr.accountConfig))
                     );
                 }),
-                map(([prev, curr]) => curr),
+                map(([, curr]) => curr),
             ).subscribe((account) => {
                 this.logger.info(`onWebViewMounted(): dispatch "TryToLogin"`);
                 this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.TryToLogin({account, webView}));

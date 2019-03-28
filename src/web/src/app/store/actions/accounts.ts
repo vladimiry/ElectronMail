@@ -23,7 +23,7 @@ export const ACCOUNTS_ACTIONS = unionize({
         ToggleDatabaseView: ofType<{ login: string; forced?: Pick<WebAccount, "databaseView"> }>(),
         ToggleSyncing: ofType<{ pk: DbAccountPk; webView: Electron.WebviewTag; finishPromise: Promise<void>; }>(),
         SetupNotificationChannel: ofType<{ account: WebAccount; webView: Electron.WebviewTag; finishPromise: Promise<void>; }>(),
-        TryToLogin: ofType<{ account: WebAccount; webView: Electron.WebviewTag; password?: string; }>(),
+        TryToLogin: ofType<{ account: WebAccount; webView: Electron.WebviewTag; }>(),
         WireUpConfigs: ofType<{ accountConfigs: AccountConfig[] }>(),
         PatchGlobalProgress: ofType<{ patch: State["globalProgress"]; }>(),
         SelectMailOnline: ofType<Omit<Arguments<CommonWebViewApi<AccountType>["selectMailOnline"]>[0], "zoneName">>(),

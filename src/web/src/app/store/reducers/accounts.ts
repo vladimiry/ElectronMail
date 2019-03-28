@@ -32,16 +32,17 @@ const initialState: State = {
 export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_ACTIONS>): State {
     return produce(state, (draftState) => ACCOUNTS_ACTIONS.match(action, {
         WireUpConfigs: ({accountConfigs}) => {
-            const needToPickNewLogin = (
+            const needToSelectNewLogin = (
                 typeof draftState.selectedLogin === "undefined"
                 ||
-                !accountConfigs.map(({login}) => login).includes(draftState.selectedLogin)
+                false === accountConfigs
+                    .map(({login}) => login)
+                    .includes(draftState.selectedLogin)
             );
 
-            if (needToPickNewLogin) {
-                draftState.selectedLogin = accountConfigs.length
-                    ? accountConfigs[0].login
-                    : undefined;
+            if (needToSelectNewLogin) {
+                const accountConfigToSelect = accountConfigs.find((config) => config.loginDelayUntilSelected !== true);
+                draftState.selectedLogin = accountConfigToSelect && accountConfigToSelect.login;
             }
 
             draftState.accounts = accountConfigs.reduce((accounts: WebAccount[], accountConfig) => {

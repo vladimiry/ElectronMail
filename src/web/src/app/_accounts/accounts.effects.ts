@@ -1,5 +1,5 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {EMPTY, Subject, concat, from, fromEvent, merge, of, throwError, timer} from "rxjs";
+import {EMPTY, Observable, Subject, concat, from, fromEvent, merge, of, race, throwError, timer} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {
@@ -13,6 +13,7 @@ import {
     map,
     mergeMap,
     switchMap,
+    take,
     takeUntil,
     tap,
     withLatestFrom,
@@ -26,8 +27,8 @@ import {ElectronService} from "src/web/src/app/_core/electron.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {State} from "src/web/src/app/store/reducers/accounts";
+import {getRandomInt, isDatabaseBootstrapped} from "src/shared/util";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/src/util";
-import {isDatabaseBootstrapped} from "src/shared/util";
 
 const rollingRateLimiter = __ELECTRON_EXPOSURE__.require["rolling-rate-limiter"]();
 const _logger = getZoneNameBoundWebLogger("[accounts.effects]");
@@ -252,52 +253,158 @@ export class AccountsEffects {
 
             switch (pageType) {
                 case "login": {
-                    const password = payload.password || credentials.password;
+                    if (!credentials.password) {
+                        logger.info("fillLogin");
 
-                    if (password) {
-                        rateLimitingCheck(password);
+                        return this.api.webViewClient(webView, type).pipe(
+                            mergeMap((webViewClient) => webViewClient("fillLogin")({login, zoneName})),
+                            mergeMap(() => of(ACCOUNTS_ACTIONS.Patch({login, patch: {loginFilledOnce: true}}))),
+                            catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                        );
+                    }
 
-                        logger.info("login");
-                        return merge(
-                            of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: true}})),
-                            resetNotificationsState$,
-                            this.api.webViewClient(webView, type).pipe(
-                                mergeMap((webViewClient) => webViewClient("login")({login, password, zoneName})),
-                                mergeMap(() => EMPTY),
-                                catchError((error) => of(CORE_ACTIONS.Fail(error))),
-                                finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: false}}))),
+                    const delayTriggers: Array<Observable<{ trigger: string }>> = [];
+                    const {loginDelaySecondsRange, loginDelayUntilSelected = false} = accountConfig;
+
+                    logger.info(`login delay configs: ${JSON.stringify({loginDelayUntilSelected, loginDelaySecondsRange})}`);
+
+                    if (loginDelaySecondsRange) {
+                        const {start, end} = loginDelaySecondsRange;
+                        const delayTime = getRandomInt(start, end) * ONE_SECOND_MS;
+
+                        logger.info(`resolved login delay (ms): ${delayTime}`);
+
+                        delayTriggers.push(
+                            timer(delayTime).pipe(
+                                map(() => ({trigger: `triggered on login delay expiration (ms): ${delayTime}`})),
                             ),
                         );
                     }
 
-                    logger.info("fillLogin");
-                    return this.api.webViewClient(webView, type).pipe(
-                        mergeMap((webViewClient) => webViewClient("fillLogin")({login, zoneName})),
-                        mergeMap(() => of(ACCOUNTS_ACTIONS.Patch({login, patch: {loginFilledOnce: true}}))),
-                        catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                    if (loginDelayUntilSelected) {
+                        delayTriggers.push(
+                            this.store.pipe(
+                                select(AccountsSelectors.FEATURED.selectedLogin),
+                                filter((selectedLogin) => selectedLogin === login),
+                                map(() => ({trigger: "triggered on account selection"})),
+                            ),
+                        );
+                    }
+
+                    const triggerReset$ = race([
+                        this.actions$.pipe(
+                            unionizeActionFilter(ACCOUNTS_ACTIONS.is.TryToLogin),
+                            filter(({payload: anoterPayload}) => {
+                                return payload.account.accountConfig.login === anoterPayload.account.accountConfig.login;
+                            }),
+                            map(({type: actionType}) => {
+                                return `another "${actionType}" action triggered`;
+                            }),
+                        ),
+                        this.store.pipe(
+                            select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
+                            map((storeAccount) => {
+                                if (!storeAccount) {
+                                    return;
+                                }
+                                if (storeAccount.notifications.pageType.type !== "login") {
+                                    return `page type changed to ${JSON.stringify(storeAccount.notifications.pageType)}`;
+                                }
+                                if (storeAccount.progress.password) {
+                                    return `"login" action performing is already in progress`;
+                                }
+                                return;
+                            }),
+                            filter((reason) => {
+                                return typeof reason === "string";
+                            }),
+                        ),
+                    ]).pipe(
+                        take(1),
+                        tap((reason) => {
+                            logger.info(`resetting delayed "login" action with the following reason: ${reason}`);
+                        }),
+                    );
+                    const trigger$ = delayTriggers.length
+                        ? race(delayTriggers).pipe(
+                            take(1), // WARN: just one notification
+                            takeUntil(triggerReset$),
+                        )
+                        : of({trigger: "triggered immediate login (as no delays defined)"});
+                    const executeLoginAction = (password: string) => merge(
+                        of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: true}})),
+                        resetNotificationsState$,
+                        this.api.webViewClient(webView, type).pipe(
+                            mergeMap((webViewClient) => webViewClient("login")({login, password, zoneName})),
+                            mergeMap(() => this.store.pipe(
+                                select(AccountsSelectors.FEATURED.selectedLogin),
+                                take(1),
+                                mergeMap((selectedLogin) => {
+                                    if (selectedLogin) {
+                                        return EMPTY;
+                                    }
+                                    // let's select the account if none has been selected
+                                    return of(ACCOUNTS_ACTIONS.Activate({login}));
+                                }),
+                            )),
+                            catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                            finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: false}}))),
+                        ),
+                    );
+
+                    return trigger$.pipe(
+                        mergeMap(({trigger}) => this.store.pipe(
+                            select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
+                            mergeMap((value) => {
+                                if (!value) {
+                                    // early skipping if account got removed during login delaying
+                                    logger.info("account got removed during login delaying?");
+                                    return EMPTY;
+                                }
+                                return [{password: value.accountConfig.credentials.password}];
+                            }),
+                            // WARN: do not react to all the notifications
+                            // but to only one in order to just pick up the to date password
+                            // or multiple login form submitting attempts can happen
+                            take(1),
+                            mergeMap(({password}) => {
+                                logger.info(`login trigger: ${trigger})`);
+
+                                if (!password) {
+                                    logger.info("login action canceled due to the empty password");
+                                    return EMPTY;
+                                }
+
+                                rateLimitingCheck(password);
+
+                                logger.info("login");
+
+                                return executeLoginAction(password);
+                            }),
+                        )),
                     );
                 }
                 case "login2fa": {
-                    const secret = payload.password || credentials.twoFactorCode;
+                    const {twoFactorCode: secret} = credentials;
 
-                    // tslint:disable-next-line:early-exit
-                    if (secret) {
-                        rateLimitingCheck(secret);
-
-                        logger.info("login2fa");
-                        return merge(
-                            of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {twoFactorCode: true}})),
-                            resetNotificationsState$,
-                            this.api.webViewClient(webView, type).pipe(
-                                mergeMap((webViewClient) => webViewClient("login2fa")({secret, zoneName})),
-                                mergeMap(() => EMPTY),
-                                catchError((error) => of(CORE_ACTIONS.Fail(error))),
-                                finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {twoFactorCode: false}}))),
-                            ),
-                        );
+                    if (!secret) {
+                        break;
                     }
 
-                    break;
+                    rateLimitingCheck(secret);
+
+                    logger.info("login2fa");
+
+                    return merge(
+                        of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {twoFactorCode: true}})),
+                        resetNotificationsState$,
+                        this.api.webViewClient(webView, type).pipe(
+                            mergeMap((webViewClient) => webViewClient("login2fa")({secret, zoneName})),
+                            mergeMap(() => EMPTY),
+                            catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                            finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {twoFactorCode: false}}))),
+                        ),
+                    );
                 }
                 case "unlock": {
                     if (type !== "protonmail") {
@@ -306,25 +413,24 @@ export class AccountsEffects {
                         );
                     }
 
-                    const mailPassword = payload.password || ("mailPassword" in credentials && credentials.mailPassword);
+                    const mailPassword = "mailPassword" in credentials && credentials.mailPassword;
 
-                    // tslint:disable-next-line:early-exit
-                    if (mailPassword) {
-                        rateLimitingCheck(mailPassword);
-
-                        return merge(
-                            of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: true}})),
-                            resetNotificationsState$,
-                            this.api.webViewClient(webView, type).pipe(
-                                mergeMap((webViewClient) => webViewClient("unlock")({mailPassword, zoneName})),
-                                mergeMap(() => EMPTY),
-                                catchError((error) => of(CORE_ACTIONS.Fail(error))),
-                                finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: false}}))),
-                            ),
-                        );
+                    if (!mailPassword) {
+                        break;
                     }
 
-                    break;
+                    rateLimitingCheck(mailPassword);
+
+                    return merge(
+                        of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: true}})),
+                        resetNotificationsState$,
+                        this.api.webViewClient(webView, type).pipe(
+                            mergeMap((webViewClient) => webViewClient("unlock")({mailPassword, zoneName})),
+                            mergeMap(() => EMPTY),
+                            catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                            finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: false}}))),
+                        ),
+                    );
                 }
             }
 

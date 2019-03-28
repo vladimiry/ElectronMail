@@ -10,7 +10,7 @@ export interface GenericAccountConfig<Type extends AccountType, CredentialFields
         proxyRules?: string;
         proxyBypassRules?: string;
     };
-    loginDelayOnSelect?: boolean;
+    loginDelayUntilSelected?: boolean;
     loginDelaySecondsRange?: { start: number; end: number; };
 }
 

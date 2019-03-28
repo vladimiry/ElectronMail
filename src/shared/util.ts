@@ -198,6 +198,13 @@ export function isDatabaseBootstrapped(
         : Boolean(Object.keys(metadata.groupEntityEventBatchIds || {}).length);
 }
 
+export function getRandomInt(min: number, max: number): number {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+
+    return min + Math.floor(Math.random() * (max - min)); // the maximum is exclusive and the minimum is inclusive
+}
+
 export const getWebViewPartition: (login: AccountConfig<AccountType>["login"]) => string = (() => {
     const prefix = "memory/";
     const result: typeof getWebViewPartition = (login) => `${prefix}${login}`;

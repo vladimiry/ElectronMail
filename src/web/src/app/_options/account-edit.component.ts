@@ -29,7 +29,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     ];
     entryUrlItems: EntryUrlItem[] = [];
     controls: Record<keyof Pick<AccountConfig,
-        | "type" | "login" | "database" | "entryUrl" | "loginDelayOnSelect" | "loginDelaySecondsRange">
+        | "type" | "login" | "database" | "entryUrl" | "loginDelayUntilSelected" | "loginDelaySecondsRange">
         | keyof Pick<Required<Required<AccountConfig>["proxy"]>, "proxyRules" | "proxyBypassRules">
         | keyof AccountConfigProtonmail["credentials"],
         AbstractControl> = {
@@ -42,7 +42,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         password: new FormControl(null),
         twoFactorCode: new FormControl(null),
         mailPassword: new FormControl(null),
-        loginDelayOnSelect: new FormControl(null),
+        loginDelayUntilSelected: new FormControl(null),
         loginDelaySecondsRange: new FormControl(
             null,
             () => {
@@ -117,7 +117,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                         controls.mailPassword.patchValue(account.credentials.mailPassword);
                     }
 
-                    controls.loginDelayOnSelect.patchValue(account.loginDelayOnSelect);
+                    controls.loginDelayUntilSelected.patchValue(account.loginDelayUntilSelected);
                     controls.loginDelaySecondsRange.patchValue(
                         account.loginDelaySecondsRange
                             ? `${account.loginDelaySecondsRange.start}-${account.loginDelaySecondsRange.end}`
@@ -160,7 +160,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                 twoFactorCode: controls.twoFactorCode.value,
             },
             ...((proxy.proxyRules || proxy.proxyBypassRules) && {proxy}),
-            loginDelayOnSelect: Boolean(controls.loginDelayOnSelect.value),
+            loginDelayUntilSelected: Boolean(controls.loginDelayUntilSelected.value),
             loginDelaySecondsRange: (() => {
                 const validated = this.controls.loginDelaySecondsRange.value
                     ? validateLoginDelaySecondsRange(this.controls.loginDelaySecondsRange.value)

@@ -12,7 +12,7 @@ export async function buildEndpoints(
 ): Promise<Pick<Endpoints, "addAccount" | "updateAccount" | "changeAccountOrder" | "removeAccount">> {
     return {
         addAccount: (
-            {type, login, entryUrl, database, credentials, proxy, loginDelayOnSelect, loginDelaySecondsRange},
+            {type, login, entryUrl, database, credentials, proxy, loginDelayUntilSelected, loginDelaySecondsRange},
         ) => from((async () => {
             const account = {
                 type,
@@ -21,7 +21,7 @@ export async function buildEndpoints(
                 database,
                 credentials,
                 proxy,
-                loginDelayOnSelect,
+                loginDelayUntilSelected,
                 loginDelaySecondsRange,
             } as AccountConfig; // TODO ger rid of "TS as" casting
             const settings = await ctx.settingsStore.readExisting();
@@ -36,7 +36,7 @@ export async function buildEndpoints(
         })()),
 
         updateAccount: (
-            {login, entryUrl, database, credentials, proxy, loginDelayOnSelect, loginDelaySecondsRange},
+            {login, entryUrl, database, credentials, proxy, loginDelayUntilSelected, loginDelaySecondsRange},
         ) => from((async () => {
             const settings = await ctx.settingsStore.readExisting();
             const account = pickAccountStrict(settings.accounts, {login});
@@ -64,7 +64,7 @@ export async function buildEndpoints(
             account.proxy = proxy;
             await configureSessionByAccount(pick(["login", "proxy"], account));
 
-            account.loginDelayOnSelect = loginDelayOnSelect;
+            account.loginDelayUntilSelected = loginDelayUntilSelected;
             account.loginDelaySecondsRange = loginDelaySecondsRange;
 
             return await ctx.settingsStore.write(settings);

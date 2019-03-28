@@ -28,8 +28,11 @@ type ApiMethods =
 
 export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiMethods>> {
     const endpoints: Pick<Endpoints, ApiMethods> = {
-        log: ({level, dataArgs}) => {
-            electronLog[level](...dataArgs);
+        log: (lines) => {
+            for (const line of lines) {
+                electronLog[line.level](...line.dataArgs);
+            }
+
             return of(null);
         },
 

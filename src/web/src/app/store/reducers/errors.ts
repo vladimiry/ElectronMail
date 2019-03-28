@@ -1,4 +1,6 @@
 import {UnionOf} from "@vladimiry/unionize";
+import {pick} from "ramda";
+import {serializerr} from "serializerr";
 
 import * as fromRoot from "src/web/src/app/store/reducers/root";
 import {CORE_ACTIONS} from "src/web/src/app/store/actions";
@@ -23,9 +25,15 @@ export function reducer(state = initialState, action: UnionOf<typeof CORE_ACTION
             const errors = [...state.errors];
 
             if (!errors.length || (errors[errors.length - 1].message !== error.message)) {
-                // tslint:disable-next-line:no-console
-                console.error(error);
-                logger.error(error);
+                console.error(error); // tslint:disable-line:no-console
+
+                logger.error(
+                    // WARN: make sure there is no circular recursive data
+                    pick(
+                        ["name", "message", "stack"],
+                        serializerr(error),
+                    ),
+                );
             }
 
             // TODO indicate in the UI that only the most recent "50 / ${ERRORS_LIMIT}" errors are shown

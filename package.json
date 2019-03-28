@@ -248,6 +248,7 @@
     "sass-lint": "1.12.1",
     "sass-loader": "7.1.0",
     "script-loader": "0.7.2",
+    "serializerr": "1.0.3",
     "sinon": "7.3.1",
     "source-map": "0.7.3",
     "source-map-loader": "0.2.4",

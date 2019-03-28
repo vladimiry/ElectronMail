@@ -6,8 +6,8 @@ import {BsDropdownModule} from "ngx-bootstrap/dropdown";
 import {CollapseModule} from "ngx-bootstrap/collapse";
 import {DragulaModule} from "ng2-dragula";
 import {EffectsModule} from "@ngrx/effects";
+import {ErrorHandler, Injector, NgModule} from "@angular/core";
 import {META_REDUCERS, StoreModule} from "@ngrx/store";
-import {NgModule} from "@angular/core";
 import {PopoverModule} from "ngx-bootstrap/popover";
 import {StoreRouterConnectingModule} from "@ngrx/router-store";
 
@@ -53,10 +53,13 @@ export const APP_MODULE_NG_CONF: NgModule = {
     ],
     providers: [
         {provide: APP_BASE_HREF, useValue: "/"},
-        AppErrorHandler,
+        {
+            provide: ErrorHandler,
+            useClass: AppErrorHandler,
+        },
         {
             provide: META_REDUCERS,
-            deps: [AppErrorHandler],
+            deps: [Injector],
             useFactory: getMetaReducers,
         },
     ],

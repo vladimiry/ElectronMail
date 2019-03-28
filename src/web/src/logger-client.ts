@@ -1,30 +1,46 @@
-import {Arguments, Logger} from "src/shared/types";
+import {Arguments, Logger, Unpacked} from "src/shared/types";
 import {Endpoints} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
 
 const apiClient = __ELECTRON_EXPOSURE__.buildIpcMainClient({options: {timeoutMs: ONE_SECOND_MS * 3}});
 const apiMethod = apiClient("log");
 
-type Args = Arguments<Endpoints["log"]>[0];
+type Line = Unpacked<Arguments<Endpoints["log"]>[0]>;
 
-const callApi = async (level: Args["level"], ...dataArgs: Args["dataArgs"]) => {
-    // TODO filter "level" argument by value taken from the main process's logger
-    // TODO consider turning args from any to "() => any" and then execute the functions only if "level" is enabled (lazy args resolving)
+const callApiDebounce: {
+    readonly delayMs: number,
+    readonly lines: Line[];
+    timeoutId?: any;
+} = {
+    delayMs: ONE_SECOND_MS,
+    lines: [],
+};
 
-    setTimeout(async () => {
-        try {
-            await apiMethod({level, dataArgs}).toPromise();
-        } catch (e) {
-            console.error(e); // tslint:disable-line:no-console
-        }
+// TODO skip irrelevant levels by filtering "level" argument by value taken from the main process's logger
+const log = async (level: Line["level"], ...dataArgs: Line["dataArgs"]) => {
+    callApiDebounce.lines.push({level, dataArgs});
+    clearTimeout(callApiDebounce.timeoutId);
+    callApiDebounce.timeoutId = setTimeout(callApi, callApiDebounce.delayMs);
+};
+
+const callApi = () => {
+    const lines = [...callApiDebounce.lines];
+
+    callApiDebounce.lines.length = 0;
+
+    (async () => {
+        await apiMethod(lines).toPromise();
+    })().catch((error) => {
+        console.error(error, JSON.stringify(lines)); // tslint:disable-line:no-console
     });
 };
 
+// TODO consider turning args from any to "() => any" and then execute the functions only if "level" is enabled (lazy args resolving)
 export const LOGGER: Logger = {
-    error: callApi.bind(null, "error"),
-    warn: callApi.bind(null, "warn"),
-    info: callApi.bind(null, "info"),
-    verbose: callApi.bind(null, "verbose"),
-    debug: callApi.bind(null, "debug"),
-    silly: callApi.bind(null, "silly"),
+    error: log.bind(null, "error"),
+    warn: log.bind(null, "warn"),
+    info: log.bind(null, "info"),
+    verbose: log.bind(null, "verbose"),
+    debug: log.bind(null, "debug"),
+    silly: log.bind(null, "silly"),
 };

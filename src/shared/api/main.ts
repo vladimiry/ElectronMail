@@ -20,7 +20,7 @@ import {Omit} from "src/shared/types";
 import {PACKAGE_NAME} from "src/shared/constants";
 
 export interface Endpoints {
-    log: ApiMethod<{ level: LogLevel; dataArgs: any[]; }, null>;
+    log: ApiMethod<Array<{ level: LogLevel; dataArgs: any[]; }>, null>;
 
     addAccount: ApiMethod<AccountConfigCreatePatch, Settings>;
 

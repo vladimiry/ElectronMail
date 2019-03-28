@@ -1,8 +1,8 @@
-import {MetaReducer} from "@ngrx/store";
+import {Injector} from "@angular/core";
+import {MetaReducer, Store} from "@ngrx/store";
 import {RouterReducerState, routerReducer} from "@ngrx/router-store";
 import {UnionOf} from "@vladimiry/unionize";
 
-import {AppErrorHandler} from "src/web/src/app/app.error-handler.service";
 import {BuildEnvironment} from "src/shared/model/common";
 import {CORE_ACTIONS, NAVIGATION_ACTIONS, ROOT_ACTIONS} from "src/web/src/app/store/actions";
 import {getZoneNameBoundWebLogger} from "src/web/src/util";
@@ -20,14 +20,14 @@ export const reducers = {
     router: routerReducer,
 };
 
-export function getMetaReducers(appErrorHandler: AppErrorHandler): Array<MetaReducer<State, Actions>> {
+export function getMetaReducers(injector: Injector): Array<MetaReducer<State, Actions>> {
     const result: Array<MetaReducer<State, Actions>> = [
         (reducer) => {
             return (state, action) => {
                 try {
                     return reducer(state, action);
                 } catch (error) {
-                    appErrorHandler.handleError(error);
+                    injector.get(Store).dispatch(CORE_ACTIONS.Fail(error));
                 }
                 return state as State;
             };

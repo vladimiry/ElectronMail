@@ -23,7 +23,7 @@ The download page with Linux/OSX/Windows installation packages is [here](https:/
 - **Multi email providers** support. [ProtonMail](https://protonmail.com/) and [Tutanota](https://tutanota.com/) at the moment.
 - **Multi accounts** support per each email provider including supporting individual [entry point domains](https://github.com/vladimiry/ElectronMail/issues/29).
 - **Automatic login into the app** with a remembered master password using [keytar](https://github.com/atom/node-keytar) module ([keep me signed in](images/keep-me-signed-in.png) feature).
-- **Automatic login into the email accounts**, including filling [2FA tokens](https://github.com/vladimiry/ElectronMail/issues/10).
+- **Automatic login into the email accounts**, including filling [2FA tokens](https://github.com/vladimiry/ElectronMail/issues/10). Two auto-login delay scenarios supported in order to make it harder to correlate the identities, see the respective [issue](https://github.com/vladimiry/ElectronMail/issues/121).
 - **Encrypted settings storage** with switchable predefined key derivation and encryption presets. Argon2 is used as the default key derivation function.
 - **Native notifications** for individual accounts clicking on which focuses the app window and selects respective account in the accounts list.
 - **System tray icon** with a total number of unread messages shown on top of it. Enabling [local messages store](https://github.com/vladimiry/ElectronMail/issues/32) improves this feature ([how to enable](https://github.com/vladimiry/ElectronMail/releases/tag/v2.0.0-beta.1)), see respective [issue](https://github.com/vladimiry/ElectronMail/issues/30).

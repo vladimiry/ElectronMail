@@ -224,7 +224,6 @@ const configPatch: Record<BuildEnvironment, Configuration> = {
         ],
     },
     test: {
-        devtool: false,
         module: {
             rules: [
                 {
@@ -236,9 +235,6 @@ const configPatch: Record<BuildEnvironment, Configuration> = {
                     loader: "null-loader",
                 },
             ],
-        },
-        optimization: {
-            minimize: false,
         },
     },
 };

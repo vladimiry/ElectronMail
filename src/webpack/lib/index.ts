@@ -1,4 +1,3 @@
-import UglifyJsPlugin from "uglifyjs-webpack-plugin";
 import path from "path";
 import webpackMerge from "webpack-merge";
 import webpack, {Configuration} from "webpack";
@@ -29,7 +28,7 @@ const buildBaseConfig: BuildConfig = (config, options = {}) => {
     return webpackMerge(
         {
             mode: environmentSate.development || environmentSate.test ? "development" : "production",
-            devtool: "source-map",
+            devtool: false,
             output: {
                 path: outputRelateivePath(),
             },
@@ -48,26 +47,12 @@ const buildBaseConfig: BuildConfig = (config, options = {}) => {
                 __dirname: false,
                 __filename: false,
             },
-        },
-        environmentSate.development ? {
             optimization: {
+                minimize: false,
                 namedChunks: true,
                 namedModules: true,
-                minimizer: [
-                    new UglifyJsPlugin({
-                        uglifyOptions: {
-                            compress: false,
-                            mangle: false,
-                            ecma: 7,
-                            output: {
-                                comments: true,
-                                beautify: false,
-                            },
-                        },
-                    }),
-                ],
             },
-        } : {},
+        },
         config,
     );
 };

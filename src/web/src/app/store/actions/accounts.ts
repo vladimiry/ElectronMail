@@ -12,11 +12,13 @@ export const ACCOUNTS_ACTIONS = unionize({
         PatchProgress: ofType<{ login: string; patch: WebAccountProgress; }>(),
         Patch: ofType<{
             login: string;
-            // TODO apply "deep partial" transformation instead of explicit individual per-field partitioning
             patch: Partial<{
-                notifications: Partial<WebAccount["notifications"]>,
-                syncingActivated: Partial<WebAccount["syncingActivated"]>,
-                loginFilledOnce: Partial<WebAccount["loginFilledOnce"]>,
+                [k in keyof Pick<WebAccount,
+                    | "notifications"
+                    | "syncingActivated"
+                    | "loginFilledOnce"
+                    | "loginDelayedSeconds"
+                    | "loginDelayedUntilSelected">]: Partial<WebAccount[k]>
             }>;
             ignoreNoAccount?: boolean
         }>(),

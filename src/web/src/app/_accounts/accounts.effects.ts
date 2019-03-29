@@ -234,7 +234,7 @@ export class AccountsEffects {
             const zoneName = logger.zoneName();
 
             // TODO make sure passwords submitting looping doesn't happen, until then a workaround is enabled below
-            const rateLimitingCheck = (password: string) => {
+            const rateLimitCheck = (password: string) => {
                 const key = String([login, pageType, password]);
                 const timeLeft = this.twoPerTenSecLimiter(key);
 
@@ -268,25 +268,51 @@ export class AccountsEffects {
 
                     logger.info(`login delay configs: ${JSON.stringify({loginDelayUntilSelected, loginDelaySecondsRange})}`);
 
+                    this.store.dispatch(ACCOUNTS_ACTIONS.Patch({login, patch: {loginDelayedSeconds: undefined}}));
+                    this.store.dispatch(ACCOUNTS_ACTIONS.Patch({login, patch: {loginDelayedUntilSelected: undefined}}));
+
                     if (loginDelaySecondsRange) {
                         const {start, end} = loginDelaySecondsRange;
-                        const delayTime = getRandomInt(start, end) * ONE_SECOND_MS;
+                        const delayTimeMs = getRandomInt(start, end) * ONE_SECOND_MS;
 
-                        logger.info(`resolved login delay (ms): ${delayTime}`);
+                        logger.info(`resolved login delay (ms): ${delayTimeMs}`);
 
                         delayTriggers.push(
-                            timer(delayTime).pipe(
-                                map(() => ({trigger: `triggered on login delay expiration (ms): ${delayTime}`})),
+                            merge(
+                                timer(delayTimeMs).pipe(
+                                    map(() => ({trigger: `triggered on login delay expiration (ms): ${delayTimeMs}`})),
+                                ),
+                                timer(0, ONE_SECOND_MS).pipe(
+                                    mergeMap((value) => {
+                                        const loginDelayedSeconds = (delayTimeMs / ONE_SECOND_MS) - value;
+                                        this.store.dispatch(
+                                            ACCOUNTS_ACTIONS.Patch({login, patch: {loginDelayedSeconds}}),
+                                        );
+                                        return EMPTY;
+                                    }),
+                                ),
                             ),
                         );
                     }
 
                     if (loginDelayUntilSelected) {
                         delayTriggers.push(
-                            this.store.pipe(
-                                select(AccountsSelectors.FEATURED.selectedLogin),
-                                filter((selectedLogin) => selectedLogin === login),
-                                map(() => ({trigger: "triggered on account selection"})),
+                            merge(
+                                (() => {
+                                    this.store.dispatch(
+                                        ACCOUNTS_ACTIONS.Patch({login, patch: {loginDelayedUntilSelected: true}}),
+                                    );
+                                    return EMPTY;
+                                })(),
+                                this.store.pipe(
+                                    select(AccountsSelectors.FEATURED.selectedLogin),
+                                    filter((selectedLogin) => selectedLogin === login),
+                                    // delay handles the case if the app has no selected account and "on select" trigger gets disabled
+                                    // if there is no selected account the app will select the account automatically
+                                    // and previously setup "on select" trigger kicks in before it gets reset by new TryToLogin action
+                                    delay(ONE_SECOND_MS * 1.5),
+                                    map(() => ({trigger: "triggered on account selection"})),
+                                ),
                             ),
                         );
                     }
@@ -294,8 +320,8 @@ export class AccountsEffects {
                     const triggerReset$ = race([
                         this.actions$.pipe(
                             unionizeActionFilter(ACCOUNTS_ACTIONS.is.TryToLogin),
-                            filter(({payload: anoterPayload}) => {
-                                return payload.account.accountConfig.login === anoterPayload.account.accountConfig.login;
+                            filter(({payload: livePayload}) => {
+                                return payload.account.accountConfig.login === livePayload.account.accountConfig.login;
                             }),
                             map(({type: actionType}) => {
                                 return `another "${actionType}" action triggered`;
@@ -303,14 +329,14 @@ export class AccountsEffects {
                         ),
                         this.store.pipe(
                             select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
-                            map((storeAccount) => {
-                                if (!storeAccount) {
+                            map((liveAccount) => {
+                                if (!liveAccount) {
                                     return;
                                 }
-                                if (storeAccount.notifications.pageType.type !== "login") {
-                                    return `page type changed to ${JSON.stringify(storeAccount.notifications.pageType)}`;
+                                if (liveAccount.notifications.pageType.type !== "login") {
+                                    return `page type changed to ${JSON.stringify(liveAccount.notifications.pageType)}`;
                                 }
-                                if (storeAccount.progress.password) {
+                                if (liveAccount.progress.password) {
                                     return `"login" action performing is already in progress`;
                                 }
                                 return;
@@ -331,42 +357,50 @@ export class AccountsEffects {
                             takeUntil(triggerReset$),
                         )
                         : of({trigger: "triggered immediate login (as no delays defined)"});
-                    const executeLoginAction = (password: string) => merge(
-                        of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: true}})),
-                        resetNotificationsState$,
-                        this.api.webViewClient(webView, type).pipe(
-                            mergeMap((webViewClient) => webViewClient("login")({login, password, zoneName})),
-                            mergeMap(() => this.store.pipe(
-                                select(AccountsSelectors.FEATURED.selectedLogin),
-                                take(1),
-                                mergeMap((selectedLogin) => {
-                                    if (selectedLogin) {
-                                        return EMPTY;
-                                    }
-                                    // let's select the account if none has been selected
-                                    return of(ACCOUNTS_ACTIONS.Activate({login}));
-                                }),
-                            )),
-                            catchError((error) => of(CORE_ACTIONS.Fail(error))),
-                            finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: false}}))),
-                        ),
-                    );
+                    const executeLoginAction = (password: string) => {
+                        rateLimitCheck(password);
+
+                        logger.info("login");
+
+                        return merge(
+                            of(ACCOUNTS_ACTIONS.Patch({login, patch: {loginDelayedSeconds: undefined}})),
+                            of(ACCOUNTS_ACTIONS.Patch({login, patch: {loginDelayedUntilSelected: undefined}})),
+                            of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: true}})),
+                            resetNotificationsState$,
+                            this.api.webViewClient(webView, type).pipe(
+                                mergeMap((webViewClient) => webViewClient("login")({login, password, zoneName})),
+                                mergeMap(() => this.store.pipe(
+                                    select(AccountsSelectors.FEATURED.selectedLogin),
+                                    take(1),
+                                    mergeMap((selectedLogin) => {
+                                        if (selectedLogin) {
+                                            return EMPTY;
+                                        }
+                                        // let's select the account if none has been selected
+                                        return of(ACCOUNTS_ACTIONS.Activate({login}));
+                                    }),
+                                )),
+                                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                                finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: false}}))),
+                            ),
+                        );
+                    };
 
                     return trigger$.pipe(
                         mergeMap(({trigger}) => this.store.pipe(
                             select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
+                            // WARN: do not react to every account change notification
+                            // but only reaction to just pick the up to date password (it can be changed during login delay)
+                            // otherwise multiple login form submitting attempts can happen
+                            take(1),
                             mergeMap((value) => {
                                 if (!value) {
-                                    // early skipping if account got removed during login delaying
+                                    // early skipping if account got removed during login delay
                                     logger.info("account got removed during login delaying?");
                                     return EMPTY;
                                 }
                                 return [{password: value.accountConfig.credentials.password}];
                             }),
-                            // WARN: do not react to all the notifications
-                            // but to only one in order to just pick up the to date password
-                            // or multiple login form submitting attempts can happen
-                            take(1),
                             mergeMap(({password}) => {
                                 logger.info(`login trigger: ${trigger})`);
 
@@ -374,10 +408,6 @@ export class AccountsEffects {
                                     logger.info("login action canceled due to the empty password");
                                     return EMPTY;
                                 }
-
-                                rateLimitingCheck(password);
-
-                                logger.info("login");
 
                                 return executeLoginAction(password);
                             }),
@@ -391,7 +421,7 @@ export class AccountsEffects {
                         break;
                     }
 
-                    rateLimitingCheck(secret);
+                    rateLimitCheck(secret);
 
                     logger.info("login2fa");
 
@@ -419,7 +449,9 @@ export class AccountsEffects {
                         break;
                     }
 
-                    rateLimitingCheck(mailPassword);
+                    rateLimitCheck(mailPassword);
+
+                    logger.info("unlock");
 
                     return merge(
                         of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: true}})),

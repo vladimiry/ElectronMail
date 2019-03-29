@@ -1,6 +1,6 @@
 @import "~src/web/src/variables";
 
-@mixin button($color) {
+@mixin account-title-button($color) {
     @include button-variant($color, $color);
 
     &:focus {
@@ -23,7 +23,7 @@
 
         &:not(.selected) {
             .btn {
-                @include button($btn-default-color);
+                @include account-title-button($btn-default-color);
             }
 
             .b-toggle-view {
@@ -33,7 +33,7 @@
 
         &.selected {
             .btn {
-                @include button($btn-selected-bg-color);
+                @include account-title-button($btn-selected-bg-color);
                 color: $btn-selected-color;
             }
 
@@ -72,5 +72,14 @@
 
     .fa {
         line-height: $line-height-base;
+    }
+
+    .login-delay {
+        color: $text-muted;
+        font-size: 85%;
+
+        .fa ~ span {
+            margin-left: $app-spacer-1 / 2;
+        }
     }
 }

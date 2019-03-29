@@ -55,7 +55,7 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                     }
                     accounts.push(account);
                 } else {
-                    accounts.push({
+                    const webAccount = {
                         accountConfig,
                         progress: {},
                         notifications: {
@@ -63,7 +63,10 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                             unread: 0,
                             pageType: {url: "", type: "unknown"},
                         },
-                    } as WebAccount); // TODO ger rid of "TS as" casting
+                        loginDelay: {},
+                    } as WebAccount; // TODO ger rid of "TS as" casting
+
+                    accounts.push(webAccount);
                 }
 
                 return accounts;
@@ -101,6 +104,12 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
             }
             if ("loginFilledOnce" in patch) {
                 account.loginFilledOnce = patch.loginFilledOnce;
+            }
+            if ("loginDelayedSeconds" in patch) {
+                account.loginDelayedSeconds = patch.loginDelayedSeconds;
+            }
+            if ("loginDelayedUntilSelected" in patch) {
+                account.loginDelayedUntilSelected = patch.loginDelayedUntilSelected;
             }
         },
         ToggleDatabaseView: ({login, forced}) => {

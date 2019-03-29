@@ -1,7 +1,7 @@
 import {BehaviorSubject, Subscription} from "rxjs";
 import {ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit} from "@angular/core";
 import {Store, select} from "@ngrx/store";
-import {distinctUntilChanged, filter} from "rxjs/operators";
+import {distinctUntilChanged, filter, map} from "rxjs/operators";
 
 import {ACCOUNTS_ACTIONS} from "src/web/src/app/store/actions";
 import {AccountsSelectors} from "src/web/src/app/store/selectors";
@@ -35,17 +35,19 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
     state$ = this.stateSubject$
         .asObservable()
         .pipe(
-            filter((s) => Boolean(s.account)),
+            filter((state) => Boolean(state.account)),
             // .pipe(debounceTime(200)),
+            map((state) => {
+                return {
+                    ...state,
+                    loginDelayed: Boolean(state.account.loginDelayedSeconds || state.account.loginDelayedUntilSelected),
+                };
+            }),
         );
 
     private accountLogin!: string;
 
     private subscription = new Subscription();
-
-    constructor(
-        private store: Store<State>,
-    ) {}
 
     @Input()
     set account(account: WebAccount) {
@@ -56,6 +58,10 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
             stored: account.accountConfig.database,
         });
     }
+
+    constructor(
+        private store: Store<State>,
+    ) {}
 
     ngOnInit() {
         if (!this.highlighting) {

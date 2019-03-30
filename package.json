@@ -264,7 +264,7 @@
     "tslint-consistent-codestyle": "1.15.1",
     "tslint-eslint-rules": "5.4.0",
     "tslint-rules-bunch": "0.0.7",
-    "typescript": "3.3.4000",
+    "typescript": "3.4.1",
     "uglifyjs-webpack-plugin": "2.1.2",
     "url-loader": "1.1.2",
     "webpack": "4.29.6",

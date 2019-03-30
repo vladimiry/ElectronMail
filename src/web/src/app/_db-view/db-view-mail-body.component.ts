@@ -45,7 +45,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
 
     iframeBodyEventSubject$ = new Subject<Event>();
 
-    conversationCollapsed$: BehaviorSubject<boolean> = new BehaviorSubject(true);
+    conversationCollapsed$ = new BehaviorSubject<boolean>(true);
 
     @ViewChildren(DbViewMailComponent, {read: ElementRef})
     dbViewMailElementRefs!: QueryList<ElementRef>;

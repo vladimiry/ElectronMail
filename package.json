@@ -193,7 +193,7 @@
     "cache-loader": "2.0.1",
     "chalk": "2.4.2",
     "circular-dependency-plugin": "5.0.2",
-    "codelyzer": "4.5.0",
+    "codelyzer": "5.0.0",
     "core-js": "2.6.5",
     "cpx": "1.5.0",
     "cross-env": "5.2.0",

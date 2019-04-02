@@ -9,6 +9,7 @@ import {WebAccount, WebAccountProgress} from "src/web/src/app/model";
 
 export const ACCOUNTS_ACTIONS = unionize({
         Activate: ofType<{ login: string }>(),
+        DeActivate: ofType<{ login: string }>(),
         PatchProgress: ofType<{ login: string; patch: WebAccountProgress; }>(),
         Patch: ofType<{
             login: string;

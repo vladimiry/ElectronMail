@@ -1,7 +1,7 @@
 import {BehaviorSubject, Subscription} from "rxjs";
 import {ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit} from "@angular/core";
 import {Store, select} from "@ngrx/store";
-import {distinctUntilChanged, filter, map} from "rxjs/operators";
+import {filter, map} from "rxjs/operators";
 
 import {ACCOUNTS_ACTIONS} from "src/web/src/app/store/actions";
 import {AccountsSelectors} from "src/web/src/app/store/selectors";
@@ -70,13 +70,9 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
 
         this.subscription.add(
             this.store
-                .pipe(
-                    select(AccountsSelectors.FEATURED.selectedLogin),
-                    filter((selectedLogin) => Boolean(selectedLogin)),
-                    distinctUntilChanged(),
-                )
+                .pipe(select(AccountsSelectors.FEATURED.selectedLogin))
                 .subscribe((selectedLogin) => {
-                    this.patchState({selected: selectedLogin === this.accountLogin});
+                    this.patchState({selected: this.accountLogin === selectedLogin});
                 }),
         );
     }

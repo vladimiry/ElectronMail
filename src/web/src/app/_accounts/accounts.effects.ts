@@ -263,13 +263,16 @@ export class AccountsEffects {
                         );
                     }
 
-                    const delayTriggers: Array<Observable<{ trigger: string }>> = [];
                     const {loginDelaySecondsRange, loginDelayUntilSelected = false} = accountConfig;
+                    const delayTriggers: Array<Observable<{ trigger: string }>> = [];
+                    const buildLoginDelaysResetAction = () => ACCOUNTS_ACTIONS.Patch({
+                        login,
+                        patch: {loginDelayedSeconds: undefined, loginDelayedUntilSelected: undefined},
+                    });
 
                     logger.info(`login delay configs: ${JSON.stringify({loginDelayUntilSelected, loginDelaySecondsRange})}`);
 
-                    this.store.dispatch(ACCOUNTS_ACTIONS.Patch({login, patch: {loginDelayedSeconds: undefined}}));
-                    this.store.dispatch(ACCOUNTS_ACTIONS.Patch({login, patch: {loginDelayedUntilSelected: undefined}}));
+                    this.store.dispatch(buildLoginDelaysResetAction());
 
                     if (loginDelaySecondsRange) {
                         const {start, end} = loginDelaySecondsRange;
@@ -296,23 +299,35 @@ export class AccountsEffects {
                     }
 
                     if (loginDelayUntilSelected) {
+                        const bootstrap$ = account.loggedInOnce
+                            ? of(true).pipe(
+                                tap(() => {
+                                    // reset the account selection if has already been logged in bafore (got logged out from account)
+                                    this.store.dispatch(ACCOUNTS_ACTIONS.DeActivate({login}));
+                                }),
+                                delay(ONE_SECOND_MS),
+                            )
+                            : of(true);
+
                         delayTriggers.push(
-                            merge(
-                                (() => {
-                                    this.store.dispatch(
-                                        ACCOUNTS_ACTIONS.Patch({login, patch: {loginDelayedUntilSelected: true}}),
-                                    );
-                                    return EMPTY;
-                                })(),
-                                this.store.pipe(
-                                    select(AccountsSelectors.FEATURED.selectedLogin),
-                                    filter((selectedLogin) => selectedLogin === login),
-                                    // delay handles the case if the app has no selected account and "on select" trigger gets disabled
-                                    // if there is no selected account the app will select the account automatically
-                                    // and previously setup "on select" trigger kicks in before it gets reset by new TryToLogin action
-                                    delay(ONE_SECOND_MS * 1.5),
-                                    map(() => ({trigger: "triggered on account selection"})),
-                                ),
+                            bootstrap$.pipe(
+                                mergeMap(() => merge(
+                                    (() => {
+                                        this.store.dispatch(
+                                            ACCOUNTS_ACTIONS.Patch({login, patch: {loginDelayedUntilSelected: true}}),
+                                        );
+                                        return EMPTY;
+                                    })(),
+                                    this.store.pipe(
+                                        select(AccountsSelectors.FEATURED.selectedLogin),
+                                        filter((selectedLogin) => selectedLogin === login),
+                                        // delay handles the case if the app has no selected account and "on select" trigger gets disabled
+                                        // if there is no selected account the app will select the account automatically
+                                        // and previously setup "on select" trigger kicks in before it gets reset by new TryToLogin action
+                                        delay(ONE_SECOND_MS * 1.5),
+                                        map(() => ({trigger: "triggered on account selection"})),
+                                    ),
+                                )),
                             ),
                         );
                     }
@@ -363,11 +378,15 @@ export class AccountsEffects {
                         logger.info("login");
 
                         return merge(
-                            of(ACCOUNTS_ACTIONS.Patch({login, patch: {loginDelayedSeconds: undefined}})),
-                            of(ACCOUNTS_ACTIONS.Patch({login, patch: {loginDelayedUntilSelected: undefined}})),
+                            of(buildLoginDelaysResetAction()),
                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: true}})),
                             resetNotificationsState$,
                             this.api.webViewClient(webView, type).pipe(
+                                delay(
+                                    account.loggedInOnce
+                                        ? ONE_SECOND_MS
+                                        : 0,
+                                ),
                                 mergeMap((webViewClient) => webViewClient("login")({login, password, zoneName})),
                                 mergeMap(() => this.store.pipe(
                                     select(AccountsSelectors.FEATURED.selectedLogin),

@@ -19,6 +19,7 @@ interface GenericWebAccount<C extends AccountConfig, NS extends Notifications> {
     syncingActivated?: boolean;
     databaseView?: boolean;
     loginFilledOnce?: boolean;
+    loggedInOnce?: boolean;
     loginDelayedSeconds?: number;
     loginDelayedUntilSelected?: boolean;
 }

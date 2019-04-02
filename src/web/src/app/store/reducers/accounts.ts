@@ -77,6 +77,11 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
         Activate: ({login}) => {
             draftState.selectedLogin = login;
         },
+        DeActivate: ({login}) => {
+            if (draftState.selectedLogin === login) {
+                delete draftState.selectedLogin;
+            }
+        },
         PatchProgress: (payload) => {
             const {account} = pickAccountBundle(draftState.accounts, payload);
             account.progress = {...account.progress, ...payload.patch};
@@ -98,6 +103,10 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
 
             if ("notifications" in patch) {
                 account.notifications = {...account.notifications, ...patch.notifications};
+
+                if (!account.loggedInOnce && account.notifications.loggedIn) {
+                    account.loggedInOnce = true;
+                }
             }
             if ("syncingActivated" in patch) {
                 account.syncingActivated = patch.syncingActivated;

@@ -224,7 +224,13 @@ const endpoints: ProtonmailApi = {
                                 break;
                             }
                             case `${entryUrl}/login/unlock`: {
-                                pageType.type = "unlock";
+                                const unlockPanel = document.querySelector<HTMLElement>("form#pm_login > .unlock-panel");
+                                const unlockPanelVisible = unlockPanel && unlockPanel.offsetParent;
+
+                                if (unlockPanelVisible) {
+                                    pageType.type = "unlock";
+                                }
+
                                 break;
                             }
                         }

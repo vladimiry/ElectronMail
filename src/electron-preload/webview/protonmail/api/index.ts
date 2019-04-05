@@ -17,7 +17,6 @@ import {fillInputValue, getLocationHref, resolveDomElements, resolveIpcMainApi, 
 import {resolveProviderApi} from "src/electron-preload/webview/protonmail/lib/provider-api";
 
 const _logger = curryFunctionMembers(WebviewConstants.WEBVIEW_LOGGERS.protonmail, "[api/index]");
-const twoFactorCodeElementId = "twoFactorCode";
 const endpoints: ProtonmailApi = {
     ...buildDbPatchEndpoint,
 
@@ -155,7 +154,7 @@ const endpoints: ProtonmailApi = {
         logger.info();
 
         const elements = await resolveDomElements({
-            input: () => document.getElementById(twoFactorCodeElementId) as HTMLInputElement,
+            input: () => document.getElementById("twoFactorCode") as HTMLInputElement,
             button: () => document.getElementById("login_btn_2fa") as HTMLElement,
         });
         logger.verbose(`elements resolved`);
@@ -172,7 +171,7 @@ const endpoints: ProtonmailApi = {
         logger.info();
 
         const elements = await resolveDomElements({
-            mailboxPassword: () => document.getElementById("password") as HTMLInputElement,
+            mailboxPassword: () => document.getElementById("mailboxPassword") as HTMLInputElement,
             submit: () => document.getElementById("unlock_btn") as HTMLElement,
         });
 
@@ -205,39 +204,40 @@ const endpoints: ProtonmailApi = {
 
             // TODO listen for location.href change instead of starting polling interval
             interval(WebviewConstants.NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL).pipe(
-                map(() => {
-                    const url = getLocationHref();
-                    const pageType: PageTypeOutput["pageType"] = {url, type: "unknown"};
+                map((() => {
+                    const formIdToPageTypeMappingEntries = (() => {
+                        const formIdToPageTypeMapping: Record<string, PageTypeOutput["pageType"]["type"]> = {
+                            pm_login: "login",
+                            pm_loginTwoFactor: "login2fa",
+                            pm_loginUnlock: "unlock",
+                        };
+                        return Object.entries(formIdToPageTypeMapping);
+                    })();
+                    const loginUrl = `${entryUrl}/login`;
 
-                    if (!isLoggedIn()) {
-                        switch (url) {
-                            case `${entryUrl}/login`: {
-                                const twoFactorCode = document.getElementById(twoFactorCodeElementId);
-                                const twoFactorCodeVisible = twoFactorCode && twoFactorCode.offsetParent;
+                    return () => {
+                        const url = getLocationHref();
+                        const pageType: PageTypeOutput["pageType"] = {url, type: "unknown"};
 
-                                if (twoFactorCodeVisible) {
-                                    pageType.type = "login2fa";
-                                } else {
-                                    pageType.type = "login";
+                        if (
+                            !isLoggedIn()
+                            &&
+                            url === loginUrl
+                        ) {
+                            for (const [formId, type] of formIdToPageTypeMappingEntries) {
+                                const form = document.getElementById(formId);
+                                const formVisible = form && form.offsetParent;
+
+                                if (formVisible) {
+                                    pageType.type = type;
+                                    break;
                                 }
-
-                                break;
-                            }
-                            case `${entryUrl}/login/unlock`: {
-                                const unlockPanel = document.querySelector<HTMLElement>("form#pm_login > .unlock-panel");
-                                const unlockPanelVisible = unlockPanel && unlockPanel.offsetParent;
-
-                                if (unlockPanelVisible) {
-                                    pageType.type = "unlock";
-                                }
-
-                                break;
                             }
                         }
-                    }
 
-                    return {pageType};
-                }),
+                        return {pageType};
+                    };
+                })()),
                 distinctUntilChanged(({pageType: prev}, {pageType: curr}) => curr.type === prev.type),
                 tap((value) => logger.verbose(JSON.stringify(value))),
             ),

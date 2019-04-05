@@ -166,10 +166,9 @@ export class Database {
 
         // fs => memory
         for (const type of Object.keys(source.accounts) as Array<keyof typeof source.accounts>) {
-            const loginBundle = source.accounts[type];
-            Object.keys(loginBundle).map((login) => {
-                target.accounts[type][login] = Database.fsAccountToMemoryAccount(loginBundle[login]);
-            });
+            for (const [login, account] of Object.entries(source.accounts[type])) {
+                target.accounts[type][login] = Database.fsAccountToMemoryAccount(account);
+            }
         }
 
         this.memoryDb = target;
@@ -264,9 +263,9 @@ export class Database {
 
         return (Object.keys(accounts) as Array<keyof typeof accounts>).reduce(
             (keys: DbAccountPk[], type) => {
-                Object
-                    .keys(accounts[type])
-                    .forEach((login) => keys.push({type, login}));
+                for (const login of Object.keys(accounts[type])) {
+                    keys.push({type, login});
+                }
                 return keys;
             },
             [],
@@ -276,7 +275,7 @@ export class Database {
     private spamFolderTester(account: MemoryDbAccount): (mail: Mail) => boolean {
         const folder = resolveMemoryAccountFolders(account).find(({folderType}) => folderType === MAIL_FOLDER_TYPE.SPAM);
         const mailFolderId = folder && folder.mailFolderId;
-        const result: (mail: Mail) => boolean = typeof mailFolderId !== "undefined"
+        const result: ReturnType<typeof Database.prototype.spamFolderTester> = typeof mailFolderId !== "undefined"
             ? ({mailFolderIds}) => mailFolderIds.includes(mailFolderId)
             : () => false;
 

@@ -19,9 +19,7 @@ export class AppModule {
             return;
         }
 
-        if (store.state) {
-            this.store.dispatch(ROOT_ACTIONS.HmrStateRestoreAction(store.state));
-        }
+        this.store.dispatch(ROOT_ACTIONS.HmrStateRestoreAction(store.state));
 
         if ("restoreInputValues" in store) {
             store.restoreInputValues();

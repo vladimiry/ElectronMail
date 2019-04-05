@@ -5,7 +5,6 @@ import {Deferred} from "ts-deferred";
 import {Fs as StoreFs, Model as StoreModel, Store} from "fs-json-store";
 import {app} from "electron";
 
-import {AccountType} from "src/shared/model/account";
 import {BuildEnvironment} from "src/shared/model/common";
 import {Config, Settings} from "src/shared/model/options";
 import {Context, ContextInitOptions, ContextInitOptionsPaths, RuntimeEnvironment} from "./model";
@@ -134,25 +133,24 @@ function initLocations(
 
             let schemeIndex = 0;
 
-            (Object.keys(webClients) as AccountType[]).map((accountType) => {
-                const webClientsDir = appRelativePath("./webclient", `./${accountType}`);
+            for (const [accountType, items] of Object.entries(webClients)) {
+                const webClientsDir = appRelativePath("webclient", accountType);
 
-                listDirsNames(storeFs, webClientsDir)
-                    .map((dirName) => {
-                        const directory = path.resolve(webClientsDir, dirName);
-                        const scheme = `${LOCAL_WEBCLIENT_PROTOCOL_PREFIX}${schemeIndex++}`;
+                for (const dirName of listDirsNames(storeFs, webClientsDir)) {
+                    const directory = path.resolve(webClientsDir, dirName);
+                    const scheme = `${LOCAL_WEBCLIENT_PROTOCOL_PREFIX}${schemeIndex++}`;
 
-                        webClients[accountType].push({
-                            entryUrl: `${scheme}://${dirName}`,
-                            entryApiUrl: `https://${dirName}`,
-                        });
-
-                        protocolBundles.push({
-                            scheme,
-                            directory,
-                        });
+                    items.push({
+                        entryUrl: `${scheme}://${dirName}`,
+                        entryApiUrl: `https://${dirName}`,
                     });
-            });
+
+                    protocolBundles.push({
+                        scheme,
+                        directory,
+                    });
+                }
+            }
 
             return {protocolBundles, webClients};
         })(),

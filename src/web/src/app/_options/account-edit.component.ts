@@ -47,20 +47,11 @@ export class AccountEditComponent implements OnInit, OnDestroy {
             null,
             () => {
                 const control: AbstractControl | undefined = this.controls && this.controls.loginDelaySecondsRange;
-                const value = control && control.value;
-
-                if (!value) {
-                    return null;
-                }
-
-                const validated = value
-                    ? validateLoginDelaySecondsRange(value)
-                    : undefined;
+                const value: string | undefined = control && control.value;
+                const validated = value && validateLoginDelaySecondsRange(value);
 
                 if (validated && "validationError" in validated) {
-                    return {
-                        errorMsg: validated.validationError,
-                    };
+                    return {errorMsg: validated.validationError};
                 }
 
                 return null;

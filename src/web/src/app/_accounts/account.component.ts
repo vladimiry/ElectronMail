@@ -290,11 +290,9 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                 this.domReadySubscription.unsubscribe();
                 this.domReadySubscription = new Subscription();
 
-                this.domReadySubscription.add(
-                    this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.SetupNotificationChannel({
-                        account: this.account, webView, finishPromise: this.setupOnWebViewDomReadyDeferred().promise,
-                    })),
-                );
+                this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.SetupNotificationChannel({
+                    account: this.account, webView, finishPromise: this.setupOnWebViewDomReadyDeferred().promise,
+                }));
 
                 this.domReadySubscription.add(
                     ((state: { stopSyncingDeferred?: Deferred<void> } = {}) => {

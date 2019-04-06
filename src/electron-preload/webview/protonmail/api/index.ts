@@ -153,17 +153,29 @@ const endpoints: ProtonmailApi = {
     login2fa: ({secret, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "login2fa()", zoneName)) => {
         logger.info();
 
-        const elements = await resolveDomElements({
+        const resolveElementsConfig = {
             input: () => document.getElementById("twoFactorCode") as HTMLInputElement,
             button: () => document.getElementById("login_btn_2fa") as HTMLElement,
-        });
-        logger.verbose(`elements resolved`);
+        };
+        const elements = await resolveDomElements(resolveElementsConfig);
+
+        logger.verbose("elements resolved");
 
         return await submitTotpToken(
             elements.input,
             elements.button,
             () => authenticator.generate(secret),
             logger,
+            {
+                submittingDetection: async () => {
+                    try {
+                        await resolveDomElements(resolveElementsConfig, {iterationsLimit: 1});
+                    } catch {
+                        return true;
+                    }
+                    return false;
+                },
+            },
         );
     })()),
 

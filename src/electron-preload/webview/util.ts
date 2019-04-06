@@ -118,12 +118,15 @@ export async function submitTotpToken(
     {
         submitTimeoutMs = ONE_SECOND_MS * 4,
         newTokenDelayMs = ONE_SECOND_MS * 2,
+        submittingDetection,
     }: {
         submitTimeoutMs?: number;
         newTokenDelayMs?: number;
+        submittingDetection?: () => Promise<boolean>;
     } = {},
 ): Promise<null> {
     const logger = curryFunctionMembers(_logger, "submitTotpToken()");
+
     logger.info();
 
     if (input.value) {
@@ -148,7 +151,14 @@ export async function submitTotpToken(
 
     async function submit() {
         logger.verbose("submit - start");
-        const urlBeforeSubmit = getLocationHref();
+
+        const submitted: () => Promise<boolean> = (
+            submittingDetection
+            ||
+            ((urlBeforeSubmit = getLocationHref()) => {
+                return async () => getLocationHref() !== urlBeforeSubmit;
+            })()
+        );
 
         await fillInputValue(input, tokenResolver());
         logger.verbose("input filled");
@@ -158,7 +168,11 @@ export async function submitTotpToken(
 
         await asyncDelay(submitTimeoutMs);
 
-        if (getLocationHref() === urlBeforeSubmit) {
+        // TODO consider using unified submitting detection
+        //      like for example testing that input/button elements no longer attached to DOM or visible
+        if (
+            !(await submitted())
+        ) {
             throw new Error(errorMessage);
         }
 

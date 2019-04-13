@@ -2,9 +2,9 @@ import {Actions, Effect} from "@ngrx/effects";
 import {EMPTY, forkJoin, from, merge, of} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store, select} from "@ngrx/store";
-import {debounceTime, filter, map, mergeMap, switchMap, takeUntil, tap} from "rxjs/operators";
+import {catchError, debounceTime, filter, finalize, map, mergeMap, switchMap, takeUntil, tap} from "rxjs/operators";
 
-import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
+import {ACCOUNTS_ACTIONS, CORE_ACTIONS, DB_VIEW_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
 import {ElectronService} from "src/web/src/app/_core/electron.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
@@ -112,6 +112,24 @@ export class DbViewEffects {
                     DB_VIEW_ACTIONS.SelectMail({dbAccountPk: {type, login}}),
                     DB_VIEW_ACTIONS.FullTextSearch({dbAccountPk: {type, login}, value}),
                 ]),
+            );
+        }),
+    );
+
+    @Effect()
+    fetchSingleMail$ = this.actions$.pipe(
+        unionizeActionFilter(ACCOUNTS_ACTIONS.is.FetchSingleMail),
+        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+        mergeMap(({payload: {account, webView, mailPk}, logger}) => {
+            const {type, login} = account.accountConfig;
+            const pk = {type, login};
+
+            return this.api.webViewClient(webView, type).pipe(
+                mergeMap((webViewClient) => webViewClient("fetchSingleMail")({...pk, mailPk, zoneName: logger.zoneName()}).pipe(
+                    mergeMap(() => of(DB_VIEW_ACTIONS.SelectConversationMailRequest({dbAccountPk: pk, mailPk}))),
+                    catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                    finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.SetFetchSingleMailParams({pk, mailPk: undefined}))),
+                )),
             );
         }),
     );

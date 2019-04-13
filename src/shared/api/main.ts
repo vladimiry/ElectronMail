@@ -16,6 +16,7 @@ import {
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {DbPatch} from "./common";
 import {ElectronContextLocations} from "src/shared/model/electron";
+import {MemoryDbAccount} from "src/shared/model/database";
 import {Omit} from "src/shared/types";
 import {PACKAGE_NAME} from "src/shared/constants";
 
@@ -35,7 +36,7 @@ export interface Endpoints {
     dbPatch: ApiMethod<DbModel.DbAccountPk
         & { patch: DbPatch }
         & { forceFlush?: boolean }
-        & { metadata: Omit<DbModel.MemoryDbAccount["metadata"], "type"> },
+        & { metadata: Omit<MemoryDbAccount<"protonmail">["metadata"], "type"> | Omit<MemoryDbAccount<"tutanota">["metadata"], "type"> },
         DbModel.FsDbAccount["metadata"]>;
 
     dbGetAccountMetadata: ApiMethod<DbModel.DbAccountPk, DbModel.FsDbAccount["metadata"] | null>;

@@ -271,6 +271,28 @@ export class AccountComponent extends NgChangesObservableComponent implements On
             }),
         );
 
+        this.subscription.add(
+            this.account$.pipe(
+                map((account) => account.fetchSingleMailParams),
+                distinctUntilChanged(),
+                withLatestFrom(this.account$),
+            ).subscribe(([value, account]) => {
+                const {accountConfig: {type, login}} = account;
+
+                if (
+                    !value
+                    ||
+                    value.type !== type
+                    ||
+                    value.login !== login
+                ) {
+                    return;
+                }
+
+                this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.FetchSingleMail({account, webView, mailPk: value.mailPk}));
+            }),
+        );
+
         // if ((process.env.NODE_ENV/* as BuildEnvironment*/) === "development") {
         //     webView.addEventListener("dom-ready", () => webView.openDevTools());
         // }

@@ -1,5 +1,5 @@
 import {catchError} from "rxjs/operators";
-import {defer, of} from "rxjs";
+import {defer, from, of} from "rxjs";
 
 import * as Database from "src/electron-preload/webview/protonmail/lib/database";
 import * as DatabaseModel from "src/shared/model/database";
@@ -12,6 +12,7 @@ import {Omit, Unpacked} from "src/shared/types";
 import {ProtonmailApi} from "src/shared/api/webview/protonmail";
 import {ProviderApi, resolveProviderApi} from "src/electron-preload/webview/protonmail/lib/provider-api";
 import {StatusCodeError} from "src/shared/model/error";
+import {UPSERT_EVENT_ACTIONS} from "src/electron-preload/webview/protonmail/lib/rest/model";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {asyncDelay, curryFunctionMembers, isDatabaseBootstrapped} from "src/shared/util";
 import {buildDbPatchRetryPipeline, buildEmptyDbPatch, persistDatabasePatch, resolveIpcMainApi} from "src/electron-preload/webview/util";
@@ -25,8 +26,8 @@ interface BuildDbPatchReturn {
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[api/build-db-patch]");
 
-const buildDbPatchEndpoint: Pick<ProtonmailApi, "buildDbPatch"> = {
-    buildDbPatch: (input) => defer(() => (async (logger = curryFunctionMembers(_logger, "api:buildDbPatch()", input.zoneName)) => {
+const buildDbPatchEndpoint: Pick<ProtonmailApi, "buildDbPatch" | "fetchSingleMail"> = {
+    buildDbPatch: (input) => defer(() => (async (logger = curryFunctionMembers(_logger, "buildDbPatch()", input.zoneName)) => {
         logger.info();
 
         if (!isLoggedIn()) {
@@ -65,28 +66,37 @@ const buildDbPatchEndpoint: Pick<ProtonmailApi, "buildDbPatch"> = {
             id: Rest.Model.Event["EventID"],
         ) => {
             const fetchedEvents: Rest.Model.Event[] = [];
+
             do {
                 const response = await events.get(id, {params: {[AJAX_SEND_NOTIFICATION_SKIP_PARAM]: ""}});
                 const hasMoreEvents = response.More === 1;
                 const sameNextId = id === response.EventID;
+
                 fetchedEvents.push(response);
                 id = response.EventID;
+
                 if (!hasMoreEvents) {
                     break;
                 }
                 if (!sameNextId) {
                     continue;
                 }
+
                 throw new Error(
                     `Events API indicates that there is a next event in the queue but responded with the same "next event id"`,
                 );
             } while (true);
+
             logger.info(`fetched ${fetchedEvents.length} missed events`);
+
             return {
                 latestEventId: id,
                 missedEvents: fetchedEvents,
             };
-        })(await resolveProviderApi(), inputMetadata.latestEventId);
+        })(
+            await resolveProviderApi(),
+            inputMetadata.latestEventId,
+        );
 
         const metadata: BuildDbPatchReturn["metadata"] = {latestEventId: preFetch.latestEventId};
         const patch = await buildDbPatch({events: preFetch.missedEvents, parentLogger: logger});
@@ -111,6 +121,37 @@ const buildDbPatchEndpoint: Pick<ProtonmailApi, "buildDbPatch"> = {
             throw error;
         }),
     ),
+
+    fetchSingleMail: (input) => from((async (logger = curryFunctionMembers(_logger, "fetchSingleMail()", input.zoneName)) => {
+        logger.info();
+
+        const [anyUpsertAction] = UPSERT_EVENT_ACTIONS;
+        const data: BuildDbPatchReturn = {
+            patch: await buildDbPatch({
+                events: [
+                    {
+                        Messages: [{ID: input.mailPk, Action: anyUpsertAction}],
+                    },
+                ],
+                parentLogger: logger,
+            }),
+            metadata: {
+                // WARN: don't persist the "latestEventId" value in the case of single mail saving
+                latestEventId: "",
+            },
+        };
+
+        await persistDatabasePatch(
+            {
+                ...data,
+                type: input.type,
+                login: input.login,
+            },
+            logger,
+        );
+
+        return null;
+    })()),
 };
 
 async function bootstrapDbPatch(
@@ -253,7 +294,7 @@ async function buildConversationDbMails(briefConversation: Rest.Model.Conversati
 
 async function buildDbPatch(
     input: {
-        events: Rest.Model.Event[];
+        events: Array<Pick<Rest.Model.Event, "Messages" | "Labels" | "Contacts">>;
         parentLogger: ReturnType<typeof buildLoggerBundle>;
     },
     nullUpsert: boolean = false,

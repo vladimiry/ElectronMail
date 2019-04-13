@@ -67,7 +67,7 @@ const baseConfig = buildBaseConfig(
         target: "web",
         entry: {
             "app": [
-                ...(aot ? [] : ["core-js/es7/reflect"]),
+                ...(aot ? [] : ["core-js/proposals/reflect-metadata"]),
                 webSrcPath("./index.ts"),
             ],
             "search-in-page-browser-view": webSrcPath("./search-in-page-browser-view/index.ts"),

@@ -2,18 +2,14 @@ import {pick} from "ramda";
 
 import * as Rest from "./rest";
 import {Arguments, Unpacked} from "src/shared/types";
+import {UPSERT_EVENT_ACTIONS} from "src/electron-preload/webview/protonmail/lib/rest/model";
 import {buildDbPatchRetryPipeline} from "src/electron-preload/webview/util";
 
 export const isUpsertOperationType = (<V = Unpacked<typeof Rest.Model.EVENT_ACTION._.values>>(
     types: Set<V>,
 ) => (type: V): boolean => {
     return types.has(type);
-})(new Set([
-    Rest.Model.EVENT_ACTION.CREATE,
-    Rest.Model.EVENT_ACTION.UPDATE,
-    Rest.Model.EVENT_ACTION.UPDATE_DRAFT,
-    Rest.Model.EVENT_ACTION.UPDATE_FLAGS,
-]));
+})(new Set(UPSERT_EVENT_ACTIONS));
 
 export const angularJsHttpResponseTypeGuard: (data: ng.IHttpResponse<any> | any) => data is ng.IHttpResponse<any> = ((
     signatureKeys = Object.freeze<keyof ng.IHttpResponse<any>>(["data", "status", "config", "statusText", "xhrStatus"]),

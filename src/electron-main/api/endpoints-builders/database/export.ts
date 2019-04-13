@@ -49,7 +49,11 @@ export async function writeEmlFile(mail: Mail, dir: string): Promise<{ file: str
 function buildEml(mail: Mail): string {
     const boundary = `----=${uuid()}@${PACKAGE_NAME}`;
     const subject = mail.subject && `=?UTF-8?B?${Base64.encode(mail.subject)}?=`;
-    const body = Base64.encode(mail.body);
+    const body = Base64.encode(
+        mail.failedDownload
+            ? mail.failedDownload.errorMessage
+            : mail.body,
+    );
     const lines = [
         `MIME-Version: 1.0`, eol,
         ...formatAddresses(`From`, [mail.sender]),

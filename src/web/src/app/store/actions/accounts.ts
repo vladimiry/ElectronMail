@@ -30,6 +30,10 @@ export const ACCOUNTS_ACTIONS = unionize({
         WireUpConfigs: ofType<{ accountConfigs: AccountConfig[] }>(),
         PatchGlobalProgress: ofType<{ patch: State["globalProgress"]; }>(),
         SelectMailOnline: ofType<Omit<Arguments<CommonWebViewApi<AccountType>["selectMailOnline"]>[0], "zoneName">>(),
+        SetFetchSingleMailParams: ofType<{ pk: DbAccountPk }
+            & Partial<Pick<Exclude<WebAccount["fetchSingleMailParams"], null>, "mailPk">>>(),
+        FetchSingleMail: ofType<{ account: WebAccount; webView: Electron.WebviewTag; }
+            & Pick<Exclude<WebAccount["fetchSingleMailParams"], null>, "mailPk">>(),
     },
     {
         tag: "type",

@@ -32,6 +32,14 @@ export interface ConversationEntry extends Entity {
     previousPk?: ConversationEntry["pk"];
 }
 
+export interface MailFailedDownload {
+    type: "body-decrypting";
+    errorMessage: string;
+    errorStack: string;
+    date: Timestamp;
+    appVersion: string;
+}
+
 export interface Mail extends Entity {
     conversationEntryPk: ConversationEntry["pk"];
     mailFolderIds: Array<Folder["mailFolderId"]>;
@@ -47,6 +55,7 @@ export interface Mail extends Entity {
     state: Unpacked<typeof Constants.MAIL_STATE._.values>;
     confidential: boolean;
     replyType: Unpacked<typeof Constants.REPLY_TYPE._.values>;
+    failedDownload?: MailFailedDownload;
 }
 
 export interface MailAddress extends Entity {

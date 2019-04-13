@@ -6,7 +6,6 @@ import {concatMap, filter, mergeMap, startWith, take} from "rxjs/operators";
 import {equals, mergeDeepRight, omit} from "ramda";
 import {v4 as uuid} from "uuid";
 
-import {Arguments, Unpacked} from "src/shared/types";
 import {Context} from "src/electron-main/model";
 import {DEFAULT_API_CALL_TIMEOUT} from "src/shared/constants";
 import {
@@ -21,6 +20,7 @@ import {
     IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$,
     IPC_MAIN_API_NOTIFICATION$,
 } from "src/electron-main/api/constants";
+import {Omit, Unpacked} from "src/shared/types";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty, walkConversationNodesTree} from "src/shared/util";
 import {indexAccount, narrowIndexActionPayload} from "./indexing";
 import {prepareFoldersView} from "./folders-view";
@@ -366,10 +366,23 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
 
 function patchMetadata(
     dest: MemoryDbAccount["metadata"],
-    patch: Arguments<Unpacked<ReturnType<typeof buildEndpoints>>["dbPatch"]>[0]["metadata"],
+    // TODO TS: use patch: Arguments<Endpoints["dbPatch"]>[0]["metadata"],
+    patch: Omit<MemoryDbAccount<"protonmail">["metadata"], "type"> | Omit<MemoryDbAccount<"tutanota">["metadata"], "type">,
     logger = curryFunctionMembers(_logger, "patchMetadata()"),
 ): boolean {
     logger.info();
+
+    if (
+        "latestEventId" in patch
+        &&
+        (
+            !patch.latestEventId
+            ||
+            !patch.latestEventId.trim()
+        )
+    ) {
+        return false;
+    }
 
     const merged = mergeDeepRight(dest, patch);
 

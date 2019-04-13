@@ -12,7 +12,8 @@ import {
 } from "@angular/core";
 import {BehaviorSubject, EMPTY, Subject, Subscription, combineLatest, fromEvent, merge} from "rxjs";
 import {Store, select} from "@ngrx/store";
-import {delay, distinctUntilChanged, filter, map, mergeMap, pairwise, startWith, take} from "rxjs/operators";
+import {delay, distinctUntilChanged, filter, map, mergeMap, pairwise, startWith, take, withLatestFrom} from "rxjs/operators";
+import {equals} from "ramda";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS} from "src/web/src/app/store/actions";
 import {AccountsSelectors} from "src/web/src/app/store/selectors";
@@ -40,6 +41,10 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
             prev.rootNode.entryPk === curr.rootNode.entryPk
             &&
             prev.conversationMail.pk === curr.conversationMail.pk
+            &&
+            prev.conversationMail.body === curr.conversationMail.body
+            &&
+            equals(prev.conversationMail.failedDownload, curr.conversationMail.failedDownload)
         )),
     );
 
@@ -58,7 +63,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         )),
     );
 
-    selectingMailOnlineAvailable$ = combineLatest(
+    onlineAndLoggedIn$ = combineLatest(
         this.account$.pipe(
             map(({notifications}) => notifications.loggedIn),
             distinctUntilChanged(),
@@ -78,6 +83,11 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
 
     selectingMailOnline$ = this.account$.pipe(
         map(({progress}) => progress.selectingMailOnline),
+        distinctUntilChanged(),
+    );
+
+    fetchingSingleMailParams$ = this.account$.pipe(
+        map((account) => Boolean(account.fetchSingleMailParams)),
         distinctUntilChanged(),
     );
 
@@ -194,6 +204,19 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
             });
     }
 
+    reDownload() {
+        this.dbAccountPk$.pipe(
+            withLatestFrom(
+                this.selectedMail$.pipe(
+                    map((selectedMail) => selectedMail.conversationMail),
+                ),
+            ),
+            take(1),
+        ).subscribe(([pk, conversationMail]) => {
+            this.store.dispatch(ACCOUNTS_ACTIONS.SetFetchSingleMailParams({pk, mailPk: conversationMail.pk}));
+        });
+    }
+
     ngOnDestroy() {
         super.ngOnDestroy();
         this.subscription.unsubscribe();
@@ -202,17 +225,19 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
     }
 
     private renderBody(mail: Mail) {
-        this.releaseBodyIframe();
-
         // TODO cache resolved DOM elements
-        const iframe = this.bodyIframe = document.createElement("iframe");
-        const container = this.elementRef.nativeElement.getElementsByClassName("body-container")[0];
+        const [container] = this.elementRef.nativeElement.getElementsByClassName("body-container");
 
+        // WARN: release the iframe first and only then reset the html content
+        this.releaseBodyIframe();
         container.innerHTML = "";
-        container.appendChild(iframe);
+
+        if (mail.failedDownload) {
+            return;
+        }
 
         // WARN: access "contentWindow" only having "appendChild" executed before
-        const {contentWindow} = iframe;
+        const {contentWindow} = container.appendChild(this.bodyIframe = document.createElement("iframe"));
 
         if (!contentWindow) {
             return;

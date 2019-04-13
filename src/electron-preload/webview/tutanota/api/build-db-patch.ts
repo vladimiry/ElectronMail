@@ -27,7 +27,7 @@ type BuildDbPatchInputMetadata = BuildDbPatchReturn["metadata"];
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[api/build-db-patch]");
 
 const buildDbPatchEndpoint: Pick<TutanotaApi, "buildDbPatch"> = {
-    buildDbPatch: (input) => defer(() => (async (logger = curryFunctionMembers(_logger, input.zoneName)) => {
+    buildDbPatch: (input) => defer(() => (async (logger = curryFunctionMembers(_logger, "buildDbPatch()", input.zoneName)) => {
         const controller = getUserController();
         const inputMetadata = input.metadata;
 

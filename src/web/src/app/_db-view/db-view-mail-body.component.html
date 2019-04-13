@@ -48,12 +48,11 @@
         </button>
         <button
             (click)="selectMailOnline()"
-            *ngIf="selectingMailOnlineAvailable$ | async"
-            [disabled]="selectingMailOnline$ | async"
+            [disabled]="(selectingMailOnline$ | async) || !(onlineAndLoggedIn$ | async)"
             class="btn btn-primary mr-2"
             type="button"
         >
-            <i class="fa fa-spinner fa-pulse fa-fw"></i>
+            <i *ngIf="selectingMailOnline$ | async" class="fa fa-spinner fa-pulse fa-fw"></i>
             View Online
         </button>
         <electron-mail-db-view-mails-export
@@ -119,6 +118,26 @@
                 >{{ address.name || address.address }}</a>
             </div>
         </ng-template>
+    </div>
+
+    <div *ngIf="selectedMail.conversationMail.failedDownload as failedDownload">
+        <div class="alert alert-danger mb-2">
+            Failed to decrypt the email body content:
+            <ul>
+                <li><strong>App version</strong>: {{ failedDownload.appVersion }}</li>
+                <li><strong>Date</strong>: {{ failedDownload.date | date:'medium' }}</li>
+                <li><strong>Error message</strong>: <span [innerText]="failedDownload.errorMessage"></span></li>
+                <li><strong>Error stacktrace</strong>: <span [innerText]="failedDownload.errorStack"></span></li>
+            </ul>
+        </div>
+        <button
+            (click)="reDownload()"
+            [disabled]="!(onlineAndLoggedIn$ | async) || (fetchingSingleMailParams$ | async)"
+            class="btn btn-secondary"
+        >
+            <i *ngIf="fetchingSingleMailParams$ | async" class="fa fa-spinner fa-pulse fa-fw"></i>
+            Redownload the Email
+        </button>
     </div>
 
     <div class="body-container d-flex flex-grow-1"></div>

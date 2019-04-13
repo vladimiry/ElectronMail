@@ -1,7 +1,7 @@
 import {Injectable, OnDestroy} from "@angular/core";
 import {Model} from "pubsub-to-stream-api";
+import {Observable, Subscription, from, of, throwError, timer} from "rxjs";
 import {Store, select} from "@ngrx/store";
-import {Subscription, from, of, throwError, timer} from "rxjs";
 import {concat, concatMap, delay, filter, map, mergeMap, retryWhen, switchMap, take, takeWhile, withLatestFrom} from "rxjs/operators";
 
 import {AccountType} from "src/shared/model/account";
@@ -55,7 +55,12 @@ export class ElectronService implements OnDestroy {
         );
     }
 
-    webViewClient<T extends AccountType>(webView: Electron.WebviewTag, type: T, options?: CallOptions) {
+    webViewClient<T extends AccountType>(
+        webView: Electron.WebviewTag,
+        type: T,
+        options?: CallOptions,
+    ): Observable<ReturnType<WebViewApi<T>["buildClient"]>> {
+        // TODO TS: figure why "webViewClient()" client stopped to be type safe after some TS version update
         const client: ReturnType<WebViewApi<T>["buildClient"]> = __ELECTRON_EXPOSURE__.buildIpcWebViewClient[type](
             webView,
             {

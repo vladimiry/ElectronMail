@@ -27,6 +27,28 @@ class File extends Entity implements Model.File {
     size!: Model.File["size"];
 }
 
+export class MailFailedDownload implements Model.MailFailedDownload {
+    @IsNotEmpty()
+    @IsString()
+    type!: Model.MailFailedDownload["type"];
+
+    @IsNotEmpty()
+    @IsString()
+    errorMessage!: Model.MailFailedDownload["errorMessage"];
+
+    @IsNotEmpty()
+    @IsString()
+    errorStack!: Model.MailFailedDownload["errorStack"];
+
+    @IsNotEmpty()
+    @IsInt()
+    date!: Model.MailFailedDownload["date"];
+
+    @IsNotEmpty()
+    @IsString()
+    appVersion!: Model.MailFailedDownload["appVersion"];
+}
+
 export class Mail extends Entity implements Model.Mail {
     @IsNotEmpty()
     @IsString()
@@ -86,4 +108,8 @@ export class Mail extends Entity implements Model.Mail {
 
     @IsIn(Model.REPLY_TYPE._.values)
     replyType!: Model.Mail["replyType"];
+
+    @ValidateNested()
+    @Type(() => MailFailedDownload)
+    failedDownload?: MailFailedDownload;
 }

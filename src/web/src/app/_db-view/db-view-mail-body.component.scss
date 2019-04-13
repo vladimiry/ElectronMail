@@ -66,10 +66,6 @@
             border-top-width: 0;
             border-top-left-radius: 0;
             border-top-right-radius: 0;
-
-            &:not([disabled]) .fa-spinner {
-                display: none;
-            }
         }
 
         .btn + #{$app-prefix}-db-view-mails-export {

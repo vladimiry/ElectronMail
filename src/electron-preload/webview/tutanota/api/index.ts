@@ -62,6 +62,12 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
             return null;
         })()),
 
+        fetchSingleMail: (input) => from((async (logger = curryFunctionMembers(_logger, "fetchSingleMail()", input.zoneName)) => {
+            logger.info();
+
+            throw new Error("Not yet supported for Tutanota");
+        })()),
+
         fillLogin: ({login, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "fillLogin()", zoneName)) => {
             logger.info();
 

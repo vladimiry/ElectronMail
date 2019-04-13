@@ -1,4 +1,4 @@
-// tslint:disable:no-unused-variable // TODO figure why tslint detects some inports as unused
+// tslint:disable:no-unused-variable // TODO figure why tslint detects some imports as unused
 
 import {ApiMethod, WebViewApiService} from "electron-rpc-api";
 import {Model} from "pubsub-to-stream-api";
@@ -25,6 +25,7 @@ export interface CommonWebViewApi<T extends AccountType> {
         mail: Pick<Mail, "id" | "mailFolderIds" | "conversationEntryPk">;
     } & ZoneApiParameter,
         null>;
+    fetchSingleMail: ApiMethod<DbAccountPk & { mailPk: Mail["pk"] } & ZoneApiParameter, null>;
 }
 
 export type WebViewApi<T extends AccountType, A = T extends "tutanota" ? TutanotaApi : ProtonmailApi>

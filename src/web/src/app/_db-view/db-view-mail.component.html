@@ -29,6 +29,13 @@
                 </div>
             </div>
         </div>
+        <i
+            *ngIf="mail.failedDownload as failedDownload"
+            [popover]="failedDownload.errorMessage"
+            class="fa fa-info-circle text-danger ml-2"
+            container="body"
+            triggers="mouseenter:mouseleave"
+        ></i>
         <i *ngIf="mail.confidential" class="fa fa-lock d-flex text-primary ml-2"></i>
     </div>
     <div class="c-auto">

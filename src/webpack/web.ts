@@ -96,7 +96,7 @@ const baseConfig = buildBaseConfig(
                 },
                 {
                     test: /\.html$/,
-                    loader: "raw-loader",
+                    loader: "html-loader",
                 },
                 {
                     test: /\.css$/,

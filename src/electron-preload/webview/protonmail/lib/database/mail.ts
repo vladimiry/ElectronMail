@@ -42,7 +42,7 @@ export async function buildMail(input: Rest.Model.Message, api: ProviderApi): Pr
 
         bodyPart.failedDownload = {
             appVersion: PACKAGE_VERSION,
-            date: Number(new Date()),
+            date: Date.now(),
             errorMessage: String(error.message),
             errorStack: String(error.stack),
             type: "body-decrypting",

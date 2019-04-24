@@ -36,7 +36,7 @@ const OPTIONS = Object.freeze({
     dataDirectory: path.join(
         process.cwd(),
         `electron-mail.spec`,
-        `${path.basename(__filename)}-${Number(new Date())}`,
+        `${path.basename(__filename)}-${Date.now()}`,
     ),
     masterPassword: "masterPassword123",
 });

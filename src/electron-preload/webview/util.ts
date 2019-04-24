@@ -60,7 +60,7 @@ export const resolveDomElements = <E extends Element,
         delayMinMs: 300,
     };
 
-    const startTime = Number(new Date());
+    const startTime = Date.now();
     const delayMs = OPTS.timeoutMs / 50;
     const queryKeys: K[] = Object.keys(query) as K[];
     const resolvedElements: Partial<R> = {};
@@ -91,7 +91,7 @@ export const resolveDomElements = <E extends Element,
             ));
         }
 
-        if (Number(new Date()) - startTime > OPTS.timeoutMs) {
+        if (Date.now() - startTime > OPTS.timeoutMs) {
             return reject(new Error(
                 `Failed to resolve some DOM elements from the list [${queryKeys.join(", ")}] within "${OPTS.timeoutMs}" milliseconds`,
             ));

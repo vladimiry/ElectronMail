@@ -5,7 +5,7 @@ import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[api/ajax-send-notification]");
 
-export const AJAX_SEND_NOTIFICATION_SKIP_PARAM = `ajax-send-notification-skip-${Number(new Date())}`;
+export const AJAX_SEND_NOTIFICATION_SKIP_PARAM = `ajax-send-notification-skip-${Date.now()}`;
 
 export const AJAX_SEND_NOTIFICATION$ = new Observable<XMLHttpRequest>((subscriber) => {
     const successHttpStatus = (status: number) => status >= 200 && status < 300;

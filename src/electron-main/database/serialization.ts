@@ -101,7 +101,7 @@ export class SerializationAdapter {
 
             this.logger.verbose(`"msgpack.encode" start`);
             const serializedData = msgpack.encode(data);
-            this.logger.verbose(`"msgpack.encode" start`);
+            this.logger.verbose(`"msgpack.encode" end`);
 
             const encryptedData = await encryptionAdapter.write(serializedData);
             const {header, cipher} = persistencePartsUtil.split(encryptedData);

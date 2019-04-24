@@ -183,7 +183,7 @@ export class Database {
         logger.info("saveToFile()");
 
         return this.saveToFileQueue.q(async () => {
-            const startTime = Number(new Date());
+            const startTime = Date.now();
             const serializationAdapter = await this.buildSerializationAdapter();
             const dump = {
                 ...this.dumpToFsDb(),
@@ -195,7 +195,7 @@ export class Database {
                 await serializationAdapter.write(dump),
             );
 
-            logger.verbose(`saveToFile().stat: ${JSON.stringify({...this.stat(), time: Number(new Date()) - startTime})}`);
+            logger.verbose(`saveToFile().stat: ${JSON.stringify({...this.stat(), time: Date.now() - startTime})}`);
         });
     }
 

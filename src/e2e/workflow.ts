@@ -65,7 +65,7 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
     };
 
     const outputDirPath = t.context.outputDirPath = t.context.outputDirPath
-        || path.join(rootDirPath, "./output/e2e", String(Number(new Date())));
+        || path.join(rootDirPath, "./output/e2e", String(Date.now()));
     const userDataDirPath = path.join(outputDirPath, "./app-data");
     const logFilePath = path.join(userDataDirPath, "log.log");
     const webdriverLogDirPath = path.join(outputDirPath, "webdriver-driver-log");

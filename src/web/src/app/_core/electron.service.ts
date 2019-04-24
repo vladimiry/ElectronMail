@@ -73,11 +73,11 @@ export class ElectronService implements OnDestroy {
         const ping$ = this.onlinePingWithTimeouts$.pipe(
             // tslint:disable-next-line:ban
             switchMap(({webViewApiPing}) => {
-                const pingStart = Number(new Date());
+                const pingStart = Date.now();
 
                 return from(client("ping", {timeoutMs: 1})({zoneName: logger.zoneName()}).pipe(
                     retryWhen((errors) => errors.pipe(
-                        takeWhile(() => (Number(new Date()) - pingStart) < webViewApiPing),
+                        takeWhile(() => (Date.now() - pingStart) < webViewApiPing),
                         delay(this.webViewApiPingIntervalMs),
                         concat(throwError(new Error(`Failed to wait for "webview:${type}" service provider initialization`))),
                     )),

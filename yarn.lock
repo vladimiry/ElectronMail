@@ -5906,13 +5906,6 @@ ignore@^4.0.3, ignore@^4.0.6:
   resolved "https://registry.yarnpkg.com/ignore/-/ignore-4.0.6.tgz#750e3db5862087b4737ebac8207ffd1ef27b25fc"
   integrity sha512-cyFDKrqc/YdcWFniJhzI42+AzS+gNwmUzOSFcRCQYwySuBBBy/KjuxWLZ/FHEH6Moq1NizMOBWyTcv8O4OZIMg==
 
-image-processing-js@0.0.3:
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/image-processing-js/-/image-processing-js-0.0.3.tgz#1f90fc0eb11131cff8f0bf0b7620ec16085a0c45"
-  integrity sha512-Z7q9ouzakoQ/Ul54LUyGrunCL6YQ+pCNr/2iA31nD1MhXauyQNnKCXnS9Xl9Z0ZmZZEpIj5bnZaC/wF3HyW1Hw==
-  dependencies:
-    thaw-image-utilities.js "^0.0.3"
-
 immer@3.1.1:
   version "3.1.1"
   resolved "https://registry.yarnpkg.com/immer/-/immer-3.1.1.tgz#eddd2c28403f494df604992c554eade8d9e5c2bb"
@@ -6659,7 +6652,7 @@ jasmine@3.4.0:
     glob "^7.1.3"
     jasmine-core "~3.4.0"
 
-jpeg-js@^0.3.3, jpeg-js@^0.3.4:
+jpeg-js@^0.3.3:
   version "0.3.4"
   resolved "https://registry.yarnpkg.com/jpeg-js/-/jpeg-js-0.3.4.tgz#dc2ba501ee3d58b7bb893c5d1fab47294917e7e7"
   integrity sha512-6IzjQxvnlT8UlklNmDXIJMWxijULjqGrzgqc0OG7YadZdvm7KPQ1j0ehmQQHckgEWOfgpptzcnWgESovxudpTA==
@@ -7564,13 +7557,6 @@ memory-fs@^0.4.0, memory-fs@^0.4.1, memory-fs@~0.4.1:
   dependencies:
     errno "^0.1.3"
     readable-stream "^2.0.1"
-
-memory-streams@0.1.3:
-  version "0.1.3"
-  resolved "https://registry.yarnpkg.com/memory-streams/-/memory-streams-0.1.3.tgz#d9b0017b4b87f1d92f55f2745c9caacb1dc93ceb"
-  integrity sha512-qVQ/CjkMyMInPaaRMrwWNDvf6boRZXaT/DbQeMYcCWuXPEBf1v8qChOc9OlEVQp2uOvRXa1Qu30fLmKhY6NipA==
-  dependencies:
-    readable-stream "~1.0.2"
 
 memorystream@^0.3.1:
   version "0.3.1"
@@ -9741,16 +9727,6 @@ readable-stream@^3.0.6, readable-stream@^3.1.1:
     string_decoder "^1.1.1"
     util-deprecate "^1.0.1"
 
-readable-stream@~1.0.2:
-  version "1.0.34"
-  resolved "https://registry.yarnpkg.com/readable-stream/-/readable-stream-1.0.34.tgz#125820e34bc842d2f2aaafafe4c2916ee32c157c"
-  integrity sha1-Elgg40vIQtLyqq+v5MKRbuMsFXw=
-  dependencies:
-    core-util-is "~1.0.0"
-    inherits "~2.0.1"
-    isarray "0.0.1"
-    string_decoder "~0.10.x"
-
 readable-stream@~1.1.9:
   version "1.1.14"
   resolved "https://registry.yarnpkg.com/readable-stream/-/readable-stream-1.1.14.tgz#7cf4c54ef648e3813084c636dd2079e166c081d9"
@@ -11429,13 +11405,6 @@ text-table@^0.2.0, text-table@~0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/text-table/-/text-table-0.2.0.tgz#7f5ee823ae805207c00af2df4a84ec3fcfa570b4"
   integrity sha1-f17oI66AUgfACvLfSoTsP8+lcLQ=
-
-thaw-image-utilities.js@^0.0.3:
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/thaw-image-utilities.js/-/thaw-image-utilities.js-0.0.3.tgz#1939a4cfb103dcf124bfb9eb0129def838b6542b"
-  integrity sha512-T7LKJc/PZlNVwCb3kVS5mDkWjJ3UxgGxXBEsvjc4YhV2xACS3yslJRYkqFfBEQd2XZbj9Dn1VzoSVjfGyC73jw==
-  dependencies:
-    jpeg-js "^0.3.4"
 
 thirty-two@1.0.2:
   version "1.0.2"

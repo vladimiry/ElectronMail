@@ -1,6 +1,6 @@
 declare module "pureimage" {
-    import {ReadStream, WriteStream} from "fs";
-    import {WritableStream} from "memory-streams";
+    import {Writable} from "stream";
+    import {ReadStream} from "fs";
 
     interface Bitmap {
         data: Buffer;
@@ -34,7 +34,7 @@ declare module "pureimage" {
 
     function decodePNGFromStream(stream: ReadStream): Promise<Bitmap>;
 
-    function encodePNGToStream(bitmap: Bitmap, stream: WriteStream | WritableStream): Promise<void>;
+    function encodePNGToStream(bitmap: Bitmap, stream: Writable): Promise<void>;
 
     function registerFont(binaryPath: string, family: string, weight?: number, style?: string, variant?: string): {
         binary: string,

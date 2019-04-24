@@ -1,9 +1,7 @@
-import imageProcessing from "image-processing-js";
 import {Bitmap, decodePNGFromStream, encodePNGToStream, make, registerFont} from "pureimage";
 import {NativeImage, nativeImage} from "electron";
-import {WritableStream} from "memory-streams";
+import {PassThrough} from "stream";
 import {createReadStream} from "fs";
-import {platform} from "os";
 
 // TODO explore https://github.com/vonderheide/mono-bitmap as a possible "pureimage" replacement
 
@@ -17,14 +15,12 @@ export interface ImageBundle {
     native: NativeImage;
 }
 
-export const IMAGE_PROCESSOR = imageProcessing();
-
 export async function trayIconBundleFromPath(trayIconPath: string): Promise<ImageBundle> {
     const bitmap = await decodePNGFromStream(createReadStream(trayIconPath));
 
     return {
         bitmap,
-        native: await bitmapToNativeImageOsDependent(bitmap),
+        native: await bitmapToNativeImage(bitmap),
     };
 }
 
@@ -39,7 +35,7 @@ export async function loggedOutBundle({bitmap: source}: ImageBundle, config: Cir
 
     return {
         bitmap,
-        native: await bitmapToNativeImageOsDependent(bitmap),
+        native: await bitmapToNativeImage(bitmap),
     };
 }
 
@@ -52,33 +48,40 @@ export async function unreadNative(
     icon: NativeImage,
     overlay: NativeImage,
 }> {
-    const rad = (source.width * config.scale) / 2;
-    const circle = buildCircle(rad, config.color);
+    const circle = await (async (text, fontFamily) => {
+        const rad = (source.width * config.scale) / 2;
+        const textDrawArea = buildCircle(rad, config.color);
 
-    await (async (text, fontFamily) => {
         if (!text || text.length > 2) {
             text = "+";
         }
+
         const scale = text.length === 1 ? 1.6 : 1.35;
         const size = rad * scale;
         const x = size - rad * 1.1;
         const y = size + rad * scale * (text.length - 1) * .1;
+        const ctx = textDrawArea.getContext("2d");
+
         await new Promise((resolve) => registerFont(fontFilePath, fontFamily).load(resolve));
-        const ctx = circle.getContext("2d");
+
         ctx.fillStyle = config.textColor;
         ctx.font = `${size}pt ${fontFamily}`;
         ctx.fillText(text, x, y);
+
+        return textDrawArea;
     })(String(unread), "some-font-family");
-
     const {width, height} = circle;
-    const bitmap = cloneBitmap(source);
+    const icon = cloneBitmap(source);
 
-    skipSettingTransparentPixels(bitmap);
-    bitmap.getContext("2d").drawImage(circle, 0, 0, width, height, bitmap.width - width, bitmap.height - height, width, height);
+    skipSettingTransparentPixels(icon);
+
+    icon
+        .getContext("2d")
+        .drawImage(circle, 0, 0, width, height, icon.width - width, icon.height - height, width, height);
 
     return {
-        icon: await bitmapToNativeImageOsDependent(bitmap),
-        overlay: await bitmapToNativeImageOsDependent(circle),
+        icon: await bitmapToNativeImage(icon),
+        overlay: await bitmapToNativeImage(circle),
     };
 }
 
@@ -104,17 +107,28 @@ function skipSettingTransparentPixels(bitmap: Bitmap): void {
     })(bitmap.setPixelRGBA);
 }
 
-async function bitmapToNativeImageOsDependent(source: Bitmap): Promise<NativeImage> {
-    const bitmap = platform() === "darwin" ? resampleToDarwinSize(source) : source;
-    const stream = new WritableStream();
-
-    await encodePNGToStream(bitmap, stream);
-
-    return nativeImage.createFromBuffer(stream.toBuffer());
+async function bitmapToNativeImage(source: Bitmap): Promise<NativeImage> {
+    return nativeImage.createFromBuffer(
+        await encodePNGToBuffer(source),
+    );
 }
 
-function resampleToDarwinSize(source: Bitmap): Bitmap {
-    return cloneBitmap(IMAGE_PROCESSOR.resampleImageFromBuffer(source, 16, 16, IMAGE_PROCESSOR.modeBicubic));
+async function encodePNGToBuffer(source: Bitmap): Promise<Buffer> {
+    return await new Promise<Buffer>((resolve, reject) => {
+        const stream = new PassThrough();
+        const data: number[] = [];
+
+        stream
+            .on("data", (chunk: typeof data) => data.push(...chunk))
+            .on("error", (error) => reject(error))
+            .on("end", () => {
+                encodingPromise
+                    .then(() => resolve(Buffer.from(data)))
+                    .catch(reject);
+            });
+
+        const encodingPromise = encodePNGToStream(source, stream);
+    });
 }
 
 function cloneBitmap(input: Pick<Bitmap, "width" | "height" | "data">): Bitmap {

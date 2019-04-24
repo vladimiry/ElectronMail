@@ -105,6 +105,7 @@ function initLocations(
         userDataDir,
         icon,
         trayIcon: icon,
+        trayIconDarwin: appRelativePath("./assets/icons/mac/icon.png"),
         numbersFont: appRelativePath("./assets/numbers.ttf"),
         browserWindowPage: developmentEnv
             ? "http://localhost:8080/index.html"

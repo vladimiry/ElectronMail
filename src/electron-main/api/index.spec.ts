@@ -102,13 +102,16 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         } = t.context;
         const {addAccount, updateAccount} = endpoints;
         const addPayload = buildProtonmailAccountData();
-        const updatePayload: AccountConfigUpdatePatch = produce(omit(["type"], addPayload), (draft) => {
-            (draft.entryUrl as any) = generateRandomString();
-            (draft.database as any) = Boolean(!draft.database);
-            draft.credentials.password = generateRandomString();
-            draft.credentials.mailPassword = generateRandomString();
-            draft.proxy = {proxyRules: "http=foopy:80;ftp=foopy2", proxyBypassRules: "<local>"};
-        });
+        const updatePayload: AccountConfigUpdatePatch = omit(
+            ["type"],
+            produce(addPayload, (draft) => {
+                (draft.entryUrl as any) = generateRandomString();
+                (draft.database as any) = Boolean(!draft.database);
+                draft.credentials.password = generateRandomString();
+                draft.credentials.mailPassword = generateRandomString();
+                draft.proxy = {proxyRules: "http=foopy:80;ftp=foopy2", proxyBypassRules: "<local>"};
+            }),
+        );
 
         await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
 

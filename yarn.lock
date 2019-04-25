@@ -570,6 +570,34 @@
     universal-user-agent "^2.0.0"
     url-template "^2.0.8"
 
+"@rgba-image/common@^0.1.0":
+  version "0.1.13"
+  resolved "https://registry.yarnpkg.com/@rgba-image/common/-/common-0.1.13.tgz#f775a1db042dd0dd23749207daa041a9d37f2e61"
+  integrity sha512-AnOBmBpjSgcymTuVhTGy+RB4FfmEQqR2GeJY3d3xfvR9fl3HfhzwgVqopuh3bKSAT6KRpJr7wNmug0qr3oI7bA==
+
+"@rgba-image/copy@^0.1.2":
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/@rgba-image/copy/-/copy-0.1.2.tgz#406049e390dc52c046b3fc4d95abd96d745882d2"
+  integrity sha512-N1t4aw0lvvGSToyoy6IgYOEEDDGEgFCL1ZP8PNfcT9f0EjmXBD+AbrJhMy4gTyq7kcxpQM3vO1fKXl0qGMUyEA==
+  dependencies:
+    "@rgba-image/common" "^0.1.0"
+
+"@rgba-image/create-image@^0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@rgba-image/create-image/-/create-image-0.1.1.tgz#873ee0ffa2d1a62565845874a7a83c4e53ae1851"
+  integrity sha512-ndExUNyi9Ooa/OZqiJS53vYrQ48FX7MDmMrEslDxhsorDsXpeKI9w689r4AYhT9CF9KZlBe8SmI++3BwSvvwAQ==
+  dependencies:
+    "@rgba-image/common" "^0.1.0"
+
+"@rgba-image/lanczos@0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@rgba-image/lanczos/-/lanczos-0.1.0.tgz#f827859971e74850caaf2ce9ca7df7b01798f240"
+  integrity sha512-pxMl+YlolWPK8b10MOCNamtFbpyHvHQAxwhllnkhJugG5CA3qV6MSN9boPP30qPtmZwbHDCeYw0hmpI+EtlbZw==
+  dependencies:
+    "@rgba-image/common" "^0.1.0"
+    "@rgba-image/copy" "^0.1.2"
+    "@rgba-image/create-image" "^0.1.1"
+
 "@samverschueren/stream-to-observable@^0.3.0":
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/@samverschueren/stream-to-observable/-/stream-to-observable-0.3.0.tgz#ecdf48d532c58ea477acfcab80348424f8d0662f"

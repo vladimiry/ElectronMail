@@ -1,25 +1,25 @@
 import {app} from "electron";
 import {from} from "rxjs";
-import {platform} from "os";
 
+import {CircleConfig} from "./model";
 import {Context} from "src/electron-main/model";
 import {DEFAULT_UNREAD_BADGE_BG_COLOR, DEFAULT_UNREAD_BADGE_BG_TEXT} from "src/shared/constants";
 import {Endpoints} from "src/shared/api/main";
 import {loggedOutBundle, trayIconBundleFromPath, unreadNative} from "./icon-builder";
 
 // TODO use "deep freezing" util
-const config = Object.freeze({
-    loggedOut: Object.freeze({scale: .25, color: "#F9C83E"}),
-    unread: Object.freeze({scale: .75, color: DEFAULT_UNREAD_BADGE_BG_COLOR, textColor: DEFAULT_UNREAD_BADGE_BG_TEXT}),
-});
+const config: {
+    loggedOut: CircleConfig,
+    unread: CircleConfig & { textColor: string },
+} = {
+    loggedOut: {scale: .25, color: "#F9C83E"},
+    unread: {scale: .75, color: DEFAULT_UNREAD_BADGE_BG_COLOR, textColor: DEFAULT_UNREAD_BADGE_BG_TEXT},
+};
 
 export async function buildEndpoints(
     ctx: Context,
 ): Promise<Pick<Endpoints, "updateOverlayIcon">> {
-    const trayIconFileProp = platform() === "darwin"
-        ? "trayIconDarwin" // macOS uses 16x16 tray icon
-        : "trayIcon";
-    const defaultCanvas = await trayIconBundleFromPath(ctx.locations[trayIconFileProp]);
+    const defaultCanvas = await trayIconBundleFromPath(ctx.locations.trayIcon);
     const loggedOutCanvas = await loggedOutBundle(defaultCanvas, config.loggedOut);
 
     return {

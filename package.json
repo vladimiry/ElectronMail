@@ -90,6 +90,7 @@
     }
   },
   "dependencies": {
+    "@rgba-image/lanczos": "0.1.0",
     "@vladimiry/unionize": "2.1.2-add-tagprefix-option",
     "about-window": "1.12.1",
     "asap-es": "1.3.3",

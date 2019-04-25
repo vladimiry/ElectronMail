@@ -29,7 +29,6 @@ export interface ElectronContextLocations {
     readonly icon: string;
     readonly numbersFont: string;
     readonly trayIcon: string;
-    readonly trayIconDarwin: string;
     readonly userDataDir: string;
     readonly preload: {
         browserWindow: string;

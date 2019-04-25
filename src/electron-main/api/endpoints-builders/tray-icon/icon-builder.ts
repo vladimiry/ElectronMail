@@ -2,18 +2,48 @@ import {Bitmap, decodePNGFromStream, encodePNGToStream, make, registerFont} from
 import {NativeImage, nativeImage} from "electron";
 import {PassThrough} from "stream";
 import {createReadStream} from "fs";
+import {lanczos} from "@rgba-image/lanczos";
+import {platform} from "os";
+
+import {CircleConfig, ImageBundle} from "./model";
 
 // TODO explore https://github.com/vonderheide/mono-bitmap as a possible "pureimage" replacement
 
-export interface CircleConfig {
-    scale: number;
-    color: string;
-}
+const bitmapToNativeImage = (() => {
+    const darwinSize = Object.freeze({width: 16, height: 16}); // macOS uses 16x16 tray icon
+    const platformSpecificScale: (source: Bitmap) => Promise<Bitmap> = platform() === "darwin"
+        ? async (source) => {
+            const sourceBits = source.data.byteLength / (source.width * source.height);
+            const dest = {
+                data: Uint8ClampedArray.from(new Array(darwinSize.width * darwinSize.height * sourceBits)),
+                ...darwinSize,
+            };
 
-export interface ImageBundle {
-    bitmap: Bitmap;
-    native: NativeImage;
-}
+            lanczos(
+                {
+                    data: Uint8ClampedArray.from(source.data),
+                    width: source.width,
+                    height: source.height,
+                },
+                dest,
+            );
+
+            const result = make(dest.width, dest.height);
+
+            result.data = Buffer.from(dest.data);
+
+            return result;
+        }
+        : async (source) => source;
+
+    return async (source: Bitmap): Promise<NativeImage> => {
+        return nativeImage.createFromBuffer(
+            await encodePNGToBuffer(
+                await platformSpecificScale(source),
+            ),
+        );
+    };
+})();
 
 export async function trayIconBundleFromPath(trayIconPath: string): Promise<ImageBundle> {
     const bitmap = await decodePNGFromStream(createReadStream(trayIconPath));
@@ -105,12 +135,6 @@ function skipSettingTransparentPixels(bitmap: Bitmap): void {
         }
         return setPixelRGBA.call(this, x, y, rgba);
     })(bitmap.setPixelRGBA);
-}
-
-async function bitmapToNativeImage(source: Bitmap): Promise<NativeImage> {
-    return nativeImage.createFromBuffer(
-        await encodePNGToBuffer(source),
-    );
 }
 
 async function encodePNGToBuffer(source: Bitmap): Promise<Buffer> {

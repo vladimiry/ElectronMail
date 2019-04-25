@@ -275,9 +275,11 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
     // TODO actualize "init" endpoint test
     init: async (t) => {
         const result = await t.context.endpoints.init().toPromise();
+        const {resolveVendorsAppCssLinkHref} = t.context.mocks["src/electron-main/util"];
 
-        t.deepEqual(result.electronLocations, t.context.ctx.locations);
+        t.deepEqual(omit(["vendorsAppCssLinkHref"], result.electronLocations), t.context.ctx.locations);
         t.is(typeof result.hasSavedPassword, "boolean");
+        t.true(resolveVendorsAppCssLinkHref.calledWithExactly(t.context.ctx.locations));
     },
 
     migrate: (t) => {
@@ -313,12 +315,12 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
     },
 
     openAboutWindow: async (t) => {
-        const defaultOnSpy: sinon.SinonSpy = t.context.mocks["about-window"].default;
+        const {showAboutBrowserWindow} = t.context.mocks["src/electron-main/window/about"];
         const action = t.context.endpoints.openAboutWindow;
 
         await action().toPromise();
-        const args = defaultOnSpy.getCall(0).args[0];
-        t.true(args.icon_path.endsWith(path.normalize("assets/icons/icon.png")), "about called with proper icon path");
+
+        t.true(showAboutBrowserWindow.calledWithExactly(t.context.ctx));
     },
 
     openExternal: async (t) => {
@@ -572,6 +574,7 @@ async function buildMocks() {
         },
         "src/electron-main/util": {
             buildSettingsAdapter,
+            resolveVendorsAppCssLinkHref: sinon.spy(),
         },
         "src/electron-main/storage-upgrade": {
             upgradeConfig: sinon.stub().returns(false),
@@ -591,8 +594,8 @@ async function buildMocks() {
             attachFullTextIndexWindow: sinon.stub().returns(Promise.resolve()),
             detachFullTextIndexWindow: sinon.stub().returns(Promise.resolve()),
         },
-        "about-window": {
-            default: sinon.spy(),
+        "src/electron-main/window/about": {
+            showAboutBrowserWindow: sinon.stub().returns(Promise.resolve()),
         },
         "electron": {
             app: {
@@ -641,7 +644,7 @@ test.beforeEach(async (t) => {
             mock("electron").with(mocks.electron);
             mock(() => import("src/electron-main/keytar"))/*.callThrough()*/.with(mocks["src/electron-main/keytar"]);
             mock(() => import("src/electron-main/window/full-text-search")).callThrough().with(mocks["src/electron-main/window/full-text-search"]); // tslint:disable-line:max-line-length
-            mock(() => import("about-window")).callThrough().with(mocks["about-window"] as any);
+            mock(() => import("src/electron-main/window/about")).callThrough().with(mocks["src/electron-main/window/about"]);
             mock(() => import("src/shared/api/main")).callThrough().with(mocks["src/shared/api/main"]);
             mock(() => import("src/electron-main/session")).callThrough().with(mocks["src/electron-main/session"]);
             mock(() => import("src/electron-main/util")).callThrough().with(mocks["src/electron-main/util"]);

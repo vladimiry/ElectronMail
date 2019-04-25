@@ -6,6 +6,8 @@ import {EntryUrlItem} from "./types";
 const {
     name: PACKAGE_NAME,
     version: PACKAGE_VERSION,
+    license: PACKAGE_LICENSE,
+    description: PACKAGE_DESCRIPTION,
 } = require("package.json"); // tslint:disable-line:no-var-requires no-import-zones
 
 export const PRODUCT_NAME = "ElectronMail";
@@ -15,6 +17,8 @@ export const REPOSITORY_NAME = PRODUCT_NAME;
 export {
     PACKAGE_NAME,
     PACKAGE_VERSION,
+    PACKAGE_LICENSE,
+    PACKAGE_DESCRIPTION,
 };
 
 // user data dir, defaults to app.getPath("userData")

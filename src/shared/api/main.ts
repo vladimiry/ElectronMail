@@ -121,7 +121,7 @@ export interface Endpoints {
 }
 
 export interface InitResponse {
-    electronLocations: ElectronContextLocations;
+    electronLocations: ElectronContextLocations & {vendorsAppCssLinkHref: string};
     hasSavedPassword?: boolean;
     snapPasswordManagerServiceHint?: boolean;
     keytarSupport: boolean;

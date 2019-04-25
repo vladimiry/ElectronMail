@@ -62,15 +62,21 @@ const tsConfigCompilerOptions: CompilerOptions = (() => {
 
     return tsConfig.options;
 })();
+const chunkNames = {
+    "app": "app",
+    "about": "about",
+    "search-in-page-browser-view": "search-in-page-browser-view",
+};
 const baseConfig = buildBaseConfig(
     {
         target: "web",
         entry: {
-            "app": [
+            [chunkNames.app]: [
                 ...(aot ? [] : ["core-js/proposals/reflect-metadata"]),
                 webSrcPath("./index.ts"),
             ],
-            "search-in-page-browser-view": webSrcPath("./search-in-page-browser-view/index.ts"),
+            [chunkNames.about]: webSrcPath("./about/index.ts"),
+            [chunkNames["search-in-page-browser-view"]]: webSrcPath("./search-in-page-browser-view/index.ts"),
         },
         output: {
             path: outputRelateivePath("./web"),
@@ -150,14 +156,24 @@ const baseConfig = buildBaseConfig(
                 filename: "index.html",
                 hash: environmentSate.production,
                 minify: false,
-                excludeChunks: ["search-in-page-browser-view"],
+                excludeChunks: [
+                    chunkNames.about,
+                    chunkNames["search-in-page-browser-view"],
+                ],
+            }),
+            new HtmlWebpackPlugin({
+                template: webSrcPath("./about/index.ejs"),
+                filename: "about.html",
+                hash: environmentSate.production,
+                minify: false,
+                chunks: [chunkNames.about],
             }),
             new HtmlWebpackPlugin({
                 template: webSrcPath("./search-in-page-browser-view/index.ejs"),
                 filename: "search-in-page-browser-view.html",
                 hash: environmentSate.production,
                 minify: false,
-                chunks: ["search-in-page-browser-view"],
+                chunks: [chunkNames["search-in-page-browser-view"]],
             }),
             new AngularCompilerPlugin({
                 entryModule: `${webSrcEnvPath("app.module")}#AppModule`,

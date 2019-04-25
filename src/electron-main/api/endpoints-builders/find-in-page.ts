@@ -64,7 +64,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
             if (visible) {
                 if (!uiContext.findInPageBrowserView || uiContext.findInPageBrowserView.isDestroyed()) {
                     logger.verbose(`building new "uiContext.findInPageBrowserView" instance`);
-                    const view = uiContext.findInPageBrowserView = initFindInPageBrowserView(ctx);
+                    const view = uiContext.findInPageBrowserView = await initFindInPageBrowserView(ctx);
                     setTimeout(() => view.webContents.focus());
                 } else {
                     logger.debug(`skipping building new "uiContext.findInPageBrowserView" instance as existing one is still alive`);

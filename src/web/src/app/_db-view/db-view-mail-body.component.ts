@@ -16,7 +16,7 @@ import {delay, distinctUntilChanged, filter, map, mergeMap, pairwise, startWith,
 import {equals} from "ramda";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS} from "src/web/src/app/store/actions";
-import {AccountsSelectors} from "src/web/src/app/store/selectors";
+import {AccountsSelectors, OptionsSelectors} from "src/web/src/app/store/selectors";
 import {DbViewAbstractComponent} from "src/web/src/app/_db-view/db-view-abstract.component";
 import {DbViewMailComponent} from "src/web/src/app/_db-view/db-view-mail.component";
 import {Mail, View} from "src/shared/model/database";
@@ -137,9 +137,21 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         );
 
         this.subscription.add(
-            this.selectedMail$.subscribe((value) => {
-                this.renderBody(value.conversationMail);
-            }),
+            this.selectedMail$
+                .pipe(
+                    withLatestFrom(this.store.pipe(
+                        select(OptionsSelectors.FEATURED.electronLocations),
+                        map((value) => {
+                            if (!value) {
+                                throw new Error(`"electronLocations" is expected to be defined`);
+                            }
+                            return value.vendorsAppCssLinkHref;
+                        }),
+                    )),
+                )
+                .subscribe(([value, vendorsAppCssLinkHref]) => {
+                    this.renderBody(value.conversationMail, {vendorsAppCssLinkHref});
+                }),
         );
 
         this.subscription.add(
@@ -224,7 +236,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         this.releaseBodyIframe();
     }
 
-    private renderBody(mail: Mail) {
+    private renderBody(mail: Mail, {vendorsAppCssLinkHref}: { vendorsAppCssLinkHref: string }) {
         // TODO cache resolved DOM elements
         const [container] = this.elementRef.nativeElement.getElementsByClassName("body-container");
 
@@ -243,13 +255,11 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
             return;
         }
 
-        const vendorLink = this.resolveVendorLinkTag();
-
         contentWindow.document.open();
         contentWindow.document.write(`
             <html>
             <head>
-                ${vendorLink && vendorLink.outerHTML}
+                <link rel="stylesheet" href="${vendorsAppCssLinkHref}"/>
             </head>
             <body>
                 ${mail.body}
@@ -277,12 +287,5 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         }
 
         this.bodyIframe.remove();
-    }
-
-    private resolveVendorLinkTag(): HTMLLinkElement | undefined {
-        // TODO use "vendors~app.css" by all the consumers as a shared constant (consumers: app,webpack)
-        // TODO cache resolved DOM elements
-        return ([].slice.call(document.querySelectorAll("html > head > link[rel='stylesheet']")) as HTMLLinkElement[])
-            .find((link) => link.href.includes("vendors~app.css"));
     }
 }

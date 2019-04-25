@@ -25,12 +25,14 @@ export interface ElectronWindow {
 export interface ElectronContextLocations {
     readonly appDir: string;
     readonly browserWindowPage: string;
+    readonly aboutBrowserWindowPage: string;
     readonly searchInPageBrowserViewPage: string;
     readonly icon: string;
     readonly numbersFont: string;
     readonly trayIcon: string;
     readonly userDataDir: string;
     readonly preload: {
+        aboutBrowserWindow: string;
         browserWindow: string;
         browserWindowE2E: string;
         searchInPageBrowserView: string;

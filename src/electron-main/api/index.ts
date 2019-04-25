@@ -12,7 +12,7 @@ import {Endpoints, IPC_MAIN_API, InitResponse} from "src/shared/api/main";
 import {PACKAGE_NAME, PRODUCT_NAME} from "src/shared/constants";
 import {PACKAGE_NAME_V2} from "src/electron-main/api/constants";
 import {attachFullTextIndexWindow, detachFullTextIndexWindow} from "src/electron-main/window/full-text-search";
-import {buildSettingsAdapter} from "src/electron-main/util";
+import {buildSettingsAdapter, resolveVendorsAppCssLinkHref} from "src/electron-main/util";
 import {clearSessionsCache, initSessionByAccount} from "src/electron-main/session";
 import {deletePassword, getPassword, setPassword} from "src/electron-main/keytar";
 import {upgradeConfig, upgradeDatabase, upgradeSettings} from "src/electron-main/storage-upgrade";
@@ -146,7 +146,10 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
             })();
 
             return {
-                electronLocations: ctx.locations,
+                electronLocations: {
+                    ...ctx.locations,
+                    vendorsAppCssLinkHref: resolveVendorsAppCssLinkHref(ctx.locations),
+                },
                 keytarSupport: ctx.keytarSupport,
                 snapPasswordManagerServiceHint: ctx.snapPasswordManagerServiceHint,
                 hasSavedPassword,

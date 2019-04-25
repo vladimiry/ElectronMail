@@ -1,31 +1,48 @@
+import _logger from "electron-log";
 import {BrowserView} from "electron";
 
 import {Context} from "src/electron-main/model";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";
+import {Unpacked} from "src/shared/types";
+import {curryFunctionMembers} from "src/shared/util";
+import {injectVendorsAppCssIntoHtmlFile} from "src/electron-main/util";
 
-export function initFindInPageBrowserView(ctx: Context): BrowserView {
-    if (!ctx.uiContext) {
-        throw new Error(`UI Context has not been initialized`);
-    }
+const logger = curryFunctionMembers(_logger, "[src/electron-main/window/find-in-page]");
 
-    const browserView = new BrowserView({
-        webPreferences: {
-            ...DEFAULT_WEB_PREFERENCES,
-            preload: ctx.locations.preload.searchInPageBrowserView,
-        },
-    });
+export const initFindInPageBrowserView: (ctx: Context) => Promise<BrowserView> = (() => {
+    let cache:
+        | Unpacked<ReturnType<typeof injectVendorsAppCssIntoHtmlFile>>
+        | undefined;
+    const resultFn: typeof initFindInPageBrowserView = async (ctx) => {
+        if (!ctx.uiContext) {
+            throw new Error(`UI Context has not been initialized`);
+        }
 
-    // WARN: "setBrowserView" needs to be called before "setBounds" call
-    // otherwise BrowserView is invisible on macOS as "setBounds" call takes no effect
-    ctx.uiContext.browserWindow.setBrowserView(browserView);
+        const browserView = new BrowserView({
+            webPreferences: {
+                ...DEFAULT_WEB_PREFERENCES,
+                preload: ctx.locations.preload.searchInPageBrowserView,
+            },
+        });
 
-    browserView.setAutoResize({width: false, height: true});
-    browserView.webContents.loadURL(ctx.locations.searchInPageBrowserViewPage);
+        // WARN: "setBrowserView" needs to be called before "setBounds" call
+        // otherwise BrowserView is invisible on macOS as "setBounds" call takes no effect
+        ctx.uiContext.browserWindow.setBrowserView(browserView);
 
-    syncFindInPageBrowserViewSize(ctx, browserView);
+        if (!cache) {
+            cache = await injectVendorsAppCssIntoHtmlFile(ctx.locations.searchInPageBrowserViewPage, ctx.locations);
+            logger.verbose(JSON.stringify(cache));
+        }
 
-    return browserView;
-}
+        browserView.setAutoResize({width: false, height: true});
+        browserView.webContents.loadURL(`data:text/html,${cache.html}`, {baseURLForDataURL: cache.baseURLForDataURL});
+
+        syncFindInPageBrowserViewSize(ctx, browserView);
+
+        return browserView;
+    };
+    return resultFn;
+})();
 
 export function syncFindInPageBrowserViewSize(ctx: Context, findInPageBrowserView?: BrowserView): void {
     if (!ctx.uiContext) {

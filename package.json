@@ -1,6 +1,6 @@
 {
   "name": "electron-mail",
-  "description": "Unofficial desktop app for E2E encrypted email providers",
+  "description": "Unofficial desktop app for ProtonMail and Tutanota E2EE email providers",
   "version": "3.2.1",
   "author": "Vladimir Yakovlev <desktop-app@protonmail.ch>",
   "license": "MIT",
@@ -92,7 +92,6 @@
   "dependencies": {
     "@rgba-image/lanczos": "0.1.0",
     "@vladimiry/unionize": "2.1.2-add-tagprefix-option",
-    "about-window": "1.12.1",
     "asap-es": "1.3.3",
     "class-transformer": "0.2.0",
     "class-transformer-validator": "0.7.1",
@@ -110,6 +109,7 @@
     "keytar": "4.5.0",
     "mime-types": "2.1.24",
     "msgpack-lite": "0.1.26",
+    "node-fetch": "2.3.0",
     "oboe": "2.1.4",
     "path-is-inside": "1.0.2",
     "pureimage": "0.1.6",
@@ -230,7 +230,6 @@
     "ng2-dragula": "2.1.1",
     "ngx-bootstrap": "4.0.1",
     "ngx-color-picker": "7.5.0",
-    "node-fetch": "2.3.0",
     "node-sass": "4.11.0",
     "npm-run-all": "4.1.5",
     "null-loader": "1.0.0",

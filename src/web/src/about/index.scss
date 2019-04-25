@@ -1,0 +1,27 @@
+@import "~src/web/src/variables";
+
+body,
+html {
+    height: 100%;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+a {
+    margin: 0 2em;
+}
+
+p,
+h1 {
+    margin-bottom: $app-spacer-2;
+}
+
+img {
+    width: 128px;
+    height: 128px;
+}

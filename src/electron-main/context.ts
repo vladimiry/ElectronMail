@@ -1,6 +1,5 @@
 import logger from "electron-log";
 import path from "path";
-import url from "url";
 import {Deferred} from "ts-deferred";
 import {Fs as StoreFs, Model as StoreModel, Store} from "fs-json-store";
 import {app} from "electron";
@@ -12,6 +11,7 @@ import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {INITIAL_STORES, configEncryptionPresetValidator, settingsAccountLoginUniquenessValidator} from "./constants";
 import {LOCAL_WEBCLIENT_PROTOCOL_PREFIX, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
+import {formatFileUrl} from "./util";
 
 const developmentEnv = (process.env.NODE_ENV as BuildEnvironment) === "development";
 
@@ -109,10 +109,14 @@ function initLocations(
         browserWindowPage: developmentEnv
             ? "http://localhost:8080/index.html"
             : formatFileUrl(appRelativePath("./web/index.html")),
+        aboutBrowserWindowPage: developmentEnv
+            ? "http://localhost:8080/about.html"
+            : appRelativePath("./web/about.html"),
         searchInPageBrowserViewPage: developmentEnv
             ? "http://localhost:8080/search-in-page-browser-view.html"
-            : formatFileUrl(appRelativePath("./web/search-in-page-browser-view.html")),
+            : appRelativePath("./web/search-in-page-browser-view.html"),
         preload: {
+            aboutBrowserWindow: appRelativePath("./electron-preload/about.js"),
             browserWindow: appRelativePath("./electron-preload/browser-window.js"),
             browserWindowE2E: appRelativePath("./electron-preload/browser-window-e2e.js"),
             searchInPageBrowserView: appRelativePath("./electron-preload/search-in-page-browser-view.js"),
@@ -155,10 +159,6 @@ function initLocations(
             return {protocolBundles, webClients};
         })(),
     };
-}
-
-function formatFileUrl(pathname: string) {
-    return url.format({pathname, protocol: "file:", slashes: true});
 }
 
 function listDirsNames(storeFs: StoreModel.StoreFs, dir: string): string[] {

@@ -5,6 +5,12 @@ import {buildBaseConfig, environment, srcRelateivePath} from "./lib";
 const configs = [
     buildRendererConfig(
         {
+            "electron-preload/about": srcRelateivePath(`./electron-preload/about/index.ts`),
+        },
+        srcRelateivePath("./electron-preload/about/tsconfig.json"),
+    ),
+    buildRendererConfig(
+        {
             "electron-preload/browser-window": srcRelateivePath(`./electron-preload/browser-window/build-env-based/${environment}.ts`),
             "electron-preload/browser-window-e2e": srcRelateivePath("./electron-preload/browser-window/e2e.ts"),
         },

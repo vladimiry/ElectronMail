@@ -1,18 +1,16 @@
-import aboutWindow from "about-window";
 import electronLog from "electron-log";
-import path from "path";
 import {EMPTY, from, of, throwError} from "rxjs";
 import {IpcMainApiActionContext, IpcMainApiService} from "electron-rpc-api";
 import {app, shell} from "electron";
 import {isWebUri} from "valid-url";
+import {map, startWith} from "rxjs/operators";
 import {platform} from "os";
 import {promisify} from "util";
-import {startWith} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
 import {Endpoints, IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
-import {PRODUCT_NAME} from "src/shared/constants";
+import {showAboutBrowserWindow} from "src/electron-main/window/about";
 
 type ApiMethods =
     | "log"
@@ -37,19 +35,10 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
         },
 
         openAboutWindow: () => {
-            // TODO get rid of "about-window" module
-            aboutWindow({
-                product_name: PRODUCT_NAME,
-                icon_path: ctx.locations.icon,
-                package_json_dir: path.join(ctx.locations.appDir, ".."),
-                win_options: {
-                    // TODO get rid of "autoHideMenuBar", see:
-                    //      https://github.com/electron/electron/issues/16521
-                    //      https://github.com/electron/electron/issues/15901
-                    autoHideMenuBar: true,
-                },
-            });
-            return of(null);
+            return from(showAboutBrowserWindow(ctx))
+                .pipe(
+                    map(() => null),
+                );
         },
 
         openExternal: ({url}) => from((async () => {

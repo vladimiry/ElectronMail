@@ -158,6 +158,7 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
     t.false(await (browserWindow as any).isDevToolsOpened(), "window'd dev tools should be closed");
     t.false(await browserWindow.isMinimized(), "window should not be not minimized");
     if (options.initial) {
+        // TODO make below lines work with electron@v5 / travis@windows
         t.true(await browserWindow.isVisible(), "window should be visible");
         t.true(await browserWindow.isFocused(), "window should be focused");
     } else {

@@ -5,43 +5,71 @@ branches:
     - master
 language: node_js
 node_js: 11.14.0
+cache:
+  yarn: true
 env:
   global:
-    - CI=true
-    - NO_AT_BRIDGE=1 # needed for "dbus" initializing, see "eval $(dbus-launch --sh-syntax);" call below
     - MOZ_HEADLESS=1 # needed for karma tests running in headless mode
-    - ELECTRON_CACHE=$HOME/.cache/electron
-    - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
-    - APP_GITHUB_ARTIFACT_WEBCLIENTS=travis-${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT}-app-webclients.zip
-addons:
-  firefox: latest
-matrix:
-  fast_finish: true
 jobs:
   include:
-    - stage: prepare web clients artifact
+    - stage: 'Prepare web clients'
       os: linux
+      dist: xenial
       addons:
         apt:
           packages:
             - libsecret-1-dev # needed for "keytar" native dependency installing/rebuilding
-            - nasm # needed for protonmail/tutanota building (don't remember which one)
+            - nasm # needed for protonmail / tutanota building (don't remember which one)
+      cache:
+        yarn: true
+        directories:
+          - output/git
+      script: ./scripts/travis/prepare-webclients.sh
+    - stage: 'Build app'
+      os: windows
+      # TODO travis cache: C\:\\Users\travis\\AppData\\Local\\Yarn\\Cache: Cannot stat: No such file or directory
+      cache: false
+      env:
+        # prevent the following error: No output has been received in the last 10m0s
+        # https://travis-ci.community/t/build-doesnt-finish-after-completing-tests/288/9
+        - YARN_GPG=no
+      before_install:
+        - powershell Get-Process
+        # enable running local PowerShell scripts
+        - powershell -Command 'Set-ExecutionPolicy -ExecutionPolicy RemoteSigned'
+        - | # tackle the performance issue of "yarn install" execution, see https://travis-ci.community/t/current-known-issues-please-read-this-before-posting-a-new-topic/264/15
+          export NODEPATH=$(where.exe node.exe)
+          export PROJECTDIR=$(pwd)
+          export YARNCACHE=$(yarn cache dir)
+          export TEMPDIR=$LOCALAPPDATA\\Temp
+          powershell Add-MpPreference -ExclusionProcess ${NODEPATH}
+          powershell Add-MpPreference -ExclusionPath ${YARNCACHE}
+          powershell Add-MpPreference -ExclusionPath ${PROJECTDIR}
+          powershell Add-MpPreference -ExclusionPath ${TEMPDIR}
+          echo "DisableArchiveScanning..."
+          powershell Start-Process -PassThru -Wait PowerShell -ArgumentList "'-Command Set-MpPreference -DisableArchiveScanning \$true'"
+          echo "DisableBehaviorMonitoring..."
+          powershell Start-Process -PassThru -Wait PowerShell -ArgumentList "'-Command Set-MpPreference -DisableBehaviorMonitoring \$true'"
+          echo "DisableRealtimeMonitoring..."
+          powershell Start-Process -PassThru -Wait PowerShell -ArgumentList "'-Command Set-MpPreference -DisableRealtimeMonitoring \$true'"
+        - choco install --yes googlechrome
+        - echo $(where.exe node.exe)
+        - echo $(yarn cache dir)
       before_script:
-        - export APP_GITHUB_ARTIFACT_LOG_DISABLED=1
-      script:
-        - yarn assets:webclient:tutanota
-        - yarn assets:webclient:protonmail
-        - | # prepare $APP_GITHUB_ARTIFACT_WEBCLIENTS archive
-          zip -r $APP_GITHUB_ARTIFACT_WEBCLIENTS ./app;
-        - ls
-        - | # upload $APP_GITHUB_ARTIFACT_WEBCLIENTS archive
-          yarn github-artifact:upload $APP_GITHUB_ARTIFACT_WEBCLIENTS;
-    - stage: build app
+        - powershell Get-Process
+      script: ./scripts/travis/script-windows.sh
+      after_script:
+        - powershell Get-Process
+    - stage: 'Build app'
       os: osx
       osx_image: xcode9.4
-      script: ./scripts/travis-build-app.sh
-    - stage: build app
+      addons:
+        firefox: latest
+      script: ./scripts/travis/script-osx.sh
+    - stage: 'Build app'
       os: linux
+      # TODO use "xenial" dist; e2e tests doesn't work (auto login using "node-keytar" case)
+      # https://travis-ci.community/search?q=No%20output%20has%20been%20received%20in%20the%20last%20windows%20category%3A16
       dist: trusty
       group: stable
       sudo: required
@@ -57,21 +85,22 @@ jobs:
             - gnome-keyring # needed for initializing keychain for running e2e tests that use "keytar"
             - libgnome-keyring-dev # needed for initializing keychain for running e2e tests that use "keytar"
             - python-gnomekeyring # needed for initializing keychain for running e2e tests that use "keytar"
+        firefox: latest
       before_script:
-        - | # init env variables
-          export CC=gcc-7; # needed for native modules compiling/rebuilding
-          export CXX=g++-7; # needed for native modules compiling/rebuilding
+        - | # needed for native modules compiling/rebuilding
+          export CC=gcc-7 CXX=g++-7;
         - | # init xvfb
           export DISPLAY=:99.0;
           sh -e /etc/init.d/xvfb start;
           sleep 3;
         - | # init dbus
+          NO_AT_BRIDGE=1;
           eval $(dbus-launch --sh-syntax);
         - | # init keychain
           eval $(echo -n "" | /usr/bin/gnome-keyring-daemon --login);
           eval $(/usr/bin/gnome-keyring-daemon --components=secrets --start);
           /usr/bin/python -c "import gnomekeyring;gnomekeyring.create_sync('login', '');";
-      script: ./scripts/travis-build-app.sh
+      script: ./scripts/travis/script-linux.sh
 before_install:
   - | # installing the most recent yarn version
     curl -o- -L https://yarnpkg.com/install.sh | bash;
@@ -80,14 +109,10 @@ install:
   - node --version
   - npm --version
   - yarn --version
-  - yarn --pure-lockfile install
-after_script:
-  - | # upload logs
-    if [ -z "$APP_GITHUB_ARTIFACT_LOG_DISABLED" ]; then
-      export APP_GITHUB_ARTIFACT_LOG=travis-${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT}-${TRAVIS_JOB_NUMBER}-log.zip;
-      zip -r $APP_GITHUB_ARTIFACT_LOG ./output/e2e;
-      yarn github-artifact:upload $APP_GITHUB_ARTIFACT_LOG;
-    fi
+  - yarn install --pure-lockfile --network-timeout 1000000
+after_failure:
+  - tar -cvf e2e-logs.tar ./output/e2e
+  - yarn scripts/transfer upload e2e-logs.tar
 notifications:
   email:
     on_success: never

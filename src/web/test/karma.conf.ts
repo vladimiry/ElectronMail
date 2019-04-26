@@ -1,4 +1,5 @@
 import {Config} from "karma";
+import {platform} from "os";
 import {produce} from "immer";
 
 // TODO import using alias
@@ -7,23 +8,9 @@ import webpackConfig from "../../webpack/web";
 const basePath = process.cwd();
 const filesBootstrap = "src/web/test/bootstrap.ts";
 const filesPattern = "src/web/src/**/*.spec.ts";
-
-const customLaunchers = {
-    linux: {
-        base: "Chrome",
-        flags: ["--no-sandbox"],
-    },
-    osx: {
-        base: "Firefox",
-        flags: ["-headless"],
-    },
-};
-
-const ENVS = {
-    CI: process.env.CI,
-    TRAVIS_OS_NAME: String(process.env.TRAVIS_OS_NAME),
-};
-
+const defaultBrowser = "headlessFirefox";
+// TODO firefox fails to start on "windows os" under "travis ci" environment, so using chrome for now
+const useChrome = process.env.CI && platform() === "win32";
 const configuration = {
     basePath,
     files: [
@@ -49,18 +36,17 @@ const configuration = {
         "text/x-typescript": ["ts"],
     },
     browsers: [
-        "Chromium",
+        useChrome
+            ? "Chrome"
+            : defaultBrowser,
     ],
-    customLaunchers,
+    customLaunchers: {
+        [defaultBrowser]: {
+            base: "Firefox",
+            flags: ["-headless"],
+        },
+    },
 };
-
-if (ENVS.CI) {
-    configuration.browsers = ["Chrome"];
-}
-
-if (ENVS.TRAVIS_OS_NAME in customLaunchers) {
-    configuration.browsers = [ENVS.TRAVIS_OS_NAME];
-}
 
 export default (config: Config) => {
     config.set({

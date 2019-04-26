@@ -1,6 +1,6 @@
 import {FolderAsDomainEntry, execAccountTypeFlow} from "./lib";
+import {LOG, execShell} from "scripts/lib";
 import {Unpacked} from "src/shared/types";
-import {consoleLevels, consoleLog, execShell} from "scripts/lib";
 
 const folderAsDomainEntries: Array<FolderAsDomainEntry<{}>> = [
     {
@@ -19,7 +19,7 @@ execAccountTypeFlow({
         },
     },
 }).catch((error) => {
-    consoleLog(consoleLevels.error(error));
+    LOG(error);
     process.exit(1);
 });
 

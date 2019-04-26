@@ -4,8 +4,8 @@ import path from "path";
 import {promisify} from "util";
 
 import {FolderAsDomainEntry, execAccountTypeFlow} from "./lib";
+import {LOG, LOG_LEVELS, execShell} from "scripts/lib";
 import {Unpacked} from "src/shared/types";
-import {consoleLevels, consoleLog, execShell} from "scripts/lib";
 
 // tslint:disable-next-line:no-var-requires no-import-zones
 const {name: PROJECT_NAME} = require("package.json");
@@ -46,7 +46,7 @@ execAccountTypeFlow({
         },
     },
 }).catch((error) => {
-    consoleLog(consoleLevels.error(error));
+    LOG(error);
     process.exit(1);
 });
 
@@ -62,9 +62,9 @@ async function build({repoDir: cwd, options, folderNameAsDomain}: { repoDir: str
             },
         }, null, 2);
 
-        consoleLog(
-            chalk.magenta(`Writing ${consoleLevels.value(envFile)} file with content:`),
-            consoleLevels.value(envFileContent),
+        LOG(
+            chalk.magenta(`Writing ${LOG_LEVELS.value(envFile)} file with content:`),
+            LOG_LEVELS.value(envFileContent),
         );
         await promisify(fs.writeFile)(envFile, envFileContent);
 
@@ -103,9 +103,9 @@ async function build({repoDir: cwd, options, folderNameAsDomain}: { repoDir: str
         `;
         // tslint:enable:no-trailing-whitespace
 
-        consoleLog(
-            chalk.magenta(`Writing ${consoleLevels.value(webpackFile)} file with content:`),
-            consoleLevels.value(webpackFileContent),
+        LOG(
+            chalk.magenta(`Writing ${LOG_LEVELS.value(webpackFile)} file with content:`),
+            LOG_LEVELS.value(webpackFileContent),
         );
         await promisify(fs.writeFile)(webpackFile, webpackFileContent);
 

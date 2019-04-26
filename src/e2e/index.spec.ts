@@ -113,19 +113,23 @@ test.afterEach.always(async (t) => {
 
     // kill processes to avoid appveyor error during preparing logs for uploading:
     // The process cannot access the file because it is being used by another process: output\e2e\1545563294836\chrome-driver.log
+    // HINT: add "- ps: Get-Process" line to appveyor.yml to list the processes
+    const processes: Array<{ pid: number }> = await Promise.all(
+        [
+            {command: PROJECT_NAME}, {arguments: PROJECT_NAME},
+            {command: "node.exe"}, {arguments: "keytar"},
+            {command: "node.exe"}, {arguments: "keytar.node"},
+            {command: "electron"}, {arguments: "electron"},
+            {command: "chrome"}, {arguments: "chrome"},
+            {command: "webdriver"}, {arguments: "webdriver"},
+            {command: "chrome-driver"}, {arguments: "chrome-driver"},
+            {arguments: "log"},
+            {arguments: "e2e"},
+            {arguments: "keytar.node"},
+            {arguments: "keytar"},
+        ].map((criteria) => promisify(psNode.lookup)(criteria)),
+    );
     await (async () => {
-        // HINT: add "- ps: Get-Process" line to appveyor.yml to list the processes
-        const processes: Array<{ pid: number }> = await Promise.all(
-            [
-                {command: PROJECT_NAME}, {arguments: PROJECT_NAME},
-                {command: "electron"}, {arguments: "electron"},
-                {command: "chrome"}, {arguments: "chrome"},
-                {command: "webdriver"}, {arguments: "webdriver"},
-                {command: "chrome-driver"}, {arguments: "chrome-driver"},
-                {arguments: "log"},
-                {arguments: "e2e"},
-            ].map((criteria) => promisify(psNode.lookup)(criteria)),
-        );
 
         for (const {pid} of processes) {
             try {

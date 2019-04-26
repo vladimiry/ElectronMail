@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "importHelpers": true,
+    "declaration": false,
+    "sourceMap": false,
+    "outDir": "."
+  },
+  "files": [
+    "./after-pack.ts"
+  ]
+}

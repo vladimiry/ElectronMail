@@ -19,7 +19,7 @@ test: off
 matrix:
   fast_finish: true
 environment:
-  nodejs_version: 10.11.0
+  nodejs_version: 11.14.0
   nodejs_arch: x64
   APP_LINUX_JOB_NAME_PATTERN: 'image: Ubuntu1804'
   APP_GITHUB_ARTIFACT_WEBCLIENTS: appveyor-%APPVEYOR_BUILD_VERSION%-%APPVEYOR_REPO_COMMIT%-app-webclients.zip
@@ -64,6 +64,7 @@ for:
           yarn github-artifact:download $env:APP_GITHUB_ARTIFACT_WEBCLIENTS
           7z.exe x $env:APP_GITHUB_ARTIFACT_WEBCLIENTS
       - yarn app:dist
+      - yarn test:e2e
       - yarn electron-builder:publish:x64
       - yarn print-dist-packages-hashes
     on_finish:

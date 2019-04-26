@@ -38,10 +38,10 @@ The download page with Linux/OSX/Windows installation packages is [here](https:/
 
 ## How to build package from source code
 
-- Regardless of the platform you are working on, you will need to have Node.js v10 installed. v10 as it's recommended to go with the same Node.js version Electron comes with. If you already have Node.js installed, but not the version 10, then you might want to use [Node Version Manager](https://github.com/creationix/nvm) to be able to switch between multiple Node.js versions:
+- Regardless of the platform you are working on, you will need to have Node.js v12 installed. v12 as it's recommended to go with the same Node.js version Electron comes with. If you already have Node.js installed, but not the v12, then you might want to use [Node Version Manager](https://github.com/creationix/nvm) to be able to switch between multiple Node.js versions:
   - Install [NVM](https://github.com/creationix/nvm).
-  - Run `nvm install 10`.
-  - Run `nvm use 10`.
+  - Run `nvm install 12`.
+  - Run `nvm use 12`.
 - Some native modules require node prebuilds files compiling and for that Python and C++ compiler need to be installed on your system:
   - On `Windows`: the simplest way to install all the needed stuff on Windows is to run `npm install --global --production windows-build-tools` CLI command. [Tutanota](https://github.com/tutao/tutanota) and [ProtonMail](https://github.com/ProtonMail/WebClient) web clients projects require bash for building, so a few more steps need to be fulfilled:
     - Install bash then check the path of bash ex: `C:\\Program Files\\git\\bin\\bash.exe`.
@@ -51,7 +51,7 @@ The download page with Linux/OSX/Windows installation packages is [here](https:/
 - [Clone](https://help.github.com/articles/cloning-a-repository/) this project to your local device. If you are going to contribute, consider cloning the [forked](https://help.github.com/articles/fork-a-repo/) into your own GitHub account project.
 - Install [Yarn](https://yarnpkg.com/en/docs/install).
 - Install dependencies running `yarn --pure-lockfile`.
-- Build app running `yarn run app:dist`. It's better to not touch a mouse during the process, since it might interfere with the `e2e` tests running at the end of the process.
+- Build app running `yarn run app:dist`.
 - Build a package to install running `yarn run electron-builder:dist` command to build Windows/Mac OS X package and one of the following commands to build Linux package:
   - `yarn run electron-builder:dist:linux:appimage`
   - `yarn run electron-builder:dist:linux:deb`

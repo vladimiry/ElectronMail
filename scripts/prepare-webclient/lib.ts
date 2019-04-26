@@ -126,6 +126,9 @@ export async function execGit([commands, pathArg, options]: Arguments<typeof Git
         pathArg,
         {
             processCallback: ({stderr}) => {
+                if (!stderr) {
+                    return;
+                }
                 byline(stderr).on("data", (chunk) => consoleLog(formatStreamChunk(chunk)));
             },
             ...options,

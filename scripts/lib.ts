@@ -21,9 +21,15 @@ export async function execShell(args: Arguments<typeof spawnAsync>) {
     consoleLog(consoleLevels.title(`Executing Shell command:`), consoleLevels.value(JSON.stringify(args)));
 
     const taskPromise = spawnAsync(...args);
+    const {stdout, stderr} = taskPromise.child;
 
-    byline(taskPromise.child.stdout).on("data", (chunk) => consoleLog(formatStreamChunk(chunk)));
-    byline(taskPromise.child.stderr).on("data", (chunk) => consoleLog(consoleLevels.error(formatStreamChunk(chunk))));
+    if (stdout) {
+        byline(stdout).on("data", (chunk) => consoleLog(formatStreamChunk(chunk)));
+    }
+    if (stderr) {
+        byline(stderr).on("data", (chunk) => consoleLog(consoleLevels.error(formatStreamChunk(chunk))));
+    }
+
     taskPromise.child.on("uncaughtException", (error) => {
         consoleLog(
             consoleLevels.error(`Failed Shell command execution (uncaught exception): ${JSON.stringify(args)}`),
@@ -46,5 +52,5 @@ export async function execShell(args: Arguments<typeof spawnAsync>) {
 }
 
 export function formatStreamChunk(chunk: any): string {
-    return Buffer.from(chunk, "UTF-8").toString();
+    return Buffer.from(chunk, "utf-8").toString();
 }

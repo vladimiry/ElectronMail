@@ -6,13 +6,16 @@ import {getZoneNameBoundWebLogger} from "src/web/src/util";
 
 const logger = getZoneNameBoundWebLogger("[environments/production/bootstrap-app]");
 
-enableProdMode();
+// TODO get rid of "onload" handler, see https://github.com/electron/electron/issues/17526
+window.addEventListener("load", () => {
+    enableProdMode();
 
-platformBrowserDynamic()
-    .bootstrapModule(AppModule)
-    .catch((error) => {
-        // tslint:disable-next-line:no-console
-        console.error(error);
-        logger.error(error);
-        throw error;
-    });
+    platformBrowserDynamic()
+        .bootstrapModule(AppModule)
+        .catch((error) => {
+            // tslint:disable-next-line:no-console
+            console.error(error);
+            logger.error(error);
+            throw error;
+        });
+});

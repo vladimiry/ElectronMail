@@ -30,6 +30,7 @@ asar: true
 asarUnpack:
   - "**/node_modules/sodium-native/**/*"
   - "**/node_modules/keytar/**/*"
+afterPack: "./scripts/electron-builder/after-pack.js"
 
 mac:
   icon: ./app/assets/icons/mac/icon.icns

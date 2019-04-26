@@ -26,38 +26,43 @@ export function registerDocumentKeyDownEventListener<E extends ObservableElement
         };
         const eventName = "keydown";
         const eventHandler = async (event: KeyboardEvent) => {
-            const el: Element | null = (event.target as any);
-            const cmdOrCtrl = event.ctrlKey || event.metaKey;
+            try {
+                const el: Element | null = (event.target as any);
+                const cmdOrCtrl = event.ctrlKey || event.metaKey;
 
-            const cmdOrCtrlPlusA = cmdOrCtrl && event.keyCode === 65;
-            const cmdOrCtrlPlusC = cmdOrCtrl && event.keyCode === 67;
-            const cmdOrCtrlPlusV = cmdOrCtrl && event.keyCode === 86;
-            const cmdOrCtrlPlusF = cmdOrCtrl && event.keyCode === 70;
+                const cmdOrCtrlPlusA = cmdOrCtrl && event.keyCode === 65;
+                const cmdOrCtrlPlusC = cmdOrCtrl && event.keyCode === 67;
+                const cmdOrCtrlPlusV = cmdOrCtrl && event.keyCode === 86;
+                const cmdOrCtrlPlusF = cmdOrCtrl && event.keyCode === 70;
 
-            if (cmdOrCtrlPlusF) {
-                await apiMethods.findInPageDisplay({visible: true}).toPromise();
-                return;
+                if (cmdOrCtrlPlusF) {
+                    await apiMethods.findInPageDisplay({visible: true}).toPromise();
+                    return;
+                }
+
+                if (!el) {
+                    return;
+                }
+
+                let type: "copy" | "paste" | "selectAll" | undefined;
+
+                if (cmdOrCtrlPlusA) {
+                    type = "selectAll";
+                } else if (cmdOrCtrlPlusC && !isPasswordInput(el)) {
+                    type = "copy";
+                } else if (cmdOrCtrlPlusV && isWritable(el)) {
+                    type = "paste";
+                }
+
+                if (!type) {
+                    return;
+                }
+
+                await apiMethods.hotkey({type}).toPromise();
+            } catch (e) {
+                logger.error(e);
+                throw e;
             }
-
-            if (!el) {
-                return;
-            }
-
-            let type: "copy" | "paste" | "selectAll" | undefined;
-
-            if (cmdOrCtrlPlusA) {
-                type = "selectAll";
-            } else if (cmdOrCtrlPlusC && !isPasswordInput(el)) {
-                type = "copy";
-            } else if (cmdOrCtrlPlusV && isWritable(el)) {
-                type = "paste";
-            }
-
-            if (!type) {
-                return;
-            }
-
-            await apiMethods.hotkey({type}).toPromise();
         };
 
         element.addEventListener(eventName, eventHandler);
@@ -101,23 +106,28 @@ export function registerDocumentClickEventListener<E extends ObservableElement>(
         };
         const eventName = "click";
         const eventHandler = async (event: MouseEvent) => {
-            const {element: el, link, href} = resolveLink(event.target as Element);
+            try {
+                const {element: el, link, href} = resolveLink(event.target as Element);
 
-            if (!link || el.classList.contains("prevent-default-event")) {
-                return;
+                if (!link || el.classList.contains("prevent-default-event")) {
+                    return;
+                }
+
+                if (
+                    !href
+                    ||
+                    !(href.startsWith("https://") || href.startsWith("http://"))
+                ) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                await apiMethods.openExternal({url: href}).toPromise();
+            } catch (e) {
+                logger.error(e);
+                throw e;
             }
-
-            if (
-                !href
-                ||
-                !(href.startsWith("https://") || href.startsWith("http://"))
-            ) {
-                return;
-            }
-
-            event.preventDefault();
-
-            await apiMethods.openExternal({url: href}).toPromise();
         };
 
         element.addEventListener(eventName, eventHandler);

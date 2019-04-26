@@ -72,7 +72,7 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
     });
 
     browserWindow.setMenu(null);
-    browserWindow.loadURL(ctx.locations.browserWindowPage);
+    await browserWindow.loadURL(ctx.locations.browserWindowPage);
 
     // execute after handlers subscriptions
     await keepBrowserWindowState(ctx, browserWindow);

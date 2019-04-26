@@ -282,21 +282,25 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             await workflow.openSettingsModal(0);
 
             // select adding account menu item
-            await client.click(`#goToAccountsSettingsLink`);
+            await client.waitForVisible(selector = `#goToAccountsSettingsLink`);
+            await workflow._click(selector);
 
             // required: type
-            await client.click(`#accountEditFormTypeField`);
+            await client.waitForVisible(selector = `#accountEditFormTypeField .ng-select-container`);
+            await workflow._mousedown(selector);
+
             await client.waitForVisible(selector = `[type-option-value="${account.type}"`);
-            await client.click(selector);
+            await workflow._click(selector = `[type-option-value="${account.type}"`);
             await client.pause(CONF.timeouts.elementTouched);
 
             // required: entryUrl
-            await client.click(`#accountEditFormEntryUrlField`);
+            await client.waitForVisible(selector = `#accountEditFormEntryUrlField .ng-select-container`);
+            await workflow._mousedown(selector);
             const entryUrlIndex = account.entryUrlValue
                 ? resolveEntryUrlIndexByValue(account.type, account.entryUrlValue)
                 : 0;
             await client.waitForVisible(selector = `[entry-url-option-index="${entryUrlIndex}"]`);
-            await client.click(selector);
+            await workflow._click(selector);
 
             // required: login
             await client.setValue(`[formcontrolname=login]`, login);
@@ -311,7 +315,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
 
             const expectedAccountsCount = await workflow.accountsCount() + 1;
 
-            await client.click(`button[type="submit"]`);
+            await workflow._click(`.modal-body button[type="submit"]`);
 
             // account got added to the settings modal account list
             await (async () => {
@@ -345,6 +349,36 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
                 }
                 await saveScreenshot(t);
             })();
+        },
+
+        // TODO electron@5 workaround, remove this method
+        //      it stopped to work since electron@v5, adding second account case (seconds button click)
+        async _click(_selector: string) {
+            await t.context.app.client.execute(
+                (selector) => {
+                    const el = document.querySelector<HTMLButtonElement>(selector);
+                    if (!el) {
+                        throw new Error(`Failed to resolve element using "${selector}" selector`);
+                    }
+                    el.click();
+                },
+                [_selector],
+            );
+        },
+
+        // TODO electron@5 workaround, remove this method
+        //      it stopped to work since electron@v5, adding second account case (seconds button click)
+        async _mousedown(_selector: string) {
+            await t.context.app.client.execute(
+                (selector) => {
+                    const el = document.querySelector<HTMLButtonElement>(selector);
+                    if (!el) {
+                        throw new Error(`Failed to resolve element using "${selector}" selector`);
+                    }
+                    el.dispatchEvent(new MouseEvent("mousedown"));
+                },
+                [_selector],
+            );
         },
 
         async selectAccount(zeroStartedAccountIndex = 0) {
@@ -406,9 +440,10 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             const {client} = t.context.app;
             let selector = "";
 
-            await client.click(`electron-mail-accounts .controls .dropdown-toggle`);
-            await client.waitForVisible(selector = `#logoutMenuItem`);
+            await client.waitForVisible(selector = `electron-mail-accounts .controls .dropdown-toggle`);
             await client.click(selector);
+            await client.waitForVisible(selector = `#logoutMenuItem`);
+            await workflow._click(selector);
 
             await (async () => {
                 selector = `#loginFormPasswordControl`;

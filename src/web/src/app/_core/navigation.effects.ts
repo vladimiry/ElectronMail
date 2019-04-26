@@ -1,9 +1,9 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {EMPTY, of} from "rxjs";
-import {Injectable, NgZone} from "@angular/core";
+import {EMPTY, from, of} from "rxjs";
+import {Injectable} from "@angular/core";
 import {Location} from "@angular/common";
 import {Router} from "@angular/router";
-import {catchError, concatMap, map, mergeMap, tap} from "rxjs/operators";
+import {catchError, concatMap, map, mergeMap, switchMap, tap} from "rxjs/operators";
 
 import {CORE_ACTIONS, NAVIGATION_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
 import {ElectronService} from "./electron.service";
@@ -17,19 +17,15 @@ export class NavigationEffects {
     navigate$ = this.actions$.pipe(
         unionizeActionFilter(NAVIGATION_ACTIONS.is.Go),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-        map(({payload, logger}) => {
-            const {path, extras} = payload;
+        switchMap(({payload, logger}) => { // tslint:disable-line:ban
+            const {path, extras, queryParams} = payload;
+
             // WARN: privacy note, do not log "queryParams" as it might be filled with sensitive data (like "login"/"user name")
             logger.verbose(JSON.stringify({path, extras}));
-            return payload;
-        }),
-        tap(({path, queryParams, extras}) => {
-            // TODO remove "zone.run" execution on https://github.com/angular/angular/issues/18254 resolving
-            // or use @angular/router v4.1.3 and older
-            this.zone.run(async () => {
-                // tslint:disable-next-line:no-floating-promises
-                await this.router.navigate(path, {queryParams, ...extras});
-            });
+
+            return from(this.router.navigate(path, {queryParams, ...extras})).pipe(
+                mergeMap(() => EMPTY),
+            );
         }),
         catchError((error) => of(CORE_ACTIONS.Fail(error))),
     );
@@ -115,6 +111,5 @@ export class NavigationEffects {
         private actions$: Actions<{ type: string; payload: any }>,
         private router: Router,
         private location: Location,
-        private zone: NgZone,
     ) {}
 }

@@ -21,7 +21,6 @@ test.serial("appReadyHandler(): default", async (t) => {
     t.false(mocks["src/electron-main/window/main"].initMainBrowserWindow.called);
     t.false(mocks["src/electron-main/tray"].initTray.called);
     t.false(mocks["src/electron-main/menu"].initApplicationMenu.called);
-    t.false(mocks["src/electron-main/app-update"].initAutoUpdate.called);
     t.false(mocks.electron.app.on.called);
 
     await library.appReadyHandler(ctx as any);
@@ -56,10 +55,6 @@ test.serial("appReadyHandler(): default", async (t) => {
     t.true(endpoints.updateOverlayIcon.calledAfter(mocks["src/electron-main/menu"].initApplicationMenu));
     t.is(endpoints.updateOverlayIcon.callCount, 1);
 
-    // TODO test conditional "initAutoUpdate()" call
-    t.true(mocks["src/electron-main/app-update"].initAutoUpdate.calledWithExactly());
-    t.true(mocks["src/electron-main/app-update"].initAutoUpdate.calledAfter(endpoints.updateOverlayIcon));
-
     t.true(mocks.electron.app.on.calledWith("second-instance"));
     t.true(mocks.electron.app.on.calledWith("activate"));
     t.is(mocks.electron.app.on.callCount, 2);
@@ -89,9 +84,6 @@ function buildMocks() {
         },
         "src/electron-main/menu": {
             initApplicationMenu: sinon.spy(),
-        },
-        "src/electron-main/app-update": {
-            initAutoUpdate: sinon.spy(),
         },
         "src/electron-main/window/main": {
             initMainBrowserWindow: sinon.spy(),

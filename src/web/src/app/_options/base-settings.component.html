@@ -51,27 +51,6 @@
         <div class="custom-control custom-switch">
             <input
                 class="custom-control-input"
-                formControlName="checkForUpdatesAndNotify"
-                id="checkForUpdatesAndNotifyCheckbox"
-                type="checkbox"
-            >
-            <label class="custom-control-label" for="checkForUpdatesAndNotifyCheckbox">
-                Automatic update
-                <i
-                    [popover]="checkForUpdatesAndNotifyPopoverTemplate"
-                    class="fa fa-info-circle text-primary"
-                    container="body"
-                    placement="bottom"
-                    triggers="mouseenter:mouseleave"
-                ></i>
-                <ng-template #checkForUpdatesAndNotifyPopoverTemplate>
-                    <code>Windows/.exe</code> is only supported installation package format at this time.
-                </ng-template>
-            </label>
-        </div>
-        <div class="custom-control custom-switch">
-            <input
-                class="custom-control-input"
                 formControlName="startMinimized"
                 id="startMinimizedCheckbox"
                 type="checkbox"

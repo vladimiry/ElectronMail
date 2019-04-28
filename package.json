@@ -102,7 +102,6 @@
     "electron-log": "2.2.17",
     "electron-rpc-api": "4.0.1",
     "electron-unhandled": "2.2.0",
-    "electron-updater": "4.0.7",
     "fs-extra": "7.0.1",
     "fs-json-store": "2.3.0",
     "fs-json-store-encryption-adapter": "1.3.5",
@@ -279,7 +278,6 @@
   "resolutions": {
     "cpx/**/braces": "^2.3.2",
     "node-sass/**/tar": "^4.4.8",
-    "electron-updater/**/builder-util-runtime": "^8.2.0",
     "builder-util/**/builder-util-runtime": "^8.2.0",
     "electron-builder/**/builder-util-runtime": "^8.2.0"
   }

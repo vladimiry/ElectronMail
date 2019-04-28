@@ -66,9 +66,12 @@ export const showAboutBrowserWindow: (ctx: Context) => Promise<BrowserWindow> = 
                     },
                 ),
                 `
-                <ul class="text-muted align-items-left justify-content-center">${
+                <ul class="list-versions align-items-left justify-content-center font-weight-light">
+                    ${
                     versionsProps
-                        .map((prop) => sanitizeHtml(`<li><strong>${prop}</strong>: ${process.versions[prop]}</li>`))
+                        .map((prop) => {
+                            return sanitizeHtml(`<li>${prop.substr(0, 1).toUpperCase()}${prop.substr(1)}: ${versions[prop]}</li>`);
+                        })
                         .join("")
                     }
                 </ul>
@@ -87,7 +90,7 @@ export const showAboutBrowserWindow: (ctx: Context) => Promise<BrowserWindow> = 
             logger.verbose(JSON.stringify(cache));
         }
 
-        browserWindow.webContents.loadURL(`data:text/html,${cache.html}`, {baseURLForDataURL: cache.baseURLForDataURL});
+        await browserWindow.webContents.loadURL(`data:text/html,${cache.html}`, {baseURLForDataURL: cache.baseURLForDataURL});
 
         return browserWindow;
     };

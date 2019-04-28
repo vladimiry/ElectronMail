@@ -8,20 +8,35 @@ html {
 body {
     display: flex;
     justify-content: center;
+}
+
+.about-block {
+    display: flex;
+    justify-content: center;
     align-items: center;
     flex-direction: column;
-}
 
-a {
-    margin: 0 2em;
-}
+    .list-versions {
+        color: $gray-600;
+        font-size: $app-font-size-base-medium;
+    }
 
-p,
-h1 {
-    margin-bottom: $app-spacer-2;
-}
+    .list-links {
+        > li {
+            flex-grow: 1;
+            flex-basis: 0;
+            text-align: center;
+        }
+    }
 
-img {
-    width: 128px;
-    height: 128px;
+    p,
+    h1 {
+        margin-bottom: $app-spacer-2;
+        text-align: center;
+    }
+
+    img {
+        width: 128px;
+        height: 128px;
+    }
 }

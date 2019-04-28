@@ -28,19 +28,28 @@ export async function execShell(
     const spawnPromise = spawnAsync(...args);
 
     if (printStd) {
-        if (spawnPromise.child.stdout) {
-            byline(spawnPromise.child.stdout).on("data", (chunk) => {
+        const {stdout, stderr} = spawnPromise.child;
+
+        if (stdout) {
+            byline(stdout).on("data", (chunk) => {
                 LOG(LOG_LEVELS.value(formatStreamChunk(chunk)));
             });
         }
-        if (spawnPromise.child.stderr) {
-            byline(spawnPromise.child.stderr).on("data", (chunk) => {
+
+        if (stderr) {
+            byline(stderr).on("data", (chunk) => {
                 LOG(LOG_LEVELS.error(formatStreamChunk(chunk)));
             });
         }
     }
 
-    return await spawnPromise;
+    try {
+        return await spawnPromise;
+    } catch (error) {
+        const omitProps: Array<keyof Unpacked<ReturnType<typeof spawnAsync>>> = ["output", "stderr", "stdout"];
+        omitProps.forEach((omitProp) => delete error[omitProp]);
+        throw error;
+    }
 }
 
 export function formatStreamChunk(chunk: any): string {

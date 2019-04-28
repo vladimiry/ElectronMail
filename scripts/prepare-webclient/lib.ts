@@ -1,13 +1,13 @@
-import byline from "byline";
 import fsExtra from "fs-extra";
+import mkdirp from "mkdirp";
 import path from "path";
 import pathIsInside from "path-is-inside";
-import {GitProcess} from "dugite";
+import {promisify} from "util";
 
 import {AccountType} from "src/shared/model/account";
-import {Arguments, Unpacked} from "src/shared/types";
-import {LOG, LOG_LEVELS, PROC_CWD, execShell, formatStreamChunk} from "scripts/lib";
+import {LOG, LOG_LEVELS, PROC_CWD, execShell} from "scripts/lib";
 import {PROVIDER_REPO} from "src/shared/constants";
+import {Unpacked} from "src/shared/types";
 
 const [, , baseDestDir] = process.argv;
 
@@ -100,39 +100,12 @@ async function installDependencies(dir: string) {
     await execShell(["npm", ["ci"], {cwd: dir}]);
 }
 
-async function clone(accountType: AccountType, destDir: string) {
+async function clone(accountType: AccountType, dir: string) {
     const {repo, commit} = PROVIDER_REPO[accountType];
 
-    await execGit([
-        ["clone", "--progress", repo, "."],
-        destDir,
-    ]);
-    await execGit([
-        ["checkout", commit],
-        destDir,
-    ]);
-    // TODO call "execGit" instead of "execShell"
-    await execShell(["git", ["show", "--summary"], {cwd: destDir}]);
-}
+    await promisify(mkdirp)(dir);
 
-export async function execGit([commands, pathArg, options]: Arguments<typeof GitProcess.exec>) {
-    const args: Arguments<typeof GitProcess.exec> = [
-        commands,
-        pathArg,
-        {
-            processCallback: ({stderr}) => {
-                if (!stderr) {
-                    return;
-                }
-                byline(stderr).on("data", (chunk) => LOG(formatStreamChunk(chunk)));
-            },
-            ...options,
-        },
-    ];
-    LOG(LOG_LEVELS.title(`Executing Git command:`), LOG_LEVELS.value(JSON.stringify(args)));
-    const result = await GitProcess.exec(...args);
-
-    if (result.exitCode) {
-        throw new Error(String(result.stderr).trim());
-    }
+    await execShell(["git", ["clone", repo, "."], {cwd: dir}]);
+    await execShell(["git", ["checkout", commit], {cwd: dir}]);
+    await execShell(["git", ["show", "--summary"], {cwd: dir}]);
 }

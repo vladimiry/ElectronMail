@@ -4134,10 +4134,10 @@ electron-unhandled@2.2.0:
     ensure-error "^1.0.0"
     lodash.debounce "^4.0.8"
 
-electron@5.0.0:
-  version "5.0.0"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-5.0.0.tgz#d8352e2c9625b3be0112ce0c1bf5c9b6f692557e"
-  integrity sha512-++emIe4vLihiYiAVL+E8DT5vSNVFEIuQCRxA+VfpDRVBcog85UB28vi4ogRmMOK3UffzKdWV6e1jqp3T0KpBoA==
+electron@4.1.5:
+  version "4.1.5"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-4.1.5.tgz#d1873147d5be36ab0c8bb9db3a54297a82ee8fef"
+  integrity sha512-0VZzUd4vZaUeSLdxJI/XMrMnPN7AROjPFZOiNgZZkYRUUEjGHfaSAbCJyxuXtii52KGhzGL0JgW0q5QmQ3ykKQ==
   dependencies:
     "@types/node" "^10.12.18"
     electron-download "^4.1.0"

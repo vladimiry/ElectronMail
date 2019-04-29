@@ -17,11 +17,9 @@ const appReadyPromise = new Promise((resolve) => app.on("ready", resolve));
 
 export function registerStandardSchemes(ctx: Context) {
     // WARN: "protocol.registerStandardSchemes" needs to be called once, see https://github.com/electron/electron/issues/15943
-    protocol.registerSchemesAsPrivileged(
-        ctx.locations.protocolBundles.map(({scheme}) => ({
-            scheme,
-            privileges: {standard: true, secure: true},
-        })),
+    protocol.registerStandardSchemes(
+        ctx.locations.protocolBundles.map(({scheme}) => scheme),
+        {secure: true},
     );
 }
 

@@ -26,7 +26,7 @@ export async function attachFullTextIndexWindow(ctx: Context): Promise<BrowserWi
     });
 
     browserWindow.setMenu(null);
-    await browserWindow.loadURL("data:text/html,<html><body></body></html>");
+    browserWindow.loadURL("data:text/html,<html><body></body></html>");
 
     ctx.uiContext.fullTextSearchBrowserWindow = browserWindow;
 

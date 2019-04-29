@@ -90,7 +90,7 @@ export const showAboutBrowserWindow: (ctx: Context) => Promise<BrowserWindow> = 
             logger.verbose(JSON.stringify(cache));
         }
 
-        await browserWindow.webContents.loadURL(`data:text/html,${cache.html}`, {baseURLForDataURL: cache.baseURLForDataURL});
+        browserWindow.webContents.loadURL(`data:text/html,${cache.html}`, {baseURLForDataURL: cache.baseURLForDataURL});
 
         return browserWindow;
     };

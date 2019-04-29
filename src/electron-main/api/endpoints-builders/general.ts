@@ -5,6 +5,7 @@ import {app, shell} from "electron";
 import {isWebUri} from "valid-url";
 import {map, startWith} from "rxjs/operators";
 import {platform} from "os";
+import {promisify} from "util";
 
 import {Context} from "src/electron-main/model";
 import {Endpoints, IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
@@ -45,7 +46,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
                 throw new Error(`Forbidden url "${url}" opening has been prevented`);
             }
 
-            await shell.openExternal(url, {activate: true});
+            await promisify(shell.openExternal)(url, {activate: true});
 
             return null;
         })()),

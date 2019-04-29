@@ -35,7 +35,7 @@ export const initFindInPageBrowserView: (ctx: Context) => Promise<BrowserView> =
         }
 
         browserView.setAutoResize({width: false, height: true});
-        await browserView.webContents.loadURL(`data:text/html,${cache.html}`, {baseURLForDataURL: cache.baseURLForDataURL});
+        browserView.webContents.loadURL(`data:text/html,${cache.html}`, {baseURLForDataURL: cache.baseURLForDataURL});
 
         syncFindInPageBrowserViewSize(ctx, browserView);
 

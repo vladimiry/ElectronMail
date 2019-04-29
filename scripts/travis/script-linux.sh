@@ -6,8 +6,22 @@ yarn scripts/transfer travis-download
 
 yarn app:dist
 
+# =====================
 # https://github.com/electron/electron/issues/16631#issuecomment-476082063
-sudo ./scripts/prepare-chrome-sandbox.sh ./node_modules/electron/dist/chrome-sandbox
+# https://github.com/electron/electron/issues/17972
+
+CHROME_SANDBOX=./node_modules/electron/dist/chrome-sandbox
+
+sudo ./scripts/prepare-chrome-sandbox.sh $CHROME_SANDBOX
+
+CHROME_SANDBOX_PERMISSIONS=$(stat -c "%a" $CHROME_SANDBOX)
+CHROME_SANDBOX_PERMISSIONS_EXPECTED="4755"
+
+if [ $CHROME_SANDBOX_PERMISSIONS != $CHROME_SANDBOX_PERMISSIONS_EXPECTED ]; then
+  printf "Expected ${CHROME_SANDBOX} permissions: ${CHROME_SANDBOX_PERMISSIONS_EXPECTED}, actual: ${CHROME_SANDBOX_PERMISSIONS}" >&2
+  exit 1
+fi
+# ================================================
 
 yarn test:e2e
 

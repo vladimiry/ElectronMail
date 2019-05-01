@@ -7,7 +7,7 @@ import {PACKAGE_NAME, PACKAGE_VERSION} from "src/shared/constants";
 
 const [, , ACTION_TYPE_ARG, FILE_ARG] = process.argv as [null, null, "upload" | "travis-upload" | "travis-download", string];
 
-const SERVICE_URL = "https://file.io";
+const SERVICE_URL = "https://file.io/";
 const SERVICE_MAX_DAYS = 1;
 
 type ServiceResponse =
@@ -76,7 +76,7 @@ async function uploadFileArg(): Promise<Extract<ServiceResponse, { success: true
         [
             "-F", `file=@${FILE_ARG}`,
             "--fail",
-            `${SERVICE_URL}/?expires=${SERVICE_MAX_DAYS}d`,
+            `${SERVICE_URL}?expires=${SERVICE_MAX_DAYS}d`,
         ],
     ]);
     const response: ServiceResponse = JSON.parse(jsonResponse);
@@ -85,7 +85,7 @@ async function uploadFileArg(): Promise<Extract<ServiceResponse, { success: true
         throw new Error(`Error response received: ${JSON.stringify(response)}`);
     }
     if (!response.link.startsWith(SERVICE_URL)) {
-        throw new Error(`Download url "${SERVICE_URL}" doesn't start from "${SERVICE_URL}"`);
+        throw new Error(`Download url "${response.link}" doesn't start from "${SERVICE_URL}"`);
     }
     if (!response.expiry.startsWith(`${SERVICE_MAX_DAYS} day`)) {
         throw new Error(`Unexpected "expiry" value received`);

@@ -6,22 +6,28 @@ import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {configureProviderApp} from "./configure-provider-app";
 import {curryFunctionMembers} from "src/shared/util";
 import {registerApi} from "./api";
-import {registerDocumentClickEventListener, registerDocumentKeyDownEventListener} from "src/electron-preload/events-handling";
 
-const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[index]");
+const logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[index]");
 
-configureProviderApp();
+try {
+    bootstrap();
+} catch (error) {
+    console.error(error); // tslint:disable-line:no-console
+    logger.error(error);
+    throw error;
+}
 
-timer(0, ONE_SECOND_MS).pipe(
-    filter(() => navigator.onLine),
-    take(1),
-).subscribe(() => {
-    registerApi()
-        .then(() => {
-            _logger.verbose(`api registered, url: ${location.href}`);
-        })
-        .catch(_logger.error);
-});
+function bootstrap() {
+    configureProviderApp();
 
-registerDocumentKeyDownEventListener(document, _logger);
-registerDocumentClickEventListener(document, _logger);
+    timer(0, ONE_SECOND_MS).pipe(
+        filter(() => navigator.onLine),
+        take(1),
+    ).subscribe(() => {
+        registerApi()
+            .then(() => {
+                logger.verbose(`api registered, url: ${location.href}`);
+            })
+            .catch(logger.error);
+    });
+}

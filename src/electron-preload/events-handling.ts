@@ -101,33 +101,9 @@ export function registerDocumentClickEventListener<E extends ObservableElement>(
 
     try {
         const apiClient = IPC_MAIN_API.buildClient();
-        const apiMethods = {
-            openExternal: apiClient("openExternal"),
-        };
         const eventName = "click";
         const eventHandler = async (event: MouseEvent) => {
-            try {
-                const {element: el, link, href} = resolveLink(event.target as Element);
-
-                if (!link || el.classList.contains("prevent-default-event")) {
-                    return;
-                }
-
-                if (
-                    !href
-                    ||
-                    !(href.startsWith("https://") || href.startsWith("http://"))
-                ) {
-                    return;
-                }
-
-                event.preventDefault();
-
-                await apiMethods.openExternal({url: href}).toPromise();
-            } catch (e) {
-                logger.error(e);
-                throw e;
-            }
+            await callDocumentClickEventListener(event, logger, apiClient);
         };
 
         element.addEventListener(eventName, eventHandler);
@@ -143,6 +119,38 @@ export function registerDocumentClickEventListener<E extends ObservableElement>(
         processedClickElements.set(element, subscription);
 
         return subscription;
+    } catch (e) {
+        logger.error(e);
+        throw e;
+    }
+}
+
+export async function callDocumentClickEventListener(
+    event: MouseEvent,
+    logger: Logger,
+    apiClient?: ReturnType<typeof IPC_MAIN_API.buildClient>,
+) {
+    try {
+        const {element: el, link, href} = resolveLink(event.target as Element);
+
+        if (!link || el.classList.contains("prevent-default-event")) {
+            return;
+        }
+
+        if (
+            !href
+            ||
+            !(href.startsWith("https://") || href.startsWith("http://"))
+        ) {
+            return;
+        }
+
+        event.preventDefault();
+
+        const client = apiClient || IPC_MAIN_API.buildClient();
+        const method = client("openExternal");
+
+        await method({url: href}).toPromise();
     } catch (e) {
         logger.error(e);
         throw e;

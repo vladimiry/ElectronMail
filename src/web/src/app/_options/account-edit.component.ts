@@ -1,17 +1,18 @@
 import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/forms";
 import {ActivatedRoute} from "@angular/router";
-import {Component, OnDestroy, OnInit} from "@angular/core";
-import {Observable, Subject, merge} from "rxjs";
+import {Component, ElementRef, OnDestroy, OnInit} from "@angular/core";
+import {Observable, Subscription, merge} from "rxjs";
 import {Store, select} from "@ngrx/store";
-import {concatMap, distinctUntilChanged, map, mergeMap, takeUntil} from "rxjs/operators";
+import {concatMap, distinctUntilChanged, map, mergeMap} from "rxjs/operators";
 
-import {ACCOUNTS_CONFIG, ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX, REPOSITORY_NAME} from "src/shared/constants";
+import {ACCOUNTS_CONFIG, ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX} from "src/shared/constants";
 import {AccountConfig, AccountConfigProtonmail, AccountType} from "src/shared/model/account";
 import {AccountConfigCreatePatch, AccountConfigUpdatePatch} from "src/shared/model/container";
 import {EntryUrlItem} from "src/shared/types";
-import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
+import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {State} from "src/web/src/app/store/reducers/options";
+import {getZoneNameBoundWebLogger} from "src/web/src/util";
 import {validateLoginDelaySecondsRange} from "src/shared/util";
 
 @Component({
@@ -79,17 +80,29 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     );
 
     // other
-    unSubscribe$ = new Subject();
+    private readonly logger = getZoneNameBoundWebLogger();
+    private readonly subscription = new Subscription();
 
-    constructor(private store: Store<State>,
-                private activatedRoute: ActivatedRoute) {}
+    constructor(
+        private store: Store<State>,
+        private activatedRoute: ActivatedRoute,
+        private elementRef: ElementRef,
+    ) {}
 
     ngOnInit() {
         const {controls} = this;
 
-        this.account$
-            .pipe(takeUntil(this.unSubscribe$))
-            .subscribe((account) => {
+        this.subscription.add({
+            unsubscribe: __ELECTRON_EXPOSURE__
+                .registerDocumentClickEventListener(
+                    this.elementRef.nativeElement,
+                    this.logger,
+                )
+                .unsubscribe,
+        });
+
+        this.subscription.add(
+            this.account$.subscribe((account) => {
                 this.account = account;
 
                 this.form.removeControl(((name: keyof Pick<typeof AccountEditComponent.prototype.controls, "login">) => name)("login"));
@@ -115,11 +128,13 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                             : undefined,
                     );
                 })();
-            });
+            }),
+        );
 
-        controls.type.valueChanges
-            .pipe(takeUntil(this.unSubscribe$))
-            .subscribe(this.typeChangeReaction.bind(this));
+        this.subscription.add(
+            controls.type.valueChanges.subscribe(this.typeChangeReaction.bind(this)),
+        );
+
         this.typeChangeReaction(controls.type.value);
     }
 
@@ -197,42 +212,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         return value.startsWith(ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX);
     }
 
-    openIssue29() {
-        this.openIssue(29);
-    }
-
-    openIssue79() {
-        this.openIssue(79);
-    }
-
-    openIssue80() {
-        this.openIssue(80);
-    }
-
-    openProxyDocsPage() {
-        this.store.dispatch(NAVIGATION_ACTIONS.OpenExternal({
-            url: "https://electronjs.org/docs/api/session#sessetproxyconfig-callback",
-        }));
-    }
-
-    open2faEnablingIssue() {
-        this.openIssue(10);
-    }
-
-    openMailPasswordDescription() {
-        this.store.dispatch(NAVIGATION_ACTIONS.OpenExternal({
-            url: "https://protonmail.com/support/knowledge-base/what-is-the-mailbox-password/",
-        }));
-    }
-
     ngOnDestroy() {
-        this.unSubscribe$.next();
-        this.unSubscribe$.complete();
-    }
-
-    private openIssue(issueNumber: number) {
-        this.store.dispatch(NAVIGATION_ACTIONS.OpenExternal({
-            url: `https://github.com/vladimiry/${REPOSITORY_NAME}/issues/${issueNumber}`,
-        }));
+        this.subscription.unsubscribe();
     }
 }

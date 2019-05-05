@@ -4,6 +4,7 @@ import {Logger} from "src/shared/types";
 type ObservableElement = Pick<HTMLElement, "addEventListener" | "removeEventListener">;
 
 const processedKeyDownElements = new WeakMap<ObservableElement, ReturnType<typeof registerDocumentKeyDownEventListener>>();
+const processedClickElements = new WeakMap<ObservableElement, ReturnType<typeof registerDocumentClickEventListener>>();
 
 export function registerDocumentKeyDownEventListener<E extends ObservableElement>(
     element: E,
@@ -24,52 +25,54 @@ export function registerDocumentKeyDownEventListener<E extends ObservableElement
             hotkey: apiClient("hotkey"),
             findInPageDisplay: apiClient("findInPageDisplay"),
         };
-        const eventName = "keydown";
-        const eventHandler = async (event: KeyboardEvent) => {
-            try {
-                const el: Element | null = (event.target as any);
-                const cmdOrCtrl = event.ctrlKey || event.metaKey;
+        const eventHandlerArgs: ["keydown", (event: KeyboardEvent) => Promise<void>] = [
+            "keydown",
+            async (event: KeyboardEvent) => {
+                try {
+                    const el: Element | null = (event.target as any);
+                    const cmdOrCtrl = event.ctrlKey || event.metaKey;
+                    const cmdOrCtrlPlusA = cmdOrCtrl && event.keyCode === 65;
+                    const cmdOrCtrlPlusC = cmdOrCtrl && event.keyCode === 67;
+                    const cmdOrCtrlPlusV = cmdOrCtrl && event.keyCode === 86;
+                    const cmdOrCtrlPlusF = cmdOrCtrl && event.keyCode === 70;
 
-                const cmdOrCtrlPlusA = cmdOrCtrl && event.keyCode === 65;
-                const cmdOrCtrlPlusC = cmdOrCtrl && event.keyCode === 67;
-                const cmdOrCtrlPlusV = cmdOrCtrl && event.keyCode === 86;
-                const cmdOrCtrlPlusF = cmdOrCtrl && event.keyCode === 70;
+                    if (cmdOrCtrlPlusF) {
+                        await apiMethods.findInPageDisplay({visible: true}).toPromise();
+                        return;
+                    }
 
-                if (cmdOrCtrlPlusF) {
-                    await apiMethods.findInPageDisplay({visible: true}).toPromise();
-                    return;
+                    if (!el) {
+                        return;
+                    }
+
+                    let type: "copy" | "paste" | "selectAll" | undefined;
+
+                    if (cmdOrCtrlPlusA) {
+                        type = "selectAll";
+                    } else if (cmdOrCtrlPlusC && !isPasswordInput(el)) {
+                        type = "copy";
+                    } else if (cmdOrCtrlPlusV && isWritable(el)) {
+                        type = "paste";
+                    }
+
+                    if (!type) {
+                        return;
+                    }
+
+                    await apiMethods.hotkey({type}).toPromise();
+                } catch (e) {
+                    logger.error(e);
+                    throw e;
                 }
+            },
+        ];
+        const [, eventHandler] = eventHandlerArgs;
 
-                if (!el) {
-                    return;
-                }
-
-                let type: "copy" | "paste" | "selectAll" | undefined;
-
-                if (cmdOrCtrlPlusA) {
-                    type = "selectAll";
-                } else if (cmdOrCtrlPlusC && !isPasswordInput(el)) {
-                    type = "copy";
-                } else if (cmdOrCtrlPlusV && isWritable(el)) {
-                    type = "paste";
-                }
-
-                if (!type) {
-                    return;
-                }
-
-                await apiMethods.hotkey({type}).toPromise();
-            } catch (e) {
-                logger.error(e);
-                throw e;
-            }
-        };
-
-        element.addEventListener(eventName, eventHandler);
+        element.addEventListener(...eventHandlerArgs);
 
         subscription = {
             unsubscribe: () => {
-                element.removeEventListener(eventName, eventHandler);
+                element.removeEventListener(...eventHandlerArgs);
                 processedKeyDownElements.delete(element);
             },
             eventHandler,
@@ -83,8 +86,6 @@ export function registerDocumentKeyDownEventListener<E extends ObservableElement
         throw e;
     }
 }
-
-const processedClickElements = new WeakMap<ObservableElement, ReturnType<typeof registerDocumentClickEventListener>>();
 
 export function registerDocumentClickEventListener<E extends ObservableElement>(
     element: E,
@@ -101,17 +102,18 @@ export function registerDocumentClickEventListener<E extends ObservableElement>(
 
     try {
         const apiClient = IPC_MAIN_API.buildClient();
-        const eventName = "click";
-        const eventHandler = async (event: MouseEvent) => {
-            await callDocumentClickEventListener(event, logger, apiClient);
-        };
+        const eventHandlerArgs: ["click", (event: MouseEvent) => Promise<void>] = [
+            "click",
+            async (event: MouseEvent) => await callDocumentClickEventListener(event, logger, apiClient),
+        ];
+        const [, eventHandler] = eventHandlerArgs;
 
-        element.addEventListener(eventName, eventHandler);
+        element.addEventListener(...eventHandlerArgs);
 
         subscription = {
             unsubscribe: () => {
-                element.removeEventListener(eventName, eventHandler);
-                processedKeyDownElements.delete(element);
+                element.removeEventListener(...eventHandlerArgs);
+                processedClickElements.delete(element);
             },
             eventHandler,
         };

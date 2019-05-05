@@ -52,10 +52,9 @@
             <div class="clearfix">
                 <label class="d-block pull-left">Domain</label>
                 <div class="pull-right text-muted">
-                    description:
-                    <button type="button" class="btn btn-link p-0" (click)="openIssue29()" title="Issue 29">29</button>,
-                    <button type="button" class="btn btn-link p-0" (click)="openIssue79()" title="Issue 79">79</button>,
-                    <button type="button" class="btn btn-link p-0" (click)="openIssue80()" title="Issue 80">80</button>
+                    <a href="https://github.com/vladimiry/ElectronMail/issues/29">#29</a>,
+                    <a href="https://github.com/vladimiry/ElectronMail/issues/79">#79</a>,
+                    <a href="https://github.com/vladimiry/ElectronMail/issues/80">#80</a>
                 </div>
             </div>
             <ng-select [items]="entryUrlItems" [clearable]="false" formControlName="entryUrl" id="accountEditFormEntryUrlField"
@@ -90,22 +89,32 @@
             <label class="d-block pull-left">
                 Two Factor Secret Key
                 <i
-                    popover="This is not the one time password your phone generates for you but a secret seed. Please follow the description link for details."
                     class="fa fa-info-circle text-warning align-self-center"
                     container="body"
                     placement="bottom"
+                    popover="This is not the one time password your phone generates for you but a secret seed. Please follow the description link for details."
                     triggers="mouseenter:mouseleave"
                 ></i>
             </label>
-            <button type="button" class="btn btn-link p-0 d-block pull-right" (click)="open2faEnablingIssue()" title="Issue 10">
-                description
-            </button>
+            <a class="d-block pull-right" href="https://github.com/vladimiry/ElectronMail/issues/10">#10</a>
             <input type="password" class="form-control" formControlName="twoFactorCode"
                    [ngClass]="controls.twoFactorCode.dirty ? {'is-invalid': controls.twoFactorCode.invalid, 'is-valid': controls.twoFactorCode.valid} : {}">
         </div>
         <div class="form-group" *ngIf="controls.type.value == 'protonmail'">
-            <label class="d-block pull-left">Mail Password</label>
-            <button type="button" class="btn btn-link p-0 d-block pull-right" (click)="openMailPasswordDescription()">description</button>
+            <label class="d-block pull-left">
+                Mailbox Password
+                <i
+                    class="fa fa-info-circle text-warning align-self-center"
+                    container="body"
+                    placement="bottom"
+                    popover="This field is only relevant if you have two-password mode enabled for your account. Please follow the description links for details."
+                    triggers="mouseenter:mouseleave"
+                ></i>
+            </label>
+            <div class="pull-right">
+                <a href="https://protonmail.com/support/knowledge-base/switch-two-password-mode/">description</a>,
+                <a href="https://github.com/vladimiry/ElectronMail/issues/138">#138</a>
+            </div>
             <input type="password" class="form-control" formControlName="mailPassword"
                    [ngClass]="controls.mailPassword.dirty ? {'is-invalid': controls.mailPassword.invalid, 'is-valid': controls.mailPassword.valid} : {}">
         </div>
@@ -127,10 +136,9 @@
                             triggers="mouseenter:mouseleave"
                         ></i>
                     </label>
-                    <button type="button" class="btn btn-link p-0 d-block pull-right" (click)="openProxyDocsPage()"
-                            title="session.setProxy(config, callback)">
+                    <a class="d-block pull-right" href="https://electronjs.org/docs/api/session#sessetproxyconfig-callback">
                         documentation
-                    </button>
+                    </a>
                     <input type="text" class="form-control" formControlName="proxyRules">
                 </div>
                 <div>
@@ -144,10 +152,9 @@
                             triggers="mouseenter:mouseleave"
                         ></i>
                     </label>
-                    <button type="button" class="btn btn-link p-0 d-block pull-right" (click)="openProxyDocsPage()"
-                            title="session.setProxy(config, callback)">
+                    <a class="d-block pull-right" href="https://electronjs.org/docs/api/session#sessetproxyconfig-callback">
                         documentation
-                    </button>
+                    </a>
                     <input type="text" class="form-control" formControlName="proxyBypassRules">
                 </div>
                 <div class="mt-3">

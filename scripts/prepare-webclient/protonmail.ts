@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import fs from "fs";
 import path from "path";
 import {promisify} from "util";
@@ -63,7 +62,7 @@ async function build({repoDir: cwd, options, folderNameAsDomain}: { repoDir: str
         }, null, 2);
 
         LOG(
-            chalk.magenta(`Writing ${LOG_LEVELS.value(envFile)} file with content:`),
+            LOG_LEVELS.title(`Writing ${LOG_LEVELS.value(envFile)} file with content:`),
             LOG_LEVELS.value(envFileContent),
         );
         await promisify(fs.writeFile)(envFile, envFileContent);
@@ -104,7 +103,7 @@ async function build({repoDir: cwd, options, folderNameAsDomain}: { repoDir: str
         // tslint:enable:no-trailing-whitespace
 
         LOG(
-            chalk.magenta(`Writing ${LOG_LEVELS.value(webpackFile)} file with content:`),
+            LOG_LEVELS.title(`Writing ${LOG_LEVELS.value(webpackFile)} file with content:`),
             LOG_LEVELS.value(webpackFileContent),
         );
         await promisify(fs.writeFile)(webpackFile, webpackFileContent);

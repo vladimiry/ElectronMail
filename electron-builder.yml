@@ -2,12 +2,7 @@ appId: "github.com/vladimiry/ElectronMail"
 artifactName: ${name}-${version}-${os}-${arch}.${ext}
 productName: "ElectronMail"
 
-publish: {provider: github, releaseType: draft, vPrefixedTagName: true}
 forceCodeSigning: false
-
-# npmRebuild: false
-# nodeGypRebuild: false
-# buildDependenciesFromSource: true
 
 # TODO consider moving fully bundable "dependencies" to "devDependencies" to reduce final package size
 

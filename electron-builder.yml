@@ -29,6 +29,8 @@ afterPack: './scripts/electron-builder/hooks/after-pack/index.js'
 mac:
   icon: ./app/assets/icons/mac/icon.icns
   category: public.app-category.productivity
+  target:
+    - {target: dmg}
 
 dmg:
   icon: ./app/assets/icons/mac/icon.icns

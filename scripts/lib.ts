@@ -20,25 +20,28 @@ export const LOG_LEVELS = {
 };
 
 export async function execShell(
-    args: Arguments<typeof spawnAsync>,
+    [command, args, options]: Arguments<typeof spawnAsync>,
     {printStd = true}: { printStd?: boolean } = {},
 ): Promise<Unpacked<ReturnType<typeof spawnAsync>>> {
-    LOG(LOG_LEVELS.title(`Executing Shell command:`), LOG_LEVELS.value(JSON.stringify(args)));
+    LOG(
+        LOG_LEVELS.title(`Executing Shell command:`),
+        LOG_LEVELS.value(JSON.stringify({command, args})),
+    );
 
-    const spawnPromise = spawnAsync(...args);
+    const spawnPromise = spawnAsync(command, args, options);
 
     if (printStd) {
         const {stdout, stderr} = spawnPromise.child;
 
         if (stdout) {
             byline(stdout).on("data", (chunk) => {
-                LOG(LOG_LEVELS.value(formatStreamChunk(chunk)));
+                LOG(chalk(formatStreamChunk(chunk)));
             });
         }
 
         if (stderr) {
             byline(stderr).on("data", (chunk) => {
-                LOG(LOG_LEVELS.error(formatStreamChunk(chunk)));
+                LOG(chalk(formatStreamChunk(chunk)));
             });
         }
     }

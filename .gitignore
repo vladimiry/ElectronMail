@@ -16,5 +16,5 @@ package-lock.json
 /build/
 /dist/
 /output/
-/scripts/electron-builder/*.js
+/scripts/electron-builder/**/*.js
 /yarn-audit-issues

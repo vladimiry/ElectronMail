@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "../../../../tsconfig.json",
   "compilerOptions": {
     "importHelpers": true,
     "declaration": false,
@@ -7,6 +7,6 @@
     "outDir": "."
   },
   "files": [
-    "./after-pack.ts"
+    "./index.ts"
   ]
 }

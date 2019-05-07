@@ -16,11 +16,10 @@ export async function listInstallationPackageFiles(dir: string): Promise<string[
     }
 
     for (const name of await promisify(fs.readdir)(dir)) {
-        // TODO make sure file is actually a file, not a directory
+        // TODO make sure "name" is actually a file, not a directory
         if (appNameRe.exec(name)) {
             result.push(path.resolve(dir, name));
         }
-
     }
 
     return result;

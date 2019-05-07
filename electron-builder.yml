@@ -19,12 +19,12 @@ files:
   - '!node_modules/sodium-native/{src,test,libsodium,tmp}'
   - '!node_modules/sodium-native/prebuilds/linux-arm'
   - '!node_modules/sodium-native/prebuilds/win32-ia32'
-compression: maximum
+compression: normal
 asar: true
 asarUnpack:
   - '**/node_modules/sodium-native/**/*'
   - '**/node_modules/keytar/**/*'
-afterPack: './scripts/electron-builder/after-pack.js'
+afterPack: './scripts/electron-builder/hooks/after-pack/index.js'
 
 mac:
   icon: ./app/assets/icons/mac/icon.icns

@@ -1,31 +1,30 @@
-appId: "github.com/vladimiry/ElectronMail"
+appId: 'github.com/vladimiry/ElectronMail'
 artifactName: ${name}-${version}-${os}-${arch}.${ext}
-productName: "ElectronMail"
+productName: 'ElectronMail'
 
 forceCodeSigning: false
 
-# TODO consider moving fully bundable "dependencies" to "devDependencies" to reduce final package size
+# TODO consider moving fully bundable 'dependencies' to 'devDependencies' to reduce final package size
 
 directories:
   output: ./dist
-files: [
-  "./app/**/*",
-  "./package.json",
-  "!app/electron-preload/browser-window-e2e.js",
-  "!node_modules/rxjs/{_esm5,_esm2015,src,bundles}",
-  "!node_modules/pureimage/{firstimages,tests}",
+files:
+  # TODO exclude not needed stuff in 'files:' section to reduce app packages size, can save megabytes, so a significant improvement
+  - './app/**/*'
+  - './package.json'
+  - '!app/electron-preload/browser-window-e2e.js'
+  - '!node_modules/rxjs/{_esm5,_esm2015,src,bundles}'
+  - '!node_modules/pureimage/{firstimages,tests}'
   # sodium-native TODO: include into the package only needed prebuilds for the platform is being built
-  "!node_modules/sodium-native/{src,test,libsodium,tmp}",
-  "!node_modules/sodium-native/prebuilds/linux-arm",
-  "!node_modules/sodium-native/prebuilds/win32-ia32",
-  # TODO exclude not needed stuff in "files:" section to reduce app packages size, can save megabytes, so a significant improvement
- ]
+  - '!node_modules/sodium-native/{src,test,libsodium,tmp}'
+  - '!node_modules/sodium-native/prebuilds/linux-arm'
+  - '!node_modules/sodium-native/prebuilds/win32-ia32'
 compression: maximum
 asar: true
 asarUnpack:
-  - "**/node_modules/sodium-native/**/*"
-  - "**/node_modules/keytar/**/*"
-afterPack: "./scripts/electron-builder/after-pack.js"
+  - '**/node_modules/sodium-native/**/*'
+  - '**/node_modules/keytar/**/*'
+afterPack: './scripts/electron-builder/after-pack.js'
 
 mac:
   icon: ./app/assets/icons/mac/icon.icns
@@ -65,16 +64,25 @@ rpm:
     - libsecret
 
 snap:
-  confinement: "strict"
+  confinement: strict
   stagePackages:
     - default
   plugs:
     - default
     - password-manager-service
     # additional plugs to pick up the GTK theme and icons from the system, mouse cursor theme still not fixed
-    - { "gtk-3-themes": { "interface": "content", "target": "$SNAP/data-dir/themes", "default-provider": "gtk-common-themes:gtk-3-themes" }, }
-    - { "icon-themes": { "interface": "content", "target": "$SNAP/data-dir/icons", "default-provider": "gtk-common-themes:icon-themes" }, }
-    - { "sound-themes": { "interface": "content", "target": "$SNAP/data-dir/sounds", "default-provider": "gtk-common-themes:sounds-themes" }, }
+    - gtk-3-themes:
+        interface: content
+        target: $SNAP/data-dir/themes
+        default-provider: 'gtk-common-themes:gtk-3-themes'
+    - icon-themes:
+        interface: content
+        target: $SNAP/data-dir/icons
+        default-provider: 'gtk-common-themes:icon-themes'
+    - sound-themes:
+        interface: content
+        target: $SNAP/data-dir/sounds
+        default-provider: 'gtk-common-themes:sounds-themes'
   environment:
     DISABLE_WAYLAND: 1
 

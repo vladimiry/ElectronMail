@@ -5,18 +5,18 @@ import {DbAccountPk, Mail, MemoryDbAccount} from "src/shared/model/database";
 import {LoginFieldContainer, PasswordFieldContainer} from "src/shared/model/container";
 import {PACKAGE_NAME} from "src/shared/constants";
 import {ProtonmailApi} from "src/shared/api/webview/protonmail";
-import {TutanotaApi} from "./tutanota";
+import {TutanotaApi} from "src/shared/api/webview/tutanota";
 import {ZoneApiParameter} from "src/shared/api/common";
 
 export const channel = `${PACKAGE_NAME}:webview-api`;
 
 const {Promise, Observable} = ActionType;
 
-export type WebViewApi<T extends AccountType> = T extends "tutanota"
-    ? TutanotaApi
-    : T extends "protonmail"
-        ? ProtonmailApi
-        : never;
+// export type WebViewApi<T extends AccountType> = T extends "tutanota"
+//     ? typeof TUTANOTA_IPC_WEBVIEW_API
+//     : T extends "protonmail"
+//         ? typeof PROTONMAIL_IPC_WEBVIEW_API
+//         : never;
 
 export function buildWebViewApiDefinition<T extends AccountType, NotificationOutput>() {
     return {
@@ -34,3 +34,9 @@ export function buildWebViewApiDefinition<T extends AccountType, NotificationOut
         notification: Observable<[{ entryUrl: string; entryApiUrl: string; } & ZoneApiParameter], NotificationOutput>(),
     };
 }
+
+export type CommonWebViewApi<T extends AccountType> = T extends "protonmail"
+    ? ProtonmailApi
+    : T extends "protonmail"
+        ? TutanotaApi
+        : never;

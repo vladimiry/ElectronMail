@@ -22,19 +22,19 @@ export class DbViewEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         mergeMap(({payload: {finishPromise, dbAccountPk}, logger}) => {
             const dispose$ = from(finishPromise).pipe(tap(() => logger.info("dispose")));
-            const apiClient = this.api.ipcMainClient({finishPromise, serialization: "jsan"});
+            const ipcMainClient = this.api.ipcMainClient({finishPromise, serialization: "jsan"});
 
             logger.info("setup");
 
             return merge(
-                apiClient("dbGetAccountDataView")(dbAccountPk), // initial load
+                from(ipcMainClient("dbGetAccountDataView")(dbAccountPk)), // initial load
                 this.store.pipe(
                     select(OptionsSelectors.FEATURED.mainProcessNotification),
                     filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbPatchAccount),
                     filter(({payload: {key}}) => key.type === dbAccountPk.type && key.login === dbAccountPk.login),
                     filter(({payload: {entitiesModified}}) => entitiesModified),
                     // tslint:disable-next-line:ban
-                    switchMap(() => apiClient("dbGetAccountDataView")(dbAccountPk)),
+                    switchMap(() => from(ipcMainClient("dbGetAccountDataView")(dbAccountPk))),
                 ),
                 this.store.pipe(
                     select(OptionsSelectors.FEATURED.mainProcessNotification),
@@ -64,11 +64,11 @@ export class DbViewEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         mergeMap(({payload}) => {
             const {dbAccountPk, mailPk} = payload;
-            const client = this.api.ipcMainClient();
+            const ipcMainClient = this.api.ipcMainClient();
 
             return forkJoin(
-                client("dbGetAccountMail")({...dbAccountPk, pk: mailPk}),
-                client("dbSearchRootConversationNodes")({...dbAccountPk, mailPks: [mailPk]}).pipe(
+                from(ipcMainClient("dbGetAccountMail")({...dbAccountPk, pk: mailPk})),
+                from(ipcMainClient("dbSearchRootConversationNodes")({...dbAccountPk, mailPks: [mailPk]})).pipe(
                     map((rootNodes) => {
                         if (rootNodes.length !== 1) {
                             throw new Error(`Failed to resolve mail's root conversation node`);
@@ -94,7 +94,9 @@ export class DbViewEffects {
         unionizeActionFilter(DB_VIEW_ACTIONS.is.SelectConversationMailRequest),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         mergeMap(({payload: {dbAccountPk, mailPk}}) => {
-            return this.api.ipcMainClient()("dbGetAccountMail")({...dbAccountPk, pk: mailPk}).pipe(
+            return from(
+                this.api.ipcMainClient()("dbGetAccountMail")({...dbAccountPk, pk: mailPk}),
+            ).pipe(
                 mergeMap((conversationMail) => of(DB_VIEW_ACTIONS.SelectConversationMail({dbAccountPk, conversationMail}))),
             );
         }),
@@ -105,9 +107,12 @@ export class DbViewEffects {
         unionizeActionFilter(DB_VIEW_ACTIONS.is.FullTextSearchRequest),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         mergeMap(({payload: {type, login, query, folderPks}}) => {
-            return this.api.ipcMainClient()("dbFullTextSearch", {timeoutMs: ONE_SECOND_MS * 5, serialization: "jsan"})({
-                type, login, query, folderPks,
-            }).pipe(
+            const dbFullTextSearch$ = from(
+                this.api.ipcMainClient()("dbFullTextSearch", {timeoutMs: ONE_SECOND_MS * 5, serialization: "jsan"})({
+                    type, login, query, folderPks,
+                }),
+            );
+            return dbFullTextSearch$.pipe(
                 mergeMap((value) => [
                     DB_VIEW_ACTIONS.SelectMail({dbAccountPk: {type, login}}),
                     DB_VIEW_ACTIONS.FullTextSearch({dbAccountPk: {type, login}, value}),
@@ -125,11 +130,16 @@ export class DbViewEffects {
             const pk = {type, login};
 
             return this.api.webViewClient(webView, type).pipe(
-                mergeMap((webViewClient) => webViewClient("fetchSingleMail")({...pk, mailPk, zoneName: logger.zoneName()}).pipe(
-                    mergeMap(() => of(DB_VIEW_ACTIONS.SelectConversationMailRequest({dbAccountPk: pk, mailPk}))),
-                    catchError((error) => of(CORE_ACTIONS.Fail(error))),
-                    finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.SetFetchSingleMailParams({pk, mailPk: undefined}))),
-                )),
+                mergeMap((webViewClient) => {
+                    const fetchSingleMail$ = from(
+                        webViewClient("fetchSingleMail")({...pk, mailPk, zoneName: logger.zoneName()}),
+                    );
+                    return fetchSingleMail$.pipe(
+                        mergeMap(() => of(DB_VIEW_ACTIONS.SelectConversationMailRequest({dbAccountPk: pk, mailPk}))),
+                        catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                        finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.SetFetchSingleMailParams({pk, mailPk: undefined}))),
+                    );
+                }),
             );
         }),
     );

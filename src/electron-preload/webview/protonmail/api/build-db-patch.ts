@@ -34,7 +34,7 @@ const buildDbPatchEndpoint: Pick<ProtonmailApi, "buildDbPatch" | "fetchSingleMai
 
         logger.info();
 
-        const delayFactory: ()  => Promise<BuildDbPatchMethodReturnType> = async () => {
+        const deferFactory: ()  => Promise<BuildDbPatchMethodReturnType> = async () => {
             logger.info("delayFactory()");
 
             if (!isLoggedIn()) {
@@ -121,7 +121,7 @@ const buildDbPatchEndpoint: Pick<ProtonmailApi, "buildDbPatch" | "fetchSingleMai
             return;
         };
 
-        return defer(delayFactory).pipe(
+        return defer(deferFactory).pipe(
             buildDbPatchRetryPipeline<BuildDbPatchMethodReturnType>(preprocessError, _logger),
             catchError((error) => {
                 if (StatusCodeError.hasStatusCodeValue(error, "SkipDbPatch")) {

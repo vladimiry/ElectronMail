@@ -1,17 +1,21 @@
 import {Injectable, OnDestroy} from "@angular/core";
-import {Observable, Subscription, from, of, throwError, timer} from "rxjs";
+import {Observable, ObservableInput, Subscription, defer, of, throwError, timer} from "rxjs";
 import {Store, select} from "@ngrx/store";
 import {concat, concatMap, delay, filter, map, mergeMap, retryWhen, switchMap, take, takeWhile, withLatestFrom} from "rxjs/operators";
+import {createIpcMainApiService} from "electron-rpc-api";
 
 import {AccountType} from "src/shared/model/account";
+import {Arguments} from "src/shared/types";
 import {DEFAULT_API_CALL_TIMEOUT, ONE_SECOND_MS} from "src/shared/constants";
-import {Model} from "pubsub-to-stream-api";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
+import {PROTONMAIL_IPC_WEBVIEW_API} from "src/shared/api/webview/protonmail";
 import {State} from "src/web/src/app/store/reducers/options";
-import {WebViewApi} from "src/shared/api/webview/common";
+import {TUTANOTA_IPC_WEBVIEW_API} from "src/shared/api/webview/tutanota";
 import {getZoneNameBoundWebLogger} from "src/web/src/util";
 
-type CallOptions = Partial<Pick<Model.CallOptions, "timeoutMs" | "finishPromise" | "serialization">>;
+type SuperCallOptions = Required<Exclude<Arguments<ReturnType<(typeof createIpcMainApiService)>["client"]>[0], undefined>>["options"];
+
+type CallOptions = Partial<Pick<SuperCallOptions, "timeoutMs" | "finishPromise" | "serialization">>;
 
 const logger = getZoneNameBoundWebLogger("[_core/electron.service]");
 
@@ -59,9 +63,9 @@ export class ElectronService implements OnDestroy {
         webView: Electron.WebviewTag,
         type: T,
         options?: CallOptions,
-    ): Observable<ReturnType<WebViewApi<T>["buildClient"]>> {
+    ): Observable<ReturnType<(T extends "protonmail" ? typeof PROTONMAIL_IPC_WEBVIEW_API : typeof TUTANOTA_IPC_WEBVIEW_API)["client"]>> {
         // TODO TS: figure why "webViewClient()" client stopped to be type safe after some TS version update
-        const client: ReturnType<WebViewApi<T>["buildClient"]> = __ELECTRON_EXPOSURE__.buildIpcWebViewClient[type](
+        const client = __ELECTRON_EXPOSURE__.buildIpcWebViewClient[type](
             webView,
             {
                 options: this.buildApiCallOptions(options),
@@ -74,19 +78,24 @@ export class ElectronService implements OnDestroy {
             // tslint:disable-next-line:ban
             switchMap(({webViewApiPing}) => {
                 const pingStart = Date.now();
+                const pingDeferFactory: () => ObservableInput<void> = () => {
+                    return client("ping", {timeoutMs: 1})({zoneName: logger.zoneName()});
+                };
 
-                return from(client("ping", {timeoutMs: 1})({zoneName: logger.zoneName()}).pipe(
+                return defer(pingDeferFactory).pipe(
                     retryWhen((errors) => errors.pipe(
                         takeWhile(() => (Date.now() - pingStart) < webViewApiPing),
                         delay(this.webViewApiPingIntervalMs),
                         concat(throwError(new Error(`Failed to wait for "webview:${type}" service provider initialization`))),
                     )),
-                ).toPromise());
+                );
             }),
         );
 
         return ping$.pipe(
-            concatMap(() => of(client)),
+            concatMap(() => {
+                return of(client as any); // TODO TS: get rid of typecasting
+            }),
         );
     }
 
@@ -100,7 +109,7 @@ export class ElectronService implements OnDestroy {
         this.subscription.unsubscribe();
     }
 
-    private buildApiCallOptions(options: CallOptions = {}): Model.CallOptions {
+    private buildApiCallOptions(options: CallOptions = {}): SuperCallOptions {
         return {
             timeoutMs: this.defaultApiCallTimeoutMs,
             notificationWrapper: Zone.current.run.bind(Zone.current),

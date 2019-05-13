@@ -44,7 +44,7 @@ export class SearchInPageWidget {
     async close() {
         await this.stopFind();
         await this.destroy();
-        await this.apiMethods.findInPageDisplay({visible: false}).toPromise();
+        await this.apiMethods.findInPageDisplay({visible: false});
     }
 
     async destroy() {
@@ -135,10 +135,7 @@ export class SearchInPageWidget {
     }
 
     protected async startFind(query: string) {
-        const result = await this
-            .apiMethods
-            .findInPage({query})
-            .toPromise();
+        const result = await this.apiMethods.findInPage({query});
 
         if (!result) {
             return await this.close();
@@ -156,10 +153,7 @@ export class SearchInPageWidget {
             throw new Error(`Search has not been started yet`);
         }
 
-        const result = await this
-            .apiMethods
-            .findInPage({query: this.query || "", options})
-            .toPromise();
+        const result = await this.apiMethods.findInPage({query: this.query || "", options});
 
         if (!result) {
             return await this.close();
@@ -178,7 +172,7 @@ export class SearchInPageWidget {
 
         this.syncElements();
 
-        await this.apiMethods.findInPageStop().toPromise();
+        await this.apiMethods.findInPageStop();
     }
 
     protected syncElements() {

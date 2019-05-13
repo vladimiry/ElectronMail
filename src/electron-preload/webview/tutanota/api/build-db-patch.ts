@@ -32,7 +32,7 @@ const buildDbPatchEndpoint: Pick<TutanotaApi, "buildDbPatch"> = {
 
         logger.info();
 
-        const delayFactory: () => Promise<BuildDbPatchMethodReturnType> = async () => {
+        const deferFactory: () => Promise<BuildDbPatchMethodReturnType> = async () => {
             logger.info("delayFactory()");
 
             const controller = getUserController();
@@ -104,7 +104,7 @@ const buildDbPatchEndpoint: Pick<TutanotaApi, "buildDbPatch"> = {
             return;
         };
 
-        return defer(delayFactory).pipe(
+        return defer(deferFactory).pipe(
             buildDbPatchRetryPipeline<BuildDbPatchMethodReturnType>(preprocessError, _logger),
             catchError((error) => {
                 if (StatusCodeError.hasStatusCodeValue(error, "SkipDbPatch")) {

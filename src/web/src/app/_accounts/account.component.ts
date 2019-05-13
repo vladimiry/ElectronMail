@@ -448,6 +448,6 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         const webView = this.resolveWebView();
         const webViewClient = await this.api.webViewClient(webView, this.account.accountConfig.type).toPromise();
 
-        await webViewClient("selectAccount")({zoneName: this.loggerZone.name, databaseView: this.account.databaseView}).toPromise();
+        await webViewClient("selectAccount")({zoneName: this.loggerZone.name, databaseView: this.account.databaseView});
     }
 }

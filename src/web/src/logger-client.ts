@@ -29,7 +29,7 @@ const callApi = () => {
     callApiDebounce.lines.length = 0;
 
     (async () => {
-        await apiMethod(lines).toPromise();
+        await apiMethod(lines);
     })().catch((error) => {
         console.error(error, JSON.stringify(lines)); // tslint:disable-line:no-console
     });

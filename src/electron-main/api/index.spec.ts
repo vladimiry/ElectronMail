@@ -59,7 +59,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
 
         t.is(0, initSessionByAccountMock.callCount);
 
-        const updatedSettings = await addAccount(payload).toPromise();
+        const updatedSettings = await addAccount(payload);
         const expectedSettings = produce(settings, (draft) => {
             (draft._rev as number)++;
             draft.accounts.push(payload);
@@ -73,14 +73,14 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         initSessionByAccountMock.calledWithExactly(t.context.ctx, initSessionByAccount1Arg, initSessionByAccountOptions);
 
         try {
-            await addAccount(payload).toPromise();
+            await addAccount(payload);
         } catch ({message}) {
             const messageEnd = `Duplicate accounts identified. Duplicated logins: ${payload.login}.`;
             t.is(messageEnd, message.substr(message.indexOf(messageEnd)), "Account.login unique constraint");
         }
 
         const payload2: AccountConfigCreatePatch = {...payload, ...{login: "login2", proxy: {proxyRules: "http=foopy:80;ftp=foopy2"}}};
-        const updatedSettings2 = await addAccount(payload2).toPromise();
+        const updatedSettings2 = await addAccount(payload2);
         const expectedSettings2 = produce(updatedSettings, (draft) => {
             (draft._rev as number)++;
             draft.accounts.push(payload2);
@@ -116,14 +116,14 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
 
         try {
-            await updateAccount({...updatePayload, login: `${updatePayload.login}404`}).toPromise();
+            await updateAccount({...updatePayload, login: `${updatePayload.login}404`});
         } catch (err) {
             t.is(err.constructor.name, StatusCodeError.name, "StatusCodeError constructor");
             t.is(err.statusCode, StatusCodeError.getStatusCodeValue("NotFoundAccount"), "StatusCode.NotFoundAccount");
         }
 
-        const settings = await addAccount(addPayload).toPromise();
-        const updatedSettings = await updateAccount(updatePayload).toPromise();
+        const settings = await addAccount(addPayload);
+        const updatedSettings = await updateAccount(updatePayload);
         const expectedSettings = produce(settings, (draft) => {
             (draft._rev as number)++;
             Object.assign(draft.accounts[0], mergeDeepRight(draft.accounts[0], updatePayload));
@@ -148,19 +148,19 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
 
         try {
-            await removeAccount(removePayload404).toPromise();
+            await removeAccount(removePayload404);
         } catch ({message}) {
             t.is(message, `Account with "${removePayload404.login}" login has not been found`, "404 account");
         }
 
-        await addAccount(addProtonPayload).toPromise();
-        await addAccount(addTutanotaPayload).toPromise();
+        await addAccount(addProtonPayload);
+        await addAccount(addTutanotaPayload);
 
         const expectedSettings = produce(await t.context.ctx.settingsStore.readExisting(), (draft) => {
             (draft._rev as number)++;
             draft.accounts.splice(draft.accounts.findIndex(accountPickingPredicate(removePayload)), 1);
         });
-        const updatedSettings = await removeAccount(removePayload).toPromise();
+        const updatedSettings = await removeAccount(removePayload);
 
         t.is(updatedSettings.accounts.length, 1, `1 account`);
         t.deepEqual(updatedSettings, expectedSettings as any, `settings with updated account is returned`);
@@ -173,14 +173,14 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
 
         await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
 
-        await addAccount(buildProtonmailAccountData()).toPromise();
-        await addAccount(buildProtonmailAccountData()).toPromise();
-        let settings = await addAccount(buildTutanotaAccountData()).toPromise();
+        await addAccount(buildProtonmailAccountData());
+        await addAccount(buildProtonmailAccountData());
+        let settings = await addAccount(buildTutanotaAccountData());
 
-        await t.throwsAsync(changeAccountOrder({login: "login.404", index: 0}).toPromise());
-        await t.throwsAsync(changeAccountOrder({login: settings.accounts[0].login, index: -1}).toPromise());
-        await t.throwsAsync(changeAccountOrder({login: settings.accounts[0].login, index: settings.accounts.length}).toPromise());
-        await t.throwsAsync(changeAccountOrder({login: settings.accounts[0].login, index: settings.accounts.length + 1}).toPromise());
+        await t.throwsAsync(changeAccountOrder({login: "login.404", index: 0}));
+        await t.throwsAsync(changeAccountOrder({login: settings.accounts[0].login, index: -1}));
+        await t.throwsAsync(changeAccountOrder({login: settings.accounts[0].login, index: settings.accounts.length}));
+        await t.throwsAsync(changeAccountOrder({login: settings.accounts[0].login, index: settings.accounts.length + 1}));
 
         const expectedSettings = produce(settings, (draft) => {
             (draft._rev as number)++;
@@ -191,12 +191,12 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
             ];
         });
         const args = {account: settings.accounts[settings.accounts.length - 1], toIndex: 0};
-        settings = await changeAccountOrder({login: args.account.login, index: args.toIndex}).toPromise();
+        settings = await changeAccountOrder({login: args.account.login, index: args.toIndex});
         t.deepEqual(expectedSettings, settings);
 
         const expectedSettings2 = produce(settings, (draft) => draft);
         const args2 = {account: settings.accounts[settings.accounts.length - 1], toIndex: settings.accounts.length - 1};
-        settings = await changeAccountOrder({login: args2.account.login, index: args2.toIndex}).toPromise();
+        settings = await changeAccountOrder({login: args2.account.login, index: args2.toIndex});
         t.deepEqual(expectedSettings2, settings);
     },
 
@@ -209,12 +209,12 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
 
         const settings = await readConfigAndSettings(endpoints, {password: payload.password});
 
-        await t.throwsAsync(changeMasterPassword(emptyPasswordPayload).toPromise(), /Decryption\sfailed/gi);
-        await t.throwsAsync(changeMasterPassword(wrongPasswordPayload).toPromise(), /Decryption\sfailed/gi);
+        await t.throwsAsync(changeMasterPassword(emptyPasswordPayload), /Decryption\sfailed/gi);
+        await t.throwsAsync(changeMasterPassword(wrongPasswordPayload), /Decryption\sfailed/gi);
 
         const updatedSettingsAdapter = t.context.ctx.settingsStore.adapter; // keep reference before update
         const updatedSettingsStore = t.context.ctx.settingsStore; // keep reference before update
-        const updatedSettings = await changeMasterPassword(payload).toPromise();
+        const updatedSettings = await changeMasterPassword(payload);
         const expectedSettings = {
             ...settings,
             _rev: (settings._rev as number) + 1,
@@ -274,7 +274,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
 
     // TODO actualize "init" endpoint test
     init: async (t) => {
-        const result = await t.context.endpoints.init().toPromise();
+        const result = await t.context.endpoints.init();
         const {resolveVendorsAppCssLinkHref} = t.context.mocks["src/electron-main/util"];
 
         t.deepEqual(omit(["vendorsAppCssLinkHref"], result.electronLocations), t.context.ctx.locations);
@@ -293,7 +293,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         const resetSpy = sinon.spy(t.context.ctx.db, "reset");
         const updateOverlayIconSpy = sinon.spy(endpoints, "updateOverlayIcon");
 
-        await endpoints.logout().toPromise();
+        await endpoints.logout();
         t.falsy(t.context.ctx.settingsStore.adapter);
         t.is(deletePasswordSpy.callCount, 1);
 
@@ -305,7 +305,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         t.truthy(t.context.ctx.settingsStore.adapter);
         t.is(deletePasswordSpy.callCount, 2);
 
-        await endpoints.logout().toPromise();
+        await endpoints.logout();
         t.falsy(t.context.ctx.settingsStore.adapter);
         t.is(deletePasswordSpy.callCount, 3);
 
@@ -318,7 +318,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         const {showAboutBrowserWindow} = t.context.mocks["src/electron-main/window/about"];
         const action = t.context.endpoints.openAboutWindow;
 
-        await action().toPromise();
+        await action();
 
         t.true(showAboutBrowserWindow.calledWithExactly(t.context.ctx));
     },
@@ -335,7 +335,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
             null,
         ];
         for (const url of forbiddenUrls) {
-            await t.throwsAsync(action({url: String(url)}).toPromise(), `Forbidden url "${url}" opening has been prevented`);
+            await t.throwsAsync(action({url: String(url)}), `Forbidden url "${url}" opening has been prevented`);
         }
 
         const allowedUrls = [
@@ -346,14 +346,14 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         ];
         for (const url of allowedUrls) {
             // tslint:disable-next-line:await-promise
-            await t.notThrowsAsync(action({url: url as string}).toPromise());
+            await t.notThrowsAsync(action({url: url as string}));
             t.true(openExternalSpy.calledWith(url), `electron.shell.openExternal.calledWith("${url}")`);
         }
     },
 
     openSettingsFolder: async (t) => {
         const openItemSpy: sinon.SinonSpy = t.context.mocks.electron.shell.openItem;
-        await t.context.endpoints.openSettingsFolder().toPromise();
+        await t.context.endpoints.openSettingsFolder();
         t.true(openItemSpy.alwaysCalledWith(t.context.ctx.locations.userDataDir));
     },
 
@@ -383,7 +383,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
 
         for (const patch of patches) {
             const initialConfig = await t.context.ctx.configStore.readExisting();
-            const updatedConfig = await action(patch as BaseConfig).toPromise();
+            const updatedConfig = await action(patch as BaseConfig);
             const actual = pickBaseConfigProperties(updatedConfig);
             const expected = pickBaseConfigProperties({...initialConfig, ...JSON.parse(JSON.stringify(patch))});
 
@@ -393,7 +393,7 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
     },
 
     quit: async (t) => {
-        await t.context.endpoints.quit().toPromise();
+        await t.context.endpoints.quit();
         t.is(t.context.mocks.electron.app.exit.callCount, 1, "electron.app.exit called once");
     },
 
@@ -491,10 +491,10 @@ const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => Imple
         const config1 = await readConfig(endpoints);
         t.true(config1.compactLayout);
 
-        const config2 = await action().toPromise();
+        const config2 = await action();
         t.is(config2.compactLayout, !config1.compactLayout);
 
-        await action().toPromise();
+        await action();
         const config3 = await t.context.ctx.configStore.readExisting();
         t.is(config3.compactLayout, !config2.compactLayout);
     },
@@ -545,14 +545,14 @@ Object.entries(tests).forEach(([apiMethodName, method]) => {
 });
 
 async function readConfig(endpoints: Endpoints): Promise<Config> {
-    return await endpoints.readConfig().toPromise();
+    return await endpoints.readConfig();
 }
 
 async function readConfigAndSettings(
     endpoints: Endpoints, payload: PasswordFieldContainer & { savePassword?: boolean; supressErrors?: boolean },
 ): Promise<Settings> {
     await readConfig(endpoints);
-    return await endpoints.readSettings(payload).toPromise();
+    return await endpoints.readSettings(payload);
 }
 
 async function buildMocks() {
@@ -561,7 +561,7 @@ async function buildMocks() {
     return {
         "src/shared/api/main": {
             IPC_MAIN_API: {
-                registerApi: sinon.spy(),
+                register: sinon.spy(),
             },
         } as any,
         "src/electron-main/session": {
@@ -699,7 +699,7 @@ test.beforeEach(async (t) => {
 
     t.context.ctx = ctx;
     t.context.endpoints = await mockedModule.initApi(t.context.ctx);
-    t.context.mocks["src/shared/api/main"].IPC_MAIN_API.registerApi.calledWithExactly(t.context.endpoints);
+    t.context.mocks["src/shared/api/main"].IPC_MAIN_API.register.calledWithExactly(t.context.endpoints);
 
     // TODO make sure "IPC_MAIN_API.register" has been called
 });

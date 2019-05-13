@@ -7,7 +7,7 @@
     "./tslint-extending/tslint-consistent-codestyle.json"
   ],
   "rules": {
-    "no-unused-variable": true,
+    "no-unused-variable": false,
     "max-line-length": [
       true,
       140

@@ -1,4 +1,4 @@
-import {EMPTY, Observable, from, interval, merge, of} from "rxjs";
+import {EMPTY, Observable, from, interval, merge} from "rxjs";
 import {authenticator} from "otplib/otplib-browser";
 import {buffer, concatMap, debounceTime, distinctUntilChanged, map, tap} from "rxjs/operators";
 import {pick} from "ramda";
@@ -21,7 +21,7 @@ export async function registerApi(): Promise<void> {
     return resolveProviderApi()
         .then(bootstrapEndpoints)
         .then((endpoints) => {
-            TUTANOTA_IPC_WEBVIEW_API.registerApi(endpoints, {logger: _logger});
+            TUTANOTA_IPC_WEBVIEW_API.register(endpoints, {logger: _logger});
         });
 }
 
@@ -36,18 +36,16 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
     const endpoints: TutanotaApi = {
         ...buildDbPatchEndpoint,
 
-        ping: () => of(null),
+        async ping() {},
 
-        selectAccount: ({databaseView, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "select()", zoneName)) => {
-            logger.info();
+        async selectAccount({databaseView, zoneName}) {
+            _logger.info("selectAccount()", zoneName);
 
             await (await resolveIpcMainApi())("selectAccount")({databaseView}).toPromise();
+        },
 
-            return null;
-        })()),
-
-        selectMailOnline: (input) => from((async (logger = curryFunctionMembers(_logger, "selectMailOnline()", input.zoneName)) => {
-            logger.info();
+        async selectMailOnline(input) {
+            _logger.info("selectMailOnline()", input.zoneName);
 
             const {tutao} = window;
             const mailId = input.mail.id;
@@ -58,17 +56,17 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
             }
 
             tutao.m.route.set(`/mail/${folderId}/${mailId}`);
+        },
 
-            return null;
-        })()),
-
-        fetchSingleMail: (input) => from((async (logger = curryFunctionMembers(_logger, "fetchSingleMail()", input.zoneName)) => {
-            logger.info();
+        async fetchSingleMail(input) {
+            _logger.info("fetchSingleMail()", input.zoneName);
 
             throw new Error("Not yet supported for Tutanota");
-        })()),
+        },
 
-        fillLogin: ({login, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "fillLogin()", zoneName)) => {
+        async fillLogin({login, zoneName}) {
+            const logger = curryFunctionMembers(_logger, "fillLogin()", zoneName);
+
             logger.info();
 
             const cancelEvenHandler = (event: MouseEvent) => {
@@ -91,14 +89,14 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
             elements.storePasswordCheckboxBlock.removeEventListener("click", cancelEvenHandler);
             elements.storePasswordCheckboxBlock.addEventListener("click", cancelEvenHandler, true);
             logger.verbose(`"store" checkbox disabled`);
+        },
 
-            return null;
-        })()),
+        async login({login, password, zoneName}) {
+            const logger = curryFunctionMembers(_logger, "login()", zoneName);
 
-        login: ({login, password, zoneName}) => from((async (logger = curryFunctionMembers(_logger, "login()", zoneName)) => {
             logger.info();
 
-            await endpoints.fillLogin({login, zoneName}).toPromise();
+            await endpoints.fillLogin({login, zoneName});
             logger.verbose(`fillLogin() executed`);
 
             const elements = await resolveDomElements({
@@ -116,12 +114,11 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
 
             elements.submit.click();
             logger.verbose(`clicked`);
+        },
 
-            return null;
-        })()),
-
-        login2fa: ({secret, zoneName}) => from((async () => {
+        async login2fa({secret, zoneName}) {
             const logger = curryFunctionMembers(_logger, "login2fa()", zoneName);
+
             logger.info();
 
             const elements = await resolveDomElements(login2FaWaitElementsConfig);
@@ -136,10 +133,11 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
                 logger,
                 {submitTimeoutMs: ONE_SECOND_MS * 8},
             );
-        })()),
+        },
 
         notification: ({entryUrl, zoneName}) => {
             const logger = curryFunctionMembers(_logger, "notification()", zoneName);
+
             logger.info();
 
             type LoggedInOutput = Required<Pick<TutanotaNotificationOutput, "loggedIn">>;

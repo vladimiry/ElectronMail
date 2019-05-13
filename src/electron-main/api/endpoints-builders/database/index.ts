@@ -1,6 +1,6 @@
 import electronLog from "electron-log";
 import sanitizeHtml from "sanitize-html";
-import {Observable, from, of, race, throwError, timer} from "rxjs";
+import {Observable, race, throwError, timer} from "rxjs";
 import {app, dialog} from "electron";
 import {concatMap, filter, mergeMap, startWith, take} from "rxjs/operators";
 import {equals, mergeDeepRight, omit} from "ramda";
@@ -10,6 +10,7 @@ import {Context} from "src/electron-main/model";
 import {DEFAULT_API_CALL_TIMEOUT} from "src/shared/constants";
 import {
     Endpoints,
+    EndpointsScan,
     IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS,
     IPC_MAIN_API_DB_INDEXER_ON_ACTIONS,
     IPC_MAIN_API_NOTIFICATION_ACTIONS,
@@ -29,7 +30,7 @@ import {writeEmlFile} from "./export";
 
 const _logger = curryFunctionMembers(electronLog, "[electron-main/api/endpoints-builders/database]");
 
-type Methods =
+type Methods = keyof Pick<Endpoints,
     | "dbPatch"
     | "dbGetAccountMetadata"
     | "dbGetAccountDataView"
@@ -38,13 +39,13 @@ type Methods =
     | "dbSearchRootConversationNodes"
     | "dbFullTextSearch"
     | "dbIndexerOn"
-    | "dbIndexerNotification";
+    | "dbIndexerNotification">;
 
 export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Methods>> {
     return {
-        dbPatch: ({type, login, metadata: metadataPatch, forceFlush, patch: entityUpdatesPatch}) => from((async (
-            logger = curryFunctionMembers(_logger, "dbPatch()"),
-        ) => {
+        async dbPatch({type, login, metadata: metadataPatch, forceFlush, patch: entityUpdatesPatch}) {
+            const logger = curryFunctionMembers(_logger, "dbPatch()");
+
             logger.info();
 
             const key = {type, login};
@@ -99,7 +100,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
             }
 
             // TODO consider caching the config
-            const {disableSpamNotifications} = await (await ctx.deferredEndpoints.promise).readConfig().toPromise();
+            const {disableSpamNotifications} = await (await ctx.deferredEndpoints.promise).readConfig();
 
             IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount({
                 key,
@@ -109,20 +110,18 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
             }));
 
             return account.metadata;
-        })()),
+        },
 
-        dbGetAccountMetadata: ({type, login}) => from((async (
-            logger = curryFunctionMembers(_logger, "dbGetAccountMetadata()"),
-        ) => {
-            logger.info();
+        async dbGetAccountMetadata({type, login}) {
+            _logger.info("dbGetAccountMetadata()");
+
             const account = ctx.db.getAccount({type, login});
-            return account ? account.metadata : null;
-        })()),
 
-        dbGetAccountDataView: ({type, login}) => from((async (
-            logger = curryFunctionMembers(_logger, "dbGetAccountDataView()"),
-        ) => {
-            logger.info();
+            return account ? account.metadata : null;
+        },
+
+        async dbGetAccountDataView({type, login}) {
+            _logger.info("dbGetAccountDataView()");
 
             const account = ctx.db.getFsAccount({type, login});
 
@@ -133,12 +132,10 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
             return {
                 folders: prepareFoldersView(account),
             };
-        })()),
+        },
 
-        dbGetAccountMail: ({type, login, pk}) => from((async (
-            logger = curryFunctionMembers(_logger, "dbGetAccountMail()"),
-        ) => {
-            logger.info();
+        async dbGetAccountMail({type, login, pk}) {
+            _logger.info("dbGetAccountMail()");
 
             const account = ctx.db.getFsAccount({type, login});
 
@@ -157,60 +154,59 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
                 // TODO test "dbGetAccountMail" setting "mail.body" through the "sanitizeHtml" call
                 body: sanitizeHtml(mail.body),
             };
-        })()),
+        },
 
-        dbExport: ({type, login, mailPks}) => ((
-            logger = curryFunctionMembers(_logger, "dbExport()"),
-        ) => new Observable<Unpacked<ReturnType<Endpoints["dbExport"]>>>((subscriber) => {
-            logger.info();
+        dbExport({type, login, mailPks}) {
+            _logger.info("dbExport()");
 
-            const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
-            if (!browserWindow) {
-                return subscriber.error(new Error(`Failed to resolve main app window`));
-            }
+            return new Observable<EndpointsScan["ApiReturns"]["dbExport"]>((subscriber) => {
+                const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
 
-            const [dir]: Array<string | undefined> = dialog.showOpenDialog(
-                browserWindow,
-                {
-                    title: "Select directory to export emails to the EML files",
-                    defaultPath: app.getPath("home"),
-                    properties: ["openDirectory"],
-                },
-            ) || [];
-
-            if (!dir) {
-                return subscriber.complete();
-            }
-
-            const account = ctx.db.getFsAccount({type, login});
-
-            if (!account) {
-                return subscriber.error(new Error(`Failed to resolve account by the provided "type/login"`));
-            }
-
-            const mails = mailPks
-                ? Object.values(account.mails).filter(({pk}) => mailPks.includes(pk))
-                : Object.values(account.mails);
-            const count = mails.length;
-
-            subscriber.next({count});
-
-            const promise = (async () => {
-                for (let index = 0; index < count; index++) {
-                    const {file} = await writeEmlFile(mails[index], dir);
-                    subscriber.next({file, progress: +((index + 1) / count * 100).toFixed(2)});
+                if (!browserWindow) {
+                    return subscriber.error(new Error(`Failed to resolve main app window`));
                 }
-            })();
 
-            promise
-                .then(() => subscriber.complete())
-                .catch((error) => subscriber.error(error));
-        }))(),
+                const [dir]: Array<string | undefined> = dialog.showOpenDialog(
+                    browserWindow,
+                    {
+                        title: "Select directory to export emails to the EML files",
+                        defaultPath: app.getPath("home"),
+                        properties: ["openDirectory"],
+                    },
+                ) || [];
 
-        dbSearchRootConversationNodes: ({type, login, folderPks, ...restOptions}) => from((async (
-            logger = curryFunctionMembers(_logger, "dbSearchRootConversationNodes()"),
-        ) => {
-            logger.info();
+                if (!dir) {
+                    return subscriber.complete();
+                }
+
+                const account = ctx.db.getFsAccount({type, login});
+
+                if (!account) {
+                    return subscriber.error(new Error(`Failed to resolve account by the provided "type/login"`));
+                }
+
+                const mails = mailPks
+                    ? Object.values(account.mails).filter(({pk}) => mailPks.includes(pk))
+                    : Object.values(account.mails);
+                const count = mails.length;
+
+                subscriber.next({count});
+
+                const promise = (async () => {
+                    for (let index = 0; index < count; index++) {
+                        const {file} = await writeEmlFile(mails[index], dir);
+                        subscriber.next({file, progress: +((index + 1) / count * 100).toFixed(2)});
+                    }
+                })();
+
+                promise
+                    .then(() => subscriber.complete())
+                    .catch((error) => subscriber.error(error));
+            });
+        },
+
+        async dbSearchRootConversationNodes({type, login, folderPks, ...restOptions}) {
+            _logger.info("dbSearchRootConversationNodes()");
 
             const account = ctx.db.getFsAccount({type, login});
 
@@ -225,142 +221,134 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
                 : restOptions.mailPks;
 
             return searchRootConversationNodes(account, {folderPks, mailPks});
-        })()),
+        },
 
-        dbFullTextSearch: (() => {
-            const logger = curryFunctionMembers(_logger, "dbFullTextSearch()");
+        dbFullTextSearch({type, login, query, folderPks}) {
+            _logger.info("dbFullTextSearch()");
+
             const timeoutMs = DEFAULT_API_CALL_TIMEOUT;
-            const method: Pick<Endpoints, "dbFullTextSearch">["dbFullTextSearch"] = ({type, login, query, folderPks}) => {
-                logger.info();
+            const account = ctx.db.getFsAccount({type, login});
 
-                const account = ctx.db.getFsAccount({type, login});
+            if (!account) {
+                throw new Error(`Failed to resolve account by the provided "type/login"`);
+            }
 
-                if (!account) {
-                    throw new Error(`Failed to resolve account by the provided "type/login"`);
-                }
-
-                const uid = uuid();
-                const result$ = race(
-                    IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$.pipe(
-                        filter(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.is.SearchResult),
-                        filter(({payload}) => payload.uid === uid),
-                        take(1),
-                        mergeMap(({payload: {data: {items, expandedTerms}}}) => {
-                            const mailScoresByPk = new Map<IndexableMailId, number>(
-                                items.map(({key, score}) => [key, score] as [IndexableMailId, number]),
-                            );
-                            const rootConversationNodes = searchRootConversationNodes(
-                                account,
-                                {mailPks: [...mailScoresByPk.keys()], folderPks},
-                            );
-                            const mailsBundleItems: Unpacked<ReturnType<Endpoints["dbFullTextSearch"]>>["mailsBundleItems"] = [];
-                            const findByFolder = folderPks
-                                ? ({pk}: View.Folder) => folderPks.includes(pk)
-                                : () => true;
-
-                            for (const rootConversationNode of rootConversationNodes) {
-                                let allNodeMailsCount = 0;
-                                const matchedScoredNodeMails: Array<Unpacked<typeof mailsBundleItems>["mail"]> = [];
-
-                                walkConversationNodesTree([rootConversationNode], ({mail}) => {
-                                    if (!mail) {
-                                        return;
-                                    }
-
-                                    allNodeMailsCount++;
-
-                                    const score = mailScoresByPk.get(mail.pk);
-
-                                    if (
-                                        typeof score !== "undefined"
-                                        &&
-                                        mail.folders.find(findByFolder)
-                                    ) {
-                                        matchedScoredNodeMails.push({...mail, score});
-                                    }
-                                });
-
-                                if (!matchedScoredNodeMails.length) {
-                                    continue;
-                                }
-
-                                mailsBundleItems.push(
-                                    ...matchedScoredNodeMails.map((mail) => ({
-                                        mail,
-                                        conversationSize: allNodeMailsCount,
-                                    })),
-                                );
-                            }
-
-                            return [{
-                                uid,
-                                mailsBundleItems,
-                                expandedTerms,
-                            }];
-                        }),
-                    ),
-                    timer(timeoutMs).pipe(
-                        concatMap(() => throwError(new Error(`Failed to complete the search in ${timeoutMs}ms`))),
-                    ),
-                );
-
-                IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.next(
-                    IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Search({
-                        key: {type, login},
-                        query,
-                        uid,
-                    }),
-                );
-
-                return result$;
-            };
-
-            return method;
-        })(),
-
-        dbIndexerOn: (() => {
-            const logger = curryFunctionMembers(_logger, "dbIndexerOn()");
-            const method: Pick<Endpoints, "dbIndexerOn">["dbIndexerOn"] = (action) => {
-                logger.info(`action.type: ${action.type}`);
-
-                // propagating action to custom stream
-                IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$.next(action);
-
-                IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.match(action, {
-                    Bootstrapped: () => {
-                        setTimeout(async () => {
-                            const logins = (await ctx.settingsStore.readExisting()).accounts.map((account) => account.login);
-                            const config = await (await ctx.deferredEndpoints.promise).readConfig().toPromise();
-
-                            for (const {account, pk} of ctx.db.accountsIterator()) {
-                                if (logins.includes(pk.login)) {
-                                    await indexAccount(account, pk, config);
-                                }
-                            }
-                        });
-                    },
-                    ProgressState: (payload) => {
-                        logger.verbose(`ProgressState.status: ${JSON.stringify(payload.status)}`);
-
-                        // propagating status to main channel which streams data to UI process
-                        IPC_MAIN_API_NOTIFICATION$.next(
-                            IPC_MAIN_API_NOTIFICATION_ACTIONS.DbIndexerProgressState(payload),
+            const uid = uuid();
+            const result$ = race(
+                IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$.pipe(
+                    filter(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.is.SearchResult),
+                    filter(({payload}) => payload.uid === uid),
+                    take(1),
+                    mergeMap(({payload: {data: {items, expandedTerms}}}) => {
+                        const mailScoresByPk = new Map<IndexableMailId, number>(
+                            items.map(({key, score}) => [key, score] as [IndexableMailId, number]),
                         );
-                    },
-                    default: () => {
-                        // NOOP
-                    },
-                });
+                        const rootConversationNodes = searchRootConversationNodes(
+                            account,
+                            {mailPks: [...mailScoresByPk.keys()], folderPks},
+                        );
+                        const mailsBundleItems: Unpacked<ReturnType<Endpoints["dbFullTextSearch"]>>["mailsBundleItems"] = [];
+                        const findByFolder = folderPks
+                            ? ({pk}: View.Folder) => folderPks.includes(pk)
+                            : () => true;
 
-                return of(null);
-            };
+                        for (const rootConversationNode of rootConversationNodes) {
+                            let allNodeMailsCount = 0;
+                            const matchedScoredNodeMails: Array<Unpacked<typeof mailsBundleItems>["mail"]> = [];
 
-            return method;
-        })(),
+                            walkConversationNodesTree([rootConversationNode], ({mail}) => {
+                                if (!mail) {
+                                    return;
+                                }
 
-        dbIndexerNotification: () => IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.asObservable().pipe(
-            startWith(IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Bootstrap({})),
-        ),
+                                allNodeMailsCount++;
+
+                                const score = mailScoresByPk.get(mail.pk);
+
+                                if (
+                                    typeof score !== "undefined"
+                                    &&
+                                    mail.folders.find(findByFolder)
+                                ) {
+                                    matchedScoredNodeMails.push({...mail, score});
+                                }
+                            });
+
+                            if (!matchedScoredNodeMails.length) {
+                                continue;
+                            }
+
+                            mailsBundleItems.push(
+                                ...matchedScoredNodeMails.map((mail) => ({
+                                    mail,
+                                    conversationSize: allNodeMailsCount,
+                                })),
+                            );
+                        }
+
+                        return [{
+                            uid,
+                            mailsBundleItems,
+                            expandedTerms,
+                        }];
+                    }),
+                ),
+                timer(timeoutMs).pipe(
+                    concatMap(() => throwError(new Error(`Failed to complete the search in ${timeoutMs}ms`))),
+                ),
+            );
+
+            IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.next(
+                IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Search({
+                    key: {type, login},
+                    query,
+                    uid,
+                }),
+            );
+
+            return result$;
+        },
+
+        async dbIndexerOn(action) {
+            const logger = curryFunctionMembers(_logger, "dbIndexerOn()");
+
+            logger.info(`action.type: ${action.type}`);
+
+            // propagating action to custom stream
+            IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$.next(action);
+
+            IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.match(action, {
+                Bootstrapped: () => {
+                    setTimeout(async () => {
+                        const logins = (await ctx.settingsStore.readExisting()).accounts.map((account) => account.login);
+                        const config = await (await ctx.deferredEndpoints.promise).readConfig();
+
+                        for (const {account, pk} of ctx.db.accountsIterator()) {
+                            if (logins.includes(pk.login)) {
+                                await indexAccount(account, pk, config);
+                            }
+                        }
+                    });
+                },
+                ProgressState: (payload) => {
+                    logger.verbose(`ProgressState.status: ${JSON.stringify(payload.status)}`);
+
+                    // propagating status to main channel which streams data to UI process
+                    IPC_MAIN_API_NOTIFICATION$.next(
+                        IPC_MAIN_API_NOTIFICATION_ACTIONS.DbIndexerProgressState(payload),
+                    );
+                },
+                default: () => {
+                    // NOOP
+                },
+            });
+        },
+
+        dbIndexerNotification() {
+            return IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.asObservable().pipe(
+                startWith(IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Bootstrap({})),
+            );
+        },
     };
 }
 

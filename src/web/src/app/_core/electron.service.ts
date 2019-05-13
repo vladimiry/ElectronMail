@@ -1,11 +1,11 @@
 import {Injectable, OnDestroy} from "@angular/core";
-import {Model} from "pubsub-to-stream-api";
 import {Observable, Subscription, from, of, throwError, timer} from "rxjs";
 import {Store, select} from "@ngrx/store";
 import {concat, concatMap, delay, filter, map, mergeMap, retryWhen, switchMap, take, takeWhile, withLatestFrom} from "rxjs/operators";
 
 import {AccountType} from "src/shared/model/account";
 import {DEFAULT_API_CALL_TIMEOUT, ONE_SECOND_MS} from "src/shared/constants";
+import {Model} from "pubsub-to-stream-api";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {State} from "src/web/src/app/store/reducers/options";
 import {WebViewApi} from "src/shared/api/webview/common";

@@ -3,7 +3,6 @@ import logger from "electron-log";
 import path from "path";
 import {constants as FsConstants} from "fs";
 import {Model, Store} from "fs-json-store";
-import {from} from "rxjs";
 import {platform} from "os";
 
 import {Account, Database, FindInPage, General, TrayIcon} from "./endpoints-builders";
@@ -25,7 +24,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
         ...await General.buildEndpoints(ctx),
         ...await TrayIcon.buildEndpoints(ctx),
 
-        changeMasterPassword: ({password, newPassword}) => from((async () => {
+        async changeMasterPassword({password, newPassword}) {
             const readStore = ctx.settingsStore.clone({adapter: await buildSettingsAdapter(ctx, password)});
             const existingData = await readStore.readExisting();
             const newStore = ctx.settingsStore.clone({adapter: await buildSettingsAdapter(ctx, newPassword)});
@@ -42,9 +41,9 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
             }
 
             return newData;
-        })()),
+        },
 
-        init: () => from((async () => {
+        async init() {
             let hasSavedPassword: boolean | undefined;
 
             try {
@@ -155,9 +154,9 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
                 hasSavedPassword,
                 copyV2AppData,
             };
-        })()),
+        },
 
-        migrate: ({config, settings, database}) => from((async () => {
+        async migrate({config, settings, database}) {
             for (const {skip, src, dest, overwrite} of [config, settings, database]) {
                 if (skip) {
                     continue;
@@ -165,24 +164,23 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
 
                 await fsExtra.copyFile(src, dest, overwrite ? 0 : FsConstants.COPYFILE_EXCL);
             }
+        },
 
-            return null;
-        })()),
-
-        logout: () => from((async () => {
+        async logout() {
             if (ctx.keytarSupport) {
                 await deletePassword();
             }
+
             ctx.settingsStore = ctx.settingsStore.clone({adapter: undefined});
             ctx.db.reset();
             delete ctx.selectedAccount; // TODO extend "logout" api test: "delete ctx.selectedAccount"
-            await clearSessionsCache(ctx);
-            await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0}).toPromise();
-            await detachFullTextIndexWindow(ctx);
-            return null;
-        })()),
 
-        patchBaseConfig: (patch) => from((async () => {
+            await clearSessionsCache(ctx);
+            await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0});
+            await detachFullTextIndexWindow(ctx);
+        },
+
+        async patchBaseConfig(patch) {
             const savedConfig = await ctx.configStore.readExisting();
             const newConfig = await ctx.configStore.write({
                 ...savedConfig,
@@ -202,10 +200,10 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
             }
 
             return newConfig;
-        })()),
+        },
 
         // TODO update "readConfig" api method test ("upgradeConfig" call, "logger.transports.file.level" updpate)
-        readConfig: () => from((async () => {
+        async readConfig() {
             const store = ctx.configStore;
             const existingConfig = await store.read();
             const config = existingConfig
@@ -215,10 +213,10 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
             logger.transports.file.level = config.logLevel;
 
             return config;
-        })()),
+        },
 
         // TODO update "readSettings" api method test ("no password provided" case, keytar support)
-        readSettings: ({password, savePassword}) => from((async () => {
+        async readSettings({password, savePassword}) {
             // trying to auto-login
             if (!password) {
                 if (!ctx.keytarSupport) {
@@ -228,7 +226,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
                 if (!storedPassword) {
                     throw new Error("No password provided to decrypt settings with");
                 }
-                return await endpoints.readSettings({password: storedPassword}).toPromise();
+                return await endpoints.readSettings({password: storedPassword});
             }
 
             const adapter = await buildSettingsAdapter(ctx, password);
@@ -254,17 +252,18 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
             }
 
             return settings;
-        })()),
+        },
 
-        reEncryptSettings: ({encryptionPreset, password}) => from((async () => {
+        async reEncryptSettings({encryptionPreset, password}) {
             await ctx.configStore.write({
                 ...(await ctx.configStore.readExisting()),
                 encryptionPreset,
             });
-            return await endpoints.changeMasterPassword({password, newPassword: password}).toPromise();
-        })()),
 
-        loadDatabase: ({accounts}) => from((async () => {
+            return await endpoints.changeMasterPassword({password, newPassword: password});
+        },
+
+        async loadDatabase({accounts}) {
             logger.info("loadDatabase() start");
 
             if (await ctx.db.persisted()) {
@@ -272,26 +271,27 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
                 await upgradeDatabase(ctx.db, accounts);
             }
 
-            if ((await endpoints.readConfig().toPromise()).fullTextSearch) {
+            if ((await endpoints.readConfig()).fullTextSearch) {
                 await attachFullTextIndexWindow(ctx);
             } else {
                 await detachFullTextIndexWindow(ctx);
             }
 
             logger.info("loadDatabase() end");
+        },
 
-            return null;
-        })()),
+        async settingsExists() {
+            return ctx.settingsStore.readable();
+        },
 
-        settingsExists: () => from(ctx.settingsStore.readable()),
-
-        toggleCompactLayout: () => from((async () => {
+        async toggleCompactLayout() {
             const config = await ctx.configStore.readExisting();
+
             return await ctx.configStore.write({...config, compactLayout: !config.compactLayout});
-        })()),
+        },
     };
 
-    IPC_MAIN_API.registerApi(endpoints, {logger});
+    IPC_MAIN_API.register(endpoints, {logger});
 
     ctx.deferredEndpoints.resolve(endpoints);
 

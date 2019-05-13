@@ -121,7 +121,7 @@ export const preprocessError: Arguments<typeof buildDbPatchRetryPipeline>[0] = (
         (name === "ServiceUnavailableError" && message.startsWith("503"))
     );
     return {
-        error,
+        error: new Error(error),
         retriable,
         skippable: retriable,
     };

@@ -1,32 +1,36 @@
-// tslint:disable:no-unused-variable // TODO figure why tslint detects some imports as unused
-
-import {ApiMethod, WebViewApiService} from "electron-rpc-api";
-import {Model} from "pubsub-to-stream-api";
+import {ActionType} from "electron-rpc-api";
 
 import {AccountType} from "src/shared/model/account";
 import {DbAccountPk, Mail, MemoryDbAccount} from "src/shared/model/database";
 import {LoginFieldContainer, PasswordFieldContainer} from "src/shared/model/container";
 import {PACKAGE_NAME} from "src/shared/constants";
-import {ProtonmailApi} from "./protonmail";
+import {ProtonmailApi} from "src/shared/api/webview/protonmail";
 import {TutanotaApi} from "./tutanota";
 import {ZoneApiParameter} from "src/shared/api/common";
 
 export const channel = `${PACKAGE_NAME}:webview-api`;
 
-export interface CommonWebViewApi<T extends AccountType> {
-    ping: ApiMethod<ZoneApiParameter, null>;
-    fillLogin: ApiMethod<LoginFieldContainer & ZoneApiParameter, null>;
-    login: ApiMethod<LoginFieldContainer & PasswordFieldContainer & ZoneApiParameter, null>;
-    login2fa: ApiMethod<{ secret: string } & ZoneApiParameter, null>;
-    buildDbPatch: ApiMethod<DbAccountPk & { metadata: Readonly<MemoryDbAccount<T>["metadata"]> | null; } & ZoneApiParameter, null>;
-    selectAccount: ApiMethod<{ databaseView?: boolean } & ZoneApiParameter, null>;
-    selectMailOnline: ApiMethod<{
-        pk: DbAccountPk;
-        mail: Pick<Mail, "id" | "mailFolderIds" | "conversationEntryPk">;
-    } & ZoneApiParameter,
-        null>;
-    fetchSingleMail: ApiMethod<DbAccountPk & { mailPk: Mail["pk"] } & ZoneApiParameter, null>;
-}
+const {Promise, Observable} = ActionType;
 
-export type WebViewApi<T extends AccountType, A = T extends "tutanota" ? TutanotaApi : ProtonmailApi>
-    = WebViewApiService<Model.ActionsRecord<Extract<keyof A, string>> & A>;
+export type WebViewApi<T extends AccountType> = T extends "tutanota"
+    ? TutanotaApi
+    : T extends "protonmail"
+        ? ProtonmailApi
+        : never;
+
+export function buildWebViewApiDefinition<T extends AccountType, NotificationOutput>() {
+    return {
+        ping: Promise<[ZoneApiParameter]>(),
+        fillLogin: Promise<[LoginFieldContainer & ZoneApiParameter]>(),
+        login: Promise<[LoginFieldContainer & PasswordFieldContainer & ZoneApiParameter]>(),
+        login2fa: Promise<[{ secret: string } & ZoneApiParameter]>(),
+        buildDbPatch: Observable<[DbAccountPk & { metadata: Readonly<MemoryDbAccount<T>["metadata"]> | null; } & ZoneApiParameter]>(),
+        selectAccount: Promise<[{ databaseView?: boolean } & ZoneApiParameter]>(),
+        selectMailOnline: Promise<[{
+            pk: DbAccountPk;
+            mail: Pick<Mail, "id" | "mailFolderIds" | "conversationEntryPk">;
+        } & ZoneApiParameter]>(),
+        fetchSingleMail: Promise<[DbAccountPk & { mailPk: Mail["pk"] } & ZoneApiParameter]>(),
+        notification: Observable<[{ entryUrl: string; entryApiUrl: string; } & ZoneApiParameter], NotificationOutput>(),
+    };
+}

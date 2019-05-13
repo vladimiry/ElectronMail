@@ -14,7 +14,7 @@ export async function appReadyHandler(ctx: Context) {
     const endpoints = await initApi(ctx);
 
     // initializing config.json file, so consequent "ctx.configStore.readExisting()" calls would not fails
-    await endpoints.readConfig().toPromise();
+    await endpoints.readConfig();
 
     initWebContentsCreatingHandlers(ctx);
 
@@ -24,8 +24,8 @@ export async function appReadyHandler(ctx: Context) {
         appMenu: await initApplicationMenu(ctx),
     };
 
-    await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0}).toPromise();
+    await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0});
 
-    app.on("second-instance", async () => await endpoints.activateBrowserWindow().toPromise());
+    app.on("second-instance", async () => await endpoints.activateBrowserWindow());
     app.on("activate", async () => await endpoints.activateBrowserWindow());
 }

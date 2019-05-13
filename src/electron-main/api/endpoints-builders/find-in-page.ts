@@ -1,21 +1,20 @@
 import electronLog from "electron-log";
 import {webContents as ElectronWebContents} from "electron";
-import {Subject, from, of} from "rxjs";
+import {Subject, of} from "rxjs";
 import {startWith} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
-import {Endpoints} from "src/shared/api/main";
-import {Unpacked} from "src/shared/types";
+import {Endpoints, EndpointsScan} from "src/shared/api/main";
 import {curryFunctionMembers} from "src/shared/util";
 import {initFindInPageBrowserView} from "src/electron-main/window/find-in-page";
 
-type ApiMethods =
+type ApiMethods = keyof Pick<Endpoints,
     | "findInPageDisplay"
     | "findInPage"
     | "findInPageStop"
-    | "findInPageNotification";
+    | "findInPageNotification">;
 
-type Notification = Unpacked<ReturnType<Endpoints["findInPageNotification"]>>;
+type Notification = EndpointsScan["ApiReturns"]["findInPageNotification"];
 
 interface NotificationMapValue {
     readonly subject: Subject<Notification>;
@@ -26,20 +25,24 @@ const _logger = curryFunctionMembers(electronLog, "[electron-main/api/endpoints-
 
 export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiMethods>> {
     let findInPageNotification: NotificationMapValue | null = null;
+
     const resolveContext = () => {
         if (!ctx.uiContext) {
             throw new Error(`UI Context has not been initialized`);
         }
         return ctx.uiContext;
     };
+
     const endpoints: Pick<Endpoints, ApiMethods> = {
-        findInPageDisplay: ({visible}) => from((async (logger = curryFunctionMembers(_logger, "findInPageDisplay()")) => {
+        async findInPageDisplay({visible}) {
+            const logger = curryFunctionMembers(_logger, "findInPageDisplay()");
+
             logger.info();
 
             if (visible) {
                 if (!ctx.selectedAccount) {
                     logger.warn(`skipping as "ctx.selectedAccount" undefined`);
-                    return null;
+                    return;
                 }
 
                 if (ctx.selectedAccount.databaseView) {
@@ -47,14 +50,14 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
                     //      webview can't be detached from DOM as it gets reloaded when reattached
                     //      search is not available in database view mode until then
                     logger.warn(`skipping as "ctx.selectedAccount.databaseView" positive value`);
-                    return null;
+                    return;
                 }
 
-                const {findInPage} = await (await ctx.deferredEndpoints.promise).readConfig().toPromise();
+                const {findInPage} = await (await ctx.deferredEndpoints.promise).readConfig();
 
                 if (!findInPage) {
                     logger.debug(`skipping as "findInPage" config option disabled`);
-                    return null;
+                    return;
                 }
             }
 
@@ -98,27 +101,23 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
                     browserWindow.webContents.focus();
                 }
             }
+        },
 
-            return null;
-        })()),
-
-        findInPage({query, options}) {
+        async findInPage({query, options}) {
             if (!ctx.selectedAccount) {
-                return of(null);
+                return null;
             }
 
             const webContents = ElectronWebContents.fromId(ctx.selectedAccount.webContentId);
             const requestId = webContents.findInPage(query, options);
 
-            return of({requestId});
+            return {requestId};
         },
 
-        findInPageStop() {
+        async findInPageStop() {
             ElectronWebContents
                 .getAllWebContents()
                 .forEach((webContents) => webContents.stopFindInPage("clearSelection"));
-
-            return of(null);
         },
 
         findInPageNotification() {
@@ -134,7 +133,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
             const webContents = ElectronWebContents.fromId(ctx.selectedAccount.webContentId);
             const notificationSubject = new Subject<Notification>();
             const notificationReset = (() => {
-                const eventArgs: ["found-in-page", (event: Electron.Event, result: Electron.FoundInPageResult) => void] = [
+                const eventSubscriptionArgs: ["found-in-page", (event: Electron.Event, result: Electron.FoundInPageResult) => void] = [
                     "found-in-page",
                     (...args) => {
                         const [, result] = args;
@@ -144,14 +143,14 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
                     },
                 ];
 
-                webContents.addListener(...eventArgs);
+                webContents.addListener(...eventSubscriptionArgs);
 
                 return () => {
                     if (webContents.isDestroyed()) {
                         return;
                     }
                     notificationSubject.complete();
-                    webContents.removeListener(...eventArgs);
+                    webContents.removeListener(...eventSubscriptionArgs);
                 };
             })();
 

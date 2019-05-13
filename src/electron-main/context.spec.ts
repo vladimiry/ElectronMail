@@ -88,7 +88,7 @@ test.serial([
                 TrayIcon: {buildEndpoints: sinon.stub()},
             });
             mock(() => import("src/shared/api/main")).callThrough().with({
-                IPC_MAIN_API: {registerApi: sinon.stub()} as any,
+                IPC_MAIN_API: {register: sinon.stub()} as any,
             });
             mock(() => import("src/electron-main/window/full-text-search")).callThrough().with({
                 attachFullTextIndexWindow: sinon.stub().returns(Promise.resolve()),
@@ -97,8 +97,8 @@ test.serial([
         },
     );
     const {readSettings, readConfig} = await initApi(ctx);
-    await readConfig().toPromise();
-    const {databaseEncryptionKey} = await readSettings({password: "password-123"}).toPromise();
+    await readConfig();
+    const {databaseEncryptionKey} = await readSettings({password: "password-123"});
     t.is(await ctx.db.options.encryption.keyResolver(), initialSettings.databaseEncryptionKey);
     t.is(await ctx.db.options.encryption.keyResolver(), databaseEncryptionKey);
 });

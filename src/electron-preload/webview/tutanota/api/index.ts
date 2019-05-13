@@ -41,7 +41,7 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
         async selectAccount({databaseView, zoneName}) {
             _logger.info("selectAccount()", zoneName);
 
-            await (await resolveIpcMainApi())("selectAccount")({databaseView}).toPromise();
+            await (await resolveIpcMainApi())("selectAccount")({databaseView});
         },
 
         async selectMailOnline(input) {

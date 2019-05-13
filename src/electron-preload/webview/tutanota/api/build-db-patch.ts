@@ -1,5 +1,5 @@
 import {catchError} from "rxjs/operators";
-import {defer, of} from "rxjs";
+import {defer, from} from "rxjs";
 
 import * as Database from "src/electron-preload/webview/tutanota/lib/database";
 import * as DatabaseModel from "src/shared/model/database";
@@ -32,7 +32,7 @@ const buildDbPatchEndpoint: Pick<TutanotaApi, "buildDbPatch"> = {
 
         logger.info();
 
-        const delayFactory: ()  => Promise<BuildDbPatchMethodReturnType> = async () => {
+        const delayFactory: () => Promise<BuildDbPatchMethodReturnType> = async () => {
             logger.info("delayFactory()");
 
             const controller = getUserController();
@@ -108,7 +108,7 @@ const buildDbPatchEndpoint: Pick<TutanotaApi, "buildDbPatch"> = {
             buildDbPatchRetryPipeline<BuildDbPatchMethodReturnType>(preprocessError, _logger),
             catchError((error) => {
                 if (StatusCodeError.hasStatusCodeValue(error, "SkipDbPatch")) {
-                    return of(null);
+                    return from(Promise.resolve());
                 }
                 throw error;
             }),
@@ -178,7 +178,7 @@ async function bootstrapDbPatch(
 
     const remainingMails: Rest.Model.Mail[] = await (async () => {
         const {fetching: {messagesStorePortionSize = DEFAULT_MESSAGES_STORE_PORTION_SIZE}}
-            = await (await resolveIpcMainApi())("readConfig")().toPromise();
+            = await (await resolveIpcMainApi())("readConfig")();
         const fetchParams = {start: await Rest.Util.generateStartId(), count: 100, reverse: false};
 
         let mailsPersistencePortion: Rest.Model.Mail[] = [];
@@ -199,6 +199,7 @@ async function bootstrapDbPatch(
 
                 const intermediatePatch = await buildMailsAndConversationEntriesDbPatch(mailsPersistencePortion, logger);
 
+                // TODO define "mailsPersistencePortion" array as a constant and reset it then like "mailsPersistencePortion.length = 0"
                 mailsPersistencePortion = [];
 
                 logger.verbose([

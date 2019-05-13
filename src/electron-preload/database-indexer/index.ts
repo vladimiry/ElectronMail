@@ -16,12 +16,20 @@ const api = SERVICES_FACTORY.api(cleanup.promise);
 const index = createMailsIndex();
 const indexingQueue = new asap();
 
+// TODO introduce timeout and fail if exceeded
 document.addEventListener("DOMContentLoaded", bootstrap);
 
 function bootstrap() {
     cleanup.subscription.add(
         api.dbIndexerNotification().subscribe(
-            dbIndexerNotificationHandler,
+            async (action) => {
+                try {
+                    await dbIndexerNotificationHandler(action);
+                } catch (error) {
+                    logger.error(`dbIndexerNotification.next, action.type:`, action.type, error);
+                    throw error;
+                }
+            },
             (error) => {
                 logger.error(`dbIndexerNotification.error`, error);
                 throw error;
@@ -35,47 +43,52 @@ function bootstrap() {
     logger.info(`dbIndexerNotification.subscribed`);
 }
 
-function dbIndexerNotificationHandler(action: Unpacked<ReturnType<typeof api.dbIndexerNotification>>): void {
+async function dbIndexerNotificationHandler(action: Unpacked<ReturnType<typeof api.dbIndexerNotification>>): Promise<void> {
     logger.verbose(`dbIndexerNotification.next, action.type:`, action.type);
 
-    IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.match(action, {
-        Bootstrap: async () => {
-            logger.info("action.Bootstrap()");
-            await api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.Bootstrapped()).toPromise();
-            return emptyObject;
+    await IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.match(
+        action,
+        {
+            Bootstrap: async () => {
+                logger.info("action.Bootstrap()");
+
+                await api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.Bootstrapped());
+
+                return emptyObject;
+            },
+            Index: async ({uid, key, remove, add}) => {
+                logger.info(`action.Index()`, `Received mails to remove/add: ${remove.length}/${add.length}`);
+
+                await api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.ProgressState({key, status: {indexing: true}}));
+
+                await indexingQueue.q(async () => {
+                    removeMailsFromIndex(index, remove);
+                    addToMailsIndex(index, add);
+                });
+
+                await Promise.all([
+                    api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.ProgressState({key, status: {indexing: false}})),
+                    api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.IndexingResult({uid})),
+                ]);
+
+                return emptyObject;
+            },
+            Search: async ({key, uid, query}) => {
+                logger.info(`action.Search()`);
+
+                await api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.ProgressState({key, status: {searching: true}}));
+
+                const {items, expandedTerms} = await indexingQueue.q(async () => {
+                    return index.search(query);
+                });
+
+                await Promise.all([
+                    api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.ProgressState({key, status: {searching: false}})),
+                    api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.SearchResult({uid, data: {items, expandedTerms}})),
+                ]);
+
+                return emptyObject;
+            },
         },
-        Index: async ({uid, key, remove, add}) => {
-            logger.info(`action.Index()`, `Received mails to remove/add: ${remove.length}/${add.length}`);
-
-            await api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.ProgressState({key, status: {indexing: true}})).toPromise();
-
-            await indexingQueue.q(async () => {
-                removeMailsFromIndex(index, remove);
-                addToMailsIndex(index, add);
-            });
-
-            await Promise.all([
-                api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.ProgressState({key, status: {indexing: false}})).toPromise(),
-                api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.IndexingResult({uid})).toPromise(),
-            ]);
-
-            return emptyObject;
-        },
-        Search: async ({key, uid, query}) => {
-            logger.info(`action.Search()`);
-
-            await api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.ProgressState({key, status: {searching: true}})).toPromise();
-
-            const {items, expandedTerms} = await indexingQueue.q(async () => {
-                return index.search(query);
-            });
-
-            await Promise.all([
-                api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.ProgressState({key, status: {searching: false}})).toPromise(),
-                api.dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.SearchResult({uid, data: {items, expandedTerms}})).toPromise(),
-            ]);
-
-            return emptyObject;
-        },
-    });
+    );
 }

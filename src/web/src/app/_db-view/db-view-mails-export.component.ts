@@ -1,4 +1,4 @@
-import {BehaviorSubject, Subject} from "rxjs";
+import {BehaviorSubject, Subject, from} from "rxjs";
 import {ChangeDetectionStrategy, Component, Input, OnDestroy} from "@angular/core";
 import {Store} from "@ngrx/store";
 import {filter, finalize, takeUntil, throttleTime} from "rxjs/operators";
@@ -52,7 +52,7 @@ export class DbViewMailsExportComponent extends DbViewAbstractComponent implemen
             ...(mails.length && {mailPks: mails.map(({pk}) => pk)}),
         };
 
-        this.api.ipcMainClient({timeoutMs: ONE_SECOND_MS * 30})("dbExport")(arg)
+        from(this.api.ipcMainClient({timeoutMs: ONE_SECOND_MS * 30})("dbExport")(arg))
             .pipe(
                 takeUntil(this.unSubscribe$),
                 filter((value) => "progress" in value),

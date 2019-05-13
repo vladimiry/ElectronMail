@@ -81,7 +81,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
                 this.selectedAccount = selectedAccount;
 
                 if (!this.selectedAccount) {
-                    await this.api.ipcMainClient()("selectAccount")({reset: true}).toPromise();
+                    await this.api.ipcMainClient()("selectAccount")({reset: true});
                 }
             }),
         );

@@ -1,6 +1,7 @@
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
 import postCssUrl from "postcss-url";
+import webpackDevServer from "webpack-dev-server";
 import webpackMerge from "webpack-merge";
 import webpack, {Configuration} from "webpack";
 import {AngularCompilerPlugin, PLATFORM} from "@ngtools/webpack";
@@ -220,13 +221,19 @@ const configPatch: Record<BuildEnvironment, Configuration> = {
         },
     },
     development: {
-        devServer: {
-            host: "127.0.0.1",
-            hot: true,
-            inline: true,
-            stats: "minimal",
-            clientLogLevel: "error",
-        },
+        ...(() => {
+            // handle "webpack" <=> "webpack-dev-server" TypeScript declarations inconsistency
+            const devServer: webpackDevServer.Configuration = {
+                host: "127.0.0.1",
+                hot: true,
+                inline: true,
+                stats: "minimal",
+                clientLogLevel: "error",
+            };
+            return {
+                devServer: devServer as any,
+            };
+        })(),
         module: {
             rules: [
                 {

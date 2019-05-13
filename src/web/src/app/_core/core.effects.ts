@@ -1,7 +1,7 @@
 import {Actions, Effect} from "@ngrx/effects";
 import {Injectable} from "@angular/core";
 import {catchError, concatMap, map, mergeMap} from "rxjs/operators";
-import {of} from "rxjs";
+import {from, of} from "rxjs";
 
 import {CORE_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
 import {ElectronService} from "src/web/src/app/_core/electron.service";
@@ -15,12 +15,15 @@ export class CoreEffects {
     updateOverlayIcon$ = this.actions$.pipe(
         unionizeActionFilter(CORE_ACTIONS.is.UpdateOverlayIcon),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-        concatMap(({payload: {hasLoggedOut, unread, unreadBgColor, unreadTextColor}}) => this.electronService
-            .ipcMainClient()("updateOverlayIcon")({hasLoggedOut, unread, unreadBgColor, unreadTextColor})
-            .pipe(
+        concatMap(({payload: {hasLoggedOut, unread, unreadBgColor, unreadTextColor}}) => {
+            const updateOverlayIcon$ = from(
+                this.electronService.ipcMainClient()("updateOverlayIcon")({hasLoggedOut, unread, unreadBgColor, unreadTextColor}),
+            );
+            return updateOverlayIcon$.pipe(
                 mergeMap(() => []),
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
-            )),
+            );
+        }),
     );
 
     constructor(

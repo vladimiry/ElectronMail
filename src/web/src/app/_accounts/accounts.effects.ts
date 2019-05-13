@@ -76,7 +76,11 @@ export class AccountsEffects {
                 // which means user is not logged-in yet at this moment, so resetting the state
                 resetNotificationsState$,
                 this.api.webViewClient(webView, type, {finishPromise}).pipe(
-                    mergeMap((webViewClient) => webViewClient("notification")({...parsedEntryUrl, zoneName: logger.zoneName()})),
+                    mergeMap((webViewClient) => {
+                        return from(
+                            webViewClient("notification")({...parsedEntryUrl, zoneName: logger.zoneName()}),
+                        );
+                    }),
                     withLatestFrom(this.store.pipe(select(AccountsSelectors.ACCOUNTS.pickAccount({login})))),
                     mergeMap(([notification, account]) => {
                         if (typeof notification.batchEntityUpdatesCounter === "number") {
@@ -140,17 +144,25 @@ export class AccountsEffects {
                     unionizeActionFilter(ACCOUNTS_ACTIONS.is.SelectMailOnline),
                     map(logActionTypeAndBoundLoggerWithActionType({_logger})),
                     filter(({payload: {pk: key}}) => key.type === type && key.login === login),
-                    mergeMap(({payload: p}) => concat(
+                    mergeMap(({payload: selectMailOnlineInput}) => concat(
                         of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {selectingMailOnline: true}})),
                         this.api.webViewClient(webView, type, {finishPromise}).pipe(
-                            mergeMap((client) => client("selectMailOnline", {timeoutMs: ONE_SECOND_MS * 5})(p).pipe(
-                                mergeMap(() => EMPTY),
-                                catchError((error) => of(CORE_ACTIONS.Fail(error))),
-                                finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({
-                                    login,
-                                    patch: {selectingMailOnline: false},
-                                }))),
-                            )),
+                            mergeMap((webViewClient) => {
+                                const selectMailOnlineInput$ = from(
+                                    webViewClient("selectMailOnline", {timeoutMs: ONE_SECOND_MS * 5})({
+                                        ...selectMailOnlineInput,
+                                        zoneName,
+                                    }),
+                                );
+                                return selectMailOnlineInput$.pipe(
+                                    mergeMap(() => EMPTY),
+                                    catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                                    finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({
+                                        login,
+                                        patch: {selectingMailOnline: false},
+                                    }))),
+                                );
+                            }),
                         ),
                     )),
                 ),
@@ -174,7 +186,11 @@ export class AccountsEffects {
                         debounceTime(ONE_SECOND_MS),
                         debounce(() => onlinePing$),
                         debounce(() => notSyncingPing$),
-                        concatMap(() => ipcMainClient("dbGetAccountMetadata")({type, login})),
+                        concatMap(() => {
+                            return from(
+                                ipcMainClient("dbGetAccountMetadata")({type, login}),
+                            );
+                        }),
                         withLatestFrom(this.store.pipe(select(OptionsSelectors.CONFIG.timeouts))),
                         concatMap(([metadata, timeouts]) => {
                             const bootstrapping = !isDatabaseBootstrapped(metadata);
@@ -200,7 +216,15 @@ export class AccountsEffects {
 
                             this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: true}}));
 
-                            const result$ = webViewClient("buildDbPatch", {timeoutMs})({type, login, zoneName, metadata}).pipe(
+                            const buildDbPatch$ = from(
+                                webViewClient("buildDbPatch", {timeoutMs})({
+                                    type,
+                                    login,
+                                    zoneName,
+                                    metadata: metadata as any, // TODO TS: get rid of typecasting
+                                }),
+                            );
+                            const result$ = buildDbPatch$.pipe(
                                 // "buildDbPatch" returns null which won't be accept by @nrgx as valid action with "type" property
                                 concatMap(() => of(CORE_ACTIONS.Stub())),
                                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
@@ -257,7 +281,11 @@ export class AccountsEffects {
                         logger.info("fillLogin");
 
                         return this.api.webViewClient(webView, type).pipe(
-                            mergeMap((webViewClient) => webViewClient("fillLogin")({login, zoneName})),
+                            mergeMap((webViewClient) => {
+                                return from(
+                                    webViewClient("fillLogin")({login, zoneName}),
+                                );
+                            }),
                             mergeMap(() => of(ACCOUNTS_ACTIONS.Patch({login, patch: {loginFilledOnce: true}}))),
                             catchError((error) => of(CORE_ACTIONS.Fail(error))),
                         );
@@ -387,7 +415,11 @@ export class AccountsEffects {
                                         ? ONE_SECOND_MS
                                         : 0,
                                 ),
-                                mergeMap((webViewClient) => webViewClient("login")({login, password, zoneName})),
+                                mergeMap((webViewClient) => {
+                                    return from(
+                                        webViewClient("login")({login, password, zoneName}),
+                                    );
+                                }),
                                 mergeMap(() => this.store.pipe(
                                     select(AccountsSelectors.FEATURED.selectedLogin),
                                     take(1),
@@ -448,7 +480,11 @@ export class AccountsEffects {
                         of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {twoFactorCode: true}})),
                         resetNotificationsState$,
                         this.api.webViewClient(webView, type).pipe(
-                            mergeMap((webViewClient) => webViewClient("login2fa")({secret, zoneName})),
+                            mergeMap((webViewClient) => {
+                                return from(
+                                    webViewClient("login2fa")({secret, zoneName}),
+                                );
+                            }),
                             mergeMap(() => EMPTY),
                             catchError((error) => of(CORE_ACTIONS.Fail(error))),
                             finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {twoFactorCode: false}}))),
@@ -476,7 +512,11 @@ export class AccountsEffects {
                         of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: true}})),
                         resetNotificationsState$,
                         this.api.webViewClient(webView, type).pipe(
-                            mergeMap((webViewClient) => webViewClient("unlock")({mailPassword, zoneName})),
+                            mergeMap((webViewClient) => {
+                                return from(
+                                    webViewClient("unlock")({mailPassword, zoneName}),
+                                );
+                            }),
                             mergeMap(() => EMPTY),
                             catchError((error) => of(CORE_ACTIONS.Fail(error))),
                             finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: false}}))),

@@ -1,5 +1,5 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {EMPTY, merge, of} from "rxjs";
+import {EMPTY, from, merge, of} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {catchError, concatMap, finalize, map, mergeMap, startWith, withLatestFrom} from "rxjs/operators";
@@ -25,26 +25,34 @@ export class OptionsEffects {
         unionizeActionFilter(OPTIONS_ACTIONS.is.SetupMainProcessNotification),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         startWith(OPTIONS_ACTIONS.SetupMainProcessNotification()),
-        mergeMap(() => this.ipcMainClient("notification")().pipe(
-            mergeMap((value) => of(OPTIONS_ACTIONS.PatchMainProcessNotification(value))),
-            catchError((error) => of(CORE_ACTIONS.Fail(error))),
-        )));
+        mergeMap(() => {
+            return from(
+                this.ipcMainClient("notification")(),
+            ).pipe(
+                mergeMap((value) => of(OPTIONS_ACTIONS.PatchMainProcessNotification(value))),
+                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+            );
+        }));
 
     @Effect()
     initRequest$ = this.actions$.pipe(
         unionizeActionFilter(OPTIONS_ACTIONS.is.InitRequest),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-        mergeMap(() => this.ipcMainClient("init")().pipe(
-            mergeMap((payload) => merge(
-                of(OPTIONS_ACTIONS.InitResponse(payload)),
-                of(this.optionsService.settingsNavigationAction({
-                    path: payload.copyV2AppData
-                        ? PATHS.migrating
-                        : "",
-                })),
-            )),
-            catchError((error) => of(CORE_ACTIONS.Fail(error))),
-        )));
+        mergeMap(() => {
+            return from(
+                this.ipcMainClient("init")(),
+            ).pipe(
+                mergeMap((payload) => merge(
+                    of(OPTIONS_ACTIONS.InitResponse(payload)),
+                    of(this.optionsService.settingsNavigationAction({
+                        path: payload.copyV2AppData
+                            ? PATHS.migrating
+                            : "",
+                    })),
+                )),
+                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+            );
+        }));
 
     @Effect()
     migrate$ = this.actions$.pipe(
@@ -52,7 +60,9 @@ export class OptionsEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({migrating: true})),
-            this.ipcMainClient("migrate", {timeoutMs: ONE_SECOND_MS * 30})(payload).pipe(
+            from(
+                this.ipcMainClient("migrate", {timeoutMs: ONE_SECOND_MS * 30})(payload),
+            ).pipe(
                 map(() => this.optionsService.settingsNavigationAction({path: ""})),
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
                 finalize(() => setTimeout(() => this.dispatchProgress({migrating: false}))),
@@ -63,13 +73,17 @@ export class OptionsEffects {
     getConfigRequest$ = this.actions$.pipe(
         unionizeActionFilter(OPTIONS_ACTIONS.is.GetConfigRequest),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-        concatMap(() => this.ipcMainClient("readConfig")().pipe(
-            concatMap((config) => [
-                OPTIONS_ACTIONS.GetConfigResponse(config),
-                this.optionsService.settingsNavigationAction({path: ""}),
-            ]),
-            catchError((error) => of(CORE_ACTIONS.Fail(error))),
-        )));
+        concatMap(() => {
+            return from(
+                this.ipcMainClient("readConfig")(),
+            ).pipe(
+                concatMap((config) => [
+                    OPTIONS_ACTIONS.GetConfigResponse(config),
+                    this.optionsService.settingsNavigationAction({path: ""}),
+                ]),
+                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+            );
+        }));
 
     @Effect()
     getSettingsRequest$ = this.actions$.pipe(
@@ -83,7 +97,9 @@ export class OptionsEffects {
                 }));
             }
 
-            return this.ipcMainClient("settingsExists")().pipe(
+            return from(
+                this.ipcMainClient("settingsExists")(),
+            ).pipe(
                 map((readable) => this.optionsService.settingsNavigationAction({
                     path: readable ? "login" : "settings-setup",
                 })),
@@ -98,14 +114,18 @@ export class OptionsEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({signingIn: true})),
-            this.ipcMainClient("readSettings")(payload).pipe(
+            from(
+                this.ipcMainClient("readSettings")(payload),
+            ).pipe(
                 withLatestFrom(this.store.pipe(
                     select(OptionsSelectors.FEATURED.config),
                     map((config) => config.timeouts),
                 )),
                 concatMap(([settings, timeouts]) => merge(
                     of(this.buildPatchProgress({loadingDatabase: true})),
-                    this.ipcMainClient("loadDatabase", {timeoutMs: timeouts.databaseLoading})({accounts: settings.accounts}).pipe(
+                    from(
+                        this.ipcMainClient("loadDatabase", {timeoutMs: timeouts.databaseLoading})({accounts: settings.accounts}),
+                    ).pipe(
                         concatMap(() => [
                             OPTIONS_ACTIONS.GetSettingsResponse(settings),
                             NAVIGATION_ACTIONS.Go({
@@ -141,7 +161,9 @@ export class OptionsEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({addingAccount: true})),
-            this.ipcMainClient("addAccount")(payload).pipe(
+            from(
+                this.ipcMainClient("addAccount")(payload),
+            ).pipe(
                 concatMap((settings) => [
                     OPTIONS_ACTIONS.GetSettingsResponse(settings),
                     this.optionsService.settingsNavigationAction({
@@ -160,7 +182,9 @@ export class OptionsEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({updatingAccount: true})),
-            this.ipcMainClient("updateAccount")(payload).pipe(
+            from(
+                this.ipcMainClient("updateAccount")(payload),
+            ).pipe(
                 map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
                 finalize(() => this.dispatchProgress({updatingAccount: false})),
@@ -173,7 +197,9 @@ export class OptionsEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({changingAccountOrder: true})),
-            this.ipcMainClient("changeAccountOrder", {timeoutMs: ONE_SECOND_MS * 20})(payload).pipe(
+            from(
+                this.ipcMainClient("changeAccountOrder", {timeoutMs: ONE_SECOND_MS * 20})(payload),
+            ).pipe(
                 map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
                 finalize(() => this.dispatchProgress({changingAccountOrder: false})),
@@ -186,7 +212,9 @@ export class OptionsEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({removingAccount: true})),
-            this.ipcMainClient("removeAccount")({login: payload.login}).pipe(
+            from(
+                this.ipcMainClient("removeAccount")({login: payload.login}),
+            ).pipe(
                 concatMap((settings) => [
                     OPTIONS_ACTIONS.GetSettingsResponse(settings),
                     this.optionsService.settingsNavigationAction({path: "accounts"}),
@@ -201,7 +229,9 @@ export class OptionsEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({changingPassword: true})),
-            this.ipcMainClient("changeMasterPassword")(payload).pipe(
+            from(
+                this.ipcMainClient("changeMasterPassword")(payload),
+            ).pipe(
                 concatMap(() => EMPTY),
                 catchError((error) => {
                     error.message = "Failed to change the master password! " +
@@ -218,7 +248,9 @@ export class OptionsEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(() => merge(
             of(this.buildPatchProgress({togglingCompactLayout: true})),
-            this.ipcMainClient("toggleCompactLayout")().pipe(
+            from(
+                this.ipcMainClient("toggleCompactLayout")(),
+            ).pipe(
                 map((config) => OPTIONS_ACTIONS.GetConfigResponse(config)),
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
                 finalize(() => this.dispatchProgress({togglingCompactLayout: false})),
@@ -231,7 +263,9 @@ export class OptionsEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({updatingBaseSettings: true})),
-            this.ipcMainClient("patchBaseConfig")(payload).pipe(
+            from(
+                this.ipcMainClient("toggleCompactLayout")(),
+            ).pipe(
                 map((config) => OPTIONS_ACTIONS.GetConfigResponse(config)),
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
                 finalize(() => this.dispatchProgress({updatingBaseSettings: false})),
@@ -247,7 +281,9 @@ export class OptionsEffects {
 
             return merge(
                 of(this.buildPatchProgress({reEncryptingSettings: true})),
-                this.ipcMainClient("reEncryptSettings")({encryptionPreset, password}).pipe(
+                from(
+                    this.ipcMainClient("reEncryptSettings")({encryptionPreset, password}),
+                ).pipe(
                     map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
                     catchError((error) => of(CORE_ACTIONS.Fail(error))),
                     finalize(() => this.dispatchProgress({reEncryptingSettings: false})),

@@ -69,7 +69,7 @@ export const preprocessError: Arguments<typeof buildDbPatchRetryPipeline>[0] = (
     );
 
     return {
-        error,
+        error: new Error(error),
         retriable,
         skippable: retriable,
     };

@@ -1,5 +1,4 @@
 import {app} from "electron";
-import {from} from "rxjs";
 
 import {CircleConfig} from "./model";
 import {Context} from "src/electron-main/model";
@@ -23,12 +22,12 @@ export async function buildEndpoints(
     const loggedOutCanvas = await loggedOutBundle(defaultCanvas, config.loggedOut);
 
     return {
-        updateOverlayIcon: ({hasLoggedOut, unread, unreadBgColor, unreadTextColor}) => from((async () => {
+        async updateOverlayIcon({hasLoggedOut, unread, unreadBgColor, unreadTextColor}) {
             const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
             const tray = ctx.uiContext && ctx.uiContext.tray;
 
             if (!browserWindow || !tray) {
-                return null;
+                return;
             }
 
             const canvas = hasLoggedOut
@@ -55,8 +54,6 @@ export async function buildEndpoints(
                 tray.setImage(canvas.native);
                 app.setBadgeCount(0);
             }
-
-            return null;
-        })()),
+        },
     };
 }

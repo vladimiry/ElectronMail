@@ -20,11 +20,11 @@ export function registerDocumentKeyDownEventListener<E extends ObservableElement
     }
 
     try {
-        const apiClient = IPC_MAIN_API.buildClient();
+        const apiClient = IPC_MAIN_API.client();
         const apiMethods = {
             hotkey: apiClient("hotkey"),
             findInPageDisplay: apiClient("findInPageDisplay"),
-        };
+        } as const;
         const eventHandlerArgs: ["keydown", (event: KeyboardEvent) => Promise<void>] = [
             "keydown",
             async (event: KeyboardEvent) => {
@@ -37,7 +37,7 @@ export function registerDocumentKeyDownEventListener<E extends ObservableElement
                     const cmdOrCtrlPlusF = cmdOrCtrl && event.keyCode === 70;
 
                     if (cmdOrCtrlPlusF) {
-                        await apiMethods.findInPageDisplay({visible: true}).toPromise();
+                        await apiMethods.findInPageDisplay({visible: true});
                         return;
                     }
 
@@ -59,7 +59,7 @@ export function registerDocumentKeyDownEventListener<E extends ObservableElement
                         return;
                     }
 
-                    await apiMethods.hotkey({type}).toPromise();
+                    await apiMethods.hotkey({type});
                 } catch (e) {
                     logger.error(e);
                     throw e;
@@ -101,7 +101,7 @@ export function registerDocumentClickEventListener<E extends ObservableElement>(
     }
 
     try {
-        const apiClient = IPC_MAIN_API.buildClient();
+        const apiClient = IPC_MAIN_API.client();
         const eventHandlerArgs: ["click", (event: MouseEvent) => Promise<void>] = [
             "click",
             async (event: MouseEvent) => await callDocumentClickEventListener(event, logger, apiClient),
@@ -130,7 +130,7 @@ export function registerDocumentClickEventListener<E extends ObservableElement>(
 export async function callDocumentClickEventListener(
     event: MouseEvent,
     logger: Logger,
-    apiClient?: ReturnType<typeof IPC_MAIN_API.buildClient>,
+    apiClient?: ReturnType<typeof IPC_MAIN_API.client>,
 ) {
     try {
         const {element: el, link, href} = resolveLink(event.target as Element);
@@ -149,10 +149,10 @@ export async function callDocumentClickEventListener(
 
         event.preventDefault();
 
-        const client = apiClient || IPC_MAIN_API.buildClient();
+        const client = apiClient || IPC_MAIN_API.client();
         const method = client("openExternal");
 
-        await method({url: href}).toPromise();
+        await method({url: href});
     } catch (e) {
         logger.error(e);
         throw e;

@@ -8,13 +8,13 @@ export async function initApplicationMenu(ctx: Context): Promise<Menu> {
     const aboutItem: MenuItemConstructorOptions = {
         label: "About",
         async click() {
-            await endpoints.openAboutWindow().toPromise();
+            await endpoints.openAboutWindow();
         },
     };
     const quitItem: MenuItemConstructorOptions = {
         label: "Quit",
         async click() {
-            await endpoints.quit().toPromise();
+            await endpoints.quit();
         },
     };
     const templateItems: MenuItemConstructorOptions[] = platform() === "darwin"

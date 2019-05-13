@@ -124,7 +124,7 @@ export async function submitTotpToken(
         newTokenDelayMs?: number;
         submittingDetection?: () => Promise<boolean>;
     } = {},
-): Promise<null> {
+): Promise<void> {
     const logger = curryFunctionMembers(_logger, "submitTotpToken()");
 
     logger.info();
@@ -147,7 +147,7 @@ export async function submitTotpToken(
         await asyncDelay(newTokenDelayMs, submit);
     }
 
-    return null;
+    return;
 
     async function submit() {
         logger.verbose("submit - start");
@@ -181,7 +181,7 @@ export async function submitTotpToken(
 }
 
 export function buildDbPatchRetryPipeline<T>(
-    preprocessError: (rawError: any) => { error: any; retriable: boolean; skippable: boolean; },
+    preprocessError: (rawError: any) => { error: Error; retriable: boolean; skippable: boolean; },
     logger: ReturnType<typeof buildLoggerBundle>,
     {retriesDelay = ONE_SECOND_MS * 5, retriesLimit = 3}: { retriesDelay?: number, retriesLimit?: number } = {},
 ) {
@@ -224,7 +224,7 @@ function triggerChangeEvent(input: HTMLInputElement) {
 export async function persistDatabasePatch(
     data: Arguments<Endpoints["dbPatch"]>[0],
     logger: ReturnType<typeof buildLoggerBundle>,
-): Promise<null> {
+): Promise<void> {
     logger.info("persist() start");
 
     await (await resolveIpcMainApi())("dbPatch")({
@@ -235,8 +235,6 @@ export async function persistDatabasePatch(
     }).toPromise();
 
     logger.info("persist() end");
-
-    return null;
 }
 
 export function buildEmptyDbPatch(): DbPatch {

@@ -1,4 +1,3 @@
-import {from} from "rxjs";
 import {pick} from "ramda";
 
 import {AccountConfig} from "src/shared/model/account";
@@ -11,9 +10,7 @@ export async function buildEndpoints(
     ctx: Context,
 ): Promise<Pick<Endpoints, "addAccount" | "updateAccount" | "changeAccountOrder" | "removeAccount">> {
     return {
-        addAccount: (
-            {type, login, entryUrl, database, credentials, proxy, loginDelayUntilSelected, loginDelaySecondsRange},
-        ) => from((async () => {
+        async addAccount({type, login, entryUrl, database, credentials, proxy, loginDelayUntilSelected, loginDelaySecondsRange}) {
             const account = {
                 type,
                 login,
@@ -33,11 +30,9 @@ export async function buildEndpoints(
             await initSessionByAccount(ctx, pick(["login", "proxy"], account), {skipClearSessionCaches: true});
 
             return result;
-        })()),
+        },
 
-        updateAccount: (
-            {login, entryUrl, database, credentials, proxy, loginDelayUntilSelected, loginDelaySecondsRange},
-        ) => from((async () => {
+        async updateAccount({login, entryUrl, database, credentials, proxy, loginDelayUntilSelected, loginDelaySecondsRange}) {
             const settings = await ctx.settingsStore.readExisting();
             const account = pickAccountStrict(settings.accounts, {login});
             const {credentials: existingCredentials} = account;
@@ -68,9 +63,9 @@ export async function buildEndpoints(
             account.loginDelaySecondsRange = loginDelaySecondsRange;
 
             return await ctx.settingsStore.write(settings);
-        })()),
+        },
 
-        changeAccountOrder: ({login, index: moveToIndex}) => from((async () => {
+        async changeAccountOrder({login, index: moveToIndex}) {
             const settings = await ctx.settingsStore.readExisting();
 
             if (isNaN(moveToIndex) || moveToIndex < 0 || moveToIndex >= settings.accounts.length) {
@@ -88,9 +83,9 @@ export async function buildEndpoints(
             settings.accounts.splice(moveToIndex, 0, accountToMove);
 
             return await ctx.settingsStore.write(settings);
-        })()),
+        },
 
-        removeAccount: ({login}) => from((async () => {
+        async removeAccount({login}) {
             const settings = await ctx.settingsStore.readExisting();
             const account = pickAccountStrict(settings.accounts, {login});
             const index = settings.accounts.indexOf(account);
@@ -100,6 +95,6 @@ export async function buildEndpoints(
             // TODO remove session, not yet supported by Electron?
 
             return await ctx.settingsStore.write(settings);
-        })()),
+        },
     };
 }

@@ -1,6 +1,4 @@
-// tslint:disable:no-unused-variable // TODO figure why tslint detects some imports as unused
-
-import {ApiMethod, ApiMethodNoArgument, IpcMainApiService} from "electron-rpc-api";
+import {ActionType, ScanApiDefinition, createIpcMainApiService} from "electron-rpc-api";
 import {LogLevel} from "electron-log";
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import {UnionOf, ofType, unionize} from "@vladimiry/unionize";
@@ -20,108 +18,112 @@ import {MemoryDbAccount} from "src/shared/model/database";
 import {Omit} from "src/shared/types";
 import {PACKAGE_NAME} from "src/shared/constants";
 
-export interface Endpoints {
-    log: ApiMethod<Array<{ level: LogLevel; dataArgs: any[]; }>, null>;
+export type EndpointsScan = ScanApiDefinition<typeof ENDPOINTS_DEFINITION>;
 
-    addAccount: ApiMethod<AccountConfigCreatePatch, Settings>;
+export type Endpoints = EndpointsScan["Api"];
 
-    updateAccount: ApiMethod<AccountConfigUpdatePatch, Settings>;
+export const ENDPOINTS_DEFINITION = {
+    log: ActionType.Promise<[Array<{ level: LogLevel; dataArgs: any[]; }>]>(),
 
-    changeAccountOrder: ApiMethod<LoginFieldContainer & { index: number }, Settings>;
+    addAccount: ActionType.Promise<[AccountConfigCreatePatch], Settings>(),
 
-    removeAccount: ApiMethod<LoginFieldContainer, Settings>;
+    updateAccount: ActionType.Promise<[AccountConfigUpdatePatch], Settings>(),
 
-    changeMasterPassword: ApiMethod<PasswordFieldContainer & NewPasswordFieldContainer, Settings>;
+    changeAccountOrder: ActionType.Promise<[LoginFieldContainer & { index: number }], Settings>(),
 
-    dbPatch: ApiMethod<DbModel.DbAccountPk
+    removeAccount: ActionType.Promise<[LoginFieldContainer], Settings>(),
+
+    changeMasterPassword: ActionType.Promise<[PasswordFieldContainer & NewPasswordFieldContainer], Settings>(),
+
+    dbPatch: ActionType.Promise<[DbModel.DbAccountPk
         & { patch: DbPatch }
         & { forceFlush?: boolean }
-        & { metadata: Omit<MemoryDbAccount<"protonmail">["metadata"], "type"> | Omit<MemoryDbAccount<"tutanota">["metadata"], "type"> },
-        DbModel.FsDbAccount["metadata"]>;
+        & { metadata: Omit<MemoryDbAccount<"protonmail">["metadata"], "type"> | Omit<MemoryDbAccount<"tutanota">["metadata"], "type"> }],
+        DbModel.FsDbAccount["metadata"]>(),
 
-    dbGetAccountMetadata: ApiMethod<DbModel.DbAccountPk, DbModel.FsDbAccount["metadata"] | null>;
+    dbGetAccountMetadata: ActionType.Promise<[DbModel.DbAccountPk], DbModel.FsDbAccount["metadata"] | null>(),
 
-    dbGetAccountDataView: ApiMethod<DbModel.DbAccountPk,
+    dbGetAccountDataView: ActionType.Promise<[DbModel.DbAccountPk],
         {
             folders: {
                 system: DbModel.View.Folder[];
                 custom: DbModel.View.Folder[];
             };
-        } | undefined>;
+        } | undefined>(),
 
-    dbGetAccountMail: ApiMethod<DbModel.DbAccountPk & { pk: DbModel.Mail["pk"] }, DbModel.Mail>;
+    dbGetAccountMail: ActionType.Promise<[DbModel.DbAccountPk & { pk: DbModel.Mail["pk"] }], DbModel.Mail>(),
 
-    dbExport: ApiMethod<DbModel.DbAccountPk & { mailPks?: Array<DbModel.Mail["pk"]> },
-        { count: number; } | { progress: number; file: string; }>;
+    dbExport: ActionType.Observable<[DbModel.DbAccountPk & { mailPks?: Array<DbModel.Mail["pk"]> }],
+        { count: number; } | { progress: number; file: string; }>(),
 
     dbSearchRootConversationNodes:
-        ApiMethod<DbModel.DbAccountPk
+        ActionType.Promise<[DbModel.DbAccountPk
             & { folderPks?: Array<DbModel.Folder["pk"]> }
-            & ({ query: string } | { mailPks: Array<DbModel.Folder["pk"]> }),
-            DbModel.View.RootConversationNode[]>;
+            & ({ query: string } | { mailPks: Array<DbModel.Folder["pk"]> })],
+            DbModel.View.RootConversationNode[]>(),
 
-    dbFullTextSearch
-        : ApiMethod<DbModel.DbAccountPk & { query: string; folderPks?: Array<DbModel.Folder["pk"]>; },
+    dbFullTextSearch: ActionType.Observable<[DbModel.DbAccountPk & { query: string; folderPks?: Array<DbModel.Folder["pk"]>; }],
         {
             uid: string;
             mailsBundleItems: Array<{ mail: DbModel.View.Mail & { score: number; }; conversationSize: number; }>;
-        } & Pick<ReturnType<DbModel.MailsIndex["search"]>, "expandedTerms">>;
+        } & Pick<ReturnType<DbModel.MailsIndex["search"]>, "expandedTerms">>(),
 
-    dbIndexerOn: ApiMethod<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_ON_ACTIONS>, null>;
+    dbIndexerOn: ActionType.Promise<[UnionOf<typeof IPC_MAIN_API_DB_INDEXER_ON_ACTIONS>]>(),
 
-    dbIndexerNotification: ApiMethodNoArgument<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>>;
+    dbIndexerNotification: ActionType.Observable<[], UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>>(),
 
-    init: ApiMethodNoArgument<InitResponse>;
+    init: ActionType.Promise<[], InitResponse>(),
 
-    migrate: ApiMethod<Required<InitResponse>["copyV2AppData"]["items"], null>;
+    migrate: ActionType.Promise<[Required<InitResponse>["copyV2AppData"]["items"]]>(),
 
-    logout: ApiMethodNoArgument<null>;
+    logout: ActionType.Promise(),
 
-    openAboutWindow: ApiMethodNoArgument<null>;
+    openAboutWindow: ActionType.Promise(),
 
-    openExternal: ApiMethod<{ url: string }, null>;
+    openExternal: ActionType.Promise<[{ url: string }]>(),
 
-    openSettingsFolder: ApiMethodNoArgument<null>;
+    openSettingsFolder: ActionType.Promise(),
 
-    patchBaseConfig: ApiMethod<BaseConfig, Config>;
+    patchBaseConfig: ActionType.Promise<[BaseConfig], Config>(),
 
-    quit: ApiMethodNoArgument<null>;
+    quit: ActionType.Promise(),
 
-    readConfig: ApiMethodNoArgument<Config>;
+    readConfig: ActionType.Promise<[], Config>(),
 
-    readSettings: ApiMethod<Partial<PasswordFieldContainer> & { savePassword?: boolean; }, Settings>;
+    readSettings: ActionType.Promise<[Partial<PasswordFieldContainer> & { savePassword?: boolean; }], Settings>(),
 
-    reEncryptSettings: ApiMethod<PasswordFieldContainer & { encryptionPreset: PasswordBasedPreset }, Settings>;
+    reEncryptSettings: ActionType.Promise<[PasswordFieldContainer & { encryptionPreset: PasswordBasedPreset }], Settings>(),
 
-    settingsExists: ApiMethodNoArgument<boolean>;
+    settingsExists: ActionType.Promise<[], boolean>(),
 
-    loadDatabase: ApiMethod<Pick<Settings, "accounts">, null>;
+    loadDatabase: ActionType.Promise<[Pick<Settings, "accounts">]>(),
 
-    activateBrowserWindow: ApiMethodNoArgument<null>;
+    activateBrowserWindow: ActionType.Promise(),
 
-    toggleBrowserWindow: ApiMethod<{ forcedState?: boolean }, null>;
+    toggleBrowserWindow: ActionType.Promise<[{ forcedState?: boolean }]>(),
 
-    toggleCompactLayout: ApiMethodNoArgument<Config>;
+    toggleCompactLayout: ActionType.Promise<[], Config>(),
 
-    updateOverlayIcon: ApiMethod<{ hasLoggedOut: boolean, unread: number; unreadBgColor?: string; unreadTextColor?: string; }, null>;
+    updateOverlayIcon: ActionType.Promise<[{ hasLoggedOut: boolean, unread: number; unreadBgColor?: string; unreadTextColor?: string; }]>(),
 
-    hotkey: ApiMethod<{ type: "copy" | "paste" | "selectAll" }, null>;
+    hotkey: ActionType.Promise<[{ type: "copy" | "paste" | "selectAll" }]>(),
 
-    findInPageDisplay: ApiMethod<{ visible: boolean; }, null>;
+    findInPageDisplay: ActionType.Promise<[{ visible: boolean; }]>(),
 
-    findInPage: ApiMethod<{ query: string; options?: Electron.FindInPageOptions; }, Pick<Electron.FoundInPageResult, "requestId"> | null>;
+    findInPage: ActionType.Promise<[{ query: string; options?: Electron.FindInPageOptions; }],
+        Pick<Electron.FoundInPageResult, "requestId"> | null>(),
 
-    findInPageStop: ApiMethodNoArgument<null>;
+    findInPageStop: ActionType.Promise<[]>(),
 
-    findInPageNotification: ApiMethodNoArgument<Electron.FoundInPageResult | { requestId: null }>;
+    findInPageNotification: ActionType.Observable<[], Electron.FoundInPageResult | { requestId: null }>(),
 
-    selectAccount: ApiMethod<{ databaseView?: boolean; reset?: boolean }, null>;
+    selectAccount: ActionType.Promise<[{ databaseView?: boolean; reset?: boolean }]>(),
 
-    notification: ApiMethodNoArgument<UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>>;
-}
+    notification: ActionType.Observable<[], UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>>(),
+};
 
 export interface InitResponse {
-    electronLocations: ElectronContextLocations & {vendorsAppCssLinkHref: string};
+    electronLocations: ElectronContextLocations & { vendorsAppCssLinkHref: string };
     hasSavedPassword?: boolean;
     snapPasswordManagerServiceHint?: boolean;
     keytarSupport: boolean;
@@ -137,7 +139,10 @@ export interface InitResponse {
     };
 }
 
-export const IPC_MAIN_API = new IpcMainApiService<Endpoints>({channel: `${PACKAGE_NAME}:ipcMain-api`});
+export const IPC_MAIN_API = createIpcMainApiService({
+    channel: `${PACKAGE_NAME}:ipcMain-api`,
+    apiDefinition: ENDPOINTS_DEFINITION,
+});
 
 export const IPC_MAIN_API_DB_INDEXER_ON_ACTIONS = unionize({
         Bootstrapped: ofType<{}>(),

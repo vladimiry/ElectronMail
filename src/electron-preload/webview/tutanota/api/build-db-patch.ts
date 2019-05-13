@@ -7,9 +7,9 @@ import * as Rest from "src/electron-preload/webview/tutanota/lib/rest";
 import {DEFAULT_MESSAGES_STORE_PORTION_SIZE} from "src/shared/constants";
 import {DbPatch} from "src/shared/api/common";
 import {MemoryDbAccount} from "src/shared/model/database";
-import {Omit, Unpacked} from "src/shared/types";
+import {Omit} from "src/shared/types";
 import {StatusCodeError} from "src/shared/model/error";
-import {TutanotaApi} from "src/shared/api/webview/tutanota";
+import {TutanotaApi, TutanotaScanApi} from "src/shared/api/webview/tutanota";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {buildDbPatchRetryPipeline, buildEmptyDbPatch, persistDatabasePatch, resolveIpcMainApi} from "src/electron-preload/webview/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
@@ -17,96 +17,108 @@ import {curryFunctionMembers, isDatabaseBootstrapped} from "src/shared/util";
 import {getUserController, isLoggedIn, isUpsertUpdate, preprocessError} from "src/electron-preload/webview/tutanota/lib/util";
 import {resolveProviderApi} from "src/electron-preload/webview/tutanota/lib/provider-api";
 
-interface BuildDbPatchReturn {
+interface DbPatchBundle {
     patch: DbPatch;
     metadata: Omit<MemoryDbAccount<"tutanota">["metadata"], "type">;
 }
 
-type BuildDbPatchInputMetadata = BuildDbPatchReturn["metadata"];
+type BuildDbPatchMethodReturnType = TutanotaScanApi["ApiReturns"]["buildDbPatch"];
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[api/build-db-patch]");
 
 const buildDbPatchEndpoint: Pick<TutanotaApi, "buildDbPatch"> = {
-    buildDbPatch: (input) => defer(() => (async (logger = curryFunctionMembers(_logger, "buildDbPatch()", input.zoneName)) => {
-        const controller = getUserController();
-        const inputMetadata = input.metadata;
+    buildDbPatch(input) {
+        const logger = curryFunctionMembers(_logger, "buildDbPatch()", input.zoneName);
 
-        if (!controller || !isLoggedIn()) {
-            throw new Error("tutanota:buildDbPatch(): user is supposed to be logged-in");
-        }
+        logger.info();
 
-        if (!isDatabaseBootstrapped(inputMetadata)) {
-            await bootstrapDbPatch(
-                logger,
-                async (dbPatch) => {
-                    await persistDatabasePatch(
-                        {
-                            ...dbPatch,
-                            type: input.type,
-                            login: input.login,
-                        },
-                        logger,
-                    );
-                },
-            );
+        const delayFactory: ()  => Promise<BuildDbPatchMethodReturnType> = async () => {
+            logger.info("delayFactory()");
 
-            return null;
-        }
+            const controller = getUserController();
+            const inputMetadata = input.metadata;
 
-        const preFetch = await (async (
-            inputGroupEntityEventBatchIds: BuildDbPatchInputMetadata["groupEntityEventBatchIds"],
-        ) => {
-            const fetchedEventBatches: Rest.Model.EntityEventBatch[] = [];
-            const memberships = Rest.Util.filterSyncingMemberships(controller.user);
-            const {groupEntityEventBatchIds}: BuildDbPatchInputMetadata = {groupEntityEventBatchIds: {}};
-            logger.verbose(`start fetching entity event batches of ${memberships.length} memberships`);
-            for (const {group} of memberships) {
-                const startId = await Rest.Util.generateStartId(inputGroupEntityEventBatchIds[group]);
-                const entityEventBatches: Rest.Model.EntityEventBatch[] = [];
-                await Rest.fetchEntitiesRangeUntilTheEnd(
-                    Rest.Model.EntityEventBatchTypeRef, group, {start: startId, count: 100}, async (fetched) => {
-                        entityEventBatches.push(...fetched);
+            if (!controller || !isLoggedIn()) {
+                throw new Error("tutanota:buildDbPatch(): user is supposed to be logged-in");
+            }
+
+            if (!isDatabaseBootstrapped(inputMetadata)) {
+                await bootstrapDbPatch(
+                    logger,
+                    async (dbPatch) => {
+                        await persistDatabasePatch(
+                            {
+                                ...dbPatch,
+                                type: input.type,
+                                login: input.login,
+                            },
+                            logger,
+                        );
                     },
                 );
-                fetchedEventBatches.push(...entityEventBatches);
-                if (entityEventBatches.length) {
-                    groupEntityEventBatchIds[group] = Rest.Util.resolveInstanceId(entityEventBatches[entityEventBatches.length - 1]);
-                }
-            }
-            logger.verbose(
-                `fetched ${fetchedEventBatches.length} entity event batches from ${memberships.length} memberships`,
-            );
-            return {
-                missedEventBatches: fetchedEventBatches,
-                metadata: {groupEntityEventBatchIds},
-            };
-        })(inputMetadata.groupEntityEventBatchIds);
-        const metadata: BuildDbPatchReturn["metadata"] = preFetch.metadata;
-        const patch = await buildDbPatch({eventBatches: preFetch.missedEventBatches, parentLogger: logger});
 
-        return await persistDatabasePatch(
-            {
-                patch,
-                metadata,
-                type: input.type,
-                login: input.login,
-            },
-            logger,
-        );
-    })()).pipe(
-        buildDbPatchRetryPipeline<Unpacked<ReturnType<TutanotaApi["buildDbPatch"]>>>(preprocessError, _logger),
-        catchError((error) => {
-            if (StatusCodeError.hasStatusCodeValue(error, "SkipDbPatch")) {
-                return of(null);
+                return;
             }
-            throw error;
-        }),
-    ),
+
+            const preFetch = await (async (
+                inputGroupEntityEventBatchIds: DbPatchBundle["metadata"]["groupEntityEventBatchIds"],
+            ) => {
+                const fetchedEventBatches: Rest.Model.EntityEventBatch[] = [];
+                const memberships = Rest.Util.filterSyncingMemberships(controller.user);
+                const {groupEntityEventBatchIds}: DbPatchBundle["metadata"] = {groupEntityEventBatchIds: {}};
+                logger.verbose(`start fetching entity event batches of ${memberships.length} memberships`);
+                for (const {group} of memberships) {
+                    const startId = await Rest.Util.generateStartId(inputGroupEntityEventBatchIds[group]);
+                    const entityEventBatches: Rest.Model.EntityEventBatch[] = [];
+                    await Rest.fetchEntitiesRangeUntilTheEnd(
+                        Rest.Model.EntityEventBatchTypeRef, group, {start: startId, count: 100}, async (fetched) => {
+                            entityEventBatches.push(...fetched);
+                        },
+                    );
+                    fetchedEventBatches.push(...entityEventBatches);
+                    if (entityEventBatches.length) {
+                        groupEntityEventBatchIds[group] = Rest.Util.resolveInstanceId(entityEventBatches[entityEventBatches.length - 1]);
+                    }
+                }
+                logger.verbose(
+                    `fetched ${fetchedEventBatches.length} entity event batches from ${memberships.length} memberships`,
+                );
+                return {
+                    missedEventBatches: fetchedEventBatches,
+                    metadata: {groupEntityEventBatchIds},
+                };
+            })(inputMetadata.groupEntityEventBatchIds);
+            const metadata: DbPatchBundle["metadata"] = preFetch.metadata;
+            const patch = await buildDbPatch({eventBatches: preFetch.missedEventBatches, parentLogger: logger});
+
+            await persistDatabasePatch(
+                {
+                    patch,
+                    metadata,
+                    type: input.type,
+                    login: input.login,
+                },
+                logger,
+            );
+
+            return;
+        };
+
+        return defer(delayFactory).pipe(
+            buildDbPatchRetryPipeline<BuildDbPatchMethodReturnType>(preprocessError, _logger),
+            catchError((error) => {
+                if (StatusCodeError.hasStatusCodeValue(error, "SkipDbPatch")) {
+                    return of(null);
+                }
+                throw error;
+            }),
+        );
+    },
 };
 
 async function bootstrapDbPatch(
     parentLogger: ReturnType<typeof buildLoggerBundle>,
-    triggerStoreCallback: (path: BuildDbPatchReturn) => Promise<void>,
+    triggerStoreCallback: (path: DbPatchBundle) => Promise<void>,
 ): Promise<void> {
     const logger = curryFunctionMembers(parentLogger, "bootstrapDbPatch()");
     const api = await resolveProviderApi();
@@ -119,7 +131,7 @@ async function bootstrapDbPatch(
     // last entity event batches fetching must be happening before entities fetching
     const {metadata} = await (async () => {
         const {GENERATED_MAX_ID} = api["src/api/common/EntityFunctions"];
-        const {groupEntityEventBatchIds}: BuildDbPatchInputMetadata = {groupEntityEventBatchIds: {}};
+        const {groupEntityEventBatchIds}: DbPatchBundle["metadata"] = {groupEntityEventBatchIds: {}};
         const memberships = Rest.Util.filterSyncingMemberships(controller.user);
         for (const {group} of memberships) {
             const entityEventBatches = await Rest.fetchEntitiesRange(

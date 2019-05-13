@@ -214,7 +214,7 @@ async function bootstrapDbPatch(
     const remainingMails: DatabaseModel.Mail[] = await (async () => {
         const conversationsQuery = {Page: 0, PageSize: 150};
         const {fetching: {messagesStorePortionSize = DEFAULT_MESSAGES_STORE_PORTION_SIZE}}
-            = await (await resolveIpcMainApi())("readConfig")().toPromise();
+            = await (await resolveIpcMainApi())("readConfig")();
 
         logger.info(JSON.stringify({messagesStorePortionSize}));
 

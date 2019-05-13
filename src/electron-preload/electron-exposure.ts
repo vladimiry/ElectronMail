@@ -9,10 +9,10 @@ import {registerDocumentClickEventListener} from "src/electron-preload/events-ha
 export const ELECTRON_WINDOW: ElectronWindow = {
     __ELECTRON_EXPOSURE__: {
         registerDocumentClickEventListener,
-        buildIpcMainClient: IPC_MAIN_API.buildClient.bind(IPC_MAIN_API),
+        buildIpcMainClient: IPC_MAIN_API.client.bind(IPC_MAIN_API),
         buildIpcWebViewClient: {
-            protonmail: PROTONMAIL_IPC_WEBVIEW_API.buildClient.bind(PROTONMAIL_IPC_WEBVIEW_API),
-            tutanota: TUTANOTA_IPC_WEBVIEW_API.buildClient.bind(TUTANOTA_IPC_WEBVIEW_API),
+            protonmail: PROTONMAIL_IPC_WEBVIEW_API.client.bind(PROTONMAIL_IPC_WEBVIEW_API),
+            tutanota: TUTANOTA_IPC_WEBVIEW_API.client.bind(TUTANOTA_IPC_WEBVIEW_API),
         },
         require: {
             "rolling-rate-limiter": () => remote.require("rolling-rate-limiter"),

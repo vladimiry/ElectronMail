@@ -25,7 +25,7 @@ export const SERVICES_FACTORY = {
     },
     api: (finishPromise: Promise<void>) => {
         const timeoutMs = ONE_SECOND_MS * 3;
-        const client = IPC_MAIN_API.buildClient({options: {timeoutMs, finishPromise}});
+        const client = IPC_MAIN_API.client({options: {timeoutMs, finishPromise}});
         return {
             dbIndexerOn: client("dbIndexerOn"),
             dbIndexerNotification: client("dbIndexerNotification"),

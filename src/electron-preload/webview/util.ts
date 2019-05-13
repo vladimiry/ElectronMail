@@ -12,8 +12,8 @@ import {buildLoggerBundle} from "src/electron-preload/util";
 
 const configsCache: { resolveDomElements?: Config } = {};
 
-export const resolveIpcMainApi: () => Promise<ReturnType<typeof IPC_MAIN_API.buildClient>> = (() => {
-    let ipcMainApiClient: ReturnType<typeof IPC_MAIN_API.buildClient> | undefined;
+export const resolveIpcMainApi: () => Promise<ReturnType<typeof IPC_MAIN_API.client>> = (() => {
+    let ipcMainApiClient: ReturnType<typeof IPC_MAIN_API.client> | undefined;
 
     return async () => {
         if (ipcMainApiClient) {
@@ -21,9 +21,9 @@ export const resolveIpcMainApi: () => Promise<ReturnType<typeof IPC_MAIN_API.bui
         }
 
         const {timeouts: {defaultApiCall: timeoutMs}}
-            = await IPC_MAIN_API.buildClient({options: {timeoutMs: 3000}})("readConfig")().toPromise();
+            = await IPC_MAIN_API.client({options: {timeoutMs: 3000}})("readConfig")();
 
-        ipcMainApiClient = IPC_MAIN_API.buildClient({options: {timeoutMs}});
+        ipcMainApiClient = IPC_MAIN_API.client({options: {timeoutMs}});
 
         return ipcMainApiClient;
     };
@@ -47,7 +47,7 @@ export const resolveDomElements = <E extends Element,
     try {
         const api = await resolveIpcMainApi();
         if (!configsCache.resolveDomElements) {
-            configsCache.resolveDomElements = await api("readConfig")().toPromise();
+            configsCache.resolveDomElements = await api("readConfig")();
         }
         configTimeout = configsCache.resolveDomElements.timeouts.domElementsResolving;
     } catch (error) {
@@ -232,7 +232,7 @@ export async function persistDatabasePatch(
         login: data.login,
         metadata: data.metadata,
         patch: data.patch,
-    }).toPromise();
+    });
 
     logger.info("persist() end");
 }

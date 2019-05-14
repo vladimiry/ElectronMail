@@ -1,5 +1,4 @@
 import electronLog from "electron-log";
-import {IpcMainApiActionContext, resolveIpcMainApiActionContext} from "electron-rpc-api";
 import {app, shell} from "electron";
 import {isWebUri} from "valid-url";
 import {platform} from "os";
@@ -8,6 +7,7 @@ import {startWith} from "rxjs/operators";
 import {Context} from "src/electron-main/model";
 import {Endpoints, IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
+import {VOID} from "src/shared/constants";
 import {showAboutBrowserWindow} from "src/electron-main/window/about";
 
 type ApiMethods = keyof Pick<Endpoints,
@@ -82,14 +82,20 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
             }
 
             if (typeof forcedState !== "undefined" ? forcedState : !browserWindow.isVisible()) {
-                await endpoints.activateBrowserWindow();
+                await endpoints.activateBrowserWindow.call(VOID);
             } else {
                 browserWindow.hide();
             }
         },
 
-        async selectAccount(this: IpcMainApiActionContext, {databaseView, reset}) {
-            const [{sender: webContents}] = resolveIpcMainApiActionContext(this).args;
+        async selectAccount({databaseView, reset}) {
+            const methodContext = this;
+
+            if (!methodContext) {
+                throw new Error(`Failed to resolve "selectAccount" method execution context`);
+            }
+
+            const [{sender: webContents}] = methodContext.args;
 
             const prevSelectedAccount = ctx.selectedAccount;
             const newSelectedAccount = reset
@@ -112,15 +118,21 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
             );
 
             if (needToCloseFindInPageWindow) {
-                await (await ctx.deferredEndpoints.promise).findInPageStop();
-                await (await ctx.deferredEndpoints.promise).findInPageDisplay({visible: false});
+                await (await ctx.deferredEndpoints.promise).findInPageStop.call(VOID);
+                await (await ctx.deferredEndpoints.promise).findInPageDisplay.call(VOID, {visible: false});
             }
 
             ctx.selectedAccount = newSelectedAccount;
         },
 
-        async hotkey(this: IpcMainApiActionContext, {type}) {
-            const [{sender: webContents}] = resolveIpcMainApiActionContext(this).args;
+        async hotkey({type}) {
+            const methodContext = this;
+
+            if (!methodContext) {
+                throw new Error(`Failed to resolve "hotkey" method execution context`);
+            }
+
+            const [{sender: webContents}] = methodContext.args;
 
             if (platform() !== "darwin") {
                 return;

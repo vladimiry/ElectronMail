@@ -5,7 +5,7 @@ import {equals} from "ramda";
 import {BuildEnvironment} from "src/shared/model/common";
 import {Context} from "src/electron-main/model";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";
-import {PRODUCT_NAME} from "src/shared/constants";
+import {PRODUCT_NAME, VOID} from "src/shared/constants";
 import {syncFindInPageBrowserViewSize} from "src/electron-main/window/find-in-page";
 
 const state: { forceClose: boolean } = {forceClose: false};
@@ -43,7 +43,7 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
         const {startMinimized} = await ctx.configStore.readExisting();
 
         if (!settingsConfigured || !startMinimized) {
-            await (await ctx.deferredEndpoints.promise).activateBrowserWindow();
+            await (await ctx.deferredEndpoints.promise).activateBrowserWindow.call(VOID);
         }
     });
     browserWindow.on("closed", () => {

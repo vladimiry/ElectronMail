@@ -5,6 +5,7 @@ import {startWith} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
 import {Endpoints, EndpointsScan} from "src/shared/api/main";
+import {VOID} from "src/shared/constants";
 import {curryFunctionMembers} from "src/shared/util";
 import {initFindInPageBrowserView} from "src/electron-main/window/find-in-page";
 
@@ -53,7 +54,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
                     return;
                 }
 
-                const {findInPage} = await (await ctx.deferredEndpoints.promise).readConfig();
+                const {findInPage} = await (await ctx.deferredEndpoints.promise).readConfig.call(VOID);
 
                 if (!findInPage) {
                     logger.debug(`skipping as "findInPage" config option disabled`);

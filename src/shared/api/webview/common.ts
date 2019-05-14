@@ -20,18 +20,18 @@ const {Promise, Observable} = ActionType;
 
 export function buildWebViewApiDefinition<T extends AccountType, NotificationOutput>() {
     return {
-        ping: Promise<[ZoneApiParameter]>(),
-        fillLogin: Promise<[LoginFieldContainer & ZoneApiParameter]>(),
-        login: Promise<[LoginFieldContainer & PasswordFieldContainer & ZoneApiParameter]>(),
-        login2fa: Promise<[{ secret: string } & ZoneApiParameter]>(),
-        buildDbPatch: Observable<[DbAccountPk & { metadata: Readonly<MemoryDbAccount<T>["metadata"]> | null; } & ZoneApiParameter]>(),
-        selectAccount: Promise<[{ databaseView?: boolean } & ZoneApiParameter]>(),
-        selectMailOnline: Promise<[{
+        ping: Promise<ZoneApiParameter>(),
+        fillLogin: Promise<LoginFieldContainer & ZoneApiParameter>(),
+        login: Promise<LoginFieldContainer & PasswordFieldContainer & ZoneApiParameter>(),
+        login2fa: Promise<{ secret: string } & ZoneApiParameter>(),
+        buildDbPatch: Observable<DbAccountPk & { metadata: Readonly<MemoryDbAccount<T>["metadata"]> | null; } & ZoneApiParameter>(),
+        selectAccount: Promise<{ databaseView?: boolean } & ZoneApiParameter>(),
+        selectMailOnline: Promise<{
             pk: DbAccountPk;
             mail: Pick<Mail, "id" | "mailFolderIds" | "conversationEntryPk">;
-        } & ZoneApiParameter]>(),
-        fetchSingleMail: Promise<[DbAccountPk & { mailPk: Mail["pk"] } & ZoneApiParameter]>(),
-        notification: Observable<[{ entryUrl: string; entryApiUrl: string; } & ZoneApiParameter], NotificationOutput>(),
+        } & ZoneApiParameter>(),
+        fetchSingleMail: Promise<DbAccountPk & { mailPk: Mail["pk"] } & ZoneApiParameter>(),
+        notification: Observable<{ entryUrl: string; entryApiUrl: string; } & ZoneApiParameter, NotificationOutput>(),
     };
 }
 

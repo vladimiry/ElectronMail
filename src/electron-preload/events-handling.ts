@@ -21,10 +21,6 @@ export function registerDocumentKeyDownEventListener<E extends ObservableElement
 
     try {
         const apiClient = IPC_MAIN_API.client();
-        const apiMethods = {
-            hotkey: apiClient("hotkey"),
-            findInPageDisplay: apiClient("findInPageDisplay"),
-        } as const;
         const eventHandlerArgs: ["keydown", (event: KeyboardEvent) => Promise<void>] = [
             "keydown",
             async (event: KeyboardEvent) => {
@@ -37,7 +33,7 @@ export function registerDocumentKeyDownEventListener<E extends ObservableElement
                     const cmdOrCtrlPlusF = cmdOrCtrl && event.keyCode === 70;
 
                     if (cmdOrCtrlPlusF) {
-                        await apiMethods.findInPageDisplay({visible: true});
+                        await apiClient("findInPageDisplay")({visible: true});
                         return;
                     }
 
@@ -59,7 +55,7 @@ export function registerDocumentKeyDownEventListener<E extends ObservableElement
                         return;
                     }
 
-                    await apiMethods.hotkey({type});
+                    await apiClient("hotkey")({type});
                 } catch (e) {
                     logger.error(e);
                     throw e;

@@ -23,13 +23,13 @@ export const SERVICES_FACTORY = {
         });
         return {subscription, promise};
     },
-    api: (finishPromise: Promise<void>) => {
-        const timeoutMs = ONE_SECOND_MS * 3;
-        const client = IPC_MAIN_API.client({options: {timeoutMs, finishPromise}});
-        return {
-            dbIndexerOn: client("dbIndexerOn"),
-            dbIndexerNotification: client("dbIndexerNotification"),
-        };
+    apiClient: (finishPromise: Promise<void>) => {
+        return IPC_MAIN_API.client({
+            options: {
+                timeoutMs: ONE_SECOND_MS * 3,
+                finishPromise,
+            },
+        });
     },
 };
 

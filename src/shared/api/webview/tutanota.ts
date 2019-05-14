@@ -1,11 +1,11 @@
-import {ScanApiDefinition, createWebViewApiService} from "electron-rpc-api";
+import {ScanService, createWebViewApiService} from "electron-rpc-api";
 
 import {NotificationsTutanota} from "src/shared/model/account";
 import {buildWebViewApiDefinition, channel} from "./common";
 
 export type TutanotaNotificationOutput = Partial<NotificationsTutanota> & Partial<{ batchEntityUpdatesCounter: number }>;
 
-export type TutanotaScanApi = ScanApiDefinition<typeof TUTANOTA_IPC_WEBVIEW_API_DEFINITION>;
+export type TutanotaScanApi = ScanService<typeof TUTANOTA_IPC_WEBVIEW_API>;
 
 export type TutanotaApi = TutanotaScanApi["Api"];
 

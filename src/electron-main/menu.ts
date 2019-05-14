@@ -2,19 +2,20 @@ import {Menu, MenuItemConstructorOptions, app} from "electron";
 import {platform} from "os";
 
 import {Context} from "src/electron-main/model";
+import {VOID} from "src/shared/constants";
 
 export async function initApplicationMenu(ctx: Context): Promise<Menu> {
     const endpoints = await ctx.deferredEndpoints.promise;
     const aboutItem: MenuItemConstructorOptions = {
         label: "About",
         async click() {
-            await endpoints.openAboutWindow();
+            await endpoints.openAboutWindow.call(VOID);
         },
     };
     const quitItem: MenuItemConstructorOptions = {
         label: "Quit",
         async click() {
-            await endpoints.quit();
+            await endpoints.quit.call(VOID);
         },
     };
     const templateItems: MenuItemConstructorOptions[] = platform() === "darwin"

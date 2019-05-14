@@ -1,6 +1,7 @@
 import {app} from "electron";
 
 import {Context} from "src/electron-main/model";
+import {VOID} from "src/shared/constants";
 import {getDefaultSession, initSession} from "src/electron-main/session";
 import {initApi} from "src/electron-main/api";
 import {initApplicationMenu} from "src/electron-main/menu";
@@ -14,7 +15,7 @@ export async function appReadyHandler(ctx: Context) {
     const endpoints = await initApi(ctx);
 
     // initializing config.json file, so consequent "ctx.configStore.readExisting()" calls would not fails
-    await endpoints.readConfig();
+    await endpoints.readConfig.call(VOID);
 
     initWebContentsCreatingHandlers(ctx);
 
@@ -24,8 +25,8 @@ export async function appReadyHandler(ctx: Context) {
         appMenu: await initApplicationMenu(ctx),
     };
 
-    await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0});
+    await endpoints.updateOverlayIcon.call(VOID, {hasLoggedOut: false, unread: 0});
 
-    app.on("second-instance", async () => await endpoints.activateBrowserWindow());
-    app.on("activate", async () => await endpoints.activateBrowserWindow());
+    app.on("second-instance", async () => await endpoints.activateBrowserWindow.call(VOID));
+    app.on("activate", async () => await endpoints.activateBrowserWindow.call(VOID));
 }

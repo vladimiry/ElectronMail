@@ -39,6 +39,8 @@ export const DEFAULT_UNREAD_BADGE_BG_TEXT = "#ffffff";
 
 export const DEFAULT_MESSAGES_STORE_PORTION_SIZE = 500;
 
+export const VOID = (() => {})();
+
 export const PROVIDER_REPO: Record<AccountType, { repo: string, version: string; commit: string; }> = {
     protonmail: {
         repo: "https://github.com/ProtonMail/WebClient.git",

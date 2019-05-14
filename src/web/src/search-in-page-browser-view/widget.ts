@@ -2,17 +2,17 @@ import asap from "asap-es";
 import {Subscription, from, fromEvent} from "rxjs";
 import {debounceTime, filter, switchMap} from "rxjs/operators";
 
-import {ONE_SECOND_MS} from "src/shared/constants";
+import {ONE_SECOND_MS, VOID} from "src/shared/constants";
 
 export class SearchInPageWidget {
     private readonly apiClient = __ELECTRON_EXPOSURE__.buildIpcMainClient({
         options: {timeoutMs: ONE_SECOND_MS},
     });
     private readonly apiMethods = {
-        findInPage: this.apiClient("findInPage"),
-        findInPageStop: this.apiClient("findInPageStop"),
-        findInPageDisplay: this.apiClient("findInPageDisplay"),
-        findInPageNotification: this.apiClient("findInPageNotification"),
+        findInPage: this.apiClient("findInPage").bind(VOID),
+        findInPageStop: this.apiClient("findInPageStop").bind(VOID),
+        findInPageDisplay: this.apiClient("findInPageDisplay").bind(VOID),
+        findInPageNotification: this.apiClient("findInPageNotification").bind(VOID),
     };
     private readonly els: {
         readonly root: HTMLElement;

@@ -7,7 +7,7 @@ import {equals, mergeDeepRight, omit} from "ramda";
 import {v4 as uuid} from "uuid";
 
 import {Context} from "src/electron-main/model";
-import {DEFAULT_API_CALL_TIMEOUT} from "src/shared/constants";
+import {DEFAULT_API_CALL_TIMEOUT, VOID} from "src/shared/constants";
 import {
     Endpoints,
     EndpointsScan,
@@ -100,7 +100,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
             }
 
             // TODO consider caching the config
-            const {disableSpamNotifications} = await (await ctx.deferredEndpoints.promise).readConfig();
+            const {disableSpamNotifications} = await (await ctx.deferredEndpoints.promise).readConfig.call(VOID);
 
             IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount({
                 key,
@@ -321,7 +321,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
                 Bootstrapped: () => {
                     setTimeout(async () => {
                         const logins = (await ctx.settingsStore.readExisting()).accounts.map((account) => account.login);
-                        const config = await (await ctx.deferredEndpoints.promise).readConfig();
+                        const config = await (await ctx.deferredEndpoints.promise).readConfig.call(VOID);
 
                         for (const {account, pk} of ctx.db.accountsIterator()) {
                             if (logins.includes(pk.login)) {

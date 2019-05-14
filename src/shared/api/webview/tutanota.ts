@@ -7,7 +7,7 @@ export type TutanotaNotificationOutput = Partial<NotificationsTutanota> & Partia
 
 export type TutanotaScanApi = ScanService<typeof TUTANOTA_IPC_WEBVIEW_API>;
 
-export type TutanotaApi = TutanotaScanApi["Api"];
+export type TutanotaApi = TutanotaScanApi["ApiClient"];
 
 export const TUTANOTA_IPC_WEBVIEW_API_DEFINITION = {
     ...buildWebViewApiDefinition<"tutanota", TutanotaNotificationOutput>(),

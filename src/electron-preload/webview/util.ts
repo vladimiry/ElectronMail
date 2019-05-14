@@ -4,7 +4,7 @@ import {of, throwError} from "rxjs";
 import {Arguments} from "src/shared/types";
 import {Config} from "src/shared/model/options";
 import {DbPatch} from "src/shared/api/common";
-import {Endpoints, IPC_MAIN_API} from "src/shared/api/main";
+import {IPC_MAIN_API, IpcMainApiEndpoints} from "src/shared/api/main";
 import {LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN, ONE_SECOND_MS} from "src/shared/constants";
 import {StatusCodeError} from "src/shared/model/error";
 import {asyncDelay, curryFunctionMembers} from "src/shared/util";
@@ -222,7 +222,7 @@ function triggerChangeEvent(input: HTMLInputElement) {
 }
 
 export async function persistDatabasePatch(
-    data: Arguments<Endpoints["dbPatch"]>[0],
+    data: Arguments<IpcMainApiEndpoints["dbPatch"]>[0],
     logger: ReturnType<typeof buildLoggerBundle>,
 ): Promise<void> {
     logger.info("persist() start");

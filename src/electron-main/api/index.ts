@@ -7,8 +7,8 @@ import {platform} from "os";
 
 import {Account, Database, FindInPage, General, TrayIcon} from "./endpoints-builders";
 import {Context} from "src/electron-main/model";
-import {Endpoints, IPC_MAIN_API, InitResponse} from "src/shared/api/main";
-import {PACKAGE_NAME, PRODUCT_NAME, VOID} from "src/shared/constants";
+import {IPC_MAIN_API, InitResponse, IpcMainApiEndpoints} from "src/shared/api/main";
+import {PACKAGE_NAME, PRODUCT_NAME} from "src/shared/constants";
 import {PACKAGE_NAME_V2} from "src/electron-main/api/constants";
 import {attachFullTextIndexWindow, detachFullTextIndexWindow} from "src/electron-main/window/full-text-search";
 import {buildSettingsAdapter, resolveVendorsAppCssLinkHref} from "src/electron-main/util";
@@ -16,8 +16,8 @@ import {clearSessionsCache, initSessionByAccount} from "src/electron-main/sessio
 import {deletePassword, getPassword, setPassword} from "src/electron-main/keytar";
 import {upgradeConfig, upgradeDatabase, upgradeSettings} from "src/electron-main/storage-upgrade";
 
-export const initApi = async (ctx: Context): Promise<Endpoints> => {
-    const endpoints: Endpoints = {
+export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
+    const endpoints: IpcMainApiEndpoints = {
         ...await Account.buildEndpoints(ctx),
         ...await Database.buildEndpoints(ctx),
         ...await FindInPage.buildEndpoints(ctx),
@@ -176,7 +176,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
             delete ctx.selectedAccount; // TODO extend "logout" api test: "delete ctx.selectedAccount"
 
             await clearSessionsCache(ctx);
-            await endpoints.updateOverlayIcon.call(VOID, {hasLoggedOut: false, unread: 0});
+            await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0});
             await detachFullTextIndexWindow(ctx);
         },
 
@@ -226,7 +226,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
                 if (!storedPassword) {
                     throw new Error("No password provided to decrypt settings with");
                 }
-                return await endpoints.readSettings.call(VOID, {password: storedPassword});
+                return await endpoints.readSettings({password: storedPassword});
             }
 
             const adapter = await buildSettingsAdapter(ctx, password);
@@ -260,7 +260,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
                 encryptionPreset,
             });
 
-            return await endpoints.changeMasterPassword.call(VOID, {password, newPassword: password});
+            return await endpoints.changeMasterPassword({password, newPassword: password});
         },
 
         async loadDatabase({accounts}) {
@@ -271,7 +271,7 @@ export const initApi = async (ctx: Context): Promise<Endpoints> => {
                 await upgradeDatabase(ctx.db, accounts);
             }
 
-            if ((await endpoints.readConfig.call(VOID)).fullTextSearch) {
+            if ((await endpoints.readConfig()).fullTextSearch) {
                 await attachFullTextIndexWindow(ctx);
             } else {
                 await detachFullTextIndexWindow(ctx);

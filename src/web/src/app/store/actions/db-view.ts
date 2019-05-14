@@ -2,7 +2,7 @@ import {ofType, unionize} from "@vladimiry/unionize";
 
 import {Arguments, Unpacked} from "src/shared/types";
 import {DbAccountPk, Mail, View} from "src/shared/model/database";
-import {Endpoints} from "src/shared/api/main";
+import {IpcMainApiEndpoints} from "src/shared/api/main";
 import {MailsBundleKey} from "src/web/src/app/store/reducers/db-view";
 
 export const DB_VIEW_ACTIONS = unionize({
@@ -53,10 +53,10 @@ export const DB_VIEW_ACTIONS = unionize({
             reset?: boolean;
             noIncrement?: boolean;
         }>(),
-        FullTextSearchRequest: ofType<Arguments<Endpoints["dbFullTextSearch"]>[0]>(),
+        FullTextSearchRequest: ofType<Arguments<IpcMainApiEndpoints["dbFullTextSearch"]>[0]>(),
         FullTextSearch: ofType<{
             dbAccountPk: DbAccountPk;
-            value: Unpacked<ReturnType<Endpoints["dbFullTextSearch"]>>;
+            value: Unpacked<ReturnType<IpcMainApiEndpoints["dbFullTextSearch"]>>;
         }>(),
         ResetSearchMailsBundleItems: ofType<{
             dbAccountPk: DbAccountPk;

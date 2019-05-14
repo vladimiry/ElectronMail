@@ -7,20 +7,20 @@ import {equals, mergeDeepRight, omit} from "ramda";
 import {v4 as uuid} from "uuid";
 
 import {Context} from "src/electron-main/model";
-import {DEFAULT_API_CALL_TIMEOUT, VOID} from "src/shared/constants";
-import {
-    Endpoints,
-    EndpointsScan,
-    IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS,
-    IPC_MAIN_API_DB_INDEXER_ON_ACTIONS,
-    IPC_MAIN_API_NOTIFICATION_ACTIONS,
-} from "src/shared/api/main";
+import {DEFAULT_API_CALL_TIMEOUT} from "src/shared/constants";
 import {EntityMap, IndexableMail, IndexableMailId, MemoryDbAccount, View} from "src/shared/model/database";
 import {
     IPC_MAIN_API_DB_INDEXER_NOTIFICATION$,
     IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$,
     IPC_MAIN_API_NOTIFICATION$,
 } from "src/electron-main/api/constants";
+import {
+    IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS,
+    IPC_MAIN_API_DB_INDEXER_ON_ACTIONS,
+    IPC_MAIN_API_NOTIFICATION_ACTIONS,
+    IpcMainApiEndpoints,
+    IpcMainServiceScan,
+} from "src/shared/api/main";
 import {Omit, Unpacked} from "src/shared/types";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty, walkConversationNodesTree} from "src/shared/util";
 import {indexAccount, narrowIndexActionPayload} from "./indexing";
@@ -30,7 +30,7 @@ import {writeEmlFile} from "./export";
 
 const _logger = curryFunctionMembers(electronLog, "[electron-main/api/endpoints-builders/database]");
 
-type Methods = keyof Pick<Endpoints,
+type Methods = keyof Pick<IpcMainApiEndpoints,
     | "dbPatch"
     | "dbGetAccountMetadata"
     | "dbGetAccountDataView"
@@ -41,7 +41,7 @@ type Methods = keyof Pick<Endpoints,
     | "dbIndexerOn"
     | "dbIndexerNotification">;
 
-export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Methods>> {
+export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpoints, Methods>> {
     return {
         async dbPatch({type, login, metadata: metadataPatch, forceFlush, patch: entityUpdatesPatch}) {
             const logger = curryFunctionMembers(_logger, "dbPatch()");
@@ -100,7 +100,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
             }
 
             // TODO consider caching the config
-            const {disableSpamNotifications} = await (await ctx.deferredEndpoints.promise).readConfig.call(VOID);
+            const {disableSpamNotifications} = await (await ctx.deferredEndpoints.promise).readConfig();
 
             IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount({
                 key,
@@ -159,7 +159,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
         dbExport({type, login, mailPks}) {
             _logger.info("dbExport()");
 
-            return new Observable<EndpointsScan["ApiReturns"]["dbExport"]>((subscriber) => {
+            return new Observable<IpcMainServiceScan["ApiImplReturns"]["dbExport"]>((subscriber) => {
                 const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
 
                 if (!browserWindow) {
@@ -247,7 +247,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
                             account,
                             {mailPks: [...mailScoresByPk.keys()], folderPks},
                         );
-                        const mailsBundleItems: Unpacked<ReturnType<Endpoints["dbFullTextSearch"]>>["mailsBundleItems"] = [];
+                        const mailsBundleItems: Unpacked<ReturnType<IpcMainApiEndpoints["dbFullTextSearch"]>>["mailsBundleItems"] = [];
                         const findByFolder = folderPks
                             ? ({pk}: View.Folder) => folderPks.includes(pk)
                             : () => true;
@@ -321,7 +321,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
                 Bootstrapped: () => {
                     setTimeout(async () => {
                         const logins = (await ctx.settingsStore.readExisting()).accounts.map((account) => account.login);
-                        const config = await (await ctx.deferredEndpoints.promise).readConfig.call(VOID);
+                        const config = await (await ctx.deferredEndpoints.promise).readConfig();
 
                         for (const {account, pk} of ctx.db.accountsIterator()) {
                             if (logins.includes(pk.login)) {
@@ -354,7 +354,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, Meth
 
 function patchMetadata(
     dest: MemoryDbAccount["metadata"],
-    // TODO TS: use patch: Arguments<Endpoints["dbPatch"]>[0]["metadata"],
+    // TODO TS: use patch: Arguments<IpcMainApiEndpoints["dbPatch"]>[0]["metadata"],
     patch: Omit<MemoryDbAccount<"protonmail">["metadata"], "type"> | Omit<MemoryDbAccount<"tutanota">["metadata"], "type">,
     logger = curryFunctionMembers(_logger, "patchMetadata()"),
 ): boolean {

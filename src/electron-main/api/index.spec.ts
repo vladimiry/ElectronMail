@@ -14,8 +14,8 @@ import {produce} from "immer";
 import {AccountConfigCreatePatch, AccountConfigUpdatePatch, PasswordFieldContainer} from "src/shared/model/container";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
-import {Endpoints} from "src/shared/api/main";
 import {INITIAL_STORES} from "src/electron-main/constants";
+import {IpcMainApiEndpoints} from "src/shared/api/main";
 import {StatusCodeError} from "src/shared/model/error";
 import {Unpacked} from "src/shared/types";
 import {accountPickingPredicate, pickBaseConfigProperties} from "src/shared/util";
@@ -26,7 +26,7 @@ import {buildSettingsAdapter} from "src/electron-main/util";
 
 interface TestContext {
     ctx: Context;
-    endpoints: Endpoints;
+    endpoints: IpcMainApiEndpoints;
     mocks: Unpacked<ReturnType<typeof buildMocks>>;
 }
 
@@ -41,7 +41,7 @@ const OPTIONS = Object.freeze({
     masterPassword: "masterPassword123",
 });
 
-const tests: Record<keyof Endpoints, (t: ExecutionContext<TestContext>) => ImplementationResult> = {
+const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>) => ImplementationResult> = {
     log: async (t) => {
         t.pass(`TODO test "log" endpoint`);
     },
@@ -544,12 +544,12 @@ Object.entries(tests).forEach(([apiMethodName, method]) => {
     test.serial(apiMethodName, method);
 });
 
-async function readConfig(endpoints: Endpoints): Promise<Config> {
+async function readConfig(endpoints: IpcMainApiEndpoints): Promise<Config> {
     return await endpoints.readConfig();
 }
 
 async function readConfigAndSettings(
-    endpoints: Endpoints, payload: PasswordFieldContainer & { savePassword?: boolean; supressErrors?: boolean },
+    endpoints: IpcMainApiEndpoints, payload: PasswordFieldContainer & { savePassword?: boolean; supressErrors?: boolean },
 ): Promise<Settings> {
     await readConfig(endpoints);
     return await endpoints.readSettings(payload);

@@ -4,18 +4,17 @@ import {Subject, of} from "rxjs";
 import {startWith} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
-import {Endpoints, EndpointsScan} from "src/shared/api/main";
-import {VOID} from "src/shared/constants";
+import {IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main";
 import {curryFunctionMembers} from "src/shared/util";
 import {initFindInPageBrowserView} from "src/electron-main/window/find-in-page";
 
-type ApiMethods = keyof Pick<Endpoints,
+type ApiMethods = keyof Pick<IpcMainApiEndpoints,
     | "findInPageDisplay"
     | "findInPage"
     | "findInPageStop"
     | "findInPageNotification">;
 
-type Notification = EndpointsScan["ApiReturns"]["findInPageNotification"];
+type Notification = IpcMainServiceScan["ApiImplReturns"]["findInPageNotification"];
 
 interface NotificationMapValue {
     readonly subject: Subject<Notification>;
@@ -24,7 +23,7 @@ interface NotificationMapValue {
 
 const _logger = curryFunctionMembers(electronLog, "[electron-main/api/endpoints-builders/find-in-page]");
 
-export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiMethods>> {
+export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpoints, ApiMethods>> {
     let findInPageNotification: NotificationMapValue | null = null;
 
     const resolveContext = () => {
@@ -34,7 +33,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
         return ctx.uiContext;
     };
 
-    const endpoints: Pick<Endpoints, ApiMethods> = {
+    const endpoints: Pick<IpcMainApiEndpoints, ApiMethods> = {
         async findInPageDisplay({visible}) {
             const logger = curryFunctionMembers(_logger, "findInPageDisplay()");
 
@@ -54,7 +53,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
                     return;
                 }
 
-                const {findInPage} = await (await ctx.deferredEndpoints.promise).readConfig.call(VOID);
+                const {findInPage} = await (await ctx.deferredEndpoints.promise).readConfig();
 
                 if (!findInPage) {
                     logger.debug(`skipping as "findInPage" config option disabled`);

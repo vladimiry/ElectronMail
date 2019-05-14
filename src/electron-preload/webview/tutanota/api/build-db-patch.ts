@@ -22,7 +22,7 @@ interface DbPatchBundle {
     metadata: Omit<MemoryDbAccount<"tutanota">["metadata"], "type">;
 }
 
-type BuildDbPatchMethodReturnType = TutanotaScanApi["ApiReturns"]["buildDbPatch"];
+type BuildDbPatchMethodReturnType = TutanotaScanApi["ApiImplReturns"]["buildDbPatch"];
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[api/build-db-patch]");
 

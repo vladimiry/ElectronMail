@@ -5,12 +5,12 @@ import {platform} from "os";
 import {startWith} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
-import {Endpoints, IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
-import {VOID} from "src/shared/constants";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main";
+import {Unpacked} from "src/shared/types";
 import {showAboutBrowserWindow} from "src/electron-main/window/about";
 
-type ApiMethods = keyof Pick<Endpoints,
+type Methods = keyof Pick<IpcMainApiEndpoints,
     | "log"
     | "openAboutWindow"
     | "openExternal"
@@ -18,12 +18,16 @@ type ApiMethods = keyof Pick<Endpoints,
     | "quit"
     | "activateBrowserWindow"
     | "toggleBrowserWindow"
-    | "hotkey"
-    | "selectAccount"
     | "notification">;
 
-export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiMethods>> {
-    const endpoints: Pick<Endpoints, ApiMethods> = {
+type ContextAwareMethods = keyof Pick<IpcMainApiEndpoints,
+    | "selectAccount"
+    | "hotkey">;
+
+export async function buildEndpoints(
+    ctx: Context,
+): Promise<Pick<IpcMainApiEndpoints, Methods> & Pick<IpcMainServiceScan["ApiImpl"], ContextAwareMethods>> {
+    const endpoints: Unpacked<ReturnType<typeof buildEndpoints>> = {
         async log(lines) {
             for (const line of lines) {
                 electronLog[line.level](...line.dataArgs);
@@ -82,7 +86,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
             }
 
             if (typeof forcedState !== "undefined" ? forcedState : !browserWindow.isVisible()) {
-                await endpoints.activateBrowserWindow.call(VOID);
+                await endpoints.activateBrowserWindow();
             } else {
                 browserWindow.hide();
             }
@@ -118,8 +122,8 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<Endpoints, ApiM
             );
 
             if (needToCloseFindInPageWindow) {
-                await (await ctx.deferredEndpoints.promise).findInPageStop.call(VOID);
-                await (await ctx.deferredEndpoints.promise).findInPageDisplay.call(VOID, {visible: false});
+                await (await ctx.deferredEndpoints.promise).findInPageStop();
+                await (await ctx.deferredEndpoints.promise).findInPageDisplay({visible: false});
             }
 
             ctx.selectedAccount = newSelectedAccount;

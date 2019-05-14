@@ -1,11 +1,11 @@
 import {Arguments, Logger, Unpacked} from "src/shared/types";
-import {Endpoints} from "src/shared/api/main";
+import {IpcMainApiEndpoints} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
 
 const apiClient = __ELECTRON_EXPOSURE__.buildIpcMainClient({options: {timeoutMs: ONE_SECOND_MS * 3}});
 const apiMethod = apiClient("log");
 
-type Line = Unpacked<Arguments<Endpoints["log"]>[0]>;
+type Line = Unpacked<Arguments<IpcMainApiEndpoints["log"]>[0]>;
 
 const callApiDebounce: {
     readonly delayMs: number,

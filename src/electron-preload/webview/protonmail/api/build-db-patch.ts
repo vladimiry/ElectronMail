@@ -24,7 +24,7 @@ interface DbPatchBundle {
     metadata: Omit<MemoryDbAccount<"protonmail">["metadata"], "type">;
 }
 
-type BuildDbPatchMethodReturnType = ProtonmailApiScan["ApiReturns"]["buildDbPatch"];
+type BuildDbPatchMethodReturnType = ProtonmailApiScan["ApiImplReturns"]["buildDbPatch"];
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[api/build-db-patch]");
 

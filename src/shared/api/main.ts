@@ -18,9 +18,9 @@ import {MemoryDbAccount} from "src/shared/model/database";
 import {Omit} from "src/shared/types";
 import {PACKAGE_NAME} from "src/shared/constants";
 
-export type EndpointsScan = ScanService<typeof IPC_MAIN_API>;
+export type IpcMainServiceScan = ScanService<typeof IPC_MAIN_API>;
 
-export type Endpoints = EndpointsScan["Api"];
+export type IpcMainApiEndpoints = IpcMainServiceScan["ApiClient"];
 
 export const ENDPOINTS_DEFINITION = {
     log: ActionType.Promise<Array<{ level: LogLevel; dataArgs: any[]; }>>(),

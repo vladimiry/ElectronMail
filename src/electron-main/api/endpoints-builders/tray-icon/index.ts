@@ -3,7 +3,7 @@ import {app} from "electron";
 import {CircleConfig} from "./model";
 import {Context} from "src/electron-main/model";
 import {DEFAULT_UNREAD_BADGE_BG_COLOR, DEFAULT_UNREAD_BADGE_BG_TEXT} from "src/shared/constants";
-import {Endpoints} from "src/shared/api/main";
+import {IpcMainApiEndpoints} from "src/shared/api/main";
 import {loggedOutBundle, trayIconBundleFromPath, unreadNative} from "./icon-builder";
 
 // TODO use "deep freezing" util
@@ -17,7 +17,7 @@ const config: {
 
 export async function buildEndpoints(
     ctx: Context,
-): Promise<Pick<Endpoints, "updateOverlayIcon">> {
+): Promise<Pick<IpcMainApiEndpoints, "updateOverlayIcon">> {
     const defaultCanvas = await trayIconBundleFromPath(ctx.locations.trayIcon);
     const loggedOutCanvas = await loggedOutBundle(defaultCanvas, config.loggedOut);
 

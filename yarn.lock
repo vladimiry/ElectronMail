@@ -885,9 +885,9 @@
     "@types/node" "*"
 
 "@types/node@*":
-  version "12.0.0"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-12.0.0.tgz#d11813b9c0ff8aaca29f04cbc12817f4c7d656e5"
-  integrity sha512-Jrb/x3HT4PTJp6a4avhmJCDEVrPdqLfl3e8GGMbpkGGdwAV5UGlIs4vVEfsHHfylZVOKZWpOqmqFH8CbfOZ6kg==
+  version "12.0.1"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-12.0.1.tgz#3dde31f8da274dfeb90e96abf55038fef46285f0"
+  integrity sha512-7sy7DKVJrCTbaAERJZq/CU12bzdmpjRr321/Ne9QmzhB3iZ//L16Cizcni5hHNbANxDbxwMb9EFoWkM8KPkp0A==
 
 "@types/node@11.13.8":
   version "11.13.8"
@@ -1771,7 +1771,7 @@ async@^1.5.2:
   resolved "https://registry.yarnpkg.com/async/-/async-1.5.2.tgz#ec6a61ae56480c0c3cb241c95618e20892f9672a"
   integrity sha1-7GphrlZIDAw8skHJVhjiCJL5Zyo=
 
-async@^2.0.0, async@^2.5.0, async@^2.6.1:
+async@^2.0.0, async@^2.5.0, async@^2.6.2:
   version "2.6.2"
   resolved "https://registry.yarnpkg.com/async/-/async-2.6.2.tgz#18330ea7e6e313887f5d2f2a904bac6fe4dd5381"
   integrity sha512-H1qVYh1MYhEEFLsP97cVKqCGo7KfCyTt6uEWqsTBr9SO84oK9Uwbyd/yCW+6rKJLHksBNUVWZDAjfS+Ccx0Bbg==
@@ -2200,13 +2200,13 @@ browserify-zlib@^0.2.0:
     pako "~1.0.5"
 
 browserslist@^4.0.0:
-  version "4.5.6"
-  resolved "https://registry.yarnpkg.com/browserslist/-/browserslist-4.5.6.tgz#ea42e8581ca2513fa7f371d4dd66da763938163d"
-  integrity sha512-o/hPOtbU9oX507lIqon+UvPYqpx3mHc8cV3QemSBTXwkG8gSQSK6UKvXcE/DcleU3+A59XTUHyCvZ5qGy8xVAg==
+  version "4.6.0"
+  resolved "https://registry.yarnpkg.com/browserslist/-/browserslist-4.6.0.tgz#5274028c26f4d933d5b1323307c1d1da5084c9ff"
+  integrity sha512-Jk0YFwXBuMOOol8n6FhgkDzn3mY9PYLYGk29zybF05SbRTsMgPqmTNeQQhOghCxq5oFqAXE3u4sYddr4C0uRhg==
   dependencies:
-    caniuse-lite "^1.0.30000963"
-    electron-to-chromium "^1.3.127"
-    node-releases "^1.1.17"
+    caniuse-lite "^1.0.30000967"
+    electron-to-chromium "^1.3.133"
+    node-releases "^1.1.19"
 
 btoa-lite@^1.0.0:
   version "1.0.0"
@@ -2518,7 +2518,7 @@ caniuse-api@^3.0.0:
     lodash.memoize "^4.1.2"
     lodash.uniq "^4.5.0"
 
-caniuse-lite@^1.0.0, caniuse-lite@^1.0.30000963:
+caniuse-lite@^1.0.0, caniuse-lite@^1.0.30000967:
   version "1.0.30000967"
   resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30000967.tgz#a5039577806fccee80a04aaafb2c0890b1ee2f73"
   integrity sha512-rUBIbap+VJfxTzrM4akJ00lkvVb5/n5v3EGXfWzSH5zT8aJmGzjA8HWhJ4U6kCpzxozUSnB+yvAYDRPY6mRpgQ==
@@ -4145,13 +4145,15 @@ electron-publish@20.39.0:
     lazy-val "^1.0.4"
     mime "^2.4.0"
 
-electron-rpc-api@./../electron-rpc-api:
+electron-rpc-api@5.0.0-beta1:
   version "5.0.0-beta1"
+  resolved "https://registry.yarnpkg.com/electron-rpc-api/-/electron-rpc-api-5.0.0-beta1.tgz#fd1a41cb7235f322252076f5d2322ee0dc5e78de"
+  integrity sha512-XC91cxtsFHSPI2F8jc8Dr/F5VGgiFeqrfe0gIHOQs4Oeqq4GzATHRAVF3C/2Tl9SiKYPE6HnhLbffeRU6++wBA==
   dependencies:
-    pubsub-to-rpc-api "./../pubsub-to-rpc-api"
+    pubsub-to-rpc-api "^5.0.0-beta4"
     tslib "^1.9.2"
 
-electron-to-chromium@^1.3.127:
+electron-to-chromium@^1.3.133:
   version "1.3.133"
   resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.133.tgz#c47639c19b91feee3e22fad69f5556142007008c"
   integrity sha512-lyoC8aoqbbDqsprb6aPdt9n3DpOZZzdz/T4IZKsR0/dkZIxnJVUjjcpOSwA66jPRIOyDAamCTAUqweU05kKNSg==
@@ -5210,7 +5212,7 @@ fs-extra-p@^7.0.0, fs-extra-p@^7.0.1:
     bluebird-lst "^1.0.7"
     fs-extra "^7.0.1"
 
-fs-extra@7.0.1, fs-extra@^7.0.0, fs-extra@^7.0.1:
+fs-extra@7.0.1, fs-extra@^7.0.1:
   version "7.0.1"
   resolved "https://registry.yarnpkg.com/fs-extra/-/fs-extra-7.0.1.tgz#4f189c44aa123b895f722804f55ea23eadc348e9"
   integrity sha512-YJDaCJZEnBmcbw13fvdAM9AwNOJwOzrE4pqMqBq5nFiEqXUqHwlK4B+3pUw6JNvfSPtX05xFHtYy/1ni01eGCw==
@@ -7435,15 +7437,15 @@ log4js@^3.0.0:
     streamroller "0.7.0"
 
 log4js@^4.0.0:
-  version "4.1.1"
-  resolved "https://registry.yarnpkg.com/log4js/-/log4js-4.1.1.tgz#48ebed51e6989557b8a991c48f01879e82773545"
-  integrity sha512-tSQUF9bBMdcBtuLD6vD7hBM9Ci6Lng/NVHZEq4YbuRGo7ObmLiZuhxz33HKAmJItit74pAjvZgirqYX2LRaoGA==
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/log4js/-/log4js-4.2.0.tgz#659a91d9522053b1e1d0ba89adf81c2005b8a993"
+  integrity sha512-1dJ2ORJcdqbzxvzKM2ceqPBh4O6bbICJpB4dvSEUoMcb14s8MqQ/54zNPqekuN5yjGtxO3GUDTvZfQOQhwdqnA==
   dependencies:
     date-format "^2.0.0"
     debug "^4.1.1"
     flatted "^2.0.0"
     rfdc "^1.1.2"
-    streamroller "^1.0.4"
+    streamroller "^1.0.5"
 
 loglevel@^1.6.1:
   version "1.6.1"
@@ -8166,7 +8168,7 @@ node-pre-gyp@^0.12.0:
     semver "^5.3.0"
     tar "^4"
 
-node-releases@^1.1.17:
+node-releases@^1.1.19:
   version "1.1.19"
   resolved "https://registry.yarnpkg.com/node-releases/-/node-releases-1.1.19.tgz#c492d1e381fea0350b338b646c27867e88e91b3d"
   integrity sha512-SH/B4WwovHbulIALsQllAVwqZZD1kPmKCqrhGfR29dXjLAVZMHvBjD3S6nL9D/J9QkmZ1R92/0wCMDKXUUvyyA==
@@ -9552,8 +9554,10 @@ public-encrypt@^4.0.0:
     randombytes "^2.0.1"
     safe-buffer "^5.1.2"
 
-pubsub-to-rpc-api@./../pubsub-to-rpc-api:
-  version "5.0.0-beta3"
+pubsub-to-rpc-api@^5.0.0-beta4:
+  version "5.0.0-beta4"
+  resolved "https://registry.yarnpkg.com/pubsub-to-rpc-api/-/pubsub-to-rpc-api-5.0.0-beta4.tgz#7101565309a34c039c4ec2c486047dd024405986"
+  integrity sha512-x9wx4rBo9QDsfj/HaX81hhtxI8DBqoAsoVaVTGENVWnfXTsbEBZQFeZ8d1ZCu+osJnYw3NCYFtEuAjSaXFosxg==
   dependencies:
     deserialize-error "^0.0.3"
     jsan "^3.1.13"
@@ -9899,9 +9903,9 @@ reflect-metadata@0.1.13, reflect-metadata@^0.1.12, reflect-metadata@^0.1.2:
   integrity sha512-Ts1Y/anZELhSsjMcU605fU9RE4Oi3p5ORujwbIKXfWa+0Zxs510Qrmrce5/Jowq3cHSZSJqBjypxmHarc+vEWg==
 
 regenerate-unicode-properties@^8.0.2:
-  version "8.0.2"
-  resolved "https://registry.yarnpkg.com/regenerate-unicode-properties/-/regenerate-unicode-properties-8.0.2.tgz#7b38faa296252376d363558cfbda90c9ce709662"
-  integrity sha512-SbA/iNrBUf6Pv2zU8Ekv1Qbhv92yxL4hiDa2siuxs4KKn4oOoMDHXjAf7+Nz9qinUQ46B1LcWEi/PhJfPWpZWQ==
+  version "8.1.0"
+  resolved "https://registry.yarnpkg.com/regenerate-unicode-properties/-/regenerate-unicode-properties-8.1.0.tgz#ef51e0f0ea4ad424b77bf7cb41f3e015c70a3f0e"
+  integrity sha512-LGZzkgtLY79GeXLm8Dp0BVLdQlWICzBnJz/ipWUgo59qBaZ+BHtq51P2q1uVZlppMuUAT37SDk39qUbjTWB7bA==
   dependencies:
     regenerate "^1.4.0"
 
@@ -11139,16 +11143,16 @@ streamroller@0.7.0:
     mkdirp "^0.5.1"
     readable-stream "^2.3.0"
 
-streamroller@^1.0.4:
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/streamroller/-/streamroller-1.0.4.tgz#d485c7624796d5e2eb34190c79afcbf006afb5e6"
-  integrity sha512-Wc2Gm5ygjSX8ZpW9J7Y9FwiSzTlKSvcl0FTTMd3rn7RoxDXpBW+xD9TY5sWL2n0UR61COB0LG1BQvN6nTUQbLQ==
+streamroller@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/streamroller/-/streamroller-1.0.5.tgz#71660c20b06b1a7b204d46085731ad13c10a562d"
+  integrity sha512-iGVaMcyF5PcUY0cPbW3xFQUXnr9O4RZXNBBjhuLZgrjLO4XCLLGfx4T2sGqygSeylUjwgWRsnNbT9aV0Zb8AYw==
   dependencies:
-    async "^2.6.1"
+    async "^2.6.2"
     date-format "^2.0.0"
-    debug "^3.1.0"
-    fs-extra "^7.0.0"
-    lodash "^4.17.10"
+    debug "^3.2.6"
+    fs-extra "^7.0.1"
+    lodash "^4.17.11"
 
 strict-uri-encode@^1.0.0:
   version "1.1.0"

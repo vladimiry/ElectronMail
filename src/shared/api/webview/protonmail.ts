@@ -9,7 +9,7 @@ const {Promise} = ActionType;
 
 export type ProtonmailApiScan = ScanService<typeof PROTONMAIL_IPC_WEBVIEW_API>;
 
-export type ProtonmailApi = ProtonmailApiScan["Api"];
+export type ProtonmailApi = ProtonmailApiScan["ApiClient"];
 
 export type ProtonmailNotificationOutput = Partial<NotificationsProtonmail> & Partial<{ batchEntityUpdatesCounter: number }>;
 

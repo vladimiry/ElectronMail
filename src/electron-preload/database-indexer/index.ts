@@ -1,6 +1,6 @@
 import asap from "asap-es";
 
-import {EndpointsScan, IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_DB_INDEXER_ON_ACTIONS} from "src/shared/api/main";
+import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_DB_INDEXER_ON_ACTIONS, IpcMainServiceScan} from "src/shared/api/main";
 import {LOGGER} from "./lib/contants";
 import {SERVICES_FACTORY, addToMailsIndex, createMailsIndex, removeMailsFromIndex} from "./lib/util";
 import {curryFunctionMembers} from "src/shared/util";
@@ -41,7 +41,7 @@ function bootstrap() {
     logger.info(`dbIndexerNotification.subscribed`);
 }
 
-async function dbIndexerNotificationHandler(action: EndpointsScan["ApiReturns"]["dbIndexerNotification"]): Promise<void> {
+async function dbIndexerNotificationHandler(action: IpcMainServiceScan["ApiImplReturns"]["dbIndexerNotification"]): Promise<void> {
     logger.verbose(`dbIndexerNotification.next, action.type:`, action.type);
 
     await IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.match(

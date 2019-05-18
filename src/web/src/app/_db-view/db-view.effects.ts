@@ -33,7 +33,6 @@ export class DbViewEffects {
                     filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbPatchAccount),
                     filter(({payload: {key}}) => key.type === dbAccountPk.type && key.login === dbAccountPk.login),
                     filter(({payload: {entitiesModified}}) => entitiesModified),
-                    // tslint:disable-next-line:ban
                     switchMap(() => from(ipcMainClient("dbGetAccountDataView")(dbAccountPk))),
                 ),
                 this.store.pipe(

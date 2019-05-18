@@ -12,21 +12,24 @@ import {buildLoggerBundle} from "src/electron-preload/util";
 
 const configsCache: { resolveDomElements?: Config } = {};
 
-export const resolveIpcMainApi: () => Promise<ReturnType<typeof IPC_MAIN_API.client>> = (() => {
+export const resolveIpcMainApi: (
+    logger: ReturnType<typeof buildLoggerBundle>,
+) => Promise<ReturnType<typeof IPC_MAIN_API.client>> = (() => {
     let ipcMainApiClient: ReturnType<typeof IPC_MAIN_API.client> | undefined;
 
-    return async () => {
+    const result: typeof resolveIpcMainApi = async (logger) => {
         if (ipcMainApiClient) {
             return ipcMainApiClient;
         }
 
-        const {timeouts: {defaultApiCall: timeoutMs}}
-            = await IPC_MAIN_API.client({options: {timeoutMs: 3000}})("readConfig")();
+        const {timeouts: {defaultApiCall: timeoutMs}} = await IPC_MAIN_API.client({options: {logger}})("readConfig")();
 
-        ipcMainApiClient = IPC_MAIN_API.client({options: {timeoutMs}});
+        ipcMainApiClient = IPC_MAIN_API.client({options: {timeoutMs, logger}});
 
         return ipcMainApiClient;
     };
+
+    return result;
 })();
 
 export const isBuiltInWebClient: () => boolean = (() => {
@@ -40,12 +43,13 @@ export const resolveDomElements = <E extends Element,
     K extends keyof Q,
     R extends { [key in K]: ReturnType<Q[key]> }>(
     query: Q,
+    logger: ReturnType<typeof buildLoggerBundle>,
     opts: { timeoutMs?: number, iterationsLimit?: number } = {},
 ): Promise<Readonly<R>> => new Promise(async (resolve, reject) => {
     let configTimeout: number | undefined;
 
     try {
-        const api = await resolveIpcMainApi();
+        const api = await resolveIpcMainApi(logger);
         if (!configsCache.resolveDomElements) {
             configsCache.resolveDomElements = await api("readConfig")();
         }
@@ -227,7 +231,7 @@ export async function persistDatabasePatch(
 ): Promise<void> {
     logger.info("persist() start");
 
-    await (await resolveIpcMainApi())("dbPatch")({
+    await (await resolveIpcMainApi(logger))("dbPatch")({
         type: data.type,
         login: data.login,
         metadata: data.metadata,

@@ -20,7 +20,7 @@ export function registerDocumentKeyDownEventListener<E extends ObservableElement
     }
 
     try {
-        const apiClient = IPC_MAIN_API.client();
+        const apiClient = IPC_MAIN_API.client({options: {logger}});
         const eventHandlerArgs: ["keydown", (event: KeyboardEvent) => Promise<void>] = [
             "keydown",
             async (event: KeyboardEvent) => {
@@ -97,7 +97,7 @@ export function registerDocumentClickEventListener<E extends ObservableElement>(
     }
 
     try {
-        const apiClient = IPC_MAIN_API.client();
+        const apiClient = IPC_MAIN_API.client({options: {logger}});
         const eventHandlerArgs: ["click", (event: MouseEvent) => Promise<void>] = [
             "click",
             async (event: MouseEvent) => await callDocumentClickEventListener(event, logger, apiClient),
@@ -145,7 +145,7 @@ export async function callDocumentClickEventListener(
 
         event.preventDefault();
 
-        const client = apiClient || IPC_MAIN_API.client();
+        const client = apiClient || IPC_MAIN_API.client({options: {logger}});
         const method = client("openExternal");
 
         await method({url: href});

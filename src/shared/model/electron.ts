@@ -6,12 +6,12 @@ import {PROTONMAIL_IPC_WEBVIEW_API} from "src/shared/api/webview/protonmail";
 import {TUTANOTA_IPC_WEBVIEW_API} from "src/shared/api/webview/tutanota";
 import {registerDocumentClickEventListener} from "src/electron-preload/events-handling";
 
-type ProtonmailWebViewClient = { [k in Extract<AccountType, "protonmail">]: typeof PROTONMAIL_IPC_WEBVIEW_API.client };
-type TutanotaWebViewClient = { [k in Extract<AccountType, "tutanota">]: typeof TUTANOTA_IPC_WEBVIEW_API.client };
-
 export interface ElectronExposure {
     registerDocumentClickEventListener: typeof registerDocumentClickEventListener;
-    buildIpcWebViewClient: ProtonmailWebViewClient & TutanotaWebViewClient;
+    buildIpcWebViewClient: {
+        protonmail: typeof PROTONMAIL_IPC_WEBVIEW_API.client;
+        tutanota: typeof TUTANOTA_IPC_WEBVIEW_API.client;
+    };
     buildIpcMainClient: typeof IPC_MAIN_API.client;
     require: {
         "rolling-rate-limiter": () => (options: InMemoryOptions) => SyncOrAsyncLimiter;

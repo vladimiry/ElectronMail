@@ -1,9 +1,8 @@
+// TODO rename the file to "electron-log-client"
+
 import {Arguments, Logger, Unpacked} from "src/shared/types";
 import {IpcMainApiEndpoints} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
-
-const apiClient = __ELECTRON_EXPOSURE__.buildIpcMainClient({options: {timeoutMs: ONE_SECOND_MS * 3}});
-const apiMethod = apiClient("log");
 
 type Line = Unpacked<Arguments<IpcMainApiEndpoints["log"]>[0]>;
 
@@ -44,3 +43,6 @@ export const LOGGER: Logger = {
     debug: log.bind(null, "debug"),
     silly: log.bind(null, "silly"),
 };
+
+const apiClient = __ELECTRON_EXPOSURE__.buildIpcMainClient({options: {logger: LOGGER}});
+const apiMethod = apiClient("log");

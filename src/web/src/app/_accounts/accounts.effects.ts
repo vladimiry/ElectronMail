@@ -120,7 +120,6 @@ export class AccountsEffects {
                 filter(() => navigator.onLine),
             );
             const notSyncingPing$ = timer(0, ONE_SECOND_MS).pipe(
-                // tslint:disable-next-line:ban
                 switchMap(() => this.store.pipe(
                     select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
                     filter((account) => Boolean(account && !account.progress.syncing)),
@@ -511,7 +510,8 @@ export class AccountsEffects {
                     return merge(
                         of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: true}})),
                         resetNotificationsState$,
-                        this.api.webViewClient(webView, type).pipe(
+                        // TODO TS: resolve "webViewClient" calling "this.api.webViewClient" as normally
+                        of(__ELECTRON_EXPOSURE__.buildIpcWebViewClient.protonmail(webView)).pipe(
                             mergeMap((webViewClient) => {
                                 return from(
                                     webViewClient("unlock")({mailPassword, zoneName}),

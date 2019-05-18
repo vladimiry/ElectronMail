@@ -32,10 +32,6 @@
     "max-classes-per-file": [
       false
     ],
-    "no-empty": false,
-    "ban": [
-      true,
-      "switchMap"
-    ]
+    "no-empty": false
   }
 }

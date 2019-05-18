@@ -59,16 +59,24 @@ export const asyncDelay = async <T>(pauseTimeMs: number, resolveAction?: () => P
     });
 };
 
-export const curryFunctionMembers = <T extends any>(src: T, ...args: any[]): T => {
-    const dest: T = typeof src === "function" ? src.bind(undefined) : {};
+export function curryFunctionMembers<T extends object | ((...a: any[]) => any)>(
+    src: T,
+    ...args: any[]
+): T {
+    const dest: T = typeof src === "function"
+        ? src.bind(undefined) :
+        Object.create(null);
+
     for (const key of Object.getOwnPropertyNames(src)) {
-        const srcMember = src[key];
+        const srcMember = (src as any)[key];
+
         if (typeof srcMember === "function") {
-            dest[key] = srcMember.bind(undefined, ...args);
+            (dest as any)[key] = srcMember.bind(src, ...args);
         }
     }
+
     return dest;
-};
+}
 
 export function isEntityUpdatesPatchNotEmpty({conversationEntries, folders, mails, contacts}: DbPatch): boolean {
     return [

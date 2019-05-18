@@ -17,7 +17,7 @@ export class NavigationEffects {
     navigate$ = this.actions$.pipe(
         unionizeActionFilter(NAVIGATION_ACTIONS.is.Go),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-        switchMap(({payload, logger}) => { // tslint:disable-line:ban
+        switchMap(({payload, logger}) => {
             const {path, extras, queryParams} = payload;
 
             // WARN: privacy note, do not log "queryParams" as it might be filled with sensitive data (like "login"/"user name")

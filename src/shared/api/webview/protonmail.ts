@@ -3,9 +3,8 @@ import {ActionType, ScanService, createWebViewApiService} from "electron-rpc-api
 import {MailPasswordFieldContainer} from "src/shared/model/container";
 import {NotificationsProtonmail} from "src/shared/model/account";
 import {ZoneApiParameter} from "src/shared/api/common";
+import {buildLoggerBundle} from "src/electron-preload/util";
 import {buildWebViewApiDefinition, channel} from "./common";
-
-const {Promise} = ActionType;
 
 export type ProtonmailApiScan = ScanService<typeof PROTONMAIL_IPC_WEBVIEW_API>;
 
@@ -15,10 +14,11 @@ export type ProtonmailNotificationOutput = Partial<NotificationsProtonmail> & Pa
 
 export const PROTONMAIL_IPC_WEBVIEW_API_DEFINITION = {
     ...buildWebViewApiDefinition<"protonmail", ProtonmailNotificationOutput>(),
-    unlock: Promise<MailPasswordFieldContainer & ZoneApiParameter>(),
+    unlock: ActionType.Promise<MailPasswordFieldContainer & ZoneApiParameter>(),
 } as const;
 
 export const PROTONMAIL_IPC_WEBVIEW_API = createWebViewApiService({
     channel,
     apiDefinition: PROTONMAIL_IPC_WEBVIEW_API_DEFINITION,
+    logger: buildLoggerBundle("[IPC_WEBVIEW_API:protonmail]"),
 });

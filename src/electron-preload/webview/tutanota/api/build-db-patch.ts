@@ -178,7 +178,7 @@ async function bootstrapDbPatch(
 
     const remainingMails: Rest.Model.Mail[] = await (async () => {
         const {fetching: {messagesStorePortionSize = DEFAULT_MESSAGES_STORE_PORTION_SIZE}}
-            = await (await resolveIpcMainApi())("readConfig")();
+            = await (await resolveIpcMainApi(logger))("readConfig")();
         const fetchParams = {start: await Rest.Util.generateStartId(), count: 100, reverse: false};
 
         let mailsPersistencePortion: Rest.Model.Mail[] = [];

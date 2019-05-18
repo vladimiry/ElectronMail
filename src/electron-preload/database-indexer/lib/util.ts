@@ -6,7 +6,6 @@ import {lowerCaseFilter, whitespaceTokenizer} from "ndx-utils";
 import {FIELD_DESCRIPTION, LOGGER} from "./contants";
 import {IPC_MAIN_API} from "src/shared/api/main";
 import {IndexableMail, IndexableMailId, MailsIndex} from "src/shared/model/database";
-import {ONE_SECOND_MS} from "src/shared/constants";
 import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(LOGGER, "[lib/util]");
@@ -26,8 +25,8 @@ export const SERVICES_FACTORY = {
     apiClient: (finishPromise: Promise<void>) => {
         return IPC_MAIN_API.client({
             options: {
-                timeoutMs: ONE_SECOND_MS * 3,
                 finishPromise,
+                logger,
             },
         });
     },

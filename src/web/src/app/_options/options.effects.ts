@@ -264,7 +264,7 @@ export class OptionsEffects {
         concatMap(({payload}) => merge(
             of(this.buildPatchProgress({updatingBaseSettings: true})),
             from(
-                this.ipcMainClient("toggleCompactLayout")(),
+                this.ipcMainClient("patchBaseConfig")(payload),
             ).pipe(
                 map((config) => OPTIONS_ACTIONS.GetConfigResponse(config)),
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),

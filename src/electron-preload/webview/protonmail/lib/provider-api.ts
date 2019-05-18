@@ -81,7 +81,7 @@ export async function resolveProviderApi(): Promise<ProviderApi> {
 
     const rateLimiting = {
         rateLimiterTick: await (async () => {
-            const {fetching: {rateLimit: rateLimitConfig}} = await (await resolveIpcMainApi())("readConfig")();
+            const {fetching: {rateLimit: rateLimitConfig}} = await (await resolveIpcMainApi(logger))("readConfig")();
             const limiter = rateLimiter({
                 interval: rateLimitConfig.intervalMs,
                 maxInInterval: rateLimitConfig.maxInInterval,

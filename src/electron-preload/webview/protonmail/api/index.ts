@@ -26,7 +26,7 @@ const endpoints: ProtonmailApi = {
     async selectAccount({databaseView, zoneName}) {
         _logger.info("selectAccount()", zoneName);
 
-        await (await resolveIpcMainApi())("selectAccount")({databaseView});
+        await (await resolveIpcMainApi(_logger))("selectAccount")({databaseView});
     },
 
     async selectMailOnline(input) {
@@ -109,9 +109,12 @@ const endpoints: ProtonmailApi = {
 
         logger.info();
 
-        const elements = await resolveDomElements({
-            username: () => document.getElementById("username") as HTMLInputElement,
-        });
+        const elements = await resolveDomElements(
+            {
+                username: () => document.getElementById("username") as HTMLInputElement,
+            },
+            logger,
+        );
         logger.verbose(`elements resolved`);
 
         await fillInputValue(elements.username, login);
@@ -128,10 +131,13 @@ const endpoints: ProtonmailApi = {
         await endpoints.fillLogin({login, zoneName});
         logger.verbose(`fillLogin() executed`);
 
-        const elements = await resolveDomElements({
-            password: () => document.getElementById("password") as HTMLInputElement,
-            submit: () => document.getElementById("login_btn") as HTMLElement,
-        });
+        const elements = await resolveDomElements(
+            {
+                password: () => document.getElementById("password") as HTMLInputElement,
+                submit: () => document.getElementById("login_btn") as HTMLElement,
+            },
+            logger,
+        );
         logger.verbose(`elements resolved`);
 
         if (elements.password.value) {
@@ -154,7 +160,7 @@ const endpoints: ProtonmailApi = {
             input: () => document.getElementById("twoFactorCode") as HTMLInputElement,
             button: () => document.getElementById("login_btn_2fa") as HTMLElement,
         };
-        const elements = await resolveDomElements(resolveElementsConfig);
+        const elements = await resolveDomElements(resolveElementsConfig, logger);
 
         logger.verbose("elements resolved");
 
@@ -166,7 +172,7 @@ const endpoints: ProtonmailApi = {
             {
                 submittingDetection: async () => {
                     try {
-                        await resolveDomElements(resolveElementsConfig, {iterationsLimit: 1});
+                        await resolveDomElements(resolveElementsConfig, logger, {iterationsLimit: 1});
                     } catch {
                         return true;
                     }
@@ -177,12 +183,17 @@ const endpoints: ProtonmailApi = {
     },
 
     async unlock({mailPassword, zoneName}) {
-        _logger.info("unlock()", zoneName);
+        const logger = curryFunctionMembers(_logger, "unlock()", zoneName);
 
-        const elements = await resolveDomElements({
-            mailboxPassword: () => document.getElementById("mailboxPassword") as HTMLInputElement,
-            submit: () => document.getElementById("unlock_btn") as HTMLElement,
-        });
+        logger.info("unlock()", zoneName);
+
+        const elements = await resolveDomElements(
+            {
+                mailboxPassword: () => document.getElementById("mailboxPassword") as HTMLInputElement,
+                submit: () => document.getElementById("unlock_btn") as HTMLElement,
+            },
+            logger,
+        );
 
         await fillInputValue(elements.mailboxPassword, mailPassword);
         elements.submit.click();

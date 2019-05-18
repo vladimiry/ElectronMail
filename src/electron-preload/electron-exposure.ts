@@ -11,8 +11,8 @@ export const ELECTRON_WINDOW: ElectronWindow = {
         registerDocumentClickEventListener,
         buildIpcMainClient: IPC_MAIN_API.client.bind(IPC_MAIN_API),
         buildIpcWebViewClient: {
-            protonmail: PROTONMAIL_IPC_WEBVIEW_API.client.bind(PROTONMAIL_IPC_WEBVIEW_API),
-            tutanota: TUTANOTA_IPC_WEBVIEW_API.client.bind(TUTANOTA_IPC_WEBVIEW_API),
+            protonmail: PROTONMAIL_IPC_WEBVIEW_API.client,
+            tutanota: TUTANOTA_IPC_WEBVIEW_API.client,
         },
         require: {
             "rolling-rate-limiter": () => remote.require("rolling-rate-limiter"),

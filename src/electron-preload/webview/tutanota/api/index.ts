@@ -39,9 +39,11 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
         async ping() {},
 
         async selectAccount({databaseView, zoneName}) {
-            _logger.info("selectAccount()", zoneName);
+            const logger = curryFunctionMembers(_logger, "selectAccount()", zoneName);
 
-            await (await resolveIpcMainApi())("selectAccount")({databaseView});
+            logger.info("selectAccount()", zoneName);
+
+            await (await resolveIpcMainApi(logger))("selectAccount")({databaseView});
         },
 
         async selectMailOnline(input) {
@@ -73,11 +75,14 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
                 event.preventDefault();
                 event.stopPropagation();
             };
-            const elements = await resolveDomElements({
-                username: () => document.querySelector("form [type=email]") as HTMLInputElement,
-                storePasswordCheckbox: () => document.querySelector("form .items-center [type=checkbox]") as HTMLInputElement,
-                storePasswordCheckboxBlock: () => document.querySelector("form .checkbox.pt.click") as HTMLInputElement,
-            });
+            const elements = await resolveDomElements(
+                {
+                    username: () => document.querySelector("form [type=email]") as HTMLInputElement,
+                    storePasswordCheckbox: () => document.querySelector("form .items-center [type=checkbox]") as HTMLInputElement,
+                    storePasswordCheckboxBlock: () => document.querySelector("form .checkbox.pt.click") as HTMLInputElement,
+                },
+                logger,
+            );
             logger.verbose(`elements resolved`);
 
             await fillInputValue(elements.username, login);
@@ -99,10 +104,13 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
             await endpoints.fillLogin({login, zoneName});
             logger.verbose(`fillLogin() executed`);
 
-            const elements = await resolveDomElements({
-                password: () => document.querySelector("form [type=password]") as HTMLInputElement,
-                submit: () => document.querySelector("form button") as HTMLElement,
-            });
+            const elements = await resolveDomElements(
+                {
+                    password: () => document.querySelector("form [type=password]") as HTMLInputElement,
+                    submit: () => document.querySelector("form button") as HTMLElement,
+                },
+                logger,
+            );
             logger.verbose(`elements resolved`);
 
             if (elements.password.value) {
@@ -121,7 +129,7 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
 
             logger.info();
 
-            const elements = await resolveDomElements(login2FaWaitElementsConfig);
+            const elements = await resolveDomElements(login2FaWaitElementsConfig, logger);
             logger.verbose(`elements resolved`);
 
             const spacesLessSecret = secret.replace(/\s/g, "");
@@ -171,7 +179,7 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
                             let twoFactorElements;
 
                             try {
-                                twoFactorElements = await resolveDomElements(login2FaWaitElementsConfig, {iterationsLimit: 1});
+                                twoFactorElements = await resolveDomElements(login2FaWaitElementsConfig, logger, {iterationsLimit: 1});
                             } catch (e) {
                                 // NOOP
                             }

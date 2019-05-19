@@ -39,18 +39,16 @@ export const DEFAULT_UNREAD_BADGE_BG_TEXT = "#ffffff";
 
 export const DEFAULT_MESSAGES_STORE_PORTION_SIZE = 500;
 
-// export const VOID = (() => {})();
-
 export const PROVIDER_REPO: Record<AccountType, { repo: string, version: string; commit: string; }> = {
     protonmail: {
         repo: "https://github.com/ProtonMail/WebClient.git",
-        commit: "d397bbef6b3274ffc4c5547f9f91e7fb2bff2063",
-        version: "3.15.30",
+        commit: "c7bcc894987f10255e7aa039b779a3587d2a13c7",
+        version: "3.15.35",
     },
     tutanota: {
         repo: "https://github.com/tutao/tutanota.git",
-        commit: "178c9b7dbe5cc67fc646e05badba3f310be9f747",
-        version: "3.50.10",
+        commit: "6eaa84d3b53df0da4ac3913370a282ec3a0d705f",
+        version: "3.51.1",
     },
 };
 

@@ -3,7 +3,9 @@
 is an [Electron](https://electronjs.org)-based unofficial desktop client for [ProtonMail](https://protonmail.com/) and [Tutanota](https://tutanota.com/) end-to-end encrypted email providers. The app aims to provide enhanced desktop user experience enabling features that are not supported by the official in-browser web clients. 
 It is written in [TypeScript](http://www.typescriptlang.org) and uses [Angular](https://angular.io).
 
-[![Build Status: Linux / macOS / Windows](https://travis-ci.org/vladimiry/ElectronMail.svg?branch=master)](https://travis-ci.org/vladimiry/ElectronMail)
+[![Travis CI](https://img.shields.io/travis/vladimiry/ElectronMail.svg?style=flat-square&label=Travis+CI)](https://travis-ci.org/vladimiry/ElectronMail)
+[![License](https://img.shields.io/github/license/vladimiry/ElectronMail.svg?color=success&style=flat-square&label=License)](https://github.com/vladimiry/ElectronMail/blob/master/LICENSE)
+[![GitHub top language](https://img.shields.io/github/languages/top/vladimiry/ElectronMail.svg?style=flat-square&label=TypeScript)](https://github.com/vladimiry/ElectronMail/search?l=typescript)
 
 ![view-toggling](images/search.gif)
 

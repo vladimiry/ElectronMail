@@ -46,7 +46,6 @@ for:
         - image: 'Visual Studio 2017'
     cache:
       - '%LOCALAPPDATA%\\Yarn'
-      - .\output\git
     build_script:
       - ps: | # download and extract prepared by linux job web clients
           $headers = @{

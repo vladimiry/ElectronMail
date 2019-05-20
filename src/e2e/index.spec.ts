@@ -1,5 +1,7 @@
-// TODO remove the "tslint:disable:await-promise" when spectron gets proper declaration files
-// TODO track this issue https://github.com/DefinitelyTyped/DefinitelyTyped/issues/25186
+// TODO remove the "tslint:disable:await-promise" when Spectron gets proper declaration files, track of the following issues:
+// - https://github.com/DefinitelyTyped/DefinitelyTyped/issues/25186
+// - https://github.com/electron/spectron/issues/358
+
 // tslint:disable:await-promise
 
 import byline from "byline";
@@ -7,7 +9,6 @@ import fs from "fs";
 import path from "path";
 import psNode from "ps-node"; // see also https://www.npmjs.com/package/find-process
 import psTree from "ps-tree";
-import {platform} from "os";
 import {promisify} from "util";
 
 import {ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX} from "src/shared/constants";
@@ -39,13 +40,10 @@ test.serial("general actions: app start, master password setup, add accounts, lo
             type: "tutanota",
             entryUrlValue: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.tutanota.com`,
         });
-        // TODO stops on ".login-filled-once" resolving stage if running on linux CI server
-        if (!CI || platform() !== "linux") {
-            await workflow.addAccount({
-                type: "protonmail",
-                entryUrlValue: "https://beta.protonmail.com",
-            });
-        }
+        await workflow.addAccount({
+            type: "protonmail",
+            entryUrlValue: "https://beta.protonmail.com",
+        });
         await workflow.logout();
 
         // login with password saving

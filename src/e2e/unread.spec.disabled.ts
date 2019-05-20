@@ -1,5 +1,7 @@
-// TODO remove the "tslint:disable:await-promise" when spectron gets proper declaration files
-// TODO track this issue https://github.com/DefinitelyTyped/DefinitelyTyped/issues/25186
+// TODO remove the "tslint:disable:await-promise" when Spectron gets proper declaration files, track of the following issues:
+// - https://github.com/DefinitelyTyped/DefinitelyTyped/issues/25186
+// - https://github.com/electron/spectron/issues/358
+
 // tslint:disable:await-promise
 
 import {AccountTypeAndLoginFieldContainer} from "src/shared/model/container";

@@ -2,7 +2,7 @@
 
 set -ev
 
-yarn scripts/transfer travis-download
+./scripts/ci/prepare-webclients.sh
 
 yarn app:dist
 

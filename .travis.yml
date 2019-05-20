@@ -20,7 +20,7 @@ jobs:
       osx_image: xcode9.4
       addons:
         firefox: latest
-      script: ./scripts/ci/prepare-webclients.sh
+      script: ./scripts/ci/travis/build-osx.sh
     - stage: 'Build app'
       os: linux
       # TODO use "xenial" dist, running auto login e2e test using "node-keytar" is a blocker at the moment
@@ -58,7 +58,7 @@ jobs:
           eval $(echo -n "" | /usr/bin/gnome-keyring-daemon --login);
           eval $(/usr/bin/gnome-keyring-daemon --components=secrets --start);
           /usr/bin/python -c "import gnomekeyring;gnomekeyring.create_sync('login', '');";
-      script: ./scripts/ci/prepare-webclients.sh
+      script: ./scripts/ci/travis/build-linux.sh
 before_install:
   - | # installing the most recent yarn version
     curl -o- -L https://yarnpkg.com/install.sh | bash;

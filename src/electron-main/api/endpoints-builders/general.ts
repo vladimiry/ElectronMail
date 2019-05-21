@@ -54,9 +54,8 @@ export async function buildEndpoints(
             app.exit();
         },
 
-        async activateBrowserWindow() {
+        async activateBrowserWindow(browserWindow = ctx.uiContext && ctx.uiContext.browserWindow) {
             const {window} = await ctx.configStore.readExisting();
-            const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
 
             if (!browserWindow) {
                 return;

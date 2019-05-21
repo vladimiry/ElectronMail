@@ -43,7 +43,7 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
         const {startMinimized} = await ctx.configStore.readExisting();
 
         if (!settingsConfigured || !startMinimized) {
-            await (await ctx.deferredEndpoints.promise).activateBrowserWindow();
+            await (await ctx.deferredEndpoints.promise).activateBrowserWindow(browserWindow);
         }
     });
     browserWindow.on("closed", () => {

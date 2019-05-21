@@ -1,4 +1,5 @@
 import {ActionType, ScanService, createIpcMainApiService} from "electron-rpc-api";
+import {BrowserWindow} from "electron";
 import {LogLevel} from "electron-log";
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import {UnionOf, ofType, unionize} from "@vladimiry/unionize";
@@ -98,7 +99,7 @@ export const ENDPOINTS_DEFINITION = {
 
     loadDatabase: ActionType.Promise<Pick<Settings, "accounts">>(),
 
-    activateBrowserWindow: ActionType.Promise(),
+    activateBrowserWindow: ActionType.Promise<BrowserWindow | void>(),
 
     toggleBrowserWindow: ActionType.Promise<{ forcedState?: boolean }>(),
 

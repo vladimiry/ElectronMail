@@ -1,16 +1,21 @@
 @import "~src/web/src/variables";
 
+$render-visible-class: 'visible';
+
 :host {
     $bg-color: theme-color("secondary");
     $padding: 0.2em;
     $padding-l: 0.25em;
 
+    display: flex;
+
     > div {
+        &.#{$render-visible-class} {
+            display: flex;
+        }
+
         @include border-radius;
-        display: flex;
-        position: fixed;
-        left: 0;
-        bottom: 0;
+        display: none;
         background-color: $bg-color;
         border: 1px solid darken($bg-color, 10%);
         color: $white;
@@ -18,4 +23,8 @@
         margin: $padding-l $padding;
         padding: $padding $padding-l;
     }
+}
+
+:export {
+    renderVisibleClass: #{$render-visible-class},
 }

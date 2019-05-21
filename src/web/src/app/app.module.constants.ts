@@ -20,7 +20,6 @@ import {AppErrorHandler} from "src/web/src/app/app.error-handler.service";
 import {CoreModule} from "./_core/core.module";
 import {ErrorItemComponent} from "./components/error-item.component";
 import {ErrorListComponent} from "./components/error-list.component";
-import {HoveredHrefComponent} from "./components/hovered-href.component";
 import {RouterProxyComponent} from "./components/router-proxy.component";
 import {RoutingModule} from "./app.routing.module";
 import {getMetaReducers, reducers} from "./store/reducers/root";
@@ -48,7 +47,6 @@ export const APP_MODULE_NG_CONF: NgModule = {
         AppComponent,
         ErrorItemComponent,
         ErrorListComponent,
-        HoveredHrefComponent,
         RouterProxyComponent,
     ],
     providers: [

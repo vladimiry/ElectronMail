@@ -7,7 +7,6 @@ import {produce} from "immer";
 import * as OptionsReducer from "src/web/src/app/store/reducers/options";
 import {AppComponent} from "./app.component";
 import {ESC_KEY, SETTINGS_OUTLET as outlet} from "src/web/src/app/app.constants";
-import {HoveredHrefComponent} from "./hovered-href.component";
 import {NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
 import {initTestEnvironment} from "src/web/test/util";
 
@@ -19,7 +18,6 @@ const moduleDef: TestModuleMetadata = Object.freeze({
     ],
     declarations: [
         AppComponent,
-        HoveredHrefComponent,
     ],
 });
 

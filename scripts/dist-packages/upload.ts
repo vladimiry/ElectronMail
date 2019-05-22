@@ -28,7 +28,7 @@ outputArchiver.pipe(outputStream);
         LOG(LOG_LEVELS.title(`Adding ${LOG_LEVELS.value(file)} to ${LOG_LEVELS.value(outputFile)} archive`));
     }
 
-    outputArchiver.finalize();
+    await outputArchiver.finalize();
 })().catch((error) => {
     LOG(error);
     process.exit(1);

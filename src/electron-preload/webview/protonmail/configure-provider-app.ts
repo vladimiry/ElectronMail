@@ -7,6 +7,7 @@ import {
 } from "src/electron-preload/events-handling";
 import {curryFunctionMembers} from "src/shared/util";
 import {disableBrowserFetchFeature, disableBrowserNotificationFeature, isBuiltInWebClient} from "src/electron-preload/webview/util";
+import {initSpellCheckProvider} from "src/electron-preload/spell-check";
 
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, `[configure-provider-app]`);
 const angularOpts = Object.freeze({
@@ -29,6 +30,8 @@ export function configureProviderApp() {
     configureAngularApp();
 
     enableEventsProcessing();
+
+    initSpellCheckProvider(logger);
 }
 
 function configureAngularApp() {

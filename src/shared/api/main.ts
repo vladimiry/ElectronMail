@@ -15,8 +15,8 @@ import {
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {DbPatch} from "./common";
 import {ElectronContextLocations} from "src/shared/model/electron";
+import {Locale, Omit} from "src/shared/types";
 import {MemoryDbAccount} from "src/shared/model/database";
-import {Omit} from "src/shared/types";
 import {PACKAGE_NAME} from "src/shared/constants";
 
 export type IpcMainServiceScan = ScanService<typeof IPC_MAIN_API>;
@@ -25,6 +25,10 @@ export type IpcMainApiEndpoints = IpcMainServiceScan["ApiClient"];
 
 export const ENDPOINTS_DEFINITION = {
     log: ActionType.Promise<Array<{ level: LogLevel; dataArgs: any[]; }>>(),
+
+    getSpellCheckMetadata: ActionType.Promise<void, { locale: Locale }>(),
+
+    spellCheck: ActionType.Promise<{ words: string[] }, { misspelledWords: string[] }>(),
 
     addAccount: ActionType.Promise<AccountConfigCreatePatch, Settings>(),
 
@@ -207,6 +211,7 @@ export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
             stat: { mails: number, folders: number; contacts: number; unread: number; };
         }>(),
         DbIndexerProgressState: ofType<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_ON_ACTIONS>, { type: "ProgressState" }>["payload"]>(),
+        Locale: ofType<{ locale: Locale }>(),
     },
     {
         tag: "type",

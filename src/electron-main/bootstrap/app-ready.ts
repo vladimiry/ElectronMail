@@ -16,7 +16,7 @@ export async function appReadyHandler(ctx: Context) {
     // initializing config.json file, so consequent "ctx.configStore.readExisting()" calls would not fails
     await endpoints.readConfig();
 
-    initWebContentsCreatingHandlers(ctx);
+    await initWebContentsCreatingHandlers(ctx);
 
     ctx.uiContext = {
         browserWindow: await initMainBrowserWindow(ctx),

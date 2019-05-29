@@ -5,21 +5,25 @@ import {platform} from "os";
 import {ACCOUNTS_CONFIG, ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX} from "src/shared/constants";
 import {Context} from "./model";
 import {EntryUrlItem} from "src/shared/types";
+import {FuzzyLocale} from "src/electron-main/spell-check/model";
 import {IPC_MAIN_API_NOTIFICATION$} from "./api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {SPELL_CHECK_CONTROLLER} from "src/electron-main/spell-check/constants";
+import {buildSpellCheckSettingsMenuItems, buildSpellingSuggestionMenuItems} from "src/electron-main/spell-check/menu";
 import {curryFunctionMembers} from "src/shared/util";
 
-const emptyArray = Object.freeze([]);
 const logger = curryFunctionMembers(_logger, "[web-contents]");
 
-// WARN: needs to be called before "BrowserWindow" creating
-export function initWebContentsCreatingHandlers(ctx: Context) {
-    const subscriptions: {
+// WARN: needs to be called before "BrowserWindow" creating (has been ensured by tests)
+export async function initWebContentsCreatingHandlers(ctx: Context) {
+    const emptyArray = [] as const;
+    const endpoints = await ctx.deferredEndpoints.promise;
+    const subscriptions: Readonly<{
         "context-menu": (event: Event, params: ContextMenuParams) => void;
         "update-target-url": (event: Event, url: string) => void;
         "will-attach-webview": (event: Event, webPreferences: any, params: any) => void;
-    } = {
-        "context-menu": ({sender: webContents}: Event, {editFlags, linkURL, linkText}) => {
+    }> = {
+        "context-menu": ({sender: webContents}: Event, {editFlags, linkURL, linkText, isEditable, selectionText}) => {
             const template: MenuItemConstructorOptions[] = [];
 
             if (linkURL) {
@@ -34,13 +38,58 @@ export function initWebContentsCreatingHandlers(ctx: Context) {
                     },
                 });
             } else {
+                const misspelled = Boolean(
+                    isEditable
+                    &&
+                    selectionText
+                    &&
+                    SPELL_CHECK_CONTROLLER
+                        .getSpellCheckProvider()
+                        .isMisspelled(selectionText),
+                );
+                const spellingSuggestionMenuItems = misspelled
+                    ? buildSpellingSuggestionMenuItems(
+                        webContents,
+                        misspelled,
+                        SPELL_CHECK_CONTROLLER
+                            .getSpellCheckProvider()
+                            .getSuggestions(selectionText)
+                            .slice(0, 7),
+                    )
+                    : [];
+                const spellCheckSettingsMenuItems = buildSpellCheckSettingsMenuItems(
+                    SPELL_CHECK_CONTROLLER.getAvailableDictionaries(),
+                    SPELL_CHECK_CONTROLLER.getCurrentLocale(),
+                    (fuzzyLocale: FuzzyLocale) => {
+                        logger.info("selecting spellchecking language", fuzzyLocale);
+                        SPELL_CHECK_CONTROLLER.changeLocale(fuzzyLocale);
+                        endpoints.getSpellCheckMetadata()
+                            .then(({locale}) => {
+                                IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.Locale({locale}));
+                            })
+                            .catch(logger.error);
+                    },
+                );
+
+                if (spellingSuggestionMenuItems.length) {
+                    template.push(...[
+                        ...spellingSuggestionMenuItems,
+                        {type: "separator"} as const,
+                    ]);
+                }
+
                 template.push(...[
                     // TODO use "role" based "cut/copy/paste" actions, currently these actions don't work properly
-                    // track the respective issue https://github.com/electron/electron/issues/15219
+                    // keep track of the respective issue https://github.com/electron/electron/issues/15219
                     ...(editFlags.canCut ? [{label: "Cut", click: () => webContents.cut()}] : emptyArray),
                     ...(editFlags.canCopy ? [{label: "Copy", click: () => webContents.copy()}] : emptyArray),
                     ...(editFlags.canPaste ? [{label: "Paste", click: () => webContents.paste()}] : emptyArray),
                     ...(editFlags.canSelectAll ? [{label: "Select All", click: () => webContents.selectAll()}] : emptyArray),
+                ]);
+
+                template.push(...[
+                    ...(template.length ? [{type: "separator"} as const] : emptyArray),
+                    ...spellCheckSettingsMenuItems,
                 ]);
             }
 

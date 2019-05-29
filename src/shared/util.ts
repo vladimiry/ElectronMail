@@ -253,3 +253,7 @@ export const parseLoginDelaySecondsRange: (
 
     return validation;
 };
+
+export function removeDuplicateItems<T extends any>(array: ReadonlyArray<T>): T[] {
+    return [...new Set<T>(array).values()];
+}

@@ -25,3 +25,8 @@ export interface EntryUrlItem {
 export type NumberString = string;
 
 export type Logger = Omit<typeof logger, "transports" | "log">;
+
+// TODO consider not using a raw string type but deriving locale items from:
+//      - https://electronjs.org/docs/api/locales
+//      - @types/chrome-apps:chrome.i18n.kLanguageInfoTable
+export type Locale = string;

@@ -5,6 +5,7 @@ import {constants as FsConstants} from "fs";
 import {Model, Store} from "fs-json-store";
 import {platform} from "os";
 
+import * as SpellCheck from "src/electron-main/spell-check/api";
 import {Account, Database, FindInPage, General, TrayIcon} from "./endpoints-builders";
 import {Context} from "src/electron-main/model";
 import {IPC_MAIN_API, InitResponse, IpcMainApiEndpoints} from "src/shared/api/main";
@@ -23,6 +24,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
         ...await FindInPage.buildEndpoints(ctx),
         ...await General.buildEndpoints(ctx),
         ...await TrayIcon.buildEndpoints(ctx),
+        ...await SpellCheck.buildEndpoints(),
 
         async changeMasterPassword({password, newPassword}) {
             const readStore = ctx.settingsStore.clone({adapter: await buildSettingsAdapter(ctx, password)});

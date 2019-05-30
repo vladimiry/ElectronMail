@@ -24,19 +24,21 @@ export async function initWebContentsCreatingHandlers(ctx: Context) {
         "will-attach-webview": (event: Event, webPreferences: any, params: any) => void;
     }> = {
         "context-menu": ({sender: webContents}: Event, {editFlags, linkURL, linkText, isEditable, selectionText}) => {
-            const template: MenuItemConstructorOptions[] = [];
+            const menuItems: MenuItemConstructorOptions[] = [];
 
             if (linkURL) {
-                template.push({
-                    label: isEmailHref(linkURL) ? "Copy Email Address" : "Copy Link Address",
-                    click() {
-                        if (platform() === "darwin") {
-                            clipboard.writeBookmark(linkText, extractEmailIfEmailHref(linkURL));
-                        } else {
-                            clipboard.writeText(extractEmailIfEmailHref(linkURL));
-                        }
+                menuItems.push(
+                    {
+                        label: isEmailHref(linkURL) ? "Copy Email Address" : "Copy Link Address",
+                        click() {
+                            if (platform() === "darwin") {
+                                clipboard.writeBookmark(linkText, extractEmailIfEmailHref(linkURL));
+                            } else {
+                                clipboard.writeText(extractEmailIfEmailHref(linkURL));
+                            }
+                        },
                     },
-                });
+                );
             } else {
                 const misspelled = Boolean(
                     isEditable
@@ -50,7 +52,6 @@ export async function initWebContentsCreatingHandlers(ctx: Context) {
                 const spellingSuggestionMenuItems = misspelled
                     ? buildSpellingSuggestionMenuItems(
                         webContents,
-                        misspelled,
                         SPELL_CHECK_CONTROLLER
                             .getSpellCheckProvider()
                             .getSuggestions(selectionText)
@@ -70,32 +71,35 @@ export async function initWebContentsCreatingHandlers(ctx: Context) {
                             .catch(logger.error);
                     },
                 );
-
-                if (spellingSuggestionMenuItems.length) {
-                    template.push(...[
-                        ...spellingSuggestionMenuItems,
-                        {type: "separator"} as const,
-                    ]);
-                }
-
-                template.push(...[
+                const editMenuItems: MenuItemConstructorOptions[] = [
                     // TODO use "role" based "cut/copy/paste" actions, currently these actions don't work properly
                     // keep track of the respective issue https://github.com/electron/electron/issues/15219
                     ...(editFlags.canCut ? [{label: "Cut", click: () => webContents.cut()}] : emptyArray),
                     ...(editFlags.canCopy ? [{label: "Copy", click: () => webContents.copy()}] : emptyArray),
                     ...(editFlags.canPaste ? [{label: "Paste", click: () => webContents.paste()}] : emptyArray),
                     ...(editFlags.canSelectAll ? [{label: "Select All", click: () => webContents.selectAll()}] : emptyArray),
-                ]);
+                ];
 
-                template.push(...[
-                    ...(template.length ? [{type: "separator"} as const] : emptyArray),
+                menuItems.push(...spellingSuggestionMenuItems);
+
+                menuItems.push(...[
+                    ...(menuItems.length ? [{type: "separator"} as const] : emptyArray),
                     ...spellCheckSettingsMenuItems,
                 ]);
+
+                menuItems.push(...[
+                    ...(menuItems.length ? [{type: "separator"} as const] : emptyArray),
+                    ...editMenuItems,
+                ]);
             }
 
-            if (template.length) {
-                Menu.buildFromTemplate(template).popup({});
+            if (!menuItems.length) {
+                return;
             }
+
+            Menu
+                .buildFromTemplate(menuItems)
+                .popup({});
         },
         "update-target-url": (event, url) => {
             IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.TargetUrl({url}));

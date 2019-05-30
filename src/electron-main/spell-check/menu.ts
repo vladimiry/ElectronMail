@@ -5,20 +5,16 @@ import {Locale} from "src/shared/types";
 
 export function buildSpellingSuggestionMenuItems(
     webContents: Readonly<WebContents>,
-    misspelled: boolean,
     suggestions: readonly string[],
 ): MenuItemConstructorOptions[] {
-    return misspelled && suggestions.length
-        ? [
-            ...suggestions.map((suggestion) => {
-                return {
-                    label: suggestion,
-                    click: replaceWithSuggestion(webContents, suggestion),
-                };
-            }),
-            {type: "separator"},
-        ]
-        : [];
+    return suggestions.map((suggestion) => {
+        return {
+            label: suggestion,
+            click: () => {
+                webContents.replaceMisspelling(suggestion);
+            },
+        };
+    });
 }
 
 export function buildSpellCheckSettingsMenuItems(
@@ -26,7 +22,7 @@ export function buildSpellCheckSettingsMenuItems(
     currentLocale: FuzzyLocale,
     onChangeLocale: (locale: FuzzyLocale) => void,
 ): MenuItemConstructorOptions[] {
-    const enabled = currentLocale !== null;
+    const enabled = Boolean(currentLocale);
     const submenu: MenuItemConstructorOptions[] = [
         ...detectedLocales.map((detectedLocale) => {
             return {
@@ -39,26 +35,21 @@ export function buildSpellCheckSettingsMenuItems(
                 },
             } as const;
         }),
-        {
-            label: "All your languages",
-            type: "radio",
-            enabled,
-            checked: currentLocale === "*",
-            click() {
-                onChangeLocale("*");
-            },
-        },
-        {type: "separator"},
-        {
-            label: "Enabled",
-            type: "checkbox",
-            checked: enabled,
-            enabled: Boolean(detectedLocales.length),
-            click() {
-                onChangeLocale(enabled ? null : true);
-            },
-        },
     ];
+
+    if (submenu.length) {
+        submenu.push({type: "separator"});
+    }
+
+    submenu.push({
+        label: "Enabled",
+        type: "checkbox",
+        checked: enabled,
+        enabled: Boolean(detectedLocales.length),
+        click() {
+            onChangeLocale(!enabled);
+        },
+    });
 
     return [
         {
@@ -66,10 +57,4 @@ export function buildSpellCheckSettingsMenuItems(
             submenu,
         },
     ];
-}
-
-function replaceWithSuggestion(webContents: WebContents, suggestion: string): () => void {
-    return () => {
-        webContents.replaceMisspelling(suggestion);
-    };
 }

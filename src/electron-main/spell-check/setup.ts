@@ -12,14 +12,14 @@ const logger = curryFunctionMembers(_logger, "[src/electron-main/spell-check/set
 
 // hunspell requires the fully-qualified locale
 // so load local with help of "os-locale" module as it returns locale in "es_ES" format vs "es." returned by "os" module
-export const DEFAULT_LOCALE: Locale = osLocale
+export const SYSTEM_LOCALE: Locale = osLocale
     .sync()
     .replace("-", "_");
 
 // the LANG environment variable is how node spellchecker finds its default language:
 // https://github.com/atom/node-spellchecker/blob/59d2d5eee5785c4b34e9669cd5d987181d17c098/lib/spellchecker.js#L29
 if (!process.env.LANG) {
-    process.env.LANG = DEFAULT_LOCALE;
+    process.env.LANG = SYSTEM_LOCALE;
 }
 
 const state: {
@@ -80,12 +80,12 @@ function setupWin7AndEarlier(locale: Locale) {
 const platform = os.platform();
 
 if (platform === "linux") {
-    setupLinux(DEFAULT_LOCALE);
+    setupLinux(SYSTEM_LOCALE);
 } else if (platform === "win32" && semver.lt(os.release(), "8.0.0")) {
-    setupWin7AndEarlier(DEFAULT_LOCALE);
+    setupWin7AndEarlier(SYSTEM_LOCALE);
 } else {
     // OSX and Windows 8+ have OS-level spellcheck APIs
-    logger.info("Using OS-level spell check API with locale", DEFAULT_LOCALE);
+    logger.info("Using OS-level spell check API with locale", SYSTEM_LOCALE);
 }
 
 export function getExtraLocales(): readonly Locale[] {

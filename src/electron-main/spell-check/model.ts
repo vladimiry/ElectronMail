@@ -2,7 +2,7 @@ import {Provider as ElectronProvider} from "electron";
 
 import {Locale} from "src/shared/types";
 
-export type FuzzyLocale = null | true | "*" | Locale;
+export type FuzzyLocale = Locale | boolean;
 
 export interface Provider extends ElectronProvider {
     isMisspelled(text: string): boolean;

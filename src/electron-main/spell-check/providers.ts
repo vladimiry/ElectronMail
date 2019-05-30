@@ -1,6 +1,6 @@
 import {Spellchecker} from "spellchecker";
 
-import {Locale, Omit} from "src/shared/types";
+import {Locale} from "src/shared/types";
 import {Provider} from "./model";
 import {removeDuplicateItems} from "src/shared/util";
 
@@ -25,32 +25,26 @@ const contractions: ReadonlySet<string> = new Set(
     }),
 );
 
-function constructSpellCheckMethod(
-    {isMisspelled}: Pick<Provider, "isMisspelled">,
-): Readonly<Pick<Provider, "spellCheck">> {
-    return {
+export function constructProvider(
+    locale: Locale,
+    spellchecker: Spellchecker,
+): Readonly<Provider> {
+    const provider: ReturnType<typeof constructProvider> = {
         spellCheck(words, callback) {
             callback(
                 removeDuplicateItems(
                     words.reduce(
                         (misspelledWords: typeof words, word) => {
-                            return isMisspelled(word)
-                                ? [...misspelledWords, word]
-                                : misspelledWords;
+                            if (provider.isMisspelled(word)) {
+                                misspelledWords.push(word);
+                            }
+                            return misspelledWords;
                         },
                         [],
                     ),
                 ),
             );
         },
-    };
-}
-
-export function constructProvider(
-    locale: Locale,
-    spellchecker: Spellchecker,
-): Readonly<Provider> {
-    const baseProvider: Omit<ReturnType<typeof constructProvider>, "spellCheck"> = {
         isMisspelled(text) {
             if (
                 locale.toLowerCase().startsWith("en")
@@ -68,42 +62,7 @@ export function constructProvider(
             spellchecker.add(text);
         },
     };
-    return {
-        ...constructSpellCheckMethod(baseProvider),
-        ...baseProvider,
-    };
-}
-
-export function constructCompositeProvider(
-    providers: Array<ReturnType<typeof constructProvider>>,
-): Readonly<Provider> {
-    const baseProvider: Omit<ReturnType<typeof constructCompositeProvider>, "spellCheck"> = {
-        isMisspelled(text) {
-            for (const provider of providers) {
-                if (!provider.isMisspelled(text)) {
-                    return true;
-                }
-            }
-            return false;
-        },
-        getSuggestions(text) {
-            return removeDuplicateItems(
-                providers.reduce(
-                    (accumulator: string[], provider) => {
-                        return [...accumulator, ...provider.getSuggestions(text)];
-                    },
-                    [],
-                ),
-            );
-        },
-        add() {
-            // NOOP
-        },
-    };
-    return {
-        ...constructSpellCheckMethod(baseProvider),
-        ...baseProvider,
-    };
+    return provider;
 }
 
 export function constructDummyProvider(): Readonly<Provider> {

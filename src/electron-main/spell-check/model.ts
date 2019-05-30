@@ -2,7 +2,7 @@ import {Provider as ElectronProvider} from "electron";
 
 import {Locale} from "src/shared/types";
 
-export type FuzzyLocale = Locale | boolean;
+export type FuzzyLocale = Locale | true | false;
 
 export interface Provider extends ElectronProvider {
     isMisspelled(text: string): boolean;
@@ -10,4 +10,14 @@ export interface Provider extends ElectronProvider {
     getSuggestions(text: string): string[];
 
     add(text: string): void;
+}
+
+export interface Controller {
+    getSpellCheckProvider(): Readonly<Provider>;
+
+    getCurrentLocale(): Exclude<FuzzyLocale, true>;
+
+    changeLocale(locale: FuzzyLocale): Promise<void>;
+
+    getAvailableDictionaries(): Promise<readonly  Locale[]>;
 }

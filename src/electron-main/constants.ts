@@ -20,6 +20,7 @@ export const INITIAL_STORES: Readonly<{
         const logLevel: LogLevel = "error";
 
         return {
+            spellCheckLocale: false,
             encryptionPreset,
             window: {
                 bounds: {width: 1024, height: 768},

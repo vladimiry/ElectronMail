@@ -5,8 +5,10 @@ import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import {Model as StoreModel} from "fs-json-store";
 
 import {AccountConfig} from "src/shared/model/account";
+import {FuzzyLocale} from "src/electron-main/spell-check/model";
 
 export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
+    spellCheckLocale: FuzzyLocale;
     encryptionPreset: PasswordBasedPreset;
     window: {
         maximized?: boolean;

@@ -2,7 +2,6 @@ import rewiremock from "rewiremock";
 import sinon from "sinon";
 import test from "ava";
 import {Fs, Store} from "fs-json-store";
-import {of} from "rxjs";
 
 import {Config} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
@@ -10,8 +9,9 @@ import {INITIAL_STORES} from "src/electron-main/constants";
 import {PACKAGE_NAME} from "src/shared/constants";
 
 test.serial("appReadyHandler(): default", async (t) => {
+    const {spellCheckLocale}: Pick<Config, "spellCheckLocale"> = {spellCheckLocale: `en_US_${Date.now()}`};
     const ctx = buildContext();
-    const mocks = buildMocks();
+    const mocks = buildMocks({spellCheckLocale});
     const library = await loadLibrary(mocks);
 
     t.false(mocks["src/electron-main/session"].getDefaultSession.called);
@@ -21,6 +21,7 @@ test.serial("appReadyHandler(): default", async (t) => {
     t.false(mocks["src/electron-main/window/main"].initMainBrowserWindow.called);
     t.false(mocks["src/electron-main/tray"].initTray.called);
     t.false(mocks["src/electron-main/menu"].initApplicationMenu.called);
+    t.false(mocks["src/electron-main/spell-check/controller"].initSpellCheckController.called);
     t.false(mocks.electron.app.on.called);
 
     await library.appReadyHandler(ctx as any);
@@ -39,8 +40,11 @@ test.serial("appReadyHandler(): default", async (t) => {
     t.true(endpoints.readConfig.calledWithExactly());
     t.true(endpoints.readConfig.calledAfter(mocks["src/electron-main/api"].initApi));
 
+    t.true(mocks["src/electron-main/spell-check/controller"].initSpellCheckController.calledWithExactly(spellCheckLocale));
+    t.true(mocks["src/electron-main/spell-check/controller"].initSpellCheckController.calledAfter(endpoints.readConfig));
+
     t.true(mocks["src/electron-main/web-contents"].initWebContentsCreatingHandlers.calledWithExactly(ctx));
-    t.true(mocks["src/electron-main/web-contents"].initWebContentsCreatingHandlers.calledAfter(endpoints.readConfig));
+    t.true(mocks["src/electron-main/web-contents"].initWebContentsCreatingHandlers.calledAfter(mocks["src/electron-main/spell-check/controller"].initSpellCheckController)); // tslint:disable-line:max-line-length
 
     t.true(mocks["src/electron-main/window/main"].initMainBrowserWindow.calledWithExactly(ctx));
     t.true(mocks["src/electron-main/window/main"].initMainBrowserWindow.calledAfter(mocks["src/electron-main/web-contents"].initWebContentsCreatingHandlers)); // tslint:disable-line:max-line-length
@@ -64,7 +68,13 @@ test.serial("appReadyHandler(): default", async (t) => {
     t.is(endpoints.activateBrowserWindow.callCount, 2);
 });
 
-function buildMocks() {
+function buildMocks(configPatch?: Partial<Config>) {
+    const config = INITIAL_STORES.config();
+
+    if (configPatch) {
+        Object.assign(config, configPatch);
+    }
+
     return {
         "electron": {
             app: {
@@ -77,9 +87,9 @@ function buildMocks() {
         },
         "src/electron-main/api": {
             initApi: sinon.stub().returns({
-                readConfig: sinon.stub().returns(of(INITIAL_STORES.config())),
-                updateOverlayIcon: sinon.stub().returns(of(null)),
-                activateBrowserWindow: sinon.stub().returns(of(INITIAL_STORES.config())),
+                readConfig: sinon.stub().returns(Promise.resolve(config)),
+                updateOverlayIcon: sinon.stub().returns(Promise.resolve()),
+                activateBrowserWindow: sinon.stub().returns(Promise.resolve()),
             }),
         },
         "src/electron-main/menu": {
@@ -91,13 +101,16 @@ function buildMocks() {
         "src/electron-main/tray": {
             initTray: sinon.spy(),
         },
+        "src/electron-main/spell-check/controller": {
+            initSpellCheckController: sinon.spy(),
+        },
         "src/electron-main/web-contents": {
             initWebContentsCreatingHandlers: sinon.spy(),
         },
     };
 }
 
-function buildContext(fsImplPatch?: Partial<Store<Config>["fs"]["_impl"]>): Pick<Context, "configStore"> {
+function buildContext(): Pick<Context, "configStore"> {
     const memFsVolume = Fs.MemFs.volume();
 
     memFsVolume._impl.mkdirpSync(process.cwd());
@@ -106,10 +119,6 @@ function buildContext(fsImplPatch?: Partial<Store<Config>["fs"]["_impl"]>): Pick
         fs: memFsVolume,
         file: "./config.json",
     });
-
-    if (fsImplPatch) {
-        Object.assign(configStore.fs._impl, fsImplPatch);
-    }
 
     return {
         configStore,

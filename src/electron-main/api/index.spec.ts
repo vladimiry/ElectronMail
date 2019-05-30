@@ -46,6 +46,18 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
         t.pass(`TODO test "log" endpoint`);
     },
 
+    getSpellCheckMetadata: (t) => {
+        t.pass(`TODO test "getSpellCheckMetadata" endpoint`);
+    },
+
+    changeSpellCheckLocale: (t) => {
+        t.pass(`TODO test "changeSpellCheckLocale" endpoint`);
+    },
+
+    spellCheck: (t) => {
+        t.pass(`TODO test "spellCheck" endpoint`);
+    },
+
     // TODO update "updateAccount" api method test (verify more fields)
     addAccount: async (t) => {
         const {

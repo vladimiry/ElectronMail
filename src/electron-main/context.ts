@@ -75,6 +75,9 @@ export function initContext(options: ContextInitOptions = {}): Context {
             validators: [settingsAccountLoginUniquenessValidator],
         }),
         keytarSupport: true,
+        getSpellCheckController: () => {
+            throw new Error(`Spell check controller has net been initialized yet`);
+        },
     };
 
     return ctx;

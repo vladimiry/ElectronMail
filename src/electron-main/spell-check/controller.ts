@@ -1,49 +1,49 @@
-import {Spellchecker, getAvailableDictionaries} from "spellchecker";
-
-import * as setup from "./setup";
-import {FuzzyLocale, Provider} from "./model";
+import {Controller, FuzzyLocale, Provider} from "./model";
 import {Locale} from "src/shared/types";
 import {constructDummyProvider, constructProvider} from "./providers";
-import {removeDuplicateItems} from "src/shared/util";
-
-const dictionaries: readonly Locale[] = removeDuplicateItems([
-    ...getAvailableDictionaries(),
-    ...setup.getExtraLocales(),
-]);
 
 const dummyProvider = constructDummyProvider();
 
-export function constructSpellCheckController(): {
-    getSpellCheckProvider(): Readonly<Provider>;
-    getCurrentLocale(): FuzzyLocale;
-    getAvailableDictionaries(): readonly Locale[];
-    changeLocale(locale: FuzzyLocale): void;
-} {
+async function provider(locale: Locale) {
+    const spellCheckerModule = await import("spellchecker");
+    const setupModule = await import("./setup");
+    const {getLocation} = await setupModule.setup();
+    const spellchecker = new spellCheckerModule.Spellchecker();
+
+    spellchecker.setDictionary(locale, getLocation());
+
+    return constructProvider(locale, spellchecker);
+}
+
+async function narrowFuzzyLocaleToStateValue(
+    locale: FuzzyLocale,
+): Promise<ReturnType<Controller["getCurrentLocale"]>> {
+    const setupModule = await import("./setup");
+    return locale === true
+        ? await setupModule.resolveSystemLocale()
+        : locale;
+}
+
+export async function initSpellCheckController(
+    initialLocale: FuzzyLocale,
+): Promise<Controller> {
     const state: {
         provider: Readonly<Provider>;
-        currentLocale: FuzzyLocale;
+        currentLocale: ReturnType<Controller["getCurrentLocale"]>;
     } = {
         provider: dummyProvider,
-        currentLocale: setup.SYSTEM_LOCALE,
+        currentLocale: await narrowFuzzyLocaleToStateValue(initialLocale),
     };
-    const location = setup.getLocation();
-    const controller: ReturnType<typeof constructSpellCheckController> = {
-        changeLocale(_) {
-            state.currentLocale = _;
+    const controller: Controller = {
+        async changeLocale(newLocale) {
+            state.currentLocale = await narrowFuzzyLocaleToStateValue(newLocale);
 
             if (state.currentLocale === false) {
                 state.provider = dummyProvider;
                 return;
             }
 
-            if (state.currentLocale === true) {
-                const locale = setup.SYSTEM_LOCALE;
-                state.currentLocale = locale;
-                state.provider = provider(locale);
-                return;
-            }
-
-            state.provider = provider(state.currentLocale);
+            state.provider = await provider(state.currentLocale);
         },
         getSpellCheckProvider() {
             return state.provider;
@@ -51,18 +51,18 @@ export function constructSpellCheckController(): {
         getCurrentLocale() {
             return state.currentLocale;
         },
-        getAvailableDictionaries() {
-            return dictionaries;
+        async getAvailableDictionaries() {
+            const setupModule = await import("./setup");
+            const setup = await setupModule.setup();
+            return setup.getAvailableDictionaries();
         },
     };
 
-    controller.changeLocale(state.currentLocale);
+    if (typeof state.currentLocale === "string") {
+        // we only construct the provider by calling "changeLocale" if spell checking is enabled
+        // to prevent potential app crush even though the spell checking feature is disabled
+        await controller.changeLocale(state.currentLocale);
+    }
 
     return controller;
-
-    function provider(locale: Locale) {
-        const spellchecker = new Spellchecker();
-        spellchecker.setDictionary(locale, location);
-        return constructProvider(locale, spellchecker);
-    }
 }

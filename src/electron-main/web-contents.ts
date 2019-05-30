@@ -5,10 +5,8 @@ import {platform} from "os";
 import {ACCOUNTS_CONFIG, ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX} from "src/shared/constants";
 import {Context} from "./model";
 import {EntryUrlItem} from "src/shared/types";
-import {FuzzyLocale} from "src/electron-main/spell-check/model";
 import {IPC_MAIN_API_NOTIFICATION$} from "./api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
-import {SPELL_CHECK_CONTROLLER} from "src/electron-main/spell-check/constants";
 import {buildSpellCheckSettingsMenuItems, buildSpellingSuggestionMenuItems} from "src/electron-main/spell-check/menu";
 import {curryFunctionMembers} from "src/shared/util";
 
@@ -18,12 +16,13 @@ const logger = curryFunctionMembers(_logger, "[web-contents]");
 export async function initWebContentsCreatingHandlers(ctx: Context) {
     const emptyArray = [] as const;
     const endpoints = await ctx.deferredEndpoints.promise;
+    const spellCheckController = ctx.getSpellCheckController();
     const subscriptions: Readonly<{
         "context-menu": (event: Event, params: ContextMenuParams) => void;
         "update-target-url": (event: Event, url: string) => void;
         "will-attach-webview": (event: Event, webPreferences: any, params: any) => void;
     }> = {
-        "context-menu": ({sender: webContents}: Event, {editFlags, linkURL, linkText, isEditable, selectionText}) => {
+        "context-menu": async ({sender: webContents}: Event, {editFlags, linkURL, linkText, isEditable, selectionText}) => {
             const menuItems: MenuItemConstructorOptions[] = [];
 
             if (linkURL) {
@@ -40,56 +39,56 @@ export async function initWebContentsCreatingHandlers(ctx: Context) {
                     },
                 );
             } else {
+                const checkSpelling = Boolean(spellCheckController.getCurrentLocale());
                 const misspelled = Boolean(
+                    checkSpelling
+                    &&
                     isEditable
                     &&
                     selectionText
                     &&
-                    SPELL_CHECK_CONTROLLER
+                    spellCheckController
                         .getSpellCheckProvider()
                         .isMisspelled(selectionText),
                 );
-                const spellingSuggestionMenuItems = misspelled
-                    ? buildSpellingSuggestionMenuItems(
-                        webContents,
-                        SPELL_CHECK_CONTROLLER
-                            .getSpellCheckProvider()
-                            .getSuggestions(selectionText)
-                            .slice(0, 7),
-                    )
-                    : [];
-                const spellCheckSettingsMenuItems = buildSpellCheckSettingsMenuItems(
-                    SPELL_CHECK_CONTROLLER.getAvailableDictionaries(),
-                    SPELL_CHECK_CONTROLLER.getCurrentLocale(),
-                    (fuzzyLocale: FuzzyLocale) => {
-                        logger.info("selecting spellchecking language", fuzzyLocale);
-                        SPELL_CHECK_CONTROLLER.changeLocale(fuzzyLocale);
-                        endpoints.getSpellCheckMetadata()
-                            .then(({locale}) => {
-                                IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.Locale({locale}));
-                            })
-                            .catch(logger.error);
-                    },
-                );
-                const editMenuItems: MenuItemConstructorOptions[] = [
-                    // TODO use "role" based "cut/copy/paste" actions, currently these actions don't work properly
-                    // keep track of the respective issue https://github.com/electron/electron/issues/15219
-                    ...(editFlags.canCut ? [{label: "Cut", click: () => webContents.cut()}] : emptyArray),
-                    ...(editFlags.canCopy ? [{label: "Copy", click: () => webContents.copy()}] : emptyArray),
-                    ...(editFlags.canPaste ? [{label: "Paste", click: () => webContents.paste()}] : emptyArray),
-                    ...(editFlags.canSelectAll ? [{label: "Select All", click: () => webContents.selectAll()}] : emptyArray),
-                ];
 
-                menuItems.push(...spellingSuggestionMenuItems);
+                if (misspelled) {
+                    menuItems.push(
+                        ...buildSpellingSuggestionMenuItems(
+                            webContents,
+                            spellCheckController
+                                .getSpellCheckProvider()
+                                .getSuggestions(selectionText)
+                                .slice(0, 7),
+                        ),
+                    );
+                }
+
+                if (isEditable) {
+                    menuItems.push(...[
+                        ...(menuItems.length ? [{type: "separator"} as const] : emptyArray),
+                        ...buildSpellCheckSettingsMenuItems(
+                            checkSpelling
+                                ? await spellCheckController.getAvailableDictionaries()
+                                : [],
+                            spellCheckController.getCurrentLocale(),
+                            async (locale) => {
+                                await endpoints.changeSpellCheckLocale({locale});
+                            },
+                        ),
+                    ]);
+                }
 
                 menuItems.push(...[
                     ...(menuItems.length ? [{type: "separator"} as const] : emptyArray),
-                    ...spellCheckSettingsMenuItems,
-                ]);
-
-                menuItems.push(...[
-                    ...(menuItems.length ? [{type: "separator"} as const] : emptyArray),
-                    ...editMenuItems,
+                    ...[
+                        // TODO use "role" based "cut/copy/paste" actions, currently these actions don't work properly
+                        // keep track of the respective issue https://github.com/electron/electron/issues/15219
+                        ...(editFlags.canCut ? [{label: "Cut", click: () => webContents.cut()}] : emptyArray),
+                        ...(editFlags.canCopy ? [{label: "Copy", click: () => webContents.copy()}] : emptyArray),
+                        ...(editFlags.canPaste ? [{label: "Paste", click: () => webContents.paste()}] : emptyArray),
+                        ...(editFlags.canSelectAll ? [{label: "Select All", click: () => webContents.selectAll()}] : emptyArray),
+                    ],
                 ]);
             }
 

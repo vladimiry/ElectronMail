@@ -24,7 +24,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
         ...await FindInPage.buildEndpoints(ctx),
         ...await General.buildEndpoints(ctx),
         ...await TrayIcon.buildEndpoints(ctx),
-        ...await SpellCheck.buildEndpoints(),
+        ...await SpellCheck.buildEndpoints(ctx),
 
         async changeMasterPassword({password, newPassword}) {
             const readStore = ctx.settingsStore.clone({adapter: await buildSettingsAdapter(ctx, password)});

@@ -47,9 +47,16 @@ export function initSpellCheckProvider(logger: Logger) {
 }
 
 function setSpellCheckProvider(
-    locale: Locale,
+    locale: Locale | false,
     client: ReturnType<typeof IPC_MAIN_API.client>,
 ) {
+    if (typeof locale !== "string") {
+        // TODO figure how to undone/cancel "webFrame.setSpellCheckProvider" action, ie reset spell check provider
+        // right now we just use dummy provider so IPC communication will be still in place
+        // but dummy provider always returns empty misspelled words array
+        return;
+    }
+
     webFrame.setSpellCheckProvider(
         locale,
         {

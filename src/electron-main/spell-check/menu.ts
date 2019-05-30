@@ -7,6 +7,14 @@ export function buildSpellingSuggestionMenuItems(
     webContents: Readonly<WebContents>,
     suggestions: readonly string[],
 ): MenuItemConstructorOptions[] {
+    if (!suggestions.length) {
+        return [
+            {
+                label: "(No Spelling Suggestions)",
+                enabled: false,
+            },
+        ];
+    }
     return suggestions.map((suggestion) => {
         return {
             label: suggestion,
@@ -22,39 +30,34 @@ export function buildSpellCheckSettingsMenuItems(
     currentLocale: FuzzyLocale,
     onChangeLocale: (locale: FuzzyLocale) => void,
 ): MenuItemConstructorOptions[] {
-    const enabled = Boolean(currentLocale);
-    const submenu: MenuItemConstructorOptions[] = [
-        ...detectedLocales.map((detectedLocale) => {
-            return {
-                label: detectedLocale,
-                type: "radio",
-                enabled,
-                checked: detectedLocale === currentLocale,
-                click() {
-                    onChangeLocale(detectedLocale);
-                },
-            } as const;
-        }),
+    const checkSpelling = Boolean(currentLocale);
+    const menuItems: MenuItemConstructorOptions[] = [
+        {
+            label: "Check Spelling",
+            type: "checkbox",
+            checked: checkSpelling,
+            click() {
+                onChangeLocale(!checkSpelling);
+            },
+        },
     ];
 
-    if (submenu.length) {
-        submenu.push({type: "separator"});
+    if (checkSpelling && detectedLocales.length) {
+        menuItems.push({
+            label: "Languages",
+            submenu: detectedLocales.map((detectedLocale) => {
+                return {
+                    label: detectedLocale,
+                    type: "radio",
+                    enabled: checkSpelling,
+                    checked: detectedLocale === currentLocale,
+                    click() {
+                        onChangeLocale(detectedLocale);
+                    },
+                } as const;
+            }),
+        });
     }
 
-    submenu.push({
-        label: "Enabled",
-        type: "checkbox",
-        checked: enabled,
-        enabled: Boolean(detectedLocales.length),
-        click() {
-            onChangeLocale(!enabled);
-        },
-    });
-
-    return [
-        {
-            label: "Spell check settings",
-            submenu,
-        },
-    ];
+    return menuItems;
 }

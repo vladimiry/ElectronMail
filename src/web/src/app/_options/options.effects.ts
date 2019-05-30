@@ -7,6 +7,7 @@ import {catchError, concatMap, finalize, map, mergeMap, startWith, withLatestFro
 import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
 import {CORE_ACTIONS, NAVIGATION_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
 import {ElectronService} from "src/web/src/app/_core/electron.service";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {OptionsService} from "./options.service";
@@ -29,7 +30,12 @@ export class OptionsEffects {
             return from(
                 this.ipcMainClient("notification")(),
             ).pipe(
-                mergeMap((value) => of(OPTIONS_ACTIONS.PatchMainProcessNotification(value))),
+                mergeMap((value) => {
+                    if (IPC_MAIN_API_NOTIFICATION_ACTIONS.is.Config(value)) {
+                        this.store.dispatch(OPTIONS_ACTIONS.GetConfigResponse(value.payload.config));
+                    }
+                    return of(OPTIONS_ACTIONS.PatchMainProcessNotification(value));
+                }),
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
             );
         }));

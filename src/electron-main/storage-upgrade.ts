@@ -106,6 +106,11 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             delete config.timeouts.syncing;
         })();
     },
+    "2.4.0": (config) => {
+        if (typeof config.spellCheckLocale === "undefined") {
+            config.spellCheckLocale = INITIAL_STORES.config().spellCheckLocale;
+        }
+    },
 };
 
 const SETTINGS_UPGRADES: Record<string, (settings: Settings) => void> = {

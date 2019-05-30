@@ -5,6 +5,7 @@ import {Config, Settings} from "src/shared/model/options";
 import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {IpcMainApiEndpoints} from "src/shared/api/main";
+import {Controller as SpellCheckController} from "src/electron-main/spell-check/model";
 
 export type RuntimeEnvironment = "e2e" | "production";
 
@@ -38,6 +39,7 @@ export interface Context {
         webContentId: number;
         databaseView?: boolean;
     };
+    getSpellCheckController: () => SpellCheckController;
 }
 
 export interface UIContext {

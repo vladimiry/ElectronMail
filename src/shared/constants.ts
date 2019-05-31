@@ -42,8 +42,8 @@ export const DEFAULT_MESSAGES_STORE_PORTION_SIZE = 500;
 export const PROVIDER_REPO: Record<AccountType, { repo: string, version: string; commit: string; }> = {
     protonmail: {
         repo: "https://github.com/ProtonMail/WebClient.git",
-        commit: "0e3d32b2fb0e0cd1391890097574af2f60953c63",
-        version: "3.15.36",
+        commit: "80ecc1a4e0843089d93a822b53a1651a7e6825f7",
+        version: "3.15.38",
     },
     tutanota: {
         repo: "https://github.com/tutao/tutanota.git",

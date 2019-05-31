@@ -61,6 +61,7 @@ const buildDbPatchEndpoint: Pick<ProtonmailApi, "buildDbPatch" | "fetchSingleMai
                                 login: input.login,
                             },
                             logger,
+                            {immediateWrite: true},
                         );
                     },
                 );
@@ -116,6 +117,7 @@ const buildDbPatchEndpoint: Pick<ProtonmailApi, "buildDbPatch" | "fetchSingleMai
                     login: input.login,
                 },
                 logger,
+                {immediateWrite: false},
             );
 
             return;
@@ -160,6 +162,7 @@ const buildDbPatchEndpoint: Pick<ProtonmailApi, "buildDbPatch" | "fetchSingleMai
                 login: input.login,
             },
             logger,
+            {immediateWrite: true},
         );
     },
 };

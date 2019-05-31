@@ -34,6 +34,9 @@ export class OptionsEffects {
                     if (IPC_MAIN_API_NOTIFICATION_ACTIONS.is.Config(value)) {
                         this.store.dispatch(OPTIONS_ACTIONS.GetConfigResponse(value.payload.config));
                     }
+                    if (IPC_MAIN_API_NOTIFICATION_ACTIONS.is.ErrorMessage(value)) {
+                        this.store.dispatch(CORE_ACTIONS.Fail(new Error(value.payload.message)));
+                    }
                     return of(OPTIONS_ACTIONS.PatchMainProcessNotification(value));
                 }),
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),

@@ -4,7 +4,7 @@ import {defer, from} from "rxjs";
 import * as Database from "src/electron-preload/webview/protonmail/lib/database";
 import * as DatabaseModel from "src/shared/model/database";
 import * as Rest from "src/electron-preload/webview/protonmail/lib/rest";
-import {AJAX_SEND_NOTIFICATION_SKIP_PARAM} from "./ajax-send-notification";
+import {AJAX_SEND_NOTIFICATION_SKIP_PARAM} from "src/electron-preload/webview/protonmail/notifications";
 import {DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_SECOND_MS} from "src/shared/constants";
 import {DbPatch} from "src/shared/api/common";
 import {MemoryDbAccount} from "src/shared/model/database";

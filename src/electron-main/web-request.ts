@@ -111,12 +111,14 @@ function resolveFakeOrigin(accountType: AccountType, requestDetails: RequestDeta
 function resolveLocalWebClientOrigins<T extends AccountType>(
     accountType: T,
     {webClients}: ElectronContextLocations,
-): { [k in T]: string[]; } {
-    return {
-        [accountType]: Object
-            .values(webClients[accountType])
-            .map(({entryUrl}) => buildOrigin(new URL(entryUrl))),
-    };
+): Record<T, string[]> {
+    const result: ReturnType<typeof resolveLocalWebClientOrigins> = Object.create(null);
+
+    result[accountType] = Object
+        .values(webClients[accountType])
+        .map(({entryUrl}) => buildOrigin(new URL(entryUrl)));
+
+    return result;
 }
 
 function resolveRequestProxy<T extends AccountType>(

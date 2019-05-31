@@ -62,9 +62,8 @@ export const EDITOR_IFRAME_NOTIFICATION$ = new Observable<{ iframeDocument: Docu
         if (
             !("tagName" in addedNode)
             || addedNode.tagName !== "DIV"
-            || !addedNode.classList.contains("composer-editor")
-            || !addedNode.classList.contains("angular-squire")
-            || !addedNode.classList.contains("squire-container")
+            || !addedNode.classList.contains("composer")
+            || !addedNode.classList.contains("composer-container")
         ) {
             return;
         }

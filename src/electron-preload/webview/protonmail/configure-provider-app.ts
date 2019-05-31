@@ -1,5 +1,8 @@
+import {NEVER, fromEvent, of, race, timer} from "rxjs";
+import {mergeMap, take, tap} from "rxjs/operators";
+
 import {EDITOR_IFRAME_NOTIFICATION$} from "./notifications";
-import {LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN} from "src/shared/constants";
+import {LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN, ONE_SECOND_MS} from "src/shared/constants";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {
     callDocumentClickEventListener,
@@ -36,9 +39,34 @@ export function configureProviderApp() {
     (() => {
         initSpellCheckProvider(logger);
 
-        EDITOR_IFRAME_NOTIFICATION$.subscribe(({iframeDocument}) => {
-            initSpellCheckProvider(logger);
-        });
+        EDITOR_IFRAME_NOTIFICATION$
+            .pipe(
+                mergeMap(({iframeDocument}) => {
+                    const $readyState = iframeDocument.readyState !== "loading"
+                        ? of(iframeDocument).pipe(
+                            tap(() => logger.verbose(`"iframeDocument" resolved: readyState "${iframeDocument.readyState}"`)),
+                        )
+                        : NEVER;
+                    return race(
+                        timer(ONE_SECOND_MS).pipe(
+                            tap(() => logger.verbose(`"iframeDocument" resolved: timer`)),
+                        ),
+                        $readyState,
+                        fromEvent(iframeDocument, "DOMFrameContentLoaded").pipe(
+                            tap(({type}) => logger.verbose(`"iframeDocument" resolved: "${type}" event`)),
+                        ),
+                        fromEvent(iframeDocument, "DOMContentLoaded").pipe(
+                            tap(({type}) => logger.verbose(`"iframeDocument" resolved: "${type}" event`)),
+                        ),
+                    ).pipe(
+                        take(1),
+                        // concatMap(() => [{iframeDocument}]),
+                    );
+                }),
+            )
+            .subscribe((/*{iframeDocument}*/) => {
+                initSpellCheckProvider(logger);
+            });
     })();
 }
 

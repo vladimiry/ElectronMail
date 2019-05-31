@@ -1,3 +1,4 @@
+import {EDITOR_IFRAME_NOTIFICATION$} from "./notifications";
 import {LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN} from "src/shared/constants";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {
@@ -10,6 +11,7 @@ import {disableBrowserFetchFeature, disableBrowserNotificationFeature, isBuiltIn
 import {initSpellCheckProvider} from "src/electron-preload/spell-check";
 
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, `[configure-provider-app]`);
+
 const angularOpts = Object.freeze({
     targetModuleName: "proton",
     imgSrcSanitizationWhitelistRe: new RegExp(`^\\s*((https?|ftp|file|blob|${LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN}):|data:image\\/)`),
@@ -31,7 +33,13 @@ export function configureProviderApp() {
 
     enableEventsProcessing();
 
-    initSpellCheckProvider(logger);
+    (() => {
+        initSpellCheckProvider(logger);
+
+        EDITOR_IFRAME_NOTIFICATION$.subscribe(({iframeDocument}) => {
+            initSpellCheckProvider(logger);
+        });
+    })();
 }
 
 function configureAngularApp() {
@@ -100,8 +108,15 @@ function tweakModule(module: angular.IModule): typeof module {
 }
 
 function enableEventsProcessing() {
-    registerDocumentKeyDownEventListener(document, logger);
-    registerDocumentClickEventListener(document, logger);
+    (() => {
+        registerDocumentKeyDownEventListener(document, logger);
+        registerDocumentClickEventListener(document, logger);
+
+        EDITOR_IFRAME_NOTIFICATION$.subscribe(({iframeDocument}) => {
+            registerDocumentKeyDownEventListener(iframeDocument, logger);
+            registerDocumentClickEventListener(iframeDocument, logger);
+        });
+    })();
 
     // solves https://github.com/vladimiry/ElectronMail/issues/136 issue by processing unattached to DOM links clicking
     // see "openWindow" function in WebClient/src/helpers/browser.js:
@@ -136,45 +151,4 @@ function enableEventsProcessing() {
             return element instanceof HTMLAnchorElement;
         }
     })();
-
-    // message editing is happening inside an iframe
-    // so we call "registerDocumentKeyDownEventListener" on every dynamically created editing iframe
-    const processAddedNode: (addedNode: Node | Element) => void = (addedNode) => {
-        if (
-            !("tagName" in addedNode)
-            || addedNode.tagName !== "DIV"
-            || !addedNode.classList.contains("composer-editor")
-            || !addedNode.classList.contains("angular-squire")
-            || !addedNode.classList.contains("squire-container")
-        ) {
-            return;
-        }
-
-        const iframe = addedNode.querySelector("iframe");
-        const iframeDocument = (
-            iframe
-            &&
-            (
-                iframe.contentDocument
-                ||
-                (iframe.contentWindow && iframe.contentWindow.document)
-            )
-        );
-
-        if (!iframeDocument) {
-            return;
-        }
-
-        registerDocumentKeyDownEventListener(iframeDocument, logger);
-        registerDocumentClickEventListener(iframeDocument, logger);
-    };
-
-    new MutationObserver((mutations) => {
-        for (const mutation of mutations) {
-            mutation.addedNodes.forEach(processAddedNode);
-        }
-    }).observe(
-        document,
-        {childList: true, subtree: true},
-    );
 }

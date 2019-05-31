@@ -5,7 +5,7 @@ import {omit} from "ramda";
 
 import * as Rest from "src/electron-preload/webview/protonmail/lib/rest";
 import * as WebviewConstants from "src/electron-preload/webview/constants";
-import {AJAX_SEND_NOTIFICATION$} from "./ajax-send-notification";
+import {AJAX_SEND_NOTIFICATION$} from "src/electron-preload/webview/protonmail/notifications";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {PROTONMAIL_IPC_WEBVIEW_API, ProtonmailApi, ProtonmailNotificationOutput} from "src/shared/api/webview/protonmail";
 import {PROTONMAIL_MAILBOX_IDENTIFIERS} from "src/shared/model/database";

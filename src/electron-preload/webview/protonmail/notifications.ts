@@ -3,7 +3,7 @@ import {Observable} from "rxjs";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {curryFunctionMembers} from "src/shared/util";
 
-const logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[api/ajax-send-notification]");
+const logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[notifications]");
 
 export const AJAX_SEND_NOTIFICATION_SKIP_PARAM = `ajax-send-notification-skip-${Date.now()}`;
 
@@ -55,4 +55,44 @@ export const AJAX_SEND_NOTIFICATION$ = new Observable<XMLHttpRequest>((subscribe
         this.addEventListener("loadend", loadEndHandler);
         return original.apply(this, arguments as any);
     })();
+});
+
+export const EDITOR_IFRAME_NOTIFICATION$ = new Observable<{ iframeDocument: Document }>((subscribe) => {
+    const processAddedNode: (addedNode: Node | Element) => void = (addedNode) => {
+        if (
+            !("tagName" in addedNode)
+            || addedNode.tagName !== "DIV"
+            || !addedNode.classList.contains("composer-editor")
+            || !addedNode.classList.contains("angular-squire")
+            || !addedNode.classList.contains("squire-container")
+        ) {
+            return;
+        }
+
+        const iframe = addedNode.querySelector("iframe");
+        const iframeDocument = (
+            iframe
+            &&
+            (
+                iframe.contentDocument
+                ||
+                (iframe.contentWindow && iframe.contentWindow.document)
+            )
+        );
+
+        if (!iframeDocument) {
+            return;
+        }
+
+        subscribe.next({iframeDocument});
+    };
+
+    new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            mutation.addedNodes.forEach(processAddedNode);
+        }
+    }).observe(
+        document,
+        {childList: true, subtree: true},
+    );
 });

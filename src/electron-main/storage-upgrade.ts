@@ -110,6 +110,9 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         if (typeof config.spellCheckLocale === "undefined") {
             config.spellCheckLocale = INITIAL_STORES.config().spellCheckLocale;
         }
+        if (typeof config.databaseSaveDelayMs === "undefined") {
+            config.databaseSaveDelayMs = INITIAL_STORES.config().databaseSaveDelayMs;
+        }
     },
 };
 

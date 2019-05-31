@@ -44,8 +44,9 @@ export const ENDPOINTS_DEFINITION = {
     changeMasterPassword: ActionType.Promise<PasswordFieldContainer & NewPasswordFieldContainer, Settings>(),
 
     dbPatch: ActionType.Promise<DbModel.DbAccountPk
-        & { patch: DbPatch }
+        & { immediateWrite?: boolean; }
         & { forceFlush?: boolean }
+        & { patch: DbPatch }
         & { metadata: Omit<MemoryDbAccount<"protonmail">["metadata"], "type"> | Omit<MemoryDbAccount<"tutanota">["metadata"], "type"> },
         DbModel.FsDbAccount["metadata"]>(),
 
@@ -216,6 +217,7 @@ export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
         DbIndexerProgressState: ofType<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_ON_ACTIONS>, { type: "ProgressState" }>["payload"]>(),
         Locale: ofType<{ locale: ReturnType<Controller["getCurrentLocale"]> }>(),
         Config: ofType<{ config: Config }>(),
+        ErrorMessage: ofType<{ message: string }>(),
     },
     {
         tag: "type",

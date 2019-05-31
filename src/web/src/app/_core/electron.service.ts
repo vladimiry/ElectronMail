@@ -8,7 +8,9 @@ import {AccountType} from "src/shared/model/account";
 import {Arguments} from "src/shared/types";
 import {DEFAULT_API_CALL_TIMEOUT, ONE_SECOND_MS} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
+import {PROTONMAIL_IPC_WEBVIEW_API} from "src/shared/api/webview/protonmail";
 import {State} from "src/web/src/app/store/reducers/options";
+import {TUTANOTA_IPC_WEBVIEW_API} from "src/shared/api/webview/tutanota";
 import {getZoneNameBoundWebLogger} from "src/web/src/util";
 
 type SuperCallOptions = Required<Exclude<Arguments<ReturnType<(typeof createIpcMainApiService)>["client"]>[0], undefined>>["options"];
@@ -61,8 +63,11 @@ export class ElectronService implements OnDestroy {
         type: T,
         options?: LimitedCallOptions,
     ) {
-        const clientBuilder = __ELECTRON_EXPOSURE__.buildIpcWebViewClient[type];
-        const client = clientBuilder(webView, {options: this.buildApiCallOptions(options)});
+        // TODO TS: improve WebView API client resolve and use type-safety
+        const buildIpcWebViewClient = __ELECTRON_EXPOSURE__.buildIpcWebViewClient[type];
+        const client: ReturnType<typeof PROTONMAIL_IPC_WEBVIEW_API.client> & ReturnType<typeof TUTANOTA_IPC_WEBVIEW_API.client> =
+            buildIpcWebViewClient(webView, {options: this.buildApiCallOptions(options)}) as any; // TODO TS: get rid of typecasting
+
         // TODO consider removing "ping" API or pinging once per "webView", keeping state in WeakMap<WebView, ...>?
         const ping$ = this.onlinePingWithTimeouts$.pipe(
             switchMap(({webViewApiPing: timeoutMs}) => {

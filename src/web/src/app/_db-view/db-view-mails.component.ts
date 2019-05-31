@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy, Component, ElementRef, Input, OnDestroy, OnInit} from "@angular/core";
+import {Observable, Subscription, fromEvent} from "rxjs";
 import {Store} from "@ngrx/store";
-import {Subscription, fromEvent} from "rxjs";
 import {distinctUntilChanged, map, mergeMap} from "rxjs/operators";
 
 import {DB_VIEW_ACTIONS} from "src/web/src/app/store/actions";
@@ -33,7 +33,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
     @Input()
     mailsBundleKey!: MailsBundleKey;
 
-    mailsBundleKey$ = this.ngChangesObservable("mailsBundleKey").pipe(
+    mailsBundleKey$: Observable<MailsBundleKey> = this.ngChangesObservable("mailsBundleKey").pipe(
         distinctUntilChanged(),
     );
 

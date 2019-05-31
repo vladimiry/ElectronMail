@@ -15,7 +15,7 @@ import {resolveMemoryAccountFolders} from "./util";
 
 const logger = curryFunctionMembers(_logger, "[electron-main/database]");
 
-// TODO consider dropping Map-based database use ("MemoryDb"), ie use ony pupe JSON-based "FsDb"
+// TODO consider dropping JSON-based "FsDb" use
 export class Database {
     static buildEmptyDatabase<T extends MemoryDb | FsDb>(): T {
         return {
@@ -33,23 +33,25 @@ export class Database {
     }
 
     private static memoryAccountToFsAccount<T extends keyof MemoryDb["accounts"]>(source: MemoryDbAccount<T>): FsDbAccount<T> {
-        return {
+        const result: FsDbAccount = {
             conversationEntries: source.conversationEntries.toObject(),
             mails: source.mails.toObject(),
             folders: source.folders.toObject(),
             contacts: source.contacts.toObject(),
             metadata: source.metadata as any,
         };
+        return result as FsDbAccount<T>;
     }
 
     private static fsAccountToMemoryAccount<T extends keyof FsDb["accounts"]>(source: FsDbAccount<T>): MemoryDbAccount<T> {
-        return {
+        const result: MemoryDbAccount = {
             conversationEntries: new EntityMap(Entity.ConversationEntry, source.conversationEntries),
             mails: new EntityMap(Entity.Mail, source.mails),
             folders: new EntityMap(Entity.Folder, source.folders),
             contacts: new EntityMap(Entity.Contact, source.contacts),
             metadata: source.metadata as any,
         };
+        return result as MemoryDbAccount<T>;
     }
 
     private memoryDb: MemoryDb = Database.buildEmptyDatabase();
@@ -78,7 +80,7 @@ export class Database {
             return;
         }
 
-        return Database.memoryAccountToFsAccount(account);
+        return Database.memoryAccountToFsAccount(account as MemoryDbAccount<TL["type"]>);
     }
 
     getAccount<TL extends DbAccountPk>({type, login}: TL): MemoryDbAccount<TL["type"]> | undefined {
@@ -88,11 +90,11 @@ export class Database {
             return;
         }
 
-        return account;
+        return account as MemoryDbAccount<TL["type"]>;
     }
 
     initAccount<TL extends DbAccountPk>({type, login}: TL): MemoryDbAccount<TL["type"]> {
-        const account = {
+        const account: MemoryDbAccount = {
             conversationEntries: new EntityMap(Entity.ConversationEntry),
             mails: new EntityMap(Entity.Mail),
             folders: new EntityMap(Entity.Folder),
@@ -102,7 +104,7 @@ export class Database {
 
         this.memoryDb.accounts[type][login] = account;
 
-        return account;
+        return account as MemoryDbAccount<TL["type"]>;
     }
 
     accountsIterator(): {

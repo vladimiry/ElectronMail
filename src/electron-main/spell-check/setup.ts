@@ -20,7 +20,7 @@ export let resolveSystemLocale: () => Promise<Locale> = async () => {
     let result: Locale = normalizeLocale(osLocaleModule.sync()) || "en_US";
 
     // prefer "en_US" locale if OS locale is in "en"-group and respective dictionary available
-    if (result.toLowerCase().startsWith("en_") && !result.toLowerCase().startsWith("en_us")) {
+    if (!result.toLowerCase().startsWith("en_us")) {
         const {getAvailableDictionaries} = await setup();
         const dictionaries = getAvailableDictionaries();
         const preferredLocale = (

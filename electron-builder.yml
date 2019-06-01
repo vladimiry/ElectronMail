@@ -24,7 +24,7 @@ asar: true
 asarUnpack:
   - '**/node_modules/sodium-native/**/*'
   - '**/node_modules/keytar/**/*'
-afterPack: './scripts/electron-builder/hooks/after-pack/index.js'
+afterPack: './scripts/electron-builder/hooks/afterPack/index.js'
 
 mac:
   icon: ./app/assets/icons/mac/icon.icns
@@ -87,6 +87,8 @@ snap:
         default-provider: 'gtk-common-themes:sounds-themes'
   environment:
     DISABLE_WAYLAND: 1
+    # LANG: en_US
+    HUNSPELL_DICTIONARIES: $SNAP/usr/share/hunspell
 
 win:
   artifactName: ${name}-${version}-windows-${arch}.${ext}

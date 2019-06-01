@@ -257,3 +257,7 @@ export const parseLoginDelaySecondsRange: (
 export function removeDuplicateItems<T extends any>(array: ReadonlyArray<T>): T[] {
     return [...new Set<T>(array).values()];
 }
+
+export function normalizeLocale(value: string): string {
+    return value.replace(/[^A-Za-z]/g, "_");
+}

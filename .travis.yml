@@ -36,13 +36,16 @@ jobs:
             # upgrade GCC to a more recent version, see https://docs.travis-ci.com/user/languages/cpp/#gcc-on-linux
             - ubuntu-toolchain-r-test
           packages:
-            - g++-7 # needed for native modules compiling/rebuilding
-            # dependencies needed for rebuilding "node-keytar" native module (if there is no prebuild binary for used node version)
+            # for native modules compiling/rebuilding
+            - g++-7
+            # for rebuilding "node-keytar" native module (if there is no prebuild binary for used node version)
             - gnome-keyring
             - libgnome-keyring-dev
             - libsecret-1-dev
-            # dependency needed for initializing keychain for running e2e tests that use "node-keytar"
+            # for initializing keychain for running e2e tests that use "node-keytar"
             - python-gnomekeyring
+            # for building snap ("unsquashfs" binary)
+            - squashfs-tools
         firefox: latest
       before_script:
         - | # needed for native modules compiling/rebuilding

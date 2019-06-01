@@ -3,12 +3,12 @@ import {Target} from "app-builder-lib";
 import {execShell} from "scripts/lib";
 
 const targets: Array<typeof Target.prototype.name> = [
+    "snap",
+    "pacman",
     "appimage",
     "deb",
     "freebsd",
-    "pacman",
     "rpm",
-    "snap",
 ];
 
 // tslint:disable-next-line:no-floating-promises

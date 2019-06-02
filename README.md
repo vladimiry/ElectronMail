@@ -38,6 +38,7 @@ The download page with Linux/OSX/Windows installation packages is [here](https:/
 - **Configuring proxy per account** support. Enabled since [v3.0.0](https://github.com/vladimiry/ElectronMail/releases/tag/v3.0.0) release. See [113](https://github.com/vladimiry/ElectronMail/issues/113) and [120](https://github.com/vladimiry/ElectronMail/issues/120) issues for details.
 - **Starting minimized to tray**.
 - **Closing to tray**.
+- **Spell Checking**.
 
 ## How to build package from source code
 

@@ -42,22 +42,30 @@ export function buildSpellCheckSettingsMenuItems(
         },
     ];
 
-    if (checkSpelling && detectedLocales.length) {
-        menuItems.push({
-            label: "Languages",
-            submenu: detectedLocales.map((detectedLocale) => {
-                return {
-                    label: detectedLocale,
-                    type: "radio",
-                    enabled: checkSpelling,
-                    checked: detectedLocale === currentLocale,
-                    click() {
-                        onChangeLocale(detectedLocale);
-                    },
-                } as const;
-            }),
-        });
+    if (!checkSpelling) {
+        return menuItems;
     }
 
-    return menuItems;
+    return [
+        ...menuItems,
+        detectedLocales.length
+            ? {
+                label: "Languages",
+                submenu: detectedLocales.map((detectedLocale) => {
+                    return {
+                        label: detectedLocale,
+                        type: "radio",
+                        enabled: checkSpelling,
+                        checked: detectedLocale === currentLocale,
+                        click() {
+                            onChangeLocale(detectedLocale);
+                        },
+                    } as const;
+                }),
+            }
+            : {
+                label: "(No Languages)",
+                enabled: false,
+            },
+    ];
 }

@@ -1,8 +1,12 @@
+import _logger from "electron-log";
 import {Spellchecker} from "spellchecker";
+import {inspect} from "util";
 
 import {Locale} from "src/shared/types";
 import {Provider} from "./model";
-import {removeDuplicateItems} from "src/shared/util";
+import {curryFunctionMembers, removeDuplicateItems} from "src/shared/util";
+
+const logger = curryFunctionMembers(_logger, "[src/electron-main/spell-check/setup]");
 
 // tslint:disable-next-line
 // https://github.com/electron-userland/electron-spellchecker/blob/6da4984fcecb9ea05d322abf66ac904252e61c35/src/spell-check-handler.js#L52-L70
@@ -29,21 +33,23 @@ export function constructProvider(
     locale: Locale,
     spellchecker: Spellchecker,
 ): Readonly<Provider> {
+    logger.debug("constructProvider()", inspect({locale, spellchecker}));
     const provider: ReturnType<typeof constructProvider> = {
         spellCheck(words, callback) {
-            callback(
-                removeDuplicateItems(
-                    words.reduce(
-                        (misspelledWords: typeof words, word) => {
-                            if (provider.isMisspelled(word)) {
-                                misspelledWords.push(word);
-                            }
-                            return misspelledWords;
-                        },
-                        [],
-                    ),
+            const misspelledWords = removeDuplicateItems(
+                words.reduce(
+                    (accumulator: typeof words, word) => {
+                        if (provider.isMisspelled(word)) {
+                            accumulator.push(word);
+                        }
+                        return accumulator;
+                    },
+                    [],
                 ),
             );
+            // WARN: don't log the actual words/misspelledWords
+            logger.debug("spellCheck()", inspect({wordsCount: words.length, misspelledWordsCount: misspelledWords.length}));
+            callback(misspelledWords);
         },
         isMisspelled(text) {
             if (
@@ -56,7 +62,10 @@ export function constructProvider(
             return spellchecker.isMisspelled(text);
         },
         getSuggestions(text) {
-            return spellchecker.getCorrectionsForMisspelling(text);
+            const suggestions = spellchecker.getCorrectionsForMisspelling(text);
+            // WARN: don't log the actual text/suggestions
+            logger.debug("getSuggestions()", inspect({textLength: text.length, suggestionsCount: suggestions.length}));
+            return suggestions;
         },
         add(text) {
             spellchecker.add(text);

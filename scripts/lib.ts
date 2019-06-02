@@ -25,7 +25,7 @@ export async function execShell(
 ): Promise<Unpacked<ReturnType<typeof spawnAsync>>> {
     LOG(
         LOG_LEVELS.title(`Executing Shell command:`),
-        LOG_LEVELS.value(JSON.stringify({command, args})),
+        LOG_LEVELS.value(JSON.stringify({command, args, options})),
     );
 
     const spawnPromise = spawnAsync(command, args, options);

@@ -6,7 +6,7 @@ set -ev
 
 yarn app:dist
 
-# needs for e2e starts with SUID sandbox if user namespacing disabled
+# needed for e2e starts with SUID sandbox if user namespacing disabled
 # https://github.com/electron/electron/issues/16631#issuecomment-476082063
 # https://github.com/electron/electron/issues/17972
 sudo ./scripts/prepare-chrome-sandbox.sh ./node_modules/electron/dist/chrome-sandbox
@@ -21,7 +21,7 @@ docker run --rm -ti \
     -v ${PWD}:/project \
     -v ${PWD##*/}-node-modules:/project/node_modules \
     electronuserland/builder \
-    /bin/bash -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash && export NVM_DIR=~/.nvm && source ~/.nvm/nvm.sh && nvm install $TRAVIS_NODE_VERSION && nvm use $TRAVIS_NODE_VERSION && yarn --pure-lockfile && yarn clean:sodium-native:prebuilds && apt-get install --yes libtool automake && yarn scripts/electron-builder/sequential-dist-linux"
+    /bin/bash -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash && export NVM_DIR=~/.nvm && source ~/.nvm/nvm.sh && nvm install $TRAVIS_NODE_VERSION && nvm use $TRAVIS_NODE_VERSION && yarn --pure-lockfile && yarn clean:sodium-native:prebuilds && apt-get install --yes libtool automake squashfs-tools && yarn scripts/electron-builder/sequential-dist-linux"
 
 yarn scripts/dist-packages/print-hashes
 yarn scripts/dist-packages/upload

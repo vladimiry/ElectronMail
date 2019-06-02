@@ -2,15 +2,12 @@ import _logger from "electron-log";
 import os from "os";
 import path from "path";
 import semver from "semver";
+import {inspect} from "util";
 
 import {Locale} from "src/shared/types";
-import {curryFunctionMembers, removeDuplicateItems} from "src/shared/util";
+import {curryFunctionMembers, normalizeLocale, removeDuplicateItems} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[src/electron-main/spell-check/setup]");
-
-function normalizeLocale(value: string): string {
-    return value.replace(/[^A-Za-z]/g, "_");
-}
 
 export let resolveSystemLocale: () => Promise<Locale> = async () => {
     const osLocaleModule = await import("os-locale");
@@ -54,12 +51,14 @@ export let setup: () => Promise<{
 }> = async () => {
     const state: {
         location: string | undefined;
-        extraLocales: Locale[];
+        hunspellLocales: Locale[];
     } = {
-        extraLocales: [],
+        hunspellLocales: [],
         location: process.env.HUNSPELL_DICTIONARIES,
     };
     const platform = os.platform();
+
+    logger.verbose("Initial state", inspect({state}));
 
     if (platform === "linux") {
         await (async () => {
@@ -68,20 +67,33 @@ export let setup: () => Promise<{
             // apt-get install hunspell-<locale> can be run for easy access to other dictionaries
             state.location = state.location || "/usr/share/hunspell";
 
+            const hunspellDictionariesGlob = path.join(state.location, "*.dic");
+            logger.verbose(inspect({dictionaryFilesGlobPattern: hunspellDictionariesGlob}));
+
             // hunspell"s "getAvailableDictionaries" does nothing, so use glob resolving as a workaround
-            const dictionaryFiles = await fastGlobModule.async<string>(
-                // result is array of strings is "stats" option disabled (default behaviour)
-                path.join(state.location, "*.dic"),
+            const hunspellDictionaries = await fastGlobModule.async<string>(
+                hunspellDictionariesGlob,
+                {
+                    absolute: true,
+                    deep: 1,
+                    onlyFiles: true,
+                    stats: false,
+                },
             );
-            const dictionaryLocales = dictionaryFiles.map((dictionaryFile) => {
+            logger.verbose(inspect({hunspellDictionaries}));
+
+            const hunspellLocales = hunspellDictionaries.map((dictionaryFile) => {
                 return normalizeLocale(
-                    path.basename(dictionaryFile)
-                        .replace(".dic", ""),
+                    path.basename(
+                        dictionaryFile,
+                        path.extname(dictionaryFile),
+                    ),
                 );
             });
+            logger.verbose(inspect({hunspellLocales}));
 
-            logger.info("Found hunspell dictionaries", dictionaryLocales);
-            state.extraLocales.push(...dictionaryLocales);
+            logger.info("Found hunspell dictionaries", hunspellLocales);
+            state.hunspellLocales.push(...hunspellLocales);
 
             logger.info(`Detected Linux. Dictionary location: ${state.location}`);
         })();
@@ -93,14 +105,18 @@ export let setup: () => Promise<{
     }
 
     const spellCheckerModule = await import("spellchecker");
+    const spellCheckerDictionaries = spellCheckerModule.getAvailableDictionaries();
+    logger.verbose(inspect({spellCheckerDictionaries}));
+
     const availableDictionaries: readonly Locale[] = removeDuplicateItems(
         [
-            ...spellCheckerModule.getAvailableDictionaries(),
-            // WARN: this needs to be called after OS-dependent initialization got completed (see above code lines)
-            // ie "state" got settled down
-            ...state.extraLocales,
+            ...spellCheckerDictionaries,
+            // this needs to be called after OS-dependent initialization got completed (see above code lines), ie "state" got settled down
+            ...state.hunspellLocales,
         ].map(normalizeLocale),
     );
+    logger.verbose(inspect({availableDictionaries}));
+
     const result = {
         getLocation() {
             return state.location;

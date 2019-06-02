@@ -1,6 +1,6 @@
 import path from "path";
 import fs, {Stats} from "fs";
-import {Packager, Platform} from "app-builder-lib";
+import {Configuration, Platform} from "app-builder-lib";
 import {promisify} from "util";
 
 import {LOG, LOG_LEVELS, execShell} from "scripts/lib";
@@ -18,7 +18,7 @@ const hasSuidBit: (stat: Stats) => boolean = ({mode}) => {
     return Boolean(mode & suidBit); // tslint:disable-line:no-bitwise
 };
 
-const afterPack: Packager["afterPack"] = async ({targets, appOutDir, electronPlatformName}) => {
+const hook: Required<Configuration>["afterPack"] = async ({targets, appOutDir, electronPlatformName}) => {
     if (electronPlatformName !== Platform.LINUX.name) {
         return;
     }
@@ -66,4 +66,4 @@ const afterPack: Packager["afterPack"] = async ({targets, appOutDir, electronPla
     await execShell(["chmod", ["+x", appBinaryFilePath]]);
 };
 
-export default afterPack;
+export default hook;

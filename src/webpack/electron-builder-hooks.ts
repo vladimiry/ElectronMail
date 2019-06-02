@@ -1,4 +1,3 @@
-import fs from "fs";
 import nodeExternals from "webpack-node-externals";
 import path from "path";
 import {Configuration} from "webpack";
@@ -10,50 +9,51 @@ const hooksDir = (...value: string[]) => path.join(
     ...value,
 );
 
-const configurations: Configuration[] = [];
+// TODO scan folder automatically
+const hooksToBuild = [
+    // "afterAllArtifactBuild",
+    "afterPack",
+];
 
-for (const name of fs.readdirSync(hooksDir())) {
-    // TODO make sure "hookDir" is actually a directory, not a file
-    const hookDir = path.resolve(hooksDir(), name);
+const configurations: Configuration[] = hooksToBuild.map((hookDirName) => {
+    const hookDir = path.join(hooksDir(hookDirName));
     const tsConfigFile = path.join(hookDir, "tsconfig.json");
 
-    configurations.push(
-        buildBaseConfig(
-            {
-                mode: "none",
-                devtool: false,
-                target: "node",
-                entry: {
-                    index: hookDir,
+    return buildBaseConfig(
+        {
+            mode: "none",
+            devtool: false,
+            target: "node",
+            entry: {
+                index: hookDir,
+            },
+            output: {
+                path: hookDir,
+                ...{
+                    // https://github.com/webpack/webpack/issues/2030#issuecomment-232886608
+                    library: "",
+                    libraryTarget: "commonjs",
                 },
-                output: {
-                    path: hookDir,
-                    ...{
-                        // https://github.com/webpack/webpack/issues/2030#issuecomment-232886608
-                        library: "",
-                        libraryTarget: "commonjs",
-                    },
-                },
-                module: {
-                    rules: [
-                        {
-                            test: /\.ts$/,
-                            use: {
-                                loader: "awesome-typescript-loader",
-                                options: {configFileName: tsConfigFile},
-                            },
+            },
+            module: {
+                rules: [
+                    {
+                        test: /\.ts$/,
+                        use: {
+                            loader: "awesome-typescript-loader",
+                            options: {configFileName: tsConfigFile},
                         },
-                    ],
-                },
-                externals: [
-                    nodeExternals(),
+                    },
                 ],
             },
-            {
-                tsConfigFile,
-            },
-        ),
+            externals: [
+                nodeExternals(),
+            ],
+        },
+        {
+            tsConfigFile,
+        },
     );
-}
+});
 
 export default configurations;

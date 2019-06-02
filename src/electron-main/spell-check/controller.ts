@@ -1,6 +1,12 @@
+import _logger from "electron-log";
+import {inspect} from "util";
+
 import {Controller, FuzzyLocale, Provider} from "./model";
 import {Locale} from "src/shared/types";
 import {constructDummyProvider, constructProvider} from "./providers";
+import {curryFunctionMembers} from "src/shared/util";
+
+const logger = curryFunctionMembers(_logger, "[src/electron-main/spell-check/controller]");
 
 const dummyProvider = constructDummyProvider();
 
@@ -9,8 +15,10 @@ async function provider(locale: Locale) {
     const setupModule = await import("./setup");
     const {getLocation} = await setupModule.setup();
     const spellchecker = new spellCheckerModule.Spellchecker();
+    const location = getLocation();
 
-    spellchecker.setDictionary(locale, getLocation());
+    const setDictionaryResult = spellchecker.setDictionary(locale, location);
+    logger.debug("provider(): spellchecker.setDictionary() returned", inspect({locale, location, result: setDictionaryResult}));
 
     return constructProvider(locale, spellchecker);
 }
@@ -27,6 +35,7 @@ async function narrowFuzzyLocaleToStateValue(
 export async function initSpellCheckController(
     initialLocale: FuzzyLocale,
 ): Promise<Controller> {
+    logger.debug("initSpellCheckController()", inspect({initialLocale}));
     const controller: Controller = {
         async changeLocale(newLocale) {
             state.currentLocale = await narrowFuzzyLocaleToStateValue(newLocale);

@@ -7,48 +7,95 @@ import {inspect} from "util";
 import {Locale} from "src/shared/types";
 import {curryFunctionMembers, normalizeLocale, removeDuplicateItems} from "src/shared/util";
 
-const logger = curryFunctionMembers(_logger, "[src/electron-main/spell-check/setup]");
-
-export let resolveSystemLocale: () => Promise<Locale> = async () => {
-    const osLocaleModule = await import("os-locale");
-
-    // hunspell requires the fully-qualified locale
-    // so load local with help of "os-locale" module as it returns locale in "es_ES" format vs "es." returned by "os" module
-    let result: Locale = normalizeLocale(osLocaleModule.sync()) || "en_US";
-
-    // prefer "en_US" locale if OS locale is in "en"-group and respective dictionary available
-    if (!result.toLowerCase().startsWith("en_us")) {
+export let resolveDefaultLocale: () => Promise<Locale> = async () => {
+    const logger = curryFunctionMembers(_logger, "[src/electron-main/spell-check/setup] resolveDefaultLocale()");
+    const resolvedLocale: Locale | undefined = await (async () => {
+        const osLocaleModule = await import("os-locale");
         const {getAvailableDictionaries} = await setup();
         const dictionaries = getAvailableDictionaries();
-        const preferredLocale = (
-            dictionaries.find((value) => value.toLowerCase() === "en_us")
-            ||
-            dictionaries.find((value) => value.toLowerCase().startsWith("en_us"))
-        );
-        if (preferredLocale) {
-            logger.info(`"${preferredLocale}" locale got preferred over "${result}"`);
-            result = preferredLocale;
+
+        // hunspell requires the fully-qualified result
+        // so load local with help of "os-result" module
+        // since it returns result in "es_ES" format vs "es." returned by "os" module
+        const locale = normalizeLocale(
+            await osLocaleModule.default(),
+        ) as Locale | undefined;
+        logger.info(`Resolved OS locale: ${locale}`);
+
+        if (!locale || !["en_us", "en"].includes(locale.toLowerCase())) {
+            // priority order: en_US, en, en_*
+            const preferredDictionaryLocale = (
+                dictionaries.find((dictionary) => dictionary.toLowerCase() === "en_us")
+                ||
+                dictionaries.find((dictionary) => dictionary.toLowerCase() === "en")
+                ||
+                dictionaries.find((dictionary) => dictionary.toLowerCase().startsWith("en_"))
+            );
+            if (preferredDictionaryLocale) {
+                logger.info(`"${preferredDictionaryLocale}" locale got preferred over "${locale}"`);
+                // it's already narrowed to available dictionary
+                return preferredDictionaryLocale;
+            }
         }
-    }
+
+        // narrow to available dictionary
+        if (locale) {
+            const lowerCaseLocale = locale.toLowerCase();
+            const localeIsInDictionary = dictionaries.some((dictionary) => dictionary.toLowerCase() === lowerCaseLocale);
+
+            if (localeIsInDictionary) {
+                return locale;
+            }
+
+            logger.info(`"${locale}" is not in the dictionary`);
+
+            if (!dictionaries.length) {
+                logger.info(`Dictionary is empty so returning "undefined"`);
+                return undefined;
+            }
+
+            // priority order: ${lowerCaseLocale}*, first item
+            const dictionaryLocale = (
+                dictionaries.find((dictionary) => dictionary.toLowerCase().startsWith(lowerCaseLocale))
+                ||
+                dictionaries.find(Boolean)
+            );
+            logger.info(`"${dictionaryLocale}" locale got picked from the dictionary`);
+            return dictionaryLocale;
+        }
+
+        return locale;
+    })();
+
+    const defaultLocale: Locale = (
+        resolvedLocale
+        ||
+        (() => {
+            const fallbackLocale = "en_US";
+            logger.info(`Failed to resolve locale so falling back to "${fallbackLocale}"`);
+            return fallbackLocale;
+        })()
+    );
 
     // the LANG environment variable is how node spellchecker finds its default language:
     // https://github.com/atom/node-spellchecker/blob/59d2d5eee5785c4b34e9669cd5d987181d17c098/lib/spellchecker.js#L29
     if (!process.env.LANG) {
-        process.env.LANG = result;
+        process.env.LANG = defaultLocale;
     }
 
     // memoize the result
-    resolveSystemLocale = async () => result;
+    resolveDefaultLocale = async () => defaultLocale;
 
-    logger.info(`Detected system/default locale: ${result}`);
+    logger.info(`Detected system/default locale: ${defaultLocale}`);
 
-    return result;
+    return defaultLocale;
 };
 
 export let setup: () => Promise<{
     getLocation: () => string | undefined;
     getAvailableDictionaries: () => readonly Locale[];
 }> = async () => {
+    const logger = curryFunctionMembers(_logger, "[src/electron-main/spell-check/setup] setup()");
     const state: {
         location: string | undefined;
         hunspellLocales: Locale[];

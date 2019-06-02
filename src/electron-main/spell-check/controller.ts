@@ -28,7 +28,7 @@ async function narrowFuzzyLocaleToStateValue(
 ): Promise<ReturnType<Controller["getCurrentLocale"]>> {
     const setupModule = await import("./setup");
     return locale === true
-        ? await setupModule.resolveSystemLocale()
+        ? await setupModule.resolveDefaultLocale()
         : locale;
 }
 
@@ -70,7 +70,7 @@ export async function initSpellCheckController(
     if (typeof state.currentLocale === "string") {
         if (!(await controller.getAvailableDictionaries()).includes(state.currentLocale)) {
             const setupModule = await import("./setup");
-            state.currentLocale = await setupModule.resolveSystemLocale();
+            state.currentLocale = await setupModule.resolveDefaultLocale();
         }
 
         await controller.changeLocale(state.currentLocale);

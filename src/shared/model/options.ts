@@ -30,7 +30,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
         defaultApiCall: number;
         indexingBootstrap: number;
     };
-    databaseSaveDelayMs: number;
+    databaseWriteDelayMs: number;
     indexingBootstrapBufferSize: number;
     jsFlags?: string[];
     // base

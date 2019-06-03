@@ -52,7 +52,7 @@ const dbPatchState: {
 
 export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpoints, Methods>> {
     return {
-        async dbPatch({immediateWrite = false, forceFlush, type, login, metadata: metadataPatch, patch: entityUpdatesPatch}) {
+        async dbPatch({immediateWrite = true, forceFlush, type, login, metadata: metadataPatch, patch: entityUpdatesPatch}) {
             const logger = curryFunctionMembers(_logger, "dbPatch()");
 
             logger.info();
@@ -107,7 +107,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             // TODO consider caching the config
             const {
                 disableSpamNotifications,
-                databaseSaveDelayMs,
+                databaseWriteDelayMs,
             } = await (await ctx.deferredEndpoints.promise).readConfig();
 
             IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount({
@@ -129,12 +129,14 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                 const writingNow = (
                     immediateWrite
                     ||
-                    typeof saveDelayedMs === "number" && saveDelayedMs >= databaseSaveDelayMs
+                    typeof databaseWriteDelayMs !== "number" || isNaN(databaseWriteDelayMs) || databaseWriteDelayMs === 0
+                    ||
+                    typeof saveDelayedMs === "number" && saveDelayedMs >= databaseWriteDelayMs
                 );
 
                 logger.verbose(
                     "[write]",
-                    inspect({dbPatchState, databaseSaveDelayMs, immediateWrite, saveDelayedMs, writingNow}),
+                    inspect({dbPatchState, databaseWriteDelayMs, immediateWrite, saveDelayedMs, writingNow}),
                 );
 
                 dbPatchState.lastWriteAttemptMark = lastWriteAttemptMark;
@@ -149,8 +151,8 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                     await ctx.db.saveToFile();
                 } else {
                     const remainingSaveDelayMs = saveDelayedMs
-                        ? databaseSaveDelayMs - saveDelayedMs
-                        : databaseSaveDelayMs;
+                        ? databaseWriteDelayMs - saveDelayedMs
+                        : databaseWriteDelayMs;
 
                     logger.verbose(`[write] setting up write timeout`, inspect({dbPatchState, remainingSaveDelayMs}));
 

@@ -106,12 +106,17 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             delete config.timeouts.syncing;
         })();
     },
-    "2.4.0": (config) => {
+    "3.4.0": (config) => {
         if (typeof config.spellCheckLocale === "undefined") {
             config.spellCheckLocale = INITIAL_STORES.config().spellCheckLocale;
         }
-        if (typeof config.databaseSaveDelayMs === "undefined") {
-            config.databaseSaveDelayMs = INITIAL_STORES.config().databaseSaveDelayMs;
+    },
+    "3.4.2": (_, config = _ as Config & { databaseSaveDelayMs?: number }) => {
+        if (typeof config.databaseSaveDelayMs !== "undefined") {
+            delete config.databaseSaveDelayMs;
+        }
+        if (typeof config.databaseWriteDelayMs === "undefined") {
+            config.databaseWriteDelayMs = INITIAL_STORES.config().databaseWriteDelayMs;
         }
     },
 };

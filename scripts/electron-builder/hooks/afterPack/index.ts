@@ -84,9 +84,5 @@ async function linux({targets, appOutDir}: AfterPackContext) {
 }
 
 async function windows({appOutDir}: AfterPackContext) {
-    await fillSpellcheckerDictionariesFolder({appOutDir});
-}
-
-async function fillSpellcheckerDictionariesFolder({appOutDir}: Pick<AfterPackContext, "appOutDir">) {
     await copyDictionaryFiles(path.join(appOutDir, APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR));
 }

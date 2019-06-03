@@ -15,4 +15,6 @@ declare module "spellchecker" {
     export function getAvailableDictionaries(): string[];
 
     export function setDictionary(lang: string, dictPath: string | undefined): boolean;
+
+    export function getDictionaryPath(): string;
 }

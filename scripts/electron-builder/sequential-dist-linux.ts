@@ -1,6 +1,6 @@
 import {Target} from "app-builder-lib";
 
-import {execShell} from "scripts/lib";
+import {LOG, execShell} from "scripts/lib";
 
 const targets: Array<typeof Target.prototype.name> = [
     "snap",
@@ -11,7 +11,6 @@ const targets: Array<typeof Target.prototype.name> = [
     "rpm",
 ];
 
-// tslint:disable-next-line:no-floating-promises
 (async () => {
     for (const target of targets) {
         await clean();
@@ -19,7 +18,10 @@ const targets: Array<typeof Target.prototype.name> = [
     }
 
     await clean();
-})();
+})().catch((error) => {
+    LOG(error);
+    process.exit(1);
+});
 
 async function clean() {
     // TODO take "dist" reading "directories.output" from electron-builder.yml

@@ -9,7 +9,6 @@ const [, , DIST_DIRECTORY] = process.argv as [null, null, string];
 
 const algorithms = ["sha1"];
 
-// tslint:disable-next-line:no-floating-promises
 (async () => {
     const files = await listInstallationPackageFiles(DIST_DIRECTORY);
 
@@ -30,7 +29,10 @@ const algorithms = ["sha1"];
             );
         }
     }
-})();
+})().catch((error) => {
+    LOG(error);
+    process.exit(1);
+});
 
 function calculateHash(file: string, alg: string): Promise<string> {
     return new Promise((resolve, reject) => {

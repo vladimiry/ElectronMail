@@ -2,8 +2,8 @@ import _logger from "electron-log";
 import os from "os";
 import path from "path";
 import semver from "semver";
-import {inspect} from "util";
 
+import {APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR} from "src/shared/constants";
 import {Locale} from "src/shared/types";
 import {curryFunctionMembers, normalizeLocale, removeDuplicateItems} from "src/shared/util";
 
@@ -40,14 +40,11 @@ export let resolveDefaultLocale: () => Promise<Locale> = async () => {
 
         // narrow to available dictionary
         if (locale) {
-            const lowerCaseLocale = locale.toLowerCase();
-            const localeIsInDictionary = dictionaries.some((dictionary) => dictionary.toLowerCase() === lowerCaseLocale);
-
-            if (localeIsInDictionary) {
+            if (dictionaries.includes(locale)) {
                 return locale;
             }
 
-            logger.info(`"${locale}" is not in the dictionary`);
+            logger.info(`there is no dictionary for "${locale}"`);
 
             if (!dictionaries.length) {
                 logger.info(`Dictionary is empty so returning "undefined"`);
@@ -55,6 +52,7 @@ export let resolveDefaultLocale: () => Promise<Locale> = async () => {
             }
 
             // priority order: ${lowerCaseLocale}*, first item
+            const lowerCaseLocale = locale.toLowerCase();
             const dictionaryLocale = (
                 dictionaries.find((dictionary) => dictionary.toLowerCase().startsWith(lowerCaseLocale))
                 ||
@@ -105,46 +103,17 @@ export let setup: () => Promise<{
     };
     const platform = os.platform();
 
-    logger.verbose("Initial state", inspect({state}));
+    logger.verbose("Initial state", JSON.stringify(state));
 
     if (platform === "linux") {
         await (async () => {
-            const fastGlobModule = await import("fast-glob");
-
-            // apt-get install hunspell-<locale> can be run for easy access to other dictionaries
             state.location = state.location || "/usr/share/hunspell";
-
-            const hunspellDictionariesGlob = path.join(state.location, "*.dic");
-            logger.verbose(inspect({dictionaryFilesGlobPattern: hunspellDictionariesGlob}));
-
-            // hunspell"s "getAvailableDictionaries" does nothing, so use glob resolving as a workaround
-            const hunspellDictionaries = await fastGlobModule.async<string>(
-                hunspellDictionariesGlob,
-                {
-                    absolute: true,
-                    deep: 1,
-                    onlyFiles: true,
-                    stats: false,
-                },
-            );
-            logger.verbose(inspect({hunspellDictionaries}));
-
-            const hunspellLocales = hunspellDictionaries.map((dictionaryFile) => {
-                return normalizeLocale(
-                    path.basename(
-                        dictionaryFile,
-                        path.extname(dictionaryFile),
-                    ),
-                );
-            });
-            logger.verbose(inspect({hunspellLocales}));
-
-            logger.info("Found hunspell dictionaries", hunspellLocales);
-            state.hunspellLocales.push(...hunspellLocales);
-
+            state.hunspellLocales.push(...await resolveHunspellLocales(state.location));
             logger.info(`Detected Linux. Dictionary location: ${state.location}`);
         })();
     } else if (platform === "win32" && semver.lt(os.release(), "8.0.0")) {
+        state.location = state.location || path.join(path.dirname(process.execPath), APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR);
+        state.hunspellLocales.push(...await resolveHunspellLocales(state.location));
         logger.info(`Detected Windows 7 or below. Dictionary location: ${state.location}`);
     } else {
         // OSX and Windows 8+ have OS-level spellcheck APIs
@@ -152,8 +121,9 @@ export let setup: () => Promise<{
     }
 
     const spellCheckerModule = await import("spellchecker");
+    logger.verbose("spellchecker.getDictionaryPath():", spellCheckerModule.getDictionaryPath());
     const spellCheckerDictionaries = spellCheckerModule.getAvailableDictionaries();
-    logger.verbose(inspect({spellCheckerDictionaries}));
+    logger.verbose("spellchecker.getAvailableDictionaries():", spellCheckerDictionaries);
 
     const availableDictionaries: readonly Locale[] = removeDuplicateItems(
         [
@@ -162,7 +132,7 @@ export let setup: () => Promise<{
             ...state.hunspellLocales,
         ].map(normalizeLocale),
     );
-    logger.verbose(inspect({availableDictionaries}));
+    logger.verbose(JSON.stringify({availableDictionaries}, null, 2));
 
     const result = {
         getLocation() {
@@ -178,3 +148,35 @@ export let setup: () => Promise<{
 
     return result;
 };
+
+async function resolveHunspellLocales(dir: string): Promise<Locale[]> {
+    const logger = curryFunctionMembers(_logger, "[src/electron-main/spell-check/setup] resolveHunspellLocales()");
+    const fastGlobModule = await import("fast-glob");
+
+    const hunspellDictionariesGlob = path.join(dir, "*.dic");
+    logger.verbose(JSON.stringify({hunspellDictionariesGlob}));
+
+    // hunspell"s "getAvailableDictionaries()" does nothing, so use resolving using glob as a workaround
+    const hunspellDictionaries = await fastGlobModule.async<string>(
+        hunspellDictionariesGlob,
+        {
+            absolute: true,
+            deep: 1,
+            onlyFiles: true,
+            stats: false,
+        },
+    );
+    logger.verbose(JSON.stringify({hunspellDictionaries}, null, 2));
+
+    const hunspellLocales = hunspellDictionaries.map((dictionaryFile) => {
+        return normalizeLocale(
+            path.basename(
+                dictionaryFile,
+                path.extname(dictionaryFile),
+            ),
+        );
+    });
+    logger.info(JSON.stringify({hunspellLocales}, null, 2));
+
+    return hunspellLocales;
+}

@@ -7,7 +7,7 @@ import {pick} from "ramda";
 
 import {Arguments, Unpacked} from "src/shared/types";
 
-export const PROC_CWD = path.resolve(process.cwd());
+export const CWD = path.resolve(process.cwd());
 
 // tslint:disable-next-line:no-console
 export const LOG = console.log;

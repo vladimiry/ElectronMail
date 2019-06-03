@@ -5,7 +5,7 @@ import pathIsInside from "path-is-inside";
 import {promisify} from "util";
 
 import {AccountType} from "src/shared/model/account";
-import {LOG, LOG_LEVELS, PROC_CWD, execShell} from "scripts/lib";
+import {CWD, LOG, LOG_LEVELS, execShell} from "scripts/lib";
 import {PROVIDER_REPO} from "src/shared/constants";
 import {Unpacked} from "src/shared/types";
 
@@ -15,7 +15,7 @@ if (!baseDestDir) {
     throw new Error(`Empty base destination directory argument`);
 }
 
-if (!pathIsInside(path.resolve(PROC_CWD, baseDestDir), PROC_CWD)) {
+if (!pathIsInside(path.resolve(CWD, baseDestDir), CWD)) {
     throw new Error(`Invalid base destination directory argument value: ${LOG_LEVELS.value(baseDestDir)}`);
 }
 
@@ -48,8 +48,8 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
     },
 ) {
     const distDir = path.resolve(baseDestDir, accountType);
-    const webClientDir = path.resolve(PROC_CWD, `./output/git/${accountType}/webclient`);
-    const baseRepoDir = path.resolve(PROC_CWD, webClientDir, `./${PROVIDER_REPO[accountType].commit}`);
+    const webClientDir = path.resolve(CWD, `./output/git/${accountType}/webclient`);
+    const baseRepoDir = path.resolve(CWD, webClientDir, `./${PROVIDER_REPO[accountType].commit}`);
 
     await fsExtra.ensureDir(webClientDir);
 

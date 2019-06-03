@@ -1,5 +1,4 @@
 import _logger from "electron-log";
-import {inspect} from "util";
 
 import {Controller, FuzzyLocale, Provider} from "./model";
 import {Locale} from "src/shared/types";
@@ -18,7 +17,7 @@ async function provider(locale: Locale) {
     const location = getLocation();
 
     const setDictionaryResult = spellchecker.setDictionary(locale, location);
-    logger.debug("provider(): spellchecker.setDictionary() returned", inspect({locale, location, result: setDictionaryResult}));
+    logger.debug("provider(): spellchecker.setDictionary() returned", JSON.stringify({locale, location, result: setDictionaryResult}));
 
     return constructProvider(locale, spellchecker);
 }
@@ -35,7 +34,8 @@ async function narrowFuzzyLocaleToStateValue(
 export async function initSpellCheckController(
     initialLocale: FuzzyLocale,
 ): Promise<Controller> {
-    logger.debug("initSpellCheckController()", inspect({initialLocale}));
+    logger.debug("initSpellCheckController()", JSON.stringify({initialLocale}));
+
     const controller: Controller = {
         async changeLocale(newLocale) {
             state.currentLocale = await narrowFuzzyLocaleToStateValue(newLocale);
@@ -68,7 +68,10 @@ export async function initSpellCheckController(
     };
 
     if (typeof state.currentLocale === "string") {
-        if (!(await controller.getAvailableDictionaries()).includes(state.currentLocale)) {
+        const dictionaries = await controller.getAvailableDictionaries();
+
+        if (!dictionaries.includes(state.currentLocale)) {
+            logger.info(`there is no dictionary for "${state.currentLocale}"`);
             const setupModule = await import("./setup");
             state.currentLocale = await setupModule.resolveDefaultLocale();
         }

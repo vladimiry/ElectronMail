@@ -1,6 +1,5 @@
 import _logger from "electron-log";
 import {Spellchecker} from "spellchecker";
-import {inspect} from "util";
 
 import {Locale} from "src/shared/types";
 import {Provider} from "./model";
@@ -33,7 +32,7 @@ export function constructProvider(
     locale: Locale,
     spellchecker: Spellchecker,
 ): Readonly<Provider> {
-    logger.debug("constructProvider()", inspect({locale, spellchecker}));
+    logger.debug("constructProvider()", JSON.stringify({locale}));
     const provider: ReturnType<typeof constructProvider> = {
         spellCheck(words, callback) {
             const misspelledWords = removeDuplicateItems(
@@ -48,7 +47,7 @@ export function constructProvider(
                 ),
             );
             // WARN: don't log the actual words/misspelledWords
-            logger.debug("spellCheck()", inspect({wordsCount: words.length, misspelledWordsCount: misspelledWords.length}));
+            logger.debug("spellCheck()", JSON.stringify({wordsCount: words.length, misspelledWordsCount: misspelledWords.length}));
             callback(misspelledWords);
         },
         isMisspelled(text) {
@@ -64,7 +63,7 @@ export function constructProvider(
         getSuggestions(text) {
             const suggestions = spellchecker.getCorrectionsForMisspelling(text);
             // WARN: don't log the actual text/suggestions
-            logger.debug("getSuggestions()", inspect({textLength: text.length, suggestionsCount: suggestions.length}));
+            logger.debug("getSuggestions()", JSON.stringify({textLength: text.length, suggestionsCount: suggestions.length}));
             return suggestions;
         },
         add(text) {

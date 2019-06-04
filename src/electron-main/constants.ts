@@ -41,7 +41,7 @@ export const INITIAL_STORES: Readonly<{
                 domElementsResolving: ONE_SECOND_MS * 20,
                 defaultApiCall: DEFAULT_API_CALL_TIMEOUT,
                 databaseLoading: ONE_MINUTE_MS * 5, // 5 minutes
-                indexingBootstrap: ONE_SECOND_MS * 15, // 15 seconds
+                indexingBootstrap: ONE_SECOND_MS * 30, // 30 seconds
             },
             databaseWriteDelayMs: 0, // 0 = no delay = immediate saving
             indexingBootstrapBufferSize: 1000,

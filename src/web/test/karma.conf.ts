@@ -3,7 +3,7 @@ import {platform} from "os";
 import {produce} from "immer";
 
 // TODO import using alias
-import webpackConfig from "../../webpack/web";
+import webpackConfig from "../../../webpack/web";
 
 const basePath = process.cwd();
 const filesBootstrap = "src/web/test/bootstrap.ts";

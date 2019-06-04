@@ -2,10 +2,10 @@ import nodeExternals from "webpack-node-externals";
 import path from "path";
 import {Configuration} from "webpack";
 
-import {buildBaseConfig, rootRelateivePath} from "./lib";
+import {buildBaseConfig, rootRelativePath} from "./lib";
 
 const hooksDir = (...value: string[]) => path.join(
-    rootRelateivePath("./scripts/electron-builder/hooks"),
+    rootRelativePath("./scripts/electron-builder/hooks"),
     ...value,
 );
 

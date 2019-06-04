@@ -18,19 +18,19 @@ const environmentSate = {
 // tslint:disable-next-line:no-console
 console.log("BuildEnvironment:", environment);
 
-const rootRelateivePath = (...value: string[]) => path.join(process.cwd(), ...value);
-const srcRelateivePath = (...value: string[]) => rootRelateivePath("./src", ...value);
-const outputRelateivePath = (...value: string[]) => rootRelateivePath(environmentSate.development ? "./app-dev" : "./app", ...value);
+const rootRelativePath = (...value: string[]) => path.join(process.cwd(), ...value);
+const srcRelativePath = (...value: string[]) => rootRelativePath("./src", ...value);
+const outputRelativePath = (...value: string[]) => rootRelativePath(environmentSate.development ? "./app-dev" : "./app", ...value);
 
 const buildBaseConfig: BuildConfig = (config, options = {}) => {
-    const {tsConfigFile} = {tsConfigFile: rootRelateivePath("./tsconfig.json"), ...options};
+    const {tsConfigFile} = {tsConfigFile: rootRelativePath("./tsconfig.json"), ...options};
 
     return webpackMerge(
         {
             mode: environmentSate.development || environmentSate.test ? "development" : "production",
             devtool: false,
             output: {
-                path: outputRelateivePath(),
+                path: outputRelativePath(),
             },
             plugins: [
                 new webpack.DefinePlugin({
@@ -61,7 +61,7 @@ export {
     buildBaseConfig,
     environment,
     environmentSate,
-    outputRelateivePath,
-    rootRelateivePath,
-    srcRelateivePath,
+    outputRelativePath,
+    rootRelativePath,
+    srcRelativePath,
 };

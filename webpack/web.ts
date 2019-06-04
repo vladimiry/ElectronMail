@@ -8,7 +8,7 @@ import {AngularCompilerPlugin, PLATFORM} from "@ngtools/webpack";
 import {CompilerOptions} from "typescript";
 
 import {BuildEnvironment} from "src/shared/model/common";
-import {buildBaseConfig, environment, environmentSate, outputRelateivePath, srcRelateivePath} from "./lib";
+import {buildBaseConfig, environment, environmentSate, outputRelativePath, srcRelativePath} from "./lib";
 
 // tslint:disable:no-var-requires
 // TODO use ES6 import format
@@ -18,7 +18,7 @@ const customProperties = require("postcss-custom-properties");
 const {readConfiguration} = require("@angular/compiler-cli");
 // tslint:enable:no-var-requires
 
-const webSrcPath = (...value: string[]) => srcRelateivePath("./web/src", ...value);
+const webSrcPath = (...value: string[]) => srcRelativePath("./web/src", ...value);
 const webAppPath = (...value: string[]) => webSrcPath("./app", ...value);
 const webSrcEnvPath = (...value: string[]) => webSrcPath(
     "./environments", environmentSate.development ? "./development" : "./production",
@@ -48,7 +48,7 @@ const cssRuleUse = [
         },
     },
 ];
-const tsConfigFile = srcRelateivePath(({
+const tsConfigFile = srcRelativePath(({
     production: "./web/tsconfig.json",
     development: "./web/tsconfig.development.json",
     test: "./web/test/tsconfig.json",
@@ -80,7 +80,7 @@ const baseConfig = buildBaseConfig(
             [chunkNames["search-in-page-browser-view"]]: webSrcPath("./search-in-page-browser-view/index.ts"),
         },
         output: {
-            path: outputRelateivePath("./web"),
+            path: outputRelativePath("./web"),
         },
         node: {
             path: "empty",

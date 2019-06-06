@@ -2,6 +2,7 @@ import nodeExternals from "webpack-node-externals";
 import path from "path";
 import {Configuration} from "webpack";
 
+import {LoaderConfig as TsLoaderConfig} from "awesome-typescript-loader/src/interfaces";
 import {buildBaseConfig, rootRelativePath} from "./lib";
 
 const hooksDir = (...value: string[]) => path.join(
@@ -41,7 +42,9 @@ const configurations: Configuration[] = hooksToBuild.map((hookDirName) => {
                         test: /\.ts$/,
                         use: {
                             loader: "awesome-typescript-loader",
-                            options: {configFileName: tsConfigFile},
+                            options: {
+                                configFileName: tsConfigFile,
+                            } as TsLoaderConfig,
                         },
                     },
                 ],

@@ -1,5 +1,6 @@
 import {Configuration} from "webpack";
 
+import {LoaderConfig as TsLoaderConfig} from "awesome-typescript-loader/src/interfaces";
 import {buildBaseConfig, environment, srcRelativePath} from "./lib";
 
 const configs = [
@@ -55,7 +56,9 @@ function buildRendererConfig(entry: Configuration["entry"], tsConfigFile: string
                         test: /\.ts$/,
                         use: {
                             loader: "awesome-typescript-loader",
-                            options: {configFileName: tsConfigFile},
+                            options: {
+                                configFileName: tsConfigFile,
+                            } as TsLoaderConfig,
                         },
                     },
                 ],

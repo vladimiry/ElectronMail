@@ -62,11 +62,11 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     didFailLoadErrorDescription?: string;
     private logger: ReturnType<typeof getZoneNameBoundWebLogger>;
     private loggerZone: Zone;
-    @ViewChild("dbViewContainer", {read: ViewContainerRef})
+    @ViewChild("dbViewContainer", {read: ViewContainerRef, static: false})
     private dbViewContainerRef!: ViewContainerRef;
-    @ViewChild("webViewTemplate", {read: TemplateRef})
+    @ViewChild("webViewTemplate", {read: TemplateRef, static: false})
     private webViewTemplate!: TemplateRef<null>;
-    @ViewChild("webviewContainer", {read: ViewContainerRef})
+    @ViewChild("webviewContainer", {read: ViewContainerRef, static: false})
     private webViewContainerRef!: ViewContainerRef;
     private webViewState$ = new Subject<WebViewSubjectState>();
     private subscription = new Subscription();

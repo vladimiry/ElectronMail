@@ -28,6 +28,12 @@ const routes: Routes = [
             {
                 path: "",
                 loadChildren: "./_accounts/accounts.module#AccountsModule",
+                // TODO loadChildren: use async ES import which is only compatible with Ivy Renderer:
+                //      https://blog.angularindepth.com/automatically-upgrade-lazy-loaded-angular-modules-for-ivy-e760872e6084
+                // loadChildren: async () => {
+                //     const {AccountsModule} = await import("src/web/src/app/_accounts/accounts.module");
+                //     return AccountsModule;
+                // },
             },
         ],
     },
@@ -42,6 +48,12 @@ const routes: Routes = [
             {
                 path: "",
                 loadChildren: "./_options/options.module#OptionsModule",
+                // TODO loadChildren: use async ES import which is only compatible with Ivy Renderer:
+                //      https://blog.angularindepth.com/automatically-upgrade-lazy-loaded-angular-modules-for-ivy-e760872e6084
+                // loadChildren: async () => {
+                //     const {OptionsModule} = await import("src/web/src/app/_options/options.module");
+                //     return OptionsModule;
+                // },
             },
         ],
     },

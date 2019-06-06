@@ -11,6 +11,7 @@
     /*
     emitting
     */
+    // TODO set "target" to "esnext" after updating Electron to v6 as Chrome 74+ is needed, see https://github.com/immerjs/immer/issues/346
     "target": "es2015",
     "module": "commonjs",
     "declaration": false,

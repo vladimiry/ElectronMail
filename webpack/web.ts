@@ -4,7 +4,7 @@ import postCssUrl from "postcss-url";
 import webpackDevServer from "webpack-dev-server";
 import webpackMerge from "webpack-merge";
 import webpack, {Configuration} from "webpack";
-import {AngularCompilerPlugin, PLATFORM} from "@ngtools/webpack";
+import {AngularCompilerPlugin, NgToolsLoader, PLATFORM} from "@ngtools/webpack";
 import {CompilerOptions} from "typescript";
 
 import {BuildEnvironment} from "src/shared/model/common";
@@ -182,9 +182,12 @@ const baseConfig = buildBaseConfig(
                     [`./_db-view/db-view.module#DbViewModule`]: webSrcPath("./app/_db-view/db-view.module.ts"),
                 },
                 platform: PLATFORM.Browser,
-                skipCodeGeneration: !aot,
+                ...(!aot && {skipCodeGeneration: true}),
                 tsConfigPath: tsConfigFile,
                 compilerOptions: tsConfigCompilerOptions,
+                nameLazyFiles: true,
+                contextElementDependencyConstructor: require("webpack/lib/dependencies/ContextElementDependency"),
+                directTemplateLoading: aot,
             }),
         ],
         ...(environment !== "test" && {
@@ -214,7 +217,7 @@ const configPatch: Record<BuildEnvironment, Configuration> = {
                     test: /(?:\.ngfactory\.js|\.ngstyle\.js|\.ts)$/,
                     use: [
                         "@angular-devkit/build-optimizer/webpack-loader",
-                        "@ngtools/webpack",
+                        NgToolsLoader,
                     ],
                 },
             ],

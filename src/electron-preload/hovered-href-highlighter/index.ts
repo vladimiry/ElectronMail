@@ -84,7 +84,7 @@ export class HoveredHrefHighlightElement extends HTMLElement {
             "notification",
             {
                 finishPromise: this.releaseApiClientDeferred.promise,
-                timeoutMs: ONE_SECOND_MS,
+                timeoutMs: ONE_SECOND_MS * 3,
             },
         )();
     }

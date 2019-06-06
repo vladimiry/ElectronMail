@@ -22,7 +22,7 @@ import {ErrorItemComponent} from "./components/error-item.component";
 import {ErrorListComponent} from "./components/error-list.component";
 import {RouterProxyComponent} from "./components/router-proxy.component";
 import {RoutingModule} from "./app.routing.module";
-import {getMetaReducers, reducers} from "./store/reducers/root";
+import {createAppMetaReducer, createErrorHandlingMetaReducer, reducers} from "./store/reducers/root";
 
 export const APP_MODULE_NG_CONF: NgModule = {
     imports: [
@@ -40,7 +40,7 @@ export const APP_MODULE_NG_CONF: NgModule = {
         StoreModule.forFeature(DbViewReducer.featureName, DbViewReducer.reducer),
         StoreModule.forFeature(ErrorsReducer.featureName, ErrorsReducer.reducer),
         StoreModule.forFeature(OptionsReducer.featureName, OptionsReducer.reducer),
-        StoreRouterConnectingModule,
+        StoreRouterConnectingModule.forRoot(),
         EffectsModule.forRoot([]),
     ],
     declarations: [
@@ -57,8 +57,14 @@ export const APP_MODULE_NG_CONF: NgModule = {
         },
         {
             provide: META_REDUCERS,
+            multi: true,
             deps: [Injector],
-            useFactory: getMetaReducers,
+            useFactory: createErrorHandlingMetaReducer,
+        },
+        {
+            provide: META_REDUCERS,
+            multi: true,
+            useFactory: createAppMetaReducer,
         },
     ],
     bootstrap: [AppComponent],

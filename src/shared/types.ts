@@ -1,5 +1,5 @@
 // tslint:disable-next-line:no-import-zones
-import logger from "electron-log";
+import logger, {ILogLevel} from "electron-log";
 import {Observable} from "rxjs";
 
 export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
@@ -24,7 +24,9 @@ export interface EntryUrlItem {
 
 export type NumberString = string;
 
-export type Logger = Omit<typeof logger, "transports" | "log">;
+export type Logger = Pick<typeof logger, ILogLevel>;
+
+export type LogLevel = keyof Logger;
 
 // TODO consider not using a raw string type but deriving locale items from:
 //      - https://electronjs.org/docs/api/locales

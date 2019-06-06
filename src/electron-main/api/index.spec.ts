@@ -42,10 +42,6 @@ const OPTIONS = Object.freeze({
 });
 
 const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>) => ImplementationResult> = {
-    log: async (t) => {
-        t.pass(`TODO test "log" endpoint`);
-    },
-
     getSpellCheckMetadata: (t) => {
         t.pass(`TODO test "getSpellCheckMetadata" endpoint`);
     },

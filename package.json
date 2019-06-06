@@ -100,7 +100,7 @@
     "class-transformer-validator": "0.7.1",
     "class-validator": "0.9.1",
     "compare-versions": "3.4.0",
-    "electron-log": "2.2.17",
+    "electron-log": "3.0.6",
     "electron-rpc-api": "5.1.0-beta3",
     "electron-unhandled": "2.2.0",
     "fast-glob": "2.2.7",

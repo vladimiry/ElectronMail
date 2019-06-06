@@ -30,7 +30,7 @@ import {State} from "src/web/src/app/store/reducers/accounts";
 import {getRandomInt, isDatabaseBootstrapped} from "src/shared/util";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/src/util";
 
-const rollingRateLimiter = __ELECTRON_EXPOSURE__.require["rolling-rate-limiter"]();
+const {rollingRateLimiter} = __ELECTRON_EXPOSURE__;
 const _logger = getZoneNameBoundWebLogger("[accounts.effects]");
 
 @Injectable()

@@ -1,15 +1,12 @@
 import asap from "asap-es";
-import {remote} from "electron"; // tslint:disable-line:no-import-zones
 import {v4 as uuid} from "uuid";
 
 import * as Rest from "./rest";
-import {ElectronExposure} from "src/shared/model/electron";
+import {ROLLING_RATE_LIMITER} from "src/electron-preload/electron-exposure/rolling-rate-limiter";
 import {Unpacked} from "src/shared/types";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {asyncDelay, curryFunctionMembers} from "src/shared/util";
 import {resolveIpcMainApi} from "src/electron-preload/webview/util";
-
-const rateLimiter: ReturnType<ElectronExposure["require"]["rolling-rate-limiter"]> = remote.require("rolling-rate-limiter");
 
 // TODO consider executing direct $http calls
 // in order to not depend on Protonmail WebClient's AngularJS factories/services
@@ -82,7 +79,7 @@ export async function resolveProviderApi(): Promise<ProviderApi> {
     const rateLimiting = {
         rateLimiterTick: await (async () => {
             const {fetching: {rateLimit: rateLimitConfig}} = await (await resolveIpcMainApi(logger))("readConfig")();
-            const limiter = rateLimiter({
+            const limiter = ROLLING_RATE_LIMITER({
                 interval: rateLimitConfig.intervalMs,
                 maxInInterval: rateLimitConfig.maxInInterval,
             });

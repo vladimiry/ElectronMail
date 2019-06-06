@@ -1,6 +1,5 @@
 import {ActionType, ScanService, createIpcMainApiService} from "electron-rpc-api";
 import {BrowserWindow} from "electron";
-import {LogLevel} from "electron-log";
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import {UnionOf, ofType, unionize} from "@vladimiry/unionize";
 
@@ -25,8 +24,6 @@ export type IpcMainServiceScan = ScanService<typeof IPC_MAIN_API>;
 export type IpcMainApiEndpoints = IpcMainServiceScan["ApiClient"];
 
 export const ENDPOINTS_DEFINITION = {
-    log: ActionType.Promise<Array<{ level: LogLevel; dataArgs: any[]; }>>(),
-
     getSpellCheckMetadata: ActionType.Promise<void, { locale: ReturnType<Controller["getCurrentLocale"]> }>(),
 
     changeSpellCheckLocale: ActionType.Promise<{ locale: FuzzyLocale }>(),

@@ -1,12 +1,11 @@
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/private/constants";
-import {LogLevel} from "electron-log";
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import {Model as StoreModel} from "fs-json-store";
 import {randomBytes} from "crypto";
 
 import {Config, ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS, Settings} from "src/shared/model/options";
 import {DEFAULT_API_CALL_TIMEOUT, DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_MINUTE_MS, ONE_SECOND_MS} from "src/shared/constants";
-import {Omit} from "src/shared/types";
+import {LogLevel, Omit} from "src/shared/types";
 
 export const INITIAL_STORES: Readonly<{
     config: () => Omit<Config, "jsFlags"> & Required<Pick<Config, "jsFlags">>;

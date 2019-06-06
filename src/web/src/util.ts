@@ -1,13 +1,14 @@
-import {LOGGER} from "src/web/src/logger-client";
 import {LOG_LEVELS} from "src/shared/constants";
 import {curryFunctionMembers} from "src/shared/util";
 
 type ZoneNameBoundWebLogger = typeof LOGGER & { zoneName: () => string };
 
+const LOGGER = __ELECTRON_EXPOSURE__.Logger;
+
 const formatZoneName = () => `<${Zone.current.name}>`;
 
 export const getZoneNameBoundWebLogger = (...args: string[]): ZoneNameBoundWebLogger => {
-    const logger = curryFunctionMembers(LOGGER, ...args);
+    const logger = {...curryFunctionMembers(LOGGER, ...args)};
     const zoneName = formatZoneName;
 
     for (const level of LOG_LEVELS) {

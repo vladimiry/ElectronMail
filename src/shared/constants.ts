@@ -1,7 +1,5 @@
-import {LogLevel} from "electron-log";
-
 import {AccountType} from "src/shared/model/account";
-import {EntryUrlItem} from "./types";
+import {EntryUrlItem, LogLevel} from "./types";
 
 const {
     name: PACKAGE_NAME,

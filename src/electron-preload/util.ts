@@ -1,8 +1,7 @@
-// TODO don't import "electron-log" in rendered process but use IPC interaction instead (see "web"module for example)
-import electronLog from "electron-log"; // tslint:disable-line:no-import-zones
-
+import {LOGGER} from "src/electron-preload/electron-exposure/logger";
+import {Logger} from "src/shared/types";
 import {curryFunctionMembers} from "src/shared/util";
 
-export function buildLoggerBundle(prefix: string) {
-    return curryFunctionMembers(electronLog, prefix);
+export function buildLoggerBundle(prefix: string): Logger {
+    return curryFunctionMembers(LOGGER, prefix);
 }

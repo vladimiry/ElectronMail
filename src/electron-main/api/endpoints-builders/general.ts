@@ -1,4 +1,3 @@
-import electronLog from "electron-log";
 import {app, shell} from "electron";
 import {isWebUri} from "valid-url";
 import {platform} from "os";
@@ -11,7 +10,6 @@ import {Unpacked} from "src/shared/types";
 import {showAboutBrowserWindow} from "src/electron-main/window/about";
 
 type Methods = keyof Pick<IpcMainApiEndpoints,
-    | "log"
     | "openAboutWindow"
     | "openExternal"
     | "openSettingsFolder"
@@ -28,12 +26,6 @@ export async function buildEndpoints(
     ctx: Context,
 ): Promise<Pick<IpcMainApiEndpoints, Methods> & Pick<IpcMainServiceScan["ApiImpl"], ContextAwareMethods>> {
     const endpoints: Unpacked<ReturnType<typeof buildEndpoints>> = {
-        async log(lines) {
-            for (const line of lines) {
-                electronLog[line.level](...line.dataArgs);
-            }
-        },
-
         async openAboutWindow() {
             await showAboutBrowserWindow(ctx);
         },

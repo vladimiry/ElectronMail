@@ -7,7 +7,6 @@ import {DB_VIEW_ACTIONS} from "src/web/src/app/store/actions";
 import {DbViewAbstractComponent} from "src/web/src/app/_db-view/db-view-abstract.component";
 import {Mail} from "src/shared/model/database";
 import {MailsBundleKey, State} from "src/web/src/app/store/reducers/db-view";
-import {Unpacked} from "src/shared/types";
 
 // TODO read "electron-mail-db-view-mail" from the DbViewMailComponent.selector property
 const mailComponentTagName = "electron-mail-db-view-mail";

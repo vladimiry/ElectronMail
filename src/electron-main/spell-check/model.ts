@@ -1,6 +1,6 @@
 import {Provider as ElectronProvider} from "electron";
 
-import {Locale} from "src/shared/types";
+import {Locale} from "src/shared/model/common";
 
 export type FuzzyLocale = Locale | true | false;
 

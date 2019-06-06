@@ -2,7 +2,7 @@ import {Deferred} from "ts-deferred";
 import {webFrame} from "electron"; // tslint:disable-line:no-import-zones
 
 import {IPC_MAIN_API, IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
-import {Locale, Logger} from "src/shared/types";
+import {Locale, Logger} from "src/shared/model/common";
 import {ONE_SECOND_MS} from "src/shared/constants";
 
 const releaseApiClientDeferred = new Deferred<void>();

@@ -1,6 +1,5 @@
 import * as DatabaseModel from "src/shared/model/database";
 import * as Rest from "./rest";
-import {Arguments, Unpacked} from "src/shared/types";
 import {BaseEntity, Id, IdTuple} from "./rest/model";
 import {GROUP_TYPE} from "./rest/model/constants";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";

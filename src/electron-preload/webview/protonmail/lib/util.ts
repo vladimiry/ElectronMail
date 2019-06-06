@@ -1,7 +1,6 @@
 import {pick} from "ramda";
 
 import * as Rest from "./rest";
-import {Arguments, Unpacked} from "src/shared/types";
 import {UPSERT_EVENT_ACTIONS} from "src/electron-preload/webview/protonmail/lib/rest/model";
 import {buildDbPatchRetryPipeline} from "src/electron-preload/webview/util";
 

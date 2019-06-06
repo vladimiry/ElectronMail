@@ -7,7 +7,6 @@ import {promisify} from "util";
 import {AccountType} from "src/shared/model/account";
 import {CWD, LOG, LOG_LEVELS, execShell} from "scripts/lib";
 import {PROVIDER_REPO} from "src/shared/constants";
-import {Unpacked} from "src/shared/types";
 
 const [, , baseDestDir] = process.argv;
 

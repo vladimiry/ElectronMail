@@ -1,7 +1,6 @@
 import {pick} from "ramda";
 
 import {PACKAGE_NAME} from "src/shared/constants";
-import {Unpacked} from "src/shared/types";
 
 const service = PACKAGE_NAME;
 const account = "master-password";

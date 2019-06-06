@@ -5,7 +5,6 @@ import {concatMap, delay, filter, map, mergeMap, retryWhen, switchMap, take, wit
 import {createIpcMainApiService} from "electron-rpc-api";
 
 import {AccountType} from "src/shared/model/account";
-import {Arguments} from "src/shared/types";
 import {DEFAULT_API_CALL_TIMEOUT, ONE_SECOND_MS} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {PROTONMAIL_IPC_WEBVIEW_API} from "src/shared/api/webview/protonmail";

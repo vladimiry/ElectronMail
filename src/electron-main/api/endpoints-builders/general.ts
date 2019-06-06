@@ -6,7 +6,6 @@ import {startWith} from "rxjs/operators";
 import {Context} from "src/electron-main/model";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main";
-import {Unpacked} from "src/shared/types";
 import {showAboutBrowserWindow} from "src/electron-main/window/about";
 
 type Methods = keyof Pick<IpcMainApiEndpoints,

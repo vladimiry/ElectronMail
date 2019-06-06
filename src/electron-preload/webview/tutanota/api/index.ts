@@ -8,7 +8,6 @@ import * as WebviewConstants from "src/electron-preload/webview/constants";
 import {MAIL_FOLDER_TYPE} from "src/shared/model/database";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {TUTANOTA_IPC_WEBVIEW_API, TutanotaApi, TutanotaNotificationOutput} from "src/shared/api/webview/tutanota";
-import {Unpacked} from "src/shared/types";
 import {buildDbPatch, buildDbPatchEndpoint} from "./build-db-patch";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {fillInputValue, getLocationHref, resolveDomElements, resolveIpcMainApi, submitTotpToken} from "src/electron-preload/webview/util";
@@ -161,7 +160,7 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
                 Observable<PageTypeOutput>,
                 Observable<UnreadOutput>,
                 Observable<BatchEntityUpdatesCounterOutput>
-                ] = [
+            ] = [
                 interval(WebviewConstants.NOTIFICATION_LOGGED_IN_POLLING_INTERVAL).pipe(
                     map(() => isLoggedIn()),
                     distinctUntilChanged(),

@@ -2,7 +2,7 @@ import {InMemoryOptions, SyncOrAsyncLimiter} from "rolling-rate-limiter";
 
 import {AccountType} from "src/shared/model/account";
 import {IPC_MAIN_API} from "src/shared/api/main";
-import {Logger} from "src/shared/types";
+import {Logger} from "src/shared/model/common";
 import {PROTONMAIL_IPC_WEBVIEW_API} from "src/shared/api/webview/protonmail";
 import {TUTANOTA_IPC_WEBVIEW_API} from "src/shared/api/webview/tutanota";
 import {registerDocumentClickEventListener} from "src/electron-preload/events-handling";

@@ -5,7 +5,6 @@ import {BrowserWindow} from "electron";
 import {Context} from "src/electron-main/model";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";
 import {PACKAGE_DESCRIPTION, PACKAGE_LICENSE, PACKAGE_VERSION, PRODUCT_NAME} from "src/shared/constants";
-import {Unpacked} from "src/shared/types";
 import {curryFunctionMembers} from "src/shared/util";
 import {injectVendorsAppCssIntoHtmlFile} from "src/electron-main/util";
 
@@ -73,7 +72,7 @@ export const showAboutBrowserWindow: (ctx: Context) => Promise<BrowserWindow> = 
                             return sanitizeHtml(`<li>${prop.substr(0, 1).toUpperCase()}${prop.substr(1)}: ${versions[prop]}</li>`);
                         })
                         .join("")
-                    }
+                }
                 </ul>
                 `,
             ].join("");

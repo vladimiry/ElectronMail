@@ -1,7 +1,7 @@
 import {IFileTransport} from "electron-log"; // tslint:disable-line:no-import-zones
 import {remote} from "electron"; // tslint:disable-line:no-import-zones
 
-import {Logger} from "src/shared/types";
+import {Logger} from "src/shared/model/common";
 
 const logger: Logger & { transports: { file: IFileTransport } } = remote.require("electron-log");
 

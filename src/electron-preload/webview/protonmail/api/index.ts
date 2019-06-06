@@ -214,7 +214,7 @@ const endpoints: ProtonmailApi = {
             Observable<PageTypeOutput>,
             Observable<UnreadOutput>,
             Observable<BatchEntityUpdatesCounterOutput>
-            ] = [
+        ] = [
             interval(WebviewConstants.NOTIFICATION_LOGGED_IN_POLLING_INTERVAL).pipe(
                 map(() => isLoggedIn()),
                 distinctUntilChanged(),

@@ -1,5 +1,5 @@
 import {AccountType} from "src/shared/model/account";
-import {EntryUrlItem, LogLevel} from "./types";
+import {EntryUrlItem, LogLevel} from "./model/common";
 
 const {
     name: PACKAGE_NAME,

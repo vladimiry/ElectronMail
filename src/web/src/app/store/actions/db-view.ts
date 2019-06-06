@@ -1,6 +1,5 @@
 import {ofType, unionize} from "@vladimiry/unionize";
 
-import {Arguments, Unpacked} from "src/shared/types";
 import {DbAccountPk, Mail, View} from "src/shared/model/database";
 import {IpcMainApiEndpoints} from "src/shared/api/main";
 import {MailsBundleKey} from "src/web/src/app/store/reducers/db-view";

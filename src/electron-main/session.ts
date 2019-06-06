@@ -2,7 +2,6 @@ import _logger from "electron-log";
 import {Session, session} from "electron";
 
 import {AccountConfig, AccountType} from "src/shared/model/account";
-import {Arguments} from "src/shared/types";
 import {Config} from "src/shared/model/options";
 import {Context} from "./model";
 import {INITIAL_STORES} from "./constants";

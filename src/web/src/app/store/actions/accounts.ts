@@ -1,7 +1,6 @@
 import {ofType, unionize} from "@vladimiry/unionize";
 
 import {AccountConfig, AccountType} from "src/shared/model/account";
-import {Arguments} from "src/shared/types";
 import {CommonWebViewApi} from "src/shared/api/webview/common";
 import {DbAccountPk} from "src/shared/model/database";
 import {State} from "src/web/src/app/store/reducers/accounts";

@@ -1,7 +1,6 @@
 import {concatMap, delay, retryWhen} from "rxjs/operators";
 import {of, throwError} from "rxjs";
 
-import {Arguments} from "src/shared/types";
 import {Config} from "src/shared/model/options";
 import {DbPatch} from "src/shared/api/common";
 import {IPC_MAIN_API, IpcMainApiEndpoints} from "src/shared/api/main";
@@ -228,7 +227,7 @@ function triggerChangeEvent(input: HTMLInputElement) {
 export async function persistDatabasePatch(
     data: Arguments<IpcMainApiEndpoints["dbPatch"]>[0],
     logger: ReturnType<typeof buildLoggerBundle>,
-    {immediateWrite}: {immediateWrite: boolean},
+    {immediateWrite}: { immediateWrite: boolean },
 ): Promise<void> {
     logger.info("persist() start");
 

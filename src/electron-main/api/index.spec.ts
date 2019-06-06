@@ -17,7 +17,6 @@ import {Context} from "src/electron-main/model";
 import {INITIAL_STORES} from "src/electron-main/constants";
 import {IpcMainApiEndpoints} from "src/shared/api/main";
 import {StatusCodeError} from "src/shared/model/error";
-import {Unpacked} from "src/shared/types";
 import {accountPickingPredicate, pickBaseConfigProperties} from "src/shared/util";
 import {buildSettingsAdapter} from "src/electron-main/util";
 

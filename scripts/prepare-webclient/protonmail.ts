@@ -4,7 +4,6 @@ import {promisify} from "util";
 
 import {FolderAsDomainEntry, execAccountTypeFlow} from "./lib";
 import {LOG, LOG_LEVELS, execShell} from "scripts/lib";
-import {Unpacked} from "src/shared/types";
 
 // tslint:disable-next-line:no-var-requires no-import-zones
 const {name: PROJECT_NAME} = require("package.json");

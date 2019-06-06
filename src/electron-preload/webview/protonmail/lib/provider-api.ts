@@ -3,7 +3,6 @@ import {v4 as uuid} from "uuid";
 
 import * as Rest from "./rest";
 import {ROLLING_RATE_LIMITER} from "src/electron-preload/electron-exposure/rolling-rate-limiter";
-import {Unpacked} from "src/shared/types";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {asyncDelay, curryFunctionMembers} from "src/shared/util";
 import {resolveIpcMainApi} from "src/electron-preload/webview/util";

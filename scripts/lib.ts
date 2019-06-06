@@ -5,8 +5,6 @@ import path from "path";
 import spawnAsync from "@expo/spawn-async";
 import {pick} from "ramda";
 
-import {Arguments, Unpacked} from "src/shared/types";
-
 export const CWD = path.resolve(process.cwd());
 
 // tslint:disable-next-line:no-console

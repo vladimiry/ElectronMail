@@ -1,6 +1,5 @@
 import {FolderAsDomainEntry, execAccountTypeFlow} from "./lib";
 import {LOG, execShell} from "scripts/lib";
-import {Unpacked} from "src/shared/types";
 
 const folderAsDomainEntries: Array<FolderAsDomainEntry<{}>> = [
     {

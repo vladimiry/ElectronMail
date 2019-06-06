@@ -1,7 +1,7 @@
 import _logger from "electron-log";
 
 import {Controller, FuzzyLocale, Provider} from "./model";
-import {Locale} from "src/shared/types";
+import {Locale} from "src/shared/model/common";
 import {constructDummyProvider, constructProvider} from "./providers";
 import {curryFunctionMembers} from "src/shared/util";
 

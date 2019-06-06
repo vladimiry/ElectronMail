@@ -9,7 +9,6 @@ import {Config} from "src/shared/model/options";
 import {DbAccountPk, INDEXABLE_MAIL_FIELDS_STUB_CONTAINER, Mail, MemoryDbAccount} from "src/shared/model/database";
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION$, IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_DB_INDEXER_ON_ACTIONS} from "src/shared/api/main";
-import {Unpacked} from "src/shared/types";
 import {curryFunctionMembers} from "src/shared/util";
 import {hrtimeDuration} from "src/electron-main/util";
 

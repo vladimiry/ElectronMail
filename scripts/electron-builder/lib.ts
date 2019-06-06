@@ -5,7 +5,7 @@ import mkdirp from "mkdirp";
 import path from "path";
 
 import {CWD, LOG, LOG_LEVELS, execShell} from "scripts/lib";
-import {Locale, Unpacked} from "src/shared/types";
+import {Locale} from "src/shared/model/common";
 import {normalizeLocale} from "src/shared/util";
 
 interface Dictionary {

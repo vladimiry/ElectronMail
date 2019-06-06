@@ -29,7 +29,6 @@ import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {NgChangesObservableComponent} from "src/web/src/app/components/ng-changes-observable.component";
 import {ONE_SECOND_MS, PACKAGE_NAME} from "src/shared/constants";
 import {State} from "src/web/src/app/store/reducers/accounts";
-import {Unpacked} from "src/shared/types";
 import {WebAccount} from "src/web/src/app/model";
 import {getWebViewPartition} from "src/shared/util";
 import {getZoneNameBoundWebLogger} from "src/web/src/util";

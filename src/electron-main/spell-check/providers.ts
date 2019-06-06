@@ -1,7 +1,7 @@
 import _logger from "electron-log";
 import {Spellchecker} from "spellchecker";
 
-import {Locale} from "src/shared/types";
+import {Locale} from "src/shared/model/common";
 import {Provider} from "./model";
 import {curryFunctionMembers, removeDuplicateItems} from "src/shared/util";
 

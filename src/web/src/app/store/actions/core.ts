@@ -1,6 +1,5 @@
 import {ofType, unionize} from "@vladimiry/unionize";
 
-import {Arguments} from "src/shared/types";
 import {IpcMainApiEndpoints} from "src/shared/api/main";
 
 export const CORE_ACTIONS = unionize({

@@ -15,7 +15,6 @@ import {promisify} from "util";
 
 import {ACCOUNTS_CONFIG, ONE_SECOND_MS, PRODUCT_NAME, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
 import {AccountType} from "src/shared/model/account";
-import {Arguments} from "src/shared/types";
 import {Config} from "src/shared/model/options";
 
 export interface TestContext {

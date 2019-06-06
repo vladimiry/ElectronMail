@@ -1,7 +1,7 @@
 import {MenuItemConstructorOptions, WebContents} from "electron";
 
 import {FuzzyLocale} from "./model";
-import {Locale} from "src/shared/types";
+import {Locale} from "src/shared/model/common";
 
 export function buildSpellingSuggestionMenuItems(
     webContents: Readonly<WebContents>,

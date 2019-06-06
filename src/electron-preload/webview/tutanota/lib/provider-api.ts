@@ -1,6 +1,6 @@
 import * as Rest from "./rest";
 import {StatusCodeError} from "src/shared/model/error";
-import {Timestamp} from "src/shared/types";
+import {Timestamp} from "src/shared/model/common";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {curryFunctionMembers} from "src/shared/util";
 

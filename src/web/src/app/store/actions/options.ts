@@ -8,7 +8,6 @@ import {
     PasswordChangeContainer,
     PasswordFieldContainer,
 } from "src/shared/model/container";
-import {Arguments} from "src/shared/types";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {InitResponse, IpcMainApiEndpoints} from "src/shared/api/main";
 import {ProgressPatch, State} from "src/web/src/app/store/reducers/options";

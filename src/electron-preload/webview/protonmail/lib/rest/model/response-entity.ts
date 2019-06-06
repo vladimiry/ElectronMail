@@ -1,6 +1,5 @@
 import {CONTACT_CARD, ENCRYPTED_STATUS, EVENT_ACTION, LABEL_TYPE, LOCATION, MAIL_TYPE} from "./constats";
 import {Id, NumberBoolean} from "./common";
-import {Unpacked} from "src/shared/types";
 
 export interface Entity {
     ID: Id;
@@ -139,7 +138,7 @@ export interface ContactEmail extends Entity {
         "voice",
         "work",
         "x-name"
-        ]>>;
+    ]>>;
 }
 
 export interface ContactCard<TypeRecord = typeof CONTACT_CARD._.nameValueMap> {

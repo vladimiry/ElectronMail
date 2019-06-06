@@ -10,7 +10,7 @@ import {
     REPLY_TYPE,
 } from "src/shared/model/database";
 import {GROUP_TYPE} from "./constants";
-import {NumberString} from "src/shared/types";
+import {NumberString} from "src/shared/model/common";
 
 export interface User extends BaseEntity<Id> {
     memberships: GroupMembership[];

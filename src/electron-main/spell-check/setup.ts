@@ -4,7 +4,7 @@ import path from "path";
 import semver from "semver";
 
 import {APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR} from "src/shared/constants";
-import {Locale} from "src/shared/types";
+import {Locale} from "src/shared/model/common";
 import {curryFunctionMembers, normalizeLocale, removeDuplicateItems} from "src/shared/util";
 
 export let resolveDefaultLocale: () => Promise<Locale> = async () => {

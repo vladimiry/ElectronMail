@@ -1,5 +1,5 @@
 import {IPC_MAIN_API} from "src/shared/api/main";
-import {Logger} from "src/shared/types";
+import {Logger} from "src/shared/model/common";
 
 type ObservableElement = Pick<HTMLElement, "addEventListener" | "removeEventListener">;
 

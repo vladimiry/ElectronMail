@@ -12,7 +12,6 @@ import {ProtonmailApi, ProtonmailApiScan} from "src/shared/api/webview/protonmai
 import {ProviderApi, resolveProviderApi} from "src/electron-preload/webview/protonmail/lib/provider-api";
 import {StatusCodeError} from "src/shared/model/error";
 import {UPSERT_EVENT_ACTIONS} from "src/electron-preload/webview/protonmail/lib/rest/model";
-import {Unpacked} from "src/shared/types";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {asyncDelay, curryFunctionMembers, isDatabaseBootstrapped} from "src/shared/util";
 import {buildDbPatchRetryPipeline, buildEmptyDbPatch, persistDatabasePatch, resolveIpcMainApi} from "src/electron-preload/webview/util";
@@ -34,7 +33,7 @@ const buildDbPatchEndpoint: Pick<ProtonmailApi, "buildDbPatch" | "fetchSingleMai
 
         logger.info();
 
-        const deferFactory: ()  => Promise<BuildDbPatchMethodReturnType> = async () => {
+        const deferFactory: () => Promise<BuildDbPatchMethodReturnType> = async () => {
             logger.info("delayFactory()");
 
             if (!isLoggedIn()) {

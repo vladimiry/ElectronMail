@@ -2,8 +2,6 @@
 import logger, {ILogLevel} from "electron-log";
 import {Observable} from "rxjs";
 
-export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
-
 export type Arguments<F extends (...x: any[]) => any> =
     F extends (...x: infer A) => any ? A : never;
 

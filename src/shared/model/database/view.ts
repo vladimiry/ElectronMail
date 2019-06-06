@@ -1,5 +1,4 @@
 import * as Model from ".";
-import {Omit} from "src/shared/types";
 
 export interface Folder extends Model.Folder {
     size: number;

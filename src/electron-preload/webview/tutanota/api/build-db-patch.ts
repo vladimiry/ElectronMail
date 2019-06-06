@@ -7,7 +7,6 @@ import * as Rest from "src/electron-preload/webview/tutanota/lib/rest";
 import {DEFAULT_MESSAGES_STORE_PORTION_SIZE} from "src/shared/constants";
 import {DbPatch} from "src/shared/api/common";
 import {MemoryDbAccount} from "src/shared/model/database";
-import {Omit} from "src/shared/types";
 import {StatusCodeError} from "src/shared/model/error";
 import {TutanotaApi, TutanotaScanApi} from "src/shared/api/webview/tutanota";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";

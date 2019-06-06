@@ -1,6 +1,5 @@
 import {Contact, Context, Conversation, Event, Label, Message} from "./response-entity";
 import {NumberBoolean} from "./common";
-import {Omit} from "src/shared/types";
 
 export const SUCCESS_RESPONSE = 1000;
 

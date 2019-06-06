@@ -3,7 +3,6 @@ import {splitEvery} from "ramda";
 import * as Model from "./model";
 import * as Util from "src/electron-preload/webview/tutanota/lib/util";
 import {BaseEntity, Id, IdTuple, RequestParams, TypeRef} from "./model";
-import {Omit} from "src/shared/types";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {curryFunctionMembers} from "src/shared/util";
 import {resolveProviderApi} from "src/electron-preload/webview/tutanota/lib/provider-api";

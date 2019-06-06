@@ -1,5 +1,4 @@
 import {IndexableMail} from "src/shared/model/database/index";
-import {Omit} from "src/shared/types";
 import {buildEnumBundle} from "src/shared/util";
 
 export const PROTONMAIL_MAILBOX_IDENTIFIERS = buildEnumBundle({

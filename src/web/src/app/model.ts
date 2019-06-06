@@ -7,7 +7,7 @@ import {
     NotificationsProtonmail,
     NotificationsTutanota,
 } from "src/shared/model/account";
-import {Arguments, Omit} from "src/shared/types";
+import {Arguments} from "src/shared/types";
 import {CommonWebViewApi} from "src/shared/api/webview/common";
 import {ZoneApiParameter} from "src/shared/api/common";
 

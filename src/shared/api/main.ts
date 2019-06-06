@@ -16,7 +16,6 @@ import {Controller, FuzzyLocale} from "src/electron-main/spell-check/model";
 import {DbPatch} from "./common";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {MemoryDbAccount} from "src/shared/model/database";
-import {Omit} from "src/shared/types";
 import {PACKAGE_NAME} from "src/shared/constants";
 
 export type IpcMainServiceScan = ScanService<typeof IPC_MAIN_API>;

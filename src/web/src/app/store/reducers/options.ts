@@ -4,7 +4,6 @@ import * as fromRoot from "./root";
 import {Config, Settings} from "src/shared/model/options";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS, InitResponse} from "src/shared/api/main";
 import {OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
-import {Omit} from "src/shared/types";
 
 export const featureName = "options";
 

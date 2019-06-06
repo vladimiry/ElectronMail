@@ -8,11 +8,11 @@ import {AJAX_SEND_NOTIFICATION_SKIP_PARAM} from "src/electron-preload/webview/pr
 import {DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_SECOND_MS} from "src/shared/constants";
 import {DbPatch} from "src/shared/api/common";
 import {MemoryDbAccount} from "src/shared/model/database";
-import {Omit, Unpacked} from "src/shared/types";
 import {ProtonmailApi, ProtonmailApiScan} from "src/shared/api/webview/protonmail";
 import {ProviderApi, resolveProviderApi} from "src/electron-preload/webview/protonmail/lib/provider-api";
 import {StatusCodeError} from "src/shared/model/error";
 import {UPSERT_EVENT_ACTIONS} from "src/electron-preload/webview/protonmail/lib/rest/model";
+import {Unpacked} from "src/shared/types";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {asyncDelay, curryFunctionMembers, isDatabaseBootstrapped} from "src/shared/util";
 import {buildDbPatchRetryPipeline, buildEmptyDbPatch, persistDatabasePatch, resolveIpcMainApi} from "src/electron-preload/webview/util";

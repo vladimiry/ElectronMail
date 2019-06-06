@@ -23,7 +23,7 @@ import {
     IpcMainApiEndpoints,
     IpcMainServiceScan,
 } from "src/shared/api/main";
-import {Omit, Unpacked} from "src/shared/types";
+import {Unpacked} from "src/shared/types";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty, walkConversationNodesTree} from "src/shared/util";
 import {indexAccount, narrowIndexActionPayload} from "./indexing";
 import {prepareFoldersView} from "./folders-view";

@@ -5,7 +5,7 @@ import {randomBytes} from "crypto";
 
 import {Config, ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS, Settings} from "src/shared/model/options";
 import {DEFAULT_API_CALL_TIMEOUT, DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_MINUTE_MS, ONE_SECOND_MS} from "src/shared/constants";
-import {LogLevel, Omit} from "src/shared/types";
+import {LogLevel} from "src/shared/types";
 
 export const INITIAL_STORES: Readonly<{
     config: () => Omit<Config, "jsFlags"> & Required<Pick<Config, "jsFlags">>;

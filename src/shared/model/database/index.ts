@@ -4,7 +4,7 @@ import {Model as StoreModel} from "fs-json-store";
 import * as Constants from "./constants";
 import * as View from "./view";
 import {AccountConfig, AccountType} from "src/shared/model/account";
-import {NumberString, Omit, Timestamp, Unpacked} from "src/shared/types";
+import {NumberString, Timestamp, Unpacked} from "src/shared/types";
 
 export * from "./constants";
 

@@ -24,6 +24,7 @@ asar: true
 asarUnpack:
   - '**/node_modules/sodium-native/**/*'
   - '**/node_modules/keytar/**/*'
+  - '**/node_modules/spellchecker/**/*'
 afterPack: './scripts/electron-builder/hooks/afterPack/index.js'
 
 mac:

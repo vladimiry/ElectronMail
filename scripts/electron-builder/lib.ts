@@ -13,6 +13,28 @@ interface Dictionary {
     files: string[];
 }
 
+export const DISABLE_SANDBOX_ARGS_LINE = "--no-sandbox --disable-setuid-sandbox";
+
+export function ensureFileHasNoSuidBit(file: string): void {
+    const stat = fs.statSync(file);
+
+    if (!stat.isFile()) {
+        throw new Error(`"${file}" is not a file`);
+    }
+
+    const hasSuidBit = Boolean(
+        // tslint:disable-next-line:no-bitwise
+        stat.mode
+        &
+        // first bit of 12, same as 0b100000000000 binary or 2048 decimal
+        0x800,
+    );
+
+    if (hasSuidBit) {
+        throw new Error(`"${file}" should not have SUID bit set`);
+    }
+}
+
 export async function copyDictionaryFiles(destDir: string) {
     const dictionaries = await prepareDictionaries();
 

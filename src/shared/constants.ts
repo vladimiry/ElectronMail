@@ -12,6 +12,8 @@ export const PRODUCT_NAME = "ElectronMail";
 
 export const REPOSITORY_NAME = PRODUCT_NAME;
 
+export const BINARY_NAME = PACKAGE_NAME;
+
 export {
     PACKAGE_NAME,
     PACKAGE_VERSION,

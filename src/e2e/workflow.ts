@@ -13,7 +13,15 @@ import {Application} from "spectron";
 import {Store} from "fs-json-store";
 import {promisify} from "util";
 
-import {ACCOUNTS_CONFIG, ONE_SECOND_MS, PRODUCT_NAME, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
+import {
+    ACCOUNTS_CONFIG,
+    BINARY_NAME,
+    ONE_SECOND_MS,
+    PACKAGE_NAME,
+    PRODUCT_NAME,
+    RUNTIME_ENV_E2E,
+    RUNTIME_ENV_USER_DATA_DIR,
+} from "src/shared/constants";
 import {AccountType} from "src/shared/model/account";
 import {Config} from "src/shared/model/options";
 
@@ -132,24 +140,12 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
         t.is(pageTitle, "", `page title should be empty`);
         t.truthy(userAgent, `user agent should be filled`);
 
-        t.truthy(await browserWindow.getTitle(), `browserWindow.getTitle() is not empty`);
-        t.is(await browserWindow.getTitle(), PRODUCT_NAME, `browserWindow.getTitle() matches product name`);
-
+        // TODO also test user agents of webviews
+        const bannedUserAgentWords = ["electron", PRODUCT_NAME, PACKAGE_NAME, BINARY_NAME, PROJECT_VERSION]
+            .map((banned) => banned.toLowerCase());
         t.false(
-            userAgent.toLowerCase().includes(PROJECT_NAME.toLowerCase()),
-            `should be no "app name" in user agent header, v: ${userAgent}`,
-        );
-        t.false(
-            userAgent.toLowerCase().includes(PRODUCT_NAME.toLowerCase()),
-            `should be no "app name" in user agent header, v: ${userAgent}`,
-        );
-        t.false(
-            userAgent.toLowerCase().includes(PROJECT_VERSION),
-            `should be no "app version" in user agent header, v: ${userAgent}`,
-        );
-        t.false(
-            userAgent.toLowerCase().includes("electron"),
-            `should be no "electron" mention in user agent header, v: ${userAgent}`,
+            bannedUserAgentWords.some((banned) => userAgent.toLowerCase().includes(banned)),
+            `User agent "${userAgent}" should not include any of "${JSON.stringify(bannedUserAgentWords)}"`,
         );
     })();
 

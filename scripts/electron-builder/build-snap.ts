@@ -48,11 +48,9 @@ function disableSandbox({packageDir}: { packageDir: string; }): void {
     const shFile = path.join(packageDir, "./command.sh");
     const shContentOriginal = fs.readFileSync(shFile).toString();
     const shContentPatched = (() => {
-        const execLine = `exec $SNAP/bin/desktop-launch "$SNAP/${BINARY_NAME}"`;
-        return shContentOriginal.replace(
-            execLine,
-            `${execLine} ${DISABLE_SANDBOX_ARGS_LINE}`,
-        );
+        const searchValue = `exec $SNAP/bin/desktop-launch "$SNAP/${BINARY_NAME}"`;
+        const replaceWith = `${searchValue} ${DISABLE_SANDBOX_ARGS_LINE}`;
+        return shContentOriginal.replace(searchValue, replaceWith);
     })();
 
     if (shContentPatched === shContentOriginal) {

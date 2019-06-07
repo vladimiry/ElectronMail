@@ -5,7 +5,7 @@ import {getConfig} from "app-builder-lib/out/util/config";
 
 import {APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR, BINARY_NAME} from "src/shared/constants";
 import {CWD, LOG, LOG_LEVELS, execShell} from "scripts/lib";
-import {DISABLE_SANDBOX_ARGS_LINE, copyDictionaryFiles, ensureFileHasNoSuidBit} from "scripts/electron-builder/lib";
+import {DISABLE_SANDBOX_ARGS_LINE, copyDictionaryFilesTo, ensureFileHasNoSuidBit} from "scripts/electron-builder/lib";
 
 (async () => {
     await postProcessSnapPackage(
@@ -38,7 +38,7 @@ async function postProcessSnapPackage({packageFile}: { packageFile: string }) {
     const packageDir = `${packageFile}-squashfs-root-${Date.now()}`;
 
     await unpack({packageDir, packageFile});
-    await copyDictionaryFiles(path.join(packageDir, APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR));
+    await copyDictionaryFilesTo(path.join(packageDir, APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR));
     disableSandbox({packageDir});
     ensureFileHasNoSuidBit(path.join(packageDir, BINARY_NAME));
     await packAndCleanup({packageDir, packageFile});
@@ -48,11 +48,9 @@ function disableSandbox({packageDir}: { packageDir: string; }): void {
     const shFile = path.join(packageDir, "./command.sh");
     const shContentOriginal = fs.readFileSync(shFile).toString();
     const shContentPatched = (() => {
-        const execLine = `exec $SNAP/bin/desktop-launch "$SNAP/${BINARY_NAME}"`;
-        return shContentOriginal.replace(
-            execLine,
-            `${execLine} ${DISABLE_SANDBOX_ARGS_LINE}`,
-        );
+        const searchValue = `exec $SNAP/bin/desktop-launch "$SNAP/${BINARY_NAME}"`;
+        const replaceWith = `${searchValue} ${DISABLE_SANDBOX_ARGS_LINE}`;
+        return shContentOriginal.replace(searchValue, replaceWith);
     })();
 
     if (shContentPatched === shContentOriginal) {

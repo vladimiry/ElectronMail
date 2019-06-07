@@ -3,9 +3,9 @@ import {Target} from "app-builder-lib";
 import {LOG, execShell} from "scripts/lib";
 
 const targets: Array<typeof Target.prototype.name> = [
+    "appimage",
     "snap",
     "pacman",
-    "appimage",
     "deb",
     "freebsd",
     "rpm",

@@ -35,7 +35,7 @@ export function ensureFileHasNoSuidBit(file: string): void {
     }
 }
 
-export async function copyDictionaryFiles(destDir: string) {
+export async function copyDictionaryFilesTo(destDir: string) {
     const dictionaries = await prepareDictionaries();
 
     LOG(LOG_LEVELS.title(
@@ -143,12 +143,15 @@ async function prepareDictionaries(): Promise<Map<Locale, Dictionary>> {
 
     for (const file of files) {
         const locale: Locale = path.basename(file, path.extname(file));
-        let dictionary: Dictionary | undefined = result.get(locale);
-
-        if (!dictionary) {
-            dictionary = {locale, files: []};
-            result.set(locale, dictionary);
-        }
+        const dictionary: Dictionary = (
+            result.get(locale)
+            ||
+            (() => {
+                const newDictionary = {locale, files: []};
+                result.set(locale, newDictionary);
+                return newDictionary;
+            })()
+        );
 
         dictionary.files.push(file);
     }

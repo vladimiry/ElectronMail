@@ -1,5 +1,5 @@
-import {EncryptionPresets} from "fs-json-store-encryption-adapter/encryption";
-import {KeyDerivationPresets} from "fs-json-store-encryption-adapter/key-derivation";
+import {EncryptionPresets} from "fs-json-store-encryption-adapter/lib/encryption";
+import {KeyDerivationPresets} from "fs-json-store-encryption-adapter/lib/key-derivation";
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import {Model as StoreModel} from "fs-json-store";
 

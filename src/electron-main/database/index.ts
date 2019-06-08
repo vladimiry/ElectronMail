@@ -1,7 +1,7 @@
 import * as FsJsonStore from "fs-json-store";
 import _logger from "electron-log";
 import asap from "asap-es";
-import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/private/constants";
+import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/lib/private/constants";
 import {KeyBasedPreset} from "fs-json-store-encryption-adapter";
 
 import * as Entity from "./entity";

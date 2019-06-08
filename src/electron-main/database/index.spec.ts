@@ -5,7 +5,7 @@ import randomstring from "randomstring";
 import rewiremock from "rewiremock";
 import sinon from "sinon";
 import test from "ava";
-import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/private/constants";
+import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/lib/private/constants";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Fs, Store} from "fs-json-store";
 

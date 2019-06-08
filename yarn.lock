@@ -5258,26 +5258,26 @@ fs-extra@^7.0.1:
     jsonfile "^4.0.0"
     universalify "^0.1.0"
 
-fs-json-store-encryption-adapter@1.3.5:
-  version "1.3.5"
-  resolved "https://registry.yarnpkg.com/fs-json-store-encryption-adapter/-/fs-json-store-encryption-adapter-1.3.5.tgz#791489b5081cd44f7f26946a8cce30ec3b4ce89e"
-  integrity sha512-i8GrBx150ieVnsc3e7dalrKeqbPsB7Fyoc8zOqVXeUIQXpTXBlpJcoA9i5tCxTl4ZBPkqE4b0ytAaCLvtVxheA==
+fs-json-store-encryption-adapter@1.3.6:
+  version "1.3.6"
+  resolved "https://registry.yarnpkg.com/fs-json-store-encryption-adapter/-/fs-json-store-encryption-adapter-1.3.6.tgz#7537748e0de0063bc5f96f722372b0b52d663cdd"
+  integrity sha512-72ia5xM66brP/rKxsrw8aNtGUaQBQCf5+0HsjkZKjFkL4JfQ0tbxaAyADm885agOeORxISqZIfkXnT3exoaciw==
   dependencies:
     "@hscmap/cache-map" "^1.2.0"
     make-error-cause "^2.2.0"
-    sodium-native "^2.2.6"
+    sodium-native "^2.4.2"
     tslib "^1.9.3"
 
-fs-json-store@2.3.0:
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/fs-json-store/-/fs-json-store-2.3.0.tgz#0f2ee3d854441f3fb7f47a4d96fe21e8b23e6629"
-  integrity sha512-ePbNjMfowiZYEkPb4UkrRxsyXbjSQTdbq4ClOWFWREYA9ven8nOTHWq5447QQTJeIUPCbDFpAb5UKwEUUgnYpA==
+fs-json-store@2.3.1:
+  version "2.3.1"
+  resolved "https://registry.yarnpkg.com/fs-json-store/-/fs-json-store-2.3.1.tgz#4c965caf95172b514a2522996ef6b2c8384933c6"
+  integrity sha512-2Xc7oKqv5BxAh+LllGjTGKTz0al2aEAn3gtDwwVd/3CRxBg9KHmhB59WrTYpkfkLgTzEgIN4LlAUTBKfYi3nrA==
   dependencies:
     combine-errors "^3.0.3"
-    fs-no-eperm-anymore "^2.0.5"
+    fs-no-eperm-anymore "^3.0.1"
     imurmurhash "^0.1.4"
     kind-of "^6.0.2"
-    memfs "^2.15.1"
+    memfs "^2.15.4"
     proper-lockfile "^3.2.0"
     tslib "^1.9.3"
 
@@ -5293,13 +5293,12 @@ fs-monkey@^0.3.3:
   resolved "https://registry.yarnpkg.com/fs-monkey/-/fs-monkey-0.3.3.tgz#7960bb2b1fa2653731b9d0e2e84812a7e8b3664a"
   integrity sha512-FNUvuTAJ3CqCQb5ELn+qCbGR/Zllhf2HtwsdAtBi59s1WeCjKMT81fHcSu7dwIskqGVK+MmOrb7VOBlq3/SItw==
 
-fs-no-eperm-anymore@^2.0.5:
-  version "2.0.5"
-  resolved "https://registry.yarnpkg.com/fs-no-eperm-anymore/-/fs-no-eperm-anymore-2.0.5.tgz#de5e7e9ae03af8926a5712f124e82b5ee15952b3"
-  integrity sha512-xXTThvn+lvGLtcFRLJRMHAPq9nBj4kXZlea3WZkP4gFInH6swt8PSYVdQkiv4G+lUtkDf/2dMjQBjQ7NTlCN0Q==
+fs-no-eperm-anymore@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/fs-no-eperm-anymore/-/fs-no-eperm-anymore-3.0.1.tgz#16823708dff06083ef9ccfb0e3dd59701945d106"
+  integrity sha512-cDdmSuIwg3c1NvCbCjDZY4cOsmjo3vC4AeseRIN25bQiLv5b8d737JmX8FbGYocg1NMwTHIAboD1oOloIjN83A==
   dependencies:
     tslib "^1.9.3"
-    util.promisify "^1.0.0"
 
 fs-write-stream-atomic@^1.0.8:
   version "1.0.10"
@@ -7685,7 +7684,7 @@ mem@^4.0.0:
     mimic-fn "^2.0.0"
     p-is-promise "^2.0.0"
 
-memfs@^2.15.1:
+memfs@^2.15.4:
   version "2.15.4"
   resolved "https://registry.yarnpkg.com/memfs/-/memfs-2.15.4.tgz#707e3c9a999f89d7d9299b04877c1c2f87caa561"
   integrity sha512-u9CNlBHByQ04cNA1jRdyIuvgcZoLA984kC2O/MRBeoJkuSRWO62575WH3H7nrUY9f0MvyxDyLLUwRqC6u1wCiw==
@@ -10824,7 +10823,7 @@ sockjs@0.3.19:
     faye-websocket "^0.10.0"
     uuid "^3.0.1"
 
-sodium-native@^2.2.6:
+sodium-native@^2.4.2:
   version "2.4.2"
   resolved "https://registry.yarnpkg.com/sodium-native/-/sodium-native-2.4.2.tgz#de3c99675899555a8c83f5be3ed97f28653aa2b2"
   integrity sha512-qwHcUnzFpRSGSm6F49j/h5SnxPFBgSNdDwZkAqjvuAoHQIVBFOXYb+oCUTJV80K5hRqSYCihpbX06vbrtPbilg==
@@ -12133,7 +12132,7 @@ util-deprecate@^1.0.1, util-deprecate@~1.0.1:
   resolved "https://registry.yarnpkg.com/util-deprecate/-/util-deprecate-1.0.2.tgz#450d4dc9fa70de732762fbd2d4a28981419a0ccf"
   integrity sha1-RQ1Nyfpw3nMnYvvS1KKJgUGaDM8=
 
-util.promisify@1.0.0, util.promisify@^1.0.0, util.promisify@~1.0.0:
+util.promisify@1.0.0, util.promisify@~1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/util.promisify/-/util.promisify-1.0.0.tgz#440f7165a459c9a16dc145eb8e72f35687097030"
   integrity sha512-i+6qA2MPhvoKLuxnJNpXAGhg7HphQOSUq2LKMZD0m15EiskXUkMvKdF4Uui0WYeCUGea+o2cw/ZuwehtfsrNkA==

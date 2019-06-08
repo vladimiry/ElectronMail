@@ -19,7 +19,6 @@ export type ProgressPatch = Partial<{
     updatingAccount: boolean;
     changingAccountOrder: boolean;
     updatingBaseSettings: boolean;
-    migrating: boolean;
 }>;
 
 type OptionalProps = "keytarSupport" | "electronLocations";

@@ -16,7 +16,6 @@ export const FEATURED = {
     keytarSupport: createSelector(STATE, (state) => state.keytarSupport),
     snapPasswordManagerServiceHint: createSelector(STATE, (state) => state.snapPasswordManagerServiceHint),
     mainProcessNotification: createSelector(STATE, (state) => state.mainProcessNotification),
-    copyV2AppData: createSelector(STATE, (state) => state.copyV2AppData),
 };
 
 export const CONFIG = {

@@ -9,7 +9,7 @@ import {
     PasswordFieldContainer,
 } from "src/shared/model/container";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
-import {InitResponse, IpcMainApiEndpoints} from "src/shared/api/main";
+import {InitResponse} from "src/shared/api/main";
 import {ProgressPatch, State} from "src/web/src/app/store/reducers/options";
 
 export const OPTIONS_ACTIONS = unionize({
@@ -31,7 +31,6 @@ export const OPTIONS_ACTIONS = unionize({
         ToggleCompactRequest: ofType<{}>(),
         SetupMainProcessNotification: ofType<{}>(),
         PatchMainProcessNotification: ofType<State["mainProcessNotification"]>(),
-        Migrate: ofType<Arguments<IpcMainApiEndpoints["migrate"]>[0]>(),
     },
     {
         tag: "type",

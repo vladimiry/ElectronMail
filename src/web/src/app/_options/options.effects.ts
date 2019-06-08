@@ -11,7 +11,6 @@ import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {OptionsService} from "./options.service";
-import {PATHS} from "src/web/src/app/_options/options.routing.module";
 import {ProgressPatch, State} from "src/web/src/app/store/reducers/options";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/src/util";
 
@@ -53,30 +52,11 @@ export class OptionsEffects {
             ).pipe(
                 mergeMap((payload) => merge(
                     of(OPTIONS_ACTIONS.InitResponse(payload)),
-                    of(this.optionsService.settingsNavigationAction({
-                        path: payload.copyV2AppData
-                            ? PATHS.migrating
-                            : "",
-                    })),
+                    of(this.optionsService.settingsNavigationAction({path: ""})),
                 )),
                 catchError((error) => of(CORE_ACTIONS.Fail(error))),
             );
         }));
-
-    @Effect()
-    migrate$ = this.actions$.pipe(
-        unionizeActionFilter(OPTIONS_ACTIONS.is.Migrate),
-        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-        concatMap(({payload}) => merge(
-            of(this.buildPatchProgress({migrating: true})),
-            from(
-                this.ipcMainClient("migrate", {timeoutMs: ONE_SECOND_MS * 30})(payload),
-            ).pipe(
-                map(() => this.optionsService.settingsNavigationAction({path: ""})),
-                catchError((error) => of(CORE_ACTIONS.Fail(error))),
-                finalize(() => setTimeout(() => this.dispatchProgress({migrating: false}))),
-            ),
-        )));
 
     @Effect()
     getConfigRequest$ = this.actions$.pipe(

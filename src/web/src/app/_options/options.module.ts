@@ -11,7 +11,6 @@ import {AccountsComponent} from "./accounts.component";
 import {BaseSettingsComponent} from "./base-settings.component";
 import {EncryptionPresetsComponent} from "./encryption-presets.component";
 import {LoginComponent} from "./login.component";
-import {MigratingComponent} from "./migrating.component";
 import {OptionsEffects} from "./options.effects";
 import {OptionsRoutingModule} from "./options.routing.module";
 import {OptionsService} from "./options.service";
@@ -42,7 +41,6 @@ import {StorageComponent} from "./storage.component";
         BaseSettingsComponent,
         EncryptionPresetsComponent,
         LoginComponent,
-        MigratingComponent,
         SettingsComponent,
         SettingsSetupComponent,
         StorageComponent,

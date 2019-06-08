@@ -289,10 +289,6 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
         t.true(resolveVendorsAppCssLinkHref.calledWithExactly(t.context.ctx.locations));
     },
 
-    migrate: (t) => {
-        t.pass(`TODO test "migrate" endpoint`);
-    },
-
     logout: async (t) => {
         const {deletePassword: deletePasswordSpy} = t.context.mocks["src/electron-main/keytar"];
         const {clearSessionsCache} = t.context.mocks["src/electron-main/session"];

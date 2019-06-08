@@ -3,8 +3,6 @@ import {UnionOf} from "@vladimiry/unionize";
 
 import {IPC_MAIN_API_DB_INDEXER_ON_ACTIONS, IpcMainServiceScan} from "src/shared/api/main";
 
-export const PACKAGE_NAME_V2 = "email-securely-app";
-
 export const IPC_MAIN_API_NOTIFICATION$ = new Subject<IpcMainServiceScan["ApiImplReturns"]["notification"]>();
 
 export const IPC_MAIN_API_DB_INDEXER_NOTIFICATION$ = new Subject<IpcMainServiceScan["ApiImplReturns"]["dbIndexerNotification"]>();

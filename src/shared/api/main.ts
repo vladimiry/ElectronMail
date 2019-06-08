@@ -79,8 +79,6 @@ export const ENDPOINTS_DEFINITION = {
 
     init: ActionType.Promise<void, InitResponse>(),
 
-    migrate: ActionType.Promise<Required<InitResponse>["copyV2AppData"]["items"]>(),
-
     logout: ActionType.Promise(),
 
     openAboutWindow: ActionType.Promise(),
@@ -132,16 +130,6 @@ export interface InitResponse {
     hasSavedPassword?: boolean;
     snapPasswordManagerServiceHint?: boolean;
     keytarSupport: boolean;
-    copyV2AppData?: {
-        v2SnapDeniedRead: boolean;
-        items: Record<"config" | "settings" | "database",
-            {
-                src: string;
-                dest: string;
-                skip?: "source doesn't exist" | "destination exists" | "denied read access";
-                overwrite?: boolean;
-            }>;
-    };
 }
 
 export const IPC_MAIN_API = createIpcMainApiService({

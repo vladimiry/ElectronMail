@@ -6,6 +6,11 @@ const {
     version: PACKAGE_VERSION,
     license: PACKAGE_LICENSE,
     description: PACKAGE_DESCRIPTION,
+}: {
+    name: string;
+    version: string;
+    license: string;
+    description: string;
 } = require("package.json"); // tslint:disable-line:no-var-requires no-import-zones
 
 export const PRODUCT_NAME = "ElectronMail";
@@ -44,8 +49,8 @@ export const APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR = "./usr/share/hunspell";
 export const PROVIDER_REPO: Record<AccountType, { repo: string, version: string; commit: string; }> = {
     protonmail: {
         repo: "https://github.com/ProtonMail/WebClient.git",
-        commit: "80ecc1a4e0843089d93a822b53a1651a7e6825f7",
-        version: "3.15.38",
+        commit: "f763025546f7cef272af5dd5b30f9eace242ad83",
+        version: "3.16.0",
     },
     tutanota: {
         repo: "https://github.com/tutao/tutanota.git",
@@ -55,9 +60,11 @@ export const PROVIDER_REPO: Record<AccountType, { repo: string, version: string;
 };
 
 export const LOCAL_WEBCLIENT_PROTOCOL_PREFIX = "webclient";
+
 export const LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN = `${LOCAL_WEBCLIENT_PROTOCOL_PREFIX}[\\d]+`;
 
 export const ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX = "local:::";
+
 export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlItem[]>> = {
     protonmail: {
         entryUrl: [

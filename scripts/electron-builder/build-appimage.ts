@@ -107,8 +107,8 @@ async function resolveAppImageTool({packageFile}: { packageFile: string }): Prom
         "curl",
         [
             "--fail",
-            "-L", // follow redirect
-            "-o", appImageFile,
+            "--location",
+            "--output", appImageFile,
             `https://github.com/AppImage/AppImageKit/releases/download/continuous/${path.basename(appImageFile)}`,
         ],
     ]);

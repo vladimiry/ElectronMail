@@ -28,7 +28,7 @@ async function uploadFileArg(): Promise<Extract<ServiceResponse, { success: true
     const {stdout: jsonResponse} = await execShell([
         "curl",
         [
-            "-F", `file=@${FILE_ARG}`,
+            "--form", `file=@${FILE_ARG}`,
             "--fail",
             `${SERVICE_URL}?expires=${SERVICE_MAX_DAYS}d`,
         ],

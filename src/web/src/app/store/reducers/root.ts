@@ -4,13 +4,13 @@ import {RouterReducerState, routerReducer} from "@ngrx/router-store";
 import {UnionOf} from "@vladimiry/unionize";
 
 import {BuildEnvironment} from "src/shared/model/common";
-import {CORE_ACTIONS, NAVIGATION_ACTIONS, ROOT_ACTIONS} from "src/web/src/app/store/actions";
+import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS, ROOT_ACTIONS} from "src/web/src/app/store/actions";
 import {getZoneNameBoundWebLogger} from "src/web/src/util";
 
 const logger = getZoneNameBoundWebLogger("[reducers/root]");
 
 // TODO join all actions in "src/web/src/app/store/actions" once
-type Actions = UnionOf<typeof ROOT_ACTIONS> & UnionOf<typeof NAVIGATION_ACTIONS> & UnionOf<typeof CORE_ACTIONS>;
+type Actions = UnionOf<typeof ROOT_ACTIONS> & UnionOf<typeof NAVIGATION_ACTIONS>;
 
 export interface State {
     router?: RouterReducerState;
@@ -26,7 +26,7 @@ export function createErrorHandlingMetaReducer(injector: Injector): MetaReducer<
             try {
                 return reducer(state, action);
             } catch (error) {
-                injector.get(Store).dispatch(CORE_ACTIONS.Fail(error));
+                injector.get(Store).dispatch(NOTIFICATION_ACTIONS.Error(error));
             }
             return state as State;
         };

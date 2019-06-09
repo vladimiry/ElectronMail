@@ -1,0 +1,10 @@
+<div
+        [ngClass]="{'alert-danger': item.type === 'error', 'alert-info': item.type === 'info'}"
+        class="alert alert-dismissible"
+        role="alert"
+>
+    <span [innerText]="item.data.message"></span>
+    <button (click)="remove()" class="close" type="button">
+        &times;
+    </button>
+</div>

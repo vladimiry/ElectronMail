@@ -1,16 +1,12 @@
 import {EffectsModule} from "@ngrx/effects";
 import {NgModule, Optional, SkipSelf} from "@angular/core";
 
-import {CoreEffects} from "./core.effects";
 import {CoreService} from "./core.service";
 import {ElectronService} from "./electron.service";
-import {ErrorEffects} from "./error.effects";
 import {NavigationEffects} from "./navigation.effects";
 
 @NgModule({
     imports: [
-        EffectsModule.forFeature([CoreEffects]),
-        EffectsModule.forFeature([ErrorEffects]),
         EffectsModule.forFeature([NavigationEffects]),
     ],
     providers: [

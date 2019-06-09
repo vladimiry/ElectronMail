@@ -3,10 +3,10 @@ import {ChangeDetectionStrategy, Component, Input, OnDestroy} from "@angular/cor
 import {Store} from "@ngrx/store";
 import {filter, finalize, takeUntil, throttleTime} from "rxjs/operators";
 
-import {CORE_ACTIONS} from "src/web/src/app/store/actions";
 import {DbViewAbstractComponent} from "src/web/src/app/_db-view/db-view-abstract.component";
 import {ElectronService} from "src/web/src/app/_core/electron.service";
 import {MailsBundle, State} from "src/web/src/app/store/reducers/db-view";
+import {NOTIFICATION_ACTIONS} from "src/web/src/app/store/actions";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {View} from "src/shared/model/database";
 import {filterConversationNodesMails} from "src/shared/util";
@@ -68,7 +68,7 @@ export class DbViewMailsExportComponent extends DbViewAbstractComponent implemen
                     }
                     this.$state.next({exporting: true});
                 },
-                (error) => this.store.dispatch(CORE_ACTIONS.Fail(error)),
+                (error) => this.store.dispatch(NOTIFICATION_ACTIONS.Error(error)),
             );
     }
 

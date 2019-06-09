@@ -2,23 +2,28 @@ import {Component, HostListener} from "@angular/core";
 import {Location} from "@angular/common";
 import {Store} from "@ngrx/store";
 
-import {ACCOUNTS_OUTLET, ERRORS_OUTLET, ESC_KEY, SETTINGS_OUTLET} from "src/web/src/app/app.constants";
+import {ACCOUNTS_OUTLET, ESC_KEY, NOTIFICATIONS_OUTLET, SETTINGS_OUTLET} from "src/web/src/app/app.constants";
 import {NAVIGATION_ACTIONS} from "src/web/src/app/store/actions";
 import {State} from "src/web/src/app/store/reducers/root";
 
-export type CloseableOutletsType = typeof ERRORS_OUTLET | typeof SETTINGS_OUTLET;
+export type CloseableOutletsType =
+    | typeof NOTIFICATIONS_OUTLET
+    | typeof SETTINGS_OUTLET;
 
 @Component({
     selector: "electron-mail-app",
     template: `
         <router-outlet name="${ACCOUNTS_OUTLET}"></router-outlet>
         <router-outlet name="${SETTINGS_OUTLET}"></router-outlet>
-        <router-outlet name="${ERRORS_OUTLET}"></router-outlet>
+        <router-outlet name="${NOTIFICATIONS_OUTLET}"></router-outlet>
     `,
     styleUrls: ["./app.component.scss"],
 })
 export class AppComponent {
-    private closeableOutlets: CloseableOutletsType[] = [ERRORS_OUTLET, SETTINGS_OUTLET];
+    private closeableOutlets: CloseableOutletsType[] = [
+        NOTIFICATIONS_OUTLET,
+        SETTINGS_OUTLET,
+    ];
 
     constructor(
         private location: Location,

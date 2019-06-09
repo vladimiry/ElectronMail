@@ -1,7 +1,7 @@
 import {ActivatedRoute} from "@angular/router";
 import {Component, HostBinding, OnDestroy, OnInit} from "@angular/core";
-import {Subject} from "rxjs";
-import {filter, map, takeUntil} from "rxjs/operators";
+import {Subscription} from "rxjs";
+import {filter, map} from "rxjs/operators";
 
 @Component({
     selector: "electron-mail-router-proxy",
@@ -11,23 +11,25 @@ import {filter, map, takeUntil} from "rxjs/operators";
 export class RouterProxyComponent implements OnInit, OnDestroy {
     @HostBinding("class")
     outlet = "";
-    unSubscribe$ = new Subject();
 
-    constructor(private route: ActivatedRoute) {
-    }
+    private subscription = new Subscription();
+
+    constructor(
+        private route: ActivatedRoute,
+    ) {}
 
     ngOnInit() {
-        this.route.data
-            .pipe(
-                map(({outlet}) => outlet),
-                filter((outlet) => outlet),
-                takeUntil(this.unSubscribe$),
-            )
-            .subscribe((outlet) => this.outlet = outlet);
+        this.subscription.add(
+            this.route.data
+                .pipe(
+                    map((data) => data.ROUTER_DATA_OUTLET_PROP),
+                    filter((outlet) => Boolean(outlet)),
+                )
+                .subscribe((outlet) => this.outlet = outlet),
+        );
     }
 
     ngOnDestroy() {
-        this.unSubscribe$.next();
-        this.unSubscribe$.complete();
+        this.subscription.unsubscribe();
     }
 }

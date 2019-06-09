@@ -1,8 +1,7 @@
 import {NgModule} from "@angular/core";
 import {PreloadAllModules, RouterModule, Routes} from "@angular/router";
 
-import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, ERRORS_OUTLET, ERRORS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "./app.constants";
-import {ErrorListComponent} from "./components/error-list.component";
+import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, NOTIFICATIONS_OUTLET, NOTIFICATIONS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "./app.constants";
 import {RouterProxyComponent} from "./components/router-proxy.component";
 
 // TODO consider getting rid of the lazy loading, it's not really needed for the Electron application
@@ -13,23 +12,18 @@ const routes: Routes = [
         pathMatch: "full",
     },
     {
-        path: ERRORS_PATH,
-        outlet: ERRORS_OUTLET,
-        component: ErrorListComponent,
-    },
-    {
         path: ACCOUNTS_PATH,
         outlet: ACCOUNTS_OUTLET,
         component: RouterProxyComponent,
         data: {
-            outlet: ACCOUNTS_OUTLET,
+            // "ROUTER_DATA_OUTLET_PROP" can't be a constant, see https://github.com/angular/angular-cli/issues/4686#issuecomment-400572965
+            ROUTER_DATA_OUTLET_PROP: ACCOUNTS_OUTLET,
         },
         children: [
             {
                 path: "",
                 loadChildren: "./_accounts/accounts.module#AccountsModule",
-                // TODO loadChildren: use async ES import which is only compatible with Ivy Renderer:
-                //      https://blog.angularindepth.com/automatically-upgrade-lazy-loaded-angular-modules-for-ivy-e760872e6084
+                // TODO use async ES import which is only compatible with Ivy Renderer
                 // loadChildren: async () => {
                 //     const {AccountsModule} = await import("src/web/src/app/_accounts/accounts.module");
                 //     return AccountsModule;
@@ -42,17 +36,35 @@ const routes: Routes = [
         outlet: SETTINGS_OUTLET,
         component: RouterProxyComponent,
         data: {
-            outlet: SETTINGS_OUTLET,
+            ROUTER_DATA_OUTLET_PROP: SETTINGS_OUTLET,
         },
         children: [
             {
                 path: "",
                 loadChildren: "./_options/options.module#OptionsModule",
-                // TODO loadChildren: use async ES import which is only compatible with Ivy Renderer:
-                //      https://blog.angularindepth.com/automatically-upgrade-lazy-loaded-angular-modules-for-ivy-e760872e6084
+                // TODO use async ES import which is only compatible with Ivy Renderer
                 // loadChildren: async () => {
                 //     const {OptionsModule} = await import("src/web/src/app/_options/options.module");
                 //     return OptionsModule;
+                // },
+            },
+        ],
+    },
+    {
+        path: NOTIFICATIONS_PATH,
+        outlet: NOTIFICATIONS_OUTLET,
+        component: RouterProxyComponent,
+        data: {
+            ROUTER_DATA_OUTLET_PROP: NOTIFICATIONS_OUTLET,
+        },
+        children: [
+            {
+                path: "",
+                loadChildren: "./_notification/notification.module#NotificationModule",
+                // TODO use async ES import which is only compatible with Ivy Renderer
+                // loadChildren: async () => {
+                //     const {NotificationModule} = await import("src/web/src/app/_notification/notification.module");
+                //     return NotificationModule;
                 // },
             },
         ],
@@ -61,11 +73,15 @@ const routes: Routes = [
 
 @NgModule({
     imports: [
-        RouterModule.forRoot(routes, {
-            useHash: true,
-            preloadingStrategy: PreloadAllModules,
-            // enableTracing: true,
-        }),
+        RouterModule.forRoot(
+            routes,
+            {
+                useHash: true,
+                preloadingStrategy: PreloadAllModules,
+                // enableTracing: true,
+                // relativeLinkResolution: "corrected", // TODO set {relativeLinkResolution: "corrected"}
+            },
+        ),
     ],
     exports: [
         RouterModule,

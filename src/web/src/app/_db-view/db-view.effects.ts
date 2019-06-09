@@ -4,7 +4,7 @@ import {Injectable} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {catchError, filter, finalize, map, mergeMap, switchMap, takeUntil, tap} from "rxjs/operators";
 
-import {ACCOUNTS_ACTIONS, CORE_ACTIONS, DB_VIEW_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
+import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS, NOTIFICATION_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
 import {ElectronService} from "src/web/src/app/_core/electron.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
@@ -139,7 +139,7 @@ export class DbViewEffects {
                     );
                     return fetchSingleMail$.pipe(
                         mergeMap(() => of(DB_VIEW_ACTIONS.SelectConversationMailRequest({dbAccountPk: pk, mailPk}))),
-                        catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                        catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                         finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.SetFetchSingleMailParams({pk, mailPk: undefined}))),
                     );
                 }),

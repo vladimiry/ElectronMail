@@ -8,7 +8,7 @@ import {CWD, LOG, LOG_LEVELS, execShell} from "scripts/lib";
 import {DISABLE_SANDBOX_ARGS_LINE, copyDictionaryFilesTo, ensureFileHasNoSuidBit} from "scripts/electron-builder/lib";
 
 (async () => {
-    await postProcessSnapPackage(
+    await postProcess(
         await build(),
     );
 })().catch((error) => {
@@ -34,7 +34,7 @@ async function build(): Promise<{ packageFile: string }> {
     return {packageFile};
 }
 
-async function postProcessSnapPackage({packageFile}: { packageFile: string }) {
+async function postProcess({packageFile}: { packageFile: string }) {
     const packageDir = `${packageFile}-squashfs-root-${Date.now()}`;
 
     await unpack({packageDir, packageFile});

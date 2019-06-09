@@ -5,9 +5,9 @@ import {Store, select} from "@ngrx/store";
 import {catchError, concatMap, finalize, map, mergeMap, startWith, withLatestFrom} from "rxjs/operators";
 
 import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
-import {CORE_ACTIONS, NAVIGATION_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
 import {ElectronService} from "src/web/src/app/_core/electron.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {OptionsService} from "./options.service";
@@ -34,11 +34,11 @@ export class OptionsEffects {
                         this.store.dispatch(OPTIONS_ACTIONS.GetConfigResponse(value.payload.config));
                     }
                     if (IPC_MAIN_API_NOTIFICATION_ACTIONS.is.ErrorMessage(value)) {
-                        this.store.dispatch(CORE_ACTIONS.Fail(new Error(value.payload.message)));
+                        this.store.dispatch(NOTIFICATION_ACTIONS.Error(new Error(value.payload.message)));
                     }
                     return of(OPTIONS_ACTIONS.PatchMainProcessNotification(value));
                 }),
-                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
             );
         }));
 
@@ -54,7 +54,7 @@ export class OptionsEffects {
                     of(OPTIONS_ACTIONS.InitResponse(payload)),
                     of(this.optionsService.settingsNavigationAction({path: ""})),
                 )),
-                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
             );
         }));
 
@@ -70,7 +70,7 @@ export class OptionsEffects {
                     OPTIONS_ACTIONS.GetConfigResponse(config),
                     this.optionsService.settingsNavigationAction({path: ""}),
                 ]),
-                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
             );
         }));
 
@@ -92,7 +92,7 @@ export class OptionsEffects {
                 map((readable) => this.optionsService.settingsNavigationAction({
                     path: readable ? "login" : "settings-setup",
                 })),
-                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
             );
         }),
     );
@@ -126,7 +126,7 @@ export class OptionsEffects {
                                 }],
                             }),
                         ]),
-                        catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                        catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                         finalize(() => this.dispatchProgress({loadingDatabase: false})),
                     ),
                 )),
@@ -138,7 +138,7 @@ export class OptionsEffects {
                     ) {
                         error.message = "Failed to decrypt the settings storage";
                     }
-                    return of(CORE_ACTIONS.Fail(error));
+                    return of(NOTIFICATION_ACTIONS.Error(error));
                 }),
                 finalize(() => this.dispatchProgress({signingIn: false})),
             ),
@@ -160,7 +160,7 @@ export class OptionsEffects {
                         queryParams: {login: payload.login},
                     }),
                 ]),
-                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                 finalize(() => this.dispatchProgress({addingAccount: false})),
             ),
         )));
@@ -175,7 +175,7 @@ export class OptionsEffects {
                 this.ipcMainClient("updateAccount")(payload),
             ).pipe(
                 map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
-                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                 finalize(() => this.dispatchProgress({updatingAccount: false})),
             ),
         )));
@@ -190,7 +190,7 @@ export class OptionsEffects {
                 this.ipcMainClient("changeAccountOrder", {timeoutMs: ONE_SECOND_MS * 20})(payload),
             ).pipe(
                 map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
-                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                 finalize(() => this.dispatchProgress({changingAccountOrder: false})),
             ),
         )));
@@ -207,7 +207,7 @@ export class OptionsEffects {
                 concatMap((settings) => [
                     OPTIONS_ACTIONS.GetSettingsResponse(settings),
                     this.optionsService.settingsNavigationAction({path: "accounts"}),
-                ]), catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                ]), catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                 finalize(() => this.dispatchProgress({removingAccount: false})),
             ),
         )));
@@ -225,7 +225,7 @@ export class OptionsEffects {
                 catchError((error) => {
                     error.message = "Failed to change the master password! " +
                         "Please make sure that correct current password has been entered.";
-                    return of(CORE_ACTIONS.Fail(error));
+                    return of(NOTIFICATION_ACTIONS.Error(error));
                 }),
                 finalize(() => this.dispatchProgress({changingPassword: false})),
             ),
@@ -241,7 +241,7 @@ export class OptionsEffects {
                 this.ipcMainClient("toggleCompactLayout")(),
             ).pipe(
                 map((config) => OPTIONS_ACTIONS.GetConfigResponse(config)),
-                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                 finalize(() => this.dispatchProgress({togglingCompactLayout: false})),
             ),
         )));
@@ -256,7 +256,7 @@ export class OptionsEffects {
                 this.ipcMainClient("patchBaseConfig")(payload),
             ).pipe(
                 map((config) => OPTIONS_ACTIONS.GetConfigResponse(config)),
-                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                 finalize(() => this.dispatchProgress({updatingBaseSettings: false})),
             ),
         )));
@@ -274,7 +274,7 @@ export class OptionsEffects {
                     this.ipcMainClient("reEncryptSettings")({encryptionPreset, password}),
                 ).pipe(
                     map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
-                    catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                    catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                     finalize(() => this.dispatchProgress({reEncryptingSettings: false})),
                 ),
             );

@@ -5,8 +5,8 @@ import {Location} from "@angular/common";
 import {Router} from "@angular/router";
 import {catchError, concatMap, map, mergeMap, switchMap, tap} from "rxjs/operators";
 
-import {CORE_ACTIONS, NAVIGATION_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
 import {ElectronService} from "./electron.service";
+import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/src/util";
 
 const _logger = getZoneNameBoundWebLogger("[navigation.effects.ts]");
@@ -27,7 +27,7 @@ export class NavigationEffects {
                 mergeMap(() => EMPTY),
             );
         }),
-        catchError((error) => of(CORE_ACTIONS.Fail(error))),
+        catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
     );
 
     @Effect({dispatch: false})
@@ -35,7 +35,7 @@ export class NavigationEffects {
         unionizeActionFilter(NAVIGATION_ACTIONS.is.Back),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         tap(() => this.location.back()),
-        catchError((error) => of(CORE_ACTIONS.Fail(error))),
+        catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
     );
 
     @Effect({dispatch: false})
@@ -43,7 +43,7 @@ export class NavigationEffects {
         unionizeActionFilter(NAVIGATION_ACTIONS.is.Forward),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         tap(() => this.location.forward()),
-        catchError((error) => of(CORE_ACTIONS.Fail(error))),
+        catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
     );
 
     @Effect()
@@ -52,7 +52,7 @@ export class NavigationEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => from(this.electronService.ipcMainClient()("toggleBrowserWindow")(payload)).pipe(
             mergeMap(() => EMPTY),
-            catchError((error) => of(CORE_ACTIONS.Fail(error))),
+            catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
         )));
 
     @Effect()
@@ -61,7 +61,7 @@ export class NavigationEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(() => from(this.electronService.ipcMainClient()("openAboutWindow")()).pipe(
             mergeMap(() => EMPTY),
-            catchError((error) => of(CORE_ACTIONS.Fail(error))),
+            catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
         )));
 
     @Effect()
@@ -70,7 +70,7 @@ export class NavigationEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(({payload}) => from(this.electronService.ipcMainClient()("openExternal")({url: payload.url})).pipe(
             mergeMap(() => EMPTY),
-            catchError((error) => of(CORE_ACTIONS.Fail(error))),
+            catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
         )));
 
     @Effect()
@@ -79,7 +79,7 @@ export class NavigationEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(() => from(this.electronService.ipcMainClient()("openSettingsFolder")()).pipe(
             mergeMap(() => EMPTY),
-            catchError((error) => of(CORE_ACTIONS.Fail(error))),
+            catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
         )));
 
     @Effect()
@@ -92,7 +92,7 @@ export class NavigationEffects {
                     setTimeout(() => window.location.reload(), 0);
                     return EMPTY;
                 }),
-                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
             );
         }),
     );
@@ -103,7 +103,7 @@ export class NavigationEffects {
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
         concatMap(() => from(this.electronService.ipcMainClient()("quit")()).pipe(
             mergeMap(() => EMPTY),
-            catchError((error) => of(CORE_ACTIONS.Fail(error))),
+            catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
         )));
 
     constructor(

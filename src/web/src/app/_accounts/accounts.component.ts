@@ -4,7 +4,7 @@ import {Store, select} from "@ngrx/store";
 import {distinctUntilChanged, map} from "rxjs/operators";
 import {equals} from "ramda";
 
-import {ACCOUNTS_ACTIONS, CORE_ACTIONS, NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
+import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/src/app/store/selectors";
 import {ElectronService} from "src/web/src/app/_core/electron.service";
 import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
@@ -70,7 +70,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
                 ),
             ).subscribe(([{hasLoggedOut, unread}, unreadBgColor, unreadTextColor]) => {
                 this.unreadSummary = unread;
-                this.store.dispatch(CORE_ACTIONS.UpdateOverlayIcon({hasLoggedOut, unread, unreadBgColor, unreadTextColor}));
+                this.store.dispatch(NOTIFICATION_ACTIONS.UpdateOverlayIcon({hasLoggedOut, unread, unreadBgColor, unreadTextColor}));
             }),
         );
         this.subscription.add(

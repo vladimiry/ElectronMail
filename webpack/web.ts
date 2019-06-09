@@ -187,6 +187,7 @@ const baseConfig = buildBaseConfig(
                 compilerOptions: tsConfigCompilerOptions,
                 nameLazyFiles: true,
                 contextElementDependencyConstructor: require("webpack/lib/dependencies/ContextElementDependency"),
+                discoverLazyRoutes: true, // TODO disable "discoverLazyRoutes" once switched to Ivy renderer
                 directTemplateLoading: aot,
             }),
         ],

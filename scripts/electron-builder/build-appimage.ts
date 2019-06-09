@@ -13,7 +13,7 @@ import {DISABLE_SANDBOX_ARGS_LINE, ensureFileHasNoSuidBit} from "scripts/electro
 const extractedImageFolderName = "squashfs-root";
 
 (async () => {
-    await postProcessSnapPackage(
+    await postProcess(
         await build(),
     );
 })().catch((error) => {
@@ -39,7 +39,7 @@ async function build(): Promise<{ packageFile: string }> {
     return {packageFile};
 }
 
-async function postProcessSnapPackage({packageFile}: { packageFile: string }) {
+async function postProcess({packageFile}: { packageFile: string }) {
     const {packageDir} = await unpack({packageFile});
     disableSandbox({packageDir});
     ensureFileHasNoSuidBit(path.join(packageDir, BINARY_NAME));

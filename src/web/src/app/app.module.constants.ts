@@ -13,13 +13,12 @@ import {StoreRouterConnectingModule} from "@ngrx/router-store";
 
 import * as AccountsReducer from "./store/reducers/accounts";
 import * as DbViewReducer from "./store/reducers/db-view";
-import * as ErrorsReducer from "./store/reducers/errors";
+import * as ErrorsReducer from "./store/reducers/notification";
+import * as NotificationReducer from "./store/reducers/notification";
 import * as OptionsReducer from "./store/reducers/options";
 import {AppComponent} from "./components/app.component";
 import {AppErrorHandler} from "src/web/src/app/app.error-handler.service";
 import {CoreModule} from "./_core/core.module";
-import {ErrorItemComponent} from "./components/error-item.component";
-import {ErrorListComponent} from "./components/error-list.component";
 import {RouterProxyComponent} from "./components/router-proxy.component";
 import {RoutingModule} from "./app.routing.module";
 import {createAppMetaReducer, createErrorHandlingMetaReducer, reducers} from "./store/reducers/root";
@@ -39,18 +38,20 @@ export const APP_MODULE_NG_CONF: NgModule = {
         StoreModule.forFeature(AccountsReducer.featureName, AccountsReducer.reducer),
         StoreModule.forFeature(DbViewReducer.featureName, DbViewReducer.reducer),
         StoreModule.forFeature(ErrorsReducer.featureName, ErrorsReducer.reducer),
+        StoreModule.forFeature(NotificationReducer.featureName, NotificationReducer.reducer),
         StoreModule.forFeature(OptionsReducer.featureName, OptionsReducer.reducer),
         StoreRouterConnectingModule.forRoot(),
         EffectsModule.forRoot([]),
     ],
     declarations: [
         AppComponent,
-        ErrorItemComponent,
-        ErrorListComponent,
         RouterProxyComponent,
     ],
     providers: [
-        {provide: APP_BASE_HREF, useValue: "/"},
+        {
+            provide: APP_BASE_HREF,
+            useValue: "/",
+        },
         {
             provide: ErrorHandler,
             useClass: AppErrorHandler,

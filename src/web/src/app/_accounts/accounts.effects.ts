@@ -19,7 +19,7 @@ import {
     withLatestFrom,
 } from "rxjs/operators";
 
-import {ACCOUNTS_ACTIONS, CORE_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
+import {ACCOUNTS_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
 import {AccountTypeAndLoginFieldContainer} from "src/shared/model/container";
 import {AccountsSelectors, OptionsSelectors} from "src/web/src/app/store/selectors";
 import {CoreService} from "src/web/src/app/_core/core.service";
@@ -155,7 +155,7 @@ export class AccountsEffects {
                                 );
                                 return selectMailOnlineInput$.pipe(
                                     mergeMap(() => EMPTY),
-                                    catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                                    catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                                     finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({
                                         login,
                                         patch: {selectingMailOnline: false},
@@ -224,9 +224,8 @@ export class AccountsEffects {
                                 }),
                             );
                             const result$ = buildDbPatch$.pipe(
-                                // "buildDbPatch" returns null which won't be accept by @nrgx as valid action with "type" property
-                                concatMap(() => of(CORE_ACTIONS.Stub())),
-                                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                                concatMap(() => EMPTY),
+                                catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                                 finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: false}}))),
                             );
 
@@ -286,7 +285,7 @@ export class AccountsEffects {
                                 );
                             }),
                             mergeMap(() => of(ACCOUNTS_ACTIONS.Patch({login, patch: {loginFilledOnce: true}}))),
-                            catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                            catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                         );
                     }
 
@@ -430,7 +429,7 @@ export class AccountsEffects {
                                         return of(ACCOUNTS_ACTIONS.Activate({login}));
                                     }),
                                 )),
-                                catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                                catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                                 finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: false}}))),
                             ),
                         );
@@ -485,7 +484,7 @@ export class AccountsEffects {
                                 );
                             }),
                             mergeMap(() => EMPTY),
-                            catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                            catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                             finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {twoFactorCode: false}}))),
                         ),
                     );
@@ -518,7 +517,7 @@ export class AccountsEffects {
                                 );
                             }),
                             mergeMap(() => EMPTY),
-                            catchError((error) => of(CORE_ACTIONS.Fail(error))),
+                            catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                             finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: false}}))),
                         ),
                     );

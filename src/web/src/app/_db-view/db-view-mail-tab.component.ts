@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy, Component, HostBinding, HostListener, OnDestroy} from "@angular/core";
-import {EMPTY} from "rxjs";
+import {EMPTY, of} from "rxjs";
 import {Store, select} from "@ngrx/store";
 import {map, mergeMap} from "rxjs/operators";
 
@@ -47,11 +47,11 @@ export class DbViewMailTabComponent extends DbViewAbstractComponent implements O
                 return EMPTY;
             }
 
-            return [{
+            return of({
                 folders,
                 selectedMail,
                 selectedFolderData,
-            }];
+            });
         }),
     );
 

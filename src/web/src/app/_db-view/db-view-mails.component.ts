@@ -44,22 +44,22 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
     );
 
     title$ = this.mailsBundle$.pipe(
-        mergeMap((mailsBundle) => [mailsBundle.title]),
+        map(({title}) => title),
         distinctUntilChanged(),
     );
 
     items$ = this.mailsBundle$.pipe(
-        mergeMap((mailsBundle) => [mailsBundle.items]),
+        map(({items}) => items),
         distinctUntilChanged(),
     );
 
     paging$ = this.mailsBundle$.pipe(
-        mergeMap((mailsBundle) => [mailsBundle.paging]),
+        map(({paging}) => paging),
         distinctUntilChanged(),
     );
 
     sorting$ = this.mailsBundle$.pipe(
-        mergeMap((mailsBundle) => [{sorters: mailsBundle.sorters, sorterIndex: mailsBundle.sorterIndex}]),
+        map((mailsBundle) => ({sorters: mailsBundle.sorters, sorterIndex: mailsBundle.sorterIndex})),
         distinctUntilChanged(),
     );
 

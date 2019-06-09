@@ -1,4 +1,4 @@
-import {BehaviorSubject, Observable, of} from "rxjs";
+import {BehaviorSubject, EMPTY, Observable, of} from "rxjs";
 import {OnChanges, OnDestroy, SimpleChanges} from "@angular/core";
 import {distinctUntilChanged, mergeMap} from "rxjs/operators";
 
@@ -26,7 +26,7 @@ export abstract class NgChangesObservableComponent implements OnChanges, OnDestr
 
     protected ngChangesObservable<K extends keyof this>(propertyName: K): Observable<this[K]> {
         return this.ngChanges.pipe(
-            mergeMap((props) => propertyName in props ? of(props[propertyName] as this[K]) : []),
+            mergeMap((props) => propertyName in props ? of(props[propertyName] as this[K]) : EMPTY),
             distinctUntilChanged(),
         );
     }

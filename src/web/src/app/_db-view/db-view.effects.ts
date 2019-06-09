@@ -2,7 +2,7 @@ import {Actions, Effect} from "@ngrx/effects";
 import {EMPTY, forkJoin, from, merge, of} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store, select} from "@ngrx/store";
-import {catchError, debounceTime, filter, finalize, map, mergeMap, switchMap, takeUntil, tap} from "rxjs/operators";
+import {catchError, filter, finalize, map, mergeMap, switchMap, takeUntil, tap} from "rxjs/operators";
 
 import {ACCOUNTS_ACTIONS, CORE_ACTIONS, DB_VIEW_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
 import {ElectronService} from "src/web/src/app/_core/electron.service";
@@ -27,7 +27,9 @@ export class DbViewEffects {
             logger.info("setup");
 
             return merge(
-                from(ipcMainClient("dbGetAccountDataView")(dbAccountPk)), // initial load
+                // data load (initial)
+                from(ipcMainClient("dbGetAccountDataView")(dbAccountPk)),
+                // data load (on change in the main process)
                 this.store.pipe(
                     select(OptionsSelectors.FEATURED.mainProcessNotification),
                     filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbPatchAccount),
@@ -35,6 +37,7 @@ export class DbViewEffects {
                     filter(({payload: {entitiesModified}}) => entitiesModified),
                     switchMap(() => from(ipcMainClient("dbGetAccountDataView")(dbAccountPk))),
                 ),
+                // side notification (status/progress patching)
                 this.store.pipe(
                     select(OptionsSelectors.FEATURED.mainProcessNotification),
                     filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbIndexerProgressState),
@@ -49,9 +52,10 @@ export class DbViewEffects {
                 ),
             ).pipe(
                 mergeMap((value) => {
-                    return value ? [DB_VIEW_ACTIONS.SetFolders({dbAccountPk, folders: value.folders})] : [];
+                    return value
+                        ? of(DB_VIEW_ACTIONS.SetFolders({dbAccountPk, folders: value.folders}))
+                        : EMPTY;
                 }),
-                debounceTime(300),
                 takeUntil(dispose$),
             );
         }),

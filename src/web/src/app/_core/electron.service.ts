@@ -1,4 +1,4 @@
-import {Injectable, OnDestroy} from "@angular/core";
+import {Injectable, NgZone, OnDestroy} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {Subscription, defer, of, race, throwError, timer} from "rxjs";
 import {concatMap, delay, filter, map, mergeMap, retryWhen, switchMap, take, withLatestFrom} from "rxjs/operators";
@@ -31,6 +31,7 @@ export class ElectronService implements OnDestroy {
 
     constructor(
         private store: Store<State>,
+        private ngZone: NgZone,
     ) {
         this.subscription.add(
             this.store
@@ -115,7 +116,7 @@ export class ElectronService implements OnDestroy {
             ...options,
             logger,
             timeoutMs: this.defaultApiCallTimeoutMs,
-            notificationWrapper: Zone.current.run.bind(Zone.current),
+            notificationWrapper: this.ngZone.run.bind(this.ngZone),
         };
     }
 }

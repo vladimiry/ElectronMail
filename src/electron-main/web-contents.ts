@@ -1,12 +1,12 @@
 import _logger from "electron-log";
 import {ContextMenuParams, Event, Menu, MenuItemConstructorOptions, WebContents, app, clipboard} from "electron";
-import {platform} from "os";
 
 import {ACCOUNTS_CONFIG, ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX} from "src/shared/constants";
 import {Context} from "./model";
 import {EntryUrlItem} from "src/shared/model/common";
 import {IPC_MAIN_API_NOTIFICATION$} from "./api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {PLATFORM} from "src/electron-main/constants";
 import {buildSpellCheckSettingsMenuItems, buildSpellingSuggestionMenuItems} from "src/electron-main/spell-check/menu";
 import {curryFunctionMembers} from "src/shared/util";
 
@@ -30,7 +30,7 @@ export async function initWebContentsCreatingHandlers(ctx: Context) {
                     {
                         label: isEmailHref(linkURL) ? "Copy Email Address" : "Copy Link Address",
                         click() {
-                            if (platform() === "darwin") {
+                            if (PLATFORM === "darwin") {
                                 clipboard.writeBookmark(linkText, extractEmailIfEmailHref(linkURL));
                             } else {
                                 clipboard.writeText(extractEmailIfEmailHref(linkURL));

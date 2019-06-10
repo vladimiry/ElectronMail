@@ -1,11 +1,18 @@
+import compareVersions from "compare-versions";
+import electronLog from "electron-log";
+import fetch from "node-fetch";
+import {ReposListReleasesResponse} from "@octokit/rest";
 import {app, shell} from "electron";
+import {inspect} from "util";
 import {isWebUri} from "valid-url";
-import {platform} from "os";
 import {startWith} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main";
+import {PACKAGE_VERSION, UPDATE_CHECK_FETCH_TIMEOUT} from "src/shared/constants";
+import {PLATFORM} from "src/electron-main/constants";
+import {curryFunctionMembers} from "src/shared/util";
 import {showAboutBrowserWindow} from "src/electron-main/window/about";
 
 type Methods = keyof Pick<IpcMainApiEndpoints,
@@ -15,11 +22,14 @@ type Methods = keyof Pick<IpcMainApiEndpoints,
     | "quit"
     | "activateBrowserWindow"
     | "toggleBrowserWindow"
+    | "updateCheck"
     | "notification">;
 
 type ContextAwareMethods = keyof Pick<IpcMainApiEndpoints,
     | "selectAccount"
     | "hotkey">;
+
+const logger = curryFunctionMembers(electronLog, "[src/electron-main/api/endpoints-builders/general]");
 
 export async function buildEndpoints(
     ctx: Context,
@@ -46,16 +56,17 @@ export async function buildEndpoints(
         },
 
         async activateBrowserWindow(browserWindow = ctx.uiContext && ctx.uiContext.browserWindow) {
-            const {window} = await ctx.configStore.readExisting();
-
             if (!browserWindow) {
                 return;
             }
 
+            const {window} = await ctx.configStore.readExisting();
+
             if (window.maximized) {
                 browserWindow.maximize();
 
-                // above "maximize()" call is supposed to show the window, but sometimes it doesn't on some systems (especially macOS)
+                // above "maximize()" call is supposed to show the window
+                // but sometimes it doesn't on some systems (especially macOS)
                 if (!browserWindow.isVisible()) {
                     browserWindow.show();
                 }
@@ -128,7 +139,7 @@ export async function buildEndpoints(
 
             const [{sender: webContents}] = methodContext.args;
 
-            if (platform() !== "darwin") {
+            if (PLATFORM !== "darwin") {
                 return;
             }
 
@@ -146,6 +157,128 @@ export async function buildEndpoints(
                     throw new Error(`Unknown hotkey "type" value:  "${type}"`);
             }
         },
+
+        updateCheck: (() => {
+            const fetchUrl = "https://api.github.com/repos/vladimiry/ElectronMail/releases";
+            const releasesUrlPrefix = "https://github.com/vladimiry/ElectronMail/releases/tag";
+            const tagNameFilterRe = /[^a-z0-9._-]/gi;
+            const filterAssetName: (name: string) => boolean = (() => {
+                const assetNameRegExpKeywords: Readonly<Partial<Record<NodeJS.Platform, readonly string[]>>> = {
+                    darwin: [
+                        "-darwin",
+                        "-mac",
+                        "-osx",
+                        ".dmg$",
+                    ],
+                    linux: [
+                        "-freebsd",
+                        "-linux",
+                        "-openbsd",
+                        ".AppImage$",
+                        ".deb$",
+                        ".freebsd$",
+                        ".pacman$",
+                        ".rpm$",
+                        ".snap$",
+                    ],
+                    win32: [
+                        "-win",
+                        // "-win32",
+                        // "-windows",
+                        ".exe$",
+                    ],
+                };
+                const assetNameRegExp = new RegExp(
+                    (
+                        assetNameRegExpKeywords[PLATFORM]
+                        ||
+                        // any file name for any platform other than darwin/linux/win32
+                        [".*"]
+                    ).join("|"),
+                    "i",
+                );
+                let assetNameRegExpLogged: boolean = false;
+
+                return (name: string) => {
+                    if (!assetNameRegExpLogged) {
+                        assetNameRegExpLogged = true;
+                        logger.verbose(
+                            "updateCheck()",
+                            inspect({assetNameRegExp}),
+                        );
+                    }
+                    return assetNameRegExp.test(name);
+                };
+            })();
+
+            return async () => {
+                const response = await fetch(
+                    fetchUrl,
+                    {
+                        method: "GET",
+                        timeout: UPDATE_CHECK_FETCH_TIMEOUT,
+                    },
+                );
+
+                if (!response.ok) {
+                    // https://developer.github.com/v3/#rate-limiting
+                    const rateLimitResetHeaderValue = Number(
+                        response.headers.get("X-RateLimit-Reset"),
+                    );
+                    const rateLimitError = (
+                        response.status === 403
+                        &&
+                        !isNaN(rateLimitResetHeaderValue)
+                        &&
+                        rateLimitResetHeaderValue > 0
+                    );
+                    const errorMessageData = JSON.stringify({
+                        url: fetchUrl,
+                        status: response.status,
+                        statusText: response.statusText,
+                    });
+
+                    if (rateLimitError) {
+                        // TODO consider enabling retry logic
+                        logger.error(new Error(`Update check failed (ignored as rate limit error): ${errorMessageData}`));
+                        return [];
+                    }
+
+                    throw new Error(`Update check failed: ${errorMessageData}`);
+                }
+
+                const releases: ReposListReleasesResponse = await response.json();
+                logger.verbose(
+                    "updateCheck()",
+                    JSON.stringify({
+                        releasesCount: releases.length,
+                        PACKAGE_VERSION,
+                        PLATFORM,
+                    }),
+                );
+
+                const resultItems = releases
+                    .filter(({tag_name}) => compareVersions(tag_name, PACKAGE_VERSION) > 0)
+                    .filter(({assets}) => assets.some(({name}) => filterAssetName(name)))
+                    .sort((o1, o2) => compareVersions(o1.tag_name, o2.tag_name))
+                    .reverse()
+                    .map(({tag_name, published_at: date}) => {
+                        const title = tag_name.replace(tagNameFilterRe, "");
+                        const tagNameValid = title === tag_name;
+                        // we don't use a raw "html_url" value but sanitize the url
+                        const url = tagNameValid
+                            ? `${releasesUrlPrefix}/${tag_name}`
+                            : undefined;
+                        return {title, url, date};
+                    });
+                logger.verbose(
+                    "updateCheck()",
+                    JSON.stringify({resultItems}, null, 2),
+                );
+
+                return resultItems;
+            };
+        })(),
 
         notification() {
             return IPC_MAIN_API_NOTIFICATION$.asObservable().pipe(

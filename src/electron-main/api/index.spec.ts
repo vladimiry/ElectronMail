@@ -369,7 +369,7 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
                 compactLayout: true,
                 closeToTray: false,
                 unreadNotifications: true,
-                checkForUpdatesAndNotify: true,
+                checkUpdateAndNotify: true,
                 logLevel: "warn",
             },
             {
@@ -377,7 +377,7 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
                 compactLayout: undefined,
                 closeToTray: true,
                 unreadNotifications: false,
-                checkForUpdatesAndNotify: false,
+                checkUpdateAndNotify: false,
                 logLevel: "info",
             },
         ];
@@ -534,6 +534,11 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
 
     // TODO test "findInPageNotification" API
     findInPageNotification: (t) => {
+        t.pass();
+    },
+
+    // TODO test "updateCheck" API
+    updateCheck(t) {
         t.pass();
     },
 

@@ -111,12 +111,21 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.spellCheckLocale = INITIAL_STORES.config().spellCheckLocale;
         }
     },
-    "3.4.2": (_, config = _ as Config & { databaseSaveDelayMs?: number }) => {
+    "3.4.2": (
+        _,
+        config = _ as Config & { databaseSaveDelayMs?: number; checkForUpdatesAndNotify?: boolean; },
+    ) => {
         if (typeof config.databaseSaveDelayMs !== "undefined") {
             delete config.databaseSaveDelayMs;
         }
         if (typeof config.databaseWriteDelayMs === "undefined") {
             config.databaseWriteDelayMs = INITIAL_STORES.config().databaseWriteDelayMs;
+        }
+        if (typeof config.checkForUpdatesAndNotify !== "undefined") {
+            delete config.checkForUpdatesAndNotify;
+        }
+        if (typeof config.checkUpdateAndNotify === "undefined") {
+            config.checkUpdateAndNotify = INITIAL_STORES.config().checkUpdateAndNotify;
         }
     },
 };

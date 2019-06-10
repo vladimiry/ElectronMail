@@ -37,7 +37,9 @@ export function initContext(options: ContextInitOptions = {}): Context {
                 ],
             },
         });
-    const runtimeEnvironment: RuntimeEnvironment = Boolean(process.env[RUNTIME_ENV_E2E]) ? "e2e" : "production";
+    const runtimeEnvironment: RuntimeEnvironment = Boolean(process.env[RUNTIME_ENV_E2E])
+        ? "e2e"
+        : "production";
     const locations = initLocations(runtimeEnvironment, storeFs, options.paths);
 
     logger.transports.file.file = path.join(locations.userDataDir, "log.log");

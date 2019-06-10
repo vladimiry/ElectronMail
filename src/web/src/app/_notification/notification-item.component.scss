@@ -15,4 +15,15 @@
             right: 0;
         }
     }
+
+    .fa-info-circle {
+        // make popover position more precise
+        padding-right: 8px;
+    }
+
+    &::ng-deep {
+        .popover {
+            max-width: 430px;
+        }
+    }
 }

@@ -17,6 +17,7 @@ export class NotificationEffects {
     $notification = merge(
         this.actions$.pipe(filter(NOTIFICATION_ACTIONS.is.Error)),
         this.actions$.pipe(filter(NOTIFICATION_ACTIONS.is.Info)),
+        this.actions$.pipe(filter(NOTIFICATION_ACTIONS.is.Update)),
     ).pipe(
         map(() => {
             return NAVIGATION_ACTIONS.Go({path: [{outlets: {[NOTIFICATIONS_OUTLET]: NOTIFICATIONS_PATH}}]});

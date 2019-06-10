@@ -34,7 +34,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     indexingBootstrapBufferSize: number;
     jsFlags?: string[];
     // base
-    checkForUpdatesAndNotify?: boolean;
+    checkUpdateAndNotify?: boolean;
     clearSession?: boolean;
     closeToTray?: boolean;
     compactLayout?: boolean;
@@ -50,7 +50,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
 }
 
 export type BaseConfig = Pick<Config,
-    | "checkForUpdatesAndNotify"
+    | "checkUpdateAndNotify"
     | "clearSession"
     | "closeToTray"
     | "compactLayout"

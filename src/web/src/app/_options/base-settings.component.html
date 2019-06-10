@@ -96,6 +96,17 @@
         </div>
         <div class="custom-control custom-switch">
             <input
+                    class="custom-control-input"
+                    formControlName="checkUpdateAndNotify"
+                    id="checkUpdateAndNotifyCheckbox"
+                    type="checkbox"
+            >
+            <label class="custom-control-label" for="checkUpdateAndNotifyCheckbox">
+                Check for update and notify
+            </label>
+        </div>
+        <div class="custom-control custom-switch">
+            <input
                 class="custom-control-input"
                 formControlName="disableSpamNotifications"
                 id="disableSpamNotificationsCheckbox"
@@ -138,7 +149,7 @@
                 Disable page rendering GPU acceleration
             </label>
             <i
-                popover="Enabling this option will allow you to save some memory but will likely slow down the page rendering a little."
+                popover="Enabling this option will allow you to save some memory but will likely somehow slow down the page rendering."
                 class="fa fa-info-circle text-primary align-self-center"
                 container="body"
                 placement="bottom"
@@ -151,6 +162,7 @@
                 placement="bottom"
                 triggers="mouseenter:mouseleave"
             ></i>
+            <div class="badge badge-secondary">experimental</div>
         </div>
         <div class="custom-control custom-switch" style="display: none;">
             <input

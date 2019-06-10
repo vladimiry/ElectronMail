@@ -1,7 +1,7 @@
 import {Menu, MenuItemConstructorOptions, app} from "electron";
-import {platform} from "os";
 
 import {Context} from "src/electron-main/model";
+import {PLATFORM} from "src/electron-main/constants";
 
 export async function initApplicationMenu(ctx: Context): Promise<Menu> {
     const endpoints = await ctx.deferredEndpoints.promise;
@@ -17,7 +17,7 @@ export async function initApplicationMenu(ctx: Context): Promise<Menu> {
             await endpoints.quit();
         },
     };
-    const templateItems: MenuItemConstructorOptions[] = platform() === "darwin"
+    const templateItems: MenuItemConstructorOptions[] = PLATFORM === "darwin"
         ? [{
             label: app.getName(),
             submenu: [

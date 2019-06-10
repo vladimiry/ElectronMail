@@ -7,7 +7,7 @@ import {StatusCodeError} from "./model/error";
 
 export function pickBaseConfigProperties(
     {
-        checkForUpdatesAndNotify,
+        checkUpdateAndNotify,
         clearSession,
         closeToTray,
         compactLayout,
@@ -23,7 +23,7 @@ export function pickBaseConfigProperties(
     }: Config,
 ): Required<BaseConfig> {
     return {
-        checkForUpdatesAndNotify: !!checkForUpdatesAndNotify,
+        checkUpdateAndNotify: !!checkUpdateAndNotify,
         clearSession: !!clearSession,
         closeToTray: !!closeToTray,
         compactLayout: !!compactLayout,
@@ -59,6 +59,7 @@ export const asyncDelay = async <T>(pauseTimeMs: number, resolveAction?: () => P
     });
 };
 
+// TODO TS: return only functions
 export function curryFunctionMembers<T extends object | ((...a: any[]) => any)>(
     src: T,
     ...args: any[]

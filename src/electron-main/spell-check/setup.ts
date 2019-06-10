@@ -5,6 +5,7 @@ import semver from "semver";
 
 import {APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR} from "src/shared/constants";
 import {Locale} from "src/shared/model/common";
+import {PLATFORM} from "src/electron-main/constants";
 import {curryFunctionMembers, normalizeLocale, removeDuplicateItems} from "src/shared/util";
 
 export let resolveDefaultLocale: () => Promise<Locale> = async () => {
@@ -101,17 +102,16 @@ export let setup: () => Promise<{
         hunspellLocales: [],
         location: process.env.HUNSPELL_DICTIONARIES,
     };
-    const platform = os.platform();
 
     logger.verbose("Initial state", JSON.stringify(state));
 
-    if (platform === "linux") {
+    if (PLATFORM === "linux") {
         await (async () => {
             state.location = state.location || "/usr/share/hunspell";
             state.hunspellLocales.push(...await resolveHunspellLocales(state.location));
             logger.info(`Detected Linux. Dictionary location: ${state.location}`);
         })();
-    } else if (platform === "win32" && semver.lt(os.release(), "8.0.0")) {
+    } else if (PLATFORM === "win32" && semver.lt(os.release(), "8.0.0")) {
         state.location = state.location || path.join(path.dirname(process.execPath), APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR);
         state.hunspellLocales.push(...await resolveHunspellLocales(state.location));
         logger.info(`Detected Windows 7 or below. Dictionary location: ${state.location}`);

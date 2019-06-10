@@ -122,6 +122,8 @@ export const ENDPOINTS_DEFINITION = {
 
     selectAccount: ActionType.Promise<{ databaseView?: boolean; reset?: boolean }>(),
 
+    updateCheck: ActionType.Promise<void, Array<{ title: string; url?: string; date: string; }>>(),
+
     notification: ActionType.Observable<void, UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>>(),
 };
 
@@ -130,6 +132,7 @@ export interface InitResponse {
     hasSavedPassword?: boolean;
     snapPasswordManagerServiceHint?: boolean;
     keytarSupport: boolean;
+    checkUpdateAndNotify: boolean;
 }
 
 export const IPC_MAIN_API = createIpcMainApiService({

@@ -3,15 +3,15 @@ import {NativeImage, nativeImage} from "electron";
 import {PassThrough} from "stream";
 import {createReadStream} from "fs";
 import {lanczos} from "@rgba-image/lanczos";
-import {platform} from "os";
 
 import {CircleConfig, ImageBundle} from "./model";
+import {PLATFORM} from "src/electron-main/constants";
 
 // TODO explore https://github.com/vonderheide/mono-bitmap as a possible "pureimage" replacement
 
 const bitmapToNativeImage = (() => {
     const darwinSize = Object.freeze({width: 16, height: 16}); // macOS uses 16x16 tray icon
-    const platformSpecificScale: (source: Bitmap) => Promise<Bitmap> = platform() === "darwin"
+    const platformSpecificScale: (source: Bitmap) => Promise<Bitmap> = PLATFORM === "darwin"
         ? async (source) => {
             const sourceBits = source.data.byteLength / (source.width * source.height);
             const dest = {

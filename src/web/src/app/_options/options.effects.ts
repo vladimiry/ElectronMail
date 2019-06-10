@@ -1,14 +1,14 @@
 import {Actions, Effect} from "@ngrx/effects";
-import {EMPTY, from, merge, of} from "rxjs";
-import {Injectable} from "@angular/core";
+import {EMPTY, from, merge, of, timer} from "rxjs";
+import {Injectable, NgZone} from "@angular/core";
 import {Store, select} from "@ngrx/store";
-import {catchError, concatMap, finalize, map, mergeMap, startWith, withLatestFrom} from "rxjs/operators";
+import {catchError, concatMap, filter, finalize, map, mergeMap, startWith, switchMap, take, withLatestFrom} from "rxjs/operators";
 
 import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
 import {ElectronService} from "src/web/src/app/_core/electron.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
-import {ONE_SECOND_MS} from "src/shared/constants";
+import {ONE_SECOND_MS, PRODUCT_NAME, UPDATE_CHECK_FETCH_TIMEOUT} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/src/app/store/selectors";
 import {OptionsService} from "./options.service";
 import {ProgressPatch, State} from "src/web/src/app/store/reducers/options";
@@ -46,17 +46,45 @@ export class OptionsEffects {
     initRequest$ = this.actions$.pipe(
         unionizeActionFilter(OPTIONS_ACTIONS.is.InitRequest),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-        mergeMap(() => {
-            return from(
-                this.ipcMainClient("init")(),
-            ).pipe(
+        switchMap(() => {
+            return from(this.ipcMainClient("init")()).pipe(
                 mergeMap((payload) => merge(
+                    payload.checkUpdateAndNotify
+                        ? (
+                            timer(ONE_SECOND_MS * 10, ONE_SECOND_MS).pipe(
+                                filter(() => navigator.onLine),
+                                take(1),
+                                mergeMap(() => from(
+                                    this.ipcMainClient("updateCheck", {timeoutMs: UPDATE_CHECK_FETCH_TIMEOUT + (ONE_SECOND_MS * 2)})(),
+                                ).pipe(
+                                    mergeMap((items) => {
+                                        if (!items.length) {
+                                            return EMPTY;
+                                        }
+
+                                        new Notification(
+                                            PRODUCT_NAME,
+                                            {
+                                                body: "App update is available.",
+                                            },
+                                        ).onclick = () => this.ngZone.run(() => {
+                                            this.store.dispatch(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));
+                                        });
+
+                                        return of(NOTIFICATION_ACTIONS.Update(items));
+                                    }),
+                                )),
+                            )
+                        )
+                        : EMPTY,
                     of(OPTIONS_ACTIONS.InitResponse(payload)),
                     of(this.optionsService.settingsNavigationAction({path: ""})),
                 )),
+            ).pipe(
                 catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
             );
-        }));
+        }),
+    );
 
     @Effect()
     getConfigRequest$ = this.actions$.pipe(
@@ -284,6 +312,7 @@ export class OptionsEffects {
         private optionsService: OptionsService,
         private api: ElectronService,
         private store: Store<State>,
+        private ngZone: NgZone,
         private actions$: Actions<{ type: string; payload: any }>,
     ) {}
 

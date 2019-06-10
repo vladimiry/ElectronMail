@@ -1,5 +1,6 @@
 import {EffectsModule} from "@ngrx/effects";
 import {NgModule} from "@angular/core";
+import {PopoverModule} from "ngx-bootstrap/popover";
 
 import {NotificationEffects} from "./notification.effects";
 import {NotificationItemComponent} from "./notification-item.component";
@@ -9,8 +10,9 @@ import {SharedModule} from "src/web/src/app/_shared/shared.module";
 
 @NgModule({
     imports: [
-        SharedModule,
+        PopoverModule,
         EffectsModule.forFeature([NotificationEffects]),
+        SharedModule,
         NotificationRoutingModule,
     ],
     declarations: [

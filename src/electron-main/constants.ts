@@ -1,11 +1,26 @@
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/lib/private/constants";
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import {Model as StoreModel} from "fs-json-store";
+import {platform} from "os";
 import {randomBytes} from "crypto";
 
 import {Config, ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS, Settings} from "src/shared/model/options";
-import {DEFAULT_API_CALL_TIMEOUT, DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_MINUTE_MS, ONE_SECOND_MS} from "src/shared/constants";
+import {
+    DEFAULT_API_CALL_TIMEOUT,
+    DEFAULT_MESSAGES_STORE_PORTION_SIZE,
+    ONE_MINUTE_MS,
+    ONE_SECOND_MS,
+    PACKAGE_NAME,
+} from "src/shared/constants";
 import {LogLevel} from "src/shared/model/common";
+
+export const PLATFORM = platform();
+
+export const SNAP_CONTAINER = (
+    Boolean(process.env.SNAP)
+    &&
+    String(process.env.SNAP_NAME) === PACKAGE_NAME
+);
 
 export const INITIAL_STORES: Readonly<{
     config: () => Omit<Config, "jsFlags"> & Required<Pick<Config, "jsFlags">>;
@@ -48,7 +63,7 @@ export const INITIAL_STORES: Readonly<{
                 "--max-old-space-size=3072",
             ],
             // base
-            checkForUpdatesAndNotify: true,
+            checkUpdateAndNotify: !SNAP_CONTAINER, // update check is disabled by default for the Snap package type
             clearSession: true,
             closeToTray: true,
             compactLayout: true,

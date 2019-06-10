@@ -1,5 +1,4 @@
 import {BrowserWindow, app} from "electron";
-import {Store} from "fs-json-store";
 import {equals} from "ramda";
 
 import {BuildEnvironment} from "src/shared/model/common";
@@ -16,17 +15,12 @@ const appBeforeQuitEventArgs: ["before-quit", (event: Electron.Event) => void] =
 ];
 
 export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow> {
-    const e2eRuntimeEnvironment = (
-        ctx.runtimeEnvironment === "e2e"
-        &&
-        await new Store({file: ctx.locations.preload.browserWindowE2E, fs: ctx.storeFs}).readable()
-    );
     app.removeListener(...appBeforeQuitEventArgs);
 
     const browserWindow = new BrowserWindow({
         webPreferences: {
             ...DEFAULT_WEB_PREFERENCES,
-            preload: e2eRuntimeEnvironment
+            preload: ctx.runtimeEnvironment === "e2e"
                 ? ctx.locations.preload.browserWindowE2E
                 : ctx.locations.preload.browserWindow,
         },

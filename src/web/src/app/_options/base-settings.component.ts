@@ -30,7 +30,7 @@ export class BaseSettingsComponent implements OnInit {
     logLevels = LOG_LEVELS;
 
     controls: Record<keyof BaseConfig, AbstractControl> = {
-        checkForUpdatesAndNotify: new FormControl(),
+        checkUpdateAndNotify: new FormControl(),
         clearSession: new FormControl(),
         closeToTray: new FormControl(),
         compactLayout: new FormControl(),

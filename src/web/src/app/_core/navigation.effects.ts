@@ -1,9 +1,9 @@
 import {Actions, Effect} from "@ngrx/effects";
 import {EMPTY, from, of} from "rxjs";
-import {Injectable} from "@angular/core";
+import {Injectable, NgZone} from "@angular/core";
 import {Location} from "@angular/common";
 import {Router} from "@angular/router";
-import {catchError, concatMap, map, mergeMap, switchMap, tap} from "rxjs/operators";
+import {catchError, concatMap, map, mergeMap, tap} from "rxjs/operators";
 
 import {ElectronService} from "./electron.service";
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
@@ -17,15 +17,16 @@ export class NavigationEffects {
     navigate$ = this.actions$.pipe(
         unionizeActionFilter(NAVIGATION_ACTIONS.is.Go),
         map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-        switchMap(({payload, logger}) => {
+        tap(({payload, logger}) => {
             const {path, extras, queryParams} = payload;
 
             // WARN: privacy note, do not log "queryParams" as it might be filled with sensitive data (like "login"/"user name")
             logger.verbose(JSON.stringify({path, extras}));
 
-            return from(this.router.navigate(path, {queryParams, ...extras})).pipe(
-                mergeMap(() => EMPTY),
-            );
+            this.ngZone.run(async () => {
+                // tslint:disable-next-line:no-floating-promises
+                await this.router.navigate(path, {queryParams, ...extras});
+            });
         }),
         catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
     );
@@ -111,5 +112,6 @@ export class NavigationEffects {
         private actions$: Actions<{ type: string; payload: any }>,
         private router: Router,
         private location: Location,
+        private ngZone: NgZone,
     ) {}
 }

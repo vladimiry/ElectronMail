@@ -1,4 +1,4 @@
-import logger from "electron-log";
+import electronLog from "electron-log";
 
 import * as SpellCheck from "src/electron-main/spell-check/api";
 import {Account, Database, FindInPage, General, TrayIcon} from "./endpoints-builders";
@@ -8,8 +8,11 @@ import {PACKAGE_NAME, PRODUCT_NAME} from "src/shared/constants";
 import {attachFullTextIndexWindow, detachFullTextIndexWindow} from "src/electron-main/window/full-text-search";
 import {buildSettingsAdapter, resolveVendorsAppCssLinkHref} from "src/electron-main/util";
 import {clearSessionsCache, initSessionByAccount} from "src/electron-main/session";
+import {curryFunctionMembers} from "src/shared/util";
 import {deletePassword, getPassword, setPassword} from "src/electron-main/keytar";
 import {upgradeConfig, upgradeDatabase, upgradeSettings} from "src/electron-main/storage-upgrade";
+
+const logger = curryFunctionMembers(electronLog, "[src/electron-main/api/index]");
 
 export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
     const endpoints: IpcMainApiEndpoints = {
@@ -78,6 +81,11 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
                 keytarSupport: ctx.keytarSupport,
                 snapPasswordManagerServiceHint: ctx.snapPasswordManagerServiceHint,
                 hasSavedPassword,
+                checkUpdateAndNotify: Boolean(
+                    ctx.runtimeEnvironment === "production"
+                    &&
+                    (await endpoints.readConfig()).checkUpdateAndNotify,
+                ),
             };
         },
 
@@ -103,7 +111,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             });
 
             // TODO update "patchBaseConfig" api method: test "logLevel" value, "logger.transports.file.level" update
-            logger.transports.file.level = newConfig.logLevel;
+            electronLog.transports.file.level = newConfig.logLevel;
 
             // TODO update "patchBaseConfig" api method: test "attachFullTextIndexWindow" / "detachFullTextIndexWindow" calls
             if (Boolean(newConfig.fullTextSearch) !== Boolean(savedConfig.fullTextSearch)) {
@@ -125,7 +133,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
                 ? (upgradeConfig(existingConfig) ? await store.write(existingConfig) : existingConfig)
                 : await store.write(ctx.initialStores.config);
 
-            logger.transports.file.level = config.logLevel;
+            electronLog.transports.file.level = config.logLevel;
 
             return config;
         },

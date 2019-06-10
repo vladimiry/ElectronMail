@@ -25,6 +25,7 @@ export function reducer(state = initialState, action: UnionOf<typeof NOTIFICATIO
     return NOTIFICATION_ACTIONS.match(action, {
         Error: (data) => add(state, {type: "error", data}),
         Info: (data) => add(state, {type: "info", data}),
+        Update: (data) => add(state, {type: "update", data}),
         Remove: (item) => {
             const items = [...state.items];
             const index = items.indexOf(item);

@@ -67,7 +67,7 @@ for:
       - ps: | # actual build
           yarn app:dist
           yarn test:e2e
-          yarn electron-builder:dist
+          npx electron-builder --publish onTagOrDraft --x64
           yarn scripts/dist-packages/print-hashes
           yarn scripts/dist-packages/upload
     on_finish:

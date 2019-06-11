@@ -1,22 +1,17 @@
-import {Target} from "app-builder-lib";
-
 import {LOG, execShell} from "scripts/lib";
 
-const targets: Array<typeof Target.prototype.name> = [
-    "appimage",
-    "snap",
-    "pacman",
-    "deb",
-    "freebsd",
-    "rpm",
-];
-
 (async () => {
-    for (const target of targets) {
-        await clean();
-        await execShell(["yarn", [`electron-builder:dist:linux:${target}`]]);
-    }
-
+    await execShell(["yarn", ["electron-builder:dist:linux:appimage"]]);
+    await clean();
+    await execShell(["yarn", ["electron-builder:dist:linux:snap"]]);
+    await clean();
+    await execShell(["npx", ["electron-builder", "--publish", "onTagOrDraft", "--x64", "--linux", "pacman"]]);
+    await clean();
+    await execShell(["npx", ["electron-builder", "--publish", "onTagOrDraft", "--x64", "--linux", "deb"]]);
+    await clean();
+    await execShell(["npx", ["electron-builder", "--publish", "onTagOrDraft", "--x64", "--linux", "freebsd"]]);
+    await clean();
+    await execShell(["npx", ["electron-builder", "--publish", "onTagOrDraft", "--x64", "--linux", "rpm"]]);
     await clean();
 })().catch((error) => {
     LOG(error);

@@ -16,8 +16,6 @@ export let resolveDefaultLocale: () => Promise<Locale> = async () => {
         const dictionaries = getAvailableDictionaries();
 
         // hunspell requires the fully-qualified result
-        // so load local with help of "os-result" module
-        // since it returns result in "es_ES" format vs "es." returned by "os" module
         const locale = normalizeLocale(
             await osLocaleModule.default(),
         ) as Locale | undefined;

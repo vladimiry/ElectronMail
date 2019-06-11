@@ -10,8 +10,6 @@ cache:
   yarn: true
   directories:
     - output/git
-    - $HOME/.cache/electron
-    - $HOME/.cache/electron-builder
 env:
   global:
     - MOZ_HEADLESS=1 # needed for karma tests running in headless mode

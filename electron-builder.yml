@@ -2,6 +2,7 @@ appId: 'github.com/vladimiry/ElectronMail'
 artifactName: ${name}-${version}-${os}-${arch}.${ext}
 productName: 'ElectronMail'
 
+publish: {provider: github, releaseType: draft, vPrefixedTagName: true}
 forceCodeSigning: false
 
 # TODO consider moving fully bundable 'dependencies' to 'devDependencies' to reduce final package size
@@ -30,8 +31,6 @@ afterPack: './scripts/electron-builder/hooks/afterPack/index.js'
 mac:
   icon: ./app/assets/icons/mac/icon.icns
   category: public.app-category.productivity
-  target:
-    - {target: dmg}
 
 dmg:
   icon: ./app/assets/icons/mac/icon.icns

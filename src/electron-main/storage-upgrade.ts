@@ -1,6 +1,11 @@
 import compareVersions from "compare-versions";
 
-import {ACCOUNTS_CONFIG, ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX, PACKAGE_VERSION} from "src/shared/constants";
+import {
+    ACCOUNTS_CONFIG,
+    ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX,
+    PACKAGE_VERSION,
+    PROTONMAIL_PRIMARY_ENTRY_POINT_VALUE,
+} from "src/shared/constants";
 import {AccountConfig} from "src/shared/model/account";
 import {Config, Settings} from "src/shared/model/options";
 import {Database} from "./database";
@@ -111,7 +116,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.spellCheckLocale = INITIAL_STORES.config().spellCheckLocale;
         }
     },
-    "3.4.2": (
+    "3.5.0": (
         _,
         config = _ as Config & { databaseSaveDelayMs?: number; checkForUpdatesAndNotify?: boolean; },
     ) => {
@@ -176,6 +181,14 @@ const SETTINGS_UPGRADES: Record<string, (settings: Settings) => void> = {
             account.entryUrl = `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}${account.entryUrl}`;
             if (!possibleEntryUrls.includes(account.entryUrl)) {
                 throw new Error(`Invalid entry url value "${account.entryUrl}"`);
+            }
+        });
+    },
+    "3.5.0": (settings) => {
+        // dropping https://beta.protonmail.com entry point, see https://github.com/vladimiry/ElectronMail/issues/164
+        settings.accounts.forEach((account) => {
+            if (account.entryUrl === "https://beta.protonmail.com") {
+                account.entryUrl = PROTONMAIL_PRIMARY_ENTRY_POINT_VALUE;
             }
         });
     },

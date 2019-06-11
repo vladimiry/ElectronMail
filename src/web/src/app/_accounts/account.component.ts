@@ -47,6 +47,7 @@ const pickLoginDelayFields = ((fields: Array<keyof AccountConfig>) => {
     return (accountConfig: AccountConfig) => pick(fields, accountConfig);
 })(["loginDelayUntilSelected", "loginDelaySecondsRange"]);
 
+// TODO split account.component.ts component to pieces
 @Component({
     selector: "electron-mail-account",
     templateUrl: "./account.component.html",
@@ -98,7 +99,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     map((a) => ({login: a.accountConfig.login, unread: a.notifications.unread})),
                     pairwise(),
                     filter(([prev, curr]) => curr.unread > prev.unread),
-                    map(([prev, curr]) => curr),
+                    map(([, curr]) => curr),
                 )
                 .subscribe(({login, unread}) => {
                     new Notification(
@@ -117,6 +118,23 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     ngAfterViewInit() {
         this.logger.info(`ngAfterViewInit()`);
 
+        const resolveWebView: () => Electron.WebviewTag = () => {
+            const webView: Electron.WebviewTag | undefined = this.elementRef.nativeElement.querySelector("webview");
+            if (!webView) {
+                throw new Error(`"webview" element is supposed to be mounted to DOM at this stage`);
+            }
+            return webView;
+        };
+
+        // tslint:disable-next-line:no-floating-promises
+        this.setupOnWebViewDomReadyDeferred().promise
+            .then(() => {
+                this.onWebViewLoadedOnce(resolveWebView());
+                // if ((process.env.NODE_ENV/* as BuildEnvironment*/) === "development") {
+                //     webView.addEventListener("dom-ready", () => webView.openDevTools());
+                // }
+            });
+
         this.subscription.add(
             (() => {
                 const hideClass = "webview-hidden";
@@ -127,10 +145,10 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         if (!view) {
                             view = this.webViewTemplate.createEmbeddedView(null);
                             this.webViewContainerRef.insert(view);
-                            this.onWebViewMounted(this.resolveWebView());
+                            this.registerWebViewEvents(resolveWebView());
                         }
 
-                        const webView = this.resolveWebView();
+                        const webView = resolveWebView();
 
                         if (!webView.src) {
                             // WARN: partition setting needs to occur before first navigation (before "src" setting)
@@ -184,6 +202,16 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                 });
             }),
         );
+    }
+
+    ngOnDestroy() {
+        this.logger.info(`ngOnDestroy()`);
+        this.subscription.unsubscribe();
+        this.resolveOnWebViewDomReadyDeferreds();
+    }
+
+    private onWebViewLoadedOnce(webView: Electron.WebviewTag) {
+        this.logger.info(`onWebViewLoadedOnce()`);
 
         this.subscription.add(
             ((state: { dbViewComponentRef?: Unpacked<ReturnType<typeof DbViewModuleResolve.prototype.buildComponentRef>> } = {}) => {
@@ -209,25 +237,15 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         this.webViewState$.next({action: "visibility", visible: !databaseView});
 
                         if (!databaseView) {
-                            setTimeout(() => this.focusWebView());
+                            setTimeout(() => this.focusWebView(webView));
                         }
 
                         if (this.account.accountConfig.login === selectedLogin) {
-                            await this.sendSelectAccountNotification();
+                            await this.sendSelectAccountNotification(webView);
                         }
                     });
             })(),
         );
-    }
-
-    ngOnDestroy() {
-        this.logger.info(`ngOnDestroy()`);
-        this.subscription.unsubscribe();
-        this.resolveOnWebViewDomReadyDeferreds();
-    }
-
-    private onWebViewMounted(webView: Electron.WebviewTag) {
-        this.logger.info(`onWebViewMounted()`);
 
         this.subscription.add(
             this.account$.pipe(
@@ -265,8 +283,8 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                 filter(([selectedLogin]) => this.account.accountConfig.login === selectedLogin),
                 debounceTime(ONE_SECOND_MS * 0.3),
             ).subscribe(async () => {
-                this.focusWebView();
-                await this.sendSelectAccountNotification();
+                this.focusWebView(webView);
+                await this.sendSelectAccountNotification(webView);
             }),
         );
 
@@ -291,12 +309,6 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                 this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.FetchSingleMail({account, webView, mailPk: value.mailPk}));
             }),
         );
-
-        // if ((process.env.NODE_ENV/* as BuildEnvironment*/) === "development") {
-        //     webView.addEventListener("dom-ready", () => webView.openDevTools());
-        // }
-
-        this.registerWebViewEvents(webView);
     }
 
     private registerWebViewEvents(webView: Electron.WebviewTag) {
@@ -421,18 +433,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         });
     }
 
-    private resolveWebView(): Electron.WebviewTag {
-        const webView: Electron.WebviewTag | undefined = this.elementRef.nativeElement.querySelector("webview");
-
-        if (!webView) {
-            throw new Error(`"webview" element is supposed to be initialized at this stage`);
-        }
-
-        return webView;
-    }
-
-    private focusWebView() {
-        const webView = this.resolveWebView();
+    private focusWebView(webView: Electron.WebviewTag) {
         const activeElement = document.activeElement as any;
 
         if (activeElement && typeof activeElement.blur === "function") {
@@ -443,10 +444,8 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         webView.focus();
     }
 
-    private async sendSelectAccountNotification() {
-        const webView = this.resolveWebView();
+    private async sendSelectAccountNotification(webView: Electron.WebviewTag) {
         const webViewClient = await this.api.webViewClient(webView, this.account.accountConfig.type).toPromise();
-
         await webViewClient("selectAccount")({zoneName: this.loggerZone.name, databaseView: this.account.databaseView});
     }
 }

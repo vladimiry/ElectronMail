@@ -34,7 +34,17 @@ export const APP_MODULE_NG_CONF: NgModule = {
         BsDropdownModule.forRoot(),
         PopoverModule.forRoot(),
         DragulaModule.forRoot(),
-        StoreModule.forRoot(reducers),
+        StoreModule.forRoot(
+            reducers,
+            {
+                runtimeChecks: {
+                    strictStateImmutability: true,
+                    strictActionImmutability: true,
+                    // strictStateSerializability: true,
+                    // strictActionSerializability: true,
+                },
+            },
+        ),
         StoreModule.forFeature(AccountsReducer.featureName, AccountsReducer.reducer),
         StoreModule.forFeature(DbViewReducer.featureName, DbViewReducer.reducer),
         StoreModule.forFeature(ErrorsReducer.featureName, ErrorsReducer.reducer),

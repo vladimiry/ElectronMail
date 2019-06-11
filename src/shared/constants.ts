@@ -67,11 +67,13 @@ export const LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN = `${LOCAL_WEBCLIENT_PROTOCOL_P
 
 export const ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX = "local:::";
 
+export const PROTONMAIL_PRIMARY_ENTRY_POINT_VALUE = `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.protonmail.com`;
+
 export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlItem[]>> = {
     protonmail: {
         entryUrl: [
             {
-                value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.protonmail.com`,
+                value: PROTONMAIL_PRIMARY_ENTRY_POINT_VALUE,
                 title: `https://mail.protonmail.com (${getBuiltInWebClientTitle("protonmail")})`,
             },
             {
@@ -81,10 +83,6 @@ export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlIte
             {
                 value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://protonirockerxow.onion`,
                 title: `https://protonirockerxow.onion (${getBuiltInWebClientTitle("protonmail")})`,
-            },
-            {
-                value: "https://beta.protonmail.com",
-                title: "https://beta.protonmail.com (deprecated)",
             },
         ],
     },

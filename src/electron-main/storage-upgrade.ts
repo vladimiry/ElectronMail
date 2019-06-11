@@ -1,12 +1,22 @@
 import compareVersions from "compare-versions";
 
-import {ACCOUNTS_CONFIG, ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX, PACKAGE_VERSION} from "src/shared/constants";
+import {
+    ACCOUNTS_CONFIG,
+    ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX,
+    PACKAGE_VERSION,
+    PROTONMAIL_PRIMARY_ENTRY_POINT_VALUE,
+} from "src/shared/constants";
 import {AccountConfig} from "src/shared/model/account";
 import {Config, Settings} from "src/shared/model/options";
 import {Database} from "./database";
 import {DbAccountPk} from "src/shared/model/database";
 import {EntryUrlItem} from "src/shared/model/common";
 import {INITIAL_STORES} from "./constants";
+
+const possibleEntryUrls: readonly string[] = Object
+    .values(ACCOUNTS_CONFIG)
+    .reduce((list: EntryUrlItem[], {entryUrl}) => list.concat(entryUrl), [])
+    .map(({value}) => value);
 
 const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
     "1.1.0": (config: Config & { appVersion?: string }) => {
@@ -111,7 +121,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.spellCheckLocale = INITIAL_STORES.config().spellCheckLocale;
         }
     },
-    "3.4.2": (
+    "3.5.0": (
         _,
         config = _ as Config & { databaseSaveDelayMs?: number; checkForUpdatesAndNotify?: boolean; },
     ) => {
@@ -165,15 +175,21 @@ const SETTINGS_UPGRADES: Record<string, (settings: Settings) => void> = {
     },
     "2.0.0": (settings) => {
         // dropping "online web clients" support, see https://github.com/vladimiry/ElectronMail/issues/80
-        const possibleEntryUrls: string[] = Object
-            .values(ACCOUNTS_CONFIG)
-            .reduce((list: EntryUrlItem[], {entryUrl}) => list.concat(entryUrl), [])
-            .map(({value}) => value);
         settings.accounts.forEach((account) => {
             if (possibleEntryUrls.includes(account.entryUrl)) {
                 return;
             }
             account.entryUrl = `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}${account.entryUrl}`;
+        });
+    },
+    "3.5.0": (settings) => {
+        // dropping https://beta.protonmail.com entry point, see https://github.com/vladimiry/ElectronMail/issues/164
+        settings.accounts.forEach((account) => {
+            // it can be either "https://beta.protonmail.com" or "local:::https://beta.protonmail.com"
+            // since above defined "2.0.0" upgrade adds "local:::"
+            if (account.entryUrl.includes("https://beta.protonmail.com")) {
+                account.entryUrl = PROTONMAIL_PRIMARY_ENTRY_POINT_VALUE;
+            }
             if (!possibleEntryUrls.includes(account.entryUrl)) {
                 throw new Error(`Invalid entry url value "${account.entryUrl}"`);
             }

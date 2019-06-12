@@ -14,8 +14,14 @@
                        [popover]="localStorePopoverTemplate" placement="bottom" container="body" triggers="mouseenter:mouseleave"
                     ></i>
                     <ng-template #localStorePopoverTemplate>
-                        The <code>local store</code> feature enables storing your messages in the encrypted <code>database.bin</code> file,
-                        so you could view your messages offline, perform full-text search against them and export them to EML files.
+                        <p>
+                            The <code>local store</code> feature enables storing your messages in the encrypted <code>database.bin</code> file,
+                            so you could view your messages offline, perform full-text search against them and export them to EML files.
+                        </p>
+                        <p>
+                            Initial data fetching might take a long time, like even hours, depending on the number of emails in the account.
+                            So just wait until data fetching icon on the account handle button stopped blinking in green.
+                        </p>
                     </ng-template>
                 </label>
             </div>

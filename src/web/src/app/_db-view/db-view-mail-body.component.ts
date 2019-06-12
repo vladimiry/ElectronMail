@@ -10,7 +10,7 @@ import {
     QueryList,
     ViewChildren,
 } from "@angular/core";
-import {BehaviorSubject, EMPTY, Subject, Subscription, combineLatest, fromEvent, merge} from "rxjs";
+import {BehaviorSubject, EMPTY, Subject, Subscription, combineLatest, fromEvent, merge, race, throwError, timer} from "rxjs";
 import {Store, select} from "@ngrx/store";
 import {delay, distinctUntilChanged, filter, map, mergeMap, pairwise, startWith, take, withLatestFrom} from "rxjs/operators";
 import {equals} from "ramda";
@@ -137,21 +137,27 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         );
 
         this.subscription.add(
-            this.selectedMail$
-                .pipe(
-                    withLatestFrom(this.store.pipe(
-                        select(OptionsSelectors.FEATURED.electronLocations),
-                        map((value) => {
-                            if (!value) {
-                                throw new Error(`"electronLocations" is expected to be defined`);
-                            }
-                            return value.vendorsAppCssLinkHref;
-                        }),
-                    )),
-                )
-                .subscribe(([value, vendorsAppCssLinkHref]) => {
-                    this.renderBody(value.conversationMail, {vendorsAppCssLinkHref});
-                }),
+            race(
+                this.store.pipe(
+                    select(OptionsSelectors.FEATURED.electronLocations),
+                    map((value) => {
+                        if (!value) {
+                            throw new Error(`"electronLocations" is expected to be defined`);
+                        }
+                        return value;
+                    }),
+                    take(1),
+                ),
+                timer(ONE_SECOND_MS).pipe(
+                    mergeMap(() => throwError(new Error(`Failed to resolve "electronLocations" value`))),
+                ),
+            ).subscribe(({vendorsAppCssLinkHref}) => {
+                this.subscription.add(
+                    this.selectedMail$.subscribe((selectedMail) => {
+                        this.renderBody(selectedMail.conversationMail, {vendorsAppCssLinkHref});
+                    }),
+                );
+            }),
         );
 
         this.subscription.add(

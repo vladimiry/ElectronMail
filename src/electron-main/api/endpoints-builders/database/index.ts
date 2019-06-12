@@ -382,12 +382,12 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
         },
 
         async dbIndexerOn(action) {
-            const logger = curryFunctionMembers(_logger, "dbIndexerOn()");
-
-            logger.info(`action.type: ${action.type}`);
+            _logger.info("dbIndexerOn()", `action.type: ${action.type}`);
 
             // propagating action to custom stream
-            IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$.next(action);
+            setTimeout(() => {
+                IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$.next(action);
+            });
 
             IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.match(action, {
                 Bootstrapped: () => {
@@ -403,12 +403,14 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                     });
                 },
                 ProgressState: (payload) => {
-                    logger.verbose(`ProgressState.status: ${JSON.stringify(payload.status)}`);
+                    _logger.verbose("dbIndexerOn()", `ProgressState.status: ${JSON.stringify(payload.status)}`);
 
                     // propagating status to main channel which streams data to UI process
-                    IPC_MAIN_API_NOTIFICATION$.next(
-                        IPC_MAIN_API_NOTIFICATION_ACTIONS.DbIndexerProgressState(payload),
-                    );
+                    setTimeout(() => {
+                        IPC_MAIN_API_NOTIFICATION$.next(
+                            IPC_MAIN_API_NOTIFICATION_ACTIONS.DbIndexerProgressState(payload),
+                        );
+                    });
                 },
                 default: () => {
                     // NOOP

@@ -72,6 +72,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     private subscription = new Subscription();
     private domReadySubscription = new Subscription();
     private onWebViewDomReadyDeferreds: Array<Deferred<void>> = [];
+    private readonly componentIndex: number;
 
     constructor(
         private dbViewModuleResolve: DbViewModuleResolve,
@@ -83,6 +84,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         private elementRef: ElementRef,
     ) {
         super();
+        this.componentIndex = componentIndex;
         const loggerPrefix = `[account.component][${componentIndex++}]`;
         this.loggerZone = Zone.current.fork({name: loggerPrefix});
         this.logger = getZoneNameBoundWebLogger(loggerPrefix);
@@ -105,7 +107,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     new Notification(
                         PRODUCT_NAME,
                         {
-                            body: `Account "${login}" has ${unread} unread email${unread > 1 ? "s" : ""}.`,
+                            body: `Account [${this.componentIndex}]: ${unread} unread message${unread > 1 ? "s" : ""}.`,
                         },
                     ).onclick = () => this.zone.run(() => {
                         this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.Activate({login}));

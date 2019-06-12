@@ -13,7 +13,8 @@ interface Dictionary {
     files: string[];
 }
 
-export const DISABLE_SANDBOX_ARGS_LINE = "--no-sandbox --disable-setuid-sandbox";
+// "--disable-setuid-sandbox" prevents falling back to SUID sandbox
+export const DISABLE_SANDBOX_ARGS_LINE = "--no-sandbox";
 
 export function ensureFileHasNoSuidBit(file: string): void {
     const stat = fs.statSync(file);

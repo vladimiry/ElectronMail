@@ -24,6 +24,7 @@ export const CONFIG = {
     unreadNotifications: createSelector(FEATURED.config, (config) => config.unreadNotifications),
     unreadBgColor: createSelector(FEATURED.config, (config) => config.customUnreadBgColor || DEFAULT_UNREAD_BADGE_BG_COLOR),
     unreadTextColor: createSelector(FEATURED.config, (config) => config.customUnreadTextColor || DEFAULT_UNREAD_BADGE_BG_TEXT),
+    hideControls: createSelector(FEATURED.config, (config) => config.hideControls),
     timeouts: createSelector(FEATURED.config, (config) => config.timeouts),
 };
 
@@ -37,7 +38,7 @@ export const SETTINGS = (() => {
             (accounts) => accounts.find(accountPickingPredicate(criteria)),
         ),
         localStoreEnabledCount: createSelector(accountsSelector, (accounts) => {
-            return accounts.reduce(
+            return (accounts || []).reduce(
                 (accumulator, {database}) => accumulator + Number(Boolean(database)),
                 0,
             );

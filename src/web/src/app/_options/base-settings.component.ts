@@ -1,7 +1,8 @@
 import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/forms";
-import {Component, OnInit} from "@angular/core";
+import {Component, OnDestroy, OnInit} from "@angular/core";
 import {Store, select} from "@ngrx/store";
-import {distinctUntilChanged, map, take} from "rxjs/operators";
+import {Subscription} from "rxjs";
+import {distinctUntilChanged, distinctUntilKeyChanged, map, take} from "rxjs/operators";
 
 import {AccountsSelectors, OptionsSelectors} from "src/web/src/app/store/selectors";
 import {BaseConfig} from "src/shared/model/options";
@@ -15,10 +16,10 @@ import {State} from "src/web/src/app/store/reducers/options";
     styleUrls: ["./base-settings.component.scss"],
     preserveWhitespaces: true,
 })
-export class BaseSettingsComponent implements OnInit {
-    baseConfig$ = this.store.select(OptionsSelectors.CONFIG.base);
-
-    processing$ = this.store.select(OptionsSelectors.FEATURED.progress).pipe(map((p) => p.updatingBaseSettings));
+export class BaseSettingsComponent implements OnInit, OnDestroy {
+    processing$ = this.store
+        .select(OptionsSelectors.FEATURED.progress)
+        .pipe(map((p) => p.updatingBaseSettings));
 
     fullTextSearchDisabled$ = this.store
         .select(OptionsSelectors.SETTINGS.localStoreEnabledCount)
@@ -40,6 +41,7 @@ export class BaseSettingsComponent implements OnInit {
         disableSpamNotifications: new FormControl(),
         findInPage: new FormControl(),
         fullTextSearch: new FormControl(),
+        hideControls: new FormControl(),
         logLevel: new FormControl(null, Validators.required),
         startMinimized: new FormControl(),
         unreadNotifications: new FormControl(),
@@ -57,18 +59,40 @@ export class BaseSettingsComponent implements OnInit {
         map(({unread}) => unread),
     );
 
+    private subscription = new Subscription();
+
     constructor(
         private store: Store<State>,
     ) {}
 
     ngOnInit() {
-        this.baseConfig$
+        this.store.select(OptionsSelectors.CONFIG.base)
             .pipe(take(1))
             .subscribe((data) => this.form.patchValue(data));
 
-        this.form.valueChanges.subscribe(() => {
-            this.store.dispatch(OPTIONS_ACTIONS.PatchBaseSettingsRequest(this.form.getRawValue()));
-        });
+        this.subscription.add(
+            this.store
+                .select(OptionsSelectors.FEATURED.config)
+                .pipe(
+                    distinctUntilKeyChanged("_rev"),
+                    distinctUntilKeyChanged("hideControls"),
+                )
+                .subscribe(({hideControls}) => {
+                    this.controls.hideControls.patchValue(hideControls);
+                }),
+        );
+
+        this.subscription.add(
+            this.form.valueChanges.subscribe(() => {
+                this.store.dispatch(
+                    OPTIONS_ACTIONS.PatchBaseSettingsRequest(this.form.getRawValue()),
+                );
+            }),
+        );
+    }
+
+    ngOnDestroy() {
+        this.subscription.unsubscribe();
     }
 
     bgColorPickerChangeHandler(color: string) {

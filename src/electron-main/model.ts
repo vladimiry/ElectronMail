@@ -1,4 +1,5 @@
 import {Deferred} from "ts-deferred";
+import {Observable} from "rxjs/internal/Observable";
 import {Model as StoreModel} from "fs-json-store";
 
 import {Config, Settings} from "src/shared/model/options";
@@ -30,6 +31,7 @@ export interface Context {
         config: Config;
         settings: Settings;
     };
+    readonly config$: Observable<Config>;
     readonly configStore: StoreModel.Store<Config>;
     keytarSupport?: boolean;
     snapPasswordManagerServiceHint?: boolean;

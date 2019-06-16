@@ -1,10 +1,19 @@
-import {IPC_MAIN_API} from "src/shared/api/main";
+import {IPC_MAIN_API, IpcMainApiEndpoints} from "src/shared/api/main";
 import {Logger} from "src/shared/model/common";
+
+// TODO setup single/global/central exception handler
 
 type ObservableElement = Pick<HTMLElement, "addEventListener" | "removeEventListener">;
 
 const processedKeyDownElements = new WeakMap<ObservableElement, ReturnType<typeof registerDocumentKeyDownEventListener>>();
 const processedClickElements = new WeakMap<ObservableElement, ReturnType<typeof registerDocumentClickEventListener>>();
+const keyCodes = {
+    A: 65,
+    C: 67,
+    V: 86,
+    F: 70,
+    F12: 123,
+} as const;
 
 export function registerDocumentKeyDownEventListener<E extends ObservableElement>(
     element: E,
@@ -21,45 +30,45 @@ export function registerDocumentKeyDownEventListener<E extends ObservableElement
 
     try {
         const apiClient = IPC_MAIN_API.client({options: {logger}});
-        const eventHandlerArgs: ["keydown", (event: KeyboardEvent) => Promise<void>] = [
+        const eventHandlerArgs: readonly ["keydown", (event: KeyboardEvent) => Promise<void>] = [
             "keydown",
-            async (event: KeyboardEvent) => {
-                try {
-                    const el: Element | null = (event.target as any);
-                    const cmdOrCtrl = event.ctrlKey || event.metaKey;
-                    const cmdOrCtrlPlusA = cmdOrCtrl && event.keyCode === 65;
-                    const cmdOrCtrlPlusC = cmdOrCtrl && event.keyCode === 67;
-                    const cmdOrCtrlPlusV = cmdOrCtrl && event.keyCode === 86;
-                    const cmdOrCtrlPlusF = cmdOrCtrl && event.keyCode === 70;
-
-                    if (cmdOrCtrlPlusF) {
-                        await apiClient("findInPageDisplay")({visible: true});
-                        return;
-                    }
-
-                    if (!el) {
-                        return;
-                    }
-
-                    let type: "copy" | "paste" | "selectAll" | undefined;
-
-                    if (cmdOrCtrlPlusA) {
-                        type = "selectAll";
-                    } else if (cmdOrCtrlPlusC && !isPasswordInput(el)) {
-                        type = "copy";
-                    } else if (cmdOrCtrlPlusV && isWritable(el)) {
-                        type = "paste";
-                    }
-
-                    if (!type) {
-                        return;
-                    }
-
-                    await apiClient("hotkey")({type});
-                } catch (e) {
-                    logger.error(e);
-                    throw e;
+            async (event: Readonly<KeyboardEvent>) => {
+                if (event.keyCode === keyCodes.F12) {
+                    await apiClient("toggleControls")();
+                    return;
                 }
+
+                const el: Element | null = (event.target as any);
+                const cmdOrCtrl = event.ctrlKey || event.metaKey;
+
+                if (!cmdOrCtrl) {
+                    return;
+                }
+
+                if (event.keyCode === keyCodes.F) {
+                    await apiClient("findInPageDisplay")({visible: true});
+                    return;
+                }
+
+                let type: Arguments<IpcMainApiEndpoints["hotkey"]>[0]["type"] | undefined;
+
+                if (!el) {
+                    return;
+                }
+
+                if (event.keyCode === keyCodes.A) {
+                    type = "selectAll";
+                } else if (event.keyCode === keyCodes.C && !isPasswordInput(el)) {
+                    type = "copy";
+                } else if (event.keyCode === keyCodes.V && isWritable(el)) {
+                    type = "paste";
+                }
+
+                if (!type) {
+                    return;
+                }
+
+                await apiClient("hotkey")({type});
             },
         ];
         const [, eventHandler] = eventHandlerArgs;

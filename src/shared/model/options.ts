@@ -44,6 +44,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     disableSpamNotifications?: boolean;
     findInPage?: boolean;
     fullTextSearch?: boolean;
+    hideControls?: boolean;
     logLevel: LogLevel;
     startMinimized?: boolean;
     unreadNotifications?: boolean;
@@ -60,6 +61,7 @@ export type BaseConfig = Pick<Config,
     | "disableSpamNotifications"
     | "findInPage"
     | "fullTextSearch"
+    | "hideControls"
     | "logLevel"
     | "startMinimized"
     | "unreadNotifications">;

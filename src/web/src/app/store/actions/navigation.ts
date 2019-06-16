@@ -10,7 +10,7 @@ export const NAVIGATION_ACTIONS = unionize({
         OpenExternal: ofType<{ url: string }>(),
         OpenSettingsFolder: ofType<{}>(),
         Quit: ofType<{}>(),
-        ToggleBrowserWindow: ofType<{ forcedState?: boolean }>(),
+        ToggleBrowserWindow: ofType<{ forcedState: boolean }>(),
     },
     {
         tag: "type",

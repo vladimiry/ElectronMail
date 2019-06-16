@@ -1,8 +1,10 @@
 import logger from "electron-log";
 import path from "path";
 import {Deferred} from "ts-deferred";
+import {ReplaySubject, merge} from "rxjs";
 import {Fs as StoreFs, Model as StoreModel, Store} from "fs-json-store";
 import {app} from "electron";
+import {distinctUntilChanged, take, tap} from "rxjs/operators";
 
 import {BuildEnvironment} from "src/shared/model/common";
 import {Config, Settings} from "src/shared/model/options";
@@ -45,6 +47,56 @@ export function initContext(options: ContextInitOptions = {}): Context {
     logger.transports.file.level = false;
     logger.transports.console.level = false;
 
+    const {
+        config$,
+        configStore,
+    } = (() => {
+        const store = new Store<Config>({
+            fs: storeFs,
+            optimisticLocking: true,
+            file: path.join(locations.userDataDir, "config.json"),
+            validators: [configEncryptionPresetValidator],
+            serialize: (data) => Buffer.from(JSON.stringify(data, null, 2)),
+        });
+        const subject$ = new ReplaySubject<Config>(1);
+
+        store.read = ((read) => {
+            const result: typeof store.read = async (...args) => {
+                const config = await read(...args);
+                if (config) {
+                    subject$.next(config);
+                }
+                return config;
+            };
+            return result;
+        })(store.read.bind(store));
+
+        store.write = ((write) => {
+            const result: typeof store.write = async (...args) => {
+                const config = await write(...args);
+                subject$.next(config);
+                return config;
+            };
+            return result;
+        })(store.write.bind(store));
+
+        return {
+            config$: merge(
+                subject$.asObservable().pipe(
+                    take(1),
+                ),
+                subject$.asObservable().pipe(
+                    distinctUntilChanged(({_rev: prev}, {_rev: curr}) => curr === prev),
+                ),
+            ).pipe(
+                tap((v) => {
+                    // console.log(v);
+                }),
+            ),
+            configStore: store,
+        };
+    })();
+
     const ctx: Context = {
         storeFs,
         runtimeEnvironment,
@@ -61,13 +113,8 @@ export function initContext(options: ContextInitOptions = {}): Context {
             storeFs,
         ),
         initialStores: options.initialStores || {config: INITIAL_STORES.config(), settings: INITIAL_STORES.settings()},
-        configStore: new Store<Config>({
-            fs: storeFs,
-            optimisticLocking: true,
-            file: path.join(locations.userDataDir, "config.json"),
-            validators: [configEncryptionPresetValidator],
-            serialize: (data) => Buffer.from(JSON.stringify(data, null, 2)),
-        }),
+        config$,
+        configStore,
         settingsStore: new Store<Settings>({
             fs: storeFs,
             optimisticLocking: true,

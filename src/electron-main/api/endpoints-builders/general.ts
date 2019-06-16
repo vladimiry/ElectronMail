@@ -5,7 +5,7 @@ import {ReposListReleasesResponse} from "@octokit/rest";
 import {app, shell} from "electron";
 import {inspect} from "util";
 import {isWebUri} from "valid-url";
-import {startWith} from "rxjs/operators";
+import {startWith, take} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
@@ -23,6 +23,7 @@ type Methods = keyof Pick<IpcMainApiEndpoints,
     | "activateBrowserWindow"
     | "toggleBrowserWindow"
     | "updateCheck"
+    | "toggleControls"
     | "notification">;
 
 type ContextAwareMethods = keyof Pick<IpcMainApiEndpoints,
@@ -79,14 +80,18 @@ export async function buildEndpoints(
             IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.ActivateBrowserWindow());
         },
 
-        async toggleBrowserWindow({forcedState}) {
+        async toggleBrowserWindow(arg) {
             const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
 
             if (!browserWindow) {
                 return;
             }
 
-            if (typeof forcedState !== "undefined" ? forcedState : !browserWindow.isVisible()) {
+            if (
+                (arg && arg.forcedState)
+                ||
+                !browserWindow.isVisible()
+            ) {
                 await endpoints.activateBrowserWindow();
             } else {
                 browserWindow.hide();
@@ -279,6 +284,22 @@ export async function buildEndpoints(
                 return resultItems;
             };
         })(),
+
+        async toggleControls(arg) {
+            const config = await ctx.config$
+                .pipe(take(1))
+                .toPromise();
+            const {hideControls} = arg || {hideControls: !config.hideControls};
+
+            IPC_MAIN_API_NOTIFICATION$.next(
+                IPC_MAIN_API_NOTIFICATION_ACTIONS.ConfigUpdated(
+                    await ctx.configStore.write({
+                        ...config,
+                        hideControls,
+                    }),
+                ),
+            );
+        },
 
         notification() {
             return IPC_MAIN_API_NOTIFICATION$.asObservable().pipe(

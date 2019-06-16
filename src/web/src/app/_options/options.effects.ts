@@ -5,6 +5,7 @@ import {Store, select} from "@ngrx/store";
 import {catchError, concatMap, filter, finalize, map, mergeMap, startWith, switchMap, take, withLatestFrom} from "rxjs/operators";
 
 import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
+import {CoreService} from "src/web/src/app/_core/core.service";
 import {ElectronService} from "src/web/src/app/_core/electron.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/src/app/store/actions";
@@ -30,12 +31,27 @@ export class OptionsEffects {
                     this.ipcMainClient("notification")(),
                 ).pipe(
                     mergeMap((value) => {
-                        if (IPC_MAIN_API_NOTIFICATION_ACTIONS.is.Config(value)) {
-                            this.store.dispatch(OPTIONS_ACTIONS.GetConfigResponse(value.payload.config));
-                        }
-                        if (IPC_MAIN_API_NOTIFICATION_ACTIONS.is.ErrorMessage(value)) {
-                            this.store.dispatch(NOTIFICATION_ACTIONS.Error(new Error(value.payload.message)));
-                        }
+                        IPC_MAIN_API_NOTIFICATION_ACTIONS.match(
+                            value,
+                            {
+                                ConfigUpdated: (config) => {
+                                    this.store.dispatch(OPTIONS_ACTIONS.GetConfigResponse(config));
+                                },
+                                OpenOptions: () => {
+                                    this.coreService.openSettingsView();
+                                },
+                                LogOut: () => {
+                                    this.coreService.logOut();
+                                },
+                                ErrorMessage: ({message}) => {
+                                    this.store.dispatch(NOTIFICATION_ACTIONS.Error(new Error(message)));
+                                },
+                                default() {
+                                    // NOOP
+                                },
+                            },
+                        );
+
                         return of(OPTIONS_ACTIONS.PatchMainProcessNotification(value));
                     }),
                     catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
@@ -68,9 +84,9 @@ export class OptionsEffects {
                                                 {
                                                     body: "App update is available.",
                                                 },
-                                            ).onclick = () => this.ngZone.run(() => {
+                                            ).onclick = () => {
                                                 this.store.dispatch(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));
-                                            });
+                                            };
 
                                             return of(NOTIFICATION_ACTIONS.Update(items));
                                         }),
@@ -323,11 +339,19 @@ export class OptionsEffects {
 
     constructor(
         private optionsService: OptionsService,
+        private coreService: CoreService,
         private api: ElectronService,
         private store: Store<State>,
         private ngZone: NgZone,
         private actions$: Actions<{ type: string; payload: any }>,
-    ) {}
+    ) {
+        store.dispatch = ((dispatch) => {
+            const result: typeof store.dispatch = (...args) => {
+                return this.ngZone.run(() => dispatch(...args));
+            };
+            return result;
+        })(store.dispatch.bind(store));
+    }
 
     private buildPatchProgress(patch: ProgressPatch) {
         return OPTIONS_ACTIONS.PatchProgress(patch);

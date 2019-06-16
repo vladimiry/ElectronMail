@@ -18,7 +18,7 @@ export const OPTIONS_ACTIONS = unionize({
         ChangeAccountOrderRequest: ofType<LoginFieldContainer & { index: number }>(),
         RemoveAccountRequest: ofType<{ login: string }>(),
         ChangeMasterPasswordRequest: ofType<PasswordChangeContainer>(),
-        GetConfigRequest: ofType<{}>(),
+        GetConfigRequest: ofType<{ justRead?: boolean }>(),
         GetConfigResponse: ofType<Config>(),
         GetSettingsRequest: ofType<{}>(),
         GetSettingsResponse: ofType<Settings>(),

@@ -1,46 +1,94 @@
-import {Menu, Tray, app, nativeImage} from "electron";
+import {Menu, MenuItemConstructorOptions, Tray, app, nativeImage} from "electron";
+import {Subscription} from "rxjs";
+import {filter, tap} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
+import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 
 export async function initTray(ctx: Context): Promise<Tray> {
     const endpoints = await ctx.deferredEndpoints.promise;
-    const toggleWindow = async () => endpoints.toggleBrowserWindow({});
+    const toggleBrowserWindow = async () => await endpoints.toggleBrowserWindow();
     const tray = new Tray(nativeImage.createEmpty());
+    const optionsMenuItem: MenuItemConstructorOptions = {
+        label: "Options",
+        visible: false,
+        async click() {
+            IPC_MAIN_API_NOTIFICATION$.next(
+                IPC_MAIN_API_NOTIFICATION_ACTIONS.OpenOptions(),
+            );
+            await endpoints.toggleBrowserWindow({forcedState: true});
+        },
+    };
+    const logOutMenuItem: MenuItemConstructorOptions = {
+        label: "Log Out",
+        visible: false,
+        click() {
+            IPC_MAIN_API_NOTIFICATION$.next(
+                IPC_MAIN_API_NOTIFICATION_ACTIONS.LogOut(),
+            );
+        },
+    };
+    const setContextMenu = () => {
+        tray.setContextMenu(
+            Menu.buildFromTemplate([
+                {
+                    label: "Toggle Window",
+                    click: toggleBrowserWindow,
+                },
+                {
+                    type: "separator",
+                },
+                optionsMenuItem,
+                {
+                    label: "Open Settings Folder",
+                    async click() {
+                        await endpoints.openSettingsFolder();
+                    },
+                },
+                {
+                    label: "About",
+                    async click() {
+                        await endpoints.openAboutWindow();
+                    },
+                },
+                {
+                    type: "separator",
+                },
+                logOutMenuItem,
+                {
+                    label: "Quit",
+                    async click() {
+                        await endpoints.quit();
+                    },
+                },
+            ]),
+        );
+    };
+    const subscription = new Subscription();
 
-    tray.setContextMenu(Menu.buildFromTemplate([
-        {
-            label: "Toggle Window",
-            click: toggleWindow,
-        },
-        {
-            label: "Open Settings Folder",
-            async click() {
-                await endpoints.openSettingsFolder();
-            },
-        },
-        {
-            type: "separator",
-        },
-        {
-            label: "About",
-            async click() {
-                await endpoints.openAboutWindow();
-            },
-        },
-        {
-            type: "separator",
-        },
-        {
-            label: "Quit",
-            async click() {
-                await endpoints.quit();
-            },
-        },
-    ]));
+    subscription.add(
+        IPC_MAIN_API_NOTIFICATION$.pipe(
+            filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.SignedInStateChange),
+            tap(({payload}) => {
+                optionsMenuItem.visible = payload;
+                logOutMenuItem.visible = payload;
+            }),
+        ).subscribe(
+            // we have to re-create the entire menu since electron doesn't support dynamic menu items change
+            // like for example changing "visible" menu items property
+            setContextMenu,
+        ),
+    );
 
-    tray.on("click", toggleWindow);
+    setContextMenu();
 
-    app.on("before-quit", () => tray.destroy());
+    tray.on("click", toggleBrowserWindow);
+
+    app.on("before-quit", () => {
+        subscription.unsubscribe();
+        tray.destroy();
+    });
 
     return tray;
 }

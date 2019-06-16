@@ -542,6 +542,11 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
         t.pass();
     },
 
+    // TODO test "toggleControls" API
+    toggleControls(t) {
+        t.pass();
+    },
+
     // TODO test "notification" API
     notification: (t) => {
         t.pass();

@@ -3,7 +3,8 @@ import electronLog from "electron-log";
 import * as SpellCheck from "src/electron-main/spell-check/api";
 import {Account, Database, FindInPage, General, TrayIcon} from "./endpoints-builders";
 import {Context} from "src/electron-main/model";
-import {IPC_MAIN_API, IpcMainApiEndpoints} from "src/shared/api/main";
+import {IPC_MAIN_API, IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
+import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {PACKAGE_NAME, PRODUCT_NAME} from "src/shared/constants";
 import {attachFullTextIndexWindow, detachFullTextIndexWindow} from "src/electron-main/window/full-text-search";
 import {buildSettingsAdapter, resolveVendorsAppCssLinkHref} from "src/electron-main/util";
@@ -101,6 +102,10 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             await clearSessionsCache(ctx);
             await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0});
             await detachFullTextIndexWindow(ctx);
+
+            IPC_MAIN_API_NOTIFICATION$.next(
+                IPC_MAIN_API_NOTIFICATION_ACTIONS.SignedInStateChange(false),
+            );
         },
 
         async patchBaseConfig(patch) {
@@ -173,6 +178,10 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             for (const {login, proxy} of settings.accounts) {
                 await initSessionByAccount(ctx, {login, proxy});
             }
+
+            IPC_MAIN_API_NOTIFICATION$.next(
+                IPC_MAIN_API_NOTIFICATION_ACTIONS.SignedInStateChange(true),
+            );
 
             return settings;
         },

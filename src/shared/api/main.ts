@@ -103,7 +103,7 @@ export const ENDPOINTS_DEFINITION = {
 
     activateBrowserWindow: ActionType.Promise<BrowserWindow | void>(),
 
-    toggleBrowserWindow: ActionType.Promise<{ forcedState?: boolean }>(),
+    toggleBrowserWindow: ActionType.Promise<{ forcedState: boolean } | void>(),
 
     toggleCompactLayout: ActionType.Promise<void, Config>(),
 
@@ -123,6 +123,8 @@ export const ENDPOINTS_DEFINITION = {
     selectAccount: ActionType.Promise<{ databaseView?: boolean; reset?: boolean }>(),
 
     updateCheck: ActionType.Promise<void, Array<{ title: string; url?: string; date: string; }>>(),
+
+    toggleControls: ActionType.Promise<Pick<Required<Config>, "hideControls"> | void, void>(),
 
     notification: ActionType.Observable<void, UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>>(),
 };
@@ -203,7 +205,10 @@ export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
         }>(),
         DbIndexerProgressState: ofType<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_ON_ACTIONS>, { type: "ProgressState" }>["payload"]>(),
         Locale: ofType<{ locale: ReturnType<Controller["getCurrentLocale"]> }>(),
-        Config: ofType<{ config: Config }>(),
+        ConfigUpdated: ofType<Config>(),
+        OpenOptions: ofType<{}>(),
+        LogOut: ofType<{}>(),
+        SignedInStateChange: ofType<boolean>(),
         ErrorMessage: ofType<{ message: string }>(),
     },
     {

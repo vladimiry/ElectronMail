@@ -61,6 +61,17 @@
         </div>
         <div class="custom-control custom-switch">
             <input
+                    class="custom-control-input"
+                    formControlName="hideControls"
+                    id="hideControlsCheckbox"
+                    type="checkbox"
+            >
+            <label class="custom-control-label" for="hideControlsCheckbox">
+                Hide controls bar (F12)
+            </label>
+        </div>
+        <div class="custom-control custom-switch">
+            <input
                 class="custom-control-input"
                 formControlName="findInPage"
                 id="findInPageCheckbox"
@@ -76,21 +87,19 @@
                     triggers="mouseenter:mouseleave"
                 ></i>
                 <ng-template #findInPagePopoverTemplate>
-                    <ul class="pl-3 m-0">
-                        <li>
-                            The <code>in page search</code> is only available within accounts page. So if you have no accounts added to the
-                            app then
-                            Ctrl+F hotkey will take no effect.
-                        </li>
-                        <li>
-                            The search window will be automatically closed on switching between accounts.
-                        </li>
-                        <li>
-                            Search window will be automatically closed on switching to the <code>database view</code> mode. Ctrl+F hotkey
-                            takes no effect
-                            while in <code>database view</code> mode.
-                        </li>
-                    </ul>
+                    <p>
+                        The <code>in page search</code> is only available within accounts page. So if you have no accounts added to the
+                        app then
+                        Ctrl+F hotkey will take no effect.
+                    </p>
+                    <p>
+                        The search window will be automatically closed on switching between accounts.
+                    </p>
+                    <p>
+                        Search window will be automatically closed on switching to the <code>database view</code> mode. Ctrl+F hotkey
+                        takes no effect
+                        while in <code>database view</code> mode.
+                    </p>
                 </ng-template>
             </label>
         </div>

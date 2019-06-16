@@ -6,6 +6,7 @@ import {equals} from "ramda";
 
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/src/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/src/app/store/selectors";
+import {CoreService} from "src/web/src/app/_core/core.service";
 import {ElectronService} from "src/web/src/app/_core/electron.service";
 import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/src/app/app.constants";
 import {State} from "src/web/src/app/store/reducers/accounts";
@@ -18,8 +19,9 @@ import {WebAccount} from "src/web/src/app/model";
     preserveWhitespaces: true,
 })
 export class AccountsComponent implements OnInit, OnDestroy {
-    compactLayout$ = this.store.pipe(select(OptionsSelectors.CONFIG.compactLayout));
     initialized$ = this.store.pipe(select(AccountsSelectors.FEATURED.initialized));
+    compactLayout$ = this.store.pipe(select(OptionsSelectors.CONFIG.compactLayout));
+    hideControls$ = this.store.pipe(select(OptionsSelectors.CONFIG.hideControls));
     accountsMap: Map<WebAccount["accountConfig"]["login"], WebAccount> = new Map();
     selectedAccount?: WebAccount;
     unreadSummary?: number;
@@ -32,6 +34,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
     }
 
     constructor(
+        private coreService: CoreService,
         private api: ElectronService,
         private store: Store<State>,
     ) {
@@ -97,9 +100,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
     }
 
     openSettingsView() {
-        this.store.dispatch(NAVIGATION_ACTIONS.Go({
-            path: [{outlets: {[SETTINGS_OUTLET]: SETTINGS_PATH}}],
-        }));
+        this.coreService.openSettingsView();
     }
 
     openAddingAccountView() {
@@ -121,7 +122,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
     }
 
     logout() {
-        this.store.dispatch(NAVIGATION_ACTIONS.Logout());
+        this.coreService.logOut();
     }
 
     quit() {

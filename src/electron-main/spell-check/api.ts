@@ -29,14 +29,13 @@ export async function buildEndpoints(
                         locale: ctx.getSpellCheckController().getCurrentLocale(),
                     }),
                 );
+
                 IPC_MAIN_API_NOTIFICATION$.next(
-                    IPC_MAIN_API_NOTIFICATION_ACTIONS.Config(
-                        {
-                            config: await ctx.configStore.write({
-                                ...await ctx.configStore.readExisting(),
-                                spellCheckLocale: locale,
-                            }),
-                        },
+                    IPC_MAIN_API_NOTIFICATION_ACTIONS.ConfigUpdated(
+                        await ctx.configStore.write({
+                            ...await ctx.configStore.readExisting(),
+                            spellCheckLocale: locale,
+                        }),
                     ),
                 );
             });

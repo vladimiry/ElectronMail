@@ -1,6 +1,6 @@
 import {Actions, createEffect} from "@ngrx/effects";
 import {EMPTY, forkJoin, from, merge, of} from "rxjs";
-import {Injectable} from "@angular/core";
+import {Injectable, NgZone} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {catchError, filter, finalize, map, mergeMap, switchMap, takeUntil, tap} from "rxjs/operators";
 
@@ -42,18 +42,20 @@ export class DbViewEffects {
                         select(OptionsSelectors.FEATURED.mainProcessNotification),
                         filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbIndexerProgressState),
                         mergeMap(({payload}) => {
-                            if ("key" in payload) {
-                                this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login: payload.key.login, patch: payload.status}));
-                            } else {
-                                ACCOUNTS_ACTIONS.PatchGlobalProgress({patch: payload.status});
-                            }
+                            this.ngZone.run(() => {
+                                this.store.dispatch(
+                                    "key" in payload
+                                        ? ACCOUNTS_ACTIONS.PatchProgress({login: payload.key.login, patch: payload.status})
+                                        : ACCOUNTS_ACTIONS.PatchGlobalProgress({patch: payload.status}),
+                                );
+                            });
                             return EMPTY;
                         }),
                     ),
                 ).pipe(
-                    mergeMap((value) => {
-                        return value
-                            ? of(DB_VIEW_ACTIONS.SetFolders({dbAccountPk, folders: value.folders}))
+                    mergeMap((accountDataView) => {
+                        return accountDataView
+                            ? of(DB_VIEW_ACTIONS.SetFolders({dbAccountPk, folders: accountDataView.folders}))
                             : EMPTY;
                     }),
                     takeUntil(dispose$),
@@ -138,10 +140,9 @@ export class DbViewEffects {
 
                 return this.api.webViewClient(webView, type).pipe(
                     mergeMap((webViewClient) => {
-                        const fetchSingleMail$ = from(
+                        return from(
                             webViewClient("fetchSingleMail")({...pk, mailPk, zoneName: logger.zoneName()}),
-                        );
-                        return fetchSingleMail$.pipe(
+                        ).pipe(
                             mergeMap(() => of(DB_VIEW_ACTIONS.SelectConversationMailRequest({dbAccountPk: pk, mailPk}))),
                             catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                             finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.SetFetchSingleMailParams({pk, mailPk: undefined}))),
@@ -155,6 +156,7 @@ export class DbViewEffects {
     constructor(
         private api: ElectronService,
         private store: Store<State>,
+        private ngZone: NgZone,
         private actions$: Actions<{ type: string; payload: any }>,
     ) {}
 }

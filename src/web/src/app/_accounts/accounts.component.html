@@ -1,5 +1,5 @@
 <div *ngIf="initialized$ | async" [ngClass]="{'compact-layout': compactLayout$ | async}" class="wrapper">
-    <div class="accounts-block px-2 pt-2">
+    <div class="accounts-block px-2 pt-2" [ngClass]="{'d-none': hideControls$ | async}">
         <div class="controls">
             <div class="btn-group" dropdown>
                 <button (click)="openSettingsView()" class="btn btn-light" id="optionsMenuItem" type="button">
@@ -30,7 +30,7 @@
                     <li role="menuitem">
                         <button (click)="logout()" class="dropdown-item" id="logoutMenuItem" type="button">
                             <i class="fa fa-sign-out"></i>
-                            Log out
+                            Log Out
                         </button>
                     </li>
                     <li role="menuitem">

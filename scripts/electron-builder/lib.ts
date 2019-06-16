@@ -61,8 +61,10 @@ async function prepareDictionaries(): Promise<Map<Locale, Dictionary>> {
     const files: string[] = [];
 
     if (fsExtra.pathExistsSync(outcomeDir)) {
-        const existingFiles = await fastGlob.async<string>(
-            path.join(outcomeDir, "./*"),
+        const existingFiles = await fastGlob(
+            path
+                .join(outcomeDir, "./*")
+                .replace(/\\/g, "/"),
             {
                 absolute: true,
                 deep: 1,
@@ -85,8 +87,10 @@ async function prepareDictionaries(): Promise<Map<Locale, Dictionary>> {
         }
 
         const resolvedDictionaries: Array<{ locale: string, aff: string; dic: string; license?: string; }> = [];
-        const localeDirs = await fastGlob.async<string>(
-            path.join(repoCwd, "./dictionaries/*"),
+        const localeDirs = await fastGlob(
+            path
+                .join(repoCwd, "./dictionaries/*")
+                .replace(/\\/g, "/"),
             {
                 absolute: true,
                 deep: 1,

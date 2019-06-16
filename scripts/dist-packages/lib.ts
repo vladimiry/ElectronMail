@@ -12,8 +12,10 @@ export async function listInstallationPackageFiles(dir: string): Promise<string[
         return result;
     }
 
-    return await fastGlob.async<string>(
-        path.join(dir, `./${PROJECT_NAME}*.*`),
+    return await fastGlob(
+        path
+            .join(dir, `./${PROJECT_NAME}*.*`)
+            .replace(/\\/g, "/"),
         {
             absolute: true,
             deep: 1,

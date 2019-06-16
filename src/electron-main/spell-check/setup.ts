@@ -151,11 +151,13 @@ async function resolveHunspellLocales(dir: string): Promise<Locale[]> {
     const logger = curryFunctionMembers(_logger, "[src/electron-main/spell-check/setup] resolveHunspellLocales()");
     const fastGlobModule = await import("fast-glob");
 
-    const hunspellDictionariesGlob = path.join(dir, "*.dic");
+    const hunspellDictionariesGlob = path
+        .join(dir, "*.dic")
+        .replace(/\\/g, "/");
     logger.verbose(JSON.stringify({hunspellDictionariesGlob}));
 
     // hunspell"s "getAvailableDictionaries()" does nothing, so use resolving using glob as a workaround
-    const hunspellDictionaries = await fastGlobModule.async<string>(
+    const hunspellDictionaries = await fastGlobModule.default(
         hunspellDictionariesGlob,
         {
             absolute: true,

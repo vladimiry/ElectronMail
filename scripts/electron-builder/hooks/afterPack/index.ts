@@ -1,10 +1,9 @@
-import fs from "fs";
 import path from "path";
 import {AfterPackContext, Configuration} from "app-builder-lib";
 
-import {APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR, PACKAGE_NAME} from "src/shared/constants";
-import {DISABLE_SANDBOX_ARGS_LINE, copyDictionaryFilesTo, ensureFileHasNoSuidBit} from "scripts/electron-builder/lib";
+import {APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR} from "src/shared/constants";
 import {LOG, LOG_LEVELS, execShell} from "scripts/lib";
+import {copyDictionaryFilesTo} from "scripts/electron-builder/lib";
 
 const printPrefix = `[hook: afterPack]`;
 
@@ -39,36 +38,4 @@ async function linux({targets, appOutDir}: AfterPackContext) {
     if (!["appimage", "snap"].includes(targetName.toLowerCase())) {
         await execShell(["chmod", ["4755", path.join(appOutDir, "chrome-sandbox")]]);
     }
-
-    if (targetName.toLowerCase() === "appimage") {
-        await writeDisablingSandboxLoader({appOutDir});
-    }
-}
-
-async function writeDisablingSandboxLoader(
-    {appOutDir}: { appOutDir: string },
-) {
-    const appBinaryFileName = PACKAGE_NAME;
-    const appBinaryFilePath = path.join(appOutDir, appBinaryFileName);
-
-    ensureFileHasNoSuidBit(appBinaryFilePath);
-
-    const unixEOL = "\n";
-    const renamedAppBinaryFileName = `${appBinaryFileName}.bin`;
-    const renamedAppBinaryFilePath = path.join(path.dirname(appBinaryFilePath), renamedAppBinaryFileName);
-    const appBinaryPreloadFileContent = [
-        `#!/bin/sh`, // shebang must be the first line
-        `\${0%/*}/${renamedAppBinaryFileName} ${DISABLE_SANDBOX_ARGS_LINE} $@`,
-        "", // empty line at the end
-    ].join(unixEOL);
-
-    await execShell(["mv", [appBinaryFilePath, renamedAppBinaryFilePath]]);
-
-    LOG(
-        LOG_LEVELS.title(`Writing ${LOG_LEVELS.value(appBinaryFilePath)} file with content:${unixEOL}`),
-        LOG_LEVELS.value(appBinaryPreloadFileContent),
-    );
-    fs.writeFileSync(appBinaryFilePath, appBinaryPreloadFileContent);
-
-    await execShell(["chmod", ["+x", appBinaryFilePath]]);
 }

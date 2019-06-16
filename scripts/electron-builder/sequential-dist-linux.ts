@@ -2,22 +2,19 @@ import {Target} from "app-builder-lib";
 
 import {LOG, execShell} from "scripts/lib";
 
-const targetsToPublish: Array<typeof Target.prototype.name> = [
-    // "snap",
+const targets: Array<typeof Target.prototype.name> = [
     "appimage",
-    "pacman",
+    "snap",
     "deb",
     "freebsd",
+    "pacman",
     "rpm",
 ];
 
 (async () => {
-    await execShell(["yarn", ["electron-builder:dist:linux:snap"]]);
-    await clean();
-
-    for (const targetToPublish of targetsToPublish) {
+    for (const target of targets) {
         await clean();
-        await execShell(["npx", ["electron-builder", "--publish", "onTagOrDraft", "--x64", "--linux", targetToPublish]]);
+        await execShell(["yarn", [`electron-builder:dist:linux:${target}`]]);
     }
 
     await clean();

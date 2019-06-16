@@ -1,12 +1,10 @@
 import _logger from "electron-log";
-import fetch from "node-fetch";
 import fs from "fs";
 import path from "path";
 import url from "url";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Model as StoreModel} from "fs-json-store";
 
-import {BuildEnvironment} from "src/shared/model/common";
 import {Context} from "./model";
 import {curryFunctionMembers} from "src/shared/util";
 
@@ -18,38 +16,22 @@ export function resolveVendorsAppCssLinkHref({appDir}: Pick<Context["locations"]
         return cache.vendorsAppCssLinkHref;
     }
 
-    if ((process.env.NODE_ENV as BuildEnvironment) === "development") {
-        cache.vendorsAppCssLinkHref = "http://localhost:8080/vendors~app.css";
-    } else {
-        const file = path.join(appDir, "./web/vendors~app.css");
-        const stat = fs.statSync(file);
+    const file = path.join(appDir, "./web/vendors~app.css");
+    const stat = fs.statSync(file);
 
-        if (!stat.isFile()) {
-            throw new Error(`Location "${file}" exists but it's not a file`);
-        }
-
-        return formatFileUrl(file);
+    if (!stat.isFile()) {
+        throw new Error(`Location "${file}" exists but it's not a file`);
     }
 
-    return cache.vendorsAppCssLinkHref;
+    return cache.vendorsAppCssLinkHref = formatFileUrl(file);
 }
 
 export async function injectVendorsAppCssIntoHtmlFile(
     pageLocation: string,
     {appDir}: Pick<Context["locations"], "appDir">,
 ): Promise<{ html: string; baseURLForDataURL: string }> {
-    const pageContent = (process.env.NODE_ENV as BuildEnvironment) === "development"
-        ? await (async () => {
-            if (!pageLocation.startsWith("http://localhost:8080")) {
-                throw new Error(`Invalid location "${pageLocation}"`);
-            }
-            const fetched = await fetch(pageLocation);
-            return await fetched.text();
-        })()
-        : fs.readFileSync(pageLocation).toString();
-    const baseURLForDataURL = (process.env.NODE_ENV as BuildEnvironment) === "development"
-        ? "http://localhost:8080/"
-        : formatFileUrl(`${path.dirname(pageLocation)}${path.sep}`);
+    const pageContent = fs.readFileSync(pageLocation).toString();
+    const baseURLForDataURL = formatFileUrl(`${path.dirname(pageLocation)}${path.sep}`);
     const vendorCssHref = resolveVendorsAppCssLinkHref({appDir});
     const htmlInjection = `<link rel="stylesheet" href="${vendorCssHref}"/>`;
     const html = pageContent.replace(/(.*)(<head>)(.*)/i, `$1$2${htmlInjection}$3`);

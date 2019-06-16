@@ -1,13 +1,16 @@
 {
   "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    // TODO get rid of "compilerOptions.skipLibCheck" option on https://github.com/angular/angular/issues/29220 resolving
+    "skipLibCheck": true
+  },
   "include": [
     "./../../src/@types/**/*",
     "./**/*",
     "./typings.d.ts"
   ],
   "exclude": [
-    "./**/*.spec.ts",
-    "./src/environments/development/**/*"
+    "./**/*.spec.ts"
   ],
   // section is taken from the parent config, inheritance does not work here
   "angularCompilerOptions": {

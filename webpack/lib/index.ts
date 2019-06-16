@@ -27,7 +27,7 @@ const buildBaseConfig: BuildConfig = (config, options = {}) => {
 
     return webpackMerge(
         {
-            mode: environmentSate.development || environmentSate.test ? "development" : "production",
+            mode: "production",
             devtool: false,
             output: {
                 path: outputRelativePath(),

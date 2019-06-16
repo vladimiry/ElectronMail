@@ -1,11 +1,9 @@
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
 import postCssUrl from "postcss-url";
-import webpackDevServer from "webpack-dev-server";
 import webpackMerge from "webpack-merge";
-import webpack, {Configuration} from "webpack";
 import {AngularCompilerPlugin, NgToolsLoader, PLATFORM} from "@ngtools/webpack";
-import {CompilerOptions} from "typescript";
+import {Configuration} from "webpack";
 
 import {BuildEnvironment} from "src/shared/model/common";
 import {buildBaseConfig, environment, environmentSate, outputRelativePath, srcRelativePath} from "./lib";
@@ -20,12 +18,9 @@ const {readConfiguration} = require("@angular/compiler-cli");
 
 const webSrcPath = (...value: string[]) => srcRelativePath("./web/src", ...value);
 const webAppPath = (...value: string[]) => webSrcPath("./app", ...value);
-const webSrcEnvPath = (...value: string[]) => webSrcPath(
-    "./environments", environmentSate.development ? "./development" : "./production",
-    ...value,
-);
 
-const aot = environmentSate.production;
+// TODO support AOT compilation when running in "test" mode
+const aot = !environmentSate.test;
 const cssRuleUse = [
     "css-loader",
     {
@@ -53,16 +48,6 @@ const tsConfigFile = srcRelativePath(({
     development: "./web/tsconfig.development.json",
     test: "./web/test/tsconfig.json",
 } as Record<BuildEnvironment, string>)[environment]);
-const tsConfigCompilerOptions: CompilerOptions = (() => {
-    const tsConfig = readConfiguration(tsConfigFile);
-
-    if (!tsConfig.options.paths) {
-        tsConfig.options.paths = {};
-    }
-    tsConfig.options.paths["src/web/src/environments/*"] = [webSrcEnvPath() + "/*"];
-
-    return tsConfig.options;
-})();
 const chunkNames = {
     "app": "app",
     "about": "about",
@@ -73,7 +58,6 @@ const baseConfig = buildBaseConfig(
         target: "web",
         entry: {
             [chunkNames.app]: [
-                ...(aot ? [] : ["core-js/proposals/reflect-metadata"]),
                 webSrcPath("./index.ts"),
             ],
             [chunkNames.about]: webSrcPath("./about/index.ts"),
@@ -94,6 +78,26 @@ const baseConfig = buildBaseConfig(
         },
         module: {
             rules: [
+                ...(
+                    aot
+                        ? (
+                            [{
+                                test: /(?:\.ngfactory\.js|\.ngstyle\.js|\.ts)$/,
+                                use: [
+                                    "@angular-devkit/build-optimizer/webpack-loader",
+                                    NgToolsLoader,
+                                ],
+                            }]
+                        )
+                        : (
+                            [{
+                                test: /\.ts$/,
+                                use: [
+                                    NgToolsLoader,
+                                ],
+                            }]
+                        )
+                ),
                 {
                     test: /[\/\\]@angular[\/\\].+\.js$/,
                     sideEffects: false,
@@ -148,9 +152,6 @@ const baseConfig = buildBaseConfig(
             ],
         },
         plugins: [
-            new webpack.DefinePlugin({
-                "process.env.APP_AOT": JSON.stringify(aot),
-            }),
             new MiniCssExtractPlugin(),
             new HtmlWebpackPlugin({
                 template: webSrcPath("./index.ejs"),
@@ -177,86 +178,43 @@ const baseConfig = buildBaseConfig(
                 chunks: [chunkNames["search-in-page-browser-view"]],
             }),
             new AngularCompilerPlugin({
-                entryModule: `${webSrcEnvPath("app.module")}#AppModule`,
+                entryModule: `${webSrcPath("./app/app.module")}#AppModule`,
                 additionalLazyModules: {
                     [`./_db-view/db-view.module#DbViewModule`]: webSrcPath("./app/_db-view/db-view.module.ts"),
                 },
                 platform: PLATFORM.Browser,
-                ...(!aot && {skipCodeGeneration: true}),
+                skipCodeGeneration: !aot,
                 tsConfigPath: tsConfigFile,
-                compilerOptions: tsConfigCompilerOptions,
+                compilerOptions: readConfiguration(tsConfigFile).options,
                 nameLazyFiles: true,
                 contextElementDependencyConstructor: require("webpack/lib/dependencies/ContextElementDependency"),
                 discoverLazyRoutes: true, // TODO disable "discoverLazyRoutes" once switched to Ivy renderer
                 directTemplateLoading: aot,
             }),
         ],
-        ...(environment !== "test" && {
-            optimization: {
-                runtimeChunk: environmentSate.development,
-                splitChunks: {
-                    chunks: "all",
-                    name: true,
-                    cacheGroups: {
-                        vendors: {
-                            test: /([\\/]node_modules[\\/])|([\\/]src[\\/]web[\\/]src[\\/]vendor[\\/])/,
-                        },
+        optimization: {
+            runtimeChunk: environmentSate.development,
+            splitChunks: {
+                chunks: "all",
+                name: true,
+                cacheGroups: {
+                    vendors: {
+                        test: /([\\/]node_modules[\\/])|([\\/]src[\\/]web[\\/]src[\\/]vendor[\\/])/,
                     },
                 },
             },
-        }),
+        },
     },
     {
         tsConfigFile,
     },
 );
 const configPatch: Record<BuildEnvironment, Configuration> = {
-    production: {
-        module: {
-            rules: [
-                {
-                    test: /(?:\.ngfactory\.js|\.ngstyle\.js|\.ts)$/,
-                    use: [
-                        "@angular-devkit/build-optimizer/webpack-loader",
-                        NgToolsLoader,
-                    ],
-                },
-            ],
-        },
-    },
-    development: {
-        ...(() => {
-            // handle "webpack" <=> "webpack-dev-server" TypeScript declarations inconsistency
-            const devServer: webpackDevServer.Configuration = {
-                host: "127.0.0.1",
-                hot: true,
-                inline: true,
-                stats: "minimal",
-                clientLogLevel: "error",
-            };
-            return {
-                devServer: devServer as any,
-            };
-        })(),
-        module: {
-            rules: [
-                {
-                    test: /\.ts$/,
-                    loader: "@ngtools/webpack",
-                },
-            ],
-        },
-        plugins: [
-            new webpack.HotModuleReplacementPlugin(),
-        ],
-    },
+    production: {},
+    development: {},
     test: {
         module: {
             rules: [
-                {
-                    test: /\.ts$/,
-                    loader: "@ngtools/webpack",
-                },
                 {
                     test: /\.(css|scss|eot|ttf|otf|woff|woff2|ico|gif|png|jpe?g|svg)$/i,
                     loader: "null-loader",

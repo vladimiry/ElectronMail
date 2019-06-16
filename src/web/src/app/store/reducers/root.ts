@@ -4,13 +4,13 @@ import {RouterReducerState, routerReducer} from "@ngrx/router-store";
 import {UnionOf} from "@vladimiry/unionize";
 
 import {BuildEnvironment} from "src/shared/model/common";
-import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS, ROOT_ACTIONS} from "src/web/src/app/store/actions";
+import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/src/app/store/actions";
 import {getZoneNameBoundWebLogger} from "src/web/src/util";
 
 const logger = getZoneNameBoundWebLogger("[reducers/root]");
 
 // TODO join all actions in "src/web/src/app/store/actions" once
-type Actions = UnionOf<typeof ROOT_ACTIONS> & UnionOf<typeof NAVIGATION_ACTIONS>;
+type Actions = UnionOf<typeof NAVIGATION_ACTIONS>;
 
 export interface State {
     router?: RouterReducerState;
@@ -34,16 +34,12 @@ export function createErrorHandlingMetaReducer(injector: Injector): MetaReducer<
 }
 
 export function createAppMetaReducer(): MetaReducer<State, Actions> {
+    const development = (process.env.NODE_ENV as BuildEnvironment) === "development";
+
     return (reducer) => {
         return (state, action) => {
-            if ((process.env.NODE_ENV as BuildEnvironment) === "development") {
-                if (typeof action.type === "string" && action.type) {
-                    logger.silly(action.type);
-                }
-
-                if (ROOT_ACTIONS.is.HmrStateRestoreAction(action)) {
-                    return action.payload;
-                }
+            if (development && typeof action.type === "string" && action.type) {
+                logger.silly(action.type);
             }
 
             if (NAVIGATION_ACTIONS.is.Logout(action)) {

@@ -1,18 +1,3 @@
 {
-  "extends": "../../tsconfig.json",
-  "include": [
-    "./../../src/@types/**/*",
-    "./**/*",
-    "./typings.d.ts"
-  ],
-  "exclude": [
-    "./**/*.spec.ts",
-    "./src/environments/production/**/*"
-  ],
-  // section is taken from the parent config, inheritance does not work here
-  "angularCompilerOptions": {
-    "preserveWhitespaces": false,
-    "fullTemplateTypeCheck": false,
-    "disableTypeScriptVersionCheck": true
-  }
+  "extends": "./tsconfig.json"
 }

@@ -13,8 +13,6 @@ import {INITIAL_STORES, configEncryptionPresetValidator, settingsAccountLoginUni
 import {LOCAL_WEBCLIENT_PROTOCOL_PREFIX, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
 import {formatFileUrl} from "./util";
 
-const developmentEnv = (process.env.NODE_ENV as BuildEnvironment) === "development";
-
 export function initContext(options: ContextInitOptions = {}): Context {
     const storeFs = options.storeFs
         ? options.storeFs
@@ -99,7 +97,12 @@ function initLocations(
     }
 
     const {appDir, userDataDir} = paths || {
-        appDir: path.resolve(__dirname, developmentEnv ? "../app-dev" : "../app"),
+        appDir: path.resolve(
+            __dirname,
+            (process.env.NODE_ENV as BuildEnvironment) === "development"
+                ? "../app-dev"
+                : "../app",
+        ),
         userDataDir: customUserDataDir || app.getPath("userData"),
     };
     const appRelativePath = (...value: string[]) => path.join(appDir, ...value);
@@ -111,15 +114,9 @@ function initLocations(
         icon,
         trayIcon: icon,
         numbersFont: appRelativePath("./assets/numbers.ttf"),
-        browserWindowPage: developmentEnv
-            ? "http://localhost:8080/index.html"
-            : formatFileUrl(appRelativePath("./web/index.html")),
-        aboutBrowserWindowPage: developmentEnv
-            ? "http://localhost:8080/about.html"
-            : appRelativePath("./web/about.html"),
-        searchInPageBrowserViewPage: developmentEnv
-            ? "http://localhost:8080/search-in-page-browser-view.html"
-            : appRelativePath("./web/search-in-page-browser-view.html"),
+        browserWindowPage: formatFileUrl(appRelativePath("./web/index.html")),
+        aboutBrowserWindowPage: appRelativePath("./web/about.html"),
+        searchInPageBrowserViewPage: appRelativePath("./web/search-in-page-browser-view.html"),
         preload: {
             aboutBrowserWindow: appRelativePath("./electron-preload/about.js"),
             browserWindow: appRelativePath("./electron-preload/browser-window.js"),

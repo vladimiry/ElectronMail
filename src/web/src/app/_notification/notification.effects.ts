@@ -1,4 +1,4 @@
-import {Actions, Effect} from "@ngrx/effects";
+import {Actions, createEffect} from "@ngrx/effects";
 import {EMPTY, from, merge, of} from "rxjs";
 import {Injectable} from "@angular/core";
 import {UnionOf} from "@vladimiry/unionize";
@@ -13,30 +13,31 @@ const _logger = getZoneNameBoundWebLogger("[notification.effects]");
 
 @Injectable()
 export class NotificationEffects {
-    @Effect()
-    $notification = merge(
-        this.actions$.pipe(filter(NOTIFICATION_ACTIONS.is.Error)),
-        this.actions$.pipe(filter(NOTIFICATION_ACTIONS.is.Info)),
-        this.actions$.pipe(filter(NOTIFICATION_ACTIONS.is.Update)),
-    ).pipe(
-        map(() => {
-            return NAVIGATION_ACTIONS.Go({path: [{outlets: {[NOTIFICATIONS_OUTLET]: NOTIFICATIONS_PATH}}]});
-        }),
+    $notification = createEffect(
+        () => merge(
+            this.actions$.pipe(filter(NOTIFICATION_ACTIONS.is.Error)),
+            this.actions$.pipe(filter(NOTIFICATION_ACTIONS.is.Info)),
+            this.actions$.pipe(filter(NOTIFICATION_ACTIONS.is.Update)),
+        ).pipe(
+            map(() => {
+                return NAVIGATION_ACTIONS.Go({path: [{outlets: {[NOTIFICATIONS_OUTLET]: NOTIFICATIONS_PATH}}]});
+            }),
+        ),
     );
 
-    @Effect()
-    updateOverlayIcon$ = this.actions$.pipe(
-        filter(NOTIFICATION_ACTIONS.is.UpdateOverlayIcon),
-        map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-        concatMap(({payload: {hasLoggedOut, unread, unreadBgColor, unreadTextColor}}) => {
-            const updateOverlayIcon$ = from(
-                this.electronService.ipcMainClient()("updateOverlayIcon")({hasLoggedOut, unread, unreadBgColor, unreadTextColor}),
-            );
-            return updateOverlayIcon$.pipe(
-                mergeMap(() => EMPTY),
-                catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
-            );
-        }),
+    updateOverlayIcon$ = createEffect(
+        () => this.actions$.pipe(
+            filter(NOTIFICATION_ACTIONS.is.UpdateOverlayIcon),
+            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+            concatMap(({payload: {hasLoggedOut, unread, unreadBgColor, unreadTextColor}}) => {
+                return from(
+                    this.electronService.ipcMainClient()("updateOverlayIcon")({hasLoggedOut, unread, unreadBgColor, unreadTextColor}),
+                ).pipe(
+                    mergeMap(() => EMPTY),
+                    catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
+                );
+            }),
+        ),
     );
 
     constructor(

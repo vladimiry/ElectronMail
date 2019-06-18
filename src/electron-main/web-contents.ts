@@ -20,6 +20,7 @@ export async function initWebContentsCreatingHandlers(ctx: Context) {
     const subscriptions: Readonly<{
         "context-menu": (event: Event, params: ContextMenuParams) => void;
         "update-target-url": (event: Event, url: string) => void;
+        "preload-error": (event: Event, preloadPath: string, error: Error) => void;
         "will-attach-webview": (event: Event, webPreferences: any, params: any) => void;
     }> = {
         "context-menu": async ({sender: webContents}: Event, {editFlags, linkURL, linkText, isEditable, selectionText}) => {
@@ -103,6 +104,9 @@ export async function initWebContentsCreatingHandlers(ctx: Context) {
         "update-target-url": (event, url) => {
             IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.TargetUrl({url}));
         },
+        "preload-error": (event, preloadPath, error) => {
+            logger.error(event.type, preloadPath, error);
+        },
         "will-attach-webview": (() => {
             const srcWhitelist: string[] = Object
                 .values(ACCOUNTS_CONFIG)
@@ -145,6 +149,10 @@ export async function initWebContentsCreatingHandlers(ctx: Context) {
         webContents.on(event, subscriptions[event]);
 
         event = "update-target-url";
+        webContents.removeListener(event, subscriptions[event]);
+        webContents.on(event, subscriptions[event]);
+
+        event = "preload-error";
         webContents.removeListener(event, subscriptions[event]);
         webContents.on(event, subscriptions[event]);
 

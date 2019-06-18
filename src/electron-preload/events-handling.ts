@@ -1,8 +1,6 @@
 import {IPC_MAIN_API, IpcMainApiEndpoints} from "src/shared/api/main";
 import {Logger} from "src/shared/model/common";
 
-// TODO setup single/global/central exception handler
-
 type ObservableElement = Pick<HTMLElement, "addEventListener" | "removeEventListener">;
 
 const processedKeyDownElements = new WeakMap<ObservableElement, ReturnType<typeof registerDocumentKeyDownEventListener>>();
@@ -28,68 +26,63 @@ export function registerDocumentKeyDownEventListener<E extends ObservableElement
         return subscription;
     }
 
-    try {
-        const apiClient = IPC_MAIN_API.client({options: {logger}});
-        const eventHandlerArgs: readonly ["keydown", (event: KeyboardEvent) => Promise<void>] = [
-            "keydown",
-            async (event: Readonly<KeyboardEvent>) => {
-                if (event.keyCode === keyCodes.F12) {
-                    await apiClient("toggleControls")();
-                    return;
-                }
+    const apiClient = IPC_MAIN_API.client({options: {logger}});
+    const eventHandlerArgs: readonly ["keydown", (event: KeyboardEvent) => Promise<void>] = [
+        "keydown",
+        async (event: Readonly<KeyboardEvent>) => {
+            if (event.keyCode === keyCodes.F12) {
+                await apiClient("toggleControls")();
+                return;
+            }
 
-                const el: Element | null = (event.target as any);
-                const cmdOrCtrl = event.ctrlKey || event.metaKey;
+            const el: Element | null = (event.target as any);
+            const cmdOrCtrl = event.ctrlKey || event.metaKey;
 
-                if (!cmdOrCtrl) {
-                    return;
-                }
+            if (!cmdOrCtrl) {
+                return;
+            }
 
-                if (event.keyCode === keyCodes.F) {
-                    await apiClient("findInPageDisplay")({visible: true});
-                    return;
-                }
+            if (event.keyCode === keyCodes.F) {
+                await apiClient("findInPageDisplay")({visible: true});
+                return;
+            }
 
-                let type: Arguments<IpcMainApiEndpoints["hotkey"]>[0]["type"] | undefined;
+            let type: Arguments<IpcMainApiEndpoints["hotkey"]>[0]["type"] | undefined;
 
-                if (!el) {
-                    return;
-                }
+            if (!el) {
+                return;
+            }
 
-                if (event.keyCode === keyCodes.A) {
-                    type = "selectAll";
-                } else if (event.keyCode === keyCodes.C && !isPasswordInput(el)) {
-                    type = "copy";
-                } else if (event.keyCode === keyCodes.V && isWritable(el)) {
-                    type = "paste";
-                }
+            if (event.keyCode === keyCodes.A) {
+                type = "selectAll";
+            } else if (event.keyCode === keyCodes.C && !isPasswordInput(el)) {
+                type = "copy";
+            } else if (event.keyCode === keyCodes.V && isWritable(el)) {
+                type = "paste";
+            }
 
-                if (!type) {
-                    return;
-                }
+            if (!type) {
+                return;
+            }
 
-                await apiClient("hotkey")({type});
-            },
-        ];
-        const [, eventHandler] = eventHandlerArgs;
+            await apiClient("hotkey")({type});
+        },
+    ];
+    const [, eventHandler] = eventHandlerArgs;
 
-        element.addEventListener(...eventHandlerArgs);
+    element.addEventListener(...eventHandlerArgs);
 
-        subscription = {
-            unsubscribe: () => {
-                element.removeEventListener(...eventHandlerArgs);
-                processedKeyDownElements.delete(element);
-            },
-            eventHandler,
-        };
+    subscription = {
+        unsubscribe: () => {
+            element.removeEventListener(...eventHandlerArgs);
+            processedKeyDownElements.delete(element);
+        },
+        eventHandler,
+    };
 
-        processedKeyDownElements.set(element, subscription);
+    processedKeyDownElements.set(element, subscription);
 
-        return subscription;
-    } catch (e) {
-        logger.error(e);
-        throw e;
-    }
+    return subscription;
 }
 
 export function registerDocumentClickEventListener<E extends ObservableElement>(
@@ -105,31 +98,26 @@ export function registerDocumentClickEventListener<E extends ObservableElement>(
         return subscription;
     }
 
-    try {
-        const apiClient = IPC_MAIN_API.client({options: {logger}});
-        const eventHandlerArgs: ["click", (event: MouseEvent) => Promise<void>] = [
-            "click",
-            async (event: MouseEvent) => await callDocumentClickEventListener(event, logger, apiClient),
-        ];
-        const [, eventHandler] = eventHandlerArgs;
+    const apiClient = IPC_MAIN_API.client({options: {logger}});
+    const eventHandlerArgs: ["click", (event: MouseEvent) => Promise<void>] = [
+        "click",
+        async (event: MouseEvent) => await callDocumentClickEventListener(event, logger, apiClient),
+    ];
+    const [, eventHandler] = eventHandlerArgs;
 
-        element.addEventListener(...eventHandlerArgs);
+    element.addEventListener(...eventHandlerArgs);
 
-        subscription = {
-            unsubscribe: () => {
-                element.removeEventListener(...eventHandlerArgs);
-                processedClickElements.delete(element);
-            },
-            eventHandler,
-        };
+    subscription = {
+        unsubscribe: () => {
+            element.removeEventListener(...eventHandlerArgs);
+            processedClickElements.delete(element);
+        },
+        eventHandler,
+    };
 
-        processedClickElements.set(element, subscription);
+    processedClickElements.set(element, subscription);
 
-        return subscription;
-    } catch (e) {
-        logger.error(e);
-        throw e;
-    }
+    return subscription;
 }
 
 export async function callDocumentClickEventListener(
@@ -137,31 +125,26 @@ export async function callDocumentClickEventListener(
     logger: Logger,
     apiClient?: ReturnType<typeof IPC_MAIN_API.client>,
 ) {
-    try {
-        const {element: el, link, href} = resolveLink(event.target as Element);
+    const {element: el, link, href} = resolveLink(event.target as Element);
 
-        if (!link || el.classList.contains("prevent-default-event")) {
-            return;
-        }
-
-        if (
-            !href
-            ||
-            !(href.startsWith("https://") || href.startsWith("http://"))
-        ) {
-            return;
-        }
-
-        event.preventDefault();
-
-        const client = apiClient || IPC_MAIN_API.client({options: {logger}});
-        const method = client("openExternal");
-
-        await method({url: href});
-    } catch (e) {
-        logger.error(e);
-        throw e;
+    if (!link || el.classList.contains("prevent-default-event")) {
+        return;
     }
+
+    if (
+        !href
+        ||
+        !(href.startsWith("https://") || href.startsWith("http://"))
+    ) {
+        return;
+    }
+
+    event.preventDefault();
+
+    const client = apiClient || IPC_MAIN_API.client({options: {logger}});
+    const method = client("openExternal");
+
+    await method({url: href});
 }
 
 function resolveLink(element: Element): { element: Element, link?: boolean; href?: string } {

@@ -9,13 +9,7 @@ import {registerApi} from "./api";
 
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[index]");
 
-try {
-    bootstrap();
-} catch (error) {
-    console.error(error); // tslint:disable-line:no-console
-    logger.error(error);
-    throw error;
-}
+bootstrap();
 
 function bootstrap() {
     configureProviderApp();

@@ -23,23 +23,24 @@ export interface ElectronWindow {
     readonly __ELECTRON_EXPOSURE__: Readonly<ElectronExposure>;
 }
 
-export interface ElectronContextLocations {
-    readonly appDir: string;
-    readonly browserWindowPage: string;
-    readonly aboutBrowserWindowPage: string;
-    readonly searchInPageBrowserViewPage: string;
-    readonly icon: string;
-    readonly numbersFont: string;
-    readonly trayIcon: string;
-    readonly userDataDir: string;
-    readonly preload: {
+export type ElectronContextLocations = Readonly<{
+    appDir: string;
+    browserWindowPage: string;
+    aboutBrowserWindowPage: string;
+    searchInPageBrowserViewPage: string;
+    icon: string;
+    numbersFont: string;
+    trayIcon: string;
+    userDataDir: string;
+    vendorsAppCssLinkHref: string;
+    preload: Readonly<{
         aboutBrowserWindow: string;
         browserWindow: string;
         browserWindowE2E: string;
         searchInPageBrowserView: string;
         fullTextSearchBrowserWindow: string;
         webView: Record<AccountType, string>;
-    };
-    readonly protocolBundles: Array<{ scheme: string; directory: string }>;
-    readonly webClients: Record<AccountType, Array<{ entryUrl: string; entryApiUrl: string; }>>;
-}
+    }>;
+    protocolBundles: ReadonlyArray<{ scheme: string; directory: string }>;
+    webClients: Readonly<Record<AccountType, Array<{ entryUrl: string; entryApiUrl: string; }>>>;
+}>;

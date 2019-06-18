@@ -1,0 +1,49 @@
+@import "~~src/web/variables";
+
+:host {
+    display: flex;
+
+    &.search-view {
+        .left-column,
+        .right-column {
+            display: none;
+        }
+    }
+
+    .left-column,
+    .right-column {
+        display: flex;
+    }
+
+    .left-column {
+        > .overflow-auto > .list-group {
+            &:not(:first-of-type) {
+                margin-top: $app-spacer-2;
+            }
+
+            > .list-group-item-action {
+                cursor: pointer;
+            }
+        }
+    }
+
+    > #{$app-prefix}-db-view-mails {
+        margin-left: $app-spacer-2;
+    }
+
+    &::ng-deep {
+        .overflow-auto {
+            overflow: auto;
+            height: 100%;
+        }
+
+        .flex-basis-half {
+            flex-basis: 50%;
+        }
+
+        #{$app-prefix}-db-view-mail-body {
+            min-height: 100%;
+            background-color: $white;
+        }
+    }
+}

@@ -1,0 +1,49 @@
+@import "~~src/web/variables";
+
+:host {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+
+    .controls {
+        border: 1px solid $list-group-border-color;
+        border-radius: $list-group-border-radius;
+        background-color: $white;
+        padding: $btn-padding-y $btn-padding-x;
+
+        .badge {
+            display: flex;
+            align-self: center;
+            font-weight: normal;
+            font-size: $app-font-size-base-small;
+            color: $gray-700;
+            border: 1px solid $border-color;
+        }
+
+        select {
+            display: flex;
+            align-self: center;
+            height: auto;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+    }
+
+    #{$app-prefix}-db-view-mail {
+        cursor: pointer;
+
+        &:not(:last-of-type) {
+            border-bottom-width: 0;
+        }
+
+        &.selected {
+            background-color: theme-color("warning-light");
+        }
+    }
+
+    .load-more {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}

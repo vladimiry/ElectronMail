@@ -2,8 +2,7 @@ import nodeExternals from "webpack-node-externals";
 import path from "path";
 import {Configuration} from "webpack";
 
-import {LoaderConfig as TsLoaderConfig} from "awesome-typescript-loader/src/interfaces";
-import {buildBaseConfig, rootRelativePath} from "./lib";
+import {awesomeTypescriptLoaderRule, buildBaseConfig, rootRelativePath} from "./lib";
 
 const hooksDir = (...value: string[]) => path.join(
     rootRelativePath("./scripts/electron-builder/hooks"),
@@ -38,15 +37,7 @@ const configurations: Configuration[] = hooksToBuild.map((hookDirName) => {
             },
             module: {
                 rules: [
-                    {
-                        test: /\.ts$/,
-                        use: {
-                            loader: "awesome-typescript-loader",
-                            options: {
-                                configFileName: tsConfigFile,
-                            } as TsLoaderConfig,
-                        },
-                    },
+                    awesomeTypescriptLoaderRule({tsConfigFile}),
                 ],
             },
             externals: [

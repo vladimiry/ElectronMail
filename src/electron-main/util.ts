@@ -9,31 +9,14 @@ import {Context} from "./model";
 import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[src/electron-main/util]");
-const cache: { vendorsAppCssLinkHref?: ReturnType<typeof resolveVendorsAppCssLinkHref> } = {};
-
-export function resolveVendorsAppCssLinkHref({appDir}: Pick<Context["locations"], "appDir">): string {
-    if (cache.vendorsAppCssLinkHref) {
-        return cache.vendorsAppCssLinkHref;
-    }
-
-    const file = path.join(appDir, "./web/vendors~app.css");
-    const stat = fs.statSync(file);
-
-    if (!stat.isFile()) {
-        throw new Error(`Location "${file}" exists but it's not a file`);
-    }
-
-    return cache.vendorsAppCssLinkHref = formatFileUrl(file);
-}
 
 export async function injectVendorsAppCssIntoHtmlFile(
     pageLocation: string,
-    {appDir}: Pick<Context["locations"], "appDir">,
+    {vendorsAppCssLinkHref}: Context["locations"],
 ): Promise<{ html: string; baseURLForDataURL: string }> {
     const pageContent = fs.readFileSync(pageLocation).toString();
     const baseURLForDataURL = formatFileUrl(`${path.dirname(pageLocation)}${path.sep}`);
-    const vendorCssHref = resolveVendorsAppCssLinkHref({appDir});
-    const htmlInjection = `<link rel="stylesheet" href="${vendorCssHref}"/>`;
+    const htmlInjection = `<link rel="stylesheet" href="${vendorsAppCssLinkHref}"/>`;
     const html = pageContent.replace(/(.*)(<head>)(.*)/i, `$1$2${htmlInjection}$3`);
 
     if (!html.includes(htmlInjection)) {

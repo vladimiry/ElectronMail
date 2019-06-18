@@ -1,0 +1,46 @@
+@import "~~src/web/variables";
+
+body,
+html {
+    height: 100%;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+}
+
+.about-block {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+
+    .list-versions {
+        color: $gray-600;
+        font-size: $app-font-size-base-medium;
+    }
+
+    .list-links {
+        > li {
+            flex-grow: 1;
+            flex-basis: 0;
+            text-align: center;
+        }
+    }
+
+    p,
+    h1 {
+        margin-bottom: $app-spacer-2;
+        text-align: center;
+    }
+
+    img {
+        width: 128px;
+        height: 128px;
+    }
+}
+
+ul > li {
+    color: #999999;
+}

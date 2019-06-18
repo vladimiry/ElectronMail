@@ -48,6 +48,12 @@ export const APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR = "./usr/share/hunspell";
 
 export const UPDATE_CHECK_FETCH_TIMEOUT = ONE_SECOND_MS * 10;
 
+export const WEB_CHUNK_NAMES = {
+    "about": "about",
+    "browser-window": "browser-window",
+    "search-in-page-browser-view": "search-in-page-browser-view",
+} as const;
+
 export const PROVIDER_REPO: Record<AccountType, { repo: string, version: string; commit: string; }> = {
     protonmail: {
         repo: "https://github.com/ProtonMail/WebClient.git",

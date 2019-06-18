@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.json",
+  "exclude": [],
+  // section is taken from the parent config, inheritance does not work here
+  "angularCompilerOptions": {
+    "preserveWhitespaces": false,
+    "fullTemplateTypeCheck": false,
+    "disableTypeScriptVersionCheck": true
+  }
+}

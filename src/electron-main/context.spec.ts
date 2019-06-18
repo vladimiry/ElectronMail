@@ -9,6 +9,8 @@ test.serial(`"Context.db" resolves encryption key calling "Context.settingsStore
     const memFsPath = process.cwd();
 
     memFsVolume._impl.mkdirpSync(memFsPath);
+    memFsVolume._impl.mkdirpSync(path.join(memFsPath, "web/browser-window"));
+    memFsVolume._impl.writeFileSync(path.join(memFsPath, "web/browser-window/vendor.css"), "");
 
     const {initContext} = await rewiremock.around(
         () => import("./context"),
@@ -21,6 +23,10 @@ test.serial(`"Context.db" resolves encryption key calling "Context.settingsStore
     );
     const ctx = initContext({
         storeFs: memFsVolume,
+        paths: {
+            appDir: memFsPath,
+            userDataDir: memFsPath,
+        },
     });
 
     await t.throwsAsync(
@@ -48,6 +54,8 @@ test.serial([
     const memFsPath = process.cwd();
 
     memFsVolume._impl.mkdirpSync(memFsPath);
+    memFsVolume._impl.mkdirpSync(path.join(memFsPath, "web/browser-window"));
+    memFsVolume._impl.writeFileSync(path.join(memFsPath, "web/browser-window/vendor.css"), "");
 
     const {INITIAL_STORES} = await import("./constants");
     const initialSettings = INITIAL_STORES.settings();
@@ -69,6 +77,10 @@ test.serial([
 
     const ctx = initContext({
         storeFs: memFsVolume,
+        paths: {
+            appDir: memFsPath,
+            userDataDir: memFsPath,
+        },
     });
 
     t.true(settingsStub.called, `"initContext()" should call "INITIAL_STORES.settings()" internally`);

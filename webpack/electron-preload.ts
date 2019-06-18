@@ -1,7 +1,6 @@
 import {Configuration} from "webpack";
 
-import {LoaderConfig as TsLoaderConfig} from "awesome-typescript-loader/src/interfaces";
-import {buildBaseConfig, environment, srcRelativePath} from "./lib";
+import {ENVIRONMENT, awesomeTypescriptLoaderRule, buildBaseConfig, srcRelativePath} from "./lib";
 
 const configs = [
     buildRendererConfig(
@@ -12,7 +11,7 @@ const configs = [
     ),
     buildRendererConfig(
         {
-            "electron-preload/browser-window": srcRelativePath(`./electron-preload/browser-window/build-env-based/${environment}.ts`),
+            "electron-preload/browser-window": srcRelativePath(`./electron-preload/browser-window/build-env-based/${ENVIRONMENT}.ts`),
             "electron-preload/browser-window-e2e": srcRelativePath("./electron-preload/browser-window/e2e.ts"),
         },
         srcRelativePath("./electron-preload/browser-window/tsconfig.json"),
@@ -52,15 +51,7 @@ function buildRendererConfig(entry: Configuration["entry"], tsConfigFile: string
             entry,
             module: {
                 rules: [
-                    {
-                        test: /\.ts$/,
-                        use: {
-                            loader: "awesome-typescript-loader",
-                            options: {
-                                configFileName: tsConfigFile,
-                            } as TsLoaderConfig,
-                        },
-                    },
+                    awesomeTypescriptLoaderRule({tsConfigFile}),
                 ],
             },
         },

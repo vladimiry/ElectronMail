@@ -130,7 +130,7 @@ export const ENDPOINTS_DEFINITION = {
 };
 
 export interface InitResponse {
-    electronLocations: ElectronContextLocations & { vendorsAppCssLinkHref: string };
+    electronLocations: ElectronContextLocations;
     hasSavedPassword?: boolean;
     snapPasswordManagerServiceHint?: boolean;
     keytarSupport: boolean;

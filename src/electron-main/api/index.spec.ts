@@ -282,11 +282,9 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
     // TODO actualize "init" endpoint test
     init: async (t) => {
         const result = await t.context.endpoints.init();
-        const {resolveVendorsAppCssLinkHref} = t.context.mocks["src/electron-main/util"];
 
-        t.deepEqual(omit(["vendorsAppCssLinkHref"], result.electronLocations), t.context.ctx.locations);
+        t.deepEqual(result.electronLocations, t.context.ctx.locations);
         t.is(typeof result.hasSavedPassword, "boolean");
-        t.true(resolveVendorsAppCssLinkHref.calledWithExactly(t.context.ctx.locations));
     },
 
     logout: async (t) => {
@@ -587,7 +585,6 @@ async function buildMocks() {
         },
         "src/electron-main/util": {
             buildSettingsAdapter,
-            resolveVendorsAppCssLinkHref: sinon.spy(),
         },
         "src/electron-main/storage-upgrade": {
             upgradeConfig: sinon.stub().returns(false),
@@ -668,7 +665,7 @@ test.beforeEach(async (t) => {
 
     const testName = t.title;
     assert.ok(testName, "test name is not empty");
-    const directory = path.join(
+    const appDir = path.join(
         OPTIONS.dataDirectory,
         `${testName.replace(/[^A-Za-z0-9]/g, "_")}`,
     );
@@ -677,6 +674,8 @@ test.beforeEach(async (t) => {
     const memFsVolume = Fs.MemFs.volume();
 
     memFsVolume._impl.mkdirpSync(process.cwd());
+    memFsVolume._impl.mkdirpSync(path.join(appDir, "web/browser-window"));
+    memFsVolume._impl.writeFileSync(path.join(appDir, "web/browser-window/vendor.css"), "");
 
     // reducing work factor in order to speed-up the test process and make it less computing resources consuming
     encryptionPreset.keyDerivation = {type: "sodium.crypto_pwhash", preset: "mode:interactive|algorithm:default"};
@@ -698,8 +697,8 @@ test.beforeEach(async (t) => {
 
     const ctx = initContext({
         paths: {
-            userDataDir: directory,
-            appDir: directory,
+            userDataDir: appDir,
+            appDir,
         },
         storeFs: memFsVolume,
         initialStores,

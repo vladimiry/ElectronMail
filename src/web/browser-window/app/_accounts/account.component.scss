@@ -1,0 +1,31 @@
+@import "~~src/web/variables";
+
+:host {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background-color: $gray-200;
+
+    &.account-hidden {
+        display: none;
+    }
+
+    &.webview-hidden {
+        .webview-wrapper {
+            display: none;
+        }
+    }
+
+    .webview-wrapper {
+        &,
+        webview {
+            flex: 1;
+            height: 100%;
+        }
+    }
+}

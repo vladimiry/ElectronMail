@@ -1,0 +1,16 @@
+@import "~~src/web/variables";
+
+:host {
+    display: flex;
+    height: 100%;
+
+    > #{$app-prefix}-db-view-mail-tab {
+        flex-grow: 1;
+    }
+
+    &::ng-deep {
+        .prevent-default-event {
+            text-decoration: none;
+        }
+    }
+}

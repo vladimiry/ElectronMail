@@ -1,0 +1,47 @@
+@import "~~src/web/variables";
+
+:host {
+    .rounded {
+        background-color: $gray-200;
+        color: $gray-600;
+        padding: $list-group-item-padding-y $list-group-item-padding-x;
+
+        .form-check {
+            margin-top: $app-spacer-1;
+
+            @media (min-width: #{map-get($grid-breakpoints, md)}) {
+                margin-top: 0;
+            }
+        }
+    }
+
+    #accountEditFormEntryUrlField {
+        .badge {
+            $local-color: theme-color("primary");
+            $online-color: theme-color("danger");
+
+            display: inline-block;
+            background-color: transparent;
+            color: $online-color;
+            border: 1px solid $online-color;
+            min-width: 3.8em;
+            vertical-align: middle;
+            font-weight: bold;
+
+            &::after {
+                display: inline-block;
+                content: "online / live";
+                font-weight: normal;
+            }
+
+            &.badge-local {
+                color: $local-color;
+                border: 1px solid $local-color;
+
+                &::after {
+                    content: "offline / prepackaged";
+                }
+            }
+        }
+    }
+}

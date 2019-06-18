@@ -1,0 +1,35 @@
+@import "~src/web/variables";
+
+html,
+body {
+    height: 100%;
+}
+
+// "bootstrap"
+.form-group.required > label::after {
+    content: "*";
+    color: theme-color("danger");
+}
+
+.form-control {
+    &.is-valid,
+    &.is-invalid {
+        background-position-x: 98%;
+    }
+}
+
+// "bootstrap"
+.dropdown-toggle-split {
+    @include app-dropdown-toggle-split;
+}
+
+// "bootstrap"
+.modal-footer {
+    padding: $modal-header-padding;
+}
+
+// "ng-select"
+ng-select.ng-invalid.ng-touched .ng-select-container { // sass-lint:disable-line no-qualifying-elements
+    border-color: #dc3545;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 0 3px #fde6e8;
+}

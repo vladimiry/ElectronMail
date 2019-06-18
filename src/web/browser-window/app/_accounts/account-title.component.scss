@@ -1,0 +1,85 @@
+@import "~~src/web/variables";
+
+@mixin account-title-button($color) {
+    @include button-variant($color, $color);
+
+    &:focus {
+        outline: none;
+        box-shadow: none;
+    }
+}
+
+:host {
+    $btn-default-color: theme-color("light");
+    $btn-selected-color: $app-color-warning-light-text;
+    $btn-selected-bg-color: theme-color("warning-light");
+
+    display: flex;
+    padding: 0;
+
+    .btn-group {
+        display: flex;
+        flex-grow: 1;
+
+        &:not(.selected) {
+            .btn {
+                @include account-title-button($btn-default-color);
+            }
+
+            .b-toggle-view {
+                border-left: 1px solid darken($btn-default-color, 10%);
+            }
+        }
+
+        &.selected {
+            .btn {
+                @include account-title-button($btn-selected-bg-color);
+                color: $btn-selected-color;
+            }
+
+            .b-toggle-view {
+                border-left: 1px solid lighten(#cdb671, 16%);
+            }
+        }
+
+        > .btn:first-child {
+            flex-grow: 1;
+        }
+    }
+
+    .b-primary {
+        display: flex;
+        flex-grow: 1;
+        text-decoration: none;
+        align-items: center;
+    }
+
+    .b-toggle-view {
+        @include app-dropdown-toggle-split;
+        margin-left: 0;
+        flex-grow: 0;
+
+        .fa {
+            font-size: 78%;
+            width: 0.78em; // prevent button size change on icon toggling
+
+            &.syncing {
+                color: theme-color("primary");
+                animation: app-keyframes-opacity 1s linear infinite;
+            }
+        }
+    }
+
+    .fa {
+        line-height: $line-height-base;
+    }
+
+    .login-delay {
+        color: $text-muted;
+        font-size: 85%;
+
+        .fa ~ span {
+            margin-left: $app-spacer-1 / 2;
+        }
+    }
+}

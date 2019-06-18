@@ -10,49 +10,6 @@ import {injectVendorsAppCssIntoHtmlFile} from "src/electron-main/util";
 
 const logger = curryFunctionMembers(_logger, "[src/electron-main/window/about]");
 
-export async function showAboutBrowserWindow(ctx: Context): Promise<BrowserWindow> {
-    if (!ctx.uiContext) {
-        throw new Error(`UI Context has not been initialized`);
-    }
-
-    const {aboutBrowserWindow: exitingBrowserWindow} = ctx.uiContext;
-
-    if (exitingBrowserWindow && !exitingBrowserWindow.isDestroyed()) {
-        exitingBrowserWindow.center();
-        exitingBrowserWindow.show();
-        exitingBrowserWindow.focus();
-        return exitingBrowserWindow;
-    }
-
-    const browserWindow = new BrowserWindow({
-        title: `About ${PRODUCT_NAME}`,
-        center: true,
-        modal: true,
-        autoHideMenuBar: true,
-        width: 650,
-        height: 500,
-        webPreferences: {
-            ...DEFAULT_WEB_PREFERENCES,
-            preload: ctx.locations.preload.aboutBrowserWindow,
-        },
-    });
-
-    browserWindow.on("closed", () => {
-        if (!ctx.uiContext) {
-            return;
-        }
-        delete ctx.uiContext.aboutBrowserWindow;
-    });
-
-    ctx.uiContext.aboutBrowserWindow = browserWindow;
-
-    const {html, baseURLForDataURL} = await resolveContent(ctx);
-
-    await browserWindow.webContents.loadURL(`data:text/html,${html}`, {baseURLForDataURL});
-
-    return browserWindow;
-}
-
 const resolveContent: (ctx: Context) => Promise<Unpacked<ReturnType<typeof injectVendorsAppCssIntoHtmlFile>>> = (() => {
     let result: typeof resolveContent = async (ctx: Context) => {
         const versions: typeof process.versions & Electron.Versions = process.versions;
@@ -100,3 +57,45 @@ const resolveContent: (ctx: Context) => Promise<Unpacked<ReturnType<typeof injec
     };
     return result;
 })();
+
+export async function showAboutBrowserWindow(ctx: Context): Promise<BrowserWindow> {
+    if (!ctx.uiContext) {
+        throw new Error(`UI Context has not been initialized`);
+    }
+
+    const {aboutBrowserWindow: exitingBrowserWindow} = ctx.uiContext;
+
+    if (exitingBrowserWindow && !exitingBrowserWindow.isDestroyed()) {
+        exitingBrowserWindow.center();
+        exitingBrowserWindow.show();
+        exitingBrowserWindow.focus();
+        return exitingBrowserWindow;
+    }
+
+    const browserWindow = new BrowserWindow({
+        title: `About ${PRODUCT_NAME}`,
+        center: true,
+        modal: true,
+        autoHideMenuBar: true,
+        width: 650,
+        height: 500,
+        webPreferences: {
+            ...DEFAULT_WEB_PREFERENCES,
+            preload: ctx.locations.preload.aboutBrowserWindow,
+        },
+    });
+
+    browserWindow.on("closed", () => {
+        if (!ctx.uiContext) {
+            return;
+        }
+        delete ctx.uiContext.aboutBrowserWindow;
+    });
+
+    ctx.uiContext.aboutBrowserWindow = browserWindow;
+
+    const {html, baseURLForDataURL} = await resolveContent(ctx);
+    await browserWindow.webContents.loadURL(`data:text/html,${html}`, {baseURLForDataURL});
+
+    return browserWindow;
+}

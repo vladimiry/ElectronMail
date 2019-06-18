@@ -1,6 +1,6 @@
 import {BrowserWindowConstructorOptions} from "electron";
 
-export const DEFAULT_WEB_PREFERENCES: BrowserWindowConstructorOptions["webPreferences"] = Object.freeze(
+export const DEFAULT_WEB_PREFERENCES: Readonly<BrowserWindowConstructorOptions["webPreferences"]> = Object.freeze(
     {
         nodeIntegration: false,
         nodeIntegrationInWorker: false,

@@ -1,7 +1,6 @@
 import nodeExternals from "webpack-node-externals";
 
-import {LoaderConfig as TsLoaderConfig} from "awesome-typescript-loader/src/interfaces";
-import {buildBaseConfig, srcRelativePath} from "./lib";
+import {awesomeTypescriptLoaderRule, buildBaseConfig, srcRelativePath} from "./lib";
 
 const tsConfigFile = srcRelativePath("./electron-main/tsconfig.json");
 
@@ -13,15 +12,7 @@ export default buildBaseConfig(
         },
         module: {
             rules: [
-                {
-                    test: /\.ts$/,
-                    use: {
-                        loader: "awesome-typescript-loader",
-                        options: {
-                            configFileName: tsConfigFile,
-                        } as TsLoaderConfig,
-                    },
-                },
+                awesomeTypescriptLoaderRule({tsConfigFile}),
             ],
         },
         externals: [

@@ -8,10 +8,18 @@ import {injectVendorsAppCssIntoHtmlFile} from "src/electron-main/util";
 
 const logger = curryFunctionMembers(_logger, "[src/electron-main/window/find-in-page]");
 
+const resolveContent: (ctx: Context) => Promise<Unpacked<ReturnType<typeof injectVendorsAppCssIntoHtmlFile>>> = (() => {
+    let result: typeof resolveContent = async (ctx: Context) => {
+        const cache = await injectVendorsAppCssIntoHtmlFile(ctx.locations.searchInPageBrowserViewPage, ctx.locations);
+        logger.verbose(JSON.stringify(cache));
+        // memoize the result
+        result = async () => cache;
+        return cache;
+    };
+    return result;
+})();
+
 export const initFindInPageBrowserView: (ctx: Context) => Promise<BrowserView> = (() => {
-    let cache:
-        | Unpacked<ReturnType<typeof injectVendorsAppCssIntoHtmlFile>>
-        | undefined;
     const resultFn: typeof initFindInPageBrowserView = async (ctx) => {
         if (!ctx.uiContext) {
             throw new Error(`UI Context has not been initialized`);
@@ -28,13 +36,11 @@ export const initFindInPageBrowserView: (ctx: Context) => Promise<BrowserView> =
         // otherwise BrowserView is invisible on macOS as "setBounds" call takes no effect
         ctx.uiContext.browserWindow.setBrowserView(browserView);
 
-        if (!cache) {
-            cache = await injectVendorsAppCssIntoHtmlFile(ctx.locations.searchInPageBrowserViewPage, ctx.locations);
-            logger.verbose(JSON.stringify(cache));
-        }
-
         browserView.setAutoResize({width: false, height: true});
-        await browserView.webContents.loadURL(`data:text/html,${cache.html}`, {baseURLForDataURL: cache.baseURLForDataURL});
+
+        const {html, baseURLForDataURL} = await resolveContent(ctx);
+
+        await browserView.webContents.loadURL(`data:text/html,${html}`, {baseURLForDataURL});
 
         syncFindInPageBrowserViewSize(ctx, browserView);
 

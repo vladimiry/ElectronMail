@@ -1,7 +1,7 @@
 import logger from "electron-log";
 import path from "path";
 import {Deferred} from "ts-deferred";
-import {ReplaySubject, merge} from "rxjs";
+import {merge, ReplaySubject} from "rxjs";
 import {Fs as StoreFs, Model as StoreModel, Store} from "fs-json-store";
 import {app} from "electron";
 import {distinctUntilChanged, take, tap} from "rxjs/operators";
@@ -11,8 +11,8 @@ import {Config, Settings} from "src/shared/model/options";
 import {Context, ContextInitOptions, ContextInitOptionsPaths, RuntimeEnvironment} from "./model";
 import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
-import {INITIAL_STORES, configEncryptionPresetValidator, settingsAccountLoginUniquenessValidator} from "./constants";
-import {LOCAL_WEBCLIENT_PROTOCOL_PREFIX, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
+import {configEncryptionPresetValidator, INITIAL_STORES, settingsAccountLoginUniquenessValidator} from "./constants";
+import {LOCAL_WEBCLIENT_PROTOCOL_PREFIX, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR, WEB_CHUNK_NAMES} from "src/shared/constants";
 import {formatFileUrl} from "./util";
 
 export function initContext(options: ContextInitOptions = {}): Context {
@@ -161,9 +161,11 @@ function initLocations(
         icon,
         trayIcon: icon,
         numbersFont: appRelativePath("./assets/numbers.ttf"),
-        browserWindowPage: formatFileUrl(appRelativePath("./web/index.html")),
-        aboutBrowserWindowPage: appRelativePath("./web/about.html"),
-        searchInPageBrowserViewPage: appRelativePath("./web/search-in-page-browser-view.html"),
+        browserWindowPage: formatFileUrl(
+            appRelativePath("./web/", WEB_CHUNK_NAMES["browser-window"], "index.html"),
+        ),
+        aboutBrowserWindowPage: appRelativePath("./web/", WEB_CHUNK_NAMES.about, "index.html"),
+        searchInPageBrowserViewPage: appRelativePath("./web/", WEB_CHUNK_NAMES["search-in-page-browser-view"], "index.html"),
         preload: {
             aboutBrowserWindow: appRelativePath("./electron-preload/about.js"),
             browserWindow: appRelativePath("./electron-preload/browser-window.js"),
@@ -175,8 +177,17 @@ function initLocations(
                 tutanota: formatFileUrl(appRelativePath("./electron-preload/webview/tutanota.js")),
             },
         },
+        vendorsAppCssLinkHref: (() => {
+            const file = appRelativePath("./web/browser-window/vendor.css");
+            const stat = storeFs._impl.statSync(file);
+            if (!stat.isFile()) {
+                throw new Error(`Location "${file}" exists but it's not a file`);
+            }
+            return formatFileUrl(file);
+        })(),
         ...(() => {
-            const {protocolBundles, webClients}: Pick<ElectronContextLocations, "protocolBundles" | "webClients"> = {
+            const {protocolBundles, webClients}: Pick<ElectronContextLocations, "webClients">
+                & { protocolBundles: Array<{ scheme: string; directory: string }> } = {
                 protocolBundles: [],
                 webClients: {
                     protonmail: [],

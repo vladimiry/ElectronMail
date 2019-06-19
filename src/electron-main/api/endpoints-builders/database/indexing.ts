@@ -1,6 +1,6 @@
 import electronLog from "electron-log";
 import {UnionOf} from "@vladimiry/unionize";
-import {concatMap, filter, map, take} from "rxjs/operators";
+import {concatMap, filter, take} from "rxjs/operators";
 import {pick} from "ramda";
 import {race, throwError, timer} from "rxjs";
 import {v4 as uuid} from "uuid";
@@ -64,7 +64,7 @@ async function indexMails(
     mails: Mail[],
     key: DbAccountPk,
     timeoutMs: number,
-): Promise<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_ON_ACTIONS>, { type: "IndexingResult" }>["payload"]> {
+): Promise<void> {
     logger.info("indexMails()");
 
     const duration = hrtimeDuration();
@@ -73,7 +73,6 @@ async function indexMails(
         IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$.pipe(
             filter(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.is.IndexingResult),
             filter(({payload}) => payload.uid === uid),
-            map(({payload}) => payload),
             take(1),
         ),
         timer(timeoutMs).pipe(
@@ -92,10 +91,9 @@ async function indexMails(
         }),
     );
 
-    return await result$
+    return result$
         .toPromise()
-        .then((value) => {
+        .then(() => {
             logger.verbose("indexMails() end", {indexed: mails.length, duration: duration.end()});
-            return value;
         });
 }

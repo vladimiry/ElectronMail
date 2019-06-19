@@ -70,9 +70,9 @@ export async function initTray(ctx: Context): Promise<Tray> {
     subscription.add(
         IPC_MAIN_API_NOTIFICATION$.pipe(
             filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.SignedInStateChange),
-            tap(({payload}) => {
-                optionsMenuItem.visible = payload;
-                logOutMenuItem.visible = payload;
+            tap(({payload: {signedIn}}) => {
+                optionsMenuItem.visible = signedIn;
+                logOutMenuItem.visible = signedIn;
             }),
         ).subscribe(
             // we have to re-create the entire menu since electron doesn't support dynamic menu items change

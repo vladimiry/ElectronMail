@@ -208,7 +208,7 @@ export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
         ConfigUpdated: ofType<Config>(),
         OpenOptions: ofType<{}>(),
         LogOut: ofType<{}>(),
-        SignedInStateChange: ofType<boolean>(),
+        SignedInStateChange: ofType<{ signedIn: boolean }>(),
         ErrorMessage: ofType<{ message: string }>(),
     },
     {

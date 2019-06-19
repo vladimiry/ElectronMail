@@ -1,8 +1,8 @@
 import electronLog from "electron-log";
 import sanitizeHtml from "sanitize-html";
-import {Observable, race, throwError, timer} from "rxjs";
+import {Observable, defer, race, throwError, timer} from "rxjs";
 import {app, dialog} from "electron";
-import {concatMap, filter, mergeMap, startWith, take} from "rxjs/operators";
+import {concatMap, filter, mergeMap, startWith, take, takeUntil} from "rxjs/operators";
 import {equals, mergeDeepRight, omit} from "ramda";
 import {inspect} from "util";
 import {performance} from "perf_hooks";
@@ -107,7 +107,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             const {
                 disableSpamNotifications,
                 databaseWriteDelayMs,
-            } = await (await ctx.deferredEndpoints.promise).readConfig();
+            } = await ctx.configStore.readExisting();
 
             IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount({
                 key,
@@ -391,15 +391,31 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
             IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.match(action, {
                 Bootstrapped: () => {
-                    setTimeout(async () => {
-                        const logins = (await ctx.settingsStore.readExisting()).accounts.map((account) => account.login);
-                        const config = await (await ctx.deferredEndpoints.promise).readConfig();
+                    const indexAccounts$ = defer(
+                        async () => {
+                            const logins = (await ctx.settingsStore.readExisting())
+                                .accounts
+                                .map(({login}) => login);
+                            const config = await ctx.configStore.readExisting();
 
-                        for (const {account, pk} of ctx.db.accountsIterator()) {
-                            if (logins.includes(pk.login)) {
-                                await indexAccount(account, pk, config);
+                            for (const {account, pk} of ctx.db.accountsIterator()) {
+                                if (logins.includes(pk.login)) {
+                                    await indexAccount(account, pk, config);
+                                }
                             }
-                        }
+                        },
+                    ).pipe(
+                        // drop indexing on "logout" action
+                        takeUntil(
+                            IPC_MAIN_API_NOTIFICATION$.pipe(
+                                filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.SignedInStateChange),
+                                filter(({payload: {signedIn}}) => !signedIn),
+                            ),
+                        ),
+                    );
+
+                    setTimeout(async () => {
+                        await indexAccounts$.toPromise();
                     });
                 },
                 ProgressState: (payload) => {

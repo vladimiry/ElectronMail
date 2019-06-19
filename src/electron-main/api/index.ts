@@ -101,7 +101,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             await detachFullTextIndexWindow(ctx);
 
             IPC_MAIN_API_NOTIFICATION$.next(
-                IPC_MAIN_API_NOTIFICATION_ACTIONS.SignedInStateChange(false),
+                IPC_MAIN_API_NOTIFICATION_ACTIONS.SignedInStateChange({signedIn: false}),
             );
         },
 
@@ -151,14 +151,18 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
                 if (!storedPassword) {
                     throw new Error("No password provided to decrypt settings with");
                 }
-                return await endpoints.readSettings({password: storedPassword});
+                return endpoints.readSettings({password: storedPassword});
             }
 
             const adapter = await buildSettingsAdapter(ctx, password);
             const store = ctx.settingsStore.clone({adapter});
             const existingSettings = await store.read();
             const settings = existingSettings
-                ? (upgradeSettings(existingSettings) ? await store.write(existingSettings) : existingSettings)
+                ? (
+                    upgradeSettings(existingSettings)
+                        ? await store.write(existingSettings)
+                        : existingSettings
+                )
                 : await store.write(ctx.initialStores.settings);
 
             // "savePassword" is unset in auto-login case
@@ -177,7 +181,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             }
 
             IPC_MAIN_API_NOTIFICATION$.next(
-                IPC_MAIN_API_NOTIFICATION_ACTIONS.SignedInStateChange(true),
+                IPC_MAIN_API_NOTIFICATION_ACTIONS.SignedInStateChange({signedIn: true}),
             );
 
             return settings;
@@ -200,7 +204,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
                 await upgradeDatabase(ctx.db, accounts);
             }
 
-            if ((await endpoints.readConfig()).fullTextSearch) {
+            if ((await ctx.configStore.readExisting()).fullTextSearch) {
                 await attachFullTextIndexWindow(ctx);
             } else {
                 await detachFullTextIndexWindow(ctx);

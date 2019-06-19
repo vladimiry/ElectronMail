@@ -61,9 +61,9 @@ export async function buildEndpoints(
                 return;
             }
 
-            const {window} = await ctx.configStore.readExisting();
+            const {window: {maximized}} = await ctx.configStore.readExisting();
 
-            if (window.maximized) {
+            if (maximized) {
                 browserWindow.maximize();
 
                 // above "maximize()" call is supposed to show the window
@@ -92,7 +92,7 @@ export async function buildEndpoints(
                 ||
                 !browserWindow.isVisible()
             ) {
-                await endpoints.activateBrowserWindow();
+                await endpoints.activateBrowserWindow(browserWindow);
             } else {
                 browserWindow.hide();
             }

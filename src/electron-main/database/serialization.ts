@@ -5,6 +5,7 @@ import oboe from "oboe";
 import {Readable} from "stream";
 
 import {FsDb} from "src/shared/model/database";
+import {ReadonlyDeep} from "type-fest";
 import {curryFunctionMembers} from "src/shared/util";
 
 interface Header extends EncryptionAdapterBundle.KeyBasedFileHeader {
@@ -13,10 +14,10 @@ interface Header extends EncryptionAdapterBundle.KeyBasedFileHeader {
     };
 }
 
-const persistencePartsUtil: {
+const persistencePartsUtil: Readonly<{
     split: (data: Buffer) => { header: Header; cipher: Buffer; };
     concat: (header: Header, cipher: Buffer) => Buffer;
-} = (() => {
+}> = (() => {
     const separator = Buffer.from([0o0]);
     const result: typeof persistencePartsUtil = {
         split(data) {
@@ -52,7 +53,7 @@ const bufferToStream = (buffer: Buffer): Readable => {
 export class SerializationAdapter {
     public readonly read: (data: Buffer) => Promise<FsDb>;
 
-    public readonly write: (data: FsDb) => Promise<Buffer>;
+    public readonly write: (data: ReadonlyDeep<FsDb>) => Promise<Buffer>;
 
     private logger = curryFunctionMembers(_logger, "[src/electron-main/database/serialization]", "[SerializationAdapter]");
 

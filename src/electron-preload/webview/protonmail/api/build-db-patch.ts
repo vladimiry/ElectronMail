@@ -7,7 +7,7 @@ import * as Rest from "src/electron-preload/webview/protonmail/lib/rest";
 import {AJAX_SEND_NOTIFICATION_SKIP_PARAM} from "src/electron-preload/webview/protonmail/notifications";
 import {DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_SECOND_MS} from "src/shared/constants";
 import {DbPatch} from "src/shared/api/common";
-import {MemoryDbAccount} from "src/shared/model/database";
+import {FsDbAccount} from "src/shared/model/database";
 import {ProtonmailApi, ProtonmailApiScan} from "src/shared/api/webview/protonmail";
 import {ProviderApi, resolveProviderApi} from "src/electron-preload/webview/protonmail/lib/provider-api";
 import {StatusCodeError} from "src/shared/model/error";
@@ -20,7 +20,7 @@ import {isLoggedIn, isUpsertOperationType, preprocessError} from "src/electron-p
 
 interface DbPatchBundle {
     patch: DbPatch;
-    metadata: Omit<MemoryDbAccount<"protonmail">["metadata"], "type">;
+    metadata: Omit<FsDbAccount<"protonmail">["metadata"], "type">;
 }
 
 type BuildDbPatchMethodReturnType = ProtonmailApiScan["ApiImplReturns"]["buildDbPatch"];

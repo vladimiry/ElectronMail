@@ -1,7 +1,7 @@
 import {ActionType} from "electron-rpc-api";
 
 import {AccountType} from "src/shared/model/account";
-import {DbAccountPk, Mail, MemoryDbAccount} from "src/shared/model/database";
+import {DbAccountPk, FsDbAccount, Mail} from "src/shared/model/database";
 import {LoginFieldContainer, PasswordFieldContainer} from "src/shared/model/container";
 import {PACKAGE_NAME} from "src/shared/constants";
 import {ProtonmailApi} from "src/shared/api/webview/protonmail";
@@ -18,7 +18,7 @@ export function buildWebViewApiDefinition<T extends AccountType, NotificationOut
         fillLogin: Promise<LoginFieldContainer & ZoneApiParameter>(),
         login: Promise<LoginFieldContainer & PasswordFieldContainer & ZoneApiParameter>(),
         login2fa: Promise<{ secret: string } & ZoneApiParameter>(),
-        buildDbPatch: Observable<DbAccountPk & { metadata: Readonly<MemoryDbAccount<T>["metadata"]> | null; } & ZoneApiParameter>(),
+        buildDbPatch: Observable<DbAccountPk & { metadata: Readonly<FsDbAccount<T>["metadata"]> | null; } & ZoneApiParameter>(),
         selectAccount: Promise<{ databaseView?: boolean } & ZoneApiParameter>(),
         selectMailOnline: Promise<{
             pk: DbAccountPk;

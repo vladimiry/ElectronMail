@@ -53,7 +53,7 @@ export async function buildDbExportEndpoints(
                     return subscriber.complete();
                 }
 
-                const account = ctx.db.getFsAccount({type, login});
+                const account = ctx.db.getAccount({type, login});
 
                 if (!account) {
                     return subscriber.error(new Error(`Failed to resolve account by the provided "type/login"`));

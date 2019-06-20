@@ -4,57 +4,33 @@ import asap from "asap-es";
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/lib/private/constants";
 import {KeyBasedPreset} from "fs-json-store-encryption-adapter";
 
-import * as Entity from "./entity";
 import {DATABASE_VERSION} from "./constants";
-import {DbAccountPk, FsDb, FsDbAccount, MAIL_FOLDER_TYPE, Mail, MemoryDb, MemoryDbAccount} from "src/shared/model/database";
-import {EntityMap} from "./entity-map";
+import {DbAccountPk, FsDb, FsDbAccount, MAIL_FOLDER_TYPE, Mail} from "src/shared/model/database";
+import {ReadonlyDeep} from "type-fest";
 import {SerializationAdapter} from "./serialization";
 import {curryFunctionMembers} from "src/shared/util";
 import {hrtimeDuration} from "src/electron-main/util";
-import {resolveMemoryAccountFolders} from "./util";
+import {resolveFsAccountFolders} from "./util";
 
 const logger = curryFunctionMembers(_logger, "[electron-main/database]");
 
-// TODO consider dropping JSON-based "FsDb" use
 export class Database {
-    static buildEmptyDatabase<T extends MemoryDb | FsDb>(): T {
+    static buildEmptyDb(): FsDb {
         return {
             version: DATABASE_VERSION,
             accounts: {tutanota: {}, protonmail: {}},
-        } as T;
+        };
     }
 
-    static buildEmptyAccountMetadata<T extends keyof MemoryDb["accounts"]>(type: T): MemoryDbAccount<T>["metadata"] {
-        const metadata: { [key in keyof MemoryDb["accounts"]]: MemoryDbAccount<key>["metadata"] } = {
+    static buildEmptyAccountMetadata<T extends keyof FsDb["accounts"]>(type: T): FsDbAccount<T>["metadata"] {
+        const metadata: { [key in keyof FsDb["accounts"]]: FsDbAccount<key>["metadata"] } = {
             tutanota: {type: "tutanota", groupEntityEventBatchIds: {}},
             protonmail: {type: "protonmail", latestEventId: ""},
         };
         return metadata[type];
     }
 
-    private static memoryAccountToFsAccount<T extends keyof MemoryDb["accounts"]>(source: MemoryDbAccount<T>): FsDbAccount<T> {
-        const result: FsDbAccount = {
-            conversationEntries: source.conversationEntries.toObject(),
-            mails: source.mails.toObject(),
-            folders: source.folders.toObject(),
-            contacts: source.contacts.toObject(),
-            metadata: source.metadata as any,
-        };
-        return result as FsDbAccount<T>;
-    }
-
-    private static fsAccountToMemoryAccount<T extends keyof FsDb["accounts"]>(source: FsDbAccount<T>): MemoryDbAccount<T> {
-        const result: MemoryDbAccount = {
-            conversationEntries: new EntityMap(Entity.ConversationEntry, source.conversationEntries),
-            mails: new EntityMap(Entity.Mail, source.mails),
-            folders: new EntityMap(Entity.Folder, source.folders),
-            contacts: new EntityMap(Entity.Contact, source.contacts),
-            metadata: source.metadata as any,
-        };
-        return result as MemoryDbAccount<T>;
-    }
-
-    private memoryDb: MemoryDb = Database.buildEmptyDatabase();
+    private dbInstance: FsDb = Database.buildEmptyDb();
 
     private saveToFileQueue = new asap();
 
@@ -70,56 +46,44 @@ export class Database {
     ) {}
 
     getVersion(): string {
-        return this.memoryDb.version;
+        return this.dbInstance.version;
     }
 
-    getFsAccount<TL extends DbAccountPk>({type, login}: TL): FsDbAccount<TL["type"]> | undefined {
-        const account = this.getAccount({type, login});
-
+    getAccount<TL extends DbAccountPk>({type, login}: TL): FsDbAccount<TL["type"]> | undefined {
+        const account = this.dbInstance.accounts[type][login];
         if (!account) {
             return;
         }
-
-        return Database.memoryAccountToFsAccount(account as MemoryDbAccount<TL["type"]>);
+        return account as FsDbAccount<TL["type"]>;
     }
 
-    getAccount<TL extends DbAccountPk>({type, login}: TL): MemoryDbAccount<TL["type"]> | undefined {
-        const account = this.memoryDb.accounts[type][login];
-
-        if (!account) {
-            return;
-        }
-
-        return account as MemoryDbAccount<TL["type"]>;
-    }
-
-    initAccount<TL extends DbAccountPk>({type, login}: TL): MemoryDbAccount<TL["type"]> {
-        const account: MemoryDbAccount = {
-            conversationEntries: new EntityMap(Entity.ConversationEntry),
-            mails: new EntityMap(Entity.Mail),
-            folders: new EntityMap(Entity.Folder),
-            contacts: new EntityMap(Entity.Contact),
+    initAccount<TL extends DbAccountPk>({type, login}: TL): FsDbAccount<TL["type"]> {
+        const account: FsDbAccount = {
+            conversationEntries: Object.create(null),
+            mails: Object.create(null),
+            folders: Object.create(null),
+            contacts: Object.create(null),
             metadata: Database.buildEmptyAccountMetadata(type) as any,
         };
 
-        this.memoryDb.accounts[type][login] = account;
+        this.dbInstance.accounts[type][login] = account;
 
-        return account as MemoryDbAccount<TL["type"]>;
+        return account as FsDbAccount<TL["type"]>;
     }
 
     accountsIterator(): {
-        [Symbol.iterator]: () => Iterator<{ account: MemoryDbAccount; pk: DbAccountPk }>;
+        [Symbol.iterator]: () => Iterator<{ account: FsDbAccount; pk: DbAccountPk }>;
     } {
         logger.info("accountsIterator()");
 
-        const accounts = this.memoryDb.accounts;
+        const accounts = this.dbInstance.accounts;
         const pks = this.getPks();
 
         let pkPointer = 0;
 
         return {
             [Symbol.iterator]: () => ({
-                next(): IteratorResult<{ account: MemoryDbAccount; pk: DbAccountPk }> {
+                next(): IteratorResult<{ account: FsDbAccount; pk: DbAccountPk }> {
                     if (pkPointer >= pks.length) {
                         return {
                             done: true,
@@ -140,11 +104,11 @@ export class Database {
     }
 
     deleteAccount<TL extends DbAccountPk>({type, login}: TL): void {
-        delete this.memoryDb.accounts[type][login];
+        delete this.dbInstance.accounts[type][login];
     }
 
     async persisted(): Promise<boolean> {
-        // TODO get rid of "fs-json-store"
+        // TODO get rid of "fs-json-store" use
         return await new FsJsonStore.Store<FsDb>({
             file: this.options.file,
             fs: this.fileFs,
@@ -160,20 +124,12 @@ export class Database {
 
         const duration = hrtimeDuration();
         const serializationAdapter = await this.buildSerializationAdapter();
-        const data = await this.fileFs.readFile(this.options.file);
-        const source = await serializationAdapter.read(data);
-        const target: MemoryDb = Database.buildEmptyDatabase();
 
-        target.version = source.version;
-
-        // fs => memory
-        for (const type of Object.keys(source.accounts) as Array<keyof typeof source.accounts>) {
-            for (const [login, account] of Object.entries(source.accounts[type])) {
-                target.accounts[type][login] = Database.fsAccountToMemoryAccount(account);
-            }
-        }
-
-        this.memoryDb = target;
+        this.dbInstance = await serializationAdapter.read(
+            await this.fileFs.readFile(
+                this.options.file,
+            ),
+        );
 
         logger.verbose(`loadFromFile().stat: ${JSON.stringify({
             ...this.stat(),
@@ -187,38 +143,25 @@ export class Database {
         return this.saveToFileQueue.q(async () => {
             const startTime = Date.now();
             const serializationAdapter = await this.buildSerializationAdapter();
-            const dump = {
-                ...this.dumpToFsDb(),
-                version: DATABASE_VERSION,
-            };
 
             await this.fileFs.writeFileAtomic(
                 this.options.file,
-                await serializationAdapter.write(dump),
+                await serializationAdapter.write({
+                    ...this.readonlyDbInstance(),
+                    version: DATABASE_VERSION,
+                }),
             );
 
             logger.verbose(`saveToFile().stat: ${JSON.stringify({...this.stat(), time: Date.now() - startTime})}`);
         });
     }
 
-    dumpToFsDb(): FsDb {
-        logger.info("dumpToFsDb()");
-
-        const {memoryDb: source} = this;
-        const target: FsDb = Database.buildEmptyDatabase();
-
-        target.version = source.version;
-
-        // memory => fs
-        for (const {account, pk} of this.accountsIterator()) {
-            target.accounts[pk.type][pk.login] = Database.memoryAccountToFsAccount(account);
-        }
-
-        return target;
+    readonlyDbInstance(): ReadonlyDeep<FsDb> {
+        return this.dbInstance;
     }
 
     reset() {
-        this.memoryDb = Database.buildEmptyDatabase();
+        this.dbInstance = Database.buildEmptyDb();
     }
 
     stat(): { records: number, conversationEntries: number, mails: number, folders: number, contacts: number } {
@@ -239,7 +182,7 @@ export class Database {
     }
 
     accountStat(
-        account: MemoryDbAccount,
+        account: FsDbAccount,
         includingSpam: boolean = false,
     ): { conversationEntries: number, mails: number, folders: number; contacts: number; unread: number } {
         const hasSpamEmail: (mail: Mail) => boolean = includingSpam
@@ -247,11 +190,11 @@ export class Database {
             : this.spamFolderTester(account);
 
         return {
-            conversationEntries: account.conversationEntries.size,
-            mails: account.mails.size,
-            folders: account.folders.size,
-            contacts: account.contacts.size,
-            unread: [...account.mails.values()].reduce(
+            conversationEntries: Object.keys(account.conversationEntries).length,
+            mails: Object.keys(account.mails).length,
+            folders: Object.keys(account.folders).length,
+            contacts: Object.keys(account.contacts).length,
+            unread: Object.values(account.mails).reduce(
                 (unread, mail) => hasSpamEmail(mail)
                     ? unread
                     : unread + Number(mail.unread),
@@ -261,7 +204,7 @@ export class Database {
     }
 
     private getPks(): DbAccountPk[] {
-        const accounts = this.memoryDb.accounts;
+        const {accounts} = this.dbInstance;
 
         return (Object.keys(accounts) as Array<keyof typeof accounts>).reduce(
             (keys: DbAccountPk[], type) => {
@@ -274,8 +217,8 @@ export class Database {
         );
     }
 
-    private spamFolderTester(account: MemoryDbAccount): (mail: Mail) => boolean {
-        const folder = resolveMemoryAccountFolders(account).find(({folderType}) => folderType === MAIL_FOLDER_TYPE.SPAM);
+    private spamFolderTester(account: FsDbAccount): (mail: Mail) => boolean {
+        const folder = resolveFsAccountFolders(account).find(({folderType}) => folderType === MAIL_FOLDER_TYPE.SPAM);
         const mailFolderId = folder && folder.mailFolderId;
         const result: ReturnType<typeof Database.prototype.spamFolderTester> = typeof mailFolderId !== "undefined"
             ? ({mailFolderIds}) => mailFolderIds.includes(mailFolderId)

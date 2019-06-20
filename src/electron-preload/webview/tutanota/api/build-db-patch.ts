@@ -6,7 +6,7 @@ import * as DatabaseModel from "src/shared/model/database";
 import * as Rest from "src/electron-preload/webview/tutanota/lib/rest";
 import {DEFAULT_MESSAGES_STORE_PORTION_SIZE} from "src/shared/constants";
 import {DbPatch} from "src/shared/api/common";
-import {MemoryDbAccount} from "src/shared/model/database";
+import {FsDbAccount} from "src/shared/model/database";
 import {StatusCodeError} from "src/shared/model/error";
 import {TutanotaApi, TutanotaScanApi} from "src/shared/api/webview/tutanota";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
@@ -18,7 +18,7 @@ import {resolveProviderApi} from "src/electron-preload/webview/tutanota/lib/prov
 
 interface DbPatchBundle {
     patch: DbPatch;
-    metadata: Omit<MemoryDbAccount<"tutanota">["metadata"], "type">;
+    metadata: Omit<FsDbAccount<"tutanota">["metadata"], "type">;
 }
 
 type BuildDbPatchMethodReturnType = TutanotaScanApi["ApiImplReturns"]["buildDbPatch"];

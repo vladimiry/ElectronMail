@@ -1,16 +1,9 @@
-import {DbAccountPk, FsDb, FsDbAccount, MemoryDb, MemoryDbAccount} from "src/shared/model/database";
+import {DbAccountPk, FsDb, FsDbAccount} from "src/shared/model/database";
 import {PROTONMAIL_STATIC_FOLDERS} from "./constants";
 
 // WARN don't mutate "account" argument
 export function resolveFsAccountFolders<T extends keyof FsDb["accounts"]>(account: FsDbAccount<T>) {
     return Object.values(account.folders).concat(
-        resolveAccountVirtualFolders(account.metadata.type),
-    );
-}
-
-// WARN don't mutate "account" argument
-export function resolveMemoryAccountFolders<T extends keyof MemoryDb["accounts"]>(account: MemoryDbAccount<T>) {
-    return [...account.folders.values()].concat(
         resolveAccountVirtualFolders(account.metadata.type),
     );
 }

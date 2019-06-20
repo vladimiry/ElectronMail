@@ -114,31 +114,24 @@ export interface ContactSocialId extends Entity {
     socialId: string;
 }
 
-export interface EntityMap<V extends Entity, K extends V["pk"] = V["pk"]> extends Omit<Map<K, V>, "set"> {
-    validateAndSet(value: V): Promise<this>;
-
-    toObject(): Record<K, V>;
+export interface ValidatedEntity {
+    _validated: undefined;
 }
 
-export type DbMemoryDataContainer = Readonly<{
-    conversationEntries: EntityMap<ConversationEntry>;
-    mails: EntityMap<Mail>;
-    folders: EntityMap<Folder>;
-    contacts: EntityMap<Contact>;
-}>;
+export type DbFsDataRecord<T extends ConversationEntry | Mail | Folder | Contact> = Record<T["pk"], T & ValidatedEntity>;
 
 export type DbFsDataContainer = Readonly<{
-    conversationEntries: Record<ConversationEntry["pk"], ConversationEntry>;
-    mails: Record<Mail["pk"], Mail>;
-    folders: Record<Folder["pk"], Folder>;
-    contacts: Record<Contact["pk"], Contact>;
+    conversationEntries: DbFsDataRecord<ConversationEntry>;
+    mails: DbFsDataRecord<Mail>;
+    folders: DbFsDataRecord<Folder>;
+    contacts: DbFsDataRecord<Contact>;
 }>;
 
-interface GenericDb<T extends AccountType, MetadataPart, EntitiesContainer extends DbMemoryDataContainer | DbFsDataContainer> {
+interface GenericDb<T extends AccountType, MetadataPart> {
     version: string;
     accounts: Record<T,
         Record<AccountConfig<T>["login"],
-            Readonly<EntitiesContainer & { metadata: { type: T } & MetadataPart }>>>;
+            Readonly<DbFsDataContainer & { metadata: { type: T } & MetadataPart }>>>;
 }
 
 interface TutanotaMetadataPart {
@@ -149,22 +142,15 @@ interface ProtonmailMetadataPart {
     latestEventId: string; // Rest.Model.Event["EventID"]
 }
 
-export type MemoryDb =
-    GenericDb<"tutanota", TutanotaMetadataPart, DbMemoryDataContainer>
-    &
-    GenericDb<"protonmail", ProtonmailMetadataPart, DbMemoryDataContainer>;
-
-export type FsDb = Partial<StoreModel.StoreEntity> &
-    (GenericDb<"tutanota", TutanotaMetadataPart, DbFsDataContainer>
-        &
-        GenericDb<"protonmail", ProtonmailMetadataPart, DbFsDataContainer>);
-
-export type MemoryDbAccount<T extends keyof MemoryDb["accounts"] = keyof MemoryDb["accounts"]> = MemoryDb["accounts"][T][string];
+export type FsDb =
+    & Partial<StoreModel.StoreEntity>
+    & GenericDb<"tutanota", TutanotaMetadataPart>
+    & GenericDb<"protonmail", ProtonmailMetadataPart>;
 
 export type FsDbAccount<T extends keyof FsDb["accounts"] = keyof FsDb["accounts"]> = FsDb["accounts"][T][string];
 
 export interface DbAccountPk {
-    type: keyof MemoryDb["accounts"];
+    type: keyof FsDb["accounts"];
     login: string;
 }
 

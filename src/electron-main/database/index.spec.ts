@@ -9,11 +9,11 @@ import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/li
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Fs, Store} from "fs-json-store";
 
-import {AccountType} from "src/shared/model/account";
 import {Database} from ".";
 import {Folder, MAIL_FOLDER_TYPE} from "src/shared/model/database";
 import {INITIAL_STORES} from "src/electron-main/constants";
 import {SerializationAdapter} from "src/electron-main/database/serialization";
+import {validateEntity} from "src/electron-main/database/validation";
 
 logger.transports.console.level = false;
 
@@ -46,12 +46,14 @@ test.serial(`save to file call should write through the "EncryptionAdapter.proto
     const {options, fileFs} = buildDatabase();
     const db = new databaseModule.Database(options, fileFs);
 
-    await db.initAccount({type: "tutanota", login: "login1"}).folders.validateAndSet(buildFolder());
+    const folderStub = buildFolder();
+    db.initAccount({type: "tutanota", login: "login1"})
+        .folders[folderStub.pk] = await validateEntity("folders", folderStub);
 
     t.false(encryptionAdapterWriteSpy.called);
 
     await db.saveToFile();
-    const dump = db.dumpToFsDb();
+    const dump = JSON.parse(JSON.stringify(db.readonlyDbInstance()));
 
     t.is(1, encryptionAdapterWriteSpy.callCount);
     t.deepEqual(msgpack.encode(dump), encryptionAdapterWriteSpy.getCall(0).args[0]);
@@ -78,9 +80,11 @@ test.serial(`save to file call should write through the "SerializationAdapter.wr
     const {options, fileFs} = buildDatabase();
     const db = new databaseModule.Database(options, fileFs);
 
-    await db.initAccount({type: "tutanota", login: "login1"}).folders.validateAndSet(buildFolder());
+    const folderStub = buildFolder();
+    db.initAccount({type: "tutanota", login: "login1"})
+        .folders[folderStub.pk] = await validateEntity("folders", folderStub);
 
-    const dump = db.dumpToFsDb();
+    const dump = JSON.parse(JSON.stringify(db.readonlyDbInstance()));
 
     await db.saveToFile();
 
@@ -105,53 +109,36 @@ test.serial(`save to file call should write through the "SerializationAdapter.wr
     );
 });
 
-test("saved/saved immutability", async (t) => {
-    const db = buildDatabase();
-    const type: AccountType = "tutanota";
-    const login = "login";
-    await db.initAccount({type, login}).folders.validateAndSet(buildFolder());
-    await db.saveToFile();
-    const persisted1 = db.dumpToFsDb();
-    await db.saveToFile();
-    const persisted2 = db.dumpToFsDb();
-    t.truthy(persisted1);
-    t.deepEqual(persisted1, persisted2);
-});
-
-test("save => load => save immutability", async (t) => {
-    const db = buildDatabase();
-    const type: AccountType = "tutanota";
-    const login = "login";
-    const account1 = db.initAccount({type, login});
-    await account1.folders.validateAndSet(buildFolder());
-    await db.saveToFile();
-    const persisted1 = db.dumpToFsDb();
-    const account2 = db.getAccount({type, login});
-    await db.saveToFile();
-    const persisted2 = db.dumpToFsDb();
-    t.truthy(persisted1);
-    t.deepEqual(persisted1, persisted2);
-    t.truthy(account1);
-    t.deepEqual(account1, account2);
-});
-
 test("several sequence save calls should persist the same data", async (t) => {
     const db = buildDatabase();
-    const persisted1 = await db.saveToFile();
-    const persisted2 = await db.saveToFile();
-    t.deepEqual(persisted1, persisted2);
+    const folderStub = buildFolder();
+    db.initAccount({type: "tutanota", login: "login1"})
+        .folders[folderStub.pk] = await validateEntity("folders", folderStub);
+
+    await db.saveToFile();
+    await db.loadFromFile();
+    const readonlyDbInstanceInstance1 = db.readonlyDbInstance();
+    const readonlyDbInstanceDump1 = JSON.parse(JSON.stringify(readonlyDbInstanceInstance1));
+
+    await db.saveToFile();
+    await db.loadFromFile();
+    const readonlyDbInstanceInstance2 = db.readonlyDbInstance();
+    const readonlyDbInstanceDump2 = JSON.parse(JSON.stringify(readonlyDbInstanceInstance2));
+
+    t.false(readonlyDbInstanceInstance1 === readonlyDbInstanceInstance2);
+    t.deepEqual(readonlyDbInstanceDump1, readonlyDbInstanceDump2);
 });
 
 test("getting nonexistent account should initialize its content", async (t) => {
     const db = buildDatabase();
     await db.saveToFile();
-    const persisted1 = db.dumpToFsDb();
+    const readonlyDbInstanceDump1 = JSON.parse(JSON.stringify(db.readonlyDbInstance()));
     db.initAccount({type: "tutanota", login: "login1"});
     await db.saveToFile();
-    const persisted2 = db.dumpToFsDb();
-    t.truthy(persisted1);
-    t.truthy(persisted2);
-    t.notDeepEqual(persisted1, persisted2);
+    const readonlyDbInstanceDump12 = JSON.parse(JSON.stringify(db.readonlyDbInstance()));
+    t.truthy(readonlyDbInstanceDump1);
+    t.truthy(readonlyDbInstanceDump12);
+    t.notDeepEqual(readonlyDbInstanceDump1, readonlyDbInstanceDump12);
 });
 
 test("wrong encryption key", async (t) => {
@@ -175,17 +162,20 @@ test("nonexistent file", async (t) => {
 
 test("reset", async (t) => {
     const db = buildDatabase();
-    const initial = Database.buildEmptyDatabase();
+    const initial = Database.buildEmptyDb();
 
-    t.deepEqual(db.dumpToFsDb(), initial);
-    await db.initAccount({type: "tutanota", login: "login1"}).folders.validateAndSet(buildFolder());
-    t.notDeepEqual(db.dumpToFsDb(), initial);
+    t.deepEqual(JSON.parse(JSON.stringify(db.readonlyDbInstance())), initial);
+    const folderStub = buildFolder();
+    db.initAccount({type: "tutanota", login: "login1"})
+        .folders[folderStub.pk] = await validateEntity("folders", folderStub);
 
-    const buildEmptyDatabaseSpy = sinon.spy(Database, "buildEmptyDatabase");
-    const buildEmptyDatabaseCallCount = buildEmptyDatabaseSpy.callCount;
+    t.notDeepEqual(JSON.parse(JSON.stringify(db.readonlyDbInstance())), initial);
+
+    const buildEmptyDbSpy = sinon.spy(Database, "buildEmptyDb");
+    const buildEmptyDbCallCount = buildEmptyDbSpy.callCount;
     db.reset();
-    t.is(buildEmptyDatabaseCallCount + 1, buildEmptyDatabaseSpy.callCount);
-    t.deepEqual(db.dumpToFsDb(), initial);
+    t.is(buildEmptyDbCallCount + 1, buildEmptyDbSpy.callCount);
+    t.deepEqual(JSON.parse(JSON.stringify(db.readonlyDbInstance())), initial);
 });
 
 function buildDatabase(keyResolver?: () => Promise<string>): Database {

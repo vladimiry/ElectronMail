@@ -4,7 +4,7 @@ import {equals, mergeDeepRight, omit} from "ramda";
 import {v4 as uuid} from "uuid";
 
 import {Context} from "src/electron-main/model";
-import {DB_DATA_CONTAINER_FIELDS, EntityMap, IndexableMail, MemoryDbAccount} from "src/shared/model/database";
+import {DB_DATA_CONTAINER_FIELDS, FsDbAccount, IndexableMail} from "src/shared/model/database";
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION$, IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
 import {buildDbExportEndpoints} from "./export";
@@ -12,6 +12,7 @@ import {buildDbIndexingEndpoints, narrowIndexActionPayload} from "./indexing";
 import {buildDbSearchEndpoints, searchRootConversationNodes} from "./search";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {prepareFoldersView} from "./folders-view";
+import {validateEntity} from "src/electron-main/database/validation";
 
 const _logger = curryFunctionMembers(electronLog, "[electron-main/api/endpoints-builders/database]");
 
@@ -42,16 +43,16 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
             for (const entityType of DB_DATA_CONTAINER_FIELDS) {
                 const {remove, upsert} = entityUpdatesPatch[entityType];
-                const destinationMap: EntityMap<Unpacked<typeof upsert>> = account[entityType];
+                const accountRecord = account[entityType];
 
                 // remove
                 remove.forEach(({pk}) => {
-                    destinationMap.delete(pk);
+                    delete accountRecord[pk];
                 });
 
                 // add
                 for (const entity of upsert) {
-                    await destinationMap.validateAndSet(entity);
+                    accountRecord[entity.pk] = await validateEntity(entityType, entity);
                 }
 
                 if (entityType !== "mails") {
@@ -112,7 +113,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
         async dbGetAccountDataView({type, login}) {
             _logger.info("dbGetAccountDataView()");
 
-            const account = ctx.db.getFsAccount({type, login});
+            const account = ctx.db.getAccount({type, login});
 
             if (!account) {
                 return undefined;
@@ -126,7 +127,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
         async dbGetAccountMail({type, login, pk}) {
             _logger.info("dbGetAccountMail()");
 
-            const account = ctx.db.getFsAccount({type, login});
+            const account = ctx.db.getAccount({type, login});
 
             if (!account) {
                 throw new Error(`Failed to resolve account by the provided "type/login"`);
@@ -148,7 +149,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
         async dbSearchRootConversationNodes({type, login, folderPks, ...restOptions}) {
             _logger.info("dbSearchRootConversationNodes()");
 
-            const account = ctx.db.getFsAccount({type, login});
+            const account = ctx.db.getAccount({type, login});
 
             if (!account) {
                 throw new Error(`Failed to resolve account by the provided "type/login"`);
@@ -166,9 +167,9 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 }
 
 function patchMetadata(
-    dest: MemoryDbAccount["metadata"],
+    dest: FsDbAccount["metadata"],
     // TODO TS: use patch: Arguments<IpcMainApiEndpoints["dbPatch"]>[0]["metadata"],
-    patch: Omit<MemoryDbAccount<"protonmail">["metadata"], "type"> | Omit<MemoryDbAccount<"tutanota">["metadata"], "type">,
+    patch: Omit<FsDbAccount<"protonmail">["metadata"], "type"> | Omit<FsDbAccount<"tutanota">["metadata"], "type">,
     logger = curryFunctionMembers(_logger, "patchMetadata()"),
 ): boolean {
     logger.info();

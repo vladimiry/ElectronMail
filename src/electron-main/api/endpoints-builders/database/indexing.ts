@@ -7,7 +7,7 @@ import {v4 as uuid} from "uuid";
 
 import {Config} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
-import {DbAccountPk, INDEXABLE_MAIL_FIELDS, Mail, MemoryDbAccount} from "src/shared/model/database";
+import {DbAccountPk, FsDbAccount, INDEXABLE_MAIL_FIELDS, Mail} from "src/shared/model/database";
 import {
     IPC_MAIN_API_DB_INDEXER_NOTIFICATION$,
     IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$,
@@ -111,13 +111,13 @@ export const narrowIndexActionPayload: (
     return result;
 })();
 
-export async function indexAccount(account: MemoryDbAccount, key: DbAccountPk, config: Config): Promise<void> {
+export async function indexAccount(account: FsDbAccount, key: DbAccountPk, config: Config): Promise<void> {
     logger.info("indexAccount()");
 
     const duration = hrtimeDuration();
     const buffer: Mail[] = [];
 
-    for (const mail of account.mails.values()) {
+    for (const mail of Object.values(account.mails)) {
         buffer.push(mail);
 
         if (buffer.length < config.indexingBootstrapBufferSize) {

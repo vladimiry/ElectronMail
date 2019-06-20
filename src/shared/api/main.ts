@@ -15,7 +15,7 @@ import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {Controller, FuzzyLocale} from "src/electron-main/spell-check/model";
 import {DbPatch} from "./common";
 import {ElectronContextLocations} from "src/shared/model/electron";
-import {MemoryDbAccount} from "src/shared/model/database";
+import {FsDbAccount} from "src/shared/model/database";
 import {PACKAGE_NAME} from "src/shared/constants";
 
 export type IpcMainServiceScan = ScanService<typeof IPC_MAIN_API>;
@@ -42,7 +42,7 @@ export const ENDPOINTS_DEFINITION = {
     dbPatch: ActionType.Promise<DbModel.DbAccountPk
         & { forceFlush?: boolean }
         & { patch: DbPatch }
-        & { metadata: Omit<MemoryDbAccount<"protonmail">["metadata"], "type"> | Omit<MemoryDbAccount<"tutanota">["metadata"], "type"> },
+        & { metadata: Omit<FsDbAccount<"protonmail">["metadata"], "type"> | Omit<FsDbAccount<"tutanota">["metadata"], "type"> },
         DbModel.FsDbAccount["metadata"]>(),
 
     dbGetAccountMetadata: ActionType.Promise<DbModel.DbAccountPk, DbModel.FsDbAccount["metadata"] | null>(),

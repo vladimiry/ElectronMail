@@ -1,8 +1,8 @@
 import {AccountConfig, AccountType} from "./model/account";
 import {BaseConfig, Config} from "./model/options";
 import {DbPatch} from "./api/common";
+import {FsDbAccount, View} from "src/shared/model/database";
 import {LoginFieldContainer} from "./model/container";
-import {MemoryDbAccount, View} from "src/shared/model/database";
 import {StatusCodeError} from "./model/error";
 
 export function pickBaseConfigProperties(
@@ -198,7 +198,7 @@ export function buildEnumBundle<V extends string | number = string>(
 }
 
 export function isDatabaseBootstrapped(
-    metadata: MemoryDbAccount["metadata"] | null,
+    metadata: FsDbAccount["metadata"] | null,
 ): metadata is Readonly<Exclude<typeof metadata, null>> {
     if (!metadata) {
         return false;

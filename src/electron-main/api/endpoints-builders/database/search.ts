@@ -21,7 +21,7 @@ export async function buildDbSearchEndpoints(
             logger.info("dbFullTextSearch()");
 
             const timeoutMs = DEFAULT_API_CALL_TIMEOUT;
-            const account = ctx.db.getFsAccount({type, login});
+            const account = ctx.db.getAccount({type, login});
 
             if (!account) {
                 throw new Error(`Failed to resolve account by the provided "type/login"`);

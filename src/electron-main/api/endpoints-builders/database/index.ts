@@ -60,10 +60,6 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             const account = ctx.db.getAccount(key) || ctx.db.initAccount(key);
             const entityTypes: ["conversationEntries", "mails", "folders", "contacts"]
                 = ["conversationEntries", "mails", "folders", "contacts"];
-            const modifiedState: { entitiesModified: boolean, metadataModified: boolean, modified?: boolean } = {
-                entitiesModified: false,
-                metadataModified: false,
-            };
 
             for (const entityType of entityTypes) {
                 const source = entityUpdatesPatch[entityType];
@@ -83,42 +79,42 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                     continue;
                 }
 
-                IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.next(
-                    IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Index(
-                        {
-                            uid: uuid(),
-                            ...narrowIndexActionPayload({
-                                key,
-                                add: source.upsert as IndexableMail[], // TODO send data as chunks
-                                remove: source.remove,
-                            }),
-                        },
-                    ),
-                );
+                // send mails indexing signal
+                setTimeout(() => {
+                    IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.next(
+                        IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Index(
+                            {
+                                uid: uuid(),
+                                ...narrowIndexActionPayload({
+                                    key,
+                                    add: source.upsert as IndexableMail[], // TODO send data as chunks
+                                    remove: source.remove,
+                                }),
+                            },
+                        ),
+                    );
+                });
             }
 
-            modifiedState.entitiesModified = isEntityUpdatesPatchNotEmpty(entityUpdatesPatch);
-            modifiedState.metadataModified = patchMetadata(account.metadata, metadataPatch);
-            modifiedState.modified = modifiedState.entitiesModified || modifiedState.metadataModified;
+            const metadataModified = patchMetadata(account.metadata, metadataPatch);
+            const entitiesModified = isEntityUpdatesPatchNotEmpty(entityUpdatesPatch);
+            const modified = entitiesModified || metadataModified;
 
-            logger.verbose(JSON.stringify({...modifiedState, forceFlush}));
+            logger.verbose(JSON.stringify({entitiesModified, metadataModified, modified, forceFlush}));
 
             // TODO consider caching the config
-            const {
-                disableSpamNotifications,
-                databaseWriteDelayMs,
-            } = await ctx.configStore.readExisting();
+            const {disableSpamNotifications, databaseWriteDelayMs} = await ctx.configStore.readExisting();
 
-            IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount({
-                key,
-                entitiesModified: modifiedState.entitiesModified,
-                metadataModified: modifiedState.metadataModified,
-                stat: ctx.db.accountStat(account, !disableSpamNotifications),
-            }));
+            setTimeout(() => {
+                IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount({
+                    key,
+                    entitiesModified,
+                    metadataModified,
+                    stat: ctx.db.accountStat(account, !disableSpamNotifications),
+                }));
+            });
 
-            const needToWrite = modifiedState.modified || forceFlush;
-
-            if (needToWrite) {
+            if (modified || forceFlush) {
                 const lastWriteAttemptMark = performance.now();
                 const saveDelayedMs: false | number = (
                     typeof dbPatchState.lastWriteAttemptMark !== "undefined"

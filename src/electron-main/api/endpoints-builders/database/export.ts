@@ -1,22 +1,85 @@
+import electronLog from "electron-log";
 import fs from "fs";
 import {Base64} from "js-base64";
+import {Observable} from "rxjs";
+import {app, dialog} from "electron";
 import {join} from "path";
 import {promisify} from "util";
 import {v4 as uuid} from "uuid";
 
+import {Context} from "src/electron-main/model";
 import {File, Mail, MailAddress} from "src/shared/model/database";
+import {IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main";
 import {PACKAGE_NAME} from "src/shared/constants";
+import {curryFunctionMembers} from "src/shared/util";
+
+const logger = curryFunctionMembers(electronLog, "[src/electron-main/api/endpoints-builders/database/export]");
 
 const fsAsync = {
     stat: promisify(fs.stat),
     writeFile: promisify(fs.writeFile),
-};
+} as const;
 
 const eol = `\r\n`;
 const emlExtension = `.eml`;
 const maxFileNameLength = 256 - emlExtension.length;
 const safeFileNameRe = /[^A-Za-z0-9.]+/g;
-const emptyArray = Object.freeze([]);
+const emptyArray = [] as const;
+
+export async function buildDbExportEndpoints(
+    ctx: Context,
+): Promise<Pick<IpcMainApiEndpoints, "dbExport">> {
+    return {
+        dbExport({type, login, mailPks}) {
+            logger.info("dbExport()");
+
+            return new Observable<IpcMainServiceScan["ApiImplReturns"]["dbExport"]>((subscriber) => {
+                const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
+
+                if (!browserWindow) {
+                    return subscriber.error(new Error(`Failed to resolve main app window`));
+                }
+
+                const [dir]: Array<string | undefined> = dialog.showOpenDialog(
+                    browserWindow,
+                    {
+                        title: "Select directory to export emails to the EML files",
+                        defaultPath: app.getPath("home"),
+                        properties: ["openDirectory"],
+                    },
+                ) || [];
+
+                if (!dir) {
+                    return subscriber.complete();
+                }
+
+                const account = ctx.db.getFsAccount({type, login});
+
+                if (!account) {
+                    return subscriber.error(new Error(`Failed to resolve account by the provided "type/login"`));
+                }
+
+                const mails = mailPks
+                    ? Object.values(account.mails).filter(({pk}) => mailPks.includes(pk))
+                    : Object.values(account.mails);
+                const count = mails.length;
+
+                subscriber.next({count});
+
+                const promise = (async () => {
+                    for (let index = 0; index < count; index++) {
+                        const {file} = await writeEmlFile(mails[index], dir);
+                        subscriber.next({file, progress: +((index + 1) / count * 100).toFixed(2)});
+                    }
+                })();
+
+                promise
+                    .then(() => subscriber.complete())
+                    .catch((error) => subscriber.error(error));
+            });
+        },
+    };
+}
 
 const formatEmlDate: (mail: Mail) => string = (() => {
     const dayNames = Object.freeze([`Mon`, `Tue`, `Wed`, `Thu`, `Fri`, `Sat`, `Sun`]);

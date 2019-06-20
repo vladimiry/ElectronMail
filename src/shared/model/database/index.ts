@@ -120,19 +120,19 @@ export interface EntityMap<V extends Entity, K extends V["pk"] = V["pk"]> extend
     toObject(): Record<K, V>;
 }
 
-export interface DbMemoryDataContainer {
+export type DbMemoryDataContainer = Readonly<{
     conversationEntries: EntityMap<ConversationEntry>;
     mails: EntityMap<Mail>;
     folders: EntityMap<Folder>;
     contacts: EntityMap<Contact>;
-}
+}>;
 
-export interface DbFsDataContainer {
+export type DbFsDataContainer = Readonly<{
     conversationEntries: Record<ConversationEntry["pk"], ConversationEntry>;
     mails: Record<Mail["pk"], Mail>;
     folders: Record<Folder["pk"], Folder>;
     contacts: Record<Contact["pk"], Contact>;
-}
+}>;
 
 interface GenericDb<T extends AccountType, MetadataPart, EntitiesContainer extends DbMemoryDataContainer | DbFsDataContainer> {
     version: string;

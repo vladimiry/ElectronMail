@@ -1,31 +1,17 @@
 import electronLog from "electron-log";
 import sanitizeHtml from "sanitize-html";
-import {Observable, defer, race, throwError, timer} from "rxjs";
-import {app, dialog} from "electron";
-import {concatMap, filter, mergeMap, startWith, take, takeUntil} from "rxjs/operators";
 import {equals, mergeDeepRight, omit} from "ramda";
 import {v4 as uuid} from "uuid";
 
 import {Context} from "src/electron-main/model";
-import {DB_DATA_CONTAINER_FIELDS, EntityMap, IndexableMail, IndexableMailId, MemoryDbAccount, View} from "src/shared/model/database";
-import {DEFAULT_API_CALL_TIMEOUT} from "src/shared/constants";
-import {
-    IPC_MAIN_API_DB_INDEXER_NOTIFICATION$,
-    IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$,
-    IPC_MAIN_API_NOTIFICATION$,
-} from "src/electron-main/api/constants";
-import {
-    IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS,
-    IPC_MAIN_API_DB_INDEXER_ON_ACTIONS,
-    IPC_MAIN_API_NOTIFICATION_ACTIONS,
-    IpcMainApiEndpoints,
-    IpcMainServiceScan,
-} from "src/shared/api/main";
-import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty, walkConversationNodesTree} from "src/shared/util";
-import {indexAccount, narrowIndexActionPayload} from "./indexing";
+import {DB_DATA_CONTAINER_FIELDS, EntityMap, IndexableMail, MemoryDbAccount} from "src/shared/model/database";
+import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION$, IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
+import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
+import {buildDbExportEndpoints} from "./export";
+import {buildDbIndexingEndpoints, narrowIndexActionPayload} from "./indexing";
+import {buildDbSearchEndpoints, searchRootConversationNodes} from "./search";
+import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {prepareFoldersView} from "./folders-view";
-import {searchRootConversationNodes} from "./search";
-import {writeEmlFile} from "./export";
 
 const _logger = curryFunctionMembers(electronLog, "[electron-main/api/endpoints-builders/database]");
 
@@ -42,6 +28,10 @@ type Methods = keyof Pick<IpcMainApiEndpoints,
 
 export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpoints, Methods>> {
     return {
+        ...await buildDbExportEndpoints(ctx),
+        ...await buildDbIndexingEndpoints(ctx),
+        ...await buildDbSearchEndpoints(ctx),
+
         async dbPatch({forceFlush, type, login, metadata: metadataPatch, patch: entityUpdatesPatch}) {
             const logger = curryFunctionMembers(_logger, "dbPatch()");
 
@@ -51,17 +41,17 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             const account = ctx.db.getAccount(key) || ctx.db.initAccount(key);
 
             for (const entityType of DB_DATA_CONTAINER_FIELDS) {
-                const source = entityUpdatesPatch[entityType];
-                const destinationMap: EntityMap<Unpacked<typeof source.upsert>> = account[entityType];
+                const {remove, upsert} = entityUpdatesPatch[entityType];
+                const destinationMap: EntityMap<Unpacked<typeof upsert>> = account[entityType];
 
                 // remove
-                source.remove.forEach(({pk}) => {
+                remove.forEach(({pk}) => {
                     destinationMap.delete(pk);
                 });
 
                 // add
-                for (const entity of source.upsert) {
-                    await (destinationMap).validateAndSet(entity);
+                for (const entity of upsert) {
+                    await destinationMap.validateAndSet(entity);
                 }
 
                 if (entityType !== "mails") {
@@ -76,8 +66,8 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                                 uid: uuid(),
                                 ...narrowIndexActionPayload({
                                     key,
-                                    add: source.upsert as IndexableMail[], // TODO send data as chunks
-                                    remove: source.remove,
+                                    add: upsert as IndexableMail[], // TODO send data as chunks
+                                    remove,
                                 }),
                             },
                         ),
@@ -155,55 +145,6 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             };
         },
 
-        dbExport({type, login, mailPks}) {
-            _logger.info("dbExport()");
-
-            return new Observable<IpcMainServiceScan["ApiImplReturns"]["dbExport"]>((subscriber) => {
-                const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
-
-                if (!browserWindow) {
-                    return subscriber.error(new Error(`Failed to resolve main app window`));
-                }
-
-                const [dir]: Array<string | undefined> = dialog.showOpenDialog(
-                    browserWindow,
-                    {
-                        title: "Select directory to export emails to the EML files",
-                        defaultPath: app.getPath("home"),
-                        properties: ["openDirectory"],
-                    },
-                ) || [];
-
-                if (!dir) {
-                    return subscriber.complete();
-                }
-
-                const account = ctx.db.getFsAccount({type, login});
-
-                if (!account) {
-                    return subscriber.error(new Error(`Failed to resolve account by the provided "type/login"`));
-                }
-
-                const mails = mailPks
-                    ? Object.values(account.mails).filter(({pk}) => mailPks.includes(pk))
-                    : Object.values(account.mails);
-                const count = mails.length;
-
-                subscriber.next({count});
-
-                const promise = (async () => {
-                    for (let index = 0; index < count; index++) {
-                        const {file} = await writeEmlFile(mails[index], dir);
-                        subscriber.next({file, progress: +((index + 1) / count * 100).toFixed(2)});
-                    }
-                })();
-
-                promise
-                    .then(() => subscriber.complete())
-                    .catch((error) => subscriber.error(error));
-            });
-        },
-
         async dbSearchRootConversationNodes({type, login, folderPks, ...restOptions}) {
             _logger.info("dbSearchRootConversationNodes()");
 
@@ -220,151 +161,6 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                 : restOptions.mailPks;
 
             return searchRootConversationNodes(account, {folderPks, mailPks});
-        },
-
-        dbFullTextSearch({type, login, query, folderPks}) {
-            _logger.info("dbFullTextSearch()");
-
-            const timeoutMs = DEFAULT_API_CALL_TIMEOUT;
-            const account = ctx.db.getFsAccount({type, login});
-
-            if (!account) {
-                throw new Error(`Failed to resolve account by the provided "type/login"`);
-            }
-
-            const uid = uuid();
-            const result$ = race(
-                IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$.pipe(
-                    filter(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.is.SearchResult),
-                    filter(({payload}) => payload.uid === uid),
-                    take(1),
-                    mergeMap(({payload: {data: {items, expandedTerms}}}) => {
-                        const mailScoresByPk = new Map<IndexableMailId, number>(
-                            items.map(({key, score}) => [key, score] as [IndexableMailId, number]),
-                        );
-                        const rootConversationNodes = searchRootConversationNodes(
-                            account,
-                            {mailPks: [...mailScoresByPk.keys()], folderPks},
-                        );
-                        const mailsBundleItems: Unpacked<ReturnType<IpcMainApiEndpoints["dbFullTextSearch"]>>["mailsBundleItems"] = [];
-                        const findByFolder = folderPks
-                            ? ({pk}: View.Folder) => folderPks.includes(pk)
-                            : () => true;
-
-                        for (const rootConversationNode of rootConversationNodes) {
-                            let allNodeMailsCount = 0;
-                            const matchedScoredNodeMails: Array<Unpacked<typeof mailsBundleItems>["mail"]> = [];
-
-                            walkConversationNodesTree([rootConversationNode], ({mail}) => {
-                                if (!mail) {
-                                    return;
-                                }
-
-                                allNodeMailsCount++;
-
-                                const score = mailScoresByPk.get(mail.pk);
-
-                                if (
-                                    typeof score !== "undefined"
-                                    &&
-                                    mail.folders.find(findByFolder)
-                                ) {
-                                    matchedScoredNodeMails.push({...mail, score});
-                                }
-                            });
-
-                            if (!matchedScoredNodeMails.length) {
-                                continue;
-                            }
-
-                            mailsBundleItems.push(
-                                ...matchedScoredNodeMails.map((mail) => ({
-                                    mail,
-                                    conversationSize: allNodeMailsCount,
-                                })),
-                            );
-                        }
-
-                        return [{
-                            uid,
-                            mailsBundleItems,
-                            expandedTerms,
-                        }];
-                    }),
-                ),
-                timer(timeoutMs).pipe(
-                    concatMap(() => throwError(new Error(`Failed to complete the search in ${timeoutMs}ms`))),
-                ),
-            );
-
-            IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.next(
-                IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Search({
-                    key: {type, login},
-                    query,
-                    uid,
-                }),
-            );
-
-            return result$;
-        },
-
-        async dbIndexerOn(action) {
-            _logger.info("dbIndexerOn()", `action.type: ${action.type}`);
-
-            // propagating action to custom stream
-            setTimeout(() => {
-                IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$.next(action);
-            });
-
-            IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.match(action, {
-                Bootstrapped: () => {
-                    const indexAccounts$ = defer(
-                        async () => {
-                            const logins = (await ctx.settingsStore.readExisting())
-                                .accounts
-                                .map(({login}) => login);
-                            const config = await ctx.configStore.readExisting();
-
-                            for (const {account, pk} of ctx.db.accountsIterator()) {
-                                if (logins.includes(pk.login)) {
-                                    await indexAccount(account, pk, config);
-                                }
-                            }
-                        },
-                    ).pipe(
-                        // drop indexing on "logout" action
-                        takeUntil(
-                            IPC_MAIN_API_NOTIFICATION$.pipe(
-                                filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.SignedInStateChange),
-                                filter(({payload: {signedIn}}) => !signedIn),
-                            ),
-                        ),
-                    );
-
-                    setTimeout(async () => {
-                        await indexAccounts$.toPromise();
-                    });
-                },
-                ProgressState: (payload) => {
-                    _logger.verbose("dbIndexerOn()", `ProgressState.status: ${JSON.stringify(payload.status)}`);
-
-                    // propagating status to main channel which streams data to UI process
-                    setTimeout(() => {
-                        IPC_MAIN_API_NOTIFICATION$.next(
-                            IPC_MAIN_API_NOTIFICATION_ACTIONS.DbIndexerProgressState(payload),
-                        );
-                    });
-                },
-                default: () => {
-                    // NOOP
-                },
-            });
-        },
-
-        dbIndexerNotification() {
-            return IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.asObservable().pipe(
-                startWith(IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Bootstrap({})),
-            );
         },
     };
 }

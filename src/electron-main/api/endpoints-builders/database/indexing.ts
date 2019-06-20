@@ -1,18 +1,93 @@
 import electronLog from "electron-log";
 import {UnionOf} from "@vladimiry/unionize";
-import {concatMap, filter, take} from "rxjs/operators";
+import {concatMap, filter, startWith, take, takeUntil} from "rxjs/operators";
+import {defer, race, throwError, timer} from "rxjs";
 import {pick} from "ramda";
-import {race, throwError, timer} from "rxjs";
 import {v4 as uuid} from "uuid";
 
 import {Config} from "src/shared/model/options";
+import {Context} from "src/electron-main/model";
 import {DbAccountPk, INDEXABLE_MAIL_FIELDS, Mail, MemoryDbAccount} from "src/shared/model/database";
-import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION$, IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$} from "src/electron-main/api/constants";
-import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_DB_INDEXER_ON_ACTIONS} from "src/shared/api/main";
+import {
+    IPC_MAIN_API_DB_INDEXER_NOTIFICATION$,
+    IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$,
+    IPC_MAIN_API_NOTIFICATION$,
+} from "src/electron-main/api/constants";
+import {
+    IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS,
+    IPC_MAIN_API_DB_INDEXER_ON_ACTIONS,
+    IPC_MAIN_API_NOTIFICATION_ACTIONS,
+    IpcMainApiEndpoints,
+} from "src/shared/api/main";
 import {curryFunctionMembers} from "src/shared/util";
 import {hrtimeDuration} from "src/electron-main/util";
 
 const logger = curryFunctionMembers(electronLog, "[src/electron-main/api/endpoints-builders/database/indexing]");
+
+export async function buildDbIndexingEndpoints(
+    ctx: Context,
+): Promise<Pick<IpcMainApiEndpoints, "dbIndexerOn" | "dbIndexerNotification">> {
+    return {
+        async dbIndexerOn(action) {
+            logger.info("dbIndexerOn()", `action.type: ${action.type}`);
+
+            // propagating action to custom stream
+            setTimeout(() => {
+                IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$.next(action);
+            });
+
+            IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.match(action, {
+                Bootstrapped: () => {
+                    const indexAccounts$ = defer(
+                        async () => {
+                            const logins = (await ctx.settingsStore.readExisting())
+                                .accounts
+                                .map(({login}) => login);
+                            const config = await ctx.configStore.readExisting();
+
+                            for (const {account, pk} of ctx.db.accountsIterator()) {
+                                if (logins.includes(pk.login)) {
+                                    await indexAccount(account, pk, config);
+                                }
+                            }
+                        },
+                    ).pipe(
+                        // drop indexing on "logout" action
+                        takeUntil(
+                            IPC_MAIN_API_NOTIFICATION$.pipe(
+                                filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.SignedInStateChange),
+                                filter(({payload: {signedIn}}) => !signedIn),
+                            ),
+                        ),
+                    );
+
+                    setTimeout(async () => {
+                        await indexAccounts$.toPromise();
+                    });
+                },
+                ProgressState: (payload) => {
+                    logger.verbose("dbIndexerOn()", `ProgressState.status: ${JSON.stringify(payload.status)}`);
+
+                    // propagating status to main channel which streams data to UI process
+                    setTimeout(() => {
+                        IPC_MAIN_API_NOTIFICATION$.next(
+                            IPC_MAIN_API_NOTIFICATION_ACTIONS.DbIndexerProgressState(payload),
+                        );
+                    });
+                },
+                default: () => {
+                    // NOOP
+                },
+            });
+        },
+
+        dbIndexerNotification() {
+            return IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.asObservable().pipe(
+                startWith(IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Bootstrap({})),
+            );
+        },
+    };
+}
 
 export const narrowIndexActionPayload: (
     payload: Omit<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>, { type: "Index" }>["payload"], "uid">,

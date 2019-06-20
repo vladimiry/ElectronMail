@@ -128,14 +128,19 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         if (typeof config.databaseSaveDelayMs !== "undefined") {
             delete config.databaseSaveDelayMs;
         }
-        if (typeof config.databaseWriteDelayMs === "undefined") {
-            config.databaseWriteDelayMs = INITIAL_STORES.config().databaseWriteDelayMs;
-        }
         if (typeof config.checkForUpdatesAndNotify !== "undefined") {
             delete config.checkForUpdatesAndNotify;
         }
         if (typeof config.checkUpdateAndNotify === "undefined") {
             config.checkUpdateAndNotify = INITIAL_STORES.config().checkUpdateAndNotify;
+        }
+    },
+    "3.5.1": (
+        _,
+        config = _ as Config & { databaseWriteDelayMs?: number; },
+    ) => {
+        if (typeof config.databaseWriteDelayMs !== "undefined") {
+            delete config.databaseWriteDelayMs;
         }
     },
 };

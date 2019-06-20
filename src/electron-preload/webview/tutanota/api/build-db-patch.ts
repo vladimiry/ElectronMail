@@ -52,7 +52,6 @@ const buildDbPatchEndpoint: Pick<TutanotaApi, "buildDbPatch"> = {
                                 login: input.login,
                             },
                             logger,
-                            {immediateWrite: true},
                         );
                     },
                 );
@@ -99,7 +98,6 @@ const buildDbPatchEndpoint: Pick<TutanotaApi, "buildDbPatch"> = {
                     login: input.login,
                 },
                 logger,
-                {immediateWrite: false},
             );
 
             return;

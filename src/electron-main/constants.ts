@@ -57,7 +57,6 @@ export const INITIAL_STORES: Readonly<{
                 databaseLoading: ONE_MINUTE_MS * 5, // 5 minutes
                 indexingBootstrap: ONE_SECOND_MS * 30, // 30 seconds
             },
-            databaseWriteDelayMs: 0, // 0 = no delay = immediate saving
             indexingBootstrapBufferSize: 1000,
             jsFlags: [
                 "--max-old-space-size=3072",

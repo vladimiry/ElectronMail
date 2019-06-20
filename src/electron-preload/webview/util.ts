@@ -227,12 +227,10 @@ function triggerChangeEvent(input: HTMLInputElement) {
 export async function persistDatabasePatch(
     data: Arguments<IpcMainApiEndpoints["dbPatch"]>[0],
     logger: ReturnType<typeof buildLoggerBundle>,
-    {immediateWrite}: { immediateWrite: boolean },
 ): Promise<void> {
     logger.info("persist() start");
 
     await (await resolveIpcMainApi(logger))("dbPatch")({
-        immediateWrite,
         type: data.type,
         login: data.login,
         metadata: data.metadata,

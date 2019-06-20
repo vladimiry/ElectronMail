@@ -4,13 +4,11 @@ import {Observable, defer, race, throwError, timer} from "rxjs";
 import {app, dialog} from "electron";
 import {concatMap, filter, mergeMap, startWith, take, takeUntil} from "rxjs/operators";
 import {equals, mergeDeepRight, omit} from "ramda";
-import {inspect} from "util";
-import {performance} from "perf_hooks";
 import {v4 as uuid} from "uuid";
 
 import {Context} from "src/electron-main/model";
+import {DB_DATA_CONTAINER_FIELDS, EntityMap, IndexableMail, IndexableMailId, MemoryDbAccount, View} from "src/shared/model/database";
 import {DEFAULT_API_CALL_TIMEOUT} from "src/shared/constants";
-import {EntityMap, IndexableMail, IndexableMailId, MemoryDbAccount, View} from "src/shared/model/database";
 import {
     IPC_MAIN_API_DB_INDEXER_NOTIFICATION$,
     IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$,
@@ -42,28 +40,19 @@ type Methods = keyof Pick<IpcMainApiEndpoints,
     | "dbIndexerOn"
     | "dbIndexerNotification">;
 
-const dbPatchState: {
-    lastWriteAttemptMark?: ReturnType<typeof performance.now>;
-    // WARN: "timeOutId" can't be just passed through "JSON.stringify": Converting circular structure to JSON
-    // so "util.inspect" needs to be used
-    timeOutId?: ReturnType<typeof setTimeout>;
-} = {};
-
 export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpoints, Methods>> {
     return {
-        async dbPatch({immediateWrite = true, forceFlush, type, login, metadata: metadataPatch, patch: entityUpdatesPatch}) {
+        async dbPatch({forceFlush, type, login, metadata: metadataPatch, patch: entityUpdatesPatch}) {
             const logger = curryFunctionMembers(_logger, "dbPatch()");
 
             logger.info();
 
-            const key = {type, login};
+            const key = {type, login} as const;
             const account = ctx.db.getAccount(key) || ctx.db.initAccount(key);
-            const entityTypes: ["conversationEntries", "mails", "folders", "contacts"]
-                = ["conversationEntries", "mails", "folders", "contacts"];
 
-            for (const entityType of entityTypes) {
+            for (const entityType of DB_DATA_CONTAINER_FIELDS) {
                 const source = entityUpdatesPatch[entityType];
-                const destinationMap = account[entityType];
+                const destinationMap: EntityMap<Unpacked<typeof source.upsert>> = account[entityType];
 
                 // remove
                 source.remove.forEach(({pk}) => {
@@ -72,7 +61,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
                 // add
                 for (const entity of source.upsert) {
-                    await (destinationMap as EntityMap<typeof entity>).validateAndSet(entity);
+                    await (destinationMap).validateAndSet(entity);
                 }
 
                 if (entityType !== "mails") {
@@ -102,79 +91,21 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
             logger.verbose(JSON.stringify({entitiesModified, metadataModified, modified, forceFlush}));
 
-            // TODO consider caching the config
-            const {disableSpamNotifications, databaseWriteDelayMs} = await ctx.configStore.readExisting();
+            setTimeout(async () => {
+                // TODO consider caching the config
+                const {disableSpamNotifications} = await ctx.configStore.readExisting();
+                const includingSpam = !disableSpamNotifications;
 
-            setTimeout(() => {
                 IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount({
                     key,
                     entitiesModified,
                     metadataModified,
-                    stat: ctx.db.accountStat(account, !disableSpamNotifications),
+                    stat: ctx.db.accountStat(account, includingSpam),
                 }));
             });
 
             if (modified || forceFlush) {
-                const lastWriteAttemptMark = performance.now();
-                const saveDelayedMs: false | number = (
-                    typeof dbPatchState.lastWriteAttemptMark !== "undefined"
-                    &&
-                    lastWriteAttemptMark - dbPatchState.lastWriteAttemptMark
-                );
-                const writingNow = (
-                    immediateWrite
-                    ||
-                    typeof databaseWriteDelayMs !== "number" || isNaN(databaseWriteDelayMs) || databaseWriteDelayMs === 0
-                    ||
-                    typeof saveDelayedMs === "number" && saveDelayedMs >= databaseWriteDelayMs
-                );
-
-                logger.verbose(
-                    "[write]",
-                    inspect({dbPatchState, databaseWriteDelayMs, immediateWrite, saveDelayedMs, writingNow}),
-                );
-
-                dbPatchState.lastWriteAttemptMark = lastWriteAttemptMark;
-
-                if (writingNow) {
-                    if (typeof dbPatchState.timeOutId !== "undefined") {
-                        logger.verbose(`[write] resetting "dbPatchState.timeOutId"`, inspect(dbPatchState));
-                        clearTimeout(dbPatchState.timeOutId);
-                        delete dbPatchState.timeOutId;
-                    }
-
-                    await ctx.db.saveToFile();
-                } else {
-                    const remainingSaveDelayMs = saveDelayedMs
-                        ? databaseWriteDelayMs - saveDelayedMs
-                        : databaseWriteDelayMs;
-
-                    logger.verbose(`[write] setting up write timeout`, inspect({dbPatchState, remainingSaveDelayMs}));
-
-                    dbPatchState.timeOutId = setTimeout(
-                        async () => {
-                            delete dbPatchState.timeOutId;
-
-                            dbPatchState.lastWriteAttemptMark = performance.now();
-
-                            try {
-                                await ctx.db.saveToFile();
-                            } catch (error) {
-                                IPC_MAIN_API_NOTIFICATION$.next(
-                                    IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({
-                                        message: [
-                                            `Failed to write "${ctx.db.options.file}" file`,
-                                            `, see "${electronLog.transports.file.file}" file for details`,
-                                        ].join(""),
-                                    }),
-                                );
-
-                                logger.error(error);
-                            }
-                        },
-                        remainingSaveDelayMs,
-                    );
-                }
+                await ctx.db.saveToFile();
             }
 
             return account.metadata;

@@ -1,4 +1,4 @@
-import {IndexableMail} from "src/shared/model/database/index";
+import {DbFsDataContainer, DbMemoryDataContainer, IndexableMail} from "src/shared/model/database/index";
 import {buildEnumBundle} from "src/shared/util";
 
 export const PROTONMAIL_MAILBOX_IDENTIFIERS = buildEnumBundle({
@@ -82,7 +82,7 @@ export const CONTACT_SOCIAL_TYPE = buildEnumBundle({
     CUSTOM: "5",
 });
 
-export const INDEXABLE_MAIL_FIELDS_STUB_CONTAINER: Record<keyof Omit<IndexableMail, "pk">, null> = Object.freeze({
+export const INDEXABLE_MAIL_FIELDS_STUB_CONTAINER: Readonly<Record<keyof Omit<IndexableMail, "pk">, null>> = {
     subject: null,
     body: null,
     sender: null,
@@ -90,4 +90,17 @@ export const INDEXABLE_MAIL_FIELDS_STUB_CONTAINER: Record<keyof Omit<IndexableMa
     ccRecipients: null,
     bccRecipients: null,
     attachments: null,
-});
+};
+
+export const INDEXABLE_MAIL_FIELDS: Readonly<Array<keyof typeof INDEXABLE_MAIL_FIELDS_STUB_CONTAINER>>
+    = Object.keys(INDEXABLE_MAIL_FIELDS_STUB_CONTAINER) as any;
+
+export const DB_DATA_CONTAINER_FIELDS_STUB_CONTAINER: Readonly<Record<keyof DbMemoryDataContainer & keyof DbFsDataContainer, null>> = {
+    conversationEntries: null,
+    mails: null,
+    folders: null,
+    contacts: null,
+};
+
+export const DB_DATA_CONTAINER_FIELDS: Readonly<Array<keyof typeof DB_DATA_CONTAINER_FIELDS_STUB_CONTAINER>>
+    = Object.keys(DB_DATA_CONTAINER_FIELDS_STUB_CONTAINER) as any;

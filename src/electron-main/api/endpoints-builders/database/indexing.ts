@@ -6,7 +6,7 @@ import {race, throwError, timer} from "rxjs";
 import {v4 as uuid} from "uuid";
 
 import {Config} from "src/shared/model/options";
-import {DbAccountPk, INDEXABLE_MAIL_FIELDS_STUB_CONTAINER, Mail, MemoryDbAccount} from "src/shared/model/database";
+import {DbAccountPk, INDEXABLE_MAIL_FIELDS, Mail, MemoryDbAccount} from "src/shared/model/database";
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION$, IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_DB_INDEXER_ON_ACTIONS} from "src/shared/api/main";
 import {curryFunctionMembers} from "src/shared/util";
@@ -20,16 +20,16 @@ export const narrowIndexActionPayload: (
     type Fn = typeof narrowIndexActionPayload;
     type Mails = ReturnType<Fn>["add"];
 
-    const mailFieldsToSelect = [
+    const fieldsToIndex = [
         ((name: keyof Pick<Unpacked<Mails>, "pk">) => name)("pk"),
-        ...Object.keys(INDEXABLE_MAIL_FIELDS_STUB_CONTAINER),
-    ] as Array<keyof Unpacked<Mails>>;
+        ...INDEXABLE_MAIL_FIELDS,
+    ] as const;
 
     const result: Fn = ({key, remove, add}) => {
         return {
             key,
             remove,
-            add: add.map((mail) => pick(mailFieldsToSelect, mail)),
+            add: add.map((mail) => pick(fieldsToIndex, mail)),
         };
     };
 

@@ -40,7 +40,6 @@ export const ENDPOINTS_DEFINITION = {
     changeMasterPassword: ActionType.Promise<PasswordFieldContainer & NewPasswordFieldContainer, Settings>(),
 
     dbPatch: ActionType.Promise<DbModel.DbAccountPk
-        & { immediateWrite?: boolean; }
         & { forceFlush?: boolean }
         & { patch: DbPatch }
         & { metadata: Omit<MemoryDbAccount<"protonmail">["metadata"], "type"> | Omit<MemoryDbAccount<"tutanota">["metadata"], "type"> },

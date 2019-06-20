@@ -53,8 +53,10 @@ export const FOLDER_UTILS: {
     const sortByName = R.sortBy(
         R.prop(((prop: keyof Pick<View.Folder, "name">) => prop)("name")),
     );
-    const customizerBasedComparator = (customizer: CustomizerResolver) => (o1: View.Folder, o2: View.Folder) => {
-        return customizer(o1).order - customizer(o2).order;
+    const buildCustomizerBasedComparator = (customizer: CustomizerResolver) => {
+        return (o1: View.Folder, o2: View.Folder) => {
+            return customizer(o1).order - customizer(o2).order;
+        };
     };
 
     return {
@@ -65,9 +67,14 @@ export const FOLDER_UTILS: {
                 ] as [View.Folder, Customizer])),
             );
             const bundle = {
-                system: R.sort(customizerBasedComparator(customizer), folders.filter((f) => f.folderType !== MAIL_FOLDER_TYPE.CUSTOM)),
-                custom: sortByName(folders.filter((f) => f.folderType === MAIL_FOLDER_TYPE.CUSTOM)),
-            };
+                system: R.sort(
+                    buildCustomizerBasedComparator(customizer),
+                    folders.filter(({folderType}) => folderType !== MAIL_FOLDER_TYPE.CUSTOM),
+                ),
+                custom: sortByName(
+                    folders.filter(({folderType}) => folderType === MAIL_FOLDER_TYPE.CUSTOM),
+                ),
+            } as const;
 
             bundle.system.forEach((folder) => folder.name = customizer(folder).title(folder));
 
@@ -90,7 +97,6 @@ export const FOLDER_UTILS: {
     };
 })();
 
-// WARN don't mutate "account" argument
 function resolveAccountConversationNodes<T extends keyof FsDb["accounts"]>(account: FsDbAccount<T>): ConversationEntry[] {
     if (account.metadata.type === "tutanota") {
         return Object.values(account.conversationEntries);
@@ -128,7 +134,6 @@ function resolveAccountConversationNodes<T extends keyof FsDb["accounts"]>(accou
     return [...entriesMappedByPk.values()];
 }
 
-// WARN don't mutate "account" argument
 export function buildFoldersAndRootNodePrototypes<T extends keyof FsDb["accounts"]>(
     account: FsDbAccount<T>,
 ): {
@@ -161,7 +166,6 @@ export function buildFoldersAndRootNodePrototypes<T extends keyof FsDb["accounts
 
     for (const entry of conversationEntries) {
         const node = nodeLookup(entry.pk);
-        // WARN don't mutate "resolvedMail"
         const resolvedMail = entry.mailPk && account.mails[entry.mailPk];
 
         if (resolvedMail) {
@@ -248,8 +252,6 @@ function buildFoldersView<T extends keyof FsDb["accounts"]>(account: FsDbAccount
 }
 
 // TODO consider moving performance expensive "prepareFoldersView" function call to the background process
-// WARN make sure input "account" is not mutated
-// to reduce accidental database mutation possibility FsDbAccount argument is used but not the MemoryDbAccount
 export function prepareFoldersView<T extends keyof FsDb["accounts"]>(account: FsDbAccount<T>) {
     return FOLDER_UTILS.splitAndFormatAndFillSummaryFolders(
         buildFoldersView(account),

@@ -66,13 +66,12 @@
             "patterns": [
               {
                 "target": [
-                  "src/**/*",
-                  "!src/electron-main/**/*"
+                  "!src/electron-main/database/entity/**/*",
+                  "!src/electron-main/database/validation.ts"
                 ],
                 "from": [
-                  "src/electron-main/database/entity/**/*",
-                  "!src/electron-main/database/entity/index",
-                  "!src/electron-main/database/entity/column-decorator"
+                  "src/electron-main/database/entity",
+                  "src/electron-main/database/entity/**/*"
                 ]
               }
             ]

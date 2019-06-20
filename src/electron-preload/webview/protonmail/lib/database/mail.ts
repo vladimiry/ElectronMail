@@ -31,7 +31,7 @@ const isConfidential = ((encryptedValues: Array<Rest.Model.Message["IsEncrypted"
 ]);
 
 export async function buildMail(input: Rest.Model.Message, api: ProviderApi): Promise<DatabaseModel.Mail> {
-    const bodyPart: Pick<DatabaseModel.Mail, "body" | "failedDownload"> = {
+    const bodyPart: Mutable<Pick<DatabaseModel.Mail, "body" | "failedDownload">> = {
         body: "",
     };
 

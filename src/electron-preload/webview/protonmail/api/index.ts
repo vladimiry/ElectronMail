@@ -47,7 +47,12 @@ const endpoints: ProtonmailApi = {
         const api = await resolveProviderApi();
         const messagesViewMode = api.mailSettingsModel.get().ViewMode === api.constants.MESSAGE_VIEW_MODE;
         const {system, custom} = input.mail.mailFolderIds.reduce(
-            (accumulator: { system: typeof input.mail.mailFolderIds, custom: typeof input.mail.mailFolderIds }, id) => {
+            (accumulator: {
+                 system: Mutable<typeof input.mail.mailFolderIds>,
+                 custom: Mutable<typeof input.mail.mailFolderIds>,
+             },
+             id,
+            ) => {
                 if (id in PROTONMAIL_MAILBOX_ROUTE_NAMES) {
                     accumulator.system.push(id);
                 } else {
@@ -55,7 +60,10 @@ const endpoints: ProtonmailApi = {
                 }
                 return accumulator;
             },
-            {system: [], custom: []},
+            {
+                system: [],
+                custom: [],
+            },
         );
         const {id: mailId, conversationEntryPk: mailConversationId} = input.mail;
 

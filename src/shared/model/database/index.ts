@@ -14,108 +14,108 @@ export {
 };
 
 export interface Entity {
-    pk: string;
-    raw: string;
-    id: string;
+    readonly pk: string;
+    readonly raw: string;
+    readonly id: string;
 }
 
 export interface Folder extends Entity {
-    folderType: Unpacked<typeof Constants.MAIL_FOLDER_TYPE._.values>;
-    name: string;
-    mailFolderId: string;
+    readonly folderType: Unpacked<typeof Constants.MAIL_FOLDER_TYPE._.values>;
+    readonly name: string;
+    readonly mailFolderId: string;
 }
 
 export interface ConversationEntry extends Entity {
-    conversationType: Unpacked<typeof Constants.CONVERSATION_TYPE._.values>;
-    messageId: string;
-    mailPk?: Mail["pk"];
-    previousPk?: ConversationEntry["pk"];
+    readonly conversationType: Unpacked<typeof Constants.CONVERSATION_TYPE._.values>;
+    readonly messageId: string;
+    readonly mailPk?: Mail["pk"];
+    readonly previousPk?: ConversationEntry["pk"];
 }
 
 export interface MailFailedDownload {
-    type: "body-decrypting";
-    errorMessage: string;
-    errorStack: string;
-    date: Timestamp;
-    appVersion: string;
+    readonly type: "body-decrypting";
+    readonly errorMessage: string;
+    readonly errorStack: string;
+    readonly date: Timestamp;
+    readonly appVersion: string;
 }
 
 export interface Mail extends Entity {
-    conversationEntryPk: ConversationEntry["pk"];
-    mailFolderIds: Array<Folder["mailFolderId"]>;
-    sentDate: Timestamp;
-    subject: string;
-    body: string;
-    sender: MailAddress;
-    toRecipients: MailAddress[];
-    ccRecipients: MailAddress[];
-    bccRecipients: MailAddress[];
-    attachments: File[];
-    unread: boolean;
-    state: Unpacked<typeof Constants.MAIL_STATE._.values>;
-    confidential: boolean;
-    replyType: Unpacked<typeof Constants.REPLY_TYPE._.values>;
-    failedDownload?: MailFailedDownload;
+    readonly conversationEntryPk: ConversationEntry["pk"];
+    readonly mailFolderIds: ReadonlyArray<Folder["mailFolderId"]>;
+    readonly sentDate: Timestamp;
+    readonly subject: string;
+    readonly body: string;
+    readonly sender: MailAddress;
+    readonly toRecipients: readonly MailAddress[];
+    readonly ccRecipients: readonly MailAddress[];
+    readonly bccRecipients: readonly MailAddress[];
+    readonly attachments: readonly File[];
+    readonly unread: boolean;
+    readonly state: Unpacked<typeof Constants.MAIL_STATE._.values>;
+    readonly confidential: boolean;
+    readonly replyType: Unpacked<typeof Constants.REPLY_TYPE._.values>;
+    readonly failedDownload?: MailFailedDownload;
 }
 
 export interface MailAddress extends Entity {
-    address: string;
-    name: string;
+    readonly address: string;
+    readonly name: string;
 }
 
 export interface File extends Entity {
-    mimeType?: string;
-    name: string;
-    size: number;
+    readonly mimeType?: string;
+    readonly name: string;
+    readonly size: number;
 }
 
 export interface Contact extends Entity {
-    comment: string;
-    company: string;
-    firstName: string;
-    lastName: string;
-    nickname?: string;
-    role: string;
-    title?: string;
-    addresses: ContactAddress[];
-    birthday?: Birthday;
-    mailAddresses: ContactMailAddress[];
-    phoneNumbers: ContactPhoneNumber[];
-    socialIds: ContactSocialId[];
+    readonly comment: string;
+    readonly company: string;
+    readonly firstName: string;
+    readonly lastName: string;
+    readonly nickname?: string;
+    readonly role: string;
+    readonly title?: string;
+    readonly addresses: readonly ContactAddress[];
+    readonly birthday?: Birthday;
+    readonly mailAddresses: readonly ContactMailAddress[];
+    readonly phoneNumbers: readonly ContactPhoneNumber[];
+    readonly socialIds: readonly ContactSocialId[];
 }
 
 export interface ContactAddress extends Entity {
-    type: Unpacked<typeof Constants.CONTACT_ADDRESS_TYPE._.values>;
-    customTypeName: string;
-    address: string;
+    readonly type: Unpacked<typeof Constants.CONTACT_ADDRESS_TYPE._.values>;
+    readonly customTypeName: string;
+    readonly address: string;
 }
 
 export interface ContactMailAddress extends Entity {
-    type: Unpacked<typeof Constants.CONTACT_ADDRESS_TYPE._.values>;
-    customTypeName: string;
-    address: string;
+    readonly type: Unpacked<typeof Constants.CONTACT_ADDRESS_TYPE._.values>;
+    readonly customTypeName: string;
+    readonly address: string;
 }
 
 export interface Birthday extends Entity {
-    day: NumberString;
-    month: NumberString;
-    year?: NumberString;
+    readonly day: NumberString;
+    readonly month: NumberString;
+    readonly year?: NumberString;
 }
 
 export interface ContactPhoneNumber extends Entity {
-    type: Unpacked<typeof Constants.CONTACT_PHONE_NUMBER_TYPE._.values>;
-    customTypeName: string;
-    number: string;
+    readonly type: Unpacked<typeof Constants.CONTACT_PHONE_NUMBER_TYPE._.values>;
+    readonly customTypeName: string;
+    readonly number: string;
 }
 
 export interface ContactSocialId extends Entity {
-    type: Unpacked<typeof Constants.CONTACT_SOCIAL_TYPE._.values>;
-    customTypeName: string;
-    socialId: string;
+    readonly type: Unpacked<typeof Constants.CONTACT_SOCIAL_TYPE._.values>;
+    readonly customTypeName: string;
+    readonly socialId: string;
 }
 
 export interface ValidatedEntity {
-    _validated: undefined;
+    readonly _validated: undefined;
 }
 
 export type DbFsDataRecord<T extends ConversationEntry | Mail | Folder | Contact> = Record<T["pk"], T & ValidatedEntity>;

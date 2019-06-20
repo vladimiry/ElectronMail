@@ -1,6 +1,6 @@
 import * as Model from ".";
 
-export interface Folder extends Model.Folder {
+export interface Folder extends Mutable<Model.Folder> {
     size: number;
     unread: number;
     rootConversationNodes: RootConversationNode[];

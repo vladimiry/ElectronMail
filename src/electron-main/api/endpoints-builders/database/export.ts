@@ -143,7 +143,7 @@ function buildEml(mail: Mail): string {
     return lines.join(``);
 }
 
-function formatAttachment(attachments: File[], boundary: string): string[] {
+function formatAttachment(attachments: readonly File[], boundary: string): string[] {
     // TODO attachment body
     return attachments.reduce((lines: string[], {mimeType, name}) => lines.concat([
         `--` + boundary, eol,
@@ -154,7 +154,7 @@ function formatAttachment(attachments: File[], boundary: string): string[] {
     ]), []);
 }
 
-function formatAddresses(prop: string, addresses: MailAddress[]): ReadonlyArray<string> | string[] {
+function formatAddresses(prop: string, addresses: readonly MailAddress[]): ReadonlyArray<string> | string[] {
     if (!addresses.length) {
         return emptyArray;
     }

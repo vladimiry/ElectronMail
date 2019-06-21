@@ -6,9 +6,10 @@ import {KeyBasedPreset} from "fs-json-store-encryption-adapter";
 
 import {DATABASE_VERSION} from "./constants";
 import {DbAccountPk, FsDb, FsDbAccount, MAIL_FOLDER_TYPE, Mail} from "src/shared/model/database";
+import {LogLevel} from "src/shared/model/common";
 import {ReadonlyDeep} from "type-fest";
 import {SerializationAdapter} from "./serialization";
-import {curryFunctionMembers} from "src/shared/util";
+import {curryFunctionMembers, logLevelEnabled} from "src/shared/util";
 import {hrtimeDuration} from "src/electron-main/util";
 import {resolveFsAccountFolders} from "./util";
 
@@ -109,7 +110,7 @@ export class Database {
 
     async persisted(): Promise<boolean> {
         // TODO get rid of "fs-json-store" use
-        return await new FsJsonStore.Store<FsDb>({
+        return new FsJsonStore.Store<FsDb>({
             file: this.options.file,
             fs: this.fileFs,
         }).readable();
@@ -131,17 +132,14 @@ export class Database {
             ),
         );
 
-        logger.verbose(`loadFromFile().stat: ${JSON.stringify({
-            ...this.stat(),
-            time: duration.end(),
-        })}`);
+        this.logStats("loadFromFile", duration);
     }
 
     async saveToFile(): Promise<void> {
         logger.info("saveToFile()");
 
         return this.saveToFileQueue.q(async () => {
-            const startTime = Date.now();
+            const duration = hrtimeDuration();
             const serializationAdapter = await this.buildSerializationAdapter();
 
             await this.fileFs.writeFileAtomic(
@@ -152,7 +150,7 @@ export class Database {
                 }),
             );
 
-            logger.verbose(`saveToFile().stat: ${JSON.stringify({...this.stat(), time: Date.now() - startTime})}`);
+            this.logStats("saveToFile", duration);
         });
     }
 
@@ -190,6 +188,7 @@ export class Database {
             : this.spamFolderTester(account);
 
         return {
+            // TODO measure "Object.keys(...).length" speed and then try caching the "length" if needed
             conversationEntries: Object.keys(account.conversationEntries).length,
             mails: Object.keys(account.mails).length,
             folders: Object.keys(account.folders).length,
@@ -201,6 +200,26 @@ export class Database {
                 0,
             ),
         };
+    }
+
+    private logStats(
+        methodName: keyof Pick<typeof Database.prototype, "loadFromFile" | "saveToFile">,
+        methodDuration: ReturnType<typeof hrtimeDuration>,
+        logLevel: LogLevel = "verbose",
+    ) {
+        if (!logLevelEnabled(logLevel, logger)) {
+            return;
+        }
+
+        const dataToLog: ReturnType<typeof Database.prototype.stat> & { methodTime: number; statTime: number; } = (() => {
+            const methodTime = methodDuration.end(); // first of all
+            const statsDuration = hrtimeDuration(); // before the "stat()" called
+            const stat = this.stat();
+            const statTime = statsDuration.end(); // after the "stat()" called
+            return {methodTime, statTime, ...stat};
+        })();
+
+        logger[logLevel](`${methodName}().stat: ${JSON.stringify(dataToLog, null, 2)}`);
     }
 
     private getPks(): DbAccountPk[] {

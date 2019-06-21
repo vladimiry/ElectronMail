@@ -106,11 +106,15 @@ function getBuiltInWebClientTitle(accountType: AccountType): string {
     return `v${PROVIDER_REPO[accountType].version}-${PROVIDER_REPO[accountType].commit.substr(0, 7)}`;
 }
 
-export const LOG_LEVELS: LogLevel[] = Object.keys(((stub: Record<LogLevel, null>) => stub)({
-    error: null,
-    warn: null,
-    info: null,
-    verbose: null,
-    debug: null,
-    silly: null,
-})) as LogLevel[];
+export const LOG_LEVELS: Readonly<LogLevel[]> = Object.keys(
+    ((stub: Record<LogLevel, null>) => {
+        return stub;
+    })({
+        error: null,
+        warn: null,
+        info: null,
+        verbose: null,
+        debug: null,
+        silly: null,
+    }),
+) as Readonly<LogLevel[]>;

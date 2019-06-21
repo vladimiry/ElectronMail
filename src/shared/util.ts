@@ -1,7 +1,10 @@
+import {IElectronLog} from "electron-log"; // tslint:disable-line:no-import-zones
+
 import {AccountConfig, AccountType} from "./model/account";
 import {BaseConfig, Config} from "./model/options";
 import {DbPatch} from "./api/common";
 import {FsDbAccount, View} from "src/shared/model/database";
+import {LogLevel} from "src/shared/model/common";
 import {LoginFieldContainer} from "./model/container";
 import {StatusCodeError} from "./model/error";
 
@@ -264,3 +267,32 @@ export function removeDuplicateItems<T extends any>(array: ReadonlyArray<T>): T[
 export function normalizeLocale(value: string): string {
     return value.replace(/[^A-Za-z]/g, "_");
 }
+
+export const logLevelEnabled: (
+    level: LogLevel,
+    logger: { transports: Pick<IElectronLog["transports"], "file"> },
+) => boolean = (() => {
+    const weights: Readonly<Record<LogLevel | "null" | "undefined" | "false", number>> = {
+        null: -1,
+        undefined: -1,
+        false: -1,
+        error: 0,
+        warn: 1,
+        info: 2,
+        verbose: 3,
+        debug: 4,
+        silly: 5,
+    };
+    const result: typeof logLevelEnabled = (
+        level,
+        {transports: {file: {level: transportLevel}}},
+    ) => {
+        const disabled = (
+            weights[level]
+            >
+            weights[String(transportLevel) as keyof typeof weights]
+        );
+        return !disabled;
+    };
+    return result;
+})();

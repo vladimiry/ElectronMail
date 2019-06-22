@@ -64,7 +64,6 @@ export const asyncDelay = async <T>(pauseTimeMs: number, resolveAction?: () => P
     });
 };
 
-// TODO TS: return only functions
 export function curryFunctionMembers<T extends object | ((...a: any[]) => any)>(
     src: T,
     ...args: any[]
@@ -76,9 +75,9 @@ export function curryFunctionMembers<T extends object | ((...a: any[]) => any)>(
     for (const key of Object.getOwnPropertyNames(src)) {
         const srcMember = (src as any)[key];
 
-        if (typeof srcMember === "function") {
-            (dest as any)[key] = srcMember.bind(src, ...args);
-        }
+        (dest as any)[key] = typeof srcMember === "function"
+            ? srcMember.bind(src, ...args)
+            : srcMember;
     }
 
     return dest;

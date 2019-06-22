@@ -1,6 +1,7 @@
 import * as FsJsonStore from "fs-json-store";
-import _logger from "electron-log";
 import asap from "asap-es";
+import path from "path";
+import _logger, {IElectronLog} from "electron-log";
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/lib/private/constants";
 import {KeyBasedPreset} from "fs-json-store-encryption-adapter";
 
@@ -12,8 +13,6 @@ import {SerializationAdapter} from "./serialization";
 import {curryFunctionMembers, logLevelEnabled} from "src/shared/util";
 import {hrtimeDuration} from "src/electron-main/util";
 import {resolveFsAccountFolders} from "./util";
-
-const logger = curryFunctionMembers(_logger, "[electron-main/database]");
 
 export class Database {
     static buildEmptyDb(): FsDb {
@@ -33,7 +32,9 @@ export class Database {
 
     private dbInstance: FsDb = Database.buildEmptyDb();
 
-    private saveToFileQueue = new asap();
+    private readonly logger: IElectronLog;
+
+    private readonly saveToFileQueue = new asap();
 
     constructor(
         public readonly options: Readonly<{
@@ -44,7 +45,9 @@ export class Database {
             }>
         }>,
         public readonly fileFs: FsJsonStore.Model.StoreFs = FsJsonStore.Fs.Fs.fs,
-    ) {}
+    ) {
+        this.logger = curryFunctionMembers(_logger, `[electron-main/database: ${path.basename(this.options.file)}]`);
+    }
 
     getVersion(): string {
         return this.dbInstance.version;
@@ -75,7 +78,7 @@ export class Database {
     accountsIterator(): {
         [Symbol.iterator]: () => Iterator<{ account: FsDbAccount; pk: DbAccountPk }>;
     } {
-        logger.info("accountsIterator()");
+        this.logger.info("accountsIterator()");
 
         const accounts = this.dbInstance.accounts;
         const pks = this.getPks();
@@ -117,7 +120,7 @@ export class Database {
     }
 
     async loadFromFile(): Promise<void> {
-        logger.info("loadFromFile()");
+        this.logger.info("loadFromFile()");
 
         if (!(await this.persisted())) {
             throw new Error(`${this.options.file} does not exist`);
@@ -136,7 +139,7 @@ export class Database {
     }
 
     async saveToFile(): Promise<void> {
-        logger.info("saveToFile()");
+        this.logger.info("saveToFile()");
 
         return this.saveToFileQueue.q(async () => {
             const duration = hrtimeDuration();
@@ -163,7 +166,7 @@ export class Database {
     }
 
     stat(): { records: number, conversationEntries: number, mails: number, folders: number, contacts: number } {
-        logger.info("stat()");
+        this.logger.info("stat()");
 
         const stat = {records: 0, conversationEntries: 0, mails: 0, folders: 0, contacts: 0};
 
@@ -207,7 +210,7 @@ export class Database {
         methodDuration: ReturnType<typeof hrtimeDuration>,
         logLevel: LogLevel = "verbose",
     ) {
-        if (!logLevelEnabled(logLevel, logger)) {
+        if (!logLevelEnabled(logLevel, this.logger)) {
             return;
         }
 
@@ -219,7 +222,7 @@ export class Database {
             return {methodTime, statTime, ...stat};
         })();
 
-        logger[logLevel](`${methodName}().stat: ${JSON.stringify(dataToLog, null, 2)}`);
+        this.logger[logLevel](`${methodName}().stat: ${JSON.stringify(dataToLog, null, 2)}`);
     }
 
     private getPks(): DbAccountPk[] {

@@ -39,17 +39,17 @@ export async function initTray(ctx: Context): Promise<Tray> {
                 {
                     type: "separator",
                 },
+                {
+                    label: "About",
+                    async click() {
+                        await endpoints.openAboutWindow();
+                    },
+                },
                 optionsMenuItem,
                 {
                     label: "Open Settings Folder",
                     async click() {
                         await endpoints.openSettingsFolder();
-                    },
-                },
-                {
-                    label: "About",
-                    async click() {
-                        await endpoints.openAboutWindow();
                     },
                 },
                 {

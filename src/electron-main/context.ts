@@ -1,7 +1,7 @@
 import logger from "electron-log";
 import path from "path";
 import {Deferred} from "ts-deferred";
-import {merge, ReplaySubject} from "rxjs";
+import {ReplaySubject, merge} from "rxjs";
 import {Fs as StoreFs, Model as StoreModel, Store} from "fs-json-store";
 import {app} from "electron";
 import {distinctUntilChanged, take, tap} from "rxjs/operators";
@@ -11,7 +11,7 @@ import {Config, Settings} from "src/shared/model/options";
 import {Context, ContextInitOptions, ContextInitOptionsPaths, RuntimeEnvironment} from "./model";
 import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
-import {configEncryptionPresetValidator, INITIAL_STORES, settingsAccountLoginUniquenessValidator} from "./constants";
+import {INITIAL_STORES, configEncryptionPresetValidator, settingsAccountLoginUniquenessValidator} from "./constants";
 import {LOCAL_WEBCLIENT_PROTOCOL_PREFIX, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR, WEB_CHUNK_NAMES} from "src/shared/constants";
 import {formatFileUrl} from "./util";
 

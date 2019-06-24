@@ -12,7 +12,7 @@ import {ReadonlyDeep} from "type-fest";
 import {SerializationAdapter} from "./serialization";
 import {curryFunctionMembers, logLevelEnabled} from "src/shared/util";
 import {hrtimeDuration} from "src/electron-main/util";
-import {resolveFsAccountFolders} from "./util";
+import {resolveAccountFolders} from "./util";
 
 export class Database {
     static buildEmptyDb(): FsDb {
@@ -30,11 +30,11 @@ export class Database {
         return metadata[type];
     }
 
-    private dbInstance: FsDb = Database.buildEmptyDb();
-
     private readonly logger: IElectronLog;
 
     private readonly saveToFileQueue = new asap();
+
+    private dbInstance: FsDb = Database.buildEmptyDb();
 
     constructor(
         public readonly options: Readonly<{
@@ -68,6 +68,12 @@ export class Database {
             folders: Object.create(null),
             contacts: Object.create(null),
             metadata: Database.buildEmptyAccountMetadata(type) as any,
+            deletedPks: {
+                conversationEntries: [],
+                mails: [],
+                folders: [],
+                contacts: [],
+            },
         };
 
         this.dbInstance.accounts[type][login] = account;
@@ -240,7 +246,7 @@ export class Database {
     }
 
     private spamFolderTester(account: FsDbAccount): (mail: Mail) => boolean {
-        const folder = resolveFsAccountFolders(account).find(({folderType}) => folderType === MAIL_FOLDER_TYPE.SPAM);
+        const folder = resolveAccountFolders(account).find(({folderType}) => folderType === MAIL_FOLDER_TYPE.SPAM);
         const mailFolderId = folder && folder.mailFolderId;
         const result: ReturnType<typeof Database.prototype.spamFolderTester> = typeof mailFolderId !== "undefined"
             ? ({mailFolderIds}) => mailFolderIds.includes(mailFolderId)

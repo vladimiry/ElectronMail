@@ -118,20 +118,29 @@ export interface ValidatedEntity {
     readonly _validated: undefined;
 }
 
-export type DbFsDataRecord<T extends ConversationEntry | Mail | Folder | Contact> = Record<T["pk"], T & ValidatedEntity>;
+export type FsDbDataRecord<T extends ConversationEntry | Mail | Folder | Contact> = Record<T["pk"], T & ValidatedEntity>;
 
-export type DbFsDataContainer = Readonly<{
-    conversationEntries: DbFsDataRecord<ConversationEntry>;
-    mails: DbFsDataRecord<Mail>;
-    folders: DbFsDataRecord<Folder>;
-    contacts: DbFsDataRecord<Contact>;
+export type FsDbDataContainer = Readonly<{
+    conversationEntries: FsDbDataRecord<ConversationEntry>;
+    mails: FsDbDataRecord<Mail>;
+    folders: FsDbDataRecord<Folder>;
+    contacts: FsDbDataRecord<Contact>;
+}>;
+
+export type  FsDbDataContainerDeletedField = Readonly<{
+    deletedPks: Readonly<{
+        conversationEntries: Array<ConversationEntry["pk"]>;
+        mails: Array<Mail["pk"]>;
+        folders: Array<Folder["pk"]>;
+        contacts: Array<Contact["pk"]>;
+    }>;
 }>;
 
 interface GenericDb<T extends AccountType, MetadataPart> {
     version: string;
     accounts: Record<T,
         Record<AccountConfig<T>["login"],
-            Readonly<DbFsDataContainer & { metadata: { type: T } & MetadataPart }>>>;
+            Readonly<FsDbDataContainer & FsDbDataContainerDeletedField & { metadata: { type: T } & MetadataPart }>>>;
 }
 
 interface TutanotaMetadataPart {

@@ -3,6 +3,7 @@ import electronLog from "electron-log";
 import * as SpellCheck from "src/electron-main/spell-check/api";
 import {Account, Database, FindInPage, General, TrayIcon} from "./endpoints-builders";
 import {Context} from "src/electron-main/model";
+import {DB_DATA_CONTAINER_FIELDS} from "src/shared/model/database";
 import {IPC_MAIN_API, IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {PACKAGE_NAME, PRODUCT_NAME} from "src/shared/constants";
@@ -11,6 +12,7 @@ import {buildSettingsAdapter} from "src/electron-main/util";
 import {clearSessionsCache, initSessionByAccount} from "src/electron-main/session";
 import {curryFunctionMembers} from "src/shared/util";
 import {deletePassword, getPassword, setPassword} from "src/electron-main/keytar";
+import {patchMetadata} from "src/electron-main/database/util";
 import {upgradeConfig, upgradeDatabase, upgradeSettings} from "src/electron-main/storage-upgrade";
 
 const logger = curryFunctionMembers(electronLog, "[src/electron-main/api/index]");
@@ -94,6 +96,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
 
             ctx.settingsStore = ctx.settingsStore.clone({adapter: undefined});
             ctx.db.reset();
+            ctx.sessionDb.reset();
             delete ctx.selectedAccount; // TODO extend "logout" api test: "delete ctx.selectedAccount"
 
             await clearSessionsCache(ctx);
@@ -189,22 +192,89 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
 
         async reEncryptSettings({encryptionPreset, password}) {
             await ctx.configStore.write({
-                ...(await ctx.configStore.readExisting()),
+                ...await ctx.configStore.readExisting(),
                 encryptionPreset,
             });
 
-            return await endpoints.changeMasterPassword({password, newPassword: password});
+            return endpoints.changeMasterPassword({password, newPassword: password});
         },
 
+        // TODO move to "src/electron-main/api/endpoints-builders/database"
         async loadDatabase({accounts}) {
             logger.info("loadDatabase() start");
 
-            if (await ctx.db.persisted()) {
-                await ctx.db.loadFromFile();
-                await upgradeDatabase(ctx.db, accounts);
+            const {db, sessionDb, configStore} = ctx;
+
+            if (await sessionDb.persisted()) {
+                await sessionDb.loadFromFile();
+                const upgraded = await upgradeDatabase(sessionDb, accounts);
+                logger.verbose("loadDatabase() session database upgraded:", upgraded);
+                // it will be reset and saved anyway
             }
 
-            if ((await ctx.configStore.readExisting()).fullTextSearch) {
+            let needToSaveDb: boolean = false;
+
+            if (await db.persisted()) {
+                await db.loadFromFile();
+                const upgraded = await upgradeDatabase(db, accounts);
+                logger.verbose("loadDatabase() database upgraded:", upgraded);
+                if (upgraded) {
+                    needToSaveDb = true;
+                }
+            }
+
+            // merging session database to the primary one
+            if (await sessionDb.persisted()) {
+                for (const {account: sourceAccount, pk: accountPk} of sessionDb.accountsIterator()) {
+                    logger.verbose("loadDatabase() account processing iteration starts");
+                    const targetAccount = db.getAccount(accountPk) || db.initAccount(accountPk);
+
+                    // inserting new/updated entities
+                    for (const entityType of DB_DATA_CONTAINER_FIELDS) {
+                        const patch = sourceAccount[entityType];
+                        const patchSize = Object.keys(patch).length;
+                        logger.verbose(`loadDatabase() patch size (${entityType}):`, patchSize);
+                        if (!patchSize) {
+                            // skipping iteration as the patch is empty
+                            continue;
+                        }
+                        Object.assign(
+                            targetAccount[entityType],
+                            patch,
+                        );
+                        needToSaveDb = true;
+                    }
+
+                    // removing entities
+                    for (const entityType of DB_DATA_CONTAINER_FIELDS) {
+                        const deletedPks = sourceAccount.deletedPks[entityType];
+                        logger.verbose("loadDatabase() removing entities count:", deletedPks.length);
+                        for (const pk of deletedPks) {
+                            delete targetAccount[entityType][pk];
+                            needToSaveDb = true;
+                        }
+                    }
+
+                    // patching metadata
+                    (() => {
+                        const metadataPatched = patchMetadata(targetAccount.metadata, sourceAccount.metadata, "loadDatabase");
+                        logger.verbose(`loadDatabase() metadata patched:`, metadataPatched);
+                        if (metadataPatched) {
+                            needToSaveDb = true;
+                        }
+                    })();
+                }
+            }
+
+            if (needToSaveDb) {
+                await db.saveToFile();
+            }
+
+            // resetting and saving the session database
+            sessionDb.reset();
+            await sessionDb.saveToFile();
+
+            if ((await configStore.readExisting()).fullTextSearch) {
                 await attachFullTextIndexWindow(ctx);
             } else {
                 await detachFullTextIndexWindow(ctx);
@@ -220,11 +290,14 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
         async toggleCompactLayout() {
             const config = await ctx.configStore.readExisting();
 
-            return await ctx.configStore.write({...config, compactLayout: !config.compactLayout});
+            return ctx.configStore.write({
+                ...config,
+                compactLayout: !config.compactLayout,
+            });
         },
     };
 
-    IPC_MAIN_API.register(endpoints);
+    IPC_MAIN_API.register(endpoints, {logger});
 
     ctx.deferredEndpoints.resolve(endpoints);
 

@@ -2,7 +2,7 @@ import R from "ramda";
 
 import {CONVERSATION_TYPE, ConversationEntry, FsDb, FsDbAccount, MAIL_FOLDER_TYPE, View} from "src/shared/model/database";
 import {mailDateComparatorDefaultsToDesc, walkConversationNodesTree} from "src/shared/util";
-import {resolveFsAccountFolders} from "src/electron-main/database/util";
+import {resolveAccountFolders} from "src/electron-main/database/util";
 
 export const FOLDER_UTILS: {
     // TODO split "splitAndFormatAndFillSummaryFolders" function to pieces
@@ -155,7 +155,7 @@ export function buildFoldersAndRootNodePrototypes<T extends keyof FsDb["accounts
         };
     })();
     const folders: View.Folder[] = Array.from(
-        resolveFsAccountFolders(account),
+        resolveAccountFolders(account),
         (folder) => ({...folder, rootConversationNodes: [], size: 0, unread: 0}),
     );
     const resolveFolder = ((map = new Map(folders.reduce(

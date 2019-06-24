@@ -59,8 +59,15 @@ export const pickAccountStrict = (accounts: AccountConfig[], criteria: LoginFiel
 };
 
 export const asyncDelay = async <T>(pauseTimeMs: number, resolveAction?: () => Promise<T>): Promise<T | void> => {
-    return await new Promise<T | void>((resolve) => {
-        setTimeout(() => typeof resolveAction === "function" ? resolve(resolveAction()) : resolve(), pauseTimeMs);
+    return new Promise<T | void>((resolve) => {
+        setTimeout(
+            () => {
+                return typeof resolveAction === "function"
+                    ? resolve(resolveAction())
+                    : resolve();
+            },
+            pauseTimeMs,
+        );
     });
 };
 

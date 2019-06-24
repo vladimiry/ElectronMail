@@ -17,7 +17,7 @@ export async function buildDbSearchEndpoints(
     ctx: Context,
 ): Promise<Pick<IpcMainApiEndpoints, "dbFullTextSearch">> {
     return {
-        dbFullTextSearch({type, login, query, folderPks}) {
+        async dbFullTextSearch({type, login, query, folderPks}) {
             logger.info("dbFullTextSearch()");
 
             const timeoutMs = DEFAULT_API_CALL_TIMEOUT;
@@ -100,7 +100,7 @@ export async function buildDbSearchEndpoints(
                 }),
             );
 
-            return result$;
+            return result$.toPromise();
         },
     };
 }

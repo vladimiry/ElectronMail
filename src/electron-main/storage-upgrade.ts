@@ -9,7 +9,7 @@ import {
 import {AccountConfig} from "src/shared/model/account";
 import {Config, Settings} from "src/shared/model/options";
 import {Database} from "./database";
-import {DbAccountPk} from "src/shared/model/database";
+import {DbAccountPk, FsDbDataContainerDeletedField} from "src/shared/model/database";
 import {EntryUrlItem} from "src/shared/model/common";
 import {INITIAL_STORES} from "./constants";
 
@@ -228,17 +228,31 @@ function isAppVersionLessThan(version: string): boolean {
     return compareVersions(PACKAGE_VERSION, version) === -1;
 }
 
-export async function upgradeDatabase(db: Database, accounts: Settings["accounts"]) {
+export async function upgradeDatabase(db: Database, accounts: Settings["accounts"]): Promise<boolean> {
     let needToSave = false;
 
     if (db.getVersion() === "1") {
         db.reset();
-        await db.saveToFile();
-        return;
+        return true;
     }
 
     if (db.getVersion() === "2") {
         needToSave = true;
+    }
+
+    if (Number(db.getVersion()) < 4) {
+        for (const {account} of db.accountsIterator()) {
+            if (typeof account.deletedPks !== "undefined") {
+                continue;
+            }
+            (account as Mutable<FsDbDataContainerDeletedField>).deletedPks = {
+                conversationEntries: [],
+                mails: [],
+                folders: [],
+                contacts: [],
+            };
+            needToSave = true;
+        }
     }
 
     // removing non existent accounts
@@ -268,7 +282,5 @@ export async function upgradeDatabase(db: Database, accounts: Settings["accounts
         }
     })();
 
-    if (needToSave) {
-        await db.saveToFile();
-    }
+    return needToSave;
 }

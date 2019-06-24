@@ -4,7 +4,7 @@ import {ValidationError} from "class-validator";
 import {flatten} from "ramda";
 
 import * as Entities from "./entity";
-import {DbFsDataContainer, Entity, ValidatedEntity} from "src/shared/model/database";
+import {Entity, FsDbDataContainer, ValidatedEntity} from "src/shared/model/database";
 import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[src/electron-main/database/validation]");
@@ -26,7 +26,7 @@ const entityClassesMap = {
 } as const;
 
 export async function validateEntity<T extends Entity>(
-    entityType: keyof DbFsDataContainer,
+    entityType: keyof FsDbDataContainer,
     entity: T,
 ): Promise<T & ValidatedEntity> {
     const classType = entityClassesMap[entityType] as unknown as ClassType<T>;

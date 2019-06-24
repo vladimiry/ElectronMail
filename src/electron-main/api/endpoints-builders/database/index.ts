@@ -1,16 +1,17 @@
 import electronLog from "electron-log";
 import sanitizeHtml from "sanitize-html";
-import {equals, mergeDeepRight, omit} from "ramda";
+import {omit} from "ramda";
 import {v4 as uuid} from "uuid";
 
 import {Context} from "src/electron-main/model";
-import {DB_DATA_CONTAINER_FIELDS, FsDbAccount, IndexableMail} from "src/shared/model/database";
+import {DB_DATA_CONTAINER_FIELDS, IndexableMail} from "src/shared/model/database";
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION$, IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
 import {buildDbExportEndpoints} from "./export";
 import {buildDbIndexingEndpoints, narrowIndexActionPayload} from "./indexing";
 import {buildDbSearchEndpoints, searchRootConversationNodes} from "./search";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
+import {patchMetadata} from "src/electron-main/database/util";
 import {prepareFoldersView} from "./folders-view";
 import {validateEntity} from "src/electron-main/database/validation";
 
@@ -38,21 +39,27 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
             logger.info();
 
+            const {db, sessionDb} = ctx;
             const key = {type, login} as const;
-            const account = ctx.db.getAccount(key) || ctx.db.initAccount(key);
+            const account = db.getAccount(key) || db.initAccount(key);
+            const sessionAccount = sessionDb.getAccount(key) || sessionDb.initAccount(key);
 
             for (const entityType of DB_DATA_CONTAINER_FIELDS) {
                 const {remove, upsert} = entityUpdatesPatch[entityType];
-                const accountRecord = account[entityType];
 
                 // remove
                 remove.forEach(({pk}) => {
-                    delete accountRecord[pk];
+                    delete account[entityType][pk];
+                    delete sessionAccount[entityType][pk];
+                    sessionAccount.deletedPks[entityType].push(pk);
                 });
 
                 // add
                 for (const entity of upsert) {
-                    accountRecord[entity.pk] = await validateEntity(entityType, entity);
+                    const validatedEntity = await validateEntity(entityType, entity);
+                    const {pk} = entity;
+                    account[entityType][pk] = validatedEntity;
+                    sessionAccount[entityType][pk] = validatedEntity;
                 }
 
                 if (entityType !== "mails") {
@@ -76,11 +83,11 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                 });
             }
 
-            const metadataModified = patchMetadata(account.metadata, metadataPatch);
+            const metadataModified = patchMetadata(account.metadata, metadataPatch, "dbPatch");
+            const sessionMetadataModified = patchMetadata(sessionAccount.metadata, metadataPatch, "dbPatch");
             const entitiesModified = isEntityUpdatesPatchNotEmpty(entityUpdatesPatch);
-            const modified = entitiesModified || metadataModified;
 
-            logger.verbose(JSON.stringify({entitiesModified, metadataModified, modified, forceFlush}));
+            logger.verbose(JSON.stringify({entitiesModified, metadataModified, sessionMetadataModified, forceFlush}));
 
             setTimeout(async () => {
                 // TODO consider caching the config
@@ -91,12 +98,16 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                     key,
                     entitiesModified,
                     metadataModified,
-                    stat: ctx.db.accountStat(account, includingSpam),
+                    stat: db.accountStat(account, includingSpam),
                 }));
             });
 
-            if (modified || forceFlush) {
-                await ctx.db.saveToFile();
+            if (
+                (entitiesModified || sessionMetadataModified)
+                ||
+                forceFlush
+            ) {
+                await sessionDb.saveToFile();
             }
 
             return account.metadata;
@@ -164,39 +175,4 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             return searchRootConversationNodes(account, {folderPks, mailPks});
         },
     };
-}
-
-function patchMetadata(
-    dest: FsDbAccount["metadata"],
-    // TODO TS: use patch: Arguments<IpcMainApiEndpoints["dbPatch"]>[0]["metadata"],
-    patch: Omit<FsDbAccount<"protonmail">["metadata"], "type"> | Omit<FsDbAccount<"tutanota">["metadata"], "type">,
-    logger = curryFunctionMembers(_logger, "patchMetadata()"),
-): boolean {
-    logger.info();
-
-    if (
-        "latestEventId" in patch
-        &&
-        (
-            !patch.latestEventId
-            ||
-            !patch.latestEventId.trim()
-        )
-    ) {
-        return false;
-    }
-
-    const merged = mergeDeepRight(dest, patch);
-
-    // console.log(JSON.stringify({dest, patch, merged}, null, 2));
-
-    if (equals(dest, merged)) {
-        return false;
-    }
-
-    Object.assign(dest, merged);
-
-    logger.verbose(`metadata patched with ${JSON.stringify(Object.keys(patch))} properties`);
-
-    return true;
 }

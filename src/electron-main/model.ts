@@ -23,6 +23,7 @@ export interface ContextInitOptions {
 
 export interface Context {
     readonly db: Database;
+    readonly sessionDb: Database;
     readonly storeFs: StoreModel.StoreFs;
     readonly runtimeEnvironment: RuntimeEnvironment;
     readonly locations: ElectronContextLocations;

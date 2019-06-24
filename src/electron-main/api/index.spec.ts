@@ -291,7 +291,8 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
         const {deletePassword: deletePasswordSpy} = t.context.mocks["src/electron-main/keytar"];
         const {clearSessionsCache} = t.context.mocks["src/electron-main/session"];
         const {endpoints} = t.context;
-        const resetSpy = sinon.spy(t.context.ctx.db, "reset");
+        const dbResetSpy = sinon.spy(t.context.ctx.db, "reset");
+        const sessionDbResetSpy = sinon.spy(t.context.ctx.sessionDb, "reset");
         const updateOverlayIconSpy = sinon.spy(endpoints, "updateOverlayIcon");
 
         await endpoints.logout();
@@ -310,7 +311,8 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
         t.falsy(t.context.ctx.settingsStore.adapter);
         t.is(deletePasswordSpy.callCount, 3);
 
-        t.is(2, resetSpy.callCount);
+        t.is(2, dbResetSpy.callCount);
+        t.is(2, sessionDbResetSpy.callCount);
         t.is(2, clearSessionsCache.callCount);
         t.is(2, updateOverlayIconSpy.callCount);
     },

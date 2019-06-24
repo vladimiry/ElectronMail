@@ -51,9 +51,9 @@ const bufferToStream = (buffer: Buffer): Readable => {
 };
 
 export class SerializationAdapter {
-    public readonly read: (data: Buffer) => Promise<FsDb>;
+    public readonly read: <T extends FsDb>(data: Buffer) => Promise<T>;
 
-    public readonly write: (data: ReadonlyDeep<FsDb>) => Promise<Buffer>;
+    public readonly write: <T extends FsDb>(data: ReadonlyDeep<T>) => Promise<Buffer>;
 
     private logger = curryFunctionMembers(_logger, "[src/electron-main/database/serialization]", "[SerializationAdapter]");
 

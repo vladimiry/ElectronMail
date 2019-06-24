@@ -70,8 +70,17 @@ test.serial("general actions: app start, master password setup, add accounts, lo
             );
             stream.on("data", (_, line = String(_)) => {
                 if (
-                    line.includes("[electron-rpc-api]") &&
-                    line.includes(`Object has been destroyed: "sender"`)
+                    (
+                        line.includes("[electron-rpc-api]")
+                        &&
+                        line.includes(`Object has been destroyed: "sender"`)
+                    )
+                    ||
+                    (
+                        line.includes(`failed to resolve window bounds`)
+                        &&
+                        line.includes("Object has been destroyed")
+                    )
                 ) {
                     return;
                 }
@@ -124,7 +133,6 @@ test.afterEach.always(async (t) => {
         ].map((criteria) => promisify(psNode.lookup)(criteria)),
     );
     await (async () => {
-
         for (const {pid} of processes) {
             try {
                 await killSelfAndChildrenProcesses(pid);

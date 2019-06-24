@@ -107,7 +107,8 @@ async function keepBrowserWindowState(ctx: Context, browserWindow: Electron.Brow
             }
         } catch (error) {
             // "browserWindow" might be destroyed at this point
-            logger.error("failed to resolve window bounds", error);
+            console.log(error); // tslint:disable-line:no-console
+            logger.warn("failed to resolve window bounds", error);
             return;
         }
 

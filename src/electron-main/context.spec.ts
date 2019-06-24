@@ -9,7 +9,7 @@ const ctxDbProps = [
     "sessionDb",
 ] as const;
 
-ctxDbProps.map((ctxDbProp) => {
+ctxDbProps.forEach((ctxDbProp) => {
     test.serial(
         `"Context.${ctxDbProp}" resolves encryption key calling "Context.settingsStore.readExisting().databaseEncryptionKey"`,
         async (t) => {

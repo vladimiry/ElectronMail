@@ -38,7 +38,6 @@ class ContactMailAddress extends Entity implements Model.ContactMailAddress {
     customTypeName!: Model.ContactMailAddress["customTypeName"];
 
     @IsString()
-    @IsNotEmpty()
     address!: Model.ContactMailAddress["address"];
 }
 

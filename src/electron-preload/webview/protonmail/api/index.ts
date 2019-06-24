@@ -84,6 +84,8 @@ const endpoints: ProtonmailApi = {
                     messageID: mailId,
                 });
             }
+
+            return;
         }
 
         type RouteNameKey = Unpacked<typeof PROTONMAIL_MAILBOX_ROUTE_NAMES._.names>;

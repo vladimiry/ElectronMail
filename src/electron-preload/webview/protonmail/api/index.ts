@@ -86,15 +86,17 @@ const endpoints: ProtonmailApi = {
             }
         }
 
+        type RouteNameKey = Unpacked<typeof PROTONMAIL_MAILBOX_ROUTE_NAMES._.names>;
+
         const folderRouteName = system.length > 1
             ? (() => {
-                const folderId = system.find((id) => id !== PROTONMAIL_MAILBOX_IDENTIFIERS["All Mail"]);
+                const folderId = system.find((id) => id !== PROTONMAIL_MAILBOX_IDENTIFIERS["All Mail"]) as RouteNameKey | undefined;
                 if (!folderId) {
                     throw new Error(`Failed to resolve folder`);
                 }
                 return PROTONMAIL_MAILBOX_ROUTE_NAMES[folderId];
             })()
-            : PROTONMAIL_MAILBOX_ROUTE_NAMES[system[0]];
+            : PROTONMAIL_MAILBOX_ROUTE_NAMES[system[0] as RouteNameKey];
 
         if (!folderRouteName) {
             throw new Error(`Failed to resolve folder route name`);

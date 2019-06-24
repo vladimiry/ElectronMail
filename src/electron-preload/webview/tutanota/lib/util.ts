@@ -13,11 +13,16 @@ export const filterSyncingMemberships = ((types: Set<string>) => ({memberships}:
     return memberships.filter(({groupType}) => types.has(groupType));
 })(new Set([GROUP_TYPE.Mail, GROUP_TYPE.Contact]));
 
-export const isUpsertOperationType = (<V = Unpacked<typeof DatabaseModel.OPERATION_TYPE._.values>>(
-    types: Set<V>,
-) => (type: V): boolean => {
-    return types.has(type);
-})(new Set([DatabaseModel.OPERATION_TYPE.CREATE, DatabaseModel.OPERATION_TYPE.UPDATE]));
+export const isUpsertOperationType: (v: Unpacked<typeof DatabaseModel.OPERATION_TYPE._.values>) => boolean = (() => {
+    const types: ReadonlySet<Arguments<typeof isUpsertOperationType>[0]> = new Set(
+        [
+            DatabaseModel.OPERATION_TYPE.CREATE,
+            DatabaseModel.OPERATION_TYPE.UPDATE,
+        ],
+    );
+    const result: typeof isUpsertOperationType = (type) => types.has(type);
+    return result;
+})();
 
 export async function fetchMailFoldersWithSubFolders(user: Rest.Model.User): Promise<Rest.Model.MailFolder[]> {
     const logger = curryFunctionMembers(_logger, "fetchMailFoldersWithSubFolders()", JSON.stringify({callId: +new Date()}));

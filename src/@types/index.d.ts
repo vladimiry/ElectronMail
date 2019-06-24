@@ -6,9 +6,10 @@ declare global {
 
     type Unpacked<T> =
         T extends Array<infer U1> ? U1 :
-            T extends Promise<infer U2> ? U2 :
-                T extends Observable<infer U3> ? U3 :
-                    T;
+            T extends ReadonlyArray<infer U1> ? U1 :
+                T extends Promise<infer U2> ? U2 :
+                    T extends Observable<infer U3> ? U3 :
+                        T;
 
     type Mutable<T> = { -readonly [K in keyof T]: T[K]; };
 }

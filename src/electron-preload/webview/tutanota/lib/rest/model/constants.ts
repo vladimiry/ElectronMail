@@ -10,4 +10,11 @@ export const GROUP_TYPE = buildEnumBundle({
     Contact: "6",
     File: "7",
     LocalAdmin: "8",
-});
+} as const);
+
+export const MAIL_STATE = buildEnumBundle({
+    DRAFT: "0",
+    SENT: "1",
+    RECEIVED: "2",
+    SENDING: "3",
+} as const);

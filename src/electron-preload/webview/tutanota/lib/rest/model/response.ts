@@ -5,11 +5,10 @@ import {
     CONTACT_SOCIAL_TYPE,
     CONVERSATION_TYPE,
     MAIL_FOLDER_TYPE,
-    MAIL_STATE,
     OPERATION_TYPE,
     REPLY_TYPE,
 } from "src/shared/model/database";
-import {GROUP_TYPE} from "./constants";
+import {GROUP_TYPE, MAIL_STATE} from "./constants";
 import {NumberString} from "src/shared/model/common";
 
 export interface User extends BaseEntity<Id> {

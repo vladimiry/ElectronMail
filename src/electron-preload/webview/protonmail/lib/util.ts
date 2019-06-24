@@ -4,11 +4,11 @@ import * as Rest from "./rest";
 import {UPSERT_EVENT_ACTIONS} from "src/electron-preload/webview/protonmail/lib/rest/model";
 import {buildDbPatchRetryPipeline} from "src/electron-preload/webview/util";
 
-export const isUpsertOperationType = (<V = Unpacked<typeof Rest.Model.EVENT_ACTION._.values>>(
-    types: Set<V>,
-) => (type: V): boolean => {
-    return types.has(type);
-})(new Set(UPSERT_EVENT_ACTIONS));
+export const isUpsertOperationType: (v: Unpacked<typeof Rest.Model.EVENT_ACTION._.values>) => boolean = (() => {
+    const types: ReadonlySet<Arguments<typeof isUpsertOperationType>[0]> = new Set(UPSERT_EVENT_ACTIONS);
+    const result: typeof isUpsertOperationType = (type) => types.has(type);
+    return result;
+})();
 
 export const angularJsHttpResponseTypeGuard: (data: ng.IHttpResponse<any> | any) => data is ng.IHttpResponse<any> = ((
     signatureKeys = Object.freeze<keyof ng.IHttpResponse<any>>(["data", "status", "config", "statusText", "xhrStatus"]),

@@ -8,26 +8,26 @@ export const LOCATION = buildEnumBundle({
     Trash: 4,
     Spam: 6,
     Archive: 7,
-});
+} as const);
 
 export const MAIL_TYPE = buildEnumBundle({
     INBOX: 0,
     DRAFT: 1,
     SENT: 2,
-    INBOX_AND_SENT: 3,
-});
+    PROTONMAIL_INBOX_AND_SENT: 3,
+} as const);
 
 export const CONTACT_CARD = buildEnumBundle({
     CLEARTEXT: 0,
     ENCRYPTED_ONLY: 1,
     SIGNED: 2,
     BOTH: 3,
-});
+} as const);
 
 export const LABEL_TYPE = buildEnumBundle({
     MESSAGE: 1,
     CONTACT_GROUP: 2,
-});
+} as const);
 
 export const EVENT_ACTION = buildEnumBundle({
     DELETE: 0,
@@ -35,7 +35,7 @@ export const EVENT_ACTION = buildEnumBundle({
     UPDATE: 2,
     UPDATE_DRAFT: 2,
     UPDATE_FLAGS: 3,
-});
+} as const);
 
 export const ENCRYPTED_STATUS = buildEnumBundle({
     NONE: 0,
@@ -48,11 +48,11 @@ export const ENCRYPTED_STATUS = buildEnumBundle({
     PGP_MIME: 8,
     PGP_MIME_SIGNED: 9,
     AUTOREPLY: 10,
-});
+} as const);
 
 export const UPSERT_EVENT_ACTIONS = [
     EVENT_ACTION.CREATE,
     EVENT_ACTION.UPDATE,
     EVENT_ACTION.UPDATE_DRAFT,
     EVENT_ACTION.UPDATE_FLAGS,
-];
+] as const;

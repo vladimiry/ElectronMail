@@ -133,7 +133,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
             .then(() => {
                 this.onWebViewLoadedOnce(resolveWebView());
                 // if ((process.env.NODE_ENV/* as BuildEnvironment*/) === "development") {
-                //     webView.addEventListener("dom-ready", () => webView.openDevTools());
+                //     resolveWebView().openDevTools();
                 // }
             });
 

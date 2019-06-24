@@ -45,7 +45,7 @@
     }
 
     &.state- {
-        &inbox_and_sent { // sass-lint:disable-line class-name-format
+        &protonmail_inbox_and_sent { // sass-lint:disable-line class-name-format
             border-left-color: $state-received;
             position: relative;
 

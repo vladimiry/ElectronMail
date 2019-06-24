@@ -8,11 +8,11 @@ import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[lib/database/mail]");
 
-const directTypeMapping: Record<keyof typeof Rest.Model.MAIL_TYPE._.nameValueMap, DatabaseModel.Mail["state"]> = {
+const directTypeMapping: Readonly<Record<Unpacked<typeof Rest.Model.MAIL_TYPE._.values>, DatabaseModel.Mail["state"]>> = {
     [Rest.Model.MAIL_TYPE.INBOX]: DatabaseModel.MAIL_STATE.RECEIVED,
     [Rest.Model.MAIL_TYPE.DRAFT]: DatabaseModel.MAIL_STATE.DRAFT,
     [Rest.Model.MAIL_TYPE.SENT]: DatabaseModel.MAIL_STATE.SENT,
-    [Rest.Model.MAIL_TYPE.INBOX_AND_SENT]: DatabaseModel.MAIL_STATE.INBOX_AND_SENT,
+    [Rest.Model.MAIL_TYPE.PROTONMAIL_INBOX_AND_SENT]: DatabaseModel.MAIL_STATE.PROTONMAIL_INBOX_AND_SENT,
 };
 
 const isConfidential = ((encryptedValues: Array<Rest.Model.Message["IsEncrypted"]>) => {

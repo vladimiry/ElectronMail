@@ -6,6 +6,13 @@ import {buildBaseEntity, buildPk} from ".";
 import {mapBy} from "src/shared/util";
 import {resolveInstanceId, resolveListId} from "src/electron-preload/webview/tutanota/lib/util";
 
+const directTypeMapping: Readonly<Record<Unpacked<typeof Rest.Model.MAIL_STATE._.values>, DatabaseModel.Mail["state"]>> = {
+    [Rest.Model.MAIL_STATE.RECEIVED]: DatabaseModel.MAIL_STATE.RECEIVED,
+    [Rest.Model.MAIL_STATE.DRAFT]: DatabaseModel.MAIL_STATE.DRAFT,
+    [Rest.Model.MAIL_STATE.SENT]: DatabaseModel.MAIL_STATE.SENT,
+    [Rest.Model.MAIL_STATE.SENDING]: DatabaseModel.MAIL_STATE.TUTANOTA_SENDING,
+};
+
 export async function buildMails(mails: Rest.Model.Mail[]): Promise<DatabaseModel.Mail[]> {
     const [bodies, files] = await Promise.all([
         // WARN: don't set huge chunk size for mails body loading
@@ -57,7 +64,7 @@ function Mail(input: Rest.Model.Mail, body: Rest.Model.MailBody, files: Rest.Mod
         bccRecipients: input.bccRecipients.map(Address),
         attachments: files.map(File),
         unread: Boolean(input.unread),
-        state: DatabaseModel.MAIL_STATE._.parseValue(input.state),
+        state: directTypeMapping[input.state],
         confidential: input.confidential,
         replyType: input.replyType,
     };

@@ -14,4 +14,4 @@ export const PROTONMAIL_MAILBOX_ROUTE_NAMES = buildEnumBundle({
     [PROTONMAIL_MAILBOX_IDENTIFIERS.Drafts]: "drafts",
     [PROTONMAIL_MAILBOX_IDENTIFIERS.Search]: "search",
     [PROTONMAIL_MAILBOX_IDENTIFIERS.Label]: "label",
-});
+} as const);

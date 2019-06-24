@@ -155,24 +155,30 @@ export function mapBy<T, K>(iterable: Iterable<T>, by: (t: T) => K): Map<K, T[]>
 }
 
 // TODO consider using https://github.com/cedx/enum.js instead
-export function buildEnumBundle<V extends string | number = string>(
-    nameValueMap: { [k: string]: V },
+export function buildEnumBundle<M, K extends keyof M, V extends Extract<M[keyof M], string | number>>(
+    nameValueMap: M,
 ) {
-    type M = typeof nameValueMap;
-
     const {names, values, valueNameMap} = Object
         .entries(nameValueMap)
-        .reduce((accumulator: { names: Array<keyof M>; values: V[]; valueNameMap: { [k in V]: string } }, [key, value]) => {
+        .reduce((
+            accumulator: {
+                names: K[];
+                values: V[];
+                valueNameMap: { [k in V]: K };
+            },
+            entry,
+        ) => {
+            const [key, value] = entry as unknown as readonly [K, V];
             accumulator.names.push(key);
-            accumulator.values.push(value as V);
+            accumulator.values.push(value);
             accumulator.valueNameMap[value] = key;
             return accumulator;
         }, {values: [], names: [], valueNameMap: {} as any});
 
     interface ResolveNameByValue {
-        (value: V): string;
+        (value: V): K;
 
-        <S extends boolean>(value: V, strict: S): S extends true ? string : string | undefined;
+        <S extends boolean>(value: V, strict: S): S extends true ? K : K | undefined;
     }
 
     const resolveNameByValue: ResolveNameByValue = (value: V, strict: boolean = true) => {
@@ -188,15 +194,25 @@ export function buildEnumBundle<V extends string | number = string>(
         <S extends boolean>(rawValue: any, strict: S): S extends true ? V : V | undefined;
     }
 
-    const parseValue: ParseValue = (rawValue: any, strict: boolean = true) => nameValueMap[resolveNameByValue(rawValue, strict) as string];
+    const parseValue: ParseValue = (rawValue: any, strict: boolean = true) => {
+        const name = resolveNameByValue(rawValue, strict);
+        if (typeof name === "undefined") {
+            return undefined as any;
+        }
+        return nameValueMap[name];
+    };
 
     // TODO deep freeze the result object
-    return Object.assign(
-        {
-            _: {resolveNameByValue, parseValue, names, values, nameValueMap},
-        },
-        nameValueMap,
-    );
+    return {
+        ...nameValueMap,
+        _: {
+            resolveNameByValue,
+            parseValue,
+            names,
+            values,
+            nameValueMap,
+        } as const,
+    } as const;
 }
 
 export function isDatabaseBootstrapped(

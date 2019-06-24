@@ -2,7 +2,8 @@ import * as Model from "src/shared/model/database";
 import * as Rest from "src/electron-preload/webview/protonmail/lib/rest";
 import {buildBaseEntity} from ".";
 
-const directTypeMapping: Record<keyof typeof Model.PROTONMAIL_MAILBOX_IDENTIFIERS._.nameValueMap, Model.Folder["folderType"]> = {
+const directTypeMapping: Readonly<Partial<Record<Unpacked<typeof Model.PROTONMAIL_MAILBOX_IDENTIFIERS._.values>,
+    Model.Folder["folderType"]>>> = {
     [Model.PROTONMAIL_MAILBOX_IDENTIFIERS.Inbox]: Model.MAIL_FOLDER_TYPE.INBOX,
     [Model.PROTONMAIL_MAILBOX_IDENTIFIERS.Sent]: Model.MAIL_FOLDER_TYPE.SENT,
     [Model.PROTONMAIL_MAILBOX_IDENTIFIERS.Trash]: Model.MAIL_FOLDER_TYPE.TRASH,
@@ -12,9 +13,10 @@ const directTypeMapping: Record<keyof typeof Model.PROTONMAIL_MAILBOX_IDENTIFIER
 };
 
 export function buildFolder(input: Rest.Model.Label): Model.Folder {
-    const {folderType, name} = input.Type in directTypeMapping
+    const systemFolderType = directTypeMapping[input.Type];
+    const {folderType, name} = typeof systemFolderType !== "undefined"
         ? {
-            folderType: directTypeMapping[input.Type],
+            folderType: systemFolderType,
             name: input.Name,
         }
         : {

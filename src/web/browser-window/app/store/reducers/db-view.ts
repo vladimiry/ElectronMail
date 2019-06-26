@@ -205,7 +205,7 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
 
             return result;
         },
-        FullTextSearch: ({dbAccountPk, value: {uid, mailsBundleItems}}) => {
+        FullTextSearch: ({dbAccountPk, value: {mailsBundleItems}}) => {
             const mailsBundleKey = "searchMailsBundle";
             const instanceKey = resolveInstanceKey(dbAccountPk);
             const instance: Instance = {
@@ -350,7 +350,7 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
     });
 }
 
-function sortMails<MailExt extends object>(mailsBundle: MailsBundle) {
+function sortMails(mailsBundle: MailsBundle) {
     const {prop, desc} = mailsBundle.sorters[mailsBundle.sorterIndex];
 
     mailsBundle.items.sort(

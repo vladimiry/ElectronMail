@@ -36,10 +36,10 @@ export class EncryptionPresetsComponent implements OnInit, OnDestroy {
                 const encryption = encryptionPreset.encryption;
                 const keyDerivationEntry = Object
                     .entries(KEY_DERIVATION_PRESETS)
-                    .find(([title, value]) => value.type === keyDerivation.type && value.preset === keyDerivation.preset);
+                    .find(([, value]) => value.type === keyDerivation.type && value.preset === keyDerivation.preset);
                 const encryptionEntry = Object
                     .entries(ENCRYPTION_DERIVATION_PRESETS)
-                    .find(([title, value]) => value.type === encryption.type && value.preset === encryption.preset);
+                    .find(([, value]) => value.type === encryption.type && value.preset === encryption.preset);
 
                 if (!keyDerivationEntry || !encryptionEntry) {
                     throw new Error(`"keyDerivationEntry/encryptionEntry" pair is not defined`);

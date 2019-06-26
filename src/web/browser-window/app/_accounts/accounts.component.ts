@@ -90,7 +90,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
         );
     }
 
-    trackAccount(index: number, account?: WebAccount) {
+    trackAccount(...[, account]: readonly [number, WebAccount | undefined]) {
         return account ? account.accountConfig.login : undefined;
     }
 

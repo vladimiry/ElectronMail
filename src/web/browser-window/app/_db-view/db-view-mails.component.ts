@@ -150,8 +150,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
     }
 
     trackByMailBundleItem(
-        index: number,
-        {mail: {pk}}: Unpacked<Unpacked<typeof DbViewMailsComponent.prototype.items$>>,
+        ...[, {mail: {pk}}]: readonly [number, Unpacked<Unpacked<typeof DbViewMailsComponent.prototype.items$>>]
     ) {
         return pk;
     }

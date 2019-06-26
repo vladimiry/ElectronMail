@@ -4,11 +4,11 @@ import {Deferred} from "ts-deferred";
 import {ReplaySubject, merge} from "rxjs";
 import {Fs as StoreFs, Model as StoreModel, Store} from "fs-json-store";
 import {app} from "electron";
-import {distinctUntilChanged, take, tap} from "rxjs/operators";
+import {distinctUntilChanged, take} from "rxjs/operators";
 
 import {BuildEnvironment} from "src/shared/model/common";
 import {Config, Settings} from "src/shared/model/options";
-import {Context, ContextInitOptions, ContextInitOptionsPaths, RuntimeEnvironment} from "./model";
+import {Context, ContextInitOptions, ContextInitOptionsPaths} from "./model";
 import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {INITIAL_STORES, configEncryptionPresetValidator, settingsAccountLoginUniquenessValidator} from "./constants";
@@ -37,10 +37,7 @@ export function initContext(options: ContextInitOptions = {}): Context {
                 ],
             },
         });
-    const runtimeEnvironment: RuntimeEnvironment = Boolean(process.env[RUNTIME_ENV_E2E])
-        ? "e2e"
-        : "production";
-    const locations = initLocations(runtimeEnvironment, storeFs, options.paths);
+    const locations = initLocations(storeFs, options.paths);
 
     logger.transports.file.file = path.join(locations.userDataDir, "log.log");
     logger.transports.file.maxSize = 1024 * 1024 * 50; // 50MB
@@ -88,10 +85,6 @@ export function initContext(options: ContextInitOptions = {}): Context {
                 subject$.asObservable().pipe(
                     distinctUntilChanged(({_rev: prev}, {_rev: curr}) => curr === prev),
                 ),
-            ).pipe(
-                tap((v) => {
-                    // console.log(v);
-                }),
             ),
             configStore: store,
         };
@@ -99,8 +92,10 @@ export function initContext(options: ContextInitOptions = {}): Context {
 
     const ctx: Context = {
         storeFs,
-        runtimeEnvironment,
         locations,
+        runtimeEnvironment: Boolean(process.env[RUNTIME_ENV_E2E])
+            ? "e2e"
+            : "production",
         deferredEndpoints: new Deferred(),
         ...(() => {
             const encryption = {
@@ -148,7 +143,6 @@ export function initContext(options: ContextInitOptions = {}): Context {
 }
 
 function initLocations(
-    runtimeEnvironment: RuntimeEnvironment,
     storeFs: StoreModel.StoreFs,
     paths?: ContextInitOptionsPaths,
 ): ElectronContextLocations {

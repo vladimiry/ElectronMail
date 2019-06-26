@@ -1,9 +1,10 @@
 {
-    "compilerOptions": {
-        "forceConsistentCasingInFileNames": true,
-        "noFallthroughCasesInSwitch": true,
-        "noImplicitReturns": true,
-        "noUnusedLocals": true,
-        "strict": true
-    }
+  "compilerOptions": {
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "strict": true
+  }
 }

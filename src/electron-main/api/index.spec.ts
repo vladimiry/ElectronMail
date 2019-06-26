@@ -629,13 +629,12 @@ async function buildMocks() {
             },
             shell: {
                 openExternalSpy,
-                openExternal: (url: string, options?: Electron.OpenExternalOptions, callback?: (error: Error) => void): boolean => {
-                    openExternalSpy(url);
-                    if (callback) {
-                        callback(null as any);
-                    }
-                    return true;
-                },
+                openExternal: await (async () => {
+                    const openExternal: (typeof import("electron"))["shell"]["openExternal"] = async (url) => {
+                        openExternalSpy(url);
+                    };
+                    return openExternal;
+                })(),
                 openItem: sinon.spy(),
             },
             nativeImage: {

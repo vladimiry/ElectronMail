@@ -126,7 +126,7 @@ export class OptionsEffects {
             unionizeActionFilter(OPTIONS_ACTIONS.is.GetSettingsRequest),
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             withLatestFrom(this.store.select(OptionsSelectors.FEATURED.settings)),
-            concatMap(([action, settings]) => {
+            concatMap(([, settings]) => {
                 if ("_rev" in settings) {
                     return of(this.optionsService.settingsNavigationAction({
                         path: settings.accounts.length ? "" : "account-edit",

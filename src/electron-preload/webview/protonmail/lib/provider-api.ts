@@ -88,7 +88,7 @@ export async function resolveProviderApi(): Promise<ProviderApi> {
 
             return () => limiter(key);
         })(),
-    };
+    } as const;
 
     return state.api = (async () => {
         const injector = window.angular && window.angular.element(document.body).injector();
@@ -117,23 +117,23 @@ export async function resolveProviderApi(): Promise<ProviderApi> {
             messageModel: resolveService<ProviderApi["messageModel"]>(injector, "messageModel"),
             conversation: resolveService<ProviderApi["conversation"]>(injector, "conversationApi", {
                 ...rateLimiting,
-                methods: ["get", "query"],
+                rateLimitedMethodNames: ["get", "query"],
             }),
             message: resolveService<ProviderApi["message"]>(injector, "messageApi", {
                 ...rateLimiting,
-                methods: ["get", "query"],
+                rateLimitedMethodNames: ["get", "query"],
             }),
             contact: resolveService<ProviderApi["contact"]>(injector, "Contact", {
                 ...rateLimiting,
-                methods: ["get", "all"],
+                rateLimitedMethodNames: ["get", "all"],
             }),
             label: resolveService<ProviderApi["label"]>(injector, "Label", {
                 ...rateLimiting,
-                methods: ["query"],
+                rateLimitedMethodNames: ["query"],
             }),
             events: resolveService<ProviderApi["events"]>(injector, "Events", {
                 ...rateLimiting,
-                methods: ["get", "getLatestID"],
+                rateLimitedMethodNames: ["get", "getLatestID"],
             }),
             vcard: resolveService<ProviderApi["vcard"]>(injector, "vcard"),
         };
@@ -141,16 +141,16 @@ export async function resolveProviderApi(): Promise<ProviderApi> {
 }
 
 type KeepAsyncFunctionsProps<T> = {
-    [K in keyof T]: T[K] extends (args: any) => Promise<infer U> ? T[K] : never
+    [K in keyof T]: T[K] extends (args: any) => Promise<any> ? T[K] : never
 };
 
 function resolveService<T extends ProviderApi[keyof ProviderApi]>(
     injector: ng.auto.IInjectorService,
     serviceName: string,
-    rateLimiting?: {
+    rateLimiting?: Readonly<{
         rateLimiterTick: () => number;
-        methods: Array<keyof KeepAsyncFunctionsProps<T>>,
-    },
+        rateLimitedMethodNames: Array<keyof KeepAsyncFunctionsProps<T>>,
+    }>,
 ): T {
     resolveServiceLogger.info();
     const service = injector.get<T | undefined>(serviceName);
@@ -167,15 +167,15 @@ function resolveService<T extends ProviderApi[keyof ProviderApi]>(
 
     const clonedService = {...service} as T;
 
-    for (const method of rateLimiting.methods) {
-        const originalMethod = clonedService[method];
-        const _fullMethodName = `${serviceName}.${method}`;
+    for (const rateLimitedMethodName of rateLimiting.rateLimitedMethodNames) {
+        const originalMethod = clonedService[rateLimitedMethodName];
+        const _fullMethodName = `${serviceName}.${rateLimitedMethodName}`;
 
         if (typeof originalMethod !== "function") {
             throw new Error(`Not a function: "${_fullMethodName}"`);
         }
 
-        clonedService[method] = async function(this: typeof service) {
+        clonedService[rateLimitedMethodName] = async function(this: typeof service) {
             const originalMethodArgs = arguments;
             const waitTime = rateLimiting.rateLimiterTick();
             const limitExceeded = waitTime > 0;

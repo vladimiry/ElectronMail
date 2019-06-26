@@ -52,7 +52,7 @@ export function initWebRequestListeners(ctx: Context, session: Session) {
                 tutanota: resolveRequestProxy("tutanota", details, origins),
             };
             const [accountType] = Object.entries(proxies)
-                .filter((([key, value]) => Boolean(value)))
+                .filter((([, value]) => Boolean(value)))
                 .map((([key]) => key as AccountType | undefined));
 
             return accountType

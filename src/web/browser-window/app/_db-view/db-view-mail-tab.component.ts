@@ -86,7 +86,7 @@ export class DbViewMailTabComponent extends DbViewAbstractComponent implements O
         }
     }
 
-    trackFolder(index: number, {pk}: View.Folder) {
+    trackFolder(...[, {pk}]: readonly [number, View.Folder]) {
         return pk;
     }
 

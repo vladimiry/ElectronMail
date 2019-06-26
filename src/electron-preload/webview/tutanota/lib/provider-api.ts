@@ -17,7 +17,7 @@ const domContentLoadedPromise = new Promise<void>((resolve) => {
 });
 
 class EventController {
-    notificationReceived(entityUpdates: Rest.Model.EntityUpdate[]): void {}
+    notificationReceived(...[]: readonly Rest.Model.EntityUpdate[][]): void {}
 }
 
 interface ProviderApi extends Record<ModuleFiles, any> {
@@ -36,24 +36,24 @@ interface ProviderApi extends Record<ModuleFiles, any> {
         generatedIdToTimestamp: (id: Rest.Model.Id) => Timestamp;
     };
     "src/api/main/Entity": {
-        loadRoot: <T extends Rest.Model.BaseEntity<Rest.Model.Id/* | Rest.Model.IdTuple*/>, TypeRefType extends Rest.Model.TypeRef<T>>(
+        loadRoot: <T extends Rest.Model.BaseEntity<Rest.Model.Id/* | Rest.Model.IdTuple*/>>(
             typeRef: Rest.Model.TypeRef<T>,
             groupId: Rest.Model.GroupMembership["group"],
         ) => Promise<T>;
-        load: <T extends Rest.Model.BaseEntity<Rest.Model.Id | Rest.Model.IdTuple>, TypeRefType extends Rest.Model.TypeRef<T>>(
+        load: <T extends Rest.Model.BaseEntity<Rest.Model.Id | Rest.Model.IdTuple>>(
             typeRef: Rest.Model.TypeRef<T>,
             id: T["_id"],
         ) => Promise<T>;
-        loadAll: <T extends Rest.Model.BaseEntity<Rest.Model.IdTuple>, TypeRefType extends Rest.Model.TypeRef<T>>(
+        loadAll: <T extends Rest.Model.BaseEntity<Rest.Model.IdTuple>>(
             typeRef: Rest.Model.TypeRef<T>,
             listId: T["_id"][0],
         ) => Promise<T[]>;
-        loadMultiple: <T extends Rest.Model.BaseEntity<Rest.Model.Id | Rest.Model.IdTuple>, TypeRefType extends Rest.Model.TypeRef<T>>(
+        loadMultiple: <T extends Rest.Model.BaseEntity<Rest.Model.Id | Rest.Model.IdTuple>>(
             typeRef: Rest.Model.TypeRef<T>,
             listId: T["_id"] extends Rest.Model.IdTuple ? T["_id"][0] : null,
             instanceIds: Array<T["_id"] extends Rest.Model.IdTuple ? T["_id"][1] : T["_id"]>,
         ) => Promise<T[]>;
-        loadRange: <T extends Rest.Model.BaseEntity<Rest.Model.IdTuple>, TypeRefType extends Rest.Model.TypeRef<T>>(
+        loadRange: <T extends Rest.Model.BaseEntity<Rest.Model.IdTuple>>(
             typeRef: Rest.Model.TypeRef<T>,
             listId: T["_id"][0],
             start: Rest.Model.Id,

@@ -101,7 +101,7 @@ export async function initWebContentsCreatingHandlers(ctx: Context) {
                 .buildFromTemplate(menuItems)
                 .popup({});
         },
-        "update-target-url": (event, url) => {
+        "update-target-url": (...[, url]) => {
             IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.TargetUrl({url}));
         },
         "preload-error": (event, preloadPath, error) => {
@@ -161,8 +161,8 @@ export async function initWebContentsCreatingHandlers(ctx: Context) {
         webContents.on(event, subscriptions[event]);
     };
 
-    app.on("browser-window-created", (event, {webContents}) => webContentsCreatedHandler(webContents));
-    app.on("web-contents-created", (webContentsCreatedEvent, webContents) => webContentsCreatedHandler(webContents));
+    app.on("browser-window-created", (...[, {webContents}]) => webContentsCreatedHandler(webContents));
+    app.on("web-contents-created", (...[, webContents]) => webContentsCreatedHandler(webContents));
 }
 
 function isEmailHref(href: string): boolean {

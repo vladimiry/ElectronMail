@@ -9,7 +9,7 @@ import {resolveProviderApi} from "src/electron-preload/webview/tutanota/lib/prov
 
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[lib/rest");
 
-export async function fetchEntity<T extends BaseEntity<Id | IdTuple>, TypeRefType extends TypeRef<T>>(
+export async function fetchEntity<T extends BaseEntity<Id | IdTuple>>(
     typeRef: TypeRef<T>,
     id: T["_id"],
 ): Promise<T> {
@@ -20,7 +20,7 @@ export async function fetchEntity<T extends BaseEntity<Id | IdTuple>, TypeRefTyp
     return load(typeRef, id);
 }
 
-export async function fetchAllEntities<T extends BaseEntity<IdTuple>, TypeRefType extends TypeRef<T>>(
+export async function fetchAllEntities<T extends BaseEntity<IdTuple>>(
     typeRef: TypeRef<T>,
     listId: T["_id"][0],
 ): Promise<T[]> {
@@ -31,7 +31,7 @@ export async function fetchAllEntities<T extends BaseEntity<IdTuple>, TypeRefTyp
     return loadAll(typeRef, listId);
 }
 
-export async function fetchMultipleEntities<T extends BaseEntity<Id | IdTuple>, TypeRefType extends TypeRef<T>>(
+export async function fetchMultipleEntities<T extends BaseEntity<Id | IdTuple>>(
     typeRef: TypeRef<T>,
     listId: T["_id"] extends IdTuple ? T["_id"][0] : null,
     instanceIds: Array<T["_id"] extends IdTuple ? T["_id"][1] : T["_id"]>,
@@ -50,7 +50,7 @@ export async function fetchMultipleEntities<T extends BaseEntity<Id | IdTuple>, 
     return result;
 }
 
-export async function fetchEntitiesRange<T extends BaseEntity<IdTuple>, TypeRefType extends TypeRef<T>>(
+export async function fetchEntitiesRange<T extends BaseEntity<IdTuple>>(
     typeRef: TypeRef<T>,
     listId: T["_id"][0],
     queryParams: Required<Omit<RequestParams, "ids">>,
@@ -63,7 +63,7 @@ export async function fetchEntitiesRange<T extends BaseEntity<IdTuple>, TypeRefT
 }
 
 // TODO consider streaming fetched entities portion to Observable instead of "portionCallback"
-export async function fetchEntitiesRangeUntilTheEnd<T extends BaseEntity<IdTuple>, TypeRefType extends TypeRef<T>>(
+export async function fetchEntitiesRangeUntilTheEnd<T extends BaseEntity<IdTuple>>(
     typeRef: TypeRef<T>,
     listId: T["_id"][0],
     {start, count}: Required<Omit<RequestParams, "ids" | "reverse">>,

@@ -68,7 +68,7 @@ const buildDbPatchEndpoint: Pick<ProtonmailApi, "buildDbPatch" | "fetchSingleMai
             }
 
             const preFetch = await (async (
-                {events, $http}: ProviderApi,
+                {events}: ProviderApi,
                 id: Rest.Model.Event["EventID"],
             ) => {
                 const fetchedEvents: Rest.Model.Event[] = [];

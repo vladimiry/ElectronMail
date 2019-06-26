@@ -137,7 +137,7 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
         const value: Record<View.Folder["pk"], boolean> = this.formControls.folders.value;
 
         return Object.entries(value)
-            .filter(([k, v]) => Boolean(v))
+            .filter(([, v]) => Boolean(v))
             .map(([k]) => k);
     }
 

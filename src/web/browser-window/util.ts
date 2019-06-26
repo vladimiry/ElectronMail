@@ -23,7 +23,7 @@ export const getZoneNameBoundWebLogger = (...args: string[]): ZoneNameBoundWebLo
 };
 
 // TODO consider building custom RxJS pipeable operator
-export const logActionTypeAndBoundLoggerWithActionType = <P extends object, T extends string>(
+export const logActionTypeAndBoundLoggerWithActionType = <P extends object>(
     {_logger}: { _logger: ZoneNameBoundWebLogger }, level: keyof typeof LOGGER = "info",
 ): (pipeInput: { type: string; payload: P }) => { type: string; payload: P } & { logger: ZoneNameBoundWebLogger } => {
     return (aciton) => {

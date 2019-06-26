@@ -31,10 +31,13 @@ export class AccountsComponent implements OnDestroy {
                 .subscribe(([value, accounts]) => this.reorderingDisabled = value || accounts.length < 2),
         );
 
-        this.dragulaService.createGroup(this.reorderingGroup, {
-            moves: (el, container, handle) => !this.reorderingDisabled && Boolean(handle && handle.classList.contains("fa-bars")),
-            accepts: (el, target) => Boolean(target && target.classList.contains("list-group")),
-        });
+        this.dragulaService.createGroup(
+            this.reorderingGroup,
+            {
+                moves: (...[, , handle]) => !this.reorderingDisabled && Boolean(handle && handle.classList.contains("fa-bars")),
+                accepts: (...[, target]) => Boolean(target && target.classList.contains("list-group")),
+            },
+        );
 
         this.subscription.add(
             this.dragulaService.drop(this.reorderingGroup)

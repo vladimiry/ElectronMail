@@ -12,9 +12,7 @@ const logger = curryFunctionMembers(_logger, "[src/electron-main/window/about]")
 
 const resolveContent: (ctx: Context) => Promise<Unpacked<ReturnType<typeof injectVendorsAppCssIntoHtmlFile>>> = (() => {
     let result: typeof resolveContent = async (ctx: Context) => {
-        const versions: typeof process.versions & Electron.Versions = process.versions;
-        const versionsProps: Array<keyof typeof versions> = ["electron", "chrome", "node", "v8"];
-        const htmlInjection = [
+        const htmlInjection: string = [
             sanitizeHtml(
                 `
                     <h1>${PRODUCT_NAME} v${PACKAGE_VERSION}</h1>
@@ -25,29 +23,34 @@ const resolveContent: (ctx: Context) => Promise<Unpacked<ReturnType<typeof injec
                     allowedTags: sanitizeHtml.defaults.allowedTags.concat(["h1"]),
                 },
             ),
-            `
-                <ul class="list-versions align-items-left justify-content-center font-weight-light">
-                    ${
-                versionsProps
-                    .map((prop) => {
-                        return sanitizeHtml(`<li>${prop.substr(0, 1).toUpperCase()}${prop.substr(1)}: ${versions[prop]}</li>`);
-                    })
-                    .join("")
-            }
-                </ul>
-                `,
+            (() => {
+                const versions: typeof process.versions & Electron.Versions = process.versions;
+                const versionsProps: ReadonlyArray<Readonly<{ prop: keyof typeof versions; title: string; }>> = [
+                    {prop: "electron", title: "Electron"},
+                    {prop: "chrome", title: "Chromium"},
+                    {prop: "node", title: "Node"},
+                    {prop: "v8", title: "V8"},
+                ];
+                return `<ul class="list-versions align-items-left justify-content-center font-weight-light">
+                ${
+                    versionsProps
+                        .map(({prop, title}) => sanitizeHtml(`<li>${title}: ${versions[prop]}</li>`))
+                        .join("")
+                }
+                </ul>`;
+            })(),
         ].join("");
         const pageLocation = ctx.locations.aboutBrowserWindowPage;
-
         const cache = await injectVendorsAppCssIntoHtmlFile(pageLocation, ctx.locations);
 
-        cache.html = cache.html.replace(/(.*)#MAIN_PROCESS_INJECTION_POINTCUT#(.*)/i, `$1${htmlInjection}$2`);
-
+        cache.html = cache.html.replace(
+            /(.*)#MAIN_PROCESS_INJECTION_POINTCUT#(.*)/i,
+            `$1${htmlInjection}$2`,
+        );
         if (!cache.html.includes(htmlInjection)) {
             logger.error(JSON.stringify({cache}));
             throw new Error(`Failed to inject "${htmlInjection}" into the "${pageLocation}" page`);
         }
-
         logger.verbose(JSON.stringify(cache));
 
         // memoize the result

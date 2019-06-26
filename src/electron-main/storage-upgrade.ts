@@ -192,7 +192,7 @@ const SETTINGS_UPGRADES: Record<string, (settings: Settings) => void> = {
         settings.accounts.forEach((account) => {
             // it can be either "https://beta.protonmail.com" or "local:::https://beta.protonmail.com"
             // since above defined "2.0.0" upgrade adds "local:::"
-            if (account.entryUrl.includes("https://beta.protonmail.com")) {
+            if (account.entryUrl.includes("https://beta.protonmail.com")) { // lgtm [js/incomplete-url-substring-sanitization]
                 account.entryUrl = PROTONMAIL_PRIMARY_ENTRY_POINT_VALUE;
             }
             if (!possibleEntryUrls.includes(account.entryUrl)) {

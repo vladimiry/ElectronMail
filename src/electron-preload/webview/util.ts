@@ -192,17 +192,19 @@ export function buildDbPatchRetryPipeline<T>(
         concatMap((rawError, retryIndex) => {
             const {error, retriable, skippable} = preprocessError(rawError);
 
+            logger.error(error);
+
             if (retryIndex >= retriesLimit) {
                 if (skippable) {
                     const message = `Skipping "buildDbPatch" call`;
-                    logger.error(message, JSON.stringify(error));
+                    logger.error(message);
                     return throwError(new StatusCodeError(message, "SkipDbPatch"));
                 }
                 return throwError(error);
             }
 
             if (retriable) {
-                logger.error(`Retrying "buildDbPatch" call (attempt: "${retryIndex}")`, JSON.stringify(error));
+                logger.error(`Retrying "buildDbPatch" call (attempt: "${retryIndex}")`);
                 return of(error).pipe(
                     delay(retriesDelay),
                 );

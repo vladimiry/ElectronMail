@@ -111,21 +111,20 @@ export function isUpsertUpdate(update: Rest.Model.EntityUpdate) {
 }
 
 export const preprocessError: Arguments<typeof buildDbPatchRetryPipeline>[0] = (rawError: any) => {
-    const error = Object(rawError);
-    const {name = "", message = ""} = error;
+    const {name, message}: {name?: unknown; message?: unknown} = Object(rawError);
     const retriable = (
         !navigator.onLine
         ||
         name === "ConnectionError"
         ||
-        message.includes("ConnectionError:")
+        String(message).includes("ConnectionError:")
         ||
-        message.includes("Reached timeout")
+        String(message).includes("Reached timeout")
         ||
-        (name === "ServiceUnavailableError" && message.startsWith("503"))
+        (name === "ServiceUnavailableError" && String(message).startsWith("503"))
     );
     return {
-        error: new Error(error),
+        error: rawError,
         retriable,
         skippable: retriable,
     };

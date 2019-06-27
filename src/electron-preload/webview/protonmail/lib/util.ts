@@ -2,6 +2,7 @@ import {pick} from "ramda";
 
 import * as Rest from "./rest";
 import {UPSERT_EVENT_ACTIONS} from "src/electron-preload/webview/protonmail/lib/rest/model";
+import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {buildDbPatchRetryPipeline} from "src/electron-preload/webview/util";
 
 export const isUpsertOperationType: (v: Unpacked<typeof Rest.Model.EVENT_ACTION._.values>) => boolean = (() => {
@@ -38,37 +39,46 @@ export function isLoggedIn(): boolean {
 }
 
 export const preprocessError: Arguments<typeof buildDbPatchRetryPipeline>[0] = (rawError: any) => {
-    const error = angularJsHttpResponseTypeGuard(rawError)
-        ? { // TODO add tests to validate that "angularJsHttpResponseTypeGuard" call on this error still return "true"
-            // whitelistening properties if error is "angular http response" object
-            // so information like http headers and params is filtered out
-            data: "<wiped out>",
-            config: pick(["method", "url"], rawError.config),
-            ...pick(["status", "statusText", "xhrStatus"], rawError),
-            message: rawError.statusText || `HTTP request error`,
-        }
-        : rawError;
-    const retriable = (
+    const sanitizedNgHttpResponse: (Omit<ng.IHttpResponse<"<wiped out>">, "headers"> & { message: string; headers: "<wiped out>" }) | false
+        = angularJsHttpResponseTypeGuard(rawError)
+        ? (() => {
+            const result = {
+                // TODO add tests to validate that "angularJsHttpResponseTypeGuard" call on this error still return "true"
+                // whitelistening properties if error is "angular http response" object
+                // so information like http headers and params is filtered out
+                message: rawError.statusText || "HTTP request error",
+                ...pick(["status", "statusText", "xhrStatus"], rawError),
+                config: pick(["method", "url"], rawError.config),
+                data: "<wiped out>",
+                headers: "<wiped out>",
+            } as const;
+            WEBVIEW_LOGGERS.protonmail.error("preprocessError()", JSON.stringify(result));
+            return result;
+        })()
+        : false;
+    const retriable: boolean = (
         !navigator.onLine
         ||
         (
-            error !== rawError
+            sanitizedNgHttpResponse
             &&
             (
                 // network connection error, connection abort, etc
-                error.status === -1
+                sanitizedNgHttpResponse.status === -1
                 ||
                 // requests to Protonmail's API end up with "503 service unavailable" error quite often during the day
                 // so we retry/skip such errors in addition to the network errors with -1 status
-                (error.status === 503 && error.statusText === "Service Unavailable")
+                (sanitizedNgHttpResponse.status === 503 && sanitizedNgHttpResponse.statusText === "Service Unavailable")
                 ||
-                (error.status === 504 && error.statusText === "Gateway Time-out")
+                (sanitizedNgHttpResponse.status === 504 && sanitizedNgHttpResponse.statusText === "Gateway Time-out")
             )
         )
     );
 
     return {
-        error: new Error(error),
+        error: sanitizedNgHttpResponse
+            ? new Error(sanitizedNgHttpResponse.message)
+            : rawError,
         retriable,
         skippable: retriable,
     };

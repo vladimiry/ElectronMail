@@ -25,7 +25,7 @@ import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/st
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
-import {ONE_SECOND_MS} from "src/shared/constants";
+import {ONE_MINUTE_MS, ONE_SECOND_MS} from "src/shared/constants";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {getRandomInt, isDatabaseBootstrapped} from "src/shared/util";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/browser-window/util";
@@ -171,7 +171,7 @@ export class AccountsEffects {
                     ),
                     this.api.webViewClient(webView, type, {finishPromise}).pipe(
                         mergeMap((webViewClient) => merge(
-                            timer(0, ONE_SECOND_MS * 60 * 3).pipe(
+                            timer(0, ONE_MINUTE_MS * 5).pipe(
                                 tap(() => logger.verbose(`triggered by: timer`)),
                             ),
                             this.fireSyncingIteration$.pipe(

@@ -186,7 +186,7 @@ export async function submitTotpToken(
 export function buildDbPatchRetryPipeline<T>(
     preprocessError: (rawError: any) => { error: Error; retriable: boolean; skippable: boolean; },
     logger: ReturnType<typeof buildLoggerBundle>,
-    {retriesDelay = ONE_SECOND_MS * 5, retriesLimit = 3}: { retriesDelay?: number, retriesLimit?: number } = {},
+    {retriesDelay = ONE_SECOND_MS * 5, retriesLimit = 2}: { retriesDelay?: number, retriesLimit?: number } = {},
 ) {
     return retryWhen<T>((errors) => errors.pipe(
         concatMap((rawError, retryIndex) => {

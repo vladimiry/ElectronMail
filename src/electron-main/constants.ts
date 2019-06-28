@@ -63,7 +63,6 @@ export const INITIAL_STORES: Readonly<{
             ],
             // base
             checkUpdateAndNotify: !SNAP_CONTAINER, // update check is disabled by default for the Snap package type
-            clearSession: true,
             closeToTray: true,
             compactLayout: true,
             disableGpuProcess: false,

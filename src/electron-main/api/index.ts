@@ -9,9 +9,9 @@ import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {PACKAGE_NAME, PRODUCT_NAME} from "src/shared/constants";
 import {attachFullTextIndexWindow, detachFullTextIndexWindow} from "src/electron-main/window/full-text-search";
 import {buildSettingsAdapter} from "src/electron-main/util";
-import {clearSessionsCache, initSessionByAccount} from "src/electron-main/session";
 import {curryFunctionMembers} from "src/shared/util";
 import {deletePassword, getPassword, setPassword} from "src/electron-main/keytar";
+import {initSessionByAccount} from "src/electron-main/session";
 import {patchMetadata} from "src/electron-main/database/util";
 import {upgradeConfig, upgradeDatabase, upgradeSettings} from "src/electron-main/storage-upgrade";
 
@@ -99,7 +99,6 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             ctx.sessionDb.reset();
             delete ctx.selectedAccount; // TODO extend "logout" api test: "delete ctx.selectedAccount"
 
-            await clearSessionsCache(ctx);
             await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0});
             await detachFullTextIndexWindow(ctx);
 

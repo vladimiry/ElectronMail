@@ -27,7 +27,7 @@ export async function buildEndpoints(
 
             const result = await ctx.settingsStore.write(settings);
 
-            await initSessionByAccount(ctx, pick(["login", "proxy"], account), {skipClearSessionCaches: true});
+            await initSessionByAccount(ctx, pick(["login", "proxy"], account));
 
             return result;
         },

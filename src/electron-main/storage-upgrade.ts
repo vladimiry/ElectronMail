@@ -79,11 +79,6 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.timeouts.syncing = INITIAL_STORES.config().timeouts.dbSyncing;
         }
     },
-    "2.3.1": (config) => {
-        if (typeof config.clearSession === "undefined") {
-            config.clearSession = INITIAL_STORES.config().clearSession;
-        }
-    },
     "2.3.3": (_, config = _ as Config & { timeouts: { fetching?: number; syncing?: number; } }) => {
         const defaultConfig = INITIAL_STORES.config();
 
@@ -141,6 +136,14 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
     ) => {
         if (typeof config.databaseWriteDelayMs !== "undefined") {
             delete config.databaseWriteDelayMs;
+        }
+    },
+    "3.6.1": (
+        _,
+        config = _ as Config & { clearSession?: boolean; },
+    ) => {
+        if (typeof config.clearSession !== "undefined") {
+            delete config.clearSession;
         }
     },
 };

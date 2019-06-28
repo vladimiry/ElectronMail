@@ -34,7 +34,6 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     jsFlags?: string[];
     // base
     checkUpdateAndNotify?: boolean;
-    clearSession?: boolean;
     closeToTray?: boolean;
     compactLayout?: boolean;
     customUnreadBgColor?: string;
@@ -51,7 +50,6 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
 
 export type BaseConfig = Pick<Config,
     | "checkUpdateAndNotify"
-    | "clearSession"
     | "closeToTray"
     | "compactLayout"
     | "customUnreadBgColor"

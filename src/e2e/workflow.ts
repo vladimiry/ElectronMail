@@ -10,7 +10,6 @@ import randomString from "randomstring";
 import sinon from "sinon";
 import ava, {ExecutionContext, TestInterface} from "ava";
 import {Application} from "spectron";
-import {Store} from "fs-json-store";
 import {promisify} from "util";
 
 import {
@@ -23,7 +22,6 @@ import {
     RUNTIME_ENV_USER_DATA_DIR,
 } from "src/shared/constants";
 import {AccountType} from "src/shared/model/account";
-import {Config} from "src/shared/model/options";
 
 export interface TestContext {
     testStatus: "initial" | "success" | "fail";
@@ -168,15 +166,6 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
     // await t.context.app.client.pause(2000);
 
     await t.context.app.client.pause(CONF.timeouts.encryption);
-
-    if (options.initial) {
-        const configStore = new Store<Config>({file: path.join(userDataDirPath, "config.json")});
-        const config = await configStore.readExisting();
-        await configStore.write({
-            ...config,
-            clearSession: false,
-        });
-    }
 
     return t.context.workflow;
 }

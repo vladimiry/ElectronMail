@@ -62,7 +62,6 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
         const {addAccount} = endpoints;
         const payload = buildProtonmailAccountData();
         const settings = await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
-        const initSessionByAccountOptions = {skipClearSessionCaches: true};
 
         t.is(0, initSessionByAccountMock.callCount);
 
@@ -77,7 +76,7 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
         t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings, `settings with added account is persisted`);
         const initSessionByAccount1Arg = pick(["login", "proxy"], payload);
         t.is(1, initSessionByAccountMock.callCount);
-        initSessionByAccountMock.calledWithExactly(t.context.ctx, initSessionByAccount1Arg, initSessionByAccountOptions);
+        initSessionByAccountMock.calledWithExactly(t.context.ctx, initSessionByAccount1Arg);
 
         try {
             await addAccount(payload);
@@ -93,12 +92,12 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
             draft.accounts.push(payload2);
         });
 
-        t.is(updatedSettings2.accounts.length, 2, `2 accounts`);
+        t.is(updatedSettings2.accounts.length, 2);
         t.deepEqual(updatedSettings2, expectedSettings2, `settings with added account is returned`);
         t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings2, `settings with added account is persisted`);
         const initSessionByAccount2Arg = pick(["login", "proxy"], payload2);
         t.is(2, initSessionByAccountMock.callCount);
-        initSessionByAccountMock.calledWithExactly(t.context.ctx, initSessionByAccount2Arg, initSessionByAccountOptions);
+        initSessionByAccountMock.calledWithExactly(t.context.ctx, initSessionByAccount2Arg);
     },
 
     // TODO update "updateAccount" api method test (verify more fields)
@@ -289,7 +288,6 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
 
     logout: async (t) => {
         const {deletePassword: deletePasswordSpy} = t.context.mocks["src/electron-main/keytar"];
-        const {clearSessionsCache} = t.context.mocks["src/electron-main/session"];
         const {endpoints} = t.context;
         const dbResetSpy = sinon.spy(t.context.ctx.db, "reset");
         const sessionDbResetSpy = sinon.spy(t.context.ctx.sessionDb, "reset");
@@ -313,7 +311,6 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
 
         t.is(2, dbResetSpy.callCount);
         t.is(2, sessionDbResetSpy.callCount);
-        t.is(2, clearSessionsCache.callCount);
         t.is(2, updateOverlayIconSpy.callCount);
     },
 
@@ -581,8 +578,6 @@ async function buildMocks() {
             initSessionByAccount: sinon.stub().returns(Promise.resolve()),
             configureSessionByAccount: sinon.stub().returns(Promise.resolve()),
             initSession: sinon.stub().returns(Promise.resolve()),
-            clearSessionsCache: sinon.stub().returns(Promise.resolve()),
-            clearSessionCaches: sinon.stub().returns(Promise.resolve()),
             getDefaultSession: sinon.stub().returns({}),
         },
         "src/electron-main/util": {

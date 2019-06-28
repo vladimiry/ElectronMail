@@ -11,7 +11,6 @@ import {StatusCodeError} from "./model/error";
 export function pickBaseConfigProperties(
     {
         checkUpdateAndNotify,
-        clearSession,
         closeToTray,
         compactLayout,
         customUnreadBgColor,
@@ -28,7 +27,6 @@ export function pickBaseConfigProperties(
 ): Required<BaseConfig> {
     return {
         checkUpdateAndNotify: !!checkUpdateAndNotify,
-        clearSession: !!clearSession,
         closeToTray: !!closeToTray,
         compactLayout: !!compactLayout,
         customUnreadBgColor: customUnreadBgColor || "",

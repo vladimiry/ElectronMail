@@ -140,10 +140,13 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
     },
     "3.6.1": (
         _,
-        config = _ as Config & { clearSession?: boolean; },
+        config = _ as Config & { clearSession?: boolean; disableGpuProcess?: boolean; },
     ) => {
         if (typeof config.clearSession !== "undefined") {
             delete config.clearSession;
+        }
+        if (typeof config.disableGpuProcess !== "undefined") {
+            delete config.disableGpuProcess;
         }
     },
 };

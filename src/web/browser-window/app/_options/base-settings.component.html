@@ -147,33 +147,6 @@
             </label>
         </div>
         <hr>
-        <div class="custom-control custom-switch">
-            <input
-                class="custom-control-input"
-                formControlName="disableGpuProcess"
-                id="disableGpuProcessCheckbox"
-                type="checkbox"
-            >
-            <label class="custom-control-label" for="disableGpuProcessCheckbox">
-                Disable page rendering GPU acceleration
-            </label>
-            <i
-                popover="Enabling this option will allow you to save some memory but will likely somehow slow down the page rendering."
-                class="fa fa-info-circle text-primary align-self-center"
-                container="body"
-                placement="bottom"
-                triggers="mouseenter:mouseleave"
-            ></i>
-            <i
-                popover="App restart needed for option to take effect."
-                class="fa fa-info-circle text-warning align-self-center"
-                container="body"
-                placement="bottom"
-                triggers="mouseenter:mouseleave"
-            ></i>
-            <div class="badge badge-secondary">experimental</div>
-        </div>
-        <hr>
         <label class="d-block mb-2">
             Notification badge appearance
             <electron-mail-unread-badge

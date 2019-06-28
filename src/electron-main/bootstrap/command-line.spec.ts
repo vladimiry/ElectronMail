@@ -51,30 +51,6 @@ test.serial("bootstrapCommandLine(): electron.app.commandLine.appendSwitch: cust
     t.true(mocks.electron.app.commandLine.appendSwitch.calledWithExactly("js-flags", jsFlags.join(" ")));
 });
 
-test.serial("bootstrapCommandLine(): app.disableHardwareAcceleration() should not be called", async (t) => {
-    const {disableGpuProcess}: Pick<Config, "disableGpuProcess"> = {disableGpuProcess: false};
-    const ctx = buildContext({readFileSync: () => JSON.stringify({disableGpuProcess})});
-    const mocks = buildMocks();
-    const library = await loadLibrary(mocks);
-
-    t.false(mocks.electron.app.disableHardwareAcceleration.called);
-    library.bootstrapCommandLine(ctx as any);
-    t.false(mocks.electron.app.disableHardwareAcceleration.called);
-    t.true(mocks.electron.app.commandLine.appendSwitch.neverCalledWith("disable-software-rasterizer"));
-});
-
-test.serial("bootstrapCommandLine(): app.disableHardwareAcceleration() should be called", async (t) => {
-    const {disableGpuProcess}: Pick<Config, "disableGpuProcess"> = {disableGpuProcess: true};
-    const ctx = buildContext({readFileSync: () => JSON.stringify({disableGpuProcess})});
-    const mocks = buildMocks();
-    const library = await loadLibrary(mocks);
-
-    t.false(mocks.electron.app.disableHardwareAcceleration.called);
-    library.bootstrapCommandLine(ctx as any);
-    t.true(mocks.electron.app.disableHardwareAcceleration.called);
-    t.true(mocks.electron.app.commandLine.appendSwitch.calledWithExactly("disable-software-rasterizer"));
-});
-
 function buildMocks() {
     return {
         electron: {
@@ -108,7 +84,7 @@ function buildContext(fsImplPatch?: Partial<Store<Config>["fs"]["_impl"]>): Pick
 }
 
 async function loadLibrary(mocks: ReturnType<typeof buildMocks>) {
-    return await rewiremock.around(
+    return rewiremock.around(
         () => import("./command-line"),
         (mock) => {
             for (const [name, data] of Object.entries(mocks)) {

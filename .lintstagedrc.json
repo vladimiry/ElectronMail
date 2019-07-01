@@ -1,16 +1,11 @@
 {
-  "linters": {
-    "*.ts": [
-      "import-sort --write",
-      "yarn run lint:ts:base --fix",
-      "git add"
-    ],
-    "*.js": [
-      "yarn run lint:js:base --fix",
-      "git add"
-    ]
-  },
-  "ignore": [
-    "./packages"
+  "*.ts": [
+    "import-sort --write",
+    "yarn run lint:ts:base --fix",
+    "git add"
+  ],
+  "*.js": [
+    "yarn run lint:js:base --fix",
+    "git add"
   ]
 }

@@ -148,6 +148,18 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         if (typeof config.disableGpuProcess !== "undefined") {
             delete config.disableGpuProcess;
         }
+        (() => {
+            const {updateCheck: defaults} = INITIAL_STORES.config();
+            if (typeof config.updateCheck === "undefined") {
+                config.updateCheck = defaults;
+            }
+            if (typeof config.updateCheck.releasesUrl === "undefined") {
+                config.updateCheck.releasesUrl = defaults.releasesUrl;
+            }
+            if (typeof config.updateCheck.proxy === "undefined") {
+                config.updateCheck.proxy = defaults.proxy;
+            }
+        })();
     },
 };
 

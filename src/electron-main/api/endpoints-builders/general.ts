@@ -1,3 +1,4 @@
+import ProxyAgent from "proxy-agent";
 import compareVersions from "compare-versions";
 import electronLog from "electron-log";
 import fetch from "node-fetch";
@@ -164,7 +165,6 @@ export async function buildEndpoints(
         },
 
         updateCheck: (() => {
-            const fetchUrl = "https://api.github.com/repos/vladimiry/ElectronMail/releases";
             const releasesUrlPrefix = "https://github.com/vladimiry/ElectronMail/releases/tag";
             const tagNameFilterRe = /[^a-z0-9._-]/gi;
             const filterAssetName: (name: string) => boolean = (() => {
@@ -217,11 +217,17 @@ export async function buildEndpoints(
             })();
 
             return async () => {
+                const {updateCheck: {releasesUrl, proxy}} = await ctx.configStore.readExisting();
                 const response = await fetch(
-                    fetchUrl,
+                    releasesUrl,
                     {
                         method: "GET",
                         timeout: UPDATE_CHECK_FETCH_TIMEOUT,
+                        ...(
+                            proxy && {
+                                agent: new ProxyAgent(proxy) as unknown as import("http").Agent,
+                            }
+                        ),
                     },
                 );
 
@@ -238,7 +244,7 @@ export async function buildEndpoints(
                         rateLimitResetHeaderValue > 0
                     );
                     const errorMessageData = JSON.stringify({
-                        url: fetchUrl,
+                        url: releasesUrl,
                         status: response.status,
                         statusText: response.statusText,
                     });

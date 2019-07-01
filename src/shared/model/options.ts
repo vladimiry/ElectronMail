@@ -30,6 +30,10 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
         defaultApiCall: number;
         indexingBootstrap: number;
     };
+    updateCheck: {
+        releasesUrl: string;
+        proxy: string;
+    };
     indexingBootstrapBufferSize: number;
     jsFlags?: string[];
     // base

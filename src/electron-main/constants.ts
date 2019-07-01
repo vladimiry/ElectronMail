@@ -57,6 +57,10 @@ export const INITIAL_STORES: Readonly<{
                 databaseLoading: ONE_MINUTE_MS * 5, // 5 minutes
                 indexingBootstrap: ONE_SECOND_MS * 30, // 30 seconds
             },
+            updateCheck: {
+                releasesUrl: "https://api.github.com/repos/vladimiry/ElectronMail/releases",
+                proxy: "",
+            },
             indexingBootstrapBufferSize: 1000,
             jsFlags: [
                 "--max-old-space-size=3072",

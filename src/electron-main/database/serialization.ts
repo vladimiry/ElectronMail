@@ -1,5 +1,5 @@
 import * as EncryptionAdapterBundle from "fs-json-store-encryption-adapter";
-import * as msgpack from "msgpack-lite";
+import * as msgpack from "@msgpack/msgpack";
 import _logger from "electron-log";
 import oboe from "oboe";
 import {Readable} from "stream";
@@ -62,7 +62,7 @@ export class SerializationAdapter {
 
         const encryptionAdapter = new EncryptionAdapterBundle.EncryptionAdapter(input);
 
-        this.read = async (data) => {
+        this.read = async <T extends FsDb>(data: Buffer) => {
             this.logger.info(`read() buffer.length: ${data.length}`);
 
             const {header: {serialization}} = persistencePartsUtil.split(data);
@@ -70,7 +70,7 @@ export class SerializationAdapter {
 
             if (serialization && serialization.type === "msgpack") {
                 this.logger.verbose(`"msgpack.decode" start`);
-                const decoded = msgpack.decode(decryptedData);
+                const decoded = msgpack.decode(decryptedData) as T;
                 this.logger.verbose(`"msgpack.decode" end`);
                 return decoded;
             }
@@ -101,7 +101,9 @@ export class SerializationAdapter {
             this.logger.info("write()");
 
             this.logger.verbose(`"msgpack.encode" start`);
-            const serializedData = msgpack.encode(data);
+            const serializedData = Buffer.from(
+                msgpack.encode(data),
+            );
             this.logger.verbose(`"msgpack.encode" end`);
 
             const encryptedData = await encryptionAdapter.write(serializedData);

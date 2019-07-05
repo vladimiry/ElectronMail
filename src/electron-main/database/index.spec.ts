@@ -1,5 +1,5 @@
 import * as EncryptionAdapterBundle from "fs-json-store-encryption-adapter";
-import * as msgpack from "msgpack-lite";
+import * as msgpack from "@msgpack/msgpack";
 import logger from "electron-log";
 import randomstring from "randomstring";
 import rewiremock from "rewiremock";
@@ -56,7 +56,12 @@ test.serial(`save to file call should write through the "EncryptionAdapter.proto
     const dump = JSON.parse(JSON.stringify(db.readonlyDbInstance()));
 
     t.is(1, encryptionAdapterWriteSpy.callCount);
-    t.deepEqual(msgpack.encode(dump), encryptionAdapterWriteSpy.getCall(0).args[0]);
+    t.deepEqual(
+        Buffer.from(
+            msgpack.encode(dump),
+        ),
+        encryptionAdapterWriteSpy.getCall(0).args[0],
+    );
 });
 
 test.serial(`save to file call should write through the "SerializationAdapter.write" call`, async (t) => {

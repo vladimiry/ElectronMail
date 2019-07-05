@@ -23,7 +23,7 @@ export type ProgressPatch = Partial<{
 
 type OptionalProps = "keytarSupport" | "electronLocations" | "checkUpdateAndNotify";
 
-export interface State extends fromRoot.State, Partial<Pick<InitResponse, OptionalProps>>, Omit<InitResponse, OptionalProps> {
+export interface State extends fromRoot.State, Partial<Pick<InitResponse, OptionalProps>>, Skip<InitResponse, OptionalProps> {
     config: Config;
     settings: Settings;
     progress: ProgressPatch;

@@ -25,7 +25,7 @@ interface GenericWebAccount<C extends AccountConfig, NS extends Notifications> {
     loggedInOnce?: boolean;
     loginDelayedSeconds?: number;
     loginDelayedUntilSelected?: boolean;
-    fetchSingleMailParams: Omit<Arguments<CommonWebViewApi<AccountType>["fetchSingleMail"]>[0], keyof ZoneApiParameter> | null;
+    fetchSingleMailParams: Skip<Arguments<CommonWebViewApi<AccountType>["fetchSingleMail"]>[0], keyof ZoneApiParameter> | null;
 }
 
 export type WebAccountProtonmail = GenericWebAccount<AccountConfigProtonmail, NotificationsProtonmail>;

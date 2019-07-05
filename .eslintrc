@@ -1,0 +1,9 @@
+{
+    "parserOptions": {
+        "ecmaVersion": 2018,
+        "sourceType": "module"
+    },
+    "extends": [
+        "./linting-extending/eslint/typescript-eslint.json"
+    ]
+}

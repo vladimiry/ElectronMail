@@ -1,10 +1,10 @@
 {
   "extends": [
     "./node_modules/tslint/lib/configs/recommended",
-    "./tslint-extending/tslint-eslint-rules.json",
-    "./tslint-extending/codelyzer.json",
-    "./tslint-extending/tslint-rules-bunch.json",
-    "./tslint-extending/tslint-consistent-codestyle.json"
+    "./linting-extending/tslint/codelyzer.json",
+    "./linting-extending/tslint/tslint-consistent-codestyle.json",
+    "./linting-extending/tslint/tslint-eslint-rules.json",
+    "./linting-extending/tslint/tslint-rules-bunch.json"
   ],
   "rules": {
     "no-unused-variable": false,

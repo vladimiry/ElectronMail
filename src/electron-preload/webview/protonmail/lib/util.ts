@@ -39,7 +39,7 @@ export function isLoggedIn(): boolean {
 }
 
 export const preprocessError: Arguments<typeof buildDbPatchRetryPipeline>[0] = (rawError: any) => {
-    const sanitizedNgHttpResponse: (Omit<ng.IHttpResponse<"<wiped out>">, "headers"> & { message: string; headers: "<wiped out>" }) | false
+    const sanitizedNgHttpResponse: (Skip<ng.IHttpResponse<"<wiped out>">, "headers"> & { message: string; headers: "<wiped out>" }) | false
         = angularJsHttpResponseTypeGuard(rawError)
         ? (() => {
             const result = {

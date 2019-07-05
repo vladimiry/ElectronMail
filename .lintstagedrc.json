@@ -1,11 +1,8 @@
 {
   "*.ts": [
     "import-sort --write",
-    "yarn run lint:ts:base --fix",
-    "git add"
-  ],
-  "*.js": [
-    "yarn run lint:js:base --fix",
+    "yarn run lint:ts:base:tslint --fix",
+    "yarn run lint:ts:base:eslint --fix",
     "git add"
   ]
 }

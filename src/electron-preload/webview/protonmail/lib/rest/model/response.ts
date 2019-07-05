@@ -25,7 +25,7 @@ export interface MessageResponse extends Response {
 export interface MessagesResponse extends Response {
     Total: number;
     Limit: number;
-    Messages: Array<Omit<Message, "Attachments" | "Body" | "Header" | "MIMEType" | "ParsedHeaders" | "ReplyTo" | "ReplyTos" | "SpamScore"> &
+    Messages: Array<Skip<Message, "Attachments" | "Body" | "Header" | "MIMEType" | "ParsedHeaders" | "ReplyTo" | "ReplyTos" | "SpamScore"> &
         { HasAttachment: NumberBoolean }>;
 }
 
@@ -36,7 +36,7 @@ export interface ContactResponse extends Response {
 export interface ContactsResponse extends Response {
     Total: number;
     Limit: number;
-    Contacts: Array<Omit<Contact, "Cards" | "ContactEmails">>;
+    Contacts: Array<Skip<Contact, "Cards" | "ContactEmails">>;
 }
 
 export interface LabelsResponse extends Response {

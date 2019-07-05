@@ -90,7 +90,7 @@ export async function buildDbIndexingEndpoints(
 }
 
 export const narrowIndexActionPayload: (
-    payload: Omit<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>, { type: "Index" }>["payload"], "uid">,
+    payload: Skip<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>, { type: "Index" }>["payload"], "uid">,
 ) => typeof payload = (() => {
     type Fn = typeof narrowIndexActionPayload;
     type Mails = ReturnType<Fn>["add"];

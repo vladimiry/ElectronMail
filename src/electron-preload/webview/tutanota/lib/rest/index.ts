@@ -53,7 +53,7 @@ export async function fetchMultipleEntities<T extends BaseEntity<Id | IdTuple>>(
 export async function fetchEntitiesRange<T extends BaseEntity<IdTuple>>(
     typeRef: TypeRef<T>,
     listId: T["_id"][0],
-    queryParams: Required<Omit<RequestParams, "ids">>,
+    queryParams: Required<Skip<RequestParams, "ids">>,
 ): Promise<T[]> {
     logger.debug("fetchEntitiesRange()");
 
@@ -66,7 +66,7 @@ export async function fetchEntitiesRange<T extends BaseEntity<IdTuple>>(
 export async function fetchEntitiesRangeUntilTheEnd<T extends BaseEntity<IdTuple>>(
     typeRef: TypeRef<T>,
     listId: T["_id"][0],
-    {start, count}: Required<Omit<RequestParams, "ids" | "reverse">>,
+    {start, count}: Required<Skip<RequestParams, "ids" | "reverse">>,
     portionCallback: (entities: T[]) => Promise<void>,
 ): Promise<void> {
     logger.debug("fetchEntitiesRangeUntilTheEnd()");

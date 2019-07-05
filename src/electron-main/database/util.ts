@@ -44,7 +44,7 @@ export const resolveAccountFolders: <T extends keyof FsDb["accounts"]>(account: 
 export function patchMetadata(
     target: FsDbAccount["metadata"],
     // TODO TS: use patch: Arguments<IpcMainApiEndpoints["dbPatch"]>[0]["metadata"],
-    source: Omit<FsDbAccount<"protonmail">["metadata"], "type"> | Omit<FsDbAccount<"tutanota">["metadata"], "type">,
+    source: Skip<FsDbAccount<"protonmail">["metadata"], "type"> | Skip<FsDbAccount<"tutanota">["metadata"], "type">,
     sourceType: "dbPatch" | "loadDatabase",
 ): boolean {
     const logPrefix = `patchMetadata() ${sourceType}`;

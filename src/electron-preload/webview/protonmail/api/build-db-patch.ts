@@ -20,7 +20,7 @@ import {isLoggedIn, isUpsertOperationType, preprocessError} from "src/electron-p
 
 interface DbPatchBundle {
     patch: DbPatch;
-    metadata: Omit<FsDbAccount<"protonmail">["metadata"], "type">;
+    metadata: Skip<FsDbAccount<"protonmail">["metadata"], "type">;
 }
 
 type BuildDbPatchMethodReturnType = ProtonmailApiScan["ApiImplReturns"]["buildDbPatch"];

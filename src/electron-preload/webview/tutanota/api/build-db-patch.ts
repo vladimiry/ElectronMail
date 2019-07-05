@@ -18,7 +18,7 @@ import {resolveProviderApi} from "src/electron-preload/webview/tutanota/lib/prov
 
 interface DbPatchBundle {
     patch: DbPatch;
-    metadata: Omit<FsDbAccount<"tutanota">["metadata"], "type">;
+    metadata: Skip<FsDbAccount<"tutanota">["metadata"], "type">;
 }
 
 type BuildDbPatchMethodReturnType = TutanotaScanApi["ApiImplReturns"]["buildDbPatch"];

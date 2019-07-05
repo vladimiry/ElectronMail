@@ -42,7 +42,7 @@ export const ENDPOINTS_DEFINITION = {
     dbPatch: ActionType.Promise<DbModel.DbAccountPk
         & { forceFlush?: boolean }
         & { patch: DbPatch }
-        & { metadata: Omit<FsDbAccount<"protonmail">["metadata"], "type"> | Omit<FsDbAccount<"tutanota">["metadata"], "type"> },
+        & { metadata: Skip<FsDbAccount<"protonmail">["metadata"], "type"> | Skip<FsDbAccount<"tutanota">["metadata"], "type"> },
         DbModel.FsDbAccount["metadata"]>(),
 
     dbGetAccountMetadata: ActionType.Promise<DbModel.DbAccountPk, DbModel.FsDbAccount["metadata"] | null>(),

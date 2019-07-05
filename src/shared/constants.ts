@@ -57,8 +57,8 @@ export const WEB_CHUNK_NAMES = {
 export const PROVIDER_REPO: Record<AccountType, { repo: string, version: string; commit: string; }> = {
     protonmail: {
         repo: "https://github.com/ProtonMail/WebClient.git",
-        commit: "f763025546f7cef272af5dd5b30f9eace242ad83",
-        version: "3.16.0",
+        commit: "c6001618f4d3bb9da058c12c144d3e8ce72296a3",
+        version: "3.16.1",
     },
     tutanota: {
         repo: "https://github.com/tutao/tutanota.git",

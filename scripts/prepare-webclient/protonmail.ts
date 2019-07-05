@@ -107,6 +107,6 @@ async function build({repoDir: cwd, options, folderNameAsDomain}: { repoDir: str
         );
         await promisify(fs.writeFile)(webpackFile, webpackFileContent);
 
-        await execShell(["npm", ["run", "dist", "--", "--progress", "false", "--config", webpackFile], {cwd}]);
+        await execShell(["npm", ["run", "build", "--", "--progress", "false", "--config", webpackFile], {cwd}]);
     })();
 }

@@ -14,6 +14,8 @@ It is written in [TypeScript](http://www.typescriptlang.org) and uses [Angular](
 
 The download page with Linux/OSX/Windows installation packages is [here](https://github.com/vladimiry/ElectronMail/releases).
 
+The way of verifying that the installation packages attached to the [releases](https://github.com/vladimiry/ElectronMail/releases) have been assembled from the source code [is being provided](https://github.com/vladimiry/ElectronMail/issues/183).
+
 `Pacman` and `Snap` packages are also available for installing from the following repositories (both repositories are being maintained by [@joshirio](https://github.com/joshirio)):
 
 [![Get it from the AUR](images/aurlogo.png)](https://aur.archlinux.org/packages/electronmail-bin)
@@ -24,7 +26,7 @@ The download page with Linux/OSX/Windows installation packages is [here](https:/
 
 - :octocat: **Open Source**.
 - :gear: **Cross platform**. The app works on Linux/OSX/Windows platforms.
-- :mailbox: **Multi email providers** support. [ProtonMail](https://protonmail.com/) and [Tutanota](https://tutanota.com/) at the moment. Tutanota support is deprecated since Jul 2019, [#180](https://github.com/vladimiry/ElectronMail/issues/180).
+- :mailbox: **Multi email providers** support. [ProtonMail](https://protonmail.com/) and [Tutanota](https://tutanota.com/) at the moment. Tutanota support [is deprecated](https://github.com/vladimiry/ElectronMail/issues/180) since Jul 2019.
 - :mailbox: **Multi accounts** support per each email provider including supporting individual [entry point domains](https://github.com/vladimiry/ElectronMail/issues/29).
 - :unlock: **Automatic login into the app** with a remembered master password using [keytar](https://github.com/atom/node-keytar) module ([keep me signed in](images/keep-me-signed-in.png) feature).
 - :unlock: **Automatic login into the email accounts**, including filling [2FA tokens](https://github.com/vladimiry/ElectronMail/issues/10). Two auto-login delay scenarios supported in order to make it harder to correlate the identities, see the respective [issue](https://github.com/vladimiry/ElectronMail/issues/121).

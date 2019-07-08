@@ -1,6 +1,6 @@
 import {Observable} from "rxjs";
 
-import {Omit} from "type-fest";
+import {Except} from "type-fest";
 
 declare global {
     type Arguments<F extends (...x: any[]) => any> =
@@ -15,5 +15,5 @@ declare global {
 
     type Mutable<T> = { -readonly [K in keyof T]: T[K]; };
 
-    type Skip<T, K extends keyof T> = Omit<T, K>; // eslint-disable-line @typescript-eslint/ban-types
+    type Skip<T, K extends keyof T> = Except<T, K>; // eslint-disable-line @typescript-eslint/ban-types
 }

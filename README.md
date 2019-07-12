@@ -25,6 +25,7 @@ The way of verifying that the installation packages attached to the [releases](h
 ## Features
 
 - :octocat: **Open Source**.
+- :gear: **Reproducible builds**.
 - :gear: **Cross platform**. The app works on Linux/OSX/Windows platforms.
 - :mailbox: **Multi email providers** support. [ProtonMail](https://protonmail.com/) and [Tutanota](https://tutanota.com/) at the moment. Tutanota support [is deprecated](https://github.com/vladimiry/ElectronMail/issues/180) since Jul 2019.
 - :mailbox: **Multi accounts** support per each email provider including supporting individual [entry point domains](https://github.com/vladimiry/ElectronMail/issues/29).
@@ -43,7 +44,13 @@ The way of verifying that the installation packages attached to the [releases](h
 - :gear: **Configuring proxy per account** support. Enabled since [v3.0.0](https://github.com/vladimiry/ElectronMail/releases/tag/v3.0.0) release. See [113](https://github.com/vladimiry/ElectronMail/issues/113) and [120](https://github.com/vladimiry/ElectronMail/issues/120) issues for details.
 - :pencil: **Spell Checking**.
 
-## How to build package from source code
+## How to build your own installation package from source code
+
+### Building on Continuous Integration server
+
+The [reproducible builds](https://en.wikipedia.org/wiki/Reproducible_builds) idea is respected by the project. So the simplest way to prepare your own installation package from the source code is to clone the project and hook it up to the [AppVeyor](https://www.appveyor.com/) and [Travis CI](https://travis-ci.org/) systems. The respective config files [appveyor.yml](appveyor.yml) and [.travis.yml](.travis.yml) come with the project.
+
+### Building locally
 
 - Regardless of the platform you are working on, you will need to have Node.js v11 installed. v11 as it's recommended to go with the same Node.js version Electron comes with. If you already have Node.js installed, but not the v11, then you might want to use [Node Version Manager](https://github.com/creationix/nvm) to be able to switch between multiple Node.js versions:
   - Install [NVM](https://github.com/creationix/nvm).

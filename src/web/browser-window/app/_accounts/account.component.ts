@@ -25,6 +25,7 @@ import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/st
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {DbViewModuleResolve} from "src/web/browser-window/app/_accounts/db-view-module-resolve.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
+import {ICON_URL} from "src/web/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";
 import {ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/constants";
@@ -107,6 +108,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     new Notification(
                         PRODUCT_NAME,
                         {
+                            icon: ICON_URL,
                             body: `Account [${this.componentIndex}]: ${unread} unread message${unread > 1 ? "s" : ""}.`,
                         },
                     ).onclick = () => this.zone.run(() => {

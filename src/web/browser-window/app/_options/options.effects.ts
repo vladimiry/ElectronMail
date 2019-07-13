@@ -7,6 +7,7 @@ import {catchError, concatMap, filter, finalize, map, mergeMap, startWith, switc
 import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
+import {ICON_URL} from "src/web/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
 import {ONE_SECOND_MS, PRODUCT_NAME, UPDATE_CHECK_FETCH_TIMEOUT} from "src/shared/constants";
@@ -82,6 +83,7 @@ export class OptionsEffects {
                                             new Notification(
                                                 PRODUCT_NAME,
                                                 {
+                                                    icon: ICON_URL,
                                                     body: "App update is available.",
                                                 },
                                             ).onclick = () => {

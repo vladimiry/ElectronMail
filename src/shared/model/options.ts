@@ -40,6 +40,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     checkUpdateAndNotify?: boolean;
     closeToTray?: boolean;
     compactLayout?: boolean;
+    customTrayIconColor?: string;
     customUnreadBgColor?: string;
     customUnreadTextColor?: string;
     disableSpamNotifications?: boolean;
@@ -55,6 +56,7 @@ export type BaseConfig = Pick<Config,
     | "checkUpdateAndNotify"
     | "closeToTray"
     | "compactLayout"
+    | "customTrayIconColor"
     | "customUnreadBgColor"
     | "customUnreadTextColor"
     | "disableSpamNotifications"

@@ -14,10 +14,11 @@ export async function appReadyHandler(ctx: Context) {
 
     const endpoints = await initApi(ctx);
 
+    // "endpoints.readConfig()" call initializes the config.json file
+    // so consequent "ctx.configStore.readExisting()" calls don't fail
+    const {spellCheckLocale, customTrayIconColor} = await endpoints.readConfig();
+
     await (async () => {
-        // "endpoints.readConfig()" call initializes the config.json file
-        // so consequent "ctx.configStore.readExisting()" calls don't fail
-        const {spellCheckLocale} = await endpoints.readConfig();
         const spellCheckController = await initSpellCheckController(spellCheckLocale);
         ctx.getSpellCheckController = () => spellCheckController;
     })();
@@ -31,7 +32,7 @@ export async function appReadyHandler(ctx: Context) {
         appMenu: await initApplicationMenu(ctx),
     };
 
-    await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0});
+    await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0, trayIconColor: customTrayIconColor});
 
     app.on("second-instance", async () => await endpoints.activateBrowserWindow());
     app.on("activate", async () => await endpoints.activateBrowserWindow());

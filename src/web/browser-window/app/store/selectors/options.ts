@@ -1,6 +1,6 @@
 import {createFeatureSelector, createSelector} from "@ngrx/store";
 
-import {DEFAULT_UNREAD_BADGE_BG_COLOR, DEFAULT_UNREAD_BADGE_BG_TEXT} from "src/shared/constants";
+import {DEFAULT_TRAY_ICON_COLOR, DEFAULT_UNREAD_BADGE_BG_COLOR, DEFAULT_UNREAD_BADGE_BG_TEXT} from "src/shared/constants";
 import {LoginFieldContainer} from "src/shared/model/container";
 import {State, featureName} from "src/web/browser-window/app/store/reducers/options";
 import {accountPickingPredicate, pickBaseConfigProperties} from "src/shared/util";
@@ -22,6 +22,7 @@ export const CONFIG = {
     base: createSelector(FEATURED.config, pickBaseConfigProperties),
     compactLayout: createSelector(FEATURED.config, (config) => config.compactLayout),
     unreadNotifications: createSelector(FEATURED.config, (config) => config.unreadNotifications),
+    trayIconColor: createSelector(FEATURED.config, (config) => config.customTrayIconColor || DEFAULT_TRAY_ICON_COLOR),
     unreadBgColor: createSelector(FEATURED.config, (config) => config.customUnreadBgColor || DEFAULT_UNREAD_BADGE_BG_COLOR),
     unreadTextColor: createSelector(FEATURED.config, (config) => config.customUnreadTextColor || DEFAULT_UNREAD_BADGE_BG_TEXT),
     hideControls: createSelector(FEATURED.config, (config) => config.hideControls),

@@ -61,19 +61,18 @@ export class AccountsComponent implements OnInit, OnDestroy {
             }),
         );
         this.subscription.add(
-            combineLatest(
+            combineLatest([
                 this.store.select(AccountsSelectors.ACCOUNTS.loggedInAndUnreadSummary).pipe(
                     distinctUntilChanged((prev, curr) => equals(prev, curr)), // TODO => "distinctUntilChanged(equals)"
                 ),
-                this.store.pipe(select(OptionsSelectors.CONFIG.unreadBgColor)).pipe(
-                    distinctUntilChanged(),
-                ),
-                this.store.pipe(select(OptionsSelectors.CONFIG.unreadTextColor)).pipe(
-                    distinctUntilChanged(),
-                ),
-            ).subscribe(([{hasLoggedOut, unread}, unreadBgColor, unreadTextColor]) => {
+                this.store.pipe(select(OptionsSelectors.CONFIG.trayIconColor)),
+                this.store.pipe(select(OptionsSelectors.CONFIG.unreadBgColor)),
+                this.store.pipe(select(OptionsSelectors.CONFIG.unreadTextColor)),
+            ]).subscribe(([{hasLoggedOut, unread}, trayIconColor, unreadBgColor, unreadTextColor]) => {
                 this.unreadSummary = unread;
-                this.store.dispatch(NOTIFICATION_ACTIONS.UpdateOverlayIcon({hasLoggedOut, unread, unreadBgColor, unreadTextColor}));
+                this.store.dispatch(NOTIFICATION_ACTIONS.UpdateOverlayIcon(
+                    {hasLoggedOut, unread, trayIconColor, unreadBgColor, unreadTextColor},
+                ));
             }),
         );
         this.subscription.add(

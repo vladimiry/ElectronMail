@@ -4,6 +4,70 @@
         class="form-group m-0"
         novalidate
     >
+        <div class="card mb-2">
+            <div class="card-header" [ngStyle]="appearanceBlockCollapsed && {'border-bottom-width': '0'}">
+                <button type="button" class="btn btn-link p-0" (click)="appearanceBlockCollapsed = !appearanceBlockCollapsed">
+                    Appearance
+                </button>
+            </div>
+            <div class="card-body" [collapse]="appearanceBlockCollapsed">
+                <div class="form-group">
+                    <label class="d-block mb-2">
+                        Tray icon color
+                    </label>
+                    <input
+                        (colorPickerChange)="trayIconColorPickerChangeHandler($event)"
+                        [colorPicker]="$trayIconColor | async"
+                        [cpOutputFormat]="'hex'"
+                        [cpPosition]="'bottom'"
+                        [cpToggle]="colorPickerOpened.icon"
+                        [value]="($trayIconColor | async)"
+                        class="form-control form-control-sm"
+                        readonly
+                        style="cursor: pointer;"
+                        type="text"
+                    />
+                </div>
+                <div>
+                    <label class="d-block mb-2">
+                        Notification badge
+                        <electron-mail-unread-badge
+                            [value]="$unreadSummary | async"
+                        ></electron-mail-unread-badge>
+                    </label>
+                    <div class="row">
+                        <div class="col-sm-6 pb-1">
+                            <input
+                                (colorPickerChange)="bgColorPickerChangeHandler($event)"
+                                [colorPicker]="$unreadBgColor | async"
+                                [cpOutputFormat]="'hex'"
+                                [cpPosition]="'bottom'"
+                                [cpToggle]="colorPickerOpened.bg"
+                                [value]="'background: ' + ($unreadBgColor | async)"
+                                class="form-control form-control-sm"
+                                readonly
+                                style="cursor: pointer;"
+                                type="text"
+                            />
+                        </div>
+                        <div class="col-sm-6 pb-1">
+                            <input
+                                (colorPickerChange)="textColorPickerChangeHandler($event)"
+                                [colorPicker]="$unreadTextColor | async"
+                                [cpOutputFormat]="'hex'"
+                                [cpPosition]="'bottom'"
+                                [cpToggle]="colorPickerOpened.text"
+                                [value]="'text: ' + ($unreadTextColor | async)"
+                                class="form-control form-control-sm"
+                                readonly
+                                style="cursor: pointer;"
+                                type="text"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="custom-control custom-switch">
             <input
                 class="custom-control-input"
@@ -145,43 +209,6 @@
             <label class="custom-control-label" for="unreadNotificationsCheckbox">
                 Desktop notifications for unread messages
             </label>
-        </div>
-        <hr>
-        <label class="d-block mb-2">
-            Notification badge appearance
-            <electron-mail-unread-badge
-                [value]="$unreadSummary | async"
-            ></electron-mail-unread-badge>
-        </label>
-        <div class="row pb-1">
-            <div class="col-sm-6">
-                <input
-                    (colorPickerChange)="bgColorPickerChangeHandler($event)"
-                    [colorPicker]="$unreadBgColor | async"
-                    [cpOutputFormat]="'hex'"
-                    [cpPosition]="'bottom'"
-                    [cpToggle]="colorPickerOpened.bg"
-                    [value]="'background: ' + ($unreadBgColor | async)"
-                    class="form-control form-control-sm"
-                    readonly
-                    style="cursor: pointer;"
-                    type="text"
-                />
-            </div>
-            <div class="col-sm-6">
-                <input
-                    (colorPickerChange)="textColorPickerChangeHandler($event)"
-                    [colorPicker]="$unreadTextColor | async"
-                    [cpOutputFormat]="'hex'"
-                    [cpPosition]="'bottom'"
-                    [cpToggle]="colorPickerOpened.text"
-                    [value]="'text: ' + ($unreadTextColor | async)"
-                    class="form-control form-control-sm"
-                    readonly
-                    style="cursor: pointer;"
-                    type="text"
-                />
-            </div>
         </div>
         <hr>
         <label class="d-block mb-2" for="logLevelSelect">

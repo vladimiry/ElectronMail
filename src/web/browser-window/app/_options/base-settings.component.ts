@@ -30,10 +30,13 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
 
     logLevels = LOG_LEVELS;
 
+    appearanceBlockCollapsed: boolean = true;
+
     controls: Record<keyof BaseConfig, AbstractControl> = {
         checkUpdateAndNotify: new FormControl(),
         closeToTray: new FormControl(),
         compactLayout: new FormControl(),
+        customTrayIconColor: new FormControl(),
         customUnreadBgColor: new FormControl(),
         customUnreadTextColor: new FormControl(),
         disableSpamNotifications: new FormControl(),
@@ -47,7 +50,9 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
 
     form = new FormGroup(this.controls);
 
-    colorPickerOpened: { bg: boolean; text: boolean } = {bg: false, text: false};
+    colorPickerOpened: { bg: boolean; text: boolean; icon: boolean; } = {bg: false, text: false, icon: false};
+
+    $trayIconColor = this.store.pipe(select(OptionsSelectors.CONFIG.trayIconColor));
 
     $unreadBgColor = this.store.pipe(select(OptionsSelectors.CONFIG.unreadBgColor));
 
@@ -91,6 +96,10 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.subscription.unsubscribe();
+    }
+
+    trayIconColorPickerChangeHandler(color: string) {
+        this.controls.customTrayIconColor.patchValue(color);
     }
 
     bgColorPickerChangeHandler(color: string) {

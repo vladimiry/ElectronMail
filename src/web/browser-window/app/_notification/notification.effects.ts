@@ -29,9 +29,9 @@ export class NotificationEffects {
         () => this.actions$.pipe(
             filter(NOTIFICATION_ACTIONS.is.UpdateOverlayIcon),
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-            concatMap(({payload: {hasLoggedOut, unread, unreadBgColor, unreadTextColor}}) => {
+            concatMap(({payload}) => {
                 return from(
-                    this.electronService.ipcMainClient()("updateOverlayIcon")({hasLoggedOut, unread, unreadBgColor, unreadTextColor}),
+                    this.electronService.ipcMainClient()("updateOverlayIcon")(payload),
                 ).pipe(
                     mergeMap(() => EMPTY),
                     catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),

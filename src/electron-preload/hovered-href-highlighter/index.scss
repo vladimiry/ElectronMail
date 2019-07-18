@@ -1,6 +1,6 @@
 @import "~src/web/variables";
 
-$render-visible-class: 'visible';
+$render-visible-class: "visible";
 
 :host {
     $bg-color: theme-color("secondary");
@@ -10,10 +10,6 @@ $render-visible-class: 'visible';
     display: flex;
 
     > div {
-        &.#{$render-visible-class} {
-            display: flex;
-        }
-
         @include border-radius;
         display: none;
         background-color: $bg-color;
@@ -22,9 +18,13 @@ $render-visible-class: 'visible';
         font-size: $app-font-size-base-medium;
         margin: $padding-l $padding;
         padding: $padding $padding-l;
+
+        &.#{$render-visible-class} {
+            display: flex;
+        }
     }
 }
 
 :export {
-    renderVisibleClass: #{$render-visible-class},
+    renderVisibleClass: #{$render-visible-class}, // sass-lint:disable-line no-misspelled-properties trailing-semicolon
 }

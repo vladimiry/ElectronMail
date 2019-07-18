@@ -43,7 +43,7 @@
             </div>
         </div>
         <div
-            [ngStyle]="!accounts.length && {'visibility': 'hidden'}" class="btn-group accounts-list d-lg-none" dropdown
+            [ngStyle]="!accounts.length ? {'visibility': 'hidden'} : {}" class="btn-group accounts-list d-lg-none" dropdown
             placement="bottom right"
         >
             <div *ngIf="unreadSummary && accounts.length > 1" class="unread-summary">
@@ -79,9 +79,9 @@
         <div *ngIf="accounts.length; then accountsDefined else accountsUndefined"></div>
         <ng-template #accountsDefined>
             <electron-mail-account
-                *ngFor="let login of (loginsSet$ | async); let index = index"
+                *ngFor="let login of ((loginsSet$ | async) || undefined); let index = index"
                 [account]="getAccountByLogin(login)"
-                [ngClass]="{'account-hidden': login != selectedAccount?.accountConfig.login}"
+                [ngClass]="{'account-hidden': login != selectedAccount?.accountConfig?.login}"
             ></electron-mail-account>
         </ng-template>
         <ng-template #accountsUndefined>

@@ -68,14 +68,14 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         mergeMap((account) => account ? [account] : []),
     );
     // progress
-    processing$ = this.store.pipe(
+    processing$: Observable<boolean> = this.store.pipe(
         select(OptionsSelectors.FEATURED.progress),
-        map((p) => Boolean(p.addingAccount || p.updatingAccount)),
+        map((progress) => Boolean(progress.addingAccount || progress.updatingAccount)),
         distinctUntilChanged(),
     );
-    removing$ = this.store.pipe(
+    removing$: Observable<boolean> = this.store.pipe(
         select(OptionsSelectors.FEATURED.progress),
-        map((p) => Boolean(p.removingAccount)),
+        map((progress) => Boolean(progress.removingAccount)),
         distinctUntilChanged(),
     );
 

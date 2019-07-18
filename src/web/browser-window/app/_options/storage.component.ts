@@ -1,5 +1,6 @@
 import {Component} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
+import {Observable} from "rxjs";
 import {Store} from "@ngrx/store";
 import {map} from "rxjs/operators";
 
@@ -40,8 +41,12 @@ export class StorageComponent {
         keyDerivation: new FormControl(null, Validators.required),
         encryption: new FormControl(null, Validators.required),
     });
-    changingPassword$ = this.store.select(OptionsSelectors.FEATURED.progress).pipe(map((p) => p.changingPassword));
-    reEncryptingSettings$ = this.store.select(OptionsSelectors.FEATURED.progress).pipe(map((p) => p.reEncryptingSettings));
+    changingPassword$: Observable<boolean> = this.store
+        .select(OptionsSelectors.FEATURED.progress)
+        .pipe(map((progress) => Boolean(progress.changingPassword)));
+    reEncryptingSettings$: Observable<boolean> = this.store
+        .select(OptionsSelectors.FEATURED.progress)
+        .pipe(map((progress) => Boolean(progress.reEncryptingSettings)));
 
     constructor(private store: Store<State>) {}
 

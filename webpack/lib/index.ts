@@ -1,7 +1,6 @@
 import path from "path";
 import webpackMerge from "webpack-merge";
 import webpack, {Configuration, RuleSetRule} from "webpack";
-import {TsconfigPathsPlugin} from "tsconfig-paths-webpack-plugin";
 
 import {BuildEnvironment} from "src/shared/model/common";
 import {LoaderConfig as TsLoaderConfig} from "awesome-typescript-loader/src/interfaces";
@@ -25,9 +24,9 @@ export const srcRelativePath = (...value: string[]) => rootRelativePath("./src",
 
 export const outputRelativePath = (...value: string[]) => rootRelativePath(ENVIRONMENT_SATE.development ? "./app-dev" : "./app", ...value);
 
-export function buildBaseConfig(config: Configuration, options?: { tsConfigFile?: string }): Configuration {
-    const {tsConfigFile} = {tsConfigFile: rootRelativePath("./tsconfig.json"), ...options};
-
+export function buildBaseConfig(
+    ...[config]: readonly [Configuration] | readonly [Configuration, { tsConfigFile?: string }]
+): Configuration {
     return webpackMerge(
         {
             mode: "production",
@@ -42,9 +41,10 @@ export function buildBaseConfig(config: Configuration, options?: { tsConfigFile?
             ],
             resolve: {
                 extensions: ["*", ".js", ".ts"],
-                plugins: [
-                    new TsconfigPathsPlugin({configFile: tsConfigFile}),
-                ],
+                alias: {
+                    "src": srcRelativePath(),
+                    "package.json": rootRelativePath("package.json"),
+                },
             },
             node: {
                 __dirname: false,

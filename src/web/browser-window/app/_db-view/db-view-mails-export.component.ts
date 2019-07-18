@@ -21,7 +21,7 @@ export class DbViewMailsExportComponent extends DbViewAbstractComponent implemen
     $state = new BehaviorSubject<{ exporting?: boolean }>({});
 
     @Input()
-    popupPlacement?: string = "bottom";
+    popupPlacement?: "bottom" | "top" = "bottom";
 
     @Input()
     title!: string;

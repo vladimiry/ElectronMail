@@ -1,14 +1,7 @@
 import {NgModule} from "@angular/core";
 import {PreloadAllModules, RouterModule, Routes} from "@angular/router";
 
-import {
-    ACCOUNTS_OUTLET,
-    ACCOUNTS_PATH,
-    NOTIFICATIONS_OUTLET,
-    NOTIFICATIONS_PATH,
-    SETTINGS_OUTLET,
-    SETTINGS_PATH,
-} from "./app.constants";
+import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, NOTIFICATIONS_OUTLET, NOTIFICATIONS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "./app.constants";
 import {RouterProxyComponent} from "./components/router-proxy.component";
 
 // TODO consider getting rid of the lazy loading, it's not really needed for the Electron application
@@ -29,12 +22,7 @@ const routes: Routes = [
         children: [
             {
                 path: "",
-                loadChildren: "./_accounts/accounts.module#AccountsModule",
-                // TODO use async ES import which is only compatible with Ivy Renderer
-                // loadChildren: async () => {
-                //     const {AccountsModule} = await import("src/web/src/app/_accounts/accounts.module");
-                //     return AccountsModule;
-                // },
+                loadChildren: async () => (await import("./_accounts/accounts.module")).AccountsModule,
             },
         ],
     },
@@ -48,12 +36,7 @@ const routes: Routes = [
         children: [
             {
                 path: "",
-                loadChildren: "./_options/options.module#OptionsModule",
-                // TODO use async ES import which is only compatible with Ivy Renderer
-                // loadChildren: async () => {
-                //     const {OptionsModule} = await import("src/web/src/app/_options/options.module");
-                //     return OptionsModule;
-                // },
+                loadChildren: async () => (await import("./_options/options.module")).OptionsModule,
             },
         ],
     },
@@ -67,12 +50,7 @@ const routes: Routes = [
         children: [
             {
                 path: "",
-                loadChildren: "./_notification/notification.module#NotificationModule",
-                // TODO use async ES import which is only compatible with Ivy Renderer
-                // loadChildren: async () => {
-                //     const {NotificationModule} = await import("src/web/src/app/_notification/notification.module");
-                //     return NotificationModule;
-                // },
+                loadChildren: async () => (await import("./_notification/notification.module")).NotificationModule,
             },
         ],
     },

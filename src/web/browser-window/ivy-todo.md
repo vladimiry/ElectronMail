@@ -1,0 +1,5 @@
+- `src/web/browser-window/tsconfig.json`: get back templates type check after https://github.com/angular/angular/issues/30080 resolving (see `[dbAccountPk]` prop use as an example).
+- `async pipe` doesn't infer the types properly which causes extra code adding  (like adding ` || undefined` at the end of the expression):
+  - it adds `null` union type all the time.
+  - it adds `null` union type all the time but `undefined` works better with `ngFor` directive.
+- `[disabled]` it adds `undefined` union type all the time which causes extra code adding (like adding ` || false` at the end of the expression).

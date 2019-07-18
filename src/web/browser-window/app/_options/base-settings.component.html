@@ -1,11 +1,11 @@
-<fieldset [disabled]="(processing$ | async)">
+<fieldset [disabled]="(processing$ | async) || false">
     <form
         [formGroup]="form"
         class="form-group m-0"
         novalidate
     >
         <div class="card mb-2">
-            <div class="card-header" [ngStyle]="appearanceBlockCollapsed && {'border-bottom-width': '0'}">
+            <div class="card-header" [ngStyle]="appearanceBlockCollapsed ? {'border-bottom-width': '0'} : {}">
                 <button type="button" class="btn btn-link p-0" (click)="appearanceBlockCollapsed = !appearanceBlockCollapsed">
                     Appearance
                 </button>
@@ -17,11 +17,11 @@
                     </label>
                     <input
                         (colorPickerChange)="trayIconColorPickerChangeHandler($event)"
-                        [colorPicker]="$trayIconColor | async"
+                        [colorPicker]="($trayIconColor | async) || undefined"
                         [cpOutputFormat]="'hex'"
                         [cpPosition]="'bottom'"
                         [cpToggle]="colorPickerOpened.icon"
-                        [value]="($trayIconColor | async)"
+                        [value]="($trayIconColor | async) + ''"
                         class="form-control form-control-sm"
                         readonly
                         style="cursor: pointer;"
@@ -32,14 +32,14 @@
                     <label class="d-block mb-2">
                         Notification badge
                         <electron-mail-unread-badge
-                            [value]="$unreadSummary | async"
+                            [value]="($unreadSummary | async) || undefined"
                         ></electron-mail-unread-badge>
                     </label>
                     <div class="row">
                         <div class="col-sm-6 pb-1">
                             <input
                                 (colorPickerChange)="bgColorPickerChangeHandler($event)"
-                                [colorPicker]="$unreadBgColor | async"
+                                [colorPicker]="($unreadBgColor | async) || undefined"
                                 [cpOutputFormat]="'hex'"
                                 [cpPosition]="'bottom'"
                                 [cpToggle]="colorPickerOpened.bg"
@@ -53,7 +53,7 @@
                         <div class="col-sm-6 pb-1">
                             <input
                                 (colorPickerChange)="textColorPickerChangeHandler($event)"
-                                [colorPicker]="$unreadTextColor | async"
+                                [colorPicker]="($unreadTextColor | async) || undefined"
                                 [cpOutputFormat]="'hex'"
                                 [cpPosition]="'bottom'"
                                 [cpToggle]="colorPickerOpened.text"
@@ -104,7 +104,7 @@
                     [popover]="fullTextSearchPopoverTemplate"
                     class="fa fa-info-circle text-warning"
                     container="body"
-                    placement="bottom"
+                    [placement]="'bottom'"
                     triggers="mouseenter:mouseleave"
                 ></i>
                 <ng-template #fullTextSearchPopoverTemplate>
@@ -147,7 +147,7 @@
                     [popover]="findInPagePopoverTemplate"
                     class="fa fa-info-circle text-primary"
                     container="body"
-                    placement="bottom"
+                    [placement]="'bottom'"
                     triggers="mouseenter:mouseleave"
                 ></i>
                 <ng-template #findInPagePopoverTemplate>
@@ -192,7 +192,7 @@
                 [popover]="disableSpamNotificationsPopoverTemplate"
                 class="fa fa-info-circle text-primary align-self-center"
                 container="body"
-                placement="bottom"
+                [placement]="'bottom'"
                 triggers="mouseenter:mouseleave"
             ></i>
             <ng-template #disableSpamNotificationsPopoverTemplate>
@@ -217,7 +217,7 @@
                 [popover]="logLevelSelectPopoverTemplate"
                 class="fa fa-info-circle text-warning align-self-center"
                 container="body"
-                placement="bottom"
+                [placement]="'bottom'"
                 triggers="mouseenter:mouseleave"
             ></i>
             <ng-template #logLevelSelectPopoverTemplate>

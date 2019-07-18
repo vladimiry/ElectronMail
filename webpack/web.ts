@@ -7,7 +7,15 @@ import {AngularCompilerPlugin, NgToolsLoader, PLATFORM} from "@ngtools/webpack";
 import {Configuration, RuleSetUseItem} from "webpack";
 
 import {BuildEnvironment} from "src/shared/model/common";
-import {ENVIRONMENT, ENVIRONMENT_SATE, awesomeTypescriptLoaderRule, buildBaseConfig, outputRelativePath, srcRelativePath} from "./lib";
+import {
+    ENVIRONMENT,
+    ENVIRONMENT_SATE,
+    awesomeTypescriptLoaderRule,
+    buildBaseConfig,
+    outputRelativePath,
+    rootRelativePath,
+    srcRelativePath,
+} from "./lib";
 import {WEB_CHUNK_NAMES} from "src/shared/constants";
 
 const browserWindowPath = (...value: string[]) => srcRelativePath("./web/browser-window", ...value);
@@ -33,7 +41,7 @@ export const CONFIGS: Readonly<Record<keyof typeof WEB_CHUNK_NAMES, Configuratio
 
         const chunkPath = browserWindowPath;
 
-        // TODO support AOT compilation when running in "test" mode
+        // TODO karma: enable "ivy" and "aot" modes
         const aot = !ENVIRONMENT_SATE.test;
 
         const tsConfigFile = chunkPath(({
@@ -75,6 +83,11 @@ export const CONFIGS: Readonly<Record<keyof typeof WEB_CHUNK_NAMES, Configuratio
                             ],
                         },
                     ],
+                },
+                resolve: {
+                    alias: {
+                        images: rootRelativePath("images"),
+                    },
                 },
                 plugins: [
                     new AngularCompilerPlugin({

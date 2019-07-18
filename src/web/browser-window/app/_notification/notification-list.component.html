@@ -1,5 +1,5 @@
 <electron-mail-notification-item
-    *ngFor="let item of ($items | async)"
+    *ngFor="let item of (($items | async) || undefined)"
     [item]="item"
     (removeHandler)="onRemove($event)"
 ></electron-mail-notification-item>

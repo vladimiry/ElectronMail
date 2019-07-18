@@ -1,7 +1,7 @@
 import {AfterViewInit, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren} from "@angular/core";
 import {FormControl, Validators} from "@angular/forms";
+import {Observable, Subject} from "rxjs";
 import {Store, select} from "@ngrx/store";
-import {Subject} from "rxjs";
 import {map, takeUntil} from "rxjs/operators";
 
 import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
@@ -18,14 +18,14 @@ export abstract class LoginBaseComponent implements AfterViewInit, OnInit, OnDes
 
     savePassword = new FormControl(false);
 
-    signingIn$ = this.store.pipe(
+    signingIn$: Observable<boolean> = this.store.pipe(
         select(OptionsSelectors.FEATURED.progress),
-        map((progress) => progress.signingIn),
+        map((progress) => Boolean(progress.signingIn)),
     );
 
-    loadingDatabase$ = this.store.pipe(
+    loadingDatabase$: Observable<boolean> = this.store.pipe(
         select(OptionsSelectors.FEATURED.progress),
-        map((progress) => progress.loadingDatabase),
+        map((progress) => Boolean(progress.loadingDatabase)),
     );
 
     databaseLoadingTimeoutSeconds$ = this.store.pipe(

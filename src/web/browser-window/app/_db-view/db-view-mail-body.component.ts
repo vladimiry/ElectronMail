@@ -10,7 +10,7 @@ import {
     QueryList,
     ViewChildren,
 } from "@angular/core";
-import {BehaviorSubject, EMPTY, Subject, Subscription, combineLatest, fromEvent, merge, race, throwError, timer} from "rxjs";
+import {BehaviorSubject, EMPTY, Observable, Subject, Subscription, combineLatest, fromEvent, merge, race, throwError, timer} from "rxjs";
 import {Store, select} from "@ngrx/store";
 import {delay, distinctUntilChanged, filter, map, mergeMap, pairwise, startWith, take, withLatestFrom} from "rxjs/operators";
 import {equals} from "ramda";
@@ -63,7 +63,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         )),
     );
 
-    onlineAndLoggedIn$ = combineLatest(
+    onlineAndLoggedIn$: Observable<boolean> = combineLatest([
         this.account$.pipe(
             map(({notifications}) => notifications.loggedIn),
             distinctUntilChanged(),
@@ -75,10 +75,8 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
             map(() => navigator.onLine),
             startWith(navigator.onLine),
         ),
-    ).pipe(
-        map(([loggedIn, online]) => {
-            return loggedIn && online;
-        }),
+    ]).pipe(
+        map(([loggedIn, online]) => loggedIn && online),
     );
 
     selectingMailOnline$ = this.account$.pipe(
@@ -86,7 +84,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         distinctUntilChanged(),
     );
 
-    fetchingSingleMailParams$ = this.account$.pipe(
+    fetchingSingleMailParams$: Observable<boolean> = this.account$.pipe(
         map((account) => Boolean(account.fetchSingleMailParams)),
         distinctUntilChanged(),
     );

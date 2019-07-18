@@ -1,7 +1,7 @@
 import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/forms";
 import {Component, OnDestroy, OnInit} from "@angular/core";
+import {Observable, Subscription} from "rxjs";
 import {Store, select} from "@ngrx/store";
-import {Subscription} from "rxjs";
 import {distinctUntilChanged, distinctUntilKeyChanged, map, take} from "rxjs/operators";
 
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
@@ -17,16 +17,16 @@ import {State} from "src/web/browser-window/app/store/reducers/options";
     preserveWhitespaces: true,
 })
 export class BaseSettingsComponent implements OnInit, OnDestroy {
-    processing$ = this.store
-        .select(OptionsSelectors.FEATURED.progress)
-        .pipe(map((p) => p.updatingBaseSettings));
+    processing$: Observable<boolean> = this.store.pipe(
+        select(OptionsSelectors.FEATURED.progress),
+        map((progress) => Boolean(progress.updatingBaseSettings)),
+    );
 
-    fullTextSearchDisabled$ = this.store
-        .select(OptionsSelectors.SETTINGS.localStoreEnabledCount)
-        .pipe(
-            distinctUntilChanged(),
-            map((value) => value < 1),
-        );
+    fullTextSearchDisabled$ = this.store.pipe(
+        select(OptionsSelectors.SETTINGS.localStoreEnabledCount),
+        distinctUntilChanged(),
+        map((value) => value < 1),
+    );
 
     logLevels = LOG_LEVELS;
 

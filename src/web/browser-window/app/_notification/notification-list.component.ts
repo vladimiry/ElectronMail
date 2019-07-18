@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit} from "@angular/core";
+import {Observable, Subscription} from "rxjs";
 import {Store} from "@ngrx/store";
-import {Subscription} from "rxjs";
 import {pairwise} from "rxjs/operators";
 
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
@@ -17,7 +17,7 @@ import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NotificationListComponent implements OnInit, OnDestroy {
-    $items = this.store.select(NotificationSelectors.FEATURED.items);
+    $items: Observable<NotificationItem[]> = this.store.select(NotificationSelectors.FEATURED.items);
 
     private readonly logger = getZoneNameBoundWebLogger();
 

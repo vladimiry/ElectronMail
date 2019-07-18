@@ -1,7 +1,7 @@
 <div class="d-flex justify-content-center">
     <form (ngSubmit)="submit()" *ngIf="!(loadingDatabase$ | async); else loadingDatabaseTemplate" [formGroup]="form" novalidate>
         <h2>Log in</h2>
-        <fieldset [disabled]="signingIn$ | async" class="form-group">
+        <fieldset [disabled]="(signingIn$ | async) || false" class="form-group">
             <div class="form-group">
                 <input
                     #passwordRef
@@ -27,7 +27,7 @@
                         Keep me signed in
                         <i
                             *ngIf="savePassword.value" [popover]="popTemplate"
-                            class="fa fa-info-circle text-danger" container="body" placement="bottom" triggers="mouseenter:mouseleave"
+                            class="fa fa-info-circle text-danger" container="body" [placement]="'bottom'" triggers="mouseenter:mouseleave"
                         ></i>
                         <ng-template #popTemplate>
                             Choosing <code>Keep me signed in</code> option enables saving the master password on your computer. It weakens

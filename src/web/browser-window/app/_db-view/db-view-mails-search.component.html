@@ -8,7 +8,7 @@
             <i class="fa fa-angle-left mr-1"></i>
             <span class="d-flex flex-grow-1 flex-column">Folders</span>
         </button>
-        <fieldset [disabled]="(searching$ | async) || (indexing$ | async)" class="d-flex">
+        <fieldset [disabled]="(searching$ | async) || (indexing$ | async) || false" class="d-flex">
             <form
                 (ngSubmit)="submit()"
                 [formGroup]="form"

@@ -1,4 +1,4 @@
-<fieldset [disabled]="(changingPassword$ | async) || (reEncryptingSettings$ | async)">
+<fieldset [disabled]="(changingPassword$ | async) || (reEncryptingSettings$ | async) || false">
     <accordion [closeOthers]="true">
         <accordion-group heading="Master password" [isOpen]="true">
             <form [formGroup]="form" (ngSubmit)="submit()" novalidate>

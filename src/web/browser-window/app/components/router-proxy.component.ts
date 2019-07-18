@@ -3,6 +3,8 @@ import {Component, HostBinding, OnDestroy, OnInit} from "@angular/core";
 import {Subscription} from "rxjs";
 import {filter, map} from "rxjs/operators";
 
+import {ROUTER_DATA_OUTLET_PROP} from "src/web/browser-window/app/app.constants";
+
 @Component({
     selector: "electron-mail-router-proxy",
     template: "<router-outlet></router-outlet>",
@@ -22,10 +24,12 @@ export class RouterProxyComponent implements OnInit, OnDestroy {
         this.subscription.add(
             this.route.data
                 .pipe(
-                    map((data) => data.ROUTER_DATA_OUTLET_PROP),
+                    map((data) => data[ROUTER_DATA_OUTLET_PROP]),
                     filter((outlet) => Boolean(outlet)),
                 )
-                .subscribe((outlet) => this.outlet = outlet),
+                .subscribe((outlet) => {
+                    this.outlet = outlet;
+                }),
         );
     }
 

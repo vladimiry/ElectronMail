@@ -13,11 +13,13 @@
   "exclude": [
     "./**/*.spec.ts"
   ],
-  // section is taken from the parent config, inheritance does not work here
   "angularCompilerOptions": {
     "preserveWhitespaces": false,
-    "fullTemplateTypeCheck": true,
     "disableTypeScriptVersionCheck": true,
-    "strictInjectionParameters": true
+    "strictInjectionParameters": true,
+    // TODO angular ivy: get back templates type check after https://github.com/angular/angular/issues/30080 resolving
+    "fullTemplateTypeCheck": false,
+    "ivyTemplateTypeCheck": false,
+    "enableIvy": true
   }
 }

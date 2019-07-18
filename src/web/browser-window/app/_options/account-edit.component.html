@@ -1,4 +1,4 @@
-<fieldset [disabled]="(processing$ | async) || (removing$ | async)">
+<fieldset [disabled]="(processing$ | async) || (removing$ | async) || false">
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="form-group">
         <div class="rounded mb-2">
             <electron-mail-type-symbol [type]="account.type" *ngIf="account"></electron-mail-type-symbol>
@@ -11,7 +11,7 @@
                 <label class="custom-control-label" for="databaseCheckbox">
                     Local store
                     <i class="fa fa-info-circle text-primary"
-                       [popover]="localStorePopoverTemplate" placement="bottom" container="body" triggers="mouseenter:mouseleave"
+                       [popover]="localStorePopoverTemplate" [placement]="'bottom'" container="body" triggers="mouseenter:mouseleave"
                     ></i>
                     <ng-template #localStorePopoverTemplate>
                         <p>
@@ -98,7 +98,7 @@
                 <i
                     class="fa fa-info-circle text-warning align-self-center"
                     container="body"
-                    placement="bottom"
+                    [placement]="'bottom'"
                     popover="This is not the one time password your phone generates for you but a secret seed. Please follow the description link for details."
                     triggers="mouseenter:mouseleave"
                 ></i>
@@ -113,7 +113,7 @@
                 <i
                     class="fa fa-info-circle text-warning align-self-center"
                     container="body"
-                    placement="bottom"
+                    [placement]="'bottom'"
                     popover="This field is only relevant if you have two-password mode enabled for your account. Please follow the description links for details."
                     triggers="mouseenter:mouseleave"
                 ></i>
@@ -126,7 +126,7 @@
                    [ngClass]="controls.mailPassword.dirty ? {'is-invalid': controls.mailPassword.invalid, 'is-valid': controls.mailPassword.valid} : {}">
         </div>
         <div class="card mb-3">
-            <div class="card-header" [ngStyle]="advancedBlockCollapsed && {'border-bottom-width': '0'}">
+            <div class="card-header" [ngStyle]="advancedBlockCollapsed ? {'border-bottom-width': '0'} : {}">
                 <button type="button" class="btn btn-link p-0" (click)="advancedBlockCollapsed = !advancedBlockCollapsed">
                     Advanced
                 </button>
@@ -139,7 +139,7 @@
                             popover="Rules indicating which proxies to use."
                             class="fa fa-info-circle text-primary align-self-center"
                             container="body"
-                            placement="bottom"
+                            [placement]="'bottom'"
                             triggers="mouseenter:mouseleave"
                         ></i>
                     </label>
@@ -155,7 +155,7 @@
                             popover="Rules indicating which URLs should bypass the proxy settings."
                             class="fa fa-info-circle text-primary align-self-center"
                             container="body"
-                            placement="bottom"
+                            [placement]="'bottom'"
                             triggers="mouseenter:mouseleave"
                         ></i>
                     </label>
@@ -171,7 +171,7 @@
                             popover="The login delay is picked by either time range or account selection triggers. Whichever kicks in first if both values defined."
                             class="fa fa-info-circle text-warning align-self-center"
                             container="body"
-                            placement="bottom"
+                            [placement]="'bottom'"
                             triggers="mouseenter:mouseleave"
                         ></i>
                     </label>

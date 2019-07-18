@@ -2,7 +2,7 @@
     <ng-container *ngIf="selectedMail.rootNode.summary.size > 1">
         <div
             *ngFor="let rootNode of [selectedMail.rootNode]"
-            [collapse]="conversationCollapsed$ | async"
+            [collapse]="((conversationCollapsed$ | async) || undefined)"
             class="flex-column root-node-container"
         >
             <ng-container
@@ -132,7 +132,7 @@
         </div>
         <button
             (click)="reDownload()"
-            [disabled]="!(onlineAndLoggedIn$ | async) || (fetchingSingleMailParams$ | async)"
+            [disabled]="!(onlineAndLoggedIn$ | async) || (fetchingSingleMailParams$ | async) || false"
             class="btn btn-secondary"
         >
             <i *ngIf="fetchingSingleMailParams$ | async" class="fa fa-spinner fa-pulse fa-fw"></i>

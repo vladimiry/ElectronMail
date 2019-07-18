@@ -10,7 +10,7 @@ import {
     QueryList,
     ViewChildren,
 } from "@angular/core";
-import {EMPTY, Subject, combineLatest} from "rxjs";
+import {EMPTY, Observable, Subject, combineLatest} from "rxjs";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store, select} from "@ngrx/store";
 import {distinctUntilChanged, map, mergeMap, takeUntil} from "rxjs/operators";
@@ -54,17 +54,17 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
         )),
     );
 
-    searching$ = this.accountProgress$.pipe(
-        map((value) => value.searching),
+    searching$: Observable<boolean> = this.accountProgress$.pipe(
+        map((value) => Boolean(value.searching)),
     );
 
-    indexing$ = combineLatest(
+    indexing$: Observable<boolean> = combineLatest([
         this.store.pipe(
             select(AccountsSelectors.FEATURED.globalProgress),
             distinctUntilChanged(),
         ),
         this.accountProgress$,
-    ).pipe(
+    ]).pipe(
         map(([globalProgress, accountProgress]) => {
             return Boolean(globalProgress.indexing || accountProgress.indexing);
         }),

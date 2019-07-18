@@ -16,6 +16,8 @@ export const NOTIFICATIONS_PATH = "notifications";
 
 export const ESC_KEY = "Escape";
 
+export const ROUTER_DATA_OUTLET_PROP = "ROUTER_DATA_OUTLET_PROP";
+
 export interface DbViewEntryComponentInterface {
     dbAccountPk: DbAccountPk;
 

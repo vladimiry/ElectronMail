@@ -43,6 +43,11 @@ const configurations: Configuration[] = hooksToBuild.map((hookDirName) => {
             externals: [
                 nodeExternals(),
             ],
+            resolve: {
+                alias: {
+                    scripts: rootRelativePath("scripts"),
+                },
+            },
         },
         {
             tsConfigFile,

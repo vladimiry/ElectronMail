@@ -368,7 +368,7 @@ export class AccountsEffects {
                             );
                         }
 
-                        const triggerReset$ = race([
+                        const triggerDispose$ = race([
                             this.actions$.pipe(
                                 unionizeActionFilter(ACCOUNTS_ACTIONS.is.TryToLogin),
                                 filter(({payload: livePayload}) => {
@@ -382,7 +382,7 @@ export class AccountsEffects {
                                 select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
                                 map((liveAccount) => {
                                     if (!liveAccount) {
-                                        return;
+                                        return `Account has been removed`;
                                     }
                                     if (liveAccount.notifications.pageType.type !== "login") {
                                         return `page type changed to ${JSON.stringify(liveAccount.notifications.pageType)}`;
@@ -399,13 +399,13 @@ export class AccountsEffects {
                         ]).pipe(
                             take(1),
                             tap((reason) => {
-                                logger.info(`resetting delayed "login" action with the following reason: ${reason}`);
+                                logger.info(`disposing delayed "login" action with the following reason: ${reason}`);
                             }),
                         );
                         const trigger$ = delayTriggers.length
                             ? race(delayTriggers).pipe(
                                 take(1), // WARN: just one notification
-                                takeUntil(triggerReset$),
+                                takeUntil(triggerDispose$),
                             )
                             : of({trigger: "triggered immediate login (as no delays defined)"});
                         const executeLoginAction = (password: string) => {

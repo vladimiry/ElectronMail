@@ -1,9 +1,10 @@
+import {CdkDragDrop} from "@angular/cdk/drag-drop";
 import {Component, HostBinding, OnDestroy} from "@angular/core";
-import {DragulaService} from "ng2-dragula";
 import {Store} from "@ngrx/store";
-import {Subscription} from "rxjs";
+import {Subject, Subscription} from "rxjs";
 import {map, withLatestFrom} from "rxjs/operators";
 
+import {LoginFieldContainer} from "src/shared/model/container";
 import {OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/options";
@@ -15,48 +16,57 @@ import {State} from "src/web/browser-window/app/store/reducers/options";
 })
 export class AccountsComponent implements OnDestroy {
     accounts$ = this.store.select(OptionsSelectors.SETTINGS.accounts);
-    changingAccountOrder$ = this.store.select(OptionsSelectors.FEATURED.progress).pipe(map((p) => !!p.changingAccountOrder));
-    reorderingGroup = "accounts";
+
+    changingAccountOrder$ = this.store
+        .select(OptionsSelectors.FEATURED.progress)
+        .pipe(map((p) => !!p.changingAccountOrder));
+
     @HostBinding("class.reordering-disabled")
     reorderingDisabled: boolean = true;
+
+    private cdkDrop$: Subject<CdkDragDrop<LoginFieldContainer>> = new Subject();
+
     private subscription = new Subscription();
 
     constructor(
         private store: Store<State>,
-        private dragulaService: DragulaService,
     ) {
         this.subscription.add(
             this.changingAccountOrder$
                 .pipe(withLatestFrom(this.accounts$))
-                .subscribe(([value, accounts]) => this.reorderingDisabled = value || accounts.length < 2),
-        );
-
-        this.dragulaService.createGroup(
-            this.reorderingGroup,
-            {
-                moves: (...[, , handle]) => !this.reorderingDisabled && Boolean(handle && handle.classList.contains("fa-bars")),
-                accepts: (...[, target]) => Boolean(target && target.classList.contains("list-group")),
-            },
+                .subscribe(([changingAccountOrder, {length}]) => {
+                    return this.reorderingDisabled = changingAccountOrder || length < 2;
+                }),
         );
 
         this.subscription.add(
-            this.dragulaService.drop(this.reorderingGroup)
-                .pipe(
-                    map((({el, target}) => ({
-                        login: el.getAttribute("data-login"),
-                        index: Array.from(target.childNodes)
-                            .filter(({nodeType, nodeName}) => nodeType === Node.ELEMENT_NODE && nodeName.toLowerCase() === "li")
-                            .findIndex((item) => item === el),
-                    }))),
-                )
-                .subscribe(({login, index}) => {
-                    this.store.dispatch(OPTIONS_ACTIONS.ChangeAccountOrderRequest({login: login as string, index}));
-                }),
+            this.cdkDrop$.subscribe(({item, container, previousIndex, currentIndex}) => {
+                const {nativeElement: itemEl} = item.element;
+                const {nativeElement: containerEl} = container.element;
+                const movedDown = currentIndex > previousIndex;
+
+                this.store.dispatch(
+                    OPTIONS_ACTIONS.ChangeAccountOrderRequest({
+                        login: item.data.login,
+                        index: currentIndex,
+                    }),
+                );
+
+                containerEl.insertBefore(
+                    itemEl,
+                    containerEl
+                        .querySelectorAll(".cdk-drag")
+                        .item(currentIndex + Number(movedDown)),
+                );
+            }),
         );
+    }
+
+    cdkDrop(event: CdkDragDrop<LoginFieldContainer>) {
+        this.cdkDrop$.next(event);
     }
 
     ngOnDestroy() {
         this.subscription.unsubscribe();
-        this.dragulaService.destroy(this.reorderingGroup);
     }
 }

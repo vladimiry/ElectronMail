@@ -4,7 +4,6 @@ import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 import {BrowserModule} from "@angular/platform-browser";
 import {BsDropdownModule} from "ngx-bootstrap/dropdown";
 import {CollapseModule} from "ngx-bootstrap/collapse";
-import {DragulaModule} from "ng2-dragula";
 import {EffectsModule} from "@ngrx/effects";
 import {ErrorHandler, Injector, NgModule} from "@angular/core";
 import {META_REDUCERS, StoreModule} from "@ngrx/store";
@@ -24,6 +23,10 @@ import {RoutingModule} from "./app.routing.module";
 import {createAppMetaReducer, createErrorHandlingMetaReducer, reducers} from "./store/reducers/root";
 
 export const APP_MODULE_NG_CONF: NgModule = {
+    declarations: [
+        AppComponent,
+        RouterProxyComponent,
+    ],
     imports: [
         BrowserModule,
         RoutingModule,
@@ -33,7 +36,6 @@ export const APP_MODULE_NG_CONF: NgModule = {
         CollapseModule.forRoot(),
         BsDropdownModule.forRoot(),
         PopoverModule.forRoot(),
-        DragulaModule.forRoot(),
         StoreModule.forRoot(
             reducers,
             {
@@ -52,10 +54,6 @@ export const APP_MODULE_NG_CONF: NgModule = {
         StoreModule.forFeature(OptionsReducer.featureName, OptionsReducer.reducer),
         StoreRouterConnectingModule.forRoot(),
         EffectsModule.forRoot([]),
-    ],
-    declarations: [
-        AppComponent,
-        RouterProxyComponent,
     ],
     providers: [
         {

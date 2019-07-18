@@ -1,10 +1,23 @@
 <a [routerLink]="['./../account-edit']" class="btn btn-primary mb-3" id="goToAccountsSettingsLink">
-    <i class="fa fa-plus" aria-hidden="true"></i>
+    <i aria-hidden="true" class="fa fa-plus"></i>
     Add Account
 </a>
-<ul class="list-group" [dragula]="reorderingGroup">
-    <li class="list-group-item pl-0 pr-3" *ngFor="let account of accounts$ | async" [attr.data-login]="account.login">
-        <i class="fa fa-bars drag-hover px-3"></i>
+<ul
+    (cdkDropListDropped)="cdkDrop($event)"
+    [cdkDropListDisabled]="reorderingDisabled"
+    [cdkDropListLockAxis]="'y'"
+    [cdkDropListOrientation]="'vertical'"
+    [cdkDropListSortingDisabled]="false"
+    cdkDropList
+    class="list-group"
+>
+    <li
+        *ngFor="let account of ((accounts$ | async) || undefined)"
+        cdkDrag
+        [cdkDragData]="{login: account.login}"
+        class="list-group-item pl-0 pr-3"
+    >
+        <i cdkDragHandle class="fa fa-bars px-3" title="Drag up/down to reorder"></i>
         <electron-mail-type-symbol [type]="account.type" class="mr-1"></electron-mail-type-symbol>
         {{ account.login }}
         <a [routerLink]="['./../account-edit', account.login]" class="float-right">
@@ -12,7 +25,7 @@
         </a>
     </li>
 </ul>
-<div class="progress mt-3" *ngIf="changingAccountOrder$ | async">
+<div *ngIf="changingAccountOrder$ | async" class="progress mt-3">
     <div class="progress-bar progress-bar-striped progress-bar-animated bg-secondary" style="width: 100%">
         Reordering ...
     </div>

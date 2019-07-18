@@ -1,7 +1,7 @@
 import {AccordionModule} from "ngx-bootstrap/accordion";
 import {CollapseModule} from "ngx-bootstrap/collapse";
 import {ColorPickerModule} from "ngx-color-picker";
-import {DragulaModule} from "ng2-dragula";
+import {DragDropModule} from "@angular/cdk/drag-drop";
 import {EffectsModule} from "@ngrx/effects";
 import {NgModule} from "@angular/core";
 import {PopoverModule} from "ngx-bootstrap/popover";
@@ -22,11 +22,11 @@ import {StorageComponent} from "src/web/browser-window/app/_options/storage.comp
 
 @NgModule({
     imports: [
+        AccordionModule,
         CollapseModule,
         ColorPickerModule,
-        AccordionModule,
+        DragDropModule,
         PopoverModule,
-        DragulaModule,
         SharedModule,
         OptionsRoutingModule,
         EffectsModule.forFeature([OptionsEffects]),

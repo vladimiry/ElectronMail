@@ -6,7 +6,6 @@ import {Fs as StoreFs, Model as StoreModel, Store} from "fs-json-store";
 import {app} from "electron";
 import {distinctUntilChanged, take} from "rxjs/operators";
 
-import {BuildEnvironment} from "src/shared/model/common";
 import {Config, Settings} from "src/shared/model/options";
 import {Context, ContextInitOptions, ContextInitOptionsPaths} from "./model";
 import {Database} from "./database";
@@ -157,7 +156,7 @@ function initLocations(
     const {appDir, userDataDir} = paths || {
         appDir: path.resolve(
             __dirname,
-            (process.env.NODE_ENV as BuildEnvironment) === "development"
+            BUILD_ENVIRONMENT === "development"
                 ? "../app-dev"
                 : "../app",
         ),

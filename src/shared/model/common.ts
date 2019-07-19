@@ -1,7 +1,5 @@
 import logger, {ILogLevel} from "electron-log";
 
-export type BuildEnvironment = "production" | "development" | "test";
-
 export type Timestamp = ReturnType<typeof Date.prototype.getTime>;
 
 export interface EntryUrlItem {

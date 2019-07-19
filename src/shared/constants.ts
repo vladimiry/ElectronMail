@@ -53,6 +53,7 @@ export const UPDATE_CHECK_FETCH_TIMEOUT = ONE_SECOND_MS * 10;
 export const WEB_CHUNK_NAMES = {
     "about": "about",
     "browser-window": "browser-window",
+    "browser-window-dll": "browser-window-dll",
     "search-in-page-browser-view": "search-in-page-browser-view",
 } as const;
 

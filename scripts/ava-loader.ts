@@ -1,6 +1,7 @@
 import fastGlob from "fast-glob";
 
 import {LOG, execShell} from "scripts/lib";
+import {sanitizeFastGlobPattern} from "src/shared/util";
 
 const [, , ...args] = process.argv as string[];
 
@@ -21,7 +22,7 @@ args.splice(filesGlobArgIndex, filesGlobArgCount);
 
 (async () => {
     const files = await fastGlob(
-        filesGlobArgValue.replace(/\\/g, "/"),
+        sanitizeFastGlobPattern(filesGlobArgValue),
         {
             absolute: false,
             onlyFiles: true,

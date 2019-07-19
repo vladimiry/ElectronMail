@@ -2,7 +2,6 @@ import logger from "electron-log";
 import {BrowserWindow, app} from "electron";
 import {equals} from "ramda";
 
-import {BuildEnvironment} from "src/shared/model/common";
 import {Context} from "src/electron-main/model";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";
 import {PRODUCT_NAME} from "src/shared/constants";
@@ -77,7 +76,7 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
     // execute after event handlers got subscribed
     await keepBrowserWindowState(ctx, browserWindow);
 
-    if ((process.env.NODE_ENV as BuildEnvironment) === "development") {
+    if (BUILD_ENVIRONMENT === "development") {
         browserWindow.webContents.openDevTools();
     }
 

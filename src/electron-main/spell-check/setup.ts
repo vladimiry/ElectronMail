@@ -6,7 +6,7 @@ import semver from "semver";
 import {APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR} from "src/shared/constants";
 import {Locale} from "src/shared/model/common";
 import {PLATFORM} from "src/electron-main/constants";
-import {curryFunctionMembers, normalizeLocale, removeDuplicateItems} from "src/shared/util";
+import {curryFunctionMembers, normalizeLocale, removeDuplicateItems, sanitizeFastGlobPattern} from "src/shared/util";
 
 export let resolveDefaultLocale: () => Promise<Locale> = async () => {
     const logger = curryFunctionMembers(_logger, "[src/electron-main/spell-check/setup] resolveDefaultLocale()");
@@ -151,9 +151,9 @@ async function resolveHunspellLocales(dir: string): Promise<Locale[]> {
     const logger = curryFunctionMembers(_logger, "[src/electron-main/spell-check/setup] resolveHunspellLocales()");
     const fastGlobModule = await import("fast-glob");
 
-    const hunspellDictionariesGlob = path
-        .join(dir, "*.dic")
-        .replace(/\\/g, "/");
+    const hunspellDictionariesGlob = sanitizeFastGlobPattern(
+        path.join(dir, "*.dic"),
+    );
     logger.verbose(JSON.stringify({hunspellDictionariesGlob}));
 
     // hunspell"s "getAvailableDictionaries()" does nothing, so use resolving using glob as a workaround

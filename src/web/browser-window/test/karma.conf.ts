@@ -3,7 +3,7 @@ import {platform} from "os";
 import {produce} from "immer";
 
 // TODO import using alias
-import {CONFIGS} from "../../../../webpack/web";
+import webpackConfig from "../../../../webpack-configs/web/browser-window";
 
 const basePath = process.cwd();
 const filesBootstrap = "src/web/browser-window/test/bootstrap.ts";
@@ -23,7 +23,7 @@ const configuration = {
         [filesPattern]: ["webpack"],
     },
     reporters: ["progress", "mocha"],
-    webpack: produce(CONFIGS["browser-window"], (draft) => {
+    webpack: produce(webpackConfig, (draft) => {
         // TODO get rid of "karma-webpack" hanging workaround
         // https://github.com/webpack-contrib/karma-webpack/issues/322#issuecomment-417862717
         (draft.output = draft.output || {}).filename = "[name]";

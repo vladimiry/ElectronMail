@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 </head>
 <body>
+<%= BUILD_ANGULAR_INJECT_DLL ? `<script src="${BUILD_ANGULAR_INJECT_DLL}"></script>` : '' %>
 <electron-mail-app class="w-100 h-100 d-flex"></electron-mail-app>
 </body>
 </html>

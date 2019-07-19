@@ -3,7 +3,6 @@ import {MetaReducer, Store} from "@ngrx/store";
 import {RouterReducerState, routerReducer} from "@ngrx/router-store";
 import {UnionOf} from "@vladimiry/unionize";
 
-import {BuildEnvironment} from "src/shared/model/common";
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
 
@@ -34,12 +33,13 @@ export function createErrorHandlingMetaReducer(injector: Injector): MetaReducer<
 }
 
 export function createAppMetaReducer(): MetaReducer<State, Actions> {
-    const development = (process.env.NODE_ENV as BuildEnvironment) === "development";
-
     return (reducer) => {
         return (state, action) => {
-            if (development && typeof action.type === "string" && action.type) {
-                logger.silly(action.type);
+            // tslint:disable-next-line:no-collapsible-if
+            if (BUILD_ENVIRONMENT === "development") {
+                if (typeof action.type === "string" && action.type) {
+                    logger.silly(action.type);
+                }
             }
 
             if (NAVIGATION_ACTIONS.is.Logout(action)) {

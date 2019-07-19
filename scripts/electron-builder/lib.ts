@@ -6,7 +6,7 @@ import path from "path";
 
 import {CWD, LOG, LOG_LEVELS, execShell} from "scripts/lib";
 import {Locale} from "src/shared/model/common";
-import {normalizeLocale} from "src/shared/util";
+import {normalizeLocale, sanitizeFastGlobPattern} from "src/shared/util";
 
 interface Dictionary {
     locale: Locale;
@@ -62,9 +62,9 @@ async function prepareDictionaries(): Promise<Map<Locale, Dictionary>> {
 
     if (fsExtra.pathExistsSync(outcomeDir)) {
         const existingFiles = await fastGlob(
-            path
-                .join(outcomeDir, "./*")
-                .replace(/\\/g, "/"),
+            sanitizeFastGlobPattern(
+                path.join(outcomeDir, "./*"),
+            ),
             {
                 absolute: true,
                 deep: 1,
@@ -88,9 +88,9 @@ async function prepareDictionaries(): Promise<Map<Locale, Dictionary>> {
 
         const resolvedDictionaries: Array<{ locale: string, aff: string; dic: string; license?: string; }> = [];
         const localeDirs = await fastGlob(
-            path
-                .join(repoCwd, "./dictionaries/*")
-                .replace(/\\/g, "/"),
+            sanitizeFastGlobPattern(
+                path.join(repoCwd, "./dictionaries/*"),
+            ),
             {
                 absolute: true,
                 deep: 1,

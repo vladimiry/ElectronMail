@@ -8,7 +8,7 @@ const logger = getZoneNameBoundWebLogger("[bootstrap-app]");
 
 // TODO call "enableProdMode()" only in prod mode
 // after angular@8.0.1=>8.0.1 update angular stopped working without enabling prod mode (in dev mode)
-// if ((process.env.NODE_ENV as BuildEnvironment) !== "development") {
+// if (BUILD_ENVIRONMENT !== "development") {
 enableProdMode();
 // }
 

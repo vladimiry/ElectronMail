@@ -134,7 +134,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         this.setupOnWebViewDomReadyDeferred().promise
             .then(() => {
                 this.onWebViewLoadedOnce(resolveWebView());
-                // if ((process.env.NODE_ENV/* as BuildEnvironment*/) === "development") {
+                // if ((BUILD_ENVIRONMENT === "development") {
                 //     resolveWebView().openDevTools();
                 // }
             });

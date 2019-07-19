@@ -1,8 +1,4 @@
 {
   "extends": "../tsconfig.json",
-  "exclude": [],
-  "angularCompilerOptions": {
-    "fullTemplateTypeCheck": false,
-    "enableIvy": false
-  }
+  "exclude": []
 }

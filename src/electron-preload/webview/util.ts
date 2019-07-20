@@ -119,7 +119,7 @@ export async function submitTotpToken(
     tokenResolver: () => string,
     _logger: ReturnType<typeof buildLoggerBundle>,
     {
-        submitTimeoutMs = ONE_SECOND_MS * 4,
+        submitTimeoutMs = ONE_SECOND_MS * 8,
         newTokenDelayMs = ONE_SECOND_MS * 2,
         submittingDetection,
     }: {

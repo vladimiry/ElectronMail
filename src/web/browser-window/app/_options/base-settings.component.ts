@@ -58,7 +58,8 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
 
     $unreadTextColor = this.store.pipe(select(OptionsSelectors.CONFIG.unreadTextColor));
 
-    $unreadSummary = this.store.select(AccountsSelectors.ACCOUNTS.loggedInAndUnreadSummary).pipe(
+    $unreadSummary = this.store.pipe(
+        select(AccountsSelectors.ACCOUNTS.loggedInAndUnreadSummary),
         map(({unread}) => unread),
     );
 

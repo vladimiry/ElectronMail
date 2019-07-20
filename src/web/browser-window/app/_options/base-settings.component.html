@@ -32,7 +32,7 @@
                     <label class="d-block mb-2">
                         Notification badge
                         <electron-mail-unread-badge
-                            [value]="($unreadSummary | async) || undefined"
+                            [value]="($unreadSummary | async) || 0"
                         ></electron-mail-unread-badge>
                     </label>
                     <div class="row">

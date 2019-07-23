@@ -42,6 +42,10 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
                 y: savedBounds.y || y,
             });
 
+            // needs to be called after the "browserWindow.setBounds" call
+            // since we don't want "setBounds" call to trigger the move/resize events handlers (leads to "maixmized" value loosing)
+            await keepBrowserWindowState(ctx, browserWindow);
+
             if (!settingsConfigured || !startMinimized) {
                 await (await ctx.deferredEndpoints.promise).activateBrowserWindow(browserWindow);
             }
@@ -72,9 +76,6 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
     browserWindow.setMenu(null);
 
     await browserWindow.loadURL(ctx.locations.browserWindowPage);
-
-    // execute after event handlers got subscribed
-    await keepBrowserWindowState(ctx, browserWindow);
 
     if (BUILD_ENVIRONMENT === "development") {
         browserWindow.webContents.openDevTools();

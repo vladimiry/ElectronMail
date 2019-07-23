@@ -11,8 +11,7 @@
   },
   "main": "./app/electron-main.js",
   "scripts": {
-    "postinstall": "npm-run-all yarn:audit postinstall:ivy-ngcc",
-    "postinstall:ivy-ngcc": "npx --no-install ivy-ngcc -l debug",
+    "postinstall": "npm-run-all yarn:audit",
     "yarn:audit": "yarn audit",
     "app:dist": "npm-run-all lint test:electron-main test:web build assets clean:sodium-native:prebuilds electron-builder:install-app-deps",
     "build": "npm-run-all build:electron-builder-hooks build:electron-main build:electron-preload build:web",

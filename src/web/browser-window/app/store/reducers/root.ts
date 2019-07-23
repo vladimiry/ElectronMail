@@ -42,10 +42,6 @@ export function createAppMetaReducer(): MetaReducer<State, Actions> {
                 }
             }
 
-            if (NAVIGATION_ACTIONS.is.Logout(action)) {
-                return reducer(undefined, action);
-            }
-
             return reducer(state, action);
         };
     };

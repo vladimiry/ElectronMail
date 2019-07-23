@@ -1,12 +1,71 @@
 import {IElectronLog} from "electron-log"; // tslint:disable-line:no-import-zones
+import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 
 import {AccountConfig, AccountType} from "./model/account";
 import {BaseConfig, Config} from "./model/options";
+import {DEFAULT_API_CALL_TIMEOUT, DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_MINUTE_MS, ONE_SECOND_MS} from "src/shared/constants";
 import {DbPatch} from "./api/common";
 import {FsDbAccount, View} from "src/shared/model/database";
 import {LogLevel} from "src/shared/model/common";
 import {LoginFieldContainer} from "./model/container";
 import {StatusCodeError} from "./model/error";
+
+export function initialConfig(): Config {
+    {
+        const encryptionPreset: PasswordBasedPreset = {
+            keyDerivation: {type: "sodium.crypto_pwhash", preset: "mode:moderate|algorithm:default"},
+            encryption: {type: "sodium.crypto_secretbox_easy", preset: "algorithm:default"},
+        };
+
+        return {
+            spellCheckLocale: false,
+            encryptionPreset,
+            window: {
+                bounds: {width: 1024, height: 768},
+            },
+            fetching: {
+                rateLimit: {
+                    // 275 requests in 60 seconds
+                    intervalMs: ONE_MINUTE_MS,
+                    maxInInterval: 275,
+                },
+                messagesStorePortionSize: DEFAULT_MESSAGES_STORE_PORTION_SIZE,
+            },
+            timeouts: {
+                // "fetchingRateLimiting" values need to be taking into the account defining the "fetching" timeout
+                dbBootstrapping: ONE_MINUTE_MS * 60 * 12, // 12 hours
+                dbSyncing: ONE_MINUTE_MS * 30, // 30 minutes
+                webViewApiPing: ONE_SECOND_MS * 15,
+                domElementsResolving: ONE_SECOND_MS * 20,
+                defaultApiCall: DEFAULT_API_CALL_TIMEOUT,
+                databaseLoading: ONE_MINUTE_MS * 5, // 5 minutes
+                indexingBootstrap: ONE_SECOND_MS * 30, // 30 seconds
+            },
+            updateCheck: {
+                releasesUrl: "https://api.github.com/repos/vladimiry/ElectronMail/releases",
+                proxy: "",
+            },
+            indexingBootstrapBufferSize: 1000,
+            jsFlags: [
+                "--max-old-space-size=3072",
+            ],
+            // base
+            checkUpdateAndNotify: false,
+            closeToTray: true,
+            compactLayout: true,
+            customTrayIconColor: "",
+            customUnreadBgColor: "",
+            customUnreadTextColor: "",
+            disableSpamNotifications: true,
+            findInPage: true,
+            fullTextSearch: true,
+            hideControls: false,
+            logLevel: "error",
+            startMinimized: true,
+            unreadNotifications: true,
+        };
+    }
+}
 
 export function pickBaseConfigProperties(
     {
@@ -26,19 +85,19 @@ export function pickBaseConfigProperties(
     }: Config,
 ): Required<BaseConfig> {
     return {
-        checkUpdateAndNotify: !!checkUpdateAndNotify,
-        closeToTray: !!closeToTray,
-        compactLayout: !!compactLayout,
-        customTrayIconColor: customTrayIconColor || "",
-        customUnreadBgColor: customUnreadBgColor || "",
-        customUnreadTextColor: customUnreadTextColor || "",
-        disableSpamNotifications: !!disableSpamNotifications,
-        findInPage: !!findInPage,
-        fullTextSearch: !!fullTextSearch,
-        hideControls: !!hideControls,
+        checkUpdateAndNotify,
+        closeToTray,
+        compactLayout,
+        customTrayIconColor,
+        customUnreadBgColor,
+        customUnreadTextColor,
+        disableSpamNotifications,
+        findInPage,
+        fullTextSearch,
+        hideControls,
         logLevel,
-        startMinimized: !!startMinimized,
-        unreadNotifications: !!unreadNotifications,
+        startMinimized,
+        unreadNotifications,
     };
 }
 

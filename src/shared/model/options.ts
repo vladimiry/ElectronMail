@@ -35,21 +35,21 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
         proxy: string;
     };
     indexingBootstrapBufferSize: number;
-    jsFlags?: string[];
+    jsFlags: string[];
     // base
-    checkUpdateAndNotify?: boolean;
-    closeToTray?: boolean;
-    compactLayout?: boolean;
-    customTrayIconColor?: string;
-    customUnreadBgColor?: string;
-    customUnreadTextColor?: string;
-    disableSpamNotifications?: boolean;
-    findInPage?: boolean;
-    fullTextSearch?: boolean;
-    hideControls?: boolean;
+    checkUpdateAndNotify: boolean;
+    closeToTray: boolean;
+    compactLayout: boolean;
+    customTrayIconColor: string;
+    customUnreadBgColor: string;
+    customUnreadTextColor: string;
+    disableSpamNotifications: boolean;
+    findInPage: boolean;
+    fullTextSearch: boolean;
+    hideControls: boolean;
     logLevel: LogLevel;
-    startMinimized?: boolean;
-    unreadNotifications?: boolean;
+    startMinimized: boolean;
+    unreadNotifications: boolean;
 }
 
 export type BaseConfig = Pick<Config,

@@ -2,6 +2,10 @@ import {InjectionToken} from "@angular/core";
 
 import {DbAccountPk} from "src/shared/model/database";
 
+export const STUB_OUTLET = "stub-outlet";
+
+export const STUB_PATH = "stub";
+
 export const ACCOUNTS_OUTLET = "accounts-outlet";
 
 export const ACCOUNTS_PATH = "accounts";

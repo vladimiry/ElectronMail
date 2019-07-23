@@ -195,12 +195,15 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
 
             if (options.setup) {
                 t.is(
-                    (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/settings-setup)",
+                    await getLocationHash(), "/(settings-outlet:settings/settings-setup)",
                     `login: "settings-setup" page url`,
                 );
             } else {
-                t.is(
-                    (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/login)",
+                t.true(
+                    [
+                        "/(settings-outlet:settings/login)",
+                        "/(settings-outlet:settings/login//stub-outlet:stub)",
+                    ].includes(await getLocationHash()),
                     `login: "settings-setup" page url`,
                 );
             }
@@ -233,7 +236,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
 
             if (options.setup) {
                 t.is(
-                    (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/account-edit//accounts-outlet:accounts)",
+                    await getLocationHash(), "/(settings-outlet:settings/account-edit//accounts-outlet:accounts)",
                     `login: "accounts" page url`,
                 );
 
@@ -249,9 +252,12 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
         },
 
         async afterLoginUrlTest(workflowPrefix = "") {
-            t.is(
-                (await t.context.app.client.getUrl()).split("#").pop(),
-                "/(accounts-outlet:accounts)", `workflow.${workflowPrefix}: "accounts" page url`,
+            t.true(
+                [
+                    "/(accounts-outlet:accounts)",
+                    "/(accounts-outlet:accounts//stub-outlet:stub)",
+                ].includes(await getLocationHash()),
+                `workflow.${workflowPrefix}: "accounts" page url`,
             );
         },
 
@@ -415,8 +421,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
 
             // making sure modal is closed (consider testing by DOM scanning)
             t.is(
-                (await client.getUrl()).split("#").pop(),
-                "/(accounts-outlet:accounts)",
+                await getLocationHash(), "/(accounts-outlet:accounts)",
                 `addAccount: "accounts" page url (settings modal closed)`,
             );
         },
@@ -442,14 +447,22 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
                 }
             })();
 
-            t.is(
-                (await client.getUrl()).split("#").pop(), "/(settings-outlet:settings/login)",
+            t.true(
+                [
+                    "/(settings-outlet:settings/login)",
+                    "/(settings-outlet:settings/login//stub-outlet:stub)",
+                ].includes(await getLocationHash()),
                 `logout: login page url`,
             );
 
             await client.pause(CONF.timeouts.transition);
         },
     };
+
+    async function getLocationHash(): Promise<string> {
+        const url = await t.context.app.client.getUrl();
+        return String(url.split("#").pop());
+    }
 
     return workflow;
 }

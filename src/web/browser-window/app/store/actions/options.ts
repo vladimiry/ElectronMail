@@ -21,7 +21,7 @@ export const OPTIONS_ACTIONS = unionize({
         GetConfigRequest: ofType<{ justRead?: boolean }>(),
         GetConfigResponse: ofType<Config>(),
         GetSettingsRequest: ofType<{}>(),
-        GetSettingsResponse: ofType<Settings>(),
+        GetSettingsResponse: ofType<Pick<Settings, "_rev" | "accounts">>(),
         InitRequest: ofType<{}>(),
         InitResponse: ofType<InitResponse>(),
         PatchBaseSettingsRequest: ofType<BaseConfig>(),

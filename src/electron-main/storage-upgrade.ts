@@ -12,6 +12,7 @@ import {Database} from "./database";
 import {DbAccountPk, FsDbDataContainerDeletedField} from "src/shared/model/database";
 import {EntryUrlItem} from "src/shared/model/common";
 import {INITIAL_STORES} from "./constants";
+import {pickBaseConfigProperties} from "src/shared/util";
 
 const possibleEntryUrls: readonly string[] = Object
     .values(ACCOUNTS_CONFIG)
@@ -160,6 +161,27 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
                 config.updateCheck.proxy = defaults.proxy;
             }
         })();
+    },
+    "3.7.1": (config) => {
+        const def = INITIAL_STORES.config();
+
+        if (typeof config.jsFlags === "undefined") {
+            config.jsFlags = def.jsFlags;
+        }
+
+        // ensuring default base props are set
+        Object.assign(
+            config,
+            {
+                ...pickBaseConfigProperties(def),
+                // JSON.parse(JSON.stringify drops undefined values
+                ...JSON.parse(
+                    JSON.stringify(
+                        pickBaseConfigProperties(config),
+                    ),
+                ),
+            },
+        );
     },
 };
 

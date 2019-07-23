@@ -127,7 +127,7 @@ export class OptionsEffects {
         () => this.actions$.pipe(
             unionizeActionFilter(OPTIONS_ACTIONS.is.GetSettingsRequest),
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-            withLatestFrom(this.store.select(OptionsSelectors.FEATURED.settings)),
+            withLatestFrom(this.store.pipe(select(OptionsSelectors.FEATURED.settings))),
             concatMap(([, settings]) => {
                 if ("_rev" in settings) {
                     return of(this.optionsService.settingsNavigationAction({

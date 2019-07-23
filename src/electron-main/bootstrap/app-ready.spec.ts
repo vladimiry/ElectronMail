@@ -55,7 +55,7 @@ test.serial("appReadyHandler(): default", async (t) => {
     t.true(mocks["src/electron-main/menu"].initApplicationMenu.calledWithExactly(ctx));
     t.true(mocks["src/electron-main/menu"].initApplicationMenu.calledAfter(mocks["src/electron-main/tray"].initTray));
 
-    t.true(endpoints.updateOverlayIcon.calledWithExactly({hasLoggedOut: false, unread: 0, trayIconColor: undefined}));
+    t.true(endpoints.updateOverlayIcon.calledWithExactly({hasLoggedOut: false, unread: 0, trayIconColor: ""}));
     t.true(endpoints.updateOverlayIcon.calledAfter(mocks["src/electron-main/menu"].initApplicationMenu));
     t.is(endpoints.updateOverlayIcon.callCount, 1);
 

@@ -1,7 +1,7 @@
 {
   "name": "electron-mail",
   "description": "Unofficial desktop app for ProtonMail and Tutanota E2EE email providers",
-  "version": "3.7.0",
+  "version": "3.7.1",
   "author": "Vladimir Yakovlev <desktop-app@protonmail.ch>",
   "license": "MIT",
   "homepage": "https://github.com/vladimiry/ElectronMail",
@@ -27,7 +27,7 @@
     "build:electron-preload:watch:dev": "cross-env WEBPACK_ENV_WATCH=1 npm-run-all build:electron-preload:dev",
     "build:web": "cross-env TS_NODE_FILES=true npx --no-install --node-arg=\"-r tsconfig-paths/register\" webpack --config ./webpack-configs/web/index.ts",
     "build:web:dev": "cross-env NODE_ENV=development npm-run-all build:web:dev:browser-window-dll build:web",
-    "build:web:dev:browser-window-dll": "cross-env c_FILES=true npx --no-install --node-arg=\"-r tsconfig-paths/register\" webpack --config ./webpack-configs/web/browser-window-dll.ts",
+    "build:web:dev:browser-window-dll": "cross-env TS_NODE_FILES=true npx --no-install --node-arg=\"-r tsconfig-paths/register\" webpack --config ./webpack-configs/web/browser-window-dll.ts",
     "build:web:watch": "cross-env WEBPACK_ENV_WATCH=1 npm-run-all build:web",
     "build:web:watch:dev": "cross-env WEBPACK_ENV_WATCH=1 npm-run-all build:web:dev",
     "build:electron-builder-hooks": "cross-env TS_NODE_FILES=true npx --no-install --node-arg=\"-r tsconfig-paths/register\" webpack --config ./webpack-configs/electron-builder-hooks.ts",

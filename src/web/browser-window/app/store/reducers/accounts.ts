@@ -2,7 +2,7 @@ import produce from "immer";
 import {UnionOf} from "@vladimiry/unionize";
 
 import * as fromRoot from "src/web/browser-window/app/store/reducers/root";
-import {ACCOUNTS_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {LoginFieldContainer} from "src/shared/model/container";
 import {WebAccount} from "src/web/browser-window/app/model";
 import {accountPickingPredicate} from "src/shared/util";
@@ -29,13 +29,17 @@ const initialState: State = {
     globalProgress: {},
 };
 
-export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_ACTIONS>): State {
+export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_ACTIONS> & UnionOf<typeof NAVIGATION_ACTIONS>): State {
+    if (NAVIGATION_ACTIONS.is.Logout(action)) {
+        return initialState;
+    }
+
     return produce(state, (draftState) => ACCOUNTS_ACTIONS.match(action, {
         WireUpConfigs: ({accountConfigs}) => {
             const needToSelectNewLogin = (
                 typeof draftState.selectedLogin === "undefined"
                 ||
-                false === accountConfigs
+                !accountConfigs
                     .map(({login}) => login)
                     .includes(draftState.selectedLogin)
             );

@@ -1,18 +1,11 @@
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/lib/private/constants";
-import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import {Model as StoreModel} from "fs-json-store";
 import {platform} from "os";
 import {randomBytes} from "crypto";
 
-import {Config, ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS, Settings} from "src/shared/model/options";
-import {
-    DEFAULT_API_CALL_TIMEOUT,
-    DEFAULT_MESSAGES_STORE_PORTION_SIZE,
-    ONE_MINUTE_MS,
-    ONE_SECOND_MS,
-    PACKAGE_NAME,
-} from "src/shared/constants";
-import {LogLevel} from "src/shared/model/common";
+import {BaseConfig, Config, ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS, Settings} from "src/shared/model/options";
+import {PACKAGE_NAME} from "src/shared/constants";
+import {initialConfig} from "src/shared/util";
 
 export const PLATFORM = platform();
 
@@ -23,58 +16,13 @@ export const SNAP_CONTAINER = (
 );
 
 export const INITIAL_STORES: Readonly<{
-    config: () => Skip<Config, "jsFlags"> & Required<Pick<Config, "jsFlags">>;
+    config: () => Skip<Config, keyof BaseConfig | "jsFlags"> & Required<BaseConfig> & Required<Pick<Config, "jsFlags">>;
     settings: () => Settings;
 }> = Object.freeze({
     config: () => {
-        const encryptionPreset: PasswordBasedPreset = {
-            keyDerivation: {type: "sodium.crypto_pwhash", preset: "mode:moderate|algorithm:default"},
-            encryption: {type: "sodium.crypto_secretbox_easy", preset: "algorithm:default"},
-        };
-        const logLevel: LogLevel = "error";
-
         return {
-            spellCheckLocale: false,
-            encryptionPreset,
-            window: {
-                bounds: {width: 1024, height: 768},
-            },
-            fetching: {
-                rateLimit: {
-                    // 275 requests in 60 seconds
-                    intervalMs: ONE_MINUTE_MS,
-                    maxInInterval: 275,
-                },
-                messagesStorePortionSize: DEFAULT_MESSAGES_STORE_PORTION_SIZE,
-            },
-            timeouts: {
-                // "fetchingRateLimiting" values need to be taking into the account defining the "fetching" timeout
-                dbBootstrapping: ONE_MINUTE_MS * 60 * 12, // 12 hours
-                dbSyncing: ONE_MINUTE_MS * 30, // 30 minutes
-                webViewApiPing: ONE_SECOND_MS * 15,
-                domElementsResolving: ONE_SECOND_MS * 20,
-                defaultApiCall: DEFAULT_API_CALL_TIMEOUT,
-                databaseLoading: ONE_MINUTE_MS * 5, // 5 minutes
-                indexingBootstrap: ONE_SECOND_MS * 30, // 30 seconds
-            },
-            updateCheck: {
-                releasesUrl: "https://api.github.com/repos/vladimiry/ElectronMail/releases",
-                proxy: "",
-            },
-            indexingBootstrapBufferSize: 1000,
-            jsFlags: [
-                "--max-old-space-size=3072",
-            ],
-            // base
+            ...initialConfig(),
             checkUpdateAndNotify: !SNAP_CONTAINER, // update check is disabled by default for the Snap package type
-            closeToTray: true,
-            compactLayout: true,
-            disableSpamNotifications: true,
-            findInPage: true,
-            fullTextSearch: true,
-            logLevel,
-            startMinimized: true,
-            unreadNotifications: true,
         };
     },
     settings: () => {

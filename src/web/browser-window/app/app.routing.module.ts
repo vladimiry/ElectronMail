@@ -1,7 +1,16 @@
 import {NgModule} from "@angular/core";
 import {PreloadAllModules, RouterModule, Routes} from "@angular/router";
 
-import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, NOTIFICATIONS_OUTLET, NOTIFICATIONS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "./app.constants";
+import {
+    ACCOUNTS_OUTLET,
+    ACCOUNTS_PATH,
+    NOTIFICATIONS_OUTLET,
+    NOTIFICATIONS_PATH,
+    SETTINGS_OUTLET,
+    SETTINGS_PATH,
+    STUB_OUTLET,
+    STUB_PATH,
+} from "./app.constants";
 import {RouterProxyComponent} from "./components/router-proxy.component";
 
 // TODO consider getting rid of the lazy loading, it's not really needed for the Electron application
@@ -53,6 +62,11 @@ const routes: Routes = [
                 loadChildren: async () => (await import("./_notification/notification.module")).NotificationModule,
             },
         ],
+    },
+    {
+        path: STUB_PATH,
+        outlet: STUB_OUTLET,
+        component: RouterProxyComponent,
     },
 ];
 

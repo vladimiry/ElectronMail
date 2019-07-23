@@ -2,7 +2,7 @@ import {UnionOf} from "@vladimiry/unionize";
 import {pick} from "ramda";
 
 import * as fromRoot from "src/web/browser-window/app/store/reducers/root";
-import {DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {DB_VIEW_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {DbAccountPk, Mail, View} from "src/shared/model/database";
 import {mailDateComparatorDefaultsToDesc, walkConversationNodesTree} from "src/shared/util";
 
@@ -48,9 +48,17 @@ const initialState: State = {
     instances: {},
 };
 
+export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACTIONS> & UnionOf<typeof NAVIGATION_ACTIONS>): State {
+    if (NAVIGATION_ACTIONS.is.Logout(action)) {
+        return initialState;
+    }
+
+    return innerReducer(state, action);
+}
+
 // TODO use "immer"
 // TODO optimize and simplify "db-view" reducer
-export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACTIONS>): State {
+function innerReducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACTIONS>): State {
     return DB_VIEW_ACTIONS.match(action, {
         SetFolders: ({dbAccountPk, folders}) => {
             const instanceKey = resolveInstanceKey(dbAccountPk);
@@ -88,7 +96,7 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
                 return false;
             })();
 
-            const result = reducer(
+            const result = innerReducer(
                 {
                     ...state,
                     instances: {
@@ -100,7 +108,7 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
             );
 
             return searchMailsBundleItemsRemoved
-                ? reducer(
+                ? innerReducer(
                     result,
                     DB_VIEW_ACTIONS.Paging({dbAccountPk, mailsBundleKey: "searchMailsBundle", noIncrement: true}),
                 )
@@ -194,11 +202,11 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
                 },
             };
 
-            result = reducer(
+            result = innerReducer(
                 result,
                 DB_VIEW_ACTIONS.Paging({dbAccountPk, mailsBundleKey: "folderMailsBundle", noIncrement: true}),
             );
-            result = reducer(
+            result = innerReducer(
                 result,
                 DB_VIEW_ACTIONS.Paging({dbAccountPk, mailsBundleKey: "folderConversationsBundle", noIncrement: true}),
             );
@@ -221,7 +229,7 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
 
             delete instance.selectedMail;
 
-            return reducer(
+            return innerReducer(
                 {
                     ...state,
                     instances: {
@@ -241,7 +249,7 @@ export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACT
 
             instance[mailsBundleKey].items = [];
 
-            return reducer(
+            return innerReducer(
                 {
                     ...state,
                     instances: {

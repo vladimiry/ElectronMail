@@ -360,7 +360,7 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
     patchBaseConfig: async (t) => {
         const endpoints = t.context.endpoints;
         const action = endpoints.patchBaseConfig;
-        const patches: BaseConfig[] = [
+        const patches: Array<Partial<BaseConfig>> = [
             {
                 startMinimized: false,
                 compactLayout: true,

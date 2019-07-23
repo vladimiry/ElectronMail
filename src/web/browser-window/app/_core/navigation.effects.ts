@@ -1,10 +1,10 @@
 import {Actions, createEffect} from "@ngrx/effects";
 import {EMPTY, from, of} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
-import {Location} from "@angular/common";
 import {Router} from "@angular/router";
-import {catchError, concatMap, map, mergeMap, tap} from "rxjs/operators";
+import {catchError, concatMap, map, mergeMap} from "rxjs/operators";
 
+import {ACCOUNTS_OUTLET, SETTINGS_OUTLET, STUB_OUTLET, STUB_PATH} from "src/web/browser-window/app/app.constants";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/browser-window/util";
@@ -13,41 +13,22 @@ const _logger = getZoneNameBoundWebLogger("[navigation.effects.ts]");
 
 @Injectable()
 export class NavigationEffects {
-    navigate$ = createEffect(
+    go$ = createEffect(
         () => this.actions$.pipe(
             unionizeActionFilter(NAVIGATION_ACTIONS.is.Go),
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-            tap(({payload, logger}) => {
+            concatMap(({payload, logger}) => {
                 const {path, extras, queryParams} = payload;
-
-                // WARN: privacy note, do not log "queryParams" as it might be filled with sensitive data (like "login"/"user name")
+                // WARN privacy note: do not log "queryParams"
+                // since it might be filled with sensitive data (like "login"/"user name")
                 logger.verbose(JSON.stringify({path, extras}));
-
-                this.ngZone.run(async () => {
-                    // tslint:disable-next-line:no-floating-promises
-                    await this.router.navigate(path, {queryParams, ...extras});
-                });
+                return from(
+                    this.ngZone.run(async () => {
+                        return await this.router.navigate(path, {queryParams, ...extras});
+                    }),
+                );
             }),
-            catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
-        ),
-        {dispatch: false},
-    );
-
-    navigateBack$ = createEffect(
-        () => this.actions$.pipe(
-            unionizeActionFilter(NAVIGATION_ACTIONS.is.Back),
-            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-            tap(() => this.location.back()),
-            catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
-        ),
-        {dispatch: false},
-    );
-
-    navigateForward$ = createEffect(
-        () => this.actions$.pipe(
-            unionizeActionFilter(NAVIGATION_ACTIONS.is.Forward),
-            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-            tap(() => this.location.forward()),
+            concatMap(() => EMPTY),
             catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
         ),
         {dispatch: false},
@@ -99,10 +80,27 @@ export class NavigationEffects {
             unionizeActionFilter(NAVIGATION_ACTIONS.is.Logout),
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             concatMap(() => {
-                return from(this.electronService.ipcMainClient()("logout")()).pipe(
+                return from(
+                    this.electronService.ipcMainClient()("logout")(),
+                ).pipe(
                     concatMap(() => {
-                        setTimeout(() => window.location.reload(), 0);
-                        return EMPTY;
+                        return [
+                            // TODO removing angular router outlets related issues:
+                            // - https://github.com/angular/angular/issues/15338
+                            // - https://github.com/angular/angular/issues/5122
+                            NAVIGATION_ACTIONS.Go({
+                                path: [{
+                                    outlets: {
+                                        [ACCOUNTS_OUTLET]: null,
+                                        [SETTINGS_OUTLET]: null,
+                                        // use stub outlet as at least one outlet always needs to be active
+                                        // that is to say otherwise accounts and settings outlets won't be reset
+                                        [STUB_OUTLET]: STUB_PATH,
+                                    },
+                                }],
+                            }),
+                            NAVIGATION_ACTIONS.Go({path: ["/"]}),
+                        ];
                     }),
                     catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                 );
@@ -124,7 +122,6 @@ export class NavigationEffects {
         private electronService: ElectronService,
         private actions$: Actions<{ type: string; payload: any }>,
         private router: Router,
-        private location: Location,
         private ngZone: NgZone,
     ) {}
 }

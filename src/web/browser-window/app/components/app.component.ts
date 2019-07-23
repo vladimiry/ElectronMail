@@ -2,7 +2,7 @@ import {Component, HostListener} from "@angular/core";
 import {Location} from "@angular/common";
 import {Store} from "@ngrx/store";
 
-import {ACCOUNTS_OUTLET, ESC_KEY, NOTIFICATIONS_OUTLET, SETTINGS_OUTLET} from "src/web/browser-window/app/app.constants";
+import {ACCOUNTS_OUTLET, ESC_KEY, NOTIFICATIONS_OUTLET, SETTINGS_OUTLET, STUB_OUTLET} from "src/web/browser-window/app/app.constants";
 import {NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {State} from "src/web/browser-window/app/store/reducers/root";
 
@@ -12,12 +12,13 @@ export type CloseableOutletsType =
 
 @Component({
     selector: "electron-mail-app",
+    styleUrls: ["./app.component.scss"],
     template: `
         <router-outlet name="${ACCOUNTS_OUTLET}"></router-outlet>
         <router-outlet name="${SETTINGS_OUTLET}"></router-outlet>
         <router-outlet name="${NOTIFICATIONS_OUTLET}"></router-outlet>
+        <router-outlet name="${STUB_OUTLET}"></router-outlet>
     `,
-    styleUrls: ["./app.component.scss"],
 })
 export class AppComponent {
     private closeableOutlets: CloseableOutletsType[] = [

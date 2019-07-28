@@ -188,29 +188,32 @@ export function buildDbPatchRetryPipeline<T>(
     logger: ReturnType<typeof buildLoggerBundle>,
     {retriesDelay = ONE_SECOND_MS * 5, retriesLimit = 2}: { retriesDelay?: number, retriesLimit?: number } = {},
 ) {
+    const errorResult = (error: Error) => {
+        logger.error(error);
+        return throwError(error);
+    };
+
     return retryWhen<T>((errors) => errors.pipe(
         concatMap((rawError, retryIndex) => {
             const {error, retriable, skippable} = preprocessError(rawError);
 
-            logger.error(error);
-
             if (retryIndex >= retriesLimit) {
                 if (skippable) {
                     const message = `Skipping "buildDbPatch" call`;
-                    logger.error(message);
+                    logger.warn(message, error);
                     return throwError(new StatusCodeError(message, "SkipDbPatch"));
                 }
-                return throwError(error);
+                return errorResult(error);
             }
 
             if (retriable) {
-                logger.error(`Retrying "buildDbPatch" call (attempt: "${retryIndex}")`);
+                logger.warn(`Retrying "buildDbPatch" call (attempt: "${retryIndex}")`);
                 return of(error).pipe(
                     delay(retriesDelay),
                 );
             }
 
-            return throwError(error);
+            return errorResult(error);
         }),
     ));
 }

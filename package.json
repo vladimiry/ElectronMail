@@ -194,7 +194,7 @@
     "@types/webpack-node-externals": "1.6.3",
     "@typescript-eslint/eslint-plugin": "1.13.0",
     "@typescript-eslint/parser": "1.13.0",
-    "app-builder-lib": "20.44.4",
+    "app-builder-lib": "21.2.0",
     "archiver": "3.0.3",
     "ava": "2.1.0",
     "awesome-typescript-loader": "5.2.1",
@@ -211,7 +211,7 @@
     "css-loader": "3.1.0",
     "cssnano": "4.1.10",
     "electron": "6.0.0",
-    "electron-builder": "20.44.4",
+    "electron-builder": "21.2.0",
     "escape-string-regexp": "2.0.0",
     "eslint": "6.1.0",
     "exports-loader": "0.7.0",
@@ -282,7 +282,7 @@
     "zone.js": "0.9.1"
   },
   "resolutions": {
-    "*/**/builder-util-runtime": "8.2.5",
+    "*/**/builder-util-runtime": "8.3.0",
     "@types/mithril-global/**/@types/mithril": "1.1.17",
     "cpx/**/braces": "3.0.2"
   }

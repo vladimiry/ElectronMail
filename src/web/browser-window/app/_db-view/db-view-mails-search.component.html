@@ -1,79 +1,79 @@
 <div [ngClass]="{'flex-basis-half': selectedMail$ | async}" class="d-flex flex-column flex-grow-1 pr-2">
-    <div class="d-flex flex-row flex-shrink-0">
-        <button
-            (click)="backToList()"
-            class="btn btn-secondary mb-2 d-flex flex-shrink-0 align-items-center"
-            style="min-width: 144px"
-        >
-            <i class="fa fa-angle-left mr-1"></i>
-            <span class="d-flex flex-grow-1 flex-column">Folders</span>
-        </button>
-        <fieldset [disabled]="(searching$ | async) || (indexing$ | async) || false" class="d-flex">
-            <form
-                (ngSubmit)="submit()"
-                [formGroup]="form"
-                class="d-flex"
-                novalidate
+    <div class="d-flex flex-column h-100">
+        <div class="d-flex flex-row flex-shrink-0">
+            <button
+                (click)="backToList()"
+                class="btn btn-secondary mb-2 d-flex flex-shrink-0 align-items-center"
+                style="min-width: 144px"
             >
-                <div
-                    *ngIf="folders$ | async; let folders;"
-                    [autoClose]="false"
-                    class="mx-2 d-flex flex-shrink-0 align-items-center"
-                    dropdown
-                    style="position: relative"
+                <i class="fa fa-angle-left mr-1"></i>
+                <span class="d-flex flex-grow-1 flex-column">Folders</span>
+            </button>
+            <fieldset [disabled]="(searching$ | async) || (indexing$ | async) || false" class="d-flex">
+                <form
+                    (ngSubmit)="submit()"
+                    [formGroup]="form"
+                    class="d-flex"
+                    novalidate
                 >
-                    <button class="btn btn-link p-0 text-decoration-none" dropdownToggle type="button">
-                        Folders: {{ foldersInfo.selectedPks.length }} of {{ foldersInfo.allPks.length }}
-                    </button>
-                    <div *dropdownMenu class="dropdown-menu px-2 py-1" role="menu">
-                        <div class="custom-control custom-switch text-center">
-                            <input
-                                class="custom-control-input"
-                                formControlName="allFoldersToggled"
-                                id="toggleAllFolders"
-                                type="checkbox"
-                            >
-                            <label class="custom-control-label" for="toggleAllFolders">
-                                All
-                            </label>
-                        </div>
-                        <hr class="my-1">
-                        <div formGroupName="folders">
-                            <div *ngFor="let folderPk of foldersInfo.allPks" class="custom-control custom-switch">
+                    <div
+                        *ngIf="folders$ | async; let folders;"
+                        [autoClose]="false"
+                        class="mx-2 d-flex flex-shrink-0 align-items-center"
+                        dropdown
+                        style="position: relative"
+                    >
+                        <button class="btn btn-link p-0 text-decoration-none" dropdownToggle type="button">
+                            Folders: {{ foldersInfo.selectedPks.length }} of {{ foldersInfo.allPks.length }}
+                        </button>
+                        <div *dropdownMenu class="dropdown-menu px-2 py-1" role="menu">
+                            <div class="custom-control custom-switch text-center">
                                 <input
-                                    [formControlName]="folderPk"
-                                    [id]="'id_' + folderPk"
                                     class="custom-control-input"
+                                    formControlName="allFoldersToggled"
+                                    id="toggleAllFolders"
                                     type="checkbox"
                                 >
-                                <label [attr.for]="'id_' + folderPk" class="custom-control-label">
-                                    {{ foldersInfo.names[folderPk] }}
+                                <label class="custom-control-label" for="toggleAllFolders">
+                                    All
                                 </label>
+                            </div>
+                            <hr class="my-1">
+                            <div formGroupName="folders">
+                                <div *ngFor="let folderPk of foldersInfo.allPks" class="custom-control custom-switch">
+                                    <input
+                                        [formControlName]="folderPk"
+                                        [id]="'id_' + folderPk"
+                                        class="custom-control-input"
+                                        type="checkbox"
+                                    >
+                                    <label [attr.for]="'id_' + folderPk" class="custom-control-label">
+                                        {{ foldersInfo.names[folderPk] }}
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <input
-                    #query
-                    [ngClass]="formControls.query.dirty ? {'is-invalid': formControls.query.invalid, 'is-valid': formControls.query.valid} : {}"
-                    class="form-control mr-2 d-flex align-items-center"
-                    formControlName="query"
-                    required
-                    type="text"
-                >
-                <button
-                    [disabled]="form.invalid"
-                    class="btn btn-primary d-flex flex-shrink-0 align-items-center"
-                    type="submit"
-                >
-                    <i class="fa fa-spinner fa-pulse fa-fw mr-1"></i>
-                    <i class="fa fa-search mr-1"></i>
-                    {{ (indexing$ | async) ? "Indexing" : "Search" }}
-                </button>
-            </form>
-        </fieldset>
-    </div>
-    <div class="d-flex flex-column flex-grow-1">
+                    <input
+                        #query
+                        [ngClass]="formControls.query.dirty ? {'is-invalid': formControls.query.invalid, 'is-valid': formControls.query.valid} : {}"
+                        class="form-control mr-2 d-flex align-items-center"
+                        formControlName="query"
+                        required
+                        type="text"
+                    >
+                    <button
+                        [disabled]="form.invalid"
+                        class="btn btn-primary d-flex flex-shrink-0 align-items-center"
+                        type="submit"
+                    >
+                        <i class="fa fa-spinner fa-pulse fa-fw mr-1"></i>
+                        <i class="fa fa-search mr-1"></i>
+                        {{ (indexing$ | async) ? "Indexing" : "Search" }}
+                    </button>
+                </form>
+            </fieldset>
+        </div>
         <electron-mail-db-view-mails
             [dbAccountPk]="dbAccountPk"
             [mailsBundleKey]="'searchMailsBundle'"
@@ -81,9 +81,7 @@
     </div>
 </div>
 <div *ngIf="selectedMail$ | async" class="flex-basis-half pr-2 d-flex flex-column">
-    <div class="overflow-auto">
-        <electron-mail-db-view-mail-body
-            [dbAccountPk]="dbAccountPk"
-        ></electron-mail-db-view-mail-body>
-    </div>
+    <electron-mail-db-view-mail-body
+        [dbAccountPk]="dbAccountPk"
+    ></electron-mail-db-view-mail-body>
 </div>

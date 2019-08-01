@@ -1,4 +1,6 @@
 import {Session, session} from "electron";
+import {concatMap} from "rxjs/operators";
+import {from, race, throwError, timer} from "rxjs";
 
 import {AccountConfig, AccountType} from "src/shared/model/account";
 import {Context} from "./model";
@@ -39,7 +41,7 @@ export async function configureSessionByAccount(
 ): Promise<void> {
     const {proxy} = account;
     const partition = getWebViewPartition(account.login);
-    const instance = session.fromPartition(partition);
+    const sessionInstance = session.fromPartition(partition);
     const proxyConfig = {
         ...{
             pacScript: "",
@@ -52,17 +54,14 @@ export async function configureSessionByAccount(
         }),
     };
 
-    return new Promise((resolve, reject) => {
-        const timeoutId = setTimeout(
-            () => reject(new Error("Failed to configure proxy settings")),
-            ONE_SECOND_MS * 2,
-        );
-
-        instance.setProxy(proxyConfig, () => {
-            clearTimeout(timeoutId);
-            resolve();
-        });
-    });
+    return race(
+        from(
+            sessionInstance.setProxy(proxyConfig),
+        ),
+        timer(ONE_SECOND_MS * 2).pipe(
+            concatMap(() => throwError(new Error("Failed to configure proxy settings"))),
+        ),
+    ).toPromise();
 }
 
 export function getDefaultSession(): Session {

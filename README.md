@@ -52,10 +52,10 @@ The [reproducible builds](https://en.wikipedia.org/wiki/Reproducible_builds) ide
 
 ### Building locally
 
-- Regardless of the platform you are working on, you will need to have Node.js v11 installed. v11 as it's recommended to go with the same Node.js version Electron comes with. If you already have Node.js installed, but not the v11, then you might want to use [Node Version Manager](https://github.com/creationix/nvm) to be able to switch between multiple Node.js versions:
+- Regardless of the platform you are working on, you will need to have Node.js v12 installed. v12 as it's recommended to go with the same Node.js version Electron comes with. If you already have Node.js installed, but not the v12, then you might want to use [Node Version Manager](https://github.com/creationix/nvm) to be able to switch between multiple Node.js versions:
   - Install [NVM](https://github.com/creationix/nvm).
-  - Run `nvm install 11`.
-  - Run `nvm use 11`.
+  - Run `nvm install 12`.
+  - Run `nvm use 12`.
 - Some native modules require node prebuilds files compiling and for that Python and C++ compiler need to be installed on your system:
   - On `Windows`: the simplest way to install all the needed stuff on Windows is to run `npm install --global --production windows-build-tools` CLI command. [Tutanota](https://github.com/tutao/tutanota) and [ProtonMail](https://github.com/ProtonMail/WebClient) web clients projects require bash for building, so a few more steps need to be fulfilled:
     - Install bash then check the path of bash ex: `C:\\Program Files\\git\\bin\\bash.exe`.

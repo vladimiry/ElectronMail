@@ -36,7 +36,7 @@ export const initFindInPageBrowserView: (ctx: Context) => Promise<BrowserView> =
         // otherwise BrowserView is invisible on macOS as "setBounds" call takes no effect
         ctx.uiContext.browserWindow.setBrowserView(browserView);
 
-        browserView.setAutoResize({width: false, height: true});
+        browserView.setAutoResize({width: false, height: true, horizontal: false, vertical: false});
 
         const {html, baseURLForDataURL} = await resolveContent(ctx);
 

@@ -17,7 +17,7 @@ matrix:
   fast_finish: true
 stack: node $nodejs_version
 environment:
-  nodejs_version: 11.13.0
+  nodejs_version: 12
   nodejs_arch: x64
   APPVEYOR_YML_DISABLE_PS_LINUX: true
   LINUX_JOB_NAME_PATTERN: 'image: Ubuntu1804'
@@ -38,14 +38,11 @@ for:
       only:
         - image: 'Ubuntu1804'
     cache:
-      - $HOME/.cache/yarn
       - ./output/git
     build_script: ./scripts/ci/appveyor/build-linux.sh
   - matrix:
       only:
         - image: 'Visual Studio 2017'
-    cache:
-      - '%LOCALAPPDATA%\\Yarn'
     build_script:
       - ps: | # download and extract prepared by linux job web clients
           $headers = @{
@@ -70,7 +67,7 @@ for:
           yarn electron-builder:dist
           yarn scripts/dist-packages/print-hashes
           yarn scripts/dist-packages/upload
-    on_finish:
+    on_failure:
       - ps: Get-Process
       - SET APP_E2E_ARTIFACT_LOG=appveyor-%APPVEYOR_BUILD_VERSION%-%APPVEYOR_REPO_COMMIT%-%APPVEYOR_JOB_NUMBER%-e2e-logs.zip
       - 7z a %APP_E2E_ARTIFACT_LOG% .\output\e2e\*

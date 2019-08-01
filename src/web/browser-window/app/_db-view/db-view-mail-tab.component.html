@@ -63,9 +63,9 @@
                     >
                         <i
                             [ngClass]="{
-                                'fa-align-right fa-flip-vertical': mailsBundleKey == 'folderConversationsBundle',
-                                'fa-align-justify': mailsBundleKey == 'folderMailsBundle'
-                            }"
+                            'fa-align-right fa-flip-vertical': mailsBundleKey == 'folderConversationsBundle',
+                            'fa-align-justify': mailsBundleKey == 'folderMailsBundle'
+                        }"
                             class="fa"
                         ></i>
                     </button>
@@ -76,12 +76,10 @@
             *ngIf="state.selectedMail"
             class="flex-basis-half pr-2 d-flex flex-column"
         >
-            <div class="overflow-auto">
-                <electron-mail-db-view-mail-body
-                    [dbAccountPk]="dbAccountPk"
-                    [selectedFolderData]="state.selectedFolderData"
-                ></electron-mail-db-view-mail-body>
-            </div>
+            <electron-mail-db-view-mail-body
+                [dbAccountPk]="dbAccountPk"
+                [selectedFolderData]="state.selectedFolderData"
+            ></electron-mail-db-view-mail-body>
         </div>
     </div>
 </ng-container>

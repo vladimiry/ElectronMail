@@ -14,151 +14,174 @@ const logger = curryFunctionMembers(_logger, "[web-contents]");
 
 // WARN: needs to be called before "BrowserWindow" creating (has been ensured by tests)
 export async function initWebContentsCreatingHandlers(ctx: Context) {
-    const emptyArray = [] as const;
-    const endpoints = await ctx.deferredEndpoints.promise;
-    const spellCheckController = ctx.getSpellCheckController();
-    const subscriptions: Readonly<{
+    interface Subscriptions {
         "context-menu": (event: Event, params: ContextMenuParams) => void;
         "update-target-url": (event: Event, url: string) => void;
         "preload-error": (event: Event, preloadPath: string, error: Error) => void;
         "will-attach-webview": (event: Event, webPreferences: any, params: any) => void;
-    }> = {
-        "context-menu": async ({sender: webContents}: Event, {editFlags, linkURL, linkText, isEditable, selectionText}) => {
-            const menuItems: MenuItemConstructorOptions[] = [];
+    }
 
-            if (linkURL) {
-                menuItems.push(
-                    {
-                        label: isEmailHref(linkURL) ? "Copy Email Address" : "Copy Link Address",
-                        click() {
-                            if (PLATFORM === "darwin") {
-                                clipboard.writeBookmark(linkText, extractEmailIfEmailHref(linkURL));
-                            } else {
-                                clipboard.writeText(extractEmailIfEmailHref(linkURL));
-                            }
-                        },
-                    },
-                );
-            } else {
-                const checkSpelling = Boolean(spellCheckController.getCurrentLocale());
-                const misspelled = Boolean(
-                    checkSpelling
-                    &&
-                    isEditable
-                    &&
-                    selectionText
-                    &&
-                    spellCheckController
-                        .getSpellCheckProvider()
-                        .isMisspelled(selectionText),
-                );
+    const emptyArray = [] as const;
+    const endpoints = await ctx.deferredEndpoints.promise;
+    const spellCheckController = ctx.getSpellCheckController();
+    const subscribe: (type: keyof Subscriptions, webContents: WebContents) => void = (() => {
+        interface SubscriptionsCache extends Record<keyof Subscriptions, WeakMap<WebContents, Subscriptions[keyof Subscriptions]>> {
+            "context-menu": WeakMap<WebContents, Subscriptions["context-menu"]>;
+            "update-target-url": WeakMap<WebContents, Subscriptions["update-target-url"]>;
+            "preload-error": WeakMap<WebContents, Subscriptions["preload-error"]>;
+            "will-attach-webview": WeakMap<WebContents, Subscriptions["will-attach-webview"]>;
+        }
 
-                if (misspelled) {
-                    menuItems.push(
-                        ...buildSpellingSuggestionMenuItems(
-                            webContents,
+        const handlersCache: Readonly<SubscriptionsCache> = {
+            "context-menu": new WeakMap(),
+            "update-target-url": new WeakMap(),
+            "preload-error": new WeakMap(),
+            "will-attach-webview": new WeakMap(),
+        };
+
+        const resultFunction: typeof subscribe = (eventName, webContents) => {
+            const subscriptions: Readonly<Subscriptions> = {
+                "context-menu": async (...[, {editFlags, linkURL, linkText, isEditable, selectionText}]) => {
+                    const menuItems: MenuItemConstructorOptions[] = [];
+
+                    if (linkURL) {
+                        menuItems.push(
+                            {
+                                label: isEmailHref(linkURL) ? "Copy Email Address" : "Copy Link Address",
+                                click() {
+                                    if (PLATFORM === "darwin") {
+                                        clipboard.writeBookmark(linkText, extractEmailIfEmailHref(linkURL));
+                                    } else {
+                                        clipboard.writeText(extractEmailIfEmailHref(linkURL));
+                                    }
+                                },
+                            },
+                        );
+                    } else {
+                        const checkSpelling = Boolean(spellCheckController.getCurrentLocale());
+                        const misspelled = Boolean(
+                            checkSpelling
+                            &&
+                            isEditable
+                            &&
+                            selectionText
+                            &&
                             spellCheckController
                                 .getSpellCheckProvider()
-                                .getSuggestions(selectionText)
-                                .slice(0, 7),
-                        ),
-                    );
-                }
+                                .isMisspelled(selectionText),
+                        );
 
-                if (isEditable) {
-                    menuItems.push(...[
-                        ...(menuItems.length ? [{type: "separator"} as const] : emptyArray),
-                        ...buildSpellCheckSettingsMenuItems(
-                            checkSpelling
-                                ? await spellCheckController.getAvailableDictionaries()
-                                : [],
-                            spellCheckController.getCurrentLocale(),
-                            async (locale) => {
-                                await endpoints.changeSpellCheckLocale({locale});
-                            },
-                        ),
-                    ]);
-                }
+                        if (misspelled) {
+                            menuItems.push(
+                                ...buildSpellingSuggestionMenuItems(
+                                    webContents,
+                                    spellCheckController
+                                        .getSpellCheckProvider()
+                                        .getSuggestions(selectionText)
+                                        .slice(0, 7),
+                                ),
+                            );
+                        }
 
-                menuItems.push(...[
-                    ...(menuItems.length ? [{type: "separator"} as const] : emptyArray),
-                    ...[
-                        // TODO use "role" based "cut/copy/paste" actions, currently these actions don't work properly
-                        // keep track of the respective issue https://github.com/electron/electron/issues/15219
-                        ...(editFlags.canCut ? [{label: "Cut", click: () => webContents.cut()}] : emptyArray),
-                        ...(editFlags.canCopy ? [{label: "Copy", click: () => webContents.copy()}] : emptyArray),
-                        ...(editFlags.canPaste ? [{label: "Paste", click: () => webContents.paste()}] : emptyArray),
-                        ...(editFlags.canSelectAll ? [{label: "Select All", click: () => webContents.selectAll()}] : emptyArray),
-                    ],
-                ]);
-            }
+                        if (isEditable) {
+                            menuItems.push(...[
+                                ...(menuItems.length ? [{type: "separator"} as const] : emptyArray),
+                                ...buildSpellCheckSettingsMenuItems(
+                                    checkSpelling
+                                        ? await spellCheckController.getAvailableDictionaries()
+                                        : [],
+                                    spellCheckController.getCurrentLocale(),
+                                    async (locale) => {
+                                        await endpoints.changeSpellCheckLocale({locale});
+                                    },
+                                ),
+                            ]);
+                        }
 
-            if (!menuItems.length) {
-                return;
-            }
+                        menuItems.push(...[
+                            ...(menuItems.length ? [{type: "separator"} as const] : emptyArray),
+                            ...[
+                                // TODO use "role" based "cut/copy/paste" actions, currently these actions don't work properly
+                                // keep track of the respective issue https://github.com/electron/electron/issues/15219
+                                ...(editFlags.canCut ? [{label: "Cut", click: () => webContents.cut()}] : emptyArray),
+                                ...(editFlags.canCopy ? [{label: "Copy", click: () => webContents.copy()}] : emptyArray),
+                                ...(editFlags.canPaste ? [{label: "Paste", click: () => webContents.paste()}] : emptyArray),
+                                ...(editFlags.canSelectAll ? [{label: "Select All", click: () => webContents.selectAll()}] : emptyArray),
+                            ],
+                        ]);
+                    }
 
-            Menu
-                .buildFromTemplate(menuItems)
-                .popup({});
-        },
-        "update-target-url": (...[, url]) => {
-            IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.TargetUrl({url}));
-        },
-        "preload-error": (event, preloadPath, error) => {
-            logger.error(event.type, preloadPath, error);
-        },
-        "will-attach-webview": (() => {
-            const srcWhitelist: string[] = Object
-                .values(ACCOUNTS_CONFIG)
-                .reduce((list: EntryUrlItem[], {entryUrl}) => list.concat(entryUrl), [])
-                .filter((item) => !item.value.startsWith(ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX))
-                .map(({value}) => value)
-                .concat(
-                    Object
-                        .values(ctx.locations.webClients)
-                        .map((locationsMap) => Object.values(locationsMap))
-                        .reduce((list: typeof entryUrls, entryUrls) => list.concat(entryUrls), [])
-                        .map(({entryUrl}) => entryUrl),
-                );
-            const result: (typeof subscriptions)["will-attach-webview"] = (willAttachWebviewEvent, webPreferences, {src}) => {
-                const allowedSrc = srcWhitelist.some((allowedPrefix) => src.startsWith(allowedPrefix));
+                    if (!menuItems.length) {
+                        return;
+                    }
 
-                webPreferences.nodeIntegration = false;
+                    Menu
+                        .buildFromTemplate(menuItems)
+                        .popup({});
+                },
+                "update-target-url": (...[, url]) => {
+                    IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.TargetUrl({url}));
+                },
+                "preload-error": (event, preloadPath, error) => {
+                    logger.error(event.type, preloadPath, error);
+                },
+                "will-attach-webview": (() => {
+                    const srcWhitelist: string[] = Object
+                        .values(ACCOUNTS_CONFIG)
+                        .reduce((list: EntryUrlItem[], {entryUrl}) => list.concat(entryUrl), [])
+                        .filter((item) => !item.value.startsWith(ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX))
+                        .map(({value}) => value)
+                        .concat(
+                            Object
+                                .values(ctx.locations.webClients)
+                                .map((locationsMap) => Object.values(locationsMap))
+                                .reduce((list: typeof entryUrls, entryUrls) => list.concat(entryUrls), [])
+                                .map(({entryUrl}) => entryUrl),
+                        );
+                    const result: (typeof subscriptions)["will-attach-webview"] = (willAttachWebviewEvent, webPreferences, {src}) => {
+                        const allowedSrc = srcWhitelist.some((allowedPrefix) => src.startsWith(allowedPrefix));
 
-                if (!allowedSrc) {
-                    willAttachWebviewEvent.preventDefault();
-                    logger.error(new Error(`Forbidden webview.src: "${allowedSrc}"`));
-                }
+                        webPreferences.nodeIntegration = false;
+
+                        if (!allowedSrc) {
+                            willAttachWebviewEvent.preventDefault();
+                            logger.error(new Error(`Forbidden webview.src: "${allowedSrc}"`));
+                        }
+                    };
+
+                    return result;
+                })(),
             };
 
-            return result;
-        })(),
-    };
+            // TODO TS: get rid of any typecasting
+            // TS doesn't allow yet narrowing the overloaded function implementations like based on argument types
+            //      it always picks the latest overloaded function's declaration in the case of just trying referencing the function
+            //      track the following related issues resolving:
+            //          https://github.com/Microsoft/TypeScript/issues/26591
+            //          https://github.com/Microsoft/TypeScript/issues/25352
+            //      so for now we have to call "removeListener / on" explicitly for all the events
+            (() => {
+                const existingHandler = handlersCache[eventName].get(webContents);
+                const handler = subscriptions[eventName];
+
+                if (existingHandler) {
+                    webContents.removeListener(eventName as any, existingHandler);
+                }
+
+                webContents.on(eventName as any, handler);
+
+                handlersCache[eventName].set(webContents, handler as any);
+            })();
+        };
+
+        return resultFunction;
+    })();
 
     const webContentsCreatedHandler = (webContents: WebContents) => {
-        // TODO TS doesn't allow yet narrowing the overloaded function implementations like based on argument types
-        //      it always picks the latest overloaded function's declaration in the case of just trying referencing the function
-        //      track the following related issues resolving:
-        //          https://github.com/Microsoft/TypeScript/issues/26591
-        //          https://github.com/Microsoft/TypeScript/issues/25352
-        //      so for now we have to call "removeListener / on" explicitly for all the events
-        let event: keyof typeof subscriptions | undefined;
-
-        event = "context-menu";
-        webContents.removeListener(event, subscriptions[event]);
-        webContents.on(event, subscriptions[event]);
-
-        event = "update-target-url";
-        webContents.removeListener(event, subscriptions[event]);
-        webContents.on(event, subscriptions[event]);
-
-        event = "preload-error";
-        webContents.removeListener(event, subscriptions[event]);
-        webContents.on(event, subscriptions[event]);
-
-        event = "will-attach-webview";
-        webContents.removeListener(event, subscriptions[event]);
-        webContents.on(event, subscriptions[event]);
+        subscribe("context-menu", webContents);
+        subscribe("update-target-url", webContents);
+        subscribe("preload-error", webContents);
+        subscribe("will-attach-webview", webContents);
     };
 
     app.on("browser-window-created", (...[, {webContents}]) => webContentsCreatedHandler(webContents));

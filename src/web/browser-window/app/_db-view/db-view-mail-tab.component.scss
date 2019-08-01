@@ -41,8 +41,14 @@
             flex-basis: 50%;
         }
 
+        #{$app-prefix}-db-view-mails {
+            overflow: auto;
+            height: 100%;
+        }
+
         #{$app-prefix}-db-view-mail-body {
-            min-height: 100%;
+            overflow: auto;
+            height: 100%;
             background-color: $white;
         }
     }

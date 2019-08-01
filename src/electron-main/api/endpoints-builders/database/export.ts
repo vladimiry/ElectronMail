@@ -1,10 +1,11 @@
 import electronLog from "electron-log";
 import fs from "fs";
 import {Base64} from "js-base64";
-import {Observable} from "rxjs";
+import {Observable, from} from "rxjs";
 import {app, dialog} from "electron";
 import {join} from "path";
 import {promisify} from "util";
+import {switchMap} from "rxjs/operators";
 import {v4 as uuid} from "uuid";
 
 import {Context} from "src/electron-main/model";
@@ -33,50 +34,60 @@ export async function buildDbExportEndpoints(
         dbExport({type, login, mailPks}) {
             logger.info("dbExport()");
 
-            return new Observable<IpcMainServiceScan["ApiImplReturns"]["dbExport"]>((subscriber) => {
-                const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
+            return from(
+                (async () => {
+                    const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
 
-                if (!browserWindow) {
-                    return subscriber.error(new Error(`Failed to resolve main app window`));
-                }
-
-                const [dir]: Array<string | undefined> = dialog.showOpenDialog(
-                    browserWindow,
-                    {
-                        title: "Select directory to export emails to the EML files",
-                        defaultPath: app.getPath("home"),
-                        properties: ["openDirectory"],
-                    },
-                ) || [];
-
-                if (!dir) {
-                    return subscriber.complete();
-                }
-
-                const account = ctx.db.getAccount({type, login});
-
-                if (!account) {
-                    return subscriber.error(new Error(`Failed to resolve account by the provided "type/login"`));
-                }
-
-                const mails = mailPks
-                    ? Object.values(account.mails).filter(({pk}) => mailPks.includes(pk))
-                    : Object.values(account.mails);
-                const count = mails.length;
-
-                subscriber.next({count});
-
-                const promise = (async () => {
-                    for (let index = 0; index < count; index++) {
-                        const {file} = await writeEmlFile(mails[index], dir);
-                        subscriber.next({file, progress: +((index + 1) / count * 100).toFixed(2)});
+                    if (!browserWindow) {
+                        throw new Error("Failed to resolve main app window");
                     }
-                })();
 
-                promise
-                    .then(() => subscriber.complete())
-                    .catch((error) => subscriber.error(error));
-            });
+                    const {filePaths = []} = await dialog.showOpenDialog(
+                        browserWindow,
+                        {
+                            title: "Select directory to export emails to the EML files",
+                            defaultPath: app.getPath("home"),
+                            properties: ["openDirectory"],
+                        },
+                    );
+
+                    return {filePaths};
+                })(),
+            ).pipe(
+                switchMap(({filePaths}) => {
+                    return new Observable<IpcMainServiceScan["ApiImplReturns"]["dbExport"]>((subscriber) => {
+                        const [dir] = filePaths;
+
+                        if (!dir) {
+                            return subscriber.complete();
+                        }
+
+                        const account = ctx.db.getAccount({type, login});
+
+                        if (!account) {
+                            return subscriber.error(new Error(`Failed to resolve account by the provided "type/login"`));
+                        }
+
+                        const mails = mailPks
+                            ? Object.values(account.mails).filter(({pk}) => mailPks.includes(pk))
+                            : Object.values(account.mails);
+                        const count = mails.length;
+
+                        subscriber.next({count});
+
+                        const promise = (async () => {
+                            for (let index = 0; index < count; index++) {
+                                const {file} = await writeEmlFile(mails[index], dir);
+                                subscriber.next({file, progress: +((index + 1) / count * 100).toFixed(2)});
+                            }
+                        })();
+
+                        promise
+                            .then(() => subscriber.complete())
+                            .catch((error) => subscriber.error(error));
+                    });
+                }),
+            );
         },
     };
 }

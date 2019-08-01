@@ -4188,10 +4188,10 @@ electron-publish@20.44.4:
     lazy-val "^1.0.4"
     mime "^2.4.4"
 
-electron-rpc-api@5.1.0:
-  version "5.1.0"
-  resolved "https://registry.yarnpkg.com/electron-rpc-api/-/electron-rpc-api-5.1.0.tgz#897d0f9c7209a6ceb112bd4b43c2fda4aab3936c"
-  integrity sha512-zuoenY12tP9ouOeyCwf0HbGw3ZbjrdBFk3PxNnkEuurJ2nIobbAdJa23dd47RJHwtmKk3swSDK/FSwoZtFBA2g==
+electron-rpc-api@6.0.0-beta4:
+  version "6.0.0-beta4"
+  resolved "https://registry.yarnpkg.com/electron-rpc-api/-/electron-rpc-api-6.0.0-beta4.tgz#93b568e4cf5e45224847b463d7b51df7d2c66607"
+  integrity sha512-qMVreXnFeOGC7/feolIaQYXdFyBFLFqAx6oHO/pRgRf71+x9nMTWNnOnC1xWL4kCgL8xCTo8ySB6jgKWNB3ZlQ==
   dependencies:
     pubsub-to-rpc-api "^5.1.0"
     tslib "^1.10.0"
@@ -4212,10 +4212,10 @@ electron-unhandled@2.2.0:
     ensure-error "^1.0.0"
     lodash.debounce "^4.0.8"
 
-electron@5.0.8:
-  version "5.0.8"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-5.0.8.tgz#b240726ce9e3510d3af30a981486c9850462c718"
-  integrity sha512-wkUVE2GaYCsqQTsISSHWkIkcdpwLwZ1jhzAXSFFoSzsTgugmzhX60rJjIccotUmZ0iPzw+u4ahfcaJ0eslrPNQ==
+electron@6.0.0:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-6.0.0.tgz#03712d461ac73cdf920b2336d6560d6c6b7f19cc"
+  integrity sha512-JVHj0dYtvVFrzVk1TgvrdXJSyLpdvlWNLhtG8ItYZsyg9XbCOQ9OoPfgLm04FjMzKMzEl4YIN0PfGC02MTx3PQ==
   dependencies:
     "@types/node" "^10.12.18"
     electron-download "^4.1.0"

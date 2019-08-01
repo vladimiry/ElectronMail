@@ -5,9 +5,10 @@ branches:
   only:
     - master
 language: node_js
-node_js: 11.14.0
+node_js: 12.4.0
 cache:
-  yarn: true
+  yarn: false
+  npm: false
   directories:
     - output/git
 env:

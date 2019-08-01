@@ -63,7 +63,6 @@ for:
           7z x $env:LINUX_JOB_ARTIFACT_TAR
       - ps: | # actual build
           yarn app:dist
-          yarn test:e2e
           yarn electron-builder:dist
           yarn scripts/dist-packages/print-hashes
           yarn scripts/dist-packages/upload

@@ -1,23 +1,19 @@
-import path from "path";
 import {AngularCompilerPlugin, NgToolsLoader, PLATFORM} from "@ngtools/webpack";
-import {CheatAngularCompilerResourcePlugin} from "webpack-dll-ng-module-loader/plugin";
-import {DefinePlugin, DllReferencePlugin} from "webpack";
+import {DefinePlugin} from "webpack";
 
 import {BuildAngularCompilationFlags, BuildEnvironment} from "webpack-configs/model";
-import {ENVIRONMENT, ENVIRONMENT_STATE, outputRelativePath, rootRelativePath} from "webpack-configs/lib";
+import {ENVIRONMENT, ENVIRONMENT_STATE, rootRelativePath} from "webpack-configs/lib";
 import {WEB_CHUNK_NAMES} from "src/shared/constants";
 import {browserWindowAppPath, browserWindowPath, buildBaseWebConfig, cssRuleSetUseItems} from "./lib";
 
-// tslint:disable:no-var-requires
-// TODO import "@angular/compiler-cli" using ES6 import format on  https://github.com/angular/angular/issues/29220 resolving
+// TODO import "@angular/compiler-cli" using ES6 import format on https://github.com/angular/angular/issues/29220 resolving
+// tslint:disable-next-line:no-var-requires
 const {readConfiguration} = require("@angular/compiler-cli");
-// tslint:enable:no-var-requires
 
 // TODO enable "ivy" and "aot" in all modes
 const angularCompilationFlags: BuildAngularCompilationFlags = {
     aot: ENVIRONMENT_STATE.production,
     ivy: ENVIRONMENT_STATE.production,
-    dllRef: ENVIRONMENT_STATE.development,
 };
 
 const tsConfigFile = browserWindowPath(({
@@ -110,45 +106,5 @@ const config = buildBaseWebConfig(
         chunkName: WEB_CHUNK_NAMES["browser-window"],
     },
 );
-
-if (angularCompilationFlags.dllRef) {
-    const dllOutputPath = outputRelativePath(`./web/${WEB_CHUNK_NAMES["browser-window-dll"]}/`);
-    const dllOutputFileName = WEB_CHUNK_NAMES["browser-window-dll"];
-    const dllOutputFileNameRelativeRequirePath = (() => {
-        if (!config.output || !config.output.path) {
-            throw new Error(`"config.output.path" is undefined`);
-        }
-        return path.join(
-            path.relative(
-                config.output.path,
-                dllOutputPath,
-            ),
-            `${dllOutputFileName}.js`,
-        );
-    })();
-
-    config.plugins = [
-        new CheatAngularCompilerResourcePlugin(),
-
-        ...(config.plugins || []),
-
-        new DllReferencePlugin({
-            context: config.context || process.cwd(),
-            manifest: require(`${dllOutputPath}/${dllOutputFileName}-manifest.json`),
-        }),
-
-        new DefinePlugin({
-            BUILD_ANGULAR_INJECT_DLL: JSON.stringify(dllOutputFileNameRelativeRequirePath),
-        }),
-    ];
-} else {
-    config.plugins = [
-        ...(config.plugins || []),
-
-        new DefinePlugin({
-            BUILD_ANGULAR_INJECT_DLL: false,
-        }),
-    ];
-}
 
 export default config;

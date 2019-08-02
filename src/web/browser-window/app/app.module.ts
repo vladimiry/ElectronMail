@@ -5,11 +5,10 @@ import {BrowserModule} from "@angular/platform-browser";
 import {BsDropdownModule} from "ngx-bootstrap/dropdown";
 import {CollapseModule} from "ngx-bootstrap/collapse";
 import {EffectsModule} from "@ngrx/effects";
-import {ErrorHandler, Injector, NgModule, NgModuleFactoryLoader} from "@angular/core";
+import {ErrorHandler, Injector, NgModule} from "@angular/core";
 import {META_REDUCERS, StoreModule} from "@ngrx/store";
 import {PopoverModule} from "ngx-bootstrap/popover";
 import {StoreRouterConnectingModule} from "@ngrx/router-store";
-import {WebpackDllNgModuleLoader} from "webpack-dll-ng-module-loader";
 
 import * as AccountsReducer from "./store/reducers/accounts";
 import * as DbViewReducer from "./store/reducers/db-view";
@@ -76,11 +75,6 @@ import {createAppMetaReducer, createErrorHandlingMetaReducer, reducers} from "./
             multi: true,
             useFactory: createAppMetaReducer,
         },
-        ...(
-            BUILD_ANGULAR_COMPILATION_FLAGS.dllRef
-                ? [{provide: NgModuleFactoryLoader, useClass: WebpackDllNgModuleLoader}]
-                : []
-        ),
     ],
     bootstrap: [AppComponent],
 })

@@ -38,7 +38,7 @@ export function isLoggedIn(): boolean {
 }
 
 export const preprocessError: Arguments<typeof buildDbPatchRetryPipeline>[0] = (rawError: any) => {
-    type SanitizedNgHttpResponse = (Skip<ng.IHttpResponse<"<wiped out>">, "headers"> & { message: string; headers: "<wiped out>" });
+    type SanitizedNgHttpResponse = (Skip<ng.IHttpResponse<"<wiped-out>">, "headers"> & { message: string; headers: "<wiped-out>" });
     const sanitizedNgHttpResponse: SanitizedNgHttpResponse | false = angularJsHttpResponseTypeGuard(rawError)
         ? {
             // TODO add tests to validate that "angularJsHttpResponseTypeGuard" call on this error still return "true"
@@ -46,9 +46,12 @@ export const preprocessError: Arguments<typeof buildDbPatchRetryPipeline>[0] = (
             // so information like http headers and params is filtered out
             message: rawError.statusText || "HTTP request error",
             ...pick(["status", "statusText", "xhrStatus"], rawError),
-            config: pick(["method", "url"], rawError.config),
-            data: "<wiped out>",
-            headers: "<wiped out>",
+            config: {
+                ...pick(["method"], rawError.config),
+                url: depersonalizeLoggedUrl(rawError.config.url),
+            },
+            data: "<wiped-out>",
+            headers: "<wiped-out>",
         }
         : false;
     const retriable: boolean = (
@@ -78,3 +81,17 @@ export const preprocessError: Arguments<typeof buildDbPatchRetryPipeline>[0] = (
         skippable: retriable,
     };
 };
+
+export function depersonalizeLoggedUrl(url: string): string {
+    const parts = url.split("/");
+    const lastPart = parts.pop();
+    // we assume that long last part is not the endpoint name/subname but a value/id
+    const skipLastPart = lastPart && lastPart.length >= 10;
+
+    return [
+        ...parts,
+        skipLastPart
+            ? "<wiped-out>"
+            : lastPart,
+    ].join("/");
+}

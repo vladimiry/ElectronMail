@@ -2,6 +2,7 @@ import {Observable} from "rxjs";
 
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {curryFunctionMembers} from "src/shared/util";
+import {depersonalizeLoggedUrl} from "src/electron-preload/webview/protonmail/lib/util";
 
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail, "[notifications]");
 
@@ -42,7 +43,11 @@ export const AJAX_SEND_NOTIFICATION$ = new Observable<XMLHttpRequest>((subscribe
 
             logger.warn(
                 "XMLHttpRequest error",
-                JSON.stringify({status: this.status, statusText: this.statusText, responseURL: this.responseURL}),
+                JSON.stringify({
+                    status: this.status,
+                    statusText: this.statusText,
+                    responseURL: depersonalizeLoggedUrl(this.responseURL),
+                }),
             );
         },
         loadEndHandler = function(this: XMLHttpRequestType) {

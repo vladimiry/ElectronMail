@@ -111,7 +111,7 @@ export function isUpsertUpdate(update: Rest.Model.EntityUpdate) {
 }
 
 export const preprocessError: Arguments<typeof buildDbPatchRetryPipeline>[0] = (rawError: any) => {
-    const {name, message}: {name?: unknown; message?: unknown} = Object(rawError);
+    const {name, message}: { name?: unknown; message?: unknown } = Object(rawError);
     const retriable = (
         !navigator.onLine
         ||
@@ -123,9 +123,44 @@ export const preprocessError: Arguments<typeof buildDbPatchRetryPipeline>[0] = (
         ||
         (name === "ServiceUnavailableError" && String(message).startsWith("503"))
     );
+
+    for (const prop in Object(rawError)) {
+        if (Object(rawError).hasOwnProperty(prop) && typeof rawError[prop] === "string") {
+            rawError[prop] = depersonalizeLoggedData(rawError[prop]);
+        }
+    }
+
+    rawError.stack = depersonalizeLoggedData(
+        String(rawError.stack),
+    );
+
     return {
         error: rawError,
         retriable,
         skippable: retriable,
     };
 };
+
+export function depersonalizeLoggedData(value: string): string {
+    // tutanota's IDs include normally include "/sdfjbjsdfjh----1" | "sdfjbjsdfjh-2s-0";
+    const mapSubPart = (subPart: string) => {
+        const sensitive = /-[\d]+$/.test(
+            String(subPart)
+                .replace(/[\r\t\n]/g, ""),
+        );
+        return sensitive
+            ? "<wiped-out>"
+            : subPart;
+    };
+    return value
+        .split("/")
+        .map((part) => {
+            return /-[\d]+/.test(part)
+                ? part
+                    .split(" ")
+                    .map(mapSubPart)
+                    .join(" ")
+                : part;
+        })
+        .join("/");
+}

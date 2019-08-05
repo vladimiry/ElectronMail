@@ -1,12 +1,12 @@
 import {concatMap, delay, retryWhen} from "rxjs/operators";
-import {of, throwError} from "rxjs";
+import {from, of, throwError} from "rxjs";
 
 import {Config} from "src/shared/model/options";
 import {DbPatch} from "src/shared/api/common";
+import {FsDbAccount} from "src/shared/model/database";
 import {IPC_MAIN_API, IpcMainApiEndpoints} from "src/shared/api/main";
 import {LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN, ONE_SECOND_MS} from "src/shared/constants";
-import {StatusCodeError} from "src/shared/model/error";
-import {asyncDelay, curryFunctionMembers} from "src/shared/util";
+import {asyncDelay, curryFunctionMembers, isDatabaseBootstrapped} from "src/shared/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
 
 const configsCache: { resolveDomElements?: Config } = {};
@@ -185,8 +185,9 @@ export async function submitTotpToken(
 
 export function buildDbPatchRetryPipeline<T>(
     preprocessError: (rawError: any) => { error: Error; retriable: boolean; skippable: boolean; },
+    metadata: FsDbAccount["metadata"] | null,
     logger: ReturnType<typeof buildLoggerBundle>,
-    {retriesDelay = ONE_SECOND_MS * 5, retriesLimit = 2}: { retriesDelay?: number, retriesLimit?: number } = {},
+    {retriesDelay = ONE_SECOND_MS * 5, retriesLimit = 3}: { retriesDelay?: number, retriesLimit?: number } = {},
 ) {
     const errorResult = (error: Error) => {
         logger.error(error);
@@ -197,11 +198,16 @@ export function buildDbPatchRetryPipeline<T>(
         concatMap((rawError, retryIndex) => {
             const {error, retriable, skippable} = preprocessError(rawError);
 
+            if (!isDatabaseBootstrapped(metadata)) {
+                // no retrying for initial/bootstrap fetch
+                return errorResult(error);
+            }
+
             if (retryIndex >= retriesLimit) {
                 if (skippable) {
                     const message = `Skipping "buildDbPatch" call`;
                     logger.warn(message, error);
-                    return throwError(new StatusCodeError(message, "SkipDbPatch"));
+                    return from(Promise.resolve());
                 }
                 return errorResult(error);
             }

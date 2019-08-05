@@ -1,5 +1,4 @@
-import {catchError} from "rxjs/operators";
-import {defer, from} from "rxjs";
+import {defer} from "rxjs";
 
 import * as Database from "src/electron-preload/webview/protonmail/lib/database";
 import * as DatabaseModel from "src/shared/model/database";
@@ -10,7 +9,6 @@ import {DbPatch} from "src/shared/api/common";
 import {FsDbAccount} from "src/shared/model/database";
 import {ProtonmailApi, ProtonmailApiScan} from "src/shared/api/webview/protonmail";
 import {ProviderApi, resolveProviderApi} from "src/electron-preload/webview/protonmail/lib/provider-api";
-import {StatusCodeError} from "src/shared/model/error";
 import {UPSERT_EVENT_ACTIONS} from "src/electron-preload/webview/protonmail/lib/rest/model";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {asyncDelay, curryFunctionMembers, isDatabaseBootstrapped} from "src/shared/util";
@@ -33,12 +31,13 @@ const buildDbPatchEndpoint: Pick<ProtonmailApi, "buildDbPatch" | "fetchSingleMai
 
         logger.info();
 
+        const inputMetadata = input.metadata;
         const deferFactory: () => Promise<BuildDbPatchMethodReturnType> = async () => {
             logger.info("delayFactory()");
 
             if (!isLoggedIn()) {
                 // TODO handle switching from built-in webclient to remote and back more properly
-                // the account state keeps the "signed-in" state despite of page still being reloded
+                // the account state keeps the "signed-in" state despite of page still being reloaded
                 // so we need to reset "signed-in" state with "account.entryUrl" value change
                 await asyncDelay(ONE_SECOND_MS * 5);
 
@@ -46,8 +45,6 @@ const buildDbPatchEndpoint: Pick<ProtonmailApi, "buildDbPatch" | "fetchSingleMai
                     throw new Error("protonmail:buildDbPatch(): user is supposed to be logged-in");
                 }
             }
-
-            const inputMetadata = input.metadata;
 
             if (!isDatabaseBootstrapped(inputMetadata)) {
                 await bootstrapDbPatch(
@@ -121,13 +118,7 @@ const buildDbPatchEndpoint: Pick<ProtonmailApi, "buildDbPatch" | "fetchSingleMai
         };
 
         return defer(deferFactory).pipe(
-            buildDbPatchRetryPipeline<BuildDbPatchMethodReturnType>(preprocessError, _logger),
-            catchError((error) => {
-                if (StatusCodeError.hasStatusCodeValue(error, "SkipDbPatch")) {
-                    return from(Promise.resolve());
-                }
-                throw error;
-            }),
+            buildDbPatchRetryPipeline<BuildDbPatchMethodReturnType>(preprocessError, inputMetadata, _logger),
         );
     },
 

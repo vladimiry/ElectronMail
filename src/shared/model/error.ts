@@ -3,14 +3,12 @@ import {PACKAGE_NAME} from "src/shared/constants";
 type Code =
     | "NotFoundAccount"
     | "InvalidArgument"
-    | "NoNetworkConnection"
-    | "SkipDbPatch";
+    | "NoNetworkConnection";
 
 const statusCodesMap: Record<Code, string> = {
     NotFoundAccount: `${PACKAGE_NAME}:NotFoundAccount`,
     InvalidArgument: `${PACKAGE_NAME}:InvalidArgument`,
     NoNetworkConnection: `${PACKAGE_NAME}:NoNetworkConnection`,
-    SkipDbPatch: `${PACKAGE_NAME}:SkipDbPatch`,
 };
 
 // TODO add optional "cause" constructor argument

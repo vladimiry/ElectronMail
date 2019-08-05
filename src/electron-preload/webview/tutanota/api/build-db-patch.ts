@@ -1,5 +1,4 @@
-import {catchError} from "rxjs/operators";
-import {defer, from} from "rxjs";
+import {defer} from "rxjs";
 
 import * as Database from "src/electron-preload/webview/tutanota/lib/database";
 import * as DatabaseModel from "src/shared/model/database";
@@ -7,7 +6,6 @@ import * as Rest from "src/electron-preload/webview/tutanota/lib/rest";
 import {DEFAULT_MESSAGES_STORE_PORTION_SIZE} from "src/shared/constants";
 import {DbPatch} from "src/shared/api/common";
 import {FsDbAccount} from "src/shared/model/database";
-import {StatusCodeError} from "src/shared/model/error";
 import {TutanotaApi, TutanotaScanApi} from "src/shared/api/webview/tutanota";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {buildDbPatchRetryPipeline, buildEmptyDbPatch, persistDatabasePatch, resolveIpcMainApi} from "src/electron-preload/webview/util";
@@ -31,11 +29,11 @@ const buildDbPatchEndpoint: Pick<TutanotaApi, "buildDbPatch"> = {
 
         logger.info();
 
+        const inputMetadata = input.metadata;
         const deferFactory: () => Promise<BuildDbPatchMethodReturnType> = async () => {
             logger.info("delayFactory()");
 
             const controller = getUserController();
-            const inputMetadata = input.metadata;
 
             if (!controller || !isLoggedIn()) {
                 throw new Error("tutanota:buildDbPatch(): user is supposed to be logged-in");
@@ -104,13 +102,7 @@ const buildDbPatchEndpoint: Pick<TutanotaApi, "buildDbPatch"> = {
         };
 
         return defer(deferFactory).pipe(
-            buildDbPatchRetryPipeline<BuildDbPatchMethodReturnType>(preprocessError, _logger),
-            catchError((error) => {
-                if (StatusCodeError.hasStatusCodeValue(error, "SkipDbPatch")) {
-                    return from(Promise.resolve());
-                }
-                throw error;
-            }),
+            buildDbPatchRetryPipeline<BuildDbPatchMethodReturnType>(preprocessError, inputMetadata, _logger),
         );
     },
 };

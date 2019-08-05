@@ -2,7 +2,6 @@ import {pick} from "ramda";
 
 import * as Rest from "./rest";
 import {UPSERT_EVENT_ACTIONS} from "src/electron-preload/webview/protonmail/lib/rest/model";
-import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {buildDbPatchRetryPipeline} from "src/electron-preload/webview/util";
 
 export const isUpsertOperationType: (v: Unpacked<typeof Rest.Model.EVENT_ACTION._.values>) => boolean = (() => {
@@ -39,22 +38,18 @@ export function isLoggedIn(): boolean {
 }
 
 export const preprocessError: Arguments<typeof buildDbPatchRetryPipeline>[0] = (rawError: any) => {
-    const sanitizedNgHttpResponse: (Skip<ng.IHttpResponse<"<wiped out>">, "headers"> & { message: string; headers: "<wiped out>" }) | false
-        = angularJsHttpResponseTypeGuard(rawError)
-        ? (() => {
-            const result = {
-                // TODO add tests to validate that "angularJsHttpResponseTypeGuard" call on this error still return "true"
-                // whitelistening properties if error is "angular http response" object
-                // so information like http headers and params is filtered out
-                message: rawError.statusText || "HTTP request error",
-                ...pick(["status", "statusText", "xhrStatus"], rawError),
-                config: pick(["method", "url"], rawError.config),
-                data: "<wiped out>",
-                headers: "<wiped out>",
-            } as const;
-            WEBVIEW_LOGGERS.protonmail.error("preprocessError()", JSON.stringify(result));
-            return result;
-        })()
+    type SanitizedNgHttpResponse = (Skip<ng.IHttpResponse<"<wiped out>">, "headers"> & { message: string; headers: "<wiped out>" });
+    const sanitizedNgHttpResponse: SanitizedNgHttpResponse | false = angularJsHttpResponseTypeGuard(rawError)
+        ? {
+            // TODO add tests to validate that "angularJsHttpResponseTypeGuard" call on this error still return "true"
+            // whitelistening properties if error is "angular http response" object
+            // so information like http headers and params is filtered out
+            message: rawError.statusText || "HTTP request error",
+            ...pick(["status", "statusText", "xhrStatus"], rawError),
+            config: pick(["method", "url"], rawError.config),
+            data: "<wiped out>",
+            headers: "<wiped out>",
+        }
         : false;
     const retriable: boolean = (
         !navigator.onLine

@@ -30,7 +30,7 @@ export async function initApplicationMenu(ctx: Context): Promise<Menu> {
                     accelerator: "Command+H",
                 },
                 {
-                    role: "hideothers",
+                    role: "hideOthers",
                     accelerator: "Command+Alt+H",
                 },
                 {

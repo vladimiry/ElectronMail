@@ -4,7 +4,7 @@ export interface TutanotaWindow {
     SystemJS: SystemJSLoader.System;
     tutao?: {
         m: {
-            route: m.Route;
+            route: import("mithril").Route;
         };
         logins?: {
             getUserController?: () => { accessToken: string, user: Rest.Model.User };

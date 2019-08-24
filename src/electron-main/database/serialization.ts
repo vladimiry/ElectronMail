@@ -51,9 +51,9 @@ const bufferToStream = (buffer: Buffer): Readable => {
 };
 
 export class SerializationAdapter {
-    public readonly read: <T extends FsDb>(data: Buffer) => Promise<T>;
+    public readonly read: (data: Buffer) => Promise<FsDb>;
 
-    public readonly write: <T extends FsDb>(data: ReadonlyDeep<T>) => Promise<Buffer>;
+    public readonly write: (data: ReadonlyDeep<FsDb>) => Promise<Buffer>;
 
     private logger = curryFunctionMembers(_logger, "[src/electron-main/database/serialization]", "[SerializationAdapter]");
 
@@ -62,7 +62,7 @@ export class SerializationAdapter {
 
         const encryptionAdapter = new EncryptionAdapterBundle.EncryptionAdapter(input);
 
-        this.read = async <T extends FsDb>(data: Buffer) => {
+        this.read = async (data: Buffer) => {
             this.logger.info(`read() buffer.length: ${data.length}`);
 
             const {header: {serialization}} = persistencePartsUtil.split(data);
@@ -70,7 +70,7 @@ export class SerializationAdapter {
 
             if (serialization && serialization.type === "msgpack") {
                 this.logger.verbose(`"msgpack.decode" start`);
-                const decoded = msgpack.decode(decryptedData) as T;
+                const decoded = msgpack.decode(decryptedData) as FsDb;
                 this.logger.verbose(`"msgpack.decode" end`);
                 return decoded;
             }

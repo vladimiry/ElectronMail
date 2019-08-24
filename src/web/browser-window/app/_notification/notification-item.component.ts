@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, EventEmitter, Inject, Input, LOCALE_ID, Output} from "@angular/core";
+import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output} from "@angular/core";
 import {formatDate} from "@angular/common";
 
 import {NotificationItem} from "src/web/browser-window/app/store/actions/notification";
@@ -17,6 +17,9 @@ export class NotificationItemComponent {
 
     @Output()
     removeHandler = new EventEmitter<NotificationItem>();
+
+    // TODO move to constructor arg with "@Inject(LOCALE_ID)"
+    private locale = "en-US";
 
     private _item!: NotificationItem;
 
@@ -40,10 +43,7 @@ export class NotificationItemComponent {
             );
     }
 
-    constructor(
-        @Inject(LOCALE_ID)
-        private locale: string,
-    ) {}
+    constructor() {}
 
     remove() {
         this.removeHandler.emit(this._item);

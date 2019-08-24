@@ -19,7 +19,10 @@ export async function buildMails(mails: Rest.Model.Mail[]): Promise<DatabaseMode
         // or server will response with timeout error on "/rest/tutanota/mailbody/" request
         await Rest.fetchMultipleEntities(Rest.Model.MailBodyTypeRef, null, mails.map(({body}) => body), 20),
         await (async () => {
-            const attachmentsIds = mails.reduce((accumulator: typeof mail.attachments, mail) => [...accumulator, ...mail.attachments], []);
+            const attachmentsIds = mails.reduce(
+                (accumulator: Unpacked<typeof mails>["attachments"], mail) => [...accumulator, ...mail.attachments],
+                [],
+            );
             const attachmentsMap = mapBy(attachmentsIds, (_id) => resolveListId({_id}));
             const attachments: Rest.Model.File[] = [];
 

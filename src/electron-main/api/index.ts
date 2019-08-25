@@ -9,6 +9,7 @@ import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {PACKAGE_NAME, PRODUCT_NAME} from "src/shared/constants";
 import {attachFullTextIndexWindow, detachFullTextIndexWindow} from "src/electron-main/window/full-text-search";
 import {buildSettingsAdapter} from "src/electron-main/util";
+import {clearIdleTimeLogOut, setupIdleTimeLogOut} from "src/electron-main/power-monitor";
 import {curryFunctionMembers} from "src/shared/util";
 import {deletePassword, getPassword, setPassword} from "src/electron-main/keytar";
 import {initSessionByAccount} from "src/electron-main/session";
@@ -101,6 +102,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
 
             await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0});
             await detachFullTextIndexWindow(ctx);
+            clearIdleTimeLogOut();
 
             IPC_MAIN_API_NOTIFICATION$.next(
                 IPC_MAIN_API_NOTIFICATION_ACTIONS.SignedInStateChange({signedIn: false}),
@@ -124,6 +126,11 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
                 } else {
                     await detachFullTextIndexWindow(ctx);
                 }
+            }
+
+            // TODO update "patchBaseConfig" api method: test "setupIdleTimeLogOut" call
+            if (newConfig.idleTimeLogOutSec !== savedConfig.idleTimeLogOutSec) {
+                await setupIdleTimeLogOut({idleTimeLogOutSec: newConfig.idleTimeLogOutSec});
             }
 
             return newConfig;
@@ -181,6 +188,12 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             for (const {login, proxy} of settings.accounts) {
                 await initSessionByAccount(ctx, {login, proxy});
             }
+
+            await (async () => {
+                // TODO update "readSettings" api method: test "setupIdleTimeLogOut" call
+                const {idleTimeLogOutSec} = await endpoints.readConfig();
+                await setupIdleTimeLogOut({idleTimeLogOutSec});
+            })();
 
             IPC_MAIN_API_NOTIFICATION$.next(
                 IPC_MAIN_API_NOTIFICATION_ACTIONS.SignedInStateChange({signedIn: true}),

@@ -3887,6 +3887,11 @@ deserialize-error@^0.0.3:
   resolved "https://registry.yarnpkg.com/deserialize-error/-/deserialize-error-0.0.3.tgz#f568633572d7c2cc46a55a5fc254b6dfce7b3fca"
   integrity sha1-9WhjNXLXwsxGpVpfwlS23857P8o=
 
+desktop-idle@1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/desktop-idle/-/desktop-idle-1.2.0.tgz#b67d101eacc8f20c985435702496c64188974b29"
+  integrity sha512-sncRHgZaKian1J0yEnqFAxYzQ7mx2dB0LyqZiaTc5NufFwZ7gbaaiisK7DaRZorBK4HKGOUOOd72bbgVS/TBuQ==
+
 destroy@~1.0.4:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/destroy/-/destroy-1.0.4.tgz#978857442c44749e4206613e37946205826abd80"

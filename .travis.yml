@@ -39,7 +39,9 @@ jobs:
           packages:
             # for native modules compiling/rebuilding
             - g++-7
-            # for rebuilding "node-keytar" native module (if there is no prebuild binary for used node version)
+            # for rebuilding "desktop-idle" native module
+            - libxss-dev
+            # for rebuilding "node-keytar" native module
             - gnome-keyring
             - libgnome-keyring-dev
             - libsecret-1-dev

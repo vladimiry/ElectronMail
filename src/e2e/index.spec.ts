@@ -9,10 +9,14 @@ import fs from "fs";
 import path from "path";
 import psNode from "ps-node"; // see also https://www.npmjs.com/package/find-process
 import psTree from "ps-tree";
+import {ExecutionContext} from "ava";
 import {promisify} from "util";
 
 import {ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX} from "src/shared/constants";
-import {CI, ENV, PROJECT_NAME, initApp, saveScreenshot, test} from "./workflow";
+import {CI, ENV, PROJECT_NAME, TestContext, initApp, saveScreenshot, test} from "./workflow";
+import {Config} from "src/shared/model/options";
+import {ONE_SECOND_MS} from "src/shared/constants";
+import {asyncDelay} from "src/shared/util";
 
 test.serial("general actions: app start, master password setup, add accounts, logout, auto login", async (t) => {
     // setup and login
@@ -63,6 +67,31 @@ test.serial("general actions: app start, master password setup, add accounts, lo
         await workflow.destroyApp();
     })();
 
+    await afterEach(t);
+});
+
+test.serial("auto logout", async (t) => {
+    const workflow = await initApp(t, {initial: true});
+    await workflow.login({setup: true, savePassword: false});
+    await workflow.logout();
+
+    const configFile = path.join(t.context.userDataDirPath, "config.json");
+    const configFileData: Config = JSON.parse(fs.readFileSync(configFile).toString());
+    const idleTimeLogOutSec = 10;
+
+    configFileData.startMinimized = true;
+    configFileData.idleTimeLogOutSec = idleTimeLogOutSec;
+    fs.writeFileSync(configFile, JSON.stringify(configFileData, null, 2));
+
+    await workflow.login({setup: false, savePassword: false});
+    await asyncDelay(idleTimeLogOutSec * ONE_SECOND_MS * 1.5);
+    await workflow.loginPageUrlTest("auto-logout");
+    await workflow.destroyApp();
+
+    await afterEach(t);
+});
+
+async function afterEach(t: ExecutionContext<TestContext>) {
     if (fs.existsSync(t.context.logFilePath)) {
         await new Promise((resolve, reject) => {
             const stream = byline.createStream(
@@ -95,7 +124,7 @@ test.serial("general actions: app start, master password setup, add accounts, lo
     // additionally making sure that settings file is actually encrypted by simply scanning it for the raw "login" value
     const rawSettings = promisify(fs.readFile)(path.join(t.context.userDataDirPath, "settings.bin"));
     t.true(rawSettings.toString().indexOf(ENV.loginPrefix) === -1);
-});
+}
 
 test.beforeEach(async (t) => {
     t.context.testStatus = "initial";

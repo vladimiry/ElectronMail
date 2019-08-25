@@ -211,6 +211,17 @@
             </label>
         </div>
         <hr>
+        <label class="d-block mb-2" for="idleTimeLogOutSec">
+            Automatic log out after idle period
+            <span class="badge badge-secondary">experimental</span>
+        </label>
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <ng-select
+                    [clearable]="false" [items]="idleTimeLogOutSecValues" bindLabel="title" bindValue="valueSec" formControlName="idleTimeLogOutSec"
+                ></ng-select>
+            </div>
+        </div>
         <label class="d-block mb-2" for="logLevelSelect">
             Log level
             <i
@@ -226,11 +237,9 @@
         </label>
         <div class="row">
             <div class="col-sm-6">
-                <select class="form-control form-control-sm w-100" formControlName="logLevel" id="logLevelSelect">
-                    <option *ngFor="let logLevel of logLevels" [value]="logLevel">
-                        {{ logLevel }}
-                    </option>
-                </select>
+                <ng-select
+                    [clearable]="false" [items]="logLevels" formControlName="logLevel" id="logLevelSelect"
+                ></ng-select>
             </div>
         </div>
         <div class="text-muted mt-2">

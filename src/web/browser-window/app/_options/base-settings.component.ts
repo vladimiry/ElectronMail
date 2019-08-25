@@ -30,6 +30,17 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
 
     logLevels = LOG_LEVELS;
 
+    idleTimeLogOutSecValues: ReadonlyArray<Readonly<{ title: string; valueSec: number; }>> = [
+        {title: "disabled", valueSec: 0},
+        {title: "3 minutes", valueSec: 60 * 3},
+        {title: "5 minutes", valueSec: 60 * 5},
+        {title: "10 minutes", valueSec: 60 * 10},
+        {title: "15 minutes", valueSec: 60 * 15},
+        {title: "20 minutes", valueSec: 60 * 20},
+        {title: "25 minutes", valueSec: 60 * 25},
+        {title: "30 minutes", valueSec: 60 * 30},
+    ];
+
     appearanceBlockCollapsed: boolean = true;
 
     controls: Record<keyof BaseConfig, AbstractControl> = {
@@ -43,6 +54,7 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         findInPage: new FormControl(),
         fullTextSearch: new FormControl(),
         hideControls: new FormControl(),
+        idleTimeLogOutSec: new FormControl(),
         logLevel: new FormControl(null, Validators.required),
         startMinimized: new FormControl(),
         unreadNotifications: new FormControl(),

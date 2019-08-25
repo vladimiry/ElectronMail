@@ -47,6 +47,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     findInPage: boolean;
     fullTextSearch: boolean;
     hideControls: boolean;
+    idleTimeLogOutSec: number;
     logLevel: LogLevel;
     startMinimized: boolean;
     unreadNotifications: boolean;
@@ -63,6 +64,7 @@ export type BaseConfig = Pick<Config,
     | "findInPage"
     | "fullTextSearch"
     | "hideControls"
+    | "idleTimeLogOutSec"
     | "logLevel"
     | "startMinimized"
     | "unreadNotifications">;

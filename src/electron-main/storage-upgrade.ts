@@ -183,6 +183,11 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             },
         );
     },
+    "3.8.0": (config) => {
+        if (typeof config.idleTimeLogOutSec === "undefined") {
+            config.idleTimeLogOutSec = INITIAL_STORES.config().idleTimeLogOutSec;
+        }
+    },
 };
 
 const SETTINGS_UPGRADES: Record<string, (settings: Settings) => void> = {

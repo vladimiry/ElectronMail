@@ -2,9 +2,15 @@ import {Actions, createEffect} from "@ngrx/effects";
 import {EMPTY, forkJoin, from, merge, of} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Store, select} from "@ngrx/store";
-import {catchError, filter, finalize, map, mergeMap, switchMap, takeUntil, tap} from "rxjs/operators";
+import {catchError, concatMap, filter, finalize, map, mergeMap, switchMap, takeUntil, tap} from "rxjs/operators";
 
-import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS, NOTIFICATION_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
+import {
+    ACCOUNTS_ACTIONS,
+    DB_VIEW_ACTIONS,
+    NOTIFICATION_ACTIONS,
+    OPTIONS_ACTIONS,
+    unionizeActionFilter,
+} from "src/web/browser-window/app/store/actions";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
@@ -16,6 +22,8 @@ const _logger = getZoneNameBoundWebLogger("[db-view.effects]");
 
 @Injectable()
 export class DbViewEffects {
+    readonly ipcMainClient = this.api.ipcMainClient();
+
     mountInstance$ = createEffect(
         () => this.actions$.pipe(
             unionizeActionFilter(DB_VIEW_ACTIONS.is.MountInstance),
@@ -151,6 +159,28 @@ export class DbViewEffects {
                 );
             }),
         ),
+    );
+
+    toggleLocalDbMailsListViewMode$ = createEffect(
+        () => this.actions$.pipe(
+            unionizeActionFilter(OPTIONS_ACTIONS.is.ToggleLocalDbMailsListViewMode),
+            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+            concatMap(() => {
+                return merge(
+                    of(OPTIONS_ACTIONS.PatchProgress({togglingLocalDbMailsListViewMode: true})),
+                    from(
+                        this.ipcMainClient("toggleLocalDbMailsListViewMode")(),
+                    ).pipe(
+                        concatMap((config) => [
+                            OPTIONS_ACTIONS.GetConfigResponse(config),
+                        ]),
+                        catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
+                        finalize(() => {
+                            this.store.dispatch(OPTIONS_ACTIONS.PatchProgress({togglingLocalDbMailsListViewMode: false}));
+                        }),
+                    ),
+                );
+            })),
     );
 
     constructor(

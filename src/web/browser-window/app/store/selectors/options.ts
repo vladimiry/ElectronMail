@@ -27,6 +27,7 @@ export const CONFIG = {
     unreadTextColor: createSelector(FEATURED.config, (config) => config.customUnreadTextColor || DEFAULT_UNREAD_BADGE_BG_TEXT),
     hideControls: createSelector(FEATURED.config, (config) => config.hideControls),
     timeouts: createSelector(FEATURED.config, (config) => config.timeouts),
+    localDbMailsListViewMode: createSelector(FEATURED.config, (config) => config.localDbMailsListViewMode),
 };
 
 export const SETTINGS = (() => {

@@ -187,6 +187,9 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         if (typeof config.idleTimeLogOutSec === "undefined") {
             config.idleTimeLogOutSec = INITIAL_STORES.config().idleTimeLogOutSec;
         }
+        if (typeof config.localDbMailsListViewMode === "undefined") {
+            config.localDbMailsListViewMode = INITIAL_STORES.config().localDbMailsListViewMode;
+        }
     },
 };
 

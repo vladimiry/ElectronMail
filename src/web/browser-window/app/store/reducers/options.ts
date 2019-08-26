@@ -21,6 +21,7 @@ export type ProgressPatch = Partial<{
     updatingAccount: boolean;
     changingAccountOrder: boolean;
     updatingBaseSettings: boolean;
+    togglingLocalDbMailsListViewMode: boolean;
 }>;
 
 type OptionalProps = "keytarSupport" | "electronLocations" | "checkUpdateAndNotify";

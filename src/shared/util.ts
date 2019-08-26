@@ -49,6 +49,7 @@ export function initialConfig(): Config {
             jsFlags: [
                 "--max-old-space-size=3072",
             ],
+            localDbMailsListViewMode: "plain",
             // base
             checkUpdateAndNotify: false,
             closeToTray: true,

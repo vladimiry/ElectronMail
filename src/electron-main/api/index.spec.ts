@@ -544,6 +544,11 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
         t.pass();
     },
 
+    // TODO test "toggleLocalDbMailsListViewMode" API
+    toggleLocalDbMailsListViewMode(t) {
+        t.pass();
+    },
+
     // TODO test "notification" API
     notification: (t) => {
         t.pass();

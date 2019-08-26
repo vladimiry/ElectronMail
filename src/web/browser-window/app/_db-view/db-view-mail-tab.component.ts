@@ -1,9 +1,9 @@
-import {ChangeDetectionStrategy, Component, HostBinding, HostListener, OnDestroy} from "@angular/core";
-import {EMPTY, of} from "rxjs";
+import {ChangeDetectionStrategy, Component, HostBinding, HostListener} from "@angular/core";
+import {EMPTY, Observable, of} from "rxjs";
 import {Store, select} from "@ngrx/store";
-import {map, mergeMap} from "rxjs/operators";
+import {distinctUntilChanged, map, mergeMap} from "rxjs/operators";
 
-import {DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {DB_VIEW_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
 import {MAIL_FOLDER_TYPE, View} from "src/shared/model/database";
 import {MailsBundleKey, State} from "src/web/browser-window/app/store/reducers/db-view";
@@ -15,11 +15,25 @@ import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
     styleUrls: ["./db-view-mail-tab.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DbViewMailTabComponent extends DbViewAbstractComponent implements OnDestroy {
-    mailsBundleKey: Extract<MailsBundleKey, "folderMailsBundle" | "folderConversationsBundle"> = "folderConversationsBundle";
-
+export class DbViewMailTabComponent extends DbViewAbstractComponent {
     @HostBinding("class.search-view")
     searchView: boolean = false;
+
+    mailsBundleKey$: Observable<Extract<MailsBundleKey, "folderMailsBundle" | "folderConversationsBundle">> = this.store.pipe(
+        select(OptionsSelectors.CONFIG.localDbMailsListViewMode),
+        map((localDbMailsListViewMode) => {
+            return localDbMailsListViewMode === "plain"
+                ? "folderMailsBundle"
+                : "folderConversationsBundle";
+        }),
+    );
+
+    togglingLocalDbMailsListViewMode$: Observable<boolean> = this.store.pipe(
+        select(OptionsSelectors.FEATURED.progress),
+        map((progress) => Boolean(progress.togglingLocalDbMailsListViewMode)),
+        distinctUntilChanged(),
+        map((value) => Boolean(value)),
+    );
 
     searchViewEnabled$ = this.store.pipe(
         select(OptionsSelectors.CONFIG.base),
@@ -71,9 +85,7 @@ export class DbViewMailTabComponent extends DbViewAbstractComponent implements O
     }
 
     toggleMailsBundleKey() {
-        this.mailsBundleKey = this.mailsBundleKey === "folderConversationsBundle"
-            ? "folderMailsBundle"
-            : "folderConversationsBundle";
+        this.store.dispatch(OPTIONS_ACTIONS.ToggleLocalDbMailsListViewMode());
     }
 
     // TODO make sure this subscription doesn't trigger undesirable change detection cycle

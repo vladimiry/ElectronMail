@@ -131,6 +131,8 @@ export const ENDPOINTS_DEFINITION = {
 
     toggleControls: ActionType.Promise<Pick<Required<Config>, "hideControls"> | void, void>(),
 
+    toggleLocalDbMailsListViewMode: ActionType.Promise<void, Config>(),
+
     notification: ActionType.Observable<void, UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>>(),
 };
 

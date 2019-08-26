@@ -25,6 +25,7 @@ type Methods = keyof Pick<IpcMainApiEndpoints,
     | "toggleBrowserWindow"
     | "updateCheck"
     | "toggleControls"
+    | "toggleLocalDbMailsListViewMode"
     | "notification">;
 
 type ContextAwareMethods = keyof Pick<IpcMainApiEndpoints,
@@ -305,6 +306,17 @@ export async function buildEndpoints(
                     }),
                 ),
             );
+        },
+
+        async toggleLocalDbMailsListViewMode() {
+            const config = await ctx.configStore.readExisting();
+
+            return ctx.configStore.write({
+                ...config,
+                localDbMailsListViewMode: config.localDbMailsListViewMode === "plain"
+                    ? "conversation"
+                    : "plain",
+            });
         },
 
         notification() {

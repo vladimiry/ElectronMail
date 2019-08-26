@@ -47,6 +47,7 @@
             class="px-2 d-flex flex-column flex-grow-1"
         >
             <electron-mail-db-view-mails
+                *ngIf="mailsBundleKey$ | async; let mailsBundleKey;"
                 [dbAccountPk]="dbAccountPk"
                 [mailsBundleKey]="mailsBundleKey"
                 [uid]="state.selectedFolderData?.pk"
@@ -57,15 +58,16 @@
                 >
                     <button
                         (click)="toggleMailsBundleKey();"
+                        [disabled]="(togglingLocalDbMailsListViewMode$ | async) || false"
                         class="btn btn-link p-0"
-                        title="Toggle mails/conversations view mode"
+                        title="Toggle plain/conversation view mode"
                         type="button"
                     >
                         <i
                             [ngClass]="{
-                            'fa-align-right fa-flip-vertical': mailsBundleKey == 'folderConversationsBundle',
-                            'fa-align-justify': mailsBundleKey == 'folderMailsBundle'
-                        }"
+                                'fa-align-right fa-flip-vertical': mailsBundleKey == 'folderConversationsBundle',
+                                'fa-align-justify': mailsBundleKey == 'folderMailsBundle'
+                            }"
                             class="fa"
                         ></i>
                     </button>

@@ -32,7 +32,6 @@ export class DbViewMailTabComponent extends DbViewAbstractComponent {
         select(OptionsSelectors.FEATURED.progress),
         map((progress) => Boolean(progress.togglingLocalDbMailsListViewMode)),
         distinctUntilChanged(),
-        map((value) => Boolean(value)),
     );
 
     searchViewEnabled$ = this.store.pipe(

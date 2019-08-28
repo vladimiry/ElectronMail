@@ -5,12 +5,12 @@ body {
     height: 100%;
 }
 
-// "bootstrap"
-.form-group.required > label::after {
+form .required label::after {
     content: "*";
     color: theme-color("danger");
 }
 
+// "bootstrap"
 .form-control {
     &.is-valid,
     &.is-invalid {

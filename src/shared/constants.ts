@@ -64,8 +64,8 @@ export const PROVIDER_REPO: Record<AccountType, { repo: string, version: string;
     },
     tutanota: {
         repo: "https://github.com/tutao/tutanota.git",
-        commit: "76237a7417239f37efe57594313e44e279e4cd1f",
-        version: "3.57.5",
+        commit: "b984a21c4c8502e1f3bad4b95ef763a8fe83764e",
+        version: "3.59.4",
     },
 };
 
@@ -105,7 +105,7 @@ export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlIte
 };
 
 function getBuiltInWebClientTitle(accountType: AccountType): string {
-    return `v${PROVIDER_REPO[accountType].version}-${PROVIDER_REPO[accountType].commit.substr(0, 7)}`;
+    return `v${PROVIDER_REPO[accountType].version} / ${PROVIDER_REPO[accountType].commit.substr(0, 7)}`;
 }
 
 export const LOG_LEVELS: Readonly<LogLevel[]> = Object.keys(

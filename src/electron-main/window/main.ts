@@ -1,11 +1,14 @@
-import logger from "electron-log";
-import {BrowserWindow, app} from "electron";
+import _logger from "electron-log";
+import {BrowserWindow, Rectangle, app, screen} from "electron";
 import {equals} from "ramda";
 
 import {Context} from "src/electron-main/model";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";
 import {PRODUCT_NAME} from "src/shared/constants";
+import {curryFunctionMembers} from "src/shared/util";
 import {syncFindInPageBrowserViewSize} from "src/electron-main/window/find-in-page";
+
+const logger = curryFunctionMembers(_logger, "[src/electron-main/window/main]");
 
 export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow> {
     const state: { forceClose: boolean } = {forceClose: false};
@@ -31,20 +34,18 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
 
     browserWindow
         .on("ready-to-show", async () => {
-            const settingsConfigured = await ctx.settingsStore.readable();
-            const {startMinimized, window: {bounds: savedBounds}} = await ctx.configStore.readExisting();
-            const {x, y} = browserWindow.getBounds();
+            const boundsToRestore = await resolveBoundsToRestore(ctx, browserWindow.getBounds());
 
-            // simply call as "setBounds(savedBounds)" after https://github.com/electron/electron/issues/16264 resolving
-            browserWindow.setBounds({
-                ...savedBounds,
-                x: savedBounds.x || x,
-                y: savedBounds.y || y,
-            });
+            logger.debug(JSON.stringify({boundsToRestore}));
+
+            browserWindow.setBounds(boundsToRestore);
 
             // needs to be called after the "browserWindow.setBounds" call
             // since we don't want "setBounds" call to trigger the move/resize events handlers (leads to "maixmized" value loosing)
             await keepBrowserWindowState(ctx, browserWindow);
+
+            const settingsConfigured = await ctx.settingsStore.readable();
+            const {startMinimized} = await ctx.configStore.readExisting();
 
             if (!settingsConfigured || !startMinimized) {
                 await (await ctx.deferredEndpoints.promise).activateBrowserWindow(browserWindow);
@@ -82,6 +83,44 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
     }
 
     return browserWindow;
+}
+
+async function resolveBoundsToRestore(
+    ctx: Context,
+    currentBounds: Readonly<Rectangle>,
+): Promise<Rectangle> {
+    const {window: {bounds: savedBounds}} = await ctx.configStore.readExisting();
+    const x = typeof savedBounds.x !== "undefined"
+        ? savedBounds.x
+        : currentBounds.x;
+    const y = typeof savedBounds.y !== "undefined"
+        ? savedBounds.y
+        : currentBounds.y;
+    const allDisplaysSummarySize: Readonly<{ width: number, height: number }> = screen.getAllDisplays().reduce(
+        (accumulator: { width: number, height: number }, {size}) => {
+            accumulator.width += size.width;
+            accumulator.height += size.height;
+            return accumulator;
+        },
+        {width: 0, height: 0},
+    );
+    const width = Math.min(savedBounds.width, allDisplaysSummarySize.width);
+    const height = Math.min(savedBounds.height, allDisplaysSummarySize.height);
+
+    logger.debug(JSON.stringify({currentBounds, savedBounds, allDisplaysSummarySize}));
+
+    return {
+        width,
+        height,
+        x: Math.min(
+            Math.max(x, 0),
+            allDisplaysSummarySize.width - width,
+        ),
+        y: Math.min(
+            Math.max(y, 0),
+            allDisplaysSummarySize.height - height,
+        ),
+    };
 }
 
 async function keepBrowserWindowState(ctx: Context, browserWindow: Electron.BrowserWindow) {

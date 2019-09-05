@@ -35,12 +35,17 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
         accountType,
         folderAsDomainEntries,
         repoRelativeDistDir,
-        flows,
+        flows: {
+            install = async ({repoDir}) => installDependencies(repoDir),
+            preInstall,
+            build,
+        },
     }: {
         accountType: AccountType,
         folderAsDomainEntries: T,
         repoRelativeDistDir: string,
         flows: {
+            install?: Flow<O>;
             preInstall?: Flow<O>;
             build: Flow<O>;
         },
@@ -81,13 +86,13 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
             if (await fsExtra.pathExists(path.resolve(repoDir, "node_modules"))) {
                 LOG(LOG_LEVELS.warning(`Skipping dependencies installing`));
             } else {
-                if (flows.preInstall) {
-                    await flows.preInstall(flowArg);
+                if (preInstall) {
+                    await preInstall(flowArg);
                 }
-                await installDependencies(repoDir);
+                await install(flowArg);
             }
 
-            await flows.build(flowArg);
+            await build(flowArg);
         }
 
         LOG(LOG_LEVELS.title(`Copying: ${LOG_LEVELS.value(repoDistDir)} to ${LOG_LEVELS.value(resolvedDistDir)}`));

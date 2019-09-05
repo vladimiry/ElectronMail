@@ -39,9 +39,6 @@ execAccountTypeFlow({
     folderAsDomainEntries,
     repoRelativeDistDir: "./dist",
     flows: {
-        install: async ({repoDir}) => {
-            await execShell(["npm", ["install"], {cwd: repoDir}]);
-        },
         build: async ({repoDir, folderAsDomainEntry}) => {
             await build({repoDir, ...folderAsDomainEntry});
         },

@@ -1,14 +1,11 @@
 import {AngularCompilerPlugin, NgToolsLoader, PLATFORM} from "@ngtools/webpack";
 import {DefinePlugin} from "webpack";
+import {readConfiguration} from "@angular/compiler-cli";
 
 import {BuildAngularCompilationFlags, BuildEnvironment} from "webpack-configs/model";
 import {ENVIRONMENT, ENVIRONMENT_STATE, rootRelativePath} from "webpack-configs/lib";
 import {WEB_CHUNK_NAMES} from "src/shared/constants";
 import {browserWindowAppPath, browserWindowPath, buildBaseWebConfig, cssRuleSetUseItems} from "./lib";
-
-// TODO import "@angular/compiler-cli" using ES6 import format on https://github.com/angular/angular/issues/29220 resolving
-// tslint:disable-next-line:no-var-requires
-const {readConfiguration} = require("@angular/compiler-cli");
 
 // TODO enable "ivy" and "aot" in all modes
 const angularCompilationFlags: BuildAngularCompilationFlags = {

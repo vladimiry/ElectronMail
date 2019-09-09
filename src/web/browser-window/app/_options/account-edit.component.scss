@@ -30,7 +30,7 @@
 
             &::after {
                 display: inline-block;
-                content: "live/online web client";
+                content: "live / online";
                 font-weight: normal;
             }
 
@@ -39,7 +39,7 @@
                 border: 1px solid $local-color;
 
                 &::after {
-                    content: "prepackaged/offline web client";
+                    content: "prepackaged / offline";
                 }
             }
         }

@@ -6,10 +6,13 @@ import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
 import {configureProviderApp} from "./configure-provider-app";
 import {curryFunctionMembers} from "src/shared/util";
 import {registerApi} from "./api";
+import {setupDeprecationWarning} from "./deprecation-warning";
 
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.tutanota, "[index]");
 
 bootstrap();
+
+setupDeprecationWarning();
 
 function bootstrap() {
     configureProviderApp();

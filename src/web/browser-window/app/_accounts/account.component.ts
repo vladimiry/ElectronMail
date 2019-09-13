@@ -15,8 +15,8 @@ import {
     ViewRef,
 } from "@angular/core";
 import {Deferred} from "ts-deferred";
-import {Subject, Subscription, combineLatest} from "rxjs";
-import {debounceTime, distinctUntilChanged, filter, map, mergeMap, pairwise, startWith, withLatestFrom} from "rxjs/operators";
+import {Observable, Subject, Subscription, combineLatest} from "rxjs";
+import {debounceTime, distinctUntilChanged, filter, map, mergeMap, pairwise, startWith, takeUntil, withLatestFrom} from "rxjs/operators";
 import {equals, pick} from "ramda";
 
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
@@ -58,7 +58,9 @@ const pickLoginDelayFields = ((fields: Array<keyof AccountConfig>) => {
 export class AccountComponent extends NgChangesObservableComponent implements OnInit, AfterViewInit, OnDestroy {
     @Input()
     account!: WebAccount;
-    account$ = this.ngChangesObservable("account");
+    account$: Observable<WebAccount> = this
+        .ngChangesObservable("account")
+        .pipe(takeUntil(this.ngOnDestroy$));
     afterFailedLoadWait: number = 0;
     didFailLoadErrorDescription?: string;
     private logger: ReturnType<typeof getZoneNameBoundWebLogger>;
@@ -134,7 +136,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         this.setupOnWebViewDomReadyDeferred().promise
             .then(() => {
                 this.onWebViewLoadedOnce(resolveWebView());
-                // if ((BUILD_ENVIRONMENT === "development") {
+                // if ((BUILD_ENVIRONMENT === "development")) {
                 //     resolveWebView().openDevTools();
                 // }
             });
@@ -187,7 +189,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         );
 
         this.subscription.add(
-            combineLatest(
+            combineLatest([
                 this.store.pipe(
                     select(OptionsSelectors.FEATURED.electronLocations),
                     mergeMap((electronLocations) => electronLocations ? [electronLocations] : []),
@@ -195,7 +197,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                 this.account$.pipe(
                     distinctUntilChanged((prev, curr) => prev.accountConfig.entryUrl === curr.accountConfig.entryUrl),
                 ),
-            ).subscribe(([electronLocations, {accountConfig}]) => {
+            ]).subscribe(([electronLocations, {accountConfig}]) => {
                 const {type} = accountConfig;
                 const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, electronLocations);
 
@@ -274,7 +276,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         );
 
         this.subscription.add(
-            combineLatest(
+            combineLatest([
                 this.store.pipe(
                     select(AccountsSelectors.FEATURED.selectedLogin),
                 ),
@@ -283,7 +285,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     startWith(IPC_MAIN_API_NOTIFICATION_ACTIONS.ActivateBrowserWindow()),
                     filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.ActivateBrowserWindow),
                 ),
-            ).pipe(
+            ]).pipe(
                 filter(([selectedLogin]) => this.account.accountConfig.login === selectedLogin),
                 debounceTime(ONE_SECOND_MS * 0.3),
             ).subscribe(async () => {
@@ -298,19 +300,25 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                 distinctUntilChanged(),
                 withLatestFrom(this.account$),
             ).subscribe(([value, account]) => {
-                const {accountConfig: {type, login}} = account;
+                if (value) {
+                    this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.FetchSingleMail({account, webView, mailPk: value.mailPk}));
+                }
+            }),
+        );
 
-                if (
-                    !value
-                    ||
-                    value.type !== type
-                    ||
-                    value.login !== login
-                ) {
+        this.subscription.add(
+            this.account$.pipe(
+                map((account) => account.makeReadMailParams),
+                distinctUntilChanged(),
+                withLatestFrom(this.account$),
+            ).subscribe(([value, account]) => {
+                if (!value) {
                     return;
                 }
-
-                this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.FetchSingleMail({account, webView, mailPk: value.mailPk}));
+                const {messageIds, mailsBundleKey} = value;
+                this.dispatchInLoggerZone(
+                    ACCOUNTS_ACTIONS.MakeMailRead({account, webView, messageIds, mailsBundleKey}),
+                );
             }),
         );
     }

@@ -116,6 +116,16 @@ const endpoints: ProtonmailApi = {
         }
     },
 
+    async makeRead(input) {
+        _logger.info("makeRead()", input.zoneName);
+
+        const {message} = await resolveProviderApi();
+
+        await message.read({IDs: input.messageIds});
+
+        // TODO consider triggering the "refresh" action (clicking the "refresh" button action)
+    },
+
     async fillLogin({login, zoneName}) {
         const logger = curryFunctionMembers(_logger, "fillLogin()", zoneName);
 

@@ -61,7 +61,11 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
 
         async fetchSingleMail(input) {
             _logger.info("fetchSingleMail()", input.zoneName);
+            throw new Error("Not yet supported for Tutanota");
+        },
 
+        async makeRead(input) {
+            _logger.info("makeRead()", input.zoneName);
             throw new Error("Not yet supported for Tutanota");
         },
 

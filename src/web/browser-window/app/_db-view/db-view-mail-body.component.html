@@ -48,7 +48,7 @@
         </button>
         <button
             (click)="selectMailOnline()"
-            [disabled]="(selectingMailOnline$ | async) || !(onlineAndLoggedIn$ | async)"
+            [disabled]="(selectingMailOnline$ | async) || !(onlineAndSignedIn$ | async)"
             class="btn btn-primary mr-2"
             type="button"
         >
@@ -132,7 +132,7 @@
         </div>
         <button
             (click)="reDownload()"
-            [disabled]="!(onlineAndLoggedIn$ | async) || (fetchingSingleMailParams$ | async) || false"
+            [disabled]="!(onlineAndSignedIn$ | async) || (fetchingSingleMailParams$ | async) || false"
             class="btn btn-secondary"
         >
             <i *ngIf="fetchingSingleMailParams$ | async" class="fa fa-spinner fa-pulse fa-fw"></i>

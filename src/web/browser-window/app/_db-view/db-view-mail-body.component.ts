@@ -10,17 +10,17 @@ import {
     QueryList,
     ViewChildren,
 } from "@angular/core";
-import {BehaviorSubject, EMPTY, Observable, Subject, Subscription, combineLatest, fromEvent, merge, race, throwError, timer} from "rxjs";
+import {BehaviorSubject, EMPTY, Observable, Subject, Subscription, combineLatest, race, throwError, timer} from "rxjs";
 import {Store, select} from "@ngrx/store";
-import {delay, distinctUntilChanged, filter, map, mergeMap, pairwise, startWith, take, withLatestFrom} from "rxjs/operators";
+import {delay, distinctUntilChanged, filter, map, mergeMap, pairwise, take, withLatestFrom} from "rxjs/operators";
 import {equals} from "ramda";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
-import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
 import {DbViewMailComponent} from "src/web/browser-window/app/_db-view/db-view-mail.component";
 import {Mail, View} from "src/shared/model/database";
 import {ONE_SECOND_MS} from "src/shared/constants";
+import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/db-view";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
 
@@ -54,30 +54,6 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
 
     @ViewChildren(DbViewMailComponent, {read: ElementRef})
     dbViewMailElementRefs!: QueryList<ElementRef>;
-
-    account$ = this.dbAccountPk$.pipe(
-        mergeMap(({login}) => this.store.pipe(
-            select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
-            mergeMap((value) => value ? [value] : EMPTY),
-            distinctUntilChanged(),
-        )),
-    );
-
-    onlineAndLoggedIn$: Observable<boolean> = combineLatest([
-        this.account$.pipe(
-            map(({notifications}) => notifications.loggedIn),
-            distinctUntilChanged(),
-        ),
-        merge(
-            fromEvent(window, "online"),
-            fromEvent(window, "offline"),
-        ).pipe(
-            map(() => navigator.onLine),
-            startWith(navigator.onLine),
-        ),
-    ]).pipe(
-        map(([loggedIn, online]) => loggedIn && online),
-    );
 
     selectingMailOnline$ = this.account$.pipe(
         map(({progress}) => progress.selectingMailOnline),
@@ -159,7 +135,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         );
 
         this.subscription.add(
-            combineLatest(
+            combineLatest([
                 this.conversationCollapsed$.pipe(
                     distinctUntilChanged(),
                 ),
@@ -167,7 +143,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
                     map((value) => value.rootNode),
                     distinctUntilChanged(),
                 ),
-            ).pipe(
+            ]).pipe(
                 filter(([conversationCollapsed]) => !conversationCollapsed),
                 delay(ONE_SECOND_MS * 0.2),
             ).subscribe(() => {
@@ -229,7 +205,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
             ),
             take(1),
         ).subscribe(([pk, conversationMail]) => {
-            this.store.dispatch(ACCOUNTS_ACTIONS.SetFetchSingleMailParams({pk, mailPk: conversationMail.pk}));
+            this.store.dispatch(ACCOUNTS_ACTIONS.FetchSingleMailSetParams({pk, mailPk: conversationMail.pk}));
         });
     }
 

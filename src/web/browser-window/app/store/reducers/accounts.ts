@@ -67,7 +67,6 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                             unread: 0,
                             pageType: {url: "", type: "unknown"},
                         },
-                        loginDelay: {},
                         fetchSingleMailParams: null,
                     } as WebAccount; // TODO ger rid of "TS as" casting
 
@@ -136,11 +135,18 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
         PatchGlobalProgress: ({patch}) => {
             draftState.globalProgress = {...draftState.globalProgress, ...patch};
         },
-        SetFetchSingleMailParams: ({pk, mailPk}) => {
+        FetchSingleMailSetParams: ({pk, mailPk}) => {
             const {account} = pickAccountBundle(draftState.accounts, {login: pk.login});
 
             account.fetchSingleMailParams = mailPk
-                ? {...pk, mailPk}
+                ? {mailPk}
+                : null;
+        },
+        MakeMailReadSetParams: ({pk, messageIds, mailsBundleKey}) => {
+            const {account} = pickAccountBundle(draftState.accounts, {login: pk.login});
+
+            account.makeReadMailParams = messageIds
+                ? {messageIds, mailsBundleKey}
                 : null;
         },
         default: () => draftState,

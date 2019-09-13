@@ -2,13 +2,12 @@ import {
     AccountConfig,
     AccountConfigProtonmail,
     AccountConfigTutanota,
-    AccountType,
     Notifications,
     NotificationsProtonmail,
     NotificationsTutanota,
 } from "src/shared/model/account";
-import {CommonWebViewApi} from "src/shared/api/webview/common";
-import {ZoneApiParameter} from "src/shared/api/common";
+import {Mail} from "src/shared/model/database";
+import {MailsBundleKey} from "src/web/browser-window/app/store/reducers/db-view";
 
 interface GenericWebAccount<C extends AccountConfig, NS extends Notifications> {
     accountConfig: C;
@@ -25,7 +24,9 @@ interface GenericWebAccount<C extends AccountConfig, NS extends Notifications> {
     loggedInOnce?: boolean;
     loginDelayedSeconds?: number;
     loginDelayedUntilSelected?: boolean;
-    fetchSingleMailParams: Skip<Arguments<CommonWebViewApi<AccountType>["fetchSingleMail"]>[0], keyof ZoneApiParameter> | null;
+    // TODO consider combining "fetchSingleMailParams" and "makeReadMailParams" to the object with "optional" props
+    fetchSingleMailParams: { mailPk: Mail["pk"] } | null;
+    makeReadMailParams: { messageIds: string[]; mailsBundleKey: MailsBundleKey; } | null;
 }
 
 export type WebAccountProtonmail = GenericWebAccount<AccountConfigProtonmail, NotificationsProtonmail>;

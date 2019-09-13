@@ -29,6 +29,16 @@
                 {{ sorter.title }}
             </option>
         </select>
+        <button
+            *ngIf="makeAllReadButtonAvailable$ | async"
+            (click)="makeAllRead()"
+            [disabled]="(makeAllReadButtonLocked$ | async) || false"
+            class="btn btn-sm btn-secondary make-all-read-btn ml-2"
+        >
+            Make all read
+            <span *ngIf="unreadCount$ | async; let unreadCount;">({{ unreadCount }})</span>
+            <i *ngIf="makeAllReadInProgress$ | async" class="fa fa-spinner fa-pulse fa-fw ml-2"></i>
+        </button>
     </div>
 </div>
 <div

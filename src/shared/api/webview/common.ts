@@ -4,9 +4,7 @@ import {AccountType} from "src/shared/model/account";
 import {DbAccountPk, FsDbAccount, Mail} from "src/shared/model/database";
 import {LoginFieldContainer, PasswordFieldContainer} from "src/shared/model/container";
 import {PACKAGE_NAME} from "src/shared/constants";
-import {ProtonmailApi} from "src/shared/api/webview/protonmail";
 import {ReadonlyDeep} from "type-fest";
-import {TutanotaApi} from "src/shared/api/webview/tutanota";
 import {ZoneApiParameter} from "src/shared/api/common";
 
 export const channel = `${PACKAGE_NAME}:webview-api`;
@@ -33,13 +31,9 @@ export function buildWebViewApiDefinition<T extends AccountType, NotificationOut
             } & ZoneApiParameter>>(),
         fetchSingleMail:
             Promise<ReadonlyDeep<DbAccountPk & { mailPk: Mail["pk"] } & ZoneApiParameter>>(),
+        makeRead:
+            Promise<ReadonlyDeep<DbAccountPk & { messageIds: string[]; } & ZoneApiParameter>>(),
         notification:
             Observable<ReadonlyDeep<{ entryUrl: string; entryApiUrl: string; } & ZoneApiParameter>, NotificationOutput>(),
     };
 }
-
-export type CommonWebViewApi<T extends AccountType> = T extends "protonmail"
-    ? ProtonmailApi
-    : T extends "tutanota"
-        ? TutanotaApi
-        : never;

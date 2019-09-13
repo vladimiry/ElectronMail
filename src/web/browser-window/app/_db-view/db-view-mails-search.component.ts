@@ -10,10 +10,10 @@ import {
     QueryList,
     ViewChildren,
 } from "@angular/core";
-import {EMPTY, Observable, Subject, combineLatest} from "rxjs";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
+import {Observable, Subject, combineLatest} from "rxjs";
 import {Store, select} from "@ngrx/store";
-import {distinctUntilChanged, map, mergeMap, takeUntil} from "rxjs/operators";
+import {distinctUntilChanged, map, takeUntil} from "rxjs/operators";
 
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
 import {DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
@@ -46,12 +46,9 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
         map((value) => value.selectedMail),
     );
 
-    accountProgress$ = this.dbAccountPk$.pipe(
-        mergeMap(({login}) => this.store.pipe(
-            select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
-            mergeMap((value) => value ? [value.progress] : EMPTY),
-            distinctUntilChanged(),
-        )),
+    accountProgress$ = this.account$.pipe(
+        map((account) => account.progress),
+        distinctUntilChanged(),
     );
 
     searching$: Observable<boolean> = this.accountProgress$.pipe(

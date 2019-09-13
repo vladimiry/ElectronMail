@@ -1,5 +1,5 @@
 import {Actions, createEffect} from "@ngrx/effects";
-import {EMPTY, Observable, Subject, concat, from, fromEvent, merge, of, race, throwError, timer} from "rxjs";
+import {EMPTY, Observable, concat, from, fromEvent, merge, of, race, throwError, timer} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {
@@ -20,10 +20,10 @@ import {
 } from "rxjs/operators";
 
 import {ACCOUNTS_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
-import {AccountTypeAndLoginFieldContainer} from "src/shared/model/container";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
+import {FIRE_SYNCING_ITERATION$} from "src/web/browser-window/app/app.constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {ONE_MINUTE_MS, ONE_SECOND_MS} from "src/shared/constants";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
@@ -43,8 +43,6 @@ export class AccountsEffects {
         interval: ONE_SECOND_MS * 10,
         maxInInterval: 2,
     });
-
-    fireSyncingIteration$ = new Subject<AccountTypeAndLoginFieldContainer>();
 
     syncAccountsConfigs$ = createEffect(
         () => this.actions$.pipe(
@@ -85,7 +83,7 @@ export class AccountsEffects {
                         withLatestFrom(this.store.pipe(select(AccountsSelectors.ACCOUNTS.pickAccount({login})))),
                         mergeMap(([notification, account]) => {
                             if (typeof notification.batchEntityUpdatesCounter === "number") {
-                                this.fireSyncingIteration$.next({type, login});
+                                FIRE_SYNCING_ITERATION$.next({type, login});
                                 return EMPTY;
                             }
 
@@ -174,9 +172,9 @@ export class AccountsEffects {
                             timer(0, ONE_MINUTE_MS * 5).pipe(
                                 tap(() => logger.verbose(`triggered by: timer`)),
                             ),
-                            this.fireSyncingIteration$.pipe(
+                            FIRE_SYNCING_ITERATION$.pipe(
                                 filter((value) => value.type === type && value.login === login),
-                                tap(() => logger.verbose(`triggered by: fireSyncingIteration$`)),
+                                tap(() => logger.verbose(`triggered by: FIRE_SYNCING_ITERATION$`)),
                                 // user might be moving emails from here to there while syncing/"buildDbPatch" cycle is in progress
                                 // debounce call reduces 404 fetch errors as we don't trigger fetching until user got settled down
                                 debounceTime(ONE_SECOND_MS * 3),

@@ -1,9 +1,9 @@
 import {ChangeDetectionStrategy, Component, ElementRef, Input, OnDestroy, OnInit} from "@angular/core";
-import {Observable, Subscription, fromEvent} from "rxjs";
+import {Observable, Subscription, combineLatest, fromEvent} from "rxjs";
 import {Store} from "@ngrx/store";
-import {distinctUntilChanged, map, mergeMap} from "rxjs/operators";
+import {distinctUntilChanged, map, mergeMap, take, withLatestFrom} from "rxjs/operators";
 
-import {DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
 import {Mail} from "src/shared/model/database";
 import {MailsBundleKey, State} from "src/web/browser-window/app/store/reducers/db-view";
@@ -63,6 +63,37 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
         distinctUntilChanged(),
     );
 
+    unreadCount$: Observable<number> = this.items$.pipe(
+        map((items) => {
+            return items.reduce(
+                (acc, {mail}) => acc + Number(mail.unread),
+                0,
+            );
+        }),
+    );
+
+    makeAllReadInProgress$: Observable<boolean> = this.account$.pipe(
+        map((account) => {
+            return account
+                ? Boolean(account.makeReadMailParams)
+                : false;
+        }),
+    );
+
+    makeAllReadButtonAvailable$: Observable<boolean> = this.dbAccountPk$.pipe(
+        map(({type}) => type === "protonmail"),
+    );
+
+    makeAllReadButtonLocked$: Observable<boolean> = combineLatest([
+        this.unreadCount$,
+        this.makeAllReadInProgress$,
+        this.onlineAndSignedIn$,
+    ]).pipe(
+        map(([unreadCount, makeAllReadInProgress, onlineAndSignedIn]) => {
+            return unreadCount < 1 || makeAllReadInProgress || !onlineAndSignedIn;
+        }),
+    );
+
     private subscription = new Subscription();
 
     private _uid?: string;
@@ -106,24 +137,24 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
         );
 
         this.subscription.add(
-            this.instance$
-                .pipe(
-                    map((value) => value.selectedMail && value.selectedMail.listMailPk),
-                    distinctUntilChanged(),
-                )
-                .subscribe((selectedMailPk) => {
-                    const selectedClassName = "selected";
-                    const el = this.elementRef.nativeElement as Element;
-                    const toDeselect = el.querySelector(`${mailComponentTagName}.${selectedClassName}`);
-                    const toSelect = el.querySelector(`${mailComponentTagName}[data-pk='${selectedMailPk}']`);
+            this.instance$.pipe(
+                map((value) => value.selectedMail),
+                distinctUntilChanged(),
+            ).subscribe((selectedMail) => {
+                const selectedClassName = "selected";
+                const el = this.elementRef.nativeElement as Element;
+                const toDeselect = el.querySelector(`${mailComponentTagName}.${selectedClassName}`);
+                const toSelect: Element | null = selectedMail
+                    ? el.querySelector(`${mailComponentTagName}[data-pk='${selectedMail.listMailPk}']`)
+                    : null;
 
-                    if (toDeselect) {
-                        toDeselect.classList.remove(selectedClassName);
-                    }
-                    if (toSelect) {
-                        toSelect.classList.add(selectedClassName);
-                    }
-                }),
+                if (toDeselect) {
+                    toDeselect.classList.remove(selectedClassName);
+                }
+                if (toSelect) {
+                    toSelect.classList.add(selectedClassName);
+                }
+            }),
         );
 
         this.subscription.add(
@@ -153,6 +184,22 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
         ...[, {mail: {pk}}]: readonly [number, Unpacked<Unpacked<typeof DbViewMailsComponent.prototype.items$>>]
     ) {
         return pk;
+    }
+
+    makeAllRead() {
+        this.items$
+            .pipe(
+                withLatestFrom(this.dbAccountPk$),
+                take(1),
+            )
+            .subscribe(([items, pk]) => {
+                const messageIds = items
+                    .filter((item) => item.mail.unread)
+                    .map((item) => item.mail.id);
+                this.store.dispatch(
+                    ACCOUNTS_ACTIONS.MakeMailReadSetParams({pk, mailsBundleKey: this.mailsBundleKey, messageIds}),
+                );
+            });
     }
 
     ngOnDestroy(): void {

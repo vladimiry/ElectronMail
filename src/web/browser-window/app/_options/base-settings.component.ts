@@ -1,14 +1,15 @@
 import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/forms";
-import {Component, OnDestroy, OnInit} from "@angular/core";
+import {Component, ElementRef, OnDestroy, OnInit} from "@angular/core";
 import {Observable, Subscription} from "rxjs";
 import {Store, select} from "@ngrx/store";
-import {distinctUntilChanged, distinctUntilKeyChanged, map, take} from "rxjs/operators";
+import {distinctUntilKeyChanged, map, take} from "rxjs/operators";
 
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {BaseConfig} from "src/shared/model/options";
 import {LOG_LEVELS} from "src/shared/constants";
 import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {State} from "src/web/browser-window/app/store/reducers/options";
+import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
 
 @Component({
     selector: "electron-mail-base-settings",
@@ -20,12 +21,6 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
     processing$: Observable<boolean> = this.store.pipe(
         select(OptionsSelectors.FEATURED.progress),
         map((progress) => Boolean(progress.updatingBaseSettings)),
-    );
-
-    fullTextSearchDisabled$ = this.store.pipe(
-        select(OptionsSelectors.SETTINGS.localStoreEnabledCount),
-        distinctUntilChanged(),
-        map((value) => value < 1),
     );
 
     logLevels = LOG_LEVELS;
@@ -75,13 +70,25 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         map(({unread}) => unread),
     );
 
+    private readonly logger = getZoneNameBoundWebLogger();
+
     private subscription = new Subscription();
 
     constructor(
         private store: Store<State>,
+        private elementRef: ElementRef,
     ) {}
 
     ngOnInit() {
+        this.subscription.add({
+            unsubscribe: __ELECTRON_EXPOSURE__
+                .registerDocumentClickEventListener(
+                    this.elementRef.nativeElement,
+                    this.logger,
+                )
+                .unsubscribe,
+        });
+
         this.store.select(OptionsSelectors.CONFIG.base)
             .pipe(take(1))
             .subscribe((data) => this.form.patchValue(data));

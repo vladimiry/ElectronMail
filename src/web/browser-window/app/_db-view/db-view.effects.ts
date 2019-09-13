@@ -12,6 +12,7 @@ import {
     unionizeActionFilter,
 } from "src/web/browser-window/app/store/actions";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
+import {FIRE_SYNCING_ITERATION$} from "src/web/browser-window/app/app.constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
@@ -153,7 +154,37 @@ export class DbViewEffects {
                         ).pipe(
                             mergeMap(() => of(DB_VIEW_ACTIONS.SelectConversationMailRequest({dbAccountPk: pk, mailPk}))),
                             catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
-                            finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.SetFetchSingleMailParams({pk, mailPk: undefined}))),
+                            finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.FetchSingleMailSetParams({pk, mailPk: undefined}))),
+                        );
+                    }),
+                );
+            }),
+        ),
+    );
+
+    makeMailRead$ = createEffect(
+        () => this.actions$.pipe(
+            unionizeActionFilter(ACCOUNTS_ACTIONS.is.MakeMailRead),
+            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+            mergeMap(({payload: {account, webView, messageIds, mailsBundleKey}, logger}) => {
+                const {type, login} = account.accountConfig;
+                const pk = {type, login};
+
+                return this.api.webViewClient(webView, type).pipe(
+                    mergeMap((webViewClient) => {
+                        return from(
+                            webViewClient("makeRead")({...pk, messageIds, zoneName: logger.zoneName()}),
+                        ).pipe(
+                            mergeMap(() => {
+                                FIRE_SYNCING_ITERATION$.next({type, login});
+                                return of(DB_VIEW_ACTIONS.MakeMailsReadInStore({dbAccountPk: pk, mailsBundleKey}));
+                            }),
+                            catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
+                            finalize(() => {
+                                this.store.dispatch(
+                                    ACCOUNTS_ACTIONS.MakeMailReadSetParams({pk, messageIds: undefined, mailsBundleKey}),
+                                );
+                            }),
                         );
                     }),
                 );

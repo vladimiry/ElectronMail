@@ -64,8 +64,8 @@ export const PROVIDER_REPO: Record<AccountType, { repo: string, version: string;
     },
     tutanota: {
         repo: "https://github.com/tutao/tutanota.git",
-        commit: "b984a21c4c8502e1f3bad4b95ef763a8fe83764e",
-        version: "3.59.4",
+        commit: "fa4c5af18eccb8575bf6e34be0fbae8ff35d6333",
+        version: "3.59.12",
     },
 };
 

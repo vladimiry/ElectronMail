@@ -9,7 +9,8 @@
         border: 1px solid $list-group-border-color;
         border-radius: $list-group-border-radius;
         background-color: $white;
-        padding: $btn-padding-y $btn-padding-x;
+        padding-top: $btn-padding-y;
+        padding-bottom: $btn-padding-y;
 
         .badge {
             display: flex;

@@ -3,6 +3,17 @@
     class="controls d-flex align-items-center flex-shrink-0 mb-2"
 >
     <div class="d-flex flex-grow-1">
+        <button
+            (click)="makeAllRead()"
+            *ngIf="makeAllReadButtonAvailable$ | async"
+            [disabled]="(makeAllReadButtonLocked$ | async) || false"
+            class="btn btn-sm btn-primary py-0 mr-2"
+            style="white-space: nowrap"
+        >
+            Make all read
+            <span *ngIf="unreadCount$ | async; let unreadCount;">({{ unreadCount }})</span>
+            <i *ngIf="makeAllReadInProgress$ | async" class="fa fa-spinner fa-pulse fa-fw ml-2"></i>
+        </button>
         <ng-content select="[controls]"></ng-content>
         <div class="badge">
             {{ title$ | async }}<span *ngIf="items.length">: {{ (paging$ | async)?.end }} of {{ items.length }}</span>
@@ -29,16 +40,6 @@
                 {{ sorter.title }}
             </option>
         </select>
-        <button
-            *ngIf="makeAllReadButtonAvailable$ | async"
-            (click)="makeAllRead()"
-            [disabled]="(makeAllReadButtonLocked$ | async) || false"
-            class="btn btn-sm btn-secondary make-all-read-btn ml-2"
-        >
-            Make all read
-            <span *ngIf="unreadCount$ | async; let unreadCount;">({{ unreadCount }})</span>
-            <i *ngIf="makeAllReadInProgress$ | async" class="fa fa-spinner fa-pulse fa-fw ml-2"></i>
-        </button>
     </div>
 </div>
 <div

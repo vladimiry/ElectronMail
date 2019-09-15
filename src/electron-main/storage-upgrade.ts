@@ -191,6 +191,13 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.localDbMailsListViewMode = INITIAL_STORES.config().localDbMailsListViewMode;
         }
     },
+    "3.8.1": ({timeouts}) => {
+        // force default "indexingBootstrap" timeout to be the minimum value
+        timeouts.indexingBootstrap = Math.max(
+            INITIAL_STORES.config().timeouts.indexingBootstrap,
+            timeouts.indexingBootstrap,
+        );
+    },
 };
 
 const SETTINGS_UPGRADES: Record<string, (settings: Settings) => void> = {

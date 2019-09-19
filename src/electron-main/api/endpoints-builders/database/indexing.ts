@@ -98,7 +98,7 @@ export const narrowIndexActionPayload: (
     const fieldsToIndex = [
         ((name: keyof Pick<Unpacked<Mails>, "pk">) => name)("pk"),
         ...INDEXABLE_MAIL_FIELDS,
-    ] as const;
+    ];
 
     const result: Fn = ({key, remove, add}) => {
         return {

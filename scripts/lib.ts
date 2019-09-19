@@ -58,10 +58,12 @@ export function formatStreamChunk(chunk: any): string {
 }
 
 export async function fetchUrl(args: Arguments<typeof fetch>): ReturnType<typeof fetch> {
-    const [urlOrRequest] = args;
-    const url = typeof urlOrRequest === "string"
-        ? urlOrRequest
-        : urlOrRequest.url;
+    const [request] = args;
+    const url = typeof request === "string"
+        ? request
+        : "url" in request
+            ? request.url
+            : request.href;
 
     LOG(LOG_LEVELS.title(`Downloading ${LOG_LEVELS.value(url)}`));
 

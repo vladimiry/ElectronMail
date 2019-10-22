@@ -2,7 +2,6 @@ import {Action, Store, select} from "@ngrx/store";
 import {
     AfterViewInit,
     ChangeDetectionStrategy,
-    ChangeDetectorRef,
     Component,
     ElementRef,
     Input,
@@ -61,8 +60,6 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     account$: Observable<WebAccount> = this
         .ngChangesObservable("account")
         .pipe(takeUntil(this.ngOnDestroy$));
-    afterFailedLoadWait: number = 0;
-    didFailLoadErrorDescription?: string;
     private logger: ReturnType<typeof getZoneNameBoundWebLogger>;
     private loggerZone: Zone;
     @ViewChild("dbViewContainer", {read: ViewContainerRef, static: false})
@@ -83,7 +80,6 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         private core: CoreService,
         private store: Store<State>,
         private zone: NgZone,
-        private changeDetectorRef: ChangeDetectorRef,
         private elementRef: ElementRef,
     ) {
         super();
@@ -385,45 +381,6 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         webView.addEventListener("new-window", ({url}: any) => {
             this.dispatchInLoggerZone(NAVIGATION_ACTIONS.OpenExternal({url}));
         });
-
-        webView.addEventListener("did-fail-load", ((options: { iteration: number, stepSeconds: number }) => {
-            let intervalId: any = null;
-
-            return ({errorDescription}: Electron.DidFailLoadEvent) => {
-                this.logger.verbose(`webview:did-fail-load: "${webView.src}"`);
-
-                // TODO figure ERR_NOT_IMPLEMENTED error cause, happening on password/2fa code submitting, tutanota only issue
-                if (errorDescription === "ERR_NOT_IMPLEMENTED" && this.account.accountConfig.type === "tutanota") {
-                    return;
-                }
-
-                this.didFailLoadErrorDescription = errorDescription;
-
-                this.resolveOnWebViewDomReadyDeferreds();
-                unsubscribeDomReadyHandler();
-
-                options.iteration++;
-
-                this.afterFailedLoadWait = Math.min(options.stepSeconds * options.iteration, 60);
-                this.changeDetectorRef.detectChanges();
-
-                this.webViewState$.next({action: "visibility", visible: false});
-
-                intervalId = setInterval(() => {
-                    this.afterFailedLoadWait += -1;
-                    this.changeDetectorRef.detectChanges();
-
-                    if (this.afterFailedLoadWait > 0) {
-                        return;
-                    }
-
-                    this.webViewState$.next({action: "visibility", visible: true});
-                    clearInterval(intervalId);
-                    subscribeDomReadyHandler();
-                    webView.reloadIgnoringCache();
-                }, ONE_SECOND_MS);
-            };
-        })({iteration: 0, stepSeconds: 10}));
     }
 
     private setupOnWebViewDomReadyDeferred() {

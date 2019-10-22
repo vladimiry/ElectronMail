@@ -4,12 +4,5 @@
         <webview #webViewElement></webview>
     </div>
 </ng-template>
-
 <ng-container #webviewContainer></ng-container>
-
-<div *ngIf="afterFailedLoadWait" class="network-unreachable-msg p-3 text-center">
-    Failed to load the page with <strong>{{ didFailLoadErrorDescription }}</strong> error code.
-    Reloading in <strong>{{ afterFailedLoadWait }}</strong> sec.
-</div>
-
 <ng-container #dbViewContainer></ng-container>

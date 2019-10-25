@@ -8,7 +8,7 @@ import {promisify} from "util";
 import {CWD, LOG, LOG_LEVELS, execShell, fetchUrl} from "scripts/lib";
 
 const SERVICE_NAME = "ffsend";
-const SERVICE_VERSION = "v0.2.52";
+const SERVICE_VERSION = "v0.2.54";
 const SERVICE_BINARY_DOWNLOAD_URL_PREFIX = `https://github.com/timvisee/${SERVICE_NAME}/releases/download/${SERVICE_VERSION}`;
 const SERVICE_DOWNLOAD_URL_PREFIX = "https://send.firefox.com/download/";
 const SERVICE_DOWNLOAD_COUNT = "1"; // only 1 is supported in anonymous mode

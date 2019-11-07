@@ -45,7 +45,7 @@ export class OptionsEffects {
                                     this.coreService.logOut();
                                 },
                                 ErrorMessage: ({message}) => {
-                                    this.store.dispatch(NOTIFICATION_ACTIONS.Error(new Error(message)));
+                                    this.store.dispatch(NOTIFICATION_ACTIONS.ErrorMessage({message}));
                                 },
                                 default() {
                                     // NOOP

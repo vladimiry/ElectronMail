@@ -4,7 +4,10 @@ import {ValidationError} from "class-validator";
 import {flatten} from "ramda";
 
 import * as Entities from "./entity";
-import {Entity, FsDbDataContainer, ValidatedEntity} from "src/shared/model/database";
+import {AccountType} from "src/shared/model/account";
+import {Contact, Entity, Folder, FsDbDataContainer, Mail, ValidatedEntity} from "src/shared/model/database";
+import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[src/electron-main/database/validation]");
@@ -28,6 +31,7 @@ const entityClassesMap = {
 export async function validateEntity<T extends Entity>(
     entityType: keyof FsDbDataContainer,
     entity: T,
+    accountType: AccountType,
 ): Promise<T & ValidatedEntity> {
     const classType = entityClassesMap[entityType] as unknown as ClassType<T>;
 
@@ -43,12 +47,45 @@ export async function validateEntity<T extends Entity>(
             JSON.stringify(validatedEntityInstance),
         );
     } catch (e) {
-        logger.error(e);
-        throw generateValidationError(e);
+        logger.error("original validation error", e);
+
+        IPC_MAIN_API_NOTIFICATION$.next(
+            IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({
+                message: "Local database entity validation error has occurred: " + JSON.stringify({
+                    accountType,
+                    entityType,
+                    ...(() => {
+                        if (entityType === "mails") {
+                            return {
+                                sentDate: (entity as unknown as Mail).sentDate,
+                                subject: (entity as unknown as Mail).subject,
+                            };
+                        }
+                        if (entityType === "contacts") {
+                            return {
+                                firstName: (entity as unknown as Contact).firstName,
+                                lastName: (entity as unknown as Contact).lastName,
+                            };
+                        }
+                        if (entityType === "folders") {
+                            return {
+                                folderName: (entity as unknown as Folder).name,
+                            };
+                        }
+                        return {};
+                    })(),
+                    error: flattenValidationError(e),
+                }),
+            }),
+        );
+
+        throw new Error(
+            `Local database saving and data syncing iterations aborted due to the "${entityType}" entity validation error`,
+        );
     }
 }
 
-function generateValidationError(rawError: Error): Error {
+function flattenValidationError(rawError: Error): Error | string {
     if (!Array.isArray(rawError)) {
         return rawError;
     }
@@ -67,12 +104,20 @@ function generateValidationError(rawError: Error): Error {
             continue;
         }
 
-        messages.push(error.property + ": " + JSON.stringify(error.constraints));
+        messages.push(
+            error.property
+            +
+            ": "
+            +
+            Object.entries(error.constraints)
+                .map(([key, value]) => `${key}: ${value}`)
+                .join(", "),
+        );
 
         if (error.children) {
             errors.push(...error.children);
         }
     }
 
-    return new Error(messages.join("; "));
+    return messages.join("; ");
 }

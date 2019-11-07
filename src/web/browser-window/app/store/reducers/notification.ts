@@ -24,6 +24,7 @@ const initialState: State = {
 export function reducer(state = initialState, action: UnionOf<typeof NOTIFICATION_ACTIONS>): State {
     return NOTIFICATION_ACTIONS.match(action, {
         Error: (data) => add(state, {type: "error", data}),
+        ErrorMessage: (data) => add(state, {type: "errorMessage", data}),
         Info: (data) => add(state, {type: "info", data}),
         Update: (data) => add(state, {type: "update", data}),
         Remove: (item) => {
@@ -48,9 +49,11 @@ export function reducer(state = initialState, action: UnionOf<typeof NOTIFICATIO
 function add(state: State, item: NotificationItem): State {
     const items = [...state.items];
 
-    if (item.type === "error") {
+    if (item.type === "error" || item.type === "errorMessage") {
         console.error(item); // tslint:disable-line:no-console
+    }
 
+    if (item.type === "error") {
         logger.error(
             // WARN: make sure there is no circular recursive data
             pick(

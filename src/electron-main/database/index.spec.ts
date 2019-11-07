@@ -48,7 +48,7 @@ test.serial(`save to file call should write through the "EncryptionAdapter.proto
 
     const folderStub = buildFolder();
     db.initAccount({type: "tutanota", login: "login1"})
-        .folders[folderStub.pk] = await validateEntity("folders", folderStub);
+        .folders[folderStub.pk] = await validateEntity("folders", folderStub, "tutanota");
 
     t.false(encryptionAdapterWriteSpy.called);
 
@@ -87,7 +87,7 @@ test.serial(`save to file call should write through the "SerializationAdapter.wr
 
     const folderStub = buildFolder();
     db.initAccount({type: "tutanota", login: "login1"})
-        .folders[folderStub.pk] = await validateEntity("folders", folderStub);
+        .folders[folderStub.pk] = await validateEntity("folders", folderStub, "tutanota");
 
     const dump = JSON.parse(JSON.stringify(db.readonlyDbInstance()));
 
@@ -118,7 +118,7 @@ test("several sequence save calls should persist the same data", async (t) => {
     const db = buildDatabase();
     const folderStub = buildFolder();
     db.initAccount({type: "tutanota", login: "login1"})
-        .folders[folderStub.pk] = await validateEntity("folders", folderStub);
+        .folders[folderStub.pk] = await validateEntity("folders", folderStub, "tutanota");
 
     await db.saveToFile();
     await db.loadFromFile();
@@ -172,7 +172,7 @@ test("reset", async (t) => {
     t.deepEqual(JSON.parse(JSON.stringify(db.readonlyDbInstance())), initial);
     const folderStub = buildFolder();
     db.initAccount({type: "tutanota", login: "login1"})
-        .folders[folderStub.pk] = await validateEntity("folders", folderStub);
+        .folders[folderStub.pk] = await validateEntity("folders", folderStub, "tutanota");
 
     t.notDeepEqual(JSON.parse(JSON.stringify(db.readonlyDbInstance())), initial);
 

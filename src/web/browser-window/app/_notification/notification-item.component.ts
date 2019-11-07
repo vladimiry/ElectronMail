@@ -26,12 +26,9 @@ export class NotificationItemComponent {
     @Input()
     set item(value: NotificationItem) {
         this._item = value;
-
         this.type = value.type;
-
-        this.message = "message" in value.data
-            ? value.data.message
-            : (
+        this.message = value.type === "update"
+            ? (
                 value.data
                     .map(({title, url, date}) => {
                         const hint = `Published at: ${formatDate(date, "medium", this.locale)}`;
@@ -40,7 +37,8 @@ export class NotificationItemComponent {
                             : `<snap title="${hint}">${title}</snap>`;
                     })
                     .join(", ")
-            );
+            )
+            : value.data.message;
     }
 
     constructor() {}

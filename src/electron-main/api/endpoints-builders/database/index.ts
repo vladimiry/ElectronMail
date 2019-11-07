@@ -56,7 +56,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
                 // add
                 for (const entity of upsert) {
-                    const validatedEntity = await validateEntity(entityType, entity);
+                    const validatedEntity = await validateEntity(entityType, entity, type);
                     const {pk} = entity;
                     account[entityType][pk] = validatedEntity;
                     sessionAccount[entityType][pk] = validatedEntity;

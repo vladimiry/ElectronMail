@@ -1,17 +1,21 @@
 <div
-        [ngClass]="{'alert-danger': type === 'error', 'alert-info': type === 'info', 'alert-secondary': type === 'update'}"
-        class="alert alert-dismissible"
-        role="alert"
+    [ngClass]="{
+        'alert-danger': type === 'error' || type === 'errorMessage',
+        'alert-info': type === 'info',
+        'alert-secondary': type === 'update'
+    }"
+    class="alert alert-dismissible"
+    role="alert"
 >
     <ng-container [ngSwitch]="type">
         <ng-container *ngSwitchCase="'update'">
             <div class="d-inline">
                 New app version available for download: <span [innerHTML]="message"></span>
                 <i
-                        [popover]="popTemplate"
-                        class="fa fa-info-circle text-primary align-self-center"
-                        [placement]="'bottom'"
-                        triggers="mouseenter:mouseleave"
+                    [placement]="'bottom'"
+                    [popover]="popTemplate"
+                    class="fa fa-info-circle text-primary align-self-center"
+                    triggers="mouseenter:mouseleave"
                 ></i>
                 <ng-template #popTemplate>
                     <p>When you follow the release link scroll down to the "Assets" section to see the installation packages list.</p>

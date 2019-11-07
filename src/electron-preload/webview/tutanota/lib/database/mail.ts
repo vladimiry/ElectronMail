@@ -60,7 +60,7 @@ function Mail(input: Rest.Model.Mail, body: Rest.Model.MailBody, files: Rest.Mod
         mailFolderIds: [resolveListId(input)],
         sentDate: Number(input.sentDate),
         subject: input.subject,
-        body: body.text,
+        body: (body.text || body.compressedText) as string,
         sender: Address(input.sender),
         toRecipients: input.toRecipients.map(Address),
         ccRecipients: input.ccRecipients.map(Address),

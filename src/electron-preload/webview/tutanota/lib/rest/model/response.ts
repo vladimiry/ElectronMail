@@ -84,9 +84,11 @@ export interface File extends BaseEntity<[MailBox["receivedAttachments"], Id]> {
     size: NumberString;
 }
 
-export interface MailBody extends BaseEntity<Id> {
-    text: string;
-}
+export type MailBody = BaseEntity<Id>
+    & (
+    | { text: string; compressedText: null | undefined; }
+    | { text: null | undefined; compressedText: string; }
+    );
 
 export interface ContactList extends BaseEntity<Id> {
     contacts: Id; // TODO defined as Id<Contact["_id"][0]>

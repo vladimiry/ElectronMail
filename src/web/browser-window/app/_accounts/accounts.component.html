@@ -2,16 +2,20 @@
     <div class="accounts-block px-2 pt-2" [ngClass]="{'d-none': hideControls$ | async}">
         <div class="controls">
             <div class="btn-group" dropdown>
-                <button (click)="openSettingsView()" class="btn btn-light" id="optionsMenuItem" type="button">
+                <button (click)="openSettingsView()" class="btn btn-light" id="optionsMenuItem" title="Options" type="button">
                     <i class="fa fa-cog"></i>
-                    Options
                 </button>
                 <button class="btn btn-light dropdown-toggle dropdown-toggle-split" dropdownToggle type="button">
                     <span class="caret"></span>
                 </button>
                 <ul *dropdownMenu class="dropdown-menu" role="menu">
                     <li role="menuitem">
-                        <button (click)="toggleCompactLayout()" class="dropdown-item toggle-layout-view" type="button">
+                        <button
+                            (click)="toggleCompactLayout()"
+                            class="dropdown-item toggle-layout-view"
+                            title="Toggling vertical/horizontal accounts handle buttons positioning"
+                            type="button"
+                        >
                             Toggle View Mode
                         </button>
                     </li>

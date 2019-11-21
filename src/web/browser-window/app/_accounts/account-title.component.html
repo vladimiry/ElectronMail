@@ -8,16 +8,16 @@
         <electron-mail-unread-badge
             *ngIf="state.account.notifications.unread"
             [value]="state.account.notifications.unread"
-            class="ml-2"
+            class="ml-1"
         ></electron-mail-unread-badge>
-        <div class="d-flex ml-2">
+        <div class="d-flex ml-1">
             <i [class]="state.account.notifications.loggedIn ? 'fa fa-unlock' : 'fa fa-lock'"></i>
         </div>
         <div class="d-flex ml-1 login-delay" *ngIf="state.loginDelayed">
             <i class="fa fa-hand-pointer-o" *ngIf="state.account.loginDelayedUntilSelected"></i>
             <span *ngIf="state.account.loginDelayedSeconds; let remainingSeconds">{{ remainingSeconds }}</span>
         </div>
-        <div class="ml-2 d-flex flex-grow-1">
+        <div class="ml-1 d-flex flex-grow-1">
             {{ state.account.accountConfig.title || state.account.accountConfig.login }}
         </div>
     </a>

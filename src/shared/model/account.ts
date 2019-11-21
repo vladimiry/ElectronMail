@@ -3,6 +3,7 @@ export type AccountType = "protonmail" | "tutanota";
 export interface GenericAccountConfig<Type extends AccountType, CredentialFields extends string> {
     type: Type;
     login: string;
+    title?: string;
     entryUrl: string;
     database?: boolean;
     credentials: Partial<Record<CredentialFields, string>>;

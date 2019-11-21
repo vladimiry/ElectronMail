@@ -30,4 +30,4 @@ export type AccountConfigCreatePatch<T extends AccountType = AccountType> = Acco
 
 export type AccountConfigUpdatePatch<T extends AccountType = AccountType> = Pick<AccountConfig<T>, "login">
     & Partial<Pick<AccountConfig,
-    "login" | "entryUrl" | "database" | "credentials" | "proxy" | "loginDelayUntilSelected" | "loginDelaySecondsRange">>;
+    "login" | "title" | "entryUrl" | "database" | "credentials" | "proxy" | "loginDelayUntilSelected" | "loginDelaySecondsRange">>;

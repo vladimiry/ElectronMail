@@ -30,12 +30,13 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     ];
     entryUrlItems: EntryUrlItem[] = [];
     controls: Record<keyof Pick<AccountConfig,
-        | "type" | "login" | "database" | "entryUrl" | "loginDelayUntilSelected" | "loginDelaySecondsRange">
+        | "type" | "login" | "title" | "database" | "entryUrl" | "loginDelayUntilSelected" | "loginDelaySecondsRange">
         | keyof Pick<Required<Required<AccountConfig>["proxy"]>, "proxyRules" | "proxyBypassRules">
         | keyof AccountConfigProtonmail["credentials"],
         AbstractControl> = {
         type: new FormControl(this.typeValues[0].value, Validators.required),
         login: new FormControl(null, Validators.required),
+        title: new FormControl(null),
         database: new FormControl(null),
         entryUrl: new FormControl(null, Validators.required),
         proxyRules: new FormControl(null),
@@ -109,6 +110,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
 
                 (() => {
                     controls.type.patchValue(account.type);
+                    controls.title.patchValue(account.title);
                     controls.database.patchValue(account.database);
                     controls.entryUrl.patchValue(account.entryUrl);
 
@@ -159,6 +161,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
             login: account
                 ? account.login :
                 controls.login.value,
+            title: controls.title.value,
             entryUrl: controls.entryUrl.value,
             database: Boolean(controls.database.value),
             credentials: {

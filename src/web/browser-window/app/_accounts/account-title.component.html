@@ -17,7 +17,9 @@
             <i class="fa fa-hand-pointer-o" *ngIf="state.account.loginDelayedUntilSelected"></i>
             <span *ngIf="state.account.loginDelayedSeconds; let remainingSeconds">{{ remainingSeconds }}</span>
         </div>
-        <div class="ml-2 d-flex flex-grow-1">{{ state.account.accountConfig.login }}</div>
+        <div class="ml-2 d-flex flex-grow-1">
+            {{ state.account.accountConfig.title || state.account.accountConfig.login }}
+        </div>
     </a>
     <button (click)="toggleViewMode($event)" *ngIf="state.stored" class="btn b-toggle-view" title="Toggle online/database view mode">
         <i

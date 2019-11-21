@@ -10,17 +10,18 @@ export async function buildEndpoints(
     ctx: Context,
 ): Promise<Pick<IpcMainApiEndpoints, "addAccount" | "updateAccount" | "changeAccountOrder" | "removeAccount">> {
     return {
-        async addAccount({type, login, entryUrl, database, credentials, proxy, loginDelayUntilSelected, loginDelaySecondsRange}) {
-            const account = {
+        async addAccount({type, login, title, entryUrl, database, credentials, proxy, loginDelayUntilSelected, loginDelaySecondsRange}) {
+            const account: AccountConfig = {
                 type,
                 login,
+                title,
                 entryUrl,
                 database,
                 credentials,
                 proxy,
                 loginDelayUntilSelected,
                 loginDelaySecondsRange,
-            } as AccountConfig; // TODO ger rid of "TS as" casting
+            };
             const settings = await ctx.settingsStore.readExisting();
 
             settings.accounts.push(account);
@@ -32,11 +33,12 @@ export async function buildEndpoints(
             return result;
         },
 
-        async updateAccount({login, entryUrl, database, credentials, proxy, loginDelayUntilSelected, loginDelaySecondsRange}) {
+        async updateAccount({login, title, entryUrl, database, credentials, proxy, loginDelayUntilSelected, loginDelaySecondsRange}) {
             const settings = await ctx.settingsStore.readExisting();
             const account = pickAccountStrict(settings.accounts, {login});
             const {credentials: existingCredentials} = account;
 
+            account.title = title;
             account.database = database;
 
             if (typeof entryUrl === "undefined") {
@@ -62,7 +64,7 @@ export async function buildEndpoints(
             account.loginDelayUntilSelected = loginDelayUntilSelected;
             account.loginDelaySecondsRange = loginDelaySecondsRange;
 
-            return await ctx.settingsStore.write(settings);
+            return ctx.settingsStore.write(settings);
         },
 
         async changeAccountOrder({login, index: moveToIndex}) {
@@ -82,7 +84,7 @@ export async function buildEndpoints(
             settings.accounts.splice(removeIndex, 1);
             settings.accounts.splice(moveToIndex, 0, accountToMove);
 
-            return await ctx.settingsStore.write(settings);
+            return ctx.settingsStore.write(settings);
         },
 
         async removeAccount({login}) {
@@ -94,7 +96,7 @@ export async function buildEndpoints(
 
             // TODO remove session, not yet supported by Electron?
 
-            return await ctx.settingsStore.write(settings);
+            return ctx.settingsStore.write(settings);
         },
     };
 }

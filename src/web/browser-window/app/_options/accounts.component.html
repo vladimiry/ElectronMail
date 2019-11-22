@@ -20,6 +20,7 @@
         <i cdkDragHandle class="fa fa-bars px-3" title="Drag up/down to reorder"></i>
         <electron-mail-type-symbol [type]="account.type" class="mr-1"></electron-mail-type-symbol>
         {{ account.login }}
+        <span *ngIf="account.title"> ({{ account.title }})</span>
         <a [routerLink]="['./../account-edit', account.login]" class="float-right">
             Edit
         </a>

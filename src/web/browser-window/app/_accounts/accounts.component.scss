@@ -167,6 +167,11 @@ $webview-border: darken($app-color-bg-dark, 10%);
                 &::ng-deep #{$app-prefix}-account-title {
                     margin-bottom: 0;
 
+                    .btn {
+                        padding-top: $list-group-item-padding-y;
+                        padding-bottom: $list-group-item-padding-y;
+                    }
+
                     &:first-child {
                         &,
                         .bnt-group .btn:last-child {

@@ -146,6 +146,7 @@
     "@angular/platform-browser": "9.0.0-rc.3",
     "@angular/platform-browser-dynamic": "9.0.0-rc.3",
     "@angular/router": "9.0.0-rc.3",
+    "@bazel/typescript": "0.41.0",
     "@email-securely-app/import-sort-style": "0.1.0",
     "@expo/spawn-async": "1.5.0",
     "@ng-select/ng-select": "3.5.0",

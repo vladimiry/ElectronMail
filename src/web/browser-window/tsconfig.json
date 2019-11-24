@@ -1,9 +1,5 @@
 {
   "extends": "../../../tsconfig.json",
-  "compilerOptions": {
-    // TODO get rid of "compilerOptions.skipLibCheck" option on https://github.com/angular/angular/issues/29220 resolving
-    "skipLibCheck": true
-  },
   "include": [
     "../../../src/@types/**/*",
     "../../../src/web/@types/index.d.ts",

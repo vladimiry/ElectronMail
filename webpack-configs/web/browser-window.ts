@@ -69,9 +69,8 @@ const config = buildBaseWebConfig(
                     preserveWhitespaces: false,
                     disableTypeScriptVersionCheck: true,
                     strictInjectionParameters: true,
-                    // TODO ivy: get back templates type check after https://github.com/angular/angular/issues/30080 resolving
-                    fullTemplateTypeCheck: false, // TODO ivy: angularCompilationFlags.aot || angularCompilationFlags.ivy
-                    ivyTemplateTypeCheck: false, // TODO ivy: angularCompilationFlags.ivy
+                    fullTemplateTypeCheck: angularCompilationFlags.aot || angularCompilationFlags.ivy,
+                    ivyTemplateTypeCheck: angularCompilationFlags.ivy,
                     enableIvy: angularCompilationFlags.ivy,
                     ...readConfiguration(tsConfigFile).options,
                 },

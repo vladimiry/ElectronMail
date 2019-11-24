@@ -1,5 +1,5 @@
+import {Directive, Input} from "@angular/core";
 import {EMPTY, Observable, combineLatest, fromEvent, merge, of} from "rxjs";
-import {Input} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {distinctUntilChanged, map, mergeMap, startWith} from "rxjs/operators";
 
@@ -8,6 +8,9 @@ import {DbAccountPk} from "src/shared/model/database";
 import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";
 import {State} from "src/web/browser-window/app/store/reducers/db-view";
 
+@Directive()
+// so weird not single-purpose directive huh, https://github.com/angular/angular/issues/30080#issuecomment-539194668
+// tslint:disable-next-line:directive-class-suffix
 export abstract class DbViewAbstractComponent extends NgChangesObservableComponent {
     @Input()
     dbAccountPk!: DbAccountPk;

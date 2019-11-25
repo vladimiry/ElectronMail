@@ -28,6 +28,7 @@ export const CONFIG = {
     hideControls: createSelector(FEATURED.config, (config) => config.hideControls),
     timeouts: createSelector(FEATURED.config, (config) => config.timeouts),
     localDbMailsListViewMode: createSelector(FEATURED.config, (config) => config.localDbMailsListViewMode),
+    reflectSelectedAccountTitle: createSelector(FEATURED.config, (config) => config.reflectSelectedAccountTitle),
 };
 
 export const SETTINGS = (() => {

@@ -150,6 +150,7 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
 
             logger.info();
 
+            type TitleOutput = Required<Pick<TutanotaNotificationOutput, "title">>;
             type LoggedInOutput = Required<Pick<TutanotaNotificationOutput, "loggedIn">>;
             type PageTypeOutput = Required<Pick<TutanotaNotificationOutput, "pageType">>;
             type UnreadOutput = Required<Pick<TutanotaNotificationOutput, "unread">>;
@@ -159,11 +160,17 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
             // so app reacts to the mails/folders updates instantly
 
             const observables: [
+                Observable<TitleOutput>,
                 Observable<LoggedInOutput>,
                 Observable<PageTypeOutput>,
                 Observable<UnreadOutput>,
                 Observable<BatchEntityUpdatesCounterOutput>
             ] = [
+                new Observable<{ title: string }>((observer) => {
+                    observer.next({title: `"title" DOM element listening is not enabled`});
+                    observer.complete();
+                }),
+
                 interval(WebviewConstants.NOTIFICATION_LOGGED_IN_POLLING_INTERVAL).pipe(
                     map(() => isLoggedIn()),
                     distinctUntilChanged(),

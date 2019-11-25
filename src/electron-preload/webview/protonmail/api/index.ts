@@ -226,136 +226,161 @@ const endpoints: ProtonmailApi = {
 
         logger.info();
 
+        type TitleOutput = Required<Pick<ProtonmailNotificationOutput, "title">>;
         type LoggedInOutput = Required<Pick<ProtonmailNotificationOutput, "loggedIn">>;
         type PageTypeOutput = Required<Pick<ProtonmailNotificationOutput, "pageType">>;
         type UnreadOutput = Required<Pick<ProtonmailNotificationOutput, "unread">>;
         type BatchEntityUpdatesCounterOutput = Required<Pick<ProtonmailNotificationOutput, "batchEntityUpdatesCounter">>;
 
         const observables: [
-            Observable<LoggedInOutput>,
-            Observable<PageTypeOutput>,
-            Observable<UnreadOutput>,
-            Observable<BatchEntityUpdatesCounterOutput>
-        ] = [
-            interval(WebviewConstants.NOTIFICATION_LOGGED_IN_POLLING_INTERVAL).pipe(
-                map(() => isLoggedIn()),
-                distinctUntilChanged(),
-                map((loggedIn) => ({loggedIn})),
-            ),
+                Observable<TitleOutput>,
+                Observable<LoggedInOutput>,
+                Observable<PageTypeOutput>,
+                Observable<UnreadOutput>,
+                Observable<BatchEntityUpdatesCounterOutput>
+            ] = [
+                new Observable<{ title: string }>((observer) => {
+                    const titleEl = document.querySelector("title");
 
-            // TODO listen for location.href change instead of starting polling interval
-            interval(WebviewConstants.NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL).pipe(
-                map((() => {
-                    const formIdToPageTypeMappingEntries = (() => {
-                        const formIdToPageTypeMapping: Record<string, PageTypeOutput["pageType"]["type"]> = {
-                            pm_login: "login",
-                            pm_loginTwoFactor: "login2fa",
-                            pm_loginUnlock: "unlock",
-                        };
-                        return Object.entries(formIdToPageTypeMapping);
-                    })();
-                    const loginUrl = `${entryUrl}/login`;
+                    if (!titleEl) {
+                        observer.next({title: `Failed to resolve "title" DOM element`});
+                        observer.complete();
+                        return;
+                    }
 
-                    return () => {
-                        const url = getLocationHref();
-                        const pageType: PageTypeOutput["pageType"] = {url, type: "unknown"};
+                    const mutation = new MutationObserver(() => {
+                        observer.next({title: document.title});
+                    });
 
-                        if (
-                            !isLoggedIn()
-                            &&
-                            url === loginUrl
-                        ) {
-                            for (const [formId, type] of formIdToPageTypeMappingEntries) {
-                                const form = document.getElementById(formId);
-                                const formVisible = form && form.offsetParent;
+                    mutation.observe(titleEl, {subtree: true, childList: true});
 
-                                if (formVisible) {
-                                    pageType.type = type;
-                                    break;
+                    return {
+                        unsubscribe: () => {
+                            mutation.disconnect();
+                        },
+                    };
+                }),
+
+                interval(WebviewConstants.NOTIFICATION_LOGGED_IN_POLLING_INTERVAL).pipe(
+                    map(() => isLoggedIn()),
+                    distinctUntilChanged(),
+                    map((loggedIn) => ({loggedIn})),
+                ),
+
+                // TODO listen for location.href change instead of starting polling interval
+                interval(WebviewConstants.NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL).pipe(
+                    map((() => {
+                        const formIdToPageTypeMappingEntries = (() => {
+                            const formIdToPageTypeMapping: Record<string, PageTypeOutput["pageType"]["type"]> = {
+                                pm_login: "login",
+                                pm_loginTwoFactor: "login2fa",
+                                pm_loginUnlock: "unlock",
+                            };
+                            return Object.entries(formIdToPageTypeMapping);
+                        })();
+                        const loginUrl = `${entryUrl}/login`;
+
+                        return () => {
+                            const url = getLocationHref();
+                            const pageType: PageTypeOutput["pageType"] = {url, type: "unknown"};
+
+                            if (
+                                !isLoggedIn()
+                                &&
+                                url === loginUrl
+                            ) {
+                                for (const [formId, type] of formIdToPageTypeMappingEntries) {
+                                    const form = document.getElementById(formId);
+                                    const formVisible = form && form.offsetParent;
+
+                                    if (formVisible) {
+                                        pageType.type = type;
+                                        break;
+                                    }
                                 }
                             }
-                        }
 
-                        return {pageType};
-                    };
-                })()),
-                distinctUntilChanged(({pageType: prev}, {pageType: curr}) => curr.type === prev.type),
-                tap((value) => logger.verbose(JSON.stringify(value))),
-            ),
+                            return {pageType};
+                        };
+                    })()),
+                    distinctUntilChanged(({pageType: prev}, {pageType: curr}) => curr.type === prev.type),
+                    tap((value) => logger.verbose(JSON.stringify(value))),
+                ),
 
-            (() => {
-                const responseListeners = [
-                    {
-                        re: new RegExp(`${entryApiUrl}/api/messages/count`),
-                        handler: ({Counts}: { Counts?: Array<{ LabelID: string; Unread: number; }> }) => {
-                            if (!Counts) {
-                                return;
-                            }
-                            return Counts
-                                .filter(({LabelID}) => LabelID === "0")
-                                .reduce((accumulator, item) => accumulator + item.Unread, 0);
-                        },
-                    },
-                    {
-                        re: new RegExp(`${entryApiUrl}/api/events/.*==`),
-                        handler: ({MessageCounts}: Rest.Model.EventResponse) => {
-                            if (!MessageCounts) {
-                                return;
-                            }
-                            return MessageCounts
-                                .filter(({LabelID}) => LabelID === "0")
-                                .reduce((accumulator, item) => accumulator + item.Unread, 0);
-                        },
-                    },
-                ];
-
-                return AJAX_SEND_NOTIFICATION$.pipe(
-                    mergeMap((request) => responseListeners
-                        .filter(({re}) => {
-                            return re.test(request.responseURL);
-                        })
-                        .reduce(
-                            (accumulator, {handler}) => {
-                                const responseData = JSON.parse(request.responseText);
-                                const value = (handler as any)(responseData);
-
-                                return typeof value === "number"
-                                    ? accumulator.concat([{unread: value}])
-                                    : accumulator;
+                (() => {
+                    const responseListeners = [
+                        {
+                            re: new RegExp(`${entryApiUrl}/api/messages/count`),
+                            handler: ({Counts}: { Counts?: Array<{ LabelID: string; Unread: number; }> }) => {
+                                if (!Counts) {
+                                    return;
+                                }
+                                return Counts
+                                    .filter(({LabelID}) => LabelID === "0")
+                                    .reduce((accumulator, item) => accumulator + item.Unread, 0);
                             },
-                            [] as UnreadOutput[],
+                        },
+                        {
+                            re: new RegExp(`${entryApiUrl}/api/events/.*==`),
+                            handler: ({MessageCounts}: Rest.Model.EventResponse) => {
+                                if (!MessageCounts) {
+                                    return;
+                                }
+                                return MessageCounts
+                                    .filter(({LabelID}) => LabelID === "0")
+                                    .reduce((accumulator, item) => accumulator + item.Unread, 0);
+                            },
+                        },
+                    ];
+
+                    return AJAX_SEND_NOTIFICATION$.pipe(
+                        mergeMap((request) => responseListeners
+                            .filter(({re}) => {
+                                return re.test(request.responseURL);
+                            })
+                            .reduce(
+                                (accumulator, {handler}) => {
+                                    const responseData = JSON.parse(request.responseText);
+                                    const value = (handler as any)(responseData);
+
+                                    return typeof value === "number"
+                                        ? accumulator.concat([{unread: value}])
+                                        : accumulator;
+                                },
+                                [] as UnreadOutput[],
+                            )),
+                        distinctUntilChanged((prev, curr) => curr.unread === prev.unread),
+                    );
+                })(),
+
+                (() => {
+                    const innerLogger = curryFunctionMembers(logger, `[entity update notification]`);
+                    const eventsUrlRe = new RegExp(`${entryApiUrl}/api/events/.*==`);
+                    const notification = {batchEntityUpdatesCounter: 0};
+                    const notificationReceived$: Observable<Rest.Model.EventResponse> = AJAX_SEND_NOTIFICATION$.pipe(
+                        filter((request) => eventsUrlRe.test(request.responseURL)),
+                        map((request) => JSON.parse(request.responseText)),
+                    );
+
+                    return notificationReceived$.pipe(
+                        buffer(notificationReceived$.pipe(
+                            debounceTime(ONE_SECOND_MS * 1.5),
                         )),
-                    distinctUntilChanged((prev, curr) => curr.unread === prev.unread),
-                );
-            })(),
-
-            (() => {
-                const innerLogger = curryFunctionMembers(logger, `[entity update notification]`);
-                const eventsUrlRe = new RegExp(`${entryApiUrl}/api/events/.*==`);
-                const notification = {batchEntityUpdatesCounter: 0};
-                const notificationReceived$: Observable<Rest.Model.EventResponse> = AJAX_SEND_NOTIFICATION$.pipe(
-                    filter((request) => eventsUrlRe.test(request.responseURL)),
-                    map((request) => JSON.parse(request.responseText)),
-                );
-
-                return notificationReceived$.pipe(
-                    buffer(notificationReceived$.pipe(
-                        debounceTime(ONE_SECOND_MS * 1.5),
-                    )),
-                    concatMap((events) => from(buildDbPatch({events, parentLogger: innerLogger}, true))),
-                    concatMap((patch) => {
-                        if (!isEntityUpdatesPatchNotEmpty(patch)) {
-                            return EMPTY;
-                        }
-                        for (const key of (Object.keys(patch) as Array<keyof typeof patch>)) {
-                            innerLogger.info(`upsert/remove ${key}: ${patch[key].upsert.length}/${patch[key].remove.length}`);
-                        }
-                        notification.batchEntityUpdatesCounter++;
-                        return [notification];
-                    }),
-                );
-            })(),
-        ];
+                        concatMap((events) => from(buildDbPatch({events, parentLogger: innerLogger}, true))),
+                        concatMap((patch) => {
+                            if (!isEntityUpdatesPatchNotEmpty(patch)) {
+                                return EMPTY;
+                            }
+                            for (const key of (Object.keys(patch) as Array<keyof typeof patch>)) {
+                                innerLogger.info(`upsert/remove ${key}: ${patch[key].upsert.length}/${patch[key].remove.length}`);
+                            }
+                            notification.batchEntityUpdatesCounter++;
+                            return [notification];
+                        }),
+                    );
+                })(),
+            ]
+        ;
 
         return merge(...observables);
     },

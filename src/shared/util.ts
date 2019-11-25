@@ -63,6 +63,7 @@ export function initialConfig(): Config {
             hideControls: false,
             idleTimeLogOutSec: 0,
             logLevel: "error",
+            reflectSelectedAccountTitle: false,
             startMinimized: true,
             unreadNotifications: true,
         };
@@ -83,6 +84,7 @@ export function pickBaseConfigProperties(
         hideControls,
         idleTimeLogOutSec,
         logLevel,
+        reflectSelectedAccountTitle,
         startMinimized,
         unreadNotifications,
     }: Config,
@@ -100,6 +102,7 @@ export function pickBaseConfigProperties(
         hideControls,
         idleTimeLogOutSec,
         logLevel,
+        reflectSelectedAccountTitle,
         startMinimized,
         unreadNotifications,
     };

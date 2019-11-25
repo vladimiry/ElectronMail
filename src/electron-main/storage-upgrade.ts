@@ -191,12 +191,15 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.localDbMailsListViewMode = INITIAL_STORES.config().localDbMailsListViewMode;
         }
     },
-    "3.8.1": ({timeouts}) => {
+    "3.8.1": ({timeouts, ...restConfig}) => {
         // force default "indexingBootstrap" timeout to be the minimum value
         timeouts.indexingBootstrap = Math.max(
             INITIAL_STORES.config().timeouts.indexingBootstrap,
             timeouts.indexingBootstrap,
         );
+        if (typeof restConfig.reflectSelectedAccountTitle === "undefined") {
+            restConfig.reflectSelectedAccountTitle = INITIAL_STORES.config().reflectSelectedAccountTitle;
+        }
     },
 };
 

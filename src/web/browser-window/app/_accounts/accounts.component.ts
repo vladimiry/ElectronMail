@@ -6,8 +6,10 @@ import {equals} from "ramda";
 
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
+import {BaseConfig} from "src/shared/model/options";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
+import {PRODUCT_NAME} from "src/shared/constants";
 import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount} from "src/web/browser-window/app/model";
@@ -76,10 +78,21 @@ export class AccountsComponent implements OnInit, OnDestroy {
             }),
         );
         this.subscription.add(
-            this.store.pipe(
-                select(AccountsSelectors.FEATURED.selectedAccount),
-                // distinctUntilChanged((prev, curr) => Boolean(prev && curr && prev.accountConfig.login === curr.accountConfig.login)),
-            ).subscribe(async (selectedAccount) => {
+            combineLatest([
+                this.store.pipe(
+                    select(AccountsSelectors.FEATURED.selectedAccount),
+                    // distinctUntilChanged((prev, curr) => Boolean(prev && curr && prev.accountConfig.login === curr.accountConfig.login)),
+                ),
+                this.store.pipe(
+                    select(OptionsSelectors.CONFIG.reflectSelectedAccountTitle),
+                ),
+            ]).subscribe(async ([selectedAccount, reflectSelectedAccountTitle]) => {
+                this.patchDocumentTitle({selectedAccount, reflectSelectedAccountTitle});
+
+                if (this.selectedAccount === selectedAccount) {
+                    return;
+                }
+
                 this.selectedAccount = selectedAccount;
 
                 if (!this.selectedAccount) {
@@ -135,5 +148,32 @@ export class AccountsComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.subscription.unsubscribe();
+        this.patchDocumentTitle();
+    }
+
+    private patchDocumentTitle(
+        {
+            reflectSelectedAccountTitle,
+            selectedAccount,
+        }: Partial<Pick<BaseConfig, "reflectSelectedAccountTitle">> & { selectedAccount?: WebAccount; } = {},
+    ) {
+        const selectedAccountDocumentTitle = (
+            reflectSelectedAccountTitle
+            &&
+            selectedAccount
+            &&
+            selectedAccount.accountConfig.type === "protonmail"
+            &&
+            selectedAccount.notifications.title
+        );
+        const newDocumentTitle = PRODUCT_NAME + (
+            selectedAccountDocumentTitle
+                ? ` | ${selectedAccountDocumentTitle}`
+                : ""
+        );
+
+        if (document.title !== newDocumentTitle) {
+            document.title = newDocumentTitle;
+        }
     }
 }

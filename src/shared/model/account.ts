@@ -20,6 +20,7 @@ export type AccountConfigTutanota = GenericAccountConfig<"tutanota", "password" 
 export type AccountConfig<T extends AccountType = AccountType> = Extract<AccountConfigProtonmail | AccountConfigTutanota, { type: T }>;
 
 export interface GenericNotifications<NotificationPageTypes extends string = string> {
+    title: string;
     loggedIn: boolean;
     unread: number;
     pageType: { url?: string; type: NotificationPageTypes; };

@@ -239,7 +239,7 @@ const endpoints: ProtonmailApi = {
                 Observable<UnreadOutput>,
                 Observable<BatchEntityUpdatesCounterOutput>
             ] = [
-                new Observable<{ title: string }>((observer) => {
+                new Observable<TitleOutput>((observer) => {
                     const titleEl = document.querySelector("title");
 
                     if (!titleEl) {

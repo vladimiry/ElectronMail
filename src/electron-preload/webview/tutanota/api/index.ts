@@ -166,7 +166,7 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
                 Observable<UnreadOutput>,
                 Observable<BatchEntityUpdatesCounterOutput>
             ] = [
-                new Observable<{ title: string }>((observer) => {
+                new Observable<TitleOutput>((observer) => {
                     observer.next({title: `"title" DOM element listening is not enabled`});
                     observer.complete();
                 }),

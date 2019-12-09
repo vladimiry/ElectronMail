@@ -123,6 +123,9 @@ export function buildMinimalWebConfig(
                                 options: {
                                     limit: 4096,
                                     name: "assets/[name].[hash].[ext]",
+                                    // TODO webpack url/file-loader:
+                                    //      drop "esModule" flag on https://github.com/webpack-contrib/html-loader/issues/203 resolving
+                                    esModule: false,
                                 },
                             },
                         },

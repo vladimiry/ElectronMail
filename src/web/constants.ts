@@ -1,2 +1,5 @@
-// tslint:disable-next-line:no-var-requires
-export const ICON_URL = require("src/assets/dist/icons/icon.png");
+import ICON_URL from "src/assets/dist/icons/icon.png";
+
+export {
+    ICON_URL,
+};

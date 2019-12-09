@@ -287,6 +287,7 @@
   "resolutions": {
     "*/**/@types/webpack": "4.41.0",
     "*/**/builder-util-runtime": "8.3.0",
+    "*/**/serialize-javascript": "^2.1.2",
     "cpx/**/braces": "3.0.2"
   }
 }

@@ -6,15 +6,20 @@ import * as Rest from "src/electron-preload/webview/protonmail/lib/rest";
 import {AJAX_SEND_NOTIFICATION_SKIP_PARAM} from "src/electron-preload/webview/protonmail/notifications";
 import {DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_SECOND_MS} from "src/shared/constants";
 import {DbPatch} from "src/shared/api/common";
-import {FsDbAccount} from "src/shared/model/database";
+import {FsDbAccount, PROTONMAIL_MAILBOX_IDENTIFIERS} from "src/shared/model/database";
 import {ProtonmailApi, ProtonmailApiScan} from "src/shared/api/webview/protonmail";
 import {ProviderApi, resolveProviderApi} from "src/electron-preload/webview/protonmail/lib/provider-api";
 import {UPSERT_EVENT_ACTIONS} from "src/electron-preload/webview/protonmail/lib/rest/model";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/constants";
+import {
+    angularJsHttpResponseTypeGuard,
+    isLoggedIn,
+    isUpsertOperationType,
+    preprocessError,
+} from "src/electron-preload/webview/protonmail/lib/util";
 import {asyncDelay, curryFunctionMembers, isDatabaseBootstrapped} from "src/shared/util";
 import {buildDbPatchRetryPipeline, buildEmptyDbPatch, persistDatabasePatch, resolveIpcMainApi} from "src/electron-preload/webview/util";
 import {buildLoggerBundle} from "src/electron-preload/util";
-import {isLoggedIn, isUpsertOperationType, preprocessError} from "src/electron-preload/webview/protonmail/lib/util";
 
 interface DbPatchBundle {
     patch: DbPatch;
@@ -304,7 +309,8 @@ async function buildDbPatch(
     const mappingItem = () => ({updatesMappedByInstanceId: new Map(), remove: [], upsertIds: []});
     const mapping: Record<"mails" | "folders" | "contacts", {
         remove: Array<{ pk: string }>;
-        upsertIds: Rest.Model.Id[];
+        // TODO put entire entity update to "upsertIds" array ("gotTrashed" needed only for "message" updates)
+        upsertIds: Array<{ id: Rest.Model.Id; gotTrashed?: boolean; }>;
     }> & {
         mails: {
             refType: keyof Pick<Rest.Model.Event, "Messages">;
@@ -350,7 +356,12 @@ async function buildDbPatch(
             // entity updates sorted in ASC order, so reversing the entity updates list in order to start processing from the newest items
             for (const update of entityUpdates.reverse()) {
                 if (!upserted && isUpsertOperationType(update.Action)) {
-                    upsertIds.push(update.ID);
+                    upsertIds.push({
+                        id: update.ID,
+                        gotTrashed: Boolean(
+                            update.Message?.LabelIDsAdded?.includes(PROTONMAIL_MAILBOX_IDENTIFIERS.Trash),
+                        ),
+                    });
                     upserted = true;
                 }
                 if (update.Action === Rest.Model.EVENT_ACTION.DELETE) {
@@ -369,21 +380,52 @@ async function buildDbPatch(
     };
 
     if (!nullUpsert) {
-        // TODO process 404 error of fetching individual entity
+        // TODO process 404 error of fetching individual entity (message case is handled, see "error.data.Code === 15052" check below)
         // so we could catch the individual entity fetching error
         // 404 error can be ignored as if it occurs because user was moved stuff from here to there while syncing cycle was in progress
-        for (const id of mapping.mails.upsertIds) {
-            const response = await api.message.get(id);
-            patch.mails.upsert.push(await Database.buildMail(response.data.Message, api));
+        for (const {id, gotTrashed} of mapping.mails.upsertIds) {
+            try {
+                const response = await api.message.get(id);
+                patch.mails.upsert.push(await Database.buildMail(response.data.Message, api));
+            } catch (error) {
+                const skippingNoSuchMessageError = (
+                    gotTrashed
+                    &&
+                    angularJsHttpResponseTypeGuard<{
+                        Code?: number, // 15052
+                        Error?: string, // Message does not exist
+                        ErrorDescription?: string,
+                        Details?: object;
+                    }>(error)
+                    &&
+                    error.status === 422
+                    &&
+                    error.data.Code === 15052
+                );
+                if (!skippingNoSuchMessageError) {
+                    throw error;
+                }
+                logger.warn(
+                    // WARN don't log message-specific data as it might include sensitive fields
+                    `Skip message fetching as it's probably already removed from the trash before fetch action started`,
+                    // WARN don't log full error as it might include sensitive data
+                    JSON.stringify({
+                        data: error.data,
+                        statusText: error.status,
+                        status: error.statusText, // Unprocessable Entity
+                    }),
+                );
+            }
         }
         await (async () => {
             const labels = await api.label.query();
+            const upsertIds = mapping.folders.upsertIds.map(({id}) => id);
             const folders = labels
-                .filter(({ID}) => mapping.folders.upsertIds.includes(ID))
+                .filter(({ID}) => upsertIds.includes(ID))
                 .map(Database.buildFolder);
             patch.folders.upsert.push(...folders);
         })();
-        for (const id of mapping.contacts.upsertIds) {
+        for (const {id} of mapping.contacts.upsertIds) {
             const contact = await api.contact.get(id);
             patch.contacts.upsert.push(Database.buildContact(contact));
         }

@@ -1,5 +1,6 @@
 import {CONTACT_CARD, ENCRYPTED_STATUS, EVENT_ACTION, LABEL_TYPE, LOCATION, MAIL_TYPE} from "./constats";
 import {Id, NumberBoolean} from "./common";
+import {PROTONMAIL_MAILBOX_IDENTIFIERS} from "src/shared/model/database";
 
 export interface Entity {
     ID: Id;
@@ -147,13 +148,17 @@ export interface ContactCard<TypeRecord = typeof CONTACT_CARD._.nameValueMap> {
     Type: TypeRecord[keyof TypeRecord];
 }
 
+interface EventSubMessage {
+    Message?: { LabelIDsAdded?: typeof PROTONMAIL_MAILBOX_IDENTIFIERS._.values };
+}
+
 export interface Event<TypeRecord = typeof EVENT_ACTION._.nameValueMap, A = TypeRecord[keyof TypeRecord]> {
     EventID: Id;
     Refresh: number; // bitmask, 255 means throw out client cache and reload everything from server, 1 is mail, 2 is contacts
     More: number; // 1 if more events exist and should be fetched
-    Messages?: Array<{ Action: A } & Pick<Message, "ID">>;
-    Contacts?: Array<{ Action: A } & Pick<Contact, "ID">>;
+    Messages?: Array<{ Action: A } & Pick<Message, "ID"> & EventSubMessage>;
+    Contacts?: Array<{ Action: A } & Pick<Contact, "ID"> & EventSubMessage>;
     ContactEmails?: Array<{ Action: A } & Pick<ContactEmail, "ID">>;
-    Labels?: Array<{ Action: A } & Pick<Label, "ID">>;
+    Labels?: Array<{ Action: A } & Pick<Label, "ID"> & EventSubMessage>;
     MessageCounts?: Array<{ LabelID: string; Unread: number; }>;
 }

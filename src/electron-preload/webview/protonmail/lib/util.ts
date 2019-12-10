@@ -10,7 +10,7 @@ export const isUpsertOperationType: (v: Unpacked<typeof Rest.Model.EVENT_ACTION.
     return result;
 })();
 
-export const angularJsHttpResponseTypeGuard: (data: ng.IHttpResponse<any> | any) => data is ng.IHttpResponse<any> = ((
+export const angularJsHttpResponseTypeGuard: <T extends any = any>(data: ng.IHttpResponse<T> | any) => data is ng.IHttpResponse<T> = ((
     signatureKeys = Object.freeze<keyof ng.IHttpResponse<any>>(["data", "status", "config", "statusText", "xhrStatus"]),
 ) => {
     return ((data: ng.IHttpResponse<any> | any) => {

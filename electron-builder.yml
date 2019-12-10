@@ -19,6 +19,8 @@ files:
   - '!node_modules/sodium-native/{src,test,libsodium,tmp}'
   - '!node_modules/sodium-native/prebuilds/linux-arm'
   - '!node_modules/sodium-native/prebuilds/win32-ia32'
+  # remeda
+  - '!node_modules/remeda/{coverage,scripts,src}'
 compression: normal
 asar: true
 asarUnpack:

@@ -124,6 +124,7 @@
     "pureimage": "0.1.6",
     "ramda": "0.26.1",
     "reflect-metadata": "0.1.13",
+    "remeda": "0.0.14",
     "rolling-rate-limiter": "0.1.11",
     "rxjs": "6.5.3",
     "sanitize-html": "1.20.1",

@@ -30,6 +30,9 @@
     ],
     "outDir": "./app",
     "baseUrl": ".",
+    "paths": {
+      "remeda/*": ["./node_modules/remeda/dist/es/*"]
+    },
     "typeRoots": [
       "./node_modules/@types",
       "./src/@types"

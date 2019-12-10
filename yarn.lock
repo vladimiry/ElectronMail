@@ -10552,6 +10552,11 @@ release-zalgo@^1.0.0:
   dependencies:
     es6-error "^4.0.1"
 
+remeda@0.0.14:
+  version "0.0.14"
+  resolved "https://registry.yarnpkg.com/remeda/-/remeda-0.0.14.tgz#2c8e3672d2ed09d21133cd73ba8ce1301b5fd78f"
+  integrity sha512-94BLgUtP0o/E0Ta7swiAstz1VRB+ngXROZ7NYiq0AgqNt4EaLkZdIxJ8IYaqn9Dd4DRiCUe7eVZaRB7wmqzBxA==
+
 remove-trailing-separator@^1.0.1:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/remove-trailing-separator/-/remove-trailing-separator-1.1.0.tgz#c24bce2a283adad5bc3f58e0d48249b92379d8ef"

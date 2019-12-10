@@ -1,4 +1,5 @@
 import {defer} from "rxjs";
+import {pick} from "remeda";
 
 import * as Database from "src/electron-preload/webview/protonmail/lib/database";
 import * as DatabaseModel from "src/shared/model/database";
@@ -388,7 +389,7 @@ async function buildDbPatch(
                 const response = await api.message.get(id);
                 patch.mails.upsert.push(await Database.buildMail(response.data.Message, api));
             } catch (error) {
-                const skippingNoSuchMessageError = (
+                if (
                     gotTrashed
                     &&
                     angularJsHttpResponseTypeGuard<{
@@ -401,20 +402,18 @@ async function buildDbPatch(
                     error.status === 422
                     &&
                     error.data.Code === 15052
-                );
-                if (!skippingNoSuchMessageError) {
+                ) { // ignoring the error as expected to happen
+                    logger.warn(
+                        // WARN don't log message-specific data as it might include sensitive fields
+                        `Skip message fetching as it has been already removed from the trash before fetch action started`,
+                        // WARN don't log full error as it might include sensitive data
+                        JSON.stringify(
+                            pick(error, ["data", "status", "statusText"]),
+                        ),
+                    );
+                } else {
                     throw error;
                 }
-                logger.warn(
-                    // WARN don't log message-specific data as it might include sensitive fields
-                    `Skip message fetching as it's probably already removed from the trash before fetch action started`,
-                    // WARN don't log full error as it might include sensitive data
-                    JSON.stringify({
-                        data: error.data,
-                        statusText: error.status,
-                        status: error.statusText, // Unprocessable Entity
-                    }),
-                );
             }
         }
         await (async () => {

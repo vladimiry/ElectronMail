@@ -1,6 +1,6 @@
 # ElectronMail
 
-is an [Electron](https://electronjs.org)-based unofficial desktop client for [ProtonMail](https://protonmail.com/) and [Tutanota](https://tutanota.com/) end-to-end encrypted email providers. The app aims to provide enhanced desktop user experience enabling features that are not supported by the official in-browser web clients. 
+is an [Electron](https://electronjs.org)-based unofficial desktop client for [ProtonMail](https://protonmail.com/). The app aims to provide enhanced desktop user experience enabling features that are not supported by the official in-browser web clients. 
 It is written in [TypeScript](http://www.typescriptlang.org) and uses [Angular](https://angular.io).
 
 [![Travis CI](https://img.shields.io/travis/vladimiry/ElectronMail.svg?style=flat-square&label=Travis+CI)](https://travis-ci.org/vladimiry/ElectronMail)
@@ -29,7 +29,6 @@ The way of verifying that the installation packages attached to the [releases](h
 - :gear: **Cross platform**. The app works on Linux/OSX/Windows platforms.
 - :mag_right: **Full-text search**. Enabled with [v2.2.0](https://github.com/vladimiry/ElectronMail/releases/tag/v2.2.0) release. See the respective [issue](https://github.com/vladimiry/ElectronMail/issues/92) for details.
 - :package: **Offline access to the emails**. The [local store](https://user-images.githubusercontent.com/1560781/51189497-382a6c00-18f1-11e9-9b9a-baa63f0c0ff4.gif) feature enables storing your messages in the encrypted `database.bin` file, so you could view your messages offline, perform a full-text search against them and export them to EML files. Enabled since [v2.0.0](https://github.com/vladimiry/ElectronMail/releases/tag/v2.0.0) release.
-- :mailbox: **Multi email providers** support. [ProtonMail](https://protonmail.com/) and [Tutanota](https://tutanota.com/) at the moment. Tutanota support [is deprecated](https://github.com/vladimiry/ElectronMail/issues/180) since Jul 2019.
 - :mailbox: **Multi accounts** support per each email provider including supporting individual [entry point domains](https://github.com/vladimiry/ElectronMail/issues/29).
 - :unlock: **Automatic login into the app** with a remembered master password using [keytar](https://github.com/atom/node-keytar) module ([keep me signed in](images/keep-me-signed-in.png) feature).
 - :unlock: **Automatic login into the email accounts**, including filling [2FA tokens](https://github.com/vladimiry/ElectronMail/issues/10). Two auto-login delay scenarios supported in order to make it harder to correlate the identities, see the respective [issue](https://github.com/vladimiry/ElectronMail/issues/121).
@@ -40,7 +39,7 @@ The way of verifying that the installation packages attached to the [releases](h
 - :gear: **Closing to tray**.
 - :gear: **Switchable accounts handle buttons positioning** (vertical, horizontal and horizontal-dropdown). See details [here](https://github.com/vladimiry/ElectronMail/issues/36) and screenshots in the [images](images) folder.
 - :package: **Batch emails export** to EML files. Feature released with [v2.0.0-beta.4](https://github.com/vladimiry/ElectronMail/releases/tag/v2.0.0-beta.4) version, requires `local messages store` feature to be enabled ([how to enable](https://github.com/vladimiry/ElectronMail/releases/tag/v2.0.0-beta.1)).
-- :closed_lock_with_key: **Built-in/prepackaged web clients**. The built-in web clients are built from source code, see respective official [Protonmail](https://github.com/ProtonMail/WebClient) and [Tutanota](https://github.com/tutao/tutanota) repositories. See [79](https://github.com/vladimiry/ElectronMail/issues/79) and [80](https://github.com/vladimiry/ElectronMail/issues/80) issues for details.
+- :closed_lock_with_key: **Built-in/prepackaged web clients**. The built-in web clients are built from source code, see respective official [Protonmail](https://github.com/ProtonMail/WebClient) repository. See [79](https://github.com/vladimiry/ElectronMail/issues/79) and [80](https://github.com/vladimiry/ElectronMail/issues/80) issues for details.
 - :gear: **Configuring proxy per account** support. Enabled since [v3.0.0](https://github.com/vladimiry/ElectronMail/releases/tag/v3.0.0) release. See [113](https://github.com/vladimiry/ElectronMail/issues/113) and [120](https://github.com/vladimiry/ElectronMail/issues/120) issues for details.
 - :pencil: **Spell Checking**.
 
@@ -57,7 +56,7 @@ The [reproducible builds](https://en.wikipedia.org/wiki/Reproducible_builds) ide
   - Run `nvm install 12`.
   - Run `nvm use 12`.
 - Some native modules require node prebuilds files compiling and for that Python and C++ compiler need to be installed on your system:
-  - On `Windows`: the simplest way to install all the needed stuff on Windows is to run `npm install --global --production windows-build-tools` CLI command. [Tutanota](https://github.com/tutao/tutanota) and [ProtonMail](https://github.com/ProtonMail/WebClient) web clients projects require bash for building, so a few more steps need to be fulfilled:
+  - On `Windows`: the simplest way to install all the needed stuff on Windows is to run `npm install --global --production windows-build-tools` CLI command. [ProtonMail](https://github.com/ProtonMail/WebClient) web client requires bash for building, so a few more steps need to be fulfilled:
     - Install bash then check the path of bash ex: `C:\\Program Files\\git\\bin\\bash.exe`.
     - Execute `npm config set script-shell "C:\\Program Files\\git\\bin\\bash.exe"` command.
   - On `Linux`: `python v2.7`, `make` and a C/C++ compiler toolchain, like `GCC` are most likely already installed. Besides [keytar](https://github.com/atom/node-keytar) needs `libsecret` library to be installed.

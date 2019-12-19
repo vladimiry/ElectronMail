@@ -217,6 +217,7 @@ export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
         LogOut: ofType<{}>(),
         SignedInStateChange: ofType<{ signedIn: boolean }>(),
         ErrorMessage: ofType<{ message: string }>(),
+        InfoMessage: ofType<{ message: string }>(),
     },
     {
         tag: "type",

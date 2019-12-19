@@ -168,7 +168,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             const existingSettings = await store.read();
             const settings = existingSettings
                 ? (
-                    upgradeSettings(existingSettings)
+                    upgradeSettings(existingSettings, ctx)
                         ? await store.write(existingSettings)
                         : existingSettings
                 )

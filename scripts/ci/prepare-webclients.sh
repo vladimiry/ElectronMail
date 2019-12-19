@@ -8,16 +8,11 @@ set -ev
 WEBCLIENTS_TMP_TAR=webclients.tar
 
 yarn assets:webclient:protonmail
-yarn assets:webclient:tutanota
 
 # create cache tar
 find output/git/protonmail/webclient/*/*/ -maxdepth 0 -type d \
     | awk '{print $1"dist/"}' \
     | tar -cf $WEBCLIENTS_TMP_TAR -T -
-# append cache tar
-find output/git/tutanota/webclient/*/*/ -maxdepth 0 -type d \
-    | awk '{print $1"build/dist"}' \
-    | tar -rf $WEBCLIENTS_TMP_TAR -T -
 
 # keep only prepared web clients in the cache
 rm -rf ./output

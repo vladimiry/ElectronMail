@@ -1,4 +1,4 @@
-import logger, {ILogLevel} from "electron-log";
+import logger, {LogLevel as ILogLevel} from "electron-log";
 
 export type Timestamp = ReturnType<typeof Date.prototype.getTime>;
 

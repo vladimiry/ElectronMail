@@ -1,4 +1,4 @@
-import {IElectronLog} from "electron-log"; // tslint:disable-line:no-import-zones
+import {ElectronLog} from "electron-log"; // tslint:disable-line:no-import-zones
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 
 import {AccountConfig, AccountType} from "./model/account";
@@ -356,7 +356,7 @@ export function normalizeLocale(value: string): string {
 
 export const logLevelEnabled: (
     level: LogLevel,
-    logger: { transports: Pick<IElectronLog["transports"], "file"> },
+    logger: { transports: Pick<ElectronLog["transports"], "file"> },
 ) => boolean = (() => {
     const weights: Readonly<Record<LogLevel | "null" | "undefined" | "false", number>> = {
         null: -1,

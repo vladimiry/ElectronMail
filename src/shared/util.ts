@@ -293,9 +293,7 @@ export function isDatabaseBootstrapped(
         return false;
     }
 
-    return metadata.type === "protonmail"
-        ? Boolean(metadata.latestEventId)
-        : Boolean(Object.keys(metadata.groupEntityEventBatchIds || {}).length);
+    return Boolean(metadata.latestEventId);
 }
 
 export function getRandomInt(min: number, max: number): number {

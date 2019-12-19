@@ -17,8 +17,7 @@
         [cdkDragData]="{login: account.login}"
         class="list-group-item pl-0 pr-3"
     >
-        <i cdkDragHandle class="fa fa-bars px-3" title="Drag up/down to reorder"></i>
-        <electron-mail-type-symbol [type]="account.type" class="mr-1"></electron-mail-type-symbol>
+        <i cdkDragHandle class="fa fa-bars pl-3 pr-2" title="Drag up/down to reorder"></i>
         {{ account.login }}
         <span *ngIf="account.title"> ({{ account.title }})</span>
         <a [routerLink]="['./../account-edit', account.login]" class="float-right">

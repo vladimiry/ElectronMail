@@ -35,6 +35,10 @@ body {
         text-align: center;
     }
 
+    h1 ~ p {
+        padding: 0 50px;
+    }
+
     img {
         width: 128px;
         height: 128px;

@@ -143,17 +143,12 @@ interface GenericDb<T extends AccountType, MetadataPart> {
             Readonly<FsDbDataContainer & FsDbDataContainerDeletedField & { metadata: { type: T } & MetadataPart }>>>;
 }
 
-interface TutanotaMetadataPart {
-    groupEntityEventBatchIds: Record</* Rest.Model.Group["_id"] */ string, /* Rest.Model.EntityEventBatch["_id"][1] */ string>;
-}
-
 interface ProtonmailMetadataPart {
     latestEventId: string; // Rest.Model.Event["EventID"]
 }
 
 export type FsDb =
     & Partial<StoreModel.StoreEntity>
-    & GenericDb<"tutanota", TutanotaMetadataPart>
     & GenericDb<"protonmail", ProtonmailMetadataPart>;
 
 export type FsDbAccount<T extends keyof FsDb["accounts"] = keyof FsDb["accounts"]> = FsDb["accounts"][T][string];

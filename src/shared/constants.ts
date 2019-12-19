@@ -62,11 +62,6 @@ export const PROVIDER_REPO: Record<AccountType, { repo: string, version: string;
         commit: "c3eec1e0ee5a9313ceef8b950864fbe26bd69e1c",
         version: "3.16.19",
     },
-    tutanota: {
-        repo: "https://github.com/tutao/tutanota.git",
-        commit: "d401796a2cdd459df32b7c42f414156de4c15d3a",
-        version: "3.60.11",
-    },
 };
 
 export const LOCAL_WEBCLIENT_PROTOCOL_PREFIX = "webclient";
@@ -91,14 +86,6 @@ export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlIte
             {
                 value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://protonirockerxow.onion`,
                 title: `https://protonirockerxow.onion (${getBuiltInWebClientTitle("protonmail")})`,
-            },
-        ],
-    },
-    tutanota: {
-        entryUrl: [
-            {
-                value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.tutanota.com`,
-                title: `https://mail.tutanota.com (${getBuiltInWebClientTitle("tutanota")})`,
             },
         ],
     },

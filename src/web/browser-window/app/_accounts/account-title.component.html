@@ -4,7 +4,6 @@
     class="btn-group"
 >
     <a class="btn b-primary" href="mailto:{{ state.account.accountConfig.login }}">
-        <electron-mail-type-symbol [type]="state.account.accountConfig.type"></electron-mail-type-symbol>
         <electron-mail-unread-badge
             *ngIf="state.account.notifications.unread"
             [value]="state.account.notifications.unread"

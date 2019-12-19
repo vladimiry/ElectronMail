@@ -98,10 +98,6 @@ export const FOLDER_UTILS: {
 })();
 
 function resolveAccountConversationNodes<T extends keyof FsDb["accounts"]>(account: FsDbAccount<T>): ConversationEntry[] {
-    if (account.metadata.type === "tutanota") {
-        return Object.values(account.conversationEntries);
-    }
-
     const buildEntry = ({pk, mailPk}: Pick<ConversationEntry, "pk" | "mailPk">) => ({
         pk,
         id: pk,

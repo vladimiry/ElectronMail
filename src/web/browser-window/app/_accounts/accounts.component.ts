@@ -162,8 +162,6 @@ export class AccountsComponent implements OnInit, OnDestroy {
             &&
             selectedAccount
             &&
-            selectedAccount.accountConfig.type === "protonmail"
-            &&
             selectedAccount.notifications.title
         );
         const newDocumentTitle = PRODUCT_NAME + (

@@ -34,12 +34,6 @@ const configs = [
         },
         srcRelativePath("./electron-preload/webview/protonmail/tsconfig.json"),
     ),
-    buildRendererConfig(
-        {
-            "electron-preload/webview/tutanota": srcRelativePath("./electron-preload/webview/tutanota/index.ts"),
-        },
-        srcRelativePath("./electron-preload/webview/tutanota/tsconfig.json"),
-    ),
 ];
 
 export default configs;

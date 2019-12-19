@@ -147,7 +147,7 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
         const {endpoints} = t.context;
         const {addAccount, removeAccount} = endpoints;
         const addProtonPayload = buildProtonmailAccountData();
-        const addTutanotaPayload = buildTutanotaAccountData();
+        const addProtonPayload2 = buildProtonmailAccountData();
         const removePayload = {login: addProtonPayload.login};
         const removePayload404 = {login: "404 login"};
 
@@ -160,7 +160,7 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
         }
 
         await addAccount(addProtonPayload);
-        await addAccount(addTutanotaPayload);
+        await addAccount(addProtonPayload2);
 
         const expectedSettings = produce(await t.context.ctx.settingsStore.readExisting(), (draft) => {
             (draft._rev as number)++;
@@ -181,7 +181,7 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
 
         await addAccount(buildProtonmailAccountData());
         await addAccount(buildProtonmailAccountData());
-        let settings = await addAccount(buildTutanotaAccountData());
+        let settings = await addAccount(buildProtonmailAccountData());
 
         await t.throwsAsync(changeAccountOrder({login: "login.404", index: 0}));
         await t.throwsAsync(changeAccountOrder({login: settings.accounts[0].login, index: -1}));
@@ -726,18 +726,6 @@ function buildProtonmailAccountData(): Readonly<AccountConfigCreatePatch<"proton
             password: generateRandomString(),
             twoFactorCode: generateRandomString(),
             mailPassword: generateRandomString(),
-        },
-    };
-}
-
-function buildTutanotaAccountData(): Readonly<AccountConfigCreatePatch<"tutanota">> {
-    return {
-        type: "tutanota",
-        login: generateRandomString(),
-        entryUrl: generateRandomString(),
-        credentials: {
-            password: generateRandomString(),
-            twoFactorCode: generateRandomString(),
         },
     };
 }

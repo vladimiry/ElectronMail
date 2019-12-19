@@ -5,7 +5,6 @@
     <div class="d-flex flex-grow-1">
         <button
             (click)="makeAllRead()"
-            *ngIf="makeAllReadButtonAvailable$ | async"
             [disabled]="(makeAllReadButtonLocked$ | async) || false"
             class="btn btn-sm btn-primary py-0 mr-2"
             style="white-space: nowrap"

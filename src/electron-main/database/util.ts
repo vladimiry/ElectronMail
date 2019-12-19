@@ -29,7 +29,6 @@ export const resolveAccountFolders: <T extends keyof FsDb["accounts"]>(account: 
             name: PROTONMAIL_MAILBOX_IDENTIFIERS._.resolveNameByValue(id as any),
             mailFolderId: id,
         })),
-        tutanota: [],
     };
 
     const result: typeof resolveAccountFolders = (account) => [
@@ -44,7 +43,7 @@ export const resolveAccountFolders: <T extends keyof FsDb["accounts"]>(account: 
 export function patchMetadata(
     target: FsDbAccount["metadata"],
     // TODO TS: use patch: Arguments<IpcMainApiEndpoints["dbPatch"]>[0]["metadata"],
-    source: Skip<FsDbAccount<"protonmail">["metadata"], "type"> | Skip<FsDbAccount<"tutanota">["metadata"], "type">,
+    source: Skip<FsDbAccount<"protonmail">["metadata"], "type">,
     sourceType: "dbPatch" | "loadDatabase",
 ): boolean {
     const logPrefix = `patchMetadata() ${sourceType}`;

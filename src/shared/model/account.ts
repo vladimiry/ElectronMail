@@ -1,4 +1,4 @@
-export type AccountType = "protonmail" | "tutanota";
+export type AccountType = "protonmail";
 
 export interface GenericAccountConfig<Type extends AccountType, CredentialFields extends string> {
     type: Type;
@@ -16,8 +16,7 @@ export interface GenericAccountConfig<Type extends AccountType, CredentialFields
 }
 
 export type AccountConfigProtonmail = GenericAccountConfig<"protonmail", "password" | "twoFactorCode" | "mailPassword">;
-export type AccountConfigTutanota = GenericAccountConfig<"tutanota", "password" | "twoFactorCode">;
-export type AccountConfig<T extends AccountType = AccountType> = Extract<AccountConfigProtonmail | AccountConfigTutanota, { type: T }>;
+export type AccountConfig<T extends AccountType = AccountType> = Extract<AccountConfigProtonmail, { type: T }>;
 
 export interface GenericNotifications<NotificationPageTypes extends string = string> {
     title: string;
@@ -26,6 +25,5 @@ export interface GenericNotifications<NotificationPageTypes extends string = str
     pageType: { url?: string; type: NotificationPageTypes; };
 }
 
-export type NotificationsTutanota = GenericNotifications<"unknown" | "login" | "login2fa">;
 export type NotificationsProtonmail = GenericNotifications<"unknown" | "login" | "login2fa" | "unlock">;
-export type Notifications = NotificationsProtonmail | NotificationsTutanota;
+export type Notifications = NotificationsProtonmail;

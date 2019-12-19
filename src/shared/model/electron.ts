@@ -4,14 +4,12 @@ import {AccountType} from "src/shared/model/account";
 import {IPC_MAIN_API} from "src/shared/api/main";
 import {Logger} from "src/shared/model/common";
 import {PROTONMAIL_IPC_WEBVIEW_API} from "src/shared/api/webview/protonmail";
-import {TUTANOTA_IPC_WEBVIEW_API} from "src/shared/api/webview/tutanota";
 import {registerDocumentClickEventListener} from "src/electron-preload/events-handling";
 
 export type ElectronExposure = Readonly<{
     buildIpcMainClient: typeof IPC_MAIN_API.client;
     buildIpcWebViewClient: {
         protonmail: typeof PROTONMAIL_IPC_WEBVIEW_API.client;
-        tutanota: typeof TUTANOTA_IPC_WEBVIEW_API.client;
     };
     registerDocumentClickEventListener: typeof registerDocumentClickEventListener;
     rollingRateLimiter: (options: InMemoryOptions) => SyncOrAsyncLimiter,

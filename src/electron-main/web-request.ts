@@ -43,13 +43,11 @@ export function initWebRequestListeners(ctx: Context, session: Session) {
     const resolveProxy: (details: RequestDetails) => RequestProxy | null = (() => {
         const origins: { [k in AccountType]: string[] } = {
             ...resolveLocalWebClientOrigins("protonmail", ctx.locations),
-            ...resolveLocalWebClientOrigins("tutanota", ctx.locations),
         };
 
         return (details: RequestDetails) => {
             const proxies: { [k in AccountType]: ReturnType<typeof resolveRequestProxy> } = {
                 protonmail: resolveRequestProxy("protonmail", details, origins),
-                tutanota: resolveRequestProxy("tutanota", details, origins),
             };
             const [accountType] = Object.entries(proxies)
                 .filter((([, value]) => Boolean(value)))
@@ -73,7 +71,7 @@ export function initWebRequestListeners(ctx: Context, session: Session) {
 
             if (requestProxy) {
                 const {name} = getHeader(requestHeaders, HEADERS.request.origin) || {name: HEADERS.request.origin};
-                requestHeaders[name] = resolveFakeOrigin(requestProxy.accountType, requestDetails);
+                requestHeaders[name] = resolveFakeOrigin(requestDetails);
                 PROXIES.set(requestDetails.id, requestProxy);
             }
 
@@ -97,14 +95,8 @@ export function initWebRequestListeners(ctx: Context, session: Session) {
     );
 }
 
-function resolveFakeOrigin(accountType: AccountType, requestDetails: RequestDetails): string {
-    if (accountType === "tutanota") {
-        // WARN: tutanota responds to the specific origins only
-        // it will not work for example with http://localhost:2015 origin, so they go with a whitelisting
-        return "http://localhost:9000";
-    }
-
-    // protonmail doesn't care much, so we generate the origin from request
+function resolveFakeOrigin(requestDetails: RequestDetails): string {
+    // protonmail doesn't care much about "origin" value, so we generate the origin from request
     return buildOrigin(new URL(requestDetails.url));
 }
 
@@ -151,7 +143,7 @@ function resolveRequestProxy<T extends AccountType>(
         : null;
 }
 
-// TODO consider doing initial preflight/OPTIONS call to https://mail.protonmail.com / https://mail.tutanota.com
+// TODO consider doing initial preflight/OPTIONS call to https://mail.protonmail.com
 // and then pick all the "Access-Control-*" header names as a template instead of hardcoding the default headers
 // since over time the server may start giving other headers
 const responseHeadersPatchHandlers: {
@@ -229,28 +221,6 @@ const responseHeadersPatchHandlers: {
                 {
                     name: HEADERS.response.accessControlExposeHeaders,
                     values: ["Date"],
-                },
-            );
-
-            return responseHeaders;
-        },
-        tutanota: ({requestProxy, responseDetails}) => {
-            const {responseHeaders} = responseDetails;
-
-            commonPatch({requestProxy, responseDetails});
-
-            patchResponseHeader(
-                responseHeaders,
-                {
-                    name: HEADERS.response.accessControlAllowHeaders,
-                    values: [
-                        ...(requestProxy.headers.accessControlRequestHeaders || {
-                            values: [
-                                "content-type",
-                                "v",
-                            ],
-                        }).values,
-                    ],
                 },
             );
 

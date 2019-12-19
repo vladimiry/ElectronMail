@@ -39,7 +39,6 @@ export const MAIL_STATE = buildEnumBundle({
     SENT: "1",
     RECEIVED: "2",
     PROTONMAIL_INBOX_AND_SENT: "100",
-    TUTANOTA_SENDING: "101",
 } as const);
 
 export const REPLY_TYPE = buildEnumBundle({

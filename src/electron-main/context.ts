@@ -184,7 +184,6 @@ function initLocations(
             fullTextSearchBrowserWindow: appRelativePath("./electron-preload/database-indexer.js"),
             webView: {
                 protonmail: formatFileUrl(appRelativePath("./electron-preload/webview/protonmail.js")),
-                tutanota: formatFileUrl(appRelativePath("./electron-preload/webview/tutanota.js")),
             },
         },
         vendorsAppCssLinkHref: (() => {
@@ -201,7 +200,6 @@ function initLocations(
                 protocolBundles: [],
                 webClients: {
                     protonmail: [],
-                    tutanota: [],
                 },
             };
 

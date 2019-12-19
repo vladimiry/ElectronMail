@@ -26,7 +26,6 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     advancedBlockCollapsed: boolean = true;
     typeValues: Array<{ value: AccountType; title: string; }> = [
         {value: "protonmail", title: "ProtonMail"},
-        {value: "tutanota", title: "Tutanota"},
     ];
     entryUrlItems: EntryUrlItem[] = [];
     controls: Record<keyof Pick<AccountConfig,
@@ -119,9 +118,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
 
                     controls.password.patchValue(account.credentials.password);
                     controls.twoFactorCode.patchValue(account.credentials.twoFactorCode);
-                    if (account.type === "protonmail") {
-                        controls.mailPassword.patchValue(account.credentials.mailPassword);
-                    }
+                    controls.mailPassword.patchValue(account.credentials.mailPassword);
 
                     controls.loginDelayUntilSelected.patchValue(account.loginDelayUntilSelected);
                     controls.loginDelaySecondsRange.patchValue(

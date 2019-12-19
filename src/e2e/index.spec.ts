@@ -40,10 +40,6 @@ test.serial("general actions: app start, master password setup, add accounts, lo
             type: "protonmail",
             entryUrlValue: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://protonirockerxow.onion`,
         });
-        await workflow.addAccount({
-            type: "tutanota",
-            entryUrlValue: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.tutanota.com`,
-        });
         await workflow.logout();
 
         // login with password saving

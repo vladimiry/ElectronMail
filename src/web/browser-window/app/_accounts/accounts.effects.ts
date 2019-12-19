@@ -498,12 +498,6 @@ export class AccountsEffects {
                         );
                     }
                     case "unlock": {
-                        if (type !== "protonmail") {
-                            throw new Error(
-                                `Accounts with type "${type}" can't have action associated with the "${pageType}" page`,
-                            );
-                        }
-
                         const mailPassword = "mailPassword" in credentials && credentials.mailPassword;
 
                         if (!mailPassword) {

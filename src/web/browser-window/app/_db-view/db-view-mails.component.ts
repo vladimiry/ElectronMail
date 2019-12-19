@@ -80,10 +80,6 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
         }),
     );
 
-    makeAllReadButtonAvailable$: Observable<boolean> = this.dbAccountPk$.pipe(
-        map(({type}) => type === "protonmail"),
-    );
-
     makeAllReadButtonLocked$: Observable<boolean> = combineLatest([
         this.unreadCount$,
         this.makeAllReadInProgress$,

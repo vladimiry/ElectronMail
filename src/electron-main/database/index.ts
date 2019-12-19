@@ -18,13 +18,12 @@ export class Database {
     static buildEmptyDb(): FsDb {
         return {
             version: DATABASE_VERSION,
-            accounts: {tutanota: {}, protonmail: {}},
+            accounts: {protonmail: {}},
         };
     }
 
     static buildEmptyAccountMetadata<T extends keyof FsDb["accounts"]>(type: T): FsDbAccount<T>["metadata"] {
         const metadata: { [key in keyof FsDb["accounts"]]: FsDbAccount<key>["metadata"] } = {
-            tutanota: {type: "tutanota", groupEntityEventBatchIds: {}},
             protonmail: {type: "protonmail", latestEventId: ""},
         };
         return metadata[type];

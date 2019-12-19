@@ -961,11 +961,6 @@
   resolved "https://registry.yarnpkg.com/@types/minimatch/-/minimatch-3.0.3.tgz#3dca0e3f33b200fc7d1139c0cd96c1268cadfd9d"
   integrity sha512-tHq6qdbT9U1IRSGf14CL0pUlULksvY9OZ+5eEgl1N7t+OA3tGvNpxJCzuKQlsNgCVwbAs670L1vcVQi8j9HjnA==
 
-"@types/mithril@2.0.2":
-  version "2.0.2"
-  resolved "https://registry.yarnpkg.com/@types/mithril/-/mithril-2.0.2.tgz#29a6e32103769b29840ae25f5bf75bb382801a15"
-  integrity sha512-q0W5GGjWNxwmKPcfkkQJqSUIVr7yvMz1zH2enWDab8yDqvZuEgkR4+mcf1O70Wnreawg8OH4axfACDVdg2zskQ==
-
 "@types/mkdirp@0.5.2":
   version "0.5.2"
   resolved "https://registry.yarnpkg.com/@types/mkdirp/-/mkdirp-0.5.2.tgz#503aacfe5cc2703d5484326b1b27efa67a339c1f"
@@ -1099,11 +1094,6 @@
   version "3.5.0"
   resolved "https://registry.yarnpkg.com/@types/spellchecker/-/spellchecker-3.5.0.tgz#c6f7215fa8fcc7f5fa19726da81abffce3590c83"
   integrity sha512-be0LXe/Byo2hXlhNLYSGgaOoogWObmAEAeqOnwuICAAcSi3xMKmmfteXpqY45vx+ZAiKc7pqzUyyRqKfxWy4TQ==
-
-"@types/systemjs@0.20.6":
-  version "0.20.6"
-  resolved "https://registry.yarnpkg.com/@types/systemjs/-/systemjs-0.20.6.tgz#79838d2b4bce9c014330efa0b4c7b9345e830a72"
-  integrity sha512-p3yv9sBBJXi3noUG216BpUI7VtVBUAvBIfZNTiDROUY31YBfsFHM4DreS7XMekN8IjtX0ysvCnm6r3WnirnNeA==
 
 "@types/tapable@*", "@types/tapable@1.0.4":
   version "1.0.4"
@@ -8384,9 +8374,6 @@ mississippi@^3.0.0:
     pumpify "^1.3.3"
     stream-each "^1.1.0"
     through2 "^2.0.0"
-
-mithril@./packages/mithril-stub:
-  version "2.0.2"
 
 mixin-deep@^1.2.0:
   version "1.3.2"

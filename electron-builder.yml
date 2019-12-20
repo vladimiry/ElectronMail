@@ -33,6 +33,7 @@ afterPack: './scripts/electron-builder/hooks/afterPack/index.js'
 mac:
   icon: ./app/assets/icons/mac/icon.icns
   category: public.app-category.productivity
+  darkModeSupport: true
   target:
     - {target: dmg}
 

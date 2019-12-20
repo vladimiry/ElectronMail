@@ -1,7 +1,6 @@
 import {ElectronWindow} from "src/shared/model/electron";
 import {IPC_MAIN_API} from "src/shared/api/main";
 import {LOGGER} from "./logger";
-import {PROTONMAIL_IPC_WEBVIEW_API} from "src/shared/api/webview/protonmail";
 import {ROLLING_RATE_LIMITER} from "src/electron-preload/electron-exposure/rolling-rate-limiter";
 import {TUTANOTA_IPC_WEBVIEW_API} from "src/shared/api/webview/tutanota";
 import {registerDocumentClickEventListener} from "src/electron-preload/events-handling";
@@ -10,7 +9,6 @@ export const ELECTRON_WINDOW: Readonly<ElectronWindow> = Object.freeze({
     __ELECTRON_EXPOSURE__: Object.freeze({
         buildIpcMainClient: IPC_MAIN_API.client.bind(IPC_MAIN_API),
         buildIpcWebViewClient: Object.freeze({
-            protonmail: PROTONMAIL_IPC_WEBVIEW_API.client,
             tutanota: TUTANOTA_IPC_WEBVIEW_API.client,
         }),
         registerDocumentClickEventListener,

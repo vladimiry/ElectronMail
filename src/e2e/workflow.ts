@@ -279,14 +279,6 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             await client.waitForVisible(selector = `#goToAccountsSettingsLink`);
             await workflow._click(selector);
 
-            // required: type
-            await client.waitForVisible(selector = `#accountEditFormTypeField .ng-select-container`);
-            await workflow._mousedown(selector);
-
-            await client.waitForVisible(selector = `[type-option-value="${account.type}"`);
-            await workflow._click(selector = `[type-option-value="${account.type}"`);
-            await client.pause(CONF.timeouts.elementTouched);
-
             // required: entryUrl
             await client.waitForVisible(selector = `#accountEditFormEntryUrlField .ng-select-container`);
             await workflow._mousedown(selector);
@@ -313,7 +305,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
 
             // account got added to the settings modal account list
             await (async () => {
-                selector = `.modal-body electron-mail-type-symbol ~ .d-inline-block > span[data-login='${login}']`;
+                selector = `.modal-body .d-inline-block > span[data-login='${login}']`;
                 const timeout = CONF.timeouts.encryption;
                 try {
                     await t.context.app.client.waitForVisible(selector, timeout);

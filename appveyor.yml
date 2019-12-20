@@ -3,7 +3,7 @@
 # - https://github.com/appveyor/ci/issues/1623
 branches:
   only:
-  - master
+  - tutanota-mail
 skip_tags: true
 image:
   # items order matters

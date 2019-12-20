@@ -1,6 +1,6 @@
-appId: 'github.com/vladimiry/ElectronMail'
+appId: 'github.com/vladimiry/TutanotaMail'
 artifactName: ${name}-${version}-${os}-${arch}.${ext}
-productName: 'ElectronMail'
+productName: 'TutanotaMail'
 
 forceCodeSigning: false
 

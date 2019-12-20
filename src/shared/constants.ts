@@ -13,7 +13,7 @@ const {
     description: string;
 } = require("package.json"); // tslint:disable-line:no-var-requires no-import-zones
 
-export const PRODUCT_NAME = "ElectronMail";
+export const PRODUCT_NAME = "TutanotaMail";
 
 export const REPOSITORY_NAME = PRODUCT_NAME;
 
@@ -27,10 +27,10 @@ export {
 };
 
 // user data dir, defaults to app.getPath("userData")
-export const RUNTIME_ENV_USER_DATA_DIR = `ELECTRON_MAIL_USER_DATA_DIR`;
+export const RUNTIME_ENV_USER_DATA_DIR = `TUTANOTA_MAIL_USER_DATA_DIR`;
 
 // boolean
-export const RUNTIME_ENV_E2E = `ELECTRON_MAIL_E2E`;
+export const RUNTIME_ENV_E2E = `TUTANOTA_MAIL_E2E`;
 
 export const ONE_SECOND_MS = 1000;
 
@@ -57,11 +57,6 @@ export const WEB_CHUNK_NAMES = {
 } as const;
 
 export const PROVIDER_REPO: Record<AccountType, { repo: string, version: string; commit: string; }> = {
-    protonmail: {
-        repo: "https://github.com/ProtonMail/WebClient.git",
-        commit: "c3eec1e0ee5a9313ceef8b950864fbe26bd69e1c",
-        version: "3.16.19",
-    },
     tutanota: {
         repo: "https://github.com/tutao/tutanota.git",
         commit: "d401796a2cdd459df32b7c42f414156de4c15d3a",
@@ -75,25 +70,7 @@ export const LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN = `${LOCAL_WEBCLIENT_PROTOCOL_P
 
 export const ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX = "local:::";
 
-export const PROTONMAIL_PRIMARY_ENTRY_POINT_VALUE = `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.protonmail.com`;
-
 export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlItem[]>> = {
-    protonmail: {
-        entryUrl: [
-            {
-                value: PROTONMAIL_PRIMARY_ENTRY_POINT_VALUE,
-                title: `https://mail.protonmail.com (${getBuiltInWebClientTitle("protonmail")})`,
-            },
-            {
-                value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://app.protonmail.ch`,
-                title: `https://app.protonmail.ch (${getBuiltInWebClientTitle("protonmail")})`,
-            },
-            {
-                value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://protonirockerxow.onion`,
-                title: `https://protonirockerxow.onion (${getBuiltInWebClientTitle("protonmail")})`,
-            },
-        ],
-    },
     tutanota: {
         entryUrl: [
             {

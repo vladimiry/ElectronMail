@@ -1,21 +1,6 @@
 import {FsDbDataContainer, IndexableMail} from "src/shared/model/database/index";
 import {buildEnumBundle} from "src/shared/util";
 
-export const PROTONMAIL_MAILBOX_IDENTIFIERS = buildEnumBundle({
-    Inbox: "0",
-    ["All Drafts"]: "1",
-    ["All Sent"]: "2",
-    Trash: "3",
-    Spam: "4",
-    ["All Mail"]: "5",
-    Starred: "10",
-    Archive: "6",
-    Sent: "7",
-    Drafts: "8",
-    Search: "search",
-    Label: "label",
-} as const);
-
 export const OPERATION_TYPE = buildEnumBundle({
     CREATE: "0",
     UPDATE: "1",
@@ -38,7 +23,6 @@ export const MAIL_STATE = buildEnumBundle({
     DRAFT: "0",
     SENT: "1",
     RECEIVED: "2",
-    PROTONMAIL_INBOX_AND_SENT: "100",
     TUTANOTA_SENDING: "101",
 } as const);
 

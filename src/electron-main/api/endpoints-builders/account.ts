@@ -53,9 +53,6 @@ export async function buildEndpoints(
                 if ("twoFactorCode" in credentials) {
                     existingCredentials.twoFactorCode = credentials.twoFactorCode;
                 }
-                if (account.type === "protonmail" && "mailPassword" in credentials) {
-                    account.credentials.mailPassword = credentials.mailPassword;
-                }
             }
 
             account.proxy = proxy;

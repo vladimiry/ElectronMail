@@ -497,39 +497,6 @@ export class AccountsEffects {
                             ),
                         );
                     }
-                    case "unlock": {
-                        if (type !== "protonmail") {
-                            throw new Error(
-                                `Accounts with type "${type}" can't have action associated with the "${pageType}" page`,
-                            );
-                        }
-
-                        const mailPassword = "mailPassword" in credentials && credentials.mailPassword;
-
-                        if (!mailPassword) {
-                            break;
-                        }
-
-                        rateLimitCheck(mailPassword);
-
-                        logger.info("unlock");
-
-                        return merge(
-                            of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: true}})),
-                            resetNotificationsState$,
-                            // TODO TS: resolve "webViewClient" calling "this.api.webViewClient" as normally
-                            of(__ELECTRON_EXPOSURE__.buildIpcWebViewClient.protonmail(webView)).pipe(
-                                mergeMap((webViewClient) => {
-                                    return from(
-                                        webViewClient("unlock")({mailPassword, zoneName}),
-                                    );
-                                }),
-                                mergeMap(() => EMPTY),
-                                catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
-                                finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: false}}))),
-                            ),
-                        );
-                    }
                 }
 
                 logger.verbose("empty");

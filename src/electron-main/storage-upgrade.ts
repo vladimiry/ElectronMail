@@ -1,18 +1,24 @@
+import _logger from "electron-log";
 import compareVersions from "compare-versions";
+import path from "path";
 
 import {
     ACCOUNTS_CONFIG,
     ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX,
     PACKAGE_VERSION,
-    PROTONMAIL_PRIMARY_ENTRY_POINT_VALUE,
 } from "src/shared/constants";
 import {AccountConfig} from "src/shared/model/account";
 import {Config, Settings} from "src/shared/model/options";
+import {Context} from "src/electron-main/model";
 import {Database} from "./database";
 import {DbAccountPk, FsDbDataContainerDeletedField} from "src/shared/model/database";
 import {EntryUrlItem} from "src/shared/model/common";
 import {INITIAL_STORES} from "./constants";
-import {pickBaseConfigProperties} from "src/shared/util";
+import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {curryFunctionMembers, pickBaseConfigProperties} from "src/shared/util";
+
+const logger = curryFunctionMembers(_logger, "[src/electron-main/storage-upgrade]");
 
 const possibleEntryUrls: readonly string[] = Object
     .values(ACCOUNTS_CONFIG)
@@ -201,62 +207,10 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             restConfig.reflectSelectedAccountTitle = INITIAL_STORES.config().reflectSelectedAccountTitle;
         }
     },
-};
-
-const SETTINGS_UPGRADES: Record<string, (settings: Settings) => void> = {
-    "1.1.1": (settings) => {
-        settings.accounts.forEach((account) => {
-            if (typeof account.credentials === "undefined") {
-                account.credentials = {};
-            }
-            if (!isAppVersionLessThan("2.0.0")) {
-                // keepass support got dropped since "2.0.0*"
-                return;
-            }
-            if (!("credentialsKeePass" in account)) {
-                (account as any).credentialsKeePass = {};
-            }
-        });
-    },
-    // TODO release: test "1.4.2" settings upgrader "dbEncryptionKey" renaming at least
-    "1.4.2": (settings: Settings & { dbEncryptionKey?: string }) => {
-        // rename "dbEncryptionKey" => "databaseEncryptionKey"
-        if (!settings.databaseEncryptionKey) {
-            settings.databaseEncryptionKey = settings.dbEncryptionKey
-                ? settings.dbEncryptionKey
-                : INITIAL_STORES.settings().databaseEncryptionKey;
+    "4.0.0": (config) => {
+        if (config.checkUpdateAndNotify) {
+            config.checkUpdateAndNotify = false; // Update check is not supported for Tutanota
         }
-
-        // rename "storeMails" => "database"
-        settings.accounts.forEach((account: AccountConfig & { storeMails?: boolean }) => {
-            if (typeof account.database !== "undefined" || typeof account.storeMails === "undefined") {
-                return;
-            }
-            account.database = account.storeMails;
-            delete account.storeMails;
-        });
-    },
-    "2.0.0": (settings) => {
-        // dropping "online web clients" support, see https://github.com/vladimiry/ElectronMail/issues/80
-        settings.accounts.forEach((account) => {
-            if (possibleEntryUrls.includes(account.entryUrl)) {
-                return;
-            }
-            account.entryUrl = `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}${account.entryUrl}`;
-        });
-    },
-    "3.5.0": (settings) => {
-        // dropping https://beta.protonmail.com entry point, see https://github.com/vladimiry/ElectronMail/issues/164
-        settings.accounts.forEach((account) => {
-            // it can be either "https://beta.protonmail.com" or "local:::https://beta.protonmail.com"
-            // since above defined "2.0.0" upgrade adds "local:::"
-            if (account.entryUrl.includes("https://beta.protonmail.com")) { // lgtm [js/incomplete-url-substring-sanitization]
-                account.entryUrl = PROTONMAIL_PRIMARY_ENTRY_POINT_VALUE;
-            }
-            if (!possibleEntryUrls.includes(account.entryUrl)) {
-                throw new Error(`Invalid entry url value "${account.entryUrl}"`);
-            }
-        });
     },
 };
 
@@ -264,9 +218,89 @@ export function upgradeConfig(config: Config): boolean {
     return upgrade(config, CONFIG_UPGRADES);
 }
 
-export function upgradeSettings(settings: Settings): boolean {
-    return upgrade(settings, SETTINGS_UPGRADES);
-}
+export const upgradeSettings: (settings: Settings, ctx: Context) => boolean = (() => {
+    const result: typeof upgradeSettings = (settings, ctx) => {
+        return upgrade(settings, buildSettingsUpgraders(ctx));
+    };
+
+    return result;
+
+    function buildSettingsUpgraders(ctx: Context): Record<string, (settings: Settings) => void> {
+        return {
+            "1.1.1": (settings) => {
+                settings.accounts.forEach((account) => {
+                    if (typeof account.credentials === "undefined") {
+                        account.credentials = {};
+                    }
+                    if (!isAppVersionLessThan("2.0.0")) {
+                        // keepass support got dropped since "2.0.0*"
+                        return;
+                    }
+                    if (!("credentialsKeePass" in account)) {
+                        (account as any).credentialsKeePass = {};
+                    }
+                });
+            },
+            // TODO release: test "1.4.2" settings upgrader "dbEncryptionKey" renaming at least
+            "1.4.2": (settings: Settings & { dbEncryptionKey?: string }) => {
+                // rename "dbEncryptionKey" => "databaseEncryptionKey"
+                if (!settings.databaseEncryptionKey) {
+                    settings.databaseEncryptionKey = settings.dbEncryptionKey
+                        ? settings.dbEncryptionKey
+                        : INITIAL_STORES.settings().databaseEncryptionKey;
+                }
+
+                // rename "storeMails" => "database"
+                settings.accounts.forEach((account: AccountConfig & { storeMails?: boolean }) => {
+                    if (typeof account.database !== "undefined" || typeof account.storeMails === "undefined") {
+                        return;
+                    }
+                    account.database = account.storeMails;
+                    delete account.storeMails;
+                });
+            },
+            "2.0.0": (settings) => {
+                // dropping "online web clients" support, see https://github.com/vladimiry/ElectronMail/issues/80
+                settings.accounts.forEach((account) => {
+                    if (possibleEntryUrls.includes(account.entryUrl)) {
+                        return;
+                    }
+                    account.entryUrl = `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}${account.entryUrl}`;
+                });
+            },
+            "4.0.0": (settings) => {
+                const tutanotaAccounts = settings.accounts.filter(({type}) => type === "tutanota");
+                const totalAccountsCount = settings.accounts.length;
+                const protonmailAccountsCount = totalAccountsCount - tutanotaAccounts.length;
+
+                if (protonmailAccountsCount < 1) {
+                    return;
+                }
+
+                const originalFile = ctx.settingsStore.file;
+                const backupFile = path.join(
+                    path.dirname(originalFile),
+                    `${path.basename(originalFile)}.protonmail-backup-${Number(new Date())}`,
+                );
+                const message = [
+                    `Count of Protonmail accounts removed from ${originalFile} file: ${protonmailAccountsCount}.`,
+                    `Backup file saved: ${backupFile} (please consider removing it manually).`,
+                ].join(" ");
+
+                ctx.settingsStore.fs._impl.copyFileSync(originalFile, backupFile);
+
+                IPC_MAIN_API_NOTIFICATION$.next(
+                    IPC_MAIN_API_NOTIFICATION_ACTIONS.InfoMessage({message}),
+                );
+
+                logger.debug(message);
+
+                // mutation the settings
+                settings.accounts = tutanotaAccounts;
+            },
+        };
+    }
+})();
 
 // TODO consider mutating entities in upgraders in an immutable way using "immer"
 // and then test for changes size like "patches.length"

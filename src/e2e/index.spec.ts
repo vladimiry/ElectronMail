@@ -29,18 +29,6 @@ test.serial("general actions: app start, master password setup, add accounts, lo
         // setup and logout
         await workflow.login({setup: true, savePassword: false});
         await workflow.addAccount({
-            type: "protonmail",
-            entryUrlValue: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://app.protonmail.ch`,
-        });
-        await workflow.addAccount({
-            type: "protonmail",
-            entryUrlValue: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.protonmail.com`,
-        });
-        await workflow.addAccount({ // no online .onion domain loading, but offline works
-            type: "protonmail",
-            entryUrlValue: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://protonirockerxow.onion`,
-        });
-        await workflow.addAccount({
             type: "tutanota",
             entryUrlValue: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.tutanota.com`,
         });

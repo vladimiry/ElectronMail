@@ -3,7 +3,7 @@
 # - https://travis-ci.community/t/using-unified-cache-control-cache-identity/1531
 branches:
   only:
-    - master
+    - tutanota-mail
 language: node_js
 node_js: 12.4.0
 cache:

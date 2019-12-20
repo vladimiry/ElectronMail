@@ -30,12 +30,6 @@ const configs = [
     ),
     buildRendererConfig(
         {
-            "electron-preload/webview/protonmail": srcRelativePath("./electron-preload/webview/protonmail/index.ts"),
-        },
-        srcRelativePath("./electron-preload/webview/protonmail/tsconfig.json"),
-    ),
-    buildRendererConfig(
-        {
             "electron-preload/webview/tutanota": srcRelativePath("./electron-preload/webview/tutanota/index.ts"),
         },
         srcRelativePath("./electron-preload/webview/tutanota/tsconfig.json"),

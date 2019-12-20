@@ -47,6 +47,9 @@ export class OptionsEffects {
                                 ErrorMessage: ({message}) => {
                                     this.store.dispatch(NOTIFICATION_ACTIONS.ErrorMessage({message}));
                                 },
+                                InfoMessage: ({message}) => {
+                                    this.store.dispatch(NOTIFICATION_ACTIONS.Info({message}));
+                                },
                                 default() {
                                     // NOOP
                                 },

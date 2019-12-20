@@ -8,25 +8,13 @@ import {AccountTypeAndLoginFieldContainer} from "src/shared/model/container";
 import {CI, accountBadgeCssSelector, initApp, test} from "./workflow";
 import {ONE_SECOND_MS} from "src/shared/constants";
 
-// protonmail account to login during e2e tests running
-const RUNTIME_ENV_E2E_PROTONMAIL_LOGIN = `ELECTRON_MAIL_E2E_PROTONMAIL_LOGIN`;
-const RUNTIME_ENV_E2E_PROTONMAIL_PASSWORD = `ELECTRON_MAIL_E2E_PROTONMAIL_PASSWORD`;
-const RUNTIME_ENV_E2E_PROTONMAIL_2FA_CODE = `ELECTRON_MAIL_E2E_PROTONMAIL_2FA_CODE`;
-const RUNTIME_ENV_E2E_PROTONMAIL_UNREAD_MIN = `ELECTRON_MAIL_E2E_PROTONMAIL_UNREAD_MIN`;
 // tutanota account to login during e2e tests running
-const RUNTIME_ENV_E2E_TUTANOTA_LOGIN = `ELECTRON_MAIL_E2E_TUTANOTA_LOGIN`;
-const RUNTIME_ENV_E2E_TUTANOTA_PASSWORD = `ELECTRON_MAIL_E2E_TUTANOTA_PASSWORD`;
-const RUNTIME_ENV_E2E_TUTANOTA_2FA_CODE = `ELECTRON_MAIL_E2E_TUTANOTA_2FA_CODE`;
-const RUNTIME_ENV_E2E_TUTANOTA_UNREAD_MIN = `ELECTRON_MAIL_E2E_TUTANOTA_UNREAD_MIN`;
+const RUNTIME_ENV_E2E_TUTANOTA_LOGIN = `TUTANOTA_MAIL_E2E_TUTANOTA_LOGIN`;
+const RUNTIME_ENV_E2E_TUTANOTA_PASSWORD = `TUTANOTA_MAIL_E2E_TUTANOTA_PASSWORD`;
+const RUNTIME_ENV_E2E_TUTANOTA_2FA_CODE = `TUTANOTA_MAIL_E2E_TUTANOTA_2FA_CODE`;
+const RUNTIME_ENV_E2E_TUTANOTA_UNREAD_MIN = `TUTANOTA_MAIL_E2E_TUTANOTA_UNREAD_MIN`;
 
 for (const {type, login, password, twoFactorCode, unread} of ([
-    {
-        type: "protonmail",
-        login: process.env[RUNTIME_ENV_E2E_PROTONMAIL_LOGIN],
-        password: process.env[RUNTIME_ENV_E2E_PROTONMAIL_PASSWORD],
-        twoFactorCode: process.env[RUNTIME_ENV_E2E_PROTONMAIL_2FA_CODE],
-        unread: Number(process.env[RUNTIME_ENV_E2E_PROTONMAIL_UNREAD_MIN]),
-    },
     {
         type: "tutanota",
         login: process.env[RUNTIME_ENV_E2E_TUTANOTA_LOGIN],

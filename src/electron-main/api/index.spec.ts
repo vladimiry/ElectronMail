@@ -60,7 +60,7 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
             mocks: {"src/electron-main/session": {initSessionByAccount: initSessionByAccountMock}},
         } = t.context;
         const {addAccount} = endpoints;
-        const payload = buildProtonmailAccountData();
+        const payload = buildTutanotaAccountData();
         const settings = await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
 
         t.is(0, initSessionByAccountMock.callCount);
@@ -107,14 +107,13 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
             mocks: {"src/electron-main/session": {configureSessionByAccount: configureSessionByAccountMock}},
         } = t.context;
         const {addAccount, updateAccount} = endpoints;
-        const addPayload = buildProtonmailAccountData();
+        const addPayload = buildTutanotaAccountData();
         const updatePayload: AccountConfigUpdatePatch = omit(
             ["type"],
             produce(addPayload, (draft) => {
                 (draft.entryUrl as any) = generateRandomString();
                 (draft.database as any) = Boolean(!draft.database);
                 draft.credentials.password = generateRandomString();
-                draft.credentials.mailPassword = generateRandomString();
                 draft.proxy = {proxyRules: "http=foopy:80;ftp=foopy2", proxyBypassRules: "<local>"};
             }),
         );
@@ -146,9 +145,9 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
     removeAccount: async (t) => {
         const {endpoints} = t.context;
         const {addAccount, removeAccount} = endpoints;
-        const addProtonPayload = buildProtonmailAccountData();
-        const addTutanotaPayload = buildTutanotaAccountData();
-        const removePayload = {login: addProtonPayload.login};
+        const addTutanotaPayload1 = buildTutanotaAccountData();
+        const addTutanotaPayload2 = buildTutanotaAccountData();
+        const removePayload = {login: addTutanotaPayload1.login};
         const removePayload404 = {login: "404 login"};
 
         await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
@@ -159,8 +158,8 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
             t.is(message, `Account with "${removePayload404.login}" login has not been found`, "404 account");
         }
 
-        await addAccount(addProtonPayload);
-        await addAccount(addTutanotaPayload);
+        await addAccount(addTutanotaPayload1);
+        await addAccount(addTutanotaPayload2);
 
         const expectedSettings = produce(await t.context.ctx.settingsStore.readExisting(), (draft) => {
             (draft._rev as number)++;
@@ -179,8 +178,8 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
 
         await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
 
-        await addAccount(buildProtonmailAccountData());
-        await addAccount(buildProtonmailAccountData());
+        await addAccount(buildTutanotaAccountData());
+        await addAccount(buildTutanotaAccountData());
         let settings = await addAccount(buildTutanotaAccountData());
 
         await t.throwsAsync(changeAccountOrder({login: "login.404", index: 0}));
@@ -716,19 +715,6 @@ test.beforeEach(async (t) => {
 
     // TODO make sure "IPC_MAIN_API.register" has been called
 });
-
-function buildProtonmailAccountData(): Readonly<AccountConfigCreatePatch<"protonmail">> {
-    return {
-        type: "protonmail",
-        login: generateRandomString(),
-        entryUrl: generateRandomString(),
-        credentials: {
-            password: generateRandomString(),
-            twoFactorCode: generateRandomString(),
-            mailPassword: generateRandomString(),
-        },
-    };
-}
 
 function buildTutanotaAccountData(): Readonly<AccountConfigCreatePatch<"tutanota">> {
     return {

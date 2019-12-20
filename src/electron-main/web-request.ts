@@ -42,13 +42,11 @@ const PROXIES = new Map<number, RequestProxy>();
 export function initWebRequestListeners(ctx: Context, session: Session) {
     const resolveProxy: (details: RequestDetails) => RequestProxy | null = (() => {
         const origins: { [k in AccountType]: string[] } = {
-            ...resolveLocalWebClientOrigins("protonmail", ctx.locations),
             ...resolveLocalWebClientOrigins("tutanota", ctx.locations),
         };
 
         return (details: RequestDetails) => {
             const proxies: { [k in AccountType]: ReturnType<typeof resolveRequestProxy> } = {
-                protonmail: resolveRequestProxy("protonmail", details, origins),
                 tutanota: resolveRequestProxy("tutanota", details, origins),
             };
             const [accountType] = Object.entries(proxies)
@@ -73,7 +71,7 @@ export function initWebRequestListeners(ctx: Context, session: Session) {
 
             if (requestProxy) {
                 const {name} = getHeader(requestHeaders, HEADERS.request.origin) || {name: HEADERS.request.origin};
-                requestHeaders[name] = resolveFakeOrigin(requestProxy.accountType, requestDetails);
+                requestHeaders[name] = resolveFakeOrigin();
                 PROXIES.set(requestDetails.id, requestProxy);
             }
 
@@ -97,15 +95,10 @@ export function initWebRequestListeners(ctx: Context, session: Session) {
     );
 }
 
-function resolveFakeOrigin(accountType: AccountType, requestDetails: RequestDetails): string {
-    if (accountType === "tutanota") {
-        // WARN: tutanota responds to the specific origins only
-        // it will not work for example with http://localhost:2015 origin, so they go with a whitelisting
-        return "http://localhost:9000";
-    }
-
-    // protonmail doesn't care much, so we generate the origin from request
-    return buildOrigin(new URL(requestDetails.url));
+function resolveFakeOrigin(): string {
+    // WARN: tutanota responds to the specific origins only
+    // it will not work for example with http://localhost:2015 origin, so they go with a whitelisting
+    return "http://localhost:9000";
 }
 
 function resolveLocalWebClientOrigins<T extends AccountType>(
@@ -190,50 +183,6 @@ const responseHeadersPatchHandlers: {
     };
 
     const result: typeof responseHeadersPatchHandlers = {
-        protonmail: ({requestProxy, responseDetails}) => {
-            const {responseHeaders} = responseDetails;
-
-            commonPatch({requestProxy, responseDetails});
-
-            patchResponseHeader(
-                responseHeaders,
-                {
-                    name: HEADERS.response.accessControlAllowCredentials,
-                    values: ["true"],
-                },
-                {extend: false},
-            );
-            patchResponseHeader(
-                responseHeaders,
-                {
-                    name: HEADERS.response.accessControlAllowHeaders,
-                    values: [
-                        ...(requestProxy.headers.accessControlRequestHeaders || {
-                            values: [
-                                "authorization",
-                                "cache-control",
-                                "content-type",
-                                "Date",
-                                "x-eo-uid",
-                                "x-pm-apiversion",
-                                "x-pm-appversion",
-                                "x-pm-session",
-                                "x-pm-uid",
-                            ],
-                        }).values,
-                    ],
-                },
-            );
-            patchResponseHeader(
-                responseHeaders,
-                {
-                    name: HEADERS.response.accessControlExposeHeaders,
-                    values: ["Date"],
-                },
-            );
-
-            return responseHeaders;
-        },
         tutanota: ({requestProxy, responseDetails}) => {
             const {responseHeaders} = responseDetails;
 

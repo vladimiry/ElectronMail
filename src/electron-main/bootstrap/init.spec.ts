@@ -21,7 +21,7 @@ test.serial("bootstrapInit(): default", async (t) => {
     }));
 
     (() => {
-        const expectedAppId = "github.com/vladimiry/ElectronMail";
+        const expectedAppId = "github.com/vladimiry/TutanotaMail";
         t.is(`github.com/vladimiry/${PRODUCT_NAME}`, expectedAppId);
         t.is(`github.com/vladimiry/${REPOSITORY_NAME}`, expectedAppId);
         t.true(mocks.electron.app.setAppUserModelId.calledWithExactly(expectedAppId));

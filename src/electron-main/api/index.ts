@@ -82,11 +82,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
                 keytarSupport: ctx.keytarSupport,
                 snapPasswordManagerServiceHint: ctx.snapPasswordManagerServiceHint,
                 hasSavedPassword,
-                checkUpdateAndNotify: Boolean(
-                    ctx.runtimeEnvironment === "production"
-                    &&
-                    (await endpoints.readConfig()).checkUpdateAndNotify,
-                ),
+                checkUpdateAndNotify: false, // Update check is not supported for Tutanota
             };
         },
 
@@ -168,7 +164,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             const existingSettings = await store.read();
             const settings = existingSettings
                 ? (
-                    upgradeSettings(existingSettings)
+                    upgradeSettings(existingSettings, ctx)
                         ? await store.write(existingSettings)
                         : existingSettings
                 )

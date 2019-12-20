@@ -1,9 +1,7 @@
 import {
     AccountConfig,
-    AccountConfigProtonmail,
     AccountConfigTutanota,
     Notifications,
-    NotificationsProtonmail,
     NotificationsTutanota,
 } from "src/shared/model/account";
 import {Mail} from "src/shared/model/database";
@@ -29,10 +27,8 @@ interface GenericWebAccount<C extends AccountConfig, NS extends Notifications> {
     makeReadMailParams: { messageIds: string[]; mailsBundleKey: MailsBundleKey; } | null;
 }
 
-export type WebAccountProtonmail = GenericWebAccount<AccountConfigProtonmail, NotificationsProtonmail>;
-
 export type WebAccountTutanota = GenericWebAccount<AccountConfigTutanota, NotificationsTutanota>;
 
-export type WebAccount = WebAccountProtonmail | WebAccountTutanota;
+export type WebAccount = WebAccountTutanota;
 
 export type WebAccountProgress = WebAccount["progress"];

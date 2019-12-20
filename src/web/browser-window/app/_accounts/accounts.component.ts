@@ -162,7 +162,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
             &&
             selectedAccount
             &&
-            selectedAccount.accountConfig.type === "protonmail"
+            selectedAccount.accountConfig.type !== "tutanota" // TODO "patchDocumentTitle" not implemented for tutanota
             &&
             selectedAccount.notifications.title
         );

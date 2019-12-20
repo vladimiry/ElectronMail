@@ -4,6 +4,8 @@ import sinon from "sinon";
 import test from "ava";
 import {Fs} from "fs-json-store";
 
+import {PACKAGE_NAME, PACKAGE_VERSION} from "src/shared/constants";
+
 const ctxDbProps = [
     "db",
     "sessionDb",
@@ -24,7 +26,11 @@ ctxDbProps.forEach((ctxDbProp) => {
                 () => import("./context"),
                 (mock) => {
                     mock(() => import("electron")).with({
-                        app: {getPath: sinon.stub().returns(memFsPath)},
+                        app: {
+                            getPath: sinon.stub().returns(memFsPath),
+                            getName: () => PACKAGE_NAME,
+                            getVersion: () => PACKAGE_VERSION,
+                        },
                     } as any);
                     mock(() => import("./constants")).callThrough();
                 },
@@ -75,7 +81,11 @@ ctxDbProps.forEach((ctxDbProp) => {
                 () => import("./context"),
                 (mock) => {
                     mock(() => import("electron")).with({
-                        app: {getPath: sinon.stub().returns(memFsPath)},
+                        app: {
+                            getPath: sinon.stub().returns(memFsPath),
+                            getName: () => PACKAGE_NAME,
+                            getVersion: () => PACKAGE_VERSION,
+                        },
                     } as any);
                     mock(() => import("./constants")).callThrough().with({
                         INITIAL_STORES: {
@@ -105,6 +115,8 @@ ctxDbProps.forEach((ctxDbProp) => {
                                 .callsArg(1)
                                 .withArgs("ready")
                                 .callsArgWith(1, {}, {on: sinon.spy()}),
+                            getName: () => PACKAGE_NAME,
+                            getVersion: () => PACKAGE_VERSION,
                         },
                     } as any);
                     mock(() => import("src/electron-main/api/endpoints-builders")).callThrough().with({

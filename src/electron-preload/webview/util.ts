@@ -225,10 +225,6 @@ export function buildDbPatchRetryPipeline<T>(
 }
 
 function triggerChangeEvent(input: HTMLInputElement) {
-    // protonmail (angularjs)
-    const changeEvent = document.createEvent("HTMLEvents");
-    changeEvent.initEvent("change", true, false);
-    input.dispatchEvent(changeEvent);
     // tutanota (mithril)
     const inputEvent = document.createEvent("Event");
     inputEvent.initEvent("input", true, false);

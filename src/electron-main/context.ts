@@ -183,7 +183,6 @@ function initLocations(
             searchInPageBrowserView: appRelativePath("./electron-preload/search-in-page-browser-view.js"),
             fullTextSearchBrowserWindow: appRelativePath("./electron-preload/database-indexer.js"),
             webView: {
-                protonmail: formatFileUrl(appRelativePath("./electron-preload/webview/protonmail.js")),
                 tutanota: formatFileUrl(appRelativePath("./electron-preload/webview/tutanota.js")),
             },
         },
@@ -200,7 +199,6 @@ function initLocations(
                 & { protocolBundles: Array<{ scheme: string; directory: string }> } = {
                 protocolBundles: [],
                 webClients: {
-                    protonmail: [],
                     tutanota: [],
                 },
             };

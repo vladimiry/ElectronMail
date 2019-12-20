@@ -42,7 +42,7 @@ export const ENDPOINTS_DEFINITION = {
     dbPatch: ActionType.Promise<DbModel.DbAccountPk
         & { forceFlush?: boolean }
         & { patch: DbPatch }
-        & { metadata: Skip<FsDbAccount<"protonmail">["metadata"], "type"> | Skip<FsDbAccount<"tutanota">["metadata"], "type"> },
+        & { metadata: Skip<FsDbAccount<"tutanota">["metadata"], "type"> },
         DbModel.FsDbAccount["metadata"]>(),
 
     dbGetAccountMetadata: ActionType.Promise<DbModel.DbAccountPk, DbModel.FsDbAccount["metadata"] | null>(),
@@ -217,6 +217,7 @@ export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
         LogOut: ofType<{}>(),
         SignedInStateChange: ofType<{ signedIn: boolean }>(),
         ErrorMessage: ofType<{ message: string }>(),
+        InfoMessage: ofType<{ message: string }>(),
     },
     {
         tag: "type",

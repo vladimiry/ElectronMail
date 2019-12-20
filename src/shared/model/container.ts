@@ -16,10 +16,6 @@ export interface PasswordFieldContainer {
     password: string;
 }
 
-export interface MailPasswordFieldContainer {
-    mailPassword: string;
-}
-
 export interface NewPasswordFieldContainer {
     newPassword: string;
 }

@@ -55,12 +55,11 @@ The [reproducible builds](https://en.wikipedia.org/wiki/Reproducible_builds) ide
   - Install [NVM](https://github.com/creationix/nvm).
   - Run `nvm install 12`.
   - Run `nvm use 12`.
-- Some native modules require node prebuilds files compiling and for that Python and C++ compiler need to be installed on your system:
-  - On `Windows`: the simplest way to install all the needed stuff on Windows is to run `npm install --global --production windows-build-tools` CLI command. [ProtonMail](https://github.com/ProtonMail/WebClient) web client requires bash for building, so a few more steps need to be fulfilled:
-    - Install bash then check the path of bash ex: `C:\\Program Files\\git\\bin\\bash.exe`.
-    - Execute `npm config set script-shell "C:\\Program Files\\git\\bin\\bash.exe"` command.
+- Some native modules require compiling process to be involved and for that Python and C++ compiler need to be installed on the system:
+  - On `Windows`: the simplest to install all the needed stuff on Windows is to run `npm install --global --production windows-build-tools` CLI command.
   - On `Linux`: `python v2.7`, `make` and a C/C++ compiler toolchain, like `GCC` are most likely already installed. Besides [keytar](https://github.com/atom/node-keytar) needs `libsecret` library to be installed.
-  - On `Mac OS X`: `python v2.7` and [Xcode](https://developer.apple.com/xcode/download/) need to be installed. You also need to install the `Command Line Tools` via Xcode, can be found under the `Xcode -> Preferences -> Downloads` menu.
+  - On `macOS`: `python v2.7` and [Xcode](https://developer.apple.com/xcode/download/) need to be installed. You also need to install the `Command Line Tools` via Xcode, can be found under the `Xcode -> Preferences -> Downloads` menu.
+- ProtonMail's [WebClient](https://github.com/ProtonMail/WebClient) requires addition environment setup if you run Windows, [see](https://github.com/ProtonMail/proton-shared/wiki/setup-windows).
 - [Clone](https://help.github.com/articles/cloning-a-repository/) this project to your local device. If you are going to contribute, consider cloning the [forked](https://help.github.com/articles/fork-a-repo/) into your own GitHub account project.
 - Install [Yarn](https://yarnpkg.com/en/docs/install).
 - Install dependencies running `yarn --pure-lockfile`.

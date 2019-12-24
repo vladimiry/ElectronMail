@@ -31,7 +31,7 @@ const resolveContent: (ctx: Context) => Promise<Unpacked<ReturnType<typeof injec
                     {prop: "node", title: "Node"},
                     {prop: "v8", title: "V8"},
                 ];
-                return `<ul class="list-versions align-items-left justify-content-center font-weight-light">
+                return `<ul class="list-versions align-items-left justify-content-center font-weight-light text-muted">
                 ${
                     versionsProps
                         .map(({prop, title}) => sanitizeHtml(`<li>${title}: ${versions[prop]}</li>`))
@@ -99,6 +99,10 @@ export async function showAboutBrowserWindow(ctx: Context): Promise<BrowserWindo
 
     const {html, baseURLForDataURL} = await resolveContent(ctx);
     await browserWindow.webContents.loadURL(`data:text/html,${html}`, {baseURLForDataURL});
+
+    if (BUILD_ENVIRONMENT === "development") {
+        browserWindow.webContents.openDevTools();
+    }
 
     return browserWindow;
 }

@@ -7,7 +7,6 @@ import {catchError, concatMap, filter, finalize, map, mergeMap, startWith, switc
 import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
-import {ICON_URL} from "src/web/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
 import {ONE_SECOND_MS, PRODUCT_NAME, UPDATE_CHECK_FETCH_TIMEOUT} from "src/shared/constants";
@@ -50,6 +49,9 @@ export class OptionsEffects {
                                 InfoMessage: ({message}) => {
                                     this.store.dispatch(NOTIFICATION_ACTIONS.Info({message}));
                                 },
+                                TrayIconDataURL: (payload) => {
+                                    this.store.dispatch(OPTIONS_ACTIONS.TrayIconDataURL({value: payload}));
+                                },
                                 default() {
                                     // NOOP
                                 },
@@ -78,15 +80,17 @@ export class OptionsEffects {
                                     mergeMap(() => from(
                                         this.ipcMainClient("updateCheck", {timeoutMs: UPDATE_CHECK_FETCH_TIMEOUT + (ONE_SECOND_MS * 2)})(),
                                     ).pipe(
-                                        mergeMap((items) => {
-                                            if (!items.length) {
-                                                return EMPTY;
-                                            }
-
+                                        filter((items) => Boolean(items.length)),
+                                        withLatestFrom(
+                                            this.store.pipe(
+                                                select(OptionsSelectors.FEATURED.trayIconDataURL),
+                                            ),
+                                        ),
+                                        mergeMap(([items, trayIconDataURL]) => {
                                             new Notification(
                                                 PRODUCT_NAME,
                                                 {
-                                                    icon: ICON_URL,
+                                                    icon: trayIconDataURL,
                                                     body: "App update is available.",
                                                 },
                                             ).onclick = () => {

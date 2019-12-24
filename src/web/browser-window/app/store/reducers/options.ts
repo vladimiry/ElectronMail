@@ -3,6 +3,7 @@ import {UnionOf} from "@vladimiry/unionize";
 
 import * as fromRoot from "src/web/browser-window/app/store/reducers/root";
 import {Config} from "src/shared/model/options";
+import {ICON_URL} from "src/web/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS, InitResponse} from "src/shared/api/main";
 import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {initialConfig} from "src/shared/util";
@@ -32,6 +33,7 @@ export interface State extends fromRoot.State, Partial<Pick<InitResponse, Option
     progress: ProgressPatch;
     hasSavedPassword?: boolean;
     mainProcessNotification: UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>;
+    trayIconDataURL: string;
 }
 
 const initialState: State = {
@@ -41,6 +43,7 @@ const initialState: State = {
     },
     progress: {},
     mainProcessNotification: {type: "ActivateBrowserWindow", payload: {}},
+    trayIconDataURL: ICON_URL,
 };
 
 export function reducer(state = initialState, action: UnionOf<typeof OPTIONS_ACTIONS> & UnionOf<typeof NAVIGATION_ACTIONS>): State {
@@ -60,6 +63,7 @@ export function reducer(state = initialState, action: UnionOf<typeof OPTIONS_ACT
         GetSettingsResponse: ({_rev, accounts}) => ({...state, settings: {_rev, accounts}}),
         PatchProgress: (progressPatch) => ({...state, progress: {...state.progress, ...progressPatch}}),
         PatchMainProcessNotification: (mainProcessNotification) => ({...state, mainProcessNotification}),
+        TrayIconDataURL: ({value: trayIconDataURL}) => ({...state, trayIconDataURL}),
         default: () => state,
     });
 }

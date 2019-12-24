@@ -218,6 +218,7 @@ export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
         SignedInStateChange: ofType<{ signedIn: boolean }>(),
         ErrorMessage: ofType<{ message: string }>(),
         InfoMessage: ofType<{ message: string }>(),
+        TrayIconDataURL: ofType<string>(),
     },
     {
         tag: "type",

@@ -138,11 +138,13 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     }
 
     typeChangeReaction(type: AccountType) {
+        const {entryUrl: entryUrlControl} = this.controls;
+
         this.entryUrlItems = ACCOUNTS_CONFIG[type].entryUrl;
 
-        const [{value: firstEntryUrlItemValue}] = this.entryUrlItems;
-
-        this.controls.entryUrl.patchValue(firstEntryUrlItemValue);
+        if (entryUrlControl.value && !this.entryUrlItems.some(({value}) => value === entryUrlControl.value)) {
+            entryUrlControl.patchValue(null);
+        }
     }
 
     submit() {

@@ -32,6 +32,7 @@ export const OPTIONS_ACTIONS = unionize({
         ToggleLocalDbMailsListViewMode: ofType<{}>(),
         SetupMainProcessNotification: ofType<{}>(),
         PatchMainProcessNotification: ofType<State["mainProcessNotification"]>(),
+        TrayIconDataURL: ofType<{ value: string }>(),
     },
     {
         tag: "type",

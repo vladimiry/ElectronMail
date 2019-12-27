@@ -1,6 +1,6 @@
 import {AfterViewInit, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren} from "@angular/core";
 import {FormControl, Validators} from "@angular/forms";
-import {Observable, Subject} from "rxjs";
+import {Observable, Subject, Subscription} from "rxjs";
 import {Store, select} from "@ngrx/store";
 import {map, takeUntil} from "rxjs/operators";
 
@@ -8,6 +8,7 @@ import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/st
 import {ONE_SECOND_MS, PACKAGE_NAME} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/options";
+import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
 
 export abstract class LoginBaseComponent implements AfterViewInit, OnInit, OnDestroy {
     projectName = PACKAGE_NAME;
@@ -45,12 +46,24 @@ export abstract class LoginBaseComponent implements AfterViewInit, OnInit, OnDes
     passwordElementRefQuery!: QueryList<ElementRef>;
 
     protected unSubscribe$ = new Subject();
+    private readonly subscription = new Subscription();
+    private readonly logger = getZoneNameBoundWebLogger();
 
     constructor(
         protected store: Store<State>,
+        protected elementRef: ElementRef,
     ) {}
 
     ngOnInit() {
+        this.subscription.add({
+            unsubscribe: __ELECTRON_EXPOSURE__
+                .registerDocumentClickEventListener(
+                    this.elementRef.nativeElement,
+                    this.logger,
+                )
+                .unsubscribe,
+        });
+
         this.keytarSupport$
             .pipe(
                 takeUntil(this.unSubscribe$),
@@ -85,5 +98,6 @@ export abstract class LoginBaseComponent implements AfterViewInit, OnInit, OnDes
     ngOnDestroy() {
         this.unSubscribe$.next();
         this.unSubscribe$.complete();
+        this.subscription.unsubscribe();
     }
 }

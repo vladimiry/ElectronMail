@@ -1,4 +1,4 @@
-import {Component, OnInit} from "@angular/core";
+import {Component, ElementRef, OnInit} from "@angular/core";
 import {FormGroup} from "@angular/forms";
 import {Store, select} from "@ngrx/store";
 import {filter, mergeMap, take, takeUntil} from "rxjs/operators";
@@ -22,8 +22,9 @@ export class LoginComponent extends LoginBaseComponent implements OnInit {
 
     constructor(
         store: Store<State>,
+        elementRef: ElementRef,
     ) {
-        super(store);
+        super(store, elementRef);
     }
 
     ngOnInit() {

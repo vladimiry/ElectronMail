@@ -1,4 +1,4 @@
-import {Component} from "@angular/core";
+import {Component, ElementRef} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Store} from "@ngrx/store";
 
@@ -34,7 +34,8 @@ export class SettingsSetupComponent extends LoginBaseComponent {
 
     constructor(
         store: Store<State>,
+        elementRef: ElementRef,
     ) {
-        super(store);
+        super(store, elementRef);
     }
 }

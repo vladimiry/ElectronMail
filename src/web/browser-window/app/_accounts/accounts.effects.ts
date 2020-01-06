@@ -31,7 +31,12 @@ import {getRandomInt, isDatabaseBootstrapped} from "src/shared/util";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/browser-window/util";
 
 const {rollingRateLimiter} = __ELECTRON_EXPOSURE__;
+
 const _logger = getZoneNameBoundWebLogger("[accounts.effects]");
+
+const pingOnlineStatusEverySecond$ = timer(0, ONE_SECOND_MS).pipe(
+    filter(() => navigator.onLine),
+);
 
 @Injectable()
 export class AccountsEffects {
@@ -55,18 +60,13 @@ export class AccountsEffects {
         () => this.actions$.pipe(
             unionizeActionFilter(ACCOUNTS_ACTIONS.is.SetupNotificationChannel),
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-            withLatestFrom(this.store.pipe(select(OptionsSelectors.FEATURED.electronLocations))),
-            mergeMap(([{payload, logger}, electronLocations]) => {
+            mergeMap(({payload, logger}) => {
                 const {webView, finishPromise} = payload;
                 const {type, login} = payload.account.accountConfig;
                 const resetNotificationsState$ = of(AccountsEffects.generateNotificationsStateResetAction(login));
                 const dispose$ = from(finishPromise).pipe(tap(() => logger.info("dispose")));
 
-                if (!electronLocations) {
-                    throw new Error(`Undefined electron context locations`);
-                }
-
-                const parsedEntryUrl = this.core.parseEntryUrl(payload.account.accountConfig, electronLocations);
+                const parsedEntryUrlBundle = this.core.parseEntryUrl(payload.account.accountConfig, "WebClient");
 
                 logger.info("setup");
 
@@ -74,15 +74,15 @@ export class AccountsEffects {
                     // app set's app notification channel on webview.dom-ready event
                     // which means user is not logged-in yet at this moment, so resetting the state
                     resetNotificationsState$,
-                    this.api.webViewClient(webView, type, {finishPromise}).pipe(
+                    this.api.webViewClient(webView, {finishPromise}).pipe(
                         mergeMap((webViewClient) => {
                             return from(
-                                webViewClient("notification")({...parsedEntryUrl, zoneName: logger.zoneName()}),
+                                webViewClient("notification")({...parsedEntryUrlBundle, zoneName: logger.zoneName()}),
                             );
                         }),
                         withLatestFrom(this.store.pipe(select(AccountsSelectors.ACCOUNTS.pickAccount({login})))),
                         mergeMap(([notification, account]) => {
-                            if (typeof notification.batchEntityUpdatesCounter === "number") {
+                            if (typeof notification.batchEntityUpdatesCounter !== "undefined") {
                                 FIRE_SYNCING_ITERATION$.next({type, login});
                                 return EMPTY;
                             }
@@ -116,9 +116,6 @@ export class AccountsEffects {
                         logger.info("dispose");
                     }),
                 );
-                const onlinePing$ = timer(0, ONE_SECOND_MS).pipe(
-                    filter(() => navigator.onLine),
-                );
                 const notSyncingPing$ = timer(0, ONE_SECOND_MS).pipe(
                     switchMap(() => this.store.pipe(
                         select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
@@ -127,7 +124,7 @@ export class AccountsEffects {
                 );
                 const ipcMainClient = this.api.ipcMainClient();
                 const zoneName = logger.zoneName();
-                let bootstrappedOnce = false;
+                let bootstrappingTriggeredOnce = false;
 
                 logger.info("setup");
 
@@ -146,7 +143,7 @@ export class AccountsEffects {
                             filter(({payload: {pk: key}}) => key.type === type && key.login === login),
                             mergeMap(({payload: selectMailOnlineInput}) => concat(
                                 of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {selectingMailOnline: true}})),
-                                this.api.webViewClient(webView, type, {finishPromise}).pipe(
+                                this.api.webViewClient(webView, {finishPromise}).pipe(
                                     mergeMap((webViewClient) => {
                                         const selectMailOnlineInput$ = from(
                                             webViewClient("selectMailOnline", {timeoutMs: ONE_SECOND_MS * 5})({
@@ -167,7 +164,7 @@ export class AccountsEffects {
                             )),
                         ),
                     ),
-                    this.api.webViewClient(webView, type, {finishPromise}).pipe(
+                    this.api.webViewClient(webView, {finishPromise}).pipe(
                         mergeMap((webViewClient) => merge(
                             timer(0, ONE_MINUTE_MS * 5).pipe(
                                 tap(() => logger.verbose(`triggered by: timer`)),
@@ -185,7 +182,7 @@ export class AccountsEffects {
                             ),
                         ).pipe(
                             debounceTime(ONE_SECOND_MS),
-                            debounce(() => onlinePing$),
+                            debounce(() => pingOnlineStatusEverySecond$),
                             debounce(() => notSyncingPing$),
                             concatMap(() => {
                                 return from(
@@ -196,7 +193,7 @@ export class AccountsEffects {
                             concatMap(([metadata, timeouts]) => {
                                 const bootstrapping = !isDatabaseBootstrapped(metadata);
 
-                                if (bootstrapping && bootstrappedOnce) {
+                                if (bootstrapping && bootstrappingTriggeredOnce) {
                                     return throwError(
                                         new Error(`Database bootstrap fetch has already been called once for the account, ${zoneName}`),
                                     );
@@ -211,31 +208,48 @@ export class AccountsEffects {
                                     JSON.stringify({
                                         timeoutMs,
                                         bootstrapping,
-                                        bootstrappedOnce,
+                                        bootstrappingTriggeredOnce,
                                     }),
                                 );
 
                                 this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: true}}));
 
-                                const buildDbPatch$ = from(
+                                const result$ = from(
                                     webViewClient("buildDbPatch", {timeoutMs})({
                                         type,
                                         login,
                                         zoneName,
-                                        metadata: metadata as any, // TODO TS: get rid of typecasting
+                                        metadata,
                                     }),
-                                );
-                                const result$ = buildDbPatch$.pipe(
+                                ).pipe(
                                     concatMap(() => EMPTY),
+                                    takeUntil(
+                                        fromEvent(window, "offline").pipe(
+                                            tap(() => {
+                                                logger.verbose(`offline event`);
+
+                                                // tslint:disable-next-line:early-exit
+                                                if (bootstrapping && bootstrappingTriggeredOnce) {
+                                                    bootstrappingTriggeredOnce = false;
+                                                    logger.verbose(
+                                                        [
+                                                            `reset "bootstrappingTriggeredOnce" state as previous iteration got aborted`,
+                                                            `by the "offline" event`,
+                                                        ].join(" "),
+                                                    );
+                                                }
+                                            }),
+                                        ),
+                                    ),
                                     catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
-                                    finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({
-                                        login,
-                                        patch: {syncing: false},
-                                    }))),
+                                    finalize(() => {
+                                        return this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: false}}));
+                                    }),
                                 );
 
                                 if (bootstrapping) {
-                                    bootstrappedOnce = true;
+                                    bootstrappingTriggeredOnce = true;
+                                    logger.verbose("bootstrappingTriggeredOnce = true");
                                 }
 
                                 return result$;
@@ -256,7 +270,7 @@ export class AccountsEffects {
             mergeMap(({payload, logger}) => {
                 const {account, webView} = payload;
                 const {accountConfig, notifications} = account;
-                const {type, login, credentials} = accountConfig;
+                const {login, credentials} = accountConfig;
                 const pageType = notifications.pageType.type;
                 const resetNotificationsState$ = of(AccountsEffects.generateNotificationsStateResetAction(login));
                 const zoneName = logger.zoneName();
@@ -284,7 +298,7 @@ export class AccountsEffects {
                         if (!credentials.password) {
                             logger.info("fillLogin");
 
-                            return this.api.webViewClient(webView, type).pipe(
+                            return this.api.webViewClient(webView).pipe(
                                 mergeMap((webViewClient) => {
                                     return from(
                                         webViewClient("fillLogin")({login, zoneName}),
@@ -415,7 +429,7 @@ export class AccountsEffects {
                                 of(buildLoginDelaysResetAction()),
                                 of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: true}})),
                                 resetNotificationsState$,
-                                this.api.webViewClient(webView, type).pipe(
+                                this.api.webViewClient(webView).pipe(
                                     delay(
                                         account.loggedInOnce
                                             ? ONE_SECOND_MS
@@ -485,7 +499,7 @@ export class AccountsEffects {
                         return merge(
                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {twoFactorCode: true}})),
                             resetNotificationsState$,
-                            this.api.webViewClient(webView, type).pipe(
+                            this.api.webViewClient(webView).pipe(
                                 mergeMap((webViewClient) => {
                                     return from(
                                         webViewClient("login2fa")({secret, zoneName}),
@@ -512,7 +526,7 @@ export class AccountsEffects {
                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: true}})),
                             resetNotificationsState$,
                             // TODO TS: resolve "webViewClient" calling "this.api.webViewClient" as normally
-                            of(__ELECTRON_EXPOSURE__.buildIpcWebViewClient.protonmail(webView)).pipe(
+                            of(__ELECTRON_EXPOSURE__.buildIpcWebViewClient(webView)).pipe(
                                 mergeMap((webViewClient) => {
                                     return from(
                                         webViewClient("unlock")({mailPassword, zoneName}),
@@ -528,7 +542,7 @@ export class AccountsEffects {
 
                 logger.verbose("empty");
 
-                return merge([]);
+                return [];
             })),
     );
 

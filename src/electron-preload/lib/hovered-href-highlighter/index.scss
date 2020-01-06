@@ -1,0 +1,30 @@
+@import "~src/web/variables";
+
+$hovered-href-highlighter-render-visible-class: "visible";
+
+:host {
+    $bg-color: theme-color("secondary");
+    $padding: 0.2em;
+    $padding-l: 0.25em;
+
+    display: flex;
+
+    > div {
+        @include border-radius($border-radius-sm);
+        display: none;
+        color: color-yiq($bg-color);
+        background-color: $bg-color;
+        border: 1px solid darken($bg-color, 10%);
+        font-size: $app-font-size-base-medium;
+        margin: $padding-l $padding;
+        padding: $padding $padding-l;
+
+        &.#{$hovered-href-highlighter-render-visible-class} {
+            display: flex;
+        }
+    }
+}
+
+:export {
+    renderVisibleClass: #{$hovered-href-highlighter-render-visible-class}, // sass-lint:disable-line no-misspelled-properties trailing-semicolon
+}

@@ -198,14 +198,23 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.localDbMailsListViewMode = INITIAL_STORES.config().localDbMailsListViewMode;
         }
     },
-    "3.8.1": ({timeouts, ...restConfig}) => {
+    "3.8.1": ({timeouts/*, ...restConfig */}) => {
         // force default "indexingBootstrap" timeout to be the minimum value
         timeouts.indexingBootstrap = Math.max(
             INITIAL_STORES.config().timeouts.indexingBootstrap,
             timeouts.indexingBootstrap,
         );
-        if (typeof restConfig.reflectSelectedAccountTitle === "undefined") {
-            restConfig.reflectSelectedAccountTitle = INITIAL_STORES.config().reflectSelectedAccountTitle;
+        // if (typeof restConfig.reflectSelectedAccountTitle === "undefined") {
+        //     restConfig.reflectSelectedAccountTitle = INITIAL_STORES.config().reflectSelectedAccountTitle;
+        // }
+    },
+    // TODO proton-v4: make sure the version is correct
+    "4.1.0": (
+        _,
+        config = _ as Config & { reflectSelectedAccountTitle?: boolean; },
+    ) => {
+        if (typeof config.reflectSelectedAccountTitle !== "undefined") {
+            delete config.reflectSelectedAccountTitle;
         }
     },
 };

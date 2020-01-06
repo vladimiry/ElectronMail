@@ -1,8 +1,16 @@
-<ng-template #webViewTemplate>
-    <!-- TODO disable "remote" module on https://github.com/electron/electron/issues/15112 resolving -->
-    <div class="webview-wrapper">
-        <webview #webViewElement></webview>
-    </div>
-</ng-template>
-<ng-container #webviewContainer></ng-container>
-<ng-container #dbViewContainer></ng-container>
+<electron-mail-account-view-primary
+    *ngIf="webViewsState.primary.src$ | async; let src"
+    (event)="onEventChild($event)"
+    [account]="account"
+    [webViewSrc]="src"
+></electron-mail-account-view-primary>
+
+<electron-mail-account-view-calendar
+    *ngIf="webViewsState.calendar.src$ | async; let src"
+    (event)="onEventChild($event)"
+    [account]="account"
+    [webViewSrc]="src"
+    class="d-none"
+></electron-mail-account-view-calendar>
+
+<ng-container #tplDbViewComponentContainerRef></ng-container>

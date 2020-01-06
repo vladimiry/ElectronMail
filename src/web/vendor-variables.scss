@@ -1,22 +1,26 @@
 @import "~bootstrap/scss/functions";
 @import "~bootstrap/scss/mixins";
 
+// >>>>> overriding bootstrap/font-awesome/other-libs variables before importing them
+
+// $enable-shadows: true;
 $primary: #1ba489;
+$secondary: lighten(#686a71, 9%);
 $modal-header-padding: 0.7rem;
 $list-group-item-padding-x: 1.25rem * 0.5;
 $badge-padding-y: 0.15em;
 
+// >>>>> importing bootstrap/font-awesome/other-libs variables
+
 @import "~bootstrap/scss/variables";
 @import "~font-awesome/scss/variables";
 
-// sass-lint:disable-all
-$theme-colors: map-merge($theme-colors, (
-    //secondary: $gray-400,
-    warning-light: theme-color-level("warning", -9),
-));
-// sass-lint:enable-all
+// >>>>> overriding bootstrap/font-awesome/other-libs maps
 
-.card-body {
-    padding-top: map-get($spacers, 3);
-    padding-bottom: map-get($spacers, 3);
-}
+$theme-colors: map-merge(
+    $theme-colors,
+    (
+        secondary: $secondary,
+        warning-light: theme-color-level("warning", -9),
+    ),
+);

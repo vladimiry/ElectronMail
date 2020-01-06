@@ -1,5 +1,5 @@
 import {BehaviorSubject, Subject, from} from "rxjs";
-import {ChangeDetectionStrategy, Component, Input, OnDestroy} from "@angular/core";
+import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
 import {Store} from "@ngrx/store";
 import {filter, finalize, takeUntil, throttleTime} from "rxjs/operators";
 
@@ -17,7 +17,7 @@ import {filterConversationNodesMails} from "src/shared/util";
     styleUrls: ["./db-view-mails-export.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DbViewMailsExportComponent extends DbViewAbstractComponent implements OnDestroy {
+export class DbViewMailsExportComponent extends DbViewAbstractComponent {
     $state = new BehaviorSubject<{ exporting?: boolean }>({});
 
     @Input()
@@ -70,11 +70,5 @@ export class DbViewMailsExportComponent extends DbViewAbstractComponent implemen
                 },
                 (error) => this.store.dispatch(NOTIFICATION_ACTIONS.Error(error)),
             );
-    }
-
-    ngOnDestroy() {
-        super.ngOnDestroy();
-        this.unSubscribe$.next();
-        this.unSubscribe$.complete();
     }
 }

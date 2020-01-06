@@ -1,8 +1,8 @@
 import {
     AccountConfig,
-    AccountConfigProtonmail,
+    AccountConfigProton,
     Notifications,
-    NotificationsProtonmail,
+    NotificationsProton,
 } from "src/shared/model/account";
 import {Mail} from "src/shared/model/database";
 import {MailsBundleKey} from "src/web/browser-window/app/store/reducers/db-view";
@@ -27,8 +27,8 @@ interface GenericWebAccount<C extends AccountConfig, NS extends Notifications> {
     makeReadMailParams: { messageIds: string[]; mailsBundleKey: MailsBundleKey; } | null;
 }
 
-export type WebAccountProtonmail = GenericWebAccount<AccountConfigProtonmail, NotificationsProtonmail>;
+export type WebAccountProton = GenericWebAccount<AccountConfigProton, NotificationsProton>;
 
-export type WebAccount = WebAccountProtonmail;
+export type WebAccount = WebAccountProton;
 
 export type WebAccountProgress = WebAccount["progress"];

@@ -9,8 +9,8 @@ import {browserWindowAppPath, browserWindowPath, buildBaseWebConfig, cssRuleSetU
 
 // TODO enable "ivy" and "aot" in all modes
 const angularCompilationFlags: BuildAngularCompilationFlags = {
-    aot: ENVIRONMENT_STATE.production,
-    ivy: ENVIRONMENT_STATE.production,
+    aot: !ENVIRONMENT_STATE.test,
+    ivy: !ENVIRONMENT_STATE.test,
 };
 
 const tsConfigFile = browserWindowPath(({

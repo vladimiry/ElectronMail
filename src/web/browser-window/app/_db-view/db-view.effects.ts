@@ -63,9 +63,15 @@ export class DbViewEffects {
                     ),
                 ).pipe(
                     mergeMap((accountDataView) => {
-                        return accountDataView
-                            ? of(DB_VIEW_ACTIONS.SetFolders({dbAccountPk, folders: accountDataView.folders}))
-                            : EMPTY;
+                        if (accountDataView) {
+                            this.ngZone.run(() => {
+                                this.store.dispatch(
+                                    DB_VIEW_ACTIONS.SetFolders({dbAccountPk, folders: accountDataView.folders}),
+                                );
+                            });
+                        }
+
+                        return EMPTY;
                     }),
                     takeUntil(dispose$),
                 );
@@ -81,7 +87,7 @@ export class DbViewEffects {
                 const {dbAccountPk, mailPk} = payload;
                 const ipcMainClient = this.api.ipcMainClient();
 
-                return forkJoin(
+                return forkJoin([
                     from(ipcMainClient("dbGetAccountMail")({...dbAccountPk, pk: mailPk})),
                     from(ipcMainClient("dbSearchRootConversationNodes")({...dbAccountPk, mailPks: [mailPk]})).pipe(
                         map((rootNodes) => {
@@ -91,7 +97,7 @@ export class DbViewEffects {
                             return rootNodes[0];
                         }),
                     ),
-                ).pipe(
+                ]).pipe(
                     mergeMap(([mail, rootNode]) => of(DB_VIEW_ACTIONS.SelectMail({
                         dbAccountPk,
                         value: {
@@ -147,7 +153,7 @@ export class DbViewEffects {
                 const {type, login} = account.accountConfig;
                 const pk = {type, login};
 
-                return this.api.webViewClient(webView, type).pipe(
+                return this.api.webViewClient(webView).pipe(
                     mergeMap((webViewClient) => {
                         return from(
                             webViewClient("fetchSingleMail")({...pk, mailPk, zoneName: logger.zoneName()}),
@@ -170,7 +176,7 @@ export class DbViewEffects {
                 const {type, login} = account.accountConfig;
                 const pk = {type, login};
 
-                return this.api.webViewClient(webView, type).pipe(
+                return this.api.webViewClient(webView).pipe(
                     mergeMap((webViewClient) => {
                         return from(
                             webViewClient("makeRead")({...pk, messageIds, zoneName: logger.zoneName()}),

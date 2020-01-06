@@ -3,6 +3,8 @@ import {BrowserView} from "electron";
 
 import {Context} from "src/electron-main/model";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";
+import {WEB_CHUNK_NAMES} from "src/shared/constants";
+import {WEB_PROTOCOL_SCHEME} from "src/electron-main/constants";
 import {curryFunctionMembers} from "src/shared/util";
 import {injectVendorsAppCssIntoHtmlFile} from "src/electron-main/util";
 
@@ -38,9 +40,12 @@ export const initFindInPageBrowserView: (ctx: Context) => Promise<BrowserView> =
 
         browserView.setAutoResize({width: false, height: true, horizontal: false, vertical: false});
 
-        const {html, baseURLForDataURL} = await resolveContent(ctx);
+        const {html} = await resolveContent(ctx);
 
-        await browserView.webContents.loadURL(`data:text/html,${html}`, {baseURLForDataURL});
+        await browserView.webContents.loadURL(
+            `data:text/html,${html}`,
+            {baseURLForDataURL: `${WEB_PROTOCOL_SCHEME}:/${WEB_CHUNK_NAMES["search-in-page-browser-view"]}/`},
+        );
 
         syncFindInPageBrowserViewSize(ctx, browserView);
 

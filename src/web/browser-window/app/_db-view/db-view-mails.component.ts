@@ -1,7 +1,7 @@
 import {ChangeDetectionStrategy, Component, ElementRef, Input, OnDestroy, OnInit} from "@angular/core";
 import {Observable, Subscription, combineLatest, fromEvent} from "rxjs";
 import {Store} from "@ngrx/store";
-import {distinctUntilChanged, map, mergeMap, take, withLatestFrom} from "rxjs/operators";
+import {distinctUntilChanged, map, mergeMap, take, tap, withLatestFrom} from "rxjs/operators";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
@@ -51,6 +51,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
     items$ = this.mailsBundle$.pipe(
         map(({items}) => items),
         distinctUntilChanged(),
+        tap(this.markDirty.bind(this)),
     );
 
     paging$ = this.mailsBundle$.pipe(
@@ -70,6 +71,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
                 0,
             );
         }),
+        distinctUntilChanged(),
     );
 
     makeAllReadInProgress$: Observable<boolean> = this.account$.pipe(
@@ -88,6 +90,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
         map(([unreadCount, makeAllReadInProgress, onlineAndSignedIn]) => {
             return unreadCount < 1 || makeAllReadInProgress || !onlineAndSignedIn;
         }),
+        distinctUntilChanged(),
     );
 
     private subscription = new Subscription();

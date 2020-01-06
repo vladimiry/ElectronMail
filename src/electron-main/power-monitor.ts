@@ -1,4 +1,5 @@
 import _logger from "electron-log";
+import {powerMonitor} from "electron";
 
 import {Config} from "src/shared/model/options";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
@@ -59,4 +60,15 @@ export function clearIdleTimeLogOut(): void {
 
     clearInterval(state.clearIntervalId);
     delete state.clearIntervalId;
+}
+
+export function setUpPowerMonitorNotification(): void {
+    const notify = (...[{message}]: Arguments<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS.PowerMonitor>) => {
+        IPC_MAIN_API_NOTIFICATION$.next(
+            IPC_MAIN_API_NOTIFICATION_ACTIONS.PowerMonitor({message}),
+        );
+    };
+    powerMonitor.on("suspend", () => notify({message: "suspend"}));
+    powerMonitor.on("resume", () => notify({message: "resume"}));
+    powerMonitor.on("shutdown", () => notify({message: "shutdown"}));
 }

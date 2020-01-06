@@ -31,8 +31,6 @@ export interface DbViewEntryComponentInterface {
 
     // tslint:disable-next-line:no-misused-new
     new(...args: any[]): DbViewEntryComponentInterface;
-
-    setVisibility(value: boolean): void;
 }
 
 export const DBVIEW_MODULE_ENTRY_COMPONENT_TOKEN = new InjectionToken<DbViewEntryComponentInterface>("DbViewEntryComponent");

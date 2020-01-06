@@ -1,0 +1,10 @@
+@import "~src/web/variables";
+
+:host {
+    &,
+    webview {
+        display: flex;
+        flex: 1;
+        height: 100%;
+    }
+}

@@ -4,9 +4,26 @@ import path from "path";
 import pathIsInside from "path-is-inside";
 import {promisify} from "util";
 
-import {AccountType} from "src/shared/model/account";
 import {CWD, LOG, LOG_LEVELS, execShell} from "scripts/lib";
-import {PROVIDER_REPO} from "src/shared/constants";
+import {PROVIDER_REPOS} from "src/shared/constants";
+
+const REPOS_ONLY_FILTER: ReadonlyArray<keyof typeof PROVIDER_REPOS> = (() => {
+    const {ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY} = process.env;
+    const result = ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY
+        ? ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY
+            .split(";")
+            .map((value) => value.trim())
+            .filter((value) => value in PROVIDER_REPOS)
+            .map((value) => value as keyof typeof PROVIDER_REPOS)
+        : [];
+    LOG(
+        LOG_LEVELS.title(`ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY (raw string):`),
+        LOG_LEVELS.value(ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY),
+        LOG_LEVELS.title(`(filtered array):`),
+        LOG_LEVELS.value(result),
+    );
+    return result;
+})();
 
 const [, , baseDestDir] = process.argv;
 
@@ -32,55 +49,71 @@ export type Flow<O> = (
 
 export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = Unpacked<T>["options"]>(
     {
-        accountType,
+        repoType,
         folderAsDomainEntries,
-        repoRelativeDistDir,
+        repoRelativeDistDir = PROVIDER_REPOS[repoType].repoRelativeDistDir,
+        destSubFolder,
         flows: {
-            install = async ({repoDir}) => installDependencies(repoDir),
             preInstall,
+            install = async ({repoDir}) => installDependencies(repoDir),
             build,
         },
     }: {
-        accountType: AccountType,
+        repoType: keyof typeof PROVIDER_REPOS,
         folderAsDomainEntries: T,
-        repoRelativeDistDir: string,
+        repoRelativeDistDir?: string,
+        destSubFolder?: string,
         flows: {
-            install?: Flow<O>;
             preInstall?: Flow<O>;
+            install?: Flow<O>;
             build: Flow<O>;
         },
     },
 ) {
-    const distDir = path.resolve(baseDestDir, accountType);
-    const webClientDir = path.resolve(CWD, `./output/git/${accountType}/webclient`);
-    const baseRepoDir = path.resolve(CWD, webClientDir, `./${PROVIDER_REPO[accountType].commit}`);
+    if (
+        REPOS_ONLY_FILTER.length
+        &&
+        !REPOS_ONLY_FILTER.includes(repoType)
+    ) {
+        LOG(
+            LOG_LEVELS.warning(`Skipping "${LOG_LEVELS.value(repoType)}" processing as not explicitly listed in Env Variable`),
+        );
+        return;
+    }
 
-    await fsExtra.ensureDir(webClientDir);
+    const destDir = path.resolve(baseDestDir);
+    const baseRepoDir = path.resolve(
+        CWD,
+        `./output/git/${repoType}`,
+        PROVIDER_REPOS[repoType].commit,
+    );
+
+    await fsExtra.ensureDir(baseRepoDir);
 
     for (const folderAsDomainEntry of folderAsDomainEntries) {
-        const resolvedDistDir = path.resolve(distDir, folderAsDomainEntry.folderNameAsDomain);
+        const resolvedDistDir = path.resolve(destDir, folderAsDomainEntry.folderNameAsDomain, destSubFolder ?? "");
         LOG(
-            LOG_LEVELS.title(`Preparing built-in WebClient build [${accountType}]:`),
+            LOG_LEVELS.title(`Preparing built-in WebClient build [${repoType}]:`),
             LOG_LEVELS.value(JSON.stringify({...folderAsDomainEntry, resolvedDistDir})),
         );
 
-        if (await fsExtra.pathExists(resolvedDistDir)) {
+        if (await fsExtra.pathExists(path.join(resolvedDistDir, "index.html"))) {
             LOG(LOG_LEVELS.warning(`Skipping as directory already exists:`), LOG_LEVELS.value(resolvedDistDir));
             continue;
         }
 
         const repoDir = path.resolve(baseRepoDir, folderAsDomainEntry.folderNameAsDomain);
-        const repoDistDir = path.resolve(repoDir, repoRelativeDistDir);
+        const distDir = path.resolve(repoDir, repoRelativeDistDir);
         const flowArg = {repoDir, folderAsDomainEntry};
 
         if (await fsExtra.pathExists(repoDir)) {
             LOG(LOG_LEVELS.warning(`Skipping cloning`));
         } else {
             await fsExtra.ensureDir(repoDir);
-            await clone(accountType, repoDir);
+            await clone(repoType, repoDir);
         }
 
-        if (await fsExtra.pathExists(path.join(repoDistDir, "index.html"))) {
+        if (await fsExtra.pathExists(path.join(distDir, "index.html"))) {
             LOG(LOG_LEVELS.warning(`Skipping building`));
         } else {
             if (await fsExtra.pathExists(path.resolve(repoDir, "node_modules"))) {
@@ -95,8 +128,8 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
             await build(flowArg);
         }
 
-        LOG(LOG_LEVELS.title(`Copying: ${LOG_LEVELS.value(repoDistDir)} to ${LOG_LEVELS.value(resolvedDistDir)}`));
-        await fsExtra.copy(repoDistDir, resolvedDistDir);
+        LOG(LOG_LEVELS.title(`Copying: ${LOG_LEVELS.value(distDir)} to ${LOG_LEVELS.value(resolvedDistDir)}`));
+        await fsExtra.copy(distDir, resolvedDistDir);
     }
 }
 
@@ -104,8 +137,8 @@ async function installDependencies(dir: string) {
     await execShell(["npm", ["ci"], {cwd: dir}]);
 }
 
-async function clone(accountType: AccountType, dir: string) {
-    const {repo, commit} = PROVIDER_REPO[accountType];
+async function clone(repoType: keyof typeof PROVIDER_REPOS, dir: string) {
+    const {repo, commit} = PROVIDER_REPOS[repoType];
 
     await promisify(mkdirp)(dir);
 

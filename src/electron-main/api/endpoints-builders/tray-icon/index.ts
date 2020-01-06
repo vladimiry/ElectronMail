@@ -92,11 +92,11 @@ export async function buildEndpoints(
 
                 browserWindow.setOverlayIcon(overlay, `Unread messages count: ${unread}`);
                 tray.setImage(icon);
-                app.setBadgeCount(unread);
+                app.badgeCount = unread;
             } else {
                 browserWindow.setOverlayIcon(null, "");
                 tray.setImage(canvas.native);
-                app.setBadgeCount(0);
+                app.badgeCount = 0;
             }
         },
     };

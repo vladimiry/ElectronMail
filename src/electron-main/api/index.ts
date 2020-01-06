@@ -1,4 +1,5 @@
 import electronLog from "electron-log";
+import {authenticator} from "otplib";
 
 import * as SpellCheck from "src/electron-main/spell-check/api";
 import {Account, Database, FindInPage, General, TrayIcon} from "./endpoints-builders";
@@ -46,6 +47,12 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             return newData;
         },
 
+        async staticInit() {
+            return {
+                electronLocations: ctx.locations,
+            };
+        },
+
         async init() {
             let hasSavedPassword: boolean | undefined;
 
@@ -53,7 +60,10 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
                 hasSavedPassword = Boolean(await getPassword());
                 ctx.keytarSupport = true;
             } catch (error) {
-                logger.error(`"keytar" module is unsupported by the system`, error);
+                // log only one-line message in "error" mode so it doesn't affect the e2e tests
+                logger.error(`"keytar" module is unsupported by the system: `, error.message);
+                // log full error in "warn" mode only so it doesn't affect the e2e tests
+                logger.warn(error);
 
                 ctx.keytarSupport = false;
 
@@ -78,7 +88,6 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             }
 
             return {
-                electronLocations: ctx.locations,
                 keytarSupport: ctx.keytarSupport,
                 snapPasswordManagerServiceHint: ctx.snapPasswordManagerServiceHint,
                 hasSavedPassword,
@@ -306,6 +315,12 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
                 ...config,
                 compactLayout: !config.compactLayout,
             });
+        },
+
+        async generateTOTPToken({secret}) {
+            return {
+                token: authenticator.generate(secret),
+            };
         },
     };
 

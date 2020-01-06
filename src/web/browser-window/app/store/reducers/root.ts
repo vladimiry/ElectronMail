@@ -1,6 +1,5 @@
 import {Injector} from "@angular/core";
 import {MetaReducer, Store} from "@ngrx/store";
-import {RouterReducerState, routerReducer} from "@ngrx/router-store";
 import {UnionOf} from "@vladimiry/unionize";
 
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
@@ -12,11 +11,11 @@ const logger = getZoneNameBoundWebLogger("[reducers/root]");
 type Actions = UnionOf<typeof NAVIGATION_ACTIONS>;
 
 export interface State {
-    router?: RouterReducerState;
+
 }
 
 export const reducers = {
-    router: routerReducer,
+
 };
 
 export function createErrorHandlingMetaReducer(injector: Injector): MetaReducer<State, Actions> {

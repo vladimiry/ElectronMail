@@ -39,7 +39,7 @@
               {
                 "target": [
                   "src/electron-preload/webview/**/*",
-                  "!src/electron-preload/webview/util.ts"
+                  "!src/electron-preload/webview/lib/util.ts"
                 ],
                 "from": [
                   "src/shared/api/main"

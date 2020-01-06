@@ -11,21 +11,16 @@
     overflow-y: auto;
     background-color: $gray-200;
 
-    &.account-hidden {
-        display: none;
-    }
-
-    &.webview-hidden {
-        .webview-wrapper {
+    &:not(.vm-live) {
+        &::ng-deep #{$app-prefix}-account-view-primary,
+        &::ng-deep #{$app-prefix}-account-view-calendar {
             display: none;
         }
     }
 
-    .webview-wrapper {
-        &,
-        webview {
-            flex: 1;
-            height: 100%;
+    &:not(.vm-database) {
+        &::ng-deep #{$app-prefix}-db-view-entry {
+            display: none;
         }
     }
 }

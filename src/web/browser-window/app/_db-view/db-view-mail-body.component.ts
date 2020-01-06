@@ -10,17 +10,16 @@ import {
     QueryList,
     ViewChildren,
 } from "@angular/core";
-import {BehaviorSubject, EMPTY, Observable, Subject, Subscription, combineLatest, race, throwError, timer} from "rxjs";
-import {Store, select} from "@ngrx/store";
+import {BehaviorSubject, EMPTY, Observable, Subject, Subscription, combineLatest} from "rxjs";
+import {Store} from "@ngrx/store";
 import {delay, distinctUntilChanged, filter, map, mergeMap, pairwise, take, withLatestFrom} from "rxjs/operators";
-import {equals} from "ramda";
+import {equals} from "remeda";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
 import {DbViewMailComponent} from "src/web/browser-window/app/_db-view/db-view-mail.component";
 import {Mail, View} from "src/shared/model/database";
 import {ONE_SECOND_MS} from "src/shared/constants";
-import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/db-view";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
 
@@ -111,26 +110,8 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         );
 
         this.subscription.add(
-            race(
-                this.store.pipe(
-                    select(OptionsSelectors.FEATURED.electronLocations),
-                    map((value) => {
-                        if (!value) {
-                            throw new Error(`"electronLocations" is expected to be defined`);
-                        }
-                        return value;
-                    }),
-                    take(1),
-                ),
-                timer(ONE_SECOND_MS).pipe(
-                    mergeMap(() => throwError(new Error(`Failed to resolve "electronLocations" value`))),
-                ),
-            ).subscribe(({vendorsAppCssLinkHref}) => {
-                this.subscription.add(
-                    this.selectedMail$.subscribe((selectedMail) => {
-                        this.renderBody(selectedMail.conversationMail, {vendorsAppCssLinkHref});
-                    }),
-                );
+            this.selectedMail$.subscribe((selectedMail) => {
+                this.renderBody(selectedMail.conversationMail);
             }),
         );
 
@@ -216,7 +197,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         this.releaseBodyIframe();
     }
 
-    private renderBody(mail: Mail, {vendorsAppCssLinkHref}: { vendorsAppCssLinkHref: string }) {
+    private renderBody(mail: Mail) {
         // TODO cache resolved DOM elements
         const [container] = this.elementRef.nativeElement.getElementsByClassName("body-container");
 
@@ -239,7 +220,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         contentWindow.document.write(`
             <html>
             <head>
-                <link rel="stylesheet" href="${vendorsAppCssLinkHref}"/>
+                <link rel="stylesheet" href="${__METADATA__.electronLocations.vendorsAppCssLinkHref}"/>
             </head>
             <body>
                 ${mail.body}

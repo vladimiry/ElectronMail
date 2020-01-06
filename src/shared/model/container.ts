@@ -4,14 +4,6 @@ export type AccountTypeAndLoginFieldContainer = Pick<AccountConfig, "type" | "lo
 
 export type LoginFieldContainer = Pick<AccountTypeAndLoginFieldContainer, "login">;
 
-export interface UrlFieldContainer {
-    url: string;
-}
-
-export interface MessageFieldContainer {
-    message: string;
-}
-
 export interface PasswordFieldContainer {
     password: string;
 }

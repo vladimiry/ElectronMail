@@ -10,7 +10,7 @@ import {Config, Settings} from "src/shared/model/options";
 import {Context, ContextInitOptions, ContextInitOptionsPaths} from "./model";
 import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
-import {INITIAL_STORES, configEncryptionPresetValidator, settingsAccountLoginUniquenessValidator} from "./constants";
+import {INITIAL_STORES, WEB_PROTOCOL_SCHEME, configEncryptionPresetValidator, settingsAccountLoginUniquenessValidator} from "./constants";
 import {LOCAL_WEBCLIENT_PROTOCOL_PREFIX, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR, WEB_CHUNK_NAMES} from "src/shared/constants";
 import {formatFileUrl} from "./util";
 
@@ -182,17 +182,22 @@ function initLocations(
             browserWindowE2E: appRelativePath("./electron-preload/browser-window-e2e.js"),
             searchInPageBrowserView: appRelativePath("./electron-preload/search-in-page-browser-view.js"),
             fullTextSearchBrowserWindow: appRelativePath("./electron-preload/database-indexer.js"),
-            webView: {
-                protonmail: formatFileUrl(appRelativePath("./electron-preload/webview/protonmail.js")),
+            primary: {
+                protonmail: formatFileUrl(appRelativePath("./electron-preload/webview/primary.js")),
+            },
+            calendar: {
+                protonmail: formatFileUrl(appRelativePath("./electron-preload/webview/calendar.js")),
             },
         },
         vendorsAppCssLinkHref: (() => {
-            const file = appRelativePath("./web/browser-window/vendor.css");
+            // TODO electron: get rid of "baseURLForDataURL" workaround, see https://github.com/electron/electron/issues/20700
+            const webRelativeCssFilePath = "browser-window/vendor.css";
+            const file = appRelativePath("web", webRelativeCssFilePath);
             const stat = storeFs._impl.statSync(file);
             if (!stat.isFile()) {
                 throw new Error(`Location "${file}" exists but it's not a file`);
             }
-            return formatFileUrl(file);
+            return `${WEB_PROTOCOL_SCHEME}://${webRelativeCssFilePath}`;
         })(),
         ...(() => {
             const {protocolBundles, webClients}: Pick<ElectronContextLocations, "webClients">
@@ -205,8 +210,8 @@ function initLocations(
 
             let schemeIndex = 0;
 
-            for (const [accountType, items] of Object.entries(webClients)) {
-                const webClientsDir = appRelativePath("webclient", accountType);
+            for (const [, items] of Object.entries(webClients)) {
+                const webClientsDir = appRelativePath("webclient");
 
                 for (const dirName of listDirsNames(storeFs, webClientsDir)) {
                     const directory = path.resolve(webClientsDir, dirName);

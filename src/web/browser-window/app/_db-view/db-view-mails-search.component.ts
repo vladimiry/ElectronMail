@@ -4,7 +4,6 @@ import {
     Component,
     ElementRef,
     EventEmitter,
-    OnDestroy,
     OnInit,
     Output,
     QueryList,
@@ -13,7 +12,7 @@ import {
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Observable, Subject, combineLatest} from "rxjs";
 import {Store, select} from "@ngrx/store";
-import {distinctUntilChanged, map, takeUntil} from "rxjs/operators";
+import {distinctUntilChanged, map, takeUntil, tap} from "rxjs/operators";
 
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
 import {DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
@@ -27,7 +26,7 @@ import {State} from "src/web/browser-window/app/store/reducers/db-view";
     styleUrls: ["./db-view-mails-search.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DbViewMailsSearchComponent extends DbViewAbstractComponent implements OnInit, AfterViewInit, OnDestroy {
+export class DbViewMailsSearchComponent extends DbViewAbstractComponent implements OnInit, AfterViewInit {
     @ViewChildren("query")
     queryElementRefQuery!: QueryList<ElementRef>;
 
@@ -53,6 +52,7 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
 
     searching$: Observable<boolean> = this.accountProgress$.pipe(
         map((value) => Boolean(value.searching)),
+        tap(this.markDirty.bind(this)),
     );
 
     indexing$: Observable<boolean> = combineLatest([
@@ -65,6 +65,7 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
         map(([globalProgress, accountProgress]) => {
             return Boolean(globalProgress.indexing || accountProgress.indexing);
         }),
+        tap(this.markDirty.bind(this)),
     );
 
     folders$ = this.instance$.pipe(
@@ -156,11 +157,5 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
             query: this.formControls.query.value,
             folderPks: this.resolveSelectedPks(),
         }));
-    }
-
-    ngOnDestroy() {
-        super.ngOnDestroy();
-        this.unSubscribe$.next();
-        this.unSubscribe$.complete();
     }
 }

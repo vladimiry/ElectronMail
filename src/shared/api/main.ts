@@ -17,6 +17,7 @@ import {DbPatch} from "./common";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {FsDbAccount} from "src/shared/model/database";
 import {PACKAGE_NAME} from "src/shared/constants";
+import {ReadonlyDeep} from "type-fest";
 
 export type IpcMainServiceScan = ScanService<typeof IPC_MAIN_API>;
 
@@ -76,6 +77,8 @@ export const ENDPOINTS_DEFINITION = {
 
     dbIndexerNotification: ActionType.Observable<void, UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>>(),
 
+    staticInit: ActionType.Promise<void, ReadonlyDeep<{ electronLocations: ElectronContextLocations }>>(),
+
     init: ActionType.Promise<void, InitResponse>(),
 
     logout: ActionType.Promise(),
@@ -125,7 +128,7 @@ export const ENDPOINTS_DEFINITION = {
 
     findInPageNotification: ActionType.Observable<void, Electron.FoundInPageResult | { requestId: null }>(),
 
-    selectAccount: ActionType.Promise<{ databaseView?: boolean; reset?: boolean }>(),
+    selectAccount: ActionType.Promise<{ databaseView?: boolean; webContentId: number; } | { reset: true; }>(),
 
     updateCheck: ActionType.Promise<void, Array<{ title: string; url?: string; date: string; }>>(),
 
@@ -133,11 +136,12 @@ export const ENDPOINTS_DEFINITION = {
 
     toggleLocalDbMailsListViewMode: ActionType.Promise<void, Config>(),
 
+    generateTOTPToken: ActionType.Promise<{ secret: string }, { token: string }>(),
+
     notification: ActionType.Observable<void, UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>>(),
 };
 
 export interface InitResponse {
-    electronLocations: ElectronContextLocations;
     hasSavedPassword?: boolean;
     snapPasswordManagerServiceHint?: boolean;
     keytarSupport: boolean;
@@ -219,6 +223,7 @@ export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
         ErrorMessage: ofType<{ message: string }>(),
         InfoMessage: ofType<{ message: string }>(),
         TrayIconDataURL: ofType<string>(),
+        PowerMonitor: ofType<{ message: "suspend" | "resume" | "shutdown" }>(),
     },
     {
         tag: "type",

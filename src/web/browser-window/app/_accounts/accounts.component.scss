@@ -1,7 +1,8 @@
 @import "~src/web/variables";
 
-$webview-border: darken($app-color-bg-dark, 10%);
-$webview-border-darkest: darken($app-color-bg-darkest, 10%);
+$webview-border: darken($app-color-bg-dark-2, 10%);
+$webview-border-darkest: darken($app-color-bg-dark-3, 10%);
+// $box-shadow-color: rgba(255, 255, 255, 0.05);
 
 :host {
     display: flex;
@@ -10,14 +11,15 @@ $webview-border-darkest: darken($app-color-bg-darkest, 10%);
     right: 0;
     top: 0;
     bottom: 0;
-    background-color: $app-color-bg-dark;
+    background-color: $app-color-bg-dark-1;
 
     @media (prefers-color-scheme: dark) {
-        background-color: $app-color-bg-darkest;
+        background-color: $app-color-bg-dark-3;
     }
 
     &::ng-deep #{$app-prefix}-account {
         border-top: 1px solid $webview-border;
+        // box-shadow: 0 -1px 0 0 $box-shadow-color;
 
         @media (prefers-color-scheme: dark) {
             border-top-color: $webview-border-darkest;
@@ -53,6 +55,8 @@ $webview-border-darkest: darken($app-color-bg-darkest, 10%);
             > .btn:first-child {
                 width: 100%;
                 white-space: nowrap;
+                border-right-color: $app-color-secondary-btn-split-border;
+                border-right-width: 2px; // next to it button has got "margin-left: -1px" defined by "bootstrap"
             }
         }
 
@@ -141,13 +145,12 @@ $webview-border-darkest: darken($app-color-bg-darkest, 10%);
 
             &::ng-deep {
                 #{$app-prefix}-account {
-                    border-left: 1px solid $webview-border;
                     border-top: 0;
+                    // border-left: 1px solid $webview-border;
+                    // box-shadow: -1px 0 0 0 $box-shadow-color;
 
                     @media (prefers-color-scheme: dark) {
-                        &::ng-deep #{$app-prefix}-account {
-                            border-left-color: $webview-border-darkest;
-                        }
+                        border-left-color: $webview-border-darkest;
                     }
                 }
             }
@@ -178,49 +181,6 @@ $webview-border-darkest: darken($app-color-bg-darkest, 10%);
             .list-group.accounts-list {
                 flex-direction: row;
                 flex-wrap: wrap;
-
-                &::ng-deep #{$app-prefix}-account-title {
-                    margin-bottom: 0;
-
-                    .btn {
-                        padding-top: $list-group-item-padding-y;
-                        padding-bottom: $list-group-item-padding-y;
-                    }
-
-                    &:first-child {
-                        &,
-                        .bnt-group .btn:last-child {
-                            border-top-left-radius: $btn-border-radius;
-                            border-top-right-radius: $btn-border-radius;
-                        }
-                    }
-
-                    &:not(:first-child) {
-                        border-top: $list-group-border-width solid $gray-300;
-
-                        &,
-                        .btn {
-                            border-top-left-radius: 0;
-                            border-top-right-radius: 0;
-                        }
-                    }
-
-                    &:not(:last-child) {
-                        &,
-                        .btn {
-                            border-bottom-left-radius: 0;
-                            border-bottom-right-radius: 0;
-                        }
-                    }
-
-                    &:last-child {
-                        &,
-                        .bnt-group .btn:last-child {
-                            border-bottom-left-radius: $btn-border-radius;
-                            border-bottom-right-radius: $btn-border-radius;
-                        }
-                    }
-                }
             }
         }
     }

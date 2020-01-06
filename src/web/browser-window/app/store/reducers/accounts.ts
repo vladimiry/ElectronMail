@@ -59,16 +59,18 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                     }
                     accounts.push(account);
                 } else {
-                    const webAccount = {
+                    const webAccount: WebAccount = {
                         accountConfig,
                         progress: {},
+                        makeReadMailParams: null,
                         notifications: {
+                            calendarLoggedIn: false,
                             loggedIn: false,
-                            unread: 0,
                             pageType: {url: "", type: "unknown"},
+                            unread: 0,
                         },
                         fetchSingleMailParams: null,
-                    } as WebAccount; // TODO ger rid of "TS as" casting
+                    };
 
                     accounts.push(webAccount);
                 }

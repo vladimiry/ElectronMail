@@ -2,10 +2,10 @@
     <div class="accounts-block px-2 pt-2" [ngClass]="{'d-none': hideControls$ | async}">
         <div class="controls">
             <div class="btn-group" dropdown>
-                <button (click)="openSettingsView()" class="btn btn-light" id="optionsMenuItem" title="Options" type="button">
+                <button (click)="openSettingsView()" class="btn btn-secondary" id="optionsMenuItem" title="Options" type="button">
                     <i class="fa fa-cog"></i>
                 </button>
-                <button class="btn btn-light dropdown-toggle dropdown-toggle-split" dropdownToggle type="button">
+                <button class="btn btn-secondary dropdown-toggle dropdown-toggle-split" dropdownToggle type="button">
                     <span class="caret"></span>
                 </button>
                 <ul *dropdownMenu class="dropdown-menu" role="menu">
@@ -85,7 +85,7 @@
             <electron-mail-account
                 *ngFor="let login of ((loginsSet$ | async) || undefined); let index = index"
                 [account]="getAccountByLogin(login)"
-                [ngClass]="{'account-hidden': login != selectedAccount?.accountConfig?.login}"
+                [ngClass]="{'d-none': login != selectedAccount?.accountConfig?.login}"
             ></electron-mail-account>
         </ng-template>
         <ng-template #accountsUndefined>

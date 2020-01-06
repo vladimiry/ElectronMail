@@ -1,85 +1,108 @@
-import {Action, Store, select} from "@ngrx/store";
+import UUID from "pure-uuid";
 import {
-    AfterViewInit,
     ChangeDetectionStrategy,
     Component,
-    ElementRef,
+    HostBinding,
     Input,
     NgZone,
     OnDestroy,
     OnInit,
-    TemplateRef,
     ViewChild,
     ViewContainerRef,
-    ViewRef,
 } from "@angular/core";
 import {Deferred} from "ts-deferred";
-import {Observable, Subject, Subscription, combineLatest} from "rxjs";
-import {debounceTime, distinctUntilChanged, filter, map, mergeMap, pairwise, startWith, takeUntil, withLatestFrom} from "rxjs/operators";
-import {equals, pick} from "ramda";
+import {EMPTY, Observable, ReplaySubject, Subject, Subscription, combineLatest, from, race, throwError, timer} from "rxjs";
+import {Store, select} from "@ngrx/store";
+import {
+    debounceTime,
+    distinctUntilChanged,
+    filter,
+    first,
+    map,
+    pairwise,
+    startWith,
+    switchMap,
+    take,
+    takeUntil,
+    withLatestFrom,
+} from "rxjs/operators";
 
-import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
-import {AccountConfig} from "src/shared/model/account";
+import {ACCOUNTS_ACTIONS, AppAction, NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {DbViewModuleResolve} from "src/web/browser-window/app/_accounts/db-view-module-resolve.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {LogLevel} from "src/shared/model/common";
 import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";
-import {ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/constants";
+import {ONE_SECOND_MS, PRODUCT_NAME, PROVIDER_REPOS} from "src/shared/constants";
+import {ReadonlyDeep} from "type-fest";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount} from "src/web/browser-window/app/model";
-import {getWebViewPartition} from "src/shared/util";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
-
-type WebViewSubjectState =
-    | { action: "attrs"; src: string; preload: string; }
-    | { action: "visibility"; visible: boolean; };
 
 let componentIndex = 0;
 
-const pickCredentialFields = ((fields: Array<keyof AccountConfig>) => {
-    return (accountConfig: AccountConfig) => pick(fields, accountConfig);
-})(["credentials"]);
-
-const pickLoginDelayFields = ((fields: Array<keyof AccountConfig>) => {
-    return (accountConfig: AccountConfig) => pick(fields, accountConfig);
-})(["loginDelayUntilSelected", "loginDelaySecondsRange"]);
-
-// TODO split account.component.ts component to pieces
 @Component({
     selector: "electron-mail-account",
     templateUrl: "./account.component.html",
     styleUrls: ["./account.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AccountComponent extends NgChangesObservableComponent implements OnInit, AfterViewInit, OnDestroy {
+export class AccountComponent extends NgChangesObservableComponent implements OnInit, OnDestroy {
     @Input()
-    account!: WebAccount;
-    account$: Observable<WebAccount> = this
-        .ngChangesObservable("account")
-        .pipe(takeUntil(this.ngOnDestroy$));
-    private logger: ReturnType<typeof getZoneNameBoundWebLogger>;
-    private loggerZone: Zone;
-    @ViewChild("dbViewContainer", {read: ViewContainerRef, static: false})
-    private dbViewContainerRef!: ViewContainerRef;
-    @ViewChild("webViewTemplate", {read: TemplateRef, static: false})
-    private webViewTemplate!: TemplateRef<null>;
-    @ViewChild("webviewContainer", {read: ViewContainerRef, static: false})
-    private webViewContainerRef!: ViewContainerRef;
-    private webViewState$ = new Subject<WebViewSubjectState>();
-    private subscription = new Subscription();
-    private domReadySubscription = new Subscription();
-    private onWebViewDomReadyDeferreds: Array<Deferred<void>> = [];
+    readonly account!: WebAccount;
+
+    readonly account$: Observable<WebAccount> = this.ngChangesObservable("account");
+
+    viewModeClass: "vm-live" | "vm-database" = "vm-live";
+
+    // TODO angular: get rid of @HostBinding("class") /  @Input() workaround https://github.com/angular/angular/issues/7289
+    @Input()
+    readonly class: string = "";
+
+    readonly webViewsState: Record<"primary" | "calendar", ReadonlyDeep<{
+        readonly src$: Subject<string>;
+        readonly domReadyOnce: Deferred<Electron.WebviewTag>;
+        readonly domReady$: Subject<Electron.WebviewTag>;
+    }>> = {
+        primary: {
+            src$: new ReplaySubject(1),
+            domReadyOnce: new Deferred(),
+            domReady$: new Subject(),
+        },
+        calendar: {
+            src$: new ReplaySubject(1),
+            domReadyOnce: new Deferred(),
+            domReady$: new Subject(),
+        },
+    };
+
+    @ViewChild("tplDbViewComponentContainerRef", {read: ViewContainerRef, static: true})
+    private readonly tplDbViewComponentContainerRef!: ViewContainerRef;
+
+    private tplDbViewComponentRef: Unpacked<ReturnType<typeof DbViewModuleResolve.prototype.buildComponentRef>> | undefined;
+
+    // TODO resolve "componentIndex" dynamically: accounts$.indexOf(({login}) => this.login === login)
     private readonly componentIndex: number;
 
+    private readonly logger: ReturnType<typeof getZoneNameBoundWebLogger>;
+
+    private readonly loggerZone: Zone;
+
+    private readonly subscription = new Subscription();
+
+    @HostBinding("class")
+    get getClass() {
+        return `${this.class} ${this.viewModeClass}`;
+    }
+
     constructor(
-        private dbViewModuleResolve: DbViewModuleResolve,
-        private api: ElectronService,
-        private core: CoreService,
-        private store: Store<State>,
-        private zone: NgZone,
-        private elementRef: ElementRef,
+        private readonly dbViewModuleResolve: DbViewModuleResolve,
+        private readonly api: ElectronService,
+        private readonly core: CoreService,
+        private readonly store: Store<State>,
+        private readonly zone: NgZone,
     ) {
         super();
         this.componentIndex = componentIndex;
@@ -90,13 +113,29 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     }
 
     ngOnInit() {
+        this.webViewsState.primary.domReadyOnce.promise
+            // tslint:disable-next-line:no-floating-promises
+            .then((webView) => this.onPrimaryViewLoadedOnce(webView));
+
+        this.subscription.add(
+            this.account$
+                .pipe(
+                    distinctUntilChanged(({accountConfig: {entryUrl: prev}}, {accountConfig: {entryUrl: curr}}) => curr === prev),
+                )
+                .subscribe(({accountConfig}) => {
+                    this.webViewsState.primary.src$.next(
+                        this.core.parseEntryUrl(accountConfig, "WebClient").entryUrl,
+                    );
+                }),
+        );
+
         this.subscription.add(
             this.account$
                 .pipe(
                     withLatestFrom(this.store.pipe(select(OptionsSelectors.CONFIG.unreadNotifications))),
                     filter(([, unreadNotifications]) => Boolean(unreadNotifications)),
                     map(([account]) => account),
-                    map((a) => ({login: a.accountConfig.login, unread: a.notifications.unread})),
+                    map((account) => ({login: account.accountConfig.login, unread: account.notifications.unread})),
                     pairwise(),
                     filter(([prev, curr]) => curr.unread > prev.unread),
                     map(([, curr]) => curr),
@@ -114,165 +153,140 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                             body: `Account [${this.componentIndex}]: ${unread} unread message${unread > 1 ? "s" : ""}.`,
                         },
                     ).onclick = () => this.zone.run(() => {
-                        this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.Activate({login}));
-                        this.dispatchInLoggerZone(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));
+                        this.onDispatchInLoggerZone(ACCOUNTS_ACTIONS.Activate({login}));
+                        this.onDispatchInLoggerZone(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));
                     });
                 }),
         );
     }
 
-    ngAfterViewInit() {
-        this.logger.info(`ngAfterViewInit()`);
+    onEventChild(
+        event:
+            | { type: "dom-ready", viewType: keyof typeof AccountComponent.prototype.webViewsState, webView: Electron.WebviewTag; }
+            | { type: "action", payload: Unpacked<Arguments<typeof AccountComponent.prototype.onDispatchInLoggerZone>> }
+            | { type: "log", data: [LogLevel, ...string[]] },
+    ) {
+        if (event.type === "log") {
+            this.logger[event.data[0]](...event.data[1]);
+            return;
+        }
 
-        const resolveWebView: () => Electron.WebviewTag = () => {
-            const webView: Electron.WebviewTag | undefined = this.elementRef.nativeElement.querySelector("webview");
-            if (!webView) {
-                throw new Error(`"webview" element is supposed to be mounted to DOM at this stage`);
-            }
-            return webView;
-        };
+        if (event.type === "action") {
+            this.onDispatchInLoggerZone(event.payload);
+            return;
+        }
 
-        // tslint:disable-next-line:no-floating-promises
-        this.setupOnWebViewDomReadyDeferred().promise
-            .then(() => {
-                this.onWebViewLoadedOnce(resolveWebView());
-                // if ((BUILD_ENVIRONMENT === "development")) {
-                //     resolveWebView().openDevTools();
-                // }
-            });
-
-        this.subscription.add(
-            (() => {
-                const hideClass = "webview-hidden";
-                let view: ViewRef | undefined;
-
-                return this.webViewState$.subscribe((value) => {
-                    if (value.action === "attrs") {
-                        if (!view) {
-                            view = this.webViewTemplate.createEmbeddedView(null);
-                            this.webViewContainerRef.insert(view);
-                            this.registerWebViewEvents(resolveWebView());
-                        }
-
-                        const webView = resolveWebView();
-
-                        if (!webView.src) {
-                            // WARN: partition setting needs to occur before first navigation (before "src" setting)
-                            webView.partition = getWebViewPartition(this.account.accountConfig.login);
-                            webView.preload = value.preload;
-                            webView.src = value.src;
-
-                            this.logger.verbose(
-                                `webview.attrs (initialize):`,
-                                JSON.stringify(pick(["src", "preload", "partition"], webView)),
-                            );
-                        } else {
-                            webView.src = value.src;
-                            this.logger.verbose(`webview.attrs (update):`, webView.src);
-                        }
-
-                        return;
-                    }
-
-                    // TODO webview gets reloaded on re-inserting to DOM, so we show/hide parent element for now
-
-                    if (value.visible) {
-                        // this.view.insert(view);
-                        this.elementRef.nativeElement.classList.remove(hideClass);
-                        return;
-                    }
-
-                    // view = this.webViewContainerRef.detach();
-                    this.elementRef.nativeElement.classList.add(hideClass);
-                });
-            })(),
-        );
-
-        this.subscription.add(
-            combineLatest([
-                this.store.pipe(
-                    select(OptionsSelectors.FEATURED.electronLocations),
-                    mergeMap((electronLocations) => electronLocations ? [electronLocations] : []),
-                ),
-                this.account$.pipe(
-                    distinctUntilChanged((prev, curr) => prev.accountConfig.entryUrl === curr.accountConfig.entryUrl),
-                ),
-            ]).subscribe(([electronLocations, {accountConfig}]) => {
-                const {type} = accountConfig;
-                const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, electronLocations);
-
-                this.webViewState$.next({
-                    action: "attrs",
-                    src: parsedEntryUrl.entryUrl,
-                    preload: electronLocations.preload.webView[type],
-                });
-            }),
-        );
+        const {domReadyOnce, domReady$} = this.webViewsState[event.viewType];
+        domReadyOnce.resolve(event.webView);
+        domReady$.next(event.webView);
     }
 
-    ngOnDestroy() {
-        this.logger.info(`ngOnDestroy()`);
-        this.subscription.unsubscribe();
-        this.resolveOnWebViewDomReadyDeferreds();
-    }
+    onPrimaryViewLoadedOnce(primaryWebView: Electron.WebviewTag) {
+        this.logger.info(`onPrimaryViewLoadedOnce()`);
 
-    private onWebViewLoadedOnce(webView: Electron.WebviewTag) {
-        this.logger.info(`onWebViewLoadedOnce()`);
+        const primaryWebViewClient = (() => {
+            let client: Unpacked<ReturnType<typeof ElectronService.prototype.webViewClient>> | undefined;
+            const result = async () => client || (client = await this.api.webViewClient(primaryWebView).toPromise());
+            return result;
+        })();
 
-        this.subscription.add(
-            ((state: { dbViewComponentRef?: Unpacked<ReturnType<typeof DbViewModuleResolve.prototype.buildComponentRef>> } = {}) => {
-                return this.account$
-                    .pipe(
-                        map((account) => ({
-                            type: account.accountConfig.type,
-                            login: account.accountConfig.login,
-                            databaseView: account.databaseView,
-                        })),
-                        distinctUntilChanged(({databaseView: prev}, {databaseView: curr}) => prev === curr),
-                        withLatestFrom(this.store.pipe(select(AccountsSelectors.FEATURED.selectedLogin))),
-                    )
-                    .subscribe(async ([{type, login, databaseView}, selectedLogin]) => {
-                        if (state.dbViewComponentRef) {
-                            state.dbViewComponentRef.instance.setVisibility(Boolean(databaseView));
-                        } else if (databaseView) {
-                            state.dbViewComponentRef = await this.dbViewModuleResolve.buildComponentRef({type, login});
-                            this.dbViewContainerRef.insert(state.dbViewComponentRef.hostView);
-                            state.dbViewComponentRef.changeDetectorRef.detectChanges();
-                        }
+        let calendarWebView: Electron.WebviewTag | undefined;
 
-                        this.webViewState$.next({action: "visibility", visible: !databaseView});
-
-                        if (!databaseView) {
-                            setTimeout(() => this.focusWebView(webView));
-                        }
-
-                        if (this.account.accountConfig.login === selectedLogin) {
-                            await this.sendSelectAccountNotification(webView);
-                        }
-                    });
-            })(),
-        );
-
+        // TODO make hidden "calendar" view auto-load optional (only of specific option is checked on the account settings form)
         this.subscription.add(
             this.account$.pipe(
-                pairwise(),
-                filter(([prev, curr]) => {
-                    return (
-                        // page changed: "entryUrl" is changeable, ie need to react on "url" change too (deep comparison with "equals")
-                        curr.notifications.pageType.type !== "unknown" && !equals(prev.notifications.pageType, curr.notifications.pageType)
-                    ) || (
-                        // creds changed
-                        !equals(pickCredentialFields(prev.accountConfig), pickCredentialFields(curr.accountConfig))
-                    ) || (
-                        // login delay values changed
-                        !equals(pickLoginDelayFields(prev.accountConfig), pickLoginDelayFields(curr.accountConfig))
-                    );
+                filter(({accountConfig: {localCalendarStore}}) => Boolean(localCalendarStore)),
+                distinctUntilChanged(({notifications: {loggedIn: prev}}, {notifications: {loggedIn: curr}}) => curr === prev),
+                switchMap(async ({accountConfig}) => {
+                    // TODO request "resolveSharedSession" from calendar page too
+                    //      and then skip page refresh if sessions on primary and calendar page are the equal
+                    const sharedSession = await (await primaryWebViewClient())("resolveSharedSession")({zoneName: this.loggerZone.name});
+
+                    if (!sharedSession) {
+                        return throwError(new Error(`Failed to resolve shared session object`));
+                    }
+
+                    const project = "proton-calendar";
+                    const projectEntryUrl = this.core.parseEntryUrl(accountConfig, project).entryUrl;
+                    const loaderId = new UUID(4).format();
+                    const loaderIdParam = "loader-id";
+                    const loaderIdTimeoutMs = ONE_SECOND_MS * 2;
+                    const loaderSrc = `${new URL(projectEntryUrl).origin}/blank.html?${loaderIdParam}=${loaderId}`;
+
+                    setTimeout(() => this.webViewsState.calendar.src$.next(loaderSrc));
+
+                    try {
+                        calendarWebView = await this.webViewsState.calendar.domReady$.pipe(
+                            filter(({src}) => !!src && new URL(src).searchParams.get(loaderIdParam) === loaderId),
+                            takeUntil(timer(loaderIdTimeoutMs)),
+                            first(), // "first() throws error if stream closed without any event passed through"
+                        ).toPromise();
+                    } catch {
+                        return throwError(new Error(`Failed to load "${loaderSrc}" page in ${loaderIdTimeoutMs}ms`));
+                    }
+
+                    const loaderCodeToExecute = `
+                        window.name = ${JSON.stringify(sharedSession.windowName)};
+                        for (const [key, value] of Object.entries(JSON.parse(${JSON.stringify(sharedSession.sessionStorage)}))) {
+                            window.sessionStorage.setItem(key, value);
+                        }
+                        // window.location.assign(${JSON.stringify(projectEntryUrl)});
+                        window.location.assign("./${PROVIDER_REPOS[project].baseDir}")
+                    `;
+
+                    try {
+                        await calendarWebView.executeJavaScript(loaderCodeToExecute);
+                    } catch (error) {
+                        const baseMessage = `Failed to set shared session object on "${loaderSrc}" page ("executeJavaScript")`;
+                        if (BUILD_ENVIRONMENT === "development") {
+                            console.log(baseMessage, error); // tslint:disable-line:no-console
+                        }
+                        // not showing/logging the original error it might contain sensitive stuff
+                        return throwError(new Error(baseMessage));
+                    }
+
+                    return EMPTY;
                 }),
-                map(([, curr]) => curr),
-            ).subscribe((account) => {
-                this.logger.info(`onWebViewMounted(): dispatch "TryToLogin"`);
-                this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.TryToLogin({account, webView}));
-            }),
+            ).subscribe(
+                () => { /* NOOP */ },
+                (error) => this.onDispatchInLoggerZone(NOTIFICATION_ACTIONS.Error(error)),
+            ),
+        );
+
+        this.subscription.add(
+            this.account$
+                .pipe(
+                    map((account) => ({
+                        type: account.accountConfig.type,
+                        login: account.accountConfig.login,
+                        databaseView: account.databaseView,
+                    })),
+                    distinctUntilChanged(({databaseView: prev}, {databaseView: curr}) => prev === curr),
+                    withLatestFrom(this.store.pipe(select(AccountsSelectors.FEATURED.selectedLogin))),
+                )
+                .subscribe(async ([{type, login, databaseView}, selectedLogin]) => {
+                    this.viewModeClass = databaseView
+                        ? "vm-database"
+                        : "vm-live";
+
+                    if (!databaseView) {
+                        this.focusPrimaryWebView();
+                    } else if (!this.tplDbViewComponentRef) {
+                        // lazy-load the local database view component ("local store" feature)
+                        this.tplDbViewComponentRef = await this.dbViewModuleResolve.buildComponentRef({type, login});
+                        this.tplDbViewComponentContainerRef.insert(this.tplDbViewComponentRef.hostView);
+                        this.tplDbViewComponentRef.changeDetectorRef.detectChanges();
+                    }
+
+                    // tslint:disable-next-line:early-exit
+                    if (this.account.accountConfig.login === selectedLogin) {
+                        await this.api.ipcMainClient()("selectAccount")({
+                            databaseView,
+                            // WARN electron: "webView.getWebContentsId()" is available only after "webView.dom-ready" triggered
+                            webContentId: primaryWebView.getWebContentsId(),
+                        });
+                    }
+                }),
         );
 
         this.subscription.add(
@@ -285,140 +299,58 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     startWith(IPC_MAIN_API_NOTIFICATION_ACTIONS.ActivateBrowserWindow()),
                     filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.ActivateBrowserWindow),
                 ),
+                this.account$,
             ]).pipe(
-                filter(([selectedLogin]) => this.account.accountConfig.login === selectedLogin),
+                filter(([selectedLogin, , account]) => account.accountConfig.login === selectedLogin),
                 debounceTime(ONE_SECOND_MS * 0.3),
-            ).subscribe(async () => {
-                this.focusWebView(webView);
-                await this.sendSelectAccountNotification(webView);
-            }),
-        );
-
-        this.subscription.add(
-            this.account$.pipe(
-                map((account) => account.fetchSingleMailParams),
-                distinctUntilChanged(),
-                withLatestFrom(this.account$),
-            ).subscribe(([value, account]) => {
-                if (value) {
-                    this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.FetchSingleMail({account, webView, mailPk: value.mailPk}));
-                }
-            }),
-        );
-
-        this.subscription.add(
-            this.account$.pipe(
-                map((account) => account.makeReadMailParams),
-                distinctUntilChanged(),
-                withLatestFrom(this.account$),
-            ).subscribe(([value, account]) => {
-                if (!value) {
-                    return;
-                }
-                const {messageIds, mailsBundleKey} = value;
-                this.dispatchInLoggerZone(
-                    ACCOUNTS_ACTIONS.MakeMailRead({account, webView, messageIds, mailsBundleKey}),
-                );
+            ).subscribe(async ([, , account]) => {
+                this.focusPrimaryWebView();
+                await this.api.ipcMainClient()("selectAccount")({
+                    databaseView: account.databaseView,
+                    // WARN electron: "webView.getWebContentsId()" is available only after "webView.dom-ready" triggered
+                    webContentId: primaryWebView.getWebContentsId(),
+                });
             }),
         );
     }
 
-    private registerWebViewEvents(webView: Electron.WebviewTag) {
-        this.logger.info(`registerWebViewEvents()`);
-
-        const arrayOfDomReadyEvenNameAndHandler: ["dom-ready", (event: Electron.Event) => void] = [
-            "dom-ready",
-            () => {
-                this.logger.verbose(`webview.domReadyEventHandler(): "${webView.src}"`);
-
-                this.resolveOnWebViewDomReadyDeferreds();
-                this.domReadySubscription.unsubscribe();
-                this.domReadySubscription = new Subscription();
-
-                this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.SetupNotificationChannel({
-                    account: this.account, webView, finishPromise: this.setupOnWebViewDomReadyDeferred().promise,
-                }));
-
-                this.domReadySubscription.add(
-                    ((state: { stopSyncingDeferred?: Deferred<void> } = {}) => {
-                        return this.account$
-                            .pipe(
-                                map(({notifications, accountConfig}) => ({
-                                    pk: {type: accountConfig.type, login: accountConfig.login},
-                                    data: {loggedIn: notifications.loggedIn, database: accountConfig.database},
-                                })),
-                                distinctUntilChanged((prev, curr) => equals(prev.data, curr.data)),
-                            )
-                            .subscribe(async ({pk, data}) => {
-                                const disabled = !data.loggedIn || !data.database;
-
-                                if (state.stopSyncingDeferred) {
-                                    state.stopSyncingDeferred.resolve();
-                                }
-
-                                if (disabled) {
-                                    return;
-                                }
-
-                                state.stopSyncingDeferred = this.setupOnWebViewDomReadyDeferred();
-
-                                this.dispatchInLoggerZone(ACCOUNTS_ACTIONS.ToggleSyncing({
-                                    pk, webView, finishPromise: state.stopSyncingDeferred.promise,
-                                }));
-                            });
-                    })(),
-                );
-            },
-        ];
-        const subscribeDomReadyHandler = () => {
-            this.logger.info(`webview.subscribeDomReadyHandler()`);
-            webView.addEventListener(...arrayOfDomReadyEvenNameAndHandler);
-        };
-        const unsubscribeDomReadyHandler = () => {
-            this.logger.info(`webview.unsubscribeDomReadyHandler()`);
-            webView.removeEventListener(...arrayOfDomReadyEvenNameAndHandler);
-        };
-
-        subscribeDomReadyHandler();
-        this.subscription.add({unsubscribe: unsubscribeDomReadyHandler});
-
-        webView.addEventListener("new-window", ({url}: any) => {
-            this.dispatchInLoggerZone(NAVIGATION_ACTIONS.OpenExternal({url}));
-        });
-    }
-
-    private setupOnWebViewDomReadyDeferred() {
-        this.logger.info(`setupOnWebViewDomReadyDeferred()`);
-        const deferred = new Deferred<void>();
-        this.onWebViewDomReadyDeferreds.push(deferred);
-        return deferred;
-    }
-
-    private resolveOnWebViewDomReadyDeferreds() {
-        this.logger.info(`resolveOnWebViewDomReadyDeferredes()`);
-        this.onWebViewDomReadyDeferreds.forEach((deferred) => deferred.resolve());
-        // TODO remove executed items form the array
-    }
-
-    private dispatchInLoggerZone<A extends Action = Action>(action: A) {
+    onDispatchInLoggerZone(action: AppAction) {
         this.loggerZone.run(() => {
             this.store.dispatch(action);
         });
     }
 
-    private focusWebView(webView: Electron.WebviewTag) {
-        const activeElement = document.activeElement as any;
-
-        if (activeElement && typeof activeElement.blur === "function") {
-            activeElement.blur();
+    ngOnDestroy() {
+        super.ngOnDestroy();
+        this.logger.info(`ngOnDestroy()`);
+        this.subscription.unsubscribe();
+        if (this.tplDbViewComponentRef) {
+            // TODO angular: there is probably no need to trigger this "destroy" explicitly
+            //      debug the db-view component to verify that
+            this.tplDbViewComponentRef.destroy();
         }
-
-        webView.blur();
-        webView.focus();
     }
 
-    private async sendSelectAccountNotification(webView: Electron.WebviewTag) {
-        const webViewClient = await this.api.webViewClient(webView, this.account.accountConfig.type).toPromise();
-        await webViewClient("selectAccount")({zoneName: this.loggerZone.name, databaseView: this.account.databaseView});
+    private focusPrimaryWebView() {
+        setTimeout(() => {
+            const activeElement = document.activeElement as (null | { blur?: () => void });
+
+            if (activeElement && typeof activeElement.blur === "function") {
+                activeElement.blur();
+            }
+
+            race([
+                from(this.webViewsState.primary.domReadyOnce.promise).pipe(
+                    filter((webView) => Boolean(webView.offsetParent)), // picking only visible element
+                ),
+                timer(300 /* 300ms */).pipe(map(() => null)),
+            ]).pipe(take(1)).subscribe((value) => {
+                if (!value) {
+                    return;
+                }
+                value.blur();
+                value.focus();
+            });
+        });
     }
 }

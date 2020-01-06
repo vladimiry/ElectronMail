@@ -66,7 +66,7 @@ export class Database {
             mails: Object.create(null),
             folders: Object.create(null),
             contacts: Object.create(null),
-            metadata: Database.buildEmptyAccountMetadata(type) as any,
+            metadata: Database.buildEmptyAccountMetadata(type),
             deletedPks: {
                 conversationEntries: [],
                 mails: [],

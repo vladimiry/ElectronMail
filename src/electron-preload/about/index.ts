@@ -1,6 +1,6 @@
-import {attachHoveredHrefHighlightElement} from "src/electron-preload/hovered-href-highlighter";
-import {buildLoggerBundle} from "src/electron-preload/util";
-import {registerDocumentClickEventListener, registerDocumentKeyDownEventListener} from "src/electron-preload/events-handling";
+import {attachHoveredHrefHighlightElement} from "src/electron-preload/lib/hovered-href-highlighter";
+import {buildLoggerBundle} from "src/electron-preload/lib/util";
+import {registerDocumentClickEventListener, registerDocumentKeyDownEventListener} from "src/electron-preload/lib/events-handling";
 
 export const LOGGER = buildLoggerBundle("[preload: about]");
 

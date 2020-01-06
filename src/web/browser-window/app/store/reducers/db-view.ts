@@ -1,5 +1,5 @@
 import {UnionOf} from "@vladimiry/unionize";
-import {pick} from "ramda";
+import {pick} from "remeda";
 
 import * as fromRoot from "src/web/browser-window/app/store/reducers/root";
 import {DB_VIEW_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
@@ -119,7 +119,7 @@ function innerReducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACTIO
             const instance: Instance = {
                 ...(state.instances[instanceKey] || initInstance()),
                 selectedFolderData: selectedFolderData
-                    ? pick(["pk", "mailFolderId"], selectedFolderData)
+                    ? pick(selectedFolderData, ["pk", "mailFolderId"])
                     : selectedFolderData,
             };
             const selectedFolder = [...instance.folders.system, ...instance.folders.custom]

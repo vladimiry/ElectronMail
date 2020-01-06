@@ -1,4 +1,4 @@
-import {Directive, Input} from "@angular/core";
+import {Directive, Input, ɵmarkDirty as markDirty} from "@angular/core";
 import {EMPTY, Observable, combineLatest, fromEvent, merge, of} from "rxjs";
 import {Store, select} from "@ngrx/store";
 import {distinctUntilChanged, map, mergeMap, startWith} from "rxjs/operators";
@@ -55,5 +55,11 @@ export abstract class DbViewAbstractComponent extends NgChangesObservableCompone
         protected store: Store<State>,
     ) {
         super();
+    }
+
+    protected markDirty() {
+        // markDirty does the same job as ViewRef/ChangeDetectorRef.markForCheck
+        // only in addition it schedules change detection using requestAnimationFrame
+        markDirty(this);
     }
 }

@@ -4,6 +4,8 @@ import {NO_ERRORS_SCHEMA, NgModule} from "@angular/core";
 
 import {AccountComponent} from "src/web/browser-window/app/_accounts/account.component";
 import {AccountTitleComponent} from "src/web/browser-window/app/_accounts/account-title.component";
+import {AccountViewCalendarComponent} from "src/web/browser-window/app/_accounts/account-view-calendar.component";
+import {AccountViewPrimaryComponent} from "src/web/browser-window/app/_accounts/account-view-primary.component";
 import {AccountsComponent} from "src/web/browser-window/app/_accounts/accounts.component";
 import {AccountsEffects} from "src/web/browser-window/app/_accounts/accounts.effects";
 import {AccountsGuard} from "src/web/browser-window/app/_accounts/accounts.guard";
@@ -21,6 +23,8 @@ import {SharedModule} from "src/web/browser-window/app/_shared/shared.module";
     declarations: [
         AccountsComponent,
         AccountComponent,
+        AccountViewPrimaryComponent,
+        AccountViewCalendarComponent,
         AccountTitleComponent,
     ],
     providers: [

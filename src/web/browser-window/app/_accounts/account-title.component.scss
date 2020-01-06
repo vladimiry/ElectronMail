@@ -1,7 +1,7 @@
 @import "~src/web/variables";
 
-@mixin account-title-button($color) {
-    @include button-variant($color, $color);
+@mixin account-title-button($color, $border: $color) {
+    @include button-variant($color, $border);
 
     &:focus {
         outline: none;
@@ -10,10 +10,6 @@
 }
 
 :host {
-    $btn-default-color: theme-color("light");
-    $btn-selected-color: $app-color-warning-light-text;
-    $btn-selected-bg-color: theme-color("warning-light");
-
     display: flex;
     padding: 0;
 
@@ -21,24 +17,25 @@
         display: flex;
         flex-grow: 1;
 
-        &:not(.selected) {
+        &.selected {
             .btn {
-                @include account-title-button($btn-default-color);
+                @include account-title-button(
+                    map_get($app-account-title-btn-colors, "selected-bg"),
+                    map_get($app-account-title-btn-colors, "selected-border"),
+                );
             }
 
-            .b-toggle-view {
-                border-left: 1px solid darken($btn-default-color, 10%);
+            .btn,
+            .login-delay {
+                color: map_get($app-account-title-btn-colors, "selected-text");
             }
         }
 
-        &.selected {
-            .btn {
-                @include account-title-button($btn-selected-bg-color);
-                color: $btn-selected-color;
-            }
-
-            .b-toggle-view {
-                border-left: 1px solid lighten(#cdb671, 16%);
+        &:not(.selected) {
+            &.stored {
+                .b-handle {
+                    border-right-color: $app-color-secondary-btn-split-border;
+                }
             }
         }
 
@@ -47,7 +44,7 @@
         }
     }
 
-    .b-primary {
+    .b-handle {
         display: flex;
         flex-grow: 1;
         text-decoration: none;
@@ -58,13 +55,14 @@
         @include app-dropdown-toggle-split;
         margin-left: 0;
         flex-grow: 0;
+        border-left-width: 0;
 
         .fa {
             font-size: 78%;
-            width: 0.78em; // prevent button size change on icon toggling
+            width: 0.78em; // prevents button size change on icon toggling
 
             &.syncing {
-                color: theme-color("primary");
+                color: lighten(theme-color("primary"), 10%);
                 animation: app-keyframes-opacity 1s linear infinite;
             }
         }
@@ -75,7 +73,7 @@
     }
 
     .login-delay {
-        color: $text-muted;
+        color: $gray-300;
         font-size: 85%;
 
         .fa ~ span {

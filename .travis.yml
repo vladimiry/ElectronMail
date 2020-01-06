@@ -5,7 +5,7 @@ branches:
   only:
     - master
 language: node_js
-node_js: 12.4.0
+node_js: 12.14.0
 cache:
   yarn: false
   npm: false
@@ -14,57 +14,40 @@ cache:
 env:
   global:
     - MOZ_HEADLESS=1 # needed for karma tests running in headless mode
-jobs:
-  include:
-    - stage: 'Build app'
-      os: osx
-      osx_image: xcode9.4
-      addons:
-        firefox: latest
-      script: ./scripts/ci/travis/build-osx.sh
-    - stage: 'Build app'
-      os: linux
-      # TODO use "xenial" dist, running auto login e2e test using "node-keytar" is a blocker at the moment
-      # https://travis-ci.community/search?q=No%20output%20has%20been%20received%20in%20the%20last%20windows%20category%3A16
-      dist: trusty
-      group: stable
-      sudo: required
-      services:
-        - docker
-      addons:
-        apt:
-          sources:
-            # upgrade GCC to a more recent version, see https://docs.travis-ci.com/user/languages/cpp/#gcc-on-linux
-            - ubuntu-toolchain-r-test
-          packages:
-            # for native modules compiling/rebuilding
-            - g++-7
-            # for rebuilding "desktop-idle" native module
-            - libxss-dev
-            # for rebuilding "node-keytar" native module
-            - gnome-keyring
-            - libgnome-keyring-dev
-            - libsecret-1-dev
-            # for initializing keychain for running e2e tests that use "node-keytar"
-            - python-gnomekeyring
-            # for building snap ("unsquashfs" binary)
-            - squashfs-tools
-        firefox: latest
-      before_script:
-        - | # needed for native modules compiling/rebuilding
-          export CC=gcc-7 CXX=g++-7;
-        - | # init xvfb
-          export DISPLAY=:99.0;
-          sh -e /etc/init.d/xvfb start;
-          sleep 3;
-        - | # init dbus
-          NO_AT_BRIDGE=1;
-          eval $(dbus-launch --sh-syntax);
-        - | # init keychain
-          eval $(echo -n "" | /usr/bin/gnome-keyring-daemon --login);
-          eval $(/usr/bin/gnome-keyring-daemon --components=secrets --start);
-          /usr/bin/python -c "import gnomekeyring;gnomekeyring.create_sync('login', '');";
-      script: ./scripts/ci/travis/build-linux.sh
+
+embedding-linux-common: &embedding-linux-common-anchor
+  os: linux
+  # TODO use "xenial" dist, running auto login e2e test using "node-keytar" is a blocker at the moment
+  # https://travis-ci.community/search?q=No%20output%20has%20been%20received%20in%20the%20last%20windows%20category%3A16
+  dist: trusty
+  group: stable
+  sudo: required
+  services:
+    - docker
+  addons:
+    apt:
+      sources:
+        # upgrade GCC to a more recent version, see https://docs.travis-ci.com/user/languages/cpp/#gcc-on-linux
+        - ubuntu-toolchain-r-test
+      packages:
+        # for native modules compiling/rebuilding
+        - g++-7
+        # for rebuilding "desktop-idle" native module
+        - libxss-dev
+        # for rebuilding "node-keytar" native module
+        - gnome-keyring
+        - libgnome-keyring-dev
+        - libsecret-1-dev
+        # for initializing keychain for running e2e tests that use "node-keytar"
+        - python-gnomekeyring
+        # for building snap ("unsquashfs" binary)
+        - squashfs-tools
+    firefox: latest
+
+embedding-macos-common: &embedding-embedding-macos-common
+  os: osx
+  osx_image: xcode9.4
+
 before_install:
   - | # installing the most recent yarn version
     curl -o- -L https://yarnpkg.com/install.sh | bash;
@@ -82,3 +65,69 @@ notifications:
   email:
     on_success: never
     on_failure: change
+
+jobs:
+  include:
+    # web clients building process split in part-1/part-2 steps
+    # to workaround the issue of travis dropping long-running jobs on free plan
+    # "workspaces" features is used to ensure that "web clients-artifact" is actually shared between jobs ("cache" doesn't always help)
+    - stage: 'Build web clients (part-1)'
+      <<: *embedding-linux-common-anchor
+      workspaces:
+        create:
+          name: 'webclients-artifact-linux'
+          paths:
+            - output/git
+      env:
+        - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="WebClient;proton-mail-settings"
+      script: ./scripts/ci/prepare-webclients.sh
+    - stage: 'Build web clients (part-2)'
+      <<: *embedding-linux-common-anchor
+      workspaces:
+        use: 'webclients-artifact-linux'
+      env:
+        - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="proton-contacts;proton-calendar"
+      script: ./scripts/ci/prepare-webclients.sh
+    - stage: 'Build web clients (part-1)'
+      <<: *embedding-embedding-macos-common
+      workspaces:
+        create:
+          name: 'webclients-artifact-macos'
+          paths:
+            - output/git
+      env:
+        - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="WebClient;proton-mail-settings"
+      script: ./scripts/ci/prepare-webclients.sh
+    - stage: 'Build web clients (part-2)'
+      <<: *embedding-embedding-macos-common
+      workspaces:
+        use: 'webclients-artifact-macos'
+      env:
+        - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="proton-contacts;proton-calendar"
+      script: ./scripts/ci/prepare-webclients.sh
+    - stage: 'Build app'
+      <<: *embedding-linux-common-anchor
+      workspaces:
+        use: 'webclients-artifact-linux'
+      before_script:
+        - | # needed for native modules compiling/rebuilding
+          export CC=gcc-7 CXX=g++-7;
+        - | # init xvfb
+          export DISPLAY=:99.0;
+          sh -e /etc/init.d/xvfb start;
+          sleep 3;
+        - | # init dbus
+          NO_AT_BRIDGE=1;
+          eval $(dbus-launch --sh-syntax);
+        - | # init keychain
+          eval $(echo -n "" | /usr/bin/gnome-keyring-daemon --login);
+          eval $(/usr/bin/gnome-keyring-daemon --components=secrets --start);
+          /usr/bin/python -c "import gnomekeyring;gnomekeyring.create_sync('login', '');";
+      script: ./scripts/ci/travis/build-linux.sh
+    - stage: 'Build app'
+      <<: *embedding-embedding-macos-common
+      workspaces:
+        use: 'webclients-artifact-macos'
+      addons:
+        firefox: latest
+      script: ./scripts/ci/travis/build-osx.sh

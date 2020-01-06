@@ -8,8 +8,12 @@ import {initMainBrowserWindow} from "src/electron-main/window/main";
 import {initSpellCheckController} from "src/electron-main/spell-check/controller";
 import {initTray} from "src/electron-main/tray";
 import {initWebContentsCreatingHandlers} from "src/electron-main/web-contents";
+import {registerWebFolderFileProtocol} from "src/electron-main/protocol";
+import {setUpPowerMonitorNotification} from "src/electron-main/power-monitor";
 
 export async function appReadyHandler(ctx: Context) {
+    await registerWebFolderFileProtocol(ctx, getDefaultSession());
+
     await initSession(ctx, getDefaultSession());
 
     const endpoints = await initApi(ctx);
@@ -31,6 +35,8 @@ export async function appReadyHandler(ctx: Context) {
         tray: await initTray(ctx),
         appMenu: await initApplicationMenu(ctx),
     };
+
+    setUpPowerMonitorNotification();
 
     await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0, trayIconColor: customTrayIconColor});
 

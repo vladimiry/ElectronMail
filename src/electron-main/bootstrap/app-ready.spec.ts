@@ -31,8 +31,13 @@ test.serial("appReadyHandler(): default", async (t) => {
 
     t.true(mocks["src/electron-main/session"].getDefaultSession.calledWithExactly());
 
+    t.true(mocks["src/electron-main/protocol"].registerWebFolderFileProtocol.calledWithExactly(ctx, defaultSession));
+    t.true(mocks["src/electron-main/protocol"].registerWebFolderFileProtocol.calledAfter(
+        mocks["src/electron-main/session"].getDefaultSession),
+    );
+
     t.true(mocks["src/electron-main/session"].initSession.calledWithExactly(ctx, defaultSession));
-    t.true(mocks["src/electron-main/session"].initSession.calledAfter(mocks["src/electron-main/session"].getDefaultSession));
+    t.true(mocks["src/electron-main/session"].initSession.calledAfter(mocks["src/electron-main/protocol"].registerWebFolderFileProtocol));
 
     t.true(mocks["src/electron-main/api"].initApi.calledWithExactly(ctx));
     t.true(mocks["src/electron-main/api"].initApi.calledAfter(mocks["src/electron-main/session"].initSession));
@@ -44,10 +49,14 @@ test.serial("appReadyHandler(): default", async (t) => {
     t.true(mocks["src/electron-main/spell-check/controller"].initSpellCheckController.calledAfter(endpoints.readConfig));
 
     t.true(mocks["src/electron-main/web-contents"].initWebContentsCreatingHandlers.calledWithExactly(ctx));
-    t.true(mocks["src/electron-main/web-contents"].initWebContentsCreatingHandlers.calledAfter(mocks["src/electron-main/spell-check/controller"].initSpellCheckController)); // tslint:disable-line:max-line-length
+    t.true(mocks["src/electron-main/web-contents"].initWebContentsCreatingHandlers.calledAfter(
+        mocks["src/electron-main/spell-check/controller"].initSpellCheckController),
+    );
 
     t.true(mocks["src/electron-main/window/main"].initMainBrowserWindow.calledWithExactly(ctx));
-    t.true(mocks["src/electron-main/window/main"].initMainBrowserWindow.calledAfter(mocks["src/electron-main/web-contents"].initWebContentsCreatingHandlers)); // tslint:disable-line:max-line-length
+    t.true(mocks["src/electron-main/window/main"].initMainBrowserWindow.calledAfter(
+        mocks["src/electron-main/web-contents"].initWebContentsCreatingHandlers),
+    );
 
     t.true(mocks["src/electron-main/tray"].initTray.calledWithExactly(ctx));
     t.true(mocks["src/electron-main/tray"].initTray.calledAfter(mocks["src/electron-main/window/main"].initMainBrowserWindow));
@@ -55,8 +64,13 @@ test.serial("appReadyHandler(): default", async (t) => {
     t.true(mocks["src/electron-main/menu"].initApplicationMenu.calledWithExactly(ctx));
     t.true(mocks["src/electron-main/menu"].initApplicationMenu.calledAfter(mocks["src/electron-main/tray"].initTray));
 
+    t.true(mocks["src/electron-main/power-monitor"].setUpPowerMonitorNotification.calledWithExactly());
+    t.true(mocks["src/electron-main/power-monitor"].setUpPowerMonitorNotification.calledAfter(
+        mocks["src/electron-main/menu"].initApplicationMenu),
+    );
+
     t.true(endpoints.updateOverlayIcon.calledWithExactly({hasLoggedOut: false, unread: 0, trayIconColor: ""}));
-    t.true(endpoints.updateOverlayIcon.calledAfter(mocks["src/electron-main/menu"].initApplicationMenu));
+    t.true(endpoints.updateOverlayIcon.calledAfter(mocks["src/electron-main/power-monitor"].setUpPowerMonitorNotification));
     t.is(endpoints.updateOverlayIcon.callCount, 1);
 
     t.true(mocks.electron.app.on.calledWith("second-instance"));
@@ -85,6 +99,9 @@ function buildMocks(configPatch?: Partial<Config>) {
             getDefaultSession: sinon.stub().returns({[`${PACKAGE_NAME}_session_id`]: 123}),
             initSession: sinon.spy(),
         },
+        "src/electron-main/protocol": {
+            registerWebFolderFileProtocol: sinon.spy(),
+        },
         "src/electron-main/api": {
             initApi: sinon.stub().returns({
                 readConfig: sinon.stub().returns(Promise.resolve(config)),
@@ -106,6 +123,9 @@ function buildMocks(configPatch?: Partial<Config>) {
         },
         "src/electron-main/web-contents": {
             initWebContentsCreatingHandlers: sinon.spy(),
+        },
+        "src/electron-main/power-monitor": {
+            setUpPowerMonitorNotification: sinon.spy(),
         },
     };
 }

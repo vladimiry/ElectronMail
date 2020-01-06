@@ -56,11 +56,35 @@ export const WEB_CHUNK_NAMES = {
     "search-in-page-browser-view": "search-in-page-browser-view",
 } as const;
 
-export const PROVIDER_REPO: Record<AccountType, { repo: string, version: string; commit: string; }> = {
-    protonmail: {
+export const PROVIDER_REPOS: Record<"WebClient" | "proton-mail-settings" | "proton-contacts" | "proton-calendar",
+    { repoRelativeDistDir: string; baseDir?: string; repo: string, version: string; commit: string; }> = {
+    "WebClient": {
+        repoRelativeDistDir: "./build",
+        baseDir: "",
         repo: "https://github.com/ProtonMail/WebClient.git",
-        commit: "c3eec1e0ee5a9313ceef8b950864fbe26bd69e1c",
-        version: "3.16.19",
+        commit: "45cd0e44230dfaf7ebc180149a17a438b979ca08",
+        version: "4.0.0-beta6",
+    },
+    "proton-mail-settings": {
+        repoRelativeDistDir: "./dist",
+        baseDir: "settings",
+        repo: "https://github.com/ProtonMail/proton-mail-settings.git",
+        commit: "e43c067895f8b13d962b6343b945b22e401de0c3",
+        version: "unknown",
+    },
+    "proton-contacts": {
+        repoRelativeDistDir: "./dist",
+        baseDir: "contacts",
+        repo: "https://github.com/ProtonMail/proton-contacts.git",
+        commit: "7f610897dc53f8be6d8fa995bbdef8f085262c7a",
+        version: "unknown",
+    },
+    "proton-calendar": {
+        repoRelativeDistDir: "./dist",
+        baseDir: "calendar",
+        repo: "https://github.com/ProtonMail/proton-calendar.git",
+        commit: "e08716488589407643d96fe784d7933b92e556a5",
+        version: "unknown",
     },
 };
 
@@ -77,22 +101,22 @@ export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlIte
         entryUrl: [
             {
                 value: PROTONMAIL_PRIMARY_ENTRY_POINT_VALUE,
-                title: `https://mail.protonmail.com (${getBuiltInWebClientTitle("protonmail")})`,
+                title: `https://mail.protonmail.com (${getBuiltInWebClientTitle()})`,
             },
             {
                 value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://app.protonmail.ch`,
-                title: `https://app.protonmail.ch (${getBuiltInWebClientTitle("protonmail")})`,
+                title: `https://app.protonmail.ch (${getBuiltInWebClientTitle()})`,
             },
             {
                 value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://protonirockerxow.onion`,
-                title: `https://protonirockerxow.onion (${getBuiltInWebClientTitle("protonmail")})`,
+                title: `https://protonirockerxow.onion (${getBuiltInWebClientTitle()})`,
             },
         ],
     },
 };
 
-function getBuiltInWebClientTitle(accountType: AccountType): string {
-    return `v${PROVIDER_REPO[accountType].version} / ${PROVIDER_REPO[accountType].commit.substr(0, 7)}`;
+function getBuiltInWebClientTitle(): string {
+    return `${PROVIDER_REPOS.WebClient.version} / ${PROVIDER_REPOS.WebClient.commit.substr(0, 7)}`;
 }
 
 export const LOG_LEVELS: Readonly<LogLevel[]> = Object.keys(

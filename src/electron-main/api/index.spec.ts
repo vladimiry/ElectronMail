@@ -278,11 +278,13 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
         t.pass(`TODO test "dbIndexerNotification" endpoint`);
     },
 
+    staticInit: async (t) => {
+        t.pass(`TODO test "staticInit" endpoint`);
+    },
+
     // TODO actualize "init" endpoint test
     init: async (t) => {
         const result = await t.context.endpoints.init();
-
-        t.deepEqual(result.electronLocations, t.context.ctx.locations);
         t.is(typeof result.hasSavedPassword, "boolean");
     },
 
@@ -497,6 +499,11 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
         await action();
         const config3 = await t.context.ctx.configStore.readExisting();
         t.is(config3.compactLayout, !config2.compactLayout);
+    },
+
+    // TODO test "generateTOTPToken" API
+    generateTOTPToken: (t) => {
+        t.pass();
     },
 
     // TODO test "updateOverlayIcon" API

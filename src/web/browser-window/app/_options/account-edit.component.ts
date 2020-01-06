@@ -6,7 +6,7 @@ import {Store, select} from "@ngrx/store";
 import {concatMap, distinctUntilChanged, map, mergeMap} from "rxjs/operators";
 
 import {ACCOUNTS_CONFIG, ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX} from "src/shared/constants";
-import {AccountConfig, AccountConfigProtonmail, AccountType} from "src/shared/model/account";
+import {AccountConfig, AccountConfigProton, AccountType} from "src/shared/model/account";
 import {AccountConfigCreatePatch, AccountConfigUpdatePatch} from "src/shared/model/container";
 import {EntryUrlItem} from "src/shared/model/common";
 import {OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
@@ -31,7 +31,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     controls: Record<keyof Pick<AccountConfig,
         | "type" | "login" | "title" | "database" | "entryUrl" | "loginDelayUntilSelected" | "loginDelaySecondsRange">
         | keyof Pick<Required<Required<AccountConfig>["proxy"]>, "proxyRules" | "proxyBypassRules">
-        | keyof AccountConfigProtonmail["credentials"],
+        | keyof AccountConfigProton["credentials"],
         AbstractControl> = {
         type: new FormControl(this.typeValues[0].value, Validators.required),
         login: new FormControl(null, Validators.required),
@@ -185,7 +185,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
 
         if (accountType === "protonmail") {
             // TODO ger rid of "TS as" casting
-            (patch as AccountConfigProtonmail).credentials.mailPassword = controls.mailPassword.value;
+            (patch as AccountConfigProton).credentials.mailPassword = controls.mailPassword.value;
         }
 
         this.store.dispatch(account

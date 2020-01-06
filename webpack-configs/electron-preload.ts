@@ -30,9 +30,15 @@ const configs = [
     ),
     buildRendererConfig(
         {
-            "electron-preload/webview/protonmail": srcRelativePath("./electron-preload/webview/protonmail/index.ts"),
+            "electron-preload/webview/primary": srcRelativePath("./electron-preload/webview/primary/index.ts"),
         },
-        srcRelativePath("./electron-preload/webview/protonmail/tsconfig.json"),
+        srcRelativePath("./electron-preload/webview/primary/tsconfig.json"),
+    ),
+    buildRendererConfig(
+        {
+            "electron-preload/webview/calendar": srcRelativePath("./electron-preload/webview/calendar/index.ts"),
+        },
+        srcRelativePath("./electron-preload/webview/calendar/tsconfig.json"),
     ),
 ];
 

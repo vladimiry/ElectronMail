@@ -2,3 +2,9 @@
 @import "~bootstrap/scss/bootstrap";
 @import "~font-awesome/css/font-awesome.css";
 @import "~@ng-select/ng-select/themes/default.theme.css";
+
+// bootstrap overriding
+.card-body {
+    padding-top: map-get($spacers, 3);
+    padding-bottom: map-get($spacers, 3);
+}

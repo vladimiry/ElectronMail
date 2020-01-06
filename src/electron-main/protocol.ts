@@ -2,8 +2,8 @@ import fs from "fs";
 import mimeTypes from "mime-types";
 import path from "path";
 import pathIsInside from "path-is-inside";
-import url from "url";
-import {RegisterFileProtocolRequest, Session, app, protocol} from "electron";
+import {Session, app, protocol} from "electron";
+import {URL} from "url";
 import {promisify} from "util";
 
 import {Context} from "src/electron-main/model";
@@ -11,8 +11,9 @@ import {Context} from "src/electron-main/model";
 const fsAsync = {
     stat: promisify(fs.stat),
     readFile: promisify(fs.readFile),
-};
+} as const;
 
+// TODO setup timeout on "ready" even firing
 const appReadyPromise = new Promise((resolve) => app.on("ready", resolve));
 
 export function registerStandardSchemes(ctx: Context) {
@@ -20,9 +21,44 @@ export function registerStandardSchemes(ctx: Context) {
     protocol.registerSchemesAsPrivileged(
         ctx.locations.protocolBundles.map(({scheme}) => ({
             scheme,
-            privileges: {standard: true, secure: true},
+            privileges: {
+                corsEnabled: true,
+                secure: true,
+                standard: true,
+                supportFetchAPI: true,
+            },
         })),
     );
+}
+
+// TODO electron: get rid of "baseURLForDataURL" workaround, see https://github.com/electron/electron/issues/20700
+export async function registerWebFolderFileProtocol(ctx: Context, session: Session): Promise<void> {
+    const webPath = path.join(ctx.locations.appDir, "./web");
+
+    return new Promise((resolve, reject) => {
+        session.protocol.registerFileProtocol(
+            "web",
+            (request, callback) => {
+                const url = new URL(request.url);
+                const resource = path.normalize(
+                    path.join(webPath, url.host, url.pathname),
+                );
+
+                if (!pathIsInside(resource, webPath)) {
+                    throw new Error(`Forbidden file system resource "${resource}"`);
+                }
+
+                callback({path: resource});
+            },
+            (error) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                resolve();
+            },
+        );
+    });
 }
 
 export async function registerSessionProtocols(ctx: Context, session: Session): Promise<void> {
@@ -55,8 +91,11 @@ export async function registerSessionProtocols(ctx: Context, session: Session): 
     }
 }
 
-async function resolveFileSystemResourceLocation(directory: string, request: RegisterFileProtocolRequest): Promise<string> {
-    const resource = path.join(directory, new url.URL(request.url).pathname);
+async function resolveFileSystemResourceLocation(
+    directory: string,
+    request: Arguments<Arguments<(typeof protocol)["registerBufferProtocol"]>[1]>[0],
+): Promise<string> {
+    const resource = path.join(directory, new URL(request.url).pathname);
 
     if (!pathIsInside(resource, directory)) {
         throw new Error(`Forbidden file system resource "${resource}"`);

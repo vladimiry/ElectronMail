@@ -18,58 +18,70 @@ import {Config} from "src/shared/model/options";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {asyncDelay} from "src/shared/util";
 
-test.serial("general actions: app start, master password setup, add accounts, logout, auto login", async (t) => {
-    // setup and login
-    await (async () => {
-        const workflow = await initApp(t, {initial: true});
+test.serial("general actions: app start, master password setup, add accounts", async (t) => {
+    const app = await initApp(t, {initial: true});
 
-        // screenshot with user agent clearly displayed
-        await saveScreenshot(t);
+    // screenshot with user agent clearly displayed
+    await saveScreenshot(t);
 
-        // setup and logout
-        await workflow.login({setup: true, savePassword: false});
-        await workflow.addAccount({
-            type: "protonmail",
-            entryUrlValue: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://app.protonmail.ch`,
-        });
-        await workflow.addAccount({
-            type: "protonmail",
-            entryUrlValue: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.protonmail.com`,
-        });
-        await workflow.addAccount({ // no online .onion domain loading, but offline works
-            type: "protonmail",
-            entryUrlValue: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://protonirockerxow.onion`,
-        });
-        await workflow.logout();
+    await app.login({setup: true, savePassword: false});
+    await app.addAccount({
+        type: "protonmail",
+        entryUrlValue: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://app.protonmail.ch`,
+    });
+    await app.addAccount({
+        type: "protonmail",
+        entryUrlValue: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.protonmail.com`,
+    });
+    await app.addAccount({ // no online .onion domain loading, but offline works
+        type: "protonmail",
+        entryUrlValue: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://protonirockerxow.onion`,
+    });
+    await app.logout();
 
-        // login with password saving
-        await workflow.login({setup: false, savePassword: true});
-        await workflow.afterLoginUrlTest("explicit-login-passwordSave");
-        await workflow.destroyApp();
-    })();
-
-    // auto login 1
-    await (async () => {
-        const workflow = await initApp(t, {initial: false});
-        await workflow.afterLoginUrlTest(("auto-login-1"));
-        await workflow.destroyApp();
-    })();
-
-    // auto login 2, making sure previous auto login step didn't remove saved password
-    await (async () => {
-        const workflow = await initApp(t, {initial: false});
-        await workflow.afterLoginUrlTest(("auto-login-2"));
-        await workflow.logout();
-        await workflow.destroyApp();
-    })();
+    await app.destroyApp();
 
     await afterEach(t);
 });
 
+if (
+    CI
+    &&
+    Boolean(0) // TODO proton-v4: enable "auto login" e2e test scenario
+) {
+    test.serial("auto login", async (t) => {
+        await (async () => {
+            const app = await initApp(t, {initial: true});
+            await app.login({setup: true, savePassword: true});
+            await app.afterLoginUrlTest("initial login");
+            await app.logout();
+            await app.destroyApp();
+        })();
+
+        // auto login 1
+        await (async () => {
+            const app = await initApp(t, {initial: false});
+            await app.afterLoginUrlTest(("auto login 1"));
+            await app.logout();
+            await app.destroyApp();
+        })();
+
+        // auto login 2, making sure previous auto login step didn't remove saved password
+        await (async () => {
+            const app = await initApp(t, {initial: false});
+            await app.afterLoginUrlTest(("auto login 2"));
+            await app.logout();
+            await app.destroyApp();
+        })();
+
+        await afterEach(t);
+    });
+}
+
 test.serial("auto logout", async (t) => {
-    const workflow = await initApp(t, {initial: true});
-    await workflow.login({setup: true, savePassword: false});
-    await workflow.logout();
+    const app = await initApp(t, {initial: true});
+    await app.login({setup: true, savePassword: false});
+    await app.logout();
 
     const configFile = path.join(t.context.userDataDirPath, "config.json");
     const configFileData: Config = JSON.parse(fs.readFileSync(configFile).toString());
@@ -79,10 +91,11 @@ test.serial("auto logout", async (t) => {
     configFileData.idleTimeLogOutSec = idleTimeLogOutSec;
     fs.writeFileSync(configFile, JSON.stringify(configFileData, null, 2));
 
-    await workflow.login({setup: false, savePassword: false});
+    await app.login({setup: false, savePassword: false});
     await asyncDelay(idleTimeLogOutSec * ONE_SECOND_MS * 1.5);
-    await workflow.loginPageUrlTest("auto-logout");
-    await workflow.destroyApp();
+    await app.loginPageUrlTest("auto-logout");
+
+    await app.destroyApp();
 
     await afterEach(t);
 });
@@ -95,6 +108,8 @@ async function afterEach(t: ExecutionContext<TestContext>) {
             );
             stream.on("data", (_, line = String(_)) => {
                 if (
+                    line.includes("keytar")
+                    ||
                     (
                         line.includes("[electron-rpc-api]")
                         &&

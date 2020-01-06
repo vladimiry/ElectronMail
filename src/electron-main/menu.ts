@@ -19,7 +19,7 @@ export async function initApplicationMenu(ctx: Context): Promise<Menu> {
     };
     const templateItems: MenuItemConstructorOptions[] = PLATFORM === "darwin"
         ? [{
-            label: app.getName(),
+            label: app.name,
             submenu: [
                 aboutItem,
                 {

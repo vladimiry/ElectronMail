@@ -143,13 +143,13 @@ interface GenericDb<T extends AccountType, MetadataPart> {
             Readonly<FsDbDataContainer & FsDbDataContainerDeletedField & { metadata: { type: T } & MetadataPart }>>>;
 }
 
-interface ProtonmailMetadataPart {
+interface ProtonMetadataPart {
     latestEventId: string; // Rest.Model.Event["EventID"]
 }
 
 export type FsDb =
     & Partial<StoreModel.StoreEntity>
-    & GenericDb<"protonmail", ProtonmailMetadataPart>;
+    & GenericDb<"protonmail", ProtonMetadataPart>;
 
 export type FsDbAccount<T extends keyof FsDb["accounts"] = keyof FsDb["accounts"]> = FsDb["accounts"][T][string];
 

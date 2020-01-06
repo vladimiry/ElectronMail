@@ -11,7 +11,6 @@ export const FEATURED = {
     config: createSelector(STATE, (state) => state.config),
     settings: createSelector(STATE, (state) => state.settings),
     progress: createSelector(STATE, (state) => state.progress),
-    electronLocations: createSelector(STATE, (state) => state.electronLocations),
     hasSavedPassword: createSelector(STATE, (state) => state.hasSavedPassword),
     keytarSupport: createSelector(STATE, (state) => state.keytarSupport),
     snapPasswordManagerServiceHint: createSelector(STATE, (state) => state.snapPasswordManagerServiceHint),
@@ -29,7 +28,6 @@ export const CONFIG = {
     hideControls: createSelector(FEATURED.config, (config) => config.hideControls),
     timeouts: createSelector(FEATURED.config, (config) => config.timeouts),
     localDbMailsListViewMode: createSelector(FEATURED.config, (config) => config.localDbMailsListViewMode),
-    reflectSelectedAccountTitle: createSelector(FEATURED.config, (config) => config.reflectSelectedAccountTitle),
 };
 
 export const SETTINGS = (() => {

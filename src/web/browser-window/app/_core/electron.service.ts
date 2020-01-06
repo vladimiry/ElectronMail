@@ -1,13 +1,11 @@
 import {Injectable, NgZone, OnDestroy} from "@angular/core";
+import {Observable, Subscription, defer, of, race, throwError, timer} from "rxjs";
 import {Store, select} from "@ngrx/store";
-import {Subscription, defer, of, race, throwError, timer} from "rxjs";
 import {concatMap, delay, filter, map, mergeMap, retryWhen, switchMap, take, withLatestFrom} from "rxjs/operators";
 import {createIpcMainApiService} from "electron-rpc-api";
 
-import {AccountType} from "src/shared/model/account";
 import {DEFAULT_API_CALL_TIMEOUT, ONE_SECOND_MS} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
-import {PROTONMAIL_IPC_WEBVIEW_API} from "src/shared/api/webview/protonmail";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
 
@@ -57,15 +55,14 @@ export class ElectronService implements OnDestroy {
         );
     }
 
-    webViewClient<T extends AccountType>(
+    webViewClient(
         webView: Electron.WebviewTag,
-        type: T,
         options?: LimitedCallOptions,
-    ) {
-        // TODO TS: improve WebView API client resolve and use type-safety
-        const buildIpcWebViewClient = __ELECTRON_EXPOSURE__.buildIpcWebViewClient[type];
-        const client: ReturnType<typeof PROTONMAIL_IPC_WEBVIEW_API.client> =
-            buildIpcWebViewClient(webView, {options: this.buildApiCallOptions(options)}) as any; // TODO TS: get rid of typecasting
+    ): Observable<ReturnType<typeof __ELECTRON_EXPOSURE__.buildIpcWebViewClient>> {
+        const client = __ELECTRON_EXPOSURE__.buildIpcWebViewClient(
+            webView,
+            {options: this.buildApiCallOptions(options)},
+        );
 
         // TODO consider removing "ping" API or pinging once per "webView", keeping state in WeakMap<WebView, ...>?
         const ping$ = this.onlinePingWithTimeouts$.pipe(
@@ -84,7 +81,7 @@ export class ElectronService implements OnDestroy {
                         concatMap(() => {
                             return throwError(
                                 new Error(
-                                    `Failed to wait for "webview:${type}" service provider initialization (timeout: ${timeoutMs}ms).`,
+                                    `Failed to wait for "webview" service provider initialization (timeout: ${timeoutMs}ms).`,
                                 ),
                             );
                         }),

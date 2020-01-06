@@ -8,7 +8,6 @@ import {EffectsModule} from "@ngrx/effects";
 import {ErrorHandler, Injector, NgModule} from "@angular/core";
 import {META_REDUCERS, StoreModule} from "@ngrx/store";
 import {PopoverModule} from "ngx-bootstrap/popover";
-import {StoreRouterConnectingModule} from "@ngrx/router-store";
 
 import * as AccountsReducer from "./store/reducers/accounts";
 import * as DbViewReducer from "./store/reducers/db-view";
@@ -52,7 +51,6 @@ import {createAppMetaReducer, createErrorHandlingMetaReducer, reducers} from "./
         StoreModule.forFeature(ErrorsReducer.featureName, ErrorsReducer.reducer),
         StoreModule.forFeature(NotificationReducer.featureName, NotificationReducer.reducer),
         StoreModule.forFeature(OptionsReducer.featureName, OptionsReducer.reducer),
-        StoreRouterConnectingModule.forRoot(),
         EffectsModule.forRoot([]),
     ],
     providers: [

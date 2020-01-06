@@ -51,7 +51,6 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         hideControls: new FormControl(),
         idleTimeLogOutSec: new FormControl(),
         logLevel: new FormControl(null, Validators.required),
-        reflectSelectedAccountTitle: new FormControl(),
         startMinimized: new FormControl(),
         unreadNotifications: new FormControl(),
     };

@@ -1,9 +1,18 @@
 import {ElectronLog} from "electron-log"; // tslint:disable-line:no-import-zones
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
+import {URL} from "@cliqz/url-parser";
+import {pick} from "remeda";
 
 import {AccountConfig, AccountType} from "./model/account";
 import {BaseConfig, Config} from "./model/options";
-import {DEFAULT_API_CALL_TIMEOUT, DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_MINUTE_MS, ONE_SECOND_MS} from "src/shared/constants";
+import {
+    DEFAULT_API_CALL_TIMEOUT,
+    DEFAULT_MESSAGES_STORE_PORTION_SIZE,
+    LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN,
+    ONE_MINUTE_MS,
+    ONE_SECOND_MS,
+    PROVIDER_REPOS,
+} from "src/shared/constants";
 import {DbPatch} from "./api/common";
 import {FsDbAccount, View} from "src/shared/model/database";
 import {LogLevel} from "src/shared/model/common";
@@ -63,7 +72,6 @@ export function initialConfig(): Config {
             hideControls: false,
             idleTimeLogOutSec: 0,
             logLevel: "error",
-            reflectSelectedAccountTitle: false,
             startMinimized: true,
             unreadNotifications: true,
         };
@@ -84,7 +92,6 @@ export function pickBaseConfigProperties(
         hideControls,
         idleTimeLogOutSec,
         logLevel,
-        reflectSelectedAccountTitle,
         startMinimized,
         unreadNotifications,
     }: Config,
@@ -102,7 +109,6 @@ export function pickBaseConfigProperties(
         hideControls,
         idleTimeLogOutSec,
         logLevel,
-        reflectSelectedAccountTitle,
         startMinimized,
         unreadNotifications,
     };
@@ -386,3 +392,46 @@ export const logLevelEnabled: (
 export function sanitizeFastGlobPattern(pattern: string): string {
     return pattern.replace(/\\/g, "/");
 }
+
+export const parsePackagedWebClientUrl: (
+    urlArg: string,
+) => (null | Readonly<Pick<URL, "protocol" | "hostname" | "pathname">>) = (() => {
+    const re = new RegExp(`^(${LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN}:)`);
+    const result: typeof parsePackagedWebClientUrl = (urlArg) => {
+        if (!re.exec(urlArg)) {
+            return null;
+        }
+
+        const url = new URL(urlArg);
+
+        // if (!re.exec(url.protocol)) {
+        //     return false;
+        // }
+
+        return pick(url, ["protocol", "hostname", "pathname"]);
+    };
+    return result;
+})();
+
+export const resolvePackagedWebClientApp: (
+    url: Exclude<ReturnType<typeof parsePackagedWebClientUrl>, null>,
+) => Readonly<{ project: keyof typeof PROVIDER_REPOS, projectSubPath?: string }> = (() => {
+    const subProjects = ["proton-mail-settings", "proton-contacts", "proton-calendar"] as const;
+    const result: typeof resolvePackagedWebClientApp = (url) => {
+        const pathname = `${url.pathname}/`;
+        const foundSubProject = subProjects.find((p) => {
+            return pathname.startsWith(`/${PROVIDER_REPOS[p].baseDir}/`);
+        });
+        const project = foundSubProject || "WebClient";
+        const [
+            /* "," does skip the first item since it's a "project" itself: */,
+            ...projectSubPathParts
+        ] = pathname.split("/").filter(Boolean);
+        const projectSubPath = projectSubPathParts.length
+            ? projectSubPathParts.join("/")
+            : undefined;
+
+        return {project, projectSubPath};
+    };
+    return result;
+})();

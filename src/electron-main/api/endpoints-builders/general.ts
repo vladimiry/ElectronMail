@@ -17,19 +17,19 @@ import {curryFunctionMembers} from "src/shared/util";
 import {showAboutBrowserWindow} from "src/electron-main/window/about";
 
 type Methods = keyof Pick<IpcMainApiEndpoints,
+    | "activateBrowserWindow"
     | "openAboutWindow"
     | "openExternal"
     | "openSettingsFolder"
     | "quit"
-    | "activateBrowserWindow"
+    | "selectAccount"
     | "toggleBrowserWindow"
-    | "updateCheck"
     | "toggleControls"
     | "toggleLocalDbMailsListViewMode"
+    | "updateCheck"
     | "notification">;
 
 type ContextAwareMethods = keyof Pick<IpcMainApiEndpoints,
-    | "selectAccount"
     | "hotkey">;
 
 const logger = curryFunctionMembers(electronLog, "[src/electron-main/api/endpoints-builders/general]");
@@ -100,21 +100,13 @@ export async function buildEndpoints(
             }
         },
 
-        async selectAccount({databaseView, reset}) {
-            const methodContext = this;
-
-            if (!methodContext) {
-                throw new Error(`Failed to resolve "selectAccount" method execution context`);
-            }
-
-            const [{sender: webContents}] = methodContext.args;
-
+        async selectAccount(args) {
             const prevSelectedAccount = ctx.selectedAccount;
-            const newSelectedAccount = reset
+            const newSelectedAccount = "reset" in args
                 ? undefined
                 : {
-                    webContentId: webContents.id,
-                    databaseView,
+                    webContentId: args.webContentId,
+                    databaseView: args.databaseView,
                 };
             const needToCloseFindInPageWindow = (
                 // reset - no accounts in the list

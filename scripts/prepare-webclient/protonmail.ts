@@ -42,8 +42,13 @@ const folderAsDomainEntries: Array<FolderAsDomainEntry<{
         folderAsDomainEntries,
         flows: {
             build: async ({repoDir: cwd, folderAsDomainEntry}) => {
-                const {configApiParam} = await configure({cwd, envFileName: "./env/env.json"}, folderAsDomainEntry);
+                const {configApiParam} = await configure(
+                    // TODO proton-v4: drop "envFileName" parameter when proton moves "WebClient" to "proton-pack" building
+                    {cwd, envFileName: "./env/env.json", repoType: "WebClient"},
+                    folderAsDomainEntry,
+                );
 
+                // TODO proton-v4: drop "npm run config" call when proton moves "WebClient" to "proton-pack" building
                 await execShell(["npm", ["run", "config", "--", "--api", configApiParam], {cwd}]);
 
                 await (async () => {
@@ -165,7 +170,7 @@ const folderAsDomainEntries: Array<FolderAsDomainEntry<{
                     }
                     : undefined,
                 build: async ({repoDir: cwd, folderAsDomainEntry}) => {
-                    const {configApiParam} = await configure({cwd}, folderAsDomainEntry);
+                    const {configApiParam} = await configure({cwd, repoType}, folderAsDomainEntry);
                     await writeProtonConfigFile({cwd});
                     await execShell(["npm", ["run", "build", "--", "--api", configApiParam], {cwd}]);
                 },
@@ -178,12 +183,13 @@ const folderAsDomainEntries: Array<FolderAsDomainEntry<{
 });
 
 async function configure(
-    {cwd, envFileName = "./appConfig.json"}: { cwd: string; envFileName?: string; },
+    {cwd, envFileName = "./appConfig.json", repoType}: { cwd: string; envFileName?: string; repoType: keyof typeof PROVIDER_REPOS; },
     {folderNameAsDomain, options}: FolderAsDomainEntry,
 ): Promise<{ configApiParam: string }> {
     const {configApiParam} = options;
     const envFile = path.join(cwd, envFileName);
     const envFileContent = JSON.stringify({
+        appConfig: PROVIDER_REPOS[repoType].protonPackAppConfig,
         [configApiParam]: {
             // https://github.com/ProtonMail/WebClient/issues/166#issuecomment-561060855
             api: `https://${folderNameAsDomain}/api`,

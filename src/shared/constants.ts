@@ -57,13 +57,27 @@ export const WEB_CHUNK_NAMES = {
 } as const;
 
 export const PROVIDER_REPOS: Record<"WebClient" | "proton-mail-settings" | "proton-contacts" | "proton-calendar",
-    { repoRelativeDistDir: string; baseDir?: string; repo: string, version: string; commit: string; }> = {
+    {
+        repoRelativeDistDir: string;
+        baseDir?: string;
+        repo: string,
+        version: string;
+        commit: string;
+        protonPackAppConfig: {
+            clientId: string;
+        },
+    }> = {
     "WebClient": {
         repoRelativeDistDir: "./build",
         baseDir: "",
         repo: "https://github.com/ProtonMail/WebClient.git",
         commit: "45cd0e44230dfaf7ebc180149a17a438b979ca08",
         version: "4.0.0-beta6",
+        protonPackAppConfig: {
+            // TODO proton-v4: make sure this value comes to the build after 4.0.0-beta6+ update
+            //      currently it's hadrcoded in the WebClient code
+            clientId: "Web",
+        },
     },
     "proton-mail-settings": {
         repoRelativeDistDir: "./dist",
@@ -71,6 +85,9 @@ export const PROVIDER_REPOS: Record<"WebClient" | "proton-mail-settings" | "prot
         repo: "https://github.com/ProtonMail/proton-mail-settings.git",
         commit: "e43c067895f8b13d962b6343b945b22e401de0c3",
         version: "unknown",
+        protonPackAppConfig: {
+            clientId: "WebMailSettings",
+        },
     },
     "proton-contacts": {
         repoRelativeDistDir: "./dist",
@@ -78,6 +95,9 @@ export const PROVIDER_REPOS: Record<"WebClient" | "proton-mail-settings" | "prot
         repo: "https://github.com/ProtonMail/proton-contacts.git",
         commit: "7f610897dc53f8be6d8fa995bbdef8f085262c7a",
         version: "unknown",
+        protonPackAppConfig: {
+            clientId: "WebContacts",
+        },
     },
     "proton-calendar": {
         repoRelativeDistDir: "./dist",
@@ -85,6 +105,9 @@ export const PROVIDER_REPOS: Record<"WebClient" | "proton-mail-settings" | "prot
         repo: "https://github.com/ProtonMail/proton-calendar.git",
         commit: "e08716488589407643d96fe784d7933b92e556a5",
         version: "unknown",
+        protonPackAppConfig: {
+            clientId: "WebCalendar",
+        },
     },
 };
 

@@ -71,10 +71,10 @@ export const PROVIDER_REPOS: Record<"WebClient" | "proton-mail-settings" | "prot
         repoRelativeDistDir: "./build",
         baseDir: "",
         repo: "https://github.com/ProtonMail/WebClient.git",
-        commit: "45cd0e44230dfaf7ebc180149a17a438b979ca08",
-        version: "4.0.0-beta6",
+        commit: "01557780595cd492e42ade9a388059c59b13fc42",
+        version: "4.0.0-beta7",
         protonPackAppConfig: {
-            // TODO proton-v4: make sure this value comes to the build after 4.0.0-beta6+ update
+            // TODO proton-v4: make sure this value comes to the build after 4.0.0-beta7+ update
             //      currently it's hadrcoded in the WebClient code
             clientId: "Web",
         },
@@ -83,7 +83,7 @@ export const PROVIDER_REPOS: Record<"WebClient" | "proton-mail-settings" | "prot
         repoRelativeDistDir: "./dist",
         baseDir: "settings",
         repo: "https://github.com/ProtonMail/proton-mail-settings.git",
-        commit: "e43c067895f8b13d962b6343b945b22e401de0c3",
+        commit: "8e213362981adbd63f8ea2a5afda0c35e80b7d7f",
         version: "unknown",
         protonPackAppConfig: {
             clientId: "WebMailSettings",

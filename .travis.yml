@@ -75,7 +75,7 @@ jobs:
       <<: *embedding-linux-common-anchor
       workspaces:
         create:
-          name: 'webclients-artifact-linux'
+          name: 'webclients-artifact-linux-part-1'
           paths:
             - output/git
       env:
@@ -84,7 +84,10 @@ jobs:
     - stage: 'Build web clients (part-2)'
       <<: *embedding-linux-common-anchor
       workspaces:
-        use: 'webclients-artifact-linux'
+        create:
+          name: 'webclients-artifact-linux-part-2'
+          paths:
+            - output/git
       env:
         - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="proton-contacts;proton-calendar"
       script: ./scripts/ci/prepare-webclients.sh
@@ -92,7 +95,7 @@ jobs:
       <<: *embedding-embedding-macos-common
       workspaces:
         create:
-          name: 'webclients-artifact-macos'
+          name: 'webclients-artifact-macos-part-1'
           paths:
             - output/git
       env:
@@ -101,14 +104,19 @@ jobs:
     - stage: 'Build web clients (part-2)'
       <<: *embedding-embedding-macos-common
       workspaces:
-        use: 'webclients-artifact-macos'
+        create:
+          name: 'webclients-artifact-macos-part-2'
+          paths:
+            - output/git
       env:
         - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="proton-contacts;proton-calendar"
       script: ./scripts/ci/prepare-webclients.sh
     - stage: 'Build app'
       <<: *embedding-linux-common-anchor
       workspaces:
-        use: 'webclients-artifact-linux'
+        use:
+          - 'webclients-artifact-linux-part1'
+          - 'webclients-artifact-linux-part2'
       before_script:
         - | # needed for native modules compiling/rebuilding
           export CC=gcc-7 CXX=g++-7;
@@ -127,7 +135,9 @@ jobs:
     - stage: 'Build app'
       <<: *embedding-embedding-macos-common
       workspaces:
-        use: 'webclients-artifact-macos'
+        use:
+          - 'webclients-artifact-macos-part1'
+          - 'webclients-artifact-macos-part2'
       addons:
         firefox: latest
       script: ./scripts/ci/travis/build-osx.sh

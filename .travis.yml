@@ -44,7 +44,7 @@ embedding-linux-common: &embedding-linux-common-anchor
         - squashfs-tools
     firefox: latest
 
-embedding-macos-common: &embedding-embedding-macos-common
+embedding-macos-common: &embedding-macos-common-anchor
   os: osx
   osx_image: xcode9.4
 
@@ -71,7 +71,7 @@ jobs:
     # web clients building process split in part-1/part-2 steps
     # to workaround the issue of travis dropping long-running jobs on free plan
     # "workspaces" features is used to ensure that "web clients-artifact" is actually shared between jobs ("cache" doesn't always help)
-    - stage: 'Build web clients (part-1)'
+    - stage: 'Build web clients'
       <<: *embedding-linux-common-anchor
       workspaces:
         create:
@@ -81,7 +81,7 @@ jobs:
       env:
         - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="WebClient;proton-mail-settings"
       script: ./scripts/ci/prepare-webclients.sh
-    - stage: 'Build web clients (part-2)'
+    - stage: 'Build web clients'
       <<: *embedding-linux-common-anchor
       workspaces:
         create:
@@ -91,8 +91,8 @@ jobs:
       env:
         - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="proton-contacts;proton-calendar"
       script: ./scripts/ci/prepare-webclients.sh
-    - stage: 'Build web clients (part-1)'
-      <<: *embedding-embedding-macos-common
+    - stage: 'Build web clients'
+      <<: *embedding-macos-common-anchor
       workspaces:
         create:
           name: 'webclients-artifact-macos-part-1'
@@ -101,8 +101,8 @@ jobs:
       env:
         - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="WebClient;proton-mail-settings"
       script: ./scripts/ci/prepare-webclients.sh
-    - stage: 'Build web clients (part-2)'
-      <<: *embedding-embedding-macos-common
+    - stage: 'Build web clients'
+      <<: *embedding-macos-common-anchor
       workspaces:
         create:
           name: 'webclients-artifact-macos-part-2'
@@ -133,7 +133,7 @@ jobs:
           /usr/bin/python -c "import gnomekeyring;gnomekeyring.create_sync('login', '');";
       script: ./scripts/ci/travis/build-linux.sh
     - stage: 'Build app'
-      <<: *embedding-embedding-macos-common
+      <<: *embedding-macos-common-anchor
       workspaces:
         use:
           - 'webclients-artifact-macos-part1'

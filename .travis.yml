@@ -1,52 +1,18 @@
-# TODO improve artifacts sharng between the jobs, keep track of the following issues:
+# TODO improve artifacts sharing between the jobs, keep track of the following issues:
 # - https://github.com/travis-ci/travis-ci/issues/7590
 # - https://travis-ci.community/t/using-unified-cache-control-cache-identity/1531
+
 branches:
   only:
     - master
-language: node_js
+
 node_js: 12.14.0
-cache:
-  yarn: false
-  npm: false
-  directories:
-    - output/git
+language: node_js
+
 env:
   global:
-    - MOZ_HEADLESS=1 # needed for karma tests running in headless mode
-
-embedding-linux-common: &embedding-linux-common-anchor
-  os: linux
-  # TODO use "xenial" dist, running auto login e2e test using "node-keytar" is a blocker at the moment
-  # https://travis-ci.community/search?q=No%20output%20has%20been%20received%20in%20the%20last%20windows%20category%3A16
-  dist: trusty
-  group: stable
-  sudo: required
-  services:
-    - docker
-  addons:
-    apt:
-      sources:
-        # upgrade GCC to a more recent version, see https://docs.travis-ci.com/user/languages/cpp/#gcc-on-linux
-        - ubuntu-toolchain-r-test
-      packages:
-        # for native modules compiling/rebuilding
-        - g++-7
-        # for rebuilding "desktop-idle" native module
-        - libxss-dev
-        # for rebuilding "node-keytar" native module
-        - gnome-keyring
-        - libgnome-keyring-dev
-        - libsecret-1-dev
-        # for initializing keychain for running e2e tests that use "node-keytar"
-        - python-gnomekeyring
-        # for building snap ("unsquashfs" binary)
-        - squashfs-tools
-    firefox: latest
-
-embedding-macos-common: &embedding-macos-common-anchor
-  os: osx
-  osx_image: xcode9.4
+    # needed for: native modules compiling
+    - CC=gcc-7 CXX=g++-7
 
 before_install:
   - | # installing the most recent yarn version
@@ -58,86 +24,74 @@ install:
   - yarn --version
   - npx envinfo
   - yarn install --pure-lockfile
-after_failure:
-  - tar -cvf e2e-logs.tar ./output/e2e
-  - yarn scripts/transfer upload e2e-logs.tar
 notifications:
   email:
     on_success: never
     on_failure: change
 
+embedding-linux-common: &embedding-linux-common-anchor
+  os: linux
+  dist: bionic
+  addons:
+    apt:
+      packages:
+        # needed for: native modules compiling
+        - g++-7
+        # needed for: compiling "desktop-idle" native module
+        - libxss-dev
+        # needed for: keychain initialization and compiling "node-keytar" native module
+        - gnome-keyring
+        - libgnome-keyring-dev
+        - libsecret-1-dev
+        # needed for: keychain access testing before running e2e tests (see "scripts/ci/add-secret-service-item-assert.py")
+        - python3-secretstorage
+        # needed for: tweaking snap package ("unsquashfs" binary)
+        - squashfs-tools
 jobs:
   include:
-    # web clients building process split in part-1/part-2 steps
-    # to workaround the issue of travis dropping long-running jobs on free plan
-    # "workspaces" features is used to ensure that "web clients-artifact" is actually shared between jobs ("cache" doesn't always help)
-    - stage: 'Build web clients'
+    # pre-build some web clients to workaround the issue of travis dropping long-running jobs on free plan
+    - stage: 'Build web clients (settings/contacts/calendar only)'
       <<: *embedding-linux-common-anchor
+      cache:
+        yarn: false
+        npm: false
+        directories:
+          - output/git/proton-calendar
+          - output/git/proton-contacts
+          - output/git/proton-mail-settings
       workspaces:
         create:
-          name: 'webclients-artifact-linux-part-1'
+          name: 'webclients-artifact'
           paths:
             - output/git
       env:
-        - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="WebClient;proton-mail-settings"
+        - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="proton-mail-settings;proton-contacts;proton-calendar"
       script: ./scripts/ci/prepare-webclients.sh
-    - stage: 'Build web clients'
+    - stage: 'Build App'
       <<: *embedding-linux-common-anchor
-      workspaces:
-        create:
-          name: 'webclients-artifact-linux-part-2'
-          paths:
-            - output/git
-      env:
-        - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="proton-contacts;proton-calendar"
-      script: ./scripts/ci/prepare-webclients.sh
-    - stage: 'Build web clients'
-      <<: *embedding-macos-common-anchor
-      workspaces:
-        create:
-          name: 'webclients-artifact-macos-part-1'
-          paths:
-            - output/git
-      env:
-        - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="WebClient;proton-mail-settings"
-      script: ./scripts/ci/prepare-webclients.sh
-    - stage: 'Build web clients'
-      <<: *embedding-macos-common-anchor
-      workspaces:
-        create:
-          name: 'webclients-artifact-macos-part-2'
-          paths:
-            - output/git
-      env:
-        - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="proton-contacts;proton-calendar"
-      script: ./scripts/ci/prepare-webclients.sh
-    - stage: 'Build app'
-      <<: *embedding-linux-common-anchor
+      sudo: required
+      services:
+        - docker
+        # needed for: running e2e tests
+        - xvfb
+      cache:
+        yarn: false
+        npm: false
+        directories:
+          - output/git
       workspaces:
         use:
-          - 'webclients-artifact-linux-part1'
-          - 'webclients-artifact-linux-part2'
+          - 'webclients-artifact'
       before_script:
-        - | # needed for native modules compiling/rebuilding
-          export CC=gcc-7 CXX=g++-7;
-        - | # init xvfb
-          export DISPLAY=:99.0;
-          sh -e /etc/init.d/xvfb start;
-          sleep 3;
         - | # init dbus
           NO_AT_BRIDGE=1;
           eval $(dbus-launch --sh-syntax);
-        - | # init keychain
-          eval $(echo -n "" | /usr/bin/gnome-keyring-daemon --login);
-          eval $(/usr/bin/gnome-keyring-daemon --components=secrets --start);
-          /usr/bin/python -c "import gnomekeyring;gnomekeyring.create_sync('login', '');";
+        # TODO get back keyring initialization then enable respective e2e test case (see "src/e2e/index.spec.ts")
+        #- | # init keychain
+        #  eval $(echo -n "" | /usr/bin/gnome-keyring-daemon --login);
+        #  eval $(/usr/bin/gnome-keyring-daemon --components=secrets --start);
+        #  python3 ./scripts/ci/add-secret-service-item-assert.py;
       script: ./scripts/ci/travis/build-linux.sh
-    - stage: 'Build app'
-      <<: *embedding-macos-common-anchor
-      workspaces:
-        use:
-          - 'webclients-artifact-macos-part1'
-          - 'webclients-artifact-macos-part2'
-      addons:
-        firefox: latest
-      script: ./scripts/ci/travis/build-osx.sh
+      after_failure:
+        - tar -cvf e2e-logs.tar ./output/e2e
+        - yarn scripts/transfer upload e2e-logs.tar

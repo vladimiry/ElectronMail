@@ -8,8 +8,9 @@ set -ev
 cat /etc/apt/sources.list
 sudo apt clean && sudo apt update
 
+# TODO remove "sudo apt-get --yes install nasm" if not required
 # dependencies needed for building protonmail/tutanota web client (don't remember which one)
-sudo apt-get --yes install nasm
+# sudo apt-get --yes install nasm
 
 # dependencies needed for compiling "node-keytar" native module (if there is no prebuild binary for used node version)
 sudo apt-get --yes install libsecret-1-dev

@@ -2,7 +2,6 @@ import UUID from "pure-uuid";
 import fs from "fs";
 import fsExtra from "fs-extra";
 import path from "path";
-import {platform} from "os";
 import {promisify} from "util";
 
 import {FolderAsDomainEntry, execAccountTypeFlow} from "./lib";
@@ -145,25 +144,6 @@ const folderAsDomainEntries: Array<FolderAsDomainEntry<{
 
                         if (fsExtra.existsSync(npmLockFile)) {
                             throw new Error(`"${npmLockFile}" file exists, it's time for switching to "npm ci" call`);
-                        }
-
-                        // avoid "fsevents" native module compilation error (happen on macOS/darwin CI environment):
-                        // tslint:disable-next-line:max-line-length
-                        // node-gyp.js build --fallback-to-build --module=/node_modules/openpgp/node_modules/fsevents/lib/binding/Release/node-v72-darwin-x64/fse.node --module_name=fse ...
-                        if (platform() === "darwin") {
-                            (() => {
-                                const packageJSONFile = path.join(repoDir, "./package.json");
-                                const packageJSON = JSON.parse(
-                                    fs.readFileSync(packageJSONFile).toString(),
-                                );
-                                (packageJSON.resolutions = packageJSON.resolutions || {})["**/fsevents"] = "^1.2.11";
-                                const packageJSONFileContent = JSON.stringify(packageJSON, null, 2);
-                                LOG(
-                                    LOG_LEVELS.title(`Writing ${LOG_LEVELS.value(packageJSONFile)} file with content:`),
-                                    LOG_LEVELS.value(packageJSONFileContent),
-                                );
-                                fs.writeFileSync(packageJSONFile, packageJSONFileContent);
-                            })();
                         }
 
                         await execShell(["yarn", ["install"], {cwd: repoDir}]);

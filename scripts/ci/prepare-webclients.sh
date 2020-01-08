@@ -12,7 +12,9 @@ yarn assets:webclient:protonmail
 
 # create archive
 ./scripts/ci/archive-webclients-dist-only.sh $ARCHIVE_FILE
+ls -lh
 
 # keep only prepared web clients in the cache (we cache only "./output" folder)
 rm -rf ./output
 tar -xf $ARCHIVE_FILE
+find ./output/git \( -name "node_modules" -o -name ".git" \) -prune -o -print

@@ -19,13 +19,14 @@ import {
     IPC_MAIN_API_NOTIFICATION_ACTIONS,
     IpcMainApiEndpoints,
 } from "src/shared/api/main";
+import {ReadonlyDeep} from "type-fest";
 import {curryFunctionMembers} from "src/shared/util";
 import {hrtimeDuration} from "src/electron-main/util";
 
 const logger = curryFunctionMembers(electronLog, "[src/electron-main/api/endpoints-builders/database/indexing]");
 
 export async function buildDbIndexingEndpoints(
-    ctx: Context,
+    ctx: ReadonlyDeep<Context>,
 ): Promise<Pick<IpcMainApiEndpoints, "dbIndexerOn" | "dbIndexerNotification">> {
     return {
         async dbIndexerOn(action) {
@@ -111,7 +112,11 @@ export const narrowIndexActionPayload: (
     return result;
 })();
 
-export async function indexAccount(account: FsDbAccount, key: DbAccountPk, config: Config): Promise<void> {
+export async function indexAccount(
+    account: ReadonlyDeep<FsDbAccount>,
+    key: ReadonlyDeep<DbAccountPk>,
+    config: ReadonlyDeep<Config>,
+): Promise<void> {
     logger.info("indexAccount()");
 
     const duration = hrtimeDuration();
@@ -136,8 +141,8 @@ export async function indexAccount(account: FsDbAccount, key: DbAccountPk, confi
 }
 
 async function indexMails(
-    mails: Mail[],
-    key: DbAccountPk,
+    mails: Array<ReadonlyDeep<Mail>>,
+    key: ReadonlyDeep<DbAccountPk>,
     timeoutMs: number,
 ): Promise<void> {
     logger.info("indexMails()");

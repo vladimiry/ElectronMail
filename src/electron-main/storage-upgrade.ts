@@ -12,7 +12,7 @@ import {AccountConfig} from "src/shared/model/account";
 import {Config, Settings} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
 import {Database} from "./database";
-import {DbAccountPk, FsDbDataContainerDeletedField} from "src/shared/model/database";
+import {DbAccountPk} from "src/shared/model/database";
 import {EntryUrlItem} from "src/shared/model/common";
 import {INITIAL_STORES} from "./constants";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
@@ -359,7 +359,7 @@ export async function upgradeDatabase(db: Database, accounts: Settings["accounts
             if (typeof account.deletedPks !== "undefined") {
                 continue;
             }
-            (account as Mutable<FsDbDataContainerDeletedField>).deletedPks = {
+            (account as Mutable<Pick<typeof account, "deletedPks">>).deletedPks = {
                 conversationEntries: [],
                 mails: [],
                 folders: [],

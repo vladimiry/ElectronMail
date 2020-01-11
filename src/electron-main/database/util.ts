@@ -3,11 +3,14 @@ import {equals} from "remeda";
 
 import {AccountType} from "src/shared/model/account";
 import {Folder, FsDb, FsDbAccount, MAIL_FOLDER_TYPE, PROTONMAIL_MAILBOX_IDENTIFIERS} from "src/shared/model/database";
+import {ReadonlyDeep} from "type-fest";
 import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(electronLog, "[src/electron-main/database/util]");
 
-export const resolveAccountFolders: <T extends keyof FsDb["accounts"]>(account: FsDbAccount<T>) => readonly Folder[] = (() => {
+export const resolveAccountFolders: <T extends keyof FsDb["accounts"]>(
+    account: ReadonlyDeep<FsDbAccount<T>>,
+) => readonly Folder[] = (() => {
     const staticFolders: Readonly<Record<AccountType, readonly Folder[]>> = {
         protonmail: (
             [
@@ -43,7 +46,7 @@ export const resolveAccountFolders: <T extends keyof FsDb["accounts"]>(account: 
 export function patchMetadata(
     target: FsDbAccount["metadata"],
     // TODO TS: use patch: Parameters<IpcMainApiEndpoints["dbPatch"]>[0]["metadata"],
-    source: Skip<FsDbAccount<"protonmail">["metadata"], "type">,
+    patch: ReadonlyDeep<Skip<FsDbAccount<"protonmail">["metadata"], "type">>,
     sourceType: "dbPatch" | "loadDatabase",
 ): boolean {
     const logPrefix = `patchMetadata() ${sourceType}`;
@@ -51,12 +54,12 @@ export function patchMetadata(
     logger.info(logPrefix);
 
     if (
-        "latestEventId" in source
+        "latestEventId" in patch
         &&
         (
-            !source.latestEventId
+            !patch.latestEventId
             ||
-            !source.latestEventId.trim()
+            !patch.latestEventId.trim()
         )
     ) {
         // we don't allow patching with empty/initial value
@@ -65,7 +68,7 @@ export function patchMetadata(
     }
 
     // TODO apply "merge deep" logic if metadata becomes nested object
-    const merged = {...target, ...source} as const;
+    const merged = {...target, ...patch} as const;
 
     // console.log(JSON.stringify({target, source, merged}, null, 2));
 
@@ -75,7 +78,7 @@ export function patchMetadata(
 
     Object.assign(target, merged);
 
-    logger.verbose(logPrefix, `metadata patched with ${JSON.stringify(Object.keys(source))} properties`);
+    logger.verbose(logPrefix, `metadata patched with ${JSON.stringify(Object.keys(patch))} properties`);
 
     return true;
 }

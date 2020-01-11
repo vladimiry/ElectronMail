@@ -52,12 +52,16 @@ export class Database {
         return this.dbInstance.version;
     }
 
-    getAccount<TL extends DbAccountPk>({type, login}: TL): FsDbAccount<TL["type"]> | undefined {
+    getMutableAccount<TL extends DbAccountPk>({type, login}: TL): FsDbAccount<TL["type"]> | undefined {
+        return this.getAccount({type, login}) as (FsDbAccount<TL["type"]> | undefined);
+    }
+
+    getAccount<TL extends DbAccountPk>({type, login}: TL): ReadonlyDeep<FsDbAccount<TL["type"]>> | undefined {
         const account = this.dbInstance.accounts[type][login];
         if (!account) {
             return;
         }
-        return account as FsDbAccount<TL["type"]>;
+        return account as ReadonlyDeep<FsDbAccount<TL["type"]>>;
     }
 
     initAccount<TL extends DbAccountPk>({type, login}: TL): FsDbAccount<TL["type"]> {
@@ -81,7 +85,7 @@ export class Database {
     }
 
     accountsIterator(): {
-        [Symbol.iterator]: () => Iterator<{ account: FsDbAccount; pk: DbAccountPk }>;
+        [Symbol.iterator]: () => Iterator<{ account: ReadonlyDeep<FsDbAccount>; pk: ReadonlyDeep<DbAccountPk> }>;
     } {
         this.logger.info("accountsIterator()");
 
@@ -188,7 +192,7 @@ export class Database {
     }
 
     accountStat(
-        account: FsDbAccount,
+        account: ReadonlyDeep<FsDbAccount>,
         includingSpam: boolean = false,
     ): { conversationEntries: number, mails: number, folders: number; contacts: number; unread: number } {
         const hasSpamEmail: (mail: Mail) => boolean = includingSpam
@@ -230,7 +234,7 @@ export class Database {
         this.logger[logLevel](`${methodName}().stat: ${JSON.stringify(dataToLog, null, 2)}`);
     }
 
-    private getPks(): DbAccountPk[] {
+    private getPks(): Array<ReadonlyDeep<DbAccountPk>> {
         const {accounts} = this.dbInstance;
 
         return (Object.keys(accounts) as Array<keyof typeof accounts>).reduce(
@@ -244,7 +248,7 @@ export class Database {
         );
     }
 
-    private spamFolderTester(account: FsDbAccount): (mail: Mail) => boolean {
+    private spamFolderTester(account: ReadonlyDeep<FsDbAccount>): (mail: Mail) => boolean {
         const folder = resolveAccountFolders(account).find(({folderType}) => folderType === MAIL_FOLDER_TYPE.SPAM);
         const mailFolderId = folder && folder.mailFolderId;
         const result: ReturnType<typeof Database.prototype.spamFolderTester> = typeof mailFolderId !== "undefined"

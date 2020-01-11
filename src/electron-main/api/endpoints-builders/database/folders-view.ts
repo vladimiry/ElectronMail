@@ -1,6 +1,7 @@
 import {omit, pipe, sort, sortBy} from "remeda";
 
 import {CONVERSATION_TYPE, ConversationEntry, FsDb, FsDbAccount, MAIL_FOLDER_TYPE, View} from "src/shared/model/database";
+import {ReadonlyDeep} from "type-fest";
 import {mailDateComparatorDefaultsToDesc, walkConversationNodesTree} from "src/shared/util";
 import {resolveAccountFolders} from "src/electron-main/database/util";
 
@@ -98,7 +99,9 @@ export const FOLDER_UTILS: {
     };
 })();
 
-function resolveAccountConversationNodes<T extends keyof FsDb["accounts"]>(account: FsDbAccount<T>): ConversationEntry[] {
+function resolveAccountConversationNodes<T extends keyof FsDb["accounts"]>(
+    account: ReadonlyDeep<FsDbAccount<T>>,
+): ConversationEntry[] {
     const buildEntry = ({pk, mailPk}: Pick<ConversationEntry, "pk" | "mailPk">) => ({
         pk,
         id: pk,
@@ -132,7 +135,7 @@ function resolveAccountConversationNodes<T extends keyof FsDb["accounts"]>(accou
 }
 
 export function buildFoldersAndRootNodePrototypes<T extends keyof FsDb["accounts"]>(
-    account: FsDbAccount<T>,
+    account: ReadonlyDeep<FsDbAccount<T>>,
 ): {
     folders: View.Folder[];
     rootNodePrototypes: View.ConversationNode[];
@@ -236,7 +239,9 @@ export function fillFoldersAndReturnRootConversationNodes(rootNodePrototypes: Vi
     });
 }
 
-function buildFoldersView<T extends keyof FsDb["accounts"]>(account: FsDbAccount<T>): View.Folder[] {
+function buildFoldersView<T extends keyof FsDb["accounts"]>(
+    account: ReadonlyDeep<FsDbAccount<T>>,
+): View.Folder[] {
     const {folders, rootNodePrototypes} = buildFoldersAndRootNodePrototypes(account);
 
     fillFoldersAndReturnRootConversationNodes(rootNodePrototypes);
@@ -249,7 +254,9 @@ function buildFoldersView<T extends keyof FsDb["accounts"]>(account: FsDbAccount
 }
 
 // TODO consider moving performance expensive "prepareFoldersView" function call to the background process
-export function prepareFoldersView<T extends keyof FsDb["accounts"]>(account: FsDbAccount<T>) {
+export function prepareFoldersView<T extends keyof FsDb["accounts"]>(
+    account: ReadonlyDeep<FsDbAccount<T>>,
+) {
     return FOLDER_UTILS.splitAndFormatAndFillSummaryFolders(
         buildFoldersView(account),
     );

@@ -248,7 +248,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             if (await sessionDb.persisted()) {
                 for (const {account: sourceAccount, pk: accountPk} of sessionDb.accountsIterator()) {
                     logger.verbose("loadDatabase() account processing iteration starts");
-                    const targetAccount = db.getAccount(accountPk) || db.initAccount(accountPk);
+                    const targetAccount = db.getMutableAccount(accountPk) || db.initAccount(accountPk);
 
                     // inserting new/updated entities
                     for (const entityType of DB_DATA_CONTAINER_FIELDS) {

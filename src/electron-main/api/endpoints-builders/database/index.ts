@@ -41,8 +41,8 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
             const {db, sessionDb} = ctx;
             const key = {type, login} as const;
-            const account = db.getAccount(key) || db.initAccount(key);
-            const sessionAccount = sessionDb.getAccount(key) || sessionDb.initAccount(key);
+            const account = db.getMutableAccount(key) || db.initAccount(key);
+            const sessionAccount = sessionDb.getMutableAccount(key) || sessionDb.initAccount(key);
 
             for (const entityType of DB_DATA_CONTAINER_FIELDS) {
                 const {remove, upsert} = entityUpdatesPatch[entityType];

@@ -93,7 +93,7 @@ export async function registerSessionProtocols(ctx: Context, session: Session): 
 
 async function resolveFileSystemResourceLocation(
     directory: string,
-    request: Arguments<Arguments<(typeof protocol)["registerBufferProtocol"]>[1]>[0],
+    request: Parameters<Parameters<(typeof protocol)["registerBufferProtocol"]>[1]>[0],
 ): Promise<string> {
     const resource = path.join(directory, new URL(request.url).pathname);
 

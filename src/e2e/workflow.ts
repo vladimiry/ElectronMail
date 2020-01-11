@@ -32,7 +32,7 @@ export interface TestContext {
     logFilePath: string;
     workflow: ReturnType<typeof buildWorkflow>;
     sinon: {
-        addAccountSpy: sinon.SinonSpy<[Arguments<ReturnType<typeof buildWorkflow>["addAccount"]>[0]], Promise<void>>;
+        addAccountSpy: sinon.SinonSpy<[Parameters<ReturnType<typeof buildWorkflow>["addAccount"]>[0]], Promise<void>>;
     };
 }
 

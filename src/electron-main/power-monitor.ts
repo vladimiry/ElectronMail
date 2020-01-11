@@ -63,7 +63,7 @@ export function clearIdleTimeLogOut(): void {
 }
 
 export function setUpPowerMonitorNotification(): void {
-    const notify = (...[{message}]: Arguments<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS.PowerMonitor>) => {
+    const notify = (...[{message}]: Parameters<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS.PowerMonitor>) => {
         IPC_MAIN_API_NOTIFICATION$.next(
             IPC_MAIN_API_NOTIFICATION_ACTIONS.PowerMonitor({message}),
         );

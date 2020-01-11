@@ -28,7 +28,7 @@ export type ProgressPatch = Partial<{
 export interface State extends fromRoot.State, Partial<InitResponse> {
     _initialized: boolean;
     config: Config;
-    settings: Arguments<typeof OPTIONS_ACTIONS.GetSettingsResponse>[0];
+    settings: Parameters<typeof OPTIONS_ACTIONS.GetSettingsResponse>[0];
     progress: ProgressPatch;
     hasSavedPassword?: boolean;
     mainProcessNotification: UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>;

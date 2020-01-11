@@ -33,7 +33,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
     readonly webViewSrc!: string;
 
     @Output()
-    readonly event = new EventEmitter<Arguments<typeof AccountComponent.prototype.onEventChild>[0]>();
+    readonly event = new EventEmitter<Parameters<typeof AccountComponent.prototype.onEventChild>[0]>();
 
     private readonly subscription = new Subscription();
 
@@ -88,7 +88,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
     }
 
     protected addSubscription(
-        ...[teardown]: Arguments<typeof AccountViewAbstractComponent.prototype.subscription.add>
+        ...[teardown]: Parameters<typeof AccountViewAbstractComponent.prototype.subscription.add>
     ): ReturnType<typeof AccountViewAbstractComponent.prototype.subscription.add> {
         return this.subscription.add(teardown);
     }

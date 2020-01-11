@@ -163,7 +163,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     onEventChild(
         event:
             | { type: "dom-ready", viewType: keyof typeof AccountComponent.prototype.webViewsState, webView: Electron.WebviewTag; }
-            | { type: "action", payload: Unpacked<Arguments<typeof AccountComponent.prototype.onDispatchInLoggerZone>> }
+            | { type: "action", payload: Unpacked<Parameters<typeof AccountComponent.prototype.onDispatchInLoggerZone>> }
             | { type: "log", data: [LogLevel, ...string[]] },
     ) {
         if (event.type === "log") {

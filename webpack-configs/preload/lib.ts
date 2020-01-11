@@ -1,6 +1,6 @@
 import {Configuration} from "webpack";
 
-import {awesomeTypescriptLoaderRule, buildBaseConfig} from "webpack-configs/lib";
+import {buildBaseConfig, typescriptLoaderRule} from "webpack-configs/lib";
 
 export function buildRendererConfig(entry: Configuration["entry"], tsConfigFile: string) {
     return buildBaseConfig(
@@ -9,7 +9,7 @@ export function buildRendererConfig(entry: Configuration["entry"], tsConfigFile:
             entry,
             module: {
                 rules: [
-                    awesomeTypescriptLoaderRule({tsConfigFile}),
+                    typescriptLoaderRule({tsConfigFile}),
                 ],
             },
         },

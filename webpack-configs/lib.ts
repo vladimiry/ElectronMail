@@ -1,10 +1,10 @@
 import path from "path";
 import webpackMerge from "webpack-merge";
 import {Configuration, DefinePlugin, RuleSetRule} from "webpack";
+import {Options as TsLoaderOptions} from "ts-loader";
 
 import {BuildEnvironment} from "./model";
 import {LOG, LOG_LEVELS} from "scripts/lib";
-import {LoaderConfig as TsLoaderConfig} from "awesome-typescript-loader/src/interfaces";
 
 export const ENVIRONMENT: BuildEnvironment = (() => {
     const NODE_ENV = process.env.NODE_ENV as Exclude<BuildEnvironment, "production"> | undefined;
@@ -69,14 +69,15 @@ export function buildBaseConfig(
     );
 }
 
-export function awesomeTypescriptLoaderRule({tsConfigFile}: { tsConfigFile: string }): RuleSetRule {
+export function typescriptLoaderRule({tsConfigFile}: { tsConfigFile: string }): RuleSetRule {
+    const options: Partial<TsLoaderOptions> = {
+        configFile: tsConfigFile,
+    };
     return {
         test: /\.ts$/,
         use: {
-            loader: "awesome-typescript-loader",
-            options: {
-                configFileName: tsConfigFile,
-            } as TsLoaderConfig,
+            loader: "ts-loader",
+            options,
         },
     };
 }

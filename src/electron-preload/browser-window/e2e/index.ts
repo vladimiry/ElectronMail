@@ -1,6 +1,6 @@
 import electron from "electron"; // tslint:disable-line:no-import-zones
 
-import "./build-env-based/production";
+import "src/electron-preload/browser-window/production";
 
 (window as any).electronRequire = (name: string): any => {
     return name === "electron"

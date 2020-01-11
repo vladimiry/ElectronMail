@@ -5,7 +5,7 @@ import webpackMerge from "webpack-merge";
 import {Configuration, RuleSetUseItem} from "webpack";
 
 import {BuildEnvironment} from "webpack-configs/model";
-import {ENVIRONMENT, ENVIRONMENT_STATE, awesomeTypescriptLoaderRule, buildBaseConfig, outputRelativePath, srcRelativePath} from "./../lib";
+import {ENVIRONMENT, ENVIRONMENT_STATE, buildBaseConfig, outputRelativePath, srcRelativePath, typescriptLoaderRule} from "./../lib";
 import {WEB_CHUNK_NAMES} from "src/shared/constants";
 
 export const browserWindowPath = (...value: string[]) => srcRelativePath("./web/browser-window", ...value);
@@ -17,7 +17,7 @@ export function buildBaseWebConfig(
     options: {
         tsConfigFile?: string;
         chunkName: keyof typeof WEB_CHUNK_NAMES;
-        awesomeTypescriptLoader?: boolean;
+        typescriptLoader?: boolean;
     },
 ): Configuration {
     const chunkPath = (...value: string[]) => srcRelativePath("./web", options.chunkName, ...value);
@@ -45,7 +45,7 @@ export function buildBaseWebConfig(
                 },
                 module: {
                     rules: [
-                        ...(options.awesomeTypescriptLoader ? [awesomeTypescriptLoaderRule({tsConfigFile})] : []),
+                        ...(options.typescriptLoader ? [typescriptLoaderRule({tsConfigFile})] : []),
                     ],
                 },
                 plugins: [

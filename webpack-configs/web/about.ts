@@ -4,7 +4,7 @@ const config = buildBaseWebConfig(
     {},
     {
         chunkName: "about",
-        awesomeTypescriptLoader: true,
+        typescriptLoader: true,
     },
 );
 

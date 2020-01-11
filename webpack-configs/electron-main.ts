@@ -1,6 +1,6 @@
 import nodeExternals from "webpack-node-externals";
 
-import {awesomeTypescriptLoaderRule, buildBaseConfig, srcRelativePath} from "./lib";
+import {buildBaseConfig, srcRelativePath, typescriptLoaderRule} from "./lib";
 
 const tsConfigFile = srcRelativePath("./electron-main/tsconfig.json");
 
@@ -12,7 +12,7 @@ export default buildBaseConfig(
         },
         module: {
             rules: [
-                awesomeTypescriptLoaderRule({tsConfigFile}),
+                typescriptLoaderRule({tsConfigFile}),
             ],
         },
         externals: [

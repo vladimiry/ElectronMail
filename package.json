@@ -24,10 +24,11 @@
     "build:electron-main:dev": "cross-env NODE_ENV=development npm-run-all build:electron-main",
     "build:electron-main:watch": "cross-env WEBPACK_ENV_WATCH=1 npm-run-all build:electron-main",
     "build:electron-main:watch:dev": "cross-env WEBPACK_ENV_WATCH=1 npm-run-all build:electron-main:dev",
-    "build:electron-preload": "npm-run-all build:electron-preload:about build:electron-preload:browser-window build:electron-preload:database-indexer build:electron-preload:search-in-page-browser-view build:electron-preload:webview-calendar build:electron-preload:webview-primary",
+    "build:electron-preload": "npm-run-all build:electron-preload:about build:electron-preload:browser-window build:electron-preload:browser-window-e2e build:electron-preload:database-indexer build:electron-preload:search-in-page-browser-view build:electron-preload:webview-calendar build:electron-preload:webview-primary",
     "build:electron-preload:dev": "cross-env NODE_ENV=development npm-run-all build:electron-preload",
     "build:electron-preload:about": "yarn build:electron-preload:base --config ./webpack-configs/preload/about.ts",
     "build:electron-preload:browser-window": "yarn build:electron-preload:base --config ./webpack-configs/preload/browser-window.ts",
+    "build:electron-preload:browser-window-e2e": "yarn build:electron-preload:base --config ./webpack-configs/preload/browser-window-e2e.ts",
     "build:electron-preload:database-indexer": "yarn build:electron-preload:base --config ./webpack-configs/preload/database-indexer.ts",
     "build:electron-preload:search-in-page-browser-view": "yarn build:electron-preload:base --config ./webpack-configs/preload/search-in-page-browser-view.ts",
     "build:electron-preload:webview-calendar": "yarn build:electron-preload:base --config ./webpack-configs/preload/webview-calendar.ts",
@@ -204,7 +205,6 @@
     "app-builder-lib": "21.2.0",
     "archiver": "3.1.1",
     "ava": "2.4.0",
-    "awesome-typescript-loader": "5.2.1",
     "bootstrap": "4.4.1",
     "byline": "5.0.0",
     "cache-loader": "4.1.0",
@@ -270,6 +270,7 @@
     "style-loader": "1.1.2",
     "stylus-loader": "3.0.2",
     "to-string-loader": "1.1.6",
+    "ts-loader": "6.2.1",
     "ts-node": "8.6.0",
     "tsconfig-paths": "3.9.0",
     "tslint": "5.20.1",
@@ -289,6 +290,7 @@
   "resolutions": {
     "*/**/@types/webpack": "4.41.2",
     "*/**/builder-util-runtime": "8.3.0",
-    "*/**/karma-jasmine": "2.0.1"
+    "*/**/karma-jasmine": "2.0.1",
+    "@ngtools/webpack/tree-kill": "1.2.2"
   }
 }

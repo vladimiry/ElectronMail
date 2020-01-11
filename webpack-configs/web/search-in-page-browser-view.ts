@@ -4,7 +4,7 @@ const config = buildBaseWebConfig(
     {},
     {
         chunkName: "search-in-page-browser-view",
-        awesomeTypescriptLoader: true,
+        typescriptLoader: true,
     },
 );
 

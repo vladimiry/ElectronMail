@@ -2,7 +2,7 @@ import electronLog from "electron-log";
 import {UnionOf} from "@vladimiry/unionize";
 import {concatMap, filter, startWith, take, takeUntil} from "rxjs/operators";
 import {defer, race, throwError, timer} from "rxjs";
-import {pick} from "ramda";
+import {pick} from "remeda";
 import {v4 as uuid} from "uuid";
 
 import {Config} from "src/shared/model/options";
@@ -104,7 +104,7 @@ export const narrowIndexActionPayload: (
         return {
             key,
             remove,
-            add: add.map((mail) => pick(fieldsToIndex, mail)),
+            add: add.map((mail) => pick(mail, fieldsToIndex)),
         };
     };
 

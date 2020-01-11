@@ -7,8 +7,8 @@ import ava, {ExecutionContext, ImplementationResult, TestInterface} from "ava";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Fs} from "fs-json-store";
 import {generate as generateRandomString} from "randomstring";
-import {mergeDeepRight, omit, pick} from "ramda";
 import {of} from "rxjs";
+import {pick} from "remeda";
 import {produce} from "immer";
 
 import {AccountConfigCreatePatch, AccountConfigUpdatePatch, PasswordFieldContainer} from "src/shared/model/container";
@@ -74,7 +74,7 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
         t.is(updatedSettings.accounts.length, 1, `1 account`);
         t.deepEqual(updatedSettings, expectedSettings, `settings with added account is returned`);
         t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings, `settings with added account is persisted`);
-        const initSessionByAccount1Arg = pick(["login", "proxy"], payload);
+        const initSessionByAccount1Arg = pick(payload, ["login", "proxy"]);
         t.is(1, initSessionByAccountMock.callCount);
         initSessionByAccountMock.calledWithExactly(t.context.ctx, initSessionByAccount1Arg);
 
@@ -95,7 +95,7 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
         t.is(updatedSettings2.accounts.length, 2);
         t.deepEqual(updatedSettings2, expectedSettings2, `settings with added account is returned`);
         t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings2, `settings with added account is persisted`);
-        const initSessionByAccount2Arg = pick(["login", "proxy"], payload2);
+        const initSessionByAccount2Arg = pick(payload2, ["login", "proxy"]);
         t.is(2, initSessionByAccountMock.callCount);
         initSessionByAccountMock.calledWithExactly(t.context.ctx, initSessionByAccount2Arg);
     },
@@ -108,16 +108,13 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
         } = t.context;
         const {addAccount, updateAccount} = endpoints;
         const addPayload = buildProtonmailAccountData();
-        const updatePayload: AccountConfigUpdatePatch = omit(
-            ["type"],
-            produce(addPayload, (draft) => {
-                (draft.entryUrl as any) = generateRandomString();
-                (draft.database as any) = Boolean(!draft.database);
-                draft.credentials.password = generateRandomString();
-                draft.credentials.mailPassword = generateRandomString();
-                draft.proxy = {proxyRules: "http=foopy:80;ftp=foopy2", proxyBypassRules: "<local>"};
-            }),
-        );
+        const updatePayload: AccountConfigUpdatePatch = produce(addPayload, (draft) => {
+            (draft.entryUrl as any) = generateRandomString();
+            (draft.database as any) = Boolean(!draft.database);
+            draft.credentials.password = generateRandomString();
+            draft.credentials.mailPassword = generateRandomString();
+            draft.proxy = {proxyRules: "http=foopy:80;ftp=foopy2", proxyBypassRules: "<local>"};
+        });
 
         await readConfigAndSettings(endpoints, {password: OPTIONS.masterPassword});
 
@@ -132,13 +129,13 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
         const updatedSettings = await updateAccount(updatePayload);
         const expectedSettings = produce(settings, (draft) => {
             (draft._rev as number)++;
-            Object.assign(draft.accounts[0], mergeDeepRight(draft.accounts[0], updatePayload));
+            Object.assign(draft.accounts[0], {...draft.accounts[0], ...updatePayload});
         });
 
         t.is(updatedSettings.accounts.length, 1, `1 account`);
         t.deepEqual(updatedSettings, expectedSettings, `settings with updated account is returned`);
         t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings, `settings with updated account is persisted`);
-        const configureSessionByAccountArg = pick(["login", "proxy"], updatePayload);
+        const configureSessionByAccountArg = pick(updatePayload, ["login", "proxy"]);
         t.is(1, configureSessionByAccountMock.callCount);
         configureSessionByAccountMock.calledWithExactly(configureSessionByAccountArg);
     },

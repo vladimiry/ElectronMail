@@ -1,4 +1,4 @@
-import {pick} from "ramda";
+import {pick} from "remeda";
 
 import {PACKAGE_NAME} from "src/shared/constants";
 
@@ -13,8 +13,8 @@ export const STATE: {
 } = {
     resolveKeytar: async () => {
         const keytar = pick(
-            ["getPassword", "setPassword", "deletePassword"],
             await import("keytar"), // tslint:disable-line:no-import-zones
+            ["getPassword", "setPassword", "deletePassword"],
         );
 
         STATE.resolveKeytar = async () => Promise.resolve(keytar);

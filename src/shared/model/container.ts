@@ -18,8 +18,8 @@ export interface NewPasswordFieldContainer {
 
 export interface PasswordChangeContainer extends PasswordFieldContainer, NewPasswordFieldContainer {}
 
-export type AccountConfigCreatePatch<T extends AccountType = AccountType> = AccountConfig<T>;
+export type AccountConfigCreatePatch<T extends AccountType = AccountType> = NoExtraProperties<Pick<AccountConfig<T>,
+    "type" | "login" | "title" | "entryUrl" | "database" | "credentials" | "proxy" | "loginDelayUntilSelected" | "loginDelaySecondsRange">>;
 
-export type AccountConfigUpdatePatch<T extends AccountType = AccountType> = Pick<AccountConfig<T>, "login">
-    & Partial<Pick<AccountConfig,
-    "login" | "title" | "entryUrl" | "database" | "credentials" | "proxy" | "loginDelayUntilSelected" | "loginDelaySecondsRange">>;
+export type AccountConfigUpdatePatch<T extends AccountType = AccountType> =
+    NoExtraProperties<Pick<AccountConfigCreatePatch<T>, "login"> & Partial<Skip<AccountConfigCreatePatch<T>, "type" | "login">>>;

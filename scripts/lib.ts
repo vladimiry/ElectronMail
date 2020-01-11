@@ -3,7 +3,7 @@ import chalk from "chalk";
 import fetch from "node-fetch";
 import path from "path";
 import spawnAsync from "@expo/spawn-async";
-import {pick} from "ramda";
+import {pick} from "remeda";
 
 export const CWD = path.resolve(process.cwd());
 
@@ -70,7 +70,7 @@ export async function fetchUrl(args: Arguments<typeof fetch>): ReturnType<typeof
     const response = await fetch(...args);
 
     if (!response.ok) {
-        throw new Error(`Downloading failed: ${JSON.stringify(pick(["status", "statusText"], response))}`);
+        throw new Error(`Downloading failed: ${JSON.stringify(pick(response, ["status", "statusText"]))}`);
     }
 
     return response;

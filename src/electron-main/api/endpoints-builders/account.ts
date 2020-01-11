@@ -1,4 +1,4 @@
-import {pick} from "ramda";
+import {pick} from "remeda";
 
 import {AccountConfig} from "src/shared/model/account";
 import {Context} from "src/electron-main/model";
@@ -28,7 +28,7 @@ export async function buildEndpoints(
 
             const result = await ctx.settingsStore.write(settings);
 
-            await initSessionByAccount(ctx, pick(["login", "proxy"], account));
+            await initSessionByAccount(ctx, pick(account, ["login", "proxy"]));
 
             return result;
         },
@@ -59,7 +59,7 @@ export async function buildEndpoints(
             }
 
             account.proxy = proxy;
-            await configureSessionByAccount(pick(["login", "proxy"], account));
+            await configureSessionByAccount(pick(account, ["login", "proxy"]));
 
             account.loginDelayUntilSelected = loginDelayUntilSelected;
             account.loginDelaySecondsRange = loginDelaySecondsRange;

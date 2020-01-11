@@ -154,7 +154,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
             proxyRules: controls.proxyRules.value && controls.proxyRules.value.trim(),
             proxyBypassRules: controls.proxyBypassRules.value && controls.proxyBypassRules.value.trim(),
         };
-        const patch: Readonly<AccountConfigUpdatePatch> = {
+        const patch: Readonly<AccountConfigCreatePatch | AccountConfigUpdatePatch> = {
             login: account
                 ? account.login :
                 controls.login.value,

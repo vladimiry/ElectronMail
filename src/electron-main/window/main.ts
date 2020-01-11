@@ -1,6 +1,6 @@
 import _logger from "electron-log";
 import {BrowserWindow, Rectangle, app, screen} from "electron";
-import {equals} from "ramda";
+import {equals} from "remeda";
 
 import {Context} from "src/electron-main/model";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";

@@ -1,6 +1,6 @@
 import electronLog from "electron-log";
 import sanitizeHtml from "sanitize-html";
-import {omit} from "ramda";
+import {omit} from "remeda";
 import {v4 as uuid} from "uuid";
 
 import {Context} from "src/electron-main/model";
@@ -151,7 +151,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             }
 
             return {
-                ...omit(["body"], mail),
+                ...omit(mail, ["body"]),
                 // TODO test "dbGetAccountMail" setting "mail.body" through the "sanitizeHtml" call
                 body: sanitizeHtml(mail.body),
             };

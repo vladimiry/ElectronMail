@@ -1,5 +1,5 @@
 import electronLog from "electron-log";
-import {equals, mergeDeepRight} from "ramda";
+import {equals} from "remeda";
 
 import {AccountType} from "src/shared/model/account";
 import {Folder, FsDb, FsDbAccount, MAIL_FOLDER_TYPE, PROTONMAIL_MAILBOX_IDENTIFIERS} from "src/shared/model/database";
@@ -64,7 +64,8 @@ export function patchMetadata(
         return false;
     }
 
-    const merged = mergeDeepRight(target, source);
+    // TODO apply "merge deep" logic if metadata becomes nested object
+    const merged = {...target, ...source} as const;
 
     // console.log(JSON.stringify({target, source, merged}, null, 2));
 

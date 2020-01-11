@@ -1,4 +1,4 @@
-import R from "ramda";
+import {omit, pipe, sort, sortBy} from "remeda";
 
 import {CONVERSATION_TYPE, ConversationEntry, FsDb, FsDbAccount, MAIL_FOLDER_TYPE, View} from "src/shared/model/database";
 import {mailDateComparatorDefaultsToDesc, walkConversationNodesTree} from "src/shared/util";
@@ -48,11 +48,11 @@ export const FOLDER_UTILS: {
     };
 
     type Customizer = typeof customizers[keyof typeof MAIL_FOLDER_TYPE._.nameValueMap];
+
     type CustomizerResolver = (folder: View.Folder) => Customizer;
 
-    const sortByName = R.sortBy(
-        R.prop(((prop: keyof Pick<View.Folder, "name">) => prop)("name")),
-    );
+    const sortByNameProp = sortBy(({name}: View.Folder) => name);
+
     const buildCustomizerBasedComparator = (customizer: CustomizerResolver) => {
         return (o1: View.Folder, o2: View.Folder) => {
             return customizer(o1).order - customizer(o2).order;
@@ -67,12 +67,13 @@ export const FOLDER_UTILS: {
                 ] as [View.Folder, Customizer])),
             );
             const bundle = {
-                system: R.sort(
-                    buildCustomizerBasedComparator(customizer),
+                system: sort(
                     folders.filter(({folderType}) => folderType !== MAIL_FOLDER_TYPE.CUSTOM),
+                    buildCustomizerBasedComparator(customizer),
                 ),
-                custom: sortByName(
+                custom: pipe(
                     folders.filter(({folderType}) => folderType === MAIL_FOLDER_TYPE.CUSTOM),
+                    sortByNameProp,
                 ),
             } as const;
 
@@ -167,7 +168,7 @@ export function buildFoldersAndRootNodePrototypes<T extends keyof FsDb["accounts
         if (resolvedMail) {
             node.mail = {
                 // TODO use "pick" instead of "omit", ie prefer whitelisting over blacklisting
-                ...R.omit(["raw", "body", "attachments"], resolvedMail),
+                ...omit(resolvedMail, ["raw", "body", "attachments"]),
                 folders: [],
             };
 

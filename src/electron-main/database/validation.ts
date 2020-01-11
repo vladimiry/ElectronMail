@@ -1,7 +1,7 @@
 import _logger from "electron-log";
 import {ClassType, TransformValidationOptions, transformAndValidate} from "class-transformer-validator";
 import {ValidationError} from "class-validator";
-import {flatten} from "ramda";
+import {flatten} from "remeda";
 
 import * as Entities from "./entity";
 import {AccountType} from "src/shared/model/account";

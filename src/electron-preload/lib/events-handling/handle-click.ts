@@ -1,5 +1,3 @@
-import {URL} from "@cliqz/url-parser";
-
 import {IPC_MAIN_API} from "src/shared/api/main";
 import {Logger} from "src/shared/model/common";
 import {parsePackagedWebClientUrl} from "src/shared/util";

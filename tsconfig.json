@@ -31,8 +31,7 @@
     "outDir": "./app",
     "baseUrl": ".",
     "paths": {
-      "remeda/*": ["./node_modules/remeda/dist/es/*"],
-      "@cliqz/url-parser/*": ["./node_modules/@cliqz/url-parser/build/es6/*"]
+      "remeda/*": ["./node_modules/remeda/dist/es/*"]
     },
     "typeRoots": [
       "./node_modules/@types",

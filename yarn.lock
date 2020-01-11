@@ -395,13 +395,6 @@
     source-map-support "0.5.9"
     tsutils "2.27.2"
 
-"@cliqz/url-parser@1.1.1":
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/@cliqz/url-parser/-/url-parser-1.1.1.tgz#53dbc764e19b509beb55bc7e29f5cb099b297c89"
-  integrity sha512-qV5ziZF1nioIt7KbS+akm8y+a7mD7Tm390Lh75Ocrf++PBCTac8gpbWnIUb4/bW6FduR/CZNUTjoT0/RqPwGmw==
-  dependencies:
-    tldts-experimental "^5.3.1"
-
 "@concordance/react@^2.0.0":
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@concordance/react/-/react-2.0.0.tgz#aef913f27474c53731f4fd79cc2f54897de90fde"
@@ -12166,18 +12159,6 @@ tlds@^1.203.0:
   version "1.207.0"
   resolved "https://registry.yarnpkg.com/tlds/-/tlds-1.207.0.tgz#459264e644cf63ddc0965fece3898913286b1afd"
   integrity sha512-k7d7Q1LqjtAvhtEOs3yN14EabsNO8ZCoY6RESSJDB9lst3bTx3as/m1UuAeCKzYxiyhR1qq72ZPhpSf+qlqiwg==
-
-tldts-core@^5.6.3:
-  version "5.6.3"
-  resolved "https://registry.yarnpkg.com/tldts-core/-/tldts-core-5.6.3.tgz#d80ce1e93b58ba0614701c28450360fc6986aaf1"
-  integrity sha512-E7Jtwgy5ZKXuKm3tb2Z73t0AgiGTnGnVrGfBAJj0nS2tENCclb/Ym5yt+wOdDW+8uJg0bI/BxHmbvUyLAYpcPQ==
-
-tldts-experimental@^5.3.1:
-  version "5.6.3"
-  resolved "https://registry.yarnpkg.com/tldts-experimental/-/tldts-experimental-5.6.3.tgz#a59f7751f208202883187c362141b9462544d56a"
-  integrity sha512-d/gWTSD7O3b11s+OQQj9/PRO/cTFXqSXe5v4Y3damEQP1urFupQE3MPSLoZaWp2iQRJB/hRlPwfOH3TNzoqZRA==
-  dependencies:
-    tldts-core "^5.6.3"
 
 tmp@0.0.33, tmp@0.0.x, tmp@^0.0.33:
   version "0.0.33"

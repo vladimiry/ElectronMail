@@ -1,6 +1,5 @@
 import {ElectronLog} from "electron-log"; // tslint:disable-line:no-import-zones
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
-import {URL} from "@cliqz/url-parser";
 import {pick} from "remeda";
 
 import {AccountConfig, AccountType} from "./model/account";

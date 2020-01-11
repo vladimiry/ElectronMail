@@ -103,7 +103,6 @@
     ]
   },
   "dependencies": {
-    "@cliqz/url-parser": "1.1.1",
     "@msgpack/msgpack": "1.10.0",
     "@rgba-image/lanczos": "0.1.0",
     "@vladimiry/unionize": "2.1.2-add-tagprefix-option",

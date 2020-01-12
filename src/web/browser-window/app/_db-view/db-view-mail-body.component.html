@@ -6,6 +6,7 @@
             class="flex-column root-node-container"
         >
             <ng-container
+                *ngIf="!(conversationCollapsed$ | async)"
                 [ngTemplateOutletContext]="{nodes: [rootNode], level: 0}"
                 [ngTemplateOutlet]="nodesTemplate"
             ></ng-container>

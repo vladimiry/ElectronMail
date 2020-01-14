@@ -4,7 +4,7 @@ import fsExtra from "fs-extra";
 import path from "path";
 import {promisify} from "util";
 
-import {FolderAsDomainEntry, execAccountTypeFlow} from "./lib";
+import {FolderAsDomainEntry, execAccountTypeFlow, printAndWriteFile} from "./lib";
 import {LOG, LOG_LEVELS, execShell} from "scripts/lib";
 import {PROVIDER_REPOS} from "src/shared/constants";
 
@@ -99,18 +99,15 @@ const folderAsDomainEntries: Array<FolderAsDomainEntry<{
                         } as const;
                     })();
 
-                    const webpackConfigFileContent = `
-                        const webpackConfig = require("${originalWebpackConfigFile}");
-                        ${resolveWebpackConfigPatchingCode("webpackConfig")}
-                        ${hasSeenOboardingModalSuppressor.webpackConfigCodePatch}
-                        module.exports = webpackConfig;
-                    `;
-
-                    LOG(
-                        LOG_LEVELS.title(`Writing ${LOG_LEVELS.value(webpackConfigFile)} file with content:`),
-                        LOG_LEVELS.value(webpackConfigFileContent),
+                    printAndWriteFile(
+                        webpackConfigFile,
+                        `
+                            const webpackConfig = require("${originalWebpackConfigFile}");
+                            ${resolveWebpackConfigPatchingCode("webpackConfig")}
+                            ${hasSeenOboardingModalSuppressor.webpackConfigCodePatch}
+                            module.exports = webpackConfig;
+                        `,
                     );
-                    await promisify(fs.writeFile)(webpackConfigFile, webpackConfigFileContent);
 
                     await execShell(["npm", ["run", "build", "--", "--api", configApiParam], {cwd}]);
 
@@ -167,21 +164,18 @@ async function configure(
     {folderNameAsDomain, options}: FolderAsDomainEntry,
 ): Promise<{ configApiParam: string }> {
     const {configApiParam} = options;
-    const envFile = path.join(cwd, envFileName);
-    const envFileContent = JSON.stringify({
-        appConfig: PROVIDER_REPOS[repoType].protonPackAppConfig,
-        [configApiParam]: {
-            // https://github.com/ProtonMail/WebClient/issues/166#issuecomment-561060855
-            api: `https://${folderNameAsDomain}/api`,
-            secure: "https://secure.protonmail.com",
-        },
-    }, null, 2);
 
-    LOG(
-        LOG_LEVELS.title(`Writing ${LOG_LEVELS.value(envFile)} file with content:`),
-        LOG_LEVELS.value(envFileContent),
+    printAndWriteFile(
+        path.join(cwd, envFileName),
+        JSON.stringify({
+            appConfig: PROVIDER_REPOS[repoType].protonPackAppConfig,
+            [configApiParam]: {
+                // https://github.com/ProtonMail/WebClient/issues/166#issuecomment-561060855
+                api: `https://${folderNameAsDomain}/api`,
+                secure: "https://secure.protonmail.com",
+            },
+        }, null, 2),
     );
-    await promisify(fs.writeFile)(envFile, envFileContent);
 
     return {configApiParam};
 }
@@ -190,20 +184,15 @@ async function configure(
 async function writeProtonConfigFile(
     {cwd}: { cwd: string; },
 ): Promise<void> {
-    const file = path.join(cwd, "./proton.config.js");
-    const fileContent = `
-        module.exports = (webpackConfig) => {
-            ${resolveWebpackConfigPatchingCode("webpackConfig")}
-            return webpackConfig;
-        }
-    `;
-
-    LOG(
-        LOG_LEVELS.title(`Writing ${LOG_LEVELS.value(file)} file with content:`),
-        LOG_LEVELS.value(fileContent),
+    printAndWriteFile(
+        path.join(cwd, "./proton.config.js"),
+        `
+            module.exports = (webpackConfig) => {
+                ${resolveWebpackConfigPatchingCode("webpackConfig")}
+                return webpackConfig;
+            }
+        `,
     );
-
-    await promisify(fs.writeFile)(file, fileContent);
 }
 
 function resolveWebpackConfigPatchingCode(webpackConfigVarName = "webpackConfig"): string {

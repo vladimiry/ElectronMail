@@ -101,11 +101,15 @@ export function initWebRequestListeners(ctx: Context, session: Session) {
             callback,
         ) => {
             const requestProxy = PROXIES.get(details.id);
-            const responseHeaders = requestProxy
-                ? responseHeadersPatchHandlers[requestProxy.accountType]({details, requestProxy})
-                : details.responseHeaders;
 
-            callback({responseHeaders});
+            if (requestProxy) {
+                const patch = responseHeadersPatchHandlers[requestProxy.accountType];
+                const responseHeaders = patch({details, requestProxy});
+                callback({responseHeaders});
+                return;
+            }
+
+            callback({});
         },
     );
 }
@@ -162,11 +166,11 @@ function resolveRequestProxy<T extends AccountType>(
 // TODO consider doing initial preflight/OPTIONS call to https://mail.protonmail.com
 // and then pick all the "Access-Control-*" header names as a template instead of hardcoding the default headers
 // since over time the server may start giving other headers
-const responseHeadersPatchHandlers: {
+const responseHeadersPatchHandlers: ReadonlyDeep<{
     [k in AccountType]: (
         arg: { requestProxy: RequestProxy, details: ResponseDetails; },
     ) => ResponseDetails["responseHeaders"];
-} = (() => {
+}> = (() => {
     const commonPatch: typeof responseHeadersPatchHandlers[AccountType] = ({requestProxy, details: {responseHeaders}}) => {
         patchResponseHeader(
             responseHeaders,

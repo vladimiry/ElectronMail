@@ -1,3 +1,4 @@
+import fs from "fs";
 import fsExtra from "fs-extra";
 import mkdirp from "mkdirp";
 import path from "path";
@@ -5,7 +6,7 @@ import pathIsInside from "path-is-inside";
 import {promisify} from "util";
 
 import {CWD, LOG, LOG_LEVELS, execShell} from "scripts/lib";
-import {PROVIDER_REPOS} from "src/shared/constants";
+import {PROVIDER_REPOS, WEB_CLIENTS_BLANK_HTML_FILE} from "src/shared/constants";
 
 const REPOS_ONLY_FILTER: ReadonlyArray<keyof typeof PROVIDER_REPOS> = (() => {
     const {ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY} = process.env;
@@ -25,14 +26,14 @@ const REPOS_ONLY_FILTER: ReadonlyArray<keyof typeof PROVIDER_REPOS> = (() => {
     return result;
 })();
 
-const [, , baseDestDir] = process.argv;
+const [, , BASE_DEST_DIR] = process.argv;
 
-if (!baseDestDir) {
+if (!BASE_DEST_DIR) {
     throw new Error(`Empty base destination directory argument`);
 }
 
-if (!pathIsInside(path.resolve(CWD, baseDestDir), CWD)) {
-    throw new Error(`Invalid base destination directory argument value: ${LOG_LEVELS.value(baseDestDir)}`);
+if (!pathIsInside(path.resolve(CWD, BASE_DEST_DIR), CWD)) {
+    throw new Error(`Invalid base destination directory argument value: ${LOG_LEVELS.value(BASE_DEST_DIR)}`);
 }
 
 export interface FolderAsDomainEntry<T extends any = any> {
@@ -55,7 +56,7 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
         destSubFolder,
         flows: {
             preInstall,
-            install = async ({repoDir}) => installDependencies(repoDir),
+            install = installDependencies,
             build,
         },
     }: {
@@ -81,7 +82,7 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
         return;
     }
 
-    const destDir = path.resolve(baseDestDir);
+    const destDir = path.resolve(BASE_DEST_DIR);
     const baseRepoDir = path.resolve(
         CWD,
         `./output/git/${repoType}`,
@@ -105,6 +106,11 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
         const repoDir = path.resolve(baseRepoDir, folderAsDomainEntry.folderNameAsDomain);
         const distDir = path.resolve(repoDir, repoRelativeDistDir);
         const flowArg = {repoDir, folderAsDomainEntry};
+
+        printAndWriteFile(
+            path.join(distDir, WEB_CLIENTS_BLANK_HTML_FILE),
+            ``,
+        );
 
         if (await fsExtra.pathExists(repoDir)) {
             LOG(LOG_LEVELS.warning(`Skipping cloning`));
@@ -133,8 +139,8 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
     }
 }
 
-async function installDependencies(dir: string) {
-    await execShell(["npm", ["ci"], {cwd: dir}]);
+async function installDependencies({repoDir: cwd}: { repoDir: string }) {
+    await execShell(["npm", ["ci"], {cwd}]);
 }
 
 async function clone(repoType: keyof typeof PROVIDER_REPOS, dir: string) {
@@ -145,4 +151,12 @@ async function clone(repoType: keyof typeof PROVIDER_REPOS, dir: string) {
     await execShell(["git", ["clone", repo, "."], {cwd: dir}]);
     await execShell(["git", ["checkout", commit], {cwd: dir}]);
     await execShell(["git", ["show", "--summary"], {cwd: dir}]);
+}
+
+export function printAndWriteFile(file: string, content: Buffer | string) {
+    LOG(
+        LOG_LEVELS.title(`Writing ${LOG_LEVELS.value(file)} file with content:`),
+        LOG_LEVELS.value(content),
+    );
+    fs.writeFileSync(file, content);
 }

@@ -138,6 +138,8 @@ export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlIte
     },
 };
 
+export const WEB_CLIENTS_BLANK_HTML_FILE = "blank.html";
+
 function getBuiltInWebClientTitle(): string {
     return `${PROVIDER_REPOS.WebClient.version} / ${PROVIDER_REPOS.WebClient.commit.substr(0, 7)}`;
 }

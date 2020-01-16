@@ -5,12 +5,11 @@ import {Observable, Subscription, merge} from "rxjs";
 import {Store, select} from "@ngrx/store";
 import {concatMap, distinctUntilChanged, map, mergeMap} from "rxjs/operators";
 
-import {ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX} from "src/shared/constants";
 import {AccountConfig} from "src/shared/model/account";
 import {AccountConfigCreateUpdatePatch} from "src/shared/model/container";
-import {EntryUrlItem} from "src/shared/model/common";
 import {OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
+import {PROTON_API_ENTRY_RECORDS} from "src/shared/constants";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
 import {validateLoginDelaySecondsRange} from "src/shared/util";
@@ -25,7 +24,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     // form
     advancedBlockCollapsed: boolean = true;
 
-    entryUrlItems: EntryUrlItem[] = [];
+    entryUrlItems = PROTON_API_ENTRY_RECORDS;
     controls: Record<keyof Pick<AccountConfig,
         | "login" | "title" | "database" | "entryUrl" | "loginDelayUntilSelected" | "loginDelaySecondsRange">
         | keyof Pick<Required<Required<AccountConfig>["proxy"]>, "proxyRules" | "proxyBypassRules">
@@ -180,10 +179,6 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         }
 
         this.store.dispatch(OPTIONS_ACTIONS.RemoveAccountRequest(account));
-    }
-
-    isLocalWebClient({value}: EntryUrlItem): boolean {
-        return value.startsWith(ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX);
     }
 
     ngOnDestroy() {

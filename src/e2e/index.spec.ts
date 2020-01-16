@@ -12,10 +12,9 @@ import psTree from "ps-tree";
 import {ExecutionContext} from "ava";
 import {promisify} from "util";
 
-import {ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX} from "src/shared/constants";
 import {CI, ENV, PROJECT_NAME, TestContext, initApp, saveScreenshot, test} from "./workflow";
 import {Config} from "src/shared/model/options";
-import {ONE_SECOND_MS} from "src/shared/constants";
+import {ONE_SECOND_MS, PROTON_API_ENTRY_URLS} from "src/shared/constants";
 import {asyncDelay} from "src/shared/util";
 
 test.serial("general actions: app start, master password setup, add accounts", async (t) => {
@@ -25,15 +24,11 @@ test.serial("general actions: app start, master password setup, add accounts", a
     await saveScreenshot(t);
 
     await app.login({setup: true, savePassword: false});
-    await app.addAccount({
-        entryUrlValue: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://app.protonmail.ch`,
-    });
-    await app.addAccount({
-        entryUrlValue: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.protonmail.com`,
-    });
-    await app.addAccount({ // no online .onion domain loading, but offline works
-        entryUrlValue: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://protonirockerxow.onion`,
-    });
+
+    for (const entryUrlValue of PROTON_API_ENTRY_URLS) {
+        await app.addAccount({entryUrlValue});
+    }
+
     await app.logout();
 
     await app.destroyApp();

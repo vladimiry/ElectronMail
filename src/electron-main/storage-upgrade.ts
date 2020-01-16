@@ -2,12 +2,6 @@ import _logger from "electron-log";
 import compareVersions from "compare-versions";
 import path from "path";
 
-import {
-    ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX,
-    PACKAGE_VERSION,
-    PROTON_API_ENTRY_URLS,
-    PROTON_PRIMARY_ENTRY_POINT_VALUE,
-} from "src/shared/constants";
 import {AccountConfig} from "src/shared/model/account";
 import {Config, Settings} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
@@ -17,6 +11,7 @@ import {DbAccountPk} from "src/shared/model/database";
 import {INITIAL_STORES} from "./constants";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {PACKAGE_VERSION, PROTON_API_ENTRY_PRIMARY_VALUE, PROTON_API_ENTRY_URLS, PROTON_API_ENTRY_VALUE_PREFIX} from "src/shared/constants";
 import {curryFunctionMembers, pickBaseConfigProperties} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[src/electron-main/storage-upgrade]");
@@ -259,30 +254,30 @@ export const upgradeSettings: (settings: Settings, ctx: Context) => boolean = ((
                     delete account.storeMails;
                 });
             },
-            "2.0.0": (settings) => {
-                // dropping "online web clients" support, see https://github.com/vladimiry/ElectronMail/issues/80
-                settings.accounts.forEach((account) => {
-                    if (PROTON_API_ENTRY_URLS.includes(account.entryUrl)) {
-                        return;
-                    }
-                    account.entryUrl = `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}${account.entryUrl}`;
-                });
-            },
+            // "2.0.0": (settings) => {
+            //     // dropping "online web clients" support, see https://github.com/vladimiry/ElectronMail/issues/80
+            //     settings.accounts.forEach((account) => {
+            //         if (PROTON_API_ENTRY_URLS.includes(account.entryUrl)) {
+            //             return;
+            //         }
+            //         account.entryUrl = `${PROTON_API_ENTRY_VALUE_PREFIX}${account.entryUrl}`;
+            //     });
+            // },
             "3.5.0": (settings) => {
                 // dropping https://beta.protonmail.com entry point, see https://github.com/vladimiry/ElectronMail/issues/164
                 settings.accounts.forEach((account) => {
                     // it can be either "https://beta.protonmail.com" or "local:::https://beta.protonmail.com"
                     // since above defined "2.0.0" upgrade adds "local:::"
                     if (account.entryUrl.includes("https://beta.protonmail.com")) { // lgtm [js/incomplete-url-substring-sanitization]
-                        account.entryUrl = PROTON_PRIMARY_ENTRY_POINT_VALUE;
+                        account.entryUrl = PROTON_API_ENTRY_PRIMARY_VALUE;
                     }
-                    if (
-                        !PROTON_API_ENTRY_URLS.includes(account.entryUrl)
-                        &&
-                        !account.entryUrl.includes("https://mail.tutanota.com") // tutanota accounts will be dropped by "4.0.0" upgrader
-                    ) {
-                        throw new Error(`Invalid entry url value "${account.entryUrl}"`);
-                    }
+                    // if (
+                    //     !PROTON_API_ENTRY_URLS.includes(account.entryUrl)
+                    //     &&
+                    //     !account.entryUrl.includes("https://mail.tutanota.com") // tutanota accounts will be dropped by "4.0.0" upgrader
+                    // ) {
+                    //     throw new Error(`Invalid entry url value "${account.entryUrl}"`);
+                    // }
                 });
             },
             "4.0.0": (settings) => {
@@ -315,12 +310,20 @@ export const upgradeSettings: (settings: Settings, ctx: Context) => boolean = ((
 
                 logger.debug(message);
 
-                // mutation the settings
+                // required data mutation
                 settings.accounts = protonmailAccounts;
             },
             "4.2.0": (settings) => {
-                settings.accounts.forEach((account) => {
+                settings.accounts.forEach((account, index) => {
                     delete (account as unknown as { type: string }).type;
+
+                    if (account.entryUrl.startsWith(PROTON_API_ENTRY_VALUE_PREFIX)) {
+                        account.entryUrl = account.entryUrl.substr(PROTON_API_ENTRY_VALUE_PREFIX.length);
+                    }
+
+                    if (!PROTON_API_ENTRY_URLS.includes(account.entryUrl)) {
+                        throw new Error(`Invalid entry url value: "${account.entryUrl}" (account index: ${index})`);
+                    }
                 });
             },
         };

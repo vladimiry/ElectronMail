@@ -29,7 +29,7 @@
         <div class="form-group required">
             <ng-template #entryUrlItemTemplate let-item="item" let-index="index">
                 {{ item.title }}
-                <div class="badge badge-secondary" [ngClass]="{'badge-local': isLocalWebClient(item)}">
+                <div class="badge badge-secondary badge-local">
                     web client:
                 </div>
             </ng-template>

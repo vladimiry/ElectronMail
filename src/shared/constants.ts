@@ -115,21 +115,21 @@ export const LOCAL_WEBCLIENT_PROTOCOL_PREFIX = "webclient";
 
 export const LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN = `${LOCAL_WEBCLIENT_PROTOCOL_PREFIX}[\\d]+`;
 
-export const ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX = "local:::";
+export const PROTON_API_ENTRY_VALUE_PREFIX = "local:::";
 
-export const PROTON_PRIMARY_ENTRY_POINT_VALUE = `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.protonmail.com`;
+export const PROTON_API_ENTRY_PRIMARY_VALUE = "https://mail.protonmail.com";
 
 export const PROTON_API_ENTRY_RECORDS: ReadonlyDeep<EntryUrlItem[]> = [
     {
-        value: PROTON_PRIMARY_ENTRY_POINT_VALUE,
-        title: `${PROTON_PRIMARY_ENTRY_POINT_VALUE} (${getBuiltInWebClientTitle()})`,
+        value: PROTON_API_ENTRY_PRIMARY_VALUE,
+        title: `${PROTON_API_ENTRY_PRIMARY_VALUE} (${getBuiltInWebClientTitle()})`,
     },
     {
-        value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://app.protonmail.ch`,
+        value: "https://app.protonmail.ch",
         title: `https://app.protonmail.ch (${getBuiltInWebClientTitle()})`,
     },
     {
-        value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://protonirockerxow.onion`,
+        value: "https://protonirockerxow.onion",
         title: `https://protonirockerxow.onion (${getBuiltInWebClientTitle()})`,
     },
 ];

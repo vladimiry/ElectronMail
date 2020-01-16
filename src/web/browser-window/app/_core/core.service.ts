@@ -1,8 +1,8 @@
 import {Injectable, NgZone} from "@angular/core";
 import {Store} from "@ngrx/store";
 
-import {ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX, PROVIDER_REPOS} from "src/shared/constants";
 import {AppAction, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {PROVIDER_REPOS} from "src/shared/constants";
 import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {State} from "src/web/browser-window/app/store/reducers/root";
 import {WebAccount} from "src/web/browser-window/app/model";
@@ -16,9 +16,9 @@ export class CoreService {
 
     parseEntryUrl(
         config: WebAccount["accountConfig"],
-        type: keyof typeof PROVIDER_REPOS,
+        repoType: keyof typeof PROVIDER_REPOS,
     ): Readonly<{ entryUrl: string; entryApiUrl: string; }> {
-        const entryApiUrl = config.entryUrl.split(ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX).pop();
+        const entryApiUrl = config.entryUrl;
 
         if (!entryApiUrl || !entryApiUrl.startsWith("https://")) {
             throw new Error(`Invalid "entryApiUrl" value: "${entryApiUrl}"`);
@@ -30,7 +30,7 @@ export class CoreService {
         if (!bundle) {
             throw new Error(`Invalid "entryUrl" value: "${JSON.stringify(bundle)}"`);
         }
-        const {baseDir} = PROVIDER_REPOS[type];
+        const {baseDir} = PROVIDER_REPOS[repoType];
         const entryUrl = `${bundle.entryUrl}${baseDir ? "/" + baseDir : ""}`;
 
         return {

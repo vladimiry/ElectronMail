@@ -2,7 +2,7 @@ import {Session, session} from "electron";
 import {concatMap} from "rxjs/operators";
 import {from, race, throwError, timer} from "rxjs";
 
-import {AccountConfig, AccountType} from "src/shared/model/account";
+import {AccountConfig} from "src/shared/model/account";
 import {Context} from "./model";
 import {ONE_SECOND_MS, PACKAGE_NAME} from "src/shared/constants";
 import {getWebViewPartition} from "src/shared/util";
@@ -13,7 +13,7 @@ const usedPartitions: Set<Parameters<typeof initSessionByAccount>[1]["login"]> =
 
 export async function initSessionByAccount(
     ctx: Context,
-    account: Pick<AccountConfig<AccountType>, "login" | "proxy">,
+    account: Pick<AccountConfig, "login" | "proxy">,
 ): Promise<void> {
     const partition = getWebViewPartition(account.login);
 
@@ -37,7 +37,7 @@ export async function initSession(
 }
 
 export async function configureSessionByAccount(
-    account: Pick<AccountConfig<AccountType>, "login" | "proxy">,
+    account: Pick<AccountConfig, "login" | "proxy">,
 ): Promise<void> {
     const {proxy} = account;
     const partition = getWebViewPartition(account.login);

@@ -11,7 +11,7 @@ import {of} from "rxjs";
 import {pick} from "remeda";
 import {produce} from "immer";
 
-import {AccountConfigCreatePatch, AccountConfigUpdatePatch, PasswordFieldContainer} from "src/shared/model/container";
+import {AccountConfigCreateUpdatePatch, PasswordFieldContainer} from "src/shared/model/container";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
 import {INITIAL_STORES} from "src/electron-main/constants";
@@ -85,7 +85,10 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
             t.is(messageEnd, message.substr(message.indexOf(messageEnd)), "Account.login unique constraint");
         }
 
-        const payload2: AccountConfigCreatePatch = {...payload, ...{login: "login2", proxy: {proxyRules: "http=foopy:80;ftp=foopy2"}}};
+        const payload2: AccountConfigCreateUpdatePatch = {
+            ...payload,
+            ...{login: "login2", proxy: {proxyRules: "http=foopy:80;ftp=foopy2"}},
+        };
         const updatedSettings2 = await addAccount(payload2);
         const expectedSettings2 = produce(updatedSettings, (draft) => {
             (draft._rev as number)++;
@@ -108,7 +111,7 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
         } = t.context;
         const {addAccount, updateAccount} = endpoints;
         const addPayload = buildProtonmailAccountData();
-        const updatePayload: AccountConfigUpdatePatch = produce(addPayload, (draft) => {
+        const updatePayload: AccountConfigCreateUpdatePatch = produce(addPayload, (draft) => {
             (draft.entryUrl as any) = generateRandomString();
             (draft.database as any) = Boolean(!draft.database);
             draft.credentials.password = generateRandomString();
@@ -721,9 +724,8 @@ test.beforeEach(async (t) => {
     // TODO make sure "IPC_MAIN_API.register" has been called
 });
 
-function buildProtonmailAccountData(): Readonly<AccountConfigCreatePatch<"protonmail">> {
+function buildProtonmailAccountData(): Readonly<AccountConfigCreateUpdatePatch> {
     return {
-        type: "protonmail",
         login: generateRandomString(),
         entryUrl: generateRandomString(),
         credentials: {

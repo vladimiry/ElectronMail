@@ -4,7 +4,7 @@ import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/constants";
 import {curryFunctionMembers} from "src/shared/util";
 import {depersonalizeLoggedUrl} from "src/electron-preload/webview/primary/util";
 
-const logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail.primary, "[notifications]");
+const logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, "[notifications]");
 
 export const AJAX_SEND_NOTIFICATION_SKIP_PARAM = `ajax-send-notification-skip-${Date.now()}`;
 

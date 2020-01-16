@@ -1,9 +1,7 @@
 import _logger from "electron-log";
 import {ContextMenuParams, Event, Menu, MenuItemConstructorOptions, WebContents, app, clipboard} from "electron";
 
-import {ACCOUNTS_CONFIG, ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX} from "src/shared/constants";
 import {Context} from "./model";
-import {EntryUrlItem} from "src/shared/model/common";
 import {IPC_MAIN_API_NOTIFICATION$} from "./api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {PLATFORM} from "src/electron-main/constants";
@@ -126,29 +124,24 @@ export async function initWebContentsCreatingHandlers(ctx: Context) {
                     logger.error(event.type, preloadPath, error);
                 },
                 "will-attach-webview": (() => {
-                    const srcWhitelist: string[] = Object
-                        .values(ACCOUNTS_CONFIG)
-                        .reduce((list: EntryUrlItem[], {entryUrl}) => list.concat(entryUrl), [])
-                        .filter((item) => !item.value.startsWith(ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX))
-                        .map(({value}) => value)
-                        .concat(
-                            Object
-                                .values(ctx.locations.webClients)
-                                .map((locationsMap) => Object.values(locationsMap))
-                                .reduce((list: typeof entryUrls, entryUrls) => list.concat(entryUrls), [])
-                                .map(({entryUrl}) => entryUrl),
-                        );
+                    const allowedPrefixes: readonly string[] = ctx.locations.webClients.map(({entryUrl}) => entryUrl);
                     const result: (typeof subscriptions)["will-attach-webview"] = (willAttachWebviewEvent, webPreferences, {src}) => {
-                        const allowedSrc = srcWhitelist.some((allowedPrefix) => src.startsWith(allowedPrefix));
+                        const allowedSrc = allowedPrefixes.some((allowedPrefix) => src.startsWith(allowedPrefix));
 
                         webPreferences.nodeIntegration = false;
 
-                        if (!allowedSrc) {
-                            willAttachWebviewEvent.preventDefault();
-                            logger.error(new Error(`Forbidden webview.src: "${allowedSrc}"`));
+                        if (allowedSrc) {
+                            return;
                         }
-                    };
 
+                        willAttachWebviewEvent.preventDefault();
+
+                        const message = `Forbidden webview.src: "${allowedSrc}"`;
+                        IPC_MAIN_API_NOTIFICATION$.next(
+                            IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({message}),
+                        );
+                        logger.error(new Error(message));
+                    };
                     return result;
                 })(),
             };

@@ -2,7 +2,7 @@ import {ActionType, ScanService, createWebViewApiService} from "electron-rpc-api
 
 import {DbAccountPk, FsDbAccount, Mail} from "src/shared/model/database";
 import {LoginFieldContainer, MailPasswordFieldContainer, PasswordFieldContainer} from "src/shared/model/container";
-import {NotificationsProton} from "src/shared/model/account";
+import {Notifications} from "src/shared/model/account";
 import {PACKAGE_NAME} from "src/shared/constants";
 import {ProtonSharedSession} from "src/shared/model/proton";
 import {ReadonlyDeep} from "type-fest";
@@ -15,7 +15,7 @@ export type ProtonApiScan = ScanService<typeof PROTONMAIL_IPC_WEBVIEW_API>;
 
 export type ProtonApi = ProtonApiScan["ApiClient"];
 
-export type ProtonNotificationOutput = Partial<NotificationsProton> & Partial<{ batchEntityUpdatesCounter: number }>;
+export type ProtonNotificationOutput = Partial<Notifications> & Partial<{ batchEntityUpdatesCounter: number }>;
 
 export const PROTONMAIL_IPC_WEBVIEW_API_DEFINITION = {
     ping:
@@ -27,7 +27,7 @@ export const PROTONMAIL_IPC_WEBVIEW_API_DEFINITION = {
     login2fa:
         Promise<ReadonlyDeep<{ secret: string } & ZoneApiParameter>>(),
     buildDbPatch:
-        Observable<ReadonlyDeep<DbAccountPk & { metadata: Readonly<FsDbAccount<"protonmail">["metadata"]> | null; } & ZoneApiParameter>>(),
+        Observable<ReadonlyDeep<DbAccountPk & { metadata: Readonly<FsDbAccount["metadata"]> | null; } & ZoneApiParameter>>(),
     selectMailOnline:
         Promise<ReadonlyDeep<{
             pk: DbAccountPk; mail: Pick<Mail, "id" | "mailFolderIds" | "conversationEntryPk">;

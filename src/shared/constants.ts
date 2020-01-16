@@ -1,5 +1,5 @@
-import {AccountType} from "src/shared/model/account";
 import {EntryUrlItem, LogLevel} from "./model/common";
+import {ReadonlyDeep} from "type-fest";
 
 const {
     name: PACKAGE_NAME,
@@ -117,26 +117,26 @@ export const LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN = `${LOCAL_WEBCLIENT_PROTOCOL_P
 
 export const ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX = "local:::";
 
-export const PROTONMAIL_PRIMARY_ENTRY_POINT_VALUE = `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.protonmail.com`;
+export const PROTON_PRIMARY_ENTRY_POINT_VALUE = `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.protonmail.com`;
 
-export const ACCOUNTS_CONFIG: Record<AccountType, Record<"entryUrl", EntryUrlItem[]>> = {
-    protonmail: {
-        entryUrl: [
-            {
-                value: PROTONMAIL_PRIMARY_ENTRY_POINT_VALUE,
-                title: `https://mail.protonmail.com (${getBuiltInWebClientTitle()})`,
-            },
-            {
-                value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://app.protonmail.ch`,
-                title: `https://app.protonmail.ch (${getBuiltInWebClientTitle()})`,
-            },
-            {
-                value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://protonirockerxow.onion`,
-                title: `https://protonirockerxow.onion (${getBuiltInWebClientTitle()})`,
-            },
-        ],
+export const PROTON_API_ENTRY_RECORDS: ReadonlyDeep<EntryUrlItem[]> = [
+    {
+        value: PROTON_PRIMARY_ENTRY_POINT_VALUE,
+        title: `${PROTON_PRIMARY_ENTRY_POINT_VALUE} (${getBuiltInWebClientTitle()})`,
     },
-};
+    {
+        value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://app.protonmail.ch`,
+        title: `https://app.protonmail.ch (${getBuiltInWebClientTitle()})`,
+    },
+    {
+        value: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://protonirockerxow.onion`,
+        title: `https://protonirockerxow.onion (${getBuiltInWebClientTitle()})`,
+    },
+];
+
+export const PROTON_API_ENTRY_URLS = PROTON_API_ENTRY_RECORDS.map(({value: url}) => url);
+
+export const PROTON_API_ENTRY_ORIGINS = PROTON_API_ENTRY_URLS.map((url) => new URL(url).origin);
 
 export const WEB_CLIENTS_BLANK_HTML_FILE = "blank.html";
 

@@ -1,35 +1,25 @@
-// TODO drop "AccountType" model as there is no multi providers support anymore
-export type AccountType = "protonmail";
-
-export interface GenericAccountConfig<Type extends AccountType, CredentialFields extends string> {
-    type: Type;
+export type AccountConfig = NoExtraProperties<{
     login: string;
     title?: string;
     entryUrl: string;
     database?: boolean; // TODO proton-v4: rename AccountConfig.database => AccountConfig.localStore
     localCalendarStore?: boolean;
-    credentials: Partial<Record<CredentialFields, string>>;
-    proxy?: {
+    credentials: NoExtraProperties<Partial<Record<"password" | "twoFactorCode" | "mailPassword", string>>>;
+    proxy?: NoExtraProperties<{
         proxyRules?: string;
         proxyBypassRules?: string;
-    };
+    }>;
     loginDelayUntilSelected?: boolean;
-    loginDelaySecondsRange?: { start: number; end: number; };
-}
+    loginDelaySecondsRange?: NoExtraProperties<{ start: number; end: number; }>;
+}>;
 
-export type AccountConfigProton = GenericAccountConfig<"protonmail", "password" | "twoFactorCode" | "mailPassword">;
-
-export type AccountConfig<T extends AccountType = AccountType> = Extract<AccountConfigProton, { type: T }>;
-
-export interface NotificationsProton {
+export type Notifications = NoExtraProperties<{
     calendarLoggedIn: boolean;
     loggedIn: boolean;
     pageType: { url?: string; type: "unknown" | "login" | "login2fa" | "unlock"; };
     unread: number;
-}
+}>;
 
-export type Notifications = NotificationsProton;
-
-export interface NotificationsCalendar {
+export type NotificationsCalendar = NoExtraProperties<{
     loggedIn: boolean;
-}
+}>;

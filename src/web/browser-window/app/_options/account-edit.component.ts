@@ -5,9 +5,9 @@ import {Observable, Subscription, merge} from "rxjs";
 import {Store, select} from "@ngrx/store";
 import {concatMap, distinctUntilChanged, map, mergeMap} from "rxjs/operators";
 
-import {ACCOUNTS_CONFIG, ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX} from "src/shared/constants";
-import {AccountConfig, AccountConfigProton, AccountType} from "src/shared/model/account";
-import {AccountConfigCreatePatch, AccountConfigUpdatePatch} from "src/shared/model/container";
+import {ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX} from "src/shared/constants";
+import {AccountConfig} from "src/shared/model/account";
+import {AccountConfigCreateUpdatePatch} from "src/shared/model/container";
 import {EntryUrlItem} from "src/shared/model/common";
 import {OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
@@ -24,16 +24,13 @@ import {validateLoginDelaySecondsRange} from "src/shared/util";
 export class AccountEditComponent implements OnInit, OnDestroy {
     // form
     advancedBlockCollapsed: boolean = true;
-    typeValues: Array<{ value: AccountType; title: string; }> = [
-        {value: "protonmail", title: "ProtonMail"},
-    ];
+
     entryUrlItems: EntryUrlItem[] = [];
     controls: Record<keyof Pick<AccountConfig,
-        | "type" | "login" | "title" | "database" | "entryUrl" | "loginDelayUntilSelected" | "loginDelaySecondsRange">
+        | "login" | "title" | "database" | "entryUrl" | "loginDelayUntilSelected" | "loginDelaySecondsRange">
         | keyof Pick<Required<Required<AccountConfig>["proxy"]>, "proxyRules" | "proxyBypassRules">
-        | keyof AccountConfigProton["credentials"],
+        | keyof AccountConfig["credentials"],
         AbstractControl> = {
-        type: new FormControl(this.typeValues[0].value, Validators.required),
         login: new FormControl(null, Validators.required),
         title: new FormControl(null),
         database: new FormControl(null),
@@ -108,7 +105,6 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                 this.form.removeControl(((name: keyof Pick<typeof AccountEditComponent.prototype.controls, "login">) => name)("login"));
 
                 (() => {
-                    controls.type.patchValue(account.type);
                     controls.title.patchValue(account.title);
                     controls.database.patchValue(account.database);
                     controls.entryUrl.patchValue(account.entryUrl);
@@ -129,32 +125,16 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                 })();
             }),
         );
-
-        this.subscription.add(
-            controls.type.valueChanges.subscribe(this.typeChangeReaction.bind(this)),
-        );
-
-        this.typeChangeReaction(controls.type.value);
-    }
-
-    typeChangeReaction(type: AccountType) {
-        const {entryUrl: entryUrlControl} = this.controls;
-
-        this.entryUrlItems = ACCOUNTS_CONFIG[type].entryUrl;
-
-        if (entryUrlControl.value && !this.entryUrlItems.some(({value}) => value === entryUrlControl.value)) {
-            entryUrlControl.patchValue(null);
-        }
     }
 
     submit() {
         const {controls} = this;
         const account = this.account;
-        const proxy: AccountConfig<AccountType>["proxy"] = {
+        const proxy: AccountConfig["proxy"] = {
             proxyRules: controls.proxyRules.value && controls.proxyRules.value.trim(),
             proxyBypassRules: controls.proxyBypassRules.value && controls.proxyBypassRules.value.trim(),
         };
-        const patch: Readonly<AccountConfigCreatePatch | AccountConfigUpdatePatch> = {
+        const patch: Readonly<AccountConfigCreateUpdatePatch> = {
             login: account
                 ? account.login :
                 controls.login.value,
@@ -164,6 +144,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
             credentials: {
                 password: controls.password.value,
                 twoFactorCode: controls.twoFactorCode.value,
+                mailPassword: controls.mailPassword.value,
             },
             ...((proxy.proxyRules || proxy.proxyBypassRules) && {proxy}),
             loginDelayUntilSelected: Boolean(controls.loginDelayUntilSelected.value),
@@ -179,18 +160,11 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                 return validated;
             })(),
         };
-        const accountType: AccountType = account
-            ? account.type
-            : controls.type.value;
 
-        if (accountType === "protonmail") {
-            // TODO ger rid of "TS as" casting
-            (patch as AccountConfigProton).credentials.mailPassword = controls.mailPassword.value;
-        }
-
-        this.store.dispatch(account
-            ? OPTIONS_ACTIONS.UpdateAccountRequest(patch)
-            : OPTIONS_ACTIONS.AddAccountRequest({...patch, type: controls.type.value} as AccountConfigCreatePatch),
+        this.store.dispatch(
+            account
+                ? OPTIONS_ACTIONS.UpdateAccountRequest(patch)
+                : OPTIONS_ACTIONS.AddAccountRequest(patch),
         );
     }
 

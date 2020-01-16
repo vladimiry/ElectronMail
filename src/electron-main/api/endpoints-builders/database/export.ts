@@ -31,7 +31,7 @@ export async function buildDbExportEndpoints(
     ctx: Context,
 ): Promise<Pick<IpcMainApiEndpoints, "dbExport">> {
     return {
-        dbExport({type, login, mailPks}) {
+        dbExport({login, mailPks}) {
             logger.info("dbExport()");
 
             return from(
@@ -62,7 +62,7 @@ export async function buildDbExportEndpoints(
                             return subscriber.complete();
                         }
 
-                        const account = ctx.db.getAccount({type, login});
+                        const account = ctx.db.getAccount({login});
 
                         if (!account) {
                             return subscriber.error(new Error(`Failed to resolve account by the provided "type/login"`));

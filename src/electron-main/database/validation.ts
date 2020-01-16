@@ -4,7 +4,6 @@ import {ValidationError} from "class-validator";
 import {flatten} from "remeda";
 
 import * as Entities from "./entity";
-import {AccountType} from "src/shared/model/account";
 import {Contact, Entity, Folder, FsDbDataContainer, Mail, ValidatedEntity} from "src/shared/model/database";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
@@ -31,7 +30,6 @@ const entityClassesMap = {
 export async function validateEntity<T extends Entity>(
     entityType: keyof FsDbDataContainer,
     entity: T,
-    accountType: AccountType,
 ): Promise<T & ValidatedEntity> {
     const classType = entityClassesMap[entityType] as unknown as ClassType<T>;
 
@@ -52,7 +50,6 @@ export async function validateEntity<T extends Entity>(
         IPC_MAIN_API_NOTIFICATION$.next(
             IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({
                 message: "Local database entity validation error has occurred: " + JSON.stringify({
-                    accountType,
                     entityType,
                     ...(() => {
                         if (entityType === "mails") {

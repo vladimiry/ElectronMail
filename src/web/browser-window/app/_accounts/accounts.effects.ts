@@ -62,7 +62,7 @@ export class AccountsEffects {
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             mergeMap(({payload, logger}) => {
                 const {webView, finishPromise} = payload;
-                const {type, login} = payload.account.accountConfig;
+                const {login} = payload.account.accountConfig;
                 const resetNotificationsState$ = of(AccountsEffects.generateNotificationsStateResetAction(login));
                 const dispose$ = from(finishPromise).pipe(tap(() => logger.info("dispose")));
 
@@ -83,7 +83,7 @@ export class AccountsEffects {
                         withLatestFrom(this.store.pipe(select(AccountsSelectors.ACCOUNTS.pickAccount({login})))),
                         mergeMap(([notification, account]) => {
                             if (typeof notification.batchEntityUpdatesCounter !== "undefined") {
-                                FIRE_SYNCING_ITERATION$.next({type, login});
+                                FIRE_SYNCING_ITERATION$.next({login});
                                 return EMPTY;
                             }
 
@@ -109,7 +109,7 @@ export class AccountsEffects {
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             mergeMap(({payload, logger}) => {
                 const {pk, webView, finishPromise} = payload;
-                const {type, login} = pk;
+                const {login} = pk;
                 const dispose$ = from(finishPromise).pipe(
                     tap(() => {
                         this.store.dispatch(ACCOUNTS_ACTIONS.Patch({login, patch: {syncingActivated: false}, ignoreNoAccount: true}));
@@ -133,14 +133,14 @@ export class AccountsEffects {
                     this.store.pipe(
                         select(OptionsSelectors.FEATURED.mainProcessNotification),
                         filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbPatchAccount),
-                        filter(({payload: {key}}) => key.type === type && key.login === login),
+                        filter(({payload: {key}}) => key.login === login),
                         mergeMap(({payload: {stat: {unread}}}) => of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread}}}))),
                     ),
                     createEffect(
                         () => this.actions$.pipe(
                             unionizeActionFilter(ACCOUNTS_ACTIONS.is.SelectMailOnline),
                             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-                            filter(({payload: {pk: key}}) => key.type === type && key.login === login),
+                            filter(({payload: {pk: key}}) => key.login === login),
                             mergeMap(({payload: selectMailOnlineInput}) => concat(
                                 of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {selectingMailOnline: true}})),
                                 this.api.webViewClient(webView, {finishPromise}).pipe(
@@ -170,7 +170,7 @@ export class AccountsEffects {
                                 tap(() => logger.verbose(`triggered by: timer`)),
                             ),
                             FIRE_SYNCING_ITERATION$.pipe(
-                                filter((value) => value.type === type && value.login === login),
+                                filter((value) => value.login === login),
                                 tap(() => logger.verbose(`triggered by: FIRE_SYNCING_ITERATION$`)),
                                 // user might be moving emails from here to there while syncing/"buildDbPatch" cycle is in progress
                                 // debounce call reduces 404 fetch errors as we don't trigger fetching until user got settled down
@@ -186,7 +186,7 @@ export class AccountsEffects {
                             debounce(() => notSyncingPing$),
                             concatMap(() => {
                                 return from(
-                                    ipcMainClient("dbGetAccountMetadata")({type, login}),
+                                    ipcMainClient("dbGetAccountMetadata")({login}),
                                 );
                             }),
                             withLatestFrom(this.store.pipe(select(OptionsSelectors.CONFIG.timeouts))),
@@ -216,7 +216,6 @@ export class AccountsEffects {
 
                                 const result$ = from(
                                     webViewClient("buildDbPatch", {timeoutMs})({
-                                        type,
                                         login,
                                         zoneName,
                                         metadata,

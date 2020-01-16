@@ -34,13 +34,13 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
         ...await buildDbIndexingEndpoints(ctx),
         ...await buildDbSearchEndpoints(ctx),
 
-        async dbPatch({forceFlush, type, login, metadata: metadataPatch, patch: entityUpdatesPatch}) {
+        async dbPatch({forceFlush, login, metadata: metadataPatch, patch: entityUpdatesPatch}) {
             const logger = curryFunctionMembers(_logger, "dbPatch()");
 
             logger.info();
 
             const {db, sessionDb} = ctx;
-            const key = {type, login} as const;
+            const key = {login} as const;
             const account = db.getMutableAccount(key) || db.initAccount(key);
             const sessionAccount = sessionDb.getMutableAccount(key) || sessionDb.initAccount(key);
 
@@ -56,7 +56,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
                 // add
                 for (const entity of upsert) {
-                    const validatedEntity = await validateEntity(entityType, entity, type);
+                    const validatedEntity = await validateEntity(entityType, entity);
                     const {pk} = entity;
                     account[entityType][pk] = validatedEntity;
                     sessionAccount[entityType][pk] = validatedEntity;
@@ -113,18 +113,18 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             return account.metadata;
         },
 
-        async dbGetAccountMetadata({type, login}) {
+        async dbGetAccountMetadata({login}) {
             _logger.info("dbGetAccountMetadata()");
 
-            const account = ctx.db.getAccount({type, login});
+            const account = ctx.db.getAccount({login});
 
             return account ? account.metadata : null;
         },
 
-        async dbGetAccountDataView({type, login}) {
+        async dbGetAccountDataView({login}) {
             _logger.info("dbGetAccountDataView()");
 
-            const account = ctx.db.getAccount({type, login});
+            const account = ctx.db.getAccount({login});
 
             if (!account) {
                 return undefined;
@@ -135,13 +135,13 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             };
         },
 
-        async dbGetAccountMail({type, login, pk}) {
+        async dbGetAccountMail({login, pk}) {
             _logger.info("dbGetAccountMail()");
 
-            const account = ctx.db.getAccount({type, login});
+            const account = ctx.db.getAccount({login});
 
             if (!account) {
-                throw new Error(`Failed to resolve account by the provided "type/login"`);
+                throw new Error(`Failed to resolve account by the provided "login"`);
             }
 
             const mail = account.mails[pk];
@@ -157,13 +157,13 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             };
         },
 
-        async dbSearchRootConversationNodes({type, login, folderPks, ...restOptions}) {
+        async dbSearchRootConversationNodes({login, folderPks, ...restOptions}) {
             _logger.info("dbSearchRootConversationNodes()");
 
-            const account = ctx.db.getAccount({type, login});
+            const account = ctx.db.getAccount({login});
 
             if (!account) {
-                throw new Error(`Failed to resolve account by the provided "type/login"`);
+                throw new Error(`Failed to resolve account by the provided "login"`);
             }
 
             // TODO fill "mailPks" array based on the execute search with "query" argument

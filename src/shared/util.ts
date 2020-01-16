@@ -2,7 +2,7 @@ import {ElectronLog} from "electron-log"; // tslint:disable-line:no-import-zones
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import {pick} from "remeda";
 
-import {AccountConfig, AccountType} from "./model/account";
+import {AccountConfig} from "./model/account";
 import {BaseConfig, Config} from "./model/options";
 import {
     DEFAULT_API_CALL_TIMEOUT,
@@ -308,7 +308,7 @@ export function getRandomInt(min: number, max: number): number {
     return min + Math.floor(Math.random() * (max - min)); // the maximum is exclusive and the minimum is inclusive
 }
 
-export const getWebViewPartition: (login: AccountConfig<AccountType>["login"]) => string = (() => {
+export const getWebViewPartition: (login: AccountConfig["login"]) => string = (() => {
     const prefix = "memory/";
     const result: typeof getWebViewPartition = (login) => `${prefix}${login}`;
 

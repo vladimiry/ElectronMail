@@ -3,7 +3,7 @@ import {Model as StoreModel} from "fs-json-store";
 
 import * as Constants from "./constants";
 import * as View from "./view";
-import {AccountConfig, AccountType} from "src/shared/model/account";
+import {AccountConfig} from "src/shared/model/account";
 import {NumberString, Timestamp} from "src/shared/model/common";
 
 export * from "./constants";
@@ -136,25 +136,21 @@ export type  FsDbDataContainerDeletedField = Readonly<{
     }>;
 }>;
 
-interface GenericDb<T extends AccountType, MetadataPart> {
+interface GenericDb<MetadataPart> {
     version: string;
-    accounts: Record<T,
-        Record<AccountConfig<T>["login"],
-            Readonly<FsDbDataContainer & FsDbDataContainerDeletedField & { metadata: { type: T } & MetadataPart }>>>;
+    accounts: Record<AccountConfig["login"],
+        Readonly<FsDbDataContainer & FsDbDataContainerDeletedField & { metadata: MetadataPart }>>;
 }
 
 interface ProtonMetadataPart {
     latestEventId: string; // Rest.Model.Event["EventID"]
 }
 
-export type FsDb =
-    & Partial<StoreModel.StoreEntity>
-    & GenericDb<"protonmail", ProtonMetadataPart>;
+export type FsDb = Partial<StoreModel.StoreEntity> & GenericDb<ProtonMetadataPart>;
 
-export type FsDbAccount<T extends keyof FsDb["accounts"] = keyof FsDb["accounts"]> = FsDb["accounts"][T][string];
+export type FsDbAccount = FsDb["accounts"][string];
 
 export interface DbAccountPk {
-    type: keyof FsDb["accounts"];
     login: string;
 }
 

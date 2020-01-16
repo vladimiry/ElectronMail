@@ -5,8 +5,7 @@ import {UnionOf, ofType, unionize} from "@vladimiry/unionize";
 
 import * as DbModel from "src/shared/model/database";
 import {
-    AccountConfigCreatePatch,
-    AccountConfigUpdatePatch,
+    AccountConfigCreateUpdatePatch,
     LoginFieldContainer,
     NewPasswordFieldContainer,
     PasswordFieldContainer,
@@ -30,9 +29,9 @@ export const ENDPOINTS_DEFINITION = {
 
     spellCheck: ActionType.Promise<{ words: string[] }, { misspelledWords: string[] }>(),
 
-    addAccount: ActionType.Promise<AccountConfigCreatePatch, Settings>(),
+    addAccount: ActionType.Promise<AccountConfigCreateUpdatePatch, Settings>(),
 
-    updateAccount: ActionType.Promise<AccountConfigUpdatePatch, Settings>(),
+    updateAccount: ActionType.Promise<AccountConfigCreateUpdatePatch, Settings>(),
 
     changeAccountOrder: ActionType.Promise<LoginFieldContainer & { index: number }, Settings>(),
 
@@ -43,7 +42,7 @@ export const ENDPOINTS_DEFINITION = {
     dbPatch: ActionType.Promise<DbModel.DbAccountPk
         & { forceFlush?: boolean }
         & { patch: DbPatch }
-        & { metadata: Skip<FsDbAccount<"protonmail">["metadata"], "type"> },
+        & { metadata: FsDbAccount["metadata"] },
         DbModel.FsDbAccount["metadata"]>(),
 
     dbGetAccountMetadata: ActionType.Promise<DbModel.DbAccountPk, DbModel.FsDbAccount["metadata"] | null>(),

@@ -10,9 +10,8 @@ export async function buildEndpoints(
     ctx: Context,
 ): Promise<Pick<IpcMainApiEndpoints, "addAccount" | "updateAccount" | "changeAccountOrder" | "removeAccount">> {
     return {
-        async addAccount({type, login, title, entryUrl, database, credentials, proxy, loginDelayUntilSelected, loginDelaySecondsRange}) {
+        async addAccount({login, title, entryUrl, database, credentials, proxy, loginDelayUntilSelected, loginDelaySecondsRange}) {
             const account: AccountConfig = {
-                type,
                 login,
                 title,
                 entryUrl,
@@ -53,7 +52,7 @@ export async function buildEndpoints(
                 if ("twoFactorCode" in credentials) {
                     existingCredentials.twoFactorCode = credentials.twoFactorCode;
                 }
-                if (account.type === "protonmail" && "mailPassword" in credentials) {
+                if ("mailPassword" in credentials) {
                     account.credentials.mailPassword = credentials.mailPassword;
                 }
             }

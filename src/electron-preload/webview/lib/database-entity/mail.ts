@@ -6,7 +6,7 @@ import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/constants";
 import {buildBaseEntity, buildPk} from "src/electron-preload/webview/lib/database-entity/index";
 import {curryFunctionMembers} from "src/shared/util";
 
-const logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail.primary, "[lib/database/mail]");
+const logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, "[lib/database/mail]");
 
 const directTypeMapping: Readonly<Record<Unpacked<typeof RestModel.MAIL_TYPE._.values>, DatabaseModel.Mail["state"]>> = {
     [RestModel.MAIL_TYPE.INBOX]: DatabaseModel.MAIL_STATE.RECEIVED,

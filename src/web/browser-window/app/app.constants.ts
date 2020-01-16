@@ -1,8 +1,8 @@
 import {InjectionToken} from "@angular/core";
 import {Subject} from "rxjs";
 
-import {AccountTypeAndLoginFieldContainer} from "src/shared/model/container";
 import {DbAccountPk} from "src/shared/model/database";
+import {LoginFieldContainer} from "src/shared/model/container";
 
 export const STUB_OUTLET = "stub-outlet";
 
@@ -24,7 +24,7 @@ export const ESC_KEY = "Escape";
 
 export const ROUTER_DATA_OUTLET_PROP = "ROUTER_DATA_OUTLET_PROP";
 
-export const FIRE_SYNCING_ITERATION$ = new Subject<AccountTypeAndLoginFieldContainer>();
+export const FIRE_SYNCING_ITERATION$ = new Subject<LoginFieldContainer>();
 
 export interface DbViewEntryComponentInterface {
     dbAccountPk: DbAccountPk;

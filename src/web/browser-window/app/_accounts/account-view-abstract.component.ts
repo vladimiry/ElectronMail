@@ -23,11 +23,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         map((login) => getWebViewPartition(login)),
     );
 
-    readonly webViewPreload$ = this.account$.pipe(
-        map(({accountConfig: {type}}) => type),
-        distinctUntilChanged(),
-        map((type) => __METADATA__.electronLocations.preload[this.viewType][type]),
-    );
+    readonly webViewPreload = __METADATA__.electronLocations.preload[this.viewType];
 
     @Input()
     readonly webViewSrc!: string;

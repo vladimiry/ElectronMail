@@ -13,15 +13,14 @@ import {Application} from "spectron";
 import {promisify} from "util";
 
 import {
-    ACCOUNTS_CONFIG,
     BINARY_NAME,
     ONE_SECOND_MS,
     PACKAGE_NAME,
     PRODUCT_NAME,
+    PROTON_API_ENTRY_URLS,
     RUNTIME_ENV_E2E,
     RUNTIME_ENV_USER_DATA_DIR,
 } from "src/shared/constants";
-import {AccountType} from "src/shared/model/account";
 
 export interface TestContext {
     testStatus: "initial" | "success" | "fail";
@@ -265,7 +264,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
         },
 
         async addAccount(
-            account: { type: AccountType, login?: string; password?: string; twoFactorCode?: string; entryUrlValue?: string; },
+            account: { login?: string; password?: string; twoFactorCode?: string; entryUrlValue?: string; },
         ) {
             const {client} = t.context.app;
             const login = account.login
@@ -283,7 +282,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             await client.waitForVisible(selector = `#accountEditFormEntryUrlField .ng-select-container`);
             await workflow._mousedown(selector);
             const entryUrlIndex = account.entryUrlValue
-                ? resolveEntryUrlIndexByValue(account.type, account.entryUrlValue)
+                ? resolveEntryUrlIndexByValue(account.entryUrlValue)
                 : 0;
             await client.waitForVisible(selector = `[entry-url-option-index="${entryUrlIndex}"]`);
             await workflow._click(selector);
@@ -521,11 +520,11 @@ function mkOutputDirs(dirs: string[]) {
     dirs.forEach((dir) => fsExtra.ensureDirSync(dir));
 }
 
-function resolveEntryUrlIndexByValue(accountType: AccountType, valueCriteria: string): number {
-    const index = ACCOUNTS_CONFIG[accountType].entryUrl.findIndex(({value}) => value === valueCriteria);
+function resolveEntryUrlIndexByValue(entryUrl: string): number {
+    const index = PROTON_API_ENTRY_URLS.findIndex((url) => url === entryUrl);
 
     if (index === -1) {
-        throw new Error(`Failed to resolve entry url index by "${valueCriteria}" value and "${accountType}" account type`);
+        throw new Error(`Failed to resolve entry url index by "${entryUrl}" value`);
     }
 
     return index;

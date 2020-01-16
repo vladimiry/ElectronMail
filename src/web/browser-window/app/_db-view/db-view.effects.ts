@@ -42,7 +42,7 @@ export class DbViewEffects {
                     this.store.pipe(
                         select(OptionsSelectors.FEATURED.mainProcessNotification),
                         filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbPatchAccount),
-                        filter(({payload: {key}}) => key.type === dbAccountPk.type && key.login === dbAccountPk.login),
+                        filter(({payload: {key}}) => key.login === dbAccountPk.login),
                         filter(({payload: {entitiesModified}}) => entitiesModified),
                         switchMap(() => from(ipcMainClient("dbGetAccountDataView")(dbAccountPk))),
                     ),
@@ -129,16 +129,16 @@ export class DbViewEffects {
         () => this.actions$.pipe(
             unionizeActionFilter(DB_VIEW_ACTIONS.is.FullTextSearchRequest),
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-            mergeMap(({payload: {type, login, query, folderPks}}) => {
+            mergeMap(({payload: {login, query, folderPks}}) => {
                 const dbFullTextSearch$ = from(
                     this.api.ipcMainClient()("dbFullTextSearch", {timeoutMs: ONE_SECOND_MS * 5, serialization: "jsan"})({
-                        type, login, query, folderPks,
+                        login, query, folderPks,
                     }),
                 );
                 return dbFullTextSearch$.pipe(
                     mergeMap((value) => [
-                        DB_VIEW_ACTIONS.SelectMail({dbAccountPk: {type, login}}),
-                        DB_VIEW_ACTIONS.FullTextSearch({dbAccountPk: {type, login}, value}),
+                        DB_VIEW_ACTIONS.SelectMail({dbAccountPk: {login}}),
+                        DB_VIEW_ACTIONS.FullTextSearch({dbAccountPk: {login}, value}),
                     ]),
                 );
             }),
@@ -150,8 +150,8 @@ export class DbViewEffects {
             unionizeActionFilter(ACCOUNTS_ACTIONS.is.FetchSingleMail),
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             mergeMap(({payload: {account, webView, mailPk}, logger}) => {
-                const {type, login} = account.accountConfig;
-                const pk = {type, login};
+                const {login} = account.accountConfig;
+                const pk = {login};
 
                 return this.api.webViewClient(webView).pipe(
                     mergeMap((webViewClient) => {
@@ -173,8 +173,8 @@ export class DbViewEffects {
             unionizeActionFilter(ACCOUNTS_ACTIONS.is.MakeMailRead),
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             mergeMap(({payload: {account, webView, messageIds, mailsBundleKey}, logger}) => {
-                const {type, login} = account.accountConfig;
-                const pk = {type, login};
+                const {login} = account.accountConfig;
+                const pk = {login};
 
                 return this.api.webViewClient(webView).pipe(
                     mergeMap((webViewClient) => {
@@ -182,7 +182,7 @@ export class DbViewEffects {
                             webViewClient("makeRead")({...pk, messageIds, zoneName: logger.zoneName()}),
                         ).pipe(
                             mergeMap(() => {
-                                FIRE_SYNCING_ITERATION$.next({type, login});
+                                FIRE_SYNCING_ITERATION$.next({login});
                                 return of(DB_VIEW_ACTIONS.MakeMailsReadInStore({dbAccountPk: pk, mailsBundleKey}));
                             }),
                             catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),

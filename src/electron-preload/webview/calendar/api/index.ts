@@ -3,7 +3,7 @@ import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/constants";
 import {curryFunctionMembers} from "src/shared/util";
 import {getLocationHref} from "src/electron-preload/webview/lib/util";
 
-const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail.calendar, "[api/index]");
+const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.calendar, "[api/index]");
 
 const endpoints: ProtonCalendarApi = {
     async ping() {

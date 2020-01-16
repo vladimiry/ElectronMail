@@ -26,15 +26,12 @@ test.serial("general actions: app start, master password setup, add accounts", a
 
     await app.login({setup: true, savePassword: false});
     await app.addAccount({
-        type: "protonmail",
         entryUrlValue: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://app.protonmail.ch`,
     });
     await app.addAccount({
-        type: "protonmail",
         entryUrlValue: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.protonmail.com`,
     });
     await app.addAccount({ // no online .onion domain loading, but offline works
-        type: "protonmail",
         entryUrlValue: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://protonirockerxow.onion`,
     });
     await app.logout();

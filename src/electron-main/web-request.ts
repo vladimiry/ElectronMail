@@ -7,9 +7,7 @@ import {
 } from "electron";
 import {URL} from "url";
 
-import {AccountType} from "src/shared/model/account";
 import {Context} from "./model";
-import {ElectronContextLocations} from "src/shared/model/electron";
 import {ReadonlyDeep} from "type-fest";
 
 // TODO drop these types when "requestHeaders / responseHeaders" get proper types
@@ -17,7 +15,6 @@ type RequestDetails = OnBeforeSendHeadersListenerDetails;
 type ResponseDetails = OnHeadersReceivedListenerDetails;
 
 type RequestProxy = ReadonlyDeep<{
-    accountType: AccountType;
     headers: {
         origin: Exclude<ReturnType<typeof getHeader>, null>,
         accessControlRequestHeaders: ReturnType<typeof getHeader>,
@@ -45,36 +42,8 @@ const PROXIES = new Map<RequestDetails["id"] | ResponseDetails["id"], RequestPro
 
 // TODO pass additional "account type" argument and apply only respective listeners
 export function initWebRequestListeners(ctx: Context, session: Session) {
-    const resolveProxy: (details: RequestDetails) => RequestProxy | null = (() => {
-        const resolveLocalWebClientOrigins = <T extends AccountType>(
-            accountType: T,
-            {webClients}: ElectronContextLocations,
-        ): Record<T, string[]> => {
-            const result: ReturnType<typeof resolveLocalWebClientOrigins> = Object.create(null);
-
-            result[accountType] = Object
-                .values(webClients[accountType])
-                .map(({entryUrl}) => new URL(entryUrl).origin);
-
-            return result;
-        };
-        const origins: { readonly [k in AccountType]: readonly string[] } = {
-            ...resolveLocalWebClientOrigins("protonmail", ctx.locations),
-        };
-
-        return (details: RequestDetails) => {
-            const proxies: Record<AccountType, ReturnType<typeof resolveRequestProxy>> = {
-                protonmail: resolveRequestProxy("protonmail", details, origins),
-            };
-            const [accountType] = Object.entries(proxies)
-                .filter((([, value]) => Boolean(value)))
-                .map((([key]) => key as AccountType | undefined));
-
-            return accountType
-                ? proxies[accountType]
-                : null;
-        };
-    })();
+    const webClientsOrigins = ctx.locations.webClients
+        .map(({entryUrl}) => new URL(entryUrl).origin);
 
     session.webRequest.onBeforeSendHeaders(
         {urls: []},
@@ -83,7 +52,7 @@ export function initWebRequestListeners(ctx: Context, session: Session) {
             callback,
         ) => {
             const {requestHeaders} = details;
-            const requestProxy = resolveProxy(details);
+            const requestProxy = resolveRequestProxy(details, webClientsOrigins);
 
             if (requestProxy) {
                 const {name} = getHeader(requestHeaders, HEADERS.request.origin) || {name: HEADERS.request.origin};
@@ -103,8 +72,7 @@ export function initWebRequestListeners(ctx: Context, session: Session) {
             const requestProxy = PROXIES.get(details.id);
 
             if (requestProxy) {
-                const patch = responseHeadersPatchHandlers[requestProxy.accountType];
-                const responseHeaders = patch({details, requestProxy});
+                const responseHeaders = patchReponseHeaders({details, requestProxy});
                 callback({responseHeaders});
                 return;
             }
@@ -119,10 +87,9 @@ function resolveFakeOrigin(requestDetails: RequestDetails): string {
     return new URL(requestDetails.url).origin;
 }
 
-function resolveRequestProxy<T extends AccountType>(
-    accountType: T,
+function resolveRequestProxy(
     {requestHeaders, resourceType}: RequestDetails,
-    origins: { readonly [k in AccountType]: readonly string[] },
+    origins: readonly string[],
 ): RequestProxy | null {
     const originHeader = (
         (
@@ -151,9 +118,8 @@ function resolveRequestProxy<T extends AccountType>(
         return null;
     }
 
-    return origins[accountType].some((localOrigin) => originValue === localOrigin)
+    return origins.some((localOrigin) => originValue === localOrigin)
         ? {
-            accountType,
             headers: {
                 origin: originHeader,
                 accessControlRequestHeaders: getHeader(requestHeaders, HEADERS.request.accessControlRequestHeaders),
@@ -166,101 +132,88 @@ function resolveRequestProxy<T extends AccountType>(
 // TODO consider doing initial preflight/OPTIONS call to https://mail.protonmail.com
 // and then pick all the "Access-Control-*" header names as a template instead of hardcoding the default headers
 // since over time the server may start giving other headers
-const responseHeadersPatchHandlers: ReadonlyDeep<{
-    [k in AccountType]: (
-        arg: { requestProxy: RequestProxy, details: ResponseDetails; },
-    ) => ResponseDetails["responseHeaders"];
-}> = (() => {
-    const commonPatch: typeof responseHeadersPatchHandlers[AccountType] = ({requestProxy, details: {responseHeaders}}) => {
-        patchResponseHeader(
-            responseHeaders,
-            {
-                name: HEADERS.response.accessControlAllowOrigin,
-                values: requestProxy.headers.origin.values,
-            },
-            {replace: true},
-        );
-        patchResponseHeader(
-            responseHeaders,
-            {
-                name: HEADERS.response.accessControlAllowMethods,
-                values: [
-                    ...(requestProxy.headers.accessControlRequestMethod || {
-                        values: [
-                            "DELETE",
-                            "GET",
-                            "HEAD",
-                            "OPTIONS",
-                            "POST",
-                            "PUT",
-                        ],
-                    }).values,
-                ],
-            },
-        );
-        return responseHeaders;
-    };
-
-    const result: typeof responseHeadersPatchHandlers = {
-        protonmail: ({requestProxy, details}) => {
-            commonPatch({requestProxy, details});
-
-            // this patching is needed for CORS request to work with https://protonirockerxow.onion/ entry point via Tor proxy
-            // TODO apply "access-control-allow-credentials" headers patch for "https://protonirockerxow.onion/*" requests only
-            //      see "details.url" value
-            patchResponseHeader(
-                details.responseHeaders,
-                {
-                    name: HEADERS.response.accessControlAllowCredentials,
-                    values: ["true"],
-                },
-                {extend: false},
-            );
-
-            // this patching is needed for CORS request to work with https://protonirockerxow.onion/ entry point via Tor proxy
-            // TODO apply "access-control-allow-headers" headers patch for "https://protonirockerxow.onion/*" requests only
-            //      see "details.url" value
-            patchResponseHeader(
-                details.responseHeaders,
-                {
-                    name: HEADERS.response.accessControlAllowHeaders,
-                    values: [
-                        ...(
-                            requestProxy.headers.accessControlRequestHeaders
-                            ||
-                            // TODO consider dropping setting fallback "access-control-request-headers" values
-                            {
-                                values: [
-                                    "authorization",
-                                    "cache-control",
-                                    "content-type",
-                                    "Date",
-                                    "x-eo-uid",
-                                    "x-pm-apiversion",
-                                    "x-pm-appversion",
-                                    "x-pm-session",
-                                    "x-pm-uid",
-                                ],
-                            }
-                        ).values,
-                    ],
-                },
-            );
-
-            patchResponseHeader(
-                details.responseHeaders,
-                {
-                    name: HEADERS.response.accessControlExposeHeaders,
-                    values: ["Date"],
-                },
-            );
-
-            return details.responseHeaders;
+const patchReponseHeaders: (arg: { requestProxy: RequestProxy, details: ResponseDetails; }) => ResponseDetails["responseHeaders"]
+    = ({requestProxy, details}) => {
+    patchResponseHeader(
+        details.responseHeaders,
+        {
+            name: HEADERS.response.accessControlAllowOrigin,
+            values: requestProxy.headers.origin.values,
         },
-    };
+        {replace: true},
+    );
 
-    return result;
-})();
+    patchResponseHeader(
+        details.responseHeaders,
+        {
+            name: HEADERS.response.accessControlAllowMethods,
+            values: [
+                ...(requestProxy.headers.accessControlRequestMethod || {
+                    values: [
+                        "DELETE",
+                        "GET",
+                        "HEAD",
+                        "OPTIONS",
+                        "POST",
+                        "PUT",
+                    ],
+                }).values,
+            ],
+        },
+    );
+
+    // this patching is needed for CORS request to work with https://protonirockerxow.onion/ entry point via Tor proxy
+    // TODO apply "access-control-allow-credentials" headers patch for "https://protonirockerxow.onion/*" requests only
+    //      see "details.url" value
+    patchResponseHeader(
+        details.responseHeaders,
+        {
+            name: HEADERS.response.accessControlAllowCredentials,
+            values: ["true"],
+        },
+        {extend: false},
+    );
+
+    // this patching is needed for CORS request to work with https://protonirockerxow.onion/ entry point via Tor proxy
+    // TODO apply "access-control-allow-headers" headers patch for "https://protonirockerxow.onion/*" requests only
+    //      see "details.url" value
+    patchResponseHeader(
+        details.responseHeaders,
+        {
+            name: HEADERS.response.accessControlAllowHeaders,
+            values: [
+                ...(
+                    requestProxy.headers.accessControlRequestHeaders
+                    ||
+                    // TODO consider dropping setting fallback "access-control-request-headers" values
+                    {
+                        values: [
+                            "authorization",
+                            "cache-control",
+                            "content-type",
+                            "Date",
+                            "x-eo-uid",
+                            "x-pm-apiversion",
+                            "x-pm-appversion",
+                            "x-pm-session",
+                            "x-pm-uid",
+                        ],
+                    }
+                ).values,
+            ],
+        },
+    );
+
+    patchResponseHeader(
+        details.responseHeaders,
+        {
+            name: HEADERS.response.accessControlExposeHeaders,
+            values: ["Date"],
+        },
+    );
+
+    return details.responseHeaders;
+};
 
 function patchResponseHeader(
     headers: HeadersReceivedResponse["responseHeaders"],

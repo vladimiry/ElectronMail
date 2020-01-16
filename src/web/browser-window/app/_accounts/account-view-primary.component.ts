@@ -48,7 +48,7 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
                 this.account$
                     .pipe(
                         map(({notifications, accountConfig}) => ({
-                            pk: {type: accountConfig.type, login: accountConfig.login},
+                            pk: {login: accountConfig.login},
                             data: {loggedIn: notifications.loggedIn, database: accountConfig.database},
                         })),
                         // process switching of either "loggedIn" or "database" flags

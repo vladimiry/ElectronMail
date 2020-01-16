@@ -24,12 +24,12 @@ import {buildLoggerBundle} from "src/electron-preload/lib/util";
 
 interface DbPatchBundle {
     patch: DbPatch;
-    metadata: Skip<FsDbAccount<"protonmail">["metadata"], "type">;
+    metadata: FsDbAccount["metadata"];
 }
 
 type BuildDbPatchMethodReturnType = ProtonApiScan["ApiImplReturns"]["buildDbPatch"];
 
-const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail.primary, "[api/build-db-patch]");
+const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, "[api/build-db-patch]");
 
 const buildDbPatchEndpoint: Pick<ProtonApi, "buildDbPatch" | "fetchSingleMail"> = {
     buildDbPatch(input) {
@@ -59,7 +59,6 @@ const buildDbPatchEndpoint: Pick<ProtonApi, "buildDbPatch" | "fetchSingleMail"> 
                         await persistDatabasePatch(
                             {
                                 ...dbPatch,
-                                type: input.type,
                                 login: input.login,
                             },
                             logger,
@@ -110,7 +109,6 @@ const buildDbPatchEndpoint: Pick<ProtonApi, "buildDbPatch" | "fetchSingleMail"> 
                 {
                     patch,
                     metadata,
-                    type: input.type,
                     login: input.login,
                 },
                 logger,
@@ -148,7 +146,6 @@ const buildDbPatchEndpoint: Pick<ProtonApi, "buildDbPatch" | "fetchSingleMail"> 
         await persistDatabasePatch(
             {
                 ...data,
-                type: input.type,
                 login: input.login,
             },
             logger,

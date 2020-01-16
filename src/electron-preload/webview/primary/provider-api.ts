@@ -61,7 +61,7 @@ export interface ProviderApi {
     };
 }
 
-const logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail.primary, "[lib/api]");
+const logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, "[lib/api]");
 const resolveServiceLogger = curryFunctionMembers(logger, "resolveService()");
 const rateLimitedApiCallingQueue = new asap();
 const state: { api?: Promise<ProviderApi> } = {};

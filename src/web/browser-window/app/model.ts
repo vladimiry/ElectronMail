@@ -1,21 +1,16 @@
-import {
-    AccountConfig,
-    AccountConfigProton,
-    Notifications,
-    NotificationsProton,
-} from "src/shared/model/account";
+import {AccountConfig, Notifications} from "src/shared/model/account";
 import {Mail} from "src/shared/model/database";
 import {MailsBundleKey} from "src/web/browser-window/app/store/reducers/db-view";
 
-interface GenericWebAccount<C extends AccountConfig, NS extends Notifications> {
-    accountConfig: C;
-    progress: Partial<Record<keyof C["credentials"], boolean>> & Partial<{
+export interface WebAccount {
+    accountConfig: AccountConfig;
+    progress: Partial<Record<keyof AccountConfig["credentials"], boolean>> & Partial<{
         syncing: boolean;
         indexing: boolean;
         searching: boolean;
         selectingMailOnline: boolean;
     }>;
-    notifications: NS;
+    notifications: Notifications;
     syncingActivated?: boolean;
     databaseView?: boolean;
     loginFilledOnce?: boolean;
@@ -26,9 +21,5 @@ interface GenericWebAccount<C extends AccountConfig, NS extends Notifications> {
     fetchSingleMailParams: { mailPk: Mail["pk"] } | null;
     makeReadMailParams: { messageIds: string[]; mailsBundleKey: MailsBundleKey; } | null;
 }
-
-export type WebAccountProton = GenericWebAccount<AccountConfigProton, NotificationsProton>;
-
-export type WebAccount = WebAccountProton;
 
 export type WebAccountProgress = WebAccount["progress"];

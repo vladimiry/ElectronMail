@@ -9,7 +9,7 @@ import {disableBrowserNotificationFeature, getLocationHref} from "src/electron-p
 import {initSpellCheckProvider} from "src/electron-preload/lib/spell-check";
 import {registerDocumentClickEventListener, registerDocumentKeyDownEventListener} from "src/electron-preload/lib/events-handling";
 
-const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.protonmail.primary, `[configure-provider-app]`);
+const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, `[configure-provider-app]`);
 
 const angularWebClientOpts = Object.freeze({
     targetModuleName: "proton",

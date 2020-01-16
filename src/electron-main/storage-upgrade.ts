@@ -3,28 +3,23 @@ import compareVersions from "compare-versions";
 import path from "path";
 
 import {
-    ACCOUNTS_CONFIG,
     ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX,
     PACKAGE_VERSION,
-    PROTONMAIL_PRIMARY_ENTRY_POINT_VALUE,
+    PROTON_API_ENTRY_URLS,
+    PROTON_PRIMARY_ENTRY_POINT_VALUE,
 } from "src/shared/constants";
 import {AccountConfig} from "src/shared/model/account";
 import {Config, Settings} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
+import {DB_INSTANCE_PROP_NAME} from "src/electron-main/database/constants";
 import {Database} from "./database";
 import {DbAccountPk} from "src/shared/model/database";
-import {EntryUrlItem} from "src/shared/model/common";
 import {INITIAL_STORES} from "./constants";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {curryFunctionMembers, pickBaseConfigProperties} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[src/electron-main/storage-upgrade]");
-
-const possibleEntryUrls: readonly string[] = Object
-    .values(ACCOUNTS_CONFIG)
-    .reduce((list: EntryUrlItem[], {entryUrl}) => list.concat(entryUrl), [])
-    .map(({value}) => value);
 
 const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
     "1.1.0": (config: Config & { appVersion?: string }) => {
@@ -267,7 +262,7 @@ export const upgradeSettings: (settings: Settings, ctx: Context) => boolean = ((
             "2.0.0": (settings) => {
                 // dropping "online web clients" support, see https://github.com/vladimiry/ElectronMail/issues/80
                 settings.accounts.forEach((account) => {
-                    if (possibleEntryUrls.includes(account.entryUrl)) {
+                    if (PROTON_API_ENTRY_URLS.includes(account.entryUrl)) {
                         return;
                     }
                     account.entryUrl = `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}${account.entryUrl}`;
@@ -279,10 +274,10 @@ export const upgradeSettings: (settings: Settings, ctx: Context) => boolean = ((
                     // it can be either "https://beta.protonmail.com" or "local:::https://beta.protonmail.com"
                     // since above defined "2.0.0" upgrade adds "local:::"
                     if (account.entryUrl.includes("https://beta.protonmail.com")) { // lgtm [js/incomplete-url-substring-sanitization]
-                        account.entryUrl = PROTONMAIL_PRIMARY_ENTRY_POINT_VALUE;
+                        account.entryUrl = PROTON_PRIMARY_ENTRY_POINT_VALUE;
                     }
                     if (
-                        !possibleEntryUrls.includes(account.entryUrl)
+                        !PROTON_API_ENTRY_URLS.includes(account.entryUrl)
                         &&
                         !account.entryUrl.includes("https://mail.tutanota.com") // tutanota accounts will be dropped by "4.0.0" upgrader
                     ) {
@@ -291,7 +286,10 @@ export const upgradeSettings: (settings: Settings, ctx: Context) => boolean = ((
                 });
             },
             "4.0.0": (settings) => {
-                const protonmailAccounts = settings.accounts.filter(({type}) => type === "protonmail");
+                const protonmailAccounts = settings.accounts.filter((account) => {
+                    const {type} = account as unknown as { type?: string };
+                    return !type || type === "protonmail";
+                });
                 const totalAccountsCount = settings.accounts.length;
                 const tutanotaAccountsCount = totalAccountsCount - protonmailAccounts.length;
 
@@ -319,6 +317,11 @@ export const upgradeSettings: (settings: Settings, ctx: Context) => boolean = ((
 
                 // mutation the settings
                 settings.accounts = protonmailAccounts;
+            },
+            "4.2.0": (settings) => {
+                settings.accounts.forEach((account) => {
+                    delete (account as unknown as { type: string }).type;
+                });
             },
         };
     }
@@ -369,15 +372,19 @@ export async function upgradeDatabase(db: Database, accounts: Settings["accounts
         }
     }
 
+    if (Number(db.getVersion()) < 5) {
+        const dbInstance = (db as any)[DB_INSTANCE_PROP_NAME];
+        dbInstance.accounts = dbInstance.accounts.protonmail ?? Database.buildEmptyDb().accounts;
+        needToSave = true;
+    }
+
     // removing non existent accounts
     await (async () => {
         const removePks: DbAccountPk[] = [];
 
         for (const {pk} of db.accountsIterator()) {
-            const accountWithEnabledLocalStoreExists = accounts.some(({database, type, login}) => (
+            const accountWithEnabledLocalStoreExists = accounts.some(({database, login}) => (
                 Boolean(database)
-                &&
-                pk.type === type
                 &&
                 pk.login === login
             ));

@@ -47,8 +47,8 @@ test.serial(`save to file call should write through the "EncryptionAdapter.proto
     const db = new databaseModule.Database(options, fileFs);
 
     const folderStub = buildFolder();
-    db.initAccount({type: "protonmail", login: "login1"})
-        .folders[folderStub.pk] = await validateEntity("folders", folderStub, "protonmail");
+    db.initAccount({login: "login1"})
+        .folders[folderStub.pk] = await validateEntity("folders", folderStub);
 
     t.false(encryptionAdapterWriteSpy.called);
 
@@ -86,8 +86,8 @@ test.serial(`save to file call should write through the "SerializationAdapter.wr
     const db = new databaseModule.Database(options, fileFs);
 
     const folderStub = buildFolder();
-    db.initAccount({type: "protonmail", login: "login1"})
-        .folders[folderStub.pk] = await validateEntity("folders", folderStub, "protonmail");
+    db.initAccount({login: "login1"})
+        .folders[folderStub.pk] = await validateEntity("folders", folderStub);
 
     const dump = JSON.parse(JSON.stringify(db.readonlyDbInstance()));
 
@@ -117,8 +117,8 @@ test.serial(`save to file call should write through the "SerializationAdapter.wr
 test("several sequence save calls should persist the same data", async (t) => {
     const db = buildDatabase();
     const folderStub = buildFolder();
-    db.initAccount({type: "protonmail", login: "login1"})
-        .folders[folderStub.pk] = await validateEntity("folders", folderStub, "protonmail");
+    db.initAccount({login: "login1"})
+        .folders[folderStub.pk] = await validateEntity("folders", folderStub);
 
     await db.saveToFile();
     await db.loadFromFile();
@@ -138,7 +138,7 @@ test("getting nonexistent account should initialize its content", async (t) => {
     const db = buildDatabase();
     await db.saveToFile();
     const readonlyDbInstanceDump1 = JSON.parse(JSON.stringify(db.readonlyDbInstance()));
-    db.initAccount({type: "protonmail", login: "login1"});
+    db.initAccount({login: "login1"});
     await db.saveToFile();
     const readonlyDbInstanceDump12 = JSON.parse(JSON.stringify(db.readonlyDbInstance()));
     t.truthy(readonlyDbInstanceDump1);
@@ -171,8 +171,8 @@ test("reset", async (t) => {
 
     t.deepEqual(JSON.parse(JSON.stringify(db.readonlyDbInstance())), initial);
     const folderStub = buildFolder();
-    db.initAccount({type: "protonmail", login: "login1"})
-        .folders[folderStub.pk] = await validateEntity("folders", folderStub, "protonmail");
+    db.initAccount({login: "login1"})
+        .folders[folderStub.pk] = await validateEntity("folders", folderStub);
 
     t.notDeepEqual(JSON.parse(JSON.stringify(db.readonlyDbInstance())), initial);
 

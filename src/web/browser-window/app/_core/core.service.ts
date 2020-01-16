@@ -24,7 +24,7 @@ export class CoreService {
             throw new Error(`Invalid "entryApiUrl" value: "${entryApiUrl}"`);
         }
 
-        const bundle = __METADATA__.electronLocations.webClients[config.type]
+        const bundle = __METADATA__.electronLocations.webClients
             .filter((webClient) => webClient.entryApiUrl === entryApiUrl)
             .pop();
         if (!bundle) {

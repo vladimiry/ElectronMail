@@ -232,7 +232,6 @@ export async function persistDatabasePatch(
     logger.info("persist() start");
 
     await (await resolveIpcMainApi(logger))("dbPatch")({
-        type: data.type,
         login: data.login,
         metadata: data.metadata,
         patch: data.patch,

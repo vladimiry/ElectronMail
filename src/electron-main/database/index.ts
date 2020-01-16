@@ -5,7 +5,7 @@ import _logger, {ElectronLog} from "electron-log";
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/lib/private/constants";
 import {KeyBasedPreset} from "fs-json-store-encryption-adapter";
 
-import {DATABASE_VERSION} from "./constants";
+import {DATABASE_VERSION, DB_INSTANCE_PROP_NAME} from "./constants";
 import {DbAccountPk, FsDb, FsDbAccount, MAIL_FOLDER_TYPE, Mail} from "src/shared/model/database";
 import {LogLevel} from "src/shared/model/common";
 import {ReadonlyDeep} from "type-fest";
@@ -18,22 +18,21 @@ export class Database {
     static buildEmptyDb(): FsDb {
         return {
             version: DATABASE_VERSION,
-            accounts: {protonmail: {}},
+            accounts: {},
         };
     }
 
-    static buildEmptyAccountMetadata<T extends keyof FsDb["accounts"]>(type: T): FsDbAccount<T>["metadata"] {
-        const metadata: { [key in keyof FsDb["accounts"]]: FsDbAccount<key>["metadata"] } = {
-            protonmail: {type: "protonmail", latestEventId: ""},
+    static buildEmptyAccountMetadata(): FsDbAccount["metadata"] {
+        return {
+            latestEventId: "",
         };
-        return metadata[type];
     }
 
     private readonly logger: ElectronLog;
 
     private readonly saveToFileQueue = new asap();
 
-    private dbInstance: FsDb = Database.buildEmptyDb();
+    private [DB_INSTANCE_PROP_NAME]: FsDb = Database.buildEmptyDb();
 
     constructor(
         public readonly options: Readonly<{
@@ -52,25 +51,25 @@ export class Database {
         return this.dbInstance.version;
     }
 
-    getMutableAccount<TL extends DbAccountPk>({type, login}: TL): FsDbAccount<TL["type"]> | undefined {
-        return this.getAccount({type, login}) as (FsDbAccount<TL["type"]> | undefined);
+    getMutableAccount<TL extends DbAccountPk>({login}: TL): FsDbAccount | undefined {
+        return this.getAccount({login}) as (FsDbAccount | undefined);
     }
 
-    getAccount<TL extends DbAccountPk>({type, login}: TL): ReadonlyDeep<FsDbAccount<TL["type"]>> | undefined {
-        const account = this.dbInstance.accounts[type][login];
+    getAccount<TL extends DbAccountPk>({login}: TL): ReadonlyDeep<FsDbAccount | undefined> {
+        const account = this.dbInstance.accounts[login];
         if (!account) {
             return;
         }
-        return account as ReadonlyDeep<FsDbAccount<TL["type"]>>;
+        return account;
     }
 
-    initAccount<TL extends DbAccountPk>({type, login}: TL): FsDbAccount<TL["type"]> {
+    initAccount<TL extends DbAccountPk>({login}: TL): FsDbAccount {
         const account: FsDbAccount = {
             conversationEntries: Object.create(null),
             mails: Object.create(null),
             folders: Object.create(null),
             contacts: Object.create(null),
-            metadata: Database.buildEmptyAccountMetadata(type),
+            metadata: Database.buildEmptyAccountMetadata(),
             deletedPks: {
                 conversationEntries: [],
                 mails: [],
@@ -79,9 +78,9 @@ export class Database {
             },
         };
 
-        this.dbInstance.accounts[type][login] = account;
+        this.dbInstance.accounts[login] = account;
 
-        return account as FsDbAccount<TL["type"]>;
+        return account;
     }
 
     accountsIterator(): {
@@ -89,7 +88,7 @@ export class Database {
     } {
         this.logger.info("accountsIterator()");
 
-        const accounts = this.dbInstance.accounts;
+        const {accounts} = this.dbInstance;
         const pks = this.getPks();
 
         let pkPointer = 0;
@@ -105,7 +104,7 @@ export class Database {
                     }
 
                     const pk = pks[pkPointer++];
-                    const account = accounts[pk.type][pk.login];
+                    const account = accounts[pk.login];
 
                     return {
                         done: false,
@@ -116,8 +115,8 @@ export class Database {
         };
     }
 
-    deleteAccount<TL extends DbAccountPk>({type, login}: TL): void {
-        delete this.dbInstance.accounts[type][login];
+    deleteAccount<TL extends DbAccountPk>({login}: TL): void {
+        delete this.dbInstance.accounts[login];
     }
 
     async persisted(): Promise<boolean> {
@@ -235,17 +234,9 @@ export class Database {
     }
 
     private getPks(): Array<ReadonlyDeep<DbAccountPk>> {
-        const {accounts} = this.dbInstance;
-
-        return (Object.keys(accounts) as Array<keyof typeof accounts>).reduce(
-            (keys: DbAccountPk[], type) => {
-                for (const login of Object.keys(accounts[type])) {
-                    keys.push({type, login});
-                }
-                return keys;
-            },
-            [],
-        );
+        return Object
+            .keys(this.dbInstance.accounts)
+            .map((login) => ({login}));
     }
 
     private spamFolderTester(account: ReadonlyDeep<FsDbAccount>): (mail: Mail) => boolean {

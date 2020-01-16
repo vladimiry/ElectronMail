@@ -22,7 +22,7 @@ import {
 } from "src/electron-preload/webview/lib/util";
 import {resolveProviderApi} from "src/electron-preload/webview/primary/provider-api";
 
-const _logger = curryFunctionMembers(WebviewConstants.WEBVIEW_LOGGERS.protonmail.primary, "[api/index]");
+const _logger = curryFunctionMembers(WebviewConstants.WEBVIEW_LOGGERS.primary, "[api/index]");
 
 const endpoints: ProtonApi = {
     ...buildDbPatchEndpoint,

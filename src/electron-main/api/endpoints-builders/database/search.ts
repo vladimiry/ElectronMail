@@ -6,7 +6,7 @@ import {v4 as uuid} from "uuid";
 import {Context} from "src/electron-main/model";
 import {DEFAULT_API_CALL_TIMEOUT} from "src/shared/constants";
 import {FOLDER_UTILS, buildFoldersAndRootNodePrototypes, fillFoldersAndReturnRootConversationNodes} from "./folders-view";
-import {Folder, FsDb, FsDbAccount, IndexableMailId, Mail, View} from "src/shared/model/database";
+import {Folder, FsDbAccount, IndexableMailId, Mail, View} from "src/shared/model/database";
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION$, IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_DB_INDEXER_ON_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
 import {ReadonlyDeep} from "type-fest";
@@ -18,11 +18,11 @@ export async function buildDbSearchEndpoints(
     ctx: ReadonlyDeep<Context>,
 ): Promise<Pick<IpcMainApiEndpoints, "dbFullTextSearch">> {
     return {
-        async dbFullTextSearch({type, login, query, folderPks}) {
+        async dbFullTextSearch({login, query, folderPks}) {
             logger.info("dbFullTextSearch()");
 
             const timeoutMs = DEFAULT_API_CALL_TIMEOUT;
-            const account = ctx.db.getAccount({type, login});
+            const account = ctx.db.getAccount({login});
 
             if (!account) {
                 throw new Error(`Failed to resolve account by the provided "type/login"`);
@@ -95,7 +95,7 @@ export async function buildDbSearchEndpoints(
 
             IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.next(
                 IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Search({
-                    key: {type, login},
+                    key: {login},
                     query,
                     uid,
                 }),
@@ -106,8 +106,8 @@ export async function buildDbSearchEndpoints(
     };
 }
 
-export function searchRootConversationNodes<T extends keyof FsDb["accounts"]>(
-    account: ReadonlyDeep<FsDbAccount<T>>,
+export function searchRootConversationNodes(
+    account: ReadonlyDeep<FsDbAccount>,
     {mailPks, folderPks}: ReadonlyDeep<{ mailPks?: Array<Mail["pk"]>; folderPks?: Array<Folder["pk"]>; }> = {},
 ): View.RootConversationNode[] {
     // TODO optimize search: implement custom search instead of getting all the mails first and then narrowing the list down

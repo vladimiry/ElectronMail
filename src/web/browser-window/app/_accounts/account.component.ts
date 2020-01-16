@@ -257,14 +257,13 @@ export class AccountComponent extends NgChangesObservableComponent implements On
             this.account$
                 .pipe(
                     map((account) => ({
-                        type: account.accountConfig.type,
                         login: account.accountConfig.login,
                         databaseView: account.databaseView,
                     })),
                     distinctUntilChanged(({databaseView: prev}, {databaseView: curr}) => prev === curr),
                     withLatestFrom(this.store.pipe(select(AccountsSelectors.FEATURED.selectedLogin))),
                 )
-                .subscribe(async ([{type, login, databaseView}, selectedLogin]) => {
+                .subscribe(async ([{login, databaseView}, selectedLogin]) => {
                     this.viewModeClass = databaseView
                         ? "vm-database"
                         : "vm-live";
@@ -273,7 +272,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         this.focusPrimaryWebView();
                     } else if (!this.tplDbViewComponentRef) {
                         // lazy-load the local database view component ("local store" feature)
-                        this.tplDbViewComponentRef = await this.dbViewModuleResolve.buildComponentRef({type, login});
+                        this.tplDbViewComponentRef = await this.dbViewModuleResolve.buildComponentRef({login});
                         this.tplDbViewComponentContainerRef.insert(this.tplDbViewComponentRef.hostView);
                         this.tplDbViewComponentRef.changeDetectorRef.detectChanges();
                     }

@@ -182,12 +182,8 @@ function initLocations(
             browserWindowE2E: appRelativePath("./electron-preload/browser-window-e2e.js"),
             searchInPageBrowserView: appRelativePath("./electron-preload/search-in-page-browser-view.js"),
             fullTextSearchBrowserWindow: appRelativePath("./electron-preload/database-indexer.js"),
-            primary: {
-                protonmail: formatFileUrl(appRelativePath("./electron-preload/webview/primary.js")),
-            },
-            calendar: {
-                protonmail: formatFileUrl(appRelativePath("./electron-preload/webview/calendar.js")),
-            },
+            primary: formatFileUrl(appRelativePath("./electron-preload/webview/primary.js")),
+            calendar: formatFileUrl(appRelativePath("./electron-preload/webview/calendar.js")),
         },
         vendorsAppCssLinkHref: (() => {
             // TODO electron: get rid of "baseURLForDataURL" workaround, see https://github.com/electron/electron/issues/20700
@@ -200,33 +196,30 @@ function initLocations(
             return `${WEB_PROTOCOL_SCHEME}://${webRelativeCssFilePath}`;
         })(),
         ...(() => {
-            const {protocolBundles, webClients}: Pick<ElectronContextLocations, "webClients">
-                & { protocolBundles: Array<{ scheme: string; directory: string }> } = {
+            const {protocolBundles, webClients}:
+                {
+                    webClients: Array<Unpacked<ElectronContextLocations["webClients"]>>;
+                    protocolBundles: Array<{ scheme: string; directory: string }>;
+                } = {
                 protocolBundles: [],
-                webClients: {
-                    protonmail: [],
-                },
+                webClients: [],
             };
+            const webClientsDir = appRelativePath("webclient");
 
             let schemeIndex = 0;
 
-            for (const [, items] of Object.entries(webClients)) {
-                const webClientsDir = appRelativePath("webclient");
+            for (const dirName of listDirsNames(storeFs, webClientsDir)) {
+                const directory = path.resolve(webClientsDir, dirName);
+                const scheme = `${LOCAL_WEBCLIENT_PROTOCOL_PREFIX}${schemeIndex++}`;
 
-                for (const dirName of listDirsNames(storeFs, webClientsDir)) {
-                    const directory = path.resolve(webClientsDir, dirName);
-                    const scheme = `${LOCAL_WEBCLIENT_PROTOCOL_PREFIX}${schemeIndex++}`;
-
-                    items.push({
-                        entryUrl: `${scheme}://${dirName}`,
-                        entryApiUrl: `https://${dirName}`,
-                    });
-
-                    protocolBundles.push({
-                        scheme,
-                        directory,
-                    });
-                }
+                webClients.push({
+                    entryUrl: `${scheme}://${dirName}`,
+                    entryApiUrl: `https://${dirName}`,
+                });
+                protocolBundles.push({
+                    scheme,
+                    directory,
+                });
             }
 
             return {protocolBundles, webClients};

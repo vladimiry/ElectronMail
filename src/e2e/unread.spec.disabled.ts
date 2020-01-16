@@ -4,7 +4,7 @@
 
 // tslint:disable:await-promise
 
-import {AccountTypeAndLoginFieldContainer} from "src/shared/model/container";
+import {LoginFieldContainer} from "src/shared/model/container";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {accountBadgeCssSelector, initApp, test} from "./workflow";
 
@@ -14,27 +14,26 @@ const RUNTIME_ENV_E2E_PROTONMAIL_PASSWORD = `ELECTRON_MAIL_E2E_PROTONMAIL_PASSWO
 const RUNTIME_ENV_E2E_PROTONMAIL_2FA_CODE = `ELECTRON_MAIL_E2E_PROTONMAIL_2FA_CODE`;
 const RUNTIME_ENV_E2E_PROTONMAIL_UNREAD_MIN = `ELECTRON_MAIL_E2E_PROTONMAIL_UNREAD_MIN`;
 
-for (const {type, login, password, twoFactorCode, unread} of ([
+for (const {login, password, twoFactorCode, unread} of ([
     {
-        type: "protonmail",
         login: process.env[RUNTIME_ENV_E2E_PROTONMAIL_LOGIN],
         password: process.env[RUNTIME_ENV_E2E_PROTONMAIL_PASSWORD],
         twoFactorCode: process.env[RUNTIME_ENV_E2E_PROTONMAIL_2FA_CODE],
         unread: Number(process.env[RUNTIME_ENV_E2E_PROTONMAIL_UNREAD_MIN]),
     },
-] as Array<AccountTypeAndLoginFieldContainer & { password: string, twoFactorCode: string, unread: number }>)) {
+] as Array<LoginFieldContainer & { password: string, twoFactorCode: string, unread: number }>)) {
     if (!login || !password || !unread || isNaN(unread)) {
         continue;
     }
 
-    test.serial(`unread check: ${type}`, async (t) => {
+    test.serial(`unread check: `, async (t) => {
         const workflow = await initApp(t, {initial: true});
         const pauseMs = ONE_SECOND_MS * 20;
         const unreadBadgeSelector = accountBadgeCssSelector();
         const state: { parsedUnreadText?: string } = {};
 
         await workflow.login({setup: true, savePassword: false});
-        await workflow.addAccount({type, login, password, twoFactorCode});
+        await workflow.addAccount({login, password, twoFactorCode});
         await workflow.selectAccount();
 
         await t.context.app.client.pause(pauseMs);

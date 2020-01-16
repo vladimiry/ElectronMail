@@ -2,8 +2,7 @@ import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import {ofType, unionize} from "@vladimiry/unionize";
 
 import {
-    AccountConfigCreatePatch,
-    AccountConfigUpdatePatch,
+    AccountConfigCreateUpdatePatch,
     LoginFieldContainer,
     PasswordChangeContainer,
     PasswordFieldContainer,
@@ -13,8 +12,8 @@ import {InitResponse} from "src/shared/api/main";
 import {ProgressPatch, State} from "src/web/browser-window/app/store/reducers/options";
 
 export const OPTIONS_ACTIONS = unionize({
-        AddAccountRequest: ofType<AccountConfigCreatePatch>(),
-        UpdateAccountRequest: ofType<AccountConfigUpdatePatch>(),
+        AddAccountRequest: ofType<AccountConfigCreateUpdatePatch>(),
+        UpdateAccountRequest: ofType<AccountConfigCreateUpdatePatch>(),
         ChangeAccountOrderRequest: ofType<LoginFieldContainer & { index: number }>(),
         RemoveAccountRequest: ofType<{ login: string }>(),
         ChangeMasterPasswordRequest: ofType<PasswordChangeContainer>(),

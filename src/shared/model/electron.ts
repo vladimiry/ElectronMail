@@ -1,6 +1,5 @@
 import {InMemoryOptions, SyncOrAsyncLimiter} from "rolling-rate-limiter";
 
-import {AccountType} from "src/shared/model/account";
 import {IPC_MAIN_API} from "src/shared/api/main";
 import {Logger} from "src/shared/model/common";
 import {PROTONMAIL_IPC_WEBVIEW_API} from "src/shared/api/webview/primary";
@@ -35,9 +34,9 @@ export type ElectronContextLocations = Readonly<{
         browserWindowE2E: string;
         searchInPageBrowserView: string;
         fullTextSearchBrowserWindow: string;
-        primary: Readonly<Record<AccountType, string>>;
-        calendar: Readonly<Record<AccountType, string>>;
+        primary: string;
+        calendar: string;
     }>;
-    protocolBundles: ReadonlyArray<{ scheme: string; directory: string }>;
-    webClients: Readonly<Record<AccountType, Array<{ entryUrl: string; entryApiUrl: string; }>>>;
+    protocolBundles: ReadonlyArray<Readonly<{ scheme: string; directory: string }>>;
+    webClients: ReadonlyArray<Readonly<{ entryUrl: string; entryApiUrl: string; }>>;
 }>;

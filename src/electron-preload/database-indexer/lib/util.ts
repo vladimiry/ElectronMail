@@ -1,7 +1,6 @@
 import {Subscription} from "rxjs";
 import {addDocumentToIndex, createIndex, removeDocumentFromIndex, vacuumIndex} from "ndx";
 import {expandTerm, query} from "ndx-query";
-import {lowerCaseFilter, whitespaceTokenizer} from "ndx-utils";
 
 import {FIELD_DESCRIPTION, LOGGER} from "./contants";
 import {IPC_MAIN_API} from "src/shared/api/main";
@@ -32,6 +31,18 @@ export const SERVICES_FACTORY = {
     },
 };
 
+const lowerCaseFilter = (term: string) => {
+    return term.toLowerCase();
+};
+
+const tokenizer: (value: string) => string[] = (() => {
+    const tokenizeRe = /[\s\-]+/; // whitespace and hyphen
+    const result: typeof tokenizer = (value) => {
+        return value.trim().split(tokenizeRe);
+    };
+    return result;
+})();
+
 const trimNonLetterCharactersFilter: (value: string) => string = (() => {
     // TODO make sure all the possible unicode categories listed here except {L} and {N}
     const toTrim = "[\\p{M}\\p{Z}\\p{S}\\p{P}\\p{C}]+";
@@ -56,7 +67,7 @@ export function createMailsIndex(): MailsIndex {
         add: (mail) => addDocumentToIndex(
             index,
             fieldAccessors,
-            whitespaceTokenizer,
+            tokenizer,
             termFilter,
             mail.pk,
             mail,
@@ -75,7 +86,7 @@ export function createMailsIndex(): MailsIndex {
                     fieldBoostFactors,
                     1.2,
                     0.75,
-                    whitespaceTokenizer,
+                    tokenizer,
                     termFilter,
                     undefined,
                     q,

@@ -6,7 +6,7 @@ import pathIsInside from "path-is-inside";
 import {promisify} from "util";
 
 import {CWD, LOG, LOG_LEVELS, execShell} from "scripts/lib";
-import {PROVIDER_REPOS, WEB_CLIENTS_BLANK_HTML_FILE} from "src/shared/constants";
+import {PROVIDER_REPOS, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/constants";
 
 const REPOS_ONLY_FILTER: ReadonlyArray<keyof typeof PROVIDER_REPOS> = (() => {
     const {ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY} = process.env;
@@ -108,8 +108,18 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
         const flowArg = {repoDir, folderAsDomainEntry};
 
         printAndWriteFile(
-            path.join(distDir, WEB_CLIENTS_BLANK_HTML_FILE),
-            ``,
+            path.join(distDir, WEB_CLIENTS_BLANK_HTML_FILE_NAME),
+            `
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Title</title>
+                </head>
+                <body>
+                </body>
+                </html>
+            `,
         );
 
         if (await fsExtra.pathExists(repoDir)) {

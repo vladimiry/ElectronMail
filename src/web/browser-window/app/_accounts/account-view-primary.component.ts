@@ -1,9 +1,9 @@
-import {ChangeDetectionStrategy, Component, OnDestroy, OnInit} from "@angular/core";
+import {ChangeDetectionStrategy, Component, Injector, OnInit} from "@angular/core";
 import {Subject, from, race} from "rxjs";
 import {distinctUntilChanged, filter, map, pairwise, take, takeUntil, withLatestFrom} from "rxjs/operators";
 import {equals, pick} from "remeda";
 
-import {ACCOUNTS_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {ACCOUNTS_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountConfig} from "src/shared/model/account";
 import {AccountViewAbstractComponent} from "src/web/browser-window/app/_accounts/account-view-abstract.component";
 
@@ -21,9 +21,11 @@ const pickLoginDelayFields = ((fields: Array<keyof AccountConfig>) => {
     styleUrls: ["./account-view-primary.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AccountViewPrimaryComponent extends AccountViewAbstractComponent implements OnInit, OnDestroy {
-    constructor() {
-        super("primary");
+export class AccountViewPrimaryComponent extends AccountViewAbstractComponent implements OnInit {
+    constructor(
+        injector: Injector,
+    ) {
+        super("primary", injector);
     }
 
     ngOnInit() {
@@ -76,10 +78,6 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
         );
     }
 
-    ngOnDestroy() {
-        super.ngOnDestroy();
-    }
-
     private onWebViewDomReadyOnceHandler(webView: Electron.WebviewTag) {
         this.addSubscription(
             this.account$.pipe(
@@ -103,6 +101,21 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
             ).subscribe((account) => {
                 this.event.emit({type: "log", data: ["info", `onWebViewMounted(): dispatch "TryToLogin"`]});
                 this.event.emit({type: "action", payload: ACCOUNTS_ACTIONS.TryToLogin({account, webView})});
+
+                // removing possibly persisted "proton session" on login form showing
+                (async () => {
+                    const {accountConfig, notifications} = account;
+                    const resetSavedProtonSession = notifications.pageType.type === "login" && accountConfig.persistentSession;
+                    if (!resetSavedProtonSession) {
+                        return;
+                    }
+                    const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, "WebClient");
+                    const key = {login: accountConfig.login, apiEndpointOrigin: new URL(parsedEntryUrl.entryApiUrl).origin} as const;
+                    await this.api.ipcMainClient()("resetSavedProtonSession")(key);
+                })().catch((error) => {
+                    // TODO make "AppErrorHandler.handleError" catch promise rejection errors
+                    this.event.emit({type: "action", payload: NOTIFICATION_ACTIONS.Error(error)});
+                });
             }),
         );
 

@@ -2,7 +2,7 @@ import electronLog from "electron-log";
 import {authenticator} from "otplib";
 
 import * as SpellCheck from "src/electron-main/spell-check/api";
-import {Account, Database, FindInPage, General, TrayIcon} from "./endpoints-builders";
+import {Account, Database, FindInPage, General, ProtonSession, TrayIcon} from "./endpoints-builders";
 import {Context} from "src/electron-main/model";
 import {DB_DATA_CONTAINER_FIELDS} from "src/shared/model/database";
 import {IPC_MAIN_API, IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
@@ -25,8 +25,9 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
         ...await Database.buildEndpoints(ctx),
         ...await FindInPage.buildEndpoints(ctx),
         ...await General.buildEndpoints(ctx),
-        ...await TrayIcon.buildEndpoints(ctx),
+        ...await ProtonSession.buildEndpoints(ctx),
         ...await SpellCheck.buildEndpoints(ctx),
+        ...await TrayIcon.buildEndpoints(ctx),
 
         async changeMasterPassword({password, newPassword}) {
             const readStore = ctx.settingsStore.clone({adapter: await buildSettingsAdapter(ctx, password)});
@@ -107,6 +108,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             ctx.settingsStore = ctx.settingsStore.clone({adapter: undefined});
             ctx.db.reset();
             ctx.sessionDb.reset();
+            ctx.sessionStorage.reset();
             delete ctx.selectedAccount; // TODO extend "logout" api test: "delete ctx.selectedAccount"
 
             await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0});
@@ -224,7 +226,10 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
         async loadDatabase({accounts}) {
             logger.info("loadDatabase() start");
 
-            const {db, sessionDb, configStore} = ctx;
+            const {db, sessionDb, configStore, sessionStorage} = ctx;
+
+            // TODO move to "readSettings" method
+            await sessionStorage.load(accounts.map(({login}) => login));
 
             if (await sessionDb.persisted()) {
                 await sessionDb.loadFromFile();

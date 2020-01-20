@@ -1,9 +1,11 @@
+import {ProtonClientSession} from "src/shared/model/proton";
+
 export type AccountConfig = NoExtraProperties<{
     login: string;
     title?: string;
     entryUrl: string;
     database?: boolean; // TODO proton-v4: rename AccountConfig.database => AccountConfig.localStore
-    localCalendarStore?: boolean;
+    databaseCalendar?: boolean;
     credentials: NoExtraProperties<Partial<Record<"password" | "twoFactorCode" | "mailPassword", string>>>;
     proxy?: NoExtraProperties<{
         proxyRules?: string;
@@ -11,7 +13,17 @@ export type AccountConfig = NoExtraProperties<{
     }>;
     loginDelayUntilSelected?: boolean;
     loginDelaySecondsRange?: NoExtraProperties<{ start: number; end: number; }>;
+    persistentSession?: boolean;
 }>;
+
+export type AccountPersistentSession = NoExtraProperties<{
+    readonly cookies: Electron.Cookie[];
+    readonly sessionStorage: ProtonClientSession["sessionStorage"];
+    readonly window: { name?: ProtonClientSession["windowName"] };
+}>;
+
+export type AccountPersistentSessionBundle
+    = Record<string /* mapped by "api endpoint origin" */, AccountPersistentSession | undefined>;
 
 export type Notifications = NoExtraProperties<{
     calendarLoggedIn: boolean;

@@ -26,13 +26,14 @@ export class AccountEditComponent implements OnInit, OnDestroy {
 
     entryUrlItems = PROTON_API_ENTRY_RECORDS;
     controls: Record<keyof Pick<AccountConfig,
-        | "login" | "title" | "database" | "entryUrl" | "loginDelayUntilSelected" | "loginDelaySecondsRange">
+        | "login" | "title" | "database" | "persistentSession" | "entryUrl" | "loginDelayUntilSelected" | "loginDelaySecondsRange">
         | keyof Pick<Required<Required<AccountConfig>["proxy"]>, "proxyRules" | "proxyBypassRules">
         | keyof AccountConfig["credentials"],
         AbstractControl> = {
         login: new FormControl(null, Validators.required),
         title: new FormControl(null),
         database: new FormControl(null),
+        persistentSession: new FormControl(null),
         entryUrl: new FormControl(null, Validators.required),
         proxyRules: new FormControl(null),
         proxyBypassRules: new FormControl(null),
@@ -106,6 +107,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                 (() => {
                     controls.title.patchValue(account.title);
                     controls.database.patchValue(account.database);
+                    controls.persistentSession.patchValue(account.persistentSession);
                     controls.entryUrl.patchValue(account.entryUrl);
 
                     controls.proxyRules.patchValue(account.proxy ? account.proxy.proxyRules : null);
@@ -140,6 +142,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
             title: controls.title.value,
             entryUrl: controls.entryUrl.value,
             database: Boolean(controls.database.value),
+            persistentSession: Boolean(controls.persistentSession.value),
             credentials: {
                 password: controls.password.value,
                 twoFactorCode: controls.twoFactorCode.value,

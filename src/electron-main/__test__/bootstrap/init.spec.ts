@@ -66,7 +66,7 @@ function buildMocks(
 
 async function loadLibrary(mocks: ReturnType<typeof buildMocks>) {
     return await rewiremock.around(
-        () => import("./init"),
+        () => import("src/electron-main/bootstrap/init"),
         (mock) => {
             for (const [name, data] of Object.entries(mocks)) {
                 mock(name).with(data);

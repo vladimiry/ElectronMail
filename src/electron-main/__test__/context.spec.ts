@@ -23,7 +23,7 @@ ctxDbProps.forEach((ctxDbProp) => {
             memFsVolume._impl.writeFileSync(path.join(memFsPath, "web/browser-window/vendor.css"), "");
 
             const {initContext} = await rewiremock.around(
-                () => import("./context"),
+                () => import("src/electron-main/context"),
                 (mock) => {
                     mock(() => import("electron")).with({
                         app: {
@@ -32,7 +32,7 @@ ctxDbProps.forEach((ctxDbProp) => {
                             getVersion: () => PACKAGE_VERSION,
                         },
                     } as any);
-                    mock(() => import("./constants")).callThrough();
+                    mock(() => import("src/electron-main/constants")).callThrough();
                 },
             );
             const ctx = initContext({
@@ -74,11 +74,11 @@ ctxDbProps.forEach((ctxDbProp) => {
             memFsVolume._impl.mkdirpSync(path.join(memFsPath, "web/browser-window"));
             memFsVolume._impl.writeFileSync(path.join(memFsPath, "web/browser-window/vendor.css"), "");
 
-            const {INITIAL_STORES} = await import("./constants");
+            const {INITIAL_STORES} = await import("src/electron-main/constants");
             const initialSettings = INITIAL_STORES.settings();
             const settingsStub = sinon.stub().returns(initialSettings);
             const {initContext} = await rewiremock.around(
-                () => import("./context"),
+                () => import("src/electron-main/context"),
                 (mock) => {
                     mock(() => import("electron")).with({
                         app: {
@@ -87,7 +87,7 @@ ctxDbProps.forEach((ctxDbProp) => {
                             getVersion: () => PACKAGE_VERSION,
                         },
                     } as any);
-                    mock(() => import("./constants")).callThrough().with({
+                    mock(() => import("src/electron-main/constants")).callThrough().with({
                         INITIAL_STORES: {
                             config: INITIAL_STORES.config,
                             settings: settingsStub,
@@ -107,7 +107,7 @@ ctxDbProps.forEach((ctxDbProp) => {
             t.true(settingsStub.called, `"initContext()" should call "INITIAL_STORES.settings()" internally`);
 
             const {initApi} = await rewiremock.around(
-                () => import("./api"),
+                () => import("src/electron-main/api"),
                 (mock) => {
                     mock(() => import("electron")).with({
                         app: {

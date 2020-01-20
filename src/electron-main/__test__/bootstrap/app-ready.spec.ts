@@ -147,7 +147,7 @@ function buildContext(): Pick<Context, "configStore"> {
 
 async function loadLibrary(mocks: ReturnType<typeof buildMocks>) {
     return await rewiremock.around(
-        () => import("./app-ready"),
+        () => import("src/electron-main/bootstrap/app-ready"),
         (mock) => {
             for (const [name, data] of Object.entries(mocks)) {
                 mock(name).with(data);

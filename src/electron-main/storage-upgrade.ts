@@ -171,7 +171,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config,
             {
                 ...pickBaseConfigProperties(def),
-                // JSON.parse(JSON.stringify drops undefined values
+                // "stringify => parse" drops "undefined" values
                 ...JSON.parse(
                     JSON.stringify(
                         pickBaseConfigProperties(config),
@@ -198,7 +198,6 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         //     restConfig.reflectSelectedAccountTitle = INITIAL_STORES.config().reflectSelectedAccountTitle;
         // }
     },
-    // TODO proton-v4: make sure the version is correct
     "4.1.0": (
         _,
         config = _ as Config & { reflectSelectedAccountTitle?: boolean; },
@@ -314,6 +313,13 @@ export const upgradeSettings: (settings: Settings, ctx: Context) => boolean = ((
                 settings.accounts = protonmailAccounts;
             },
             "4.2.0": (settings) => {
+                (() => {
+                    const key = "sessionStorageEncryptionKey";
+                    if (!settings[key]) {
+                        settings[key] = INITIAL_STORES.settings()[key];
+                    }
+                })();
+
                 settings.accounts.forEach((account, index) => {
                     delete (account as unknown as { type: string }).type;
 

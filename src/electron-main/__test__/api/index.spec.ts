@@ -25,7 +25,42 @@ import {buildSettingsAdapter} from "src/electron-main/util";
 
 interface TestContext {
     ctx: Context;
-    endpoints: IpcMainApiEndpoints;
+    endpoints: Skip<IpcMainApiEndpoints,
+        // TODO test skipped methods
+        | "activateBrowserWindow"
+        | "applySavedProtonBackendSession"
+        | "changeSpellCheckLocale"
+        | "dbExport"
+        | "dbFullTextSearch"
+        | "dbGetAccountDataView"
+        | "dbGetAccountMail"
+        | "dbGetAccountMetadata"
+        | "dbIndexerNotification"
+        | "dbIndexerOn"
+        | "dbPatch"
+        | "dbSearchRootConversationNodes"
+        | "findInPage"
+        | "findInPageDisplay"
+        | "findInPageNotification"
+        | "findInPageStop"
+        | "generateTOTPToken"
+        | "getSpellCheckMetadata"
+        | "hotkey"
+        | "loadDatabase"
+        | "notification"
+        | "reEncryptSettings"
+        | "resetProtonBackendSession"
+        | "resetSavedProtonSession"
+        | "resolveSavedProtonClientSession"
+        | "saveProtonSession"
+        | "selectAccount"
+        | "spellCheck"
+        | "staticInit"
+        | "toggleBrowserWindow"
+        | "toggleControls"
+        | "toggleLocalDbMailsListViewMode"
+        | "updateCheck"
+        | "updateOverlayIcon">;
     mocks: Unpacked<ReturnType<typeof buildMocks>>;
 }
 
@@ -40,19 +75,7 @@ const OPTIONS = Object.freeze({
     masterPassword: "masterPassword123",
 });
 
-const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>) => ImplementationResult> = {
-    getSpellCheckMetadata: (t) => {
-        t.pass(`TODO test "getSpellCheckMetadata" endpoint`);
-    },
-
-    changeSpellCheckLocale: (t) => {
-        t.pass(`TODO test "changeSpellCheckLocale" endpoint`);
-    },
-
-    spellCheck: (t) => {
-        t.pass(`TODO test "spellCheck" endpoint`);
-    },
-
+const tests: Record<keyof TestContext["endpoints"], (t: ExecutionContext<TestContext>) => ImplementationResult> = {
     // TODO update "updateAccount" api method test (verify more fields)
     addAccount: async (t) => {
         const {
@@ -242,46 +265,6 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
         setPasswordSpy.calledWithExactly(payload.newPassword);
     },
 
-    dbPatch: (t) => {
-        t.pass(`TODO test "dbPatch" endpoint`);
-    },
-
-    dbGetAccountMetadata: (t) => {
-        t.pass(`TODO test "dbGetAccountMetadata" endpoint`);
-    },
-
-    dbGetAccountDataView: (t) => {
-        t.pass(`TODO test "dbGetAccountMetadata" endpoint`);
-    },
-
-    dbGetAccountMail: (t) => {
-        t.pass(`TODO test "dbGetAccountMail" endpoint`);
-    },
-
-    dbExport: (t) => {
-        t.pass(`TODO test "dbExport" endpoint`);
-    },
-
-    dbSearchRootConversationNodes: (t) => {
-        t.pass(`TODO test "dbSearchRootConversationNodes" endpoint`);
-    },
-
-    dbFullTextSearch: (t) => {
-        t.pass(`TODO test "dbFullTextSearch" endpoint`);
-    },
-
-    dbIndexerOn: (t) => {
-        t.pass(`TODO test "dbIndexerOn" endpoint`);
-    },
-
-    dbIndexerNotification: (t) => {
-        t.pass(`TODO test "dbIndexerNotification" endpoint`);
-    },
-
-    staticInit: async (t) => {
-        t.pass(`TODO test "staticInit" endpoint`);
-    },
-
     // TODO actualize "init" endpoint test
     init: async (t) => {
         const result = await t.context.endpoints.init();
@@ -293,7 +276,8 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
         const {endpoints} = t.context;
         const dbResetSpy = sinon.spy(t.context.ctx.db, "reset");
         const sessionDbResetSpy = sinon.spy(t.context.ctx.sessionDb, "reset");
-        const updateOverlayIconSpy = sinon.spy(endpoints, "updateOverlayIcon");
+        const sessionStorageResetSpy = sinon.spy(t.context.ctx.sessionStorage, "reset");
+        const updateOverlayIconSpy = sinon.spy(endpoints as any, "updateOverlayIcon");
 
         await endpoints.logout();
         t.falsy(t.context.ctx.settingsStore.adapter);
@@ -313,6 +297,7 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
 
         t.is(2, dbResetSpy.callCount);
         t.is(2, sessionDbResetSpy.callCount);
+        t.is(2, sessionStorageResetSpy.callCount);
         t.is(2, updateOverlayIconSpy.callCount);
     },
 
@@ -460,30 +445,10 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
         t.is(initial.accounts.length + final.accounts.length, initSessionByAccountMock.callCount);
     },
 
-    // TODO test "reEncryptSettings" API
-    reEncryptSettings: async (t) => {
-        t.pass();
-    },
-
     settingsExists: async (t) => {
         t.false(await t.context.ctx.settingsStore.readable(), "store: settings file does not exist");
         await readConfigAndSettings(t.context.endpoints, {password: OPTIONS.masterPassword});
         t.true(await t.context.ctx.settingsStore.readable(), "store: settings file exists");
-    },
-
-    // TODO test "loadDatabase" API
-    loadDatabase: (t) => {
-        t.pass();
-    },
-
-    // TODO test "activateBrowserWindow" API
-    activateBrowserWindow: (t) => {
-        t.pass();
-    },
-
-    // TODO test "toggleBrowserWindow" API
-    toggleBrowserWindow: (t) => {
-        t.pass();
     },
 
     toggleCompactLayout: async (t) => {
@@ -500,78 +465,18 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
         const config3 = await t.context.ctx.configStore.readExisting();
         t.is(config3.compactLayout, !config2.compactLayout);
     },
-
-    // TODO test "generateTOTPToken" API
-    generateTOTPToken: (t) => {
-        t.pass();
-    },
-
-    // TODO test "updateOverlayIcon" API
-    updateOverlayIcon: async (t) => {
-        t.pass();
-    },
-
-    // TODO test "hotkey" API
-    selectAccount: (t) => {
-        t.pass();
-    },
-
-    // TODO test "hotkey" API
-    hotkey: (t) => {
-        t.pass();
-    },
-
-    // TODO test "findInPageDisplay" API
-    findInPageDisplay: (t) => {
-        t.pass();
-    },
-
-    // TODO test "findInPage" API
-    findInPage: (t) => {
-        t.pass();
-    },
-
-    // TODO test "findInPageStop" API
-    findInPageStop: (t) => {
-        t.pass();
-    },
-
-    // TODO test "findInPageNotification" API
-    findInPageNotification: (t) => {
-        t.pass();
-    },
-
-    // TODO test "updateCheck" API
-    updateCheck(t) {
-        t.pass();
-    },
-
-    // TODO test "toggleControls" API
-    toggleControls(t) {
-        t.pass();
-    },
-
-    // TODO test "toggleLocalDbMailsListViewMode" API
-    toggleLocalDbMailsListViewMode(t) {
-        t.pass();
-    },
-
-    // TODO test "notification" API
-    notification: (t) => {
-        t.pass();
-    },
 };
 
 Object.entries(tests).forEach(([apiMethodName, method]) => {
     test.serial(apiMethodName, method);
 });
 
-async function readConfig(endpoints: IpcMainApiEndpoints): Promise<Config> {
+async function readConfig(endpoints: TestContext["endpoints"]): Promise<Config> {
     return await endpoints.readConfig();
 }
 
 async function readConfigAndSettings(
-    endpoints: IpcMainApiEndpoints, payload: PasswordFieldContainer & { savePassword?: boolean; supressErrors?: boolean },
+    endpoints: TestContext["endpoints"], payload: PasswordFieldContainer & { savePassword?: boolean; supressErrors?: boolean },
 ): Promise<Settings> {
     await readConfig(endpoints);
     return await endpoints.readSettings(payload);
@@ -656,7 +561,7 @@ test.beforeEach(async (t) => {
     t.context.mocks = await buildMocks();
 
     const mockedModule = await rewiremock.around(
-        () => import("./index"),
+        () => import("src/electron-main/api"),
         (mock) => {
             const {mocks} = t.context;
             mock("electron").with(mocks.electron);
@@ -667,7 +572,7 @@ test.beforeEach(async (t) => {
             mock(() => import("src/electron-main/session")).callThrough().with(mocks["src/electron-main/session"]);
             mock(() => import("src/electron-main/util")).callThrough().with(mocks["src/electron-main/util"]);
             mock(() => import("src/electron-main/storage-upgrade")).callThrough().with(mocks["src/electron-main/storage-upgrade"]);
-            mock(() => import("./endpoints-builders")).callThrough().with(mocks["./endpoints-builders"]);
+            mock(() => import("src/electron-main/api/endpoints-builders")).callThrough().with(mocks["./endpoints-builders"]);
         },
     );
 

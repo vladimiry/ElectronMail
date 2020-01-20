@@ -2,6 +2,10 @@ import {AccountConfig} from "src/shared/model/account";
 
 export type LoginFieldContainer = Pick<AccountConfig, "login">;
 
+export interface ApiEndpointOriginFieldContainer {
+    apiEndpointOrigin: string;
+}
+
 export interface PasswordFieldContainer {
     password: string;
 }
@@ -17,4 +21,12 @@ export interface NewPasswordFieldContainer {
 export interface PasswordChangeContainer extends PasswordFieldContainer, NewPasswordFieldContainer {}
 
 export type AccountConfigCreateUpdatePatch = NoExtraProperties<Pick<AccountConfig,
-    "login" | "title" | "entryUrl" | "database" | "credentials" | "proxy" | "loginDelayUntilSelected" | "loginDelaySecondsRange">>;
+    | "credentials"
+    | "database"
+    | "entryUrl"
+    | "login"
+    | "loginDelaySecondsRange"
+    | "loginDelayUntilSelected"
+    | "persistentSession"
+    | "proxy"
+    | "title">>;

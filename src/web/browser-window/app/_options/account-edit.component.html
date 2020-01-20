@@ -182,6 +182,23 @@
                         class="invalid-feedback"
                     ></div>
                 </div>
+                <div class="d-block mt-3">
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" formControlName="persistentSession" id="persistentSessionCheckbox">
+                        <label class="custom-control-label d-flex" for="persistentSessionCheckbox">
+                            Persistent Session
+                            <i
+                                class="fa fa-info-circle text-warning align-self-center ml-1"
+                                container="body"
+                                [placement]="'bottom'"
+                                popover="If option enabled the saved Proton session will be reused, so the login form will be skipped."
+                                triggers="mouseenter:mouseleave"
+                            ></i>
+                            <span class="badge badge-secondary align-self-center ml-1">experimental</span>
+                            <a class="ml-1" href="https://github.com/vladimiry/ElectronMail/issues/227">#227</a>
+                        </label>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="clearfix">

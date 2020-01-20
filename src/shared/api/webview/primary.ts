@@ -4,7 +4,7 @@ import {DbAccountPk, FsDbAccount, Mail} from "src/shared/model/database";
 import {LoginFieldContainer, MailPasswordFieldContainer, PasswordFieldContainer} from "src/shared/model/container";
 import {Notifications} from "src/shared/model/account";
 import {PACKAGE_NAME} from "src/shared/constants";
-import {ProtonSharedSession} from "src/shared/model/proton";
+import {ProtonClientSession} from "src/shared/model/proton";
 import {ReadonlyDeep} from "type-fest";
 import {ZoneApiParameter} from "src/shared/api/common";
 import {buildLoggerBundle} from "src/electron-preload/lib/util";
@@ -40,8 +40,8 @@ export const PROTONMAIL_IPC_WEBVIEW_API_DEFINITION = {
         Observable<ReadonlyDeep<{ entryUrl: string; entryApiUrl: string; } & ZoneApiParameter>, ProtonNotificationOutput>(),
     unlock:
         ActionType.Promise<MailPasswordFieldContainer & ZoneApiParameter>(),
-    resolveSharedSession:
-        ActionType.Promise<ReadonlyDeep<ZoneApiParameter>, ProtonSharedSession | null>(),
+    resolveSavedProtonClientSession:
+        ActionType.Promise<ReadonlyDeep<ZoneApiParameter>, ProtonClientSession | null>(),
 } as const;
 
 export const PROTONMAIL_IPC_WEBVIEW_API = createWebViewApiService({

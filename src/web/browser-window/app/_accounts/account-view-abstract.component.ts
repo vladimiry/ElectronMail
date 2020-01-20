@@ -1,8 +1,10 @@
-import {Directive, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild} from "@angular/core";
+import {Directive, ElementRef, EventEmitter, Injector, Input, OnDestroy, OnInit, Output, ViewChild} from "@angular/core";
 import {Observable, Subscription, race} from "rxjs";
 import {distinctUntilChanged, filter, map, take} from "rxjs/operators";
 
 import {AccountComponent} from "src/web/browser-window/app/_accounts/account.component";
+import {CoreService} from "src/web/browser-window/app/_core/core.service";
+import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";
 import {WebAccount} from "src/web/browser-window/app/model";
@@ -31,6 +33,10 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
     @Output()
     readonly event = new EventEmitter<Parameters<typeof AccountComponent.prototype.onEventChild>[0]>();
 
+    protected readonly api: ElectronService = this.injector.get(ElectronService);
+
+    protected readonly core: CoreService = this.injector.get(CoreService);
+
     private readonly subscription = new Subscription();
 
     @ViewChild("tplWebViewRef", {static: true})
@@ -43,6 +49,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
     protected constructor(
         private readonly viewType:
             Extract<keyof typeof __METADATA__.electronLocations.preload, "primary" | "calendar">,
+        private readonly injector: Injector,
     ) {
         super();
     }

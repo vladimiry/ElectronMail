@@ -1,6 +1,6 @@
-import {ProtonSharedSession} from "src/shared/model/proton";
+import {ProtonClientSession} from "src/shared/model/proton";
 
-export function dumpProtonSharedSession(): ProtonSharedSession | null {
+export function dumpProtonSharedSession(): ProtonClientSession | null {
     const restore = (() => {
         const backup = {
             windowName: window.name,
@@ -20,7 +20,7 @@ export function dumpProtonSharedSession(): ProtonSharedSession | null {
     // https://github.com/ProtonMail/proton-shared/blob/37716bc2685d9cef8245efcb8d16e827b97a03c5/lib/createSecureSessionStorage.js#L14-L16
     window.dispatchEvent(new Event("unload"));
 
-    const windowName: Readonly<Record<string, any>> = JSON.parse(window.name);
+    const windowName: Readonly<Record<string, any /* TODO TS: replace "any" with JSONValue type */>> = JSON.parse(window.name);
     const windowNameKeys = Object.keys(windowName);
 
     if (!windowNameKeys.length) {
@@ -33,8 +33,8 @@ export function dumpProtonSharedSession(): ProtonSharedSession | null {
     restore();
 
     return {
-        windowName: JSON.stringify(windowName),
-        sessionStorage: JSON.stringify(sessionStorage),
+        windowName,
+        sessionStorage,
     };
 }
 
@@ -54,7 +54,7 @@ function pickSessionStorageItems(
 
         return allKeys;
     })(),
-): Readonly<Record<string, any>> {
+): Readonly<Record<string, any /* TODO TS: replace "any" with JSONValue type */>> {
     const result: Record<string, any> = Object.create(null);
 
     for (const key of keys) {

@@ -9,7 +9,7 @@ import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/li
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Fs, Store} from "fs-json-store";
 
-import {Database} from ".";
+import {Database} from "src/electron-main/database";
 import {Folder, MAIL_FOLDER_TYPE} from "src/shared/model/database";
 import {INITIAL_STORES} from "src/electron-main/constants";
 import {SerializationAdapter} from "src/electron-main/database/serialization";
@@ -36,7 +36,7 @@ test.serial(`save to file call should write through the "EncryptionAdapter.proto
 
     const encryptionAdapterWriteSpy = sinon.spy(MockedEncryptionAdapter.prototype, "write");
     const databaseModule = await rewiremock.around(
-        () => import("."),
+        () => import("src/electron-main/database"),
         (mock) => {
             mock(() => import("fs-json-store-encryption-adapter"))
                 .callThrough()
@@ -75,9 +75,9 @@ test.serial(`save to file call should write through the "SerializationAdapter.wr
     }
 
     const databaseModule = await rewiremock.around(
-        () => import("."),
+        () => import("src/electron-main/database"),
         async (rw) => {
-            rw(() => import("./serialization"))
+            rw(() => import("src/electron-main/database/serialization"))
                 .callThrough()
                 .with({SerializationAdapter: MockedSerializationAdapter});
         },

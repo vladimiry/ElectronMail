@@ -10,6 +10,7 @@ import {AccountsComponent} from "src/web/browser-window/app/_accounts/accounts.c
 import {AccountsEffects} from "src/web/browser-window/app/_accounts/accounts.effects";
 import {AccountsGuard} from "src/web/browser-window/app/_accounts/accounts.guard";
 import {AccountsRoutingModule} from "src/web/browser-window/app/_accounts/accounts.routing.module";
+import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
 import {DbViewModuleResolve} from "src/web/browser-window/app/_accounts/db-view-module-resolve.service";
 import {SharedModule} from "src/web/browser-window/app/_shared/shared.module";
 
@@ -28,8 +29,9 @@ import {SharedModule} from "src/web/browser-window/app/_shared/shared.module";
         AccountTitleComponent,
     ],
     providers: [
-        DbViewModuleResolve,
         AccountsGuard,
+        AccountsService,
+        DbViewModuleResolve,
     ],
     schemas: [
         // TODO enable ELECTRON_SCHEMA instead of NO_ERRORS_SCHEMA

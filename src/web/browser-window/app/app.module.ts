@@ -41,8 +41,8 @@ import {createAppMetaReducer, createErrorHandlingMetaReducer, reducers} from "./
                 runtimeChecks: {
                     strictStateImmutability: true,
                     strictActionImmutability: true,
-                    // strictStateSerializability: true,
-                    // strictActionSerializability: true,
+                    strictStateSerializability: BUILD_ENVIRONMENT === "development",
+                    strictActionSerializability: BUILD_ENVIRONMENT === "development",
                 },
             },
         ),

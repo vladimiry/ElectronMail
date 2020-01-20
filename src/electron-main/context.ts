@@ -12,6 +12,7 @@ import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {INITIAL_STORES, WEB_PROTOCOL_SCHEME, configEncryptionPresetValidator, settingsAccountLoginUniquenessValidator} from "./constants";
 import {LOCAL_WEBCLIENT_PROTOCOL_PREFIX, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR, WEB_CHUNK_NAMES} from "src/shared/constants";
+import {SessionStorage} from "src/electron-main/session-storage";
 import {formatFileUrl} from "./util";
 
 export function initContext(options: ContextInitOptions = {}): Context {
@@ -117,6 +118,26 @@ export function initContext(options: ContextInitOptions = {}): Context {
                 sessionDb: new Database(
                     {
                         file: path.join(locations.userDataDir, "database-session.bin"),
+                        encryption,
+                    },
+                    storeFs,
+                ),
+            };
+        })(),
+        ...(() => {
+            const encryption = {
+                async keyResolver() {
+                    const {sessionStorageEncryptionKey} = await ctx.settingsStore.readExisting();
+                    return sessionStorageEncryptionKey;
+                },
+                async presetResolver() {
+                    return {encryption: {type: "sodium.crypto_secretbox_easy", preset: "algorithm:default"}} as const;
+                },
+            } as const;
+            return {
+                sessionStorage: new SessionStorage(
+                    {
+                        file: path.join(locations.userDataDir, "session.bin"),
                         encryption,
                     },
                     storeFs,

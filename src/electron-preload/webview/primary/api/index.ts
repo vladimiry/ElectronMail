@@ -225,7 +225,7 @@ const endpoints: ProtonApi = {
         elements.submit.click();
     },
 
-    async resolveSharedSession() {
+    async resolveSavedProtonClientSession() {
         return dumpProtonSharedSession();
     },
 

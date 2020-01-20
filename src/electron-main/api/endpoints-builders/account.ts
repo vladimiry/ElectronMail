@@ -10,12 +10,15 @@ export async function buildEndpoints(
     ctx: Context,
 ): Promise<Pick<IpcMainApiEndpoints, "addAccount" | "updateAccount" | "changeAccountOrder" | "removeAccount">> {
     return {
-        async addAccount({login, title, entryUrl, database, credentials, proxy, loginDelayUntilSelected, loginDelaySecondsRange}) {
+        async addAccount(
+            {login, title, entryUrl, database, persistentSession, credentials, proxy, loginDelayUntilSelected, loginDelaySecondsRange},
+        ) {
             const account: AccountConfig = {
                 login,
                 title,
                 entryUrl,
                 database,
+                persistentSession,
                 credentials,
                 proxy,
                 loginDelayUntilSelected,
@@ -32,13 +35,16 @@ export async function buildEndpoints(
             return result;
         },
 
-        async updateAccount({login, title, entryUrl, database, credentials, proxy, loginDelayUntilSelected, loginDelaySecondsRange}) {
+        async updateAccount(
+            {login, title, entryUrl, database, persistentSession, credentials, proxy, loginDelayUntilSelected, loginDelaySecondsRange},
+        ) {
             const settings = await ctx.settingsStore.readExisting();
             const account = pickAccountStrict(settings.accounts, {login});
             const {credentials: existingCredentials} = account;
 
             account.title = title;
             account.database = database;
+            account.persistentSession = persistentSession;
 
             if (typeof entryUrl === "undefined") {
                 throw new Error('"entryUrl" is undefined');

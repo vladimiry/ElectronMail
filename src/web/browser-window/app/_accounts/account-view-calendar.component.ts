@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component} from "@angular/core";
+import {ChangeDetectionStrategy, Component, Injector} from "@angular/core";
 
 import {AccountViewAbstractComponent} from "src/web/browser-window/app/_accounts/account-view-abstract.component";
 
@@ -9,7 +9,9 @@ import {AccountViewAbstractComponent} from "src/web/browser-window/app/_accounts
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountViewCalendarComponent extends AccountViewAbstractComponent {
-    constructor() {
-        super("calendar");
+    constructor(
+        injector: Injector,
+    ) {
+        super("calendar", injector);
     }
 }

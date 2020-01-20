@@ -85,7 +85,7 @@ function buildContext(fsImplPatch?: Partial<Store<Config>["fs"]["_impl"]>): Pick
 
 async function loadLibrary(mocks: ReturnType<typeof buildMocks>) {
     return rewiremock.around(
-        () => import("./command-line"),
+        () => import("src/electron-main/bootstrap/command-line"),
         (mock) => {
             for (const [name, data] of Object.entries(mocks)) {
                 mock(name).with(data);

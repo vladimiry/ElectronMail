@@ -6,6 +6,7 @@ import {UnionOf, ofType, unionize} from "@vladimiry/unionize";
 import * as DbModel from "src/shared/model/database";
 import {
     AccountConfigCreateUpdatePatch,
+    ApiEndpointOriginFieldContainer,
     LoginFieldContainer,
     NewPasswordFieldContainer,
     PasswordFieldContainer,
@@ -16,6 +17,7 @@ import {DbPatch} from "./common";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {FsDbAccount} from "src/shared/model/database";
 import {PACKAGE_NAME} from "src/shared/constants";
+import {ProtonClientSession} from "src/shared/model/proton";
 import {ReadonlyDeep} from "type-fest";
 
 export type IpcMainServiceScan = ScanService<typeof IPC_MAIN_API>;
@@ -136,6 +138,18 @@ export const ENDPOINTS_DEFINITION = {
     toggleLocalDbMailsListViewMode: ActionType.Promise<void, Config>(),
 
     generateTOTPToken: ActionType.Promise<{ secret: string }, { token: string }>(),
+
+    resolveSavedProtonClientSession: ActionType.Promise<LoginFieldContainer & ApiEndpointOriginFieldContainer,
+        ProtonClientSession | null>(),
+
+    saveProtonSession: ActionType.Promise<LoginFieldContainer & ApiEndpointOriginFieldContainer
+        & { clientSession: ProtonClientSession }>(),
+
+    resetSavedProtonSession: ActionType.Promise<LoginFieldContainer & ApiEndpointOriginFieldContainer>(),
+
+    applySavedProtonBackendSession: ActionType.Promise<LoginFieldContainer & ApiEndpointOriginFieldContainer, boolean>(),
+
+    resetProtonBackendSession: ActionType.Promise<LoginFieldContainer>(),
 
     notification: ActionType.Observable<void, UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>>(),
 };

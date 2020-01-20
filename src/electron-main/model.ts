@@ -6,6 +6,7 @@ import {Config, Settings} from "src/shared/model/options";
 import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {IpcMainApiEndpoints} from "src/shared/api/main";
+import {SessionStorage} from "src/electron-main/session-storage";
 import {Controller as SpellCheckController} from "src/electron-main/spell-check/model";
 
 export type RuntimeEnvironment = "e2e" | "production";
@@ -37,6 +38,7 @@ export interface Context {
     keytarSupport?: boolean;
     snapPasswordManagerServiceHint?: boolean;
     settingsStore: StoreModel.Store<Settings>;
+    readonly sessionStorage: SessionStorage;
     uiContext?: UIContext;
     selectedAccount?: {
         webContentId: number;

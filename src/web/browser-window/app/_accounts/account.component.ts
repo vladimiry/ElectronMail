@@ -1,4 +1,3 @@
-import UUID from "pure-uuid";
 import {
     ChangeDetectionStrategy,
     Component,
@@ -11,31 +10,31 @@ import {
     ViewContainerRef,
 } from "@angular/core";
 import {Deferred} from "ts-deferred";
-import {EMPTY, Observable, ReplaySubject, Subject, Subscription, combineLatest, from, race, throwError, timer} from "rxjs";
+import {Observable, ReplaySubject, Subject, Subscription, combineLatest, from, race, timer} from "rxjs";
 import {Store, select} from "@ngrx/store";
 import {
     debounceTime,
+    delayWhen,
     distinctUntilChanged,
     filter,
-    first,
     map,
     pairwise,
     startWith,
     switchMap,
     take,
-    takeUntil,
     withLatestFrom,
 } from "rxjs/operators";
 
 import {ACCOUNTS_ACTIONS, AppAction, NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
+import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {DbViewModuleResolve} from "src/web/browser-window/app/_accounts/db-view-module-resolve.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {LogLevel} from "src/shared/model/common";
 import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";
-import {ONE_SECOND_MS, PRODUCT_NAME, PROVIDER_REPOS} from "src/shared/constants";
+import {ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/constants";
 import {ReadonlyDeep} from "type-fest";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount} from "src/web/browser-window/app/model";
@@ -83,6 +82,20 @@ export class AccountComponent extends NgChangesObservableComponent implements On
 
     private tplDbViewComponentRef: Unpacked<ReturnType<typeof DbViewModuleResolve.prototype.buildComponentRef>> | undefined;
 
+    private readonly databaseViewToggled$ = this.account$.pipe(
+        map((account) => ({
+            login: account.accountConfig.login,
+            databaseView: account.databaseView,
+        })),
+        distinctUntilChanged(({databaseView: prev}, {databaseView: curr}) => prev === curr),
+        withLatestFrom(this.store.pipe(select(AccountsSelectors.FEATURED.selectedLogin))),
+    );
+
+    private readonly onlinePing$ = timer(0, ONE_SECOND_MS).pipe(
+        filter(() => navigator.onLine),
+        take(1),
+    );
+
     // TODO resolve "componentIndex" dynamically: accounts$.indexOf(({login}) => this.login === login)
     private readonly componentIndex: number;
 
@@ -99,6 +112,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
 
     constructor(
         private readonly dbViewModuleResolve: DbViewModuleResolve,
+        private readonly accountsService: AccountsService,
         private readonly api: ElectronService,
         private readonly core: CoreService,
         private readonly store: Store<State>,
@@ -121,12 +135,72 @@ export class AccountComponent extends NgChangesObservableComponent implements On
             this.account$
                 .pipe(
                     distinctUntilChanged(({accountConfig: {entryUrl: prev}}, {accountConfig: {entryUrl: curr}}) => curr === prev),
+                    switchMap((account) => this.accountsService.setupLoginDelayTrigger(account, this.logger)),
+                    delayWhen(() => this.onlinePing$),
+                    withLatestFrom(this.account$),
                 )
-                .subscribe(({accountConfig}) => {
-                    this.webViewsState.primary.src$.next(
-                        this.core.parseEntryUrl(accountConfig, "WebClient").entryUrl,
-                    );
+                // TODO move subscribe handler logic to "_accounts/*.service"
+                .subscribe(([, {accountConfig}]) => {
+                    (async () => {
+                        const project = "WebClient";
+                        const {primary: state} = this.webViewsState;
+                        const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, project);
+                        const key = {login: accountConfig.login, apiEndpointOrigin: new URL(parsedEntryUrl.entryApiUrl).origin} as const;
+                        const baseReturn = async () => {
+                            // reset the "backend session"
+                            await this.api.ipcMainClient()("resetProtonBackendSession")({login: key.login});
+                            // reset the "client session" and navigate
+                            await this.core.initProtonClientSessionAndNavigate(
+                                accountConfig,
+                                project,
+                                state.domReady$,
+                                (src) => state.src$.next(src),
+                            );
+                        };
+
+                        if (!accountConfig.persistentSession) {
+                            return await baseReturn();
+                        }
+
+                        const clientSession = await this.api.ipcMainClient()("resolveSavedProtonClientSession")(key);
+
+                        if (!clientSession) {
+                            return await baseReturn();
+                        }
+
+                        if (!(await this.api.ipcMainClient()("applySavedProtonBackendSession")(key))) {
+                            return await baseReturn();
+                        }
+
+                        await this.core.initProtonClientSessionAndNavigate(
+                            accountConfig,
+                            project,
+                            state.domReady$,
+                            (src) => state.src$.next(src),
+                            clientSession,
+                        );
+                    })().catch((error) => {
+                        // TODO make "AppErrorHandler.handleError" catch promise rejection errors
+                        this.onDispatchInLoggerZone(NOTIFICATION_ACTIONS.Error(error));
+                    });
                 }),
+        );
+
+        this.subscription.add(
+            this.databaseViewToggled$.subscribe(async ([{login, databaseView}]) => {
+                this.viewModeClass = databaseView
+                    ? "vm-database"
+                    : "vm-live";
+
+                if (!databaseView) {
+                    this.focusPrimaryWebView();
+                } else if (!this.tplDbViewComponentRef) {
+                    // lazy-load the local database view component ("local store" feature)
+                    this.tplDbViewComponentRef = await this.dbViewModuleResolve.buildComponentRef({login});
+                    this.tplDbViewComponentContainerRef.insert(this.tplDbViewComponentRef.hostView);
+                    this.tplDbViewComponentRef.changeDetectorRef.detectChanges();
+                }
+            }),
         );
 
         this.subscription.add(
@@ -184,108 +258,65 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     onPrimaryViewLoadedOnce(primaryWebView: Electron.WebviewTag) {
         this.logger.info(`onPrimaryViewLoadedOnce()`);
 
-        const primaryWebViewClient = (() => {
-            let client: Unpacked<ReturnType<typeof ElectronService.prototype.webViewClient>> | undefined;
-            const result = async () => client || (client = await this.api.webViewClient(primaryWebView).toPromise());
-            return result;
-        })();
-
-        let calendarWebView: Electron.WebviewTag | undefined;
-
-        // TODO make hidden "calendar" view auto-load optional (only of specific option is checked on the account settings form)
         this.subscription.add(
-            this.account$.pipe(
-                filter(({accountConfig: {localCalendarStore}}) => Boolean(localCalendarStore)),
-                distinctUntilChanged(({notifications: {loggedIn: prev}}, {notifications: {loggedIn: curr}}) => curr === prev),
-                switchMap(async ({accountConfig}) => {
-                    // TODO request "resolveSharedSession" from calendar page too
-                    //      and then skip page refresh if sessions on primary and calendar page are the equal
-                    const sharedSession = await (await primaryWebViewClient())("resolveSharedSession")({zoneName: this.loggerZone.name});
+            combineLatest([
+                // notification: toggling "loggedIn" state
+                this.account$.pipe(
+                    map(({notifications: {loggedIn}}) => loggedIn),
+                    distinctUntilChanged(),
+                ),
+                // notification: toggling "persistentSession" flag on the account edit form
+                this.account$.pipe(
+                    map(({accountConfig: {persistentSession}}) => Boolean(persistentSession)),
+                    distinctUntilChanged(),
+                ),
+            ]).pipe(
+                withLatestFrom(this.account$),
+            ).subscribe(([[loggedIn, persistentSession], {accountConfig}]) => {
+                (async () => {
+                    const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, "WebClient");
+                    const key = {login: accountConfig.login, apiEndpointOrigin: new URL(parsedEntryUrl.entryApiUrl).origin} as const;
 
-                    if (!sharedSession) {
-                        return throwError(new Error(`Failed to resolve shared session object`));
+                    if (!persistentSession) {
+                        await this.api.ipcMainClient()("resetSavedProtonSession")(key);
+                        return;
                     }
 
-                    const project = "proton-calendar";
-                    const projectEntryUrl = this.core.parseEntryUrl(accountConfig, project).entryUrl;
-                    const loaderId = new UUID(4).format();
-                    const loaderIdParam = "loader-id";
-                    const loaderIdTimeoutMs = ONE_SECOND_MS * 2;
-                    const loaderSrc = `${new URL(projectEntryUrl).origin}/blank.html?${loaderIdParam}=${loaderId}`;
-
-                    setTimeout(() => this.webViewsState.calendar.src$.next(loaderSrc));
-
-                    try {
-                        calendarWebView = await this.webViewsState.calendar.domReady$.pipe(
-                            filter(({src}) => !!src && new URL(src).searchParams.get(loaderIdParam) === loaderId),
-                            takeUntil(timer(loaderIdTimeoutMs)),
-                            first(), // "first() throws error if stream closed without any event passed through"
-                        ).toPromise();
-                    } catch {
-                        return throwError(new Error(`Failed to load "${loaderSrc}" page in ${loaderIdTimeoutMs}ms`));
+                    if (!loggedIn) {
+                        // TODO also reset the session reset if loggedIn toggled: true => false
+                        //      and page is not calendar/settings/contacts page, ie webclient page
+                        return;
                     }
 
-                    const loaderCodeToExecute = `
-                        window.name = ${JSON.stringify(sharedSession.windowName)};
-                        for (const [key, value] of Object.entries(JSON.parse(${JSON.stringify(sharedSession.sessionStorage)}))) {
-                            window.sessionStorage.setItem(key, value);
-                        }
-                        // window.location.assign(${JSON.stringify(projectEntryUrl)});
-                        window.location.assign("./${PROVIDER_REPOS[project].baseDir}")
-                    `;
+                    const apiClient = await this.api.webViewClient(primaryWebView).toPromise();
+                    const clientSession = await apiClient("resolveSavedProtonClientSession")({zoneName: this.loggerZone.name});
 
-                    try {
-                        await calendarWebView.executeJavaScript(loaderCodeToExecute);
-                    } catch (error) {
-                        const baseMessage = `Failed to set shared session object on "${loaderSrc}" page ("executeJavaScript")`;
-                        if (BUILD_ENVIRONMENT === "development") {
-                            console.log(baseMessage, error); // tslint:disable-line:no-console
-                        }
-                        // not showing/logging the original error it might contain sensitive stuff
-                        return throwError(new Error(baseMessage));
+                    if (!clientSession) {
+                        throw new Error(`Failed to resolve ProtonClientSession object`);
                     }
 
-                    return EMPTY;
-                }),
-            ).subscribe(
-                () => { /* NOOP */ },
-                (error) => this.onDispatchInLoggerZone(NOTIFICATION_ACTIONS.Error(error)),
-            ),
+                    await this.api.ipcMainClient()("saveProtonSession")({
+                        ...key,
+                        clientSession,
+                    });
+                })().catch((error) => {
+                    // TODO make "AppErrorHandler.handleError" catch promise rejection errors
+                    this.onDispatchInLoggerZone(NOTIFICATION_ACTIONS.Error(error));
+                });
+            }),
         );
 
         this.subscription.add(
-            this.account$
-                .pipe(
-                    map((account) => ({
-                        login: account.accountConfig.login,
-                        databaseView: account.databaseView,
-                    })),
-                    distinctUntilChanged(({databaseView: prev}, {databaseView: curr}) => prev === curr),
-                    withLatestFrom(this.store.pipe(select(AccountsSelectors.FEATURED.selectedLogin))),
-                )
-                .subscribe(async ([{login, databaseView}, selectedLogin]) => {
-                    this.viewModeClass = databaseView
-                        ? "vm-database"
-                        : "vm-live";
-
-                    if (!databaseView) {
-                        this.focusPrimaryWebView();
-                    } else if (!this.tplDbViewComponentRef) {
-                        // lazy-load the local database view component ("local store" feature)
-                        this.tplDbViewComponentRef = await this.dbViewModuleResolve.buildComponentRef({login});
-                        this.tplDbViewComponentContainerRef.insert(this.tplDbViewComponentRef.hostView);
-                        this.tplDbViewComponentRef.changeDetectorRef.detectChanges();
-                    }
-
-                    // tslint:disable-next-line:early-exit
-                    if (this.account.accountConfig.login === selectedLogin) {
-                        await this.api.ipcMainClient()("selectAccount")({
-                            databaseView,
-                            // WARN electron: "webView.getWebContentsId()" is available only after "webView.dom-ready" triggered
-                            webContentId: primaryWebView.getWebContentsId(),
-                        });
-                    }
-                }),
+            this.databaseViewToggled$.subscribe(async ([{databaseView}, selectedLogin]) => {
+                // tslint:disable-next-line:early-exit
+                if (this.account.accountConfig.login === selectedLogin) {
+                    await this.api.ipcMainClient()("selectAccount")({
+                        databaseView,
+                        // WARN electron: "webView.getWebContentsId()" is available only after "webView.dom-ready" triggered
+                        webContentId: primaryWebView.getWebContentsId(),
+                    });
+                }
+            }),
         );
 
         this.subscription.add(

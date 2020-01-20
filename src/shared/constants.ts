@@ -138,7 +138,7 @@ export const PROTON_API_ENTRY_URLS = PROTON_API_ENTRY_RECORDS.map(({value: url})
 
 export const PROTON_API_ENTRY_ORIGINS = PROTON_API_ENTRY_URLS.map((url) => new URL(url).origin);
 
-export const WEB_CLIENTS_BLANK_HTML_FILE = "blank.html";
+export const WEB_CLIENTS_BLANK_HTML_FILE_NAME = "blank.html";
 
 function getBuiltInWebClientTitle(): string {
     return `${PROVIDER_REPOS.WebClient.version} / ${PROVIDER_REPOS.WebClient.commit.substr(0, 7)}`;

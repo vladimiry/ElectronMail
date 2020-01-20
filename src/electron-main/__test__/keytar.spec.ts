@@ -89,7 +89,7 @@ function buildMocks() {
 }
 
 async function loadLibrary(mocks: ReturnType<typeof buildMocks>) {
-    const library = await import("./keytar");
+    const library = await import("src/electron-main/keytar");
 
     library.STATE.resolveKeytar = async () => {
         return mocks.keytar;

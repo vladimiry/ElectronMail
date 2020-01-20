@@ -73,6 +73,7 @@ export type BaseConfig = Pick<Config,
 export interface Settings extends Partial<StoreModel.StoreEntity> {
     accounts: AccountConfig[];
     databaseEncryptionKey: string;
+    sessionStorageEncryptionKey: string;
 }
 
 export const KEY_DERIVATION_PRESETS: Record<string, KeyDerivationPresets> = {

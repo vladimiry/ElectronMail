@@ -215,8 +215,8 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
 
         const settings = await readConfigAndSettings(endpoints, {password: payload.password});
 
-        await t.throwsAsync(changeMasterPassword(emptyPasswordPayload), /Decryption\sfailed/gi);
-        await t.throwsAsync(changeMasterPassword(wrongPasswordPayload), /Decryption\sfailed/gi);
+        await t.throwsAsync(changeMasterPassword(emptyPasswordPayload), {message: /Decryption\sfailed/gi});
+        await t.throwsAsync(changeMasterPassword(wrongPasswordPayload), {message: /Decryption\sfailed/gi});
 
         const updatedSettingsAdapter = t.context.ctx.settingsStore.adapter; // keep reference before update
         const updatedSettingsStore = t.context.ctx.settingsStore; // keep reference before update
@@ -337,7 +337,7 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
             null,
         ];
         for (const url of forbiddenUrls) {
-            await t.throwsAsync(action({url: String(url)}), `Forbidden url "${url}" opening has been prevented`);
+            await t.throwsAsync(action({url: String(url)}), {message: `Forbidden url "${url}" opening has been prevented`});
         }
 
         const allowedUrls = [

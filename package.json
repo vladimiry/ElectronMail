@@ -78,8 +78,8 @@
     "lint:ts:eslint": "yarn lint:ts:base:eslint \"./src/**/*.ts\" \"./scripts/**/*.ts\" \"./webpack-configs/**/*.ts\"",
     "start:electron": "electron ./app/electron-main.js",
     "start:electron:dev": "electron ./app-dev/electron-main.js",
-    "test:e2e": "cross-env TS_NODE_FILES=true ts-node -r tsconfig-paths/register ./scripts/ava-loader.ts --verbose --filesGlob \"./src/e2e/**/*.{spec,test}.ts\"",
-    "test:electron-main": "cross-env TS_NODE_FILES=true TS_NODE_PROJECT=./src/electron-main/tsconfig.json ts-node -r tsconfig-paths/register ./scripts/ava-loader.ts --verbose --filesGlob \"./src/electron-main/**/*.{spec,test}.ts\"",
+    "test:e2e": "cross-env TS_NODE_FILES=true npx --no-install --node-arg=\"-r tsconfig-paths/register -r ts-node/register\" ava \"./src/e2e/**/*.{spec,test}.ts\"",
+    "test:electron-main": "cross-env TS_NODE_FILES=true TS_NODE_PROJECT=./src/electron-main/tsconfig.json npx --no-install --node-arg=\"-r tsconfig-paths/register -r ts-node/register\" ava \"./src/electron-main/**/*.{spec,test}.ts\"",
     "test:web": "cross-env NODE_ENV=test TS_NODE_FILES=true npx --no-install --node-arg=\"-r tsconfig-paths/register\" karma start ./src/web/browser-window/test/karma.conf.ts --single-run",
     "scripts/ci/appveyor/download-webclients-artifact": "cross-env TS_NODE_FILES=true ts-node -r tsconfig-paths/register scripts/ci/appveyor/download-webclients-artifact.ts",
     "scripts/ci/print-webclients-dist-paths-pattern": "cross-env TS_NODE_FILES=true ts-node -r tsconfig-paths/register scripts/ci/print-webclients-dist-paths-pattern.ts",
@@ -94,14 +94,14 @@
     "scripts/yarn-audit/audit": "scripts/yarn-audit/audit.sh"
   },
   "ava": {
-    "compileEnhancements": false,
     "extensions": [
       "ts"
     ],
-    "require": [
-      "ts-node/register",
-      "tsconfig-paths/register"
-    ]
+    "files": [
+      "./src/**/*.{spec,test}.ts"
+    ],
+    "timeout": "120s",
+    "verbose": true
   },
   "dependencies": {
     "@msgpack/msgpack": "1.11.0",
@@ -204,7 +204,7 @@
     "@typescript-eslint/parser": "2.16.0",
     "app-builder-lib": "21.2.0",
     "archiver": "3.1.1",
-    "ava": "2.4.0",
+    "ava": "3.0.0",
     "bootstrap": "4.4.1",
     "byline": "5.0.0",
     "cache-loader": "4.1.0",

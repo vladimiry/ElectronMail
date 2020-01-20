@@ -45,7 +45,7 @@ ctxDbProps.forEach((ctxDbProp) => {
 
             await t.throwsAsync(
                 ctx[ctxDbProp].options.encryption.keyResolver(),
-                new RegExp(`${path.basename(ctx.settingsStore.file)} does not exist`),
+                {message: new RegExp(`${path.basename(ctx.settingsStore.file)} does not exist`)},
             );
 
             const {databaseEncryptionKey} = await ctx.settingsStore.write(ctx.initialStores.settings);

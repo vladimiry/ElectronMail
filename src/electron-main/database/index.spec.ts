@@ -152,7 +152,7 @@ test("wrong encryption key", async (t) => {
     );
     await t.throwsAsync(
         buildDatabase(async () => Buffer.alloc(30).toString(BASE64_ENCODING)).saveToFile(),
-        `Invalid encryption key length, expected: ${KEY_BYTES_32}, actual: 30`,
+        {message: `Invalid encryption key length, expected: ${KEY_BYTES_32}, actual: 30`},
     );
 });
 
@@ -162,7 +162,7 @@ test("nonexistent file", async (t) => {
         await new Store({file: db.options.file, fs: db.fileFs}).remove();
     }
     t.false(await db.persisted());
-    await t.throwsAsync(db.loadFromFile(), `${db.options.file} does not exist`);
+    await t.throwsAsync(db.loadFromFile(), {message: `${db.options.file} does not exist`});
 });
 
 test("reset", async (t) => {

@@ -6,7 +6,7 @@ import {filter, first, takeUntil} from "rxjs/operators";
 import {timer} from "rxjs";
 
 import {AppAction, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
-import {ONE_SECOND_MS, PROVIDER_REPOS} from "src/shared/constants";
+import {ONE_SECOND_MS, PROVIDER_REPOS, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/constants";
 import {ProtonClientSession} from "src/shared/model/proton";
 import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {State} from "src/web/browser-window/app/store/reducers/root";
@@ -55,7 +55,8 @@ export class CoreService {
         const loaderId = new UUID(4).format();
         const loaderIdParam = "loader-id";
         const loaderIdTimeoutMs = ONE_SECOND_MS * 2;
-        const loaderSrc = `${new URL(this.parseEntryUrl(accountConfig, repoType).entryUrl).origin}/blank.html?${loaderIdParam}=${loaderId}`;
+        const loaderSrcOrigin = new URL(this.parseEntryUrl(accountConfig, repoType).entryUrl).origin;
+        const loaderSrc = `${loaderSrcOrigin}/${WEB_CLIENTS_BLANK_HTML_FILE_NAME}?${loaderIdParam}=${loaderId}`;
         let webView: Electron.WebviewTag | undefined;
 
         setTimeout(() => {

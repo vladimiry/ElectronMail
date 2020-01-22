@@ -63,7 +63,9 @@ export async function buildEndpoints(
                 return;
             }
 
-            const {window: {maximized}} = await ctx.configStore.readExisting();
+            const {window: {maximized}, zoomFactor} = await ctx.configStore.readExisting();
+
+            browserWindow.webContents.zoomFactor = zoomFactor;
 
             if (maximized) {
                 browserWindow.maximize();

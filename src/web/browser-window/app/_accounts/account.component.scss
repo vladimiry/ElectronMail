@@ -9,7 +9,7 @@
     bottom: 0;
     overflow-x: hidden;
     overflow-y: auto;
-    background-color: $gray-200;
+    background-color: $app-color-bg-dark-1;
 
     &:not(.vm-live) {
         &::ng-deep #{$app-prefix}-account-view-primary,

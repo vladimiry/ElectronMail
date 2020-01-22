@@ -4,7 +4,14 @@ import {BrowserWindow} from "electron";
 
 import {Context} from "src/electron-main/model";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";
-import {PACKAGE_DESCRIPTION, PACKAGE_LICENSE, PACKAGE_VERSION, PRODUCT_NAME, WEB_CHUNK_NAMES} from "src/shared/constants";
+import {
+    PACKAGE_DESCRIPTION,
+    PACKAGE_LICENSE,
+    PACKAGE_VERSION,
+    PRODUCT_NAME,
+    WEB_CHUNK_NAMES,
+    ZOOM_FACTOR_DEFAULT,
+} from "src/shared/constants";
 import {WEB_PROTOCOL_SCHEME} from "src/electron-main/constants";
 import {curryFunctionMembers} from "src/shared/util";
 import {injectVendorsAppCssIntoHtmlFile} from "src/electron-main/util";
@@ -76,16 +83,22 @@ export async function showAboutBrowserWindow(ctx: Context): Promise<BrowserWindo
         return exitingBrowserWindow;
     }
 
+    const {zoomFactor} = await ctx.configStore.readExisting();
+    const windowSizeFactor = zoomFactor > 1 && zoomFactor < 3
+        ? zoomFactor
+        : 1;
     const browserWindow = new BrowserWindow({
         title: `About ${PRODUCT_NAME}`,
         center: true,
         modal: true,
         autoHideMenuBar: true,
-        width: 650,
-        height: 500,
+        show: false,
+        width: 650 * windowSizeFactor,
+        height: 500 * windowSizeFactor,
         webPreferences: {
             ...DEFAULT_WEB_PREFERENCES,
             preload: ctx.locations.preload.aboutBrowserWindow,
+            ...(zoomFactor !== ZOOM_FACTOR_DEFAULT && {zoomFactor}),
         },
     });
 
@@ -97,6 +110,9 @@ export async function showAboutBrowserWindow(ctx: Context): Promise<BrowserWindo
     });
 
     ctx.uiContext.aboutBrowserWindow = browserWindow;
+
+    browserWindow.show();
+    browserWindow.focus();
 
     const {html} = await resolveContent(ctx);
 

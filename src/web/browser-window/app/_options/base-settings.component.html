@@ -212,6 +212,20 @@
             </div>
         </div>
         <label class="d-block mb-2">
+            Page Zoom
+        </label>
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <ng-select
+                    [clearable]="false"
+                    [items]="zoomFactors"
+                    bindLabel="title"
+                    bindValue="value"
+                    formControlName="zoomFactor"
+                ></ng-select>
+            </div>
+        </div>
+        <label class="d-block mb-2">
             Log level
             <i
                 [popover]="logLevelSelectPopoverTemplate"

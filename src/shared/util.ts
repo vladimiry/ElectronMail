@@ -11,6 +11,7 @@ import {
     ONE_MINUTE_MS,
     ONE_SECOND_MS,
     PROVIDER_REPOS,
+    ZOOM_FACTOR_DEFAULT,
 } from "src/shared/constants";
 import {DbPatch} from "./api/common";
 import {FsDbAccount, View} from "src/shared/model/database";
@@ -73,6 +74,7 @@ export function initialConfig(): Config {
             logLevel: "error",
             startMinimized: true,
             unreadNotifications: true,
+            zoomFactor: ZOOM_FACTOR_DEFAULT,
         };
     }
 }
@@ -93,6 +95,7 @@ export function pickBaseConfigProperties(
         logLevel,
         startMinimized,
         unreadNotifications,
+        zoomFactor,
     }: Config,
 ): Required<BaseConfig> {
     return {
@@ -110,6 +113,7 @@ export function pickBaseConfigProperties(
         logLevel,
         startMinimized,
         unreadNotifications,
+        zoomFactor,
     };
 }
 

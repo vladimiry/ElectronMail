@@ -136,7 +136,7 @@ export const PROTON_API_ENTRY_RECORDS: ReadonlyDeep<EntryUrlItem[]> = [
 
 export const PROTON_API_ENTRY_URLS = PROTON_API_ENTRY_RECORDS.map(({value: url}) => url);
 
-export const PROTON_API_ENTRY_ORIGINS = PROTON_API_ENTRY_URLS.map((url) => new URL(url).origin);
+// export const PROTON_API_ENTRY_ORIGINS = PROTON_API_ENTRY_URLS.map((url) => new URL(url).origin);
 
 export const WEB_CLIENTS_BLANK_HTML_FILE_NAME = "blank.html";
 
@@ -156,3 +156,34 @@ export const LOG_LEVELS: Readonly<LogLevel[]> = Object.keys(
         silly: null,
     }),
 ) as Readonly<LogLevel[]>;
+
+export const ZOOM_FACTOR_DEFAULT = 1;
+
+export const ZOOM_FACTORS: ReadonlyArray<number> = [
+    0.5,
+    0.55,
+    0.6,
+    0.65,
+    0.7,
+    0.75,
+    0.8,
+    0.85,
+    0.9,
+    0.95,
+    ZOOM_FACTOR_DEFAULT,
+    1.05,
+    1.1,
+    1.15,
+    1.2,
+    1.25,
+    1.3,
+    1.35,
+    1.4,
+    1.45,
+    1.5,
+    1.6,
+    1.7,
+    1.8,
+    1.9,
+    2,
+];

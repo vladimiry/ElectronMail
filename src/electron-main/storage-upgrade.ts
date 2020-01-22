@@ -11,7 +11,13 @@ import {DbAccountPk} from "src/shared/model/database";
 import {INITIAL_STORES} from "./constants";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
-import {PACKAGE_VERSION, PROTON_API_ENTRY_PRIMARY_VALUE, PROTON_API_ENTRY_URLS, PROTON_API_ENTRY_VALUE_PREFIX} from "src/shared/constants";
+import {
+    PACKAGE_VERSION,
+    PROTON_API_ENTRY_PRIMARY_VALUE,
+    PROTON_API_ENTRY_URLS,
+    PROTON_API_ENTRY_VALUE_PREFIX,
+    ZOOM_FACTORS,
+} from "src/shared/constants";
 import {curryFunctionMembers, pickBaseConfigProperties} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[src/electron-main/storage-upgrade]");
@@ -205,6 +211,14 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         if (typeof config.reflectSelectedAccountTitle !== "undefined") {
             delete config.reflectSelectedAccountTitle;
         }
+    },
+    "4.2.0": (config) => {
+        (() => {
+            const key = "zoomFactor";
+            if (typeof config[key] !== "number" || !ZOOM_FACTORS.includes(config[key])) {
+                config[key] = INITIAL_STORES.config()[key];
+            }
+        })();
     },
 };
 

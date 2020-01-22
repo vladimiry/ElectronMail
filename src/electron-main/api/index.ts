@@ -144,6 +144,18 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
                 await setupIdleTimeLogOut({idleTimeLogOutSec: newConfig.idleTimeLogOutSec});
             }
 
+            if (newConfig.zoomFactor !== savedConfig.zoomFactor) {
+                [
+                    ctx.uiContext?.aboutBrowserWindow?.webContents,
+                    ctx.uiContext?.browserWindow?.webContents,
+                ].forEach((webContents) => {
+                    if (!webContents) {
+                        return;
+                    }
+                    webContents.zoomFactor = newConfig.zoomFactor;
+                });
+            }
+
             return newConfig;
         },
 

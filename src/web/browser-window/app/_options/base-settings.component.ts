@@ -6,7 +6,7 @@ import {distinctUntilKeyChanged, map, take} from "rxjs/operators";
 
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {BaseConfig} from "src/shared/model/options";
-import {LOG_LEVELS} from "src/shared/constants";
+import {LOG_LEVELS, ZOOM_FACTORS} from "src/shared/constants";
 import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
@@ -36,6 +36,8 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         {title: "30 minutes", valueSec: 60 * 30},
     ];
 
+    zoomFactors = ZOOM_FACTORS.map((zoomLevel) => ({value: zoomLevel, title: `${Math.round(zoomLevel * 100)}%`}));
+
     appearanceBlockCollapsed: boolean = true;
 
     controls: Record<keyof BaseConfig, AbstractControl> = {
@@ -53,6 +55,7 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         logLevel: new FormControl(null, Validators.required),
         startMinimized: new FormControl(),
         unreadNotifications: new FormControl(),
+        zoomFactor: new FormControl(),
     };
 
     form = new FormGroup(this.controls);

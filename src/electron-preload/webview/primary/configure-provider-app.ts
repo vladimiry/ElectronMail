@@ -4,6 +4,7 @@ import {mergeMap, take, tap} from "rxjs/operators";
 import {EDITOR_IFRAME_NOTIFICATION$} from "./notifications";
 import {LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN, ONE_SECOND_MS} from "src/shared/constants";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/constants";
+import {applyZoomFactor} from "src/electron-preload/lib/util";
 import {curryFunctionMembers, parsePackagedWebClientUrl, resolvePackagedWebClientApp} from "src/shared/util";
 import {disableBrowserNotificationFeature, getLocationHref} from "src/electron-preload/webview/lib/util";
 import {initSpellCheckProvider} from "src/electron-preload/lib/spell-check";
@@ -22,6 +23,7 @@ export function configureProviderApp() {
     logger.info(JSON.stringify({locationHref: getLocationHref()}));
 
     initSpellCheckProvider(logger);
+    applyZoomFactor(logger);
     disableBrowserNotificationFeature(logger);
     registerDocumentKeyDownEventListener(document, logger);
     registerDocumentClickEventListener(document, logger);
@@ -70,6 +72,7 @@ export function configureProviderApp() {
         )
         .subscribe((/*{iframeDocument}*/) => {
             initSpellCheckProvider(logger);
+            applyZoomFactor(logger);
         });
 }
 

@@ -1,6 +1,8 @@
-# ElectronMail
+<p align="center">
+  <img src="src/assets/og-image/github-og-image-640-320.png">
+</p>
 
-is an [Electron](https://electronjs.org)-based unofficial desktop client for [ProtonMail](https://protonmail.com/). The app aims to provide enhanced desktop user experience enabling features that are not supported by the official in-browser web clients. 
+ElectronMail is an [Electron](https://electronjs.org)-based unofficial desktop client for [ProtonMail](https://protonmail.com/). The app aims to provide enhanced desktop user experience enabling features that are not supported by the official in-browser web clients. 
 It is written in [TypeScript](http://www.typescriptlang.org) and uses [Angular](https://angular.io).
 
 [![Travis CI](https://img.shields.io/travis/vladimiry/ElectronMail.svg?style=flat-square&label=Travis+CI)](https://travis-ci.org/vladimiry/ElectronMail)

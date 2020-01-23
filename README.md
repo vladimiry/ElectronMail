@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="src/assets/og-image/github-og-image-640-320.png">
+  <img src="src/assets/og-image/github-og-image-readme.png">
 </p>
 
 ElectronMail is an [Electron](https://electronjs.org)-based unofficial desktop client for [ProtonMail](https://protonmail.com/). The app aims to provide enhanced desktop user experience enabling features that are not supported by the official in-browser web clients. 

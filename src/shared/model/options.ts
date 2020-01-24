@@ -45,6 +45,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     customUnreadBgColor: string;
     customUnreadTextColor: string;
     disableSpamNotifications: boolean;
+    enableHideControlsHotkey: boolean;
     findInPage: boolean;
     fullTextSearch: boolean;
     hideControls: boolean;
@@ -63,6 +64,7 @@ export type BaseConfig = Pick<Config,
     | "customUnreadBgColor"
     | "customUnreadTextColor"
     | "disableSpamNotifications"
+    | "enableHideControlsHotkey"
     | "findInPage"
     | "fullTextSearch"
     | "hideControls"

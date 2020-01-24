@@ -48,6 +48,7 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         customUnreadBgColor: new FormControl(),
         customUnreadTextColor: new FormControl(),
         disableSpamNotifications: new FormControl(),
+        enableHideControlsHotkey: new FormControl(),
         findInPage: new FormControl(),
         fullTextSearch: new FormControl(),
         hideControls: new FormControl(),

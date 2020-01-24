@@ -32,8 +32,12 @@ export function registerDocumentKeyDownEventListener<E extends ObservableElement
         "keydown",
         async (event: Readonly<KeyboardEvent>) => {
             if (event.keyCode === keyCodes.F12) {
-                await apiClient("toggleControls")();
-                return;
+                const {enableHideControlsHotkey} = await apiClient("readConfig")();
+
+                if (enableHideControlsHotkey) {
+                    await apiClient("toggleControls")();
+                    return;
+                }
             }
 
             const el: Element | null = (event.target as any);

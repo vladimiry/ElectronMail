@@ -219,6 +219,13 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
                 config[key] = INITIAL_STORES.config()[key];
             }
         })();
+
+        (() => {
+            const key = "enableHideControlsHotkey";
+            if (typeof config[key] === "undefined") {
+                config[key] = INITIAL_STORES.config()[key];
+            }
+        })();
     },
 };
 

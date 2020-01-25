@@ -73,7 +73,7 @@ async function resolveCommand(): Promise<{ command: string }> {
         const url = `${SERVICE_BINARY_DOWNLOAD_URL_PREFIX}/${binaryFileName}`;
         const response = await fetchUrl([url]);
 
-        await promisify(mkdirp)(path.dirname(binaryFile));
+        mkdirp.sync(path.dirname(binaryFile));
         await promisify(fs.writeFile)(binaryFile, await response.buffer());
 
         if (!(await fsExtra.pathExists(binaryFile))) {

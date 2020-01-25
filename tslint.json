@@ -7,6 +7,7 @@
     "./linting-extending/tslint/tslint-rules-bunch.json"
   ],
   "rules": {
+    "array-type": [true, "array-simple"],
     "no-unused-variable": false,
     "max-line-length": [
       true,

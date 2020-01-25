@@ -3,7 +3,6 @@ import fsExtra from "fs-extra";
 import mkdirp from "mkdirp";
 import path from "path";
 import pathIsInside from "path-is-inside";
-import {promisify} from "util";
 
 import {CWD, LOG, LOG_LEVELS, execShell} from "scripts/lib";
 import {PROVIDER_REPOS, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/constants";
@@ -106,21 +105,7 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
         const repoDir = path.resolve(baseRepoDir, folderAsDomainEntry.folderNameAsDomain);
         const distDir = path.resolve(repoDir, repoRelativeDistDir);
         const flowArg = {repoDir, folderAsDomainEntry};
-
-        printAndWriteFile(
-            path.join(distDir, WEB_CLIENTS_BLANK_HTML_FILE_NAME),
-            `
-                <!DOCTYPE html>
-                <html lang="en">
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Title</title>
-                </head>
-                <body>
-                </body>
-                </html>
-            `,
-        );
+        const blankHtmlFile = path.join(distDir, WEB_CLIENTS_BLANK_HTML_FILE_NAME);
 
         if (await fsExtra.pathExists(repoDir)) {
             LOG(LOG_LEVELS.warning(`Skipping cloning`));
@@ -144,6 +129,25 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
             await build(flowArg);
         }
 
+        if (await fsExtra.pathExists(blankHtmlFile)) {
+            LOG(LOG_LEVELS.warning(`Skipping creating ${LOG_LEVELS.value(blankHtmlFile)}`));
+        } else {
+            printAndWriteFile(
+                blankHtmlFile,
+                `
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Title</title>
+                </head>
+                <body>
+                </body>
+                </html>
+            `,
+            );
+        }
+
         LOG(LOG_LEVELS.title(`Copying: ${LOG_LEVELS.value(distDir)} to ${LOG_LEVELS.value(resolvedDistDir)}`));
         await fsExtra.copy(distDir, resolvedDistDir);
     }
@@ -156,7 +160,7 @@ async function installDependencies({repoDir: cwd}: { repoDir: string }) {
 async function clone(repoType: keyof typeof PROVIDER_REPOS, dir: string) {
     const {repo, commit} = PROVIDER_REPOS[repoType];
 
-    await promisify(mkdirp)(dir);
+    mkdirp.sync(dir);
 
     await execShell(["git", ["clone", repo, "."], {cwd: dir}]);
     await execShell(["git", ["checkout", commit], {cwd: dir}]);
@@ -168,5 +172,6 @@ export function printAndWriteFile(file: string, content: Buffer | string) {
         LOG_LEVELS.title(`Writing ${LOG_LEVELS.value(file)} file with content:`),
         LOG_LEVELS.value(content),
     );
+    mkdirp.sync(path.dirname(file));
     fs.writeFileSync(file, content);
 }

@@ -1,13 +1,12 @@
 @import "~src/web/variables";
 
 :host {
-    $border-color: $list-group-border-color;
-
     position: relative;
     display: flex;
     flex-direction: column;
     padding: 0 $app-spacer-2 $app-spacer-2;
-    border: 1px solid $border-color;
+    border: 1px solid $app-db-view-color-border;
+    background-color: $app-db-view-color-bg-body;
 
     .addresses,
     .attachments {
@@ -15,12 +14,12 @@
             font-weight: normal;
             font-size: $app-font-size-base-medium;
             color: $gray-700;
-            border: 1px solid $border-color;
+            border: 1px solid $app-db-view-color-border;
         }
     }
 
     .addresses {
-        border-bottom: 1px solid $border-color;
+        border-bottom: 1px solid $app-db-view-color-border;
 
         .badge {
             .address:not(:last-of-type)::after {
@@ -49,27 +48,20 @@
     }
 
     .attachments {
-        border-top: 1px solid $border-color;
+        border-top: 1px solid $app-db-view-color-border;
     }
 
     .controls {
         padding: 0 $btn-padding-x ($btn-padding-y * 2) 0;
         justify-content: center;
 
-        #{$app-prefix}-db-view-mails-export {
-            border-top: 1px solid transparent;
-            padding-top: $btn-padding-y;
-        }
-
-        .btn {
-            font-size: $app-font-size-base-small;
-            border-top-width: 0;
-            border-top-left-radius: 0;
-            border-top-right-radius: 0;
-        }
-
-        .btn + #{$app-prefix}-db-view-mails-export {
-            padding-top: 0;
+        &::ng-deep {
+            .btn {
+                font-size: $app-font-size-base-small;
+                border-top-width: 0;
+                border-top-left-radius: 0;
+                border-top-right-radius: 0;
+            }
         }
     }
 

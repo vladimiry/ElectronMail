@@ -1,12 +1,12 @@
 <div
     *ngIf="(items$ | async) as items"
-    class="controls d-flex align-items-center flex-shrink-0 mb-2 px-2"
+    class="controls d-flex align-items-center flex-shrink-0 mb-2"
 >
     <div class="d-flex flex-grow-1">
         <button
             (click)="makeAllRead()"
             [disabled]="(makeAllReadButtonLocked$ | async) || false"
-            class="btn btn-sm btn-primary py-0 mr-2"
+            class="btn btn-sm btn-primary mr-2"
             style="white-space: nowrap"
         >
             Make all read
@@ -55,7 +55,7 @@
     <button
         (click)="loadMore()"
         *ngIf="(paging$ | async)?.nextPageSize; let nextPageSize;"
-        class="btn btn-secondary load-more my-3"
+        class="btn btn-secondary-light load-more my-3"
     >
         More
         <small>(+{{ nextPageSize }})</small>

@@ -1,19 +1,21 @@
 @import "~src/web/variables";
 
 :host {
-    $state-sent: #07bb9c;
-    $state-received: $app-color-purple-light;
-    $state-draft: #feb06a;
+    $state-line-sent: lighten(#07bb9c, 3%);
+    $state-line-received: lighten($app-color-purple-light, 3%);
+    $state-line-draft: #febe5e;
+    $state-line-with: 4px;
+    $state-line-margin: 3px;
     $border-color: $list-group-border-color;
     $padding-y: $list-group-item-padding-y * 0.5;
     $padding-x: $list-group-item-padding-x * 0.5;
 
+    background-color: $app-db-view-color-bg-mail;
+    border: 1px solid $list-group-border-color;
     display: flex;
     flex-direction: column;
     padding: $padding-y $padding-x;
-    border: 1px solid $border-color;
-    border-left: 2px solid transparent;
-    background-color: $white;
+    position: relative;
 
     .r {
         display: flex;
@@ -44,72 +46,53 @@
         }
     }
 
+    &::before {
+        display: block;
+        content: "";
+        position: absolute;
+        left: $state-line-margin;
+        width: $state-line-with;
+        top: $state-line-margin;
+        bottom: $state-line-margin;
+        background-color: transparent;
+    }
+
     &.state- {
         &protonmail_inbox_and_sent { // sass-lint:disable-line class-name-format
-            border-left-color: $state-received;
-            position: relative;
-
             &::before {
+                background-color: $state-line-sent;
+                width: ($state-line-with / 2);
+            }
+
+            &::after {
                 display: block;
                 content: "";
                 position: absolute;
-                left: 0;
-                width: 2px;
-                top: 0;
-                bottom: 0;
-                background-color: $state-sent;
-            }
-
-            .state {
-                background-color: $state-received;
-
-                &::after {
-                    content: "Y";
-                }
+                left: $state-line-margin + ($state-line-with / 2);
+                width: ($state-line-with / 2);
+                top: $state-line-margin;
+                bottom: $state-line-margin;
+                background-color: $state-line-received;
             }
         }
 
         &sent {
-            border-left-color: $state-sent;
-
-            .state {
-                background-color: $state-sent;
-
-                &::after {
-                    content: "S";
-                }
+            &::before {
+                background-color: $state-line-sent;
             }
         }
 
         &received {
-            border-left-color: $state-received;
-
-            .state {
-                background-color: $state-received;
-
-                &::after {
-                    content: "R";
-                }
+            &::before {
+                background-color: $state-line-received;
             }
         }
 
         &draft {
-            border-left-color: $state-draft;
-
-            .state {
-                background-color: $state-draft;
-
-                &::after {
-                    content: "D";
-                }
+            &::before {
+                background-color: $state-line-draft;
             }
         }
-    }
-
-    .badge {
-        padding-top: 0.25em;
-        padding-bottom: 0.25em;
-        font-weight: normal;
     }
 
     .fa {
@@ -117,46 +100,40 @@
         line-height: 1.8;
     }
 
-    .state,
-    .folders,
+    .conversation-size,
     .address,
-    .date,
-    .score {
+    .score,
+    .folders,
+    .date {
         display: flex;
         flex-direction: column;
         justify-content: center;
         justify-items: center;
-
-        &,
-        .badge {
-            font-weight: normal;
-            font-size: $app-font-size-base-small;
-            color: $gray-700;
-        }
+        font-size: $app-font-size-base-small;
+        color: $gray-700;
     }
 
-    .address,
-    .date,
-    .score {
-        border: 1px solid $border-color;
+    .b {
+        background-color: lighten($app-db-view-color-bg-mail, 10%);
+        border: 1px solid $app-db-view-color-border;
+        padding: $badge-padding-y $badge-padding-x;
+        border-radius: $badge-border-radius;
     }
 
-    .state {
-        text-transform: uppercase;
-        color: $white;
-        font-size: $app-font-size-base-small * 0.9;
+    .conversation-size {
+        margin: 0 ($app-spacer-1 * 0.8);
+        padding-left: ($state-line-margin + $state-line-with);
+        padding-right: $padding-x;
+    }
+
+    .score,
+    .date {
+        background-color: transparent;
     }
 
     .subject {
         display: table;
         table-layout: fixed;
         width: 100%;
-    }
-
-    .folders {
-        .badge {
-            background-color: $gray-300;
-            border: 1px solid darken($gray-300, 10%);
-        }
     }
 }

@@ -28,6 +28,39 @@ form .required label::after {
     padding: $modal-header-padding;
 }
 
+// "bootstrap"
+.card-body {
+    padding-top: map-get($spacers, 3);
+    padding-bottom: map-get($spacers, 3);
+}
+
+// "bootstrap"
+.list-group {
+    > .list-group-item-action {
+        cursor: pointer;
+    }
+
+    .list-group-item + .list-group-item {
+        border-top-width: 1px;
+    }
+
+    .list-group-item-warning {
+        border-color: map_get($app-account-title-btn-colors, "selected-border");
+
+        + .list-group-item {
+            border-top-width: 0;
+        }
+    }
+
+    .list-group-item {
+        &:not(:last-of-type) {
+            &:not(.list-group-item-warning) {
+                border-bottom-width: 0;
+            }
+        }
+    }
+}
+
 // "ng-select"
 ng-select.ng-invalid.ng-touched .ng-select-container { // sass-lint:disable-line no-qualifying-elements
     border-color: #dc3545;

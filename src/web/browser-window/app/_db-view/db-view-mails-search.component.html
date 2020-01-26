@@ -3,7 +3,7 @@
         <div class="d-flex flex-row flex-shrink-0">
             <button
                 (click)="backToList()"
-                class="btn btn-secondary mb-2 d-flex flex-shrink-0 align-items-center"
+                class="btn btn-secondary-light btn-sm mb-2 d-flex flex-shrink-0 align-items-center"
                 style="min-width: 144px"
             >
                 <i class="fa fa-angle-left mr-1"></i>
@@ -23,7 +23,7 @@
                         dropdown
                         style="position: relative"
                     >
-                        <button class="btn btn-link p-0 text-decoration-none" dropdownToggle type="button">
+                        <button class="btn btn-link btn-sm p-0 text-decoration-none" dropdownToggle type="button">
                             Folders: {{ foldersInfo.selectedPks.length }} of {{ foldersInfo.allPks.length }}
                         </button>
                         <div *dropdownMenu class="dropdown-menu px-2 py-1" role="menu">
@@ -57,14 +57,14 @@
                     <input
                         #query
                         [ngClass]="formControls.query.dirty ? {'is-invalid': formControls.query.invalid, 'is-valid': formControls.query.valid} : {}"
-                        class="form-control mr-2 d-flex align-items-center"
+                        class="form-control form-control-sm mr-2 d-flex align-items-center"
                         formControlName="query"
                         required
                         type="text"
                     >
                     <button
                         [disabled]="form.invalid"
-                        class="btn btn-primary d-flex flex-shrink-0 align-items-center"
+                        class="btn btn-primary btn-sm d-flex flex-shrink-0 align-items-center"
                         type="submit"
                     >
                         <i class="fa fa-spinner fa-pulse fa-fw mr-1"></i>
@@ -75,8 +75,9 @@
             </fieldset>
         </div>
         <electron-mail-db-view-mails
+            *ngIf="(mailsBundleItemsSize$ | async)"
             [dbAccountPk]="dbAccountPk"
-            [mailsBundleKey]="'searchMailsBundle'"
+            [mailsBundleKey]="[mailsBundleKey]"
         ></electron-mail-db-view-mails>
     </div>
 </div>

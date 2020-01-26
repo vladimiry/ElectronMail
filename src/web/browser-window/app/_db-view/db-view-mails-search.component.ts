@@ -18,7 +18,7 @@ import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
 import {DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
 import {MAIL_FOLDER_TYPE, View} from "src/shared/model/database";
-import {State} from "src/web/browser-window/app/store/reducers/db-view";
+import {MailsBundleKey, State} from "src/web/browser-window/app/store/reducers/db-view";
 
 @Component({
     selector: "electron-mail-db-view-mails-search",
@@ -27,6 +27,15 @@ import {State} from "src/web/browser-window/app/store/reducers/db-view";
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DbViewMailsSearchComponent extends DbViewAbstractComponent implements OnInit, AfterViewInit {
+    readonly mailsBundleKey: MailsBundleKey = "searchMailsBundle";
+
+    readonly mailsBundleItemsSize$: Observable<number> = this.instance$.pipe(
+        map((instance) => instance[this.mailsBundleKey]),
+        map(({items}) => items),
+        distinctUntilChanged(),
+        map(({length}) => length),
+    );
+
     @ViewChildren("query")
     queryElementRefQuery!: QueryList<ElementRef>;
 

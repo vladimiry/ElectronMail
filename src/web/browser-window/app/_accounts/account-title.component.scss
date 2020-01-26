@@ -62,7 +62,7 @@
             width: 0.78em; // prevents button size change on icon toggling
 
             &.syncing {
-                color: lighten(theme-color("primary"), 10%);
+                color: theme-color("primary");
                 animation: app-keyframes-opacity 1s linear infinite;
             }
         }

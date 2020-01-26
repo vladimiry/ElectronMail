@@ -47,10 +47,14 @@ export class DbViewMailComponent {
 
     @HostBinding("class")
     get unread() {
-        return (this.state ? [
-            `unread-${Number(this.mail.unread)}`,
-            `state-${this.stateTitle}`,
-        ] : []).join(" ");
+        return (
+            this.state
+                ? [
+                    `unread-${Number(this.mail.unread)}`,
+                    `state-${this.stateTitle}`,
+                ]
+                : []
+        ).join(" ");
     }
 
     trackFolderByPk(...[, {pk}]: readonly [number, View.Folder]) {

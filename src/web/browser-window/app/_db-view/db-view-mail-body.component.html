@@ -42,7 +42,7 @@
         <button
             (click)="toggleConversationCollapsing()"
             *ngIf="selectedMail.rootNode.summary.size > 1"
-            class="btn btn-secondary mr-2"
+            class="btn btn-secondary-light mr-2"
             type="button"
         >
             Conversation ({{ selectedMail.rootNode.summary.size }})
@@ -68,6 +68,9 @@
     </div>
 
     <div class="addresses pb-2 mb-2">
+        <div class="badge mr-2">
+            {{ selectedMail.conversationMail.sentDate | date:'medium' }}
+        </div>
         <div class="badge mr-2">
             Sender:
             <ng-container
@@ -134,7 +137,7 @@
         <button
             (click)="reDownload()"
             [disabled]="!(onlineAndSignedIn$ | async) || (fetchingSingleMailParams$ | async) || false"
-            class="btn btn-secondary"
+            class="btn btn-secondary-light"
         >
             <i *ngIf="fetchingSingleMailParams$ | async" class="fa fa-spinner fa-pulse fa-fw"></i>
             Redownload the Email

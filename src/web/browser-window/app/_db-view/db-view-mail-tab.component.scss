@@ -20,10 +20,14 @@
             &:not(:first-of-type) {
                 margin-top: $app-spacer-2;
             }
+        }
 
-            > .list-group-item-action {
-                cursor: pointer;
-            }
+        .list-group-item:not(.list-group-item-warning) {
+            background-color: $app-db-view-color-bg-mail;
+        }
+
+        #{$app-prefix}-db-view-mails-export {
+            flex-grow: 1;
         }
     }
 
@@ -49,7 +53,6 @@
         #{$app-prefix}-db-view-mail-body {
             overflow: auto;
             height: 100%;
-            background-color: $white;
         }
     }
 }

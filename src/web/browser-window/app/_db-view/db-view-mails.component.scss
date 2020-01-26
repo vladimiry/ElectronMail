@@ -6,27 +6,20 @@
     flex-direction: column;
 
     .controls {
-        border: 1px solid $list-group-border-color;
-        border-radius: $list-group-border-radius;
-        background-color: $white;
-        padding-top: $btn-padding-y;
-        padding-bottom: $btn-padding-y;
-
         .badge {
+            @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $btn-font-size-sm, $btn-line-height-sm, $btn-border-radius-sm);
             display: flex;
             align-self: center;
             font-weight: normal;
-            font-size: $app-font-size-base-small;
-            color: $gray-700;
-            border: 1px solid $border-color;
+            border: 1px solid $app-db-view-color-border;
         }
 
         select {
+            @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $btn-font-size-sm, $btn-line-height-sm, $btn-border-radius-sm);
+            @include button-variant(theme-color("secondary-light"), theme-color("secondary-light"));
             display: flex;
             align-self: center;
             height: auto;
-            padding-top: 0;
-            padding-bottom: 0;
         }
     }
 
@@ -34,11 +27,18 @@
         cursor: pointer;
 
         &:not(:last-of-type) {
-            border-bottom-width: 0;
+            &:not(.selected) {
+                border-bottom-width: 0;
+            }
         }
 
         &.selected {
-            background-color: theme-color("warning-light");
+            background-color: map_get($app-account-title-btn-colors, "selected-bg");
+            border-color: map_get($app-account-title-btn-colors, "selected-border");
+
+            + #{$app-prefix}-db-view-mail {
+                border-top-width: 0;
+            }
         }
     }
 

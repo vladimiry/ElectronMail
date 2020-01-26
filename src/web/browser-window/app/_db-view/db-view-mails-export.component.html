@@ -1,25 +1,25 @@
 <ng-template #mainTemplate>
     <button
         (click)="export()"
-        class="btn btn-link p-0 d-flex flex-grow-1"
+        class="btn btn-secondary-light btn-sm d-flex flex-grow-1"
         type="button"
     >
         <span class="text">{{ title }}</span>
+        <i
+            [placement]="popupPlacement"
+            [popover]="popupTemplate"
+            class="fa fa-info-circle d-flex align-self-center ml-1"
+            container="body"
+            triggers="mouseenter:mouseleave"
+        ></i>
+        <ng-template #popupTemplate>
+            <div class="text-center">
+                App exports emails in the<br>
+                original unsanitized form.<br>
+                Attachments content is ignored.
+            </div>
+        </ng-template>
     </button>
-    <i
-        [placement]="popupPlacement"
-        [popover]="popupTemplate"
-        class="fa fa-info-circle text-warning d-flex align-self-center ml-1"
-        container="body"
-        triggers="mouseenter:mouseleave"
-    ></i>
-    <ng-template #popupTemplate>
-        <div class="text-center">
-            App exports emails in the<br>
-            original unsanitized form.<br>
-            Attachments content is ignored.
-        </div>
-    </ng-template>
 </ng-template>
 <div
     class="text-primary d-flex flex-grow-1"

@@ -130,13 +130,6 @@ $webview-border-darkest: darken($app-color-bg-dark-3, 10%);
         .wrapper:not(.compact-layout) {
             flex-flow: row;
 
-            &::ng-deep {
-                #{$app-prefix}-account {
-                    // border-left: 1px solid $webview-border;
-                    // box-shadow: -1px 0 0 0 $box-shadow-color;
-                }
-            }
-
             > .btn-group {
                 display: none;
             }

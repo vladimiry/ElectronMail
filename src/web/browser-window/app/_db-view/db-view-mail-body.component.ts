@@ -221,6 +221,11 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
             <html>
             <head>
                 <link rel="stylesheet" href="${__METADATA__.electronLocations.vendorsAppCssLinkHref}"/>
+                <style>
+                    html, body {
+                        background-color: transparent;
+                    }
+                </style>
             </head>
             <body>
                 ${mail.body}

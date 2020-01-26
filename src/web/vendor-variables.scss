@@ -8,7 +8,9 @@ $primary: #1ba489;
 $secondary: lighten(#686a71, 9%);
 $modal-header-padding: 0.7rem;
 $list-group-item-padding-x: 1.25rem * 0.5;
+$list-group-item-padding-y: 0.65rem !default;
 $badge-padding-y: 0.15em;
+// $card-cap-bg: #d1d7dc;
 
 // >>>>> importing bootstrap/font-awesome/other-libs variables
 
@@ -21,6 +23,7 @@ $theme-colors: map-merge(
     $theme-colors,
     (
         secondary: $secondary,
+        secondary-light: darken($gray-400, 5%),
         warning-light: theme-color-level("warning", -9),
     ),
 );

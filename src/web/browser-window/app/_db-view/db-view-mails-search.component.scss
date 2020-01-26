@@ -5,6 +5,10 @@
     flex-direction: row;
     flex-grow: 1;
 
+    .custom-switch {
+        @include font-size($input-font-size-sm);
+    }
+
     fieldset {
         &:not([disabled]) {
             .fa-spinner {

@@ -6,15 +6,12 @@
     $state-line-draft: #febe5e;
     $state-line-with: 4px;
     $state-line-margin: 3px;
-    $border-color: $list-group-border-color;
-    $padding-y: $list-group-item-padding-y * 0.5;
-    $padding-x: $list-group-item-padding-x * 0.5;
 
     background-color: $app-db-view-color-bg-mail;
     border: 1px solid $list-group-border-color;
     display: flex;
     flex-direction: column;
-    padding: $padding-y $padding-x;
+    padding: $app-db-view-mail-padding-y $app-db-view-mail-padding-x;
     position: relative;
 
     .r {
@@ -97,7 +94,7 @@
 
     .fa {
         font-size: 85%;
-        line-height: 1.8;
+        align-self: center;
     }
 
     .conversation-size,
@@ -115,7 +112,7 @@
 
     .b {
         border: 1px solid darken($app-db-view-color-border, 2%);
-        padding: $badge-padding-y $badge-padding-x;
+        padding: ($badge-padding-y * 0.5) $badge-padding-x;
         border-radius: $badge-border-radius;
     }
 

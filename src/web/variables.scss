@@ -32,6 +32,8 @@ $app-db-view-color-bg-body: lighten(#eeeff1, 1%);
 $app-db-view-color-bg-mail: lighten(#d1d7dc, 1%);
 $app-db-view-color-bg: lighten($app-db-view-color-bg-mail, 7%);
 $app-db-view-color-border: $list-group-border-color;
+$app-db-view-mail-padding-x: $list-group-item-padding-x * 0.5;
+$app-db-view-mail-padding-y: $list-group-item-padding-y * 0.5;
 
 @mixin app-dropdown-toggle-split {
     padding-left: $btn-padding-x * 1.1;

@@ -73,6 +73,6 @@
     }
 
     #{$app-prefix}-db-view-mail {
-        @include selectable-mail;
+        @include app-db-view-selectable-mail;
     }
 }

@@ -8,6 +8,7 @@
 
     .controls {
         .title {
+            @include app-db-view-badge-padding-radius;
             display: flex;
             align-self: center;
             color: $app-db-view-color-text-mail;
@@ -15,7 +16,7 @@
 
         select {
             @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $btn-font-size-sm, $btn-line-height-sm, $btn-border-radius-sm);
-            @include button-variant(theme-color("secondary"), theme-color("secondary"));
+            @include button-variant(theme-color("secondary-light"), theme-color("secondary-light"));
             display: flex;
             align-self: center;
             height: auto;
@@ -29,6 +30,6 @@
     }
 
     #{$app-prefix}-db-view-mail {
-        @include selectable-mail;
+        @include app-db-view-selectable-mail;
     }
 }

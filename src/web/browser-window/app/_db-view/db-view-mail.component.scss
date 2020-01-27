@@ -110,25 +110,24 @@
         justify-content: center;
         justify-items: center;
         font-size: $app-font-size-base-small;
-        color: $gray-700;
+        color: $gray-800;
     }
 
     .b {
-        background-color: lighten($app-db-view-color-bg-mail, 10%);
-        border: 1px solid $app-db-view-color-border;
+        border: 1px solid darken($app-db-view-color-border, 2%);
         padding: $badge-padding-y $badge-padding-x;
         border-radius: $badge-border-radius;
     }
 
-    .conversation-size {
-        margin: 0 ($app-spacer-1 * 0.8);
+    .badges-1 {
         padding-left: ($state-line-margin + $state-line-with);
-        padding-right: $padding-x;
     }
 
-    .score,
-    .date {
-        background-color: transparent;
+    .conversation-size {
+        // margin: 0 ($app-spacer-1 * 0.8);
+        // margin-left: $app-spacer-1 * 0.8;
+        // padding-left: ($state-line-margin + $state-line-with);
+        // padding-right: $padding-x;
     }
 
     .subject {

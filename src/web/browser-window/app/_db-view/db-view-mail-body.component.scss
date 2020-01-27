@@ -1,4 +1,5 @@
 @import "~src/web/variables";
+@import "~src/web/browser-window/app/_db-view/lib";
 
 :host {
     position: relative;
@@ -57,7 +58,7 @@
 
         &::ng-deep {
             .btn {
-                font-size: $app-font-size-base-small;
+                font-size: $app-font-size-base-smallest;
                 border-top-width: 0;
                 border-top-left-radius: 0;
                 border-top-right-radius: 0;
@@ -71,19 +72,7 @@
         display: flex;
     }
 
-    .root-node {
-        &:not(:first-of-type) {
-            #{$app-prefix}-db-view-mail {
-                border-top-width: 0;
-            }
-        }
-    }
-
     #{$app-prefix}-db-view-mail {
-        cursor: pointer;
-
-        &[selected="1"] {
-            background-color: theme-color("warning-light");
-        }
+        @include selectable-mail;
     }
 }

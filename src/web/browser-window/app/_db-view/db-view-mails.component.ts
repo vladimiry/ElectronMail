@@ -4,6 +4,7 @@ import {Store} from "@ngrx/store";
 import {distinctUntilChanged, map, mergeMap, take, tap, withLatestFrom} from "rxjs/operators";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {DB_VIDE_MAIL_SELECTED_CLASS_NAME} from "src/web/browser-window/app/_db-view/const";
 import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
 import {Mail} from "src/shared/model/database";
 import {MailsBundleKey, State} from "src/web/browser-window/app/store/reducers/db-view";
@@ -140,7 +141,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
                 map((value) => value.selectedMail),
                 distinctUntilChanged(),
             ).subscribe((selectedMail) => {
-                const selectedClassName = "selected";
+                const selectedClassName = DB_VIDE_MAIL_SELECTED_CLASS_NAME;
                 const el = this.elementRef.nativeElement as Element;
                 const toDeselect = el.querySelector(`${mailComponentTagName}.${selectedClassName}`);
                 const toSelect: Element | null = selectedMail

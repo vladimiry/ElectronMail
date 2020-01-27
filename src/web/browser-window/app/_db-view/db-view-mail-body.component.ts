@@ -16,6 +16,7 @@ import {delay, distinctUntilChanged, filter, map, mergeMap, pairwise, take, with
 import {equals} from "remeda";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {DB_VIDE_MAIL_SELECTED_CLASS_NAME} from "src/web/browser-window/app/_db-view/const";
 import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
 import {DbViewMailComponent} from "src/web/browser-window/app/_db-view/db-view-mail.component";
 import {Mail, View} from "src/shared/model/database";
@@ -129,7 +130,11 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
                 delay(ONE_SECOND_MS * 0.2),
             ).subscribe(() => {
                 const selectedRef = this.dbViewMailElementRefs.find((ref) => {
-                    return ref.nativeElement.offsetParent && String(ref.nativeElement.getAttribute("selected")) === "1";
+                    return Boolean(
+                        ref.nativeElement.offsetParent
+                        &&
+                        ref.nativeElement.classList.contains(DB_VIDE_MAIL_SELECTED_CLASS_NAME)
+                    );
                 });
                 if (selectedRef) {
                     selectedRef.nativeElement.scrollIntoView({behavior: "smooth", block: "start"});

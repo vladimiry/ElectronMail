@@ -1,8 +1,8 @@
 <div class="r">
     <div class="c-auto">
-        <div class="d-flex">
+        <div class="d-flex badges-1">
             <!-- TODO render "conversationSize" using transcluding -->
-            <div *ngIf="conversationSize" class="conversation-size">
+            <div *ngIf="conversationSize" class="conversation-size mr-1">
                 {{ conversationSize }}
             </div>
             <a
@@ -39,7 +39,7 @@
             <!-- TODO render "score" using transcluding -->
             <div
                 *ngIf="mail.score"
-                class="score b ml-2"
+                class="b ml-2"
             >
                 score: {{ mail.score.toFixed(2) }}
             </div>

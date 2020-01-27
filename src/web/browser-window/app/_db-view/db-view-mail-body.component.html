@@ -1,4 +1,8 @@
 <ng-container *ngIf="(selectedMail$ | async) as selectedMail">
+    <!--
+    TODO drop "level" support as ProtonMail doesn't support nested/tree-like conversations (Tutanota does)
+    -->
+
     <ng-container *ngIf="selectedMail.rootNode.summary.size > 1">
         <div
             *ngFor="let rootNode of [selectedMail.rootNode]"
@@ -19,18 +23,17 @@
         let-nodes="nodes"
     >
         <ng-container *ngFor="let node of nodes">
-            <div
+            <ng-container
                 *ngIf="!isEmptyNodes(nodes)"
-                [ngStyle]="{'padding-left': level + 'em'}"
-                class="root-node"
             >
                 <electron-mail-db-view-mail
                     (click)="selectConversationMail(node.mail)"
                     *ngIf="node.mail"
-                    [attr.selected]="node.mail.pk === selectedMail.conversationMail?.pk ? 1 : 0"
                     [mail]="node.mail"
+                    [ngClass]="{'selected': node.mail.pk === selectedMail.conversationMail?.pk}"
+                    [ngStyle]="{'margin-left': level + 'em'}"
                 ></electron-mail-db-view-mail>
-            </div>
+            </ng-container>
             <ng-container
                 [ngTemplateOutletContext]="{nodes: node.children, level: level + (isEmptyNodes(nodes) ? 0 : 0.75)}"
                 [ngTemplateOutlet]="nodesTemplate"

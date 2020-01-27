@@ -3,7 +3,7 @@
 :host {
     display: flex;
     height: 100%;
-    background-color: $app-color-bg-dark-1;
+    background-color: lighten($app-db-view-color-bg-mail, 14%);
 
     #{$app-prefix}-db-view-mail-tab {
         flex-grow: 1;

@@ -13,6 +13,10 @@ $webview-border-darkest: darken($app-color-bg-dark-3, 10%);
     bottom: 0;
     background-color: $app-color-bg-dark-1;
 
+    #optionsMenuItem {
+        @include app-dropdown-toggle-split;
+    }
+
     .wrapper {
         width: 100%;
         height: 100%;

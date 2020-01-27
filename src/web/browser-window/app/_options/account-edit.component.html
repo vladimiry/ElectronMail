@@ -202,14 +202,14 @@
             </div>
         </div>
         <div class="clearfix">
-            <button class="btn btn-outline-danger pull-left" type="button" *ngIf="account" (click)="remove()">
+            <button class="btn btn-sm btn-outline-danger pull-left" type="button" *ngIf="account" (click)="remove()">
                 <i class="fa" [ngClass]="{
                     'fa-spinner fa-pulse fa-fw': (removing$ | async),
                     'fa-times': !(removing$ | async)
                 }"></i>
                 Remove
             </button>
-            <button class="btn btn-primary pull-right" type="submit" [disabled]="form.invalid">
+            <button class="btn btn-sm btn-primary pull-right" type="submit" [disabled]="form.invalid">
                 <i class="fa" [ngClass]="{
                     'fa-spinner fa-pulse fa-fw': (processing$ | async),
                     'fa-check': !(processing$ | async)

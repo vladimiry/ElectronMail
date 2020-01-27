@@ -16,7 +16,7 @@
                     type="password"
                 >
             </div>
-            <button [disabled]="form.invalid" class="btn btn-primary btn-lg btn-block" type="submit">
+            <button [disabled]="form.invalid" class="btn btn-lg btn-primary btn-block" type="submit">
                 <i *ngIf="signingIn$ | async" class="fa fa-spinner fa-pulse fa-fw"></i>
                 Submit
             </button>

@@ -19,7 +19,7 @@ form .required label::after {
 }
 
 // "bootstrap"
-.dropdown-toggle-split {
+.btn-sm + .dropdown-toggle-split {
     @include app-dropdown-toggle-split;
 }
 

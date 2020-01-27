@@ -3,7 +3,7 @@
     [ngClass]="{'selected': state.selected, 'stored': state.stored, 'login-filled-once': state.account.loginFilledOnce}"
     class="btn-group"
 >
-    <a class="btn btn-secondary b-handle" href="mailto:{{ state.account.accountConfig.login }}">
+    <a class="btn btn-sm btn-secondary b-handle" href="mailto:{{ state.account.accountConfig.login }}">
         <electron-mail-unread-badge
             *ngIf="state.account.notifications.unread"
             [value]="state.account.notifications.unread"
@@ -23,7 +23,7 @@
     <button
         (click)="toggleViewMode($event)"
         *ngIf="state.stored"
-        class="btn btn-secondary b-toggle-view"
+        class="btn btn-sm btn-secondary b-toggle-view"
         title="Toggle online/database view mode"
     >
         <i

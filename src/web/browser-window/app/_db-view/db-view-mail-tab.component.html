@@ -3,7 +3,7 @@
         <button
             (click)="toggleSearchView()"
             *ngIf="searchViewEnabled$ | async"
-            class="btn btn-primary btn-sm d-flex align-items-center flex-shrink-0 mb-2"
+            class="btn btn-sm btn-primary d-flex align-items-center flex-shrink-0 mb-2"
         >
             <span class="d-flex flex-grow-1 flex-column">Search</span>
             <i class="fa fa-angle-right d-flex"></i>
@@ -59,7 +59,7 @@
                     <button
                         (click)="toggleMailsBundleKey();"
                         [disabled]="(togglingLocalDbMailsListViewMode$ | async) || false"
-                        class="btn btn-secondary btn-sm"
+                        class="btn btn-sm btn-secondary"
                         title="Toggle plain/conversation view mode"
                         type="button"
                     >

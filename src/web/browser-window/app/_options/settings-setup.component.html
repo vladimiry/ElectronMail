@@ -23,7 +23,7 @@
                     </div>
                 </div>
             </div>
-            <button class="btn btn-primary btn-lg btn-block" type="submit" [disabled]="form.invalid">
+            <button class="btn btn-lg btn-primary btn-block" type="submit" [disabled]="form.invalid">
                 <i class="fa fa-spinner fa-pulse fa-fw" *ngIf="signingIn$ | async"></i>
                 Submit
             </button>

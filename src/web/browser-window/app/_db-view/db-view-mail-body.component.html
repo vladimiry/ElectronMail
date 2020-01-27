@@ -45,7 +45,7 @@
         <button
             (click)="toggleConversationCollapsing()"
             *ngIf="selectedMail.rootNode.summary.size > 1"
-            class="btn btn-secondary mr-2"
+            class="btn btn-sm btn-secondary mr-2"
             type="button"
         >
             Conversation ({{ selectedMail.rootNode.summary.size }})
@@ -53,7 +53,7 @@
         <button
             (click)="selectMailOnline()"
             [disabled]="(selectingMailOnline$ | async) || !(onlineAndSignedIn$ | async)"
-            class="btn btn-primary mr-2"
+            class="btn btn-sm btn-primary mr-2"
             type="button"
         >
             <i *ngIf="selectingMailOnline$ | async" class="fa fa-spinner fa-pulse fa-fw"></i>
@@ -140,7 +140,7 @@
         <button
             (click)="reDownload()"
             [disabled]="!(onlineAndSignedIn$ | async) || (fetchingSingleMailParams$ | async) || false"
-            class="btn btn-secondary"
+            class="btn btn-sm btn-secondary"
         >
             <i *ngIf="fetchingSingleMailParams$ | async" class="fa fa-spinner fa-pulse fa-fw"></i>
             Redownload the Email

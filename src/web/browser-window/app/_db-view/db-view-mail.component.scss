@@ -96,6 +96,10 @@
     .fa {
         font-size: 85%;
         align-self: center;
+
+        &.fa-lock {
+            color: $app-color-primary-light;
+        }
     }
 
     .conversation-size,

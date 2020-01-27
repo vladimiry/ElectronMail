@@ -2,10 +2,10 @@
     <div class="accounts-block px-2 pt-2" [ngClass]="{'d-none': hideControls$ | async}">
         <div class="controls">
             <div class="btn-group" dropdown>
-                <button (click)="openSettingsView()" class="btn btn-secondary" id="optionsMenuItem" title="Options" type="button">
+                <button (click)="openSettingsView()" class="btn btn-sm btn-secondary" id="optionsMenuItem" title="Options" type="button">
                     <i class="fa fa-cog"></i>
                 </button>
-                <button class="btn btn-secondary dropdown-toggle dropdown-toggle-split" dropdownToggle type="button">
+                <button class="btn btn-sm btn-secondary dropdown-toggle dropdown-toggle-split" dropdownToggle type="button">
                     <span class="caret"></span>
                 </button>
                 <ul *dropdownMenu class="dropdown-menu" role="menu">
@@ -90,7 +90,7 @@
         </ng-template>
         <ng-template #accountsUndefined>
             <div class="d-flex justify-content-center align-items-center p-3 no-accounts-block">
-                <button (click)="openAddingAccountView()" class="btn btn-primary btn-lg" type="button">
+                <button (click)="openAddingAccountView()" class="btn btn-sm btn-primary btn-lg" type="button">
                     <i class="fa fa-plus"></i>
                     Add Account
                 </button>

@@ -32,7 +32,7 @@
                     </div>
                 </div>
                 <div class="clearfix">
-                    <button class="btn btn-primary pull-right" type="submit" [disabled]="form.invalid">
+                    <button class="btn btn-sm btn-primary pull-right" type="submit" [disabled]="form.invalid">
                         <i class="fa fa-spinner fa-pulse fa-fw" *ngIf="changingPassword$ | async"></i>
                         Apply
                     </button>
@@ -53,7 +53,7 @@
                     [formGroup]="encryptionPresetForm"
                 ></electron-mail-encryption-presets>
                 <div class="clearfix">
-                    <button class="btn btn-primary pull-right" type="submit" [disabled]="encryptionPresetForm.invalid">
+                    <button class="btn btn-sm btn-primary pull-right" type="submit" [disabled]="encryptionPresetForm.invalid">
                         <i class="fa fa-spinner fa-pulse fa-fw" *ngIf="reEncryptingSettings$ | async"></i>
                         Apply
                     </button>

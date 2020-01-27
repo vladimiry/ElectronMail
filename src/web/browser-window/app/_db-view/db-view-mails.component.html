@@ -14,7 +14,7 @@
             <i *ngIf="makeAllReadInProgress$ | async" class="fa fa-spinner fa-pulse fa-fw ml-2"></i>
         </button>
         <ng-content select="[controls]"></ng-content>
-        <div class="badge">
+        <div class="title">
             {{ title$ | async }}<span *ngIf="items.length">: {{ (paging$ | async)?.end }} of {{ items.length }}</span>
         </div>
     </div>
@@ -55,7 +55,7 @@
     <button
         (click)="loadMore()"
         *ngIf="(paging$ | async)?.nextPageSize; let nextPageSize;"
-        class="btn btn-secondary-light load-more my-3"
+        class="btn btn-secondary load-more my-3"
     >
         More
         <small>(+{{ nextPageSize }})</small>

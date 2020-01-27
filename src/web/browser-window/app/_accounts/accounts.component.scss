@@ -111,9 +111,15 @@ $webview-border-darkest: darken($app-color-bg-dark-3, 10%);
     }
 
     .compact-layout {
-        &::ng-deep #{$app-prefix}-account-title {
-            &:not(:last-child) {
-                margin-right: $app-spacer-2;
+        &::ng-deep {
+            #{$app-prefix}-account-title {
+                &:not(:last-child) {
+                    margin-right: $app-spacer-2;
+                }
+            }
+
+            #{$app-prefix}-db-view-mail-tab {
+                padding-top: 0;
             }
         }
     }
@@ -156,6 +162,12 @@ $webview-border-darkest: darken($app-color-bg-dark-3, 10%);
             .list-group.accounts-list {
                 flex-direction: row;
                 flex-wrap: wrap;
+            }
+
+            ::ng-deep {
+                #{$app-prefix}-db-view-mail-tab {
+                    padding-left: 0;
+                }
             }
         }
     }

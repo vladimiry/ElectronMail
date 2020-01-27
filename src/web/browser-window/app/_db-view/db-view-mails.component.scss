@@ -7,17 +7,15 @@
     flex-direction: column;
 
     .controls {
-        .badge {
-            @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $btn-font-size-sm, $btn-line-height-sm, $btn-border-radius-sm);
+        .title {
             display: flex;
             align-self: center;
-            font-weight: normal;
-            border: 1px solid $app-db-view-color-border;
+            color: $app-db-view-color-text-mail;
         }
 
         select {
             @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $btn-font-size-sm, $btn-line-height-sm, $btn-border-radius-sm);
-            @include button-variant(theme-color("secondary-light"), theme-color("secondary-light"));
+            @include button-variant(theme-color("secondary"), theme-color("secondary"));
             display: flex;
             align-self: center;
             height: auto;

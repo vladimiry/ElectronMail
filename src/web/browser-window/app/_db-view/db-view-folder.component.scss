@@ -3,6 +3,10 @@
 :host {
     display: flex;
 
+    #{$app-prefix}-unread-badge {
+        font-size: $app-font-size-base-small;
+    }
+
     .fa {
         line-height: inherit;
     }

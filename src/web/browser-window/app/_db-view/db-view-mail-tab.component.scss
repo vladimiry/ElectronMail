@@ -28,6 +28,7 @@
 
         .list-group-item:not(.list-group-item-warning) {
             background-color: $app-db-view-color-bg-mail;
+            color: $app-db-view-color-text-mail;
         }
 
         #{$app-prefix}-db-view-mails-export {

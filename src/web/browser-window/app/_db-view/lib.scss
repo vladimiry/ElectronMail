@@ -15,7 +15,14 @@
         &,
         ::ng-deep .b {
             border-color: map_get($app-account-title-btn-colors, "selected-border");
-            color: $app-color-warning-light-text;
+        }
+
+        ::ng-deep {
+            &,
+            .conversation-size,
+            .b {
+                color: $app-color-warning-light-text;
+            }
         }
 
         + #{$app-prefix}-db-view-mail {

@@ -3,10 +3,12 @@
 :host {
     display: flex;
     height: 100%;
-    background-color: $app-db-view-color-bg;
+    background-color: $app-color-bg-dark-1;
 
-    > #{$app-prefix}-db-view-mail-tab {
+    #{$app-prefix}-db-view-mail-tab {
         flex-grow: 1;
+        padding-top: $app-spacer-2;
+        padding-left: $app-spacer-2;
     }
 
     &::ng-deep {

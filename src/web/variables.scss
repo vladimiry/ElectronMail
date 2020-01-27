@@ -11,7 +11,8 @@ $app-color-bg-dark-2: #30353f;
 $app-color-bg-dark-3: #262a33;
 $app-color-bg-dark-4: #1b1e24;
 
-$app-color-purple-light: #987ebf;
+$app-color-primary-light: lighten(theme-color("primary"), 10%);
+$app-color-purple-light: lighten(#987ebf, 8%);
 $app-color-warning-light-text: theme-color-level("warning", 6);
 $app-color-secondary-btn-split-border: darken($secondary, 5%);
 
@@ -28,9 +29,9 @@ $app-account-title-btn-colors: map-merge(
     (),
 );
 
+$app-db-view-color-text-mail: $gray-200;
 $app-db-view-color-bg-body: lighten(#eeeff1, 1%);
-$app-db-view-color-bg-mail: lighten(#d1d7dc, 1%);
-$app-db-view-color-bg: lighten($app-db-view-color-bg-mail, 7%);
+$app-db-view-color-bg-mail: theme-color("secondary");
 $app-db-view-color-border: $list-group-border-color;
 $app-db-view-mail-padding-x: $list-group-item-padding-x * 0.5;
 $app-db-view-mail-padding-y: $list-group-item-padding-y * 0.5;

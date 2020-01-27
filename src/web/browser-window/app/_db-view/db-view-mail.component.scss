@@ -1,8 +1,8 @@
 @import "~src/web/variables";
 
 :host {
-    $state-line-sent: lighten(#07bb9c, 3%);
-    $state-line-received: lighten($app-color-purple-light, 3%);
+    $state-line-sent: $app-color-primary-light;
+    $state-line-received: $app-color-purple-light;
     $state-line-draft: #febe5e;
     $state-line-with: 4px;
     $state-line-margin: 3px;
@@ -13,6 +13,7 @@
     flex-direction: column;
     padding: $app-db-view-mail-padding-y $app-db-view-mail-padding-x;
     position: relative;
+    color: $app-db-view-color-text-mail;
 
     .r {
         display: flex;
@@ -107,11 +108,11 @@
         justify-content: center;
         justify-items: center;
         font-size: $app-font-size-base-small;
-        color: $gray-800;
+        color: $app-db-view-color-text-mail;
     }
 
     .b {
-        border: 1px solid darken($app-db-view-color-border, 2%);
+        border: 1px solid lighten($app-db-view-color-bg-mail, 10%);
         padding: ($badge-padding-y * 0.5) $badge-padding-x;
         border-radius: $badge-border-radius;
     }

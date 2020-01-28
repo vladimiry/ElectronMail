@@ -26,7 +26,10 @@ environment:
 
 image:
   # TODO try using "appveyor" for building all platforms packages and drop "travis-ci" use then
-  # items order matters, "Ubuntu1804" needs to be the first one
+  # https://www.appveyor.com/docs/linux-images-software/
+  # https://www.appveyor.com/docs/macos-images-software/
+  # https://www.appveyor.com/docs/windows-images-software/
+  # WARN items order matters, "Ubuntu1804" needs to be the first one
   - 'Ubuntu1804'
   - 'macos'
   - 'Visual Studio 2017'
@@ -65,6 +68,8 @@ for:
   - matrix:
       only:
         - image: 'macos'
+    environment:
+      ARTIFACT_NAME_POSTFIX: 'catalina-10.15.1-11b500'
     install:
       # - HOMEBREW_NO_INSTALL_CLEANUP=1 brew cask install firefox
       - nvm install $nodejs_version

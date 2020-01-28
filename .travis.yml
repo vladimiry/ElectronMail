@@ -163,18 +163,18 @@ jobs:
       <<: *embedding-build-app-macos-anchor
       osx_image: xcode9.4
       env:
-        - ARTIFACT_NAME_POSTFIX="high-sierra-10.13-9F2000"
+        - ARTIFACT_NAME_POSTFIX="high-sierra-10.13-9f2000"
     - stage: 'build app'
       <<: *embedding-macos-common-anchor
       <<: *embedding-build-app-common-anchor
       <<: *embedding-build-app-macos-anchor
       osx_image: xcode10.3
       env:
-        - ARTIFACT_NAME_POSTFIX="mojave-10.14.4-18E226"
+        - ARTIFACT_NAME_POSTFIX="mojave-10.14.4-18e226"
     - stage: 'build app'
       <<: *embedding-macos-common-anchor
       <<: *embedding-build-app-common-anchor
       <<: *embedding-build-app-macos-anchor
       osx_image: xcode11.3
       env:
-        - ARTIFACT_NAME_POSTFIX="mojave-10.14-11C29"
+        - ARTIFACT_NAME_POSTFIX="mojave-10.14-11c29"

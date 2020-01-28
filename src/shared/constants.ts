@@ -83,7 +83,7 @@ export const PROVIDER_REPOS: Record<"WebClient" | "proton-mail-settings" | "prot
         repoRelativeDistDir: "./dist",
         baseDir: "settings",
         repo: "https://github.com/ProtonMail/proton-mail-settings.git",
-        commit: "c2d0ba4095833d674680d80d51bcf6701e69b731",
+        commit: "3f1a1acd7f18c97f3a7c872a9d66e3d95f83acde",
         version: "unknown",
         protonPackAppConfig: {
             clientId: "WebMailSettings",
@@ -93,7 +93,7 @@ export const PROVIDER_REPOS: Record<"WebClient" | "proton-mail-settings" | "prot
         repoRelativeDistDir: "./dist",
         baseDir: "contacts",
         repo: "https://github.com/ProtonMail/proton-contacts.git",
-        commit: "104cfd9d12424e50f667d579f7e4fb3462cec2d1",
+        commit: "417c4195504473c12ff046474e135f21749c6903",
         version: "unknown",
         protonPackAppConfig: {
             clientId: "WebContacts",

@@ -2,42 +2,22 @@ import escapeStringRegexp from "escape-string-regexp";
 import fs from "fs";
 import mkdirp from "mkdirp";
 import path from "path";
-import {Packager, Platform} from "app-builder-lib";
-import {getConfig} from "app-builder-lib/out/util/config";
 
 import {BINARY_NAME} from "src/shared/constants";
-import {CWD, LOG, LOG_LEVELS, execShell} from "scripts/lib";
-import {DISABLE_SANDBOX_ARGS_LINE, ensureFileHasNoSuidBit} from "scripts/electron-builder/lib";
+import {DISABLE_SANDBOX_ARGS_LINE, build, ensureFileHasNoSuidBit} from "scripts/electron-builder/lib";
+import {LOG, LOG_LEVELS, execShell} from "scripts/lib";
 
 // TODO pass destination directory instead of hardcoding it ("--appimage-extract" doesn't support destination parameter at the moment)
 const extractedImageFolderName = "squashfs-root";
 
 (async () => {
     await postProcess(
-        await build(),
+        await build("appimage"),
     );
 })().catch((error) => {
     LOG(error);
     process.exit(1);
 });
-
-async function build(): Promise<{ packageFile: string }> {
-    const packager = new Packager({
-        targets: Platform.LINUX.createTarget("appimage"),
-        config: await getConfig(
-            CWD,
-            path.join(CWD, "./electron-builder.yml"),
-            null,
-        ),
-    });
-    const {artifactPaths: [packageFile]} = await packager.build();
-
-    if (!String(packageFile).endsWith(".AppImage")) {
-        throw new Error(`Invalid artifact: "${packageFile}"`);
-    }
-
-    return {packageFile};
-}
 
 async function postProcess({packageFile}: { packageFile: string }) {
     const {packageDir} = await unpack({packageFile});

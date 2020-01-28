@@ -79,6 +79,11 @@ notifications:
     on_success: never
     on_failure: change
 
+embedding-build-app-macos: &embedding-build-app-macos-anchor
+  env:
+    - ARTIFACT_NAME_POSTFIX="-$TRAVIS_OSX_IMAGE"
+  script: ./scripts/ci/travis/build-osx.sh
+
 jobs:
   include:
     # pre-build some web clients to workaround the issue of travis dropping long-running jobs on free plan
@@ -115,18 +120,19 @@ jobs:
         #  eval $(/usr/bin/gnome-keyring-daemon --components=secrets --start);
         #  python3 ./scripts/ci/add-secret-service-item-assert.py;
       script: ./scripts/ci/travis/build-linux.sh
+    # see travis macOS images list at https://docs.travis-ci.com/user/reference/osx/
     - stage: 'Build app'
       <<: *embedding-macos-common-anchor
       <<: *embedding-build-app-common-anchor
+      <<: *embedding-build-app-macos-anchor
       osx_image: xcode9.4
-      script: ./scripts/ci/travis/build-osx.sh
     - stage: 'Build app'
       <<: *embedding-macos-common-anchor
       <<: *embedding-build-app-common-anchor
+      <<: *embedding-build-app-macos-anchor
       osx_image: xcode10.3
-      script: ./scripts/ci/travis/build-osx.sh
     - stage: 'Build app'
       <<: *embedding-macos-common-anchor
       <<: *embedding-build-app-common-anchor
+      <<: *embedding-build-app-macos-anchor
       osx_image: xcode11.3
-      script: ./scripts/ci/travis/build-osx.sh

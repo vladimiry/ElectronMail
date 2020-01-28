@@ -167,3 +167,38 @@ async function prepareDictionaries(): Promise<Map<Locale, Dictionary>> {
 
     return result;
 }
+
+export async function build(
+    packageType: "appimage" | "snap",
+): Promise<{ packageFile: string }> {
+    await execShell([
+        "yarn",
+        [
+            "electron-builder:shortcut",
+            "--x64",
+            "--publish", "never",
+            "--linux",
+            packageType,
+        ]
+    ]);
+
+    // TODO move "fastGlob" to lib function with inner "sanitizeFastGlobPattern" call
+    const [packageFile] = await fastGlob(
+        // TODO resolve "./dist" programmatically from "electron-builder.yml"
+        sanitizeFastGlobPattern(
+            path.join(`./dist", "*.${packageType === "appimage" ? "AppImage" : packageType}`),
+        ),
+        {
+            absolute: true,
+            deep: 1,
+            onlyFiles: true,
+            stats: false,
+        },
+    );
+
+    if (!packageFile) {
+        throw new Error(`Invalid artifact: "${packageFile}"`);
+    }
+
+    return {packageFile};
+}

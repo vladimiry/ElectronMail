@@ -5,6 +5,8 @@ import path from "path";
 import spawnAsync from "@expo/spawn-async";
 import {pick} from "remeda";
 
+import {ARTIFACT_NAME_POSTFIX_ENV_VAR_NAME} from "scripts/const";
+
 export const CWD = path.resolve(process.cwd());
 
 // tslint:disable-next-line:no-console
@@ -19,11 +21,30 @@ export const LOG_LEVELS = {
 
 export async function execShell(
     [command, args, options]: Parameters<typeof spawnAsync>,
-    {printStd = true}: { printStd?: boolean } = {},
+    {
+        printStd = true,
+        printEnvWhitelist = [ARTIFACT_NAME_POSTFIX_ENV_VAR_NAME],
+    }: {
+        printStd?: boolean;
+        printEnvWhitelist?: string[];
+    } = {},
 ): Promise<Unpacked<ReturnType<typeof spawnAsync>>> {
     LOG(
         LOG_LEVELS.title("Executing Shell command:"),
-        LOG_LEVELS.value(JSON.stringify({command, args, options}, null, 2)),
+        LOG_LEVELS.value(
+            JSON.stringify(
+                {
+                    args,
+                    command,
+                    options: {
+                        ...options,
+                        env: pick(options?.env ?? {}, printEnvWhitelist),
+                    },
+                },
+                null,
+                2,
+            ),
+        ),
     );
 
     const spawnPromise = spawnAsync(command, args, options);

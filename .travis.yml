@@ -72,7 +72,6 @@ embedding-macos-common: &embedding-macos-common-anchor
 #  osx_image:
 #    - xcode9.4
 #    - xcode10.3
-#    - xcode11.3
 
 embedding-build-app-common: &embedding-build-app-common-anchor
   cache:
@@ -121,10 +120,6 @@ jobs:
       <<: *embedding-prepare-webclients-1-anchor
       osx_image: xcode10.3
     - stage: 'build web clients'
-      <<: *embedding-macos-common-anchor
-      <<: *embedding-prepare-webclients-1-anchor
-      osx_image: xcode11.3
-    - stage: 'build web clients'
       <<: *embedding-linux-common-anchor
       <<: *embedding-prepare-webclients-2-anchor
     - stage: 'build web clients'
@@ -135,10 +130,6 @@ jobs:
       <<: *embedding-macos-common-anchor
       <<: *embedding-prepare-webclients-2-anchor
       osx_image: xcode10.3
-    - stage: 'build web clients'
-      <<: *embedding-macos-common-anchor
-      <<: *embedding-prepare-webclients-2-anchor
-      osx_image: xcode11.3
     - stage: 'build app'
       <<: *embedding-linux-common-anchor
       <<: *embedding-build-app-common-anchor
@@ -163,7 +154,7 @@ jobs:
       <<: *embedding-build-app-macos-anchor
       osx_image: xcode9.4
       env:
-        - ARTIFACT_NAME_POSTFIX="high-sierra-10.13-9f2000"
+        - ARTIFACT_NAME_POSTFIX="high-sierra-10.13.6-9f2000"
     - stage: 'build app'
       <<: *embedding-macos-common-anchor
       <<: *embedding-build-app-common-anchor
@@ -171,10 +162,3 @@ jobs:
       osx_image: xcode10.3
       env:
         - ARTIFACT_NAME_POSTFIX="mojave-10.14.4-18e226"
-    - stage: 'build app'
-      <<: *embedding-macos-common-anchor
-      <<: *embedding-build-app-common-anchor
-      <<: *embedding-build-app-macos-anchor
-      osx_image: xcode11.3
-      env:
-        - ARTIFACT_NAME_POSTFIX="mojave-10.14-11c29"

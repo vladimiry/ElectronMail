@@ -32,6 +32,7 @@ image:
   # WARN items order matters, "Ubuntu1804" needs to be the first one
   - 'Ubuntu1804'
   - 'macos'
+  - 'macos-mojave'
   - 'Visual Studio 2017'
 
 before_build:
@@ -69,7 +70,18 @@ for:
       only:
         - image: 'macos'
     environment:
-      ARTIFACT_NAME_POSTFIX: 'catalina-10.15.1-11b500'
+      ARTIFACT_NAME_POSTFIX: '-catalina'
+    install:
+      # - HOMEBREW_NO_INSTALL_CLEANUP=1 brew cask install firefox
+      - nvm install $nodejs_version
+      - |
+        curl -o- -L https://yarnpkg.com/install.sh | bash;
+        export PATH="$HOME/.yarn/bin:$PATH";
+  - matrix:
+      only:
+        - image: 'macos-mojave'
+    environment:
+      ARTIFACT_NAME_POSTFIX: '-mojave'
     install:
       # - HOMEBREW_NO_INSTALL_CLEANUP=1 brew cask install firefox
       - nvm install $nodejs_version

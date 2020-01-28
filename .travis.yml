@@ -15,11 +15,6 @@ embedding-prepare-webclients-mail-settings: &embedding-prepare-webclients-mail-s
     npm: false
     directories:
       - output/git/proton-mail-settings
-  workspaces:
-    create:
-      name: 'webclients-artifact-mail-settings'
-      paths:
-        - output/git/proton-mail-settings
   env:
     - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="proton-mail-settings"
   script: ./scripts/ci/prepare-webclients.sh
@@ -30,11 +25,6 @@ embedding-prepare-webclients-contacts: &embedding-prepare-webclients-contacts-an
     npm: false
     directories:
       - output/git/proton-contacts
-  workspaces:
-    create:
-      name: 'webclients-artifact-contacts'
-      paths:
-        - output/git/proton-contacts
   env:
     - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="proton-contacts"
   script: ./scripts/ci/prepare-webclients.sh
@@ -45,26 +35,16 @@ embedding-prepare-webclients-calendar: &embedding-prepare-webclients-calendar-an
     npm: false
     directories:
       - output/git/proton-calendar
-  workspaces:
-    create:
-      name: 'webclients-artifact-calendar'
-      paths:
-        - output/git/proton-calendar
   env:
     - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="proton-calendar"
   script: ./scripts/ci/prepare-webclients.sh
 
-embedding-prepare-webclients-WebClient: &embedding-prepare-webclients-WebClient-anchor
+embedding-prepare-webclients-webclient: &embedding-prepare-webclients-webclient-anchor
   cache:
     yarn: false
     npm: false
     directories:
       - output/git/WebClient
-  workspaces:
-    create:
-      name: 'webclients-artifact-WebClient'
-      paths:
-        - output/git/WebClient
   env:
     - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="WebClient"
   script: ./scripts/ci/prepare-webclients.sh
@@ -93,24 +73,12 @@ embedding-linux-common: &embedding-linux-common-anchor
 
 embedding-macos-common: &embedding-macos-common-anchor
   os: osx
-# TODO figure why "osx_image" doesn't multiply the matrix (we copy tasks for now putting different images in each)
-#  # see travis macOS images list at https://docs.travis-ci.com/user/reference/osx/
-#  osx_image:
-#    - xcode9.4
-#    - xcode10.3
+  osx_image: xcode9.4
 
 embedding-build-app-common: &embedding-build-app-common-anchor
   cache:
     yarn: false
     npm: false
-    directories:
-      - output/git
-  workspaces:
-    use:
-      - 'webclients-artifact-mail-settings'
-      - 'webclients-artifact-contacts'
-      - 'webclients-artifact-calendar'
-      - 'webclients-artifact-WebClient'
   after_failure:
     - tar -cvf e2e-logs.tar ./output/e2e
     - yarn scripts/transfer upload e2e-logs.tar
@@ -130,9 +98,6 @@ notifications:
     on_success: never
     on_failure: change
 
-embedding-build-app-macos: &embedding-build-app-macos-anchor
-  script: ./scripts/ci/travis/build-osx.sh
-
 jobs:
   include:
     # pre-building proton web clients in individual jobs to workaround the issue of travis dropping long-running jobs on free plan
@@ -140,54 +105,80 @@ jobs:
     - stage: 'build proton clients'
       <<: *embedding-linux-common-anchor
       <<: *embedding-prepare-webclients-mail-settings-anchor
+      workspaces:
+        create:
+          name: 'linux-webclients-artifact-mail-settings'
+          paths:
+            - output/git/proton-mail-settings
     - stage: 'build proton clients'
       <<: *embedding-macos-common-anchor
       <<: *embedding-prepare-webclients-mail-settings-anchor
-      osx_image: xcode9.4
-    - stage: 'build proton clients'
-      <<: *embedding-macos-common-anchor
-      <<: *embedding-prepare-webclients-mail-settings-anchor
-      osx_image: xcode10.3
+      workspaces:
+        create:
+          name: 'macos-webclients-artifact-mail-settings'
+          paths:
+            - output/git/proton-mail-settings
     # [contacts]
     - stage: 'build proton clients'
       <<: *embedding-linux-common-anchor
       <<: *embedding-prepare-webclients-contacts-anchor
+      workspaces:
+        create:
+          name: 'linux-webclients-artifact-contacts'
+          paths:
+            - output/git/proton-contacts
     - stage: 'build proton clients'
       <<: *embedding-macos-common-anchor
       <<: *embedding-prepare-webclients-contacts-anchor
-      osx_image: xcode9.4
-    - stage: 'build proton clients'
-      <<: *embedding-macos-common-anchor
-      <<: *embedding-prepare-webclients-contacts-anchor
-      osx_image: xcode10.3
+      workspaces:
+        create:
+          name: 'macos-webclients-artifact-contacts'
+          paths:
+            - output/git/proton-contacts
     # [calendar]
     - stage: 'build proton clients'
       <<: *embedding-linux-common-anchor
       <<: *embedding-prepare-webclients-calendar-anchor
+      workspaces:
+        create:
+          name: 'linux-webclients-artifact-calendar'
+          paths:
+            - output/git/proton-calendar
     - stage: 'build proton clients'
       <<: *embedding-macos-common-anchor
       <<: *embedding-prepare-webclients-calendar-anchor
-      osx_image: xcode9.4
-    - stage: 'build proton clients'
-      <<: *embedding-macos-common-anchor
-      <<: *embedding-prepare-webclients-calendar-anchor
-      osx_image: xcode10.3
+      workspaces:
+        create:
+          name: 'macos-webclients-artifact-calendar'
+          paths:
+            - output/git/proton-calendar
     # [WebClient]
     - stage: 'build proton clients'
       <<: *embedding-linux-common-anchor
-      <<: *embedding-prepare-webclients-WebClient-anchor
+      <<: *embedding-prepare-webclients-webclient-anchor
+      workspaces:
+        create:
+          name: 'linux-webclients-artifact-webclient'
+          paths:
+            - output/git/WebClient
     - stage: 'build proton clients'
       <<: *embedding-macos-common-anchor
-      <<: *embedding-prepare-webclients-WebClient-anchor
-      osx_image: xcode9.4
-    - stage: 'build proton clients'
-      <<: *embedding-macos-common-anchor
-      <<: *embedding-prepare-webclients-WebClient-anchor
-      osx_image: xcode10.3
+      <<: *embedding-prepare-webclients-webclient-anchor
+      workspaces:
+        create:
+          name: 'macos-webclients-artifact-webclient'
+          paths:
+            - output/git/WebClient
     # [build]
     - stage: 'build app'
       <<: *embedding-linux-common-anchor
       <<: *embedding-build-app-common-anchor
+      workspaces:
+        use:
+          - 'linux-webclients-artifact-mail-settings'
+          - 'linux-webclients-artifact-contacts'
+          - 'linux-webclients-artifact-calendar'
+          - 'linux-webclients-artifact-webclient'
       sudo: required
       services:
         - docker
@@ -206,14 +197,12 @@ jobs:
     - stage: 'build app'
       <<: *embedding-macos-common-anchor
       <<: *embedding-build-app-common-anchor
-      <<: *embedding-build-app-macos-anchor
-      osx_image: xcode9.4
+      workspaces:
+        use:
+          - 'macos-webclients-artifact-mail-settings'
+          - 'macos-webclients-artifact-contacts'
+          - 'macos-webclients-artifact-calendar'
+          - 'macos-webclients-artifact-webclient'
       env:
-        - ARTIFACT_NAME_POSTFIX="high-sierra-10.13.6-9f2000"
-    - stage: 'build app'
-      <<: *embedding-macos-common-anchor
-      <<: *embedding-build-app-common-anchor
-      <<: *embedding-build-app-macos-anchor
-      osx_image: xcode10.3
-      env:
-        - ARTIFACT_NAME_POSTFIX="mojave-10.14.4-18e226"
+        - ARTIFACT_NAME_POSTFIX="-high-sierra"
+      script: ./scripts/ci/travis/build-osx.sh

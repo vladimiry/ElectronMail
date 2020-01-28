@@ -9,38 +9,64 @@ branches:
 node_js: 12
 language: node_js
 
-embedding-prepare-webclients-1: &embedding-prepare-webclients-1-anchor
+embedding-prepare-webclients-mail-settings: &embedding-prepare-webclients-mail-settings-anchor
   cache:
     yarn: false
     npm: false
     directories:
       - output/git/proton-mail-settings
+  workspaces:
+    create:
+      name: 'webclients-artifact-mail-settings'
+      paths:
+        - output/git/proton-mail-settings
+  env:
+    - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="proton-mail-settings"
+  script: ./scripts/ci/prepare-webclients.sh
+
+embedding-prepare-webclients-contacts: &embedding-prepare-webclients-contacts-anchor
+  cache:
+    yarn: false
+    npm: false
+    directories:
       - output/git/proton-contacts
   workspaces:
     create:
-      name: 'webclients-artifact-1'
+      name: 'webclients-artifact-contacts'
       paths:
-        - output/git/proton-mail-settings
         - output/git/proton-contacts
   env:
-    - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="proton-mail-settings;proton-contacts"
+    - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="proton-contacts"
   script: ./scripts/ci/prepare-webclients.sh
 
-embedding-prepare-webclients-2: &embedding-prepare-webclients-2-anchor
+embedding-prepare-webclients-calendar: &embedding-prepare-webclients-calendar-anchor
   cache:
     yarn: false
     npm: false
     directories:
       - output/git/proton-calendar
+  workspaces:
+    create:
+      name: 'webclients-artifact-calendar'
+      paths:
+        - output/git/proton-calendar
+  env:
+    - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="proton-calendar"
+  script: ./scripts/ci/prepare-webclients.sh
+
+embedding-prepare-webclients-WebClient: &embedding-prepare-webclients-WebClient-anchor
+  cache:
+    yarn: false
+    npm: false
+    directories:
       - output/git/WebClient
   workspaces:
     create:
-      name: 'webclients-artifact-2'
+      name: 'webclients-artifact-WebClient'
       paths:
-        - output/git/proton-calendar
         - output/git/WebClient
   env:
-    - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="proton-calendar;WebClient"
+    - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="WebClient"
   script: ./scripts/ci/prepare-webclients.sh
 
 embedding-linux-common: &embedding-linux-common-anchor
@@ -81,8 +107,10 @@ embedding-build-app-common: &embedding-build-app-common-anchor
       - output/git
   workspaces:
     use:
-      - 'webclients-artifact-1'
-      - 'webclients-artifact-2'
+      - 'webclients-artifact-mail-settings'
+      - 'webclients-artifact-contacts'
+      - 'webclients-artifact-calendar'
+      - 'webclients-artifact-WebClient'
   after_failure:
     - tar -cvf e2e-logs.tar ./output/e2e
     - yarn scripts/transfer upload e2e-logs.tar
@@ -107,29 +135,56 @@ embedding-build-app-macos: &embedding-build-app-macos-anchor
 
 jobs:
   include:
-    # pre-build some web clients to workaround the issue of travis dropping long-running jobs on free plan
-    - stage: 'build web clients'
+    # pre-building proton web clients in individual jobs to workaround the issue of travis dropping long-running jobs on free plan
+    # [mail-settings]
+    - stage: 'build proton clients'
       <<: *embedding-linux-common-anchor
-      <<: *embedding-prepare-webclients-1-anchor
-    - stage: 'build web clients'
+      <<: *embedding-prepare-webclients-mail-settings-anchor
+    - stage: 'build proton clients'
       <<: *embedding-macos-common-anchor
-      <<: *embedding-prepare-webclients-1-anchor
+      <<: *embedding-prepare-webclients-mail-settings-anchor
       osx_image: xcode9.4
-    - stage: 'build web clients'
+    - stage: 'build proton clients'
       <<: *embedding-macos-common-anchor
-      <<: *embedding-prepare-webclients-1-anchor
+      <<: *embedding-prepare-webclients-mail-settings-anchor
       osx_image: xcode10.3
-    - stage: 'build web clients'
+    # [contacts]
+    - stage: 'build proton clients'
       <<: *embedding-linux-common-anchor
-      <<: *embedding-prepare-webclients-2-anchor
-    - stage: 'build web clients'
+      <<: *embedding-prepare-webclients-contacts-anchor
+    - stage: 'build proton clients'
       <<: *embedding-macos-common-anchor
-      <<: *embedding-prepare-webclients-2-anchor
+      <<: *embedding-prepare-webclients-contacts-anchor
       osx_image: xcode9.4
-    - stage: 'build web clients'
+    - stage: 'build proton clients'
       <<: *embedding-macos-common-anchor
-      <<: *embedding-prepare-webclients-2-anchor
+      <<: *embedding-prepare-webclients-contacts-anchor
       osx_image: xcode10.3
+    # [calendar]
+    - stage: 'build proton clients'
+      <<: *embedding-linux-common-anchor
+      <<: *embedding-prepare-webclients-calendar-anchor
+    - stage: 'build proton clients'
+      <<: *embedding-macos-common-anchor
+      <<: *embedding-prepare-webclients-calendar-anchor
+      osx_image: xcode9.4
+    - stage: 'build proton clients'
+      <<: *embedding-macos-common-anchor
+      <<: *embedding-prepare-webclients-calendar-anchor
+      osx_image: xcode10.3
+    # [WebClient]
+    - stage: 'build proton clients'
+      <<: *embedding-linux-common-anchor
+      <<: *embedding-prepare-webclients-WebClient-anchor
+    - stage: 'build proton clients'
+      <<: *embedding-macos-common-anchor
+      <<: *embedding-prepare-webclients-WebClient-anchor
+      osx_image: xcode9.4
+    - stage: 'build proton clients'
+      <<: *embedding-macos-common-anchor
+      <<: *embedding-prepare-webclients-WebClient-anchor
+      osx_image: xcode10.3
+    # [build]
     - stage: 'build app'
       <<: *embedding-linux-common-anchor
       <<: *embedding-build-app-common-anchor

@@ -6,7 +6,7 @@ branches:
   only:
     - master
 
-node_js: 12.14.0
+node_js: 12
 language: node_js
 
 embedding-prepare-webclients: &embedding-prepare-webclients-anchor
@@ -50,7 +50,6 @@ embedding-linux-common: &embedding-linux-common-anchor
 
 embedding-macos-common: &embedding-macos-common-anchor
   os: osx
-  osx_image: xcode9.4
 
 embedding-build-app-common: &embedding-build-app-common-anchor
   cache:
@@ -89,6 +88,15 @@ jobs:
     - stage: 'Build web clients (settings/contacts/calendar only)'
       <<: *embedding-macos-common-anchor
       <<: *embedding-prepare-webclients-anchor
+      osx_image: xcode9.4
+    - stage: 'Build web clients (settings/contacts/calendar only)'
+      <<: *embedding-macos-common-anchor
+      <<: *embedding-prepare-webclients-anchor
+      osx_image: xcode10.3
+    - stage: 'Build web clients (settings/contacts/calendar only)'
+      <<: *embedding-macos-common-anchor
+      <<: *embedding-prepare-webclients-anchor
+      osx_image: xcode11.3
     - stage: 'Build App'
       <<: *embedding-linux-common-anchor
       <<: *embedding-build-app-common-anchor
@@ -110,4 +118,15 @@ jobs:
     - stage: 'Build app'
       <<: *embedding-macos-common-anchor
       <<: *embedding-build-app-common-anchor
+      osx_image: xcode9.4
+      script: ./scripts/ci/travis/build-osx.sh
+    - stage: 'Build app'
+      <<: *embedding-macos-common-anchor
+      <<: *embedding-build-app-common-anchor
+      osx_image: xcode10.3
+      script: ./scripts/ci/travis/build-osx.sh
+    - stage: 'Build app'
+      <<: *embedding-macos-common-anchor
+      <<: *embedding-build-app-common-anchor
+      osx_image: xcode11.3
       script: ./scripts/ci/travis/build-osx.sh

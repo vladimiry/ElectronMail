@@ -38,8 +38,8 @@ $app-db-view-mail-padding-x: $list-group-item-padding-x * 0.5;
 $app-db-view-mail-padding-y: $list-group-item-padding-y * 0.5;
 
 @mixin app-dropdown-toggle-split {
-    padding-left: $btn-padding-x * 1.1;
-    padding-right: $btn-padding-x * 1.1;
+    padding-left: $btn-padding-x * 0.9;
+    padding-right: $btn-padding-x * 0.9;
 }
 
 @keyframes app-keyframes-opacity {

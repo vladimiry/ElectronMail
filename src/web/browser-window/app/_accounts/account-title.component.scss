@@ -29,6 +29,14 @@
             .login-delay {
                 color: map_get($app-account-title-btn-colors, "selected-text");
             }
+
+            .b-toggle-view {
+                .fa {
+                    &.syncing {
+                        color: theme-color("primary");
+                    }
+                }
+            }
         }
 
         &:not(.selected) {

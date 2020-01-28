@@ -9,10 +9,61 @@ branches:
 node_js: 12.14.0
 language: node_js
 
-env:
-  global:
+embedding-prepare-webclients: &embedding-prepare-webclients-anchor
+  cache:
+    yarn: false
+    npm: false
+    directories:
+      - output/git/proton-calendar
+      - output/git/proton-contacts
+      - output/git/proton-mail-settings
+  workspaces:
+    create:
+      name: 'webclients-artifact'
+      paths:
+        - output/git
+  env:
+    - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="proton-mail-settings;proton-contacts;proton-calendar"
+  script: ./scripts/ci/prepare-webclients.sh
+
+embedding-linux-common: &embedding-linux-common-anchor
+  os: linux
+  dist: bionic
+  env:
     # needed for: native modules compiling
     - CC=gcc-7 CXX=g++-7
+  addons:
+    apt:
+      packages:
+        # needed for: native modules compiling
+        - g++-7
+        # needed for: compiling "desktop-idle" native module
+        - libxss-dev
+        # needed for: keychain initialization and compiling "node-keytar" native module
+        - gnome-keyring
+        - libgnome-keyring-dev
+        - libsecret-1-dev
+        # needed for: keychain access testing before running e2e tests (see "scripts/ci/add-secret-service-item-assert.py")
+        - python3-secretstorage
+        # needed for: tweaking snap package ("unsquashfs" binary)
+        - squashfs-tools
+
+embedding-macos-common: &embedding-macos-common-anchor
+  os: osx
+  osx_image: xcode9.4
+
+embedding-build-app-common: &embedding-build-app-common-anchor
+  cache:
+    yarn: false
+    npm: false
+    directories:
+      - output/git
+  workspaces:
+    use:
+      - 'webclients-artifact'
+  after_failure:
+    - tar -cvf e2e-logs.tar ./output/e2e
+    - yarn scripts/transfer upload e2e-logs.tar
 
 before_install:
   - | # installing the most recent yarn version
@@ -29,59 +80,23 @@ notifications:
     on_success: never
     on_failure: change
 
-embedding-linux-common: &embedding-linux-common-anchor
-  os: linux
-  dist: bionic
-  addons:
-    apt:
-      packages:
-        # needed for: native modules compiling
-        - g++-7
-        # needed for: compiling "desktop-idle" native module
-        - libxss-dev
-        # needed for: keychain initialization and compiling "node-keytar" native module
-        - gnome-keyring
-        - libgnome-keyring-dev
-        - libsecret-1-dev
-        # needed for: keychain access testing before running e2e tests (see "scripts/ci/add-secret-service-item-assert.py")
-        - python3-secretstorage
-        # needed for: tweaking snap package ("unsquashfs" binary)
-        - squashfs-tools
 jobs:
   include:
     # pre-build some web clients to workaround the issue of travis dropping long-running jobs on free plan
     - stage: 'Build web clients (settings/contacts/calendar only)'
       <<: *embedding-linux-common-anchor
-      cache:
-        yarn: false
-        npm: false
-        directories:
-          - output/git/proton-calendar
-          - output/git/proton-contacts
-          - output/git/proton-mail-settings
-      workspaces:
-        create:
-          name: 'webclients-artifact'
-          paths:
-            - output/git
-      env:
-        - ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY="proton-mail-settings;proton-contacts;proton-calendar"
-      script: ./scripts/ci/prepare-webclients.sh
+      <<: *embedding-prepare-webclients-anchor
+    - stage: 'Build web clients (settings/contacts/calendar only)'
+      <<: *embedding-macos-common-anchor
+      <<: *embedding-prepare-webclients-anchor
     - stage: 'Build App'
       <<: *embedding-linux-common-anchor
+      <<: *embedding-build-app-common-anchor
       sudo: required
       services:
         - docker
         # needed for: running e2e tests
         - xvfb
-      cache:
-        yarn: false
-        npm: false
-        directories:
-          - output/git
-      workspaces:
-        use:
-          - 'webclients-artifact'
       before_script:
         - | # init dbus
           NO_AT_BRIDGE=1;
@@ -92,6 +107,7 @@ jobs:
         #  eval $(/usr/bin/gnome-keyring-daemon --components=secrets --start);
         #  python3 ./scripts/ci/add-secret-service-item-assert.py;
       script: ./scripts/ci/travis/build-linux.sh
-      after_failure:
-        - tar -cvf e2e-logs.tar ./output/e2e
-        - yarn scripts/transfer upload e2e-logs.tar
+    - stage: 'Build app'
+      <<: *embedding-macos-common-anchor
+      <<: *embedding-build-app-common-anchor
+      script: ./scripts/ci/travis/build-osx.sh

@@ -184,9 +184,16 @@ export async function build(
 
     // TODO move "fastGlob" to lib function with inner "sanitizeFastGlobPattern" call
     const [packageFile] = await fastGlob(
-        // TODO resolve "./dist" programmatically from "electron-builder.yml"
         sanitizeFastGlobPattern(
-            path.join(`./dist", "*.${packageType === "appimage" ? "AppImage" : packageType}`),
+            path.join(
+                // TODO resolve "./dist" programmatically from "electron-builder.yml"
+                "./dist",
+                "*." + (
+                    packageType === "appimage"
+                        ? "AppImage"
+                        : packageType
+                ),
+            ),
         ),
         {
             absolute: true,

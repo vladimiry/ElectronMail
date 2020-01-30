@@ -6,7 +6,12 @@ import {filter, first, takeUntil} from "rxjs/operators";
 import {timer} from "rxjs";
 
 import {AppAction, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
-import {ONE_SECOND_MS, PROVIDER_REPOS, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/constants";
+import {
+    ONE_SECOND_MS,
+    PROVIDER_REPOS,
+    WEB_CLIENTS_BLANK_HTML_FILE_NAME,
+    WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS
+} from "src/shared/constants";
 import {ProtonClientSession} from "src/shared/model/proton";
 import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {State} from "src/web/browser-window/app/store/reducers/root";
@@ -75,27 +80,31 @@ export class CoreService {
             throw new Error(`Failed to load "${loaderSrc}" page in ${loaderIdTimeoutMs}ms`);
         }
 
-        const javaScriptCode = clientSession
-            ? `
-            (() => {
-                const windowNameStr = ${JSON.stringify(JSON.stringify(clientSession.windowName))};
-                const sessionStorageStr = ${JSON.stringify(JSON.stringify(clientSession.sessionStorage))};
-                const sessionStorageParsed = JSON.parse(sessionStorageStr);
-                window.name = windowNameStr;
-                for (const [key, value] of Object.entries(sessionStorageParsed)) {
-                    window.sessionStorage.setItem(key, value);
-                    console.log(key, value);
-                }
-                window.location.assign("./${PROVIDER_REPOS[repoType].baseDir}");
-            })()
-            `
-            : `
-            (() => {
+        const javaScriptCode = (() => {
+            const finalCodePart = `
+                window.sessionStorage.setItem(${JSON.stringify(WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS)}, 1);
+                window.location.assign("./${PROVIDER_REPOS[repoType].baseDir}")
+            `;
+
+            if (clientSession) {
+                return `(() => {
+                    const windowNameStr = ${JSON.stringify(JSON.stringify(clientSession.windowName))};
+                    const sessionStorageStr = ${JSON.stringify(JSON.stringify(clientSession.sessionStorage))};
+                    const sessionStorageParsed = JSON.parse(sessionStorageStr);
+                    window.name = windowNameStr;
+                    for (const [key, value] of Object.entries(sessionStorageParsed)) {
+                        window.sessionStorage.setItem(key, value);
+                    }
+                    ${finalCodePart}
+                })()`;
+            }
+
+            return `(() => {
                 window.name = "";
                 window.sessionStorage.clear();
-                window.location.assign("./${PROVIDER_REPOS[repoType].baseDir}");
-            })()
-            `;
+                ${finalCodePart}
+            })()`;
+        })();
 
         try {
             await webView.executeJavaScript(javaScriptCode);

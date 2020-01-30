@@ -1,5 +1,5 @@
 import {Actions, createEffect} from "@ngrx/effects";
-import {EMPTY, concat, from, fromEvent, merge, of, throwError, timer} from "rxjs";
+import {EMPTY, Observable, concat, from, fromEvent, merge, of, throwError, timer} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {
@@ -21,11 +21,11 @@ import {
 
 import {ACCOUNTS_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
+import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {FIRE_SYNCING_ITERATION$} from "src/web/browser-window/app/app.constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
-import {LoginFieldContainer} from "src/shared/model/container";
 import {ONE_MINUTE_MS, ONE_SECOND_MS} from "src/shared/constants";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/browser-window/util";
@@ -271,7 +271,7 @@ export class AccountsEffects {
                 const {account, webView} = payload;
                 const {accountConfig, notifications} = account;
                 const {login, credentials} = accountConfig;
-                const pageType = notifications.pageType.type;
+                const {type: pageType, skipLoginDelayLogic} = notifications.pageType;
                 const resetNotificationsState$ = of(AccountsEffects.generateNotificationsStateResetAction(login));
                 const zoneName = logger.zoneName();
 
@@ -299,7 +299,7 @@ export class AccountsEffects {
                             logger.info("fillLogin");
 
                             return merge(
-                                of(this.buildLoginDelaysResetAction({login})),
+                                of(this.accountsService.buildLoginDelaysResetAction({login})),
                                 this.api.webViewClient(webView).pipe(
                                     mergeMap((webViewClient) => {
                                         return from(
@@ -318,7 +318,7 @@ export class AccountsEffects {
                             logger.info("login");
 
                             return merge(
-                                of(this.buildLoginDelaysResetAction({login})),
+                                of(this.accountsService.buildLoginDelaysResetAction({login})),
                                 of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: true}})),
                                 resetNotificationsState$,
                                 this.api.webViewClient(webView).pipe(
@@ -339,28 +339,34 @@ export class AccountsEffects {
                             );
                         };
 
-                        return this.store.pipe(
-                            select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
-                            // WARN: do not react to every account change notification
-                            // but only reaction to just pick the up to date password (it can be changed during login delay)
-                            // otherwise multiple login form submitting attempts can happen
-                            take(1),
-                            mergeMap((value) => {
-                                if (!value) {
-                                    // early skipping if account got removed during login delay
-                                    logger.info("account got removed during login delaying?");
-                                    return EMPTY;
-                                }
-                                return [{password: value.accountConfig.credentials.password}];
-                            }),
-                            mergeMap(({password}) => {
-                                if (!password) {
-                                    logger.info("login action canceled due to the empty password");
-                                    return EMPTY;
-                                }
+                        const trigger$: Observable<{ trigger: string }> = skipLoginDelayLogic
+                            ? of({trigger: "the delay already took place, so immediate resolve"})
+                            : this.accountsService.setupLoginDelayTrigger(account, logger);
 
-                                return executeLoginAction(password);
-                            }),
+                        return trigger$.pipe(
+                            mergeMap(() => this.store.pipe(
+                                select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
+                                // WARN: do not react to every account change notification
+                                // but only reaction to just pick the up to date password (it can be changed during login delay)
+                                // otherwise multiple login form submitting attempts can happen
+                                take(1),
+                                mergeMap((value) => {
+                                    if (!value) {
+                                        // early skipping if account got removed during login delay
+                                        logger.info("account got removed during login delaying?");
+                                        return EMPTY;
+                                    }
+                                    return [{password: value.accountConfig.credentials.password}];
+                                }),
+                                mergeMap(({password}) => {
+                                    if (!password) {
+                                        logger.info("login action canceled due to the empty password");
+                                        return EMPTY;
+                                    }
+
+                                    return executeLoginAction(password);
+                                }),
+                            )),
                         );
                     }
                     case "login2fa": {
@@ -425,16 +431,10 @@ export class AccountsEffects {
     );
 
     constructor(
-        public readonly actions$: Actions<{ type: string; payload: any }>,
+        private readonly actions$: Actions<{ type: string; payload: any }>,
         private readonly api: ElectronService,
         private readonly core: CoreService,
         private readonly store: Store<State>,
+        private readonly accountsService: AccountsService,
     ) {}
-
-    buildLoginDelaysResetAction({login}: LoginFieldContainer) {
-        return ACCOUNTS_ACTIONS.Patch({
-            login,
-            patch: {loginDelayedSeconds: undefined, loginDelayedUntilSelected: undefined},
-        });
-    }
 }

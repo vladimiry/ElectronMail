@@ -5,7 +5,7 @@ import {omit} from "remeda";
 import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 import * as WebviewConstants from "src/electron-preload/webview/lib/constants";
 import {AJAX_SEND_NOTIFICATION$} from "src/electron-preload/webview/primary/notifications";
-import {ONE_SECOND_MS} from "src/shared/constants";
+import {ONE_SECOND_MS, WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS} from "src/shared/constants";
 import {PROTONMAIL_IPC_WEBVIEW_API, ProtonApi, ProtonNotificationOutput} from "src/shared/api/webview/primary";
 import {PROTONMAIL_MAILBOX_IDENTIFIERS} from "src/shared/model/database";
 import {PROTONMAIL_MAILBOX_ROUTE_NAMES} from "./constants";
@@ -288,6 +288,22 @@ const endpoints: ProtonApi = {
                     };
                 })()),
                 distinctUntilChanged(({pageType: prev}, {pageType: curr}) => curr.type === prev.type),
+                map((value) => {
+                    if (value.pageType.type !== "login") {
+                        return value;
+                    }
+
+                    const skipLoginDelayLogic = Boolean(
+                        window.sessionStorage.getItem(WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS),
+                    );
+
+                    window.sessionStorage.removeItem(WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS);
+
+                    return {
+                        ...value,
+                        skipLoginDelayLogic,
+                    };
+                }),
                 tap((value) => logger.verbose(JSON.stringify(value))),
             ),
 

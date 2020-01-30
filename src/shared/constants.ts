@@ -56,20 +56,20 @@ export const WEB_CHUNK_NAMES = {
     "search-in-page-browser-view": "search-in-page-browser-view",
 } as const;
 
-export const PROVIDER_REPOS: Record<"WebClient" | "proton-mail-settings" | "proton-contacts" | "proton-calendar",
+export const PROVIDER_REPOS: ReadonlyDeep<Record<"WebClient" | "proton-mail-settings" | "proton-contacts" | "proton-calendar",
     {
         repoRelativeDistDir: string;
-        baseDir?: string;
+        baseDir: string;
         repo: string,
         version: string;
         commit: string;
         protonPackAppConfig: {
             clientId: string;
         },
-    }> = {
+    }>> = {
     "WebClient": {
         repoRelativeDistDir: "./build",
-        baseDir: "",
+        baseDir: "", // TODO define model as {baseDir?: string} instead of using empty string value
         repo: "https://github.com/ProtonMail/WebClient.git",
         commit: "f96be268c0117e6556092c3fbc5b6c379d716032",
         version: "4.0.0-beta8",
@@ -187,3 +187,6 @@ export const ZOOM_FACTORS: ReadonlyArray<number> = [
     1.9,
     2,
 ];
+
+
+export const WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS = "ELECTRON_MAIL_SKIP_LOGIN_DELAYS";

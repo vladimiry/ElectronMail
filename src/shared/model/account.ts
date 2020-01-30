@@ -28,7 +28,11 @@ export type AccountPersistentSessionBundle
 export type Notifications = NoExtraProperties<{
     calendarLoggedIn: boolean;
     loggedIn: boolean;
-    pageType: { url?: string; type: "unknown" | "login" | "login2fa" | "unlock"; };
+    pageType: {
+        url?: string;
+        type: "unknown" | "login" | "login2fa" | "unlock";
+        skipLoginDelayLogic?: boolean,
+    };
     unread: number;
 }>;
 

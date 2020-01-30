@@ -1,11 +1,12 @@
+import {Actions} from "@ngrx/effects";
 import {EMPTY, Observable, merge, of, race, timer} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store, select} from "@ngrx/store";
-import {delay, distinctUntilChanged, filter, map, mergeMap, take, takeUntil, tap} from "rxjs/operators";
+import {delay, distinctUntilChanged, filter, map, mergeMap, pairwise, take, takeUntil, tap} from "rxjs/operators";
 
 import {ACCOUNTS_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
-import {AccountsEffects} from "src/web/browser-window/app/_accounts/accounts.effects";
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
+import {LoginFieldContainer} from "src/shared/model/container";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {ReadonlyDeep} from "type-fest";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
@@ -17,8 +18,15 @@ import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
 export class AccountsService {
     constructor(
         private readonly store: Store<State>,
-        private readonly accountsEffects: AccountsEffects,
+        private readonly actions$: Actions<{ type: string; payload: any }>,
     ) {}
+
+    buildLoginDelaysResetAction({login}: LoginFieldContainer) {
+        return ACCOUNTS_ACTIONS.Patch({
+            login,
+            patch: {loginDelayedSeconds: undefined, loginDelayedUntilSelected: undefined},
+        });
+    }
 
     setupLoginDelayTrigger(
         account: ReadonlyDeep<WebAccount>,
@@ -29,7 +37,7 @@ export class AccountsService {
 
         logger.info(`login delay configs: ${JSON.stringify({loginDelayUntilSelected, loginDelaySecondsRange})}`);
 
-        this.store.dispatch(this.accountsEffects.buildLoginDelaysResetAction({login}));
+        this.store.dispatch(this.buildLoginDelaysResetAction({login}));
 
         if (loginDelaySecondsRange) {
             const {start, end} = loginDelaySecondsRange;
@@ -92,7 +100,7 @@ export class AccountsService {
         }
 
         const delayTriggersDispose$ = race([
-            this.accountsEffects.actions$.pipe(
+            this.actions$.pipe(
                 unionizeActionFilter(ACCOUNTS_ACTIONS.is.TryToLogin),
                 filter(({payload}) => {
                     return payload.account.accountConfig.login === login;
@@ -104,7 +112,8 @@ export class AccountsService {
                 mergeMap((liveAccount) => liveAccount ? [liveAccount] : []),
                 map(({notifications: {pageType}}) => pageType.type),
                 distinctUntilChanged(),
-                filter((value) => value !== "unknown"),
+                pairwise(),
+                filter(([/* prev */, curr]) => curr !== "unknown"),
                 map((value) => `page type changed to ${JSON.stringify(value)}`),
             ),
             this.store.pipe(
@@ -146,7 +155,7 @@ export class AccountsService {
                 }),
             )),
             tap(({trigger}) => {
-                this.store.dispatch(this.accountsEffects.buildLoginDelaysResetAction({login}));
+                this.store.dispatch(this.buildLoginDelaysResetAction({login}));
                 logger.info(`login trigger: ${trigger})`);
             }),
         );

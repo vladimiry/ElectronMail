@@ -293,16 +293,16 @@ const endpoints: ProtonApi = {
                         return value;
                     }
 
-                    const skipLoginDelayLogic = Boolean(
-                        window.sessionStorage.getItem(WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS),
-                    );
+                    const pageType: typeof value.pageType = {
+                        ...value.pageType,
+                        skipLoginDelayLogic: Boolean(
+                            window.sessionStorage.getItem(WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS),
+                        ),
+                    };
 
                     window.sessionStorage.removeItem(WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS);
 
-                    return {
-                        ...value,
-                        skipLoginDelayLogic,
-                    };
+                    return {pageType};
                 }),
                 tap((value) => logger.verbose(JSON.stringify(value))),
             ),

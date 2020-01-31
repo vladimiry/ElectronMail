@@ -291,7 +291,7 @@ export class AccountsEffects {
                     }
                 };
 
-                logger.verbose(JSON.stringify({pageType}));
+                logger.verbose(JSON.stringify({pageType, skipLoginDelayLogic}));
 
                 switch (pageType) {
                     case "login": {

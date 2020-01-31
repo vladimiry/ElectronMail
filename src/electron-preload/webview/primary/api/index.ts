@@ -249,6 +249,11 @@ const endpoints: ProtonApi = {
                 map(() => isLoggedIn()),
                 distinctUntilChanged(),
                 map((loggedIn) => ({loggedIn})),
+                tap(({loggedIn}) => {
+                    if (loggedIn) {
+                        window.sessionStorage.removeItem(WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS);
+                    }
+                }),
             ),
 
             // TODO listen for location.href change instead of starting polling interval

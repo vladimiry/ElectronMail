@@ -151,6 +151,9 @@ export async function buildEndpoints(
                 case "paste":
                     webContents.paste();
                     break;
+                case "cut":
+                    webContents.cut();
+                    break;
                 case "selectAll":
                     webContents.selectAll();
                     break;

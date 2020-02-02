@@ -10,6 +10,7 @@ const keyCodes = {
     A: 65,
     C: 67,
     V: 86,
+    X: 88,
     F: 70,
     F12: 123,
 } as const;
@@ -64,6 +65,8 @@ export function registerDocumentKeyDownEventListener<E extends ObservableElement
                 type = "copy";
             } else if (event.keyCode === keyCodes.V && isWritable(el)) {
                 type = "paste";
+            } else if (event.keyCode === keyCodes.X && isWritable(el)) {
+                type = "cut";
             }
 
             if (!type) {

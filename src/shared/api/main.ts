@@ -118,7 +118,7 @@ export const ENDPOINTS_DEFINITION = {
         unreadTextColor?: string;
     }>(),
 
-    hotkey: ActionType.Promise<{ type: "copy" | "paste" | "selectAll" }>(),
+    hotkey: ActionType.Promise<{ type: "copy" | "paste" | "cut" | "selectAll" }>(),
 
     findInPageDisplay: ActionType.Promise<{ visible: boolean; }>(),
 

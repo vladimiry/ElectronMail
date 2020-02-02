@@ -45,6 +45,7 @@ export function initialConfig(): Config {
                 dbBootstrapping: ONE_MINUTE_MS * 60 * 12, // 12 hours
                 dbSyncing: ONE_MINUTE_MS * 30, // 30 minutes
                 webViewApiPing: ONE_SECOND_MS * 15,
+                webViewBlankDOMLoaded: ONE_SECOND_MS * 15,
                 domElementsResolving: ONE_SECOND_MS * 20,
                 defaultApiCall: DEFAULT_API_CALL_TIMEOUT,
                 databaseLoading: ONE_MINUTE_MS * 5, // 5 minutes

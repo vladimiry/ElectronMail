@@ -227,6 +227,14 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             }
         })();
     },
+    "4.2.2": (config) => {
+        (() => {
+            const key = "webViewBlankDOMLoaded";
+            if (typeof config.timeouts[key] !== "number") {
+                config.timeouts[key] = INITIAL_STORES.config().timeouts[key];
+            }
+        })();
+    },
 };
 
 export function upgradeConfig(config: Config): boolean {

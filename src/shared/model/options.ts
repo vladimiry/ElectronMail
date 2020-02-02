@@ -26,6 +26,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
         dbBootstrapping: number;
         dbSyncing: number;
         webViewApiPing: number;
+        webViewBlankDOMLoaded: number;
         domElementsResolving: number;
         defaultApiCall: number;
         indexingBootstrap: number;

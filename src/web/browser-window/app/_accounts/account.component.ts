@@ -329,14 +329,13 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     startWith(IPC_MAIN_API_NOTIFICATION_ACTIONS.ActivateBrowserWindow()),
                     filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.ActivateBrowserWindow),
                 ),
-                this.account$,
             ]).pipe(
-                filter(([selectedLogin, , account]) => account.accountConfig.login === selectedLogin),
+                filter(([selectedLogin]) => this.account.accountConfig.login === selectedLogin),
                 debounceTime(ONE_SECOND_MS * 0.3),
-            ).subscribe(async ([, , account]) => {
+            ).subscribe(async () => {
                 this.focusPrimaryWebView();
                 await this.api.ipcMainClient()("selectAccount")({
-                    databaseView: account.databaseView,
+                    databaseView: this.account.databaseView,
                     // WARN electron: "webView.getWebContentsId()" is available only after "webView.dom-ready" triggered
                     webContentId: primaryWebView.getWebContentsId(),
                 });

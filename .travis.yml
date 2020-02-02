@@ -4,7 +4,7 @@
 
 branches:
   only:
-    - master
+    - issue-248-cmd-x
 
 node_js: 12
 language: node_js

@@ -1,13 +1,12 @@
 import UUID from "pure-uuid";
 import {Injectable, NgZone} from "@angular/core";
 import {Observable} from "rxjs/internal/Observable";
-import {Store} from "@ngrx/store";
-import {filter, first, takeUntil} from "rxjs/operators";
+import {Store, select} from "@ngrx/store";
+import {filter, first, take, takeUntil} from "rxjs/operators";
 import {timer} from "rxjs";
 
 import {AppAction, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
-import {Config} from "src/shared/model/options";
-import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
+import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {PROVIDER_REPOS, WEB_CLIENTS_BLANK_HTML_FILE_NAME, WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS} from "src/shared/constants";
 import {ProtonClientSession} from "src/shared/model/proton";
 import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
@@ -16,10 +15,7 @@ import {WebAccount} from "src/web/browser-window/app/model";
 
 @Injectable()
 export class CoreService {
-    private webViewBlankDOMLoadedTimeoutMs?: Config["timeouts"]["webViewBlankDOMLoaded"];
-
     constructor(
-        private electron: ElectronService,
         private store: Store<State>,
         private zone: NgZone,
     ) {}
@@ -57,14 +53,14 @@ export class CoreService {
         setWebViewSrc: (src: string) => void,
         clientSession?: ProtonClientSession,
     ) {
-        if (typeof this.webViewBlankDOMLoadedTimeoutMs === "undefined") {
-            const config = await this.electron.ipcMainClient()("readConfig")();
-            this.webViewBlankDOMLoadedTimeoutMs = config.timeouts.webViewBlankDOMLoaded;
-        }
-
+        const {webViewBlankDOMLoaded: loaderIdTimeoutMs} = await this.store
+            .pipe(
+                select(OptionsSelectors.CONFIG.timeouts),
+                take(1),
+            )
+            .toPromise();
         const loaderId = new UUID(4).format();
         const loaderIdParam = "loader-id";
-        const loaderIdTimeoutMs = this.webViewBlankDOMLoadedTimeoutMs;
         const loaderSrcOrigin = new URL(this.parseEntryUrl(accountConfig, repoType).entryUrl).origin;
         const loaderSrc = `${loaderSrcOrigin}/${WEB_CLIENTS_BLANK_HTML_FILE_NAME}?${loaderIdParam}=${loaderId}`;
         let webView: Electron.WebviewTag | undefined;

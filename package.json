@@ -204,7 +204,7 @@
     "@types/webpack-node-externals": "1.7.0",
     "@typescript-eslint/eslint-plugin": "2.18.0",
     "@typescript-eslint/parser": "2.18.0",
-    "app-builder-lib": "21.2.0",
+    "app-builder-lib": "22.3.3",
     "archiver": "3.1.1",
     "ava": "3.1.0",
     "bootstrap": "4.4.1",
@@ -219,7 +219,7 @@
     "css-loader": "3.4.2",
     "cssnano": "4.1.10",
     "electron": "7.1.10",
-    "electron-builder": "21.2.0",
+    "electron-builder": "22.3.2",
     "escape-string-regexp": "2.0.0",
     "eslint": "6.8.0",
     "exports-loader": "0.7.0",
@@ -290,7 +290,7 @@
   },
   "resolutions": {
     "*/**/@types/webpack": "4.41.3",
-    "*/**/builder-util-runtime": "8.3.0",
+    "*/**/builder-util-runtime": "8.6.0",
     "*/**/karma-jasmine": "^2.0.1",
     "@ngtools/webpack/tree-kill": "^1.2.2"
   }

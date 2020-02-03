@@ -6,13 +6,12 @@ import {Fs, Store} from "fs-json-store";
 import {Config} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
 import {INITIAL_STORES} from "src/electron-main/constants";
-import {PACKAGE_NAME} from "src/shared/constants";
+import {PACKAGE_NAME, PACKAGE_VERSION} from "src/shared/constants";
 
-test.serial("appReadyHandler(): default", async (t) => {
+test("appReadyHandler(): default", async (t) => {
     const {spellCheckLocale}: Pick<Config, "spellCheckLocale"> = {spellCheckLocale: `en_US_${Date.now()}`};
-    const ctx = buildContext();
     const mocks = buildMocks({spellCheckLocale});
-    const library = await loadLibrary(mocks);
+    const ctx = buildContext();
 
     t.false(mocks["src/electron-main/session"].getDefaultSession.called);
     t.false(mocks["src/electron-main/session"].initSession.called);
@@ -23,6 +22,8 @@ test.serial("appReadyHandler(): default", async (t) => {
     t.false(mocks["src/electron-main/menu"].initApplicationMenu.called);
     t.false(mocks["src/electron-main/spell-check/controller"].initSpellCheckController.called);
     t.false(mocks.electron.app.on.called);
+
+    const library = await loadLibrary(mocks);
 
     await library.appReadyHandler(ctx as any);
 
@@ -93,6 +94,8 @@ function buildMocks(configPatch?: Partial<Config>) {
         "electron": {
             app: {
                 on: sinon.stub().callsArgWith(1, {}, {on: sinon.spy()}),
+                getName: () => PACKAGE_NAME,
+                getVersion: () => PACKAGE_VERSION,
             },
         },
         "src/electron-main/session": {
@@ -127,7 +130,7 @@ function buildMocks(configPatch?: Partial<Config>) {
         "src/electron-main/power-monitor": {
             setUpPowerMonitorNotification: sinon.spy(),
         },
-    };
+    } as const;
 }
 
 function buildContext(): Pick<Context, "configStore"> {
@@ -148,10 +151,17 @@ function buildContext(): Pick<Context, "configStore"> {
 async function loadLibrary(mocks: ReturnType<typeof buildMocks>) {
     return await rewiremock.around(
         () => import("src/electron-main/bootstrap/app-ready"),
-        (mock) => {
-            for (const [name, data] of Object.entries(mocks)) {
-                mock(name).with(data);
-            }
+        async (mock) => {
+            mock("electron").with(mocks.electron as any);
+            mock(() => import("src/electron-main/session")).with(mocks["src/electron-main/session"]);
+            mock(() => import("src/electron-main/protocol")).with(mocks["src/electron-main/protocol"]);
+            mock(() => import("src/electron-main/api")).with(mocks["src/electron-main/api"]);
+            mock(() => import("src/electron-main/menu")).with(mocks["src/electron-main/menu"]);
+            mock(() => import("src/electron-main/window/main")).with(mocks["src/electron-main/window/main"]);
+            mock(() => import("src/electron-main/tray")).with(mocks["src/electron-main/tray"]);
+            mock(() => import("src/electron-main/spell-check/controller")).with(mocks["src/electron-main/spell-check/controller"]);
+            mock(() => import("src/electron-main/web-contents")).with(mocks["src/electron-main/web-contents"]);
+            mock(() => import("src/electron-main/power-monitor")).with(mocks["src/electron-main/power-monitor"]);
         },
     );
 }

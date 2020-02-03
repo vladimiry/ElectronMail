@@ -1,4 +1,16 @@
 {
   "extends": "./../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./__compiled__",
+    "noEmitOnError": true,
+    "plugins": [
+      {
+        "transform": "typescript-transform-paths"
+      },
+      {
+        "transform": "./../../../scripts/typescript/webpack-build-env-transformer.ts"
+      }
+    ]
+  },
   "exclude": []
 }

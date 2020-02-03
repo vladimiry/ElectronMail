@@ -13,9 +13,6 @@ const fsAsync = {
     readFile: promisify(fs.readFile),
 } as const;
 
-// TODO setup timeout on "ready" even firing
-const appReadyPromise = new Promise((resolve) => app.on("ready", resolve));
-
 export function registerStandardSchemes(ctx: Context) {
     // WARN: "protocol.registerStandardSchemes" needs to be called once, see https://github.com/electron/electron/issues/15943
     protocol.registerSchemesAsPrivileged(
@@ -62,7 +59,8 @@ export async function registerWebFolderFileProtocol(ctx: Context, session: Sessi
 }
 
 export async function registerSessionProtocols(ctx: Context, session: Session): Promise<void> {
-    await appReadyPromise;
+    // TODO setup timeout on "ready" even firing
+    await app.whenReady();
 
     for (const {scheme, directory} of ctx.locations.protocolBundles) {
         await new Promise((resolve, reject) => {

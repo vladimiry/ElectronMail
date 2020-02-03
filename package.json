@@ -77,8 +77,12 @@
     "start:electron": "electron ./app/electron-main.js",
     "start:electron:dev": "electron ./app-dev/electron-main.js",
     "test:e2e": "cross-env TS_NODE_FILES=true npx --no-install --node-arg=\"-r tsconfig-paths/register -r ts-node/register\" ava \"./src/e2e/**/*.{spec,test}.ts\"",
-    "test:electron-main": "yarn test:electron-main:base \"./src/electron-main/__test__/**/*.{spec,test}.ts\"",
-    "test:electron-main:base": "cross-env TS_NODE_FILES=true TS_NODE_PROJECT=./src/electron-main/__test__/tsconfig.json npx --no-install --node-arg=\"-r tsconfig-paths/register -r ts-node/register\" ava",
+    "test:electron-main": "cross-env NODE_ENV=test npm-run-all test:electron-main:compiled:clean test:electron-main:compiled:compile test:electron-main:compiled:ava",
+    "test:electron-main:compiled:ava": "npx --no-install ava \"./src/electron-main/__test__/__compiled__/src/electron-main/__test__/**/*.{spec,test}.js\"",
+    "test:electron-main:compiled:clean": "rimraf ./src/electron-main/__test__/__compiled__",
+    "test:electron-main:compiled:compile": "cross-env TS_NODE_FILES=true npx --no-install --node-arg=\"-r tsconfig-paths/register\" ttsc --project ./src/electron-main/__test__/tsconfig.json",
+    "test:electron-main:ts-node": "yarn test:electron-main:ts-node:shortcut \"./src/electron-main/__test__/**/*.{spec,test}.ts\"",
+    "test:electron-main:ts-node:shortcut": "cross-env TS_NODE_FILES=true TS_NODE_PROJECT=./src/electron-main/__test__/tsconfig.json npx --no-install --node-arg=\"-r tsconfig-paths/register -r ts-node/register\" ava",
     "test:web": "cross-env NODE_ENV=test TS_NODE_FILES=true npx --no-install --node-arg=\"-r tsconfig-paths/register\" karma start ./src/web/browser-window/test/karma.conf.ts --single-run",
     "scripts/ci/appveyor/download-webclients-artifact": "yarn ts-node:shortcut ./scripts/ci/appveyor/download-webclients-artifact.ts",
     "scripts/ci/print-webclients-dist-paths-pattern": "yarn --silent ts-node:shortcut ./scripts/ci/print-webclients-dist-paths-pattern.ts",
@@ -98,10 +102,11 @@
   },
   "ava": {
     "extensions": [
-      "ts"
+      "ts",
+      "js"
     ],
     "files": [
-      "./src/**/*.{spec,test}.ts"
+      "./src/**/*.{spec,test}.{ts,js}"
     ],
     "timeout": "120s",
     "verbose": true
@@ -278,8 +283,10 @@
     "tslint-consistent-codestyle": "1.16.0",
     "tslint-eslint-rules": "5.4.0",
     "tslint-rules-bunch": "0.0.8",
+    "ttypescript": "1.5.10",
     "type-fest": "0.9.0",
     "typescript": "3.7.5",
+    "typescript-transform-paths": "1.1.14",
     "url-loader": "3.0.0",
     "webpack": "4.41.5",
     "webpack-cli": "3.3.10",

@@ -3,14 +3,13 @@ import {DefinePlugin} from "webpack";
 import {readConfiguration} from "@angular/compiler-cli";
 
 import {BuildAngularCompilationFlags, BuildEnvironment} from "webpack-configs/model";
-import {ENVIRONMENT, ENVIRONMENT_STATE, rootRelativePath} from "webpack-configs/lib";
+import {ENVIRONMENT, rootRelativePath} from "webpack-configs/lib";
 import {WEB_CHUNK_NAMES} from "src/shared/constants";
 import {browserWindowAppPath, browserWindowPath, buildBaseWebConfig, cssRuleSetUseItems} from "./lib";
 
-// TODO enable "ivy" and "aot" in all modes
 const angularCompilationFlags: BuildAngularCompilationFlags = {
-    aot: !ENVIRONMENT_STATE.test,
-    ivy: !ENVIRONMENT_STATE.test,
+    aot: true,
+    ivy: true,
 };
 
 const tsConfigFile = browserWindowPath(({

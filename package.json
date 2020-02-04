@@ -218,7 +218,6 @@
     "chalk": "3.0.0",
     "circular-dependency-plugin": "5.2.0",
     "codelyzer": "5.2.1",
-    "core-js": "3.6.4",
     "cpx2": "2.0.0",
     "cross-env": "7.0.0",
     "css-loader": "3.4.2",

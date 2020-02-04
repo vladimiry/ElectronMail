@@ -14,6 +14,7 @@ import {LoginComponent} from "src/web/browser-window/app/_options/login.componen
 import {OptionsEffects} from "src/web/browser-window/app/_options/options.effects";
 import {OptionsRoutingModule} from "src/web/browser-window/app/_options/options.routing.module";
 import {OptionsService} from "src/web/browser-window/app/_options/options.service";
+import {SavePasswordLabelComponent} from "src/web/browser-window/app/_options/save-password-label.component";
 import {SettingsComponent} from "src/web/browser-window/app/_options/settings.component";
 import {SettingsConfigureGuard} from "src/web/browser-window/app/_options/settings-configure.guard";
 import {SettingsSetupComponent} from "src/web/browser-window/app/_options/settings-setup.component";
@@ -41,6 +42,7 @@ import {StorageComponent} from "src/web/browser-window/app/_options/storage.comp
         BaseSettingsComponent,
         EncryptionPresetsComponent,
         LoginComponent,
+        SavePasswordLabelComponent,
         SettingsComponent,
         SettingsSetupComponent,
         StorageComponent,

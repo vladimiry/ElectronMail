@@ -1,12 +1,12 @@
-import {Component, ElementRef, OnInit} from "@angular/core";
+import {Component, Injector, OnInit} from "@angular/core";
 import {FormGroup} from "@angular/forms";
-import {Store, select} from "@ngrx/store";
-import {filter, mergeMap, take, takeUntil} from "rxjs/operators";
+import {combineLatest} from "rxjs";
+import {filter, take} from "rxjs/operators";
+import {select} from "@ngrx/store";
 
 import {LoginBaseComponent} from "src/web/browser-window/app/_options/login-base.component";
 import {OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
-import {State} from "src/web/browser-window/app/store/reducers/options";
 
 @Component({
     selector: "electron-mail-login",
@@ -21,28 +21,27 @@ export class LoginComponent extends LoginBaseComponent implements OnInit {
     });
 
     constructor(
-        store: Store<State>,
-        elementRef: ElementRef,
+        injector: Injector,
     ) {
-        super(store, elementRef);
+        super(injector);
     }
 
     ngOnInit() {
-        super.ngOnInit();
-
-        this.keytarSupport$
-            .pipe(
-                filter(Boolean),
+        this.subscription.add(
+            combineLatest([
+                this.store.pipe(
+                    select(OptionsSelectors.FEATURED.keytarSupport),
+                    filter(Boolean),
+                ),
+                this.store.pipe(
+                    select(OptionsSelectors.FEATURED.hasSavedPassword),
+                    filter(Boolean),
+                ),
+            ]).pipe(
                 take(1),
-                mergeMap(() => {
-                    return this.store.pipe(
-                        select(OptionsSelectors.FEATURED.hasSavedPassword),
-                        filter(Boolean),
-                        take(1),
-                    );
-                }),
-                takeUntil(this.unSubscribe$),
-            )
-            .subscribe(() => this.store.dispatch(OPTIONS_ACTIONS.SignInRequest({})));
+            ).subscribe(() => {
+                this.store.dispatch(OPTIONS_ACTIONS.SignInRequest({}));
+            }),
+        );
     }
 }

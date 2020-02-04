@@ -1,9 +1,7 @@
-import {Component, ElementRef} from "@angular/core";
+import {Component, Injector} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
-import {Store} from "@ngrx/store";
 
 import {LoginBaseComponent} from "src/web/browser-window/app/_options/login-base.component";
-import {State} from "src/web/browser-window/app/store/reducers/options";
 
 @Component({
     selector: "electron-mail-settings-setup",
@@ -33,9 +31,8 @@ export class SettingsSetupComponent extends LoginBaseComponent {
     });
 
     constructor(
-        store: Store<State>,
-        elementRef: ElementRef,
+        injector: Injector,
     ) {
-        super(store, elementRef);
+        super(injector);
     }
 }

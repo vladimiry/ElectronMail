@@ -16,6 +16,7 @@ export class NotificationEffects {
     $notification = createEffect(
         () => merge(
             this.actions$.pipe(filter(NOTIFICATION_ACTIONS.is.Error)),
+            this.actions$.pipe(filter(NOTIFICATION_ACTIONS.is.ErrorMessage)),
             this.actions$.pipe(filter(NOTIFICATION_ACTIONS.is.Info)),
             this.actions$.pipe(filter(NOTIFICATION_ACTIONS.is.Update)),
         ).pipe(

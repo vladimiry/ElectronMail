@@ -80,8 +80,6 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     @ViewChild("tplDbViewComponentContainerRef", {read: ViewContainerRef, static: true})
     private readonly tplDbViewComponentContainerRef!: ViewContainerRef;
 
-    private tplDbViewComponentRef: Unpacked<ReturnType<typeof DbViewModuleResolve.prototype.buildComponentRef>> | undefined;
-
     private readonly databaseViewToggled$ = this.account$.pipe(
         map((account) => ({
             login: account.accountConfig.login,
@@ -187,20 +185,25 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         );
 
         this.subscription.add(
-            this.databaseViewToggled$.subscribe(async ([{login, databaseView}]) => {
-                this.viewModeClass = databaseView
-                    ? "vm-database"
-                    : "vm-live";
+            (() => {
+                let dbViewEntryComponentMounted = false;
 
-                if (!databaseView) {
-                    this.focusPrimaryWebView();
-                } else if (!this.tplDbViewComponentRef) {
-                    // lazy-load the local database view component ("local store" feature)
-                    this.tplDbViewComponentRef = await this.dbViewModuleResolve.buildComponentRef({login});
-                    this.tplDbViewComponentContainerRef.insert(this.tplDbViewComponentRef.hostView);
-                    this.tplDbViewComponentRef.changeDetectorRef.detectChanges();
-                }
-            }),
+                return this.databaseViewToggled$.subscribe(async ([{login, databaseView}]) => {
+                    this.viewModeClass = databaseView
+                        ? "vm-database"
+                        : "vm-live";
+
+                    if (!databaseView) {
+                        this.focusPrimaryWebView();
+                    } else if (!dbViewEntryComponentMounted) {
+                        await this.dbViewModuleResolve.mountDbViewEntryComponent(
+                            this.tplDbViewComponentContainerRef,
+                            {login},
+                        );
+                        dbViewEntryComponentMounted = true;
+                    }
+                });
+            })(),
         );
 
         this.subscription.add(
@@ -353,11 +356,6 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         super.ngOnDestroy();
         this.logger.info(`ngOnDestroy()`);
         this.subscription.unsubscribe();
-        if (this.tplDbViewComponentRef) {
-            // TODO angular: there is probably no need to trigger this "destroy" explicitly
-            //      debug the db-view component to verify that
-            this.tplDbViewComponentRef.destroy();
-        }
     }
 
     private focusPrimaryWebView() {

@@ -79,9 +79,6 @@ const config = buildBaseWebConfig(
                 discoverLazyRoutes: true, // TODO disable "discoverLazyRoutes" once switched to Ivy renderer
                 directTemplateLoading: false,
                 entryModule: `${browserWindowAppPath("./app.module")}#AppModule`,
-                additionalLazyModules: {
-                    ["./_db-view/db-view.module#DbViewModule"]: browserWindowAppPath("./_db-view/db-view.module.ts"),
-                },
             }),
         ],
         optimization: {
@@ -90,6 +87,11 @@ const config = buildBaseWebConfig(
                     commons: {
                         test: /[\\/]node_modules[\\/]|[\\/]vendor[\\/]/,
                         name: "vendor",
+                        chunks: "all",
+                    },
+                    "_db-view": {
+                        test: /src[\\/]web[\\/]browser-window[\\/]app[\\/]_db-view/,
+                        name: "_db-view",
                         chunks: "all",
                     },
                 },

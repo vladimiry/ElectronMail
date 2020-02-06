@@ -18,6 +18,7 @@ import {
     tap,
     withLatestFrom,
 } from "rxjs/operators";
+import {subscribableLikeToObservable} from "electron-rpc-api";
 
 import {ACCOUNTS_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
@@ -27,6 +28,7 @@ import {ElectronService} from "src/web/browser-window/app/_core/electron.service
 import {FIRE_SYNCING_ITERATION$} from "src/web/browser-window/app/app.constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {ONE_MINUTE_MS, ONE_SECOND_MS} from "src/shared/constants";
+import {PROTONMAIL_IPC_WEBVIEW_API} from "src/shared/api/webview/primary";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/browser-window/util";
 import {isDatabaseBootstrapped} from "src/shared/util";
@@ -77,7 +79,7 @@ export class AccountsEffects {
                     resetNotificationsState$,
                     this.api.webViewClient(webView, {finishPromise}).pipe(
                         mergeMap((webViewClient) => {
-                            return from(
+                            return subscribableLikeToObservable(
                                 webViewClient("notification")({...parsedEntryUrlBundle, zoneName: logger.zoneName()}),
                             );
                         }),
@@ -215,7 +217,7 @@ export class AccountsEffects {
 
                                 this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: true}}));
 
-                                const result$ = from(
+                                const result$ = subscribableLikeToObservable(
                                     webViewClient("buildDbPatch", {timeoutMs})({
                                         login,
                                         zoneName,
@@ -410,7 +412,7 @@ export class AccountsEffects {
                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: true}})),
                             resetNotificationsState$,
                             // TODO TS: resolve "webViewClient" calling "this.api.webViewClient" as normally
-                            of(__ELECTRON_EXPOSURE__.buildIpcWebViewClient(webView)).pipe(
+                            of(PROTONMAIL_IPC_WEBVIEW_API.client(webView)).pipe(
                                 mergeMap((webViewClient) => {
                                     return from(
                                         webViewClient("unlock")({mailPassword, zoneName}),

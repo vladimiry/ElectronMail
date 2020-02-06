@@ -3,6 +3,7 @@ import {EMPTY, from, merge, of, timer} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {catchError, concatMap, filter, finalize, map, mergeMap, startWith, switchMap, take, withLatestFrom} from "rxjs/operators";
+import {subscribableLikeToObservable} from "electron-rpc-api";
 
 import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
@@ -27,7 +28,7 @@ export class OptionsEffects {
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             startWith(OPTIONS_ACTIONS.SetupMainProcessNotification()),
             mergeMap(() => {
-                return from(
+                return subscribableLikeToObservable(
                     this.ipcMainClient("notification")(),
                 ).pipe(
                     mergeMap((value) => {

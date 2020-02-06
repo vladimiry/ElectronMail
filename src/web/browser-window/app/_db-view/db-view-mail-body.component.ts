@@ -23,6 +23,7 @@ import {Mail, View} from "src/shared/model/database";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {State} from "src/web/browser-window/app/store/reducers/db-view";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
+import {registerDocumentClickEventListener} from "src/shared-web/events-handling";
 
 @Component({
     selector: "electron-mail-db-view-mail-body",
@@ -67,7 +68,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
 
     private bodyIframe?: HTMLIFrameElement;
 
-    private elementRefClickSubscription?: ReturnType<typeof __ELECTRON_EXPOSURE__.registerDocumentClickEventListener>;
+    private elementRefClickSubscription?: ReturnType<typeof registerDocumentClickEventListener>;
 
     private readonly subscription = new Subscription();
 
@@ -91,7 +92,8 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
     }
 
     ngOnInit() {
-        this.elementRefClickSubscription = __ELECTRON_EXPOSURE__.registerDocumentClickEventListener(
+        this.elementRefClickSubscription = registerDocumentClickEventListener(
+            __ELECTRON_EXPOSURE__.buildIpcMainClient,
             this.elementRef.nativeElement,
             this.logger,
         );

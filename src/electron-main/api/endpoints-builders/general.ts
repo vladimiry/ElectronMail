@@ -2,10 +2,10 @@ import ProxyAgent from "proxy-agent";
 import compareVersions from "compare-versions";
 import electronLog from "electron-log";
 import fetch from "node-fetch";
-import {ReposListReleasesResponse} from "@octokit/rest";
 import {app, shell} from "electron";
 import {inspect} from "util";
 import {isWebUri} from "valid-url";
+import {observableToSubscribableLike} from "electron-rpc-api";
 import {startWith, take} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
@@ -253,6 +253,8 @@ export async function buildEndpoints(
                     throw new Error(`Update check failed: ${errorMessageData}`);
                 }
 
+                type ReposListReleasesResponse = Unpacked<ReturnType<(import("@octokit/rest").Octokit)["repos"]["listReleases"]>>["data"];
+
                 const releases: ReposListReleasesResponse = await response.json();
                 logger.verbose(
                     "updateCheck()",
@@ -314,8 +316,10 @@ export async function buildEndpoints(
         },
 
         notification() {
-            return IPC_MAIN_API_NOTIFICATION$.asObservable().pipe(
-                startWith(IPC_MAIN_API_NOTIFICATION_ACTIONS.Bootstrap({})),
+            return observableToSubscribableLike(
+                IPC_MAIN_API_NOTIFICATION$.asObservable().pipe(
+                    startWith(IPC_MAIN_API_NOTIFICATION_ACTIONS.Bootstrap({})),
+                )
             );
         },
     };

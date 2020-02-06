@@ -59,7 +59,7 @@ export const ENDPOINTS_DEFINITION = {
 
     dbGetAccountMail: ActionType.Promise<DbModel.DbAccountPk & { pk: DbModel.Mail["pk"] }, DbModel.Mail>(),
 
-    dbExport: ActionType.Observable<DbModel.DbAccountPk & { mailPks?: Array<DbModel.Mail["pk"]> },
+    dbExport: ActionType.SubscribableLike<DbModel.DbAccountPk & { mailPks?: Array<DbModel.Mail["pk"]> },
         { count: number; } | { progress: number; file: string; }>(),
 
     dbSearchRootConversationNodes:
@@ -76,7 +76,7 @@ export const ENDPOINTS_DEFINITION = {
 
     dbIndexerOn: ActionType.Promise<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_ON_ACTIONS>>(),
 
-    dbIndexerNotification: ActionType.Observable<void, UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>>(),
+    dbIndexerNotification: ActionType.SubscribableLike<void, UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>>(),
 
     staticInit: ActionType.Promise<void, ReadonlyDeep<{ electronLocations: ElectronContextLocations }>>(),
 
@@ -127,7 +127,7 @@ export const ENDPOINTS_DEFINITION = {
 
     findInPageStop: ActionType.Promise(),
 
-    findInPageNotification: ActionType.Observable<void, Electron.FoundInPageResult | { requestId: null }>(),
+    findInPageNotification: ActionType.SubscribableLike<void, Electron.FoundInPageResult | { requestId: null }>(),
 
     selectAccount: ActionType.Promise<{ databaseView?: boolean; webContentId: number; } | { reset: true; }>(),
 
@@ -151,7 +151,7 @@ export const ENDPOINTS_DEFINITION = {
 
     resetProtonBackendSession: ActionType.Promise<LoginFieldContainer>(),
 
-    notification: ActionType.Observable<void, UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>>(),
+    notification: ActionType.SubscribableLike<void, UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>>(),
 };
 
 export interface InitResponse {

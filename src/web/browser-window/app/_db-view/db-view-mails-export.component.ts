@@ -1,7 +1,8 @@
-import {BehaviorSubject, Subject, from} from "rxjs";
+import {BehaviorSubject, Subject} from "rxjs";
 import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
 import {Store} from "@ngrx/store";
 import {filter, finalize, takeUntil, throttleTime} from "rxjs/operators";
+import {subscribableLikeToObservable} from "electron-rpc-api";
 
 import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
@@ -52,7 +53,7 @@ export class DbViewMailsExportComponent extends DbViewAbstractComponent {
             ...(mails.length && {mailPks: mails.map(({pk}) => pk)}),
         };
 
-        from(this.api.ipcMainClient({timeoutMs: ONE_SECOND_MS * 30})("dbExport")(arg))
+        subscribableLikeToObservable(this.api.ipcMainClient({timeoutMs: ONE_SECOND_MS * 30})("dbExport")(arg))
             .pipe(
                 takeUntil(this.unSubscribe$),
                 filter((value) => "progress" in value),

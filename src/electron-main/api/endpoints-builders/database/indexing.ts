@@ -2,6 +2,7 @@ import electronLog from "electron-log";
 import {UnionOf} from "@vladimiry/unionize";
 import {concatMap, filter, startWith, take, takeUntil} from "rxjs/operators";
 import {defer, race, throwError, timer} from "rxjs";
+import {observableToSubscribableLike} from "electron-rpc-api";
 import {pick} from "remeda";
 import {v4 as uuid} from "uuid";
 
@@ -83,8 +84,10 @@ export async function buildDbIndexingEndpoints(
         },
 
         dbIndexerNotification() {
-            return IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.asObservable().pipe(
-                startWith(IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Bootstrap({})),
+            return observableToSubscribableLike(
+                IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.asObservable().pipe(
+                    startWith(IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Bootstrap({})),
+                )
             );
         },
     };

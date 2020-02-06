@@ -2,13 +2,14 @@ import {NEVER, fromEvent, of, race, timer} from "rxjs";
 import {mergeMap, take, tap} from "rxjs/operators";
 
 import {EDITOR_IFRAME_NOTIFICATION$} from "./notifications";
+import {IPC_MAIN_API} from "src/shared/api/main"; // tslint:disable-line:no-import-zones
 import {LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN, ONE_SECOND_MS} from "src/shared/constants";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/constants";
 import {applyZoomFactor} from "src/electron-preload/lib/util";
 import {curryFunctionMembers, parsePackagedWebClientUrl, resolvePackagedWebClientApp} from "src/shared/util";
 import {disableBrowserNotificationFeature, getLocationHref} from "src/electron-preload/webview/lib/util";
 import {initSpellCheckProvider} from "src/electron-preload/lib/spell-check";
-import {registerDocumentClickEventListener, registerDocumentKeyDownEventListener} from "src/electron-preload/lib/events-handling";
+import {registerDocumentClickEventListener, registerDocumentKeyDownEventListener} from "src/shared-web/events-handling";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, `[configure-provider-app]`);
 
@@ -25,8 +26,8 @@ export function configureProviderApp() {
     initSpellCheckProvider(logger);
     applyZoomFactor(logger);
     disableBrowserNotificationFeature(logger);
-    registerDocumentKeyDownEventListener(document, logger);
-    registerDocumentClickEventListener(document, logger);
+    registerDocumentKeyDownEventListener(IPC_MAIN_API.client, document, logger);
+    registerDocumentClickEventListener(IPC_MAIN_API.client, document, logger);
 
     const packagedWebClientUrl = parsePackagedWebClientUrl(getLocationHref());
     const isAngularWebClient = packagedWebClientUrl && resolvePackagedWebClientApp(packagedWebClientUrl).project === "WebClient";
@@ -41,8 +42,8 @@ export function configureProviderApp() {
     configureAngularApp();
 
     EDITOR_IFRAME_NOTIFICATION$.subscribe(({iframeDocument}) => {
-        registerDocumentKeyDownEventListener(iframeDocument, logger);
-        registerDocumentClickEventListener(iframeDocument, logger);
+        registerDocumentKeyDownEventListener(IPC_MAIN_API.client, iframeDocument, logger);
+        registerDocumentClickEventListener(IPC_MAIN_API.client, iframeDocument, logger);
     });
 
     EDITOR_IFRAME_NOTIFICATION$

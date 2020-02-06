@@ -1,6 +1,6 @@
 import {IPC_MAIN_API, IpcMainApiEndpoints} from "src/shared/api/main";
 import {Logger} from "src/shared/model/common";
-import {isPasswordInput, isWritable} from "src/electron-preload/lib/events-handling/lib";
+import {isPasswordInput, isWritable} from "src/shared-web/events-handling/lib";
 
 type ObservableElement = Pick<HTMLElement, "addEventListener" | "removeEventListener">;
 
@@ -15,19 +15,27 @@ const keyCodes = {
 } as const;
 
 export function registerDocumentKeyDownEventListener<E extends ObservableElement>(
+    buildIpcMainClient: typeof IPC_MAIN_API.client,
     element: E,
     logger: Logger,
 ): {
     unsubscribe: () => void;
     eventHandler: (event: KeyboardEvent) => Promise<void>;
 } {
+    if (Boolean(1)) {
+        return {
+            unsubscribe() {},
+            async eventHandler() {},
+        };
+    }
+
     let subscription = processedKeyDownElements.get(element);
 
     if (subscription) {
         return subscription;
     }
 
-    const apiClient = IPC_MAIN_API.client({options: {logger}});
+    const apiClient = buildIpcMainClient({options: {logger}});
     const eventHandlerArgs: readonly ["keydown", (event: KeyboardEvent) => Promise<void>] = [
         "keydown",
         async (event: Readonly<KeyboardEvent>) => {

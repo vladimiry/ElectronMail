@@ -1,6 +1,7 @@
 import electronLog from "electron-log";
 import {webContents as ElectronWebContents} from "electron";
 import {Subject, of} from "rxjs";
+import {observableToSubscribableLike} from "electron-rpc-api";
 import {startWith} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
@@ -127,7 +128,9 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             }
 
             if (!ctx.selectedAccount) {
-                return of({requestId: null});
+                return observableToSubscribableLike(
+                    of({requestId: null}),
+                );
             }
 
             const webContents = ElectronWebContents.fromId(ctx.selectedAccount.webContentId);
@@ -156,9 +159,11 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
             findInPageNotification = {subject: notificationSubject, reset: notificationReset};
 
-            return notificationSubject.asObservable().pipe(
-                // initial/fake response resets the timeout
-                startWith({requestId: null}),
+            return observableToSubscribableLike(
+                notificationSubject.asObservable().pipe(
+                    // initial/fake response resets the timeout
+                    startWith({requestId: null}),
+                ),
             );
         },
     };

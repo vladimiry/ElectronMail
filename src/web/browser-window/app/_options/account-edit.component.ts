@@ -12,6 +12,7 @@ import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {PROTON_API_ENTRY_RECORDS} from "src/shared/constants";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
+import {registerDocumentClickEventListener} from "src/shared-web/events-handling";
 import {validateLoginDelaySecondsRange} from "src/shared/util";
 
 @Component({
@@ -90,12 +91,11 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         const {controls} = this;
 
         this.subscription.add({
-            unsubscribe: __ELECTRON_EXPOSURE__
-                .registerDocumentClickEventListener(
-                    this.elementRef.nativeElement,
-                    this.logger,
-                )
-                .unsubscribe,
+            unsubscribe: registerDocumentClickEventListener(
+                __ELECTRON_EXPOSURE__.buildIpcMainClient,
+                this.elementRef.nativeElement,
+                this.logger,
+            ).unsubscribe,
         });
 
         this.subscription.add(

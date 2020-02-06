@@ -1,5 +1,6 @@
 import {EMPTY, Observable, from, interval, merge} from "rxjs";
 import {buffer, concatMap, debounceTime, distinctUntilChanged, filter, map, mergeMap, tap} from "rxjs/operators";
+import {observableToSubscribableLike} from "electron-rpc-api";
 import {omit} from "remeda";
 
 import * as RestModel from "src/electron-preload/webview/lib/rest-model";
@@ -386,7 +387,9 @@ const endpoints: ProtonApi = {
             })(),
         ];
 
-        return merge(...observables);
+        return observableToSubscribableLike(
+            merge(...observables)
+        )
     },
 };
 

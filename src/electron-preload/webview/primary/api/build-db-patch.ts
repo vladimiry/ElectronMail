@@ -1,4 +1,5 @@
 import {defer} from "rxjs";
+import {observableToSubscribableLike} from "electron-rpc-api";
 import {pick} from "remeda";
 
 import * as Database from "src/electron-preload/webview/lib/database-entity";
@@ -117,8 +118,10 @@ const buildDbPatchEndpoint: Pick<ProtonApi, "buildDbPatch" | "fetchSingleMail"> 
             return;
         };
 
-        return defer(deferFactory).pipe(
-            buildDbPatchRetryPipeline<BuildDbPatchMethodReturnType>(preprocessError, inputMetadata, _logger),
+        return observableToSubscribableLike(
+            defer(deferFactory).pipe(
+                buildDbPatchRetryPipeline<BuildDbPatchMethodReturnType>(preprocessError, inputMetadata, _logger),
+            ),
         );
     },
 

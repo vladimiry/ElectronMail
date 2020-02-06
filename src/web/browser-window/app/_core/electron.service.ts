@@ -6,6 +6,7 @@ import {createIpcMainApiService} from "electron-rpc-api";
 
 import {DEFAULT_API_CALL_TIMEOUT, ONE_SECOND_MS} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
+import {PROTONMAIL_IPC_WEBVIEW_API} from "src/shared/api/webview/primary";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
 
@@ -58,8 +59,8 @@ export class ElectronService implements OnDestroy {
     webViewClient(
         webView: Electron.WebviewTag,
         options?: LimitedCallOptions,
-    ): Observable<ReturnType<typeof __ELECTRON_EXPOSURE__.buildIpcWebViewClient>> {
-        const client = __ELECTRON_EXPOSURE__.buildIpcWebViewClient(
+    ): Observable<ReturnType<typeof PROTONMAIL_IPC_WEBVIEW_API.client>> {
+        const client = PROTONMAIL_IPC_WEBVIEW_API.client(
             webView,
             {options: this.buildApiCallOptions(options)},
         );

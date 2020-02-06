@@ -7,9 +7,8 @@ import {PACKAGE_NAME} from "src/shared/constants";
 import {ProtonClientSession} from "src/shared/model/proton";
 import {ReadonlyDeep} from "type-fest";
 import {ZoneApiParameter} from "src/shared/api/common";
-import {buildLoggerBundle} from "src/electron-preload/lib/util";
 
-const {Promise, Observable} = ActionType;
+const {Promise, SubscribableLike} = ActionType;
 
 export type ProtonApiScan = ScanService<typeof PROTONMAIL_IPC_WEBVIEW_API>;
 
@@ -27,7 +26,7 @@ export const PROTONMAIL_IPC_WEBVIEW_API_DEFINITION = {
     login2fa:
         Promise<ReadonlyDeep<{ secret: string } & ZoneApiParameter>>(),
     buildDbPatch:
-        Observable<ReadonlyDeep<DbAccountPk & { metadata: Readonly<FsDbAccount["metadata"]> | null; } & ZoneApiParameter>>(),
+        SubscribableLike<ReadonlyDeep<DbAccountPk & { metadata: Readonly<FsDbAccount["metadata"]> | null; } & ZoneApiParameter>>(),
     selectMailOnline:
         Promise<ReadonlyDeep<{
             pk: DbAccountPk; mail: Pick<Mail, "id" | "mailFolderIds" | "conversationEntryPk">;
@@ -37,7 +36,7 @@ export const PROTONMAIL_IPC_WEBVIEW_API_DEFINITION = {
     makeRead:
         Promise<ReadonlyDeep<DbAccountPk & { messageIds: string[]; } & ZoneApiParameter>>(),
     notification:
-        Observable<ReadonlyDeep<{ entryUrl: string; entryApiUrl: string; } & ZoneApiParameter>, ProtonNotificationOutput>(),
+        SubscribableLike<ReadonlyDeep<{ entryUrl: string; entryApiUrl: string; } & ZoneApiParameter>, ProtonNotificationOutput>(),
     unlock:
         ActionType.Promise<MailPasswordFieldContainer & ZoneApiParameter>(),
     resolveSavedProtonClientSession:
@@ -47,5 +46,5 @@ export const PROTONMAIL_IPC_WEBVIEW_API_DEFINITION = {
 export const PROTONMAIL_IPC_WEBVIEW_API = createWebViewApiService({
     channel: `${PACKAGE_NAME}:webview-api`,
     apiDefinition: PROTONMAIL_IPC_WEBVIEW_API_DEFINITION,
-    logger: buildLoggerBundle("[IPC_WEBVIEW_API:protonmail]"),
+    // logger: buildLoggerBundle("[IPC_WEBVIEW_API:protonmail]"),
 });

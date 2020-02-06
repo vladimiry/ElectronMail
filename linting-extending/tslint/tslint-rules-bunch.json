@@ -29,7 +29,8 @@
                   "electron-log",
                   "src/**/*",
                   "!src/electron-preload/**/*",
-                  "!src/shared/**/*"
+                  "!src/shared/**/*",
+                  "!src/shared-web/**/*"
                 ]
               }
             ]
@@ -57,7 +58,8 @@
                   "src/**/*",
                   "!src/web/src/**/*",
                   "!src/web/test/util",
-                  "!src/shared/**/*"
+                  "!src/shared/**/*",
+                  "!src/shared-web/**/*"
                 ]
               }
             ]

@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", bootstrap);
 
 function bootstrap() {
     cleanup.subscription.add(
-        api("dbIndexerNotification", {timeoutMs: ONE_SECOND_MS * 3, logger})().subscribe(
+        api("dbIndexerNotification", {timeoutMs: ONE_SECOND_MS * 3, logger})().subscribeLike(
             async (action) => {
                 try {
                     await dbIndexerNotificationHandler(action);

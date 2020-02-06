@@ -9,6 +9,7 @@ import {NotificationItem} from "src/web/browser-window/app/store/actions/notific
 import {NotificationSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/notification";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
+import {registerDocumentClickEventListener} from "src/shared-web/events-handling";
 
 @Component({
     selector: "electron-mail-notification-list",
@@ -30,12 +31,11 @@ export class NotificationListComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.subscription.add({
-            unsubscribe: __ELECTRON_EXPOSURE__
-                .registerDocumentClickEventListener(
-                    this.elementRef.nativeElement,
-                    this.logger,
-                )
-                .unsubscribe,
+            unsubscribe: registerDocumentClickEventListener(
+                __ELECTRON_EXPOSURE__.buildIpcMainClient,
+                this.elementRef.nativeElement,
+                this.logger,
+            ).unsubscribe,
         });
 
         this.subscription.add(

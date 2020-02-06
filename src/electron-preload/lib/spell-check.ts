@@ -17,7 +17,7 @@ const state: {
         state.setupNotificationListening = () => {};
 
         const client = IPC_MAIN_API.client({options: {logger, finishPromise, timeoutMs: ONE_SECOND_MS}});
-        const notificationSubscription = client("notification")().subscribe(
+        const notificationSubscription = client("notification")().subscribeLike(
             (notification) => {
                 if (IPC_MAIN_API_NOTIFICATION_ACTIONS.is.Locale(notification)) {
                     const {locale} = notification.payload;

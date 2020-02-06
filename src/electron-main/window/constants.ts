@@ -2,6 +2,7 @@ import {BrowserWindowConstructorOptions} from "electron";
 
 export const DEFAULT_WEB_PREFERENCES: Readonly<BrowserWindowConstructorOptions["webPreferences"]> = Object.freeze(
     {
+        contextIsolation: true,
         nodeIntegration: false,
         nodeIntegrationInWorker: false,
         webviewTag: true,

@@ -1,7 +1,8 @@
+import {IPC_MAIN_API} from "src/shared/api/main"; // tslint:disable-line:no-import-zones
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/constants";
 import {curryFunctionMembers} from "src/shared/util";
 import {getLocationHref} from "src/electron-preload/webview/lib/util";
-import {registerDocumentClickEventListener, registerDocumentKeyDownEventListener} from "src/electron-preload/lib/events-handling";
+import {registerDocumentClickEventListener, registerDocumentKeyDownEventListener} from "src/shared-web/events-handling";
 
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.calendar, `[configure-provider-app]`);
 
@@ -19,6 +20,6 @@ export function configureProviderApp() {
 }
 
 function enableEventsProcessing() {
-    registerDocumentKeyDownEventListener(document, logger);
-    registerDocumentClickEventListener(document, logger);
+    registerDocumentKeyDownEventListener(IPC_MAIN_API.client, document, logger);
+    registerDocumentClickEventListener(IPC_MAIN_API.client, document, logger);
 }

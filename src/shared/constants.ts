@@ -71,8 +71,8 @@ export const PROVIDER_REPOS: ReadonlyDeep<Record<"WebClient" | "proton-mail-sett
         repoRelativeDistDir: "./build",
         baseDir: "", // TODO define model as {baseDir?: string} instead of using empty string value
         repo: "https://github.com/ProtonMail/WebClient.git",
-        commit: "f96be268c0117e6556092c3fbc5b6c379d716032",
-        version: "4.0.0-beta8",
+        commit: "4d751fc3ec902a33e14a81076292d14174047a6d",
+        version: "4.0.0-beta9",
         protonPackAppConfig: {
             // TODO proton-v4: make sure this value comes to the build after 4.0.0-beta7+ update
             //      currently it's hadrcoded in the WebClient code
@@ -83,7 +83,7 @@ export const PROVIDER_REPOS: ReadonlyDeep<Record<"WebClient" | "proton-mail-sett
         repoRelativeDistDir: "./dist",
         baseDir: "settings",
         repo: "https://github.com/ProtonMail/proton-mail-settings.git",
-        commit: "3f1a1acd7f18c97f3a7c872a9d66e3d95f83acde",
+        commit: "1a7cb9d5b48a0b97eb0eb927dd0c8a65b38ef604",
         version: "unknown",
         protonPackAppConfig: {
             clientId: "WebMailSettings",
@@ -93,7 +93,7 @@ export const PROVIDER_REPOS: ReadonlyDeep<Record<"WebClient" | "proton-mail-sett
         repoRelativeDistDir: "./dist",
         baseDir: "contacts",
         repo: "https://github.com/ProtonMail/proton-contacts.git",
-        commit: "417c4195504473c12ff046474e135f21749c6903",
+        commit: "aed8afb08426c6b7b12f3260da41e95e7ddca96e",
         version: "unknown",
         protonPackAppConfig: {
             clientId: "WebContacts",
@@ -103,7 +103,7 @@ export const PROVIDER_REPOS: ReadonlyDeep<Record<"WebClient" | "proton-mail-sett
         repoRelativeDistDir: "./dist",
         baseDir: "calendar",
         repo: "https://github.com/ProtonMail/proton-calendar.git",
-        commit: "e08716488589407643d96fe784d7933b92e556a5",
+        commit: "5ec480f0b0033264e3d423c75f5f550df151fc91",
         version: "unknown",
         protonPackAppConfig: {
             clientId: "WebCalendar",
@@ -188,5 +188,13 @@ export const ZOOM_FACTORS: ReadonlyArray<number> = [
     2,
 ];
 
+export const LAYOUT_MODES = [
+    {value: "top", title: "top"},
+    {value: "left", title: "left"},
+    {value: "left-thin", title: "left (thin)"},
+] as const;
 
 export const WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS = "ELECTRON_MAIL_SKIP_LOGIN_DELAYS";
+
+// TODO electron: get rid of "baseURLForDataURL" workaround, see https://github.com/electron/electron/issues/20700
+export const WEB_PROTOCOL_SCHEME = "web";

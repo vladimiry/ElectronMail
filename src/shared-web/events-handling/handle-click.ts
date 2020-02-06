@@ -1,29 +1,38 @@
 import {IPC_MAIN_API} from "src/shared/api/main";
 import {Logger} from "src/shared/model/common";
 import {parsePackagedWebClientUrl} from "src/shared/util";
-import {resolveLink} from "src/electron-preload/lib/events-handling/lib";
+import {resolveLink} from "src/shared-web/events-handling/lib";
 
 type ObservableElement = Pick<HTMLElement, "addEventListener" | "removeEventListener">;
 
 const processedClickElements = new WeakMap<ObservableElement, ReturnType<typeof registerDocumentClickEventListener>>();
 
 export function registerDocumentClickEventListener<E extends ObservableElement>(
+    // TODO expose only "openExternal" API method
+    buildIpcMainClient: typeof IPC_MAIN_API.client,
     element: E,
     logger: Logger,
 ): {
     unsubscribe: () => void;
     eventHandler: (event: MouseEvent) => Promise<void>;
 } {
+    if (Boolean(1)) {
+        return {
+            unsubscribe() {},
+            async eventHandler() {},
+        };
+    }
+
     let subscription = processedClickElements.get(element);
 
     if (subscription) {
         return subscription;
     }
 
-    const apiClient = IPC_MAIN_API.client({options: {logger}});
+    const apiClient = buildIpcMainClient({options: {logger}});
     const eventHandlerArgs: ["click", (event: MouseEvent) => Promise<void>] = [
         "click",
-        async (event: MouseEvent) => await callDocumentClickEventListener(event, logger, apiClient),
+        async (event: MouseEvent) => await callDocumentClickEventListener(event, apiClient),
     ];
     const [, eventHandler] = eventHandlerArgs;
 
@@ -42,10 +51,9 @@ export function registerDocumentClickEventListener<E extends ObservableElement>(
     return subscription;
 }
 
-export async function callDocumentClickEventListener<E extends Event = MouseEvent>(
+async function callDocumentClickEventListener<E extends Event = MouseEvent>(
     event: E,
-    logger: Logger,
-    apiClient?: ReturnType<typeof IPC_MAIN_API.client>,
+    apiClient: ReturnType<typeof IPC_MAIN_API.client>,
 ) {
     const {element, link, href} = resolveLink(event.target as Element);
 
@@ -70,7 +78,6 @@ export async function callDocumentClickEventListener<E extends Event = MouseEven
     }
 
     // opening https/http links in external-program/browser
-    const client = apiClient || IPC_MAIN_API.client({options: {logger}});
-    const method = client("openExternal");
+    const method = apiClient("openExternal");
     await method({url: href});
 }

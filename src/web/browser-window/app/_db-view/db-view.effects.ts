@@ -31,7 +31,7 @@ export class DbViewEffects {
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             mergeMap(({payload: {finishPromise, dbAccountPk}, logger}) => {
                 const dispose$ = from(finishPromise).pipe(tap(() => logger.info("dispose")));
-                const ipcMainClient = this.api.ipcMainClient({finishPromise, serialization: "jsan"});
+                const ipcMainClient = this.api.ipcMainClient({serialization: "jsan"});
 
                 logger.info("setup");
 

@@ -113,7 +113,7 @@ export class SearchInPageWidget {
 
     protected initFoundNotification() {
         this.subscription.add(
-            this.apiMethods.findInPageNotification().subscribe((result) => {
+            this.apiMethods.findInPageNotification().subscribeLike((result) => {
                 if (!result.requestId || result.requestId !== this.requestId) {
                     return;
                 }

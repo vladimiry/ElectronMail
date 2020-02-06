@@ -7,6 +7,7 @@ import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {PACKAGE_NAME} from "src/shared/constants";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
+import {registerDocumentClickEventListener} from "src/shared-web/events-handling";
 
 @Component({
     selector: "electron-mail-save-password-label",
@@ -40,12 +41,11 @@ export class SavePasswordLabelComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.subscription.add({
-            unsubscribe: __ELECTRON_EXPOSURE__
-                .registerDocumentClickEventListener(
-                    this.elementRef.nativeElement,
-                    this.logger,
-                )
-                .unsubscribe,
+            unsubscribe: registerDocumentClickEventListener(
+                __ELECTRON_EXPOSURE__.buildIpcMainClient,
+                this.elementRef.nativeElement,
+                this.logger,
+            ).unsubscribe,
         });
     }
 

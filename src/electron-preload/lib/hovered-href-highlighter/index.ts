@@ -1,7 +1,8 @@
 import {Deferred} from "ts-deferred";
-import {Observable, Subscription} from "rxjs";
+import {Subscription} from "rxjs";
+import {subscribableLikeToObservable} from "electron-rpc-api";
 
-import {IPC_MAIN_API, IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainServiceScan} from "src/shared/api/main";
+import {IPC_MAIN_API, IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {ONE_SECOND_MS, PACKAGE_NAME} from "src/shared/constants";
 import {buildLoggerBundle} from "src/electron-preload/lib/util";
 
@@ -15,9 +16,6 @@ export class HoveredHrefHighlightElement extends HTMLElement {
     public static readonly tagName = `${PACKAGE_NAME}-hovered-href-highlight`.toLowerCase();
 
     private readonly logger = {...buildLoggerBundle(`[${HoveredHrefHighlightElement.tagName}]`)} as const;
-
-    // TODO share single "notification$" instance between all the element instances, so make it static field?
-    private notification$?: Observable<IpcMainServiceScan["ApiImplReturns"]["notification"]>;
 
     private readonly root: ShadowRoot;
 
@@ -47,14 +45,13 @@ export class HoveredHrefHighlightElement extends HTMLElement {
         this.subscription.unsubscribe();
         window.removeEventListener(...this.beforeUnloadEventHandlingArgs);
         this.root.innerHTML = "";
-        delete this.notification$;
     }
 
     connectedCallback() {
         this.logger.info("connectedCallback()");
 
         this.subscription.add(
-            this.resolveNotification().subscribe(
+            subscribableLikeToObservable(this.resolveNotification()).subscribe(
                 (value) => {
                     if (!IPC_MAIN_API_NOTIFICATION_ACTIONS.is.TargetUrl(value) || !value.payload.url) {
                         this.renderEl.classList.remove(renderVisibleClass);
@@ -74,13 +71,9 @@ export class HoveredHrefHighlightElement extends HTMLElement {
     }
 
     private resolveNotification() {
-        if (this.notification$) {
-            return this.notification$;
-        }
-
         const apiClient = IPC_MAIN_API.client({options: {logger: this.logger}});
 
-        return this.notification$ = apiClient(
+        return apiClient(
             "notification",
             {
                 finishPromise: this.releaseApiClientDeferred.promise,

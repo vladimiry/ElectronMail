@@ -10,6 +10,7 @@ import {LOG_LEVELS, ZOOM_FACTORS} from "src/shared/constants";
 import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
+import {registerDocumentClickEventListener} from "src/shared-web/events-handling";
 
 @Component({
     selector: "electron-mail-base-settings",
@@ -85,12 +86,11 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.subscription.add({
-            unsubscribe: __ELECTRON_EXPOSURE__
-                .registerDocumentClickEventListener(
-                    this.elementRef.nativeElement,
-                    this.logger,
-                )
-                .unsubscribe,
+            unsubscribe: registerDocumentClickEventListener(
+                __ELECTRON_EXPOSURE__.buildIpcMainClient,
+                this.elementRef.nativeElement,
+                this.logger,
+            ).unsubscribe,
         });
 
         this.store.select(OptionsSelectors.CONFIG.base)

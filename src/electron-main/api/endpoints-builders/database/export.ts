@@ -4,6 +4,7 @@ import {Base64} from "js-base64";
 import {Observable, from} from "rxjs";
 import {app, dialog} from "electron";
 import {join} from "path";
+import {observableToSubscribableLike} from "electron-rpc-api";
 import {promisify} from "util";
 import {switchMap} from "rxjs/operators";
 import {v4 as uuid} from "uuid";
@@ -34,7 +35,7 @@ export async function buildDbExportEndpoints(
         dbExport({login, mailPks}) {
             logger.info("dbExport()");
 
-            return from(
+            const observable$ = from(
                 (async () => {
                     const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
 
@@ -87,6 +88,10 @@ export async function buildDbExportEndpoints(
                             .catch((error) => subscriber.error(error));
                     });
                 }),
+            );
+
+            return observableToSubscribableLike(
+                observable$,
             );
         },
     };

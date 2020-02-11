@@ -122,6 +122,7 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
                 });
 
                 this.foldersInfo.allPks = Object.keys(this.foldersInfo.names);
+                this.foldersInfo.selectedPks = this.resolveSelectedPks();
             });
 
         this.formControls.folders.valueChanges

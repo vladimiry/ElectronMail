@@ -31,6 +31,8 @@ export function configureProviderApp() {
     const packagedWebClientUrl = parsePackagedWebClientUrl(getLocationHref());
     const isAngularWebClient = packagedWebClientUrl && resolvePackagedWebClientApp(packagedWebClientUrl).project === "WebClient";
 
+    logger.verbose(JSON.stringify({packagedWebClientUrl, isAngularWebClient}));
+
     if (!isAngularWebClient) {
         logger.info(`Skip configuring AngularWebClient-specific stuff`);
         return;

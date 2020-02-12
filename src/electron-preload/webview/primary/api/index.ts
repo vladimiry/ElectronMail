@@ -309,7 +309,6 @@ const endpoints: ProtonApi = {
 
                     return {pageType};
                 }),
-                tap((value) => logger.verbose(JSON.stringify(value))),
             ),
 
             (() => {
@@ -386,7 +385,9 @@ const endpoints: ProtonApi = {
             })(),
         ];
 
-        return merge(...observables);
+        return merge(...observables).pipe(
+            tap((notification) => logger.verbose(JSON.stringify({notification}))),
+        );
     },
 };
 

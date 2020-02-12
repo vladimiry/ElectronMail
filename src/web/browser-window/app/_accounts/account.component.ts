@@ -244,7 +244,8 @@ export class AccountComponent extends NgChangesObservableComponent implements On
             | { type: "log", data: [LogLevel, ...string[]] },
     ) {
         if (event.type === "log") {
-            this.logger[event.data[0]](...event.data[1]);
+            const [level, ...args] = event.data;
+            this.logger[level](...args);
             return;
         }
 

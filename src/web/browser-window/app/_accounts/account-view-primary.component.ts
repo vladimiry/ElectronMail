@@ -6,6 +6,8 @@ import {equals, pick} from "remeda";
 import {ACCOUNTS_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountConfig} from "src/shared/model/account";
 import {AccountViewAbstractComponent} from "src/web/browser-window/app/_accounts/account-view-abstract.component";
+import {WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/constants";
+import {parsePackagedWebClientUrl} from "src/shared/util";
 
 const pickCredentialFields = ((fields: Array<keyof AccountConfig>) => {
     return (accountConfig: AccountConfig) => pick(accountConfig, fields);
@@ -39,6 +41,26 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
 
         this.addSubscription(
             this.filterDomReadyEvent().subscribe(({webView}) => {
+                const packagedWebClientUrl = parsePackagedWebClientUrl(webView.src);
+
+                if (
+                    // TODO move "not packaged or blank.html page" check to utility function
+                    //      and use it then in "src/electron-preload/webview/primary/index.ts" too
+                    !packagedWebClientUrl
+                    ||
+                    packagedWebClientUrl.pathname === `/${WEB_CLIENTS_BLANK_HTML_FILE_NAME}`
+                ) {
+                    this.event.emit({
+                        type: "log",
+                        data: [
+                            "info",
+                            `Skip webview.dom-ready processing as no packaged web-client detected or the page is the "loader/blank" one`,
+                            JSON.stringify({packagedWebClientUrl}),
+                        ]
+                    });
+                    return;
+                }
+
                 const finishPromise = this.filterDomReadyOrDestroyedPromise();
                 const breakPreviousSyncing$ = new Subject<void>();
 

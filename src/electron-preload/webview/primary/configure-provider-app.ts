@@ -6,21 +6,21 @@ import {LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN, ONE_SECOND_MS} from "src/shared/con
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/constants";
 import {applyZoomFactor} from "src/electron-preload/lib/util";
 import {curryFunctionMembers, parsePackagedWebClientUrl, resolvePackagedWebClientApp} from "src/shared/util";
-import {disableBrowserNotificationFeature, getLocationHref} from "src/electron-preload/webview/lib/util";
+import {disableBrowserNotificationFeature} from "src/electron-preload/webview/lib/util";
 import {initSpellCheckProvider} from "src/electron-preload/lib/spell-check";
 import {registerDocumentClickEventListener, registerDocumentKeyDownEventListener} from "src/electron-preload/lib/events-handling";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, `[configure-provider-app]`);
 
-const angularWebClientOpts = Object.freeze({
+const angularWebClientOpts = {
     targetModuleName: "proton",
     imgSrcSanitizationWhitelistRe: new RegExp(`^\\s*((https?|ftp|file|blob|${LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN}):|data:image\\/)`),
-});
+} as const;
 
-export function configureProviderApp() {
+export function configureProviderApp(
+    packagedWebClientUrl: Exclude<ReturnType<typeof parsePackagedWebClientUrl>, null>,
+) {
     const logger = curryFunctionMembers(_logger, "configureProviderApp()");
-
-    logger.info(JSON.stringify({locationHref: getLocationHref()}));
 
     initSpellCheckProvider(logger);
     applyZoomFactor(logger);
@@ -28,10 +28,9 @@ export function configureProviderApp() {
     registerDocumentKeyDownEventListener(document, logger);
     registerDocumentClickEventListener(document, logger);
 
-    const packagedWebClientUrl = parsePackagedWebClientUrl(getLocationHref());
-    const isAngularWebClient = packagedWebClientUrl && resolvePackagedWebClientApp(packagedWebClientUrl).project === "WebClient";
-
-    logger.verbose(JSON.stringify({packagedWebClientUrl, isAngularWebClient}));
+    const packagedWebClientApp = resolvePackagedWebClientApp(packagedWebClientUrl);
+    const isAngularWebClient = packagedWebClientApp.project === "WebClient";
+    logger.verbose(JSON.stringify({packagedWebClientApp, isAngularWebClient}));
 
     if (!isAngularWebClient) {
         logger.info(`Skip configuring AngularWebClient-specific stuff`);

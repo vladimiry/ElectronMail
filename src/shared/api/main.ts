@@ -78,7 +78,10 @@ export const ENDPOINTS_DEFINITION = {
 
     dbIndexerNotification: ActionType.Observable<void, UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>>(),
 
-    staticInit: ActionType.Promise<void, ReadonlyDeep<{ electronLocations: ElectronContextLocations }>>(),
+    staticInit: ActionType.Promise<void, ReadonlyDeep<{
+        electronLocations: ElectronContextLocations;
+        platform: ReturnType<(typeof import("os"))["platform"]>;
+    }>>(),
 
     init: ActionType.Promise<void, InitResponse>(),
 

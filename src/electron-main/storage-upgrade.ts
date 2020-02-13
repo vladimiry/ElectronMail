@@ -1,6 +1,8 @@
 import _logger from "electron-log";
 import compareVersions from "compare-versions";
 import path from "path";
+import {delay, filter, take} from "rxjs/operators";
+import {merge} from "rxjs";
 
 import {AccountConfig} from "src/shared/model/account";
 import {Config, Settings} from "src/shared/model/options";
@@ -8,10 +10,11 @@ import {Context} from "src/electron-main/model";
 import {DB_INSTANCE_PROP_NAME} from "src/electron-main/database/constants";
 import {Database} from "./database";
 import {DbAccountPk} from "src/shared/model/database";
-import {INITIAL_STORES} from "./constants";
+import {INITIAL_STORES, PLATFORM} from "./constants";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {
+    ONE_SECOND_MS,
     PACKAGE_VERSION,
     PROTON_API_ENTRY_PRIMARY_VALUE,
     PROTON_API_ENTRY_URLS,
@@ -166,25 +169,9 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         })();
     },
     "3.7.1": (config) => {
-        const def = INITIAL_STORES.config();
-
         if (typeof config.jsFlags === "undefined") {
-            config.jsFlags = def.jsFlags;
+            config.jsFlags = INITIAL_STORES.config().jsFlags;
         }
-
-        // ensuring default base props are set
-        Object.assign(
-            config,
-            {
-                ...pickBaseConfigProperties(def),
-                // "stringify => parse" drops "undefined" values
-                ...JSON.parse(
-                    JSON.stringify(
-                        pickBaseConfigProperties(config),
-                    ),
-                ),
-            },
-        );
     },
     "3.8.0": (config) => {
         if (typeof config.idleTimeLogOutSec === "undefined") {
@@ -214,14 +201,14 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
     },
     "4.2.0": (config) => {
         (() => {
-            const key = "zoomFactor";
+            const key: keyof Pick<Config, "zoomFactor"> = "zoomFactor";
             if (typeof config[key] !== "number" || !ZOOM_FACTORS.includes(config[key])) {
                 config[key] = INITIAL_STORES.config()[key];
             }
         })();
 
         (() => {
-            const key = "enableHideControlsHotkey";
+            const key: keyof Pick<Config, "enableHideControlsHotkey"> = "enableHideControlsHotkey";
             if (typeof config[key] === "undefined") {
                 config[key] = INITIAL_STORES.config()[key];
             }
@@ -229,11 +216,94 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
     },
     "4.2.2": (config) => {
         (() => {
-            const key = "webViewBlankDOMLoaded";
+            const key: keyof Pick<Config["timeouts"], "webViewBlankDOMLoaded"> = "webViewBlankDOMLoaded";
             if (typeof config.timeouts[key] !== "number") {
                 config.timeouts[key] = INITIAL_STORES.config().timeouts[key];
             }
         })();
+    },
+    "4.2.3": (config) => {
+        const loggerPrefix = "[config updater 4.2.3]";
+
+        logger.info(loggerPrefix);
+
+        (() => {
+            const key: keyof Pick<Config, "startHidden"> = "startHidden";
+
+            if (typeof config[key] === "boolean") {
+                // renaming "startMinimized => startHidden" already happened before, so we do nothing
+                return;
+            }
+
+            type PrevConfig = Config & { startMinimized?: boolean };
+            const valueSavedBefore423 = (config as PrevConfig).startMinimized;
+            delete (config as PrevConfig).startMinimized;
+
+            config[key] = PLATFORM === "linux" || typeof valueSavedBefore423 !== "boolean"
+                // set the default value if any conditions met:
+                //   - Linux system
+                //   - no value saved before v4.2.3 detected
+                ? INITIAL_STORES.config()[key]
+                // otherwise just rename "startMinimized => startHidden"
+                : valueSavedBefore423;
+
+            setTimeout(() => {
+                const showStartMinimizedToTrayMessage = (
+                    PLATFORM === "linux"
+                    &&
+                    // value existed and has been changed/reset
+                    typeof valueSavedBefore423 === "boolean" && config[key] !== valueSavedBefore423
+                );
+
+                logger.info(
+                    loggerPrefix,
+                    JSON.stringify({PLATFORM, valueSavedBefore423, [key]: config[key], showStartMinimizedToTrayMessage}),
+                );
+
+                if (!showStartMinimizedToTrayMessage) {
+                    return;
+                }
+
+                merge(
+                    IPC_MAIN_API_NOTIFICATION$.pipe(filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.Bootstrap)),
+                    IPC_MAIN_API_NOTIFICATION$.pipe(filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.ActivateBrowserWindow)),
+                ).pipe(
+                    take(1),
+                    delay(ONE_SECOND_MS * 3),
+                ).subscribe((notification) => {
+                    logger.info(
+                        loggerPrefix,
+                        "Showing message",
+                        JSON.stringify({notification}),
+                    );
+
+                    IPC_MAIN_API_NOTIFICATION$.next(
+                        IPC_MAIN_API_NOTIFICATION_ACTIONS.InfoMessage({
+                            message: [
+                                `The "Start minimized to tray" flag has been reset, `,
+                                `see why in https://github.com/vladimiry/ElectronMail/issues/254.`,
+                            ].join(""),
+                        }),
+                    );
+                });
+            });
+        })();
+    },
+    // WARN needs to be the last updater
+    "100.0.0": (config) => {
+        // ensuring default base props are set
+        Object.assign(
+            config,
+            {
+                ...pickBaseConfigProperties(INITIAL_STORES.config()),
+                // "stringify => parse" drops "undefined" values
+                ...JSON.parse(
+                    JSON.stringify(
+                        pickBaseConfigProperties(config),
+                    ),
+                ),
+            },
+        );
     },
 };
 
@@ -343,7 +413,7 @@ export const upgradeSettings: (settings: Settings, ctx: Context) => boolean = ((
             },
             "4.2.0": (settings) => {
                 (() => {
-                    const key = "sessionStorageEncryptionKey";
+                    const key: keyof Pick<Settings, "sessionStorageEncryptionKey"> = "sessionStorageEncryptionKey";
                     if (!settings[key]) {
                         settings[key] = INITIAL_STORES.settings()[key];
                     }
@@ -372,7 +442,6 @@ function upgrade<T extends Config | Settings>(entity: T, upgrades: Record<string
 
     Object
         .keys(upgrades)
-        .filter((upgraderVersion) => compareVersions(upgraderVersion, PACKAGE_VERSION) <= 0)
         .sort(compareVersions)
         .forEach((version) => upgrades[version](entity));
 

@@ -18,6 +18,8 @@ import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
     preserveWhitespaces: true,
 })
 export class BaseSettingsComponent implements OnInit, OnDestroy {
+    readonly showStartMinimizedToTrayIssueLink = __METADATA__.platform === "linux";
+
     processing$: Observable<boolean> = this.store.pipe(
         select(OptionsSelectors.FEATURED.progress),
         map((progress) => Boolean(progress.updatingBaseSettings)),
@@ -54,7 +56,7 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         hideControls: new FormControl(),
         idleTimeLogOutSec: new FormControl(),
         logLevel: new FormControl(null, Validators.required),
-        startMinimized: new FormControl(),
+        startHidden: new FormControl(),
         unreadNotifications: new FormControl(),
         zoomFactor: new FormControl(),
     };

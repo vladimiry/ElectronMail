@@ -74,7 +74,7 @@ export function initialConfig(): Config {
             hideControls: false,
             idleTimeLogOutSec: 0,
             logLevel: "error",
-            startMinimized: true,
+            startHidden: true,
             unreadNotifications: true,
             zoomFactor: ZOOM_FACTOR_DEFAULT,
         };
@@ -96,7 +96,7 @@ export function pickBaseConfigProperties(
         hideControls,
         idleTimeLogOutSec,
         logLevel,
-        startMinimized,
+        startHidden,
         unreadNotifications,
         zoomFactor,
     }: Config,
@@ -115,7 +115,7 @@ export function pickBaseConfigProperties(
         hideControls,
         idleTimeLogOutSec,
         logLevel,
-        startMinimized,
+        startHidden,
         unreadNotifications,
         zoomFactor,
     };

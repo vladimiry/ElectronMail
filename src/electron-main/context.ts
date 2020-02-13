@@ -41,7 +41,7 @@ export function initContext(options: ContextInitOptions = {}): Context {
 
     logger.transports.file.file = path.join(locations.userDataDir, "log.log");
     logger.transports.file.maxSize = 1024 * 1024 * 50; // 50MB
-    logger.transports.file.level = false;
+    logger.transports.file.level = INITIAL_STORES.config().logLevel;
     logger.transports.console.level = false;
 
     const {

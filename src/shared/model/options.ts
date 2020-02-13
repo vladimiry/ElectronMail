@@ -52,7 +52,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     hideControls: boolean;
     idleTimeLogOutSec: number;
     logLevel: LogLevel;
-    startMinimized: boolean;
+    startHidden: boolean;
     unreadNotifications: boolean;
     zoomFactor: number;
 }
@@ -71,7 +71,7 @@ export type BaseConfig = Pick<Config,
     | "hideControls"
     | "idleTimeLogOutSec"
     | "logLevel"
-    | "startMinimized"
+    | "startHidden"
     | "zoomFactor"
     | "unreadNotifications">;
 

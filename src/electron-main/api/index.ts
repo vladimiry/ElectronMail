@@ -8,6 +8,7 @@ import {DB_DATA_CONTAINER_FIELDS} from "src/shared/model/database";
 import {IPC_MAIN_API, IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {PACKAGE_NAME, PRODUCT_NAME} from "src/shared/constants";
+import {PLATFORM} from "src/electron-main/constants";
 import {attachFullTextIndexWindow, detachFullTextIndexWindow} from "src/electron-main/window/full-text-search";
 import {buildSettingsAdapter} from "src/electron-main/util";
 import {clearIdleTimeLogOut, setupIdleTimeLogOut} from "src/electron-main/power-monitor";
@@ -15,7 +16,7 @@ import {curryFunctionMembers} from "src/shared/util";
 import {deletePassword, getPassword, setPassword} from "src/electron-main/keytar";
 import {initSessionByAccount} from "src/electron-main/session";
 import {patchMetadata} from "src/electron-main/database/util";
-import {upgradeConfig, upgradeDatabase, upgradeSettings} from "src/electron-main/storage-upgrade";
+import {upgradeDatabase, upgradeSettings} from "src/electron-main/storage-upgrade";
 
 const logger = curryFunctionMembers(electronLog, "[src/electron-main/api/index]");
 
@@ -51,6 +52,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
         async staticInit() {
             return {
                 electronLocations: ctx.locations,
+                platform: PLATFORM,
             };
         },
 
@@ -159,15 +161,9 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             return newConfig;
         },
 
-        // TODO update "readConfig" api method test ("upgradeConfig" call, "logger.transports.file.level" updpate)
         async readConfig() {
             const store = ctx.configStore;
-            const existingConfig = await store.read();
-            const config = existingConfig
-                ? (upgradeConfig(existingConfig) ? await store.write(existingConfig) : existingConfig)
-                : await store.write(ctx.initialStores.config);
-
-            electronLog.transports.file.level = config.logLevel;
+            const config = await store.read() ?? await store.write(ctx.initialStores.config);
 
             return config;
         },

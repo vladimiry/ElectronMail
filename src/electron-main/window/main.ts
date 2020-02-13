@@ -45,9 +45,9 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
             await keepBrowserWindowState(ctx, browserWindow);
 
             const settingsConfigured = await ctx.settingsStore.readable();
-            const {startMinimized} = await ctx.configStore.readExisting();
+            const {startHidden} = await ctx.configStore.readExisting();
 
-            if (!settingsConfigured || !startMinimized) {
+            if (!settingsConfigured || !startHidden) {
                 await (await ctx.deferredEndpoints.promise).activateBrowserWindow(browserWindow);
             }
         })

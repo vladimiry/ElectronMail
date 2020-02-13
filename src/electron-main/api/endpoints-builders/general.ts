@@ -315,6 +315,7 @@ export async function buildEndpoints(
 
         notification() {
             return IPC_MAIN_API_NOTIFICATION$.asObservable().pipe(
+                // TODO replace "startWith" with "defaultIfEmpty" (simply some response needed to avoid timeout error)
                 startWith(IPC_MAIN_API_NOTIFICATION_ACTIONS.Bootstrap({})),
             );
         },

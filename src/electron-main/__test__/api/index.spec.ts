@@ -349,7 +349,7 @@ const tests: Record<keyof TestContext["endpoints"], (t: ExecutionContext<TestCon
         const action = endpoints.patchBaseConfig;
         const patches: Array<Partial<BaseConfig>> = [
             {
-                startMinimized: false,
+                startHidden: false,
                 compactLayout: true,
                 closeToTray: false,
                 unreadNotifications: true,
@@ -357,7 +357,7 @@ const tests: Record<keyof TestContext["endpoints"], (t: ExecutionContext<TestCon
                 logLevel: "warn",
             },
             {
-                startMinimized: true,
+                startHidden: true,
                 compactLayout: undefined,
                 closeToTray: true,
                 unreadNotifications: false,
@@ -385,19 +385,15 @@ const tests: Record<keyof TestContext["endpoints"], (t: ExecutionContext<TestCon
     },
 
     readConfig: async (t) => {
-        const upgradeConfigSpy = t.context.mocks["src/electron-main/storage-upgrade"].upgradeConfig;
-
         t.false(await t.context.ctx.configStore.readable(), "config file does not exist");
 
         const initial = await readConfig(t.context.endpoints);
-        t.is(0, upgradeConfigSpy.callCount);
 
         const initialExpected = {...t.context.ctx.initialStores.config, ...{_rev: 0}};
         t.deepEqual(initial, initialExpected, "checking initial config file");
         t.true(await t.context.ctx.configStore.readable(), "config file exists");
 
         await readConfig(t.context.endpoints);
-        t.is(1, upgradeConfigSpy.callCount);
     },
 
     readSettings: async (t) => {

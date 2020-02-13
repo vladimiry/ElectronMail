@@ -1,3 +1,4 @@
+import electronLog from "electron-log";
 import {app} from "electron";
 
 import {Context} from "src/electron-main/model";
@@ -20,7 +21,10 @@ export async function appReadyHandler(ctx: Context) {
 
     // "endpoints.readConfig()" call initializes the config.json file
     // so consequent "ctx.configStore.readExisting()" calls don't fail
-    const {spellCheckLocale, customTrayIconColor} = await endpoints.readConfig();
+    const {spellCheckLocale, customTrayIconColor, logLevel} = await endpoints.readConfig();
+
+    // TODO test "logger.transports.file.level" update
+    electronLog.transports.file.level = logLevel;
 
     await (async () => {
         const spellCheckController = await initSpellCheckController(spellCheckLocale);

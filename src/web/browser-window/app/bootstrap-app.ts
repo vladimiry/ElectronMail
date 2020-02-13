@@ -16,9 +16,15 @@ __ELECTRON_EXPOSURE__.buildIpcMainClient()("staticInit")()
     .then((staticInit) => {
         const metadata: typeof __METADATA__ = staticInit;
 
-        Object.assign(
+        Object.defineProperty(
             window,
-            {__METADATA__: metadata},
+            "__METADATA__",
+            {
+                value: metadata,
+                configurable: false,
+                enumerable: false,
+                writable: false,
+            },
         );
 
         // if AOT compilation enabled "platformBrowserDynamic" is being on-the-fly patched by "@ngtools/webpack"

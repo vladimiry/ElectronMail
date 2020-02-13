@@ -79,7 +79,7 @@ test.serial("auto logout", async (t) => {
     const configFileData: Config = JSON.parse(fs.readFileSync(configFile).toString());
     const idleTimeLogOutSec = 10;
 
-    configFileData.startMinimized = true;
+    configFileData.startHidden = true;
     configFileData.idleTimeLogOutSec = idleTimeLogOutSec;
     fs.writeFileSync(configFile, JSON.stringify(configFileData, null, 2));
 

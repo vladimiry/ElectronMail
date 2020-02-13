@@ -34,8 +34,8 @@ export async function execShell(
         LOG_LEVELS.value(
             JSON.stringify(
                 {
-                    args,
                     command,
+                    args,
                     options: {
                         ...options,
                         env: pick(options?.env ?? {}, printEnvWhitelist),

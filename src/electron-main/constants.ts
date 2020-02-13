@@ -23,9 +23,13 @@ export const INITIAL_STORES: Readonly<{
     settings: () => Settings;
 }> = Object.freeze({
     config: () => {
+        const config = initialConfig();
         return {
-            ...initialConfig(),
+            ...config,
             checkUpdateAndNotify: !SNAP_CONTAINER, // update check is disabled by default for the Snap package type
+            startHidden: PLATFORM === "linux"
+                ? false
+                : config.startHidden,
         };
     },
     settings: () => {

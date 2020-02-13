@@ -2,12 +2,17 @@ import rewiremock from "rewiremock";
 import sinon from "sinon";
 import test from "ava";
 
-import {PACKAGE_NAME} from "src/shared/constants";
+import {INITIAL_STORES} from "src/electron-main/constants";
+import {ONE_SECOND_MS, PACKAGE_NAME, PACKAGE_VERSION} from "src/shared/constants";
+import {asyncDelay} from "src/shared/util";
 
-test.serial("flow", async (t) => {
+test("flow", async (t) => {
     const mocks = buildMocks();
 
-    await loadLibrary(mocks);
+    await Promise.all([
+        await loadLibrary(mocks),
+        asyncDelay(ONE_SECOND_MS / 2),
+    ]);
 
     const ctx = mocks["./context"].initContext.firstCall.returnValue;
 
@@ -28,24 +33,32 @@ test.serial("flow", async (t) => {
     t.true(mocks["./protocol"].registerStandardSchemes.calledAfter(mocks["./bootstrap/command-line"].bootstrapCommandLine));
     t.is(mocks["./protocol"].registerStandardSchemes.callCount, 1);
 
-    t.true(mocks.electron.app.on.alwaysCalledWith("ready"));
-    t.true(mocks.electron.app.on.calledAfter(mocks["./protocol"].registerStandardSchemes));
-    t.is(mocks.electron.app.on.callCount, 1);
+    t.true(mocks["./bootstrap/upgrade-config"].upgradeExistingConfig.alwaysCalledWithExactly(ctx));
+    t.true(mocks["./bootstrap/upgrade-config"].upgradeExistingConfig.calledAfter(mocks["./protocol"].registerStandardSchemes));
+    t.is(mocks["./bootstrap/upgrade-config"].upgradeExistingConfig.callCount, 1);
 
-    t.true(mocks["./bootstrap/app-ready"].appReadyHandler.alwaysCalledWithExactly(ctx));
-    t.true(mocks["./bootstrap/app-ready"].appReadyHandler.calledAfter(mocks.electron.app.on));
+    t.true(mocks.electron.app.whenReady.calledAfter(mocks["./bootstrap/upgrade-config"].upgradeExistingConfig));
+    t.is(mocks.electron.app.whenReady.callCount, 1);
+
     t.is(mocks["./bootstrap/app-ready"].appReadyHandler.callCount, 1);
+    t.true(mocks["./bootstrap/app-ready"].appReadyHandler.alwaysCalledWithExactly(ctx));
+    t.true(mocks["./bootstrap/app-ready"].appReadyHandler.calledAfter(mocks.electron.app.whenReady));
 });
 
 function buildMocks() {
     return {
         "electron": {
             app: {
-                on: sinon.stub().callsArgWith(1, {}, {on: sinon.spy()}),
+                whenReady: sinon.stub().returns(Promise.resolve()),
+                getName: () => PACKAGE_NAME,
+                getVersion: () => PACKAGE_VERSION,
             },
         },
         "./bootstrap/app-ready": {
-            appReadyHandler: sinon.spy(),
+            appReadyHandler: sinon.stub().returns(Promise.resolve()),
+        },
+        "./bootstrap/upgrade-config": {
+            upgradeExistingConfig: sinon.stub().returns(Promise.resolve()),
         },
         "./bootstrap/command-line": {
             bootstrapCommandLine: sinon.spy(),
@@ -54,7 +67,14 @@ function buildMocks() {
             bootstrapInit: sinon.spy(),
         },
         "./context": {
-            initContext: sinon.stub().returns({[`${PACKAGE_NAME}_context_id`]: 123}),
+            initContext: sinon.stub().returns({
+                [`${PACKAGE_NAME}_context_id`]: 123,
+                configStore: {
+                    async read() {
+                        return INITIAL_STORES.config();
+                    },
+                },
+            }),
         },
         "./protocol": {
             registerStandardSchemes: sinon.spy(),

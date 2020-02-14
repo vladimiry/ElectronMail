@@ -12,7 +12,7 @@ export class DbViewModuleResolve {
         resolveComponentFactory: () => Promise<ComponentFactory<DbViewEntryComponent>>;
     } = {
         resolveComponentFactory: async () => {
-            const {DbViewModule} = await import("src/web/browser-window/app/_db-view/db-view.module");
+            const {DbViewModule} = await import(/* webpackChunkName: "_db-view" */ "src/web/browser-window/app/_db-view/db-view.module");
             const compiler = this.injector.get(Compiler);
             const moduleFactory = await compiler.compileModuleAsync(DbViewModule);
             const moduleRef = moduleFactory.create(this.injector);

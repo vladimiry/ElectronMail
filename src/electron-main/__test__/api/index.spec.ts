@@ -584,7 +584,7 @@ test.beforeEach(async (t) => {
 
     memFsVolume._impl.mkdirpSync(process.cwd());
     memFsVolume._impl.mkdirpSync(path.join(appDir, "web/browser-window"));
-    memFsVolume._impl.writeFileSync(path.join(appDir, "web/browser-window/vendor.css"), "");
+    memFsVolume._impl.writeFileSync(path.join(appDir, "web/browser-window/shared-vendor.css"), "");
 
     // reducing work factor in order to speed-up the test process and make it less computing resources consuming
     encryptionPreset.keyDerivation = {type: "sodium.crypto_pwhash", preset: "mode:interactive|algorithm:default"};

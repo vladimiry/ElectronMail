@@ -84,15 +84,11 @@ const config = buildBaseWebConfig(
         optimization: {
             splitChunks: {
                 cacheGroups: {
-                    commons: {
-                        test: /[\\/]node_modules[\\/]|[\\/]vendor[\\/]/,
-                        name: "vendor",
+                    styles: {
+                        name: "shared-vendor",
+                        test: /[\\/]vendor[\\/]shared-vendor\.scss$/,
                         chunks: "all",
-                    },
-                    "_db-view": {
-                        test: /src[\\/]web[\\/]browser-window[\\/]app[\\/]_db-view/,
-                        name: "_db-view",
-                        chunks: "all",
+                        enforce: true,
                     },
                 },
             },

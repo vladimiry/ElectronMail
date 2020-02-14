@@ -1,4 +1,5 @@
 import "zone.js/dist/zone";
 
-import "src/web/browser-window/vendor/index.scss";
+import "./shared-vendor.scss";
+import "./app.scss";
 import "./electron-webview-angular-fix.ts";

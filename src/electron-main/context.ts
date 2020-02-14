@@ -208,7 +208,7 @@ function initLocations(
         },
         vendorsAppCssLinkHref: (() => {
             // TODO electron: get rid of "baseURLForDataURL" workaround, see https://github.com/electron/electron/issues/20700
-            const webRelativeCssFilePath = "browser-window/vendor.css";
+            const webRelativeCssFilePath = "browser-window/shared-vendor.css";
             const file = appRelativePath("web", webRelativeCssFilePath);
             const stat = storeFs._impl.statSync(file);
             if (!stat.isFile()) {

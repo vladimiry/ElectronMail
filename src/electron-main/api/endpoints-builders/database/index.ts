@@ -127,7 +127,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             const account = ctx.db.getAccount({login});
 
             if (!account) {
-                return undefined;
+                return false;
             }
 
             return {

@@ -55,7 +55,7 @@ export const ENDPOINTS_DEFINITION = {
                 system: DbModel.View.Folder[];
                 custom: DbModel.View.Folder[];
             };
-        } | undefined>(),
+        } | false>(),
 
     dbGetAccountMail: ActionType.Promise<DbModel.DbAccountPk & { pk: DbModel.Mail["pk"] }, DbModel.Mail>(),
 

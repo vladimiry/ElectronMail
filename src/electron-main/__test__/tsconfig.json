@@ -1,7 +1,7 @@
 {
   "extends": "./../tsconfig.json",
   "compilerOptions": {
-    "outDir": "./__compiled__",
+    "outDir": "./../../../output/__test__/electron-main",
     "noEmitOnError": true,
     "plugins": [
       {

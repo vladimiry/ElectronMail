@@ -18,4 +18,3 @@ package-lock.json
 /output/
 /scripts/electron-builder/**/*.js
 /yarn-audit-issues
-/src/electron-main/__test__/__compiled__

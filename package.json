@@ -78,8 +78,8 @@
     "start:electron:dev": "electron ./app-dev/electron-main.js",
     "test:e2e": "cross-env TS_NODE_FILES=true npx --no-install --node-arg=\"-r tsconfig-paths/register -r ts-node/register\" ava \"./src/e2e/**/*.{spec,test}.ts\"",
     "test:electron-main": "cross-env NODE_ENV=test npm-run-all test:electron-main:compiled:clean test:electron-main:compiled:compile test:electron-main:compiled:ava",
-    "test:electron-main:compiled:ava": "npx --no-install ava \"./src/electron-main/__test__/__compiled__/src/electron-main/__test__/**/*.{spec,test}.js\"",
-    "test:electron-main:compiled:clean": "rimraf ./src/electron-main/__test__/__compiled__",
+    "test:electron-main:compiled:ava": "npx --no-install ava \"./output/__test__/electron-main/src/electron-main/__test__/**/*.{spec,test}.js\"",
+    "test:electron-main:compiled:clean": "rimraf ./output/__test__/electron-main",
     "test:electron-main:compiled:compile": "cross-env TS_NODE_FILES=true npx --no-install --node-arg=\"-r tsconfig-paths/register\" ttsc --project ./src/electron-main/__test__/tsconfig.json",
     "test:electron-main:ts-node": "yarn test:electron-main:ts-node:shortcut \"./src/electron-main/__test__/**/*.{spec,test}.ts\"",
     "test:electron-main:ts-node:shortcut": "cross-env TS_NODE_FILES=true TS_NODE_PROJECT=./src/electron-main/__test__/tsconfig.json npx --no-install --node-arg=\"-r tsconfig-paths/register -r ts-node/register\" ava",
@@ -106,7 +106,8 @@
       "js"
     ],
     "files": [
-      "./src/**/*.{spec,test}.{ts,js}"
+      "./src/**/*.{spec,test}.{ts,js}",
+      "./output/__test__/**/*.{spec,test}.{ts,js}"
     ],
     "timeout": "120s",
     "verbose": true

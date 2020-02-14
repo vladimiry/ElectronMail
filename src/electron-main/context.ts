@@ -10,8 +10,14 @@ import {Config, Settings} from "src/shared/model/options";
 import {Context, ContextInitOptions, ContextInitOptionsPaths} from "./model";
 import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
-import {INITIAL_STORES, WEB_PROTOCOL_SCHEME, configEncryptionPresetValidator, settingsAccountLoginUniquenessValidator} from "./constants";
-import {LOCAL_WEBCLIENT_PROTOCOL_PREFIX, RUNTIME_ENV_E2E, RUNTIME_ENV_USER_DATA_DIR, WEB_CHUNK_NAMES} from "src/shared/constants";
+import {INITIAL_STORES, configEncryptionPresetValidator, settingsAccountLoginUniquenessValidator} from "./constants";
+import {
+    LOCAL_WEBCLIENT_PROTOCOL_PREFIX,
+    RUNTIME_ENV_E2E,
+    RUNTIME_ENV_USER_DATA_DIR,
+    WEB_CHUNK_NAMES,
+    WEB_PROTOCOL_SCHEME
+} from "src/shared/constants";
 import {SessionStorage} from "src/electron-main/session-storage";
 import {formatFileUrl} from "./util";
 

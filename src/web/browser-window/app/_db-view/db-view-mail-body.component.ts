@@ -1,3 +1,4 @@
+import UUID from "pure-uuid";
 import {
     AfterViewInit,
     ChangeDetectionStrategy,
@@ -20,7 +21,7 @@ import {DB_VIDE_MAIL_SELECTED_CLASS_NAME} from "src/web/browser-window/app/_db-v
 import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
 import {DbViewMailComponent} from "src/web/browser-window/app/_db-view/db-view-mail.component";
 import {Mail, View} from "src/shared/model/database";
-import {ONE_SECOND_MS} from "src/shared/constants";
+import {ONE_SECOND_MS, WEB_PROTOCOL_SCHEME} from "src/shared/constants";
 import {State} from "src/web/browser-window/app/store/reducers/db-view";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
 
@@ -214,19 +215,37 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
             return;
         }
 
+        const iframeCspInlineStyleNonce = new UUID(4).format();
+        const iframeCsp = `default-src 'none'; style-src ${WEB_PROTOCOL_SCHEME}: 'nonce-${iframeCspInlineStyleNonce}'`;
+
+        (() => {
+            delete this.bodyIframe;
+            const iframe = document.createElement("iframe");
+
+            iframe.setAttribute(
+                "sandbox",
+                "allow-same-origin", // exclusion required to be able to call "document.open()" on iframe
+            );
+            iframe.setAttribute("csp", iframeCsp);
+
+            this.bodyIframe = iframe;
+        })();
+
         // WARN: access "contentWindow" only having "appendChild" executed before
-        const {contentWindow} = container.appendChild(this.bodyIframe = document.createElement("iframe"));
+        const {contentWindow} = container.appendChild(this.bodyIframe);
 
         if (!contentWindow) {
-            return;
+            throw new Error(`Failed to prepare email body rendering "iframe"`);
         }
 
         contentWindow.document.open();
         contentWindow.document.write(`
             <html>
             <head>
+                <meta http-equiv="Content-Security-Policy" content="${iframeCsp}">
+                <meta http-equiv="X-Content-Security-Policy" content="${iframeCsp}">
                 <link rel="stylesheet" href="${__METADATA__.electronLocations.vendorsAppCssLinkHref}"/>
-                <style>
+                <style nonce="${iframeCspInlineStyleNonce}">
                     html, body {
                         background-color: transparent;
                     }

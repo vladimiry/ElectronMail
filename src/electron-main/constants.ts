@@ -9,9 +9,6 @@ import {initialConfig} from "src/shared/util";
 
 export const PLATFORM = platform();
 
-// TODO electron: get rid of "baseURLForDataURL" workaround, see https://github.com/electron/electron/issues/20700
-export const WEB_PROTOCOL_SCHEME = "web";
-
 export const SNAP_CONTAINER = (
     Boolean(process.env.SNAP)
     &&

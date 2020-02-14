@@ -10,9 +10,9 @@ import {
     PACKAGE_VERSION,
     PRODUCT_NAME,
     WEB_CHUNK_NAMES,
+    WEB_PROTOCOL_SCHEME,
     ZOOM_FACTOR_DEFAULT,
 } from "src/shared/constants";
-import {WEB_PROTOCOL_SCHEME} from "src/electron-main/constants";
 import {curryFunctionMembers} from "src/shared/util";
 import {injectVendorsAppCssIntoHtmlFile} from "src/electron-main/util";
 

@@ -7,6 +7,7 @@ import {URL} from "url";
 import {promisify} from "util";
 
 import {Context} from "src/electron-main/model";
+import {WEB_PROTOCOL_SCHEME} from "src/shared/constants";
 
 const fsAsync = {
     stat: promisify(fs.stat),
@@ -34,7 +35,7 @@ export async function registerWebFolderFileProtocol(ctx: Context, session: Sessi
 
     return new Promise((resolve, reject) => {
         session.protocol.registerFileProtocol(
-            "web",
+            WEB_PROTOCOL_SCHEME,
             (request, callback) => {
                 const url = new URL(request.url);
                 const resource = path.normalize(

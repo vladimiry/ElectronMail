@@ -10,7 +10,7 @@ test("flow", async (t) => {
     const mocks = buildMocks();
 
     await Promise.all([
-        await loadLibrary(mocks),
+        loadLibrary(mocks),
         asyncDelay(ONE_SECOND_MS / 2),
     ]);
 

@@ -294,22 +294,6 @@ export class OptionsEffects {
             ))),
     );
 
-    toggleCompactLayout$ = createEffect(
-        () => this.actions$.pipe(
-            unionizeActionFilter(OPTIONS_ACTIONS.is.ToggleCompactRequest),
-            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-            concatMap(() => merge(
-                of(this.buildPatchProgress({togglingCompactLayout: true})),
-                from(
-                    this.ipcMainClient("toggleCompactLayout")(),
-                ).pipe(
-                    map((config) => OPTIONS_ACTIONS.GetConfigResponse(config)),
-                    catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
-                    finalize(() => this.dispatchProgress({togglingCompactLayout: false})),
-                ),
-            ))),
-    );
-
     updateBaseSettings$ = createEffect(
         () => this.actions$.pipe(
             unionizeActionFilter(OPTIONS_ACTIONS.is.PatchBaseSettingsRequest),

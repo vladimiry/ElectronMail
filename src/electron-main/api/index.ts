@@ -321,15 +321,6 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             return ctx.settingsStore.readable();
         },
 
-        async toggleCompactLayout() {
-            const config = await ctx.configStore.readExisting();
-
-            return ctx.configStore.write({
-                ...config,
-                compactLayout: !config.compactLayout,
-            });
-        },
-
         async generateTOTPToken({secret}) {
             return {
                 token: authenticator.generate(secret),

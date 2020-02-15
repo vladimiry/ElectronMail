@@ -41,20 +41,21 @@
         .btn-group {
             width: 100%;
 
-            > .btn:first-child {
-                width: 100%;
-                white-space: nowrap;
-                border-right-color: $app-color-secondary-btn-split-border;
-                border-right-width: 2px; // next to it button has got "margin-left: -1px" defined by "bootstrap"
+            > .btn {
+                &:first-child {
+                    width: 100%;
+                    white-space: nowrap;
+                    border-right-color: $app-color-secondary-btn-split-border;
+                }
+
+                &:not(:first-child) {
+                    margin-left: 0;
+                }
             }
         }
 
         .dropdown-menu {
             min-width: 100%;
-
-            .toggle-layout-view {
-                display: none;
-            }
         }
     }
 
@@ -112,7 +113,7 @@
         flex: 1;
     }
 
-    .compact-layout {
+    .layout-mode-top {
         &::ng-deep {
             #{$app-prefix}-account-title {
                 &:not(:last-child) {
@@ -123,15 +124,7 @@
     }
 
     @media (min-width: #{map-get($grid-breakpoints, lg)}) {
-        .controls {
-            .dropdown-menu {
-                .toggle-layout-view {
-                    display: block;
-                }
-            }
-        }
-
-        .wrapper:not(.compact-layout) {
+        [class*="layout-mode-left"] {
             flex-flow: row;
 
             > .btn-group {
@@ -147,6 +140,7 @@
                 position: relative;
                 flex-flow: column;
                 flex-grow: 0;
+                overflow-y: auto;
 
                 .list-group.accounts-list {
                     flex-direction: column;
@@ -160,6 +154,73 @@
             .list-group.accounts-list {
                 flex-direction: row;
                 flex-wrap: wrap;
+            }
+        }
+
+        .layout-mode-left-thin {
+            &::ng-deep {
+                .btn-group {
+                    flex-direction: column;
+
+                    > .btn-sm {
+                        flex-direction: column;
+                        align-items: center;
+                        padding-left: ($btn-padding-x-sm / 2);
+                        padding-right: ($btn-padding-x-sm / 2);
+
+                        &:not(:last-child) {
+                            border-radius: $btn-border-radius-sm $btn-border-radius-sm 0 0;
+                            border-bottom-color: $app-color-secondary-btn-split-border;
+                        }
+
+                        &:not(:first-child) {
+                            border-radius: 0 0 $btn-border-radius-sm $btn-border-radius-sm;
+                            padding-top: 0.1rem;
+                            padding-bottom: 0.1rem;
+                        }
+                    }
+                }
+
+                #{$app-prefix}-account-title {
+                    $margin-v: ($app-spacer-1 / 1.5);
+
+                    #{$app-prefix}-unread-badge {
+                        margin-bottom: $margin-v;
+                    }
+
+                    .fa {
+                        margin: 0 !important;
+                        padding: .2rem 0;
+                        line-height: 1;
+
+                        &.fa-unlock {
+                            padding-left: .15rem;
+                        }
+                    }
+
+                    .letters {
+                        writing-mode: tb-rl;
+                        transform: rotate(180deg);
+                        margin: $margin-v 0;
+                        line-height: 1;
+
+                        &.login {
+                            margin-left: -0.05rem;
+                        }
+                    }
+
+                    .btn-group {
+                        .login-delay {
+                            flex-direction: column;
+                        }
+
+                        > * {
+                            &, > * {
+                                margin-right: 0 !important;
+                            }
+                        }
+                    }
+                }
             }
         }
     }

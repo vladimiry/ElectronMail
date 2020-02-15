@@ -6,7 +6,7 @@ import {distinctUntilKeyChanged, map, take} from "rxjs/operators";
 
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {BaseConfig} from "src/shared/model/options";
-import {LOG_LEVELS, ZOOM_FACTORS} from "src/shared/constants";
+import {LAYOUT_MODES, LOG_LEVELS, ZOOM_FACTORS} from "src/shared/constants";
 import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
@@ -20,14 +20,16 @@ import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
 export class BaseSettingsComponent implements OnInit, OnDestroy {
     readonly showStartMinimizedToTrayIssueLink = __METADATA__.platform === "linux";
 
-    processing$: Observable<boolean> = this.store.pipe(
+    readonly processing$: Observable<boolean> = this.store.pipe(
         select(OptionsSelectors.FEATURED.progress),
         map((progress) => Boolean(progress.updatingBaseSettings)),
     );
 
-    logLevels = LOG_LEVELS;
+    readonly logLevels = LOG_LEVELS;
 
-    idleTimeLogOutSecValues: ReadonlyArray<Readonly<{ title: string; valueSec: number; }>> = [
+    readonly layoutModes = LAYOUT_MODES;
+
+    readonly idleTimeLogOutSecValues: ReadonlyArray<Readonly<{ title: string; valueSec: number; }>> = [
         {title: "disabled", valueSec: 0},
         {title: "3 minutes", valueSec: 60 * 3},
         {title: "5 minutes", valueSec: 60 * 5},
@@ -38,14 +40,14 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         {title: "30 minutes", valueSec: 60 * 30},
     ];
 
-    zoomFactors = ZOOM_FACTORS.map((zoomLevel) => ({value: zoomLevel, title: `${Math.round(zoomLevel * 100)}%`}));
+    readonly zoomFactors = ZOOM_FACTORS.map((zoomLevel) => ({value: zoomLevel, title: `${Math.round(zoomLevel * 100)}%`}));
 
     appearanceBlockCollapsed: boolean = true;
 
-    controls: Record<keyof BaseConfig, AbstractControl> = {
+    readonly controls: Record<keyof BaseConfig, AbstractControl> = {
         checkUpdateAndNotify: new FormControl(),
         closeToTray: new FormControl(),
-        compactLayout: new FormControl(),
+        layoutMode: new FormControl(),
         customTrayIconColor: new FormControl(),
         customUnreadBgColor: new FormControl(),
         customUnreadTextColor: new FormControl(),
@@ -61,17 +63,17 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         zoomFactor: new FormControl(),
     };
 
-    form = new FormGroup(this.controls);
+    readonly form = new FormGroup(this.controls);
 
-    colorPickerOpened: { bg: boolean; text: boolean; icon: boolean; } = {bg: false, text: false, icon: false};
+    readonly colorPickerOpened: { bg: boolean; text: boolean; icon: boolean; } = {bg: false, text: false, icon: false};
 
-    $trayIconColor = this.store.pipe(select(OptionsSelectors.CONFIG.trayIconColor));
+    readonly $trayIconColor = this.store.pipe(select(OptionsSelectors.CONFIG.trayIconColor));
 
-    $unreadBgColor = this.store.pipe(select(OptionsSelectors.CONFIG.unreadBgColor));
+    readonly $unreadBgColor = this.store.pipe(select(OptionsSelectors.CONFIG.unreadBgColor));
 
-    $unreadTextColor = this.store.pipe(select(OptionsSelectors.CONFIG.unreadTextColor));
+    readonly $unreadTextColor = this.store.pipe(select(OptionsSelectors.CONFIG.unreadTextColor));
 
-    $unreadSummary = this.store.pipe(
+    readonly $unreadSummary = this.store.pipe(
         select(AccountsSelectors.ACCOUNTS.loggedInAndUnreadSummary),
         map(({unread}) => unread),
     );

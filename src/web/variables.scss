@@ -15,7 +15,7 @@ $app-color-bg-dark-1: #3c414e;
 $app-color-primary-light: lighten(theme-color("primary"), 2%);
 $app-color-purple-light: lighten(#987ebf, 2%);
 $app-color-warning-light-text: theme-color-level("warning", 6);
-$app-color-secondary-btn-split-border: darken($secondary, 5%);
+$app-color-secondary-btn-split-border: darken($secondary, 7%);
 
 $app-font-size-base-smallest: $font-size-base * 0.75;
 $app-font-size-base-small: $font-size-base * 0.8;

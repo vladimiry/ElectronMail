@@ -111,8 +111,6 @@ export const ENDPOINTS_DEFINITION = {
 
     toggleBrowserWindow: ActionType.Promise<{ forcedState: boolean } | void>(),
 
-    toggleCompactLayout: ActionType.Promise<void, Config>(),
-
     updateOverlayIcon: ActionType.Promise<{
         hasLoggedOut: boolean;
         unread: number;

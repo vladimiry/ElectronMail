@@ -3,7 +3,7 @@
     [ngClass]="{'selected': state.selected, 'stored': state.stored, 'login-filled-once': state.account.loginFilledOnce}"
     class="btn-group"
 >
-    <a class="btn btn-sm btn-secondary b-handle" href="mailto:{{ state.account.accountConfig.login }}">
+    <a class="btn btn-sm btn-secondary" href="mailto:{{ state.account.accountConfig.login }}">
         <electron-mail-unread-badge
             *ngIf="state.account.notifications.unread"
             [value]="state.account.notifications.unread"
@@ -14,16 +14,14 @@
         </div>
         <div *ngIf="state.loginDelayed" class="d-flex mr-2 login-delay">
             <i *ngIf="state.account.loginDelayedUntilSelected" class="fa fa-hand-pointer-o mr-1"></i>
-            <span *ngIf="state.account.loginDelayedSeconds; let remainingSeconds">{{ remainingSeconds }}</span>
+            <span class="letters" *ngIf="state.account.loginDelayedSeconds; let remainingSeconds">{{ remainingSeconds }}</span>
         </div>
-        <div class="d-flex flex-grow-1">
-            {{ state.account.accountConfig.title || state.account.accountConfig.login }}
-        </div>
+        <div class="d-flex flex-grow-1 letters login">{{ state.account.accountConfig.title || state.account.accountConfig.login }}</div>
     </a>
     <button
         (click)="toggleViewMode($event)"
         *ngIf="state.stored"
-        class="btn btn-sm btn-secondary b-toggle-view"
+        class="btn btn-sm btn-secondary"
         title="Toggle online/database view mode"
     >
         <i

@@ -27,7 +27,6 @@ export const OPTIONS_ACTIONS = unionize({
         PatchProgress: ofType<ProgressPatch>(),
         ReEncryptSettings: ofType<{ password: string, encryptionPreset: PasswordBasedPreset }>(),
         SignInRequest: ofType<Partial<PasswordFieldContainer> & { savePassword?: boolean; }>(),
-        ToggleCompactRequest: ofType<{}>(),
         ToggleLocalDbMailsListViewMode: ofType<{}>(),
         SetupMainProcessNotification: ofType<{}>(),
         PatchMainProcessNotification: ofType<State["mainProcessNotification"]>(),

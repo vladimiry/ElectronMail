@@ -20,7 +20,7 @@ export const FEATURED = {
 
 export const CONFIG = {
     base: createSelector(FEATURED.config, pickBaseConfigProperties),
-    compactLayout: createSelector(FEATURED.config, (config) => config.compactLayout),
+    layoutMode: createSelector(FEATURED.config, (config) => config.layoutMode),
     unreadNotifications: createSelector(FEATURED.config, (config) => config.unreadNotifications),
     trayIconColor: createSelector(FEATURED.config, (config) => config.customTrayIconColor || DEFAULT_TRAY_ICON_COLOR),
     unreadBgColor: createSelector(FEATURED.config, (config) => config.customUnreadBgColor || DEFAULT_UNREAD_BADGE_BG_COLOR),

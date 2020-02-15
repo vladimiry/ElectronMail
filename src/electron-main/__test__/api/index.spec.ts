@@ -350,7 +350,7 @@ const tests: Record<keyof TestContext["endpoints"], (t: ExecutionContext<TestCon
         const patches: Array<Partial<BaseConfig>> = [
             {
                 startHidden: false,
-                compactLayout: true,
+                layoutMode: "top",
                 closeToTray: false,
                 unreadNotifications: true,
                 checkUpdateAndNotify: true,
@@ -358,7 +358,7 @@ const tests: Record<keyof TestContext["endpoints"], (t: ExecutionContext<TestCon
             },
             {
                 startHidden: true,
-                compactLayout: undefined,
+                layoutMode: undefined,
                 closeToTray: true,
                 unreadNotifications: false,
                 checkUpdateAndNotify: false,
@@ -445,21 +445,6 @@ const tests: Record<keyof TestContext["endpoints"], (t: ExecutionContext<TestCon
         t.false(await t.context.ctx.settingsStore.readable(), "store: settings file does not exist");
         await readConfigAndSettings(t.context.endpoints, {password: OPTIONS.masterPassword});
         t.true(await t.context.ctx.settingsStore.readable(), "store: settings file exists");
-    },
-
-    toggleCompactLayout: async (t) => {
-        const endpoints = t.context.endpoints;
-        const action = endpoints.toggleCompactLayout;
-
-        const config1 = await readConfig(endpoints);
-        t.true(config1.compactLayout);
-
-        const config2 = await action();
-        t.is(config2.compactLayout, !config1.compactLayout);
-
-        await action();
-        const config3 = await t.context.ctx.configStore.readExisting();
-        t.is(config3.compactLayout, !config2.compactLayout);
     },
 };
 

@@ -188,6 +188,11 @@ export const ZOOM_FACTORS: ReadonlyArray<number> = [
     2,
 ];
 
+export const LAYOUT_MODES = [
+    {value: "top", title: "top"},
+    {value: "left", title: "left"},
+    {value: "left-thin", title: "left (thin)"},
+] as const;
 
 export const WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS = "ELECTRON_MAIL_SKIP_LOGIN_DELAYS";
 

@@ -82,17 +82,6 @@
         <div class="custom-control custom-switch">
             <input
                 class="custom-control-input"
-                formControlName="compactLayout"
-                id="compactLayoutCheckbox"
-                type="checkbox"
-            >
-            <label class="custom-control-label" for="compactLayoutCheckbox">
-                Tabs view mode
-            </label>
-        </div>
-        <div class="custom-control custom-switch">
-            <input
-                class="custom-control-input"
                 formControlName="startHidden"
                 id="startHiddenCheckbox"
                 type="checkbox"
@@ -221,6 +210,20 @@
                     bindLabel="title"
                     bindValue="valueSec"
                     formControlName="idleTimeLogOutSec"
+                ></ng-select>
+            </div>
+        </div>
+        <label class="d-block mb-2">
+            Controls view mode
+        </label>
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <ng-select
+                    [clearable]="false"
+                    [items]="layoutModes"
+                    bindLabel="title"
+                    bindValue="value"
+                    formControlName="layoutMode"
                 ></ng-select>
             </div>
         </div>

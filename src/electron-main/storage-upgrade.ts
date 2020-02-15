@@ -14,6 +14,7 @@ import {INITIAL_STORES, PLATFORM} from "./constants";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {
+    LAYOUT_MODES,
     ONE_SECOND_MS,
     PACKAGE_VERSION,
     PROTON_API_ENTRY_PRIMARY_VALUE,
@@ -287,6 +288,24 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
                     );
                 });
             });
+        })();
+
+        (() => {
+            const key: keyof Pick<Config, "layoutMode"> = "layoutMode";
+
+            if (LAYOUT_MODES.some(({value}) => value === config[key])) {
+                return;
+            }
+
+            type PrevConfig = Config & { compactLayout?: boolean };
+            const compactLayout = (config as PrevConfig).compactLayout;
+            delete (config as PrevConfig).compactLayout;
+
+            config[key] = typeof compactLayout === "boolean"
+                ? compactLayout
+                    ? "top"
+                    : "left"
+                : INITIAL_STORES.config()[key];
         })();
     },
     // WARN needs to be the last updater

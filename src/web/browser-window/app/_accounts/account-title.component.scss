@@ -20,58 +20,54 @@
         &.selected {
             .btn {
                 @include account-title-button(
-                    map_get($app-account-title-btn-colors, "selected-bg"),
-                    map_get($app-account-title-btn-colors, "selected-border"),
+                        map_get($app-account-title-btn-colors, "selected-bg"),
+                        map_get($app-account-title-btn-colors, "selected-border"),
                 );
+
+                &:nth-child(2) {
+                    .fa {
+                        &.syncing {
+                            color: theme-color("primary");
+                        }
+                    }
+                }
             }
 
             .btn,
             .login-delay {
                 color: map_get($app-account-title-btn-colors, "selected-text");
             }
-
-            .b-toggle-view {
-                .fa {
-                    &.syncing {
-                        color: theme-color("primary");
-                    }
-                }
-            }
         }
 
         &:not(.selected) {
-            &.stored {
-                .b-handle {
-                    border-right-color: $app-color-secondary-btn-split-border;
-                }
+            > .btn:not(:last-child) {
+                border-right-color: $app-color-secondary-btn-split-border;
             }
         }
 
-        > .btn:first-child {
-            flex-grow: 1;
-        }
-    }
+        > .btn {
+            &:nth-child(1) {
+                flex-grow: 1;
+                display: flex;
+                text-decoration: none;
+                align-items: center;
+            }
 
-    .b-handle {
-        display: flex;
-        flex-grow: 1;
-        text-decoration: none;
-        align-items: center;
-    }
+            &:nth-child(2) {
+                @include app-dropdown-toggle-split;
+                margin-left: 0;
+                flex-grow: 0;
+                border-left-width: 0;
 
-    .b-toggle-view {
-        @include app-dropdown-toggle-split;
-        margin-left: 0;
-        flex-grow: 0;
-        border-left-width: 0;
+                .fa {
+                    font-size: 78%;
+                    width: 0.78em; // prevents button size change on icon toggling
 
-        .fa {
-            font-size: 78%;
-            width: 0.78em; // prevents button size change on icon toggling
-
-            &.syncing {
-                color: $app-color-primary-light;
-                animation: app-keyframes-opacity 1s linear infinite;
+                    &.syncing {
+                        color: $app-color-primary-light;
+                        animation: app-keyframes-opacity 1s linear infinite;
+                    }
+                }
             }
         }
     }
@@ -82,7 +78,7 @@
 
     .login-delay {
         color: $gray-300;
-        font-size: 85%;
+        font-size: 80%;
 
         .fa ~ span {
             margin-left: $app-spacer-1 / 2;

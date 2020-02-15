@@ -4,7 +4,7 @@ import {Store, select} from "@ngrx/store";
 import {distinctUntilChanged, map} from "rxjs/operators";
 import {equals} from "remeda";
 
-import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
@@ -20,7 +20,7 @@ import {WebAccount} from "src/web/browser-window/app/model";
 })
 export class AccountsComponent implements OnInit, OnDestroy {
     initialized$ = this.store.pipe(select(AccountsSelectors.FEATURED.initialized));
-    compactLayout$ = this.store.pipe(select(OptionsSelectors.CONFIG.compactLayout));
+    layoutMode$ = this.store.pipe(select(OptionsSelectors.CONFIG.layoutMode));
     hideControls$ = this.store.pipe(select(OptionsSelectors.CONFIG.hideControls));
     accountsMap: Map<WebAccount["accountConfig"]["login"], WebAccount> = new Map();
     selectedAccount?: WebAccount;
@@ -116,10 +116,6 @@ export class AccountsComponent implements OnInit, OnDestroy {
 
     openSettingsFolder() {
         this.store.dispatch(NAVIGATION_ACTIONS.OpenSettingsFolder());
-    }
-
-    toggleCompactLayout() {
-        this.store.dispatch(OPTIONS_ACTIONS.ToggleCompactRequest());
     }
 
     logout() {

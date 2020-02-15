@@ -1,4 +1,4 @@
-<div *ngIf="initialized$ | async" [ngClass]="{'compact-layout': compactLayout$ | async}" class="wrapper">
+<div *ngIf="initialized$ | async" [attr.class]="'wrapper layout-mode-' + (layoutMode$ | async)">
     <div class="accounts-block px-2 pt-2" [ngClass]="{'d-none': hideControls$ | async}">
         <div class="controls">
             <div class="btn-group" dropdown>
@@ -9,16 +9,6 @@
                     <span class="caret"></span>
                 </button>
                 <ul *dropdownMenu class="dropdown-menu" role="menu">
-                    <li role="menuitem">
-                        <button
-                            (click)="toggleCompactLayout()"
-                            class="dropdown-item toggle-layout-view"
-                            title="Toggling vertical/horizontal accounts handle buttons positioning"
-                            type="button"
-                        >
-                            Toggle View Mode
-                        </button>
-                    </li>
                     <li role="menuitem">
                         <button (click)="openSettingsFolder()" class="dropdown-item" type="button">
                             Open Settings Folder

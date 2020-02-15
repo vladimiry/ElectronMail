@@ -63,7 +63,7 @@ export function initialConfig(): Config {
             // base
             checkUpdateAndNotify: false,
             closeToTray: true,
-            compactLayout: true,
+            layoutMode: "top",
             customTrayIconColor: "",
             customUnreadBgColor: "",
             customUnreadTextColor: "",
@@ -85,7 +85,7 @@ export function pickBaseConfigProperties(
     {
         checkUpdateAndNotify,
         closeToTray,
-        compactLayout,
+        layoutMode,
         customTrayIconColor,
         customUnreadBgColor,
         customUnreadTextColor,
@@ -104,7 +104,7 @@ export function pickBaseConfigProperties(
     return {
         checkUpdateAndNotify,
         closeToTray,
-        compactLayout,
+        layoutMode,
         customTrayIconColor,
         customUnreadBgColor,
         customUnreadTextColor,

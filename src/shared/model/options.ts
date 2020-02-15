@@ -41,7 +41,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     // base
     checkUpdateAndNotify: boolean;
     closeToTray: boolean;
-    compactLayout: boolean;
+    layoutMode: (typeof import("src/shared/constants").LAYOUT_MODES)[number]["value"];
     customTrayIconColor: string;
     customUnreadBgColor: string;
     customUnreadTextColor: string;
@@ -60,7 +60,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
 export type BaseConfig = Pick<Config,
     | "checkUpdateAndNotify"
     | "closeToTray"
-    | "compactLayout"
+    | "layoutMode"
     | "customTrayIconColor"
     | "customUnreadBgColor"
     | "customUnreadTextColor"

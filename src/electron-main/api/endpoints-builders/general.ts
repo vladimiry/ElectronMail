@@ -2,7 +2,6 @@ import ProxyAgent from "proxy-agent";
 import compareVersions from "compare-versions";
 import electronLog from "electron-log";
 import fetch from "node-fetch";
-import {ReposListReleasesResponse} from "@octokit/rest";
 import {app, shell} from "electron";
 import {inspect} from "util";
 import {isWebUri} from "valid-url";
@@ -252,6 +251,8 @@ export async function buildEndpoints(
 
                     throw new Error(`Update check failed: ${errorMessageData}`);
                 }
+
+                type ReposListReleasesResponse = Unpacked<ReturnType<(import("@octokit/rest").Octokit)["repos"]["listReleases"]>>["data"];
 
                 const releases: ReposListReleasesResponse = await response.json();
                 logger.verbose(

@@ -40,7 +40,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     localDbMailsListViewMode: "plain" | "conversation";
     // base
     checkUpdateAndNotify: boolean;
-    closeToTray: boolean;
+    hideOnClose: boolean;
     layoutMode: (typeof import("src/shared/constants").LAYOUT_MODES)[number]["value"];
     customTrayIconColor: string;
     customUnreadBgColor: string;
@@ -59,7 +59,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
 
 export type BaseConfig = Pick<Config,
     | "checkUpdateAndNotify"
-    | "closeToTray"
+    | "hideOnClose"
     | "layoutMode"
     | "customTrayIconColor"
     | "customUnreadBgColor"

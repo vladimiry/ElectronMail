@@ -71,12 +71,13 @@
         <div class="custom-control custom-switch">
             <input
                 class="custom-control-input"
-                formControlName="closeToTray"
-                id="closeToTrayCheckbox"
+                formControlName="hideOnClose"
+                id="hideOnCloseCheckbox"
                 type="checkbox"
             >
-            <label class="custom-control-label" for="closeToTrayCheckbox">
+            <label class="custom-control-label" for="hideOnCloseCheckbox">
                 Close to tray
+                <a *ngIf="linuxLikePlatform" href="https://github.com/vladimiry/ElectronMail/issues/254">#254</a>
             </label>
         </div>
         <div class="custom-control custom-switch">
@@ -88,7 +89,7 @@
             >
             <label class="custom-control-label" for="startHiddenCheckbox">
                 Start minimized to tray
-                <a *ngIf="showStartMinimizedToTrayIssueLink" href="https://github.com/vladimiry/ElectronMail/issues/254">#254</a>
+                <a *ngIf="linuxLikePlatform" href="https://github.com/vladimiry/ElectronMail/issues/254">#254</a>
             </label>
         </div>
         <div class="custom-control custom-switch">

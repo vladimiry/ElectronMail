@@ -6,6 +6,7 @@ import {randomBytes} from "crypto";
 import {BaseConfig, Config, ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS, Settings} from "src/shared/model/options";
 import {PACKAGE_NAME} from "src/shared/constants";
 import {initialConfig} from "src/shared/util";
+import {linuxLikePlatform} from "src/electron-main/util";
 
 export const PLATFORM = platform();
 
@@ -24,9 +25,12 @@ export const INITIAL_STORES: Readonly<{
         return {
             ...config,
             checkUpdateAndNotify: !SNAP_CONTAINER, // update check is disabled by default for the Snap package type
-            startHidden: PLATFORM === "linux"
+            startHidden: linuxLikePlatform()
                 ? false
                 : config.startHidden,
+            hideOnClose: linuxLikePlatform()
+                ? false
+                : config.hideOnClose,
         };
     },
     settings: () => {

@@ -80,7 +80,7 @@ export const ENDPOINTS_DEFINITION = {
 
     staticInit: ActionType.Promise<void, ReadonlyDeep<{
         electronLocations: ElectronContextLocations;
-        platform: ReturnType<(typeof import("os"))["platform"]>;
+        linuxLikePlatform: boolean;
     }>>(),
 
     init: ActionType.Promise<void, InitResponse>(),

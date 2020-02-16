@@ -18,7 +18,7 @@ import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
     preserveWhitespaces: true,
 })
 export class BaseSettingsComponent implements OnInit, OnDestroy {
-    readonly showStartMinimizedToTrayIssueLink = __METADATA__.platform === "linux";
+    readonly linuxLikePlatform = __METADATA__.linuxLikePlatform;
 
     readonly processing$: Observable<boolean> = this.store.pipe(
         select(OptionsSelectors.FEATURED.progress),
@@ -46,7 +46,7 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
 
     readonly controls: Record<keyof BaseConfig, AbstractControl> = {
         checkUpdateAndNotify: new FormControl(),
-        closeToTray: new FormControl(),
+        hideOnClose: new FormControl(),
         layoutMode: new FormControl(),
         customTrayIconColor: new FormControl(),
         customUnreadBgColor: new FormControl(),

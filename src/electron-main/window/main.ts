@@ -64,7 +64,7 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
             event.returnValue = false;
             event.preventDefault();
 
-            if ((await ctx.configStore.readExisting()).closeToTray) {
+            if ((await ctx.configStore.readExisting()).hideOnClose) {
                 browserWindow.hide();
             } else {
                 state.forceClose = true;

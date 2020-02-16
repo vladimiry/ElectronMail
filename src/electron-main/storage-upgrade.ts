@@ -5,12 +5,12 @@ import {delay, filter, take} from "rxjs/operators";
 import {merge} from "rxjs";
 
 import {AccountConfig} from "src/shared/model/account";
-import {Config, Settings} from "src/shared/model/options";
+import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
 import {DB_INSTANCE_PROP_NAME} from "src/electron-main/database/constants";
 import {Database} from "./database";
 import {DbAccountPk} from "src/shared/model/database";
-import {INITIAL_STORES, PLATFORM} from "./constants";
+import {INITIAL_STORES} from "./constants";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {
@@ -23,6 +23,7 @@ import {
     ZOOM_FACTORS,
 } from "src/shared/constants";
 import {curryFunctionMembers, pickBaseConfigProperties} from "src/shared/util";
+import {linuxLikePlatform} from "src/electron-main/util";
 
 const logger = curryFunctionMembers(_logger, "[src/electron-main/storage-upgrade]");
 
@@ -228,40 +229,69 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
 
         logger.info(loggerPrefix);
 
-        (() => {
-            const key: keyof Pick<Config, "startHidden"> = "startHidden";
+        trayIconRelatedUpdate({prevKey: "startMinimized", key: "startHidden", keyTitle: "Start minimized to tray"});
+        trayIconRelatedUpdate({prevKey: "closeToTray", key: "hideOnClose", keyTitle: "Close to tray"});
 
-            if (typeof config[key] === "boolean") {
-                // renaming "startMinimized => startHidden" already happened before, so we do nothing
+        (() => {
+            const key: keyof Pick<Config, "layoutMode"> = "layoutMode";
+
+            if (LAYOUT_MODES.some(({value}) => value === config[key])) {
                 return;
             }
 
-            type PrevConfig = Config & { startMinimized?: boolean };
-            const valueSavedBefore423 = (config as PrevConfig).startMinimized;
+            type PrevConfig = Config & { compactLayout?: boolean };
+            const {compactLayout} = config as PrevConfig;
+            delete (config as PrevConfig).compactLayout;
+
+            config[key] = typeof compactLayout === "boolean"
+                ? compactLayout
+                    ? "top"
+                    : "left"
+                : INITIAL_STORES.config()[key];
+        })();
+
+        function trayIconRelatedUpdate(
+            {prevKey, key, keyTitle}:
+                | Readonly<{ prevKey: "startMinimized"; key: keyof Pick<BaseConfig, "startHidden">, keyTitle: string }>
+                | Readonly<{ prevKey: "closeToTray"; key: keyof Pick<BaseConfig, "hideOnClose">, keyTitle: string }>,
+        ) {
+            if (typeof config[key] === "boolean") {
+                return;
+            }
+
+            type PrevConfig = { [k in typeof prevKey]?: boolean };
+            const {[prevKey]: prevValue} = config as PrevConfig;
             delete (config as PrevConfig).startMinimized;
 
-            config[key] = PLATFORM === "linux" || typeof valueSavedBefore423 !== "boolean"
+            config[key] = linuxLikePlatform() || typeof prevValue !== "boolean"
                 // set the default value if any conditions met:
                 //   - Linux system
-                //   - no value saved before v4.2.3 detected
+                //   - no saved before v4.2.3 value detected
                 ? INITIAL_STORES.config()[key]
                 // otherwise just rename "startMinimized => startHidden"
-                : valueSavedBefore423;
+                : prevValue;
 
             setTimeout(() => {
-                const showStartMinimizedToTrayMessage = (
-                    PLATFORM === "linux"
+                const showValueResetNotification = (
+                    linuxLikePlatform()
                     &&
                     // value existed and has been changed/reset
-                    typeof valueSavedBefore423 === "boolean" && config[key] !== valueSavedBefore423
+                    typeof prevValue === "boolean" && config[key] !== prevValue
                 );
 
                 logger.info(
                     loggerPrefix,
-                    JSON.stringify({PLATFORM, valueSavedBefore423, [key]: config[key], showStartMinimizedToTrayMessage}),
+                    JSON.stringify({
+                        linuxLikePlatform: linuxLikePlatform(),
+                        prevKey,
+                        key,
+                        prevValue,
+                        value: config[key],
+                        showValueResetNotification
+                    }),
                 );
 
-                if (!showStartMinimizedToTrayMessage) {
+                if (!showValueResetNotification) {
                     return;
                 }
 
@@ -281,32 +311,14 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
                     IPC_MAIN_API_NOTIFICATION$.next(
                         IPC_MAIN_API_NOTIFICATION_ACTIONS.InfoMessage({
                             message: [
-                                `The "Start minimized to tray" flag has been reset, `,
-                                `see why in https://github.com/vladimiry/ElectronMail/issues/254.`,
+                                `The "${keyTitle}" flag has been reset. `,
+                                `See https://github.com/vladimiry/ElectronMail/issues/254 for details.`,
                             ].join(""),
                         }),
                     );
                 });
             });
-        })();
-
-        (() => {
-            const key: keyof Pick<Config, "layoutMode"> = "layoutMode";
-
-            if (LAYOUT_MODES.some(({value}) => value === config[key])) {
-                return;
-            }
-
-            type PrevConfig = Config & { compactLayout?: boolean };
-            const compactLayout = (config as PrevConfig).compactLayout;
-            delete (config as PrevConfig).compactLayout;
-
-            config[key] = typeof compactLayout === "boolean"
-                ? compactLayout
-                    ? "top"
-                    : "left"
-                : INITIAL_STORES.config()[key];
-        })();
+        }
     },
     // WARN needs to be the last updater
     "100.0.0": (config) => {

@@ -8,9 +8,8 @@ import {DB_DATA_CONTAINER_FIELDS} from "src/shared/model/database";
 import {IPC_MAIN_API, IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {PACKAGE_NAME, PRODUCT_NAME} from "src/shared/constants";
-import {PLATFORM} from "src/electron-main/constants";
 import {attachFullTextIndexWindow, detachFullTextIndexWindow} from "src/electron-main/window/full-text-search";
-import {buildSettingsAdapter} from "src/electron-main/util";
+import {buildSettingsAdapter, linuxLikePlatform} from "src/electron-main/util";
 import {clearIdleTimeLogOut, setupIdleTimeLogOut} from "src/electron-main/power-monitor";
 import {curryFunctionMembers} from "src/shared/util";
 import {deletePassword, getPassword, setPassword} from "src/electron-main/keytar";
@@ -52,7 +51,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
         async staticInit() {
             return {
                 electronLocations: ctx.locations,
-                platform: PLATFORM,
+                linuxLikePlatform: linuxLikePlatform(),
             };
         },
 

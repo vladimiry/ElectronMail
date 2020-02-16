@@ -62,7 +62,7 @@ export function initialConfig(): Config {
             localDbMailsListViewMode: "plain",
             // base
             checkUpdateAndNotify: false,
-            closeToTray: true,
+            hideOnClose: true,
             layoutMode: "top",
             customTrayIconColor: "",
             customUnreadBgColor: "",
@@ -84,7 +84,7 @@ export function initialConfig(): Config {
 export function pickBaseConfigProperties(
     {
         checkUpdateAndNotify,
-        closeToTray,
+        hideOnClose,
         layoutMode,
         customTrayIconColor,
         customUnreadBgColor,
@@ -103,7 +103,7 @@ export function pickBaseConfigProperties(
 ): Required<BaseConfig> {
     return {
         checkUpdateAndNotify,
-        closeToTray,
+        hideOnClose,
         layoutMode,
         customTrayIconColor,
         customUnreadBgColor,

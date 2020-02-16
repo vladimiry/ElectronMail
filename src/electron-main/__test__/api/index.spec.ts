@@ -351,7 +351,7 @@ const tests: Record<keyof TestContext["endpoints"], (t: ExecutionContext<TestCon
             {
                 startHidden: false,
                 layoutMode: "top",
-                closeToTray: false,
+                hideOnClose: false,
                 unreadNotifications: true,
                 checkUpdateAndNotify: true,
                 logLevel: "warn",
@@ -359,7 +359,7 @@ const tests: Record<keyof TestContext["endpoints"], (t: ExecutionContext<TestCon
             {
                 startHidden: true,
                 layoutMode: undefined,
-                closeToTray: true,
+                hideOnClose: true,
                 unreadNotifications: false,
                 checkUpdateAndNotify: false,
                 logLevel: "info",

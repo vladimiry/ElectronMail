@@ -61,6 +61,11 @@ form .required label::after {
     }
 }
 
+// "bootstrap"
+bs-dropdown-container {
+    z-index: $zindex-dropdown;
+}
+
 // "ng-select"
 ng-select.ng-invalid.ng-touched .ng-select-container { // sass-lint:disable-line no-qualifying-elements
     border-color: #dc3545;

@@ -71,8 +71,8 @@ export const PROVIDER_REPOS: ReadonlyDeep<Record<"WebClient" | "proton-mail-sett
         repoRelativeDistDir: "./build",
         baseDir: "", // TODO define model as {baseDir?: string} instead of using empty string value
         repo: "https://github.com/ProtonMail/WebClient.git",
-        commit: "f96be268c0117e6556092c3fbc5b6c379d716032",
-        version: "4.0.0-beta8",
+        commit: "4d751fc3ec902a33e14a81076292d14174047a6d",
+        version: "4.0.0-beta9",
         protonPackAppConfig: {
             // TODO proton-v4: make sure this value comes to the build after 4.0.0-beta7+ update
             //      currently it's hadrcoded in the WebClient code
@@ -83,7 +83,7 @@ export const PROVIDER_REPOS: ReadonlyDeep<Record<"WebClient" | "proton-mail-sett
         repoRelativeDistDir: "./dist",
         baseDir: "settings",
         repo: "https://github.com/ProtonMail/proton-mail-settings.git",
-        commit: "3f1a1acd7f18c97f3a7c872a9d66e3d95f83acde",
+        commit: "e85825885138b0eab1de63785abe12072c004389",
         version: "unknown",
         protonPackAppConfig: {
             clientId: "WebMailSettings",
@@ -93,7 +93,7 @@ export const PROVIDER_REPOS: ReadonlyDeep<Record<"WebClient" | "proton-mail-sett
         repoRelativeDistDir: "./dist",
         baseDir: "contacts",
         repo: "https://github.com/ProtonMail/proton-contacts.git",
-        commit: "417c4195504473c12ff046474e135f21749c6903",
+        commit: "3a6fee911fea8a74e784e23e43de431324fb61b3",
         version: "unknown",
         protonPackAppConfig: {
             clientId: "WebContacts",

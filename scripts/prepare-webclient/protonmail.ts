@@ -40,7 +40,7 @@ const folderAsDomainEntries: Array<FolderAsDomainEntry<{
         repoType: "WebClient",
         folderAsDomainEntries,
         flows: {
-            build: async ({repoDir: cwd, folderAsDomainEntry}) => {
+            async build({repoDir: cwd, folderAsDomainEntry}) {
                 const {configApiParam} = await configure(
                     // TODO proton-v4: drop "envFileName" parameter when proton moves "WebClient" to "proton-pack" building
                     {cwd, envFileName: "./env/env.json", repoType: "WebClient"},
@@ -108,6 +108,10 @@ const folderAsDomainEntries: Array<FolderAsDomainEntry<{
                             module.exports = webpackConfig;
                         `,
                     );
+
+                    // TODO drop "./node_modules/proton-translations" dir creating
+                    // https://github.com/ProtonMail/WebClient/issues/158#issuecomment-588103753
+                    await execShell(["npx", ["make-dir-cli", "./node_modules/proton-translations"], {cwd}]);
 
                     await execShell(["npm", ["run", "build", "--", "--api", configApiParam], {cwd}]);
 

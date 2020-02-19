@@ -83,7 +83,7 @@ export const PROVIDER_REPOS: ReadonlyDeep<Record<"WebClient" | "proton-mail-sett
         repoRelativeDistDir: "./dist",
         baseDir: "settings",
         repo: "https://github.com/ProtonMail/proton-mail-settings.git",
-        commit: "e85825885138b0eab1de63785abe12072c004389",
+        commit: "41e625d21218f5a5ad767173fce41098e7176458",
         version: "unknown",
         protonPackAppConfig: {
             clientId: "WebMailSettings",
@@ -93,7 +93,7 @@ export const PROVIDER_REPOS: ReadonlyDeep<Record<"WebClient" | "proton-mail-sett
         repoRelativeDistDir: "./dist",
         baseDir: "contacts",
         repo: "https://github.com/ProtonMail/proton-contacts.git",
-        commit: "3a6fee911fea8a74e784e23e43de431324fb61b3",
+        commit: "aed8afb08426c6b7b12f3260da41e95e7ddca96e",
         version: "unknown",
         protonPackAppConfig: {
             clientId: "WebContacts",
@@ -103,7 +103,7 @@ export const PROVIDER_REPOS: ReadonlyDeep<Record<"WebClient" | "proton-mail-sett
         repoRelativeDistDir: "./dist",
         baseDir: "calendar",
         repo: "https://github.com/ProtonMail/proton-calendar.git",
-        commit: "e08716488589407643d96fe784d7933b92e556a5",
+        commit: "5ec480f0b0033264e3d423c75f5f550df151fc91",
         version: "unknown",
         protonPackAppConfig: {
             clientId: "WebCalendar",

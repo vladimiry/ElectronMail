@@ -67,7 +67,7 @@ const folderAsDomainEntries: Array<FolderAsDomainEntry<{
                         await promisify(fs.rename)(from, to);
                     })();
 
-                    const hasSeenOboardingModalSuppressor = await (async () => {
+                    const hasSeenOnboardingModalSuppressor = await (async () => {
                         const replacedMarkFile = path.join(cwd, `${new UUID(4).format()}-replaced-mark`);
                         const targetFile = path.resolve(cwd, "./src/app/core/controllers/secured.js");
                         if (!fsExtra.existsSync(targetFile)) {
@@ -104,7 +104,7 @@ const folderAsDomainEntries: Array<FolderAsDomainEntry<{
                         `
                             const webpackConfig = require("${originalWebpackConfigFile}");
                             ${resolveWebpackConfigPatchingCode("webpackConfig")}
-                            ${hasSeenOboardingModalSuppressor.webpackConfigCodePatch}
+                            ${hasSeenOnboardingModalSuppressor.webpackConfigCodePatch}
                             module.exports = webpackConfig;
                         `,
                     );
@@ -115,8 +115,8 @@ const folderAsDomainEntries: Array<FolderAsDomainEntry<{
 
                     await execShell(["npm", ["run", "build", "--", "--api", configApiParam], {cwd}]);
 
-                    if (!hasSeenOboardingModalSuppressor.isReplaced()) {
-                        throw new Error(`Failed to patch the "${hasSeenOboardingModalSuppressor}" file`);
+                    if (!hasSeenOnboardingModalSuppressor.isReplaced()) {
+                        throw new Error(`Failed to patch the "${hasSeenOnboardingModalSuppressor}" file`);
                     }
                 })();
             },
@@ -139,11 +139,19 @@ const folderAsDomainEntries: Array<FolderAsDomainEntry<{
             flows: {
                 // TODO proton-v4: remove "npm install" code block
                 // https://github.com/ProtonMail/WebClient/issues/158
-                install: repoType === "proton-contacts" || repoType === "proton-calendar"
+                install: repoType === "proton-contacts" || repoType === "proton-mail-settings"
                     ? async ({repoDir}) => {
                         const npmLockFile = path.join(repoDir, "./package-lock.json");
 
                         if (fsExtra.existsSync(npmLockFile)) {
+                            if (repoType === "proton-mail-settings") {
+                                // TODO prefer "npm ci" to "npm install"
+                                // lock file of "proton-mail-settings" project got out of sync state
+                                // so we gave to run "npm install" for now
+                                // https://github.com/ProtonMail/WebClient/issues/158#issuecomment-588252103
+                                await execShell(["npm", ["install"], {cwd: repoDir}]);
+                                return;
+                            }
                             throw new Error(`"${npmLockFile}" file exists, it's time for switching to "npm ci" call`);
                         }
 

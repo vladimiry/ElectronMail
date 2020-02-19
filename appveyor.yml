@@ -59,6 +59,8 @@ for:
       only:
         - image: 'Ubuntu1804'
     cache:
+      # - $HOME/.npm
+      # - $HOME/.cache/yarn
       - ./output/git
     install:
       - nvm install $nodejs_version

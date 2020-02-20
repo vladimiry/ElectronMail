@@ -83,7 +83,7 @@ export const PROVIDER_REPOS: ReadonlyDeep<Record<"WebClient" | "proton-mail-sett
         repoRelativeDistDir: "./dist",
         baseDir: "settings",
         repo: "https://github.com/ProtonMail/proton-mail-settings.git",
-        commit: "41e625d21218f5a5ad767173fce41098e7176458",
+        commit: "1a7cb9d5b48a0b97eb0eb927dd0c8a65b38ef604",
         version: "unknown",
         protonPackAppConfig: {
             clientId: "WebMailSettings",

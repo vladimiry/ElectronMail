@@ -139,19 +139,11 @@ const folderAsDomainEntries: Array<FolderAsDomainEntry<{
             flows: {
                 // TODO proton-v4: remove "npm install" code block
                 // https://github.com/ProtonMail/WebClient/issues/158
-                install: repoType === "proton-contacts" || repoType === "proton-mail-settings"
+                install: repoType === "proton-contacts"
                     ? async ({repoDir}) => {
                         const npmLockFile = path.join(repoDir, "./package-lock.json");
 
                         if (fsExtra.existsSync(npmLockFile)) {
-                            if (repoType === "proton-mail-settings") {
-                                // TODO prefer "npm ci" to "npm install"
-                                // lock file of "proton-mail-settings" project got out of sync state
-                                // so we gave to run "npm install" for now
-                                // https://github.com/ProtonMail/WebClient/issues/158#issuecomment-588252103
-                                await execShell(["npm", ["install"], {cwd: repoDir}]);
-                                return;
-                            }
                             throw new Error(`"${npmLockFile}" file exists, it's time for switching to "npm ci" call`);
                         }
 

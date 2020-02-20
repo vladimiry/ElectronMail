@@ -37,7 +37,7 @@ export const initFindInPageBrowserView: (ctx: Context) => Promise<BrowserView> =
         // otherwise BrowserView is invisible on macOS as "setBounds" call takes no effect
         ctx.uiContext.browserWindow.setBrowserView(browserView);
 
-        browserView.setAutoResize({width: false, height: true, horizontal: false, vertical: false});
+        browserView.setAutoResize({width: false, height: false, horizontal: false, vertical: false});
 
         const {html} = await resolveContent(ctx);
 
@@ -71,7 +71,7 @@ export function syncFindInPageBrowserViewSize(ctx: Context, findInPageBrowserVie
         width: alignCenter
             ? Math.trunc(browserWindowBounds.width * 0.9)
             : 400,
-        height: 38,
+        height: 30,
     };
     const bounds = {
         x: alignCenter

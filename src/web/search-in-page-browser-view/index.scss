@@ -1,4 +1,14 @@
+@import "~src/web/variables";
+@import "~font-awesome/css/font-awesome.css";
+
 body,
 html {
     overflow: hidden;
+}
+
+.input-group-text {
+    font-size: $app-font-size-base-medium;
+    align-self: center;
+    background-color: transparent;
+    border-color: transparent;
 }

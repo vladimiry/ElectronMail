@@ -20,8 +20,8 @@
         &.selected {
             .btn {
                 @include account-title-button(
-                        map_get($app-account-title-btn-colors, "selected-bg"),
-                        map_get($app-account-title-btn-colors, "selected-border"),
+                    map_get($app-account-title-btn-colors, "selected-bg"),
+                    map_get($app-account-title-btn-colors, "selected-border"),
                 );
 
                 &:nth-child(2) {

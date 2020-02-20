@@ -4,13 +4,8 @@
         class="form-group m-0"
         novalidate
     >
-        <div class="card mb-2">
-            <div class="card-header" [ngStyle]="appearanceBlockCollapsed ? {'border-bottom-width': '0'} : {}">
-                <button type="button" class="btn btn-link p-0" (click)="appearanceBlockCollapsed = !appearanceBlockCollapsed">
-                    Appearance
-                </button>
-            </div>
-            <div class="card-body" [collapse]="appearanceBlockCollapsed">
+        <accordion class="mb-2">
+            <accordion-group heading="Appearance" [isOpen]="false">
                 <div class="form-group">
                     <label class="d-block mb-2">
                         Tray/Notification icon color
@@ -66,8 +61,8 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </accordion-group>
+        </accordion>
         <div class="custom-control custom-switch">
             <input
                 class="custom-control-input"

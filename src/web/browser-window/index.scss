@@ -29,12 +29,6 @@ form .required label::after {
 }
 
 // "bootstrap"
-.card-body {
-    padding-top: map-get($spacers, 3);
-    padding-bottom: map-get($spacers, 3);
-}
-
-// "bootstrap"
 .list-group {
     > .list-group-item-action {
         cursor: pointer;
@@ -64,6 +58,70 @@ form .required label::after {
 // "bootstrap"
 bs-dropdown-container {
     z-index: $zindex-dropdown;
+}
+
+// "ngx-bootstrap"
+accordion-group {
+    &.panel-open {
+        .card-header {
+            &::after {
+                content: $fa-var-caret-up;
+            }
+        }
+    }
+
+    &:not(.panel-open) {
+        .panel {
+            border-bottom-width: 0;
+        }
+    }
+
+    &:not(:first-child) {
+        .panel {
+            border-top-width: 0;
+            border-top-right-radius: 0;
+            border-top-left-radius: 0;
+        }
+    }
+
+    &:not(:last-child) {
+        .panel {
+            border-bottom-right-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+    }
+
+    .card-header {
+        color: $link-color;
+        padding: $list-group-item-padding-y $list-group-item-padding-x;
+        display: flex;
+        align-items: baseline;
+
+        &::after {
+            @include fa-icon;
+            content: $fa-var-caret-down;
+            margin-right: $app-spacer-1;
+        }
+
+        .panel-title {
+            width: 100%;
+        }
+
+        .btn {
+            border-width: 0;
+        }
+    }
+
+    .card-body {
+        padding-top: map-get($spacers, 3);
+        padding-bottom: map-get($spacers, 3);
+    }
+
+    .accordion-toggle {
+        .btn {
+            padding: 0;
+        }
+    }
 }
 
 // "ng-select"

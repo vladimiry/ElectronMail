@@ -11,7 +11,6 @@ import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
 @Component({
     selector: "electron-mail-save-password-label",
     templateUrl: "./save-password-label.component.html",
-    styleUrls: ["./save-password-label.component.scss"],
 })
 export class SavePasswordLabelComponent implements OnInit, OnDestroy {
     @Input()

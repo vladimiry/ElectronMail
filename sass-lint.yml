@@ -44,7 +44,9 @@ rules:
 
   # name Formats
   class-name-format: 1
-  function-name-format: 1
+  function-name-format:
+    - 1
+    - convention: ^[-_a-z]+$
   id-name-format: 0
   mixin-name-format: 1
   placeholder-name-format: 1

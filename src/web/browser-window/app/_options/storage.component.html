@@ -3,7 +3,7 @@
         <accordion-group heading="Master password" [isOpen]="true">
             <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
                 <div class="form-group required">
-                    <label>Current Password</label>
+                    <label>Current password</label>
                     <input type="password" class="form-control" formControlName="password"
                            [ngClass]="password.dirty ? {
                        'is-invalid': password.invalid,
@@ -12,7 +12,7 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group required col-md-6">
-                        <label>New Password</label>
+                        <label>New password</label>
                         <input type="password" class="form-control" formControlName="newPassword"
                                [ngClass]="newPassword.dirty ? {
                            'is-invalid': newPassword.invalid,

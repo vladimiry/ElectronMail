@@ -34,7 +34,7 @@
                 </div>
             </ng-template>
             <div class="clearfix">
-                <label class="d-block pull-left">API Entry Point</label>
+                <label class="d-block pull-left">API entry point</label>
                 <div class="pull-right text-muted">
                     <a href="https://github.com/vladimiry/ElectronMail/issues/29">#29</a>,
                     <a href="https://github.com/vladimiry/ElectronMail/issues/79">#79</a>,
@@ -72,7 +72,7 @@
         </div>
         <div class="form-group">
             <label class="d-block pull-left">
-                Two Factor Secret Key
+                Two-Factor secret key
                 <i
                     class="fa fa-info-circle text-warning align-self-center"
                     container="body"
@@ -87,7 +87,7 @@
         </div>
         <div class="form-group">
             <label class="d-block pull-left">
-                Mailbox Password
+                Mailbox password
                 <i
                     class="fa fa-info-circle text-warning align-self-center"
                     container="body"
@@ -103,13 +103,8 @@
             <input type="password" class="form-control" formControlName="mailPassword"
                    [ngClass]="controls.mailPassword.dirty ? {'is-invalid': controls.mailPassword.invalid, 'is-valid': controls.mailPassword.valid} : {}">
         </div>
-        <div class="card mb-3">
-            <div class="card-header" [ngStyle]="advancedBlockCollapsed ? {'border-bottom-width': '0'} : {}">
-                <button type="button" class="btn btn-link p-0" (click)="advancedBlockCollapsed = !advancedBlockCollapsed">
-                    Extended Options
-                </button>
-            </div>
-            <div class="card-body" [collapse]="advancedBlockCollapsed">
+        <accordion class="mb-3">
+            <accordion-group heading="Extended Options" [isOpen]="false">
                 <div class="form-group">
                     <div class="custom-control custom-switch">
                         <input type="checkbox" class="custom-control-input" formControlName="persistentSession" id="persistentSessionCheckbox">
@@ -201,8 +196,8 @@
                         class="invalid-feedback"
                     ></div>
                 </div>
-            </div>
-        </div>
+            </accordion-group>
+        </accordion>
         <div class="clearfix">
             <button class="btn btn-sm btn-outline-danger pull-left" type="button" *ngIf="account" (click)="remove()">
                 <i class="fa" [ngClass]="{

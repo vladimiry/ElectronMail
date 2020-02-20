@@ -190,11 +190,11 @@
 
                     .fa {
                         margin: 0 !important;
-                        padding: .2rem 0;
+                        padding: 0.2rem 0;
                         line-height: 1;
 
                         &.fa-unlock {
-                            padding-left: .15rem;
+                            padding-left: 0.15rem;
                         }
                     }
 
@@ -215,7 +215,8 @@
                         }
 
                         > * {
-                            &, > * {
+                            &,
+                            > * {
                                 margin-right: 0 !important;
                             }
                         }

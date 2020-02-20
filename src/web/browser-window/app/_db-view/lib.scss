@@ -1,6 +1,6 @@
 @import "~src/web/variables";
 
-@mixin app-db-view-badge-padding-radius() {
+@mixin app-db-view-badge-padding-radius {
     border-radius: $badge-border-radius;
     border: 1px solid $app-db-view-color-border;
     padding: ($badge-padding-y * 0.5) $badge-padding-x;

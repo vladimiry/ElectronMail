@@ -1,4 +1,4 @@
-@import "vendor-variables";
+@import "./vendor-variables";
 
 $app-prefix: electron-mail;
 
@@ -26,8 +26,7 @@ $app-account-title-btn-colors: map-merge(
         "selected-bg": theme-color("warning-light"),
         "selected-border": darken(theme-color("warning-light"), 30%),
         "selected-text": $app-color-warning-light-text,
-    ),
-    (),
+    ), (),
 );
 
 $app-db-view-color-bg-mail: lighten(#d1d7dc, 5%);

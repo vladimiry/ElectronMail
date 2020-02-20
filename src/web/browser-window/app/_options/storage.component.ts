@@ -12,7 +12,6 @@ import {State} from "src/web/browser-window/app/store/reducers/options";
 @Component({
     selector: "electron-mail-storage",
     templateUrl: "./storage.component.html",
-    styleUrls: ["./storage.component.scss"],
     preserveWhitespaces: true,
 })
 export class StorageComponent {

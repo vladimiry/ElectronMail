@@ -111,6 +111,23 @@
             </div>
             <div class="card-body" [collapse]="advancedBlockCollapsed">
                 <div class="form-group">
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" formControlName="persistentSession" id="persistentSessionCheckbox">
+                        <label class="custom-control-label d-flex" for="persistentSessionCheckbox">
+                            Persistent session
+                            <i
+                                class="fa fa-info-circle text-warning align-self-center ml-1"
+                                container="body"
+                                [placement]="'bottom'"
+                                popover="If option enabled the saved Proton session will be reused, so the login form will be skipped."
+                                triggers="mouseenter:mouseleave"
+                            ></i>
+                            <span class="badge badge-secondary align-self-center ml-1">experimental</span>
+                            <a class="ml-1" href="https://github.com/vladimiry/ElectronMail/issues/227">#227</a>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
                     <label class="d-block">
                         Handle button alias
                         <i
@@ -123,37 +140,39 @@
                     </label>
                     <input type="text" class="form-control" formControlName="title">
                 </div>
-                <div class="form-group">
-                    <label class="d-block pull-left">
-                        Proxy Rules
-                        <i
-                            popover="Rules indicating which proxies to use."
-                            class="fa fa-info-circle text-primary align-self-center"
-                            container="body"
-                            [placement]="'bottom'"
-                            triggers="mouseenter:mouseleave"
-                        ></i>
-                    </label>
-                    <a class="d-block pull-right" href="https://electronjs.org/docs/api/session#sessetproxyconfig-callback">
-                        documentation
-                    </a>
-                    <input type="text" class="form-control" formControlName="proxyRules">
-                </div>
-                <div>
-                    <label class="d-block pull-left">
-                        Proxy Bypass Rules
-                        <i
-                            popover="Rules indicating which URLs should bypass the proxy settings."
-                            class="fa fa-info-circle text-primary align-self-center"
-                            container="body"
-                            [placement]="'bottom'"
-                            triggers="mouseenter:mouseleave"
-                        ></i>
-                    </label>
-                    <a class="d-block pull-right" href="https://electronjs.org/docs/api/session#sessetproxyconfig-callback">
-                        documentation
-                    </a>
-                    <input type="text" class="form-control" formControlName="proxyBypassRules">
+                <div class="row">
+                    <div class="col-md-6 form-group">
+                        <label class="d-block pull-left">
+                            Proxy rules
+                            <i
+                                popover="Rules indicating which proxies to use."
+                                class="fa fa-info-circle text-primary align-self-center"
+                                container="body"
+                                [placement]="'bottom'"
+                                triggers="mouseenter:mouseleave"
+                            ></i>
+                        </label>
+                        <a class="d-block pull-right" href="https://electronjs.org/docs/api/session#sessetproxyconfig-callback">
+                            info
+                        </a>
+                        <input type="text" class="form-control" formControlName="proxyRules">
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label class="d-block pull-left">
+                            Proxy bypass rules
+                            <i
+                                popover="Rules indicating which URLs should bypass the proxy settings."
+                                class="fa fa-info-circle text-primary align-self-center"
+                                container="body"
+                                [placement]="'bottom'"
+                                triggers="mouseenter:mouseleave"
+                            ></i>
+                        </label>
+                        <a class="d-block pull-right" href="https://electronjs.org/docs/api/session#sessetproxyconfig-callback">
+                            info
+                        </a>
+                        <input type="text" class="form-control" formControlName="proxyBypassRules">
+                    </div>
                 </div>
                 <div class="mt-3">
                     <label class="d-block pull-left">
@@ -181,23 +200,6 @@
                         [innerText]="controls.loginDelaySecondsRange.errors?.errorMsg"
                         class="invalid-feedback"
                     ></div>
-                </div>
-                <div class="d-block mt-3">
-                    <div class="custom-control custom-switch">
-                        <input type="checkbox" class="custom-control-input" formControlName="persistentSession" id="persistentSessionCheckbox">
-                        <label class="custom-control-label d-flex" for="persistentSessionCheckbox">
-                            Persistent Session
-                            <i
-                                class="fa fa-info-circle text-warning align-self-center ml-1"
-                                container="body"
-                                [placement]="'bottom'"
-                                popover="If option enabled the saved Proton session will be reused, so the login form will be skipped."
-                                triggers="mouseenter:mouseleave"
-                            ></i>
-                            <span class="badge badge-secondary align-self-center ml-1">experimental</span>
-                            <a class="ml-1" href="https://github.com/vladimiry/ElectronMail/issues/227">#227</a>
-                        </label>
-                    </div>
                 </div>
             </div>
         </div>

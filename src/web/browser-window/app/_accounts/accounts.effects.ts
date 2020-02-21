@@ -295,7 +295,7 @@ export class AccountsEffects {
 
                 switch (pageType) {
                     case "login": {
-                        if (!credentials.password) {
+                        const onlyFillLoginAction = () => {
                             logger.info("fillLogin");
 
                             return merge(
@@ -310,63 +310,80 @@ export class AccountsEffects {
                                     catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                                 ),
                             );
-                        }
+                        };
+                        const fullLoginAction = () => {
+                            const executeLoginAction = (password: string) => {
+                                rateLimitCheck(password);
 
-                        const executeLoginAction = (password: string) => {
-                            rateLimitCheck(password);
+                                logger.info("login");
 
-                            logger.info("login");
-
-                            return merge(
-                                of(this.accountsService.buildLoginDelaysResetAction({login})),
-                                of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: true}})),
-                                resetNotificationsState$,
-                                this.api.webViewClient(webView).pipe(
-                                    delay(
-                                        account.loggedInOnce
-                                            ? ONE_SECOND_MS
-                                            : 0,
+                                return merge(
+                                    of(this.accountsService.buildLoginDelaysResetAction({login})),
+                                    of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: true}})),
+                                    resetNotificationsState$,
+                                    this.api.webViewClient(webView).pipe(
+                                        delay(
+                                            account.loggedInOnce
+                                                ? ONE_SECOND_MS
+                                                : 0,
+                                        ),
+                                        mergeMap((webViewClient) => {
+                                            return from(
+                                                webViewClient("login")({login, password, zoneName}),
+                                            );
+                                        }),
+                                        mergeMap(() => EMPTY),
+                                        catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
+                                        finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({
+                                            login,
+                                            patch: {password: false}
+                                        }))),
                                     ),
-                                    mergeMap((webViewClient) => {
-                                        return from(
-                                            webViewClient("login")({login, password, zoneName}),
-                                        );
+                                );
+                            };
+                            const trigger$: Observable<{ trigger: string }> = skipLoginDelayLogic
+                                ? of({trigger: "the delay already took place, so immediate resolve"})
+                                : this.accountsService.setupLoginDelayTrigger(account, logger);
+
+                            return trigger$.pipe(
+                                mergeMap(() => this.store.pipe(
+                                    select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
+                                    // WARN: do not react to every account change notification
+                                    // but only reaction to just pick the up to date password (it can be changed during login delay)
+                                    // otherwise multiple login form submitting attempts can happen
+                                    take(1),
+                                    mergeMap((value) => {
+                                        if (!value) {
+                                            // early skipping if account got removed during login delay
+                                            logger.info("account got removed during login delaying?");
+                                            return EMPTY;
+                                        }
+                                        return [{password: value.accountConfig.credentials.password}];
                                     }),
-                                    mergeMap(() => EMPTY),
-                                    catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
-                                    finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: false}}))),
-                                ),
+                                    mergeMap(({password}) => {
+                                        if (!password) {
+                                            logger.info("login action canceled due to the empty password");
+                                            return EMPTY;
+                                        }
+
+                                        return executeLoginAction(password);
+                                    }),
+                                )),
                             );
                         };
 
-                        const trigger$: Observable<{ trigger: string }> = skipLoginDelayLogic
-                            ? of({trigger: "the delay already took place, so immediate resolve"})
-                            : this.accountsService.setupLoginDelayTrigger(account, logger);
-
-                        return trigger$.pipe(
-                            mergeMap(() => this.store.pipe(
-                                select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
-                                // WARN: do not react to every account change notification
-                                // but only reaction to just pick the up to date password (it can be changed during login delay)
-                                // otherwise multiple login form submitting attempts can happen
-                                take(1),
-                                mergeMap((value) => {
-                                    if (!value) {
-                                        // early skipping if account got removed during login delay
-                                        logger.info("account got removed during login delaying?");
-                                        return EMPTY;
-                                    }
-                                    return [{password: value.accountConfig.credentials.password}];
-                                }),
-                                mergeMap(({password}) => {
-                                    if (!password) {
-                                        logger.info("login action canceled due to the empty password");
-                                        return EMPTY;
-                                    }
-
-                                    return executeLoginAction(password);
-                                }),
-                            )),
+                        return from(
+                            // TODO handle the edge case of user to be very fast with manual login form submitting
+                            //      in such case there is a possibility that we "resetProtonBackendSession" after the form got submitted
+                            //      and so the app might potentially reset the cookies set after the fast manual login
+                            this.api.ipcMainClient()("resetProtonBackendSession")({login}),
+                        ).pipe(
+                            mergeMap(() => {
+                                if (!credentials.password) {
+                                    return onlyFillLoginAction();
+                                }
+                                return fullLoginAction();
+                            }),
                         );
                     }
                     case "login2fa": {

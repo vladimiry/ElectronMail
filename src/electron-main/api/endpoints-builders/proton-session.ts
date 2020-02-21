@@ -54,6 +54,15 @@ export async function buildEndpoints(
                 },
             } as const;
 
+            const {accessTokens, refreshTokens} = resolveTokenCookies(data.session.cookies);
+
+            if (accessTokens.length > 1 || refreshTokens.length > 1) {
+                throw new Error([
+                    `The app refuses to save more than one "proton-session" cookies records set `,
+                    `(access tokens count: ${accessTokens.length}, refresh tokens count: ${refreshTokens.length}).`,
+                ].join(""));
+            }
+
             await ctx.sessionStorage.saveSession(data);
         },
 
@@ -71,9 +80,11 @@ export async function buildEndpoints(
                 return false;
             }
 
-            const savedCookies = pickTokens(savedSession.cookies);
+            const tokenCookie = resolveTokenCookies(savedSession.cookies);
+            const accessTokenCookie = [...tokenCookie.accessTokens].pop();
+            const refreshTokenCookie = [...tokenCookie.refreshTokens].pop();
 
-            if (!savedCookies.accessToken || !savedCookies.refreshToken) {
+            if (!accessTokenCookie || !refreshTokenCookie) {
                 return false;
             }
 
@@ -81,12 +92,12 @@ export async function buildEndpoints(
 
             await Promise.all([
                 session.cookies.set({
-                    ...pickCookiePropsToSet(savedCookies.accessToken),
-                    url: `${apiEndpointOrigin}${savedCookies.accessToken.path}`,
+                    ...pickTokenCookiePropsToApply(accessTokenCookie),
+                    url: `${apiEndpointOrigin}${accessTokenCookie.path}`,
                 }),
                 session.cookies.set({
-                    ...pickCookiePropsToSet(savedCookies.refreshToken),
-                    url: `${apiEndpointOrigin}${savedCookies.refreshToken.path}`,
+                    ...pickTokenCookiePropsToApply(refreshTokenCookie),
+                    url: `${apiEndpointOrigin}${refreshTokenCookie.path}`,
                 }),
             ]);
 
@@ -111,15 +122,15 @@ export async function buildEndpoints(
     return endpoints;
 }
 
-function pickTokens(
+function resolveTokenCookies(
     items: ReadonlyDeep<AccountPersistentSession>["cookies"],
-): Readonly<{ accessToken?: Unpacked<typeof items>; refreshToken?: Unpacked<typeof items>; }> {
+): Readonly<{ accessTokens: typeof items; refreshTokens: typeof items; }> {
     return {
-        accessToken: items.find(({name}) => name.toUpperCase().startsWith("AUTH-")),
-        refreshToken: items.find(({name}) => name.toUpperCase().startsWith("REFRESH-")),
+        accessTokens: items.filter(({name}) => name.toUpperCase().startsWith("AUTH-")),
+        refreshTokens: items.filter(({name}) => name.toUpperCase().startsWith("REFRESH-")),
     } as const;
 }
 
-function pickCookiePropsToSet(cookie: Electron.Cookie) {
+function pickTokenCookiePropsToApply(cookie: ReadonlyDeep<Electron.Cookie>) {
     return pick(cookie, ["httpOnly", "name", "path", "secure", "value"]);
 }

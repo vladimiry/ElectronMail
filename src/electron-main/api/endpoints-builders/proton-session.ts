@@ -2,9 +2,11 @@ import {concatMap} from "rxjs/operators";
 import {from, race, throwError, timer} from "rxjs";
 import {pick} from "remeda";
 
+import {AccountPersistentSession} from "src/shared/model/account";
 import {Context} from "src/electron-main/model";
 import {IpcMainApiEndpoints} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
+import {ReadonlyDeep} from "type-fest";
 import {resolveInitialisedSession} from "src/electron-main/session";
 
 // TODO enable minimal logging
@@ -109,7 +111,9 @@ export async function buildEndpoints(
     return endpoints;
 }
 
-function pickTokens<T extends { name: string }>(items: T[]): Readonly<{ accessToken?: T; refreshToken?: T; }> {
+function pickTokens(
+    items: ReadonlyDeep<AccountPersistentSession>["cookies"],
+): Readonly<{ accessToken?: Unpacked<typeof items>; refreshToken?: Unpacked<typeof items>; }> {
     return {
         accessToken: items.find(({name}) => name.toUpperCase().startsWith("AUTH-")),
         refreshToken: items.find(({name}) => name.toUpperCase().startsWith("REFRESH-")),

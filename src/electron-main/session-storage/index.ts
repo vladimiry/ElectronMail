@@ -42,7 +42,7 @@ export class SessionStorage {
 
     getSession(
         {login, apiEndpointOrigin}: LoginFieldContainer & ApiEndpointOriginFieldContainer,
-    ): AccountPersistentSession | undefined {
+    ): ReadonlyDeep<AccountPersistentSession> | undefined {
         this.logger.info("getSession()");
         const bundle = this.instance[login];
         return bundle && bundle[apiEndpointOrigin];

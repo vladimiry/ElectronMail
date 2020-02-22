@@ -193,6 +193,8 @@ jobs:
         #  eval $(echo -n "" | /usr/bin/gnome-keyring-daemon --login);
         #  eval $(/usr/bin/gnome-keyring-daemon --components=secrets --start);
         #  python3 ./scripts/ci/add-secret-service-item-assert.py;
+      env:
+        - CI_WEBCLIENTS_JOB_REMOVE_OUTPUT_GIT_DIR="0"
       script: ./scripts/ci/travis/build-linux.sh
     - stage: 'build app'
       <<: *embedding-macos-common-anchor
@@ -205,4 +207,5 @@ jobs:
           - 'macos-webclients-artifact-webclient'
       env:
         - ARTIFACT_NAME_POSTFIX="-high-sierra"
+        - CI_WEBCLIENTS_JOB_REMOVE_OUTPUT_GIT_DIR="0"
       script: ./scripts/ci/travis/build-osx.sh

@@ -165,8 +165,8 @@
                     > .btn-sm {
                         flex-direction: column;
                         align-items: center;
-                        padding-left: ($btn-padding-x-sm / 2);
-                        padding-right: ($btn-padding-x-sm / 2);
+                        padding-left: ($btn-padding-x-sm * 0.4);
+                        padding-right: ($btn-padding-x-sm * 0.4);
 
                         &:not(:last-child) {
                             border-radius: $btn-border-radius-sm $btn-border-radius-sm 0 0;
@@ -186,12 +186,18 @@
 
                     #{$app-prefix}-unread-badge {
                         margin-bottom: $margin-v;
+                        padding: 0.3rem 0.1rem;
                     }
 
                     .fa {
                         margin: 0 !important;
-                        padding: 0.2rem 0;
-                        line-height: 1;
+                        padding: 0.3rem 0 0.2rem;
+
+                        &.fa-lock,
+                        &.fa-unlock {
+                            padding-top: 0;
+                            padding-bottom: 0.1rem;
+                        }
 
                         &.fa-unlock {
                             padding-left: 0.15rem;

@@ -73,7 +73,20 @@
     }
 
     .fa {
-        line-height: $line-height-base;
+        display: flex;
+        align-self: center;
+
+        &.fa-hand-pointer-o {
+            margin-right: ($app-spacer-1 * 0.3);
+        }
+
+        &.fa-lock {
+            margin-right: $app-spacer-1;
+        }
+
+        &.fa-unlock {
+            margin-right: ($app-spacer-1 * 1.2);
+        }
     }
 
     .login-delay {
@@ -81,7 +94,8 @@
         font-size: 80%;
 
         .fa ~ span {
-            margin-left: $app-spacer-1 / 2;
+            display: flex;
+            align-self: center;
         }
     }
 }

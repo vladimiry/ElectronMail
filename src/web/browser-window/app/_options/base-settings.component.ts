@@ -43,6 +43,7 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
     readonly zoomFactors = ZOOM_FACTORS.map((zoomLevel) => ({value: zoomLevel, title: `${Math.round(zoomLevel * 100)}%`}));
 
     readonly controls: Record<keyof BaseConfig, AbstractControl> = {
+        doNotRenderNotificationBadgeValue: new FormControl(),
         checkUpdateAndNotify: new FormControl(),
         hideOnClose: new FormControl(),
         layoutMode: new FormControl(),

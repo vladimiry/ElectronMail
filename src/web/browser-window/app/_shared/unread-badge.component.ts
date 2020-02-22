@@ -15,12 +15,17 @@ export class UnreadBadgeComponent implements OnInit, OnDestroy {
     @Input()
     value!: number;
 
-    subscription = new Subscription();
+    @Input()
+    alwaysRenderTheValue: boolean = false;
+
+    readonly doNotRenderNotificationBadgeValue$ = this.store.pipe(select(OptionsSelectors.CONFIG.doNotRenderNotificationBadgeValue));
+
+    private readonly subscription = new Subscription();
 
     constructor(
-        private store: Store<State>,
-        private elementRef: ElementRef,
-        private renderer: Renderer2,
+        private readonly store: Store<State>,
+        private readonly elementRef: ElementRef,
+        private readonly renderer: Renderer2,
     ) {}
 
     ngOnInit() {

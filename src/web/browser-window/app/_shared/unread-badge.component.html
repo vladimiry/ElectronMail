@@ -1,1 +1,5 @@
-{{ value }}
+<ng-container *ngIf="!alwaysRenderTheValue && (doNotRenderNotificationBadgeValue$ | async); else renderTheValueTpl">
+    <span style="visibility: hidden;">0</span>
+</ng-container>
+
+<ng-template #renderTheValueTpl><span>{{ value }}</span></ng-template>

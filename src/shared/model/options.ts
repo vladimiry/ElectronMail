@@ -40,6 +40,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     localDbMailsListViewMode: "plain" | "conversation";
     // base
     checkUpdateAndNotify: boolean;
+    doNotRenderNotificationBadgeValue: boolean;
     hideOnClose: boolean;
     layoutMode: (typeof import("src/shared/constants").LAYOUT_MODES)[number]["value"];
     customTrayIconColor: string;
@@ -58,6 +59,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
 }
 
 export type BaseConfig = Pick<Config,
+    | "doNotRenderNotificationBadgeValue"
     | "checkUpdateAndNotify"
     | "hideOnClose"
     | "layoutMode"

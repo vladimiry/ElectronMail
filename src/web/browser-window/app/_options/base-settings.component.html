@@ -29,6 +29,17 @@
                         <electron-mail-unread-badge
                             [value]="($unreadSummary | async) || 0"
                         ></electron-mail-unread-badge>
+                        <div class="custom-control custom-switch float-md-right">
+                            <input
+                                class="custom-control-input"
+                                formControlName="doNotRenderNotificationBadgeValue"
+                                id="doNotRenderNotificationBadgeValueCheckbox"
+                                type="checkbox"
+                            >
+                            <label class="custom-control-label" for="doNotRenderNotificationBadgeValueCheckbox">
+                                Don't render the value
+                            </label>
+                        </div>
                     </label>
                     <div class="row">
                         <div class="col-sm-6 pb-1">

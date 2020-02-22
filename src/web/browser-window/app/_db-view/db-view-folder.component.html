@@ -5,6 +5,7 @@
 </div>
 <electron-mail-unread-badge
     *ngIf="folder.unread"
+    [alwaysRenderTheValue]="true"
     [value]="folder.unread"
     class="flex-grow-0 ml-1"
 ></electron-mail-unread-badge>

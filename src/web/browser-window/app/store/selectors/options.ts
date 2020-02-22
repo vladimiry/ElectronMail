@@ -28,6 +28,7 @@ export const CONFIG = {
     hideControls: createSelector(FEATURED.config, (config) => config.hideControls),
     timeouts: createSelector(FEATURED.config, (config) => config.timeouts),
     localDbMailsListViewMode: createSelector(FEATURED.config, (config) => config.localDbMailsListViewMode),
+    doNotRenderNotificationBadgeValue: createSelector(FEATURED.config, (config) => config.doNotRenderNotificationBadgeValue),
 };
 
 export const SETTINGS = (() => {

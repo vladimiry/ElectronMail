@@ -11,4 +11,8 @@
     text-align: center;
     white-space: nowrap;
     vertical-align: baseline;
+
+    &.do-not-render-value {
+        visibility: hidden;
+    }
 }

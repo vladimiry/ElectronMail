@@ -44,6 +44,7 @@
                 <electron-mail-unread-badge
                     *ngIf="unreadSummary && accounts.length > 1"
                     [value]="unreadSummary"
+                    [alwaysRenderTheValue]="true"
                 ></electron-mail-unread-badge>
             </div>
             <electron-mail-account-title

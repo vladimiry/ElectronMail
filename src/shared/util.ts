@@ -61,6 +61,7 @@ export function initialConfig(): Config {
             ],
             localDbMailsListViewMode: "plain",
             // base
+            doNotRenderNotificationBadgeValue: false,
             checkUpdateAndNotify: false,
             hideOnClose: true,
             layoutMode: "top",
@@ -83,6 +84,7 @@ export function initialConfig(): Config {
 
 export function pickBaseConfigProperties(
     {
+        doNotRenderNotificationBadgeValue,
         checkUpdateAndNotify,
         hideOnClose,
         layoutMode,
@@ -102,6 +104,7 @@ export function pickBaseConfigProperties(
     }: Config,
 ): Required<BaseConfig> {
     return {
+        doNotRenderNotificationBadgeValue,
         checkUpdateAndNotify,
         hideOnClose,
         layoutMode,

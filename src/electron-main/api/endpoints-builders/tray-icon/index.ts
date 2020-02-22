@@ -66,13 +66,13 @@ export async function buildEndpoints(
                 });
                 state.loggedOutIcon = await loggedOutBundle(state.defaultIcon, config.loggedOut);
                 state.trayIconColor = trayIconColor;
-
-                setTimeout(() => {
-                    IPC_MAIN_API_NOTIFICATION$.next(
-                        IPC_MAIN_API_NOTIFICATION_ACTIONS.TrayIconDataURL(state.defaultIcon.native.toDataURL()),
-                    );
-                });
             }
+
+            setTimeout(() => {
+                IPC_MAIN_API_NOTIFICATION$.next(
+                    IPC_MAIN_API_NOTIFICATION_ACTIONS.TrayIconDataURL(state.defaultIcon.native.toDataURL()),
+                );
+            });
 
             const canvas = hasLoggedOut
                 ? state.loggedOutIcon

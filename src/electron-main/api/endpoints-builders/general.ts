@@ -252,9 +252,12 @@ export async function buildEndpoints(
                     throw new Error(`Update check failed: ${errorMessageData}`);
                 }
 
-                type ReposListReleasesResponse = Unpacked<ReturnType<(import("@octokit/rest").Octokit)["repos"]["listReleases"]>>["data"];
+                const releases: Array<{
+                    tag_name: string;
+                    published_at: string;
+                    assets: Array<{ name: string; }>;
+                }> = await response.json();
 
-                const releases: ReposListReleasesResponse = await response.json();
                 logger.verbose(
                     "updateCheck()",
                     JSON.stringify({
@@ -264,7 +267,7 @@ export async function buildEndpoints(
                     }),
                 );
 
-                const resultItems = releases
+                const newReleases = releases
                     .filter(({tag_name}) => compareVersions(tag_name, PACKAGE_VERSION) > 0)
                     .filter(({assets}) => assets.some(({name}) => filterAssetName(name)))
                     .sort((o1, o2) => compareVersions(o1.tag_name, o2.tag_name))
@@ -276,14 +279,15 @@ export async function buildEndpoints(
                         const url = tagNameValid
                             ? `${releasesUrlPrefix}/${tag_name}`
                             : undefined;
-                        return {title, url, date};
+                        return {title, url, date} as const;
                     });
+
                 logger.verbose(
                     "updateCheck()",
-                    JSON.stringify({resultItems}, null, 2),
+                    JSON.stringify({newReleases}, null, 2),
                 );
 
-                return resultItems;
+                return newReleases;
             };
         })(),
 

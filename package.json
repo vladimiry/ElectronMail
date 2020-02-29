@@ -1,7 +1,7 @@
 {
   "name": "electron-mail",
   "description": "Unofficial ProtonMail Desktop App",
-  "version": "4.4.0",
+  "version": "4.4.1",
   "author": "Vladimir Yakovlev <desktop-app@protonmail.ch>",
   "license": "MIT",
   "homepage": "https://github.com/vladimiry/ElectronMail",
@@ -171,7 +171,6 @@
     "@ngrx/effects": "8.6.0",
     "@ngrx/store": "8.6.0",
     "@ngtools/webpack": "9.0.3",
-    "@octokit/rest": "16.43.1",
     "@types/angular": "1.6.57",
     "@types/archiver": "3.0.0",
     "@types/byline": "4.2.31",

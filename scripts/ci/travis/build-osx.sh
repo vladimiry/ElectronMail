@@ -6,7 +6,7 @@ set -ev
 
 yarn app:dist
 
-yarn test:e2e
+# yarn test:e2e
 
 # preventing "No output has been received in the last 10m0s" error occuring on travis-ci
 # see https://github.com/travis-ci/travis-ci/issues/4190#issuecomment-353342526

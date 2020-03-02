@@ -311,7 +311,7 @@ const tests: Record<keyof TestContext["endpoints"], (t: ExecutionContext<TestCon
     },
 
     openExternal: async (t) => {
-        const openExternalSpy: sinon.SinonSpy = t.context.mocks.electron.shell.openExternalSpy;
+        const openExternalSpy = t.context.mocks.electron.shell.openExternalSpy;
         const action = t.context.endpoints.openExternal;
 
         const forbiddenUrls = [
@@ -333,15 +333,15 @@ const tests: Record<keyof TestContext["endpoints"], (t: ExecutionContext<TestCon
         ];
         for (const url of allowedUrls) {
             // tslint:disable-next-line:await-promise
-            await t.notThrowsAsync(action({url: url as string}));
-            t.true(openExternalSpy.calledWith(url), `electron.shell.openExternal.calledWith("${url}")`);
+            await t.notThrowsAsync(action({url}));
+            t.true(openExternalSpy.calledWith(url), `electron.shell.openPath.calledWith("${url}")`);
         }
     },
 
     openSettingsFolder: async (t) => {
-        const openItemSpy: sinon.SinonSpy = t.context.mocks.electron.shell.openItem;
+        const openPathSpy = t.context.mocks.electron.shell.openPathSpy;
         await t.context.endpoints.openSettingsFolder();
-        t.true(openItemSpy.alwaysCalledWith(t.context.ctx.locations.userDataDir));
+        t.true(openPathSpy.alwaysCalledWith(t.context.ctx.locations.userDataDir));
     },
 
     patchBaseConfig: async (t) => {
@@ -464,6 +464,7 @@ async function readConfigAndSettings(
 }
 
 async function buildMocks() {
+    const openPathSpy = sinon.spy();
     const openExternalSpy = sinon.spy();
 
     return {
@@ -521,6 +522,14 @@ async function buildMocks() {
                 removeListener: sinon.spy(),
             },
             shell: {
+                openPathSpy,
+                openPath: await (async () => {
+                    const openPath: (typeof import("electron"))["shell"]["openPath"] = async (url) => {
+                        openPathSpy(url);
+                        return "";
+                    };
+                    return openPath;
+                })(),
                 openExternalSpy,
                 openExternal: await (async () => {
                     const openExternal: (typeof import("electron"))["shell"]["openExternal"] = async (url) => {
@@ -528,14 +537,13 @@ async function buildMocks() {
                     };
                     return openExternal;
                 })(),
-                openItem: sinon.spy(),
             },
             nativeImage: {
                 createFromPath: sinon.stub().returns({toPNG: sinon.spy}),
                 createFromBuffer: sinon.stub(),
             },
-        } as any,
-    };
+        },
+    } as const;
 }
 
 test.beforeEach(async (t) => {

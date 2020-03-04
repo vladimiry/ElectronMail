@@ -66,37 +66,57 @@ export const PROVIDER_REPOS: ReadonlyDeep<Record<"WebClient" | "proton-mail-sett
         protonPackAppConfig: {
             clientId: string;
         },
+        i18nEnvVars: {
+            I18N_DEPENDENCY_REPO: "git@github.com:ProtonMail/proton-translations.git";
+            I18N_DEPENDENCY_BRANCH: string;
+            I18N_DEPENDENCY_BRANCH_V4?: string;
+        };
     }>> = {
     "WebClient": {
         repoRelativeDistDir: "./build",
         baseDir: "", // TODO define model as {baseDir?: string} instead of using empty string value
         repo: "https://github.com/ProtonMail/WebClient.git",
-        commit: "4d751fc3ec902a33e14a81076292d14174047a6d",
-        version: "4.0.0-beta9",
+        commit: "175554bce448f426a0031d7c2cc4bb5da8a2bba5",
+        version: "4.0.0-beta10",
         protonPackAppConfig: {
             // TODO proton-v4: make sure this value comes to the build after 4.0.0-beta7+ update
             //      currently it's hadrcoded in the WebClient code
             clientId: "Web",
+        },
+        // "proton-i18n" project requires some env vars to be set
+        // see https://github.com/ProtonMail/WebClient/issues/176#issuecomment-595111186
+        i18nEnvVars: {
+            I18N_DEPENDENCY_REPO: "git@github.com:ProtonMail/proton-translations.git",
+            I18N_DEPENDENCY_BRANCH: "webmail",
+            I18N_DEPENDENCY_BRANCH_V4: "webmail-v4",
         },
     },
     "proton-mail-settings": {
         repoRelativeDistDir: "./dist",
         baseDir: "settings",
         repo: "https://github.com/ProtonMail/proton-mail-settings.git",
-        commit: "1a7cb9d5b48a0b97eb0eb927dd0c8a65b38ef604",
+        commit: "8fa6a90ddf4c96a93b167f4bfe6c074ededa224a",
         version: "unknown",
         protonPackAppConfig: {
             clientId: "WebMailSettings",
+        },
+        i18nEnvVars: {
+            I18N_DEPENDENCY_REPO: "git@github.com:ProtonMail/proton-translations.git",
+            I18N_DEPENDENCY_BRANCH: "fe-mail-settings",
         },
     },
     "proton-contacts": {
         repoRelativeDistDir: "./dist",
         baseDir: "contacts",
         repo: "https://github.com/ProtonMail/proton-contacts.git",
-        commit: "aed8afb08426c6b7b12f3260da41e95e7ddca96e",
+        commit: "7fa14c3e1e53bd106d790872d990fd1aec5ec52c",
         version: "unknown",
         protonPackAppConfig: {
             clientId: "WebContacts",
+        },
+        i18nEnvVars: {
+            I18N_DEPENDENCY_REPO: "git@github.com:ProtonMail/proton-translations.git",
+            I18N_DEPENDENCY_BRANCH: "fe-contacts",
         },
     },
     "proton-calendar": {
@@ -107,6 +127,10 @@ export const PROVIDER_REPOS: ReadonlyDeep<Record<"WebClient" | "proton-mail-sett
         version: "unknown",
         protonPackAppConfig: {
             clientId: "WebCalendar",
+        },
+        i18nEnvVars: {
+            I18N_DEPENDENCY_REPO: "git@github.com:ProtonMail/proton-translations.git",
+            I18N_DEPENDENCY_BRANCH: "fe-calendar",
         },
     },
 };

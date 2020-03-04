@@ -36,52 +36,67 @@ const folderAsDomainEntries: Array<FolderAsDomainEntry<{
 
 (async () => {
     // TODO move "WebClient" build logic to separate file (got long)
-    await execAccountTypeFlow({
-        repoType: "WebClient",
-        folderAsDomainEntries,
-        flows: {
-            async build({repoDir: cwd, folderAsDomainEntry}) {
-                const {configApiParam} = await configure(
-                    // TODO proton-v4: drop "envFileName" parameter when proton moves "WebClient" to "proton-pack" building
-                    {cwd, envFileName: "./env/env.json", repoType: "WebClient"},
-                    folderAsDomainEntry,
-                );
+    await (async () => {
+        const repoType = "WebClient";
 
-                // TODO proton-v4: drop "npm run config" call when proton moves "WebClient" to "proton-pack" building
-                await execShell(["npm", ["run", "config", "--", "--api", configApiParam], {cwd}]);
+        await execAccountTypeFlow({
+            repoType,
+            folderAsDomainEntries,
+            flows: {
+                async build({repoDir: cwd, folderAsDomainEntry}) {
+                    const {configApiParam} = await configure(
+                        // TODO proton-v4: drop "envFileName" parameter when proton moves "WebClient" to "proton-pack" building
+                        {cwd, envFileName: "./env/env.json", repoType},
+                        folderAsDomainEntry,
+                    );
 
-                await (async () => {
-                    const originalWebpackConfigFile = path.join(cwd, "./webpack.config.original.js");
-                    const webpackConfigFile = path.join(cwd, "./webpack.config.js");
+                    // TODO proton-v4: drop "npm run config" call when proton moves "WebClient" to "proton-pack" building
+                    await execShell(["npm", ["run", "config", "--", "--api", configApiParam], {cwd}]);
 
-                    await (async (from = webpackConfigFile, to = originalWebpackConfigFile) => {
-                        if (await fsExtra.pathExists(to)) {
+                    await (async () => {
+                        const originalWebpackConfigFile = path.join(cwd, "./webpack.config.original.js");
+                        const webpackConfigFile = path.join(cwd, "./webpack.config.js");
+
+                        await (async (from = webpackConfigFile, to = originalWebpackConfigFile) => {
+                            if (await fsExtra.pathExists(to)) {
+                                LOG(
+                                    LOG_LEVELS.warning(`Skipping renaming ${LOG_LEVELS.value(from)} to: ${LOG_LEVELS.value(to)}`),
+                                );
+                                return;
+                            }
                             LOG(
-                                LOG_LEVELS.warning(`Skipping renaming ${LOG_LEVELS.value(from)} to: ${LOG_LEVELS.value(to)}`),
+                                LOG_LEVELS.title(`Renaming ${LOG_LEVELS.value(from)} to: ${LOG_LEVELS.value(to)}`),
                             );
-                            return;
-                        }
-                        LOG(
-                            LOG_LEVELS.title(`Renaming ${LOG_LEVELS.value(from)} to: ${LOG_LEVELS.value(to)}`),
-                        );
-                        await promisify(fs.rename)(from, to);
-                    })();
+                            await promisify(fs.rename)(from, to);
+                        })();
 
-                    const hasSeenOnboardingModalSuppressor = await (async () => {
-                        const replacedMarkFile = path.join(cwd, `${new UUID(4).format()}-replaced-mark`);
-                        const targetFile = path.resolve(cwd, "./src/app/core/controllers/secured.js");
-                        if (!fsExtra.existsSync(targetFile)) {
-                            throw new Error(`File "${targetFile}" doesn't exist`);
-                        }
-                        await execShell(["npm", ["add", "--no-save", "string-replace-loader"], {cwd}]);
-                        // tslint:disable-next-line
-                        // https://github.com/ProtonMail/WebClient/blob/0c504c8d4ae84a665af5b6e2603228f414ac6f07/src/app/core/controllers/secured.js#L84
-                        const search = "return $cookies.get(ONBOARD_MODAL_COOKIE) || localStorage.getItem(ONBOARD_MODAL_COOKIE);";
-                        const replace = "return true;";
-                        return {
-                            targetFile,
-                            isReplaced: () => fsExtra.existsSync(replacedMarkFile),
-                            webpackConfigCodePatch: `
+                        const hasSeenOnboardingModalSuppressor = await (async () => {
+                            const replacedMarkFile = path.join(cwd, `${new UUID(4).format()}-replaced-mark`);
+                            const targetFile = path.resolve(cwd, "./src/app/core/controllers/secured.js");
+
+                            if (!fsExtra.existsSync(targetFile)) {
+                                throw new Error(`File "${targetFile}" doesn't exist`);
+                            }
+
+                            await execShell(["npm", ["add", "--no-save", "string-replace-loader"], {cwd}]);
+
+                            // previous "npm add" command run removes the "proton-translations" dir
+                            // so we explicitly run "postinstall" again to get it back
+                            await execShell([
+                                "npm",
+                                ["run", "postinstall"],
+                                {cwd, env: {...process.env, ...PROVIDER_REPOS[repoType].i18nEnvVars}},
+                            ]);
+
+                            // tslint:disable-next-line
+                            // https://github.com/ProtonMail/WebClient/blob/0c504c8d4ae84a665af5b6e2603228f414ac6f07/src/app/core/controllers/secured.js#L84
+                            const search = "return $cookies.get(ONBOARD_MODAL_COOKIE) || localStorage.getItem(ONBOARD_MODAL_COOKIE);";
+                            const replace = "return true;";
+
+                            return {
+                                targetFile,
+                                isReplaced: () => fsExtra.existsSync(replacedMarkFile),
+                                webpackConfigCodePatch: `
                                 webpackConfig.module.rules.push({
                                     test: ${JSON.stringify(targetFile)},
                                     loader: 'string-replace-loader',
@@ -95,33 +110,30 @@ const folderAsDomainEntries: Array<FolderAsDomainEntry<{
                                       strict: true,
                                     }
                                 })
+                                `,
+                            } as const;
+                        })();
+
+                        printAndWriteFile(
+                            webpackConfigFile,
+                            `
+                                const webpackConfig = require("${originalWebpackConfigFile}");
+                                ${resolveWebpackConfigPatchingCode("webpackConfig")}
+                                ${hasSeenOnboardingModalSuppressor.webpackConfigCodePatch}
+                                module.exports = webpackConfig;
                             `,
-                        } as const;
+                        );
+
+                        await execShell(["npm", ["run", "build", "--", "--api", configApiParam], {cwd}]);
+
+                        if (!hasSeenOnboardingModalSuppressor.isReplaced()) {
+                            throw new Error(`Failed to patch the "${hasSeenOnboardingModalSuppressor}" file`);
+                        }
                     })();
-
-                    printAndWriteFile(
-                        webpackConfigFile,
-                        `
-                            const webpackConfig = require("${originalWebpackConfigFile}");
-                            ${resolveWebpackConfigPatchingCode("webpackConfig")}
-                            ${hasSeenOnboardingModalSuppressor.webpackConfigCodePatch}
-                            module.exports = webpackConfig;
-                        `,
-                    );
-
-                    // TODO drop "./node_modules/proton-translations" dir creating
-                    // https://github.com/ProtonMail/WebClient/issues/158#issuecomment-588103753
-                    await execShell(["npx", ["make-dir-cli", "./node_modules/proton-translations"], {cwd}]);
-
-                    await execShell(["npm", ["run", "build", "--", "--api", configApiParam], {cwd}]);
-
-                    if (!hasSeenOnboardingModalSuppressor.isReplaced()) {
-                        throw new Error(`Failed to patch the "${hasSeenOnboardingModalSuppressor}" file`);
-                    }
-                })();
+                },
             },
-        },
-    });
+        });
+    })();
 
     for (const repoType of (["proton-mail-settings", "proton-contacts", "proton-calendar"] as const)) {
         const destSubFolder = PROVIDER_REPOS[repoType].baseDir;
@@ -137,9 +149,9 @@ const folderAsDomainEntries: Array<FolderAsDomainEntry<{
             folderAsDomainEntries,
             destSubFolder,
             flows: {
-                // TODO proton-v4: remove "npm install" code block
-                // https://github.com/ProtonMail/WebClient/issues/158
                 install: repoType === "proton-contacts"
+                    // TODO proton-v4 (proton-contacts): remove "npm install" code block
+                    // https://github.com/ProtonMail/WebClient/issues/158
                     ? async ({repoDir}) => {
                         const npmLockFile = path.join(repoDir, "./package-lock.json");
 
@@ -147,7 +159,11 @@ const folderAsDomainEntries: Array<FolderAsDomainEntry<{
                             throw new Error(`"${npmLockFile}" file exists, it's time for switching to "npm ci" call`);
                         }
 
-                        await execShell(["yarn", ["install"], {cwd: repoDir}]);
+                        await execShell([
+                            "npm",
+                            ["install"],
+                            {cwd: repoDir, env: {...process.env, ...PROVIDER_REPOS[repoType].i18nEnvVars}},
+                        ]);
                     }
                     : undefined,
                 build: async ({repoDir: cwd, folderAsDomainEntry}) => {

@@ -6,6 +6,7 @@ import spawnAsync from "@expo/spawn-async";
 import {pick} from "remeda";
 
 import {ARTIFACT_NAME_POSTFIX_ENV_VAR_NAME} from "scripts/const";
+import {PROVIDER_REPOS} from "src/shared/constants";
 
 export const CWD = path.resolve(process.cwd());
 
@@ -19,14 +20,26 @@ export const LOG_LEVELS = {
     value: chalk.cyan,
 };
 
+const execShellPrintEnvWhitelist: ReadonlyArray<string> = [
+    ARTIFACT_NAME_POSTFIX_ENV_VAR_NAME,
+    ...(() => {
+        const stub: Record<keyof Required<(typeof PROVIDER_REPOS)[keyof typeof PROVIDER_REPOS]["i18nEnvVars"]>, null> = {
+            I18N_DEPENDENCY_REPO: null,
+            I18N_DEPENDENCY_BRANCH: null,
+            I18N_DEPENDENCY_BRANCH_V4: null,
+        };
+        return Object.keys(stub);
+    })(),
+] as const;
+
 export async function execShell(
     [command, args, options]: Parameters<typeof spawnAsync>,
     {
         printStd = true,
-        printEnvWhitelist = [ARTIFACT_NAME_POSTFIX_ENV_VAR_NAME],
+        printEnvWhitelist = execShellPrintEnvWhitelist,
     }: {
         printStd?: boolean;
-        printEnvWhitelist?: string[];
+        printEnvWhitelist?: readonly string[];
     } = {},
 ): Promise<Unpacked<ReturnType<typeof spawnAsync>>> {
     LOG(
@@ -38,7 +51,7 @@ export async function execShell(
                     args,
                     options: {
                         ...options,
-                        env: pick(options?.env ?? {}, printEnvWhitelist),
+                        env: pick(options?.env ?? {}, [...printEnvWhitelist]),
                     },
                 },
                 null,

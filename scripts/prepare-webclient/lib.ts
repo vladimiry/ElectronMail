@@ -55,7 +55,7 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
         destSubFolder,
         flows: {
             preInstall,
-            install = installDependencies,
+            install,
             build,
         },
     }: {
@@ -123,7 +123,15 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
                 if (preInstall) {
                     await preInstall(flowArg);
                 }
-                await install(flowArg);
+                if (install) {
+                    await install(flowArg);
+                } else {
+                    await execShell([
+                        "npm",
+                        ["ci"],
+                        {cwd: repoDir, env: {...process.env, ...PROVIDER_REPOS[repoType].i18nEnvVars}},
+                    ]);
+                }
             }
 
             await build(flowArg);
@@ -151,10 +159,6 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
         LOG(LOG_LEVELS.title(`Copying: ${LOG_LEVELS.value(distDir)} to ${LOG_LEVELS.value(resolvedDistDir)}`));
         await fsExtra.copy(distDir, resolvedDistDir);
     }
-}
-
-async function installDependencies({repoDir: cwd}: { repoDir: string }) {
-    await execShell(["npm", ["ci"], {cwd}]);
 }
 
 async function clone(repoType: keyof typeof PROVIDER_REPOS, dir: string) {

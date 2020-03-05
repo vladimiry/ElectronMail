@@ -21,7 +21,7 @@ import {validateLoginDelaySecondsRange} from "src/shared/util";
     preserveWhitespaces: true,
 })
 export class AccountEditComponent implements OnInit, OnDestroy {
-    entryUrlItems = PROTON_API_ENTRY_RECORDS;
+    entryUrlItems = [...PROTON_API_ENTRY_RECORDS];
     controls: Record<keyof Pick<AccountConfig,
         | "login" | "title" | "database" | "persistentSession" | "entryUrl" | "loginDelayUntilSelected" | "loginDelaySecondsRange">
         | keyof Pick<Required<Required<AccountConfig>["proxy"]>, "proxyRules" | "proxyBypassRules">

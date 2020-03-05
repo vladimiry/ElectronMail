@@ -11,12 +11,13 @@
                         Tray/Notification icon color
                     </label>
                     <input
+                        *ngIf="($trayIconColor | async) as trayIconColor"
                         (colorPickerChange)="trayIconColorPickerChangeHandler($event)"
-                        [colorPicker]="($trayIconColor | async) || undefined"
+                        [colorPicker]="trayIconColor"
                         [cpOutputFormat]="'hex'"
                         [cpPosition]="'bottom'"
                         [cpToggle]="colorPickerOpened.icon"
-                        [value]="($trayIconColor | async) + ''"
+                        [value]="(trayIconColor) + ''"
                         class="form-control form-control-sm"
                         readonly
                         style="cursor: pointer;"
@@ -44,12 +45,13 @@
                     <div class="row">
                         <div class="col-sm-6 pb-1">
                             <input
+                                *ngIf="($unreadBgColor | async) as unreadBgColor"
                                 (colorPickerChange)="bgColorPickerChangeHandler($event)"
-                                [colorPicker]="($unreadBgColor | async) || undefined"
+                                [colorPicker]="unreadBgColor"
                                 [cpOutputFormat]="'hex'"
                                 [cpPosition]="'bottom'"
                                 [cpToggle]="colorPickerOpened.bg"
-                                [value]="'background: ' + ($unreadBgColor | async)"
+                                [value]="'background: ' + (unreadBgColor)"
                                 class="form-control form-control-sm"
                                 readonly
                                 style="cursor: pointer;"
@@ -58,12 +60,13 @@
                         </div>
                         <div class="col-sm-6 pb-1">
                             <input
+                                *ngIf="($unreadTextColor | async) as unreadTextColor"
                                 (colorPickerChange)="textColorPickerChangeHandler($event)"
-                                [colorPicker]="($unreadTextColor | async) || undefined"
+                                [colorPicker]="unreadTextColor"
                                 [cpOutputFormat]="'hex'"
                                 [cpPosition]="'bottom'"
                                 [cpToggle]="colorPickerOpened.text"
-                                [value]="'text: ' + ($unreadTextColor | async)"
+                                [value]="'text: ' + (unreadTextColor)"
                                 class="form-control form-control-sm"
                                 readonly
                                 style="cursor: pointer;"

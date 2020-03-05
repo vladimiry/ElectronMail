@@ -20,9 +20,9 @@ import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS} from "src/web/browser-window/app/stor
 import {DB_VIDE_MAIL_SELECTED_CLASS_NAME} from "src/web/browser-window/app/_db-view/const";
 import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
 import {DbViewMailComponent} from "src/web/browser-window/app/_db-view/db-view-mail.component";
+import {Instance, State} from "src/web/browser-window/app/store/reducers/db-view";
 import {Mail, View} from "src/shared/model/database";
 import {ONE_SECOND_MS, WEB_PROTOCOL_SCHEME} from "src/shared/constants";
-import {State} from "src/web/browser-window/app/store/reducers/db-view";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
 
 @Component({
@@ -33,7 +33,7 @@ import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
 })
 export class DbViewMailBodyComponent extends DbViewAbstractComponent implements OnInit, OnDestroy, AfterViewInit {
     @Input()
-    selectedFolderData?: View.Folder;
+    selectedFolderData?: Instance["selectedFolderData"];
 
     selectedMail$ = this.instance$.pipe(
         map((value) => value.selectedMail),

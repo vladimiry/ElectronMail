@@ -237,10 +237,8 @@ function resolveWebpackConfigPatchingCode(webpackConfigVarName = "webpackConfig"
                     plugin.options.minify = false;
                     break;
                 case "ImageminPlugin":
-                    if (CI) {
-                        plugin.options.maxConcurrency = 1;
-                        break;
-                    }
+                    return false;
+                case "FaviconsWebpackPlugin":
                     return false;
                 case "OptimizeCSSAssetsPlugin":
                     return false;

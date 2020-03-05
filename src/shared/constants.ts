@@ -67,7 +67,7 @@ export const PROVIDER_REPOS: ReadonlyDeep<Record<"WebClient" | "proton-mail-sett
             clientId: string;
         },
         i18nEnvVars: {
-            I18N_DEPENDENCY_REPO: "git@github.com:ProtonMail/proton-translations.git";
+            I18N_DEPENDENCY_REPO: "https://github.com/ProtonMail/proton-translations.git";
             I18N_DEPENDENCY_BRANCH: string;
             I18N_DEPENDENCY_BRANCH_V4?: string;
         };
@@ -86,7 +86,7 @@ export const PROVIDER_REPOS: ReadonlyDeep<Record<"WebClient" | "proton-mail-sett
         // "proton-i18n" project requires some env vars to be set
         // see https://github.com/ProtonMail/WebClient/issues/176#issuecomment-595111186
         i18nEnvVars: {
-            I18N_DEPENDENCY_REPO: "git@github.com:ProtonMail/proton-translations.git",
+            I18N_DEPENDENCY_REPO: "https://github.com/ProtonMail/proton-translations.git",
             I18N_DEPENDENCY_BRANCH: "webmail",
             I18N_DEPENDENCY_BRANCH_V4: "webmail-v4",
         },
@@ -101,7 +101,7 @@ export const PROVIDER_REPOS: ReadonlyDeep<Record<"WebClient" | "proton-mail-sett
             clientId: "WebMailSettings",
         },
         i18nEnvVars: {
-            I18N_DEPENDENCY_REPO: "git@github.com:ProtonMail/proton-translations.git",
+            I18N_DEPENDENCY_REPO: "https://github.com/ProtonMail/proton-translations.git",
             I18N_DEPENDENCY_BRANCH: "fe-mail-settings",
         },
     },
@@ -115,7 +115,7 @@ export const PROVIDER_REPOS: ReadonlyDeep<Record<"WebClient" | "proton-mail-sett
             clientId: "WebContacts",
         },
         i18nEnvVars: {
-            I18N_DEPENDENCY_REPO: "git@github.com:ProtonMail/proton-translations.git",
+            I18N_DEPENDENCY_REPO: "https://github.com/ProtonMail/proton-translations.git",
             I18N_DEPENDENCY_BRANCH: "fe-contacts",
         },
     },
@@ -129,7 +129,7 @@ export const PROVIDER_REPOS: ReadonlyDeep<Record<"WebClient" | "proton-mail-sett
             clientId: "WebCalendar",
         },
         i18nEnvVars: {
-            I18N_DEPENDENCY_REPO: "git@github.com:ProtonMail/proton-translations.git",
+            I18N_DEPENDENCY_REPO: "https://github.com/ProtonMail/proton-translations.git",
             I18N_DEPENDENCY_BRANCH: "fe-calendar",
         },
     },

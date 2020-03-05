@@ -18,6 +18,7 @@ import {
     distinctUntilChanged,
     filter,
     map,
+    mergeMap,
     pairwise,
     startWith,
     switchMap,
@@ -92,6 +93,11 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     private readonly onlinePing$ = timer(0, ONE_SECOND_MS).pipe(
         filter(() => navigator.onLine),
         take(1),
+    );
+
+    private readonly persistentSession$ = this.account$.pipe(
+        map(({accountConfig: {persistentSession}}) => Boolean(persistentSession)),
+        distinctUntilChanged(),
     );
 
     // TODO resolve "componentIndex" dynamically: accounts$.indexOf(({login}) => this.login === login)
@@ -235,6 +241,31 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     });
                 }),
         );
+
+        // removing "proton session" on "persistent session" toggle gets disabled notification
+        // WARN don't put this logic in "onPrimaryViewLoadedOnce" since it should work in offline mode too
+        this.subscription.add(
+            this.persistentSession$
+                .pipe(
+                    mergeMap((persistentSession) => persistentSession ? [] : [persistentSession]),
+                    withLatestFrom(this.account$),
+                )
+                .subscribe(([persistentSession, {accountConfig}]) => {
+                    (async () => {
+                        if (persistentSession) { // just extra check
+                            throw new Error(`"persistentSession" value is supposed to be "false" here`);
+                        }
+
+                        const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, "WebClient");
+                        const key = {login: accountConfig.login, apiEndpointOrigin: new URL(parsedEntryUrl.entryApiUrl).origin} as const;
+
+                        await this.api.ipcMainClient()("resetSavedProtonSession")(key);
+                    })().catch((error) => {
+                        // TODO make "AppErrorHandler.handleError" catch promise rejection errors
+                        this.onDispatchInLoggerZone(NOTIFICATION_ACTIONS.Error(error));
+                    });
+                }),
+        );
     }
 
     onEventChild(
@@ -270,10 +301,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     distinctUntilChanged(),
                 ),
                 // notification: toggling "persistentSession" flag on the account edit form
-                this.account$.pipe(
-                    map(({accountConfig: {persistentSession}}) => Boolean(persistentSession)),
-                    distinctUntilChanged(),
-                ),
+                this.persistentSession$,
             ]).pipe(
                 withLatestFrom(this.account$),
             ).subscribe(([[loggedIn, persistentSession], {accountConfig}]) => {
@@ -282,7 +310,6 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     const key = {login: accountConfig.login, apiEndpointOrigin: new URL(parsedEntryUrl.entryApiUrl).origin} as const;
 
                     if (!persistentSession) {
-                        await this.api.ipcMainClient()("resetSavedProtonSession")(key);
                         return;
                     }
 

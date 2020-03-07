@@ -1,8 +1,5 @@
 {
   "extends": "../../../tsconfig.json",
-  "compilerOptions": {
-    "module": "ESNext"
-  },
   "include": [
     "../../../src/@types/**/*",
     "../../../src/web/@types/index.d.ts",

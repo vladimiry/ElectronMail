@@ -26,5 +26,5 @@ $hovered-href-highlighter-render-visible-class: "visible";
 }
 
 :export {
-    renderVisibleClass: #{$hovered-href-highlighter-render-visible-class}, // sass-lint:disable-line no-misspelled-properties trailing-semicolon
+    renderVisibleClass: #{$hovered-href-highlighter-render-visible-class},
 }

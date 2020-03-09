@@ -68,7 +68,7 @@
 
     .root-node-container {
         max-height: 200px;
-        overflow-y: auto !important; // sass-lint:disable-line no-important // interferes with ngx-bootstrap'a "collapse" module
+        overflow-y: auto !important;
         display: flex;
     }
 

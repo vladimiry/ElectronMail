@@ -57,7 +57,7 @@
     }
 
     &.state- {
-        &protonmail_inbox_and_sent { // sass-lint:disable-line class-name-format
+        &protonmail_inbox_and_sent {
             &::before {
                 background-color: $state-line-sent;
                 width: ($state-line-with / 2);

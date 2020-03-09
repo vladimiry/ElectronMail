@@ -56,13 +56,13 @@
             }
         }
 
-        &-STARRED { // sass-lint:disable-line class-name-format
+        &-STARRED {
             .fa::before {
                 content: $fa-var-star;
             }
         }
 
-        &-ALL { // sass-lint:disable-line class-name-format
+        &-ALL {
             .fa::before {
                 content: $fa-var-globe;
             }

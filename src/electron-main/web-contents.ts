@@ -1,5 +1,6 @@
 import _logger from "electron-log";
-import {ContextMenuParams, Event, Menu, MenuItemConstructorOptions, WebContents, app, clipboard} from "electron";
+import {ContextMenuParams, Event, Menu, MenuItemConstructorOptions, WebContents, WebPreferences, app, clipboard} from "electron";
+import {take} from "rxjs/operators";
 
 import {Context} from "./model";
 import {IPC_MAIN_API_NOTIFICATION$} from "./api/constants";
@@ -16,7 +17,7 @@ export async function initWebContentsCreatingHandlers(ctx: Context) {
         "context-menu": (event: Event, params: ContextMenuParams) => void;
         "update-target-url": (event: Event, url: string) => void;
         "preload-error": (event: Event, preloadPath: string, error: Error) => void;
-        "will-attach-webview": (event: Event, webPreferences: any, params: any) => void;
+        "will-attach-webview": (event: Event, webPreferences: WebPreferences, params: Record<string, string>) => void;
     }
 
     const emptyArray = [] as const;
@@ -170,11 +171,14 @@ export async function initWebContentsCreatingHandlers(ctx: Context) {
         return resultFunction;
     })();
 
-    const webContentsCreatedHandler = (webContents: WebContents) => {
+    const webContentsCreatedHandler = async (webContents: WebContents) => {
         subscribe("context-menu", webContents);
         subscribe("update-target-url", webContents);
         subscribe("preload-error", webContents);
         subscribe("will-attach-webview", webContents);
+
+        const {zoomFactor} = await ctx.config$.pipe(take(1)).toPromise();
+        webContents.zoomFactor = zoomFactor;
     };
 
     app.on("browser-window-created", (...[, {webContents}]) => webContentsCreatedHandler(webContents));

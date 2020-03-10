@@ -19,6 +19,9 @@ export function dumpProtonSharedSession(): ProtonClientSession | null {
     // proton dumps session to "window.name" and "window.sessionStorage" on "window.unload" event
     // https://github.com/ProtonMail/proton-shared/blob/37716bc2685d9cef8245efcb8d16e827b97a03c5/lib/createSecureSessionStorage.js#L14-L16
     window.dispatchEvent(new Event("unload"));
+    // proton dumps session to "window.name" and "window.sessionStorage" on "window.unload" event
+    // https://github.com/ProtonMail/proton-shared/blob/c7e008673b518be87127dcfb4e1e2cecac3dbec6/lib/createSecureSessionStorage.js#L23
+    window.dispatchEvent(new Event("pagehide"));
 
     const windowName: Readonly<Record<string, any /* TODO TS: replace "any" with JSONValue type */>> = JSON.parse(window.name);
     const windowNameKeys = Object.keys(windowName);

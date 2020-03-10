@@ -149,23 +149,6 @@ const folderAsDomainEntries: Array<FolderAsDomainEntry<{
             folderAsDomainEntries,
             destSubFolder,
             flows: {
-                install: repoType === "proton-contacts"
-                    // TODO proton-v4 (proton-contacts): remove "npm install" code block
-                    // https://github.com/ProtonMail/WebClient/issues/158
-                    ? async ({repoDir}) => {
-                        const npmLockFile = path.join(repoDir, "./package-lock.json");
-
-                        if (fsExtra.existsSync(npmLockFile)) {
-                            throw new Error(`"${npmLockFile}" file exists, it's time for switching to "npm ci" call`);
-                        }
-
-                        await execShell([
-                            "npm",
-                            ["install"],
-                            {cwd: repoDir, env: {...process.env, ...PROVIDER_REPOS[repoType].i18nEnvVars}},
-                        ]);
-                    }
-                    : undefined,
                 build: async ({repoDir: cwd, folderAsDomainEntry}) => {
                     const {configApiParam} = await configure({cwd, repoType}, folderAsDomainEntry);
                     await writeProtonConfigFile({cwd});

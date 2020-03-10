@@ -1,4 +1,3 @@
-import * as ts from 'typescript';
 import {AngularCompilerPlugin, NgToolsLoader, PLATFORM} from "@ngtools/webpack";
 import {DefinePlugin} from "webpack";
 import {readConfiguration} from "@angular/compiler-cli";
@@ -88,7 +87,6 @@ const config = buildBaseWebConfig(
                     preserveWhitespaces: false,
                     disableTypeScriptVersionCheck: true,
                     enableIvy: angularCompilationFlags.ivy,
-                    module: ts.ModuleKind.ESNext,
                     ...legacyNgcOptions,
                     ...strictTemplateOptions,
                     ...readConfiguration(tsConfigFile).options,

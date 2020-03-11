@@ -1,6 +1,6 @@
 import {UnionOf} from "@vladimiry/unionize";
 import {pick} from "remeda";
-import {serializerr} from "serializerr";
+import {serializeError} from "serialize-error";
 
 import * as fromRoot from "src/web/browser-window/app/store/reducers/root";
 import {NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
@@ -56,7 +56,7 @@ function add(state: State, item: NotificationItem): State {
     if (item.type === "error") {
         logger.error(
             // WARN: make sure there is no circular recursive data
-            serializerr(
+            serializeError(
                 pick(item.data, ["name", "message", "stack"]),
             ),
         );

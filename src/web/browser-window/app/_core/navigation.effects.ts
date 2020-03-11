@@ -1,12 +1,12 @@
 import {Actions, createEffect} from "@ngrx/effects";
-import {EMPTY, from, of} from "rxjs";
+import {EMPTY, from} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Router} from "@angular/router";
-import {catchError, concatMap, map, mergeMap} from "rxjs/operators";
+import {concatMap, map, mergeMap} from "rxjs/operators";
 
 import {ACCOUNTS_OUTLET, SETTINGS_OUTLET, STUB_OUTLET, STUB_PATH} from "src/web/browser-window/app/app.constants";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
-import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
+import {NAVIGATION_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/browser-window/util";
 
 const _logger = getZoneNameBoundWebLogger("[navigation.effects.ts]");
@@ -29,7 +29,6 @@ export class NavigationEffects {
                 );
             }),
             concatMap(() => EMPTY),
-            catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
         ),
         {dispatch: false},
     );
@@ -40,7 +39,6 @@ export class NavigationEffects {
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             concatMap(({payload}) => from(this.electronService.ipcMainClient()("toggleBrowserWindow")(payload)).pipe(
                 mergeMap(() => EMPTY),
-                catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
             ))),
     );
 
@@ -50,7 +48,6 @@ export class NavigationEffects {
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             concatMap(() => from(this.electronService.ipcMainClient()("openAboutWindow")()).pipe(
                 mergeMap(() => EMPTY),
-                catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
             ))),
     );
 
@@ -60,7 +57,6 @@ export class NavigationEffects {
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             concatMap(({payload}) => from(this.electronService.ipcMainClient()("openExternal")({url: payload.url})).pipe(
                 mergeMap(() => EMPTY),
-                catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
             )),
         ),
     );
@@ -71,7 +67,6 @@ export class NavigationEffects {
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             concatMap(() => from(this.electronService.ipcMainClient()("openSettingsFolder")()).pipe(
                 mergeMap(() => EMPTY),
-                catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
             ))),
     );
 
@@ -102,7 +97,6 @@ export class NavigationEffects {
                             NAVIGATION_ACTIONS.Go({path: ["/"]}),
                         ];
                     }),
-                    catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                 );
             }),
         ),
@@ -114,7 +108,6 @@ export class NavigationEffects {
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             concatMap(() => from(this.electronService.ipcMainClient()("quit")()).pipe(
                 mergeMap(() => EMPTY),
-                catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
             ))),
     );
 

@@ -2,15 +2,9 @@ import {Actions, createEffect} from "@ngrx/effects";
 import {EMPTY, forkJoin, from, merge, of} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Store, select} from "@ngrx/store";
-import {catchError, concatMap, filter, finalize, map, mergeMap, switchMap, takeUntil, tap} from "rxjs/operators";
+import {concatMap, filter, finalize, map, mergeMap, switchMap, takeUntil, tap} from "rxjs/operators";
 
-import {
-    ACCOUNTS_ACTIONS,
-    DB_VIEW_ACTIONS,
-    NOTIFICATION_ACTIONS,
-    OPTIONS_ACTIONS,
-    unionizeActionFilter,
-} from "src/web/browser-window/app/store/actions";
+import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter,} from "src/web/browser-window/app/store/actions";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {FIRE_SYNCING_ITERATION$} from "src/web/browser-window/app/app.constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
@@ -159,7 +153,6 @@ export class DbViewEffects {
                             webViewClient("fetchSingleMail")({...pk, mailPk, zoneName: logger.zoneName()}),
                         ).pipe(
                             mergeMap(() => of(DB_VIEW_ACTIONS.SelectConversationMailRequest({dbAccountPk: pk, mailPk}))),
-                            catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                             finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.FetchSingleMailSetParams({pk, mailPk: undefined}))),
                         );
                     }),
@@ -185,7 +178,6 @@ export class DbViewEffects {
                                 FIRE_SYNCING_ITERATION$.next({login});
                                 return of(DB_VIEW_ACTIONS.MakeMailsReadInStore({dbAccountPk: pk, mailsBundleKey}));
                             }),
-                            catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                             finalize(() => {
                                 this.store.dispatch(
                                     ACCOUNTS_ACTIONS.MakeMailReadSetParams({pk, messageIds: undefined, mailsBundleKey}),
@@ -211,7 +203,6 @@ export class DbViewEffects {
                         concatMap((config) => [
                             OPTIONS_ACTIONS.GetConfigResponse(config),
                         ]),
-                        catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                         finalize(() => {
                             this.store.dispatch(OPTIONS_ACTIONS.PatchProgress({togglingLocalDbMailsListViewMode: false}));
                         }),

@@ -1,8 +1,8 @@
 import {Actions, createEffect} from "@ngrx/effects";
-import {EMPTY, from, merge, of} from "rxjs";
+import {EMPTY, from, merge} from "rxjs";
 import {Injectable} from "@angular/core";
 import {UnionOf} from "@vladimiry/unionize";
-import {catchError, concatMap, filter, map, mergeMap} from "rxjs/operators";
+import {concatMap, filter, map, mergeMap} from "rxjs/operators";
 
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
@@ -35,7 +35,6 @@ export class NotificationEffects {
                     this.electronService.ipcMainClient()("updateOverlayIcon")(payload),
                 ).pipe(
                     mergeMap(() => EMPTY),
-                    catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                 );
             }),
         ),

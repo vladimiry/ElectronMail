@@ -60,7 +60,6 @@ export class OptionsEffects {
 
                         return of(OPTIONS_ACTIONS.PatchMainProcessNotification(value));
                     }),
-                    catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                 );
             })),
     );
@@ -106,8 +105,6 @@ export class OptionsEffects {
                         of(OPTIONS_ACTIONS.InitResponse(payload)),
                         of(this.optionsService.settingsNavigationAction({path: ""})),
                     )),
-                ).pipe(
-                    catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                 );
             }),
         ),
@@ -125,7 +122,6 @@ export class OptionsEffects {
                         OPTIONS_ACTIONS.GetConfigResponse(config),
                         this.optionsService.settingsNavigationAction({path: ""}),
                     ]),
-                    catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                 );
             })),
     );
@@ -148,7 +144,6 @@ export class OptionsEffects {
                     map((readable) => this.optionsService.settingsNavigationAction({
                         path: readable ? "login" : "settings-setup",
                     })),
-                    catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                 );
             }),
         ),
@@ -183,7 +178,6 @@ export class OptionsEffects {
                                     }],
                                 }),
                             ]),
-                            catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                             finalize(() => this.dispatchProgress({loadingDatabase: false})),
                         ),
                     )),
@@ -218,7 +212,6 @@ export class OptionsEffects {
                             queryParams: {login: payload.login},
                         }),
                     ]),
-                    catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                     finalize(() => this.dispatchProgress({addingAccount: false})),
                 ),
             ))),
@@ -234,7 +227,6 @@ export class OptionsEffects {
                     this.ipcMainClient("updateAccount")(payload),
                 ).pipe(
                     map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
-                    catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                     finalize(() => this.dispatchProgress({updatingAccount: false})),
                 ),
             ))),
@@ -250,7 +242,6 @@ export class OptionsEffects {
                     this.ipcMainClient("changeAccountOrder", {timeoutMs: ONE_SECOND_MS * 20})(payload),
                 ).pipe(
                     map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
-                    catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                     finalize(() => this.dispatchProgress({changingAccountOrder: false})),
                 ),
             ))),
@@ -268,7 +259,7 @@ export class OptionsEffects {
                     concatMap((settings) => [
                         OPTIONS_ACTIONS.GetSettingsResponse(settings),
                         this.optionsService.settingsNavigationAction({path: "accounts"}),
-                    ]), catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
+                    ]),
                     finalize(() => this.dispatchProgress({removingAccount: false})),
                 ),
             ))),
@@ -304,7 +295,6 @@ export class OptionsEffects {
                     this.ipcMainClient("patchBaseConfig")(payload),
                 ).pipe(
                     map((config) => OPTIONS_ACTIONS.GetConfigResponse(config)),
-                    catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                     finalize(() => this.dispatchProgress({updatingBaseSettings: false})),
                 ),
             ))),
@@ -323,7 +313,6 @@ export class OptionsEffects {
                         this.ipcMainClient("reEncryptSettings")({encryptionPreset, password}),
                     ).pipe(
                         map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
-                        catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                         finalize(() => this.dispatchProgress({reEncryptingSettings: false})),
                     ),
                 );

@@ -154,7 +154,6 @@ export class AccountsEffects {
                                         );
                                         return selectMailOnlineInput$.pipe(
                                             mergeMap(() => EMPTY),
-                                            catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                                             finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({
                                                 login,
                                                 patch: {selectingMailOnline: false},
@@ -241,7 +240,6 @@ export class AccountsEffects {
                                             }),
                                         ),
                                     ),
-                                    catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                                     finalize(() => {
                                         return this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: false}}));
                                     }),
@@ -444,7 +442,11 @@ export class AccountsEffects {
                 logger.verbose("empty");
 
                 return [];
-            })),
+            }),
+        ),
+        {
+            useEffectsErrorHandler: false,
+        },
     );
 
     constructor(

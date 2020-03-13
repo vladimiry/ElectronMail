@@ -1,8 +1,8 @@
 import {Deferred} from "ts-deferred";
 import {Observable, Subscription} from "rxjs";
 
+import {HOVERED_HREF_HIGHLIGHT_TAG_NAME, ONE_SECOND_MS} from "src/shared/constants";
 import {IPC_MAIN_API, IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainServiceScan} from "src/shared/api/main";
-import {ONE_SECOND_MS, PACKAGE_NAME} from "src/shared/constants";
 import {buildLoggerBundle} from "src/electron-preload/lib/util";
 
 // TODO TS add declaration for "index.scss" and use "ES import" then
@@ -12,7 +12,7 @@ const css = require(`to-string-loader!css-loader!sass-loader!./index.scss`);
 const {locals: {renderVisibleClass}}: { locals: { renderVisibleClass: string } } = require(`css-loader!sass-loader!./index.scss`);
 
 export class HoveredHrefHighlightElement extends HTMLElement {
-    public static readonly tagName = `${PACKAGE_NAME}-hovered-href-highlight`.toLowerCase();
+    public static readonly tagName = HOVERED_HREF_HIGHLIGHT_TAG_NAME;
 
     private readonly logger = {...buildLoggerBundle(`[${HoveredHrefHighlightElement.tagName}]`)} as const;
 
@@ -31,6 +31,12 @@ export class HoveredHrefHighlightElement extends HTMLElement {
         "beforeunload",
         () => this.destroy(),
     ];
+    private readonly mouseLeaveEventHandlingArgs: readonly ["mouseleave", () => void] = [
+        "mouseleave",
+        () => {
+            this.renderEl.classList.remove(renderVisibleClass);
+        },
+    ];
 
     constructor() {
         super();
@@ -38,6 +44,7 @@ export class HoveredHrefHighlightElement extends HTMLElement {
         this.root = this.attachShadow({mode: "closed"});
         this.root.innerHTML = `<style>${css}</style>`;
         this.renderEl = this.root.appendChild(document.createElement("div"));
+        this.renderEl.addEventListener(...this.mouseLeaveEventHandlingArgs);
         window.addEventListener(...this.beforeUnloadEventHandlingArgs);
     }
 
@@ -45,6 +52,7 @@ export class HoveredHrefHighlightElement extends HTMLElement {
         this.logger.info("destroy()");
         this.releaseApiClientDeferred.resolve();
         this.subscription.unsubscribe();
+        this.renderEl.removeEventListener(...this.mouseLeaveEventHandlingArgs);
         window.removeEventListener(...this.beforeUnloadEventHandlingArgs);
         this.root.innerHTML = "";
         delete this.notification$;
@@ -106,14 +114,6 @@ export function registerHoveredHrefHighlightElement(
 
 export function attachHoveredHrefHighlightElement(): HoveredHrefHighlightElement {
     const el = document.createElement(registerHoveredHrefHighlightElement().tagName) as HoveredHrefHighlightElement;
-    const stylePatch: Partial<CSSStyleDeclaration> = {
-        position: "fixed",
-        bottom: "0",
-        left: "0",
-        zIndex: "10000",
-    };
-
-    Object.assign(el.style, stylePatch);
 
     document.addEventListener("DOMContentLoaded", () => {
         document.body.appendChild(el);

@@ -221,7 +221,11 @@ export const IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS = unionize({
 export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
         Bootstrap: ofType<{}>(),
         ActivateBrowserWindow: ofType<{}>(),
-        TargetUrl: ofType<{ url: string }>(),
+        TargetUrl: ofType<ReadonlyDeep<NoExtraProperties<{
+            url: string;
+            // percent sizes get calculated since absolute sizes use introduce a mistake if "zoomFactor is not 1"
+            position?: { cursorXPercent: number; cursorYPercent: number; }
+        }>>>(),
         DbPatchAccount: ofType<{
             key: DbModel.DbAccountPk;
             entitiesModified: boolean;

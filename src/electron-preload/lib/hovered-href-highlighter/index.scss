@@ -8,16 +8,14 @@ $hovered-href-highlighter-render-visible-class: "visible";
     $padding-l: 0.25em;
 
     display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    z-index: 10000;
-    // word-break: break-all;
-    // max-width: 50%;
 
     > div {
         @include border-radius($border-radius-sm);
         display: none;
+        position: fixed;
+        bottom: 0;
+        z-index: 10000;
+        word-break: break-all;
         color: color-yiq($bg-color);
         background-color: $bg-color;
         border: 1px solid darken($bg-color, 10%);

@@ -79,7 +79,7 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
     await browserWindow.loadURL(ctx.locations.browserWindowPage);
 
     if (BUILD_ENVIRONMENT === "development") {
-        browserWindow.webContents.openDevTools();
+        browserWindow.webContents.openDevTools(/* {mode: "detach"} */);
     }
 
     return browserWindow;

@@ -91,6 +91,11 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
         selectedPks: [],
     };
 
+    private readonly defaultUncheckedFolderIds: ReadonlySet<string> = new Set([
+        MAIL_FOLDER_TYPE.ALL,
+        MAIL_FOLDER_TYPE.SPAM,
+    ]);
+
     private unSubscribe$ = new Subject();
 
     constructor(
@@ -117,7 +122,7 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
                         return;
                     }
 
-                    this.formControls.folders.addControl(pk, new FormControl(folderType !== MAIL_FOLDER_TYPE.SPAM));
+                    this.formControls.folders.addControl(pk, new FormControl(!this.defaultUncheckedFolderIds.has(folderType)));
                     this.foldersInfo.names[pk] = `${name} (${size})`;
                 });
 

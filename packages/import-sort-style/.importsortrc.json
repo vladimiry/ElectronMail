@@ -1,6 +1,0 @@
-{
-    ".ts": {
-        "parser": "typescript",
-        "style": "@email-securely-app/import-sort-style"
-    }
-}

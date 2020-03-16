@@ -264,11 +264,6 @@
     global-agent "^2.0.2"
     global-tunnel-ng "^2.7.1"
 
-"@email-securely-app/import-sort-style@0.1.0":
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/@email-securely-app/import-sort-style/-/import-sort-style-0.1.0.tgz#cc5d3b6da7d18d363367396d8f667b304bff3cae"
-  integrity sha512-ukbwbJJIadsLGA/DI05vq6p/ckK0uHwCkn+Vs/pk45OSXNqPKSdhDr/Qats0J9MrYZkk500qkI1TH3r/FTpe0Q==
-
 "@expo/spawn-async@1.5.0":
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/@expo/spawn-async/-/spawn-async-1.5.0.tgz#799827edd8c10ef07eb1a2ff9dcfe081d596a395"
@@ -1061,6 +1056,11 @@
     lodash "^4.17.15"
     semver "^6.3.0"
     tsutils "^3.17.1"
+
+"@vladimiry/import-sort-style@0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@vladimiry/import-sort-style/-/import-sort-style-0.1.1.tgz#6ab4c03bf29f30db0f476d1b3f9737e4fb4a5da2"
+  integrity sha512-2dvvbesobix5Iqz551sjlxJWvZqTeiV69jbrsZRPVJJ1HXmH9igbmicuDPhIY+Tn4YrKPM/qdoEA1DezPJ796A==
 
 "@vladimiry/unionize@2.1.2-add-tagprefix-option":
   version "2.1.2-add-tagprefix-option"

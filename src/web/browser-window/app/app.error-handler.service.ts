@@ -1,3 +1,4 @@
+import combineErrors from "combine-errors";
 import {ErrorHandler, Injectable, Injector} from "@angular/core";
 import {Store} from "@ngrx/store";
 import {pick} from "remeda";
@@ -12,13 +13,25 @@ const logger = getZoneNameBoundWebLogger("[app.error-handler.service]");
 export class AppErrorHandler implements ErrorHandler {
     constructor(private readonly injector: Injector) {}
 
-    handleError(error: Error): void {
-        logger.error(
-            // WARN: make sure there is no circular recursive data
-            serializeError(
-                pick(error, ["name", "message", "stack"]),
-            ),
-        );
+    handleError(
+        error: Error & { errors?: (Array<Error | string>) | unknown },
+    ): void {
+        (() => {
+            const {errors} = error;
+
+            logger.error(
+                // WARN: make sure there is no circular recursive data
+                serializeError(
+                    pick(
+                        Array.isArray(errors) && errors.length
+                            // rxjs's "UnsubscriptionError" comes with "errors" array prop but "stack" props not well combined
+                            ? combineErrors([error, ...errors])
+                            : error,
+                        ["name", "message", "stack"],
+                    ),
+                ),
+            );
+        })();
 
         this.injector.get(Store).dispatch(
             NOTIFICATION_ACTIONS.ErrorSkipLogging(error),

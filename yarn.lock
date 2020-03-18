@@ -2748,7 +2748,7 @@ colors@^1.1.0:
   resolved "https://registry.yarnpkg.com/colors/-/colors-1.4.0.tgz#c50491479d4c1bdaed2c9ced32cf7c7dc2360f78"
   integrity sha512-a+UqTh4kgZg/SlGvfbzDHpgRu7AAQOmmqRHJnxhRZICKFUT91brVhNNt58CMWU9PsBbv3PDCZUHbVxuDiH2mtA==
 
-combine-errors@^3.0.3:
+combine-errors@3.0.3, combine-errors@^3.0.3:
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/combine-errors/-/combine-errors-3.0.3.tgz#f4df6740083e5703a3181110c2b10551f003da86"
   integrity sha1-9N9nQAg+VwOjGBEQwrEFUfAD2oY=

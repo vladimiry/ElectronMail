@@ -291,6 +291,7 @@
   "resolutions": {
     "*/**/@types/webpack": "4.41.7",
     "*/**/builder-util-runtime": "8.6.2",
-    "*/**/karma-jasmine": "2.0.1"
+    "*/**/karma-jasmine": "2.0.1",
+    "*/**/minimist": ">=1.2.3"
   }
 }

@@ -10,6 +10,7 @@ export type NotificationItem =
 
 export const NOTIFICATION_ACTIONS = unionize({
         Error: ofType<Extract<NotificationItem, { type: "error" }>["data"]>(),
+        ErrorSkipLogging: ofType<Extract<NotificationItem, { type: "error" }>["data"]>(),
         ErrorMessage: ofType<Extract<NotificationItem, { type: "errorMessage" }>["data"]>(),
         Info: ofType<Extract<NotificationItem, { type: "info" }>["data"]>(),
         Update: ofType<Extract<NotificationItem, { type: "update" }>["data"]>(),

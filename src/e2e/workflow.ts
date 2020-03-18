@@ -29,8 +29,10 @@ export interface TestContext {
     userDataDirPath: string;
     appDirPath: string;
     logFilePath: string;
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
     workflow: ReturnType<typeof buildWorkflow>;
     sinon: {
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
         addAccountSpy: sinon.SinonSpy<[Parameters<ReturnType<typeof buildWorkflow>["addAccount"]>[0]], Promise<void>>;
     };
 }
@@ -42,8 +44,8 @@ export const ENV = {
 };
 export const CI = Boolean(process.env.CI && (process.env.APPVEYOR || process.env.TRAVIS));
 
-// tslint:disable-next-line:no-var-requires no-import-zones
-export const {name: PROJECT_NAME, version: PROJECT_VERSION, description: APP_TITLE} = require("package.json");
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+export const {name: PROJECT_NAME, version: PROJECT_VERSION} = require("package.json"); // tslint:disable-line: no-import-zones
 
 const rootDirPath = path.resolve(__dirname, process.cwd());
 const appDirPath = path.join(rootDirPath, "./app");
@@ -62,115 +64,86 @@ const GLOBAL_STATE = {
     loginPrefixCount: 0,
 };
 
-export async function initApp(t: ExecutionContext<TestContext>, options: { initial: boolean }): Promise<TestContext["workflow"]> {
-    t.context.workflow = buildWorkflow(t);
-    t.context.sinon = {
-        addAccountSpy: sinon.spy(t.context.workflow, "addAccount"),
-    };
-
-    const outputDirPath = t.context.outputDirPath = t.context.outputDirPath || path.join(rootDirPath, "./output/e2e", String(Date.now()));
-    const userDataDirPath = path.join(outputDirPath, "./app-data");
-    const logFilePath = path.join(userDataDirPath, "log.log");
-    const webdriverLogDirPath = path.join(outputDirPath, "webdriver-driver-log");
-    const chromeDriverLogFilePath = path.join(outputDirPath, "chrome-driver.log");
-
-    mkOutputDirs([
-        outputDirPath,
-        userDataDirPath,
-        webdriverLogDirPath,
-    ]);
-
-    t.context.appDirPath = appDirPath;
-    t.context.userDataDirPath = userDataDirPath;
-    t.context.logFilePath = logFilePath;
-
-    if (options.initial) {
-        t.false(fs.existsSync(path.join(userDataDirPath, "config.json")),
-            `"config.json" should not exist yet in "${userDataDirPath}"`);
-        t.false(fs.existsSync(path.join(userDataDirPath, "settings.bin")),
-            `"settings.bin" should not exist yet in "${userDataDirPath}"`);
+export async function saveScreenshot(t: ExecutionContext<TestContext>): Promise<string | void> {
+    if (!t.context.app || !t.context.app.browserWindow) {
+        return;
     }
 
-    t.context.app = new Application({
-        // TODO consider running e2e tests on compiled/binary app too: path.join(rootPath, "./dist/linux-unpacked/electron-mail")
-        path: electron as any,
-        requireName: "electronRequire",
-        env: {
-            [RUNTIME_ENV_E2E]: String(true),
-            [RUNTIME_ENV_USER_DATA_DIR]: userDataDirPath,
-        },
-        args: [mainScriptFilePath],
+    const file = path.join(
+        t.context.outputDirPath,
+        `sreenshot-${t.title}-${new Date().toISOString()}.png`.replace(/[^A-Za-z0-9.]/g, "_"),
+    );
+    const image = await t.context.app.browserWindow.capturePage();
 
-        // ...(CI && {
-        //     startTimeout: ONE_SECOND_MS * 15,
-        //     chromeDriverArgs: [/*"no-sandbox", */"headless", "disable-gpu"],
-        // }),
+    await promisify(fs.writeFile)(file, image);
 
-        // TODO setting path chromedriver config parameters might cause the following errors happening:
-        // - ChromeDriver did not start within 5000ms
-        // - Failed to redirect stderr to log file.
-        // - Unable to initialize logging. Exiting...
-        webdriverLogPath: webdriverLogDirPath,
-        chromeDriverLogPath: chromeDriverLogFilePath,
-    });
+    // eslint-disable-next-line no-console
+    console.info(`Screenshot produced: ${file}`);
 
-    // start
-    try {
-        await t.context.app.start();
-    } catch (e) {
-        // tslint:disable-next-line:no-console
-        console.log(`chromeDriver.logLines:\n${(t.context.app as any).chromeDriver.logLines.join("\n")}`);
-        throw e;
-    }
-    t.is(t.context.app.isRunning(), true);
-    await t.context.app.client.waitUntilWindowLoaded();
-
-    // test window state
-    const {browserWindow} = t.context.app;
-
-    await (async () => {
-        const stubElement = t.context.app.client.$(".e2e-stub-element");
-        const text = await stubElement.getText();
-        const {title: pageTitle, userAgent}: { title: string; userAgent: string; } = JSON.parse(text);
-
-        t.is(pageTitle, "", `page title should be empty`);
-        t.truthy(userAgent, `user agent should be filled`);
-
-        // TODO also test user agents of webviews
-        const bannedUserAgentWords = ["electron", PRODUCT_NAME, PACKAGE_NAME, BINARY_NAME, PROJECT_VERSION]
-            .map((banned) => banned.toLowerCase());
-        t.false(
-            bannedUserAgentWords.some((banned) => userAgent.toLowerCase().includes(banned)),
-            `User agent "${userAgent}" should not include any of "${JSON.stringify(bannedUserAgentWords)}"`,
-        );
-    })();
-
-    // t.false(await browserWindow.webContents.isDevToolsOpened(), "browserWindow's dev tools should be closed");
-    t.false(await (browserWindow as any).isDevToolsOpened(), "window'd dev tools should be closed");
-    t.false(await browserWindow.isMinimized(), "window should not be not minimized");
-    if (options.initial) {
-        // TODO make below lines work with electron@v5 / travis@windows
-        t.true(await browserWindow.isVisible(), "window should be visible");
-        t.true(await browserWindow.isFocused(), "window should be focused");
-    } else {
-        t.false(await browserWindow.isVisible(), "window should not be visible");
-        t.false(await browserWindow.isFocused(), "window should not be focused");
-    }
-    const {width, height} = await browserWindow.getBounds();
-    t.true(width > 0, "window.width should be > 0");
-    t.true(height > 0, "window.height should be > 0");
-
-    // await awaitAngular(t.context.app.client); // seems to be not needed
-    // await t.context.app.client.pause(2000);
-
-    await t.context.app.client.pause(CONF.timeouts.encryption);
-
-    return t.context.workflow;
+    return file;
 }
 
+export async function printElectronLogs(t: ExecutionContext<TestContext>): Promise<void> {
+    /* eslint-disable no-console */
+    if (!t.context.app || !t.context.app.client) {
+        return;
+    }
+
+    await t.context.app.client.getMainProcessLogs()
+        .then((logs) => logs.forEach((log) => console.log(log)));
+
+    await t.context.app.client.getRenderProcessLogs()
+        .then((logs) => logs.forEach((log) => {
+            console.log(log.level);
+            console.log(log.message);
+            console.log(
+                (log as any).source, // eslint-disable-line @typescript-eslint/no-explicit-any
+            );
+
+        }));
+    /* eslint-enable no-console */
+}
+
+export async function catchError(t: ExecutionContext<TestContext>, error?: Error): Promise<void> {
+    try {
+        await saveScreenshot(t);
+    } catch {
+        // NOOP
+    }
+
+    await printElectronLogs(t);
+
+    if (typeof error !== "undefined") {
+        throw error;
+    }
+}
+
+export function accountCssSelector(zeroStartedAccountIndex = 0): string {
+    return `.list-group.accounts-list > electron-mail-account-title:nth-child(${zeroStartedAccountIndex + 1})`;
+}
+
+export function accountBadgeCssSelector(zeroStartedAccountIndex = 0): string {
+    return `${accountCssSelector(zeroStartedAccountIndex)} .badge`;
+}
+
+function mkOutputDirs(dirs: string[]): void {
+    dirs.forEach((dir) => fsExtra.ensureDirSync(dir));
+}
+
+function resolveEntryUrlIndexByValue(entryUrl: string): number {
+    const index = PROTON_API_ENTRY_URLS.findIndex((url) => url === entryUrl);
+
+    if (index === -1) {
+        throw new Error(`Failed to resolve entry url index by "${entryUrl}" value`);
+    }
+
+    return index;
+}
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function buildWorkflow(t: ExecutionContext<TestContext>) {
     const workflow = {
-        async destroyApp() {
+        async destroyApp(): Promise<void> {
             await saveScreenshot(t);
 
             // TODO update to electron 2: app.isRunning() returns undefined, uncomment as soon as it's fixed
@@ -185,7 +158,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             delete t.context.app;
         },
 
-        async login(options: { setup: boolean, savePassword: boolean }) {
+        async login(options: { setup: boolean; savePassword: boolean }): Promise<void> {
             const {client} = t.context.app;
             let selector: string | null = null;
 
@@ -215,7 +188,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
 
             await client.click(selector = `button[type="submit"]`);
 
-            await (async () => {
+            await (async (): Promise<void> => {
                 selector = `electron-mail-accounts .list-group.accounts-list`;
                 const timeout = CONF.timeouts.encryption * 2;
                 try {
@@ -243,7 +216,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             t.is(accountsCount, t.context.sinon.addAccountSpy.callCount);
         },
 
-        async afterLoginUrlTest(workflowPrefix = "") {
+        async afterLoginUrlTest(workflowPrefix = ""): Promise<void> {
             t.true(
                 [
                     "/(accounts-outlet:accounts)",
@@ -253,7 +226,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             );
         },
 
-        async loginPageUrlTest(workflowPrefix = "") {
+        async loginPageUrlTest(workflowPrefix = ""): Promise<void> {
             t.true(
                 [
                     "/(settings-outlet:settings/login)",
@@ -264,8 +237,8 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
         },
 
         async addAccount(
-            account: { login?: string; password?: string; twoFactorCode?: string; entryUrlValue?: string; },
-        ) {
+            account: { login?: string; password?: string; twoFactorCode?: string; entryUrlValue?: string },
+        ): Promise<void> {
             const {client} = t.context.app;
             const login = account.login
                 ? account.login
@@ -303,7 +276,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             await workflow._click(`.modal-body button[type="submit"]`);
 
             // account got added to the settings modal account list
-            await (async () => {
+            await (async (): Promise<void> => {
                 selector = `.modal-body .d-inline-block > span[data-login='${login}']`;
                 const timeout = CONF.timeouts.encryption;
                 try {
@@ -321,7 +294,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             await workflow.selectAccount(expectedAccountsCount - 1);
 
             // make sure webview api got initialized (page loaded and login auto-filled)
-            await (async () => {
+            await (async (): Promise<void> => {
                 const accountIndex = expectedAccountsCount - 1;
                 selector = `${accountCssSelector(accountIndex)} > .login-filled-once`;
                 const timeout = CONF.timeouts.loginFilledOnce;
@@ -338,7 +311,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
 
         // TODO electron@5 workaround, remove this method
         //      it stopped to work since electron@v5, adding second account case (seconds button click)
-        async _click(_selector: string) {
+        async _click(_selector: string): Promise<void> {
             await t.context.app.client.execute(
                 (selector) => {
                     const el = document.querySelector<HTMLButtonElement>(selector);
@@ -353,7 +326,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
 
         // TODO electron@5 workaround, remove this method
         //      it stopped to work since electron@v5, adding second account case (seconds button click)
-        async _mousedown(_selector: string) {
+        async _mousedown(_selector: string): Promise<void> {
             await t.context.app.client.execute(
                 (selector) => {
                     const el = document.querySelector<HTMLButtonElement>(selector);
@@ -366,7 +339,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             );
         },
 
-        async selectAccount(zeroStartedAccountIndex = 0) {
+        async selectAccount(zeroStartedAccountIndex = 0): Promise<void> {
             const {client} = t.context.app;
 
             await client.click(accountCssSelector(zeroStartedAccountIndex));
@@ -374,14 +347,14 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             // TODO make sure account is selected
         },
 
-        async accountsCount() {
+        async accountsCount(): Promise<number> {
             const {client} = t.context.app;
             const els = await client.elements(`.list-group.accounts-list > electron-mail-account-title`);
 
             return els.value.length;
         },
 
-        async openSettingsModal(index?: number) {
+        async openSettingsModal(index?: number): Promise<void> {
             const listGroupSelector = `.modal-body .list-group`;
             const {client} = t.context.app;
 
@@ -407,7 +380,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             }
         },
 
-        async closeSettingsModal() {
+        async closeSettingsModal(): Promise<void> {
             const {client} = t.context.app;
 
             await client.click(`button.close`);
@@ -420,7 +393,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             );
         },
 
-        async logout() {
+        async logout(): Promise<void> {
             const {client} = t.context.app;
             let selector = "";
 
@@ -429,7 +402,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             await client.waitForVisible(selector = `#logoutMenuItem`);
             await workflow._click(selector);
 
-            await (async () => {
+            await (async (): Promise<void> => {
                 selector = `#loginFormPasswordControl`;
                 const timeout = CONF.timeouts.logout;
                 try {
@@ -455,77 +428,110 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
     return workflow;
 }
 
-export async function catchError(t: ExecutionContext<TestContext>, error?: Error) {
+export async function initApp(t: ExecutionContext<TestContext>, options: { initial: boolean }): Promise<TestContext["workflow"]> {
+    t.context.workflow = buildWorkflow(t);
+    t.context.sinon = {
+        addAccountSpy: sinon.spy(t.context.workflow, "addAccount"),
+    };
+
+    const outputDirPath = t.context.outputDirPath = t.context.outputDirPath || path.join(rootDirPath, "./output/e2e", String(Date.now()));
+    const userDataDirPath = path.join(outputDirPath, "./app-data");
+    const logFilePath = path.join(userDataDirPath, "log.log");
+    const webdriverLogDirPath = path.join(outputDirPath, "webdriver-driver-log");
+    const chromeDriverLogFilePath = path.join(outputDirPath, "chrome-driver.log");
+
+    mkOutputDirs([
+        outputDirPath,
+        userDataDirPath,
+        webdriverLogDirPath,
+    ]);
+
+    t.context.appDirPath = appDirPath;
+    t.context.userDataDirPath = userDataDirPath;
+    t.context.logFilePath = logFilePath;
+
+    if (options.initial) {
+        t.false(fs.existsSync(path.join(userDataDirPath, "config.json")),
+            `"config.json" should not exist yet in "${userDataDirPath}"`);
+        t.false(fs.existsSync(path.join(userDataDirPath, "settings.bin")),
+            `"settings.bin" should not exist yet in "${userDataDirPath}"`);
+    }
+
+    t.context.app = new Application({
+        // TODO consider running e2e tests on compiled/binary app too: path.join(rootPath, "./dist/linux-unpacked/electron-mail")
+        path: electron as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        requireName: "electronRequire",
+        env: {
+            [RUNTIME_ENV_E2E]: String(true),
+            [RUNTIME_ENV_USER_DATA_DIR]: userDataDirPath,
+        },
+        args: [mainScriptFilePath],
+
+        // ...(CI && {
+        //     startTimeout: ONE_SECOND_MS * 15,
+        //     chromeDriverArgs: [/*"no-sandbox", */"headless", "disable-gpu"],
+        // }),
+
+        // TODO setting path chromedriver config parameters might cause the following errors happening:
+        // - ChromeDriver did not start within 5000ms
+        // - Failed to redirect stderr to log file.
+        // - Unable to initialize logging. Exiting...
+        webdriverLogPath: webdriverLogDirPath,
+        chromeDriverLogPath: chromeDriverLogFilePath,
+    });
+
+    // start
     try {
-        await saveScreenshot(t);
-    } catch {
-        // NOOP
+        await t.context.app.start();
+    } catch (e) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-console
+        console.log(`chromeDriver.logLines:\n${(t.context.app as any).chromeDriver.logLines.join("\n")}`);
+        throw e;
     }
+    t.is(t.context.app.isRunning(), true);
+    await t.context.app.client.waitUntilWindowLoaded();
 
-    await printElectronLogs(t);
+    // test window state
+    const {browserWindow} = t.context.app;
 
-    if (typeof error !== "undefined") {
-        throw error;
+    await (async (): Promise<void> => {
+        const stubElement = t.context.app.client.$(".e2e-stub-element");
+        const text = await stubElement.getText();
+        const {title: pageTitle, userAgent}: { title: string; userAgent: string } = JSON.parse(text);
+
+        t.is(pageTitle, "", `page title should be empty`);
+        t.truthy(userAgent, `user agent should be filled`);
+
+        // TODO also test user agents of webviews
+        const bannedUserAgentWords = (["electron", PRODUCT_NAME, PACKAGE_NAME, BINARY_NAME, PROJECT_VERSION] as ReadonlyArray<string>)
+            .map((banned) => banned.toLowerCase());
+        t.false(
+            bannedUserAgentWords.some((banned) => userAgent.toLowerCase().includes(banned)),
+            `User agent "${userAgent}" should not include any of "${JSON.stringify(bannedUserAgentWords)}"`,
+        );
+    })();
+
+    // t.false(await browserWindow.webContents.isDevToolsOpened(), "browserWindow's dev tools should be closed");
+    t.false(
+        await (browserWindow as any).isDevToolsOpened(), // eslint-disable-line @typescript-eslint/no-explicit-any
+        "window'd dev tools should be closed",);
+    t.false(await browserWindow.isMinimized(), "window should not be not minimized");
+    if (options.initial) {
+        // TODO make below lines work with electron@v5 / travis@windows
+        t.true(await browserWindow.isVisible(), "window should be visible");
+        t.true(await browserWindow.isFocused(), "window should be focused");
+    } else {
+        t.false(await browserWindow.isVisible(), "window should not be visible");
+        t.false(await browserWindow.isFocused(), "window should not be focused");
     }
-}
+    const {width, height} = await browserWindow.getBounds();
+    t.true(width > 0, "window.width should be > 0");
+    t.true(height > 0, "window.height should be > 0");
 
-export async function saveScreenshot(t: ExecutionContext<TestContext>) {
-    if (!t.context.app || !t.context.app.browserWindow) {
-        return;
-    }
+    // await awaitAngular(t.context.app.client); // seems to be not needed
+    // await t.context.app.client.pause(2000);
 
-    const file = path.join(
-        t.context.outputDirPath,
-        `sreenshot-${t.title}-${new Date().toISOString()}.png`.replace(/[^A-Za-z0-9\.]/g, "_"),
-    );
-    const image = await t.context.app.browserWindow.capturePage();
+    await t.context.app.client.pause(CONF.timeouts.encryption);
 
-    await promisify(fs.writeFile)(file, image);
-
-    // tslint:disable-next-line:no-console
-    console.info(`Screenshot produced: ${file}`);
-
-    return file;
-}
-
-export async function printElectronLogs(t: ExecutionContext<TestContext>) {
-    // tslint:disable:no-console
-    if (!t.context.app || !t.context.app.client) {
-        return;
-    }
-
-    await t.context.app.client.getMainProcessLogs()
-        .then((logs) => logs.forEach((log) => console.log(log)));
-
-    await t.context.app.client.getRenderProcessLogs()
-        .then((logs) => logs.forEach((log) => {
-
-            console.log(log.level);
-            console.log(log.message);
-            console.log((log as any).source);
-
-        }));
-    // tslint:enable:no-console
-}
-
-export function accountCssSelector(zeroStartedAccountIndex = 0) {
-    return `.list-group.accounts-list > electron-mail-account-title:nth-child(${zeroStartedAccountIndex + 1})`;
-}
-
-export function accountBadgeCssSelector(zeroStartedAccountIndex = 0) {
-    return `${accountCssSelector(zeroStartedAccountIndex)} .badge`;
-}
-
-function mkOutputDirs(dirs: string[]) {
-    dirs.forEach((dir) => fsExtra.ensureDirSync(dir));
-}
-
-function resolveEntryUrlIndexByValue(entryUrl: string): number {
-    const index = PROTON_API_ENTRY_URLS.findIndex((url) => url === entryUrl);
-
-    if (index === -1) {
-        throw new Error(`Failed to resolve entry url index by "${entryUrl}" value`);
-    }
-
-    return index;
+    return t.context.workflow;
 }

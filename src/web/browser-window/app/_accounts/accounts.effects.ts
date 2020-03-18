@@ -41,7 +41,9 @@ const pingOnlineStatusEverySecond$ = timer(0, ONE_SECOND_MS).pipe(
 
 @Injectable()
 export class AccountsEffects {
-    private static generateNotificationsStateResetAction(login: string) {
+    private static generateNotificationsStateResetAction(
+        login: string,
+    ): ReturnType<typeof ACCOUNTS_ACTIONS.Patch> {
         return ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread: 0, loggedIn: false}}});
     }
 
@@ -274,7 +276,7 @@ export class AccountsEffects {
                 const zoneName = logger.zoneName();
 
                 // TODO make sure passwords submitting looping doesn't happen, until then a workaround is enabled below
-                const rateLimitCheck = (password: string) => {
+                const rateLimitCheck = (password: string): void => {
                     const key = String([login, pageType, password]);
                     const timeLeft = this.twoPerTenSecLimiter(key);
 
@@ -293,7 +295,7 @@ export class AccountsEffects {
 
                 switch (pageType) {
                     case "login": {
-                        const onlyFillLoginAction = () => {
+                        const onlyFillLoginAction = (): Observable<import("@ngrx/store").Action> => {
                             logger.info("fillLogin");
 
                             return merge(
@@ -309,8 +311,8 @@ export class AccountsEffects {
                                 ),
                             );
                         };
-                        const fullLoginAction = () => {
-                            const executeLoginAction = (password: string) => {
+                        const fullLoginAction = (): Observable<import("@ngrx/store").Action> => {
+                            const executeLoginAction = (password: string): Observable<import("@ngrx/store").Action> => {
                                 rateLimitCheck(password);
 
                                 logger.info("login");
@@ -450,7 +452,10 @@ export class AccountsEffects {
     );
 
     constructor(
-        private readonly actions$: Actions<{ type: string; payload: any }>,
+        private readonly actions$: Actions<{
+            type: string;
+            payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+        }>,
         private readonly api: ElectronService,
         private readonly core: CoreService,
         private readonly store: Store<State>,

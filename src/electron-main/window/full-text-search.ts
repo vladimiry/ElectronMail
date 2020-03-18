@@ -33,7 +33,7 @@ export async function attachFullTextIndexWindow(ctx: Context): Promise<BrowserWi
     return browserWindow;
 }
 
-export async function detachFullTextIndexWindow(ctx: Context) {
+export async function detachFullTextIndexWindow(ctx: Context): Promise<void> {
     if (!ctx.uiContext || !ctx.uiContext.fullTextSearchBrowserWindow) {
         return;
     }

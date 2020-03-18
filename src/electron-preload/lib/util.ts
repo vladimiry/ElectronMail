@@ -10,7 +10,7 @@ export function buildLoggerBundle(prefix: string): Logger {
 }
 
 // TODO apply "zoomFactor" in main process only, track of https://github.com/electron/electron/issues/10572
-export function applyZoomFactor(_logger: ReturnType<typeof buildLoggerBundle>) {
+export function applyZoomFactor(_logger: ReturnType<typeof buildLoggerBundle>): void {
     const logger = curryFunctionMembers(_logger, "applyZoomFactor()");
 
     logger.verbose();
@@ -27,7 +27,7 @@ export function applyZoomFactor(_logger: ReturnType<typeof buildLoggerBundle>) {
             logger.verbose("webFrame.getZoomFactor() (after)", JSON.stringify(webFrame.getZoomFactor()));
         }
     })().catch((error) => {
-        console.error(error); // tslint:disable-line:no-console
+        console.error(error); // eslint-disable-line no-console
         logger.error(error);
     });
 }

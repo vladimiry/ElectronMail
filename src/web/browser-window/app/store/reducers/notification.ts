@@ -13,6 +13,35 @@ const logger = getZoneNameBoundWebLogger("[reducers/notification]");
 
 const itemsLimit = 50;
 
+function add(state: State, item: NotificationItem): State {
+    const items = [...state.items];
+
+    if (item.type === "error" || item.type === "errorMessage") {
+        console.error(item); // eslint-disable-line no-console
+    }
+
+    if (item.type === "error") {
+        logger.error(
+            // WARN: make sure there is no circular recursive data
+            serializeError(
+                pick(item.data, ["name", "message", "stack"]),
+            ),
+        );
+    }
+
+    // TODO indicate in the UI that only the most recent ${itemsLimit} items are shown
+    if (items.length >= itemsLimit) {
+        items.splice(0, 1);
+    }
+
+    items.push(item);
+
+    return {
+        ...state,
+        items,
+    };
+}
+
 export interface State extends fromRoot.State {
     items: NotificationItem[];
 }
@@ -44,33 +73,4 @@ export function reducer(state = initialState, action: UnionOf<typeof NOTIFICATIO
         },
         default: () => state,
     });
-}
-
-function add(state: State, item: NotificationItem): State {
-    const items = [...state.items];
-
-    if (item.type === "error" || item.type === "errorMessage") {
-        console.error(item); // tslint:disable-line:no-console
-    }
-
-    if (item.type === "error") {
-        logger.error(
-            // WARN: make sure there is no circular recursive data
-            serializeError(
-                pick(item.data, ["name", "message", "stack"]),
-            ),
-        );
-    }
-
-    // TODO indicate in the UI that only the most recent ${itemsLimit} items are shown
-    if (items.length >= itemsLimit) {
-        items.splice(0, 1);
-    }
-
-    items.push(item);
-
-    return {
-        ...state,
-        items,
-    };
 }

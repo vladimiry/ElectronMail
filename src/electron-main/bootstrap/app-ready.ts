@@ -12,7 +12,7 @@ import {initWebContentsCreatingHandlers} from "src/electron-main/web-contents";
 import {registerWebFolderFileProtocol} from "src/electron-main/protocol";
 import {setUpPowerMonitorNotification} from "src/electron-main/power-monitor";
 
-export async function appReadyHandler(ctx: Context) {
+export async function appReadyHandler(ctx: Context): Promise<void> {
     await registerWebFolderFileProtocol(ctx, getDefaultSession());
 
     await initSession(ctx, getDefaultSession());
@@ -26,9 +26,9 @@ export async function appReadyHandler(ctx: Context) {
     // TODO test "logger.transports.file.level" update
     electronLog.transports.file.level = logLevel;
 
-    await (async () => {
+    await (async (): Promise<void> => {
         const spellCheckController = await initSpellCheckController(spellCheckLocale);
-        ctx.getSpellCheckController = () => spellCheckController;
+        ctx.getSpellCheckController = (): typeof spellCheckController => spellCheckController;
     })();
 
     // TODO test "initWebContentsCreatingHandlers" called after "ctx.getSpellCheckController" got initialized
@@ -44,6 +44,6 @@ export async function appReadyHandler(ctx: Context) {
 
     await endpoints.updateOverlayIcon({hasLoggedOut: false, unread: 0, trayIconColor: customTrayIconColor});
 
-    app.on("second-instance", async () => await endpoints.activateBrowserWindow());
-    app.on("activate", async () => await endpoints.activateBrowserWindow());
+    app.on("second-instance", async () => endpoints.activateBrowserWindow());
+    app.on("activate", async () => endpoints.activateBrowserWindow());
 }

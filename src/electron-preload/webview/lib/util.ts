@@ -31,78 +31,88 @@ export const resolveIpcMainApi: (
     return result;
 })();
 
-export const resolveDomElements = <E extends Element,
+export const resolveDomElements = async <E extends Element,
     Q extends Readonly<Record<string, () => E>>,
     K extends keyof Q,
     R extends { [key in K]: ReturnType<Q[key]> }>(
     query: Q,
     logger: ReturnType<typeof buildLoggerBundle>,
-    opts: { timeoutMs?: number, iterationsLimit?: number } = {},
-): Promise<Readonly<R>> => new Promise(async (resolve, reject) => {
-    let configTimeout: number | undefined;
-
-    try {
+    opts: { timeoutMs?: number; iterationsLimit?: number } = {},
+): Promise<Readonly<R>> => {
+    if (!configsCache.resolveDomElements) {
         const api = await resolveIpcMainApi(logger);
-        if (!configsCache.resolveDomElements) {
-            configsCache.resolveDomElements = await api("readConfig")();
-        }
-        configTimeout = configsCache.resolveDomElements.timeouts.domElementsResolving;
-    } catch (error) {
-        return reject(error);
+        configsCache.resolveDomElements = await api("readConfig")();
     }
 
-    const OPTS = {
-        timeoutMs: opts.timeoutMs || configTimeout || ONE_SECOND_MS * 10,
-        iterationsLimit: opts.iterationsLimit || 0, // 0 - unlimited
-        delayMinMs: 300,
-    };
+    return new Promise((resolve, reject) => {
+        const OPTS = {
+            timeoutMs: (
+                opts.timeoutMs
+                ??
+                configsCache.resolveDomElements?.timeouts.domElementsResolving
+                ??
+                ONE_SECOND_MS * 10
+            ),
+            iterationsLimit: opts.iterationsLimit || 0, // 0 - unlimited
+            delayMinMs: 300,
+        };
 
-    const startTime = Date.now();
-    const delayMs = OPTS.timeoutMs / 50;
-    const queryKeys: K[] = Object.keys(query) as K[];
-    const resolvedElements: Partial<R> = {};
-    let iteration = 0;
+        const startTime = Date.now();
+        const delayMs = OPTS.timeoutMs / 50;
+        const queryKeys: K[] = Object.keys(query) as K[];
+        const resolvedElements: Partial<R> = {};
+        let it = 0;
 
-    scanElements();
+        const scanElements: () => void = () => {
+            it++;
 
-    function scanElements() {
-        iteration++;
+            queryKeys.forEach((key) => {
+                if (key in resolvedElements) {
+                    return;
+                }
+                const element = query[key]();
+                if (element) {
+                    resolvedElements[key] = element as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+                }
+            });
 
-        queryKeys.forEach((key) => {
-            if (key in resolvedElements) {
-                return;
+            if (Object.keys(resolvedElements).length === queryKeys.length) {
+                return resolve(resolvedElements as R);
             }
-            const element = query[key]();
-            if (element) {
-                resolvedElements[key] = element as any;
+
+            if (OPTS.iterationsLimit && (it >= OPTS.iterationsLimit)) {
+                return reject(
+                    new Error(
+                        `Failed to resolve some DOM elements from the list [${queryKeys.join(", ")}] having "${it}" iterations performed`,
+                    ),
+                );
             }
-        });
 
-        if (Object.keys(resolvedElements).length === queryKeys.length) {
-            return resolve(resolvedElements as R);
-        }
+            if (Date.now() - startTime > OPTS.timeoutMs) {
+                return reject(new Error(
+                    `Failed to resolve some DOM elements from the list [${queryKeys.join(", ")}] within "${OPTS.timeoutMs}" milliseconds`,
+                ));
+            }
 
-        if (OPTS.iterationsLimit && (iteration >= OPTS.iterationsLimit)) {
-            return reject(new Error(
-                `Failed to resolve some DOM elements from the list [${queryKeys.join(", ")}] having "${iteration}" iterations performed`,
-            ));
-        }
+            setTimeout(scanElements, Math.max(OPTS.delayMinMs, delayMs));
+        };
 
-        if (Date.now() - startTime > OPTS.timeoutMs) {
-            return reject(new Error(
-                `Failed to resolve some DOM elements from the list [${queryKeys.join(", ")}] within "${OPTS.timeoutMs}" milliseconds`,
-            ));
-        }
-
-        setTimeout(scanElements, Math.max(OPTS.delayMinMs, delayMs));
-    }
-});
+        scanElements();
+    });
+};
 
 export function getLocationHref(): string {
     return window.location.href;
 }
 
-export async function fillInputValue(input: HTMLInputElement, value: string) {
+function triggerChangeEvent(input: HTMLInputElement): void {
+    // protonmail (angularjs)
+    const changeEvent = document.createEvent("HTMLEvents");
+    changeEvent.initEvent("change", true, false);
+    input.dispatchEvent(changeEvent);
+}
+
+export function fillInputValue(input: HTMLInputElement, value: string): void {
     input.value = value;
     triggerChangeEvent(input);
 }
@@ -132,21 +142,7 @@ export async function submitTotpToken(
 
     const errorMessage = `Failed to submit two factor token within ${submitTimeoutMs}ms`;
 
-    try {
-        await submit();
-    } catch (e) {
-        if (e.message !== errorMessage) {
-            throw e;
-        }
-
-        logger.verbose(`submit 1 - fail: ${e.message}`);
-        // second attempt as token might become expired right before submitting
-        await asyncDelay(newTokenDelayMs, submit);
-    }
-
-    return;
-
-    async function submit() {
+    const submit: () => Promise<void> = async () => {
         logger.verbose("submit - start");
 
         const submitted: () => Promise<boolean> = (
@@ -157,7 +153,7 @@ export async function submitTotpToken(
             })()
         );
 
-        await fillInputValue(input, await resolveToken());
+        fillInputValue(input, await resolveToken());
         logger.verbose("input filled");
 
         button.click();
@@ -174,16 +170,31 @@ export async function submitTotpToken(
         }
 
         logger.verbose("submit - success");
+    };
+
+    try {
+        await submit();
+    } catch (e) {
+        if (e.message !== errorMessage) {
+            throw e;
+        }
+
+        logger.verbose(`submit 1 - fail: ${e.message}`);
+        // second attempt as token might become expired right before submitting
+        await asyncDelay(newTokenDelayMs, submit);
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function buildDbPatchRetryPipeline<T>(
-    preprocessError: (rawError: any) => { error: Error; retriable: boolean; skippable: boolean; },
+    preprocessError: (
+        rawError: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+    ) => { error: Error; retriable: boolean; skippable: boolean },
     metadata: FsDbAccount["metadata"] | null,
     logger: ReturnType<typeof buildLoggerBundle>,
-    {retriesDelay = ONE_SECOND_MS * 5, retriesLimit = 3}: { retriesDelay?: number, retriesLimit?: number } = {},
+    {retriesDelay = ONE_SECOND_MS * 5, retriesLimit = 3}: { retriesDelay?: number; retriesLimit?: number } = {},
 ) {
-    const errorResult = (error: Error) => {
+    const errorResult = (error: Error): ReturnType<typeof throwError> => {
         logger.error(error);
         return throwError(error);
     };
@@ -218,13 +229,6 @@ export function buildDbPatchRetryPipeline<T>(
     ));
 }
 
-function triggerChangeEvent(input: HTMLInputElement) {
-    // protonmail (angularjs)
-    const changeEvent = document.createEvent("HTMLEvents");
-    changeEvent.initEvent("change", true, false);
-    input.dispatchEvent(changeEvent);
-}
-
 export async function persistDatabasePatch(
     data: Parameters<IpcMainApiEndpoints["dbPatch"]>[0],
     logger: ReturnType<typeof buildLoggerBundle>,
@@ -249,7 +253,7 @@ export function buildEmptyDbPatch(): DbPatch {
     };
 }
 
-export function disableBrowserNotificationFeature(parentLogger: ReturnType<typeof buildLoggerBundle>) {
+export function disableBrowserNotificationFeature(parentLogger: ReturnType<typeof buildLoggerBundle>): void {
     delete window.Notification;
     parentLogger.info(`browser "notification" feature disabled`);
 }

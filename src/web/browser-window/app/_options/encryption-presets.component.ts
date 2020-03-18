@@ -25,15 +25,14 @@ export class EncryptionPresetsComponent implements OnInit, OnDestroy {
 
     constructor(private store: Store<State>) {}
 
-    ngOnInit() {
+    ngOnInit(): void {
         this.config$
             .pipe(
                 map(({encryptionPreset}) => encryptionPreset),
                 takeUntil(this.unSubscribe$),
             )
             .subscribe((encryptionPreset) => {
-                const keyDerivation = encryptionPreset.keyDerivation;
-                const encryption = encryptionPreset.encryption;
+                const {keyDerivation, encryption} = encryptionPreset;
                 const keyDerivationEntry = Object
                     .entries(KEY_DERIVATION_PRESETS)
                     .find(([, value]) => value.type === keyDerivation.type && value.preset === keyDerivation.preset);
@@ -54,7 +53,7 @@ export class EncryptionPresetsComponent implements OnInit, OnDestroy {
             });
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         this.unSubscribe$.next();
         this.unSubscribe$.complete();
     }

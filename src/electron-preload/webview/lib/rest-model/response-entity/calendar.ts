@@ -58,7 +58,7 @@ export interface CalendarMember extends Entity {
 
 // TODO review https://github.com/ProtonMail/proton-calendar/doc
 
-// tslint:disable-next-line:max-line-length
+// eslint-disable-next-line max-len
 // TODO explore CalendarEvent decryption here https://github.com/ProtonMail/proton-calendar/blob/e08716488589407643d96fe784d7933b92e556a5/src/app/containers/calendar/useCalendarsEvents.js#L333
 // export interface CalendarEvent_ extends Entity {
 //     // https://github.com/ProtonMail/proton-shared/blob/6068a669a5d0f36d93714d0efa6845f3abcda994/lib/calendar/helper.js#L5

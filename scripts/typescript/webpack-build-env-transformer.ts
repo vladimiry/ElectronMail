@@ -4,30 +4,6 @@ import {buildBaseConfig} from "webpack-configs/lib";
 
 const definePluginNodeEnvKey = "BUILD_ENVIRONMENT";
 
-export default function(
-    ...[/* program, */ /* pluginOptions */]: [ts.Program, {}]
-) {
-    const buildEnvironment = resolveBuildEnvironment();
-
-    return (ctx: ts.TransformationContext) => {
-        return (sourceFile: ts.SourceFile) => {
-            return ts.visitEachChild(sourceFile, visitor, ctx);
-        };
-
-        function visitor(node: ts.Node): ts.Node {
-            if (
-                node.kind === ts.SyntaxKind.Identifier
-                &&
-                node.getText() === definePluginNodeEnvKey
-            ) {
-                return ts.createLiteral(buildEnvironment);
-            }
-
-            return ts.visitEachChild(node, visitor, ctx);
-        }
-    };
-}
-
 function resolveBuildEnvironment(): string {
     // TODO pick "DefinePlugin" as webpack.DefinePlugin.constructor.name
     const definePluginConstructorName = "DefinePlugin";
@@ -47,5 +23,28 @@ function resolveBuildEnvironment(): string {
         throw new Error(`Resolve empty "${definePluginConstructorName}.${definePluginNodeEnvKey}" definition: ${result}"`);
     }
 
-    return JSON.parse(result);
+    return JSON.parse(result); // eslint-disable-line @typescript-eslint/no-unsafe-return
+}
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export default function(/*  ts.Program , <options object> */) {
+    const buildEnvironment = resolveBuildEnvironment();
+
+    return (ctx: ts.TransformationContext) => {
+        function visitor(node: ts.Node): ts.Node {
+            if (
+                node.kind === ts.SyntaxKind.Identifier
+                &&
+                node.getText() === definePluginNodeEnvKey
+            ) {
+                return ts.createLiteral(buildEnvironment);
+            }
+
+            return ts.visitEachChild(node, visitor, ctx);
+        }
+
+        return (sourceFile: ts.SourceFile) => {
+            return ts.visitEachChild(sourceFile, visitor, ctx);
+        };
+    };
 }

@@ -135,7 +135,7 @@ export async function buildEndpoints(
         },
 
         async hotkey({type}) {
-            const methodContext = this;
+            const methodContext = this;  // eslint-disable-line @typescript-eslint/no-this-alias
 
             if (!methodContext) {
                 throw new Error(`Failed to resolve "hotkey" method execution context`);
@@ -165,56 +165,58 @@ export async function buildEndpoints(
         updateCheck: (() => {
             const releasesUrlPrefix = "https://github.com/vladimiry/ElectronMail/releases/tag";
             const tagNameFilterRe = /[^a-z0-9._-]/gi;
-            const filterAssetName: (name: string) => boolean = (() => {
-                const assetNameRegExpKeywords: Readonly<Partial<Record<NodeJS.Platform, readonly string[]>>> = {
-                    darwin: [
-                        "-darwin",
-                        "-mac",
-                        "-osx",
-                        ".dmg$",
-                    ],
-                    linux: [
-                        "-freebsd",
-                        "-linux",
-                        "-openbsd",
-                        ".AppImage$",
-                        ".deb$",
-                        ".freebsd$",
-                        ".pacman$",
-                        ".rpm$",
-                        ".snap$",
-                    ],
-                    win32: [
-                        "-win",
-                        // "-win32",
-                        // "-windows",
-                        ".exe$",
-                    ],
-                };
-                const assetNameRegExp = new RegExp(
-                    (
-                        assetNameRegExpKeywords[PLATFORM]
-                        ||
-                        // any file name for any platform other than darwin/linux/win32
-                        [".*"]
-                    ).join("|"),
-                    "i",
-                );
-                let assetNameRegExpLogged: boolean = false;
+            const filterAssetName: (name: string) => boolean = (
+                (): (name: string) => boolean => {
+                    const assetNameRegExpKeywords: Readonly<Partial<Record<NodeJS.Platform, readonly string[]>>> = {
+                        darwin: [
+                            "-darwin",
+                            "-mac",
+                            "-osx",
+                            ".dmg$",
+                        ],
+                        linux: [
+                            "-freebsd",
+                            "-linux",
+                            "-openbsd",
+                            ".AppImage$",
+                            ".deb$",
+                            ".freebsd$",
+                            ".pacman$",
+                            ".rpm$",
+                            ".snap$",
+                        ],
+                        win32: [
+                            "-win",
+                            // "-win32",
+                            // "-windows",
+                            ".exe$",
+                        ],
+                    };
+                    const assetNameRegExp = new RegExp(
+                        (
+                            assetNameRegExpKeywords[PLATFORM]
+                            ||
+                            // any file name for any platform other than darwin/linux/win32
+                            [".*"]
+                        ).join("|"),
+                        "i",
+                    );
+                    let assetNameRegExpLogged = false;
 
-                return (name: string) => {
-                    if (!assetNameRegExpLogged) {
-                        assetNameRegExpLogged = true;
-                        logger.verbose(
-                            "updateCheck()",
-                            inspect({assetNameRegExp}),
-                        );
-                    }
-                    return assetNameRegExp.test(name);
-                };
-            })();
+                    return (name: string): boolean => {
+                        if (!assetNameRegExpLogged) {
+                            assetNameRegExpLogged = true;
+                            logger.verbose(
+                                "updateCheck()",
+                                inspect({assetNameRegExp}),
+                            );
+                        }
+                        return assetNameRegExp.test(name);
+                    };
+                }
+            )();
 
-            return async () => {
+            return async (): Promise<IpcMainServiceScan["ApiImplReturns"]["updateCheck"]> => {
                 const {updateCheck: {releasesUrl, proxy}} = await ctx.configStore.readExisting();
                 const response = await fetch(
                     releasesUrl,
@@ -259,7 +261,7 @@ export async function buildEndpoints(
                 const releases: Array<{
                     tag_name: string;
                     published_at: string;
-                    assets: Array<{ name: string; }>;
+                    assets: Array<{ name: string }>;
                 }> = await response.json();
 
                 logger.verbose(
@@ -272,16 +274,16 @@ export async function buildEndpoints(
                 );
 
                 const newReleases = releases
-                    .filter(({tag_name}) => compareVersions(tag_name, PACKAGE_VERSION) > 0)
+                    .filter(({tag_name: tagName}) => compareVersions(tagName, PACKAGE_VERSION) > 0)
                     .filter(({assets}) => assets.some(({name}) => filterAssetName(name)))
                     .sort((o1, o2) => compareVersions(o1.tag_name, o2.tag_name))
                     .reverse()
-                    .map(({tag_name, published_at: date}) => {
-                        const title = tag_name.replace(tagNameFilterRe, "");
-                        const tagNameValid = title === tag_name;
+                    .map(({tag_name: tagName, published_at: date}) => {
+                        const title = tagName.replace(tagNameFilterRe, "");
+                        const tagNameValid = title === tagName;
                         // we don't use a raw "html_url" value but sanitize the url
                         const url = tagNameValid
-                            ? `${releasesUrlPrefix}/${tag_name}`
+                            ? `${releasesUrlPrefix}/${tagName}`
                             : undefined;
                         return {title, url, date} as const;
                     });

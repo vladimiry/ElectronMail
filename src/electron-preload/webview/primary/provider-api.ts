@@ -57,7 +57,10 @@ export interface ProviderApi {
     };
     vcard: {
         // TODO proper "vcard" model definition
-        from: (vcfString: string) => { version: string; data: Record<string, any> };
+        from: (vcfString: string) => {
+            version: string;
+            data: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+        };
     };
 }
 
@@ -67,6 +70,71 @@ const rateLimitedApiCallingQueue = new asap();
 const state: { api?: Promise<ProviderApi> } = {};
 
 let rateLimitedMethodsCallCount = 0;
+
+function resolveService<T extends ProviderApi[keyof ProviderApi]>(
+    injector: ng.auto.IInjectorService,
+    serviceName: string,
+    rateLimiting?: Readonly<{
+        rateLimiterTick: () => number;
+        rateLimitedMethodNames: Array<keyof KeepAsyncFunctionsProps<T>>;
+    }>,
+): T {
+    resolveServiceLogger.info();
+    const service = injector.get<T | undefined>(serviceName);
+
+    if (!service) {
+        throw new Error(`Failed to resolve "${serviceName}" service`);
+    }
+
+    resolveServiceLogger.verbose(`"${serviceName}" keys`, JSON.stringify(Object.keys(service)));
+
+    if (!rateLimiting) {
+        return service;
+    }
+
+    const clonedService = {...service} as T;
+
+    for (const rateLimitedMethodName of rateLimiting.rateLimitedMethodNames) {
+        const originalMethod = clonedService[rateLimitedMethodName];
+        const _fullMethodName = `${serviceName}.${rateLimitedMethodName}`;
+
+        if (typeof originalMethod !== "function") {
+            throw new Error(`Not a function: "${_fullMethodName}"`);
+        }
+
+        clonedService[rateLimitedMethodName] = async function(
+            this: typeof service,
+            ...args: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+        ) {
+            const waitTime = rateLimiting.rateLimiterTick();
+            const limitExceeded = waitTime > 0;
+
+            if (limitExceeded) {
+                resolveServiceLogger.info(
+                    `delaying rate limited method calling: ${_fullMethodName} ${JSON.stringify({waitTime, rateLimitedMethodsCallCount})}`,
+                );
+
+                await asyncDelay(waitTime);
+            }
+
+            resolveServiceLogger.debug(`queueing rate limited method: "${_fullMethodName}"`);
+
+            return rateLimitedApiCallingQueue.q(() => {
+                resolveServiceLogger.verbose(
+                    `calling rate limited method: ${_fullMethodName} ${JSON.stringify({waitTime, rateLimitedMethodsCallCount})}`,
+                );
+
+                const result = originalMethod.apply(service, args);
+
+                rateLimitedMethodsCallCount++;
+
+                return result; // eslint-disable-line @typescript-eslint/no-unsafe-return
+            });
+        } as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    }
+
+    return clonedService;
+}
 
 export async function resolveProviderApi(): Promise<ProviderApi> {
     if (state.api) {
@@ -142,68 +210,7 @@ export async function resolveProviderApi(): Promise<ProviderApi> {
 }
 
 type KeepAsyncFunctionsProps<T> = {
-    [K in keyof T]: T[K] extends (args: any) => Promise<any> ? T[K] : never
+    [K in keyof T]: T[K] extends (args: any) => Promise<any> // eslint-disable-line @typescript-eslint/no-explicit-any
+        ? T[K]
+        : never
 };
-
-function resolveService<T extends ProviderApi[keyof ProviderApi]>(
-    injector: ng.auto.IInjectorService,
-    serviceName: string,
-    rateLimiting?: Readonly<{
-        rateLimiterTick: () => number;
-        rateLimitedMethodNames: Array<keyof KeepAsyncFunctionsProps<T>>,
-    }>,
-): T {
-    resolveServiceLogger.info();
-    const service = injector.get<T | undefined>(serviceName);
-
-    if (!service) {
-        throw new Error(`Failed to resolve "${serviceName}" service`);
-    }
-
-    resolveServiceLogger.verbose(`"${serviceName}" keys`, JSON.stringify(Object.keys(service)));
-
-    if (!rateLimiting) {
-        return service;
-    }
-
-    const clonedService = {...service} as T;
-
-    for (const rateLimitedMethodName of rateLimiting.rateLimitedMethodNames) {
-        const originalMethod = clonedService[rateLimitedMethodName];
-        const _fullMethodName = `${serviceName}.${rateLimitedMethodName}`;
-
-        if (typeof originalMethod !== "function") {
-            throw new Error(`Not a function: "${_fullMethodName}"`);
-        }
-
-        clonedService[rateLimitedMethodName] = async function(this: typeof service) {
-            const originalMethodArgs = arguments;
-            const waitTime = rateLimiting.rateLimiterTick();
-            const limitExceeded = waitTime > 0;
-
-            if (limitExceeded) {
-                resolveServiceLogger.info(
-                    `delaying rate limited method calling: ${_fullMethodName} ${JSON.stringify({waitTime, rateLimitedMethodsCallCount})}`,
-                );
-
-                await asyncDelay(waitTime);
-            }
-
-            resolveServiceLogger.debug(`queueing rate limited method: "${_fullMethodName}"`);
-
-            return rateLimitedApiCallingQueue.q(() => {
-                resolveServiceLogger.verbose(
-                    `calling rate limited method: ${_fullMethodName} ${JSON.stringify({waitTime, rateLimitedMethodsCallCount})}`,
-                );
-
-                const result = originalMethod.apply(service, originalMethodArgs);
-
-                rateLimitedMethodsCallCount++;
-
-                return result;
-            });
-        } as any;
-    }
-
-    return clonedService;
-}

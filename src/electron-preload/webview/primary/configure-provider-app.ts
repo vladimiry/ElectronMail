@@ -17,9 +17,69 @@ const angularWebClientOpts = {
     imgSrcSanitizationWhitelistRe: new RegExp(`^\\s*((https?|ftp|file|blob|${LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN}):|data:image\\/)`),
 } as const;
 
+function tweakAngularModule(module: angular.IModule): typeof module {
+    _logger.info(`tweakAngularModule()`);
+
+    const {imgSrcSanitizationWhitelistRe} = angularWebClientOpts;
+
+    return module.config([
+        "$compileProvider",
+        ($compileProvider: angular.ICompileProvider) => {
+            $compileProvider.imgSrcSanitizationWhitelist(imgSrcSanitizationWhitelistRe);
+            _logger.info(`"$compileProvider.imgSrcSanitizationWhitelist" called with "${imgSrcSanitizationWhitelistRe}" regexp`);
+        },
+    ]);
+}
+
+function angularObjectWiredUpHandler(
+    // not the "angular.IAngularStatic" but "object" as an this point object is still empty (like no "module" method linked yet)
+    angular: object,
+): void {
+    _logger.info(`angularInitializedHandler()`);
+
+    type ValueType = angular.IAngularStatic["module"];
+    let value: ValueType | undefined;
+
+    Object.defineProperty(angular, "module", {
+        get: () => value,
+        set(original: ValueType) {
+            if (value) {
+                return;
+            }
+
+            value = function(this: angular.IAngularStatic, ...args) {
+                const [moduleName] = args;
+                const creating = args.length > 1;
+                const result = original.apply(this, args);
+
+                if (creating && moduleName === angularWebClientOpts.targetModuleName) {
+                    return tweakAngularModule(result);
+                }
+
+                return result;
+            };
+        },
+    });
+}
+
+function configureAngularApp(): void {
+    type ValueType = angular.IAngularStatic;
+    let value: ValueType | undefined;
+
+    Object.defineProperty(window, "angular", {
+        get: () => value,
+        set(original: ValueType) {
+            if (!value) {
+                angularObjectWiredUpHandler(original);
+            }
+            value = original;
+        },
+    });
+}
+
 export function configureProviderApp(
     packagedWebClientUrl: Exclude<ReturnType<typeof parsePackagedWebClientUrl>, null>,
-) {
+): void {
     const logger = curryFunctionMembers(_logger, "configureProviderApp()");
 
     initSpellCheckProvider(logger);
@@ -77,62 +137,4 @@ export function configureProviderApp(
         });
 }
 
-function configureAngularApp() {
-    type ValueType = angular.IAngularStatic;
-    let value: ValueType | undefined;
 
-    Object.defineProperty(window, "angular", {
-        get: () => value,
-        set(original: ValueType) {
-            if (!value) {
-                angularObjectWiredUpHandler(original);
-            }
-            value = original;
-        },
-    });
-}
-
-function angularObjectWiredUpHandler(
-    // not the "angular.IAngularStatic" but "object" as an this point object is still empty (like no "module" method linked yet)
-    angular: object,
-) {
-    _logger.info(`angularInitializedHandler()`);
-
-    type ValueType = angular.IAngularStatic["module"];
-    let value: ValueType | undefined;
-
-    Object.defineProperty(angular, "module", {
-        get: () => value,
-        set(original: ValueType) {
-            if (value) {
-                return;
-            }
-
-            value = function(this: angular.IAngularStatic, ...args) {
-                const [moduleName] = args;
-                const creating = args.length > 1;
-                const result = original.apply(this, args);
-
-                if (creating && moduleName === angularWebClientOpts.targetModuleName) {
-                    return tweakAngularModule(result);
-                }
-
-                return result;
-            };
-        },
-    });
-}
-
-function tweakAngularModule(module: angular.IModule): typeof module {
-    _logger.info(`tweakAngularModule()`);
-
-    const {imgSrcSanitizationWhitelistRe} = angularWebClientOpts;
-
-    return module.config([
-        "$compileProvider",
-        ($compileProvider: angular.ICompileProvider) => {
-            $compileProvider.imgSrcSanitizationWhitelist(imgSrcSanitizationWhitelistRe);
-            _logger.info(`"$compileProvider.imgSrcSanitizationWhitelist" called with "${imgSrcSanitizationWhitelistRe}" regexp`);
-        },
-    ]);
-}

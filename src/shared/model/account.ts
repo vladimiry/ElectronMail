@@ -12,7 +12,7 @@ export type AccountConfig = NoExtraProperties<{
         proxyBypassRules?: string;
     }>;
     loginDelayUntilSelected?: boolean;
-    loginDelaySecondsRange?: NoExtraProperties<{ start: number; end: number; }>;
+    loginDelaySecondsRange?: NoExtraProperties<{ start: number; end: number }>;
     persistentSession?: boolean;
 }>;
 
@@ -31,7 +31,7 @@ export type Notifications = NoExtraProperties<{
     pageType: NoExtraProperties<{
         url?: string;
         type: "unknown" | "login" | "login2fa" | "unlock";
-        skipLoginDelayLogic?: boolean,
+        skipLoginDelayLogic?: boolean;
     }>;
     unread: number;
 }>;

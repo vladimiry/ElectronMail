@@ -13,7 +13,7 @@ export class SettingsComponent {
     constructor(private optionsService: OptionsService,
                 private store: Store<State>) {}
 
-    close() {
+    close(): void {
         this.store.dispatch(this.optionsService.settingsNavigationAction());
     }
 }

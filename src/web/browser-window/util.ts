@@ -1,11 +1,11 @@
 import {LOG_LEVELS} from "src/shared/constants";
 import {curryFunctionMembers} from "src/shared/util";
 
-type ZoneNameBoundWebLogger = typeof LOGGER & { zoneName: () => string };
-
 const LOGGER = __ELECTRON_EXPOSURE__.Logger;
 
-const formatZoneName = () => `<${Zone.current.name}>`;
+const formatZoneName = (): string => `<${Zone.current.name}>`;
+
+type ZoneNameBoundWebLogger = typeof LOGGER & { zoneName: () => string };
 
 export const getZoneNameBoundWebLogger = (...args: string[]): ZoneNameBoundWebLogger => {
     const logger = {...curryFunctionMembers(LOGGER, ...args)};
@@ -13,8 +13,11 @@ export const getZoneNameBoundWebLogger = (...args: string[]): ZoneNameBoundWebLo
 
     for (const level of LOG_LEVELS) {
         logger[level] = ((original) => {
-            return function(this: typeof logger) {
-                return original.apply(this, [zoneName()].concat(Array.prototype.slice.call(arguments)));
+            return function(
+                this: typeof logger,
+                ...loggerArgs: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+            ) {
+                return original.apply(this, [zoneName()].concat(loggerArgs));
             };
         })(logger[level]);
     }

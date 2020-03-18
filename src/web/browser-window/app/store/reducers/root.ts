@@ -10,13 +10,10 @@ const logger = getZoneNameBoundWebLogger("[reducers/root]");
 // TODO join all actions in "src/web/src/app/store/actions" once
 type Actions = UnionOf<typeof NAVIGATION_ACTIONS>;
 
-export interface State {
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface State {}
 
-}
-
-export const reducers = {
-
-};
+export const reducers = {};
 
 export function createErrorHandlingMetaReducer(injector: Injector): MetaReducer<State, Actions> {
     return (reducer) => {
@@ -34,8 +31,7 @@ export function createErrorHandlingMetaReducer(injector: Injector): MetaReducer<
 export function createAppMetaReducer(): MetaReducer<State, Actions> {
     return (reducer) => {
         return (state, action) => {
-            // tslint:disable-next-line:no-collapsible-if
-            if (BUILD_ENVIRONMENT === "development") {
+            if (BUILD_ENVIRONMENT === "development") { // eslint-disable-line sonarjs/no-collapsible-if
                 if (typeof action.type === "string" && action.type) {
                     logger.silly(action.type);
                 }

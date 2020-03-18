@@ -2,7 +2,7 @@ import {Context} from "src/electron-main/model";
 import {ReadonlyDeep} from "type-fest";
 import {upgradeConfig} from "src/electron-main/storage-upgrade";
 
-export async function upgradeExistingConfig(ctx: ReadonlyDeep<Context>) {
+export async function upgradeExistingConfig(ctx: ReadonlyDeep<Context>): Promise<void> {
     const existingConfig = await ctx.configStore.read();
 
     if (

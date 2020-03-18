@@ -11,15 +11,14 @@ import {PopoverModule} from "ngx-bootstrap/popover";
 
 import * as AccountsReducer from "./store/reducers/accounts";
 import * as DbViewReducer from "./store/reducers/db-view";
-import * as ErrorsReducer from "./store/reducers/notification";
 import * as NotificationReducer from "./store/reducers/notification";
 import * as OptionsReducer from "./store/reducers/options";
+import * as RootReducer from "./store/reducers/root";
 import {AppComponent} from "./components/app.component";
 import {AppErrorHandler} from "./app.error-handler.service";
 import {CoreModule} from "./_core/core.module";
 import {RouterProxyComponent} from "./components/router-proxy.component";
 import {RoutingModule} from "./app.routing.module";
-import {createAppMetaReducer, createErrorHandlingMetaReducer, reducers} from "./store/reducers/root";
 
 @NgModule({
     declarations: [
@@ -36,7 +35,7 @@ import {createAppMetaReducer, createErrorHandlingMetaReducer, reducers} from "./
         BsDropdownModule.forRoot(),
         PopoverModule.forRoot(),
         StoreModule.forRoot(
-            reducers,
+            RootReducer.reducers,
             {
                 runtimeChecks: {
                     strictStateImmutability: true,
@@ -48,7 +47,6 @@ import {createAppMetaReducer, createErrorHandlingMetaReducer, reducers} from "./
         ),
         StoreModule.forFeature(AccountsReducer.featureName, AccountsReducer.reducer),
         StoreModule.forFeature(DbViewReducer.featureName, DbViewReducer.reducer),
-        StoreModule.forFeature(ErrorsReducer.featureName, ErrorsReducer.reducer),
         StoreModule.forFeature(NotificationReducer.featureName, NotificationReducer.reducer),
         StoreModule.forFeature(OptionsReducer.featureName, OptionsReducer.reducer),
         EffectsModule.forRoot([]),
@@ -66,12 +64,12 @@ import {createAppMetaReducer, createErrorHandlingMetaReducer, reducers} from "./
             provide: META_REDUCERS,
             multi: true,
             deps: [Injector],
-            useFactory: createErrorHandlingMetaReducer,
+            useFactory: RootReducer.createErrorHandlingMetaReducer,
         },
         {
             provide: META_REDUCERS,
             multi: true,
-            useFactory: createAppMetaReducer,
+            useFactory: RootReducer.createAppMetaReducer,
         },
     ],
     bootstrap: [AppComponent],

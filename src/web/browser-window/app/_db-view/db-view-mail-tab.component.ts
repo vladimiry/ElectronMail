@@ -17,7 +17,7 @@ import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 })
 export class DbViewMailTabComponent extends DbViewAbstractComponent {
     @HostBinding("class.search-view")
-    searchView: boolean = false;
+    searchView = false;
 
     mailsBundleKey$: Observable<Extract<MailsBundleKey, "folderMailsBundle" | "folderConversationsBundle">> = this.store.pipe(
         select(OptionsSelectors.CONFIG.localDbMailsListViewMode),
@@ -74,7 +74,7 @@ export class DbViewMailTabComponent extends DbViewAbstractComponent {
         super(store);
     }
 
-    toggleSearchView() {
+    toggleSearchView(): void {
         this.searchView = !this.searchView;
 
         if (this.searchView) {
@@ -83,13 +83,13 @@ export class DbViewMailTabComponent extends DbViewAbstractComponent {
         }
     }
 
-    toggleMailsBundleKey() {
+    toggleMailsBundleKey(): void {
         this.store.dispatch(OPTIONS_ACTIONS.ToggleLocalDbMailsListViewMode());
     }
 
     // TODO make sure this subscription doesn't trigger undesirable change detection cycle
     @HostListener("click", ["$event"])
-    onClick(event: MouseEvent) {
+    onClick(event: MouseEvent): void {
         const element = event.target as Element | undefined;
 
         if (element && element.classList.contains("prevent-default-event")) {
@@ -97,11 +97,11 @@ export class DbViewMailTabComponent extends DbViewAbstractComponent {
         }
     }
 
-    trackFolder(...[, {pk}]: readonly [number, View.Folder]) {
+    trackFolder(...[, {pk}]: readonly [number, View.Folder]): View.Folder["pk"] {
         return pk;
     }
 
-    selectFolder(folder: View.Folder) {
+    selectFolder(folder: View.Folder): void {
         this.store.dispatch(DB_VIEW_ACTIONS.SelectFolder({dbAccountPk: this.dbAccountPk, selectedFolderData: folder}));
     }
 }

@@ -52,7 +52,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
         return account;
     }
 
-    ngOnInit() {
+    ngOnInit(): void {
         this.subscription.add(
             this.accounts$.subscribe((accounts) => {
                 this.accountsMap = new Map(accounts.reduce((entries: Array<[string, WebAccount]>, account) => {
@@ -91,47 +91,49 @@ export class AccountsComponent implements OnInit, OnDestroy {
         );
     }
 
-    trackAccount(...[, account]: readonly [number, WebAccount | undefined]) {
+    trackAccount(
+        ...[, account]: readonly [number, WebAccount | undefined]
+    ): WebAccount["accountConfig"]["login"] | undefined {
         return account ? account.accountConfig.login : undefined;
     }
 
-    activateAccount(event: Event, account: WebAccount) {
+    activateAccount(event: Event, account: WebAccount): void {
         event.preventDefault();
         this.store.dispatch(ACCOUNTS_ACTIONS.Activate({login: account.accountConfig.login}));
     }
 
-    openSettingsView() {
+    openSettingsView(): void {
         this.coreService.openSettingsView();
     }
 
-    openAddingAccountView() {
+    openAddingAccountView(): void {
         this.store.dispatch(NAVIGATION_ACTIONS.Go({
             path: [{outlets: {[SETTINGS_OUTLET]: `${SETTINGS_PATH}/account-edit`}}],
         }));
     }
 
-    openAboutWindow() {
+    openAboutWindow(): void {
         this.store.dispatch(NAVIGATION_ACTIONS.OpenAboutWindow());
     }
 
-    openSettingsFolder() {
+    openSettingsFolder(): void {
         this.store.dispatch(NAVIGATION_ACTIONS.OpenSettingsFolder());
     }
 
-    logout() {
+    logout(): void {
         this.coreService.logOut();
     }
 
-    quit() {
+    quit(): void {
         this.store.dispatch(NAVIGATION_ACTIONS.Quit());
     }
 
-    cancelEvent(event: Event) {
+    cancelEvent(event: Event): void {
         event.preventDefault();
         event.stopPropagation();
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         this.subscription.unsubscribe();
     }
 }

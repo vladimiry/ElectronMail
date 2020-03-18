@@ -10,11 +10,102 @@ import {syncFindInPageBrowserViewSize} from "src/electron-main/window/find-in-pa
 
 const logger = curryFunctionMembers(_logger, "[src/electron-main/window/main]");
 
+async function resolveBoundsToRestore(
+    ctx: Context,
+    currentBounds: Readonly<Rectangle>,
+): Promise<Rectangle> {
+    const {window: {bounds: savedBounds}} = await ctx.configStore.readExisting();
+    const x = typeof savedBounds.x !== "undefined"
+        ? savedBounds.x
+        : currentBounds.x;
+    const y = typeof savedBounds.y !== "undefined"
+        ? savedBounds.y
+        : currentBounds.y;
+    const allDisplaysSummarySize: Readonly<{ width: number; height: number }> = screen.getAllDisplays().reduce(
+        (accumulator: { width: number; height: number }, {size}) => {
+            accumulator.width += size.width;
+            accumulator.height += size.height;
+            return accumulator;
+        },
+        {width: 0, height: 0},
+    );
+    const width = Math.min(savedBounds.width, allDisplaysSummarySize.width);
+    const height = Math.min(savedBounds.height, allDisplaysSummarySize.height);
+
+    logger.debug(JSON.stringify({currentBounds, savedBounds, allDisplaysSummarySize}));
+
+    return {
+        width,
+        height,
+        x: Math.min(
+            Math.max(x, 0),
+            allDisplaysSummarySize.width - width,
+        ),
+        y: Math.min(
+            Math.max(y, 0),
+            allDisplaysSummarySize.height - height,
+        ),
+    };
+}
+
+async function keepBrowserWindowState(ctx: Context, browserWindow: Electron.BrowserWindow): Promise<void> {
+    await (async (): Promise<void> => {
+        const {window: {bounds}} = await ctx.configStore.readExisting();
+        const hasSavedPosition = "x" in bounds && "y" in bounds;
+
+        if (!hasSavedPosition) {
+            browserWindow.center();
+        }
+    })();
+
+    const saveWindowStateHandler = async (): Promise<void> => {
+        const config = await ctx.configStore.readExisting();
+        const storedWindowConfig = Object.freeze(config.window);
+        const newWindowConfig = {...config.window};
+
+        try {
+            newWindowConfig.maximized = browserWindow.isMaximized();
+
+            if (!newWindowConfig.maximized) {
+                newWindowConfig.bounds = browserWindow.getBounds();
+            }
+        } catch (error) {
+            // "browserWindow" might be destroyed at this point
+            console.log(error); // eslint-disable-line no-console
+            logger.warn("failed to resolve window bounds", error);
+            return;
+        }
+
+        if (equals(storedWindowConfig, newWindowConfig)) {
+            return;
+        }
+
+        await ctx.configStore.write({
+            ...config,
+            window: newWindowConfig,
+        });
+    };
+    const saveWindowStateHandlerDebounced = (
+        (): () => void => {
+            let timeoutId: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+            return (): void => {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(saveWindowStateHandler, 500);
+                syncFindInPageBrowserViewSize(ctx);
+            };
+        }
+    )();
+
+    browserWindow.on("close", saveWindowStateHandler);
+    browserWindow.on("resize", saveWindowStateHandlerDebounced);
+    browserWindow.on("move", saveWindowStateHandlerDebounced);
+}
+
 export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow> {
     const state: { forceClose: boolean } = {forceClose: false};
     const appBeforeQuitEventArgs: ["before-quit", (event: Electron.Event) => void] = [
         "before-quit",
-        () => state.forceClose = true,
+        (): true => state.forceClose = true,
     ];
     const browserWindow = new BrowserWindow({
         webPreferences: {
@@ -85,91 +176,3 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
     return browserWindow;
 }
 
-async function resolveBoundsToRestore(
-    ctx: Context,
-    currentBounds: Readonly<Rectangle>,
-): Promise<Rectangle> {
-    const {window: {bounds: savedBounds}} = await ctx.configStore.readExisting();
-    const x = typeof savedBounds.x !== "undefined"
-        ? savedBounds.x
-        : currentBounds.x;
-    const y = typeof savedBounds.y !== "undefined"
-        ? savedBounds.y
-        : currentBounds.y;
-    const allDisplaysSummarySize: Readonly<{ width: number, height: number }> = screen.getAllDisplays().reduce(
-        (accumulator: { width: number, height: number }, {size}) => {
-            accumulator.width += size.width;
-            accumulator.height += size.height;
-            return accumulator;
-        },
-        {width: 0, height: 0},
-    );
-    const width = Math.min(savedBounds.width, allDisplaysSummarySize.width);
-    const height = Math.min(savedBounds.height, allDisplaysSummarySize.height);
-
-    logger.debug(JSON.stringify({currentBounds, savedBounds, allDisplaysSummarySize}));
-
-    return {
-        width,
-        height,
-        x: Math.min(
-            Math.max(x, 0),
-            allDisplaysSummarySize.width - width,
-        ),
-        y: Math.min(
-            Math.max(y, 0),
-            allDisplaysSummarySize.height - height,
-        ),
-    };
-}
-
-async function keepBrowserWindowState(ctx: Context, browserWindow: Electron.BrowserWindow) {
-    await (async () => {
-        const {window: {bounds}} = await ctx.configStore.readExisting();
-        const hasSavedPosition = "x" in bounds && "y" in bounds;
-
-        if (!hasSavedPosition) {
-            browserWindow.center();
-        }
-    })();
-
-    const saveWindowStateHandler = async () => {
-        const config = await ctx.configStore.readExisting();
-        const storedWindowConfig = Object.freeze(config.window);
-        const newWindowConfig = {...config.window};
-
-        try {
-            newWindowConfig.maximized = browserWindow.isMaximized();
-
-            if (!newWindowConfig.maximized) {
-                newWindowConfig.bounds = browserWindow.getBounds();
-            }
-        } catch (error) {
-            // "browserWindow" might be destroyed at this point
-            console.log(error); // tslint:disable-line:no-console
-            logger.warn("failed to resolve window bounds", error);
-            return;
-        }
-
-        if (equals(storedWindowConfig, newWindowConfig)) {
-            return;
-        }
-
-        await ctx.configStore.write({
-            ...config,
-            window: newWindowConfig,
-        });
-    };
-    const saveWindowStateHandlerDebounced = (() => {
-        let timeoutId: any;
-        return () => {
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(saveWindowStateHandler, 500);
-            syncFindInPageBrowserViewSize(ctx);
-        };
-    })();
-
-    browserWindow.on("close", saveWindowStateHandler);
-    browserWindow.on("resize", saveWindowStateHandlerDebounced);
-    browserWindow.on("move", saveWindowStateHandlerDebounced);
-}

@@ -1,7 +1,9 @@
 import {BrowserDynamicTestingModule, platformBrowserDynamicTesting} from "@angular/platform-browser-dynamic/testing";
 import {TestBed, getTestBed} from "@angular/core/testing";
 
-export function initTestEnvironment(configure: (testBed: TestBed) => void) {
+export function initTestEnvironment(
+    configure: (testBed: TestBed) => void,
+): TestBed {
     const testBed: TestBed = getTestBed();
 
     if (!testBed.platform) {

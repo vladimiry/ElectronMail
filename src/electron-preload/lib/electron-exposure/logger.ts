@@ -7,6 +7,17 @@ import {logLevelEnabled} from "src/shared/util";
 
 const logger: ReadonlyDeep<Logger & { transports: { file: FileTransport } }> = remote.require("electron-log");
 
+function log(
+    level: LogLevel,
+    ...params: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+): void {
+    if (!logLevelEnabled(level, logger)) {
+        return;
+    }
+
+    logger[level](...params);
+}
+
 export const LOGGER: Logger = {
     error: log.bind(null, "error"),
     warn: log.bind(null, "warn"),
@@ -16,10 +27,3 @@ export const LOGGER: Logger = {
     silly: log.bind(null, "silly"),
 };
 
-function log(level: LogLevel, ...params: any[]): void {
-    if (!logLevelEnabled(level, logger)) {
-        return;
-    }
-
-    logger[level](...params);
-}

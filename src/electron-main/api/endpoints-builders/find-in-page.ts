@@ -26,7 +26,7 @@ const _logger = curryFunctionMembers(electronLog, "[electron-main/api/endpoints-
 export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpoints, ApiMethods>> {
     let findInPageNotification: NotificationMapValue | null = null;
 
-    const resolveContext = () => {
+    const resolveContext = (): Exclude<typeof ctx.uiContext, undefined> => {
         if (!ctx.uiContext) {
             throw new Error(`UI Context has not been initialized`);
         }
@@ -91,8 +91,10 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                     // destroy
                     logger.verbose(`destroying "uiContext.findInPageBrowserView"`);
                     // WARN "setBrowserView" needs to be called with null, see https://github.com/electron/electron/issues/13581
-                    // TODO TS: get rid of any cast, see https://github.com/electron/electron/issues/13581
-                    browserWindow.setBrowserView(null as any);
+                    browserWindow.setBrowserView(
+                        // TODO TS: get rid of any cast, see https://github.com/electron/electron/issues/13581
+                        null as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+                    );
                     uiContext.findInPageBrowserView.destroy();
                     delete uiContext.findInPageBrowserView;
                 });
@@ -132,10 +134,10 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
             const webContents = ElectronWebContents.fromId(ctx.selectedAccount.webContentId);
             const notificationSubject = new Subject<Notification>();
-            const notificationReset = (() => {
+            const notificationReset = ((): () => void => {
                 const eventSubscriptionArgs: ["found-in-page", (event: Electron.Event, result: Electron.FoundInPageResult) => void] = [
                     "found-in-page",
-                    (...args) => {
+                    (...args): void => {
                         const [, result] = args;
                         if (!webContents.isDestroyed()) {
                             notificationSubject.next(result);
@@ -145,7 +147,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
                 webContents.addListener(...eventSubscriptionArgs);
 
-                return () => {
+                return (): void => {
                     if (webContents.isDestroyed()) {
                         return;
                     }

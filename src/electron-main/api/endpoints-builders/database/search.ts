@@ -14,6 +14,49 @@ import {curryFunctionMembers, walkConversationNodesTree} from "src/shared/util";
 
 const logger = curryFunctionMembers(electronLog, "[src/electron-main/api/endpoints-builders/database/search]");
 
+export function searchRootConversationNodes(
+    account: ReadonlyDeep<FsDbAccount>,
+    {mailPks, folderPks}: ReadonlyDeep<{ mailPks?: Array<Mail["pk"]>; folderPks?: Array<Folder["pk"]> }> = {},
+): View.RootConversationNode[] {
+    // TODO optimize search: implement custom search instead of getting all the mails first and then narrowing the list down
+    // TODO don't create functions inside iterations so extensively, "filter" / "walkConversationNodesTree" calls
+    const {rootNodePrototypes, folders} = buildFoldersAndRootNodePrototypes(account);
+    const filteredByMails = mailPks
+        ? rootNodePrototypes.filter((rootNodePrototype) => {
+            let matched = false;
+            // don't filter by folders here as folders are not yet linked to root nodes at this point
+            walkConversationNodesTree([rootNodePrototype], ({mail}) => {
+                matched = Boolean(mail && mailPks.includes(mail.pk));
+                if (!matched) {
+                    return;
+                }
+                return "break";
+            });
+            return matched;
+        })
+        : rootNodePrototypes;
+    const filteredByMailsWithFoldersAttached = fillFoldersAndReturnRootConversationNodes(filteredByMails);
+
+    const result = folderPks
+        ? filteredByMailsWithFoldersAttached.filter((rootNodePrototype) => {
+            let matched = false;
+            walkConversationNodesTree([rootNodePrototype], ({mail}) => {
+                matched = Boolean(mail && mail.folders.find(({pk}) => folderPks.includes(pk)));
+                if (!matched) {
+                    return;
+                }
+                return "break";
+            });
+            return matched;
+        })
+        : filteredByMailsWithFoldersAttached;
+
+    // TODO use separate function to fill the system folders names
+    FOLDER_UTILS.splitAndFormatAndFillSummaryFolders(folders);
+
+    return result;
+}
+
 export async function buildDbSearchEndpoints(
     ctx: ReadonlyDeep<Context>,
 ): Promise<Pick<IpcMainApiEndpoints, "dbFullTextSearch">> {
@@ -44,8 +87,8 @@ export async function buildDbSearchEndpoints(
                         );
                         const mailsBundleItems: Unpacked<ReturnType<IpcMainApiEndpoints["dbFullTextSearch"]>>["mailsBundleItems"] = [];
                         const findByFolder = folderPks
-                            ? ({pk}: View.Folder) => folderPks.includes(pk)
-                            : () => true;
+                            ? ({pk}: View.Folder): boolean => folderPks.includes(pk)
+                            : (): true => true;
 
                         for (const rootConversationNode of rootConversationNodes) {
                             let allNodeMailsCount = 0;
@@ -106,45 +149,3 @@ export async function buildDbSearchEndpoints(
     };
 }
 
-export function searchRootConversationNodes(
-    account: ReadonlyDeep<FsDbAccount>,
-    {mailPks, folderPks}: ReadonlyDeep<{ mailPks?: Array<Mail["pk"]>; folderPks?: Array<Folder["pk"]>; }> = {},
-): View.RootConversationNode[] {
-    // TODO optimize search: implement custom search instead of getting all the mails first and then narrowing the list down
-    // TODO don't create functions inside iterations so extensively, "filter" / "walkConversationNodesTree" calls
-    const {rootNodePrototypes, folders} = buildFoldersAndRootNodePrototypes(account);
-    const filteredByMails = mailPks
-        ? rootNodePrototypes.filter((rootNodePrototype) => {
-            let matched: boolean = false;
-            // don't filter by folders here as folders are not yet linked to root nodes at this point
-            walkConversationNodesTree([rootNodePrototype], ({mail}) => {
-                matched = Boolean(mail && mailPks.includes(mail.pk));
-                if (!matched) {
-                    return;
-                }
-                return "break";
-            });
-            return matched;
-        })
-        : rootNodePrototypes;
-    const filteredByMailsWithFoldersAttached = fillFoldersAndReturnRootConversationNodes(filteredByMails);
-
-    const result = folderPks
-        ? filteredByMailsWithFoldersAttached.filter((rootNodePrototype) => {
-            let matched: boolean = false;
-            walkConversationNodesTree([rootNodePrototype], ({mail}) => {
-                matched = Boolean(mail && mail.folders.find(({pk}) => folderPks.includes(pk)));
-                if (!matched) {
-                    return;
-                }
-                return "break";
-            });
-            return matched;
-        })
-        : filteredByMailsWithFoldersAttached;
-
-    // TODO use separate function to fill the system folders names
-    FOLDER_UTILS.splitAndFormatAndFillSummaryFolders(folders);
-
-    return result;
-}

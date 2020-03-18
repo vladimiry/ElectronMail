@@ -1,4 +1,4 @@
-export function resolveLink(element: Element): { element: Element, link?: boolean; href?: string } {
+export function resolveLink(element: Element): { element: Element; link?: boolean; href?: string } {
     const parentScanState: {
         element: (Node & ParentNode) | null | Element;
         link?: boolean;
@@ -43,16 +43,8 @@ export function isTextarea(el: Element | HTMLTextAreaElement): el is HTMLTextAre
     return el.tagName === "TEXTAREA";
 }
 
-export function isWritable(el: Element): boolean {
-    const writableInput = (
-        (isInput(el) || isTextarea(el))
-        &&
-        !el.disabled && !el.hasAttribute("disabled")
-        &&
-        !el.readOnly && !el.hasAttribute("readonly")
-    );
-
-    return writableInput || isContentEditableDeep(el);
+export function isContentEditable(el: Element): boolean {
+    return el.hasAttribute("contenteditable");
 }
 
 export function isContentEditableDeep(el: Node | Element | null): boolean {
@@ -66,14 +58,22 @@ export function isContentEditableDeep(el: Node | Element | null): boolean {
     return value;
 }
 
-export function isContentEditable(el: Element): boolean {
-    return el.hasAttribute("contenteditable");
-}
-
 export function isPasswordInput(el: Element): boolean {
     return (
         isInput(el)
         &&
         String(el.getAttribute("type")).toLowerCase() === "password"
     );
+}
+
+export function isWritable(el: Element): boolean {
+    const writableInput = (
+        (isInput(el) || isTextarea(el))
+        &&
+        !el.disabled && !el.hasAttribute("disabled")
+        &&
+        !el.readOnly && !el.hasAttribute("readonly")
+    );
+
+    return writableInput || isContentEditableDeep(el);
 }

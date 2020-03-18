@@ -24,7 +24,9 @@ export type AppAction =
     | UnionOf<typeof OPTIONS_ACTIONS>;
 
 export function unionizeActionFilter<P>(
-    predicate: (action: any) => action is { type: string, payload: P },
-): MonoTypeOperatorFunction<{ type: string, payload: P }> {
+    predicate: (
+        action: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+    ) => action is { type: string; payload: P },
+): MonoTypeOperatorFunction<{ type: string; payload: P }> {
     return filter((predicate));
 }

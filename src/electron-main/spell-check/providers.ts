@@ -7,7 +7,7 @@ import {curryFunctionMembers, removeDuplicateItems} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[src/electron-main/spell-check/setup]");
 
-// tslint:disable-next-line
+// eslint-disable-next-line max-len
 // https://github.com/electron-userland/electron-spellchecker/blob/6da4984fcecb9ea05d322abf66ac904252e61c35/src/spell-check-handler.js#L52-L70
 // NB: This is to work around electron/electron#1005, where contractions
 // are incorrectly marked as spelling errors. This lets people get away with
@@ -75,15 +75,19 @@ export function constructProvider(
 
 export function constructDummyProvider(): Readonly<Provider> {
     return {
+        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
         spellCheck(...[, callback]) {
             callback([]);
         },
+        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
         isMisspelled() {
             return false;
         },
+        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
         getSuggestions() {
             return [];
         },
+        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
         add() {
             // NOOP
         },

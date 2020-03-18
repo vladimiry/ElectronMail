@@ -82,7 +82,7 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
     );
 
     foldersInfo: {
-        names: Record<View.Folder["pk"], View.Folder["name"]>,
+        names: Record<View.Folder["pk"], View.Folder["name"]>;
         allPks: Array<View.Folder["pk"]>;
         selectedPks: Array<View.Folder["pk"]>;
     } = {
@@ -104,7 +104,7 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
         super(store);
     }
 
-    ngOnInit() {
+    ngOnInit(): void {
         this.folders$
             .pipe(takeUntil(this.unSubscribe$))
             .subscribe(({system, custom}) => {
@@ -147,26 +147,26 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
     }
 
     resolveSelectedPks(): typeof DbViewMailsSearchComponent.prototype.foldersInfo.selectedPks {
-        const value: Record<View.Folder["pk"], boolean> = this.formControls.folders.value;
+        const value: Record<View.Folder["pk"], boolean> = this.formControls.folders.value; // eslint-disable-line  prefer-destructuring
 
         return Object.entries(value)
             .filter(([, v]) => Boolean(v))
             .map(([k]) => k);
     }
 
-    ngAfterViewInit() {
+    ngAfterViewInit(): void {
         if (this.queryElementRefQuery.length) {
             this.queryElementRefQuery.first.nativeElement.focus();
         }
     }
 
-    backToList() {
+    backToList(): void {
         this.store.dispatch(DB_VIEW_ACTIONS.SelectMail({dbAccountPk: this.dbAccountPk}));
         this.store.dispatch(DB_VIEW_ACTIONS.ResetSearchMailsBundleItems({dbAccountPk: this.dbAccountPk}));
         this.backToListHandler.emit();
     }
 
-    submit() {
+    submit(): void {
         this.store.dispatch(DB_VIEW_ACTIONS.FullTextSearchRequest({
             ...this.dbAccountPk,
             query: this.formControls.query.value,

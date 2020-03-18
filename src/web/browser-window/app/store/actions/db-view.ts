@@ -14,7 +14,7 @@ export const DB_VIEW_ACTIONS = unionize({
         }>(),
         SetFolders: ofType<{
             dbAccountPk: DbAccountPk;
-            folders: { system: View.Folder[]; custom: View.Folder[]; };
+            folders: { system: View.Folder[]; custom: View.Folder[] };
         }>(),
         SelectFolder: ofType<{
             dbAccountPk: DbAccountPk;

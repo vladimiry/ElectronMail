@@ -20,11 +20,13 @@ export class RouterProxyComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
     ) {}
 
-    ngOnInit() {
+    ngOnInit(): void {
         this.subscription.add(
             this.route.data
                 .pipe(
-                    map((data) => data[ROUTER_DATA_OUTLET_PROP]),
+                    map((data) => {
+                        return data[ROUTER_DATA_OUTLET_PROP]; // eslint-disable-line  @typescript-eslint/no-unsafe-return
+                    }),
                     filter((outlet) => Boolean(outlet)),
                 )
                 .subscribe((outlet) => {
@@ -33,7 +35,7 @@ export class RouterProxyComponent implements OnInit, OnDestroy {
         );
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         this.subscription.unsubscribe();
     }
 }

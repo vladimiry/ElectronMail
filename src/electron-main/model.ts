@@ -18,7 +18,7 @@ export interface ContextInitOptionsPaths {
 
 export interface ContextInitOptions {
     paths?: ContextInitOptionsPaths;
-    initialStores?: { config: Config; settings: Settings; };
+    initialStores?: { config: Config; settings: Settings };
     storeFs?: StoreModel.StoreFs;
 }
 

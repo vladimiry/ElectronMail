@@ -49,14 +49,14 @@ export class StorageComponent {
 
     constructor(private store: Store<State>) {}
 
-    submit() {
+    submit(): void {
         this.store.dispatch(OPTIONS_ACTIONS.ChangeMasterPasswordRequest({
             password: this.password.value,
             newPassword: this.newPassword.value,
         }));
     }
 
-    submitPresets() {
+    submitPresets(): void {
         const keyDerivation = KEY_DERIVATION_PRESETS[this.encryptionPresetForm.controls.keyDerivation.value];
         const encryption = ENCRYPTION_DERIVATION_PRESETS[this.encryptionPresetForm.controls.encryption.value];
         const encryptionPreset = {keyDerivation, encryption};

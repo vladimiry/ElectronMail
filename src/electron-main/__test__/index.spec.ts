@@ -6,6 +6,56 @@ import {INITIAL_STORES} from "src/electron-main/constants";
 import {ONE_SECOND_MS, PACKAGE_NAME, PACKAGE_VERSION} from "src/shared/constants";
 import {asyncDelay} from "src/shared/util";
 
+function buildMocks() { // eslint-disable-line @typescript-eslint/explicit-function-return-type
+    return {
+        "electron": {
+            app: {
+                whenReady: sinon.stub().returns(Promise.resolve()),
+                getName: (): string => PACKAGE_NAME,
+                getVersion: (): string => PACKAGE_VERSION,
+            },
+        },
+        "./bootstrap/app-ready": {
+            appReadyHandler: sinon.stub().returns(Promise.resolve()),
+        },
+        "./bootstrap/upgrade-config": {
+            upgradeExistingConfig: sinon.stub().returns(Promise.resolve()),
+        },
+        "./bootstrap/command-line": {
+            bootstrapCommandLine: sinon.spy(),
+        },
+        "./bootstrap/init": {
+            bootstrapInit: sinon.spy(),
+        },
+        "./context": {
+            initContext: sinon.stub().returns({
+                [`${PACKAGE_NAME}_context_id`]: 123,
+                configStore: {
+                    async read(): Promise<ReturnType<typeof INITIAL_STORES.config>> {
+                        return INITIAL_STORES.config();
+                    },
+                },
+            }),
+        },
+        "./protocol": {
+            registerStandardSchemes: sinon.spy(),
+        },
+    };
+}
+
+async function loadLibrary(
+    mocks: ReturnType<typeof buildMocks>,
+): Promise<typeof import("src/electron-main/index")> {
+    return rewiremock.around(
+        async () => import("src/electron-main/index"),
+        (mock) => {
+            for (const [name, data] of Object.entries(mocks)) {
+                mock(name).with(data);
+            }
+        },
+    );
+}
+
 test("flow", async (t) => {
     const mocks = buildMocks();
 
@@ -44,51 +94,3 @@ test("flow", async (t) => {
     t.true(mocks["./bootstrap/app-ready"].appReadyHandler.alwaysCalledWithExactly(ctx));
     t.true(mocks["./bootstrap/app-ready"].appReadyHandler.calledAfter(mocks.electron.app.whenReady));
 });
-
-function buildMocks() {
-    return {
-        "electron": {
-            app: {
-                whenReady: sinon.stub().returns(Promise.resolve()),
-                getName: () => PACKAGE_NAME,
-                getVersion: () => PACKAGE_VERSION,
-            },
-        },
-        "./bootstrap/app-ready": {
-            appReadyHandler: sinon.stub().returns(Promise.resolve()),
-        },
-        "./bootstrap/upgrade-config": {
-            upgradeExistingConfig: sinon.stub().returns(Promise.resolve()),
-        },
-        "./bootstrap/command-line": {
-            bootstrapCommandLine: sinon.spy(),
-        },
-        "./bootstrap/init": {
-            bootstrapInit: sinon.spy(),
-        },
-        "./context": {
-            initContext: sinon.stub().returns({
-                [`${PACKAGE_NAME}_context_id`]: 123,
-                configStore: {
-                    async read() {
-                        return INITIAL_STORES.config();
-                    },
-                },
-            }),
-        },
-        "./protocol": {
-            registerStandardSchemes: sinon.spy(),
-        },
-    };
-}
-
-async function loadLibrary(mocks: ReturnType<typeof buildMocks>) {
-    return await rewiremock.around(
-        () => import("src/electron-main/index"),
-        (mock) => {
-            for (const [name, data] of Object.entries(mocks)) {
-                mock(name).with(data);
-            }
-        },
-    );
-}

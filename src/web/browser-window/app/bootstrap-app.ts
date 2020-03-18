@@ -13,7 +13,7 @@ enableProdMode();
 // }
 
 __ELECTRON_EXPOSURE__.buildIpcMainClient()("staticInit")()
-    .then((staticInit) => {
+    .then(async (staticInit) => {
         const metadata: typeof __METADATA__ = staticInit;
 
         Object.defineProperty(
@@ -33,7 +33,7 @@ __ELECTRON_EXPOSURE__.buildIpcMainClient()("staticInit")()
         return platformBrowserDynamic().bootstrapModule(AppModule);
     })
     .catch((error) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.error(error);
         logger.error(error);
         throw error;

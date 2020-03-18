@@ -16,9 +16,12 @@ type ResponseDetails = OnHeadersReceivedListenerDetails;
 
 type RequestProxy = ReadonlyDeep<{
     headers: {
-        origin: Exclude<ReturnType<typeof getHeader>, null>,
-        accessControlRequestHeaders: ReturnType<typeof getHeader>,
-        accessControlRequestMethod: ReturnType<typeof getHeader>,
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
+        origin: Exclude<ReturnType<typeof getHeader>, null>;
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
+        accessControlRequestHeaders: ReturnType<typeof getHeader>;
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
+        accessControlRequestMethod: ReturnType<typeof getHeader>;
     };
 }>;
 
@@ -40,51 +43,28 @@ const HEADERS = {
 
 const PROXIES = new Map<RequestDetails["id"] | ResponseDetails["id"], RequestProxy>();
 
-// TODO pass additional "account type" argument and apply only respective listeners
-export function initWebRequestListeners(ctx: Context, session: Session) {
-    const webClientsOrigins = ctx.locations.webClients
-        .map(({entryUrl}) => new URL(entryUrl).origin);
+function getHeader(
+    headers: Exclude<HeadersReceivedResponse["responseHeaders"] | BeforeSendResponse["requestHeaders"], undefined>,
+    nameCriteria: string,
+): { name: string; values: string[] } | null {
+    const names = Object.keys(headers);
+    const resolvedIndex = names.findIndex((name) => name.toLowerCase() === nameCriteria.toLowerCase());
+    const resolvedName = resolvedIndex !== -1
+        ? names[resolvedIndex]
+        : null;
 
-    session.webRequest.onBeforeSendHeaders(
-        {urls: []},
-        (
-            details,
-            callback,
-        ) => {
-            const {requestHeaders} = details;
-            const requestProxy = resolveRequestProxy(details, webClientsOrigins);
+    if (!resolvedName) {
+        return null;
+    }
 
-            if (requestProxy) {
-                const {name} = getHeader(requestHeaders, HEADERS.request.origin) || {name: HEADERS.request.origin};
-                requestHeaders[name] = resolveFakeOrigin(details);
-                PROXIES.set(details.id, requestProxy);
-            }
+    const value = headers[resolvedName];
 
-            callback({requestHeaders});
-        },
-    );
-
-    session.webRequest.onHeadersReceived(
-        (
-            details,
-            callback,
-        ) => {
-            const requestProxy = PROXIES.get(details.id);
-
-            if (requestProxy) {
-                const responseHeaders = patchReponseHeaders({details, requestProxy});
-                callback({responseHeaders});
-                return;
-            }
-
-            callback({});
-        },
-    );
-}
-
-function resolveFakeOrigin(requestDetails: RequestDetails): string {
-    // protonmail doesn't care much about "origin" value, so we generate the origin from request
-    return new URL(requestDetails.url).origin;
+    return {
+        name: resolvedName,
+        values: Array.isArray(value)
+            ? value
+            : [value],
+    };
 }
 
 function resolveRequestProxy(
@@ -129,10 +109,39 @@ function resolveRequestProxy(
         : null;
 }
 
+function resolveFakeOrigin(requestDetails: RequestDetails): string {
+    // protonmail doesn't care much about "origin" value, so we generate the origin from request
+    return new URL(requestDetails.url).origin;
+}
+
+function patchResponseHeader(
+    headers: HeadersReceivedResponse["responseHeaders"],
+    patch: ReadonlyDeep<ReturnType<typeof getHeader>>,
+    {replace, extend = true, _default = true}: { replace?: boolean; extend?: boolean; _default?: boolean } = {},
+): void {
+    if (!patch || !headers) {
+        return;
+    }
+
+    const header: Exclude<ReturnType<typeof getHeader>, null> =
+        getHeader(headers, patch.name) || {name: patch.name, values: []};
+
+    if (_default && !header.values.length) {
+        headers[header.name] = [...patch.values];
+        return;
+    }
+
+    headers[header.name] = replace
+        ? [...patch.values]
+        : extend
+            ? [...header.values, ...patch.values]
+            : header.values;
+}
+
 // TODO consider doing initial preflight/OPTIONS call to https://mail.protonmail.com
 // and then pick all the "Access-Control-*" header names as a template instead of hardcoding the default headers
 // since over time the server may start giving other headers
-const patchReponseHeaders: (arg: { requestProxy: RequestProxy, details: ResponseDetails; }) => ResponseDetails["responseHeaders"]
+const patchReponseHeaders: (arg: { requestProxy: RequestProxy; details: ResponseDetails }) => ResponseDetails["responseHeaders"]
     = ({requestProxy, details}) => {
     patchResponseHeader(
         details.responseHeaders,
@@ -215,50 +224,44 @@ const patchReponseHeaders: (arg: { requestProxy: RequestProxy, details: Response
     return details.responseHeaders;
 };
 
-function patchResponseHeader(
-    headers: HeadersReceivedResponse["responseHeaders"],
-    patch: ReadonlyDeep<ReturnType<typeof getHeader>>,
-    {replace, extend = true, _default = true}: { replace?: boolean; extend?: boolean; _default?: boolean } = {},
-): void {
-    if (!patch || !headers) {
-        return;
-    }
+// TODO pass additional "account type" argument and apply only respective listeners
+export function initWebRequestListeners(ctx: Context, session: Session): void {
+    const webClientsOrigins = ctx.locations.webClients
+        .map(({entryUrl}) => new URL(entryUrl).origin);
 
-    const header: Exclude<ReturnType<typeof getHeader>, null> =
-        getHeader(headers, patch.name) || {name: patch.name, values: []};
+    session.webRequest.onBeforeSendHeaders(
+        {urls: []},
+        (
+            details,
+            callback,
+        ) => {
+            const {requestHeaders} = details;
+            const requestProxy = resolveRequestProxy(details, webClientsOrigins);
 
-    if (_default && !header.values.length) {
-        headers[header.name] = [...patch.values];
-        return;
-    }
+            if (requestProxy) {
+                const {name} = getHeader(requestHeaders, HEADERS.request.origin) || {name: HEADERS.request.origin};
+                requestHeaders[name] = resolveFakeOrigin(details);
+                PROXIES.set(details.id, requestProxy);
+            }
 
-    headers[header.name] = replace
-        ? [...patch.values]
-        : extend
-            ? [...header.values, ...patch.values]
-            : header.values;
-}
+            callback({requestHeaders});
+        },
+    );
 
-function getHeader(
-    headers: Exclude<HeadersReceivedResponse["responseHeaders"] | BeforeSendResponse["requestHeaders"], undefined>,
-    nameCriteria: string,
-): { name: string, values: string[]; } | null {
-    const names = Object.keys(headers);
-    const resolvedIndex = names.findIndex((name) => name.toLowerCase() === nameCriteria.toLowerCase());
-    const resolvedName = resolvedIndex !== -1
-        ? names[resolvedIndex]
-        : null;
+    session.webRequest.onHeadersReceived(
+        (
+            details,
+            callback,
+        ) => {
+            const requestProxy = PROXIES.get(details.id);
 
-    if (!resolvedName) {
-        return null;
-    }
+            if (requestProxy) {
+                const responseHeaders = patchReponseHeaders({details, requestProxy});
+                callback({responseHeaders});
+                return;
+            }
 
-    const value = headers[resolvedName];
-
-    return {
-        name: resolvedName,
-        values: Array.isArray(value)
-            ? value
-            : [value],
-    };
+            callback({});
+        },
+    );
 }

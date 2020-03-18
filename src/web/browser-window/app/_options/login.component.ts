@@ -26,7 +26,7 @@ export class LoginComponent extends LoginBaseComponent implements OnInit {
         super(injector);
     }
 
-    ngOnInit() {
+    ngOnInit(): void {
         this.subscription.add(
             combineLatest([
                 this.store.pipe(

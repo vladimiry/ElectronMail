@@ -6,8 +6,8 @@ export interface ZoneApiParameter {
 }
 
 export interface DbPatch {
-    conversationEntries: { remove: Array<Pick<ConversationEntry, "pk">>; upsert: ConversationEntry[]; };
-    mails: { remove: Array<Pick<Mail, "pk">>; upsert: Mail[]; };
-    folders: { remove: Array<Pick<Folder, "pk">>; upsert: Folder[]; };
-    contacts: { remove: Array<Pick<Contact, "pk">>; upsert: Contact[]; };
+    conversationEntries: { remove: Array<Pick<ConversationEntry, "pk">>; upsert: ConversationEntry[] };
+    mails: { remove: Array<Pick<Mail, "pk">>; upsert: Mail[] };
+    folders: { remove: Array<Pick<Folder, "pk">>; upsert: Folder[] };
+    contacts: { remove: Array<Pick<Contact, "pk">>; upsert: Contact[] };
 }

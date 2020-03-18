@@ -13,7 +13,7 @@ const statusCodesMap: Record<Code, string> = {
 
 // TODO add optional "cause" constructor argument
 export class StatusCodeError extends Error {
-    public static getStatusCodeValue(statusCode: keyof typeof statusCodesMap) {
+    public static getStatusCodeValue(statusCode: keyof typeof statusCodesMap): string {
         return statusCodesMap[statusCode];
     }
 

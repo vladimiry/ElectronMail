@@ -22,7 +22,7 @@ interface ComponentState {
 })
 export class AccountTitleComponent implements OnInit, OnDestroy {
     @Input()
-    highlighting: boolean = true;
+    highlighting = true;
 
     private stateSubject$ = new BehaviorSubject<ComponentState>({
         // account: null,
@@ -63,7 +63,7 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
         private store: Store<State>,
     ) {}
 
-    ngOnInit() {
+    ngOnInit(): void {
         if (!this.highlighting) {
             return;
         }
@@ -77,16 +77,16 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
         );
     }
 
-    toggleViewMode(event: Event) {
+    toggleViewMode(event: Event): void {
         event.stopPropagation();
         this.store.dispatch(ACCOUNTS_ACTIONS.ToggleDatabaseView({login: this.accountLogin}));
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         this.subscription.unsubscribe();
     }
 
-    private patchState(patch: Partial<ComponentState>) {
+    private patchState(patch: Partial<ComponentState>): void {
         this.stateSubject$.next({...this.stateSubject$.value, ...patch});
     }
 }

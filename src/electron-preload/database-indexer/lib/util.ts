@@ -31,12 +31,12 @@ export const SERVICES_FACTORY = {
     },
 };
 
-const lowerCaseFilter = (term: string) => {
+const lowerCaseFilter = (term: string): string => {
     return term.toLowerCase();
 };
 
 const tokenizer: (value: string) => string[] = (() => {
-    const tokenizeRe = /[\s\-]+/; // whitespace and hyphen
+    const tokenizeRe = /[\s-]+/; // whitespace and hyphen
     const result: typeof tokenizer = (value) => {
         return value.trim().split(tokenizeRe);
     };
@@ -57,7 +57,7 @@ export function createMailsIndex(): MailsIndex {
     const fieldAccessors = fields.map((field) => field.accessor);
     const fieldBoostFactors = fields.map((field) => field.boost);
     const removed = new Set<IndexableMailId>();
-    const termFilter = (term: string) => {
+    const termFilter = (term: string): string => {
         return trimNonLetterCharactersFilter( // "trimNonWordCharactersFilter" from "ndx-utils" is too aggressive
             lowerCaseFilter(term),
         );

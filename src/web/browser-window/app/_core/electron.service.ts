@@ -68,7 +68,7 @@ export class ElectronService implements OnDestroy {
         const ping$ = this.onlinePingWithTimeouts$.pipe(
             switchMap(({webViewApiPing: timeoutMs}) => {
                 return race(
-                    defer(() => {
+                    defer(async () => {
                         return client("ping", {timeoutMs: ONE_SECOND_MS})({zoneName: logger.zoneName()});
                     }).pipe(
                         retryWhen((errors) => {
@@ -97,7 +97,7 @@ export class ElectronService implements OnDestroy {
         );
     }
 
-    ipcMainClient(options?: LimitedCallOptions) {
+    ipcMainClient(options?: LimitedCallOptions): ReturnType<typeof __ELECTRON_EXPOSURE__.buildIpcMainClient> {
         return __ELECTRON_EXPOSURE__.buildIpcMainClient({
             options: this.buildApiCallOptions(options),
         });

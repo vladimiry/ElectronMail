@@ -23,16 +23,18 @@ ctxDbProps.forEach((ctxDbProp) => {
             memFsVolume._impl.writeFileSync(path.join(memFsPath, "web/browser-window/shared-vendor.css"), "");
 
             const {initContext} = await rewiremock.around(
-                () => import("src/electron-main/context"),
+                async () => import("src/electron-main/context"),
                 (mock) => {
-                    mock(() => import("electron")).with({
-                        app: {
-                            getPath: sinon.stub().returns(memFsPath),
-                            getName: () => PACKAGE_NAME,
-                            getVersion: () => PACKAGE_VERSION,
-                        },
-                    } as any);
-                    mock(() => import("src/electron-main/constants")).callThrough();
+                    mock(async () => import("electron")).with(
+                        {
+                            app: {
+                                getPath: sinon.stub().returns(memFsPath),
+                                getName: (): string => PACKAGE_NAME,
+                                getVersion: (): string => PACKAGE_VERSION,
+                            },
+                        } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+                    );
+                    mock(async () => import("src/electron-main/constants")).callThrough();
                 },
             );
             const ctx = initContext({
@@ -78,16 +80,18 @@ ctxDbProps.forEach((ctxDbProp) => {
             const initialSettings = INITIAL_STORES.settings();
             const settingsStub = sinon.stub().returns(initialSettings);
             const {initContext} = await rewiremock.around(
-                () => import("src/electron-main/context"),
+                async () => import("src/electron-main/context"),
                 (mock) => {
-                    mock(() => import("electron")).with({
-                        app: {
-                            getPath: sinon.stub().returns(memFsPath),
-                            getName: () => PACKAGE_NAME,
-                            getVersion: () => PACKAGE_VERSION,
-                        },
-                    } as any);
-                    mock(() => import("src/electron-main/constants")).callThrough().with({
+                    mock(async () => import("electron")).with(
+                        {
+                            app: {
+                                getPath: sinon.stub().returns(memFsPath),
+                                getName: (): string => PACKAGE_NAME,
+                                getVersion: (): string => PACKAGE_VERSION,
+                            },
+                        } as any // eslint-disable-line @typescript-eslint/no-explicit-any
+                    );
+                    mock(async () => import("src/electron-main/constants")).callThrough().with({
                         INITIAL_STORES: {
                             config: INITIAL_STORES.config,
                             settings: settingsStub,
@@ -107,25 +111,29 @@ ctxDbProps.forEach((ctxDbProp) => {
             t.true(settingsStub.called, `"initContext()" should call "INITIAL_STORES.settings()" internally`);
 
             const {initApi} = await rewiremock.around(
-                () => import("src/electron-main/api"),
+                async () => import("src/electron-main/api"),
                 (mock) => {
-                    mock(() => import("electron")).with({
-                        app: {
-                            on: sinon.stub()
-                                .callsArg(1)
-                                .withArgs("ready")
-                                .callsArgWith(1, {}, {on: sinon.spy()}),
-                            getName: () => PACKAGE_NAME,
-                            getVersion: () => PACKAGE_VERSION,
-                        },
-                    } as any);
-                    mock(() => import("src/electron-main/api/endpoints-builders")).callThrough().with({
+                    mock(async () => import("electron")).with(
+                        {
+                            app: {
+                                on: sinon.stub()
+                                    .callsArg(1)
+                                    .withArgs("ready")
+                                    .callsArgWith(1, {}, {on: sinon.spy()}),
+                                getName: (): string => PACKAGE_NAME,
+                                getVersion: (): string => PACKAGE_VERSION,
+                            },
+                        } as any // eslint-disable-line @typescript-eslint/no-explicit-any
+                    );
+                    mock(async () => import("src/electron-main/api/endpoints-builders")).callThrough().with({
                         TrayIcon: {buildEndpoints: sinon.stub()},
                     });
-                    mock(() => import("src/shared/api/main")).callThrough().with({
-                        IPC_MAIN_API: {register: sinon.stub()} as any,
-                    });
-                    mock(() => import("src/electron-main/window/full-text-search")).callThrough().with({
+                    mock(async () => import("src/shared/api/main")).callThrough().with(
+                        {
+                            IPC_MAIN_API: {register: sinon.stub()} as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+                        },
+                    );
+                    mock(async () => import("src/electron-main/window/full-text-search")).callThrough().with({
                         attachFullTextIndexWindow: sinon.stub().returns(Promise.resolve()),
                         detachFullTextIndexWindow: sinon.stub().returns(Promise.resolve()),
                     });

@@ -32,7 +32,7 @@ const config = buildBaseWebConfig(
                     ],
                 },
                 {
-                    test: /[\/\\]@angular[\/\\].+\.js$/,
+                    test: /[/\\]@angular[/\\].+\.js$/,
                     sideEffects: false,
                     parser: {
                         system: true,

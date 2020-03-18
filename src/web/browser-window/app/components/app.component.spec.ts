@@ -58,7 +58,10 @@ describe(AppComponent.name, () => {
         document.dispatchEvent(new KeyboardEvent("keyup", {key: ESC_KEY}));
         fixture.detectChanges();
 
-        expect(hashIndexOfSpy).toHaveBeenCalledTimes((fixture.componentInstance as any).closeableOutlets.length);
+        expect(hashIndexOfSpy).toHaveBeenCalledTimes(
+            (fixture.componentInstance as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+                .closeableOutlets.length
+        );
     });
 
     it(`should call "location.path() => store.dispatch()"`, async () => {
@@ -78,7 +81,7 @@ describe(AppComponent.name, () => {
                     provide: Store, useValue: {
                         dispatch: storeDispatchStub,
                         // TODO mock "pipe" with sinon stub
-                        pipe: () => {},
+                        pipe: () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
                     },
                 },
             ];

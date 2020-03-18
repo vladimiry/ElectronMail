@@ -151,18 +151,18 @@ export const asyncDelay = async <T>(pauseTimeMs: number, resolveAction?: () => P
     });
 };
 
-export function curryFunctionMembers<T extends object | ((...a: any[]) => any)>(
+export function curryFunctionMembers<T extends object | ((...a: any[]) => any)>( // eslint-disable-line @typescript-eslint/no-explicit-any
     src: T,
-    ...args: any[]
+    ...args: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
 ): T {
     const dest: T = typeof src === "function"
         ? src.bind(undefined) :
         Object.create(null);
 
     for (const key of Object.getOwnPropertyNames(src)) {
-        const srcMember = (src as any)[key];
+        const srcMember = (src as any)[key]; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-        (dest as any)[key] = typeof srcMember === "function"
+        (dest as any)[key] = typeof srcMember === "function" // eslint-disable-line @typescript-eslint/no-explicit-any
             ? srcMember.bind(src, ...args)
             : srcMember;
     }
@@ -185,9 +185,9 @@ export function isEntityUpdatesPatchNotEmpty({conversationEntries, folders, mail
 
 export function walkConversationNodesTree(
     rootNodes: View.ConversationNode[],
-    fn: (arg: { node: View.ConversationNode; mail?: View.ConversationNode["mail"]; }) => void | "break",
+    fn: (arg: { node: View.ConversationNode; mail?: View.ConversationNode["mail"] }) => void | "break",
 ): void {
-    const state: { nodes: View.ConversationNode[]; } = {nodes: [...rootNodes]};
+    const state: { nodes: View.ConversationNode[] } = {nodes: [...rootNodes]};
 
     while (state.nodes.length) {
         const node = state.nodes.pop();
@@ -221,7 +221,7 @@ export function filterConversationNodesMails(
     return result;
 }
 
-export function mailDateComparatorDefaultsToDesc(o1: View.Mail, o2: View.Mail, order: "desc" | "asc" = "desc") {
+export function mailDateComparatorDefaultsToDesc(o1: View.Mail, o2: View.Mail, order: "desc" | "asc" = "desc"): number {
     return order === "desc"
         ? o2.sentDate - o1.sentDate
         : o1.sentDate - o2.sentDate;
@@ -242,6 +242,7 @@ export function mapBy<T, K>(iterable: Iterable<T>, by: (t: T) => K): Map<K, T[]>
 }
 
 // TODO consider using https://github.com/cedx/enum.js instead
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function buildEnumBundle<M, K extends keyof M, V extends Extract<M[keyof M], string | number>>(
     nameValueMap: M,
 ) {
@@ -260,7 +261,11 @@ export function buildEnumBundle<M, K extends keyof M, V extends Extract<M[keyof 
             accumulator.values.push(value);
             accumulator.valueNameMap[value] = key;
             return accumulator;
-        }, {values: [], names: [], valueNameMap: {} as any});
+        }, {
+            values: [],
+            names: [],
+            valueNameMap: {} as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        });
 
     interface ResolveNameByValue {
         (value: V): K;
@@ -268,7 +273,10 @@ export function buildEnumBundle<M, K extends keyof M, V extends Extract<M[keyof 
         <S extends boolean>(value: V, strict: S): S extends true ? K : K | undefined;
     }
 
-    const resolveNameByValue: ResolveNameByValue = (value: V, strict: boolean = true) => {
+    const resolveNameByValue: ResolveNameByValue = (
+        value: V,
+        strict: boolean = true, // eslint-disable-line @typescript-eslint/no-inferrable-types
+    ) => {
         if (strict && !(value in valueNameMap)) {
             throw new Error(`Failed to parse "${value}" value from the "${JSON.stringify(nameValueMap)}" map`);
         }
@@ -276,15 +284,23 @@ export function buildEnumBundle<M, K extends keyof M, V extends Extract<M[keyof 
     };
 
     interface ParseValue {
-        (rawValue: any): V;
+        (
+            rawValue: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        ): V;
 
-        <S extends boolean>(rawValue: any, strict: S): S extends true ? V : V | undefined;
+        <S extends boolean>(
+            rawValue: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+            strict: S,
+        ): S extends true ? V : V | undefined;
     }
 
-    const parseValue: ParseValue = (rawValue: any, strict: boolean = true) => {
+    const parseValue: ParseValue = (
+        rawValue: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        strict: boolean = true, // eslint-disable-line @typescript-eslint/no-inferrable-types
+    ) => {
         const name = resolveNameByValue(rawValue, strict);
         if (typeof name === "undefined") {
-            return undefined as any;
+            return undefined as any; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
         }
         return nameValueMap[name];
     };
@@ -360,6 +376,7 @@ export const parseLoginDelaySecondsRange: (
     return validation;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function removeDuplicateItems<T extends any>(array: ReadonlyArray<T>): T[] {
     return [...new Set<T>(array).values()];
 }
@@ -425,7 +442,7 @@ export const parsePackagedWebClientUrl: (
 
 export const resolvePackagedWebClientApp: (
     url: Exclude<ReturnType<typeof parsePackagedWebClientUrl>, null>,
-) => Readonly<{ project: keyof typeof PROVIDER_REPOS, projectSubPath?: string }> = (() => {
+) => Readonly<{ project: keyof typeof PROVIDER_REPOS; projectSubPath?: string }> = (() => {
     const subProjects = ["proton-mail-settings", "proton-contacts", "proton-calendar"] as const;
     const result: typeof resolvePackagedWebClientApp = (url) => {
         const pathname = `${url.pathname}/`;
@@ -445,3 +462,13 @@ export const resolvePackagedWebClientApp: (
     };
     return result;
 })();
+
+export const resolveOrRejectIfError = (resolve: () => void, reject: (error: Error) => void) => {
+    return (error: Error): void => {
+        if (error) {
+            reject(error);
+            return;
+        }
+        resolve();
+    };
+};

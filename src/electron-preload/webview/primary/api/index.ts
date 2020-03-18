@@ -27,7 +27,7 @@ const _logger = curryFunctionMembers(WebviewConstants.WEBVIEW_LOGGERS.primary, "
 const endpoints: ProtonApi = {
     ...buildDbPatchEndpoint,
 
-    async ping() {},
+    async ping() {}, // eslint-disable-line @typescript-eslint/no-empty-function
 
     async selectMailOnline(input) {
         _logger.info("selectMailOnline()", input.zoneName);
@@ -48,8 +48,8 @@ const endpoints: ProtonApi = {
         const messagesViewMode = api.mailSettingsModel.get().ViewMode === api.constants.MESSAGE_VIEW_MODE;
         const {system, custom} = input.mail.mailFolderIds.reduce(
             (accumulator: {
-                 system: Mutable<typeof input.mail.mailFolderIds>,
-                 custom: Mutable<typeof input.mail.mailFolderIds>,
+                 system: Mutable<typeof input.mail.mailFolderIds>;
+                 custom: Mutable<typeof input.mail.mailFolderIds>;
              },
              id,
             ) => {
@@ -139,7 +139,7 @@ const endpoints: ProtonApi = {
         );
         logger.verbose(`elements resolved`);
 
-        await fillInputValue(elements.username, login);
+        fillInputValue(elements.username, login);
         logger.verbose(`input values filled`);
 
         elements.username.readOnly = true;
@@ -166,7 +166,7 @@ const endpoints: ProtonApi = {
             throw new Error(`Password is not supposed to be filled already on "login" stage`);
         }
 
-        await fillInputValue(elements.password, password);
+        fillInputValue(elements.password, password);
         logger.verbose(`input values filled`);
 
         elements.submit.click();
@@ -186,7 +186,7 @@ const endpoints: ProtonApi = {
 
         logger.verbose("elements resolved");
 
-        return await submitTotpToken(
+        return submitTotpToken(
             elements.input,
             elements.button,
             async () => {
@@ -221,7 +221,7 @@ const endpoints: ProtonApi = {
             logger,
         );
 
-        await fillInputValue(elements.mailboxPassword, mailPassword);
+        fillInputValue(elements.mailboxPassword, mailPassword);
         elements.submit.click();
     },
 
@@ -261,9 +261,9 @@ const endpoints: ProtonApi = {
                 map((() => {
                     const formIdToPageTypeMappingEntries = (() => {
                         const formIdToPageTypeMapping: Record<string, PageTypeOutput["pageType"]["type"]> = {
-                            pm_login: "login",
-                            pm_loginTwoFactor: "login2fa",
-                            pm_loginUnlock: "unlock",
+                            pm_login: "login", // eslint-disable-line @typescript-eslint/camelcase
+                            pm_loginTwoFactor: "login2fa", // eslint-disable-line @typescript-eslint/camelcase
+                            pm_loginUnlock: "unlock", // eslint-disable-line @typescript-eslint/camelcase
                         };
                         return Object.entries(formIdToPageTypeMapping);
                     })();
@@ -315,7 +315,7 @@ const endpoints: ProtonApi = {
                 const responseListeners = [
                     {
                         re: new RegExp(`${entryApiUrl}/api/messages/count`),
-                        handler: ({Counts}: { Counts?: Array<{ LabelID: string; Unread: number; }> }) => {
+                        handler: ({Counts}: { Counts?: Array<{ LabelID: string; Unread: number }> }) => {
                             if (!Counts) {
                                 return;
                             }
@@ -363,7 +363,9 @@ const endpoints: ProtonApi = {
                 const notification = {batchEntityUpdatesCounter: 0};
                 const notificationReceived$: Observable<RestModel.EventResponse> = AJAX_SEND_NOTIFICATION$.pipe(
                     filter((request) => eventsUrlRe.test(request.responseURL)),
-                    map((request) => JSON.parse(request.responseText)),
+                    map((request) => {
+                        return JSON.parse(request.responseText); // eslint-disable-line @typescript-eslint/no-unsafe-return
+                    }),
                 );
 
                 return notificationReceived$.pipe(
@@ -391,13 +393,15 @@ const endpoints: ProtonApi = {
     },
 };
 
-export function registerApi() {
+export function registerApi(): void {
     PROTONMAIL_IPC_WEBVIEW_API.register(
         endpoints,
         {
             logger: {
                 ..._logger,
-                error: (...args: any[]) => {
+                error: (
+                    ...args: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+                ) => {
                     _logger.error(
                         ...args.map((arg) => {
                             if (angularJsHttpResponseTypeGuard(arg)) {
@@ -407,7 +411,7 @@ export function registerApi() {
                                     url: arg.config && arg.config.url,
                                 };
                             }
-                            return arg;
+                            return arg; // eslint-disable-line @typescript-eslint/no-unsafe-return
                         }),
                     );
                 },

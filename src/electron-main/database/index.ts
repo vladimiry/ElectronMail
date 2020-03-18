@@ -40,7 +40,7 @@ export class Database {
             encryption: Readonly<{
                 keyResolver: () => Promise<string>;
                 presetResolver: () => Promise<KeyBasedPreset>;
-            }>
+            }>;
         }>,
         public readonly fileFs: FsJsonStore.Model.StoreFs = FsJsonStore.Fs.Fs.fs,
     ) {
@@ -83,36 +83,17 @@ export class Database {
         return account;
     }
 
-    accountsIterator(): {
-        [Symbol.iterator]: () => Iterator<{ account: ReadonlyDeep<FsDbAccount>; pk: ReadonlyDeep<DbAccountPk> }>;
-    } {
+    * [Symbol.iterator](): Iterator<{ account: ReadonlyDeep<FsDbAccount>; pk: ReadonlyDeep<DbAccountPk> }> {
         this.logger.info("accountsIterator()");
 
         const {accounts} = this.dbInstance;
-        const pks = this.getPks();
 
-        let pkPointer = 0;
-
-        return {
-            [Symbol.iterator]: () => ({
-                next(): IteratorResult<{ account: FsDbAccount; pk: DbAccountPk }> {
-                    if (pkPointer >= pks.length) {
-                        return {
-                            done: true,
-                            value: null as any,
-                        };
-                    }
-
-                    const pk = pks[pkPointer++];
-                    const account = accounts[pk.login];
-
-                    return {
-                        done: false,
-                        value: {pk, account},
-                    };
-                },
-            }),
-        };
+        for (const pk of this.getPks()) {
+            yield {
+                pk,
+                account: accounts[pk.login],
+            };
+        }
     }
 
     deleteAccount<TL extends DbAccountPk>({login}: TL): void {
@@ -169,16 +150,16 @@ export class Database {
         return this.dbInstance;
     }
 
-    reset() {
+    reset(): void {
         this.dbInstance = Database.buildEmptyDb();
     }
 
-    stat(): { records: number, conversationEntries: number, mails: number, folders: number, contacts: number } {
+    stat(): { records: number; conversationEntries: number; mails: number; folders: number; contacts: number } {
         this.logger.info("stat()");
 
         const stat = {records: 0, conversationEntries: 0, mails: 0, folders: 0, contacts: 0};
 
-        for (const {account} of this.accountsIterator()) {
+        for (const {account} of this) {
             const {conversationEntries, mails, folders, contacts} = this.accountStat(account, true);
             stat.records++;
             stat.conversationEntries += conversationEntries;
@@ -192,10 +173,10 @@ export class Database {
 
     accountStat(
         account: ReadonlyDeep<FsDbAccount>,
-        includingSpam: boolean = false,
-    ): { conversationEntries: number, mails: number, folders: number; contacts: number; unread: number } {
+        includingSpam = false,
+    ): { conversationEntries: number; mails: number; folders: number; contacts: number; unread: number } {
         const hasSpamEmail: (mail: Mail) => boolean = includingSpam
-            ? () => false
+            ? (): false => false
             : this.spamFolderTester(account);
 
         return {
@@ -217,18 +198,20 @@ export class Database {
         methodName: keyof Pick<typeof Database.prototype, "loadFromFile" | "saveToFile">,
         methodDuration: ReturnType<typeof hrtimeDuration>,
         logLevel: LogLevel = "verbose",
-    ) {
+    ): void {
         if (!logLevelEnabled(logLevel, this.logger)) {
             return;
         }
 
-        const dataToLog: ReturnType<typeof Database.prototype.stat> & { methodTime: number; statTime: number; } = (() => {
-            const methodTime = methodDuration.end(); // first of all
-            const statsDuration = hrtimeDuration(); // before the "stat()" called
-            const stat = this.stat();
-            const statTime = statsDuration.end(); // after the "stat()" called
-            return {methodTime, statTime, ...stat};
-        })();
+        const dataToLog: ReturnType<typeof Database.prototype.stat> & { methodTime: number; statTime: number } = (
+            (): typeof dataToLog => {
+                const methodTime = methodDuration.end(); // first of all
+                const statsDuration = hrtimeDuration(); // before the "stat()" called
+                const stat = this.stat();
+                const statTime = statsDuration.end(); // after the "stat()" called
+                return {methodTime, statTime, ...stat};
+            }
+        )();
 
         this.logger[logLevel](`${methodName}().stat: ${JSON.stringify(dataToLog, null, 2)}`);
     }
@@ -243,8 +226,8 @@ export class Database {
         const folder = resolveAccountFolders(account).find(({folderType}) => folderType === MAIL_FOLDER_TYPE.SPAM);
         const mailFolderId = folder && folder.mailFolderId;
         const result: ReturnType<typeof Database.prototype.spamFolderTester> = typeof mailFolderId !== "undefined"
-            ? ({mailFolderIds}) => mailFolderIds.includes(mailFolderId)
-            : () => false;
+            ? ({mailFolderIds}): boolean => mailFolderIds.includes(mailFolderId)
+            : (): false => false;
 
         return result;
     }

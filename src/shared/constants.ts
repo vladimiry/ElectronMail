@@ -11,7 +11,8 @@ const {
     version: string;
     license: string;
     description: string;
-} = require("package.json"); // tslint:disable-line:no-var-requires no-import-zones
+    // tslint:disable-next-line no-import-zones
+} = require("package.json"); // eslint-disable-line @typescript-eslint/no-var-requires
 
 export const PRODUCT_NAME = "ElectronMail";
 
@@ -60,12 +61,12 @@ export const PROVIDER_REPOS: ReadonlyDeep<Record<"WebClient" | "proton-mail-sett
     {
         repoRelativeDistDir: string;
         baseDir: string;
-        repo: string,
+        repo: string;
         version: string;
         commit: string;
         protonPackAppConfig: {
             clientId: string;
-        },
+        };
         i18nEnvVars: {
             I18N_DEPENDENCY_REPO: "https://github.com/ProtonMail/proton-translations.git";
             I18N_DEPENDENCY_BRANCH: string;
@@ -143,6 +144,10 @@ export const PROTON_API_ENTRY_VALUE_PREFIX = "local:::";
 
 export const PROTON_API_ENTRY_PRIMARY_VALUE = "https://mail.protonmail.com";
 
+function getBuiltInWebClientTitle(): string {
+    return `${PROVIDER_REPOS.WebClient.version} / ${PROVIDER_REPOS.WebClient.commit.substr(0, 7)}`;
+}
+
 export const PROTON_API_ENTRY_RECORDS: ReadonlyDeep<EntryUrlItem[]> = [
     {
         value: PROTON_API_ENTRY_PRIMARY_VALUE,
@@ -163,10 +168,6 @@ export const PROTON_API_ENTRY_URLS = PROTON_API_ENTRY_RECORDS.map(({value: url})
 // export const PROTON_API_ENTRY_ORIGINS = PROTON_API_ENTRY_URLS.map((url) => new URL(url).origin);
 
 export const WEB_CLIENTS_BLANK_HTML_FILE_NAME = "blank.html";
-
-function getBuiltInWebClientTitle(): string {
-    return `${PROVIDER_REPOS.WebClient.version} / ${PROVIDER_REPOS.WebClient.commit.substr(0, 7)}`;
-}
 
 export const LOG_LEVELS: Readonly<LogLevel[]> = Object.keys(
     ((stub: Record<LogLevel, null>) => {

@@ -12,13 +12,13 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     encryptionPreset: PasswordBasedPreset;
     window: {
         maximized?: boolean;
-        bounds: { x?: number; y?: number; width: number; height: number; };
+        bounds: { x?: number; y?: number; width: number; height: number };
     };
     fetching: {
         rateLimit: {
             intervalMs: number;
             maxInInterval: number;
-        },
+        };
         messagesStorePortionSize: number;
     };
     timeouts: {

@@ -34,6 +34,83 @@ const folderAsDomainEntries: Array<FolderAsDomainEntry<{
     },
 ];
 
+async function configure(
+    {cwd, envFileName = "./appConfig.json", repoType}: { cwd: string; envFileName?: string; repoType: keyof typeof PROVIDER_REPOS },
+    {folderNameAsDomain, options}: FolderAsDomainEntry,
+): Promise<{ configApiParam: string }> {
+    const {configApiParam} = options;
+
+    printAndWriteFile(
+        path.join(cwd, envFileName),
+        JSON.stringify({
+            appConfig: PROVIDER_REPOS[repoType].protonPackAppConfig,
+            [configApiParam]: {
+                // https://github.com/ProtonMail/WebClient/issues/166#issuecomment-561060855
+                api: `https://${folderNameAsDomain}/api`,
+                secure: "https://secure.protonmail.com",
+            },
+        }, null, 2),
+    );
+
+    return {configApiParam};
+}
+
+function resolveWebpackConfigPatchingCode(webpackConfigVarName = "webpackConfig"): string {
+    const result = `
+        const {CI} = process.env;
+
+        ${webpackConfigVarName}.devtool = false;
+
+        Object.assign(
+            ${webpackConfigVarName}.optimization,
+            {
+                moduleIds: "named",
+                namedChunks: true,
+                namedModules: true,
+                minimize: false,
+            },
+        );
+
+        ${webpackConfigVarName}.plugins = ${webpackConfigVarName}.plugins.filter((plugin) => {
+            switch (plugin.constructor.name) {
+                case "HtmlWebpackPlugin":
+                    plugin.options.minify = false;
+                    break;
+                case "ImageminPlugin":
+                    return false;
+                case "FaviconsWebpackPlugin":
+                    return false;
+                case "OptimizeCSSAssetsPlugin":
+                    return false;
+                case "OptimizeCssAssetsWebpackPlugin":
+                    return false;
+                case "SourceMapDevToolPlugin":
+                    return false;
+                case "HashedModuleIdsPlugin":
+                    return false;
+            }
+            return true;
+        });
+    `;
+
+    return result;
+}
+
+// https://github.com/ProtonMail/proton-pack/tree/2e44d5fd9d2df39787202fc08a90757ea47fe480#how-to-configure
+async function writeProtonConfigFile(
+    {cwd}: { cwd: string },
+): Promise<void> {
+    printAndWriteFile(
+        path.join(cwd, "./proton.config.js"),
+        `
+            module.exports = (webpackConfig) => {
+                ${resolveWebpackConfigPatchingCode("webpackConfig")}
+                return webpackConfig;
+            }
+        `,
+    );
+}
+
 (async () => {
     // TODO move "WebClient" build logic to separate file (got long)
     await (async () => {
@@ -88,7 +165,7 @@ const folderAsDomainEntries: Array<FolderAsDomainEntry<{
                                 {cwd, env: {...process.env, ...PROVIDER_REPOS[repoType].i18nEnvVars}},
                             ]);
 
-                            // tslint:disable-next-line
+                            // eslint-disable-next-line max-len
                             // https://github.com/ProtonMail/WebClient/blob/0c504c8d4ae84a665af5b6e2603228f414ac6f07/src/app/core/controllers/secured.js#L84
                             const search = "return $cookies.get(ONBOARD_MODAL_COOKIE) || localStorage.getItem(ONBOARD_MODAL_COOKIE);";
                             const replace = "return true;";
@@ -161,80 +238,3 @@ const folderAsDomainEntries: Array<FolderAsDomainEntry<{
     LOG(error);
     process.exit(1);
 });
-
-async function configure(
-    {cwd, envFileName = "./appConfig.json", repoType}: { cwd: string; envFileName?: string; repoType: keyof typeof PROVIDER_REPOS; },
-    {folderNameAsDomain, options}: FolderAsDomainEntry,
-): Promise<{ configApiParam: string }> {
-    const {configApiParam} = options;
-
-    printAndWriteFile(
-        path.join(cwd, envFileName),
-        JSON.stringify({
-            appConfig: PROVIDER_REPOS[repoType].protonPackAppConfig,
-            [configApiParam]: {
-                // https://github.com/ProtonMail/WebClient/issues/166#issuecomment-561060855
-                api: `https://${folderNameAsDomain}/api`,
-                secure: "https://secure.protonmail.com",
-            },
-        }, null, 2),
-    );
-
-    return {configApiParam};
-}
-
-// https://github.com/ProtonMail/proton-pack/tree/2e44d5fd9d2df39787202fc08a90757ea47fe480#how-to-configure
-async function writeProtonConfigFile(
-    {cwd}: { cwd: string; },
-): Promise<void> {
-    printAndWriteFile(
-        path.join(cwd, "./proton.config.js"),
-        `
-            module.exports = (webpackConfig) => {
-                ${resolveWebpackConfigPatchingCode("webpackConfig")}
-                return webpackConfig;
-            }
-        `,
-    );
-}
-
-function resolveWebpackConfigPatchingCode(webpackConfigVarName = "webpackConfig"): string {
-    const result = `
-        const {CI} = process.env;
-
-        ${webpackConfigVarName}.devtool = false;
-
-        Object.assign(
-            ${webpackConfigVarName}.optimization,
-            {
-                moduleIds: "named",
-                namedChunks: true,
-                namedModules: true,
-                minimize: false,
-            },
-        );
-
-        ${webpackConfigVarName}.plugins = ${webpackConfigVarName}.plugins.filter((plugin) => {
-            switch (plugin.constructor.name) {
-                case "HtmlWebpackPlugin":
-                    plugin.options.minify = false;
-                    break;
-                case "ImageminPlugin":
-                    return false;
-                case "FaviconsWebpackPlugin":
-                    return false;
-                case "OptimizeCSSAssetsPlugin":
-                    return false;
-                case "OptimizeCssAssetsWebpackPlugin":
-                    return false;
-                case "SourceMapDevToolPlugin":
-                    return false;
-                case "HashedModuleIdsPlugin":
-                    return false;
-            }
-            return true;
-        });
-    `;
-
-    return result;
-}

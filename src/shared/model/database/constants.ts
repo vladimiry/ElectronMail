@@ -93,7 +93,7 @@ export const INDEXABLE_MAIL_FIELDS_STUB_CONTAINER: Readonly<Record<keyof Skip<In
 };
 
 export const INDEXABLE_MAIL_FIELDS: Readonly<Array<keyof typeof INDEXABLE_MAIL_FIELDS_STUB_CONTAINER>>
-    = Object.keys(INDEXABLE_MAIL_FIELDS_STUB_CONTAINER) as any;
+    = Object.keys(INDEXABLE_MAIL_FIELDS_STUB_CONTAINER) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 export const DB_DATA_CONTAINER_FIELDS_STUB_CONTAINER: Readonly<Record<keyof FsDbDataContainer, null>> = {
     conversationEntries: null,
@@ -103,4 +103,4 @@ export const DB_DATA_CONTAINER_FIELDS_STUB_CONTAINER: Readonly<Record<keyof FsDb
 };
 
 export const DB_DATA_CONTAINER_FIELDS: Readonly<Array<keyof typeof DB_DATA_CONTAINER_FIELDS_STUB_CONTAINER>>
-    = Object.keys(DB_DATA_CONTAINER_FIELDS_STUB_CONTAINER) as any;
+    = Object.keys(DB_DATA_CONTAINER_FIELDS_STUB_CONTAINER) as any; // eslint-disable-line @typescript-eslint/no-explicit-any

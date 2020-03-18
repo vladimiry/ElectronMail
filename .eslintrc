@@ -1,9 +1,139 @@
 {
+    "parser": "@typescript-eslint/parser",
     "parserOptions": {
-        "ecmaVersion": 2018,
-        "sourceType": "module"
+        "ecmaVersion": 2020,
+        "sourceType": "module",
+        "project": "./tsconfig.json"
     },
-    "extends": [
-        "./linting-extending/eslint/typescript-eslint.json"
+    "overrides": [
+        {
+            "files": [
+                "*.ts"
+            ],
+            "plugins": [
+                "import",
+                "@typescript-eslint",
+                "sonarjs"
+            ],
+            "extends": [
+                "eslint:recommended",
+                "plugin:import/errors",
+                "plugin:import/warnings",
+                "plugin:sonarjs/recommended",
+                "plugin:@typescript-eslint/eslint-recommended",
+                "plugin:@typescript-eslint/recommended"
+            ],
+            "rules": {
+                "max-len": [
+                    "error",
+                    {
+                        "code": 140
+                    }
+                ],
+                "no-console": "error",
+                "no-else-return": "error",
+                "no-lonely-if": "error",
+                "no-return-await": "error",
+                "no-unused-expressions": "error",
+                "no-useless-return": "error",
+                "prefer-destructuring": "error",
+                "import/no-unresolved": "off",
+                "sonarjs/prefer-immediate-return": "off",
+                "sonarjs/cognitive-complexity": "off",
+                "sonarjs/no-duplicate-string": "off",
+                "@typescript-eslint/no-floating-promises": "error",
+                "@typescript-eslint/no-unsafe-return": "error",
+                "@typescript-eslint/promise-function-async": "error",
+                "@typescript-eslint/require-await": "off",
+                "@typescript-eslint/explicit-function-return-type": [
+                    "warn",
+                    {
+                        "allowExpressions": true
+                    }
+                ],
+                "@typescript-eslint/ban-types": [
+                    "error",
+                    {
+                        "types": {
+                            "Omit": "Prefer `Skip` to built-in TS `Omit` type"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "files": [
+                "./src/web/browser-window/**/*.ts"
+            ],
+            "plugins": [
+                "@typescript-eslint",
+                "@angular-eslint"
+            ],
+            // TODO extend "@angular-eslint" use
+            //            "parserOptions": {
+            //                "ecmaVersion": 2020,
+            //                "sourceType": "module",
+            //                "project": "./src/web/browser-window/tsconfig.json"
+            //            },
+            "rules": {
+                "@angular-eslint/component-class-suffix": "error",
+                "@angular-eslint/contextual-lifecycle": "error",
+                "@angular-eslint/directive-class-suffix": "error",
+                "@angular-eslint/no-conflicting-lifecycle": "error",
+                "@angular-eslint/no-host-metadata-property": "error",
+                "@angular-eslint/no-input-rename": "error",
+                "@angular-eslint/no-inputs-metadata-property": "error",
+                "@angular-eslint/no-output-native": "error",
+                "@angular-eslint/no-output-on-prefix": "error",
+                "@angular-eslint/no-output-rename": "error",
+                "@angular-eslint/no-outputs-metadata-property": "error",
+                "@angular-eslint/use-lifecycle-interface": "error",
+                "@angular-eslint/use-pipe-transform-interface": "error",
+                "@angular-eslint/directive-selector": [
+                    "error",
+                    {
+                        "type": "attribute",
+                        "prefix": "electron-mail",
+                        "style": "camelCase"
+                    }
+                ],
+                "@angular-eslint/component-selector": [
+                    "error",
+                    {
+                        "type": "element",
+                        "prefix": "electron-mail",
+                        "style": "kebab-case"
+                    }
+                ]
+            }
+        }
+        // TODO extend "@angular-eslint" use
+        //        {
+        //            "files": [
+        //                "./src/web/browser-window/**/*.component.html"
+        //            ],
+        //            "parser": "@angular-eslint/template-parser",
+        //            "plugins": [
+        //                "angular-eslint/template"
+        //            ],
+        //            "rules": {
+        //                "@angular-eslint/template/banana-in-a-box": "error",
+        //                "@angular-eslint/template/no-negated-async": "error"
+        //            }
+        //        },
+        //        {
+        //            "files": [
+        //                "./src/web/browser-window/**/*.component.ts"
+        //            ],
+        //            "parser": "@typescript-eslint/parser",
+        //            "parserOptions": {
+        //                "ecmaVersion": 2020,
+        //                "sourceType": "module"
+        //            },
+        //            "plugins": [
+        //                "@angular-eslint/template"
+        //            ],
+        //            "processor": "@angular-eslint/template/extract-inline-html"
+        //        }
     ]
 }

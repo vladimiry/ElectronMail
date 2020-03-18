@@ -19,7 +19,7 @@ export interface WebAccount {
     loginDelayedUntilSelected?: boolean;
     // TODO consider combining "fetchSingleMailParams" and "makeReadMailParams" to the object with "optional" props
     fetchSingleMailParams: { mailPk: Mail["pk"] } | null;
-    makeReadMailParams: { messageIds: string[]; mailsBundleKey: MailsBundleKey; } | null;
+    makeReadMailParams: { messageIds: string[]; mailsBundleKey: MailsBundleKey } | null;
 }
 
 export type WebAccountProgress = WebAccount["progress"];

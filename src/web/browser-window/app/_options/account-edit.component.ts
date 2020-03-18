@@ -83,7 +83,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         private elementRef: ElementRef,
     ) {}
 
-    ngOnInit() {
+    ngOnInit(): void {
         const {controls} = this;
 
         this.subscription.add({
@@ -125,9 +125,8 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         );
     }
 
-    submit() {
-        const {controls} = this;
-        const account = this.account;
+    submit(): void {
+        const {controls, account} = this;
         const proxy: AccountConfig["proxy"] = {
             proxyRules: controls.proxyRules.value && controls.proxyRules.value.trim(),
             proxyBypassRules: controls.proxyBypassRules.value && controls.proxyBypassRules.value.trim(),
@@ -167,8 +166,8 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         );
     }
 
-    remove() {
-        const account = this.account;
+    remove(): void {
+        const {account} = this;
 
         if (!account) {
             throw new Error(`No "Account" to remove`);
@@ -181,7 +180,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         this.store.dispatch(OPTIONS_ACTIONS.RemoveAccountRequest(account));
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         this.subscription.unsubscribe();
     }
 }

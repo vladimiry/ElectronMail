@@ -7,7 +7,7 @@ import {NOTIFICATION_ACTIONS} from "./store/actions";
 export class AppErrorHandler implements ErrorHandler {
     constructor(private injector: Injector) {}
 
-    handleError(error: Error) {
+    handleError(error: Error): void {
         this.injector.get(Store).dispatch(NOTIFICATION_ACTIONS.Error(error));
     }
 }

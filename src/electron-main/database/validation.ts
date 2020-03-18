@@ -27,61 +27,6 @@ const entityClassesMap = {
     contacts: Entities.Contact,
 } as const;
 
-export async function validateEntity<T extends Entity>(
-    entityType: keyof FsDbDataContainer,
-    entity: T,
-): Promise<T & ValidatedEntity> {
-    const classType = entityClassesMap[entityType] as unknown as ClassType<T>;
-
-    try {
-        const validatedEntityInstance = await transformAndValidate(
-            classType,
-            entity,
-            transformValidationOptions,
-        );
-
-        // TODO performance: why JSON.parse <= JSON.stringify call?
-        return JSON.parse(
-            JSON.stringify(validatedEntityInstance),
-        );
-    } catch (e) {
-        logger.error("original validation error", e);
-
-        IPC_MAIN_API_NOTIFICATION$.next(
-            IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({
-                message: "Local database entity validation error has occurred: " + JSON.stringify({
-                    entityType,
-                    ...(() => {
-                        if (entityType === "mails") {
-                            return {
-                                sentDate: (entity as unknown as Mail).sentDate,
-                                subject: (entity as unknown as Mail).subject,
-                            };
-                        }
-                        if (entityType === "contacts") {
-                            return {
-                                firstName: (entity as unknown as Contact).firstName,
-                                lastName: (entity as unknown as Contact).lastName,
-                            };
-                        }
-                        if (entityType === "folders") {
-                            return {
-                                folderName: (entity as unknown as Folder).name,
-                            };
-                        }
-                        return {};
-                    })(),
-                    error: flattenValidationError(e),
-                }),
-            }),
-        );
-
-        throw new Error(
-            `Local database saving and data syncing iterations aborted due to the "${entityType}" entity validation error`,
-        );
-    }
-}
-
 function flattenValidationError(rawError: Error): Error | string {
     if (!Array.isArray(rawError)) {
         return rawError;
@@ -117,4 +62,59 @@ function flattenValidationError(rawError: Error): Error | string {
     }
 
     return messages.join("; ");
+}
+
+export async function validateEntity<T extends Entity>(
+    entityType: keyof FsDbDataContainer,
+    entity: T,
+): Promise<T & ValidatedEntity> {
+    const classType = entityClassesMap[entityType] as unknown as ClassType<T>;
+
+    try {
+        const validatedEntityInstance = await transformAndValidate(
+            classType,
+            entity,
+            transformValidationOptions,
+        );
+
+        // TODO performance: why JSON.parse <= JSON.stringify call?
+        return JSON.parse( // eslint-disable-line @typescript-eslint/no-unsafe-return
+            JSON.stringify(validatedEntityInstance),
+        );
+    } catch (e) {
+        logger.error("original validation error", e);
+
+        IPC_MAIN_API_NOTIFICATION$.next(
+            IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({
+                message: "Local database entity validation error has occurred: " + JSON.stringify({
+                    entityType,
+                    ...(() => { // eslint-disable-line @typescript-eslint/explicit-function-return-type
+                        if (entityType === "mails") {
+                            return {
+                                sentDate: (entity as unknown as Mail).sentDate,
+                                subject: (entity as unknown as Mail).subject,
+                            };
+                        }
+                        if (entityType === "contacts") {
+                            return {
+                                firstName: (entity as unknown as Contact).firstName,
+                                lastName: (entity as unknown as Contact).lastName,
+                            };
+                        }
+                        if (entityType === "folders") {
+                            return {
+                                folderName: (entity as unknown as Folder).name,
+                            };
+                        }
+                        return {};
+                    })(),
+                    error: flattenValidationError(e),
+                }),
+            }),
+        );
+
+        throw new Error(
+            `Local database saving and data syncing iterations aborted due to the "${entityType}" entity validation error`,
+        );
+    }
 }

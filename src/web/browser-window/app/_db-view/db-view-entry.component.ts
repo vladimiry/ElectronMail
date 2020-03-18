@@ -22,11 +22,13 @@ export class DbViewEntryComponent implements OnDestroy, OnInit {
         private store: Store<State>,
     ) {}
 
-    ngOnInit() {
-        this.store.dispatch(DB_VIEW_ACTIONS.MountInstance({dbAccountPk: this.dbAccountPk, finishPromise: this.finishDeferred.promise}));
+    ngOnInit(): void {
+        this.store.dispatch(
+            DB_VIEW_ACTIONS.MountInstance({dbAccountPk: this.dbAccountPk, finishPromise: this.finishDeferred.promise}),
+        );
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         this.finishDeferred.resolve();
         this.store.dispatch(DB_VIEW_ACTIONS.UnmountInstance({dbAccountPk: this.dbAccountPk}));
     }

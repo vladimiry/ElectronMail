@@ -1,5 +1,5 @@
-import produce from "immer";
 import {UnionOf} from "@vladimiry/unionize";
+import {produce} from "immer";
 
 import * as fromRoot from "src/web/browser-window/app/store/reducers/root";
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
@@ -12,6 +12,21 @@ const logger = getZoneNameBoundWebLogger("[reducers/accounts]");
 
 export const featureName = "accounts";
 
+const notFoundAccountError = new Error(`Failed to resolve account`);
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+function pickAccountBundle(accounts: WebAccount[], criteria: LoginFieldContainer, strict = true) {
+    const index = accounts
+        .map(({accountConfig}) => accountConfig)
+        .findIndex(accountPickingPredicate(criteria));
+
+    if (strict && index === -1) {
+        throw notFoundAccountError;
+    }
+
+    return {index, account: accounts[index]};
+}
+
 export interface State extends fromRoot.State {
     selectedLogin?: string;
     initialized?: boolean;
@@ -21,8 +36,6 @@ export interface State extends fromRoot.State {
         indexing?: boolean;
     };
 }
-
-const notFoundAccountError = new Error(`Failed to resolve account`);
 
 const initialState: State = {
     accounts: [],
@@ -99,7 +112,7 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
 
             try {
                 const bundle = pickAccountBundle(draftState.accounts, {login});
-                account = bundle.account;
+                account = bundle.account; // eslint-disable-line prefer-destructuring
             } catch (error) {
                 if (error === notFoundAccountError && ignoreNoAccount) {
                     return;
@@ -153,16 +166,4 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
         },
         default: () => draftState,
     }));
-}
-
-function pickAccountBundle(accounts: WebAccount[], criteria: LoginFieldContainer, strict = true) {
-    const index = accounts
-        .map(({accountConfig}) => accountConfig)
-        .findIndex(accountPickingPredicate(criteria));
-
-    if (strict && index === -1) {
-        throw notFoundAccountError;
-    }
-
-    return {index, account: accounts[index]};
 }

@@ -10,4 +10,4 @@ declare global {
     const __ELECTRON_EXPOSURE__: ElectronExposure;
 }
 
-declare var window: Window;
+declare let window: Window;

@@ -3,7 +3,7 @@ import {Observable, Subject} from "rxjs";
 import {BuildEnvironment} from "webpack-configs/model";
 import {Except} from "type-fest";
 
-type Impossible<K extends keyof any> = {
+type Impossible<K extends keyof any> = { // eslint-disable-line @typescript-eslint/no-explicit-any
     [P in K]: never;
 };
 
@@ -22,5 +22,5 @@ declare global {
 
     type Skip<T, K extends keyof T> = Except<T, K>; // eslint-disable-line @typescript-eslint/ban-types
 
-    var BUILD_ENVIRONMENT: BuildEnvironment;
+    const BUILD_ENVIRONMENT: BuildEnvironment;
 }

@@ -2,7 +2,7 @@ import {Configuration} from "webpack";
 
 import {buildBaseConfig, typescriptLoaderRule} from "webpack-configs/lib";
 
-export function buildRendererConfig(entry: Configuration["entry"], tsConfigFile: string) {
+export function buildRendererConfig(entry: Configuration["entry"], tsConfigFile: string): Configuration {
     return buildBaseConfig(
         {
             target: "electron-renderer",

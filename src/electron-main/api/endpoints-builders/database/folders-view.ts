@@ -7,11 +7,13 @@ import {resolveAccountFolders} from "src/electron-main/database/util";
 
 export const FOLDER_UTILS: {
     // TODO split "splitAndFormatAndFillSummaryFolders" function to pieces
-    splitAndFormatAndFillSummaryFolders: (folders: View.Folder[]) => { system: View.Folder[]; custom: View.Folder[]; },
+    splitAndFormatAndFillSummaryFolders: (
+        folders: View.Folder[],
+    ) => { system: View.Folder[]; custom: View.Folder[] };
 } = (() => {
-    const customizers: Record<keyof typeof MAIL_FOLDER_TYPE._.nameValueMap, { title: (f: View.Folder) => string; order: number; }> = {
+    const customizers: Record<keyof typeof MAIL_FOLDER_TYPE._.nameValueMap, { title: (f: View.Folder) => string; order: number }> = {
         CUSTOM: {
-            title: ({name}) => name,
+            title: ({name}): string => name,
             order: 0,
         },
         INBOX: {
@@ -55,13 +57,13 @@ export const FOLDER_UTILS: {
     const sortByNameProp = sortBy(({name}: View.Folder) => name);
 
     const buildCustomizerBasedComparator = (customizer: CustomizerResolver) => {
-        return (o1: View.Folder, o2: View.Folder) => {
+        return (o1: View.Folder, o2: View.Folder): number => {
             return customizer(o1).order - customizer(o2).order;
         };
     };
 
-    return {
-        splitAndFormatAndFillSummaryFolders: (folders: View.Folder[]) => {
+    const result: typeof FOLDER_UTILS = {
+        splitAndFormatAndFillSummaryFolders(folders) {
             const customizer: CustomizerResolver = ((map) => (folder: View.Folder): Customizer => map.get(folder) as Customizer)(
                 new Map(folders.map((folder) => [
                     folder, customizers[MAIL_FOLDER_TYPE._.resolveNameByValue(folder.folderType)],
@@ -97,12 +99,14 @@ export const FOLDER_UTILS: {
             return bundle;
         },
     };
+
+    return result;
 })();
 
 function resolveAccountConversationNodes(
     account: ReadonlyDeep<FsDbAccount>,
 ): ConversationEntry[] {
-    const buildEntry = ({pk, mailPk}: Pick<ConversationEntry, "pk" | "mailPk">) => ({
+    const buildEntry = ({pk, mailPk}: Pick<ConversationEntry, "pk" | "mailPk">): ConversationEntry => ({
         pk,
         id: pk,
         raw: "{}",
@@ -141,27 +145,35 @@ export function buildFoldersAndRootNodePrototypes(
     rootNodePrototypes: View.ConversationNode[];
 } {
     const conversationEntries = resolveAccountConversationNodes(account);
-    const nodeLookup = (() => {
+    const nodeLookup: (
+        pk: ConversationEntry["pk"] | Required<ConversationEntry>["previousPk"],
+        node?: View.ConversationNode,
+    ) => View.ConversationNode = (() => {
         const nodeLookupMap = new Map<ConversationEntry["pk"], View.ConversationNode>();
-        return (
-            pk: ConversationEntry["pk"] | Required<ConversationEntry>["previousPk"],
-            node: View.ConversationNode = {entryPk: pk, children: []},
-        ): View.ConversationNode => {
+        const result: typeof nodeLookup = (pk, node = {entryPk: pk, children: []}) => {
             node = nodeLookupMap.get(pk) || node;
             if (!nodeLookupMap.has(pk)) {
                 nodeLookupMap.set(pk, node);
             }
             return node;
         };
+        return result;
     })();
     const folders: View.Folder[] = Array.from(
         resolveAccountFolders(account),
         (folder) => ({...folder, rootConversationNodes: [], size: 0, unread: 0}),
     );
-    const resolveFolder = ((map = new Map(folders.reduce(
-        (entries: Array<[View.Folder["mailFolderId"], View.Folder]>, folder) => entries.concat([[folder.mailFolderId, folder]]),
-        [],
-    ))) => ({mailFolderId}: Pick<View.Folder, "mailFolderId">) => map.get(mailFolderId))();
+    const resolveFolder: ({mailFolderId}: Pick<View.Folder, "mailFolderId">) => View.Folder | undefined = (() => {
+        const map = new Map(
+            folders.reduce(
+                (entries: Array<[View.Folder["mailFolderId"], View.Folder]>, folder) => {
+                    return entries.concat([[folder.mailFolderId, folder]]);
+                },
+                [],
+            ));
+        const result: typeof resolveFolder = ({mailFolderId}) => map.get(mailFolderId);
+        return result;
+    })();
     const rootNodePrototypes: View.ConversationNode[] = [];
 
     for (const entry of conversationEntries) {
@@ -256,7 +268,7 @@ function buildFoldersView(
 // TODO consider moving performance expensive "prepareFoldersView" function call to the background process
 export function prepareFoldersView(
     account: ReadonlyDeep<FsDbAccount>,
-) {
+): ReturnType<typeof FOLDER_UTILS.splitAndFormatAndFillSummaryFolders> {
     return FOLDER_UTILS.splitAndFormatAndFillSummaryFolders(
         buildFoldersView(account),
     );

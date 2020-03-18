@@ -8,13 +8,14 @@ import {promisify} from "util";
 
 import {Context} from "src/electron-main/model";
 import {WEB_PROTOCOL_SCHEME} from "src/shared/constants";
+import {resolveOrRejectIfError} from "src/shared/util";
 
 const fsAsync = {
     stat: promisify(fs.stat),
     readFile: promisify(fs.readFile),
 } as const;
 
-export function registerStandardSchemes(ctx: Context) {
+export function registerStandardSchemes(ctx: Context): void {
     // WARN: "protocol.registerStandardSchemes" needs to be called once, see https://github.com/electron/electron/issues/15943
     protocol.registerSchemesAsPrivileged(
         ctx.locations.protocolBundles.map(({scheme}) => ({
@@ -48,46 +49,9 @@ export async function registerWebFolderFileProtocol(ctx: Context, session: Sessi
 
                 callback({path: resource});
             },
-            (error) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                resolve();
-            },
+            resolveOrRejectIfError(resolve, reject),
         );
     });
-}
-
-export async function registerSessionProtocols(ctx: Context, session: Session): Promise<void> {
-    // TODO setup timeout on "ready" even firing
-    await app.whenReady();
-
-    for (const {scheme, directory} of ctx.locations.protocolBundles) {
-        await new Promise((resolve, reject) => {
-            session.protocol.registerBufferProtocol(
-                scheme,
-                async (request, callback) => {
-                    const file = await resolveFileSystemResourceLocation(directory, request);
-                    const data = await fsAsync.readFile(file);
-                    const mimeType = mimeTypes.lookup(path.basename(file));
-                    const result = mimeType
-                        ? {data, mimeType}
-                        : data;
-
-                    callback(result);
-                },
-                (error) => {
-                    if (error) {
-                        reject(error);
-                        return;
-                    }
-
-                    resolve();
-                },
-            );
-        });
-    }
 }
 
 async function resolveFileSystemResourceLocation(
@@ -119,3 +83,28 @@ async function resolveFileSystemResourceLocation(
 
     throw new Error(`Failed to resolve "${resource}" file system resource`);
 }
+
+export async function registerSessionProtocols(ctx: Context, session: Session): Promise<void> {
+    // TODO setup timeout on "ready" even firing
+    await app.whenReady();
+
+    for (const {scheme, directory} of ctx.locations.protocolBundles) {
+        await new Promise((resolve, reject) => {
+            session.protocol.registerBufferProtocol(
+                scheme,
+                async (request, callback) => {
+                    const file = await resolveFileSystemResourceLocation(directory, request);
+                    const data = await fsAsync.readFile(file);
+                    const mimeType = mimeTypes.lookup(path.basename(file));
+                    const result = mimeType
+                        ? {data, mimeType}
+                        : data;
+
+                    callback(result);
+                },
+                resolveOrRejectIfError(resolve, reject),
+            );
+        });
+    }
+}
+

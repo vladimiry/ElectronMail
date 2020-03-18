@@ -5,48 +5,15 @@ import {resolveLink} from "src/electron-preload/lib/events-handling/lib";
 
 type ObservableElement = Pick<HTMLElement, "addEventListener" | "removeEventListener">;
 
-const processedClickElements = new WeakMap<ObservableElement, ReturnType<typeof registerDocumentClickEventListener>>();
-
-export function registerDocumentClickEventListener<E extends ObservableElement>(
-    element: E,
-    logger: Logger,
-): {
-    unsubscribe: () => void;
-    eventHandler: (event: MouseEvent) => Promise<void>;
-} {
-    let subscription = processedClickElements.get(element);
-
-    if (subscription) {
-        return subscription;
-    }
-
-    const apiClient = IPC_MAIN_API.client({options: {logger}});
-    const eventHandlerArgs: ["click", (event: MouseEvent) => Promise<void>] = [
-        "click",
-        async (event: MouseEvent) => await callDocumentClickEventListener(event, logger, apiClient),
-    ];
-    const [, eventHandler] = eventHandlerArgs;
-
-    element.addEventListener(...eventHandlerArgs);
-
-    subscription = {
-        unsubscribe: () => {
-            element.removeEventListener(...eventHandlerArgs);
-            processedClickElements.delete(element);
-        },
-        eventHandler,
-    };
-
-    processedClickElements.set(element, subscription);
-
-    return subscription;
-}
+const processedClickElements
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    = new WeakMap<ObservableElement, ReturnType<typeof registerDocumentClickEventListener>>();
 
 export async function callDocumentClickEventListener<E extends Event = MouseEvent>(
     event: E,
     logger: Logger,
     apiClient?: ReturnType<typeof IPC_MAIN_API.client>,
-) {
+): Promise<void> {
     const {element, link, href} = resolveLink(event.target as Element);
 
     if (!link || element.classList.contains("prevent-default-event")) {
@@ -74,3 +41,40 @@ export async function callDocumentClickEventListener<E extends Event = MouseEven
     const method = client("openExternal");
     await method({url: href});
 }
+
+export function registerDocumentClickEventListener<E extends ObservableElement>(
+    element: E,
+    logger: Logger,
+): {
+    unsubscribe: () => void;
+    eventHandler: (event: MouseEvent) => Promise<void>;
+} {
+    let subscription = processedClickElements.get(element);
+
+    if (subscription) {
+        return subscription;
+    }
+
+    const apiClient = IPC_MAIN_API.client({options: {logger}});
+    const eventHandlerArgs: ["click", (event: MouseEvent) => Promise<void>] = [
+        "click",
+        async (event: MouseEvent) => callDocumentClickEventListener(event, logger, apiClient),
+    ];
+    const [, eventHandler] = eventHandlerArgs;
+
+    element.addEventListener(...eventHandlerArgs);
+
+    subscription = {
+        unsubscribe: () => {
+            element.removeEventListener(...eventHandlerArgs);
+            processedClickElements.delete(element);
+        },
+        eventHandler,
+    };
+
+    processedClickElements.set(element, subscription);
+
+    return subscription;
+}
+
+

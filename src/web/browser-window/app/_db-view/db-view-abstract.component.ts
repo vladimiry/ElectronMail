@@ -10,7 +10,7 @@ import {State} from "src/web/browser-window/app/store/reducers/db-view";
 
 @Directive()
 // so weird not single-purpose directive huh, https://github.com/angular/angular/issues/30080#issuecomment-539194668
-// tslint:disable-next-line:directive-class-suffix
+// eslint-disable-next-line @angular-eslint/directive-class-suffix
 export abstract class DbViewAbstractComponent extends NgChangesObservableComponent {
     @Input()
     dbAccountPk!: DbAccountPk;
@@ -57,7 +57,7 @@ export abstract class DbViewAbstractComponent extends NgChangesObservableCompone
         super();
     }
 
-    protected markDirty() {
+    protected markDirty(): void {
         // markDirty does the same job as ViewRef/ChangeDetectorRef.markForCheck
         // only in addition it schedules change detection using requestAnimationFrame
         markDirty(this);

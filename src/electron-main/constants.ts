@@ -43,8 +43,8 @@ export const INITIAL_STORES: Readonly<{
 });
 
 export const configEncryptionPresetValidator: StoreModel.StoreValidator<Config> = async (data) => {
-    const keyDerivation = data.encryptionPreset.keyDerivation;
-    const encryption = data.encryptionPreset.encryption;
+    const {keyDerivation} = data.encryptionPreset;
+    const {encryption} = data.encryptionPreset;
     const errors = [
         ...(Object.values(KEY_DERIVATION_PRESETS)
             .some((value) => value.type === keyDerivation.type && value.preset === keyDerivation.preset)

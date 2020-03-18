@@ -23,7 +23,7 @@ export class CoreService {
     parseEntryUrl(
         accountConfig: WebAccount["accountConfig"],
         repoType: keyof typeof PROVIDER_REPOS,
-    ): Readonly<{ entryUrl: string; entryApiUrl: string; }> {
+    ): Readonly<{ entryUrl: string; entryApiUrl: string }> {
         const entryApiUrl = accountConfig.entryUrl;
 
         if (!entryApiUrl || !entryApiUrl.startsWith("https://")) {
@@ -52,7 +52,7 @@ export class CoreService {
         webViewDomReady$: Observable<Electron.WebviewTag>,
         setWebViewSrc: (src: string) => void,
         clientSession?: ProtonClientSession,
-    ) {
+    ): Promise<void> {
         const {webViewBlankDOMLoaded: loaderIdTimeoutMs} = await this.store
             .pipe(
                 select(OptionsSelectors.CONFIG.timeouts),
@@ -112,14 +112,14 @@ export class CoreService {
         } catch (error) {
             const baseMessage = `Failed to set shared session object on "${loaderSrc}" page ("executeJavaScript")`;
             if (BUILD_ENVIRONMENT === "development") {
-                console.log(baseMessage, error); // tslint:disable-line:no-console
+                console.log(baseMessage, error); // eslint-disable-line no-console
             }
             // not showing/logging the original error it might contain sensitive stuff
             throw new Error(baseMessage);
         }
     }
 
-    openSettingsView() {
+    openSettingsView(): void {
         this.store.dispatch(
             NAVIGATION_ACTIONS.Go({
                 path: [{outlets: {[SETTINGS_OUTLET]: SETTINGS_PATH}}],
@@ -127,11 +127,11 @@ export class CoreService {
         );
     }
 
-    logOut() {
+    logOut(): void {
         this.store.dispatch(NAVIGATION_ACTIONS.Logout());
     }
 
-    dispatch(action: AppAction) {
+    dispatch(action: AppAction): void {
         this.zone.run(() => {
             this.store.dispatch(action);
         });

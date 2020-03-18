@@ -8,7 +8,7 @@ import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 
 export async function initTray(ctx: Context): Promise<Tray> {
     const endpoints = await ctx.deferredEndpoints.promise;
-    const toggleBrowserWindow = async () => await endpoints.toggleBrowserWindow();
+    const toggleBrowserWindow = async (): Promise<void> => endpoints.toggleBrowserWindow();
     const tray = new Tray(nativeImage.createEmpty());
     const optionsMenuItem: MenuItemConstructorOptions = {
         label: "Options",
@@ -29,7 +29,7 @@ export async function initTray(ctx: Context): Promise<Tray> {
             );
         },
     };
-    const setContextMenu = () => {
+    const setContextMenu = (): void => {
         tray.setContextMenu(
             Menu.buildFromTemplate([
                 {
@@ -41,14 +41,14 @@ export async function initTray(ctx: Context): Promise<Tray> {
                 },
                 {
                     label: "About",
-                    async click() {
+                    async click(): Promise<void> {
                         await endpoints.openAboutWindow();
                     },
                 },
                 optionsMenuItem,
                 {
                     label: "Open Settings Folder",
-                    async click() {
+                    async click(): Promise<void> {
                         await endpoints.openSettingsFolder();
                     },
                 },
@@ -58,7 +58,7 @@ export async function initTray(ctx: Context): Promise<Tray> {
                 logOutMenuItem,
                 {
                     label: "Quit",
-                    async click() {
+                    async click(): Promise<void> {
                         await endpoints.quit();
                     },
                 },

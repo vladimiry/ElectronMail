@@ -25,8 +25,96 @@ import {hrtimeDuration} from "src/electron-main/util";
 
 const logger = curryFunctionMembers(electronLog, "[src/electron-main/api/endpoints-builders/database/indexing]");
 
+export const narrowIndexActionPayload: (
+    payload: Skip<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>, { type: "Index" }>["payload"], "uid">,
+) => typeof payload = (() => {
+    type Fn = typeof narrowIndexActionPayload;
+    type Mails = ReturnType<Fn>["add"];
+
+    const fieldsToIndex = [
+        ((name: keyof Pick<Unpacked<Mails>, "pk">): typeof name => name)("pk"),
+        ...INDEXABLE_MAIL_FIELDS,
+    ];
+
+    const result: Fn = ({key, remove, add}) => {
+        return {
+            key,
+            remove,
+            add: add.map((mail) => pick(mail, fieldsToIndex)),
+        };
+    };
+
+    return result;
+})();
+
+async function indexMails(
+    mails: Array<ReadonlyDeep<Mail>>,
+    key: ReadonlyDeep<DbAccountPk>,
+    timeoutMs: number,
+): Promise<void> {
+    logger.info("indexMails()");
+
+    const duration = hrtimeDuration();
+    const uid = uuid();
+    const result$ = race(
+        IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$.pipe(
+            filter(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.is.IndexingResult),
+            filter(({payload}) => payload.uid === uid),
+            take(1),
+        ),
+        timer(timeoutMs).pipe(
+            concatMap(() => throwError(new Error(`Failed index emails in ${timeoutMs}ms (mails portions size: ${mails.length})`))),
+        ),
+    );
+
+    IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.next(
+        IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Index({
+            uid,
+            ...narrowIndexActionPayload({
+                key,
+                remove: [],
+                add: mails,
+            }),
+        }),
+    );
+
+    return result$
+        .toPromise()
+        .then(() => {
+            logger.verbose("indexMails() end", {indexed: mails.length, duration: duration.end()});
+        });
+}
+
+export async function indexAccount(
+    account: ReadonlyDeep<FsDbAccount>,
+    key: ReadonlyDeep<DbAccountPk>,
+    config: ReadonlyDeep<Config>,
+): Promise<void> {
+    logger.info("indexAccount()");
+
+    const duration = hrtimeDuration();
+    const buffer: Mail[] = [];
+
+    for (const mail of Object.values(account.mails)) {
+        buffer.push(mail);
+
+        if (buffer.length < config.indexingBootstrapBufferSize) {
+            continue;
+        }
+
+        await indexMails(buffer, key, config.timeouts.indexingBootstrap);
+        buffer.length = 0;
+    }
+
+    if (buffer.length) {
+        await indexMails(buffer, key, config.timeouts.indexingBootstrap);
+    }
+
+    logger.verbose("indexAccount() end", {indexed: account.mails.size, duration: duration.end()});
+}
+
 export async function buildDbIndexingEndpoints(
-    ctx: ReadonlyDeep<Context>,
+    ctx: Context, // TODO make argument "DeepReadonly"
 ): Promise<Pick<IpcMainApiEndpoints, "dbIndexerOn" | "dbIndexerNotification">> {
     return {
         async dbIndexerOn(action) {
@@ -46,7 +134,7 @@ export async function buildDbIndexingEndpoints(
                                 .map(({login}) => login);
                             const config = await ctx.configStore.readExisting();
 
-                            for (const {account, pk} of ctx.db.accountsIterator()) {
+                            for (const {account, pk} of ctx.db) {
                                 if (logins.includes(pk.login)) {
                                     await indexAccount(account, pk, config);
                                 }
@@ -90,90 +178,4 @@ export async function buildDbIndexingEndpoints(
     };
 }
 
-export const narrowIndexActionPayload: (
-    payload: Skip<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>, { type: "Index" }>["payload"], "uid">,
-) => typeof payload = (() => {
-    type Fn = typeof narrowIndexActionPayload;
-    type Mails = ReturnType<Fn>["add"];
 
-    const fieldsToIndex = [
-        ((name: keyof Pick<Unpacked<Mails>, "pk">) => name)("pk"),
-        ...INDEXABLE_MAIL_FIELDS,
-    ];
-
-    const result: Fn = ({key, remove, add}) => {
-        return {
-            key,
-            remove,
-            add: add.map((mail) => pick(mail, fieldsToIndex)),
-        };
-    };
-
-    return result;
-})();
-
-export async function indexAccount(
-    account: ReadonlyDeep<FsDbAccount>,
-    key: ReadonlyDeep<DbAccountPk>,
-    config: ReadonlyDeep<Config>,
-): Promise<void> {
-    logger.info("indexAccount()");
-
-    const duration = hrtimeDuration();
-    const buffer: Mail[] = [];
-
-    for (const mail of Object.values(account.mails)) {
-        buffer.push(mail);
-
-        if (buffer.length < config.indexingBootstrapBufferSize) {
-            continue;
-        }
-
-        await indexMails(buffer, key, config.timeouts.indexingBootstrap);
-        buffer.length = 0;
-    }
-
-    if (buffer.length) {
-        await indexMails(buffer, key, config.timeouts.indexingBootstrap);
-    }
-
-    logger.verbose("indexAccount() end", {indexed: account.mails.size, duration: duration.end()});
-}
-
-async function indexMails(
-    mails: Array<ReadonlyDeep<Mail>>,
-    key: ReadonlyDeep<DbAccountPk>,
-    timeoutMs: number,
-): Promise<void> {
-    logger.info("indexMails()");
-
-    const duration = hrtimeDuration();
-    const uid = uuid();
-    const result$ = race(
-        IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$.pipe(
-            filter(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.is.IndexingResult),
-            filter(({payload}) => payload.uid === uid),
-            take(1),
-        ),
-        timer(timeoutMs).pipe(
-            concatMap(() => throwError(new Error(`Failed index emails in ${timeoutMs}ms (mails portions size: ${mails.length})`))),
-        ),
-    );
-
-    IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.next(
-        IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Index({
-            uid,
-            ...narrowIndexActionPayload({
-                key,
-                remove: [],
-                add: mails,
-            }),
-        }),
-    );
-
-    return result$
-        .toPromise()
-        .then(() => {
-            logger.verbose("indexMails() end", {indexed: mails.length, duration: duration.end()});
-        });
-}

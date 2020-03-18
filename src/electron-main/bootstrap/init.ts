@@ -5,7 +5,7 @@ import {app} from "electron";
 import {REPOSITORY_NAME} from "src/shared/constants";
 
 // WARN needs to be called before app is ready, function is synchronous
-export function bootstrapInit() {
+export function bootstrapInit(): void {
     electronUnhandled({
         logger: logger.error,
         showDialog: true,

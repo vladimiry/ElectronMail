@@ -14,9 +14,9 @@ import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
 })
 export class SavePasswordLabelComponent implements OnInit, OnDestroy {
     @Input()
-    savePassword: boolean = false;
+    savePassword = false;
 
-    keytarUnsupportedDetails: boolean = false;
+    keytarUnsupportedDetails = false;
 
     readonly keytarSupport$ = this.store.pipe(
         select(OptionsSelectors.FEATURED.keytarSupport),
@@ -37,7 +37,7 @@ export class SavePasswordLabelComponent implements OnInit, OnDestroy {
         private elementRef: ElementRef,
     ) {}
 
-    ngOnInit() {
+    ngOnInit(): void {
         this.subscription.add({
             unsubscribe: __ELECTRON_EXPOSURE__
                 .registerDocumentClickEventListener(
@@ -48,12 +48,12 @@ export class SavePasswordLabelComponent implements OnInit, OnDestroy {
         });
     }
 
-    openSettingsFolder(event: Event) {
+    openSettingsFolder(event: Event): void {
         event.preventDefault();
         this.store.dispatch(NAVIGATION_ACTIONS.OpenSettingsFolder());
     }
 
-    toggleKeytarUnsupportedDetails(event: Event) {
+    toggleKeytarUnsupportedDetails(event: Event): void {
         event.preventDefault();
         this.keytarUnsupportedDetails = !this.keytarUnsupportedDetails;
     }

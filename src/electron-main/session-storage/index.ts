@@ -12,7 +12,7 @@ import {curryFunctionMembers} from "src/shared/util";
 
 export class SessionStorage {
     static emptyInstance(): typeof SessionStorage.prototype.instance {
-        return Object.create(null);
+        return Object.create(null); // eslint-disable-line @typescript-eslint/no-unsafe-return
     }
 
     private instance: Record<string /* mapped by "login" */, AccountPersistentSessionBundle | undefined>
@@ -28,14 +28,14 @@ export class SessionStorage {
             encryption: Readonly<{
                 keyResolver: () => Promise<string>;
                 presetResolver: () => Promise<KeyBasedPreset>;
-            }>
+            }>;
         }>,
         public readonly fileFs: FsJsonStore.Model.StoreFs = FsJsonStore.Fs.Fs.fs,
     ) {
         this.logger = curryFunctionMembers(_logger, `[electron-main/session-storage: ${path.basename(this.options.file)}]`);
     }
 
-    reset() {
+    reset(): void {
         this.logger.info("reset()");
         this.instance = SessionStorage.emptyInstance();
     }

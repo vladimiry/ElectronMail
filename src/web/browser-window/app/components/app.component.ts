@@ -32,7 +32,7 @@ export class AppComponent {
     ) {}
 
     @HostListener("document:keyup", ["$event"])
-    onKeyUp({key}: KeyboardEvent) {
+    onKeyUp({key}: KeyboardEvent): void {
         if (key !== ESC_KEY) {
             return;
         }
@@ -47,7 +47,7 @@ export class AppComponent {
         }
     }
 
-    private closeOutlet(outlet: CloseableOutletsType) {
+    private closeOutlet(outlet: CloseableOutletsType): void {
         this.store.dispatch(NAVIGATION_ACTIONS.Go({path: [{outlets: {[outlet]: null}}]}));
     }
 }

@@ -15,6 +15,10 @@ export function linuxLikePlatform(): boolean {
     return PLATFORM !== "win32" && PLATFORM !== "darwin";
 }
 
+export function formatFileUrl(pathname: string): string {
+    return url.format({pathname, protocol: "file:", slashes: true});
+}
+
 export async function injectVendorsAppCssIntoHtmlFile(
     pageLocation: string,
     {vendorsAppCssLinkHref}: Context["locations"],
@@ -46,7 +50,7 @@ export function hrtimeDuration(): { end: () => number } {
     const start = process.hrtime();
 
     return {
-        end() {
+        end(): number {
             const time = process.hrtime(start);
 
             return Math.round((time[0] * 1000) + (time[1] / 1000000));
@@ -54,6 +58,3 @@ export function hrtimeDuration(): { end: () => number } {
     };
 }
 
-export function formatFileUrl(pathname: string): string {
-    return url.format({pathname, protocol: "file:", slashes: true});
-}

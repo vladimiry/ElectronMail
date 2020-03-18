@@ -18,7 +18,7 @@ export function buildSpellingSuggestionMenuItems(
     return suggestions.map((suggestion) => {
         return {
             label: suggestion,
-            click: () => {
+            click: (): void => {
                 webContents.replaceMisspelling(suggestion);
             },
         };
@@ -36,7 +36,7 @@ export function buildSpellCheckSettingsMenuItems(
             label: "Check Spelling",
             type: "checkbox",
             checked: checkSpelling,
-            click() {
+            click(): void {
                 onChangeLocale(!checkSpelling);
             },
         },

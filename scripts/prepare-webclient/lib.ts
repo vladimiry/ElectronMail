@@ -35,7 +35,7 @@ if (!pathIsInside(path.resolve(CWD, BASE_DEST_DIR), CWD)) {
     throw new Error(`Invalid base destination directory argument value: ${LOG_LEVELS.value(BASE_DEST_DIR)}`);
 }
 
-export interface FolderAsDomainEntry<T extends any = any> {
+export interface FolderAsDomainEntry<T extends any = any> { // eslint-disable-line @typescript-eslint/no-explicit-any
     folderNameAsDomain: string;
     options: T;
 }
@@ -46,6 +46,25 @@ export type Flow<O> = (
         folderAsDomainEntry: FolderAsDomainEntry<O>;
     },
 ) => Promise<void>;
+
+async function clone(repoType: keyof typeof PROVIDER_REPOS, dir: string): Promise<void> {
+    const {repo, commit} = PROVIDER_REPOS[repoType];
+
+    mkdirp.sync(dir);
+
+    await execShell(["git", ["clone", repo, "."], {cwd: dir}]);
+    await execShell(["git", ["checkout", commit], {cwd: dir}]);
+    await execShell(["git", ["show", "--summary"], {cwd: dir}]);
+}
+
+export function printAndWriteFile(file: string, content: Buffer | string): void {
+    LOG(
+        LOG_LEVELS.title(`Writing ${LOG_LEVELS.value(file)} file with content:`),
+        LOG_LEVELS.value(content),
+    );
+    mkdirp.sync(path.dirname(file));
+    fs.writeFileSync(file, content);
+}
 
 export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = Unpacked<T>["options"]>(
     {
@@ -59,17 +78,17 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
             build,
         },
     }: {
-        repoType: keyof typeof PROVIDER_REPOS,
-        folderAsDomainEntries: T,
-        repoRelativeDistDir?: string,
-        destSubFolder?: string,
+        repoType: keyof typeof PROVIDER_REPOS;
+        folderAsDomainEntries: T;
+        repoRelativeDistDir?: string;
+        destSubFolder?: string;
         flows: {
             preInstall?: Flow<O>;
             install?: Flow<O>;
             build: Flow<O>;
-        },
+        };
     },
-) {
+): Promise<void> {
     if (
         REPOS_ONLY_FILTER.length
         &&
@@ -159,23 +178,4 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
         LOG(LOG_LEVELS.title(`Copying: ${LOG_LEVELS.value(distDir)} to ${LOG_LEVELS.value(resolvedDistDir)}`));
         await fsExtra.copy(distDir, resolvedDistDir);
     }
-}
-
-async function clone(repoType: keyof typeof PROVIDER_REPOS, dir: string) {
-    const {repo, commit} = PROVIDER_REPOS[repoType];
-
-    mkdirp.sync(dir);
-
-    await execShell(["git", ["clone", repo, "."], {cwd: dir}]);
-    await execShell(["git", ["checkout", commit], {cwd: dir}]);
-    await execShell(["git", ["show", "--summary"], {cwd: dir}]);
-}
-
-export function printAndWriteFile(file: string, content: Buffer | string) {
-    LOG(
-        LOG_LEVELS.title(`Writing ${LOG_LEVELS.value(file)} file with content:`),
-        LOG_LEVELS.value(content),
-    );
-    mkdirp.sync(path.dirname(file));
-    fs.writeFileSync(file, content);
 }

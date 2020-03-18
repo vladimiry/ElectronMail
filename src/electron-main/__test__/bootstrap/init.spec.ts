@@ -4,6 +4,39 @@ import test from "ava";
 
 import {PRODUCT_NAME, REPOSITORY_NAME} from "src/shared/constants";
 
+function buildMocks( // eslint-disable-line @typescript-eslint/explicit-function-return-type
+    arg: {
+        requestSingleInstanceLockResult: boolean;
+    },
+) {
+    return {
+        "electron": {
+            app: {
+                exit: sinon.spy(),
+                requestSingleInstanceLock: sinon.stub().returns(arg.requestSingleInstanceLockResult),
+                setAppUserModelId: sinon.spy(),
+            },
+        },
+        "electron-log": {
+            error: sinon.spy(),
+        },
+        "electron-unhandled": sinon.spy(),
+    };
+}
+
+async function loadLibrary(
+    mocks: ReturnType<typeof buildMocks>,
+): Promise<typeof import("src/electron-main/bootstrap/init")> {
+    return rewiremock.around(
+        async () => import("src/electron-main/bootstrap/init"),
+        (mock) => {
+            for (const [name, data] of Object.entries(mocks)) {
+                mock(name).with(data);
+            }
+        },
+    );
+}
+
 test.serial("bootstrapInit(): default", async (t) => {
     const mocks = buildMocks({requestSingleInstanceLockResult: false});
     const library = await loadLibrary(mocks);
@@ -20,7 +53,7 @@ test.serial("bootstrapInit(): default", async (t) => {
         showDialog: true,
     }));
 
-    (() => {
+    ((): void => {
         const expectedAppId = "github.com/vladimiry/ElectronMail";
         t.is(`github.com/vladimiry/${PRODUCT_NAME}`, expectedAppId);
         t.is(`github.com/vladimiry/${REPOSITORY_NAME}`, expectedAppId);
@@ -43,34 +76,3 @@ test.serial("bootstrapInit: app.exit() should not be called", async (t) => {
     library.bootstrapInit();
     t.false(mocks.electron.app.exit.called);
 });
-
-function buildMocks(
-    arg: {
-        requestSingleInstanceLockResult: boolean;
-    },
-) {
-    return {
-        "electron": {
-            app: {
-                exit: sinon.spy(),
-                requestSingleInstanceLock: sinon.stub().returns(arg.requestSingleInstanceLockResult),
-                setAppUserModelId: sinon.spy(),
-            },
-        },
-        "electron-log": {
-            error: sinon.spy(),
-        },
-        "electron-unhandled": sinon.spy(),
-    };
-}
-
-async function loadLibrary(mocks: ReturnType<typeof buildMocks>) {
-    return await rewiremock.around(
-        () => import("src/electron-main/bootstrap/init"),
-        (mock) => {
-            for (const [name, data] of Object.entries(mocks)) {
-                mock(name).with(data);
-            }
-        },
-    );
-}

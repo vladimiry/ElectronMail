@@ -36,26 +36,6 @@ export function ensureFileHasNoSuidBit(file: string): void {
     }
 }
 
-export async function copyDictionaryFilesTo(destDir: string) {
-    const dictionaries = await prepareDictionaries();
-
-    LOG(LOG_LEVELS.title(
-        `Copying files of ${LOG_LEVELS.value(String(dictionaries.size))} dictionaries to ${LOG_LEVELS.value(destDir)} directory:`,
-    ));
-
-    mkdirp.sync(destDir);
-
-    for (const dictionary of dictionaries.values()) {
-        for (const file of dictionary.files) {
-            fs.copyFileSync(
-                file,
-                path.join(destDir, path.basename(file)),
-            );
-            LOG(LOG_LEVELS.value(file));
-        }
-    }
-}
-
 async function prepareDictionaries(): Promise<Map<Locale, Dictionary>> {
     const outcomeDir = path.join(CWD, "./output/git-wooorm-dictionaries-outcome");
     const files: string[] = [];
@@ -86,7 +66,7 @@ async function prepareDictionaries(): Promise<Map<Locale, Dictionary>> {
             await execShell(["git", ["show", "--summary"], {cwd: repoCwd}]);
         }
 
-        const resolvedDictionaries: Array<{ locale: string, aff: string; dic: string; license?: string; }> = [];
+        const resolvedDictionaries: Array<{ locale: string; aff: string; dic: string; license?: string }> = [];
         const localeDirs = await fastGlob(
             sanitizeFastGlobPattern(
                 path.join(repoCwd, "./dictionaries/*"),
@@ -166,6 +146,26 @@ async function prepareDictionaries(): Promise<Map<Locale, Dictionary>> {
     ));
 
     return result;
+}
+
+export async function copyDictionaryFilesTo(destDir: string): Promise<void> {
+    const dictionaries = await prepareDictionaries();
+
+    LOG(LOG_LEVELS.title(
+        `Copying files of ${LOG_LEVELS.value(String(dictionaries.size))} dictionaries to ${LOG_LEVELS.value(destDir)} directory:`,
+    ));
+
+    mkdirp.sync(destDir);
+
+    for (const dictionary of dictionaries.values()) {
+        for (const file of dictionary.files) {
+            fs.copyFileSync(
+                file,
+                path.join(destDir, path.basename(file)),
+            );
+            LOG(LOG_LEVELS.value(file));
+        }
+    }
 }
 
 export async function build(

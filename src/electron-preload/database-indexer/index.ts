@@ -16,33 +16,9 @@ const api = SERVICES_FACTORY.apiClient(cleanup.promise);
 const index = createMailsIndex();
 const indexingQueue = new asap();
 
-document.addEventListener("DOMContentLoaded", bootstrap);
-
-function bootstrap() {
-    cleanup.subscription.add(
-        api("dbIndexerNotification", {timeoutMs: ONE_SECOND_MS * 3, logger})().subscribe(
-            async (action) => {
-                try {
-                    await dbIndexerNotificationHandler(action);
-                } catch (error) {
-                    logger.error(`dbIndexerNotification.next, action.type:`, action.type, error);
-                    throw error;
-                }
-            },
-            (error) => {
-                logger.error(`dbIndexerNotification.error`, error);
-                throw error;
-            },
-            () => {
-                logger.info(`dbIndexerNotification.complete`);
-            },
-        ),
-    );
-
-    logger.info(`dbIndexerNotification.subscribed`);
-}
-
-async function dbIndexerNotificationHandler(action: IpcMainServiceScan["ApiImplReturns"]["dbIndexerNotification"]): Promise<void> {
+async function dbIndexerNotificationHandler(
+    action: IpcMainServiceScan["ApiImplReturns"]["dbIndexerNotification"],
+): Promise<void> {
     logger.verbose(`dbIndexerNotification.next, action.type:`, action.type);
 
     const dbIndexerOn = api("dbIndexerOn", {timeoutMs: ONE_SECOND_MS * 15, logger});
@@ -93,3 +69,27 @@ async function dbIndexerNotificationHandler(action: IpcMainServiceScan["ApiImplR
         },
     );
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+    cleanup.subscription.add(
+        api("dbIndexerNotification", {timeoutMs: ONE_SECOND_MS * 3, logger})().subscribe(
+            async (action) => {
+                try {
+                    await dbIndexerNotificationHandler(action);
+                } catch (error) {
+                    logger.error(`dbIndexerNotification.next, action.type:`, action.type, error);
+                    throw error;
+                }
+            },
+            (error) => {
+                logger.error(`dbIndexerNotification.error`, error);
+                throw error;
+            },
+            () => {
+                logger.info(`dbIndexerNotification.complete`);
+            },
+        ),
+    );
+
+    logger.info(`dbIndexerNotification.subscribed`);
+});

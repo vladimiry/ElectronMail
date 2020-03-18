@@ -15,7 +15,7 @@ interface Header extends EncryptionAdapterBundle.KeyBasedFileHeader {
 }
 
 const persistencePartsUtil: Readonly<{
-    split: (data: Buffer) => { header: Header; cipher: Buffer; };
+    split: (data: Buffer) => { header: Header; cipher: Buffer };
     concat: (header: Header, cipher: Buffer) => Buffer;
 }> = (() => {
     const separator = Buffer.from([0o0]);
@@ -57,12 +57,11 @@ export class SerializationAdapter {
 
     private logger = curryFunctionMembers(_logger, "[src/electron-main/database/serialization]", "[SerializationAdapter]");
 
-    constructor(input: { key: Buffer, preset: EncryptionAdapterBundle.KeyBasedPreset }) {
+    constructor(input: { key: Buffer; preset: EncryptionAdapterBundle.KeyBasedPreset }) {
         this.logger.info("constructor()");
 
         const encryptionAdapter = new EncryptionAdapterBundle.EncryptionAdapter(input);
-
-        this.read = async (data: Buffer) => {
+        const read: typeof SerializationAdapter.prototype.read = async (data) => {
             this.logger.info(`read() buffer.length: ${data.length}`);
 
             const {header: {serialization}} = persistencePartsUtil.split(data);
@@ -96,8 +95,7 @@ export class SerializationAdapter {
                     });
             });
         };
-
-        this.write = async (data) => {
+        const write: typeof SerializationAdapter.prototype.write = async (data) => {
             this.logger.info("write()");
 
             this.logger.verbose(`"msgpack.encode" start`);
@@ -113,5 +111,8 @@ export class SerializationAdapter {
 
             return persistencePartsUtil.concat(header, cipher);
         };
+
+        this.read = read;
+        this.write = write;
     }
 }

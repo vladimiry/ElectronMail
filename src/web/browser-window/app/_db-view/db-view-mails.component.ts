@@ -128,7 +128,8 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
                     return;
                 }
 
-                const mailPk: Mail["pk"] | undefined = mailElement.getAttribute("data-pk") as any;
+                const mailPk: Mail["pk"] | undefined
+                    = mailElement.getAttribute("data-pk") as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
                 if (mailPk) {
                     this.store.dispatch(DB_VIEW_ACTIONS.SelectMailRequest({dbAccountPk: this.dbAccountPk, mailPk}));
@@ -168,7 +169,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
         );
     }
 
-    sortChange(sorterIndex: number | string) {
+    sortChange(sorterIndex: number | string): void {
         this.store.dispatch(DB_VIEW_ACTIONS.SortMails({
             dbAccountPk: this.dbAccountPk,
             mailsBundleKey: this.mailsBundleKey,
@@ -176,17 +177,17 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
         }));
     }
 
-    loadMore() {
+    loadMore(): void {
         this.store.dispatch(DB_VIEW_ACTIONS.Paging({dbAccountPk: this.dbAccountPk, mailsBundleKey: this.mailsBundleKey}));
     }
 
     trackByMailBundleItem(
         ...[, {mail: {pk}}]: readonly [number, Unpacked<Unpacked<typeof DbViewMailsComponent.prototype.items$>>]
-    ) {
+    ): string {
         return pk;
     }
 
-    makeAllRead() {
+    makeAllRead(): void {
         this.items$
             .pipe(
                 withLatestFrom(this.dbAccountPk$),

@@ -16,6 +16,15 @@ const state: {
     idle?: boolean;
 } = {};
 
+export function clearIdleTimeLogOut(): void {
+    if (typeof state.clearIntervalId === "undefined") {
+        return;
+    }
+
+    clearInterval(state.clearIntervalId);
+    delete state.clearIntervalId;
+}
+
 export async function setupIdleTimeLogOut({idleTimeLogOutSec}: Readonly<Pick<Config, "idleTimeLogOutSec">>): Promise<void> {
     clearIdleTimeLogOut();
 
@@ -53,17 +62,8 @@ export async function setupIdleTimeLogOut({idleTimeLogOutSec}: Readonly<Pick<Con
     );
 }
 
-export function clearIdleTimeLogOut(): void {
-    if (typeof state.clearIntervalId === "undefined") {
-        return;
-    }
-
-    clearInterval(state.clearIntervalId);
-    delete state.clearIntervalId;
-}
-
 export function setUpPowerMonitorNotification(): void {
-    const notify = (...[{message}]: Parameters<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS.PowerMonitor>) => {
+    const notify = (...[{message}]: Parameters<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS.PowerMonitor>): void => {
         IPC_MAIN_API_NOTIFICATION$.next(
             IPC_MAIN_API_NOTIFICATION_ACTIONS.PowerMonitor({message}),
         );

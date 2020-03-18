@@ -18,56 +18,56 @@ import {injectVendorsAppCssIntoHtmlFile} from "src/electron-main/util";
 
 const logger = curryFunctionMembers(_logger, "[src/electron-main/window/about]");
 
-const resolveContent: (ctx: Context) => Promise<Unpacked<ReturnType<typeof injectVendorsAppCssIntoHtmlFile>>> = (() => {
-    let result: typeof resolveContent = async (ctx: Context) => {
-        const htmlInjection: string = [
-            sanitizeHtml(
-                `
+const resolveContent: (ctx: Context) => Promise<Unpacked<ReturnType<typeof injectVendorsAppCssIntoHtmlFile>>> = (
+    (): typeof resolveContent => {
+        let result: typeof resolveContent = async (ctx: Context) => {
+            const htmlInjection: string = [
+                sanitizeHtml(
+                    `
                     <h1>${PRODUCT_NAME} v${PACKAGE_VERSION}</h1>
                     <p>${PACKAGE_DESCRIPTION}</p>
                     <p>Distributed under ${PACKAGE_LICENSE} license.</p>
                     `,
-                {
-                    allowedTags: sanitizeHtml.defaults.allowedTags.concat(["h1"]),
-                },
-            ),
-            (() => {
-                const {versions} = process;
-                const props: ReadonlyArray<Readonly<{ prop: keyof typeof versions; title: string; }>> = [
-                    {prop: "electron", title: "Electron"},
-                    {prop: "chrome", title: "Chromium"},
-                    {prop: "node", title: "Node"},
-                    {prop: "v8", title: "V8"},
-                ];
-                return `<ul class="list-versions align-items-left justify-content-center font-weight-light text-muted">
-                ${
-                    props
-                        .map(({prop, title}) => sanitizeHtml(`<li>${title}: ${versions[prop]}</li>`))
-                        .join("")
-                }
-                </ul>`;
-            })(),
-        ].join("");
-        const pageLocation = ctx.locations.aboutBrowserWindowPage;
-        const cache = await injectVendorsAppCssIntoHtmlFile(pageLocation, ctx.locations);
+                    {
+                        allowedTags: sanitizeHtml.defaults.allowedTags.concat(["h1"]),
+                    },
+                ),
+                ((): string => {
+                    const {versions} = process;
+                    const props: ReadonlyArray<Readonly<{ prop: keyof typeof versions; title: string }>> = [
+                        {prop: "electron", title: "Electron"},
+                        {prop: "chrome", title: "Chromium"},
+                        {prop: "node", title: "Node"},
+                        {prop: "v8", title: "V8"},
+                    ];
+                    return `
+                        <ul class="list-versions align-items-left justify-content-center font-weight-light text-muted">
+                            ${props.map(({prop, title}) => sanitizeHtml(`<li>${title}: ${versions[prop]}</li>`)).join("")}
+                        </ul>
+                    `;
+                })(),
+            ].join("");
+            const pageLocation = ctx.locations.aboutBrowserWindowPage;
+            const cache = await injectVendorsAppCssIntoHtmlFile(pageLocation, ctx.locations);
 
-        cache.html = cache.html.replace(
-            /(.*)#MAIN_PROCESS_INJECTION_POINTCUT#(.*)/i,
-            `$1${htmlInjection}$2`,
-        );
-        if (!cache.html.includes(htmlInjection)) {
-            logger.error(JSON.stringify({cache}));
-            throw new Error(`Failed to inject "${htmlInjection}" into the "${pageLocation}" page`);
-        }
-        logger.verbose(JSON.stringify(cache));
+            cache.html = cache.html.replace(
+                /(.*)#MAIN_PROCESS_INJECTION_POINTCUT#(.*)/i,
+                `$1${htmlInjection}$2`,
+            );
+            if (!cache.html.includes(htmlInjection)) {
+                logger.error(JSON.stringify({cache}));
+                throw new Error(`Failed to inject "${htmlInjection}" into the "${pageLocation}" page`);
+            }
+            logger.verbose(JSON.stringify(cache));
 
-        // memoize the result
-        result = async () => cache;
+            // memoize the result
+            result = async (): Promise<typeof cache> => cache;
 
-        return cache;
-    };
-    return result;
-})();
+            return cache;
+        };
+        return result;
+    }
+)();
 
 export async function showAboutBrowserWindow(ctx: Context): Promise<BrowserWindow> {
     if (!ctx.uiContext) {

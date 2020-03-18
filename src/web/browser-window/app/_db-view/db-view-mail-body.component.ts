@@ -72,14 +72,18 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
 
     private readonly subscription = new Subscription();
 
-    private readonly bodyIframeEventHandler = ((event: Event) => {
-        this.zone.run(() => this.iframeBodyEventSubject$.next(event));
-    });
+    private readonly bodyIframeEventHandler = (event: Event): void => {
+        this.zone.run(() => {
+            this.iframeBodyEventSubject$.next(event);
+        });
+    };
 
-    private readonly bodyIframeEventArgs = ["click"].map((event) => ({
-        event,
-        handler: this.bodyIframeEventHandler,
-    }));
+    private readonly bodyIframeEventArgs = ["click"].map((event) => {
+        return {
+            event,
+            handler: this.bodyIframeEventHandler,
+        };
+    });
 
     private readonly logger = getZoneNameBoundWebLogger();
 
@@ -91,7 +95,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         super(store);
     }
 
-    ngOnInit() {
+    ngOnInit(): void {
         this.elementRefClickSubscription = __ELECTRON_EXPOSURE__.registerDocumentClickEventListener(
             this.elementRef.nativeElement,
             this.logger,
@@ -99,7 +103,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         this.subscription.add({unsubscribe: this.elementRefClickSubscription.unsubscribe});
     }
 
-    ngAfterViewInit() {
+    ngAfterViewInit(): void {
         this.subscription.add(
             this.iframeBodyEventSubject$.pipe(
                 filter(({type}) => type === "click"),
@@ -148,19 +152,19 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         return nodes.length === 1 && !nodes[0].mail;
     }
 
-    selectConversationMail({pk: mailPk}: Pick<Mail, "pk">) {
+    selectConversationMail({pk: mailPk}: Pick<Mail, "pk">): void {
         this.store.dispatch(DB_VIEW_ACTIONS.SelectConversationMailRequest({dbAccountPk: this.dbAccountPk, mailPk}));
     }
 
-    toggleConversationCollapsing() {
+    toggleConversationCollapsing(): void {
         this.conversationCollapsed$.next(!this.conversationCollapsed$.value);
     }
 
-    selectMailOnline() {
+    selectMailOnline(): void {
         // TODO consider introducing unique id of the selecting operation
         this.selectingMailOnline$.pipe(
             pairwise(),
-            filter((prev, curr) => Boolean(prev) && !Boolean(curr)),
+            filter((prev, curr) => Boolean(prev) && !curr),
             take(1),
         ).subscribe(() => {
             this.store.dispatch(ACCOUNTS_ACTIONS.ToggleDatabaseView({login: this.dbAccountPk.login, forced: {databaseView: false}}));
@@ -183,7 +187,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
             });
     }
 
-    reDownload() {
+    reDownload(): void {
         this.dbAccountPk$.pipe(
             withLatestFrom(
                 this.selectedMail$.pipe(
@@ -196,14 +200,14 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         });
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         super.ngOnDestroy();
         this.subscription.unsubscribe();
         this.iframeBodyEventSubject$.complete();
         this.releaseBodyIframe();
     }
 
-    private renderBody(mail: Mail) {
+    private renderBody(mail: Mail): void {
         // TODO cache resolved DOM elements
         const [container] = this.elementRef.nativeElement.getElementsByClassName("body-container");
 
@@ -263,7 +267,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         });
     }
 
-    private releaseBodyIframe() {
+    private releaseBodyIframe(): void {
         if (!this.bodyIframe) {
             return;
         }

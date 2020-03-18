@@ -15,50 +15,101 @@ const pureimageUInt32: Readonly<{
         rgba: ReturnType<import("pureimage").Bitmap["getPixelRGBA"]>,
     ): readonly [number, number, number, number]; // rgba
     fromBytesBigEndian(
-        ...args: ReturnType<typeof pureimageUInt32["getBytesBigEndian"]>
+        ...args: ReturnType<typeof pureimageUInt32["getBytesBigEndian"]> // eslint-disable-line  @typescript-eslint/no-use-before-define
     ): ReturnType<import("pureimage").Bitmap["getPixelRGBA"]>;
     // TODO TS: import "pureimage/src/uint32" using ES import syntax
-    // tslint:disable-next-line:no-var-requires
-}> = require("pureimage/src/uint32");
+}> = require("pureimage/src/uint32"); // eslint-disable-line @typescript-eslint/no-var-requires
 
-const bitmapToNativeImage = (() => {
-    const darwinSize = Object.freeze({width: 16, height: 16}); // macOS uses 16x16 tray icon
-    const platformSpecificScale: (source: Bitmap) => Promise<Bitmap> = PLATFORM === "darwin"
-        ? async (source) => {
-            const sourceBits = source.data.byteLength / (source.width * source.height);
-            const dest = {
-                data: Uint8ClampedArray.from(new Array(darwinSize.width * darwinSize.height * sourceBits)),
-                ...darwinSize,
-            };
+const buildCircle: (rad: number, color: string) => Bitmap = (rad, color) => {
+    const bitmap = make(rad * 2, rad * 2);
+    const ctx = bitmap.getContext("2d");
 
-            lanczos(
-                {
-                    data: Uint8ClampedArray.from(source.data),
-                    width: source.width,
-                    height: source.height,
-                },
-                dest,
-            );
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(bitmap.width - rad, bitmap.height - rad, rad, 0, Math.PI * 2, false);
+    ctx.closePath();
+    ctx.fill();
 
-            const result = make(dest.width, dest.height);
+    return bitmap;
+};
 
-            result.data = Buffer.from(dest.data);
-
-            return result;
+const skipSettingTransparentPixels: (bitmap: Bitmap) => void = (bitmap) => {
+    const setPixelRGBAOriginal = bitmap.setPixelRGBA.bind(bitmap);
+    const setPixelRGBAOverridden: typeof setPixelRGBAOriginal = function(this: typeof bitmap, x: number, y: number, rgba: number) {
+        if (rgba === 0) {
+            return;
         }
-        : async (source) => source;
-
-    return async (source: Bitmap): Promise<NativeImage> => {
-        return nativeImage.createFromBuffer(
-            await encodePNGToBuffer(
-                await platformSpecificScale(source),
-            ),
-        );
+        return setPixelRGBAOriginal.call(this, x, y, rgba);
     };
-})();
+    bitmap.setPixelRGBA = setPixelRGBAOverridden;
+};
+
+const encodePNGToBuffer: (input: Bitmap) => Promise<Buffer> = async (input) => {
+    return new Promise<Buffer>((resolve, reject) => {
+        const stream = new PassThrough();
+        const data: number[] = [];
+
+        stream
+            .on("data", (chunk: typeof data) => data.push(...chunk))
+            .on("error", (error) => reject(error))
+            .on("end", () => {
+                encodingPromise // eslint-disable-line @typescript-eslint/no-use-before-define
+                    .then(() => resolve(Buffer.from(data)))
+                    .catch(reject);
+            });
+
+        const encodingPromise = encodePNGToStream(input, stream);
+    });
+};
+
+const cloneBitmap: (input: Pick<Bitmap, "width" | "height" | "data">) => Bitmap = (input) => {
+    const output = make(input.width, input.height);
+
+    output.data = Buffer.from(input.data);
+
+    return output;
+};
+
+const bitmapToNativeImage: (source: Bitmap) => Promise<NativeImage> = (
+    (): typeof bitmapToNativeImage => {
+        const darwinSize = Object.freeze({width: 16, height: 16}); // macOS uses 16x16 tray icon
+        const platformSpecificScale: (source: Bitmap) => Promise<Bitmap> = PLATFORM === "darwin"
+            ? async (source): ReturnType<typeof platformSpecificScale> => {
+                const sourceBits = source.data.byteLength / (source.width * source.height);
+                const dest = {
+                    data: Uint8ClampedArray.from(new Array(darwinSize.width * darwinSize.height * sourceBits)),
+                    ...darwinSize,
+                };
+
+                lanczos(
+                    {
+                        data: Uint8ClampedArray.from(source.data),
+                        width: source.width,
+                        height: source.height,
+                    },
+                    dest,
+                );
+
+                const result = make(dest.width, dest.height);
+
+                result.data = Buffer.from(dest.data);
+
+                return result;
+            }
+            : async (source): ReturnType<typeof platformSpecificScale> => source;
+        const resultFn: typeof bitmapToNativeImage = async (source: Bitmap): Promise<NativeImage> => {
+            return nativeImage.createFromBuffer(
+                await encodePNGToBuffer(
+                    await platformSpecificScale(source),
+                ),
+            );
+        };
+        return resultFn;
+    }
+)();
 
 export async function recolor(
-    {source, fromColor, toColor}: Readonly<{ source: Bitmap, fromColor: string, toColor: string }>,
+    {source, fromColor, toColor}: Readonly<{ source: Bitmap; fromColor: string; toColor: string }>,
 ): Promise<ImageBundle> {
     const hslColors = {
         from: toHsl(fromColor),
@@ -152,10 +203,10 @@ export async function unreadNative(
     {bitmap: source}: ImageBundle,
     config: CircleConfig & { textColor: string },
 ): Promise<{
-    icon: NativeImage,
-    overlay: NativeImage,
+    icon: NativeImage;
+    overlay: NativeImage;
 }> {
-    const circle = await (async (text, fontFamily) => {
+    const circle = await (async (text, fontFamily): Promise<ReturnType<typeof buildCircle>> => {
         const rad = (source.width * config.scale) / 2;
         const textDrawArea = buildCircle(rad, config.color);
 
@@ -190,52 +241,4 @@ export async function unreadNative(
         icon: await bitmapToNativeImage(icon),
         overlay: await bitmapToNativeImage(circle),
     };
-}
-
-function buildCircle(rad: number, color: string): Bitmap {
-    const bitmap = make(rad * 2, rad * 2);
-    const ctx = bitmap.getContext("2d");
-
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(bitmap.width - rad, bitmap.height - rad, rad, 0, Math.PI * 2, false);
-    ctx.closePath();
-    ctx.fill();
-
-    return bitmap;
-}
-
-function skipSettingTransparentPixels(bitmap: Bitmap): void {
-    bitmap.setPixelRGBA = ((setPixelRGBA) => function(this: typeof bitmap, x: number, y: number, rgba: number) {
-        if (rgba === 0) {
-            return;
-        }
-        return setPixelRGBA.call(this, x, y, rgba);
-    })(bitmap.setPixelRGBA);
-}
-
-async function encodePNGToBuffer(source: Bitmap): Promise<Buffer> {
-    return await new Promise<Buffer>((resolve, reject) => {
-        const stream = new PassThrough();
-        const data: number[] = [];
-
-        stream
-            .on("data", (chunk: typeof data) => data.push(...chunk))
-            .on("error", (error) => reject(error))
-            .on("end", () => {
-                encodingPromise
-                    .then(() => resolve(Buffer.from(data)))
-                    .catch(reject);
-            });
-
-        const encodingPromise = encodePNGToStream(source, stream);
-    });
-}
-
-function cloneBitmap(input: Pick<Bitmap, "width" | "height" | "data">): Bitmap {
-    const output = make(input.width, input.height);
-
-    output.data = Buffer.from(input.data);
-
-    return output;
 }

@@ -11,13 +11,23 @@ import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[web-contents]");
 
+function isEmailHref(href: string): boolean {
+    return String(href).startsWith("mailto:");
+}
+
+function extractEmailIfEmailHref(href: string): string {
+    return isEmailHref(href)
+        ? String(href.split("mailto:").pop())
+        : href;
+}
+
 // WARN: needs to be called before "BrowserWindow" creating (has been ensured by tests)
-export async function initWebContentsCreatingHandlers(ctx: Context) {
+export async function initWebContentsCreatingHandlers(ctx: Context): Promise<void> {
     const emptyArray = [] as const;
     const endpoints = await ctx.deferredEndpoints.promise;
     const spellCheckController = ctx.getSpellCheckController();
     const allowedWebViewPrefixes: readonly string[] = ctx.locations.webClients.map(({entryUrl}) => entryUrl);
-    const webContentsCreatedHandler = async (webContents: WebContents) => {
+    const webContentsCreatedHandler = async (webContents: WebContents): Promise<void> => {
         webContents.on("context-menu", async (...[, {editFlags, linkURL, linkText, isEditable, selectionText}]) => {
             const menuItems: MenuItemConstructorOptions[] = [];
 
@@ -80,10 +90,10 @@ export async function initWebContentsCreatingHandlers(ctx: Context) {
                     ...[
                         // TODO use "role" based "cut/copy/paste" actions, currently these actions don't work properly
                         // keep track of the respective issue https://github.com/electron/electron/issues/15219
-                        ...(editFlags.canCut ? [{label: "Cut", click: () => webContents.cut()}] : emptyArray),
-                        ...(editFlags.canCopy ? [{label: "Copy", click: () => webContents.copy()}] : emptyArray),
-                        ...(editFlags.canPaste ? [{label: "Paste", click: () => webContents.paste()}] : emptyArray),
-                        ...(editFlags.canSelectAll ? [{label: "Select All", click: () => webContents.selectAll()}] : emptyArray),
+                        ...(editFlags.canCut ? [{label: "Cut", click: (): void => webContents.cut()}] : emptyArray),
+                        ...(editFlags.canCopy ? [{label: "Copy", click: (): void => webContents.copy()}] : emptyArray),
+                        ...(editFlags.canPaste ? [{label: "Paste", click: (): void => webContents.paste()}] : emptyArray),
+                        ...(editFlags.canSelectAll ? [{label: "Select All", click: (): void => webContents.selectAll()}] : emptyArray),
                     ],
                 ]);
             }
@@ -150,15 +160,5 @@ export async function initWebContentsCreatingHandlers(ctx: Context) {
         webContents.zoomFactor = zoomFactor;
     };
 
-    app.on("web-contents-created", (...[, webContents]) => webContentsCreatedHandler(webContents));
-}
-
-function isEmailHref(href: string): boolean {
-    return String(href).startsWith("mailto:");
-}
-
-function extractEmailIfEmailHref(href: string): string {
-    return isEmailHref(href)
-        ? String(href.split("mailto:").pop())
-        : href;
+    app.on("web-contents-created", async (...[, webContents]) => webContentsCreatedHandler(webContents));
 }

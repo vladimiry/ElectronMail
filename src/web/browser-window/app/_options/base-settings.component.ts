@@ -29,7 +29,7 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
 
     readonly layoutModes = [...LAYOUT_MODES];
 
-    readonly idleTimeLogOutSecValues: Array<Readonly<{ title: string; valueSec: number; }>> = [
+    readonly idleTimeLogOutSecValues: Array<Readonly<{ title: string; valueSec: number }>> = [
         {title: "disabled", valueSec: 0},
         {title: "3 minutes", valueSec: 60 * 3},
         {title: "5 minutes", valueSec: 60 * 5},
@@ -64,7 +64,7 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
 
     readonly form = new FormGroup(this.controls);
 
-    readonly colorPickerOpened: { bg: boolean; text: boolean; icon: boolean; } = {bg: false, text: false, icon: false};
+    readonly colorPickerOpened: { bg: boolean; text: boolean; icon: boolean } = {bg: false, text: false, icon: false};
 
     readonly $trayIconColor = this.store.pipe(select(OptionsSelectors.CONFIG.trayIconColor));
 
@@ -86,7 +86,7 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         private elementRef: ElementRef,
     ) {}
 
-    ngOnInit() {
+    ngOnInit(): void {
         this.subscription.add({
             unsubscribe: __ELECTRON_EXPOSURE__
                 .registerDocumentClickEventListener(
@@ -121,23 +121,23 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         );
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         this.subscription.unsubscribe();
     }
 
-    trayIconColorPickerChangeHandler(color: string) {
+    trayIconColorPickerChangeHandler(color: string): void {
         this.controls.customTrayIconColor.patchValue(color);
     }
 
-    bgColorPickerChangeHandler(color: string) {
+    bgColorPickerChangeHandler(color: string): void {
         this.controls.customUnreadBgColor.patchValue(color);
     }
 
-    textColorPickerChangeHandler(color: string) {
+    textColorPickerChangeHandler(color: string): void {
         this.controls.customUnreadTextColor.patchValue(color);
     }
 
-    openSettingsFolder(event: Event) {
+    openSettingsFolder(event: Event): void {
         event.preventDefault();
         this.store.dispatch(NAVIGATION_ACTIONS.OpenSettingsFolder());
     }

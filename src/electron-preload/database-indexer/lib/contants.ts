@@ -8,7 +8,7 @@ const htmlToText: { fromString: (value: string) => string } = remote.require("ht
 export const LOGGER = buildLoggerBundle("[preload: database-indexer]");
 
 export const FIELD_DESCRIPTION: Record<keyof typeof INDEXABLE_MAIL_FIELDS_STUB_CONTAINER, {
-    accessor: (doc: IndexableMail) => string,
+    accessor: (doc: IndexableMail) => string;
     boost: number;
 }> = (() => {
     const joinListBy = " ";

@@ -37,13 +37,13 @@ declare module "pureimage" {
     function encodePNGToStream(bitmap: Bitmap, stream: Writable): Promise<void>;
 
     function registerFont(binaryPath: string, family: string, weight?: number, style?: string, variant?: string): {
-        binary: string,
-        family: string,
-        weight?: number,
-        style?: string,
-        variant?: string,
+        binary: string;
+        family: string;
+        weight?: number;
+        style?: string;
+        variant?: string;
         loaded: boolean;
-        font: null | any;
+        font: null | any; // eslint-disable-line @typescript-eslint/no-explicit-any
         load: (cb: () => void) => void;
     };
 

@@ -16,10 +16,10 @@ export interface MailSorter {
 
 export interface MailsBundle {
     title: string;
-    items: Array<{ mail: View.Mail; conversationSize: number; }>;
+    items: Array<{ mail: View.Mail; conversationSize: number }>;
     sorters: MailSorter[];
     sorterIndex: number;
-    paging: { page: number; end: number; nextPageSize: number; pageSize: number; };
+    paging: { page: number; end: number; nextPageSize: number; pageSize: number };
 }
 
 export type MailsBundleKey = keyof Pick<Instance, "folderMailsBundle" | "folderConversationsBundle" | "searchMailsBundle">;
@@ -48,12 +48,79 @@ const initialState: State = {
     instances: {},
 };
 
-export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACTIONS> & UnionOf<typeof NAVIGATION_ACTIONS>): State {
-    if (NAVIGATION_ACTIONS.is.Logout(action)) {
-        return initialState;
-    }
+function sortMails(mailsBundle: MailsBundle): void {
+    const {prop, desc} = mailsBundle.sorters[mailsBundle.sorterIndex];
 
-    return innerReducer(state, action);
+    mailsBundle.items.sort(
+        desc
+            ? (o1, o2) => Number(o2.mail[prop]) - Number(o1.mail[prop])
+            : (o1, o2) => Number(o1.mail[prop]) - Number(o2.mail[prop]),
+    );
+}
+
+function resolveInstanceKey(dbAccountPk: DbAccountPk): string {
+    return JSON.stringify(dbAccountPk);
+}
+
+function initMailBundlePaging(): MailsBundle["paging"] {
+    return {page: 0, end: 0, nextPageSize: 0, pageSize: 50};
+}
+
+function initMailBundleSorters(): MailSorter[] {
+    return [
+        {
+            title: "Date (Desc)",
+            prop: "sentDate",
+            desc: true,
+        },
+        {
+            title: "Date (Asc)",
+            prop: "sentDate",
+        },
+    ];
+}
+
+function initInstance(): NoExtraProperties<Instance> {
+    const common = (): NoExtraProperties<Pick<MailsBundle, "items" | "sorterIndex" | "paging">> => {
+        return {
+            items: [],
+            sorterIndex: 0,
+            paging: initMailBundlePaging(),
+        };
+    };
+
+    return {
+        folders: {
+            system: [],
+            custom: [],
+        },
+        folderMailsBundle: {
+            ...common(),
+            title: "folder mails",
+            sorters: initMailBundleSorters(),
+        },
+        folderConversationsBundle: {
+            ...common(),
+            title: "folder conversations",
+            sorters: initMailBundleSorters(),
+        },
+        searchMailsBundle: {
+            ...common(),
+            title: "found mails",
+            sorters: [
+                {
+                    title: "Score (Desc)",
+                    prop: "score" as keyof View.Mail, // TS get rid of casting
+                    desc: true,
+                },
+                {
+                    title: "Score (Asc)",
+                    prop: "score" as keyof View.Mail, // TS get rid of casting
+                },
+                ...initMailBundleSorters(),
+            ],
+        },
+    };
 }
 
 // TODO use "immer"
@@ -389,75 +456,10 @@ function innerReducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACTIO
     });
 }
 
-function sortMails(mailsBundle: MailsBundle) {
-    const {prop, desc} = mailsBundle.sorters[mailsBundle.sorterIndex];
+export function reducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACTIONS> & UnionOf<typeof NAVIGATION_ACTIONS>): State {
+    if (NAVIGATION_ACTIONS.is.Logout(action)) {
+        return initialState;
+    }
 
-    mailsBundle.items.sort(
-        desc
-            ? (o1, o2) => Number(o2.mail[prop]) - Number(o1.mail[prop])
-            : (o1, o2) => Number(o1.mail[prop]) - Number(o2.mail[prop]),
-    );
-}
-
-function resolveInstanceKey(dbAccountPk: DbAccountPk): string {
-    return JSON.stringify(dbAccountPk);
-}
-
-function initInstance(): Instance {
-    const common = () => ({
-        items: [],
-        sorterIndex: 0,
-        paging: initMailBundlePaging(),
-    });
-
-    return {
-        folders: {
-            system: [],
-            custom: [],
-        },
-        folderMailsBundle: {
-            ...common(),
-            title: "folder mails",
-            sorters: initMailBundleSorters(),
-        },
-        folderConversationsBundle: {
-            ...common(),
-            title: "folder conversations",
-            sorters: initMailBundleSorters(),
-        },
-        searchMailsBundle: {
-            ...common(),
-            title: "found mails",
-            sorters: [
-                {
-                    title: "Score (Desc)",
-                    prop: "score" as keyof View.Mail, // TS get rid of casting
-                    desc: true,
-                },
-                {
-                    title: "Score (Asc)",
-                    prop: "score" as keyof View.Mail, // TS get rid of casting
-                },
-                ...initMailBundleSorters(),
-            ],
-        },
-    };
-}
-
-function initMailBundlePaging(): MailsBundle["paging"] {
-    return {page: 0, end: 0, nextPageSize: 0, pageSize: 50};
-}
-
-function initMailBundleSorters(): MailSorter[] {
-    return [
-        {
-            title: "Date (Desc)",
-            prop: "sentDate",
-            desc: true,
-        },
-        {
-            title: "Date (Asc)",
-            prop: "sentDate",
-        },
-    ];
+    return innerReducer(state, action);
 }

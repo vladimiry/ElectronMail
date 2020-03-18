@@ -18,10 +18,15 @@ import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
 export class AccountsService {
     constructor(
         private readonly store: Store<State>,
-        private readonly actions$: Actions<{ type: string; payload: any }>,
+        private readonly actions$: Actions<{
+            type: string;
+            payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+        }>,
     ) {}
 
-    buildLoginDelaysResetAction({login}: LoginFieldContainer) {
+    buildLoginDelaysResetAction(
+        {login}: LoginFieldContainer,
+    ): ReturnType<typeof ACCOUNTS_ACTIONS.Patch> {
         return ACCOUNTS_ACTIONS.Patch({
             login,
             patch: {loginDelayedSeconds: undefined, loginDelayedUntilSelected: undefined},
@@ -86,11 +91,9 @@ export class AccountsService {
                         this.store.pipe(
                             select(AccountsSelectors.FEATURED.selectedLogin),
                             filter((selectedLogin) => selectedLogin === login),
-                            // tslint:disable:max-line-length
                             // delay handles the case if the app has no selected account and "on select" trigger gets disabled
                             // if there is no selected account the app will select the account automatically
                             // and previously setup "on select" trigger kicks in before it gets reset by new TryToLogin action
-                            // tslint:enable:max-line-length
                             delay(ONE_SECOND_MS * 1.5),
                             map(() => ({trigger: "triggered on account selection"})),
                         ),
@@ -102,9 +105,7 @@ export class AccountsService {
         const delayTriggersDispose$ = race([
             this.actions$.pipe(
                 unionizeActionFilter(ACCOUNTS_ACTIONS.is.TryToLogin),
-                filter(({payload}) => {
-                    return payload.account.accountConfig.login === login;
-                }),
+                filter(({payload}) => payload.account.accountConfig.login === login),
                 map(({type: actionType}) => `another "${actionType}" action triggered`),
             ),
             this.store.pipe(
@@ -125,7 +126,7 @@ export class AccountsService {
                     if (liveAccount.progress.password) {
                         return `"login" action performing is already in progress`;
                     }
-                    return;
+                    return void 0;
                 }),
                 filter((reason) => typeof reason === "string"),
             ),

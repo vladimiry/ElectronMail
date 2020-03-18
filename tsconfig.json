@@ -31,14 +31,18 @@
     "outDir": "./app",
     "baseUrl": ".",
     "paths": {
-      "remeda/*": ["./node_modules/remeda/dist/es/*"]
+      "remeda/*": [
+        "./node_modules/remeda/dist/es/*"
+      ]
     },
     "typeRoots": [
       "./node_modules/@types",
       "./src/@types"
     ]
   },
-  "exclude": [
-    "node_modules"
+  "include": [
+    "scripts/**/*",
+    "src/**/*",
+    "webpack-configs/**/*"
   ]
 }

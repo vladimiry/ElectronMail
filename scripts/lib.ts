@@ -10,7 +10,7 @@ import {PROVIDER_REPOS} from "src/shared/constants";
 
 export const CWD = path.resolve(process.cwd());
 
-// tslint:disable-next-line:no-console
+// eslint-disable-next-line no-console
 export const LOG = console.log;
 
 export const LOG_LEVELS = {
@@ -31,6 +31,12 @@ const execShellPrintEnvWhitelist: ReadonlyArray<string> = [
         return Object.keys(stub);
     })(),
 ] as const;
+
+export function formatStreamChunk(
+    chunk: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+): string {
+    return Buffer.from(chunk, "utf-8").toString();
+}
 
 export async function execShell(
     [command, args, options]: Parameters<typeof spawnAsync>,
@@ -85,10 +91,6 @@ export async function execShell(
         omitProps.forEach((omitProp) => delete error[omitProp]);
         throw error;
     }
-}
-
-export function formatStreamChunk(chunk: any): string {
-    return Buffer.from(chunk, "utf-8").toString();
 }
 
 export async function fetchUrl(args: Parameters<typeof fetch>): ReturnType<typeof fetch> {

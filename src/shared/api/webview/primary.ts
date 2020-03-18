@@ -11,12 +11,6 @@ import {buildLoggerBundle} from "src/electron-preload/lib/util";
 
 const {Promise, Observable} = ActionType;
 
-export type ProtonApiScan = ScanService<typeof PROTONMAIL_IPC_WEBVIEW_API>;
-
-export type ProtonApi = ProtonApiScan["ApiClient"];
-
-export type ProtonNotificationOutput = Partial<Notifications> & Partial<{ batchEntityUpdatesCounter: number }>;
-
 export const PROTONMAIL_IPC_WEBVIEW_API_DEFINITION = {
     ping:
         Promise<ReadonlyDeep<ZoneApiParameter>>(),
@@ -27,7 +21,7 @@ export const PROTONMAIL_IPC_WEBVIEW_API_DEFINITION = {
     login2fa:
         Promise<ReadonlyDeep<{ secret: string } & ZoneApiParameter>>(),
     buildDbPatch:
-        Observable<ReadonlyDeep<DbAccountPk & { metadata: Readonly<FsDbAccount["metadata"]> | null; } & ZoneApiParameter>>(),
+        Observable<ReadonlyDeep<DbAccountPk & { metadata: Readonly<FsDbAccount["metadata"]> | null } & ZoneApiParameter>>(),
     selectMailOnline:
         Promise<ReadonlyDeep<{
             pk: DbAccountPk; mail: Pick<Mail, "id" | "mailFolderIds" | "conversationEntryPk">;
@@ -35,9 +29,9 @@ export const PROTONMAIL_IPC_WEBVIEW_API_DEFINITION = {
     fetchSingleMail:
         Promise<ReadonlyDeep<DbAccountPk & { mailPk: Mail["pk"] } & ZoneApiParameter>>(),
     makeRead:
-        Promise<ReadonlyDeep<DbAccountPk & { messageIds: string[]; } & ZoneApiParameter>>(),
+        Promise<ReadonlyDeep<DbAccountPk & { messageIds: string[] } & ZoneApiParameter>>(),
     notification:
-        Observable<ReadonlyDeep<{ entryUrl: string; entryApiUrl: string; } & ZoneApiParameter>, ProtonNotificationOutput>(),
+        Observable<ReadonlyDeep<{ entryUrl: string; entryApiUrl: string } & ZoneApiParameter>, ProtonNotificationOutput>(),
     unlock:
         ActionType.Promise<MailPasswordFieldContainer & ZoneApiParameter>(),
     resolveSavedProtonClientSession:
@@ -49,3 +43,9 @@ export const PROTONMAIL_IPC_WEBVIEW_API = createWebViewApiService({
     apiDefinition: PROTONMAIL_IPC_WEBVIEW_API_DEFINITION,
     logger: buildLoggerBundle("[IPC_WEBVIEW_API:protonmail]"),
 });
+
+export type ProtonApiScan = ScanService<typeof PROTONMAIL_IPC_WEBVIEW_API>;
+
+export type ProtonApi = ProtonApiScan["ApiClient"];
+
+export type ProtonNotificationOutput = Partial<Notifications> & Partial<{ batchEntityUpdatesCounter: number }>;

@@ -21,7 +21,10 @@ export function buildFolder(input: RestModel.Label): Model.Folder {
         }
         : {
             folderType: Model.MAIL_FOLDER_TYPE.CUSTOM,
-            name: Model.PROTONMAIL_MAILBOX_IDENTIFIERS._.resolveNameByValue(input.ID as any, false) || input.Name,
+            name: Model.PROTONMAIL_MAILBOX_IDENTIFIERS._.resolveNameByValue(
+                input.ID as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+                false,
+            ) ?? input.Name,
         };
     return {
         ...buildBaseEntity(input),

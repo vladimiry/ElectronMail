@@ -10,21 +10,28 @@ export const isUpsertOperationType: (v: Unpacked<typeof RestModel.EVENT_ACTION._
     return result;
 })();
 
-export const angularJsHttpResponseTypeGuard: <T extends any = any>(data: ng.IHttpResponse<T> | any) => data is ng.IHttpResponse<T> = ((
-    signatureKeys = Object.freeze<keyof ng.IHttpResponse<any>>(["data", "status", "config", "statusText", "xhrStatus"]),
-) => {
-    return ((data: ng.IHttpResponse<any> | any) => {
-        if (typeof data !== "object") {
-            return false;
+export const angularJsHttpResponseTypeGuard: <T extends any = any>( // eslint-disable-line @typescript-eslint/no-explicit-any
+    data: ng.IHttpResponse<T> | any // eslint-disable-line @typescript-eslint/no-explicit-any
+) => data is ng.IHttpResponse<T> = (() => {
+    const signatureKeys
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        = Object.freeze<keyof ng.IHttpResponse<any>>(["data", "status", "config", "statusText", "xhrStatus"]);
+    return (
+        (
+            data: ng.IHttpResponse<any> | any // eslint-disable-line @typescript-eslint/no-explicit-any
+        ) => {
+            if (typeof data !== "object") {
+                return false;
+            }
+            return signatureKeys.reduce((count, prop) => count + Number(prop in data), 0) === signatureKeys.length;
         }
-        return signatureKeys.reduce((count, prop) => count + Number(prop in data), 0) === signatureKeys.length;
-    }) as typeof angularJsHttpResponseTypeGuard;
+    ) as typeof angularJsHttpResponseTypeGuard;
 })();
 
 export function isLoggedIn(): boolean {
     const appElement = window.angular && window.angular.element(document);
     const $injector = appElement && appElement.data("$injector");
-    const authentication: undefined | { user?: object; isLoggedIn: () => boolean; } = $injector && $injector.get("authentication");
+    const authentication: undefined | { user?: object; isLoggedIn: () => boolean } = $injector && $injector.get("authentication");
 
     return Boolean(
         authentication
@@ -37,7 +44,23 @@ export function isLoggedIn(): boolean {
     );
 }
 
-export const preprocessError: Parameters<typeof buildDbPatchRetryPipeline>[0] = (rawError: any) => {
+export function depersonalizeLoggedUrl(url: string): string {
+    const parts = url.split("/");
+    const lastPart = parts.pop();
+    // we assume that long last part is not the endpoint name/subname but a value/id
+    const skipLastPart = lastPart && lastPart.length >= 10;
+
+    return [
+        ...parts,
+        skipLastPart
+            ? "<wiped-out>"
+            : lastPart,
+    ].join("/");
+}
+
+export const preprocessError: Parameters<typeof buildDbPatchRetryPipeline>[0] = (
+    rawError: any // eslint-disable-line @typescript-eslint/no-explicit-any
+) => {
     type SanitizedNgHttpResponse = (Skip<ng.IHttpResponse<"<wiped-out>">, "headers"> & { message: string; headers: "<wiped-out>" });
     const sanitizedNgHttpResponse: SanitizedNgHttpResponse | false = angularJsHttpResponseTypeGuard(rawError)
         ? {
@@ -82,16 +105,3 @@ export const preprocessError: Parameters<typeof buildDbPatchRetryPipeline>[0] = 
     };
 };
 
-export function depersonalizeLoggedUrl(url: string): string {
-    const parts = url.split("/");
-    const lastPart = parts.pop();
-    // we assume that long last part is not the endpoint name/subname but a value/id
-    const skipLastPart = lastPart && lastPart.length >= 10;
-
-    return [
-        ...parts,
-        skipLastPart
-            ? "<wiped-out>"
-            : lastPart,
-    ].join("/");
-}

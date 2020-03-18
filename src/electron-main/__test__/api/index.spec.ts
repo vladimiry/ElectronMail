@@ -61,19 +61,126 @@ interface TestContext {
         | "toggleLocalDbMailsListViewMode"
         | "updateCheck"
         | "updateOverlayIcon">;
-    mocks: Unpacked<ReturnType<typeof buildMocks>>;
+    mocks: Unpacked<ReturnType<typeof buildMocks>>; // eslint-disable-line @typescript-eslint/no-use-before-define
 }
 
 const test = ava as TestInterface<TestContext>;
 
-const OPTIONS = Object.freeze({
+const OPTIONS = {
     dataDirectory: path.join(
         process.cwd(),
         `electron-mail.spec`,
         `${path.basename(__filename)}-${Date.now()}`,
     ),
     masterPassword: "masterPassword123",
-});
+} as const;
+
+function buildProtonmailAccountData(): Readonly<AccountConfigCreateUpdatePatch> {
+    return {
+        login: generateRandomString(),
+        entryUrl: generateRandomString(),
+        credentials: {
+            password: generateRandomString(),
+            twoFactorCode: generateRandomString(),
+            mailPassword: generateRandomString(),
+        },
+    };
+}
+
+async function readConfig(endpoints: TestContext["endpoints"]): Promise<Config> {
+    return endpoints.readConfig();
+}
+
+async function readConfigAndSettings(
+    endpoints: TestContext["endpoints"], payload: PasswordFieldContainer & { savePassword?: boolean; supressErrors?: boolean },
+): Promise<Settings> {
+    await readConfig(endpoints);
+    return endpoints.readSettings(payload);
+}
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+async function buildMocks() {
+    const openPathSpy = sinon.spy();
+    const openExternalSpy = sinon.spy();
+
+    return {
+        "src/shared/api/main": {
+            IPC_MAIN_API: {
+                register: sinon.spy(),
+            },
+        } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        "src/electron-main/session": {
+            initSessionByAccount: sinon.stub().returns(Promise.resolve()),
+            configureSessionByAccount: sinon.stub().returns(Promise.resolve()),
+            initSession: sinon.stub().returns(Promise.resolve()),
+            getDefaultSession: sinon.stub().returns({}),
+        },
+        "src/electron-main/util": {
+            buildSettingsAdapter,
+        },
+        "src/electron-main/storage-upgrade": {
+            upgradeConfig: sinon.stub().returns(false),
+            upgradeSettings: sinon.stub().returns(false),
+        },
+        "./endpoints-builders": {
+            TrayIcon: {
+                buildEndpoints: sinon.stub().returns(Promise.resolve({updateOverlayIcon: () => of(null)})),
+            },
+        } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        "src/electron-main/keytar": {
+            getPassword: sinon.stub().returns(OPTIONS.masterPassword),
+            deletePassword: sinon.spy(),
+            setPassword: sinon.spy(),
+        },
+        "src/electron-main/window/full-text-search": {
+            attachFullTextIndexWindow: sinon.stub().returns(Promise.resolve()),
+            detachFullTextIndexWindow: sinon.stub().returns(Promise.resolve()),
+        },
+        "src/electron-main/window/about": {
+            showAboutBrowserWindow: sinon.stub().returns(Promise.resolve()),
+        },
+        "electron": {
+            app: {
+                exit: sinon.spy(),
+                setAppUserModelId: sinon.spy(),
+                on: sinon.stub()
+                    .callsArg(1)
+                    .withArgs("ready")
+                    .callsArgWith(1, {}, {on: sinon.spy()}),
+            },
+            remote: {
+                BrowserWindow: sinon.spy(),
+            },
+            ipcMain: {
+                addListener: sinon.spy(),
+                emit: sinon.spy(),
+                on: sinon.spy(),
+                removeListener: sinon.spy(),
+            },
+            shell: {
+                openPathSpy,
+                openPath: await (async () => { // eslint-disable-line @typescript-eslint/explicit-function-return-type
+                    const openPath: (typeof import("electron"))["shell"]["openPath"] = async (url) => {
+                        openPathSpy(url);
+                        return "";
+                    };
+                    return openPath;
+                })(),
+                openExternalSpy,
+                openExternal: await (async () => { // eslint-disable-line @typescript-eslint/explicit-function-return-type
+                    const openExternal: (typeof import("electron"))["shell"]["openExternal"] = async (url) => {
+                        openExternalSpy(url);
+                    };
+                    return openExternal;
+                })(),
+            },
+            nativeImage: {
+                createFromPath: sinon.stub().returns({toPNG: sinon.spy}),
+                createFromBuffer: sinon.stub(),
+            },
+        },
+    } as const;
+}
 
 const tests: Record<keyof TestContext["endpoints"], (t: ExecutionContext<TestContext>) => ImplementationResult> = {
     // TODO update "updateAccount" api method test (verify more fields)
@@ -135,8 +242,8 @@ const tests: Record<keyof TestContext["endpoints"], (t: ExecutionContext<TestCon
         const {addAccount, updateAccount} = endpoints;
         const addPayload = buildProtonmailAccountData();
         const updatePayload: AccountConfigCreateUpdatePatch = produce(addPayload, (draft) => {
-            (draft.entryUrl as any) = generateRandomString();
-            (draft.database as any) = Boolean(!draft.database);
+            (draft.entryUrl as any) = generateRandomString(); // eslint-disable-line @typescript-eslint/no-explicit-any
+            (draft.database as any) = Boolean(!draft.database); // eslint-disable-line @typescript-eslint/no-explicit-any
             draft.credentials.password = generateRandomString();
             draft.credentials.mailPassword = generateRandomString();
             draft.proxy = {proxyRules: "http=foopy:80;ftp=foopy2", proxyBypassRules: "<local>"};
@@ -192,8 +299,14 @@ const tests: Record<keyof TestContext["endpoints"], (t: ExecutionContext<TestCon
         const updatedSettings = await removeAccount(removePayload);
 
         t.is(updatedSettings.accounts.length, 1, `1 account`);
-        t.deepEqual(updatedSettings, expectedSettings as any, `settings with updated account is returned`);
-        t.deepEqual(await t.context.ctx.settingsStore.read(), expectedSettings as any, `settings with updated account is persisted`);
+        t.deepEqual(
+            updatedSettings, expectedSettings as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+            `settings with updated account is returned`,
+        );
+        t.deepEqual(
+            await t.context.ctx.settingsStore.read(), expectedSettings as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+            `settings with updated account is persisted`,
+        );
     },
 
     changeAccountOrder: async (t) => {
@@ -277,7 +390,10 @@ const tests: Record<keyof TestContext["endpoints"], (t: ExecutionContext<TestCon
         const dbResetSpy = sinon.spy(t.context.ctx.db, "reset");
         const sessionDbResetSpy = sinon.spy(t.context.ctx.sessionDb, "reset");
         const sessionStorageResetSpy = sinon.spy(t.context.ctx.sessionStorage, "reset");
-        const updateOverlayIconSpy = sinon.spy(endpoints as any, "updateOverlayIcon");
+        const updateOverlayIconSpy = sinon.spy(
+            endpoints as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+            "updateOverlayIcon",
+        );
 
         await endpoints.logout();
         t.falsy(t.context.ctx.settingsStore.adapter);
@@ -311,7 +427,7 @@ const tests: Record<keyof TestContext["endpoints"], (t: ExecutionContext<TestCon
     },
 
     openExternal: async (t) => {
-        const openExternalSpy = t.context.mocks.electron.shell.openExternalSpy;
+        const {openExternalSpy} = t.context.mocks.electron.shell;
         const action = t.context.endpoints.openExternal;
 
         const forbiddenUrls = [
@@ -339,13 +455,13 @@ const tests: Record<keyof TestContext["endpoints"], (t: ExecutionContext<TestCon
     },
 
     openSettingsFolder: async (t) => {
-        const openPathSpy = t.context.mocks.electron.shell.openPathSpy;
+        const {openPathSpy} = t.context.mocks.electron.shell;
         await t.context.endpoints.openSettingsFolder();
         t.true(openPathSpy.alwaysCalledWith(t.context.ctx.locations.userDataDir));
     },
 
     patchBaseConfig: async (t) => {
-        const endpoints = t.context.endpoints;
+        const {endpoints} = t.context;
         const action = endpoints.patchBaseConfig;
         const patches: Array<Partial<BaseConfig>> = [
             {
@@ -452,116 +568,22 @@ Object.entries(tests).forEach(([apiMethodName, method]) => {
     test.serial(apiMethodName, method);
 });
 
-async function readConfig(endpoints: TestContext["endpoints"]): Promise<Config> {
-    return await endpoints.readConfig();
-}
-
-async function readConfigAndSettings(
-    endpoints: TestContext["endpoints"], payload: PasswordFieldContainer & { savePassword?: boolean; supressErrors?: boolean },
-): Promise<Settings> {
-    await readConfig(endpoints);
-    return await endpoints.readSettings(payload);
-}
-
-async function buildMocks() {
-    const openPathSpy = sinon.spy();
-    const openExternalSpy = sinon.spy();
-
-    return {
-        "src/shared/api/main": {
-            IPC_MAIN_API: {
-                register: sinon.spy(),
-            },
-        } as any,
-        "src/electron-main/session": {
-            initSessionByAccount: sinon.stub().returns(Promise.resolve()),
-            configureSessionByAccount: sinon.stub().returns(Promise.resolve()),
-            initSession: sinon.stub().returns(Promise.resolve()),
-            getDefaultSession: sinon.stub().returns({}),
-        },
-        "src/electron-main/util": {
-            buildSettingsAdapter,
-        },
-        "src/electron-main/storage-upgrade": {
-            upgradeConfig: sinon.stub().returns(false),
-            upgradeSettings: sinon.stub().returns(false),
-        },
-        "./endpoints-builders": {
-            TrayIcon: {
-                buildEndpoints: sinon.stub().returns(Promise.resolve({updateOverlayIcon: () => of(null)})),
-            },
-        } as any,
-        "src/electron-main/keytar": {
-            getPassword: sinon.stub().returns(OPTIONS.masterPassword),
-            deletePassword: sinon.spy(),
-            setPassword: sinon.spy(),
-        },
-        "src/electron-main/window/full-text-search": {
-            attachFullTextIndexWindow: sinon.stub().returns(Promise.resolve()),
-            detachFullTextIndexWindow: sinon.stub().returns(Promise.resolve()),
-        },
-        "src/electron-main/window/about": {
-            showAboutBrowserWindow: sinon.stub().returns(Promise.resolve()),
-        },
-        "electron": {
-            app: {
-                exit: sinon.spy(),
-                setAppUserModelId: sinon.spy(),
-                on: sinon.stub()
-                    .callsArg(1)
-                    .withArgs("ready")
-                    .callsArgWith(1, {}, {on: sinon.spy()}),
-            },
-            remote: {
-                BrowserWindow: sinon.spy(),
-            },
-            ipcMain: {
-                addListener: sinon.spy(),
-                emit: sinon.spy(),
-                on: sinon.spy(),
-                removeListener: sinon.spy(),
-            },
-            shell: {
-                openPathSpy,
-                openPath: await (async () => {
-                    const openPath: (typeof import("electron"))["shell"]["openPath"] = async (url) => {
-                        openPathSpy(url);
-                        return "";
-                    };
-                    return openPath;
-                })(),
-                openExternalSpy,
-                openExternal: await (async () => {
-                    const openExternal: (typeof import("electron"))["shell"]["openExternal"] = async (url) => {
-                        openExternalSpy(url);
-                    };
-                    return openExternal;
-                })(),
-            },
-            nativeImage: {
-                createFromPath: sinon.stub().returns({toPNG: sinon.spy}),
-                createFromBuffer: sinon.stub(),
-            },
-        },
-    } as const;
-}
-
 test.beforeEach(async (t) => {
     t.context.mocks = await buildMocks();
 
     const mockedModule = await rewiremock.around(
-        () => import("src/electron-main/api"),
+        async () => import("src/electron-main/api"),
         (mock) => {
             const {mocks} = t.context;
             mock("electron").with(mocks.electron);
-            mock(() => import("src/electron-main/keytar"))/*.callThrough()*/.with(mocks["src/electron-main/keytar"]);
-            mock(() => import("src/electron-main/window/full-text-search")).callThrough().with(mocks["src/electron-main/window/full-text-search"]); // tslint:disable-line:max-line-length
-            mock(() => import("src/electron-main/window/about")).callThrough().with(mocks["src/electron-main/window/about"]);
-            mock(() => import("src/shared/api/main")).callThrough().with(mocks["src/shared/api/main"]);
-            mock(() => import("src/electron-main/session")).callThrough().with(mocks["src/electron-main/session"]);
-            mock(() => import("src/electron-main/util")).callThrough().with(mocks["src/electron-main/util"]);
-            mock(() => import("src/electron-main/storage-upgrade")).callThrough().with(mocks["src/electron-main/storage-upgrade"]);
-            mock(() => import("src/electron-main/api/endpoints-builders")).callThrough().with(mocks["./endpoints-builders"]);
+            mock(async () => import("src/electron-main/keytar"))/*.callThrough()*/.with(mocks["src/electron-main/keytar"]);
+            mock(async () => import("src/electron-main/window/full-text-search")).callThrough().with(mocks["src/electron-main/window/full-text-search"]); // eslint-disable-line max-len
+            mock(async () => import("src/electron-main/window/about")).callThrough().with(mocks["src/electron-main/window/about"]);
+            mock(async () => import("src/shared/api/main")).callThrough().with(mocks["src/shared/api/main"]);
+            mock(async () => import("src/electron-main/session")).callThrough().with(mocks["src/electron-main/session"]);
+            mock(async () => import("src/electron-main/util")).callThrough().with(mocks["src/electron-main/util"]);
+            mock(async () => import("src/electron-main/storage-upgrade")).callThrough().with(mocks["src/electron-main/storage-upgrade"]);
+            mock(async () => import("src/electron-main/api/endpoints-builders")).callThrough().with(mocks["./endpoints-builders"]);
         },
     );
 
@@ -572,7 +594,7 @@ test.beforeEach(async (t) => {
         `${testName.replace(/[^A-Za-z0-9]/g, "_")}`,
     );
     const initialStores = {config: INITIAL_STORES.config(), settings: INITIAL_STORES.settings()};
-    const encryptionPreset = initialStores.config.encryptionPreset;
+    const {encryptionPreset} = initialStores.config;
     const memFsVolume = Fs.MemFs.volume();
 
     memFsVolume._impl.mkdirpSync(process.cwd());
@@ -585,14 +607,18 @@ test.beforeEach(async (t) => {
     (encryptionPreset as import("type-fest").Mutable<typeof encryptionPreset>).encryption
         = {type: "crypto", preset: "algorithm:aes-256-cbc"};
 
-    logger.transports.file = ((msg: any) => {
-        logger.transports.console(msg);
-    }) as any;
+    logger.transports.file = (
+        (
+            msg: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        ) => {
+            logger.transports.console(msg);
+        }
+    ) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
     const {initContext} = await rewiremock.around(
-        () => import("src/electron-main/context"),
+        async () => import("src/electron-main/context"),
         (mock) => {
-            mock(() => import("src/electron-main/protocol")).append({
+            mock(async () => import("src/electron-main/protocol")).append({
                 registerStandardSchemes: sinon.stub(),
                 registerSessionProtocols: sinon.stub().returns(Promise.resolve({})),
             });
@@ -620,14 +646,3 @@ test.beforeEach(async (t) => {
     // TODO make sure "IPC_MAIN_API.register" has been called
 });
 
-function buildProtonmailAccountData(): Readonly<AccountConfigCreateUpdatePatch> {
-    return {
-        login: generateRandomString(),
-        entryUrl: generateRandomString(),
-        credentials: {
-            password: generateRandomString(),
-            twoFactorCode: generateRandomString(),
-            mailPassword: generateRandomString(),
-        },
-    };
-}

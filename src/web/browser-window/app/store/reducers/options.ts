@@ -1,5 +1,5 @@
-import produce from "immer";
 import {UnionOf} from "@vladimiry/unionize";
+import {produce} from "immer";
 
 import * as fromRoot from "src/web/browser-window/app/store/reducers/root";
 import {Config} from "src/shared/model/options";

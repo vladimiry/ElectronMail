@@ -4,7 +4,9 @@ import {isPasswordInput, isWritable} from "src/electron-preload/lib/events-handl
 
 type ObservableElement = Pick<HTMLElement, "addEventListener" | "removeEventListener">;
 
-const processedKeyDownElements = new WeakMap<ObservableElement, ReturnType<typeof registerDocumentKeyDownEventListener>>();
+const processedKeyDownElements
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    = new WeakMap<ObservableElement, ReturnType<typeof registerDocumentKeyDownEventListener>>();
 
 const keyCodes = {
     A: 65,
@@ -40,7 +42,9 @@ export function registerDocumentKeyDownEventListener<E extends ObservableElement
                 }
             }
 
-            const el: Element | null = (event.target as any);
+            const el: Element | null = (
+                event.target as any // eslint-disable-line @typescript-eslint/no-explicit-any
+            );
             const cmdOrCtrl = event.ctrlKey || event.metaKey;
 
             if (!cmdOrCtrl) {

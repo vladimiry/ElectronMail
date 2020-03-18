@@ -9,8 +9,8 @@ import {ReadonlyDeep} from "type-fest";
 import {loggedOutBundle, recolor, trayIconBundleFromPath, unreadNative} from "./lib";
 
 const config: ReadonlyDeep<{
-    loggedOut: CircleConfig,
-    unread: CircleConfig & { textColor: string },
+    loggedOut: CircleConfig;
+    unread: CircleConfig & { textColor: string };
 }> = {
     loggedOut: {scale: .25, color: "#F9C83E"},
     unread: {scale: .75, color: DEFAULT_UNREAD_BADGE_BG_COLOR, textColor: DEFAULT_UNREAD_BADGE_BG_TEXT},
@@ -24,7 +24,7 @@ const resolveState: (ctx: ReadonlyDeep<Context>) => Promise<{
 }> = (() => {
     let state: Unpacked<ReturnType<typeof resolveState>> | undefined;
 
-    return async (ctx: ReadonlyDeep<Context>) => {
+    const resultFn: typeof resolveState = async (ctx: ReadonlyDeep<Context>) => {
         if (state) {
             return state;
         }
@@ -42,6 +42,8 @@ const resolveState: (ctx: ReadonlyDeep<Context>) => Promise<{
 
         return state;
     };
+
+    return resultFn;
 })();
 
 export async function buildEndpoints(

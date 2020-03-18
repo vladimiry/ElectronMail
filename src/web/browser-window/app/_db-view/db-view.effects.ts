@@ -215,6 +215,9 @@ export class DbViewEffects {
         private api: ElectronService,
         private store: Store<State>,
         private ngZone: NgZone,
-        private actions$: Actions<{ type: string; payload: any }>,
+        private actions$: Actions<{
+            type: string;
+            payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+        }>,
     ) {}
 }

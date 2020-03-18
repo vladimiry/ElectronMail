@@ -12,6 +12,21 @@ import {resolveInitialisedSession} from "src/electron-main/session";
 // TODO enable minimal logging
 // const logger = curryFunctionMembers(electronLog, "[electron-main/api/endpoints-builders/proton-session]");
 
+function resolveTokenCookies(
+    items: ReadonlyDeep<AccountPersistentSession>["cookies"],
+): Readonly<{ accessTokens: typeof items; refreshTokens: typeof items }> {
+    return {
+        accessTokens: items.filter(({name}) => name.toUpperCase().startsWith("AUTH-")),
+        refreshTokens: items.filter(({name}) => name.toUpperCase().startsWith("REFRESH-")),
+    } as const;
+}
+
+function pickTokenCookiePropsToApply(
+    cookie: ReadonlyDeep<Electron.Cookie>,
+): Pick<typeof cookie, "httpOnly" | "name" | "path" | "secure" | "value"> {
+    return pick(cookie, ["httpOnly", "name", "path", "secure", "value"]);
+}
+
 export async function buildEndpoints(
     ctx: Context,
 ): Promise<Pick<IpcMainApiEndpoints,
@@ -122,15 +137,3 @@ export async function buildEndpoints(
     return endpoints;
 }
 
-function resolveTokenCookies(
-    items: ReadonlyDeep<AccountPersistentSession>["cookies"],
-): Readonly<{ accessTokens: typeof items; refreshTokens: typeof items; }> {
-    return {
-        accessTokens: items.filter(({name}) => name.toUpperCase().startsWith("AUTH-")),
-        refreshTokens: items.filter(({name}) => name.toUpperCase().startsWith("REFRESH-")),
-    } as const;
-}
-
-function pickTokenCookiePropsToApply(cookie: ReadonlyDeep<Electron.Cookie>) {
-    return pick(cookie, ["httpOnly", "name", "path", "secure", "value"]);
-}

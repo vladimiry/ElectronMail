@@ -30,7 +30,7 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
         super("primary", injector);
     }
 
-    ngOnInit() {
+    ngOnInit(): void {
         super.ngOnInit();
 
         this.addSubscription(
@@ -89,7 +89,7 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
                         const syncingFinishPromise = race([
                             from(finishPromise),
                             breakPreviousSyncing$.pipe(take(1)),
-                        ]).toPromise().then(() => {});
+                        ]).toPromise().then(() => {}); // eslint-disable-line @typescript-eslint/no-empty-function
 
                         this.event.emit({
                             type: "action",
@@ -100,7 +100,7 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
         );
     }
 
-    private onWebViewDomReadyOnceHandler(webView: Electron.WebviewTag) {
+    private onWebViewDomReadyOnceHandler(webView: Electron.WebviewTag): void {
         this.addSubscription(
             this.account$.pipe(
                 pairwise(),

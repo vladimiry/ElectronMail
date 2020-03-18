@@ -24,7 +24,7 @@ export class NavigationEffects {
                 logger.verbose(JSON.stringify({path, extras}));
                 return from(
                     this.ngZone.run(async () => {
-                        return await this.router.navigate(path, {queryParams, ...extras});
+                        return this.router.navigate(path, {queryParams, ...extras});
                     }),
                 );
             }),
@@ -113,7 +113,10 @@ export class NavigationEffects {
 
     constructor(
         private electronService: ElectronService,
-        private actions$: Actions<{ type: string; payload: any }>,
+        private actions$: Actions<{
+            type: string;
+            payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+        }>,
         private router: Router,
         private ngZone: NgZone,
     ) {}

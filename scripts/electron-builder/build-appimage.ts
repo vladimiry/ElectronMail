@@ -10,23 +10,7 @@ import {LOG, LOG_LEVELS, execShell} from "scripts/lib";
 // TODO pass destination directory instead of hardcoding it ("--appimage-extract" doesn't support destination parameter at the moment)
 const extractedImageFolderName = "squashfs-root";
 
-(async () => {
-    await postProcess(
-        await build("appimage"),
-    );
-})().catch((error) => {
-    LOG(error);
-    process.exit(1);
-});
-
-async function postProcess({packageFile}: { packageFile: string }) {
-    const {packageDir} = await unpack({packageFile});
-    disableSandbox({packageDir});
-    ensureFileHasNoSuidBit(path.join(packageDir, BINARY_NAME));
-    await packAndCleanup({packageDir, packageFile});
-}
-
-function disableSandbox({packageDir}: { packageDir: string; }): void {
+function disableSandbox({packageDir}: { packageDir: string }): void {
     const shFile = path.join(packageDir, "./AppRun");
     const shContentOriginal = fs.readFileSync(shFile).toString();
     const {content: shContentPatched, count: shContentPatchedCount} = (() => {
@@ -52,7 +36,7 @@ function disableSandbox({packageDir}: { packageDir: string; }): void {
     fs.writeFileSync(shFile, shContentPatched);
 }
 
-async function unpack({packageFile}: { packageFile: string; }): Promise<{ packageDir: string }> {
+async function unpack({packageFile}: { packageFile: string }): Promise<{ packageDir: string }> {
     const cwd = path.dirname(packageFile);
     const packageDir = path.join(
         path.dirname(packageFile),
@@ -63,14 +47,6 @@ async function unpack({packageFile}: { packageFile: string; }): Promise<{ packag
     await execShell([packageFile, ["--appimage-extract"], {cwd}]);
 
     return {packageDir};
-}
-
-async function packAndCleanup({packageFile, packageDir}: { packageFile: string; packageDir: string; }) {
-    const {appImageTool} = await resolveAppImageTool({packageFile});
-
-    await execShell(["rm", ["--force", packageFile]]);
-    await execShell([appImageTool, ["-n", "--comp", "xz", packageDir, packageFile]]);
-    await execShell(["npx", ["rimraf", packageDir]]);
 }
 
 async function resolveAppImageTool({packageFile}: { packageFile: string }): Promise<{ appImageTool: string }> {
@@ -106,3 +82,27 @@ async function resolveAppImageTool({packageFile}: { packageFile: string }): Prom
         ),
     };
 }
+
+async function packAndCleanup({packageFile, packageDir}: { packageFile: string; packageDir: string }): Promise<void> {
+    const {appImageTool} = await resolveAppImageTool({packageFile});
+
+    await execShell(["rm", ["--force", packageFile]]);
+    await execShell([appImageTool, ["-n", "--comp", "xz", packageDir, packageFile]]);
+    await execShell(["npx", ["rimraf", packageDir]]);
+}
+
+async function postProcess({packageFile}: { packageFile: string }): Promise<void> {
+    const {packageDir} = await unpack({packageFile});
+    disableSandbox({packageDir});
+    ensureFileHasNoSuidBit(path.join(packageDir, BINARY_NAME));
+    await packAndCleanup({packageDir, packageFile});
+}
+
+(async () => {
+    await postProcess(
+        await build("appimage"),
+    );
+})().catch((error) => {
+    LOG(error);
+    process.exit(1);
+});

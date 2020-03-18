@@ -3,10 +3,10 @@ import {ofType, unionize} from "@vladimiry/unionize";
 import {IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main";
 
 export type NotificationItem =
-    | Readonly<{ type: "error"; data: Readonly<Error>; }>
-    | Readonly<{ type: "errorMessage"; data: Readonly<{ message: string }>; }>
-    | Readonly<{ type: "info"; data: Readonly<{ message: string }>; }>
-    | Readonly<{ type: "update"; data: Readonly<IpcMainServiceScan["ApiImplReturns"]["updateCheck"]>; }>;
+    | Readonly<{ type: "error"; data: Readonly<Error> }>
+    | Readonly<{ type: "errorMessage"; data: Readonly<{ message: string }> }>
+    | Readonly<{ type: "info"; data: Readonly<{ message: string }> }>
+    | Readonly<{ type: "update"; data: Readonly<IpcMainServiceScan["ApiImplReturns"]["updateCheck"]> }>;
 
 export const NOTIFICATION_ACTIONS = unionize({
         Error: ofType<Extract<NotificationItem, { type: "error" }>["data"]>(),

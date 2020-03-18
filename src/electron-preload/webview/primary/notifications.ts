@@ -9,57 +9,61 @@ const logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, "[notifications]");
 export const AJAX_SEND_NOTIFICATION_SKIP_PARAM = `ajax-send-notification-skip-${Date.now()}`;
 
 export const AJAX_SEND_NOTIFICATION$ = new Observable<XMLHttpRequest>((subscriber) => {
-    const successHttpStatus = (status: number) => status >= 200 && status < 300;
+    const successHttpStatus = (status: number): boolean => status >= 200 && status < 300;
     const ajaxSendNotificationSkipSymbol = Symbol(AJAX_SEND_NOTIFICATION_SKIP_PARAM);
 
     type XMLHttpRequestType = XMLHttpRequest & { [ajaxSendNotificationSkipSymbol]?: true };
 
-    XMLHttpRequest.prototype.open = ((
-        original = XMLHttpRequest.prototype.open,
-        urlArgIndex = 1,
-        removeAjaxNotificationSkipParamRe = new RegExp(`[\\?\\&]${AJAX_SEND_NOTIFICATION_SKIP_PARAM}=`),
-    ) => function(this: XMLHttpRequestType) {
-        const args = [...arguments];
-
-        if (args.length && String(args[urlArgIndex]).indexOf(AJAX_SEND_NOTIFICATION_SKIP_PARAM) !== -1) {
-            this[ajaxSendNotificationSkipSymbol] = true;
-            args[urlArgIndex] = args[urlArgIndex].replace(removeAjaxNotificationSkipParamRe, "");
+    XMLHttpRequest.prototype.open = (
+        () => {
+            const original = XMLHttpRequest.prototype.open;
+            const urlArgIndex = 1;
+            const removeAjaxNotificationSkipParamRe = new RegExp(`[\\?\\&]${AJAX_SEND_NOTIFICATION_SKIP_PARAM}=`);
+            return function(
+                this: XMLHttpRequestType,
+                ...args: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+            ) {
+                if (args.length && String(args[urlArgIndex]).includes(AJAX_SEND_NOTIFICATION_SKIP_PARAM)) {
+                    this[ajaxSendNotificationSkipSymbol] = true;
+                    args[urlArgIndex] = String(args[urlArgIndex]).replace(removeAjaxNotificationSkipParamRe, "");
+                }
+                return original.apply(this, args as Parameters<typeof original>);
+            };
         }
+    )();
 
-        return original.apply(this, arguments as any);
-    })();
-
-    XMLHttpRequest.prototype.send = ((
-        original = XMLHttpRequest.prototype.send,
-        loadHandler = function(this: XMLHttpRequestType) {
-            if (this[ajaxSendNotificationSkipSymbol]) {
-                return;
-            }
-
-            if (successHttpStatus(this.status)) {
-                subscriber.next(this);
-                return;
-            }
-
-            logger.warn(
-                "XMLHttpRequest error",
-                JSON.stringify({
-                    status: this.status,
-                    statusText: this.statusText,
-                    responseURL: depersonalizeLoggedUrl(this.responseURL),
-                }),
-            );
-        },
-        loadEndHandler = function(this: XMLHttpRequestType) {
-            delete this[ajaxSendNotificationSkipSymbol];
-            this.removeEventListener("load", loadHandler);
-            this.removeEventListener("loadend", loadHandler);
-        },
-    ) => function(this: XMLHttpRequestType) {
-        this.addEventListener("load", loadHandler);
-        this.addEventListener("loadend", loadEndHandler);
-        return original.apply(this, arguments as any);
-    })();
+    XMLHttpRequest.prototype.send = (
+        () => {
+            const original = XMLHttpRequest.prototype.send;
+            const loadHandler = function(this: XMLHttpRequestType): void {
+                if (this[ajaxSendNotificationSkipSymbol]) {
+                    return;
+                }
+                if (successHttpStatus(this.status)) {
+                    subscriber.next(this);
+                    return;
+                }
+                logger.warn(
+                    "XMLHttpRequest error",
+                    JSON.stringify({
+                        status: this.status,
+                        statusText: this.statusText,
+                        responseURL: depersonalizeLoggedUrl(this.responseURL),
+                    }),
+                );
+            };
+            const loadEndHandler = function(this: XMLHttpRequestType): void {
+                delete this[ajaxSendNotificationSkipSymbol];
+                this.removeEventListener("load", loadHandler);
+                this.removeEventListener("loadend", loadHandler);
+            };
+            return function(this: XMLHttpRequestType, ...args: Parameters<typeof original>) {
+                this.addEventListener("load", loadHandler);
+                this.addEventListener("loadend", loadEndHandler);
+                return original.apply(this, args);
+            };
+        }
+    )();
 });
 
 export const EDITOR_IFRAME_NOTIFICATION$ = new Observable<{ iframeDocument: Document }>((subscribe) => {

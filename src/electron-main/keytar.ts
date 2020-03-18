@@ -11,13 +11,13 @@ type Keytar = Pick<typeof import("keytar"), "getPassword" | "setPassword" | "del
 export const STATE: {
     resolveKeytar: () => Promise<Keytar>;
 } = {
-    resolveKeytar: async () => {
+    resolveKeytar: async (): ReturnType<(typeof STATE)["resolveKeytar"]> => {
         const keytar = pick(
             await import("keytar"), // tslint:disable-line:no-import-zones
             ["getPassword", "setPassword", "deletePassword"],
         );
 
-        STATE.resolveKeytar = async () => Promise.resolve(keytar);
+        STATE.resolveKeytar = async (): ReturnType<(typeof STATE)["resolveKeytar"]> => Promise.resolve(keytar);
 
         return keytar;
     },
@@ -25,15 +25,15 @@ export const STATE: {
 
 export const getPassword: () => ReturnType<Unpacked<Keytar>["getPassword"]> = async () => {
     const keytar = await STATE.resolveKeytar();
-    return await keytar.getPassword(service, account);
+    return keytar.getPassword(service, account);
 };
 
 export const setPassword: (password: string) => ReturnType<Unpacked<Keytar>["setPassword"]> = async (password) => {
     const keytar = await STATE.resolveKeytar();
-    return await keytar.setPassword(service, account, password);
+    return keytar.setPassword(service, account, password);
 };
 
 export const deletePassword: () => ReturnType<Unpacked<Keytar>["deletePassword"]> = async () => {
     const keytar = await STATE.resolveKeytar();
-    return await keytar.deletePassword(service, account);
+    return keytar.deletePassword(service, account);
 };

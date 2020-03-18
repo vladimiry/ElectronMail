@@ -6,7 +6,7 @@ import rewiremock from "rewiremock";
 import sinon from "sinon";
 import test from "ava";
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/lib/private/constants";
-import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
+import {EncryptionAdapter, KeyBasedPreset} from "fs-json-store-encryption-adapter";
 import {Fs, Store} from "fs-json-store";
 
 import {Database} from "src/electron-main/database";
@@ -16,6 +16,42 @@ import {SerializationAdapter} from "src/electron-main/database/serialization";
 import {validateEntity} from "src/electron-main/database/validation";
 
 logger.transports.console.level = false;
+
+function buildDatabase(keyResolver?: () => Promise<string>): Database {
+    if (!keyResolver) {
+        const key = INITIAL_STORES.settings().databaseEncryptionKey;
+        keyResolver = async (): Promise<typeof key> => key;
+    }
+
+    const fileFs = Fs.MemFs.volume();
+
+    fileFs._impl.mkdirpSync(process.cwd());
+
+    return new Database(
+        {
+            file: `database-${randomstring.generate()}.bin`,
+            encryption: {
+                keyResolver,
+                presetResolver: async (): Promise<KeyBasedPreset> => {
+                    return {encryption: {type: "sodium.crypto_secretbox_easy", preset: "algorithm:default"}};
+                },
+            },
+        },
+        fileFs,
+    );
+}
+
+// TODO use "cooky-cutter" to build complete entities factories
+function buildFolder(): Folder {
+    return {
+        pk: randomstring.generate(),
+        raw: "{}",
+        id: randomstring.generate(),
+        name: randomstring.generate(),
+        folderType: MAIL_FOLDER_TYPE.SENT,
+        mailFolderId: "123",
+    };
+}
 
 test(`"keyResolver" should be called during save/load`, async (t) => {
     const db = buildDatabase();
@@ -36,9 +72,9 @@ test.serial(`save to file call should write through the "EncryptionAdapter.proto
 
     const encryptionAdapterWriteSpy = sinon.spy(MockedEncryptionAdapter.prototype, "write");
     const databaseModule = await rewiremock.around(
-        () => import("src/electron-main/database"),
+        async () => import("src/electron-main/database"),
         (mock) => {
-            mock(() => import("fs-json-store-encryption-adapter"))
+            mock(async () => import("fs-json-store-encryption-adapter"))
                 .callThrough()
                 .with({EncryptionAdapter: MockedEncryptionAdapter});
         },
@@ -65,19 +101,19 @@ test.serial(`save to file call should write through the "EncryptionAdapter.proto
 });
 
 test.serial(`save to file call should write through the "SerializationAdapter.write" call`, async (t) => {
-    let serializationAdapterWriteSpy: any;
+    let serializationAdapterWriteSpy: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
     class MockedSerializationAdapter extends SerializationAdapter {
-        constructor(input: { key: Buffer, preset: EncryptionAdapterBundle.KeyBasedPreset }) {
+        constructor(input: { key: Buffer; preset: EncryptionAdapterBundle.KeyBasedPreset }) {
             super(input);
             serializationAdapterWriteSpy = sinon.spy(this, "write");
         }
     }
 
     const databaseModule = await rewiremock.around(
-        () => import("src/electron-main/database"),
+        async () => import("src/electron-main/database"),
         async (rw) => {
-            rw(() => import("src/electron-main/database/serialization"))
+            rw(async () => import("src/electron-main/database/serialization"))
                 .callThrough()
                 .with({SerializationAdapter: MockedSerializationAdapter});
         },
@@ -148,7 +184,9 @@ test("getting nonexistent account should initialize its content", async (t) => {
 
 test("wrong encryption key", async (t) => {
     await t.throwsAsync(
-        buildDatabase(async () => null as any).saveToFile(),
+        buildDatabase(
+            async () => null as any // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+        ).saveToFile(),
     );
     await t.throwsAsync(
         buildDatabase(async () => Buffer.alloc(30).toString(BASE64_ENCODING)).saveToFile(),
@@ -182,37 +220,3 @@ test("reset", async (t) => {
     t.is(buildEmptyDbCallCount + 1, buildEmptyDbSpy.callCount);
     t.deepEqual(JSON.parse(JSON.stringify(db.readonlyDbInstance())), initial);
 });
-
-function buildDatabase(keyResolver?: () => Promise<string>): Database {
-    if (!keyResolver) {
-        const key = INITIAL_STORES.settings().databaseEncryptionKey;
-        keyResolver = async () => key;
-    }
-
-    const fileFs = Fs.MemFs.volume();
-
-    fileFs._impl.mkdirpSync(process.cwd());
-
-    return new Database(
-        {
-            file: `database-${randomstring.generate()}.bin`,
-            encryption: {
-                keyResolver,
-                presetResolver: async () => ({encryption: {type: "sodium.crypto_secretbox_easy", preset: "algorithm:default"}}),
-            },
-        },
-        fileFs,
-    );
-}
-
-// TODO use "cooky-cutter" to build complete entities factories
-function buildFolder(): Folder {
-    return {
-        pk: randomstring.generate(),
-        raw: "{}",
-        id: randomstring.generate(),
-        name: randomstring.generate(),
-        folderType: MAIL_FOLDER_TYPE.SENT,
-        mailFolderId: "123",
-    };
-}

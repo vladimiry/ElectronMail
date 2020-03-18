@@ -5,7 +5,12 @@ import {registerDocumentClickEventListener, registerDocumentKeyDownEventListener
 
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.calendar, `[configure-provider-app]`);
 
-export function configureProviderApp() {
+function enableEventsProcessing(): void {
+    registerDocumentKeyDownEventListener(document, logger);
+    registerDocumentClickEventListener(document, logger);
+}
+
+export function configureProviderApp(): void {
     logger.info(`configureProviderApp()`, JSON.stringify({locationHref: getLocationHref()}));
 
     // logger.info("configureAngularApp()", `setup "beforeunload" event canceling handler`);
@@ -18,7 +23,3 @@ export function configureProviderApp() {
     enableEventsProcessing();
 }
 
-function enableEventsProcessing() {
-    registerDocumentKeyDownEventListener(document, logger);
-    registerDocumentClickEventListener(document, logger);
-}

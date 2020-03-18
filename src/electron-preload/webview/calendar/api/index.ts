@@ -6,16 +6,14 @@ import {getLocationHref} from "src/electron-preload/webview/lib/util";
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.calendar, "[api/index]");
 
 const endpoints: ProtonCalendarApi = {
-    async ping() {
-
-    },
+    async ping() {}, // eslint-disable-line  @typescript-eslint/no-empty-function
 
     notification() {
-        return null as any;
+        return null as any; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
     },
 };
 
-export function registerApi() {
+export function registerApi(): void {
     PROTONMAIL_IPC_WEBVIEW_CALENDAR_API.register(
         endpoints,
         {

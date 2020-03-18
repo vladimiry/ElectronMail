@@ -171,6 +171,6 @@ export interface MailsIndex {
     remove: (id: IndexableMailId) => void;
     search: (q: string) => {
         items: Array<QueryResult<IndexableMailId>>;
-        expandedTerms: string[],
+        expandedTerms: string[];
     };
 }

@@ -207,7 +207,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
                 await initSessionByAccount(ctx, {login, proxy});
             }
 
-            await (async () => {
+            await (async (): Promise<void> => {
                 // TODO update "readSettings" api method: test "setupIdleTimeLogOut" call
                 const {idleTimeLogOutSec} = await endpoints.readConfig();
                 await setupIdleTimeLogOut({idleTimeLogOutSec});
@@ -245,7 +245,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
                 // it will be reset and saved anyway
             }
 
-            let needToSaveDb: boolean = false;
+            let needToSaveDb = false;
 
             if (await db.persisted()) {
                 await db.loadFromFile();
@@ -258,7 +258,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
 
             // merging session database to the primary one
             if (await sessionDb.persisted()) {
-                for (const {account: sourceAccount, pk: accountPk} of sessionDb.accountsIterator()) {
+                for (const {account: sourceAccount, pk: accountPk} of sessionDb) {
                     logger.verbose("loadDatabase() account processing iteration starts");
                     const targetAccount = db.getMutableAccount(accountPk) || db.initAccount(accountPk);
 
@@ -289,7 +289,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
                     }
 
                     // patching metadata
-                    (() => {
+                    ((): void => {
                         const metadataPatched = patchMetadata(targetAccount.metadata, sourceAccount.metadata, "loadDatabase");
                         logger.verbose(`loadDatabase() metadata patched:`, metadataPatched);
                         if (metadataPatched) {

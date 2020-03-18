@@ -9,7 +9,7 @@ export type ElectronExposure = Readonly<{
     buildIpcMainClient: typeof IPC_MAIN_API.client;
     buildIpcWebViewClient: typeof PROTONMAIL_IPC_WEBVIEW_API.client;
     registerDocumentClickEventListener: typeof registerDocumentClickEventListener;
-    rollingRateLimiter: (options: InMemoryOptions) => SyncOrAsyncLimiter,
+    rollingRateLimiter: (options: InMemoryOptions) => SyncOrAsyncLimiter;
     Logger: Readonly<Logger>;
 }>;
 
@@ -38,5 +38,5 @@ export type ElectronContextLocations = Readonly<{
         calendar: string;
     }>;
     protocolBundles: ReadonlyArray<Readonly<{ scheme: string; directory: string }>>;
-    webClients: ReadonlyArray<Readonly<{ entryUrl: string; entryApiUrl: string; }>>;
+    webClients: ReadonlyArray<Readonly<{ entryUrl: string; entryApiUrl: string }>>;
 }>;

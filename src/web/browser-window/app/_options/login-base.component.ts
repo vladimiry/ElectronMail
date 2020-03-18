@@ -50,24 +50,24 @@ export abstract class LoginBaseComponent implements AfterViewInit, OnDestroy {
         this.enableMasterPasswordWarning();
     }
 
-    ngAfterViewInit() {
+    ngAfterViewInit(): void {
         if (this.passwordElementRefQuery.length) {
             this.passwordElementRefQuery.first.nativeElement.focus();
         }
     }
 
-    submit() {
+    submit(): void {
         this.store.dispatch(OPTIONS_ACTIONS.SignInRequest({
             password: String(this.password.value),
             savePassword: Boolean(this.savePassword.value),
         }));
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         this.subscription.unsubscribe();
     }
 
-    private enableMasterPasswordWarning() {
+    private enableMasterPasswordWarning(): void {
         this.subscription.add(
             this.savePassword.valueChanges.pipe(
                 pairwise(),

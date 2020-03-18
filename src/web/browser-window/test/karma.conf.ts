@@ -34,10 +34,10 @@ const configuration = {
     browsers: ["jsdom"],
 };
 
-export default (config: Config) => {
+export default (config: Config): void => {
     config.set({
         ...configuration,
         // TODO get rid of karma circular JSON stringifying error, see https://github.com/karma-runner/karma/issues/3154
-        ...{toJSON: () => ({})} as any,
+        ...{toJSON: () => ({})} as any, // eslint-disable-line @typescript-eslint/no-explicit-any
     });
 };

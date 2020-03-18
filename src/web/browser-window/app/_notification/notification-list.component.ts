@@ -28,7 +28,7 @@ export class NotificationListComponent implements OnInit, OnDestroy {
         private elementRef: ElementRef,
     ) {}
 
-    ngOnInit() {
+    ngOnInit(): void {
         this.subscription.add({
             unsubscribe: __ELECTRON_EXPOSURE__
                 .registerDocumentClickEventListener(
@@ -51,7 +51,7 @@ export class NotificationListComponent implements OnInit, OnDestroy {
         );
     }
 
-    close() {
+    close(): void {
         this.store.dispatch(
             NAVIGATION_ACTIONS.Go({
                 path: [{outlets: {[NOTIFICATIONS_OUTLET]: null}}],
@@ -59,11 +59,11 @@ export class NotificationListComponent implements OnInit, OnDestroy {
         );
     }
 
-    onRemove(item: NotificationItem) {
+    onRemove(item: NotificationItem): void {
         this.store.dispatch(NOTIFICATION_ACTIONS.Remove(item));
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         this.subscription.unsubscribe();
     }
 }

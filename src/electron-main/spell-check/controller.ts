@@ -9,7 +9,7 @@ const logger = curryFunctionMembers(_logger, "[src/electron-main/spell-check/con
 
 const dummyProvider = constructDummyProvider();
 
-async function provider(locale: Locale) {
+async function provider(locale: Locale): Promise<ReturnType<typeof constructProvider>> {
     const spellCheckerModule = await import("spellchecker");
     const setupModule = await import("./setup");
     const {getLocation} = await setupModule.setup();
@@ -27,7 +27,7 @@ async function narrowFuzzyLocaleToStateValue(
 ): Promise<ReturnType<Controller["getCurrentLocale"]>> {
     const setupModule = await import("./setup");
     return locale === true
-        ? await setupModule.resolveDefaultLocale()
+        ? setupModule.resolveDefaultLocale()
         : locale;
 }
 
@@ -35,6 +35,14 @@ export async function initSpellCheckController(
     initialLocale: FuzzyLocale,
 ): Promise<Controller> {
     logger.debug("initSpellCheckController()", JSON.stringify({initialLocale}));
+
+    const state: {
+        provider: Readonly<Provider>;
+        currentLocale: ReturnType<Controller["getCurrentLocale"]>;
+    } = {
+        provider: dummyProvider,
+        currentLocale: await narrowFuzzyLocaleToStateValue(initialLocale),
+    };
 
     const controller: Controller = {
         async changeLocale(newLocale) {
@@ -58,13 +66,6 @@ export async function initSpellCheckController(
             const setup = await setupModule.setup();
             return setup.getAvailableDictionaries();
         },
-    };
-    const state: {
-        provider: Readonly<Provider>;
-        currentLocale: ReturnType<Controller["getCurrentLocale"]>;
-    } = {
-        provider: dummyProvider,
-        currentLocale: await narrowFuzzyLocaleToStateValue(initialLocale),
     };
 
     if (typeof state.currentLocale === "string") {

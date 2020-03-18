@@ -4,10 +4,12 @@ import {Configuration} from "webpack";
 
 import {buildBaseConfig, rootRelativePath, typescriptLoaderRule} from "./lib";
 
-const hooksDir = (...value: string[]) => path.join(
-    rootRelativePath("./scripts/electron-builder/hooks"),
-    ...value,
-);
+const hooksDir = (...value: string[]): string => {
+    return path.join(
+        rootRelativePath("./scripts/electron-builder/hooks"),
+        ...value,
+    );
+};
 
 // TODO scan folder automatically
 const hooksToBuild = [

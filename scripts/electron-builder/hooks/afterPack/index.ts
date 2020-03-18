@@ -7,6 +7,18 @@ import {copyDictionaryFilesTo} from "scripts/electron-builder/lib";
 
 const printPrefix = `[hook: afterPack]`;
 
+async function linux({targets, appOutDir}: AfterPackContext): Promise<void> {
+    if (targets.length !== 1) {
+        throw new Error(`${printPrefix} Only one target is allowed at a time for Linux platform`);
+    }
+
+    const [{name: targetName}] = targets;
+
+    if (!["appimage", "snap"].includes(targetName.toLowerCase())) {
+        await execShell(["chmod", ["4755", path.join(appOutDir, "chrome-sandbox")]]);
+    }
+}
+
 const hook: Required<Configuration>["afterPack"] = async (context) => {
     const electronPlatformNameLoweredCase = context.electronPlatformName.toLowerCase();
 
@@ -28,14 +40,3 @@ const hook: Required<Configuration>["afterPack"] = async (context) => {
 
 export default hook;
 
-async function linux({targets, appOutDir}: AfterPackContext) {
-    if (targets.length !== 1) {
-        throw new Error(`${printPrefix} Only one target is allowed at a time for Linux platform`);
-    }
-
-    const [{name: targetName}] = targets;
-
-    if (!["appimage", "snap"].includes(targetName.toLowerCase())) {
-        await execShell(["chmod", ["4755", path.join(appOutDir, "chrome-sandbox")]]);
-    }
-}

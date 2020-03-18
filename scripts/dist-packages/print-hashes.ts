@@ -7,7 +7,18 @@ import {listInstallationPackageFiles} from "./lib";
 
 const [, , DIST_DIRECTORY] = process.argv as [null, null, string];
 
-const algorithms = ["sha1"];
+const algorithms = ["sha1"] as const;
+
+async function calculateHash(file: string, alg: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const hash = createHash(alg);
+
+        fs.createReadStream(file)
+            .on("data", (data) => hash.update(data))
+            .on("end", () => resolve(hash.digest("hex")))
+            .on("error", reject);
+    });
+}
 
 (async () => {
     const files = await listInstallationPackageFiles(DIST_DIRECTORY);
@@ -34,13 +45,3 @@ const algorithms = ["sha1"];
     process.exit(1);
 });
 
-function calculateHash(file: string, alg: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const hash = createHash(alg);
-
-        fs.createReadStream(file)
-            .on("data", (data) => hash.update(data))
-            .on("end", () => resolve(hash.digest("hex")))
-            .on("error", reject);
-    });
-}

@@ -15,36 +15,6 @@ const SERVICE_DOWNLOAD_COUNT = "1"; // only 1 is supported in anonymous mode
 
 const [, , ACTION_TYPE_ARG, FILE_ARG] = process.argv as [null, null, "upload" | string, string];
 
-(async () => {
-    if (ACTION_TYPE_ARG !== "upload") {
-        throw new Error(`Unsupported action type: ${LOG_LEVELS.value(ACTION_TYPE_ARG)}`);
-    }
-    await uploadFileArg();
-})().catch((error) => {
-    LOG(error);
-    process.exit(1);
-});
-
-async function uploadFileArg(): Promise<{ downloadUrl: string }> {
-    const {command} = await resolveCommand();
-    const {stdout: downloadUrl} = await execShell([
-        command,
-        [
-            "upload",
-            "--no-interact",
-            "--incognito",
-            "--downloads", SERVICE_DOWNLOAD_COUNT,
-            FILE_ARG,
-        ],
-    ]);
-
-    if (!downloadUrl.startsWith(SERVICE_DOWNLOAD_URL_PREFIX)) {
-        throw new Error(`Download url "${downloadUrl}" doesn't start from "${SERVICE_DOWNLOAD_URL_PREFIX}"`);
-    }
-
-    return {downloadUrl};
-}
-
 async function resolveCommand(): Promise<{ command: string }> {
     const binaryFileName = (() => {
         const fileNames: Record<Extract<ReturnType<typeof os.platform>, "darwin" | "linux" | "win32">, string> = Object.freeze({
@@ -61,6 +31,12 @@ async function resolveCommand(): Promise<{ command: string }> {
         throw new Error(`Failed to resolve SERVICE binary name for ${platform} platform`);
     })();
     const binaryFile = path.resolve(CWD, "./output", binaryFileName);
+    const returnExecutableCommand: () => Promise<{ command: string }> = async () => {
+        if (os.platform() !== "win32") {
+            await execShell(["chmod", ["+x", binaryFile]]);
+        }
+        return {command: binaryFile};
+    };
 
     if (await fsExtra.pathExists(binaryFile)) {
         LOG(
@@ -82,12 +58,34 @@ async function resolveCommand(): Promise<{ command: string }> {
     })();
 
     return returnExecutableCommand();
-
-    async function returnExecutableCommand(): Promise<{ command: string }> {
-        if (os.platform() !== "win32") {
-            await execShell(["chmod", ["+x", binaryFile]]);
-        }
-
-        return {command: binaryFile};
-    }
 }
+
+async function uploadFileArg(): Promise<{ downloadUrl: string }> {
+    const {command} = await resolveCommand();
+    const {stdout: downloadUrl} = await execShell([
+        command,
+        [
+            "upload",
+            "--no-interact",
+            "--incognito",
+            "--downloads", SERVICE_DOWNLOAD_COUNT,
+            FILE_ARG,
+        ],
+    ]);
+
+    if (!downloadUrl.startsWith(SERVICE_DOWNLOAD_URL_PREFIX)) {
+        throw new Error(`Download url "${downloadUrl}" doesn't start from "${SERVICE_DOWNLOAD_URL_PREFIX}"`);
+    }
+
+    return {downloadUrl};
+}
+
+(async () => {
+    if (ACTION_TYPE_ARG !== "upload") {
+        throw new Error(`Unsupported action type: ${LOG_LEVELS.value(ACTION_TYPE_ARG)}`);
+    }
+    await uploadFileArg();
+})().catch((error) => {
+    LOG(error);
+    process.exit(1);
+});

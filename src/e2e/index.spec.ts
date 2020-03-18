@@ -17,82 +17,7 @@ import {Config} from "src/shared/model/options";
 import {ONE_SECOND_MS, PROTON_API_ENTRY_URLS} from "src/shared/constants";
 import {asyncDelay} from "src/shared/util";
 
-test.serial("general actions: app start, master password setup, add accounts", async (t) => {
-    const app = await initApp(t, {initial: true});
-
-    // screenshot with user agent clearly displayed
-    await saveScreenshot(t);
-
-    await app.login({setup: true, savePassword: false});
-
-    for (const entryUrlValue of PROTON_API_ENTRY_URLS) {
-        await app.addAccount({entryUrlValue});
-    }
-
-    await app.logout();
-
-    await app.destroyApp();
-
-    await afterEach(t);
-});
-
-if (
-    CI
-    &&
-    Boolean(0) // TODO proton-v4: enable "auto login" e2e test scenario
-) {
-    test.serial("auto login", async (t) => {
-        await (async () => {
-            const app = await initApp(t, {initial: true});
-            await app.login({setup: true, savePassword: true});
-            await app.afterLoginUrlTest("initial login");
-            await app.logout();
-            await app.destroyApp();
-        })();
-
-        // auto login 1
-        await (async () => {
-            const app = await initApp(t, {initial: false});
-            await app.afterLoginUrlTest(("auto login 1"));
-            await app.logout();
-            await app.destroyApp();
-        })();
-
-        // auto login 2, making sure previous auto login step didn't remove saved password
-        await (async () => {
-            const app = await initApp(t, {initial: false});
-            await app.afterLoginUrlTest(("auto login 2"));
-            await app.logout();
-            await app.destroyApp();
-        })();
-
-        await afterEach(t);
-    });
-}
-
-test.serial("auto logout", async (t) => {
-    const app = await initApp(t, {initial: true});
-    await app.login({setup: true, savePassword: false});
-    await app.logout();
-
-    const configFile = path.join(t.context.userDataDirPath, "config.json");
-    const configFileData: Config = JSON.parse(fs.readFileSync(configFile).toString());
-    const idleTimeLogOutSec = 10;
-
-    configFileData.startHidden = true;
-    configFileData.idleTimeLogOutSec = idleTimeLogOutSec;
-    fs.writeFileSync(configFile, JSON.stringify(configFileData, null, 2));
-
-    await app.login({setup: false, savePassword: false});
-    await asyncDelay(idleTimeLogOutSec * ONE_SECOND_MS * 1.5);
-    await app.loginPageUrlTest("auto-logout");
-
-    await app.destroyApp();
-
-    await afterEach(t);
-});
-
-async function afterEach(t: ExecutionContext<TestContext>) {
+async function afterEach(t: ExecutionContext<TestContext>): Promise<void> {
     if (fs.existsSync(t.context.logFilePath)) {
         await new Promise((resolve, reject) => {
             const stream = byline.createStream(
@@ -129,6 +54,81 @@ async function afterEach(t: ExecutionContext<TestContext>) {
     t.true(rawSettings.toString().indexOf(ENV.loginPrefix) === -1);
 }
 
+test.serial("general actions: app start, master password setup, add accounts", async (t) => {
+    const app = await initApp(t, {initial: true});
+
+    // screenshot with user agent clearly displayed
+    await saveScreenshot(t);
+
+    await app.login({setup: true, savePassword: false});
+
+    for (const entryUrlValue of PROTON_API_ENTRY_URLS) {
+        await app.addAccount({entryUrlValue});
+    }
+
+    await app.logout();
+
+    await app.destroyApp();
+
+    await afterEach(t);
+});
+
+if (
+    CI
+    &&
+    Boolean(0) // TODO proton-v4: enable "auto login" e2e test scenario
+) {
+    test.serial("auto login", async (t) => {
+        await (async (): Promise<void> => {
+            const app = await initApp(t, {initial: true});
+            await app.login({setup: true, savePassword: true});
+            await app.afterLoginUrlTest("initial login");
+            await app.logout();
+            await app.destroyApp();
+        })();
+
+        // auto login 1
+        await (async (): Promise<void> => {
+            const app = await initApp(t, {initial: false});
+            await app.afterLoginUrlTest(("auto login 1"));
+            await app.logout();
+            await app.destroyApp();
+        })();
+
+        // auto login 2, making sure previous auto login step didn't remove saved password
+        await (async (): Promise<void> => {
+            const app = await initApp(t, {initial: false});
+            await app.afterLoginUrlTest(("auto login 2"));
+            await app.logout();
+            await app.destroyApp();
+        })();
+
+        await afterEach(t);
+    });
+}
+
+test.serial("auto logout", async (t) => {
+    const app = await initApp(t, {initial: true});
+    await app.login({setup: true, savePassword: false});
+    await app.logout();
+
+    const configFile = path.join(t.context.userDataDirPath, "config.json");
+    const configFileData: Config = JSON.parse(fs.readFileSync(configFile).toString());
+    const idleTimeLogOutSec = 10;
+
+    configFileData.startHidden = true;
+    configFileData.idleTimeLogOutSec = idleTimeLogOutSec;
+    fs.writeFileSync(configFile, JSON.stringify(configFileData, null, 2));
+
+    await app.login({setup: false, savePassword: false});
+    await asyncDelay(idleTimeLogOutSec * ONE_SECOND_MS * 1.5);
+    await app.loginPageUrlTest("auto-logout");
+
+    await app.destroyApp();
+
+    await afterEach(t);
+});
+
 test.beforeEach(async (t) => {
     t.context.testStatus = "initial";
 });
@@ -162,19 +162,10 @@ test.afterEach.always(async (t) => {
             {arguments: "e2e"},
             {arguments: "keytar.node"},
             {arguments: "keytar"},
-        ].map((criteria) => promisify(psNode.lookup)(criteria)),
+        ].map((criteria) => promisify(psNode.lookup)(criteria)), // eslint-disable-line @typescript-eslint/no-unsafe-return
     );
-    await (async () => {
-        for (const {pid} of processes) {
-            try {
-                await killSelfAndChildrenProcesses(pid);
-            } catch {
-                // NOOP
-            }
-        }
-    })();
 
-    async function killSelfAndChildrenProcesses(pid: number) {
+    async function killSelfAndChildrenProcesses(pid: number): Promise<void> {
         const processesToKill = [
             ...(await promisify(psTree)(pid)),
             {PID: pid},
@@ -188,4 +179,14 @@ test.afterEach.always(async (t) => {
             }
         }
     }
+
+    await (async (): Promise<void> => {
+        for (const {pid} of processes) {
+            try {
+                await killSelfAndChildrenProcesses(pid);
+            } catch {
+                // NOOP
+            }
+        }
+    })();
 });

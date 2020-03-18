@@ -20,7 +20,7 @@ export default buildBaseConfig(
                 modulesFromFile: {
                     exclude: ["devDependencies"],
                     include: ["dependencies"],
-                } as any,
+                } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
             }),
         ],
     },

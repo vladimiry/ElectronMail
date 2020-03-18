@@ -27,6 +27,10 @@ import {linuxLikePlatform} from "src/electron-main/util";
 
 const logger = curryFunctionMembers(_logger, "[src/electron-main/storage-upgrade]");
 
+function isAppVersionLessThan(version: string): boolean {
+    return compareVersions(PACKAGE_VERSION, version) === -1;
+}
+
 const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
     "1.1.0": (config: Config & { appVersion?: string }) => {
         if (typeof config.appVersion !== "undefined") {
@@ -46,8 +50,9 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             // "fetchingRateLimiting" for rename to "fetching.rateLimit" since "2.0.0-beta.9"
             return;
         }
-        if (typeof (config as any).fetchingRateLimiting === "undefined") {
-            (config as any).fetchingRateLimiting = INITIAL_STORES.config().fetching.rateLimit;
+        if (typeof (config as any).fetchingRateLimiting === "undefined") { // eslint-disable-line @typescript-eslint/no-explicit-any
+            (config as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+                .fetchingRateLimiting = INITIAL_STORES.config().fetching.rateLimit;
         }
     },
     "2.0.0-beta.8": (config) => {
@@ -63,10 +68,10 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.timeouts.defaultApiCall = INITIAL_STORES.config().timeouts.defaultApiCall;
         }
         if (!config.fetching) {
-            config.fetching = {} as any;
+            config.fetching = {} as any; // eslint-disable-line @typescript-eslint/no-explicit-any
         }
         if (!config.fetching.rateLimit) {
-            const fetchingRateLimiting = (config as any).fetchingRateLimiting;
+            const {fetchingRateLimiting} = (config as any); // eslint-disable-line @typescript-eslint/no-explicit-any
             config.fetching.rateLimit = typeof fetchingRateLimiting === "object"
                 ? fetchingRateLimiting
                 : INITIAL_STORES.config().fetching.rateLimit;
@@ -88,7 +93,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.timeouts.syncing = INITIAL_STORES.config().timeouts.dbSyncing;
         }
     },
-    "2.3.3": (_, config = _ as Config & { timeouts: { fetching?: number; syncing?: number; } }) => {
+    "2.3.3": (_, config = _ as Config & { timeouts: { fetching?: number; syncing?: number } }) => {
         const defaultConfig = INITIAL_STORES.config();
 
         if (!Array.isArray(config.jsFlags)) {
@@ -107,7 +112,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.indexingBootstrapBufferSize = defaultConfig.indexingBootstrapBufferSize;
         }
 
-        (() => {
+        ((): void => {
             if (typeof config.timeouts.dbBootstrapping !== "number") {
                 config.timeouts.dbBootstrapping = defaultConfig.timeouts.dbBootstrapping;
             }
@@ -127,7 +132,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
     },
     "3.5.0": (
         _,
-        config = _ as Config & { databaseSaveDelayMs?: number; checkForUpdatesAndNotify?: boolean; },
+        config = _ as Config & { databaseSaveDelayMs?: number; checkForUpdatesAndNotify?: boolean },
     ) => {
         if (typeof config.databaseSaveDelayMs !== "undefined") {
             delete config.databaseSaveDelayMs;
@@ -141,7 +146,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
     },
     "3.5.1": (
         _,
-        config = _ as Config & { databaseWriteDelayMs?: number; },
+        config = _ as Config & { databaseWriteDelayMs?: number },
     ) => {
         if (typeof config.databaseWriteDelayMs !== "undefined") {
             delete config.databaseWriteDelayMs;
@@ -149,7 +154,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
     },
     "3.6.1": (
         _,
-        config = _ as Config & { clearSession?: boolean; disableGpuProcess?: boolean; },
+        config = _ as Config & { clearSession?: boolean; disableGpuProcess?: boolean },
     ) => {
         if (typeof config.clearSession !== "undefined") {
             delete config.clearSession;
@@ -157,7 +162,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         if (typeof config.disableGpuProcess !== "undefined") {
             delete config.disableGpuProcess;
         }
-        (() => {
+        ((): void => {
             const {updateCheck: defaults} = INITIAL_STORES.config();
             if (typeof config.updateCheck === "undefined") {
                 config.updateCheck = defaults;
@@ -195,21 +200,21 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
     },
     "4.1.0": (
         _,
-        config = _ as Config & { reflectSelectedAccountTitle?: boolean; },
+        config = _ as Config & { reflectSelectedAccountTitle?: boolean },
     ) => {
         if (typeof config.reflectSelectedAccountTitle !== "undefined") {
             delete config.reflectSelectedAccountTitle;
         }
     },
     "4.2.0": (config) => {
-        (() => {
+        ((): void => {
             const key: keyof Pick<Config, "zoomFactor"> = "zoomFactor";
             if (typeof config[key] !== "number" || !ZOOM_FACTORS.includes(config[key])) {
                 config[key] = INITIAL_STORES.config()[key];
             }
         })();
 
-        (() => {
+        ((): void => {
             const key: keyof Pick<Config, "enableHideControlsHotkey"> = "enableHideControlsHotkey";
             if (typeof config[key] === "undefined") {
                 config[key] = INITIAL_STORES.config()[key];
@@ -217,7 +222,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         })();
     },
     "4.2.2": (config) => {
-        (() => {
+        ((): void => {
             const key: keyof Pick<Config["timeouts"], "webViewBlankDOMLoaded"> = "webViewBlankDOMLoaded";
             if (typeof config.timeouts[key] !== "number") {
                 config.timeouts[key] = INITIAL_STORES.config().timeouts[key];
@@ -229,32 +234,11 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
 
         logger.info(loggerPrefix);
 
-        trayIconRelatedUpdate({prevKey: "startMinimized", key: "startHidden", keyTitle: "Start minimized to tray"});
-        trayIconRelatedUpdate({prevKey: "closeToTray", key: "hideOnClose", keyTitle: "Close to tray"});
-
-        (() => {
-            const key: keyof Pick<Config, "layoutMode"> = "layoutMode";
-
-            if (LAYOUT_MODES.some(({value}) => value === config[key])) {
-                return;
-            }
-
-            type PrevConfig = Config & { compactLayout?: boolean };
-            const {compactLayout} = config as PrevConfig;
-            delete (config as PrevConfig).compactLayout;
-
-            config[key] = typeof compactLayout === "boolean"
-                ? compactLayout
-                    ? "top"
-                    : "left"
-                : INITIAL_STORES.config()[key];
-        })();
-
         function trayIconRelatedUpdate(
             {prevKey, key, keyTitle}:
-                | Readonly<{ prevKey: "startMinimized"; key: keyof Pick<BaseConfig, "startHidden">, keyTitle: string }>
-                | Readonly<{ prevKey: "closeToTray"; key: keyof Pick<BaseConfig, "hideOnClose">, keyTitle: string }>,
-        ) {
+                | Readonly<{ prevKey: "startMinimized"; key: keyof Pick<BaseConfig, "startHidden">; keyTitle: string }>
+                | Readonly<{ prevKey: "closeToTray"; key: keyof Pick<BaseConfig, "hideOnClose">; keyTitle: string }>,
+        ): void {
             if (typeof config[key] === "boolean") {
                 return;
             }
@@ -271,7 +255,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
                 // otherwise just rename "startMinimized => startHidden"
                 : prevValue;
 
-            setTimeout(() => {
+            setTimeout((): void => {
                 const showValueResetNotification = (
                     linuxLikePlatform()
                     &&
@@ -319,6 +303,27 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
                 });
             });
         }
+
+        trayIconRelatedUpdate({prevKey: "startMinimized", key: "startHidden", keyTitle: "Start minimized to tray"});
+        trayIconRelatedUpdate({prevKey: "closeToTray", key: "hideOnClose", keyTitle: "Close to tray"});
+
+        ((): void => {
+            const key: keyof Pick<Config, "layoutMode"> = "layoutMode";
+
+            if (LAYOUT_MODES.some(({value}) => value === config[key])) {
+                return;
+            }
+
+            type PrevConfig = Config & { compactLayout?: boolean };
+            const {compactLayout} = config as PrevConfig;
+            delete (config as PrevConfig).compactLayout;
+
+            config[key] = typeof compactLayout === "boolean"
+                ? compactLayout
+                    ? "top"
+                    : "left"
+                : INITIAL_STORES.config()[key];
+        })();
     },
     // WARN needs to be the last updater
     "100.0.0": (config) => {
@@ -338,20 +343,27 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
     },
 };
 
+// TODO consider mutating entities in upgraders in an immutable way using "immer"
+// and then test for changes size like "patches.length"
+function upgrade<T extends Config | Settings>(entity: T, upgrades: Record<string, (entity: T) => void>): boolean {
+    const input = JSON.stringify(entity);
+
+    Object
+        .keys(upgrades)
+        .sort(compareVersions)
+        .forEach((version) => upgrades[version](entity));
+
+    return JSON.stringify(entity) !== input;
+}
+
 export function upgradeConfig(config: Config): boolean {
     return upgrade(config, CONFIG_UPGRADES);
 }
 
 export const upgradeSettings: (settings: Settings, ctx: Context) => boolean = (() => {
-    const result: typeof upgradeSettings = (settings, ctx) => {
-        return upgrade(settings, buildSettingsUpgraders(ctx));
-    };
-
-    return result;
-
     function buildSettingsUpgraders(ctx: Context): Record<string, (settings: Settings) => void> {
         return {
-            "1.1.1": (settings) => {
+            "1.1.1": (settings): void => {
                 settings.accounts.forEach((account) => {
                     if (typeof account.credentials === "undefined") {
                         account.credentials = {};
@@ -361,12 +373,13 @@ export const upgradeSettings: (settings: Settings, ctx: Context) => boolean = ((
                         return;
                     }
                     if (!("credentialsKeePass" in account)) {
-                        (account as any).credentialsKeePass = {};
+                        (account as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+                            .credentialsKeePass = {};
                     }
                 });
             },
             // TODO release: test "1.4.2" settings upgrader "dbEncryptionKey" renaming at least
-            "1.4.2": (settings: Settings & { dbEncryptionKey?: string }) => {
+            "1.4.2": (settings: Settings & { dbEncryptionKey?: string }): void => {
                 // rename "dbEncryptionKey" => "databaseEncryptionKey"
                 if (!settings.databaseEncryptionKey) {
                     settings.databaseEncryptionKey = settings.dbEncryptionKey
@@ -392,7 +405,7 @@ export const upgradeSettings: (settings: Settings, ctx: Context) => boolean = ((
             //         account.entryUrl = `${PROTON_API_ENTRY_VALUE_PREFIX}${account.entryUrl}`;
             //     });
             // },
-            "3.5.0": (settings) => {
+            "3.5.0": (settings): void => {
                 // dropping https://beta.protonmail.com entry point, see https://github.com/vladimiry/ElectronMail/issues/164
                 settings.accounts.forEach((account) => {
                     // it can be either "https://beta.protonmail.com" or "local:::https://beta.protonmail.com"
@@ -409,7 +422,7 @@ export const upgradeSettings: (settings: Settings, ctx: Context) => boolean = ((
                     // }
                 });
             },
-            "4.0.0": (settings) => {
+            "4.0.0": (settings): void => {
                 const protonmailAccounts = settings.accounts.filter((account) => {
                     const {type} = account as unknown as { type?: string };
                     return !type || type === "protonmail";
@@ -442,8 +455,8 @@ export const upgradeSettings: (settings: Settings, ctx: Context) => boolean = ((
                 // required data mutation
                 settings.accounts = protonmailAccounts;
             },
-            "4.2.0": (settings) => {
-                (() => {
+            "4.2.0": (settings): void => {
+                ((): void => {
                     const key: keyof Pick<Settings, "sessionStorageEncryptionKey"> = "sessionStorageEncryptionKey";
                     if (!settings[key]) {
                         settings[key] = INITIAL_STORES.settings()[key];
@@ -464,24 +477,13 @@ export const upgradeSettings: (settings: Settings, ctx: Context) => boolean = ((
             },
         };
     }
+
+    const result: typeof upgradeSettings = (settings, ctx) => {
+        return upgrade(settings, buildSettingsUpgraders(ctx));
+    };
+
+    return result;
 })();
-
-// TODO consider mutating entities in upgraders in an immutable way using "immer"
-// and then test for changes size like "patches.length"
-function upgrade<T extends Config | Settings>(entity: T, upgrades: Record<string, (entity: T) => void>): boolean {
-    const input = JSON.stringify(entity);
-
-    Object
-        .keys(upgrades)
-        .sort(compareVersions)
-        .forEach((version) => upgrades[version](entity));
-
-    return JSON.stringify(entity) !== input;
-}
-
-function isAppVersionLessThan(version: string): boolean {
-    return compareVersions(PACKAGE_VERSION, version) === -1;
-}
 
 export async function upgradeDatabase(db: Database, accounts: Settings["accounts"]): Promise<boolean> {
     let needToSave = false;
@@ -496,7 +498,7 @@ export async function upgradeDatabase(db: Database, accounts: Settings["accounts
     }
 
     if (Number(db.getVersion()) < 4) {
-        for (const {account} of db.accountsIterator()) {
+        for (const {account} of db) {
             if (typeof account.deletedPks !== "undefined") {
                 continue;
             }
@@ -511,16 +513,16 @@ export async function upgradeDatabase(db: Database, accounts: Settings["accounts
     }
 
     if (Number(db.getVersion()) < 5) {
-        const dbInstance = (db as any)[DB_INSTANCE_PROP_NAME];
+        const dbInstance = (db as any)[DB_INSTANCE_PROP_NAME]; // eslint-disable-line @typescript-eslint/no-explicit-any
         dbInstance.accounts = dbInstance.accounts.protonmail ?? Database.buildEmptyDb().accounts;
         needToSave = true;
     }
 
     // removing non existent accounts
-    await (async () => {
+    await (async (): Promise<void> => {
         const removePks: DbAccountPk[] = [];
 
-        for (const {pk} of db.accountsIterator()) {
+        for (const {pk} of db) {
             const accountWithEnabledLocalStoreExists = accounts.some(({database, login}) => (
                 Boolean(database)
                 &&

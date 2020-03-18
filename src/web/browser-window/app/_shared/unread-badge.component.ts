@@ -16,7 +16,7 @@ export class UnreadBadgeComponent implements OnInit, OnDestroy {
     value!: number;
 
     @Input()
-    alwaysRenderTheValue: boolean = false;
+    alwaysRenderTheValue = false;
 
     readonly doNotRenderNotificationBadgeValue$ = this.store.pipe(select(OptionsSelectors.CONFIG.doNotRenderNotificationBadgeValue));
 
@@ -28,7 +28,7 @@ export class UnreadBadgeComponent implements OnInit, OnDestroy {
         private readonly renderer: Renderer2,
     ) {}
 
-    ngOnInit() {
+    ngOnInit(): void {
         this.subscription.add(
             this.store
                 .pipe(select(OptionsSelectors.CONFIG.unreadBgColor))
@@ -41,11 +41,11 @@ export class UnreadBadgeComponent implements OnInit, OnDestroy {
         );
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         this.subscription.unsubscribe();
     }
 
-    private setStyle(prop: "backgroundColor" | "color", value: string) {
+    private setStyle(prop: "backgroundColor" | "color", value: string): void {
         this.renderer.setStyle(this.elementRef.nativeElement, prop, value);
     }
 }

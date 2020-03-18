@@ -13,7 +13,7 @@ import {NotificationItem} from "src/web/browser-window/app/store/actions/notific
 export class NotificationItemComponent {
     type: NotificationItem["type"] = "error";
 
-    message: string = "";
+    message = "";
 
     @Output()
     removeHandler = new EventEmitter<NotificationItem>();
@@ -41,9 +41,7 @@ export class NotificationItemComponent {
             : value.data.message;
     }
 
-    constructor() {}
-
-    remove() {
+    remove(): void {
         this.removeHandler.emit(this._item);
     }
 }

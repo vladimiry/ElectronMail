@@ -15,6 +15,27 @@ const directTypeMapping: Readonly<Record<Unpacked<typeof RestModel.MAIL_TYPE._.v
     [RestModel.MAIL_TYPE.PROTONMAIL_INBOX_AND_SENT]: DatabaseModel.MAIL_STATE.PROTONMAIL_INBOX_AND_SENT,
 };
 
+function buildAddressId(message: RestModel.Message, prefix: string, index = 0): Pick<RestModel.Entity, "ID"> {
+    return {ID: `${message.ID}|${prefix}[${index}]`};
+}
+
+function Address(input: RestModel.MailAddress & RestModel.Entity): DatabaseModel.MailAddress {
+    return {
+        ...buildBaseEntity(input),
+        name: input.Name,
+        address: input.Address,
+    };
+}
+
+function File(input: RestModel.Attachment): DatabaseModel.File {
+    return {
+        ...buildBaseEntity(input),
+        mimeType: input.MIMEType,
+        name: input.Name,
+        size: Number(input.Size),
+    };
+}
+
 const isConfidential = ((encryptedValues: Array<RestModel.Message["IsEncrypted"]>) => {
     return ({IsEncrypted}: Pick<RestModel.Message, "IsEncrypted">) => encryptedValues.includes(IsEncrypted);
 })([
@@ -71,26 +92,5 @@ export async function buildMail(input: RestModel.Message, api: ProviderApi): Pro
                 : input.IsForwarded
                     ? DatabaseModel.REPLY_TYPE.FORWARD
                     : DatabaseModel.REPLY_TYPE.NONE,
-    };
-}
-
-function buildAddressId(message: RestModel.Message, prefix: string, index: number = 0): Pick<RestModel.Entity, "ID"> {
-    return {ID: `${message.ID}|${prefix}[${index}]`};
-}
-
-function Address(input: RestModel.MailAddress & RestModel.Entity): DatabaseModel.MailAddress {
-    return {
-        ...buildBaseEntity(input),
-        name: input.Name,
-        address: input.Address,
-    };
-}
-
-function File(input: RestModel.Attachment): DatabaseModel.File {
-    return {
-        ...buildBaseEntity(input),
-        mimeType: input.MIMEType,
-        name: input.Name,
-        size: Number(input.Size),
     };
 }

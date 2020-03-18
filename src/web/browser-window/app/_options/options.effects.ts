@@ -325,7 +325,10 @@ export class OptionsEffects {
         private api: ElectronService,
         private store: Store<State>,
         private ngZone: NgZone,
-        private actions$: Actions<{ type: string; payload: any }>,
+        private actions$: Actions<{
+            type: string;
+            payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+        }>,
     ) {
         store.dispatch = ((dispatch) => {
             const result: typeof store.dispatch = (...args) => {
@@ -335,11 +338,11 @@ export class OptionsEffects {
         })(store.dispatch.bind(store));
     }
 
-    private buildPatchProgress(patch: ProgressPatch) {
+    private buildPatchProgress(patch: ProgressPatch): ReturnType<typeof OPTIONS_ACTIONS.PatchProgress> {
         return OPTIONS_ACTIONS.PatchProgress(patch);
     }
 
-    private dispatchProgress(patch: ProgressPatch) {
+    private dispatchProgress(patch: ProgressPatch): void {
         this.store.dispatch(this.buildPatchProgress(patch));
     }
 }

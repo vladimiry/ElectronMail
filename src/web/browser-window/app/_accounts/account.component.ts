@@ -110,7 +110,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     private readonly subscription = new Subscription();
 
     @HostBinding("class")
-    get getClass() {
+    get getClass(): string {
         return `${this.class} ${this.viewModeClass}`;
     }
 
@@ -130,9 +130,9 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         this.logger.info(`constructor()`);
     }
 
-    ngOnInit() {
+    ngOnInit(): void {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.webViewsState.primary.domReadyOnce.promise
-            // tslint:disable-next-line:no-floating-promises
             .then((webView) => this.onPrimaryViewLoadedOnce(webView));
 
         this.subscription.add(
@@ -150,7 +150,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         const {primary: state} = this.webViewsState;
                         const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, project);
                         const key = {login: accountConfig.login, apiEndpointOrigin: new URL(parsedEntryUrl.entryApiUrl).origin} as const;
-                        const baseReturn = async () => {
+                        const baseReturn = async (): Promise<void> => {
                             // reset the "backend session"
                             await this.api.ipcMainClient()("resetProtonBackendSession")({login: key.login});
                             // reset the "client session" and navigate
@@ -163,17 +163,17 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         };
 
                         if (!accountConfig.persistentSession) {
-                            return await baseReturn();
+                            return baseReturn();
                         }
 
                         const clientSession = await this.api.ipcMainClient()("resolveSavedProtonClientSession")(key);
 
                         if (!clientSession) {
-                            return await baseReturn();
+                            return baseReturn();
                         }
 
                         if (!(await this.api.ipcMainClient()("applySavedProtonBackendSession")(key))) {
-                            return await baseReturn();
+                            return baseReturn();
                         }
 
                         await this.core.initProtonClientSessionAndNavigate(
@@ -270,10 +270,10 @@ export class AccountComponent extends NgChangesObservableComponent implements On
 
     onEventChild(
         event:
-            | { type: "dom-ready", viewType: keyof typeof AccountComponent.prototype.webViewsState, webView: Electron.WebviewTag; }
-            | { type: "action", payload: Unpacked<Parameters<typeof AccountComponent.prototype.onDispatchInLoggerZone>> }
-            | { type: "log", data: [LogLevel, ...string[]] },
-    ) {
+            | { type: "dom-ready"; viewType: keyof typeof AccountComponent.prototype.webViewsState; webView: Electron.WebviewTag }
+            | { type: "action"; payload: Unpacked<Parameters<typeof AccountComponent.prototype.onDispatchInLoggerZone>> }
+            | { type: "log"; data: [LogLevel, ...string[]] },
+    ): void {
         if (event.type === "log") {
             const [level, ...args] = event.data;
             this.logger[level](...args);
@@ -290,7 +290,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         domReady$.next(event.webView);
     }
 
-    onPrimaryViewLoadedOnce(primaryWebView: Electron.WebviewTag) {
+    onPrimaryViewLoadedOnce(primaryWebView: Electron.WebviewTag): void {
         this.logger.info(`onPrimaryViewLoadedOnce()`);
 
         this.subscription.add(
@@ -374,19 +374,19 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         );
     }
 
-    onDispatchInLoggerZone(action: AppAction) {
+    onDispatchInLoggerZone(action: AppAction): void {
         this.loggerZone.run(() => {
             this.store.dispatch(action);
         });
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         super.ngOnDestroy();
         this.logger.info(`ngOnDestroy()`);
         this.subscription.unsubscribe();
     }
 
-    private focusPrimaryWebView() {
+    private focusPrimaryWebView(): void {
         setTimeout(() => {
             const activeElement = document.activeElement as (null | { blur?: () => void });
 

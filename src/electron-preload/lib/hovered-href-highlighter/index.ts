@@ -7,9 +7,9 @@ import {ONE_SECOND_MS, PACKAGE_NAME} from "src/shared/constants";
 import {buildLoggerBundle} from "src/electron-preload/lib/util";
 
 // TODO TS add declaration for "index.scss" and use "ES import" then
-// tslint:disable-next-line:no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const css = require(`to-string-loader!css-loader!sass-loader!./index.scss`);
-// tslint:disable-next-line:no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const {locals: {renderVisibleClass}}: { locals: { renderVisibleClass: string } } = require(`css-loader!sass-loader!./index.scss`);
 
 export class HoveredHrefHighlightElement extends HTMLElement {
@@ -42,7 +42,7 @@ export class HoveredHrefHighlightElement extends HTMLElement {
         window.addEventListener(...this.beforeUnloadEventHandlingArgs);
     }
 
-    destroy() {
+    destroy(): void {
         this.logger.info("destroy()");
         this.releaseApiClientDeferred.resolve();
         this.subscription.unsubscribe();
@@ -51,7 +51,7 @@ export class HoveredHrefHighlightElement extends HTMLElement {
         delete this.notification$;
     }
 
-    connectedCallback() {
+    connectedCallback(): void {
         this.logger.info("connectedCallback()");
 
         this.subscription.add(
@@ -64,7 +64,7 @@ export class HoveredHrefHighlightElement extends HTMLElement {
                     ({payload: {url, position}}) => {
                         const {el} = this;
                         const {style} = el;
-                        const render = () => {
+                        const render = (): void => {
                             el.innerText = url;
                             el.classList.add(renderVisibleClass);
                         };
@@ -118,12 +118,12 @@ export class HoveredHrefHighlightElement extends HTMLElement {
         );
     }
 
-    disconnectedCallback() {
+    disconnectedCallback(): void {
         this.logger.info("disconnectedCallback()");
         this.subscription.unsubscribe();
     }
 
-    private resolveNotification() {
+    private resolveNotification(): Observable<IpcMainServiceScan["ApiImplReturns"]["notification"]> {
         if (this.notification$) {
             return this.notification$;
         }
@@ -147,7 +147,7 @@ export function registerHoveredHrefHighlightElement(
 } {
     customElements.define(name, HoveredHrefHighlightElement);
 
-    console.log(`"${name}" custom element has been registered`); // tslint:disable-line:no-console
+    console.log(`"${name}" custom element has been registered`); // eslint-disable-line no-console
 
     return {
         tagName: name,

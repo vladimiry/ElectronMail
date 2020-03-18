@@ -10,9 +10,11 @@ import {NgChangesObservableComponent} from "src/web/browser-window/app/component
 import {WebAccount} from "src/web/browser-window/app/model";
 import {getWebViewPartition} from "src/shared/util";
 
+type ChildEvent = Parameters<typeof AccountComponent.prototype.onEventChild>[0];
+
 @Directive()
 // so weird not single-purpose directive huh, https://github.com/angular/angular/issues/30080#issuecomment-539194668
-// tslint:disable-next-line:directive-class-suffix
+// eslint-disable-next-line @angular-eslint/directive-class-suffix
 export abstract class AccountViewAbstractComponent extends NgChangesObservableComponent implements OnInit, OnDestroy {
     @Input()
     readonly account!: WebAccount;
@@ -31,7 +33,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
     readonly webViewSrc!: string;
 
     @Output()
-    readonly event = new EventEmitter<Parameters<typeof AccountComponent.prototype.onEventChild>[0]>();
+    readonly event = new EventEmitter<ChildEvent>();
 
     protected readonly api: ElectronService = this.injector.get(ElectronService);
 
@@ -42,7 +44,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
     @ViewChild("tplWebViewRef", {static: true})
     private tplWebViewRef!: ElementRef<Electron.WebviewTag>;
 
-    private get webView() {
+    private get webView(): ElementRef<Electron.WebviewTag>["nativeElement"] {
         return this.tplWebViewRef.nativeElement;
     }
 
@@ -54,7 +56,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         super();
     }
 
-    ngOnInit() {
+    ngOnInit(): void {
         this.registerWebViewEventsHandling();
 
         // this.subscription.add(
@@ -68,12 +70,12 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         // );
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         super.ngOnDestroy();
         this.event.emit({type: "log", data: ["info", `ngOnDestroy()`, ""]});
     }
 
-    protected filterDomReadyEvent() {
+    protected filterDomReadyEvent(): Observable<Extract<ChildEvent, { type: "dom-ready" }>> {
         return this.event.pipe(
             filter(({type}) => type === "dom-ready"),
             // TODO TS drop type casting "map" https://github.com/microsoft/TypeScript/issues/16069 (or use "mergeMap", see below)
@@ -82,12 +84,12 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         );
     }
 
-    protected filterDomReadyOrDestroyedPromise(): Promise<void> {
+    protected async filterDomReadyOrDestroyedPromise(): Promise<void> {
         return race([
             this.filterDomReadyEvent()
                 .pipe(take(1)),
             this.ngOnDestroy$,
-        ]).toPromise().then(() => {});
+        ]).toPromise().then(() => {}); // eslint-disable-line @typescript-eslint/no-empty-function
     }
 
     protected addSubscription(
@@ -96,7 +98,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         return this.subscription.add(teardown);
     }
 
-    private registerWebViewEventsHandling() {
+    private registerWebViewEventsHandling(): void {
         this.event.emit({type: "log", data: ["info", `registerWebViewEvents()`]});
 
         const {webView} = this;

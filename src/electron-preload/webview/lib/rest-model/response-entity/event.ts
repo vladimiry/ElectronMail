@@ -17,7 +17,7 @@ export interface Event<TypeRecord = typeof EVENT_ACTION._.nameValueMap, A = Type
     Contacts?: Array<{ Action: A } & Pick<Contact, "ID"> & EventSubMessage>;
     ContactEmails?: Array<{ Action: A } & Pick<ContactEmail, "ID">>;
     Labels?: Array<{ Action: A } & Pick<Label, "ID"> & EventSubMessage>;
-    MessageCounts?: Array<{ LabelID: string; Unread: number; }>;
+    MessageCounts?: Array<{ LabelID: string; Unread: number }>;
     Calendars?: Array<{ Action: A } & Pick<Calendar, "ID"> & { Calendar: Calendar }>;
     CalendarEvents?: Array<{ Action: A } & Pick<CalendarEvent, "ID"> & { Event: CalendarEvent }>;
     CalendarAlarms?: Array<{ Action: A } & Pick<CalendarAlarm, "ID"> & { Alarm: CalendarAlarm }>;

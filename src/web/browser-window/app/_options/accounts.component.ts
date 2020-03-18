@@ -22,7 +22,7 @@ export class AccountsComponent implements OnDestroy {
         .pipe(map((p) => !!p.changingAccountOrder));
 
     @HostBinding("class.reordering-disabled")
-    reorderingDisabled: boolean = true;
+    reorderingDisabled = true;
 
     private cdkDrop$: Subject<CdkDragDrop<LoginFieldContainer>> = new Subject();
 
@@ -62,11 +62,11 @@ export class AccountsComponent implements OnDestroy {
         );
     }
 
-    cdkDrop(event: CdkDragDrop<LoginFieldContainer>) {
+    cdkDrop(event: CdkDragDrop<LoginFieldContainer>): void {
         this.cdkDrop$.next(event);
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         this.subscription.unsubscribe();
     }
 }

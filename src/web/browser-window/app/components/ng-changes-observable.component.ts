@@ -7,22 +7,22 @@ export abstract class NgChangesObservableComponent implements OnChanges, OnDestr
 
     protected ngOnDestroy$ = new Subject();
 
-    ngOnChanges(changes: SimpleChanges) {
-        const props: Record<keyof typeof changes, any> = {};
+    ngOnChanges(changes: SimpleChanges): void {
+        const props: Record<keyof typeof changes, any> // eslint-disable-line @typescript-eslint/no-explicit-any
+            = {};
 
         Object.assign(props, this.ngChanges.value);
 
-        for (const propertyName in changes) {
-            if (!changes.hasOwnProperty(propertyName)) {
-                continue;
-            }
+        for (const propertyName of Object.keys(changes)) {
             props[propertyName] = changes[propertyName].currentValue;
         }
 
-        this.ngChanges.next(props as any);
+        this.ngChanges.next(
+            props as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        );
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         this.ngChanges.complete();
         this.ngOnDestroy$.next();
         this.ngOnDestroy$.complete();

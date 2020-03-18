@@ -31,127 +31,22 @@ type BuildDbPatchMethodReturnType = ProtonApiScan["ApiImplReturns"]["buildDbPatc
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, "[api/build-db-patch]");
 
-const buildDbPatchEndpoint: Pick<ProtonApi, "buildDbPatch" | "fetchSingleMail"> = {
-    buildDbPatch(input) {
-        const logger = curryFunctionMembers(_logger, "buildDbPatch()", input.zoneName);
+async function buildConversationDbMails(briefConversation: RestModel.Conversation, api: ProviderApi): Promise<DatabaseModel.Mail[]> {
+    const result: DatabaseModel.Mail[] = [];
+    const conversationFetchResponse = await api.conversation.get(briefConversation.ID);
+    const conversationMessages = conversationFetchResponse.data.Messages;
 
-        logger.info();
+    for (const mail of conversationMessages) {
+        if (mail.Body) {
+            result.push(await Database.buildMail(mail, api));
+            continue;
+        }
+        const mailFetchResponse = await api.message.get(mail.ID);
+        result.push(await Database.buildMail(mailFetchResponse.data.Message, api));
+    }
 
-        const inputMetadata = input.metadata;
-        const deferFactory: () => Promise<BuildDbPatchMethodReturnType> = async () => {
-            logger.info("delayFactory()");
-
-            if (!isLoggedIn()) {
-                // TODO handle switching from built-in webclient to remote and back more properly
-                // the account state keeps the "signed-in" state despite of page still being reloaded
-                // so we need to reset "signed-in" state with "account.entryUrl" value change
-                await asyncDelay(ONE_SECOND_MS * 5);
-
-                if (!isLoggedIn()) {
-                    throw new Error("protonmail:buildDbPatch(): user is supposed to be logged-in");
-                }
-            }
-
-            if (!isDatabaseBootstrapped(inputMetadata)) {
-                await bootstrapDbPatch(
-                    logger,
-                    async (dbPatch) => {
-                        await persistDatabasePatch(
-                            {
-                                ...dbPatch,
-                                login: input.login,
-                            },
-                            logger,
-                        );
-                    },
-                );
-
-                return;
-            }
-
-            const preFetch = await (async () => {
-                const {events}: ProviderApi = await resolveProviderApi();
-                const fetchedEvents: RestModel.Event[] = [];
-                let id: RestModel.Event["EventID"] = inputMetadata.latestEventId;
-
-                do {
-                    const response = await events.get(id, {params: {[AJAX_SEND_NOTIFICATION_SKIP_PARAM]: ""}});
-                    const hasMoreEvents = response.More === 1;
-                    const sameNextId = id === response.EventID;
-
-                    fetchedEvents.push(response);
-                    id = response.EventID;
-
-                    if (!hasMoreEvents) {
-                        break;
-                    }
-                    if (!sameNextId) {
-                        continue;
-                    }
-
-                    throw new Error(
-                        `Events API indicates that there is a next event in the queue but responded with the same "next event id"`,
-                    );
-                } while (true);
-
-                logger.info(`fetched ${fetchedEvents.length} missed events`);
-
-                return {
-                    latestEventId: id,
-                    missedEvents: fetchedEvents,
-                };
-            })();
-
-            const metadata: DbPatchBundle["metadata"] = {latestEventId: preFetch.latestEventId};
-            const patch = await buildDbPatch({events: preFetch.missedEvents, parentLogger: logger});
-
-            await persistDatabasePatch(
-                {
-                    patch,
-                    metadata,
-                    login: input.login,
-                },
-                logger,
-            );
-
-            return;
-        };
-
-        return defer(deferFactory).pipe(
-            buildDbPatchRetryPipeline<BuildDbPatchMethodReturnType>(preprocessError, inputMetadata, _logger),
-        );
-    },
-
-    async fetchSingleMail(input) {
-        const logger = curryFunctionMembers(_logger, "fetchSingleMail()", input.zoneName);
-
-        logger.info();
-
-        const [anyUpsertAction] = UPSERT_EVENT_ACTIONS;
-        const data: DbPatchBundle = {
-            patch: await buildDbPatch({
-                events: [
-                    {
-                        Messages: [{ID: input.mailPk, Action: anyUpsertAction}],
-                    },
-                ],
-                parentLogger: logger,
-            }),
-            metadata: {
-                // WARN: don't persist the "latestEventId" value in the case of single mail saving
-                latestEventId: "",
-            },
-        };
-
-        await persistDatabasePatch(
-            {
-                ...data,
-                login: input.login,
-            },
-            logger,
-        );
-    },
-};
+    return result;
+}
 
 async function bootstrapDbPatch(
     parentLogger: ReturnType<typeof buildLoggerBundle>,
@@ -279,54 +174,36 @@ async function bootstrapDbPatch(
     });
 }
 
-async function buildConversationDbMails(briefConversation: RestModel.Conversation, api: ProviderApi): Promise<DatabaseModel.Mail[]> {
-    const result: DatabaseModel.Mail[] = [];
-    const conversationFetchResponse = await api.conversation.get(briefConversation.ID);
-    const conversationMessages = conversationFetchResponse.data.Messages;
-
-    for (const mail of conversationMessages) {
-        if (mail.Body) {
-            result.push(await Database.buildMail(mail, api));
-            continue;
-        }
-        const mailFetchResponse = await api.message.get(mail.ID);
-        result.push(await Database.buildMail(mailFetchResponse.data.Message, api));
-    }
-
-    return result;
-}
-
 async function buildDbPatch(
     input: {
         events: Array<Pick<RestModel.Event, "Messages" | "Labels" | "Contacts">>;
         parentLogger: ReturnType<typeof buildLoggerBundle>;
     },
-    nullUpsert: boolean = false,
+    nullUpsert = false,
 ): Promise<DbPatch> {
     const api = await resolveProviderApi();
     const logger = curryFunctionMembers(input.parentLogger, "buildDbPatch()");
-    const mappingItem = () => ({updatesMappedByInstanceId: new Map(), remove: [], upsertIds: []});
     const mapping: Record<"mails" | "folders" | "contacts", {
         remove: Array<{ pk: string }>;
         // TODO put entire entity update to "upsertIds" array ("gotTrashed" needed only for "message" updates)
-        upsertIds: Array<{ id: RestModel.Id; gotTrashed?: boolean; }>;
+        upsertIds: Array<{ id: RestModel.Id; gotTrashed?: boolean }>;
     }> & {
         mails: {
             refType: keyof Pick<RestModel.Event, "Messages">;
             updatesMappedByInstanceId: Map<RestModel.Id, Array<Unpacked<Required<RestModel.Event>["Messages"]>>>;
-        },
+        };
         folders: {
             refType: keyof Pick<RestModel.Event, "Labels">;
             updatesMappedByInstanceId: Map<RestModel.Id, Array<Unpacked<Required<RestModel.Event>["Labels"]>>>;
-        },
+        };
         contacts: {
             refType: keyof Pick<RestModel.Event, "Contacts">;
             updatesMappedByInstanceId: Map<RestModel.Id, Array<Unpacked<Required<RestModel.Event>["Contacts"]>>>;
-        },
+        };
     } = {
-        mails: {refType: "Messages", ...mappingItem()},
-        folders: {refType: "Labels", ...mappingItem()},
-        contacts: {refType: "Contacts", ...mappingItem()},
+        mails: {refType: "Messages", updatesMappedByInstanceId: new Map(), remove: [], upsertIds: []},
+        folders: {refType: "Labels", updatesMappedByInstanceId: new Map(), remove: [], upsertIds: []},
+        contacts: {refType: "Contacts", updatesMappedByInstanceId: new Map(), remove: [], upsertIds: []},
     };
     const mappingKeys = Object.keys(mapping) as Array<keyof typeof mapping>;
 
@@ -391,9 +268,9 @@ async function buildDbPatch(
                     gotTrashed
                     &&
                     angularJsHttpResponseTypeGuard<{
-                        Code?: number, // 15052
-                        Error?: string, // Message does not exist
-                        ErrorDescription?: string,
+                        Code?: number; // 15052
+                        Error?: string; // Message does not exist
+                        ErrorDescription?: string;
                         Details?: object;
                     }>(error)
                     &&
@@ -430,7 +307,8 @@ async function buildDbPatch(
         // we only need the data structure to be formed at this point, so no need to perform the actual fetching
         for (const key of mappingKeys) {
             mapping[key].upsertIds.forEach(() => {
-                (patch[key].upsert as any[]).push(null);
+                (patch[key].upsert as any[]) // eslint-disable-line @typescript-eslint/no-explicit-any
+                    .push(null);
             });
         }
     }
@@ -442,6 +320,128 @@ async function buildDbPatch(
 
     return patch;
 }
+
+const buildDbPatchEndpoint: Pick<ProtonApi, "buildDbPatch" | "fetchSingleMail"> = {
+    buildDbPatch(input) {
+        const logger = curryFunctionMembers(_logger, "buildDbPatch()", input.zoneName);
+
+        logger.info();
+
+        const inputMetadata = input.metadata;
+        const deferFactory: () => Promise<BuildDbPatchMethodReturnType> = async () => {
+            logger.info("delayFactory()");
+
+            if (!isLoggedIn()) {
+                // TODO handle switching from built-in webclient to remote and back more properly
+                // the account state keeps the "signed-in" state despite of page still being reloaded
+                // so we need to reset "signed-in" state with "account.entryUrl" value change
+                await asyncDelay(ONE_SECOND_MS * 5);
+
+                if (!isLoggedIn()) {
+                    throw new Error("protonmail:buildDbPatch(): user is supposed to be logged-in");
+                }
+            }
+
+            if (!isDatabaseBootstrapped(inputMetadata)) {
+                await bootstrapDbPatch(
+                    logger,
+                    async (dbPatch) => {
+                        await persistDatabasePatch(
+                            {
+                                ...dbPatch,
+                                login: input.login,
+                            },
+                            logger,
+                        );
+                    },
+                );
+
+                return;
+            }
+
+            const preFetch = await (async () => {
+                const {events}: ProviderApi = await resolveProviderApi();
+                const fetchedEvents: RestModel.Event[] = [];
+                let id: RestModel.Event["EventID"] = inputMetadata.latestEventId;
+
+                do {
+                    const response = await events.get(id, {params: {[AJAX_SEND_NOTIFICATION_SKIP_PARAM]: ""}});
+                    const hasMoreEvents = response.More === 1;
+                    const sameNextId = id === response.EventID;
+
+                    fetchedEvents.push(response);
+                    id = response.EventID;
+
+                    if (!hasMoreEvents) {
+                        break;
+                    }
+                    if (!sameNextId) {
+                        continue;
+                    }
+
+                    throw new Error(
+                        `Events API indicates that there is a next event in the queue but responded with the same "next event id"`,
+                    );
+                } while (true); // eslint-disable-line no-constant-condition
+
+                logger.info(`fetched ${fetchedEvents.length} missed events`);
+
+                return {
+                    latestEventId: id,
+                    missedEvents: fetchedEvents,
+                };
+            })();
+
+            const metadata: DbPatchBundle["metadata"] = {latestEventId: preFetch.latestEventId};
+            const patch = await buildDbPatch({events: preFetch.missedEvents, parentLogger: logger});
+
+            await persistDatabasePatch(
+                {
+                    patch,
+                    metadata,
+                    login: input.login,
+                },
+                logger,
+            );
+
+            return void 0;
+        };
+
+        return defer(deferFactory).pipe(
+            buildDbPatchRetryPipeline<BuildDbPatchMethodReturnType>(preprocessError, inputMetadata, _logger),
+        );
+    },
+
+    async fetchSingleMail(input) {
+        const logger = curryFunctionMembers(_logger, "fetchSingleMail()", input.zoneName);
+
+        logger.info();
+
+        const [anyUpsertAction] = UPSERT_EVENT_ACTIONS;
+        const data: DbPatchBundle = {
+            patch: await buildDbPatch({
+                events: [
+                    {
+                        Messages: [{ID: input.mailPk, Action: anyUpsertAction}],
+                    },
+                ],
+                parentLogger: logger,
+            }),
+            metadata: {
+                // WARN: don't persist the "latestEventId" value in the case of single mail saving
+                latestEventId: "",
+            },
+        };
+
+        await persistDatabasePatch(
+            {
+                ...data,
+                login: input.login,
+            },
+            logger,
+        );
+    },
+};
 
 export {
     buildDbPatchEndpoint,

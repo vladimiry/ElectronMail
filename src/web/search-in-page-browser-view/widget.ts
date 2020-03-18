@@ -36,24 +36,24 @@ export class SearchInPageWidget {
         this.initFoundNotification();
     }
 
-    open() {
+    open(): void {
         this.syncElements();
         setTimeout(() => this.els.input.focus());
     }
 
-    async close() {
+    async close(): Promise<void> {
         await this.stopFind();
         await this.destroy();
         await this.apiMethods.findInPageDisplay({visible: false});
     }
 
-    async destroy() {
+    async destroy(): Promise<void> {
         this.subscription.unsubscribe();
         await this.stopFind();
     }
 
-    protected async find(forward: boolean, continueRequested: boolean = true) {
-        return await this.queryQueue.q(async () => {
+    protected async find(forward: boolean, continueRequested = true): Promise<void> {
+        return this.queryQueue.q(async () => {
             const {value: query} = this.els.input;
             const isSearchingWithSameQuery = this.isSearching() && query === this.query;
 
@@ -69,7 +69,7 @@ export class SearchInPageWidget {
         });
     }
 
-    protected initEvents() {
+    protected initEvents(): void {
         this.subscription.add(
             fromEvent<KeyboardEvent>(this.els.input, "keydown")
                 .pipe(
@@ -111,7 +111,7 @@ export class SearchInPageWidget {
         );
     }
 
-    protected initFoundNotification() {
+    protected initFoundNotification(): void {
         this.subscription.add(
             this.apiMethods.findInPageNotification().subscribe((result) => {
                 if (!result.requestId || result.requestId !== this.requestId) {
@@ -126,7 +126,7 @@ export class SearchInPageWidget {
         );
     }
 
-    protected isSearching() {
+    protected isSearching(): boolean {
         return (
             this.requestId !== null
             &&
@@ -134,11 +134,11 @@ export class SearchInPageWidget {
         );
     }
 
-    protected async startFind(query: string) {
+    protected async startFind(query: string): Promise<void> {
         const result = await this.apiMethods.findInPage({query});
 
         if (!result) {
-            return await this.close();
+            return this.close();
         }
 
         this.requestId = result.requestId;
@@ -148,7 +148,7 @@ export class SearchInPageWidget {
         delete this.maxIdx;
     }
 
-    protected async continueFind(options: Electron.FindInPageOptions) {
+    protected async continueFind(options: Electron.FindInPageOptions): Promise<void> {
         if (!this.isSearching()) {
             throw new Error(`Search has not been started yet`);
         }
@@ -156,13 +156,13 @@ export class SearchInPageWidget {
         const result = await this.apiMethods.findInPage({query: this.query || "", options});
 
         if (!result) {
-            return await this.close();
+            return this.close();
         }
 
         this.requestId = result.requestId;
     }
 
-    protected async stopFind() {
+    protected async stopFind(): Promise<void> {
         this.els.input.value = "";
 
         delete this.requestId;
@@ -175,7 +175,7 @@ export class SearchInPageWidget {
         await this.apiMethods.findInPageStop();
     }
 
-    protected syncElements() {
+    protected syncElements(): void {
         const disabledButtons = typeof this.maxIdx !== "number" || this.maxIdx < 2;
         const {els} = this;
 

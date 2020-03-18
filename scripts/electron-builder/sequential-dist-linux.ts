@@ -11,6 +11,11 @@ const targets: Array<typeof Target.prototype.name> = [
     "rpm",
 ];
 
+async function clean(): Promise<void> {
+    // TODO take "dist" reading "directories.output" from electron-builder.yml
+    await execShell(["npx", ["rimraf", "./dist/linux-unpacked", "./dist/*.yaml"]]);
+}
+
 (async () => {
     for (const target of targets) {
         await clean();
@@ -22,8 +27,3 @@ const targets: Array<typeof Target.prototype.name> = [
     LOG(error);
     process.exit(1);
 });
-
-async function clean() {
-    // TODO take "dist" reading "directories.output" from electron-builder.yml
-    await execShell(["npx", ["rimraf", "./dist/linux-unpacked", "./dist/*.yaml"]]);
-}

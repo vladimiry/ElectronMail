@@ -10,6 +10,7 @@ import {getWebViewPartition} from "src/shared/util";
 import {initWebRequestListeners} from "src/electron-main/web-request";
 import {registerSessionProtocols} from "src/electron-main/protocol";
 
+// eslint-disable-next-line @typescript-eslint/no-use-before-define
 const usedPartitions: Set<Parameters<typeof initSessionByAccount>[1]["login"]> = new Set();
 
 // TODO remove the session from map on account removing
@@ -23,25 +24,18 @@ export function resolveInitialisedSession({login}: LoginFieldContainer): Session
     return session;
 }
 
-export async function initSessionByAccount(
-    ctx: Context,
-    account: Pick<AccountConfig, "login" | "proxy">,
-): Promise<void> {
-    const partition = getWebViewPartition(account.login);
+function purifyUserAgentHeader(session: Session): void {
+    const appNameRe = new RegExp(`${PACKAGE_NAME}[\\/\\S]+`, "i");
+    const electronRe = new RegExp("electron", "i");
+    const currentUserAgent = String(session.getUserAgent());
+    const purifiedUserAgent = currentUserAgent
+        .split(appNameRe)
+        .join("")
+        .split(/\s+/)
+        .filter((chunk) => !electronRe.exec(chunk))
+        .join(" ");
 
-    if (usedPartitions.has(partition)) {
-        return;
-    }
-
-    // TODO make user "electron.session.fromPartition" called once per "partition" across all the code
-    const session = electronSession.fromPartition(partition);
-
-    usedSessions.set(partition, session);
-
-    await initSession(ctx, session);
-    await configureSessionByAccount(account);
-
-    usedPartitions.add(partition);
+    session.setUserAgent(purifiedUserAgent);
 }
 
 export async function initSession(
@@ -80,6 +74,27 @@ export async function configureSessionByAccount(
     ).toPromise();
 }
 
+export async function initSessionByAccount(
+    ctx: Context,
+    account: Pick<AccountConfig, "login" | "proxy">,
+): Promise<void> {
+    const partition = getWebViewPartition(account.login);
+
+    if (usedPartitions.has(partition)) {
+        return;
+    }
+
+    // TODO make user "electron.session.fromPartition" called once per "partition" across all the code
+    const session = electronSession.fromPartition(partition);
+
+    usedSessions.set(partition, session);
+
+    await initSession(ctx, session);
+    await configureSessionByAccount(account);
+
+    usedPartitions.add(partition);
+}
+
 export function getDefaultSession(): Session {
     const {defaultSession} = electronSession;
 
@@ -90,16 +105,3 @@ export function getDefaultSession(): Session {
     return defaultSession;
 }
 
-function purifyUserAgentHeader(session: Session) {
-    const appNameRe = new RegExp(`${PACKAGE_NAME}[\\/\\S]+`, "i");
-    const electronRe = new RegExp("electron", "i");
-    const currentUserAgent = String(session.getUserAgent());
-    const purifiedUserAgent = currentUserAgent
-        .split(appNameRe)
-        .join("")
-        .split(/\s+/)
-        .filter((chunk) => !electronRe.exec(chunk))
-        .join(" ");
-
-    session.setUserAgent(purifiedUserAgent);
-}

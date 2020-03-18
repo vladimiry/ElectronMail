@@ -21,7 +21,7 @@ for (const {login, password, twoFactorCode, unread} of ([
         twoFactorCode: process.env[RUNTIME_ENV_E2E_PROTONMAIL_2FA_CODE],
         unread: Number(process.env[RUNTIME_ENV_E2E_PROTONMAIL_UNREAD_MIN]),
     },
-] as Array<LoginFieldContainer & { password: string, twoFactorCode: string, unread: number }>)) {
+] as Array<LoginFieldContainer & { password: string; twoFactorCode: string; unread: number }>)) {
     if (!login || !password || !unread || isNaN(unread)) {
         continue;
     }

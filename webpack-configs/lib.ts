@@ -24,11 +24,17 @@ LOG(
     LOG_LEVELS.value(ENVIRONMENT),
 );
 
-export const rootRelativePath = (...value: string[]) => path.join(process.cwd(), ...value);
+export const rootRelativePath = (...value: string[]): string => {
+    return path.join(process.cwd(), ...value);
+};
 
-export const srcRelativePath = (...value: string[]) => rootRelativePath("./src", ...value);
+export const srcRelativePath = (...value: string[]): string => {
+    return rootRelativePath("./src", ...value);
+};
 
-export const outputRelativePath = (...value: string[]) => rootRelativePath(ENVIRONMENT_STATE.development ? "./app-dev" : "./app", ...value);
+export const outputRelativePath = (...value: string[]): string => {
+    return rootRelativePath(ENVIRONMENT_STATE.development ? "./app-dev" : "./app", ...value);
+};
 
 export function buildBaseConfig(
     ...[config]: readonly [Configuration] | readonly [Configuration, { tsConfigFile?: string }]

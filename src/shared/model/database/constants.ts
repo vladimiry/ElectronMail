@@ -82,7 +82,7 @@ export const CONTACT_SOCIAL_TYPE = buildEnumBundle({
     CUSTOM: "5",
 } as const);
 
-export const INDEXABLE_MAIL_FIELDS_STUB_CONTAINER: Readonly<Record<keyof Skip<IndexableMail, "pk">, null>> = {
+export const INDEXABLE_MAIL_FIELDS_STUB_CONTAINER: Readonly<Record<keyof StrictOmit<IndexableMail, "pk">, null>> = {
     subject: null,
     body: null,
     sender: null,

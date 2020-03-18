@@ -1,5 +1,4 @@
 import {EntryUrlItem, LogLevel} from "./model/common";
-import {ReadonlyDeep} from "type-fest";
 
 const {
     name: PACKAGE_NAME,
@@ -57,7 +56,7 @@ export const WEB_CHUNK_NAMES = {
     "search-in-page-browser-view": "search-in-page-browser-view",
 } as const;
 
-export const PROVIDER_REPOS: ReadonlyDeep<Record<"WebClient" | "proton-mail-settings" | "proton-contacts" | "proton-calendar",
+export const PROVIDER_REPOS: DeepReadonly<Record<"WebClient" | "proton-mail-settings" | "proton-contacts" | "proton-calendar",
     {
         repoRelativeDistDir: string;
         baseDir: string;
@@ -148,7 +147,7 @@ function getBuiltInWebClientTitle(): string {
     return `${PROVIDER_REPOS.WebClient.version} / ${PROVIDER_REPOS.WebClient.commit.substr(0, 7)}`;
 }
 
-export const PROTON_API_ENTRY_RECORDS: ReadonlyDeep<EntryUrlItem[]> = [
+export const PROTON_API_ENTRY_RECORDS: DeepReadonly<EntryUrlItem[]> = [
     {
         value: PROTON_API_ENTRY_PRIMARY_VALUE,
         title: `${PROTON_API_ENTRY_PRIMARY_VALUE} (${getBuiltInWebClientTitle()})`,

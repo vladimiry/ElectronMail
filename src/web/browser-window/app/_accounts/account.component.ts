@@ -36,7 +36,6 @@ import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {LogLevel} from "src/shared/model/common";
 import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";
 import {ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/constants";
-import {ReadonlyDeep} from "type-fest";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount} from "src/web/browser-window/app/model";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
@@ -61,7 +60,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     @Input()
     readonly class: string = "";
 
-    readonly webViewsState: Record<"primary" | "calendar", ReadonlyDeep<{
+    readonly webViewsState: Readonly<Record<"primary" | "calendar", {
         readonly src$: Subject<string>;
         readonly domReadyOnce: Deferred<Electron.WebviewTag>;
         readonly domReady$: Subject<Electron.WebviewTag>;

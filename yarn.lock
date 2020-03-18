@@ -11358,6 +11358,11 @@ ts-deferred@1.0.4:
   resolved "https://registry.yarnpkg.com/ts-deferred/-/ts-deferred-1.0.4.tgz#58145ebaeef5b8f2a290b8cec3d060839f9489c7"
   integrity sha1-WBReuu71uPKikLjOw9Bgg5+Uicc=
 
+ts-essentials@6.0.2:
+  version "6.0.2"
+  resolved "https://registry.yarnpkg.com/ts-essentials/-/ts-essentials-6.0.2.tgz#5c20814c272f4cf13c5f27e9b99dced39b2f99af"
+  integrity sha512-C7Ujc1nSGURahqEy00vvJogkxJoxGLp80tbzI/vTmMn1k8jUYNPVlzvs9APqwr7GWJG1ORwsi1xmtRWEIK6m6w==
+
 ts-loader@6.2.1:
   version "6.2.1"
   resolved "https://registry.yarnpkg.com/ts-loader/-/ts-loader-6.2.1.tgz#67939d5772e8a8c6bdaf6277ca023a4812da02ef"
@@ -11455,15 +11460,15 @@ type-detect@4.0.8, type-detect@^4.0.8:
   resolved "https://registry.yarnpkg.com/type-detect/-/type-detect-4.0.8.tgz#7646fb5f18871cfbb7749e69bd39a6388eb7450c"
   integrity sha512-0fr/mIH1dlO+x7TlcMy+bIDqKPsw/70tVyeHW787goQjhmqaZe10uwLujubK9q9Lg6Fiho1KUKDYz0Z7k7g5/g==
 
-type-fest@0.12.0, type-fest@^0.12.0:
-  version "0.12.0"
-  resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-0.12.0.tgz#f57a27ab81c68d136a51fd71467eff94157fa1ee"
-  integrity sha512-53RyidyjvkGpnWPMF9bQgFtWp+Sl8O2Rp13VavmJgfAP9WWG6q6TkrKU8iyJdnwnfgHI6k2hTlgqH4aSdjoTbg==
-
 type-fest@^0.11.0:
   version "0.11.0"
   resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-0.11.0.tgz#97abf0872310fed88a5c466b25681576145e33f1"
   integrity sha512-OdjXJxnCN1AvyLSzeKIgXTXxV+99ZuXl3Hpo9XpJAv9MBcHrrJOQ5kV7ypXOuQie+AmWG25hLbiKdwYTifzcfQ==
+
+type-fest@^0.12.0:
+  version "0.12.0"
+  resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-0.12.0.tgz#f57a27ab81c68d136a51fd71467eff94157fa1ee"
+  integrity sha512-53RyidyjvkGpnWPMF9bQgFtWp+Sl8O2Rp13VavmJgfAP9WWG6q6TkrKU8iyJdnwnfgHI6k2hTlgqH4aSdjoTbg==
 
 type-fest@^0.3.0:
   version "0.3.1"

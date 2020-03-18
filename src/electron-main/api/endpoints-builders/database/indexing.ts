@@ -19,14 +19,13 @@ import {
     IPC_MAIN_API_NOTIFICATION_ACTIONS,
     IpcMainApiEndpoints,
 } from "src/shared/api/main";
-import {ReadonlyDeep} from "type-fest";
 import {curryFunctionMembers} from "src/shared/util";
 import {hrtimeDuration} from "src/electron-main/util";
 
 const logger = curryFunctionMembers(electronLog, "[src/electron-main/api/endpoints-builders/database/indexing]");
 
 export const narrowIndexActionPayload: (
-    payload: Skip<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>, { type: "Index" }>["payload"], "uid">,
+    payload: StrictOmit<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>, { type: "Index" }>["payload"], "uid">,
 ) => typeof payload = (() => {
     type Fn = typeof narrowIndexActionPayload;
     type Mails = ReturnType<Fn>["add"];
@@ -48,8 +47,8 @@ export const narrowIndexActionPayload: (
 })();
 
 async function indexMails(
-    mails: Array<ReadonlyDeep<Mail>>,
-    key: ReadonlyDeep<DbAccountPk>,
+    mails: Array<DeepReadonly<Mail>>,
+    key: DeepReadonly<DbAccountPk>,
     timeoutMs: number,
 ): Promise<void> {
     logger.info("indexMails()");
@@ -86,9 +85,9 @@ async function indexMails(
 }
 
 export async function indexAccount(
-    account: ReadonlyDeep<FsDbAccount>,
-    key: ReadonlyDeep<DbAccountPk>,
-    config: ReadonlyDeep<Config>,
+    account: DeepReadonly<FsDbAccount>,
+    key: DeepReadonly<DbAccountPk>,
+    config: DeepReadonly<Config>,
 ): Promise<void> {
     logger.info("indexAccount()");
 

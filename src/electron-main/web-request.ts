@@ -8,13 +8,12 @@ import {
 import {URL} from "url";
 
 import {Context} from "./model";
-import {ReadonlyDeep} from "type-fest";
 
 // TODO drop these types when "requestHeaders / responseHeaders" get proper types
 type RequestDetails = OnBeforeSendHeadersListenerDetails;
 type ResponseDetails = OnHeadersReceivedListenerDetails;
 
-type RequestProxy = ReadonlyDeep<{
+type RequestProxy = DeepReadonly<{
     headers: {
         // eslint-disable-next-line @typescript-eslint/no-use-before-define
         origin: Exclude<ReturnType<typeof getHeader>, null>;
@@ -116,7 +115,7 @@ function resolveFakeOrigin(requestDetails: RequestDetails): string {
 
 function patchResponseHeader(
     headers: HeadersReceivedResponse["responseHeaders"],
-    patch: ReadonlyDeep<ReturnType<typeof getHeader>>,
+    patch: DeepReadonly<ReturnType<typeof getHeader>>,
     {replace, extend = true, _default = true}: { replace?: boolean; extend?: boolean; _default?: boolean } = {},
 ): void {
     if (!patch || !headers) {

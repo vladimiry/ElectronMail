@@ -2,13 +2,12 @@ import electronLog from "electron-log";
 import {equals} from "remeda";
 
 import {Folder, FsDbAccount, MAIL_FOLDER_TYPE, PROTONMAIL_MAILBOX_IDENTIFIERS} from "src/shared/model/database";
-import {ReadonlyDeep} from "type-fest";
 import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(electronLog, "[src/electron-main/database/util]");
 
 export const resolveAccountFolders: (
-    account: ReadonlyDeep<FsDbAccount>,
+    account: DeepReadonly<FsDbAccount>,
 ) => readonly Folder[] = (
     (): typeof resolveAccountFolders => {
         const staticFolders: readonly Folder[] = (
@@ -47,7 +46,7 @@ export const resolveAccountFolders: (
 export function patchMetadata(
     target: FsDbAccount["metadata"],
     // TODO TS: use patch: Parameters<IpcMainApiEndpoints["dbPatch"]>[0]["metadata"],
-    patch: ReadonlyDeep<FsDbAccount["metadata"]>,
+    patch: DeepReadonly<FsDbAccount["metadata"]>,
     sourceType: "dbPatch" | "loadDatabase",
 ): boolean {
     const logPrefix = `patchMetadata() ${sourceType}`;

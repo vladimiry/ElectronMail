@@ -81,7 +81,7 @@ const config = buildBaseWebConfig(
 
                 type AngularCompilerPluginOptions
                     = NoExtraProperties<import("@ngtools/webpack/src/interfaces").AngularCompilerPluginOptions>;
-                const compilerOptions: Skip<Required<AngularCompilerPluginOptions>["compilerOptions"],
+                const compilerOptions: StrictOmit<Required<AngularCompilerPluginOptions>["compilerOptions"],
                     // skipping raw "string" props
                     Extract<keyof Required<AngularCompilerPluginOptions>["compilerOptions"], string>> = {
                     preserveWhitespaces: false,

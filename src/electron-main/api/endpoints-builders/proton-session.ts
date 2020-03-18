@@ -6,14 +6,13 @@ import {AccountPersistentSession} from "src/shared/model/account";
 import {Context} from "src/electron-main/model";
 import {IpcMainApiEndpoints} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
-import {ReadonlyDeep} from "type-fest";
 import {resolveInitialisedSession} from "src/electron-main/session";
 
 // TODO enable minimal logging
 // const logger = curryFunctionMembers(electronLog, "[electron-main/api/endpoints-builders/proton-session]");
 
 function resolveTokenCookies(
-    items: ReadonlyDeep<AccountPersistentSession>["cookies"],
+    items: DeepReadonly<AccountPersistentSession>["cookies"],
 ): Readonly<{ accessTokens: typeof items; refreshTokens: typeof items }> {
     return {
         accessTokens: items.filter(({name}) => name.toUpperCase().startsWith("AUTH-")),
@@ -22,7 +21,7 @@ function resolveTokenCookies(
 }
 
 function pickTokenCookiePropsToApply(
-    cookie: ReadonlyDeep<Electron.Cookie>,
+    cookie: DeepReadonly<Electron.Cookie>,
 ): Pick<typeof cookie, "httpOnly" | "name" | "path" | "secure" | "value"> {
     return pick(cookie, ["httpOnly", "name", "path", "secure", "value"]);
 }

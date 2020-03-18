@@ -25,7 +25,7 @@ import {buildSettingsAdapter} from "src/electron-main/util";
 
 interface TestContext {
     ctx: Context;
-    endpoints: Skip<IpcMainApiEndpoints,
+    endpoints: StrictOmit<IpcMainApiEndpoints,
         // TODO test skipped methods
         | "activateBrowserWindow"
         | "applySavedProtonBackendSession"
@@ -602,9 +602,9 @@ test.beforeEach(async (t) => {
     memFsVolume._impl.writeFileSync(path.join(appDir, "web/browser-window/shared-vendor.css"), "");
 
     // reducing work factor in order to speed-up the test process and make it less computing resources consuming
-    (encryptionPreset as import("type-fest").Mutable<typeof encryptionPreset>).keyDerivation
+    (encryptionPreset as import("ts-essentials").Writable<typeof encryptionPreset>).keyDerivation
         = {type: "sodium.crypto_pwhash", preset: "mode:interactive|algorithm:default"};
-    (encryptionPreset as import("type-fest").Mutable<typeof encryptionPreset>).encryption
+    (encryptionPreset as import("ts-essentials").Writable<typeof encryptionPreset>).encryption
         = {type: "crypto", preset: "algorithm:aes-256-cbc"};
 
     logger.transports.file = (

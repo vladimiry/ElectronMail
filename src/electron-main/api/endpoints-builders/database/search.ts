@@ -9,14 +9,13 @@ import {FOLDER_UTILS, buildFoldersAndRootNodePrototypes, fillFoldersAndReturnRoo
 import {Folder, FsDbAccount, IndexableMailId, Mail, View} from "src/shared/model/database";
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION$, IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_DB_INDEXER_ON_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
-import {ReadonlyDeep} from "type-fest";
 import {curryFunctionMembers, walkConversationNodesTree} from "src/shared/util";
 
 const logger = curryFunctionMembers(electronLog, "[src/electron-main/api/endpoints-builders/database/search]");
 
 export function searchRootConversationNodes(
-    account: ReadonlyDeep<FsDbAccount>,
-    {mailPks, folderPks}: ReadonlyDeep<{ mailPks?: Array<Mail["pk"]>; folderPks?: Array<Folder["pk"]> }> = {},
+    account: DeepReadonly<FsDbAccount>,
+    {mailPks, folderPks}: DeepReadonly<{ mailPks?: Array<Mail["pk"]>; folderPks?: Array<Folder["pk"]> }> = {},
 ): View.RootConversationNode[] {
     // TODO optimize search: implement custom search instead of getting all the mails first and then narrowing the list down
     // TODO don't create functions inside iterations so extensively, "filter" / "walkConversationNodesTree" calls
@@ -58,7 +57,7 @@ export function searchRootConversationNodes(
 }
 
 export async function buildDbSearchEndpoints(
-    ctx: ReadonlyDeep<Context>,
+    ctx: DeepReadonly<Context>,
 ): Promise<Pick<IpcMainApiEndpoints, "dbFullTextSearch">> {
     return {
         async dbFullTextSearch({login, query, folderPks}) {

@@ -5,7 +5,6 @@ import {LoginFieldContainer, MailPasswordFieldContainer, PasswordFieldContainer}
 import {Notifications} from "src/shared/model/account";
 import {PACKAGE_NAME} from "src/shared/constants";
 import {ProtonClientSession} from "src/shared/model/proton";
-import {ReadonlyDeep} from "type-fest";
 import {ZoneApiParameter} from "src/shared/api/common";
 import {buildLoggerBundle} from "src/electron-preload/lib/util";
 
@@ -13,29 +12,29 @@ const {Promise, Observable} = ActionType;
 
 export const PROTONMAIL_IPC_WEBVIEW_API_DEFINITION = {
     ping:
-        Promise<ReadonlyDeep<ZoneApiParameter>>(),
+        Promise<DeepReadonly<ZoneApiParameter>>(),
     fillLogin:
-        Promise<ReadonlyDeep<LoginFieldContainer & ZoneApiParameter>>(),
+        Promise<DeepReadonly<LoginFieldContainer & ZoneApiParameter>>(),
     login:
-        Promise<ReadonlyDeep<LoginFieldContainer & PasswordFieldContainer & ZoneApiParameter>>(),
+        Promise<DeepReadonly<LoginFieldContainer & PasswordFieldContainer & ZoneApiParameter>>(),
     login2fa:
-        Promise<ReadonlyDeep<{ secret: string } & ZoneApiParameter>>(),
+        Promise<DeepReadonly<{ secret: string } & ZoneApiParameter>>(),
     buildDbPatch:
-        Observable<ReadonlyDeep<DbAccountPk & { metadata: Readonly<FsDbAccount["metadata"]> | null } & ZoneApiParameter>>(),
+        Observable<DeepReadonly<DbAccountPk & { metadata: Readonly<FsDbAccount["metadata"]> | null } & ZoneApiParameter>>(),
     selectMailOnline:
-        Promise<ReadonlyDeep<{
+        Promise<DeepReadonly<{
             pk: DbAccountPk; mail: Pick<Mail, "id" | "mailFolderIds" | "conversationEntryPk">;
         } & ZoneApiParameter>>(),
     fetchSingleMail:
-        Promise<ReadonlyDeep<DbAccountPk & { mailPk: Mail["pk"] } & ZoneApiParameter>>(),
+        Promise<DeepReadonly<DbAccountPk & { mailPk: Mail["pk"] } & ZoneApiParameter>>(),
     makeRead:
-        Promise<ReadonlyDeep<DbAccountPk & { messageIds: string[] } & ZoneApiParameter>>(),
+        Promise<DeepReadonly<DbAccountPk & { messageIds: string[] } & ZoneApiParameter>>(),
     notification:
-        Observable<ReadonlyDeep<{ entryUrl: string; entryApiUrl: string } & ZoneApiParameter>, ProtonNotificationOutput>(),
+        Observable<DeepReadonly<{ entryUrl: string; entryApiUrl: string } & ZoneApiParameter>, ProtonNotificationOutput>(),
     unlock:
         ActionType.Promise<MailPasswordFieldContainer & ZoneApiParameter>(),
     resolveSavedProtonClientSession:
-        ActionType.Promise<ReadonlyDeep<ZoneApiParameter>, ProtonClientSession | null>(),
+        ActionType.Promise<DeepReadonly<ZoneApiParameter>, ProtonClientSession | null>(),
 } as const;
 
 export const PROTONMAIL_IPC_WEBVIEW_API = createWebViewApiService({

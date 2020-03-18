@@ -5,10 +5,9 @@ import {Context} from "src/electron-main/model";
 import {DEFAULT_TRAY_ICON_COLOR, DEFAULT_UNREAD_BADGE_BG_COLOR, DEFAULT_UNREAD_BADGE_BG_TEXT} from "src/shared/constants";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
-import {ReadonlyDeep} from "type-fest";
 import {loggedOutBundle, recolor, trayIconBundleFromPath, unreadNative} from "./lib";
 
-const config: ReadonlyDeep<{
+const config: DeepReadonly<{
     loggedOut: CircleConfig;
     unread: CircleConfig & { textColor: string };
 }> = {
@@ -16,7 +15,7 @@ const config: ReadonlyDeep<{
     unread: {scale: .75, color: DEFAULT_UNREAD_BADGE_BG_COLOR, textColor: DEFAULT_UNREAD_BADGE_BG_TEXT},
 };
 
-const resolveState: (ctx: ReadonlyDeep<Context>) => Promise<{
+const resolveState: (ctx: DeepReadonly<Context>) => Promise<{
     readonly fileIcon: ImageBundle;
     trayIconColor: string;
     defaultIcon: ImageBundle;
@@ -24,7 +23,7 @@ const resolveState: (ctx: ReadonlyDeep<Context>) => Promise<{
 }> = (() => {
     let state: Unpacked<ReturnType<typeof resolveState>> | undefined;
 
-    const resultFn: typeof resolveState = async (ctx: ReadonlyDeep<Context>) => {
+    const resultFn: typeof resolveState = async (ctx: DeepReadonly<Context>) => {
         if (state) {
             return state;
         }
@@ -47,7 +46,7 @@ const resolveState: (ctx: ReadonlyDeep<Context>) => Promise<{
 })();
 
 export async function buildEndpoints(
-    ctx: ReadonlyDeep<Context>,
+    ctx: DeepReadonly<Context>,
 ): Promise<Pick<IpcMainApiEndpoints, "updateOverlayIcon">> {
     return {
         async updateOverlayIcon({hasLoggedOut, unread, unreadBgColor, unreadTextColor, trayIconColor}) {

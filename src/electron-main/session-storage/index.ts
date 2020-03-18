@@ -7,7 +7,6 @@ import {EncryptionAdapter, KeyBasedPreset} from "fs-json-store-encryption-adapte
 
 import {AccountConfig, AccountPersistentSession, AccountPersistentSessionBundle} from "src/shared/model/account";
 import {ApiEndpointOriginFieldContainer, LoginFieldContainer} from "src/shared/model/container";
-import {ReadonlyDeep} from "type-fest";
 import {curryFunctionMembers} from "src/shared/util";
 
 export class SessionStorage {
@@ -42,7 +41,7 @@ export class SessionStorage {
 
     getSession(
         {login, apiEndpointOrigin}: LoginFieldContainer & ApiEndpointOriginFieldContainer,
-    ): ReadonlyDeep<AccountPersistentSession> | undefined {
+    ): DeepReadonly<AccountPersistentSession> | undefined {
         this.logger.info("getSession()");
         const bundle = this.instance[login];
         return bundle && bundle[apiEndpointOrigin];
@@ -80,7 +79,7 @@ export class SessionStorage {
         await this.removeNonExistingLogins(actualLogins);
     }
 
-    readonlyInstance(): ReadonlyDeep<typeof SessionStorage.prototype.instance> {
+    readonlyInstance(): DeepReadonly<typeof SessionStorage.prototype.instance> {
         return this.instance;
     }
 

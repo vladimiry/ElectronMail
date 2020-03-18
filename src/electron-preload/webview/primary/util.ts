@@ -61,7 +61,7 @@ export function depersonalizeLoggedUrl(url: string): string {
 export const preprocessError: Parameters<typeof buildDbPatchRetryPipeline>[0] = (
     rawError: any // eslint-disable-line @typescript-eslint/no-explicit-any
 ) => {
-    type SanitizedNgHttpResponse = (Skip<ng.IHttpResponse<"<wiped-out>">, "headers"> & { message: string; headers: "<wiped-out>" });
+    type SanitizedNgHttpResponse = (StrictOmit<ng.IHttpResponse<"<wiped-out>">, "headers"> & { message: string; headers: "<wiped-out>" });
     const sanitizedNgHttpResponse: SanitizedNgHttpResponse | false = angularJsHttpResponseTypeGuard(rawError)
         ? {
             // TODO add tests to validate that "angularJsHttpResponseTypeGuard" call on this error still return "true"

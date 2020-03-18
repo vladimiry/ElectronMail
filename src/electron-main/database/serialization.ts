@@ -5,7 +5,6 @@ import oboe from "oboe";
 import {Readable} from "stream";
 
 import {FsDb} from "src/shared/model/database";
-import {ReadonlyDeep} from "type-fest";
 import {curryFunctionMembers} from "src/shared/util";
 
 interface Header extends EncryptionAdapterBundle.KeyBasedFileHeader {
@@ -53,7 +52,7 @@ const bufferToStream = (buffer: Buffer): Readable => {
 export class SerializationAdapter {
     public readonly read: (data: Buffer) => Promise<FsDb>;
 
-    public readonly write: (data: ReadonlyDeep<FsDb>) => Promise<Buffer>;
+    public readonly write: (data: DeepReadonly<FsDb>) => Promise<Buffer>;
 
     private logger = curryFunctionMembers(_logger, "[src/electron-main/database/serialization]", "[SerializationAdapter]");
 

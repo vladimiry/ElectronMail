@@ -8,7 +8,6 @@ import {ACCOUNTS_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
 import {LoginFieldContainer} from "src/shared/model/container";
 import {ONE_SECOND_MS} from "src/shared/constants";
-import {ReadonlyDeep} from "type-fest";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount} from "src/web/browser-window/app/model";
 import {getRandomInt} from "src/shared/util";
@@ -34,7 +33,7 @@ export class AccountsService {
     }
 
     setupLoginDelayTrigger(
-        account: ReadonlyDeep<WebAccount>,
+        account: DeepReadonly<WebAccount>,
         logger: ReturnType<typeof getZoneNameBoundWebLogger>,
     ): Observable<{ trigger: string }> {
         const {loginDelaySecondsRange, loginDelayUntilSelected = false, login} = account.accountConfig;

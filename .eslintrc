@@ -55,7 +55,7 @@
                     "error",
                     {
                         "types": {
-                            "Omit": "Prefer `Skip` to built-in TS `Omit` type"
+                            "Omit": "TS: prefer `StrictOmit` to built-in `Omit` type"
                         }
                     }
                 ]

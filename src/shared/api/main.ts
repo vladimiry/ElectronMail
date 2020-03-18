@@ -18,7 +18,6 @@ import {ElectronContextLocations} from "src/shared/model/electron";
 import {FsDbAccount} from "src/shared/model/database";
 import {PACKAGE_NAME} from "src/shared/constants";
 import {ProtonClientSession} from "src/shared/model/proton";
-import {ReadonlyDeep} from "type-fest";
 
 export const IPC_MAIN_API_DB_INDEXER_ON_ACTIONS = unionize({
         Bootstrapped: ofType<{}>(),
@@ -74,7 +73,7 @@ export const IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS = unionize({
 export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
         Bootstrap: ofType<{}>(),
         ActivateBrowserWindow: ofType<{}>(),
-        TargetUrl: ofType<ReadonlyDeep<NoExtraProperties<{
+        TargetUrl: ofType<DeepReadonly<NoExtraProperties<{
             url: string;
             // percent sizes get calculated since absolute sizes use introduce a mistake if "zoomFactor is not 1"
             position?: { cursorXPercent: number; cursorYPercent: number };
@@ -157,7 +156,7 @@ export const ENDPOINTS_DEFINITION = {
 
     dbIndexerNotification: ActionType.Observable<void, UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>>(),
 
-    staticInit: ActionType.Promise<void, ReadonlyDeep<{
+    staticInit: ActionType.Promise<void, DeepReadonly<{
         electronLocations: ElectronContextLocations;
         linuxLikePlatform: boolean;
     }>>(),

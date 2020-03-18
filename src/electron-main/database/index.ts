@@ -8,7 +8,6 @@ import {KeyBasedPreset} from "fs-json-store-encryption-adapter";
 import {DATABASE_VERSION, DB_INSTANCE_PROP_NAME} from "./constants";
 import {DbAccountPk, FsDb, FsDbAccount, MAIL_FOLDER_TYPE, Mail} from "src/shared/model/database";
 import {LogLevel} from "src/shared/model/common";
-import {ReadonlyDeep} from "type-fest";
 import {SerializationAdapter} from "./serialization";
 import {curryFunctionMembers, logLevelEnabled} from "src/shared/util";
 import {hrtimeDuration} from "src/electron-main/util";
@@ -55,7 +54,7 @@ export class Database {
         return this.getAccount({login}) as (FsDbAccount | undefined);
     }
 
-    getAccount<TL extends DbAccountPk>({login}: TL): ReadonlyDeep<FsDbAccount | undefined> {
+    getAccount<TL extends DbAccountPk>({login}: TL): DeepReadonly<FsDbAccount | undefined> {
         const account = this.dbInstance.accounts[login];
         if (!account) {
             return;
@@ -83,7 +82,7 @@ export class Database {
         return account;
     }
 
-    * [Symbol.iterator](): Iterator<{ account: ReadonlyDeep<FsDbAccount>; pk: ReadonlyDeep<DbAccountPk> }> {
+    * [Symbol.iterator](): Iterator<{ account: DeepReadonly<FsDbAccount>; pk: DeepReadonly<DbAccountPk> }> {
         this.logger.info("accountsIterator()");
 
         const {accounts} = this.dbInstance;
@@ -146,7 +145,7 @@ export class Database {
         });
     }
 
-    readonlyDbInstance(): ReadonlyDeep<FsDb> {
+    readonlyDbInstance(): DeepReadonly<FsDb> {
         return this.dbInstance;
     }
 
@@ -172,7 +171,7 @@ export class Database {
     }
 
     accountStat(
-        account: ReadonlyDeep<FsDbAccount>,
+        account: DeepReadonly<FsDbAccount>,
         includingSpam = false,
     ): { conversationEntries: number; mails: number; folders: number; contacts: number; unread: number } {
         const hasSpamEmail: (mail: Mail) => boolean = includingSpam
@@ -216,13 +215,13 @@ export class Database {
         this.logger[logLevel](`${methodName}().stat: ${JSON.stringify(dataToLog, null, 2)}`);
     }
 
-    private getPks(): Array<ReadonlyDeep<DbAccountPk>> {
+    private getPks(): Array<DeepReadonly<DbAccountPk>> {
         return Object
             .keys(this.dbInstance.accounts)
             .map((login) => ({login}));
     }
 
-    private spamFolderTester(account: ReadonlyDeep<FsDbAccount>): (mail: Mail) => boolean {
+    private spamFolderTester(account: DeepReadonly<FsDbAccount>): (mail: Mail) => boolean {
         const folder = resolveAccountFolders(account).find(({folderType}) => folderType === MAIL_FOLDER_TYPE.SPAM);
         const mailFolderId = folder && folder.mailFolderId;
         const result: ReturnType<typeof Database.prototype.spamFolderTester> = typeof mailFolderId !== "undefined"

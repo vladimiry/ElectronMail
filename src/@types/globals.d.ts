@@ -1,7 +1,6 @@
 import {Observable, Subject} from "rxjs";
 
 import {BuildEnvironment} from "webpack-configs/model";
-import {Except} from "type-fest";
 
 type Impossible<K extends keyof any> = { // eslint-disable-line @typescript-eslint/no-explicit-any
     [P in K]: never;
@@ -16,11 +15,13 @@ declare global {
                         T extends Subject<infer U3> ? U3 :
                             T;
 
-    type Mutable<T> = { -readonly [K in keyof T]: T[K]; };
+    type Mutable<T> = import("ts-essentials").Writable<T>;
 
     type NoExtraProperties<T, U extends T = T> = U & Impossible<Exclude<keyof U, keyof T>>;
 
-    type Skip<T, K extends keyof T> = Except<T, K>; // eslint-disable-line @typescript-eslint/ban-types
+    type StrictOmit<T, K extends keyof T> = import("ts-essentials").StrictOmit<T, K>;
+
+    type DeepReadonly<T> = import("ts-essentials").DeepReadonly<T>;
 
     const BUILD_ENVIRONMENT: BuildEnvironment;
 }

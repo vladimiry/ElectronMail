@@ -1,8 +1,11 @@
 import _logger from "electron-log";
-import {BrowserWindow, Menu, MenuItemConstructorOptions, app, clipboard, screen} from "electron";
+import {BrowserWindow, Menu, MenuItemConstructorOptions, WebPreferences, app, clipboard, screen} from "electron";
+import {equals, pick} from "remeda";
+import {inspect} from "util";
 import {take} from "rxjs/operators";
 
 import {Context} from "./model";
+import {DEFAULT_WEB_PREFERENCES, DEFAULT_WEB_PREFERENCES_KEYS} from "src/electron-main/window/constants";
 import {IPC_MAIN_API_NOTIFICATION$} from "./api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {PLATFORM} from "src/electron-main/constants";
@@ -11,14 +14,31 @@ import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[web-contents]");
 
-const notifyLogAndThrow = (message: string): never => {
-    IPC_MAIN_API_NOTIFICATION$.next(
-        IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({message}),
-    );
-    const error = new Error(message);
-    logger.error(error); // TODO remove explicit logging
-    throw error;
-};
+const checkWebViewWebPreferencesDefaults: (webPreferences: WebPreferences) => boolean = (
+    () => {
+        const expected = DEFAULT_WEB_PREFERENCES;
+        const pickKeys = [...DEFAULT_WEB_PREFERENCES_KEYS];
+        const resultFn: typeof checkWebViewWebPreferencesDefaults = (webPreferences) => {
+            const actual = pick(webPreferences, pickKeys);
+            const result = equals(actual, expected);
+            if (!equals(actual, expected)) {
+                // TODO figure is the following props not getting precisely translated to "webview.WebPreferences"
+                //      expected Electron behavior (prop: expected value => actually received value):
+                //     - backgroundThrottling: false => undefined,
+                //     - disableBlinkFeatures: "Auxclick" => "",
+                //     - nodeIntegrationInWorker: false => undefined,
+                //     - spellcheck: false => undefined
+                //     - webviewTag: false => undefined
+                logger.warn(
+                    `Default/expected and actual "webview.webPreferences" props are not equal: `,
+                    inspect({actual, expected}),
+                );
+            }
+            return result;
+        };
+        return resultFn;
+    }
+)();
 
 const isEmailHref = (href: string): boolean => {
     return String(href).startsWith("mailto:");
@@ -121,10 +141,20 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
             logger.error(event.type, preloadPath, error);
         });
 
-        webContents.on("will-attach-webview", (...[event, /* webPreferences */, {src}]) => {
+        webContents.on("will-attach-webview", (...[event, webPreferences, {src}]) => {
             if (!webViewEntryUrlsWhitelist.some((allowedPrefix) => src.startsWith(allowedPrefix))) {
                 event.preventDefault();
-                notifyLogAndThrow(`Forbidden webview.src: "${src}"`);
+                const message = `Forbidden "webview.src" value: "${src}"`;
+                IPC_MAIN_API_NOTIFICATION$.next(
+                    IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({message}),
+                );
+                const error = new Error(message);
+                logger.error(error);
+                throw error;
+            }
+
+            if (!checkWebViewWebPreferencesDefaults(webPreferences)) {
+                Object.assign(webPreferences, DEFAULT_WEB_PREFERENCES);
             }
         });
 

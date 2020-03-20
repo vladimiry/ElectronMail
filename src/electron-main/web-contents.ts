@@ -50,6 +50,15 @@ const extractEmailIfEmailHref = (href: string): string => {
         : href;
 };
 
+const notifyLogAndThrow = (message: string): never => {
+    IPC_MAIN_API_NOTIFICATION$.next(
+        IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({message}),
+    );
+    const error = new Error(message);
+    logger.error(error);
+    throw error;
+};
+
 // WARN: needs to be called before "BrowserWindow" creating (has been ensured by tests)
 export async function initWebContentsCreatingHandlers(ctx: Context): Promise<void> {
     const emptyArray = [] as const;
@@ -58,6 +67,11 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
     const webViewEntryUrlsWhitelist: readonly string[] = ctx.locations.webClients.map(({entryUrl}) => `${entryUrl}/`);
 
     app.on("web-contents-created", async (...[, webContents]) => {
+        webContents.on("new-window", (event, url) => {
+            event.preventDefault();
+            notifyLogAndThrow(`Opening a new window is forbidden, url: "${url}"`);
+        });
+
         webContents.on("context-menu", async (...[, {editFlags, linkURL, linkText, isEditable, selectionText}]) => {
             const menuItems: MenuItemConstructorOptions[] = [];
 
@@ -144,13 +158,7 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
         webContents.on("will-attach-webview", (...[event, webPreferences, {src}]) => {
             if (!webViewEntryUrlsWhitelist.some((allowedPrefix) => src.startsWith(allowedPrefix))) {
                 event.preventDefault();
-                const message = `Forbidden "webview.src" value: "${src}"`;
-                IPC_MAIN_API_NOTIFICATION$.next(
-                    IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({message}),
-                );
-                const error = new Error(message);
-                logger.error(error);
-                throw error;
+                notifyLogAndThrow(`Forbidden "webview.src" value: "${src}"`);
             }
 
             if (!checkWebViewWebPreferencesDefaults(webPreferences)) {

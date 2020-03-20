@@ -3,7 +3,7 @@ import {srcRelativePath} from "webpack-configs/lib";
 
 export default buildRendererConfig(
     {
-        "electron-preload/webview/calendar": srcRelativePath("./electron-preload/webview/calendar/index.ts"),
+        "electron-preload/webview/primary": srcRelativePath("./electron-preload/webview/primary/index.ts"),
     },
-    srcRelativePath("./electron-preload/webview/calendar/tsconfig.json"),
+    srcRelativePath("./electron-preload/webview/primary/tsconfig.json"),
 );

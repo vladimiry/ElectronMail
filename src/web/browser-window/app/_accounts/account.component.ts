@@ -60,17 +60,12 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     @Input()
     readonly class: string = "";
 
-    readonly webViewsState: Readonly<Record<"primary" | "calendar", {
+    readonly webViewsState: Readonly<Record<"primary" /* | "calendar" */, {
         readonly src$: Subject<string>;
         readonly domReadyOnce: Deferred<Electron.WebviewTag>;
         readonly domReady$: Subject<Electron.WebviewTag>;
     }>> = {
         primary: {
-            src$: new ReplaySubject(1),
-            domReadyOnce: new Deferred(),
-            domReady$: new Subject(),
-        },
-        calendar: {
             src$: new ReplaySubject(1),
             domReadyOnce: new Deferred(),
             domReady$: new Subject(),

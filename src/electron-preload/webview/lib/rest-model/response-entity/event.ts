@@ -1,4 +1,3 @@
-import {Calendar, CalendarAlarm, CalendarEvent} from "src/electron-preload/webview/lib/rest-model/response-entity/calendar";
 import {Contact, ContactEmail, Message} from "src/electron-preload/webview/lib/rest-model/response-entity/mail";
 import {EVENT_ACTION} from "src/electron-preload/webview/lib/rest-model/constats";
 import {Id} from "src/electron-preload/webview/lib/rest-model/common";
@@ -18,7 +17,4 @@ export interface Event<TypeRecord = typeof EVENT_ACTION._.nameValueMap, A = Type
     ContactEmails?: Array<{ Action: A } & Pick<ContactEmail, "ID">>;
     Labels?: Array<{ Action: A } & Pick<Label, "ID"> & EventSubMessage>;
     MessageCounts?: Array<{ LabelID: string; Unread: number }>;
-    Calendars?: Array<{ Action: A } & Pick<Calendar, "ID"> & { Calendar: Calendar }>;
-    CalendarEvents?: Array<{ Action: A } & Pick<CalendarEvent, "ID"> & { Event: CalendarEvent }>;
-    CalendarAlarms?: Array<{ Action: A } & Pick<CalendarAlarm, "ID"> & { Alarm: CalendarAlarm }>;
 }

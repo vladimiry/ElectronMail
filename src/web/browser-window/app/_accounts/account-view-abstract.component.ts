@@ -50,7 +50,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
 
     protected constructor(
         private readonly viewType:
-            Extract<keyof typeof __METADATA__.electronLocations.preload, "primary" | "calendar">,
+            Extract<keyof typeof __METADATA__.electronLocations.preload, "primary" /* | "calendar" */>,
         private readonly injector: Injector,
     ) {
         super();

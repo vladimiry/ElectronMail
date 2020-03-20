@@ -5,7 +5,7 @@ export type AccountConfig = NoExtraProperties<{
     title?: string;
     entryUrl: string;
     database?: boolean; // TODO proton-v4: rename AccountConfig.database => AccountConfig.localStore
-    databaseCalendar?: boolean;
+    // databaseCalendar?: boolean;
     credentials: NoExtraProperties<Partial<Record<"password" | "twoFactorCode" | "mailPassword", string>>>;
     proxy?: NoExtraProperties<{
         proxyRules?: string;
@@ -26,7 +26,6 @@ export type AccountPersistentSessionBundle
     = Record<string /* mapped by "api endpoint origin" */, AccountPersistentSession | undefined>;
 
 export type Notifications = NoExtraProperties<{
-    calendarLoggedIn: boolean;
     loggedIn: boolean;
     pageType: NoExtraProperties<{
         url?: string;
@@ -34,8 +33,4 @@ export type Notifications = NoExtraProperties<{
         skipLoginDelayLogic?: boolean;
     }>;
     unread: number;
-}>;
-
-export type NotificationsCalendar = NoExtraProperties<{
-    loggedIn: boolean;
 }>;

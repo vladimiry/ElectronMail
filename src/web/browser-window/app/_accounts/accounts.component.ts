@@ -99,7 +99,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
 
     activateAccount(event: Event, account: WebAccount): void {
         event.preventDefault();
-        this.store.dispatch(ACCOUNTS_ACTIONS.Activate({login: account.accountConfig.login}));
+        this.store.dispatch(ACCOUNTS_ACTIONS.Select({login: account.accountConfig.login}));
     }
 
     openSettingsView(): void {

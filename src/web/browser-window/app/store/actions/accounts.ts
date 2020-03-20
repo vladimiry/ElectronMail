@@ -7,8 +7,8 @@ import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount, WebAccountProgress} from "src/web/browser-window/app/model";
 
 export const ACCOUNTS_ACTIONS = unionize({
-        Activate: ofType<{ login: string }>(),
-        DeActivate: ofType<{ login: string }>(),
+        Select: ofType<{ login: string }>(),
+        DeSelect: ofType<{ login: string }>(),
         PatchProgress: ofType<{ login: string; patch: WebAccountProgress }>(),
         Patch: ofType<{
             login: string;

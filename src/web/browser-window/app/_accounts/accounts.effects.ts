@@ -343,7 +343,7 @@ export class AccountsEffects {
                             };
                             const trigger$: Observable<{ trigger: string }> = skipLoginDelayLogic
                                 ? of({trigger: "the delay already took place, so immediate resolve"})
-                                : this.accountsService.setupLoginDelayTrigger(account, logger);
+                                : this.accountsService.setupLoginDelayTrigger({login}, logger);
 
                             return trigger$.pipe(
                                 mergeMap(() => this.store.pipe(

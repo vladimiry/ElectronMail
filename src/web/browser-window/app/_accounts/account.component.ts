@@ -138,7 +138,8 @@ export class AccountComponent extends NgChangesObservableComponent implements On
             this.account$
                 .pipe(
                     distinctUntilChanged(({accountConfig: {entryUrl: prev}}, {accountConfig: {entryUrl: curr}}) => curr === prev),
-                    switchMap((account) => this.accountsService.setupLoginDelayTrigger(account, this.logger)),
+                    // WARN: "switchMap" used to drop previously setup notification (we don't need them to run in parallel)
+                    switchMap(({accountConfig: {login}}) => this.accountsService.setupLoginDelayTrigger({login}, this.logger)),
                     delayWhen(() => this.onlinePing$),
                     withLatestFrom(this.account$),
                 )
@@ -235,7 +236,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                             body: `Account [${this.componentIndex}]: ${unread} unread message${unread > 1 ? "s" : ""}.`,
                         },
                     ).onclick = () => this.zone.run(() => {
-                        this.onDispatchInLoggerZone(ACCOUNTS_ACTIONS.Activate({login}));
+                        this.onDispatchInLoggerZone(ACCOUNTS_ACTIONS.Select({login}));
                         this.onDispatchInLoggerZone(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));
                     });
                 }),

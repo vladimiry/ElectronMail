@@ -93,10 +93,10 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
 
             draftState.initialized = true;
         },
-        Activate: ({login}) => {
+        Select: ({login}) => {
             draftState.selectedLogin = login;
         },
-        DeActivate: ({login}) => {
+        DeSelect: ({login}) => {
             if (draftState.selectedLogin === login) {
                 delete draftState.selectedLogin;
             }

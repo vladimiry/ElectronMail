@@ -1,5 +1,5 @@
 import _logger from "electron-log";
-import {BrowserWindow, Menu, MenuItemConstructorOptions, WebContents, app, clipboard, screen} from "electron";
+import {BrowserWindow, Menu, MenuItemConstructorOptions, app, clipboard, screen} from "electron";
 import {take} from "rxjs/operators";
 
 import {Context} from "./model";
@@ -11,23 +11,33 @@ import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[web-contents]");
 
-function isEmailHref(href: string): boolean {
-    return String(href).startsWith("mailto:");
-}
+const notifyLogAndThrow = (message: string): never => {
+    IPC_MAIN_API_NOTIFICATION$.next(
+        IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({message}),
+    );
+    const error = new Error(message);
+    logger.error(error); // TODO remove explicit logging
+    throw error;
+};
 
-function extractEmailIfEmailHref(href: string): string {
+const isEmailHref = (href: string): boolean => {
+    return String(href).startsWith("mailto:");
+};
+
+const extractEmailIfEmailHref = (href: string): string => {
     return isEmailHref(href)
         ? String(href.split("mailto:").pop())
         : href;
-}
+};
 
 // WARN: needs to be called before "BrowserWindow" creating (has been ensured by tests)
 export async function initWebContentsCreatingHandlers(ctx: Context): Promise<void> {
     const emptyArray = [] as const;
     const endpoints = await ctx.deferredEndpoints.promise;
     const spellCheckController = ctx.getSpellCheckController();
-    const allowedWebViewPrefixes: readonly string[] = ctx.locations.webClients.map(({entryUrl}) => entryUrl);
-    const webContentsCreatedHandler = async (webContents: WebContents): Promise<void> => {
+    const webViewEntryUrlsWhitelist: readonly string[] = ctx.locations.webClients.map(({entryUrl}) => `${entryUrl}/`);
+
+    app.on("web-contents-created", async (...[, webContents]) => {
         webContents.on("context-menu", async (...[, {editFlags, linkURL, linkText, isEditable, selectionText}]) => {
             const menuItems: MenuItemConstructorOptions[] = [];
 
@@ -90,10 +100,10 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
                     ...[
                         // TODO use "role" based "cut/copy/paste" actions, currently these actions don't work properly
                         // keep track of the respective issue https://github.com/electron/electron/issues/15219
-                        ...(editFlags.canCut ? [{label: "Cut", click: (): void => webContents.cut()}] : emptyArray),
-                        ...(editFlags.canCopy ? [{label: "Copy", click: (): void => webContents.copy()}] : emptyArray),
-                        ...(editFlags.canPaste ? [{label: "Paste", click: (): void => webContents.paste()}] : emptyArray),
-                        ...(editFlags.canSelectAll ? [{label: "Select All", click: (): void => webContents.selectAll()}] : emptyArray),
+                        ...(editFlags.canCut ? [{label: "Cut", click: () => webContents.cut()}] : emptyArray),
+                        ...(editFlags.canCopy ? [{label: "Copy", click: () => webContents.copy()}] : emptyArray),
+                        ...(editFlags.canPaste ? [{label: "Paste", click: () => webContents.paste()}] : emptyArray),
+                        ...(editFlags.canSelectAll ? [{label: "Select All", click: () => webContents.selectAll()}] : emptyArray),
                     ],
                 ]);
             }
@@ -111,22 +121,11 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
             logger.error(event.type, preloadPath, error);
         });
 
-        webContents.on("will-attach-webview", (willAttachWebviewEvent, webPreferences, {src}) => {
-            const allowedSrc = allowedWebViewPrefixes.some((allowedPrefix) => src.startsWith(allowedPrefix));
-
-            webPreferences.nodeIntegration = false;
-
-            if (allowedSrc) {
-                return;
+        webContents.on("will-attach-webview", (...[event, /* webPreferences */, {src}]) => {
+            if (!webViewEntryUrlsWhitelist.some((allowedPrefix) => src.startsWith(allowedPrefix))) {
+                event.preventDefault();
+                notifyLogAndThrow(`Forbidden webview.src: "${src}"`);
             }
-
-            willAttachWebviewEvent.preventDefault();
-
-            const message = `Forbidden webview.src: "${allowedSrc}"`;
-            IPC_MAIN_API_NOTIFICATION$.next(
-                IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({message}),
-            );
-            logger.error(new Error(message));
         });
 
         webContents.on("update-target-url", (...[, url]) => {
@@ -158,7 +157,5 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
 
         const {zoomFactor} = await ctx.config$.pipe(take(1)).toPromise();
         webContents.zoomFactor = zoomFactor;
-    };
-
-    app.on("web-contents-created", async (...[, webContents]) => webContentsCreatedHandler(webContents));
+    });
 }

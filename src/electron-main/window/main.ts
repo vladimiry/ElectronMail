@@ -110,6 +110,7 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
     const browserWindow = new BrowserWindow({
         webPreferences: {
             ...DEFAULT_WEB_PREFERENCES,
+            webviewTag: true,
             preload: ctx.runtimeEnvironment === "e2e"
                 ? ctx.locations.preload.browserWindowE2E
                 : ctx.locations.preload.browserWindow,

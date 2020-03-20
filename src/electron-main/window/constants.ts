@@ -8,6 +8,7 @@ export const DEFAULT_WEB_PREFERENCES: Readonly<NoExtraProperties<BrowserWindowCo
         webviewTag: true,
         webSecurity: true,
         sandbox: true,
+        spellcheck: false,
         disableBlinkFeatures: "Auxclick",
         // TODO disable "remote" module by disabling "enableRemoteModule" option
         //      currently these things depend on it:

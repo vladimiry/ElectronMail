@@ -142,6 +142,7 @@
     "rxjs": "6.5.4",
     "sanitize-html": "1.22.1",
     "spellchecker": "https://github.com/vladimiry-playground/node-spellchecker#37cebc43ccbfce27dac51f64ec45f72d9aa80b8f",
+    "truncate-utf8-bytes": "1.0.2",
     "ts-deferred": "1.0.4",
     "tslib": "1.11.1",
     "uuid": "7.0.2",

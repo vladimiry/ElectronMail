@@ -1,5 +1,6 @@
 import electronLog from "electron-log";
 import fs from "fs";
+import truncateStringLength from "truncate-utf8-bytes";
 import {Base64} from "js-base64";
 import {Observable, from} from "rxjs";
 import {app, dialog} from "electron";
@@ -21,15 +22,60 @@ const fsAsync = {
     writeFile: promisify(fs.writeFile),
 } as const;
 
-const eol = `\r\n`;
-const emlExtension = `.eml`;
-const maxFileNameLength = 256 - emlExtension.length;
-const safeFileNameRe = /[^A-Za-z0-9.]+/g;
+const eol = "\r\n";
 const emptyArray = [] as const;
 
-function padStart(value: number, args: [number, string] = [2, `0`]): string {
+const padStart = (value: number, args: [number, string] = [2, "0"]): string => {
     return String.prototype.padStart.apply(value, args);
-}
+};
+
+const buildSortableDate = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = padStart(date.getMonth());
+    const day = padStart(date.getDate());
+    const hours = padStart(date.getHours());
+    const minutes = padStart(date.getMinutes());
+    const seconds = padStart(date.getSeconds());
+
+    return `${year}-${month}-${day} ${hours}h${minutes}m${seconds}s`;
+};
+
+const fileExists = async (file: string): Promise<boolean> => {
+    try {
+        return (await fsAsync.stat(file)).isFile();
+    } catch (error) {
+        if (error.code === "ENOENT") {
+            return false;
+        }
+        throw error;
+    }
+};
+
+const generateFileName: (mail: Mail, dir: string) => Promise<string> = (() => {
+    const extension = ".eml";
+    const fileNameWithoutExtensionLengthLimit = 255 - extension.length;
+    const safeFileNameRe = /[^A-Za-z0-9]+/g;
+    const generatingLimit = 10;
+    const resultFn: typeof generateFileName = async (mail, dir) => {
+        for (let i = 0; i < generatingLimit; i++) {
+            const fileNamePrefixEnding: string = i
+                ? `_${i}`
+                : "";
+            const fileNamePrefix = buildSortableDate(new Date(mail.sentDate)) + fileNamePrefixEnding;
+            const fileNameWithoutExtension = `${fileNamePrefix} ${mail.subject}`.replace(safeFileNameRe, "_");
+            const fileName = truncateStringLength(fileNameWithoutExtension, fileNameWithoutExtensionLengthLimit) + extension;
+            const file = join(dir, fileName);
+            if (await fileExists(file)) {
+                continue;
+            }
+            return file;
+        }
+        throw new Error(
+            `Failed to generate unique file name for email with "${mail.subject}" subject after ${generatingLimit} iterations`,
+        );
+    };
+    return resultFn;
+})();
 
 function formatAttachment(attachments: readonly File[], boundary: string): string[] {
     // TODO attachment body
@@ -54,49 +100,6 @@ function formatAddresses(prop: string, addresses: readonly MailAddress[]): Reado
             .join(`, `),
         eol,
     ];
-}
-
-function buildSortableDate(date: Date): string {
-    const year = date.getFullYear();
-    const month = padStart(date.getMonth());
-    const day = padStart(date.getDate());
-    const hours = padStart(date.getHours());
-    const minutes = padStart(date.getMinutes());
-    const seconds = padStart(date.getSeconds());
-
-    return `${year}-${month}-${day} ${hours}h${minutes}m${seconds}s`;
-}
-
-async function fileExists(file: string): Promise<boolean> {
-    try {
-        return (await fsAsync.stat(file)).isFile();
-    } catch (error) {
-        if (error.code === "ENOENT") {
-            return false;
-        }
-        throw error;
-    }
-}
-
-async function generateFileName(mail: Mail, dir: string): Promise<string> {
-    const limit = 10;
-
-    for (let i = 0; i < limit; i++) {
-        const fileNamePrefixEnding: string = i
-            ? `_${i}`
-            : "";
-        const fileNamePrefix: string = buildSortableDate(new Date(mail.sentDate)) + fileNamePrefixEnding;
-        const fileName: string = `${fileNamePrefix} ${mail.subject}`.substr(0, maxFileNameLength) + emlExtension;
-        const file: string = join(dir, fileName.replace(safeFileNameRe, `_`));
-
-        if (await fileExists(file)) {
-            continue;
-        }
-
-        return file;
-    }
-
-    throw new Error(`Failed to generate unique file name for email with "${mail.subject}" subject after ${limit} iterations`);
 }
 
 const formatEmlDate: (mail: Mail) => string = (() => {

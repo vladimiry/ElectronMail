@@ -13,7 +13,6 @@ export const DEFAULT_WEB_PREFERENCES_KEYS = Object.freeze([
     // TODO disable "remote" module by disabling "enableRemoteModule" option
     //      currently these things depend on it:
     //      - "rolling-rate-limiter" module
-    //      - "html-to-text" module
     //      - e2e tests preload script
     // enableRemoteModule: false,
 ] as const);

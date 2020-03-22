@@ -1,9 +1,7 @@
-import {remote} from "electron"; // tslint:disable-line:no-import-zones
+import {fromString as htmlToText} from "html-to-text";
 
 import {INDEXABLE_MAIL_FIELDS_STUB_CONTAINER, IndexableMail, MailAddress} from "src/shared/model/database";
 import {buildLoggerBundle} from "src/electron-preload/lib/util";
-
-const htmlToText: { fromString: (value: string) => string } = remote.require("html-to-text");
 
 export const LOGGER = buildLoggerBundle("[preload: database-indexer]");
 
@@ -24,7 +22,7 @@ export const FIELD_DESCRIPTION: Record<keyof typeof INDEXABLE_MAIL_FIELDS_STUB_C
             boost: 7,
         },
         body: {
-            accessor: ({body}) => htmlToText.fromString(body),
+            accessor: ({body}) => htmlToText(body),
             boost: 5,
         },
         sender: {

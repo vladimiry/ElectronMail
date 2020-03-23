@@ -17,11 +17,11 @@ const logger = curryFunctionMembers(_logger, "[web-contents]");
 const checkWebViewWebPreferencesDefaults: (webPreferences: WebPreferences) => boolean = (
     () => {
         const expected = DEFAULT_WEB_PREFERENCES;
-        const pickKeys = [...DEFAULT_WEB_PREFERENCES_KEYS];
+        const pickKeys = DEFAULT_WEB_PREFERENCES_KEYS;
         const resultFn: typeof checkWebViewWebPreferencesDefaults = (webPreferences) => {
             const actual = pick(webPreferences, pickKeys);
-            const result = equals(actual, expected);
-            if (!equals(actual, expected)) {
+            const same = equals(actual, expected);
+            if (!same) {
                 // TODO figure is the following props not getting precisely translated to "webview.WebPreferences"
                 //      expected Electron behavior (prop: expected value => actually received value):
                 //     - backgroundThrottling: false => undefined,
@@ -34,7 +34,7 @@ const checkWebViewWebPreferencesDefaults: (webPreferences: WebPreferences) => bo
                     inspect({actual, expected}),
                 );
             }
-            return result;
+            return same;
         };
         return resultFn;
     }

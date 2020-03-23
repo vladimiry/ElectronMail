@@ -1,7 +1,7 @@
 {
   "name": "electron-mail",
   "description": "Unofficial ProtonMail Desktop App",
-  "version": "4.4.2",
+  "version": "4.4.3",
   "author": "Vladimir Yakovlev <desktop-app@protonmail.ch>",
   "license": "MIT",
   "homepage": "https://github.com/vladimiry/ElectronMail",
@@ -137,7 +137,7 @@
     "proxy-agent": "3.1.1",
     "pureimage": "0.2.1",
     "reflect-metadata": "0.1.13",
-    "remeda": "0.0.15",
+    "remeda": "0.0.17",
     "rolling-rate-limiter": "0.1.11",
     "rxjs": "6.5.4",
     "sanitize-html": "1.22.1",

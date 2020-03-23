@@ -46,7 +46,7 @@ export class AccountsService {
             mergeMap((account) => account ? [account] as const : [] as const),
             distinctUntilChanged(({accountConfig: prev}, {accountConfig: curr}) => {
                 // check if related props changed
-                return equals(pick(prev, [...props]), pick(curr, [...props]));
+                return equals(pick(prev, props), pick(curr, props));
             }),
             // WARN: "switchMap" used to drop previously setup notification (we don't need them to run in parallel)
             // so we re-setup the "delay" logic if related props changed (see above "distinctUntilChanged" check)

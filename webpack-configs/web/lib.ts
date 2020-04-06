@@ -79,6 +79,9 @@ export function buildMinimalWebConfig(
                         {
                             test: /\.html$/,
                             loader: "html-loader",
+                            options: {
+                                minimize: false,
+                            },
                         },
                         {
                             test: /\.css$/,

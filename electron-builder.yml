@@ -49,27 +49,6 @@ linux:
   category: Office
   packageCategory: Office
 
-deb:
-  depends:
-    # default Electron dependencies
-    - gconf2
-    - gconf-service
-    - libnotify4
-    - libappindicator1
-    - libxtst6
-    - libnss3
-    # keytar dependencies
-    - libsecret-1-0
-
-rpm:
-  depends:
-    # default Electron dependencies
-    - libXScrnSaver
-    - libappindicator
-    - libnotify
-    # keytar dependencies
-    - libsecret
-
 snap:
   confinement: strict
   stagePackages:

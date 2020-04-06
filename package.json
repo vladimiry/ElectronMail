@@ -218,7 +218,7 @@
     "cross-env": "7.0.2",
     "css-loader": "3.5.0",
     "cssnano": "4.1.10",
-    "electron": "9.0.0-beta.5",
+    "electron": "9.0.0-beta.14",
     "electron-builder": "22.4.1",
     "escape-string-regexp": "2.0.0",
     "eslint": "6.8.0",

@@ -48,6 +48,8 @@ linux:
   icon: ./app/assets/icons/png
   category: Office
   packageCategory: Office
+  desktop:
+    StartupWMClass: electron-mail
 
 # TODO drop explicitly listed "pacman" dependencies in https://github.com/develar/app-builder/pull/29 resolving
 pacman:

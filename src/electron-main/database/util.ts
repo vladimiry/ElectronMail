@@ -31,6 +31,7 @@ export const resolveAccountFolders: (
                 id as any, // eslint-disable-line @typescript-eslint/no-explicit-any
             ),
             mailFolderId: id,
+            exclusive: 1,
         }));
 
         const result: typeof resolveAccountFolders = (account) => [

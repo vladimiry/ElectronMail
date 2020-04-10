@@ -149,10 +149,25 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
                 if (!account.makeReadMailParams) {
                     return;
                 }
-                const {messageIds, mailsBundleKey} = account.makeReadMailParams;
+                const {messageIds} = account.makeReadMailParams;
                 this.event.emit({
                     type: "action",
-                    payload: ACCOUNTS_ACTIONS.MakeMailRead({account, webView, messageIds, mailsBundleKey}),
+                    payload: ACCOUNTS_ACTIONS.MakeMailRead({account, webView, messageIds}),
+                });
+            }),
+        );
+
+        this.addSubscription(
+            this.account$.pipe(
+                distinctUntilChanged(({setMailFolderParams: prev}, {setMailFolderParams: curr}) => curr === prev),
+            ).subscribe((account) => {
+                if (!account.setMailFolderParams) {
+                    return;
+                }
+                const {folderId, messageIds} = account.setMailFolderParams;
+                this.event.emit({
+                    type: "action",
+                    payload: ACCOUNTS_ACTIONS.SetMailFolder({account, webView, folderId, messageIds}),
                 });
             }),
         );

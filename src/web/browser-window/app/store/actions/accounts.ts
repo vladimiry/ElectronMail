@@ -2,7 +2,6 @@ import {ofType, unionize} from "@vladimiry/unionize";
 
 import {AccountConfig} from "src/shared/model/account";
 import {DbAccountPk, Mail} from "src/shared/model/database";
-import {MailsBundleKey} from "src/web/browser-window/app/store/reducers/db-view";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount, WebAccountProgress} from "src/web/browser-window/app/model";
 
@@ -24,6 +23,7 @@ export const ACCOUNTS_ACTIONS = unionize({
         }>(),
         ToggleDatabaseView: ofType<{ login: string; forced?: Pick<WebAccount, "databaseView"> }>(),
         ToggleSyncing: ofType<{ pk: DbAccountPk; webView: Electron.WebviewTag; finishPromise: Promise<void> }>(),
+        Synced: ofType<{ pk: DbAccountPk }>(),
         SetupNotificationChannel: ofType<{ account: WebAccount; webView: Electron.WebviewTag; finishPromise: Promise<void> }>(),
         TryToLogin: ofType<{ account: WebAccount; webView: Electron.WebviewTag }>(),
         WireUpConfigs: ofType<{ accountConfigs: AccountConfig[] }>(),
@@ -33,10 +33,14 @@ export const ACCOUNTS_ACTIONS = unionize({
             & Partial<Pick<Exclude<WebAccount["fetchSingleMailParams"], null>, "mailPk">>>(),
         FetchSingleMail: ofType<{ account: WebAccount; webView: Electron.WebviewTag }
             & Pick<Exclude<WebAccount["fetchSingleMailParams"], null>, "mailPk">>(),
-        MakeMailReadSetParams: ofType<{ pk: DbAccountPk; mailsBundleKey: MailsBundleKey }
-            & Partial<Pick<Exclude<WebAccount["makeReadMailParams"], null>, "messageIds">>>(),
-        MakeMailRead: ofType<{ account: WebAccount; webView: Electron.WebviewTag; mailsBundleKey: MailsBundleKey }
-            & Pick<Exclude<WebAccount["makeReadMailParams"], null>, "messageIds">>(),
+        MakeMailReadSetParams: ofType<{ pk: DbAccountPk }
+            & (Exclude<WebAccount["makeReadMailParams"], null> | {})>(),
+        MakeMailRead: ofType<{ account: WebAccount; webView: Electron.WebviewTag }
+            & Exclude<WebAccount["makeReadMailParams"], null>>(),
+        SetMailFolderParams: ofType<{ pk: DbAccountPk }
+            & (Exclude<WebAccount["setMailFolderParams"], null> | {})>(),
+        SetMailFolder: ofType<{ account: WebAccount; webView: Electron.WebviewTag }
+            & Exclude<WebAccount["setMailFolderParams"], null>>(),
     },
     {
         tag: "type",

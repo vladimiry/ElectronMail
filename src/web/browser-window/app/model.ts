@@ -1,6 +1,5 @@
 import {AccountConfig, Notifications} from "src/shared/model/account";
-import {Mail} from "src/shared/model/database";
-import {MailsBundleKey} from "src/web/browser-window/app/store/reducers/db-view";
+import {Folder, Mail} from "src/shared/model/database";
 
 export interface WebAccount {
     accountConfig: AccountConfig;
@@ -19,7 +18,8 @@ export interface WebAccount {
     loginDelayedUntilSelected?: boolean;
     // TODO consider combining "fetchSingleMailParams" and "makeReadMailParams" to the object with "optional" props
     fetchSingleMailParams: { mailPk: Mail["pk"] } | null;
-    makeReadMailParams: { messageIds: string[]; mailsBundleKey: MailsBundleKey } | null;
+    makeReadMailParams: { messageIds: Array<Mail["id"]> } | null;
+    setMailFolderParams: { folderId: Folder["id"]; messageIds: Array<Mail["id"]> } | null;
 }
 
 export type WebAccountProgress = WebAccount["progress"];

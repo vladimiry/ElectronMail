@@ -2,12 +2,14 @@ import {ChangeDetectionStrategy, Component, ElementRef, Input, OnDestroy, OnInit
 import {Observable, Subscription, combineLatest, fromEvent} from "rxjs";
 import {Store} from "@ngrx/store";
 import {distinctUntilChanged, map, mergeMap, take, tap, withLatestFrom} from "rxjs/operators";
+import {sortBy} from "remeda";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {DB_VIDE_MAIL_SELECTED_CLASS_NAME} from "src/web/browser-window/app/_db-view/const";
 import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
-import {Mail} from "src/shared/model/database";
+import {Folder, Mail} from "src/shared/model/database/view";
 import {MailsBundleKey, State} from "src/web/browser-window/app/store/reducers/db-view";
+import {PROTONMAIL_MAILBOX_IDENTIFIERS} from "src/shared/model/database";
 
 // TODO read "electron-mail-db-view-mail" from the DbViewMailComponent.selector property
 const mailComponentTagName = "electron-mail-db-view-mail";
@@ -88,11 +90,90 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
         this.makeAllReadInProgress$,
         this.onlineAndSignedIn$,
     ]).pipe(
-        map(([unreadCount, makeAllReadInProgress, onlineAndSignedIn]) => {
-            return unreadCount < 1 || makeAllReadInProgress || !onlineAndSignedIn;
+        map(([unreadCount, inProgress, onlineAndSignedIn]) => {
+            return unreadCount < 1 || inProgress || !onlineAndSignedIn;
         }),
         distinctUntilChanged(),
     );
+
+    plainMailsBundle$ = this.mailsBundleKey$.pipe(
+        mergeMap((mailsBundleKey) => this.instance$.pipe(
+            map((instance) => {
+                const key = mailsBundleKey === "folderConversationsBundle"
+                    ? "folderMailsBundle"
+                    : mailsBundleKey;
+                return instance[key];
+            }),
+            distinctUntilChanged(),
+        )),
+    );
+
+    plainItems$ = this.plainMailsBundle$.pipe(
+        map(({items}) => items),
+        distinctUntilChanged(),
+        tap(this.markDirty.bind(this)),
+    );
+
+    plainItemsCount$: Observable<number> = this.plainItems$.pipe(
+        map(({length}) => length),
+        distinctUntilChanged(),
+    );
+
+    setFolderInProgress$: Observable<boolean> = this.account$.pipe(
+        map((account) => {
+            return account
+                ? Boolean(account.setMailFolderParams)
+                : false;
+        }),
+    );
+
+    setFolderButtonLocked$: Observable<boolean> = combineLatest([
+        this.plainItemsCount$,
+        this.setFolderInProgress$,
+        this.onlineAndSignedIn$,
+    ]).pipe(
+        map(([count, inProgress, onlineAndSignedIn]) => {
+            return count < 1 || inProgress || !onlineAndSignedIn;
+        }),
+        distinctUntilChanged(),
+    );
+
+    moveToFolders$: Observable<Folder[]> = (() => {
+        const excludePks: ReadonlySet<Folder["pk"]> = new Set([
+            PROTONMAIL_MAILBOX_IDENTIFIERS["All Drafts"],
+            PROTONMAIL_MAILBOX_IDENTIFIERS["All Sent"],
+            PROTONMAIL_MAILBOX_IDENTIFIERS["All Mail"],
+            PROTONMAIL_MAILBOX_IDENTIFIERS.Search,
+            PROTONMAIL_MAILBOX_IDENTIFIERS.Label,
+        ])
+        const staticFilter = (item: Folder): boolean => {
+            return (
+                item.exclusive > 0
+                &&
+                !excludePks.has(item.pk)
+            );
+        };
+        return combineLatest([
+            this.instance$.pipe(
+                map((value) => value.folders),
+                distinctUntilChanged(),
+                map(({custom, system}) => ([...custom, ...system])),
+                map((items) => items.filter(staticFilter)),
+                map((items) => sortBy([...items], ({name}) => name)),
+            ),
+            this.instance$.pipe(
+                map((value) => value.selectedFolderData),
+                distinctUntilChanged(),
+            ),
+        ]).pipe(
+            map(([items, selectedFolderData]) => {
+                const excludeFolderPk = this.mailsBundleKey === "searchMailsBundle"
+                    ? null // no excluding for the full-text search result lit
+                    : selectedFolderData?.pk;
+                return items.filter(({pk}) => pk !== excludeFolderPk);
+            }),
+        );
+    })();
 
     private subscription = new Subscription();
 
@@ -198,7 +279,24 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
                     .filter((item) => item.mail.unread)
                     .map((item) => item.mail.id);
                 this.store.dispatch(
-                    ACCOUNTS_ACTIONS.MakeMailReadSetParams({pk, mailsBundleKey: this.mailsBundleKey, messageIds}),
+                    ACCOUNTS_ACTIONS.MakeMailReadSetParams({pk, messageIds}),
+                );
+            });
+    }
+
+    setFolder(folderId: Folder["id"]): void {
+        this.plainItems$
+            .pipe(
+                withLatestFrom(this.dbAccountPk$),
+                take(1),
+            )
+            .subscribe(([items, pk]) => {
+                const messageIds = items.map((item) => item.mail.id);
+                if (!messageIds.length) {
+                    return;
+                }
+                this.store.dispatch(
+                    ACCOUNTS_ACTIONS.SetMailFolderParams({pk, folderId, messageIds}),
                 );
             });
     }

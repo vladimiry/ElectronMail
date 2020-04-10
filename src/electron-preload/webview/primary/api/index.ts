@@ -116,12 +116,22 @@ const endpoints: ProtonApi = {
         }
     },
 
-    async makeRead(input) {
-        _logger.info("makeRead()", input.zoneName);
+    async makeMailRead(input) {
+        _logger.info("makeMailRead()", input.zoneName);
 
         const {message} = await resolveProviderApi();
 
         await message.read({IDs: input.messageIds});
+
+        // TODO consider triggering the "refresh" action (clicking the "refresh" button action)
+    },
+
+    async setMailFolder(input) {
+        _logger.info("setMailFolder()", input.zoneName);
+
+        const {message} = await resolveProviderApi();
+
+        await message.label({LabelID: input.folderId, IDs: input.messageIds});
 
         // TODO consider triggering the "refresh" action (clicking the "refresh" button action)
     },

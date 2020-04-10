@@ -12,10 +12,15 @@
     }
 
     .type {
-        &-0 {
+        &-0 { // custom
             .fa::before {
-                content: $fa-var-user-o;
-                font-size: 80%;
+                content: $fa-var-tag;
+            }
+
+            &.folder-true {
+                .fa::before {
+                    content: $fa-var-folder;
+                }
             }
         }
 

@@ -75,13 +75,14 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                     const webAccount: WebAccount = {
                         accountConfig,
                         progress: {},
-                        makeReadMailParams: null,
                         notifications: {
                             loggedIn: false,
                             pageType: {url: "", type: "unknown"},
                             unread: 0,
                         },
                         fetchSingleMailParams: null,
+                        makeReadMailParams: null,
+                        setMailFolderParams: null,
                     };
 
                     accounts.push(webAccount);
@@ -156,12 +157,29 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                 ? {mailPk}
                 : null;
         },
-        MakeMailReadSetParams: ({pk, messageIds, mailsBundleKey}) => {
+        MakeMailReadSetParams: ({pk, ...rest}) => {
+            const key = "makeReadMailParams";
             const {account} = pickAccountBundle(draftState.accounts, {login: pk.login});
 
-            account.makeReadMailParams = messageIds
-                ? {messageIds, mailsBundleKey}
-                : null;
+            if ("messageIds" in rest) {
+                const {messageIds} = rest;
+                account[key] = {messageIds};
+                return;
+            }
+
+            account[key] = null;
+        },
+        SetMailFolderParams: ({pk, ...rest}) => {
+            const key = "setMailFolderParams";
+            const {account} = pickAccountBundle(draftState.accounts, {login: pk.login});
+
+            if ("messageIds" in rest) {
+                const {folderId, messageIds} = rest;
+                account[key] = {folderId, messageIds};
+                return;
+            }
+
+            account[key] = null;
         },
         default: () => draftState,
     }));

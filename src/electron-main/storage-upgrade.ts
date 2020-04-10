@@ -518,6 +518,23 @@ export async function upgradeDatabase(db: Database, accounts: Settings["accounts
         needToSave = true;
     }
 
+    if (Number(db.getVersion()) < 6) {
+        for (const {account} of db) {
+            for (const [/* folderPk */, folder] of Object.entries(account.folders)) {
+                if (typeof folder.exclusive === "number") {
+                    continue;
+                }
+                type RawFolder = Pick<import("src/electron-preload/webview/lib/rest-model/response-entity/folder").Label, "Exclusive">;
+                const rawRestResponseFolder: Readonly<RawFolder> = JSON.parse(folder.raw);
+                (folder as Mutable<Pick<typeof folder, "exclusive">>).exclusive = rawRestResponseFolder.Exclusive;
+                if (typeof folder.exclusive !== "number") {
+                    throw new Error(`Failed to resolve "rawFolder.Exclusive" numeric property`);
+                }
+                needToSave = true;
+            }
+        }
+    }
+
     // removing non existent accounts
     await (async (): Promise<void> => {
         const removePks: DbAccountPk[] = [];

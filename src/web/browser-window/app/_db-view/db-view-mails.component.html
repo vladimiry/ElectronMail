@@ -10,9 +10,38 @@
             style="white-space: nowrap"
         >
             Make all read
-            <span *ngIf="unreadCount$ | async; let unreadCount;">({{ unreadCount }})</span>
+            <span *ngIf="unreadCount$ | async; let count;">({{ count }})</span>
             <i *ngIf="makeAllReadInProgress$ | async" class="fa fa-spinner fa-pulse fa-fw ml-2"></i>
         </button>
+        <div
+            #dropdown="bs-dropdown"
+            [isDisabled]="(setFolderButtonLocked$ | async) || false"
+            class="btn-group"
+            dropdown
+        >
+            <button
+                class="btn btn-sm btn-primary mr-2"
+                dropdownToggle
+                style="white-space: nowrap"
+            >
+                Move all to
+                <ng-container *ngIf="!(setFolderInProgress$ | async)">
+                    <span *ngIf="plainItemsCount$ | async; let count;">({{ count }})</span>
+                </ng-container>
+                <i *ngIf="setFolderInProgress$ | async" class="fa fa-spinner fa-pulse fa-fw ml-2"></i>
+                <ul *dropdownMenu class="dropdown-menu" role="menu">
+                    <li
+                        (click)="dropdown.hide(); setFolder(folder.id)"
+                        *ngFor="let folder of (moveToFolders$ | async)"
+                        role="menuitem"
+                    >
+                        <a class="dropdown-item" href="#">
+                            {{ folder.name }} ({{ folder.size }})
+                        </a>
+                    </li>
+                </ul>
+            </button>
+        </div>
         <ng-content select="[controls]"></ng-content>
         <div class="title">
             {{ title$ | async }}<span *ngIf="items.length">: {{ (paging$ | async)?.end }} of {{ items.length }}</span>

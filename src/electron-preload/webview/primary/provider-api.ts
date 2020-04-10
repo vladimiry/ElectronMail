@@ -43,6 +43,7 @@ export interface ProviderApi {
             params?: RestModel.QueryParams & { LabelID?: Unpacked<RestModel.Message["LabelIDs"]> },
         ) => Promise<RestModel.MessagesResponse>;
         read: (params: { IDs: ReadonlyArray<RestModel.Message["ID"]> }) => Promise<void>;
+        label: (params: { LabelID: RestModel.Label["ID"]; IDs: ReadonlyArray<RestModel.Message["ID"]> }) => Promise<void>;
     };
     contact: {
         get: (id: RestModel.Contact["ID"]) => Promise<RestModel.ContactResponse["Contact"]>;
@@ -190,7 +191,7 @@ export async function resolveProviderApi(): Promise<ProviderApi> {
             }),
             message: resolveService<ProviderApi["message"]>(injector, "messageApi", {
                 ...rateLimiting,
-                rateLimitedMethodNames: ["get", "query"/*, "read"*/],
+                rateLimitedMethodNames: ["get", "query"/*, "read"*/ /*, "label"*/],
             }),
             contact: resolveService<ProviderApi["contact"]>(injector, "Contact", {
                 ...rateLimiting,

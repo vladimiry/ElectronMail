@@ -23,6 +23,7 @@ export interface Folder extends Entity {
     readonly folderType: Unpacked<typeof Constants.MAIL_FOLDER_TYPE._.values>;
     readonly name: string;
     readonly mailFolderId: string;
+    readonly exclusive: number;
 }
 
 export interface ConversationEntry extends Entity {

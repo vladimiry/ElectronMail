@@ -167,94 +167,102 @@ export class AccountsEffects {
                         ),
                     ),
                     this.api.webViewClient(webView, {finishPromise}).pipe(
-                        mergeMap((webViewClient) => merge(
-                            timer(0, ONE_MINUTE_MS * 5).pipe(
-                                tap(() => logger.verbose(`triggered by: timer`)),
-                            ),
-                            FIRE_SYNCING_ITERATION$.pipe(
-                                filter((value) => value.login === login),
-                                tap(() => logger.verbose(`triggered by: FIRE_SYNCING_ITERATION$`)),
-                                // user might be moving emails from here to there while syncing/"buildDbPatch" cycle is in progress
-                                // debounce call reduces 404 fetch errors as we don't trigger fetching until user got settled down
-                                debounceTime(ONE_SECOND_MS * 3),
-                            ),
-                            fromEvent(window, "online").pipe(
-                                tap(() => logger.verbose(`triggered by: "window.online" event`)),
-                                delay(ONE_SECOND_MS * 3),
-                            ),
-                        ).pipe(
-                            debounceTime(ONE_SECOND_MS),
-                            debounce(() => pingOnlineStatusEverySecond$),
-                            debounce(() => notSyncingPing$),
-                            concatMap(() => {
-                                return from(
-                                    ipcMainClient("dbGetAccountMetadata")({login}),
-                                );
-                            }),
-                            withLatestFrom(this.store.pipe(select(OptionsSelectors.CONFIG.timeouts))),
-                            concatMap(([metadata, timeouts]) => {
-                                const bootstrapping = !isDatabaseBootstrapped(metadata);
+                        mergeMap((webViewClient) => {
+                            const syncingIterationTrigger$: Observable<null> = merge(
+                                timer(0, ONE_MINUTE_MS * 5).pipe(
+                                    tap(() => logger.verbose(`triggered by: timer`)),
+                                    map(() => null),
+                                ),
+                                fromEvent(window, "online").pipe(
+                                    tap(() => logger.verbose(`triggered by: "window.online" event`)),
+                                    delay(ONE_SECOND_MS * 3),
+                                    map(() => null),
+                                ),
+                                FIRE_SYNCING_ITERATION$.pipe(
+                                    filter((value) => value.login === login),
+                                    tap(() => logger.verbose(`triggered by: FIRE_SYNCING_ITERATION$`)),
+                                    // user might be moving emails from here to there while syncing/"buildDbPatch" cycle is in progress
+                                    // debounce call reduces 404 fetch errors as we don't trigger fetching until user got settled down
+                                    debounceTime(ONE_SECOND_MS * 3),
+                                ),
+                            ).pipe(
+                                map(() => null),
+                            );
 
-                                if (bootstrapping && bootstrappingTriggeredOnce) {
-                                    return throwError(
-                                        new Error(`Database bootstrap fetch has already been called once for the account, ${zoneName}`),
+                            return syncingIterationTrigger$.pipe(
+                                debounceTime(ONE_SECOND_MS),
+                                debounce(() => pingOnlineStatusEverySecond$),
+                                debounce(() => notSyncingPing$),
+                                concatMap(() => {
+                                    return from(
+                                        ipcMainClient("dbGetAccountMetadata")({login}),
                                     );
-                                }
+                                }),
+                                withLatestFrom(this.store.pipe(select(OptionsSelectors.CONFIG.timeouts))),
+                                concatMap(([metadata, timeouts]) => {
+                                    const bootstrapping = !isDatabaseBootstrapped(metadata);
 
-                                const timeoutMs = bootstrapping
-                                    ? timeouts.dbBootstrapping
-                                    : timeouts.dbSyncing;
+                                    if (bootstrapping && bootstrappingTriggeredOnce) {
+                                        return throwError(
+                                            new Error(`Database bootstrap fetch has already been called once for the account, ${zoneName}`),
+                                        );
+                                    }
 
-                                logger.verbose(
-                                    `calling "buildDbPatch" api`,
-                                    JSON.stringify({
-                                        timeoutMs,
-                                        bootstrapping,
-                                        bootstrappingTriggeredOnce,
-                                    }),
-                                );
+                                    const timeoutMs = bootstrapping
+                                        ? timeouts.dbBootstrapping
+                                        : timeouts.dbSyncing;
 
-                                this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: true}}));
+                                    logger.verbose(
+                                        `calling "buildDbPatch" api`,
+                                        JSON.stringify({
+                                            timeoutMs,
+                                            bootstrapping,
+                                            bootstrappingTriggeredOnce,
+                                        }),
+                                    );
 
-                                const result$ = from(
-                                    webViewClient("buildDbPatch", {timeoutMs})({
-                                        login,
-                                        zoneName,
-                                        metadata,
-                                    }),
-                                ).pipe(
-                                    concatMap(() => EMPTY),
-                                    takeUntil(
-                                        fromEvent(window, "offline").pipe(
-                                            tap(() => {
-                                                logger.verbose(`offline event`);
+                                    this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: true}}));
 
-                                                // tslint:disable-next-line:early-exit
-                                                if (bootstrapping && bootstrappingTriggeredOnce) {
-                                                    bootstrappingTriggeredOnce = false;
-                                                    logger.verbose(
-                                                        [
-                                                            `reset "bootstrappingTriggeredOnce" state as previous iteration got aborted`,
-                                                            `by the "offline" event`,
-                                                        ].join(" "),
-                                                    );
-                                                }
-                                            }),
+                                    const result$ = from(
+                                        webViewClient("buildDbPatch", {timeoutMs})({
+                                            login,
+                                            zoneName,
+                                            metadata,
+                                        }),
+                                    ).pipe(
+                                        concatMap(() => of(ACCOUNTS_ACTIONS.Synced({pk: {login}}))),
+                                        takeUntil(
+                                            fromEvent(window, "offline").pipe(
+                                                tap(() => {
+                                                    logger.verbose(`offline event`);
+
+                                                    // tslint:disable-next-line:early-exit
+                                                    if (bootstrapping && bootstrappingTriggeredOnce) {
+                                                        bootstrappingTriggeredOnce = false;
+                                                        logger.verbose(
+                                                            [
+                                                                `reset "bootstrappingTriggeredOnce" state as previous iteration`,
+                                                                `got aborted by the "offline" event`,
+                                                            ].join(" "),
+                                                        );
+                                                    }
+                                                }),
+                                            ),
                                         ),
-                                    ),
-                                    finalize(() => {
-                                        return this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: false}}));
-                                    }),
-                                );
+                                        finalize(() => {
+                                            this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: false}}));
+                                        }),
+                                    );
 
-                                if (bootstrapping) {
-                                    bootstrappingTriggeredOnce = true;
-                                    logger.verbose("bootstrappingTriggeredOnce = true");
-                                }
+                                    if (bootstrapping) {
+                                        bootstrappingTriggeredOnce = true;
+                                        logger.verbose("bootstrappingTriggeredOnce = true");
+                                    }
 
-                                return result$;
-                            }),
-                        )),
+                                    return result$;
+                                }),
+                            );
+                        }),
                     ),
                 ).pipe(
                     takeUntil(dispose$),

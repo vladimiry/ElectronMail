@@ -7,6 +7,10 @@
     flex-direction: column;
 
     .controls {
+        .dropdown-menu {
+            @include font-size($input-font-size-sm);
+        }
+
         .title {
             @include app-db-view-badge-padding-radius;
             display: flex;

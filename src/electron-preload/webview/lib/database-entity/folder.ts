@@ -31,5 +31,6 @@ export function buildFolder(input: RestModel.Label): Model.Folder {
         folderType,
         name,
         mailFolderId: input.ID,
+        exclusive: input.Exclusive,
     };
 }

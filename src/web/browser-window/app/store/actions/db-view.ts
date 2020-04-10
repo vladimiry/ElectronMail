@@ -60,10 +60,6 @@ export const DB_VIEW_ACTIONS = unionize({
         ResetSearchMailsBundleItems: ofType<{
             dbAccountPk: DbAccountPk;
         }>(),
-        MakeMailsReadInStore: ofType<{
-            dbAccountPk: DbAccountPk;
-            mailsBundleKey: MailsBundleKey;
-        }>(),
     },
     {
         tag: "type",

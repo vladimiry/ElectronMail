@@ -5,7 +5,7 @@ import {NumberBoolean} from "src/electron-preload/webview/lib/rest-model/common"
 export interface Label<TypeRecord = typeof LABEL_TYPE._.nameValueMap> extends Entity {
     Color: string;
     Display: NumberBoolean;
-    Exclusive: NumberBoolean;
+    Exclusive: number;
     Name: string;
     Notify: NumberBoolean;
     Order: number;

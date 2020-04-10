@@ -1,6 +1,6 @@
 import {ActionType, ScanService, createWebViewApiService} from "electron-rpc-api";
 
-import {DbAccountPk, FsDbAccount, Mail} from "src/shared/model/database";
+import {DbAccountPk, Folder, FsDbAccount, Mail} from "src/shared/model/database";
 import {LoginFieldContainer, MailPasswordFieldContainer, PasswordFieldContainer} from "src/shared/model/container";
 import {Notifications} from "src/shared/model/account";
 import {PACKAGE_NAME} from "src/shared/constants";
@@ -10,6 +10,7 @@ import {buildLoggerBundle} from "src/electron-preload/lib/util";
 
 const {Promise, Observable} = ActionType;
 
+// TODO drop "ZoneApiParameter" use
 export const PROTONMAIL_IPC_WEBVIEW_API_DEFINITION = {
     ping:
         Promise<DeepReadonly<ZoneApiParameter>>(),
@@ -27,8 +28,10 @@ export const PROTONMAIL_IPC_WEBVIEW_API_DEFINITION = {
         } & ZoneApiParameter>>(),
     fetchSingleMail:
         Promise<DeepReadonly<DbAccountPk & { mailPk: Mail["pk"] } & ZoneApiParameter>>(),
-    makeRead:
-        Promise<DeepReadonly<DbAccountPk & { messageIds: string[] } & ZoneApiParameter>>(),
+    makeMailRead:
+        Promise<DeepReadonly<DbAccountPk & { messageIds: Array<Mail["id"]> } & ZoneApiParameter>>(),
+    setMailFolder:
+        Promise<DeepReadonly<DbAccountPk & { folderId: Folder["id"]; messageIds: Array<Mail["id"]> } & ZoneApiParameter>>(),
     notification:
         Observable<DeepReadonly<{ entryUrl: string; entryApiUrl: string } & ZoneApiParameter>, ProtonNotificationOutput>(),
     unlock:

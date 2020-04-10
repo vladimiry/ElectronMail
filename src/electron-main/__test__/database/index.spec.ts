@@ -50,6 +50,7 @@ function buildFolder(): Folder {
         name: randomstring.generate(),
         folderType: MAIL_FOLDER_TYPE.SENT,
         mailFolderId: "123",
+        exclusive: 234,
     };
 }
 

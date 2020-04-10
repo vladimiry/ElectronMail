@@ -1,10 +1,12 @@
 import {Actions, createEffect} from "@ngrx/effects";
-import {EMPTY, forkJoin, from, merge, of} from "rxjs";
+import {EMPTY, concat, forkJoin, from, merge, of} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
+import {Observable} from "rxjs/internal/Observable";
 import {Store, select} from "@ngrx/store";
-import {concatMap, filter, finalize, map, mergeMap, switchMap, takeUntil, tap} from "rxjs/operators";
+import {concatMap, filter, finalize, map, mergeMap, switchMap, take, takeUntil, tap} from "rxjs/operators";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter,} from "src/web/browser-window/app/store/actions";
+import {AccountConfig} from "src/shared/model/account";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {FIRE_SYNCING_ITERATION$} from "src/web/browser-window/app/app.constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
@@ -165,24 +167,39 @@ export class DbViewEffects {
         () => this.actions$.pipe(
             unionizeActionFilter(ACCOUNTS_ACTIONS.is.MakeMailRead),
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-            mergeMap(({payload: {account, webView, messageIds, mailsBundleKey}, logger}) => {
+            mergeMap(({payload: {account, webView, messageIds}, logger}) => {
                 const {login} = account.accountConfig;
                 const pk = {login};
 
                 return this.api.webViewClient(webView).pipe(
                     mergeMap((webViewClient) => {
                         return from(
-                            webViewClient("makeRead")({...pk, messageIds, zoneName: logger.zoneName()}),
+                            webViewClient("makeMailRead")({...pk, messageIds, zoneName: logger.zoneName()}),
                         ).pipe(
-                            mergeMap(() => {
-                                FIRE_SYNCING_ITERATION$.next({login});
-                                return of(DB_VIEW_ACTIONS.MakeMailsReadInStore({dbAccountPk: pk, mailsBundleKey}));
-                            }),
-                            finalize(() => {
-                                this.store.dispatch(
-                                    ACCOUNTS_ACTIONS.MakeMailReadSetParams({pk, messageIds: undefined, mailsBundleKey}),
-                                );
-                            }),
+                            mergeMap(() => this.fireSyncingIteration({login})),
+                            finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.MakeMailReadSetParams({pk}))),
+                        );
+                    }),
+                );
+            }),
+        ),
+    );
+
+    setMailFolder$ = createEffect(
+        () => this.actions$.pipe(
+            unionizeActionFilter(ACCOUNTS_ACTIONS.is.SetMailFolder),
+            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+            mergeMap(({payload: {account, webView, folderId, messageIds}, logger}) => {
+                const {login} = account.accountConfig;
+                const pk = {login};
+
+                return this.api.webViewClient(webView).pipe(
+                    mergeMap((webViewClient) => {
+                        return from(
+                            webViewClient("setMailFolder")({...pk, folderId, messageIds, zoneName: logger.zoneName()}),
+                        ).pipe(
+                            mergeMap(() => this.fireSyncingIteration({login})),
+                            finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.SetMailFolderParams({pk}))),
                         );
                     }),
                 );
@@ -220,4 +237,25 @@ export class DbViewEffects {
             payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
         }>,
     ) {}
+
+    private fireSyncingIteration({login}: Pick<AccountConfig, "login">): Observable<never> {
+        setTimeout(() => FIRE_SYNCING_ITERATION$.next({login}));
+
+        return concat(
+            // first should start new syncing iteration
+            this.actions$.pipe(
+                unionizeActionFilter(ACCOUNTS_ACTIONS.is.PatchProgress),
+                filter(({payload}) => payload.login === login && Boolean(payload.patch.syncing)),
+                take(1),
+            ),
+            // then should successfully complete the syncing iteration
+            this.actions$.pipe(
+                unionizeActionFilter(ACCOUNTS_ACTIONS.is.Synced),
+                filter(({payload}) => payload.pk.login === login),
+                take(1),
+            ),
+        ).pipe(
+            mergeMap(() => EMPTY),
+        );
+    }
 }

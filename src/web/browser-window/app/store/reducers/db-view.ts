@@ -410,37 +410,6 @@ function innerReducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACTIO
                 },
             };
         },
-        MakeMailsReadInStore: ({dbAccountPk, mailsBundleKey}) => {
-            const instanceKey = resolveInstanceKey(dbAccountPk);
-            const instance: Instance = {
-                ...(state.instances[instanceKey] || initInstance()),
-            };
-
-            return {
-                ...state,
-                instances: {
-                    ...state.instances,
-                    [instanceKey]: {
-                        ...instance,
-                        [mailsBundleKey]: {
-                            ...instance[mailsBundleKey],
-                            items: instance[mailsBundleKey].items.map((item) => {
-                                if (!item.mail.unread) {
-                                    return item;
-                                }
-                                return {
-                                    ...item,
-                                    mail: {
-                                        ...item.mail,
-                                        unread: false,
-                                    },
-                                };
-                            }),
-                        },
-                    },
-                },
-            };
-        },
         UnmountInstance: ({dbAccountPk}) => {
             const instanceKey = resolveInstanceKey(dbAccountPk);
             const instances = {...state.instances};

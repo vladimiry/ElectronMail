@@ -46,12 +46,30 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
         )),
     );
 
+    plainMailsBundle$ = this.mailsBundleKey$.pipe(
+        mergeMap((mailsBundleKey) => this.instance$.pipe(
+            map((instance) => {
+                const key = mailsBundleKey === "folderConversationsBundle"
+                    ? "folderMailsBundle"
+                    : mailsBundleKey;
+                return instance[key];
+            }),
+            distinctUntilChanged(),
+        )),
+    );
+
     title$ = this.mailsBundle$.pipe(
         map(({title}) => title),
         distinctUntilChanged(),
     );
 
     items$ = this.mailsBundle$.pipe(
+        map(({items}) => items),
+        distinctUntilChanged(),
+        tap(this.markDirty.bind(this)),
+    );
+
+    plainItems$ = this.plainMailsBundle$.pipe(
         map(({items}) => items),
         distinctUntilChanged(),
         tap(this.markDirty.bind(this)),
@@ -67,7 +85,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
         distinctUntilChanged(),
     );
 
-    unreadCount$: Observable<number> = this.items$.pipe(
+    unreadCount$: Observable<number> = this.plainItems$.pipe(
         map((items) => {
             return items.reduce(
                 (acc, {mail}) => acc + Number(mail.unread),
@@ -94,24 +112,6 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
             return unreadCount < 1 || inProgress || !onlineAndSignedIn;
         }),
         distinctUntilChanged(),
-    );
-
-    plainMailsBundle$ = this.mailsBundleKey$.pipe(
-        mergeMap((mailsBundleKey) => this.instance$.pipe(
-            map((instance) => {
-                const key = mailsBundleKey === "folderConversationsBundle"
-                    ? "folderMailsBundle"
-                    : mailsBundleKey;
-                return instance[key];
-            }),
-            distinctUntilChanged(),
-        )),
-    );
-
-    plainItems$ = this.plainMailsBundle$.pipe(
-        map(({items}) => items),
-        distinctUntilChanged(),
-        tap(this.markDirty.bind(this)),
     );
 
     plainItemsCount$: Observable<number> = this.plainItems$.pipe(
@@ -269,7 +269,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
     }
 
     makeAllRead(): void {
-        this.items$
+        this.plainItems$
             .pipe(
                 withLatestFrom(this.dbAccountPk$),
                 take(1),
@@ -278,6 +278,9 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
                 const messageIds = items
                     .filter((item) => item.mail.unread)
                     .map((item) => item.mail.id);
+                if (!messageIds.length) {
+                    return;
+                }
                 this.store.dispatch(
                     ACCOUNTS_ACTIONS.MakeMailReadSetParams({pk, messageIds}),
                 );

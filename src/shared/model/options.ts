@@ -38,6 +38,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     indexingBootstrapBufferSize: number;
     jsFlags: string[];
     localDbMailsListViewMode: "plain" | "conversation";
+    userAgents: string[];
     // base
     checkUpdateAndNotify: boolean;
     doNotRenderNotificationBadgeValue: boolean;

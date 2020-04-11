@@ -84,7 +84,7 @@ async function resolveFileSystemResourceLocation(
     throw new Error(`Failed to resolve "${resource}" file system resource`);
 }
 
-export async function registerSessionProtocols(ctx: Context, session: Session): Promise<void> {
+export async function registerSessionProtocols(ctx: DeepReadonly<Context>, session: Session): Promise<void> {
     // TODO setup timeout on "ready" even firing
     await app.whenReady();
 

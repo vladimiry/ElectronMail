@@ -325,6 +325,14 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
                 : INITIAL_STORES.config()[key];
         })();
     },
+    "4.5.0": (config) => {
+        (() => {
+            const key: keyof Pick<Config, "userAgents"> = "userAgents";
+            if (!Array.isArray(config[key])) {
+                config[key] = INITIAL_STORES.config()[key];
+            }
+        })();
+    },
     // WARN needs to be the last updater
     "100.0.0": (config) => {
         // ensuring default base props are set

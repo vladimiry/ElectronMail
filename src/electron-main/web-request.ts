@@ -224,7 +224,7 @@ const patchReponseHeaders: (arg: { requestProxy: RequestProxy; details: Response
 };
 
 // TODO pass additional "account type" argument and apply only respective listeners
-export function initWebRequestListeners(ctx: Context, session: Session): void {
+export function initWebRequestListeners(ctx: DeepReadonly<Context>, session: Session): void {
     const webClientsOrigins = ctx.locations.webClients
         .map(({entryUrl}) => new URL(entryUrl).origin);
 

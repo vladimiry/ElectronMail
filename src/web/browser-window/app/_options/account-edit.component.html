@@ -123,6 +123,22 @@
                     </div>
                 </div>
                 <div class="form-group">
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" formControlName="rotateUserAgent" id="rotateUserAgentCheckbox">
+                        <label class="custom-control-label d-flex" for="rotateUserAgentCheckbox">
+                            User-agent rotation
+                            <i
+                                class="fa fa-info-circle text-warning align-self-center ml-1"
+                                container="body"
+                                [placement]="'bottom'"
+                                popover="App restart required for the option to take effect."
+                                triggers="mouseenter:mouseleave"
+                            ></i>
+                            <a class="ml-1" href="https://github.com/vladimiry/ElectronMail/issues/273">#273</a>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
                     <label class="d-block">
                         Handle button alias
                         <i

@@ -28,5 +28,6 @@ export type AccountConfigCreateUpdatePatch = NoExtraProperties<Pick<AccountConfi
     | "loginDelaySecondsRange"
     | "loginDelayUntilSelected"
     | "persistentSession"
+    | "rotateUserAgent"
     | "proxy"
     | "title">>;

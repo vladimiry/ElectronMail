@@ -11,7 +11,19 @@ export async function buildEndpoints(
 ): Promise<Pick<IpcMainApiEndpoints, "addAccount" | "updateAccount" | "changeAccountOrder" | "removeAccount">> {
     return {
         async addAccount(
-            {login, title, entryUrl, database, persistentSession, credentials, proxy, loginDelayUntilSelected, loginDelaySecondsRange},
+            {
+
+                login,
+                title,
+                entryUrl,
+                database,
+                persistentSession,
+                rotateUserAgent,
+                credentials,
+                proxy,
+                loginDelayUntilSelected,
+                loginDelaySecondsRange,
+            },
         ) {
             const account: AccountConfig = {
                 login,
@@ -19,6 +31,7 @@ export async function buildEndpoints(
                 entryUrl,
                 database,
                 persistentSession,
+                rotateUserAgent,
                 credentials,
                 proxy,
                 loginDelayUntilSelected,
@@ -30,13 +43,24 @@ export async function buildEndpoints(
 
             const result = await ctx.settingsStore.write(settings);
 
-            await initSessionByAccount(ctx, pick(account, ["login", "proxy"]));
+            await initSessionByAccount(ctx, pick(account, ["login", "proxy", "rotateUserAgent"]));
 
             return result;
         },
 
         async updateAccount(
-            {login, title, entryUrl, database, persistentSession, credentials, proxy, loginDelayUntilSelected, loginDelaySecondsRange},
+            {
+                login,
+                title,
+                entryUrl,
+                database,
+                persistentSession,
+                rotateUserAgent,
+                credentials,
+                proxy,
+                loginDelayUntilSelected,
+                loginDelaySecondsRange,
+            },
         ) {
             const settings = await ctx.settingsStore.readExisting();
             const account = pickAccountStrict(settings.accounts, {login});
@@ -45,6 +69,7 @@ export async function buildEndpoints(
             account.title = title;
             account.database = database;
             account.persistentSession = persistentSession;
+            account.rotateUserAgent = rotateUserAgent;
 
             if (typeof entryUrl === "undefined") {
                 throw new Error('"entryUrl" is undefined');

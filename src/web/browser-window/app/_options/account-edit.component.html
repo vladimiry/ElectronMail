@@ -128,6 +128,7 @@
                         <label class="custom-control-label d-flex" for="rotateUserAgentCheckbox">
                             User-agent rotation
                             <i
+                                *ngIf="account"
                                 class="fa fa-info-circle text-warning align-self-center ml-1"
                                 container="body"
                                 [placement]="'bottom'"

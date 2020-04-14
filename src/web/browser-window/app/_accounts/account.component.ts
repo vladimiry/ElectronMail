@@ -213,7 +213,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     withLatestFrom(this.store.pipe(select(OptionsSelectors.CONFIG.unreadNotifications))),
                     filter(([, unreadNotifications]) => Boolean(unreadNotifications)),
                     map(([account]) => account),
-                    map((account) => ({login: account.accountConfig.login, unread: account.notifications.unread})),
+                    map(({accountConfig: {login, title}, notifications: {unread}}) => ({login, title, unread})),
                     pairwise(),
                     filter(([prev, curr]) => curr.unread > prev.unread),
                     map(([, curr]) => curr),
@@ -223,12 +223,12 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         ),
                     ),
                 )
-                .subscribe(([{login, unread}, trayIconDataURL]) => {
+                .subscribe(([{login, unread, title}, trayIconDataURL]) => {
                     new Notification(
                         PRODUCT_NAME,
                         {
                             icon: trayIconDataURL,
-                            body: `Account [${this.componentIndex}]: ${unread} unread message${unread > 1 ? "s" : ""}.`,
+                            body: `Account [${title || this.componentIndex}]: ${unread} unread message${unread > 1 ? "s" : ""}.`,
                         },
                     ).onclick = () => this.zone.run(() => {
                         this.onDispatchInLoggerZone(ACCOUNTS_ACTIONS.Select({login}));

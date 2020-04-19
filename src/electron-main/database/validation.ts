@@ -51,7 +51,7 @@ function flattenValidationError(rawError: Error): Error | string {
             +
             ": "
             +
-            Object.entries(error.constraints)
+            Object.entries(error.constraints ?? {})
                 .map(([key, value]) => `${key}: ${value}`)
                 .join(", "),
         );

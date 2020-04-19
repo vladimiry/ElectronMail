@@ -18,7 +18,7 @@ const configuration = {
         [filesBootstrap]: ["webpack"],
         [filesPattern]: ["webpack"],
     },
-    reporters: ["progress", "mocha"],
+    reporters: ["progress"],
     webpack: produce(webpackConfig, (draft) => {
         // TODO get rid of "karma-webpack" hanging workaround
         // https://github.com/webpack-contrib/karma-webpack/issues/322#issuecomment-417862717

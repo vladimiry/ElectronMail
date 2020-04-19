@@ -41,7 +41,7 @@ async function afterEach(t: ExecutionContext<TestContext>): Promise<void> {
                 ) {
                     return;
                 }
-                line = null; // WARN: don't print log line
+                line = ""; // WARN: don't print log line
                 t.fail(`App log file error line`);
             });
             stream.on("error", reject);

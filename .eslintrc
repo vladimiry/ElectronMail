@@ -38,6 +38,7 @@
                 "no-useless-return": "error",
                 "prefer-destructuring": "error",
                 "import/no-unresolved": "off",
+                "import/no-relative-parent-imports": "error",
                 "sonarjs/prefer-immediate-return": "off",
                 "sonarjs/cognitive-complexity": "off",
                 "sonarjs/no-duplicate-string": "off",

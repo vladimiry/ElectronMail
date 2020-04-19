@@ -1,7 +1,6 @@
 import {Actions, createEffect} from "@ngrx/effects";
 import {EMPTY, concat, forkJoin, from, merge, of} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
-import {Observable} from "rxjs/internal/Observable";
 import {Store, select} from "@ngrx/store";
 import {concatMap, filter, finalize, map, mergeMap, switchMap, take, takeUntil, tap} from "rxjs/operators";
 
@@ -238,7 +237,7 @@ export class DbViewEffects {
         }>,
     ) {}
 
-    private fireSyncingIteration({login}: Pick<AccountConfig, "login">): Observable<never> {
+    private fireSyncingIteration({login}: Pick<AccountConfig, "login">): import("rxjs").Observable<never> {
         setTimeout(() => FIRE_SYNCING_ITERATION$.next({login}));
 
         return concat(

@@ -1,6 +1,5 @@
 import UUID from "pure-uuid";
 import {Injectable, NgZone} from "@angular/core";
-import {Observable} from "rxjs/internal/Observable";
 import {Store, select} from "@ngrx/store";
 import {filter, first, take, takeUntil} from "rxjs/operators";
 import {timer} from "rxjs";
@@ -49,7 +48,7 @@ export class CoreService {
     async initProtonClientSessionAndNavigate(
         accountConfig: WebAccount["accountConfig"],
         repoType: keyof typeof PROVIDER_REPOS,
-        webViewDomReady$: Observable<Electron.WebviewTag>,
+        webViewDomReady$: import("rxjs").Observable<Electron.WebviewTag>,
         setWebViewSrc: (src: string) => void,
         clientSession?: ProtonClientSession,
     ): Promise<void> {

@@ -36,6 +36,15 @@
                 "no-return-await": "error",
                 "no-unused-expressions": "error",
                 "no-useless-return": "error",
+                "no-restricted-imports": [
+                    "error",
+                    {
+                        "patterns": [
+                            "rxjs/*",
+                            "!rxjs/operators"
+                        ]
+                    }
+                ],
                 "prefer-destructuring": "error",
                 "import/no-unresolved": "off",
                 "import/no-relative-parent-imports": "error",

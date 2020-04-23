@@ -40,7 +40,7 @@ export function syncFindInPageBrowserViewSize(ctx: Context, findInPageBrowserVie
         width: alignCenter
             ? Math.trunc(browserWindowBounds.width * 0.9)
             : 400,
-        height: 33,
+        height: 30,
     };
     const bounds = {
         x: alignCenter

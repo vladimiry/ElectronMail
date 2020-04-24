@@ -74,8 +74,7 @@ The [reproducible builds](https://en.wikipedia.org/wiki/Reproducible_builds) ide
   - `yarn run electron-builder:dist:linux:pacman`
   - `yarn run electron-builder:dist:linux:rpm`
   - `yarn run electron-builder:dist:linux:snap`
-- If you don't need a package to install, but a folder to execute app from, simply run `yarn run electron-builder:dir` command.  
-- Binary executable, whether it's a folder or package to install, comes into the `./dist` folder.
+- Binary executable, comes into the `./dist` folder.
 
 To recap, considering that all the described build requirements are met, the short command to build let's say Arch Linux package will be `yarn --pure-lockfile && yarn app:dist && yarn electron-builder:dist:linux:pacman`.
 

@@ -194,6 +194,7 @@
     "@types/randomstring": "1.1.6",
     "@types/rimraf": "3.0.0",
     "@types/rolling-rate-limiter": "0.1.0",
+    "@types/sanitize-html": "1.23.0",
     "@types/semver": "7.1.0",
     "@types/sinon": "9.0.0",
     "@types/spellchecker": "3.5.0",

@@ -2,6 +2,7 @@ import _logger from "electron-log";
 import {BrowserWindow, Menu, MenuItemConstructorOptions, WebPreferences, app, clipboard, screen} from "electron";
 import {equals, pick} from "remeda";
 import {inspect} from "util";
+import {isWebUri} from "valid-url";
 import {take} from "rxjs/operators";
 
 import {Context} from "./model";
@@ -67,9 +68,13 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
     const webViewEntryUrlsWhitelist: readonly string[] = ctx.locations.webClients.map(({entryUrl}) => `${entryUrl}/`);
 
     app.on("web-contents-created", async (...[, webContents]) => {
-        webContents.on("new-window", (event, url) => {
+        webContents.on("new-window", async (event, url) => {
             event.preventDefault();
-            notifyLogAndThrow(`Opening a new window is forbidden, url: "${url}"`);
+            if (isWebUri(url)) {
+                await endpoints.openExternal({url});
+                return;
+            }
+            logger.warn(`Opening a new window is forbidden, url: "${url}"`);
         });
 
         webContents.on("context-menu", async (...[, {editFlags, linkURL, linkText, isEditable, selectionText}]) => {

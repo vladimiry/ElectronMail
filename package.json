@@ -287,8 +287,8 @@
   },
   "resolutions": {
     "import-sort-cli/yargs/yargs-parser": "^=13.1.2",
+    "spectron/webdriverio/optimist/minimist": "^=1.2.3",
     "*/**/@types/webpack": "4.41.12",
-    "*/**/builder-util-runtime": "8.7.0",
-    "*/**/minimist": ">=1.2.3"
+    "*/**/builder-util-runtime": "8.7.0"
   }
 }

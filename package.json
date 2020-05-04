@@ -286,6 +286,7 @@
     "zone.js": "0.10.3"
   },
   "resolutions": {
+    "import-sort-cli/yargs/yargs-parser": "^=13.1.2",
     "*/**/@types/webpack": "4.41.12",
     "*/**/builder-util-runtime": "8.7.0",
     "*/**/minimist": ">=1.2.3"

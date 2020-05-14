@@ -76,8 +76,8 @@ export const PROVIDER_REPOS: DeepReadonly<Record<"WebClient" | "proton-mail-sett
         repoRelativeDistDir: "./build",
         baseDir: "", // TODO define model as {baseDir?: string} instead of using empty string value
         repo: "https://github.com/ProtonMail/WebClient.git",
-        commit: "955c34f8d7b2bf888c9f96cbcab6f172c8757e7c",
-        version: "4.0.0-beta12",
+        commit: "da47545e1182fcb022917ecc400b2a6c59ef87a0",
+        version: "4.0.0-beta13",
         protonPackAppConfig: {
             // TODO proton-v4: make sure this value comes to the build after 4.0.0-beta7+ update
             //      currently it's hadrcoded in the WebClient code
@@ -95,7 +95,7 @@ export const PROVIDER_REPOS: DeepReadonly<Record<"WebClient" | "proton-mail-sett
         repoRelativeDistDir: "./dist",
         baseDir: "settings",
         repo: "https://github.com/ProtonMail/proton-mail-settings.git",
-        commit: "0992676b81900e14356044fe7172fb0a41d74c4e",
+        commit: "4a94547adb5f0ec4ffa256af4cfb02b341701d46",
         version: "4.0.0-beta.7",
         protonPackAppConfig: {
             clientId: "WebMailSettings",
@@ -109,8 +109,8 @@ export const PROVIDER_REPOS: DeepReadonly<Record<"WebClient" | "proton-mail-sett
         repoRelativeDistDir: "./dist",
         baseDir: "contacts",
         repo: "https://github.com/ProtonMail/proton-contacts.git",
-        commit: "93fa8b9f36b2fcb3e9f605c2877e3ee18415363e",
-        version: "4.0.0-beta.9",
+        commit: "ae54f5caffc20c2f58c46e8a3c9e2c414fe18813",
+        version: "4.0.0-beta.10",
         protonPackAppConfig: {
             clientId: "WebContacts",
         },
@@ -123,8 +123,8 @@ export const PROVIDER_REPOS: DeepReadonly<Record<"WebClient" | "proton-mail-sett
         repoRelativeDistDir: "./dist",
         baseDir: "calendar",
         repo: "https://github.com/ProtonMail/proton-calendar.git",
-        commit: "f53e8749773c8f93315e1733c8c398a6fc32048b",
-        version: "4.0.0-beta.1",
+        commit: "02cba956a54d79c7752993ac61ebc3dbc2901e8d",
+        version: "4.0.0-beta.2",
         protonPackAppConfig: {
             clientId: "WebCalendar",
         },

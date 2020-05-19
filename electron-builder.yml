@@ -51,10 +51,6 @@ linux:
   desktop:
     StartupWMClass: electron-mail
 
-# TODO drop explicitly listed "pacman" dependencies in https://github.com/develar/app-builder/pull/29 resolving
-pacman:
-  depends: ["c-ares", "ffmpeg", "gtk3", "http-parser", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy", "libnotify", "libappindicator-gtk3"]
-
 snap:
   confinement: strict
   stagePackages:

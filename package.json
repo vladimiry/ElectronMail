@@ -288,6 +288,7 @@
   "resolutions": {
     "import-sort-cli/yargs/yargs-parser": "^=13.1.2",
     "spectron/webdriverio/optimist/minimist": "^=1.2.3",
+    "*/**/sodium-native": "3.0.1",
     "*/**/@types/webpack": "4.41.13",
     "*/**/builder-util-runtime": "8.7.0"
   }

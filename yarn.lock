@@ -10024,10 +10024,10 @@ socks@~2.3.2:
     ip "1.1.5"
     smart-buffer "^4.1.0"
 
-sodium-native@^3.0.1:
-  version "3.1.1"
-  resolved "https://registry.yarnpkg.com/sodium-native/-/sodium-native-3.1.1.tgz#268eb00cd438b21c7dac20cb5b50819ad2813ec3"
-  integrity sha512-XA85yUIW28Oeba0knYdLOobNEI4ACpyayjaG1eOwazcCtcIuB5xViPwV2bb3bc2ppUcX+dLTqxxj7cQBZNEpXw==
+sodium-native@3.0.1, sodium-native@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/sodium-native/-/sodium-native-3.0.1.tgz#59199d5c193bc045eb7f8e6425f370506e02950e"
+  integrity sha512-MHHgeK3JTx1j16V6SdO3ZD3aDbzWGCDd380gYi07a7HPR5TL2ipmI9BzVtckTkLTYMpAAnJ3BjsJ8F5O/GZ6eg==
   dependencies:
     ini "^1.3.5"
     node-gyp-build "^4.2.0"

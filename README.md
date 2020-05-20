@@ -46,6 +46,10 @@ The way of verifying that the installation packages attached to the [releases](h
 - :gear: **Configuring proxy per account** support. Enabled since [v3.0.0](https://github.com/vladimiry/ElectronMail/releases/tag/v3.0.0) release. See [113](https://github.com/vladimiry/ElectronMail/issues/113) and [120](https://github.com/vladimiry/ElectronMail/issues/120) issues for details.
 - :pencil: **Spell Checking**.
 
+## FAQ
+
+You got it [here](https://github.com/vladimiry/ElectronMail/wiki/FAQ).
+
 ## How to build your own installation package from source code
 
 ### Building on Continuous Integration server

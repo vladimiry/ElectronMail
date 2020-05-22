@@ -195,7 +195,10 @@ export class DbViewEffects {
                 return this.api.webViewClient(webView).pipe(
                     mergeMap((webViewClient) => {
                         return from(
-                            webViewClient("setMailFolder")({...pk, folderId, messageIds, zoneName: logger.zoneName()}),
+                            webViewClient(
+                                "setMailFolder",
+                                {timeoutMs: ONE_SECOND_MS * 120},
+                            )({...pk, folderId, messageIds, zoneName: logger.zoneName()}),
                         ).pipe(
                             mergeMap(() => this.fireSyncingIteration({login})),
                             finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.SetMailFolderParams({pk}))),

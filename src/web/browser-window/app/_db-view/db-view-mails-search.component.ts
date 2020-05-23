@@ -40,7 +40,10 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
     queryElementRefQuery!: QueryList<ElementRef>;
 
     formControls = {
-        query: new FormControl(null, Validators.required),
+        query: new FormControl(
+            null,
+            Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
+        ),
         folders: new FormGroup({}),
         allFoldersToggled: new FormControl(false),
     };
@@ -139,7 +142,7 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
         this.formControls.allFoldersToggled.valueChanges
             .pipe(takeUntil(this.unSubscribe$))
             .subscribe(() => {
-                const {value} = this.formControls.allFoldersToggled;
+                const {value} = this.formControls.allFoldersToggled; // eslint-disable-line @typescript-eslint/no-unsafe-assignment
                 Object.values(this.formControls.folders.controls).forEach((control) => {
                     control.patchValue(value);
                 });
@@ -147,7 +150,8 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
     }
 
     resolveSelectedPks(): typeof DbViewMailsSearchComponent.prototype.foldersInfo.selectedPks {
-        const value: Record<View.Folder["pk"], boolean> = this.formControls.folders.value; // eslint-disable-line  prefer-destructuring
+        // eslint-disable-next-line prefer-destructuring, @typescript-eslint/no-unsafe-assignment
+        const value: Record<View.Folder["pk"], boolean> = this.formControls.folders.value;
 
         return Object.entries(value)
             .filter(([, v]) => Boolean(v))
@@ -156,6 +160,7 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
 
     ngAfterViewInit(): void {
         if (this.queryElementRefQuery.length) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
             this.queryElementRefQuery.first.nativeElement.focus();
         }
     }
@@ -169,7 +174,7 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
     submit(): void {
         this.store.dispatch(DB_VIEW_ACTIONS.FullTextSearchRequest({
             ...this.dbAccountPk,
-            query: this.formControls.query.value,
+            query: this.formControls.query.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
             folderPks: this.resolveSelectedPks(),
         }));
     }

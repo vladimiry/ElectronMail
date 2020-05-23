@@ -6,12 +6,14 @@ import {Options as TsLoaderOptions} from "ts-loader";
 import {BuildEnvironment} from "./model";
 import {LOG, LOG_LEVELS} from "scripts/lib";
 
-export const ENVIRONMENT: BuildEnvironment = (() => {
-    const NODE_ENV = process.env.NODE_ENV as Exclude<BuildEnvironment, "production"> | undefined;
-    return NODE_ENV === "development" || NODE_ENV === "test"
-        ? NODE_ENV
-        : "production";
-})();
+export const ENVIRONMENT: BuildEnvironment = (
+    () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
+        const NODE_ENV = process.env.NODE_ENV as Exclude<BuildEnvironment, "production"> | undefined;
+        return NODE_ENV === "development" || NODE_ENV === "test"
+            ? NODE_ENV
+            : "production";
+    }
+)();
 
 export const ENVIRONMENT_STATE: Readonly<Record<BuildEnvironment, boolean>> = {
     production: ENVIRONMENT === "production",

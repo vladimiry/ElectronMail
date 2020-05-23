@@ -6,8 +6,11 @@ import {State, featureName} from "src/web/browser-window/app/store/reducers/db-v
 export const STATE = createFeatureSelector<State>(featureName);
 
 export const FEATURED = {
-    instance: () => createSelector(
-        STATE,
-        ({instances}: State, {pk}: { pk: DbAccountPk }) => instances[JSON.stringify(pk)],
-    ),
+    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+    instance: () => {
+        return createSelector(
+            STATE,
+            ({instances}: State, {pk}: { pk: DbAccountPk }) => instances[JSON.stringify(pk)],
+        );
+    },
 };

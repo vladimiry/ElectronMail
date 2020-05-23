@@ -17,7 +17,8 @@ function pickSessionStorageItems(
         return allKeys;
     })(),
 ): Readonly<Record<string, any /* TODO TS: replace "any" with "JSONValue" */>> { // eslint-disable-line @typescript-eslint/no-explicit-any
-    const result: Record<string, any> = Object.create(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+    const result: Record<string, any> = Object.create(null);
 
     for (const key of keys) {
         result[key] = sessionStorage.getItem(key);
@@ -49,7 +50,7 @@ export function dumpProtonSharedSession(): ProtonClientSession | null {
     // https://github.com/ProtonMail/proton-shared/blob/c7e008673b518be87127dcfb4e1e2cecac3dbec6/lib/createSecureSessionStorage.js#L23
     window.dispatchEvent(new Event("pagehide"));
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
     const windowName: Readonly<Record<string, any /* TODO TS: replace "any" with "JSONValue" */>> = JSON.parse(window.name);
     const windowNameKeys = Object.keys(windowName);
 

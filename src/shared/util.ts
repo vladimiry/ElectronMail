@@ -136,8 +136,8 @@ export function pickBaseConfigProperties(
     };
 }
 
-export const accountPickingPredicate = (criteria: LoginFieldContainer): (account: AccountConfig) => boolean => {
-    return ({login}) => login === criteria.login;
+export const accountPickingPredicate: (criteria: LoginFieldContainer) => (account: AccountConfig) => boolean = ({login: criteriaLogin}) => {
+    return ({login}) => login === criteriaLogin; // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
 };
 
 export const pickAccountStrict = (accounts: AccountConfig[], criteria: LoginFieldContainer): AccountConfig => {
@@ -163,18 +163,22 @@ export const asyncDelay = async <T>(pauseTimeMs: number, resolveAction?: () => P
     });
 };
 
-export function curryFunctionMembers<T extends object | ((...a: any[]) => any)>( // eslint-disable-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/ban-types
+export function curryFunctionMembers<T extends object | ((...a: any[]) => any)>(
     src: T,
     ...args: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
 ): T {
-    const dest: T = typeof src === "function"
+    const dest: T = typeof src === "function" // eslint-disable-line @typescript-eslint/no-unsafe-assignment
         ? src.bind(undefined) :
         Object.create(null);
 
     for (const key of Object.getOwnPropertyNames(src)) {
-        const srcMember = (src as any)[key]; // eslint-disable-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+        const srcMember = (src as any)[key]; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
 
-        (dest as any)[key] = typeof srcMember === "function" // eslint-disable-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+        (dest as any)[key] = typeof srcMember === "function" // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
             ? srcMember.bind(src, ...args)
             : srcMember;
     }
@@ -220,7 +224,7 @@ export function walkConversationNodesTree(
 
 export function filterConversationNodesMails(
     rootNodes: View.ConversationNode[],
-    filter: (mail: View.Mail) => boolean = () => true,
+    filter: (mail: View.Mail) => boolean = (): boolean => true,
 ): View.Mail[] {
     const result: View.Mail[] = [];
 
@@ -254,7 +258,7 @@ export function mapBy<T, K>(iterable: Iterable<T>, by: (t: T) => K): Map<K, T[]>
 }
 
 // TODO consider using https://github.com/cedx/enum.js instead
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
 export function buildEnumBundle<M, K extends keyof M, V extends Extract<M[keyof M], string | number>>(
     nameValueMap: M,
 ) {
@@ -276,7 +280,7 @@ export function buildEnumBundle<M, K extends keyof M, V extends Extract<M[keyof 
         }, {
             values: [],
             names: [],
-            valueNameMap: {} as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+            valueNameMap: {} as any, // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
         });
 
     interface ResolveNameByValue {
@@ -347,34 +351,38 @@ export function getRandomInt(min: number, max: number): number {
     return min + Math.floor(Math.random() * (max - min)); // the maximum is exclusive and the minimum is inclusive
 }
 
-export const getWebViewPartition: (login: AccountConfig["login"]) => string = (() => {
-    const prefix = "memory/";
-    const result: typeof getWebViewPartition = (login) => `${prefix}${login}`;
+export const getWebViewPartition: (login: AccountConfig["login"]) => string = (
+    () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
+        const prefix = "memory/";
+        const result: typeof getWebViewPartition = (login) => `${prefix}${login}`;
 
-    return result;
-})();
+        return result;
+    }
+)();
 
 export const validateLoginDelaySecondsRange: (
     loginDelaySecondsRange: string,
-) => { validationError: string } | Required<AccountConfig>["loginDelaySecondsRange"] = (() => {
-    const re = /^(\d+)-(\d+)$/;
-    const result: typeof validateLoginDelaySecondsRange = (loginDelaySecondsRange) => {
-        const match = loginDelaySecondsRange.match(re) || [];
-        const end = Number(match.pop());
-        const start = Number(match.pop());
+) => { validationError: string } | Required<AccountConfig>["loginDelaySecondsRange"] = (
+    () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
+        const re = /^(\d+)-(\d+)$/;
+        const result: typeof validateLoginDelaySecondsRange = (loginDelaySecondsRange) => {
+            const match = re.exec(loginDelaySecondsRange) || [];
+            const end = Number(match.pop());
+            const start = Number(match.pop());
 
-        if (isNaN(start) || isNaN(end)) {
-            return {validationError: `Invalid data format, "number-number" format is expected.`};
-        }
-        if (start > end) {
-            return {validationError: `"Start" value is bigger than "end" value.`};
-        }
+            if (isNaN(start) || isNaN(end)) {
+                return {validationError: `Invalid data format, "number-number" format is expected.`};
+            }
+            if (start > end) {
+                return {validationError: `"Start" value is bigger than "end" value.`};
+            }
 
-        return {start, end};
-    };
+            return {start, end};
+        };
 
-    return result;
-})();
+        return result;
+    }
+)();
 
 export const parseLoginDelaySecondsRange: (
     loginDelaySecondsRange: string,
@@ -400,31 +408,33 @@ export function normalizeLocale(value: string): string {
 export const logLevelEnabled: (
     level: LogLevel,
     logger: { transports: Pick<ElectronLog["transports"], "file"> },
-) => boolean = (() => {
-    const weights: Readonly<Record<LogLevel | "null" | "undefined" | "false", number>> = {
-        null: -1,
-        undefined: -1,
-        false: -1,
-        error: 0,
-        warn: 1,
-        info: 2,
-        verbose: 3,
-        debug: 4,
-        silly: 5,
-    };
-    const result: typeof logLevelEnabled = (
-        level,
-        {transports: {file: {level: transportLevel}}},
-    ) => {
-        const disabled = (
-            weights[level]
-            >
-            weights[String(transportLevel) as keyof typeof weights]
-        );
-        return !disabled;
-    };
-    return result;
-})();
+) => boolean = (
+    () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
+        const weights: Readonly<Record<LogLevel | "null" | "undefined" | "false", number>> = {
+            null: -1,
+            undefined: -1,
+            false: -1,
+            error: 0,
+            warn: 1,
+            info: 2,
+            verbose: 3,
+            debug: 4,
+            silly: 5,
+        };
+        const result: typeof logLevelEnabled = (
+            level,
+            {transports: {file: {level: transportLevel}}},
+        ) => {
+            const disabled = (
+                weights[level]
+                >
+                weights[String(transportLevel) as keyof typeof weights]
+            );
+            return !disabled;
+        };
+        return result;
+    }
+)();
 
 // - Breaking changes: https://github.com/mrmlnc/fast-glob/releases/tag/3.0.0
 // - How to write patterns on Windows: https://github.com/mrmlnc/fast-glob
@@ -434,46 +444,50 @@ export function sanitizeFastGlobPattern(pattern: string): string {
 
 export const parsePackagedWebClientUrl: (
     urlArg: string,
-) => (null | Readonly<Pick<URL, "protocol" | "hostname" | "pathname">>) = (() => {
-    const re = new RegExp(`^(${LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN}:)`);
-    const result: typeof parsePackagedWebClientUrl = (urlArg) => {
-        if (!re.exec(urlArg)) {
-            return null;
-        }
+) => (null | Readonly<Pick<URL, "protocol" | "hostname" | "pathname">>) = (
+    () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
+        const re = new RegExp(`^(${LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN}:)`);
+        const result: typeof parsePackagedWebClientUrl = (urlArg) => {
+            if (!re.exec(urlArg)) {
+                return null;
+            }
 
-        const url = new URL(urlArg);
+            const url = new URL(urlArg);
 
-        // if (!re.exec(url.protocol)) {
-        //     return false;
-        // }
+            // if (!re.exec(url.protocol)) {
+            //     return false;
+            // }
 
-        return pick(url, ["protocol", "hostname", "pathname"]);
-    };
-    return result;
-})();
+            return pick(url, ["protocol", "hostname", "pathname"]);
+        };
+        return result;
+    }
+)();
 
 export const resolvePackagedWebClientApp: (
     url: Exclude<ReturnType<typeof parsePackagedWebClientUrl>, null>,
-) => Readonly<{ project: keyof typeof PROVIDER_REPOS; projectSubPath?: string }> = (() => {
-    const subProjects = ["proton-mail-settings", "proton-contacts", "proton-calendar"] as const;
-    const result: typeof resolvePackagedWebClientApp = (url) => {
-        const pathname = `${url.pathname}/`;
-        const foundSubProject = subProjects.find((p) => {
-            return pathname.startsWith(`/${PROVIDER_REPOS[p].baseDir}/`);
-        });
-        const project = foundSubProject || "WebClient";
-        const [
-            /* "," does skip the first item since it's a "project" itself: */,
-            ...projectSubPathParts
-        ] = pathname.split("/").filter(Boolean);
-        const projectSubPath = projectSubPathParts.length
-            ? projectSubPathParts.join("/")
-            : undefined;
+) => Readonly<{ project: keyof typeof PROVIDER_REPOS; projectSubPath?: string }> = (
+    () => {  // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
+        const subProjects = ["proton-mail-settings", "proton-contacts", "proton-calendar"] as const;
+        const result: typeof resolvePackagedWebClientApp = (url) => {
+            const pathname = `${url.pathname}/`;
+            const foundSubProject = subProjects.find((p) => {
+                return pathname.startsWith(`/${PROVIDER_REPOS[p].baseDir}/`);
+            });
+            const project = foundSubProject || "WebClient";
+            const [
+                /* "," does skip the first item since it's a "project" itself: */,
+                ...projectSubPathParts
+            ] = pathname.split("/").filter(Boolean);
+            const projectSubPath = projectSubPathParts.length
+                ? projectSubPathParts.join("/")
+                : undefined;
 
-        return {project, projectSubPath};
-    };
-    return result;
-})();
+            return {project, projectSubPath};
+        };
+        return result;
+    }
+)();
 
 export const resolveOrRejectIfError = (resolve: () => void, reject: (error: Error) => void) => {
     return (error: Error): void => {

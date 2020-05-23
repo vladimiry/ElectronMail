@@ -20,14 +20,17 @@ export const FEATURED = {
 };
 
 export const ACCOUNTS = {
-    pickAccount: (criteria: LoginFieldContainer) => createSelector(
-        accountsSelector,
-        (accounts) => {
-            const configs = accounts.map((a) => a.accountConfig);
-            const index = configs.findIndex(accountPickingPredicate(criteria));
-            return index === -1 ? null : accounts[index];
-        },
-    ),
+    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+    pickAccount: (criteria: LoginFieldContainer) => {
+        return createSelector(
+            accountsSelector,
+            (accounts) => {
+                const configs = accounts.map((a) => a.accountConfig);
+                const index = configs.findIndex(accountPickingPredicate(criteria));
+                return index === -1 ? null : accounts[index];
+            },
+        );
+    },
     loggedInAndUnreadSummary: createSelector(accountsSelector, (accounts) => {
         return accounts.reduce(
             (accumulator, {notifications}) => {

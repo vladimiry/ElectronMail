@@ -21,7 +21,7 @@ const usedPartitions: Set<Parameters<typeof initSessionByAccount>[1]["login"]> =
 
 // TODO move "usedSessions" prop to "ctx"
 // TODO remove the session from map on account removing
-const usedSessions: Map<string, Session> = new Map();
+const usedSessions = new Map<string, Session>();
 
 export function resolveInitialisedSession({login}: LoginFieldContainer): Session {
     const session = usedSessions.get(getWebViewPartition(login));

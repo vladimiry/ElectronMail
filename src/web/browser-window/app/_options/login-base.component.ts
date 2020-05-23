@@ -10,14 +10,17 @@ import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 
 export abstract class LoginBaseComponent implements AfterViewInit, OnDestroy {
-    readonly password = new FormControl(null, Validators.required);
+    readonly password = new FormControl(
+        null,
+        Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
+    );
 
     readonly savePassword = new FormControl(false);
 
     @ViewChildren("passwordRef")
     passwordElementRefQuery!: QueryList<ElementRef>;
 
-    protected readonly store: Store<State> = this.injector.get(Store);
+    protected readonly store = this.injector.get<Store<State>>(Store);
 
     readonly signingIn$: Observable<boolean> = this.store.pipe(
         select(OptionsSelectors.FEATURED.progress),
@@ -52,6 +55,7 @@ export abstract class LoginBaseComponent implements AfterViewInit, OnDestroy {
 
     ngAfterViewInit(): void {
         if (this.passwordElementRefQuery.length) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
             this.passwordElementRefQuery.first.nativeElement.focus();
         }
     }

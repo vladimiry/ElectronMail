@@ -75,7 +75,7 @@ async function resolveFileSystemResourceLocation(
             return path.join(resource, "index.html");
         }
     } catch (error) {
-        if (error.code === "ENOENT") {
+        if (error.code === "ENOENT") { // eslint-disable-line @typescript-eslint/no-unsafe-member-access
             return path.join(directory, "index.html");
         }
         throw error;

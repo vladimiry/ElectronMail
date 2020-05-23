@@ -183,6 +183,6 @@ export class SearchInPageWidget {
         els.findNext.disabled = disabledButtons;
 
         els.status.classList[this.query ? "remove" : "add"]("d-none");
-        els.status.innerText = this.query ? `${this.activeIdx}/${this.maxIdx}` : "";
+        els.status.innerText = this.query ? `${String(this.activeIdx)}/${String(this.maxIdx)}` : "";
     }
 }

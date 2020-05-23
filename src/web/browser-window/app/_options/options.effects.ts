@@ -183,10 +183,12 @@ export class OptionsEffects {
                     )),
                     catchError((error) => {
                         if (
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                             String(error.message)
                                 .toLowerCase()
                                 .includes("decryption failed")
                         ) {
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                             error.message = "Failed to decrypt the settings storage";
                         }
                         return of(NOTIFICATION_ACTIONS.Error(error));
@@ -276,6 +278,7 @@ export class OptionsEffects {
                 ).pipe(
                     concatMap(() => EMPTY),
                     catchError((error) => {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                         error.message = "Failed to change the master password! " +
                             "Please make sure that correct current password has been entered.";
                         return of(NOTIFICATION_ACTIONS.Error(error));

@@ -1,8 +1,9 @@
-// TODO remove the "tslint:disable:await-promise" when Spectron gets proper declaration files, track of the following issues:
-// - https://github.com/DefinitelyTyped/DefinitelyTyped/issues/25186
-// - https://github.com/electron/spectron/issues/358
+// TODO remove the "tslint:disable:await-promise" when spectron gets proper declaration files
+// TODO track this issue https://github.com/DefinitelyTyped/DefinitelyTyped/issues/25186
+/* eslint-disable @typescript-eslint/await-thenable, @typescript-eslint/no-misused-promises */
 
-// tslint:disable:await-promise
+// TODO drop eslint disabling
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
 
 import byline from "byline";
 import fs from "fs";
@@ -112,7 +113,7 @@ test.serial("auto logout", async (t) => {
     await app.logout();
 
     const configFile = path.join(t.context.userDataDirPath, "config.json");
-    const configFileData: Config = JSON.parse(fs.readFileSync(configFile).toString());
+    const configFileData = JSON.parse(fs.readFileSync(configFile).toString()) as Config;
     const idleTimeLogOutSec = 10;
 
     configFileData.startHidden = true;
@@ -148,7 +149,7 @@ test.afterEach.always(async (t) => {
     // kill processes to avoid appveyor error during preparing logs for uploading:
     // The process cannot access the file because it is being used by another process: output\e2e\1545563294836\chrome-driver.log
     // HINT: add "- ps: Get-Process" line to appveyor.yml to list the processes
-    const processes: Array<{ pid: number }> = await Promise.all(
+    const processes: Array<{ pid: number }> = await Promise.all( // eslint-disable-line @typescript-eslint/no-unsafe-assignment
         [
             {command: PROJECT_NAME}, {arguments: PROJECT_NAME},
             {command: "node.exe"}, {arguments: "keytar"},
@@ -161,7 +162,10 @@ test.afterEach.always(async (t) => {
             {arguments: "e2e"},
             {arguments: "keytar.node"},
             {arguments: "keytar"},
-        ].map((criteria) => promisify(psNode.lookup)(criteria)), // eslint-disable-line @typescript-eslint/no-unsafe-return
+        ].map((criteria) => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return
+            return promisify(psNode.lookup)(criteria);
+        }),
     );
 
     async function killSelfAndChildrenProcesses(pid: number): Promise<void> {

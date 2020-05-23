@@ -1,3 +1,6 @@
+// TODO drop eslint disabling
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
+
 import * as EncryptionAdapterBundle from "fs-json-store-encryption-adapter";
 import * as msgpack from "@msgpack/msgpack";
 import logger from "electron-log";

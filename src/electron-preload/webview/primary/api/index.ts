@@ -33,12 +33,17 @@ const endpoints: ProtonApi = {
         _logger.info("selectMailOnline()", input.zoneName);
 
         // TODO reduce the "mailFolderId" value that contains a minimum items count
-        const $state: undefined | {
+        const $state: undefined | { // eslint-disable-line @typescript-eslint/no-unsafe-assignment
             go: (
                 path: string,
                 params?: Partial<Record<"label" | "id" | "messageID", string>>,
             ) => Promise<void>;
-        } = window.angular && window.angular.element(document).data().$injector.get("$state");
+        } = (
+            window.angular
+            &&
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+            window.angular.element(document).data().$injector.get("$state")
+        );
 
         if (!$state) {
             throw new Error(`Failed to resolve "$state" service`);
@@ -271,9 +276,9 @@ const endpoints: ProtonApi = {
                 map((() => {
                     const formIdToPageTypeMappingEntries = (() => {
                         const formIdToPageTypeMapping: Record<string, PageTypeOutput["pageType"]["type"]> = {
-                            pm_login: "login", // eslint-disable-line @typescript-eslint/camelcase
-                            pm_loginTwoFactor: "login2fa", // eslint-disable-line @typescript-eslint/camelcase
-                            pm_loginUnlock: "unlock", // eslint-disable-line @typescript-eslint/camelcase
+                            pm_login: "login", // eslint-disable-line @typescript-eslint/naming-convention
+                            pm_loginTwoFactor: "login2fa", // eslint-disable-line @typescript-eslint/naming-convention
+                            pm_loginUnlock: "unlock", // eslint-disable-line @typescript-eslint/naming-convention
                         };
                         return Object.entries(formIdToPageTypeMapping);
                     })();
@@ -354,6 +359,7 @@ const endpoints: ProtonApi = {
                         })
                         .reduce(
                             (accumulator, {handler}) => {
+                                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                                 const responseData = JSON.parse(request.responseText);
                                 const value = handler(responseData);
 
@@ -369,8 +375,9 @@ const endpoints: ProtonApi = {
 
             (() => {
                 const innerLogger = curryFunctionMembers(logger, `[entity update notification]`);
-                const eventsUrlRe = new RegExp(`${entryApiUrl}/api/events/.*==`);
+                const eventsUrlRe = new RegExp(entryApiUrl + "/api/events/.*==");
                 const notification = {batchEntityUpdatesCounter: 0};
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 const notificationReceived$: Observable<RestModel.EventResponse> = AJAX_SEND_NOTIFICATION$.pipe(
                     filter((request) => eventsUrlRe.test(request.responseURL)),
                     map((request) => {

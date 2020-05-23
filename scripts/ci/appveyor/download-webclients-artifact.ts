@@ -48,7 +48,7 @@ interface Job {
         `https://ci.appveyor.com/api/projects/${APPVEYOR_ACCOUNT_NAME}/${APPVEYOR_PROJECT_SLUG}`,
         {headers: {"Content-type": "application/json"}},
     ]);
-    const {build: {jobs}}: { build: { jobs: Job[] } } = await projectResponse.json();
+    const {build: {jobs}} = await projectResponse.json() as { build: { jobs: Job[] } };
     const job = jobs.find(({name}) => name.toLocaleLowerCase() === LINUX_JOB_NAME.toLocaleLowerCase());
 
     if (!job) {

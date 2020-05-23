@@ -10,16 +10,16 @@ export function bootstrapCommandLine(ctx: Context): void {
 
     try {
         // TODO add synchronous "read" method to "fs-json-store"
-        configFile = ctx.configStore.fs._impl.readFileSync(ctx.configStore.file);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        configFile = ctx.configStore.fs._impl.readFileSync(ctx.configStore.file); // eslint-disable-line @typescript-eslint/no-unsafe-call
     } catch (error) {
-        if (error.code !== "ENOENT") {
+        if (error.code !== "ENOENT") { // eslint-disable-line @typescript-eslint/no-unsafe-member-access
             throw error;
         }
     }
 
-    const {
-        jsFlags = INITIAL_STORES.config().jsFlags,
-    }: Config = configFile
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const {jsFlags = INITIAL_STORES.config().jsFlags}: Config = configFile
         ? JSON.parse(configFile.toString())
         : {};
 

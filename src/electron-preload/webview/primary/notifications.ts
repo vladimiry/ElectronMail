@@ -16,7 +16,7 @@ export const AJAX_SEND_NOTIFICATION$ = new Observable<XMLHttpRequest>((subscribe
 
     XMLHttpRequest.prototype.open = (
         () => {
-            const original = XMLHttpRequest.prototype.open;
+            const original = XMLHttpRequest.prototype.open; // eslint-disable-line @typescript-eslint/unbound-method
             const urlArgIndex = 1;
             const removeAjaxNotificationSkipParamRe = new RegExp(`[\\?\\&]${AJAX_SEND_NOTIFICATION_SKIP_PARAM}=`);
             return function(
@@ -34,7 +34,7 @@ export const AJAX_SEND_NOTIFICATION$ = new Observable<XMLHttpRequest>((subscribe
 
     XMLHttpRequest.prototype.send = (
         () => {
-            const original = XMLHttpRequest.prototype.send;
+            const original = XMLHttpRequest.prototype.send; // eslint-disable-line @typescript-eslint/unbound-method
             const loadHandler = function(this: XMLHttpRequestType): void {
                 if (this[ajaxSendNotificationSkipSymbol]) {
                     return;

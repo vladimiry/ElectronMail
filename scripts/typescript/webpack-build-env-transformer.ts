@@ -20,16 +20,17 @@ function resolveBuildEnvironment(): string {
     const result = definitions[definePluginNodeEnvKey];
 
     if (typeof result !== "string" || !result) {
-        throw new Error(`Resolve empty "${definePluginConstructorName}.${definePluginNodeEnvKey}" definition: ${result}"`);
+        throw new Error(`Resolve falsy "${definePluginConstructorName}.${definePluginNodeEnvKey}" definition"`);
     }
 
     return JSON.parse(result); // eslint-disable-line @typescript-eslint/no-unsafe-return
 }
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
 export default function(/*  ts.Program , <options object> */) {
     const buildEnvironment = resolveBuildEnvironment();
 
+    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     return (ctx: ts.TransformationContext) => {
         function visitor(node: ts.Node): ts.Node {
             if (
@@ -43,6 +44,7 @@ export default function(/*  ts.Program , <options object> */) {
             return ts.visitEachChild(node, visitor, ctx);
         }
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         return (sourceFile: ts.SourceFile) => {
             return ts.visitEachChild(sourceFile, visitor, ctx);
         };

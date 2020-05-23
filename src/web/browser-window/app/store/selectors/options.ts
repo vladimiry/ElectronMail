@@ -31,22 +31,26 @@ export const CONFIG = {
     doNotRenderNotificationBadgeValue: createSelector(FEATURED.config, (config) => config.doNotRenderNotificationBadgeValue),
 };
 
-export const SETTINGS = (() => {
-    const accountsSelector = createSelector(FEATURED.settings, ({accounts}) => accounts);
+export const SETTINGS = (
+    () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
+        const accountsSelector = createSelector(FEATURED.settings, ({accounts}) => accounts);
 
-    return {
-        accounts: accountsSelector,
-        pickAccount: (criteria: LoginFieldContainer) => createSelector(
-            accountsSelector,
-            (accounts) => accounts.find(accountPickingPredicate(criteria)),
-        ),
-        localStoreEnabledCount: createSelector(
-            accountsSelector,
-            (accounts) => {
-                return (accounts || []).reduce(
-                    (accumulator, {database}) => accumulator + Number(Boolean(database)),
-                    0,
+        return {
+            accounts: accountsSelector,
+            pickAccount: (criteria: LoginFieldContainer) => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
+                return createSelector(
+                    accountsSelector,
+                    (accounts) => accounts.find(accountPickingPredicate(criteria)),
                 );
-            }),
-    };
-})();
+            },
+            localStoreEnabledCount: createSelector(
+                accountsSelector,
+                (accounts) => {
+                    return (accounts || []).reduce(
+                        (accumulator, {database}) => accumulator + Number(Boolean(database)),
+                        0,
+                    );
+                }),
+        };
+    }
+)();

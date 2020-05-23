@@ -93,16 +93,17 @@ function resolveService<T extends ProviderApi[keyof ProviderApi]>(
         return service;
     }
 
-    const clonedService = {...service} as T;
+    const clonedService = {...service};
 
     for (const rateLimitedMethodName of rateLimiting.rateLimitedMethodNames) {
         const originalMethod = clonedService[rateLimitedMethodName];
-        const _fullMethodName = `${serviceName}.${rateLimitedMethodName}`;
+        const _fullMethodName = `${serviceName}.${String(rateLimitedMethodName)}`;
 
         if (typeof originalMethod !== "function") {
             throw new Error(`Not a function: "${_fullMethodName}"`);
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         clonedService[rateLimitedMethodName] = async function(
             this: typeof service,
             ...args: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -125,6 +126,7 @@ function resolveService<T extends ProviderApi[keyof ProviderApi]>(
                     `calling rate limited method: ${_fullMethodName} ${JSON.stringify({waitTime, rateLimitedMethodsCallCount})}`,
                 );
 
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 const result = originalMethod.apply(service, args);
 
                 rateLimitedMethodsCallCount++;
@@ -160,7 +162,7 @@ export async function resolveProviderApi(): Promise<ProviderApi> {
         })(),
     } as const;
 
-    return state.api = (async () => {
+    return state.api = (async () : Promise<ProviderApi> => {
         const injector = window.angular && window.angular.element(document.body).injector();
 
         if (!injector) {

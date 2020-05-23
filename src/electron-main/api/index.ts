@@ -29,6 +29,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
         ...await SpellCheck.buildEndpoints(ctx),
         ...await TrayIcon.buildEndpoints(ctx),
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async changeMasterPassword({password, newPassword}) {
             const readStore = ctx.settingsStore.clone({adapter: await buildSettingsAdapter(ctx, password)});
             const existingData = await readStore.readExisting();
@@ -48,6 +49,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             return newData;
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async staticInit() {
             return {
                 electronLocations: ctx.locations,
@@ -55,6 +57,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             };
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async init() {
             let hasSavedPassword: boolean | undefined;
 
@@ -63,14 +66,15 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
                 ctx.keytarSupport = true;
             } catch (error) {
                 // log only one-line message in "error" mode so it doesn't affect the e2e tests
+                // eslint-disable-next-line  @typescript-eslint/no-unsafe-member-access
                 logger.error(`"keytar" module is unsupported by the system: `, error.message);
                 // log full error in "warn" mode only so it doesn't affect the e2e tests
                 logger.warn(error);
 
                 ctx.keytarSupport = false;
 
-                const errorMessage = String(error.message)
-                    .toLowerCase();
+                // eslint-disable-next-line  @typescript-eslint/no-unsafe-member-access
+                const errorMessage = String(error.message).toLowerCase();
 
                 ctx.snapPasswordManagerServiceHint = (
                     errorMessage.includes("snap")
@@ -101,6 +105,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             };
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async logout() {
             if (ctx.keytarSupport) {
                 await deletePassword();
@@ -121,6 +126,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             );
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async patchBaseConfig(patch) {
             const savedConfig = await ctx.configStore.readExisting();
             const newConfig = await ctx.configStore.write({
@@ -160,6 +166,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             return newConfig;
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async readConfig() {
             const store = ctx.configStore;
             const config = await store.read() ?? await store.write(ctx.initialStores.config);
@@ -168,6 +175,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
         },
 
         // TODO update "readSettings" api method test ("no password provided" case, keytar support)
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async readSettings({password, savePassword}) {
             // trying to auto-login
             if (!password) {
@@ -220,6 +228,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             return settings;
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async reEncryptSettings({encryptionPreset, password}) {
             await ctx.configStore.write({
                 ...await ctx.configStore.readExisting(),
@@ -230,6 +239,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
         },
 
         // TODO move to "src/electron-main/api/endpoints-builders/database"
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async loadDatabase({accounts}) {
             logger.info("loadDatabase() start");
 
@@ -316,10 +326,12 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             logger.info("loadDatabase() end");
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async settingsExists() {
             return ctx.settingsStore.readable();
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async generateTOTPToken({secret}) {
             return {
                 token: authenticator.generate(secret),

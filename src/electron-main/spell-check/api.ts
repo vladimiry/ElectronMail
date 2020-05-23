@@ -11,12 +11,14 @@ export async function buildEndpoints(
     ctx: Context,
 ): Promise<Pick<IpcMainApiEndpoints, "getSpellCheckMetadata" | "changeSpellCheckLocale" | "spellCheck">> {
     return {
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async getSpellCheckMetadata() {
             return {
                 locale: ctx.getSpellCheckController().getCurrentLocale(),
             };
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async changeSpellCheckLocale({locale}) {
             logger.info("selecting spellchecking language", locale);
 
@@ -41,6 +43,7 @@ export async function buildEndpoints(
             });
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async spellCheck({words}) {
             const misspelledWords: string[] = await new Promise((resolve) => {
                 ctx.getSpellCheckController()

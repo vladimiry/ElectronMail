@@ -1,3 +1,6 @@
+// TODO drop eslint disabling
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
+
 import _logger from "electron-log";
 import compareVersions from "compare-versions";
 import path from "path";
@@ -51,8 +54,8 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             return;
         }
         if (typeof (config as any).fetchingRateLimiting === "undefined") { // eslint-disable-line @typescript-eslint/no-explicit-any
-            (config as any) // eslint-disable-line @typescript-eslint/no-explicit-any
-                .fetchingRateLimiting = INITIAL_STORES.config().fetching.rateLimit;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (config as any).fetchingRateLimiting = INITIAL_STORES.config().fetching.rateLimit;
         }
     },
     "2.0.0-beta.8": (config) => {
@@ -368,7 +371,7 @@ export function upgradeConfig(config: Config): boolean {
     return upgrade(config, CONFIG_UPGRADES);
 }
 
-export const upgradeSettings: (settings: Settings, ctx: Context) => boolean = (() => {
+export const upgradeSettings: (settings: Settings, ctx: Context) => boolean = ((): typeof upgradeSettings => {
     function buildSettingsUpgraders(ctx: Context): Record<string, (settings: Settings) => void> {
         return {
             "1.1.1": (settings): void => {

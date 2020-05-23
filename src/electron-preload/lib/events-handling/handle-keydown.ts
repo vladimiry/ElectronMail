@@ -42,6 +42,7 @@ export function registerDocumentKeyDownEventListener<E extends ObservableElement
                 }
             }
 
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const el: Element | null = (
                 event.target as any // eslint-disable-line @typescript-eslint/no-explicit-any
             );

@@ -51,9 +51,9 @@ export class SessionStorage {
         {login, apiEndpointOrigin, session}: LoginFieldContainer & ApiEndpointOriginFieldContainer & { session: AccountPersistentSession },
     ): Promise<void> {
         this.logger.info("saveSession()");
-        const bundle = this.instance[login] || Object.create(null);
-        bundle[apiEndpointOrigin] = session;
-        this.instance[login] = bundle;
+        const bundle = this.instance[login] ?? Object.create(null); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+        bundle[apiEndpointOrigin] = session; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+        this.instance[login] = bundle; // eslint-disable-line @typescript-eslint/no-unsafe-assignment
         await this.save();
     }
 

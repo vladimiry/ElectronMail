@@ -1,3 +1,6 @@
+// TODO drop eslint disabling
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
+
 import assert from "assert";
 import logger from "electron-log";
 import path from "path";
@@ -438,7 +441,7 @@ const tests: Record<keyof TestContext["endpoints"], (t: ExecutionContext<TestCon
             null,
         ];
         for (const url of forbiddenUrls) {
-            await t.throwsAsync(action({url: String(url)}), {message: `Forbidden url "${url}" opening has been prevented`});
+            await t.throwsAsync(action({url: String(url)}), {message: `Forbidden url "${String(url)}" opening has been prevented`});
         }
 
         const allowedUrls = [

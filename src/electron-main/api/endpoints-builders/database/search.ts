@@ -60,6 +60,7 @@ export async function buildDbSearchEndpoints(
     ctx: DeepReadonly<Context>,
 ): Promise<Pick<IpcMainApiEndpoints, "dbFullTextSearch">> {
     return {
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbFullTextSearch({login, query, folderPks}) {
             logger.info("dbFullTextSearch()");
 
@@ -147,4 +148,3 @@ export async function buildDbSearchEndpoints(
         },
     };
 }
-

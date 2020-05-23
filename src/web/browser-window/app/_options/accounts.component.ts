@@ -47,6 +47,7 @@ export class AccountsComponent implements OnDestroy {
 
                 this.store.dispatch(
                     OPTIONS_ACTIONS.ChangeAccountOrderRequest({
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                         login: item.data.login,
                         index: currentIndex,
                     }),

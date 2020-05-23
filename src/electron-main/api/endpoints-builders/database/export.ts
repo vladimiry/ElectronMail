@@ -44,7 +44,7 @@ const fileExists = async (file: string): Promise<boolean> => {
     try {
         return (await fsAsync.stat(file)).isFile();
     } catch (error) {
-        if (error.code === "ENOENT") {
+        if (error.code === "ENOENT") { // eslint-disable-line @typescript-eslint/no-unsafe-member-access
             return false;
         }
         throw error;
@@ -168,6 +168,7 @@ export async function buildDbExportEndpoints(
     ctx: Context,
 ): Promise<Pick<IpcMainApiEndpoints, "dbExport">> {
     return {
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         dbExport({login, mailPks}) {
             logger.info("dbExport()");
 

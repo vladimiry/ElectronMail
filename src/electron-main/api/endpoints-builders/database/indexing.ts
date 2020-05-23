@@ -26,7 +26,7 @@ const logger = curryFunctionMembers(electronLog, "[src/electron-main/api/endpoin
 
 export const narrowIndexActionPayload: (
     payload: StrictOmit<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>, { type: "Index" }>["payload"], "uid">,
-) => typeof payload = (() => {
+) => typeof payload = ((): typeof narrowIndexActionPayload => {
     type Fn = typeof narrowIndexActionPayload;
     type Mails = ReturnType<Fn>["add"];
 
@@ -116,6 +116,7 @@ export async function buildDbIndexingEndpoints(
     ctx: Context, // TODO make argument "DeepReadonly"
 ): Promise<Pick<IpcMainApiEndpoints, "dbIndexerOn" | "dbIndexerNotification">> {
     return {
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbIndexerOn(action) {
             logger.info("dbIndexerOn()", `action.type: ${action.type}`);
 
@@ -169,6 +170,7 @@ export async function buildDbIndexingEndpoints(
             });
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         dbIndexerNotification() {
             return IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.asObservable().pipe(
                 startWith(IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Bootstrap({})),

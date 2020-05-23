@@ -10,6 +10,7 @@ import {curryFunctionMembers} from "src/shared/util";
 const logger = curryFunctionMembers(LOGGER, "[lib/util]");
 
 export const SERVICES_FACTORY = {
+    // tslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     cleanup: () => {
         const subscription = new Subscription();
         const promise = new Promise<void>((resolve) => {
@@ -21,6 +22,7 @@ export const SERVICES_FACTORY = {
         });
         return {subscription, promise};
     },
+    // tslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     apiClient: (finishPromise: Promise<void>) => {
         return IPC_MAIN_API.client({
             options: {
@@ -29,27 +31,31 @@ export const SERVICES_FACTORY = {
             },
         });
     },
-};
+} as const;
 
 const lowerCaseFilter = (term: string): string => {
     return term.toLowerCase();
 };
 
-const tokenizer: (value: string) => string[] = (() => {
-    const tokenizeRe = /[\s-]+/; // whitespace and hyphen
-    const result: typeof tokenizer = (value) => {
-        return value.trim().split(tokenizeRe);
-    };
-    return result;
-})();
+const tokenizer: (value: string) => string[] = (
+    (): typeof tokenizer => {
+        const tokenizeRe = /[\s-]+/; // whitespace and hyphen
+        const result: typeof tokenizer = (value) => {
+            return value.trim().split(tokenizeRe);
+        };
+        return result;
+    }
+)();
 
-const trimNonLetterCharactersFilter: (value: string) => string = (() => {
-    // TODO make sure all the possible unicode categories listed here except {L} and {N}
-    const toTrim = "[\\p{M}\\p{Z}\\p{S}\\p{P}\\p{C}]+";
-    const startEndTrimmingRe = new RegExp(`(^${toTrim})|(${toTrim}$)`, "gu");
+const trimNonLetterCharactersFilter: (value: string) => string = (
+    (): typeof trimNonLetterCharactersFilter => {
+        // TODO make sure all the possible unicode categories listed here except {L} and {N}
+        const toTrim = "[\\p{M}\\p{Z}\\p{S}\\p{P}\\p{C}]+";
+        const startEndTrimmingRe = new RegExp(`(^${toTrim})|(${toTrim}$)`, "gu");
 
-    return (value: string) => value.replace(startEndTrimmingRe, "");
-})();
+        return (value: string) => value.replace(startEndTrimmingRe, "");
+    }
+)();
 
 export function createMailsIndex(): MailsIndex {
     const index = createIndex<IndexableMailId>(Object.keys(FIELD_DESCRIPTION).length);
@@ -62,8 +68,7 @@ export function createMailsIndex(): MailsIndex {
             lowerCaseFilter(term),
         );
     };
-
-    return {
+    const result: ReturnType<typeof createMailsIndex> = {
         add: (mail) => addDocumentToIndex(
             index,
             fieldAccessors,
@@ -72,7 +77,7 @@ export function createMailsIndex(): MailsIndex {
             mail.pk,
             mail,
         ),
-        remove: (id: IndexableMailId) => {
+        remove: (id) => {
             removeDocumentFromIndex(index, removed, id);
 
             if (removed.size > 25) {
@@ -95,6 +100,7 @@ export function createMailsIndex(): MailsIndex {
             };
         },
     };
+    return result;
 }
 
 export function addToMailsIndex(

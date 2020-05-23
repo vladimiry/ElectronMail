@@ -4,6 +4,7 @@ import {remote} from "electron"; // tslint:disable-line:no-import-zones
 import {LogLevel, Logger} from "src/shared/model/common";
 import {logLevelEnabled} from "src/shared/util";
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 const logger: DeepReadonly<Logger & { transports: { file: FileTransport } }> = remote.require("electron-log");
 
 function log(

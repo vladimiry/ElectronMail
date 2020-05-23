@@ -1,5 +1,6 @@
 import {EntryUrlItem, LogLevel} from "./model/common";
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 const {
     name: PACKAGE_NAME,
     version: PACKAGE_VERSION,
@@ -169,9 +170,7 @@ export const PROTON_API_ENTRY_URLS = PROTON_API_ENTRY_RECORDS.map(({value: url})
 export const WEB_CLIENTS_BLANK_HTML_FILE_NAME = "blank.html";
 
 export const LOG_LEVELS: Readonly<LogLevel[]> = Object.keys(
-    ((stub: Record<LogLevel, null>) => {
-        return stub;
-    })({
+    ((stub: Record<LogLevel, null>) => stub)({ // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
         error: null,
         warn: null,
         info: null,

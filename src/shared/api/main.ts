@@ -20,7 +20,7 @@ import {PACKAGE_NAME} from "src/shared/constants";
 import {ProtonClientSession} from "src/shared/model/proton";
 
 export const IPC_MAIN_API_DB_INDEXER_ON_ACTIONS = unionize({
-        Bootstrapped: ofType<{}>(),
+        Bootstrapped: ofType<Record<string, unknown>>(),
         ProgressState: ofType<{
             key: DbModel.DbAccountPk;
             status: {
@@ -48,7 +48,7 @@ export const IPC_MAIN_API_DB_INDEXER_ON_ACTIONS = unionize({
 );
 
 export const IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS = unionize({
-        Bootstrap: ofType<{}>(),
+        Bootstrap: ofType<Record<string, unknown>>(),
         // TODO consider splitting huge data portion to chunks, see "ramda.splitEvery"
         Index: ofType<{
             key: DbModel.DbAccountPk;
@@ -71,8 +71,8 @@ export const IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS = unionize({
 
 // WARN: do not put sensitive data or any data to the main process notification stream, only status-like signals
 export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
-        Bootstrap: ofType<{}>(),
-        ActivateBrowserWindow: ofType<{}>(),
+        Bootstrap: ofType<Record<string, unknown>>(),
+        ActivateBrowserWindow: ofType<Record<string, unknown>>(),
         TargetUrl: ofType<DeepReadonly<NoExtraProperties<{
             url: string;
             // percent sizes get calculated since absolute sizes use introduce a mistake if "zoomFactor is not 1"
@@ -87,8 +87,8 @@ export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
         DbIndexerProgressState: ofType<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_ON_ACTIONS>, { type: "ProgressState" }>["payload"]>(),
         Locale: ofType<{ locale: ReturnType<Controller["getCurrentLocale"]> }>(),
         ConfigUpdated: ofType<Config>(),
-        OpenOptions: ofType<{}>(),
-        LogOut: ofType<{}>(),
+        OpenOptions: ofType<Record<string, unknown>>(),
+        LogOut: ofType<Record<string, unknown>>(),
         SignedInStateChange: ofType<{ signedIn: boolean }>(),
         ErrorMessage: ofType<{ message: string }>(),
         InfoMessage: ofType<{ message: string }>(),

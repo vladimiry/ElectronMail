@@ -34,6 +34,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
         ...await buildDbIndexingEndpoints(ctx),
         ...await buildDbSearchEndpoints(ctx),
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbPatch({forceFlush, login, metadata: metadataPatch, patch: entityUpdatesPatch}) {
             const logger = curryFunctionMembers(_logger, "dbPatch()");
 
@@ -113,6 +114,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             return account.metadata;
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbGetAccountMetadata({login}) {
             _logger.info("dbGetAccountMetadata()");
 
@@ -121,6 +123,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             return account ? account.metadata : null;
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbGetAccountDataView({login}) {
             _logger.info("dbGetAccountDataView()");
 
@@ -135,6 +138,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             };
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbGetAccountMail({login, pk}) {
             _logger.info("dbGetAccountMail()");
 
@@ -157,6 +161,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             };
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbSearchRootConversationNodes({login, folderPks, ...restOptions}) {
             _logger.info("dbSearchRootConversationNodes()");
 

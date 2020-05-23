@@ -36,7 +36,7 @@ const folderAsDomainEntries: Array<FolderAsDomainEntry<{
 
 async function configure(
     {cwd, envFileName = "./appConfig.json", repoType}: { cwd: string; envFileName?: string; repoType: keyof typeof PROVIDER_REPOS },
-    {folderNameAsDomain, options}: FolderAsDomainEntry,
+    {folderNameAsDomain, options}: Unpacked<typeof folderAsDomainEntries>,
 ): Promise<{ configApiParam: string }> {
     const {configApiParam} = options;
 
@@ -204,7 +204,7 @@ async function writeProtonConfigFile(
                         await execShell(["npm", ["run", "build", "--", "--api", configApiParam], {cwd}]);
 
                         if (!hasSeenOnboardingModalSuppressor.isReplaced()) {
-                            throw new Error(`Failed to patch the "${hasSeenOnboardingModalSuppressor}" file`);
+                            throw new Error(`Failed to patch the "${hasSeenOnboardingModalSuppressor.targetFile}" file`);
                         }
                     })();
                 },

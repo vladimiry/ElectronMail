@@ -34,6 +34,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
     };
 
     const endpoints: Pick<IpcMainApiEndpoints, ApiMethods> = {
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async findInPageDisplay({visible}) {
             const logger = curryFunctionMembers(_logger, "findInPageDisplay()");
 
@@ -105,6 +106,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             }
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async findInPage({query, options}) {
             if (!ctx.selectedAccount) {
                 return null;
@@ -116,12 +118,14 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             return {requestId};
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async findInPageStop() {
             ElectronWebContents
                 .getAllWebContents()
                 .forEach((webContents) => webContents.stopFindInPage("clearSelection"));
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         findInPageNotification() {
             if (findInPageNotification) {
                 findInPageNotification.reset();

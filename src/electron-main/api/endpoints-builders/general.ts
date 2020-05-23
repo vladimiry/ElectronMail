@@ -37,10 +37,12 @@ export async function buildEndpoints(
     ctx: Context,
 ): Promise<Pick<IpcMainApiEndpoints, Methods> & Pick<IpcMainServiceScan["ApiImpl"], ContextAwareMethods>> {
     const endpoints: Unpacked<ReturnType<typeof buildEndpoints>> = {
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async openAboutWindow() {
             await showAboutBrowserWindow(ctx);
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async openExternal({url}) {
             if (!isWebUri(url)) {
                 throw new Error(`Forbidden url "${url}" opening has been prevented`);
@@ -49,6 +51,7 @@ export async function buildEndpoints(
             await shell.openExternal(url, {activate: true});
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async openSettingsFolder() {
             const errorMessage = await shell.openPath(ctx.locations.userDataDir);
 
@@ -57,10 +60,12 @@ export async function buildEndpoints(
             }
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async quit() {
             app.exit();
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async activateBrowserWindow(browserWindow = ctx.uiContext && ctx.uiContext.browserWindow) {
             if (!browserWindow) {
                 return;
@@ -87,6 +92,7 @@ export async function buildEndpoints(
             IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.ActivateBrowserWindow());
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async toggleBrowserWindow(arg) {
             const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
 
@@ -105,6 +111,7 @@ export async function buildEndpoints(
             }
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async selectAccount(args) {
             const prevSelectedAccount = ctx.selectedAccount;
             const newSelectedAccount = "reset" in args
@@ -134,6 +141,7 @@ export async function buildEndpoints(
             ctx.selectedAccount = newSelectedAccount;
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async hotkey({type}) {
             const methodContext = this;  // eslint-disable-line @typescript-eslint/no-this-alias
 
@@ -158,10 +166,11 @@ export async function buildEndpoints(
                     webContents.selectAll();
                     break;
                 default:
-                    throw new Error(`Unknown hotkey "type" value:  "${type}"`);
+                    throw new Error(`Unknown hotkey "type" value:  "${String(type)}"`);
             }
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         updateCheck: (() => {
             const releasesUrlPrefix = "https://github.com/vladimiry/ElectronMail/releases/tag";
             const tagNameFilterRe = /[^a-z0-9._-]/gi;
@@ -258,6 +267,7 @@ export async function buildEndpoints(
                     throw new Error(`Update check failed: ${errorMessageData}`);
                 }
 
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 const releases: Array<{
                     tag_name: string;
                     published_at: string;
@@ -297,6 +307,7 @@ export async function buildEndpoints(
             };
         })(),
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async toggleControls(arg) {
             const config = await ctx.config$
                 .pipe(take(1))
@@ -313,6 +324,7 @@ export async function buildEndpoints(
             );
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async toggleLocalDbMailsListViewMode() {
             const config = await ctx.configStore.readExisting();
 
@@ -324,6 +336,7 @@ export async function buildEndpoints(
             });
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         notification() {
             return IPC_MAIN_API_NOTIFICATION$.asObservable().pipe(
                 // TODO replace "startWith" with "defaultIfEmpty" (simply some response needed to avoid timeout error)

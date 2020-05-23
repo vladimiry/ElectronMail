@@ -201,9 +201,23 @@ async function buildDbPatch(
             updatesMappedByInstanceId: Map<RestModel.Id, Array<Unpacked<Required<RestModel.Event>["Contacts"]>>>;
         };
     } = {
-        mails: {refType: "Messages", updatesMappedByInstanceId: new Map(), remove: [], upsertIds: []},
-        folders: {refType: "Labels", updatesMappedByInstanceId: new Map(), remove: [], upsertIds: []},
-        contacts: {refType: "Contacts", updatesMappedByInstanceId: new Map(), remove: [], upsertIds: []},
+        mails: {
+            refType: "Messages",
+            updatesMappedByInstanceId: new Map(),  // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            remove: [],
+            upsertIds: []},
+        folders: {
+            refType: "Labels",
+            updatesMappedByInstanceId: new Map(), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            remove: [],
+            upsertIds: [],
+        },
+        contacts: {
+            refType: "Contacts",
+            updatesMappedByInstanceId: new Map(), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            remove: [],
+            upsertIds: [],
+        },
     };
     const mappingKeys = Object.keys(mapping) as Array<keyof typeof mapping>;
 
@@ -271,7 +285,7 @@ async function buildDbPatch(
                         Code?: number; // 15052
                         Error?: string; // Message does not exist
                         ErrorDescription?: string;
-                        Details?: object;
+                        Details?: unknown;
                     }>(error)
                     &&
                     error.status === 422

@@ -13,23 +13,25 @@ const configsCache: { resolveDomElements?: Config } = {};
 
 export const resolveIpcMainApi: (
     logger: ReturnType<typeof buildLoggerBundle>,
-) => Promise<ReturnType<typeof IPC_MAIN_API.client>> = (() => {
-    let ipcMainApiClient: ReturnType<typeof IPC_MAIN_API.client> | undefined;
+) => Promise<ReturnType<typeof IPC_MAIN_API.client>> = (
+    (): typeof resolveIpcMainApi => {
+        let ipcMainApiClient: ReturnType<typeof IPC_MAIN_API.client> | undefined;
 
-    const result: typeof resolveIpcMainApi = async (logger) => {
-        if (ipcMainApiClient) {
+        const result: typeof resolveIpcMainApi = async (logger) => {
+            if (ipcMainApiClient) {
+                return ipcMainApiClient;
+            }
+
+            const {timeouts: {defaultApiCall: timeoutMs}} = await IPC_MAIN_API.client({options: {logger}})("readConfig")();
+
+            ipcMainApiClient = IPC_MAIN_API.client({options: {timeoutMs, logger}});
+
             return ipcMainApiClient;
-        }
+        };
 
-        const {timeouts: {defaultApiCall: timeoutMs}} = await IPC_MAIN_API.client({options: {logger}})("readConfig")();
-
-        ipcMainApiClient = IPC_MAIN_API.client({options: {timeoutMs, logger}});
-
-        return ipcMainApiClient;
-    };
-
-    return result;
-})();
+        return result;
+    }
+)();
 
 export const resolveDomElements = async <E extends Element,
     Q extends Readonly<Record<string, () => E>>,
@@ -72,7 +74,8 @@ export const resolveDomElements = async <E extends Element,
                 }
                 const element = query[key]();
                 if (element) {
-                    resolvedElements[key] = element as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any,  @typescript-eslint/no-unsafe-assignment
+                    resolvedElements[key] = element as any;
                 }
             });
 
@@ -175,17 +178,19 @@ export async function submitTotpToken(
     try {
         await submit();
     } catch (e) {
-        if (e.message !== errorMessage) {
+        const {message} = e; // eslint-disable-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+
+        if (message !== errorMessage) {
             throw e;
         }
 
-        logger.verbose(`submit 1 - fail: ${e.message}`);
+        logger.verbose(`submit 1 - fail: ${String(message)}`);
         // second attempt as token might become expired right before submitting
         await asyncDelay(newTokenDelayMs, submit);
     }
 }
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
 export function buildDbPatchRetryPipeline<T>(
     preprocessError: (
         rawError: any, // eslint-disable-line @typescript-eslint/no-explicit-any

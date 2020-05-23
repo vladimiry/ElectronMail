@@ -75,19 +75,19 @@ export function constructProvider(
 
 export function constructDummyProvider(): Readonly<Provider> {
     return {
-        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         spellCheck(...[, callback]) {
             callback([]);
         },
-        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         isMisspelled() {
             return false;
         },
-        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         getSuggestions() {
             return [];
         },
-        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         add() {
             // NOOP
         },

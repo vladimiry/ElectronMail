@@ -1,8 +1,9 @@
-// TODO remove the "tslint:disable:await-promise" when Spectron gets proper declaration files, track of the following issues:
-// - https://github.com/DefinitelyTyped/DefinitelyTyped/issues/25186
-// - https://github.com/electron/spectron/issues/358
+// TODO remove the "tslint:disable:await-promise" when spectron gets proper declaration files
+// TODO track this issue https://github.com/electron-userland/spectron/issues/349
+/* eslint-disable @typescript-eslint/await-thenable, @typescript-eslint/no-misused-promises */
 
-// tslint:disable:await-promise
+// TODO drop eslint disabling
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
 
 import {LoginFieldContainer} from "src/shared/model/container";
 import {ONE_SECOND_MS} from "src/shared/constants";

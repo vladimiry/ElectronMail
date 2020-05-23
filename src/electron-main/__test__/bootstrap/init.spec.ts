@@ -1,3 +1,6 @@
+// TODO drop eslint disabling
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
+
 import rewiremock from "rewiremock";
 import sinon from "sinon";
 import test from "ava";
@@ -9,6 +12,7 @@ function buildMocks( // eslint-disable-line @typescript-eslint/explicit-function
         requestSingleInstanceLockResult: boolean;
     },
 ) {
+    const electronLogErrorSpy = sinon.spy();
     return {
         "electron": {
             app: {
@@ -17,8 +21,11 @@ function buildMocks( // eslint-disable-line @typescript-eslint/explicit-function
                 setAppUserModelId: sinon.spy(),
             },
         },
+        "electron-log-error": electronLogErrorSpy,
         "electron-log": {
-            error: sinon.spy(),
+            error: {
+                bind: sinon.stub().returns(electronLogErrorSpy),
+            },
         },
         "electron-unhandled": sinon.spy(),
     };
@@ -48,8 +55,10 @@ test.serial("bootstrapInit(): default", async (t) => {
 
     library.bootstrapInit();
 
+    mocks["electron-log"].error.bind.calledWithExactly(mocks["electron-log"]);
+
     t.true(mocks["electron-unhandled"].calledWithExactly({
-        logger: mocks["electron-log"].error,
+        logger: mocks["electron-log-error"],
         showDialog: true,
     }));
 

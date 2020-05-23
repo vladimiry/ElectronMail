@@ -4,34 +4,43 @@ import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 import {UPSERT_EVENT_ACTIONS} from "src/electron-preload/webview/lib/rest-model";
 import {buildDbPatchRetryPipeline} from "src/electron-preload/webview/lib/util";
 
-export const isUpsertOperationType: (v: Unpacked<typeof RestModel.EVENT_ACTION._.values>) => boolean = (() => {
-    const types: ReadonlySet<Parameters<typeof isUpsertOperationType>[0]> = new Set(UPSERT_EVENT_ACTIONS);
-    const result: typeof isUpsertOperationType = (type) => types.has(type);
-    return result;
-})();
+export const isUpsertOperationType: (v: Unpacked<typeof RestModel.EVENT_ACTION._.values>) => boolean = (
+    () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
+        const types: ReadonlySet<Parameters<typeof isUpsertOperationType>[0]> = new Set(UPSERT_EVENT_ACTIONS);
+        const result: typeof isUpsertOperationType = (type) => types.has(type);
+        return result;
+    }
+)();
 
 export const angularJsHttpResponseTypeGuard: <T extends any = any>( // eslint-disable-line @typescript-eslint/no-explicit-any
     data: ng.IHttpResponse<T> | any // eslint-disable-line @typescript-eslint/no-explicit-any
-) => data is ng.IHttpResponse<T> = (() => {
-    const signatureKeys
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        = Object.freeze<keyof ng.IHttpResponse<any>>(["data", "status", "config", "statusText", "xhrStatus"]);
-    return (
-        (
-            data: ng.IHttpResponse<any> | any // eslint-disable-line @typescript-eslint/no-explicit-any
-        ) => {
-            if (typeof data !== "object") {
-                return false;
+) => data is ng.IHttpResponse<T> = (
+    () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
+        const signatureKeys
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            = Object.freeze<keyof ng.IHttpResponse<any>>(["data", "status", "config", "statusText", "xhrStatus"]);
+        return (
+            (
+                data: ng.IHttpResponse<any> | any // eslint-disable-line @typescript-eslint/no-explicit-any
+            ) => {
+                if (typeof data !== "object") {
+                    return false;
+                }
+                return signatureKeys.reduce((count, prop) => count + Number(prop in data), 0) === signatureKeys.length;
             }
-            return signatureKeys.reduce((count, prop) => count + Number(prop in data), 0) === signatureKeys.length;
-        }
-    ) as typeof angularJsHttpResponseTypeGuard;
-})();
+        ) as typeof angularJsHttpResponseTypeGuard;
+    }
+)();
 
 export function isLoggedIn(): boolean {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const appElement = window.angular && window.angular.element(document);
-    const $injector = appElement && appElement.data("$injector");
-    const authentication: undefined | { user?: object; isLoggedIn: () => boolean } = $injector && $injector.get("authentication");
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const $injector: angular.auto.IInjectorService | undefined = appElement && appElement.data("$injector");
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const authentication:
+        | undefined
+        | { user?: Record<string, unknown>; isLoggedIn: () => boolean } = $injector && $injector.get("authentication");
 
     return Boolean(
         authentication
@@ -97,6 +106,7 @@ export const preprocessError: Parameters<typeof buildDbPatchRetryPipeline>[0] = 
     );
 
     return {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         error: sanitizedNgHttpResponse
             ? new Error(sanitizedNgHttpResponse.message)
             : rawError,

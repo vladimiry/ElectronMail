@@ -17,8 +17,10 @@ export const browserWindowAppPath = (...value: string[]): string => {
 };
 
 export function cssRuleSetUseItems(): RuleSetUseItem[] {
-    const cssNano = require("cssnano"); // eslint-disable-line @typescript-eslint/no-var-requires
-    const customProperties = require("postcss-custom-properties"); // eslint-disable-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-assignment
+    const cssNano = require("cssnano");
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-assignment
+    const customProperties = require("postcss-custom-properties");
 
     return [
         "css-loader",
@@ -27,11 +29,11 @@ export function cssRuleSetUseItems(): RuleSetUseItem[] {
             options: {
                 sourceMap: false, // TODO handle sourceMap
                 ident: "postcss",
-                plugins: () => {
-                    return [ // eslint-disable-line  @typescript-eslint/no-unsafe-return
+                plugins: () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
+                    return [ // eslint-disable-line @typescript-eslint/no-unsafe-return
                         postCssUrl(),
-                        customProperties({preserve: true}),
-                        cssNano({
+                        customProperties({preserve: true}), // eslint-disable-line @typescript-eslint/no-unsafe-call
+                        cssNano({ // eslint-disable-line @typescript-eslint/no-unsafe-call
                             autoprefixer: true,
                             discardComments: true,
                             mergeLonghand: false,

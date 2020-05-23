@@ -10,6 +10,7 @@ import {PLATFORM} from "src/electron-main/constants";
 
 // TODO explore https://github.com/vonderheide/mono-bitmap as a potential "pureimage" replacement
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 const pureimageUInt32: Readonly<{
     getBytesBigEndian(
         rgba: ReturnType<import("pureimage").Bitmap["getPixelRGBA"]>,

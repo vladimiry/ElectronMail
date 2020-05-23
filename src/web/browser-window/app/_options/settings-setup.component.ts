@@ -11,9 +11,9 @@ import {LoginBaseComponent} from "src/web/browser-window/app/_options/login-base
 })
 export class SettingsSetupComponent extends LoginBaseComponent {
     passwordConfirm = new FormControl(null, [
-        Validators.required,
+        Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
         // TODO make "controls match" to be "common/util" validator
-        () => {
+        () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
             if (this.password
                 && this.passwordConfirm
                 && this.password.value !== this.passwordConfirm.value) {

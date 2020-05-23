@@ -1,3 +1,6 @@
+// TODO drop eslint disabling
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
+
 import path from "path";
 import rewiremock from "rewiremock";
 import sinon from "sinon";

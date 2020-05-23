@@ -32,7 +32,7 @@ const execShellPrintEnvWhitelist: ReadonlyArray<string> = [
     })(),
 ] as const;
 
-export function formatStreamChunk(
+export function formatStreamChunk( // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
     chunk: any, // eslint-disable-line @typescript-eslint/no-explicit-any
 ): string {
     return Buffer.from(chunk, "utf-8").toString();
@@ -87,8 +87,14 @@ export async function execShell(
     try {
         return await spawnPromise;
     } catch (error) {
-        const omitProps: Array<keyof Unpacked<ReturnType<typeof spawnAsync>>> = ["output", "stderr", "stdout"];
-        omitProps.forEach((omitProp) => delete error[omitProp]);
+        (() => {
+            const omitProps: Array<keyof Unpacked<ReturnType<typeof spawnAsync>>> = ["output", "stderr", "stdout"];
+            omitProps.forEach((omitProp) => {
+                if (omitProp in error) {
+                    delete error[omitProp] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+                }
+            });
+        })();
         throw error;
     }
 }

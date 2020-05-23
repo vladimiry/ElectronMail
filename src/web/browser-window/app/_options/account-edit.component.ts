@@ -34,12 +34,18 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         | keyof Pick<Required<Required<AccountConfig>["proxy"]>, "proxyRules" | "proxyBypassRules">
         | keyof AccountConfig["credentials"],
         AbstractControl> = {
-        login: new FormControl(null, Validators.required),
+        login: new FormControl(
+            null,
+            Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
+        ),
         title: new FormControl(null),
         database: new FormControl(null),
         persistentSession: new FormControl(null),
         rotateUserAgent: new FormControl(null),
-        entryUrl: new FormControl(null, Validators.required),
+        entryUrl: new FormControl(
+            null,
+            Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
+        ),
         proxyRules: new FormControl(null),
         proxyBypassRules: new FormControl(null),
         password: new FormControl(null),
@@ -48,9 +54,9 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         loginDelayUntilSelected: new FormControl(null),
         loginDelaySecondsRange: new FormControl(
             null,
-            () => {
+            (): null | { errorMsg: string } => {
                 const control: AbstractControl | undefined = this.controls && this.controls.loginDelaySecondsRange;
-                const value: string | undefined = control && control.value;
+                const value: string | undefined = control && control.value; // eslint-disable-line @typescript-eslint/no-unsafe-assignment
                 const validated = value && validateLoginDelaySecondsRange(value);
 
                 if (validated && "validationError" in validated) {
@@ -137,22 +143,32 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     submit(): void {
         const {controls, account} = this;
         const proxy: AccountConfig["proxy"] = {
-            proxyRules: controls.proxyRules.value && controls.proxyRules.value.trim(),
-            proxyBypassRules: controls.proxyBypassRules.value && controls.proxyBypassRules.value.trim(),
+            proxyRules: ( // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                controls.proxyRules.value
+                &&
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+                controls.proxyRules.value.trim()
+            ),
+            proxyBypassRules: ( // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                controls.proxyBypassRules.value
+                &&
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+                controls.proxyBypassRules.value.trim() // eslint-disable-line @typescript-eslint/no-unsafe-call
+            ),
         };
-        const patch: Readonly<AccountConfigCreateUpdatePatch> = {
-            login: account
+        const patch: Readonly<AccountConfigCreateUpdatePatch> = { // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            login: account // eslint-disable-line @typescript-eslint/no-unsafe-assignment
                 ? account.login :
                 controls.login.value,
-            title: controls.title.value,
-            entryUrl: controls.entryUrl.value,
+            title: controls.title.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            entryUrl: controls.entryUrl.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
             database: Boolean(controls.database.value),
             persistentSession: Boolean(controls.persistentSession.value),
             rotateUserAgent: Boolean(controls.rotateUserAgent.value),
             credentials: {
-                password: controls.password.value,
-                twoFactorCode: controls.twoFactorCode.value,
-                mailPassword: controls.mailPassword.value,
+                password: controls.password.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                twoFactorCode: controls.twoFactorCode.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                mailPassword: controls.mailPassword.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
             },
             ...((proxy.proxyRules || proxy.proxyBypassRules) && {proxy}),
             loginDelayUntilSelected: Boolean(controls.loginDelayUntilSelected.value),

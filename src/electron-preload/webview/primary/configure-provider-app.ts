@@ -26,14 +26,14 @@ function tweakAngularModule(module: angular.IModule): typeof module {
         "$compileProvider",
         ($compileProvider: angular.ICompileProvider) => {
             $compileProvider.imgSrcSanitizationWhitelist(imgSrcSanitizationWhitelistRe);
-            _logger.info(`"$compileProvider.imgSrcSanitizationWhitelist" called with "${imgSrcSanitizationWhitelistRe}" regexp`);
+            _logger.info(`"$compileProvider.imgSrcSanitizationWhitelist" called with "${String(imgSrcSanitizationWhitelistRe)}" regexp`);
         },
     ]);
 }
 
 function angularObjectWiredUpHandler(
     // not the "angular.IAngularStatic" but "object" as an this point object is still empty (like no "module" method linked yet)
-    angular: object,
+    angular: unknown,
 ): void {
     _logger.info(`angularInitializedHandler()`);
 

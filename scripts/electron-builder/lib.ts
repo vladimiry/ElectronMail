@@ -124,7 +124,7 @@ async function prepareDictionaries(): Promise<Map<Locale, Dictionary>> {
         }
     }
 
-    const result: Map<Locale, Dictionary> = new Map();
+    const result = new Map<Locale, Dictionary>();
 
     for (const file of files) {
         const locale: Locale = path.basename(file, path.extname(file));

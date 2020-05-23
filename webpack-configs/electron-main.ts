@@ -17,7 +17,7 @@ export default buildBaseConfig(
         },
         externals: [
             nodeExternals({
-                modulesFromFile: {
+                modulesFromFile: { // eslint-disable-line @typescript-eslint/no-unsafe-assignment
                     exclude: ["devDependencies"],
                     include: ["dependencies"],
                 } as any, // eslint-disable-line @typescript-eslint/no-explicit-any

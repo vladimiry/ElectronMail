@@ -59,7 +59,8 @@ describe(AppComponent.name, () => {
         fixture.detectChanges();
 
         expect(hashIndexOfSpy).toHaveBeenCalledTimes(
-            (fixture.componentInstance as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+            (fixture.componentInstance as any)
                 .closeableOutlets.length
         );
     });

@@ -93,6 +93,7 @@ const config = buildBaseWebConfig(
                 };
 
                 const angularCompilerPluginOptions: AngularCompilerPluginOptions = {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                     contextElementDependencyConstructor: require("webpack/lib/dependencies/ContextElementDependency"),
                     tsConfigPath: tsConfigFile,
                     compilerOptions,

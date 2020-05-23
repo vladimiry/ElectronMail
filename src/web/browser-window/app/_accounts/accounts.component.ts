@@ -22,7 +22,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
     initialized$ = this.store.pipe(select(AccountsSelectors.FEATURED.initialized));
     layoutMode$ = this.store.pipe(select(OptionsSelectors.CONFIG.layoutMode));
     hideControls$ = this.store.pipe(select(OptionsSelectors.CONFIG.hideControls));
-    accountsMap: Map<WebAccount["accountConfig"]["login"], WebAccount> = new Map();
+    accountsMap = new Map<WebAccount["accountConfig"]["login"], WebAccount>();
     selectedAccount?: WebAccount;
     unreadSummary?: number;
     loginsSet$: Observable<string[]>;

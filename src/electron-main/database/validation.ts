@@ -32,7 +32,7 @@ function flattenValidationError(rawError: Error): Error | string {
         return rawError;
     }
 
-    const errors: ValidationError[] = flatten(rawError);
+    const errors: ValidationError[] = flatten(rawError); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
     const messages: string[] = [];
 
     if (!errors.length || !(errors[0] instanceof ValidationError)) {

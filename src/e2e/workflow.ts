@@ -1,6 +1,9 @@
 // TODO remove the "tslint:disable:await-promise" when spectron gets proper declaration files
-// TODO track this issue https://github.com/DefinitelyTyped/DefinitelyTyped/issues/25186
-// tslint:disable:await-promise
+// TODO track this issue https://github.com/electron-userland/spectron/issues/349
+/* eslint-disable @typescript-eslint/await-thenable, @typescript-eslint/no-misused-promises */
+
+// TODO drop eslint disabling
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
 
 import electron from "electron";
 import fs from "fs";
@@ -45,7 +48,8 @@ export const ENV = {
 export const CI = Boolean(process.env.CI && (process.env.APPVEYOR || process.env.TRAVIS));
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-export const {name: PROJECT_NAME, version: PROJECT_VERSION} = require("package.json"); // tslint:disable-line: no-import-zones
+export const {name: PROJECT_NAME, version: PROJECT_VERSION}
+    = require("package.json") as { name: string, version: string }; // tslint:disable-line: no-import-zones
 
 const rootDirPath = path.resolve(__dirname, process.cwd());
 const appDirPath = path.join(rootDirPath, "./app");
@@ -316,7 +320,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
                 (selector) => {
                     const el = document.querySelector<HTMLButtonElement>(selector);
                     if (!el) {
-                        throw new Error(`Failed to resolve element using "${selector}" selector`);
+                        throw new Error(`Failed to resolve element using "${String(selector)}" selector`);
                     }
                     el.click();
                 },
@@ -331,7 +335,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
                 (selector) => {
                     const el = document.querySelector<HTMLButtonElement>(selector);
                     if (!el) {
-                        throw new Error(`Failed to resolve element using "${selector}" selector`);
+                        throw new Error(`Failed to resolve element using "${String(selector)}" selector`);
                     }
                     el.dispatchEvent(new MouseEvent("mousedown"));
                 },
@@ -484,7 +488,7 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
     try {
         await t.context.app.start();
     } catch (e) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-console
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-console, @typescript-eslint/restrict-template-expressions
         console.log(`chromeDriver.logLines:\n${(t.context.app as any).chromeDriver.logLines.join("\n")}`);
         throw e;
     }

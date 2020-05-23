@@ -56,7 +56,10 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         fullTextSearch: new FormControl(),
         hideControls: new FormControl(),
         idleTimeLogOutSec: new FormControl(),
-        logLevel: new FormControl(null, Validators.required),
+        logLevel: new FormControl(
+            null,
+            Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
+        ),
         startHidden: new FormControl(),
         unreadNotifications: new FormControl(),
         zoomFactor: new FormControl(),

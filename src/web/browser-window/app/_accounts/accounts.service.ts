@@ -142,7 +142,7 @@ export class AccountsService {
                 ]).pipe(
                     take(1),
                     tap((reason) => {
-                        logger.info(`disposing delayed "login" action with the following reason: ${reason}`);
+                        logger.info(`disposing delayed "login" action with the following reason: ${String(reason)}`);
                     }),
                 );
                 const trigger$ = delayTriggers.length

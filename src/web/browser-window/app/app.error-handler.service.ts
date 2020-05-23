@@ -25,6 +25,7 @@ export class AppErrorHandler implements ErrorHandler {
                     pick(
                         Array.isArray(errors) && errors.length
                             // rxjs's "UnsubscriptionError" comes with "errors" array prop but "stack" props not well combined
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                             ? combineErrors([error, ...errors])
                             : error,
                         ["name", "message", "stack"],

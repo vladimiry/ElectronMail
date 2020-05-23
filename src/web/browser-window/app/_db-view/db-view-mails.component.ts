@@ -138,42 +138,44 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
         distinctUntilChanged(),
     );
 
-    moveToFolders$: Observable<Folder[]> = (() => {
-        const excludePks: ReadonlySet<Folder["pk"]> = new Set([
-            PROTONMAIL_MAILBOX_IDENTIFIERS["All Drafts"],
-            PROTONMAIL_MAILBOX_IDENTIFIERS["All Sent"],
-            PROTONMAIL_MAILBOX_IDENTIFIERS["All Mail"],
-            PROTONMAIL_MAILBOX_IDENTIFIERS.Search,
-            PROTONMAIL_MAILBOX_IDENTIFIERS.Label,
-        ])
-        const staticFilter = (item: Folder): boolean => {
-            return (
-                item.exclusive > 0
-                &&
-                !excludePks.has(item.pk)
+    moveToFolders$: Observable<Folder[]> = (
+        () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
+            const excludePks: ReadonlySet<Folder["pk"]> = new Set([
+                PROTONMAIL_MAILBOX_IDENTIFIERS["All Drafts"],
+                PROTONMAIL_MAILBOX_IDENTIFIERS["All Sent"],
+                PROTONMAIL_MAILBOX_IDENTIFIERS["All Mail"],
+                PROTONMAIL_MAILBOX_IDENTIFIERS.Search,
+                PROTONMAIL_MAILBOX_IDENTIFIERS.Label,
+            ])
+            const staticFilter = (item: Folder): boolean => {
+                return (
+                    item.exclusive > 0
+                    &&
+                    !excludePks.has(item.pk)
+                );
+            };
+            return combineLatest([
+                this.instance$.pipe(
+                    map((value) => value.folders),
+                    distinctUntilChanged(),
+                    map(({custom, system}) => ([...custom, ...system])),
+                    map((items) => items.filter(staticFilter)),
+                    map((items) => sortBy([...items], ({name}) => name)),
+                ),
+                this.instance$.pipe(
+                    map((value) => value.selectedFolderData),
+                    distinctUntilChanged(),
+                ),
+            ]).pipe(
+                map(([items, selectedFolderData]) => {
+                    const excludeFolderPk = this.mailsBundleKey === "searchMailsBundle"
+                        ? null // no excluding for the full-text search result lit
+                        : selectedFolderData?.pk;
+                    return items.filter(({pk}) => pk !== excludeFolderPk);
+                }),
             );
-        };
-        return combineLatest([
-            this.instance$.pipe(
-                map((value) => value.folders),
-                distinctUntilChanged(),
-                map(({custom, system}) => ([...custom, ...system])),
-                map((items) => items.filter(staticFilter)),
-                map((items) => sortBy([...items], ({name}) => name)),
-            ),
-            this.instance$.pipe(
-                map((value) => value.selectedFolderData),
-                distinctUntilChanged(),
-            ),
-        ]).pipe(
-            map(([items, selectedFolderData]) => {
-                const excludeFolderPk = this.mailsBundleKey === "searchMailsBundle"
-                    ? null // no excluding for the full-text search result lit
-                    : selectedFolderData?.pk;
-                return items.filter(({pk}) => pk !== excludeFolderPk);
-            }),
-        );
-    })();
+        }
+    )();
 
     private subscription = new Subscription();
 
@@ -209,7 +211,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
                     return;
                 }
 
-                const mailPk: Mail["pk"] | undefined
+                const mailPk: Mail["pk"] | undefined // eslint-disable-line @typescript-eslint/no-unsafe-assignment
                     = mailElement.getAttribute("data-pk") as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
                 if (mailPk) {

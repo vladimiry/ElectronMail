@@ -10,6 +10,7 @@ export async function buildEndpoints(
     ctx: Context,
 ): Promise<Pick<IpcMainApiEndpoints, "addAccount" | "updateAccount" | "changeAccountOrder" | "removeAccount">> {
     return {
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async addAccount(
             {
 
@@ -48,6 +49,7 @@ export async function buildEndpoints(
             return result;
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async updateAccount(
             {
                 login,
@@ -97,6 +99,7 @@ export async function buildEndpoints(
             return ctx.settingsStore.write(settings);
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async changeAccountOrder({login, index: moveToIndex}) {
             const settings = await ctx.settingsStore.readExisting();
 
@@ -117,6 +120,7 @@ export async function buildEndpoints(
             return ctx.settingsStore.write(settings);
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async removeAccount({login}) {
             const settings = await ctx.settingsStore.readExisting();
             const account = pickAccountStrict(settings.accounts, {login});

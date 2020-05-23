@@ -2,7 +2,7 @@ import electron from "electron"; // tslint:disable-line:no-import-zones
 
 import "src/electron-preload/browser-window/production";
 
-(window as any).electronRequire = ( // eslint-disable-line @typescript-eslint/no-explicit-any
+(window as any).electronRequire = ( // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
     name: string,
 ): any => { // eslint-disable-line @typescript-eslint/no-explicit-any
     return name === "electron" // eslint-disable-line @typescript-eslint/no-unsafe-return

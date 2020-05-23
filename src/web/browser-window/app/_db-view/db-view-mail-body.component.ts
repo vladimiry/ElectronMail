@@ -54,7 +54,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
     conversationCollapsed$ = new BehaviorSubject<boolean>(true);
 
     @ViewChildren(DbViewMailComponent, {read: ElementRef})
-    dbViewMailElementRefs!: QueryList<ElementRef>;
+    dbViewMailElementRefs!: QueryList<ElementRef<HTMLElement>>;
 
     selectingMailOnline$ = this.account$.pipe(
         map(({progress}) => progress.selectingMailOnline),
@@ -89,7 +89,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
 
     constructor(
         store: Store<State>,
-        private elementRef: ElementRef,
+        private elementRef: ElementRef<HTMLElement>,
         private zone: NgZone,
     ) {
         super(store);
@@ -209,7 +209,11 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
 
     private renderBody(mail: Mail): void {
         // TODO cache resolved DOM elements
-        const [container] = this.elementRef.nativeElement.getElementsByClassName("body-container");
+        const container = this.elementRef.nativeElement.getElementsByClassName("body-container").item(0);
+
+        if (!container) {
+            throw new Error("Failed to resolve body container element")
+        }
 
         // WARN: release the iframe first and only then reset the html content
         this.releaseBodyIframe();

@@ -64,10 +64,10 @@ export class Database {
 
     initAccount<TL extends DbAccountPk>({login}: TL): FsDbAccount {
         const account: FsDbAccount = {
-            conversationEntries: Object.create(null),
-            mails: Object.create(null),
-            folders: Object.create(null),
-            contacts: Object.create(null),
+            conversationEntries: Object.create(null), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            mails: Object.create(null), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            folders: Object.create(null), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            contacts: Object.create(null), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
             metadata: Database.buildEmptyAccountMetadata(),
             deletedPks: {
                 conversationEntries: [],

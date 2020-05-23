@@ -9,7 +9,7 @@ export const FOLDER_UTILS: {
     splitAndFormatAndFillSummaryFolders: (
         folders: View.Folder[],
     ) => { system: View.Folder[]; custom: View.Folder[] };
-} = (() => {
+} = ((): typeof FOLDER_UTILS => {
     const customizers: Record<keyof typeof MAIL_FOLDER_TYPE._.nameValueMap, { title: (f: View.Folder) => string; order: number }> = {
         CUSTOM: {
             title: ({name}): string => name,

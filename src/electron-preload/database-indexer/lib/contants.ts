@@ -8,7 +8,7 @@ export const LOGGER = buildLoggerBundle("[preload: database-indexer]");
 export const FIELD_DESCRIPTION: Record<keyof typeof INDEXABLE_MAIL_FIELDS_STUB_CONTAINER, {
     accessor: (doc: IndexableMail) => string;
     boost: number;
-}> = (() => {
+}> = ((): typeof FIELD_DESCRIPTION => {
     const joinListBy = " ";
     const buildMailAddressGetter: (address: MailAddress) => string = (address) => {
         return [

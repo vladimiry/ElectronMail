@@ -49,11 +49,11 @@ export const configEncryptionPresetValidator: StoreModel.StoreValidator<Config> 
         ...(Object.values(KEY_DERIVATION_PRESETS)
             .some((value) => value.type === keyDerivation.type && value.preset === keyDerivation.preset)
             ? []
-            : [`Wrong "config.encryptionPreset.keyDerivation"="${keyDerivation}" value.`]),
+            : [`Wrong "config.encryptionPreset.keyDerivation"="${JSON.stringify(keyDerivation)}" value.`]),
         ...(Object.values(ENCRYPTION_DERIVATION_PRESETS)
             .some((value) => value.type === encryption.type && value.preset === encryption.preset)
             ? []
-            : [`Wrong "config.encryptionPreset.encryption"="${encryption}" value.`]),
+            : [`Wrong "config.encryptionPreset.encryption"="${JSON.stringify(encryption)}" value.`]),
     ];
 
     return errors.length ? errors.join(" ") : null;

@@ -34,11 +34,11 @@ export const ACCOUNTS_ACTIONS = unionize({
         FetchSingleMail: ofType<{ account: WebAccount; webView: Electron.WebviewTag }
             & Pick<Exclude<WebAccount["fetchSingleMailParams"], null>, "mailPk">>(),
         MakeMailReadSetParams: ofType<{ pk: DbAccountPk }
-            & (Exclude<WebAccount["makeReadMailParams"], null> | {})>(),
+            & (Exclude<WebAccount["makeReadMailParams"], null> | {})>(), // eslint-disable-line @typescript-eslint/ban-types
         MakeMailRead: ofType<{ account: WebAccount; webView: Electron.WebviewTag }
             & Exclude<WebAccount["makeReadMailParams"], null>>(),
         SetMailFolderParams: ofType<{ pk: DbAccountPk }
-            & (Exclude<WebAccount["setMailFolderParams"], null> | {})>(),
+            & (Exclude<WebAccount["setMailFolderParams"], null> | {})>(), // eslint-disable-line @typescript-eslint/ban-types
         SetMailFolder: ofType<{ account: WebAccount; webView: Electron.WebviewTag }
             & Exclude<WebAccount["setMailFolderParams"], null>>(),
     },

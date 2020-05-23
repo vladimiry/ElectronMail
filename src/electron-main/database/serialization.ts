@@ -22,7 +22,7 @@ const persistencePartsUtil: Readonly<{
         split(data) {
             const headerBytesSize = data.indexOf(separator);
             const headerBuffer = data.slice(0, headerBytesSize);
-            const header: Header = JSON.parse(headerBuffer.toString());
+            const header: Header = JSON.parse(headerBuffer.toString()); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
             const cipher = data.slice(headerBytesSize + 1);
 
             return {header, cipher};

@@ -115,7 +115,7 @@ export let resolveDefaultLocale: () => Promise<Locale> = async () => {
             const locale = normalizeLocale(
                 await osLocaleModule.default(),
             ) as Locale | undefined;
-            logger.info(`Resolved OS locale: ${locale}`);
+            logger.info(`Resolved OS locale: ${String(locale)}`);
 
             if (!locale || !["en_us", "en"].includes(locale.toLowerCase())) {
                 // priority order: en_US, en, en_*
@@ -127,7 +127,7 @@ export let resolveDefaultLocale: () => Promise<Locale> = async () => {
                     dictionaries.find((dictionary) => dictionary.toLowerCase().startsWith("en_"))
                 );
                 if (preferredDictionaryLocale) {
-                    logger.info(`"${preferredDictionaryLocale}" locale got preferred over "${locale}"`);
+                    logger.info(`"${preferredDictionaryLocale}" locale got preferred over "${String(locale)}"`);
                     // it's already narrowed to available dictionary
                     return preferredDictionaryLocale;
                 }
@@ -153,7 +153,7 @@ export let resolveDefaultLocale: () => Promise<Locale> = async () => {
                     ||
                     dictionaries.find(Boolean)
                 );
-                logger.info(`"${dictionaryLocale}" locale got picked from the dictionary`);
+                logger.info(`"${String(dictionaryLocale)}" locale got picked from the dictionary`);
                 return dictionaryLocale;
             }
 

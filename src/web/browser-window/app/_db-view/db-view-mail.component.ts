@@ -51,7 +51,7 @@ export class DbViewMailComponent {
             this.state
                 ? [
                     `unread-${Number(this.mail.unread)}`,
-                    `state-${this.stateTitle}`,
+                    `state-${String(this.stateTitle)}`,
                 ]
                 : []
         ).join(" ");

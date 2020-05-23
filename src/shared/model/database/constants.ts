@@ -92,6 +92,7 @@ export const INDEXABLE_MAIL_FIELDS_STUB_CONTAINER: Readonly<Record<keyof StrictO
     attachments: null,
 };
 
+// eslint-disable-next-line  @typescript-eslint/no-unsafe-assignment
 export const INDEXABLE_MAIL_FIELDS: Readonly<Array<keyof typeof INDEXABLE_MAIL_FIELDS_STUB_CONTAINER>>
     = Object.keys(INDEXABLE_MAIL_FIELDS_STUB_CONTAINER) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -102,5 +103,6 @@ export const DB_DATA_CONTAINER_FIELDS_STUB_CONTAINER: Readonly<Record<keyof FsDb
     contacts: null,
 };
 
+// eslint-disable-next-line  @typescript-eslint/no-unsafe-assignment
 export const DB_DATA_CONTAINER_FIELDS: Readonly<Array<keyof typeof DB_DATA_CONTAINER_FIELDS_STUB_CONTAINER>>
     = Object.keys(DB_DATA_CONTAINER_FIELDS_STUB_CONTAINER) as any; // eslint-disable-line @typescript-eslint/no-explicit-any

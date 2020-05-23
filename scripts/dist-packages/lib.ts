@@ -5,7 +5,7 @@ import path from "path";
 import {sanitizeFastGlobPattern} from "src/shared/util";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const {name: PROJECT_NAME} = require("package.json"); // tslint:disable-next-line:no-var-requires no-import-zones
+const {name: PROJECT_NAME} = require("package.json") as { name: string }; // tslint:disable-next-line:no-var-requires no-import-zones
 
 export async function listInstallationPackageFiles(dir: string): Promise<string[]> {
     const result: string[] = [];

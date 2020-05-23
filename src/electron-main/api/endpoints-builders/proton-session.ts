@@ -35,6 +35,7 @@ export async function buildEndpoints(
     | "applySavedProtonBackendSession"
     | "resetProtonBackendSession">> {
     const endpoints: Unpacked<ReturnType<typeof buildEndpoints>> = {
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async resolveSavedProtonClientSession({login, apiEndpointOrigin}) {
             const savedSession = ctx.sessionStorage.getSession({login, apiEndpointOrigin});
 
@@ -54,6 +55,7 @@ export async function buildEndpoints(
             };
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async saveProtonSession({login, apiEndpointOrigin, clientSession}) {
             const session = resolveInitialisedSession({login});
             const data = {
@@ -80,10 +82,12 @@ export async function buildEndpoints(
             await ctx.sessionStorage.saveSession(data);
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async resetSavedProtonSession({login, apiEndpointOrigin}) {
             await ctx.sessionStorage.clearSession({login, apiEndpointOrigin});
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async applySavedProtonBackendSession({login, apiEndpointOrigin}) {
             const savedSession = ctx.sessionStorage.getSession({login, apiEndpointOrigin});
 
@@ -107,10 +111,12 @@ export async function buildEndpoints(
             await Promise.all([
                 session.cookies.set({
                     ...pickTokenCookiePropsToApply(accessTokenCookie),
+                    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
                     url: `${apiEndpointOrigin}${accessTokenCookie.path}`,
                 }),
                 session.cookies.set({
                     ...pickTokenCookiePropsToApply(refreshTokenCookie),
+                    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
                     url: `${apiEndpointOrigin}${refreshTokenCookie.path}`,
                 }),
             ]);
@@ -118,6 +124,7 @@ export async function buildEndpoints(
             return true;
         },
 
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async resetProtonBackendSession({login}) {
             const session = resolveInitialisedSession({login});
             const timeoutMs = ONE_SECOND_MS * 3;

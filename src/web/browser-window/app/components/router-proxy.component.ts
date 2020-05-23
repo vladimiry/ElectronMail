@@ -30,6 +30,7 @@ export class RouterProxyComponent implements OnInit, OnDestroy {
                     filter((outlet) => Boolean(outlet)),
                 )
                 .subscribe((outlet) => {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                     this.outlet = outlet;
                 }),
         );

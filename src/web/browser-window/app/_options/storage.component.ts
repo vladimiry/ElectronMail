@@ -15,12 +15,18 @@ import {State} from "src/web/browser-window/app/store/reducers/options";
     preserveWhitespaces: true,
 })
 export class StorageComponent {
-    password = new FormControl(null, Validators.required);
-    newPassword = new FormControl(null, Validators.required);
+    password = new FormControl(
+        null,
+        Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
+    );
+    newPassword = new FormControl(
+        null,
+        Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
+    );
     newPasswordConfirm = new FormControl(null, [
-        Validators.required,
+        Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
         // TODO make "controls match" to be "common/util" validator
-        () => {
+        () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
             if (this.newPassword
                 && this.newPasswordConfirm
                 && this.newPassword.value !== this.newPasswordConfirm.value) {
@@ -36,9 +42,18 @@ export class StorageComponent {
         newPasswordConfirm: this.newPasswordConfirm,
     });
     encryptionPresetForm = new FormGroup({
-        password: new FormControl(null, Validators.required),
-        keyDerivation: new FormControl(null, Validators.required),
-        encryption: new FormControl(null, Validators.required),
+        password: new FormControl(
+            null,
+            Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
+        ),
+        keyDerivation: new FormControl(
+            null,
+            Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
+        ),
+        encryption: new FormControl(
+            null,
+            Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
+        ),
     });
     changingPassword$: Observable<boolean> = this.store
         .select(OptionsSelectors.FEATURED.progress)
@@ -51,17 +66,20 @@ export class StorageComponent {
 
     submit(): void {
         this.store.dispatch(OPTIONS_ACTIONS.ChangeMasterPasswordRequest({
-            password: this.password.value,
-            newPassword: this.newPassword.value,
+            password: this.password.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            newPassword: this.newPassword.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
         }));
     }
 
     submitPresets(): void {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const keyDerivation = KEY_DERIVATION_PRESETS[this.encryptionPresetForm.controls.keyDerivation.value];
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const encryption = ENCRYPTION_DERIVATION_PRESETS[this.encryptionPresetForm.controls.encryption.value];
         const encryptionPreset = {keyDerivation, encryption};
 
         this.store.dispatch(OPTIONS_ACTIONS.ReEncryptSettings({
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             password: this.encryptionPresetForm.controls.password.value,
             encryptionPreset,
         }));

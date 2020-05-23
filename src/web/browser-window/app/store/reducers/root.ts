@@ -16,7 +16,7 @@ export interface State {}
 export const reducers = {};
 
 export function createErrorHandlingMetaReducer(injector: Injector): MetaReducer<State, Actions> {
-    return (reducer) => {
+    const result: ReturnType<typeof createErrorHandlingMetaReducer> = (reducer) => {
         return (state, action) => {
             try {
                 return reducer(state, action);
@@ -26,10 +26,11 @@ export function createErrorHandlingMetaReducer(injector: Injector): MetaReducer<
             return state as State;
         };
     };
+    return result;
 }
 
 export function createAppMetaReducer(): MetaReducer<State, Actions> {
-    return (reducer) => {
+    const result: ReturnType<typeof createAppMetaReducer> = (reducer) => {
         return (state, action) => {
             if (BUILD_ENVIRONMENT === "development") { // eslint-disable-line sonarjs/no-collapsible-if
                 if (typeof action.type === "string" && action.type) {
@@ -40,4 +41,5 @@ export function createAppMetaReducer(): MetaReducer<State, Actions> {
             return reducer(state, action);
         };
     };
+    return result;
 }

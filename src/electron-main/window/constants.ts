@@ -14,7 +14,7 @@ export const DEFAULT_WEB_PREFERENCES_KEYS = Object.freeze([
     //      currently these things depend on it:
     //      - "rolling-rate-limiter" module
     //      - e2e tests preload script
-    // enableRemoteModule: false,
+    "enableRemoteModule",
 ] as const);
 
 type DefaultWebPreferences = Readonly<NoExtraProperties<Pick<Required<WebPreferences>, typeof DEFAULT_WEB_PREFERENCES_KEYS[number]>>>;
@@ -29,6 +29,7 @@ export const DEFAULT_WEB_PREFERENCES: DefaultWebPreferences = Object.freeze<Defa
         spellcheck: false,
         webSecurity: true,
         webviewTag: false,
+        enableRemoteModule: true,
     },
 );
 

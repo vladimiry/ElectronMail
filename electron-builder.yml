@@ -85,3 +85,4 @@ nsis:
   artifactName: ${name}-${version}-windows-${arch}-nsis-installer.${ext}
   oneClick: false
   perMachine: false
+  include: scripts/electron-builder/installer.nsh

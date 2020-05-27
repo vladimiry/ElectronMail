@@ -19,8 +19,9 @@ function addCommandLineArgs({packageDir}: { packageDir: string; }): void {
     const shFile = path.join(packageDir, "./command.sh");
     const shContentOriginal = fs.readFileSync(shFile).toString();
     const shContentPatched = (() => {
-        const searchValue = `exec $SNAP/bin/desktop-launch "$SNAP/${BINARY_NAME}"`;
-        const replaceWith = `${searchValue} --js-flags="--max-old-space-size=6144" $@`;
+        // eslint-disable-next-line max-len
+        const searchValue = `exec "$SNAP/desktop-init.sh" "$SNAP/desktop-common.sh" "$SNAP/desktop-gnome-specific.sh" "$SNAP/${BINARY_NAME}" "$@" --no-sandbox`;
+        const replaceWith = `${searchValue} --js-flags="--max-old-space-size=6144"`;
         return shContentOriginal.replace(searchValue, replaceWith);
     })();
 

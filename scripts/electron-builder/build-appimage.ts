@@ -10,12 +10,12 @@ import {LOG, LOG_LEVELS, execShell} from "scripts/lib";
 // TODO pass destination directory instead of hardcoding it ("--appimage-extract" doesn't support destination parameter at the moment)
 const extractedImageFolderName = "squashfs-root";
 
-function disableSandbox({packageDir}: { packageDir: string }): void {
+function addCommandLineArgs({packageDir}: { packageDir: string }): void {
     const shFile = path.join(packageDir, "./AppRun");
     const shContentOriginal = fs.readFileSync(shFile).toString();
     const {content: shContentPatched, count: shContentPatchedCount} = (() => {
         const searchValue = `exec "$BIN"`;
-        const replaceWith = `${searchValue} ${DISABLE_SANDBOX_ARGS_LINE}`;
+        const replaceWith = `${searchValue} ${DISABLE_SANDBOX_ARGS_LINE} --js-flags="--max-old-space-size=6144"`;
         let count = 0;
         const content = shContentOriginal.replace(
             new RegExp(escapeStringRegexp(searchValue), "g"),
@@ -93,7 +93,7 @@ async function packAndCleanup({packageFile, packageDir}: { packageFile: string; 
 
 async function postProcess({packageFile}: { packageFile: string }): Promise<void> {
     const {packageDir} = await unpack({packageFile});
-    disableSandbox({packageDir});
+    addCommandLineArgs({packageDir});
     ensureFileHasNoSuidBit(path.join(packageDir, BINARY_NAME));
     await packAndCleanup({packageDir, packageFile});
 }

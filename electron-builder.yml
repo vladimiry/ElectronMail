@@ -50,6 +50,8 @@ linux:
   packageCategory: Office
   desktop:
     StartupWMClass: electron-mail
+  executableArgs:
+    - '--js-flags="--max-old-space-size=6144"'
 
 snap:
   confinement: strict

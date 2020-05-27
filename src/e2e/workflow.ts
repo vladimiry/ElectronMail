@@ -69,6 +69,11 @@ const GLOBAL_STATE = {
 };
 
 export async function saveScreenshot(t: ExecutionContext<TestContext>): Promise<string | void> {
+    if (true) { // eslint-disable-line no-constant-condition
+        // TODO get back "saveScreenshot" implementation
+        return;
+    }
+
     if (!t.context.app || !t.context.app.browserWindow) {
         return;
     }

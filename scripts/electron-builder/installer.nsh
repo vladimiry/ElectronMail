@@ -1,8 +1,3 @@
-!macro customHeader
-  ShowInstDetails show
-  ShowUninstDetails show
-!macroend
-
 !macro customInstall
 
 !define REDIST_NAME "$\"Microsoft Visual C++ 2015-2019 Redistributable (x64) 14.26.28720.03$\""

@@ -2,7 +2,7 @@
 
 !define REDIST_NAME "$\"Microsoft Visual C++ 2015-2019 Redistributable (x64) 14.26.28720.03$\""
 !define REDIST_SETUP_URL "https://download.visualstudio.microsoft.com/download/pr/d60aa805-26e9-47df-b4e3-cd6fcc392333/7D7105C52FCD6766BEEE1AE162AA81E278686122C1E44890712326634D0B055E/VC_redist.x64.exe"
-!define REDIST_SETUP_FILE "$TEMP\vcredist140-x64-installed.exe"
+!define REDIST_SETUP_FILE "$TEMP\vcredist140-x64-installer.exe"
 
 ClearErrors
 

@@ -49,6 +49,9 @@ async function configure(
                 api: `https://${folderNameAsDomain}/api`,
                 secure: "https://secure.protonmail.com",
             },
+            // so "dsn: SENTRY_CONFIG[env].sentry" code line not throwing ("env" variable gets resolved with "dev" value)
+            // https://github.com/ProtonMail/WebClient/blob/aebd13605eec849bab199ffc0e58407a2e0d6537/env/config.js#L146
+            dev: {},
         }, null, 2),
     );
 

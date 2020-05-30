@@ -77,8 +77,8 @@ export const PROVIDER_REPOS: DeepReadonly<Record<"WebClient" | "proton-mail-sett
         repoRelativeDistDir: "./build",
         baseDir: "", // TODO define model as {baseDir?: string} instead of using empty string value
         repo: "https://github.com/ProtonMail/WebClient.git",
-        commit: "aebd13605eec849bab199ffc0e58407a2e0d6537",
-        version: "4.0.0-beta14",
+        commit: "9ff19d1bf06e3e5a58578bd0f4b01206a2f3380d",
+        version: "4.0.0-beta15",
         protonPackAppConfig: {
             // TODO proton-v4: make sure this value comes to the build after 4.0.0-beta7+ update
             //      currently it's hadrcoded in the WebClient code

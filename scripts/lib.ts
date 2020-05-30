@@ -91,7 +91,7 @@ export async function execShell(
             const omitProps: Array<keyof Unpacked<ReturnType<typeof spawnAsync>>> = ["output", "stderr", "stdout"];
             omitProps.forEach((omitProp) => {
                 if (omitProp in error) {
-                    delete error[omitProp] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+                    delete error[omitProp]; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
                 }
             });
         })();

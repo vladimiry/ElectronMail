@@ -212,7 +212,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         const container = this.elementRef.nativeElement.getElementsByClassName("body-container").item(0);
 
         if (!container) {
-            throw new Error("Failed to resolve body container element")
+            throw new Error("Failed to resolve body container element");
         }
 
         // WARN: release the iframe first and only then reset the html content

@@ -146,7 +146,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
                 PROTONMAIL_MAILBOX_IDENTIFIERS["All Mail"],
                 PROTONMAIL_MAILBOX_IDENTIFIERS.Search,
                 PROTONMAIL_MAILBOX_IDENTIFIERS.Label,
-            ])
+            ]);
             const staticFilter = (item: Folder): boolean => {
                 return (
                     item.exclusive > 0

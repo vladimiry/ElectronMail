@@ -1,7 +1,7 @@
+import UUID from "pure-uuid";
 import electronLog from "electron-log";
 import {concatMap, filter, mergeMap, take} from "rxjs/operators";
 import {race, throwError, timer} from "rxjs";
-import {v4 as uuid} from "uuid";
 
 import {Context} from "src/electron-main/model";
 import {DEFAULT_API_CALL_TIMEOUT} from "src/shared/constants";
@@ -27,7 +27,7 @@ export async function buildDbSearchEndpoints(
                 throw new Error(`Failed to resolve account by the provided "type/login"`);
             }
 
-            const uid = uuid();
+            const uid = new UUID(4).format();
             const result$ = race(
                 IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$.pipe(
                     filter(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.is.SearchResult),

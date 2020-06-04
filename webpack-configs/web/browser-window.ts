@@ -3,14 +3,13 @@ import {DefinePlugin} from "webpack";
 import {readConfiguration} from "@angular/compiler-cli";
 
 import {BuildAngularCompilationFlags, BuildEnvironment} from "webpack-configs/model";
-import {ENVIRONMENT, ENVIRONMENT_STATE, rootRelativePath} from "webpack-configs/lib";
+import {ENVIRONMENT, rootRelativePath} from "webpack-configs/lib";
 import {WEB_CHUNK_NAMES} from "src/shared/constants";
 import {browserWindowAppPath, browserWindowPath, buildBaseWebConfig, cssRuleSetUseItems} from "./lib";
 
-// TODO enable "ivy" and "aot" in all modes
 const angularCompilationFlags: BuildAngularCompilationFlags = {
-    aot: ENVIRONMENT_STATE.production,
-    ivy: ENVIRONMENT_STATE.production,
+    aot: true,
+    ivy: true,
 };
 
 const tsConfigFile = browserWindowPath(({
@@ -33,7 +32,7 @@ const config = buildBaseWebConfig(
                     ],
                 },
                 {
-                    test: /[\/\\]@angular[\/\\].+\.js$/,
+                    test: /[/\\]@angular[/\\].+\.js$/,
                     sideEffects: false,
                     parser: {
                         system: true,
@@ -62,36 +61,60 @@ const config = buildBaseWebConfig(
             new DefinePlugin({
                 BUILD_ANGULAR_COMPILATION_FLAGS: JSON.stringify(angularCompilationFlags),
             }),
-            new AngularCompilerPlugin({
-                contextElementDependencyConstructor: require("webpack/lib/dependencies/ContextElementDependency"),
-                tsConfigPath: tsConfigFile,
-                compilerOptions: {
+            (() => {
+                type StrictTemplateOptions
+                    = NoExtraProperties<Required<import("@angular/compiler-cli/src/ngtsc/core/api").StrictTemplateOptions>>;
+                const strictTemplateOptions: NoExtraProperties<Pick<StrictTemplateOptions, "strictTemplates">> = {
+                    // if "true", implies all template strictness flags below (unless individually disabled)
+                    // see https://angular.io/guide/template-typecheck
+                    strictTemplates: angularCompilationFlags.ivy,
+                };
+
+                type LegacyNgcOptions
+                    = NoExtraProperties<Required<Pick<import("@angular/compiler-cli/src/ngtsc/core/api").LegacyNgcOptions,
+                    | "fullTemplateTypeCheck"
+                    | "strictInjectionParameters">>>;
+                const legacyNgcOptions: LegacyNgcOptions = {
+                    fullTemplateTypeCheck: angularCompilationFlags.aot || angularCompilationFlags.ivy,
+                    strictInjectionParameters: true,
+                };
+
+                type AngularCompilerPluginOptions
+                    = NoExtraProperties<import("@ngtools/webpack/src/interfaces").AngularCompilerPluginOptions>;
+                const compilerOptions: StrictOmit<Required<AngularCompilerPluginOptions>["compilerOptions"],
+                    // skipping raw "string" props
+                    Extract<keyof Required<AngularCompilerPluginOptions>["compilerOptions"], string>> = {
                     preserveWhitespaces: false,
                     disableTypeScriptVersionCheck: true,
-                    strictInjectionParameters: true,
-                    fullTemplateTypeCheck: angularCompilationFlags.aot || angularCompilationFlags.ivy,
-                    ivyTemplateTypeCheck: angularCompilationFlags.ivy,
                     enableIvy: angularCompilationFlags.ivy,
+                    ...legacyNgcOptions,
+                    ...strictTemplateOptions,
                     ...readConfiguration(tsConfigFile).options,
-                },
-                platform: PLATFORM.Browser,
-                skipCodeGeneration: !angularCompilationFlags.aot,
-                nameLazyFiles: true,
-                discoverLazyRoutes: true, // TODO disable "discoverLazyRoutes" once switched to Ivy renderer
-                directTemplateLoading: false,
-                entryModule: `${browserWindowAppPath("./app.module")}#AppModule`,
-                additionalLazyModules: {
-                    ["./_db-view/db-view.module#DbViewModule"]: browserWindowAppPath("./_db-view/db-view.module.ts"),
-                },
-            }),
+                };
+
+                const angularCompilerPluginOptions: AngularCompilerPluginOptions = {
+                    contextElementDependencyConstructor: require("webpack/lib/dependencies/ContextElementDependency"),
+                    tsConfigPath: tsConfigFile,
+                    compilerOptions,
+                    platform: PLATFORM.Browser,
+                    skipCodeGeneration: !angularCompilationFlags.aot,
+                    nameLazyFiles: true,
+                    discoverLazyRoutes: true, // TODO disable "discoverLazyRoutes" once switched to Ivy renderer
+                    directTemplateLoading: false,
+                    entryModule: `${browserWindowAppPath("./app.module")}#AppModule`,
+                };
+
+                return new AngularCompilerPlugin(angularCompilerPluginOptions);
+            })(),
         ],
         optimization: {
             splitChunks: {
                 cacheGroups: {
-                    commons: {
-                        test: /[\\/]node_modules[\\/]|[\\/]vendor[\\/]/,
-                        name: "vendor",
+                    styles: {
+                        name: "shared-vendor",
+                        test: /[\\/]vendor[\\/]shared-vendor\.scss$/,
                         chunks: "all",
+                        enforce: true,
                     },
                 },
             },

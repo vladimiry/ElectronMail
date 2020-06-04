@@ -4,10 +4,7 @@ import {Store} from "@ngrx/store";
 
 import {DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {DbAccountPk} from "src/shared/model/database";
-import {DbViewEntryComponentInterface} from "src/web/browser-window/app/app.constants";
 import {State} from "src/web/browser-window/app/store/reducers/db-view";
-
-type ComponentInterface = Pick<DbViewEntryComponentInterface, Extract<keyof DbViewEntryComponentInterface, string>>;
 
 @Component({
     selector: "electron-mail-db-view-entry",
@@ -15,7 +12,7 @@ type ComponentInterface = Pick<DbViewEntryComponentInterface, Extract<keyof DbVi
     styleUrls: ["./db-view-entry.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DbViewEntryComponent implements ComponentInterface, OnDestroy, OnInit {
+export class DbViewEntryComponent implements OnDestroy, OnInit {
     @Input()
     dbAccountPk!: DbAccountPk;
 

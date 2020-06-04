@@ -2,7 +2,7 @@
     <ng-container *ngIf="selectedMail.rootNode.summary.size > 1">
         <div
             *ngFor="let rootNode of [selectedMail.rootNode]"
-            [collapse]="((conversationCollapsed$ | async) || undefined)"
+            [collapse]="((conversationCollapsed$ | async) || false)"
             class="flex-column root-node-container"
         >
             <ng-container

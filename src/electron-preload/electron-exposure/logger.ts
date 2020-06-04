@@ -2,10 +2,9 @@ import {FileTransport} from "electron-log"; // tslint:disable-line:no-import-zon
 import {remote} from "electron"; // tslint:disable-line:no-import-zones
 
 import {LogLevel, Logger} from "src/shared/model/common";
-import {ReadonlyDeep} from "type-fest";
 import {logLevelEnabled} from "src/shared/util";
 
-const logger: ReadonlyDeep<Logger & { transports: { file: FileTransport } }> = remote.require("electron-log");
+const logger: DeepReadonly<Logger & { transports: { file: FileTransport } }> = remote.require("electron-log");
 
 export const LOGGER: Logger = {
     error: log.bind(null, "error"),

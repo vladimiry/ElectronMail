@@ -20,7 +20,7 @@ ctxDbProps.forEach((ctxDbProp) => {
 
             memFsVolume._impl.mkdirpSync(memFsPath);
             memFsVolume._impl.mkdirpSync(path.join(memFsPath, "web/browser-window"));
-            memFsVolume._impl.writeFileSync(path.join(memFsPath, "web/browser-window/vendor.css"), "");
+            memFsVolume._impl.writeFileSync(path.join(memFsPath, "web/browser-window/shared-vendor.css"), "");
 
             const {initContext} = await rewiremock.around(
                 () => import("./context"),
@@ -72,7 +72,7 @@ ctxDbProps.forEach((ctxDbProp) => {
 
             memFsVolume._impl.mkdirpSync(memFsPath);
             memFsVolume._impl.mkdirpSync(path.join(memFsPath, "web/browser-window"));
-            memFsVolume._impl.writeFileSync(path.join(memFsPath, "web/browser-window/vendor.css"), "");
+            memFsVolume._impl.writeFileSync(path.join(memFsPath, "web/browser-window/shared-vendor.css"), "");
 
             const {INITIAL_STORES} = await import("./constants");
             const initialSettings = INITIAL_STORES.settings();

@@ -99,7 +99,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
     private _uid?: string;
 
     @Input()
-    set uid(value: string) {
+    set uid(value: string | undefined) {
         if (this._uid && this._uid !== value) {
             this.store.dispatch(DB_VIEW_ACTIONS.Paging({
                 dbAccountPk: this.dbAccountPk,

@@ -232,7 +232,7 @@ function triggerChangeEvent(input: HTMLInputElement) {
 }
 
 export async function persistDatabasePatch(
-    data: Arguments<IpcMainApiEndpoints["dbPatch"]>[0],
+    data: Parameters<IpcMainApiEndpoints["dbPatch"]>[0],
     logger: ReturnType<typeof buildLoggerBundle>,
 ): Promise<void> {
     logger.info("persist() start");

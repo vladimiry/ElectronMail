@@ -5,7 +5,7 @@ branches:
   only:
     - tutanota-mail
 language: node_js
-node_js: 12.4.0
+node_js: 12
 cache:
   yarn: false
   npm: false
@@ -24,46 +24,39 @@ jobs:
       script: ./scripts/ci/travis/build-osx.sh
     - stage: 'Build app'
       os: linux
-      # TODO use "xenial" dist, running auto login e2e test using "node-keytar" is a blocker at the moment
-      # https://travis-ci.community/search?q=No%20output%20has%20been%20received%20in%20the%20last%20windows%20category%3A16
-      dist: trusty
-      group: stable
+      dist: bionic
       sudo: required
       services:
         - docker
+        # needed for: running e2e tests
+        - xvfb
+      env:
+        # needed for: native modules compiling
+        - CC=gcc-7 CXX=g++-7
       addons:
         apt:
-          sources:
-            # upgrade GCC to a more recent version, see https://docs.travis-ci.com/user/languages/cpp/#gcc-on-linux
-            - ubuntu-toolchain-r-test
           packages:
-            # for native modules compiling/rebuilding
+            # needed for: native modules compiling
             - g++-7
-            # for rebuilding "desktop-idle" native module
+            # needed for: compiling "desktop-idle" native module
             - libxss-dev
-            # for rebuilding "node-keytar" native module
+            # needed for: keychain initialization and compiling "node-keytar" native module
             - gnome-keyring
             - libgnome-keyring-dev
             - libsecret-1-dev
-            # for initializing keychain for running e2e tests that use "node-keytar"
-            - python-gnomekeyring
-            # for building snap ("unsquashfs" binary)
+            # needed for: keychain access testing before running e2e tests (see "scripts/ci/add-secret-service-item-assert.py")
+            - python3-secretstorage
+            # needed for: tweaking snap package ("unsquashfs" binary)
             - squashfs-tools
-        firefox: latest
       before_script:
-        - | # needed for native modules compiling/rebuilding
-          export CC=gcc-7 CXX=g++-7;
-        - | # init xvfb
-          export DISPLAY=:99.0;
-          sh -e /etc/init.d/xvfb start;
-          sleep 3;
         - | # init dbus
           NO_AT_BRIDGE=1;
           eval $(dbus-launch --sh-syntax);
-        - | # init keychain
-          eval $(echo -n "" | /usr/bin/gnome-keyring-daemon --login);
-          eval $(/usr/bin/gnome-keyring-daemon --components=secrets --start);
-          /usr/bin/python -c "import gnomekeyring;gnomekeyring.create_sync('login', '');";
+        # TODO get back keyring initialization then enable respective e2e test case (see "src/e2e/index.spec.ts")
+        #- | # init keychain
+        #  eval $(echo -n "" | /usr/bin/gnome-keyring-daemon --login);
+        #  eval $(/usr/bin/gnome-keyring-daemon --components=secrets --start);
+        #  python3 ./scripts/ci/add-secret-service-item-assert.py;
       script: ./scripts/ci/travis/build-linux.sh
 before_install:
   - | # installing the most recent yarn version

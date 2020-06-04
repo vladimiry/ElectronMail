@@ -9,7 +9,7 @@ import {getWebViewPartition} from "src/shared/util";
 import {initWebRequestListeners} from "src/electron-main/web-request";
 import {registerSessionProtocols} from "src/electron-main/protocol";
 
-const usedPartitions: Set<Arguments<typeof initSessionByAccount>[1]["login"]> = new Set();
+const usedPartitions: Set<Parameters<typeof initSessionByAccount>[1]["login"]> = new Set();
 
 export async function initSessionByAccount(
     ctx: Context,

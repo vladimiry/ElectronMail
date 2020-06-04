@@ -18,45 +18,59 @@ import {Config} from "src/shared/model/options";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {asyncDelay} from "src/shared/util";
 
-test.serial("general actions: app start, master password setup, add accounts, logout, auto login", async (t) => {
-    // setup and login
-    await (async () => {
-        const workflow = await initApp(t, {initial: true});
+test.serial("general actions: app start, master password setup, add accounts", async (t) => {
+    const app = await initApp(t, {initial: true});
 
-        // screenshot with user agent clearly displayed
-        await saveScreenshot(t);
+    // screenshot with user agent clearly displayed
+    await saveScreenshot(t);
 
-        // setup and logout
-        await workflow.login({setup: true, savePassword: false});
-        await workflow.addAccount({
-            type: "tutanota",
-            entryUrlValue: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.tutanota.com`,
-        });
-        await workflow.logout();
+    await app.login({setup: true, savePassword: false});
 
-        // login with password saving
-        await workflow.login({setup: false, savePassword: true});
-        await workflow.afterLoginUrlTest("explicit-login-passwordSave");
-        await workflow.destroyApp();
-    })();
+    await app.addAccount({
+        type: "tutanota",
+        entryUrlValue: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.tutanota.com`,
+    });
 
-    // auto login 1
-    await (async () => {
-        const workflow = await initApp(t, {initial: false});
-        await workflow.afterLoginUrlTest(("auto-login-1"));
-        await workflow.destroyApp();
-    })();
+    await app.logout();
 
-    // auto login 2, making sure previous auto login step didn't remove saved password
-    await (async () => {
-        const workflow = await initApp(t, {initial: false});
-        await workflow.afterLoginUrlTest(("auto-login-2"));
-        await workflow.logout();
-        await workflow.destroyApp();
-    })();
+    await app.destroyApp();
 
     await afterEach(t);
 });
+
+if (
+    CI
+    &&
+    Boolean(0) // TODO proton-v4: enable "auto login" e2e test scenario
+) {
+    test.serial("auto login", async (t) => {
+        await (async (): Promise<void> => {
+            const app = await initApp(t, {initial: true});
+            await app.login({setup: true, savePassword: true});
+            await app.afterLoginUrlTest("initial login");
+            await app.logout();
+            await app.destroyApp();
+        })();
+
+        // auto login 1
+        await (async (): Promise<void> => {
+            const app = await initApp(t, {initial: false});
+            await app.afterLoginUrlTest(("auto login 1"));
+            await app.logout();
+            await app.destroyApp();
+        })();
+
+        // auto login 2, making sure previous auto login step didn't remove saved password
+        await (async (): Promise<void> => {
+            const app = await initApp(t, {initial: false});
+            await app.afterLoginUrlTest(("auto login 2"));
+            await app.logout();
+            await app.destroyApp();
+        })();
+
+        await afterEach(t);
+    });
+}
 
 test.serial("auto logout", async (t) => {
     const workflow = await initApp(t, {initial: true});

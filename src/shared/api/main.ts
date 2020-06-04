@@ -42,7 +42,7 @@ export const ENDPOINTS_DEFINITION = {
     dbPatch: ActionType.Promise<DbModel.DbAccountPk
         & { forceFlush?: boolean }
         & { patch: DbPatch }
-        & { metadata: Skip<FsDbAccount<"tutanota">["metadata"], "type"> },
+        & { metadata: StrictOmit<FsDbAccount<"tutanota">["metadata"], "type"> },
         DbModel.FsDbAccount["metadata"]>(),
 
     dbGetAccountMetadata: ActionType.Promise<DbModel.DbAccountPk, DbModel.FsDbAccount["metadata"] | null>(),
@@ -76,7 +76,12 @@ export const ENDPOINTS_DEFINITION = {
 
     dbIndexerNotification: ActionType.Observable<void, UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>>(),
 
-    init: ActionType.Promise<void, InitResponse>(),
+    staticInit: ActionType.Promise<void, DeepReadonly<{
+        electronLocations: ElectronContextLocations;
+        linuxLikePlatform: boolean;
+    }>>(),
+
+    init: ActionType.Promise<void, NoExtraProperties<InitResponse>>(),
 
     logout: ActionType.Promise(),
 
@@ -137,7 +142,6 @@ export const ENDPOINTS_DEFINITION = {
 };
 
 export interface InitResponse {
-    electronLocations: ElectronContextLocations;
     hasSavedPassword?: boolean;
     snapPasswordManagerServiceHint?: boolean;
     keytarSupport: boolean;

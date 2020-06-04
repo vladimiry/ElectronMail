@@ -14,7 +14,7 @@ export const NOTIFICATION_ACTIONS = unionize({
         Info: ofType<Extract<NotificationItem, { type: "info" }>["data"]>(),
         Update: ofType<Extract<NotificationItem, { type: "update" }>["data"]>(),
         Remove: ofType<NotificationItem>(),
-        UpdateOverlayIcon: ofType<Arguments<IpcMainApiEndpoints["updateOverlayIcon"]>[0]>(),
+        UpdateOverlayIcon: ofType<Parameters<IpcMainApiEndpoints["updateOverlayIcon"]>[0]>(),
     },
     {
         tag: "type",

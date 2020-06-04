@@ -97,3 +97,6 @@ export const LOG_LEVELS: Readonly<LogLevel[]> = Object.keys(
         silly: null,
     }),
 ) as Readonly<LogLevel[]>;
+
+// TODO electron: get rid of "baseURLForDataURL" workaround, see https://github.com/electron/electron/issues/20700
+export const WEB_PROTOCOL_SCHEME = "web";

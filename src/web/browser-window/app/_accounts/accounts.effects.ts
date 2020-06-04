@@ -55,18 +55,12 @@ export class AccountsEffects {
         () => this.actions$.pipe(
             unionizeActionFilter(ACCOUNTS_ACTIONS.is.SetupNotificationChannel),
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-            withLatestFrom(this.store.pipe(select(OptionsSelectors.FEATURED.electronLocations))),
-            mergeMap(([{payload, logger}, electronLocations]) => {
+            mergeMap(({payload, logger}) => {
                 const {webView, finishPromise} = payload;
                 const {type, login} = payload.account.accountConfig;
                 const resetNotificationsState$ = of(AccountsEffects.generateNotificationsStateResetAction(login));
                 const dispose$ = from(finishPromise).pipe(tap(() => logger.info("dispose")));
-
-                if (!electronLocations) {
-                    throw new Error(`Undefined electron context locations`);
-                }
-
-                const parsedEntryUrl = this.core.parseEntryUrl(payload.account.accountConfig, electronLocations);
+                const parsedEntryUrl = this.core.parseEntryUrl(payload.account.accountConfig);
 
                 logger.info("setup");
 

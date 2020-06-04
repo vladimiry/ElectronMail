@@ -12,13 +12,28 @@ const logger = getZoneNameBoundWebLogger("[bootstrap-app]");
 enableProdMode();
 // }
 
-// if AOT compilation enabled "platformBrowserDynamic" is being on-the-fly patched by "@ngtools/webpack"
-// to use "platformBrowser" imported from from "@angular/platform-browser";
-platformBrowserDynamic()
-    .bootstrapModule(AppModule)
+__ELECTRON_EXPOSURE__.buildIpcMainClient()("staticInit")()
+    .then(async (staticInit) => {
+        const metadata: typeof __METADATA__ = staticInit;
+
+        Object.defineProperty(
+            window,
+            "__METADATA__",
+            {
+                value: metadata,
+                configurable: false,
+                enumerable: false,
+                writable: false,
+            },
+        );
+
+        // if AOT compilation enabled "platformBrowserDynamic" is being on-the-fly patched by "@ngtools/webpack"
+        // to use "platformBrowser" imported from from "@angular/platform-browser";
+
+        return platformBrowserDynamic().bootstrapModule(AppModule);
+    })
     .catch((error) => {
-        // tslint:disable-next-line:no-console
-        console.error(error);
+        console.error(error); // tslint:disable-line:no-console
         logger.error(error);
         throw error;
     });

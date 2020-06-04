@@ -1,7 +1,7 @@
+import UUID from "pure-uuid";
 import electronLog from "electron-log";
 import sanitizeHtml from "sanitize-html";
 import {omit} from "ramda";
-import {v4 as uuid} from "uuid";
 
 import {Context} from "src/electron-main/model";
 import {DB_DATA_CONTAINER_FIELDS, IndexableMail} from "src/shared/model/database";
@@ -71,7 +71,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                     IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.next(
                         IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Index(
                             {
-                                uid: uuid(),
+                                uid: new UUID(4).format(),
                                 ...narrowIndexActionPayload({
                                     key,
                                     add: upsert as IndexableMail[], // TODO send data as chunks

@@ -25,11 +25,12 @@ export type ProgressPatch = Partial<{
     togglingLocalDbMailsListViewMode: boolean;
 }>;
 
-type OptionalProps = "keytarSupport" | "electronLocations" | "checkUpdateAndNotify";
+type OptionalProps = "keytarSupport" | "checkUpdateAndNotify";
 
-export interface State extends fromRoot.State, Partial<Pick<InitResponse, OptionalProps>>, Skip<InitResponse, OptionalProps> {
+export interface State extends fromRoot.State, Partial<Pick<InitResponse, OptionalProps>>, StrictOmit<InitResponse, OptionalProps> {
+    _initialized: boolean;
     config: Config;
-    settings: Arguments<typeof OPTIONS_ACTIONS.GetSettingsResponse>[0];
+    settings: Parameters<typeof OPTIONS_ACTIONS.GetSettingsResponse>[0];
     progress: ProgressPatch;
     hasSavedPassword?: boolean;
     mainProcessNotification: UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>;
@@ -37,6 +38,7 @@ export interface State extends fromRoot.State, Partial<Pick<InitResponse, Option
 }
 
 const initialState: State = {
+    _initialized: false,
     config: initialConfig(),
     settings: {
         accounts: [],
@@ -52,13 +54,12 @@ export function reducer(state = initialState, action: UnionOf<typeof OPTIONS_ACT
             draftState.settings = initialState.settings;
             // removing "electronLocations" triggers "init" api call
             delete draftState.checkUpdateAndNotify;
-            delete draftState.electronLocations;
             delete draftState.keytarSupport;
         });
     }
 
     return OPTIONS_ACTIONS.match(action, {
-        InitResponse: (statePatch) => ({...state, ...statePatch}),
+        InitResponse: (statePatch) => ({...state, ...statePatch, _initialized: true}),
         GetConfigResponse: (config) => ({...state, config}),
         GetSettingsResponse: ({_rev, accounts}) => ({...state, settings: {_rev, accounts}}),
         PatchProgress: (progressPatch) => ({...state, progress: {...state.progress, ...progressPatch}}),

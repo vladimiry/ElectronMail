@@ -47,7 +47,7 @@ export function registerDocumentKeyDownEventListener<E extends ObservableElement
                 return;
             }
 
-            let type: Arguments<IpcMainApiEndpoints["hotkey"]>[0]["type"] | undefined;
+            let type: Parameters<IpcMainApiEndpoints["hotkey"]>[0]["type"] | undefined;
 
             if (!el) {
                 return;

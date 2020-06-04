@@ -4,7 +4,14 @@ import {BrowserWindow} from "electron";
 
 import {Context} from "src/electron-main/model";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";
-import {PACKAGE_DESCRIPTION, PACKAGE_LICENSE, PACKAGE_VERSION, PRODUCT_NAME} from "src/shared/constants";
+import {
+    PACKAGE_DESCRIPTION,
+    PACKAGE_LICENSE,
+    PACKAGE_VERSION,
+    PRODUCT_NAME,
+    WEB_CHUNK_NAMES,
+    WEB_PROTOCOL_SCHEME,
+} from "src/shared/constants";
 import {curryFunctionMembers} from "src/shared/util";
 import {injectVendorsAppCssIntoHtmlFile} from "src/electron-main/util";
 
@@ -23,21 +30,19 @@ const resolveContent: (ctx: Context) => Promise<Unpacked<ReturnType<typeof injec
                     allowedTags: sanitizeHtml.defaults.allowedTags.concat(["h1"]),
                 },
             ),
-            (() => {
-                const versions: typeof process.versions & Electron.Versions = process.versions;
-                const versionsProps: ReadonlyArray<Readonly<{ prop: keyof typeof versions; title: string; }>> = [
+            ((): string => {
+                const {versions} = process;
+                const props: ReadonlyArray<Readonly<{ prop: keyof typeof versions; title: string }>> = [
                     {prop: "electron", title: "Electron"},
                     {prop: "chrome", title: "Chromium"},
                     {prop: "node", title: "Node"},
                     {prop: "v8", title: "V8"},
                 ];
-                return `<ul class="list-versions align-items-left justify-content-center font-weight-light text-muted">
-                ${
-                    versionsProps
-                        .map(({prop, title}) => sanitizeHtml(`<li>${title}: ${versions[prop]}</li>`))
-                        .join("")
-                }
-                </ul>`;
+                return `
+                        <ul class="list-versions align-items-left justify-content-center font-weight-light text-muted">
+                            ${props.map(({prop, title}) => sanitizeHtml(`<li>${title}: ${versions[prop]}</li>`)).join("")}
+                        </ul>
+                    `;
             })(),
         ].join("");
         const pageLocation = ctx.locations.aboutBrowserWindowPage;
@@ -97,8 +102,12 @@ export async function showAboutBrowserWindow(ctx: Context): Promise<BrowserWindo
 
     ctx.uiContext.aboutBrowserWindow = browserWindow;
 
-    const {html, baseURLForDataURL} = await resolveContent(ctx);
-    await browserWindow.webContents.loadURL(`data:text/html,${html}`, {baseURLForDataURL});
+    const {html} = await resolveContent(ctx);
+
+    await browserWindow.webContents.loadURL(
+        `data:text/html,${html}`,
+        {baseURLForDataURL: `${WEB_PROTOCOL_SCHEME}:/${WEB_CHUNK_NAMES.about}/`},
+    );
 
     if (BUILD_ENVIRONMENT === "development") {
         browserWindow.webContents.openDevTools();

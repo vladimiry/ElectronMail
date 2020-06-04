@@ -31,7 +31,11 @@ const routes: Routes = [
         children: [
             {
                 path: "",
-                loadChildren: async () => (await import("./_accounts/accounts.module")).AccountsModule,
+                loadChildren: async () => {
+                    return (
+                        await import(/* webpackChunkName: "_accounts" */ "./_accounts/accounts.module")
+                    ).AccountsModule;
+                },
             },
         ],
     },
@@ -45,7 +49,16 @@ const routes: Routes = [
         children: [
             {
                 path: "",
-                loadChildren: async () => (await import("./_options/options.module")).OptionsModule,
+                children: [
+                    {
+                        path: "",
+                        loadChildren: async () => {
+                            return (
+                                await import(/* webpackChunkName: "_options" */ "./_options/options.module")
+                            ).OptionsModule;
+                        },
+                    },
+                ],
             },
         ],
     },
@@ -59,7 +72,11 @@ const routes: Routes = [
         children: [
             {
                 path: "",
-                loadChildren: async () => (await import("./_notification/notification.module")).NotificationModule,
+                loadChildren: async () => {
+                    return (
+                        await import(/* webpackChunkName: \"_notification\" */ "./_notification/notification.module")
+                    ).NotificationModule;
+                },
             },
         ],
     },

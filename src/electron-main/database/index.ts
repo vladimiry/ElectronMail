@@ -8,7 +8,6 @@ import {KeyBasedPreset} from "fs-json-store-encryption-adapter";
 import {DATABASE_VERSION} from "./constants";
 import {DbAccountPk, FsDb, FsDbAccount, MAIL_FOLDER_TYPE, Mail} from "src/shared/model/database";
 import {LogLevel} from "src/shared/model/common";
-import {ReadonlyDeep} from "type-fest";
 import {SerializationAdapter} from "./serialization";
 import {curryFunctionMembers, logLevelEnabled} from "src/shared/util";
 import {hrtimeDuration} from "src/electron-main/util";
@@ -162,7 +161,7 @@ export class Database {
         });
     }
 
-    readonlyDbInstance(): ReadonlyDeep<FsDb> {
+    readonlyDbInstance(): DeepReadonly<FsDb> {
         return this.dbInstance;
     }
 

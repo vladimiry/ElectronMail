@@ -31,8 +31,13 @@ test.serial("appReadyHandler(): default", async (t) => {
 
     t.true(mocks["src/electron-main/session"].getDefaultSession.calledWithExactly());
 
+    t.true(mocks["src/electron-main/protocol"].registerWebFolderFileProtocol.calledWithExactly(ctx, defaultSession));
+    t.true(mocks["src/electron-main/protocol"].registerWebFolderFileProtocol.calledAfter(
+        mocks["src/electron-main/session"].getDefaultSession),
+    );
+
     t.true(mocks["src/electron-main/session"].initSession.calledWithExactly(ctx, defaultSession));
-    t.true(mocks["src/electron-main/session"].initSession.calledAfter(mocks["src/electron-main/session"].getDefaultSession));
+    t.true(mocks["src/electron-main/session"].initSession.calledAfter(mocks["src/electron-main/protocol"].registerWebFolderFileProtocol));
 
     t.true(mocks["src/electron-main/api"].initApi.calledWithExactly(ctx));
     t.true(mocks["src/electron-main/api"].initApi.calledAfter(mocks["src/electron-main/session"].initSession));
@@ -84,6 +89,9 @@ function buildMocks(configPatch?: Partial<Config>) {
         "src/electron-main/session": {
             getDefaultSession: sinon.stub().returns({[`${PACKAGE_NAME}_session_id`]: 123}),
             initSession: sinon.spy(),
+        },
+        "src/electron-main/protocol": {
+            registerWebFolderFileProtocol: sinon.spy(),
         },
         "src/electron-main/api": {
             initApi: sinon.stub().returns({

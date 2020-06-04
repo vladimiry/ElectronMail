@@ -32,7 +32,7 @@ export interface TestContext {
     logFilePath: string;
     workflow: ReturnType<typeof buildWorkflow>;
     sinon: {
-        addAccountSpy: sinon.SinonSpy<[Arguments<ReturnType<typeof buildWorkflow>["addAccount"]>[0]], Promise<void>>;
+        addAccountSpy: sinon.SinonSpy<[Parameters<ReturnType<typeof buildWorkflow>["addAccount"]>[0]], Promise<void>>;
     };
 }
 
@@ -471,6 +471,14 @@ export async function catchError(t: ExecutionContext<TestContext>, error?: Error
 }
 
 export async function saveScreenshot(t: ExecutionContext<TestContext>) {
+    // "saveScreenshot" function disabled for now since internal spectron's "browserWindow.capturePage" call
+    // ends up with "Failed to serialize arguments" error
+
+    if (Boolean(1)) {
+        // TODO get back "saveScreenshot" implementation
+        return;
+    }
+
     if (!t.context.app || !t.context.app.browserWindow) {
         return;
     }

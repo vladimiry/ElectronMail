@@ -277,11 +277,13 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
         t.pass(`TODO test "dbIndexerNotification" endpoint`);
     },
 
+    staticInit: async (t) => {
+        t.pass(`TODO test "staticInit" endpoint`);
+    },
+
     // TODO actualize "init" endpoint test
     init: async (t) => {
         const result = await t.context.endpoints.init();
-
-        t.deepEqual(result.electronLocations, t.context.ctx.locations);
         t.is(typeof result.hasSavedPassword, "boolean");
     },
 
@@ -323,7 +325,7 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
     },
 
     openExternal: async (t) => {
-        const openExternalSpy: sinon.SinonSpy = t.context.mocks.electron.shell.openExternalSpy;
+        const openExternalSpy = t.context.mocks.electron.shell.openExternalSpy;
         const action = t.context.endpoints.openExternal;
 
         const forbiddenUrls = [
@@ -334,7 +336,7 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
             null,
         ];
         for (const url of forbiddenUrls) {
-            await t.throwsAsync(action({url: String(url)}), `Forbidden url "${url}" opening has been prevented`);
+            await t.throwsAsync(action({url: String(url)}), {message: `Forbidden url "${url}" opening has been prevented`});
         }
 
         const allowedUrls = [
@@ -345,15 +347,15 @@ const tests: Record<keyof IpcMainApiEndpoints, (t: ExecutionContext<TestContext>
         ];
         for (const url of allowedUrls) {
             // tslint:disable-next-line:await-promise
-            await t.notThrowsAsync(action({url: url as string}));
-            t.true(openExternalSpy.calledWith(url), `electron.shell.openExternal.calledWith("${url}")`);
+            await t.notThrowsAsync(action({url}));
+            t.true(openExternalSpy.calledWith(url), `electron.shell.openPath.calledWith("${url}")`);
         }
     },
 
     openSettingsFolder: async (t) => {
-        const openItemSpy: sinon.SinonSpy = t.context.mocks.electron.shell.openItem;
+        const {openPathSpy} = t.context.mocks.electron.shell;
         await t.context.endpoints.openSettingsFolder();
-        t.true(openItemSpy.alwaysCalledWith(t.context.ctx.locations.userDataDir));
+        t.true(openPathSpy.alwaysCalledWith(t.context.ctx.locations.userDataDir));
     },
 
     patchBaseConfig: async (t) => {
@@ -570,6 +572,7 @@ async function readConfigAndSettings(
 }
 
 async function buildMocks() {
+    const openPathSpy = sinon.spy();
     const openExternalSpy = sinon.spy();
 
     return {
@@ -627,6 +630,14 @@ async function buildMocks() {
                 removeListener: sinon.spy(),
             },
             shell: {
+                openPathSpy,
+                openPath: await (async () => {
+                    const openPath: (typeof import("electron"))["shell"]["openPath"] = async (url) => {
+                        openPathSpy(url);
+                        return "";
+                    };
+                    return openPath;
+                })(),
                 openExternalSpy,
                 openExternal: await (async () => {
                     const openExternal: (typeof import("electron"))["shell"]["openExternal"] = async (url) => {
@@ -634,14 +645,13 @@ async function buildMocks() {
                     };
                     return openExternal;
                 })(),
-                openItem: sinon.spy(),
             },
             nativeImage: {
                 createFromPath: sinon.stub().returns({toPNG: sinon.spy}),
                 createFromBuffer: sinon.stub(),
             },
-        } as any,
-    };
+        },
+    } as const;
 }
 
 test.beforeEach(async (t) => {
@@ -675,7 +685,7 @@ test.beforeEach(async (t) => {
 
     memFsVolume._impl.mkdirpSync(process.cwd());
     memFsVolume._impl.mkdirpSync(path.join(appDir, "web/browser-window"));
-    memFsVolume._impl.writeFileSync(path.join(appDir, "web/browser-window/vendor.css"), "");
+    memFsVolume._impl.writeFileSync(path.join(appDir, "web/browser-window/shared-vendor.css"), "");
 
     // reducing work factor in order to speed-up the test process and make it less computing resources consuming
     encryptionPreset.keyDerivation = {type: "sodium.crypto_pwhash", preset: "mode:interactive|algorithm:default"};

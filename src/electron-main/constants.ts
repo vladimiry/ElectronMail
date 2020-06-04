@@ -16,7 +16,7 @@ export const SNAP_CONTAINER = (
 );
 
 export const INITIAL_STORES: Readonly<{
-    config: () => Skip<Config, keyof BaseConfig | "jsFlags"> & Required<BaseConfig> & Required<Pick<Config, "jsFlags">>;
+    config: () => StrictOmit<Config, keyof BaseConfig | "jsFlags"> & Required<BaseConfig> & Required<Pick<Config, "jsFlags">>;
     settings: () => Settings;
 }> = Object.freeze({
     config: () => {

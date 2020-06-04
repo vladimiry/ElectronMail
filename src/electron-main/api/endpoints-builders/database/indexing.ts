@@ -1,9 +1,9 @@
+import UUID from "pure-uuid";
 import electronLog from "electron-log";
 import {UnionOf} from "@vladimiry/unionize";
 import {concatMap, filter, startWith, take, takeUntil} from "rxjs/operators";
 import {defer, race, throwError, timer} from "rxjs";
 import {pick} from "ramda";
-import {v4 as uuid} from "uuid";
 
 import {Config} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
@@ -90,7 +90,7 @@ export async function buildDbIndexingEndpoints(
 }
 
 export const narrowIndexActionPayload: (
-    payload: Skip<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>, { type: "Index" }>["payload"], "uid">,
+    payload: StrictOmit<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>, { type: "Index" }>["payload"], "uid">,
 ) => typeof payload = (() => {
     type Fn = typeof narrowIndexActionPayload;
     type Mails = ReturnType<Fn>["add"];
@@ -143,7 +143,7 @@ async function indexMails(
     logger.info("indexMails()");
 
     const duration = hrtimeDuration();
-    const uid = uuid();
+    const uid = new UUID(4).format();
     const result$ = race(
         IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$.pipe(
             filter(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.is.IndexingResult),

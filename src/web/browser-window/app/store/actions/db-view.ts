@@ -52,7 +52,7 @@ export const DB_VIEW_ACTIONS = unionize({
             reset?: boolean;
             noIncrement?: boolean;
         }>(),
-        FullTextSearchRequest: ofType<Arguments<IpcMainApiEndpoints["dbFullTextSearch"]>[0]>(),
+        FullTextSearchRequest: ofType<Parameters<IpcMainApiEndpoints["dbFullTextSearch"]>[0]>(),
         FullTextSearch: ofType<{
             dbAccountPk: DbAccountPk;
             value: Unpacked<ReturnType<IpcMainApiEndpoints["dbFullTextSearch"]>>;

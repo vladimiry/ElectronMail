@@ -11,7 +11,7 @@ import {State} from "src/web/browser-window/app/store/reducers/options";
 import {TUTANOTA_IPC_WEBVIEW_API} from "src/shared/api/webview/tutanota";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
 
-type SuperCallOptions = Required<Exclude<Arguments<ReturnType<(typeof createIpcMainApiService)>["client"]>[0], undefined>>["options"];
+type SuperCallOptions = Required<Exclude<Parameters<ReturnType<(typeof createIpcMainApiService)>["client"]>[0], undefined>>["options"];
 
 type LimitedCallOptions = Partial<Pick<SuperCallOptions, "timeoutMs" | "finishPromise" | "serialization">>;
 

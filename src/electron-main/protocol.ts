@@ -2,61 +2,63 @@ import fs from "fs";
 import mimeTypes from "mime-types";
 import path from "path";
 import pathIsInside from "path-is-inside";
-import url from "url";
-import {RegisterFileProtocolRequest, Session, app, protocol} from "electron";
+import {Session, app, protocol} from "electron";
+import {URL} from "url";
 import {promisify} from "util";
 
 import {Context} from "src/electron-main/model";
+import {WEB_PROTOCOL_SCHEME} from "src/shared/constants";
+import {resolveOrRejectIfError} from "src/shared/util";
 
 const fsAsync = {
     stat: promisify(fs.stat),
     readFile: promisify(fs.readFile),
-};
+} as const;
 
-const appReadyPromise = new Promise((resolve) => app.on("ready", resolve));
-
-export function registerStandardSchemes(ctx: Context) {
+export function registerStandardSchemes(ctx: Context): void {
     // WARN: "protocol.registerStandardSchemes" needs to be called once, see https://github.com/electron/electron/issues/15943
     protocol.registerSchemesAsPrivileged(
         ctx.locations.protocolBundles.map(({scheme}) => ({
             scheme,
-            privileges: {standard: true, secure: true},
+            privileges: {
+                corsEnabled: true,
+                secure: true,
+                standard: true,
+                supportFetchAPI: true,
+            },
         })),
     );
 }
 
-export async function registerSessionProtocols(ctx: Context, session: Session): Promise<void> {
-    await appReadyPromise;
+// TODO electron: get rid of "baseURLForDataURL" workaround, see https://github.com/electron/electron/issues/20700
+export async function registerWebFolderFileProtocol(ctx: Context, session: Session): Promise<void> {
+    const webPath = path.join(ctx.locations.appDir, "./web");
 
-    for (const {scheme, directory} of ctx.locations.protocolBundles) {
-        await new Promise((resolve, reject) => {
-            session.protocol.registerBufferProtocol(
-                scheme,
-                async (request, callback) => {
-                    const file = await resolveFileSystemResourceLocation(directory, request);
-                    const data = await fsAsync.readFile(file);
-                    const mimeType = mimeTypes.lookup(path.basename(file));
-                    const result = mimeType
-                        ? {data, mimeType}
-                        : data;
+    return new Promise((resolve, reject) => {
+        session.protocol.registerFileProtocol(
+            WEB_PROTOCOL_SCHEME,
+            (request, callback) => {
+                const url = new URL(request.url);
+                const resource = path.normalize(
+                    path.join(webPath, url.host, url.pathname),
+                );
 
-                    callback(result);
-                },
-                (error) => {
-                    if (error) {
-                        reject(error);
-                        return;
-                    }
+                if (!pathIsInside(resource, webPath)) {
+                    throw new Error(`Forbidden file system resource "${resource}"`);
+                }
 
-                    resolve();
-                },
-            );
-        });
-    }
+                callback({path: resource});
+            },
+            resolveOrRejectIfError(resolve, reject),
+        );
+    });
 }
 
-async function resolveFileSystemResourceLocation(directory: string, request: RegisterFileProtocolRequest): Promise<string> {
-    const resource = path.join(directory, new url.URL(request.url).pathname);
+async function resolveFileSystemResourceLocation(
+    directory: string,
+    request: Parameters<Parameters<(typeof protocol)["registerBufferProtocol"]>[1]>[0],
+): Promise<string> {
+    const resource = path.join(directory, new URL(request.url).pathname);
 
     if (!pathIsInside(resource, directory)) {
         throw new Error(`Forbidden file system resource "${resource}"`);
@@ -80,4 +82,28 @@ async function resolveFileSystemResourceLocation(directory: string, request: Reg
     }
 
     throw new Error(`Failed to resolve "${resource}" file system resource`);
+}
+
+export async function registerSessionProtocols(ctx: Context, session: Session): Promise<void> {
+    // TODO setup timeout on "ready" even firing
+    await app.whenReady();
+
+    for (const {scheme, directory} of ctx.locations.protocolBundles) {
+        await new Promise((resolve, reject) => {
+            session.protocol.registerBufferProtocol(
+                scheme,
+                async (request, callback) => {
+                    const file = await resolveFileSystemResourceLocation(directory, request);
+                    const data = await fsAsync.readFile(file);
+                    const mimeType = mimeTypes.lookup(path.basename(file));
+                    const result = mimeType
+                        ? {data, mimeType}
+                        : data;
+
+                    callback(result);
+                },
+                resolveOrRejectIfError(resolve, reject),
+            );
+        });
+    }
 }

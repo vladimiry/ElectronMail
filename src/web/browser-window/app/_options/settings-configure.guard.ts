@@ -18,7 +18,7 @@ export class SettingsConfigureGuard implements CanActivate {
         return this.store.pipe(
             select(OptionsSelectors.STATE),
             concatMap((state) => {
-                if (!state.electronLocations) {
+                if (!state._initialized) {
                     this.store.dispatch(OPTIONS_ACTIONS.InitRequest());
                     return of(false);
                 }

@@ -23,9 +23,9 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         map((progress) => Boolean(progress.updatingBaseSettings)),
     );
 
-    logLevels = LOG_LEVELS;
+    readonly logLevels = [...LOG_LEVELS];
 
-    idleTimeLogOutSecValues: ReadonlyArray<Readonly<{ title: string; valueSec: number; }>> = [
+    readonly idleTimeLogOutSecValues: Array<Readonly<{ title: string; valueSec: number; }>> = [
         {title: "disabled", valueSec: 0},
         {title: "3 minutes", valueSec: 60 * 3},
         {title: "5 minutes", valueSec: 60 * 5},

@@ -1,8 +1,7 @@
-import {InjectionToken} from "@angular/core";
+import {InjectionToken, Type} from "@angular/core";
 import {Subject} from "rxjs";
 
 import {AccountTypeAndLoginFieldContainer} from "src/shared/model/container";
-import {DbAccountPk} from "src/shared/model/database";
 
 export const STUB_OUTLET = "stub-outlet";
 
@@ -26,13 +25,5 @@ export const ROUTER_DATA_OUTLET_PROP = "ROUTER_DATA_OUTLET_PROP";
 
 export const FIRE_SYNCING_ITERATION$ = new Subject<AccountTypeAndLoginFieldContainer>();
 
-export interface DbViewEntryComponentInterface {
-    dbAccountPk: DbAccountPk;
-
-    // tslint:disable-next-line:no-misused-new
-    new(...args: any[]): DbViewEntryComponentInterface;
-
-    setVisibility(value: boolean): void;
-}
-
-export const DBVIEW_MODULE_ENTRY_COMPONENT_TOKEN = new InjectionToken<DbViewEntryComponentInterface>("DbViewEntryComponent");
+export const DBVIEW_MODULE_ENTRY_COMPONENT_TOKEN // tslint:disable-next-line:max-line-length
+    = new InjectionToken<Type<import("src/web/browser-window/app/_db-view/db-view-entry.component").DbViewEntryComponent>>("DbViewEntryComponent");

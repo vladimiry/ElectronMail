@@ -7,7 +7,7 @@
         <span class="text">{{ title }}</span>
     </button>
     <i
-        [placement]="popupPlacement"
+        [placement]="popupPlacement || 'auto'"
         [popover]="popupTemplate"
         class="fa fa-info-circle text-warning d-flex align-self-center ml-1"
         container="body"

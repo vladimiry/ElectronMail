@@ -18,7 +18,7 @@ export const LOG_LEVELS = {
 };
 
 export async function execShell(
-    [command, args, options]: Arguments<typeof spawnAsync>,
+    [command, args, options]: Parameters<typeof spawnAsync>,
     {printStd = true}: { printStd?: boolean } = {},
 ): Promise<Unpacked<ReturnType<typeof spawnAsync>>> {
     LOG(
@@ -57,7 +57,7 @@ export function formatStreamChunk(chunk: any): string {
     return Buffer.from(chunk, "utf-8").toString();
 }
 
-export async function fetchUrl(args: Arguments<typeof fetch>): ReturnType<typeof fetch> {
+export async function fetchUrl(args: Parameters<typeof fetch>): ReturnType<typeof fetch> {
     const [request] = args;
     const url = typeof request === "string"
         ? request

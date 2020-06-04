@@ -1,8 +1,8 @@
-import {Action, Store, select} from "@ngrx/store";
 import {
     AfterViewInit,
     ChangeDetectionStrategy,
     Component,
+    ComponentRef,
     ElementRef,
     Input,
     NgZone,
@@ -15,13 +15,15 @@ import {
 } from "@angular/core";
 import {Deferred} from "ts-deferred";
 import {Observable, Subject, Subscription, combineLatest} from "rxjs";
-import {debounceTime, distinctUntilChanged, filter, map, mergeMap, pairwise, startWith, takeUntil, withLatestFrom} from "rxjs/operators";
+import {Store, select} from "@ngrx/store";
+import {debounceTime, distinctUntilChanged, filter, map, pairwise, startWith, takeUntil, withLatestFrom} from "rxjs/operators";
 import {equals, pick} from "ramda";
 
-import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {ACCOUNTS_ACTIONS, AppAction, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountConfig} from "src/shared/model/account";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
+import {DbViewEntryComponent} from "src/web/browser-window/app/_db-view/db-view-entry.component";
 import {DbViewModuleResolve} from "src/web/browser-window/app/_accounts/db-view-module-resolve.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
@@ -61,11 +63,11 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         .pipe(takeUntil(this.ngOnDestroy$));
     private logger: ReturnType<typeof getZoneNameBoundWebLogger>;
     private loggerZone: Zone;
-    @ViewChild("dbViewContainer", {read: ViewContainerRef, static: false})
+    @ViewChild("dbViewContainer", {read: ViewContainerRef, static: true})
     private dbViewContainerRef!: ViewContainerRef;
-    @ViewChild("webViewTemplate", {read: TemplateRef, static: false})
+    @ViewChild("webViewTemplate", {read: TemplateRef, static: true})
     private webViewTemplate!: TemplateRef<null>;
-    @ViewChild("webviewContainer", {read: ViewContainerRef, static: false})
+    @ViewChild("webviewContainer", {read: ViewContainerRef, static: true})
     private webViewContainerRef!: ViewContainerRef;
     private webViewState$ = new Subject<WebViewSubjectState>();
     private subscription = new Subscription();
@@ -189,22 +191,16 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         );
 
         this.subscription.add(
-            combineLatest([
-                this.store.pipe(
-                    select(OptionsSelectors.FEATURED.electronLocations),
-                    mergeMap((electronLocations) => electronLocations ? [electronLocations] : []),
-                ),
-                this.account$.pipe(
-                    distinctUntilChanged((prev, curr) => prev.accountConfig.entryUrl === curr.accountConfig.entryUrl),
-                ),
-            ]).subscribe(([electronLocations, {accountConfig}]) => {
+            this.account$.pipe(
+                distinctUntilChanged((prev, curr) => prev.accountConfig.entryUrl === curr.accountConfig.entryUrl),
+            ).subscribe(({accountConfig}) => {
                 const {type} = accountConfig;
-                const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, electronLocations);
+                const parsedEntryUrl = this.core.parseEntryUrl(accountConfig);
 
                 this.webViewState$.next({
                     action: "attrs",
                     src: parsedEntryUrl.entryUrl,
-                    preload: electronLocations.preload.webView[type],
+                    preload: __METADATA__.electronLocations.preload.webView[type],
                 });
             }),
         );
@@ -220,7 +216,9 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         this.logger.info(`onWebViewLoadedOnce()`);
 
         this.subscription.add(
-            ((state: { dbViewComponentRef?: Unpacked<ReturnType<typeof DbViewModuleResolve.prototype.buildComponentRef>> } = {}) => {
+            (() => {
+                let dbViewEntryComponent: ComponentRef<DbViewEntryComponent> | undefined;
+
                 return this.account$
                     .pipe(
                         map((account) => ({
@@ -232,12 +230,13 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         withLatestFrom(this.store.pipe(select(AccountsSelectors.FEATURED.selectedLogin))),
                     )
                     .subscribe(async ([{type, login, databaseView}, selectedLogin]) => {
-                        if (state.dbViewComponentRef) {
-                            state.dbViewComponentRef.instance.setVisibility(Boolean(databaseView));
+                        if (dbViewEntryComponent) {
+                            dbViewEntryComponent.instance.setVisibility(Boolean(databaseView));
                         } else if (databaseView) {
-                            state.dbViewComponentRef = await this.dbViewModuleResolve.buildComponentRef({type, login});
-                            this.dbViewContainerRef.insert(state.dbViewComponentRef.hostView);
-                            state.dbViewComponentRef.changeDetectorRef.detectChanges();
+                            dbViewEntryComponent = await this.dbViewModuleResolve.mountDbViewEntryComponent(
+                                this.dbViewContainerRef,
+                                {type, login},
+                            );
                         }
 
                         this.webViewState$.next({action: "visibility", visible: !databaseView});
@@ -400,7 +399,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         // TODO remove executed items form the array
     }
 
-    private dispatchInLoggerZone<A extends Action = Action>(action: A) {
+    private dispatchInLoggerZone(action: AppAction) {
         this.loggerZone.run(() => {
             this.store.dispatch(action);
         });

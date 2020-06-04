@@ -51,7 +51,11 @@ export async function buildEndpoints(
         },
 
         async openSettingsFolder() {
-            shell.openItem(ctx.locations.userDataDir);
+            const errorMessage = await shell.openPath(ctx.locations.userDataDir);
+
+            if (errorMessage) {
+                throw new Error(errorMessage);
+            }
         },
 
         async quit() {

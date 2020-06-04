@@ -1,4 +1,4 @@
-import {OnBeforeSendHeadersDetails, OnHeadersReceivedDetails, Session} from "electron";
+import {HeadersReceivedResponse, OnBeforeSendHeadersListenerDetails, OnHeadersReceivedListenerDetails, Session} from "electron";
 import {URL} from "url";
 
 import {AccountType} from "src/shared/model/account";
@@ -6,8 +6,8 @@ import {Context} from "./model";
 import {ElectronContextLocations} from "src/shared/model/electron";
 
 // TODO drop these types when "requestHeaders / responseHeaders" get proper types
-type RequestDetails = OnBeforeSendHeadersDetails & { requestHeaders: HeadersMap };
-type ResponseDetails = OnHeadersReceivedDetails & { responseHeaders: HeadersMap<string[]> };
+type RequestDetails = OnBeforeSendHeadersListenerDetails;
+type ResponseDetails = OnHeadersReceivedListenerDetails;
 
 interface HeadersMap<V extends string | string[] = string | string[]> {
     [k: string]: V;
@@ -211,11 +211,11 @@ const responseHeadersPatchHandlers: {
 })();
 
 function patchResponseHeader(
-    headers: ResponseDetails["responseHeaders"],
+    headers: HeadersReceivedResponse["responseHeaders"],
     patch: ReturnType<typeof getHeader>,
     {replace, extend = true, _default = true}: { replace?: boolean; extend?: boolean; _default?: boolean } = {},
 ): void {
-    if (!patch) {
+    if (!patch || !headers) {
         return;
     }
 
@@ -223,12 +223,12 @@ function patchResponseHeader(
         getHeader(headers, patch.name) || {name: patch.name, values: []};
 
     if (_default && !header.values.length) {
-        headers[header.name] = patch.values;
+        headers[header.name] = [...patch.values];
         return;
     }
 
     headers[header.name] = replace
-        ? patch.values
+        ? [...patch.values]
         : extend
             ? [...header.values, ...patch.values]
             : header.values;

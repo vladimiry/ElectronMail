@@ -14,7 +14,7 @@ export const filterSyncingMemberships = ((types: Set<string>) => ({memberships}:
 })(new Set([GROUP_TYPE.Mail, GROUP_TYPE.Contact]));
 
 export const isUpsertOperationType: (v: Unpacked<typeof DatabaseModel.OPERATION_TYPE._.values>) => boolean = (() => {
-    const types: ReadonlySet<Arguments<typeof isUpsertOperationType>[0]> = new Set(
+    const types: ReadonlySet<Parameters<typeof isUpsertOperationType>[0]> = new Set(
         [
             DatabaseModel.OPERATION_TYPE.CREATE,
             DatabaseModel.OPERATION_TYPE.UPDATE,
@@ -110,7 +110,7 @@ export function isUpsertUpdate(update: Rest.Model.EntityUpdate) {
     return isUpsertOperationType(update.operation);
 }
 
-export const preprocessError: Arguments<typeof buildDbPatchRetryPipeline>[0] = (rawError: any) => {
+export const preprocessError: Parameters<typeof buildDbPatchRetryPipeline>[0] = (rawError: any) => {
     const {name, message}: { name?: unknown; message?: unknown } = Object(rawError);
     const retriable = (
         !navigator.onLine

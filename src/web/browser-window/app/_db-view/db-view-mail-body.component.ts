@@ -1,3 +1,4 @@
+import UUID from "pure-uuid";
 import {
     AfterViewInit,
     ChangeDetectionStrategy,
@@ -20,7 +21,7 @@ import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-vi
 import {DbViewMailComponent} from "src/web/browser-window/app/_db-view/db-view-mail.component";
 import {Instance, State} from "src/web/browser-window/app/store/reducers/db-view";
 import {Mail, View} from "src/shared/model/database";
-import {ONE_SECOND_MS} from "src/shared/constants";
+import {ONE_SECOND_MS, WEB_PROTOCOL_SCHEME} from "src/shared/constants";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
 
 @Component({
@@ -209,9 +210,19 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
             return;
         }
 
+        const iframeCspInlineStyleNonce = new UUID(4).format();
+        const iframeCsp = `default-src 'none'; style-src ${WEB_PROTOCOL_SCHEME}: 'nonce-${iframeCspInlineStyleNonce}'`;
+
         (() => {
             delete this.bodyIframe;
             const iframe = document.createElement("iframe");
+
+            iframe.setAttribute(
+                "sandbox",
+                "allow-same-origin", // exclusion required to be able to call "document.open()" on iframe
+            );
+            iframe.setAttribute("csp", iframeCsp);
+
             this.bodyIframe = iframe;
         })();
 
@@ -226,8 +237,10 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         contentWindow.document.write(`
             <html>
             <head>
+                <meta http-equiv="Content-Security-Policy" content="${iframeCsp}">
+                <meta http-equiv="X-Content-Security-Policy" content="${iframeCsp}">
                 <link rel="stylesheet" href="${__METADATA__.electronLocations.vendorsAppCssLinkHref}"/>
-                <style>
+                <style nonce="${iframeCspInlineStyleNonce}">
                     html, body {
                         background-color: transparent;
                     }

@@ -1,3 +1,5 @@
+import path from "path";
+
 import {FolderAsDomainEntry, execAccountTypeFlow} from "./lib";
 import {LOG, execShell} from "scripts/lib";
 
@@ -13,7 +15,16 @@ execAccountTypeFlow({
     folderAsDomainEntries,
     repoRelativeDistDir: "./build/dist",
     flows: {
-        build: async ({repoDir, folderAsDomainEntry}) => {
+        async preInstall({repoDir}) {
+            await execShell([
+                "patch",
+                [
+                    path.join(repoDir, "src/misc/U2fClient.js"),
+                    "./scripts/prepare-webclient/patches/src/misc/U2fClient.js.diff",
+                ],
+            ]);
+        },
+        async build({repoDir, folderAsDomainEntry}) {
             await build({repoDir, ...folderAsDomainEntry});
         },
     },

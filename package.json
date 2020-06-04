@@ -14,9 +14,8 @@
   },
   "main": "./app/electron-main.js",
   "scripts": {
-    "postinstall": "npm-run-all yarn:audit postinstall:remove:prebuild-install",
+    "postinstall": "npm-run-all postinstall:remove:prebuild-install",
     "postinstall:remove:prebuild-install": "rimraf ./node_modules/prebuild-install",
-    "yarn:audit": "yarn audit",
     "app:dist": "npm-run-all lint test:electron-main test:web build assets clean:prebuilds electron-builder:install-app-deps",
     "build": "npm-run-all build:electron-builder-hooks build:electron-main build:electron-preload build:web",
     "build:dev": "cross-env NODE_ENV=development npm-run-all build",

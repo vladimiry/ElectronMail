@@ -79,7 +79,7 @@ test.serial("auto logout", async (t) => {
     await afterEach(t);
 });
 
-async function afterEach(t: ExecutionContext<TestContext>) {
+async function afterEach(t: ExecutionContext<TestContext>): Promise<void> {
     if (fs.existsSync(t.context.logFilePath)) {
         await new Promise((resolve, reject) => {
             const stream = byline.createStream(
@@ -87,6 +87,8 @@ async function afterEach(t: ExecutionContext<TestContext>) {
             );
             stream.on("data", (_, line = String(_)) => {
                 if (
+                    line.includes("keytar")
+                    ||
                     (
                         line.includes("[electron-rpc-api]")
                         &&
@@ -101,7 +103,6 @@ async function afterEach(t: ExecutionContext<TestContext>) {
                 ) {
                     return;
                 }
-                line = null; // WARN: don't print log line
                 t.fail(`App log file error line`);
             });
             stream.on("error", reject);

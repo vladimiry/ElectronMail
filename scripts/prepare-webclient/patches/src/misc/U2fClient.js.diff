@@ -1,0 +1,10 @@
+47,53c47
+< 		return Promise
+< 			.resolve(
+< 				// Explicitly disable old Edge and apps so that they don'tt try to open Store for extension URL
+< 				!isApp() && client.browser !== BrowserType.EDGE
+< 				&& !!(window.u2f && window.u2f.register || this.checkVersionWithTimeout())
+< 			)
+< 			.catch(() => false)
+---
+> 		return Promise.resolve(false);

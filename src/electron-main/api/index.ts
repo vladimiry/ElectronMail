@@ -53,7 +53,10 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
                 hasSavedPassword = Boolean(await getPassword());
                 ctx.keytarSupport = true;
             } catch (error) {
-                logger.error(`"keytar" module is unsupported by the system`, error);
+                // log only one-line message in "error" mode so it doesn't affect the e2e tests
+                logger.error(`"keytar" module is unsupported by the system: `, error.message);
+                // log full error in "warn" mode only so it doesn't affect the e2e tests
+                logger.warn(error);
 
                 ctx.keytarSupport = false;
 

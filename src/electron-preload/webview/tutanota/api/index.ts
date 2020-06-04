@@ -206,7 +206,13 @@ function bootstrapEndpoints(api: Unpacked<ReturnType<typeof resolveProviderApi>>
 
                         return {pageType};
                     })())),
-                    distinctUntilChanged(({pageType: prev}, {pageType: curr}) => curr.type === prev.type),
+                    distinctUntilChanged(({pageType: prev}, {pageType: curr}) => {
+                        return (
+                            curr.type === prev.type
+                            ||
+                            curr.type === "login" && prev.type === "login2fa"
+                        );
+                    }),
                     tap((value) => logger.verbose(JSON.stringify(value))),
                 ),
 

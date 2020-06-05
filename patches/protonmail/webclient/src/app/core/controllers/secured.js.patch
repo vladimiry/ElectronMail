@@ -1,0 +1,13 @@
+diff --git a/src/app/core/controllers/secured.js b/src/app/core/controllers/secured.js
+index 0e758e7da..c247131bf 100644
+--- a/src/app/core/controllers/secured.js
++++ b/src/app/core/controllers/secured.js
+@@ -84,7 +84,7 @@ function SecuredController(
+      */
+     const hasSeenOboardingModal = () => {
+         try {
+-            return $cookies.get(ONBOARD_MODAL_COOKIE) || localStorage.getItem(ONBOARD_MODAL_COOKIE);
++            return true;
+         } catch (e) {
+             // ( ･_･)ﾉ  ⌒●~*
+         }

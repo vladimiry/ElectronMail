@@ -1,11 +1,10 @@
-import UUID from "pure-uuid";
 import fs from "fs";
 import fsExtra from "fs-extra";
 import path from "path";
 import {promisify} from "util";
 
+import {CWD, LOG, LOG_LEVELS, execShell} from "scripts/lib";
 import {FolderAsDomainEntry, execAccountTypeFlow, printAndWriteFile} from "./lib";
-import {LOG, LOG_LEVELS, execShell} from "scripts/lib";
 import {PROVIDER_REPOS} from "src/shared/constants";
 
 const folderAsDomainEntries: Array<FolderAsDomainEntry<{
@@ -123,19 +122,35 @@ async function writeProtonConfigFile(
             repoType,
             folderAsDomainEntries,
             flows: {
-                async build({repoDir: cwd, folderAsDomainEntry}) {
+                async postClone({repoDir}) {
+                    await execShell([
+                        "git",
+                        [
+                            "apply",
+                            "--ignore-whitespace",
+                            "--reject",
+                            path.join(
+                                CWD,
+                                "./patches/protonmail/webclient/src/app/core/controllers/secured.js.patch",
+                            ),
+                        ],
+                        {cwd: repoDir},
+                    ]);
+                },
+
+                async build({repoDir, folderAsDomainEntry}) {
                     const {configApiParam} = await configure(
                         // TODO proton-v4: drop "envFileName" parameter when proton moves "WebClient" to "proton-pack" building
-                        {cwd, envFileName: "./env/env.json", repoType},
+                        {cwd: repoDir, envFileName: "./env/env.json", repoType},
                         folderAsDomainEntry,
                     );
 
                     // TODO proton-v4: drop "npm run config" call when proton moves "WebClient" to "proton-pack" building
-                    await execShell(["npm", ["run", "config", "--", "--api", configApiParam], {cwd}]);
+                    await execShell(["npm", ["run", "config", "--", "--api", configApiParam], {cwd: repoDir}]);
 
                     await (async () => {
-                        const originalWebpackConfigFile = path.join(cwd, "./webpack.config.original.js");
-                        const webpackConfigFile = path.join(cwd, "./webpack.config.js");
+                        const originalWebpackConfigFile = path.join(repoDir, "./webpack.config.original.js");
+                        const webpackConfigFile = path.join(repoDir, "./webpack.config.js");
 
                         await (async (from = webpackConfigFile, to = originalWebpackConfigFile) => {
                             if (await fsExtra.pathExists(to)) {
@@ -150,65 +165,16 @@ async function writeProtonConfigFile(
                             await promisify(fs.rename)(from, to);
                         })();
 
-                        const hasSeenOnboardingModalSuppressor = await (async () => {
-                            const replacedMarkFile = path.join(cwd, `${new UUID(4).format()}-replaced-mark`);
-                            const targetFile = path.resolve(cwd, "./src/app/core/controllers/secured.js");
-
-                            if (!fsExtra.existsSync(targetFile)) {
-                                throw new Error(`File "${targetFile}" doesn't exist`);
-                            }
-
-                            await execShell(["npm", ["add", "--no-save", "string-replace-loader"], {cwd}]);
-
-                            // previous "npm add" command run removes the "proton-translations" dir
-                            // so we explicitly run "postinstall" again to get it back
-                            await execShell([
-                                "npm",
-                                ["run", "postinstall"],
-                                {cwd, env: {...process.env, ...PROVIDER_REPOS[repoType].i18nEnvVars}},
-                            ]);
-
-                            // eslint-disable-next-line max-len
-                            // https://github.com/ProtonMail/WebClient/blob/0c504c8d4ae84a665af5b6e2603228f414ac6f07/src/app/core/controllers/secured.js#L84
-                            const search = "return $cookies.get(ONBOARD_MODAL_COOKIE) || localStorage.getItem(ONBOARD_MODAL_COOKIE);";
-                            const replace = "return true;";
-
-                            return {
-                                targetFile,
-                                isReplaced: () => fsExtra.existsSync(replacedMarkFile),
-                                webpackConfigCodePatch: `
-                                webpackConfig.module.rules.push({
-                                    test: ${JSON.stringify(targetFile)},
-                                    loader: 'string-replace-loader',
-                                    options: {
-                                      search: ${JSON.stringify(search)},
-                                      replace: () => {
-                                        const result = ${JSON.stringify(replace)};
-                                        require("fs").writeFileSync(${JSON.stringify(replacedMarkFile)}, "");
-                                        return result;
-                                      },
-                                      strict: true,
-                                    }
-                                })
-                                `,
-                            } as const;
-                        })();
-
                         printAndWriteFile(
                             webpackConfigFile,
                             `
                                 const webpackConfig = require("${originalWebpackConfigFile}");
                                 ${resolveWebpackConfigPatchingCode("webpackConfig")}
-                                ${hasSeenOnboardingModalSuppressor.webpackConfigCodePatch}
                                 module.exports = webpackConfig;
                             `,
                         );
 
-                        await execShell(["npm", ["run", "build", "--", "--api", configApiParam], {cwd}]);
-
-                        if (!hasSeenOnboardingModalSuppressor.isReplaced()) {
-                            throw new Error(`Failed to patch the "${hasSeenOnboardingModalSuppressor.targetFile}" file`);
-                        }
+                        await execShell(["npm", ["run", "build", "--", "--api", configApiParam], {cwd: repoDir}]);
                     })();
                 },
             },

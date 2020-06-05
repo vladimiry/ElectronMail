@@ -52,7 +52,7 @@ async function clone(repoType: keyof typeof PROVIDER_REPOS, dir: string): Promis
 
     mkdirp.sync(dir);
 
-    await execShell(["git", ["clone", repo, "."], {cwd: dir}]);
+    await execShell(["git", ["clone", repo, dir]]);
     await execShell(["git", ["checkout", commit], {cwd: dir}]);
     await execShell(["git", ["show", "--summary"], {cwd: dir}]);
 }
@@ -73,7 +73,7 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
         repoRelativeDistDir = PROVIDER_REPOS[repoType].repoRelativeDistDir,
         destSubFolder,
         flows: {
-            preInstall,
+            postClone,
             install,
             build,
         },
@@ -83,7 +83,7 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
         repoRelativeDistDir?: string;
         destSubFolder?: string;
         flows: {
-            preInstall?: Flow<O>;
+            postClone?: Flow<O>;
             install?: Flow<O>;
             build: Flow<O>;
         };
@@ -131,6 +131,9 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
         } else {
             await fsExtra.ensureDir(repoDir);
             await clone(repoType, repoDir);
+            if (postClone) {
+                await postClone(flowArg);
+            }
         }
 
         if (await fsExtra.pathExists(path.join(distDir, "index.html"))) {
@@ -138,11 +141,7 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
         } else {
             if (await fsExtra.pathExists(path.resolve(repoDir, "node_modules"))) {
                 LOG(LOG_LEVELS.warning(`Skipping dependencies installing`));
-            } else {
-                if (preInstall) {
-                    await preInstall(flowArg);
-                }
-                if (install) {
+            } else if (install) {
                     await install(flowArg);
                 } else {
                     await execShell([
@@ -151,7 +150,6 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
                         {cwd: repoDir, env: {...process.env, ...PROVIDER_REPOS[repoType].i18nEnvVars}},
                     ]);
                 }
-            }
 
             await build(flowArg);
         }

@@ -1,3 +1,4 @@
+import UUID from "pure-uuid";
 import electronLog from "electron-log";
 import fs from "fs";
 import truncateStringLength from "truncate-utf8-bytes";
@@ -7,7 +8,6 @@ import {app, dialog} from "electron";
 import {join} from "path";
 import {promisify} from "util";
 import {switchMap} from "rxjs/operators";
-import {v4 as uuid} from "uuid";
 
 import {Context} from "src/electron-main/model";
 import {File, Mail, MailAddress} from "src/shared/model/database";
@@ -122,7 +122,7 @@ const formatEmlDate: (mail: Mail) => string = (() => {
 
 // TODO consider sanitizing "mail.body"
 function buildEml(mail: Mail): string {
-    const boundary = `----=${uuid()}@${PACKAGE_NAME}`;
+    const boundary = `----=${new UUID(4).format()}@${PACKAGE_NAME}`;
     const subject = mail.subject && `=?UTF-8?B?${Base64.encode(mail.subject)}?=`;
     const body = Base64.encode(
         mail.failedDownload

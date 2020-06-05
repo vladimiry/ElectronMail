@@ -1,5 +1,5 @@
+import UUID from "pure-uuid";
 import asap from "asap-es";
-import {v4 as uuid} from "uuid";
 
 import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 import {ROLLING_RATE_LIMITER} from "src/electron-preload/lib/electron-exposure/rolling-rate-limiter";
@@ -154,7 +154,7 @@ export async function resolveProviderApi(): Promise<ProviderApi> {
                 interval: rateLimitConfig.intervalMs,
                 maxInInterval: rateLimitConfig.maxInInterval,
             });
-            const key = `webview:protonmail-api:${uuid()}`;
+            const key = `webview:protonmail-api:${new UUID(4).format()}`;
 
             logger.verbose(JSON.stringify({rateLimitConfig}));
 

@@ -14,7 +14,7 @@ export type ElectronExposure = Readonly<{
 }>;
 
 export interface ElectronWindow {
-    // TODO generate "__ELECTRON_EXPOSURE__" prop name during the build process using the pattern like `__ELECTRON_EXPOSURE__${uuid.v4()}`
+    // TODO generate "__ELECTRON_EXPOSURE__" prop name during the build process using the pattern like `__ELECTRON_EXPOSURE__<UUID>`
     readonly __ELECTRON_EXPOSURE__: Readonly<ElectronExposure>;
 }
 

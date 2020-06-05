@@ -1,9 +1,9 @@
+import UUID from "pure-uuid";
 import electronLog from "electron-log";
 import {UnionOf} from "@vladimiry/unionize";
 import {concatMap, filter, startWith, take, takeUntil} from "rxjs/operators";
 import {defer, race, throwError, timer} from "rxjs";
 import {pick} from "remeda";
-import {v4 as uuid} from "uuid";
 
 import {Config} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
@@ -54,7 +54,7 @@ async function indexMails(
     logger.info("indexMails()");
 
     const duration = hrtimeDuration();
-    const uid = uuid();
+    const uid = new UUID(4).format();
     const result$ = race(
         IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$.pipe(
             filter(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.is.IndexingResult),

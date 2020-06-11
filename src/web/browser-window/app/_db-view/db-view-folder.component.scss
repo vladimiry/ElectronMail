@@ -9,6 +9,11 @@
 
     .fa {
         line-height: inherit;
+
+        &::before {
+            // default/"unread" icon
+            content: $fa-var-bell;
+        }
     }
 
     .type {

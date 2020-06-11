@@ -49,13 +49,13 @@ export class DbViewMailTabComponent extends DbViewAbstractComponent {
             const {folders, selectedFolderData, selectedMail} = instance;
 
             if (!selectedFolderData) {
-                const inbox = folders.system.find((f) => f.folderType === MAIL_FOLDER_TYPE.INBOX);
+                const unread = folders.system.find((f) => f.folderType === MAIL_FOLDER_TYPE._VIRTUAL_UNREAD_);
 
-                if (!inbox) {
-                    throw new Error(`Failed to resolve "inbox" folder`);
+                if (!unread) {
+                    throw new Error(`Failed to resolve "unread" virtual folder`);
                 }
 
-                this.store.dispatch(DB_VIEW_ACTIONS.SelectFolder({dbAccountPk: this.dbAccountPk, selectedFolderData: inbox}));
+                this.store.dispatch(DB_VIEW_ACTIONS.SelectFolder({dbAccountPk: this.dbAccountPk, selectedFolderData: unread}));
 
                 return EMPTY;
             }

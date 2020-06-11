@@ -11,6 +11,7 @@ import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-vi
 import {Folder, Mail} from "src/shared/model/database/view";
 import {MailsBundleKey, State} from "src/web/browser-window/app/store/reducers/db-view";
 import {PROTONMAIL_MAILBOX_IDENTIFIERS} from "src/shared/model/database";
+import {VIRTUAL_UNREAD_FOLDER_TYPE} from "src/shared/constants";
 
 // TODO read "electron-mail-db-view-mail" from the DbViewMailComponent.selector property
 const mailComponentTagName = "electron-mail-db-view-mail".toUpperCase();
@@ -163,6 +164,8 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
                     item.exclusive > 0
                     &&
                     !excludePks.has(item.pk)
+                    &&
+                    item.mailFolderId !== VIRTUAL_UNREAD_FOLDER_TYPE
                 );
             };
             return combineLatest([

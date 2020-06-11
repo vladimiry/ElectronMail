@@ -1,68 +1,90 @@
 import {omit, pipe, sort, sortBy} from "remeda";
 
 import {CONVERSATION_TYPE, ConversationEntry, FsDbAccount, MAIL_FOLDER_TYPE, View} from "src/shared/model/database";
+import {PRODUCT_NAME, VIRTUAL_UNREAD_FOLDER_TYPE} from "src/shared/constants";
 import {mailDateComparatorDefaultsToDesc, walkConversationNodesTree} from "src/shared/util";
 import {resolveAccountFolders} from "src/electron-main/database/util";
 
-export const FOLDER_UTILS: {
-    // TODO split "splitAndFormatAndFillSummaryFolders" function to pieces
-    splitAndFormatAndFillSummaryFolders: (
-        folders: View.Folder[],
-    ) => { system: View.Folder[]; custom: View.Folder[] };
-} = ((): typeof FOLDER_UTILS => {
-    const customizers: Record<keyof typeof MAIL_FOLDER_TYPE._.nameValueMap, { title: (f: View.Folder) => string; order: number }> = {
-        CUSTOM: {
-            title: ({name}): string => name,
-            order: 0,
-        },
-        INBOX: {
-            title: () => "Inbox",
-            order: 1,
-        },
-        DRAFT: {
-            title: () => "Draft",
-            order: 2,
-        },
-        SENT: {
-            title: () => "Sent",
-            order: 3,
-        },
-        STARRED: {
-            title: () => "Starred",
-            order: 4,
-        },
-        ARCHIVE: {
-            title: () => "Archive",
-            order: 5,
-        },
-        SPAM: {
-            title: () => "Spam",
-            order: 6,
-        },
-        ALL: {
-            title: () => "All Mail",
-            order: 7,
-        },
-        TRASH: {
-            title: () => "Trash",
-            order: 8,
-        },
+const buildFolderViewPart = (): NoExtraProperties<Pick<View.Folder, "rootConversationNodes" | "size" | "unread">> => {
+    return {
+        rootConversationNodes: [],
+        size: 0,
+        unread: 0,
     };
+};
 
-    type Customizer = typeof customizers[keyof typeof MAIL_FOLDER_TYPE._.nameValueMap];
+const buildVirtualUnreadFolder = (): View.Folder => {
+    return {
+        id: `${PRODUCT_NAME}_VIRTUAL_UNREAD_ID`,
+        pk: `${PRODUCT_NAME}_VIRTUAL_UNREAD_PK`,
+        raw: "{}",
+        folderType: VIRTUAL_UNREAD_FOLDER_TYPE,
+        name: "Unread",
+        mailFolderId: `${PRODUCT_NAME}_VIRTUAL_UNREAD_MAIL_FOLDER_ID`,
+        exclusive: -1,
+        ...buildFolderViewPart(),
+    };
+};
 
-    type CustomizerResolver = (folder: View.Folder) => Customizer;
-
-    const sortByNameProp = sortBy(({name}: View.Folder) => name);
-
-    const buildCustomizerBasedComparator = (customizer: CustomizerResolver) => {
-        return (o1: View.Folder, o2: View.Folder): number => {
-            return customizer(o1).order - customizer(o2).order;
+// TODO split "splitAndFormatAndFillSummaryFolders" function to pieces
+export const splitAndFormatAndFillSummaryFolders: (folders: View.Folder[]) => { system: View.Folder[]; custom: View.Folder[] } = (
+    () => {
+        const customizers: Record<keyof typeof MAIL_FOLDER_TYPE._.nameValueMap, { title: (f: View.Folder) => string; order: number }> = {
+            _VIRTUAL_UNREAD_: {
+                title: ({name}): string => name,
+                order: 0,
+            },
+            CUSTOM: {
+                title: ({name}): string => name,
+                order: 0,
+            },
+            INBOX: {
+                title: () => "Inbox",
+                order: 1,
+            },
+            DRAFT: {
+                title: () => "Draft",
+                order: 2,
+            },
+            SENT: {
+                title: () => "Sent",
+                order: 3,
+            },
+            STARRED: {
+                title: () => "Starred",
+                order: 4,
+            },
+            ARCHIVE: {
+                title: () => "Archive",
+                order: 5,
+            },
+            SPAM: {
+                title: () => "Spam",
+                order: 6,
+            },
+            ALL: {
+                title: () => "All Mail",
+                order: 7,
+            },
+            TRASH: {
+                title: () => "Trash",
+                order: 8,
+            },
         };
-    };
 
-    const result: typeof FOLDER_UTILS = {
-        splitAndFormatAndFillSummaryFolders(folders) {
+        type Customizer = typeof customizers[keyof typeof MAIL_FOLDER_TYPE._.nameValueMap];
+
+        type CustomizerResolver = (folder: View.Folder) => Customizer;
+
+        const sortByNameProp = sortBy(({name}: View.Folder) => name);
+
+        const buildCustomizerBasedComparator = (customizer: CustomizerResolver) => {
+            return (o1: View.Folder, o2: View.Folder): number => {
+                return customizer(o1).order - customizer(o2).order;
+            };
+        };
+
+        const result: typeof splitAndFormatAndFillSummaryFolders = (folders) => {
             const customizer: CustomizerResolver = ((map) => (folder: View.Folder): Customizer => map.get(folder) as Customizer)(
                 new Map(folders.map((folder) => [
                     folder, customizers[MAIL_FOLDER_TYPE._.resolveNameByValue(folder.folderType)],
@@ -96,11 +118,11 @@ export const FOLDER_UTILS: {
             });
 
             return bundle;
-        },
-    };
+        };
 
-    return result;
-})();
+        return result;
+    }
+)();
 
 function resolveAccountConversationNodes(
     account: DeepReadonly<FsDbAccount>,
@@ -158,9 +180,13 @@ export function buildFoldersAndRootNodePrototypes(
         };
         return result;
     })();
+    const virtualUnreadFolder = buildVirtualUnreadFolder();
     const folders: View.Folder[] = Array.from(
-        resolveAccountFolders(account),
-        (folder) => ({...folder, rootConversationNodes: [], size: 0, unread: 0}),
+        [
+            virtualUnreadFolder,
+            ...resolveAccountFolders(account),
+        ],
+        (folder) => ({...folder, ...buildFolderViewPart()}),
     );
     const resolveFolder: ({mailFolderId}: Pick<View.Folder, "mailFolderId">) => View.Folder | undefined = (() => {
         const map = new Map(
@@ -175,31 +201,35 @@ export function buildFoldersAndRootNodePrototypes(
     })();
     const rootNodePrototypes: View.ConversationNode[] = [];
 
-    for (const entry of conversationEntries) {
-        const node = nodeLookup(entry.pk);
-        const resolvedMail = entry.mailPk && account.mails[entry.mailPk];
+    for (const conversationEntry of conversationEntries) {
+        const conversationNode = nodeLookup(conversationEntry.pk);
+        const mail = conversationEntry.mailPk && account.mails[conversationEntry.mailPk];
 
-        if (resolvedMail) {
-            node.mail = {
+        if (mail) {
+            conversationNode.mail = {
                 // TODO use "pick" instead of "omit", ie prefer whitelisting over blacklisting
-                ...omit(resolvedMail, ["raw", "body", "attachments"]),
+                ...omit(mail, ["raw", "body", "attachments"]),
                 folders: [],
             };
 
-            for (const mailFolderId of node.mail.mailFolderIds) {
+            const mailFolderIds = conversationNode.mail.unread
+                ? [...conversationNode.mail.mailFolderIds, virtualUnreadFolder.mailFolderId]
+                : conversationNode.mail.mailFolderIds;
+
+            for (const mailFolderId of mailFolderIds) {
                 const folder = resolveFolder({mailFolderId});
                 if (folder) {
-                    node.mail.folders.push(folder);
+                    conversationNode.mail.folders.push(folder);
                 }
             }
         }
 
-        if (!entry.previousPk) {
-            rootNodePrototypes.push(node);
+        if (!conversationEntry.previousPk) {
+            rootNodePrototypes.push(conversationNode);
             continue;
         }
 
-        nodeLookup(entry.previousPk).children.push(node);
+        nodeLookup(conversationEntry.previousPk).children.push(conversationNode);
     }
 
     return {
@@ -267,8 +297,8 @@ function buildFoldersView(
 // TODO consider moving performance expensive "prepareFoldersView" function call to the background process
 export function prepareFoldersView(
     account: DeepReadonly<FsDbAccount>,
-): ReturnType<typeof FOLDER_UTILS.splitAndFormatAndFillSummaryFolders> {
-    return FOLDER_UTILS.splitAndFormatAndFillSummaryFolders(
+): ReturnType<typeof splitAndFormatAndFillSummaryFolders> {
+    return splitAndFormatAndFillSummaryFolders(
         buildFoldersView(account),
     );
 }

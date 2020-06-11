@@ -27,6 +27,8 @@ export {
     PACKAGE_DESCRIPTION,
 };
 
+export const VIRTUAL_UNREAD_FOLDER_TYPE = `${PRODUCT_NAME}_VIRTUAL_UNREAD_`;
+
 // user data dir, defaults to app.getPath("userData")
 export const RUNTIME_ENV_USER_DATA_DIR = `ELECTRON_MAIL_USER_DATA_DIR`;
 

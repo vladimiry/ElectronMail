@@ -5,10 +5,14 @@ import {race, throwError, timer} from "rxjs";
 
 import {Context} from "src/electron-main/model";
 import {DEFAULT_API_CALL_TIMEOUT} from "src/shared/constants";
-import {FOLDER_UTILS, buildFoldersAndRootNodePrototypes, fillFoldersAndReturnRootConversationNodes} from "./folders-view";
 import {Folder, FsDbAccount, IndexableMailId, Mail, View} from "src/shared/model/database";
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION$, IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_DB_INDEXER_ON_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
+import {
+    buildFoldersAndRootNodePrototypes,
+    fillFoldersAndReturnRootConversationNodes,
+    splitAndFormatAndFillSummaryFolders
+} from "./folders-view";
 import {curryFunctionMembers, walkConversationNodesTree} from "src/shared/util";
 
 const logger = curryFunctionMembers(electronLog, "[src/electron-main/api/endpoints-builders/database/search]");
@@ -51,7 +55,7 @@ export function searchRootConversationNodes(
         : filteredByMailsWithFoldersAttached;
 
     // TODO use separate function to fill the system folders names
-    FOLDER_UTILS.splitAndFormatAndFillSummaryFolders(folders);
+    splitAndFormatAndFillSummaryFolders(folders);
 
     return result;
 }

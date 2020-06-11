@@ -1,4 +1,5 @@
 import {FsDbDataContainer, IndexableMail} from "src/shared/model/database/index";
+import {PRODUCT_NAME} from "src/shared/constants";
 import {buildEnumBundle} from "src/shared/util";
 
 export const PROTONMAIL_MAILBOX_IDENTIFIERS = buildEnumBundle({
@@ -16,13 +17,8 @@ export const PROTONMAIL_MAILBOX_IDENTIFIERS = buildEnumBundle({
     Label: "label",
 } as const);
 
-export const OPERATION_TYPE = buildEnumBundle({
-    CREATE: "0",
-    UPDATE: "1",
-    DELETE: "2",
-} as const);
-
 export const MAIL_FOLDER_TYPE = buildEnumBundle({
+    _VIRTUAL_UNREAD_: `${PRODUCT_NAME}_VIRTUAL_UNREAD_`,
     CUSTOM: "0",
     INBOX: "1",
     SENT: "2",

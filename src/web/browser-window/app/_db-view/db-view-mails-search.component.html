@@ -24,7 +24,7 @@
                         style="position: relative"
                     >
                         <button class="btn btn-sm btn-secondary-light text-decoration-none" dropdownToggle type="button">
-                            Folders: {{ foldersInfo.selectedPks.length }} of {{ foldersInfo.allPks.length }}
+                            Folders: {{ (selectedPks$ | async)?.length }} of {{ folders.length }}
                         </button>
                         <div *dropdownMenu class="dropdown-menu px-2 py-1" role="menu">
                             <div class="custom-control custom-switch text-center">
@@ -40,15 +40,15 @@
                             </div>
                             <hr class="my-1">
                             <div formGroupName="folders">
-                                <div *ngFor="let folderPk of foldersInfo.allPks" class="custom-control custom-switch">
+                                <div *ngFor="let folder of folders" class="custom-control custom-switch">
                                     <input
-                                        [formControlName]="folderPk"
-                                        [id]="'id_' + folderPk"
+                                        [formControlName]="folder.pk"
+                                        [id]="'id_' + folder.pk"
                                         class="custom-control-input"
                                         type="checkbox"
                                     >
-                                    <label [attr.for]="'id_' + folderPk" class="custom-control-label">
-                                        {{ foldersInfo.names[folderPk] }}
+                                    <label [attr.for]="'id_' + folder.pk" class="custom-control-label">
+                                        <electron-mail-db-view-folder [folder]="folder"></electron-mail-db-view-folder>
                                     </label>
                                 </div>
                             </div>

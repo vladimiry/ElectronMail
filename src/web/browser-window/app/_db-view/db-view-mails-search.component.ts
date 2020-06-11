@@ -10,7 +10,7 @@ import {
     ViewChildren,
 } from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
-import {Observable, Subject, combineLatest} from "rxjs";
+import {Observable, Subject, combineLatest, merge} from "rxjs";
 import {Store, select} from "@ngrx/store";
 import {distinctUntilChanged, map, takeUntil, tap} from "rxjs/operators";
 
@@ -37,9 +37,9 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
     );
 
     @ViewChildren("query")
-    queryElementRefQuery!: QueryList<ElementRef>;
+    readonly queryElementRefQuery!: QueryList<ElementRef>;
 
-    formControls = {
+    readonly formControls = {
         query: new FormControl(
             null,
             Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
@@ -48,26 +48,26 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
         allFoldersToggled: new FormControl(false),
     };
 
-    form = new FormGroup(this.formControls);
+    readonly form = new FormGroup(this.formControls);
 
     @Output()
-    backToListHandler = new EventEmitter<void>();
+    readonly backToListHandler = new EventEmitter<void>();
 
-    selectedMail$ = this.instance$.pipe(
+    readonly selectedMail$ = this.instance$.pipe(
         map((value) => value.selectedMail),
     );
 
-    accountProgress$ = this.account$.pipe(
+    readonly accountProgress$ = this.account$.pipe(
         map((account) => account.progress),
         distinctUntilChanged(),
     );
 
-    searching$: Observable<boolean> = this.accountProgress$.pipe(
+    readonly searching$: Observable<boolean> = this.accountProgress$.pipe(
         map((value) => Boolean(value.searching)),
         tap(this.markDirty.bind(this)),
     );
 
-    indexing$: Observable<boolean> = combineLatest([
+    readonly indexing$: Observable<boolean> = combineLatest([
         this.store.pipe(
             select(AccountsSelectors.FEATURED.globalProgress),
             distinctUntilChanged(),
@@ -80,26 +80,23 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
         tap(this.markDirty.bind(this)),
     );
 
-    folders$ = this.instance$.pipe(
-        map((value) => value.folders),
+    readonly folders$ = this.instance$.pipe(
+        map((value) => [...value.folders.system, ...value.folders.custom]),
     );
 
-    foldersInfo: {
-        names: Record<View.Folder["pk"], View.Folder["name"]>;
-        allPks: Array<View.Folder["pk"]>;
-        selectedPks: Array<View.Folder["pk"]>;
-    } = {
-        names: {},
-        allPks: [],
-        selectedPks: [],
-    };
+    private readonly formFolderControlsInitialized$ = new Subject();
+
+    readonly selectedPks$: Observable<Array<View.Folder["pk"]>> = merge(
+        this.formFolderControlsInitialized$,
+        this.formControls.folders.valueChanges,
+    ).pipe(
+        map(() => this.resolveSelectedPks()),
+    );
 
     private readonly defaultUncheckedFolderIds: ReadonlySet<string> = new Set([
         MAIL_FOLDER_TYPE.ALL,
         MAIL_FOLDER_TYPE.SPAM,
     ]);
-
-    private unSubscribe$ = new Subject();
 
     constructor(
         store: Store<State>,
@@ -109,9 +106,8 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
 
     ngOnInit(): void {
         this.folders$
-            .pipe(takeUntil(this.unSubscribe$))
-            .subscribe(({system, custom}) => {
-                const folders = [...system, ...custom];
+            .pipe(takeUntil(this.ngOnDestroy$))
+            .subscribe((folders) => {
                 const pks = folders.map((folder) => folder.pk);
 
                 Object.keys(this.formControls.folders).forEach((name) => {
@@ -120,27 +116,23 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
                     }
                 });
 
-                folders.forEach(({pk, name, folderType, size}) => {
+                folders.forEach(({pk, folderType}) => {
                     if (this.formControls.folders.contains(pk)) {
                         return;
                     }
-
                     this.formControls.folders.addControl(pk, new FormControl(!this.defaultUncheckedFolderIds.has(folderType)));
-                    this.foldersInfo.names[pk] = `${name} (${size})`;
                 });
 
-                this.foldersInfo.allPks = Object.keys(this.foldersInfo.names);
-                this.foldersInfo.selectedPks = this.resolveSelectedPks();
-            });
-
-        this.formControls.folders.valueChanges
-            .pipe(takeUntil(this.unSubscribe$))
-            .subscribe(() => {
-                this.foldersInfo.selectedPks = this.resolveSelectedPks();
+                if (!this.formFolderControlsInitialized$.closed) {
+                    setTimeout(() => { // execute below code after folder form controls got rendered (next change detection tick)
+                        this.formFolderControlsInitialized$.next();
+                        this.formFolderControlsInitialized$.complete();
+                    });
+                }
             });
 
         this.formControls.allFoldersToggled.valueChanges
-            .pipe(takeUntil(this.unSubscribe$))
+            .pipe(takeUntil(this.ngOnDestroy$))
             .subscribe(() => {
                 const {value} = this.formControls.allFoldersToggled; // eslint-disable-line @typescript-eslint/no-unsafe-assignment
                 Object.values(this.formControls.folders.controls).forEach((control) => {
@@ -149,7 +141,7 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
             });
     }
 
-    resolveSelectedPks(): typeof DbViewMailsSearchComponent.prototype.foldersInfo.selectedPks {
+    resolveSelectedPks(): Unpacked<typeof DbViewMailsSearchComponent.prototype.selectedPks$> {
         // eslint-disable-next-line prefer-destructuring, @typescript-eslint/no-unsafe-assignment
         const value: Record<View.Folder["pk"], boolean> = this.formControls.folders.value;
 

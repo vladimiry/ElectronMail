@@ -29,14 +29,14 @@
                     <span *ngIf="plainItemsCount$ | async; let count;">({{ count }})</span>
                 </ng-container>
                 <i *ngIf="setFolderInProgress$ | async" class="fa fa-spinner fa-pulse fa-fw ml-2"></i>
-                <ul *dropdownMenu class="dropdown-menu" role="menu">
+                <ul *dropdownMenu class="dropdown-menu px-0 py-1" role="menu">
                     <li
                         (click)="dropdown.hide(); setFolder(folder.id)"
                         *ngFor="let folder of (moveToFolders$ | async)"
                         role="menuitem"
                     >
-                        <a class="dropdown-item" href="#">
-                            {{ folder.name }} ({{ folder.size }})
+                        <a class="dropdown-item px-2" href="#">
+                            <electron-mail-db-view-folder [folder]="folder"></electron-mail-db-view-folder>
                         </a>
                     </li>
                 </ul>

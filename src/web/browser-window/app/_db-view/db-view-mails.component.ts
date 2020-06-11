@@ -2,7 +2,6 @@ import {ChangeDetectionStrategy, Component, ElementRef, Input, OnDestroy, OnInit
 import {Observable, Subscription, combineLatest, fromEvent} from "rxjs";
 import {Store, select} from "@ngrx/store";
 import {distinctUntilChanged, map, mergeMap, take, tap, withLatestFrom} from "rxjs/operators";
-import {sortBy} from "remeda";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
@@ -172,9 +171,8 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
                 this.instance$.pipe(
                     map((value) => value.folders),
                     distinctUntilChanged(),
-                    map(({custom, system}) => ([...custom, ...system])),
+                    map(({custom, system}) => ([...system, ...custom])),
                     map((items) => items.filter(staticFilter)),
-                    map((items) => sortBy([...items], ({name}) => name)),
                 ),
                 this.instance$.pipe(
                     map((value) => value.selectedFolderData),

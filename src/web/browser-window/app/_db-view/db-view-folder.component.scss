@@ -2,6 +2,7 @@
 
 :host {
     display: flex;
+    white-space: nowrap;
 
     #{$app-prefix}-unread-badge {
         font-size: $app-font-size-base-small;

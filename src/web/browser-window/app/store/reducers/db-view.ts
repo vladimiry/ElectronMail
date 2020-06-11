@@ -8,37 +8,37 @@ import {mailDateComparatorDefaultsToDesc, walkConversationNodesTree} from "src/s
 
 export const featureName = "db-view";
 
-export interface MailSorter {
+export type MailSorter = NoExtraProperties<{
     title: string;
     prop: keyof View.Mail;
     desc?: boolean;
-}
+}>;
 
-export interface MailsBundle {
+export type MailsBundle = NoExtraProperties<{
     title: string;
     items: Array<{ mail: View.Mail; conversationSize: number }>;
     sorters: MailSorter[];
     sorterIndex: number;
-    paging: { page: number; end: number; nextPageSize: number; pageSize: number };
-}
+    paging: NoExtraProperties<{ page: number; end: number; nextPageSize: number; pageSize: number }>;
+}>
 
 export type MailsBundleKey = keyof Pick<Instance, "folderMailsBundle" | "folderConversationsBundle" | "searchMailsBundle">;
 
-export interface Instance {
-    folders: {
+export type Instance = NoExtraProperties<{
+    folders: NoExtraProperties<{
         system: View.Folder[];
         custom: View.Folder[];
-    };
+    }>;
     selectedFolderData?: Pick<View.Folder, "pk" | "mailFolderId">;
     folderMailsBundle: MailsBundle;
     folderConversationsBundle: MailsBundle;
     searchMailsBundle: MailsBundle;
-    selectedMail?: {
+    selectedMail?: NoExtraProperties<{
         listMailPk: Mail["pk"];
         rootNode: View.RootConversationNode;
         conversationMail: Mail;
-    };
-}
+    }>;
+}>;
 
 export interface State extends fromRoot.State {
     instances: Partial<Record<string, Instance>>;

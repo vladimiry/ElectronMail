@@ -5,7 +5,7 @@ import {distinctUntilChanged, map, mergeMap, take, tap, withLatestFrom} from "rx
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
-import {DB_VIDE_MAIL_DATA_PK_ATTR_NAME, DB_VIDE_MAIL_SELECTED_CLASS_NAME} from "src/web/browser-window/app/_db-view/const";
+import {DB_VIEW_MAIL_DATA_PK_ATTR_NAME, DB_VIEW_MAIL_SELECTED_CLASS_NAME} from "src/web/browser-window/app/_db-view/const";
 import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
 import {Folder, Mail} from "src/shared/model/database/view";
 import {MailsBundleKey, State} from "src/web/browser-window/app/store/reducers/db-view";
@@ -34,7 +34,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
     }
 
     private static resolveMailPk(mailElement: Element): Mail["pk"] {
-        const result = mailElement.getAttribute(DB_VIDE_MAIL_DATA_PK_ATTR_NAME);
+        const result = mailElement.getAttribute(DB_VIEW_MAIL_DATA_PK_ATTR_NAME);
 
         if (!result) {
             throw new Error(`Failed to resolve "pk" of mail element`);
@@ -328,14 +328,14 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
                 const toDeselect = this.resolveSelectedMailElement();
                 const toSelect: Element | null = selectedMail
                     ? this.elementRef.nativeElement
-                        .querySelector(`${mailComponentTagName}[${DB_VIDE_MAIL_DATA_PK_ATTR_NAME}='${selectedMail.listMailPk}']`)
+                        .querySelector(`${mailComponentTagName}[${DB_VIEW_MAIL_DATA_PK_ATTR_NAME}='${selectedMail.listMailPk}']`)
                     : null;
 
                 if (toDeselect) {
-                    toDeselect.classList.remove(DB_VIDE_MAIL_SELECTED_CLASS_NAME);
+                    toDeselect.classList.remove(DB_VIEW_MAIL_SELECTED_CLASS_NAME);
                 }
                 if (toSelect) {
-                    toSelect.classList.add(DB_VIDE_MAIL_SELECTED_CLASS_NAME);
+                    toSelect.classList.add(DB_VIEW_MAIL_SELECTED_CLASS_NAME);
                 }
             }),
         );
@@ -411,6 +411,6 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
 
     private resolveSelectedMailElement(): Element | null {
         return (this.elementRef.nativeElement)
-            .querySelector(`${mailComponentTagName}.${DB_VIDE_MAIL_SELECTED_CLASS_NAME}`);
+            .querySelector(`${mailComponentTagName}.${DB_VIEW_MAIL_SELECTED_CLASS_NAME}`);
     }
 }

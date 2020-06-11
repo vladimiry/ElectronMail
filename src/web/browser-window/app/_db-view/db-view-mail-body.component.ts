@@ -17,7 +17,7 @@ import {delay, distinctUntilChanged, filter, map, mergeMap, pairwise, take, with
 import {equals} from "remeda";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
-import {DB_VIDE_MAIL_SELECTED_CLASS_NAME} from "src/web/browser-window/app/_db-view/const";
+import {DB_VIEW_MAIL_SELECTED_CLASS_NAME} from "src/web/browser-window/app/_db-view/const";
 import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
 import {DbViewMailComponent} from "src/web/browser-window/app/_db-view/db-view-mail.component";
 import {Instance, State} from "src/web/browser-window/app/store/reducers/db-view";
@@ -138,7 +138,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
                     return Boolean(
                         ref.nativeElement.offsetParent
                         &&
-                        ref.nativeElement.classList.contains(DB_VIDE_MAIL_SELECTED_CLASS_NAME)
+                        ref.nativeElement.classList.contains(DB_VIEW_MAIL_SELECTED_CLASS_NAME)
                     );
                 });
                 if (selectedRef) {

@@ -33,7 +33,7 @@ const execShellPrintEnvWhitelist: ReadonlyArray<string> = [
 ] as const;
 
 export function formatStreamChunk( // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
-    chunk: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+    chunk: any, // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
 ): string {
     return Buffer.from(chunk, "utf-8").toString();
 }

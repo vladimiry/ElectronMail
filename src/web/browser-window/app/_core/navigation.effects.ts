@@ -39,7 +39,9 @@ export class NavigationEffects {
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             concatMap(({payload}) => from(this.electronService.ipcMainClient()("toggleBrowserWindow")(payload)).pipe(
                 mergeMap(() => EMPTY),
-            ))),
+            )),
+        ),
+        {dispatch: false},
     );
 
     openAboutWindow$ = createEffect(
@@ -48,7 +50,9 @@ export class NavigationEffects {
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             concatMap(() => from(this.electronService.ipcMainClient()("openAboutWindow")()).pipe(
                 mergeMap(() => EMPTY),
-            ))),
+            )),
+        ),
+        {dispatch: false},
     );
 
     openExternal$ = createEffect(
@@ -59,6 +63,7 @@ export class NavigationEffects {
                 mergeMap(() => EMPTY),
             )),
         ),
+        {dispatch: false},
     );
 
     openSettingsFolder$ = createEffect(
@@ -67,7 +72,9 @@ export class NavigationEffects {
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             concatMap(() => from(this.electronService.ipcMainClient()("openSettingsFolder")()).pipe(
                 mergeMap(() => EMPTY),
-            ))),
+            )),
+        ),
+        {dispatch: false},
     );
 
     logout$ = createEffect(
@@ -108,7 +115,9 @@ export class NavigationEffects {
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             concatMap(() => from(this.electronService.ipcMainClient()("quit")()).pipe(
                 mergeMap(() => EMPTY),
-            ))),
+            )),
+        ),
+        {dispatch: false},
     );
 
     constructor(

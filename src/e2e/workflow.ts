@@ -47,8 +47,7 @@ export const ENV = {
 };
 export const CI = Boolean(process.env.CI && (process.env.APPVEYOR || process.env.TRAVIS));
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-export const {name: PROJECT_NAME, version: PROJECT_VERSION}
+export const {name: PROJECT_NAME, version: PROJECT_VERSION} // eslint-disable-next-line @typescript-eslint/no-var-requires
     = require("package.json") as { name: string, version: string }; // tslint:disable-line: no-import-zones
 
 const rootDirPath = path.resolve(__dirname, process.cwd());

@@ -72,6 +72,7 @@ export class DbViewEffects {
                 );
             }),
         ),
+        {dispatch: false},
     );
 
     selectMailRequest$ = createEffect(
@@ -182,6 +183,7 @@ export class DbViewEffects {
                 );
             }),
         ),
+        {dispatch: false},
     );
 
     setMailFolder$ = createEffect(
@@ -207,6 +209,7 @@ export class DbViewEffects {
                 );
             }),
         ),
+        {dispatch: false},
     );
 
     toggleLocalDbMailsListViewMode$ = createEffect(
@@ -227,7 +230,8 @@ export class DbViewEffects {
                         }),
                     ),
                 );
-            })),
+            }),
+        ),
     );
 
     constructor(

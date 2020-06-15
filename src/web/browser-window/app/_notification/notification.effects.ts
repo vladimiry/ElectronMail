@@ -39,6 +39,7 @@ export class NotificationEffects {
                 );
             }),
         ),
+        {dispatch: false},
     );
 
     constructor(

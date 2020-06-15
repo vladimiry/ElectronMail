@@ -158,7 +158,6 @@ export const ENDPOINTS_DEFINITION = {
 
     staticInit: ActionType.Promise<void, DeepReadonly<{
         electronLocations: ElectronContextLocations;
-        linuxLikePlatform: boolean;
     }>>(),
 
     init: ActionType.Promise<void, InitResponse>(),

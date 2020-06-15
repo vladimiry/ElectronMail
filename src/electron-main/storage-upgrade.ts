@@ -4,8 +4,6 @@
 import _logger from "electron-log";
 import compareVersions from "compare-versions";
 import path from "path";
-import {delay, filter, take} from "rxjs/operators";
-import {merge} from "rxjs";
 
 import {AccountConfig} from "src/shared/model/account";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
@@ -18,7 +16,6 @@ import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {
     LAYOUT_MODES,
-    ONE_SECOND_MS,
     PACKAGE_VERSION,
     PROTON_API_ENTRY_PRIMARY_VALUE,
     PROTON_API_ENTRY_URLS,
@@ -26,7 +23,6 @@ import {
     ZOOM_FACTORS,
 } from "src/shared/constants";
 import {curryFunctionMembers, pickBaseConfigProperties} from "src/shared/util";
-import {linuxLikePlatform} from "src/electron-main/util";
 
 const logger = curryFunctionMembers(_logger, "[src/electron-main/storage-upgrade]");
 
@@ -238,9 +234,9 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         logger.info(loggerPrefix);
 
         function trayIconRelatedUpdate(
-            {prevKey, key, keyTitle}:
-                | Readonly<{ prevKey: "startMinimized"; key: keyof Pick<BaseConfig, "startHidden">; keyTitle: string }>
-                | Readonly<{ prevKey: "closeToTray"; key: keyof Pick<BaseConfig, "hideOnClose">; keyTitle: string }>,
+            {prevKey, key}:
+                | Readonly<{ prevKey: "startMinimized"; key: keyof Pick<BaseConfig, "startHidden"> }>
+                | Readonly<{ prevKey: "closeToTray"; key: keyof Pick<BaseConfig, "hideOnClose"> }>,
         ): void {
             if (typeof config[key] === "boolean") {
                 return;
@@ -248,67 +244,15 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
 
             type PrevConfig = { [k in typeof prevKey]?: boolean };
             const {[prevKey]: prevValue} = config as PrevConfig;
-            delete (config as PrevConfig).startMinimized;
+            delete (config as PrevConfig)[prevKey];
 
-            config[key] = linuxLikePlatform() || typeof prevValue !== "boolean"
-                // set the default value if any conditions met:
-                //   - Linux system
-                //   - no saved before v4.2.3 value detected
+            config[key] = typeof prevValue !== "boolean"
                 ? INITIAL_STORES.config()[key]
-                // otherwise just rename "startMinimized => startHidden"
                 : prevValue;
-
-            setTimeout((): void => {
-                const showValueResetNotification = (
-                    linuxLikePlatform()
-                    &&
-                    // value existed and has been changed/reset
-                    typeof prevValue === "boolean" && config[key] !== prevValue
-                );
-
-                logger.info(
-                    loggerPrefix,
-                    JSON.stringify({
-                        linuxLikePlatform: linuxLikePlatform(),
-                        prevKey,
-                        key,
-                        prevValue,
-                        value: config[key],
-                        showValueResetNotification
-                    }),
-                );
-
-                if (!showValueResetNotification) {
-                    return;
-                }
-
-                merge(
-                    IPC_MAIN_API_NOTIFICATION$.pipe(filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.Bootstrap)),
-                    IPC_MAIN_API_NOTIFICATION$.pipe(filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.ActivateBrowserWindow)),
-                ).pipe(
-                    take(1),
-                    delay(ONE_SECOND_MS * 3),
-                ).subscribe((notification) => {
-                    logger.info(
-                        loggerPrefix,
-                        "Showing message",
-                        JSON.stringify({notification}),
-                    );
-
-                    IPC_MAIN_API_NOTIFICATION$.next(
-                        IPC_MAIN_API_NOTIFICATION_ACTIONS.InfoMessage({
-                            message: [
-                                `The "${keyTitle}" flag has been reset. `,
-                                `See https://github.com/vladimiry/ElectronMail/issues/254 for details.`,
-                            ].join(""),
-                        }),
-                    );
-                });
-            });
         }
 
-        trayIconRelatedUpdate({prevKey: "startMinimized", key: "startHidden", keyTitle: "Start minimized to tray"});
-        trayIconRelatedUpdate({prevKey: "closeToTray", key: "hideOnClose", keyTitle: "Close to tray"});
+        trayIconRelatedUpdate({prevKey: "startMinimized", key: "startHidden"});
+        trayIconRelatedUpdate({prevKey: "closeToTray", key: "hideOnClose"});
 
         ((): void => {
             const key: keyof Pick<Config, "layoutMode"> = "layoutMode";

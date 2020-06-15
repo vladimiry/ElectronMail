@@ -6,14 +6,9 @@ import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Model as StoreModel} from "fs-json-store";
 
 import {Context} from "./model";
-import {PLATFORM} from "src/electron-main/constants";
 import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[src/electron-main/util]");
-
-export function linuxLikePlatform(): boolean {
-    return PLATFORM !== "win32" && PLATFORM !== "darwin";
-}
 
 export function formatFileUrl(pathname: string): string {
     return url.format({pathname, protocol: "file:", slashes: true});

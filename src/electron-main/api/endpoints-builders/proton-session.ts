@@ -1,11 +1,10 @@
-import {concatMap} from "rxjs/operators";
+import {concatMap, take} from "rxjs/operators";
 import {from, race, throwError, timer} from "rxjs";
 import {pick} from "remeda";
 
 import {AccountPersistentSession} from "src/shared/model/account";
 import {Context} from "src/electron-main/model";
 import {IpcMainApiEndpoints} from "src/shared/api/main";
-import {ONE_SECOND_MS} from "src/shared/constants";
 import {resolveInitialisedSession} from "src/electron-main/session";
 
 // TODO enable minimal logging
@@ -127,7 +126,7 @@ export async function buildEndpoints(
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async resetProtonBackendSession({login}) {
             const session = resolveInitialisedSession({login});
-            const timeoutMs = ONE_SECOND_MS * 3;
+            const {timeouts: {clearSessionStorageData: timeoutMs}} = await ctx.config$.pipe(take(1)).toPromise();
 
             await race(
                 from(
@@ -142,4 +141,3 @@ export async function buildEndpoints(
 
     return endpoints;
 }
-

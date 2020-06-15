@@ -336,6 +336,14 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             }
         })();
     },
+    "4.6.0": (config) => {
+        (() => {
+            const timeoutsKey: keyof Pick<Config["timeouts"], "clearSessionStorageData"> = "clearSessionStorageData";
+            if (typeof config.timeouts[timeoutsKey] !== "number") {
+                config.timeouts[timeoutsKey] = INITIAL_STORES.config().timeouts[timeoutsKey];
+            }
+        })();
+    },
     // WARN needs to be the last updater
     "100.0.0": (config) => {
         // ensuring default base props are set

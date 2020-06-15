@@ -30,6 +30,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
         domElementsResolving: number;
         defaultApiCall: number;
         indexingBootstrap: number;
+        clearSessionStorageData: number;
     };
     updateCheck: {
         releasesUrl: string;

@@ -8,7 +8,6 @@ import {promisify} from "util";
 
 import {Context} from "src/electron-main/model";
 import {WEB_PROTOCOL_SCHEME} from "src/shared/constants";
-import {resolveOrRejectIfError} from "src/shared/util";
 
 const fsAsync = {
     stat: promisify(fs.stat),
@@ -31,27 +30,25 @@ export function registerStandardSchemes(ctx: Context): void {
 }
 
 // TODO electron: get rid of "baseURLForDataURL" workaround, see https://github.com/electron/electron/issues/20700
-export async function registerWebFolderFileProtocol(ctx: Context, session: Session): Promise<void> {
+export function registerWebFolderFileProtocol(ctx: Context, session: Session): void {
     const webPath = path.join(ctx.locations.appDir, "./web");
-
-    return new Promise((resolve, reject) => {
-        session.protocol.registerFileProtocol(
-            WEB_PROTOCOL_SCHEME,
-            (request, callback) => {
-                const url = new URL(request.url);
-                const resource = path.normalize(
-                    path.join(webPath, url.host, url.pathname),
-                );
-
-                if (!pathIsInside(resource, webPath)) {
-                    throw new Error(`Forbidden file system resource "${resource}"`);
-                }
-
-                callback({path: resource});
-            },
-            resolveOrRejectIfError(resolve, reject),
-        );
-    });
+    const scheme = WEB_PROTOCOL_SCHEME;
+    const registered = session.protocol.registerFileProtocol(
+        scheme,
+        (request, callback) => {
+            const url = new URL(request.url);
+            const resource = path.normalize(
+                path.join(webPath, url.host, url.pathname),
+            );
+            if (!pathIsInside(resource, webPath)) {
+                throw new Error(`Forbidden file system resource "${resource}"`);
+            }
+            callback({path: resource});
+        },
+    );
+    if (!registered) {
+        throw new Error(`Failed to register "${scheme}" protocol mapped to "${webPath}" directory`);
+    }
 }
 
 async function resolveFileSystemResourceLocation(
@@ -89,22 +86,21 @@ export async function registerSessionProtocols(ctx: DeepReadonly<Context>, sessi
     await app.whenReady();
 
     for (const {scheme, directory} of ctx.locations.protocolBundles) {
-        await new Promise((resolve, reject) => {
-            session.protocol.registerBufferProtocol(
-                scheme,
-                async (request, callback) => {
-                    const file = await resolveFileSystemResourceLocation(directory, request);
-                    const data = await fsAsync.readFile(file);
-                    const mimeType = mimeTypes.lookup(path.basename(file));
-                    const result = mimeType
-                        ? {data, mimeType}
-                        : data;
+        const registered = session.protocol.registerBufferProtocol(
+            scheme,
+            async (request, callback) => {
+                const file = await resolveFileSystemResourceLocation(directory, request);
+                const data = await fsAsync.readFile(file);
+                const mimeType = mimeTypes.lookup(path.basename(file));
+                const result = mimeType
+                    ? {data, mimeType}
+                    : data;
 
-                    callback(result);
-                },
-                resolveOrRejectIfError(resolve, reject),
-            );
-        });
+                callback(result);
+            },
+        );
+        if (!registered) {
+            throw new Error(`Failed to register "${scheme}" protocol mapped to "${directory}" directory`);
+        }
     }
 }
-

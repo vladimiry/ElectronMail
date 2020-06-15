@@ -13,7 +13,7 @@ import {registerWebFolderFileProtocol} from "src/electron-main/protocol";
 import {setUpPowerMonitorNotification} from "src/electron-main/power-monitor";
 
 export async function appReadyHandler(ctx: Context): Promise<void> {
-    await registerWebFolderFileProtocol(ctx, getDefaultSession());
+    registerWebFolderFileProtocol(ctx, getDefaultSession());
 
     await initSession(ctx, getDefaultSession());
 

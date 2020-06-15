@@ -489,13 +489,3 @@ export const resolvePackagedWebClientApp: (
         return result;
     }
 )();
-
-export const resolveOrRejectIfError = (resolve: () => void, reject: (error: Error) => void) => {
-    return (error: Error): void => {
-        if (error) {
-            reject(error);
-            return;
-        }
-        resolve();
-    };
-};

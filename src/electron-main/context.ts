@@ -92,7 +92,7 @@ function initLocations(
         userDataDir,
         icon,
         trayIcon: icon,
-        numbersFont: appRelativePath("./assets/numbers.ttf"),
+        trayIconFont: appRelativePath("./assets/fonts/tray-icon/roboto-derivative.ttf"),
         browserWindowPage: formatFileUrl(
             appRelativePath("./web/", WEB_CHUNK_NAMES["browser-window"], "index.html"),
         ),

@@ -3,8 +3,6 @@ import {promisify} from "util";
 
 import {LOG, fetchUrl} from "scripts/lib";
 
-const [, , OUTPUT_FILE] = process.argv as [null, null, string];
-
 const googleApiUrl = `https://fonts.googleapis.com/css?family=Roboto&text=${encodeURIComponent("0123456789+")}`;
 const fontRegExp = /url\(([^)]+)\)/gm;
 
@@ -19,7 +17,7 @@ const fontRegExp = /url\(([^)]+)\)/gm;
     const [, fontUrl] = url;
     const fontResponse = await fetchUrl([fontUrl]);
 
-    await promisify(fs.writeFile)(OUTPUT_FILE, await fontResponse.buffer());
+    await promisify(fs.writeFile)("./src/assets/dist/fonts/tray-icon/roboto-derivative.ttf", await fontResponse.buffer());
 })().catch((error) => {
     LOG(error);
     process.exit(1);

@@ -24,7 +24,7 @@ export type ElectronContextLocations = Readonly<{
     aboutBrowserWindowPage: string;
     searchInPageBrowserViewPage: string;
     icon: string;
-    numbersFont: string;
+    trayIconFont: string;
     trayIcon: string;
     userDataDir: string;
     vendorsAppCssLinkHref: string;

@@ -83,7 +83,7 @@ export async function buildEndpoints(
             if (unread > 0) {
                 const {icon, overlay} = await unreadNative(
                     unread,
-                    ctx.locations.numbersFont,
+                    ctx.locations.trayIconFont,
                     canvas,
                     {
                         ...config.unread,

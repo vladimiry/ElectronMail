@@ -1,7 +1,10 @@
 import {BehaviorSubject, EMPTY, Observable, Subject, of} from "rxjs";
-import {OnChanges, OnDestroy, SimpleChanges} from "@angular/core";
+import {Directive, OnChanges, OnDestroy, SimpleChanges} from "@angular/core";
 import {distinctUntilChanged, mergeMap, takeUntil} from "rxjs/operators";
 
+@Directive()
+// so weird not single-purpose directive huh, https://github.com/angular/angular/issues/30080#issuecomment-539194668
+// eslint-disable-next-line @angular-eslint/directive-class-suffix
 export abstract class NgChangesObservableComponent implements OnChanges, OnDestroy {
     protected ngChanges = new BehaviorSubject<Partial<{ [k in keyof this]: this[k] }>>({});
 

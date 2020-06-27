@@ -1,4 +1,11 @@
 {
   "extends": "../tsconfig.json",
+  "include": [
+    "../../../../node_modules/@types/jasmine/ts3.1/index.d.ts",
+    "../../../../src/@types/**/*",
+    "../../../../src/web/@types/index.d.ts",
+    "../../../../src/web/@types/electron-exposure.d.ts",
+    "../**/*"
+  ],
   "exclude": []
 }

@@ -1,4 +1,4 @@
-import {AfterViewInit, ElementRef, Injector, OnDestroy, QueryList, ViewChildren} from "@angular/core";
+import {AfterViewInit, Directive, ElementRef, Injector, OnDestroy, QueryList, ViewChildren} from "@angular/core";
 import {FormControl, Validators} from "@angular/forms";
 import {Observable, Subscription} from "rxjs";
 import {Store, select} from "@ngrx/store";
@@ -9,6 +9,9 @@ import {ONE_SECOND_MS} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 
+@Directive()
+// so weird not single-purpose directive huh, https://github.com/angular/angular/issues/30080#issuecomment-539194668
+// eslint-disable-next-line @angular-eslint/directive-class-suffix
 export abstract class LoginBaseComponent implements AfterViewInit, OnDestroy {
     readonly password = new FormControl(
         null,

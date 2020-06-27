@@ -74,7 +74,7 @@ const routes: Routes = [
                 path: "",
                 loadChildren: async () => {
                     return (
-                        await import(/* webpackChunkName: \"_notification\" */ "./_notification/notification.module")
+                        await import(/* webpackChunkName: "_notification" */ "./_notification/notification.module")
                     ).NotificationModule;
                 },
             },

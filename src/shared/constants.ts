@@ -79,8 +79,8 @@ export const PROVIDER_REPOS: DeepReadonly<Record<"WebClient" | "proton-mail-sett
         repoRelativeDistDir: "./build",
         baseDir: "", // TODO define model as {baseDir?: string} instead of using empty string value
         repo: "https://github.com/ProtonMail/WebClient.git",
-        commit: "e86314524026b140efdaa69c055d197c7b01f77c",
-        version: "4.0.0-beta16",
+        commit: "bf1bf3301a9a32c5c1b22e0a34238a0e6328fa75",
+        version: "4.0.0-beta18",
         protonPackAppConfig: {
             // TODO proton-v4: make sure this value comes to the build after 4.0.0-beta7+ update
             //      currently it's hadrcoded in the WebClient code
@@ -126,8 +126,8 @@ export const PROVIDER_REPOS: DeepReadonly<Record<"WebClient" | "proton-mail-sett
         repoRelativeDistDir: "./dist",
         baseDir: "calendar",
         repo: "https://github.com/ProtonMail/proton-calendar.git",
-        commit: "e6b88ab69eab9f1b1e0bce4da04a3a8c6a428a3c",
-        version: "4.0.0-beta.4",
+        commit: "e39caf505352b803d0dfc21ae38caa4b524068e7",
+        version: "4.0.0-beta.5",
         protonPackAppConfig: {
             clientId: "WebCalendar",
         },

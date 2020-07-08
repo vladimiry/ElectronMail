@@ -1,8 +1,8 @@
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
 import postCssUrl from "postcss-url";
-import webpackMerge from "webpack-merge";
 import {Configuration, RuleSetUseItem} from "webpack";
+import {merge as webpackMerge} from "webpack-merge";
 
 import {BuildEnvironment} from "webpack-configs/model";
 import {ENVIRONMENT, ENVIRONMENT_STATE, buildBaseConfig, outputRelativePath, srcRelativePath, typescriptLoaderRule} from "./../lib";

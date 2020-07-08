@@ -1,7 +1,7 @@
 import path from "path";
-import webpackMerge from "webpack-merge";
 import {Configuration, DefinePlugin, RuleSetRule} from "webpack";
 import {Options as TsLoaderOptions} from "ts-loader";
+import {merge as webpackMerge} from "webpack-merge";
 
 import {BuildEnvironment} from "./model";
 import {LOG, LOG_LEVELS} from "scripts/lib";

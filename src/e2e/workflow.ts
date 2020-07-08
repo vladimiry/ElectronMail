@@ -359,6 +359,9 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             const {client} = t.context.app;
             const els = await client.elements(`.list-group.accounts-list > electron-mail-account-title`);
 
+            // TODO e2e => spectron => webdriver: sync e2e code with @webdriver v4 => v6" bump
+            //      see https://github.com/electron-userland/spectron/pull/631
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return els.value.length;
         },
 

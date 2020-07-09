@@ -1,13 +1,7 @@
-// TODO remove the "tslint:disable:await-promise" when spectron gets proper declaration files
-// TODO track this issue https://github.com/electron-userland/spectron/issues/349
-/* eslint-disable @typescript-eslint/await-thenable, @typescript-eslint/no-misused-promises */
-
-// TODO drop eslint disabling
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
-
 import {LoginFieldContainer} from "src/shared/model/container";
 import {ONE_SECOND_MS} from "src/shared/constants";
-import {accountBadgeCssSelector, initApp, test} from "./workflow";
+import {accountBadgeCssSelector} from "src/e2e/lib";
+import {initApp, test} from "./workflow";
 
 // protonmail account to login during e2e tests running
 const RUNTIME_ENV_E2E_PROTONMAIL_LOGIN = `ELECTRON_MAIL_E2E_PROTONMAIL_LOGIN`;
@@ -41,14 +35,16 @@ for (const {login, password, twoFactorCode, unread} of ([
 
         try {
             try {
-                state.parsedUnreadText = await t.context.app.client.getText(unreadBadgeSelector);
+                state.parsedUnreadText = await t.context.app.client
+                    .$(unreadBadgeSelector)
+                    .then(async (el) => el.getText());
             } catch (e) {
                 t.fail(`failed to locate DOM element by "${unreadBadgeSelector}" selector after the "${pauseMs}" milliseconds pause`);
                 throw e;
             }
 
-            const parsedUnread = Number(state.parsedUnreadText.replace(/\D/g, ""));
-            t.true(parsedUnread >= unread, `parsedUnread(${parsedUnread}) >= unread(${unread})`);
+            const parsedUnread = Number(state.parsedUnreadText?.replace(/\D/g, ""));
+            t.true(!isNaN(parsedUnread) && parsedUnread >= unread, `parsedUnread(${parsedUnread}) >= unread(${unread})`);
         } finally {
             await workflow.destroyApp();
         }

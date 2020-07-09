@@ -11,7 +11,7 @@ yarn app:dist
 # https://github.com/electron/electron/issues/17972
 sudo ./scripts/prepare-chrome-sandbox.sh ./node_modules/electron/dist/chrome-sandbox
 
-# yarn test:e2e
+yarn test:e2e
 
 # --env-file: https://github.com/electron-userland/electron-builder/issues/2450
 

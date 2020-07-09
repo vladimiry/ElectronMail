@@ -1,10 +1,3 @@
-// TODO remove the "tslint:disable:await-promise" when spectron gets proper declaration files
-// TODO track this issue https://github.com/electron-userland/spectron/issues/349
-/* eslint-disable @typescript-eslint/await-thenable, @typescript-eslint/no-misused-promises */
-
-// TODO drop eslint disabling
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
-
 import electron from "electron";
 import fs from "fs";
 import fsExtra from "fs-extra";
@@ -13,7 +6,6 @@ import randomString from "randomstring";
 import sinon from "sinon";
 import ava, {ExecutionContext, TestInterface} from "ava";
 import {Application} from "spectron";
-import {promisify} from "util";
 
 import {
     BINARY_NAME,
@@ -24,6 +16,7 @@ import {
     RUNTIME_ENV_E2E,
     RUNTIME_ENV_USER_DATA_DIR,
 } from "src/shared/constants";
+import {accountCssSelector, saveScreenshot, waitForClickable, waitForEnabled} from "src/e2e/lib";
 
 export interface TestContext {
     testStatus: "initial" | "success" | "fail";
@@ -41,10 +34,12 @@ export interface TestContext {
 }
 
 export const test = ava as TestInterface<TestContext>;
+
 export const ENV = {
     masterPassword: `master-password-${randomString.generate({length: 8})}`,
     loginPrefix: `login-${randomString.generate({length: 8})}`,
 };
+
 export const CI = Boolean(process.env.CI && (process.env.APPVEYOR || process.env.TRAVIS));
 
 export const {name: PROJECT_NAME, version: PROJECT_VERSION} // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -53,6 +48,7 @@ export const {name: PROJECT_NAME, version: PROJECT_VERSION} // eslint-disable-ne
 const rootDirPath = path.resolve(__dirname, process.cwd());
 const appDirPath = path.join(rootDirPath, "./app");
 const mainScriptFilePath = path.join(appDirPath, "./electron-main.js");
+
 const CONF = {
     timeouts: {
         element: ONE_SECOND_MS,
@@ -62,77 +58,11 @@ const CONF = {
         logout: ONE_SECOND_MS * (CI ? 6 : 3),
         loginFilledOnce: ONE_SECOND_MS * (CI ? 45 : 15),
     },
-};
+} as const;
+
 const GLOBAL_STATE = {
     loginPrefixCount: 0,
 };
-
-export async function saveScreenshot(t: ExecutionContext<TestContext>): Promise<string | void> {
-    if (true) { // eslint-disable-line no-constant-condition
-        // TODO get back "saveScreenshot" implementation
-        return;
-    }
-
-    if (!t.context.app || !t.context.app.browserWindow) {
-        return;
-    }
-
-    const file = path.join(
-        t.context.outputDirPath,
-        `sreenshot-${t.title}-${new Date().toISOString()}.png`.replace(/[^A-Za-z0-9.]/g, "_"),
-    );
-    const image = await t.context.app.browserWindow.capturePage();
-
-    await promisify(fs.writeFile)(file, image);
-
-    // eslint-disable-next-line no-console
-    console.info(`Screenshot produced: ${file}`);
-
-    return file;
-}
-
-export async function printElectronLogs(t: ExecutionContext<TestContext>): Promise<void> {
-    /* eslint-disable no-console */
-    if (!t.context.app || !t.context.app.client) {
-        return;
-    }
-
-    await t.context.app.client.getMainProcessLogs()
-        .then((logs) => logs.forEach((log) => console.log(log)));
-
-    await t.context.app.client.getRenderProcessLogs()
-        .then((logs) => logs.forEach((log) => {
-            console.log(log.level);
-            console.log(log.message);
-            console.log(
-                (log as any).source, // eslint-disable-line @typescript-eslint/no-explicit-any
-            );
-
-        }));
-    /* eslint-enable no-console */
-}
-
-export async function catchError(t: ExecutionContext<TestContext>, error?: Error): Promise<void> {
-    try {
-        await saveScreenshot(t);
-    } catch {
-        // NOOP
-    }
-
-    await printElectronLogs(t);
-
-    if (typeof error !== "undefined") {
-        throw error;
-    }
-}
-
-export function accountCssSelector(zeroStartedAccountIndex = 0): string {
-    return `.list-group.accounts-list > electron-mail-account-title:nth-child(${zeroStartedAccountIndex + 1})`;
-}
-
-export function accountBadgeCssSelector(zeroStartedAccountIndex = 0): string {
-    return `${accountCssSelector(zeroStartedAccountIndex)} .badge`;
-}
 
 function mkOutputDirs(dirs: string[]): void {
     dirs.forEach((dir) => fsExtra.ensureDirSync(dir));
@@ -181,26 +111,41 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
                 await workflow.loginPageUrlTest(`login: "settings-setup" page url`);
             }
 
-            await client.waitForVisible(selector = `[formControlName="password"]`, CONF.timeouts.element);
-            await client.setValue(selector, ENV.masterPassword);
+            await waitForEnabled(
+                client,
+                "[formControlName=password]",
+                {callback: async (el) => el.setValue(ENV.masterPassword), timeout: CONF.timeouts.element},
+            );
 
             if (options.setup) {
-                await client.waitForVisible(selector = `[formControlName="passwordConfirm"]`, CONF.timeouts.element);
-                await client.setValue(selector, ENV.masterPassword);
+                await waitForEnabled(
+                    client,
+                    "[formControlName=passwordConfirm]",
+                    {callback: async (el) => el.setValue(ENV.masterPassword), timeout: CONF.timeouts.element},
+                );
             }
 
             if (options.savePassword) {
-                await client.waitForVisible(selector = `[formControlName="savePassword"]`, CONF.timeouts.element);
-                await client.click(selector);
+                await waitForClickable(
+                    client,
+                    "[formControlName=savePassword]",
+                    {callback: async (el) => el.click(), timeout: CONF.timeouts.element},
+                );
             }
 
-            await client.click(selector = `button[type="submit"]`);
+            await waitForClickable(
+                client,
+                "button[type=submit]",
+                {callback: async (el) => el.click(), timeout: CONF.timeouts.element},
+            );
 
             await (async (): Promise<void> => {
                 selector = `electron-mail-accounts .list-group.accounts-list`;
                 const timeout = CONF.timeouts.encryption * 2;
                 try {
-                    await t.context.app.client.waitForVisible(selector, timeout);
+                    await client
+                        .$(selector)
+                        .then(async (el) => el.waitForDisplayed({timeout}));
                 } catch (error) {
                     t.fail(`Failed to resolve "${selector}" element within ${timeout}ms`);
                     throw error;
@@ -256,39 +201,78 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             await workflow.openSettingsModal(0);
 
             // select adding account menu item
-            await client.waitForVisible(selector = `#goToAccountsSettingsLink`);
-            await workflow._click(selector);
+            await waitForClickable(
+                client,
+                "#goToAccountsSettingsLink",
+                {callback: async (el) => el.click()},
+            );
 
             // required: entryUrl
-            await client.waitForVisible(selector = `#accountEditFormEntryUrlField .ng-select-container`);
-            await workflow._mousedown(selector);
+            await waitForClickable(
+                client,
+                selector = "#accountEditFormEntryUrlField .ng-select-container",
+            );
+            await t.context.app.client.execute(
+                (selector) => {
+                    const el = document.querySelector<HTMLButtonElement>(selector);
+                    if (!el) {
+                        throw new Error(`Failed to resolve element using "${String(selector)}" selector`);
+                    }
+                    el.dispatchEvent(new MouseEvent("mousedown"));
+                },
+                [selector],
+            );
+
             const entryUrlIndex = account.entryUrlValue
                 ? resolveEntryUrlIndexByValue(account.entryUrlValue)
                 : 0;
-            await client.waitForVisible(selector = `[entry-url-option-index="${entryUrlIndex}"]`);
-            await workflow._click(selector);
+            await waitForClickable(
+                client,
+                `[entry-url-option-index="${entryUrlIndex}"]`,
+                {callback: async (el) => el.click()},
+            );
 
             // required: login
-            await client.setValue(`[formcontrolname=login]`, login);
+            await waitForEnabled(
+                client,
+                "[formControlName=login]",
+                {callback: async (el) => el.setValue(login)},
+            );
 
             if (account.password) {
-                await client.setValue(`[formcontrolname=password]`, account.password);
+                const {password} = account;
+                await waitForEnabled(
+                    client,
+                    "[formControlName=password]",
+                    {callback: async (el) => el.setValue(password)},
+                );
             }
 
             if (account.twoFactorCode) {
-                await client.setValue(`[formcontrolname=twoFactorCode]`, account.twoFactorCode);
+                const {twoFactorCode} = account;
+                await waitForEnabled(
+                    client,
+                    "[formControlName=twoFactorCode]",
+                    {callback: async (el) => el.setValue(twoFactorCode)},
+                );
             }
 
             const expectedAccountsCount = await workflow.accountsCount() + 1;
 
-            await workflow._click(`.modal-body button[type="submit"]`);
+            await waitForClickable(
+                client,
+                `.modal-body button[type="submit"]`,
+                {callback: async (el) => el.click()},
+            );
 
             // account got added to the settings modal account list
             await (async (): Promise<void> => {
                 selector = `.modal-body .d-inline-block > span[data-login='${login}']`;
                 const timeout = CONF.timeouts.encryption;
                 try {
-                    await t.context.app.client.waitForVisible(selector, timeout);
+                    await t.context.app.client
+                        .$(selector)
+                        .then(async (el) => el.waitForDisplayed({timeout}));
                 } catch (error) {
                     t.fail(`Failed to resolve "${selector}" element within ${timeout}ms`);
                     throw error;
@@ -307,7 +291,9 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
                 selector = `${accountCssSelector(accountIndex)} > .login-filled-once`;
                 const timeout = CONF.timeouts.loginFilledOnce;
                 try {
-                    await t.context.app.client.waitForVisible(selector, timeout);
+                    await t.context.app.client
+                        .$(selector)
+                        .then(async (el) => el.waitForDisplayed({timeout}));
                 } catch (error) {
                     await saveScreenshot(t);
                     t.fail(`Failed to resolve "${selector}" element within ${timeout}ms`);
@@ -317,52 +303,23 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             })();
         },
 
-        // TODO electron@5 workaround, remove this method
-        //      it stopped to work since electron@v5, adding second account case (seconds button click)
-        async _click(_selector: string): Promise<void> {
-            await t.context.app.client.execute(
-                (selector) => {
-                    const el = document.querySelector<HTMLButtonElement>(selector);
-                    if (!el) {
-                        throw new Error(`Failed to resolve element using "${String(selector)}" selector`);
-                    }
-                    el.click();
-                },
-                [_selector],
-            );
-        },
-
-        // TODO electron@5 workaround, remove this method
-        //      it stopped to work since electron@v5, adding second account case (seconds button click)
-        async _mousedown(_selector: string): Promise<void> {
-            await t.context.app.client.execute(
-                (selector) => {
-                    const el = document.querySelector<HTMLButtonElement>(selector);
-                    if (!el) {
-                        throw new Error(`Failed to resolve element using "${String(selector)}" selector`);
-                    }
-                    el.dispatchEvent(new MouseEvent("mousedown"));
-                },
-                [_selector],
-            );
-        },
-
         async selectAccount(zeroStartedAccountIndex = 0): Promise<void> {
             const {client} = t.context.app;
 
-            await client.click(accountCssSelector(zeroStartedAccountIndex));
+            await waitForClickable(
+                client,
+                accountCssSelector(zeroStartedAccountIndex),
+                {callback: async (el) => el.click()},
+            );
+
             await client.pause(CONF.timeouts.elementTouched);
             // TODO make sure account is selected
         },
 
         async accountsCount(): Promise<number> {
-            const {client} = t.context.app;
-            const els = await client.elements(`.list-group.accounts-list > electron-mail-account-title`);
-
-            // TODO e2e => spectron => webdriver: sync e2e code with @webdriver v4 => v6" bump
-            //      see https://github.com/electron-userland/spectron/pull/631
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            return els.value.length;
+            return (
+                await t.context.app.client.$$(`.list-group.accounts-list > electron-mail-account-title`)
+            ).length;
         },
 
         async openSettingsModal(index?: number): Promise<void> {
@@ -371,30 +328,52 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
 
             // open modal if not yet opened
             try {
-                await client.waitForVisible(listGroupSelector, ONE_SECOND_MS);
+                await t.context.app.client
+                    .$(listGroupSelector)
+                    .then(async (el) => el.waitForDisplayed({timeout: ONE_SECOND_MS}));
             } catch (e) {
-                await client.click(`.controls .dropdown-toggle`);
-                await client.click(`#optionsMenuItem`);
+                await waitForClickable(
+                    client,
+                    ".controls .dropdown-toggle",
+                    {callback: async (el) => el.click()},
+                );
+                await waitForClickable(
+                    client,
+                    "#optionsMenuItem",
+                    {callback: async (el) => el.click()},
+                );
             }
 
             // making sure modal is opened TODO consider test by url too
-            await client.waitForVisible(listGroupSelector);
+            await t.context.app.client
+                .$(listGroupSelector)
+                .then(async (el) => el.waitForDisplayed());
 
             if (typeof index === "undefined") {
                 return;
             }
 
-            await client.click(`${listGroupSelector} .list-group-item-action:nth-child(${index + 1})`);
+            await waitForClickable(
+                client,
+                `${listGroupSelector} .list-group-item-action:nth-child(${index + 1})`,
+                {callback: async (el) => el.click()},
+            );
 
             if (index === 0) {
-                await client.waitForVisible(`.modal-body electron-mail-accounts`);
+                await t.context.app.client
+                    .$(`.modal-body electron-mail-accounts`)
+                    .then(async (el) => el.waitForDisplayed());
             }
         },
 
         async closeSettingsModal(): Promise<void> {
             const {client} = t.context.app;
 
-            await client.click(`button.close`);
+            await waitForClickable(
+                client,
+                "button.close",
+                {callback: async (el) => el.click()},
+            );
             await client.pause(CONF.timeouts.elementTouched);
 
             // making sure modal is closed (consider testing by DOM scanning)
@@ -408,16 +387,24 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             const {client} = t.context.app;
             let selector = "";
 
-            await client.waitForVisible(selector = `electron-mail-accounts .controls .dropdown-toggle`);
-            await client.click(selector);
-            await client.waitForVisible(selector = `#logoutMenuItem`);
-            await workflow._click(selector);
+            await waitForClickable(
+                client,
+                "electron-mail-accounts .controls .dropdown-toggle",
+                {callback: async (el) => el.click()},
+            );
+            await waitForClickable(
+                client,
+                "#logoutMenuItem",
+                {callback: async (el) => el.click()},
+            );
 
             await (async (): Promise<void> => {
                 selector = `#loginFormPasswordControl`;
                 const timeout = CONF.timeouts.logout;
                 try {
-                    await t.context.app.client.waitForVisible(selector, timeout);
+                    await t.context.app.client
+                        .$(selector)
+                        .then(async (el) => el.waitForDisplayed({timeout}));
                 } catch (error) {
                     await saveScreenshot(t);
                     t.fail(`Failed to resolve "${selector}" element within ${timeout}ms`);
@@ -470,7 +457,7 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
 
     t.context.app = new Application({
         // TODO consider running e2e tests on compiled/binary app too: path.join(rootPath, "./dist/linux-unpacked/electron-mail")
-        path: electron as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        path: electron as any, // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
         requireName: "electronRequire",
         env: {
             [RUNTIME_ENV_E2E]: String(true),
@@ -492,13 +479,7 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
     });
 
     // start
-    try {
-        await t.context.app.start();
-    } catch (e) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-console, @typescript-eslint/restrict-template-expressions
-        console.log(`chromeDriver.logLines:\n${(t.context.app as any).chromeDriver.logLines.join("\n")}`);
-        throw e;
-    }
+    await t.context.app.start();
     t.is(t.context.app.isRunning(), true);
     await t.context.app.client.waitUntilWindowLoaded();
 
@@ -506,8 +487,10 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
     const {browserWindow} = t.context.app;
 
     await (async (): Promise<void> => {
-        const stubElement = t.context.app.client.$(".e2e-stub-element");
-        const text = await stubElement.getText();
+        const text = await t.context.app.client
+            .$(".e2e-stub-element")
+            .then(async (el) => el.getText());
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const {title: pageTitle, userAgent}: { title: string; userAgent: string } = JSON.parse(text);
 
         t.is(pageTitle, "", `page title should be empty`);
@@ -522,19 +505,26 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
         );
     })();
 
-    // t.false(await browserWindow.webContents.isDevToolsOpened(), "browserWindow's dev tools should be closed");
     t.false(
-        await (browserWindow as any).isDevToolsOpened(), // eslint-disable-line @typescript-eslint/no-explicit-any
-        "window'd dev tools should be closed",);
+        // eslint-disable-next-line @typescript-eslint/await-thenable
+        await (browserWindow as unknown as Pick<Electron.WebContents, "isDevToolsOpened">).isDevToolsOpened(),
+        "window'd dev tools should be closed",
+    );
+    // eslint-disable-next-line @typescript-eslint/await-thenable
     t.false(await browserWindow.isMinimized(), "window should not be not minimized");
     if (options.initial) {
         // TODO make below lines work with electron@v5 / travis@windows
+        // eslint-disable-next-line @typescript-eslint/await-thenable
         t.true(await browserWindow.isVisible(), "window should be visible");
+        // eslint-disable-next-line @typescript-eslint/await-thenable
         t.true(await browserWindow.isFocused(), "window should be focused");
     } else {
+        // eslint-disable-next-line @typescript-eslint/await-thenable
         t.false(await browserWindow.isVisible(), "window should not be visible");
+        // eslint-disable-next-line @typescript-eslint/await-thenable
         t.false(await browserWindow.isFocused(), "window should not be focused");
     }
+    // eslint-disable-next-line @typescript-eslint/await-thenable
     const {width, height} = await browserWindow.getBounds();
     t.true(width > 0, "window.width should be > 0");
     t.true(height > 0, "window.height should be > 0");

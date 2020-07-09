@@ -1,10 +1,3 @@
-// TODO remove the "tslint:disable:await-promise" when spectron gets proper declaration files
-// TODO track this issue https://github.com/DefinitelyTyped/DefinitelyTyped/issues/25186
-/* eslint-disable @typescript-eslint/await-thenable, @typescript-eslint/no-misused-promises */
-
-// TODO drop eslint disabling
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
-
 import byline from "byline";
 import fs from "fs";
 import path from "path";
@@ -13,10 +6,11 @@ import psTree from "ps-tree";
 import {ExecutionContext} from "ava";
 import {promisify} from "util";
 
-import {CI, ENV, PROJECT_NAME, TestContext, initApp, saveScreenshot, test} from "./workflow";
+import {CI, ENV, PROJECT_NAME, TestContext, initApp, test} from "./workflow";
 import {Config} from "src/shared/model/options";
 import {ONE_SECOND_MS, PROTON_API_ENTRY_URLS} from "src/shared/constants";
 import {asyncDelay} from "src/shared/util";
+import {saveScreenshot} from "src/e2e/lib";
 
 async function afterEach(t: ExecutionContext<TestContext>): Promise<void> {
     if (fs.existsSync(t.context.logFilePath)) {

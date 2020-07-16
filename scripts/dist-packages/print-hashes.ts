@@ -7,7 +7,7 @@ import {listInstallationPackageFiles} from "./lib";
 
 const [, , DIST_DIRECTORY] = process.argv as [null, null, string];
 
-const algorithms = ["sha1"] as const;
+const hashAlgorithm = "sha256";
 
 async function calculateHash(file: string, alg: string): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -30,18 +30,15 @@ async function calculateHash(file: string, alg: string): Promise<string> {
     );
 
     for (const file of files) {
-        for (const algorithm of algorithms) {
-            const hash = await calculateHash(file, algorithm);
+        const hash = await calculateHash(file, hashAlgorithm);
 
-            LOG(
-                LOG_LEVELS.title(
-                    `${LOG_LEVELS.value(path.basename(file))} [${algorithm}]: ${LOG_LEVELS.value(hash)}`,
-                ),
-            );
-        }
+        LOG(
+            LOG_LEVELS.title(
+                `${LOG_LEVELS.value(path.basename(file))} [${hashAlgorithm}]: ${LOG_LEVELS.value(hash)}`,
+            ),
+        );
     }
 })().catch((error) => {
     LOG(error);
     process.exit(1);
 });
-

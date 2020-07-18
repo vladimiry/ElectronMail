@@ -50,7 +50,9 @@ before_build:
   - yarn install --pure-lockfile
 build_script:
   - yarn scripts/ci/appveyor/download-webclients-artifact
-  - yarn app:dist
+  - yarn app:dist:base
+  - npm run clean:prebuilds
+  - npx --no-install electron-builder install-app-deps --arch=x64
   - yarn test:e2e
   - yarn electron-builder:dist
   - yarn scripts/dist-packages/print-hashes

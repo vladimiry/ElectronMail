@@ -1,3 +1,4 @@
+import fs from "fs";
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/lib/private/constants";
 import {Model as StoreModel} from "fs-json-store";
 import {platform} from "os";
@@ -9,21 +10,28 @@ import {initialConfig} from "src/shared/util";
 
 export const PLATFORM = platform();
 
-export const SNAP_CONTAINER = (
-    Boolean(process.env.SNAP)
-    &&
-    String(process.env.SNAP_NAME) === PACKAGE_NAME
-);
-
-export const INITIAL_STORES: Readonly<{
-    config: () => StrictOmit<Config, keyof BaseConfig | "jsFlags"> & Required<BaseConfig> & Required<Pick<Config, "jsFlags">>;
-    settings: () => Settings;
-}> = Object.freeze({
+export const INITIAL_STORES: {
+    readonly config: () => StrictOmit<Config, keyof BaseConfig | "jsFlags"> & Required<BaseConfig> & Required<Pick<Config, "jsFlags">>;
+    readonly settings: () => Settings;
+} = Object.freeze({
     config: () => {
-        const config = initialConfig();
+        // update check is disabled by default for the Snap and Flatpak package types
+        const disableUpdateCheck = (
+            // detect "snap" container
+            (
+                Boolean(process.env.SNAP)
+                &&
+                String(process.env.SNAP_NAME) === PACKAGE_NAME
+            )
+            // detect "flatpak" container
+            ||
+            (
+                fs.existsSync("/.flatpak-info")
+            )
+        );
         return {
-            ...config,
-            checkUpdateAndNotify: !SNAP_CONTAINER, // update check is disabled by default for the Snap package type
+            ...initialConfig(),
+            checkUpdateAndNotify: !disableUpdateCheck,
         };
     },
     settings: () => {

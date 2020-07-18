@@ -205,7 +205,8 @@ async function buildDbPatch(
             refType: "Messages",
             updatesMappedByInstanceId: new Map(),  // eslint-disable-line @typescript-eslint/no-unsafe-assignment
             remove: [],
-            upsertIds: []},
+            upsertIds: []
+        },
         folders: {
             refType: "Labels",
             updatesMappedByInstanceId: new Map(), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
@@ -376,32 +377,47 @@ const buildDbPatchEndpoint: Pick<ProtonApi, "buildDbPatch" | "fetchSingleMail"> 
             const preFetch = await (async () => {
                 const {events}: ProviderApi = await resolveProviderApi();
                 const fetchedEvents: RestModel.Event[] = [];
-                let id: RestModel.Event["EventID"] = inputMetadata.latestEventId;
+                const state: NoExtraProperties<{
+                    latestEventId: RestModel.Event["EventID"];
+                    sameNextIdCounter: number;
+                }> = {
+                    latestEventId: inputMetadata.latestEventId,
+                    sameNextIdCounter: 0,
+                };
 
                 do {
-                    const response = await events.get(id, {params: {[AJAX_SEND_NOTIFICATION_SKIP_PARAM]: ""}});
+                    const response = await events.get(state.latestEventId, {params: {[AJAX_SEND_NOTIFICATION_SKIP_PARAM]: ""}});
                     const hasMoreEvents = response.More === 1;
-                    const sameNextId = id === response.EventID;
 
                     fetchedEvents.push(response);
-                    id = response.EventID;
+
+                    // WARN increase "sameNextIdCounter" before "state.latestEventId" reassigning
+                    state.sameNextIdCounter += Number(state.latestEventId === response.EventID);
+                    state.latestEventId = response.EventID;
 
                     if (!hasMoreEvents) {
                         break;
                     }
-                    if (!sameNextId) {
-                        continue;
-                    }
 
-                    throw new Error(
-                        `Events API indicates that there is a next event in the queue but responded with the same "next event id"`,
-                    );
+                    // in early july 2020 protonmail's "/events/{id}" API/backend started returning
+                    // old/requested "response.EventID" having no more events in the queue ("response.More" !== 1)
+                    // which looks like an implementation error
+                    // so let's allow up to 3 such problematic iterations, log the error, and break the iteration then
+                    // rather than raising the error like we did before in order to detect the protonmail's error
+                    // it's ok to break the iteration since we start from "latestEventId" next time syncing process gets triggered
+                    // another error handling approach is to iterate until "response.More" !== 1 but let's prefer "early break" for now
+                    if (state.sameNextIdCounter > 2) {
+                        logger.error(
+                            `Events API indicates that there is a next event in the queue but responded with the same "next event id".`,
+                        );
+                        break;
+                    }
                 } while (true); // eslint-disable-line no-constant-condition
 
                 logger.info(`fetched ${fetchedEvents.length} missed events`);
 
                 return {
-                    latestEventId: id,
+                    latestEventId: state.latestEventId,
                     missedEvents: fetchedEvents,
                 };
             })();

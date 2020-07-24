@@ -1,10 +1,12 @@
 import {EMPTY, Observable, from, interval, merge} from "rxjs";
 import {buffer, concatMap, debounceTime, distinctUntilChanged, filter, map, mergeMap, tap} from "rxjs/operators";
-import {omit} from "remeda";
+import {omit, pick} from "remeda";
+import {serializeError} from "serialize-error";
 
 import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 import * as WebviewConstants from "src/electron-preload/webview/lib/constants";
 import {AJAX_SEND_NOTIFICATION$} from "src/electron-preload/webview/primary/notifications";
+import {IpcMainServiceScan} from "src/shared/api/main";
 import {ONE_SECOND_MS, WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS} from "src/shared/constants";
 import {PROTONMAIL_IPC_WEBVIEW_API, ProtonApi, ProtonNotificationOutput} from "src/shared/api/webview/primary";
 import {PROTONMAIL_MAILBOX_IDENTIFIERS} from "src/shared/model/database";
@@ -139,6 +141,63 @@ const endpoints: ProtonApi = {
         await message.label({LabelID: input.folderId, IDs: input.messageIds});
 
         // TODO consider triggering the "refresh" action (clicking the "refresh" button action)
+    },
+
+    async exportMailAttachments({uuid, mailPk, login, zoneName}) {
+        const logger = curryFunctionMembers(_logger, "exportMailAttachments()", zoneName);
+
+        logger.info();
+
+        const ipcMain = await resolveIpcMainApi(_logger);
+        const dbMessage = await ipcMain("dbGetAccountMail")({pk: mailPk, login});
+        const rawMessage: RestModel.Message = JSON.parse(dbMessage.raw); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+        const {attachmentLoader} = await resolveProviderApi();
+        const loadedAttachments: Mutable<IpcMainServiceScan["ApiImplArgs"]["dbExportMailAttachmentsNotification"][0]["attachments"]> = [];
+
+        for (const attachment of rawMessage.Attachments) {
+            const template = {Headers: attachment.Headers} as const;
+
+            try {
+                loadedAttachments.push({
+                    ...template,
+                    data: await attachmentLoader.get(attachment, rawMessage),
+                });
+            } catch (error) {
+                /* eslint-disable max-len */
+                // TODO live attachments export: process "error.data" case:
+                //      see https://github.com/ProtonMail/WebClient/blob/15bd4af2e5a4b695991cc8633b2304d2f9d4d99e/src/app/attachments/services/attachmentDownloader.js#L197 ("formatDownload" function)
+                /* eslint-enable max-len */
+                const serializedError = serializeError(
+                    // sanitizing the error (original error might include the "data"/other props which we don't want to log)
+                    pick(error, ["name", "message", "stack", "code"]), // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+                );
+
+                logger.error("attachment loading failed", JSON.stringify({index: loadedAttachments.length}), serializedError);
+
+                // TODO live attachments export: skip failed calls so export process
+                //      doesn't get cancelled (display skipped mails on the UI)
+                loadedAttachments.push({
+                    ...template,
+                    serializedError: serializeError(serializedError),
+                });
+            }
+        }
+
+        if (dbMessage.attachments.length !== loadedAttachments.length) {
+            throw new Error(
+                [
+                    `Invalid attachments content items array length (`,
+                    `expected/db: ${String(dbMessage.attachments.length)}; actual/loaded: ${String(loadedAttachments.length)}`,
+                    `)`,
+                ].join(""),
+            );
+        }
+
+        await ipcMain("dbExportMailAttachmentsNotification")({
+            uuid,
+            accountPk: {login},
+            attachments: loadedAttachments,
+        });
     },
 
     async fillLogin({login, zoneName}) {

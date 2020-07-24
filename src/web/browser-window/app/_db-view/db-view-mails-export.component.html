@@ -1,31 +1,58 @@
-<ng-template #mainTemplate>
-    <button
-        (click)="export()"
-        class="btn btn-sm btn-secondary-light d-flex flex-grow-1"
-        type="button"
-    >
-        <span class="text">{{ title }}</span>
-        <i
-            [placement]="popupPlacement || 'auto'"
-            [popover]="popupTemplate"
-            class="fa fa-info-circle d-flex align-self-center ml-1"
-            container="body"
-            triggers="mouseenter:mouseleave"
-        ></i>
-        <ng-template #popupTemplate>
-            <div class="text-center">
-                App exports emails in the<br>
-                original unsanitized form.<br>
-                Attachments content won't be processed.
-            </div>
-        </ng-template>
-    </button>
-</ng-template>
-<div
-    class="text-primary d-flex flex-grow-1"
-    style="cursor: not-allowed"
-    *ngIf="($state | async)?.exporting; else mainTemplate"
+<button
+    (click)="openModal(modalTemplate)"
+    class="btn btn-sm btn-secondary-light d-flex flex-grow-1"
+    type="button"
 >
-    <span class="text">Export</span>
-    <small><i class="fa fa-spinner fa-pulse fa-fw ml-2"></i></small>
-</div>
+    <span class="text">{{ title }}</span>
+</button>
+
+<ng-template #modalTemplate>
+    <div class="modal-header">
+        <h5 class="modal-title">Export email messages to EML files</h5>
+        <button (click)="modalRef?.hide()" aria-label="Close" class="close" type="button">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    <div class="modal-body">
+        <form (ngSubmit)="submit()" [formGroup]="form" class="mb-0" novalidate>
+            <div class="input-group mb-2">
+                <input
+                    (click)="selectExportDir()"
+                    [ngClass]="{'is-invalid': formControls.exportDir.invalid, 'is-valid': formControls.exportDir.valid}"
+                    class="form-control form-control-sm"
+                    formControlName="exportDir"
+                    placeholder="Click to select a file system directory to export data to"
+                    readonly
+                    required
+                    type="text"
+                >
+                <div class="input-group-append">
+                    <button (click)="selectExportDir()" class="btn btn-sm btn-secondary" type="button">...</button>
+                </div>
+            </div>
+            <div class="mb-1">
+                <div class="custom-control custom-switch">
+                    <input
+                        class="custom-control-input"
+                        formControlName="includingAttachments"
+                        id="includingAttachmentsCheckbox"
+                        type="checkbox"
+                    >
+                    <label class="custom-control-label" for="includingAttachmentsCheckbox">
+                        Including attachments
+                        <span class="badge badge-secondary">experimental</span>
+                    </label>
+                </div>
+                <div class="text-muted">
+                    <small>
+                        This toggle can only be enabled if you are "online" and "signed-in" into the email account since live attachments
+                        loading and decrypting will be happening (attachments not stored in the local database).
+                    </small>
+                </div>
+            </div>
+            <button [disabled]="form.invalid" class="btn btn-sm btn-primary pull-right" type="submit">
+                Export
+            </button>
+        </form>
+    </div>
+</ng-template>

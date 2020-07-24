@@ -1,4 +1,4 @@
-import {Observable, Subject} from "rxjs";
+import {Observable, Subject, Subscriber} from "rxjs";
 
 import {BuildEnvironment} from "webpack-configs/model";
 
@@ -13,10 +13,12 @@ declare global {
                 T extends Promise<infer U2> ? U2 :
                     T extends Observable<infer U3> ? U3 :
                         T extends Subject<infer U3> ? U3 :
-                            T;
+                            T extends Subscriber<infer U3> ? U3 :
+                                T;
 
     type Mutable<T> = import("ts-essentials").Writable<T>;
 
+    // TODO add "DeepNoExtraProperties" type
     type NoExtraProperties<T, U extends T = T> = U & Impossible<Exclude<keyof U, keyof T>>;
 
     type StrictOmit<T, K extends keyof T> = import("ts-essentials").StrictOmit<T, K>;

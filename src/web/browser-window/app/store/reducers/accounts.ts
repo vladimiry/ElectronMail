@@ -48,7 +48,7 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
     }
 
     return produce(state, (draftState) => ACCOUNTS_ACTIONS.match(action, {
-        WireUpConfigs: ({accountConfigs}) => {
+        WireUpConfigs({accountConfigs}) {
             const needToSelectNewLogin = (
                 typeof draftState.selectedLogin === "undefined"
                 ||
@@ -80,6 +80,7 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                             pageType: {url: "", type: "unknown"},
                             unread: 0,
                         },
+                        dbExportProgress: [],
                         fetchSingleMailParams: null,
                         makeReadMailParams: null,
                         setMailFolderParams: null,
@@ -93,19 +94,19 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
 
             draftState.initialized = true;
         },
-        Select: ({login}) => {
+        Select({login}) {
             draftState.selectedLogin = login;
         },
-        DeSelect: ({login}) => {
+        DeSelect({login}) {
             if (draftState.selectedLogin === login) {
                 delete draftState.selectedLogin;
             }
         },
-        PatchProgress: (payload) => {
+        PatchProgress(payload) {
             const {account} = pickAccountBundle(draftState.accounts, payload);
             account.progress = {...account.progress, ...payload.patch};
         },
-        Patch: ({login, patch, ignoreNoAccount}) => {
+        Patch({login, patch, ignoreNoAccount}) {
             logger.verbose("(Patch)", JSON.stringify({patch}));
 
             let account: WebAccount | undefined;
@@ -140,24 +141,41 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                 account.loginDelayedUntilSelected = patch.loginDelayedUntilSelected;
             }
         },
-        ToggleDatabaseView: ({login, forced}) => {
+        PatchDbExportProgress({pk: {login}, uuid, progress}) {
+            const {account} = pickAccountBundle(draftState.accounts, {login});
+            const item = account.dbExportProgress.find((_) => _.uuid === uuid);
+
+            if (typeof progress === "number") {
+                if (item) {
+                    item.progress = progress; // updating item
+                } else {
+                    account.dbExportProgress.push({uuid, progress}); // adding item
+                }
+            } else if (item) {
+                account.dbExportProgress.splice( // removing item
+                    account.dbExportProgress.indexOf(item),
+                    1,
+                );
+            }
+        },
+        ToggleDatabaseView({login, forced}) {
             const {account} = pickAccountBundle(draftState.accounts, {login});
 
             account.databaseView = forced
                 ? forced.databaseView
                 : !account.databaseView;
         },
-        PatchGlobalProgress: ({patch}) => {
+        PatchGlobalProgress({patch}) {
             draftState.globalProgress = {...draftState.globalProgress, ...patch};
         },
-        FetchSingleMailSetParams: ({pk, mailPk}) => {
+        FetchSingleMailSetParams({pk, mailPk}) {
             const {account} = pickAccountBundle(draftState.accounts, {login: pk.login});
 
             account.fetchSingleMailParams = mailPk
                 ? {mailPk}
                 : null;
         },
-        MakeMailReadSetParams: ({pk, ...rest}) => {
+        MakeMailReadSetParams({pk, ...rest}) {
             const key = "makeReadMailParams";
             const {account} = pickAccountBundle(draftState.accounts, {login: pk.login});
 
@@ -169,7 +187,7 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
 
             account[key] = null;
         },
-        SetMailFolderParams: ({pk, ...rest}) => {
+        SetMailFolderParams({pk, ...rest}) {
             const key = "setMailFolderParams";
             const {account} = pickAccountBundle(draftState.accounts, {login: pk.login});
 

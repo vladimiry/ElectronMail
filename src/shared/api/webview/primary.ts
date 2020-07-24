@@ -32,6 +32,8 @@ export const PROTONMAIL_IPC_WEBVIEW_API_DEFINITION = {
         Promise<DeepReadonly<DbAccountPk & { messageIds: Array<Mail["id"]> } & ZoneApiParameter>>(),
     setMailFolder:
         Promise<DeepReadonly<DbAccountPk & { folderId: Folder["id"]; messageIds: Array<Mail["id"]> } & ZoneApiParameter>>(),
+    exportMailAttachments:
+        Promise<DeepReadonly<DbAccountPk & { uuid: string; mailPk: Mail["pk"] } & ZoneApiParameter>>(),
     notification:
         Observable<DeepReadonly<{ entryUrl: string; entryApiUrl: string } & ZoneApiParameter>, ProtonNotificationOutput>(),
     unlock:

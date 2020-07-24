@@ -2,6 +2,7 @@ import {CONTACT_CARD, ENCRYPTED_STATUS, LOCATION, MAIL_TYPE} from "src/electron-
 import {Entity} from "src/electron-preload/webview/lib/rest-model/response-entity/base";
 import {Id, NumberBoolean} from "src/electron-preload/webview/lib/rest-model/common";
 import {Label} from "src/electron-preload/webview/lib/rest-model/response-entity/folder";
+import {ProtonAttachmentHeadersProp, ProtonMailExternalIdProp} from "src/shared/model/proton";
 
 export interface Context {
     ContextNumAttachments: number;
@@ -33,7 +34,7 @@ export interface Conversation extends Entity {
 
 export interface Message<TypeRecord = typeof MAIL_TYPE._.nameValueMap,
     LocationRecord = typeof LOCATION._.nameValueMap,
-    IsEncryptedRecord = typeof ENCRYPTED_STATUS._.nameValueMap> extends Entity {
+    IsEncryptedRecord = typeof ENCRYPTED_STATUS._.nameValueMap> extends Entity, ProtonMailExternalIdProp {
     AddressID: Id;
     Attachments: Attachment[];
     BCCList: MailAddress[];
@@ -41,7 +42,6 @@ export interface Message<TypeRecord = typeof MAIL_TYPE._.nameValueMap,
     CCList: MailAddress[];
     ConversationID: Conversation["ID"];
     ExpirationTime: number;
-    ExternalID: string;
     Header: string;
     IsEncrypted: IsEncryptedRecord[keyof IsEncryptedRecord];
     IsForwarded: NumberBoolean;
@@ -68,8 +68,7 @@ export interface Message<TypeRecord = typeof MAIL_TYPE._.nameValueMap,
     Unread: NumberBoolean;
 }
 
-export interface Attachment extends Entity {
-    Headers: Record<string, string>;
+export interface Attachment extends Entity, ProtonAttachmentHeadersProp {
     KeyPackets: string;
     MIMEType: string;
     Name: string;

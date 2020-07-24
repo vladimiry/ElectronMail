@@ -1,6 +1,7 @@
 import {BsDropdownModule} from "ngx-bootstrap/dropdown";
 import {CollapseModule} from "ngx-bootstrap/collapse";
 import {EffectsModule} from "@ngrx/effects";
+import {ModalModule} from "ngx-bootstrap/modal";
 import {NgModule} from "@angular/core";
 import {PopoverModule} from "ngx-bootstrap/popover";
 
@@ -20,6 +21,7 @@ import {SharedModule} from "src/web/browser-window/app/_shared/shared.module";
     imports: [
         BsDropdownModule,
         CollapseModule,
+        ModalModule,
         PopoverModule,
         SharedModule,
         EffectsModule.forFeature([DbViewEffects]),

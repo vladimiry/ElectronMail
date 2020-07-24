@@ -17,7 +17,7 @@ import {DbPatch} from "./common";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {FsDbAccount} from "src/shared/model/database";
 import {PACKAGE_NAME} from "src/shared/constants";
-import {ProtonClientSession} from "src/shared/model/proton";
+import {ProtonAttachmentHeadersProp, ProtonClientSession} from "src/shared/model/proton";
 
 export const IPC_MAIN_API_DB_INDEXER_ON_ACTIONS = unionize({
         Bootstrapped: ofType<Record<string, unknown>>(),
@@ -85,6 +85,12 @@ export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
             stat: { mails: number; folders: number; contacts: number; unread: number };
         }>(),
         DbIndexerProgressState: ofType<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_ON_ACTIONS>, { type: "ProgressState" }>["payload"]>(),
+        DbAttachmentExportRequest: ofType<DeepReadonly<{
+            uuid: string;
+            key: DbModel.DbAccountPk;
+            mailPk: DbModel.Mail["pk"];
+            timeoutMs: number;
+        }>>(),
         Locale: ofType<{ locale: ReturnType<Controller["getCurrentLocale"]> }>(),
         ConfigUpdated: ofType<Config>(),
         OpenOptions: ofType<Record<string, unknown>>(),
@@ -119,6 +125,8 @@ export const ENDPOINTS_DEFINITION = {
 
     changeMasterPassword: ActionType.Promise<PasswordFieldContainer & NewPasswordFieldContainer, Settings>(),
 
+    selectPath: ActionType.Observable<void, { message: "timeout-reset" | "canceled" } | { location: string }>(),
+
     dbPatch: ActionType.Promise<DbModel.DbAccountPk
         & { forceFlush?: boolean }
         & { patch: DbPatch }
@@ -137,8 +145,21 @@ export const ENDPOINTS_DEFINITION = {
 
     dbGetAccountMail: ActionType.Promise<DbModel.DbAccountPk & { pk: DbModel.Mail["pk"] }, DbModel.Mail>(),
 
-    dbExport: ActionType.Observable<DbModel.DbAccountPk & { mailPks?: Array<DbModel.Mail["pk"]> },
-        { count: number } | { progress: number; file: string }>(),
+    dbExport:
+        ActionType.Observable<DeepReadonly<DbModel.DbAccountPk & {
+            mailPks?: Array<DbModel.Mail["pk"]>;
+            exportDir: string;
+            includingAttachments?: boolean;
+        }>, { mailsCount: number } | { progress: number; file: string; attachmentsLoadError: boolean }>(),
+
+    dbExportMailAttachmentsNotification:
+        ActionType.Promise<DeepReadonly<NoExtraProperties<{
+            uuid: string;
+            accountPk: NoExtraProperties<DbModel.DbAccountPk>;
+            attachments: Array<NoExtraProperties<ProtonAttachmentHeadersProp
+                & ({ data: Uint8Array } | { serializedError: import("serialize-error").ErrorObject })>>;
+            serializedError?: import("serialize-error").ErrorObject
+        }>>>(),
 
     dbSearchRootConversationNodes:
         ActionType.Promise<DbModel.DbAccountPk

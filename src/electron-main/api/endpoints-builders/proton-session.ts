@@ -133,7 +133,7 @@ export async function buildEndpoints(
                     session.clearStorageData(),
                 ),
                 timer(timeoutMs).pipe(
-                    concatMap(() => throwError(new Error(`Failed clear the session in ${timeoutMs}ms`))),
+                    concatMap(() => throwError(new Error(`Session clearing failed in ${timeoutMs}ms`))),
                 ),
             ).toPromise();
         },

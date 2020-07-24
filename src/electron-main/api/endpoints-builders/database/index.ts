@@ -7,7 +7,7 @@ import {Context} from "src/electron-main/model";
 import {DB_DATA_CONTAINER_FIELDS, IndexableMail} from "src/shared/model/database";
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION$, IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
-import {buildDbExportEndpoints} from "./export";
+import {buildDbExportEndpoints} from "./export/api";
 import {buildDbIndexingEndpoints, narrowIndexActionPayload} from "./indexing";
 import {buildDbSearchEndpoints, searchRootConversationNodes} from "./search";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
@@ -23,6 +23,7 @@ type Methods = keyof Pick<IpcMainApiEndpoints,
     | "dbGetAccountDataView"
     | "dbGetAccountMail"
     | "dbExport"
+    | "dbExportMailAttachmentsNotification"
     | "dbSearchRootConversationNodes"
     | "dbFullTextSearch"
     | "dbIndexerOn"

@@ -18,6 +18,7 @@ import {
     tap,
     withLatestFrom,
 } from "rxjs/operators";
+import {serializeError} from "serialize-error";
 
 import {ACCOUNTS_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
@@ -77,6 +78,7 @@ export class AccountsEffects {
                     // app set's app notification channel on webview.dom-ready event
                     // which means user is not logged-in yet at this moment, so resetting the state
                     resetNotificationsState$,
+
                     this.api.webViewClient(webView, {finishPromise}).pipe(
                         mergeMap((webViewClient) => {
                             return from(
@@ -97,6 +99,41 @@ export class AccountsEffects {
                             }
 
                             return of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: notification}}));
+                        }),
+                    ),
+
+                    this.store.pipe(
+                        select(OptionsSelectors.FEATURED.mainProcessNotification),
+                        filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbAttachmentExportRequest),
+                        filter(({payload: {key}}) => key.login === login),
+                        mergeMap(({payload}) => {
+                            // TODO live attachments export: fire error if offline or not signed-in into the account
+                            return this.api.webViewClient(webView, {finishPromise}).pipe(
+                                mergeMap((webViewClient) => {
+                                    return from(
+                                        webViewClient("exportMailAttachments", {timeoutMs: payload.timeoutMs})({
+                                            uuid: payload.uuid,
+                                            mailPk: payload.mailPk,
+                                            login: payload.key.login,
+                                            zoneName: logger.zoneName(),
+                                        }),
+                                    );
+                                }),
+                                catchError((error) => {
+                                    return from(
+                                        this.api.ipcMainClient()("dbExportMailAttachmentsNotification")({
+                                            uuid: payload.uuid,
+                                            accountPk: {login},
+                                            attachments: [], // stub data
+                                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                                            serializedError: serializeError(error),
+                                        })
+                                    ).pipe(
+                                        mergeMap(() => throwError(error)),
+                                    );
+                                }),
+                                mergeMap(() => EMPTY),
+                            );
                         }),
                     ),
                 ).pipe(

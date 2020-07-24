@@ -63,6 +63,9 @@ export interface ProviderApi {
             data: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
         };
     };
+    attachmentLoader: {
+        get: (attachment: RestModel.Attachment, message: RestModel.Message) => Promise<Uint8Array>;
+    },
 }
 
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, "[lib/api]");
@@ -162,7 +165,7 @@ export async function resolveProviderApi(): Promise<ProviderApi> {
         })(),
     } as const;
 
-    return state.api = (async () : Promise<ProviderApi> => {
+    return state.api = (async (): Promise<ProviderApi> => {
         const injector = window.angular && window.angular.element(document.body).injector();
 
         if (!injector) {
@@ -208,6 +211,10 @@ export async function resolveProviderApi(): Promise<ProviderApi> {
                 rateLimitedMethodNames: ["get", "getLatestID"],
             }),
             vcard: resolveService<ProviderApi["vcard"]>(injector, "vcard"),
+            attachmentLoader: resolveService<ProviderApi["attachmentLoader"]>(injector, "AttachmentLoader", {
+                ...rateLimiting,
+                rateLimitedMethodNames: ["get"],
+            }),
         };
     })();
 }

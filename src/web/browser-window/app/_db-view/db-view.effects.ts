@@ -1,8 +1,9 @@
+import UUID from "pure-uuid";
 import {Actions, createEffect} from "@ngrx/effects";
 import {EMPTY, concat, forkJoin, from, merge, of} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Store, select} from "@ngrx/store";
-import {concatMap, filter, finalize, map, mergeMap, switchMap, take, takeUntil, tap} from "rxjs/operators";
+import {concatMap, filter, finalize, map, mergeMap, switchMap, take, takeUntil, tap, throttleTime} from "rxjs/operators";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter,} from "src/web/browser-window/app/store/actions";
 import {AccountConfig} from "src/shared/model/account";
@@ -73,6 +74,30 @@ export class DbViewEffects {
             }),
         ),
         {dispatch: false},
+    );
+
+    dbExport$ = createEffect(
+        () => this.actions$.pipe(
+            unionizeActionFilter(DB_VIEW_ACTIONS.is.DbExport),
+            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+            mergeMap(({payload}) => {
+                const pk = {login: payload.login};
+                const uuid = new UUID(4).format();
+                return merge(
+                    of(ACCOUNTS_ACTIONS.PatchDbExportProgress({pk, uuid, progress: 0})),
+                    from(this.api.ipcMainClient()("dbExport")(payload)).pipe(
+                        mergeMap((value) => "progress" in value ? [value] : []),
+                        throttleTime(ONE_SECOND_MS / 4),
+                        mergeMap(({progress}) => {
+                            return of(ACCOUNTS_ACTIONS.PatchDbExportProgress({pk, uuid, progress}));
+                        }),
+                        finalize(() => {
+                            this.store.dispatch(ACCOUNTS_ACTIONS.PatchDbExportProgress({pk, uuid}));
+                        }),
+                    ),
+                );
+            }),
+        ),
     );
 
     selectMailRequest$ = createEffect(

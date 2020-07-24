@@ -21,6 +21,7 @@ export const ACCOUNTS_ACTIONS = unionize({
             }>;
             ignoreNoAccount?: boolean;
         }>(),
+        PatchDbExportProgress: ofType<{ pk: DbAccountPk; uuid: string; progress?: number }>(),
         ToggleDatabaseView: ofType<{ login: string; forced?: Pick<WebAccount, "databaseView"> }>(),
         ToggleSyncing: ofType<{ pk: DbAccountPk; webView: Electron.WebviewTag; finishPromise: Promise<void> }>(),
         Synced: ofType<{ pk: DbAccountPk }>(),

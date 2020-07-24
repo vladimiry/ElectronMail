@@ -2,10 +2,11 @@ import ProxyAgent from "proxy-agent";
 import compareVersions from "compare-versions";
 import electronLog from "electron-log";
 import fetch from "node-fetch";
-import {app, shell} from "electron";
+import {app, dialog, shell} from "electron";
+import {from, merge, of, throwError} from "rxjs";
 import {inspect} from "util";
 import {isWebUri} from "valid-url";
-import {startWith, take} from "rxjs/operators";
+import {map, startWith, take} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
@@ -22,6 +23,7 @@ type Methods = keyof Pick<IpcMainApiEndpoints,
     | "openSettingsFolder"
     | "quit"
     | "selectAccount"
+    | "selectPath"
     | "toggleBrowserWindow"
     | "toggleControls"
     | "toggleLocalDbMailsListViewMode"
@@ -139,6 +141,34 @@ export async function buildEndpoints(
             }
 
             ctx.selectedAccount = newSelectedAccount;
+        },
+
+        selectPath() {
+            const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
+
+            if (!browserWindow) {
+                return throwError(new Error("Failed to resolve main app window"));
+            }
+
+            return merge(
+                of({message: "timeout-reset"}), // resets api calling timeouts (dialog potentially can be opened for a long period of time)
+                from(
+                    dialog.showOpenDialog(
+                        browserWindow,
+                        {
+                            title: "Select file system directory ...",
+                            defaultPath: app.getPath("home"),
+                            properties: ["openDirectory"],
+                        },
+                    ),
+                ).pipe(
+                    map(({canceled, filePaths: [location]}) => {
+                        return canceled
+                            ? {message: "canceled"} as const
+                            : {location} as const;
+                    }),
+                ),
+            );
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types

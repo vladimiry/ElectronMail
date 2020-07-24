@@ -12,6 +12,7 @@ interface ComponentState {
     account: WebAccount;
     selected: boolean;
     stored: boolean;
+    title: string;
 }
 
 @Component({
@@ -28,6 +29,7 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
         // account: null,
         selected: false,
         stored: false,
+        title: "",
     } as ComponentState);
 
     // TODO consider replacing observable with just an object explicitly triggering ChangeDetectorRef.detectChanges() after its mutation
@@ -56,6 +58,14 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
         this.patchState({
             account,
             stored: account.accountConfig.database,
+            // TODO live attachments export: print export progress in a separate app notifications section, not inside the account button
+            title: (
+                (account.accountConfig.title || account.accountConfig.login)
+                +
+                account.dbExportProgress
+                    .map((item, idx, {length}) => ` (export${length > 1 ? ` ${idx + 1}` : ""}: ${item.progress}%)`)
+                    .join("")
+            ),
         });
     }
 

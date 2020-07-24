@@ -9,6 +9,7 @@ export interface WebAccount {
         searching: boolean;
         selectingMailOnline: boolean;
     }>;
+    dbExportProgress: Array<{ uuid: string; progress: number }>;
     notifications: Notifications;
     syncingActivated?: boolean;
     databaseView?: boolean;

@@ -7,6 +7,7 @@ import {CollapseModule} from "ngx-bootstrap/collapse";
 import {EffectsModule} from "@ngrx/effects";
 import {ErrorHandler, Injector, NgModule} from "@angular/core";
 import {META_REDUCERS, StoreModule} from "@ngrx/store";
+import {ModalModule} from "ngx-bootstrap/modal";
 import {PopoverModule} from "ngx-bootstrap/popover";
 
 import * as AccountsReducer from "./store/reducers/accounts";
@@ -31,8 +32,9 @@ import {RoutingModule} from "./app.routing.module";
         BrowserAnimationsModule,
         CoreModule,
         AccordionModule.forRoot(),
-        CollapseModule.forRoot(),
         BsDropdownModule.forRoot(),
+        CollapseModule.forRoot(),
+        ModalModule.forRoot(),
         PopoverModule.forRoot(),
         StoreModule.forRoot(
             RootReducer.reducers,

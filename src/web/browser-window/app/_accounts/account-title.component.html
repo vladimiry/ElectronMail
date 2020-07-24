@@ -14,7 +14,7 @@
             <i *ngIf="state.account.loginDelayedUntilSelected" class="fa fa-hand-pointer-o"></i>
             <span class="letters" *ngIf="state.account.loginDelayedSeconds; let remainingSeconds">{{ remainingSeconds }}</span>
         </div>
-        <div class="d-flex flex-grow-1 letters login">{{ state.account.accountConfig.title || state.account.accountConfig.login }}</div>
+        <div class="d-flex flex-grow-1 letters login">{{ state.title }}</div>
     </a>
     <button
         (click)="toggleViewMode($event)"

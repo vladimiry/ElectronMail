@@ -1,7 +1,7 @@
 import {ofType, unionize} from "@vladimiry/unionize";
 
 import {DbAccountPk, Mail, View} from "src/shared/model/database";
-import {IpcMainApiEndpoints} from "src/shared/api/main";
+import {IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main";
 import {MailsBundleKey} from "src/web/browser-window/app/store/reducers/db-view";
 
 export const DB_VIEW_ACTIONS = unionize({
@@ -33,6 +33,7 @@ export const DB_VIEW_ACTIONS = unionize({
                 conversationMail: Mail;
             };
         }>(),
+        DbExport: ofType<NoExtraProperties<DeepReadonly<IpcMainServiceScan["ApiImplArgs"]["dbExport"][0]>>>(),
         SelectConversationMailRequest: ofType<{
             dbAccountPk: DbAccountPk;
             mailPk: Mail["pk"];

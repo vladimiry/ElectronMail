@@ -23,7 +23,12 @@ export function cssRuleSetUseItems(): RuleSetUseItem[] {
     const customProperties = require("postcss-custom-properties");
 
     return [
-        "css-loader",
+        {
+            loader: "css-loader",
+            options: {
+                esModule: false,
+            },
+        },
         {
             loader: "postcss-loader",
             options: {

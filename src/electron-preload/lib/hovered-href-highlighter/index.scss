@@ -1,7 +1,5 @@
 @import "~src/web/variables";
 
-$hovered-href-highlighter-render-visible-class: "visible";
-
 :host {
     $bg-color: theme-color("secondary");
     $padding: 0.2em;
@@ -23,12 +21,8 @@ $hovered-href-highlighter-render-visible-class: "visible";
         margin: $padding-l $padding;
         padding: $padding $padding-l;
 
-        &.#{$hovered-href-highlighter-render-visible-class} {
+        &.visible {
             display: flex;
         }
     }
-}
-
-:export {
-    renderVisibleClass: #{$hovered-href-highlighter-render-visible-class},
 }

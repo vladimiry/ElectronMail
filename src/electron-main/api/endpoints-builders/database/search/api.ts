@@ -5,67 +5,39 @@ import {race, throwError, timer} from "rxjs";
 
 import {Context} from "src/electron-main/model";
 import {DEFAULT_API_CALL_TIMEOUT} from "src/shared/constants";
-import {Folder, FsDbAccount, IndexableMailId, Mail, View} from "src/shared/model/database";
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION$, IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_DB_INDEXER_ON_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
-import {
-    buildFoldersAndRootNodePrototypes,
-    fillFoldersAndReturnRootConversationNodes,
-    splitAndFormatAndFillSummaryFolders
-} from "./folders-view";
+import {IndexableMailId, View} from "src/shared/model/database";
 import {curryFunctionMembers, walkConversationNodesTree} from "src/shared/util";
+import {searchRootConversationNodes} from "src/electron-main/api/endpoints-builders/database/search/service";
 
-const logger = curryFunctionMembers(electronLog, "[src/electron-main/api/endpoints-builders/database/search]");
-
-export function searchRootConversationNodes(
-    account: DeepReadonly<FsDbAccount>,
-    {mailPks, folderPks}: DeepReadonly<{ mailPks?: Array<Mail["pk"]>; folderPks?: Array<Folder["pk"]> }> = {},
-): View.RootConversationNode[] {
-    // TODO optimize search: implement custom search instead of getting all the mails first and then narrowing the list down
-    // TODO don't create functions inside iterations so extensively, "filter" / "walkConversationNodesTree" calls
-    const {rootNodePrototypes, folders} = buildFoldersAndRootNodePrototypes(account);
-    const filteredByMails = mailPks
-        ? rootNodePrototypes.filter((rootNodePrototype) => {
-            let matched = false;
-            // don't filter by folders here as folders are not yet linked to root nodes at this point
-            walkConversationNodesTree([rootNodePrototype], ({mail}) => {
-                matched = Boolean(mail && mailPks.includes(mail.pk));
-                if (!matched) {
-                    return;
-                }
-                return "break";
-            });
-            return matched;
-        })
-        : rootNodePrototypes;
-    const filteredByMailsWithFoldersAttached = fillFoldersAndReturnRootConversationNodes(filteredByMails);
-
-    const result = folderPks
-        ? filteredByMailsWithFoldersAttached.filter((rootNodePrototype) => {
-            let matched = false;
-            walkConversationNodesTree([rootNodePrototype], ({mail}) => {
-                matched = Boolean(mail && mail.folders.find(({pk}) => folderPks.includes(pk)));
-                if (!matched) {
-                    return;
-                }
-                return "break";
-            });
-            return matched;
-        })
-        : filteredByMailsWithFoldersAttached;
-
-    // TODO use separate function to fill the system folders names
-    splitAndFormatAndFillSummaryFolders(folders);
-
-    return result;
-}
+const logger = curryFunctionMembers(electronLog, "[src/electron-main/api/endpoints-builders/database/search/api]");
 
 export async function buildDbSearchEndpoints(
     ctx: DeepReadonly<Context>,
-): Promise<Pick<IpcMainApiEndpoints, "dbFullTextSearch">> {
+): Promise<Pick<IpcMainApiEndpoints, "dbSearchRootConversationNodes" | "dbFullTextSearch">> {
     return {
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-        async dbFullTextSearch({login, query, folderPks}) {
+        async dbSearchRootConversationNodes({login, folderPks, ...restOptions}) {
+            logger.info("dbSearchRootConversationNodes()");
+
+            const account = ctx.db.getAccount({login});
+
+            if (!account) {
+                throw new Error(`Failed to resolve account by the provided "login"`);
+            }
+
+            // TODO fill "mailPks" array based on the execute search with "query" argument
+
+            const mailPks = "query" in restOptions
+                ? [] //  TODO execute the actual search
+                : restOptions.mailPks;
+
+            return searchRootConversationNodes(account, {folderPks, mailPks});
+        },
+
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+        async dbFullTextSearch({login, query, folderPks, hasAttachments, sentDateAfter}) {
             logger.info("dbFullTextSearch()");
 
             const timeoutMs = DEFAULT_API_CALL_TIMEOUT;
@@ -90,9 +62,20 @@ export async function buildDbSearchEndpoints(
                             {mailPks: [...mailScoresByPk.keys()], folderPks},
                         );
                         const mailsBundleItems: Unpacked<ReturnType<IpcMainApiEndpoints["dbFullTextSearch"]>>["mailsBundleItems"] = [];
-                        const findByFolder = folderPks
+                        const filterByFolder = folderPks
                             ? ({pk}: View.Folder): boolean => folderPks.includes(pk)
-                            : (): true => true;
+                            : () => true;
+                        const filterByHasAttachment = hasAttachments
+                            ? (attachmentsCount: number): boolean => Boolean(attachmentsCount)
+                            : () => true;
+                        const filterBySentDateAfter = (() => {
+                            const sentDateFilter: number | null = sentDateAfter
+                                ? new Date(String(sentDateAfter).trim()).getTime()
+                                : null;
+                            return sentDateFilter
+                                ? (sentDate: number): boolean => sentDate > sentDateFilter
+                                : () => true;
+                        })();
 
                         for (const rootConversationNode of rootConversationNodes) {
                             let allNodeMailsCount = 0;
@@ -110,7 +93,11 @@ export async function buildDbSearchEndpoints(
                                 if (
                                     typeof score !== "undefined"
                                     &&
-                                    mail.folders.find(findByFolder)
+                                    mail.folders.find(filterByFolder)
+                                    &&
+                                    filterByHasAttachment(mail.attachmentsCount)
+                                    &&
+                                    filterBySentDateAfter(mail.sentDate)
                                 ) {
                                     matchedScoredNodeMails.push({...mail, score});
                                 }

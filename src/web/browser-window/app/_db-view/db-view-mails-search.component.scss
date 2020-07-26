@@ -7,6 +7,14 @@
 
     .custom-switch {
         @include font-size($input-font-size-sm);
+
+        label {
+            padding-top: 1.5px;
+        }
+    }
+
+    .form-control {
+        max-width: 9em;
     }
 
     fieldset {

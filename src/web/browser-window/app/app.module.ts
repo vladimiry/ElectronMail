@@ -2,6 +2,7 @@ import {APP_BASE_HREF} from "@angular/common";
 import {AccordionModule} from "ngx-bootstrap/accordion";
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 import {BrowserModule} from "@angular/platform-browser";
+import {BsDatepickerModule} from "ngx-bootstrap/datepicker";
 import {BsDropdownModule} from "ngx-bootstrap/dropdown";
 import {CollapseModule} from "ngx-bootstrap/collapse";
 import {EffectsModule} from "@ngrx/effects";
@@ -27,15 +28,16 @@ import {RoutingModule} from "./app.routing.module";
         RouterProxyComponent,
     ],
     imports: [
-        BrowserModule,
-        RoutingModule,
-        BrowserAnimationsModule,
-        CoreModule,
         AccordionModule.forRoot(),
+        BrowserAnimationsModule,
+        BrowserModule,
+        BsDatepickerModule.forRoot(),
         BsDropdownModule.forRoot(),
         CollapseModule.forRoot(),
+        CoreModule,
         ModalModule.forRoot(),
         PopoverModule.forRoot(),
+        RoutingModule,
         StoreModule.forRoot(
             RootReducer.reducers,
             {

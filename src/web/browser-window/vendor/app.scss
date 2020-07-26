@@ -1,2 +1,10 @@
-@import "~font-awesome/css/font-awesome.css";
+@use "src/web/vendor-variables" as vendor-variables;
+
+@use "~ngx-bootstrap/datepicker/bs-datepicker" with (
+    // >>>>> overriding node_modules/ngx-bootstrap/datepicker/utils/scss/variables maps
+    $theme-gray: vendor-variables.theme-color("primary"),
+    $theme-green: vendor-variables.theme-color("primary"),
+);
+
 @import "~@ng-select/ng-select/themes/default.theme.css";
+@import "~font-awesome/css/font-awesome.css";

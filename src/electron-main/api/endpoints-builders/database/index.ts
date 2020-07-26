@@ -9,7 +9,7 @@ import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION$, IPC_MAIN_API_NOTIFICATION$} from 
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
 import {buildDbExportEndpoints} from "./export/api";
 import {buildDbIndexingEndpoints, narrowIndexActionPayload} from "./indexing";
-import {buildDbSearchEndpoints, searchRootConversationNodes} from "./search";
+import {buildDbSearchEndpoints} from "./search/api";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {patchMetadata} from "src/electron-main/database/util";
 import {prepareFoldersView} from "./folders-view";
@@ -160,25 +160,6 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                 // TODO test "dbGetAccountMail" setting "mail.body" through the "sanitizeHtml" call
                 body: sanitizeHtml(mail.body),
             };
-        },
-
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-        async dbSearchRootConversationNodes({login, folderPks, ...restOptions}) {
-            _logger.info("dbSearchRootConversationNodes()");
-
-            const account = ctx.db.getAccount({login});
-
-            if (!account) {
-                throw new Error(`Failed to resolve account by the provided "login"`);
-            }
-
-            // TODO fill "mailPks" array based on the execute search with "query" argument
-
-            const mailPks = "query" in restOptions
-                ? [] //  TODO execute the actual search
-                : restOptions.mailPks;
-
-            return searchRootConversationNodes(account, {folderPks, mailPks});
         },
     };
 }

@@ -167,7 +167,8 @@ export const ENDPOINTS_DEFINITION = {
             & ({ query: string } | { mailPks: Array<DbModel.Folder["pk"]> }),
             DbModel.View.RootConversationNode[]>(),
 
-    dbFullTextSearch: ActionType.Promise<DbModel.DbAccountPk & { query: string; folderPks?: Array<DbModel.Folder["pk"]> },
+    dbFullTextSearch: ActionType.Promise<DbModel.DbAccountPk
+        & { query: string; sentDateAfter: string; hasAttachments: boolean; folderPks?: Array<DbModel.Folder["pk"]> },
         {
             uid: string;
             mailsBundleItems: Array<{ mail: DbModel.View.Mail & { score: number }; conversationSize: number }>;

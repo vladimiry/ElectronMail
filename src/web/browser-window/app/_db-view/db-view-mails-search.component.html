@@ -31,10 +31,10 @@
                                 <input
                                     class="custom-control-input"
                                     formControlName="allFoldersToggled"
-                                    id="toggleAllFolders"
+                                    id="toggleAllFoldersCheckbox"
                                     type="checkbox"
                                 >
-                                <label class="custom-control-label" for="toggleAllFolders">
+                                <label class="custom-control-label" for="toggleAllFoldersCheckbox">
                                     All
                                 </label>
                             </div>
@@ -55,13 +55,36 @@
                         </div>
                     </div>
                     <input
-                        #query
+                        #queryFormControl
                         [ngClass]="formControls.query.dirty ? {'is-invalid': formControls.query.invalid, 'is-valid': formControls.query.valid} : {}"
                         class="form-control form-control-sm mr-2 d-flex align-items-center"
                         formControlName="query"
+                        placeholder="keyword"
                         required
+                        size="10"
                         type="text"
                     >
+                    <input
+                        [bsConfig]="{dateInputFormat: 'YYYY-MM-DD'}"
+                        [ngClass]="formControls.sentDateAfter.dirty ? {'is-invalid': formControls.sentDateAfter.invalid, 'is-valid': formControls.sentDateAfter.valid} : {}"
+                        bsDatepicker
+                        class="form-control form-control-sm mr-2 d-flex align-items-center"
+                        formControlName="sentDateAfter"
+                        placeholder="date after"
+                        size="10"
+                        type="text"
+                    >
+                    <div class="custom-control custom-switch d-flex align-self-center mr-2">
+                        <input
+                            class="custom-control-input"
+                            formControlName="hasAttachments"
+                            id="hasAttachmentsCheckbox"
+                            type="checkbox"
+                        >
+                        <label class="custom-control-label d-flex" for="hasAttachmentsCheckbox" title="Only messages with attachments">
+                            Attachments
+                        </label>
+                    </div>
                     <button
                         [disabled]="form.invalid"
                         class="btn btn-sm btn-primary d-flex flex-shrink-0 align-items-center"

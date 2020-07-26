@@ -209,6 +209,7 @@ export function buildFoldersAndRootNodePrototypes(
             conversationNode.mail = {
                 // TODO use "pick" instead of "omit", ie prefer whitelisting over blacklisting
                 ...omit(mail, ["raw", "body", "attachments"]),
+                attachmentsCount: mail.attachments.length,
                 folders: [],
             };
 

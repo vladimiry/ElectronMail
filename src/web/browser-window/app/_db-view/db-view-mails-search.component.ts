@@ -36,8 +36,8 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
         map(({length}) => length),
     );
 
-    @ViewChildren("query")
-    readonly queryElementRefQuery!: QueryList<ElementRef>;
+    @ViewChildren("queryFormControl")
+    readonly queryFormControlRefs!: QueryList<ElementRef>;
 
     readonly formControls = {
         query: new FormControl(
@@ -46,6 +46,8 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
         ),
         folders: new FormGroup({}),
         allFoldersToggled: new FormControl(false),
+        sentDateAfter: new FormControl(),
+        hasAttachments: new FormControl(false),
     };
 
     readonly form = new FormGroup(this.formControls);
@@ -151,9 +153,9 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
     }
 
     ngAfterViewInit(): void {
-        if (this.queryElementRefQuery.length) {
+        if (this.queryFormControlRefs.length) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-            this.queryElementRefQuery.first.nativeElement.focus();
+            this.queryFormControlRefs.first.nativeElement.focus();
         }
     }
 
@@ -164,10 +166,14 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
     }
 
     submit(): void {
-        this.store.dispatch(DB_VIEW_ACTIONS.FullTextSearchRequest({
-            ...this.dbAccountPk,
-            query: this.formControls.query.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-            folderPks: this.resolveSelectedPks(),
-        }));
+        this.store.dispatch(
+            DB_VIEW_ACTIONS.FullTextSearchRequest({
+                ...this.dbAccountPk,
+                query: this.formControls.query.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                sentDateAfter: this.formControls.sentDateAfter.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                hasAttachments: this.formControls.hasAttachments.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                folderPks: this.resolveSelectedPks(),
+            }),
+        );
     }
 }

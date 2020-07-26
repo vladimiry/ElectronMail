@@ -81,7 +81,7 @@ function formatAttachment(
         throw new Error(
             [
                 "Invalid attachments content items array length ",
-                `(expected: ${String(attachments.length)}; actual: ${String(attachmentsContent?.length)})`,
+                `(expected: ${String(attachments.length)}; actual: ${String(attachmentsContent.length)})`,
             ].join(""),
         );
     }

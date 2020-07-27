@@ -1,7 +1,7 @@
 {
   "name": "electron-mail",
   "description": "Unofficial ProtonMail Desktop App",
-  "version": "4.7.0",
+  "version": "4.7.1",
   "author": "Vladimir Yakovlev <desktop-app@protonmail.ch>",
   "license": "MIT",
   "homepage": "https://github.com/vladimiry/ElectronMail",
@@ -284,6 +284,7 @@
     "import-sort-cli/yargs/yargs-parser": "^=13.1.2",
     "keytar/node-addon-api": "3.0.0",
     "*/**/@types/webpack": "4.41.21",
-    "*/**/builder-util-runtime": "8.7.2"
+    "*/**/builder-util-runtime": "8.7.2",
+    "pureimage/jpeg-js": "^0.4.1"
   }
 }

@@ -31,7 +31,8 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
         defaultApiCall: number;
         indexingBootstrap: number;
         clearSessionStorageData: number;
-        singleAttachmentLoad: number;
+        attachmentLoadAverage: number;
+        fullTextSearch: number;
     };
     updateCheck: {
         releasesUrl: string;

@@ -75,12 +75,15 @@ export class DbViewMailTabComponent extends DbViewAbstractComponent {
     }
 
     toggleSearchView(): void {
-        this.searchView = !this.searchView;
+        const {dbAccountPk} = this;
 
-        if (this.searchView) {
-            this.store.dispatch(DB_VIEW_ACTIONS.SelectMail({dbAccountPk: this.dbAccountPk}));
-            this.store.dispatch(DB_VIEW_ACTIONS.ResetSearchMailsBundleItems({dbAccountPk: this.dbAccountPk}));
+        this.store.dispatch(DB_VIEW_ACTIONS.SelectMail({dbAccountPk}));
+
+        for (const mailsBundleKey of ["searchMailsBundle", "searchNoQueryMailsBundle"] as const) {
+            this.store.dispatch(DB_VIEW_ACTIONS.ResetSearchMailsBundleItems({dbAccountPk, mailsBundleKey}));
         }
+
+        this.searchView = !this.searchView;
     }
 
     toggleMailsBundleKey(): void {

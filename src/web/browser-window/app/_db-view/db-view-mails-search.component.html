@@ -60,7 +60,6 @@
                         class="form-control form-control-sm mr-2 d-flex align-items-center"
                         formControlName="query"
                         placeholder="keyword"
-                        required
                         size="10"
                         type="text"
                     >
@@ -97,11 +96,13 @@
                 </form>
             </fieldset>
         </div>
-        <electron-mail-db-view-mails
-            *ngIf="(mailsBundleItemsSize$ | async)"
-            [dbAccountPk]="dbAccountPk"
-            [mailsBundleKey]="mailsBundleKey"
-        ></electron-mail-db-view-mails>
+        <ng-container *ngIf="(mailsBundleItemsSize$ | async)">
+            <electron-mail-db-view-mails
+                *ngIf="(mailsBundleKey$ | async) as mailsBundleKey"
+                [dbAccountPk]="dbAccountPk"
+                [mailsBundleKey]="mailsBundleKey"
+            ></electron-mail-db-view-mails>
+        </ng-container>
     </div>
 </div>
 <div *ngIf="selectedMail$ | async" class="flex-basis-half pr-2 d-flex flex-column">

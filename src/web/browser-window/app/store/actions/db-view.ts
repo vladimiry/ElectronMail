@@ -2,7 +2,7 @@ import {ofType, unionize} from "@vladimiry/unionize";
 
 import {DbAccountPk, Mail, View} from "src/shared/model/database";
 import {IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main";
-import {MailsBundleKey} from "src/web/browser-window/app/store/reducers/db-view";
+import {MailsBundleKey, SearchMailsBundleKey} from "src/web/browser-window/app/store/reducers/db-view";
 
 export const DB_VIEW_ACTIONS = unionize({
         MountInstance: ofType<{
@@ -60,6 +60,7 @@ export const DB_VIEW_ACTIONS = unionize({
         }>(),
         ResetSearchMailsBundleItems: ofType<{
             dbAccountPk: DbAccountPk;
+            mailsBundleKey: SearchMailsBundleKey;
         }>(),
     },
     {

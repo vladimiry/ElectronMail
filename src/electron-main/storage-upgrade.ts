@@ -288,9 +288,19 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             }
         })();
     },
-    "4.7.0": (config) => {
+    "4.8.0": (
+        _,
+        config = _ as Config & { timeouts: {singleAttachmentLoad?: number } },
+    ) => {
         (() => {
-            const timeoutsKey: keyof Pick<Config["timeouts"], "singleAttachmentLoad"> = "singleAttachmentLoad";
+            delete config.timeouts.singleAttachmentLoad;
+            const timeoutsKey: keyof Pick<Config["timeouts"], "attachmentLoadAverage"> = "attachmentLoadAverage";
+            if (typeof config.timeouts[timeoutsKey] !== "number") {
+                config.timeouts[timeoutsKey] = INITIAL_STORES.config().timeouts[timeoutsKey];
+            }
+        })();
+        (() => {
+            const timeoutsKey: keyof Pick<Config["timeouts"], "fullTextSearch"> = "fullTextSearch";
             if (typeof config.timeouts[timeoutsKey] !== "number") {
                 config.timeouts[timeoutsKey] = INITIAL_STORES.config().timeouts[timeoutsKey];
             }

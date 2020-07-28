@@ -9,16 +9,16 @@ import {
     QueryList,
     ViewChildren,
 } from "@angular/core";
-import {FormControl, FormGroup, Validators} from "@angular/forms";
-import {Observable, Subject, combineLatest, merge} from "rxjs";
+import {EMPTY, Observable, Subject, combineLatest, merge} from "rxjs";
+import {FormControl, FormGroup} from "@angular/forms";
 import {Store, select} from "@ngrx/store";
-import {distinctUntilChanged, map, takeUntil, tap} from "rxjs/operators";
+import {distinctUntilChanged, map, mergeMap, switchMap, takeUntil, tap} from "rxjs/operators";
 
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
 import {DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
+import {Instance, State} from "src/web/browser-window/app/store/reducers/db-view";
 import {MAIL_FOLDER_TYPE, View} from "src/shared/model/database";
-import {MailsBundleKey, State} from "src/web/browser-window/app/store/reducers/db-view";
 
 @Component({
     selector: "electron-mail-db-view-mails-search",
@@ -27,23 +27,31 @@ import {MailsBundleKey, State} from "src/web/browser-window/app/store/reducers/d
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DbViewMailsSearchComponent extends DbViewAbstractComponent implements OnInit, AfterViewInit {
-    readonly mailsBundleKey: MailsBundleKey = "searchMailsBundle";
-
-    readonly mailsBundleItemsSize$: Observable<number> = this.instance$.pipe(
-        map((instance) => instance[this.mailsBundleKey]),
-        map(({items}) => items),
+    readonly mailsBundleKey$: Observable<Exclude<Instance["searchResultMailsBundleKey"], undefined>> = this.instance$.pipe(
+        mergeMap((instance) => {
+            return typeof instance.searchResultMailsBundleKey !== "undefined"
+                ? [instance.searchResultMailsBundleKey]
+                : EMPTY;
+        }),
         distinctUntilChanged(),
-        map(({length}) => length),
+    );
+
+    readonly mailsBundleItemsSize$: Observable<number> = this.mailsBundleKey$.pipe(
+        switchMap((mailsBundleKey) => {
+            return this.instance$.pipe(
+                map((instance) => instance[mailsBundleKey]),
+                map(({items}) => items),
+                distinctUntilChanged(),
+                map(({length}) => length),
+            );
+        }),
     );
 
     @ViewChildren("queryFormControl")
     readonly queryFormControlRefs!: QueryList<ElementRef>;
 
     readonly formControls = {
-        query: new FormControl(
-            null,
-            Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
-        ),
+        query: new FormControl(),
         folders: new FormGroup({}),
         allFoldersToggled: new FormControl(false),
         sentDateAfter: new FormControl(),
@@ -160,8 +168,6 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
     }
 
     backToList(): void {
-        this.store.dispatch(DB_VIEW_ACTIONS.SelectMail({dbAccountPk: this.dbAccountPk}));
-        this.store.dispatch(DB_VIEW_ACTIONS.ResetSearchMailsBundleItems({dbAccountPk: this.dbAccountPk}));
         this.backToListHandler.emit();
     }
 

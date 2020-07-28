@@ -55,7 +55,7 @@ export async function buildDbExportEndpoints(
                 let skippedIndividualAttachments = 0;
 
                 const promise = (async (): Promise<void> => {
-                    const {timeouts: {singleAttachmentLoad: singleAttachmentLoadTimeoutMs}} = await ctx.config$.pipe(take(1)).toPromise();
+                    const {timeouts: {attachmentLoadAverage: attachmentLoadAverageTimeoutMs}} = await ctx.config$.pipe(take(1)).toPromise();
 
                     for (let mailIndex = 0; mailIndex < mailsCount; mailIndex++) {
                         const mail = mails[mailIndex];
@@ -66,7 +66,7 @@ export async function buildDbExportEndpoints(
                             logger.verbose("attachments processing start", JSON.stringify({mailIndex, attachmentsCount}));
 
                             const uuid = new UUID(4).format();
-                            const timeoutMs = singleAttachmentLoadTimeoutMs * attachmentsCount;
+                            const timeoutMs = attachmentLoadAverageTimeoutMs * attachmentsCount;
 
                             process.nextTick(() => {
                                 IPC_MAIN_API_NOTIFICATION$.next(

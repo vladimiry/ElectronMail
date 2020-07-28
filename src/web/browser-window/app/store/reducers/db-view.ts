@@ -10,7 +10,7 @@ export const featureName = "db-view";
 
 export type MailSorter = NoExtraProperties<{
     title: string;
-    prop: keyof View.Mail;
+    prop: keyof Required<View.Mail>;
     desc?: boolean;
 }>;
 
@@ -22,7 +22,13 @@ export type MailsBundle = NoExtraProperties<{
     paging: NoExtraProperties<{ page: number; end: number; nextPageSize: number; pageSize: number }>;
 }>
 
-export type MailsBundleKey = keyof Pick<Instance, "folderMailsBundle" | "folderConversationsBundle" | "searchMailsBundle">;
+export type MailsBundleKey = keyof Pick<Instance,
+    | "folderMailsBundle"
+    | "folderConversationsBundle"
+    | "searchMailsBundle"
+    | "searchNoQueryMailsBundle">;
+
+export type SearchMailsBundleKey = Extract<MailsBundleKey, "searchMailsBundle" | "searchNoQueryMailsBundle">;
 
 export type Instance = NoExtraProperties<{
     folders: NoExtraProperties<{
@@ -33,6 +39,8 @@ export type Instance = NoExtraProperties<{
     folderMailsBundle: MailsBundle;
     folderConversationsBundle: MailsBundle;
     searchMailsBundle: MailsBundle;
+    searchNoQueryMailsBundle: MailsBundle;
+    searchResultMailsBundleKey?: SearchMailsBundleKey;
     selectedMail?: NoExtraProperties<{
         listMailPk: Mail["pk"];
         rootNode: View.RootConversationNode;
@@ -110,15 +118,20 @@ function initInstance(): NoExtraProperties<Instance> {
             sorters: [
                 {
                     title: "Score (Desc)",
-                    prop: "score" as keyof View.Mail, // TS get rid of casting
+                    prop: "score",
                     desc: true,
                 },
                 {
                     title: "Score (Asc)",
-                    prop: "score" as keyof View.Mail, // TS get rid of casting
+                    prop: "score",
                 },
                 ...initMailBundleSorters(),
             ],
+        },
+        searchNoQueryMailsBundle: {
+            ...common(),
+            title: "found mails",
+            sorters: initMailBundleSorters(),
         },
     };
 }
@@ -280,35 +293,42 @@ function innerReducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACTIO
 
             return result;
         },
-        FullTextSearch: ({dbAccountPk, value: {mailsBundleItems}}) => {
-            const mailsBundleKey = "searchMailsBundle";
+        FullTextSearch: ({dbAccountPk, value: {mailsBundleItems, searched}}) => {
+            const keys = ["searchMailsBundle", "searchNoQueryMailsBundle"] as const;
+            const [searchResultMailsBundleKey, mailsBundleKeyToEmpty] = searched
+                ? keys
+                : [...keys].reverse();
             const instanceKey = resolveInstanceKey(dbAccountPk);
             const instance: Instance = {
                 ...(state.instances[instanceKey] || initInstance()),
             };
 
-            instance[mailsBundleKey] = {
-                ...instance[mailsBundleKey],
+            instance.searchResultMailsBundleKey = searchResultMailsBundleKey;
+
+            instance[searchResultMailsBundleKey] = {
+                ...instance[searchResultMailsBundleKey],
                 items: mailsBundleItems,
             };
 
-            sortMails(instance[mailsBundleKey]);
+            sortMails(instance[searchResultMailsBundleKey]);
 
             delete instance.selectedMail;
 
             return innerReducer(
-                {
-                    ...state,
-                    instances: {
-                        ...state.instances,
-                        [instanceKey]: instance,
+                innerReducer(
+                    {
+                        ...state,
+                        instances: {
+                            ...state.instances,
+                            [instanceKey]: instance,
+                        },
                     },
-                },
-                DB_VIEW_ACTIONS.Paging({dbAccountPk, mailsBundleKey, reset: true}),
+                    DB_VIEW_ACTIONS.Paging({dbAccountPk, mailsBundleKey: searchResultMailsBundleKey, reset: true}),
+                ),
+                DB_VIEW_ACTIONS.ResetSearchMailsBundleItems({dbAccountPk, mailsBundleKey: mailsBundleKeyToEmpty}),
             );
         },
-        ResetSearchMailsBundleItems: ({dbAccountPk}) => {
-            const mailsBundleKey = "searchMailsBundle";
+        ResetSearchMailsBundleItems: ({dbAccountPk, mailsBundleKey}) => {
             const instanceKey = resolveInstanceKey(dbAccountPk);
             const instance: Instance = {
                 ...(state.instances[instanceKey] || initInstance()),

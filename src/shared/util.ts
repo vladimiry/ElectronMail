@@ -51,7 +51,8 @@ export function initialConfig(): Config {
                 databaseLoading: ONE_MINUTE_MS * 5, // 5 minutes
                 indexingBootstrap: ONE_SECOND_MS * 30, // 30 seconds
                 clearSessionStorageData: ONE_SECOND_MS * 3, // 3 seconds
-                singleAttachmentLoad: ONE_SECOND_MS * 30, // 30 seconds
+                attachmentLoadAverage: ONE_MINUTE_MS * 2, // 2 minutes
+                fullTextSearch: ONE_SECOND_MS * 30, // 30 seconds
             },
             updateCheck: {
                 releasesUrl: "https://api.github.com/repos/vladimiry/ElectronMail/releases",

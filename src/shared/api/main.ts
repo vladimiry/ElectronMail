@@ -167,12 +167,15 @@ export const ENDPOINTS_DEFINITION = {
             & ({ query: string } | { mailPks: Array<DbModel.Folder["pk"]> }),
             DbModel.View.RootConversationNode[]>(),
 
-    dbFullTextSearch: ActionType.Promise<DbModel.DbAccountPk
-        & { query: string; sentDateAfter: string; hasAttachments: boolean; folderPks?: Array<DbModel.Folder["pk"]> },
-        {
-            uid: string;
-            mailsBundleItems: Array<{ mail: DbModel.View.Mail & { score: number }; conversationSize: number }>;
-        } & Pick<ReturnType<DbModel.MailsIndex["search"]>, "expandedTerms">>(),
+    dbFullTextSearch: ActionType.Promise<NoExtraProperties<DbModel.DbAccountPk & {
+        query: string;
+        sentDateAfter: string;
+        hasAttachments: boolean;
+        folderPks?: Array<DbModel.Folder["pk"]>;
+    }>, NoExtraProperties<{
+        searched: boolean;
+        mailsBundleItems: Array<{ mail: DbModel.View.Mail & { score?: number }; conversationSize: number }>;
+    }>>(),
 
     dbIndexerOn: ActionType.Promise<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_ON_ACTIONS>>(),
 

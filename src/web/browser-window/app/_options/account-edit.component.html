@@ -103,25 +103,25 @@
             <input type="password" class="form-control" formControlName="mailPassword"
                    [ngClass]="controls.mailPassword.dirty ? {'is-invalid': controls.mailPassword.invalid, 'is-valid': controls.mailPassword.valid} : {}">
         </div>
+        <div class="form-group">
+            <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" formControlName="persistentSession" id="persistentSessionCheckbox">
+                <label class="custom-control-label d-flex" for="persistentSessionCheckbox">
+                    Persistent session
+                    <i
+                        class="fa fa-info-circle text-warning align-self-center ml-1"
+                        container="body"
+                        [placement]="'bottom'"
+                        popover="If option enabled the saved Proton session will be reused on the next app start, so the login form will be skipped."
+                        triggers="mouseenter:mouseleave"
+                    ></i>
+                    <span class="badge badge-secondary align-self-center ml-1">experimental</span>
+                    <a class="ml-1" href="https://github.com/vladimiry/ElectronMail/issues/227">#227</a>
+                </label>
+            </div>
+        </div>
         <accordion class="mb-3">
             <accordion-group heading="Extended Options" [isOpen]="false">
-                <div class="form-group">
-                    <div class="custom-control custom-switch">
-                        <input type="checkbox" class="custom-control-input" formControlName="persistentSession" id="persistentSessionCheckbox">
-                        <label class="custom-control-label d-flex" for="persistentSessionCheckbox">
-                            Persistent session
-                            <i
-                                class="fa fa-info-circle text-warning align-self-center ml-1"
-                                container="body"
-                                [placement]="'bottom'"
-                                popover="If option enabled the saved Proton session will be reused on the next app start, so the login form will be skipped."
-                                triggers="mouseenter:mouseleave"
-                            ></i>
-                            <span class="badge badge-secondary align-self-center ml-1">experimental</span>
-                            <a class="ml-1" href="https://github.com/vladimiry/ElectronMail/issues/227">#227</a>
-                        </label>
-                    </div>
-                </div>
                 <div class="form-group">
                     <div class="custom-control custom-switch">
                         <input type="checkbox" class="custom-control-input" formControlName="rotateUserAgent" id="rotateUserAgentCheckbox">

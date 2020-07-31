@@ -18,11 +18,13 @@ The download page with Linux/OSX/Windows installation packages is [here](https:/
 
 The way of verifying that the installation packages attached to the [releases](https://github.com/vladimiry/ElectronMail/releases) have been assembled from the source code [is being provided](https://github.com/vladimiry/ElectronMail/issues/183).
 
-`Pacman` and `Snap` packages are also available for installing from the following repositories (both repositories are being maintained by [@joshirio](https://github.com/joshirio)):
+Some Linux package types are available for installing from the repositories (`Pacman` and `Snap` packages are being maintained by [@joshirio](https://github.com/joshirio)):
 
 [![Get it from the AUR](images/aurlogo.png)](https://aur.archlinux.org/packages/electronmail-bin)
 
 [![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/electron-mail)
+
+[![Get it from the Flathub](images/flathub-logo-toolbar.png)](https://flathub.org/apps/details/com.github.vladimiry.ElectronMail)
 
 ## Features
 

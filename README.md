@@ -24,7 +24,7 @@ Some Linux package types are available for installing from the repositories (`Pa
 
 [![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/electron-mail)
 
-[![Get it from the Flathub](images/flathub-logo-toolbar.png)](https://flathub.org/apps/details/com.github.vladimiry.ElectronMail)
+<a href="https://flathub.org/apps/details/com.github.vladimiry.ElectronMail"><img width="182" alt="Get it from the Flathub" src="https://flathub.org/assets/badges/flathub-badge-en.png"/></a>
 
 ## Features
 

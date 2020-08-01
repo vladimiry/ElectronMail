@@ -1,5 +1,5 @@
 <div class="d-flex justify-content-center">
-    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="p-3">
         <h2>Master Password Setup</h2>
         <fieldset [disabled]="(signingIn$ | async) || false">
             <div class="form-row">
@@ -22,6 +22,12 @@
                         Passwords don't match.
                     </div>
                 </div>
+            </div>
+            <div class="form-group text-muted">
+                The app uses this password to encrypt all the sensitive data to be stored in
+                the <a (click)="$event.preventDefault(); openSettingsFolder()" href>settings folder</a>.
+                All the files being produced and stored by the app listed in
+                the <a (click)="$event.preventDefault(); openFaq()" href>FAQ</a>.
             </div>
             <button class="btn btn-lg btn-primary btn-block" type="submit" [disabled]="form.invalid">
                 <i class="fa fa-spinner fa-pulse fa-fw" *ngIf="signingIn$ | async"></i>

@@ -11,8 +11,6 @@ import {NotificationItem} from "src/web/browser-window/app/store/actions/notific
     preserveWhitespaces: true,
 })
 export class NotificationItemComponent {
-    type: NotificationItem["type"] = "error";
-
     message = "";
 
     @Output()
@@ -24,12 +22,11 @@ export class NotificationItemComponent {
     private _item!: NotificationItem;
 
     @Input()
-    set item(value: NotificationItem) {
-        this._item = value;
-        this.type = value.type;
-        this.message = value.type === "update"
+    set item(item: NotificationItem) {
+        this._item = item;
+        this.message = item.type === "update"
             ? (
-                value.data
+                item.data
                     .map(({title, url, date}) => {
                         const hint = `Published at: ${formatDate(date, "medium", this.locale)}`;
                         return url
@@ -38,7 +35,11 @@ export class NotificationItemComponent {
                     })
                     .join(", ")
             )
-            : value.data.message;
+            : item.data.message;
+    }
+
+    get item(): NotificationItem {
+        return this._item;
     }
 
     remove(): void {

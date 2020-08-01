@@ -7,6 +7,7 @@ import {filter, map, pairwise} from "rxjs/operators";
 import {NOTIFICATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
+import {SAVE_PASSWORD_WARN_TRUSTED_HTML} from "./const";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 
 @Directive()
@@ -81,9 +82,7 @@ export abstract class LoginBaseComponent implements AfterViewInit, OnDestroy {
                 filter(([prev, curr]) => curr && Boolean(curr) !== Boolean(prev)),
             ).subscribe(() => {
                 this.store.dispatch(
-                    NOTIFICATION_ACTIONS.ErrorMessage({
-                        message: "Saving the master password on computer weakens the security.",
-                    }),
+                    NOTIFICATION_ACTIONS.Message({message: SAVE_PASSWORD_WARN_TRUSTED_HTML, style: "warning", html: true}),
                 );
             }),
         );

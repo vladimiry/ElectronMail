@@ -5,6 +5,7 @@ import {Subscription} from "rxjs";
 import {NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {PACKAGE_NAME} from "src/shared/constants";
+import {SAVE_PASSWORD_WARN_TRUSTED_HTML} from "./const";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
 
@@ -17,6 +18,8 @@ export class SavePasswordLabelComponent implements OnInit, OnDestroy {
     savePassword = false;
 
     keytarUnsupportedDetails = false;
+
+    readonly savePasswordWarnHtmlMessage = SAVE_PASSWORD_WARN_TRUSTED_HTML;
 
     readonly keytarSupport$ = this.store.pipe(
         select(OptionsSelectors.FEATURED.keytarSupport),
@@ -34,7 +37,7 @@ export class SavePasswordLabelComponent implements OnInit, OnDestroy {
 
     constructor(
         private readonly store: Store<State>,
-        private elementRef: ElementRef,
+        private readonly elementRef: ElementRef,
     ) {}
 
     ngOnInit(): void {
@@ -48,13 +51,11 @@ export class SavePasswordLabelComponent implements OnInit, OnDestroy {
         });
     }
 
-    openSettingsFolder(event: Event): void {
-        event.preventDefault();
+    openSettingsFolder(): void {
         this.store.dispatch(NAVIGATION_ACTIONS.OpenSettingsFolder());
     }
 
-    toggleKeytarUnsupportedDetails(event: Event): void {
-        event.preventDefault();
+    toggleKeytarUnsupportedDetails(): void {
         this.keytarUnsupportedDetails = !this.keytarUnsupportedDetails;
     }
 

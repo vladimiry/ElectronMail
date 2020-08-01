@@ -16,7 +16,7 @@ const itemsLimit = 50;
 function addNotificationItem(state: State, item: NotificationItem, skipLogging?: true): State {
     const items = [...state.items];
 
-    if (item.type === "error" || item.type === "errorMessage") {
+    if (item.type === "error" || (item.type === "message" && item.data.style === "error")) {
         console.error(item); // eslint-disable-line no-console
     }
 
@@ -54,8 +54,7 @@ export function reducer(state = initialState, action: UnionOf<typeof NOTIFICATIO
     return NOTIFICATION_ACTIONS.match(action, {
         Error: (data) => addNotificationItem(state, {type: "error", data}),
         ErrorSkipLogging: (data) => addNotificationItem(state, {type: "error", data}, true),
-        ErrorMessage: (data) => addNotificationItem(state, {type: "errorMessage", data}),
-        Info: (data) => addNotificationItem(state, {type: "info", data}),
+        Message: (data) => addNotificationItem(state, {type: "message", data}),
         Update: (data) => addNotificationItem(state, {type: "update", data}),
         Remove: (item) => {
             const items = [...state.items];

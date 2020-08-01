@@ -2,6 +2,7 @@ import {Component, Injector} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 
 import {LoginBaseComponent} from "src/web/browser-window/app/_options/login-base.component";
+import {NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 
 @Component({
     selector: "electron-mail-settings-setup",
@@ -34,5 +35,17 @@ export class SettingsSetupComponent extends LoginBaseComponent {
         injector: Injector,
     ) {
         super(injector);
+    }
+
+    openSettingsFolder(): void {
+        this.store.dispatch(
+            NAVIGATION_ACTIONS.OpenSettingsFolder(),
+        );
+    }
+
+    openFaq(): void {
+        this.store.dispatch(
+            NAVIGATION_ACTIONS.OpenExternal({url: "https://github.com/vladimiry/ElectronMail/wiki/FAQ"}),
+        );
     }
 }

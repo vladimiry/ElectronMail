@@ -44,10 +44,10 @@ export class OptionsEffects {
                                     this.coreService.logOut();
                                 },
                                 ErrorMessage: ({message}) => {
-                                    this.store.dispatch(NOTIFICATION_ACTIONS.ErrorMessage({message}));
+                                    this.store.dispatch(NOTIFICATION_ACTIONS.Message({message, style: "error"}));
                                 },
                                 InfoMessage: ({message}) => {
-                                    this.store.dispatch(NOTIFICATION_ACTIONS.Info({message}));
+                                    this.store.dispatch(NOTIFICATION_ACTIONS.Message({message, style: "info"}));
                                 },
                                 TrayIconDataURL: (payload) => {
                                     this.store.dispatch(OPTIONS_ACTIONS.TrayIconDataURL({value: payload}));

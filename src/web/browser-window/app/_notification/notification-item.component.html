@@ -1,31 +1,40 @@
 <div
     [ngClass]="{
-        'alert-danger': type === 'error' || type === 'errorMessage',
-        'alert-info': type === 'info',
-        'alert-secondary': type === 'update'
+        'alert-danger': item.type === 'error' || (item.type === 'message' && item.data.style === 'error'),
+        'alert-warning': item.type === 'message' && item.data.style === 'warning',
+        'alert-info': item.type === 'message' && item.data.style === 'info',
+        'alert-secondary': item.type === 'update'
     }"
     class="alert alert-dismissible"
     role="alert"
 >
-    <ng-container [ngSwitch]="type">
-        <ng-container *ngSwitchCase="'update'">
-            <div class="d-inline">
-                New app version available for download: <span [innerHTML]="message"></span>
-                <i
-                    [placement]="'bottom'"
-                    [popover]="popTemplate"
-                    class="fa fa-info-circle text-primary align-self-center"
-                    triggers="mouseenter:mouseleave"
-                ></i>
-                <ng-template #popTemplate>
-                    <p>When you follow the release link scroll down to the "Assets" section to see the installation packages list.</p>
-                    <p class="text-center">
-                        <img alt="Assets list" src="~images/assets-list.gif" style="max-width: 400px;">
-                    </p>
-                </ng-template>
-            </div>
+    <!-- TODO move to "ngSwitch" directive use on https://github.com/angular/angular/issues/20780 resolving -->
+    <ng-container *ngIf="item.type === 'update'">
+        <div class="d-inline">
+            New app version available for download: <span [innerHTML]="message"></span>
+            <i
+                [placement]="'bottom'"
+                [popover]="popTemplate"
+                class="fa fa-info-circle text-primary align-self-center"
+                triggers="mouseenter:mouseleave"
+            ></i>
+            <ng-template #popTemplate>
+                <p>If you see more than one version on the list it's normally fine to install the newest one.</p>
+                <p>When you follow the release link scroll down to the "Assets" section to see the installation packages list.</p>
+                <p class="text-center">
+                    <img alt="Assets list" src="~images/assets-list.gif" style="max-width: 400px;">
+                </p>
+            </ng-template>
+        </div>
+    </ng-container>
+    <ng-container *ngIf="item.type === 'error'">
+        <span [innerText]="message"></span>
+    </ng-container>
+    <ng-container *ngIf="item.type === 'message'">
+        <ng-container [ngSwitch]="item.data.html">
+            <span *ngSwitchCase="true" [innerHTML]="message"></span>
+            <span *ngSwitchDefault [innerText]="message"></span>
         </ng-container>
-        <span *ngSwitchDefault [innerText]="message"></span>
     </ng-container>
     <button (click)="remove()" class="close" type="button">
         &times;

@@ -3,7 +3,7 @@ import {Actions, createEffect} from "@ngrx/effects";
 import {EMPTY, concat, forkJoin, from, merge, of} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Store, select} from "@ngrx/store";
-import {concatMap, filter, finalize, map, mergeMap, switchMap, take, takeUntil, tap, throttleTime} from "rxjs/operators";
+import {concatMap, filter, finalize, map, mergeMap, switchMap, take, takeUntil, tap, throttleTime, withLatestFrom} from "rxjs/operators";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter,} from "src/web/browser-window/app/store/actions";
 import {AccountConfig} from "src/shared/model/account";
@@ -150,11 +150,18 @@ export class DbViewEffects {
         () => this.actions$.pipe(
             unionizeActionFilter(DB_VIEW_ACTIONS.is.FullTextSearchRequest),
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-            mergeMap(({payload: {login, query, folderPks, sentDateAfter, hasAttachments}}) => {
+            withLatestFrom(this.store.pipe(select(OptionsSelectors.CONFIG.timeouts))),
+            mergeMap(([{payload: {login, query, folderPks, sentDateAfter, hasAttachments}}, {fullTextSearch: fullTextSearchTimeoutMs}]) => {
                 const dbFullTextSearch$ = from(
-                    this.api.ipcMainClient()("dbFullTextSearch", {timeoutMs: ONE_SECOND_MS * 5, serialization: "jsan"})({
-                        login, query, folderPks, sentDateAfter, hasAttachments,
-                    }),
+                    this.api.ipcMainClient()(
+                        "dbFullTextSearch",
+                        {
+                            // "fullTextSearchTimeoutMs" is the full-text search specific value
+                            // so adding 20% reserve for result serialization/etc
+                            timeoutMs: fullTextSearchTimeoutMs * 1.2,
+                            serialization: "jsan",
+                        },
+                    )({login, query, folderPks, sentDateAfter, hasAttachments}),
                 );
                 return dbFullTextSearch$.pipe(
                     mergeMap((value) => [

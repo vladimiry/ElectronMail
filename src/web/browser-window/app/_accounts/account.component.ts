@@ -9,8 +9,7 @@ import {
     ViewChild,
     ViewContainerRef,
 } from "@angular/core";
-import {Deferred} from "ts-deferred";
-import {Observable, ReplaySubject, Subject, Subscription, combineLatest, from, race, timer} from "rxjs";
+import {Observable, ReplaySubject, Subject, Subscription, combineLatest, race, timer} from "rxjs";
 import {Store, select} from "@ngrx/store";
 import {
     debounceTime,
@@ -62,12 +61,10 @@ export class AccountComponent extends NgChangesObservableComponent implements On
 
     readonly webViewsState: Readonly<Record<"primary" /* | "calendar" */, {
         readonly src$: Subject<string>;
-        readonly domReadyOnce: Deferred<Electron.WebviewTag>;
         readonly domReady$: Subject<Electron.WebviewTag>;
     }>> = {
         primary: {
             src$: new ReplaySubject(1),
-            domReadyOnce: new Deferred(),
             domReady$: new Subject(),
         },
     };
@@ -125,9 +122,13 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     }
 
     ngOnInit(): void {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.webViewsState.primary.domReadyOnce.promise
-            .then((webView) => this.onPrimaryViewLoadedOnce(webView));
+        this.subscription.add(
+            this.webViewsState.primary.domReady$.pipe(
+                take(1),
+            ).subscribe((webView) => {
+                this.onPrimaryViewLoadedOnce(webView);
+            }),
+        );
 
         this.subscription.add(
             this.account$
@@ -145,16 +146,18 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         const {primary: state} = this.webViewsState;
                         const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, project);
                         const key = {login: accountConfig.login, apiEndpointOrigin: new URL(parsedEntryUrl.entryApiUrl).origin} as const;
+                        const initProtonClientSessionAndNavigateArgs = [
+                            accountConfig,
+                            project,
+                            state.domReady$,
+                            (src: string) => state.src$.next(src),
+                            this.logger,
+                        ] as const;
                         const baseReturn = async (): Promise<void> => {
                             // reset the "backend session"
                             await this.api.ipcMainClient()("resetProtonBackendSession")({login: key.login});
                             // reset the "client session" and navigate
-                            await this.core.initProtonClientSessionAndNavigate(
-                                accountConfig,
-                                project,
-                                state.domReady$,
-                                (src) => state.src$.next(src),
-                            );
+                            await this.core.initProtonClientSessionAndNavigate(...initProtonClientSessionAndNavigateArgs);
                         };
 
                         if (!accountConfig.persistentSession) {
@@ -171,13 +174,10 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                             return baseReturn();
                         }
 
-                        await this.core.initProtonClientSessionAndNavigate(
-                            accountConfig,
-                            project,
-                            state.domReady$,
-                            (src) => state.src$.next(src),
+                        await this.core.initProtonClientSessionAndNavigate(...[
+                            ...initProtonClientSessionAndNavigateArgs,
                             clientSession,
-                        );
+                        ] as const);
                     })().catch((error) => {
                         // TODO make "AppErrorHandler.handleError" catch promise rejection errors
                         this.onDispatchInLoggerZone(NOTIFICATION_ACTIONS.Error(error));
@@ -280,9 +280,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
             return;
         }
 
-        const {domReadyOnce, domReady$} = this.webViewsState[event.viewType];
-        domReadyOnce.resolve(event.webView);
-        domReady$.next(event.webView);
+        this.webViewsState[event.viewType].domReady$.next(event.webView);
     }
 
     onPrimaryViewLoadedOnce(primaryWebView: Electron.WebviewTag): void {
@@ -389,18 +387,26 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                 activeElement.blur();
             }
 
-            race([
-                from(this.webViewsState.primary.domReadyOnce.promise).pipe(
-                    filter((webView) => Boolean(webView.offsetParent)), // picking only visible element
+            const webViews$ = race([
+                this.webViewsState.primary.domReady$.pipe(
+                    filter((webView) => {
+                        const result = Boolean(webView.offsetParent); // picking only visible element
+                        this.logger.verbose("focusPrimaryWebView()", "webViews$ filter", {result});
+                        return result;
+                    }),
                 ),
                 timer(300 /* 300ms */).pipe(map(() => null)),
-            ]).pipe(take(1)).subscribe((value) => {
-                if (!value) {
-                    return;
-                }
-                value.blur();
-                value.focus();
-            });
+            ]);
+
+            webViews$
+                .pipe(take(1))
+                .subscribe((webViews) => {
+                    if (!webViews) {
+                        return;
+                    }
+                    webViews.blur();
+                    webViews.focus();
+                });
         });
     }
 }

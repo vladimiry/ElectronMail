@@ -11,6 +11,7 @@ import {ProtonClientSession} from "src/shared/model/proton";
 import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {State} from "src/web/browser-window/app/store/reducers/root";
 import {WebAccount} from "src/web/browser-window/app/model";
+import {curryFunctionMembers} from "src/shared/util";
 
 @Injectable()
 export class CoreService {
@@ -50,8 +51,10 @@ export class CoreService {
         repoType: keyof typeof PROVIDER_REPOS,
         webViewDomReady$: import("rxjs").Observable<Electron.WebviewTag>,
         setWebViewSrc: (src: string) => void,
+        logger_: ReturnType<typeof import("src/web/browser-window/util").getZoneNameBoundWebLogger>,
         clientSession?: ProtonClientSession,
     ): Promise<void> {
+        const logger = curryFunctionMembers(logger_, "[core.service]", "initProtonClientSessionAndNavigate");
         const {webViewBlankDOMLoaded: loaderIdTimeoutMs} = await this.store
             .pipe(
                 select(OptionsSelectors.CONFIG.timeouts),
@@ -64,20 +67,30 @@ export class CoreService {
         const loaderSrc = `${loaderSrcOrigin}/${WEB_CLIENTS_BLANK_HTML_FILE_NAME}?${loaderIdParam}=${loaderId}`;
         let webView: Electron.WebviewTag | undefined;
 
+        logger.verbose("setTimeout");
         setTimeout(() => {
-            this.zone.run(() => {
+            logger.verbose("this.zone.run");
+            this.zone.run(() => { // TODO "setTimeout" already triggers the change detection so "zone.run" call seems redundant
+                logger.verbose("setWebViewSrc");
                 setWebViewSrc(loaderSrc);
             });
         });
 
         try {
+            logger.verbose("webViewDomReady$");
             webView = await webViewDomReady$.pipe(
-                filter(({src}) => !!src && new URL(src).searchParams.get(loaderIdParam) === loaderId),
+                filter(({src}) => {
+                    const result = Boolean(src) && new URL(src).searchParams.get(loaderIdParam) === loaderId;
+                    logger.verbose("webViewDomReady$ filter", JSON.stringify({src, result}));
+                    return result;
+                }),
                 takeUntil(timer(loaderIdTimeoutMs)),
                 first(), // "first()" throws error if stream closed without any event passed through
             ).toPromise();
-        } catch {
-            throw new Error(`Failed to load "${loaderSrc}" page in ${loaderIdTimeoutMs}ms`);
+        } catch (error) {
+            const message = `Failed to load "${loaderSrc}" page in ${loaderIdTimeoutMs}ms`;
+            logger.error(message, error);
+            throw new Error(message);
         }
 
         const javaScriptCode = (() => {
@@ -107,13 +120,14 @@ export class CoreService {
         })();
 
         try {
+            logger.verbose("executeJavaScript");
             await webView.executeJavaScript(javaScriptCode);
         } catch (error) {
             const baseMessage = `Failed to set shared session object on "${loaderSrc}" page ("executeJavaScript")`;
             if (BUILD_ENVIRONMENT === "development") {
                 console.log(baseMessage, error); // eslint-disable-line no-console
             }
-            // not showing/logging the original error it might contain sensitive stuff
+            // not showing/logging the original error as it might contain sensitive stuff
             throw new Error(baseMessage);
         }
     }

@@ -1,6 +1,6 @@
 import _logger from "electron-log";
 import {BrowserWindow, Menu, MenuItemConstructorOptions, WebPreferences, app, clipboard, screen} from "electron";
-import {equals, pick} from "remeda";
+import {equals, omit, pick} from "remeda";
 import {inspect} from "util";
 import {isWebUri} from "valid-url";
 import {take} from "rxjs/operators";
@@ -9,6 +9,7 @@ import {Context} from "./model";
 import {DEFAULT_WEB_PREFERENCES, DEFAULT_WEB_PREFERENCES_KEYS} from "src/electron-main/window/constants";
 import {IPC_MAIN_API_NOTIFICATION$} from "./api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {PACKAGE_VERSION} from "src/shared/constants";
 import {PLATFORM} from "src/electron-main/constants";
 import {buildSpellCheckSettingsMenuItems, buildSpellingSuggestionMenuItems} from "src/electron-main/spell-check/menu";
 import {curryFunctionMembers} from "src/shared/util";
@@ -68,6 +69,93 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
     const webViewEntryUrlsWhitelist: readonly string[] = ctx.locations.webClients.map(({entryUrl}) => `${entryUrl}/`);
 
     app.on("web-contents-created", async (...[, webContents]) => {
+        if (PACKAGE_VERSION.includes("-debug")) {
+            const mark = "WEBCONTENTS_EVENTS_DEBUG";
+
+            webContents.on("will-attach-webview", (...[/* event */, ...[webPreferences, params]]) => {
+                logger.verbose(
+                    mark,
+                    JSON.stringify({
+                        type: "will-attach-webview",
+                        webPreferences,
+                        params: omit(params, ["partition"]), // "partition" prop includes "login" value, so skipping it as sensitive data
+                    }),
+                );
+            });
+            webContents.on("did-attach-webview", (...[/* event */, childWebContents]) => {
+                logger.verbose(
+                    mark,
+                    JSON.stringify({type: "did-attach-webview", id: childWebContents.id}),
+                );
+            });
+
+            logger.verbose(mark, "handlers subscribed");
+        }
+
+        webContents.on("certificate-error", ({type}, url, error) => {
+            logger.error(
+                JSON.stringify({
+                    type,
+                    url,
+                }),
+                error,
+            );
+        });
+        webContents.on("console-message", ({type}, level, message, line, sourceId) => {
+            const isWarn = Number(level) === 2;
+            const isError = Number(level) === 3;
+            if (isWarn || isError) {
+                logger[isWarn ? "warn" : "error"](
+                    JSON.stringify({type, level, message, line, sourceId}),
+                );
+            }
+        });
+        webContents.on("did-fail-load", (
+            {type}, errorCode, errorDescription, validatedURL, isMainFrame, frameProcessId, frameRoutingId,
+        ) => {
+            logger.error(
+                JSON.stringify({
+                    type,
+                    errorCode,
+                    errorDescription,
+                    validatedURL,
+                    isMainFrame,
+                    frameProcessId,
+                    frameRoutingId
+                }),
+            );
+        });
+        webContents.on("did-fail-provisional-load", (
+            {type}, errorCode, errorDescription, validatedURL, isMainFrame, frameProcessId, frameRoutingId,
+        ) => { // eslint-disable-line sonarjs/no-identical-functions
+            logger.error(
+                JSON.stringify({
+                    type,
+                    errorCode,
+                    errorDescription,
+                    validatedURL,
+                    isMainFrame,
+                    frameProcessId,
+                    frameRoutingId
+                }),
+            );
+        });
+        webContents.on("plugin-crashed", ({type}, name, version) => {
+            logger.error(
+                JSON.stringify({type, name, version}),
+            );
+        });
+        webContents.on("preload-error", ({type}, preloadPath, error) => {
+            logger.error(
+                JSON.stringify({type, preloadPath}),
+                error,
+            );
+        });
+        webContents.on("render-process-gone", ({type}, details) => {
+            logger.error(
+                JSON.stringify({type, details}),
+            );
+        });
         webContents.on("new-window", async (event, url) => {
             event.preventDefault();
             if (isWebUri(url)) {
@@ -76,7 +164,6 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
             }
             logger.warn(`Opening a new window is forbidden, url: "${url}"`);
         });
-
         webContents.on("context-menu", async (...[, {editFlags, linkURL, linkText, isEditable, selectionText}]) => {
             const menuItems: MenuItemConstructorOptions[] = [];
 
@@ -155,11 +242,9 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
                 .buildFromTemplate(menuItems)
                 .popup({});
         });
-
         webContents.on("preload-error", (event, preloadPath, error) => {
             logger.error(event.type, preloadPath, error);
         });
-
         webContents.on("will-attach-webview", (...[event, webPreferences, {src}]) => {
             if (!webViewEntryUrlsWhitelist.some((allowedPrefix) => src.startsWith(allowedPrefix))) {
                 event.preventDefault();
@@ -170,7 +255,6 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
                 Object.assign(webPreferences, DEFAULT_WEB_PREFERENCES);
             }
         });
-
         webContents.on("update-target-url", (...[, url]) => {
             const focusedWindow = BrowserWindow.getFocusedWindow();
 

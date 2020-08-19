@@ -31,8 +31,6 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
     }
 
     ngOnInit(): void {
-        super.ngOnInit();
-
         this.addSubscription(
             this.filterDomReadyEvent()
                 .pipe(take(1))

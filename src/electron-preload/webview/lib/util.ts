@@ -259,6 +259,6 @@ export function buildEmptyDbPatch(): DbPatch {
 }
 
 export function disableBrowserNotificationFeature(parentLogger: ReturnType<typeof buildLoggerBundle>): void {
-    delete (window as {Notification?: (typeof window)["Notification"]}).Notification;
+    delete (window as Partial<Pick<typeof window, "Notification">>).Notification;
     parentLogger.info(`browser "notification" feature disabled`);
 }

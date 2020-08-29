@@ -445,7 +445,7 @@ export const upgradeSettings: (settings: Settings, ctx: Context) => boolean = ((
                 })();
 
                 settings.accounts.forEach((account, index) => {
-                    delete (account as unknown as { type: string }).type;
+                    delete (account as unknown as { type?: string }).type;
 
                     if (account.entryUrl.startsWith(PROTON_API_ENTRY_VALUE_PREFIX)) {
                         account.entryUrl = account.entryUrl.substr(PROTON_API_ENTRY_VALUE_PREFIX.length);

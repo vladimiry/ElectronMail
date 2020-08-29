@@ -79,33 +79,21 @@
             }
         },
         {
+            "extends": [
+                "plugin:@angular-eslint/recommended"
+            ],
             "files": [
                 "./src/web/browser-window/**/*.ts"
             ],
-            "plugins": [
-                "@typescript-eslint",
-                "@angular-eslint"
-            ],
-            // TODO extend "@angular-eslint" use
-            //            "parserOptions": {
-            //                "ecmaVersion": 2020,
-            //                "sourceType": "module",
-            //                "project": "./src/web/browser-window/tsconfig.json"
-            //            },
             "rules": {
-                "@angular-eslint/component-class-suffix": "error",
-                "@angular-eslint/contextual-lifecycle": "error",
-                "@angular-eslint/directive-class-suffix": "error",
-                "@angular-eslint/no-conflicting-lifecycle": "error",
-                "@angular-eslint/no-host-metadata-property": "error",
-                "@angular-eslint/no-input-rename": "error",
-                "@angular-eslint/no-inputs-metadata-property": "error",
-                "@angular-eslint/no-output-native": "error",
-                "@angular-eslint/no-output-on-prefix": "error",
-                "@angular-eslint/no-output-rename": "error",
-                "@angular-eslint/no-outputs-metadata-property": "error",
-                "@angular-eslint/use-lifecycle-interface": "error",
-                "@angular-eslint/use-pipe-transform-interface": "error",
+                "quotes": [
+                    2,
+                    "double",
+                    {
+                        "allowTemplateLiterals": true
+                    }
+                ],
+                "@typescript-eslint/member-ordering": "off",
                 "@angular-eslint/directive-selector": [
                     "error",
                     {
@@ -123,34 +111,33 @@
                     }
                 ]
             }
+        },
+        {
+            "files": [
+                "./src/web/browser-window/**/*.component.html"
+            ],
+            "parser": "@angular-eslint/template-parser",
+            "plugins": [
+                "@angular-eslint/template"
+            ],
+            "rules": {
+                "@angular-eslint/template/banana-in-a-box": "error",
+                "@angular-eslint/template/cyclomatic-complexity": "error",
+                "@angular-eslint/template/no-call-expression": "error",
+                "@angular-eslint/template/no-negated-async": "error",
+                "@angular-eslint/template/i18n": [
+                    "error",
+                    {
+                        "checkId": false,
+                        "checkText": true,
+                        "checkAttributes": true,
+                        "ignoreAttributes": [
+                            "field",
+                            "identifier"
+                        ]
+                    }
+                ]
+            }
         }
-        // TODO extend "@angular-eslint" use
-        //        {
-        //            "files": [
-        //                "./src/web/browser-window/**/*.component.html"
-        //            ],
-        //            "parser": "@angular-eslint/template-parser",
-        //            "plugins": [
-        //                "angular-eslint/template"
-        //            ],
-        //            "rules": {
-        //                "@angular-eslint/template/banana-in-a-box": "error",
-        //                "@angular-eslint/template/no-negated-async": "error"
-        //            }
-        //        },
-        //        {
-        //            "files": [
-        //                "./src/web/browser-window/**/*.component.ts"
-        //            ],
-        //            "parser": "@typescript-eslint/parser",
-        //            "parserOptions": {
-        //                "ecmaVersion": 2020,
-        //                "sourceType": "module"
-        //            },
-        //            "plugins": [
-        //                "@angular-eslint/template"
-        //            ],
-        //            "processor": "@angular-eslint/template/extract-inline-html"
-        //        }
     ]
 }

@@ -19,8 +19,6 @@ export const browserWindowAppPath = (...value: string[]): string => {
 export function cssRuleSetUseItems(): RuleSetUseItem[] {
     // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-assignment
     const cssNano = require("cssnano");
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-assignment
-    const customProperties = require("postcss-custom-properties");
 
     return [
         {
@@ -37,7 +35,6 @@ export function cssRuleSetUseItems(): RuleSetUseItem[] {
                 plugins: () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
                     return [ // eslint-disable-line @typescript-eslint/no-unsafe-return
                         postCssUrl(),
-                        customProperties({preserve: true}), // eslint-disable-line @typescript-eslint/no-unsafe-call
                         cssNano({ // eslint-disable-line @typescript-eslint/no-unsafe-call
                             autoprefixer: true,
                             discardComments: true,

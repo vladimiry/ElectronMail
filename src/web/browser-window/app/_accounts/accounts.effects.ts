@@ -20,7 +20,7 @@ import {
 } from "rxjs/operators";
 import {serializeError} from "serialize-error";
 
-import {ACCOUNTS_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
+import {ACCOUNTS_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
@@ -352,7 +352,6 @@ export class AccountsEffects {
                                         );
                                     }),
                                     mergeMap(() => of(ACCOUNTS_ACTIONS.Patch({login, patch: {loginFilledOnce: true}}))),
-                                    catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                                 ),
                             );
                         };
@@ -378,7 +377,6 @@ export class AccountsEffects {
                                             );
                                         }),
                                         mergeMap(() => EMPTY),
-                                        catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                                         finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({
                                             login,
                                             patch: {password: false}
@@ -452,7 +450,6 @@ export class AccountsEffects {
                                     );
                                 }),
                                 mergeMap(() => EMPTY),
-                                catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                                 finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {twoFactorCode: false}}))),
                             ),
                         );
@@ -479,7 +476,6 @@ export class AccountsEffects {
                                     );
                                 }),
                                 mergeMap(() => EMPTY),
-                                catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                                 finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: false}}))),
                             ),
                         );
@@ -491,9 +487,6 @@ export class AccountsEffects {
                 return [];
             }),
         ),
-        {
-            useEffectsErrorHandler: false,
-        },
     );
 
     constructor(

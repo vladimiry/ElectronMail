@@ -12,8 +12,8 @@ export const DEFAULT_WEB_PREFERENCES_KEYS = Object.freeze([
     "webviewTag",
     // TODO disable "remote" module by disabling "enableRemoteModule" option
     //      currently these things depend on it:
-    //      - "rolling-rate-limiter" module
     //      - e2e tests preload script
+    //      - sending log lines to main process
     "enableRemoteModule",
 ] as const);
 

@@ -2,10 +2,17 @@ import UUID from "pure-uuid";
 import asap from "asap-es";
 
 import * as RestModel from "src/electron-preload/webview/lib/rest-model";
-import {ROLLING_RATE_LIMITER} from "src/electron-preload/lib/electron-exposure/rolling-rate-limiter";
+import {ONE_SECOND_MS} from "src/shared/constants";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/constants";
-import {asyncDelay, curryFunctionMembers} from "src/shared/util";
+import {asyncDelay, consumeMemoryRateLimiter, curryFunctionMembers} from "src/shared/util";
 import {resolveIpcMainApi} from "src/electron-preload/webview/lib/util";
+
+// TODO get rid of require "rate-limiter-flexible/lib/RateLimiterMemory" import
+//      ES import makes the build fail in "web" context since webpack attempts to bundle the whole library which requires "node" context
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+const RateLimiterMemory: typeof import("rate-limiter-flexible")["RateLimiterMemory"]
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    = require("rate-limiter-flexible/lib/RateLimiterMemory");
 
 // TODO consider executing direct $http calls
 // in order to not depend on Protonmail WebClient's AngularJS factories/services
@@ -79,8 +86,8 @@ function resolveService<T extends ProviderApi[keyof ProviderApi]>(
     injector: ng.auto.IInjectorService,
     serviceName: string,
     rateLimiting?: Readonly<{
-        rateLimiterTick: () => number;
-        rateLimitedMethodNames: Array<keyof KeepAsyncFunctionsProps<T>>;
+        consume: () => ReturnType<typeof RateLimiterMemory.prototype.consume>;
+        methodNames: Array<keyof KeepAsyncFunctionsProps<T>>;
     }>,
 ): T {
     resolveServiceLogger.info();
@@ -98,7 +105,7 @@ function resolveService<T extends ProviderApi[keyof ProviderApi]>(
 
     const clonedService = {...service};
 
-    for (const rateLimitedMethodName of rateLimiting.rateLimitedMethodNames) {
+    for (const rateLimitedMethodName of rateLimiting.methodNames) {
         const originalMethod = clonedService[rateLimitedMethodName];
         const _fullMethodName = `${serviceName}.${String(rateLimitedMethodName)}`;
 
@@ -111,22 +118,20 @@ function resolveService<T extends ProviderApi[keyof ProviderApi]>(
             this: typeof service,
             ...args: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
         ) {
-            const waitTime = rateLimiting.rateLimiterTick();
-            const limitExceeded = waitTime > 0;
+            const {waitTimeMs} = await consumeMemoryRateLimiter(rateLimiting.consume);
 
-            if (limitExceeded) {
+            if (waitTimeMs > 0) {
                 resolveServiceLogger.info(
-                    `delaying rate limited method calling: ${_fullMethodName} ${JSON.stringify({waitTime, rateLimitedMethodsCallCount})}`,
+                    `delaying rate limited method calling: ${_fullMethodName} ${JSON.stringify({waitTimeMs, rateLimitedMethodsCallCount})}`,
                 );
-
-                await asyncDelay(waitTime);
+                await asyncDelay(waitTimeMs);
             }
 
             resolveServiceLogger.debug(`queueing rate limited method: "${_fullMethodName}"`);
 
             return rateLimitedApiCallingQueue.q(() => {
                 resolveServiceLogger.verbose(
-                    `calling rate limited method: ${_fullMethodName} ${JSON.stringify({waitTime, rateLimitedMethodsCallCount})}`,
+                    `calling rate limited method: ${_fullMethodName} ${JSON.stringify({waitTimeMs, rateLimitedMethodsCallCount})}`,
                 );
 
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -151,17 +156,15 @@ export async function resolveProviderApi(): Promise<ProviderApi> {
     logger.info(`resolveProviderApi()`);
 
     const rateLimiting = {
-        rateLimiterTick: await (async () => {
+        consume: await (async () => {
             const {fetching: {rateLimit: rateLimitConfig}} = await (await resolveIpcMainApi(logger))("readConfig")();
-            const limiter = ROLLING_RATE_LIMITER({
-                interval: rateLimitConfig.intervalMs,
-                maxInInterval: rateLimitConfig.maxInInterval,
+            const limiter = new RateLimiterMemory({
+                points: rateLimitConfig.maxInInterval,
+                duration: rateLimitConfig.intervalMs / ONE_SECOND_MS, // seconds value
             });
             const key = `webview:protonmail-api:${new UUID(4).format()}`;
-
             logger.verbose(JSON.stringify({rateLimitConfig}));
-
-            return () => limiter(key);
+            return async () => limiter.consume(key);
         })(),
     } as const;
 
@@ -192,28 +195,28 @@ export async function resolveProviderApi(): Promise<ProviderApi> {
             messageModel: resolveService<ProviderApi["messageModel"]>(injector, "messageModel"),
             conversation: resolveService<ProviderApi["conversation"]>(injector, "conversationApi", {
                 ...rateLimiting,
-                rateLimitedMethodNames: ["get", "query"],
+                methodNames: ["get", "query"],
             }),
             message: resolveService<ProviderApi["message"]>(injector, "messageApi", {
                 ...rateLimiting,
-                rateLimitedMethodNames: ["get", "query"/*, "read"*/ /*, "label"*/],
+                methodNames: ["get", "query"/*, "read"*/ /*, "label"*/],
             }),
             contact: resolveService<ProviderApi["contact"]>(injector, "Contact", {
                 ...rateLimiting,
-                rateLimitedMethodNames: ["get", "all"],
+                methodNames: ["get", "all"],
             }),
             label: resolveService<ProviderApi["label"]>(injector, "Label", {
                 ...rateLimiting,
-                rateLimitedMethodNames: ["query"],
+                methodNames: ["query"],
             }),
             events: resolveService<ProviderApi["events"]>(injector, "Events", {
                 ...rateLimiting,
-                rateLimitedMethodNames: ["get", "getLatestID"],
+                methodNames: ["get", "getLatestID"],
             }),
             vcard: resolveService<ProviderApi["vcard"]>(injector, "vcard"),
             attachmentLoader: resolveService<ProviderApi["attachmentLoader"]>(injector, "AttachmentLoader", {
                 ...rateLimiting,
-                rateLimitedMethodNames: ["get"],
+                methodNames: ["get"],
             }),
         };
     })();

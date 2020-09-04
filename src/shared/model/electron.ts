@@ -1,5 +1,3 @@
-import {InMemoryOptions, SyncOrAsyncLimiter} from "rolling-rate-limiter";
-
 import {IPC_MAIN_API} from "src/shared/api/main";
 import {Logger} from "src/shared/model/common";
 import {PROTONMAIL_IPC_WEBVIEW_API} from "src/shared/api/webview/primary";
@@ -9,7 +7,6 @@ export type ElectronExposure = Readonly<{
     buildIpcMainClient: typeof IPC_MAIN_API.client;
     buildIpcWebViewClient: typeof PROTONMAIL_IPC_WEBVIEW_API.client;
     registerDocumentClickEventListener: typeof registerDocumentClickEventListener;
-    rollingRateLimiter: (options: InMemoryOptions) => SyncOrAsyncLimiter;
     Logger: Readonly<Logger>;
 }>;
 

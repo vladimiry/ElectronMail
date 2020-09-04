@@ -29,10 +29,15 @@ import {FIRE_SYNCING_ITERATION$} from "src/web/browser-window/app/app.constants"
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {ONE_MINUTE_MS, ONE_SECOND_MS} from "src/shared/constants";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
+import {consumeMemoryRateLimiter, isDatabaseBootstrapped} from "src/shared/util";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/browser-window/util";
-import {isDatabaseBootstrapped} from "src/shared/util";
 
-const {rollingRateLimiter} = __ELECTRON_EXPOSURE__;
+// TODO get rid of require "rate-limiter-flexible/lib/RateLimiterMemory" import
+//      ES import makes the build fail in "web" context since webpack attempts to bundle the whole library which requires "node" context
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+const RateLimiterMemory: typeof import("rate-limiter-flexible")["RateLimiterMemory"]
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    = require("rate-limiter-flexible/lib/RateLimiterMemory");
 
 const _logger = getZoneNameBoundWebLogger("[accounts.effects]");
 
@@ -48,10 +53,12 @@ export class AccountsEffects {
         return ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread: 0, loggedIn: false}}});
     }
 
-    twoPerTenSecLimiter = rollingRateLimiter({
-        interval: ONE_SECOND_MS * 10,
-        maxInInterval: 2,
-    });
+    private loginRateLimiterOptions = {
+        points: 2,
+        duration: 10, // seconds value
+    } as const
+
+    readonly loginRateLimiter = new RateLimiterMemory(this.loginRateLimiterOptions)
 
     syncAccountsConfigs$ = createEffect(
         () => this.actions$.pipe(
@@ -320,17 +327,19 @@ export class AccountsEffects {
                 const resetNotificationsState$ = of(AccountsEffects.generateNotificationsStateResetAction(login));
                 const zoneName = logger.zoneName();
 
-                // TODO make sure passwords submitting looping doesn't happen, until then a workaround is enabled below
-                const rateLimitCheck = (password: string): void => {
+                // TODO improve login submitting looping prevention
+                const rateLimitCheck = async (password: string): Promise<void> => {
                     const key = String([login, pageType, password]);
-                    const timeLeft = this.twoPerTenSecLimiter(key);
-
+                    const {waitTimeMs} = await consumeMemoryRateLimiter(
+                        async () => this.loginRateLimiter.consume(key),
+                    );
                     // tslint:disable-next-line:early-exit
-                    if (timeLeft > 0) {
+                    if (waitTimeMs > 0) {
+                        const {points, duration} = this.loginRateLimiterOptions;
                         throw new Error([
                             `It's not allowed to submit the same password for the same account`,
-                            `more than 2 times per 10 seconds (page type: "${pageType}").`,
-                            `Make sure that your password is valid.`,
+                            `more than ${points} times per ${duration} milliseconds (${JSON.stringify({pageType, waitTimeMs})}).`,
+                            `Make sure that your login/password is correct.`,
                             `Auto login feature is disable until app restarted.`,
                         ].join(" "));
                     }
@@ -357,11 +366,9 @@ export class AccountsEffects {
                         };
                         const fullLoginAction = (): Observable<import("@ngrx/store").Action> => {
                             const executeLoginAction = (password: string): Observable<import("@ngrx/store").Action> => {
-                                rateLimitCheck(password);
-
                                 logger.info("login");
 
-                                return merge(
+                                const action$ = merge(
                                     of(this.accountsService.buildLoginDelaysResetAction({login})),
                                     of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: true}})),
                                     resetNotificationsState$,
@@ -382,6 +389,12 @@ export class AccountsEffects {
                                             patch: {password: false}
                                         }))),
                                     ),
+                                );
+
+                                return from(
+                                    rateLimitCheck(password),
+                                ).pipe(
+                                    concatMap(() => action$),
                                 );
                             };
                             const trigger$: Observable<{ trigger: string }> = skipLoginDelayLogic
@@ -436,11 +449,7 @@ export class AccountsEffects {
                             break;
                         }
 
-                        rateLimitCheck(secret);
-
-                        logger.info("login2fa");
-
-                        return merge(
+                        const action$ = merge(
                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {twoFactorCode: true}})),
                             resetNotificationsState$,
                             this.api.webViewClient(webView).pipe(
@@ -453,6 +462,14 @@ export class AccountsEffects {
                                 finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {twoFactorCode: false}}))),
                             ),
                         );
+
+                        logger.info("login2fa");
+
+                        return from(
+                            rateLimitCheck(secret),
+                        ).pipe(
+                            concatMap(() => action$),
+                        );
                     }
                     case "unlock": {
                         const mailPassword = "mailPassword" in credentials && credentials.mailPassword;
@@ -461,11 +478,7 @@ export class AccountsEffects {
                             break;
                         }
 
-                        rateLimitCheck(mailPassword);
-
-                        logger.info("unlock");
-
-                        return merge(
+                        const action$ = merge(
                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: true}})),
                             resetNotificationsState$,
                             // TODO TS: resolve "webViewClient" calling "this.api.webViewClient" as normally
@@ -478,6 +491,14 @@ export class AccountsEffects {
                                 mergeMap(() => EMPTY),
                                 finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: false}}))),
                             ),
+                        );
+
+                        logger.info("unlock");
+
+                        return from(
+                            rateLimitCheck(mailPassword),
+                        ).pipe(
+                            concatMap(() => action$),
                         );
                     }
                 }

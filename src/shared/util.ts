@@ -1,5 +1,6 @@
 import {ElectronLog} from "electron-log"; // tslint:disable-line:no-import-zones
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
+import type {RateLimiterMemory} from "rate-limiter-flexible";
 import {pick} from "remeda";
 
 import {AccountConfig} from "./model/account";
@@ -491,3 +492,18 @@ export const resolvePackagedWebClientApp: (
         return result;
     }
 )();
+
+export const consumeMemoryRateLimiter = async (
+    consume: () => ReturnType<typeof RateLimiterMemory.prototype.consume>,
+): Promise<{waitTimeMs: number}> => {
+    try {
+        await consume();
+        return {waitTimeMs: 0};
+    } catch (_error) {
+        const error = _error as ({ msBeforeNext?: unknown } | Unpacked<ReturnType<typeof RateLimiterMemory.prototype.consume>>);
+        if (typeof error === "object" && typeof error.msBeforeNext === "number") {
+            return {waitTimeMs: error.msBeforeNext};
+        }
+        throw error;
+    }
+};

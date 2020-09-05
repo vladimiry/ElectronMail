@@ -1,7 +1,7 @@
 import path from "path";
 import {AfterPackContext, Configuration} from "app-builder-lib";
 
-import {APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR} from "src/shared/constants";
+import {APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR, BINARY_NAME} from "src/shared/constants";
 import {LOG, LOG_LEVELS, execShell} from "scripts/lib";
 import {copyDictionaryFilesTo} from "scripts/electron-builder/lib";
 
@@ -28,6 +28,21 @@ const hook: Required<Configuration>["afterPack"] = async (context) => {
         ),
     );
 
+    {
+        // TODO electron v10 => v11: the asar file seems to be missing some dirs, like "./node_modules/sodium-native"
+        //      this looks like an issue of one the following projects: electron, electron-builder, sodium-native
+        //      the workaround is to repack the asar file:
+        //      - unpacking takes missed stuff from the "app.asar.unpacked" dir
+        //      - then packing puts everything to asar file
+        const asarFile = path.join(context.appOutDir, "./resources/app.asar");
+        const unpackedDir = path.join(context.appOutDir, `./resources/app.asar.unpacked.${BINARY_NAME}`);
+
+        await execShell(["npx", ["--no-install", "asar", "extract", asarFile, unpackedDir]]);
+        await execShell(["npx", ["--no-install", "rimraf", asarFile]]);
+        await execShell(["npx", ["--no-install", "asar", "pack", unpackedDir, asarFile]]);
+        await execShell(["npx", ["--no-install", "rimraf", unpackedDir]]);
+    }
+
     if (electronPlatformNameLoweredCase.startsWith("lin")) {
         await linux(context);
         return;
@@ -39,4 +54,3 @@ const hook: Required<Configuration>["afterPack"] = async (context) => {
 };
 
 export default hook;
-

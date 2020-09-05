@@ -93,7 +93,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             await t.context.app.stop();
             t.is(t.context.app.isRunning(), false);
 
-            delete t.context.app;
+            delete (t.context as Partial<Pick<typeof t.context, "app">>).app;
         },
 
         async login(options: { setup: boolean; savePassword: boolean }): Promise<void> {

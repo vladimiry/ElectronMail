@@ -1614,18 +1614,6 @@ asap-es@1.3.3:
   resolved "https://registry.yarnpkg.com/asap-es/-/asap-es-1.3.3.tgz#a47f4d9db67853f91f278370fc5b97ce8ef6dcf1"
   integrity sha512-3yTL5EEA1KNlbo9KuxpeGXF+C2nERpfZ/Zf3rECkSS9jWB+XUdOih/8yXlkMLOtPSgUOmNwmNthVjV/0uzaO+g==
 
-asar@3.0.3:
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/asar/-/asar-3.0.3.tgz#1fef03c2d6d2de0cbad138788e4f7ae03b129c7b"
-  integrity sha512-k7zd+KoR+n8pl71PvgElcoKHrVNiSXtw7odKbyNpmgKe7EGRF9Pnu3uLOukD37EvavKwVFxOUpqXTIZC5B5Pmw==
-  dependencies:
-    chromium-pickle-js "^0.2.0"
-    commander "^5.0.0"
-    glob "^7.1.6"
-    minimatch "^3.0.4"
-  optionalDependencies:
-    "@types/glob" "^7.1.1"
-
 asn1.js@^5.2.0:
   version "5.4.1"
   resolved "https://registry.yarnpkg.com/asn1.js/-/asn1.js-5.4.1.tgz#11a980b84ebb91781ce35b0fdc2ee294e3783f07"
@@ -2676,11 +2664,6 @@ commander@^4.1.1:
   version "4.1.1"
   resolved "https://registry.yarnpkg.com/commander/-/commander-4.1.1.tgz#9fd602bd936294e9e9ef46a3f4d6964044b18068"
   integrity sha512-NOKm8xhkzAjzFx8B2v5OAHT+u5pRQc2UCa2Vq9jYL/31o2wi9mxBA7LIFs3sV5VSC49z6pEhfbMULvShKj26WA==
-
-commander@^5.0.0:
-  version "5.1.0"
-  resolved "https://registry.yarnpkg.com/commander/-/commander-5.1.0.tgz#46abbd1652f8e059bddaef99bbdcb2ad9cf179ae"
-  integrity sha512-P0CysNDQ7rtVw4QIQtm+MRxV66vKFSvlsQvGYXZWR3qFU0jlMKHZZZgw8e+8DSah4UDKMqnknRDQz+xuQXQ/Zg==
 
 commander@^6.0.0:
   version "6.1.0"
@@ -3837,10 +3820,10 @@ electron-unhandled@3.0.2:
     ensure-error "^2.0.0"
     lodash.debounce "^4.0.8"
 
-electron@11.0.0-beta.4:
-  version "11.0.0-beta.4"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-11.0.0-beta.4.tgz#8b786539cfabaccb0b408cb9419f227af481aa44"
-  integrity sha512-OmgQ4CRRt56q3CytBEgS6Ryl5OJHER+3ASE9kljcYKtzYTT6qmtHShpxniif5lT1iqlyJJ7frPjPZhlghBjBTw==
+electron@10.1.1:
+  version "10.1.1"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-10.1.1.tgz#44ff9207afc9df253d3b5ea40c7e6513c5dc08d8"
+  integrity sha512-ZJtZHMr17AvvBosuA6XUmpehwAlGM4/n46Mw9BcyD8tpgdI6IQd0X5OU9meE3X3M8Y6Ja2Kr2udTMgtjvot2hA==
   dependencies:
     "@electron/get" "^1.0.1"
     "@types/node" "^12.0.12"

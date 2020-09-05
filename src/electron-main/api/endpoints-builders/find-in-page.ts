@@ -66,7 +66,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             const {browserWindow} = uiContext;
 
             if (visible) {
-                if (!uiContext.findInPageBrowserView || uiContext.findInPageBrowserView.webContents.isDestroyed()) {
+                if (!uiContext.findInPageBrowserView || uiContext.findInPageBrowserView.isDestroyed()) {
                     logger.verbose(`building new "uiContext.findInPageBrowserView" instance`);
                     const view = uiContext.findInPageBrowserView = await initFindInPageBrowserView(ctx);
                     setTimeout(() => view.webContents.focus());
@@ -92,9 +92,11 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                     // destroy
                     logger.verbose(`destroying "uiContext.findInPageBrowserView"`);
                     // WARN "setBrowserView" needs to be called with null, see https://github.com/electron/electron/issues/13581
-                    browserWindow.setBrowserView(null);
-                    // TODO electron v10 => v11: destroy the "findInPageBrowserView", see https://github.com/electron/electron/pull/25112
-                    // uiContext.findInPageBrowserView.destroy();
+                    browserWindow.setBrowserView(
+                        // TODO TS: get rid of any cast, see https://github.com/electron/electron/issues/13581
+                        null as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+                    );
+                    uiContext.findInPageBrowserView.destroy();
                     delete uiContext.findInPageBrowserView;
                 });
 

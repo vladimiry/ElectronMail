@@ -1,10 +1,11 @@
 import {Component, OnDestroy, OnInit} from "@angular/core";
-import {Observable, Subscription, combineLatest} from "rxjs";
 import {Store, select} from "@ngrx/store";
+import {Subscription, combineLatest} from "rxjs";
 import {distinctUntilChanged, map} from "rxjs/operators";
 import {equals} from "remeda";
 
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {AccountConfig} from "src/shared/model/account";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
@@ -19,28 +20,43 @@ import {WebAccount} from "src/web/browser-window/app/model";
     preserveWhitespaces: true,
 })
 export class AccountsComponent implements OnInit, OnDestroy {
-    initialized$ = this.store.pipe(select(AccountsSelectors.FEATURED.initialized));
-    layoutMode$ = this.store.pipe(select(OptionsSelectors.CONFIG.layoutMode));
-    hideControls$ = this.store.pipe(select(OptionsSelectors.CONFIG.hideControls));
-    accountsMap = new Map<WebAccount["accountConfig"]["login"], WebAccount>();
-    selectedAccount?: WebAccount;
-    unreadSummary?: number;
-    loginsSet$: Observable<string[]>;
-    private accounts$ = this.store.pipe(select(AccountsSelectors.FEATURED.accounts));
-    private subscription = new Subscription();
+    readonly initialized$ = this.store.pipe(select(AccountsSelectors.FEATURED.initialized));
 
-    get accounts(): WebAccount[] {
-        return [...this.accountsMap.values()];
-    }
+    readonly layoutMode$ = this.store.pipe(select(OptionsSelectors.CONFIG.layoutMode));
+
+    readonly hideControls$ = this.store.pipe(select(OptionsSelectors.CONFIG.hideControls));
+
+    selectedAccount?: WebAccount;
+
+    unreadSummary?: number;
+
+    private accountsMap = new Map<WebAccount["accountConfig"]["login"], WebAccount>();
+
+    private accounts$ = this.store.pipe(select(AccountsSelectors.FEATURED.accounts));
+
+    readonly logins$ = this.accounts$.pipe(
+        map((accounts) => accounts.map((account) => account.accountConfig.login)),
+        distinctUntilChanged(),
+    );
+
+    readonly loginsWithoutOrdering$ = this.logins$.pipe(
+        // account views should not be re-crated if we reorder the accounts in the settings
+        distinctUntilChanged((prev, curr) => equals([...prev].sort(), [...curr].sort())),
+    );
+
+    private readonly subscription = new Subscription();
 
     constructor(
         private coreService: CoreService,
         private api: ElectronService,
         private store: Store<State>,
     ) {
-        this.loginsSet$ = this.accounts$.pipe(
-            map((accounts) => accounts.map((account) => account.accountConfig.login)),
-            distinctUntilChanged((prev, curr) => equals([...prev].sort(), [...curr].sort())),
+        this.subscription.add(
+            this.accounts$.subscribe((accounts) => {
+                this.accountsMap = new Map(accounts.reduce((entries: Array<[string, WebAccount]>, account) => {
+                    return entries.concat([[account.accountConfig.login, account]]);
+                }, []));
+            }),
         );
     }
 
@@ -53,13 +69,6 @@ export class AccountsComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        this.subscription.add(
-            this.accounts$.subscribe((accounts) => {
-                this.accountsMap = new Map(accounts.reduce((entries: Array<[string, WebAccount]>, account) => {
-                    return entries.concat([[account.accountConfig.login, account]]);
-                }, []));
-            }),
-        );
         this.subscription.add(
             combineLatest([
                 this.store.select(AccountsSelectors.ACCOUNTS.loggedInAndUnreadSummary).pipe(
@@ -91,15 +100,9 @@ export class AccountsComponent implements OnInit, OnDestroy {
         );
     }
 
-    trackAccount(
-        ...[, account]: readonly [number, WebAccount | undefined]
-    ): WebAccount["accountConfig"]["login"] | undefined {
-        return account ? account.accountConfig.login : undefined;
-    }
-
-    activateAccount(event: Event, account: WebAccount): void {
+    activateAccountByLogin(event: Event, login: AccountConfig["login"]): void {
         event.preventDefault();
-        this.store.dispatch(ACCOUNTS_ACTIONS.Select({login: account.accountConfig.login}));
+        this.store.dispatch(ACCOUNTS_ACTIONS.Select({login}));
     }
 
     openSettingsView(): void {

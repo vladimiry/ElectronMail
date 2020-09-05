@@ -49,49 +49,56 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
 
     return produce(state, (draftState) => ACCOUNTS_ACTIONS.match(action, {
         WireUpConfigs({accountConfigs}) {
-            const needToSelectNewLogin = (
+            const webAccounts = accountConfigs
+                .filter((accountConfig) => !accountConfig.disabled)
+                .reduce((accounts: WebAccount[], accountConfig) => {
+                    const {account} = pickAccountBundle(draftState.accounts, accountConfig, false);
+
+                    if (account) {
+                        account.accountConfig = accountConfig;
+                        if (!account.accountConfig.database) {
+                            delete account.databaseView;
+                        }
+                        accounts.push(account);
+                    } else {
+                        const webAccount: WebAccount = {
+                            accountConfig,
+                            progress: {},
+                            notifications: {
+                                loggedIn: false,
+                                pageType: {url: "", type: "unknown"},
+                                unread: 0,
+                            },
+                            dbExportProgress: [],
+                            fetchSingleMailParams: null,
+                            makeReadMailParams: null,
+                            setMailFolderParams: null,
+                        };
+
+                        accounts.push(webAccount);
+                    }
+
+                    return accounts;
+                }, []);
+
+            if (
                 typeof draftState.selectedLogin === "undefined"
                 ||
-                !accountConfigs
-                    .map(({login}) => login)
+                !webAccounts
+                    .map(({accountConfig: {login}}) => login)
                     .includes(draftState.selectedLogin)
-            );
-
-            if (needToSelectNewLogin) {
-                const accountConfigToSelect = accountConfigs.find((config) => config.loginDelayUntilSelected !== true);
-                draftState.selectedLogin = accountConfigToSelect && accountConfigToSelect.login;
+            ) { // setting new "selected login" value
+                const webAccountToSelect = webAccounts.find((webAccount) => {
+                    return (
+                        !webAccount.loginDelayedUntilSelected
+                        &&
+                        !webAccount.loginDelayedSeconds
+                    );
+                });
+                draftState.selectedLogin = webAccountToSelect && webAccountToSelect.accountConfig.login;
             }
 
-            draftState.accounts = accountConfigs.reduce((accounts: WebAccount[], accountConfig) => {
-                const {account} = pickAccountBundle(draftState.accounts, accountConfig, false);
-
-                if (account) {
-                    account.accountConfig = accountConfig;
-                    if (!account.accountConfig.database) {
-                        delete account.databaseView;
-                    }
-                    accounts.push(account);
-                } else {
-                    const webAccount: WebAccount = {
-                        accountConfig,
-                        progress: {},
-                        notifications: {
-                            loggedIn: false,
-                            pageType: {url: "", type: "unknown"},
-                            unread: 0,
-                        },
-                        dbExportProgress: [],
-                        fetchSingleMailParams: null,
-                        makeReadMailParams: null,
-                        setMailFolderParams: null,
-                    };
-
-                    accounts.push(webAccount);
-                }
-
-                return accounts;
-            }, []);
-
+            draftState.accounts = webAccounts;
             draftState.initialized = true;
         },
         Select({login}) {

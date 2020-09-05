@@ -1,12 +1,15 @@
 import {CdkDragDrop} from "@angular/cdk/drag-drop";
 import {Component, HostBinding, OnDestroy} from "@angular/core";
+import {Observable} from "rxjs/internal/Observable";
 import {Store} from "@ngrx/store";
 import {Subject, Subscription} from "rxjs";
 import {map, withLatestFrom} from "rxjs/operators";
 
+import {AccountConfig} from "src/shared/model/account";
 import {LoginFieldContainer} from "src/shared/model/container";
-import {OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
+import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 
 @Component({
@@ -15,11 +18,15 @@ import {State} from "src/web/browser-window/app/store/reducers/options";
     styleUrls: ["./accounts.component.scss"],
 })
 export class AccountsComponent implements OnDestroy {
-    accounts$ = this.store.select(OptionsSelectors.SETTINGS.accounts);
+    readonly accounts$ = this.store.select(OptionsSelectors.SETTINGS.accounts);
 
-    changingAccountOrder$ = this.store
+    readonly changingAccountOrder$: Observable<boolean> = this.store
         .select(OptionsSelectors.FEATURED.progress)
-        .pipe(map((p) => !!p.changingAccountOrder));
+        .pipe(map((progress) => Boolean(progress.changingAccountOrder)));
+
+    readonly togglingAccountDisabling$: Observable<boolean> = this.store
+        .select(OptionsSelectors.FEATURED.progress)
+        .pipe(map((progress) => Boolean(progress.togglingAccountDisabling)));
 
     @HostBinding("class.reordering-disabled")
     reorderingDisabled = true;
@@ -29,13 +36,13 @@ export class AccountsComponent implements OnDestroy {
     private subscription = new Subscription();
 
     constructor(
-        private store: Store<State>,
+        private readonly store: Store<State>,
     ) {
         this.subscription.add(
             this.changingAccountOrder$
                 .pipe(withLatestFrom(this.accounts$))
                 .subscribe(([changingAccountOrder, {length}]) => {
-                    return this.reorderingDisabled = changingAccountOrder || length < 2;
+                    this.reorderingDisabled = changingAccountOrder || length < 2;
                 }),
         );
 
@@ -65,6 +72,21 @@ export class AccountsComponent implements OnDestroy {
 
     cdkDrop(event: CdkDragDrop<LoginFieldContainer>): void {
         this.cdkDrop$.next(event);
+    }
+
+    toggleAccountDisabling(login: AccountConfig["login"]): void {
+        this.store.dispatch(
+            OPTIONS_ACTIONS.ToggleAccountDisablingRequest({login}),
+        );
+    }
+
+    navigateToAccountEdit(login?: AccountConfig["login"]): void {
+        this.store.dispatch(
+            NAVIGATION_ACTIONS.Go({
+                path: [{outlets: {[SETTINGS_OUTLET]: `${SETTINGS_PATH}/account-edit`}}],
+                ...(login && {queryParams: {login}}),
+            }),
+        );
     }
 
     ngOnDestroy(): void {

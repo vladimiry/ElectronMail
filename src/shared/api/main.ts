@@ -121,6 +121,8 @@ export const ENDPOINTS_DEFINITION = {
 
     changeAccountOrder: ActionType.Promise<LoginFieldContainer & { index: number }, Settings>(),
 
+    toggleAccountDisabling: ActionType.Promise<LoginFieldContainer, Settings>(),
+
     removeAccount: ActionType.Promise<LoginFieldContainer, Settings>(),
 
     changeMasterPassword: ActionType.Promise<PasswordFieldContainer & NewPasswordFieldContainer, Settings>(),

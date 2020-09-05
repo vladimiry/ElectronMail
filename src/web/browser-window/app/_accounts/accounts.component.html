@@ -1,7 +1,7 @@
 <div *ngIf="initialized$ | async" [attr.class]="'wrapper layout-mode-' + (layoutMode$ | async)">
-    <div class="accounts-block px-2 pt-2" [ngClass]="{'d-none': hideControls$ | async}">
+    <div *ngIf="logins$ | async; let logins" [ngClass]="{'d-none': hideControls$ | async}" class="accounts-block px-2 pt-2">
         <div class="controls">
-            <div class="btn-group" dropdown container="body">
+            <div class="btn-group" container="body" dropdown>
                 <button (click)="openSettingsView()" class="btn btn-sm btn-secondary" id="optionsMenuItem" title="Options" type="button">
                     <i class="fa fa-cog"></i>
                 </button>
@@ -37,14 +37,14 @@
             </div>
         </div>
         <div
-            [ngStyle]="!accounts.length ? {'visibility': 'hidden'} : {}" class="btn-group accounts-list d-lg-none" dropdown
+            [ngStyle]="!logins.length ? {'visibility': 'hidden'} : {}" class="btn-group accounts-list d-lg-none" dropdown
             placement="bottom right"
         >
-            <div *ngIf="unreadSummary && accounts.length > 1" class="unread-summary">
+            <div *ngIf="unreadSummary && logins.length > 1" class="unread-summary">
                 <electron-mail-unread-badge
-                    *ngIf="unreadSummary && accounts.length > 1"
-                    [value]="unreadSummary"
+                    *ngIf="unreadSummary && logins.length > 1"
                     [alwaysRenderTheValue]="true"
+                    [value]="unreadSummary"
                 ></electron-mail-unread-badge>
             </div>
             <electron-mail-account-title
@@ -55,26 +55,27 @@
                 dropdownToggle
             ></electron-mail-account-title>
             <ul *dropdownMenu class="dropdown-menu dropdown-menu-right" role="menu">
-                <li *ngFor="let account of accounts; trackBy: trackAccount" role="menuitem">
+                <li *ngFor="let login of logins" role="menuitem">
                     <electron-mail-account-title
-                        (click)="activateAccount($event, account)"
-                        [account]="account"
+                        (click)="activateAccountByLogin($event, login)"
+                        [account]="getAccountByLogin(login)"
                     ></electron-mail-account-title>
                 </li>
             </ul>
         </div>
         <ul class="list-group accounts-list d-none d-lg-flex">
             <electron-mail-account-title
-                (click)="activateAccount($event, account)" *ngFor="let account of accounts; trackBy: trackAccount"
-                [account]="account"
+                (click)="activateAccountByLogin($event, login)"
+                *ngFor="let login of logins"
+                [account]="getAccountByLogin(login)"
             ></electron-mail-account-title>
         </ul>
     </div>
-    <div class="account-block">
-        <div *ngIf="accounts.length; then accountsDefined else accountsUndefined"></div>
+    <div *ngIf="loginsWithoutOrdering$ | async; let logins" class="account-block">
+        <div *ngIf="logins.length; then accountsDefined else accountsUndefined"></div>
         <ng-template #accountsDefined>
             <electron-mail-account
-                *ngFor="let login of ((loginsSet$ | async) || undefined); let index = index"
+                *ngFor="let login of logins; let index = index"
                 [account]="getAccountByLogin(login)"
                 [ngClass]="{'d-none': login != selectedAccount?.accountConfig?.login}"
             ></electron-mail-account>

@@ -61,6 +61,7 @@ interface TestContext {
         | "selectPath"
         | "spellCheck"
         | "staticInit"
+        | "toggleAccountDisabling"
         | "toggleBrowserWindow"
         | "toggleControls"
         | "toggleLocalDbMailsListViewMode"

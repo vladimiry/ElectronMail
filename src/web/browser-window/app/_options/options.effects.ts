@@ -249,6 +249,21 @@ export class OptionsEffects {
             ))),
     );
 
+    toggleAccountDisabling$ = createEffect(
+        () => this.actions$.pipe(
+            unionizeActionFilter(OPTIONS_ACTIONS.is.ToggleAccountDisablingRequest),
+            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+            concatMap(({payload}) => merge(
+                of(this.buildPatchProgress({togglingAccountDisabling: true})),
+                from(
+                    this.ipcMainClient("toggleAccountDisabling", {timeoutMs: ONE_SECOND_MS * 20})(payload),
+                ).pipe(
+                    map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
+                    finalize(() => this.dispatchProgress({togglingAccountDisabling: false})),
+                ),
+            ))),
+    );
+
     removeAccountRequest$ = createEffect(
         () => this.actions$.pipe(
             unionizeActionFilter(OPTIONS_ACTIONS.is.RemoveAccountRequest),

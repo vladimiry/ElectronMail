@@ -15,6 +15,7 @@ export type AccountConfig = NoExtraProperties<{
     loginDelaySecondsRange?: NoExtraProperties<{ start: number; end: number }>;
     persistentSession?: boolean;
     rotateUserAgent?: boolean;
+    disabled?: boolean;
 }>;
 
 export type AccountPersistentSession = NoExtraProperties<{

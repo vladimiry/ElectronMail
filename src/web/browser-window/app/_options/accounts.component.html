@@ -1,32 +1,63 @@
-<a [routerLink]="['./../account-edit']" class="btn btn-sm btn-primary mb-3" id="goToAccountsSettingsLink">
-    <i aria-hidden="true" class="fa fa-plus"></i>
-    Add Account
-</a>
-<ul
-    (cdkDropListDropped)="cdkDrop($event)"
-    [cdkDropListDisabled]="reorderingDisabled"
-    [cdkDropListLockAxis]="'y'"
-    [cdkDropListOrientation]="'vertical'"
-    [cdkDropListSortingDisabled]="false"
-    cdkDropList
-    class="list-group"
->
-    <li
-        *ngFor="let account of ((accounts$ | async) || undefined)"
-        cdkDrag
-        [cdkDragData]="{login: account.login}"
-        class="list-group-item pl-0 pr-3"
+<fieldset [disabled]="(changingAccountOrder$ | async) || (togglingAccountDisabling$ | async)">
+    <button
+        (click)="$event.preventDefault(); navigateToAccountEdit()"
+        class="btn btn-primary btn-sm mb-3"
+        id="goToAccountsSettingsLink"
     >
-        <i cdkDragHandle class="fa fa-bars pl-3 pr-2" title="Drag up/down to reorder"></i>
-        {{ account.login }}
-        <span *ngIf="account.title"> ({{ account.title }})</span>
-        <a [routerLink]="['./../account-edit', account.login]" class="float-right">
-            Edit
-        </a>
-    </li>
-</ul>
-<div *ngIf="changingAccountOrder$ | async" class="progress mt-3">
-    <div class="progress-bar progress-bar-striped progress-bar-animated bg-secondary" style="width: 100%">
-        Reordering ...
+        <i aria-hidden="true" class="fa fa-plus"></i>
+        Add Account
+    </button>
+    <ul
+        (cdkDropListDropped)="cdkDrop($event)"
+        [cdkDropListDisabled]="reorderingDisabled"
+        [cdkDropListLockAxis]="'y'"
+        [cdkDropListOrientation]="'vertical'"
+        [cdkDropListSortingDisabled]="false"
+        cdkDropList
+        class="list-group"
+    >
+        <li
+            *ngFor="let account of ((accounts$ | async) || undefined)"
+            [cdkDragData]="{login: account.login}"
+            cdkDrag
+            class="list-group-item pl-0 pr-3 d-flex align-items-baseline"
+        >
+            <div class="flex-grow-1">
+                <i cdkDragHandle class="fa fa-bars pl-3 pr-2" title="Drag up/down to reorder"></i>
+                {{ account.login }}
+                <span *ngIf="account.title"> ({{ account.title }})</span>
+            </div>
+            <div
+                *ngIf="'_options_accounts_disabled_id_' + account.login; let disabledInputId"
+                class="custom-control custom-switch d-flex mr-3"
+            >
+                <input
+                    (click)="$event.preventDefault(); toggleAccountDisabling(account.login)"
+                    [checked]="!account.disabled"
+                    [id]="disabledInputId"
+                    class="custom-control-input"
+                    type="checkbox"
+                >
+                <label [for]="disabledInputId" class="custom-control-label" style="cursor: pointer">
+                    active
+                </label>
+            </div>
+            <button
+                (click)="$event.preventDefault(); navigateToAccountEdit(account.login)"
+                class="btn btn-link d-flex p-0"
+            >
+                Edit
+            </button>
+        </li>
+    </ul>
+    <div *ngIf="changingAccountOrder$ | async" class="progress mt-3">
+        <div class="progress-bar progress-bar-striped progress-bar-animated bg-secondary" style="width: 100%">
+            Reordering ...
+        </div>
     </div>
-</div>
+    <div *ngIf="togglingAccountDisabling$ | async" class="progress mt-3">
+        <div class="progress-bar progress-bar-striped progress-bar-animated bg-secondary" style="width: 100%">
+            Disabling/enabling ...
+        </div>
+    </div>
+</fieldset>

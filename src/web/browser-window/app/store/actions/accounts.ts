@@ -27,7 +27,7 @@ export const ACCOUNTS_ACTIONS = unionize({
         Synced: ofType<{ pk: DbAccountPk }>(),
         SetupNotificationChannel: ofType<{ account: WebAccount; webView: Electron.WebviewTag; finishPromise: Promise<void> }>(),
         TryToLogin: ofType<{ account: WebAccount; webView: Electron.WebviewTag }>(),
-        WireUpConfigs: ofType<{ accountConfigs: AccountConfig[] }>(),
+        WireUpConfigs: ofType<DeepReadonly<{ accountConfigs: AccountConfig[] }>>(),
         PatchGlobalProgress: ofType<{ patch: State["globalProgress"] }>(),
         SelectMailOnline: ofType<{ pk: DbAccountPk; mail: Pick<Mail, "id" | "mailFolderIds" | "conversationEntryPk"> }>(),
         FetchSingleMailSetParams: ofType<{ pk: DbAccountPk }

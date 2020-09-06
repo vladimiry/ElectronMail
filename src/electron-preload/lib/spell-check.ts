@@ -39,7 +39,7 @@ const state: {
         // we call it only once, so nooping the function
         state.setupNotificationListening = () => {}; // eslint-disable-line @typescript-eslint/no-empty-function
 
-        const client = IPC_MAIN_API.client({options: {logger, finishPromise, timeoutMs: ONE_SECOND_MS}});
+        const client = IPC_MAIN_API.client({options: {logger, finishPromise, timeoutMs: ONE_SECOND_MS * 3 + 1}});
         const notificationSubscription = client("notification")()
             .pipe(filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.Locale))
             .subscribe(({payload: {locale}}) => setSpellCheckProvider(locale, client));

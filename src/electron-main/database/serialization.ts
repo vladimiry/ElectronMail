@@ -98,13 +98,15 @@ export class SerializationAdapter {
             this.logger.info("write()");
 
             this.logger.verbose(`"msgpack.encode" start`);
-            const serializedData = Buffer.from(
-                msgpack.encode(data),
-            );
+            const serializedData = (() => {
+                const encoded = msgpack.encode(data);
+                return Buffer.from(encoded.buffer, encoded.byteOffset, encoded.byteLength);
+            })();
             this.logger.verbose(`"msgpack.encode" end`);
 
-            const encryptedData = await encryptionAdapter.write(serializedData);
-            const {header, cipher} = persistencePartsUtil.split(encryptedData);
+            const {header, cipher} = persistencePartsUtil.split(
+                await encryptionAdapter.write(serializedData),
+            );
 
             header.serialization = {type: "msgpack"};
 

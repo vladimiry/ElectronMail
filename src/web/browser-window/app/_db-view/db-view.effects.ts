@@ -46,6 +46,11 @@ export class DbViewEffects {
                     this.store.pipe(
                         select(OptionsSelectors.FEATURED.mainProcessNotification),
                         filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbIndexerProgressState),
+                        filter(({payload}) => {
+                            return "key" in payload
+                                ? payload.key.login === dbAccountPk.login
+                                : true;
+                        }),
                         mergeMap(({payload}) => {
                             this.ngZone.run(() => {
                                 this.store.dispatch(

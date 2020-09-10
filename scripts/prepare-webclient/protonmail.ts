@@ -117,6 +117,7 @@ async function writeProtonConfigFile(
     // TODO move "WebClient" build logic to separate file (got long)
     await (async () => {
         const repoType = "WebClient";
+        const {repoRelativeDistDir} = PROVIDER_REPOS[repoType];
 
         await execAccountTypeFlow({
             repoType,
@@ -144,6 +145,39 @@ async function writeProtonConfigFile(
                         {cwd: repoDir, envFileName: "./env/env.json", repoType},
                         folderAsDomainEntry,
                     );
+
+                    await (async () => {
+                        const {stdout} = await execShell([
+                            "node",
+                            [
+                                "-e",
+                                `
+                                const configDefault = require("./env/configDefault.js");
+                                const props = {changelogPath: configDefault.changelogPath, versionPath: configDefault.versionPath};
+                                console.log(JSON.stringify(props));
+                                `,
+                            ],
+                            {cwd: repoDir},
+                        ]);
+                        const {changelogPath, versionPath} = JSON.parse(stdout) as { changelogPath: string, versionPath: string };
+                        const destDir = path.join(repoDir, repoRelativeDistDir);
+                        const changelogOutput = path.join(destDir, changelogPath);
+                        const versionOutput = path.join(destDir, versionPath);
+
+                        (await import("mkdirp")).sync(path.dirname(versionOutput));
+                        (await import("mkdirp")).sync(path.dirname(changelogOutput));
+
+                        await execShell([
+                            "node",
+                            ["./tasks/generateChangelog.js", "./CHANGELOG.md", changelogOutput],
+                            {cwd: repoDir},
+                        ]);
+                        await execShell([
+                            "./node_modules/proton-bundler/scripts/createVersionJSON.sh",
+                            ["--output", versionOutput],
+                            {cwd: repoDir},
+                        ]);
+                    })();
 
                     // TODO proton-v4: drop "npm run config" call when proton moves "WebClient" to "proton-pack" building
                     await execShell(["npm", ["run", "config", "--", "--api", configApiParam], {cwd: repoDir}]);
@@ -182,7 +216,7 @@ async function writeProtonConfigFile(
     })();
 
     for (const repoType of (["proton-mail-settings", "proton-contacts", "proton-calendar"] as const)) {
-        const destSubFolder = PROVIDER_REPOS[repoType].baseDir;
+        const {baseDir: destSubFolder} = PROVIDER_REPOS[repoType];
 
         if (!destSubFolder) {
             throw new Error(

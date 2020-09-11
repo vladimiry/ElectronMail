@@ -1,18 +1,11 @@
 import {EntryUrlItem, LogLevel} from "./model/common";
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-const {
-    name: PACKAGE_NAME,
-    version: PACKAGE_VERSION,
-    license: PACKAGE_LICENSE,
-    description: PACKAGE_DESCRIPTION,
-}: {
-    name: string;
-    version: string;
-    license: string;
-    description: string;
-    // tslint:disable-next-line no-import-zones
-} = require("package.json"); // eslint-disable-line @typescript-eslint/no-var-requires
+import {
+    description as PACKAGE_DESCRIPTION,
+    homepage as PACKAGE_GITHUB_PROJECT_URL,
+    license as PACKAGE_LICENSE,
+    name as PACKAGE_NAME,
+    version as PACKAGE_VERSION,
+} from "package.json";
 
 export const PRODUCT_NAME = "ElectronMail";
 
@@ -25,6 +18,7 @@ export {
     PACKAGE_VERSION,
     PACKAGE_LICENSE,
     PACKAGE_DESCRIPTION,
+    PACKAGE_GITHUB_PROJECT_URL,
 };
 
 export const VIRTUAL_UNREAD_FOLDER_TYPE = `${PRODUCT_NAME}_VIRTUAL_UNREAD_`;

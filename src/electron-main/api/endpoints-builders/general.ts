@@ -11,7 +11,7 @@ import {map, startWith, take} from "rxjs/operators";
 import {Context} from "src/electron-main/model";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main";
-import {PACKAGE_VERSION, UPDATE_CHECK_FETCH_TIMEOUT} from "src/shared/constants";
+import {PACKAGE_GITHUB_PROJECT_URL, PACKAGE_VERSION, UPDATE_CHECK_FETCH_TIMEOUT} from "src/shared/constants";
 import {PLATFORM} from "src/electron-main/constants";
 import {curryFunctionMembers} from "src/shared/util";
 import {showAboutBrowserWindow} from "src/electron-main/window/about";
@@ -202,7 +202,7 @@ export async function buildEndpoints(
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         updateCheck: (() => {
-            const releasesUrlPrefix = "https://github.com/vladimiry/ElectronMail/releases/tag";
+            const releasesUrlPrefix = `${PACKAGE_GITHUB_PROJECT_URL}/releases/tag`;
             const tagNameFilterRe = /[^a-z0-9._-]/gi;
             const filterAssetName: (name: string) => boolean = (
                 (): (name: string) => boolean => {

@@ -3,6 +3,8 @@ import {Subject} from "rxjs";
 
 import {LoginFieldContainer} from "src/shared/model/container";
 
+export const PACKAGE_GITHUB_PROJECT_URL_TOKEN = new InjectionToken<string>("PACKAGE_GITHUB_PROJECT_URL");
+
 export const STUB_OUTLET = "stub-outlet";
 
 export const STUB_PATH = "stub";

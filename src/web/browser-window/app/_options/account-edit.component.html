@@ -22,7 +22,7 @@
                             So just wait until the data fetching icon on the account handle button stopped blinking in green.
                         </p>
                     </ng-template>
-                    <a href="https://github.com/vladimiry/ElectronMail/wiki/FAQ">FAQ</a>
+                    <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/wiki/FAQ">FAQ</a>
                 </label>
             </div>
         </div>
@@ -36,10 +36,10 @@
             <div class="clearfix">
                 <label class="d-block pull-left">API entry point</label>
                 <div class="pull-right text-muted">
-                    <a href="https://github.com/vladimiry/ElectronMail/issues/29">#29</a>,
-                    <a href="https://github.com/vladimiry/ElectronMail/issues/79">#79</a>,
-                    <a href="https://github.com/vladimiry/ElectronMail/issues/80">#80</a>,
-                    <a href="https://github.com/vladimiry/ElectronMail/issues/164">#164</a>
+                    <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/29">#29</a>,
+                    <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/79">#79</a>,
+                    <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/80">#80</a>,
+                    <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/164">#164</a>
                 </div>
             </div>
             <ng-select [items]="entryUrlItems" [clearable]="false" formControlName="entryUrl" id="accountEditFormEntryUrlField"
@@ -81,7 +81,7 @@
                     triggers="mouseenter:mouseleave"
                 ></i>
             </label>
-            <a class="d-block pull-right" href="https://github.com/vladimiry/ElectronMail/issues/10">#10</a>
+            <a class="d-block pull-right" href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/10">#10</a>
             <input type="password" class="form-control" formControlName="twoFactorCode"
                    [ngClass]="controls.twoFactorCode.dirty ? {'is-invalid': controls.twoFactorCode.invalid, 'is-valid': controls.twoFactorCode.valid} : {}">
         </div>
@@ -98,7 +98,7 @@
             </label>
             <div class="pull-right">
                 <a href="https://protonmail.com/support/knowledge-base/switch-two-password-mode/">description</a>,
-                <a href="https://github.com/vladimiry/ElectronMail/issues/138">#138</a>
+                <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/138">#138</a>
             </div>
             <input type="password" class="form-control" formControlName="mailPassword"
                    [ngClass]="controls.mailPassword.dirty ? {'is-invalid': controls.mailPassword.invalid, 'is-valid': controls.mailPassword.valid} : {}">
@@ -116,7 +116,7 @@
                         triggers="mouseenter:mouseleave"
                     ></i>
                     <span class="badge badge-secondary align-self-center ml-1">experimental</span>
-                    <a class="ml-1" href="https://github.com/vladimiry/ElectronMail/issues/227">#227</a>
+                    <a class="ml-1" href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/227">#227</a>
                 </label>
             </div>
         </div>
@@ -135,7 +135,7 @@
                                 popover="App restart required for the option to take effect."
                                 triggers="mouseenter:mouseleave"
                             ></i>
-                            <a class="ml-1" href="https://github.com/vladimiry/ElectronMail/issues/273">#273</a>
+                            <a class="ml-1" href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/273">#273</a>
                         </label>
                     </div>
                 </div>

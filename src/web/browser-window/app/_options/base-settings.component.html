@@ -5,14 +5,14 @@
         novalidate
     >
         <accordion class="mb-2">
-            <accordion-group heading="Colors customization" [isOpen]="false">
+            <accordion-group [isOpen]="false" heading="Colors customization">
                 <div class="form-group">
                     <label class="d-block mb-2">
                         Tray/Notification icon color
                     </label>
                     <input
-                        *ngIf="($trayIconColor | async) as trayIconColor"
                         (colorPickerChange)="trayIconColorPickerChangeHandler($event)"
+                        *ngIf="($trayIconColor | async) as trayIconColor"
                         [colorPicker]="trayIconColor"
                         [cpOutputFormat]="'hex'"
                         [cpPosition]="'bottom'"
@@ -45,8 +45,8 @@
                     <div class="row">
                         <div class="col-sm-6 pb-1">
                             <input
-                                *ngIf="($unreadBgColor | async) as unreadBgColor"
                                 (colorPickerChange)="bgColorPickerChangeHandler($event)"
+                                *ngIf="($unreadBgColor | async) as unreadBgColor"
                                 [colorPicker]="unreadBgColor"
                                 [cpOutputFormat]="'hex'"
                                 [cpPosition]="'bottom'"
@@ -60,8 +60,8 @@
                         </div>
                         <div class="col-sm-6 pb-1">
                             <input
-                                *ngIf="($unreadTextColor | async) as unreadTextColor"
                                 (colorPickerChange)="textColorPickerChangeHandler($event)"
+                                *ngIf="($unreadTextColor | async) as unreadTextColor"
                                 [colorPicker]="unreadTextColor"
                                 [cpOutputFormat]="'hex'"
                                 [cpPosition]="'bottom'"
@@ -109,10 +109,10 @@
             <label class="custom-control-label" for="findInPageCheckbox">
                 Find in page (Ctrl+F)
                 <i
+                    [placement]="'bottom'"
                     [popover]="findInPagePopoverTemplate"
                     class="fa fa-info-circle text-primary"
                     container="body"
-                    [placement]="'bottom'"
                     triggers="mouseenter:mouseleave"
                 ></i>
                 <ng-template #findInPagePopoverTemplate>
@@ -180,7 +180,7 @@
         <hr>
         <div class="text-muted mb-2">
             Switches of this block only make sense and take effect if the
-            <a href="https://github.com/vladimiry/ElectronMail/wiki/FAQ">local store</a> feature is enabled for at least
+            <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/wiki/FAQ">local store</a> feature is enabled for at least
             one account.
         </div>
         <div class="custom-control custom-switch">
@@ -252,10 +252,10 @@
         <label class="d-block mb-2">
             Log level
             <i
+                [placement]="'bottom'"
                 [popover]="logLevelSelectPopoverTemplate"
                 class="fa fa-info-circle text-warning align-self-center"
                 container="body"
-                [placement]="'bottom'"
                 triggers="mouseenter:mouseleave"
             ></i>
             <ng-template #logLevelSelectPopoverTemplate>
@@ -271,7 +271,9 @@
         </div>
         <div class="text-muted mt-2">
             <small>
-                The <code>log.log</code> file located in the <a (click)="openSettingsFolder($event)" href>settings folder</a>
+                The <code>log.log</code> file located in the <a (click)="openSettingsFolder($event)" href="javascript:void(0)">
+                settings folder
+            </a>
             </small>
         </div>
     </form>

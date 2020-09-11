@@ -1,6 +1,6 @@
 import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/forms";
 import {ActivatedRoute} from "@angular/router";
-import {Component, ElementRef, OnDestroy, OnInit} from "@angular/core";
+import {Component, ElementRef, Inject, OnDestroy, OnInit} from "@angular/core";
 import {Observable, Subscription, merge} from "rxjs";
 import {Store, select} from "@ngrx/store";
 import {concatMap, distinctUntilChanged, map, mergeMap} from "rxjs/operators";
@@ -9,6 +9,7 @@ import {AccountConfig} from "src/shared/model/account";
 import {AccountConfigCreateUpdatePatch} from "src/shared/model/container";
 import {OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
+import {PACKAGE_GITHUB_PROJECT_URL_TOKEN} from "src/web/browser-window/app/app.constants";
 import {PROTON_API_ENTRY_RECORDS} from "src/shared/constants";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
@@ -92,9 +93,11 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     private readonly subscription = new Subscription();
 
     constructor(
-        private store: Store<State>,
-        private activatedRoute: ActivatedRoute,
-        private elementRef: ElementRef,
+        @Inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN)
+        public readonly PACKAGE_GITHUB_PROJECT_URL: string,
+        private readonly store: Store<State>,
+        private readonly activatedRoute: ActivatedRoute,
+        private readonly elementRef: ElementRef,
     ) {}
 
     ngOnInit(): void {

@@ -1,5 +1,5 @@
 import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/forms";
-import {Component, ElementRef, OnDestroy, OnInit} from "@angular/core";
+import {Component, ElementRef, Inject, OnDestroy, OnInit} from "@angular/core";
 import {Observable, Subscription} from "rxjs";
 import {Store, select} from "@ngrx/store";
 import {distinctUntilKeyChanged, map, take} from "rxjs/operators";
@@ -8,6 +8,7 @@ import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/st
 import {BaseConfig} from "src/shared/model/options";
 import {LAYOUT_MODES, LOG_LEVELS, ZOOM_FACTORS} from "src/shared/constants";
 import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {PACKAGE_GITHUB_PROJECT_URL_TOKEN} from "src/web/browser-window/app/app.constants";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
 
@@ -83,8 +84,10 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
     private subscription = new Subscription();
 
     constructor(
-        private store: Store<State>,
-        private elementRef: ElementRef,
+        @Inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN)
+        public readonly PACKAGE_GITHUB_PROJECT_URL: string,
+        private readonly store: Store<State>,
+        private readonly elementRef: ElementRef,
     ) {}
 
     ngOnInit(): void {

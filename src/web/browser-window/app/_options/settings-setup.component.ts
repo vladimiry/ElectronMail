@@ -1,8 +1,10 @@
-import {Component, Injector} from "@angular/core";
+import {Component, Inject, Injector} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 
 import {LoginBaseComponent} from "src/web/browser-window/app/_options/login-base.component";
 import {NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {PACKAGE_GITHUB_PROJECT_URL} from "src/shared/constants";
+import {PACKAGE_GITHUB_PROJECT_URL_TOKEN} from "src/web/browser-window/app/app.constants";
 
 @Component({
     selector: "electron-mail-settings-setup",
@@ -32,7 +34,9 @@ export class SettingsSetupComponent extends LoginBaseComponent {
     });
 
     constructor(
-        injector: Injector,
+        @Inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN)
+        public readonly PACKAGE_GITHUB_PROJECT_URL: string,
+        protected readonly injector: Injector,
     ) {
         super(injector);
     }
@@ -45,7 +49,7 @@ export class SettingsSetupComponent extends LoginBaseComponent {
 
     openFaq(): void {
         this.store.dispatch(
-            NAVIGATION_ACTIONS.OpenExternal({url: "https://github.com/vladimiry/ElectronMail/wiki/FAQ"}),
+            NAVIGATION_ACTIONS.OpenExternal({url: `${PACKAGE_GITHUB_PROJECT_URL}/wiki/FAQ`}),
         );
     }
 }

@@ -24,10 +24,10 @@
                 </div>
             </div>
             <div class="form-group text-muted">
-                The app uses this password to encrypt all the sensitive data to be stored in
-                the <a (click)="$event.preventDefault(); openSettingsFolder()" href>settings folder</a>.
+                The app uses this password to encrypt all the sensitive data to be stored in the
+                <a (click)="$event.preventDefault(); openSettingsFolder()" href="javascript:void(0)">settings folder</a>.
                 All the files being produced and stored by the app listed in
-                the <a (click)="$event.preventDefault(); openFaq()" href>FAQ</a>.
+                the <a (click)="$event.preventDefault(); openFaq()" href="{{ PACKAGE_GITHUB_PROJECT_URL }}/wiki/FAQ">FAQ</a>.
             </div>
             <button class="btn btn-lg btn-primary btn-block" type="submit" [disabled]="form.invalid">
                 <i class="fa fa-spinner fa-pulse fa-fw" *ngIf="signingIn$ | async"></i>

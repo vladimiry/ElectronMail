@@ -1,9 +1,10 @@
-import {Component, ElementRef, Input, OnDestroy, OnInit} from "@angular/core";
+import {Component, ElementRef, Inject, Input, OnDestroy, OnInit} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {Subscription} from "rxjs";
 
 import {NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
+import {PACKAGE_GITHUB_PROJECT_URL_TOKEN} from "src/web/browser-window/app/app.constants";
 import {PACKAGE_NAME} from "src/shared/constants";
 import {SAVE_PASSWORD_WARN_TRUSTED_HTML} from "./const";
 import {State} from "src/web/browser-window/app/store/reducers/options";
@@ -36,6 +37,8 @@ export class SavePasswordLabelComponent implements OnInit, OnDestroy {
     private readonly subscription = new Subscription();
 
     constructor(
+        @Inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN)
+        public readonly PACKAGE_GITHUB_PROJECT_URL: string,
         private readonly store: Store<State>,
         private readonly elementRef: ElementRef,
     ) {}

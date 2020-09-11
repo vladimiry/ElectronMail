@@ -19,6 +19,8 @@ import * as RootReducer from "./store/reducers/root";
 import {AppComponent} from "./components/app.component";
 import {AppErrorHandler} from "./app.error-handler.service";
 import {CoreModule} from "./_core/core.module";
+import {PACKAGE_GITHUB_PROJECT_URL} from "src/shared/constants";
+import {PACKAGE_GITHUB_PROJECT_URL_TOKEN} from "./app.constants";
 import {RouterProxyComponent} from "./components/router-proxy.component";
 import {RoutingModule} from "./app.routing.module";
 
@@ -56,6 +58,10 @@ import {RoutingModule} from "./app.routing.module";
         EffectsModule.forRoot([]),
     ],
     providers: [
+        {
+            provide: PACKAGE_GITHUB_PROJECT_URL_TOKEN,
+            useValue: PACKAGE_GITHUB_PROJECT_URL,
+        },
         {
             provide: APP_BASE_HREF,
             useValue: "/",

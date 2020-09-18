@@ -6,8 +6,8 @@
   "license": "MIT",
   "homepage": "https://github.com/vladimiry/ElectronMail",
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/vladimiry/ElectronMail.git"
+    "type": "git",
+    "url": "https://github.com/vladimiry/ElectronMail.git"
   },
   "bugs": {
     "url": "https://github.com/vladimiry/ElectronMail/issues"
@@ -83,14 +83,9 @@
     "start:electron:dev": "electron ./app-dev/electron-main.js",
     "test:e2e": "cross-env TS_NODE_FILES=true npx --no-install --node-arg=\"--require tsconfig-paths/register --require ts-node/register\" ava \"./src/e2e/**/*.{spec,test}.ts\"",
     "test:electron-main": "cross-env NODE_ENV=test npm-run-all test:electron-main:compiled:clean test:electron-main:compiled:compile test:electron-main:compiled:ava",
-    "test:electron-main:compiled:ava:pre:cpx:tsconfig.json": "cpx ./src/assets/output/__test__/electron-main/tsconfig.json output/__test__/electron-main",
-    "test:electron-main:compiled:ava:pre:cpx:package.json": "cpx ./package.json output/__test__/electron-main",
-    "test:electron-main:compiled:ava:pre:run": "cross-env TS_NODE_PROJECT=./output/__test__/electron-main/tsconfig.json npx --no-install --node-arg=\"--require tsconfig-paths/register\" ava \"./output/__test__/electron-main/src/electron-main/__test__/**/*.{spec,test}.js\"",
-    "test:electron-main:compiled:ava": "npm-run-all test:electron-main:compiled:ava:pre:cpx:tsconfig.json test:electron-main:compiled:ava:pre:cpx:package.json test:electron-main:compiled:ava:pre:run",
+    "test:electron-main:compiled:ava": "npx --no-install ava \"./output/__test__/electron-main/src/electron-main/__test__/**/*.{spec,test}.js\"",
     "test:electron-main:compiled:clean": "rimraf ./output/__test__/electron-main",
     "test:electron-main:compiled:compile": "cross-env TS_NODE_FILES=true npx --no-install --node-arg=\"--require tsconfig-paths/register\" ttsc --project ./src/electron-main/__test__/tsconfig.json",
-    "test:electron-main:ts-node": "yarn test:electron-main:ts-node:shortcut \"./src/electron-main/__test__/**/*.{spec,test}.ts\"",
-    "test:electron-main:ts-node:shortcut": "cross-env TS_NODE_FILES=true TS_NODE_PROJECT=./src/electron-main/__test__/tsconfig.json npx --no-install --node-arg=\"--require tsconfig-paths/register --require ts-node/register\" ava",
     "test:web": "cross-env NODE_ENV=test TS_NODE_FILES=true npx --no-install --node-arg=\"--require tsconfig-paths/register\" karma start ./src/web/browser-window/test/karma.conf.ts --single-run",
     "scripts/ci/appveyor/download-webclients-artifact": "yarn ts-node:shortcut ./scripts/ci/appveyor/download-webclients-artifact.ts",
     "scripts/ci/print-webclients-dist-paths-pattern": "yarn --silent ts-node:shortcut ./scripts/ci/print-webclients-dist-paths-pattern.ts",
@@ -277,7 +272,7 @@
     "tsconfig-paths": "3.9.0",
     "ttypescript": "1.5.12",
     "typescript": "4.0.2",
-    "typescript-transform-paths": "2.0.0",
+    "typescript-transform-paths": "2.0.1",
     "url-loader": "4.1.0",
     "webpack": "4.44.1",
     "webpack-cli": "3.3.12",

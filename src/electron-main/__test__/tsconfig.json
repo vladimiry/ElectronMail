@@ -4,14 +4,12 @@
     "outDir": "./../../../output/__test__/electron-main",
     "noEmitOnError": true,
     "plugins": [
-      // TODO typescript v3 => v4: drop "test:electron-main:compiled:ava:pre:*" npm scripts and related files
-      // TODO typescript v3 => v4: uncomment when https://github.com/LeDDGroup/typescript-transform-paths/issues/68 gets resolved
-      //      {
-      //        "transform": "typescript-transform-paths"
-      //      },
-      //      {
-      //        "transform": "./../../../scripts/typescript/webpack-build-env-transformer.ts"
-      //      }
+      {
+        "transform": "typescript-transform-paths"
+      },
+      {
+        "transform": "./../../../scripts/typescript/webpack-build-env-transformer.ts"
+      }
     ]
   },
   "exclude": []

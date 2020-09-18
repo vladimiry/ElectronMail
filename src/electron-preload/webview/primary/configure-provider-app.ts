@@ -84,18 +84,20 @@ export function configureProviderApp(
 
     initSpellCheckProvider(logger);
     applyZoomFactor(logger);
-    disableBrowserNotificationFeature(logger);
     registerDocumentKeyDownEventListener(document, logger);
     registerDocumentClickEventListener(document, logger);
 
     const packagedWebClientApp = resolvePackagedWebClientApp(packagedWebClientUrl);
-    const isAngularWebClient = packagedWebClientApp.project === "WebClient";
-    logger.verbose(JSON.stringify({packagedWebClientApp, isAngularWebClient}));
+    const isWebClient = packagedWebClientApp.project === "WebClient";
+    logger.verbose(JSON.stringify({packagedWebClientApp, isWebClient}));
 
-    if (!isAngularWebClient) {
+    if (!isWebClient) {
         logger.info(`Skip configuring AngularWebClient-specific stuff`);
         return;
     }
+
+    // should be called for "WebClient" project only
+    disableBrowserNotificationFeature(logger);
 
     logger.info(`Start configuring AngularWebClient-specific stuff`);
 

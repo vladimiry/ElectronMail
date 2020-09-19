@@ -5,6 +5,7 @@ import url from "url";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Model as StoreModel} from "fs-json-store";
 
+import {Config} from "src/shared/model/options";
 import {Context} from "./model";
 import {curryFunctionMembers} from "src/shared/util";
 
@@ -53,3 +54,20 @@ export function hrtimeDuration(): { end: () => number } {
     };
 }
 
+// TODO add synchronous "read" method to "fs-json-store"
+export function readConfigSync({configStore}: DeepReadonly<Context>): Config | null {
+    let configFile: Buffer | string | undefined;
+
+    try {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        configFile = configStore.fs._impl.readFileSync(configStore.file); // eslint-disable-line @typescript-eslint/no-unsafe-call
+    } catch (error) {
+        if (error.code !== "ENOENT") { // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+            throw error;
+        }
+    }
+
+    return configFile
+        ? JSON.parse(configFile.toString()) as Config
+        : null;
+}

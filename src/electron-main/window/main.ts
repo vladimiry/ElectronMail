@@ -6,6 +6,7 @@ import {Context} from "src/electron-main/model";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";
 import {PRODUCT_NAME} from "src/shared/constants";
 import {curryFunctionMembers} from "src/shared/util";
+import {readConfigSync} from "src/electron-main/util";
 import {syncFindInPageBrowserViewSize} from "src/electron-main/window/find-in-page";
 
 const logger = curryFunctionMembers(_logger, "[src/electron-main/window/main]");
@@ -148,19 +149,27 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
             state.forceClose = false;
             app.quit();
         })
-        .on("close", async (event) => {
+        .on("close", (event) => {
             if (state.forceClose) {
-                return event.returnValue = true;
-            }
-
-            event.returnValue = false;
-            event.preventDefault();
-
-            if ((await ctx.configStore.readExisting()).hideOnClose) {
-                browserWindow.hide();
+                event.returnValue = true;
             } else {
-                state.forceClose = true;
-                browserWindow.close(); // re-triggering the same "close" event
+                event.preventDefault();
+                event.returnValue = false;
+
+                setTimeout(() => {
+                    const config = readConfigSync(ctx);
+
+                    if (!config) {
+                        throw new Error(`No config file detected ("${ctx.configStore.file}")`);
+                    }
+
+                    if (config.hideOnClose) {
+                        browserWindow.hide();
+                    } else {
+                        state.forceClose = true;
+                        browserWindow.close(); // re-triggering the same "close" event
+                    }
+                });
             }
 
             return event.returnValue;

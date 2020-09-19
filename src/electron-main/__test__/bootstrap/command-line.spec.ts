@@ -9,6 +9,7 @@ import {Fs, Store} from "fs-json-store";
 import {Config} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
 import {INITIAL_STORES} from "src/electron-main/constants";
+import {PACKAGE_NAME, PACKAGE_VERSION} from "src/shared/constants";
 
 function buildMocks() { // eslint-disable-line @typescript-eslint/explicit-function-return-type
     return {
@@ -18,6 +19,8 @@ function buildMocks() { // eslint-disable-line @typescript-eslint/explicit-funct
                     appendSwitch: sinon.spy(),
                 },
                 disableHardwareAcceleration: sinon.spy(),
+                getName: (): string => PACKAGE_NAME,
+                getVersion: (): string => PACKAGE_VERSION,
             },
         },
     };

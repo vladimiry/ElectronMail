@@ -17,7 +17,7 @@
   },
   "main": "./app/electron-main.js",
   "scripts": {
-    "postinstall": "npm-run-all yarn:audit postinstall:patch-package postinstall:remove:prebuild-install postinstall:electron-chromedriver",
+    "postinstall": "npm-run-all yarn:audit postinstall:patch-package postinstall:remove:prebuild-install postinstall:electron-chromedriver scripts/code-generating/electron-main",
     "postinstall:remove:prebuild-install": "rimraf ./node_modules/prebuild-install",
     "postinstall:patch-package": "patch-package --patch-dir ./patches/patch-package",
     "postinstall:electron-chromedriver": "npm-run-all postinstall:electron-chromedriver:remove postinstall:electron-chromedriver:download",

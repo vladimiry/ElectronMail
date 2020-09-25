@@ -13,8 +13,7 @@ import {LOG, execShell} from "scripts/lib";
                 await Promise.all(
                     (
                         [
-                            {prop: "branch", gitArgs: ["branch", "--show-current"]},
-                            {prop: "commitShort", gitArgs: ["rev-parse", "--short", "HEAD"]},
+                            {prop: "shortCommit", gitArgs: ["rev-parse", "--short", "HEAD"]},
                             {prop: "commit", gitArgs: ["rev-parse", "HEAD"]},
                         ] as const
                     ).map(
@@ -29,7 +28,7 @@ import {LOG, execShell} from "scripts/lib";
                     }
                     return {...accumulator, [prop]: value};
                 },
-                {branch: "", commitShort: "", commit: ""},
+                {shortCommit: "", commit: ""},
             )
         ),
     );

@@ -22,7 +22,7 @@ const logger = curryFunctionMembers(_logger, "[src/electron-main/window/about]")
 const resolveContent: (ctx: Context) => Promise<Unpacked<ReturnType<typeof injectVendorsAppCssIntoHtmlFile>>> = (
     (): typeof resolveContent => {
         let result: typeof resolveContent = async (ctx: Context) => {
-            const {branch, commit, commitShort} = await import("./about.json");
+            const {commit, shortCommit} = await import("./about.json");
             const htmlInjection: string = [
                 sanitizeHtml(
                     `
@@ -32,7 +32,7 @@ const resolveContent: (ctx: Context) => Promise<Unpacked<ReturnType<typeof injec
                             href="${PACKAGE_GITHUB_PROJECT_URL}/commit/${commit}"
                             style="position: absolute; left: 100%; bottom: 100%; font-size: 1rem;"
                         >
-                            ${branch}:${commitShort}
+                            ${shortCommit}
                         </a>
                     </h1>
                     <p>${PACKAGE_DESCRIPTION}</p>

@@ -31,9 +31,8 @@ export function cssRuleSetUseItems(): RuleSetUseItem[] {
             loader: "postcss-loader",
             options: {
                 sourceMap: false, // TODO handle sourceMap
-                ident: "postcss",
-                plugins: () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
-                    return [ // eslint-disable-line @typescript-eslint/no-unsafe-return
+                postcssOptions: {
+                    plugins: [
                         postCssUrl(),
                         cssNano({ // eslint-disable-line @typescript-eslint/no-unsafe-call
                             autoprefixer: true,
@@ -41,7 +40,7 @@ export function cssRuleSetUseItems(): RuleSetUseItem[] {
                             mergeLonghand: false,
                             safe: true,
                         }),
-                    ];
+                    ],
                 },
             },
         },

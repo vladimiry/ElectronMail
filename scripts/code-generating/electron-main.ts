@@ -1,7 +1,7 @@
 import fs from "fs";
 import {promisify} from "util";
 
-import {execShell, LOG} from "scripts/lib";
+import {LOG, execShell} from "scripts/lib";
 
 (async () => {
     const destFile = "./src/electron-main/window/about.json";
@@ -18,14 +18,14 @@ import {execShell, LOG} from "scripts/lib";
                             {prop: "commit", gitArgs: ["rev-parse", "HEAD"]},
                         ] as const
                     ).map(
-                        ({gitArgs, prop}) => execShell(["git", gitArgs])
+                        async ({gitArgs, prop}) => execShell(["git", gitArgs])
                             .then(({stdout}) => ({value: stdout.replace(/(\r\n|\n|\r)/gm, ""), gitArgs, prop})),
                     ),
                 )
             ).reduce(
                 (accumulator: NoExtraProperties<Record<typeof prop, string>>, {value, gitArgs, prop}) => {
                     if (!value) {
-                        throw new Error(`"${gitArgs}" git command returned empty value: ${value}`);
+                        throw new Error(`"${JSON.stringify(gitArgs)}" git command returned empty value: ${value}`);
                     }
                     return {...accumulator, [prop]: value};
                 },

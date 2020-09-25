@@ -1,13 +1,14 @@
 import {Subscription} from "rxjs";
 import {addDocumentToIndex, createIndex, removeDocumentFromIndex, vacuumIndex} from "ndx";
 import {expandTerm, query} from "ndx-query";
+import {fromString as htmlToText} from "html-to-text";
 
-import {FIELD_DESCRIPTION, LOGGER} from "./contants";
+import {Config} from "src/shared/model/options";
+import {INDEXABLE_MAIL_FIELDS_STUB_CONTAINER, IndexableMail, IndexableMailId, MailAddress, MailsIndex} from "src/shared/model/database";
 import {IPC_MAIN_API} from "src/shared/api/main";
-import {IndexableMail, IndexableMailId, MailsIndex} from "src/shared/model/database";
-import {curryFunctionMembers} from "src/shared/util";
+import {buildLoggerBundle} from "src/electron-preload/lib/util";
 
-const logger = curryFunctionMembers(LOGGER, "[lib/util]");
+const logger = buildLoggerBundle("[preload: database-indexer: service]");
 
 export const SERVICES_FACTORY = {
     // tslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -57,9 +58,78 @@ const trimNonLetterCharactersFilter: (value: string) => string = (
     }
 )();
 
-export function createMailsIndex(): MailsIndex {
-    const index = createIndex<IndexableMailId>(Object.keys(FIELD_DESCRIPTION).length);
-    const fields = Object.values(FIELD_DESCRIPTION);
+function buildFieldDescription(
+    options: NoExtraProperties<Pick<Config, "htmlToText">>,
+): DeepReadonly<Record<keyof typeof INDEXABLE_MAIL_FIELDS_STUB_CONTAINER, {
+    accessor: (doc: IndexableMail) => string;
+    boost: number;
+}>> {
+    const joinListBy = " ";
+    const htmlToTextOptions = {limits: options.htmlToText} as const;
+    const buildMailAddressGetter: (address: MailAddress) => string = (address) => {
+        return [
+            ...(address.name ? [address.name] : []),
+            address.address,
+        ].join(joinListBy);
+    };
+
+    return {
+        subject: {
+            accessor: ({subject}) => subject,
+            boost: 7,
+        },
+        body: {
+            accessor: ({body, subject}) => {
+                try {
+                    return htmlToText(body);
+                } catch (error) {
+                    if (error instanceof RangeError) {
+                        logger.error(`falling back to "htmlToText" call with "limit" options`, error);
+                        logger.verbose("problematic mail subject: ", subject);
+                        return htmlToText(body, htmlToTextOptions);
+                    }
+                    throw error;
+                }
+            },
+            boost: 5,
+        },
+        sender: {
+            accessor: ({sender}) => buildMailAddressGetter(sender),
+            boost: 1,
+        },
+        toRecipients: {
+            accessor: ({toRecipients}) => toRecipients
+                .map(buildMailAddressGetter)
+                .join(joinListBy),
+            boost: 1,
+        },
+        ccRecipients: {
+            accessor: ({ccRecipients}) => ccRecipients
+                .map(buildMailAddressGetter)
+                .join(joinListBy),
+            boost: 1,
+        },
+        bccRecipients: {
+            accessor: ({bccRecipients}) => bccRecipients
+                .map(buildMailAddressGetter)
+                .join(joinListBy),
+            boost: 1,
+        },
+        attachments: {
+            accessor: ({attachments}) => attachments
+                .map(({name}) => name)
+                .join(joinListBy),
+            boost: 1,
+        },
+    };
+}
+
+export function createMailsIndex(
+    {htmlToText}: Pick<Config, "htmlToText">,
+): MailsIndex {
+    const fieldDescription = buildFieldDescription({htmlToText});
+    const index = createIndex<IndexableMailId>(Object.keys(fieldDescription).length);
+    const fields = Object.values(fieldDescription);
     const fieldAccessors = fields.map((field) => field.accessor);
     const fieldBoostFactors = fields.map((field) => field.boost);
     const removed = new Set<IndexableMailId>();
@@ -68,7 +138,8 @@ export function createMailsIndex(): MailsIndex {
             lowerCaseFilter(term),
         );
     };
-    const result: ReturnType<typeof createMailsIndex> = {
+
+    return {
         add: (mail) => addDocumentToIndex(
             index,
             fieldAccessors,
@@ -100,7 +171,6 @@ export function createMailsIndex(): MailsIndex {
             };
         },
     };
-    return result;
 }
 
 export function addToMailsIndex(

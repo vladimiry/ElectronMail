@@ -1,27 +1,35 @@
 import asap from "asap-es";
 
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_DB_INDEXER_ON_ACTIONS, IpcMainServiceScan} from "src/shared/api/main";
-import {LOGGER} from "./lib/contants";
 import {ONE_SECOND_MS} from "src/shared/constants";
-import {SERVICES_FACTORY, addToMailsIndex, createMailsIndex, removeMailsFromIndex} from "./lib/util";
-import {curryFunctionMembers} from "src/shared/util";
+import {addToMailsIndex, createMailsIndex, removeMailsFromIndex, SERVICES_FACTORY} from "./service";
+import {buildLoggerBundle} from "src/electron-preload/lib/util";
+import {MailsIndex} from "src/shared/model/database";
 
-const logger = curryFunctionMembers(LOGGER, "[index]");
+const logger = buildLoggerBundle("[preload: database-indexer: index]");
 
 // TODO drop "emptyObject"
-const emptyObject = {};
+const emptyObject = {} as const;
 
 const cleanup = SERVICES_FACTORY.cleanup();
 const api = SERVICES_FACTORY.apiClient(cleanup.promise);
-const index = createMailsIndex();
+const dbIndexerOn = api("dbIndexerOn", {timeoutMs: ONE_SECOND_MS * 15, logger});
 const indexingQueue = new asap();
+
+const state: { index?: MailsIndex } = {};
+
+async function buildIndex(): Promise<MailsIndex> {
+    const {htmlToText} = await api("readConfig", {timeoutMs: ONE_SECOND_MS * 5, logger})();
+    logger.verbose("buildIndex()", JSON.stringify({htmlToText}));
+    return createMailsIndex({htmlToText});
+}
 
 async function dbIndexerNotificationHandler(
     action: IpcMainServiceScan["ApiImplReturns"]["dbIndexerNotification"],
 ): Promise<void> {
     logger.verbose(`dbIndexerNotification.next, action.type:`, action.type);
 
-    const dbIndexerOn = api("dbIndexerOn", {timeoutMs: ONE_SECOND_MS * 15, logger});
+    const index = state.index ??= await buildIndex();
 
     await IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.match(
         action,

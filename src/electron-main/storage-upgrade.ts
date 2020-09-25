@@ -306,6 +306,14 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             }
         })();
     },
+    "4.9.0": (config) => {
+        (() => {
+            const key: keyof Pick<Config, "htmlToText"> = "htmlToText";
+            if (typeof config[key] !== "object") {
+                config[key] = INITIAL_STORES.config()[key];
+            }
+        })();
+    },
     // WARN needs to be the last updater
     "100.0.0": (config) => {
         // ensuring default base props are set

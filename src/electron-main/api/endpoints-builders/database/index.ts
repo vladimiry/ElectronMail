@@ -8,9 +8,10 @@ import {DB_DATA_CONTAINER_FIELDS, IndexableMail} from "src/shared/model/database
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION$, IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
 import {buildDbExportEndpoints} from "./export/api";
-import {buildDbIndexingEndpoints, narrowIndexActionPayload} from "./indexing";
+import {buildDbIndexingEndpoints} from "./indexing/api";
 import {buildDbSearchEndpoints} from "./search/api";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
+import {narrowIndexActionPayload} from "./indexing/service";
 import {patchMetadata} from "src/electron-main/database/util";
 import {prepareFoldersView} from "./folders-view";
 import {validateEntity} from "src/electron-main/database/validation";

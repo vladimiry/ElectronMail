@@ -5411,9 +5411,9 @@ html-minifier-terser@^5.0.1, html-minifier-terser@^5.1.1:
     relateurl "^0.2.7"
     terser "^4.6.3"
 
-"html-to-text@https://github.com/werk85/node-html-to-text#7894809a57e9066501b954dbd9c16fd34c3bcebf":
+"html-to-text@https://github.com/vladimiry-playground/node-html-to-text#c6b7dc35cb7f84aba57d6772b83e0b4f7bc2a38a":
   version "6.0.0-next.0"
-  resolved "https://github.com/werk85/node-html-to-text#7894809a57e9066501b954dbd9c16fd34c3bcebf"
+  resolved "https://github.com/vladimiry-playground/node-html-to-text#c6b7dc35cb7f84aba57d6772b83e0b4f7bc2a38a"
   dependencies:
     deepmerge "^4.2.2"
     he "^1.2.0"

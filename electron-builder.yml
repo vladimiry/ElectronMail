@@ -21,6 +21,8 @@ files:
   - '!node_modules/sodium-native/prebuilds/win32-ia32'
   # remeda
   - '!node_modules/remeda/{coverage,scripts,src}'
+  # spellchecker
+  - '!node_modules/spellchecker/{spec}'
 compression: normal
 asar: true
 asarUnpack:

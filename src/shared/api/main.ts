@@ -39,6 +39,7 @@ export const IPC_MAIN_API_DB_INDEXER_ON_ACTIONS = unionize({
             data: ReturnType<DbModel.MailsIndex["search"]>;
             uid: string;
         }>(),
+        ErrorMessage: ofType<{ message: string }>(),
     },
     {
         tag: "type",

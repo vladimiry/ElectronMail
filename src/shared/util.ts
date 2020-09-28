@@ -76,10 +76,6 @@ export function initialConfig(): Config {
                 "Mozilla/5.0 CK={} (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko",
                 /* eslint-enable max-len */
             ],
-            htmlToText: {
-              maxChildNodes: 200,
-              maxDepth: 2000,
-            },
             // base
             doNotRenderNotificationBadgeValue: false,
             checkUpdateAndNotify: false,

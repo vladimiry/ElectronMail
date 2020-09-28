@@ -306,13 +306,13 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             }
         })();
     },
-    "4.9.0": (config) => {
-        (() => {
-            const key: keyof Pick<Config, "htmlToText"> = "htmlToText";
-            if (typeof config[key] !== "object") {
-                config[key] = INITIAL_STORES.config()[key];
-            }
-        })();
+    "4.9.0": (
+        _,
+        config = _ as Config & { htmlToText?: boolean },
+    ) => {
+        if (typeof config.htmlToText !== "undefined") {
+            delete config.htmlToText;
+        }
     },
     // WARN needs to be the last updater
     "100.0.0": (config) => {

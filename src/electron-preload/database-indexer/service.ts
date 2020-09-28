@@ -3,7 +3,6 @@ import {addDocumentToIndex, createIndex, removeDocumentFromIndex, vacuumIndex} f
 import {expandTerm, query} from "ndx-query";
 import {fromString as htmlToText} from "html-to-text";
 
-import {Config} from "src/shared/model/options";
 import {INDEXABLE_MAIL_FIELDS_STUB_CONTAINER, IndexableMail, IndexableMailId, MailAddress, MailsIndex} from "src/shared/model/database";
 import {IPC_MAIN_API} from "src/shared/api/main";
 import {buildLoggerBundle} from "src/electron-preload/lib/util";
@@ -58,14 +57,51 @@ const trimNonLetterCharactersFilter: (value: string) => string = (
     }
 )();
 
-function buildFieldDescription(
-    options: NoExtraProperties<Pick<Config, "htmlToText">>,
-): DeepReadonly<Record<keyof typeof INDEXABLE_MAIL_FIELDS_STUB_CONTAINER, {
+function htmlToTextViaIframe(html: string): string {
+    const csp = `default-src 'none';`;
+    const iframe = document.createElement("iframe");
+    const parent = document.body;
+
+    iframe.setAttribute(
+        "sandbox",
+        "allow-same-origin", // exclusion required to be able to call "document.open()" on iframe
+    );
+    iframe.setAttribute("csp", csp);
+
+    const {contentWindow} = parent.appendChild(iframe);
+
+    if (!contentWindow) {
+        throw new Error(`Failed to prepare email rendering "iframe"`);
+    }
+
+    contentWindow.document.open();
+    contentWindow.document.write(
+        `
+            <html>
+            <head>
+                <meta http-equiv="Content-Security-Policy" content="${csp}">
+                <meta http-equiv="X-Content-Security-Policy" content="${csp}">
+            </head>
+            <body>
+                ${html}
+            </body>
+            </html>
+        `,
+    );
+    contentWindow.document.close();
+
+    const {innerText: result} = contentWindow.document.body;
+
+    parent.removeChild(iframe);
+
+    return result;
+}
+
+function buildFieldDescription(): DeepReadonly<Record<keyof typeof INDEXABLE_MAIL_FIELDS_STUB_CONTAINER, {
     accessor: (doc: IndexableMail) => string;
     boost: number;
 }>> {
     const joinListBy = " ";
-    const htmlToTextOptions = {limits: options.htmlToText} as const;
     const buildMailAddressGetter: (address: MailAddress) => string = (address) => {
         return [
             ...(address.name ? [address.name] : []),
@@ -84,9 +120,13 @@ function buildFieldDescription(
                     return htmlToText(body);
                 } catch (error) {
                     if (error instanceof RangeError) {
-                        logger.error(`falling back to "htmlToText" call with "limit" options`, error);
-                        logger.verbose("problematic mail subject: ", subject);
-                        return htmlToText(body, htmlToTextOptions);
+                        const msg = `falling back to iframe-based "html-to-text" conversion`;
+                        logger.error(msg, "error: ", error);
+                        logger.verbose(msg, "subject: ", subject);
+
+                        return htmlToTextViaIframe(
+                            body,
+                        );
                     }
                     throw error;
                 }
@@ -124,10 +164,8 @@ function buildFieldDescription(
     };
 }
 
-export function createMailsIndex(
-    {htmlToText}: Pick<Config, "htmlToText">,
-): MailsIndex {
-    const fieldDescription = buildFieldDescription({htmlToText});
+export function createMailsIndex(): MailsIndex {
+    const fieldDescription = buildFieldDescription();
     const index = createIndex<IndexableMailId>(Object.keys(fieldDescription).length);
     const fields = Object.values(fieldDescription);
     const fieldAccessors = fields.map((field) => field.accessor);

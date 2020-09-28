@@ -69,6 +69,8 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
     const webViewEntryUrlsWhitelist: readonly string[] = ctx.locations.webClients.map(({entryUrl}) => `${entryUrl}/`);
 
     app.on("web-contents-created", async (...[, webContents]) => {
+        const isFullTextSearchBrowserWindow = ctx.uiContext?.fullTextSearchBrowserWindow?.webContents === webContents;
+
         if (PACKAGE_VERSION.includes("-debug")) {
             const mark = "WEBCONTENTS_EVENTS_DEBUG";
 
@@ -104,7 +106,15 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
         webContents.on("console-message", ({type}, level, message, line, sourceId) => {
             const isWarn = Number(level) === 2;
             const isError = Number(level) === 3;
-            if (isWarn || isError) {
+            const isFullTextSearchInstanceError = (
+                isError
+                &&
+                isFullTextSearchBrowserWindow
+                &&
+                // fallback html-to-text conversion is iframe-based, so a lot of false-positive CSP-related errors will likely happen
+                ["Content Security Policy", "CSP"].some((pattern) => message.includes(pattern))
+            );
+            if ((isWarn || isError) && !isFullTextSearchInstanceError) {
                 logger[isWarn ? "warn" : "error"](
                     JSON.stringify({type, level, message, line, sourceId}),
                 );

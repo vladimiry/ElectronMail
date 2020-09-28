@@ -42,7 +42,6 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     jsFlags: string[];
     localDbMailsListViewMode: "plain" | "conversation";
     userAgents: string[];
-    htmlToText: NoExtraProperties<import("html-to-text").HtmlToTextOptions["limits"]>,
     // base
     checkUpdateAndNotify: boolean;
     doNotRenderNotificationBadgeValue: boolean;

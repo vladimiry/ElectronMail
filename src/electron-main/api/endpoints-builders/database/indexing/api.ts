@@ -33,7 +33,7 @@ export async function buildDbIndexingEndpoints(
             });
 
             IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.match(action, {
-                Bootstrapped: () => {
+                Bootstrapped() {
                     const indexAccounts$ = defer(
                         async () => {
                             const [{accounts}, config] = await Promise.all([
@@ -62,7 +62,7 @@ export async function buildDbIndexingEndpoints(
                         await indexAccounts$.toPromise();
                     });
                 },
-                ProgressState: (payload) => {
+                ProgressState(payload) {
                     logger.verbose("dbIndexerOn()", `ProgressState.status: ${JSON.stringify(payload.status)}`);
 
                     // propagating status to main channel which streams data to UI process
@@ -72,7 +72,14 @@ export async function buildDbIndexingEndpoints(
                         );
                     });
                 },
-                default: () => {
+                ErrorMessage({message}) {
+                    setTimeout(() => {
+                        IPC_MAIN_API_NOTIFICATION$.next(
+                            IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({message}),
+                        );
+                    });
+                },
+                default() {
                     // NOOP
                 },
             });

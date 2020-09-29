@@ -34,9 +34,11 @@ export interface Context {
     };
     readonly config$: import("rxjs").Observable<Config>;
     readonly configStore: StoreModel.Store<Config>;
+    readonly configStoreQueue: import("asap-es").IASAP;
     keytarSupport?: boolean;
     snapPasswordManagerServiceHint?: boolean;
     settingsStore: StoreModel.Store<Settings>;
+    readonly settingsStoreQueue: import("asap-es").IASAP;
     readonly sessionStorage: SessionStorage;
     uiContext?: UIContext;
     selectedAccount?: {

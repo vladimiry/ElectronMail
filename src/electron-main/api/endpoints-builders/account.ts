@@ -43,11 +43,11 @@ export async function buildEndpoints(
                 loginDelayUntilSelected,
                 loginDelaySecondsRange,
             };
-            const settings = await ctx.settingsStore.readExisting();
-
-            settings.accounts.push(account);
-
-            const result = await ctx.settingsStore.write(settings);
+            const result = await ctx.settingsStoreQueue.q(async () => {
+                const settings = await ctx.settingsStore.readExisting();
+                settings.accounts.push(account);
+                return ctx.settingsStore.write(settings);
+            });
 
             await initSessionByAccount(ctx, pick(account, ["login", "proxy", "rotateUserAgent"]));
 
@@ -69,83 +69,91 @@ export async function buildEndpoints(
                 loginDelaySecondsRange,
             },
         ) {
-            const settings = await ctx.settingsStore.readExisting();
-            const account = pickAccountStrict(settings.accounts, {login});
-            const {credentials: existingCredentials} = account;
+            return ctx.settingsStoreQueue.q(async () => {
+                const settings = await ctx.settingsStore.readExisting();
+                const account = pickAccountStrict(settings.accounts, {login});
+                const {credentials: existingCredentials} = account;
 
-            account.title = title;
-            account.database = database;
-            account.persistentSession = persistentSession;
-            account.rotateUserAgent = rotateUserAgent;
+                account.title = title;
+                account.database = database;
+                account.persistentSession = persistentSession;
+                account.rotateUserAgent = rotateUserAgent;
 
-            if (typeof entryUrl === "undefined") {
-                throw new Error('"entryUrl" is undefined');
-            }
-            account.entryUrl = entryUrl;
-
-            if (credentials) {
-                if ("password" in credentials) {
-                    existingCredentials.password = credentials.password;
+                if (typeof entryUrl === "undefined") {
+                    throw new Error('"entryUrl" is undefined');
                 }
-                if ("twoFactorCode" in credentials) {
-                    existingCredentials.twoFactorCode = credentials.twoFactorCode;
+                account.entryUrl = entryUrl;
+
+                if (credentials) {
+                    if ("password" in credentials) {
+                        existingCredentials.password = credentials.password;
+                    }
+                    if ("twoFactorCode" in credentials) {
+                        existingCredentials.twoFactorCode = credentials.twoFactorCode;
+                    }
+                    if ("mailPassword" in credentials) {
+                        account.credentials.mailPassword = credentials.mailPassword;
+                    }
                 }
-                if ("mailPassword" in credentials) {
-                    account.credentials.mailPassword = credentials.mailPassword;
-                }
-            }
 
-            account.proxy = proxy;
-            await configureSessionByAccount(pick(account, ["login", "proxy"]));
+                account.proxy = proxy;
+                await configureSessionByAccount(pick(account, ["login", "proxy"]));
 
-            account.loginDelayUntilSelected = loginDelayUntilSelected;
-            account.loginDelaySecondsRange = loginDelaySecondsRange;
+                account.loginDelayUntilSelected = loginDelayUntilSelected;
+                account.loginDelaySecondsRange = loginDelaySecondsRange;
 
-            return ctx.settingsStore.write(settings);
+                return ctx.settingsStore.write(settings);
+            });
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async changeAccountOrder({login, index: moveToIndex}) {
-            const settings = await ctx.settingsStore.readExisting();
+            return ctx.settingsStoreQueue.q(async () => {
+                const settings = await ctx.settingsStore.readExisting();
 
-            if (isNaN(moveToIndex) || moveToIndex < 0 || moveToIndex >= settings.accounts.length) {
-                throw new Error(`Invalid "index" value`);
-            }
+                if (isNaN(moveToIndex) || moveToIndex < 0 || moveToIndex >= settings.accounts.length) {
+                    throw new Error(`Invalid "index" value`);
+                }
 
-            const accountToMove = pickAccountStrict(settings.accounts, {login});
-            const removeIndex = settings.accounts.indexOf(accountToMove);
+                const accountToMove = pickAccountStrict(settings.accounts, {login});
+                const removeIndex = settings.accounts.indexOf(accountToMove);
 
-            if (removeIndex === moveToIndex) {
-                return settings;
-            }
+                if (removeIndex === moveToIndex) {
+                    return settings;
+                }
 
-            settings.accounts.splice(removeIndex, 1);
-            settings.accounts.splice(moveToIndex, 0, accountToMove);
+                settings.accounts.splice(removeIndex, 1);
+                settings.accounts.splice(moveToIndex, 0, accountToMove);
 
-            return ctx.settingsStore.write(settings);
+                return ctx.settingsStore.write(settings);
+            });
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async toggleAccountDisabling({login}) {
-            const settings = await ctx.settingsStore.readExisting();
-            const account = pickAccountStrict(settings.accounts, {login});
+            return ctx.settingsStoreQueue.q(async () => {
+                const settings = await ctx.settingsStore.readExisting();
+                const account = pickAccountStrict(settings.accounts, {login});
 
-            account.disabled = !account.disabled;
+                account.disabled = !account.disabled;
 
-            return ctx.settingsStore.write(settings);
+                return ctx.settingsStore.write(settings);
+            });
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async removeAccount({login}) {
-            const settings = await ctx.settingsStore.readExisting();
-            const account = pickAccountStrict(settings.accounts, {login});
-            const index = settings.accounts.indexOf(account);
+            return ctx.settingsStoreQueue.q(async () => {
+                const settings = await ctx.settingsStore.readExisting();
+                const account = pickAccountStrict(settings.accounts, {login});
+                const index = settings.accounts.indexOf(account);
 
-            settings.accounts.splice(index, 1);
+                settings.accounts.splice(index, 1);
 
-            // TODO remove session, not yet supported by Electron?
+                // TODO remove session, not yet supported by Electron?
 
-            return ctx.settingsStore.write(settings);
+                return ctx.settingsStore.write(settings);
+            });
         },
     };
 }

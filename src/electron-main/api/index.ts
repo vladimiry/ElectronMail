@@ -31,12 +31,16 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async changeMasterPassword({password, newPassword}) {
-            const readStore = ctx.settingsStore.clone({adapter: await buildSettingsAdapter(ctx, password)});
-            const existingData = await readStore.readExisting();
-            const newStore = ctx.settingsStore.clone({adapter: await buildSettingsAdapter(ctx, newPassword)});
-            const newData = await newStore.write(existingData, {readAdapter: ctx.settingsStore.adapter});
+            const result = await ctx.settingsStoreQueue.q(async () => {
+                const readStore = ctx.settingsStore.clone({adapter: await buildSettingsAdapter(ctx, password)});
+                const existingData = await readStore.readExisting();
+                const newStore = ctx.settingsStore.clone({adapter: await buildSettingsAdapter(ctx, newPassword)});
+                const newData = await newStore.write(existingData, {readAdapter: ctx.settingsStore.adapter});
 
-            ctx.settingsStore = newStore;
+                return {newStore, newData};
+            });
+
+            ctx.settingsStore = result.newStore;
 
             if (ctx.keytarSupport) {
                 if (await getPassword() === password) {
@@ -46,7 +50,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
                 }
             }
 
-            return newData;
+            return result.newData;
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -127,18 +131,21 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async patchBaseConfig(patch) {
-            const savedConfig = await ctx.configStore.readExisting();
-            const newConfig = await ctx.configStore.write({
-                ...savedConfig,
-                ...JSON.parse(JSON.stringify(patch)), // parse => stringify call strips out undefined values from the object
+            const {updated: updatedConfig, previous: previousConfig} = await ctx.configStoreQueue.q(async () => {
+                const previous = await ctx.configStore.readExisting();
+                const updated = await ctx.configStore.write({
+                    ...previous,
+                    ...JSON.parse(JSON.stringify(patch)), // parse => stringify call strips out undefined values from the object
+                });
+                return {previous, updated};
             });
 
             // TODO update "patchBaseConfig" api method: test "logLevel" value, "logger.transports.file.level" update
-            electronLog.transports.file.level = newConfig.logLevel;
+            electronLog.transports.file.level = updatedConfig.logLevel;
 
             // TODO update "patchBaseConfig" api method: test "attachFullTextIndexWindow" / "detachFullTextIndexWindow" calls
-            if (Boolean(newConfig.fullTextSearch) !== Boolean(savedConfig.fullTextSearch)) {
-                if (newConfig.fullTextSearch) {
+            if (Boolean(updatedConfig.fullTextSearch) !== Boolean(previousConfig.fullTextSearch)) {
+                if (updatedConfig.fullTextSearch) {
                     await attachFullTextIndexWindow(ctx);
                 } else {
                     await detachFullTextIndexWindow(ctx);
@@ -146,11 +153,11 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             }
 
             // TODO update "patchBaseConfig" api method: test "setupIdleTimeLogOut" call
-            if (newConfig.idleTimeLogOutSec !== savedConfig.idleTimeLogOutSec) {
-                await setupIdleTimeLogOut({idleTimeLogOutSec: newConfig.idleTimeLogOutSec});
+            if (updatedConfig.idleTimeLogOutSec !== previousConfig.idleTimeLogOutSec) {
+                await setupIdleTimeLogOut({idleTimeLogOutSec: updatedConfig.idleTimeLogOutSec});
             }
 
-            if (newConfig.zoomFactor !== savedConfig.zoomFactor) {
+            if (updatedConfig.zoomFactor !== previousConfig.zoomFactor) {
                 [
                     ctx.uiContext?.aboutBrowserWindow?.webContents,
                     ctx.uiContext?.browserWindow?.webContents,
@@ -158,19 +165,17 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
                     if (!webContents) {
                         return;
                     }
-                    webContents.zoomFactor = newConfig.zoomFactor;
+                    webContents.zoomFactor = updatedConfig.zoomFactor;
                 });
             }
 
-            return newConfig;
+            return updatedConfig;
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async readConfig() {
-            const store = ctx.configStore;
-            const config = await store.read() ?? await store.write(ctx.initialStores.config);
-
-            return config;
+            return await ctx.configStore.read()
+                ?? ctx.configStoreQueue.q(async () => ctx.configStore.write(ctx.initialStores.config));
         },
 
         // TODO update "readSettings" api method test ("no password provided" case, keytar support)
@@ -190,14 +195,16 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
 
             const adapter = await buildSettingsAdapter(ctx, password);
             const store = ctx.settingsStore.clone({adapter});
-            const existingSettings = await store.read();
-            const settings = existingSettings
-                ? (
-                    upgradeSettings(existingSettings, ctx)
-                        ? await store.write(existingSettings)
-                        : existingSettings
-                )
-                : await store.write(ctx.initialStores.settings);
+            const settings = await ctx.settingsStoreQueue.q(async () => {
+                const existingSettings = await store.read();
+                return existingSettings
+                    ? (
+                        upgradeSettings(existingSettings, ctx)
+                            ? store.write(existingSettings)
+                            : existingSettings
+                    )
+                    : store.write(ctx.initialStores.settings);
+            });
 
             // "savePassword" is unset in auto-login case
             if (typeof savePassword !== "undefined" && ctx.keytarSupport) {
@@ -229,9 +236,11 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async reEncryptSettings({encryptionPreset, password}) {
-            await ctx.configStore.write({
-                ...await ctx.configStore.readExisting(),
-                encryptionPreset,
+            await ctx.configStoreQueue.q(async () => {
+                await ctx.configStore.write({
+                    ...await ctx.configStore.readExisting(),
+                    encryptionPreset,
+                });
             });
 
             return endpoints.changeMasterPassword({password, newPassword: password});

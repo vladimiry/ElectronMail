@@ -339,16 +339,18 @@ export async function buildEndpoints(
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async toggleControls(arg) {
-            const config = await ctx.config$
-                .pipe(take(1))
-                .toPromise();
-            const {hideControls} = arg || {hideControls: !config.hideControls};
-
             IPC_MAIN_API_NOTIFICATION$.next(
                 IPC_MAIN_API_NOTIFICATION_ACTIONS.ConfigUpdated(
-                    await ctx.configStore.write({
-                        ...config,
-                        hideControls,
+                    await ctx.configStoreQueue.q(async () => {
+                        const config = await ctx.config$
+                            .pipe(take(1))
+                            .toPromise();
+                        const {hideControls} = arg || {hideControls: !config.hideControls};
+
+                        return ctx.configStore.write({
+                            ...config,
+                            hideControls,
+                        });
                     }),
                 ),
             );
@@ -356,13 +358,15 @@ export async function buildEndpoints(
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async toggleLocalDbMailsListViewMode() {
-            const config = await ctx.configStore.readExisting();
+            return ctx.configStoreQueue.q(async () => {
+                const config = await ctx.configStore.readExisting();
 
-            return ctx.configStore.write({
-                ...config,
-                localDbMailsListViewMode: config.localDbMailsListViewMode === "plain"
-                    ? "conversation"
-                    : "plain",
+                return ctx.configStore.write({
+                    ...config,
+                    localDbMailsListViewMode: config.localDbMailsListViewMode === "plain"
+                        ? "conversation"
+                        : "plain",
+                });
             });
         },
 

@@ -34,9 +34,11 @@ export async function buildEndpoints(
 
                 IPC_MAIN_API_NOTIFICATION$.next(
                     IPC_MAIN_API_NOTIFICATION_ACTIONS.ConfigUpdated(
-                        await ctx.configStore.write({
-                            ...await ctx.configStore.readExisting(),
-                            spellCheckLocale: locale,
+                        await ctx.configStoreQueue.q(async () => {
+                            return ctx.configStore.write({
+                                ...await ctx.configStore.readExisting(),
+                                spellCheckLocale: locale,
+                            });
                         }),
                     ),
                 );

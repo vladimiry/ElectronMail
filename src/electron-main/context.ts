@@ -1,6 +1,7 @@
 // TODO drop eslint disabling
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
 
+import asap from "asap-es";
 import logger from "electron-log";
 import path from "path";
 import {Deferred} from "ts-deferred";
@@ -280,12 +281,14 @@ export function initContext(options: ContextInitOptions = {}): NoExtraProperties
         initialStores: options.initialStores || {config: INITIAL_STORES.config(), settings: INITIAL_STORES.settings()},
         config$,
         configStore,
+        configStoreQueue: new asap(),
         settingsStore: new Store<Settings>({
             fs: storeFs,
             optimisticLocking: true,
             file: path.join(locations.userDataDir, "settings.bin"),
             validators: [settingsAccountLoginUniquenessValidator],
         }),
+        settingsStoreQueue: new asap(),
         keytarSupport: true,
         getSpellCheckController: () => {
             throw new Error(`Spell check controller has net been initialized yet`);

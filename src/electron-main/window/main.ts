@@ -60,30 +60,32 @@ async function keepBrowserWindowState(ctx: Context, browserWindow: Electron.Brow
     })();
 
     const saveWindowStateHandler = async (): Promise<void> => {
-        const config = await ctx.configStore.readExisting();
-        const storedWindowConfig = Object.freeze(config.window);
-        const newWindowConfig = {...config.window};
+        await ctx.configStoreQueue.q(async () => {
+            const config = await ctx.configStore.readExisting();
+            const storedWindowConfig = Object.freeze(config.window);
+            const newWindowConfig = {...config.window};
 
-        try {
-            newWindowConfig.maximized = browserWindow.isMaximized();
+            try {
+                newWindowConfig.maximized = browserWindow.isMaximized();
 
-            if (!newWindowConfig.maximized) {
-                newWindowConfig.bounds = browserWindow.getBounds();
+                if (!newWindowConfig.maximized) {
+                    newWindowConfig.bounds = browserWindow.getBounds();
+                }
+            } catch (error) {
+                // "browserWindow" might be destroyed at this point
+                console.log(error); // eslint-disable-line no-console
+                logger.warn("failed to resolve window bounds", error);
+                return;
             }
-        } catch (error) {
-            // "browserWindow" might be destroyed at this point
-            console.log(error); // eslint-disable-line no-console
-            logger.warn("failed to resolve window bounds", error);
-            return;
-        }
 
-        if (equals(storedWindowConfig, newWindowConfig)) {
-            return;
-        }
+            if (equals(storedWindowConfig, newWindowConfig)) {
+                return;
+            }
 
-        await ctx.configStore.write({
-            ...config,
-            window: newWindowConfig,
+            await ctx.configStore.write({
+                ...config,
+                window: newWindowConfig,
+            });
         });
     };
     const saveWindowStateHandlerDebounced = (

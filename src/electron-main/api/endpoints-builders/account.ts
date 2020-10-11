@@ -1,10 +1,13 @@
-import {pick} from "remeda";
+import electronLog from "electron-log";
+import {equals, pick} from "remeda";
 
 import {AccountConfig} from "src/shared/model/account";
 import {Context} from "src/electron-main/model";
 import {IpcMainApiEndpoints} from "src/shared/api/main";
 import {configureSessionByAccount, initSessionByAccount} from "src/electron-main/session";
-import {pickAccountStrict} from "src/shared/util";
+import {curryFunctionMembers, pickAccountStrict} from "src/shared/util";
+
+const _logger = curryFunctionMembers(electronLog, "[electron-main/api/endpoints-builders/account]");
 
 export async function buildEndpoints(
     ctx: Context,
@@ -49,7 +52,7 @@ export async function buildEndpoints(
                 return ctx.settingsStore.write(settings);
             });
 
-            await initSessionByAccount(ctx, pick(account, ["login", "proxy", "rotateUserAgent"]));
+            await initSessionByAccount(ctx, pick(account, ["login", "proxy", "rotateUserAgent", "entryUrl"]));
 
             return result;
         },
@@ -70,6 +73,10 @@ export async function buildEndpoints(
             },
         ) {
             return ctx.settingsStoreQueue.q(async () => {
+                const logger = curryFunctionMembers(_logger, "updateAccount()");
+
+                logger.info();
+
                 const settings = await ctx.settingsStore.readExisting();
                 const account = pickAccountStrict(settings.accounts, {login});
                 const {credentials: existingCredentials} = account;
@@ -97,10 +104,23 @@ export async function buildEndpoints(
                 }
 
                 account.proxy = proxy;
-                await configureSessionByAccount(pick(account, ["login", "proxy"]));
-
                 account.loginDelayUntilSelected = loginDelayUntilSelected;
                 account.loginDelaySecondsRange = loginDelaySecondsRange;
+
+                const shouldConfigureSession = (
+                    account.entryUrl !== entryUrl
+                    ||
+                    !equals(account.proxy, entryUrl)
+                );
+
+                logger.info(JSON.stringify({shouldConfigureSession}));
+
+                if (shouldConfigureSession) {
+                    await configureSessionByAccount(
+                        ctx,
+                        pick(account, ["login", "proxy", "entryUrl"]),
+                    );
+                }
 
                 return ctx.settingsStore.write(settings);
             });

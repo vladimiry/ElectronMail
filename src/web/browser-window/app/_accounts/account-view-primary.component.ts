@@ -6,8 +6,9 @@ import {equals, pick} from "remeda";
 import {ACCOUNTS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountConfig} from "src/shared/model/account";
 import {AccountViewAbstractComponent} from "src/web/browser-window/app/_accounts/account-view-abstract.component";
-import {WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/constants";
-import {parsePackagedWebClientUrl} from "src/shared/util";
+import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
+import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
+import {testProtonAppPage} from "src/shared/util";
 
 const pickCredentialFields = ((fields: Array<keyof AccountConfig>) => {
     return (accountConfig: AccountConfig) => pick(accountConfig, fields);
@@ -24,10 +25,15 @@ const pickLoginDelayFields = ((fields: Array<keyof AccountConfig>) => {
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountViewPrimaryComponent extends AccountViewAbstractComponent implements OnInit {
+    private readonly logger = getZoneNameBoundWebLogger(`[_accounts/account-view-primary.component]`);
+
+    private readonly accountsService: AccountsService;
+
     constructor(
         injector: Injector,
     ) {
         super("primary", injector);
+        this.accountsService = injector.get(AccountsService);
     }
 
     ngOnInit(): void {
@@ -39,24 +45,21 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
 
         this.addSubscription(
             this.filterDomReadyEvent().subscribe(({webView}) => {
-                const packagedWebClientUrl = parsePackagedWebClientUrl(webView.src);
+                {
+                    const {src: url} = webView;
+                    const {shouldInitProviderApi} = testProtonAppPage({url, logger: this.logger});
 
-                if (
-                    // TODO move "not packaged or blank.html page" check to utility function
-                    //      and use it then in "src/electron-preload/webview/primary/index.ts" too
-                    !packagedWebClientUrl
-                    ||
-                    packagedWebClientUrl.pathname === `/${WEB_CLIENTS_BLANK_HTML_FILE_NAME}`
-                ) {
-                    this.event.emit({
-                        type: "log",
-                        data: [
-                            "info",
-                            `Skip webview.dom-ready processing as no packaged web-client detected or the page is the "loader/blank" one`,
-                            JSON.stringify({packagedWebClientUrl}),
-                        ]
-                    });
-                    return;
+                    if (!shouldInitProviderApi) {
+                        this.event.emit({
+                            type: "log",
+                            data: ["info", `skip webview.dom-ready processing for ${url} page`]
+                        });
+                        this.event.emit({
+                            type: "action",
+                            payload: this.accountsService.generateNotificationsStateResetAction({login: this.account.accountConfig.login}),
+                        });
+                        return;
+                    }
                 }
 
                 const finishPromise = this.filterDomReadyOrDestroyedPromise();
@@ -119,7 +122,7 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
                 }),
                 map(([, curr]) => curr),
             ).subscribe((account) => {
-                this.event.emit({type: "log", data: ["info", `onWebViewMounted(): dispatch "TryToLogin"`]});
+                this.event.emit({type: "log", data: ["info", `webview mounted: dispatch "TryToLogin"`]});
                 this.event.emit({type: "action", payload: ACCOUNTS_ACTIONS.TryToLogin({account, webView})});
             }),
         );

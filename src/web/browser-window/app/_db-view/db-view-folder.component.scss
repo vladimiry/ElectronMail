@@ -9,71 +9,73 @@
     }
 
     .fa {
-        line-height: inherit;
-
-        &::before {
-            // default/"unread" icon
-            content: $fa-var-bell;
-        }
+        display: flex;
+        align-self: center;
     }
 
-    .type {
-        &-0 { // custom
+    .fa::before {
+        content: $fa-var-bell; // default/unread/bell icon
+    }
+
+    .is-custom-true {
+        &.is-folder-true {
+            .fa::before {
+                content: $fa-var-folder;
+            }
+        }
+
+        &.is-folder-false {
             .fa::before {
                 content: $fa-var-tag;
             }
-
-            &.folder-true {
-                .fa::before {
-                    content: $fa-var-folder;
-                }
-            }
         }
+    }
 
-        &-1 {
+    .folder-id {
+        &-0 { // inbox
             .fa::before {
                 content: $fa-var-inbox;
             }
         }
 
-        &-2 {
+        &-8 { // drafts
             .fa::before {
                 content: $fa-var-paper-plane-o;
             }
         }
 
-        &-3 {
+        &-7 { // sent
             .fa::before {
-                content: $fa-var-trash-o;
+                content: $fa-var-paper-plane-o;
             }
         }
 
-        &-4 {
+        &-10 { // starred
+            .fa::before {
+                content: $fa-var-star;;
+            }
+        }
+
+        &-6 { // archive
             .fa::before {
                 content: $fa-var-archive;
                 font-size: 87%;
             }
         }
 
-        &-5 {
+        &-4 { // spam
             .fa::before {
                 content: $fa-var-ban;
             }
         }
 
-        &-6 {
+        &-3 { // trash
             .fa::before {
-                content: $fa-var-pencil-square-o;
+                content: $fa-var-trash-o;
             }
         }
 
-        &-STARRED {
-            .fa::before {
-                content: $fa-var-star;
-            }
-        }
-
-        &-ALL {
+        &-5 { // all
             .fa::before {
                 content: $fa-var-globe;
             }

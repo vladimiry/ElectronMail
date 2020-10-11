@@ -5,7 +5,7 @@ import {distinctUntilChanged, map, mergeMap} from "rxjs/operators";
 
 import {DB_VIEW_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
-import {MAIL_FOLDER_TYPE, View} from "src/shared/model/database";
+import {LABEL_TYPE, SYSTEM_FOLDER_IDENTIFIERS, View} from "src/shared/model/database";
 import {MailsBundleKey, State} from "src/web/browser-window/app/store/reducers/db-view";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 
@@ -49,7 +49,7 @@ export class DbViewMailTabComponent extends DbViewAbstractComponent {
             const {folders, selectedFolderData, selectedMail} = instance;
 
             if (!selectedFolderData) {
-                const unread = folders.system.find((f) => f.folderType === MAIL_FOLDER_TYPE._VIRTUAL_UNREAD_);
+                const unread = folders.system.find(({id}) => id === SYSTEM_FOLDER_IDENTIFIERS["Virtual Unread"]);
 
                 if (!unread) {
                     throw new Error(`Failed to resolve "unread" virtual folder`);
@@ -61,7 +61,9 @@ export class DbViewMailTabComponent extends DbViewAbstractComponent {
             }
 
             return of({
-                folders,
+                systemFolders: folders.system,
+                customFolders: folders.custom.filter(({type}) => type === LABEL_TYPE.MESSAGE_FOLDER),
+                customLabels: folders.custom.filter(({type}) => type === LABEL_TYPE.MESSAGE_LABEL),
                 selectedMail,
                 selectedFolderData,
             });
@@ -100,8 +102,8 @@ export class DbViewMailTabComponent extends DbViewAbstractComponent {
         }
     }
 
-    trackFolder(...[, {pk}]: readonly [number, View.Folder]): View.Folder["pk"] {
-        return pk;
+    trackFolder(...[, {id}]: readonly [number, View.Folder]): View.Folder["id"] {
+        return id;
     }
 
     selectFolder(folder: View.Folder): void {

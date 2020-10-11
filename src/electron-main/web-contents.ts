@@ -1,9 +1,9 @@
 import _logger from "electron-log";
 import {BrowserWindow, Menu, MenuItemConstructorOptions, WebPreferences, app, clipboard, screen} from "electron";
 import {equals, omit, pick} from "remeda";
+import {first} from "rxjs/operators";
 import {inspect} from "util";
 import {isWebUri} from "valid-url";
-import {take} from "rxjs/operators";
 
 import {Context} from "./model";
 import {DEFAULT_WEB_PREFERENCES, DEFAULT_WEB_PREFERENCES_KEYS} from "src/electron-main/window/constants";
@@ -31,7 +31,7 @@ const checkWebViewWebPreferencesDefaults: (webPreferences: WebPreferences) => bo
                 //     - nodeIntegrationInWorker: false => undefined,
                 //     - spellcheck: false => undefined
                 //     - webviewTag: false => undefined
-                logger.warn(
+                logger.verbose(
                     `Default/expected and actual "webview.webPreferences" props are not equal: `,
                     inspect({actual, expected}),
                 );
@@ -258,12 +258,19 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
         webContents.on("will-attach-webview", (...[event, webPreferences, {src}]) => {
             if (!webViewEntryUrlsWhitelist.some((allowedPrefix) => src.startsWith(allowedPrefix))) {
                 event.preventDefault();
-                notifyLogAndThrow(`Forbidden "webview.src" value: "${src}"`);
+                notifyLogAndThrow(`Forbidden "webview.src" value: "${JSON.stringify({src, eventType: event.type})}"`);
             }
-
             if (!checkWebViewWebPreferencesDefaults(webPreferences)) {
                 Object.assign(webPreferences, DEFAULT_WEB_PREFERENCES);
             }
+        });
+        webContents.on("did-attach-webview", (...[, webViewWebContents]) => {
+            webViewWebContents.on("will-navigate", (...[willNavigateEvent, src]) => {
+                if (!webViewEntryUrlsWhitelist.some((allowedPrefix) => src.startsWith(allowedPrefix))) {
+                    willNavigateEvent.preventDefault();
+                    notifyLogAndThrow(`Forbidden "webview.src" value: "${JSON.stringify({src, eventType: willNavigateEvent.type})}"`);
+                }
+            });
         });
         webContents.on("update-target-url", (...[, url]) => {
             const focusedWindow = BrowserWindow.getFocusedWindow();
@@ -292,7 +299,7 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
             );
         });
 
-        const {zoomFactor} = await ctx.config$.pipe(take(1)).toPromise();
+        const {zoomFactor} = await ctx.config$.pipe(first()).toPromise();
         webContents.zoomFactor = zoomFactor;
     });
 }

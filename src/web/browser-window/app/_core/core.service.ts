@@ -1,12 +1,17 @@
 import UUID from "pure-uuid";
 import {Injectable, NgZone} from "@angular/core";
 import {Store, select} from "@ngrx/store";
+import {URL} from "@cliqz/url-parser";
 import {filter, first, take, takeUntil} from "rxjs/operators";
 import {timer} from "rxjs";
 
 import {AppAction, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
-import {PROVIDER_REPOS, WEB_CLIENTS_BLANK_HTML_FILE_NAME, WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS} from "src/shared/constants";
+import {
+    PROVIDER_REPO_MAP,
+    WEB_CLIENTS_BLANK_HTML_FILE_NAME,
+    WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS,
+} from "src/shared/constants";
 import {ProtonClientSession} from "src/shared/model/proton";
 import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {State} from "src/web/browser-window/app/store/reducers/root";
@@ -22,7 +27,7 @@ export class CoreService {
 
     parseEntryUrl(
         accountConfig: WebAccount["accountConfig"],
-        repoType: keyof typeof PROVIDER_REPOS,
+        repoType: keyof typeof PROVIDER_REPO_MAP,
     ): Readonly<{ entryUrl: string; entryApiUrl: string }> {
         const entryApiUrl = accountConfig.entryUrl;
 
@@ -36,8 +41,8 @@ export class CoreService {
         if (!bundle) {
             throw new Error(`Invalid "entryUrl" value: "${JSON.stringify(bundle)}"`);
         }
-        const {baseDir} = PROVIDER_REPOS[repoType];
-        const entryUrl = `${bundle.entryUrl}${baseDir ? "/" + baseDir : ""}`;
+        const {baseDirName} = PROVIDER_REPO_MAP[repoType];
+        const entryUrl = `${bundle.entryUrl}${baseDirName ? "/" + baseDirName : ""}`;
 
         return {
             entryUrl,
@@ -48,7 +53,7 @@ export class CoreService {
     // TODO move method to "_accounts/*.service"
     async initProtonClientSessionAndNavigate(
         accountConfig: WebAccount["accountConfig"],
-        repoType: keyof typeof PROVIDER_REPOS,
+        repoType: keyof typeof PROVIDER_REPO_MAP,
         webViewDomReady$: import("rxjs").Observable<Electron.WebviewTag>,
         setWebViewSrc: (src: string) => void,
         logger_: ReturnType<typeof import("src/web/browser-window/util").getZoneNameBoundWebLogger>,
@@ -96,7 +101,7 @@ export class CoreService {
         const javaScriptCode = (() => {
             const finalCodePart = `
                 window.sessionStorage.setItem(${JSON.stringify(WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS)}, 1);
-                window.location.assign("./${PROVIDER_REPOS[repoType].baseDir}")
+                window.location.assign("./${PROVIDER_REPO_MAP[repoType].baseDirName}")
             `;
 
             if (clientSession) {

@@ -1,7 +1,8 @@
 import {CONTACT_CARD, ENCRYPTED_STATUS, LOCATION, MAIL_TYPE} from "src/electron-preload/webview/lib/rest-model/constats";
 import {Entity} from "src/electron-preload/webview/lib/rest-model/response-entity/base";
-import {Id, NumberBoolean} from "src/electron-preload/webview/lib/rest-model/common";
+import {Id} from "src/electron-preload/webview/lib/rest-model/common";
 import {Label} from "src/electron-preload/webview/lib/rest-model/response-entity/folder";
+import {NumericBoolean} from "src/shared/model/common";
 import {ProtonAttachmentHeadersProp, ProtonMailExternalIdProp} from "src/shared/model/proton";
 
 export interface Context {
@@ -44,9 +45,9 @@ export interface Message<TypeRecord = typeof MAIL_TYPE._.nameValueMap,
     ExpirationTime: number;
     Header: string;
     IsEncrypted: IsEncryptedRecord[keyof IsEncryptedRecord];
-    IsForwarded: NumberBoolean;
-    IsReplied: NumberBoolean;
-    IsRepliedAll: NumberBoolean;
+    IsForwarded: NumericBoolean;
+    IsReplied: NumericBoolean;
+    IsRepliedAll: NumericBoolean;
     LabelIDs: string[];
     Location: LocationRecord[keyof LocationRecord];
     MIMEType: string;
@@ -60,12 +61,12 @@ export interface Message<TypeRecord = typeof MAIL_TYPE._.nameValueMap,
     SenderName: MailAddress["Name"];
     Size: number;
     SpamScore: number;
-    Starred: NumberBoolean;
+    Starred: NumericBoolean;
     Subject: string;
     Time: number;
     ToList: MailAddress[];
     Type: TypeRecord[keyof TypeRecord];
-    Unread: NumberBoolean;
+    Unread: NumericBoolean;
 }
 
 export interface Attachment extends Entity, ProtonAttachmentHeadersProp {

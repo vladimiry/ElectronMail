@@ -1,7 +1,8 @@
 import {ofType, unionize} from "@vladimiry/unionize";
 
 import {AccountConfig} from "src/shared/model/account";
-import {DbAccountPk, Mail} from "src/shared/model/database";
+import {DbAccountPk} from "src/shared/model/database";
+import {ProtonApiScan} from "src/shared/api/webview/primary";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount, WebAccountProgress} from "src/web/browser-window/app/model";
 
@@ -29,7 +30,7 @@ export const ACCOUNTS_ACTIONS = unionize({
         TryToLogin: ofType<{ account: WebAccount; webView: Electron.WebviewTag }>(),
         WireUpConfigs: ofType<DeepReadonly<{ accountConfigs: AccountConfig[] }>>(),
         PatchGlobalProgress: ofType<{ patch: State["globalProgress"] }>(),
-        SelectMailOnline: ofType<{ pk: DbAccountPk; mail: Pick<Mail, "id" | "mailFolderIds" | "conversationEntryPk"> }>(),
+        SelectMailOnline: ofType<StrictOmit<ProtonApiScan["ApiImplArgs"]["selectMailOnline"][0], "zoneName">>(),
         FetchSingleMailSetParams: ofType<{ pk: DbAccountPk }
             & Partial<Pick<Exclude<WebAccount["fetchSingleMailParams"], null>, "mailPk">>>(),
         FetchSingleMail: ofType<{ account: WebAccount; webView: Electron.WebviewTag }

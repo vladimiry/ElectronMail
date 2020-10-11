@@ -4,7 +4,7 @@ import {Options as TsLoaderOptions} from "ts-loader";
 import {merge as webpackMerge} from "webpack-merge";
 
 import {BuildEnvironment} from "./model";
-import {LOG, LOG_LEVELS} from "scripts/lib";
+import {CONSOLE_LOG} from "scripts/lib";
 
 export const ENVIRONMENT: BuildEnvironment = (
     () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
@@ -21,10 +21,7 @@ export const ENVIRONMENT_STATE: Readonly<Record<BuildEnvironment, boolean>> = {
     test: ENVIRONMENT === "test",
 };
 
-LOG(
-    LOG_LEVELS.title("BuildEnvironment:"),
-    LOG_LEVELS.value(ENVIRONMENT),
-);
+CONSOLE_LOG("BuildEnvironment: ", ENVIRONMENT);
 
 export const rootRelativePath = (...value: string[]): string => {
     return path.join(process.cwd(), ...value);

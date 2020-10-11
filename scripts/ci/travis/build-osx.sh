@@ -2,8 +2,6 @@
 
 set -ev
 
-./scripts/ci/prepare-webclients.sh
-
 yarn app:dist:base
 npm run clean:prebuilds
 npx --no-install electron-builder install-app-deps --arch=x64

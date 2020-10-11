@@ -156,7 +156,7 @@ export class DbViewEffects {
             unionizeActionFilter(DB_VIEW_ACTIONS.is.FullTextSearchRequest),
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             withLatestFrom(this.store.pipe(select(OptionsSelectors.CONFIG.timeouts))),
-            mergeMap(([{payload: {login, query, folderPks, sentDateAfter, hasAttachments}}, {fullTextSearch: fullTextSearchTimeoutMs}]) => {
+            mergeMap(([{payload: {login, query, folderIds, sentDateAfter, hasAttachments}}, {fullTextSearch: fullTextSearchTimeoutMs}]) => {
                 const dbFullTextSearch$ = from(
                     this.api.ipcMainClient()(
                         "dbFullTextSearch",
@@ -166,7 +166,7 @@ export class DbViewEffects {
                             timeoutMs: fullTextSearchTimeoutMs * 1.2,
                             serialization: "jsan",
                         },
-                    )({login, query, folderPks, sentDateAfter, hasAttachments}),
+                    )({login, query, folderIds, sentDateAfter, hasAttachments}),
                 );
                 return dbFullTextSearch$.pipe(
                     mergeMap((value) => [

@@ -18,7 +18,7 @@ export const DB_VIEW_ACTIONS = unionize({
         }>(),
         SelectFolder: ofType<{
             dbAccountPk: DbAccountPk;
-            selectedFolderData?: Pick<View.Folder, "pk" | "mailFolderId">;
+            selectedFolderData?: Pick<View.Folder, "id">;
             distinct?: boolean;
         }>(),
         SelectMailRequest: ofType<{
@@ -33,7 +33,7 @@ export const DB_VIEW_ACTIONS = unionize({
                 conversationMail: Mail;
             };
         }>(),
-        DbExport: ofType<NoExtraProperties<DeepReadonly<IpcMainServiceScan["ApiImplArgs"]["dbExport"][0]>>>(),
+        DbExport: ofType<NoExtraProps<DeepReadonly<IpcMainServiceScan["ApiImplArgs"]["dbExport"][0]>>>(),
         SelectConversationMailRequest: ofType<{
             dbAccountPk: DbAccountPk;
             mailPk: Mail["pk"];

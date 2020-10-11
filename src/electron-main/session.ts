@@ -1,6 +1,6 @@
 import _logger from "electron-log";
 import {Session, session as electronSession} from "electron";
-import {concatMap, take} from "rxjs/operators";
+import {concatMap, first} from "rxjs/operators";
 import {from, race, throwError, timer} from "rxjs";
 
 import {AccountConfig} from "src/shared/model/account";
@@ -10,7 +10,7 @@ import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {LoginFieldContainer} from "src/shared/model/container";
 import {ONE_SECOND_MS, PACKAGE_NAME} from "src/shared/constants";
 import {curryFunctionMembers, getRandomInt, getWebViewPartition} from "src/shared/util";
-import {initWebRequestListeners} from "src/electron-main/web-request";
+import {initCorsTweakingWebRequestListenersByAccount} from "src/electron-main/web-request";
 import {registerSessionProtocols} from "src/electron-main/protocol";
 
 const logger = curryFunctionMembers(_logger, "[src/electron-main/session]");
@@ -23,7 +23,7 @@ const usedPartitions: Set<Parameters<typeof initSessionByAccount>[1]["login"]> =
 // TODO remove the session from map on account removing
 const usedSessions = new Map<string, Session>();
 
-export function resolveInitialisedSession({login}: LoginFieldContainer): Session {
+export function resolveInitializedSession({login}: DeepReadonly<LoginFieldContainer>): Session {
     const session = usedSessions.get(getWebViewPartition(login));
     if (!session) {
         throw new Error(`Failed to resolve account session`);
@@ -52,9 +52,7 @@ export async function initSession(
 ): Promise<void> {
     if (rotateUserAgent) {
         if (!ctx.userAgentsPool || !ctx.userAgentsPool.length) {
-            const {userAgents} = await ctx.config$
-                .pipe(take(1))
-                .toPromise();
+            const {userAgents} = await ctx.config$.pipe(first()).toPromise();
             ctx.userAgentsPool = [...userAgents];
         }
         const {userAgentsPool} = ctx;
@@ -73,15 +71,16 @@ export async function initSession(
         }
     }
     purifyUserAgentHeader(session);
-    await registerSessionProtocols(ctx, session);
-    initWebRequestListeners(ctx, session);
 }
 
 export async function configureSessionByAccount(
-    account: DeepReadonly<Pick<AccountConfig, "login" | "proxy">>,
+    ctx: DeepReadonly<Context>,
+    account: DeepReadonly<Pick<AccountConfig, "login" | "proxy" | "entryUrl">>,
 ): Promise<void> {
+    logger.info("configureSessionByAccount()");
+
     const {proxy} = account;
-    const session = resolveInitialisedSession({login: account.login});
+    const session = resolveInitializedSession({login: account.login});
     const proxyConfig = {
         ...{
             pacScript: "",
@@ -94,7 +93,9 @@ export async function configureSessionByAccount(
         }),
     };
 
-    return race(
+    initCorsTweakingWebRequestListenersByAccount(ctx, account);
+
+    await race(
         from(
             session.setProxy(proxyConfig),
         ),
@@ -106,7 +107,7 @@ export async function configureSessionByAccount(
 
 export async function initSessionByAccount(
     ctx: DeepReadonly<StrictOmit<Context, "userAgentsPool">> & Pick<Context, "userAgentsPool">,
-    account: DeepReadonly<Pick<AccountConfig, "login" | "proxy" | "rotateUserAgent">>,
+    account: DeepReadonly<Pick<AccountConfig, "login" | "proxy" | "rotateUserAgent" | "entryUrl">>,
 ): Promise<void> {
     const partition = getWebViewPartition(account.login);
 
@@ -120,7 +121,8 @@ export async function initSessionByAccount(
     usedSessions.set(partition, session);
 
     await initSession(ctx, session, {rotateUserAgent: account.rotateUserAgent});
-    await configureSessionByAccount(account);
+    await registerSessionProtocols(ctx, session);
+    await configureSessionByAccount(ctx, account);
 
     usedPartitions.add(partition);
 }

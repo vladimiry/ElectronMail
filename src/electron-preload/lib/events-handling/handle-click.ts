@@ -1,6 +1,8 @@
-import {IPC_MAIN_API} from "src/shared/api/main";
+import {URL} from "@cliqz/url-parser";
+
 import {Logger} from "src/shared/model/common";
 import {parsePackagedWebClientUrl} from "src/shared/util";
+import {resolveIpcMainApi} from "src/electron-preload/lib/util";
 import {resolveLink} from "src/electron-preload/lib/events-handling/lib";
 
 type ObservableElement = Pick<HTMLElement, "addEventListener" | "removeEventListener">;
@@ -12,7 +14,7 @@ const processedClickElements
 export async function callDocumentClickEventListener<E extends Event = MouseEvent>(
     event: E,
     logger: Logger,
-    apiClient?: ReturnType<typeof IPC_MAIN_API.client>,
+    apiClient?: Unpacked<ReturnType<typeof resolveIpcMainApi>>,
 ): Promise<void> {
     const {element, link, href} = resolveLink(event.target as Element);
 
@@ -37,7 +39,7 @@ export async function callDocumentClickEventListener<E extends Event = MouseEven
     }
 
     // opening https/http links in external-program/browser
-    const client = apiClient || IPC_MAIN_API.client({options: {logger}});
+    const client = apiClient || resolveIpcMainApi({logger});
     const method = client("openExternal");
     await method({url: href});
 }
@@ -55,7 +57,7 @@ export function registerDocumentClickEventListener<E extends ObservableElement>(
         return subscription;
     }
 
-    const apiClient = IPC_MAIN_API.client({options: {logger}});
+    const apiClient = resolveIpcMainApi({logger});
     const eventHandlerArgs: ["click", (event: MouseEvent) => Promise<void>] = [
         "click",
         async (event: MouseEvent) => callDocumentClickEventListener(event, logger, apiClient),

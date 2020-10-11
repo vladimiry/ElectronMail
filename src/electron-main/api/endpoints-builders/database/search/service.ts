@@ -8,7 +8,7 @@ import {walkConversationNodesTree} from "src/shared/util";
 
 export function searchRootConversationNodes(
     account: DeepReadonly<FsDbAccount>,
-    {mailPks, folderPks}: DeepReadonly<{ mailPks?: Array<Mail["pk"]>; folderPks?: Array<Folder["pk"]> }> = {},
+    {mailPks, folderIds}: DeepReadonly<{ mailPks?: Array<Mail["pk"]>; folderIds?: Array<Folder["pk"]> }> = {},
 ): View.RootConversationNode[] {
     // TODO optimize search: implement custom search instead of getting all the mails first and then narrowing the list down
     // TODO don't create functions inside iterations so extensively, "filter" / "walkConversationNodesTree" calls
@@ -29,11 +29,11 @@ export function searchRootConversationNodes(
         : rootNodePrototypes;
     const filteredByMailsWithFoldersAttached = fillFoldersAndReturnRootConversationNodes(filteredByMails);
 
-    const result = folderPks
+    const result = folderIds
         ? filteredByMailsWithFoldersAttached.filter((rootNodePrototype) => {
             let matched = false;
             walkConversationNodesTree([rootNodePrototype], ({mail}) => {
-                matched = Boolean(mail && mail.folders.find(({pk}) => folderPks.includes(pk)));
+                matched = Boolean(mail && mail.folders.find(({id}) => folderIds.includes(id)));
                 if (!matched) {
                     return;
                 }

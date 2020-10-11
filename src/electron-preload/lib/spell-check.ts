@@ -2,18 +2,20 @@ import {Deferred} from "ts-deferred";
 import {filter} from "rxjs/operators";
 import {webFrame} from "electron"; // tslint:disable-line:no-import-zones
 
-import {IPC_MAIN_API, IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {Locale, Logger} from "src/shared/model/common";
 import {ONE_SECOND_MS} from "src/shared/constants";
+import {resolveIpcMainApi} from "src/electron-preload/lib/util";
 
-const releaseApiClientDeferred = new Deferred<void>();
+const apiClientCleanupService = (() => {
+    const deferred = new Deferred<void>();
+    return {
+        release: () => deferred.resolve(),
+        finishPromise: deferred.promise,
+    };
+})();
 
-const finishPromise = releaseApiClientDeferred.promise;
-
-const setSpellCheckProvider: (
-    locale: Locale | false,
-    client: ReturnType<typeof IPC_MAIN_API.client>,
-) => void = (locale, client) => {
+const setSpellCheckProvider = (locale: Locale | false, ipcMainApiClient: ReturnType<typeof resolveIpcMainApi>): void => {
     if (typeof locale !== "string") {
         // TODO figure how to undone/cancel "webFrame.setSpellCheckProvider" action, ie reset spell check provider
         // right now we just use dummy provider so IPC communication will be still in place
@@ -25,7 +27,7 @@ const setSpellCheckProvider: (
         locale,
         {
             spellCheck(words, callback) {
-                client("spellCheck")({words}) // eslint-disable-line @typescript-eslint/no-floating-promises
+                ipcMainApiClient("spellCheck")({words}) // eslint-disable-line @typescript-eslint/no-floating-promises
                     .then(({misspelledWords}) => callback(misspelledWords));
             },
         },
@@ -33,33 +35,35 @@ const setSpellCheckProvider: (
 };
 
 const state: {
-    setupNotificationListening: (logger: Logger) => void;
+    setupNotificationListening: (ipcMainApiClient: ReturnType<typeof resolveIpcMainApi>,) => void;
 } = {
-    setupNotificationListening(logger) {
+    setupNotificationListening(ipcMainApiClient) {
         // we call it only once, so nooping the function
         state.setupNotificationListening = () => {}; // eslint-disable-line @typescript-eslint/no-empty-function
 
-        const client = IPC_MAIN_API.client({options: {logger, finishPromise, timeoutMs: ONE_SECOND_MS * 3 + 1}});
-        const notificationSubscription = client("notification")()
+        const notificationSubscription = ipcMainApiClient("notification")()
             .pipe(filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.Locale))
-            .subscribe(({payload: {locale}}) => setSpellCheckProvider(locale, client));
+            .subscribe(({payload: {locale}}) => setSpellCheckProvider(locale, ipcMainApiClient));
 
         window.addEventListener(
             "beforeunload",
             () => {
                 notificationSubscription.unsubscribe();
-                releaseApiClientDeferred.resolve();
+                apiClientCleanupService.release();
             },
         );
     },
 };
 
 export function initSpellCheckProvider(logger: Logger): void {
-    const client = IPC_MAIN_API.client({options: {logger, finishPromise, timeoutMs: ONE_SECOND_MS * 3}});
-    const getSpellCheckMetadata = client("getSpellCheckMetadata");
+    const ipcMainApiClient = resolveIpcMainApi({
+        logger,
+        finishPromise: apiClientCleanupService.finishPromise,
+        timeoutMs: ONE_SECOND_MS * 3
+    });
 
-    state.setupNotificationListening(logger);
+    state.setupNotificationListening(ipcMainApiClient);
 
-    getSpellCheckMetadata() // eslint-disable-line @typescript-eslint/no-floating-promises
-        .then(({locale}) => setSpellCheckProvider(locale, client));
+    ipcMainApiClient("getSpellCheckMetadata")() // eslint-disable-line @typescript-eslint/no-floating-promises
+        .then(({locale}) => setSpellCheckProvider(locale, ipcMainApiClient));
 }

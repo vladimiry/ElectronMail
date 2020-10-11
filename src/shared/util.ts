@@ -1,6 +1,7 @@
 import {ElectronLog} from "electron-log"; // tslint:disable-line:no-import-zones
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import type {RateLimiterMemory} from "rate-limiter-flexible";
+import {URL} from "@cliqz/url-parser";
 import {pick} from "remeda";
 
 import {AccountConfig} from "./model/account";
@@ -11,7 +12,9 @@ import {
     LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN,
     ONE_MINUTE_MS,
     ONE_SECOND_MS,
-    PROVIDER_REPOS,
+    PROVIDER_REPO_MAP,
+    PROVIDER_REPO_NAMES,
+    WEB_CLIENTS_BLANK_HTML_FILE_NAME,
     ZOOM_FACTOR_DEFAULT,
 } from "src/shared/constants";
 import {DbPatch} from "./api/common";
@@ -287,6 +290,10 @@ export function buildEnumBundle<M, K extends keyof M, V extends Extract<M[keyof 
             valueNameMap: {} as any, // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
         });
 
+    const isValidValue = (value: unknown): value is V => {
+        return (value as any) in valueNameMap; // eslint-disable-line @typescript-eslint/no-explicit-any
+    };
+
     interface ResolveNameByValue {
         (value: V): K;
 
@@ -297,8 +304,8 @@ export function buildEnumBundle<M, K extends keyof M, V extends Extract<M[keyof 
         value: V,
         strict: boolean = true, // eslint-disable-line @typescript-eslint/no-inferrable-types
     ) => {
-        if (strict && !(value in valueNameMap)) {
-            throw new Error(`Failed to parse "${value}" value from the "${JSON.stringify(nameValueMap)}" map`);
+        if (strict && !isValidValue(value)) {
+            throw new Error(`Failed to parse "${String(value)}" value from the "${JSON.stringify(nameValueMap)}" map`);
         }
         return valueNameMap[value];
     };
@@ -334,7 +341,8 @@ export function buildEnumBundle<M, K extends keyof M, V extends Extract<M[keyof 
             names,
             values,
             nameValueMap,
-        } as const,
+            isValidValue,
+        },
     } as const;
 }
 
@@ -470,15 +478,15 @@ export const parsePackagedWebClientUrl: (
 
 export const resolvePackagedWebClientApp: (
     url: Exclude<ReturnType<typeof parsePackagedWebClientUrl>, null>,
-) => Readonly<{ project: keyof typeof PROVIDER_REPOS; projectSubPath?: string }> = (
+) => Readonly<{ project: keyof typeof PROVIDER_REPO_MAP; projectSubPath?: string }> = (
     () => {  // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
-        const subProjects = ["proton-mail-settings", "proton-contacts", "proton-calendar"] as const;
+        const subProjects = PROVIDER_REPO_NAMES.filter((projectType) => projectType !== "proton-mail");
         const result: typeof resolvePackagedWebClientApp = (url) => {
             const pathname = `${url.pathname}/`;
-            const foundSubProject = subProjects.find((p) => {
-                return pathname.startsWith(`/${PROVIDER_REPOS[p].baseDir}/`);
+            const foundSubProject = subProjects.find((subProject) => {
+                return pathname.startsWith(`/${PROVIDER_REPO_MAP[subProject].baseDirName}/`);
             });
-            const project = foundSubProject || "WebClient";
+            const project = foundSubProject || "proton-mail";
             const [
                 /* "," does skip the first item since it's a "project" itself: */,
                 ...projectSubPathParts
@@ -493,9 +501,33 @@ export const resolvePackagedWebClientApp: (
     }
 )();
 
+export const testProtonAppPage = (
+    {url, logger}: { url: string; logger: import("src/shared/model/common").Logger },
+): { shouldInitProviderApi: boolean; packagedWebClientUrl: ReturnType<typeof parsePackagedWebClientUrl> } => {
+    let projectType: keyof typeof PROVIDER_REPO_MAP | undefined;
+    const packagedWebClientUrl = parsePackagedWebClientUrl(url);
+    const logDetails = (): string => {
+        return JSON.stringify({url, packagedWebClientUrl: JSON.stringify(packagedWebClientUrl), project: String(projectType)});
+    };
+
+    if (
+        !packagedWebClientUrl
+        ||
+        packagedWebClientUrl.pathname === `/${WEB_CLIENTS_BLANK_HTML_FILE_NAME}`
+        ||
+        (projectType = resolvePackagedWebClientApp(packagedWebClientUrl).project) !== "proton-mail"
+    ) {
+        logger.info("should init provider api", logDetails());
+        return {shouldInitProviderApi: false, packagedWebClientUrl};
+    }
+
+    logger.info("should not init provider api", logDetails());
+    return {shouldInitProviderApi: true, packagedWebClientUrl};
+};
+
 export const consumeMemoryRateLimiter = async (
     consume: () => ReturnType<typeof RateLimiterMemory.prototype.consume>,
-): Promise<{waitTimeMs: number}> => {
+): Promise<{ waitTimeMs: number }> => {
     try {
         await consume();
         return {waitTimeMs: 0};
@@ -505,5 +537,15 @@ export const consumeMemoryRateLimiter = async (
             return {waitTimeMs: error.msBeforeNext};
         }
         throw error;
+    }
+};
+
+export const assertTypeOf = (
+    {value, expectedType}: { value: unknown, expectedType: string },
+    errorMessagePrefix: string,
+): void | never => {
+    const actualType = typeof value;
+    if (actualType !== expectedType) {
+        throw new Error(`${errorMessagePrefix} ${JSON.stringify({actualType, expectedType: expectedType})}`);
     }
 };

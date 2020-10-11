@@ -1,6 +1,7 @@
 import UUID from "pure-uuid";
 import electronLog from "electron-log";
 import sanitizeHtml from "sanitize-html";
+import {first} from "rxjs/operators";
 import {omit} from "remeda";
 
 import {Context} from "src/electron-main/model";
@@ -93,8 +94,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             logger.verbose(JSON.stringify({entitiesModified, metadataModified, sessionMetadataModified, forceFlush}));
 
             setTimeout(async () => {
-                // TODO consider caching the config
-                const {disableSpamNotifications} = await ctx.configStore.readExisting();
+                const {disableSpamNotifications} = await ctx.config$.pipe(first()).toPromise();
                 const includingSpam = !disableSpamNotifications;
 
                 IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount({

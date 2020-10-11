@@ -3,10 +3,10 @@ import compareVersions from "compare-versions";
 import electronLog from "electron-log";
 import fetch from "node-fetch";
 import {app, dialog, shell} from "electron";
+import {first, map, startWith} from "rxjs/operators";
 import {from, merge, of, throwError} from "rxjs";
 import {inspect} from "util";
 import {isWebUri} from "valid-url";
-import {map, startWith, take} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
@@ -73,7 +73,7 @@ export async function buildEndpoints(
                 return;
             }
 
-            const {window: {maximized}, zoomFactor} = await ctx.configStore.readExisting();
+            const {window: {maximized}, zoomFactor} = await ctx.config$.pipe(first()).toPromise();
 
             browserWindow.webContents.zoomFactor = zoomFactor;
 
@@ -256,7 +256,7 @@ export async function buildEndpoints(
             )();
 
             return async (): Promise<IpcMainServiceScan["ApiImplReturns"]["updateCheck"]> => {
-                const {updateCheck: {releasesUrl, proxy}} = await ctx.configStore.readExisting();
+                const {updateCheck: {releasesUrl, proxy}} = await ctx.config$.pipe(first()).toPromise();
                 const response = await fetch(
                     releasesUrl,
                     {
@@ -342,9 +342,7 @@ export async function buildEndpoints(
             IPC_MAIN_API_NOTIFICATION$.next(
                 IPC_MAIN_API_NOTIFICATION_ACTIONS.ConfigUpdated(
                     await ctx.configStoreQueue.q(async () => {
-                        const config = await ctx.config$
-                            .pipe(take(1))
-                            .toPromise();
+                        const config = await ctx.config$.pipe(first()).toPromise();
                         const {hideControls} = arg || {hideControls: !config.hideControls};
 
                         return ctx.configStore.write({

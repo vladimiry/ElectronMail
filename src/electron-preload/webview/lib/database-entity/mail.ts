@@ -1,7 +1,7 @@
 import * as DatabaseModel from "src/shared/model/database";
 import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 import {ONE_SECOND_MS, PACKAGE_VERSION} from "src/shared/constants";
-import {ProviderApi} from "src/electron-preload/webview/primary/provider-api";
+import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/constants";
 import {buildBaseEntity, buildPk} from "src/electron-preload/webview/lib/database-entity/index";
 import {curryFunctionMembers} from "src/shared/util";
@@ -57,10 +57,10 @@ export async function buildMail(input: RestModel.Message, api: ProviderApi): Pro
     };
 
     try {
-        bodyPart.body = await api.messageModel(input).clearTextBody();
+        bodyPart.body = await api._custom_.decryptMessageBody(input);
     } catch (error) {
+        // printing mail subject to log helps users locating the problematic item
         logger.error(`body decryption failed, email subject: "${input.Subject}"`, error);
-
         bodyPart.failedDownload = {
             appVersion: PACKAGE_VERSION,
             date: Date.now(),

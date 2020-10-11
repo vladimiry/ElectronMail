@@ -24,7 +24,7 @@
                         style="position: relative"
                     >
                         <button class="btn btn-sm btn-secondary-light text-decoration-none" dropdownToggle type="button">
-                            Folders: {{ (selectedPks$ | async)?.length }} of {{ folders.length }}
+                            Folders: {{ (selectedIds$ | async)?.length }} of {{ folders.length }}
                         </button>
                         <div *dropdownMenu class="dropdown-menu px-2 py-1" role="menu">
                             <div class="custom-control custom-switch text-center">
@@ -42,12 +42,12 @@
                             <div formGroupName="folders">
                                 <div *ngFor="let folder of folders" class="custom-control custom-switch">
                                     <input
-                                        [formControlName]="folder.pk"
-                                        [id]="'id_' + folder.pk"
+                                        [formControlName]="folder.id"
+                                        [id]="'id_' + folder.id"
                                         class="custom-control-input"
                                         type="checkbox"
                                     >
-                                    <label [attr.for]="'id_' + folder.pk" class="custom-control-label">
+                                    <label [attr.for]="'id_' + folder.id" class="custom-control-label">
                                         <electron-mail-db-view-folder [folder]="folder"></electron-mail-db-view-folder>
                                     </label>
                                 </div>
@@ -85,7 +85,7 @@
                         </label>
                     </div>
                     <button
-                        [disabled]="form.invalid"
+                        [disabled]="form.invalid || !(selectedIds$ | async)?.length"
                         class="btn btn-sm btn-primary d-flex flex-shrink-0 align-items-center"
                         type="submit"
                     >

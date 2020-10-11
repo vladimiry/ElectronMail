@@ -1,13 +1,15 @@
-import {
-    BeforeSendResponse,
-    HeadersReceivedResponse,
-    OnBeforeSendHeadersListenerDetails,
-    OnHeadersReceivedListenerDetails,
-    Session,
-} from "electron";
-import {URL} from "url";
+import _logger from "electron-log";
+import {BeforeSendResponse, HeadersReceivedResponse, OnBeforeSendHeadersListenerDetails, OnHeadersReceivedListenerDetails} from "electron";
+import {URL} from "@cliqz/url-parser";
 
-import {Context} from "./model";
+import {AccountConfig} from "src/shared/model/account";
+import {Context} from "src/electron-main/model";
+import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {curryFunctionMembers} from "src/shared/util";
+import {resolveInitializedSession} from "src/electron-main/session";
+
+const logger = curryFunctionMembers(_logger, "[web-request]");
 
 // TODO drop these types when "requestHeaders / responseHeaders" get proper types
 type RequestDetails = OnBeforeSendHeadersListenerDetails;
@@ -68,7 +70,7 @@ function getHeader(
 
 function resolveRequestProxy(
     {requestHeaders, resourceType}: RequestDetails,
-    origins: readonly string[],
+    originsWhitelist: readonly string[],
 ): RequestProxy | null {
     const originHeader = (
         (
@@ -97,7 +99,9 @@ function resolveRequestProxy(
         return null;
     }
 
-    return origins.some((localOrigin) => originValue === localOrigin)
+    const originWhitelisted = originsWhitelist.some((originsWhitelistItem) => originValue === originsWhitelistItem);
+
+    return originWhitelisted
         ? {
             headers: {
                 origin: originHeader,
@@ -223,19 +227,67 @@ const patchReponseHeaders: (arg: { requestProxy: RequestProxy; details: Response
     return details.responseHeaders;
 };
 
-// TODO pass additional "account type" argument and apply only respective listeners
-export function initWebRequestListeners(ctx: DeepReadonly<Context>, session: Session): void {
-    const webClientsOrigins = ctx.locations.webClients
-        .map(({entryUrl}) => new URL(entryUrl).origin);
+export function initCorsTweakingWebRequestListenersByAccount(
+    ctx: DeepReadonly<Context>,
+    account: DeepReadonly<Pick<AccountConfig, "login" | "entryUrl">>,
+): void {
+    const session = resolveInitializedSession({login: account.login});
+    const {entryUrl: accountEntryApiUrl} = account;
+    const webClient = ctx.locations.webClients.find(({entryApiUrl}) => accountEntryApiUrl === entryApiUrl);
 
+    if (!webClient) {
+        throw new Error(`Failed to resolve the "web-client" bundle location by "${accountEntryApiUrl}" API entry point value`);
+    }
+
+    const originsWhitelist: readonly string[] = [
+        new URL(webClient.entryUrl).origin,
+        new URL(accountEntryApiUrl).origin,
+        ...(
+            BUILD_ENVIRONMENT === "development"
+                ? [new URL("devtools://devtools/").origin]
+                : []
+        ),
+    ].map((origin) => {
+        if (
+            !origin
+            ||
+            // browsers resolve "new URL(...).origin" of custom schemes as "null" string value
+            // example: new URL("webclient://domain.net/blank.html?loader-id=2fb1c580").origin
+            String(origin).trim() === "null"
+        ) {
+            throw new Error(`Unexpected "origin" value detected (value: "${String(origin)}")`);
+        }
+        return origin;
+    });
+
+    // according to electron docs "only the last attached listener will be used", so no need to unsubscribe previously registered handlers
+    session.webRequest.onBeforeRequest(
+        {urls: []},
+        (details, callback) => {
+            const {url} = details;
+            const urlAccessGranted = originsWhitelist.some((originsWhitelistItem) => new URL(url).origin === originsWhitelistItem);
+
+            if (!urlAccessGranted) {
+                const message = `Access to the "${url}" URL has been forbidden. Allowed origins: ${JSON.stringify(originsWhitelist)}.`;
+
+                logger.error(message);
+                IPC_MAIN_API_NOTIFICATION$.next(
+                    IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({message}),
+                );
+
+                return callback({cancel: true});
+            }
+
+            callback({});
+        },
+    );
+
+    // according to electron docs "only the last attached listener will be used", so no need to unsubscribe previously registered handlers
     session.webRequest.onBeforeSendHeaders(
         {urls: []},
-        (
-            details,
-            callback,
-        ) => {
+        (details, callback) => {
             const {requestHeaders} = details;
-            const requestProxy = resolveRequestProxy(details, webClientsOrigins);
+            const requestProxy = resolveRequestProxy(details, originsWhitelist);
 
             if (requestProxy) {
                 const {name} = getHeader(requestHeaders, HEADERS.request.origin) || {name: HEADERS.request.origin};
@@ -247,11 +299,9 @@ export function initWebRequestListeners(ctx: DeepReadonly<Context>, session: Ses
         },
     );
 
+    // according to electron docs "only the last attached listener will be used", so no need to unsubscribe previously registered handlers
     session.webRequest.onHeadersReceived(
-        (
-            details,
-            callback,
-        ) => {
+        (details, callback) => {
             const requestProxy = PROXIES.get(details.id);
 
             if (requestProxy) {

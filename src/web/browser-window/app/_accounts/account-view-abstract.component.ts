@@ -4,6 +4,7 @@ import {distinctUntilChanged, filter, map, take} from "rxjs/operators";
 import {pick} from "remeda";
 
 import {AccountComponent} from "src/web/browser-window/app/_accounts/account.component";
+import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
@@ -103,20 +104,27 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
             })(),
         );
 
-        // this.subscription.add(
-        //     this.filterDomReadyEvent()
-        //         .pipe(take(1))
-        //         .subscribe(({webView}) => {
-        //             if ((BUILD_ENVIRONMENT === "development")) {
-        //                 webView.openDevTools();
-        //             }
-        //         }),
-        // );
+        this.subscription.add(
+            this.filterDomReadyEvent()
+                .pipe(take(1))
+                .subscribe(({webView}) => {
+                    if ((BUILD_ENVIRONMENT === "development")) {
+                        webView.openDevTools();
+                    }
+                }),
+        );
     }
 
     ngOnDestroy(): void {
         super.ngOnDestroy();
         this.event.emit({type: "log", data: ["info", `ngOnDestroy()`, ""]});
+        this.subscription.unsubscribe();
+        this.event.emit({
+            type: "action",
+            payload: this.injector
+                .get(AccountsService)
+                .generateNotificationsStateResetAction({login: this.account.accountConfig.login, ignoreNoAccount: true}),
+        });
     }
 
     protected filterDomReadyEvent(): Observable<Extract<ChildEvent, { type: "dom-ready" }>> {

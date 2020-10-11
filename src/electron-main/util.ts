@@ -1,9 +1,9 @@
 import _logger from "electron-log";
 import fs from "fs";
 import path from "path";
-import url from "url";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Model as StoreModel} from "fs-json-store";
+import {format as formatURL} from "url";
 
 import {Config} from "src/shared/model/options";
 import {Context} from "./model";
@@ -12,7 +12,7 @@ import {curryFunctionMembers} from "src/shared/util";
 const logger = curryFunctionMembers(_logger, "[src/electron-main/util]");
 
 export function formatFileUrl(pathname: string): string {
-    return url.format({pathname, protocol: "file:", slashes: true});
+    return formatURL({pathname, protocol: "file:", slashes: true});
 }
 
 export async function injectVendorsAppCssIntoHtmlFile(

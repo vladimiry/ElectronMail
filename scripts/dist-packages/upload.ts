@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import {platform} from "os";
 
-import {LOG, LOG_LEVELS, execShell} from "scripts/lib";
+import {CONSOLE_LOG, execShell} from "scripts/lib";
 import {listInstallationPackageFiles} from "./lib";
 
 const [, , DIST_DIRECTORY, OUTPUT_DIRECTORY] = process.argv as [null, null, string, string];
@@ -18,18 +18,15 @@ outputStream.on("finish", async () => {
 
 outputArchiver.pipe(outputStream);
 
-(async () => {
+(async () => { // eslint-disable-line @typescript-eslint/no-floating-promises
     for (const file of await listInstallationPackageFiles(DIST_DIRECTORY)) {
         if (file.endsWith(".blockmap")) {
             continue;
         }
 
         outputArchiver.file(file, {name: path.basename(file)});
-        LOG(LOG_LEVELS.title(`Adding ${LOG_LEVELS.value(file)} to ${LOG_LEVELS.value(outputFile)} archive`));
+        CONSOLE_LOG(`Adding ${file} to ${outputFile} archive`);
     }
 
     await outputArchiver.finalize();
-})().catch((error) => {
-    LOG(error);
-    process.exit(1);
-});
+})();

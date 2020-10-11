@@ -74,7 +74,7 @@ export const IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS = unionize({
 export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
         Bootstrap: ofType<Record<string, unknown>>(),
         ActivateBrowserWindow: ofType<Record<string, unknown>>(),
-        TargetUrl: ofType<DeepReadonly<NoExtraProperties<{
+        TargetUrl: ofType<DeepReadonly<NoExtraProps<{
             url: string;
             // percent sizes get calculated since absolute sizes use introduce a mistake if "zoomFactor is not 1"
             position?: { cursorXPercent: number; cursorYPercent: number };
@@ -156,26 +156,26 @@ export const ENDPOINTS_DEFINITION = {
         }>, { mailsCount: number } | { progress: number; file: string; attachmentsLoadError: boolean }>(),
 
     dbExportMailAttachmentsNotification:
-        ActionType.Promise<DeepReadonly<NoExtraProperties<{
+        ActionType.Promise<DeepReadonly<NoExtraProps<{
             uuid: string;
-            accountPk: NoExtraProperties<DbModel.DbAccountPk>;
-            attachments: Array<NoExtraProperties<ProtonAttachmentHeadersProp
+            accountPk: NoExtraProps<DbModel.DbAccountPk>;
+            attachments: Array<NoExtraProps<ProtonAttachmentHeadersProp
                 & ({ data: Uint8Array } | { serializedError: import("serialize-error").ErrorObject })>>;
             serializedError?: import("serialize-error").ErrorObject
         }>>>(),
 
     dbSearchRootConversationNodes:
         ActionType.Promise<DbModel.DbAccountPk
-            & { folderPks?: Array<DbModel.Folder["pk"]> }
+            & { folderIds?: Array<DbModel.Folder["id"]> }
             & ({ query: string } | { mailPks: Array<DbModel.Folder["pk"]> }),
             DbModel.View.RootConversationNode[]>(),
 
-    dbFullTextSearch: ActionType.Promise<NoExtraProperties<DbModel.DbAccountPk & {
+    dbFullTextSearch: ActionType.Promise<NoExtraProps<DbModel.DbAccountPk & {
         query: string;
         sentDateAfter: string;
         hasAttachments: boolean;
-        folderPks?: Array<DbModel.Folder["pk"]>;
-    }>, NoExtraProperties<{
+        folderIds?: Array<DbModel.Folder["pk"]>;
+    }>, NoExtraProps<{
         searched: boolean;
         mailsBundleItems: Array<{ mail: DbModel.View.Mail & { score?: number }; conversationSize: number }>;
     }>>(),

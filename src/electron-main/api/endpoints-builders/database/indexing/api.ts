@@ -1,6 +1,6 @@
 import electronLog from "electron-log";
 import {defer} from "rxjs";
-import {filter, startWith, take, takeUntil} from "rxjs/operators";
+import {filter, first, startWith, takeUntil} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
 import {
@@ -38,7 +38,7 @@ export async function buildDbIndexingEndpoints(
                         async () => {
                             const [{accounts}, config] = await Promise.all([
                                 ctx.settingsStore.readExisting(),
-                                ctx.config$.pipe(take(1)).toPromise(),
+                                ctx.config$.pipe(first()).toPromise(),
                             ]);
                             const logins = accounts.map(({login}) => login);
 

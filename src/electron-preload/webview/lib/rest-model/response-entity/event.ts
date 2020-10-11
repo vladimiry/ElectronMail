@@ -2,10 +2,10 @@ import {Contact, ContactEmail, Message} from "src/electron-preload/webview/lib/r
 import {EVENT_ACTION} from "src/electron-preload/webview/lib/rest-model/constats";
 import {Id} from "src/electron-preload/webview/lib/rest-model/common";
 import {Label} from "src/electron-preload/webview/lib/rest-model/response-entity/folder";
-import {PROTONMAIL_MAILBOX_IDENTIFIERS} from "src/shared/model/database";
+import {SYSTEM_FOLDER_IDENTIFIERS} from "src/shared/model/database";
 
 interface EventSubMessage {
-    Message?: { LabelIDsAdded?: typeof PROTONMAIL_MAILBOX_IDENTIFIERS._.values };
+    Message?: { LabelIDsAdded?: typeof SYSTEM_FOLDER_IDENTIFIERS._.values };
 }
 
 export interface Event<TypeRecord = typeof EVENT_ACTION._.nameValueMap, A = TypeRecord[keyof TypeRecord]> {

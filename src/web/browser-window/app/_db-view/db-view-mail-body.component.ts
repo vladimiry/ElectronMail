@@ -13,7 +13,7 @@ import {
 } from "@angular/core";
 import {BehaviorSubject, EMPTY, Observable, Subject, Subscription, combineLatest} from "rxjs";
 import {Store} from "@ngrx/store";
-import {delay, distinctUntilChanged, filter, map, mergeMap, pairwise, take, withLatestFrom} from "rxjs/operators";
+import {delay, distinctUntilChanged, filter, first, map, mergeMap, pairwise, withLatestFrom} from "rxjs/operators";
 import {equals} from "remeda";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
@@ -165,24 +165,18 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         this.selectingMailOnline$.pipe(
             pairwise(),
             filter((prev, curr) => Boolean(prev) && !curr),
-            take(1),
+            first(),
         ).subscribe(() => {
             this.store.dispatch(ACCOUNTS_ACTIONS.ToggleDatabaseView({login: this.dbAccountPk.login, forced: {databaseView: false}}));
         });
 
         this.selectedMail$
-            .pipe(take(1))
+            .pipe(first())
             .subscribe(({conversationMail: {id, mailFolderIds, conversationEntryPk}}) => {
-                const {selectedFolderData} = this;
-
-                if (selectedFolderData && mailFolderIds.includes(selectedFolderData.mailFolderId)) {
-                    mailFolderIds = [selectedFolderData.mailFolderId];
-                }
-
-                // TODO send only one "mailFolderId" value that contains a minimum items count
                 this.store.dispatch(ACCOUNTS_ACTIONS.SelectMailOnline({
                     pk: this.dbAccountPk,
                     mail: {id, mailFolderIds, conversationEntryPk},
+                    selectedFolderId: (this.selectedFolderData ?? {id: null}).id,
                 }));
             });
     }
@@ -194,7 +188,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
                     map((selectedMail) => selectedMail.conversationMail),
                 ),
             ),
-            take(1),
+            first(),
         ).subscribe(([pk, conversationMail]) => {
             this.store.dispatch(ACCOUNTS_ACTIONS.FetchSingleMailSetParams({pk, mailPk: conversationMail.pk}));
         });

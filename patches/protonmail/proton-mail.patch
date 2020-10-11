@@ -1,0 +1,83 @@
+diff --git a/node_modules/mutex-browser/lib/index.js b/node_modules/mutex-browser/lib/index.js
+index f69eebf..22c9492 100644
+--- a/node_modules/mutex-browser/lib/index.js
++++ b/node_modules/mutex-browser/lib/index.js
+@@ -7,8 +7,8 @@ export const create = (options) => {
+     const hasIDBPromise = new Promise((resolve) => {
+         try {
+             const db = indexedDB.open(options && options.dbName || DEFAULT_DB_NAME);
+-            db.onerror = () => resolve(true);
+-            db.onsuccess = () => resolve(false);
++            db.onerror = () => resolve(false);
++            db.onsuccess = () => resolve(true);
+         }
+         catch (err) {
+             resolve(false);
+diff --git a/node_modules/react-components/containers/login/MinimalLoginContainer.tsx b/node_modules/react-components/containers/login/MinimalLoginContainer.tsx
+index 9895e4d..c7cf01d 100644
+--- a/node_modules/react-components/containers/login/MinimalLoginContainer.tsx
++++ b/node_modules/react-components/containers/login/MinimalLoginContainer.tsx
+@@ -13,6 +13,8 @@ import LoginUsernameInput from './LoginUsernameInput';
+ import LoginTotpInput from './LoginTotpInput';
+ import LoginUnlockInput from './LoginUnlockInput';
+
++const ELECTRON_MAIL_FORM_STYLE = { padding: '0.8rem' } as const;
++
+ interface Props extends Omit<UseLoginProps, 'api'> {
+     needHelp?: React.ReactNode;
+ }
+@@ -56,7 +58,7 @@ const MinimalLoginContainer = ({ onLogin, ignoreUnlock = false, needHelp }: Prop
+             withLoading(handleLogin().catch(catchHandler));
+         };
+         return (
+-            <form name="loginForm" onSubmit={handleSubmit}>
++            <form name="loginForm" onSubmit={handleSubmit} style={ELECTRON_MAIL_FORM_STYLE}>
+                 <Label htmlFor="login">{c('Label').t`Username or ProtonMail address`}</Label>
+                 <div className="mb1">
+                     <LoginUsernameInput
+@@ -97,7 +99,7 @@ const MinimalLoginContainer = ({ onLogin, ignoreUnlock = false, needHelp }: Prop
+             withLoading(handleTotp().catch(catchHandler));
+         };
+         return (
+-            <form name="totpForm" onSubmit={handleSubmit}>
++            <form name="totpForm" onSubmit={handleSubmit} style={ELECTRON_MAIL_FORM_STYLE}>
+                 <Label htmlFor="twoFa">{c('Label').t`Two-factor code`}</Label>
+                 <div className="mb1">
+                     <LoginTotpInput totp={totp} setTotp={loading ? noop : setTotp} id="twoFa" />
+@@ -123,7 +125,7 @@ const MinimalLoginContainer = ({ onLogin, ignoreUnlock = false, needHelp }: Prop
+             withLoading(handleUnlock().catch(catchHandler));
+         };
+         return (
+-            <form name="unlockForm" onSubmit={handleSubmit}>
++            <form name="unlockForm" onSubmit={handleSubmit} style={ELECTRON_MAIL_FORM_STYLE}>
+                 <Label htmlFor="password">{c('Label').t`Mailbox password`}</Label>
+                 <div className="mb1">
+                     <LoginUnlockInput
+diff --git a/node_modules/proton-shared/lib/apps/helper.ts b/node_modules/proton-shared/lib/apps/helper.ts
+index b6913e1..31a52f7 100644
+--- a/node_modules/proton-shared/lib/apps/helper.ts
++++ b/node_modules/proton-shared/lib/apps/helper.ts
+@@ -32,7 +32,7 @@ export const getAppHrefBundle = (to: string, toApp: APP_NAMES) => {
+     return `/${path}`;
+ };
+
+-export const getAccountSettingsApp = () => (isSSOMode ? APPS.PROTONACCOUNT : APPS.PROTONMAIL_SETTINGS);
++export const getAccountSettingsApp = () => APPS.PROTONACCOUNT;
+
+ export const getClientID = (appName: APP_NAMES) => {
+     return APPS_CONFIGURATION[appName].clientID;
+diff --git a/node_modules/proton-shared/lib/constants.ts b/node_modules/proton-shared/lib/constants.ts
+index 579ec9c..a74fb32 100644
+--- a/node_modules/proton-shared/lib/constants.ts
++++ b/node_modules/proton-shared/lib/constants.ts
+@@ -33,8 +33,8 @@ export const APPS = {
+ } as const;
+ export const APPS_CONFIGURATION = {
+     [APPS.PROTONACCOUNT]: {
+-        publicPath: '',
+-        subdomain: 'account',
++        publicPath: '/account',
++        subdomain: '',
+         name: 'Proton Account',
+         clientID: 'WebAccount',
+         icon: 'protonaccount',

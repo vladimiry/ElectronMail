@@ -2,7 +2,7 @@ import path from "path";
 import {AfterPackContext, Configuration} from "app-builder-lib";
 
 import {APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR} from "src/shared/constants";
-import {LOG, LOG_LEVELS, execShell} from "scripts/lib";
+import {CONSOLE_LOG, execShell} from "scripts/lib";
 import {copyDictionaryFilesTo} from "scripts/electron-builder/lib";
 
 const printPrefix = `[hook: afterPack]`;
@@ -22,11 +22,7 @@ async function linux({targets, appOutDir}: AfterPackContext): Promise<void> {
 const hook: Required<Configuration>["afterPack"] = async (context) => {
     const electronPlatformNameLoweredCase = context.electronPlatformName.toLowerCase();
 
-    LOG(
-        LOG_LEVELS.title(
-            `${printPrefix} Processing ${LOG_LEVELS.value(JSON.stringify(context.targets.map(({name}) => name)))} targets`,
-        ),
-    );
+    CONSOLE_LOG(`${printPrefix} Processing ${JSON.stringify(context.targets.map(({name}) => name))} targets`);
 
     if (electronPlatformNameLoweredCase.startsWith("lin")) {
         await linux(context);

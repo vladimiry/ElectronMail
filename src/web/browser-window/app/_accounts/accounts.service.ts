@@ -24,6 +24,12 @@ export class AccountsService {
         }>,
     ) {}
 
+    generateNotificationsStateResetAction(
+        {login, ignoreNoAccount}: { login: string; ignoreNoAccount?: boolean }
+    ): ReturnType<typeof ACCOUNTS_ACTIONS.Patch> {
+        return ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread: 0, loggedIn: false}}, ignoreNoAccount});
+    }
+
     buildLoginDelaysResetAction(
         {login}: LoginFieldContainer,
     ): ReturnType<typeof ACCOUNTS_ACTIONS.Patch> {
@@ -34,7 +40,7 @@ export class AccountsService {
     }
 
     setupLoginDelayTrigger(
-        {login}: NoExtraProperties<Pick<WebAccount["accountConfig"], "login">>,
+        {login}: NoExtraProps<Pick<WebAccount["accountConfig"], "login">>,
         logger: ReturnType<typeof getZoneNameBoundWebLogger>,
     ): Observable<{ trigger: string }> {
         const account$ = this.store.pipe(

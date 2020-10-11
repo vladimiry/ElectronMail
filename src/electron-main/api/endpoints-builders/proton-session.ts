@@ -1,11 +1,11 @@
-import {concatMap, take} from "rxjs/operators";
+import {concatMap, first} from "rxjs/operators";
 import {from, race, throwError, timer} from "rxjs";
 import {pick} from "remeda";
 
 import {AccountPersistentSession} from "src/shared/model/account";
 import {Context} from "src/electron-main/model";
 import {IpcMainApiEndpoints} from "src/shared/api/main";
-import {resolveInitialisedSession} from "src/electron-main/session";
+import {resolveInitializedSession} from "src/electron-main/session";
 
 // TODO enable minimal logging
 // const logger = curryFunctionMembers(electronLog, "[electron-main/api/endpoints-builders/proton-session]");
@@ -56,7 +56,7 @@ export async function buildEndpoints(
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async saveProtonSession({login, apiEndpointOrigin, clientSession}) {
-            const session = resolveInitialisedSession({login});
+            const session = resolveInitializedSession({login});
             const data = {
                 login,
                 apiEndpointOrigin,
@@ -105,7 +105,7 @@ export async function buildEndpoints(
                 return false;
             }
 
-            const session = resolveInitialisedSession({login});
+            const session = resolveInitializedSession({login});
 
             await Promise.all([
                 session.cookies.set({
@@ -125,8 +125,8 @@ export async function buildEndpoints(
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async resetProtonBackendSession({login}) {
-            const session = resolveInitialisedSession({login});
-            const {timeouts: {clearSessionStorageData: timeoutMs}} = await ctx.config$.pipe(take(1)).toPromise();
+            const session = resolveInitializedSession({login});
+            const {timeouts: {clearSessionStorageData: timeoutMs}} = await ctx.config$.pipe(first()).toPromise();
 
             await race(
                 from(

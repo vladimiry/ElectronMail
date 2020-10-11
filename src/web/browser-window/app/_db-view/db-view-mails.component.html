@@ -43,7 +43,7 @@
             </button>
         </div>
         <ng-content select="[controls]"></ng-content>
-        <div class="title">
+        <div class="btn btn-sm border border-secondary-light" style="cursor: default;">
             {{ title$ | async }}<span *ngIf="items.length">: {{ (paging$ | async)?.end }} of {{ items.length }}</span>
         </div>
     </div>

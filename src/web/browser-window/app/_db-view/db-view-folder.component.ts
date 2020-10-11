@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
 
-import {View} from "src/shared/model/database";
+import {LABEL_TYPE, SYSTEM_FOLDER_IDENTIFIERS, View} from "src/shared/model/database";
 
 @Component({
     selector: "electron-mail-db-view-folder",
@@ -11,4 +11,12 @@ import {View} from "src/shared/model/database";
 export class DbViewFolderComponent {
     @Input()
     folder!: View.Folder;
+
+    get isCustom(): boolean {
+        return !SYSTEM_FOLDER_IDENTIFIERS._.isValidValue(this.folder.id);
+    }
+
+    get isFolder(): boolean {
+        return this.folder.type === LABEL_TYPE.MESSAGE_FOLDER;
+    }
 }

@@ -44,7 +44,7 @@
                 score: {{ mail.score.toFixed(2) }}
             </div>
             <div class="folders flex-row ml-2">
-                <div *ngFor="let folder of mail.folders; trackBy: trackFolderByPk" class="d-flex b mr-2">
+                <div *ngFor="let folder of mail.folders; trackBy: trackFolder" class="d-flex b mr-2">
                     {{ folder.name }}
                 </div>
             </div>

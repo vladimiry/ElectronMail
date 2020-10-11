@@ -9,9 +9,7 @@ export function buildPk<ID extends RestModel.Id>(id: ID): DatabaseModel.Entity["
     return id;
 }
 
-export function buildBaseEntity<T extends RestModel.Entity>(
-    input: T
-): NoExtraProperties<DatabaseModel.Entity> {
+export function buildBaseEntity<T extends RestModel.Entity>(input: T): NoExtraProps<DatabaseModel.Entity> {
     return {
         pk: buildPk(input.ID),
         raw: JSON.stringify(input),

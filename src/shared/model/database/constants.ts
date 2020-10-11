@@ -1,8 +1,9 @@
+import {BINARY_NAME} from "src/shared/constants";
 import {FsDbDataContainer, IndexableMail} from "src/shared/model/database/index";
-import {PRODUCT_NAME} from "src/shared/constants";
 import {buildEnumBundle} from "src/shared/util";
 
-export const PROTONMAIL_MAILBOX_IDENTIFIERS = buildEnumBundle({
+export const SYSTEM_FOLDER_IDENTIFIERS = buildEnumBundle({
+    ["Virtual Unread"]: `${BINARY_NAME}_virtual_unread_id`.replace(/[a-z0-9_]/gi, "_"), // virtual "id" value (not stored anywhere)
     Inbox: "0",
     ["All Drafts"]: "1",
     ["All Sent"]: "2",
@@ -17,17 +18,10 @@ export const PROTONMAIL_MAILBOX_IDENTIFIERS = buildEnumBundle({
     Label: "label",
 } as const);
 
-export const MAIL_FOLDER_TYPE = buildEnumBundle({
-    _VIRTUAL_UNREAD_: `${PRODUCT_NAME}_VIRTUAL_UNREAD_`,
-    CUSTOM: "0",
-    INBOX: "1",
-    SENT: "2",
-    TRASH: "3",
-    ARCHIVE: "4",
-    SPAM: "5",
-    DRAFT: "6",
-    ALL: "ALL",
-    STARRED: "STARRED",
+export const LABEL_TYPE = buildEnumBundle({
+    MESSAGE_LABEL: 1,
+    CONTACT_GROUP: 2,
+    MESSAGE_FOLDER: 3,
 } as const);
 
 export const MAIL_STATE = buildEnumBundle({
@@ -102,3 +96,4 @@ export const DB_DATA_CONTAINER_FIELDS_STUB_CONTAINER: Readonly<Record<keyof FsDb
 // eslint-disable-next-line  @typescript-eslint/no-unsafe-assignment
 export const DB_DATA_CONTAINER_FIELDS: Readonly<Array<keyof typeof DB_DATA_CONTAINER_FIELDS_STUB_CONTAINER>>
     = Object.keys(DB_DATA_CONTAINER_FIELDS_STUB_CONTAINER) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+

@@ -63,15 +63,15 @@ const config = buildBaseWebConfig(
             }),
             (() => {
                 type StrictTemplateOptions
-                    = NoExtraProperties<Required<import("@angular/compiler-cli/src/ngtsc/core/api").StrictTemplateOptions>>;
-                const strictTemplateOptions: NoExtraProperties<Pick<StrictTemplateOptions, "strictTemplates">> = {
+                    = NoExtraProps<Required<import("@angular/compiler-cli/src/ngtsc/core/api").StrictTemplateOptions>>;
+                const strictTemplateOptions: NoExtraProps<Pick<StrictTemplateOptions, "strictTemplates">> = {
                     // if "true", implies all template strictness flags below (unless individually disabled)
                     // see https://angular.io/guide/template-typecheck
                     strictTemplates: angularCompilationFlags.ivy,
                 };
 
                 type LegacyNgcOptions
-                    = NoExtraProperties<Required<Pick<import("@angular/compiler-cli/src/ngtsc/core/api").LegacyNgcOptions,
+                    = NoExtraProps<Required<Pick<import("@angular/compiler-cli/src/ngtsc/core/api").LegacyNgcOptions,
                     | "fullTemplateTypeCheck"
                     | "strictInjectionParameters">>>;
                 const legacyNgcOptions: LegacyNgcOptions = {
@@ -80,7 +80,7 @@ const config = buildBaseWebConfig(
                 };
 
                 type AngularCompilerPluginOptions
-                    = NoExtraProperties<import("@ngtools/webpack/src/interfaces").AngularCompilerPluginOptions>;
+                    = NoExtraProps<import("@ngtools/webpack/src/interfaces").AngularCompilerPluginOptions>;
                 const compilerOptions: StrictOmit<Required<AngularCompilerPluginOptions>["compilerOptions"],
                     // skipping raw "string" props
                     Extract<keyof Required<AngularCompilerPluginOptions>["compilerOptions"], string>> = {

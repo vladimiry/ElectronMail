@@ -8,18 +8,18 @@ import {mailDateComparatorDefaultsToDesc, walkConversationNodesTree} from "src/s
 
 export const featureName = "db-view";
 
-export type MailSorter = NoExtraProperties<{
+export type MailSorter = NoExtraProps<{
     title: string;
     prop: keyof Required<View.Mail>;
     desc?: boolean;
 }>;
 
-export type MailsBundle = NoExtraProperties<{
+export type MailsBundle = NoExtraProps<{
     title: string;
     items: Array<{ mail: View.Mail; conversationSize: number }>;
     sorters: MailSorter[];
     sorterIndex: number;
-    paging: NoExtraProperties<{ page: number; end: number; nextPageSize: number; pageSize: number }>;
+    paging: NoExtraProps<{ page: number; end: number; nextPageSize: number; pageSize: number }>;
 }>
 
 export type MailsBundleKey = keyof Pick<Instance,
@@ -30,18 +30,18 @@ export type MailsBundleKey = keyof Pick<Instance,
 
 export type SearchMailsBundleKey = Extract<MailsBundleKey, "searchMailsBundle" | "searchNoQueryMailsBundle">;
 
-export type Instance = NoExtraProperties<{
-    folders: NoExtraProperties<{
+export type Instance = NoExtraProps<{
+    folders: NoExtraProps<{
         system: View.Folder[];
         custom: View.Folder[];
     }>;
-    selectedFolderData?: Pick<View.Folder, "pk" | "mailFolderId">;
+    selectedFolderData?: Pick<View.Folder, "id">;
     folderMailsBundle: MailsBundle;
     folderConversationsBundle: MailsBundle;
     searchMailsBundle: MailsBundle;
     searchNoQueryMailsBundle: MailsBundle;
     searchResultMailsBundleKey?: SearchMailsBundleKey;
-    selectedMail?: NoExtraProperties<{
+    selectedMail?: NoExtraProps<{
         listMailPk: Mail["pk"];
         rootNode: View.RootConversationNode;
         conversationMail: Mail;
@@ -88,8 +88,8 @@ function initMailBundleSorters(): MailSorter[] {
     ];
 }
 
-function initInstance(): NoExtraProperties<Instance> {
-    const common = (): NoExtraProperties<Pick<MailsBundle, "items" | "sorterIndex" | "paging">> => {
+function initInstance(): NoExtraProps<Instance> {
+    const common = (): NoExtraProps<Pick<MailsBundle, "items" | "sorterIndex" | "paging">> => {
         return {
             items: [],
             sorterIndex: 0,
@@ -199,11 +199,11 @@ function innerReducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACTIO
             const instance: Instance = {
                 ...(state.instances[instanceKey] || initInstance()),
                 selectedFolderData: selectedFolderData
-                    ? pick(selectedFolderData, ["pk", "mailFolderId"])
+                    ? pick(selectedFolderData, ["id"])
                     : selectedFolderData,
             };
             const selectedFolder = [...instance.folders.system, ...instance.folders.custom]
-                .find(({pk}) => pk === (instance.selectedFolderData && instance.selectedFolderData.pk));
+                .find(({id}) => id === (instance.selectedFolderData && instance.selectedFolderData.id));
 
             if (selectedFolder) {
                 // TODO consider caching this block calculations result, so no recalculation on repeatable same folder selection

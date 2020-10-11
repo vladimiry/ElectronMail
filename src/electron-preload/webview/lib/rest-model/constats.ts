@@ -24,11 +24,6 @@ export const CONTACT_CARD = buildEnumBundle({
     BOTH: 3,
 } as const);
 
-export const LABEL_TYPE = buildEnumBundle({
-    MESSAGE: 1,
-    CONTACT_GROUP: 2,
-} as const);
-
 export const EVENT_ACTION = buildEnumBundle({
     DELETE: 0,
     CREATE: 1,

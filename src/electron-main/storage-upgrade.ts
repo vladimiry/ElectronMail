@@ -10,7 +10,7 @@ import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
 import {DB_INSTANCE_PROP_NAME} from "src/electron-main/database/constants";
 import {Database} from "./database";
-import {DbAccountPk} from "src/shared/model/database";
+import {DbAccountPk, LABEL_TYPE} from "src/shared/model/database";
 import {INITIAL_STORES} from "./constants";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
@@ -22,6 +22,7 @@ import {
     PROTON_API_ENTRY_VALUE_PREFIX,
     ZOOM_FACTORS,
 } from "src/shared/constants";
+import {NumericBoolean} from "src/shared/model/common";
 import {curryFunctionMembers, pickBaseConfigProperties} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[src/electron-main/storage-upgrade]");
@@ -290,7 +291,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
     },
     "4.8.0": (
         _,
-        config = _ as Config & { timeouts: {singleAttachmentLoad?: number } },
+        config = _ as Config & { timeouts: { singleAttachmentLoad?: number } },
     ) => {
         (() => {
             delete config.timeouts.singleAttachmentLoad;
@@ -453,7 +454,7 @@ export const upgradeSettings: (settings: Settings, ctx: Context) => boolean = ((
                 })();
 
                 settings.accounts.forEach((account, index) => {
-                    delete (account as (typeof account & {type?: "protonmail" | "tutanota"})).type;
+                    delete (account as (typeof account & { type?: "protonmail" | "tutanota" })).type;
 
                     if (account.entryUrl.startsWith(PROTON_API_ENTRY_VALUE_PREFIX)) {
                         account.entryUrl = account.entryUrl.substr(PROTON_API_ENTRY_VALUE_PREFIX.length);
@@ -507,20 +508,39 @@ export async function upgradeDatabase(db: Database, accounts: Settings["accounts
         needToSave = true;
     }
 
-    if (Number(db.getVersion()) < 6) {
-        for (const {account} of db) {
-            for (const [/* folderPk */, folder] of Object.entries(account.folders)) {
-                if (typeof folder.exclusive === "number") {
-                    continue;
-                }
-                type RawFolder = Pick<import("src/electron-preload/webview/lib/rest-model/response-entity/folder").Label, "Exclusive">;
-                const rawRestResponseFolder: Readonly<RawFolder> = JSON.parse(folder.raw);
-                (folder as Mutable<Pick<typeof folder, "exclusive">>).exclusive = rawRestResponseFolder.Exclusive;
-                if (typeof folder.exclusive !== "number") {
-                    throw new Error(`Failed to resolve "rawFolder.Exclusive" numeric property`);
-                }
+    // was adding "{exclusive: number}" prop to the "folder" entity (parsed from the "folder.raw" value)
+    // if (Number(db.getVersion()) < 6) { ...
+
+    if (Number(db.getVersion()) < 7) {
+        const folderPropsToRemove = ["folderType", "mailFolderId", "exclusive"] as const;
+        const folderHandler = (folder: import("src/shared/model/database").Folder): void => {
+            // setting "folder.type" prop from the "folder.raw" value
+            if (!LABEL_TYPE._.isValidValue(folder.type)) {
+                const exclusiveProp: typeof folderPropsToRemove[2] = "exclusive";
+
+                (folder as Mutable<Pick<typeof folder, "type">>).type = (folder as { [exclusiveProp]?: NumericBoolean }).exclusive === 1
+                    ? LABEL_TYPE.MESSAGE_FOLDER
+                    : LABEL_TYPE.MESSAGE_LABEL;
+
                 needToSave = true;
             }
+            // not removing, so users could revert back to the previous app version
+            // dropping not needed anymore props
+            // {
+            //     type MutableFolder = Record<Exclude<(typeof folderPropsToRemove)[number], keyof typeof folder>, unknown>;
+            //     for (const propToRemove of folderPropsToRemove) {
+            //         if (propToRemove in folder as unknown as MutableFolder) {
+            //             delete (folder as unknown as MutableFolder)[propToRemove];
+            //             needToSave = true;
+            //         }
+            //     }
+            // }
+        };
+
+        for (const {account} of db) {
+            Object
+                .values(account.folders)
+                .forEach(folderHandler);
         }
     }
 

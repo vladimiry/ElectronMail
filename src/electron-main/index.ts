@@ -24,7 +24,7 @@ registerStandardSchemes(ctx);
         electronLog.transports.file.level = logLevel;
     })();
     await upgradeExistingConfig(ctx);
-    await app.whenReady();
+    await app.whenReady(); // TODO setup timeout on "ready" even firing
     await appReadyHandler(ctx);
 })().catch((error) => {
     console.error(error); // eslint-disable-line no-console

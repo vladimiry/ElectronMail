@@ -18,8 +18,8 @@ declare global {
 
     type Mutable<T> = import("ts-essentials").Writable<T>;
 
-    // TODO add "DeepNoExtraProperties" type
-    type NoExtraProperties<T, U extends T = T> = U & Impossible<Exclude<keyof U, keyof T>>;
+    // TODO add "DeepNoExtraProps" type
+    type NoExtraProps<T, U extends T = T> = U & Impossible<Exclude<keyof U, keyof T>>;
 
     type StrictOmit<T, K extends keyof T> = import("ts-essentials").StrictOmit<T, K>;
 

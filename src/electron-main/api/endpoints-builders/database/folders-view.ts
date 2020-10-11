@@ -1,11 +1,11 @@
-import {omit, pipe, sort, sortBy} from "remeda";
+import {omit, pipe, sortBy} from "remeda";
 
-import {CONVERSATION_TYPE, ConversationEntry, FsDbAccount, MAIL_FOLDER_TYPE, View} from "src/shared/model/database";
-import {PRODUCT_NAME, VIRTUAL_UNREAD_FOLDER_TYPE} from "src/shared/constants";
+import {CONVERSATION_TYPE, ConversationEntry, FsDbAccount, LABEL_TYPE, SYSTEM_FOLDER_IDENTIFIERS, View} from "src/shared/model/database";
+import {PRODUCT_NAME} from "src/shared/constants";
 import {mailDateComparatorDefaultsToDesc, walkConversationNodesTree} from "src/shared/util";
 import {resolveAccountFolders} from "src/electron-main/database/util";
 
-const buildFolderViewPart = (): NoExtraProperties<Pick<View.Folder, "rootConversationNodes" | "size" | "unread">> => {
+const buildFolderViewPart = (): NoExtraProps<Pick<View.Folder, "rootConversationNodes" | "size" | "unread">> => {
     return {
         rootConversationNodes: [],
         size: 0,
@@ -15,93 +15,48 @@ const buildFolderViewPart = (): NoExtraProperties<Pick<View.Folder, "rootConvers
 
 const buildVirtualUnreadFolder = (): View.Folder => {
     return {
-        id: `${PRODUCT_NAME}_VIRTUAL_UNREAD_ID`,
+        id: SYSTEM_FOLDER_IDENTIFIERS["Virtual Unread"],
         pk: `${PRODUCT_NAME}_VIRTUAL_UNREAD_PK`,
         raw: "{}",
-        folderType: VIRTUAL_UNREAD_FOLDER_TYPE,
+        type: LABEL_TYPE.MESSAGE_FOLDER,
         name: "Unread",
-        mailFolderId: `${PRODUCT_NAME}_VIRTUAL_UNREAD_MAIL_FOLDER_ID`,
-        exclusive: -1,
         ...buildFolderViewPart(),
     };
 };
 
-// TODO split "splitAndFormatAndFillSummaryFolders" function to pieces
-export const splitAndFormatAndFillSummaryFolders: (folders: View.Folder[]) => { system: View.Folder[]; custom: View.Folder[] } = (
+// TODO move the "formatting" and "filling the summary" actions to individual functions
+export const splitAndFormatAndFillSummaryFolders: (
+    folders: View.Folder[],
+) => { system: View.Folder[]; custom: View.Folder[] } = (
     () => {
-        const customizers: Record<keyof typeof MAIL_FOLDER_TYPE._.nameValueMap, { title: (f: View.Folder) => string; order: number }> = {
-            _VIRTUAL_UNREAD_: {
-                title: ({name}): string => name,
-                order: 0,
-            },
-            CUSTOM: {
-                title: ({name}): string => name,
-                order: 0,
-            },
-            INBOX: {
-                title: () => "Inbox",
-                order: 1,
-            },
-            DRAFT: {
-                title: () => "Draft",
-                order: 2,
-            },
-            SENT: {
-                title: () => "Sent",
-                order: 3,
-            },
-            STARRED: {
-                title: () => "Starred",
-                order: 4,
-            },
-            ARCHIVE: {
-                title: () => "Archive",
-                order: 5,
-            },
-            SPAM: {
-                title: () => "Spam",
-                order: 6,
-            },
-            ALL: {
-                title: () => "All Mail",
-                order: 7,
-            },
-            TRASH: {
-                title: () => "Trash",
-                order: 8,
-            },
-        };
-
-        type Customizer = typeof customizers[keyof typeof MAIL_FOLDER_TYPE._.nameValueMap];
-
-        type CustomizerResolver = (folder: View.Folder) => Customizer;
-
-        const sortByNameProp = sortBy(({name}: View.Folder) => name);
-
-        const buildCustomizerBasedComparator = (customizer: CustomizerResolver) => {
-            return (o1: View.Folder, o2: View.Folder): number => {
-                return customizer(o1).order - customizer(o2).order;
-            };
-        };
-
+        const resolveSystemFolderCustomizer = (() => {
+            const customizers = { // just "order" value is set for now, later the icon/etc props might be added
+                [SYSTEM_FOLDER_IDENTIFIERS["Virtual Unread"]]: {order: 0},
+                [SYSTEM_FOLDER_IDENTIFIERS["Inbox"]]: {order: 1},
+                [SYSTEM_FOLDER_IDENTIFIERS["Drafts"]]: {order: 2},
+                [SYSTEM_FOLDER_IDENTIFIERS["Sent"]]: {order: 3},
+                [SYSTEM_FOLDER_IDENTIFIERS["Starred"]]: {order: 4},
+                [SYSTEM_FOLDER_IDENTIFIERS["Archive"]]: {order: 5},
+                [SYSTEM_FOLDER_IDENTIFIERS["Spam"]]: {order: 6},
+                [SYSTEM_FOLDER_IDENTIFIERS["Trash"]]: {order: 7},
+                [SYSTEM_FOLDER_IDENTIFIERS["All Mail"]]: {order: 8},
+            } as const;
+            return ({id}: View.Folder) => customizers[id] ?? undefined;
+        })();
+        const sortFolders = sortBy(
+            (folder: View.Folder) => (resolveSystemFolderCustomizer(folder) ?? {order: folder.name}).order,
+        );
         const result: typeof splitAndFormatAndFillSummaryFolders = (folders) => {
-            const customizer: CustomizerResolver = ((map) => (folder: View.Folder): Customizer => map.get(folder) as Customizer)(
-                new Map(folders.map((folder) => [
-                    folder, customizers[MAIL_FOLDER_TYPE._.resolveNameByValue(folder.folderType)],
-                ] as [View.Folder, Customizer])),
-            );
             const bundle = {
-                system: sort(
-                    folders.filter(({folderType}) => folderType !== MAIL_FOLDER_TYPE.CUSTOM),
-                    buildCustomizerBasedComparator(customizer),
+                system: pipe(
+                    folders.filter(({id}) => SYSTEM_FOLDER_IDENTIFIERS._.isValidValue(id)),
+                    sortFolders,
                 ),
                 custom: pipe(
-                    folders.filter(({folderType}) => folderType === MAIL_FOLDER_TYPE.CUSTOM),
-                    sortByNameProp,
+                    folders.filter(({id}) => !SYSTEM_FOLDER_IDENTIFIERS._.isValidValue(id)),
+                    sortFolders,
                 ),
             } as const;
-
-            bundle.system.forEach((folder) => folder.name = customizer(folder).title(folder));
 
             [...bundle.system, ...bundle.custom].forEach((folder) => {
                 folder.size = 0;
@@ -188,15 +143,15 @@ export function buildFoldersAndRootNodePrototypes(
         ],
         (folder) => ({...folder, ...buildFolderViewPart()}),
     );
-    const resolveFolder: ({mailFolderId}: Pick<View.Folder, "mailFolderId">) => View.Folder | undefined = (() => {
+    const resolveFolder: ({id}: Pick<View.Folder, "id">) => View.Folder | undefined = (() => {
         const map = new Map(
             folders.reduce(
-                (entries: Array<[View.Folder["mailFolderId"], View.Folder]>, folder) => {
-                    return entries.concat([[folder.mailFolderId, folder]]);
+                (entries: Array<[View.Folder["id"], View.Folder]>, folder) => {
+                    return entries.concat([[folder.id, folder]]);
                 },
                 [],
             ));
-        const result: typeof resolveFolder = ({mailFolderId}) => map.get(mailFolderId);
+        const result: typeof resolveFolder = ({id}) => map.get(id);
         return result;
     })();
     const rootNodePrototypes: View.ConversationNode[] = [];
@@ -214,11 +169,11 @@ export function buildFoldersAndRootNodePrototypes(
             };
 
             const mailFolderIds = conversationNode.mail.unread
-                ? [...conversationNode.mail.mailFolderIds, virtualUnreadFolder.mailFolderId]
+                ? [...conversationNode.mail.mailFolderIds, virtualUnreadFolder.id]
                 : conversationNode.mail.mailFolderIds;
 
-            for (const mailFolderId of mailFolderIds) {
-                const folder = resolveFolder({mailFolderId});
+            for (const id of mailFolderIds) {
+                const folder = resolveFolder({id});
                 if (folder) {
                     conversationNode.mail.folders.push(folder);
                 }
@@ -239,7 +194,9 @@ export function buildFoldersAndRootNodePrototypes(
     };
 }
 
-export function fillFoldersAndReturnRootConversationNodes(rootNodePrototypes: View.ConversationNode[]): View.RootConversationNode[] {
+export function fillFoldersAndReturnRootConversationNodes(
+    rootNodePrototypes: View.ConversationNode[],
+): View.RootConversationNode[] {
     return rootNodePrototypes.map((rootNodePrototype) => {
         const rootNode: View.RootConversationNode = {
             ...rootNodePrototype,

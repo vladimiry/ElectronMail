@@ -5,3 +5,5 @@ export * from "src/electron-preload/webview/lib/rest-model/response-entity/base"
 export * from "src/electron-preload/webview/lib/rest-model/response-entity/event";
 export * from "src/electron-preload/webview/lib/rest-model/response-entity/folder";
 export * from "src/electron-preload/webview/lib/rest-model/response-entity/mail";
+export {LABEL_TYPE} from "src/shared/model/database";
+export {NumericBoolean} from "src/shared/model/common";

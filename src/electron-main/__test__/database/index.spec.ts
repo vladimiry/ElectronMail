@@ -13,7 +13,7 @@ import {EncryptionAdapter, KeyBasedPreset} from "fs-json-store-encryption-adapte
 import {Fs, Store} from "fs-json-store";
 
 import {Database} from "src/electron-main/database";
-import {Folder, MAIL_FOLDER_TYPE} from "src/shared/model/database";
+import {Folder, LABEL_TYPE} from "src/shared/model/database";
 import {INITIAL_STORES} from "src/electron-main/constants";
 import {SerializationAdapter} from "src/electron-main/database/serialization";
 import {validateEntity} from "src/electron-main/database/validation";
@@ -51,9 +51,7 @@ function buildFolder(): Folder {
         raw: "{}",
         id: randomstring.generate(),
         name: randomstring.generate(),
-        folderType: MAIL_FOLDER_TYPE.SENT,
-        mailFolderId: "123",
-        exclusive: 234,
+        type: LABEL_TYPE.MESSAGE_FOLDER,
     };
 }
 

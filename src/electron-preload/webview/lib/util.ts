@@ -1,57 +1,30 @@
 import {concatMap, delay, retryWhen} from "rxjs/operators";
 import {from, of, throwError} from "rxjs";
 
-import {Config} from "src/shared/model/options";
 import {DbPatch} from "src/shared/api/common";
 import {FsDbAccount} from "src/shared/model/database";
-import {IPC_MAIN_API, IpcMainApiEndpoints} from "src/shared/api/main";
+import {IpcMainApiEndpoints} from "src/shared/api/main";
+import {Logger} from "src/shared/model/common";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {asyncDelay, curryFunctionMembers, isDatabaseBootstrapped} from "src/shared/util";
-import {buildLoggerBundle} from "src/electron-preload/lib/util";
+import {resolveCachedConfig, resolveIpcMainApi} from "src/electron-preload/lib/util";
 
-const configsCache: { resolveDomElements?: Config } = {};
-
-export const resolveIpcMainApi: (
-    logger: ReturnType<typeof buildLoggerBundle>,
-) => Promise<ReturnType<typeof IPC_MAIN_API.client>> = (
-    (): typeof resolveIpcMainApi => {
-        let ipcMainApiClient: ReturnType<typeof IPC_MAIN_API.client> | undefined;
-
-        const result: typeof resolveIpcMainApi = async (logger) => {
-            if (ipcMainApiClient) {
-                return ipcMainApiClient;
-            }
-
-            const {timeouts: {defaultApiCall: timeoutMs}} = await IPC_MAIN_API.client({options: {logger}})("readConfig")();
-
-            ipcMainApiClient = IPC_MAIN_API.client({options: {timeoutMs, logger}});
-
-            return ipcMainApiClient;
-        };
-
-        return result;
-    }
-)();
-
-export const resolveDomElements = async <E extends Element,
+export const resolveDomElements = async <E extends Element | null,
     Q extends Readonly<Record<string, () => E>>,
     K extends keyof Q,
-    R extends { [key in K]: ReturnType<Q[key]> }>(
+    R extends { [key in K]: Exclude<ReturnType<Q[key]>, null> }>(
     query: Q,
-    logger: ReturnType<typeof buildLoggerBundle>,
+    logger: Logger,
     opts: { timeoutMs?: number; iterationsLimit?: number } = {},
-): Promise<Readonly<R>> => {
-    if (!configsCache.resolveDomElements) {
-        const api = await resolveIpcMainApi(logger);
-        configsCache.resolveDomElements = await api("readConfig")();
-    }
+): Promise<R> => {
+    const {timeouts: {domElementsResolving}} = await resolveCachedConfig(logger);
 
     return new Promise((resolve, reject) => {
         const OPTS = {
             timeoutMs: (
                 opts.timeoutMs
                 ??
-                configsCache.resolveDomElements?.timeouts.domElementsResolving
+                domElementsResolving
                 ??
                 ONE_SECOND_MS * 10
             ),
@@ -108,23 +81,31 @@ export function getLocationHref(): string {
     return window.location.href;
 }
 
-function triggerChangeEvent(input: HTMLInputElement): void {
-    // protonmail (angularjs)
-    const changeEvent = document.createEvent("HTMLEvents");
-    changeEvent.initEvent("change", true, false);
-    input.dispatchEvent(changeEvent);
-}
-
 export function fillInputValue(input: HTMLInputElement, value: string): void {
-    input.value = value;
-    triggerChangeEvent(input);
+    const setValue = (() => {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        const valueSetter = Object.getOwnPropertyDescriptor(input, "value")?.set;
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        const prototypeValueSetter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), "value")?.set;
+
+        return prototypeValueSetter && valueSetter !== prototypeValueSetter
+            ? prototypeValueSetter
+            : valueSetter;
+    })();
+
+    if (!setValue) {
+        throw new Error("Form input control value setter resolving failed");
+    }
+
+    setValue.call(input, value);
+    input.dispatchEvent(new Event("input", {bubbles: true}));
 }
 
 export async function submitTotpToken(
     input: HTMLInputElement,
     button: HTMLElement,
     resolveToken: () => Promise<string>,
-    _logger: ReturnType<typeof buildLoggerBundle>,
+    _logger: Logger,
     {
         submitTimeoutMs = ONE_SECOND_MS * 8,
         newTokenDelayMs = ONE_SECOND_MS * 2,
@@ -192,11 +173,9 @@ export async function submitTotpToken(
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
 export function buildDbPatchRetryPipeline<T>(
-    preprocessError: (
-        rawError: any, // eslint-disable-line @typescript-eslint/no-explicit-any
-    ) => { error: Error; retriable: boolean; skippable: boolean },
+    preprocessError: (rawError: unknown) => { error: Error; retriable: boolean; skippable: boolean },
     metadata: FsDbAccount["metadata"] | null,
-    logger: ReturnType<typeof buildLoggerBundle>,
+    logger: Logger,
     {retriesDelay = ONE_SECOND_MS * 5, retriesLimit = 3}: { retriesDelay?: number; retriesLimit?: number } = {},
 ) {
     const errorResult = (error: Error): ReturnType<typeof throwError> => {
@@ -236,11 +215,11 @@ export function buildDbPatchRetryPipeline<T>(
 
 export async function persistDatabasePatch(
     data: Parameters<IpcMainApiEndpoints["dbPatch"]>[0],
-    logger: ReturnType<typeof buildLoggerBundle>,
+    logger: Logger,
 ): Promise<void> {
     logger.info("persist() start");
 
-    await (await resolveIpcMainApi(logger))("dbPatch")({
+    await resolveIpcMainApi({logger})("dbPatch")({
         login: data.login,
         metadata: data.metadata,
         patch: data.patch,
@@ -258,7 +237,7 @@ export function buildEmptyDbPatch(): DbPatch {
     };
 }
 
-export function disableBrowserNotificationFeature(parentLogger: ReturnType<typeof buildLoggerBundle>): void {
+export function disableBrowserNotificationFeature(parentLogger: Logger): void {
     delete (window as Partial<Pick<typeof window, "Notification">>).Notification;
     parentLogger.info(`browser "notification" feature disabled`);
 }

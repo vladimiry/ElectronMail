@@ -1,38 +1,33 @@
 import fs from "fs";
 import fsExtra from "fs-extra";
-import mkdirp from "mkdirp";
 import path from "path";
 import pathIsInside from "path-is-inside";
 
-import {CWD, LOG, LOG_LEVELS, execShell} from "scripts/lib";
-import {PROVIDER_REPOS, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/constants";
+import {CONSOLE_LOG, CWD, GIT_CLONE_ABSOLUTE_DIR, execShell, resolveGitCommitInfo} from "scripts/lib";
+import {PROVIDER_REPO_MAP, RUNTIME_ENV_CI_PROTON_CLIENTS_ONLY, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/constants";
 
-const REPOS_ONLY_FILTER: ReadonlyArray<keyof typeof PROVIDER_REPOS> = (() => {
-    const {ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY} = process.env;
-    const result = ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY
-        ? ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY
+const reposOnlyFilter: DeepReadonly<{ value: Array<keyof typeof PROVIDER_REPO_MAP>, envVariableName: string }> = (() => {
+    const envVariableName = RUNTIME_ENV_CI_PROTON_CLIENTS_ONLY;
+    const envVariableValue = process.env[envVariableName];
+    const result = envVariableValue
+        ? envVariableValue
             .split(";")
             .map((value) => value.trim())
-            .filter((value) => value in PROVIDER_REPOS)
-            .map((value) => value as keyof typeof PROVIDER_REPOS)
+            .filter((value) => value in PROVIDER_REPO_MAP)
+            .map((value) => value as keyof typeof PROVIDER_REPO_MAP)
         : [];
-    LOG(
-        LOG_LEVELS.title(`ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY (raw string):`),
-        LOG_LEVELS.value(ELECTRON_MAIL_PREPARE_WEBCLIENTS_REPOS_ONLY),
-        LOG_LEVELS.title(`(filtered array):`),
-        LOG_LEVELS.value(result),
-    );
-    return result;
+    CONSOLE_LOG(`${envVariableName} env variable (raw string):`, envVariableValue, "(filtered array):", result);
+    return {value: result, envVariableName};
 })();
 
 const [, , BASE_DEST_DIR] = process.argv;
 
 if (!BASE_DEST_DIR) {
-    throw new Error(`Empty base destination directory argument`);
+    throw new Error("Empty base destination directory argument");
 }
 
 if (!pathIsInside(path.resolve(CWD, BASE_DEST_DIR), CWD)) {
-    throw new Error(`Invalid base destination directory argument value: ${LOG_LEVELS.value(BASE_DEST_DIR)}`);
+    throw new Error(`Invalid base destination directory argument value: ${BASE_DEST_DIR}`);
 }
 
 export interface FolderAsDomainEntry<T extends any = any> { // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -47,10 +42,10 @@ export type Flow<O> = (
     },
 ) => Promise<void>;
 
-async function clone(repoType: keyof typeof PROVIDER_REPOS, dir: string): Promise<void> {
-    const {repo, commit} = PROVIDER_REPOS[repoType];
+async function clone(repoType: keyof typeof PROVIDER_REPO_MAP, dir: string): Promise<void> {
+    const {repo, commit} = PROVIDER_REPO_MAP[repoType];
 
-    mkdirp.sync(dir);
+    fsExtra.ensureDirSync(dir);
 
     await execShell(["git", ["clone", repo, dir]]);
     await execShell(["git", ["checkout", commit], {cwd: dir}]);
@@ -58,19 +53,41 @@ async function clone(repoType: keyof typeof PROVIDER_REPOS, dir: string): Promis
 }
 
 export function printAndWriteFile(file: string, content: Buffer | string): void {
-    LOG(
-        LOG_LEVELS.title(`Writing ${LOG_LEVELS.value(file)} file with content:`),
-        LOG_LEVELS.value(content),
-    );
-    mkdirp.sync(path.dirname(file));
+    CONSOLE_LOG(`Writing ${file} file with content:`, content);
+    fsExtra.ensureDirSync(path.dirname(file));
     fs.writeFileSync(file, content);
 }
 
-export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = Unpacked<T>["options"]>(
+async function cleanDestAndMoveToIt({src, dest}: { src: string, dest: string }): Promise<void> {
+    CONSOLE_LOG(`Moving ${src} to ${dest} (cleaning destination dir before)`);
+    await execShell(["npx", ["--no-install", "rimraf", dest]]);
+    await fsExtra.move(src, dest);
+}
+
+function resolveBackupDir(
+    {
+        repoType,
+        commit = PROVIDER_REPO_MAP[repoType].commit,
+        suffix,
+    }: {
+        repoType: keyof typeof PROVIDER_REPO_MAP,
+        commit?: string,
+        suffix?: string,
+    },
+): string {
+    return path.join(
+        GIT_CLONE_ABSOLUTE_DIR,
+        "./backup",
+        repoType,
+        `./${commit.substr(0, 7)}${suffix ? ("-" + suffix) : ""}`,
+    );
+}
+
+export async function executeBuildFlow<T extends FolderAsDomainEntry[], O = Unpacked<T>["options"]>(
     {
         repoType,
         folderAsDomainEntries,
-        repoRelativeDistDir = PROVIDER_REPOS[repoType].repoRelativeDistDir,
+        repoRelativeDistDir = PROVIDER_REPO_MAP[repoType].repoRelativeDistDir,
         destSubFolder,
         flows: {
             postClone,
@@ -78,10 +95,10 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
             build,
         },
     }: {
-        repoType: keyof typeof PROVIDER_REPOS;
+        repoType: keyof typeof PROVIDER_REPO_MAP;
         folderAsDomainEntries: T;
         repoRelativeDistDir?: string;
-        destSubFolder?: string;
+        destSubFolder: string;
         flows: {
             postClone?: Flow<O>;
             install?: Flow<O>;
@@ -90,90 +107,114 @@ export async function execAccountTypeFlow<T extends FolderAsDomainEntry[], O = U
     },
 ): Promise<void> {
     if (
-        REPOS_ONLY_FILTER.length
+        reposOnlyFilter.value.length
         &&
-        !REPOS_ONLY_FILTER.includes(repoType)
+        !reposOnlyFilter.value.includes(repoType)
     ) {
-        LOG(
-            LOG_LEVELS.warning(`Skipping "${LOG_LEVELS.value(repoType)}" processing as not explicitly listed in Env Variable`),
-        );
+        CONSOLE_LOG(`Skip "${repoType}" processing as not explicitly listed in "${reposOnlyFilter.envVariableName}" env variable`);
         return;
     }
 
-    const destDir = path.resolve(BASE_DEST_DIR);
-    const baseRepoDir = path.resolve(
-        CWD,
-        `./output/git/${repoType}`,
-        PROVIDER_REPOS[repoType].commit,
-    );
-
-    await fsExtra.ensureDir(baseRepoDir);
+    const repoDir = path.join(GIT_CLONE_ABSOLUTE_DIR, repoType);
 
     for (const folderAsDomainEntry of folderAsDomainEntries) {
-        const resolvedDistDir = path.resolve(destDir, folderAsDomainEntry.folderNameAsDomain, destSubFolder ?? "");
-        LOG(
-            LOG_LEVELS.title(`Preparing built-in WebClient build [${repoType}]:`),
-            LOG_LEVELS.value(JSON.stringify({...folderAsDomainEntry, resolvedDistDir})),
+        const targetDistDir = path.resolve(BASE_DEST_DIR, folderAsDomainEntry.folderNameAsDomain, destSubFolder);
+
+        CONSOLE_LOG(
+            `Prepare web client build [${repoType}]:`,
+            JSON.stringify({...folderAsDomainEntry, resolvedDistDir: targetDistDir}),
         );
 
-        if (await fsExtra.pathExists(path.join(resolvedDistDir, "index.html"))) {
-            LOG(LOG_LEVELS.warning(`Skipping as directory already exists:`), LOG_LEVELS.value(resolvedDistDir));
+        if (fsExtra.pathExistsSync(path.join(targetDistDir, "index.html"))) {
+            CONSOLE_LOG("Skip building as directory already exists:", targetDistDir);
             continue;
         }
 
-        const repoDir = path.resolve(baseRepoDir, folderAsDomainEntry.folderNameAsDomain);
-        const distDir = path.resolve(repoDir, repoRelativeDistDir);
-        const flowArg = {repoDir, folderAsDomainEntry};
-        const blankHtmlFile = path.join(distDir, WEB_CLIENTS_BLANK_HTML_FILE_NAME);
+        const repoDistDir = path.resolve(repoDir, repoRelativeDistDir);
+        const flowOptions = {repoDir, folderAsDomainEntry} as const;
+        const cloneRequired = await (async () => {
+            const dirExists = fsExtra.pathExistsSync(repoDir);
+            const {commit: expectedCommit} = PROVIDER_REPO_MAP[repoType];
+            if (dirExists) {
+                const {commit: repoDirCommit} = await resolveGitCommitInfo({dir: repoDir});
+                if (repoDirCommit === expectedCommit) {
+                    return false;
+                }
+                // backup current repo dir since commits don't match
+                await cleanDestAndMoveToIt({
+                    src: repoDir,
+                    dest: resolveBackupDir({repoType, commit: repoDirCommit}),
+                });
+                return true;
+            }
+            const existingBackupDir = resolveBackupDir({repoType});
+            if (fsExtra.pathExistsSync(existingBackupDir)) { // maybe we have backup-ed it before
+                const src = existingBackupDir;
+                const dest = repoDir;
+                CONSOLE_LOG(`Copying backup ${src} to ${dest}`);
+                await fsExtra.copy(src, dest);
+                return false;
+            }
+            return true;
+        })();
 
-        if (await fsExtra.pathExists(repoDir)) {
-            LOG(LOG_LEVELS.warning(`Skipping cloning`));
-        } else {
-            await fsExtra.ensureDir(repoDir);
+        fsExtra.ensureDirSync(repoDir);
+
+        if (cloneRequired) {
             await clone(repoType, repoDir);
             if (postClone) {
-                await postClone(flowArg);
+                await postClone(flowOptions);
+            }
+        } else {
+            CONSOLE_LOG("Skip cloning");
+        }
+
+        // making sure dist dir doesn't exist before executing a new build or taking it from backup
+        await execShell(["npx", ["--no-install", "rimraf", repoDistDir]]);
+
+        const repoDistBackupDir = resolveBackupDir({repoType, suffix: `dist-${folderAsDomainEntry.folderNameAsDomain}`});
+
+        if (fsExtra.pathExistsSync(repoDistBackupDir)) { // taking dist from the backup
+            const src = repoDistBackupDir;
+            const dest = repoDistDir;
+            CONSOLE_LOG(`Copying backup ${src} to ${dest}`);
+            await fsExtra.copy(src, dest);
+        } else { // executing the build
+            if (fsExtra.pathExistsSync(path.resolve(repoDir, "node_modules"))) {
+                CONSOLE_LOG("Skip dependencies installing");
+            } else if (install) {
+                await install(flowOptions);
+            } else {
+                await execShell(["npm", ["ci"], {cwd: repoDir}]);
+            }
+
+            await build(flowOptions);
+
+            printAndWriteFile(
+                path.join(repoDistDir, WEB_CLIENTS_BLANK_HTML_FILE_NAME),
+                `
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <title>Title</title>
+                        </head>
+                        <body>
+                        </body>
+                        </html>
+                    `,
+            );
+
+            { // backup the dist
+                const src = repoDistDir;
+                const dest = repoDistBackupDir;
+                await execShell(["npx", ["--no-install", "rimraf", dest]]);
+                CONSOLE_LOG(`Backup ${src} to ${dest}`);
+                await fsExtra.copy(src, dest);
             }
         }
 
-        if (await fsExtra.pathExists(path.join(distDir, "index.html"))) {
-            LOG(LOG_LEVELS.warning(`Skipping building`));
-        } else {
-            if (await fsExtra.pathExists(path.resolve(repoDir, "node_modules"))) {
-                LOG(LOG_LEVELS.warning(`Skipping dependencies installing`));
-            } else if (install) {
-                    await install(flowArg);
-                } else {
-                    await execShell([
-                        "npm",
-                        ["ci"],
-                        {cwd: repoDir, env: {...process.env, ...PROVIDER_REPOS[repoType].i18nEnvVars}},
-                    ]);
-                }
-
-            await build(flowArg);
-        }
-
-        if (await fsExtra.pathExists(blankHtmlFile)) {
-            LOG(LOG_LEVELS.warning(`Skipping creating ${LOG_LEVELS.value(blankHtmlFile)}`));
-        } else {
-            printAndWriteFile(
-                blankHtmlFile,
-                `
-                <!DOCTYPE html>
-                <html lang="en">
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Title</title>
-                </head>
-                <body>
-                </body>
-                </html>
-            `,
-            );
-        }
-
-        LOG(LOG_LEVELS.title(`Copying: ${LOG_LEVELS.value(distDir)} to ${LOG_LEVELS.value(resolvedDistDir)}`));
-        await fsExtra.copy(distDir, resolvedDistDir);
+        // move to destination folder
+        await cleanDestAndMoveToIt({src: repoDistDir, dest: targetDistDir});
     }
 }

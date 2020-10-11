@@ -4,8 +4,7 @@ import {expandTerm, query} from "ndx-query";
 import {fromString as htmlToText} from "html-to-text";
 
 import {INDEXABLE_MAIL_FIELDS_STUB_CONTAINER, IndexableMail, IndexableMailId, MailAddress, MailsIndex} from "src/shared/model/database";
-import {IPC_MAIN_API} from "src/shared/api/main";
-import {buildLoggerBundle} from "src/electron-preload/lib/util";
+import {buildLoggerBundle, resolveIpcMainApi} from "src/electron-preload/lib/util";
 
 const logger = buildLoggerBundle("[preload: database-indexer: service]");
 
@@ -23,14 +22,7 @@ export const SERVICES_FACTORY = {
         return {subscription, promise};
     },
     // tslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-    apiClient: (finishPromise: Promise<void>) => {
-        return IPC_MAIN_API.client({
-            options: {
-                finishPromise,
-                logger,
-            },
-        });
-    },
+    apiClient: (finishPromise: Promise<void>) => resolveIpcMainApi({finishPromise, logger}),
 } as const;
 
 const lowerCaseFilter = (term: string): string => {

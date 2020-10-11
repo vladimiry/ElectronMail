@@ -1,36 +1,15 @@
 import byline from "byline";
-import chalk from "chalk";
 import fetch from "node-fetch";
 import path from "path";
 import spawnAsync from "@expo/spawn-async";
 import {pick} from "remeda";
 
-import {ARTIFACT_NAME_POSTFIX_ENV_VAR_NAME} from "scripts/const";
-import {PROVIDER_REPOS} from "src/shared/constants";
-
 export const CWD = path.resolve(process.cwd());
 
 // eslint-disable-next-line no-console
-export const LOG = console.log;
+export const CONSOLE_LOG = console.log.bind(console);
 
-export const LOG_LEVELS = {
-    error: chalk.red,
-    warning: chalk.yellow,
-    title: chalk.magenta,
-    value: chalk.cyan,
-};
-
-const execShellPrintEnvWhitelist: ReadonlyArray<string> = [
-    ARTIFACT_NAME_POSTFIX_ENV_VAR_NAME,
-    ...(() => {
-        const stub: Record<keyof Required<(typeof PROVIDER_REPOS)[keyof typeof PROVIDER_REPOS]["i18nEnvVars"]>, null> = {
-            I18N_DEPENDENCY_REPO: null,
-            I18N_DEPENDENCY_BRANCH: null,
-            I18N_DEPENDENCY_BRANCH_V4: null,
-        };
-        return Object.keys(stub);
-    })(),
-] as const;
+export const GIT_CLONE_ABSOLUTE_DIR = path.resolve(CWD, "./output/git");
 
 export function formatStreamChunk( // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
     chunk: any, // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
@@ -42,27 +21,25 @@ export async function execShell(
     [command, args, options]: Parameters<typeof spawnAsync>,
     {
         printStd = true,
-        printEnvWhitelist = execShellPrintEnvWhitelist,
+        printEnvWhitelist = [],
     }: {
         printStd?: boolean;
         printEnvWhitelist?: readonly string[];
     } = {},
 ): Promise<Unpacked<ReturnType<typeof spawnAsync>>> {
-    LOG(
-        LOG_LEVELS.title("Executing Shell command:"),
-        LOG_LEVELS.value(
-            JSON.stringify(
-                {
-                    command,
-                    args,
-                    options: {
-                        ...options,
-                        env: pick(options?.env ?? {}, [...printEnvWhitelist]),
-                    },
+    CONSOLE_LOG(
+        "Executing Shell command:",
+        JSON.stringify(
+            {
+                command,
+                args,
+                options: {
+                    ...options,
+                    env: pick(options?.env ?? {}, [...printEnvWhitelist]),
                 },
-                null,
-                2,
-            ),
+            },
+            null,
+            2,
         ),
     );
 
@@ -70,17 +47,11 @@ export async function execShell(
 
     if (printStd) {
         const {stdout, stderr} = spawnPromise.child;
-
         if (stdout) {
-            byline(stdout).on("data", (chunk) => {
-                LOG(chalk(formatStreamChunk(chunk)));
-            });
+            byline(stdout).on("data", (chunk) => CONSOLE_LOG(formatStreamChunk(chunk)));
         }
-
         if (stderr) {
-            byline(stderr).on("data", (chunk) => {
-                LOG(chalk(formatStreamChunk(chunk)));
-            });
+            byline(stderr).on("data", (chunk) => formatStreamChunk(chunk));
         }
     }
 
@@ -107,7 +78,7 @@ export async function fetchUrl(args: Parameters<typeof fetch>): ReturnType<typeo
             ? request.url
             : request.href;
 
-    LOG(LOG_LEVELS.title(`Downloading ${LOG_LEVELS.value(url)}`));
+    CONSOLE_LOG(`Downloading ${url}`);
 
     const response = await fetch(...args);
 
@@ -116,4 +87,30 @@ export async function fetchUrl(args: Parameters<typeof fetch>): ReturnType<typeo
     }
 
     return response;
+}
+
+export async function resolveGitCommitInfo(
+    {dir}: { dir: string },
+): Promise<{ shortCommit: string, commit: string }> {
+    return (
+        await Promise.all(
+            (
+                [
+                    {prop: "shortCommit", gitArgs: ["rev-parse", "--short", "HEAD"]},
+                    {prop: "commit", gitArgs: ["rev-parse", "HEAD"]},
+                ] as const
+            ).map(
+                async ({gitArgs, prop}) => execShell(["git", gitArgs, {cwd: dir}])
+                    .then(({stdout}) => ({value: stdout.replace(/(\r\n|\n|\r)/gm, ""), gitArgs, prop})),
+            ),
+        )
+    ).reduce(
+        (accumulator: NoExtraProps<Record<typeof prop, string>>, {value, gitArgs, prop}) => {
+            if (!value) {
+                throw new Error(`"${JSON.stringify(gitArgs)}" git command returned empty value: ${value}`);
+            }
+            return {...accumulator, [prop]: value};
+        },
+        {shortCommit: "", commit: ""},
+    );
 }

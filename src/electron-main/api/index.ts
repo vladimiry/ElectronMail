@@ -1,5 +1,6 @@
 import electronLog from "electron-log";
 import {authenticator} from "otplib";
+import {first} from "rxjs/operators";
 
 import * as SpellCheck from "src/electron-main/spell-check/api";
 import {Account, Database, FindInPage, General, ProtonSession, TrayIcon} from "./endpoints-builders";
@@ -217,8 +218,8 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
 
             ctx.settingsStore = store;
 
-            for (const {login, proxy, rotateUserAgent} of settings.accounts) {
-                await initSessionByAccount(ctx, {login, proxy, rotateUserAgent});
+            for (const {login, proxy, rotateUserAgent, entryUrl} of settings.accounts) {
+                await initSessionByAccount(ctx, {login, proxy, rotateUserAgent, entryUrl});
             }
 
             await (async (): Promise<void> => {
@@ -251,7 +252,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
         async loadDatabase({accounts}) {
             logger.info("loadDatabase() start");
 
-            const {db, sessionDb, configStore, sessionStorage} = ctx;
+            const {db, sessionDb, sessionStorage} = ctx;
 
             // TODO move to "readSettings" method
             await sessionStorage.load(accounts.map(({login}) => login));
@@ -325,7 +326,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             sessionDb.reset();
             await sessionDb.saveToFile();
 
-            if ((await configStore.readExisting()).fullTextSearch) {
+            if ((await ctx.config$.pipe(first()).toPromise()).fullTextSearch) {
                 await attachFullTextIndexWindow(ctx);
             } else {
                 await detachFullTextIndexWindow(ctx);

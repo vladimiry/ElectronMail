@@ -1,6 +1,7 @@
 import _logger from "electron-log";
 import {BrowserWindow, Rectangle, app, screen} from "electron";
 import {equals} from "remeda";
+import {first} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";
@@ -15,7 +16,7 @@ async function resolveBoundsToRestore(
     ctx: Context,
     currentBounds: Readonly<Rectangle>,
 ): Promise<Rectangle> {
-    const {window: {bounds: savedBounds}} = await ctx.configStore.readExisting();
+    const {window: {bounds: savedBounds}} = await ctx.config$.pipe(first()).toPromise();
     const x = typeof savedBounds.x !== "undefined"
         ? savedBounds.x
         : currentBounds.x;
@@ -51,7 +52,7 @@ async function resolveBoundsToRestore(
 
 async function keepBrowserWindowState(ctx: Context, browserWindow: Electron.BrowserWindow): Promise<void> {
     await (async (): Promise<void> => {
-        const {window: {bounds}} = await ctx.configStore.readExisting();
+        const {window: {bounds}} = await ctx.config$.pipe(first()).toPromise();
         const hasSavedPosition = "x" in bounds && "y" in bounds;
 
         if (!hasSavedPosition) {
@@ -60,33 +61,35 @@ async function keepBrowserWindowState(ctx: Context, browserWindow: Electron.Brow
     })();
 
     const saveWindowStateHandler = async (): Promise<void> => {
-        await ctx.configStoreQueue.q(async () => {
-            const config = await ctx.configStore.readExisting();
-            const storedWindowConfig = Object.freeze(config.window);
-            const newWindowConfig = {...config.window};
+        await ctx.configStoreQueue.q(
+            async () => {
+                const config = await ctx.config$.pipe(first()).toPromise();
+                const storedWindowConfig = Object.freeze(config.window);
+                const newWindowConfig = {...config.window};
 
-            try {
-                newWindowConfig.maximized = browserWindow.isMaximized();
+                try {
+                    newWindowConfig.maximized = browserWindow.isMaximized();
 
-                if (!newWindowConfig.maximized) {
-                    newWindowConfig.bounds = browserWindow.getBounds();
+                    if (!newWindowConfig.maximized) {
+                        newWindowConfig.bounds = browserWindow.getBounds();
+                    }
+                } catch (error) {
+                    // "browserWindow" might be destroyed at this point
+                    console.log(error); // eslint-disable-line no-console
+                    logger.warn("failed to resolve window bounds", error);
+                    return;
                 }
-            } catch (error) {
-                // "browserWindow" might be destroyed at this point
-                console.log(error); // eslint-disable-line no-console
-                logger.warn("failed to resolve window bounds", error);
-                return;
-            }
 
-            if (equals(storedWindowConfig, newWindowConfig)) {
-                return;
-            }
+                if (equals(storedWindowConfig, newWindowConfig)) {
+                    return;
+                }
 
-            await ctx.configStore.write({
-                ...config,
-                window: newWindowConfig,
-            });
-        });
+                await ctx.configStore.write({
+                    ...config,
+                    window: newWindowConfig,
+                });
+            },
+        );
     };
     const saveWindowStateHandlerDebounced = (
         (): () => void => {
@@ -139,10 +142,12 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
             // since we don't want "setBounds" call to trigger the move/resize events handlers (leads to "maixmized" value loosing)
             await keepBrowserWindowState(ctx, browserWindow);
 
-            const settingsConfigured = await ctx.settingsStore.readable();
-            const {startHidden} = await ctx.configStore.readExisting();
-
-            if (!settingsConfigured || !startHidden) {
+            if (
+                !(await ctx.config$.pipe(first()).toPromise()).startHidden
+                ||
+                // always showing the window when the settings is still not configured/saved
+                !(await ctx.settingsStore.readable())
+            ) {
                 await (await ctx.deferredEndpoints.promise).activateBrowserWindow(browserWindow);
             }
         })

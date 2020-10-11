@@ -57,7 +57,7 @@ export class Mail extends Entity implements Model.Mail {
     @ArrayUnique()
     @IsArray()
     @IsString({each: true})
-    mailFolderIds!: Array<Model.Folder["mailFolderId"]>;
+    mailFolderIds!: Array<Model.Folder["id"]>;
 
     @IsNotEmpty()
     @IsInt()

@@ -21,14 +21,6 @@ export {
     PACKAGE_GITHUB_PROJECT_URL,
 };
 
-export const VIRTUAL_UNREAD_FOLDER_TYPE = `${PRODUCT_NAME}_VIRTUAL_UNREAD_`;
-
-// user data dir, defaults to app.getPath("userData")
-export const RUNTIME_ENV_USER_DATA_DIR = `ELECTRON_MAIL_USER_DATA_DIR`;
-
-// boolean
-export const RUNTIME_ENV_E2E = `ELECTRON_MAIL_E2E`;
-
 export const ONE_SECOND_MS = 1000;
 
 export const ONE_MINUTE_MS = ONE_SECOND_MS * 60;
@@ -53,84 +45,76 @@ export const WEB_CHUNK_NAMES = {
     "search-in-page-browser-view": "search-in-page-browser-view",
 } as const;
 
-export const PROVIDER_REPOS: DeepReadonly<Record<"WebClient" | "proton-mail-settings" | "proton-contacts" | "proton-calendar",
-    {
-        repoRelativeDistDir: string;
-        baseDir: string;
-        repo: string;
-        version: string;
-        commit: string;
-        protonPackAppConfig: {
-            clientId: string;
-        };
-        i18nEnvVars: {
-            I18N_DEPENDENCY_REPO: "https://github.com/ProtonMail/proton-translations.git";
-            I18N_DEPENDENCY_BRANCH: string;
-            I18N_DEPENDENCY_BRANCH_V4?: string;
-        };
-    }>> = {
-    "WebClient": {
-        repoRelativeDistDir: "./build",
-        baseDir: "", // TODO define model as {baseDir?: string} instead of using empty string value
-        repo: "https://github.com/ProtonMail/WebClient.git",
-        commit: "0912dff240dde923de91ed8c7d42e7ff3151259d",
-        version: "4.0.0-beta20",
-        protonPackAppConfig: {
-            // TODO proton-v4: make sure this value comes to the build after 4.0.0-beta7+ update
-            //      currently it's hadrcoded in the WebClient code
-            clientId: "Web",
-        },
-        // "proton-i18n" project requires some env vars to be set
-        // see https://github.com/ProtonMail/WebClient/issues/176#issuecomment-595111186
-        i18nEnvVars: {
-            I18N_DEPENDENCY_REPO: "https://github.com/ProtonMail/proton-translations.git",
-            I18N_DEPENDENCY_BRANCH: "webmail",
-            I18N_DEPENDENCY_BRANCH_V4: "webmail-v4",
+export const PROVIDER_REPO_NAMES = [
+    "proton-mail",
+    "proton-account",
+    "proton-mail-settings",
+    "proton-contacts",
+    "proton-calendar",
+] as const;
+
+export const PROVIDER_REPO_MAP = {
+    [PROVIDER_REPO_NAMES[0]]: {
+        repoRelativeDistDir: "./dist",
+        baseDirName: "",
+        repo: "https://github.com/ProtonMail/proton-mail.git",
+        commit: "2ab916e847bfe8064f5ff321c50f1028adf547e1",
+        protonPack: {
+            appConfig: {clientId: "WebMail"},
+            webpackIndexEntryItems: [
+                // immediate
+                "./node_modules/proton-shared/lib/api/contacts.ts",
+                "./node_modules/proton-shared/lib/api/conversations.js",
+                "./node_modules/proton-shared/lib/api/events.ts",
+                "./node_modules/proton-shared/lib/api/labels.ts",
+                "./node_modules/proton-shared/lib/api/messages.js",
+                "./node_modules/proton-shared/lib/constants.ts",
+                "./node_modules/proton-shared/lib/models/mailSettingsModel.js",
+                "./node_modules/react-components/containers/app/StandardSetup.tsx",
+                "./src/app/containers/PageContainer.tsx",
+                "./src/app/helpers/attachment/attachmentLoader.ts",
+                "./src/app/helpers/mailboxUrl.ts",
+                "./src/app/helpers/message/messageDecrypt.ts",
+                // lazy/dynamic
+                "./node_modules/react-components/hooks/useApi.ts",
+                "./node_modules/react-components/hooks/useAuthentication.ts",
+                "./node_modules/react-components/hooks/useCache.ts",
+                "./node_modules/react-components/hooks/useGetEncryptionPreferences.ts",
+                "./node_modules/react-router/esm/react-router.js",
+                "./src/app/containers/AttachmentProvider.tsx",
+                "./src/app/hooks/message/useMessageKeys.ts",
+            ],
         },
     },
-    "proton-mail-settings": {
+    [PROVIDER_REPO_NAMES[1]]: {
         repoRelativeDistDir: "./dist",
-        baseDir: "settings",
+        baseDirName: "account",
+        repo: "https://github.com/ProtonMail/proton-account.git",
+        commit: "c9c88d7503bf2b1bb799b9759f1056ad5c36c8a4",
+        protonPack: {appConfig: {clientId: "WebAccount"}}
+    },
+    [PROVIDER_REPO_NAMES[2]]: {
+        repoRelativeDistDir: "./dist",
+        baseDirName: "settings",
         repo: "https://github.com/ProtonMail/proton-mail-settings.git",
-        commit: "577f7513646dcf5923b7edfd5aeade36bac2fb69",
-        version: "4.0.0-beta.10",
-        protonPackAppConfig: {
-            clientId: "WebMailSettings",
-        },
-        i18nEnvVars: {
-            I18N_DEPENDENCY_REPO: "https://github.com/ProtonMail/proton-translations.git",
-            I18N_DEPENDENCY_BRANCH: "fe-mail-settings",
-        },
+        commit: "3fc5ed1708238abc1f2383a9bd985e4918590c69",
+        protonPack: {appConfig: {clientId: "WebMailSettings"}},
     },
-    "proton-contacts": {
+    [PROVIDER_REPO_NAMES[3]]: {
         repoRelativeDistDir: "./dist",
-        baseDir: "contacts",
+        baseDirName: "contacts",
         repo: "https://github.com/ProtonMail/proton-contacts.git",
-        commit: "462ff64106b752a06ca19b32413c012579f4b85c",
-        version: "4.0.0-beta.13",
-        protonPackAppConfig: {
-            clientId: "WebContacts",
-        },
-        i18nEnvVars: {
-            I18N_DEPENDENCY_REPO: "https://github.com/ProtonMail/proton-translations.git",
-            I18N_DEPENDENCY_BRANCH: "fe-contacts",
-        },
+        commit: "7424abec3c5d025864bfd47f33b126e3bf880972",
+        protonPack: {appConfig: {clientId: "WebContacts"}},
     },
-    "proton-calendar": {
+    [PROVIDER_REPO_NAMES[4]]: {
         repoRelativeDistDir: "./dist",
-        baseDir: "calendar",
+        baseDirName: "calendar",
         repo: "https://github.com/ProtonMail/proton-calendar.git",
-        commit: "f0878b3034e281df3c22f2b940f19886bb7c65de",
-        version: "4.0.0-beta.7",
-        protonPackAppConfig: {
-            clientId: "WebCalendar",
-        },
-        i18nEnvVars: {
-            I18N_DEPENDENCY_REPO: "https://github.com/ProtonMail/proton-translations.git",
-            I18N_DEPENDENCY_BRANCH: "fe-calendar",
-        },
+        commit: "78930119df898e600a3144262dad1cbc94b70cd1",
+        protonPack: {appConfig: {clientId: "WebCalendar"}},
     },
-};
+} as const;
 
 export const LOCAL_WEBCLIENT_PROTOCOL_PREFIX = "webclient";
 
@@ -141,7 +125,7 @@ export const PROTON_API_ENTRY_VALUE_PREFIX = "local:::";
 export const PROTON_API_ENTRY_PRIMARY_VALUE = "https://mail.protonmail.com";
 
 function getBuiltInWebClientTitle(): string {
-    return `${PROVIDER_REPOS.WebClient.version} / ${PROVIDER_REPOS.WebClient.commit.substr(0, 7)}`;
+    return PROVIDER_REPO_MAP["proton-mail"].commit.substr(0, 7);
 }
 
 export const PROTON_API_ENTRY_RECORDS: DeepReadonly<EntryUrlItem[]> = [
@@ -160,8 +144,6 @@ export const PROTON_API_ENTRY_RECORDS: DeepReadonly<EntryUrlItem[]> = [
 ];
 
 export const PROTON_API_ENTRY_URLS = PROTON_API_ENTRY_RECORDS.map(({value: url}) => url);
-
-// export const PROTON_API_ENTRY_ORIGINS = PROTON_API_ENTRY_URLS.map((url) => new URL(url).origin);
 
 export const WEB_CLIENTS_BLANK_HTML_FILE_NAME = "blank.html";
 
@@ -217,3 +199,17 @@ export const WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS = "ELECTRON_MAIL_SKI
 
 // TODO electron: get rid of "baseURLForDataURL" workaround, see https://github.com/electron/electron/issues/20700
 export const WEB_PROTOCOL_SCHEME = "web";
+
+// user data dir, defaults to app.getPath("userData")
+export const RUNTIME_ENV_USER_DATA_DIR = "ELECTRON_MAIL_USER_DATA_DIR";
+
+// ci-specific
+export const RUNTIME_ENV_CI_PROTON_CLIENTS_ONLY = "ELECTRON_MAIL_CI_PROTON_CLIENTS_ONLY";
+export const RUNTIME_ENV_CI_REMOVE_OUTPUT_GIT_DIR = "ELECTRON_MAIL_CI_REMOVE_OUTPUT_GIT_DIR";
+
+// protonmail account to login during e2e tests running
+export const RUNTIME_ENV_E2E = "ELECTRON_MAIL_E2E";
+export const RUNTIME_ENV_E2E_PROTONMAIL_LOGIN = "ELECTRON_MAIL_E2E_PROTONMAIL_LOGIN";
+export const RUNTIME_ENV_E2E_PROTONMAIL_PASSWORD = "ELECTRON_MAIL_E2E_PROTONMAIL_PASSWORD";
+export const RUNTIME_ENV_E2E_PROTONMAIL_2FA_CODE = "ELECTRON_MAIL_E2E_PROTONMAIL_2FA_CODE";
+export const RUNTIME_ENV_E2E_PROTONMAIL_UNREAD_MIN = "ELECTRON_MAIL_E2E_PROTONMAIL_UNREAD_MIN";

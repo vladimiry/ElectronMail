@@ -1,7 +1,7 @@
 import UUID from "pure-uuid";
 import electronLog from "electron-log";
 import {Observable, of, race, throwError, timer} from "rxjs";
-import {concatMap, filter, mergeMap, take} from "rxjs/operators";
+import {concatMap, filter, first, mergeMap} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION$, IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$} from "src/electron-main/api/constants";
@@ -17,7 +17,7 @@ export async function buildDbSearchEndpoints(
 ): Promise<Pick<IpcMainApiEndpoints, "dbSearchRootConversationNodes" | "dbFullTextSearch">> {
     return {
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-        async dbSearchRootConversationNodes({login, folderPks, ...restOptions}) {
+        async dbSearchRootConversationNodes({login, folderIds, ...restOptions}) {
             logger.info("dbSearchRootConversationNodes()");
 
             const account = ctx.db.getAccount({login});
@@ -30,11 +30,11 @@ export async function buildDbSearchEndpoints(
                 ? [] // TODO execute the actual search and pick "mailPks" from the search result
                 : restOptions.mailPks;
 
-            return searchRootConversationNodes(account, {folderPks, mailPks});
+            return searchRootConversationNodes(account, {folderIds, mailPks});
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-        async dbFullTextSearch({login, query, folderPks, hasAttachments, sentDateAfter}) {
+        async dbFullTextSearch({login, query, folderIds, hasAttachments, sentDateAfter}) {
             logger.info("dbFullTextSearch()");
 
             const account = ctx.db.getAccount({login});
@@ -46,12 +46,12 @@ export async function buildDbSearchEndpoints(
             const searchUid: string | null = query
                 ? new UUID(4).format()
                 : null;
-            const search$: Observable<DeepReadonly<NoExtraProperties<{ mailScoresByPk?: Map<IndexableMailId, number> }>>> = query
+            const search$: Observable<DeepReadonly<NoExtraProps<{ mailScoresByPk?: Map<IndexableMailId, number> }>>> = query
                 ? race(
                     IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$.pipe(
                         filter(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.is.SearchResult),
                         filter(({payload}) => payload.uid === searchUid),
-                        take(1),
+                        first(),
                         mergeMap(({payload: {data: {items}}}) => {
                             const mailScoresByPk = new Map<IndexableMailId, number>(
                                 items.map(({key, score}) => [key, score] as [IndexableMailId, number]),
@@ -59,8 +59,8 @@ export async function buildDbSearchEndpoints(
                             return [{mailScoresByPk}];
                         }),
                     ),
-                    await (async() => {
-                        const {timeouts: {fullTextSearch: timeoutMs}} = await ctx.config$.pipe(take(1)).toPromise();
+                    await (async () => {
+                        const {timeouts: {fullTextSearch: timeoutMs}} = await ctx.config$.pipe(first()).toPromise();
                         return timer(timeoutMs).pipe(
                             concatMap(() => throwError(new Error(`Failed to complete the search in ${timeoutMs}ms`))),
                         );
@@ -74,11 +74,11 @@ export async function buildDbSearchEndpoints(
                             mailPks: mailScoresByPk
                                 ? [...mailScoresByPk.keys()]
                                 : undefined,
-                            folderPks,
+                            folderIds,
                         },
                     );
-                    const filterByFolder = folderPks
-                        ? ({pk}: View.Folder): boolean => folderPks.includes(pk)
+                    const filterByFolder = folderIds
+                        ? ({id}: View.Folder): boolean => folderIds.includes(id)
                         : () => true;
                     const filterByHasAttachment = hasAttachments
                         ? (attachmentsCount: number): boolean => Boolean(attachmentsCount)

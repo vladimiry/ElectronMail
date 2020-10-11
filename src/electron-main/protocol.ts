@@ -1,18 +1,28 @@
+import _logger from "electron-log";
 import fs from "fs";
 import mimeTypes from "mime-types";
 import path from "path";
 import pathIsInside from "path-is-inside";
 import {Session, app, protocol} from "electron";
-import {URL} from "url";
+import {URL} from "@cliqz/url-parser";
 import {promisify} from "util";
 
 import {Context} from "src/electron-main/model";
-import {WEB_PROTOCOL_SCHEME} from "src/shared/constants";
+import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {PROVIDER_REPO_MAP, WEB_PROTOCOL_SCHEME} from "src/shared/constants";
+import {curryFunctionMembers} from "src/shared/util";
+
+const logger = curryFunctionMembers(_logger, "[protocol]");
 
 const fsAsync = {
     stat: promisify(fs.stat),
     readFile: promisify(fs.readFile),
 } as const;
+
+const baseDirNames: readonly string[] = Object
+    .values(PROVIDER_REPO_MAP)
+    .map(({baseDirName}) => baseDirName);
 
 export function registerStandardSchemes(ctx: Context): void {
     // WARN: "protocol.registerStandardSchemes" needs to be called once, see https://github.com/electron/electron/issues/15943
@@ -54,8 +64,25 @@ export function registerWebFolderFileProtocol(ctx: Context, session: Session): v
 async function resolveFileSystemResourceLocation(
     directory: string,
     request: Parameters<Parameters<(typeof protocol)["registerBufferProtocol"]>[1]>[0],
-): Promise<string> {
-    const resource = path.join(directory, new URL(request.url).pathname);
+): Promise<string | null> {
+    const resource = (() => {
+        const urlBasedResource = path.normalize(
+            path.join(directory, new URL(request.url).pathname),
+        );
+        return path.extname(urlBasedResource)
+            ? urlBasedResource
+            : (() => {
+                const leadingFolder = path
+                    .relative(directory, urlBasedResource)
+                    .split(path.sep)
+                    .shift();
+                return leadingFolder && baseDirNames.includes(leadingFolder)
+                    ? path.join(directory, leadingFolder)
+                    : directory;
+            })();
+    })();
+
+    logger.verbose("resolveFileSystemResourceLocation()", {directory, resource});
 
     if (!pathIsInside(resource, directory)) {
         throw new Error(`Forbidden file system resource "${resource}"`);
@@ -67,18 +94,18 @@ async function resolveFileSystemResourceLocation(
         if (stat.isFile()) {
             return resource;
         }
-
         if (stat.isDirectory()) {
             return path.join(resource, "index.html");
         }
     } catch (error) {
+        logger.error("resolveFileSystemResourceLocation()", error);
         if (error.code === "ENOENT") { // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-            return path.join(directory, "index.html");
+            return null;
         }
         throw error;
     }
 
-    throw new Error(`Failed to resolve "${resource}" file system resource`);
+    return null;
 }
 
 export async function registerSessionProtocols(ctx: DeepReadonly<Context>, session: Session): Promise<void> {
@@ -89,9 +116,20 @@ export async function registerSessionProtocols(ctx: DeepReadonly<Context>, sessi
         const registered = session.protocol.registerBufferProtocol(
             scheme,
             async (request, callback) => {
-                const file = await resolveFileSystemResourceLocation(directory, request);
-                const data = await fsAsync.readFile(file);
-                const mimeType = mimeTypes.lookup(path.basename(file));
+                const resourceLocation = await resolveFileSystemResourceLocation(directory, request);
+
+                if (!resourceLocation) {
+                    const message = `Failed to resolve "${request.url}" resource`;
+                    logger.error(message);
+                    IPC_MAIN_API_NOTIFICATION$.next(
+                        IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({message}),
+                    );
+                    callback({statusCode: 404});
+                    return;
+                }
+
+                const data = await fsAsync.readFile(resourceLocation);
+                const mimeType = mimeTypes.lookup(path.basename(resourceLocation));
                 const result = mimeType
                     ? {data, mimeType}
                     : data;

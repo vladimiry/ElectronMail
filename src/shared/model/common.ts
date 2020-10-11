@@ -17,3 +17,5 @@ export type LogLevel = keyof Logger;
 //      - https://electronjs.org/docs/api/locales
 //      - @types/chrome-apps:chrome.i18n.kLanguageInfoTable
 export type Locale = string;
+
+export type NumericBoolean = 0 | 1;

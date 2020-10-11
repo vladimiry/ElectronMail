@@ -2,9 +2,9 @@ import {Deferred} from "ts-deferred";
 import {Observable, Subscription} from "rxjs";
 import {distinctUntilChanged, filter} from "rxjs/operators";
 
-import {IPC_MAIN_API, IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainServiceScan} from "src/shared/api/main";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainServiceScan} from "src/shared/api/main";
 import {ONE_SECOND_MS, PACKAGE_NAME} from "src/shared/constants";
-import {buildLoggerBundle} from "src/electron-preload/lib/util";
+import {buildLoggerBundle, resolveIpcMainApi} from "src/electron-preload/lib/util";
 
 // TODO TS add declaration for "index.scss" and use "ES import" then
 // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-assignment
@@ -128,9 +128,7 @@ export class HoveredHrefHighlightElement extends HTMLElement {
             return this.notification$;
         }
 
-        const apiClient = IPC_MAIN_API.client({options: {logger: this.logger}});
-
-        return this.notification$ = apiClient(
+        return this.notification$ = resolveIpcMainApi({logger: this.logger})(
             "notification",
             {
                 finishPromise: this.releaseApiClientDeferred.promise,

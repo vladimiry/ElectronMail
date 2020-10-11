@@ -38,9 +38,6 @@ environment:
     - job_name: 'build app (macos-catalina)'
       appveyor_build_worker_image: 'macos'
       job_depends_on: 'build proton clients (linux)'
-    - job_name: 'build app (macos-mojave)'
-      appveyor_build_worker_image: 'macos-mojave'
-      job_depends_on: 'build proton clients (linux)'
 
 before_build:
   - node --version
@@ -49,6 +46,7 @@ before_build:
   - npx envinfo
   - yarn install --pure-lockfile
 build_script:
+  - yarn scripts/ci/clean-git-output-if-needed
   - yarn scripts/ci/appveyor/download-webclients-artifact
   - yarn app:dist:base
   - npm run clean:prebuilds
@@ -66,6 +64,16 @@ on_failure:
 for:
   - matrix:
       only:
+        - job_name: 'build proton clients (linux)'
+    cache:
+      - ./output/git/backup
+    install:
+      - nvm install $nodejs_version
+      - ./scripts/ci/appveyor/install-linux.sh
+    build_script: ./scripts/ci/appveyor/build-webclients-linux.sh
+    on_failure: echo "overridden"
+  - matrix:
+      only:
         - job_name: 'build app (windows)'
     install:
       - cmd: powershell Install-Product node $env:nodejs_version $env:nodejs_arch
@@ -74,33 +82,11 @@ for:
           cmd /c start /wait msiexec.exe /i $env:temp\yarn.msi /quiet /qn /norestart
   - matrix:
       only:
-        - job_name: 'build proton clients (linux)'
-    cache:
-      # - $HOME/.npm
-      # - $HOME/.cache/yarn
-      - ./output/git
-    install:
-      - nvm install $nodejs_version
-      - ./scripts/ci/appveyor/install-linux.sh
-    build_script: echo "overridden"
-    after_build: ./scripts/ci/appveyor/build-linux.sh
-    on_failure: echo "overridden"
-  - matrix:
-      only:
         - job_name: 'build app (macos-catalina)'
     environment:
+      APPVEYOR_CACHE_SKIP_SAVE: true
+      APPVEYOR_CACHE_SKIP_RESTORE: true
       ARTIFACT_NAME_POSTFIX: '-catalina'
-    install:
-      # - HOMEBREW_NO_INSTALL_CLEANUP=1 brew cask install firefox
-      - nvm install $nodejs_version
-      - |
-        curl -o- -L https://yarnpkg.com/install.sh | bash;
-        export PATH="$HOME/.yarn/bin:$PATH";
-  - matrix:
-      only:
-        - job_name: 'build app (macos-mojave)'
-    environment:
-      ARTIFACT_NAME_POSTFIX: '-mojave'
     install:
       # - HOMEBREW_NO_INSTALL_CLEANUP=1 brew cask install firefox
       - nvm install $nodejs_version

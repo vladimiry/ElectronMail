@@ -24,7 +24,9 @@ export const PROTONMAIL_IPC_WEBVIEW_API_DEFINITION = {
         Observable<DeepReadonly<DbAccountPk & { metadata: Readonly<FsDbAccount["metadata"]> | null } & ZoneApiParameter>>(),
     selectMailOnline:
         Promise<DeepReadonly<{
-            pk: DbAccountPk; mail: Pick<Mail, "id" | "mailFolderIds" | "conversationEntryPk">;
+            pk: DbAccountPk
+            mail: Pick<Mail, "id" | "mailFolderIds" | "conversationEntryPk">
+            selectedFolderId: Folder["id"] | null
         } & ZoneApiParameter>>(),
     fetchSingleMail:
         Promise<DeepReadonly<DbAccountPk & { mailPk: Mail["pk"] } & ZoneApiParameter>>(),

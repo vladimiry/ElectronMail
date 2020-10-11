@@ -1,26 +1,21 @@
-import {defer} from "rxjs";
-import {pick} from "remeda";
+import {concatMap, filter, first} from "rxjs/operators";
+import {defer, race, throwError, timer} from "rxjs";
 
 import * as Database from "src/electron-preload/webview/lib/database-entity";
 import * as DatabaseModel from "src/shared/model/database";
 import * as RestModel from "src/electron-preload/webview/lib/rest-model";
-import {AJAX_SEND_NOTIFICATION_SKIP_PARAM} from "src/electron-preload/webview/primary/notifications";
 import {DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_SECOND_MS} from "src/shared/constants";
 import {DbPatch} from "src/shared/api/common";
-import {FsDbAccount, PROTONMAIL_MAILBOX_IDENTIFIERS} from "src/shared/model/database";
+import {FsDbAccount, LABEL_TYPE, SYSTEM_FOLDER_IDENTIFIERS} from "src/shared/model/database";
+import {Logger} from "src/shared/model/common";
 import {ProtonApi, ProtonApiScan} from "src/shared/api/webview/primary";
-import {ProviderApi, resolveProviderApi} from "src/electron-preload/webview/primary/provider-api";
+import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
 import {UPSERT_EVENT_ACTIONS} from "src/electron-preload/webview/lib/rest-model";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/constants";
-import {
-    angularJsHttpResponseTypeGuard,
-    isLoggedIn,
-    isUpsertOperationType,
-    preprocessError,
-} from "src/electron-preload/webview/primary/util";
-import {asyncDelay, curryFunctionMembers, isDatabaseBootstrapped} from "src/shared/util";
-import {buildDbPatchRetryPipeline, buildEmptyDbPatch, persistDatabasePatch, resolveIpcMainApi} from "src/electron-preload/webview/lib/util";
-import {buildLoggerBundle} from "src/electron-preload/lib/util";
+import {buildDbPatchRetryPipeline, buildEmptyDbPatch, persistDatabasePatch} from "src/electron-preload/webview/lib/util";
+import {curryFunctionMembers, isDatabaseBootstrapped} from "src/shared/util";
+import {isProtonApiError, resolveCachedConfig, sanitizeProtonApiError} from "src/electron-preload/lib/util";
+import {isUpsertOperationType, preprocessError} from "src/electron-preload/webview/primary/util";
 
 interface DbPatchBundle {
     patch: DbPatch;
@@ -33,30 +28,30 @@ const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, "[api/build-db-pat
 
 async function buildConversationDbMails(briefConversation: RestModel.Conversation, api: ProviderApi): Promise<DatabaseModel.Mail[]> {
     const result: DatabaseModel.Mail[] = [];
-    const conversationFetchResponse = await api.conversation.get(briefConversation.ID);
-    const conversationMessages = conversationFetchResponse.data.Messages;
+    const conversationFetchResponse = await api.conversation.getConversation(briefConversation.ID);
+    const conversationMessages = conversationFetchResponse.Messages;
 
     for (const mail of conversationMessages) {
         if (mail.Body) {
             result.push(await Database.buildMail(mail, api));
             continue;
         }
-        const mailFetchResponse = await api.message.get(mail.ID);
-        result.push(await Database.buildMail(mailFetchResponse.data.Message, api));
+        const mailFetchResponse = await api.message.getMessage(mail.ID);
+        result.push(await Database.buildMail(mailFetchResponse.Message, api));
     }
 
     return result;
 }
 
 async function bootstrapDbPatch(
-    parentLogger: ReturnType<typeof buildLoggerBundle>,
+    providerApi: ProviderApi,
+    parentLogger: Logger,
     triggerStoreCallback: (path: DbPatchBundle) => Promise<void>,
 ): Promise<void> {
     const logger = curryFunctionMembers(parentLogger, "bootstrapDbPatch()");
-    const api = await resolveProviderApi();
     // WARN: "getLatestID" should be called on top of the function, ie before any other fetching
     // so app is able to get any potentially missed changes happened during this function execution
-    const latestEventId = await api.events.getLatestID();
+    const {EventID: latestEventId} = await providerApi.events.getLatestID();
 
     if (!latestEventId) {
         throw new Error(`"getLatestID" call returned empty value`);
@@ -69,17 +64,22 @@ async function bootstrapDbPatch(
         logger.verbose("start fetching contacts");
 
         const contacts = await (async () => {
-            const items = await api.contact.all();
+            const {Contacts: items} = await providerApi.contact.queryContacts();
             const result: RestModel.Contact[] = [];
             for (const item of items) {
-                result.push(await api.contact.get(item.ID));
+                const contactResponse = await providerApi.contact.getContact(item.ID);
+                result.push(contactResponse.Contact);
             }
             return result;
         })();
         logger.info(`fetched ${contacts.length} contacts`);
 
-        logger.verbose(`start fetching folders`);
-        const folders = await api.label.query({Type: RestModel.LABEL_TYPE.MESSAGE}); // fetching all the entities;
+        logger.verbose("start fetching folders");
+        const [labelsResponse, foldersResponse] = await Promise.all([
+            providerApi.label.get(LABEL_TYPE.MESSAGE_LABEL),
+            providerApi.label.get(LABEL_TYPE.MESSAGE_FOLDER),
+        ]);
+        const folders = [...labelsResponse.Labels, ...foldersResponse.Labels];
         logger.info(`fetched ${folders.length} folders`);
 
         logger.verbose(`construct initial database patch`);
@@ -102,26 +102,25 @@ async function bootstrapDbPatch(
     logger.verbose("start fetching messages");
     const remainingMails: DatabaseModel.Mail[] = await (async () => {
         const conversationsQuery = {Page: 0, PageSize: 150};
-        const {fetching: {messagesStorePortionSize = DEFAULT_MESSAGES_STORE_PORTION_SIZE}}
-            = await (await resolveIpcMainApi(logger))("readConfig")();
+        const {fetching: {messagesStorePortionSize = DEFAULT_MESSAGES_STORE_PORTION_SIZE}} = await resolveCachedConfig(logger);
 
         logger.info(JSON.stringify({messagesStorePortionSize}));
 
-        let conversationsFetchResponse: Unpacked<ReturnType<typeof api.conversation.query>> | undefined;
+        let conversationsFetchResponse: Unpacked<ReturnType<typeof providerApi.conversation.queryConversations>> | undefined;
         let mailsPersistencePortion: DatabaseModel.Mail[] = [];
         let conversationsFetched = 0;
         let mailsFetched = 0;
 
         logger.verbose("start fetching conversations");
-        while (!conversationsFetchResponse || conversationsFetchResponse.data.Conversations.length) {
-            conversationsFetchResponse = await api.conversation.query(conversationsQuery);
-            const conversations = conversationsFetchResponse.data.Conversations;
+        while (!conversationsFetchResponse || conversationsFetchResponse.Conversations.length) {
+            conversationsFetchResponse = await providerApi.conversation.queryConversations(conversationsQuery);
+            const conversations = conversationsFetchResponse.Conversations;
 
             conversationsFetched += conversations.length;
             logger.verbose(`conversations fetch progress: ${conversationsFetched}`);
 
             for (const conversation of conversations) {
-                const dbMails = await buildConversationDbMails(conversation, api);
+                const dbMails = await buildConversationDbMails(conversation, providerApi);
 
                 mailsFetched += dbMails.length;
                 logger.verbose(`mails fetch progress: ${mailsFetched}`);
@@ -175,13 +174,13 @@ async function bootstrapDbPatch(
 }
 
 async function buildDbPatch(
+    providerApi: ProviderApi,
     input: {
         events: Array<Pick<RestModel.Event, "Messages" | "Labels" | "Contacts">>;
-        parentLogger: ReturnType<typeof buildLoggerBundle>;
+        parentLogger: Logger;
     },
     nullUpsert = false,
 ): Promise<DbPatch> {
-    const api = await resolveProviderApi();
     const logger = curryFunctionMembers(input.parentLogger, "buildDbPatch()");
     const mapping: Record<"mails" | "folders" | "contacts", {
         remove: Array<{ pk: string }>;
@@ -250,7 +249,7 @@ async function buildDbPatch(
                     upsertIds.push({
                         id: update.ID,
                         gotTrashed: Boolean(
-                            update.Message?.LabelIDsAdded?.includes(PROTONMAIL_MAILBOX_IDENTIFIERS.Trash),
+                            update.Message?.LabelIDsAdded?.includes(SYSTEM_FOLDER_IDENTIFIERS.Trash),
                         ),
                     });
                     upserted = true;
@@ -276,29 +275,24 @@ async function buildDbPatch(
         // 404 error can be ignored as if it occurs because user was moved stuff from here to there while syncing cycle was in progress
         for (const {id, gotTrashed} of mapping.mails.upsertIds) {
             try {
-                const response = await api.message.get(id);
-                patch.mails.upsert.push(await Database.buildMail(response.data.Message, api));
+                const response = await providerApi.message.getMessage(id);
+                patch.mails.upsert.push(await Database.buildMail(response.Message, providerApi));
             } catch (error) {
                 if (
                     gotTrashed
                     &&
-                    angularJsHttpResponseTypeGuard<{
-                        Code?: number; // 15052
-                        Error?: string; // Message does not exist
-                        ErrorDescription?: string;
-                        Details?: unknown;
-                    }>(error)
+                    isProtonApiError(error)
                     &&
                     error.status === 422
                     &&
-                    error.data.Code === 15052
+                    error.data?.Code === 15052
                 ) { // ignoring the error as expected to happen
                     logger.warn(
                         // WARN don't log message-specific data as it might include sensitive fields
-                        `Skip message fetching as it has been already removed from the trash before fetch action started`,
+                        `skip message fetching as it has been already removed from the trash before fetch action started`,
                         // WARN don't log full error as it might include sensitive data
                         JSON.stringify(
-                            pick(error, ["data", "status", "statusText"]),
+                            sanitizeProtonApiError(error),
                         ),
                     );
                 } else {
@@ -307,16 +301,21 @@ async function buildDbPatch(
             }
         }
         await (async () => {
-            const labels = await api.label.query();
+            // TODO explore possibility to fetch folders by IDs / "upsertIds" variable
+            const [labelsResponse, foldersResponse] = await Promise.all([
+                providerApi.label.get(LABEL_TYPE.MESSAGE_LABEL),
+                providerApi.label.get(LABEL_TYPE.MESSAGE_FOLDER),
+            ]);
+            const allFoldersFromServer = [...labelsResponse.Labels, ...foldersResponse.Labels];
             const upsertIds = mapping.folders.upsertIds.map(({id}) => id);
-            const folders = labels
+            const foldersToPush = allFoldersFromServer
                 .filter(({ID}) => upsertIds.includes(ID))
                 .map(Database.buildFolder);
-            patch.folders.upsert.push(...folders);
+            patch.folders.upsert.push(...foldersToPush);
         })();
         for (const {id} of mapping.contacts.upsertIds) {
-            const contact = await api.contact.get(id);
-            patch.contacts.upsert.push(Database.buildContact(contact));
+            const contactResponse = await providerApi.contact.getContact(id);
+            patch.contacts.upsert.push(Database.buildContact(contactResponse.Contact));
         }
     } else {
         // we only need the data structure to be formed at this point, so no need to perform the actual fetching
@@ -336,141 +335,149 @@ async function buildDbPatch(
     return patch;
 }
 
-const buildDbPatchEndpoint: Pick<ProtonApi, "buildDbPatch" | "fetchSingleMail"> = {
-    buildDbPatch(input) {
-        const logger = curryFunctionMembers(_logger, "buildDbPatch()", input.zoneName);
+const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonApi, "buildDbPatch" | "fetchSingleMail"> => {
+    return {
+        buildDbPatch(input) {
+            const logger = curryFunctionMembers(_logger, "buildDbPatch()", input.zoneName);
 
-        logger.info();
+            logger.info();
 
-        const inputMetadata = input.metadata;
-        const deferFactory: () => Promise<BuildDbPatchMethodReturnType> = async () => {
-            logger.info("delayFactory()");
+            const inputMetadata = input.metadata;
+            const deferFactory: () => Promise<BuildDbPatchMethodReturnType> = async () => {
+                logger.info("delayFactory()");
 
-            if (!isLoggedIn()) {
-                // TODO handle switching from built-in webclient to remote and back more properly
+                // TODO handle "account.entryUrl" change event
                 // the account state keeps the "signed-in" state despite of page still being reloaded
                 // so we need to reset "signed-in" state with "account.entryUrl" value change
-                await asyncDelay(ONE_SECOND_MS * 5);
+                await race(
+                    providerApi._custom_.loggedIn$.pipe(
+                        filter(Boolean), // should be logged in
+                        first(),
+                    ),
+                    // timeout value of calling "buildDbPatch()" is long so we setup custom one here just to test the logged-in state
+                    timer(ONE_SECOND_MS * 5).pipe(
+                        concatMap(() => throwError(new Error(`User is supposed to be logged-in`))),
+                    ),
+                ).toPromise();
 
-                if (!isLoggedIn()) {
-                    throw new Error("protonmail:buildDbPatch(): user is supposed to be logged-in");
+                if (!isDatabaseBootstrapped(inputMetadata)) {
+                    await bootstrapDbPatch(
+                        providerApi,
+                        logger,
+                        async (dbPatch) => {
+                            await persistDatabasePatch(
+                                {
+                                    ...dbPatch,
+                                    login: input.login,
+                                },
+                                logger,
+                            );
+                        },
+                    );
+
+                    return;
                 }
-            }
 
-            if (!isDatabaseBootstrapped(inputMetadata)) {
-                await bootstrapDbPatch(
-                    logger,
-                    async (dbPatch) => {
-                        await persistDatabasePatch(
-                            {
-                                ...dbPatch,
-                                login: input.login,
-                            },
-                            logger,
-                        );
+                const preFetch = await (async () => {
+                    const fetchedEvents: RestModel.Event[] = [];
+                    const state: NoExtraProps<{
+                        latestEventId: RestModel.Event["EventID"];
+                        sameNextIdCounter: number;
+                    }> = {
+                        latestEventId: inputMetadata.latestEventId,
+                        sameNextIdCounter: 0,
+                    };
+
+                    do {
+                        const response = await providerApi.events.getEvents(state.latestEventId);
+                        const hasMoreEvents = response.More === 1;
+
+                        fetchedEvents.push(response);
+
+                        // WARN increase "sameNextIdCounter" before "state.latestEventId" reassigning
+                        state.sameNextIdCounter += Number(state.latestEventId === response.EventID);
+                        state.latestEventId = response.EventID;
+
+                        if (!hasMoreEvents) {
+                            break;
+                        }
+
+                        // in early july 2020 protonmail's "/events/{id}" API/backend started returning
+                        // old/requested "response.EventID" having no more events in the queue ("response.More" !== 1)
+                        // which looks like an implementation error
+                        // so let's allow up to 3 such problematic iterations, log the error, and break the iteration then
+                        // rather than raising the error like we did before in order to detect the protonmail's error
+                        // it's ok to break the iteration since we start from "latestEventId" next time syncing process gets triggered
+                        // another error handling approach is to iterate until "response.More" !== 1 but let's prefer "early break" for now
+                        if (state.sameNextIdCounter > 2) {
+                            logger.error(
+                                `Events API indicates that there is a next event in the queue but responded with the same "next event id".`,
+                            );
+                            break;
+                        }
+                    } while (true); // eslint-disable-line no-constant-condition
+
+                    logger.info(`fetched ${fetchedEvents.length} missed events`);
+
+                    return {
+                        latestEventId: state.latestEventId,
+                        missedEvents: fetchedEvents,
+                    };
+                })();
+
+                const metadata: DbPatchBundle["metadata"] = {latestEventId: preFetch.latestEventId};
+                const patch = await buildDbPatch(providerApi, {events: preFetch.missedEvents, parentLogger: logger});
+
+                await persistDatabasePatch(
+                    {
+                        patch,
+                        metadata,
+                        login: input.login,
                     },
+                    logger,
                 );
 
-                return;
-            }
+                return void 0;
+            };
 
-            const preFetch = await (async () => {
-                const {events}: ProviderApi = await resolveProviderApi();
-                const fetchedEvents: RestModel.Event[] = [];
-                const state: NoExtraProperties<{
-                    latestEventId: RestModel.Event["EventID"];
-                    sameNextIdCounter: number;
-                }> = {
-                    latestEventId: inputMetadata.latestEventId,
-                    sameNextIdCounter: 0,
-                };
+            return defer(deferFactory).pipe(
+                buildDbPatchRetryPipeline<BuildDbPatchMethodReturnType>(preprocessError, inputMetadata, _logger),
+            );
+        },
 
-                do {
-                    const response = await events.get(state.latestEventId, {params: {[AJAX_SEND_NOTIFICATION_SKIP_PARAM]: ""}});
-                    const hasMoreEvents = response.More === 1;
+        async fetchSingleMail(input) {
+            const logger = curryFunctionMembers(_logger, "fetchSingleMail()", input.zoneName);
 
-                    fetchedEvents.push(response);
+            logger.info();
 
-                    // WARN increase "sameNextIdCounter" before "state.latestEventId" reassigning
-                    state.sameNextIdCounter += Number(state.latestEventId === response.EventID);
-                    state.latestEventId = response.EventID;
-
-                    if (!hasMoreEvents) {
-                        break;
-                    }
-
-                    // in early july 2020 protonmail's "/events/{id}" API/backend started returning
-                    // old/requested "response.EventID" having no more events in the queue ("response.More" !== 1)
-                    // which looks like an implementation error
-                    // so let's allow up to 3 such problematic iterations, log the error, and break the iteration then
-                    // rather than raising the error like we did before in order to detect the protonmail's error
-                    // it's ok to break the iteration since we start from "latestEventId" next time syncing process gets triggered
-                    // another error handling approach is to iterate until "response.More" !== 1 but let's prefer "early break" for now
-                    if (state.sameNextIdCounter > 2) {
-                        logger.error(
-                            `Events API indicates that there is a next event in the queue but responded with the same "next event id".`,
-                        );
-                        break;
-                    }
-                } while (true); // eslint-disable-line no-constant-condition
-
-                logger.info(`fetched ${fetchedEvents.length} missed events`);
-
-                return {
-                    latestEventId: state.latestEventId,
-                    missedEvents: fetchedEvents,
-                };
-            })();
-
-            const metadata: DbPatchBundle["metadata"] = {latestEventId: preFetch.latestEventId};
-            const patch = await buildDbPatch({events: preFetch.missedEvents, parentLogger: logger});
+            const [anyUpsertAction] = UPSERT_EVENT_ACTIONS;
+            const data: DbPatchBundle = {
+                patch: await buildDbPatch(
+                    providerApi,
+                    {
+                        events: [
+                            {
+                                Messages: [{ID: input.mailPk, Action: anyUpsertAction}],
+                            },
+                        ],
+                        parentLogger: logger,
+                    },
+                ),
+                metadata: {
+                    // WARN: don't persist the "latestEventId" value in the case of single mail saving
+                    latestEventId: "",
+                },
+            };
 
             await persistDatabasePatch(
                 {
-                    patch,
-                    metadata,
+                    ...data,
                     login: input.login,
                 },
                 logger,
             );
-
-            return void 0;
-        };
-
-        return defer(deferFactory).pipe(
-            buildDbPatchRetryPipeline<BuildDbPatchMethodReturnType>(preprocessError, inputMetadata, _logger),
-        );
-    },
-
-    async fetchSingleMail(input) {
-        const logger = curryFunctionMembers(_logger, "fetchSingleMail()", input.zoneName);
-
-        logger.info();
-
-        const [anyUpsertAction] = UPSERT_EVENT_ACTIONS;
-        const data: DbPatchBundle = {
-            patch: await buildDbPatch({
-                events: [
-                    {
-                        Messages: [{ID: input.mailPk, Action: anyUpsertAction}],
-                    },
-                ],
-                parentLogger: logger,
-            }),
-            metadata: {
-                // WARN: don't persist the "latestEventId" value in the case of single mail saving
-                latestEventId: "",
-            },
-        };
-
-        await persistDatabasePatch(
-            {
-                ...data,
-                login: input.login,
-            },
-            logger,
-        );
-    },
+        },
+    };
 };
 
 export {

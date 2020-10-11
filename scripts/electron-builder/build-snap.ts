@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 
 import {APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR, BINARY_NAME} from "src/shared/constants";
-import {LOG, LOG_LEVELS, execShell} from "scripts/lib";
+import {CONSOLE_LOG, execShell} from "scripts/lib";
 import {build, copyDictionaryFilesTo, ensureFileHasNoSuidBit} from "scripts/electron-builder/lib";
 
 async function unpack({packageFile, packageDir}: { packageFile: string; packageDir: string }): Promise<void> {
@@ -12,7 +12,7 @@ async function unpack({packageFile, packageDir}: { packageFile: string; packageD
 async function packAndCleanup({packageFile, packageDir}: { packageFile: string; packageDir: string }): Promise<void> {
     await execShell(["rm", ["--force", packageFile]]);
     await execShell(["snapcraft", ["pack", packageDir, "--output", packageFile]]);
-    await execShell(["npx", ["rimraf", packageDir]]);
+    await execShell(["npx", ["--no-install", "rimraf", packageDir]]);
 }
 
 function addCommandLineArgs({packageDir}: { packageDir: string; }): void {
@@ -29,10 +29,7 @@ function addCommandLineArgs({packageDir}: { packageDir: string; }): void {
         throw new Error(`Failed to patch content of the "${shFile}" file`);
     }
 
-    LOG(
-        LOG_LEVELS.title(`Writing ${LOG_LEVELS.value(shFile)} file with content:`),
-        LOG_LEVELS.value(shContentPatched),
-    );
+    CONSOLE_LOG(`Writing ${shFile} file with content:`, shContentPatched);
 
     fs.writeFileSync(shFile, shContentPatched);
 }
@@ -47,11 +44,8 @@ async function postProcess({packageFile}: { packageFile: string }): Promise<void
     await packAndCleanup({packageDir, packageFile});
 }
 
-(async () => {
+(async () => { // eslint-disable-line @typescript-eslint/no-floating-promises
     await postProcess(
         await build("snap"),
     );
-})().catch((error) => {
-    LOG(error);
-    process.exit(1);
-});
+})();

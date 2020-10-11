@@ -67,7 +67,7 @@ function listDirsNames(storeFs: StoreModel.StoreFs, dir: string): string[] {
 function initLocations(
     storeFs: StoreModel.StoreFs,
     paths?: ContextInitOptionsPaths,
-): NoExtraProperties<ElectronContextLocations> {
+): NoExtraProps<ElectronContextLocations> {
     const customUserDataDir = process.env[RUNTIME_ENV_USER_DATA_DIR];
 
     if (customUserDataDir && !directoryExists(customUserDataDir, storeFs)) {
@@ -117,7 +117,7 @@ function initLocations(
             }
             return `${WEB_PROTOCOL_SCHEME}://${webRelativeCssFilePath}`;
         })(),
-        ...((): NoExtraProperties<Pick<ElectronContextLocations, "protocolBundles" | "webClients">> => {
+        ...((): NoExtraProps<Pick<ElectronContextLocations, "protocolBundles" | "webClients">> => {
             const {protocolBundles, webClients}:
                 {
                     webClients: Array<Unpacked<ElectronContextLocations["webClients"]>>;
@@ -149,7 +149,7 @@ function initLocations(
     };
 }
 
-export function initContext(options: ContextInitOptions = {}): NoExtraProperties<Context> {
+export function initContext(options: ContextInitOptions = {}): NoExtraProps<Context> {
     const storeFs = options.storeFs
         ? options.storeFs
         : StoreFs.Fs.volume({
@@ -181,7 +181,7 @@ export function initContext(options: ContextInitOptions = {}): NoExtraProperties
     const {
         config$,
         configStore,
-    } = ((): NoExtraProperties<Pick<Context, "config$" | "configStore">> => {
+    } = ((): NoExtraProps<Pick<Context, "config$" | "configStore">> => {
         const store = new Store<Config>({
             fs: storeFs,
             optimisticLocking: true,
@@ -189,13 +189,13 @@ export function initContext(options: ContextInitOptions = {}): NoExtraProperties
             validators: [configEncryptionPresetValidator],
             serialize: (data): Buffer => Buffer.from(JSON.stringify(data, null, 2)),
         });
-        const subject$ = new ReplaySubject<Config>(1);
+        const valueChangeSubject$ = new ReplaySubject<Config>(1);
 
         store.read = ((read): typeof store.read => {
             const result: typeof store.read = async (...args) => {
                 const config = await read(...args);
                 if (config) {
-                    subject$.next(config);
+                    valueChangeSubject$.next(config);
                 }
                 return config;
             };
@@ -205,7 +205,7 @@ export function initContext(options: ContextInitOptions = {}): NoExtraProperties
         store.write = ((write): typeof store.write => {
             const result: typeof store.write = async (...args) => {
                 const config = await write(...args);
-                subject$.next(config);
+                valueChangeSubject$.next(config);
                 return config;
             };
             return result;
@@ -213,10 +213,10 @@ export function initContext(options: ContextInitOptions = {}): NoExtraProperties
 
         return {
             config$: merge(
-                subject$.asObservable().pipe(
+                valueChangeSubject$.asObservable().pipe(
                     take(1),
                 ),
-                subject$.asObservable().pipe(
+                valueChangeSubject$.asObservable().pipe(
                     distinctUntilChanged(({_rev: prev}, {_rev: curr}) => curr === prev),
                 ),
             ),
@@ -231,7 +231,7 @@ export function initContext(options: ContextInitOptions = {}): NoExtraProperties
             ? "e2e"
             : "production",
         deferredEndpoints: new Deferred(),
-        ...((): NoExtraProperties<Pick<Context, "db" | "sessionDb">> => {
+        ...((): NoExtraProps<Pick<Context, "db" | "sessionDb">> => {
             const encryption = {
                 async keyResolver() {
                     const {databaseEncryptionKey} = await ctx.settingsStore.readExisting();
@@ -258,7 +258,7 @@ export function initContext(options: ContextInitOptions = {}): NoExtraProperties
                 ),
             };
         })(),
-        ...((): NoExtraProperties<Pick<Context, "sessionStorage">> => {
+        ...((): NoExtraProps<Pick<Context, "sessionStorage">> => {
             const encryption = {
                 async keyResolver() {
                     const {sessionStorageEncryptionKey} = await ctx.settingsStore.readExisting();

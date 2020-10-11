@@ -10,11 +10,18 @@
         </button>
         <div class="overflow-auto">
             <ng-container
-                [ngTemplateOutletContext]="{folders: state.folders.system}"
+                *ngIf="state.systemFolders.length"
+                [ngTemplateOutletContext]="{folders: state.systemFolders}"
                 [ngTemplateOutlet]="foldersGroup"
             ></ng-container>
             <ng-container
-                [ngTemplateOutletContext]="{folders: state.folders.custom}"
+                *ngIf="state.customFolders.length"
+                [ngTemplateOutletContext]="{folders: state.customFolders}"
+                [ngTemplateOutlet]="foldersGroup"
+            ></ng-container>
+            <ng-container
+                *ngIf="state.customLabels.length"
+                [ngTemplateOutletContext]="{folders: state.customLabels}"
                 [ngTemplateOutlet]="foldersGroup"
             ></ng-container>
         </div>
@@ -26,7 +33,7 @@
                 <li
                     (click)="selectFolder(folder)"
                     *ngFor="let folder of folders; trackBy: trackFolder"
-                    [ngClass]="{'list-group-item-warning': state.selectedFolderData.pk === folder.pk}"
+                    [ngClass]="{'list-group-item-warning': state.selectedFolderData.id === folder.id}"
                     class="list-group-item list-group-item-action"
                 >
                     <electron-mail-db-view-folder [folder]="folder"></electron-mail-db-view-folder>
@@ -49,7 +56,7 @@
                 *ngIf="mailsBundleKey$ | async; let mailsBundleKey;"
                 [dbAccountPk]="dbAccountPk"
                 [mailsBundleKey]="mailsBundleKey"
-                [uid]="state.selectedFolderData?.pk"
+                [uid]="state.selectedFolderData?.id"
             >
                 <div
                     class="d-inline-block mr-2"

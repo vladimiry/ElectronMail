@@ -18,7 +18,7 @@ import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
 import {DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
 import {Instance, State} from "src/web/browser-window/app/store/reducers/db-view";
-import {MAIL_FOLDER_TYPE, View} from "src/shared/model/database";
+import {SYSTEM_FOLDER_IDENTIFIERS, View} from "src/shared/model/database";
 
 @Component({
     selector: "electron-mail-db-view-mails-search",
@@ -96,16 +96,17 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
 
     private readonly formFolderControlsInitialized$ = new Subject();
 
-    readonly selectedPks$: Observable<Array<View.Folder["pk"]>> = merge(
+    readonly selectedIds$: Observable<Array<View.Folder["id"]>> = merge(
         this.formFolderControlsInitialized$,
         this.formControls.folders.valueChanges,
     ).pipe(
-        map(() => this.resolveSelectedPks()),
+        map(() => this.resolveSelectedIds()),
     );
 
-    private readonly defaultUncheckedFolderIds: ReadonlySet<string> = new Set([
-        MAIL_FOLDER_TYPE.ALL,
-        MAIL_FOLDER_TYPE.SPAM,
+    private readonly defaultUncheckedFolderIds: ReadonlySet<Unpacked<typeof SYSTEM_FOLDER_IDENTIFIERS._.values>> = new Set([
+        SYSTEM_FOLDER_IDENTIFIERS["Virtual Unread"],
+        SYSTEM_FOLDER_IDENTIFIERS["All Mail"],
+        SYSTEM_FOLDER_IDENTIFIERS.Spam,
     ]);
 
     constructor(
@@ -118,19 +119,19 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
         this.folders$
             .pipe(takeUntil(this.ngOnDestroy$))
             .subscribe((folders) => {
-                const pks = folders.map((folder) => folder.pk);
+                const folderIds = folders.map((folder) => folder.id);
 
                 Object.keys(this.formControls.folders).forEach((name) => {
-                    if (!pks.includes(name)) {
+                    if (!folderIds.includes(name)) {
                         this.formControls.folders.removeControl(name);
                     }
                 });
 
-                folders.forEach(({pk, folderType}) => {
-                    if (this.formControls.folders.contains(pk)) {
-                        return;
+                folders.forEach(({id}) => {
+                    if (!this.formControls.folders.contains(id)) {
+                        const selectedByDefault = !this.defaultUncheckedFolderIds.has(id);
+                        this.formControls.folders.addControl(id, new FormControl(selectedByDefault));
                     }
-                    this.formControls.folders.addControl(pk, new FormControl(!this.defaultUncheckedFolderIds.has(folderType)));
                 });
 
                 if (!this.formFolderControlsInitialized$.closed) {
@@ -145,19 +146,19 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
             .pipe(takeUntil(this.ngOnDestroy$))
             .subscribe(() => {
                 const {value} = this.formControls.allFoldersToggled; // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-                Object.values(this.formControls.folders.controls).forEach((control) => {
-                    control.patchValue(value);
-                });
+                Object
+                    .values(this.formControls.folders.controls)
+                    .forEach((control) => control.patchValue(value));
             });
     }
 
-    resolveSelectedPks(): Unpacked<typeof DbViewMailsSearchComponent.prototype.selectedPks$> {
+    resolveSelectedIds(): Unpacked<typeof DbViewMailsSearchComponent.prototype.selectedIds$> {
         // eslint-disable-next-line prefer-destructuring, @typescript-eslint/no-unsafe-assignment
-        const value: Record<View.Folder["pk"], boolean> = this.formControls.folders.value;
+        const value: Record<View.Folder["id"], boolean> = this.formControls.folders.value;
 
         return Object.entries(value)
-            .filter(([, v]) => Boolean(v))
-            .map(([k]) => k);
+            .filter(([, value]) => Boolean(value))
+            .map(([key]) => key);
     }
 
     ngAfterViewInit(): void {
@@ -178,7 +179,7 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
                 query: this.formControls.query.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
                 sentDateAfter: this.formControls.sentDateAfter.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
                 hasAttachments: this.formControls.hasAttachments.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-                folderPks: this.resolveSelectedPks(),
+                folderIds: this.resolveSelectedIds(),
             }),
         );
     }

@@ -4,6 +4,7 @@ import {Model as StoreModel} from "fs-json-store";
 import * as Constants from "./constants";
 import * as View from "./view";
 import {AccountConfig} from "src/shared/model/account";
+import {LABEL_TYPE} from "./constants";
 import {NumberString, Timestamp} from "src/shared/model/common";
 
 export * from "./constants";
@@ -13,27 +14,25 @@ export {
     Constants,
 };
 
-export type Entity = NoExtraProperties<{
+export type Entity = NoExtraProps<{
     readonly pk: string;
     readonly raw: string;
     readonly id: string;
 }>;
 
-export type Folder = NoExtraProperties<Entity & {
-    readonly folderType: Unpacked<typeof Constants.MAIL_FOLDER_TYPE._.values>;
+export type Folder = NoExtraProps<Entity & {
     readonly name: string;
-    readonly mailFolderId: string;
-    readonly exclusive: number;
+    readonly type: Unpacked<typeof LABEL_TYPE._.values>;
 }>
 
-export type ConversationEntry = NoExtraProperties<Entity & {
+export type ConversationEntry = NoExtraProps<Entity & {
     readonly conversationType: Unpacked<typeof Constants.CONVERSATION_TYPE._.values>;
     readonly messageId: string;
     readonly mailPk?: Mail["pk"];
     readonly previousPk?: ConversationEntry["pk"];
 }>;
 
-export type MailFailedDownload = NoExtraProperties<{
+export type MailFailedDownload = NoExtraProps<{
     readonly type: "body-decrypting";
     readonly errorMessage: string;
     readonly errorStack: string;
@@ -41,9 +40,9 @@ export type MailFailedDownload = NoExtraProperties<{
     readonly appVersion: string;
 }>
 
-export type Mail = NoExtraProperties<Entity & {
+export type Mail = NoExtraProps<Entity & {
     readonly conversationEntryPk: ConversationEntry["pk"];
-    readonly mailFolderIds: ReadonlyArray<Folder["mailFolderId"]>;
+    readonly mailFolderIds: ReadonlyArray<Folder["id"]>;
     readonly sentDate: Timestamp;
     readonly subject: string;
     readonly body: string;
@@ -59,18 +58,18 @@ export type Mail = NoExtraProperties<Entity & {
     readonly failedDownload?: MailFailedDownload;
 }>;
 
-export type MailAddress = NoExtraProperties<Entity & {
+export type MailAddress = NoExtraProps<Entity & {
     readonly address: string;
     readonly name: string;
 }>;
 
-export type File = NoExtraProperties<Entity & {
+export type File = NoExtraProps<Entity & {
     readonly mimeType?: string;
     readonly name: string;
     readonly size: number;
 }>;
 
-export type Contact = NoExtraProperties<Entity & {
+export type Contact = NoExtraProps<Entity & {
     readonly comment: string;
     readonly company: string;
     readonly firstName: string;
@@ -85,51 +84,51 @@ export type Contact = NoExtraProperties<Entity & {
     readonly socialIds: readonly ContactSocialId[];
 }>;
 
-export type ContactAddress = NoExtraProperties<Entity & {
+export type ContactAddress = NoExtraProps<Entity & {
     readonly type: Unpacked<typeof Constants.CONTACT_ADDRESS_TYPE._.values>;
     readonly customTypeName: string;
     readonly address: string;
 }>;
 
-export type ContactMailAddress = NoExtraProperties<Entity & {
+export type ContactMailAddress = NoExtraProps<Entity & {
     readonly type: Unpacked<typeof Constants.CONTACT_ADDRESS_TYPE._.values>;
     readonly customTypeName: string;
     readonly address: string;
 }>;
 
-export type Birthday = NoExtraProperties<Entity & {
+export type Birthday = NoExtraProps<Entity & {
     readonly day: NumberString;
     readonly month: NumberString;
     readonly year?: NumberString;
 }>;
 
-export type ContactPhoneNumber = NoExtraProperties<Entity & {
+export type ContactPhoneNumber = NoExtraProps<Entity & {
     readonly type: Unpacked<typeof Constants.CONTACT_PHONE_NUMBER_TYPE._.values>;
     readonly customTypeName: string;
     readonly number: string;
 }>;
 
-export type ContactSocialId = NoExtraProperties<Entity & {
+export type ContactSocialId = NoExtraProps<Entity & {
     readonly type: Unpacked<typeof Constants.CONTACT_SOCIAL_TYPE._.values>;
     readonly customTypeName: string;
     readonly socialId: string;
 }>;
 
-export type ValidatedEntity = NoExtraProperties<{
+export type ValidatedEntity = NoExtraProps<{
     readonly _validated: undefined;
 }>;
 
-export type FsDbDataRecord<T extends ConversationEntry | Mail | Folder | Contact> = NoExtraProperties<Record<T["pk"], T & ValidatedEntity>>;
+export type FsDbDataRecord<T extends ConversationEntry | Mail | Folder | Contact> = NoExtraProps<Record<T["pk"], T & ValidatedEntity>>;
 
-export type FsDbDataContainer = NoExtraProperties<Readonly<{
+export type FsDbDataContainer = NoExtraProps<Readonly<{
     conversationEntries: FsDbDataRecord<ConversationEntry>;
     mails: FsDbDataRecord<Mail>;
     folders: FsDbDataRecord<Folder>;
     contacts: FsDbDataRecord<Contact>;
 }>>;
 
-export type  FsDbDataContainerDeletedField = NoExtraProperties<Readonly<{
-    deletedPks: NoExtraProperties<Readonly<{
+export type  FsDbDataContainerDeletedField = NoExtraProps<Readonly<{
+    deletedPks: NoExtraProps<Readonly<{
         conversationEntries: Array<ConversationEntry["pk"]>;
         mails: Array<Mail["pk"]>;
         folders: Array<Folder["pk"]>;
@@ -137,25 +136,25 @@ export type  FsDbDataContainerDeletedField = NoExtraProperties<Readonly<{
     }>>;
 }>>;
 
-type GenericDb<MetadataPart> = NoExtraProperties<{
+type GenericDb<MetadataPart> = NoExtraProps<{
     version: string;
     accounts: Record<AccountConfig["login"],
-        Readonly<FsDbDataContainer & FsDbDataContainerDeletedField & NoExtraProperties<{ metadata: MetadataPart }>>>;
+        Readonly<FsDbDataContainer & FsDbDataContainerDeletedField & NoExtraProps<{ metadata: MetadataPart }>>>;
 }>;
 
-type ProtonMetadataPart = NoExtraProperties<{
+type ProtonMetadataPart = NoExtraProps<{
     latestEventId: string; // Rest.Model.Event["EventID"]
 }>;
 
-export type FsDb = NoExtraProperties<Partial<StoreModel.StoreEntity> & GenericDb<ProtonMetadataPart>>;
+export type FsDb = NoExtraProps<Partial<StoreModel.StoreEntity> & GenericDb<ProtonMetadataPart>>;
 
-export type FsDbAccount = NoExtraProperties<FsDb["accounts"][string]>;
+export type FsDbAccount = NoExtraProps<FsDb["accounts"][string]>;
 
-export type DbAccountPk = NoExtraProperties<{
+export type DbAccountPk = NoExtraProps<{
     login: string;
 }>;
 
-export type IndexableMail = NoExtraProperties<Pick<Mail, keyof Pick<Mail,
+export type IndexableMail = NoExtraProps<Pick<Mail, keyof Pick<Mail,
     | "pk"
     | "subject"
     | "body"
@@ -165,9 +164,9 @@ export type IndexableMail = NoExtraProperties<Pick<Mail, keyof Pick<Mail,
     | "bccRecipients"
     | "attachments">>>;
 
-export type IndexableMailId = NoExtraProperties<IndexableMail["pk"]>;
+export type IndexableMailId = NoExtraProps<IndexableMail["pk"]>;
 
-export type MailsIndex = NoExtraProperties<{
+export type MailsIndex = NoExtraProps<{
     add: (mail: IndexableMail) => void;
     remove: (id: IndexableMailId) => void;
     search: (q: string) => {

@@ -1,11 +1,11 @@
 import escapeStringRegexp from "escape-string-regexp";
 import fs from "fs";
-import mkdirp from "mkdirp";
+import fsExtra from "fs-extra";
 import path from "path";
 
 import {BINARY_NAME} from "src/shared/constants";
+import {CONSOLE_LOG, execShell} from "scripts/lib";
 import {DISABLE_SANDBOX_ARGS_LINE, build, ensureFileHasNoSuidBit} from "scripts/electron-builder/lib";
-import {LOG, LOG_LEVELS, execShell} from "scripts/lib";
 
 // TODO pass destination directory instead of hardcoding it ("--appimage-extract" doesn't support destination parameter at the moment)
 const extractedImageFolderName = "squashfs-root";
@@ -28,10 +28,7 @@ function addCommandLineArgs({packageDir}: { packageDir: string }): void {
         throw new Error(`Failed to patch content of the "${shFile}" file`);
     }
 
-    LOG(
-        LOG_LEVELS.title(`Writing ${LOG_LEVELS.value(shFile)} file with content:`),
-        LOG_LEVELS.value(shContentPatched),
-    );
+    CONSOLE_LOG(`Writing ${shFile} file with content:`, shContentPatched);
 
     fs.writeFileSync(shFile, shContentPatched);
 }
@@ -43,7 +40,7 @@ async function unpack({packageFile}: { packageFile: string }): Promise<{ package
         extractedImageFolderName,
     );
 
-    await execShell(["npx", ["rimraf", packageDir]]);
+    await execShell(["npx", ["--no-install", "rimraf", packageDir]]);
     await execShell([packageFile, ["--appimage-extract"], {cwd}]);
 
     return {packageDir};
@@ -56,7 +53,7 @@ async function resolveAppImageTool({packageFile}: { packageFile: string }): Prom
     );
     const cwd = path.dirname(appImageFile);
 
-    mkdirp.sync(cwd);
+    fsExtra.ensureDirSync(cwd);
 
     // TODO cache the "appimagetool"
     await execShell([
@@ -88,7 +85,7 @@ async function packAndCleanup({packageFile, packageDir}: { packageFile: string; 
 
     await execShell(["rm", ["--force", packageFile]]);
     await execShell([appImageTool, ["-n", "--comp", "xz", packageDir, packageFile]]);
-    await execShell(["npx", ["rimraf", packageDir]]);
+    await execShell(["npx", ["--no-install", "rimraf", packageDir]]);
 }
 
 async function postProcess({packageFile}: { packageFile: string }): Promise<void> {
@@ -98,11 +95,8 @@ async function postProcess({packageFile}: { packageFile: string }): Promise<void
     await packAndCleanup({packageDir, packageFile});
 }
 
-(async () => {
+(async () => { // eslint-disable-line @typescript-eslint/no-floating-promises
     await postProcess(
         await build("appimage"),
     );
-})().catch((error) => {
-    LOG(error);
-    process.exit(1);
-});
+})();

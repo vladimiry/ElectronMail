@@ -1,11 +1,11 @@
 import {Contact, Context, Conversation, Message} from "src/electron-preload/webview/lib/rest-model/response-entity/mail";
 import {Event} from "src/electron-preload/webview/lib/rest-model/response-entity/event";
 import {Label} from "src/electron-preload/webview/lib/rest-model/response-entity/folder";
-import {NumberBoolean} from "src/electron-preload/webview/lib/rest-model/common";
+import {NumericBoolean} from "src/shared/model/common";
 
 export const SUCCESS_RESPONSE = 1000;
 
-interface Response {
+export interface Response {
     Code: typeof SUCCESS_RESPONSE | number;
 }
 
@@ -36,7 +36,7 @@ export interface MessagesResponse extends Response {
         | "ReplyTo"
         | "ReplyTos"
         | "SpamScore"> &
-        { HasAttachment: NumberBoolean }>;
+        { HasAttachment: NumericBoolean }>;
 }
 
 export interface ContactResponse extends Response {
@@ -53,6 +53,6 @@ export interface LabelsResponse extends Response {
     Labels: Label[];
 }
 
-export type LatestEventResponse = Event["EventID"];
+export type LatestEventResponse = Response & Pick<Event, "EventID">;
 
 export interface EventResponse extends Response, Event {}

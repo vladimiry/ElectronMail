@@ -1,7 +1,7 @@
 import UUID from "pure-uuid";
 import electronLog from "electron-log";
 import {UnionOf} from "@vladimiry/unionize";
-import {concatMap, filter, take} from "rxjs/operators";
+import {concatMap, filter, first} from "rxjs/operators";
 import {pick} from "remeda";
 import {race, throwError, timer} from "rxjs";
 
@@ -49,7 +49,7 @@ async function indexMails(
         IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$.pipe(
             filter(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.is.IndexingResult),
             filter(({payload}) => payload.uid === uid),
-            take(1),
+            first(),
         ),
         timer(timeoutMs).pipe(
             concatMap(() => throwError(new Error(`Failed index emails in ${timeoutMs}ms (mails portions size: ${mails.length})`))),

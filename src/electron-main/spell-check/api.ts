@@ -25,21 +25,24 @@ export async function buildEndpoints(
             await ctx.getSpellCheckController().changeLocale(locale);
 
             setTimeout(async () => {
+                const endpoints = await ctx.deferredEndpoints.promise;
+
                 IPC_MAIN_API_NOTIFICATION$.next(
-                    IPC_MAIN_API_NOTIFICATION_ACTIONS.Locale({
-                        // TODO consider getting data from "getSpellCheckMetadata" endpoint response
-                        locale: ctx.getSpellCheckController().getCurrentLocale(),
-                    }),
+                    IPC_MAIN_API_NOTIFICATION_ACTIONS.Locale(
+                        await endpoints.getSpellCheckMetadata(),
+                    ),
                 );
 
                 IPC_MAIN_API_NOTIFICATION$.next(
                     IPC_MAIN_API_NOTIFICATION_ACTIONS.ConfigUpdated(
-                        await ctx.configStoreQueue.q(async () => {
-                            return ctx.configStore.write({
-                                ...await ctx.configStore.readExisting(),
-                                spellCheckLocale: locale,
-                            });
-                        }),
+                        await ctx.configStoreQueue.q(
+                            async () => {
+                                return ctx.configStore.write({
+                                    ...await ctx.configStore.readExisting(),
+                                    spellCheckLocale: locale,
+                                });
+                            },
+                        ),
                     ),
                 );
             });

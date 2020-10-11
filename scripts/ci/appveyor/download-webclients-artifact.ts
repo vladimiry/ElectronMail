@@ -2,7 +2,7 @@ import path from "path";
 import {pick} from "remeda";
 import {platform} from "os";
 
-import {CWD, LOG, execShell, fetchUrl} from "scripts/lib";
+import {CONSOLE_LOG, CWD, execShell, fetchUrl} from "scripts/lib";
 
 // process.env.APPVEYOR_ACCOUNT_NAME = "vladimiry";
 // process.env.APPVEYOR_PROJECT_SLUG = "electronmail";
@@ -16,7 +16,7 @@ const {
     LINUX_JOB_NAME = "",
 } = process.env;
 
-LOG(
+CONSOLE_LOG(
     JSON.stringify({
         APPVEYOR_ACCOUNT_NAME,
         APPVEYOR_PROJECT_SLUG,
@@ -43,7 +43,7 @@ interface Job {
     status: "success" | unknown;
 }
 
-(async () => {
+(async () => { // eslint-disable-line @typescript-eslint/no-floating-promises
     const projectResponse = await fetchUrl([
         `https://ci.appveyor.com/api/projects/${APPVEYOR_ACCOUNT_NAME}/${APPVEYOR_PROJECT_SLUG}`,
         {headers: {"Content-type": "application/json"}},
@@ -76,7 +76,4 @@ interface Job {
     } else {
         await execShell(["tar", ["-xf", tarFile]]);
     }
-})().catch((error) => {
-    LOG(error);
-    process.exit(1);
-});
+})();

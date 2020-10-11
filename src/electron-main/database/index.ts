@@ -6,12 +6,11 @@ import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/li
 import {KeyBasedPreset} from "fs-json-store-encryption-adapter";
 
 import {DATABASE_VERSION, DB_INSTANCE_PROP_NAME} from "./constants";
-import {DbAccountPk, FsDb, FsDbAccount, MAIL_FOLDER_TYPE, Mail} from "src/shared/model/database";
+import {DbAccountPk, FsDb, FsDbAccount, Mail, SYSTEM_FOLDER_IDENTIFIERS} from "src/shared/model/database";
 import {LogLevel} from "src/shared/model/common";
 import {SerializationAdapter} from "./serialization";
 import {curryFunctionMembers, logLevelEnabled} from "src/shared/util";
 import {hrtimeDuration} from "src/electron-main/util";
-import {resolveAccountFolders} from "./util";
 
 export class Database {
     static buildEmptyDb(): FsDb {
@@ -174,9 +173,9 @@ export class Database {
         account: DeepReadonly<FsDbAccount>,
         includingSpam = false,
     ): { conversationEntries: number; mails: number; folders: number; contacts: number; unread: number } {
-        const hasSpamEmail: (mail: Mail) => boolean = includingSpam
+        const excluding: (mail: Mail) => boolean = includingSpam
             ? (): false => false
-            : this.spamFolderTester(account);
+            : this.buildSpamFolderTester();
 
         return {
             // TODO measure "Object.keys(...).length" speed and then try caching the "length" if needed
@@ -185,11 +184,13 @@ export class Database {
             folders: Object.keys(account.folders).length,
             contacts: Object.keys(account.contacts).length,
             unread: Object.values(account.mails).reduce(
-                (unread, mail) => hasSpamEmail(mail)
-                    ? unread
-                    : unread + Number(mail.unread),
-                0,
-            ),
+                    (unread, mail) => {
+                        return excluding(mail)
+                            ? unread
+                            : unread + Number(mail.unread);
+                    },
+                    0,
+                ),
         };
     }
 
@@ -221,13 +222,9 @@ export class Database {
             .map((login) => ({login}));
     }
 
-    private spamFolderTester(account: DeepReadonly<FsDbAccount>): (mail: Mail) => boolean {
-        const folder = resolveAccountFolders(account).find(({folderType}) => folderType === MAIL_FOLDER_TYPE.SPAM);
-        const mailFolderId = folder && folder.mailFolderId;
-        const result: ReturnType<typeof Database.prototype.spamFolderTester> = typeof mailFolderId !== "undefined"
-            ? ({mailFolderIds}): boolean => mailFolderIds.includes(mailFolderId)
-            : (): false => false;
-
+    private buildSpamFolderTester(): (mail: Mail) => boolean {
+        const result: ReturnType<typeof Database.prototype.buildSpamFolderTester>
+            = ({mailFolderIds}): boolean => mailFolderIds.includes(SYSTEM_FOLDER_IDENTIFIERS.Spam);
         return result;
     }
 

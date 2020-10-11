@@ -2,7 +2,7 @@ import UUID from "pure-uuid";
 import electronLog from "electron-log";
 import fsExtra from "fs-extra";
 import {Observable, race, throwError, timer} from "rxjs";
-import {concatMap, filter, mergeMap, take, tap} from "rxjs/operators";
+import {concatMap, filter, first, mergeMap, tap} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
 import {
@@ -55,7 +55,8 @@ export async function buildDbExportEndpoints(
                 let skippedIndividualAttachments = 0;
 
                 const promise = (async (): Promise<void> => {
-                    const {timeouts: {attachmentLoadAverage: attachmentLoadAverageTimeoutMs}} = await ctx.config$.pipe(take(1)).toPromise();
+                    const {timeouts: {attachmentLoadAverage: attachmentLoadAverageTimeoutMs}}
+                        = await ctx.config$.pipe(first()).toPromise();
 
                     for (let mailIndex = 0; mailIndex < mailsCount; mailIndex++) {
                         const mail = mails[mailIndex];
@@ -89,7 +90,7 @@ export async function buildDbExportEndpoints(
                                         }
                                         return [{attachments: payload.attachments}];
                                     }),
-                                    take(1),
+                                    first(),
                                     tap(({attachments}) => {
                                         loadedAttachments.push(...attachments);
                                     }),

@@ -1,10 +1,9 @@
 import fastGlob from "fast-glob";
 import fs from "fs";
 import fsExtra from "fs-extra";
-import mkdirp from "mkdirp";
 import path from "path";
 
-import {CWD, LOG, LOG_LEVELS, execShell} from "scripts/lib";
+import {CONSOLE_LOG, CWD, execShell} from "scripts/lib";
 import {Locale} from "src/shared/model/common";
 import {normalizeLocale, sanitizeFastGlobPattern} from "src/shared/util";
 
@@ -85,7 +84,7 @@ async function prepareDictionaries(): Promise<Map<Locale, Dictionary>> {
             );
 
             if (String(locale.split("_").pop()).length > 2) {
-                LOG(LOG_LEVELS.warning(`Skipping ${LOG_LEVELS.value(locale)} dictionary`));
+                CONSOLE_LOG(`Skipping ${locale} dictionary`);
                 continue;
             }
 
@@ -101,7 +100,7 @@ async function prepareDictionaries(): Promise<Map<Locale, Dictionary>> {
             });
         }
 
-        mkdirp.sync(outcomeDir);
+        fsExtra.ensureDirSync(outcomeDir);
 
         for (const {locale, aff, dic, license} of resolvedDictionaries) {
             const dest: Unpacked<typeof resolvedDictionaries> & { license: string } = {
@@ -141,9 +140,7 @@ async function prepareDictionaries(): Promise<Map<Locale, Dictionary>> {
         dictionary.files.push(file);
     }
 
-    LOG(LOG_LEVELS.title(
-        `Prepared ${LOG_LEVELS.value(String(files.length))} dictionary files of ${LOG_LEVELS.value(String(result.size))} locales.`,
-    ));
+    CONSOLE_LOG(`Prepared ${String(files.length)} dictionary files of ${String(result.size)} locales.`);
 
     return result;
 }
@@ -151,11 +148,9 @@ async function prepareDictionaries(): Promise<Map<Locale, Dictionary>> {
 export async function copyDictionaryFilesTo(destDir: string): Promise<void> {
     const dictionaries = await prepareDictionaries();
 
-    LOG(LOG_LEVELS.title(
-        `Copying files of ${LOG_LEVELS.value(String(dictionaries.size))} dictionaries to ${LOG_LEVELS.value(destDir)} directory:`,
-    ));
+    CONSOLE_LOG(`Copying files of ${String(dictionaries.size)} dictionaries to ${destDir} directory:`);
 
-    mkdirp.sync(destDir);
+    fsExtra.ensureDirSync(destDir);
 
     for (const dictionary of dictionaries.values()) {
         for (const file of dictionary.files) {
@@ -163,7 +158,7 @@ export async function copyDictionaryFilesTo(destDir: string): Promise<void> {
                 file,
                 path.join(destDir, path.basename(file)),
             );
-            LOG(LOG_LEVELS.value(file));
+            CONSOLE_LOG(file);
         }
     }
 }

@@ -1,11 +1,10 @@
 import fs from "fs";
 import fsExtra from "fs-extra";
-import mkdirp from "mkdirp";
 import os from "os";
 import path from "path";
 import {promisify} from "util";
 
-import {CWD, LOG, LOG_LEVELS, execShell, fetchUrl} from "scripts/lib";
+import {CONSOLE_LOG, CWD, execShell, fetchUrl} from "scripts/lib";
 
 const SERVICE_NAME = "wormhole-william";
 const SERVICE_VERSION = "1.0.4";
@@ -41,9 +40,7 @@ async function resolveCommand(): Promise<{ command: string }> {
     };
 
     if (await fsExtra.pathExists(binaryFile)) {
-        LOG(
-            LOG_LEVELS.title(`Binary ${LOG_LEVELS.value(binaryFile)} exists`),
-        );
+        CONSOLE_LOG(`Binary ${binaryFile} exists`);
         return returnExecutableCommand();
     }
 
@@ -51,7 +48,7 @@ async function resolveCommand(): Promise<{ command: string }> {
         const url = `${SERVICE_BINARY_DOWNLOAD_URL_PREFIX}/${path.basename(binaryFile)}`;
         const response = await fetchUrl([url]);
 
-        mkdirp.sync(path.dirname(binaryFile));
+        fsExtra.ensureDirSync(path.dirname(binaryFile));
         await promisify(fs.writeFile)(binaryFile, await response.buffer());
 
         if (!(await fsExtra.pathExists(binaryFile))) {
@@ -75,12 +72,9 @@ async function uploadFileArg(): Promise<{ downloadCodePhrase: string }> {
     return {downloadCodePhrase};
 }
 
-(async () => {
+(async () => { // eslint-disable-line @typescript-eslint/no-floating-promises
     if (ACTION_TYPE_ARG !== "upload") {
-        throw new Error(`Unsupported action type: ${LOG_LEVELS.value(ACTION_TYPE_ARG)}`);
+        throw new Error(`Unsupported action type: ${ACTION_TYPE_ARG}`);
     }
     await uploadFileArg();
-})().catch((error) => {
-    LOG(error);
-    process.exit(1);
-});
+})();

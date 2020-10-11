@@ -1,13 +1,13 @@
 import {LoginFieldContainer} from "src/shared/model/container";
-import {ONE_SECOND_MS} from "src/shared/constants";
+import {
+    ONE_SECOND_MS,
+    RUNTIME_ENV_E2E_PROTONMAIL_2FA_CODE,
+    RUNTIME_ENV_E2E_PROTONMAIL_LOGIN,
+    RUNTIME_ENV_E2E_PROTONMAIL_PASSWORD,
+    RUNTIME_ENV_E2E_PROTONMAIL_UNREAD_MIN
+} from "src/shared/constants";
 import {accountBadgeCssSelector} from "src/e2e/lib";
 import {initApp, test} from "./workflow";
-
-// protonmail account to login during e2e tests running
-const RUNTIME_ENV_E2E_PROTONMAIL_LOGIN = `ELECTRON_MAIL_E2E_PROTONMAIL_LOGIN`;
-const RUNTIME_ENV_E2E_PROTONMAIL_PASSWORD = `ELECTRON_MAIL_E2E_PROTONMAIL_PASSWORD`;
-const RUNTIME_ENV_E2E_PROTONMAIL_2FA_CODE = `ELECTRON_MAIL_E2E_PROTONMAIL_2FA_CODE`;
-const RUNTIME_ENV_E2E_PROTONMAIL_UNREAD_MIN = `ELECTRON_MAIL_E2E_PROTONMAIL_UNREAD_MIN`;
 
 for (const {login, password, twoFactorCode, unread} of ([
     {

@@ -8,9 +8,8 @@ import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
 import {DB_VIEW_MAIL_DATA_PK_ATTR_NAME, DB_VIEW_MAIL_SELECTED_CLASS_NAME} from "src/web/browser-window/app/_db-view/const";
 import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
 import {Folder, Mail} from "src/shared/model/database/view";
+import {LABEL_TYPE, SYSTEM_FOLDER_IDENTIFIERS} from "src/shared/model/database";
 import {MailsBundleKey, State} from "src/web/browser-window/app/store/reducers/db-view";
-import {PROTONMAIL_MAILBOX_IDENTIFIERS} from "src/shared/model/database";
-import {VIRTUAL_UNREAD_FOLDER_TYPE} from "src/shared/constants";
 
 // TODO read "electron-mail-db-view-mail" from the DbViewMailComponent.selector property
 const mailComponentTagName = "electron-mail-db-view-mail".toUpperCase();
@@ -151,20 +150,19 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
 
     moveToFolders$: Observable<Folder[]> = (
         () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
-            const excludePks: ReadonlySet<Folder["pk"]> = new Set([
-                PROTONMAIL_MAILBOX_IDENTIFIERS["All Drafts"],
-                PROTONMAIL_MAILBOX_IDENTIFIERS["All Sent"],
-                PROTONMAIL_MAILBOX_IDENTIFIERS["All Mail"],
-                PROTONMAIL_MAILBOX_IDENTIFIERS.Search,
-                PROTONMAIL_MAILBOX_IDENTIFIERS.Label,
+            const excludeIds: ReadonlySet<Folder["id"]> = new Set([
+                SYSTEM_FOLDER_IDENTIFIERS["Virtual Unread"],
+                SYSTEM_FOLDER_IDENTIFIERS["All Drafts"],
+                SYSTEM_FOLDER_IDENTIFIERS["All Sent"],
+                SYSTEM_FOLDER_IDENTIFIERS["All Mail"],
+                SYSTEM_FOLDER_IDENTIFIERS.Search,
+                SYSTEM_FOLDER_IDENTIFIERS.Label,
             ]);
-            const staticFilter = (item: Folder): boolean => {
+            const staticFilter = ({id, type}: Folder): boolean => {
                 return (
-                    item.exclusive > 0
+                    type === LABEL_TYPE.MESSAGE_FOLDER
                     &&
-                    !excludePks.has(item.pk)
-                    &&
-                    item.mailFolderId !== VIRTUAL_UNREAD_FOLDER_TYPE
+                    !excludeIds.has(id)
                 );
             };
             return combineLatest([
@@ -180,10 +178,10 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
                 ),
             ]).pipe(
                 map(([items, selectedFolderData]) => {
-                    const excludeFolderPk = this.mailsBundleKey === "searchMailsBundle"
+                    const excludeFolderId = this.mailsBundleKey === "searchMailsBundle"
                         ? null // no excluding for the full-text search result lit
-                        : selectedFolderData?.pk;
-                    return items.filter(({pk}) => pk !== excludeFolderPk);
+                        : selectedFolderData?.id;
+                    return items.filter(({id}) => id !== excludeFolderId);
                 }),
             );
         }

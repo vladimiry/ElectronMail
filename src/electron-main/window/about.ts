@@ -1,6 +1,7 @@
 import _logger from "electron-log";
 import sanitizeHtml from "sanitize-html";
 import {BrowserWindow} from "electron";
+import {first} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";
@@ -97,7 +98,7 @@ export async function showAboutBrowserWindow(ctx: Context): Promise<BrowserWindo
         return exitingBrowserWindow;
     }
 
-    const {zoomFactor} = await ctx.configStore.readExisting();
+    const {zoomFactor} = await ctx.config$.pipe(first()).toPromise();
     const windowSizeFactor = zoomFactor > 1 && zoomFactor < 3
         ? zoomFactor
         : 1;

@@ -11,11 +11,13 @@ import {
 } from "@angular/core";
 import {Observable, ReplaySubject, Subject, Subscription, combineLatest, race, timer} from "rxjs";
 import {Store, select} from "@ngrx/store";
+import {URL} from "@cliqz/url-parser";
 import {
     debounceTime,
     delayWhen,
     distinctUntilChanged,
     filter,
+    first,
     map,
     mergeMap,
     pairwise,
@@ -124,7 +126,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     ngOnInit(): void {
         this.subscription.add(
             this.webViewsState.primary.domReady$.pipe(
-                take(1),
+                first(),
             ).subscribe((webView) => {
                 this.onPrimaryViewLoadedOnce(webView);
             }),
@@ -142,7 +144,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                 // TODO move subscribe handler logic to "_accounts/*.service"
                 .subscribe(([, {accountConfig}]) => {
                     (async () => {
-                        const project = "WebClient";
+                        const project = "proton-mail";
                         const {primary: state} = this.webViewsState;
                         const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, project);
                         const key = {login: accountConfig.login, apiEndpointOrigin: new URL(parsedEntryUrl.entryApiUrl).origin} as const;
@@ -251,7 +253,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                             throw new Error(`"persistentSession" value is supposed to be "false" here`);
                         }
 
-                        const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, "WebClient");
+                        const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, "proton-mail");
                         const key = {login: accountConfig.login, apiEndpointOrigin: new URL(parsedEntryUrl.entryApiUrl).origin} as const;
 
                         await this.api.ipcMainClient()("resetSavedProtonSession")(key);
@@ -299,7 +301,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                 withLatestFrom(this.account$),
             ).subscribe(([[loggedIn, persistentSession], {accountConfig}]) => {
                 (async () => {
-                    const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, "WebClient");
+                    const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, "proton-mail");
                     const key = {login: accountConfig.login, apiEndpointOrigin: new URL(parsedEntryUrl.entryApiUrl).origin} as const;
 
                     if (!persistentSession) {
@@ -307,8 +309,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     }
 
                     if (!loggedIn) {
-                        // TODO also reset the session reset if loggedIn toggled: true => false
-                        //      and page is not calendar/settings/contacts page, ie webclient page
+                        // TODO reset the session if logged-in value toggled "true => false" and page the page is "proton-mail"
                         return;
                     }
 
@@ -399,7 +400,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
             ]);
 
             webViews$
-                .pipe(take(1))
+                .pipe(first())
                 .subscribe((webViews) => {
                     if (!webViews) {
                         return;

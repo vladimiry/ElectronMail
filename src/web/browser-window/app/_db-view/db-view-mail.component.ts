@@ -57,7 +57,7 @@ export class DbViewMailComponent {
         ).join(" ");
     }
 
-    trackFolderByPk(...[, {pk}]: readonly [number, View.Folder]): View.Folder["pk"] {
-        return pk;
+    trackFolder(...[, {id}]: readonly [number, View.Folder]): View.Folder["id"] {
+        return id;
     }
 }

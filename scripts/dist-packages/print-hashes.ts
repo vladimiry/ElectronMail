@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import {createHash} from "crypto";
 
-import {LOG, LOG_LEVELS} from "scripts/lib";
+import {CONSOLE_LOG} from "scripts/lib";
 import {listInstallationPackageFiles} from "./lib";
 
 const [, , DIST_DIRECTORY] = process.argv as [null, null, string];
@@ -20,25 +20,13 @@ async function calculateHash(file: string, alg: string): Promise<string> {
     });
 }
 
-(async () => {
+(async () => { // eslint-disable-line @typescript-eslint/no-floating-promises
     const files = await listInstallationPackageFiles(DIST_DIRECTORY);
 
-    LOG(
-        LOG_LEVELS.title(
-            `Hashing ${LOG_LEVELS.value(String(files.length))} package's located in ${LOG_LEVELS.value(DIST_DIRECTORY)} directory:`,
-        ),
-    );
+    CONSOLE_LOG(`Hashing ${String(files.length)} package's located in ${DIST_DIRECTORY} directory:`);
 
     for (const file of files) {
         const hash = await calculateHash(file, hashAlgorithm);
-
-        LOG(
-            LOG_LEVELS.title(
-                `${LOG_LEVELS.value(path.basename(file))} [${hashAlgorithm}]: ${LOG_LEVELS.value(hash)}`,
-            ),
-        );
+        CONSOLE_LOG(`${path.basename(file)} [${hashAlgorithm}]: ${hash}`);
     }
-})().catch((error) => {
-    LOG(error);
-    process.exit(1);
-});
+})();

@@ -20,7 +20,7 @@ import {
 } from "rxjs/operators";
 import {serializeError} from "serialize-error";
 
-import {ACCOUNTS_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
+import {ACCOUNTS_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
@@ -47,18 +47,12 @@ const pingOnlineStatusEverySecond$ = timer(0, ONE_SECOND_MS).pipe(
 
 @Injectable()
 export class AccountsEffects {
-    private static generateNotificationsStateResetAction(
-        login: string,
-    ): ReturnType<typeof ACCOUNTS_ACTIONS.Patch> {
-        return ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread: 0, loggedIn: false}}});
-    }
-
-    private loginRateLimiterOptions = {
+    private readonly loginRateLimiterOptions = {
         points: 2,
         duration: 10, // seconds value
     } as const
 
-    readonly loginRateLimiter = new RateLimiterMemory(this.loginRateLimiterOptions)
+    private readonly loginRateLimiter = new RateLimiterMemory(this.loginRateLimiterOptions)
 
     syncAccountsConfigs$ = createEffect(
         () => this.actions$.pipe(
@@ -74,17 +68,15 @@ export class AccountsEffects {
             mergeMap(({payload, logger}) => {
                 const {webView, finishPromise} = payload;
                 const {login} = payload.account.accountConfig;
-                const resetNotificationsState$ = of(AccountsEffects.generateNotificationsStateResetAction(login));
                 const dispose$ = from(finishPromise).pipe(tap(() => logger.info("dispose")));
-
-                const parsedEntryUrlBundle = this.core.parseEntryUrl(payload.account.accountConfig, "WebClient");
+                const parsedEntryUrlBundle = this.core.parseEntryUrl(payload.account.accountConfig, "proton-mail");
 
                 logger.info("setup");
 
                 return merge(
                     // app set's app notification channel on webview.dom-ready event
                     // which means user is not logged-in yet at this moment, so resetting the state
-                    resetNotificationsState$,
+                    of(this.accountsService.generateNotificationsStateResetAction({login})),
 
                     this.api.webViewClient(webView, {finishPromise}).pipe(
                         mergeMap((webViewClient) => {
@@ -181,7 +173,7 @@ export class AccountsEffects {
                         select(OptionsSelectors.FEATURED.mainProcessNotification),
                         filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbPatchAccount),
                         filter(({payload: {key}}) => key.login === login),
-                        mergeMap(({payload: {stat: {unread}}}) => of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread}}}))),
+                        mergeMap(({payload}) => of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread: payload.stat.unread}}}))),
                     ),
                     createEffect(
                         () => this.actions$.pipe(
@@ -293,6 +285,7 @@ export class AccountsEffects {
                                                 }),
                                             ),
                                         ),
+                                        catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                                         finalize(() => {
                                             this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: false}}));
                                         }),
@@ -324,7 +317,7 @@ export class AccountsEffects {
                 const {accountConfig, notifications} = account;
                 const {login, credentials} = accountConfig;
                 const {type: pageType, skipLoginDelayLogic} = notifications.pageType;
-                const resetNotificationsState$ = of(AccountsEffects.generateNotificationsStateResetAction(login));
+                const resetNotificationsState$ = of(this.accountsService.generateNotificationsStateResetAction({login}));
                 const zoneName = logger.zoneName();
 
                 // TODO improve login submitting looping prevention

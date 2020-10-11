@@ -17,7 +17,7 @@ export const DEFAULT_WEB_PREFERENCES_KEYS = Object.freeze([
     "enableRemoteModule",
 ] as const);
 
-type DefaultWebPreferences = Readonly<NoExtraProperties<Pick<Required<WebPreferences>, typeof DEFAULT_WEB_PREFERENCES_KEYS[number]>>>;
+type DefaultWebPreferences = Readonly<NoExtraProps<Pick<Required<WebPreferences>, typeof DEFAULT_WEB_PREFERENCES_KEYS[number]>>>;
 
 export const DEFAULT_WEB_PREFERENCES: DefaultWebPreferences = Object.freeze<DefaultWebPreferences>(
     {

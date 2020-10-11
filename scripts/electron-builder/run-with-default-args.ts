@@ -1,5 +1,5 @@
 import {ARTIFACT_NAME_POSTFIX_ENV_VAR_NAME} from "scripts/const";
-import {LOG, execShell} from "scripts/lib";
+import {execShell} from "scripts/lib";
 
 // https://nodejs.org/en/knowledge/command-line/how-to-parse-command-line-arguments/
 const [
@@ -8,7 +8,7 @@ const [
     ...args
 ] = process.argv;
 
-(async () => {
+(async () => { // eslint-disable-line @typescript-eslint/no-floating-promises
     await execShell([
         "npx",
         ["electron-builder", ...args],
@@ -19,7 +19,4 @@ const [
             },
         },
     ]);
-})().catch((error) => {
-    LOG(error);
-    process.exit(1);
-});
+})();

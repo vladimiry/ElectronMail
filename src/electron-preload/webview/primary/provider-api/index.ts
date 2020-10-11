@@ -108,7 +108,7 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                         );
                         if (cachedModel?.value) {
                             assertTypeOf(
-                                {value: cachedModel?.value.ViewMode, expectedType: "number"},
+                                {value: cachedModel.value.ViewMode, expectedType: "number"},
                                 `Invalid "mail settings model" detected`,
                             );
                             return [cachedModel.value];

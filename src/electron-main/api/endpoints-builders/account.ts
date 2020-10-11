@@ -81,6 +81,13 @@ export async function buildEndpoints(
                 const account = pickAccountStrict(settings.accounts, {login});
                 const {credentials: existingCredentials} = account;
 
+                const shouldConfigureSession = (
+                    account.entryUrl !== entryUrl
+                    ||
+                    !equals(account.proxy, proxy)
+                );
+                logger.info(JSON.stringify({shouldConfigureSession}));
+
                 account.title = title;
                 account.database = database;
                 account.persistentSession = persistentSession;
@@ -106,14 +113,6 @@ export async function buildEndpoints(
                 account.proxy = proxy;
                 account.loginDelayUntilSelected = loginDelayUntilSelected;
                 account.loginDelaySecondsRange = loginDelaySecondsRange;
-
-                const shouldConfigureSession = (
-                    account.entryUrl !== entryUrl
-                    ||
-                    !equals(account.proxy, entryUrl)
-                );
-
-                logger.info(JSON.stringify({shouldConfigureSession}));
 
                 if (shouldConfigureSession) {
                     await configureSessionByAccount(

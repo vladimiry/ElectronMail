@@ -2,7 +2,6 @@ import ProxyAgent from "proxy-agent";
 import compareVersions from "compare-versions";
 import electronLog from "electron-log";
 import fetch from "node-fetch";
-import {ReposListReleasesResponse} from "@octokit/rest";
 import {app, shell} from "electron";
 import {inspect} from "util";
 import {isWebUri} from "valid-url";
@@ -263,7 +262,13 @@ export async function buildEndpoints(
                     throw new Error(`Update check failed: ${errorMessageData}`);
                 }
 
-                const releases: ReposListReleasesResponse = await response.json();
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                const releases: Array<{
+                    tag_name: string;
+                    published_at: string;
+                    assets: Array<{ name: string }>;
+                }> = await response.json();
+
                 logger.verbose(
                     "updateCheck()",
                     JSON.stringify({

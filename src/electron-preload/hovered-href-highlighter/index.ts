@@ -8,8 +8,8 @@ import {buildLoggerBundle} from "src/electron-preload/util";
 // TODO TS add declaration for "index.scss" and use "ES import" then
 // tslint:disable-next-line:no-var-requires
 const css = require(`to-string-loader!css-loader!sass-loader!./index.scss`);
-// tslint:disable-next-line:no-var-requires
-const {locals: {renderVisibleClass}}: { locals: { renderVisibleClass: string } } = require(`css-loader!sass-loader!./index.scss`);
+
+const renderVisibleClass = "visible";
 
 export class HoveredHrefHighlightElement extends HTMLElement {
     public static readonly tagName = `${PACKAGE_NAME}-hovered-href-highlight`.toLowerCase();

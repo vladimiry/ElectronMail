@@ -144,27 +144,29 @@ export function cssRuleSetUseItems(): RuleSetUseItem[] {
     // tslint:disable:no-var-requires
     // TODO use ES6 import format
     const cssNano = require("cssnano");
-    const customProperties = require("postcss-custom-properties");
     // tslint:enable:no-var-requires
 
     return [
-        "css-loader",
+        {
+            loader: "css-loader",
+            options: {
+                esModule: false,
+            },
+        },
         {
             loader: "postcss-loader",
             options: {
                 sourceMap: false, // TODO handle sourceMap
-                ident: "postcss",
-                plugins: () => {
-                    return [
+                postcssOptions: {
+                    plugins: [
                         postCssUrl(),
-                        customProperties({preserve: true}),
-                        cssNano({
+                        cssNano({ // eslint-disable-line @typescript-eslint/no-unsafe-call
                             autoprefixer: true,
                             discardComments: true,
                             mergeLonghand: false,
                             safe: true,
                         }),
-                    ];
+                    ],
                 },
             },
         },

@@ -8,7 +8,6 @@ import {promisify} from "util";
 
 import {Context} from "src/electron-main/model";
 import {WEB_PROTOCOL_SCHEME} from "src/shared/constants";
-import {resolveOrRejectIfError} from "src/shared/util";
 
 const fsAsync = {
     stat: promisify(fs.stat),
@@ -34,24 +33,21 @@ export function registerStandardSchemes(ctx: Context): void {
 export async function registerWebFolderFileProtocol(ctx: Context, session: Session): Promise<void> {
     const webPath = path.join(ctx.locations.appDir, "./web");
 
-    return new Promise((resolve, reject) => {
-        session.protocol.registerFileProtocol(
-            WEB_PROTOCOL_SCHEME,
-            (request, callback) => {
-                const url = new URL(request.url);
-                const resource = path.normalize(
-                    path.join(webPath, url.host, url.pathname),
-                );
+    session.protocol.registerFileProtocol(
+        WEB_PROTOCOL_SCHEME,
+        (request, callback) => {
+            const url = new URL(request.url);
+            const resource = path.normalize(
+                path.join(webPath, url.host, url.pathname),
+            );
 
-                if (!pathIsInside(resource, webPath)) {
-                    throw new Error(`Forbidden file system resource "${resource}"`);
-                }
+            if (!pathIsInside(resource, webPath)) {
+                throw new Error(`Forbidden file system resource "${resource}"`);
+            }
 
-                callback({path: resource});
-            },
-            resolveOrRejectIfError(resolve, reject),
-        );
-    });
+            callback({path: resource});
+        },
+    );
 }
 
 async function resolveFileSystemResourceLocation(
@@ -89,21 +85,18 @@ export async function registerSessionProtocols(ctx: Context, session: Session): 
     await app.whenReady();
 
     for (const {scheme, directory} of ctx.locations.protocolBundles) {
-        await new Promise((resolve, reject) => {
-            session.protocol.registerBufferProtocol(
-                scheme,
-                async (request, callback) => {
-                    const file = await resolveFileSystemResourceLocation(directory, request);
-                    const data = await fsAsync.readFile(file);
-                    const mimeType = mimeTypes.lookup(path.basename(file));
-                    const result = mimeType
-                        ? {data, mimeType}
-                        : data;
+        session.protocol.registerBufferProtocol(
+            scheme,
+            async (request, callback) => {
+                const file = await resolveFileSystemResourceLocation(directory, request);
+                const data = await fsAsync.readFile(file);
+                const mimeType = mimeTypes.lookup(path.basename(file));
+                const result = mimeType
+                    ? {data, mimeType}
+                    : data;
 
-                    callback(result);
-                },
-                resolveOrRejectIfError(resolve, reject),
-            );
-        });
+                callback(result);
+            },
+        );
     }
 }

@@ -24,7 +24,3 @@ $render-visible-class: "visible";
         }
     }
 }
-
-:export {
-    renderVisibleClass: #{$render-visible-class}, // sass-lint:disable-line no-misspelled-properties trailing-semicolon
-}

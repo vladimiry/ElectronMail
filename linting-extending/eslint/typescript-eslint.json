@@ -5,7 +5,7 @@
   ],
   "rules": {
     "@typescript-eslint/ban-types": [
-      "error",
+      "warn",
       {
         "types": {
           "Omit": "Prefer `Skip` to built-in TS `Omit` type."

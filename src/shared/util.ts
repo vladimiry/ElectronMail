@@ -388,13 +388,3 @@ export const logLevelEnabled: (
 export function sanitizeFastGlobPattern(pattern: string): string {
     return pattern.replace(/\\/g, "/");
 }
-
-export const resolveOrRejectIfError = (resolve: () => void, reject: (error: Error) => void) => {
-    return (error: Error): void => {
-        if (error) {
-            reject(error);
-            return;
-        }
-        resolve();
-    };
-};

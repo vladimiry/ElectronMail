@@ -2,7 +2,6 @@ import fsExtra from "fs-extra";
 import mkdirp from "mkdirp";
 import path from "path";
 import pathIsInside from "path-is-inside";
-import {promisify} from "util";
 
 import {AccountType} from "src/shared/model/account";
 import {CWD, LOG, LOG_LEVELS, execShell} from "scripts/lib";
@@ -107,7 +106,7 @@ async function installDependencies(dir: string) {
 async function clone(accountType: AccountType, dir: string) {
     const {repo, commit} = PROVIDER_REPO[accountType];
 
-    await promisify(mkdirp)(dir);
+    mkdirp.sync(dir);
 
     await execShell(["git", ["clone", repo, "."], {cwd: dir}]);
     await execShell(["git", ["checkout", commit], {cwd: dir}]);

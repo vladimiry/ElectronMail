@@ -688,8 +688,10 @@ test.beforeEach(async (t) => {
     memFsVolume._impl.writeFileSync(path.join(appDir, "web/browser-window/shared-vendor.css"), "");
 
     // reducing work factor in order to speed-up the test process and make it less computing resources consuming
-    encryptionPreset.keyDerivation = {type: "sodium.crypto_pwhash", preset: "mode:interactive|algorithm:default"};
-    encryptionPreset.encryption = {type: "crypto", preset: "algorithm:aes-256-cbc"};
+    (encryptionPreset as import("ts-essentials").Writable<typeof encryptionPreset>).keyDerivation
+        = {type: "sodium.crypto_pwhash", preset: "mode:interactive|algorithm:default"};
+    (encryptionPreset as import("ts-essentials").Writable<typeof encryptionPreset>).encryption
+        = {type: "crypto", preset: "algorithm:aes-256-cbc"};
 
     logger.transports.file = ((msg: any) => {
         logger.transports.console(msg);

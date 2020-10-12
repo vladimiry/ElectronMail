@@ -1,0 +1,13 @@
+diff --git a/node_modules/electron-chromedriver/download-chromedriver.js b/node_modules/electron-chromedriver/download-chromedriver.js
+index 6a02099..f8618f7 100644
+--- a/node_modules/electron-chromedriver/download-chromedriver.js
++++ b/node_modules/electron-chromedriver/download-chromedriver.js
+@@ -2,7 +2,7 @@ const { promises: fs } = require('fs')
+ const path = require('path')
+ const { downloadArtifact } = require('@electron/get')
+ const extractZip = require('extract-zip')
+-const versionToDownload = require('./package').version
++const versionToDownload = require('./../../package').devDependencies.electron;
+ 
+ function download (version) {
+   return downloadArtifact({

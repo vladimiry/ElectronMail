@@ -100,9 +100,10 @@ export class SerializationAdapter {
             this.logger.info("write()");
 
             this.logger.verbose(`"msgpack.encode" start`);
-            const serializedData = Buffer.from(
-                msgpack.encode(data),
-            );
+            const serializedData = (() => {
+                const encoded = msgpack.encode(data);
+                return Buffer.from(encoded.buffer, encoded.byteOffset, encoded.byteLength);
+            })();
             this.logger.verbose(`"msgpack.encode" end`);
 
             const encryptedData = await encryptionAdapter.write(serializedData);

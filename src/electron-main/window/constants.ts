@@ -14,6 +14,6 @@ export const DEFAULT_WEB_PREFERENCES: Readonly<NoExtraProperties<BrowserWindowCo
         //      - "rolling-rate-limiter" module
         //      - "html-to-text" module
         //      - e2e tests preload script
-        // enableRemoteModule: false,
+        enableRemoteModule: true,
     },
 );

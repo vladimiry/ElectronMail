@@ -1,9 +1,3 @@
-// TODO remove the "tslint:disable:await-promise" when Spectron gets proper declaration files, track of the following issues:
-// - https://github.com/DefinitelyTyped/DefinitelyTyped/issues/25186
-// - https://github.com/electron/spectron/issues/358
-
-// tslint:disable:await-promise
-
 import byline from "byline";
 import fs from "fs";
 import path from "path";
@@ -12,11 +6,47 @@ import psTree from "ps-tree";
 import {ExecutionContext} from "ava";
 import {promisify} from "util";
 
-import {ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX} from "src/shared/constants";
-import {CI, ENV, PROJECT_NAME, TestContext, initApp, saveScreenshot, test} from "./workflow";
+import {ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX, ONE_SECOND_MS} from "src/shared/constants";
+import {CI, ENV, PROJECT_NAME, TestContext, initApp, test} from "./workflow";
 import {Config} from "src/shared/model/options";
-import {ONE_SECOND_MS} from "src/shared/constants";
 import {asyncDelay} from "src/shared/util";
+import {saveScreenshot} from "src/e2e/lib";
+
+async function afterEach(t: ExecutionContext<TestContext>): Promise<void> {
+    if (fs.existsSync(t.context.logFilePath)) {
+        await new Promise((resolve, reject) => {
+            const stream = byline.createStream(
+                fs.createReadStream(t.context.logFilePath),
+            );
+            stream.on("data", (_, line = String(_)) => {
+                if (
+                    line.includes("keytar")
+                    ||
+                    (
+                        line.includes("[electron-rpc-api]")
+                        &&
+                        line.includes(`Object has been destroyed: "sender"`)
+                    )
+                    ||
+                    (
+                        line.includes(`failed to resolve window bounds`)
+                        &&
+                        line.includes("Object has been destroyed")
+                    )
+                ) {
+                    return;
+                }
+                t.fail(`App log file error line`);
+            });
+            stream.on("error", reject);
+            stream.on("end", resolve);
+        });
+    }
+
+    // additionally making sure that settings file is actually encrypted by simply scanning it for the raw "login" value
+    const rawSettings = promisify(fs.readFile)(path.join(t.context.userDataDirPath, "settings.bin"));
+    t.true(rawSettings.toString().indexOf(ENV.loginPrefix) === -1);
+}
 
 test.serial("general actions: app start, master password setup, add accounts", async (t) => {
     const app = await initApp(t, {initial: true});
@@ -27,7 +57,6 @@ test.serial("general actions: app start, master password setup, add accounts", a
     await app.login({setup: true, savePassword: false});
 
     await app.addAccount({
-        type: "tutanota",
         entryUrlValue: `${ACCOUNTS_CONFIG_ENTRY_URL_LOCAL_PREFIX}https://mail.tutanota.com`,
     });
 
@@ -73,61 +102,26 @@ if (
 }
 
 test.serial("auto logout", async (t) => {
-    const workflow = await initApp(t, {initial: true});
-    await workflow.login({setup: true, savePassword: false});
-    await workflow.logout();
+    const app = await initApp(t, {initial: true});
+    await app.login({setup: true, savePassword: false});
+    await app.logout();
 
     const configFile = path.join(t.context.userDataDirPath, "config.json");
-    const configFileData: Config = JSON.parse(fs.readFileSync(configFile).toString());
+    const configFileData = JSON.parse(fs.readFileSync(configFile).toString()) as Config;
     const idleTimeLogOutSec = 10;
 
     configFileData.startMinimized = true;
     configFileData.idleTimeLogOutSec = idleTimeLogOutSec;
     fs.writeFileSync(configFile, JSON.stringify(configFileData, null, 2));
 
-    await workflow.login({setup: false, savePassword: false});
+    await app.login({setup: false, savePassword: false});
     await asyncDelay(idleTimeLogOutSec * ONE_SECOND_MS * 1.5);
-    await workflow.loginPageUrlTest("auto-logout");
-    await workflow.destroyApp();
+    await app.loginPageUrlTest("auto-logout");
+
+    await app.destroyApp();
 
     await afterEach(t);
 });
-
-async function afterEach(t: ExecutionContext<TestContext>): Promise<void> {
-    if (fs.existsSync(t.context.logFilePath)) {
-        await new Promise((resolve, reject) => {
-            const stream = byline.createStream(
-                fs.createReadStream(t.context.logFilePath),
-            );
-            stream.on("data", (_, line = String(_)) => {
-                if (
-                    line.includes("keytar")
-                    ||
-                    (
-                        line.includes("[electron-rpc-api]")
-                        &&
-                        line.includes(`Object has been destroyed: "sender"`)
-                    )
-                    ||
-                    (
-                        line.includes(`failed to resolve window bounds`)
-                        &&
-                        line.includes("Object has been destroyed")
-                    )
-                ) {
-                    return;
-                }
-                t.fail(`App log file error line`);
-            });
-            stream.on("error", reject);
-            stream.on("end", resolve);
-        });
-    }
-
-    // additionally making sure that settings file is actually encrypted by simply scanning it for the raw "login" value
-    const rawSettings = promisify(fs.readFile)(path.join(t.context.userDataDirPath, "settings.bin"));
-    t.true(rawSettings.toString().indexOf(ENV.loginPrefix) === -1);
-}
 
 test.beforeEach(async (t) => {
     t.context.testStatus = "initial";
@@ -149,7 +143,7 @@ test.afterEach.always(async (t) => {
     // kill processes to avoid appveyor error during preparing logs for uploading:
     // The process cannot access the file because it is being used by another process: output\e2e\1545563294836\chrome-driver.log
     // HINT: add "- ps: Get-Process" line to appveyor.yml to list the processes
-    const processes: Array<{ pid: number }> = await Promise.all(
+    const processes: Array<{ pid: number }> = await Promise.all( // eslint-disable-line @typescript-eslint/no-unsafe-assignment
         [
             {command: PROJECT_NAME}, {arguments: PROJECT_NAME},
             {command: "node.exe"}, {arguments: "keytar"},
@@ -162,19 +156,13 @@ test.afterEach.always(async (t) => {
             {arguments: "e2e"},
             {arguments: "keytar.node"},
             {arguments: "keytar"},
-        ].map((criteria) => promisify(psNode.lookup)(criteria)),
+        ].map((criteria) => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return
+            return promisify(psNode.lookup)(criteria);
+        }),
     );
-    await (async () => {
-        for (const {pid} of processes) {
-            try {
-                await killSelfAndChildrenProcesses(pid);
-            } catch {
-                // NOOP
-            }
-        }
-    })();
 
-    async function killSelfAndChildrenProcesses(pid: number) {
+    async function killSelfAndChildrenProcesses(pid: number): Promise<void> {
         const processesToKill = [
             ...(await promisify(psTree)(pid)),
             {PID: pid},
@@ -188,4 +176,14 @@ test.afterEach.always(async (t) => {
             }
         }
     }
+
+    await (async (): Promise<void> => {
+        for (const {pid} of processes) {
+            try {
+                await killSelfAndChildrenProcesses(pid);
+            } catch {
+                // NOOP
+            }
+        }
+    })();
 });

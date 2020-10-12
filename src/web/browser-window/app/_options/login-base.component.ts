@@ -1,4 +1,4 @@
-import {AfterViewInit, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren} from "@angular/core";
+import {AfterViewInit, Directive, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren} from "@angular/core";
 import {FormControl, Validators} from "@angular/forms";
 import {Observable, Subject} from "rxjs";
 import {Store, select} from "@ngrx/store";
@@ -9,6 +9,9 @@ import {ONE_SECOND_MS, PACKAGE_NAME} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 
+@Directive()
+// so weird not single-purpose directive huh, https://github.com/angular/angular/issues/30080#issuecomment-539194668
+// tslint:disable-next-line:directive-class-suffix
 export abstract class LoginBaseComponent implements AfterViewInit, OnInit, OnDestroy {
     projectName = PACKAGE_NAME;
 

@@ -79,15 +79,18 @@ export function resolveListId<T extends BaseEntity<IdTuple>>(entity: T): Id {
 
 export function getUserController(): { accessToken: string, user: Rest.Model.User } | null {
     const {tutao} = window;
-    const userController = (
-        tutao
-        &&
-        tutao.logins
-        &&
-        tutao.logins.getUserController
-        &&
-        tutao.logins.getUserController()
-    );
+    const userController = tutao && tutao.logins && (typeof tutao.logins.getUserController ==="function")
+    ? (() => {
+        try {
+            return tutao.logins.getUserController();
+        } catch (error) {
+            if (error.message === "Assertion failed: null") {
+                return null;
+            }
+            throw error;
+        }
+        })()
+        : null;
 
     return userController
         ? userController

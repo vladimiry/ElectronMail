@@ -16,7 +16,7 @@ import {ProtonClientSession} from "src/shared/model/proton";
 import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {State} from "src/web/browser-window/app/store/reducers/root";
 import {WebAccount} from "src/web/browser-window/app/model";
-import {curryFunctionMembers} from "src/shared/util";
+import {curryFunctionMembers, parseUrlOriginWithNullishCheck} from "src/shared/util";
 
 @Injectable()
 export class CoreService {
@@ -68,7 +68,9 @@ export class CoreService {
             .toPromise();
         const loaderId = new UUID(4).format();
         const loaderIdParam = "loader-id";
-        const loaderSrcOrigin = new URL(this.parseEntryUrl(accountConfig, repoType).entryUrl).origin;
+        const loaderSrcOrigin = parseUrlOriginWithNullishCheck(
+            this.parseEntryUrl(accountConfig, repoType).entryUrl,
+        );
         const loaderSrc = `${loaderSrcOrigin}/${WEB_CLIENTS_BLANK_HTML_FILE_NAME}?${loaderIdParam}=${loaderId}`;
         let webView: Electron.WebviewTag | undefined;
 

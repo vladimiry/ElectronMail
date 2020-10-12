@@ -6,7 +6,7 @@ import {AccountConfig} from "src/shared/model/account";
 import {Context} from "src/electron-main/model";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
-import {curryFunctionMembers} from "src/shared/util";
+import {buildUrlOriginsTester, curryFunctionMembers, parseUrlOriginWithNullishCheck, verifyUrlOriginValue} from "src/shared/util";
 import {resolveInitializedSession} from "src/electron-main/session";
 
 const logger = curryFunctionMembers(_logger, "[web-request]");
@@ -70,7 +70,7 @@ function getHeader(
 
 function resolveRequestProxy(
     {requestHeaders, resourceType}: RequestDetails,
-    originsWhitelist: readonly string[],
+    allowedOrigins: readonly string[],
 ): RequestProxy | null {
     const originHeader = (
         (
@@ -92,14 +92,18 @@ function resolveRequestProxy(
     const originValue = (
         originHeader
         &&
-        new URL(originHeader.values[0]).origin
+        originHeader.values.length
+        &&
+        verifyUrlOriginValue(
+            new URL(originHeader.values[0]).origin,
+        )
     );
 
-    if (!originValue || !originHeader) {
+    if (typeof originValue !== "string" || !originValue || !originHeader) {
         return null;
     }
 
-    const originWhitelisted = originsWhitelist.some((originsWhitelistItem) => originValue === originsWhitelistItem);
+    const originWhitelisted = allowedOrigins.some((allowedOrigin) => originValue === allowedOrigin);
 
     return originWhitelisted
         ? {
@@ -114,7 +118,7 @@ function resolveRequestProxy(
 
 function resolveFakeOrigin(requestDetails: RequestDetails): string {
     // protonmail doesn't care much about "origin" value, so we generate the origin from request
-    return new URL(requestDetails.url).origin;
+    return parseUrlOriginWithNullishCheck(requestDetails.url);
 }
 
 function patchResponseHeader(
@@ -239,41 +243,33 @@ export function initCorsTweakingWebRequestListenersByAccount(
         throw new Error(`Failed to resolve the "web-client" bundle location by "${accountEntryApiUrl}" API entry point value`);
     }
 
-    const originsWhitelist: readonly string[] = [
-        new URL(webClient.entryUrl).origin,
-        new URL(accountEntryApiUrl).origin,
+    const allowedOrigins: readonly string[] = [
+        webClient.entryUrl,
+        accountEntryApiUrl,
         ...(
             BUILD_ENVIRONMENT === "development"
-                ? [new URL("devtools://devtools/").origin]
+                ? ["devtools://devtools/"]
                 : []
         ),
-    ].map((origin) => {
-        if (
-            !origin
-            ||
-            // browsers resolve "new URL(...).origin" of custom schemes as "null" string value
-            // example: new URL("webclient://domain.net/blank.html?loader-id=2fb1c580").origin
-            String(origin).trim() === "null"
-        ) {
-            throw new Error(`Unexpected "origin" value detected (value: "${String(origin)}")`);
-        }
-        return origin;
-    });
+    ].map(parseUrlOriginWithNullishCheck);
+
+    const verifyUrlAccess = buildUrlOriginsTester(allowedOrigins);
 
     // according to electron docs "only the last attached listener will be used", so no need to unsubscribe previously registered handlers
     session.webRequest.onBeforeRequest(
         {urls: []},
         (details, callback) => {
             const {url} = details;
-            const urlAccessGranted = originsWhitelist.some((originsWhitelistItem) => new URL(url).origin === originsWhitelistItem);
 
-            if (!urlAccessGranted) {
-                const message = `Access to the "${url}" URL has been forbidden. Allowed origins: ${JSON.stringify(originsWhitelist)}.`;
+            if (!verifyUrlAccess(url)) {
+                const message = `Access to the "${url}" URL has been forbidden. Allowed origins: ${JSON.stringify(allowedOrigins)}.`;
 
-                logger.error(message);
-                IPC_MAIN_API_NOTIFICATION$.next(
-                    IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({message}),
-                );
+                setTimeout(() => { // can be asynchronous (speeds up callback resolving)
+                    logger.error(message);
+                    IPC_MAIN_API_NOTIFICATION$.next(
+                        IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({message}),
+                    );
+                });
 
                 return callback({cancel: true});
             }
@@ -287,7 +283,7 @@ export function initCorsTweakingWebRequestListenersByAccount(
         {urls: []},
         (details, callback) => {
             const {requestHeaders} = details;
-            const requestProxy = resolveRequestProxy(details, originsWhitelist);
+            const requestProxy = resolveRequestProxy(details, allowedOrigins);
 
             if (requestProxy) {
                 const {name} = getHeader(requestHeaders, HEADERS.request.origin) || {name: HEADERS.request.origin};

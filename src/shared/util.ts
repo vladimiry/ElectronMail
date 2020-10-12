@@ -549,3 +549,42 @@ export const assertTypeOf = (
         throw new Error(`${errorMessagePrefix} ${JSON.stringify({actualType, expectedType: expectedType})}`);
     }
 };
+
+export const verifyUrlOriginValue = (origin: string): string | never => {
+    if (
+        !origin
+        ||
+        // browsers resolve "new URL(...).origin" of custom schemes as "null" string value
+        // example: new URL("webclient://domain.net/blank.html?loader-id=2fb1c580").origin
+        String(origin).trim() === "null"
+    ) {
+        throw new Error(`Unexpected "origin" value detected (value: "${JSON.stringify({origin: String(origin)})}")`);
+    }
+
+    return origin;
+};
+
+export const parseUrlOriginWithNullishCheck = (url: string): string | never => {
+    const {origin} = new URL(url);
+
+    verifyUrlOriginValue(origin);
+
+    return origin;
+};
+
+export const buildUrlOriginsTester: (
+    // array item can be either url or already parsed origin (mixed array item types allowed)
+    // since each array item value get parsed/verified by the function
+    allowedOriginsOrUrls: readonly string[],
+) => (url: string) => boolean = (() => {
+    const result: typeof buildUrlOriginsTester = (allowedOriginsOrUrls) => {
+        const allowedOrigins = allowedOriginsOrUrls.map(parseUrlOriginWithNullishCheck);
+
+        return (url: string) => {
+            const urlOrigin = parseUrlOriginWithNullishCheck(url);
+            return allowedOrigins.some((allowedOrigin) => urlOrigin === allowedOrigin);
+        };
+    };
+
+    return result;
+})();

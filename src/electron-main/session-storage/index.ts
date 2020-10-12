@@ -7,7 +7,7 @@ import {EncryptionAdapter, KeyBasedPreset} from "fs-json-store-encryption-adapte
 
 import {AccountConfig, AccountPersistentSession, AccountPersistentSessionBundle} from "src/shared/model/account";
 import {ApiEndpointOriginFieldContainer, LoginFieldContainer} from "src/shared/model/container";
-import {curryFunctionMembers} from "src/shared/util";
+import {curryFunctionMembers, verifyUrlOriginValue} from "src/shared/util";
 
 export class SessionStorage {
     static emptyInstance(): typeof SessionStorage.prototype.instance {
@@ -52,7 +52,7 @@ export class SessionStorage {
     ): Promise<void> {
         this.logger.info("saveSession()");
         const bundle = this.instance[login] ?? Object.create(null); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-        bundle[apiEndpointOrigin] = session; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+        bundle[verifyUrlOriginValue(apiEndpointOrigin)] = session; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
         this.instance[login] = bundle; // eslint-disable-line @typescript-eslint/no-unsafe-assignment
         await this.save();
     }
@@ -61,6 +61,7 @@ export class SessionStorage {
         {login, apiEndpointOrigin}: LoginFieldContainer & ApiEndpointOriginFieldContainer,
     ): Promise<boolean> {
         this.logger.info("clearSession()");
+        // no need to "verify url origin value" during removing the record ("verifyUrlOriginValue()" calling)
         const bundle = this.instance[login];
         if (bundle && (apiEndpointOrigin in bundle)) {
             delete bundle[apiEndpointOrigin];

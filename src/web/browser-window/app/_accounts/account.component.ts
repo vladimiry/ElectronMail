@@ -40,6 +40,7 @@ import {ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/constants";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount} from "src/web/browser-window/app/model";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
+import {parseUrlOriginWithNullishCheck} from "src/shared/util";
 
 let componentIndex = 0;
 
@@ -147,7 +148,10 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         const project = "proton-mail";
                         const {primary: state} = this.webViewsState;
                         const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, project);
-                        const key = {login: accountConfig.login, apiEndpointOrigin: new URL(parsedEntryUrl.entryApiUrl).origin} as const;
+                        const key = {
+                            login: accountConfig.login,
+                            apiEndpointOrigin: parseUrlOriginWithNullishCheck(parsedEntryUrl.entryApiUrl),
+                        } as const;
                         const initProtonClientSessionAndNavigateArgs = [
                             accountConfig,
                             project,
@@ -302,7 +306,10 @@ export class AccountComponent extends NgChangesObservableComponent implements On
             ).subscribe(([[loggedIn, persistentSession], {accountConfig}]) => {
                 (async () => {
                     const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, "proton-mail");
-                    const key = {login: accountConfig.login, apiEndpointOrigin: new URL(parsedEntryUrl.entryApiUrl).origin} as const;
+                    const key = {
+                        login: accountConfig.login,
+                        apiEndpointOrigin: parseUrlOriginWithNullishCheck(parsedEntryUrl.entryApiUrl),
+                    } as const;
 
                     if (!persistentSession) {
                         return;

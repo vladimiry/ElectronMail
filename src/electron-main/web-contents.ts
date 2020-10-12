@@ -12,7 +12,7 @@ import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {PACKAGE_VERSION} from "src/shared/constants";
 import {PLATFORM} from "src/electron-main/constants";
 import {buildSpellCheckSettingsMenuItems, buildSpellingSuggestionMenuItems} from "src/electron-main/spell-check/menu";
-import {curryFunctionMembers} from "src/shared/util";
+import {buildUrlOriginsTester, curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[web-contents]");
 
@@ -66,7 +66,9 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
     const emptyArray = [] as const;
     const endpoints = await ctx.deferredEndpoints.promise;
     const spellCheckController = ctx.getSpellCheckController();
-    const webViewEntryUrlsWhitelist: readonly string[] = ctx.locations.webClients.map(({entryUrl}) => `${entryUrl}/`);
+    const verifyUrlAccess = buildUrlOriginsTester(
+        ctx.locations.webClients.map(({entryUrl}) => entryUrl),
+    );
 
     app.on("web-contents-created", async (...[, webContents]) => {
         const isFullTextSearchBrowserWindow = ctx.uiContext?.fullTextSearchBrowserWindow?.webContents === webContents;
@@ -256,7 +258,7 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
             logger.error(event.type, preloadPath, error);
         });
         webContents.on("will-attach-webview", (...[event, webPreferences, {src}]) => {
-            if (!webViewEntryUrlsWhitelist.some((allowedPrefix) => src.startsWith(allowedPrefix))) {
+            if (!(verifyUrlAccess(src))) {
                 event.preventDefault();
                 notifyLogAndThrow(`Forbidden "webview.src" value: "${JSON.stringify({src, eventType: event.type})}"`);
             }
@@ -266,7 +268,7 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
         });
         webContents.on("did-attach-webview", (...[, webViewWebContents]) => {
             webViewWebContents.on("will-navigate", (...[willNavigateEvent, src]) => {
-                if (!webViewEntryUrlsWhitelist.some((allowedPrefix) => src.startsWith(allowedPrefix))) {
+                if (!(verifyUrlAccess(src))) {
                     willNavigateEvent.preventDefault();
                     notifyLogAndThrow(`Forbidden "webview.src" value: "${JSON.stringify({src, eventType: willNavigateEvent.type})}"`);
                 }

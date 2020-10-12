@@ -10,6 +10,7 @@ import {Config} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
 import {INITIAL_STORES} from "src/electron-main/constants";
 import {PACKAGE_NAME, PACKAGE_VERSION} from "src/shared/constants";
+import {generateElectronMainTestPrefixedFile} from "src/electron-main/__test__/util";
 
 function buildMocks() { // eslint-disable-line @typescript-eslint/explicit-function-return-type
     return {
@@ -29,13 +30,9 @@ function buildMocks() { // eslint-disable-line @typescript-eslint/explicit-funct
 function buildContext(
     fsImplPatch?: Partial<Store<Config>["fs"]["_impl"]>,
 ): Pick<Context, "configStore"> {
-    const memFsVolume = Fs.MemFs.volume();
-
-    memFsVolume._impl.mkdirpSync(process.cwd());
-
     const configStore = new Store<Config>({
-        fs: memFsVolume,
-        file: "./config.json",
+        fs: Fs.Fs.volume(),
+        file: generateElectronMainTestPrefixedFile("./config.json"),
     });
 
     if (fsImplPatch) {

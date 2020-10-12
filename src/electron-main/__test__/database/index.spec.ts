@@ -3,7 +3,9 @@
 
 import * as EncryptionAdapterBundle from "fs-json-store-encryption-adapter";
 import * as msgpack from "@msgpack/msgpack";
+import fsExtra from "fs-extra";
 import logger from "electron-log";
+import path from "path";
 import randomstring from "randomstring";
 import rewiremock from "rewiremock";
 import sinon from "sinon";
@@ -16,6 +18,7 @@ import {Database} from "src/electron-main/database";
 import {Folder, LABEL_TYPE} from "src/shared/model/database";
 import {INITIAL_STORES} from "src/electron-main/constants";
 import {SerializationAdapter} from "src/electron-main/database/serialization";
+import {generateElectronMainTestPrefixedFile} from "src/electron-main/__test__/util";
 import {validateEntity} from "src/electron-main/database/validation";
 
 logger.transports.console.level = false;
@@ -26,13 +29,12 @@ function buildDatabase(keyResolver?: () => Promise<string>): Database {
         keyResolver = async (): Promise<typeof key> => key;
     }
 
-    const fileFs = Fs.MemFs.volume();
-
-    fileFs._impl.mkdirpSync(process.cwd());
+    const file = generateElectronMainTestPrefixedFile(`./database-${randomstring.generate()}.bin`);
+    fsExtra.ensureDirSync(path.dirname(file));
 
     return new Database(
         {
-            file: `database-${randomstring.generate()}.bin`,
+            file,
             encryption: {
                 keyResolver,
                 presetResolver: async (): Promise<KeyBasedPreset> => {
@@ -40,7 +42,7 @@ function buildDatabase(keyResolver?: () => Promise<string>): Database {
                 },
             },
         },
-        fileFs,
+        Fs.Fs.volume(),
     );
 }
 
@@ -199,7 +201,9 @@ test("wrong encryption key", async (t) => {
 test("nonexistent file", async (t) => {
     const db = buildDatabase();
     if (await db.persisted()) {
-        await new Store({file: db.options.file, fs: db.fileFs}).remove();
+        const file = generateElectronMainTestPrefixedFile(db.options.file);
+        fsExtra.ensureDirSync(path.dirname(file));
+        await new Store({file, fs: db.fileFs}).remove();
     }
     t.false(await db.persisted());
     await t.throwsAsync(db.loadFromFile(), {message: `${db.options.file} does not exist`});

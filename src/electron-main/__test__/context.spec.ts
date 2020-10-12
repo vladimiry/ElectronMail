@@ -1,6 +1,7 @@
 // TODO drop eslint disabling
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
 
+import fsExtra from "fs-extra";
 import path from "path";
 import rewiremock from "rewiremock";
 import sinon from "sinon";
@@ -8,6 +9,7 @@ import test from "ava";
 import {Fs} from "fs-json-store";
 
 import {PACKAGE_NAME, PACKAGE_VERSION} from "src/shared/constants";
+import {generateElectronMainTestPrefixedFile} from "src/electron-main/__test__/util";
 
 const ctxDbProps = [
     "db",
@@ -18,12 +20,11 @@ ctxDbProps.forEach((ctxDbProp) => {
     test.serial(
         `"Context.${ctxDbProp}" resolves encryption key calling "Context.settingsStore.readExisting().databaseEncryptionKey"`,
         async (t) => {
-            const memFsVolume = Fs.MemFs.volume();
-            const memFsPath = process.cwd();
-
-            memFsVolume._impl.mkdirpSync(memFsPath);
-            memFsVolume._impl.mkdirpSync(path.join(memFsPath, "web/browser-window"));
-            memFsVolume._impl.writeFileSync(path.join(memFsPath, "web/browser-window/shared-vendor.css"), "");
+            const storeFs = Fs.Fs.volume();
+            const storeFsBasePath = path.dirname(generateElectronMainTestPrefixedFile("some"));
+            const sharedVendorCssFile = path.join(storeFsBasePath, "./web/browser-window/shared-vendor.css");
+            fsExtra.ensureDirSync(path.dirname(sharedVendorCssFile));
+            fsExtra.writeFileSync(sharedVendorCssFile, "");
 
             const {initContext} = await rewiremock.around(
                 async () => import("src/electron-main/context"),
@@ -31,7 +32,7 @@ ctxDbProps.forEach((ctxDbProp) => {
                     mock(async () => import("electron")).with(
                         {
                             app: {
-                                getPath: sinon.stub().returns(memFsPath),
+                                getPath: sinon.stub().returns(storeFsBasePath),
                                 getName: (): string => PACKAGE_NAME,
                                 getVersion: (): string => PACKAGE_VERSION,
                             },
@@ -41,10 +42,10 @@ ctxDbProps.forEach((ctxDbProp) => {
                 },
             );
             const ctx = initContext({
-                storeFs: memFsVolume,
+                storeFs,
                 paths: {
-                    appDir: memFsPath,
-                    userDataDir: memFsPath,
+                    appDir: storeFsBasePath,
+                    userDataDir: storeFsBasePath,
                 },
             });
 
@@ -72,12 +73,11 @@ ctxDbProps.forEach((ctxDbProp) => {
             "settingsStore.databaseEncryptionKey",
         ].join(" == "),
         async (t) => {
-            const memFsVolume = Fs.MemFs.volume();
-            const memFsPath = process.cwd();
-
-            memFsVolume._impl.mkdirpSync(memFsPath);
-            memFsVolume._impl.mkdirpSync(path.join(memFsPath, "web/browser-window"));
-            memFsVolume._impl.writeFileSync(path.join(memFsPath, "web/browser-window/shared-vendor.css"), "");
+            const storeFs = Fs.Fs.volume();
+            const storeFsBasePath = path.dirname(generateElectronMainTestPrefixedFile("some"));
+            const sharedVendorCssFile = path.join(storeFsBasePath, "./web/browser-window/shared-vendor.css");
+            fsExtra.ensureDirSync(path.dirname(sharedVendorCssFile));
+            fsExtra.writeFileSync(sharedVendorCssFile, "");
 
             const {INITIAL_STORES} = await import("src/electron-main/constants");
             const initialSettings = INITIAL_STORES.settings();
@@ -88,7 +88,7 @@ ctxDbProps.forEach((ctxDbProp) => {
                     mock(async () => import("electron")).with(
                         {
                             app: {
-                                getPath: sinon.stub().returns(memFsPath),
+                                getPath: sinon.stub().returns(storeFsBasePath),
                                 getName: (): string => PACKAGE_NAME,
                                 getVersion: (): string => PACKAGE_VERSION,
                             },
@@ -104,10 +104,10 @@ ctxDbProps.forEach((ctxDbProp) => {
             );
 
             const ctx = initContext({
-                storeFs: memFsVolume,
+                storeFs,
                 paths: {
-                    appDir: memFsPath,
-                    userDataDir: memFsPath,
+                    appDir: storeFsBasePath,
+                    userDataDir: storeFsBasePath,
                 },
             });
 

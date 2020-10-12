@@ -1,7 +1,7 @@
+import assert from "assert";
 // TODO drop eslint disabling
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
-
-import assert from "assert";
+import fsExtra from "fs-extra";
 import logger from "electron-log";
 import path from "path";
 import rewiremock from "rewiremock";
@@ -22,6 +22,7 @@ import {IpcMainApiEndpoints} from "src/shared/api/main";
 import {StatusCodeError} from "src/shared/model/error";
 import {accountPickingPredicate, pickBaseConfigProperties} from "src/shared/util";
 import {buildSettingsAdapter} from "src/electron-main/util";
+import {generateElectronMainTestPrefixedFile} from "src/electron-main/__test__/util";
 
 // TODO split this huge test file to pieces (test endpoints builders or even individual endpoints/methods)
 // TODO "immer" instead of cloning with "..."
@@ -73,11 +74,6 @@ interface TestContext {
 const test = ava as TestInterface<TestContext>;
 
 const OPTIONS = {
-    dataDirectory: path.join(
-        process.cwd(),
-        `electron-mail.spec`,
-        `${path.basename(__filename)}-${Date.now()}`,
-    ),
     masterPassword: "masterPassword123",
 } as const;
 
@@ -593,19 +589,17 @@ test.beforeEach(async (t) => {
         },
     );
 
+    const storeFs = Fs.Fs.volume();
+    const storeFsBasePath = path.dirname(generateElectronMainTestPrefixedFile("some"));
+    const sharedVendorCssFile = path.join(storeFsBasePath, "./app/web/browser-window/shared-vendor.css");
+    fsExtra.ensureDirSync(path.dirname(sharedVendorCssFile));
+    fsExtra.writeFileSync(sharedVendorCssFile, "");
+
     const testName = t.title;
     assert.ok(testName, "test name is not empty");
-    const appDir = path.join(
-        OPTIONS.dataDirectory,
-        `${testName.replace(/[^A-Za-z0-9]/g, "_")}`,
-    );
+    const appDir = path.join(storeFsBasePath, "app");
     const initialStores = {config: INITIAL_STORES.config(), settings: INITIAL_STORES.settings()};
     const {encryptionPreset} = initialStores.config;
-    const memFsVolume = Fs.MemFs.volume();
-
-    memFsVolume._impl.mkdirpSync(process.cwd());
-    memFsVolume._impl.mkdirpSync(path.join(appDir, "web/browser-window"));
-    memFsVolume._impl.writeFileSync(path.join(appDir, "web/browser-window/shared-vendor.css"), "");
 
     // reducing work factor in order to speed-up the test process and make it less computing resources consuming
     (encryptionPreset as import("ts-essentials").Writable<typeof encryptionPreset>).keyDerivation
@@ -636,7 +630,7 @@ test.beforeEach(async (t) => {
             userDataDir: appDir,
             appDir,
         },
-        storeFs: memFsVolume,
+        storeFs,
         initialStores,
     });
 

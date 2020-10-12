@@ -4,12 +4,13 @@
 import rewiremock from "rewiremock";
 import sinon from "sinon";
 import test from "ava";
-import {Fs, Store} from "fs-json-store";
+import {Store} from "fs-json-store";
 
 import {Config} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
 import {INITIAL_STORES} from "src/electron-main/constants";
 import {PACKAGE_NAME, PACKAGE_VERSION} from "src/shared/constants";
+import {generateElectronMainTestPrefixedFile} from "src/electron-main/__test__/util";
 
 function buildMocks(configPatch?: Partial<Config>) { // eslint-disable-line @typescript-eslint/explicit-function-return-type
     const config = INITIAL_STORES.config();
@@ -62,17 +63,10 @@ function buildMocks(configPatch?: Partial<Config>) { // eslint-disable-line @typ
 }
 
 function buildContext(): Pick<Context, "configStore"> {
-    const memFsVolume = Fs.MemFs.volume();
-
-    memFsVolume._impl.mkdirpSync(process.cwd());
-
-    const configStore = new Store<Config>({
-        fs: memFsVolume,
-        file: "./config.json",
-    });
-
     return {
-        configStore,
+        configStore: new Store<Config>({
+            file: generateElectronMainTestPrefixedFile("./config.json"),
+        }),
     };
 }
 

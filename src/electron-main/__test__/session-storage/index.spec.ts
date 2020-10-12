@@ -10,6 +10,7 @@ import {EncryptionAdapter, KeyBasedPreset} from "fs-json-store-encryption-adapte
 import {Fs} from "fs-json-store";
 
 import {INITIAL_STORES} from "src/electron-main/constants";
+import {generateElectronMainTestPrefixedFile} from "src/electron-main/__test__/util";
 
 logger.transports.console.level = false;
 
@@ -19,10 +20,6 @@ async function buildSessionStorage(keyResolver?: () => Promise<string>) {
         const key = INITIAL_STORES.settings().sessionStorageEncryptionKey;
         keyResolver = async (): Promise<typeof key> => key;
     }
-
-    const fileFs = Fs.MemFs.volume();
-
-    fileFs._impl.mkdirpSync(process.cwd());
 
     class MockedEncryptionAdapter extends EncryptionAdapter {}
 
@@ -40,7 +37,7 @@ async function buildSessionStorage(keyResolver?: () => Promise<string>) {
     return {
         sessionStorage: new sessionStorageModule.SessionStorage(
             {
-                file: `database-${randomstring.generate()}.bin`,
+                file: generateElectronMainTestPrefixedFile(`./database-${randomstring.generate()}.bin`),
                 encryption: {
                     keyResolver,
                     presetResolver: async (): Promise<KeyBasedPreset> => {
@@ -48,7 +45,7 @@ async function buildSessionStorage(keyResolver?: () => Promise<string>) {
                     },
                 },
             },
-            fileFs,
+            Fs.Fs.volume(),
         ),
         encryptionAdapterWriteSpy,
     } as const;

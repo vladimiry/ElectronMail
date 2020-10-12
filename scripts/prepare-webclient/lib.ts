@@ -3,7 +3,7 @@ import fsExtra from "fs-extra";
 import path from "path";
 import pathIsInside from "path-is-inside";
 
-import {CONSOLE_LOG, CWD, GIT_CLONE_ABSOLUTE_DIR, execShell, resolveGitCommitInfo} from "scripts/lib";
+import {CONSOLE_LOG, CWD, GIT_CLONE_ABSOLUTE_DIR, execShell, resolveGitCommitInfo, resolveGitOutputBackupDir} from "scripts/lib";
 import {PROVIDER_REPO_MAP, RUNTIME_ENV_CI_PROTON_CLIENTS_ONLY, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/constants";
 
 const reposOnlyFilter: DeepReadonly<{ value: Array<keyof typeof PROVIDER_REPO_MAP>, envVariableName: string }> = (() => {
@@ -62,25 +62,6 @@ async function cleanDestAndMoveToIt({src, dest}: { src: string, dest: string }):
     CONSOLE_LOG(`Moving ${src} to ${dest} (cleaning destination dir before)`);
     await execShell(["npx", ["--no-install", "rimraf", dest]]);
     await fsExtra.move(src, dest);
-}
-
-function resolveBackupDir(
-    {
-        repoType,
-        commit = PROVIDER_REPO_MAP[repoType].commit,
-        suffix,
-    }: {
-        repoType: keyof typeof PROVIDER_REPO_MAP,
-        commit?: string,
-        suffix?: string,
-    },
-): string {
-    return path.join(
-        GIT_CLONE_ABSOLUTE_DIR,
-        "./backup",
-        repoType,
-        `./${commit.substr(0, 7)}${suffix ? ("-" + suffix) : ""}`,
-    );
 }
 
 export async function executeBuildFlow<T extends FolderAsDomainEntry[], O = Unpacked<T>["options"]>(
@@ -143,11 +124,11 @@ export async function executeBuildFlow<T extends FolderAsDomainEntry[], O = Unpa
                 // backup current repo dir since commits don't match
                 await cleanDestAndMoveToIt({
                     src: repoDir,
-                    dest: resolveBackupDir({repoType, commit: repoDirCommit}),
+                    dest: resolveGitOutputBackupDir({repoType, commit: repoDirCommit}),
                 });
                 return true;
             }
-            const existingBackupDir = resolveBackupDir({repoType});
+            const existingBackupDir = resolveGitOutputBackupDir({repoType});
             if (fsExtra.pathExistsSync(existingBackupDir)) { // maybe we have backup-ed it before
                 const src = existingBackupDir;
                 const dest = repoDir;
@@ -172,7 +153,7 @@ export async function executeBuildFlow<T extends FolderAsDomainEntry[], O = Unpa
         // making sure dist dir doesn't exist before executing a new build or taking it from backup
         await execShell(["npx", ["--no-install", "rimraf", repoDistDir]]);
 
-        const repoDistBackupDir = resolveBackupDir({repoType, suffix: `dist-${folderAsDomainEntry.folderNameAsDomain}`});
+        const repoDistBackupDir = resolveGitOutputBackupDir({repoType, suffix: `dist-${folderAsDomainEntry.folderNameAsDomain}`});
 
         if (fsExtra.pathExistsSync(repoDistBackupDir)) { // taking dist from the backup
             const src = repoDistBackupDir;

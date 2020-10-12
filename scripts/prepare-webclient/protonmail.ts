@@ -1,4 +1,3 @@
-import fsExtra from "fs-extra";
 import path from "path";
 
 import {BINARY_NAME, PROVIDER_REPO_MAP, PROVIDER_REPO_NAMES} from "src/shared/constants";
@@ -185,7 +184,6 @@ function resolveWebpackConfigPatchingCode(
             flows: {
                 async install({repoDir}) {
                     await execShell(["npm", ["ci"], {cwd: repoDir}]);
-
                     await execShell([
                         "git",
                         [
@@ -233,53 +231,22 @@ function resolveWebpackConfigPatchingCode(
                         "npm",
                         [
                             "run",
-                            "build",
+                            "bundle",
                             "--",
+                            "--no-lint",
                             "--api", configApiParam,
-                            // "--appMode", "standalone" | "sso" | undefined, // https://github.com/ProtonMail/WebClient/issues/205
                             ...(
                                 repoType === "proton-mail-settings"
                                     ? ["--featureFlags", "sub-folder" /* + " mail-import" */]
                                     : []
                             ),
+                            // eslint-disable-next-line
+                            // see possible "buildMode / appMode" values here: https://github.com/ProtonMail/proton-bundler/blob/e366ff769e770c49f5254ebc8ec0ee28cf389e40/lib/tasks/bundle.js#L64-L92
+                            // related issue: https://github.com/ProtonMail/WebClient/issues/205
+                            // "--buildMode", "standalone" | "sso" | undefined,
                         ],
                         {cwd},
                     ]);
-
-                    await (async () => {
-                        const {stdout} = await execShell([
-                            "npx",
-                            [
-                                "--no-install",
-                                "ts-node",
-                                "-O", `{"module": "commonjs"}`,
-                                "-e", `import {VERSION_PATH} from "./src/app/config"; console.log(VERSION_PATH);`,
-                            ],
-                            {cwd},
-                        ]);
-                        const versionPathParts = path
-                            .normalize(stdout.trim())
-                            .split(path.sep)
-                            .filter((item) => Boolean(item));
-                        if (!versionPathParts.length) {
-                            throw new Error("Failed to resolve version path");
-                        }
-                        if (versionPathParts[0] === PROVIDER_REPO_MAP[repoType].baseDirName) {
-                            // TODO explore VERSION_PATH build arg setting capability rather than dealing with the default value
-                            versionPathParts.shift();
-                        }
-                        const versionOutput = path.join(
-                            cwd,
-                            PROVIDER_REPO_MAP[repoType].repoRelativeDistDir,
-                            ...versionPathParts,
-                        );
-                        fsExtra.ensureDirSync(path.dirname(versionOutput));
-                        await execShell([
-                            "./node_modules/proton-bundler/scripts/createVersionJSON.sh",
-                            ["--output", versionOutput],
-                            {cwd},
-                        ]);
-                    })();
                 },
             },
         });

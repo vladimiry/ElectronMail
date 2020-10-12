@@ -4,12 +4,33 @@ import path from "path";
 import spawnAsync from "@expo/spawn-async";
 import {pick} from "remeda";
 
+import {PROVIDER_REPO_MAP} from "src/shared/constants";
+
 export const CWD = path.resolve(process.cwd());
 
 // eslint-disable-next-line no-console
 export const CONSOLE_LOG = console.log.bind(console);
 
 export const GIT_CLONE_ABSOLUTE_DIR = path.resolve(CWD, "./output/git");
+
+export function resolveGitOutputBackupDir(
+    {
+        repoType,
+        commit = PROVIDER_REPO_MAP[repoType].commit,
+        suffix,
+    }: {
+        repoType: keyof typeof PROVIDER_REPO_MAP,
+        commit?: string,
+        suffix?: string,
+    },
+): string {
+    return path.join(
+        GIT_CLONE_ABSOLUTE_DIR,
+        "./backup",
+        repoType,
+        `./${commit.substr(0, 7)}${suffix ? ("-" + suffix) : ""}`,
+    );
+}
 
 export function formatStreamChunk( // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
     chunk: any, // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
@@ -51,7 +72,7 @@ export async function execShell(
             byline(stdout).on("data", (chunk) => CONSOLE_LOG(formatStreamChunk(chunk)));
         }
         if (stderr) {
-            byline(stderr).on("data", (chunk) => formatStreamChunk(chunk));
+            byline(stderr).on("data", (chunk) => CONSOLE_LOG(formatStreamChunk(chunk)));
         }
     }
 

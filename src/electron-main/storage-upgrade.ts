@@ -512,29 +512,17 @@ export async function upgradeDatabase(db: Database, accounts: Settings["accounts
     // if (Number(db.getVersion()) < 6) { ...
 
     if (Number(db.getVersion()) < 7) {
-        const folderPropsToRemove = ["folderType", "mailFolderId", "exclusive"] as const;
         const folderHandler = (folder: import("src/shared/model/database").Folder): void => {
             // setting "folder.type" prop from the "folder.raw" value
             if (!LABEL_TYPE._.isValidValue(folder.type)) {
-                const exclusiveProp: typeof folderPropsToRemove[2] = "exclusive";
-
-                (folder as Mutable<Pick<typeof folder, "type">>).type = (folder as { [exclusiveProp]?: NumericBoolean }).exclusive === 1
+                (folder as Mutable<Pick<typeof folder, "type">>).type = (folder as { exclusive?: NumericBoolean }).exclusive === 1
                     ? LABEL_TYPE.MESSAGE_FOLDER
                     : LABEL_TYPE.MESSAGE_LABEL;
 
                 needToSave = true;
             }
-            // not removing, so users could revert back to the previous app version
-            // dropping not needed anymore props
-            // {
-            //     type MutableFolder = Record<Exclude<(typeof folderPropsToRemove)[number], keyof typeof folder>, unknown>;
-            //     for (const propToRemove of folderPropsToRemove) {
-            //         if (propToRemove in folder as unknown as MutableFolder) {
-            //             delete (folder as unknown as MutableFolder)[propToRemove];
-            //             needToSave = true;
-            //         }
-            //     }
-            // }
+            // WARN: the unused ["folderType", "mailFolderId", "exclusive"] props might remain in "folder" entity after this database update
+            // we don't remove these props so users could revert back to the previous app version
         };
 
         for (const {account} of db) {

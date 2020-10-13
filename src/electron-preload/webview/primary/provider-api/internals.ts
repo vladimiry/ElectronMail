@@ -232,13 +232,13 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
 
                                             // WARN contexts should be resolved outside of the "useEffect" handler
                                             // TODO validate resolved proton entities (at least test the "typeof" result)
-                                            const api = useApiModule.default();
+                                            const httpApi = useApiModule.default();
                                             const authentication = useAuthenticationModule.default();
                                             const cache = useCacheModule.default();
                                             const history = reactRouterModule.useHistory();
 
                                             useEffect(() => {
-                                                notify({publicScope: {api, authentication, cache, history}});
+                                                notify({publicScope: {httpApi, authentication, cache, history}});
                                                 markAsInitialized();
                                             });
 

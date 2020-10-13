@@ -44,7 +44,7 @@ export type ProviderInternals = ExtendByInitializedBooleanProp<{
     [K in Extract<ProviderInternalsImmediateKeys, "./node_modules/react-components/containers/app/StandardSetup.tsx">]: DefineObservableValue<{
         readonly publicScope: {
             // https://github.com/ProtonMail/react-components/blob/500b9a973ce7347638c11994d809f63299eb5df2/containers/api/ApiProvider.js
-            readonly api: Api
+            readonly httpApi: HttpApi
             // https://github.com/ProtonMail/proton-shared/blob/bb72d8f979504b1b6ec53b3f010d45e61c2f3ecb/lib/helpers/cache.ts
             readonly authentication: { readonly hasSession?: () => boolean }
             // https://github.com/ProtonMail/react-components/blob/500b9a973ce7347638c11994d809f63299eb5df2/containers/cache/Provider.tsx
@@ -70,7 +70,7 @@ export type ProviderInternals = ExtendByInitializedBooleanProp<{
                     senderVerified: EncryptionPreferences["isContactSignatureVerified"]
                     privateKeys: MessageKeys["privateKeys"]
                 }> /* & MessageExtendedWithData */, // full extended message is not added since this method accesses only the listed props
-                api: Api
+                api: HttpApi
             ) => Promise<{ data: Uint8Array }>
         }
     }, (arg: unknown) => import("react").ReactNode>
@@ -94,33 +94,33 @@ export type ProviderInternals = ExtendByInitializedBooleanProp<{
     }
 } & {
     [K in Extract<ProviderInternalsImmediateKeys, "./node_modules/proton-shared/lib/api/labels.ts">]: {
-        readonly get: (type?: RestModel.Label["Type"]) => Promise<RestModel.LabelsResponse>
+        readonly get: (type?: RestModel.Label["Type"]) => HttpApiArg
     }
 } & {
     [K in Extract<ProviderInternalsImmediateKeys, "./node_modules/proton-shared/lib/api/conversations.js">]: {
-        readonly getConversation: (id: RestModel.Conversation["ID"]) => Promise<RestModel.ConversationResponse>
+        readonly getConversation: (id: RestModel.Conversation["ID"]) => HttpApiArg
         readonly queryConversations: (
             params?: RestModel.QueryParams & { LabelID?: Unpacked<RestModel.Conversation["LabelIDs"]> },
-        ) => Promise<RestModel.ConversationsResponse>
+        ) => HttpApiArg
     }
 } & {
     [K in Extract<ProviderInternalsImmediateKeys, "./node_modules/proton-shared/lib/api/messages.js">]: {
-        readonly getMessage: (id: RestModel.Message["ID"]) => Promise<RestModel.MessageResponse>
+        readonly getMessage: (id: RestModel.Message["ID"]) => HttpApiArg
         readonly queryMessageMetadata: (
             params?: RestModel.QueryParams & { LabelID?: Unpacked<RestModel.Message["LabelIDs"]> },
-        ) => Promise<RestModel.MessagesResponse>
-        readonly markMessageAsRead: (ids: ReadonlyArray<RestModel.Message["ID"]>) => Promise<void>
-        readonly labelMessages: (arg: { LabelID: RestModel.Label["ID"]; IDs: ReadonlyArray<RestModel.Message["ID"]> }) => Promise<void>
+        ) => HttpApiArg
+        readonly markMessageAsRead: (ids: ReadonlyArray<RestModel.Message["ID"]>) => HttpApiArg
+        readonly labelMessages: (arg: { LabelID: RestModel.Label["ID"]; IDs: ReadonlyArray<RestModel.Message["ID"]> }) => HttpApiArg
     }
 } & {
     [K in Extract<ProviderInternalsImmediateKeys, "./node_modules/proton-shared/lib/api/contacts.ts">]: {
-        readonly queryContacts: () => Promise<RestModel.ContactsResponse>
-        readonly getContact: (id: RestModel.Contact["ID"]) => Promise<RestModel.ContactResponse>
+        readonly queryContacts: () => HttpApiArg
+        readonly getContact: (id: RestModel.Contact["ID"]) => HttpApiArg
     }
 } & {
     [K in Extract<ProviderInternalsImmediateKeys, "./node_modules/proton-shared/lib/api/events.ts">]: {
-        readonly getEvents: (id: RestModel.Event["EventID"]) => Promise<RestModel.EventResponse>
-        readonly getLatestID: () => Promise<RestModel.LatestEventResponse>
+        readonly getEvents: (id: RestModel.Event["EventID"]) => HttpApiArg
+        readonly getLatestID: () => HttpApiArg
     }
 } & {
     [K in Extract<ProviderInternalsImmediateKeys, "./src/app/helpers/mailboxUrl.ts">]: {
@@ -139,7 +139,7 @@ type PrivateScope = Exclude<Unpacked<ProviderInternals["./src/app/containers/Pag
 
 export type ProviderInternalsLazy = ExtendByInitializedBooleanProp<{
     [K in Extract<ProviderInternalsLazyKeys, "./node_modules/react-components/hooks/useApi.ts">]: {
-        default: () => PublicScope["api"]
+        default: () => PublicScope["httpApi"]
     }
 } & {
     [K in Extract<ProviderInternalsLazyKeys, "./node_modules/react-components/hooks/useAuthentication.ts">]: {
@@ -180,11 +180,49 @@ export type ProviderApi = DeepReadonly<{
         decryptMessageBody: (message: RestModel.Message) => Promise<string>
     }
     constants: ProviderInternals["./node_modules/proton-shared/lib/constants.ts"]["value"],
-    label: ProviderInternals["./node_modules/proton-shared/lib/api/labels.ts"]["value"],
-    conversation: ProviderInternals["./node_modules/proton-shared/lib/api/conversations.js"]["value"],
-    message: ProviderInternals["./node_modules/proton-shared/lib/api/messages.js"]["value"],
-    contact: ProviderInternals["./node_modules/proton-shared/lib/api/contacts.ts"]["value"],
-    events: ProviderInternals["./node_modules/proton-shared/lib/api/events.ts"]["value"],
+    label: {
+        get: (
+            ...args: Parameters<ProviderInternals["./node_modules/proton-shared/lib/api/labels.ts"]["value"]["get"]>
+        ) => Promise<RestModel.LabelsResponse>
+    },
+    conversation: {
+        getConversation: (
+            ...args: Parameters<ProviderInternals["./node_modules/proton-shared/lib/api/conversations.js"]["value"]["getConversation"]>
+        ) => Promise<RestModel.ConversationResponse>
+        queryConversations: (
+            ...args: Parameters<ProviderInternals["./node_modules/proton-shared/lib/api/conversations.js"]["value"]["queryConversations"]>
+        ) => Promise<RestModel.ConversationsResponse>
+    },
+    message: {
+        getMessage: (
+            ...args: Parameters<ProviderInternals["./node_modules/proton-shared/lib/api/messages.js"]["value"]["getMessage"]>
+        ) => Promise<RestModel.MessageResponse>
+        queryMessageMetadata: (
+            ...args: Parameters<ProviderInternals["./node_modules/proton-shared/lib/api/messages.js"]["value"]["queryMessageMetadata"]>
+        ) => Promise<RestModel.MessagesResponse>
+        markMessageAsRead: (
+            ...args: Parameters<ProviderInternals["./node_modules/proton-shared/lib/api/messages.js"]["value"]["markMessageAsRead"]>
+        ) => Promise<void>
+        labelMessages: (
+            ...args: Parameters<ProviderInternals["./node_modules/proton-shared/lib/api/messages.js"]["value"]["labelMessages"]>
+        ) => Promise<void>
+    },
+    contact: {
+        queryContacts: (
+            ...args: Parameters<ProviderInternals["./node_modules/proton-shared/lib/api/contacts.ts"]["value"]["queryContacts"]>
+        ) => Promise<RestModel.ContactsResponse>
+        getContact: (
+            ...args: Parameters<ProviderInternals["./node_modules/proton-shared/lib/api/contacts.ts"]["value"]["getContact"]>
+        ) => Promise<RestModel.ContactResponse>
+    },
+    events: {
+        getEvents: (
+            ...args: Parameters<ProviderInternals["./node_modules/proton-shared/lib/api/events.ts"]["value"]["getEvents"]>
+        ) => Promise<RestModel.EventResponse>
+        getLatestID: (
+            ...args: Parameters<ProviderInternals["./node_modules/proton-shared/lib/api/events.ts"]["value"]["getLatestID"]>
+        ) => Promise<RestModel.LatestEventResponse>
+    },
     attachmentLoader: {
         getDecryptedAttachment: (
             attachment: RestModel.Attachment,
@@ -204,7 +242,12 @@ export type ProviderApi = DeepReadonly<{
 
 export type Cache = { readonly get: <T>(key: string) => T | undefined }
 
-export type Api = <T>(arg: unknown) => T
+export interface HttpApiArg {
+    url: string
+    method: string
+}
+
+export type HttpApi = <T>(arg: HttpApiArg) => Promise<T>
 
 export interface EncryptionPreferences {
     readonly pinnedKeys: readonly unknown[]

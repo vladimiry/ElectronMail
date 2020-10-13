@@ -1,7 +1,7 @@
 import {EMPTY, combineLatest} from "rxjs";
 import {distinctUntilChanged, first, map, mergeMap} from "rxjs/operators";
 
-import {EncryptionPreferences, MessageKeys, ProviderApi} from "./model";
+import {EncryptionPreferences, HttpApi, MessageKeys, ProviderApi} from "./model";
 import {FETCH_NOTIFICATION_SKIP_SYMBOL} from "./const";
 import {Logger} from "src/shared/model/common";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/constants";
@@ -42,8 +42,8 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                     distinctUntilChanged(),
                 );
             return { // TODO set race-based timeout when members of this object get accessed/resolved
-                api$: scope$.pipe(
-                    map(({api}) => api),
+                httpApi$: scope$.pipe(
+                    map(({httpApi}) => httpApi),
                     distinctUntilChanged(),
                 ),
                 authentication$: scope$.pipe(
@@ -78,8 +78,7 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                 )
                 .toPromise();
         };
-        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-        const resolvePublicApi = async () => internalsPublicApi.api$.pipe(first()).toPromise();
+        const resolveHttpApi = async (): Promise<HttpApi> => internalsPublicApi.httpApi$.pipe(first()).toPromise();
         const providerApi: ProviderApi = {
             _custom_: {
                 loggedIn$: combineLatest([
@@ -144,53 +143,53 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
             },
             label: {
                 async get(type) {
-                    return (await resolvePublicApi())(
+                    return (await resolveHttpApi())(
                         internals["./node_modules/proton-shared/lib/api/labels.ts"].value.get(type),
                     );
                 },
             },
             conversation: {
                 async getConversation(id) {
-                    return (await resolvePublicApi())(
+                    return (await resolveHttpApi())(
                         internals["./node_modules/proton-shared/lib/api/conversations.js"].value.getConversation(id),
                     );
                 },
                 async queryConversations(params) {
-                    return (await resolvePublicApi())(
+                    return (await resolveHttpApi())(
                         internals["./node_modules/proton-shared/lib/api/conversations.js"].value.queryConversations(params),
                     );
                 },
             },
             message: {
                 async getMessage(id) {
-                    return (await resolvePublicApi())(
+                    return (await resolveHttpApi())(
                         internals["./node_modules/proton-shared/lib/api/messages.js"].value.getMessage(id),
                     );
                 },
                 async queryMessageMetadata(params) {
-                    return (await resolvePublicApi())(
+                    return (await resolveHttpApi())(
                         internals["./node_modules/proton-shared/lib/api/messages.js"].value.queryMessageMetadata(params),
                     );
                 },
                 async markMessageAsRead(ids) {
-                    return (await resolvePublicApi())(
+                    return (await resolveHttpApi())(
                         internals["./node_modules/proton-shared/lib/api/messages.js"].value.markMessageAsRead(ids),
                     );
                 },
                 async labelMessages(params) {
-                    return (await resolvePublicApi())(
+                    return (await resolveHttpApi())(
                         internals["./node_modules/proton-shared/lib/api/messages.js"].value.labelMessages(params),
                     );
                 },
             },
             contact: {
                 async queryContacts() {
-                    return (await resolvePublicApi())(
+                    return (await resolveHttpApi())(
                         internals["./node_modules/proton-shared/lib/api/contacts.ts"].value.queryContacts(),
                     );
                 },
                 async getContact(id) {
-                    return (await resolvePublicApi())(
+                    return (await resolveHttpApi())(
                         internals["./node_modules/proton-shared/lib/api/contacts.ts"].value.getContact(id),
                     );
                 },
@@ -201,12 +200,13 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                     // the app listens for the "events" api calls to enable reactive syncing scenario
                     // so the api calls explicitly triggered by the app should not be listened to prevent infinity looping code issue
                     const additionParams = {[FETCH_NOTIFICATION_SKIP_SYMBOL]: FETCH_NOTIFICATION_SKIP_SYMBOL};
-                    const finalParams = {...originalParams, ...additionParams};
 
-                    return (await resolvePublicApi())(finalParams);
+                    return (await resolveHttpApi())(
+                        {...originalParams, ...additionParams},
+                    );
                 },
                 async getLatestID() {
-                    return (await resolvePublicApi())(
+                    return (await resolveHttpApi())(
                         internals["./node_modules/proton-shared/lib/api/events.ts"].value.getLatestID(),
                     );
                 },
@@ -246,7 +246,7 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                     const result: ProviderApi["attachmentLoader"]["getDecryptedAttachment"] = async (attachment, message) => {
                         const privateApi = await resolvePrivateApi();
                         const [protonApi, messageKeys, encryptionPreferences] = await Promise.all([
-                            resolvePublicApi(),
+                            resolveHttpApi(),
                             privateApi.getMessageKeys({data: message}),
                             privateApi.getEncryptionPreferences(message.Sender.Address),
                         ]);

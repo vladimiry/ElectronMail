@@ -49,7 +49,7 @@ export async function saveScreenshot(t: ExecutionContext<TestContext>): Promise<
         return;
     }
 
-    if (!t.context.app || !t.context.app.browserWindow) {
+    if (!t.context.app || !t.context.app.browserWindow) { // lgtm [js/unreachable-statement]
         return;
     }
 

@@ -59,7 +59,7 @@ export const WEB_CHUNK_NAMES = {
 export const PROVIDER_REPO: Record<AccountType, { repo: string, version: string; commit: string; }> = {
     tutanota: {
         repo: "https://github.com/tutao/tutanota.git",
-        commit: "43958382a4383a8f85e72a339c8f434640fddc2c",
+        commit: "64121d5a6fbf9f99993480903bfd9252b75642d8",
         version: "3.76.11+",
     },
 };

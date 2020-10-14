@@ -198,7 +198,7 @@ function buildCircle(rad: number, color: string): Bitmap {
 
     ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.arc(bitmap.width - rad, bitmap.height - rad, rad, 0, Math.PI * 2, true);
+    ctx.arc(bitmap.width - rad, bitmap.height - rad, rad, 0, Math.PI * 2, false);
     ctx.closePath();
     ctx.fill();
 

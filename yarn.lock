@@ -5838,23 +5838,17 @@ fs-json-store-encryption-adapter@2.0.0:
     sodium-native "^3.0.1"
     tslib "^1.11.1"
 
-fs-json-store@3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/fs-json-store/-/fs-json-store-3.0.0.tgz#3a05678f263fcbb4bd0511e31ce7506080afb448"
-  integrity sha512-pBTvfgSJAVCEut2uCQ5i5c7/pIGkHB9mkxsxZesRGCP02cvohUk0HQ0xRX7qAjzWLTq0+qozZZnMm7bt8GuRBw==
+fs-json-store@6.0.0-beta2:
+  version "6.0.0-beta2"
+  resolved "https://registry.yarnpkg.com/fs-json-store/-/fs-json-store-6.0.0-beta2.tgz#98625c1b7d19101130383f0353096e79091f5fc1"
+  integrity sha512-AaYkxZdUkUhyuHRtpxh/GwvCjakNImEWYO4UeoRp0lVymQPlZW5winUM2aGCcs+KUGmAaR3lAsR5WazyfJfYTg==
   dependencies:
     combine-errors "^3.0.3"
     fs-no-eperm-anymore "^4.0.0"
     imurmurhash "^0.1.4"
     kind-of "^6.0.3"
-    memfs "^3.1.2"
-    proper-lockfile "^3.2.0"
-    tslib "^1.11.1"
-
-fs-monkey@1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/fs-monkey/-/fs-monkey-1.0.1.tgz#4a82f36944365e619f4454d9fff106553067b781"
-  integrity sha512-fcSa+wyTqZa46iWweI7/ZiUfegOZl0SG8+dltIwFXo7+zYU9J9kpS3NB6pZcSlJdhvIwp81Adx2XhZorncxiaA==
+    proper-lockfile "^4.1.1"
+    tslib "^2.0.3"
 
 fs-no-eperm-anymore@^4.0.0:
   version "4.0.0"
@@ -8440,13 +8434,6 @@ mem@^5.0.0:
     mimic-fn "^2.1.0"
     p-is-promise "^2.1.0"
 
-memfs@^3.1.2:
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/memfs/-/memfs-3.2.0.tgz#f9438e622b5acd1daa8a4ae160c496fdd1325b26"
-  integrity sha512-f/xxz2TpdKv6uDn6GtHee8ivFyxwxmPuXatBb1FBwxYNuVpbM3k/Y1Z+vC0mH/dIXXrukYfe3qe5J32Dfjg93A==
-  dependencies:
-    fs-monkey "1.0.1"
-
 memory-fs@^0.4.1:
   version "0.4.1"
   resolved "https://registry.yarnpkg.com/memory-fs/-/memory-fs-0.4.1.tgz#3a9a20b8462523e447cfbc7e8bb80ed667bfc552"
@@ -10214,10 +10201,10 @@ promise-inflight@^1.0.1:
   resolved "https://registry.yarnpkg.com/promise-inflight/-/promise-inflight-1.0.1.tgz#98472870bf228132fcbdd868129bad12c3c029e3"
   integrity sha1-mEcocL8igTL8vdhoEputEsPAKeM=
 
-proper-lockfile@^3.2.0:
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/proper-lockfile/-/proper-lockfile-3.2.0.tgz#89ca420eea1d55d38ca552578851460067bcda66"
-  integrity sha512-iMghHHXv2bsxl6NchhEaFck8tvX3F9cknEEh1SUpguUOBjN7PAAW9BLzmbc1g/mCD1gY3EE2EABBHPJfFdHFmA==
+proper-lockfile@^4.1.1:
+  version "4.1.1"
+  resolved "https://registry.yarnpkg.com/proper-lockfile/-/proper-lockfile-4.1.1.tgz#284cf9db9e30a90e647afad69deb7cb06881262c"
+  integrity sha512-1w6rxXodisVpn7QYvLk706mzprPTAPCYAqxMvctmPN3ekuRk/kuGkGc82pangZiAt4R3lwSuUzheTTn0/Yb7Zg==
   dependencies:
     graceful-fs "^4.1.11"
     retry "^0.12.0"
@@ -12522,7 +12509,7 @@ tsconfig-paths@3.9.0:
     minimist "^1.2.0"
     strip-bom "^3.0.0"
 
-tslib@1.9.0, tslib@2.0.1, tslib@2.0.3, tslib@>=1.9.0, tslib@^1.10.0, tslib@^1.11.0, tslib@^1.11.1, tslib@^1.13.0, tslib@^1.7.1, tslib@^1.8.1, tslib@^1.9.0, tslib@^2.0.0, tslib@^2.0.1, tslib@^2.x:
+tslib@1.9.0, tslib@2.0.1, tslib@2.0.3, tslib@>=1.9.0, tslib@^1.10.0, tslib@^1.11.0, tslib@^1.11.1, tslib@^1.13.0, tslib@^1.7.1, tslib@^1.8.1, tslib@^1.9.0, tslib@^2.0.0, tslib@^2.0.1, tslib@^2.0.3, tslib@^2.x:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.0.3.tgz#8e0741ac45fc0c226e58a17bfc3e64b9bc6ca61c"
   integrity sha512-uZtkfKblCEQtZKBF6EBXVZeQNl82yqtDQdv+eck8u7tdPxjLu2/lp5/uPW+um2tpuxINHWy3GhiccY7QgEaVHQ==

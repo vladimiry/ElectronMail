@@ -21,27 +21,7 @@ import {
 import {formatFileUrl} from "./util";
 
 export function initContext(options: ContextInitOptions = {}): Context {
-    const storeFs = options.storeFs
-        ? options.storeFs
-        : StoreFs.Fs.volume({
-            writeFileAtomicOptions: {
-                fsync: false,
-                disableChmod: true,
-                disableChown: true,
-            },
-            fsNoEpermAnymore: {
-                items: [
-                    {
-                        platforms: ["win32"],
-                        errorCodes: ["EPERM", "EBUSY"],
-                        options: {
-                            retryIntervalMs: 100, // every 100 ms
-                            retryTimeoutMs: 5 * 1000, // 5 seconds
-                        },
-                    },
-                ],
-            },
-        });
+    const storeFs = options.storeFs ?? StoreFs.Fs.volume();
     const locations = initLocations(storeFs, options.paths);
 
     logger.transports.file.file = path.join(locations.userDataDir, "log.log");

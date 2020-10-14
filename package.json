@@ -110,7 +110,7 @@
     "fs-json-store-encryption-adapter": "2.0.0",
     "html-to-text": "5.1.1",
     "js-base64": "3.5.2",
-    "keytar": "6.0.1",
+    "keytar": "7.0.0",
     "mime-types": "2.1.27",
     "node-fetch": "2.6.1",
     "oboe": "2.1.5",

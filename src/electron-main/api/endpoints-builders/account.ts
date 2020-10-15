@@ -25,6 +25,7 @@ export async function buildEndpoints(
                 login,
                 title,
                 entryUrl,
+                blockNonEntryUrlBasedRequests,
                 database,
                 persistentSession,
                 rotateUserAgent,
@@ -38,6 +39,7 @@ export async function buildEndpoints(
                 login,
                 title,
                 entryUrl,
+                blockNonEntryUrlBasedRequests,
                 database,
                 persistentSession,
                 rotateUserAgent,
@@ -52,7 +54,10 @@ export async function buildEndpoints(
                 return ctx.settingsStore.write(settings);
             });
 
-            await initSessionByAccount(ctx, pick(account, ["login", "proxy", "rotateUserAgent", "entryUrl"]));
+            await initSessionByAccount(
+                ctx,
+                pick(account, ["login", "proxy", "rotateUserAgent", "entryUrl", "blockNonEntryUrlBasedRequests"]),
+            );
 
             return result;
         },
@@ -63,6 +68,7 @@ export async function buildEndpoints(
                 login,
                 title,
                 entryUrl,
+                blockNonEntryUrlBasedRequests,
                 database,
                 persistentSession,
                 rotateUserAgent,
@@ -79,12 +85,13 @@ export async function buildEndpoints(
 
                 const settings = await ctx.settingsStore.readExisting();
                 const account = pickAccountStrict(settings.accounts, {login});
-                const {credentials: existingCredentials} = account;
 
                 const shouldConfigureSession = (
                     account.entryUrl !== entryUrl
                     ||
                     !equals(account.proxy, proxy)
+                    ||
+                    account.blockNonEntryUrlBasedRequests !== blockNonEntryUrlBasedRequests
                 );
                 logger.info(JSON.stringify({shouldConfigureSession}));
 
@@ -97,8 +104,11 @@ export async function buildEndpoints(
                     throw new Error('"entryUrl" is undefined');
                 }
                 account.entryUrl = entryUrl;
+                account.blockNonEntryUrlBasedRequests = blockNonEntryUrlBasedRequests;
 
                 if (credentials) {
+                    const {credentials: existingCredentials} = account;
+
                     if ("password" in credentials) {
                         existingCredentials.password = credentials.password;
                     }
@@ -117,7 +127,7 @@ export async function buildEndpoints(
                 if (shouldConfigureSession) {
                     await configureSessionByAccount(
                         ctx,
-                        pick(account, ["login", "proxy", "entryUrl"]),
+                        pick(account, ["login", "proxy", "entryUrl", "blockNonEntryUrlBasedRequests"]),
                     );
                 }
 

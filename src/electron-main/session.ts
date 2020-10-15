@@ -10,7 +10,7 @@ import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {LoginFieldContainer} from "src/shared/model/container";
 import {ONE_SECOND_MS, PACKAGE_NAME} from "src/shared/constants";
 import {curryFunctionMembers, getRandomInt, getWebViewPartition} from "src/shared/util";
-import {initCorsTweakingWebRequestListenersByAccount} from "src/electron-main/web-request";
+import {initWebRequestListenersByAccount} from "src/electron-main/web-request";
 import {registerSessionProtocols} from "src/electron-main/protocol";
 
 const logger = curryFunctionMembers(_logger, "[src/electron-main/session]");
@@ -75,7 +75,7 @@ export async function initSession(
 
 export async function configureSessionByAccount(
     ctx: DeepReadonly<Context>,
-    account: DeepReadonly<Pick<AccountConfig, "login" | "proxy" | "entryUrl">>,
+    account: NoExtraProps<DeepReadonly<Pick<AccountConfig, "login" | "proxy" | "entryUrl" | "blockNonEntryUrlBasedRequests">>>,
 ): Promise<void> {
     logger.info("configureSessionByAccount()");
 
@@ -93,7 +93,7 @@ export async function configureSessionByAccount(
         }),
     };
 
-    initCorsTweakingWebRequestListenersByAccount(ctx, account);
+    initWebRequestListenersByAccount(ctx, account);
 
     await race(
         from(
@@ -107,7 +107,8 @@ export async function configureSessionByAccount(
 
 export async function initSessionByAccount(
     ctx: DeepReadonly<StrictOmit<Context, "userAgentsPool">> & Pick<Context, "userAgentsPool">,
-    account: DeepReadonly<Pick<AccountConfig, "login" | "proxy" | "rotateUserAgent" | "entryUrl">>,
+    // eslint-disable-next-line max-len
+    account: NoExtraProps<DeepReadonly<Pick<AccountConfig, "login" | "proxy" | "rotateUserAgent" | "entryUrl" | "blockNonEntryUrlBasedRequests">>>,
 ): Promise<void> {
     const partition = getWebViewPartition(account.login);
 

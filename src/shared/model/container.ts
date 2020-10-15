@@ -24,6 +24,7 @@ export type AccountConfigCreateUpdatePatch = NoExtraProps<Pick<AccountConfig,
     | "credentials"
     | "database"
     | "entryUrl"
+    | "blockNonEntryUrlBasedRequests"
     | "login"
     | "loginDelaySecondsRange"
     | "loginDelayUntilSelected"

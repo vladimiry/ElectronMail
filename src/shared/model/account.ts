@@ -4,6 +4,7 @@ export type AccountConfig = NoExtraProps<{
     login: string;
     title?: string;
     entryUrl: string;
+    blockNonEntryUrlBasedRequests?: boolean;
     database?: boolean; // TODO proton-v4: rename AccountConfig.database => AccountConfig.localStore
     // databaseCalendar?: boolean;
     credentials: NoExtraProps<Partial<Record<"password" | "twoFactorCode" | "mailPassword", string>>>;

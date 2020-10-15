@@ -231,21 +231,24 @@ const patchReponseHeaders: (arg: { requestProxy: RequestProxy; details: Response
     return details.responseHeaders;
 };
 
-export function initCorsTweakingWebRequestListenersByAccount(
+export function initWebRequestListenersByAccount(
     ctx: DeepReadonly<Context>,
-    account: DeepReadonly<Pick<AccountConfig, "login" | "entryUrl">>,
+    {
+        login,
+        entryUrl,
+        blockNonEntryUrlBasedRequests,
+    }: NoExtraProps<DeepReadonly<Pick<AccountConfig, "login" | "entryUrl" | "blockNonEntryUrlBasedRequests">>>,
 ): void {
-    const session = resolveInitializedSession({login: account.login});
-    const {entryUrl: accountEntryApiUrl} = account;
-    const webClient = ctx.locations.webClients.find(({entryApiUrl}) => accountEntryApiUrl === entryApiUrl);
+    const session = resolveInitializedSession({login});
+    const webClient = ctx.locations.webClients.find(({entryApiUrl}) => entryApiUrl === entryUrl);
 
     if (!webClient) {
-        throw new Error(`Failed to resolve the "web-client" bundle location by "${accountEntryApiUrl}" API entry point value`);
+        throw new Error(`Failed to resolve the "web-client" bundle location by "${entryUrl}" API entry point value`);
     }
 
     const allowedOrigins: readonly string[] = [
+        entryUrl,
         webClient.entryUrl,
-        accountEntryApiUrl,
         ...(
             BUILD_ENVIRONMENT === "development"
                 ? ["devtools://devtools/"]
@@ -253,7 +256,9 @@ export function initCorsTweakingWebRequestListenersByAccount(
         ),
     ].map(parseUrlOriginWithNullishCheck);
 
-    const verifyUrlAccess = buildUrlOriginsTester(allowedOrigins);
+    const verifyUrlAccess = blockNonEntryUrlBasedRequests
+        ? buildUrlOriginsTester(allowedOrigins)
+        : () => true;
 
     // according to electron docs "only the last attached listener will be used", so no need to unsubscribe previously registered handlers
     session.webRequest.onBeforeRequest(

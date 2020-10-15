@@ -218,8 +218,8 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
 
             ctx.settingsStore = store;
 
-            for (const {login, proxy, rotateUserAgent, entryUrl} of settings.accounts) {
-                await initSessionByAccount(ctx, {login, proxy, rotateUserAgent, entryUrl});
+            for (const {login, proxy, rotateUserAgent, entryUrl, blockNonEntryUrlBasedRequests} of settings.accounts) {
+                await initSessionByAccount(ctx, {login, proxy, rotateUserAgent, entryUrl, blockNonEntryUrlBasedRequests});
             }
 
             await (async (): Promise<void> => {

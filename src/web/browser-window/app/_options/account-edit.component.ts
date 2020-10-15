@@ -30,11 +30,13 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         | "persistentSession"
         | "rotateUserAgent"
         | "entryUrl"
+        | "blockNonEntryUrlBasedRequests"
         | "loginDelayUntilSelected"
         | "loginDelaySecondsRange">
         | keyof Pick<Required<Required<AccountConfig>["proxy"]>, "proxyRules" | "proxyBypassRules">
         | keyof AccountConfig["credentials"],
         AbstractControl> = {
+        blockNonEntryUrlBasedRequests: new FormControl(null),
         login: new FormControl(
             null,
             Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
@@ -124,7 +126,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                     controls.persistentSession.patchValue(account.persistentSession);
                     controls.rotateUserAgent.patchValue(account.rotateUserAgent);
                     controls.entryUrl.patchValue(account.entryUrl);
-
+                    controls.blockNonEntryUrlBasedRequests.patchValue(account.blockNonEntryUrlBasedRequests);
                     controls.proxyRules.patchValue(account.proxy ? account.proxy.proxyRules : null);
                     controls.proxyBypassRules.patchValue(account.proxy ? account.proxy.proxyBypassRules : null);
 
@@ -165,6 +167,8 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                 controls.login.value,
             title: controls.title.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
             entryUrl: controls.entryUrl.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            blockNonEntryUrlBasedRequests: Boolean(controls.blockNonEntryUrlBasedRequests.value),
             database: Boolean(controls.database.value),
             persistentSession: Boolean(controls.persistentSession.value),
             rotateUserAgent: Boolean(controls.rotateUserAgent.value),

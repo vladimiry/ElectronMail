@@ -1,7 +1,6 @@
 import fs from "fs";
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/lib/private/constants";
 import {Model as StoreModel} from "fs-json-store";
-import {WriteFileAtomicOptions} from "fs-json-store/lib/private/write-file-atomic/model";
 import {platform} from "os";
 import {randomBytes} from "crypto";
 
@@ -10,8 +9,6 @@ import {PACKAGE_NAME} from "src/shared/constants";
 import {initialConfig} from "src/shared/util";
 
 export const PLATFORM = platform();
-
-export const WRITE_FILE_ATOMIC_OPTIONS: DeepReadonly<WriteFileAtomicOptions> = {fsync: true};
 
 export const INITIAL_STORES: {
     readonly config: () => StrictOmit<Config, keyof BaseConfig | "jsFlags"> & Required<BaseConfig> & Required<Pick<Config, "jsFlags">>;

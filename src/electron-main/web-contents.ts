@@ -12,7 +12,7 @@ import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {PACKAGE_VERSION} from "src/shared/constants";
 import {PLATFORM} from "src/electron-main/constants";
 import {buildSpellCheckSettingsMenuItems, buildSpellingSuggestionMenuItems} from "src/electron-main/spell-check/menu";
-import {buildUrlOriginsTester, curryFunctionMembers} from "src/shared/util";
+import {buildUrlOriginsFailedMsgTester, curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[web-contents]");
 
@@ -66,7 +66,7 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
     const emptyArray = [] as const;
     const endpoints = await ctx.deferredEndpoints.promise;
     const spellCheckController = ctx.getSpellCheckController();
-    const verifyUrlAccess = buildUrlOriginsTester(
+    const verifyWebviewUrlAccess = buildUrlOriginsFailedMsgTester(
         ctx.locations.webClients.map(({entryUrl}) => entryUrl),
     );
 
@@ -258,9 +258,12 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
             logger.error(event.type, preloadPath, error);
         });
         webContents.on("will-attach-webview", (...[event, webPreferences, {src}]) => {
-            if (!(verifyUrlAccess(src))) {
+            const bannedAccessMsg = verifyWebviewUrlAccess(src);
+            if (typeof bannedAccessMsg === "string") {
                 event.preventDefault();
-                notifyLogAndThrow(`Forbidden "webview.src" value: "${JSON.stringify({src, eventType: event.type})}"`);
+                notifyLogAndThrow(
+                    `Forbidden "webview.src" value: "${JSON.stringify({src, eventType: event.type})}". ${bannedAccessMsg}`,
+                );
             }
             if (!checkWebViewWebPreferencesDefaults(webPreferences)) {
                 Object.assign(webPreferences, DEFAULT_WEB_PREFERENCES);
@@ -268,9 +271,12 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
         });
         webContents.on("did-attach-webview", (...[, webViewWebContents]) => {
             webViewWebContents.on("will-navigate", (...[willNavigateEvent, src]) => {
-                if (!(verifyUrlAccess(src))) {
+                const bannedAccessMsg = verifyWebviewUrlAccess(src);
+                if (typeof bannedAccessMsg === "string") {
                     willNavigateEvent.preventDefault();
-                    notifyLogAndThrow(`Forbidden "webview.src" value: "${JSON.stringify({src, eventType: willNavigateEvent.type})}"`);
+                    notifyLogAndThrow(
+                        `Forbidden "webview.src" value: "${JSON.stringify({src, eventType: willNavigateEvent.type})}". ${bannedAccessMsg}`,
+                    );
                 }
             });
         });

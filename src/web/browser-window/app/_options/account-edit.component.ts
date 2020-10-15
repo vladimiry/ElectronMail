@@ -5,15 +5,15 @@ import {Observable, Subscription, merge} from "rxjs";
 import {Store, select} from "@ngrx/store";
 import {concatMap, distinctUntilChanged, map, mergeMap} from "rxjs/operators";
 
+import {ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN, PROTON_API_ENTRY_RECORDS} from "src/shared/constants";
 import {AccountConfig} from "src/shared/model/account";
 import {AccountConfigCreateUpdatePatch} from "src/shared/model/container";
 import {OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {PACKAGE_GITHUB_PROJECT_URL_TOKEN} from "src/web/browser-window/app/app.constants";
-import {PROTON_API_ENTRY_RECORDS} from "src/shared/constants";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
-import {validateLoginDelaySecondsRange} from "src/shared/util";
+import {validateExternalContentProxyUrlPattern, validateLoginDelaySecondsRange} from "src/shared/util";
 
 @Component({
     selector: "electron-mail-account-edit",
@@ -31,12 +31,38 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         | "rotateUserAgent"
         | "entryUrl"
         | "blockNonEntryUrlBasedRequests"
+        | "externalContentProxyUrlPattern"
+        | "enableExternalContentProxy"
         | "loginDelayUntilSelected"
         | "loginDelaySecondsRange">
         | keyof Pick<Required<Required<AccountConfig>["proxy"]>, "proxyRules" | "proxyBypassRules">
         | keyof AccountConfig["credentials"],
         AbstractControl> = {
         blockNonEntryUrlBasedRequests: new FormControl(null),
+        externalContentProxyUrlPattern: new FormControl(
+            null,
+            (): null | { errorMsg: string } => {
+                if (!this.controls) {
+                    return null;
+                }
+                const {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                    externalContentProxyUrlPattern: {value: externalContentProxyUrlPattern},
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                    enableExternalContentProxy: {value: enableExternalContentProxy},
+                } = this.controls;
+                const validated = validateExternalContentProxyUrlPattern(
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                    {externalContentProxyUrlPattern, enableExternalContentProxy},
+                );
+                if (!validated) {
+                    const msg = `Value should be a valid URL with inserted "${ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN}" pattern`;
+                    return {errorMsg: msg};
+                }
+                return null;
+            },
+        ),
+        enableExternalContentProxy: new FormControl(null),
         login: new FormControl(
             null,
             Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
@@ -58,14 +84,17 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         loginDelaySecondsRange: new FormControl(
             null,
             (): null | { errorMsg: string } => {
-                const control: AbstractControl | undefined = this.controls && this.controls.loginDelaySecondsRange;
-                const value: string | undefined = control && control.value; // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                if (!this.controls) {
+                    return null;
+                }
+                const {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                    loginDelaySecondsRange: {value},
+                } = this.controls;
                 const validated = value && validateLoginDelaySecondsRange(value);
-
                 if (validated && "validationError" in validated) {
                     return {errorMsg: validated.validationError};
                 }
-
                 return null;
             },
         ),
@@ -120,28 +149,46 @@ export class AccountEditComponent implements OnInit, OnDestroy {
 
                 this.form.removeControl(((name: keyof Pick<typeof AccountEditComponent.prototype.controls, "login">) => name)("login"));
 
-                (() => {
-                    controls.title.patchValue(account.title);
-                    controls.database.patchValue(account.database);
-                    controls.persistentSession.patchValue(account.persistentSession);
-                    controls.rotateUserAgent.patchValue(account.rotateUserAgent);
-                    controls.entryUrl.patchValue(account.entryUrl);
-                    controls.blockNonEntryUrlBasedRequests.patchValue(account.blockNonEntryUrlBasedRequests);
-                    controls.proxyRules.patchValue(account.proxy ? account.proxy.proxyRules : null);
-                    controls.proxyBypassRules.patchValue(account.proxy ? account.proxy.proxyBypassRules : null);
+                controls.title.patchValue(account.title);
+                controls.database.patchValue(account.database);
+                controls.persistentSession.patchValue(account.persistentSession);
+                controls.rotateUserAgent.patchValue(account.rotateUserAgent);
+                controls.entryUrl.patchValue(account.entryUrl);
+                controls.blockNonEntryUrlBasedRequests.patchValue(account.blockNonEntryUrlBasedRequests);
+                controls.externalContentProxyUrlPattern.patchValue(account.externalContentProxyUrlPattern);
+                controls.enableExternalContentProxy.patchValue(account.enableExternalContentProxy);
+                controls.proxyRules.patchValue(account.proxy?.proxyRules);
+                controls.proxyBypassRules.patchValue(account.proxy?.proxyBypassRules);
 
-                    controls.password.patchValue(account.credentials.password);
-                    controls.twoFactorCode.patchValue(account.credentials.twoFactorCode);
-                    controls.mailPassword.patchValue(account.credentials.mailPassword);
+                controls.password.patchValue(account.credentials.password);
+                controls.twoFactorCode.patchValue(account.credentials.twoFactorCode);
+                controls.mailPassword.patchValue(account.credentials.mailPassword);
 
-                    controls.loginDelayUntilSelected.patchValue(account.loginDelayUntilSelected);
-                    controls.loginDelaySecondsRange.patchValue(
-                        account.loginDelaySecondsRange
-                            ? `${account.loginDelaySecondsRange.start}-${account.loginDelaySecondsRange.end}`
-                            : undefined,
-                    );
-                })();
+                controls.loginDelayUntilSelected.patchValue(account.loginDelayUntilSelected);
+                controls.loginDelaySecondsRange.patchValue(
+                    account.loginDelaySecondsRange
+                        ? `${account.loginDelaySecondsRange.start}-${account.loginDelaySecondsRange.end}`
+                        : undefined,
+                );
             }),
+        );
+
+        this.subscription.add(
+            controls.enableExternalContentProxy.valueChanges.subscribe(() => {
+                this.touchExternalContentProxyUrlPatternControl();
+            }),
+        );
+    }
+
+    touchExternalContentProxyUrlPatternControl(): void {
+        this.controls.externalContentProxyUrlPattern.markAsTouched();
+        this.controls.externalContentProxyUrlPattern.markAsDirty();
+        this.controls.externalContentProxyUrlPattern.updateValueAndValidity();
+    }
+
+    fillDefaultExternalContentProxyUrlPattern(): void {
+        this.controls.externalContentProxyUrlPattern.patchValue(
+            `https://external-content.duckduckgo.com/iu/?u=${ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN}`,
         );
     }
 
@@ -169,6 +216,10 @@ export class AccountEditComponent implements OnInit, OnDestroy {
             entryUrl: controls.entryUrl.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             blockNonEntryUrlBasedRequests: Boolean(controls.blockNonEntryUrlBasedRequests.value),
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            externalContentProxyUrlPattern: controls.externalContentProxyUrlPattern.value,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            enableExternalContentProxy: Boolean(controls.enableExternalContentProxy.value),
             database: Boolean(controls.database.value),
             persistentSession: Boolean(controls.persistentSession.value),
             rotateUserAgent: Boolean(controls.rotateUserAgent.value),
@@ -183,11 +234,9 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                 const validated = this.controls.loginDelaySecondsRange.value
                     ? validateLoginDelaySecondsRange(this.controls.loginDelaySecondsRange.value)
                     : undefined;
-
                 if (validated && "validationError" in validated) {
                     throw new Error(validated.validationError);
                 }
-
                 return validated;
             })(),
         };

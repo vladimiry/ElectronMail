@@ -75,7 +75,7 @@ export async function initSession(
 
 export async function configureSessionByAccount(
     ctx: DeepReadonly<Context>,
-    account: NoExtraProps<DeepReadonly<Pick<AccountConfig, "login" | "proxy" | "entryUrl" | "blockNonEntryUrlBasedRequests">>>,
+    account: DeepReadonly<AccountConfig>,
 ): Promise<void> {
     logger.info("configureSessionByAccount()");
 
@@ -108,7 +108,7 @@ export async function configureSessionByAccount(
 export async function initSessionByAccount(
     ctx: DeepReadonly<StrictOmit<Context, "userAgentsPool">> & Pick<Context, "userAgentsPool">,
     // eslint-disable-next-line max-len
-    account: NoExtraProps<DeepReadonly<Pick<AccountConfig, "login" | "proxy" | "rotateUserAgent" | "entryUrl" | "blockNonEntryUrlBasedRequests">>>,
+    account: DeepReadonly<AccountConfig>,
 ): Promise<void> {
     const partition = getWebViewPartition(account.login);
 

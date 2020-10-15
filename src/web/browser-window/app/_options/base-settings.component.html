@@ -271,9 +271,10 @@
         </div>
         <div class="text-muted mt-2">
             <small>
-                The <code>log.log</code> file located in the <a (click)="openSettingsFolder($event)" href="javascript:void(0)">
-                settings folder
-            </a>
+                The <code>log.log</code> file located in the
+                <a (click)="$event.preventDefault(); openSettingsFolder();" href="javascript:void(0)">
+                    settings folder
+                </a>
             </small>
         </div>
     </form>

@@ -1,13 +1,25 @@
 import electronLog from "electron-log";
-import {equals, pick} from "remeda";
+import {equals} from "remeda";
 
 import {AccountConfig} from "src/shared/model/account";
 import {Context} from "src/electron-main/model";
 import {IpcMainApiEndpoints} from "src/shared/api/main";
+import {assertTypeOf, curryFunctionMembers, pickAccountStrict, validateExternalContentProxyUrlPattern} from "src/shared/util";
 import {configureSessionByAccount, initSessionByAccount} from "src/electron-main/session";
-import {curryFunctionMembers, pickAccountStrict} from "src/shared/util";
 
 const _logger = curryFunctionMembers(electronLog, "[electron-main/api/endpoints-builders/account]");
+
+const assertEntryUrl = (value: string): void | never => {
+    assertTypeOf({value, expectedType: "string"}, `Invalid "API entry point" value.`);
+};
+
+const assertExternalContentProxyUrlPattern = (
+    arg: Pick<NoExtraProps<DeepReadonly<AccountConfig>>, "externalContentProxyUrlPattern" | "enableExternalContentProxy">,
+): void | never => {
+    if (!validateExternalContentProxyUrlPattern(arg)) {
+        throw new Error(`Invalid "external content proxy URL pattern" value: "${String(arg.externalContentProxyUrlPattern)}"`);
+    }
+};
 
 export async function buildEndpoints(
     ctx: Context,
@@ -26,6 +38,8 @@ export async function buildEndpoints(
                 title,
                 entryUrl,
                 blockNonEntryUrlBasedRequests,
+                externalContentProxyUrlPattern,
+                enableExternalContentProxy,
                 database,
                 persistentSession,
                 rotateUserAgent,
@@ -35,11 +49,16 @@ export async function buildEndpoints(
                 loginDelaySecondsRange,
             },
         ) {
+            assertEntryUrl(entryUrl);
+            assertExternalContentProxyUrlPattern({enableExternalContentProxy, externalContentProxyUrlPattern});
+
             const account: AccountConfig = {
                 login,
                 title,
                 entryUrl,
                 blockNonEntryUrlBasedRequests,
+                externalContentProxyUrlPattern,
+                enableExternalContentProxy,
                 database,
                 persistentSession,
                 rotateUserAgent,
@@ -54,10 +73,7 @@ export async function buildEndpoints(
                 return ctx.settingsStore.write(settings);
             });
 
-            await initSessionByAccount(
-                ctx,
-                pick(account, ["login", "proxy", "rotateUserAgent", "entryUrl", "blockNonEntryUrlBasedRequests"]),
-            );
+            await initSessionByAccount(ctx, account);
 
             return result;
         },
@@ -69,6 +85,8 @@ export async function buildEndpoints(
                 title,
                 entryUrl,
                 blockNonEntryUrlBasedRequests,
+                externalContentProxyUrlPattern,
+                enableExternalContentProxy,
                 database,
                 persistentSession,
                 rotateUserAgent,
@@ -78,6 +96,9 @@ export async function buildEndpoints(
                 loginDelaySecondsRange,
             },
         ) {
+            assertEntryUrl(entryUrl);
+            assertExternalContentProxyUrlPattern({enableExternalContentProxy, externalContentProxyUrlPattern});
+
             return ctx.settingsStoreQueue.q(async () => {
                 const logger = curryFunctionMembers(_logger, "updateAccount()");
 
@@ -92,19 +113,21 @@ export async function buildEndpoints(
                     !equals(account.proxy, proxy)
                     ||
                     account.blockNonEntryUrlBasedRequests !== blockNonEntryUrlBasedRequests
+                    ||
+                    account.externalContentProxyUrlPattern !== externalContentProxyUrlPattern
+                    ||
+                    account.enableExternalContentProxy !== enableExternalContentProxy
                 );
-                logger.info(JSON.stringify({shouldConfigureSession}));
+                logger.verbose(JSON.stringify({shouldConfigureSession}));
 
                 account.title = title;
                 account.database = database;
                 account.persistentSession = persistentSession;
                 account.rotateUserAgent = rotateUserAgent;
-
-                if (typeof entryUrl === "undefined") {
-                    throw new Error('"entryUrl" is undefined');
-                }
                 account.entryUrl = entryUrl;
                 account.blockNonEntryUrlBasedRequests = blockNonEntryUrlBasedRequests;
+                account.externalContentProxyUrlPattern = externalContentProxyUrlPattern;
+                account.enableExternalContentProxy = enableExternalContentProxy;
 
                 if (credentials) {
                     const {credentials: existingCredentials} = account;
@@ -125,10 +148,7 @@ export async function buildEndpoints(
                 account.loginDelaySecondsRange = loginDelaySecondsRange;
 
                 if (shouldConfigureSession) {
-                    await configureSessionByAccount(
-                        ctx,
-                        pick(account, ["login", "proxy", "entryUrl", "blockNonEntryUrlBasedRequests"]),
-                    );
+                    await configureSessionByAccount(ctx, account);
                 }
 
                 return ctx.settingsStore.write(settings);

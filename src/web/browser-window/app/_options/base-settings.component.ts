@@ -141,8 +141,7 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         this.controls.customUnreadTextColor.patchValue(color);
     }
 
-    openSettingsFolder(event: Event): void {
-        event.preventDefault();
+    openSettingsFolder(): void {
         this.store.dispatch(NAVIGATION_ACTIONS.OpenSettingsFolder());
     }
 }

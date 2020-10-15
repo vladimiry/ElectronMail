@@ -1,11 +1,11 @@
 import {ElectronLog} from "electron-log"; // tslint:disable-line:no-import-zones
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import type {RateLimiterMemory} from "rate-limiter-flexible";
+import {URL} from "@cliqz/url-parser";
 import {pick} from "remeda";
 
-import {AccountConfig} from "./model/account";
-import {BaseConfig, Config} from "./model/options";
 import {
+    ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN,
     DEFAULT_API_CALL_TIMEOUT,
     DEFAULT_MESSAGES_STORE_PORTION_SIZE,
     LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN,
@@ -16,12 +16,13 @@ import {
     WEB_CLIENTS_BLANK_HTML_FILE_NAME,
     ZOOM_FACTOR_DEFAULT,
 } from "src/shared/constants";
+import {AccountConfig} from "./model/account";
+import {BaseConfig, Config} from "./model/options";
 import {DbPatch} from "./api/common";
 import {FsDbAccount, View} from "src/shared/model/database";
 import {LogLevel} from "src/shared/model/common";
 import {LoginFieldContainer} from "./model/container";
 import {StatusCodeError} from "./model/error";
-import {URL} from "@cliqz/url-parser";
 
 export function initialConfig(): Config {
     {
@@ -408,6 +409,47 @@ export const parseLoginDelaySecondsRange: (
     return validation;
 };
 
+export const validateExternalContentProxyUrlPattern = (
+    {
+        externalContentProxyUrlPattern: value,
+        enableExternalContentProxy: enabled,
+    }: Pick<NoExtraProps<DeepReadonly<AccountConfig>>, "externalContentProxyUrlPattern" | "enableExternalContentProxy">,
+): boolean => {
+    if (!enabled && !value) { // empty value allowed if feature not enabled
+        return true;
+    }
+
+    if (!value) {
+        return false;
+    }
+
+    const parsedUrl = (() => {
+        try {
+            const url = new URL(value);
+            return {
+                origin: parseUrlOriginWithNullishCheck(value),
+                ...pick(url, ["pathname", "search"]),
+            };
+        } catch {
+            return null;
+        }
+    })();
+
+    return Boolean(
+        parsedUrl
+        &&
+        (
+            parsedUrl.origin
+            &&
+            !parsedUrl.origin.includes(ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN)
+        )
+        &&
+        [parsedUrl.pathname, parsedUrl.search]
+            .filter((valuePart) => valuePart.includes(ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN))
+            .length === 1
+    );
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function removeDuplicateItems<T extends any>(array: ReadonlyArray<T>): T[] {
     return [...new Set<T>(array).values()];
@@ -541,7 +583,10 @@ export const consumeMemoryRateLimiter = async (
 };
 
 export const assertTypeOf = (
-    {value, expectedType}: { value: unknown, expectedType: string },
+    {value, expectedType}: {
+        value: unknown
+        expectedType: "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function"
+    },
     errorMessagePrefix: string,
 ): void | never => {
     const actualType = typeof value;
@@ -572,19 +617,19 @@ export const parseUrlOriginWithNullishCheck = (url: string): string | never => {
     return origin;
 };
 
-export const buildUrlOriginsTester: (
+export const buildUrlOriginsFailedMsgTester: (
     // array item can be either url or already parsed origin (mixed array item types allowed)
     // since each array item value get parsed/verified by the function
-    allowedOriginsOrUrls: readonly string[],
-) => (url: string) => boolean = (() => {
-    const result: typeof buildUrlOriginsTester = (allowedOriginsOrUrls) => {
-        const allowedOrigins = allowedOriginsOrUrls.map(parseUrlOriginWithNullishCheck);
-
+    originsOrUrlsWhitelist: readonly string[],
+) => (url: string) => null | string = (() => {
+    const result: typeof buildUrlOriginsFailedMsgTester = (allowedOriginsOrUrls) => {
+        const originsWhitelist = allowedOriginsOrUrls.map(parseUrlOriginWithNullishCheck);
         return (url: string) => {
             const urlOrigin = parseUrlOriginWithNullishCheck(url);
-            return allowedOrigins.some((allowedOrigin) => urlOrigin === allowedOrigin);
+            return originsWhitelist.includes(urlOrigin)
+                ? null
+                : `No matched value found in ${JSON.stringify(originsWhitelist)} URL origins list for "${urlOrigin}" value.`;
         };
     };
-
     return result;
 })();

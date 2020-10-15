@@ -1,20 +1,25 @@
 <fieldset [disabled]="(processing$ | async) || (removing$ | async) || false">
-    <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="form-group mb-0">
+    <form (ngSubmit)="submit()" [formGroup]="form" class="form-group mb-0" novalidate>
         <div class="rounded mb-2">
             <div class="d-inline-block">
                 <span *ngIf="account; else label" [attr.data-login]="account.login">{{ account.login }}</span>
                 <ng-template #label>Add Account</ng-template>
             </div>
             <div class="custom-control custom-switch float-md-right">
-                <input type="checkbox" class="custom-control-input" formControlName="database" id="databaseCheckbox">
+                <input class="custom-control-input" formControlName="database" id="databaseCheckbox" type="checkbox">
                 <label class="custom-control-label" for="databaseCheckbox">
                     Local store
-                    <i class="fa fa-info-circle text-primary"
-                       [popover]="localStorePopoverTemplate" [placement]="'bottom'" container="body" triggers="mouseenter:mouseleave"
+                    <i
+                        [popover]="localStorePopoverTemplate"
+                        class="fa fa-info-circle text-primary"
+                        container="body"
+                        placement="bottom"
+                        triggers="mouseenter:mouseleave"
                     ></i>
                     <ng-template #localStorePopoverTemplate>
                         <p>
-                            The <code>local store</code> feature enables storing your messages in the encrypted <code>database.bin</code> file,
+                            The <code>local store</code> feature enables storing your messages in the encrypted <code>database.bin</code>
+                            file,
                             so you could view your messages offline, perform full-text search against them and export them to EML files.
                         </p>
                         <p>
@@ -27,7 +32,7 @@
             </div>
         </div>
         <div class="form-group required">
-            <ng-template #entryUrlItemTemplate let-item="item" let-index="index">
+            <ng-template #entryUrlItemTemplate let-index="index" let-item="item">
                 {{ item.title }}
                 <div class="badge badge-secondary badge-local">
                     web client:
@@ -35,39 +40,49 @@
             </ng-template>
             <div class="clearfix">
                 <label class="d-block pull-left">API entry point</label>
-                <div class="pull-right text-muted">
+                <div class="pull-right">
                     <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/29">#29</a>,
                     <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/79">#79</a>,
                     <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/80">#80</a>,
                     <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/164">#164</a>
                 </div>
             </div>
-            <ng-select [items]="entryUrlItems" [clearable]="false" formControlName="entryUrl" id="accountEditFormEntryUrlField"
-                       bindLabel="title" bindValue="value">
-                <ng-template ng-label-tmp let-item="item" let-index="index">
+            <ng-select
+                [clearable]="false" [items]="entryUrlItems" bindLabel="title" bindValue="value"
+                formControlName="entryUrl" id="accountEditFormEntryUrlField"
+            >
+                <ng-template let-index="index" let-item="item" ng-label-tmp>
                     <ng-container
-                        [ngTemplateOutlet]="entryUrlItemTemplate" [ngTemplateOutletContext]="{item: item, index: index}"
+                        [ngTemplateOutletContext]="{item: item, index: index}" [ngTemplateOutlet]="entryUrlItemTemplate"
                     ></ng-container>
                 </ng-template>
-                <ng-template ng-option-tmp let-item="item" let-index="index">
+                <ng-template let-index="index" let-item="item" ng-option-tmp>
                     <div [attr.entry-url-option-index]="index">
                         <ng-container
-                            [ngTemplateOutlet]="entryUrlItemTemplate" [ngTemplateOutletContext]="{item: item, index: index}"
+                            [ngTemplateOutletContext]="{item: item, index: index}" [ngTemplateOutlet]="entryUrlItemTemplate"
                         ></ng-container>
                     </div>
                 </ng-template>
             </ng-select>
         </div>
         <div class="row">
-            <div class="form-group col-sm-6 required" *ngIf="!account">
+            <div *ngIf="!account" class="form-group col-sm-6 required">
                 <label>Login</label>
-                <input type="text" class="form-control" formControlName="login"
-                       [ngClass]="controls.login.dirty ? {'is-invalid': controls.login.invalid, 'is-valid': controls.login.valid} : {}">
+                <input
+                    [ngClass]="controls.login.dirty ? {'is-invalid': controls.login.invalid, 'is-valid': controls.login.valid} : {}"
+                    class="form-control"
+                    formControlName="login"
+                    type="text"
+                >
             </div>
-            <div class="form-group" [ngClass]="{'col-sm-6': !account, 'col-sm-12': account}">
+            <div [ngClass]="{'col-sm-6': !account, 'col-sm-12': account}" class="form-group">
                 <label>Password</label>
-                <input type="password" class="form-control" formControlName="password"
-                       [ngClass]="controls.password.dirty ? {'is-invalid': controls.password.invalid, 'is-valid': controls.password.valid} : {}">
+                <input
+                    [ngClass]="controls.password.dirty ? {'is-invalid': controls.password.invalid, 'is-valid': controls.password.valid} : {}"
+                    class="form-control"
+                    formControlName="password"
+                    type="password"
+                >
             </div>
         </div>
         <div class="form-group">
@@ -76,14 +91,18 @@
                 <i
                     class="fa fa-info-circle text-warning align-self-center"
                     container="body"
-                    [placement]="'bottom'"
+                    placement="bottom"
                     popover="This is not the one time password your phone generates for you but a secret seed. Please follow the description link for details."
                     triggers="mouseenter:mouseleave"
                 ></i>
             </label>
             <a class="d-block pull-right" href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/10">#10</a>
-            <input type="password" class="form-control" formControlName="twoFactorCode"
-                   [ngClass]="controls.twoFactorCode.dirty ? {'is-invalid': controls.twoFactorCode.invalid, 'is-valid': controls.twoFactorCode.valid} : {}">
+            <input
+                [ngClass]="controls.twoFactorCode.dirty ? {'is-invalid': controls.twoFactorCode.invalid, 'is-valid': controls.twoFactorCode.valid} : {}"
+                class="form-control"
+                formControlName="twoFactorCode"
+                type="password"
+            >
         </div>
         <div class="form-group">
             <label class="d-block pull-left">
@@ -91,7 +110,7 @@
                 <i
                     class="fa fa-info-circle text-warning align-self-center"
                     container="body"
-                    [placement]="'bottom'"
+                    placement="bottom"
                     popover="This field is only relevant if you have two-password mode enabled for your account. Please follow the description links for details."
                     triggers="mouseenter:mouseleave"
                 ></i>
@@ -100,52 +119,99 @@
                 <a href="https://protonmail.com/support/knowledge-base/switch-two-password-mode/">description</a>,
                 <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/138">#138</a>
             </div>
-            <input type="password" class="form-control" formControlName="mailPassword"
-                   [ngClass]="controls.mailPassword.dirty ? {'is-invalid': controls.mailPassword.invalid, 'is-valid': controls.mailPassword.valid} : {}">
+            <input
+                [ngClass]="controls.mailPassword.dirty ? {'is-invalid': controls.mailPassword.invalid, 'is-valid': controls.mailPassword.valid} : {}"
+                class="form-control"
+                formControlName="mailPassword"
+                type="password"
+            >
         </div>
         <div class="form-group">
             <div class="custom-control custom-switch">
-                <input type="checkbox" class="custom-control-input" formControlName="persistentSession" id="persistentSessionCheckbox">
+                <input class="custom-control-input" formControlName="persistentSession" id="persistentSessionCheckbox" type="checkbox">
                 <label class="custom-control-label d-flex" for="persistentSessionCheckbox">
                     Persistent session
                     <i
                         class="fa fa-info-circle text-warning align-self-center ml-1"
                         container="body"
-                        [placement]="'bottom'"
-                        popover="If option enabled the saved Proton session will be reused on the next app start, so the login form will be skipped."
+                        placement="bottom"
+                        popover="If option enabled the saved &quot;Proton Session&quot; will be reused on the next computer/app start and so the login form will be skipped."
                         triggers="mouseenter:mouseleave"
                     ></i>
-                    <span class="badge badge-secondary align-self-center ml-1">experimental</span>
                     <a class="ml-1" href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/227">#227</a>
                 </label>
             </div>
         </div>
         <accordion class="mb-3">
-            <accordion-group heading="Extended Options" [isOpen]="false">
+            <accordion-group [isOpen]="false" heading="Extended Options">
                 <div class="form-group">
-                    <label class="d-block">
+                    <label class="d-block pull-left">
                         Handle button alias
                         <i
-                            popover="If specified will be displayed in the UI instead of login."
                             class="fa fa-info-circle text-primary align-self-center"
                             container="body"
-                            [placement]="'bottom'"
+                            placement="bottom"
+                            popover="If specified will be displayed in the UI instead of login."
                             triggers="mouseenter:mouseleave"
                         ></i>
                     </label>
-                    <input type="text" class="form-control" formControlName="title">
+                    <input class="form-control" formControlName="title" type="text">
+                </div>
+                <div class="row">
+                    <div class="col-md-6 form-group">
+                        <label class="d-block pull-left">
+                            Proxy rules
+                            <i
+                                class="fa fa-info-circle text-primary align-self-center"
+                                container="body"
+                                placement="bottom"
+                                popover="Rules indicating which proxies to use."
+                                triggers="mouseenter:mouseleave"
+                            ></i>
+                        </label>
+                        <a
+                            class="d-block pull-right"
+                            href="https://github.com/electron/electron/blob/21afda36794393731f14c5b4a4c71dc3ed0484c3/docs/api/session.md#sessetproxyconfig"
+                        >
+                            info
+                        </a>
+                        <input class="form-control" formControlName="proxyRules" type="text">
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label class="d-block pull-left">
+                            Proxy bypass rules
+                            <i
+                                class="fa fa-info-circle text-primary align-self-center"
+                                container="body"
+                                placement="bottom"
+                                popover="Rules indicating which URLs should bypass the proxy settings."
+                                triggers="mouseenter:mouseleave"
+                            ></i>
+                        </label>
+                        <a
+                            class="d-block pull-right"
+                            href="https://github.com/electron/electron/blob/21afda36794393731f14c5b4a4c71dc3ed0484c3/docs/api/session.md#sessetproxyconfig"
+                        >
+                            info
+                        </a>
+                        <input class="form-control" formControlName="proxyBypassRules" type="text">
+                    </div>
                 </div>
                 <div class="form-group">
                     <div class="custom-control custom-switch">
-                        <input type="checkbox" class="custom-control-input" formControlName="blockNonEntryUrlBasedRequests" id="blockNonEntryUrlBasedRequestsCheckbox">
+                        <input
+                            class="custom-control-input"
+                            formControlName="blockNonEntryUrlBasedRequests"
+                            id="blockNonEntryUrlBasedRequestsCheckbox"
+                            type="checkbox"
+                        >
                         <label class="custom-control-label d-flex" for="blockNonEntryUrlBasedRequestsCheckbox">
                             Block non "API entry point"-based network requests
                             <i
-                                *ngIf="account"
                                 class="fa fa-info-circle text-warning align-self-center ml-1"
                                 container="body"
-                                [placement]="'bottom'"
-                                popover="So, for example, the inlined in the email messages images won't be loaded."
+                                placement="bottom"
+                                popover="So, for example, the inlined in the email messages images loading will be blocked if this option enabled."
                                 triggers="mouseenter:mouseleave"
                             ></i>
                             <a class="ml-1" href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/312">#312</a>
@@ -154,97 +220,116 @@
                 </div>
                 <div class="form-group">
                     <div class="custom-control custom-switch">
-                        <input type="checkbox" class="custom-control-input" formControlName="rotateUserAgent" id="rotateUserAgentCheckbox">
-                        <label class="custom-control-label d-flex" for="rotateUserAgentCheckbox">
-                            User-agent rotation
+                        <input
+                            class="custom-control-input"
+                            formControlName="enableExternalContentProxy"
+                            id="enableExternalContentProxyCheckbox"
+                            type="checkbox"
+                        >
+                        <label
+                            (click)="touchExternalContentProxyUrlPatternControl()"
+                            class="custom-control-label mb-2 d-block"
+                            for="enableExternalContentProxyCheckbox"
+                        >
+                            Route remote images through a proxy
                             <i
-                                *ngIf="account"
-                                class="fa fa-info-circle text-warning align-self-center ml-1"
+                                [popover]="enableExternalContentProxyPopoverContent"
+                                class="fa fa-info-circle text-warning align-self-center"
                                 container="body"
-                                [placement]="'bottom'"
-                                popover="App restart required for the option to take effect."
+                                placement="bottom"
                                 triggers="mouseenter:mouseleave"
                             ></i>
-                            <a class="ml-1" href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/273">#273</a>
+                            <ng-template #enableExternalContentProxyPopoverContent>
+                                Image requests to the specified proxy will bypass the non &quot;API entry point&quot;-based network
+                                requests blocking if such blocking enabled (see respective toggle upper on the form).
+                            </ng-template>
+                            <a
+                                (click)="$event.preventDefault(); fillDefaultExternalContentProxyUrlPattern()"
+                                href="javascript:void(0)"
+                            >(fill in the example value)</a>
+                            <div class="pull-right">
+                                <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/312">#312</a>
+                            </div>
                         </label>
                     </div>
+                    <input
+                        [ngClass]="controls.externalContentProxyUrlPattern.dirty
+                               ? {'is-invalid': controls.externalContentProxyUrlPattern.invalid, 'is-valid': controls.externalContentProxyUrlPattern.valid}
+                               : {}" class="form-control" formControlName="externalContentProxyUrlPattern"
+                        type="text"
+                    >
+                    <div
+                        *ngIf="controls.externalContentProxyUrlPattern.invalid && controls.externalContentProxyUrlPattern.errors?.errorMsg"
+                        [innerText]="controls.externalContentProxyUrlPattern.errors?.errorMsg"
+                        class="invalid-feedback"
+                    ></div>
                 </div>
-                <div class="row">
-                    <div class="col-md-6 form-group">
-                        <label class="d-block pull-left">
-                            Proxy rules
-                            <i
-                                popover="Rules indicating which proxies to use."
-                                class="fa fa-info-circle text-primary align-self-center"
-                                container="body"
-                                [placement]="'bottom'"
-                                triggers="mouseenter:mouseleave"
-                            ></i>
-                        </label>
-                        <a class="d-block pull-right" href="https://www.electronjs.org/docs/api/session#sessetproxyconfig">
-                            info
-                        </a>
-                        <input type="text" class="form-control" formControlName="proxyRules">
-                    </div>
-                    <div class="col-md-6 form-group">
-                        <label class="d-block pull-left">
-                            Proxy bypass rules
-                            <i
-                                popover="Rules indicating which URLs should bypass the proxy settings."
-                                class="fa fa-info-circle text-primary align-self-center"
-                                container="body"
-                                [placement]="'bottom'"
-                                triggers="mouseenter:mouseleave"
-                            ></i>
-                        </label>
-                        <a class="d-block pull-right" href="https://www.electronjs.org/docs/api/session#sessetproxyconfig">
-                            info
-                        </a>
-                        <input type="text" class="form-control" formControlName="proxyBypassRules">
-                    </div>
-                </div>
-                <div class="mt-3">
+                <div class="form-group">
                     <label class="d-block pull-left">
                         Login delay range (seconds)
                         <i
-                            popover="The login delay is picked by either time range or account selection triggers. Whichever kicks in first if both values defined."
                             class="fa fa-info-circle text-warning align-self-center"
                             container="body"
-                            [placement]="'bottom'"
+                            placement="bottom"
+                            popover="The login delay is picked by either time range or account selection triggers. Whichever kicks in first if both values defined."
                             triggers="mouseenter:mouseleave"
                         ></i>
                     </label>
                     <div class="custom-control custom-switch float-md-right">
-                        <input type="checkbox" class="custom-control-input" formControlName="loginDelayUntilSelected" id="loginDelayUntilSelectedCheckbox">
+                        <input
+                            class="custom-control-input"
+                            formControlName="loginDelayUntilSelected"
+                            id="loginDelayUntilSelectedCheckbox"
+                            type="checkbox"
+                        >
                         <label class="custom-control-label" for="loginDelayUntilSelectedCheckbox">
                             Login on account selection
                         </label>
                     </div>
-                    <input type="text" class="form-control" formControlName="loginDelaySecondsRange"
-                           [ngClass]="controls.loginDelaySecondsRange.dirty
+                    <input
+                        [ngClass]="controls.loginDelaySecondsRange.dirty
                                ? {'is-invalid': controls.loginDelaySecondsRange.invalid, 'is-valid': controls.loginDelaySecondsRange.valid}
-                               : {}">
+                               : {}" class="form-control" formControlName="loginDelaySecondsRange"
+                        type="text"
+                    >
                     <div
                         *ngIf="controls.loginDelaySecondsRange.invalid && controls.loginDelaySecondsRange.errors?.errorMsg"
                         [innerText]="controls.loginDelaySecondsRange.errors?.errorMsg"
                         class="invalid-feedback"
                     ></div>
                 </div>
+                <div class="custom-control custom-switch clearfix">
+                    <input class="custom-control-input" formControlName="rotateUserAgent" id="rotateUserAgentCheckbox" type="checkbox">
+                    <label class="custom-control-label d-flex" for="rotateUserAgentCheckbox">
+                        User-agent rotation
+                        <i
+                            class="fa fa-info-circle text-warning align-self-center ml-1"
+                            container="body"
+                            placement="bottom"
+                            triggers="mouseenter:mouseleave"
+                        ></i>
+                        <a class="ml-1" href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/273">#273</a>
+                    </label>
+                </div>
             </accordion-group>
         </accordion>
         <div class="clearfix">
-            <button class="btn btn-sm btn-outline-danger pull-left" type="button" *ngIf="account" (click)="remove()">
-                <i class="fa" [ngClass]="{
+            <button (click)="remove()" *ngIf="account" class="btn btn-sm btn-outline-danger pull-left" type="button">
+                <i
+                    [ngClass]="{
                     'fa-spinner fa-pulse fa-fw': (removing$ | async),
                     'fa-times': !(removing$ | async)
-                }"></i>
+                }" class="fa"
+                ></i>
                 Remove
             </button>
-            <button class="btn btn-sm btn-primary pull-right" type="submit" [disabled]="form.invalid">
-                <i class="fa" [ngClass]="{
+            <button [disabled]="form.invalid" class="btn btn-sm btn-primary pull-right" type="submit">
+                <i
+                    [ngClass]="{
                     'fa-spinner fa-pulse fa-fw': (processing$ | async),
                     'fa-check': !(processing$ | async)
-                }"></i>
+                }" class="fa"
+                ></i>
                 {{ account ? "Update" : "Add" }}
             </button>
         </div>

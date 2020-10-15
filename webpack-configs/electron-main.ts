@@ -1,6 +1,5 @@
-import nodeExternals from "webpack-node-externals";
-
 import {buildBaseConfig, srcRelativePath, typescriptLoaderRule} from "./lib";
+import {nodeExternals} from "webpack-configs/require-import";
 
 const tsConfigFile = srcRelativePath("./electron-main/tsconfig.json");
 
@@ -17,10 +16,9 @@ export default buildBaseConfig(
         },
         externals: [
             nodeExternals({
-                modulesFromFile: { // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-                    exclude: ["devDependencies"],
-                    include: ["dependencies"],
-                } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+                modulesFromFile: {
+                    excludeFromBundle: ["devDependencies", "dependencies"],
+                },
             }),
         ],
     },

@@ -1,11 +1,11 @@
 import HtmlWebpackPlugin from "html-webpack-plugin";
-import MiniCssExtractPlugin from "mini-css-extract-plugin";
 import postCssUrl from "postcss-url";
-import {Configuration, RuleSetUseItem} from "webpack";
+import {Configuration, RuleSetRule} from "webpack";
 import {merge as webpackMerge} from "webpack-merge";
 
 import {BuildEnvironment} from "webpack-configs/model";
 import {ENVIRONMENT, ENVIRONMENT_STATE, buildBaseConfig, outputRelativePath, srcRelativePath, typescriptLoaderRule} from "./../lib";
+import {MiniCssExtractPlugin} from "webpack-configs/require-import";
 import {WEB_CHUNK_NAMES} from "src/shared/constants";
 
 export const browserWindowPath = (...value: string[]): string => {
@@ -16,10 +16,7 @@ export const browserWindowAppPath = (...value: string[]): string => {
     return browserWindowPath("./app", ...value);
 };
 
-export function cssRuleSetUseItems(): RuleSetUseItem[] {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-assignment
-    const cssNano = require("cssnano");
-
+export function cssRuleSetRules(): RuleSetRule[] {
     return [
         {
             loader: "css-loader",
@@ -34,12 +31,6 @@ export function cssRuleSetUseItems(): RuleSetUseItem[] {
                 postcssOptions: {
                     plugins: [
                         postCssUrl(),
-                        cssNano({ // eslint-disable-line @typescript-eslint/no-unsafe-call
-                            autoprefixer: true,
-                            discardComments: true,
-                            mergeLonghand: false,
-                            safe: true,
-                        }),
                     ],
                 },
             },
@@ -66,16 +57,7 @@ export function buildMinimalWebConfig(
                 },
                 output: {
                     path: outputRelativePath("./web", options.chunkName),
-                },
-                node: {
-                    path: "empty",
-                    fs: "empty",
-                    __dirname: false,
-                    __filename: false,
-                    Buffer: false,
-                    global: false,
-                    process: false,
-                    setImmediate: false,
+                    publicPath: "",
                 },
                 module: {
                     rules: [
@@ -90,14 +72,14 @@ export function buildMinimalWebConfig(
                             test: /\.css$/,
                             use: [
                                 MiniCssExtractPlugin.loader,
-                                ...cssRuleSetUseItems(),
+                                ...cssRuleSetRules(),
                             ],
                         },
                         {
                             test: /\.scss$/,
                             use: [
                                 MiniCssExtractPlugin.loader,
-                                ...cssRuleSetUseItems(),
+                                ...cssRuleSetRules(),
                                 "sass-loader",
                             ],
                             exclude: [
@@ -111,13 +93,19 @@ export function buildMinimalWebConfig(
                                 options: {
                                     limit: 4096,
                                     name: "assets/[name].[hash].[ext]",
+                                    esModule: false,
                                     // TODO webpack url/file-loader:
                                     //      drop "esModule" flag on https://github.com/webpack-contrib/html-loader/issues/203 resolving
-                                    esModule: false,
                                 },
                             },
                         },
                     ],
+                },
+                resolve: {
+                    fallback: {
+                        "path": false,
+                        "fs": false,
+                    },
                 },
                 plugins: [
                     new MiniCssExtractPlugin(),

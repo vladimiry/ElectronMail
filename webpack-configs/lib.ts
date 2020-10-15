@@ -60,14 +60,10 @@ export function buildBaseConfig(
                     "package.json": rootRelativePath("package.json"),
                 },
             },
-            node: {
-                __dirname: false,
-                __filename: false,
-            },
             optimization: {
                 minimize: false,
-                namedChunks: true,
-                namedModules: true,
+                chunkIds: "named",
+                moduleIds: "named",
             },
         },
         config,

@@ -1,7 +1,6 @@
 import {ElectronLog} from "electron-log"; // tslint:disable-line:no-import-zones
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import type {RateLimiterMemory} from "rate-limiter-flexible";
-import {URL} from "@cliqz/url-parser";
 import {pick} from "remeda";
 
 import {AccountConfig} from "./model/account";
@@ -22,6 +21,7 @@ import {FsDbAccount, View} from "src/shared/model/database";
 import {LogLevel} from "src/shared/model/common";
 import {LoginFieldContainer} from "./model/container";
 import {StatusCodeError} from "./model/error";
+import {URL} from "@cliqz/url-parser";
 
 export function initialConfig(): Config {
     {

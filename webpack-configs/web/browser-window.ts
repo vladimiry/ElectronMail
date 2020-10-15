@@ -5,7 +5,7 @@ import {readConfiguration} from "@angular/compiler-cli";
 import {BuildAngularCompilationFlags, BuildEnvironment} from "webpack-configs/model";
 import {ENVIRONMENT, rootRelativePath} from "webpack-configs/lib";
 import {WEB_CHUNK_NAMES} from "src/shared/constants";
-import {browserWindowAppPath, browserWindowPath, buildBaseWebConfig, cssRuleSetUseItems} from "./lib";
+import {browserWindowAppPath, browserWindowPath, buildBaseWebConfig, cssRuleSetRules} from "./lib";
 
 const angularCompilationFlags: BuildAngularCompilationFlags = {
     aot: true,
@@ -42,7 +42,7 @@ const config = buildBaseWebConfig(
                     test: /\.scss$/,
                     use: [
                         "to-string-loader",
-                        ...cssRuleSetUseItems(),
+                        ...cssRuleSetRules(),
                         "resolve-url-loader",
                         "sass-loader",
                     ],
@@ -92,9 +92,13 @@ const config = buildBaseWebConfig(
                     ...readConfiguration(tsConfigFile).options,
                 };
 
+                /* eslint-disable max-len */
+                // https://github.com/angular/angular-devkit-build-angular-builds/blob/e8499b649475ae03b1519f181b982ce568b86c49/src/webpack/configs/typescript.js
+                // https://github.com/angular/ngtools-webpack-builds/blob/4ee7f6f5d3f611ad29832bd27e984f1a46a99421/README.md
+                // https://github.com/angular/angular-cli/blob/9980f8139cfcdd2a8e928a3a93b7af455ba25ea4/packages/ngtools/webpack/README.md
+                // eslint-disable-next-line max-len
                 const angularCompilerPluginOptions: AngularCompilerPluginOptions = {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                    contextElementDependencyConstructor: require("webpack/lib/dependencies/ContextElementDependency"),
+                    // contextElementDependencyConstructor: require("webpack/lib/dependencies/ContextElementDependency"),
                     tsConfigPath: tsConfigFile,
                     compilerOptions,
                     platform: PLATFORM.Browser,

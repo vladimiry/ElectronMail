@@ -276,7 +276,6 @@
     "import-sort-cli/yargs": "^15.x",
     "import-sort-parser-typescript/typescript": "^4.x",
     "*/**/tslib": "^2.x",
-    "*/**/@types/webpack": "4.41.22",
     "*/**/builder-util-runtime": "8.7.2"
   }
 }

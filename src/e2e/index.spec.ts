@@ -1,12 +1,10 @@
 import byline from "byline";
 import fs from "fs";
 import path from "path";
-import psNode from "ps-node"; // see also https://www.npmjs.com/package/find-process
-import psTree from "ps-tree";
 import {ExecutionContext} from "ava";
 import {promisify} from "util";
 
-import {CI, ENV, PROJECT_NAME, TestContext, initApp, test} from "./workflow";
+import {CI, ENV, TestContext, initApp, test} from "./workflow";
 import {Config} from "src/shared/model/options";
 import {ONE_SECOND_MS, PROTON_API_ENTRY_URLS} from "src/shared/constants";
 import {asyncDelay} from "src/shared/util";
@@ -135,55 +133,4 @@ test.afterEach.always(async (t) => {
     if (t.context.testStatus !== "success") {
         await saveScreenshot(t);
     }
-
-    if (!CI) {
-        return;
-    }
-
-    // kill processes to avoid appveyor error during preparing logs for uploading:
-    // The process cannot access the file because it is being used by another process: output\e2e\1545563294836\chrome-driver.log
-    // HINT: add "- ps: Get-Process" line to appveyor.yml to list the processes
-    const processes: Array<{ pid: number }> = await Promise.all( // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-        [
-            {command: PROJECT_NAME}, {arguments: PROJECT_NAME},
-            {command: "node.exe"}, {arguments: "keytar"},
-            {command: "node.exe"}, {arguments: "keytar.node"},
-            {command: "electron"}, {arguments: "electron"},
-            {command: "chrome"}, {arguments: "chrome"},
-            {command: "webdriver"}, {arguments: "webdriver"},
-            {command: "chrome-driver"}, {arguments: "chrome-driver"},
-            {arguments: "log"},
-            {arguments: "e2e"},
-            {arguments: "keytar.node"},
-            {arguments: "keytar"},
-        ].map((criteria) => {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return
-            return promisify(psNode.lookup)(criteria);
-        }),
-    );
-
-    async function killSelfAndChildrenProcesses(pid: number): Promise<void> {
-        const processesToKill = [
-            ...(await promisify(psTree)(pid)),
-            {PID: pid},
-        ];
-
-        for (const {PID} of processesToKill) {
-            try {
-                process.kill(Number(PID), "SIGKILL");
-            } catch {
-                // NOOP
-            }
-        }
-    }
-
-    await (async (): Promise<void> => {
-        for (const {pid} of processes) {
-            try {
-                await killSelfAndChildrenProcesses(pid);
-            } catch {
-                // NOOP
-            }
-        }
-    })();
 });

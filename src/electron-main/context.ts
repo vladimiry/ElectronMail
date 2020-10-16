@@ -11,7 +11,7 @@ import {app} from "electron";
 import {distinctUntilChanged, take} from "rxjs/operators";
 
 import {Config, Settings} from "src/shared/model/options";
-import {Context, ContextInitOptions, ContextInitOptionsPaths} from "./model";
+import {Context, ContextInitOptions, ContextInitOptionsPaths, ProperLockfileError} from "./model";
 import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {INITIAL_STORES, configEncryptionPresetValidator, settingsAccountLoginUniquenessValidator} from "./constants";
@@ -149,6 +149,34 @@ function initLocations(
     };
 }
 
+function isProperLockfileError(value: unknown | ProperLockfileError): value is ProperLockfileError {
+    return (
+        typeof value === "object"
+        &&
+        typeof (value as ProperLockfileError).message === "string"
+        &&
+        (value as ProperLockfileError).code === "ELOCKED"
+        &&
+        typeof (value as ProperLockfileError).file === "string"
+        &&
+        Boolean(
+            (value as ProperLockfileError).file,
+        )
+    );
+}
+
+function wrapProperLockfileError(error: ProperLockfileError): ProperLockfileError {
+    const extendedMessage = [
+        `. Related data file: "${error.file}".`,
+        "Normally, this error indicates that the app was abnormally closed or a power loss has taken place.",
+        "Please restart the app to restore its functionality (stale lock files will be removed automatically).",
+    ].join(" ");
+    return  Object.assign(
+        error,
+        {message: `${error.message} ${extendedMessage}`},
+    );
+}
+
 export function initContext(
     {storeFs = StoreFs.Fs.fs, ...options}: ContextInitOptions = {},
 ): NoExtraProps<Context> {
@@ -159,6 +187,9 @@ export function initContext(
     logger.transports.file.level = INITIAL_STORES.config().logLevel;
     logger.transports.console.level = false;
 
+    // the lock path gets resolved explicitly in case "proper-lockfile" module changes the default resolving strategy in the future
+    const lockfilePathResolver = (file: string): string => `${file}.lock`;
+
     const {
         config$,
         configStore,
@@ -166,6 +197,7 @@ export function initContext(
         const store = new Store<Config>({
             fs: storeFs,
             optimisticLocking: true,
+            lockfilePathResolver,
             file: path.join(locations.userDataDir, "config.json"),
             validators: [configEncryptionPresetValidator],
             serialize: (data): Buffer => Buffer.from(JSON.stringify(data, null, 2)),
@@ -185,9 +217,17 @@ export function initContext(
 
         store.write = ((write): typeof store.write => {
             const result: typeof store.write = async (...args) => {
-                const config = await write(...args);
-                valueChangeSubject$.next(config);
-                return config;
+                let callResult: Unpacked<ReturnType<typeof write>> | undefined;
+                try {
+                    callResult = await write(...args);
+                } catch (error) {
+                    if (isProperLockfileError((error))) {
+                        throw wrapProperLockfileError(error);
+                    }
+                    throw error;
+                }
+                valueChangeSubject$.next(callResult);
+                return callResult;
             };
             return result;
         })(store.write.bind(store));
@@ -263,18 +303,45 @@ export function initContext(
         config$,
         configStore,
         configStoreQueue: new asap(),
-        settingsStore: new Store<Settings>({
-            fs: storeFs,
-            optimisticLocking: true,
-            file: path.join(locations.userDataDir, "settings.bin"),
-            validators: [settingsAccountLoginUniquenessValidator],
-        }),
+        settingsStore: (() => {
+            const store = new Store<Settings>({
+                fs: storeFs,
+                optimisticLocking: true,
+                lockfilePathResolver,
+                file: path.join(locations.userDataDir, "settings.bin"),
+                validators: [settingsAccountLoginUniquenessValidator],
+            });
+            store.write = ((write): typeof store.write => {
+                const result: typeof store.write = async (...args) => {
+                    try {
+                        return await write(...args);
+                    } catch (error) {
+                        if (isProperLockfileError((error))) {
+                            throw wrapProperLockfileError(error);
+                        }
+                        throw error;
+                    }
+                };
+                return result;
+            })(store.write.bind(store));
+            return store;
+        })(),
         settingsStoreQueue: new asap(),
         keytarSupport: true,
         getSpellCheckController: () => {
             throw new Error(`Spell check controller has net been initialized yet`);
         },
     };
+
+    // "proper-lockfile" module creates directory-based locks (since it's an atomic operation on all systems)
+    // so lets remove the stale locks on app start
+    // in general, a stale locks might remain on the file system due to the abnormal program exit, power loss, etc
+    for (const {file, fs: {_impl: fsImpl}} of [ctx.configStore, ctx.settingsStore]) {
+        const lockFile = lockfilePathResolver(file);
+        if (fsImpl.existsSync(lockFile)) {
+            fsImpl.rmdirSync(lockFile);
+        }
+    }
 
     return ctx;
 }

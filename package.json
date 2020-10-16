@@ -135,7 +135,7 @@
     "electron-unhandled": "3.0.2",
     "fast-glob": "3.2.4",
     "fs-extra": "9.0.1",
-    "fs-json-store": "6.0.0-beta2",
+    "fs-json-store": "6.0.0-beta4",
     "fs-json-store-encryption-adapter": "2.0.0",
     "js-base64": "3.5.2",
     "keytar": "7.0.0",

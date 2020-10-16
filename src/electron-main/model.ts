@@ -57,3 +57,9 @@ export interface UIContext {
     readonly tray: Electron.Tray;
     readonly appMenu: Electron.Menu;
 }
+
+export interface ProperLockfileError {
+    message: string
+    code: "ELOCKED"
+    file: string
+}

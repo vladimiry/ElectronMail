@@ -11,21 +11,6 @@ index 6eef523..b016a0d 100755
      echo "[error] no SourceMaps found inside the directory: $OUTPUT_DIR";
    fi;
 
-diff --git a/node_modules/mutex-browser/lib/index.js b/node_modules/mutex-browser/lib/index.js
-index f69eebf..22c9492 100644
---- a/node_modules/mutex-browser/lib/index.js
-+++ b/node_modules/mutex-browser/lib/index.js
-@@ -7,8 +7,8 @@ export const create = (options) => {
-     const hasIDBPromise = new Promise((resolve) => {
-         try {
-             const db = indexedDB.open(options && options.dbName || DEFAULT_DB_NAME);
--            db.onerror = () => resolve(true);
--            db.onsuccess = () => resolve(false);
-+            db.onerror = () => resolve(false);
-+            db.onsuccess = () => resolve(true);
-         }
-         catch (err) {
-             resolve(false);
 diff --git a/node_modules/proton-shared/lib/apps/helper.ts b/node_modules/proton-shared/lib/apps/helper.ts
 index b6913e1..31a52f7 100644
 --- a/node_modules/proton-shared/lib/apps/helper.ts

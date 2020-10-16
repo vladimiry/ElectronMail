@@ -1,6 +1,6 @@
 import {Target} from "app-builder-lib";
 
-import {execShell} from "scripts/lib";
+import {CONSOLE_LOG, execShell} from "scripts/lib";
 
 const targets: Array<typeof Target.prototype.name> = [
     "appimage",
@@ -16,11 +16,14 @@ async function clean(): Promise<void> {
     await execShell(["npx", ["--no-install", "rimraf", "./dist/linux-unpacked", "./dist/*.yaml"]]);
 }
 
-(async () => { // eslint-disable-line @typescript-eslint/no-floating-promises
+(async () => {
     for (const target of targets) {
         await clean();
         await execShell(["yarn", [`electron-builder:dist:linux:${target}`]]);
     }
 
     await clean();
-})();
+})().catch((error) => {
+    CONSOLE_LOG(error);
+    process.exit(1);
+});

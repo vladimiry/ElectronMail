@@ -20,7 +20,7 @@ async function calculateHash(file: string, alg: string): Promise<string> {
     });
 }
 
-(async () => { // eslint-disable-line @typescript-eslint/no-floating-promises
+(async () => {
     const files = await listInstallationPackageFiles(DIST_DIRECTORY);
 
     CONSOLE_LOG(`Hashing ${String(files.length)} package's located in ${DIST_DIRECTORY} directory:`);
@@ -29,4 +29,7 @@ async function calculateHash(file: string, alg: string): Promise<string> {
         const hash = await calculateHash(file, hashAlgorithm);
         CONSOLE_LOG(`${path.basename(file)} [${hashAlgorithm}]: ${hash}`);
     }
-})();
+})().catch((error) => {
+    CONSOLE_LOG(error);
+    process.exit(1);
+});

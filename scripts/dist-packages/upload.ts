@@ -18,7 +18,7 @@ outputStream.on("finish", async () => {
 
 outputArchiver.pipe(outputStream);
 
-(async () => { // eslint-disable-line @typescript-eslint/no-floating-promises
+(async () => {
     for (const file of await listInstallationPackageFiles(DIST_DIRECTORY)) {
         if (file.endsWith(".blockmap")) {
             continue;
@@ -29,4 +29,7 @@ outputArchiver.pipe(outputStream);
     }
 
     await outputArchiver.finalize();
-})();
+})().catch((error) => {
+    CONSOLE_LOG(error);
+    process.exit(1);
+});

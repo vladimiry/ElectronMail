@@ -1,7 +1,7 @@
 import path from "path";
 
 import {BINARY_NAME, PROVIDER_REPO_MAP, PROVIDER_REPO_NAMES} from "src/shared/constants";
-import {CWD, execShell} from "scripts/lib";
+import {CONSOLE_LOG, CWD, execShell} from "scripts/lib";
 import {FolderAsDomainEntry, executeBuildFlow, printAndWriteFile} from "./lib";
 
 const folderAsDomainEntries: Array<FolderAsDomainEntry<{
@@ -175,7 +175,7 @@ function resolveWebpackConfigPatchingCode(
     return result;
 }
 
-(async () => { // eslint-disable-line @typescript-eslint/no-floating-promises
+(async () => {
     for (const repoType of PROVIDER_REPO_NAMES) {
         await executeBuildFlow({
             repoType,
@@ -251,4 +251,7 @@ function resolveWebpackConfigPatchingCode(
             },
         });
     }
-})();
+})().catch((error) => {
+    CONSOLE_LOG(error);
+    process.exit(1);
+});

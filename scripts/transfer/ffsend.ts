@@ -77,9 +77,12 @@ async function uploadFileArg(): Promise<{ downloadUrl: string }> {
     return {downloadUrl};
 }
 
-(async () => { // eslint-disable-line @typescript-eslint/no-floating-promises
+(async () => {
     if (ACTION_TYPE_ARG !== "upload") {
         throw new Error(`Unsupported action type: ${ACTION_TYPE_ARG}`);
     }
     await uploadFileArg();
-})();
+})().catch((error) => {
+    CONSOLE_LOG(error);
+    process.exit(1);
+});

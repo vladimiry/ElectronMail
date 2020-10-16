@@ -95,8 +95,11 @@ async function postProcess({packageFile}: { packageFile: string }): Promise<void
     await packAndCleanup({packageDir, packageFile});
 }
 
-(async () => { // eslint-disable-line @typescript-eslint/no-floating-promises
+(async () => {
     await postProcess(
         await build("appimage"),
     );
-})();
+})().catch((error) => {
+    CONSOLE_LOG(error);
+    process.exit(1);
+});

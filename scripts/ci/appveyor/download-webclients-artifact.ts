@@ -43,7 +43,7 @@ interface Job {
     status: "success" | unknown;
 }
 
-(async () => { // eslint-disable-line @typescript-eslint/no-floating-promises
+(async () => {
     const projectResponse = await fetchUrl([
         `https://ci.appveyor.com/api/projects/${APPVEYOR_ACCOUNT_NAME}/${APPVEYOR_PROJECT_SLUG}`,
         {headers: {"Content-type": "application/json"}},
@@ -76,4 +76,7 @@ interface Job {
     } else {
         await execShell(["tar", ["-xf", tarFile]]);
     }
-})();
+})().catch((error) => {
+    CONSOLE_LOG(error);
+    process.exit(1);
+});

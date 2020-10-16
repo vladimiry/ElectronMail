@@ -123,7 +123,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
             type: "action",
             payload: this.injector
                 .get(AccountsService)
-                .generateNotificationsStateResetAction({login: this.account.accountConfig.login, ignoreNoAccount: true}),
+                .generateNotificationsStateResetAction({login: this.account.accountConfig.login, optionalAccount: true}),
         });
     }
 

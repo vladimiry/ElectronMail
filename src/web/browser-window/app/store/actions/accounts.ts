@@ -9,7 +9,7 @@ import {WebAccount, WebAccountProgress} from "src/web/browser-window/app/model";
 export const ACCOUNTS_ACTIONS = unionize({
         Select: ofType<{ login: string }>(),
         DeSelect: ofType<{ login: string }>(),
-        PatchProgress: ofType<{ login: string; patch: WebAccountProgress }>(),
+        PatchProgress: ofType<{ login: string; patch: WebAccountProgress; optionalAccount?: boolean; }>(),
         Patch: ofType<{
             login: string;
             patch: Partial<{
@@ -20,7 +20,7 @@ export const ACCOUNTS_ACTIONS = unionize({
                     | "loginDelayedSeconds"
                     | "loginDelayedUntilSelected">]: Partial<WebAccount[k]>
             }>;
-            ignoreNoAccount?: boolean;
+            optionalAccount?: boolean;
         }>(),
         PatchDbExportProgress: ofType<{ pk: DbAccountPk; uuid: string; progress?: number }>(),
         ToggleDatabaseView: ofType<{ login: string; forced?: Pick<WebAccount, "databaseView"> }>(),

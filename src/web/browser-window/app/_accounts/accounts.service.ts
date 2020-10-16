@@ -25,9 +25,9 @@ export class AccountsService {
     ) {}
 
     generateNotificationsStateResetAction(
-        {login, ignoreNoAccount}: { login: string; ignoreNoAccount?: boolean }
+        {login, optionalAccount}: { login: string; optionalAccount?: boolean }
     ): ReturnType<typeof ACCOUNTS_ACTIONS.Patch> {
-        return ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread: 0, loggedIn: false}}, ignoreNoAccount});
+        return ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread: 0, loggedIn: false}}, optionalAccount});
     }
 
     buildLoginDelaysResetAction(

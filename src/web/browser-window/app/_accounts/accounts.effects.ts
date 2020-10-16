@@ -151,7 +151,7 @@ export class AccountsEffects {
                 const {login} = pk;
                 const dispose$ = from(finishPromise).pipe(
                     tap(() => {
-                        this.store.dispatch(ACCOUNTS_ACTIONS.Patch({login, patch: {syncingActivated: false}, ignoreNoAccount: true}));
+                        this.store.dispatch(ACCOUNTS_ACTIONS.Patch({login, patch: {syncingActivated: false}, optionalAccount: true}));
                         logger.info("dispose");
                     }),
                 );
@@ -192,10 +192,11 @@ export class AccountsEffects {
                                         );
                                         return selectMailOnlineInput$.pipe(
                                             mergeMap(() => EMPTY),
-                                            finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({
-                                                login,
-                                                patch: {selectingMailOnline: false},
-                                            }))),
+                                            finalize(() => {
+                                                this.store.dispatch(
+                                                    ACCOUNTS_ACTIONS.PatchProgress({login, patch: {selectingMailOnline: false}}),
+                                                );
+                                            }),
                                         );
                                     }),
                                 ),
@@ -287,7 +288,9 @@ export class AccountsEffects {
                                         ),
                                         catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                                         finalize(() => {
-                                            this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: false}}));
+                                            this.store.dispatch(
+                                                ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: false}, optionalAccount: true}),
+                                            );
                                         }),
                                     );
 

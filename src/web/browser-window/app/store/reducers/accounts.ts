@@ -12,21 +12,6 @@ const logger = getZoneNameBoundWebLogger("[reducers/accounts]");
 
 export const featureName = "accounts";
 
-const notFoundAccountError = new Error(`Failed to resolve account`);
-
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function pickAccountBundle(accounts: WebAccount[], criteria: LoginFieldContainer, strict = true) {
-    const index = accounts
-        .map(({accountConfig}) => accountConfig)
-        .findIndex(accountPickingPredicate(criteria));
-
-    if (strict && index === -1) {
-        throw notFoundAccountError;
-    }
-
-    return {index, account: accounts[index]};
-}
-
 export interface State extends fromRoot.State {
     selectedLogin?: string;
     initialized?: boolean;
@@ -42,6 +27,22 @@ const initialState: State = {
     globalProgress: {},
 };
 
+const resolveAccountByLogin = <T extends boolean>(
+    accounts: WebAccount[],
+    filterCriteria: LoginFieldContainer,
+    strict: T,
+): typeof strict extends true ? WebAccount : WebAccount | undefined => {
+    const filterPredicate = accountPickingPredicate(filterCriteria);
+    const webAccount: ReturnType<typeof resolveAccountByLogin> = accounts.find(({accountConfig}) => filterPredicate(accountConfig));
+
+    if (!webAccount && strict) {
+        throw new Error("Failed to resolve account");
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
+    return webAccount as any;
+};
+
 export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_ACTIONS> & UnionOf<typeof NAVIGATION_ACTIONS>): State {
     if (NAVIGATION_ACTIONS.is.Logout(action)) {
         return initialState;
@@ -52,7 +53,7 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
             const webAccounts = accountConfigs
                 .filter((accountConfig) => !accountConfig.disabled)
                 .reduce((accounts: WebAccount[], accountConfig) => {
-                    const {account} = pickAccountBundle(draftState.accounts, accountConfig, false);
+                    const account = resolveAccountByLogin(draftState.accounts, accountConfig, false);
 
                     if (account) {
                         account.accountConfig = accountConfig;
@@ -109,23 +110,26 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                 delete draftState.selectedLogin;
             }
         },
-        PatchProgress(payload) {
-            const {account} = pickAccountBundle(draftState.accounts, payload);
-            account.progress = {...account.progress, ...payload.patch};
+        PatchProgress({login, patch, optionalAccount}) {
+            logger.verbose("(PatchProgress)", JSON.stringify({patch, optionalAccount}));
+
+            const account = resolveAccountByLogin(draftState.accounts, {login}, !optionalAccount);
+
+            if (!account) {
+                logger.verbose("(PatchProgress) reducing skipped");
+                return;
+            }
+
+            account.progress = {...account.progress, ...patch};
         },
-        Patch({login, patch, ignoreNoAccount}) {
-            logger.verbose("(Patch)", JSON.stringify({patch}));
+        Patch({login, patch, optionalAccount}) {
+            logger.verbose("(Patch)", JSON.stringify({patch, optionalAccount}));
 
-            let account: WebAccount | undefined;
+            const account = resolveAccountByLogin(draftState.accounts, {login}, !optionalAccount);
 
-            try {
-                const bundle = pickAccountBundle(draftState.accounts, {login});
-                account = bundle.account; // eslint-disable-line prefer-destructuring
-            } catch (error) {
-                if (error === notFoundAccountError && ignoreNoAccount) {
-                    return;
-                }
-                throw error;
+            if (!account) {
+                logger.verbose("(Patch) reducing skipped");
+                return;
             }
 
             if ("notifications" in patch) {
@@ -149,7 +153,7 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
             }
         },
         PatchDbExportProgress({pk: {login}, uuid, progress}) {
-            const {account} = pickAccountBundle(draftState.accounts, {login});
+            const account = resolveAccountByLogin(draftState.accounts, {login}, true);
             const item = account.dbExportProgress.find((_) => _.uuid === uuid);
 
             if (typeof progress === "number") {
@@ -166,7 +170,7 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
             }
         },
         ToggleDatabaseView({login, forced}) {
-            const {account} = pickAccountBundle(draftState.accounts, {login});
+            const account = resolveAccountByLogin(draftState.accounts, {login}, true);
 
             account.databaseView = forced
                 ? forced.databaseView
@@ -176,7 +180,7 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
             draftState.globalProgress = {...draftState.globalProgress, ...patch};
         },
         FetchSingleMailSetParams({pk, mailPk}) {
-            const {account} = pickAccountBundle(draftState.accounts, {login: pk.login});
+            const account = resolveAccountByLogin(draftState.accounts, {login: pk.login}, true);
 
             account.fetchSingleMailParams = mailPk
                 ? {mailPk}
@@ -184,7 +188,7 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
         },
         MakeMailReadSetParams({pk, ...rest}) {
             const key = "makeReadMailParams";
-            const {account} = pickAccountBundle(draftState.accounts, {login: pk.login});
+            const account = resolveAccountByLogin(draftState.accounts, {login: pk.login}, true);
 
             if ("messageIds" in rest) {
                 const {messageIds} = rest;
@@ -196,7 +200,7 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
         },
         SetMailFolderParams({pk, ...rest}) {
             const key = "setMailFolderParams";
-            const {account} = pickAccountBundle(draftState.accounts, {login: pk.login});
+            const account = resolveAccountByLogin(draftState.accounts, {login: pk.login}, true);
 
             if ("messageIds" in rest) {
                 const {folderId, messageIds} = rest;

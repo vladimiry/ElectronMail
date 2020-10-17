@@ -6,6 +6,7 @@ export interface ZoneApiParameter {
 }
 
 export interface DbPatch {
+    // TODO remove "DbPatch.conversationEntries" prop as it was needed for "tutanota" mail provider only
     conversationEntries: { remove: Array<Pick<ConversationEntry, "pk">>; upsert: ConversationEntry[] };
     mails: { remove: Array<Pick<Mail, "pk">>; upsert: Mail[] };
     folders: { remove: Array<Pick<Folder, "pk">>; upsert: Folder[] };

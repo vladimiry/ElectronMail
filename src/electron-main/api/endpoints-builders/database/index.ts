@@ -66,25 +66,24 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                     sessionAccount[entityType][pk] = validatedEntity;
                 }
 
-                if (entityType !== "mails") {
-                    continue;
+                if (entityType === "mails") {
+                    // send mails to indexing process
+                    // TODO performance optimization: send mails to indexing process if indexing feature activated
+                    setTimeout(() => {
+                        IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.next(
+                            IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Index(
+                                {
+                                    uid: new UUID(4).format(),
+                                    ...narrowIndexActionPayload({
+                                        key,
+                                        add: upsert as IndexableMail[], // TODO send data as chunks
+                                        remove,
+                                    }),
+                                },
+                            ),
+                        );
+                    });
                 }
-
-                // send mails indexing signal
-                setTimeout(() => {
-                    IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.next(
-                        IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Index(
-                            {
-                                uid: new UUID(4).format(),
-                                ...narrowIndexActionPayload({
-                                    key,
-                                    add: upsert as IndexableMail[], // TODO send data as chunks
-                                    remove,
-                                }),
-                            },
-                        ),
-                    );
-                });
             }
 
             const metadataModified = patchMetadata(account.metadata, metadataPatch, "dbPatch");

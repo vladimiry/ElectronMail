@@ -223,13 +223,16 @@ async function buildDbPatch(
 
     for (const event of input.events) {
         for (const key of mappingKeys) {
-            const {refType, updatesMappedByInstanceId: updatesMappedByInstanceId} = mapping[key];
+            const {refType, updatesMappedByInstanceId} = mapping[key];
             const updateItems = event[refType];
             if (!updateItems) {
                 continue;
             }
             for (const updateItem of updateItems) {
-                updatesMappedByInstanceId.set(updateItem.ID, (updatesMappedByInstanceId.get(updateItem.ID) || []).concat(updateItem));
+                updatesMappedByInstanceId.set(
+                    updateItem.ID,
+                    (updatesMappedByInstanceId.get(updateItem.ID) ?? []).concat(updateItem),
+                );
             }
         }
     }
@@ -256,6 +259,13 @@ async function buildDbPatch(
                 }
                 if (update.Action === RestModel.EVENT_ACTION.DELETE) {
                     remove.push({pk: Database.buildPk(update.ID)});
+                    // "delete" action is irrecoverable, so we break the updates iterating loop as soon as we faced the "delete" action
+                    // normally that should be a last update in the updates list for the specific entity
+                    // so we process the "delete" action first of all since we iterate the reversed updates list
+                    // TODO consider throwing an error if "upsertIds" list is not empty on this stage
+                    //      since as written above, the "delete" action is supposed to be processed processed first of all
+                    //      since entity is not supposed to receiving any notifications being already removed (remember,
+                    //      we iterate the items starting from the newest items)
                     break;
                 }
             }
@@ -271,8 +281,11 @@ async function buildDbPatch(
 
     if (!nullUpsert) {
         // TODO process 404 error of fetching individual entity ("message" case is handled, see "error.data.Code === 15052" check below)
-        // so we could catch the individual entity fetching error
-        // 404 error can be ignored as if it occurs because user was moved stuff from here to there while syncing cycle was in progress
+        //      so we could catch the individual entity fetching error
+        //      404 error can be ignored as if it occurs because user was moving the email from here to there ending up
+        //      removing it while syncing cycle was in progress
+
+        // fetching mails
         for (const {id, gotTrashed} of mapping.mails.upsertIds) {
             try {
                 const response = await providerApi.message.getMessage(id);
@@ -283,10 +296,13 @@ async function buildDbPatch(
                     &&
                     isProtonApiError(error)
                     &&
-                    error.status === 422
-                    &&
-                    error.data?.Code === 15052
-                ) { // ignoring the error as expected to happen
+                    ( // message has already been removed error condition:
+                        error.status === 42
+                        &&
+                        error.data?.Code === 15052
+                    )
+                ) { // ignoring the error as permissible
+                    // TODO figure how to suppress displaying this error on "proton ui" in the case we initiated it (triggered the fetching)
                     logger.warn(
                         // WARN don't log message-specific data as it might include sensitive fields
                         `skip message fetching as it has been already removed from the trash before fetch action started`,
@@ -300,8 +316,10 @@ async function buildDbPatch(
                 }
             }
         }
+
+        // fetching folders/labels
         await (async () => {
-            // TODO explore possibility to fetch folders by IDs / "upsertIds" variable
+            // TODO explore possibility to fetch folders by IDs ("upsertIds" variable)
             const [labelsResponse, foldersResponse] = await Promise.all([
                 providerApi.label.get(LABEL_TYPE.MESSAGE_LABEL),
                 providerApi.label.get(LABEL_TYPE.MESSAGE_FOLDER),
@@ -313,6 +331,8 @@ async function buildDbPatch(
                 .map(Database.buildFolder);
             patch.folders.upsert.push(...foldersToPush);
         })();
+
+        // fetching contacts
         for (const {id} of mapping.contacts.upsertIds) {
             const contactResponse = await providerApi.contact.getContact(id);
             patch.contacts.upsert.push(Database.buildContact(contactResponse.Contact));

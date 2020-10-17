@@ -3,7 +3,8 @@ import fsExtra from "fs-extra";
 import path from "path";
 import pathIsInside from "path-is-inside";
 
-import {CONSOLE_LOG, CWD, GIT_CLONE_ABSOLUTE_DIR, execShell, resolveGitCommitInfo, resolveGitOutputBackupDir} from "scripts/lib";
+import {CONSOLE_LOG, execShell, resolveGitCommitInfo, resolveGitOutputBackupDir} from "scripts/lib";
+import {CWD_ABSOLUTE_DIR, GIT_CLONE_ABSOLUTE_DIR} from "scripts/const";
 import {PROVIDER_REPO_MAP, RUNTIME_ENV_CI_PROTON_CLIENTS_ONLY, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/constants";
 
 const reposOnlyFilter: DeepReadonly<{ value: Array<keyof typeof PROVIDER_REPO_MAP>, envVariableName: string }> = (() => {
@@ -26,7 +27,7 @@ if (!BASE_DEST_DIR) {
     throw new Error("Empty base destination directory argument");
 }
 
-if (!pathIsInside(path.resolve(CWD, BASE_DEST_DIR), CWD)) {
+if (!pathIsInside(path.resolve(CWD_ABSOLUTE_DIR, BASE_DEST_DIR), CWD_ABSOLUTE_DIR)) {
     throw new Error(`Invalid base destination directory argument value: ${BASE_DEST_DIR}`);
 }
 

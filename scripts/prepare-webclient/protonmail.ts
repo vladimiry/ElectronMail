@@ -1,7 +1,8 @@
 import path from "path";
 
 import {BINARY_NAME, PROVIDER_REPO_MAP, PROVIDER_REPO_NAMES} from "src/shared/constants";
-import {CONSOLE_LOG, CWD, execShell} from "scripts/lib";
+import {CONSOLE_LOG, execShell} from "scripts/lib";
+import {CWD_ABSOLUTE_DIR} from "scripts/const";
 import {FolderAsDomainEntry, executeBuildFlow, printAndWriteFile} from "./lib";
 
 const folderAsDomainEntries: Array<FolderAsDomainEntry<{
@@ -190,7 +191,7 @@ function resolveWebpackConfigPatchingCode(
                             "apply",
                             "--ignore-whitespace",
                             "--reject",
-                            path.join(CWD, `./patches/protonmail/${repoType}.patch`),
+                            path.join(CWD_ABSOLUTE_DIR, `./patches/protonmail/${repoType}.patch`),
                         ],
                         {cwd: repoDir},
                     ]);

@@ -1,10 +1,9 @@
 import escapeStringRegexp from "escape-string-regexp";
 import fs from "fs";
-import fsExtra from "fs-extra";
 import path from "path";
 
 import {BINARY_NAME} from "src/shared/constants";
-import {CONSOLE_LOG, execShell} from "scripts/lib";
+import {CONSOLE_LOG, execShell, resolveExecutable} from "scripts/lib";
 import {DISABLE_SANDBOX_ARGS_LINE, build, ensureFileHasNoSuidBit} from "scripts/electron-builder/lib";
 
 // TODO pass destination directory instead of hardcoding it ("--appimage-extract" doesn't support destination parameter at the moment)
@@ -46,45 +45,31 @@ async function unpack({packageFile}: { packageFile: string }): Promise<{ package
     return {packageDir};
 }
 
-async function resolveAppImageTool({packageFile}: { packageFile: string }): Promise<{ appImageTool: string }> {
-    const appImageFile = path.join(
-        path.join(path.dirname(packageFile), "./appimagetool"),
-        "./appimagetool-x86_64.AppImage",
+async function resolveAppImageTool(): Promise<{ command: string }> {
+    const {command} = await resolveExecutable(
+        "https://github.com/AppImage/AppImageKit/releases/download/12/appimagetool-x86_64.AppImage",
+        "d918b4df547b388ef253f3c9e7f6529ca81a885395c31f619d9aaf7030499a13",
+        "appimagetool",
     );
-    const cwd = path.dirname(appImageFile);
-
-    fsExtra.ensureDirSync(cwd);
-
-    // TODO cache the "appimagetool"
-    await execShell([
-        "curl",
-        [
-            "--fail",
-            "--location",
-            "--output", appImageFile,
-            `https://github.com/AppImage/AppImageKit/releases/download/continuous/${path.basename(appImageFile)}`,
-        ],
-    ]);
-
-    await execShell(["chmod", ["+x", appImageFile]]);
+    const cwd = path.dirname(command);
 
     // unpacking the image in order to prevent the following error: AppImages require FUSE to run
     // https://docs.appimage.org/user-guide/run-appimages.html?highlight=fuse#the-appimage-tells-me-it-needs-fuse-to-run
-    await execShell([appImageFile, ["--appimage-extract"], {cwd}]);
+    await execShell([command, ["--appimage-extract"], {cwd}]);
 
     return {
-        appImageTool: path.join(
-            path.dirname(appImageFile),
+        command: path.join(
+            cwd,
             path.join(extractedImageFolderName, "AppRun"),
         ),
     };
 }
 
 async function packAndCleanup({packageFile, packageDir}: { packageFile: string; packageDir: string }): Promise<void> {
-    const {appImageTool} = await resolveAppImageTool({packageFile});
+    const {command} = await resolveAppImageTool();
 
     await execShell(["rm", ["--force", packageFile]]);
-    await execShell([appImageTool, ["-n", "--comp", "xz", packageDir, packageFile]]);
+    await execShell([command, ["-n", "--comp", "xz", packageDir, packageFile]]);
     await execShell(["npx", ["--no-install", "rimraf", packageDir]]);
 }
 

@@ -1,10 +1,7 @@
-import fs from "fs";
-import fsExtra from "fs-extra";
 import os from "os";
 import path from "path";
-import {promisify} from "util";
 
-import {CONSOLE_LOG, CWD, execShell, fetchUrl} from "scripts/lib";
+import {CONSOLE_LOG, execShell, resolveExecutable} from "scripts/lib";
 
 const SERVICE_NAME = "wormhole-william";
 const SERVICE_VERSION = "1.0.4";
@@ -13,50 +10,28 @@ const SERVICE_BINARY_DOWNLOAD_URL_PREFIX = `https://github.com/psanford/${SERVIC
 const [, , ACTION_TYPE_ARG, FILE_ARG] = process.argv as [null, null, "upload" | string, string];
 
 async function resolveCommand(): Promise<{ command: string }> {
-    const binaryFile = path.resolve(
-        CWD,
-        "./output",
-        (() => {
-            const fileNames: Record<Extract<ReturnType<typeof os.platform>, "darwin" | "linux" | "win32">, string> = Object.freeze({
-                darwin: "wormhole-william-darwin-amd64",
-                linux: "wormhole-william-linux-amd64",
-                win32: "wormhole-william-windows-386.exe",
-            });
-            const platform = os.platform();
-            if (platform in fileNames) {
-                return fileNames[platform as keyof typeof fileNames];
-            }
-            throw new Error(`Failed to resolve SERVICE binary name for ${platform} platform`);
-        })(),
-    );
-    const returnExecutableCommand: () => Promise<{ command: string }> = async () => {
-        if (!(await fsExtra.pathExists(binaryFile))) {
-            throw new Error(`Failed to resolve "${binaryFile}" file`);
+    const binaryBundle = (() => {
+        const fileNames = {
+            darwin: {postfix: "darwin-amd64", sha256: "048383785da82faa484bf85149989429ecb90f9f756b4d58f5926748649d6532"},
+            linux: {postfix: "linux-amd64", sha256: "1dbb936fcecdc07e9bd8463e97da282db5c8acee864661ed689a5ce40a64ffdb"},
+            win32: {postfix: "windows-386.exe", sha256: "3ed85cf51f5c17b3dc56d164959751c2808188554b00ca33d5856543758fb905"},
+        } as const;
+        const platform = os.platform();
+        const resolvedItem: typeof fileNames[keyof typeof fileNames] | undefined = fileNames[platform as (keyof typeof fileNames)];
+        if (resolvedItem) {
+            return {
+                fileName: `${SERVICE_NAME}-${resolvedItem.postfix}`,
+                sha256: resolvedItem.sha256,
+            } as const;
         }
-        if (os.platform() !== "win32") {
-            await execShell(["chmod", ["+x", binaryFile]]);
-        }
-        return {command: binaryFile};
-    };
-
-    if (await fsExtra.pathExists(binaryFile)) {
-        CONSOLE_LOG(`Binary ${binaryFile} exists`);
-        return returnExecutableCommand();
-    }
-
-    await (async () => {
-        const url = `${SERVICE_BINARY_DOWNLOAD_URL_PREFIX}/${path.basename(binaryFile)}`;
-        const response = await fetchUrl([url]);
-
-        fsExtra.ensureDirSync(path.dirname(binaryFile));
-        await promisify(fs.writeFile)(binaryFile, await response.buffer());
-
-        if (!(await fsExtra.pathExists(binaryFile))) {
-            throw new Error(`Failed to save ${url} to ${binaryFile} file`);
-        }
+        throw new Error(`Failed to resolve binary name for ${platform} platform`);
     })();
 
-    return returnExecutableCommand();
+    return resolveExecutable(
+        `${SERVICE_BINARY_DOWNLOAD_URL_PREFIX}/${path.basename(binaryBundle.fileName)}`,
+        binaryBundle.sha256,
+        "wormhole-william",
+    );
 }
 
 async function uploadFileArg(): Promise<{ downloadCodePhrase: string }> {

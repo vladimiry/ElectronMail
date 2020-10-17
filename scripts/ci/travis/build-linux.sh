@@ -24,13 +24,3 @@ docker run --rm -ti \
     -v ~/.cache/electron-builder:/root/.cache/electron-builder \
     electronuserland/builder \
     /bin/bash ./scripts/ci/travis/build-linux-docker.sh
-
-yarn scripts/dist-packages/print-hashes
-
-# preventing "No output has been received in the last 10m0s" error occurring on travis-ci
-# see https://github.com/travis-ci/travis-ci/issues/4190#issuecomment-353342526
-# output something every 9 minutes (540 seconds) to prevent Travis killing the job
-while sleep 540; do echo "=====[ $SECONDS seconds still running ]====="; done &
-    yarn scripts/dist-packages/upload
-# killing background sleep loop
-kill %1

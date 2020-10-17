@@ -2,7 +2,8 @@ import path from "path";
 import {pick} from "remeda";
 import {platform} from "os";
 
-import {CONSOLE_LOG, CWD, execShell, fetchUrl} from "scripts/lib";
+import {CONSOLE_LOG, execShell, fetchUrl} from "scripts/lib";
+import {CWD_ABSOLUTE_DIR} from "scripts/const";
 
 // process.env.APPVEYOR_ACCOUNT_NAME = "vladimiry";
 // process.env.APPVEYOR_PROJECT_SLUG = "electronmail";
@@ -58,7 +59,7 @@ interface Job {
         throw new Error(`Invalid web clients preparing job status (${JSON.stringify(pick(job, ["name", "jobId", "status"]))})`);
     }
 
-    const tarFile = path.join(CWD, LINUX_JOB_ARTIFACT_TAR);
+    const tarFile = path.join(CWD_ABSOLUTE_DIR, LINUX_JOB_ARTIFACT_TAR);
 
     await execShell([
         "curl",

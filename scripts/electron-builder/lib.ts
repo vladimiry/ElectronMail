@@ -3,7 +3,8 @@ import fs from "fs";
 import fsExtra from "fs-extra";
 import path from "path";
 
-import {CONSOLE_LOG, CWD, execShell} from "scripts/lib";
+import {CONSOLE_LOG, execShell} from "scripts/lib";
+import {GIT_CLONE_ABSOLUTE_DIR} from "scripts/const";
 import {Locale} from "src/shared/model/common";
 import {normalizeLocale, sanitizeFastGlobPattern} from "src/shared/util";
 
@@ -36,7 +37,7 @@ export function ensureFileHasNoSuidBit(file: string): void {
 }
 
 async function prepareDictionaries(): Promise<Map<Locale, Dictionary>> {
-    const outcomeDir = path.join(CWD, "./output/git-wooorm-dictionaries-outcome");
+    const outcomeDir = path.join(GIT_CLONE_ABSOLUTE_DIR, "./git-wooorm-dictionaries-outcome");
     const files: string[] = [];
 
     if (fsExtra.pathExistsSync(outcomeDir)) {
@@ -57,7 +58,7 @@ async function prepareDictionaries(): Promise<Map<Locale, Dictionary>> {
     }
 
     if (!files.length) {
-        const repoCwd = path.join(CWD, "./output/git-wooorm-dictionaries");
+        const repoCwd = path.join(GIT_CLONE_ABSOLUTE_DIR, "./git-wooorm-dictionaries");
 
         if (!fsExtra.pathExistsSync(repoCwd)) {
             await execShell(["git", ["clone", "https://github.com/wooorm/dictionaries.git", repoCwd]]);

@@ -2,7 +2,8 @@ import path from "path";
 import {sync as fastGlobSync} from "fast-glob";
 import {flatten} from "remeda";
 
-import {CONSOLE_LOG, CWD, resolveGitOutputBackupDir} from "scripts/lib";
+import {CONSOLE_LOG, resolveGitOutputBackupDir} from "scripts/lib";
+import {CWD_ABSOLUTE_DIR} from "scripts/const";
 import {PROVIDER_REPO_NAMES} from "src/shared/constants";
 import {sanitizeFastGlobPattern} from "src/shared/util";
 
@@ -20,7 +21,7 @@ const result: string = flatten(
                 stats: false,
             },
         ).map((item) => {
-            return path.relative(CWD, item);
+            return path.relative(CWD_ABSOLUTE_DIR, item);
         });
     }),
 ).join(delimiter);

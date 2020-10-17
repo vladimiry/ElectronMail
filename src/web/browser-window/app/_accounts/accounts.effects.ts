@@ -1,7 +1,7 @@
+import {Action, Store, select} from "@ngrx/store";
 import {Actions, createEffect} from "@ngrx/effects";
 import {EMPTY, Observable, concat, from, fromEvent, merge, of, throwError, timer} from "rxjs";
 import {Injectable} from "@angular/core";
-import {Store, select} from "@ngrx/store";
 import {
     catchError,
     concatMap,
@@ -20,7 +20,7 @@ import {
 } from "rxjs/operators";
 import {serializeError} from "serialize-error";
 
-import {ACCOUNTS_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
+import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
@@ -169,12 +169,16 @@ export class AccountsEffects {
 
                 return merge(
                     of(ACCOUNTS_ACTIONS.Patch({login, patch: {syncingActivated: true}})),
+
+                    // processing "db-view"-related notifications received from the main process
                     this.store.pipe(
                         select(OptionsSelectors.FEATURED.mainProcessNotification),
                         filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbPatchAccount),
                         filter(({payload: {key}}) => key.login === login),
                         mergeMap(({payload}) => of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread: payload.stat.unread}}}))),
                     ),
+
+                    // selecting mail in "proton ui"
                     createEffect(
                         () => this.actions$.pipe(
                             unionizeActionFilter(ACCOUNTS_ACTIONS.is.SelectMailOnline),
@@ -203,6 +207,94 @@ export class AccountsEffects {
                             )),
                         ),
                     ),
+
+                    // processing "make mails read" signal fired in the "db-view" module
+                    createEffect(
+                        () => this.actions$.pipe(
+                            unionizeActionFilter(ACCOUNTS_ACTIONS.is.MakeMailRead),
+                            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+                            filter(({payload}) => payload.pk.login === login),
+                            mergeMap(({payload: {messageIds}}) => concat(
+                                of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {makingMailRead: true}})),
+                                this.api.webViewClient(webView).pipe(
+                                    mergeMap((webViewClient) => {
+                                        return from(
+                                            webViewClient("makeMailRead")({...pk, messageIds, zoneName}),
+                                        ).pipe(
+                                            mergeMap(() => this.core.fireSyncingIteration({login})),
+                                            finalize(() => {
+                                                this.store.dispatch(
+                                                    ACCOUNTS_ACTIONS.PatchProgress({login, patch: {makingMailRead: false}}),
+                                                );
+                                            }),
+                                        );
+                                    }),
+                                ),
+                            )),
+                        ),
+                        {dispatch: false},
+                    ),
+
+                    // processing "make mails read" signal fired in the "db-view" module
+                    createEffect(
+                        () => this.actions$.pipe(
+                            unionizeActionFilter(ACCOUNTS_ACTIONS.is.SetMailFolder),
+                            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+                            filter(({payload}) => payload.pk.login === login),
+                            mergeMap(({payload: {folderId, messageIds}}) => concat(
+                                of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {settingMailFolder: true}})),
+                                this.api.webViewClient(webView).pipe(
+                                    mergeMap((webViewClient) => {
+                                        return from(
+                                            webViewClient(
+                                                "setMailFolder",
+                                                {timeoutMs: ONE_SECOND_MS * 120},
+                                            )({...pk, folderId, messageIds, zoneName,}),
+                                        ).pipe(
+                                            mergeMap(() => this.core.fireSyncingIteration({login})),
+                                            finalize(() => {
+                                                this.store.dispatch(
+                                                    ACCOUNTS_ACTIONS.PatchProgress({login, patch: {settingMailFolder: false}}),
+                                                );
+                                            }),
+                                        );
+                                    }),
+                                ),
+                            )),
+                        ),
+                        {dispatch: false},
+                    ),
+
+                    // processing "fetch single mail" signal fired in the "db-view" module
+                    createEffect(
+                        () => this.actions$.pipe(
+                            unionizeActionFilter(ACCOUNTS_ACTIONS.is.FetchSingleMail),
+                            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+                            filter(({payload}) => payload.pk.login === login),
+                            mergeMap(({payload: {pk, mailPk}}) => concat(
+                                of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {fetchingSingleMail: true}})),
+                                this.api.webViewClient(webView).pipe(
+                                    // TODO progress on
+                                    mergeMap((webViewClient) => {
+                                        return from(
+                                            webViewClient("fetchSingleMail")({...pk, mailPk, zoneName}),
+                                        ).pipe(
+                                            mergeMap(() => {
+                                                return of<Action>(DB_VIEW_ACTIONS.SelectConversationMailRequest({dbAccountPk: pk, mailPk}));
+                                            }),
+                                            finalize(() => {
+                                                this.store.dispatch(
+                                                    ACCOUNTS_ACTIONS.PatchProgress({login, patch: {fetchingSingleMail: false}}),
+                                                );
+                                            }),
+                                        );
+                                    }),
+                                ),
+                            )),
+                        ),
+                    ),
+
+                    // syncing
                     this.api.webViewClient(webView, {finishPromise}).pipe(
                         mergeMap((webViewClient) => {
                             const syncingIterationTrigger$: Observable<null> = merge(
@@ -286,7 +378,6 @@ export class AccountsEffects {
                                                 }),
                                             ),
                                         ),
-                                        catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                                         finalize(() => {
                                             this.store.dispatch(
                                                 ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: false}, optionalAccount: true}),

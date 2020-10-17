@@ -1,19 +1,17 @@
 import UUID from "pure-uuid";
+import {Actions} from "@ngrx/effects";
+import {EMPTY, concat, timer} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {URL} from "@cliqz/url-parser";
-import {filter, first, take, takeUntil} from "rxjs/operators";
-import {timer} from "rxjs";
+import {filter, first, mergeMap, take, takeUntil} from "rxjs/operators";
 
-import {AppAction, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {ACCOUNTS_ACTIONS, AppAction, NAVIGATION_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
+import {AccountConfig} from "src/shared/model/account";
+import {FIRE_SYNCING_ITERATION$, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
-import {
-    PROVIDER_REPO_MAP,
-    WEB_CLIENTS_BLANK_HTML_FILE_NAME,
-    WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS,
-} from "src/shared/constants";
+import {PROVIDER_REPO_MAP, WEB_CLIENTS_BLANK_HTML_FILE_NAME, WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS,} from "src/shared/constants";
 import {ProtonClientSession} from "src/shared/model/proton";
-import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {State} from "src/web/browser-window/app/store/reducers/root";
 import {WebAccount} from "src/web/browser-window/app/model";
 import {curryFunctionMembers, parseUrlOriginWithNullishCheck} from "src/shared/util";
@@ -23,6 +21,10 @@ export class CoreService {
     constructor(
         private store: Store<State>,
         private zone: NgZone,
+        private readonly actions$: Actions<{
+            type: string;
+            payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+        }>,
     ) {}
 
     parseEntryUrl(
@@ -155,5 +157,26 @@ export class CoreService {
         this.zone.run(() => {
             this.store.dispatch(action);
         });
+    }
+
+    fireSyncingIteration({login}: Pick<AccountConfig, "login">): import("rxjs").Observable<never> {
+        setTimeout(() => FIRE_SYNCING_ITERATION$.next({login}));
+
+        return concat(
+            // first should start new syncing iteration
+            this.actions$.pipe(
+                unionizeActionFilter(ACCOUNTS_ACTIONS.is.PatchProgress),
+                filter(({payload}) => payload.login === login && Boolean(payload.patch.syncing)),
+                take(1),
+            ),
+            // then should successfully complete the syncing iteration
+            this.actions$.pipe(
+                unionizeActionFilter(ACCOUNTS_ACTIONS.is.Synced),
+                filter(({payload}) => payload.pk.login === login),
+                take(1),
+            ),
+        ).pipe(
+            mergeMap(() => EMPTY),
+        );
     }
 }

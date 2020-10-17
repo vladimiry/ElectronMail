@@ -106,11 +106,8 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
     );
 
     makeAllReadInProgress$: Observable<boolean> = this.account$.pipe(
-        map((account) => {
-            return account
-                ? Boolean(account.makeReadMailParams)
-                : false;
-        }),
+        map((account) => Boolean(account.progress.makingMailRead)),
+        distinctUntilChanged(),
     );
 
     makeAllReadButtonLocked$: Observable<boolean> = combineLatest([
@@ -130,11 +127,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
     );
 
     setFolderInProgress$: Observable<boolean> = this.account$.pipe(
-        map((account) => {
-            return account
-                ? Boolean(account.setMailFolderParams)
-                : false;
-        }),
+        map((account) => Boolean(account.progress.settingMailFolder)),
     );
 
     setFolderButtonLocked$: Observable<boolean> = combineLatest([
@@ -381,7 +374,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
                     return;
                 }
                 this.store.dispatch(
-                    ACCOUNTS_ACTIONS.MakeMailReadSetParams({pk, messageIds}),
+                    ACCOUNTS_ACTIONS.MakeMailRead({pk, messageIds}),
                 );
             });
     }
@@ -398,7 +391,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
                     return;
                 }
                 this.store.dispatch(
-                    ACCOUNTS_ACTIONS.SetMailFolderParams({pk, folderId, messageIds}),
+                    ACCOUNTS_ACTIONS.SetMailFolder({pk, folderId, messageIds}),
                 );
             });
     }

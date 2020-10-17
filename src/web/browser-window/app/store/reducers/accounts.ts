@@ -71,9 +71,6 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                                 unread: 0,
                             },
                             dbExportProgress: [],
-                            fetchSingleMailParams: null,
-                            makeReadMailParams: null,
-                            setMailFolderParams: null,
                         };
 
                         accounts.push(webAccount);
@@ -178,37 +175,6 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
         },
         PatchGlobalProgress({patch}) {
             draftState.globalProgress = {...draftState.globalProgress, ...patch};
-        },
-        FetchSingleMailSetParams({pk, mailPk}) {
-            const account = resolveAccountByLogin(draftState.accounts, {login: pk.login}, true);
-
-            account.fetchSingleMailParams = mailPk
-                ? {mailPk}
-                : null;
-        },
-        MakeMailReadSetParams({pk, ...rest}) {
-            const key = "makeReadMailParams";
-            const account = resolveAccountByLogin(draftState.accounts, {login: pk.login}, true);
-
-            if ("messageIds" in rest) {
-                const {messageIds} = rest;
-                account[key] = {messageIds};
-                return;
-            }
-
-            account[key] = null;
-        },
-        SetMailFolderParams({pk, ...rest}) {
-            const key = "setMailFolderParams";
-            const account = resolveAccountByLogin(draftState.accounts, {login: pk.login}, true);
-
-            if ("messageIds" in rest) {
-                const {folderId, messageIds} = rest;
-                account[key] = {folderId, messageIds};
-                return;
-            }
-
-            account[key] = null;
         },
         default: () => draftState,
     }));

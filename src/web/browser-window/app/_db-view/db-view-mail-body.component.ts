@@ -62,7 +62,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
     );
 
     fetchingSingleMailParams$: Observable<boolean> = this.account$.pipe(
-        map((account) => Boolean(account.fetchSingleMailParams)),
+        map((account) => Boolean(account.progress.fetchingSingleMail)),
         distinctUntilChanged(),
     );
 
@@ -190,7 +190,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
             ),
             first(),
         ).subscribe(([pk, conversationMail]) => {
-            this.store.dispatch(ACCOUNTS_ACTIONS.FetchSingleMailSetParams({pk, mailPk: conversationMail.pk}));
+            this.store.dispatch(ACCOUNTS_ACTIONS.FetchSingleMail({pk, mailPk: conversationMail.pk}));
         });
     }
 

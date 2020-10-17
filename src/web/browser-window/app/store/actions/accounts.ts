@@ -1,7 +1,7 @@
 import {ofType, unionize} from "@vladimiry/unionize";
 
 import {AccountConfig} from "src/shared/model/account";
-import {DbAccountPk} from "src/shared/model/database";
+import {DbAccountPk, Folder, Mail} from "src/shared/model/database";
 import {ProtonApiScan} from "src/shared/api/webview/primary";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount, WebAccountProgress} from "src/web/browser-window/app/model";
@@ -31,18 +31,9 @@ export const ACCOUNTS_ACTIONS = unionize({
         WireUpConfigs: ofType<DeepReadonly<{ accountConfigs: AccountConfig[] }>>(),
         PatchGlobalProgress: ofType<{ patch: State["globalProgress"] }>(),
         SelectMailOnline: ofType<StrictOmit<ProtonApiScan["ApiImplArgs"]["selectMailOnline"][0], "zoneName">>(),
-        FetchSingleMailSetParams: ofType<{ pk: DbAccountPk }
-            & Partial<Pick<Exclude<WebAccount["fetchSingleMailParams"], null>, "mailPk">>>(),
-        FetchSingleMail: ofType<{ account: WebAccount; webView: Electron.WebviewTag }
-            & Pick<Exclude<WebAccount["fetchSingleMailParams"], null>, "mailPk">>(),
-        MakeMailReadSetParams: ofType<{ pk: DbAccountPk }
-            & (Exclude<WebAccount["makeReadMailParams"], null> | {})>(), // eslint-disable-line @typescript-eslint/ban-types
-        MakeMailRead: ofType<{ account: WebAccount; webView: Electron.WebviewTag }
-            & Exclude<WebAccount["makeReadMailParams"], null>>(),
-        SetMailFolderParams: ofType<{ pk: DbAccountPk }
-            & (Exclude<WebAccount["setMailFolderParams"], null> | {})>(), // eslint-disable-line @typescript-eslint/ban-types
-        SetMailFolder: ofType<{ account: WebAccount; webView: Electron.WebviewTag }
-            & Exclude<WebAccount["setMailFolderParams"], null>>(),
+        FetchSingleMail: ofType<{ pk: DbAccountPk } & { mailPk: Mail["pk"] }>(),
+        MakeMailRead: ofType<{ pk: DbAccountPk } & { messageIds: Array<Mail["id"]> }>(),
+        SetMailFolder: ofType<{ pk: DbAccountPk } & { folderId: Folder["id"]; messageIds: Array<Mail["id"]> }>(),
     },
     {
         tag: "type",

@@ -1,14 +1,12 @@
 import UUID from "pure-uuid";
 import {Actions, createEffect} from "@ngrx/effects";
-import {EMPTY, concat, forkJoin, from, merge, of} from "rxjs";
+import {EMPTY, forkJoin, from, merge, of} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Store, select} from "@ngrx/store";
-import {concatMap, filter, finalize, map, mergeMap, switchMap, take, takeUntil, tap, throttleTime, withLatestFrom} from "rxjs/operators";
+import {concatMap, filter, finalize, map, mergeMap, switchMap, takeUntil, tap, throttleTime, withLatestFrom} from "rxjs/operators";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter,} from "src/web/browser-window/app/store/actions";
-import {AccountConfig} from "src/shared/model/account";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
-import {FIRE_SYNCING_ITERATION$} from "src/web/browser-window/app/app.constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
@@ -178,77 +176,6 @@ export class DbViewEffects {
         ),
     );
 
-    fetchSingleMail$ = createEffect(
-        () => this.actions$.pipe(
-            unionizeActionFilter(ACCOUNTS_ACTIONS.is.FetchSingleMail),
-            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-            mergeMap(({payload: {account, webView, mailPk}, logger}) => {
-                const {login} = account.accountConfig;
-                const pk = {login};
-
-                return this.api.webViewClient(webView).pipe(
-                    mergeMap((webViewClient) => {
-                        return from(
-                            webViewClient("fetchSingleMail")({...pk, mailPk, zoneName: logger.zoneName()}),
-                        ).pipe(
-                            mergeMap(() => of(DB_VIEW_ACTIONS.SelectConversationMailRequest({dbAccountPk: pk, mailPk}))),
-                            finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.FetchSingleMailSetParams({pk, mailPk: undefined}))),
-                        );
-                    }),
-                );
-            }),
-        ),
-    );
-
-    makeMailRead$ = createEffect(
-        () => this.actions$.pipe(
-            unionizeActionFilter(ACCOUNTS_ACTIONS.is.MakeMailRead),
-            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-            mergeMap(({payload: {account, webView, messageIds}, logger}) => {
-                const {login} = account.accountConfig;
-                const pk = {login};
-
-                return this.api.webViewClient(webView).pipe(
-                    mergeMap((webViewClient) => {
-                        return from(
-                            webViewClient("makeMailRead")({...pk, messageIds, zoneName: logger.zoneName()}),
-                        ).pipe(
-                            mergeMap(() => this.fireSyncingIteration({login})),
-                            finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.MakeMailReadSetParams({pk}))),
-                        );
-                    }),
-                );
-            }),
-        ),
-        {dispatch: false},
-    );
-
-    setMailFolder$ = createEffect(
-        () => this.actions$.pipe(
-            unionizeActionFilter(ACCOUNTS_ACTIONS.is.SetMailFolder),
-            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-            mergeMap(({payload: {account, webView, folderId, messageIds}, logger}) => {
-                const {login} = account.accountConfig;
-                const pk = {login};
-
-                return this.api.webViewClient(webView).pipe(
-                    mergeMap((webViewClient) => {
-                        return from(
-                            webViewClient(
-                                "setMailFolder",
-                                {timeoutMs: ONE_SECOND_MS * 120},
-                            )({...pk, folderId, messageIds, zoneName: logger.zoneName()}),
-                        ).pipe(
-                            mergeMap(() => this.fireSyncingIteration({login})),
-                            finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.SetMailFolderParams({pk}))),
-                        );
-                    }),
-                );
-            }),
-        ),
-        {dispatch: false},
-    );
-
     toggleLocalDbMailsListViewMode$ = createEffect(
         () => this.actions$.pipe(
             unionizeActionFilter(OPTIONS_ACTIONS.is.ToggleLocalDbMailsListViewMode),
@@ -280,25 +207,4 @@ export class DbViewEffects {
             payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
         }>,
     ) {}
-
-    private fireSyncingIteration({login}: Pick<AccountConfig, "login">): import("rxjs").Observable<never> {
-        setTimeout(() => FIRE_SYNCING_ITERATION$.next({login}));
-
-        return concat(
-            // first should start new syncing iteration
-            this.actions$.pipe(
-                unionizeActionFilter(ACCOUNTS_ACTIONS.is.PatchProgress),
-                filter(({payload}) => payload.login === login && Boolean(payload.patch.syncing)),
-                take(1),
-            ),
-            // then should successfully complete the syncing iteration
-            this.actions$.pipe(
-                unionizeActionFilter(ACCOUNTS_ACTIONS.is.Synced),
-                filter(({payload}) => payload.pk.login === login),
-                take(1),
-            ),
-        ).pipe(
-            mergeMap(() => EMPTY),
-        );
-    }
 }

@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy, Component, Injector, OnInit} from "@angular/core";
 import {Subject, from, race} from "rxjs";
-import {distinctUntilChanged, filter, map, pairwise, take, takeUntil, withLatestFrom} from "rxjs/operators";
+import {distinctUntilChanged, filter, map, pairwise, take, takeUntil} from "rxjs/operators";
 import {equals, pick} from "remeda";
 
 import {ACCOUNTS_ACTIONS} from "src/web/browser-window/app/store/actions";
@@ -124,52 +124,6 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
             ).subscribe((account) => {
                 this.event.emit({type: "log", data: ["info", `webview mounted: dispatch "TryToLogin"`]});
                 this.event.emit({type: "action", payload: ACCOUNTS_ACTIONS.TryToLogin({account, webView})});
-            }),
-        );
-
-        this.addSubscription(
-            this.account$.pipe(
-                map((account) => account.fetchSingleMailParams),
-                distinctUntilChanged(),
-                withLatestFrom(this.account$),
-            ).subscribe(([value, account]) => {
-                if (!value) {
-                    return;
-                }
-                this.event.emit({
-                    type: "action",
-                    payload: ACCOUNTS_ACTIONS.FetchSingleMail({account, webView, mailPk: value.mailPk}),
-                });
-            }),
-        );
-
-        this.addSubscription(
-            this.account$.pipe(
-                distinctUntilChanged(({makeReadMailParams: prev}, {makeReadMailParams: curr}) => curr === prev),
-            ).subscribe((account) => {
-                if (!account.makeReadMailParams) {
-                    return;
-                }
-                const {messageIds} = account.makeReadMailParams;
-                this.event.emit({
-                    type: "action",
-                    payload: ACCOUNTS_ACTIONS.MakeMailRead({account, webView, messageIds}),
-                });
-            }),
-        );
-
-        this.addSubscription(
-            this.account$.pipe(
-                distinctUntilChanged(({setMailFolderParams: prev}, {setMailFolderParams: curr}) => curr === prev),
-            ).subscribe((account) => {
-                if (!account.setMailFolderParams) {
-                    return;
-                }
-                const {folderId, messageIds} = account.setMailFolderParams;
-                this.event.emit({
-                    type: "action",
-                    payload: ACCOUNTS_ACTIONS.SetMailFolder({account, webView, folderId, messageIds}),
-                });
             }),
         );
     }

@@ -1,5 +1,4 @@
 import {AccountConfig, Notifications} from "src/shared/model/account";
-import {Folder, Mail} from "src/shared/model/database";
 
 export interface WebAccount {
     accountConfig: AccountConfig;
@@ -8,6 +7,9 @@ export interface WebAccount {
         indexing: boolean;
         searching: boolean;
         selectingMailOnline: boolean;
+        makingMailRead: boolean;
+        settingMailFolder: boolean;
+        fetchingSingleMail: boolean;
     }>;
     dbExportProgress: Array<{ uuid: string; progress: number }>;
     notifications: Notifications;
@@ -17,10 +19,6 @@ export interface WebAccount {
     loggedInOnce?: boolean;
     loginDelayedSeconds?: number;
     loginDelayedUntilSelected?: boolean;
-    // TODO consider combining "fetchSingleMailParams" and "makeReadMailParams" to the object with "optional" props
-    fetchSingleMailParams: { mailPk: Mail["pk"] } | null;
-    makeReadMailParams: { messageIds: Array<Mail["id"]> } | null;
-    setMailFolderParams: { folderId: Folder["id"]; messageIds: Array<Mail["id"]> } | null;
 }
 
 export type WebAccountProgress = WebAccount["progress"];

@@ -74,7 +74,7 @@ export function registerApi(providerApi: ProviderApi): void {
 
             await providerApi.message.markMessageAsRead(input.messageIds);
 
-            // TODO consider triggering the "refresh" action (clicking the "refresh" button action)
+            // TODO consider triggering the "refresh" action (clicking the "refresh" button action in "proton ui")
         },
 
         async setMailFolder(input) {
@@ -82,7 +82,7 @@ export function registerApi(providerApi: ProviderApi): void {
 
             await providerApi.message.labelMessages({LabelID: input.folderId, IDs: input.messageIds});
 
-            // TODO consider triggering the "refresh" action (clicking the "refresh" button action)
+            // TODO consider triggering the "refresh" action (clicking the "refresh" button action in "proton ui")
         },
 
         async exportMailAttachments({uuid, mailPk, login, zoneName}) {

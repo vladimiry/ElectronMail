@@ -30,7 +30,7 @@ export const ACCOUNTS_ACTIONS = unionize({
         TryToLogin: ofType<{ account: WebAccount; webView: Electron.WebviewTag }>(),
         WireUpConfigs: ofType<DeepReadonly<{ accountConfigs: AccountConfig[] }>>(),
         PatchGlobalProgress: ofType<{ patch: State["globalProgress"] }>(),
-        SelectMailOnline: ofType<StrictOmit<ProtonApiScan["ApiImplArgs"]["selectMailOnline"][0], "zoneName">>(),
+        SelectMailOnline: ofType<{ pk: DbAccountPk } & StrictOmit<ProtonApiScan["ApiImplArgs"]["selectMailOnline"][0], "zoneName">>(),
         FetchSingleMail: ofType<{ pk: DbAccountPk } & { mailPk: Mail["pk"] }>(),
         MakeMailRead: ofType<{ pk: DbAccountPk } & { messageIds: Array<Mail["id"]> }>(),
         SetMailFolder: ofType<{ pk: DbAccountPk } & { folderId: Folder["id"]; messageIds: Array<Mail["id"]> }>(),

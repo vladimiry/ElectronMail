@@ -24,16 +24,15 @@ export const PROTONMAIL_IPC_WEBVIEW_API_DEFINITION = {
         Observable<DeepReadonly<DbAccountPk & { metadata: Readonly<FsDbAccount["metadata"]> | null } & ZoneApiParameter>>(),
     selectMailOnline:
         Promise<DeepReadonly<{
-            pk: DbAccountPk
             mail: Pick<Mail, "id" | "mailFolderIds" | "conversationEntryPk">
             selectedFolderId: Folder["id"] | null
         } & ZoneApiParameter>>(),
     fetchSingleMail:
         Promise<DeepReadonly<DbAccountPk & { mailPk: Mail["pk"] } & ZoneApiParameter>>(),
     makeMailRead:
-        Promise<DeepReadonly<DbAccountPk & { messageIds: Array<Mail["id"]> } & ZoneApiParameter>>(),
+        Promise<DeepReadonly<{ messageIds: Array<Mail["id"]> } & ZoneApiParameter>>(),
     setMailFolder:
-        Promise<DeepReadonly<DbAccountPk & { folderId: Folder["id"]; messageIds: Array<Mail["id"]> } & ZoneApiParameter>>(),
+        Promise<DeepReadonly<{ folderId: Folder["id"]; messageIds: Array<Mail["id"]> } & ZoneApiParameter>>(),
     exportMailAttachments:
         Promise<DeepReadonly<DbAccountPk & { uuid: string; mailPk: Mail["pk"] } & ZoneApiParameter>>(),
     notification:

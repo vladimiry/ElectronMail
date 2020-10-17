@@ -219,7 +219,7 @@ export class AccountsEffects {
                                 this.api.webViewClient(webView).pipe(
                                     mergeMap((webViewClient) => {
                                         return from(
-                                            webViewClient("makeMailRead")({...pk, messageIds, zoneName}),
+                                            webViewClient("makeMailRead")({messageIds, zoneName}),
                                         ).pipe(
                                             mergeMap(() => this.core.fireSyncingIteration({login})),
                                             finalize(() => {
@@ -235,7 +235,7 @@ export class AccountsEffects {
                         {dispatch: false},
                     ),
 
-                    // processing "make mails read" signal fired in the "db-view" module
+                    // processing "set mails folder" signal fired in the "db-view" module
                     createEffect(
                         () => this.actions$.pipe(
                             unionizeActionFilter(ACCOUNTS_ACTIONS.is.SetMailFolder),
@@ -246,10 +246,9 @@ export class AccountsEffects {
                                 this.api.webViewClient(webView).pipe(
                                     mergeMap((webViewClient) => {
                                         return from(
-                                            webViewClient(
-                                                "setMailFolder",
-                                                {timeoutMs: ONE_SECOND_MS * 120},
-                                            )({...pk, folderId, messageIds, zoneName,}),
+                                            webViewClient("setMailFolder",{timeoutMs: ONE_SECOND_MS * 120})(
+                                                {folderId, messageIds, zoneName},
+                                            ),
                                         ).pipe(
                                             mergeMap(() => this.core.fireSyncingIteration({login})),
                                             finalize(() => {

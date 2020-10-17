@@ -109,10 +109,10 @@ export class ElectronService implements OnDestroy {
 
     private buildApiCallOptions(options: LimitedCallOptions = {}): SuperCallOptions {
         return {
-            ...options,
             logger,
             timeoutMs: this.defaultApiCallTimeoutMs,
             notificationWrapper: this.ngZone.run.bind(this.ngZone),
+            ...options,
         };
     }
 }

@@ -31,6 +31,7 @@ export const ACCOUNTS_ACTIONS = unionize({
         WireUpConfigs: ofType<DeepReadonly<{ accountConfigs: AccountConfig[] }>>(),
         PatchGlobalProgress: ofType<{ patch: State["globalProgress"] }>(),
         SelectMailOnline: ofType<{ pk: DbAccountPk } & StrictOmit<ProtonApiScan["ApiImplArgs"]["selectMailOnline"][0], "zoneName">>(),
+        DeleteMessages: ofType<{ pk: DbAccountPk } & StrictOmit<ProtonApiScan["ApiImplArgs"]["deleteMessages"][0], "zoneName">>(),
         FetchSingleMail: ofType<{ pk: DbAccountPk } & { mailPk: Mail["pk"] }>(),
         MakeMailRead: ofType<{ pk: DbAccountPk } & { messageIds: Array<Mail["id"]> }>(),
         SetMailFolder: ofType<{ pk: DbAccountPk } & { folderId: Folder["id"]; messageIds: Array<Mail["id"]> }>(),

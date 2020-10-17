@@ -29,6 +29,8 @@ export const PROTONMAIL_IPC_WEBVIEW_API_DEFINITION = {
         } & ZoneApiParameter>>(),
     fetchSingleMail:
         Promise<DeepReadonly<DbAccountPk & { mailPk: Mail["pk"] } & ZoneApiParameter>>(),
+    deleteMessages:
+        Promise<DeepReadonly<{ messageIds: Array<Mail["id"]> } & ZoneApiParameter>>(),
     makeMailRead:
         Promise<DeepReadonly<{ messageIds: Array<Mail["id"]> } & ZoneApiParameter>>(),
     setMailFolder:

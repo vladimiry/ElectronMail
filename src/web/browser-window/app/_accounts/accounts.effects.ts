@@ -219,7 +219,9 @@ export class AccountsEffects {
                                 this.api.webViewClient(webView).pipe(
                                     mergeMap((webViewClient) => {
                                         return from(
-                                            webViewClient("makeMailRead")({messageIds, zoneName}),
+                                            webViewClient("makeMailRead", {timeoutMs: ONE_SECOND_MS * 30})(
+                                                {messageIds, zoneName},
+                                            ),
                                         ).pipe(
                                             mergeMap(() => this.core.fireSyncingIteration({login})),
                                             finalize(() => {
@@ -246,7 +248,7 @@ export class AccountsEffects {
                                 this.api.webViewClient(webView).pipe(
                                     mergeMap((webViewClient) => {
                                         return from(
-                                            webViewClient("setMailFolder",{timeoutMs: ONE_SECOND_MS * 120})(
+                                            webViewClient("setMailFolder", {timeoutMs: ONE_MINUTE_MS})(
                                                 {folderId, messageIds, zoneName},
                                             ),
                                         ).pipe(
@@ -254,6 +256,35 @@ export class AccountsEffects {
                                             finalize(() => {
                                                 this.store.dispatch(
                                                     ACCOUNTS_ACTIONS.PatchProgress({login, patch: {settingMailFolder: false}}),
+                                                );
+                                            }),
+                                        );
+                                    }),
+                                ),
+                            )),
+                        ),
+                        {dispatch: false},
+                    ),
+
+                    // processing "delete messages" signal fired in the "db-view" module
+                    createEffect(
+                        () => this.actions$.pipe(
+                            unionizeActionFilter(ACCOUNTS_ACTIONS.is.DeleteMessages),
+                            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+                            filter(({payload}) => payload.pk.login === login),
+                            mergeMap(({payload: {messageIds}}) => concat(
+                                of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {deletingMessages: true}})),
+                                this.api.webViewClient(webView).pipe(
+                                    mergeMap((webViewClient) => {
+                                        return from(
+                                            webViewClient("deleteMessages", {timeoutMs: ONE_MINUTE_MS})(
+                                                {messageIds, zoneName},
+                                            ),
+                                        ).pipe(
+                                            mergeMap(() => this.core.fireSyncingIteration({login})),
+                                            finalize(() => {
+                                                this.store.dispatch(
+                                                    ACCOUNTS_ACTIONS.PatchProgress({login, patch: {deletingMessages: false}}),
                                                 );
                                             }),
                                         );

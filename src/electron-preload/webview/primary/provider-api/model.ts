@@ -111,6 +111,7 @@ export type ProviderInternals = ExtendByInitializedBooleanProp<{
         ) => HttpApiArg
         readonly markMessageAsRead: (ids: ReadonlyArray<RestModel.Message["ID"]>) => HttpApiArg
         readonly labelMessages: (arg: { LabelID: RestModel.Label["ID"]; IDs: ReadonlyArray<RestModel.Message["ID"]> }) => HttpApiArg
+        readonly deleteMessages: (IDs: ReadonlyArray<RestModel.Message["ID"]>) => HttpApiArg
     }
 } & {
     [K in Extract<ProviderInternalsImmediateKeys, "./node_modules/proton-shared/lib/api/contacts.ts">]: {
@@ -206,6 +207,9 @@ export type ProviderApi = DeepReadonly<{
         labelMessages: (
             ...args: Parameters<ProviderInternals["./node_modules/proton-shared/lib/api/messages.js"]["value"]["labelMessages"]>
         ) => Promise<void>
+        deleteMessages: (
+            ...args: Parameters<ProviderInternals["./node_modules/proton-shared/lib/api/messages.js"]["value"]["deleteMessages"]>
+        ) => Promise<void>
     },
     contact: {
         queryContacts: (
@@ -243,8 +247,8 @@ export type ProviderApi = DeepReadonly<{
 export type Cache = { readonly get: <T>(key: string) => T | undefined }
 
 export interface HttpApiArg {
-    url: string
-    method: string
+    url?: string
+    method?: string
 }
 
 export type HttpApi = <T>(arg: HttpApiArg) => Promise<T>

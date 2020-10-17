@@ -181,6 +181,11 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                         internals["./node_modules/proton-shared/lib/api/messages.js"].value.labelMessages(params),
                     );
                 },
+                async deleteMessages(IDs) {
+                    return (await resolveHttpApi())(
+                        internals["./node_modules/proton-shared/lib/api/messages.js"].value.deleteMessages(IDs),
+                    );
+                },
             },
             contact: {
                 async queryContacts() {

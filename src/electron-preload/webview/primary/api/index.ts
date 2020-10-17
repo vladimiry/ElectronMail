@@ -77,6 +77,14 @@ export function registerApi(providerApi: ProviderApi): void {
             // TODO consider triggering the "refresh" action (clicking the "refresh" button action in "proton ui")
         },
 
+        async deleteMessages({messageIds, zoneName}) {
+            _logger.info("deleteMessages()", zoneName);
+
+            await providerApi.message.deleteMessages(messageIds);
+
+            // TODO consider triggering the "refresh" action (clicking the "refresh" button action in "proton ui")
+        },
+
         async setMailFolder(input) {
             _logger.info("setMailFolder()", input.zoneName);
 

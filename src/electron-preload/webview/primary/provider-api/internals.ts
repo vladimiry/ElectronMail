@@ -142,7 +142,13 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
                 value: {getConversation: NEVER_FN, queryConversations: NEVER_FN},
             },
             "./node_modules/proton-shared/lib/api/messages.js": {
-                value: {getMessage: NEVER_FN, queryMessageMetadata: NEVER_FN, labelMessages: NEVER_FN, markMessageAsRead: NEVER_FN},
+                value: {
+                    getMessage: NEVER_FN,
+                    queryMessageMetadata: NEVER_FN,
+                    labelMessages: NEVER_FN,
+                    markMessageAsRead: NEVER_FN,
+                    deleteMessages: NEVER_FN,
+                },
             },
             "./node_modules/proton-shared/lib/api/contacts.ts": {
                 value: {queryContacts: NEVER_FN, getContact: NEVER_FN},

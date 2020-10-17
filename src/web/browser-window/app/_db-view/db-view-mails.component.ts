@@ -1,7 +1,7 @@
 import {ChangeDetectionStrategy, Component, ElementRef, Input, OnDestroy, OnInit} from "@angular/core";
 import {Observable, Subscription, combineLatest, fromEvent} from "rxjs";
 import {Store, select} from "@ngrx/store";
-import {distinctUntilChanged, map, mergeMap, take, tap, withLatestFrom} from "rxjs/operators";
+import {distinctUntilChanged, first, map, mergeMap, tap, withLatestFrom} from "rxjs/operators";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
@@ -45,18 +45,18 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
     @Input()
     mailsBundleKey!: MailsBundleKey;
 
-    mailsBundleKey$: Observable<MailsBundleKey> = this.ngChangesObservable("mailsBundleKey").pipe(
+    readonly mailsBundleKey$: Observable<MailsBundleKey> = this.ngChangesObservable("mailsBundleKey").pipe(
         distinctUntilChanged(),
     );
 
-    mailsBundle$ = this.mailsBundleKey$.pipe(
+    readonly mailsBundle$ = this.mailsBundleKey$.pipe(
         mergeMap((mailsBundleKey) => this.instance$.pipe(
             map((instance) => instance[mailsBundleKey]),
             distinctUntilChanged(),
         )),
     );
 
-    plainMailsBundle$ = this.mailsBundleKey$.pipe(
+    readonly plainMailsBundle$ = this.mailsBundleKey$.pipe(
         mergeMap((mailsBundleKey) => this.instance$.pipe(
             map((instance) => {
                 const key = mailsBundleKey === "folderConversationsBundle"
@@ -68,34 +68,34 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
         )),
     );
 
-    title$ = this.mailsBundle$.pipe(
+    readonly title$ = this.mailsBundle$.pipe(
         map(({title}) => title),
         distinctUntilChanged(),
     );
 
-    items$ = this.mailsBundle$.pipe(
+    readonly items$ = this.mailsBundle$.pipe(
         map(({items}) => items),
         distinctUntilChanged(),
         tap(this.markDirty.bind(this)),
     );
 
-    plainItems$ = this.plainMailsBundle$.pipe(
+    readonly plainItems$ = this.plainMailsBundle$.pipe(
         map(({items}) => items),
         distinctUntilChanged(),
         tap(this.markDirty.bind(this)),
     );
 
-    paging$ = this.mailsBundle$.pipe(
+    readonly paging$ = this.mailsBundle$.pipe(
         map(({paging}) => paging),
         distinctUntilChanged(),
     );
 
-    sorting$ = this.mailsBundle$.pipe(
+    readonly sorting$ = this.mailsBundle$.pipe(
         map((mailsBundle) => ({sorters: mailsBundle.sorters, sorterIndex: mailsBundle.sorterIndex})),
         distinctUntilChanged(),
     );
 
-    unreadCount$: Observable<number> = this.plainItems$.pipe(
+    readonly unreadCount$: Observable<number> = this.plainItems$.pipe(
         map((items) => {
             return items.reduce(
                 (acc, {mail}) => acc + Number(mail.unread),
@@ -105,43 +105,53 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
         distinctUntilChanged(),
     );
 
-    makeAllReadInProgress$: Observable<boolean> = this.account$.pipe(
+    readonly makeAllReadInProgress$: Observable<boolean> = this.account$.pipe(
         map((account) => Boolean(account.progress.makingMailRead)),
         distinctUntilChanged(),
     );
 
-    makeAllReadButtonLocked$: Observable<boolean> = combineLatest([
+    readonly makeAllReadButtonLocked$: Observable<boolean> = combineLatest([
         this.unreadCount$,
         this.makeAllReadInProgress$,
         this.onlineAndSignedIn$,
     ]).pipe(
-        map(([unreadCount, inProgress, onlineAndSignedIn]) => {
-            return unreadCount < 1 || inProgress || !onlineAndSignedIn;
-        }),
+        map(([count, inProgress, onlineAndSignedIn]) => count < 1 || inProgress || !onlineAndSignedIn),
         distinctUntilChanged(),
     );
 
-    plainItemsCount$: Observable<number> = this.plainItems$.pipe(
+    readonly plainItemsCount$: Observable<number> = this.plainItems$.pipe(
         map(({length}) => length),
         distinctUntilChanged(),
     );
 
-    setFolderInProgress$: Observable<boolean> = this.account$.pipe(
+    readonly setFolderInProgress$: Observable<boolean> = this.account$.pipe(
         map((account) => Boolean(account.progress.settingMailFolder)),
     );
 
-    setFolderButtonLocked$: Observable<boolean> = combineLatest([
+    readonly setFolderButtonLocked$: Observable<boolean> = combineLatest([
         this.plainItemsCount$,
         this.setFolderInProgress$,
         this.onlineAndSignedIn$,
     ]).pipe(
-        map(([count, inProgress, onlineAndSignedIn]) => {
-            return count < 1 || inProgress || !onlineAndSignedIn;
-        }),
+        map(([count, inProgress, onlineAndSignedIn]) => count < 1 || inProgress || !onlineAndSignedIn),
         distinctUntilChanged(),
     );
 
-    moveToFolders$: Observable<Folder[]> = (
+    readonly deletingMessagesInProgress$: Observable<boolean> = this.account$.pipe(
+        map((account) => Boolean(account.progress.deletingMessages)),
+        distinctUntilChanged(),
+    );
+
+    readonly deletingMessagesButtonLocked$: Observable<boolean> = combineLatest([
+        this.plainItemsCount$,
+        this.deletingMessagesInProgress$,
+        this.onlineAndSignedIn$,
+    ]).pipe(
+        map(([count, inProgress, onlineAndSignedIn]) => count < 1 || inProgress || !onlineAndSignedIn),
+        distinctUntilChanged(),
+    );
+
+    readonly moveToFolders$: Observable<Folder[]> = (
         () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
             const excludeIds: ReadonlySet<Folder["id"]> = new Set([
                 SYSTEM_FOLDER_IDENTIFIERS["Virtual Unread"],
@@ -360,44 +370,57 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
         return pk;
     }
 
+    deleteMessages(): void {
+        this.resolvePlainItemsAndPk().subscribe(([items, pk]) => {
+            const messageIds = items.map((item) => item.mail.id);
+            if (!messageIds.length) {
+                return;
+            }
+            if (
+                !confirm(`Are you sure you want to permanently delete ${messageIds.length} message${messageIds.length > 1 ? "s" : ""}?`)
+            ) {
+                return;
+            }
+            this.store.dispatch(
+                ACCOUNTS_ACTIONS.DeleteMessages({pk, messageIds}),
+            );
+        });
+    }
+
     makeAllRead(): void {
-        this.plainItems$
-            .pipe(
-                withLatestFrom(this.dbAccountPk$),
-                take(1),
-            )
-            .subscribe(([items, pk]) => {
-                const messageIds = items
-                    .filter((item) => item.mail.unread)
-                    .map((item) => item.mail.id);
-                if (!messageIds.length) {
-                    return;
-                }
+        this.resolvePlainItemsAndPk().subscribe(([items, pk]) => {
+            const messageIds = items
+                .filter((item) => item.mail.unread)
+                .map((item) => item.mail.id);
+            if (messageIds.length) {
                 this.store.dispatch(
                     ACCOUNTS_ACTIONS.MakeMailRead({pk, messageIds}),
                 );
-            });
+            }
+        });
     }
 
     setFolder(folderId: Folder["id"]): void {
-        this.plainItems$
-            .pipe(
-                withLatestFrom(this.dbAccountPk$),
-                take(1),
-            )
-            .subscribe(([items, pk]) => {
-                const messageIds = items.map((item) => item.mail.id);
-                if (!messageIds.length) {
-                    return;
-                }
+        this.resolvePlainItemsAndPk().subscribe(([items, pk]) => {
+            const messageIds = items.map((item) => item.mail.id);
+            if (messageIds.length) {
                 this.store.dispatch(
                     ACCOUNTS_ACTIONS.SetMailFolder({pk, folderId, messageIds}),
                 );
-            });
+            }
+        });
     }
 
     ngOnDestroy(): void {
+        super.ngOnDestroy();
         this.subscription.unsubscribe();
+    }
+
+    private resolvePlainItemsAndPk() { // eslint-disable-line @typescript-eslint/explicit-function-return-type
+        return this.plainItems$.pipe(
+            withLatestFrom(this.dbAccountPk$),
+            first(),
+        );
     }
 
     private resolveSelectedMailElement(): Element | null {

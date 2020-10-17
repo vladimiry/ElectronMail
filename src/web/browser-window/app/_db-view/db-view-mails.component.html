@@ -42,6 +42,18 @@
                 </ul>
             </button>
         </div>
+        <button
+            (click)="deleteMessages()"
+            [disabled]="(deletingMessagesButtonLocked$ | async) || false"
+            class="btn btn-sm btn-outline-danger mr-2"
+            style="white-space: nowrap"
+        >
+            Delete permanently
+            <ng-container *ngIf="!(deletingMessagesInProgress$ | async)">
+                <span *ngIf="plainItemsCount$ | async; let count;">({{ count }})</span>
+            </ng-container>
+            <i *ngIf="deletingMessagesInProgress$ | async" class="fa fa-spinner fa-pulse fa-fw ml-2"></i>
+        </button>
         <ng-content select="[controls]"></ng-content>
         <div class="btn btn-sm border border-secondary-light" style="cursor: default;">
             {{ title$ | async }}<span *ngIf="items.length">: {{ (paging$ | async)?.end }} of {{ items.length }}</span>

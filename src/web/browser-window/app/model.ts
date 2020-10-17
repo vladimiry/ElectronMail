@@ -7,6 +7,7 @@ export interface WebAccount {
         indexing: boolean;
         searching: boolean;
         selectingMailOnline: boolean;
+        deletingMessages: boolean;
         makingMailRead: boolean;
         settingMailFolder: boolean;
         fetchingSingleMail: boolean;

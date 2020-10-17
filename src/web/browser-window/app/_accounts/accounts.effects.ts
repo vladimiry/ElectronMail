@@ -198,7 +198,9 @@ export class AccountsEffects {
                                             mergeMap(() => EMPTY),
                                             finalize(() => {
                                                 this.store.dispatch(
-                                                    ACCOUNTS_ACTIONS.PatchProgress({login, patch: {selectingMailOnline: false}}),
+                                                    ACCOUNTS_ACTIONS.PatchProgress(
+                                                        {login, patch: {selectingMailOnline: false}, optionalAccount: true},
+                                                    ),
                                                 );
                                             }),
                                         );
@@ -226,7 +228,9 @@ export class AccountsEffects {
                                             mergeMap(() => this.core.fireSyncingIteration({login})),
                                             finalize(() => {
                                                 this.store.dispatch(
-                                                    ACCOUNTS_ACTIONS.PatchProgress({login, patch: {makingMailRead: false}}),
+                                                    ACCOUNTS_ACTIONS.PatchProgress(
+                                                        {login, patch: {makingMailRead: false}, optionalAccount: true},
+                                                    ),
                                                 );
                                             }),
                                         );
@@ -255,7 +259,9 @@ export class AccountsEffects {
                                             mergeMap(() => this.core.fireSyncingIteration({login})),
                                             finalize(() => {
                                                 this.store.dispatch(
-                                                    ACCOUNTS_ACTIONS.PatchProgress({login, patch: {settingMailFolder: false}}),
+                                                    ACCOUNTS_ACTIONS.PatchProgress(
+                                                        {login, patch: {settingMailFolder: false}, optionalAccount: true},
+                                                    ),
                                                 );
                                             }),
                                         );
@@ -284,7 +290,9 @@ export class AccountsEffects {
                                             mergeMap(() => this.core.fireSyncingIteration({login})),
                                             finalize(() => {
                                                 this.store.dispatch(
-                                                    ACCOUNTS_ACTIONS.PatchProgress({login, patch: {deletingMessages: false}}),
+                                                    ACCOUNTS_ACTIONS.PatchProgress(
+                                                        {login, patch: {deletingMessages: false}, optionalAccount: true},
+                                                    ),
                                                 );
                                             }),
                                         );
@@ -314,7 +322,9 @@ export class AccountsEffects {
                                             }),
                                             finalize(() => {
                                                 this.store.dispatch(
-                                                    ACCOUNTS_ACTIONS.PatchProgress({login, patch: {fetchingSingleMail: false}}),
+                                                    ACCOUNTS_ACTIONS.PatchProgress(
+                                                        {login, patch: {fetchingSingleMail: false}, optionalAccount: true},
+                                                    ),
                                                 );
                                             }),
                                         );

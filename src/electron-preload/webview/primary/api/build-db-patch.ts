@@ -318,19 +318,22 @@ async function buildDbPatch(
         }
 
         // fetching folders/labels
-        await (async () => {
-            // TODO explore possibility to fetch folders by IDs ("upsertIds" variable)
-            const [labelsResponse, foldersResponse] = await Promise.all([
-                providerApi.label.get(LABEL_TYPE.MESSAGE_LABEL),
-                providerApi.label.get(LABEL_TYPE.MESSAGE_FOLDER),
-            ]);
-            const allFoldersFromServer = [...labelsResponse.Labels, ...foldersResponse.Labels];
+        if (mapping.folders.upsertIds.length) {
             const upsertIds = mapping.folders.upsertIds.map(({id}) => id);
-            const foldersToPush = allFoldersFromServer
-                .filter(({ID}) => upsertIds.includes(ID))
-                .map(Database.buildFolder);
-            patch.folders.upsert.push(...foldersToPush);
-        })();
+            await (async () => {
+                // TODO explore possibility to fetch folders by IDs ("upsertIds" variable)
+                //      currently we fetch all of them and reduce the needed
+                const [labelsResponse, foldersResponse] = await Promise.all([
+                    providerApi.label.get(LABEL_TYPE.MESSAGE_LABEL),
+                    providerApi.label.get(LABEL_TYPE.MESSAGE_FOLDER),
+                ]);
+                const allFoldersFromServer = [...labelsResponse.Labels, ...foldersResponse.Labels];
+                const foldersToPush = allFoldersFromServer
+                    .filter(({ID}) => upsertIds.includes(ID))
+                    .map(Database.buildFolder);
+                patch.folders.upsert.push(...foldersToPush);
+            })();
+        }
 
         // fetching contacts
         for (const {id} of mapping.contacts.upsertIds) {

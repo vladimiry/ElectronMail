@@ -312,7 +312,8 @@ export class AccountsEffects {
                                     tap(() => logger.verbose(`triggered by: FIRE_SYNCING_ITERATION$`)),
                                     // user might be moving emails from here to there while syncing/"buildDbPatch" cycle is in progress
                                     // debounce call reduces 404 fetch errors as we don't trigger fetching until user got settled down
-                                    debounceTime(ONE_SECOND_MS * 3),
+                                    // debouncing the fetching signal we strive to process larger group of events in a single sync iteration
+                                    debounceTime(ONE_SECOND_MS * 5),
                                 ),
                             ).pipe(
                                 map(() => null),

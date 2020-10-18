@@ -45,33 +45,31 @@
         }
     }
 
-    &::before {
+    @mixin mail-type-highlighter() {
         display: block;
         content: "";
         position: absolute;
         left: $state-line-margin;
         width: $state-line-with;
-        top: $state-line-margin;
         bottom: $state-line-margin;
         background-color: transparent;
+    }
+
+    &::before {
+        @include mail-type-highlighter;
+        top: $state-line-margin;
     }
 
     &.state- {
         &protonmail_inbox_and_sent {
             &::before {
                 background-color: $state-line-sent;
-                width: ($state-line-with / 2);
             }
 
             &::after {
-                display: block;
-                content: "";
-                position: absolute;
-                left: $state-line-margin + ($state-line-with / 2);
-                width: ($state-line-with / 2);
-                top: $state-line-margin;
-                bottom: $state-line-margin;
+                @include mail-type-highlighter;
                 background-color: $state-line-received;
+                height: calc(50% - #{$state-line-margin});
             }
         }
 

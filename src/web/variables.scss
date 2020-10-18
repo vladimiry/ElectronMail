@@ -17,8 +17,8 @@ $app-color-purple-light: lighten(#987ebf, 2%);
 $app-color-warning-light-text: theme-color-level("warning", 6);
 $app-color-secondary-btn-split-border: darken($secondary, 7%);
 
-$app-font-size-base-smallest: $font-size-base * 0.75;
-$app-font-size-base-small: $font-size-base * 0.8;
+// $app-font-size-base-smallest: $font-size-base * 0.75;
+$app-font-size-base-small: $font-size-sm;
 $app-font-size-base-medium: $font-size-base * 0.9;
 
 $app-account-title-btn-colors: map-merge(

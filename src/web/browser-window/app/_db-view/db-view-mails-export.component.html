@@ -3,8 +3,10 @@
     [disabled]="mailsBundleItems && !mailsBundleItems.length"
     class="btn btn-sm btn-secondary-light d-flex flex-grow-1"
     type="button"
+    title="Export to EML"
 >
-    <span class="text">{{ title }}</span>
+    {{ title }}
+    <span *ngIf="titleSuffix" [innerText]="titleSuffix" class="pl-1"></span>
 </button>
 
 <ng-template #modalTemplate>

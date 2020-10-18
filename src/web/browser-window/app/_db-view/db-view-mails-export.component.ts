@@ -39,6 +39,9 @@ export class DbViewMailsExportComponent extends DbViewAbstractComponent implemen
     @Input()
     title = "";
 
+    @Input()
+    titleSuffix = "";
+
     modalRef?: BsModalRef;
 
     constructor(

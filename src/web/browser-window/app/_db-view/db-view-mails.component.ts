@@ -352,7 +352,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
         );
     }
 
-    sortChange(sorterIndex: number | string): void {
+    sortChange(sorterIndex: number): void {
         this.store.dispatch(DB_VIEW_ACTIONS.SortMails({
             dbAccountPk: this.dbAccountPk,
             mailsBundleKey: this.mailsBundleKey,

@@ -62,7 +62,8 @@
         <electron-mail-db-view-mails-export
             [dbAccountPk]="dbAccountPk"
             [rootConversationNode]="selectedMail.rootNode"
-            [title]="'Export' + (selectedMail.rootNode.summary.size ? ' (' + selectedMail.rootNode.summary.size + ')' : '')"
+            [titleSuffix]="selectedMail.rootNode.summary.size ? '(' + selectedMail.rootNode.summary.size + ')' : ''"
+            [title]="'Export'"
         ></electron-mail-db-view-mails-export>
     </div>
 

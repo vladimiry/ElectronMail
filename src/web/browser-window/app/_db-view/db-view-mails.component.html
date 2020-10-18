@@ -7,48 +7,18 @@
             (click)="makeAllRead()"
             *ngrxLet="unreadCount$ as count"
             [disabled]="(makeAllReadButtonLocked$ | async) || false"
-            class="btn btn-sm btn-primary text-nowrap mr-2"
+            class="btn btn-sm btn-primary mr-2 text-nowrap"
         >
-            Make all read
+            Make read
             <ng-container [ngSwitch]="makeAllReadInProgress$ | async">
                 <i *ngSwitchCase="true" class="fa fa-spinner fa-pulse fa-fw ml-1"></i>
-                <span *ngSwitchDefault [innerText]="count ? '(' + count + ')' : ''" class="ml-1"></span>
+                <span *ngSwitchDefault [innerText]="'(' + count + ')'" [ngClass]="{'d-none': !count}" class="ml-1"></span>
             </ng-container>
         </button>
-        <div
-            #moveAllToDropdown="bs-dropdown"
-            *ngrxLet="plainItemsCount$ as count"
-            [isDisabled]="(setFolderButtonLocked$ | async) || false"
-            class="btn-group"
-            dropdown
-        >
-            <button
-                class="btn btn-sm btn-primary dropdown-toggle mr-2"
-                dropdownToggle
-                type="button"
-            >
-                Move all to
-                <ng-container [ngSwitch]="setFolderInProgress$ | async">
-                    <i *ngSwitchCase="true" class="fa fa-spinner fa-pulse fa-fw ml-1"></i>
-                    <span *ngSwitchDefault [innerText]="count ? '(' + count + ')' : ''" class="ml-1"></span>
-                </ng-container>
-                <span class="caret"></span>
-                <ul *dropdownMenu class="dropdown-menu px-0 py-1" role="menu">
-                    <li
-                        (click)="moveAllToDropdown.hide(); setFolder(folder.id)"
-                        *ngFor="let folder of (moveToFolders$ | async)"
-                        role="menuitem"
-                    >
-                        <a class="dropdown-item px-2" href="#">
-                            <electron-mail-db-view-folder [folder]="folder"></electron-mail-db-view-folder>
-                        </a>
-                    </li>
-                </ul>
-            </button>
-        </div>
         <ng-content select="[controls]"></ng-content>
         <div class="btn btn-sm border border-secondary-light" style="cursor: default;">
-            {{ title$ | async }}<span *ngIf="items.length">: {{ (paging$ | async)?.end }} of {{ items.length }}</span>
+            {{ (title$ | async) + (items.length ? ':' : '') }}
+            <span *ngIf="items.length">{{ (paging$ | async)?.end }} of {{ items.length }}</span>
         </div>
     </div>
     <div class="d-flex">
@@ -58,6 +28,7 @@
             class="btn-group mx-2"
             dropdown
             placement="bottom right"
+            title="Delete permanently"
         >
             <button
                 class="btn btn-sm btn-outline-danger dropdown-toggle"
@@ -65,12 +36,11 @@
                 type="button"
             >
                 <i class="fa fa-times mr-1"></i>
-                Delete
                 <ng-container [ngSwitch]="deletingMessagesInProgress$ | async">
                     <i *ngSwitchCase="true" class="fa fa-spinner fa-pulse fa-fw ml-1"></i>
-                    <span *ngSwitchDefault [innerText]="count ? '(' + count + ')' : ''" class="ml-1"></span>
+                    <span *ngSwitchDefault [innerText]="'(' + count + ')'" [ngClass]="{'d-none': !count}" class="ml-1"></span>
+                    <span class="caret"></span>
                 </ng-container>
-                <span class="caret"></span>
             </button>
             <ul *dropdownMenu class="dropdown-menu dropdown-menu-right px-0 py-1" role="menu">
                 <li>
@@ -86,25 +56,72 @@
                 </li>
             </ul>
         </div>
+        <div
+            #moveAllToDropdown="bs-dropdown"
+            *ngrxLet="plainItemsCount$ as count"
+            [isDisabled]="(setFolderButtonLocked$ | async) || false"
+            class="btn-group mr-2"
+            dropdown
+            title="Move to folder"
+        >
+            <button
+                class="btn btn-sm btn-secondary-light dropdown-toggle"
+                dropdownToggle
+                type="button"
+            >
+                <i class="fa fa-folder-open-o"></i>
+                <ng-container [ngSwitch]="setFolderInProgress$ | async">
+                    <i *ngSwitchCase="true" class="fa fa-spinner fa-pulse fa-fw ml-1"></i>
+                    <span *ngSwitchDefault [innerText]="'(' + count + ')'" [ngClass]="{'d-none': !count}" class="ml-1"></span>
+                    <span class="caret"></span>
+                </ng-container>
+                <ul *dropdownMenu class="dropdown-menu px-0 py-1" role="menu">
+                    <li
+                        (click)="moveAllToDropdown.hide(); setFolder(folder.id)"
+                        *ngFor="let folder of (moveToFolders$ | async)"
+                        role="menuitem"
+                    >
+                        <a class="dropdown-item px-2" href="#">
+                            <electron-mail-db-view-folder [folder]="folder"></electron-mail-db-view-folder>
+                        </a>
+                    </li>
+                </ul>
+            </button>
+        </div>
         <electron-mail-db-view-mails-export
             [dbAccountPk]="dbAccountPk"
             [mailsBundleItems]="items"
-            [title]="'Export' + (items.length ? ' (' + items.length + ')' : '')"
+            [titleSuffix]="items.length ? '(' + items.length + ')' : ''"
+            [title]="'Export'"
         ></electron-mail-db-view-mails-export>
-        <select
-            #sortSelect
-            (change)="sortChange(sortSelect.value)"
-            *ngIf="sorting$ | async; let sorting;"
-            class="form-control form-control-sm ml-2 align-self-stretch"
+        <div
+            *ngIf="(sorting$ | async) as sorting;"
+            class="btn-group mx-2"
+            dropdown
+            placement="bottom right"
+            title="Sort by"
         >
-            <option
-                *ngFor="let sorter of sorting.sorters; index as i;"
-                [selected]="i == sorting.sorterIndex"
-                [value]="i"
+            <button
+                class="btn btn-sm btn-secondary-light dropdown-toggle"
+                dropdownToggle
+                type="button"
             >
-                Sort by: {{ sorter.title }}
-            </option>
-        </select>
+                <span class="pl-1">{{ sorting.sorters[sorting.sorterIndex].title }}</span>
+                <span class="caret"></span>
+            </button>
+            <ul *dropdownMenu class="dropdown-menu dropdown-menu-right px-0 py-1" role="menu">
+                <li *ngFor="let sorter of sorting.sorters; index as sorterIndex;">
+                    <a
+                        (click)="sortChange(sorterIndex)"
+                        class="dropdown-item px-2"
+                        href="#"
+                        role="menuitem"
+                    >
+                        {{ sorter.title }}
+                    </a>
+                </li>
+            </ul>
+        </div>
     </div>
 </div>
 <div

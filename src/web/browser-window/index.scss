@@ -24,6 +24,7 @@ form .required label::after {
     align-items: center;
 }
 
+// "bootstrap"
 .btn-sm + .dropdown-toggle-split {
     @include app-dropdown-toggle-x-padding-split;
 }

@@ -12,7 +12,7 @@
     background-color: $app-color-bg-dark-1;
 
     #optionsMenuItem {
-        @include app-dropdown-toggle-split;
+        @include app-dropdown-toggle-x-padding-split;
     }
 
     .wrapper {

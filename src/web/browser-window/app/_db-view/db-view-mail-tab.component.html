@@ -59,7 +59,7 @@
                 [uid]="state.selectedFolderData?.id"
             >
                 <div
-                    class="d-inline-block mr-2"
+                    class="d-flex mr-2"
                     controls
                 >
                     <button
@@ -74,7 +74,8 @@
                                 'fa-align-right fa-flip-vertical': mailsBundleKey == 'folderConversationsBundle',
                                 'fa-align-justify': mailsBundleKey == 'folderMailsBundle'
                             }"
-                            class="fa"
+                            [ngStyle]="{'margin-top': (mailsBundleKey == 'folderConversationsBundle' ? -0.2 : 0.1) + 'rem'}"
+                            class="fa d-flex"
                         ></i>
                     </button>
                 </div>

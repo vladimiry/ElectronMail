@@ -36,7 +36,7 @@ $app-db-view-color-border: $list-group-border-color;
 $app-db-view-mail-padding-x: $list-group-item-padding-x * 0.5;
 $app-db-view-mail-padding-y: $list-group-item-padding-y * 0.5;
 
-@mixin app-dropdown-toggle-split {
+@mixin app-dropdown-toggle-x-padding-split {
     padding-left: $btn-padding-x * 0.9;
     padding-right: $btn-padding-x * 0.9;
 }

@@ -13,10 +13,6 @@
         }
     }
 
-    .form-control {
-        max-width: 9em;
-    }
-
     fieldset {
         &:not([disabled]) {
             .fa-spinner {

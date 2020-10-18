@@ -19,8 +19,13 @@ form .required label::after {
 }
 
 // "bootstrap"
+.dropdown-toggle {
+    display: flex;
+    align-items: center;
+}
+
 .btn-sm + .dropdown-toggle-split {
-    @include app-dropdown-toggle-split;
+    @include app-dropdown-toggle-x-padding-split;
 }
 
 // "bootstrap"

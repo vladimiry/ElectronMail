@@ -7,35 +7,35 @@
             (click)="makeAllRead()"
             *ngrxLet="unreadCount$ as count"
             [disabled]="(makeAllReadButtonLocked$ | async) || false"
-            class="btn btn-sm btn-primary mr-2"
-            style="white-space: nowrap"
+            class="btn btn-sm btn-primary text-nowrap mr-2"
         >
             Make all read
             <ng-container [ngSwitch]="makeAllReadInProgress$ | async">
                 <i *ngSwitchCase="true" class="fa fa-spinner fa-pulse fa-fw ml-1"></i>
-                <span *ngSwitchDefault [innerText]="count ? '(' + count + ')' : ''"></span>
+                <span *ngSwitchDefault [innerText]="count ? '(' + count + ')' : ''" class="ml-1"></span>
             </ng-container>
         </button>
         <div
-            #dropdown="bs-dropdown"
+            #moveAllToDropdown="bs-dropdown"
+            *ngrxLet="plainItemsCount$ as count"
             [isDisabled]="(setFolderButtonLocked$ | async) || false"
             class="btn-group"
             dropdown
         >
             <button
-                *ngrxLet="plainItemsCount$ as count"
-                class="btn btn-sm btn-primary mr-2"
+                class="btn btn-sm btn-primary dropdown-toggle mr-2"
                 dropdownToggle
-                style="white-space: nowrap"
+                type="button"
             >
                 Move all to
                 <ng-container [ngSwitch]="setFolderInProgress$ | async">
                     <i *ngSwitchCase="true" class="fa fa-spinner fa-pulse fa-fw ml-1"></i>
-                    <span *ngSwitchDefault [innerText]="count ? '(' + count + ')' : ''"></span>
+                    <span *ngSwitchDefault [innerText]="count ? '(' + count + ')' : ''" class="ml-1"></span>
                 </ng-container>
+                <span class="caret"></span>
                 <ul *dropdownMenu class="dropdown-menu px-0 py-1" role="menu">
                     <li
-                        (click)="dropdown.hide(); setFolder(folder.id)"
+                        (click)="moveAllToDropdown.hide(); setFolder(folder.id)"
                         *ngFor="let folder of (moveToFolders$ | async)"
                         role="menuitem"
                     >
@@ -52,30 +52,23 @@
         </div>
     </div>
     <div class="d-flex">
-        <electron-mail-db-view-mails-export
-            [dbAccountPk]="dbAccountPk"
-            [mailsBundleItems]="items"
-            [title]="'Export' + (items.length ? '(' + items.length + ')' : '')"
-        ></electron-mail-db-view-mails-export>
         <div
             *ngrxLet="plainItemsCount$ as count"
             [isDisabled]="(deletingMessagesButtonLocked$ | async) || false"
-            class="btn-group ml-2"
+            class="btn-group mx-2"
             dropdown
             placement="bottom right"
-            style="white-space: nowrap"
         >
             <button
-                [disabled]="(deletingMessagesButtonLocked$ | async) || false"
-                class="btn btn-sm btn-secondary-light dropdown-toggle"
+                class="btn btn-sm btn-outline-danger dropdown-toggle"
                 dropdownToggle
                 type="button"
             >
-                <i class="fa fa-times"></i>
+                <i class="fa fa-times mr-1"></i>
                 Delete
                 <ng-container [ngSwitch]="deletingMessagesInProgress$ | async">
                     <i *ngSwitchCase="true" class="fa fa-spinner fa-pulse fa-fw ml-1"></i>
-                    <span *ngSwitchDefault [innerText]="count ? '(' + count + ')' : ''"></span>
+                    <span *ngSwitchDefault [innerText]="count ? '(' + count + ')' : ''" class="ml-1"></span>
                 </ng-container>
                 <span class="caret"></span>
             </button>
@@ -93,32 +86,37 @@
                 </li>
             </ul>
         </div>
+        <electron-mail-db-view-mails-export
+            [dbAccountPk]="dbAccountPk"
+            [mailsBundleItems]="items"
+            [title]="'Export' + (items.length ? ' (' + items.length + ')' : '')"
+        ></electron-mail-db-view-mails-export>
         <select
             #sortSelect
             (change)="sortChange(sortSelect.value)"
             *ngIf="sorting$ | async; let sorting;"
-            class="form-control form-control-sm ml-2"
+            class="form-control form-control-sm ml-2 align-self-stretch"
         >
             <option
                 *ngFor="let sorter of sorting.sorters; index as i;"
                 [selected]="i == sorting.sorterIndex"
                 [value]="i"
             >
-                {{ sorter.title }}
+                Sort by: {{ sorter.title }}
             </option>
         </select>
     </div>
 </div>
 <div
-    class="overflow-auto"
     *ngIf="items$ | async; let items;"
+    class="overflow-auto"
 >
     <!-- TODO consider using "virtual list", ie render only visible data -->
     <electron-mail-db-view-mail
         *ngFor="let item of items.slice(0, (paging$ | async)?.end); trackBy: trackByMailBundleItem"
         [attr.data-pk]="item.mail.pk"
-        [mail]="item.mail"
         [conversationSize]="item.conversationSize"
+        [mail]="item.mail"
     ></electron-mail-db-view-mail>
     <button
         (click)="loadMore()"

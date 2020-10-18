@@ -54,7 +54,7 @@
             }
 
             &:nth-child(2) {
-                @include app-dropdown-toggle-split;
+                @include app-dropdown-toggle-x-padding-split;
                 margin-left: 0;
                 flex-grow: 0;
                 border-left-width: 0;

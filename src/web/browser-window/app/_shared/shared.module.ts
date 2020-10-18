@@ -1,6 +1,7 @@
 import {CommonModule} from "@angular/common";
 import {NgModule} from "@angular/core";
 import {NgSelectModule} from "@ng-select/ng-select";
+import {ReactiveComponentModule} from "@ngrx/component";
 import {ReactiveFormsModule} from "@angular/forms";
 
 import {UnreadBadgeComponent} from "src/web/browser-window/app/_shared/unread-badge.component";
@@ -8,16 +9,18 @@ import {UnreadBadgeComponent} from "src/web/browser-window/app/_shared/unread-ba
 @NgModule({
     imports: [
         CommonModule,
-        ReactiveFormsModule,
         NgSelectModule,
+        ReactiveComponentModule,
+        ReactiveFormsModule,
     ],
     declarations: [
         UnreadBadgeComponent,
     ],
     exports: [
         CommonModule,
-        ReactiveFormsModule,
         NgSelectModule,
+        ReactiveComponentModule,
+        ReactiveFormsModule,
         UnreadBadgeComponent,
     ],
 })

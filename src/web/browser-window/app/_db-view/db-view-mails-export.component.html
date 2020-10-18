@@ -1,5 +1,6 @@
 <button
     (click)="openModal(modalTemplate)"
+    [disabled]="mailsBundleItems && !mailsBundleItems.length"
     class="btn btn-sm btn-secondary-light d-flex flex-grow-1"
     type="button"
 >

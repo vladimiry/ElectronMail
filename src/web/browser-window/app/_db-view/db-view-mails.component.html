@@ -5,13 +5,16 @@
     <div class="d-flex flex-grow-1">
         <button
             (click)="makeAllRead()"
+            *ngrxLet="unreadCount$ as count"
             [disabled]="(makeAllReadButtonLocked$ | async) || false"
             class="btn btn-sm btn-primary mr-2"
             style="white-space: nowrap"
         >
             Make all read
-            <span *ngIf="unreadCount$ | async; let count;">({{ count }})</span>
-            <i *ngIf="makeAllReadInProgress$ | async" class="fa fa-spinner fa-pulse fa-fw ml-2"></i>
+            <ng-container [ngSwitch]="makeAllReadInProgress$ | async">
+                <i *ngSwitchCase="true" class="fa fa-spinner fa-pulse fa-fw ml-1"></i>
+                <span *ngSwitchDefault [innerText]="count ? '(' + count + ')' : ''"></span>
+            </ng-container>
         </button>
         <div
             #dropdown="bs-dropdown"
@@ -20,15 +23,16 @@
             dropdown
         >
             <button
+                *ngrxLet="plainItemsCount$ as count"
                 class="btn btn-sm btn-primary mr-2"
                 dropdownToggle
                 style="white-space: nowrap"
             >
                 Move all to
-                <ng-container *ngIf="!(setFolderInProgress$ | async)">
-                    <span *ngIf="plainItemsCount$ | async; let count;">({{ count }})</span>
+                <ng-container [ngSwitch]="setFolderInProgress$ | async">
+                    <i *ngSwitchCase="true" class="fa fa-spinner fa-pulse fa-fw ml-1"></i>
+                    <span *ngSwitchDefault [innerText]="count ? '(' + count + ')' : ''"></span>
                 </ng-container>
-                <i *ngIf="setFolderInProgress$ | async" class="fa fa-spinner fa-pulse fa-fw ml-2"></i>
                 <ul *dropdownMenu class="dropdown-menu px-0 py-1" role="menu">
                     <li
                         (click)="dropdown.hide(); setFolder(folder.id)"
@@ -42,18 +46,6 @@
                 </ul>
             </button>
         </div>
-        <button
-            (click)="deleteMessages()"
-            [disabled]="(deletingMessagesButtonLocked$ | async) || false"
-            class="btn btn-sm btn-outline-danger mr-2"
-            style="white-space: nowrap"
-        >
-            Delete permanently
-            <ng-container *ngIf="!(deletingMessagesInProgress$ | async)">
-                <span *ngIf="plainItemsCount$ | async; let count;">({{ count }})</span>
-            </ng-container>
-            <i *ngIf="deletingMessagesInProgress$ | async" class="fa fa-spinner fa-pulse fa-fw ml-2"></i>
-        </button>
         <ng-content select="[controls]"></ng-content>
         <div class="btn btn-sm border border-secondary-light" style="cursor: default;">
             {{ title$ | async }}<span *ngIf="items.length">: {{ (paging$ | async)?.end }} of {{ items.length }}</span>
@@ -61,11 +53,46 @@
     </div>
     <div class="d-flex">
         <electron-mail-db-view-mails-export
-            *ngIf="items.length"
             [dbAccountPk]="dbAccountPk"
             [mailsBundleItems]="items"
-            [title]="'Export (' + items.length + ')'"
+            [title]="'Export' + (items.length ? '(' + items.length + ')' : '')"
         ></electron-mail-db-view-mails-export>
+        <div
+            *ngrxLet="plainItemsCount$ as count"
+            [isDisabled]="(deletingMessagesButtonLocked$ | async) || false"
+            class="btn-group ml-2"
+            dropdown
+            placement="bottom right"
+            style="white-space: nowrap"
+        >
+            <button
+                [disabled]="(deletingMessagesButtonLocked$ | async) || false"
+                class="btn btn-sm btn-secondary-light dropdown-toggle"
+                dropdownToggle
+                type="button"
+            >
+                <i class="fa fa-times"></i>
+                Delete permanently
+                <ng-container [ngSwitch]="deletingMessagesInProgress$ | async">
+                    <i *ngSwitchCase="true" class="fa fa-spinner fa-pulse fa-fw ml-1"></i>
+                    <span *ngSwitchDefault [innerText]="count ? '(' + count + ')' : ''"></span>
+                </ng-container>
+                <span class="caret"></span>
+            </button>
+            <ul *dropdownMenu class="dropdown-menu dropdown-menu-right px-0 py-1" role="menu">
+                <li>
+                    <a
+                        (click)="deleteMessages()"
+                        class="dropdown-item px-2"
+                        href="#"
+                        role="menuitem"
+                    >
+                        <i class="fa fa-times text-danger"></i>
+                        Confirm deleting
+                    </a>
+                </li>
+            </ul>
+        </div>
         <select
             #sortSelect
             (change)="sortChange(sortSelect.value)"

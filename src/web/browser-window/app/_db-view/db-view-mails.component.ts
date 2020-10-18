@@ -371,7 +371,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
     }
 
     deleteMessages(): void {
-        this.resolvePlainItemsAndPk().subscribe(([items, pk]) => {
+        this.resolveSinglePlainItemsAndPkNotification().subscribe(([items, pk]) => {
             const messageIds = items.map((item) => item.mail.id);
             if (!messageIds.length) {
                 return;
@@ -388,7 +388,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
     }
 
     makeAllRead(): void {
-        this.resolvePlainItemsAndPk().subscribe(([items, pk]) => {
+        this.resolveSinglePlainItemsAndPkNotification().subscribe(([items, pk]) => {
             const messageIds = items
                 .filter((item) => item.mail.unread)
                 .map((item) => item.mail.id);
@@ -401,7 +401,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
     }
 
     setFolder(folderId: Folder["id"]): void {
-        this.resolvePlainItemsAndPk().subscribe(([items, pk]) => {
+        this.resolveSinglePlainItemsAndPkNotification().subscribe(([items, pk]) => {
             const messageIds = items.map((item) => item.mail.id);
             if (messageIds.length) {
                 this.store.dispatch(
@@ -416,7 +416,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
         this.subscription.unsubscribe();
     }
 
-    private resolvePlainItemsAndPk() { // eslint-disable-line @typescript-eslint/explicit-function-return-type
+    private resolveSinglePlainItemsAndPkNotification() { // eslint-disable-line @typescript-eslint/explicit-function-return-type
         return this.plainItems$.pipe(
             withLatestFrom(this.dbAccountPk$),
             first(),

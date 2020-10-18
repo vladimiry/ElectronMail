@@ -72,7 +72,7 @@
                 type="button"
             >
                 <i class="fa fa-times"></i>
-                Delete permanently
+                Delete
                 <ng-container [ngSwitch]="deletingMessagesInProgress$ | async">
                     <i *ngSwitchCase="true" class="fa fa-spinner fa-pulse fa-fw ml-1"></i>
                     <span *ngSwitchDefault [innerText]="count ? '(' + count + ')' : ''"></span>
@@ -88,7 +88,7 @@
                         role="menuitem"
                     >
                         <i class="fa fa-times text-danger"></i>
-                        Confirm deleting
+                        Confirm <span class="text-danger">permanent</span> deleting
                     </a>
                 </li>
             </ul>

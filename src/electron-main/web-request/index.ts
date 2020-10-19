@@ -27,7 +27,7 @@ const requestProxyCache = (() => {
         | OnHeadersReceivedListenerDetails
         | OnErrorOccurredListenerDetails
         | OnCompletedListenerDetails;
-    type MapValue = { imageUrlProxified?: boolean; corsProxy?: CorsProxy };
+    type MapValue = { additionAllowedOrigin?: string; corsProxy?: CorsProxy };
 
     const map = new Map<MapKeyArg["id"], MapValue>();
 
@@ -67,13 +67,6 @@ export function initWebRequestListenersByAccount(
     }
 
     const origins = {
-        externalContentProxyUrlPattern: (
-            enableExternalContentProxy
-            &&
-            externalContentProxyUrlPattern
-            &&
-            parseUrlOriginWithNullishCheck(externalContentProxyUrlPattern)
-        ),
         webClientEntryUrl: parseUrlOriginWithNullishCheck(webClient.entryUrl),
         devTools: parseUrlOriginWithNullishCheck("devtools://devtools"),
     } as const;
@@ -95,38 +88,52 @@ export function initWebRequestListenersByAccount(
             const urlOrigin = parseUrlOriginWithNullishCheck(url);
 
             if (
-                enableExternalContentProxy
+                enableExternalContentProxy // feature enabled
                 &&
-                !requestProxyCache.get(details)?.imageUrlProxified // has not yet been proxified
+                !requestProxyCache.get(details)?.additionAllowedOrigin // has not yet been proxified (preventing infinity redirect loop)
                 &&
-                String(details.resourceType).toLowerCase() === "image"
+                urlOrigin !== origins.webClientEntryUrl // not proton's static resource
                 &&
-                urlOrigin !== origins.webClientEntryUrl // not proton's static image
+                String(details.resourceType).toLowerCase() === "image" // only image resources
                 &&
                 (
                     BUILD_ENVIRONMENT !== "development"
                     ||
-                    urlOrigin !== origins.devTools // not devtools image
+                    urlOrigin !== origins.devTools // not devtools-specific resource
                 )
             ) {
                 if (!externalContentProxyUrlPattern) {
                     throw new Error(`Invalid "external content proxy URL pattern" value.`);
                 }
-                const redirectURL = externalContentProxyUrlPattern.replace(
-                    ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN,
-                    details.url,
+
+                const redirectURL = externalContentProxyUrlPattern.replace(ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN, url);
+
+                if (
+                    redirectURL === externalContentProxyUrlPattern
+                    ||
+                    !redirectURL.includes(url)
+                ) {
+                    throw new Error(`Failed to substitute "${url}" in "${externalContentProxyUrlPattern}" pattern.`);
+                }
+
+                requestProxyCache.patch(
+                    details,
+                    {additionAllowedOrigin: parseUrlOriginWithNullishCheck(redirectURL)},
                 );
-                requestProxyCache.patch(details, {imageUrlProxified: true});
+
                 callback({redirectURL});
+
                 return;
             }
+
+            const additionAllowedOrigin = requestProxyCache.get(details)?.additionAllowedOrigin;
 
             const bannedUrlAccessMsg: null | string = blockNonEntryUrlBasedRequests
                 ? buildUrlOriginsFailedMsgTester([
                     ...allowedOrigins,
                     ...(
-                        origins.externalContentProxyUrlPattern && requestProxyCache.get(details)?.imageUrlProxified
-                            ? [origins.externalContentProxyUrlPattern]
+                        additionAllowedOrigin
+                            ? [additionAllowedOrigin]
                             : []
                     ),
                 ])(url)

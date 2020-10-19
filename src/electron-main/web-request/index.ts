@@ -1,5 +1,11 @@
 import _logger from "electron-log";
-import {OnBeforeRequestListenerDetails, OnBeforeSendHeadersListenerDetails, OnHeadersReceivedListenerDetails} from "electron";
+import {
+    OnBeforeRequestListenerDetails,
+    OnBeforeSendHeadersListenerDetails,
+    OnCompletedListenerDetails,
+    OnErrorOccurredListenerDetails,
+    OnHeadersReceivedListenerDetails,
+} from "electron";
 
 import {ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN} from "src/shared/constants";
 import {AccountConfig} from "src/shared/model/account";
@@ -15,7 +21,12 @@ import {resolveInitializedSession} from "src/electron-main/session";
 const logger = curryFunctionMembers(_logger, "[web-request]");
 
 const requestProxyCache = (() => {
-    type MapKeyArg = OnBeforeRequestListenerDetails | OnBeforeSendHeadersListenerDetails | OnHeadersReceivedListenerDetails;
+    type MapKeyArg =
+        | OnBeforeRequestListenerDetails
+        | OnBeforeSendHeadersListenerDetails
+        | OnHeadersReceivedListenerDetails
+        | OnErrorOccurredListenerDetails
+        | OnCompletedListenerDetails;
     type MapValue = { imageUrlProxified?: boolean; corsProxy?: CorsProxy };
 
     const map = new Map<MapKeyArg["id"], MapValue>();
@@ -55,21 +66,23 @@ export function initWebRequestListenersByAccount(
         throw new Error(`Failed to resolve the "web-client" bundle location by "${accountEntryApiUrl}" API entry point value`);
     }
 
-    const externalContentProxyUrlPatternOrigin: string | false | undefined = (
-        enableExternalContentProxy
-        &&
-        externalContentProxyUrlPattern
-        &&
-        parseUrlOriginWithNullishCheck(externalContentProxyUrlPattern)
-    );
-    const webClientEntryUrlOrigin = parseUrlOriginWithNullishCheck(webClient.entryUrl);
-    const devToolsOrigin = parseUrlOriginWithNullishCheck("devtools://devtools");
+    const origins = {
+        externalContentProxyUrlPattern: (
+            enableExternalContentProxy
+            &&
+            externalContentProxyUrlPattern
+            &&
+            parseUrlOriginWithNullishCheck(externalContentProxyUrlPattern)
+        ),
+        webClientEntryUrl: parseUrlOriginWithNullishCheck(webClient.entryUrl),
+        devTools: parseUrlOriginWithNullishCheck("devtools://devtools"),
+    } as const;
     const allowedOrigins: readonly string[] = [
         accountEntryApiUrl,
-        webClientEntryUrlOrigin,
+        origins.webClientEntryUrl,
         ...(
             BUILD_ENVIRONMENT === "development"
-                ? [devToolsOrigin]
+                ? [origins.devTools]
                 : []
         ),
     ];
@@ -84,43 +97,47 @@ export function initWebRequestListenersByAccount(
             if (
                 enableExternalContentProxy
                 &&
-                !requestProxyCache.get(details)?.imageUrlProxified
+                !requestProxyCache.get(details)?.imageUrlProxified // has not yet been proxified
                 &&
                 String(details.resourceType).toLowerCase() === "image"
                 &&
-                urlOrigin !== webClientEntryUrlOrigin // not proton's static image
+                urlOrigin !== origins.webClientEntryUrl // not proton's static image
                 &&
                 (
                     BUILD_ENVIRONMENT !== "development"
                     ||
-                    urlOrigin !== devToolsOrigin // not devtools image
+                    urlOrigin !== origins.devTools // not devtools image
                 )
             ) {
                 if (!externalContentProxyUrlPattern) {
-                    throw new Error(`Unexpected "external content proxy URL pattern" value.`);
+                    throw new Error(`Invalid "external content proxy URL pattern" value.`);
                 }
-                const redirectURL = externalContentProxyUrlPattern.replace(ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN, details.url);
+                const redirectURL = externalContentProxyUrlPattern.replace(
+                    ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN,
+                    details.url,
+                );
                 requestProxyCache.patch(details, {imageUrlProxified: true});
                 callback({redirectURL});
                 return;
             }
 
-            const bannedUrlAccessMessage: null | string = blockNonEntryUrlBasedRequests
+            const bannedUrlAccessMsg: null | string = blockNonEntryUrlBasedRequests
                 ? buildUrlOriginsFailedMsgTester([
                     ...allowedOrigins,
                     ...(
-                        externalContentProxyUrlPatternOrigin && requestProxyCache.get(details)?.imageUrlProxified
-                            ? [externalContentProxyUrlPatternOrigin]
+                        origins.externalContentProxyUrlPattern && requestProxyCache.get(details)?.imageUrlProxified
+                            ? [origins.externalContentProxyUrlPattern]
                             : []
                     ),
                 ])(url)
                 : null;
 
-            if (typeof bannedUrlAccessMessage === "string") {
-                const message
-                    = `Access to the "${details.resourceType}" resource with "${url}" URL has been forbidden. ${bannedUrlAccessMessage}`;
-
+            if (typeof bannedUrlAccessMsg === "string") {
                 setTimeout(() => { // can be asynchronous (speeds up callback resolving)
+                    requestProxyCache.remove(details);
+
+                    const message
+                        = `Access to the "${details.resourceType}" resource with "${url}" URL has been forbidden. ${bannedUrlAccessMsg}`;
                     logger.error(message);
                     IPC_MAIN_API_NOTIFICATION$.next(
                         IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({message}),
@@ -173,4 +190,12 @@ export function initWebRequestListenersByAccount(
             requestProxyCache.remove(details);
         },
     );
+
+    session.webRequest.onErrorOccurred((details) => {
+        requestProxyCache.remove(details);
+    });
+
+    session.webRequest.onCompleted((details) => {
+        requestProxyCache.remove(details);
+    });
 }

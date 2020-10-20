@@ -188,50 +188,47 @@ async function buildDbPatch(
         upsertIds: Array<{ id: RestModel.Id; gotTrashed?: boolean }>;
     }> & {
         mails: {
-            refType: keyof Pick<RestModel.Event, "Messages">;
-            updatesMappedByInstanceId: Map<RestModel.Id, Array<Unpacked<Required<RestModel.Event>["Messages"]>>>;
+            updatesArrayPropName: keyof Pick<RestModel.Event, "Messages">;
+            updatesMappedByEntityId: Map<RestModel.Id, Array<Unpacked<Required<RestModel.Event>["Messages"]>>>;
         };
         folders: {
-            refType: keyof Pick<RestModel.Event, "Labels">;
-            updatesMappedByInstanceId: Map<RestModel.Id, Array<Unpacked<Required<RestModel.Event>["Labels"]>>>;
+            updatesArrayPropName: keyof Pick<RestModel.Event, "Labels">;
+            updatesMappedByEntityId: Map<RestModel.Id, Array<Unpacked<Required<RestModel.Event>["Labels"]>>>;
         };
         contacts: {
-            refType: keyof Pick<RestModel.Event, "Contacts">;
-            updatesMappedByInstanceId: Map<RestModel.Id, Array<Unpacked<Required<RestModel.Event>["Contacts"]>>>;
+            updatesArrayPropName: keyof Pick<RestModel.Event, "Contacts">;
+            updatesMappedByEntityId: Map<RestModel.Id, Array<Unpacked<Required<RestModel.Event>["Contacts"]>>>;
         };
     } = {
         mails: {
-            refType: "Messages",
-            updatesMappedByInstanceId: new Map(),  // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            updatesArrayPropName: "Messages",
+            updatesMappedByEntityId: new Map(),  // eslint-disable-line @typescript-eslint/no-unsafe-assignment
             remove: [],
             upsertIds: []
         },
         folders: {
-            refType: "Labels",
-            updatesMappedByInstanceId: new Map(), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            updatesArrayPropName: "Labels",
+            updatesMappedByEntityId: new Map(), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
             remove: [],
             upsertIds: [],
         },
         contacts: {
-            refType: "Contacts",
-            updatesMappedByInstanceId: new Map(), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            updatesArrayPropName: "Contacts",
+            updatesMappedByEntityId: new Map(), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
             remove: [],
             upsertIds: [],
         },
     };
-    const mappingKeys = Object.keys(mapping) as Array<keyof typeof mapping>;
+    const entityTypes = Object.keys(mapping) as Array<keyof typeof mapping>;
 
     for (const event of input.events) {
-        for (const key of mappingKeys) {
-            const {refType, updatesMappedByInstanceId} = mapping[key];
-            const updateItems = event[refType];
-            if (!updateItems) {
-                continue;
-            }
-            for (const updateItem of updateItems) {
-                updatesMappedByInstanceId.set(
-                    updateItem.ID,
-                    (updatesMappedByInstanceId.get(updateItem.ID) ?? []).concat(updateItem),
+        for (const entityType of entityTypes) {
+            const {updatesArrayPropName, updatesMappedByEntityId} = mapping[entityType];
+
+            for (const update of (event[updatesArrayPropName] ?? [])) {
+                updatesMappedByEntityId.set(
+                    update.ID,
+                    (updatesMappedByEntityId.get(update.ID) ?? []).concat(update),
                 );
             }
         }
@@ -239,35 +236,29 @@ async function buildDbPatch(
 
     logger.verbose([
         `resolved unique entities to process history chain:`,
-        mappingKeys.map((key) => `${key}: ${mapping[key].updatesMappedByInstanceId.size}`).join("; "),
+        entityTypes.map((key) => `${key}: ${mapping[key].updatesMappedByEntityId.size}`).join("; "),
     ].join(" "));
 
-    for (const key of mappingKeys) {
-        const {updatesMappedByInstanceId, upsertIds, remove} = mapping[key];
-        for (const entityUpdates of updatesMappedByInstanceId.values()) {
-            let upserted = false;
-            // entity updates sorted in ASC order, so reversing the entity updates list in order to start processing from the newest items
-            for (const update of entityUpdates.reverse()) {
-                if (update.Action === RestModel.EVENT_ACTION.DELETE) {
-                    remove.push({pk: Database.buildPk(update.ID)});
-                    // "delete" action is irrecoverable, so we break the updates iterating loop as soon as we faced the "delete" action
-                    // normally that should be a last update in the updates list for the specific entity
-                    // so we process the "delete" action first of all since we iterate the reversed updates list
-                    // TODO consider throwing an error if "upsertIds" list is not empty on this stage
-                    //      since as written above, the "delete" action is supposed to be processed processed first of all
-                    //      since entity is not supposed to receiving any notifications being already removed (remember,
-                    //      we iterate the items starting from the newest items)
-                    break;
-                }
-                if (!upserted) {
-                    upsertIds.push({
-                        id: update.ID,
-                        gotTrashed: Boolean(
-                            update.Message?.LabelIDsAdded?.includes(SYSTEM_FOLDER_IDENTIFIERS.Trash),
-                        ),
-                    });
-                    upserted = true;
-                }
+    for (const entityType of entityTypes) {
+        const {updatesMappedByEntityId, upsertIds, remove} = mapping[entityType];
+
+        for (const updates of updatesMappedByEntityId.values()) {
+            const deleteUpdate = updates.find(({Action}) => Action === RestModel.EVENT_ACTION.DELETE);
+
+            if (deleteUpdate) {
+                // "delete" action is irrecoverable
+                // so if it presents in the updates list then we don't process the list any longer
+                remove.push({pk: Database.buildPk(deleteUpdate.ID)});
+            } else {
+                // we take here just last update item since all non-"delete" actions treated as "update" actions
+                const [update] = updates.slice().reverse(); // immutable reversing
+
+                upsertIds.push({
+                    id: update.ID,
+                    gotTrashed: Boolean(
+                        update.Message?.LabelIDsAdded?.includes(SYSTEM_FOLDER_IDENTIFIERS.Trash),
+                    ),
+                });
             }
         }
     }
@@ -342,7 +333,7 @@ async function buildDbPatch(
         }
     } else {
         // we only need the data structure to be formed at this point, so no need to perform the actual fetching
-        for (const key of mappingKeys) {
+        for (const key of entityTypes) {
             mapping[key].upsertIds.forEach(() => {
                 (patch[key].upsert as any[]) // eslint-disable-line @typescript-eslint/no-explicit-any
                     .push(null);
@@ -352,7 +343,7 @@ async function buildDbPatch(
 
     logger.verbose([
         `upsert/remove:`,
-        mappingKeys.map((key) => `${key}: ${patch[key].upsert.length}/${patch[key].remove.length}`).join("; "),
+        entityTypes.map((key) => `${key}: ${patch[key].upsert.length}/${patch[key].remove.length}`).join("; "),
     ].join(" "));
 
     return patch;

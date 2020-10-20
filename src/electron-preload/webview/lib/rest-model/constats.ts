@@ -24,6 +24,7 @@ export const CONTACT_CARD = buildEnumBundle({
     BOTH: 3,
 } as const);
 
+// https://github.com/ProtonMail/proton-shared/blob/64d6d0b6c60b05785bd06d2b8fa90471b27046a2/lib/constants.ts#L140-L146
 export const EVENT_ACTION = buildEnumBundle({
     DELETE: 0,
     CREATE: 1,

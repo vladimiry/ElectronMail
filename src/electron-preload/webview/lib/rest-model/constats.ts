@@ -44,10 +44,3 @@ export const ENCRYPTED_STATUS = buildEnumBundle({
     PGP_MIME_SIGNED: 9,
     AUTOREPLY: 10,
 } as const);
-
-export const UPSERT_EVENT_ACTIONS = [
-    EVENT_ACTION.CREATE,
-    EVENT_ACTION.UPDATE,
-    EVENT_ACTION.UPDATE_DRAFT,
-    EVENT_ACTION.UPDATE_FLAGS,
-] as const;

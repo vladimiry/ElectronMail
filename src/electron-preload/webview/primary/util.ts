@@ -1,15 +1,5 @@
-import * as RestModel from "src/electron-preload/webview/lib/rest-model";
-import {UPSERT_EVENT_ACTIONS} from "src/electron-preload/webview/lib/rest-model";
 import {buildDbPatchRetryPipeline} from "src/electron-preload/webview/lib/util";
 import {isProtonApiError, sanitizeProtonApiError} from "src/electron-preload/lib/util";
-
-export const isUpsertOperationType: (v: Unpacked<typeof RestModel.EVENT_ACTION._.values>) => boolean = (
-    () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
-        const types: ReadonlySet<Parameters<typeof isUpsertOperationType>[0]> = new Set(UPSERT_EVENT_ACTIONS);
-        const result: typeof isUpsertOperationType = (type) => types.has(type);
-        return result;
-    }
-)();
 
 export const preprocessError: Parameters<typeof buildDbPatchRetryPipeline>[0] = (() => {
     const strings = {

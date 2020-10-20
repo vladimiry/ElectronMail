@@ -6,16 +6,16 @@ import * as DatabaseModel from "src/shared/model/database";
 import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 import {DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_SECOND_MS} from "src/shared/constants";
 import {DbPatch} from "src/shared/api/common";
+import {EVENT_ACTION} from "src/electron-preload/webview/lib/rest-model";
 import {FsDbAccount, LABEL_TYPE, SYSTEM_FOLDER_IDENTIFIERS} from "src/shared/model/database";
 import {Logger} from "src/shared/model/common";
 import {ProtonApi, ProtonApiScan} from "src/shared/api/webview/primary";
 import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
-import {UPSERT_EVENT_ACTIONS} from "src/electron-preload/webview/lib/rest-model";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/constants";
 import {buildDbPatchRetryPipeline, buildEmptyDbPatch, persistDatabasePatch} from "src/electron-preload/webview/lib/util";
 import {curryFunctionMembers, isDatabaseBootstrapped} from "src/shared/util";
 import {isProtonApiError, resolveCachedConfig, sanitizeProtonApiError} from "src/electron-preload/lib/util";
-import {isUpsertOperationType, preprocessError} from "src/electron-preload/webview/primary/util";
+import {preprocessError} from "src/electron-preload/webview/primary/util";
 
 interface DbPatchBundle {
     patch: DbPatch;
@@ -248,15 +248,6 @@ async function buildDbPatch(
             let upserted = false;
             // entity updates sorted in ASC order, so reversing the entity updates list in order to start processing from the newest items
             for (const update of entityUpdates.reverse()) {
-                if (!upserted && isUpsertOperationType(update.Action)) {
-                    upsertIds.push({
-                        id: update.ID,
-                        gotTrashed: Boolean(
-                            update.Message?.LabelIDsAdded?.includes(SYSTEM_FOLDER_IDENTIFIERS.Trash),
-                        ),
-                    });
-                    upserted = true;
-                }
                 if (update.Action === RestModel.EVENT_ACTION.DELETE) {
                     remove.push({pk: Database.buildPk(update.ID)});
                     // "delete" action is irrecoverable, so we break the updates iterating loop as soon as we faced the "delete" action
@@ -267,6 +258,15 @@ async function buildDbPatch(
                     //      since entity is not supposed to receiving any notifications being already removed (remember,
                     //      we iterate the items starting from the newest items)
                     break;
+                }
+                if (!upserted) {
+                    upsertIds.push({
+                        id: update.ID,
+                        gotTrashed: Boolean(
+                            update.Message?.LabelIDsAdded?.includes(SYSTEM_FOLDER_IDENTIFIERS.Trash),
+                        ),
+                    });
+                    upserted = true;
                 }
             }
         }
@@ -473,14 +473,18 @@ const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonApi, "buildD
 
             logger.info();
 
-            const [anyUpsertAction] = UPSERT_EVENT_ACTIONS;
             const data: DbPatchBundle = {
                 patch: await buildDbPatch(
                     providerApi,
                     {
                         events: [
                             {
-                                Messages: [{ID: input.mailPk, Action: anyUpsertAction}],
+                                Messages: [{
+                                    ID: input.mailPk,
+                                    // it can be any action but not "EVENT_ACTION.DELETE"
+                                    // so messages gets reduced as an updated and gets updated in the local database then
+                                    Action: EVENT_ACTION.UPDATE
+                                }],
                             },
                         ],
                         parentLogger: logger,

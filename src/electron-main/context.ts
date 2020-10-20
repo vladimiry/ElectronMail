@@ -68,23 +68,44 @@ function initLocations(
     storeFs: StoreModel.StoreFs,
     paths?: ContextInitOptionsPaths,
 ): NoExtraProps<ElectronContextLocations> {
-    const customUserDataDir = process.env[RUNTIME_ENV_USER_DATA_DIR];
+    const {appDir, userDataDir}: ContextInitOptionsPaths = (
+        paths
+        ??
+        {
+            appDir: path.resolve(
+                __dirname,
+                BUILD_ENVIRONMENT === "development"
+                    ? "../app-dev"
+                    : "../app",
+            ),
+            userDataDir: path.resolve(
+                (() => {
+                    const envVarName = RUNTIME_ENV_USER_DATA_DIR;
+                    const envVarValue = process.env[envVarName];
+                    if (envVarValue && !directoryExists(envVarValue, storeFs)) {
+                        throw new Error(
+                            `Make sure that the directory exists before passing the "${envVarName}" environment variable`,
+                        );
+                    }
+                    return envVarValue;
+                })()
+                ||
+                app.getPath("userData")
+            ),
+        }
+    );
 
-    if (customUserDataDir && !directoryExists(customUserDataDir, storeFs)) {
-        throw new Error(
-            `Make sure that custom "userData" dir exists before passing the "${RUNTIME_ENV_USER_DATA_DIR}" environment variable`,
-        );
+    logger.transports.file.file = path.join(userDataDir, "log.log");
+    logger.transports.file.maxSize = 1024 * 1024 * 50; // 50MB
+    logger.transports.file.level = INITIAL_STORES.config().logLevel;
+    logger.transports.console.level = false;
+
+    // TODO electron fix: the "Dictionaries" dir still stays as default place
+    //      see https://github.com/electron/electron/issues/26039
+    if (path.resolve(userDataDir) !== path.resolve(app.getPath("userData"))) {
+        app.setPath("userData", userDataDir);
     }
 
-    const {appDir, userDataDir} = paths || {
-        appDir: path.resolve(
-            __dirname,
-            BUILD_ENVIRONMENT === "development"
-                ? "../app-dev"
-                : "../app",
-        ),
-        userDataDir: customUserDataDir || app.getPath("userData"),
-    };
     const appRelativePath = (...value: string[]): string => path.join(appDir, ...value);
     const icon = appRelativePath("./assets/icons/icon.png");
 
@@ -171,7 +192,7 @@ function wrapProperLockfileError(error: ProperLockfileError): ProperLockfileErro
         "Normally, this error indicates that the app was abnormally closed or a power loss has taken place.",
         "Please restart the app to restore its functionality (stale lock files will be removed automatically).",
     ].join(" ");
-    return  Object.assign(
+    return Object.assign(
         error,
         {message: `${error.message} ${extendedMessage}`},
     );
@@ -181,11 +202,6 @@ export function initContext(
     {storeFs = StoreFs.Fs.fs, ...options}: ContextInitOptions = {},
 ): NoExtraProps<Context> {
     const locations = initLocations(storeFs, options.paths);
-
-    logger.transports.file.file = path.join(locations.userDataDir, "log.log");
-    logger.transports.file.maxSize = 1024 * 1024 * 50; // 50MB
-    logger.transports.file.level = INITIAL_STORES.config().logLevel;
-    logger.transports.console.level = false;
 
     // the lock path gets resolved explicitly in case "proper-lockfile" module changes the default resolving strategy in the future
     const lockfilePathResolver = (file: string): string => `${file}.lock`;

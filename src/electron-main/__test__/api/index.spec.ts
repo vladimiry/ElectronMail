@@ -19,6 +19,7 @@ import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
 import {INITIAL_STORES} from "src/electron-main/constants";
 import {IpcMainApiEndpoints} from "src/shared/api/main";
+import {PACKAGE_NAME, PACKAGE_VERSION} from "src/shared/constants";
 import {StatusCodeError} from "src/shared/model/error";
 import {accountPickingPredicate, pickBaseConfigProperties} from "src/shared/util";
 import {buildSettingsAdapter} from "src/electron-main/util";
@@ -622,6 +623,16 @@ test.beforeEach(async (t) => {
                 registerStandardSchemes: sinon.stub(),
                 registerSessionProtocols: sinon.stub().returns(Promise.resolve({})),
             });
+            mock(async () => import("electron")).append(
+                {
+                    app: {
+                        getPath: sinon.stub().returns(appDir),
+                        setPath: sinon.spy(),
+                        getName: (): string => PACKAGE_NAME,
+                        getVersion: (): string => PACKAGE_VERSION,
+                    },
+                } as any // eslint-disable-line @typescript-eslint/no-explicit-any
+            );
         },
     );
 

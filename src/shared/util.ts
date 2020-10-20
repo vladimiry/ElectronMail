@@ -354,7 +354,13 @@ export function isDatabaseBootstrapped(
         return false;
     }
 
-    return Boolean(metadata.latestEventId);
+    return (
+        typeof metadata.latestEventId === "string"
+        &&
+        Boolean(
+            metadata.latestEventId.trim(),
+        )
+    );
 }
 
 export function getRandomInt(min: number, max: number): number {

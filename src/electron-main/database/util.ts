@@ -51,13 +51,9 @@ export function patchMetadata(
     logger.info(logPrefix);
 
     if (
-        "latestEventId" in patch
-        &&
-        (
-            !patch.latestEventId
-            ||
-            !patch.latestEventId.trim()
-        )
+        typeof patch.latestEventId !== "string"
+        ||
+        !patch.latestEventId.trim()
     ) {
         // we don't allow patching with empty/initial value
         // which would cause a need to completely reset the account in the database

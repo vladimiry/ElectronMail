@@ -228,7 +228,10 @@ async function buildDbPatch(
             for (const update of (event[updatesArrayPropName] ?? [])) {
                 updatesMappedByEntityId.set(
                     update.ID,
-                    (updatesMappedByEntityId.get(update.ID) ?? []).concat(update),
+                    [
+                        ...(updatesMappedByEntityId.get(update.ID) ?? []),
+                        update,
+                    ],
                 );
             }
         }

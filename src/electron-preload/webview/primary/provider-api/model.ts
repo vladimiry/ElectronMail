@@ -57,11 +57,11 @@ export type ProviderInternals = ExtendByInitializedBooleanProp<{
     [K in Extract<ProviderInternalsImmediateKeys, "./src/app/containers/PageContainer.tsx">]: DefineObservableValue<{
         readonly privateScope: null | {
             // https://github.com/ProtonMail/react-components/blob/276aeddfba47dd473e96a54dbd2b12d6214a6359/hooks/useGetEncryptionPreferences.ts
-            readonly getEncryptionPreferences: (senderAddress: RestModel.Message["Sender"]["Address"]) => EncryptionPreferences
+            readonly getEncryptionPreferences: (senderAddress: RestModel.Message["Sender"]["Address"]) => Promise<EncryptionPreferences>
             // https://github.com/ProtonMail/proton-mail/blob/7f0116a096ca6a00369f18b0c62fa79a48e4e62e/src/app/containers/AttachmentProvider.tsx
             readonly attachmentCache: Cache
             // https://github.com/ProtonMail/proton-mail/blob/7f0116a096ca6a00369f18b0c62fa79a48e4e62e/src/app/hooks/message/useMessageKeys.ts
-            readonly getMessageKeys: (message: MessageExtendedWithData) => MessageKeys
+            readonly getMessageKeys: (message: MessageExtendedWithData) => Promise<MessageKeys>
             // https://github.com/ProtonMail/proton-mail/blob/2ab916e847bfe8064f5ff321c50f1028adf547e1/src/app/helpers/attachment/attachmentLoader.ts
             readonly getDecryptedAttachment: (
                 attachment: RestModel.Attachment,
@@ -76,10 +76,9 @@ export type ProviderInternals = ExtendByInitializedBooleanProp<{
     }, (arg: unknown) => import("react").ReactNode>
 } & WrapToValueProp<{
     [K in Extract<ProviderInternalsImmediateKeys, "./src/app/helpers/message/messageDecrypt.ts">]: {
-        // https://github.com/ProtonMail/proton-mail/blob/2ab916e847bfe8064f5ff321c50f1028adf547e1/src/app/helpers/message/messageDecrypt.ts
+        // https://github.com/ProtonMail/proton-mail/blob/0418b3f3ce98e6fc2c787f9524e9a2cb4a78800c/src/app/helpers/message/messageDecrypt.ts#L99
         readonly decryptMessage: (
             message: RestModel.Message,
-            publicKeys: EncryptionPreferences["pinnedKeys"],
             privateKeys: MessageKeys["privateKeys"],
             attachmentsCache: Cache,
         ) => Promise<{ readonly decryptedBody: string }>

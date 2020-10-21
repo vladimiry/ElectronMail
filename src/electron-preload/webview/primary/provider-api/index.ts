@@ -126,18 +126,13 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                 },
                 async decryptMessageBody(message) {
                     const privateApi = await resolvePrivateApi();
-                    const [messageKeys, encryptionPreferences] = await Promise.all([
-                        privateApi.getMessageKeys({data: message}),
-                        privateApi.getEncryptionPreferences(message.Sender.Address),
-                    ]);
-                    // eslint-disable-next-line max-len
-                    // https://github.com/ProtonMail/proton-mail/blob/2ab916e847bfe8064f5ff321c50f1028adf547e1/src/app/helpers/message/messageDecrypt.ts#L96
+                    const messageKeys = await privateApi.getMessageKeys({data: message});
                     const decryptedMessage = await internals["./src/app/helpers/message/messageDecrypt.ts"].value.decryptMessage(
                         message,
-                        encryptionPreferences.pinnedKeys,
                         messageKeys.privateKeys,
                         privateApi.attachmentCache,
                     );
+
                     return decryptedMessage.decryptedBody;
                 },
             },

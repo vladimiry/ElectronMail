@@ -11,8 +11,8 @@
         >
             Make read
             <ng-container [ngSwitch]="makeAllReadInProgress$ | async">
-                <i *ngSwitchCase="true" class="fa fa-spinner fa-pulse fa-fw ml-1"></i>
-                <span *ngSwitchDefault [innerText]="'(' + count + ')'" [ngClass]="{'d-none': !count}" class="ml-1"></span>
+                <i *ngSwitchCase="true" class="fa fa-spinner fa-pulse fa-fw"></i>
+                <span *ngSwitchDefault [innerText]="'(' + count + ')'" [ngClass]="{'d-none': !count}"></span>
             </ng-container>
         </button>
         <ng-content select="[controls]"></ng-content>
@@ -35,7 +35,7 @@
                 dropdownToggle
                 type="button"
             >
-                <i class="fa fa-times mr-1"></i>
+                <i class="fa fa-times"></i>
                 <ng-container [ngSwitch]="deletingMessagesInProgress$ | async">
                     <i *ngSwitchCase="true" class="fa fa-spinner fa-pulse fa-fw ml-1"></i>
                     <span *ngSwitchDefault [innerText]="'(' + count + ')'" [ngClass]="{'d-none': !count}" class="ml-1"></span>

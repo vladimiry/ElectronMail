@@ -13,7 +13,6 @@ import {
     PACKAGE_NAME,
     PRODUCT_NAME,
     PROTON_API_ENTRY_URLS,
-    RUNTIME_ENV_E2E,
     RUNTIME_ENV_USER_DATA_DIR,
 } from "src/shared/constants";
 import {accountCssSelector, saveScreenshot, waitForClickable, waitForEnabled} from "src/e2e/lib";
@@ -47,7 +46,7 @@ export const {name: PROJECT_NAME, version: PROJECT_VERSION} // eslint-disable-ne
 
 const rootDirPath = path.resolve(__dirname, process.cwd());
 const appDirPath = path.join(rootDirPath, "./app");
-const mainScriptFilePath = path.join(appDirPath, "./electron-main.js");
+const mainScriptFilePath = path.join(appDirPath, "./electron-main-e2e.js");
 
 const CONF = {
     timeouts: {
@@ -460,7 +459,6 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
         path: electron as any, // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
         requireName: "electronRequire",
         env: {
-            [RUNTIME_ENV_E2E]: String(true),
             [RUNTIME_ENV_USER_DATA_DIR]: userDataDirPath,
         },
         args: [mainScriptFilePath],

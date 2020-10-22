@@ -117,7 +117,7 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
         webPreferences: {
             ...DEFAULT_WEB_PREFERENCES,
             webviewTag: true,
-            preload: ctx.runtimeEnvironment === "e2e"
+            preload: BUILD_ENVIRONMENT === "e2e"
                 ? ctx.locations.preload.browserWindowE2E
                 : ctx.locations.preload.browserWindow,
         },

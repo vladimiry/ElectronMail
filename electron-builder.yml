@@ -12,6 +12,7 @@ files:
   # TODO exclude not needed stuff in 'files:' section to reduce app packages size, can save megabytes, so a significant improvement
   - './app/**/*'
   - './package.json'
+  - '!app/electron-main-e2e.js'
   - '!app/electron-preload/browser-window-e2e.js'
   - '!node_modules/rxjs/{_esm5,_esm2015,src,bundles}'
   - '!node_modules/pureimage/{firstimages,tests}'

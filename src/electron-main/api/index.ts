@@ -102,7 +102,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
                 snapPasswordManagerServiceHint: ctx.snapPasswordManagerServiceHint,
                 hasSavedPassword,
                 checkUpdateAndNotify: Boolean(
-                    ctx.runtimeEnvironment === "production"
+                    BUILD_ENVIRONMENT !== "e2e"
                     &&
                     (await endpoints.readConfig()).checkUpdateAndNotify,
                 ),

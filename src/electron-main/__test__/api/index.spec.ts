@@ -628,6 +628,7 @@ test.beforeEach(async (t) => {
                     app: {
                         getPath: sinon.stub().returns(appDir),
                         setPath: sinon.spy(),
+                        setAppLogsPath: sinon.spy(),
                         getName: (): string => PACKAGE_NAME,
                         getVersion: (): string => PACKAGE_VERSION,
                     },

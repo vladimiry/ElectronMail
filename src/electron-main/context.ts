@@ -10,18 +10,18 @@ import {Fs as StoreFs, Model as StoreModel, Store} from "fs-json-store";
 import {app} from "electron";
 import {distinctUntilChanged, take} from "rxjs/operators";
 
+import {
+    BINARY_NAME,
+    LOCAL_WEBCLIENT_PROTOCOL_PREFIX,
+    RUNTIME_ENV_USER_DATA_DIR,
+    WEB_CHUNK_NAMES,
+    WEB_PROTOCOL_SCHEME
+} from "src/shared/constants";
 import {Config, Settings} from "src/shared/model/options";
 import {Context, ContextInitOptions, ContextInitOptionsPaths, ProperLockfileError} from "./model";
 import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {INITIAL_STORES, configEncryptionPresetValidator, settingsAccountLoginUniquenessValidator} from "./constants";
-import {
-    LOCAL_WEBCLIENT_PROTOCOL_PREFIX,
-    RUNTIME_ENV_E2E,
-    RUNTIME_ENV_USER_DATA_DIR,
-    WEB_CHUNK_NAMES,
-    WEB_PROTOCOL_SCHEME
-} from "src/shared/constants";
 import {SessionStorage} from "src/electron-main/session-storage";
 import {formatFileUrl} from "./util";
 
@@ -100,10 +100,16 @@ function initLocations(
     logger.transports.file.level = INITIAL_STORES.config().logLevel;
     logger.transports.console.level = false;
 
-    // TODO electron fix: the "Dictionaries" dir still stays as default place
-    //      see https://github.com/electron/electron/issues/26039
-    if (path.resolve(userDataDir) !== path.resolve(app.getPath("userData"))) {
-        app.setPath("userData", userDataDir);
+    if (BUILD_ENVIRONMENT !== "e2e") { // eslint-disable-line sonarjs/no-collapsible-if
+        // TODO electron fix: the "Dictionaries" dir still stays as default place
+        //      see https://github.com/electron/electron/issues/26039
+        if (path.resolve(userDataDir) !== path.resolve(app.getPath("userData"))) {
+            // TODO figure why "app.setPath(...)" call breaks normal e2e/spectron test start
+            app.setPath("userData", userDataDir);
+            app.setAppLogsPath(
+                path.join(userDataDir, BINARY_NAME, "logs"),
+            );
+        }
     }
 
     const appRelativePath = (...value: string[]): string => path.join(appDir, ...value);
@@ -264,9 +270,6 @@ export function initContext(
     const ctx: Context = {
         storeFs,
         locations,
-        runtimeEnvironment: process.env[RUNTIME_ENV_E2E]
-            ? "e2e"
-            : "production",
         deferredEndpoints: new Deferred(),
         ...((): NoExtraProps<Pick<Context, "db" | "sessionDb">> => {
             const encryption = {

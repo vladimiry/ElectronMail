@@ -131,6 +131,7 @@ export function buildBaseWebConfig(
     const environmentBasedPatch: Record<BuildEnvironment, Configuration> = {
         production: {},
         development: {},
+        e2e: {},
         test: {
             module: {
                 rules: [

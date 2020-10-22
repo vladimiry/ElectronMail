@@ -8,8 +8,6 @@ import {IpcMainApiEndpoints} from "src/shared/api/main";
 import {SessionStorage} from "src/electron-main/session-storage";
 import {Controller as SpellCheckController} from "src/electron-main/spell-check/model";
 
-export type RuntimeEnvironment = "e2e" | "production";
-
 export interface ContextInitOptionsPaths {
     appDir: string;
     userDataDir: string;
@@ -25,7 +23,6 @@ export interface Context {
     readonly db: Database;
     readonly sessionDb: Database;
     readonly storeFs: StoreModel.StoreFs;
-    readonly runtimeEnvironment: RuntimeEnvironment;
     readonly locations: ElectronContextLocations;
     readonly deferredEndpoints: Deferred<IpcMainApiEndpoints>;
     readonly initialStores: {

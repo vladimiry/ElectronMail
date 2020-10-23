@@ -109,7 +109,7 @@ function buildFieldDescription(): DeepReadonly<Record<keyof typeof INDEXABLE_MAI
         body: {
             accessor: ({body, subject}) => {
                 try {
-                    return htmlToText(body);
+                    return htmlToText(body, {wordwrap: false});
                 } catch (error) {
                     if (error instanceof RangeError) {
                         const msg = `falling back to iframe-based "html-to-text" conversion`;

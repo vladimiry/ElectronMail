@@ -291,7 +291,7 @@ async function buildDbPatch(
                     isProtonApiError(error)
                     &&
                     ( // message has already been removed error condition:
-                        error.status === 42
+                        error.status === 422
                         &&
                         error.data?.Code === 15052
                     )

@@ -532,6 +532,17 @@ export async function upgradeDatabase(db: Database, accounts: Settings["accounts
         }
     }
 
+    if (Number(db.getVersion()) < 8) {
+        for (const {account} of db) {
+            for (const mail of Object.values(account.mails)) {
+                type RawMail = Pick<import("src/electron-preload/webview/lib/rest-model/response-entity/mail").Message, "MIMEType">;
+                const rawRestResponseMail: Readonly<RawMail> = JSON.parse(mail.raw);
+                (mail as Mutable<Pick<typeof mail, "mimeType">>).mimeType = rawRestResponseMail.MIMEType;
+                needToSave = true;
+            }
+        }
+    }
+
     // removing non existent accounts
     await (async (): Promise<void> => {
         const removePks: DbAccountPk[] = [];

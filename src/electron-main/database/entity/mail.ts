@@ -112,4 +112,7 @@ export class Mail extends Entity implements Model.Mail {
     @ValidateNested()
     @Type(() => MailFailedDownload)
     failedDownload?: MailFailedDownload;
+
+    @IsIn(Model.MIME_TYPES._.values)
+    mimeType!: Model.Mail["mimeType"];
 }

@@ -56,6 +56,7 @@ export type Mail = NoExtraProps<Entity & {
     readonly confidential: boolean;
     readonly replyType: Unpacked<typeof Constants.REPLY_TYPE._.values>;
     readonly failedDownload?: MailFailedDownload;
+    readonly mimeType: Unpacked<typeof Constants.MIME_TYPES._.values>;
 }>;
 
 export type MailAddress = NoExtraProps<Entity & {
@@ -162,7 +163,8 @@ export type IndexableMail = NoExtraProps<Pick<Mail, keyof Pick<Mail,
     | "toRecipients"
     | "ccRecipients"
     | "bccRecipients"
-    | "attachments">>>;
+    | "attachments"
+    | "mimeType">>>;
 
 export type IndexableMailId = NoExtraProps<IndexableMail["pk"]>;
 

@@ -1,3 +1,4 @@
+import * as Constants from "src/shared/model/database/constants";
 import {CONTACT_CARD, ENCRYPTED_STATUS, LOCATION, MAIL_TYPE} from "src/electron-preload/webview/lib/rest-model/constats";
 import {Entity} from "src/electron-preload/webview/lib/rest-model/response-entity/base";
 import {Id} from "src/electron-preload/webview/lib/rest-model/common";
@@ -50,7 +51,7 @@ export interface Message<TypeRecord = typeof MAIL_TYPE._.nameValueMap,
     IsRepliedAll: NumericBoolean;
     LabelIDs: string[];
     Location: LocationRecord[keyof LocationRecord];
-    MIMEType: string;
+    MIMEType: Unpacked<typeof Constants.MIME_TYPES._.values>;
     NumAttachments: number;
     Order: number;
     ParsedHeaders: Record<string, string>;

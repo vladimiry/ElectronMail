@@ -3,7 +3,7 @@ import {addDocumentToIndex, createIndex, removeDocumentFromIndex, vacuumIndex} f
 import {expandTerm, query} from "ndx-query";
 import {fromString as htmlToText} from "html-to-text";
 
-import {INDEXABLE_MAIL_FIELDS_STUB_CONTAINER, IndexableMail, IndexableMailId, MailAddress, MailsIndex} from "src/shared/model/database";
+import {INDEXABLE_MAIL_FIELDS, IndexableMail, IndexableMailId, MIME_TYPES, MailAddress, MailsIndex} from "src/shared/model/database";
 import {buildLoggerBundle, resolveIpcMainApi} from "src/electron-preload/lib/util";
 
 const logger = buildLoggerBundle("[preload: database-indexer: service]");
@@ -89,7 +89,7 @@ function htmlToTextViaIframe(html: string): string {
     return result;
 }
 
-function buildFieldDescription(): DeepReadonly<Record<keyof typeof INDEXABLE_MAIL_FIELDS_STUB_CONTAINER, {
+function buildFieldDescription(): DeepReadonly<Record<typeof INDEXABLE_MAIL_FIELDS[number], {
     accessor: (doc: IndexableMail) => string;
     boost: number;
 }>> {
@@ -107,7 +107,11 @@ function buildFieldDescription(): DeepReadonly<Record<keyof typeof INDEXABLE_MAI
             boost: 7,
         },
         body: {
-            accessor: ({body, subject}) => {
+            accessor: ({body, subject, mimeType}) => {
+                if (mimeType === MIME_TYPES.PLAINTEXT) {
+                    return body;
+                }
+
                 try {
                     return htmlToText(body, {wordwrap: false});
                 } catch (error) {
@@ -152,6 +156,10 @@ function buildFieldDescription(): DeepReadonly<Record<keyof typeof INDEXABLE_MAI
                 .map(({name}) => name)
                 .join(joinListBy),
             boost: 1,
+        },
+        mimeType: {
+            accessor: ({mimeType}) => mimeType,
+            boost: 0,
         },
     };
 }

@@ -72,19 +72,23 @@ export const CONTACT_SOCIAL_TYPE = buildEnumBundle({
     CUSTOM: "5",
 } as const);
 
-export const INDEXABLE_MAIL_FIELDS_STUB_CONTAINER: Readonly<Record<keyof StrictOmit<IndexableMail, "pk">, null>> = {
-    subject: null,
-    body: null,
-    sender: null,
-    toRecipients: null,
-    ccRecipients: null,
-    bccRecipients: null,
-    attachments: null,
-};
+export const MIME_TYPES = buildEnumBundle({
+    MIME: "multipart/mixed",
+    PLAINTEXT: "text/plain",
+    DEFAULT: "text/html",
+    AUTOMATIC: "",
+} as const);
 
-// eslint-disable-next-line  @typescript-eslint/no-unsafe-assignment
-export const INDEXABLE_MAIL_FIELDS: Readonly<Array<keyof typeof INDEXABLE_MAIL_FIELDS_STUB_CONTAINER>>
-    = Object.keys(INDEXABLE_MAIL_FIELDS_STUB_CONTAINER) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+export const INDEXABLE_MAIL_FIELDS: ReadonlyArray<keyof StrictOmit<IndexableMail, "pk">> = [
+    "subject",
+    "body",
+    "sender",
+    "toRecipients",
+    "ccRecipients",
+    "bccRecipients",
+    "attachments",
+    "mimeType"
+] as const;
 
 export const DB_DATA_CONTAINER_FIELDS_STUB_CONTAINER: Readonly<Record<keyof FsDbDataContainer, null>> = {
     conversationEntries: null,

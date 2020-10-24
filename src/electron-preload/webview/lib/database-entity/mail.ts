@@ -92,5 +92,6 @@ export async function buildMail(input: RestModel.Message, api: ProviderApi): Pro
                 : input.IsForwarded
                     ? DatabaseModel.REPLY_TYPE.FORWARD
                     : DatabaseModel.REPLY_TYPE.NONE,
+        mimeType: input.MIMEType,
     };
 }

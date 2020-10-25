@@ -66,40 +66,36 @@ export function initWebRequestListenersByAccount(
         throw new Error(`Failed to resolve the "web-client" bundle location by "${accountEntryApiUrl}" API entry point value`);
     }
 
-    const origins = {
-        webClientEntryUrl: parseUrlOriginWithNullishCheck(webClient.entryUrl),
-        devTools: parseUrlOriginWithNullishCheck("devtools://devtools"),
-    } as const;
     const allowedOrigins: readonly string[] = [
-        accountEntryApiUrl,
-        origins.webClientEntryUrl,
+        webClient.entryApiUrl,
+        webClient.entryUrl,
         ...(
             BUILD_ENVIRONMENT === "development"
-                ? [origins.devTools]
+                ? ["devtools://devtools"]
                 : []
         ),
-    ];
+    ].map(parseUrlOriginWithNullishCheck);
 
-    // according to electron docs "only the last attached listener will be used", so no need to unsubscribe previously registered handlers
+    // according to electron docs "only the last attached listener will be used" so no need to unsubscribe previously registered handlers
     session.webRequest.onBeforeRequest(
         {urls: []},
         (details, callback) => {
             const {url} = details;
-            const urlOrigin = parseUrlOriginWithNullishCheck(url);
 
             if (
-                enableExternalContentProxy // feature enabled
+                // feature enabled
+                enableExternalContentProxy
                 &&
-                !requestProxyCache.get(details)?.additionAllowedOrigin // has not yet been proxified (preventing infinity redirect loop)
+                // has not yet been proxified (preventing infinity redirect loop)
+                !requestProxyCache.get(details)?.additionAllowedOrigin
                 &&
-                urlOrigin !== origins.webClientEntryUrl // not proton's static resource
+                // only image resources
+                String(details.resourceType).toLowerCase() === "image"
                 &&
-                String(details.resourceType).toLowerCase() === "image" // only image resources
-                &&
-                (
-                    BUILD_ENVIRONMENT !== "development"
-                    ||
-                    urlOrigin !== origins.devTools // not devtools-specific resource
+                // resources served from "allowed origins" should not be proxified as those
+                // are not external (proton's static resource & API, devtools, etc)
+                !allowedOrigins.includes(
+                    parseUrlOriginWithNullishCheck(url),
                 )
             ) {
                 if (!externalContentProxyUrlPattern) {
@@ -122,7 +118,6 @@ export function initWebRequestListenersByAccount(
                 );
 
                 callback({redirectURL});
-
                 return;
             }
 
@@ -141,8 +136,6 @@ export function initWebRequestListenersByAccount(
 
             if (typeof bannedUrlAccessMsg === "string") {
                 setTimeout(() => { // can be asynchronous (speeds up callback resolving)
-                    requestProxyCache.remove(details);
-
                     const message
                         = `Access to the "${details.resourceType}" resource with "${url}" URL has been forbidden. ${bannedUrlAccessMsg}`;
                     logger.error(message);
@@ -151,7 +144,10 @@ export function initWebRequestListenersByAccount(
                     );
                 });
 
-                return callback({cancel: true});
+                requestProxyCache.remove(details);
+
+                callback({cancel: true});
+                return;
             }
 
             callback({});

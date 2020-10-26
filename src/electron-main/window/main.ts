@@ -17,12 +17,14 @@ async function resolveBoundsToRestore(
     currentBounds: Readonly<Rectangle>,
 ): Promise<Rectangle> {
     const {window: {bounds: savedBounds}} = await ctx.config$.pipe(first()).toPromise();
-    const x = typeof savedBounds.x !== "undefined"
-        ? savedBounds.x
-        : currentBounds.x;
-    const y = typeof savedBounds.y !== "undefined"
-        ? savedBounds.y
-        : currentBounds.y;
+    const x = Math.max(
+        savedBounds.x ?? currentBounds.x,
+        0,
+    );
+    const y = Math.max(
+        savedBounds.y ?? currentBounds.y,
+        0,
+    );
     const allDisplaysSummarySize: Readonly<{ width: number; height: number }> = screen.getAllDisplays().reduce(
         (accumulator: { width: number; height: number }, {size}) => {
             accumulator.width += size.width;
@@ -31,23 +33,30 @@ async function resolveBoundsToRestore(
         },
         {width: 0, height: 0},
     );
-    const width = Math.min(savedBounds.width, allDisplaysSummarySize.width);
-    const height = Math.min(savedBounds.height, allDisplaysSummarySize.height);
-
-    logger.debug(JSON.stringify({currentBounds, savedBounds, allDisplaysSummarySize}));
-
-    return {
+    const width = Math.max(
+        Math.min(savedBounds.width, allDisplaysSummarySize.width),
+        100,
+    );
+    const height = Math.max(
+        Math.min(savedBounds.height, allDisplaysSummarySize.height),
+        100,
+    );
+    const result = {
         width,
         height,
         x: Math.min(
-            Math.max(x, 0),
-            allDisplaysSummarySize.width - width,
+            x,
+            Math.max(allDisplaysSummarySize.width - width, 0),
         ),
         y: Math.min(
-            Math.max(y, 0),
-            allDisplaysSummarySize.height - height,
+            y,
+            Math.max(allDisplaysSummarySize.height - height, 0),
         ),
-    };
+    } as const;
+
+    logger.verbose("resolveBoundsToRestore()", JSON.stringify({currentBounds, savedBounds, allDisplaysSummarySize, result}));
+
+    return result;
 }
 
 async function keepBrowserWindowState(ctx: Context, browserWindow: Electron.BrowserWindow): Promise<void> {
@@ -134,7 +143,7 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
         .on("ready-to-show", async () => {
             const boundsToRestore = await resolveBoundsToRestore(ctx, browserWindow.getBounds());
 
-            logger.debug(JSON.stringify({boundsToRestore}));
+            logger.verbose(JSON.stringify({boundsToRestore}));
 
             browserWindow.setBounds(boundsToRestore);
 

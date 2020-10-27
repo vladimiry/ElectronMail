@@ -213,35 +213,36 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
             },
             attachmentLoader: {
                 getDecryptedAttachment: (() => {
-                    // WARN: notice the ordering correlation
-                    const allowedExtendedMessageKeys = ["senderPinnedKeys", "senderVerified", "privateKeys"] as const;
                     const constructExtendedMessage = (
                         encryptionPreferences: EncryptionPreferences,
                         messageKeys: MessageKeys,
                     ): Parameters<Unpacked<ReturnType<typeof resolvePrivateApi>>["getDecryptedAttachment"]>[1] => {
-                        const extendedMessage = { // WARN: notice the ordering correlation
-                            [allowedExtendedMessageKeys[0]]: encryptionPreferences.pinnedKeys,
-                            [allowedExtendedMessageKeys[1]]: encryptionPreferences.isContactSignatureVerified,
-                            [allowedExtendedMessageKeys[2]]: messageKeys.privateKeys,
-                        } as const;
+                        const extendedMessage: ReturnType<typeof constructExtendedMessage> = {
+                            senderPinnedKeys: encryptionPreferences.pinnedKeys,
+                            senderVerified: Boolean(encryptionPreferences.isContactSignatureVerified),
+                            privateKeys: messageKeys.privateKeys,
+                        };
                         // this proxy helps early detecting unexpected/not-yet-reviewed protonmail's "getDecryptedAttachment" behaviour
-                        // if/likely-when it gets changed one day by them/protonmail
-                        return new Proxy(extendedMessage, {
-                            get(target: typeof extendedMessage, prop: keyof typeof target) {
-                                if (!allowedExtendedMessageKeys.includes(prop)) {
-                                    throw new Error([
-                                        `Unexpected email message prop accessing detected`,
-                                        `during the attachment download (${JSON.stringify(prop)})`,
-                                    ].join(" "));
+                        // if/likely-when the behaviour gets changed by protonmail
+                        return new Proxy(
+                            extendedMessage,
+                            {
+                                get(target, prop) {
+                                    if (!(prop in extendedMessage)) {
+                                        throw new Error([
+                                            "Unexpected email message prop accessing detected",
+                                            `during the attachment download (${JSON.stringify({prop})})`,
+                                        ].join(" "));
+                                    }
+                                    return target[prop as keyof typeof target];
+                                },
+                                set(...[/* target */, prop]) {
+                                    throw new Error(
+                                        `Email message modifying during the attachment download detected (${JSON.stringify({prop})})`,
+                                    );
                                 }
-                                return target[prop];
                             },
-                            set(...[/* target */, prop]) {
-                                throw new Error(
-                                    `Email message modifying during the attachment download detected (${JSON.stringify(prop)})`,
-                                );
-                            }
-                        });
+                        );
                     };
                     const result: ProviderApi["attachmentLoader"]["getDecryptedAttachment"] = async (attachment, message) => {
                         const privateApi = await resolvePrivateApi();

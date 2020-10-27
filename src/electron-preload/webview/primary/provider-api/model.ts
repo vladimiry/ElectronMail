@@ -65,11 +65,11 @@ export type ProviderInternals = ExtendByInitializedBooleanProp<{
             // https://github.com/ProtonMail/proton-mail/blob/2ab916e847bfe8064f5ff321c50f1028adf547e1/src/app/helpers/attachment/attachmentLoader.ts
             readonly getDecryptedAttachment: (
                 attachment: RestModel.Attachment,
-                message: NoExtraProps<{
-                    senderPinnedKeys: EncryptionPreferences["pinnedKeys"]
-                    senderVerified: EncryptionPreferences["isContactSignatureVerified"]
-                    privateKeys: MessageKeys["privateKeys"]
-                }> /* & MessageExtendedWithData */, // full extended message is not added since this method accesses only the listed props
+                message: NoExtraProps<Pick<Required<MessageExtended>,
+                    // only actually accessed props get listed here
+                    | "senderPinnedKeys"
+                    | "senderVerified"
+                    | "privateKeys">>,
                 api: HttpApi
             ) => Promise<{ data: Uint8Array }>
         }
@@ -263,7 +263,10 @@ export interface MessageKeys {
 }
 
 export type MessageExtended = NoExtraProps<{
-    readonly data?: DeepReadonly<RestModel.Message>;
+    readonly data?: DeepReadonly<RestModel.Message>
+    readonly senderPinnedKeys?: EncryptionPreferences["pinnedKeys"]
+    readonly senderVerified?: EncryptionPreferences["isContactSignatureVerified"]
+    readonly privateKeys?: MessageKeys["privateKeys"]
 }>;
 
 export type MessageExtendedWithData = NoExtraProps<Required<Pick<MessageExtended, "data">> & MessageExtended>;

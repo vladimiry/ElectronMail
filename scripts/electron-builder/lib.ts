@@ -62,7 +62,7 @@ async function prepareDictionaries(): Promise<Map<Locale, Dictionary>> {
 
         if (!fsExtra.pathExistsSync(repoCwd)) {
             await execShell(["git", ["clone", "https://github.com/wooorm/dictionaries.git", repoCwd]]);
-            await execShell(["git", ["checkout", "44f122685cbcb52008a34abadc417149e31134f2"], {cwd: repoCwd}]);
+            await execShell(["git", ["checkout", "5fbbffcfa55acdcdeed53787edcbf4e5b69a86fd"], {cwd: repoCwd}]);
             await execShell(["git", ["show", "--summary"], {cwd: repoCwd}]);
         }
 

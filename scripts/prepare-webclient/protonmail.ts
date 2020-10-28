@@ -236,11 +236,6 @@ function resolveWebpackConfigPatchingCode(
                             "--",
                             "--no-lint",
                             "--api", configApiParam,
-                            ...(
-                                repoType === "proton-mail-settings"
-                                    ? ["--featureFlags", "sub-folder" /* + " mail-import" */]
-                                    : []
-                            ),
                             // eslint-disable-next-line
                             // see possible "buildMode / appMode" values here: https://github.com/ProtonMail/proton-bundler/blob/e366ff769e770c49f5254ebc8ec0ee28cf389e40/lib/tasks/bundle.js#L64-L92
                             // related issue: https://github.com/ProtonMail/WebClient/issues/205

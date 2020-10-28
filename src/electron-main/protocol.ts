@@ -34,6 +34,8 @@ export function registerStandardSchemes(ctx: Context): void {
                 secure: true,
                 standard: true,
                 supportFetchAPI: true,
+                // proton v4 (drive): enable service worker thing on https://github.com/electron/electron/issues/20248 resolving
+                // allowServiceWorkers: true,
             },
         })),
     );

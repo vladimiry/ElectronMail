@@ -11,43 +11,6 @@ index 6eef523..b016a0d 100755
      echo "[error] no SourceMaps found inside the directory: $OUTPUT_DIR";
    fi;
 
-diff --git a/src/app/Setup.tsx b/src/app/Setup.tsx
-index 9d333b8..2921f49 100644
---- a/src/app/Setup.tsx
-+++ b/src/app/Setup.tsx
-@@ -4,14 +4,29 @@ import locales from 'proton-shared/lib/i18n/locales';
- import { PublicAuthenticationStore, PrivateAuthenticationStore, useAuthentication } from 'react-components';
-
- import PrivateApp from './content/PrivateApp';
--import PublicApp from './content/PublicApp';
-+
-+const RedirectToOrigin = () => {
-+    const timeoutMs = 5000;
-+    const {origin: destination} = window.location;
-+    const message = `Redirecting to "${destination}" in ${timeoutMs}ms`;
-+    let timeoutId: undefined | ReturnType<typeof setTimeout>;
-+    React.useEffect(() => {
-+        timeoutId = setTimeout(
-+            () => window.location.replace(destination),
-+            timeoutMs,
-+        );
-+        return () => clearTimeout(timeoutId);
-+    });
-+    return React.createElement(React.Fragment, null, message);
-+}
-
- const Setup = () => {
--    const { UID, login, logout } = useAuthentication() as PublicAuthenticationStore & PrivateAuthenticationStore;
-+    const { UID, logout } = useAuthentication() as PublicAuthenticationStore & PrivateAuthenticationStore;
-     if (UID) {
-         return <PrivateApp locales={locales} onLogout={logout} />;
-     }
--    return <PublicApp locales={locales} onLogin={login} />;
-+
-+    return <RedirectToOrigin/>;
- };
-
- export default Setup;
 diff --git a/node_modules/proton-shared/lib/apps/helper.ts b/node_modules/proton-shared/lib/apps/helper.ts
 index b6913e1..31a52f7 100644
 --- a/node_modules/proton-shared/lib/apps/helper.ts
@@ -62,10 +25,10 @@ index b6913e1..31a52f7 100644
  export const getClientID = (appName: APP_NAMES) => {
      return APPS_CONFIGURATION[appName].clientID;
 diff --git a/node_modules/proton-shared/lib/constants.ts b/node_modules/proton-shared/lib/constants.ts
-index ffc1441..9ffb7bd 100644
+index a1b7919..ff7f6ec 100644
 --- a/node_modules/proton-shared/lib/constants.ts
 +++ b/node_modules/proton-shared/lib/constants.ts
-@@ -33,22 +33,22 @@ export const APPS = {
+@@ -35,22 +35,22 @@ export const APPS = {
  } as const;
  export const APPS_CONFIGURATION = {
      [APPS.PROTONACCOUNT]: {
@@ -92,7 +55,7 @@ index ffc1441..9ffb7bd 100644
          name: 'ProtonMail',
          // Needs to be the same ClientID as mail since they are deployed as an embedded app
          clientID: 'WebMail',
-@@ -56,21 +56,21 @@ export const APPS_CONFIGURATION = {
+@@ -58,21 +58,21 @@ export const APPS_CONFIGURATION = {
      },
      [APPS.PROTONCONTACTS]: {
          publicPath: '/contacts',

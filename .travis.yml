@@ -54,6 +54,15 @@ embedding-prepare-webclients-account: &embedding-prepare-webclients-account-anch
     - ELECTRON_MAIL_CI_PROTON_CLIENTS_ONLY="proton-account"
   script: ./scripts/ci/prepare-webclients.sh
 
+embedding-prepare-webclients-drive: &embedding-prepare-webclients-drive-anchor
+  cache:
+    yarn: false
+    npm: false
+    directories: [ './output/git/backup/proton-drive' ]
+  env:
+    - ELECTRON_MAIL_CI_PROTON_CLIENTS_ONLY="proton-drive"
+  script: ./scripts/ci/prepare-webclients.sh
+
 embedding-linux-common: &embedding-linux-common-anchor
   os: linux
   dist: bionic
@@ -179,6 +188,21 @@ jobs:
         create:
           name: 'macos-webclients-artifact-account'
           paths: [ './output/git/backup/proton-account' ]
+    # [proton-drive]
+    - stage: 'build proton clients'
+      <<: *embedding-linux-common-anchor
+      <<: *embedding-prepare-webclients-drive-anchor
+      workspaces:
+        create:
+          name: 'linux-webclients-artifact-drive'
+          paths: [ './output/git/backup/proton-drive' ]
+    - stage: 'build proton clients'
+      <<: *embedding-macos-common-anchor
+      <<: *embedding-prepare-webclients-drive-anchor
+      workspaces:
+        create:
+          name: 'macos-webclients-artifact-drive'
+          paths: [ './output/git/backup/proton-drive' ]
     # [build]
     - stage: 'build app'
       <<: *embedding-linux-common-anchor
@@ -190,6 +214,7 @@ jobs:
           - 'linux-webclients-artifact-calendar'
           - 'linux-webclients-artifact-mail'
           - 'linux-webclients-artifact-account'
+          - 'linux-webclients-artifact-drive'
       sudo: required
       services:
         - docker
@@ -215,6 +240,7 @@ jobs:
           - 'macos-webclients-artifact-calendar'
           - 'macos-webclients-artifact-mail'
           - 'macos-webclients-artifact-account'
+          - 'macos-webclients-artifact-drive'
       env: [ { ARTIFACT_NAME_POSTFIX: "-high-sierra" } ]
       script: ./scripts/ci/travis/build-osx.sh
     - stage: 'build app'
@@ -228,5 +254,6 @@ jobs:
           - 'macos-webclients-artifact-calendar'
           - 'macos-webclients-artifact-mail'
           - 'macos-webclients-artifact-account'
+          - 'macos-webclients-artifact-drive'
       env: [ { ARTIFACT_NAME_POSTFIX: "-mojave" } ]
       script: ./scripts/ci/travis/build-osx.sh

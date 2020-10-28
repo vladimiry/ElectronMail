@@ -201,7 +201,7 @@ function resolveWebpackConfigPatchingCode(
                     const {configApiParam} = await configure({cwd, repoType}, folderAsDomainEntry);
 
                     {
-                        const webpackPatch = repoType === "proton-account"
+                        const webpackPatch = repoType !== "proton-mail"
                             ? {publicPath: `/${PROVIDER_REPO_MAP[repoType].baseDirName}/`}
                             : undefined;
                         const webpackIndexEntryItems = repoType === "proton-mail"

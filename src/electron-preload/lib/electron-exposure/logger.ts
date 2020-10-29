@@ -1,13 +1,7 @@
-import {FileTransport} from "electron-log"; // tslint:disable-line:no-import-zones
 import {pick} from "remeda";
-import {remote} from "electron"; // tslint:disable-line:no-import-zones
 
 import {LogLevel, Logger} from "src/shared/model/common";
-import {isProtonApiError, sanitizeProtonApiError} from "src/electron-preload/lib/util";
-import {logLevelEnabled} from "src/shared/util";
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-const logger: DeepReadonly<Logger & { transports: { file: FileTransport } }> = remote.require("electron-log");
+import {isProtonApiError, resolveIpcMainApi, sanitizeProtonApiError} from "src/electron-preload/lib/util";
 
 const isDOMException = (error: unknown | DOMException): error is DOMException => {
     return (
@@ -27,20 +21,14 @@ const isDOMException = (error: unknown | DOMException): error is DOMException =>
 
 function log(
     level: LogLevel,
-    ...params: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+    ...args: unknown[]
 ): void {
-    if (!logLevelEnabled(level, logger)) {
-        return;
-    }
-
-    try {
-        logger[level](...params);
-    } catch (error) {
+    resolveIpcMainApi({})("log")({level, args}).catch((error) => {
         // eslint-disable-next-line no-console
         console.error("Sending error to main process for logging failed (likely due to the serialization issue):", error);
         // eslint-disable-next-line no-console
-        console.error("Original error args:", level, ...params);
-    }
+        console.error("Original error args:", level, ...args);
+    });
 }
 
 const sanitizeLoggedArgument = (arg: unknown): unknown => {

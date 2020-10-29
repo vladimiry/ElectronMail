@@ -1,7 +1,6 @@
 import {WebPreferences} from "electron";
-import {equals} from "remeda";
 
-export const DEFAULT_WEB_PREFERENCES_KEYS = Object.freeze([
+export const DEFAULT_WEB_PREFERENCES_KEYS = [
     "backgroundThrottling",
     "disableBlinkFeatures",
     "nodeIntegration",
@@ -10,34 +9,19 @@ export const DEFAULT_WEB_PREFERENCES_KEYS = Object.freeze([
     "spellcheck",
     "webSecurity",
     "webviewTag",
-    // TODO disable "remote" module by disabling "enableRemoteModule" option
-    //      currently these things depend on it:
-    //      - e2e tests preload script
-    //      - sending log lines to main process
     "enableRemoteModule",
-] as const);
+] as const;
 
-type DefaultWebPreferences = Readonly<NoExtraProps<Pick<Required<WebPreferences>, typeof DEFAULT_WEB_PREFERENCES_KEYS[number]>>>;
-
-export const DEFAULT_WEB_PREFERENCES: DefaultWebPreferences = Object.freeze<DefaultWebPreferences>(
-    {
-        backgroundThrottling: false,
-        disableBlinkFeatures: "Auxclick",
-        nodeIntegration: false,
-        nodeIntegrationInWorker: false,
-        sandbox: true,
-        spellcheck: false,
-        webSecurity: true,
-        webviewTag: false,
-        enableRemoteModule: true,
-    },
-);
-
-if (
-    !equals(
-        Object.keys(DEFAULT_WEB_PREFERENCES),
-        DEFAULT_WEB_PREFERENCES_KEYS,
-    )
-) {
-    throw new Error(`Invalid "DEFAULT_WEB_PREFERENCES" constant props detected`);
-}
+export const DEFAULT_WEB_PREFERENCES: Readonly<NoExtraProps<Pick<Required<WebPreferences>, typeof DEFAULT_WEB_PREFERENCES_KEYS[number]>>>
+    = {
+    backgroundThrottling: false,
+    disableBlinkFeatures: "Auxclick",
+    nodeIntegration: false,
+    nodeIntegrationInWorker: false,
+    sandbox: true,
+    spellcheck: false,
+    webSecurity: true,
+    webviewTag: false,
+    // TODO completely disable "remote" module (still required by "spectron")
+    enableRemoteModule: BUILD_ENVIRONMENT === "e2e",
+};

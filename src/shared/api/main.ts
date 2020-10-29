@@ -258,6 +258,8 @@ export const ENDPOINTS_DEFINITION = {
     resetProtonBackendSession: ActionType.Promise<LoginFieldContainer>(),
 
     notification: ActionType.Observable<void, UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>>(),
+
+    log: ActionType.Promise<{ level: import("src/shared/model/common").LogLevel, args: unknown[] }>(),
 };
 
 export interface InitResponse {

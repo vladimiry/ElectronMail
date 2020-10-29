@@ -68,7 +68,8 @@ interface TestContext {
         | "toggleControls"
         | "toggleLocalDbMailsListViewMode"
         | "updateCheck"
-        | "updateOverlayIcon">;
+        | "updateOverlayIcon"
+        | "log">;
     mocks: Unpacked<ReturnType<typeof buildMocks>>; // eslint-disable-line @typescript-eslint/no-use-before-define
 }
 

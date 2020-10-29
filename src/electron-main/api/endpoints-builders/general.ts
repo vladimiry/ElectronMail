@@ -28,7 +28,8 @@ type Methods = keyof Pick<IpcMainApiEndpoints,
     | "toggleControls"
     | "toggleLocalDbMailsListViewMode"
     | "updateCheck"
-    | "notification">;
+    | "notification"
+    | "log">;
 
 type ContextAwareMethods = keyof Pick<IpcMainApiEndpoints,
     | "hotkey">;
@@ -374,6 +375,10 @@ export async function buildEndpoints(
                 // TODO replace "startWith" with "defaultIfEmpty" (simply some response needed to avoid timeout error)
                 startWith(IPC_MAIN_API_NOTIFICATION_ACTIONS.Bootstrap({})),
             );
+        },
+
+        async log({level, args}) {
+            electronLog[level](...args);
         },
     };
 

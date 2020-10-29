@@ -9,7 +9,7 @@ import {DATABASE_VERSION, DB_INSTANCE_PROP_NAME} from "./constants";
 import {DbAccountPk, FsDb, FsDbAccount, Mail, SYSTEM_FOLDER_IDENTIFIERS} from "src/shared/model/database";
 import {LogLevel} from "src/shared/model/common";
 import {SerializationAdapter} from "./serialization";
-import {curryFunctionMembers, logLevelEnabled} from "src/shared/util";
+import {curryFunctionMembers} from "src/shared/util";
 import {hrtimeDuration} from "src/electron-main/util";
 
 export class Database {
@@ -184,13 +184,13 @@ export class Database {
             folders: Object.keys(account.folders).length,
             contacts: Object.keys(account.contacts).length,
             unread: Object.values(account.mails).reduce(
-                    (unread, mail) => {
-                        return excluding(mail)
-                            ? unread
-                            : unread + Number(mail.unread);
-                    },
-                    0,
-                ),
+                (unread, mail) => {
+                    return excluding(mail)
+                        ? unread
+                        : unread + Number(mail.unread);
+                },
+                0,
+            ),
         };
     }
 
@@ -199,10 +199,6 @@ export class Database {
         methodDuration: ReturnType<typeof hrtimeDuration>,
         logLevel: LogLevel = "verbose",
     ): void {
-        if (!logLevelEnabled(logLevel, this.logger)) {
-            return;
-        }
-
         const dataToLog: ReturnType<typeof Database.prototype.stat> & { methodTime: number; statTime: number } = (
             (): typeof dataToLog => {
                 const methodTime = methodDuration.end(); // first of all

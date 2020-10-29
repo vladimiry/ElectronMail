@@ -1,4 +1,3 @@
-import {ElectronLog} from "electron-log"; // tslint:disable-line:no-import-zones
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import type {RateLimiterMemory} from "rate-limiter-flexible";
 import {URL} from "@cliqz/url-parser";
@@ -20,7 +19,6 @@ import {AccountConfig} from "./model/account";
 import {BaseConfig, Config} from "./model/options";
 import {DbPatch} from "./api/common";
 import {FsDbAccount, View} from "src/shared/model/database";
-import {LogLevel} from "src/shared/model/common";
 import {LoginFieldContainer} from "./model/container";
 import {StatusCodeError} from "./model/error";
 
@@ -464,37 +462,6 @@ export function removeDuplicateItems<T extends any>(array: ReadonlyArray<T>): T[
 export function normalizeLocale(value: string): string {
     return value.replace(/[^A-Za-z]/g, "_");
 }
-
-export const logLevelEnabled: (
-    level: LogLevel,
-    logger: { transports: Pick<ElectronLog["transports"], "file"> },
-) => boolean = (
-    () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
-        const weights: Readonly<Record<LogLevel | "null" | "undefined" | "false", number>> = {
-            null: -1,
-            undefined: -1,
-            false: -1,
-            error: 0,
-            warn: 1,
-            info: 2,
-            verbose: 3,
-            debug: 4,
-            silly: 5,
-        };
-        const result: typeof logLevelEnabled = (
-            level,
-            {transports: {file: {level: transportLevel}}},
-        ) => {
-            const disabled = (
-                weights[level]
-                >
-                weights[String(transportLevel) as keyof typeof weights]
-            );
-            return !disabled;
-        };
-        return result;
-    }
-)();
 
 // - Breaking changes: https://github.com/mrmlnc/fast-glob/releases/tag/3.0.0
 // - How to write patterns on Windows: https://github.com/mrmlnc/fast-glob

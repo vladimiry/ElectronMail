@@ -59,7 +59,7 @@ export const PROVIDER_REPO_MAP = {
         repoRelativeDistDir: "./dist",
         baseDirName: "",
         repo: "https://github.com/ProtonMail/proton-mail.git",
-        commit: "e039060ede1890cee21e61b128d32a214472d7e9",
+        commit: "1dbe9c2eba05892f605cd630aef45cf052d3b8b0",
         protonPack: {
             appConfig: {clientId: "WebMail"},
             webpackIndexEntryItems: [
@@ -91,21 +91,21 @@ export const PROVIDER_REPO_MAP = {
         repoRelativeDistDir: "./dist",
         baseDirName: "account",
         repo: "https://github.com/ProtonMail/proton-account.git",
-        commit: "9f1a16e7d41f1b58d8a02c8ab3faf7cd8bf9919a",
+        commit: "993dc51d43fd8efda854072bd5d63b9289176fb0",
         protonPack: {appConfig: {clientId: "WebAccount"}}
     },
     [PROVIDER_REPO_NAMES[2]]: {
         repoRelativeDistDir: "./dist",
         baseDirName: "settings",
         repo: "https://github.com/ProtonMail/proton-mail-settings.git",
-        commit: "8609984010d088fb65ece554a475499b82df99f1",
+        commit: "277e2bc3286f257a6f328e14dafa06eb48468c4a",
         protonPack: {appConfig: {clientId: "WebMailSettings"}},
     },
     [PROVIDER_REPO_NAMES[3]]: {
         repoRelativeDistDir: "./dist",
         baseDirName: "contacts",
         repo: "https://github.com/ProtonMail/proton-contacts.git",
-        commit: "bdce4276478f966d3817e70468ba08080375225a",
+        commit: "d0f2084dd200ff39900735271468d826c5b5daaf",
         protonPack: {appConfig: {clientId: "WebContacts"}},
     },
     [PROVIDER_REPO_NAMES[4]]: {

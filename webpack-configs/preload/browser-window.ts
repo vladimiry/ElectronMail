@@ -1,13 +1,14 @@
 import path from "path";
 
-import {ENVIRONMENT, srcRelativePath} from "webpack-configs/lib";
+import {ENVIRONMENT_STATE, srcRelativePath} from "webpack-configs/lib";
 import {buildRendererConfig} from "./lib";
 
-const dir = srcRelativePath("./electron-preload/browser-window", ENVIRONMENT);
+const baseEntryName = "electron-preload/browser-window";
+const src = (value: string): string => path.join(srcRelativePath(baseEntryName), value);
 
 export default buildRendererConfig(
     {
-        "electron-preload/browser-window": path.join(dir, "./index.ts"),
+        [`${baseEntryName}${ENVIRONMENT_STATE.e2e ? "-e2e" : ""}`]: src("./index.ts"),
     },
-    path.join(dir, "./tsconfig.json"),
+    src("./tsconfig.json"),
 );

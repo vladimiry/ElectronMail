@@ -1,13 +1,17 @@
+import path from "path";
+
 import {ENVIRONMENT_STATE, buildBaseConfig, srcRelativePath, typescriptLoaderRule} from "./lib";
 import {nodeExternals} from "webpack-configs/require-import";
 
-const tsConfigFile = srcRelativePath("./electron-main/tsconfig.json");
+const baseEntryName = "electron-main";
+const src = (value: string): string => path.join(srcRelativePath(baseEntryName), value);
+const tsConfigFile = src("./tsconfig.json");
 
 export default buildBaseConfig(
     {
         target: "electron-main",
         entry: {
-            [ENVIRONMENT_STATE.e2e ? "electron-main-e2e" : "electron-main"]: srcRelativePath("./electron-main/index.ts"),
+            [`${baseEntryName}${ENVIRONMENT_STATE.e2e ? "-e2e" : ""}`]: src("./index.ts"),
         },
         module: {
             rules: [

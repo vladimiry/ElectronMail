@@ -5,28 +5,37 @@ import {IFRAME_NOTIFICATION$} from "src/electron-preload/webview/primary/provide
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/constants";
 import {applyZoomFactor} from "src/electron-preload/lib/util";
-import {curryFunctionMembers} from "src/shared/util";
+import {curryFunctionMembers, testProtonAppPage} from "src/shared/util";
 import {disableBrowserNotificationFeature} from "src/electron-preload/webview/lib/util";
 import {initSpellCheckProvider} from "src/electron-preload/lib/spell-check";
 import {registerDocumentClickEventListener, registerDocumentKeyDownEventListener} from "src/electron-preload/lib/events-handling";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, "[provider-api/setup]");
 
-export const setupProviderIntegration = (): void => {
-    const logger = curryFunctionMembers(_logger, "configureProviderIntegration()");
+export const setupProviderIntegration = (
+    {shouldDisableBrowserNotificationFeature, blankHtmlPage}: ReturnType<typeof testProtonAppPage>,
+): void => {
+    const logger = curryFunctionMembers(_logger, "setupProviderIntegration()");
+
+    if (blankHtmlPage) {
+        logger.info("skipped");
+        return;
+    }
 
     initSpellCheckProvider(logger);
     applyZoomFactor(logger);
     registerDocumentKeyDownEventListener(document, logger);
     registerDocumentClickEventListener(document, logger);
 
-    // should be called for "proton-mail" project only (previously "WebClient")
-    disableBrowserNotificationFeature(logger);
+    if (shouldDisableBrowserNotificationFeature) {
+        disableBrowserNotificationFeature(logger);
+    }
 
     IFRAME_NOTIFICATION$.subscribe(({iframeDocument}) => {
         registerDocumentKeyDownEventListener(iframeDocument, logger);
         registerDocumentClickEventListener(iframeDocument, logger);
     });
+
     IFRAME_NOTIFICATION$
         .pipe(
             mergeMap(({iframeDocument}) => {

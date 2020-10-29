@@ -551,26 +551,32 @@ export const resolvePackagedWebClientApp: (
 
 export const testProtonAppPage = (
     {url, logger}: { url: string; logger: import("src/shared/model/common").Logger },
-): { shouldInitProviderApi: boolean; packagedWebClientUrl: ReturnType<typeof parsePackagedWebClientUrl> } => {
+): {
+    shouldInitProviderApi: boolean
+    shouldDisableBrowserNotificationFeature: boolean
+    blankHtmlPage: boolean
+    packagedWebClientUrl: ReturnType<typeof parsePackagedWebClientUrl>
+} => {
     let projectType: keyof typeof PROVIDER_REPO_MAP | undefined;
     const packagedWebClientUrl = parsePackagedWebClientUrl(url);
-    const logDetails = (): string => {
-        return JSON.stringify({url, packagedWebClientUrl: JSON.stringify(packagedWebClientUrl), project: String(projectType)});
-    };
+    const blankHtmlPage = packagedWebClientUrl?.pathname === `/${WEB_CLIENTS_BLANK_HTML_FILE_NAME}`;
+    const protonMailProject = Boolean(
+        !blankHtmlPage
+        &&
+        packagedWebClientUrl
+        &&
+        (projectType = resolvePackagedWebClientApp(packagedWebClientUrl).project) === "proton-mail"
+    );
+    const result = {
+        shouldInitProviderApi: protonMailProject,
+        shouldDisableBrowserNotificationFeature: protonMailProject,
+        blankHtmlPage,
+        packagedWebClientUrl,
+    } as const;
 
-    if (
-        !packagedWebClientUrl
-        ||
-        packagedWebClientUrl.pathname === `/${WEB_CLIENTS_BLANK_HTML_FILE_NAME}`
-        ||
-        (projectType = resolvePackagedWebClientApp(packagedWebClientUrl).project) !== "proton-mail"
-    ) {
-        logger.info("should init provider api", logDetails());
-        return {shouldInitProviderApi: false, packagedWebClientUrl};
-    }
+    logger.verbose("testProtonAppPage()", JSON.stringify({...result, url, projectType}));
 
-    logger.info("should not init provider api", logDetails());
-    return {shouldInitProviderApi: true, packagedWebClientUrl};
+    return result;
 };
 
 export const consumeMemoryRateLimiter = async (

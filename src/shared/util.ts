@@ -346,7 +346,7 @@ export function buildEnumBundle<M, K extends keyof M, V extends Extract<M[keyof 
 }
 
 export function isDatabaseBootstrapped(
-    metadata: FsDbAccount["metadata"] | null,
+    metadata: DeepReadonly<FsDbAccount["metadata"]> | null,
 ): metadata is Readonly<Exclude<typeof metadata, null>> {
     if (!metadata) {
         return false;

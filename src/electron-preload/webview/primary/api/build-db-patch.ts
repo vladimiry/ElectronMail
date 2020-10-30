@@ -12,7 +12,7 @@ import {Logger} from "src/shared/model/common";
 import {ProtonApi, ProtonApiScan} from "src/shared/api/webview/primary";
 import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/constants";
-import {buildDbPatchRetryPipeline, buildEmptyDbPatch, persistDatabasePatch} from "src/electron-preload/webview/lib/util";
+import {buildDbPatchRetryPipeline, buildEmptyDbPatch, fetchEvents, persistDatabasePatch} from "src/electron-preload/webview/lib/util";
 import {curryFunctionMembers, isDatabaseBootstrapped} from "src/shared/util";
 import {isProtonApiError, resolveCachedConfig, sanitizeProtonApiError} from "src/electron-preload/lib/util";
 import {preprocessError} from "src/electron-preload/webview/primary/util";
@@ -359,7 +359,6 @@ const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonApi, "buildD
 
             logger.info();
 
-            const inputMetadata = input.metadata;
             const deferFactory: () => Promise<BuildDbPatchMethodReturnType> = async () => {
                 logger.info("delayFactory()");
 
@@ -377,7 +376,7 @@ const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonApi, "buildD
                     ),
                 ).toPromise();
 
-                if (!isDatabaseBootstrapped(inputMetadata)) {
+                if (!isDatabaseBootstrapped(input.metadata)) {
                     await bootstrapDbPatch(
                         providerApi,
                         logger,
@@ -395,70 +394,24 @@ const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonApi, "buildD
                     return;
                 }
 
-                const preFetch = await (async () => {
-                    const fetchedEvents: RestModel.Event[] = [];
-                    const state: NoExtraProps<{
-                        latestEventId: RestModel.Event["EventID"];
-                        sameNextIdCounter: number;
-                    }> = {
-                        latestEventId: inputMetadata.latestEventId,
-                        sameNextIdCounter: 0,
-                    };
+                {
+                    const {events, latestEventId} = await fetchEvents(providerApi, input.metadata.latestEventId, logger);
 
-                    do {
-                        const response = await providerApi.events.getEvents(state.latestEventId);
-                        const hasMoreEvents = response.More === 1;
-
-                        fetchedEvents.push(response);
-
-                        // WARN increase "sameNextIdCounter" before "state.latestEventId" reassigning
-                        state.sameNextIdCounter += Number(state.latestEventId === response.EventID);
-                        state.latestEventId = response.EventID;
-
-                        if (!hasMoreEvents) {
-                            break;
-                        }
-
-                        // in early july 2020 protonmail's "/events/{id}" API/backend started returning
-                        // old/requested "response.EventID" having no more events in the queue ("response.More" !== 1)
-                        // which looks like an implementation error
-                        // so let's allow up to 3 such problematic iterations, log the error, and break the iteration then
-                        // rather than raising the error like we did before in order to detect the protonmail's error
-                        // it's ok to break the iteration since we start from "latestEventId" next time syncing process gets triggered
-                        // another error handling approach is to iterate until "response.More" !== 1 but let's prefer "early break" for now
-                        if (state.sameNextIdCounter > 2) {
-                            logger.error(
-                                `Events API indicates that there is a next event in the queue but responded with the same "next event id".`,
-                            );
-                            break;
-                        }
-                    } while (true); // eslint-disable-line no-constant-condition
-
-                    logger.info(`fetched ${fetchedEvents.length} missed events`);
-
-                    return {
-                        latestEventId: state.latestEventId,
-                        missedEvents: fetchedEvents,
-                    };
-                })();
-
-                const metadata: DbPatchBundle["metadata"] = {latestEventId: preFetch.latestEventId};
-                const patch = await buildDbPatch(providerApi, {events: preFetch.missedEvents, parentLogger: logger});
-
-                await persistDatabasePatch(
-                    {
-                        patch,
-                        metadata,
-                        login: input.login,
-                    },
-                    logger,
-                );
+                    await persistDatabasePatch(
+                        {
+                            patch: await buildDbPatch(providerApi, {events, parentLogger: logger}),
+                            metadata: {latestEventId},
+                            login: input.login,
+                        },
+                        logger,
+                    );
+                }
 
                 return void 0;
             };
 
             return defer(deferFactory).pipe(
-                buildDbPatchRetryPipeline<BuildDbPatchMethodReturnType>(preprocessError, inputMetadata, _logger),
+                buildDbPatchRetryPipeline<BuildDbPatchMethodReturnType>(preprocessError, input.metadata, _logger),
             );
         },
 

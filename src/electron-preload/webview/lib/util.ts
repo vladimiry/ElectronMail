@@ -1,11 +1,13 @@
 import {concatMap, delay, retryWhen} from "rxjs/operators";
 import {from, of, throwError} from "rxjs";
 
+import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 import {DbPatch} from "src/shared/api/common";
 import {FsDbAccount} from "src/shared/model/database";
 import {IpcMainApiEndpoints} from "src/shared/api/main";
 import {Logger} from "src/shared/model/common";
 import {ONE_SECOND_MS} from "src/shared/constants";
+import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
 import {asyncDelay, curryFunctionMembers, isDatabaseBootstrapped} from "src/shared/util";
 import {resolveCachedConfig, resolveIpcMainApi} from "src/electron-preload/lib/util";
 
@@ -174,7 +176,7 @@ export async function submitTotpToken(
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
 export function buildDbPatchRetryPipeline<T>(
     preprocessError: (rawError: unknown) => { error: Error; retriable: boolean; skippable: boolean },
-    metadata: FsDbAccount["metadata"] | null,
+    metadata: DeepReadonly<FsDbAccount["metadata"]> | null,
     logger: Logger,
     {retriesDelay = ONE_SECOND_MS * 5, retriesLimit = 3}: { retriesDelay?: number; retriesLimit?: number } = {},
 ) {
@@ -241,3 +243,58 @@ export function disableBrowserNotificationFeature(parentLogger: Logger): void {
     delete (window as Partial<Pick<typeof window, "Notification">>).Notification;
     parentLogger.info(`browser "notification" feature disabled`);
 }
+
+export const fetchEvents = async (
+    providerApi: ProviderApi,
+    latestEventId: RestModel.Event["EventID"],
+    _logger: Logger,
+): Promise<{
+    latestEventId: RestModel.Event["EventID"]
+    events: RestModel.Event[]
+}> => {
+    const logger = curryFunctionMembers(_logger, "fetchEvents()");
+    const events: RestModel.Event[] = [];
+    const iterationState: NoExtraProps<{
+        latestEventId: RestModel.Event["EventID"];
+        sameNextIdCounter: number;
+    }> = {
+        latestEventId,
+        sameNextIdCounter: 0,
+    };
+
+    do {
+        const response = await providerApi.events.getEvents(iterationState.latestEventId);
+        const hasMoreEvents = response.More === 1;
+
+        events.push(response);
+
+        // WARN increase "sameNextIdCounter" before "state.latestEventId" reassigning
+        iterationState.sameNextIdCounter += Number(iterationState.latestEventId === response.EventID);
+        iterationState.latestEventId = response.EventID;
+
+        if (!hasMoreEvents) {
+            break;
+        }
+
+        // in early july 2020 protonmail's "/events/{id}" API/backend started returning
+        // old/requested "response.EventID" having no more events in the queue ("response.More" !== 1)
+        // which looks like an implementation error
+        // so let's allow up to 3 such problematic iterations, log the error, and break the iteration then
+        // rather than raising the error like we did before in order to detect the protonmail's error
+        // it's ok to break the iteration since we start from "latestEventId" next time syncing process gets triggered
+        // another error handling approach is to iterate until "response.More" !== 1 but let's prefer "early break" for now
+        if (iterationState.sameNextIdCounter > 2) {
+            logger.error(
+                `Events API indicates that there is a next event in the queue but responded with the same "next event id".`,
+            );
+            break;
+        }
+    } while (true); // eslint-disable-line no-constant-condition
+
+    logger.info(`fetched ${events.length} missed events`);
+
+    return {
+        latestEventId: iterationState.latestEventId,
+        events,
+    };
+};

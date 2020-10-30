@@ -1,25 +1,21 @@
 <div class="r">
     <div class="c-auto">
-        <div class="d-flex badges-1">
-            <!-- TODO render "conversationSize" using transcluding -->
-            <div *ngIf="conversationSize" class="conversation-size mr-1">
-                {{ conversationSize }}
-            </div>
-            <a
-                *ngIf="mailAddress"
-                class="prevent-default-event address b flex-row mr-2"
-                href="mailto:{{ mailAddress.address }}"
-            >
-                {{ mailAddress.name || mailAddress.address }}
-                <span *ngIf="mailAddressTotal && mailAddressTotal  > 1" class="d-flex ml-1">
-                    (+{{ mailAddressTotal - 1 }})
-                </span>
-            </a>
-        </div>
+        <a
+            *ngIf="mailAddress"
+            class="prevent-default-event address b flex-row"
+            href="mailto:{{ mailAddress.address }}"
+        >
+            {{ mailAddress.name || mailAddress.address }}
+            <span *ngIf="mailAddressTotal && mailAddressTotal  > 1" class="d-flex ml-1">(+{{ mailAddressTotal - 1 }})</span>
+        </a>
     </div>
     <div class="c-stretch">
+        <!-- TODO render "conversationSize" using transcluding -->
+        <div *ngIf="conversationSize && conversationSize > 1" class="conversation-size b ml-1">
+            {{ conversationSize }}
+        </div>
         <div class="d-flex">
-            <div class="subject">
+            <div class="subject ml-1">
                 <div class="ellipsis">
                     {{ mail.subject }}
                 </div>
@@ -28,23 +24,23 @@
         <i
             *ngIf="mail.failedDownload as failedDownload"
             [popover]="failedDownload.errorMessage"
-            class="fa fa-info-circle text-danger ml-2"
+            class="fa fa-info-circle text-danger ml-1"
             container="body"
             triggers="mouseenter:mouseleave"
         ></i>
-        <i *ngIf="mail.confidential" class="fa fa-lock d-flex ml-2"></i>
+        <i *ngIf="mail.confidential" class="fa fa-lock d-flex ml-1"></i>
     </div>
     <div class="c-auto">
         <div class="d-flex">
             <!-- TODO render "score" using transcluding -->
             <div
                 *ngIf="mail.score"
-                class="b ml-2 score"
+                class="b ml-1 score"
             >
                 score: {{ mail.score.toFixed(2) }}
             </div>
-            <div class="folders flex-row ml-2">
-                <div *ngFor="let folder of mail.folders; trackBy: trackFolder" class="d-flex b mr-2">
+            <div class="folders flex-row ml-1">
+                <div *ngFor="let folder of mail.folders; trackBy: trackFolder" class="d-flex b mr-1">
                     {{ folder.name }}
                 </div>
             </div>

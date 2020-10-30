@@ -138,7 +138,7 @@
     <button
         (click)="loadMore()"
         *ngIf="(paging$ | async)?.nextPageSize; let nextPageSize;"
-        class="btn btn-sm btn-secondary-light load-more my-3"
+        class="btn btn-sm btn-secondary-light load-more my-2"
     >
         More
         <small>(+{{ nextPageSize }})</small>

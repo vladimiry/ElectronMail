@@ -114,12 +114,32 @@
         color: $app-db-view-color-text-mail;
     }
 
+    &:not(.selected) {
+        .address,
+        .conversation-size,
+        .date,
+        .score,
+        .folders > .b {
+            background-color: theme-color("secondary-light");
+        }
+    }
+
+    &.selected {
+        .address,
+        .conversation-size,
+        .date,
+        .score,
+        .folders > .b {
+            background-color: darken(theme-color("warning-light"), 5%);
+        }
+    }
+
     .b {
         @include app-db-view-badge-padding-radius;
     }
 
-    .badges-1 {
-        padding-left: ($state-line-margin + $state-line-with);
+    .address {
+        margin-left: ($state-line-margin / 2) + $state-line-with;
     }
 
     .subject {

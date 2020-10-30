@@ -24,7 +24,7 @@ $theme-colors: map-merge(
     $theme-colors,
     (
         secondary: $secondary,
-        secondary-light: darken($gray-400, 5%),
+        secondary-light: darken($gray-400, 1%),
         warning-light: theme-color-level("warning", -9),
     ),
 );

@@ -1,3 +1,4 @@
+import fsExtra from "fs-extra";
 import path from "path";
 
 import {BINARY_NAME, PROVIDER_REPO_MAP, PROVIDER_REPO_NAMES} from "src/shared/constants";
@@ -176,6 +177,19 @@ function resolveWebpackConfigPatchingCode(
     return result;
 }
 
+const applyPatch = async ({patchFile, cwd}: { patchFile: string; cwd: string }): Promise<void> => {
+    await execShell([
+        "git",
+        [
+            "apply",
+            "--ignore-whitespace",
+            "--reject",
+            patchFile,
+        ],
+        {cwd},
+    ]);
+};
+
 (async () => {
     for (const repoType of PROVIDER_REPO_NAMES) {
         await executeBuildFlow({
@@ -185,16 +199,17 @@ function resolveWebpackConfigPatchingCode(
             flows: {
                 async install({repoDir}) {
                     await execShell(["npm", ["ci"], {cwd: repoDir}]);
-                    await execShell([
-                        "git",
-                        [
-                            "apply",
-                            "--ignore-whitespace",
-                            "--reject",
-                            path.join(CWD_ABSOLUTE_DIR, `./patches/protonmail/${repoType}.patch`),
-                        ],
-                        {cwd: repoDir},
-                    ]);
+
+                    {
+                        const resolvePatchFile = (file: string): string => path.join(CWD_ABSOLUTE_DIR, `./patches/protonmail/${file}`);
+                        const repoTypePatchFile = resolvePatchFile(`${repoType}.patch`);
+
+                        await applyPatch({patchFile: resolvePatchFile("common.patch"), cwd: repoDir});
+
+                        if (fsExtra.pathExistsSync(repoTypePatchFile)) {
+                            await applyPatch({patchFile: repoTypePatchFile, cwd: repoDir});
+                        }
+                    }
                 },
 
                 build: async ({repoDir: cwd, folderAsDomainEntry}) => {

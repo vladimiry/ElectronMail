@@ -80,3 +80,44 @@ index a1b7919..ff7f6ec 100644
          name: 'ProtonCalendar',
          clientID: 'WebCalendar',
          icon: 'protoncalendar',
+diff --git a/node_modules/react-components/containers/heading/useBlackFriday.tsx b/node_modules/react-components/containers/heading/useBlackFriday.tsx
+index f88f020..30bcf16 100644
+--- a/node_modules/react-components/containers/heading/useBlackFriday.tsx
++++ b/node_modules/react-components/containers/heading/useBlackFriday.tsx
+@@ -50,21 +50,21 @@ const useBlackFriday = () => {
+
+     const keys = useRef<{ blackFridayStateKey?: string; productPayerStateKey?: string }>({});
+
+-    useEffect(() => {
+-        const run = async () => {
+-            const [newBlackFridayStateKey, newProductPayerStateKey] = await Promise.all([
+-                getSHA256String(`${ID}${BLACK_FRIDAY.COUPON_CODE}-black-friday-modal`),
+-                getSHA256String(`${ID}-product-payer-modal`),
+-            ]);
+-
+-            keys.current.blackFridayStateKey = newBlackFridayStateKey.slice(0, 8);
+-            keys.current.productPayerStateKey = newProductPayerStateKey.slice(0, 8);
+-
+-            setBlackFridayModalState(getCookie(keys.current.blackFridayStateKey) || '');
+-            setProductPayerModalState(getCookie(keys.current.productPayerStateKey) || '');
+-        };
+-        run();
+-    }, []);
++    // useEffect(() => {
++    //     const run = async () => {
++    //         const [newBlackFridayStateKey, newProductPayerStateKey] = await Promise.all([
++    //             getSHA256String(`${ID}${BLACK_FRIDAY.COUPON_CODE}-black-friday-modal`),
++    //             getSHA256String(`${ID}-product-payer-modal`),
++    //         ]);
++    //
++    //         keys.current.blackFridayStateKey = newBlackFridayStateKey.slice(0, 8);
++    //         keys.current.productPayerStateKey = newProductPayerStateKey.slice(0, 8);
++    //
++    //         setBlackFridayModalState(getCookie(keys.current.blackFridayStateKey) || '');
++    //         setProductPayerModalState(getCookie(keys.current.productPayerStateKey) || '');
++    //     };
++    //     run();
++    // }, []);
+
+     const [isEligible, setEligibility] = useState(false);
+     const location = useLocation();

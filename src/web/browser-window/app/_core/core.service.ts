@@ -53,7 +53,7 @@ export class CoreService {
     }
 
     // TODO move method to "_accounts/*.service"
-    async initProtonClientSessionAndNavigate(
+    async applyProtonClientSessionAndNavigate(
         accountConfig: WebAccount["accountConfig"],
         repoType: keyof typeof PROVIDER_REPO_MAP,
         webViewDomReady$: import("rxjs").Observable<Electron.WebviewTag>,
@@ -61,11 +61,11 @@ export class CoreService {
         logger_: ReturnType<typeof import("src/web/browser-window/util").getZoneNameBoundWebLogger>,
         clientSession?: ProtonClientSession,
     ): Promise<void> {
-        const logger = curryFunctionMembers(logger_, "[core.service]", "initProtonClientSessionAndNavigate");
+        const logger = curryFunctionMembers(logger_, "[core.service]", "applyProtonClientSessionAndNavigate");
         const {webViewBlankDOMLoaded: loaderIdTimeoutMs} = await this.store
             .pipe(
                 select(OptionsSelectors.CONFIG.timeouts),
-                take(1),
+                first(),
             )
             .toPromise();
         const loaderId = new UUID(4).format();

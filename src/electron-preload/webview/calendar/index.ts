@@ -1,15 +1,13 @@
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
-import {curryFunctionMembers, testProtonMailAppPage} from "src/shared/util";
+import {curryFunctionMembers, testProtonCalendarAppPage} from "src/shared/util";
 import {getLocationHref} from "src/electron-preload/webview/lib/util";
 import {initProviderApi} from "./provider-api";
 import {registerApi} from "./api";
-import {setupProviderIntegration} from "./provider-api/setup";
 
-const logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, "[index]");
-const protonAppPageStatus = testProtonMailAppPage({url: getLocationHref(), logger});
+const logger = curryFunctionMembers(WEBVIEW_LOGGERS.calendar, "[index]");
+const protonAppPageStatus = testProtonCalendarAppPage({url: getLocationHref(), logger});
 
-setupProviderIntegration(protonAppPageStatus);
-
+// TODO throw error if "not calendar or blank.html" page loaded
 if (protonAppPageStatus.shouldInitProviderApi) {
     // TODO set up timeout
     initProviderApi()

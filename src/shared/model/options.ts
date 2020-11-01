@@ -8,78 +8,80 @@ import {FuzzyLocale} from "src/electron-main/spell-check/model";
 import {LogLevel} from "src/shared/model/common";
 
 export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
-    spellCheckLocale: FuzzyLocale;
-    encryptionPreset: PasswordBasedPreset;
+    spellCheckLocale: FuzzyLocale
+    encryptionPreset: PasswordBasedPreset
     window: {
-        maximized?: boolean;
-        bounds: { x?: number; y?: number; width: number; height: number };
-    };
+        maximized?: boolean
+        bounds: { x?: number; y?: number; width: number; height: number }
+    }
     fetching: {
         rateLimit: {
-            intervalMs: number;
-            maxInInterval: number;
-        };
-        messagesStorePortionSize: number;
-    };
+            intervalMs: number
+            maxInInterval: number
+        }
+        messagesStorePortionSize: number
+    }
     timeouts: {
-        databaseLoading: number;
-        dbBootstrapping: number;
-        dbSyncing: number;
-        webViewApiPing: number;
-        webViewBlankDOMLoaded: number;
-        domElementsResolving: number;
-        defaultApiCall: number;
-        indexingBootstrap: number;
-        clearSessionStorageData: number;
-        attachmentLoadAverage: number;
-        fullTextSearch: number;
-    };
+        databaseLoading: number
+        dbBootstrapping: number
+        dbSyncing: number
+        webViewApiPing: number
+        webViewBlankDOMLoaded: number
+        domElementsResolving: number
+        defaultApiCall: number
+        indexingBootstrap: number
+        clearSessionStorageData: number
+        attachmentLoadAverage: number
+        fullTextSearch: number
+    }
     updateCheck: {
-        releasesUrl: string;
-        proxy: string;
-    };
-    indexingBootstrapBufferSize: number;
-    jsFlags: string[];
-    localDbMailsListViewMode: "plain" | "conversation";
-    userAgents: string[];
+        releasesUrl: string
+        proxy: string
+    }
+    indexingBootstrapBufferSize: number
+    jsFlags: string[]
+    localDbMailsListViewMode: "plain" | "conversation"
+    userAgents: string[]
     // base
-    checkUpdateAndNotify: boolean;
-    doNotRenderNotificationBadgeValue: boolean;
-    hideOnClose: boolean;
-    layoutMode: (typeof import("src/shared/constants").LAYOUT_MODES)[number]["value"];
-    customTrayIconColor: string;
-    customUnreadBgColor: string;
-    customUnreadTextColor: string;
-    disableSpamNotifications: boolean;
-    enableHideControlsHotkey: boolean;
-    findInPage: boolean;
-    fullTextSearch: boolean;
-    hideControls: boolean;
-    idleTimeLogOutSec: number;
-    logLevel: LogLevel;
-    startHidden: boolean;
-    unreadNotifications: boolean;
-    zoomFactor: number;
+    calendarNotification: boolean
+    checkUpdateAndNotify: boolean
+    customTrayIconColor: string
+    customUnreadBgColor: string
+    customUnreadTextColor: string
+    disableSpamNotifications: boolean
+    doNotRenderNotificationBadgeValue: boolean
+    enableHideControlsHotkey: boolean
+    findInPage: boolean
+    fullTextSearch: boolean
+    hideControls: boolean
+    hideOnClose: boolean
+    idleTimeLogOutSec: number
+    layoutMode: (typeof import("src/shared/constants").LAYOUT_MODES)[number]["value"]
+    logLevel: LogLevel
+    startHidden: boolean
+    unreadNotifications: boolean
+    zoomFactor: number
 }
 
 export type BaseConfig = Pick<Config,
-    | "doNotRenderNotificationBadgeValue"
+    | "calendarNotification"
     | "checkUpdateAndNotify"
-    | "hideOnClose"
-    | "layoutMode"
     | "customTrayIconColor"
     | "customUnreadBgColor"
     | "customUnreadTextColor"
     | "disableSpamNotifications"
+    | "doNotRenderNotificationBadgeValue"
     | "enableHideControlsHotkey"
     | "findInPage"
     | "fullTextSearch"
     | "hideControls"
+    | "hideOnClose"
     | "idleTimeLogOutSec"
+    | "layoutMode"
     | "logLevel"
     | "startHidden"
-    | "zoomFactor"
-    | "unreadNotifications">;
+    | "unreadNotifications"
+    | "zoomFactor">;
 
 export interface Settings extends Partial<StoreModel.StoreEntity> {
     accounts: AccountConfig[];

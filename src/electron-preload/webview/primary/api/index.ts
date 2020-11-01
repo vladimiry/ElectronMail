@@ -4,23 +4,24 @@ import {pick} from "remeda";
 import {serializeError} from "serialize-error";
 
 import * as RestModel from "src/electron-preload/webview/lib/rest-model";
-import * as WebviewConstants from "src/electron-preload/webview/lib/constants";
+import * as WebviewConstants from "src/electron-preload/webview/lib/const";
 import {FETCH_NOTIFICATION$} from "src/electron-preload/webview/primary/provider-api/notifications";
 import {IpcMainServiceScan} from "src/shared/api/main";
 import {ONE_SECOND_MS, WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS} from "src/shared/constants";
-import {PROTONMAIL_IPC_WEBVIEW_API, ProtonApi, ProtonNotificationOutput} from "src/shared/api/webview/primary";
+import {PROTON_PRIMARY_IPC_WEBVIEW_API, ProtonPrimaryApi, ProtonPrimaryNotificationOutput} from "src/shared/api/webview/primary";
 import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
 import {SYSTEM_FOLDER_IDENTIFIERS} from "src/shared/model/database";
+import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 import {buildDbPatch, buildDbPatchEndpoint} from "src/electron-preload/webview/primary/api/build-db-patch";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {dumpProtonSharedSession} from "src/electron-preload/webview/primary/shared-session";
 import {fillInputValue, getLocationHref, resolveDomElements, submitTotpToken,} from "src/electron-preload/webview/lib/util";
 import {resolveIpcMainApi} from "src/electron-preload/lib/util";
 
-const _logger = curryFunctionMembers(WebviewConstants.WEBVIEW_LOGGERS.primary, "[api/index]");
+const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, "[api/index]");
 
 export function registerApi(providerApi: ProviderApi): void {
-    const endpoints: ProtonApi = {
+    const endpoints: ProtonPrimaryApi = {
         ...buildDbPatchEndpoint(providerApi),
 
         async ping() {}, // eslint-disable-line @typescript-eslint/no-empty-function
@@ -267,10 +268,10 @@ export function registerApi(providerApi: ProviderApi): void {
 
             logger.info();
 
-            type LoggedInOutput = Required<Pick<ProtonNotificationOutput, "loggedIn">>;
-            type PageTypeOutput = Required<Pick<ProtonNotificationOutput, "pageType">>;
-            type UnreadOutput = Required<Pick<ProtonNotificationOutput, "unread">>;
-            type BatchEntityUpdatesCounterOutput = Required<Pick<ProtonNotificationOutput, "batchEntityUpdatesCounter">>;
+            type LoggedInOutput = Required<Pick<ProtonPrimaryNotificationOutput, "loggedIn">>;
+            type PageTypeOutput = Required<Pick<ProtonPrimaryNotificationOutput, "pageType">>;
+            type UnreadOutput = Required<Pick<ProtonPrimaryNotificationOutput, "unread">>;
+            type BatchEntityUpdatesCounterOutput = Required<Pick<ProtonPrimaryNotificationOutput, "batchEntityUpdatesCounter">>;
 
             const observables: [
                 Observable<LoggedInOutput>,
@@ -432,7 +433,7 @@ export function registerApi(providerApi: ProviderApi): void {
         },
     };
 
-    PROTONMAIL_IPC_WEBVIEW_API.register(endpoints, {logger: _logger});
+    PROTON_PRIMARY_IPC_WEBVIEW_API.register(endpoints, {logger: _logger});
 
     _logger.verbose(`api registered, url: ${getLocationHref()}`);
 }

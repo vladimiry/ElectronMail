@@ -133,6 +133,7 @@ function initLocations(
             searchInPageBrowserView: appRelativePath("./electron-preload/search-in-page-browser-view.js"),
             fullTextSearchBrowserWindow: appRelativePath("./electron-preload/database-indexer.js"),
             primary: formatFileUrl(appRelativePath("./electron-preload/webview/primary.js")),
+            calendar: formatFileUrl(appRelativePath("./electron-preload/webview/calendar.js")),
         },
         vendorsAppCssLinkHref: ((): string => {
             // TODO electron: get rid of "baseURLForDataURL" workaround, see https://github.com/electron/electron/issues/20700

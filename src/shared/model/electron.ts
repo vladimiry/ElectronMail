@@ -1,13 +1,9 @@
-import {IPC_MAIN_API} from "src/shared/api/main";
-import {Logger} from "src/shared/model/common";
-import {PROTONMAIL_IPC_WEBVIEW_API} from "src/shared/api/webview/primary";
-import {registerDocumentClickEventListener} from "src/electron-preload/lib/events-handling";
-
 export type ElectronExposure = Readonly<{
-    buildIpcMainClient: typeof IPC_MAIN_API.client;
-    buildIpcWebViewClient: typeof PROTONMAIL_IPC_WEBVIEW_API.client;
-    registerDocumentClickEventListener: typeof registerDocumentClickEventListener;
-    Logger: Readonly<Logger>;
+    buildIpcMainClient: (typeof import("src/shared/api/main"))["IPC_MAIN_API"]["client"];
+    buildIpcPrimaryWebViewClient: (typeof import("src/shared/api/webview/primary"))["PROTON_PRIMARY_IPC_WEBVIEW_API"]["client"];
+    buildIpcCalendarWebViewClient: (typeof import("src/shared/api/webview/calendar"))["PROTON_CALENDAR_IPC_WEBVIEW_API"]["client"];
+    registerDocumentClickEventListener: (typeof import("src/electron-preload/lib/events-handling"))["registerDocumentClickEventListener"];
+    Logger: Readonly<import("src/shared/model/common").Logger>;
 }>;
 
 export interface ElectronWindow {
@@ -32,6 +28,7 @@ export type ElectronContextLocations = Readonly<{
         searchInPageBrowserView: string;
         fullTextSearchBrowserWindow: string;
         primary: string;
+        calendar: string;
     }>;
     protocolBundles: ReadonlyArray<Readonly<{ scheme: string; directory: string }>>;
     webClients: ReadonlyArray<Readonly<{ entryUrl: string; entryApiUrl: string }>>;

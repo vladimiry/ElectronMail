@@ -23,6 +23,10 @@ declare global {
 
     type StrictOmit<T, K extends keyof T> = import("ts-essentials").StrictOmit<T, K>;
 
+    type StrictExclude<T, K extends T> = Exclude<T, K>;
+
+    type StrictExtract<T, K extends T> = Extract<T, K>;
+
     type DeepReadonly<T> = import("ts-essentials").DeepReadonly<T>;
 
     const BUILD_ENVIRONMENT: BuildEnvironment;

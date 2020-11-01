@@ -11,7 +11,7 @@ import {buildLoggerBundle} from "src/electron-preload/lib/util";
 const {Promise, Observable} = ActionType;
 
 // TODO drop "ZoneApiParameter" use
-export const PROTONMAIL_IPC_WEBVIEW_API_DEFINITION = {
+export const PROTON_PRIMARY_IPC_WEBVIEW_API_DEFINITION = {
     ping:
         Promise<DeepReadonly<ZoneApiParameter>>(),
     fillLogin:
@@ -38,21 +38,22 @@ export const PROTONMAIL_IPC_WEBVIEW_API_DEFINITION = {
     exportMailAttachments:
         Promise<DeepReadonly<DbAccountPk & { uuid: string; mailPk: Mail["pk"] } & ZoneApiParameter>>(),
     notification:
-        Observable<DeepReadonly<{ entryUrl: string; entryApiUrl: string } & ZoneApiParameter>, ProtonNotificationOutput>(),
+        Observable<DeepReadonly<{ entryUrl: string; entryApiUrl: string } & ZoneApiParameter>, ProtonPrimaryNotificationOutput>(),
     unlock:
         ActionType.Promise<MailPasswordFieldContainer & ZoneApiParameter>(),
     resolveSavedProtonClientSession:
         ActionType.Promise<DeepReadonly<ZoneApiParameter>, ProtonClientSession | null>(),
 } as const;
 
-export const PROTONMAIL_IPC_WEBVIEW_API = createWebViewApiService({
-    channel: `${PACKAGE_NAME}:webview-api`,
-    apiDefinition: PROTONMAIL_IPC_WEBVIEW_API_DEFINITION,
-    logger: buildLoggerBundle("[IPC_WEBVIEW_API:protonmail]"),
+export const PROTON_PRIMARY_IPC_WEBVIEW_API = createWebViewApiService({
+    apiDefinition: PROTON_PRIMARY_IPC_WEBVIEW_API_DEFINITION,
+    channel: `${PACKAGE_NAME}:webview-api:primary`,
+    logger: buildLoggerBundle("[webview-api:primary]"),
 });
 
-export type ProtonApiScan = ScanService<typeof PROTONMAIL_IPC_WEBVIEW_API>;
+export type ProtonPrimaryApiScan = ScanService<typeof PROTON_PRIMARY_IPC_WEBVIEW_API>;
 
-export type ProtonApi = ProtonApiScan["ApiClient"];
+export type ProtonPrimaryApi = ProtonPrimaryApiScan["ApiClient"];
 
-export type ProtonNotificationOutput = Partial<Notifications> & Partial<{ batchEntityUpdatesCounter: number }>;
+export type ProtonPrimaryNotificationOutput = Partial<StrictOmit<Notifications, "loggedInCalendar">>
+    & Partial<{ batchEntityUpdatesCounter: number }>;

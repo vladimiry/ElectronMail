@@ -6,6 +6,7 @@ import {createIpcMainApiService} from "electron-rpc-api";
 
 import {DEFAULT_API_CALL_TIMEOUT, ONE_SECOND_MS} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
+import {PROTON_CALENDAR_IPC_WEBVIEW_API_DEFINITION} from "src/shared/api/webview/calendar";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
 
@@ -55,42 +56,37 @@ export class ElectronService implements OnDestroy {
         );
     }
 
-    webViewClient(
+    primaryWebViewClient(
         webView: Electron.WebviewTag,
         options?: LimitedCallOptions,
-    ): Observable<ReturnType<typeof __ELECTRON_EXPOSURE__.buildIpcWebViewClient>> {
-        const client = __ELECTRON_EXPOSURE__.buildIpcWebViewClient(
+    ): Observable<ReturnType<typeof __ELECTRON_EXPOSURE__.buildIpcPrimaryWebViewClient>> {
+        const client = __ELECTRON_EXPOSURE__.buildIpcPrimaryWebViewClient(
             webView,
             {options: this.buildApiCallOptions(options)},
         );
 
         // TODO consider removing "ping" API or pinging once per "webView", keeping state in WeakMap<WebView, ...>?
-        const ping$ = this.onlinePingWithTimeouts$.pipe(
-            switchMap(({webViewApiPing: timeoutMs}) => {
-                return race(
-                    defer(async () => {
-                        return client("ping", {timeoutMs: ONE_SECOND_MS})({zoneName: logger.zoneName()});
-                    }).pipe(
-                        retryWhen((errors) => {
-                            return errors.pipe(
-                                delay(ONE_SECOND_MS),
-                            );
-                        }),
-                    ),
-                    timer(timeoutMs).pipe(
-                        concatMap(() => {
-                            return throwError(
-                                new Error(
-                                    `Failed to wait for "webview" service provider initialization (timeout: ${timeoutMs}ms).`,
-                                ),
-                            );
-                        }),
-                    ),
-                );
+        return this.onlinePingWithTimeouts$.pipe(
+            switchMap(({webViewApiPing: timeoutMs}) => this.raceWebViewClient(client, timeoutMs)),
+            concatMap(() => {
+                return of(client);
             }),
         );
+    }
 
-        return ping$.pipe(
+    calendarWebViewClient(
+        webView: Electron.WebviewTag,
+        options?: LimitedCallOptions,
+    ): Observable<ReturnType<typeof __ELECTRON_EXPOSURE__.buildIpcCalendarWebViewClient>> {
+        const client = __ELECTRON_EXPOSURE__.buildIpcCalendarWebViewClient(
+            webView,
+            {options: this.buildApiCallOptions(options)},
+        );
+
+        // TODO consider removing "ping" API or pinging once per "webView", keeping state in WeakMap<WebView, ...>?
+        return this.store.pipe(
+            select(OptionsSelectors.CONFIG.timeouts),
+            switchMap(({webViewApiPing: timeoutMs}) => this.raceWebViewClient(client, timeoutMs)),
             concatMap(() => {
                 return of(client);
             }),
@@ -105,6 +101,37 @@ export class ElectronService implements OnDestroy {
 
     ngOnDestroy(): void {
         this.subscription.unsubscribe();
+    }
+
+    // TODO TS: simplify method signature
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+    private raceWebViewClient<T extends ReturnType<import("pubsub-to-rpc-api")
+        .Model
+        .CreateServiceReturn<Pick<(typeof PROTON_CALENDAR_IPC_WEBVIEW_API_DEFINITION), "ping">,
+        [import("electron").IpcMessageEvent]>["caller"]>>(
+        client: T,
+        timeoutMs: number,
+    ) {
+        return race(
+            defer(async () => {
+                return client("ping", {timeoutMs: ONE_SECOND_MS})({zoneName: logger.zoneName()});
+            }).pipe(
+                retryWhen((errors) => {
+                    return errors.pipe(
+                        delay(ONE_SECOND_MS),
+                    );
+                }),
+            ),
+            timer(timeoutMs).pipe(
+                concatMap(() => {
+                    return throwError(
+                        new Error(
+                            `Failed to wait for "webview" service provider initialization (timeout: ${timeoutMs}ms).`,
+                        ),
+                    );
+                }),
+            ),
+        );
     }
 
     private buildApiCallOptions(options: LimitedCallOptions = {}): SuperCallOptions {

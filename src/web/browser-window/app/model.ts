@@ -20,6 +20,7 @@ export interface WebAccount {
     loggedInOnce?: boolean;
     loginDelayedSeconds?: number;
     loginDelayedUntilSelected?: boolean;
+    webviewSrcValues: Record<Extract<keyof typeof __METADATA__.electronLocations.preload, "primary" | "calendar">, string>;
 }
 
 export type WebAccountProgress = WebAccount["progress"];

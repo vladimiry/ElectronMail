@@ -6,4 +6,4 @@ export const STATE = createFeatureSelector<State>(featureName);
 
 export const FEATURED = {
     items: createSelector(STATE, ({items}) => items),
-};
+} as const;

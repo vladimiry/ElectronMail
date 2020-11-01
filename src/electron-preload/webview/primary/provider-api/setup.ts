@@ -3,9 +3,9 @@ import {first, mergeMap, tap} from "rxjs/operators";
 
 import {IFRAME_NOTIFICATION$} from "src/electron-preload/webview/primary/provider-api/notifications";
 import {ONE_SECOND_MS} from "src/shared/constants";
-import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/constants";
+import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 import {applyZoomFactor} from "src/electron-preload/lib/util";
-import {curryFunctionMembers, testProtonAppPage} from "src/shared/util";
+import {curryFunctionMembers, testProtonMailAppPage} from "src/shared/util";
 import {disableBrowserNotificationFeature} from "src/electron-preload/webview/lib/util";
 import {initSpellCheckProvider} from "src/electron-preload/lib/spell-check";
 import {registerDocumentClickEventListener, registerDocumentKeyDownEventListener} from "src/electron-preload/lib/events-handling";
@@ -13,7 +13,7 @@ import {registerDocumentClickEventListener, registerDocumentKeyDownEventListener
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, "[provider-api/setup]");
 
 export const setupProviderIntegration = (
-    {shouldDisableBrowserNotificationFeature, blankHtmlPage}: ReturnType<typeof testProtonAppPage>,
+    {shouldDisableBrowserNotificationFeature, blankHtmlPage}: ReturnType<typeof testProtonMailAppPage>,
 ): void => {
     const logger = curryFunctionMembers(_logger, "setupProviderIntegration()");
 

@@ -5,4 +5,11 @@
     [webViewSrc]="src"
 ></electron-mail-account-view-primary>
 
+<electron-mail-account-view-calendar
+    *ngIf="webViewsState.calendar.src$ | async; let src"
+    (event)="onEventChild($event)"
+    [account]="account"
+    [webViewSrc]="src"
+></electron-mail-account-view-calendar>
+
 <ng-container #tplDbViewComponentContainerRef></ng-container>

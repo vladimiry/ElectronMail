@@ -16,7 +16,7 @@ export const FEATURED = {
     snapPasswordManagerServiceHint: createSelector(STATE, (state) => state.snapPasswordManagerServiceHint),
     mainProcessNotification: createSelector(STATE, (state) => state.mainProcessNotification),
     trayIconDataURL: createSelector(STATE, (state) => state.trayIconDataURL),
-};
+} as const;
 
 export const CONFIG = {
     base: createSelector(FEATURED.config, pickBaseConfigProperties),
@@ -26,10 +26,11 @@ export const CONFIG = {
     unreadBgColor: createSelector(FEATURED.config, (config) => config.customUnreadBgColor || DEFAULT_UNREAD_BADGE_BG_COLOR),
     unreadTextColor: createSelector(FEATURED.config, (config) => config.customUnreadTextColor || DEFAULT_UNREAD_BADGE_BG_TEXT),
     hideControls: createSelector(FEATURED.config, (config) => config.hideControls),
+    calendarNotification: createSelector(FEATURED.config, (config) => config.calendarNotification),
     timeouts: createSelector(FEATURED.config, (config) => config.timeouts),
     localDbMailsListViewMode: createSelector(FEATURED.config, (config) => config.localDbMailsListViewMode),
     doNotRenderNotificationBadgeValue: createSelector(FEATURED.config, (config) => config.doNotRenderNotificationBadgeValue),
-};
+} as const;
 
 export const SETTINGS = (
     () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
@@ -51,6 +52,6 @@ export const SETTINGS = (
                         0,
                     );
                 }),
-        };
+        } as const;
     }
 )();

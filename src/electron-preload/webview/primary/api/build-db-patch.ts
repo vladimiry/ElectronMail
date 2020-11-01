@@ -9,9 +9,9 @@ import {DbPatch} from "src/shared/api/common";
 import {EVENT_ACTION} from "src/electron-preload/webview/lib/rest-model";
 import {FsDbAccount, LABEL_TYPE, SYSTEM_FOLDER_IDENTIFIERS} from "src/shared/model/database";
 import {Logger} from "src/shared/model/common";
-import {ProtonApi, ProtonApiScan} from "src/shared/api/webview/primary";
+import {ProtonPrimaryApi, ProtonPrimaryApiScan} from "src/shared/api/webview/primary";
 import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
-import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/constants";
+import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 import {buildDbPatchRetryPipeline, buildEmptyDbPatch, fetchEvents, persistDatabasePatch} from "src/electron-preload/webview/lib/util";
 import {curryFunctionMembers, isDatabaseBootstrapped} from "src/shared/util";
 import {isProtonApiError, resolveCachedConfig, sanitizeProtonApiError} from "src/electron-preload/lib/util";
@@ -22,7 +22,7 @@ interface DbPatchBundle {
     metadata: FsDbAccount["metadata"];
 }
 
-type BuildDbPatchMethodReturnType = ProtonApiScan["ApiImplReturns"]["buildDbPatch"];
+type BuildDbPatchMethodReturnType = ProtonPrimaryApiScan["ApiImplReturns"]["buildDbPatch"];
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, "[api/build-db-patch]");
 
@@ -352,7 +352,7 @@ async function buildDbPatch(
     return patch;
 }
 
-const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonApi, "buildDbPatch" | "fetchSingleMail"> => {
+const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonPrimaryApi, "buildDbPatch" | "fetchSingleMail"> => {
     return {
         buildDbPatch(input) {
             const logger = curryFunctionMembers(_logger, "buildDbPatch()", input.zoneName);

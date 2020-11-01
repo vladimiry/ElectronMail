@@ -2,7 +2,7 @@ import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/form
 import {Component, ElementRef, Inject, OnDestroy, OnInit} from "@angular/core";
 import {Observable, Subscription} from "rxjs";
 import {Store, select} from "@ngrx/store";
-import {distinctUntilKeyChanged, map, take} from "rxjs/operators";
+import {distinctUntilChanged, distinctUntilKeyChanged, map, take} from "rxjs/operators";
 
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {BaseConfig} from "src/shared/model/options";
@@ -62,6 +62,7 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         startHidden: new FormControl(),
         unreadNotifications: new FormControl(),
         zoomFactor: new FormControl(),
+        calendarNotification: new FormControl(),
     };
 
     readonly form = new FormGroup(this.controls);
@@ -79,9 +80,15 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         map(({unread}) => unread),
     );
 
+    readonly localStoreInUse$: Observable<boolean> = this.store.pipe(
+        select(AccountsSelectors.FEATURED.accounts),
+        map((accounts) => accounts.some((account) => account.accountConfig.database)),
+        distinctUntilChanged(),
+    );
+
     private readonly logger = getZoneNameBoundWebLogger();
 
-    private subscription = new Subscription();
+    private readonly subscription = new Subscription();
 
     constructor(
         @Inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN)

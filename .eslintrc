@@ -46,7 +46,7 @@
                     }
                 ],
                 "prefer-destructuring": "error",
-                "semi": "error",
+                "semi": "warn",
                 "import/no-unresolved": "off",
                 "import/no-relative-parent-imports": "error",
                 "sonarjs/prefer-immediate-return": "off",

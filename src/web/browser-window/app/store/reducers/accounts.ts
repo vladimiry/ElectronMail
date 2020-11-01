@@ -15,11 +15,9 @@ export const featureName = "accounts";
 export interface State extends fromRoot.State {
     selectedLogin?: string;
     initialized?: boolean;
+    globalProgress: { indexing?: boolean };
     // TODO consider using "@ngrx/entity" library instead of dealing with a raw array
     accounts: WebAccount[];
-    globalProgress: {
-        indexing?: boolean;
-    };
 }
 
 const initialState: State = {
@@ -66,11 +64,16 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                             accountConfig,
                             progress: {},
                             notifications: {
-                                loggedIn: false,
-                                pageType: {url: "", type: "unknown"},
                                 unread: 0,
+                                loggedIn: false,
+                                loggedInCalendar: false,
+                                pageType: {url: "", type: "unknown"},
                             },
                             dbExportProgress: [],
+                            webviewSrcValues: {
+                                calendar: "",
+                                primary: ""
+                            },
                         };
 
                         accounts.push(webAccount);
@@ -129,6 +132,9 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                 return;
             }
 
+            if ("webviewSrcValues" in patch) {
+                account.webviewSrcValues = {...account.webviewSrcValues, ...patch.webviewSrcValues};
+            }
             if ("notifications" in patch) {
                 account.notifications = {...account.notifications, ...patch.notifications};
 

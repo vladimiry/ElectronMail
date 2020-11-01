@@ -3,11 +3,10 @@ import {Observable, Subscription, race} from "rxjs";
 import {distinctUntilChanged, filter, map, take} from "rxjs/operators";
 import {pick} from "remeda";
 
+import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountComponent} from "src/web/browser-window/app/_accounts/account.component";
-import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
-import {NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";
 import {PACKAGE_VERSION} from "src/shared/constants";
 import {WebAccount} from "src/web/browser-window/app/model";
@@ -83,7 +82,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
 
     protected constructor(
         private readonly viewType:
-            Extract<keyof typeof __METADATA__.electronLocations.preload, "primary" /* | "calendar" */>,
+            Extract<keyof typeof __METADATA__.electronLocations.preload, "primary" | "calendar">,
         private readonly injector: Injector,
     ) {
         super();
@@ -121,9 +120,9 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         this.subscription.unsubscribe();
         this.event.emit({
             type: "action",
-            payload: this.injector
-                .get(AccountsService)
-                .generateNotificationsStateResetAction({login: this.account.accountConfig.login, optionalAccount: true}),
+            payload: ACCOUNTS_ACTIONS.Patch(
+                {login: this.account.accountConfig.login, patch: {webviewSrcValues: {[this.viewType]: ""}}, optionalAccount: true},
+            ),
         });
     }
 
@@ -158,6 +157,17 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
 
         this.event.emit({type: "log", data: ["info", "registerWebViewEventsHandlingOnce()"]});
 
+        const didNavigateArgs = [
+            "did-navigate",
+            ({url}: import("electron").DidNavigateEvent) => {
+                this.event.emit({
+                    type: "action",
+                    payload: ACCOUNTS_ACTIONS.Patch(
+                        {login: this.account.accountConfig.login, patch: {webviewSrcValues: {[this.viewType]: url}}},
+                    ),
+                });
+            },
+        ] as const;
         const domReadyArgs = [
             "dom-ready",
             ({type}: import("electron").Event) => {
@@ -239,6 +249,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         //      it's currently not possible since TS doesn't support overloaded methods narrowing:
         //      - https://github.com/Microsoft/TypeScript/issues/26591
         //      - https://github.com/Microsoft/TypeScript/issues/25352
+        webView.addEventListener(...didNavigateArgs);
         webView.addEventListener(...domReadyArgs);
         webView.addEventListener(...newWindowArgs);
         webView.addEventListener(...consoleMessageArgs);
@@ -279,6 +290,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
 
         this.subscription.add({
             unsubscribe: () => {
+                webView.removeEventListener(...didNavigateArgs);
                 webView.removeEventListener(...domReadyArgs);
                 webView.removeEventListener(...newWindowArgs);
                 webView.removeEventListener(...consoleMessageArgs);

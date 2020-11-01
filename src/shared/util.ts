@@ -79,19 +79,20 @@ export function initialConfig(): Config {
                 /* eslint-enable max-len */
             ],
             // base
-            doNotRenderNotificationBadgeValue: false,
+            calendarNotification: false,
             checkUpdateAndNotify: false,
-            hideOnClose: true,
-            layoutMode: "top",
             customTrayIconColor: "",
             customUnreadBgColor: "",
             customUnreadTextColor: "",
             disableSpamNotifications: true,
+            doNotRenderNotificationBadgeValue: false,
             enableHideControlsHotkey: false,
             findInPage: true,
             fullTextSearch: true,
             hideControls: false,
+            hideOnClose: true,
             idleTimeLogOutSec: 0,
+            layoutMode: "top",
             logLevel: "error",
             startHidden: true,
             unreadNotifications: true,
@@ -100,47 +101,31 @@ export function initialConfig(): Config {
     }
 }
 
-export function pickBaseConfigProperties(
-    {
-        doNotRenderNotificationBadgeValue,
-        checkUpdateAndNotify,
-        hideOnClose,
-        layoutMode,
-        customTrayIconColor,
-        customUnreadBgColor,
-        customUnreadTextColor,
-        disableSpamNotifications,
-        enableHideControlsHotkey,
-        findInPage,
-        fullTextSearch,
-        hideControls,
-        idleTimeLogOutSec,
-        logLevel,
-        startHidden,
-        unreadNotifications,
-        zoomFactor,
-    }: Config,
-): Required<BaseConfig> {
-    return {
-        doNotRenderNotificationBadgeValue,
-        checkUpdateAndNotify,
-        hideOnClose,
-        layoutMode,
-        customTrayIconColor,
-        customUnreadBgColor,
-        customUnreadTextColor,
-        disableSpamNotifications,
-        enableHideControlsHotkey,
-        findInPage,
-        fullTextSearch,
-        hideControls,
-        idleTimeLogOutSec,
-        logLevel,
-        startHidden,
-        unreadNotifications,
-        zoomFactor,
-    };
-}
+export const pickBaseConfigProperties = (
+    config: Config,
+): NoExtraProps<Required<BaseConfig>> => pick(
+    config,
+    [
+        "calendarNotification",
+        "checkUpdateAndNotify",
+        "customTrayIconColor",
+        "customUnreadBgColor",
+        "customUnreadTextColor",
+        "disableSpamNotifications",
+        "doNotRenderNotificationBadgeValue",
+        "enableHideControlsHotkey",
+        "findInPage",
+        "fullTextSearch",
+        "hideControls",
+        "hideOnClose",
+        "idleTimeLogOutSec",
+        "layoutMode",
+        "logLevel",
+        "startHidden",
+        "unreadNotifications",
+        "zoomFactor",
+    ],
+);
 
 export const accountPickingPredicate: (criteria: LoginFieldContainer) => (account: AccountConfig) => boolean = ({login: criteriaLogin}) => {
     return ({login}) => login === criteriaLogin; // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
@@ -516,13 +501,14 @@ export const resolvePackagedWebClientApp: (
     }
 )();
 
-export const testProtonAppPage = (
+const testProtonAppPage = (
+    targetProjectType: keyof typeof PROVIDER_REPO_MAP,
     {url, logger}: { url: string; logger: import("src/shared/model/common").Logger },
 ): {
     shouldInitProviderApi: boolean
-    shouldDisableBrowserNotificationFeature: boolean
     blankHtmlPage: boolean
     packagedWebClientUrl: ReturnType<typeof parsePackagedWebClientUrl>
+    projectType?: keyof typeof PROVIDER_REPO_MAP,
 } => {
     let projectType: keyof typeof PROVIDER_REPO_MAP | undefined;
     const packagedWebClientUrl = parsePackagedWebClientUrl(url);
@@ -532,18 +518,35 @@ export const testProtonAppPage = (
         &&
         packagedWebClientUrl
         &&
-        (projectType = resolvePackagedWebClientApp(packagedWebClientUrl).project) === "proton-mail"
+        (projectType = resolvePackagedWebClientApp(packagedWebClientUrl).project) === targetProjectType
     );
     const result = {
         shouldInitProviderApi: protonMailProject,
-        shouldDisableBrowserNotificationFeature: protonMailProject,
         blankHtmlPage,
         packagedWebClientUrl,
+        projectType,
     } as const;
 
     logger.verbose("testProtonAppPage()", JSON.stringify({...result, url, projectType}));
 
     return result;
+};
+
+export const testProtonMailAppPage = (
+    params: { url: string; logger: import("src/shared/model/common").Logger },
+): ReturnType<typeof testProtonAppPage> & { shouldDisableBrowserNotificationFeature: boolean } => {
+    const baseResult = testProtonAppPage("proton-mail", params);
+
+    return {
+        ...baseResult,
+        shouldDisableBrowserNotificationFeature: baseResult.shouldInitProviderApi,
+    };
+};
+
+export const testProtonCalendarAppPage = (
+    params: { url: string; logger: import("src/shared/model/common").Logger },
+): ReturnType<typeof testProtonAppPage> => {
+    return testProtonAppPage("proton-calendar", params);
 };
 
 export const consumeMemoryRateLimiter = async (

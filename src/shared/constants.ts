@@ -54,6 +54,17 @@ export const PROVIDER_REPO_NAMES = [
     "proton-drive",
 ] as const;
 
+export const PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS = [
+    // immediate
+    "./node_modules/react-components/containers/app/StandardSetup.tsx",
+    // lazy/dynamic
+    // triggered via "./node_modules/react-components/containers/app/StandardSetup.tsx":
+    "./node_modules/react-components/hooks/useApi.ts",
+    "./node_modules/react-components/hooks/useAuthentication.ts",
+    "./node_modules/react-components/hooks/useCache.ts",
+    "./node_modules/react-router/esm/react-router.js",
+] as const;
+
 export const PROVIDER_REPO_MAP = {
     [PROVIDER_REPO_NAMES[0]]: {
         repoRelativeDistDir: "./dist",
@@ -71,19 +82,16 @@ export const PROVIDER_REPO_MAP = {
                 "./node_modules/proton-shared/lib/api/messages.js",
                 "./node_modules/proton-shared/lib/constants.ts",
                 "./node_modules/proton-shared/lib/models/mailSettingsModel.js",
-                "./node_modules/react-components/containers/app/StandardSetup.tsx",
                 "./src/app/containers/PageContainer.tsx",
-                "./src/app/helpers/attachment/attachmentLoader.ts",
                 "./src/app/helpers/mailboxUrl.ts",
                 "./src/app/helpers/message/messageDecrypt.ts",
                 // lazy/dynamic
-                "./node_modules/react-components/hooks/useApi.ts",
-                "./node_modules/react-components/hooks/useAuthentication.ts",
-                "./node_modules/react-components/hooks/useCache.ts",
+                // triggered via "./src/app/containers/PageContainer.tsx":
                 "./node_modules/react-components/hooks/useGetEncryptionPreferences.ts",
-                "./node_modules/react-router/esm/react-router.js",
                 "./src/app/containers/AttachmentProvider.tsx",
+                "./src/app/helpers/attachment/attachmentLoader.ts",
                 "./src/app/hooks/message/useMessageKeys.ts",
+                ...PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS,
             ],
         },
     },
@@ -113,7 +121,14 @@ export const PROVIDER_REPO_MAP = {
         baseDirName: "calendar",
         repo: "https://github.com/ProtonMail/proton-calendar.git",
         commit: "66eaf58929b4e0d9629befcaa6fbacabfb6836ea",
-        protonPack: {appConfig: {clientId: "WebCalendar"}},
+        protonPack: {
+            appConfig: {clientId: "WebCalendar"},
+            webpackIndexEntryItems: [
+                // immediate
+                "./src/app/content/PrivateApp.tsx",
+                ...PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS,
+            ],
+        },
     },
     [PROVIDER_REPO_NAMES[5]]: {
         repoRelativeDistDir: "./dist",

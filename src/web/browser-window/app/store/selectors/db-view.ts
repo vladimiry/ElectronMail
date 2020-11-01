@@ -13,4 +13,4 @@ export const FEATURED = {
             ({instances}: State, {pk}: { pk: DbAccountPk }) => instances[JSON.stringify(pk)],
         );
     },
-};
+} as const;

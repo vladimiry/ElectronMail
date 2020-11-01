@@ -24,10 +24,24 @@ export class AccountsService {
         }>,
     ) {}
 
-    generateNotificationsStateResetAction(
+    generatePrimaryNotificationsStateResetAction(
         {login, optionalAccount}: { login: string; optionalAccount?: boolean }
     ): ReturnType<typeof ACCOUNTS_ACTIONS.Patch> {
-        return ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread: 0, loggedIn: false}}, optionalAccount});
+        return ACCOUNTS_ACTIONS.Patch({
+            login,
+            patch: {notifications: {unread: 0, loggedIn: false, /* loggedInCalendar: false */}},
+            optionalAccount,
+        });
+    }
+
+    generateCalendarNotificationsStateResetAction(
+        {login, optionalAccount}: { login: string; optionalAccount?: boolean }
+    ): ReturnType<typeof ACCOUNTS_ACTIONS.Patch> {
+        return ACCOUNTS_ACTIONS.Patch({
+            login,
+            patch: {notifications: {loggedInCalendar: false}},
+            optionalAccount,
+        });
     }
 
     buildLoginDelaysResetAction(

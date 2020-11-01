@@ -1,3 +1,4 @@
+import {BehaviorSubject, Observable, Subject, Subscription, combineLatest, race, timer} from "rxjs";
 import {
     ChangeDetectionStrategy,
     Component,
@@ -9,10 +10,10 @@ import {
     ViewChild,
     ViewContainerRef,
 } from "@angular/core";
-import {Observable, ReplaySubject, Subject, Subscription, combineLatest, race, timer} from "rxjs";
 import {Store, select} from "@ngrx/store";
 import {URL} from "@cliqz/url-parser";
 import {
+    concatMap,
     debounceTime,
     delayWhen,
     distinctUntilChanged,
@@ -26,6 +27,7 @@ import {
     take,
     withLatestFrom,
 } from "rxjs/operators";
+import {throwError} from "rxjs/internal/observable/throwError";
 
 import {ACCOUNTS_ACTIONS, AppAction, NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
@@ -37,6 +39,7 @@ import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {LogLevel} from "src/shared/model/common";
 import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";
 import {ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/constants";
+import {ProtonClientSession} from "src/shared/model/proton";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount} from "src/web/browser-window/app/model";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
@@ -62,14 +65,11 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     @Input()
     readonly class: string = "";
 
-    readonly webViewsState: Readonly<Record<"primary" /* | "calendar" */, {
-        readonly src$: Subject<string>;
-        readonly domReady$: Subject<Electron.WebviewTag>;
+    readonly webViewsState: Readonly<Record<"primary" | "calendar", {
+        readonly src$: BehaviorSubject<string>; readonly domReady$: Subject<Electron.WebviewTag>;
     }>> = {
-        primary: {
-            src$: new ReplaySubject(1),
-            domReady$: new Subject(),
-        },
+        primary: {src$: new BehaviorSubject(""), domReady$: new Subject()},
+        calendar: {src$: new BehaviorSubject(""), domReady$: new Subject()},
     };
 
     @ViewChild("tplDbViewComponentContainerRef", {read: ViewContainerRef, static: true})
@@ -94,6 +94,18 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         distinctUntilChanged(),
     );
 
+    private readonly loggedIn$ = this.account$.pipe(
+        map(({notifications: {loggedIn}}) => loggedIn),
+        distinctUntilChanged(),
+    );
+
+    private readonly loggedInCalendar$ = this.account$.pipe(
+        map(({notifications: {loggedInCalendar}}) => loggedInCalendar),
+        distinctUntilChanged(),
+    );
+
+    private readonly ipcMainClient = this.electronService.ipcMainClient();
+
     // TODO resolve "componentIndex" dynamically: accounts$.indexOf(({login}) => this.login === login)
     private readonly componentIndex: number;
 
@@ -111,7 +123,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     constructor(
         private readonly dbViewModuleResolve: DbViewModuleResolve,
         private readonly accountsService: AccountsService,
-        private readonly api: ElectronService,
+        private readonly electronService: ElectronService,
         private readonly core: CoreService,
         private readonly store: Store<State>,
         private readonly zone: NgZone,
@@ -146,42 +158,41 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                 .subscribe(([, {accountConfig}]) => {
                     (async () => {
                         const project = "proton-mail";
-                        const {primary: state} = this.webViewsState;
-                        const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, project);
+                        const {primary: webViewsState} = this.webViewsState;
                         const key = {
                             login: accountConfig.login,
-                            apiEndpointOrigin: parseUrlOriginWithNullishCheck(parsedEntryUrl.entryApiUrl),
+                            apiEndpointOrigin: parseUrlOriginWithNullishCheck(this.core.parseEntryUrl(accountConfig, project).entryApiUrl),
                         } as const;
-                        const initProtonClientSessionAndNavigateArgs = [
+                        const applyProtonClientSessionAndNavigateArgs = [
                             accountConfig,
                             project,
-                            state.domReady$,
-                            (src: string) => state.src$.next(src),
+                            webViewsState.domReady$,
+                            (src: string) => webViewsState.src$.next(src),
                             this.logger,
                         ] as const;
                         const baseReturn = async (): Promise<void> => {
                             // reset the "backend session"
-                            await this.api.ipcMainClient()("resetProtonBackendSession")({login: key.login});
+                            await this.ipcMainClient("resetProtonBackendSession")({login: key.login});
                             // reset the "client session" and navigate
-                            await this.core.initProtonClientSessionAndNavigate(...initProtonClientSessionAndNavigateArgs);
+                            await this.core.applyProtonClientSessionAndNavigate(...applyProtonClientSessionAndNavigateArgs);
                         };
 
                         if (!accountConfig.persistentSession) {
                             return baseReturn();
                         }
 
-                        const clientSession = await this.api.ipcMainClient()("resolveSavedProtonClientSession")(key);
+                        const clientSession = await this.ipcMainClient("resolveSavedProtonClientSession")(key);
 
                         if (!clientSession) {
                             return baseReturn();
                         }
 
-                        if (!(await this.api.ipcMainClient()("applySavedProtonBackendSession")(key))) {
+                        if (!(await this.ipcMainClient("applySavedProtonBackendSession")(key))) {
                             return baseReturn();
                         }
 
-                        await this.core.initProtonClientSessionAndNavigate(...[
-                            ...initProtonClientSessionAndNavigateArgs,
+                        await this.core.applyProtonClientSessionAndNavigate(...[
+                            ...applyProtonClientSessionAndNavigateArgs,
                             clientSession,
                         ] as const);
                     })().catch((error) => {
@@ -260,7 +271,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, "proton-mail");
                         const key = {login: accountConfig.login, apiEndpointOrigin: new URL(parsedEntryUrl.entryApiUrl).origin} as const;
 
-                        await this.api.ipcMainClient()("resetSavedProtonSession")(key);
+                        await this.ipcMainClient("resetSavedProtonSession")(key);
                     })().catch((error) => {
                         // TODO make "AppErrorHandler.handleError" catch promise rejection errors
                         this.onDispatchInLoggerZone(NOTIFICATION_ACTIONS.Error(error));
@@ -290,47 +301,92 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     }
 
     onPrimaryViewLoadedOnce(primaryWebView: Electron.WebviewTag): void {
-        this.logger.info(`onPrimaryViewLoadedOnce()`);
+        this.logger.info("onPrimaryViewLoadedOnce()");
+
+        const resolveSavedProtonClientSession = async (): Promise<ProtonClientSession> => {
+            const apiClient = await this.electronService.primaryWebViewClient(primaryWebView).toPromise();
+            const value = await apiClient("resolveSavedProtonClientSession")({zoneName: this.loggerZone.name});
+
+            if (!value) {
+                throw new Error(`Failed to resolve "proton client session" object`);
+            }
+
+            return value;
+        };
 
         this.subscription.add(
             combineLatest([
-                // notification: toggling "loggedIn" state
-                this.account$.pipe(
-                    map(({notifications: {loggedIn}}) => loggedIn),
-                    distinctUntilChanged(),
-                ),
-                // notification: toggling "persistentSession" flag on the account edit form
+                this.loggedIn$,
                 this.persistentSession$,
             ]).pipe(
+                filter(([loggedIn, persistentSession]) => persistentSession && loggedIn),
                 withLatestFrom(this.account$),
-            ).subscribe(([[loggedIn, persistentSession], {accountConfig}]) => {
+            ).subscribe(([, {accountConfig}]) => {
                 (async () => {
-                    const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, "proton-mail");
-                    const key = {
+                    await this.ipcMainClient("saveProtonSession")({
                         login: accountConfig.login,
-                        apiEndpointOrigin: parseUrlOriginWithNullishCheck(parsedEntryUrl.entryApiUrl),
-                    } as const;
-
-                    if (!persistentSession) {
-                        return;
-                    }
-
-                    if (!loggedIn) {
-                        // TODO reset the session if logged-in value toggled "true => false" and page the page is "proton-mail"
-                        return;
-                    }
-
-                    const apiClient = await this.api.webViewClient(primaryWebView).toPromise();
-                    const clientSession = await apiClient("resolveSavedProtonClientSession")({zoneName: this.loggerZone.name});
-
-                    if (!clientSession) {
-                        throw new Error(`Failed to resolve ProtonClientSession object`);
-                    }
-
-                    await this.api.ipcMainClient()("saveProtonSession")({
-                        ...key,
-                        clientSession,
+                        clientSession: await resolveSavedProtonClientSession(),
+                        apiEndpointOrigin: parseUrlOriginWithNullishCheck(
+                            this.core.parseEntryUrl(accountConfig, "proton-mail").entryApiUrl,
+                        ),
                     });
+                })().catch((error) => {
+                    // TODO make "AppErrorHandler.handleError" catch promise rejection errors
+                    this.onDispatchInLoggerZone(NOTIFICATION_ACTIONS.Error(error));
+                });
+            }),
+        );
+
+        this.subscription.add(
+            combineLatest([
+                this.loggedIn$,
+                this.loggedInCalendar$,
+                this.store.pipe(
+                    select(OptionsSelectors.CONFIG.calendarNotification),
+                ),
+            ]).pipe(
+                withLatestFrom(
+                    this.account$,
+                    this.store.pipe(
+                        select(OptionsSelectors.CONFIG.timeouts),
+                    ),
+                ),
+            ).subscribe((
+                [[loggedIn, loggedInCalendar, calendarNotification], {accountConfig}, {webViewApiPing: calendarGetsSignedInStateTimeoutMs}]
+            ) => {
+                if (!calendarNotification) {
+                    // TODO make sure that calendar-related component/webview actually disappears
+                    this.webViewsState.calendar.src$.next("");
+                    return;
+                }
+                if (!loggedIn || loggedInCalendar) {
+                    return;
+                }
+
+                (async () => {
+                    // TODO if "src$" has been set before, consider only refreshing the client session without full page reload
+
+                    await Promise.all([
+                        // the app shares the same backend between mail and calendar, so applying here only the client session
+                        await this.core.applyProtonClientSessionAndNavigate(
+                            accountConfig,
+                            "proton-calendar",
+                            this.webViewsState.calendar.domReady$,
+                            (src: string) => this.webViewsState.calendar.src$.next(src),
+                            this.logger,
+                            await resolveSavedProtonClientSession(),
+                        ),
+                        race(
+                            this.loggedInCalendar$.pipe(
+                                filter(Boolean),
+                            ),
+                            timer(calendarGetsSignedInStateTimeoutMs).pipe(
+                                concatMap(() => throwError(
+                                    new Error(`The Calendar has not got the signed-in stage in ${calendarGetsSignedInStateTimeoutMs}ms`)),
+                                ),
+                            ),
+                        ).toPromise(),
+                    ]);
                 })().catch((error) => {
                     // TODO make "AppErrorHandler.handleError" catch promise rejection errors
                     this.onDispatchInLoggerZone(NOTIFICATION_ACTIONS.Error(error));
@@ -342,7 +398,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
             this.databaseViewToggled$.subscribe(async ([{databaseView}, selectedLogin]) => {
                 // tslint:disable-next-line:early-exit
                 if (this.account.accountConfig.login === selectedLogin) {
-                    await this.api.ipcMainClient()("selectAccount")({
+                    await this.ipcMainClient("selectAccount")({
                         databaseView,
                         // WARN electron: "webView.getWebContentsId()" is available only after "webView.dom-ready" triggered
                         webContentId: primaryWebView.getWebContentsId(),
@@ -366,7 +422,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                 debounceTime(ONE_SECOND_MS * 0.3),
             ).subscribe(async () => {
                 this.focusPrimaryWebView();
-                await this.api.ipcMainClient()("selectAccount")({
+                await this.ipcMainClient("selectAccount")({
                     databaseView: this.account.databaseView,
                     // WARN electron: "webView.getWebContentsId()" is available only after "webView.dom-ready" triggered
                     webContentId: primaryWebView.getWebContentsId(),

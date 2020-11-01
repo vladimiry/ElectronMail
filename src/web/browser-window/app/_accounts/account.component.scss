@@ -22,4 +22,8 @@
             display: none;
         }
     }
+
+    &::ng-deep #{$app-prefix}-account-view-calendar {
+        display: none;
+    }
 }

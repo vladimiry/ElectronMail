@@ -1,13 +1,14 @@
 import {EMPTY, combineLatest} from "rxjs";
 import {distinctUntilChanged, first, map, mergeMap} from "rxjs/operators";
 
-import {EncryptionPreferences, HttpApi, MessageKeys, ProviderApi} from "./model";
+import {EncryptionPreferences, MessageKeys, ProviderApi} from "./model";
 import {FETCH_NOTIFICATION_SKIP_SYMBOL} from "./const";
+import {HttpApi, resolveStandardSetupPublicApi} from "src/electron-preload/webview/lib/provider-api/standart-setup-internals";
 import {Logger} from "src/shared/model/common";
-import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/constants";
+import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 import {assertTypeOf, curryFunctionMembers} from "src/shared/util";
-import {attachRateLimiting} from "src/electron-preload/webview/primary/provider-api/rate-limiting";
-import {resolveProviderInternals} from "src/electron-preload/webview/primary/provider-api/internals";
+import {attachRateLimiting} from "./rate-limiting";
+import {resolveProviderInternals} from "./internals";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, "[provider-api/index]");
 
@@ -30,39 +31,14 @@ const attachLoggingBeforeCall = (api: ProviderApi, logger: Logger): void => {
 export const initProviderApi = async (): Promise<ProviderApi> => {
     const logger = curryFunctionMembers(_logger, "initProviderApi()");
 
-    logger.info("init");
+    logger.info();
 
     return (async (): Promise<ProviderApi> => {
-        const internals = await resolveProviderInternals();
-        const internalsPublicApi = (() => { // eslint-disable-line @typescript-eslint/explicit-function-return-type
-            const scope$ = internals["./node_modules/react-components/containers/app/StandardSetup.tsx"].value$
-                .asObservable()
-                .pipe(
-                    map(({publicScope}) => publicScope),
-                    distinctUntilChanged(),
-                );
-            return { // TODO set race-based timeout when members of this object get accessed/resolved
-                httpApi$: scope$.pipe(
-                    map(({httpApi}) => httpApi),
-                    distinctUntilChanged(),
-                ),
-                authentication$: scope$.pipe(
-                    map(({authentication}) => authentication),
-                    distinctUntilChanged(),
-                ),
-                cache$: scope$.pipe(
-                    map(({cache}) => cache),
-                    distinctUntilChanged(),
-                ),
-                history$: scope$.pipe(
-                    map(({history}) => history),
-                    distinctUntilChanged(),
-                ),
-            } as const;
-        })();
-        const internalsPrivateScope$ = internals["./src/app/containers/PageContainer.tsx"].value$
-            .asObservable()
-            .pipe(distinctUntilChanged());
+        const [standardSetupPublicApi, internals] = await Promise.all([
+            resolveStandardSetupPublicApi(logger),
+            resolveProviderInternals(),
+        ]);
+        const internalsPrivateScope$ = internals["./src/app/containers/PageContainer.tsx"].value$.pipe(distinctUntilChanged());
         const resolvePrivateApi = async () => { // eslint-disable-line @typescript-eslint/explicit-function-return-type
             return internalsPrivateScope$
                 .pipe(
@@ -78,11 +54,11 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                 )
                 .toPromise();
         };
-        const resolveHttpApi = async (): Promise<HttpApi> => internalsPublicApi.httpApi$.pipe(first()).toPromise();
+        const resolveHttpApi = async (): Promise<HttpApi> => standardSetupPublicApi.httpApi$.pipe(first()).toPromise();
         const providerApi: ProviderApi = {
             _custom_: {
                 loggedIn$: combineLatest([
-                    internalsPublicApi.authentication$,
+                    standardSetupPublicApi.authentication$,
                     internalsPrivateScope$,
                 ]).pipe(
                     map(([authentication, {privateScope}]) => {
@@ -95,7 +71,7 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                     }),
                     distinctUntilChanged(),
                 ),
-                cachedMailSettingsModel$: internalsPublicApi.cache$.pipe(
+                cachedMailSettingsModel$: standardSetupPublicApi.cache$.pipe(
                     mergeMap((cache) => {
                         const cachedModel = cache.get<{
                             value: Unpacked<ProviderApi["_custom_"]["cachedMailSettingsModel$"]>
@@ -270,7 +246,7 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                 async push({folderId, conversationId, mailId}) {
                     // eslint-disable-next-line max-len
                     // https://github.com/ProtonMail/proton-mail/blob/2ab916e847bfe8064f5ff321c50f1028adf547e1/src/app/containers/MailboxContainer.tsx#L147-L150
-                    const history = await internalsPublicApi.history$.pipe(first()).toPromise();
+                    const history = await standardSetupPublicApi.history$.pipe(first()).toPromise();
                     const {setPathInUrl} = internals["./src/app/helpers/mailboxUrl.ts"].value;
                     const resolvedUrl = conversationId
                         ? setPathInUrl(history.location, folderId, conversationId, mailId)
@@ -289,6 +265,6 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
 
         logger.info("initialized");
 
-        return providerApi as any; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+        return providerApi;
     })();
 };

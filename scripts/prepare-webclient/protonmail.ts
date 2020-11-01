@@ -204,7 +204,7 @@ function resolveWebpackConfigPatchingCode(
                         const webpackPatch = repoType !== "proton-mail"
                             ? {publicPath: `/${PROVIDER_REPO_MAP[repoType].baseDirName}/`}
                             : undefined;
-                        const webpackIndexEntryItems = repoType === "proton-mail"
+                        const webpackIndexEntryItems = repoType === "proton-mail" || repoType === "proton-calendar"
                             ? PROVIDER_REPO_MAP[repoType].protonPack.webpackIndexEntryItems
                             : undefined;
 

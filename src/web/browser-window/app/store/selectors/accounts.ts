@@ -6,7 +6,7 @@ import {accountPickingPredicate} from "src/shared/util";
 
 export const STATE = createFeatureSelector<State>(featureName);
 
-const accountsSelector = createSelector(STATE, (s) => s.accounts);
+const accountsSelector = createSelector(STATE, (state) => state.accounts);
 
 export const FEATURED = {
     accounts: accountsSelector,
@@ -17,7 +17,7 @@ export const FEATURED = {
         STATE,
         (s) => s.accounts.find((a) => a.accountConfig.login === s.selectedLogin),
     ),
-};
+} as const;
 
 export const ACCOUNTS = {
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -46,4 +46,4 @@ export const ACCOUNTS = {
             },
         );
     }),
-};
+} as const;

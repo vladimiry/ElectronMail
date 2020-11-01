@@ -20,16 +20,22 @@ import {
 } from "rxjs/operators";
 import {serializeError} from "serialize-error";
 
-import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
+import {
+    ACCOUNTS_ACTIONS,
+    DB_VIEW_ACTIONS,
+    NAVIGATION_ACTIONS,
+    OPTIONS_ACTIONS,
+    unionizeActionFilter
+} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {FIRE_SYNCING_ITERATION$} from "src/web/browser-window/app/app.constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
-import {ONE_MINUTE_MS, ONE_SECOND_MS} from "src/shared/constants";
+import {ONE_MINUTE_MS, ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/constants";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
-import {consumeMemoryRateLimiter, isDatabaseBootstrapped} from "src/shared/util";
+import {consumeMemoryRateLimiter, isDatabaseBootstrapped, testProtonCalendarAppPage} from "src/shared/util";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/browser-window/util";
 
 // TODO get rid of require "rate-limiter-flexible/lib/RateLimiterMemory" import
@@ -61,30 +67,35 @@ export class AccountsEffects {
         ),
     );
 
-    setupNotificationChannel$ = createEffect(
+    setupPrimaryNotificationChannel$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(ACCOUNTS_ACTIONS.is.SetupNotificationChannel),
+            unionizeActionFilter(ACCOUNTS_ACTIONS.is.SetupPrimaryNotificationChannel),
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             mergeMap(({payload, logger}) => {
                 const {webView, finishPromise} = payload;
                 const {login} = payload.account.accountConfig;
-                const dispose$ = from(finishPromise).pipe(tap(() => logger.info("dispose")));
+                const dispose$ = from(finishPromise).pipe(tap(() => {
+                    logger.info("dispose");
+                    this.store.dispatch(
+                        this.accountsService.generatePrimaryNotificationsStateResetAction({login, optionalAccount: true}),
+                    );
+                }));
                 const parsedEntryUrlBundle = this.core.parseEntryUrl(payload.account.accountConfig, "proton-mail");
 
                 logger.info("setup");
 
                 return merge(
-                    // app set's app notification channel on webview.dom-ready event
-                    // which means user is not logged-in yet at this moment, so resetting the state
-                    of(this.accountsService.generateNotificationsStateResetAction({login})),
-
-                    this.api.webViewClient(webView, {finishPromise}).pipe(
+                    this.api.primaryWebViewClient(webView, {finishPromise}).pipe(
                         mergeMap((webViewClient) => {
                             return from(
                                 webViewClient("notification")({...parsedEntryUrlBundle, zoneName: logger.zoneName()}),
                             );
                         }),
-                        withLatestFrom(this.store.pipe(select(AccountsSelectors.ACCOUNTS.pickAccount({login})))),
+                        withLatestFrom(
+                            this.store.pipe(
+                                select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
+                            ),
+                        ),
                         mergeMap(([notification, account]) => {
                             if (typeof notification.batchEntityUpdatesCounter !== "undefined") {
                                 FIRE_SYNCING_ITERATION$.next({login});
@@ -107,7 +118,7 @@ export class AccountsEffects {
                         filter(({payload: {key}}) => key.login === login),
                         mergeMap(({payload}) => {
                             // TODO live attachments export: fire error if offline or not signed-in into the account
-                            return this.api.webViewClient(webView, {finishPromise}).pipe(
+                            return this.api.primaryWebViewClient(webView, {finishPromise}).pipe(
                                 mergeMap((webViewClient) => {
                                     return from(
                                         webViewClient("exportMailAttachments", {timeoutMs: payload.timeoutMs})({
@@ -133,6 +144,79 @@ export class AccountsEffects {
                                 }),
                                 mergeMap(() => EMPTY),
                             );
+                        }),
+                    ),
+                ).pipe(
+                    takeUntil(dispose$),
+                );
+            }),
+        ),
+    );
+
+    setupCalendarNotificationChannel$ = createEffect(
+        () => this.actions$.pipe(
+            unionizeActionFilter(ACCOUNTS_ACTIONS.is.SetupCalendarNotificationChannel),
+            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+            mergeMap(({payload, logger}) => {
+                const {webView, finishPromise} = payload;
+                const {login} = payload.account.accountConfig;
+                const dispose$ = from(finishPromise).pipe(tap(() => {
+                    logger.info("dispose");
+                    this.store.dispatch(
+                        this.accountsService.generateCalendarNotificationsStateResetAction({login, optionalAccount: true}),
+                    );
+                }));
+
+                logger.info("setup");
+
+                return merge(
+                    this.api.calendarWebViewClient(webView, {finishPromise}).pipe(
+                        mergeMap((webViewClient) => {
+                            return from(
+                                webViewClient("notification")({zoneName: logger.zoneName()}),
+                            );
+                        }),
+                        withLatestFrom(
+                            this.store.pipe(
+                                select(OptionsSelectors.FEATURED.trayIconDataURL),
+                            ),
+                            this.store.pipe(
+                                select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
+                                mergeMap((account) => account ? [account] : EMPTY),
+                            ),
+                        ),
+                        mergeMap(([notification, trayIconDataURL, {webviewSrcValues}]) => {
+                            if (!("calendarNotification" in notification)) {
+                                return of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: notification}}));
+                            }
+
+                            if (!notification.calendarNotification) {
+                                throw new Error(`Unexpected "Notification" constructor args received.`);
+                            }
+
+                            // preventing duplicated desktop notifications
+                            // on calendar page the desktop notification gets displayed by calendar itself
+                            if (testProtonCalendarAppPage({url: webviewSrcValues.primary, logger}).projectType === "proton-calendar") {
+                                return EMPTY;
+                            }
+
+                            const [title, options] = notification.calendarNotification;
+
+                            new Notification(
+                                `${PRODUCT_NAME}: ${title}`,
+                                {
+                                    icon: trayIconDataURL,
+                                    body: typeof options === "object"
+                                        ? options.body
+                                        : options,
+                                },
+                            ).onclick = () => {
+                                this.store.dispatch(ACCOUNTS_ACTIONS.Select({login}));
+                                this.store.dispatch(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));
+                                // TODO consider loading the calendar page (likely with with "confirm")
+                            };
+
+                            return EMPTY;
                         }),
                     ),
                 ).pipe(
@@ -186,7 +270,7 @@ export class AccountsEffects {
                             filter(({payload: {pk: key}}) => key.login === login),
                             mergeMap(({payload: selectMailOnlineInput}) => concat(
                                 of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {selectingMailOnline: true}})),
-                                this.api.webViewClient(webView, {finishPromise}).pipe(
+                                this.api.primaryWebViewClient(webView, {finishPromise}).pipe(
                                     mergeMap((webViewClient) => {
                                         const selectMailOnlineInput$ = from(
                                             webViewClient("selectMailOnline", {timeoutMs: ONE_SECOND_MS * 5})({
@@ -218,7 +302,7 @@ export class AccountsEffects {
                             filter(({payload}) => payload.pk.login === login),
                             mergeMap(({payload: {messageIds}}) => concat(
                                 of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {makingMailRead: true}})),
-                                this.api.webViewClient(webView).pipe(
+                                this.api.primaryWebViewClient(webView).pipe(
                                     mergeMap((webViewClient) => {
                                         return from(
                                             webViewClient("makeMailRead", {timeoutMs: ONE_SECOND_MS * 30})(
@@ -249,7 +333,7 @@ export class AccountsEffects {
                             filter(({payload}) => payload.pk.login === login),
                             mergeMap(({payload: {folderId, messageIds}}) => concat(
                                 of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {settingMailFolder: true}})),
-                                this.api.webViewClient(webView).pipe(
+                                this.api.primaryWebViewClient(webView).pipe(
                                     mergeMap((webViewClient) => {
                                         return from(
                                             webViewClient("setMailFolder", {timeoutMs: ONE_MINUTE_MS})(
@@ -280,7 +364,7 @@ export class AccountsEffects {
                             filter(({payload}) => payload.pk.login === login),
                             mergeMap(({payload: {messageIds}}) => concat(
                                 of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {deletingMessages: true}})),
-                                this.api.webViewClient(webView).pipe(
+                                this.api.primaryWebViewClient(webView).pipe(
                                     mergeMap((webViewClient) => {
                                         return from(
                                             webViewClient("deleteMessages", {timeoutMs: ONE_MINUTE_MS})(
@@ -311,7 +395,7 @@ export class AccountsEffects {
                             filter(({payload}) => payload.pk.login === login),
                             mergeMap(({payload: {pk, mailPk}}) => concat(
                                 of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {fetchingSingleMail: true}})),
-                                this.api.webViewClient(webView).pipe(
+                                this.api.primaryWebViewClient(webView).pipe(
                                     // TODO progress on
                                     mergeMap((webViewClient) => {
                                         return from(
@@ -335,7 +419,7 @@ export class AccountsEffects {
                     ),
 
                     // syncing
-                    this.api.webViewClient(webView, {finishPromise}).pipe(
+                    this.api.primaryWebViewClient(webView, {finishPromise}).pipe(
                         mergeMap((webViewClient) => {
                             const syncingIterationTrigger$: Observable<null> = merge(
                                 timer(0, ONE_MINUTE_MS * 5).pipe(
@@ -452,7 +536,7 @@ export class AccountsEffects {
                 const {accountConfig, notifications} = account;
                 const {login, credentials} = accountConfig;
                 const {type: pageType, skipLoginDelayLogic} = notifications.pageType;
-                const resetNotificationsState$ = of(this.accountsService.generateNotificationsStateResetAction({login}));
+                const resetNotificationsState$ = of(this.accountsService.generatePrimaryNotificationsStateResetAction({login}));
                 const zoneName = logger.zoneName();
 
                 // TODO improve login submitting looping prevention
@@ -482,7 +566,7 @@ export class AccountsEffects {
 
                             return merge(
                                 of(this.accountsService.buildLoginDelaysResetAction({login})),
-                                this.api.webViewClient(webView).pipe(
+                                this.api.primaryWebViewClient(webView).pipe(
                                     mergeMap((webViewClient) => {
                                         return from(
                                             webViewClient("fillLogin")({login, zoneName}),
@@ -500,7 +584,7 @@ export class AccountsEffects {
                                     of(this.accountsService.buildLoginDelaysResetAction({login})),
                                     of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: true}})),
                                     resetNotificationsState$,
-                                    this.api.webViewClient(webView).pipe(
+                                    this.api.primaryWebViewClient(webView).pipe(
                                         delay(
                                             account.loggedInOnce
                                                 ? ONE_SECOND_MS
@@ -580,7 +664,7 @@ export class AccountsEffects {
                         const action$ = merge(
                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {twoFactorCode: true}})),
                             resetNotificationsState$,
-                            this.api.webViewClient(webView).pipe(
+                            this.api.primaryWebViewClient(webView).pipe(
                                 mergeMap((webViewClient) => {
                                     return from(
                                         webViewClient("login2fa")({secret, zoneName}),
@@ -610,7 +694,7 @@ export class AccountsEffects {
                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: true}})),
                             resetNotificationsState$,
                             // TODO TS: resolve "webViewClient" calling "this.api.webViewClient" as normally
-                            of(__ELECTRON_EXPOSURE__.buildIpcWebViewClient(webView)).pipe(
+                            of(__ELECTRON_EXPOSURE__.buildIpcPrimaryWebViewClient(webView)).pipe(
                                 mergeMap((webViewClient) => {
                                     return from(
                                         webViewClient("unlock")({mailPassword, zoneName}),

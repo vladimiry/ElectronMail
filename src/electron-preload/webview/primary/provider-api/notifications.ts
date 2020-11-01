@@ -2,7 +2,7 @@ import {Observable, ReplaySubject} from "rxjs";
 
 import {FETCH_NOTIFICATION_SKIP_SYMBOL} from "./const";
 import {ProtonApiError} from "src/electron-preload/webview/primary/types";
-import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/constants";
+import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 import {curryFunctionMembers} from "src/shared/util";
 import {sanitizeProtonApiError} from "src/electron-preload/lib/util";
 

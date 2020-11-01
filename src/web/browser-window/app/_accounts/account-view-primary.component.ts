@@ -8,7 +8,7 @@ import {AccountConfig} from "src/shared/model/account";
 import {AccountViewAbstractComponent} from "src/web/browser-window/app/_accounts/account-view-abstract.component";
 import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
-import {testProtonAppPage} from "src/shared/util";
+import {testProtonMailAppPage} from "src/shared/util";
 
 @Component({
     selector: "electron-mail-account-view-primary",
@@ -37,14 +37,18 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
 
         this.addSubscription(
             this.filterDomReadyEvent().subscribe(({webView}) => {
-                if (!testProtonAppPage({url: webView.src, logger: this.logger}).shouldInitProviderApi) {
+                // app set's app notification channel on webview.dom-ready event
+                // which means user is not logged-in yet at this moment, so resetting the state
+                this.event.emit({
+                    type: "action",
+                    payload: this.accountsService
+                        .generatePrimaryNotificationsStateResetAction({login: this.account.accountConfig.login}),
+                });
+
+                if (!testProtonMailAppPage({url: webView.src, logger: this.logger}).shouldInitProviderApi) {
                     this.event.emit({
                         type: "log",
                         data: ["info", `skip webview.dom-ready processing for ${webView.src} page`]
-                    });
-                    this.event.emit({
-                        type: "action",
-                        payload: this.accountsService.generateNotificationsStateResetAction({login: this.account.accountConfig.login}),
                     });
                     return;
                 }
@@ -54,7 +58,7 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
 
                 this.event.emit({
                     type: "action",
-                    payload: ACCOUNTS_ACTIONS.SetupNotificationChannel({account: this.account, webView, finishPromise}),
+                    payload: ACCOUNTS_ACTIONS.SetupPrimaryNotificationChannel({account: this.account, webView, finishPromise}),
                 });
 
                 this.account$
@@ -91,9 +95,6 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
     }
 
     private onWebViewDomReadyOnceHandler(webView: Electron.WebviewTag): void {
-        const pickCredentialFields = (value: AccountConfig) => pick(value, ["credentials"]);
-        const pickLoginDelayFields = (value: AccountConfig) => pick(value, ["loginDelayUntilSelected", "loginDelaySecondsRange"]);
-
         this.addSubscription(
             this.account$.pipe(
                 pairwise(),
@@ -108,10 +109,10 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
                         )
                         ||
                         // credentials changed
-                        !equals(pickCredentialFields(prev.accountConfig), pickCredentialFields(curr.accountConfig))
+                        !equals(this.pickCredentialFields(prev.accountConfig), this.pickCredentialFields(curr.accountConfig))
                         ||
                         // login delay values changed
-                        !equals(pickLoginDelayFields(prev.accountConfig), pickLoginDelayFields(curr.accountConfig))
+                        !equals(this.pickLoginDelayFields(prev.accountConfig), this.pickLoginDelayFields(curr.accountConfig))
                     );
                 }),
                 map(([, curr]) => curr),
@@ -120,5 +121,13 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
                 this.event.emit({type: "action", payload: ACCOUNTS_ACTIONS.TryToLogin({account, webView})});
             }),
         );
+    }
+
+    private pickCredentialFields(value: AccountConfig): Pick<AccountConfig, "credentials"> {
+        return pick(value, ["credentials"]);
+    }
+
+    private pickLoginDelayFields(value: AccountConfig): Pick<AccountConfig, "loginDelayUntilSelected" | "loginDelaySecondsRange"> {
+        return pick(value, ["loginDelayUntilSelected", "loginDelaySecondsRange"]);
     }
 }

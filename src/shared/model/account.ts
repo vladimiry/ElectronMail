@@ -31,11 +31,12 @@ export type AccountPersistentSessionBundle
     = Record<string /* mapped by "api endpoint origin" */, AccountPersistentSession | undefined>;
 
 export type Notifications = NoExtraProps<{
-    loggedIn: boolean;
+    unread: number
+    loggedIn: boolean
+    loggedInCalendar: boolean
     pageType: NoExtraProps<{
-        url?: string;
-        type: "unknown" | "login" | "login2fa" | "unlock";
-        skipLoginDelayLogic?: boolean;
-    }>;
-    unread: number;
+        url?: string
+        type: "unknown" | "login" | "login2fa" | "unlock"
+        skipLoginDelayLogic?: boolean
+    }>
 }>;

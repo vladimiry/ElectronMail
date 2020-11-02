@@ -3565,10 +3565,10 @@ electron-unhandled@3.0.2:
     ensure-error "^2.0.0"
     lodash.debounce "^4.0.8"
 
-electron@10.1.5:
-  version "10.1.5"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-10.1.5.tgz#f2b161310f627063e73fbac44efcb35dece83a90"
-  integrity sha512-fys/KnEfJq05TtMij+lFvLuKkuVH030CHYx03iZrW5DNNLwjE6cW3pysJ420lB0FRSfPjTHBMu2eVCf5TG71zQ==
+electron@11.0.0-beta.18:
+  version "11.0.0-beta.18"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-11.0.0-beta.18.tgz#8594fd33895413ef20ce2f187a8f6dc76e29728c"
+  integrity sha512-/8MUSMREQXtEC8HkwN+jStUBOrp0fsIJLyem/XCvXNODcUXrc1aczjxiz49HmXseM00R7T0Nk+6UD+z2jKSt3g==
   dependencies:
     "@electron/get" "^1.0.1"
     "@types/node" "^12.0.12"

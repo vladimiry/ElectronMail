@@ -66,10 +66,20 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             const {browserWindow} = uiContext;
 
             if (visible) {
-                if (!uiContext.findInPageBrowserView || uiContext.findInPageBrowserView.isDestroyed()) {
+                const {findInPageBrowserView: existingView} = uiContext;
+                if (
+                    !existingView
+                    ||
+                    (
+                        existingView.isDestroyed
+                        &&
+                        existingView.isDestroyed()
+                    )
+                ) {
                     logger.verbose(`building new "uiContext.findInPageBrowserView" instance`);
-                    const view = uiContext.findInPageBrowserView = await initFindInPageBrowserView(ctx);
-                    setTimeout(() => view.webContents.focus());
+                    setTimeout(
+                        async () => (uiContext.findInPageBrowserView = await initFindInPageBrowserView(ctx)).webContents.focus(),
+                    );
                 } else {
                     logger.debug(`skipping building new "uiContext.findInPageBrowserView" instance as existing one is still alive`);
                 }
@@ -96,7 +106,10 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                         // TODO TS: get rid of any cast, see https://github.com/electron/electron/issues/13581
                         null as any, // eslint-disable-line @typescript-eslint/no-explicit-any
                     );
-                    uiContext.findInPageBrowserView.destroy();
+                    {
+                        const {destroy} =  uiContext.findInPageBrowserView;
+                        destroy && destroy(); // eslint-disable-line no-unused-expressions
+                    }
                     delete uiContext.findInPageBrowserView;
                 });
 

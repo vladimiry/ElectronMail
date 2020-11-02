@@ -25,7 +25,7 @@ files:
   # spellchecker
   - '!node_modules/spellchecker/{spec}'
 compression: normal
-asar: true
+asar: false
 asarUnpack:
   - '**/node_modules/sodium-native/**/*'
   - '**/node_modules/keytar/**/*'

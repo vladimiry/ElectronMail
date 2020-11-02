@@ -8,3 +8,4 @@ export const WEBVIEW_LOGGERS: Readonly<Record<"primary" | "calendar", Logger>> =
     primary: buildLoggerBundle("[preload: webview/primary]"),
     calendar: buildLoggerBundle("[preload: webview/calendar]"),
 };
+

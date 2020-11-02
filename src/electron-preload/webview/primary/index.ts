@@ -3,11 +3,13 @@ import {curryFunctionMembers, testProtonMailAppPage} from "src/shared/util";
 import {getLocationHref} from "src/electron-preload/webview/lib/util";
 import {initProviderApi} from "./provider-api";
 import {registerApi} from "./api";
+import {setupProtonOpenNewTabEventHandler} from "src/electron-preload/webview/lib/custom-event";
 import {setupProviderIntegration} from "./provider-api/setup";
 
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, "[index]");
 const protonAppPageStatus = testProtonMailAppPage({url: getLocationHref(), logger});
 
+setupProtonOpenNewTabEventHandler(logger);
 setupProviderIntegration(protonAppPageStatus);
 
 if (protonAppPageStatus.shouldInitProviderApi) {

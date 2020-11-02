@@ -3,9 +3,12 @@ import {curryFunctionMembers, testProtonCalendarAppPage} from "src/shared/util";
 import {getLocationHref} from "src/electron-preload/webview/lib/util";
 import {initProviderApi} from "./provider-api";
 import {registerApi} from "./api";
+import {setupProtonOpenNewTabEventHandler} from "src/electron-preload/webview/lib/custom-event";
 
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.calendar, "[index]");
 const protonAppPageStatus = testProtonCalendarAppPage({url: getLocationHref(), logger});
+
+setupProtonOpenNewTabEventHandler(logger);
 
 // TODO throw error if "not calendar or blank.html" page loaded
 if (protonAppPageStatus.shouldInitProviderApi) {

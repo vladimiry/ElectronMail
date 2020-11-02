@@ -140,7 +140,7 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
     app.on(...appBeforeQuitEventArgs);
 
     browserWindow
-        .on("ready-to-show", async () => {
+        .once("ready-to-show", async () => {
             const boundsToRestore = await resolveBoundsToRestore(ctx, browserWindow.getBounds());
 
             logger.verbose(JSON.stringify({boundsToRestore}));

@@ -27,6 +27,8 @@ environment:
   nodejs_version: 12
   nodejs_arch: x64
   APPVEYOR_YML_DISABLE_PS_LINUX: true
+  APPVEYOR_CACHE_SKIP_SAVE: true
+  APPVEYOR_CACHE_SKIP_RESTORE: true
   LINUX_JOB_NAME: 'build proton clients (linux)'
   LINUX_JOB_ARTIFACT_TAR: 'webclients-artifact.tar'
   matrix:
@@ -46,7 +48,6 @@ before_build:
   - npx envinfo
   - yarn install --pure-lockfile
 build_script:
-  - yarn scripts/ci/clean-git-output-if-needed
   - yarn scripts/ci/appveyor/download-webclients-artifact
   - yarn app:dist:base
   - npm run clean:prebuilds
@@ -65,12 +66,15 @@ for:
   - matrix:
       only:
         - job_name: 'build proton clients (linux)'
+    environment:
+      APPVEYOR_CACHE_SKIP_SAVE: false
+      APPVEYOR_CACHE_SKIP_RESTORE: false
     cache:
       - ./output/git/backup
     install:
       - nvm install $nodejs_version
       - ./scripts/ci/appveyor/install-linux.sh
-    build_script: ./scripts/ci/appveyor/build-webclients-linux.sh
+    build_script: ./scripts/ci/appveyor/build-webclients.sh
     on_failure: echo "overridden"
   - matrix:
       only:
@@ -84,8 +88,6 @@ for:
       only:
         - job_name: 'build app (macos-catalina)'
     environment:
-      APPVEYOR_CACHE_SKIP_SAVE: true
-      APPVEYOR_CACHE_SKIP_RESTORE: true
       ARTIFACT_NAME_POSTFIX: '-catalina'
     install:
       # - HOMEBREW_NO_INSTALL_CLEANUP=1 brew cask install firefox

@@ -9,59 +9,12 @@ branches:
 node_js: 12
 language: node_js
 
-embedding-prepare-webclients-mail-settings: &embedding-prepare-webclients-mail-settings-anchor
+embedding-prepare-webclients: &embedding-prepare-webclients
   cache:
     yarn: false
     npm: false
-    directories: [ './output/git/backup/proton-mail-settings' ]
-  env:
-    - ELECTRON_MAIL_CI_PROTON_CLIENTS_ONLY="proton-mail-settings"
-  script: ./scripts/ci/prepare-webclients.sh
-
-embedding-prepare-webclients-contacts: &embedding-prepare-webclients-contacts-anchor
-  cache:
-    yarn: false
-    npm: false
-    directories: [ './output/git/backup/proton-contacts' ]
-  env:
-    - ELECTRON_MAIL_CI_PROTON_CLIENTS_ONLY="proton-contacts"
-  script: ./scripts/ci/prepare-webclients.sh
-
-embedding-prepare-webclients-calendar: &embedding-prepare-webclients-calendar-anchor
-  cache:
-    yarn: false
-    npm: false
-    directories: [ './output/git/backup/proton-calendar' ]
-  env:
-    - ELECTRON_MAIL_CI_PROTON_CLIENTS_ONLY="proton-calendar"
-  script: ./scripts/ci/prepare-webclients.sh
-
-embedding-prepare-webclients-mail: &embedding-prepare-webclients-mail-anchor
-  cache:
-    yarn: false
-    npm: false
-    directories: [ './output/git/backup/proton-mail' ]
-  env:
-    - ELECTRON_MAIL_CI_PROTON_CLIENTS_ONLY="proton-mail"
-  script: ./scripts/ci/prepare-webclients.sh
-
-embedding-prepare-webclients-account: &embedding-prepare-webclients-account-anchor
-  cache:
-    yarn: false
-    npm: false
-    directories: [ './output/git/backup/proton-account' ]
-  env:
-    - ELECTRON_MAIL_CI_PROTON_CLIENTS_ONLY="proton-account"
-  script: ./scripts/ci/prepare-webclients.sh
-
-embedding-prepare-webclients-drive: &embedding-prepare-webclients-drive-anchor
-  cache:
-    yarn: false
-    npm: false
-    directories: [ './output/git/backup/proton-drive' ]
-  env:
-    - ELECTRON_MAIL_CI_PROTON_CLIENTS_ONLY="proton-drive"
-  script: ./scripts/ci/prepare-webclients.sh
+    directories: [ './output/git/backup' ]
+  script: ./scripts/ci/travis/build-webclients.sh
 
 embedding-linux-common: &embedding-linux-common-anchor
   os: linux
@@ -113,108 +66,27 @@ notifications:
 jobs:
   include:
     # pre-building proton web clients in individual jobs to workaround the issue of travis dropping long-running jobs on free plan
-    # [mail-settings]
     - stage: 'build proton clients'
       <<: *embedding-linux-common-anchor
-      <<: *embedding-prepare-webclients-mail-settings-anchor
+      <<: *embedding-prepare-webclients
       workspaces:
         create:
-          name: 'linux-webclients-artifact-mail-settings'
-          paths: [ './output/git/backup/proton-mail-settings' ]
+          name: 'linux-webclients-artifact'
+          paths: [ './output/git/backup' ]
     - stage: 'build proton clients'
       <<: *embedding-macos-common-anchor
-      <<: *embedding-prepare-webclients-mail-settings-anchor
+      <<: *embedding-prepare-webclients
       workspaces:
         create:
-          name: 'macos-webclients-artifact-mail-settings'
-          paths: [ './output/git/backup/proton-mail-settings' ]
-    # [contacts]
-    - stage: 'build proton clients'
-      <<: *embedding-linux-common-anchor
-      <<: *embedding-prepare-webclients-contacts-anchor
-      workspaces:
-        create:
-          name: 'linux-webclients-artifact-contacts'
-          paths: [ './output/git/backup/proton-contacts' ]
-    - stage: 'build proton clients'
-      <<: *embedding-macos-common-anchor
-      <<: *embedding-prepare-webclients-contacts-anchor
-      workspaces:
-        create:
-          name: 'macos-webclients-artifact-contacts'
-          paths: [ './output/git/backup/proton-contacts' ]
-    # [calendar]
-    - stage: 'build proton clients'
-      <<: *embedding-linux-common-anchor
-      <<: *embedding-prepare-webclients-calendar-anchor
-      workspaces:
-        create:
-          name: 'linux-webclients-artifact-calendar'
-          paths: [ './output/git/backup/proton-calendar' ]
-    - stage: 'build proton clients'
-      <<: *embedding-macos-common-anchor
-      <<: *embedding-prepare-webclients-calendar-anchor
-      workspaces:
-        create:
-          name: 'macos-webclients-artifact-calendar'
-          paths: [ './output/git/backup/proton-calendar' ]
-    # [proton-mail]
-    - stage: 'build proton clients'
-      <<: *embedding-linux-common-anchor
-      <<: *embedding-prepare-webclients-mail-anchor
-      workspaces:
-        create:
-          name: 'linux-webclients-artifact-mail'
-          paths: [ './output/git/backup/proton-mail' ]
-    - stage: 'build proton clients'
-      <<: *embedding-macos-common-anchor
-      <<: *embedding-prepare-webclients-mail-anchor
-      workspaces:
-        create:
-          name: 'macos-webclients-artifact-mail'
-          paths: [ './output/git/backup/proton-mail' ]
-    # [proton-account]
-    - stage: 'build proton clients'
-      <<: *embedding-linux-common-anchor
-      <<: *embedding-prepare-webclients-account-anchor
-      workspaces:
-        create:
-          name: 'linux-webclients-artifact-account'
-          paths: [ './output/git/backup/proton-account' ]
-    - stage: 'build proton clients'
-      <<: *embedding-macos-common-anchor
-      <<: *embedding-prepare-webclients-account-anchor
-      workspaces:
-        create:
-          name: 'macos-webclients-artifact-account'
-          paths: [ './output/git/backup/proton-account' ]
-    # [proton-drive]
-    - stage: 'build proton clients'
-      <<: *embedding-linux-common-anchor
-      <<: *embedding-prepare-webclients-drive-anchor
-      workspaces:
-        create:
-          name: 'linux-webclients-artifact-drive'
-          paths: [ './output/git/backup/proton-drive' ]
-    - stage: 'build proton clients'
-      <<: *embedding-macos-common-anchor
-      <<: *embedding-prepare-webclients-drive-anchor
-      workspaces:
-        create:
-          name: 'macos-webclients-artifact-drive'
-          paths: [ './output/git/backup/proton-drive' ]
+          name: 'macos-webclients-artifact'
+          paths: [ './output/git/backup' ]
     # [build]
     - stage: 'build app'
       <<: *embedding-linux-common-anchor
       <<: *embedding-build-app-common-anchor
       workspaces:
         use:
-          - 'linux-webclients-artifact-mail-settings'
-          - 'linux-webclients-artifact-contacts'
-          - 'linux-webclients-artifact-calendar'
-          - 'linux-webclients-artifact-mail'
-          - 'linux-webclients-artifact-account'
-          - 'linux-webclients-artifact-drive'
+          - 'linux-webclients-artifact'
       sudo: required
       services:
         - docker
@@ -235,12 +107,7 @@ jobs:
       <<: *embedding-build-app-common-anchor
       workspaces:
         use:
-          - 'macos-webclients-artifact-mail-settings'
-          - 'macos-webclients-artifact-contacts'
-          - 'macos-webclients-artifact-calendar'
-          - 'macos-webclients-artifact-mail'
-          - 'macos-webclients-artifact-account'
-          - 'macos-webclients-artifact-drive'
+          - 'macos-webclients-artifact'
       env: [ { ARTIFACT_NAME_POSTFIX: "-high-sierra" } ]
       script: ./scripts/ci/travis/build-osx.sh
     - stage: 'build app'
@@ -249,11 +116,6 @@ jobs:
       osx_image: xcode11.3
       workspaces:
         use:
-          - 'macos-webclients-artifact-mail-settings'
-          - 'macos-webclients-artifact-contacts'
-          - 'macos-webclients-artifact-calendar'
-          - 'macos-webclients-artifact-mail'
-          - 'macos-webclients-artifact-account'
-          - 'macos-webclients-artifact-drive'
+          - 'macos-webclients-artifact'
       env: [ { ARTIFACT_NAME_POSTFIX: "-mojave" } ]
       script: ./scripts/ci/travis/build-osx.sh

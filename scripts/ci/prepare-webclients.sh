@@ -17,8 +17,6 @@ ARCHIVE_FILE=webclients.tar
 
 printContent
 
-yarn scripts/ci/clean-git-output-if-needed
-
 # build
 # preventing "No output has been received in the last 10m0s" error occuring on travis-ci
 # see https://github.com/travis-ci/travis-ci/issues/4190#issuecomment-353342526

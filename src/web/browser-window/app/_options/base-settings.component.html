@@ -250,20 +250,22 @@
                 ></ng-select>
             </div>
         </div>
-        <label class="d-block mb-2">
-            Page zoom
-        </label>
-        <div class="row mb-2">
-            <div class="col-sm-6">
-                <ng-select
-                    [clearable]="false"
-                    [items]="zoomFactors"
-                    bindLabel="title"
-                    bindValue="value"
-                    formControlName="zoomFactor"
-                ></ng-select>
+        <fieldset [ngClass]="{'d-none': controls.zoomFactor.disabled}">
+            <label class="d-block mb-2">
+                Page zoom
+            </label>
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <ng-select
+                        [clearable]="false"
+                        [items]="zoomFactors"
+                        bindLabel="title"
+                        bindValue="value"
+                        formControlName="zoomFactor"
+                    ></ng-select>
+                </div>
             </div>
-        </div>
+        </fieldset>
         <label class="d-block mb-2">
             Log level
             <i

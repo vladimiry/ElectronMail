@@ -2,7 +2,7 @@ import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/form
 import {Component, ElementRef, Inject, OnDestroy, OnInit} from "@angular/core";
 import {Observable, Subscription} from "rxjs";
 import {Store, select} from "@ngrx/store";
-import {distinctUntilChanged, distinctUntilKeyChanged, map, take} from "rxjs/operators";
+import {distinctUntilChanged, distinctUntilKeyChanged, first, map} from "rxjs/operators";
 
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {BaseConfig} from "src/shared/model/options";
@@ -108,8 +108,16 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         });
 
         this.store.select(OptionsSelectors.CONFIG.base)
-            .pipe(take(1))
+            .pipe(first())
             .subscribe((data) => this.form.patchValue(data));
+
+        this.subscription.add(
+            this.store.pipe(
+                select(OptionsSelectors.CONFIG.zoomFactorDisabled),
+            ).subscribe((zoomFactorDisabled) => {
+                this.controls.zoomFactor[zoomFactorDisabled ? "disable" : "enable"]();
+            }),
+        );
 
         this.subscription.add(
             this.store

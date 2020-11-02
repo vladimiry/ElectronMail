@@ -15,6 +15,7 @@ import {
     WEB_PROTOCOL_SCHEME,
     ZOOM_FACTOR_DEFAULT,
 } from "src/shared/constants";
+import {applyZoomFactor} from "src/electron-main/window/util";
 import {curryFunctionMembers} from "src/shared/util";
 import {injectVendorsAppCssIntoHtmlFile} from "src/electron-main/util";
 
@@ -113,16 +114,21 @@ export async function showAboutBrowserWindow(ctx: Context): Promise<BrowserWindo
         webPreferences: {
             ...DEFAULT_WEB_PREFERENCES,
             preload: ctx.locations.preload.aboutBrowserWindow,
-            ...(zoomFactor !== ZOOM_FACTOR_DEFAULT && {zoomFactor}),
         },
     });
 
-    browserWindow.on("closed", () => {
-        if (!ctx.uiContext) {
-            return;
-        }
-        delete ctx.uiContext.aboutBrowserWindow;
-    });
+    browserWindow
+        .on("ready-to-show", async () => {
+            if (zoomFactor !== ZOOM_FACTOR_DEFAULT) {
+                await applyZoomFactor(ctx, browserWindow.webContents);
+            }
+        })
+        .on("closed", () => {
+            if (!ctx.uiContext) {
+                return;
+            }
+            delete ctx.uiContext.aboutBrowserWindow;
+        });
 
     ctx.uiContext.aboutBrowserWindow = browserWindow;
 

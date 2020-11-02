@@ -13,6 +13,7 @@ import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main";
 import {PACKAGE_GITHUB_PROJECT_URL, PACKAGE_VERSION, UPDATE_CHECK_FETCH_TIMEOUT} from "src/shared/constants";
 import {PLATFORM} from "src/electron-main/constants";
+import {applyZoomFactor} from "src/electron-main/window/util";
 import {curryFunctionMembers} from "src/shared/util";
 import {showAboutBrowserWindow} from "src/electron-main/window/about";
 
@@ -74,9 +75,9 @@ export async function buildEndpoints(
                 return;
             }
 
-            const {window: {maximized}, zoomFactor} = await ctx.config$.pipe(first()).toPromise();
+            const {window: {maximized}} = await ctx.config$.pipe(first()).toPromise();
 
-            browserWindow.webContents.zoomFactor = zoomFactor;
+            await applyZoomFactor(ctx, browserWindow.webContents);
 
             if (maximized) {
                 browserWindow.maximize();

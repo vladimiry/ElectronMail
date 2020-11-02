@@ -78,6 +78,7 @@ export function initialConfig(): Config {
                 "Mozilla/5.0 CK={} (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko",
                 /* eslint-enable max-len */
             ],
+            zoomFactorDisabled: false,
             // base
             calendarNotification: false,
             checkUpdateAndNotify: false,

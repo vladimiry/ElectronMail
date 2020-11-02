@@ -112,7 +112,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.indexingBootstrapBufferSize = defaultConfig.indexingBootstrapBufferSize;
         }
 
-        ((): void => {
+        {
             if (typeof config.timeouts.dbBootstrapping !== "number") {
                 config.timeouts.dbBootstrapping = defaultConfig.timeouts.dbBootstrapping;
             }
@@ -123,7 +123,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
 
             delete config.timeouts.fetching;
             delete config.timeouts.syncing;
-        })();
+        }
     },
     "3.4.0": (config) => {
         if (typeof config.spellCheckLocale === "undefined") {
@@ -162,7 +162,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         if (typeof config.disableGpuProcess !== "undefined") {
             delete config.disableGpuProcess;
         }
-        ((): void => {
+        {
             const {updateCheck: defaults} = INITIAL_STORES.config();
             if (typeof config.updateCheck === "undefined") {
                 config.updateCheck = defaults;
@@ -173,7 +173,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             if (typeof config.updateCheck.proxy === "undefined") {
                 config.updateCheck.proxy = defaults.proxy;
             }
-        })();
+        }
     },
     "3.7.1": (config) => {
         if (typeof config.jsFlags === "undefined") {
@@ -207,27 +207,26 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         }
     },
     "4.2.0": (config) => {
-        ((): void => {
+        {
             const key: keyof Pick<Config, "zoomFactor"> = "zoomFactor";
             if (typeof config[key] !== "number" || !ZOOM_FACTORS.includes(config[key])) {
                 config[key] = INITIAL_STORES.config()[key];
             }
-        })();
-
-        ((): void => {
+        }
+        {
             const key: keyof Pick<Config, "enableHideControlsHotkey"> = "enableHideControlsHotkey";
             if (typeof config[key] === "undefined") {
                 config[key] = INITIAL_STORES.config()[key];
             }
-        })();
+        }
     },
     "4.2.2": (config) => {
-        ((): void => {
+        {
             const key: keyof Pick<Config["timeouts"], "webViewBlankDOMLoaded"> = "webViewBlankDOMLoaded";
             if (typeof config.timeouts[key] !== "number") {
                 config.timeouts[key] = INITIAL_STORES.config().timeouts[key];
             }
-        })();
+        }
     },
     "4.2.3": (config) => {
         const loggerPrefix = "[config updater 4.2.3]";
@@ -255,7 +254,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         trayIconRelatedUpdate({prevKey: "startMinimized", key: "startHidden"});
         trayIconRelatedUpdate({prevKey: "closeToTray", key: "hideOnClose"});
 
-        ((): void => {
+        {
             const key: keyof Pick<Config, "layoutMode"> = "layoutMode";
 
             if (LAYOUT_MODES.some(({value}) => value === config[key])) {
@@ -271,41 +270,41 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
                     ? "top"
                     : "left"
                 : INITIAL_STORES.config()[key];
-        })();
+        }
     },
     "4.5.0": (config) => {
-        (() => {
+        {
             const key: keyof Pick<Config, "userAgents"> = "userAgents";
             if (!Array.isArray(config[key])) {
                 config[key] = INITIAL_STORES.config()[key];
             }
-        })();
+        }
     },
     "4.6.0": (config) => {
-        (() => {
+        {
             const timeoutsKey: keyof Pick<Config["timeouts"], "clearSessionStorageData"> = "clearSessionStorageData";
             if (typeof config.timeouts[timeoutsKey] !== "number") {
                 config.timeouts[timeoutsKey] = INITIAL_STORES.config().timeouts[timeoutsKey];
             }
-        })();
+        }
     },
     "4.8.0": (
         _,
         config = _ as Config & { timeouts: { singleAttachmentLoad?: number } },
     ) => {
-        (() => {
+        {
             delete config.timeouts.singleAttachmentLoad;
             const timeoutsKey: keyof Pick<Config["timeouts"], "attachmentLoadAverage"> = "attachmentLoadAverage";
             if (typeof config.timeouts[timeoutsKey] !== "number") {
                 config.timeouts[timeoutsKey] = INITIAL_STORES.config().timeouts[timeoutsKey];
             }
-        })();
-        (() => {
+        }
+        {
             const timeoutsKey: keyof Pick<Config["timeouts"], "fullTextSearch"> = "fullTextSearch";
             if (typeof config.timeouts[timeoutsKey] !== "number") {
                 config.timeouts[timeoutsKey] = INITIAL_STORES.config().timeouts[timeoutsKey];
             }
-        })();
+        }
     },
     "4.9.0": (
         _,
@@ -313,6 +312,12 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
     ) => {
         if (typeof config.htmlToText !== "undefined") {
             delete config.htmlToText;
+        }
+        {
+            const key: keyof Pick<Config, "zoomFactorDisabled"> = "zoomFactorDisabled";
+            if (typeof config[key] !== "boolean") {
+                config[key] = INITIAL_STORES.config()[key];
+            }
         }
     },
     // WARN needs to be the last updater

@@ -1,7 +1,6 @@
 import _logger from "electron-log";
 import {BrowserWindow, Menu, MenuItemConstructorOptions, WebPreferences, app, clipboard, screen} from "electron";
 import {equals, omit, pick} from "remeda";
-import {first} from "rxjs/operators";
 import {inspect} from "util";
 import {isWebUri} from "valid-url";
 
@@ -11,6 +10,7 @@ import {IPC_MAIN_API_NOTIFICATION$} from "./api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {PACKAGE_VERSION} from "src/shared/constants";
 import {PLATFORM} from "src/electron-main/constants";
+import {applyZoomFactor} from "src/electron-main/window/util";
 import {buildSpellCheckSettingsMenuItems, buildSpellingSuggestionMenuItems} from "src/electron-main/spell-check/menu";
 import {buildUrlOriginsFailedMsgTester, curryFunctionMembers} from "src/shared/util";
 
@@ -307,7 +307,6 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
             );
         });
 
-        const {zoomFactor} = await ctx.config$.pipe(first()).toPromise();
-        webContents.zoomFactor = zoomFactor;
+        await applyZoomFactor(ctx, webContents);
     });
 }

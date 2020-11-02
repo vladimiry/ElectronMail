@@ -9,6 +9,7 @@ import {DB_DATA_CONTAINER_FIELDS} from "src/shared/model/database";
 import {IPC_MAIN_API, IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {PACKAGE_NAME, PRODUCT_NAME} from "src/shared/constants";
+import {applyZoomFactor} from "src/electron-main/window/util";
 import {attachFullTextIndexWindow, detachFullTextIndexWindow} from "src/electron-main/window/full-text-search";
 import {buildSettingsAdapter} from "src/electron-main/util";
 import {clearIdleTimeLogOut, setupIdleTimeLogOut} from "src/electron-main/power-monitor";
@@ -159,15 +160,14 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             }
 
             if (updatedConfig.zoomFactor !== previousConfig.zoomFactor) {
-                [
+                for (const webContents of [
                     ctx.uiContext?.aboutBrowserWindow?.webContents,
                     ctx.uiContext?.browserWindow?.webContents,
-                ].forEach((webContents) => {
-                    if (!webContents) {
-                        return;
+                ]) {
+                    if (webContents) {
+                        await applyZoomFactor(ctx, webContents);
                     }
-                    webContents.zoomFactor = updatedConfig.zoomFactor;
-                });
+                }
             }
 
             return updatedConfig;

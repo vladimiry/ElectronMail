@@ -30,6 +30,7 @@ export const CONFIG = {
     timeouts: createSelector(FEATURED.config, (config) => config.timeouts),
     localDbMailsListViewMode: createSelector(FEATURED.config, (config) => config.localDbMailsListViewMode),
     doNotRenderNotificationBadgeValue: createSelector(FEATURED.config, (config) => config.doNotRenderNotificationBadgeValue),
+    zoomFactorDisabled: createSelector(FEATURED.config, (config) => config.zoomFactorDisabled),
 } as const;
 
 export const SETTINGS = (

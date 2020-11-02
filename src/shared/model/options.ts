@@ -42,6 +42,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     jsFlags: string[]
     localDbMailsListViewMode: "plain" | "conversation"
     userAgents: string[]
+    zoomFactorDisabled: boolean;
     // base
     calendarNotification: boolean
     checkUpdateAndNotify: boolean

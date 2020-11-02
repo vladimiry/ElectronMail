@@ -37,7 +37,14 @@ export const applyZoomFactor = (_logger: Logger): void => {
     logger.verbose();
 
     (async () => {
-        const {zoomFactor} = await resolveCachedConfig(logger);
+        const {zoomFactor, zoomFactorDisabled} = await resolveCachedConfig(logger);
+
+        logger.verbose(JSON.stringify({zoomFactorDisabled}));
+
+        if (zoomFactorDisabled) {
+            return;
+        }
+
         const webFrameZoomFactor = webFrame.getZoomFactor();
 
         logger.verbose("config.zoomFactor", JSON.stringify(zoomFactor));

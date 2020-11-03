@@ -1,7 +1,8 @@
-import {BehaviorSubject, Observable, Subject, Subscription, combineLatest, race, timer} from "rxjs";
+import {BehaviorSubject, EMPTY, Observable, Subject, Subscription, combineLatest, race, throwError, timer} from "rxjs";
 import {
     ChangeDetectionStrategy,
     Component,
+    ElementRef,
     HostBinding,
     Input,
     NgZone,
@@ -25,9 +26,9 @@ import {
     startWith,
     switchMap,
     take,
+    takeUntil,
     withLatestFrom,
 } from "rxjs/operators";
-import {throwError} from "rxjs/internal/observable/throwError";
 
 import {ACCOUNTS_ACTIONS, AppAction, NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
@@ -127,6 +128,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         private readonly core: CoreService,
         private readonly store: Store<State>,
         private readonly zone: NgZone,
+        private readonly elementRef: ElementRef<HTMLElement>,
     ) {
         super();
         this.componentIndex = componentIndex;
@@ -212,7 +214,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         : "vm-live";
 
                     if (!databaseView) {
-                        this.focusPrimaryWebView();
+                        this.focusPrimaryWebview();
                     } else if (!dbViewEntryComponentMounted) {
                         await this.dbViewModuleResolve.mountDbViewEntryComponent(
                             this.tplDbViewComponentContainerRef,
@@ -421,7 +423,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                 filter(([selectedLogin]) => this.account.accountConfig.login === selectedLogin),
                 debounceTime(ONE_SECOND_MS * 0.3),
             ).subscribe(async () => {
-                this.focusPrimaryWebView();
+                this.focusPrimaryWebview();
                 await this.ipcMainClient("selectAccount")({
                     databaseView: this.account.databaseView,
                     // WARN electron: "webView.getWebContentsId()" is available only after "webView.dom-ready" triggered
@@ -443,34 +445,22 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         this.subscription.unsubscribe();
     }
 
-    private focusPrimaryWebView(): void {
-        setTimeout(() => {
-            const activeElement = document.activeElement as (null | { blur?: () => void });
-
-            if (activeElement && typeof activeElement.blur === "function") {
-                activeElement.blur();
-            }
-
-            const webViews$ = race([
-                this.webViewsState.primary.domReady$.pipe(
-                    filter((webView) => {
-                        const result = Boolean(webView.offsetParent); // picking only visible element
-                        this.logger.verbose("focusPrimaryWebView()", "webViews$ filter", {result});
-                        return result;
-                    }),
-                ),
-                timer(300 /* 300ms */).pipe(map(() => null)),
-            ]);
-
-            webViews$
-                .pipe(first())
-                .subscribe((webViews) => {
-                    if (!webViews) {
-                        return;
-                    }
-                    webViews.blur();
-                    webViews.focus();
-                });
+    private focusPrimaryWebview(): void {
+        timer(0, ONE_SECOND_MS / 10).pipe(
+            map(() => {
+                return this.elementRef.nativeElement.querySelector<HTMLElement>(
+                    this.viewModeClass === "vm-live"
+                        ? "electron-mail-account-view-primary > webview"
+                        : "electron-mail-db-view-entry",
+                );
+            }),
+            mergeMap((value) => value && value.offsetParent /* only visible element */ ? [value] : EMPTY),
+            take(1),
+            takeUntil(
+                timer(ONE_SECOND_MS / 3),
+            ),
+        ).subscribe((value) => {
+            value.focus();
         });
     }
 }

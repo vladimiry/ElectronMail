@@ -1,3 +1,4 @@
+<button type="button" class="btn-stub"></button>
 <div *ngIf="initialized$ | async" [attr.class]="'wrapper layout-mode-' + (layoutMode$ | async)">
     <div *ngIf="logins$ | async; let logins" [ngClass]="{'d-none': hideControls$ | async}" class="accounts-block px-2 pt-2">
         <div class="controls">

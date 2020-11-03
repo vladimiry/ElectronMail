@@ -11,6 +11,19 @@
     bottom: 0;
     background-color: $app-color-bg-dark-1;
 
+    // invisible/stub button gets focused so real buttons don't flick on window activation (tray icon "toggle" click)
+    & > .btn-stub {
+        position: fixed;
+        left: -1000px;
+        top: -1000px;
+        width: 0;
+        height: 0;
+        padding: 0;
+        margin: 0;
+        font-size: 0;
+        border: 0;
+    }
+
     #optionsMenuItem {
         @include app-dropdown-toggle-x-padding-split;
     }

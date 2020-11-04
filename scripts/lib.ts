@@ -7,7 +7,7 @@ import path from "path";
 import spawnAsync from "@expo/spawn-async";
 import {URL} from "@cliqz/url-parser";
 import {createHash} from "crypto";
-import {pick} from "remeda";
+import {omit, pick} from "remeda";
 import {promisify} from "util";
 
 import {GIT_CLONE_ABSOLUTE_DIR, OUTPUT_ABSOLUTE_DIR} from "scripts/const";
@@ -58,8 +58,12 @@ export async function execShell(
                 command,
                 args,
                 options: {
-                    ...options,
-                    env: pick(options?.env ?? {}, [...printEnvWhitelist]),
+                    ...omit(options || {}, ["env"]),
+                    ...{
+                        whitelistedEnv: options?.env && printEnvWhitelist?.length
+                            ? pick(options.env, [...printEnvWhitelist])
+                            : undefined,
+                    },
                 },
             },
             null,

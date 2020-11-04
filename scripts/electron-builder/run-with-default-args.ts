@@ -9,16 +9,19 @@ const [
 ] = process.argv;
 
 (async () => {
-    await execShell([
-        "npx",
-        ["electron-builder", ...args],
-        {
-            env: {
-                ...process.env,
-                [ARTIFACT_NAME_POSTFIX_ENV_VAR_NAME]: process.env[ARTIFACT_NAME_POSTFIX_ENV_VAR_NAME] ?? "",
+    await execShell(
+        [
+            "npx",
+            ["electron-builder", ...args],
+            {
+                env: {
+                    ...process.env,
+                    [ARTIFACT_NAME_POSTFIX_ENV_VAR_NAME]: process.env[ARTIFACT_NAME_POSTFIX_ENV_VAR_NAME] ?? "",
+                },
             },
-        },
-    ]);
+        ],
+        {printEnvWhitelist: [ARTIFACT_NAME_POSTFIX_ENV_VAR_NAME]},
+    );
 })().catch((error) => {
     CONSOLE_LOG(error);
     process.exit(1);

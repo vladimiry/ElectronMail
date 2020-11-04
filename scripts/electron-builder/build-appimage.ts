@@ -47,8 +47,8 @@ async function unpack({packageFile}: { packageFile: string }): Promise<{ package
 
 async function resolveAppImageTool(): Promise<{ command: string }> {
     const {command} = await resolveExecutable(
-        "https://github.com/AppImage/AppImageKit/releases/download/12/appimagetool-x86_64.AppImage",
-        "d918b4df547b388ef253f3c9e7f6529ca81a885395c31f619d9aaf7030499a13",
+        "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage",
+        "1ca0df42503a57875a6d0cadea825ca2146f4e467ecb4e380a06b35f4a78d087",
         "appimagetool",
     );
     const cwd = path.dirname(command);
@@ -69,7 +69,7 @@ async function packAndCleanup({packageFile, packageDir}: { packageFile: string; 
     const {command} = await resolveAppImageTool();
 
     await execShell(["rm", ["--force", packageFile]]);
-    await execShell([command, ["-n", "--comp", "xz", packageDir, packageFile]]);
+    await execShell([command, ["-n", "--comp", "xz", packageDir, packageFile], {env: {ARCH: "x86_64"}}]);
     await execShell(["npx", ["--no-install", "rimraf", packageDir]]);
 }
 

@@ -69,7 +69,14 @@ async function packAndCleanup({packageFile, packageDir}: { packageFile: string; 
     const {command} = await resolveAppImageTool();
 
     await execShell(["rm", ["--force", packageFile]]);
-    await execShell([command, ["-n", "--comp", "xz", packageDir, packageFile], {env: {ARCH: "x86_64"}}]);
+    await execShell(
+        [
+            command,
+            ["-n", "--comp", "xz", packageDir, packageFile],
+            {env: {...process.env, ARCH: "x86_64"}},
+        ],
+        {printEnvWhitelist: ["ARCH"]},
+    );
     await execShell(["npx", ["--no-install", "rimraf", packageDir]]);
 }
 

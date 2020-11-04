@@ -10,7 +10,7 @@ import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
 import {DB_INSTANCE_PROP_NAME} from "src/electron-main/database/constants";
 import {Database} from "./database";
-import {DbAccountPk, LABEL_TYPE} from "src/shared/model/database";
+import {DbAccountPk, LABEL_TYPE, MIME_TYPES} from "src/shared/model/database";
 import {INITIAL_STORES} from "./constants";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
@@ -537,12 +537,15 @@ export async function upgradeDatabase(db: Database, accounts: Settings["accounts
         }
     }
 
-    if (Number(db.getVersion()) < 8) {
+    if (Number(db.getVersion()) < 9) {
         for (const {account} of db) {
             for (const mail of Object.values(account.mails)) {
+                if (MIME_TYPES._.isValidValue(mail.mimeType)) {
+                    continue;
+                }
                 type RawMail = Pick<import("src/electron-preload/webview/lib/rest-model/response-entity/mail").Message, "MIMEType">;
-                const rawRestResponseMail: Readonly<RawMail> = JSON.parse(mail.raw);
-                (mail as Mutable<Pick<typeof mail, "mimeType">>).mimeType = rawRestResponseMail.MIMEType;
+                const rawMail: Readonly<RawMail> = JSON.parse(mail.raw);
+                (mail as Mutable<Pick<typeof mail, "mimeType">>).mimeType = rawMail.MIMEType;
                 needToSave = true;
             }
         }

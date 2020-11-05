@@ -115,6 +115,17 @@ const config = buildBaseWebConfig(
         optimization: {
             splitChunks: {
                 cacheGroups: {
+                    defaultVendors: false,
+                    vendors: {
+                        test: /[\\/]node_modules[\\/]/,
+                        priority: -10,
+                        filename({chunk}) {
+                            if (!chunk?.hash) {
+                                throw new Error(`Invalid "chunk.hash" value`);
+                            }
+                            return `vendor_${chunk.hash}.js`;
+                        },
+                    },
                     styles: {
                         name: "shared-vendor",
                         test: /[\\/]vendor[\\/]shared-vendor\.scss$/,

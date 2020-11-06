@@ -4514,16 +4514,17 @@ fs-json-store-encryption-adapter@2.0.0:
     sodium-native "^3.0.1"
     tslib "^1.11.1"
 
-fs-json-store@6.0.0:
-  version "6.0.0"
-  resolved "https://registry.yarnpkg.com/fs-json-store/-/fs-json-store-6.0.0.tgz#bd576dc992ba57b3548a7b78d3439a094df4f703"
-  integrity sha512-k/99VoB5/XUJ13X3DiHSlyNNR0hbHcRnOdX98F3x7w91pY3Mf6yD1Paj1HmR+qYf1oZ9/12o0LjFkl1X/2nhaA==
+fs-json-store@7.0.0-beta2:
+  version "7.0.0-beta2"
+  resolved "https://registry.yarnpkg.com/fs-json-store/-/fs-json-store-7.0.0-beta2.tgz#5a298e39218ddcc4651ca31585b3ddd7bc08686e"
+  integrity sha512-n1/bNvdb9g6OhHo13JB2ULYjUn1uzpNgwM+Ll51Qks9FropXLc9hzbQA7hwxfiMY7fypf0XhpdzTMDSaxVt0tw==
   dependencies:
     combine-errors "^3.0.3"
     fs-no-eperm-anymore "^4.0.0"
     imurmurhash "^0.1.4"
     kind-of "^6.0.3"
     proper-lockfile "^4.1.1"
+    signal-exit "^3.0.3"
     tslib "^2.0.3"
 
 fs-no-eperm-anymore@^4.0.0:
@@ -8598,7 +8599,7 @@ shell-quote@^1.6.1, shell-quote@^1.7.1:
   resolved "https://registry.yarnpkg.com/shell-quote/-/shell-quote-1.7.2.tgz#67a7d02c76c9da24f99d20808fcaded0e0e04be2"
   integrity sha512-mRz/m/JVscCrkMyPqHc/bczi3OQHkLTqXHEFu0zDhK/qfv3UcOA4SVmRCLmos4bhjr9ekVQubj/R7waKapmiQg==
 
-signal-exit@^3.0.0, signal-exit@^3.0.2:
+signal-exit@^3.0.0, signal-exit@^3.0.2, signal-exit@^3.0.3:
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/signal-exit/-/signal-exit-3.0.3.tgz#a1410c2edd8f077b08b4e253c8eacfcaf057461c"
   integrity sha512-VUJ49FC8U1OxwZLxIbTTrDvLnf/6TDgxZcK8wxR8zs13xpx7xbG60ndBlhNrFi2EMuFRoeDoJO7wthSLq42EjA==

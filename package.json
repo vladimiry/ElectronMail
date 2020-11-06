@@ -1,7 +1,7 @@
 {
   "name": "electron-mail",
   "description": "Unofficial ProtonMail Desktop App",
-  "version": "4.9.0",
+  "version": "4.9.1",
   "author": "Vladimir Yakovlev <desktop-app@protonmail.ch>",
   "license": "MIT",
   "homepage": "https://github.com/vladimiry/ElectronMail",
@@ -138,7 +138,7 @@
     "electron-unhandled": "3.0.2",
     "fast-glob": "3.2.4",
     "fs-extra": "9.0.1",
-    "fs-json-store": "6.0.0",
+    "fs-json-store": "7.0.0-beta2",
     "fs-json-store-encryption-adapter": "2.0.0",
     "js-base64": "3.6.0",
     "keytar": "7.0.0",

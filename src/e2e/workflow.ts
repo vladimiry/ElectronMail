@@ -219,7 +219,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
                     }
                     el.dispatchEvent(new MouseEvent("mousedown"));
                 },
-                [selector],
+                selector,
             );
 
             const entryUrlIndex = account.entryUrlValue

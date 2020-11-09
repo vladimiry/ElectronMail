@@ -10,9 +10,9 @@ const logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, "[provider-api/noti
 
 // WARN: has to be initialized ASAP in page/js-code loading/evaluating life cycle
 // since the app needs to be notified about all the fetch request
-export const FETCH_NOTIFICATION$: Observable<Response> = (() => {
+export const FETCH_NOTIFICATION$: Observable<NoExtraProps<{ url: string; responseTextPromise: Promise<string> }>> = (() => {
     // WARN: has to be replay subject since the app starts listening for fetch calls with some delay
-    const subject = new ReplaySubject<Response>(100);
+    const subject = new ReplaySubject<Unpacked<typeof FETCH_NOTIFICATION$>>(100);
     const originalFetch = window.fetch;
     const overriddenFetch: typeof originalFetch = async function(this: typeof originalFetch, ...args) {
         const [firstArg, configArg] = args;
@@ -24,34 +24,37 @@ export const FETCH_NOTIFICATION$: Observable<Response> = (() => {
 
         const originalCallResult = originalFetch.apply(this, args);
 
-        if (skipNotification) {
-            const url = typeof firstArg === "string"
-                ? firstArg
-                : firstArg.url;
-            logger.verbose("fetch notification skipped", JSON.stringify({url}));
-        } else {
-            originalCallResult
-                .then((response) => {
-                    if (response.ok) {
-                        subject.next(response);
-                    } else {
-                        const protonApiError: ProtonApiError = {
-                            name: "UnsuccessfulFetchRequest",
-                            status: response.status,
-                            response: {url: response.url},
-                            message: `Unsuccessful fetch request notification: ${response.statusText}`,
-                        };
-                        logger.warn(
-                            JSON.stringify(sanitizeProtonApiError(protonApiError)),
-                        );
-                    }
-                })
-                .catch((error) => {
-                    logger.warn(sanitizeProtonApiError(error));
-                });
-        }
+        originalCallResult.catch((error) => {
+            logger.warn(sanitizeProtonApiError(error));
+        });
 
-        return originalCallResult;
+        return originalCallResult.then((originalResponse) => {
+            const clonedResponse = originalResponse.clone();
+
+            setTimeout(() => {
+                if (skipNotification) {
+                    const url = typeof firstArg === "string"
+                        ? firstArg
+                        : firstArg.url;
+                    logger.verbose("fetch notification skipped", JSON.stringify({url}));
+                    return;
+                }
+
+                if (clonedResponse.ok) {
+                    subject.next({url: clonedResponse.url, responseTextPromise: clonedResponse.text()});
+                } else {
+                    const protonApiError: ProtonApiError = {
+                        name: "UnsuccessfulFetchRequest",
+                        status: clonedResponse.status,
+                        response: {url: clonedResponse.url},
+                        message: `Unsuccessful fetch request notification: ${clonedResponse.statusText}`,
+                    };
+                    logger.warn(sanitizeProtonApiError(protonApiError));
+                }
+            });
+
+            return originalResponse;
+        });
     };
 
     window.fetch = overriddenFetch;

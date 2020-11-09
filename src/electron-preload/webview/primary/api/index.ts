@@ -370,7 +370,7 @@ export function registerApi(providerApi: ProviderApi): void {
                                 return EMPTY;
                             }
 
-                            return from(response.clone().text()).pipe(
+                            return from(response.responseTextPromise).pipe(
                                 mergeMap((responseText) => {
                                     return listeners.reduce(
                                         (accumulator, {handler}) => {
@@ -397,7 +397,7 @@ export function registerApi(providerApi: ProviderApi): void {
                     const notification = {batchEntityUpdatesCounter: 0};
                     const notificationReceived$: Observable<RestModel.EventResponse> = FETCH_NOTIFICATION$.pipe(
                         filter((response) => isEventsApiUrl(response.url)),
-                        mergeMap((response) => from(response.clone().text())),
+                        mergeMap((response) => from(response.responseTextPromise)),
                         map((responseText) => {
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                             const parsed: RestModel.EventResponse = JSON.parse(responseText);

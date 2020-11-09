@@ -99,7 +99,7 @@ export const PROVIDER_REPO_MAP = {
         repoRelativeDistDir: "./dist",
         baseDirName: "account",
         repo: "https://github.com/ProtonMail/proton-account.git",
-        commit: "88a92bb93d4380f59de421d22174c5ff35598c39",
+        commit: "9a91d5de032fd8595e4dd136bf881660c1b73e5d",
         protonPack: {appConfig: {clientId: "WebAccount"}}
     },
     [PROVIDER_REPO_NAMES[2]]: {

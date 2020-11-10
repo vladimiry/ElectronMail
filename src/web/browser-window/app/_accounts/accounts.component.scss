@@ -171,9 +171,18 @@
         }
 
         .layout-mode-left-thin {
-            &::ng-deep {
+            .controls,
+            &::ng-deep #{$app-prefix}-account-title {
                 .btn-group {
                     flex-direction: column;
+
+                    &:not(.selected) {
+                        > .btn-sm {
+                            &:not(:last-child) {
+                                border-bottom-color: $app-color-secondary-btn-split-border;
+                            }
+                        }
+                    }
 
                     > .btn-sm {
                         flex-direction: column;
@@ -183,17 +192,16 @@
 
                         &:not(:last-child) {
                             border-radius: $btn-border-radius-sm $btn-border-radius-sm 0 0;
-                            border-bottom-color: $app-color-secondary-btn-split-border;
                         }
 
                         &:not(:first-child) {
                             border-radius: 0 0 $btn-border-radius-sm $btn-border-radius-sm;
-                            padding-top: 0.1rem;
-                            padding-bottom: 0.1rem;
                         }
                     }
                 }
+            }
 
+            &::ng-deep {
                 #{$app-prefix}-account-title {
                     $margin-v: ($app-spacer-1 / 1.5);
 

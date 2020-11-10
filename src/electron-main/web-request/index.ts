@@ -49,6 +49,19 @@ const resolveFakeOrigin = (requestDetails: DeepReadonly<OnBeforeSendHeadersListe
     return parseUrlOriginWithNullishCheck(requestDetails.url);
 };
 
+const isProtonEmbeddedUrl = (() => {
+    // https://github.com/ProtonMail/proton-shared/blob/84c149ebd0419e13e9a1504404a1d1803c53500c/lib/helpers/image.ts#L171
+    const nonSchemaLikePrefix = "cid:";
+
+    return (url: string): boolean => {
+        return (
+            url.startsWith(nonSchemaLikePrefix)
+            &&
+            url.substr(nonSchemaLikePrefix.length, 2) !== "//" // preventing "cid://"-like url schema use
+        );
+    };
+})();
+
 export function initWebRequestListenersByAccount(
     ctx: DeepReadonly<Context>,
     {
@@ -81,6 +94,8 @@ export function initWebRequestListenersByAccount(
         {urls: []},
         (details, callback) => {
             const {url} = details;
+            const allowRequest = (): void => callback({});
+            const banRequest = (): void => callback({cancel: true});
 
             if (
                 // feature enabled
@@ -91,6 +106,11 @@ export function initWebRequestListenersByAccount(
                 &&
                 // only image resources
                 String(details.resourceType).toLowerCase() === "image"
+                &&
+                // TODO consider proxyfying only images with http/https schemes
+                // WARN: should be called before consequent "parseUrlOriginWithNullishCheck" call
+                // embedded/"cid:"-prefixed urls should not be processed/proxyfied (origin resolving for such urls returns "null")
+                !isProtonEmbeddedUrl(url)
                 &&
                 // resources served from "allowed origins" should not be proxified as those
                 // are not external (proton's static resource & API, devtools, etc)
@@ -121,36 +141,44 @@ export function initWebRequestListenersByAccount(
                 return;
             }
 
-            const additionAllowedOrigin = requestProxyCache.get(details)?.additionAllowedOrigin;
-
-            const bannedUrlAccessMsg: null | string = blockNonEntryUrlBasedRequests
-                ? buildUrlOriginsFailedMsgTester([
-                    ...allowedOrigins,
-                    ...(
-                        additionAllowedOrigin
-                            ? [additionAllowedOrigin]
-                            : []
-                    ),
-                ])(url)
-                : null;
-
-            if (typeof bannedUrlAccessMsg === "string") {
-                setTimeout(() => { // can be asynchronous (speeds up callback resolving)
-                    const message
-                        = `Access to the "${details.resourceType}" resource with "${url}" URL has been forbidden. ${bannedUrlAccessMsg}`;
-                    logger.error(message);
-                    IPC_MAIN_API_NOTIFICATION$.next(
-                        IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({message}),
-                    );
-                });
-
-                requestProxyCache.remove(details);
-
-                callback({cancel: true});
+            if (!blockNonEntryUrlBasedRequests) {
+                allowRequest();
                 return;
             }
 
-            callback({});
+            if (isProtonEmbeddedUrl(url)) {
+                // embedded/"cid:"-prefixed urls get silently blocked (origin resolving for such urls returns "null")
+                banRequest();
+                return;
+            }
+
+            const additionAllowedOrigin = requestProxyCache.get(details)?.additionAllowedOrigin;
+            const bannedUrlAccessMsg: null | string = buildUrlOriginsFailedMsgTester([
+                ...allowedOrigins,
+                ...(
+                    additionAllowedOrigin
+                        ? [additionAllowedOrigin]
+                        : []
+                ),
+            ])(url);
+
+            if (typeof bannedUrlAccessMsg !== "string") {
+                allowRequest();
+                return;
+            }
+
+            setTimeout(() => { // can be asynchronous (speeds up callback resolving)
+                const message
+                    = `Access to the "${details.resourceType}" resource with "${url}" URL has been forbidden. ${bannedUrlAccessMsg}`;
+                logger.error(message);
+                IPC_MAIN_API_NOTIFICATION$.next(
+                    IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({message}),
+                );
+            });
+
+            requestProxyCache.remove(details);
+
+            banRequest();
         },
     );
 

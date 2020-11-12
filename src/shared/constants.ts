@@ -70,7 +70,7 @@ export const PROVIDER_REPO_MAP = {
         repoRelativeDistDir: "./dist",
         baseDirName: "",
         repo: "https://github.com/ProtonMail/proton-mail.git",
-        commit: "54c2b974f314e98091b0caa443c4e8004a39263a",
+        commit: "d3ef340d820c51275310b7b8b3e13ff25193dece",
         protonPack: {
             appConfig: {clientId: "WebMail"},
             webpackIndexEntryItems: [
@@ -99,28 +99,28 @@ export const PROVIDER_REPO_MAP = {
         repoRelativeDistDir: "./dist",
         baseDirName: "account",
         repo: "https://github.com/ProtonMail/proton-account.git",
-        commit: "9a91d5de032fd8595e4dd136bf881660c1b73e5d",
+        commit: "0957ba4924c12130ae3dd997a39f7bdd2fc34f8a",
         protonPack: {appConfig: {clientId: "WebAccount"}}
     },
     [PROVIDER_REPO_NAMES[2]]: {
         repoRelativeDistDir: "./dist",
         baseDirName: "settings",
         repo: "https://github.com/ProtonMail/proton-mail-settings.git",
-        commit: "f5cd01d325de3e789da36639bf8c8c51d04106fb",
+        commit: "3acb41ae6de515ef100c80db83a9fc68e88c3d72",
         protonPack: {appConfig: {clientId: "WebMailSettings"}},
     },
     [PROVIDER_REPO_NAMES[3]]: {
         repoRelativeDistDir: "./dist",
         baseDirName: "contacts",
         repo: "https://github.com/ProtonMail/proton-contacts.git",
-        commit: "ccbf5dba49cf8e2dddd4305a4688f1001e537120",
+        commit: "c38e06944adfcadf69cd4037813236c2a669731f",
         protonPack: {appConfig: {clientId: "WebContacts"}},
     },
     [PROVIDER_REPO_NAMES[4]]: {
         repoRelativeDistDir: "./dist",
         baseDirName: "calendar",
         repo: "https://github.com/ProtonMail/proton-calendar.git",
-        commit: "66eaf58929b4e0d9629befcaa6fbacabfb6836ea",
+        commit: "e43aab4450b1eb111abd79dcf873d039300a3151",
         protonPack: {
             appConfig: {clientId: "WebCalendar"},
             webpackIndexEntryItems: [
@@ -134,7 +134,7 @@ export const PROVIDER_REPO_MAP = {
         repoRelativeDistDir: "./dist",
         baseDirName: "drive",
         repo: "https://github.com/ProtonMail/proton-drive.git",
-        commit: "30a0677da4d083e2d93ba7f38fe8b52854f7776c",
+        commit: "084066524405f10e5a00c762c8a400482428a861",
         protonPack: {appConfig: {clientId: "WebDrive"}},
     },
 } as const;

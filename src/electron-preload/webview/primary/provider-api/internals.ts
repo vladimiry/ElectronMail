@@ -53,7 +53,7 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
                 value: {getEvents: NEVER_FN, getLatestID: NEVER_FN},
             },
             "./src/app/helpers/mailboxUrl.ts": {
-                value: {setPathInUrl: NEVER_FN},
+                value: {setParamsInLocation: NEVER_FN},
             },
         };
         const resolveIfFullyInitialized = webpackJsonpPushUtil.buildFullyInitializedResolver(result, resolve, logger);

@@ -94,11 +94,13 @@ export type ProviderInternals = AddInitializedProp<{
     }
 } & {
     [K in StrictExtract<ImmediateKeys, "./src/app/helpers/mailboxUrl.ts">]: {
-        readonly setPathInUrl: (
+        readonly setParamsInLocation: (
             location: ReturnType<typeof import("react-router").useHistory>["location"],
-            labelID: RestModel.Label["ID"],
-            elementID?: RestModel.Conversation["ID"] | RestModel.Message["ID"],
-            messageID?: RestModel.Message["ID"],
+            params: {
+                labelID: RestModel.Label["ID"],
+                elementID?: RestModel.Conversation["ID"] | RestModel.Message["ID"],
+                messageID?: RestModel.Message["ID"],
+            },
         ) => Location
     }
 }>>

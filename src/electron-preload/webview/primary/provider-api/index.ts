@@ -245,12 +245,12 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
             history: {
                 async push({folderId, conversationId, mailId}) {
                     // eslint-disable-next-line max-len
-                    // https://github.com/ProtonMail/proton-mail/blob/2ab916e847bfe8064f5ff321c50f1028adf547e1/src/app/containers/MailboxContainer.tsx#L147-L150
+                    // https://github.com/ProtonMail/proton-mail/blob/d3ef340d820c51275310b7b8b3e13ff25193dece/src/app/containers/MailboxContainer.tsx#L147-L157
                     const history = await standardSetupPublicApi.history$.pipe(first()).toPromise();
-                    const {setPathInUrl} = internals["./src/app/helpers/mailboxUrl.ts"].value;
+                    const {setParamsInLocation} = internals["./src/app/helpers/mailboxUrl.ts"].value;
                     const resolvedUrl = conversationId
-                        ? setPathInUrl(history.location, folderId, conversationId, mailId)
-                        : setPathInUrl(history.location, folderId, mailId);
+                        ? setParamsInLocation(history.location, {labelID: folderId, elementID: conversationId, messageID: mailId})
+                        : setParamsInLocation(history.location, {labelID: folderId, elementID: mailId});
 
                     history.push(resolvedUrl);
                 },

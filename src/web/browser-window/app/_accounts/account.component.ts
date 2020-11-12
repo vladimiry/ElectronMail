@@ -317,13 +317,21 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         };
 
         this.subscription.add(
-            combineLatest([
-                this.loggedIn$,
-                this.persistentSession$,
-            ]).pipe(
-                filter(([loggedIn, persistentSession]) => persistentSession && loggedIn),
-                withLatestFrom(this.account$),
+            this.store.pipe(
+                select(OptionsSelectors.CONFIG.persistentSessionSavingInterval),
+                switchMap((persistentSessionSavingInterval) => {
+                    return combineLatest([
+                        this.loggedIn$,
+                        this.persistentSession$,
+                        timer(0, persistentSessionSavingInterval),
+                    ]).pipe(
+                        filter(([loggedIn, persistentSession]) => persistentSession && loggedIn),
+                        withLatestFrom(this.account$),
+                    );
+                }),
             ).subscribe(([, {accountConfig}]) => {
+                this.logger.verbose("saving proton session");
+
                 (async () => {
                     await this.ipcMainClient("saveProtonSession")({
                         login: accountConfig.login,

@@ -43,6 +43,10 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     localDbMailsListViewMode: "plain" | "conversation"
     userAgents: string[]
     zoomFactorDisabled: boolean;
+    persistentSessionSavingInterval: number;
+    dbSyncingIntervalTrigger: number;
+    dbSyncingOnlineTriggerDelay: number;
+    dbSyncingFiredTriggerDebounce: number;
     // base
     calendarNotification: boolean
     checkUpdateAndNotify: boolean

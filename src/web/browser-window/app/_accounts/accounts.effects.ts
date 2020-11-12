@@ -420,15 +420,22 @@ export class AccountsEffects {
 
                     // syncing
                     this.api.primaryWebViewClient(webView, {finishPromise}).pipe(
-                        mergeMap((webViewClient) => {
+                        withLatestFrom(
+                            this.store.pipe(
+                                select(OptionsSelectors.FEATURED.config),
+                            ),
+                        ),
+                        mergeMap((
+                            [webViewClient, {dbSyncingIntervalTrigger, dbSyncingOnlineTriggerDelay, dbSyncingFiredTriggerDebounce}],
+                        ) => {
                             const syncingIterationTrigger$: Observable<null> = merge(
-                                timer(0, ONE_MINUTE_MS * 5).pipe(
+                                timer(0, dbSyncingIntervalTrigger).pipe(
                                     tap(() => logger.verbose(`triggered by: timer`)),
                                     map(() => null),
                                 ),
                                 fromEvent(window, "online").pipe(
                                     tap(() => logger.verbose(`triggered by: "window.online" event`)),
-                                    delay(ONE_SECOND_MS * 3),
+                                    delay(dbSyncingOnlineTriggerDelay),
                                     map(() => null),
                                 ),
                                 FIRE_SYNCING_ITERATION$.pipe(
@@ -437,7 +444,7 @@ export class AccountsEffects {
                                     // user might be moving emails from here to there while syncing/"buildDbPatch" cycle is in progress
                                     // debounce call reduces 404 fetch errors as we don't trigger fetching until user got settled down
                                     // debouncing the fetching signal we strive to process larger group of events in a single sync iteration
-                                    debounceTime(ONE_SECOND_MS * 5),
+                                    debounceTime(dbSyncingFiredTriggerDebounce),
                                 ),
                             ).pipe(
                                 map(() => null),

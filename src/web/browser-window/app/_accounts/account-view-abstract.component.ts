@@ -103,15 +103,15 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
             })(),
         );
 
-        this.subscription.add(
-            this.filterDomReadyEvent()
-                .pipe(take(1))
-                .subscribe(({webView}) => {
-                    if ((BUILD_ENVIRONMENT === "development")) {
-                        webView.openDevTools();
-                    }
-                }),
-        );
+        // this.subscription.add(
+        //     this.filterDomReadyEvent()
+        //         .pipe(take(1))
+        //         .subscribe(({webView}) => {
+        //             if ((BUILD_ENVIRONMENT === "development")) {
+        //                 webView.openDevTools();
+        //             }
+        //         }),
+        // );
     }
 
     ngOnDestroy(): void {

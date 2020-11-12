@@ -320,6 +320,20 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             }
         }
     },
+    "4.9.3": (config) => {
+        for (
+            const key of [
+            "persistentSessionSavingInterval",
+            "dbSyncingIntervalTrigger",
+            "dbSyncingOnlineTriggerDelay",
+            "dbSyncingFiredTriggerDebounce",
+        ] as const
+        ) {
+            if (typeof config[key] === "undefined") {
+                config[key] = INITIAL_STORES.config()[key];
+            }
+        }
+    },
     // WARN needs to be the last updater
     "100.0.0": (config) => {
         // ensuring default base props are set

@@ -79,6 +79,10 @@ export function initialConfig(): Config {
                 /* eslint-enable max-len */
             ],
             zoomFactorDisabled: false,
+            persistentSessionSavingInterval: ONE_MINUTE_MS * 15,
+            dbSyncingIntervalTrigger: ONE_MINUTE_MS * 5,
+            dbSyncingOnlineTriggerDelay: ONE_SECOND_MS * 3,
+            dbSyncingFiredTriggerDebounce: ONE_SECOND_MS * 5,
             // base
             calendarNotification: false,
             checkUpdateAndNotify: false,

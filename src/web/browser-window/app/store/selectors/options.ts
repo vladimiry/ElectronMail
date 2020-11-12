@@ -31,6 +31,7 @@ export const CONFIG = {
     localDbMailsListViewMode: createSelector(FEATURED.config, (config) => config.localDbMailsListViewMode),
     doNotRenderNotificationBadgeValue: createSelector(FEATURED.config, (config) => config.doNotRenderNotificationBadgeValue),
     zoomFactorDisabled: createSelector(FEATURED.config, (config) => config.zoomFactorDisabled),
+    persistentSessionSavingInterval: createSelector(FEATURED.config, (config) => config.persistentSessionSavingInterval),
 } as const;
 
 export const SETTINGS = (

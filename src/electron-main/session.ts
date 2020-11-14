@@ -70,7 +70,12 @@ export async function initSession(
             logger.warn(message);
         }
     }
+
     purifyUserAgentHeader(session);
+
+    // TODO electron built-in spellcheck: drop dictionaries load preventing hack
+    // passing a non-resolving URL is a workaround, see https://github.com/electron/electron/issues/22995
+    session.setSpellCheckerDictionaryDownloadURL("https://00.00/");
 }
 
 export async function configureSessionByAccount(

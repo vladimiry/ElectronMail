@@ -71,3 +71,12 @@ export function readConfigSync({configStore}: DeepReadonly<Context>): Config | n
         ? JSON.parse(configFile.toString()) as Config
         : null;
 }
+
+export const filterProtonSessionTokenCookies = <T extends { name: string }>(
+    items: readonly T[],
+): { readonly accessTokens: typeof items; readonly refreshTokens: typeof items } => {
+    return {
+        accessTokens: items.filter(({name}) => name.toUpperCase().startsWith("AUTH-")),
+        refreshTokens: items.filter(({name}) => name.toUpperCase().startsWith("REFRESH-")),
+    } as const;
+};

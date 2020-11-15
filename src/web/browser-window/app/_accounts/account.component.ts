@@ -1,4 +1,4 @@
-import {BehaviorSubject, EMPTY, Observable, Subject, Subscription, combineLatest, race, throwError, timer} from "rxjs";
+import {BehaviorSubject, EMPTY, Observable, Subject, Subscription, combineLatest, merge, of, race, throwError, timer} from "rxjs";
 import {
     ChangeDetectionStrategy,
     Component,
@@ -27,6 +27,7 @@ import {
     switchMap,
     take,
     takeUntil,
+    tap,
     withLatestFrom,
 } from "rxjs/operators";
 
@@ -43,8 +44,8 @@ import {ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/constants";
 import {ProtonClientSession} from "src/shared/model/proton";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount} from "src/web/browser-window/app/model";
+import {curryFunctionMembers, parseUrlOriginWithNullishCheck} from "src/shared/util";
 import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
-import {parseUrlOriginWithNullishCheck} from "src/shared/util";
 
 let componentIndex = 0;
 
@@ -316,36 +317,65 @@ export class AccountComponent extends NgChangesObservableComponent implements On
             return value;
         };
 
-        this.subscription.add(
-            this.store.pipe(
-                select(OptionsSelectors.CONFIG.persistentSessionSavingInterval),
-                switchMap((persistentSessionSavingInterval) => {
-                    return combineLatest([
-                        this.loggedIn$,
-                        this.persistentSession$,
-                        timer(0, persistentSessionSavingInterval),
-                    ]).pipe(
-                        filter(([loggedIn, persistentSession]) => persistentSession && loggedIn),
-                        withLatestFrom(this.account$),
-                    );
-                }),
-            ).subscribe(([, {accountConfig}]) => {
-                this.logger.verbose("saving proton session");
+        {
+            const logger = curryFunctionMembers(this.logger, "saving proton session");
 
-                (async () => {
-                    await this.ipcMainClient("saveProtonSession")({
-                        login: accountConfig.login,
-                        clientSession: await resolveSavedProtonClientSession(),
-                        apiEndpointOrigin: parseUrlOriginWithNullishCheck(
-                            this.core.parseEntryUrl(accountConfig, "proton-mail").entryApiUrl,
-                        ),
+            this.subscription.add(
+                this.store.pipe(
+                    select(OptionsSelectors.CONFIG.persistentSessionSavingInterval),
+                    switchMap((persistentSessionSavingInterval) => {
+                        return combineLatest([
+                            this.loggedIn$.pipe(
+                                tap((value) => logger.verbose("trigger: loggedIn$", value)),
+                            ),
+                            this.persistentSession$.pipe(
+                                tap((value) => logger.verbose("trigger: persistentSession$", value)),
+                            ),
+                            merge(
+                                of(null), // fired once to unblock the "combineLatest"
+                                this.store.pipe(
+                                    select(OptionsSelectors.FEATURED.mainProcessNotification),
+                                    filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.ProtonSessionTokenCookiesModified),
+                                    debounceTime(ONE_SECOND_MS),
+                                    withLatestFrom(this.account$),
+                                    filter(([{payload: {key}}, {accountConfig: {login}}]) => key.login === login),
+                                    tap(() => logger.verbose("trigger: proton session token cookies modified")),
+                                ),
+                            ),
+                            (
+                                persistentSessionSavingInterval > 0 // negative value skips the interval-based trigger
+                                    ? (
+                                        timer(0, persistentSessionSavingInterval).pipe(
+                                            tap((value) => logger.verbose("trigger: interval", value)),
+                                        )
+                                    )
+                                    : of(null) // fired once to unblock the "combineLatest"
+                            ),
+                        ]).pipe(
+                            filter(([loggedIn, persistentSession]) => persistentSession && loggedIn),
+                            withLatestFrom(this.account$),
+                        );
+                    }),
+                ).subscribe(([, {accountConfig}]) => {
+                    const ipcMainAction = "saveProtonSession";
+
+                    logger.verbose(ipcMainAction);
+
+                    (async () => {
+                        await this.ipcMainClient(ipcMainAction)({
+                            login: accountConfig.login,
+                            clientSession: await resolveSavedProtonClientSession(),
+                            apiEndpointOrigin: parseUrlOriginWithNullishCheck(
+                                this.core.parseEntryUrl(accountConfig, "proton-mail").entryApiUrl,
+                            ),
+                        });
+                    })().catch((error) => {
+                        // TODO make "AppErrorHandler.handleError" catch promise rejection errors
+                        this.onDispatchInLoggerZone(NOTIFICATION_ACTIONS.Error(error));
                     });
-                })().catch((error) => {
-                    // TODO make "AppErrorHandler.handleError" catch promise rejection errors
-                    this.onDispatchInLoggerZone(NOTIFICATION_ACTIONS.Error(error));
-                });
-            }),
-        );
+                }),
+            );
+        }
 
         this.subscription.add(
             combineLatest([

@@ -101,6 +101,7 @@ export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
         InfoMessage: ofType<{ message: string }>(),
         TrayIconDataURL: ofType<string>(),
         PowerMonitor: ofType<{ message: "suspend" | "resume" | "shutdown" }>(),
+        ProtonSessionTokenCookiesModified: ofType<{ key: DbModel.DbAccountPk }>(),
     },
     {
         tag: "type",

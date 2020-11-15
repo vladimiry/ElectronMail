@@ -2,22 +2,13 @@ import {concatMap, first} from "rxjs/operators";
 import {from, race, throwError, timer} from "rxjs";
 import {pick} from "remeda";
 
-import {AccountPersistentSession} from "src/shared/model/account";
 import {Context} from "src/electron-main/model";
 import {IpcMainApiEndpoints} from "src/shared/api/main";
+import {filterProtonSessionTokenCookies} from "src/electron-main/util";
 import {resolveInitializedSession} from "src/electron-main/session";
 
 // TODO enable minimal logging
 // const logger = curryFunctionMembers(electronLog, "[electron-main/api/endpoints-builders/proton-session]");
-
-function resolveTokenCookies(
-    items: DeepReadonly<AccountPersistentSession>["cookies"],
-): Readonly<{ accessTokens: typeof items; refreshTokens: typeof items }> {
-    return {
-        accessTokens: items.filter(({name}) => name.toUpperCase().startsWith("AUTH-")),
-        refreshTokens: items.filter(({name}) => name.toUpperCase().startsWith("REFRESH-")),
-    } as const;
-}
 
 function pickTokenCookiePropsToApply(
     cookie: DeepReadonly<Electron.Cookie>,
@@ -69,7 +60,7 @@ export async function buildEndpoints(
                 },
             } as const;
 
-            const {accessTokens, refreshTokens} = resolveTokenCookies(data.session.cookies);
+            const {accessTokens, refreshTokens} = filterProtonSessionTokenCookies(data.session.cookies);
 
             if (accessTokens.length > 1 || refreshTokens.length > 1) {
                 throw new Error([
@@ -97,7 +88,7 @@ export async function buildEndpoints(
                 return false;
             }
 
-            const tokenCookie = resolveTokenCookies(savedSession.cookies);
+            const tokenCookie = filterProtonSessionTokenCookies(savedSession.cookies);
             const accessTokenCookie = [...tokenCookie.accessTokens].pop();
             const refreshTokenCookie = [...tokenCookie.refreshTokens].pop();
 

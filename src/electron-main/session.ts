@@ -1,4 +1,4 @@
-import _logger from "electron-log";
+import electronLog from "electron-log";
 import {Session, session as electronSession} from "electron";
 import {concatMap, first} from "rxjs/operators";
 import {from, race, throwError, timer} from "rxjs";
@@ -10,10 +10,11 @@ import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {LoginFieldContainer} from "src/shared/model/container";
 import {ONE_SECOND_MS, PACKAGE_NAME} from "src/shared/constants";
 import {curryFunctionMembers, getRandomInt, getWebViewPartition} from "src/shared/util";
+import {filterProtonSessionTokenCookies} from "src/electron-main/util";
 import {initWebRequestListenersByAccount} from "src/electron-main/web-request";
 import {registerSessionProtocols} from "src/electron-main/protocol";
 
-const logger = curryFunctionMembers(_logger, "[src/electron-main/session]");
+const _logger = curryFunctionMembers(electronLog, "[src/electron-main/session]");
 
 // TODO move "usedPartitions" prop to "ctx"
 // eslint-disable-next-line @typescript-eslint/no-use-before-define
@@ -50,6 +51,8 @@ export async function initSession(
     session: Session,
     {rotateUserAgent}: DeepReadonly<Partial<Pick<AccountConfig, "rotateUserAgent">>> = {},
 ): Promise<void> {
+    const logger = curryFunctionMembers(_logger, "initSession()");
+
     if (rotateUserAgent) {
         if (!ctx.userAgentsPool || !ctx.userAgentsPool.length) {
             const {userAgents} = await ctx.config$.pipe(first()).toPromise();
@@ -82,7 +85,7 @@ export async function configureSessionByAccount(
     ctx: DeepReadonly<Context>,
     account: DeepReadonly<AccountConfig>,
 ): Promise<void> {
-    logger.info("configureSessionByAccount()");
+    _logger.info("configureSessionByAccount()");
 
     const {proxy} = account;
     const session = resolveInitializedSession({login: account.login});
@@ -115,6 +118,7 @@ export async function initSessionByAccount(
     // eslint-disable-next-line max-len
     account: DeepReadonly<AccountConfig>,
 ): Promise<void> {
+    const logger = curryFunctionMembers(_logger, "initSessionByAccount()");
     const partition = getWebViewPartition(account.login);
 
     if (usedPartitions.has(partition)) {
@@ -129,6 +133,37 @@ export async function initSessionByAccount(
     await initSession(ctx, session, {rotateUserAgent: account.rotateUserAgent});
     await registerSessionProtocols(ctx, session);
     await configureSessionByAccount(ctx, account);
+
+    {
+        type Cause = "explicit" | "overwrite" | "expired" | "evicted" | "expired-overwrite";
+
+        const skipCauses: ReadonlyArray<Cause> = ["expired", "evicted", "expired-overwrite"];
+
+        session.cookies.on(
+            "changed",
+            // TODO electron/TS: drop explicit callback args typing (currently typed as Function in electron.d.ts)
+            (...[, cookie, cause, removed]: [
+                event: unknown,
+                cookie: Electron.Cookie,
+                cause: "explicit" | "overwrite" | "expired" | "evicted" | "expired-overwrite",
+                removed: boolean
+            ]) => {
+                if (removed || skipCauses.includes(cause)) {
+                    return;
+                }
+
+                const protonSessionTokenCookies = filterProtonSessionTokenCookies([cookie]);
+
+                if (protonSessionTokenCookies.accessTokens.length || protonSessionTokenCookies.refreshTokens.length) {
+                    logger.verbose("proton session token cookies modified");
+
+                    IPC_MAIN_API_NOTIFICATION$.next(
+                        IPC_MAIN_API_NOTIFICATION_ACTIONS.ProtonSessionTokenCookiesModified({key: {login: account.login}}),
+                    );
+                }
+            },
+        );
+    }
 
     usedPartitions.add(partition);
 }

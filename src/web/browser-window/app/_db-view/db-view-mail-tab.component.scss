@@ -31,6 +31,12 @@
             color: $app-db-view-color-text-mail;
         }
 
+        #{$app-prefix}-db-view-folder {
+            ::ng-deep .fa {
+                font-size: 80%;
+            }
+        }
+
         #{$app-prefix}-db-view-mails-export {
             flex-grow: 1;
         }

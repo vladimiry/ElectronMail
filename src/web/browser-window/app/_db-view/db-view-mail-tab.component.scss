@@ -36,10 +36,6 @@
                 font-size: 80%;
             }
         }
-
-        #{$app-prefix}-db-view-mails-export {
-            flex-grow: 1;
-        }
     }
 
     > #{$app-prefix}-db-view-mails {

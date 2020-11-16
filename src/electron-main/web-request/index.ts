@@ -82,6 +82,7 @@ export function initWebRequestListenersByAccount(
     const allowedOrigins: readonly string[] = [
         webClient.entryApiUrl,
         webClient.entryUrl,
+        "chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai",
         ...(
             BUILD_ENVIRONMENT === "development"
                 ? ["devtools://devtools"]

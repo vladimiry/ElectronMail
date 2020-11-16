@@ -6,6 +6,7 @@ import {
     OnErrorOccurredListenerDetails,
     OnHeadersReceivedListenerDetails,
 } from "electron";
+import {URL} from "@cliqz/url-parser";
 
 import {ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN} from "src/shared/constants";
 import {AccountConfig} from "src/shared/model/account";
@@ -114,10 +115,14 @@ export function initWebRequestListenersByAccount(
                 !isProtonEmbeddedUrl(url)
                 &&
                 // resources served from "allowed origins" should not be proxified as those
-                // are not external (proton's static resource & API, devtools, etc)
+                // are local resources (proton's static resource & API, devtools, etc)
                 !allowedOrigins.includes(
                     parseUrlOriginWithNullishCheck(url),
                 )
+                &&
+                // TODO consider proxyfying only images with http/https schemes
+                // local resource
+                new URL(url).scheme !== "chrome-extension"
             ) {
                 if (!externalContentProxyUrlPattern) {
                     throw new Error(`Invalid "external content proxy URL pattern" value.`);

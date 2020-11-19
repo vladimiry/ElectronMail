@@ -31,7 +31,7 @@ import {
     withLatestFrom,
 } from "rxjs/operators";
 
-import {ACCOUNTS_ACTIONS, AppAction, NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {ACCOUNTS_ACTIONS, AppAction, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
@@ -158,50 +158,45 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     withLatestFrom(this.account$),
                 )
                 // TODO move subscribe handler logic to "_accounts/*.service"
-                .subscribe(([, {accountConfig}]) => {
-                    (async () => {
-                        const project = "proton-mail";
-                        const {primary: webViewsState} = this.webViewsState;
-                        const key = {
-                            login: accountConfig.login,
-                            apiEndpointOrigin: parseUrlOriginWithNullishCheck(this.core.parseEntryUrl(accountConfig, project).entryApiUrl),
-                        } as const;
-                        const applyProtonClientSessionAndNavigateArgs = [
-                            accountConfig,
-                            project,
-                            webViewsState.domReady$,
-                            (src: string) => webViewsState.src$.next(src),
-                            this.logger,
-                        ] as const;
-                        const baseReturn = async (): Promise<void> => {
-                            // reset the "backend session"
-                            await this.ipcMainClient("resetProtonBackendSession")({login: key.login});
-                            // reset the "client session" and navigate
-                            await this.core.applyProtonClientSessionAndNavigate(...applyProtonClientSessionAndNavigateArgs);
-                        };
+                .subscribe(async ([, {accountConfig}]) => {
+                    const project = "proton-mail";
+                    const {primary: webViewsState} = this.webViewsState;
+                    const key = {
+                        login: accountConfig.login,
+                        apiEndpointOrigin: parseUrlOriginWithNullishCheck(this.core.parseEntryUrl(accountConfig, project).entryApiUrl),
+                    } as const;
+                    const applyProtonClientSessionAndNavigateArgs = [
+                        accountConfig,
+                        project,
+                        webViewsState.domReady$,
+                        (src: string) => webViewsState.src$.next(src),
+                        this.logger,
+                    ] as const;
+                    const baseReturn = async (): Promise<void> => {
+                        // reset the "backend session"
+                        await this.ipcMainClient("resetProtonBackendSession")({login: key.login});
+                        // reset the "client session" and navigate
+                        await this.core.applyProtonClientSessionAndNavigate(...applyProtonClientSessionAndNavigateArgs);
+                    };
 
-                        if (!accountConfig.persistentSession) {
-                            return baseReturn();
-                        }
+                    if (!accountConfig.persistentSession) {
+                        return baseReturn();
+                    }
 
-                        const clientSession = await this.ipcMainClient("resolveSavedProtonClientSession")(key);
+                    const clientSession = await this.ipcMainClient("resolveSavedProtonClientSession")(key);
 
-                        if (!clientSession) {
-                            return baseReturn();
-                        }
+                    if (!clientSession) {
+                        return baseReturn();
+                    }
 
-                        if (!(await this.ipcMainClient("applySavedProtonBackendSession")(key))) {
-                            return baseReturn();
-                        }
+                    if (!(await this.ipcMainClient("applySavedProtonBackendSession")(key))) {
+                        return baseReturn();
+                    }
 
-                        await this.core.applyProtonClientSessionAndNavigate(...[
-                            ...applyProtonClientSessionAndNavigateArgs,
-                            clientSession,
-                        ] as const);
-                    })().catch((error) => {
-                        // TODO make "AppErrorHandler.handleError" catch promise rejection errors
-                        this.onDispatchInLoggerZone(NOTIFICATION_ACTIONS.Error(error));
-                    });
+                    await this.core.applyProtonClientSessionAndNavigate(...[
+                        ...applyProtonClientSessionAndNavigateArgs,
+                        clientSession,
+                    ] as const);
                 }),
         );
 
@@ -265,20 +260,15 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     mergeMap((persistentSession) => persistentSession ? [] : [persistentSession]),
                     withLatestFrom(this.account$),
                 )
-                .subscribe(([persistentSession, {accountConfig}]) => {
-                    (async () => {
-                        if (persistentSession) { // just extra check
-                            throw new Error(`"persistentSession" value is supposed to be "false" here`);
-                        }
+                .subscribe(async ([persistentSession, {accountConfig}]) => {
+                    if (persistentSession) { // just extra check
+                        throw new Error(`"persistentSession" value is supposed to be "false" here`);
+                    }
 
-                        const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, "proton-mail");
-                        const key = {login: accountConfig.login, apiEndpointOrigin: new URL(parsedEntryUrl.entryApiUrl).origin} as const;
+                    const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, "proton-mail");
+                    const key = {login: accountConfig.login, apiEndpointOrigin: new URL(parsedEntryUrl.entryApiUrl).origin} as const;
 
-                        await this.ipcMainClient("resetSavedProtonSession")(key);
-                    })().catch((error) => {
-                        // TODO make "AppErrorHandler.handleError" catch promise rejection errors
-                        this.onDispatchInLoggerZone(NOTIFICATION_ACTIONS.Error(error));
-                    });
+                    await this.ipcMainClient("resetSavedProtonSession")(key);
                 }),
         );
     }
@@ -356,22 +346,17 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                             withLatestFrom(this.account$),
                         );
                     }),
-                ).subscribe(([, {accountConfig}]) => {
+                ).subscribe(async ([, {accountConfig}]) => {
                     const ipcMainAction = "saveProtonSession";
 
                     logger.verbose(ipcMainAction);
 
-                    (async () => {
-                        await this.ipcMainClient(ipcMainAction)({
-                            login: accountConfig.login,
-                            clientSession: await resolveSavedProtonClientSession(),
-                            apiEndpointOrigin: parseUrlOriginWithNullishCheck(
-                                this.core.parseEntryUrl(accountConfig, "proton-mail").entryApiUrl,
-                            ),
-                        });
-                    })().catch((error) => {
-                        // TODO make "AppErrorHandler.handleError" catch promise rejection errors
-                        this.onDispatchInLoggerZone(NOTIFICATION_ACTIONS.Error(error));
+                    await this.ipcMainClient(ipcMainAction)({
+                        login: accountConfig.login,
+                        clientSession: await resolveSavedProtonClientSession(),
+                        apiEndpointOrigin: parseUrlOriginWithNullishCheck(
+                            this.core.parseEntryUrl(accountConfig, "proton-mail").entryApiUrl,
+                        ),
                     });
                 }),
             );
@@ -391,7 +376,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         select(OptionsSelectors.CONFIG.timeouts),
                     ),
                 ),
-            ).subscribe((
+            ).subscribe(async (
                 [[loggedIn, loggedInCalendar, calendarNotification], {accountConfig}, {webViewApiPing: calendarGetsSignedInStateTimeoutMs}]
             ) => {
                 if (!calendarNotification) {
@@ -403,34 +388,29 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     return;
                 }
 
-                (async () => {
-                    // TODO if "src$" has been set before, consider only refreshing the client session without full page reload
+                // TODO if "src$" has been set before, consider only refreshing the client session without full page reload
 
-                    await Promise.all([
-                        // the app shares the same backend between mail and calendar, so applying here only the client session
-                        await this.core.applyProtonClientSessionAndNavigate(
-                            accountConfig,
-                            "proton-calendar",
-                            this.webViewsState.calendar.domReady$,
-                            (src: string) => this.webViewsState.calendar.src$.next(src),
-                            this.logger,
-                            await resolveSavedProtonClientSession(),
+                await Promise.all([
+                    // the app shares the same backend between mail and calendar, so applying here only the client session
+                    await this.core.applyProtonClientSessionAndNavigate(
+                        accountConfig,
+                        "proton-calendar",
+                        this.webViewsState.calendar.domReady$,
+                        (src: string) => this.webViewsState.calendar.src$.next(src),
+                        this.logger,
+                        await resolveSavedProtonClientSession(),
+                    ),
+                    race(
+                        this.loggedInCalendar$.pipe(
+                            filter(Boolean),
                         ),
-                        race(
-                            this.loggedInCalendar$.pipe(
-                                filter(Boolean),
+                        timer(calendarGetsSignedInStateTimeoutMs).pipe(
+                            concatMap(() => throwError(
+                                new Error(`The Calendar has not got the signed-in stage in ${calendarGetsSignedInStateTimeoutMs}ms`)),
                             ),
-                            timer(calendarGetsSignedInStateTimeoutMs).pipe(
-                                concatMap(() => throwError(
-                                    new Error(`The Calendar has not got the signed-in stage in ${calendarGetsSignedInStateTimeoutMs}ms`)),
-                                ),
-                            ),
-                        ).toPromise(),
-                    ]);
-                })().catch((error) => {
-                    // TODO make "AppErrorHandler.handleError" catch promise rejection errors
-                    this.onDispatchInLoggerZone(NOTIFICATION_ACTIONS.Error(error));
-                });
+                        ),
+                    ).toPromise(),
+                ]);
             }),
         );
 

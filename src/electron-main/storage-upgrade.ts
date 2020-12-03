@@ -360,7 +360,13 @@ function upgrade<T extends Config | Settings>(entity: T, upgrades: Record<string
     Object
         .keys(upgrades)
         .sort(compareVersions)
-        .forEach((version) => upgrades[version](entity));
+        .forEach((version) => {
+            const upgrader = upgrades[version];
+            if (!upgrader) {
+                throw new Error("Upgrading function resolving failed");
+            }
+            upgrader(entity);
+        });
 
     return JSON.stringify(entity) !== input;
 }

@@ -221,7 +221,7 @@ export async function unreadNative(
         const y = size + rad * scale * (text.length - 1) * .1;
         const ctx = textDrawArea.getContext("2d");
 
-        await new Promise((resolve) => registerFont(fontFilePath, fontFamily).load(resolve));
+        await new Promise<void>((resolve) => registerFont(fontFilePath, fontFamily).load(resolve));
 
         ctx.fillStyle = config.textColor;
         ctx.font = `${size}pt ${fontFamily}`;

@@ -122,14 +122,19 @@ export class DbViewEffects {
                         }),
                     ),
                 ]).pipe(
-                    mergeMap(([mail, rootNode]) => of(DB_VIEW_ACTIONS.SelectMail({
-                        dbAccountPk,
-                        value: {
-                            rootNode,
-                            listMailPk: mail.pk,
-                            conversationMail: mail,
-                        },
-                    }))),
+                    mergeMap(([mail, rootNode]) => {
+                        if (!rootNode) {
+                            throw new Error("Invalid root node value");
+                        }
+                        return of(DB_VIEW_ACTIONS.SelectMail({
+                            dbAccountPk,
+                            value: {
+                                rootNode,
+                                listMailPk: mail.pk,
+                                conversationMail: mail,
+                            },
+                        }));
+                    }),
                 );
             }),
         ),

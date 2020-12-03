@@ -258,6 +258,9 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
             logger.error(event.type, preloadPath, error);
         });
         webContents.on("will-attach-webview", (...[event, webPreferences, {src}]) => {
+            if (!src) {
+                throw new Error(`Invalid/empty "src" value received in "${event.type}" handler`);
+            }
             const bannedAccessMsg = verifyWebviewUrlAccess(src);
             if (typeof bannedAccessMsg === "string") {
                 event.preventDefault();

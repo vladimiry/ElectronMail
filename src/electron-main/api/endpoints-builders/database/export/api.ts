@@ -60,6 +60,11 @@ export async function buildDbExportEndpoints(
 
                     for (let mailIndex = 0; mailIndex < mailsCount; mailIndex++) {
                         const mail = mails[mailIndex];
+
+                        if (!mail) {
+                            throw new Error("Mail resolving failed");
+                        }
+
                         const loadedAttachments: Array<DbExportMailAttachmentItem> = [];
                         const attachmentsCount = mail.attachments.length;
 

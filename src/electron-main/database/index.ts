@@ -87,10 +87,11 @@ export class Database {
         const {accounts} = this.dbInstance;
 
         for (const pk of this.getPks()) {
-            yield {
-                pk,
-                account: accounts[pk.login],
-            };
+            const account = accounts[pk.login];
+            if (!account) {
+                throw new Error("Account resolving failed");
+            }
+            yield {pk, account};
         }
     }
 

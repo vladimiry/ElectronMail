@@ -57,7 +57,13 @@ const initialState: State = {
 };
 
 function sortMails(mailsBundle: MailsBundle): void {
-    const {prop, desc} = mailsBundle.sorters[mailsBundle.sorterIndex];
+    const sorter = mailsBundle.sorters[mailsBundle.sorterIndex];
+
+    if (!sorter) {
+        throw new Error("Sorter resolving failed");
+    }
+
+    const {prop, desc} = sorter;
 
     mailsBundle.items.sort(
         desc
@@ -243,10 +249,19 @@ function innerReducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACTIO
                             conversationSize,
                         })),
                     );
-                    items.folderConversationsBundle.push({
-                        mail: [...matchedNodeMails].sort(mailDateComparatorDefaultsToDesc)[0],
-                        conversationSize,
-                    });
+
+                    {
+                        const [conversationMail] = [...matchedNodeMails].sort(mailDateComparatorDefaultsToDesc);
+
+                        if (!conversationMail) {
+                            throw new Error("Failed to resolve conversation mail");
+                        }
+
+                        items.folderConversationsBundle.push({
+                            mail: conversationMail,
+                            conversationSize,
+                        });
+                    }
                 }
 
                 Object.entries(items).forEach(([key, value]) => {

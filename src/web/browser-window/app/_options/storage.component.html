@@ -44,9 +44,9 @@
                 <div class="form-group required">
                     <label>Current Password</label>
                     <input type="password" class="form-control" formControlName="password"
-                           [ngClass]="encryptionPresetForm.controls.password.dirty ? {
-                       'is-invalid': encryptionPresetForm.controls.password.invalid,
-                       'is-valid': encryptionPresetForm.controls.password.valid
+                           [ngClass]="encryptionPresetForm.controls.password?.dirty ? {
+                       'is-invalid': encryptionPresetForm.controls.password?.invalid,
+                       'is-valid': encryptionPresetForm.controls.password?.valid
                    } : {}">
                 </div>
                 <electron-mail-encryption-presets

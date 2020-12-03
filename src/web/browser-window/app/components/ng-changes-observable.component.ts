@@ -18,7 +18,7 @@ export abstract class NgChangesObservableComponent implements OnChanges, OnDestr
 
         for (const propertyName of Object.keys(changes)) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            props[propertyName] = changes[propertyName].currentValue;
+            props[propertyName] = changes[propertyName]?.currentValue;
         }
 
         this.ngChanges.next(

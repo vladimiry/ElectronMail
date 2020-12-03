@@ -134,8 +134,8 @@ function formatAddresses(prop: string, addresses: readonly MailAddress[]): Reado
 }
 
 const formatEmlDate: (mail: Mail) => string = (() => {
-    const dayNames = Object.freeze(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]);
-    const monthNames = Object.freeze(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]);
+    const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
 
     return (mail: Mail): string => {
         const date = new Date(mail.sentDate);
@@ -147,7 +147,7 @@ const formatEmlDate: (mail: Mail) => string = (() => {
         const minutes = padStart(date.getUTCMinutes());
         const seconds = padStart(date.getUTCSeconds());
 
-        return `${dayName}, ${day} ${monthName} ${year} ${hours}:${minutes}:${seconds} +0000`;
+        return `${String(dayName)}, ${day} ${String(monthName)} ${year} ${hours}:${minutes}:${seconds} +0000`;
     };
 })();
 

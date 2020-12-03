@@ -165,9 +165,13 @@ export async function buildEndpoints(
                     ),
                 ).pipe(
                     map(({canceled, filePaths: [location]}) => {
-                        return canceled
-                            ? {message: "canceled"} as const
-                            : {location} as const;
+                        if (canceled) {
+                            return {message: "canceled"} as const;
+                        }
+                        if (!location) {
+                            throw new Error("Location resolving failed");
+                        }
+                        return {location} as const;
                     }),
                 ),
             );

@@ -62,6 +62,9 @@ export async function initSession(
         if (userAgentsPool.length) {
             const idx = getRandomInt(0, userAgentsPool.length - 1);
             const userAgent = userAgentsPool[idx];
+            if (!userAgent) {
+                throw new Error("Invalid/empty user agent value (check the config.json file)");
+            }
             logger.info("picked user agent to set", JSON.stringify({idx, userAgent, userAgentsPoolSize: userAgentsPool.length}));
             userAgentsPool.splice(idx, 1); // removing used value from the pool
             session.setUserAgent(userAgent);

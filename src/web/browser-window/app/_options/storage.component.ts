@@ -73,15 +73,18 @@ export class StorageComponent {
 
     submitPresets(): void {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const keyDerivation = KEY_DERIVATION_PRESETS[this.encryptionPresetForm.controls.keyDerivation.value];
+        const keyDerivation = KEY_DERIVATION_PRESETS[this.encryptionPresetForm.controls.keyDerivation?.value];
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const encryption = ENCRYPTION_DERIVATION_PRESETS[this.encryptionPresetForm.controls.encryption.value];
-        const encryptionPreset = {keyDerivation, encryption};
+        const encryption = ENCRYPTION_DERIVATION_PRESETS[this.encryptionPresetForm.controls.encryption?.value];
+
+        if (!keyDerivation || !encryption) {
+            throw new Error("Invalid keyDerivation/encryption values detected");
+        }
 
         this.store.dispatch(OPTIONS_ACTIONS.ReEncryptSettings({
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            password: this.encryptionPresetForm.controls.password.value,
-            encryptionPreset,
+            password: this.encryptionPresetForm.controls.password?.value,
+            encryptionPreset: {keyDerivation, encryption},
         }));
     }
 }

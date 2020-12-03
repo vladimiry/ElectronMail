@@ -15,6 +15,9 @@ const fontRegExp = /url\(([^)]+)\)/gm;
     }
 
     const [, fontUrl] = url;
+    if (!fontUrl) {
+        throw new Error("Failed to resolve font URL");
+    }
     const fontResponse = await fetchUrl([fontUrl]);
 
     await promisify(fs.writeFile)("./src/assets/dist/fonts/tray-icon/roboto-derivative.ttf", await fontResponse.buffer());

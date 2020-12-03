@@ -256,6 +256,10 @@ async function buildDbPatch(
                 // we take here just last update item since all non-"delete" actions treated as "update" actions
                 const [update] = updates.slice().reverse(); // immutable reversing
 
+                if (!update) {
+                    throw new Error("Failed to resolve the entity update item");
+                }
+
                 upsertIds.push({
                     id: update.ID,
                     gotTrashed: Boolean(

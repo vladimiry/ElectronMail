@@ -14,6 +14,7 @@ import {of} from "rxjs";
 import {pick} from "remeda";
 import {produce} from "immer";
 
+import {AccountConfig} from "src/shared/model/account";
 import {AccountConfigCreateUpdatePatch, PasswordFieldContainer} from "src/shared/model/container";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
@@ -323,26 +324,34 @@ const tests: Record<keyof TestContext["endpoints"], (t: ExecutionContext<TestCon
         await addAccount(buildProtonmailAccountData());
         let settings = await addAccount(buildProtonmailAccountData());
 
-        await t.throwsAsync(changeAccountOrder({login: "login.404", index: 0}));
-        await t.throwsAsync(changeAccountOrder({login: settings.accounts[0].login, index: -1}));
-        await t.throwsAsync(changeAccountOrder({login: settings.accounts[0].login, index: settings.accounts.length}));
-        await t.throwsAsync(changeAccountOrder({login: settings.accounts[0].login, index: settings.accounts.length + 1}));
+        await t.throwsAsync(
+            changeAccountOrder({login: "login.404", index: 0}),
+        );
+        await t.throwsAsync(
+            changeAccountOrder({login: settings.accounts[0]?.login as AccountConfig["login"], index: -1}),
+        );
+        await t.throwsAsync(
+            changeAccountOrder({login: settings.accounts[0]?.login as AccountConfig["login"], index: settings.accounts.length}),
+        );
+        await t.throwsAsync(
+            changeAccountOrder({login: settings.accounts[0]?.login as AccountConfig["login"], index: settings.accounts.length + 1}),
+        );
 
         const expectedSettings = produce(settings, (draft) => {
             (draft._rev as number)++;
             draft.accounts = [
-                draft.accounts[2],
-                draft.accounts[0],
-                draft.accounts[1],
+                draft.accounts[2] as AccountConfig,
+                draft.accounts[0] as AccountConfig,
+                draft.accounts[1] as AccountConfig,
             ];
         });
         const args = {account: settings.accounts[settings.accounts.length - 1], toIndex: 0};
-        settings = await changeAccountOrder({login: args.account.login, index: args.toIndex});
+        settings = await changeAccountOrder({login: args.account?.login as AccountConfig["login"], index: args.toIndex});
         t.deepEqual(expectedSettings, settings);
 
         const expectedSettings2 = produce(settings, (draft) => draft);
         const args2 = {account: settings.accounts[settings.accounts.length - 1], toIndex: settings.accounts.length - 1};
-        settings = await changeAccountOrder({login: args2.account.login, index: args2.toIndex});
+        settings = await changeAccountOrder({login: args2.account?.login as AccountConfig["login"], index: args2.toIndex});
         t.deepEqual(expectedSettings2, settings);
     },
 

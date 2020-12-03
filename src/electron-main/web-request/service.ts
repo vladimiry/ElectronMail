@@ -21,6 +21,10 @@ export const getHeader = (
 
     const value = headers[resolvedName];
 
+    if (typeof value === "undefined") {
+        throw new Error("Invalid/undefined header value detected");
+    }
+
     return {
         name: resolvedName,
         values: Array.isArray(value)
@@ -168,7 +172,7 @@ export const resolveCorsProxy = (
         originHeader.values.length
         &&
         verifyUrlOriginValue(
-            new URL(originHeader.values[0]).origin,
+            new URL(originHeader.values[0] as string).origin,
         )
     );
 

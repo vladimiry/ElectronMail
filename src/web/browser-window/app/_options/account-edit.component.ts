@@ -91,7 +91,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                     loginDelaySecondsRange: {value},
                 } = this.controls;
-                const validated = value && validateLoginDelaySecondsRange(value);
+                const validated = Boolean(value) && validateLoginDelaySecondsRange(value);
                 if (validated && "validationError" in validated) {
                     return {errorMsg: validated.validationError};
                 }

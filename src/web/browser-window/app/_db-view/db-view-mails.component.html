@@ -106,7 +106,7 @@
                 dropdownToggle
                 type="button"
             >
-                <span class="pl-1">{{ sorting.sorters[sorting.sorterIndex].title }}</span>
+                <span class="pl-1">{{ sorting.sorters[sorting.sorterIndex]?.title }}</span>
                 <span class="caret"></span>
             </button>
             <ul *dropdownMenu class="dropdown-menu dropdown-menu-right px-0 py-1" role="menu">

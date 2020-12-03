@@ -51,7 +51,7 @@ export function registerApi(providerApi: ProviderApi): void {
                 = systemMailFolderIds.filter((id) => id !== SYSTEM_FOLDER_IDENTIFIERS["All Mail"]);
             // TODO resolve "folder.id" value from the folder that contains a minimum items count
             //      so narrowest result if multiple items resolved (so protonmail will have to load less data, pagination thing)
-            const folderId =
+            const folderId: string | undefined =
                 ( // selected folder gets highest priority
                     input.selectedFolderId
                     &&
@@ -62,6 +62,10 @@ export function registerApi(providerApi: ProviderApi): void {
                 customFolderId
                 ??
                 systemFolderId;
+
+            if (!folderId) {
+                throw new Error(`Failed to resolve "folder.id" value`);
+            }
 
             if (messagesViewMode) {
                 await providerApi.history.push({folderId, mailId});

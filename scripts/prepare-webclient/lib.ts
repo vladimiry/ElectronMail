@@ -100,7 +100,7 @@ export async function executeBuildFlow<T extends FolderAsDomainEntry[], O = Unpa
     const repoDir = path.join(GIT_CLONE_ABSOLUTE_DIR, repoType);
 
     for (const folderAsDomainEntry of folderAsDomainEntries) {
-        const targetDistDir = path.resolve(BASE_DEST_DIR, folderAsDomainEntry.folderNameAsDomain, destSubFolder);
+        const targetDistDir = path.resolve(BASE_DEST_DIR as string, folderAsDomainEntry.folderNameAsDomain, destSubFolder);
 
         CONSOLE_LOG(
             `Prepare web client build [${repoType}]:`,

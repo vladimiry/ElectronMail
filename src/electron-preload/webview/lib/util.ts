@@ -36,7 +36,7 @@ export const resolveDomElements = async <E extends Element | null,
 
         const startTime = Date.now();
         const delayMs = OPTS.timeoutMs / 50;
-        const queryKeys: K[] = Object.keys(query) as K[];
+        const queryKeys = Object.keys(query) as K[];
         const resolvedElements: Partial<R> = {};
         let it = 0;
 
@@ -47,7 +47,11 @@ export const resolveDomElements = async <E extends Element | null,
                 if (key in resolvedElements) {
                     return;
                 }
-                const element = query[key]();
+                const queryFn = query[key];
+                if (typeof queryFn !== "function") {
+                    throw new Error("Failed to resolved query function");
+                }
+                const element = queryFn();
                 if (element) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any,  @typescript-eslint/no-unsafe-assignment
                     resolvedElements[key] = element as any;

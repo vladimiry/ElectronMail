@@ -149,7 +149,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
     }
 
     isEmptyNodes(nodes: View.ConversationNode[]): boolean {
-        return nodes.length === 1 && !nodes[0].mail;
+        return nodes.length === 1 && !(nodes[0]?.mail);
     }
 
     selectConversationMail({pk: mailPk}: Pick<Mail, "pk">): void {

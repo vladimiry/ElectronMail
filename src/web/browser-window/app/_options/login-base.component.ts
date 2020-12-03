@@ -79,7 +79,7 @@ export abstract class LoginBaseComponent implements AfterViewInit, OnDestroy {
         this.subscription.add(
             this.savePassword.valueChanges.pipe(
                 pairwise(),
-                filter(([prev, curr]) => curr && Boolean(curr) !== Boolean(prev)),
+                filter(([prev, curr]) => Boolean(curr) && Boolean(curr) !== Boolean(prev)),
             ).subscribe(() => {
                 this.store.dispatch(
                     NOTIFICATION_ACTIONS.Message({message: SAVE_PASSWORD_WARN_TRUSTED_HTML, style: "warning", html: true}),

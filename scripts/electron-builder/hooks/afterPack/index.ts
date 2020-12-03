@@ -12,9 +12,15 @@ async function linux({targets, appOutDir}: AfterPackContext): Promise<void> {
         throw new Error(`${printPrefix} Only one target is allowed at a time for Linux platform`);
     }
 
-    const [{name: targetName}] = targets;
+    const [target] = targets;
 
-    if (!["appimage", "snap"].includes(targetName.toLowerCase())) {
+    if (!target) {
+        throw new Error("Target resolving failed");
+    }
+
+    const {name: targetName} = target;
+
+    if (!["appimage", "snap"].includes(targetName.toLocaleLowerCase())) {
         await execShell(["chmod", ["4755", path.join(appOutDir, "chrome-sandbox")]]);
     }
 }

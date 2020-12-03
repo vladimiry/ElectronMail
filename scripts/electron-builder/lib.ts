@@ -200,7 +200,7 @@ export async function build(
     );
 
     if (!packageFile) {
-        throw new Error(`Invalid artifact: "${packageFile}"`);
+        throw new Error(`Invalid artifact: "${String(packageFile)}"`);
     }
 
     return {packageFile};

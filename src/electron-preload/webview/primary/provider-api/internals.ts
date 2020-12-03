@@ -98,7 +98,7 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
                                             return webpack_require<ProviderInternalsLazy[typeof key]>(key);
                                         })();
                                         const useGetMessageKeysModule = (() => {
-                                            const key = "./src/app/hooks/message/useMessageKeys.ts";
+                                            const key = "./src/app/hooks/message/useGetMessageKeys.ts";
                                             return webpack_require<ProviderInternalsLazy[typeof key]>(key);
                                         })();
 
@@ -107,7 +107,7 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
                                         const getEncryptionPreferences = useGetEncryptionPreferencesModule.default();
                                         const attachmentCache = useAttachmentCacheModule.useAttachmentCache();
                                         const {getDecryptedAttachment} = getDecryptedAttachmentModule;
-                                        const getMessageKeys = useGetMessageKeysModule.useMessageKeys();
+                                        const getMessageKeys = useGetMessageKeysModule.useGetMessageKeys();
 
                                         useEffect(() => {
                                             notify({

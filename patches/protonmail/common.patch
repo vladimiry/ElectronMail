@@ -11,19 +11,6 @@ index 6eef523..b016a0d 100755
      echo "[error] no SourceMaps found inside the directory: $OUTPUT_DIR";
    fi;
 
-diff --git a/node_modules/proton-shared/lib/apps/helper.ts b/node_modules/proton-shared/lib/apps/helper.ts
-index b6913e1..31a52f7 100644
---- a/node_modules/proton-shared/lib/apps/helper.ts
-+++ b/node_modules/proton-shared/lib/apps/helper.ts
-@@ -32,7 +32,7 @@ export const getAppHrefBundle = (to: string, toApp: APP_NAMES) => {
-     return `/${path}`;
- };
-
--export const getAccountSettingsApp = () => (isSSOMode ? APPS.PROTONACCOUNT : APPS.PROTONMAIL_SETTINGS);
-+export const getAccountSettingsApp = () => APPS.PROTONACCOUNT;
-
- export const getClientID = (appName: APP_NAMES) => {
-     return APPS_CONFIGURATION[appName].clientID;
 diff --git a/node_modules/proton-shared/lib/helpers/browser.ts b/node_modules/proton-shared/lib/helpers/browser.ts
 index cf3991e..8ff16c7 100644
 --- a/node_modules/proton-shared/lib/helpers/browser.ts
@@ -56,10 +43,10 @@ index cf3991e..8ff16c7 100644
 +    );
  };
 diff --git a/node_modules/proton-shared/lib/constants.ts b/node_modules/proton-shared/lib/constants.ts
-index a1b7919..ff7f6ec 100644
+index 37ec3c0..2d4628a 100644
 --- a/node_modules/proton-shared/lib/constants.ts
 +++ b/node_modules/proton-shared/lib/constants.ts
-@@ -35,22 +35,22 @@ export const APPS = {
+@@ -34,42 +34,42 @@ export const APPS = {
  } as const;
  export const APPS_CONFIGURATION = {
      [APPS.PROTONACCOUNT]: {
@@ -78,15 +65,6 @@ index a1b7919..ff7f6ec 100644
          name: 'ProtonMail',
          clientID: 'WebMail',
          icon: 'protonmail',
-     },
-     [APPS.PROTONMAIL_SETTINGS]: {
-         publicPath: '/settings',
--        subdomain: 'beta',
-+        subdomain: '',
-         name: 'ProtonMail',
-         // Needs to be the same ClientID as mail since they are deployed as an embedded app
-         clientID: 'WebMail',
-@@ -58,21 +58,21 @@ export const APPS_CONFIGURATION = {
      },
      [APPS.PROTONCONTACTS]: {
          publicPath: '/contacts',
@@ -111,3 +89,10 @@ index a1b7919..ff7f6ec 100644
          name: 'ProtonCalendar',
          clientID: 'WebCalendar',
          icon: 'protoncalendar',
+     },
+     [APPS.PROTONVPN_SETTINGS]: {
+-        publicPath: '',
++        publicPath: '/settings',
+         subdomain: '',
+         name: 'ProtonVPN',
+         clientID: 'WebVPNSettings',

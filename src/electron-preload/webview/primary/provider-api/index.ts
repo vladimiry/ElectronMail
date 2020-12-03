@@ -102,12 +102,16 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                 },
                 async decryptMessageBody(message) {
                     const privateApi = await resolvePrivateApi();
-                    const messageKeys = await privateApi.getMessageKeys({data: message});
+                    const messageKeys = await privateApi.getMessageKeys(message);
                     const decryptedMessage = await internals["./src/app/helpers/message/messageDecrypt.ts"].value.decryptMessage(
                         message,
                         messageKeys.privateKeys,
                         privateApi.attachmentCache,
                     );
+
+                    if (typeof decryptedMessage.decryptedBody !== "string") {
+                        throw new Error("Invalid message body content");
+                    }
 
                     return decryptedMessage.decryptedBody;
                 },
@@ -224,11 +228,11 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                         const privateApi = await resolvePrivateApi();
                         const [protonApi, messageKeys, encryptionPreferences] = await Promise.all([
                             resolveHttpApi(),
-                            privateApi.getMessageKeys({data: message}),
+                            privateApi.getMessageKeys(message),
                             privateApi.getEncryptionPreferences(message.Sender.Address),
                         ]);
                         const extendedMessage = constructExtendedMessage(encryptionPreferences, messageKeys);
-                        const {data} = await privateApi.getDecryptedAttachment(attachment, extendedMessage, protonApi);
+                        const {data} = await privateApi.getDecryptedAttachment(attachment, extendedMessage, messageKeys, protonApi);
 
                         // the custom error also has the "data" prop, so this test won't suppress/override the custom error
                         // so this test should help detecting at early stage the protonmail's code change

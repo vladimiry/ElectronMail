@@ -48,7 +48,6 @@ export const WEB_CHUNK_NAMES = {
 export const PROVIDER_REPO_NAMES = [
     "proton-mail",
     "proton-account",
-    "proton-mail-settings",
     "proton-contacts",
     "proton-calendar",
     "proton-drive",
@@ -70,7 +69,7 @@ export const PROVIDER_REPO_MAP = {
         repoRelativeDistDir: "./dist",
         baseDirName: "",
         repo: "https://github.com/ProtonMail/proton-mail.git",
-        commit: "06d2adb61bc40274617b1de44fba64acd80b604d",
+        commit: "77b133013cdb5695aa23c0c4c29cc6578878faa5",
         protonPack: {
             appConfig: {clientId: "WebMail"},
             webpackIndexEntryItems: [
@@ -90,7 +89,7 @@ export const PROVIDER_REPO_MAP = {
                 "./node_modules/react-components/hooks/useGetEncryptionPreferences.ts",
                 "./src/app/containers/AttachmentProvider.tsx",
                 "./src/app/helpers/attachment/attachmentLoader.ts",
-                "./src/app/hooks/message/useMessageKeys.ts",
+                "./src/app/hooks/message/useGetMessageKeys.ts",
                 ...PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS,
             ],
         },
@@ -99,28 +98,21 @@ export const PROVIDER_REPO_MAP = {
         repoRelativeDistDir: "./dist",
         baseDirName: "account",
         repo: "https://github.com/ProtonMail/proton-account.git",
-        commit: "179d3baf501227025674ee00fd550d2dd1638c78",
+        commit: "a2131f6e8208660b1fb50685a23e7aff32943b91",
         protonPack: {appConfig: {clientId: "WebAccount"}}
     },
     [PROVIDER_REPO_NAMES[2]]: {
         repoRelativeDistDir: "./dist",
-        baseDirName: "settings",
-        repo: "https://github.com/ProtonMail/proton-mail-settings.git",
-        commit: "cf692a54fbfd429ebaa052c0bb542f8ce16c0669",
-        protonPack: {appConfig: {clientId: "WebMailSettings"}},
+        baseDirName: "contacts",
+        repo: "https://github.com/ProtonMail/proton-contacts.git",
+        commit: "ba6cab3bbf2e9fd219d7288d7b4b5d4a800bbd25",
+        protonPack: {appConfig: {clientId: "WebContacts"}},
     },
     [PROVIDER_REPO_NAMES[3]]: {
         repoRelativeDistDir: "./dist",
-        baseDirName: "contacts",
-        repo: "https://github.com/ProtonMail/proton-contacts.git",
-        commit: "59ef7ce4b68d987b10c84622fd90b7f1eb42438c",
-        protonPack: {appConfig: {clientId: "WebContacts"}},
-    },
-    [PROVIDER_REPO_NAMES[4]]: {
-        repoRelativeDistDir: "./dist",
         baseDirName: "calendar",
         repo: "https://github.com/ProtonMail/proton-calendar.git",
-        commit: "946fe4c20f98b507286ecbbca6f09c89c18ae718",
+        commit: "c067c3727396e038327fd1f34954c26088df6523",
         protonPack: {
             appConfig: {clientId: "WebCalendar"},
             webpackIndexEntryItems: [
@@ -130,11 +122,11 @@ export const PROVIDER_REPO_MAP = {
             ],
         },
     },
-    [PROVIDER_REPO_NAMES[5]]: {
+    [PROVIDER_REPO_NAMES[4]]: {
         repoRelativeDistDir: "./dist",
         baseDirName: "drive",
         repo: "https://github.com/ProtonMail/proton-drive.git",
-        commit: "084066524405f10e5a00c762c8a400482428a861",
+        commit: "673db883517d1c6031ec7cd8ab77633b0325910b",
         protonPack: {appConfig: {clientId: "WebDrive"}},
     },
 } as const;

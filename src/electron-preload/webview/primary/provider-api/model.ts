@@ -17,7 +17,7 @@ export type LazyKeys = StrictExclude<StrictExtract<Keys,
     | "./node_modules/react-components/hooks/useGetEncryptionPreferences.ts"
     | "./src/app/containers/AttachmentProvider.tsx"
     | "./src/app/helpers/attachment/attachmentLoader.ts"
-    | "./src/app/hooks/message/useMessageKeys.ts">, never>
+    | "./src/app/hooks/message/useGetMessageKeys.ts">, never>
 
 export type ImmediateKeys = StrictExclude<Keys, LazyKeys>
 
@@ -30,9 +30,9 @@ export type ProviderInternals = AddInitializedProp<{
             readonly getEncryptionPreferences: (senderAddress: RestModel.Message["Sender"]["Address"]) => Promise<EncryptionPreferences>
             // https://github.com/ProtonMail/proton-mail/blob/7f0116a096ca6a00369f18b0c62fa79a48e4e62e/src/app/containers/AttachmentProvider.tsx
             readonly attachmentCache: Cache
-            // https://github.com/ProtonMail/proton-mail/blob/7f0116a096ca6a00369f18b0c62fa79a48e4e62e/src/app/hooks/message/useMessageKeys.ts
-            readonly getMessageKeys: (message: MessageExtendedWithData) => Promise<MessageKeys>
-            // https://github.com/ProtonMail/proton-mail/blob/2ab916e847bfe8064f5ff321c50f1028adf547e1/src/app/helpers/attachment/attachmentLoader.ts
+            // https://github.com/ProtonMail/proton-mail/blob/77b133013cdb5695aa23c0c4c29cc6578878faa5/src/app/hooks/message/useGetMessageKeys.ts#L13
+            readonly getMessageKeys: (message: Pick<RestModel.Message, "AddressID">) => Promise<MessageKeys>
+            // https://github.com/ProtonMail/proton-mail/blob/77b133013cdb5695aa23c0c4c29cc6578878faa5/src/app/helpers/attachment/attachmentLoader.ts#L46
             readonly getDecryptedAttachment: (
                 attachment: RestModel.Attachment,
                 message: NoExtraProps<Pick<Required<MessageExtended>,
@@ -40,6 +40,7 @@ export type ProviderInternals = AddInitializedProp<{
                     | "senderPinnedKeys"
                     | "senderVerified"
                     | "privateKeys">>,
+                messageKeys: MessageKeys,
                 api: HttpApi
             ) => Promise<{ data: Uint8Array }>
         }
@@ -116,8 +117,8 @@ export type ProviderInternalsLazy = AddInitializedProp<{
         useAttachmentCache: () => PrivateScope["attachmentCache"]
     }
 } & {
-    [K in StrictExtract<LazyKeys, "./src/app/hooks/message/useMessageKeys.ts">]: {
-        useMessageKeys: () => PrivateScope["getMessageKeys"]
+    [K in StrictExtract<LazyKeys, "./src/app/hooks/message/useGetMessageKeys.ts">]: {
+        useGetMessageKeys: () => PrivateScope["getMessageKeys"]
     }
 } & {
     [K in StrictExtract<LazyKeys, "./src/app/helpers/attachment/attachmentLoader.ts">]: {
@@ -213,5 +214,3 @@ export type MessageExtended = NoExtraProps<{
     readonly senderVerified?: EncryptionPreferences["isContactSignatureVerified"]
     readonly privateKeys?: MessageKeys["privateKeys"]
 }>;
-
-export type MessageExtendedWithData = NoExtraProps<Required<Pick<MessageExtended, "data">> & MessageExtended>;

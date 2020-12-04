@@ -48,8 +48,9 @@ async function unpack({packageFile}: { packageFile: string }): Promise<{ package
 async function resolveAppImageTool(): Promise<{ command: string }> {
     const {command} = await resolveExecutable(
         "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage",
-        "1ca0df42503a57875a6d0cadea825ca2146f4e467ecb4e380a06b35f4a78d087",
+        "b6a088aa3d51949bb0578f218f8485f148389100e5c7f6d77a70c7f8e860f58b",
         "appimagetool",
+        {optionalHashSumCheck: true},
     );
     const cwd = path.dirname(command);
 

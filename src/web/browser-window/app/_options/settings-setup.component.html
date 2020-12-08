@@ -25,7 +25,9 @@
             </div>
             <div class="form-group text-muted">
                 The app uses this password to encrypt all the sensitive data to be stored in the
-                <a (click)="$event.preventDefault(); openSettingsFolder()" href="javascript:void(0)">settings folder</a>.
+                <a (click)="$event.preventDefault(); openSettingsFolder()" href="{{ userDataDir }}">
+                    settings folder
+                </a>.
                 All the files being produced and stored by the app listed in
                 the <a (click)="$event.preventDefault(); openFaq()" href="{{ PACKAGE_GITHUB_PROJECT_URL }}/wiki/FAQ">FAQ</a>.
             </div>

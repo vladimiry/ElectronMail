@@ -32,6 +32,7 @@ export const OPTIONS_ACTIONS = unionize({
         PatchMainProcessNotification: ofType<State["mainProcessNotification"]>(),
         TrayIconDataURL: ofType<{ value: string }>(),
         ToggleAccountDisablingRequest: ofType<LoginFieldContainer>(),
+        ResetDbMetadata: ofType<{ reset?: boolean }>(),
     },
     {
         tag: "type",

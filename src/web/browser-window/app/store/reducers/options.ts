@@ -23,6 +23,7 @@ export type ProgressPatch = Partial<{
     updatingBaseSettings: boolean;
     togglingLocalDbMailsListViewMode: boolean;
     togglingAccountDisabling: boolean;
+    resettingDbMetadata: boolean;
 }>;
 
 export interface State extends fromRoot.State, Partial<InitResponse> {

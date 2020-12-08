@@ -11,9 +11,9 @@
                 </button>
                 <ul *dropdownMenu class="dropdown-menu" role="menu">
                     <li role="menuitem">
-                        <button (click)="openSettingsFolder()" class="dropdown-item" type="button">
+                        <a (click)="$event.preventDefault(); openSettingsFolder();" class="dropdown-item" href="{{ userDataDir }}">
                             Open Settings Folder
-                        </button>
+                        </a>
                     </li>
                     <li class="divider dropdown-divider"></li>
                     <li role="menuitem">

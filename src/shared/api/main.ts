@@ -82,7 +82,6 @@ export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
         DbPatchAccount: ofType<{
             key: DbModel.DbAccountPk;
             entitiesModified: boolean;
-            metadataModified: boolean;
             stat: { mails: number; folders: number; contacts: number; unread: number };
         }>(),
         DbIndexerProgressState: ofType<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_ON_ACTIONS>, { type: "ProgressState" }>["payload"]>(),
@@ -132,10 +131,12 @@ export const ENDPOINTS_DEFINITION = {
     selectPath: ActionType.Observable<void, { message: "timeout-reset" | "canceled" } | { location: string }>(),
 
     dbPatch: ActionType.Promise<DbModel.DbAccountPk
-        & { forceFlush?: boolean }
+        & { bootstrapPhase?: "initial" | "intermediate" | "final" }
         & { patch: DbPatch }
         & { metadata: FsDbAccount["metadata"] },
         DbModel.FsDbAccount["metadata"]>(),
+
+    dbResetDbMetadata: ActionType.Promise<{ reset: boolean }>(),
 
     dbGetAccountMetadata: ActionType.Promise<DbModel.DbAccountPk, DbModel.FsDbAccount["metadata"] | null>(),
 

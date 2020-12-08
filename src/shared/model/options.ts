@@ -47,6 +47,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     dbSyncingIntervalTrigger: number;
     dbSyncingOnlineTriggerDelay: number;
     dbSyncingFiredTriggerDebounce: number;
+    shouldRequestDbMetadataReset: "initial" | "done";
     // base
     calendarNotification: boolean
     checkUpdateAndNotify: boolean

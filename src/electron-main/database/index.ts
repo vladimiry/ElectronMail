@@ -1,16 +1,19 @@
 import * as FsJsonStore from "fs-json-store";
 import asap from "asap-es";
 import path from "path";
-import _logger, {ElectronLog} from "electron-log";
+import electronLog, {ElectronLog} from "electron-log";
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/lib/private/constants";
 import {KeyBasedPreset} from "fs-json-store-encryption-adapter";
 
 import {DATABASE_VERSION, DB_INSTANCE_PROP_NAME} from "./constants";
-import {DbAccountPk, FsDb, FsDbAccount, Mail, SYSTEM_FOLDER_IDENTIFIERS} from "src/shared/model/database";
+import {DB_DATA_CONTAINER_FIELDS, DbAccountPk, FsDb, FsDbAccount, Mail, SYSTEM_FOLDER_IDENTIFIERS} from "src/shared/model/database";
 import {LogLevel} from "src/shared/model/common";
 import {SerializationAdapter} from "./serialization";
 import {curryFunctionMembers} from "src/shared/util";
 import {hrtimeDuration} from "src/electron-main/util";
+import {patchMetadata} from "src/electron-main/database/util";
+
+const _logger = curryFunctionMembers(electronLog, "[electron-main/database]");
 
 export class Database {
     static buildEmptyDb(): FsDb {
@@ -24,6 +27,68 @@ export class Database {
         return {
             latestEventId: "",
         };
+    }
+
+    static mergeAccount<TL extends DbAccountPk>(
+        sourceDb: DeepReadonly<Database>,
+        targetDb: DeepReadonly<Database>,
+        accountPk: TL,
+    ): boolean {
+        const logger = curryFunctionMembers(_logger, "mergeAccount()", `[${sourceDb.options.file} => ${targetDb.options.file}]`);
+
+        logger.verbose();
+
+        const sourceAccount = sourceDb.getAccount(accountPk);
+        const targetAccount = targetDb.getMutableAccount(accountPk) || targetDb.initEmptyAccount(accountPk);
+        let targetPatched = false;
+
+        if (!sourceAccount) {
+            throw new Error(`Failed to resolve the source account for merging into the target account`);
+        }
+
+        // inserting new/updated entities
+        for (const entityType of DB_DATA_CONTAINER_FIELDS) {
+            const patch = sourceAccount[entityType];
+            const patchSize = Object.keys(patch).length;
+
+            logger.verbose(`patch size (${entityType}):`, patchSize);
+
+            if (!patchSize) {
+                // skipping iteration as the patch is empty
+                continue;
+            }
+
+            Object.assign(
+                targetAccount[entityType],
+                patch,
+            );
+
+            targetPatched = true;
+        }
+
+        // removing entities
+        for (const entityType of DB_DATA_CONTAINER_FIELDS) {
+            const deletedPks = sourceAccount.deletedPks[entityType];
+
+            logger.verbose("removing entities count:", deletedPks.length);
+
+            for (const pk of deletedPks) {
+                delete targetAccount[entityType][pk];
+                targetPatched = true;
+            }
+        }
+
+        { // patching metadata
+            const metadataPatched = patchMetadata(targetAccount.metadata, sourceAccount.metadata, "mergeAccount");
+
+            logger.verbose(`metadata patched:`, metadataPatched);
+
+            if (metadataPatched) {
+                targetPatched = true;
+            }
+        }
+
+        return targetPatched;
     }
 
     private readonly logger: ElectronLog;
@@ -42,7 +107,7 @@ export class Database {
         }>,
         public readonly fileFs: FsJsonStore.Model.StoreFs = FsJsonStore.Fs.Fs.fs,
     ) {
-        this.logger = curryFunctionMembers(_logger, `[electron-main/database: ${path.basename(this.options.file)}]`);
+        this.logger = curryFunctionMembers(_logger, `[${path.basename(this.options.file)}]`);
     }
 
     getVersion(): string {
@@ -61,7 +126,7 @@ export class Database {
         return account;
     }
 
-    initAccount<TL extends DbAccountPk>({login}: TL): FsDbAccount {
+    initEmptyAccount<TL extends DbAccountPk>({login}: TL): FsDbAccount {
         const account: FsDbAccount = {
             conversationEntries: Object.create(null), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
             mails: Object.create(null), // eslint-disable-line @typescript-eslint/no-unsafe-assignment

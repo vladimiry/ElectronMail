@@ -462,6 +462,7 @@ export class AccountsEffects {
                                 withLatestFrom(this.store.pipe(select(OptionsSelectors.CONFIG.timeouts))),
                                 concatMap(([metadata, timeouts]) => {
                                     const bootstrapping = !isDatabaseBootstrapped(metadata);
+                                    const buildDbPatchMethodName = "buildDbPatch";
 
                                     if (bootstrapping && bootstrappingTriggeredOnce) {
                                         return throwError(
@@ -474,7 +475,7 @@ export class AccountsEffects {
                                         : timeouts.dbSyncing;
 
                                     logger.verbose(
-                                        `calling "buildDbPatch" api`,
+                                        `calling "${buildDbPatchMethodName}" api`,
                                         JSON.stringify({
                                             timeoutMs,
                                             bootstrapping,
@@ -485,11 +486,15 @@ export class AccountsEffects {
                                     this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: true}}));
 
                                     const result$ = from(
-                                        webViewClient("buildDbPatch", {timeoutMs})({
+                                        webViewClient(buildDbPatchMethodName, {timeoutMs})({
                                             login,
                                             zoneName,
                                             metadata,
-                                        }),
+                                        }).pipe(
+                                            tap((value) => {
+                                                logger.verbose(`${buildDbPatchMethodName}:value type: ${typeof value}`);
+                                            }),
+                                        ),
                                     ).pipe(
                                         concatMap(() => of(ACCOUNTS_ACTIONS.Synced({pk: {login}}))),
                                         takeUntil(

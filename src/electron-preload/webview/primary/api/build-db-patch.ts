@@ -1,5 +1,5 @@
-import {concatMap, filter, first} from "rxjs/operators";
-import {defer, race, throwError, timer} from "rxjs";
+import {Subject, defer, merge, race, throwError, timer} from "rxjs";
+import {concatMap, filter, first, map, tap} from "rxjs/operators";
 
 import * as Database from "src/electron-preload/webview/lib/database-entity";
 import * as DatabaseModel from "src/shared/model/database";
@@ -46,7 +46,10 @@ async function buildConversationDbMails(briefConversation: RestModel.Conversatio
 async function bootstrapDbPatch(
     providerApi: ProviderApi,
     parentLogger: Logger,
-    triggerStoreCallback: (path: DbPatchBundle) => Promise<void>,
+    triggerStoreCallback: (
+        bootstrapPhase: "initial" | "intermediate" | "final",
+        path: DbPatchBundle,
+    ) => Promise<void>,
 ): Promise<void> {
     const logger = curryFunctionMembers(parentLogger, "bootstrapDbPatch()");
     // WARN: "getLatestID" should be called on top of the function, ie before any other fetching
@@ -91,13 +94,16 @@ async function bootstrapDbPatch(
     })();
 
     logger.verbose(`trigger initial storing`);
-    await triggerStoreCallback({
-        patch: initialPatch,
-        metadata: {
-            // WARN: don't persist the "latestEventId" value yet as this is intermediate storing
-            latestEventId: "",
+    await triggerStoreCallback(
+        "initial",
+        {
+            patch: initialPatch,
+            metadata: {
+                // WARN: don't persist the "latestEventId" value yet as this is intermediate storing
+                latestEventId: "",
+            },
         },
-    });
+    );
 
     logger.verbose("start fetching messages");
     const remainingMails: DatabaseModel.Mail[] = await (async () => {
@@ -142,13 +148,16 @@ async function bootstrapDbPatch(
                     `trigger intermediate storing,`,
                     `mails: ${intermediatePatch.mails.upsert.length},`,
                 ].join(" "));
-                await triggerStoreCallback({
-                    patch: intermediatePatch,
-                    metadata: {
-                        // WARN: don't persist the "latestEventId" value yet as this is intermediate storing
-                        latestEventId: "",
+                await triggerStoreCallback(
+                    "intermediate",
+                    {
+                        patch: intermediatePatch,
+                        metadata: {
+                            // WARN: don't persist the "latestEventId" value yet as this is intermediate storing
+                            latestEventId: "",
+                        },
                     },
-                });
+                );
             }
 
             conversationsQuery.Page++;
@@ -167,10 +176,13 @@ async function bootstrapDbPatch(
         `mails: ${finalPatch.mails.upsert.length},`,
     ].join(" "));
 
-    await triggerStoreCallback({
-        patch: finalPatch,
-        metadata: {latestEventId},
-    });
+    await triggerStoreCallback(
+        "final",
+        {
+            patch: finalPatch,
+            metadata: {latestEventId},
+        },
+    );
 }
 
 async function buildDbPatch(
@@ -246,20 +258,18 @@ async function buildDbPatch(
         const {updatesMappedByEntityId, upsertIds, remove} = mapping[entityType];
 
         for (const updates of updatesMappedByEntityId.values()) {
-            const deleteUpdate = updates.find(({Action}) => Action === RestModel.EVENT_ACTION.DELETE);
+            // we take here just last update item as the most actual one
+            const [update] = updates.slice().reverse(); // immutable reversing (assuming that entity updates sorted in ASC order)
 
-            if (deleteUpdate) {
-                // "delete" action is irrecoverable
+            if (!update) {
+                throw new Error("Failed to resolve the entity update item");
+            }
+
+            if (update.Action === RestModel.EVENT_ACTION.DELETE) {
+                // "delete" action being placed at the tail is irrecoverable
                 // so if it presents in the updates list then we don't process the list any longer
-                remove.push({pk: Database.buildPk(deleteUpdate.ID)});
+                remove.push({pk: Database.buildPk(update.ID)});
             } else {
-                // we take here just last update item since all non-"delete" actions treated as "update" actions
-                const [update] = updates.slice().reverse(); // immutable reversing
-
-                if (!update) {
-                    throw new Error("Failed to resolve the entity update item");
-                }
-
                 upsertIds.push({
                     id: update.ID,
                     gotTrashed: Boolean(
@@ -363,7 +373,15 @@ const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonPrimaryApi, 
 
             logger.info();
 
-            const deferFactory: () => Promise<BuildDbPatchMethodReturnType> = async () => {
+            const timeoutReleaseSubject$ = new Subject();
+            const releaseTimeout = (cause: "refresh" | "defer"): void => {
+                logger.verbose(`releaseTimeout() triggered by "${cause}"`);
+                // the bootstrap fetch process triggered by "refresh" event gets called with short/"dbSyncing" timeout value, so we
+                // release the timeout at this point since bootstrap fetch might take long time (see "dbBootstrapping" timeout)
+                timeoutReleaseSubject$.next();
+                timeoutReleaseSubject$.complete();
+            };
+            const deferFactory = async (): Promise<BuildDbPatchMethodReturnType> => {
                 logger.info("delayFactory()");
 
                 // TODO handle "account.entryUrl" change event
@@ -380,42 +398,62 @@ const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonPrimaryApi, 
                     ),
                 ).toPromise();
 
-                if (!isDatabaseBootstrapped(input.metadata)) {
-                    await bootstrapDbPatch(
-                        providerApi,
-                        logger,
-                        async (dbPatch) => {
-                            await persistDatabasePatch(
-                                {
-                                    ...dbPatch,
-                                    login: input.login,
-                                },
-                                logger,
-                            );
-                        },
-                    );
+                const fetchedEvents = (
+                    isDatabaseBootstrapped(input.metadata)
+                    &&
+                    await fetchEvents(providerApi, input.metadata.latestEventId, logger)
+                );
 
-                    return;
-                }
-
-                {
-                    const {events, latestEventId} = await fetchEvents(providerApi, input.metadata.latestEventId, logger);
-
+                if (typeof fetchedEvents === "object") {
                     await persistDatabasePatch(
                         {
-                            patch: await buildDbPatch(providerApi, {events, parentLogger: logger}),
-                            metadata: {latestEventId},
+                            patch: await buildDbPatch(providerApi, {events: fetchedEvents.events, parentLogger: logger}),
+                            metadata: {latestEventId: fetchedEvents.latestEventId},
                             login: input.login,
                         },
                         logger,
                     );
+                    return;
                 }
 
-                return void 0;
+                {
+                    const refresh = fetchedEvents === "refresh";
+
+                    if (refresh) {
+                        releaseTimeout("refresh");
+                    }
+
+                    await bootstrapDbPatch(
+                        providerApi,
+                        logger,
+                        async (bootstrapPhase, patch) => {
+                            await persistDatabasePatch(
+                                {
+                                    ...patch,
+                                    login: input.login,
+                                },
+                                logger,
+                                bootstrapPhase,
+                            );
+                        },
+                    );
+                }
             };
 
-            return defer(deferFactory).pipe(
-                buildDbPatchRetryPipeline<BuildDbPatchMethodReturnType>(preprocessError, input.metadata, _logger),
+            return merge(
+                timeoutReleaseSubject$.pipe(
+                    map(() => {
+                        const value = "timeoutRelease";
+                        logger.verbose(JSON.stringify({value}));
+                    }),
+                ),
+                defer(deferFactory).pipe(
+                    buildDbPatchRetryPipeline<BuildDbPatchMethodReturnType>(preprocessError, input.metadata, _logger),
+                    tap(() => {
+                        // WARN: needs to be fired here since otherwise the observable won't be fully "completed"
+                        releaseTimeout("defer");
+                    }),
+                ),
             );
         },
 

@@ -45,6 +45,7 @@ interface TestContext {
         | "dbIndexerNotification"
         | "dbIndexerOn"
         | "dbPatch"
+        | "dbResetDbMetadata"
         | "dbSearchRootConversationNodes"
         | "findInPage"
         | "findInPageDisplay"

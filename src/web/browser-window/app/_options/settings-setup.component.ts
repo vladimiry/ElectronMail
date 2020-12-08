@@ -13,6 +13,8 @@ import {PACKAGE_GITHUB_PROJECT_URL_TOKEN} from "src/web/browser-window/app/app.c
     preserveWhitespaces: true,
 })
 export class SettingsSetupComponent extends LoginBaseComponent {
+    readonly userDataDir = __METADATA__.electronLocations.userDataDir;
+
     passwordConfirm = new FormControl(null, [
         Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
         // TODO make "controls match" to be "common/util" validator

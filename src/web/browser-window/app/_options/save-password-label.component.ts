@@ -15,6 +15,8 @@ import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
     templateUrl: "./save-password-label.component.html",
 })
 export class SavePasswordLabelComponent implements OnInit, OnDestroy {
+    readonly userDataDir = __METADATA__.electronLocations.userDataDir;
+
     @Input()
     savePassword = false;
 

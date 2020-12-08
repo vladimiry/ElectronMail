@@ -222,16 +222,18 @@ export function buildDbPatchRetryPipeline<T>(
 export async function persistDatabasePatch(
     data: Parameters<IpcMainApiEndpoints["dbPatch"]>[0],
     logger: Logger,
+    bootstrapPhase?: "initial" | "intermediate" | "final",
 ): Promise<void> {
-    logger.info("persist() start");
+    logger.info("persistDatabasePatch() start", JSON.stringify({bootstrapPhase}));
 
     await resolveIpcMainApi({logger})("dbPatch")({
+        bootstrapPhase,
         login: data.login,
         metadata: data.metadata,
         patch: data.patch,
     });
 
-    logger.info("persist() end");
+    logger.info("persistDatabasePatch() end");
 }
 
 export function buildEmptyDbPatch(): DbPatch {
@@ -252,10 +254,7 @@ export const fetchEvents = async (
     providerApi: ProviderApi,
     latestEventId: RestModel.Event["EventID"],
     _logger: Logger,
-): Promise<{
-    latestEventId: RestModel.Event["EventID"]
-    events: RestModel.Event[]
-}> => {
+): Promise<{ latestEventId: RestModel.Event["EventID"]; events: RestModel.Event[] } | "refresh"> => {
     const logger = curryFunctionMembers(_logger, "fetchEvents()");
     const events: RestModel.Event[] = [];
     const iterationState: NoExtraProps<{
@@ -269,6 +268,11 @@ export const fetchEvents = async (
     do {
         const response = await providerApi.events.getEvents(iterationState.latestEventId);
         const hasMoreEvents = response.More === 1;
+
+        if (response.Refresh) {
+            // any non-zero value treated as "refresh needed" signal
+            return "refresh";
+        }
 
         events.push(response);
 

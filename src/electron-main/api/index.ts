@@ -2,10 +2,10 @@ import electronLog from "electron-log";
 import {authenticator} from "otplib";
 import {first} from "rxjs/operators";
 
+import * as EndpointsBuilders from "./endpoints-builders";
 import * as SpellCheck from "src/electron-main/spell-check/api";
-import {Account, Database, FindInPage, General, ProtonSession, TrayIcon} from "./endpoints-builders";
 import {Context} from "src/electron-main/model";
-import {DB_DATA_CONTAINER_FIELDS} from "src/shared/model/database";
+import {Database} from "src/electron-main/database";
 import {IPC_MAIN_API, IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {PACKAGE_NAME, PRODUCT_NAME} from "src/shared/constants";
@@ -16,20 +16,19 @@ import {clearIdleTimeLogOut, setupIdleTimeLogOut} from "src/electron-main/power-
 import {curryFunctionMembers} from "src/shared/util";
 import {deletePassword, getPassword, setPassword} from "src/electron-main/keytar";
 import {initSessionByAccount} from "src/electron-main/session";
-import {patchMetadata} from "src/electron-main/database/util";
 import {upgradeDatabase, upgradeSettings} from "src/electron-main/storage-upgrade";
 
 const logger = curryFunctionMembers(electronLog, "[src/electron-main/api/index]");
 
 export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
     const endpoints: IpcMainApiEndpoints = {
-        ...await Account.buildEndpoints(ctx),
-        ...await Database.buildEndpoints(ctx),
-        ...await FindInPage.buildEndpoints(ctx),
-        ...await General.buildEndpoints(ctx),
-        ...await ProtonSession.buildEndpoints(ctx),
+        ...await EndpointsBuilders.Account.buildEndpoints(ctx),
+        ...await EndpointsBuilders.Database.buildEndpoints(ctx),
+        ...await EndpointsBuilders.FindInPage.buildEndpoints(ctx),
+        ...await EndpointsBuilders.General.buildEndpoints(ctx),
+        ...await EndpointsBuilders.ProtonSession.buildEndpoints(ctx),
+        ...await EndpointsBuilders.TrayIcon.buildEndpoints(ctx),
         ...await SpellCheck.buildEndpoints(ctx),
-        ...await TrayIcon.buildEndpoints(ctx),
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async changeMasterPassword({password, newPassword}) {
@@ -277,44 +276,18 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
 
             // merging session database to the primary one
             if (await sessionDb.persisted()) {
-                for (const {account: sourceAccount, pk: accountPk} of sessionDb) {
-                    logger.verbose("loadDatabase() account processing iteration starts");
-                    const targetAccount = db.getMutableAccount(accountPk) || db.initAccount(accountPk);
+                logger.verbose("loadDatabase() start session db accounts merging to primary db");
 
-                    // inserting new/updated entities
-                    for (const entityType of DB_DATA_CONTAINER_FIELDS) {
-                        const patch = sourceAccount[entityType];
-                        const patchSize = Object.keys(patch).length;
-                        logger.verbose(`loadDatabase() patch size (${entityType}):`, patchSize);
-                        if (!patchSize) {
-                            // skipping iteration as the patch is empty
-                            continue;
-                        }
-                        Object.assign(
-                            targetAccount[entityType],
-                            patch,
-                        );
+                for (const {pk: accountPk} of sessionDb) {
+                    if (
+                        Database.mergeAccount(
+                            sessionDb,
+                            db,
+                            accountPk,
+                        )
+                    ) {
                         needToSaveDb = true;
                     }
-
-                    // removing entities
-                    for (const entityType of DB_DATA_CONTAINER_FIELDS) {
-                        const deletedPks = sourceAccount.deletedPks[entityType];
-                        logger.verbose("loadDatabase() removing entities count:", deletedPks.length);
-                        for (const pk of deletedPks) {
-                            delete targetAccount[entityType][pk];
-                            needToSaveDb = true;
-                        }
-                    }
-
-                    // patching metadata
-                    ((): void => {
-                        const metadataPatched = patchMetadata(targetAccount.metadata, sourceAccount.metadata, "loadDatabase");
-                        logger.verbose(`loadDatabase() metadata patched:`, metadataPatched);
-                        if (metadataPatched) {
-                            needToSaveDb = true;
-                        }
-                    })();
                 }
             }
 
@@ -322,8 +295,9 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
                 await db.saveToFile();
             }
 
-            // resetting and saving the session database
+            // resetting the session database in memory
             sessionDb.reset();
+            // saving the session database
             await sessionDb.saveToFile();
 
             if ((await ctx.config$.pipe(first()).toPromise()).fullTextSearch) {

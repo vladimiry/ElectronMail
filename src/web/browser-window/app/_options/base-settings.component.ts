@@ -19,6 +19,8 @@ import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
     preserveWhitespaces: true,
 })
 export class BaseSettingsComponent implements OnInit, OnDestroy {
+    readonly userDataDir = __METADATA__.electronLocations.userDataDir;
+
     readonly processing$: Observable<boolean> = this.store.pipe(
         select(OptionsSelectors.FEATURED.progress),
         map((progress) => Boolean(progress.updatingBaseSettings)),

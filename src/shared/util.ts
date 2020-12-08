@@ -83,6 +83,7 @@ export function initialConfig(): Config {
             dbSyncingIntervalTrigger: ONE_MINUTE_MS * 5,
             dbSyncingOnlineTriggerDelay: ONE_SECOND_MS * 3,
             dbSyncingFiredTriggerDebounce: ONE_SECOND_MS * 5,
+            shouldRequestDbMetadataReset: "initial",
             // base
             calendarNotification: false,
             checkUpdateAndNotify: false,

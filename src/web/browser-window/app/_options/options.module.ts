@@ -6,20 +6,21 @@ import {EffectsModule} from "@ngrx/effects";
 import {NgModule} from "@angular/core";
 import {PopoverModule} from "ngx-bootstrap/popover";
 
-import {AccountEditComponent} from "src/web/browser-window/app/_options/account-edit.component";
-import {AccountsComponent} from "src/web/browser-window/app/_options/accounts.component";
-import {BaseSettingsComponent} from "src/web/browser-window/app/_options/base-settings.component";
-import {EncryptionPresetsComponent} from "src/web/browser-window/app/_options/encryption-presets.component";
-import {LoginComponent} from "src/web/browser-window/app/_options/login.component";
-import {OptionsEffects} from "src/web/browser-window/app/_options/options.effects";
-import {OptionsRoutingModule} from "src/web/browser-window/app/_options/options.routing.module";
-import {OptionsService} from "src/web/browser-window/app/_options/options.service";
-import {SavePasswordLabelComponent} from "src/web/browser-window/app/_options/save-password-label.component";
-import {SettingsComponent} from "src/web/browser-window/app/_options/settings.component";
-import {SettingsConfigureGuard} from "src/web/browser-window/app/_options/settings-configure.guard";
-import {SettingsSetupComponent} from "src/web/browser-window/app/_options/settings-setup.component";
+import {AccountEditComponent} from "./account-edit.component";
+import {AccountsComponent} from "./accounts.component";
+import {BaseSettingsComponent} from "./base-settings.component";
+import {DbMetadataResetRequestComponent} from "./db-metadata-reset-request.component";
+import {EncryptionPresetsComponent} from "./encryption-presets.component";
+import {LoginComponent} from "./login.component";
+import {OptionsEffects} from "./options.effects";
+import {OptionsRoutingModule} from "./options.routing.module";
+import {OptionsService} from "./options.service";
+import {SavePasswordLabelComponent} from "./save-password-label.component";
+import {SettingsComponent} from "./settings.component";
+import {SettingsConfigureGuard} from "./settings-configure.guard";
+import {SettingsSetupComponent} from "./settings-setup.component";
 import {SharedModule} from "src/web/browser-window/app/_shared/shared.module";
-import {StorageComponent} from "src/web/browser-window/app/_options/storage.component";
+import {StorageComponent} from "./storage.component";
 
 @NgModule({
     imports: [
@@ -40,6 +41,7 @@ import {StorageComponent} from "src/web/browser-window/app/_options/storage.comp
         AccountEditComponent,
         AccountsComponent,
         BaseSettingsComponent,
+        DbMetadataResetRequestComponent,
         EncryptionPresetsComponent,
         LoginComponent,
         SavePasswordLabelComponent,

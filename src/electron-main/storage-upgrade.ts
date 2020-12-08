@@ -321,14 +321,18 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         }
     },
     "4.9.3": (config) => {
-        for (
-            const key of [
+        for (const key of [
             "persistentSessionSavingInterval",
             "dbSyncingIntervalTrigger",
             "dbSyncingOnlineTriggerDelay",
             "dbSyncingFiredTriggerDebounce",
-        ] as const
-        ) {
+        ] as const) {
+            if (typeof config[key] === "undefined") {
+                config[key] = INITIAL_STORES.config()[key];
+            }
+        }
+        {
+            const key = "shouldRequestDbMetadataReset";
             if (typeof config[key] === "undefined") {
                 config[key] = INITIAL_STORES.config()[key];
             }

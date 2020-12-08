@@ -1,0 +1,22 @@
+@import "~src/web/variables";
+
+:host {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+    margin: 0 25%;
+    align-items: center;
+
+    p {
+        margin: $app-spacer-2 0;
+    }
+
+    fieldset {
+        margin-bottom: $app-spacer-2;
+    }
+
+    .btn-block + .btn-block {
+        margin-top: $app-spacer-2;
+    }
+}

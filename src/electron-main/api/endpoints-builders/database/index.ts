@@ -6,6 +6,7 @@ import {omit} from "remeda";
 
 import {Context} from "src/electron-main/model";
 import {DB_DATA_CONTAINER_FIELDS, IndexableMail} from "src/shared/model/database";
+import {Database} from "src/electron-main/database";
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION$, IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
 import {buildDbExportEndpoints} from "./export/api";
@@ -21,6 +22,7 @@ const _logger = curryFunctionMembers(electronLog, "[electron-main/api/endpoints-
 
 type Methods = keyof Pick<IpcMainApiEndpoints,
     | "dbPatch"
+    | "dbResetDbMetadata"
     | "dbGetAccountMetadata"
     | "dbGetAccountDataView"
     | "dbGetAccountMail"
@@ -38,15 +40,23 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
         ...await buildDbSearchEndpoints(ctx),
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-        async dbPatch({forceFlush, login, metadata: metadataPatch, patch: entityUpdatesPatch}) {
+        async dbPatch({bootstrapPhase, login, metadata: metadataPatch, patch: entityUpdatesPatch}) {
             const logger = curryFunctionMembers(_logger, "dbPatch()");
 
             logger.info();
 
             const {db, sessionDb} = ctx;
-            const key = {login} as const;
-            const account = db.getMutableAccount(key) || db.initAccount(key);
-            const sessionAccount = sessionDb.getMutableAccount(key) || sessionDb.initAccount(key);
+            const accountKey = {login} as const;
+
+            logger.verbose(JSON.stringify({bootstrapPhase}));
+
+            if (bootstrapPhase === "initial") {
+                // reset session db account so the bootstrap fetch outcome gets saved into the clear/empty session database
+                sessionDb.initEmptyAccount(accountKey);
+            }
+
+            const account = db.getMutableAccount(accountKey) || db.initEmptyAccount(accountKey);
+            const sessionAccount = sessionDb.getMutableAccount(accountKey) || sessionDb.initEmptyAccount(accountKey);
 
             for (const entityType of DB_DATA_CONTAINER_FIELDS) {
                 const {remove, upsert} = entityUpdatesPatch[entityType];
@@ -67,15 +77,15 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                 }
 
                 if (entityType === "mails") {
-                    // send mails to indexing process
-                    // TODO performance optimization: send mails to indexing process if indexing feature activated
                     setTimeout(() => {
+                        // send mails to indexing process
+                        // TODO performance optimization: send mails to indexing process if indexing feature activated
                         IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.next(
                             IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Index(
                                 {
                                     uid: new UUID(4).format(),
                                     ...narrowIndexActionPayload({
-                                        key,
+                                        key: accountKey,
                                         add: upsert as IndexableMail[], // TODO send data as chunks
                                         remove,
                                     }),
@@ -86,33 +96,101 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                 }
             }
 
+            const entitiesModified = isEntityUpdatesPatchNotEmpty(entityUpdatesPatch);
             const metadataModified = patchMetadata(account.metadata, metadataPatch, "dbPatch");
             const sessionMetadataModified = patchMetadata(sessionAccount.metadata, metadataPatch, "dbPatch");
-            const entitiesModified = isEntityUpdatesPatchNotEmpty(entityUpdatesPatch);
 
-            logger.verbose(JSON.stringify({entitiesModified, metadataModified, sessionMetadataModified, forceFlush}));
+            logger.verbose(JSON.stringify({entitiesModified, metadataModified, sessionMetadataModified}));
+
+            if (bootstrapPhase === "final") {
+                // reset db account before mering session db account into it
+                db.initEmptyAccount(accountKey);
+
+                // calculate stale ids, ie those that get removed after the session db account merge
+                const staleMailPks = (() => {
+                    {
+                        const sessionAccount = sessionDb.getAccount(accountKey);
+                        const account = db.getAccount(accountKey);
+                        if (!sessionAccount || !account) {
+                            return [];
+                        }
+                        const sessionMails = sessionAccount["mails"];
+                        const allMailsPks = Object.keys(account["mails"]);
+                        const staleMailsPks = allMailsPks.filter((mailPk) => !(mailPk in sessionMails));
+                        return staleMailsPks.map((pk) => ({pk}));
+                    }
+                })();
+
+                setTimeout(() => {
+                    // removing stale mails form the full text search index
+                    // TODO performance optimization: send mails to indexing process if indexing feature activated
+                    IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.next(
+                        IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Index(
+                            {
+                                uid: new UUID(4).format(),
+                                ...narrowIndexActionPayload({
+                                    key: accountKey,
+                                    add: [],
+                                    remove: staleMailPks,
+                                }),
+                            },
+                        ),
+                    );
+                });
+
+                if (
+                    Database.mergeAccount(
+                        sessionDb,
+                        db,
+                        accountKey,
+                    )
+                ) {
+                    await db.saveToFile();
+                }
+
+                // reset session db account after it got merged into the primary db
+                sessionDb.initEmptyAccount(accountKey);
+                await sessionDb.saveToFile();
+            }
 
             setTimeout(async () => {
                 const {disableSpamNotifications} = await ctx.config$.pipe(first()).toPromise();
                 const includingSpam = !disableSpamNotifications;
 
-                IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount({
-                    key,
-                    entitiesModified,
-                    metadataModified,
-                    stat: db.accountStat(account, includingSpam),
-                }));
+                IPC_MAIN_API_NOTIFICATION$.next(
+                    IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount({
+                        key: accountKey,
+                        entitiesModified,
+                        stat: db.accountStat(account, includingSpam),
+                    }),
+                );
             });
 
             if (
-                (entitiesModified || sessionMetadataModified)
+                entitiesModified
                 ||
-                forceFlush
+                sessionMetadataModified
             ) {
                 await sessionDb.saveToFile();
             }
 
             return account.metadata;
+        },
+
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+        async dbResetDbMetadata({reset}) {
+            if (reset) {
+                for (const {account: {metadata}} of ctx.db) {
+                    (metadata as Mutable<typeof metadata>).latestEventId = "";
+                }
+                await ctx.db.saveToFile();
+            }
+            await ctx.configStoreQueue.q(async () => {
+                await ctx.configStore.write({
+                    ...await ctx.configStore.readExisting(),
+                    shouldRequestDbMetadataReset: "done",
+                });
+            });
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types

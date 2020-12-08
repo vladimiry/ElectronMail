@@ -1,0 +1,27 @@
+<p>
+    You are seeing this message because your <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/wiki/FAQ">local store</a> might be missing some
+    email messages due to the <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/314">#314</a> issue.
+</p>
+<p>
+    It's highly likely you are affected
+    by the issue if there was a period of time when you were not using the app for 21+ days in a row having the
+    <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/wiki/FAQ">local store</a> feature enabled for at least one email account.
+</p>
+<p>
+    Please take one of the the actions listed below!
+</p>
+<fieldset [disabled]="(resettingDbMetadata$ | async) || false">
+    <button (click)="submit({reset: true})" class="btn btn-lg btn-primary btn-block">
+        <i *ngIf="resettingDbMetadata$ | async" class="fa fa-spinner fa-pulse fa-fw"></i>
+        Schedule full "local store" data refresh/fetch (recommended)
+    </button>
+    <button (click)="submit()" class="btn btn-sm btn-secondary-light btn-block">
+        Skip (message will be displayed again on next app start)
+    </button>
+    <button (click)="submit({reset: false})" class="btn btn-sm btn-secondary-light btn-block">
+        Don't show anymore (not recommended)
+    </button>
+</fieldset>
+<p class="text-muted">
+    Prefer the recommended/first action if you don't understand what this message means or you are simply unsure which one to take.
+</p>

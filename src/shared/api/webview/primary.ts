@@ -21,7 +21,8 @@ export const PROTON_PRIMARY_IPC_WEBVIEW_API_DEFINITION = {
     login2fa:
         Promise<DeepReadonly<{ secret: string } & ZoneApiParameter>>(),
     buildDbPatch:
-        Observable<DeepReadonly<DbAccountPk & { metadata: Readonly<FsDbAccount["metadata"]> | null } & ZoneApiParameter>>(),
+        Observable<DeepReadonly<DbAccountPk & { metadata: Readonly<FsDbAccount["metadata"]> | null } & ZoneApiParameter>,
+            void | "timeoutRelease">(),
     selectMailOnline:
         Promise<DeepReadonly<{
             mail: Pick<Mail, "id" | "mailFolderIds" | "conversationEntryPk">

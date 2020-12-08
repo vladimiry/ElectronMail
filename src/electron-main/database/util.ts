@@ -44,7 +44,7 @@ export function patchMetadata(
     target: FsDbAccount["metadata"],
     // TODO TS: use patch: Parameters<IpcMainApiEndpoints["dbPatch"]>[0]["metadata"],
     patch: DeepReadonly<FsDbAccount["metadata"]>,
-    sourceType: "dbPatch" | "loadDatabase",
+    sourceType: "dbPatch" | "mergeAccount",
 ): boolean {
     const logPrefix = `patchMetadata() ${sourceType}`;
 

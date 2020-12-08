@@ -20,6 +20,8 @@ import {WebAccount} from "src/web/browser-window/app/model";
     preserveWhitespaces: true,
 })
 export class AccountsComponent implements OnInit, OnDestroy {
+    readonly userDataDir = __METADATA__.electronLocations.userDataDir;
+
     readonly initialized$ = this.store.pipe(select(AccountsSelectors.FEATURED.initialized));
 
     readonly layoutMode$ = this.store.pipe(select(OptionsSelectors.CONFIG.layoutMode));

@@ -5,12 +5,12 @@ import {Store, select} from "@ngrx/store";
 import {catchError, concatMap, filter, finalize, map, mergeMap, startWith, switchMap, take, withLatestFrom} from "rxjs/operators";
 
 import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
+import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
 import {ONE_SECOND_MS, PRODUCT_NAME, UPDATE_CHECK_FETCH_TIMEOUT} from "src/shared/constants";
-import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {OptionsService} from "src/web/browser-window/app/_options/options.service";
 import {ProgressPatch, State} from "src/web/browser-window/app/store/reducers/options";
 import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/browser-window/util";
@@ -149,38 +149,91 @@ export class OptionsEffects {
         ),
     );
 
+    resetDbMetadata$ = createEffect(
+        () => this.actions$.pipe(
+            unionizeActionFilter(OPTIONS_ACTIONS.is.ResetDbMetadata),
+            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
+            withLatestFrom(
+                this.store.pipe(
+                    select(AccountsSelectors.FEATURED.accounts),
+                ),
+            ),
+            concatMap(([{payload: {reset}}, accounts]) => {
+                const buildFinishNavigationAction = () => this.buildAfterLoginNavigationAction(accounts.length);
+
+                return typeof reset === "boolean"
+                    // patching db/config
+                    ? merge(
+                        of(this.buildPatchProgress({resettingDbMetadata: true})),
+                        from(
+                            this.ipcMainClient("dbResetDbMetadata")({reset}),
+                        ).pipe(
+                            concatMap(() => [
+                                buildFinishNavigationAction(),
+                            ]),
+                            finalize(() => this.dispatchProgress({resettingDbMetadata: false})),
+                        ),
+                    )
+                    // just navigating
+                    : of(buildFinishNavigationAction());
+            }),
+        ),
+    );
+
     signInRequest$ = createEffect(
         () => this.actions$.pipe(
             unionizeActionFilter(OPTIONS_ACTIONS.is.SignInRequest),
             map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-            concatMap(({payload}) => merge(
+            concatMap(({payload, logger}) => merge(
                 of(this.buildPatchProgress({signingIn: true})),
                 from(
                     this.ipcMainClient("readSettings")(payload),
                 ).pipe(
-                    withLatestFrom(this.store.pipe(
-                        select(OptionsSelectors.FEATURED.config),
-                        map((config) => config.timeouts),
-                    )),
-                    concatMap(([settings, timeouts]) => merge(
-                        of(this.buildPatchProgress({loadingDatabase: true})),
-                        from(
-                            this.ipcMainClient("loadDatabase", {timeoutMs: timeouts.databaseLoading})({accounts: settings.accounts}),
-                        ).pipe(
-                            concatMap(() => [
-                                OPTIONS_ACTIONS.GetSettingsResponse(settings),
-                                NAVIGATION_ACTIONS.Go({
-                                    path: [{
-                                        outlets: {
-                                            [SETTINGS_OUTLET]: settings.accounts.length ? null : `${SETTINGS_PATH}/account-edit`,
-                                            [ACCOUNTS_OUTLET]: ACCOUNTS_PATH,
-                                        },
-                                    }],
-                                }),
-                            ]),
-                            finalize(() => this.dispatchProgress({loadingDatabase: false})),
+                    withLatestFrom(
+                        this.store.pipe(
+                            select(OptionsSelectors.FEATURED.config),
                         ),
-                    )),
+                    ),
+                    concatMap(([settings, {timeouts: {databaseLoading: databaseLoadingTimeout}, shouldRequestDbMetadataReset}]) => {
+                        return merge(
+                            of(this.buildPatchProgress({loadingDatabase: true})),
+                            from(
+                                this.ipcMainClient("loadDatabase", {timeoutMs: databaseLoadingTimeout})({accounts: settings.accounts}),
+                            ).pipe(
+                                concatMap(() => [
+                                    OPTIONS_ACTIONS.GetSettingsResponse(settings),
+                                    (() => {
+                                        const shouldRequestDbMetadataResetInitial = shouldRequestDbMetadataReset === "initial";
+
+                                        logger.info({shouldRequestDbMetadataResetInitial});
+
+                                        if (
+                                            shouldRequestDbMetadataResetInitial
+                                            &&
+                                            // "local store" enabled for at least one account
+                                            settings.accounts.some(({database}) => Boolean(database))
+                                        ) {
+                                            return NAVIGATION_ACTIONS.Go({
+                                                path: [{
+                                                    outlets: {
+                                                        [SETTINGS_OUTLET]: `${SETTINGS_PATH}/db-metadata-reset-request`,
+                                                    },
+                                                }],
+                                            });
+                                        }
+
+                                        if (shouldRequestDbMetadataResetInitial) {
+                                            // turning the flag to "done" so the logic doesn't take place anymore
+                                            return OPTIONS_ACTIONS.ResetDbMetadata({reset: false});
+                                        }
+
+                                        return this.buildAfterLoginNavigationAction(settings.accounts.length);
+                                    })(),
+                                ]),
+                                finalize(() => this.dispatchProgress({loadingDatabase: false})),
+                            ),
+                        );
+                    }),
                     catchError((error) => {
                         if (
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -354,6 +407,17 @@ export class OptionsEffects {
             };
             return result;
         })(store.dispatch.bind(store));
+    }
+
+    private buildAfterLoginNavigationAction(accountCount: number): ReturnType<typeof NAVIGATION_ACTIONS.Go> {
+        return NAVIGATION_ACTIONS.Go({
+            path: [{
+                outlets: {
+                    [SETTINGS_OUTLET]: accountCount ? null : `${SETTINGS_PATH}/account-edit`,
+                    [ACCOUNTS_OUTLET]: ACCOUNTS_PATH,
+                },
+            }]
+        });
     }
 
     private buildPatchProgress(patch: ProgressPatch): ReturnType<typeof OPTIONS_ACTIONS.PatchProgress> {

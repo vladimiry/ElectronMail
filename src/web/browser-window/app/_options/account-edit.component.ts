@@ -24,6 +24,7 @@ import {validateExternalContentProxyUrlPattern, validateLoginDelaySecondsRange} 
 export class AccountEditComponent implements OnInit, OnDestroy {
     entryUrlItems = [...PROTON_API_ENTRY_RECORDS];
     controls: Record<keyof Pick<AccountConfig,
+        | "customCSS"
         | "login"
         | "title"
         | "database"
@@ -38,6 +39,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         | keyof Pick<Required<Required<AccountConfig>["proxy"]>, "proxyRules" | "proxyBypassRules">
         | keyof AccountConfig["credentials"],
         AbstractControl> = {
+        customCSS: new FormControl(null),
         blockNonEntryUrlBasedRequests: new FormControl(null),
         externalContentProxyUrlPattern: new FormControl(
             null,
@@ -149,6 +151,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
 
                 this.form.removeControl(((name: keyof Pick<typeof AccountEditComponent.prototype.controls, "login">) => name)("login"));
 
+                controls.customCSS.patchValue(account.customCSS);
                 controls.title.patchValue(account.title);
                 controls.database.patchValue(account.database);
                 controls.persistentSession.patchValue(account.persistentSession);
@@ -213,6 +216,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                 ? account.login :
                 controls.login.value,
             title: controls.title.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            customCSS: controls.customCSS.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
             entryUrl: controls.entryUrl.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             blockNonEntryUrlBasedRequests: Boolean(controls.blockNonEntryUrlBasedRequests.value),

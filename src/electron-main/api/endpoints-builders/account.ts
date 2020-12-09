@@ -33,8 +33,8 @@ export async function buildEndpoints(
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async addAccount(
             {
-
                 login,
+                customCSS,
                 title,
                 entryUrl,
                 blockNonEntryUrlBasedRequests,
@@ -54,6 +54,7 @@ export async function buildEndpoints(
 
             const account: AccountConfig = {
                 login,
+                customCSS,
                 title,
                 entryUrl,
                 blockNonEntryUrlBasedRequests,
@@ -82,6 +83,7 @@ export async function buildEndpoints(
         async updateAccount(
             {
                 login,
+                customCSS,
                 title,
                 entryUrl,
                 blockNonEntryUrlBasedRequests,
@@ -120,6 +122,7 @@ export async function buildEndpoints(
                 );
                 logger.verbose(JSON.stringify({shouldConfigureSession}));
 
+                account.customCSS = customCSS;
                 account.title = title;
                 account.database = database;
                 account.persistentSession = persistentSession;

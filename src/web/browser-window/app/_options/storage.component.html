@@ -42,7 +42,7 @@
         <accordion-group heading="Encryption">
             <form [formGroup]="encryptionPresetForm" (ngSubmit)="submitPresets()" novalidate>
                 <div class="form-group required">
-                    <label>Current Password</label>
+                    <label>Current Master Password</label>
                     <input type="password" class="form-control" formControlName="password"
                            [ngClass]="encryptionPresetForm.controls.password?.dirty ? {
                        'is-invalid': encryptionPresetForm.controls.password?.invalid,

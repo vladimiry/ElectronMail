@@ -142,8 +142,11 @@
                 </label>
             </div>
         </div>
-        <accordion class="mb-3">
-            <accordion-group [isOpen]="false" heading="Extended Options">
+        <accordion [closeOthers]="true" class="mb-3">
+            <accordion-group [isOpen]="false" heading="Custom CSS">
+                <textarea class="form-control" rows="10" formControlName="customCSS"></textarea>
+            </accordion-group>
+            <accordion-group [isOpen]="false" heading="Advanced Options">
                 <div class="form-group">
                     <label class="d-block pull-left">
                         Handle button alias

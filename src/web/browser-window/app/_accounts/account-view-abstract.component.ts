@@ -1,5 +1,5 @@
 import {Directive, ElementRef, EventEmitter, Injector, Input, OnDestroy, Output, ViewChild} from "@angular/core";
-import {Observable, Subscription, race} from "rxjs";
+import {Observable, Subscription, combineLatest, race} from "rxjs";
 import {distinctUntilChanged, filter, map, take} from "rxjs/operators";
 import {pick} from "remeda";
 
@@ -103,6 +103,33 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
             })(),
         );
 
+        {
+            let customCssKey: string | undefined;
+
+            this.subscription.add(
+                combineLatest([
+                    this.filterDomReadyEvent(),
+                    this.account$.pipe(
+                        map(({accountConfig: {customCSS}}) => customCSS),
+                        distinctUntilChanged(),
+                    ),
+                ]).subscribe(async ([{webView}, customCSS]) => {
+                    if (customCssKey) {
+                        this.event.emit({type: "log", data: ["verbose", "removing custom css"]});
+                        await webView.removeInsertedCSS(customCssKey);
+                        customCssKey = undefined;
+                    }
+
+                    if (!customCSS?.trim()) {
+                        return;
+                    }
+
+                    this.event.emit({type: "log", data: ["verbose", "inserting custom css"]});
+                    customCssKey = await webView.insertCSS(customCSS);
+                }),
+            );
+        }
+
         // this.subscription.add(
         //     this.filterDomReadyEvent()
         //         .pipe(take(1))
@@ -116,7 +143,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
 
     ngOnDestroy(): void {
         super.ngOnDestroy();
-        this.event.emit({type: "log", data: ["info", `ngOnDestroy()`, ""]});
+        this.event.emit({type: "log", data: ["info", "ngOnDestroy()", ""]});
         this.subscription.unsubscribe();
         this.event.emit({
             type: "action",
@@ -137,8 +164,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
 
     protected async filterDomReadyOrDestroyedPromise(): Promise<void> {
         return race([
-            this.filterDomReadyEvent()
-                .pipe(take(1)),
+            this.filterDomReadyEvent().pipe(take(1)),
             this.ngOnDestroy$,
         ]).toPromise().then(() => {}); // eslint-disable-line @typescript-eslint/no-empty-function
     }

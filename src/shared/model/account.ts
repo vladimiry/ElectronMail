@@ -19,6 +19,7 @@ export type AccountConfig = NoExtraProps<{
     persistentSession?: boolean;
     rotateUserAgent?: boolean;
     disabled?: boolean;
+    customCSS?: string;
 }>;
 
 export type AccountPersistentSession = NoExtraProps<{

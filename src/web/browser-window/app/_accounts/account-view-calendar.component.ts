@@ -29,28 +29,23 @@ export class AccountViewCalendarComponent extends AccountViewAbstractComponent i
             this.filterDomReadyEvent().subscribe(({webView}) => {
                 // app set's app notification channel on webview.dom-ready event
                 // which means user is not logged-in yet at this moment, so resetting the state
-                this.event.emit({
-                    type: "action",
-                    payload: this.accountsService
+                this.action(
+                    this.accountsService
                         .generateCalendarNotificationsStateResetAction({login: this.account.accountConfig.login}),
-                });
+                );
 
                 if (!testProtonCalendarAppPage({url: webView.src, logger: this.logger}).shouldInitProviderApi) {
-                    this.event.emit({
-                        type: "log",
-                        data: ["info", `skip webview.dom-ready processing for ${webView.src} page`]
-                    });
+                    this.log("info", [`skip webview.dom-ready processing for ${webView.src} page`]);
                     return;
                 }
 
-                this.event.emit({
-                    type: "action",
-                    payload: ACCOUNTS_ACTIONS.SetupCalendarNotificationChannel({
+                this.action(
+                    ACCOUNTS_ACTIONS.SetupCalendarNotificationChannel({
                         account: this.account,
                         webView,
                         finishPromise: this.filterDomReadyOrDestroyedPromise(),
                     }),
-                });
+                );
             }),
         );
     }

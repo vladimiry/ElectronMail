@@ -39,27 +39,22 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
             this.filterDomReadyEvent().subscribe(({webView}) => {
                 // app set's app notification channel on webview.dom-ready event
                 // which means user is not logged-in yet at this moment, so resetting the state
-                this.event.emit({
-                    type: "action",
-                    payload: this.accountsService
+                this.action(
+                    this.accountsService
                         .generatePrimaryNotificationsStateResetAction({login: this.account.accountConfig.login}),
-                });
+                );
 
                 if (!testProtonMailAppPage({url: webView.src, logger: this.logger}).shouldInitProviderApi) {
-                    this.event.emit({
-                        type: "log",
-                        data: ["info", `skip webview.dom-ready processing for ${webView.src} page`]
-                    });
+                    this.log("info", [`skip webview.dom-ready processing for ${webView.src} page`]);
                     return;
                 }
 
                 const finishPromise = this.filterDomReadyOrDestroyedPromise();
                 const breakPreviousSyncing$ = new Subject<void>();
 
-                this.event.emit({
-                    type: "action",
-                    payload: ACCOUNTS_ACTIONS.SetupPrimaryNotificationChannel({account: this.account, webView, finishPromise}),
-                });
+                this.action(
+                    ACCOUNTS_ACTIONS.SetupPrimaryNotificationChannel({account: this.account, webView, finishPromise}),
+                );
 
                 this.account$
                     .pipe(
@@ -78,9 +73,8 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
                             return; // syncing disabled
                         }
 
-                        this.event.emit({
-                            type: "action",
-                            payload: ACCOUNTS_ACTIONS.ToggleSyncing({
+                        this.action(
+                            ACCOUNTS_ACTIONS.ToggleSyncing({
                                 pk,
                                 webView,
                                 finishPromise: race([
@@ -88,7 +82,7 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
                                     breakPreviousSyncing$.pipe(take(1)),
                                 ]).toPromise(),
                             }),
-                        });
+                        );
                     });
             }),
         );
@@ -117,8 +111,8 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
                 }),
                 map(([, curr]) => curr),
             ).subscribe((account) => {
-                this.event.emit({type: "log", data: ["info", `webview mounted: dispatch "TryToLogin"`]});
-                this.event.emit({type: "action", payload: ACCOUNTS_ACTIONS.TryToLogin({account, webView})});
+                this.log("info", [`webview mounted: dispatch "TryToLogin"`]);
+                this.action(ACCOUNTS_ACTIONS.TryToLogin({account, webView}));
             }),
         );
     }

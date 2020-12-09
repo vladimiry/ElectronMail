@@ -3,10 +3,11 @@ import {Observable, Subscription, combineLatest, race} from "rxjs";
 import {distinctUntilChanged, filter, map, take} from "rxjs/operators";
 import {pick} from "remeda";
 
-import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {ACCOUNTS_ACTIONS, AppAction, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountComponent} from "src/web/browser-window/app/_accounts/account.component";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
+import {LogLevel} from "src/shared/model/common";
 import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";
 import {PACKAGE_VERSION} from "src/shared/constants";
 import {WebAccount} from "src/web/browser-window/app/model";
@@ -35,12 +36,12 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
 
     @Input()
     set webViewSrc(value: string) {
-        this.event.emit({type: "log", data: ["verbose", "set webViewSrc"]});
+        this.log("verbose", ["set webViewSrc"]);
 
         const {webView} = this;
 
         if (webView) {
-            this.event.emit({type: "log", data: ["verbose", "set webViewSrc: registerWebViewEventsHandlingOnce()"]});
+            this.log("verbose", ["set webViewSrc: registerWebViewEventsHandlingOnce()"]);
             this.registerWebViewEventsHandlingOnce(webView);
         }
 
@@ -52,7 +53,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
     }
 
     @Output()
-    readonly event = new EventEmitter<ChildEvent>();
+    private readonly event = new EventEmitter<ChildEvent>();
 
     protected readonly api: ElectronService = this.injector.get(ElectronService);
 
@@ -71,8 +72,8 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         for (const mutation of mutations) {
             mutation.addedNodes.forEach((node) => {
                 if ((node as Element).tagName === "WEBVIEW") {
-                    this.event.emit({type: "log", data: ["info", "webViewAddMutationObserver: mounted to DOM"]});
-                    this.event.emit({type: "log", data: ["verbose", "webViewAddMutationObserver: registerWebViewEventsHandlingOnce()"]});
+                    this.log("info", ["webViewAddMutationObserver: mounted to DOM"]);
+                    this.log("verbose", ["webViewAddMutationObserver: registerWebViewEventsHandlingOnce()"]);
                     this.registerWebViewEventsHandlingOnce(node as Electron.WebviewTag);
                     this.webViewAddMutationObserver.disconnect();
                 }
@@ -87,7 +88,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
     ) {
         super();
 
-        this.event.emit({type: "log", data: ["info", "constructor() abstract"]});
+        this.log("info", ["constructor() abstract"]);
 
         const elementRef = injector.get<ElementRef<HTMLElement>>(ElementRef);
 
@@ -115,7 +116,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
                     ),
                 ]).subscribe(async ([{webView}, customCSS]) => {
                     if (customCssKey) {
-                        this.event.emit({type: "log", data: ["verbose", "removing custom css"]});
+                        this.log("verbose", ["removing custom css"]);
                         await webView.removeInsertedCSS(customCssKey);
                         customCssKey = undefined;
                     }
@@ -124,7 +125,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
                         return;
                     }
 
-                    this.event.emit({type: "log", data: ["verbose", "inserting custom css"]});
+                    this.log("verbose", ["inserting custom css"]);
                     customCssKey = await webView.insertCSS(customCSS);
                 }),
             );
@@ -143,14 +144,21 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
 
     ngOnDestroy(): void {
         super.ngOnDestroy();
-        this.event.emit({type: "log", data: ["info", "ngOnDestroy()", ""]});
+        this.log("info", ["ngOnDestroy()"]);
         this.subscription.unsubscribe();
-        this.event.emit({
-            type: "action",
-            payload: ACCOUNTS_ACTIONS.Patch(
+        this.action(
+            ACCOUNTS_ACTIONS.Patch(
                 {login: this.account.accountConfig.login, patch: {webviewSrcValues: {[this.viewType]: ""}}, optionalAccount: true},
             ),
-        });
+        );
+    }
+
+    protected log(level: LogLevel, args: string[]): void {
+        this.event.emit({type: "log", data: [level, ...args]});
+    }
+
+    protected action(payload: AppAction): void {
+        this.event.emit({type: "action", payload});
     }
 
     protected filterDomReadyEvent(): Observable<Extract<ChildEvent, { type: "dom-ready" }>> {
@@ -178,34 +186,26 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
     private registerWebViewEventsHandlingOnce(webView: Electron.WebviewTag): void {
         // making sure function called once
         this.registerWebViewEventsHandlingOnce = () => {
-            this.event.emit({type: "log", data: ["info", "registerWebViewEventsHandlingOnce()", "noop"]});
+            this.log("info", ["registerWebViewEventsHandlingOnce()", "noop"]);
         };
 
-        this.event.emit({type: "log", data: ["info", "registerWebViewEventsHandlingOnce()"]});
+        this.log("info", ["registerWebViewEventsHandlingOnce()"]);
 
         const didNavigateArgs = [
             "did-navigate",
             ({url}: import("electron").DidNavigateEvent) => {
-                this.event.emit({
-                    type: "action",
-                    payload: ACCOUNTS_ACTIONS.Patch(
+                this.action(
+                    ACCOUNTS_ACTIONS.Patch(
                         {login: this.account.accountConfig.login, patch: {webviewSrcValues: {[this.viewType]: url}}},
                     ),
-                });
+                );
             },
         ] as const;
         const domReadyArgs = [
             "dom-ready",
             ({type}: import("electron").Event) => {
                 this.event.emit({type: "dom-ready", viewType: this.viewType, webView});
-                this.event.emit({
-                    type: "log",
-                    data: [
-                        "verbose",
-                        "webview event",
-                        JSON.stringify({type, src: webView.src}),
-                    ],
-                });
+                this.log("verbose", ["webview event", JSON.stringify({type, src: webView.src})]);
             },
         ] as const;
         const newWindowArgs = [
@@ -220,54 +220,32 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
                 const isWarn = Number(level) === 2;
                 const isError = Number(level) === 3;
                 if (isWarn || isError) {
-                    this.event.emit({
-                        type: "log",
-                        data: [
-                            isWarn ? "warn" : "error",
-                            "webview event",
-                            JSON.stringify({type, level, message, line, sourceId}),
-                        ],
-                    });
+                    this.log(isWarn ? "warn" : "error", ["webview event", JSON.stringify({type, level, message, line, sourceId})]);
                 }
             },
         ] as const;
         const didFailLoadArgs = [
             "did-fail-load",
             (event: import("electron").DidFailLoadEvent) => {
-                this.event.emit({
-                    type: "log",
-                    data: [
-                        "error",
+                this.log(
+                    "error",
+                    [
                         "webview event",
                         JSON.stringify(pick(event, ["type", "errorCode", "errorDescription", "validatedURL", "isMainFrame"])),
                     ],
-                });
+                );
             },
         ] as const;
         const crashedArgs = [
             "crashed",
             (event: import("electron").Event) => {
-                this.event.emit({
-                    type: "log",
-                    data: [
-                        "error",
-                        "webview event",
-                        JSON.stringify(pick(event, ["type"])),
-                    ],
-                });
+                this.log("error", ["webview event", JSON.stringify(pick(event, ["type"]))]);
             },
         ] as const;
         const pluginCrashedArgs = [
             "plugin-crashed",
             (event: import("electron").PluginCrashedEvent) => {
-                this.event.emit({
-                    type: "log",
-                    data: [
-                        "error",
-                        "webview event",
-                        JSON.stringify(pick(event, ["type", "name", "version"])),
-                    ],
-                });
+                this.log("error", ["webview event", JSON.stringify(pick(event, ["type", "name", "version"]))]);
             },
         ] as const;
 
@@ -283,12 +261,12 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         webView.addEventListener(...crashedArgs);
         webView.addEventListener(...pluginCrashedArgs);
 
-        this.event.emit({type: "log", data: ["info", `webview handlers subscribed`]});
+        this.log("info", ["webview handlers subscribed"]);
 
         if (PACKAGE_VERSION.includes("-debug")) {
             const mark = "WEBVIEW_EVENTS_DEBUG";
             const log = (stringifiableProps: Record<string, unknown>): void => {
-                this.event.emit({type: "log", data: ["verbose", mark, JSON.stringify(stringifiableProps)]});
+                this.log("verbose", [mark, JSON.stringify(stringifiableProps)]);
             };
             /* eslint-disable max-len */
             webView.addEventListener("load-commit", (event) => log(pick(event, ["type", "url", "isMainFrame"])));
@@ -311,7 +289,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
             webView.addEventListener("destroyed", (event) => log(pick(event, ["type"])));
             // webView.addEventListener("update-target-url", (event) => log(pick(event, ["type", "url"])));
             /* eslint-enable max-len */
-            this.event.emit({type: "log", data: ["verbose", mark, "handlers subscribed"]});
+            this.log("verbose", [mark, "handlers subscribed"]);
         }
 
         this.subscription.add({
@@ -324,7 +302,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
                 webView.removeEventListener(...crashedArgs);
                 webView.removeEventListener(...pluginCrashedArgs);
 
-                this.event.emit({type: "log", data: ["info", `webview handlers unsubscribed`]});
+                this.log("info", ["webview handlers unsubscribed"]);
             },
         });
     }

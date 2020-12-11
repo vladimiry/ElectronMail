@@ -159,6 +159,7 @@ export class OptionsEffects {
                 ),
             ),
             concatMap(([{payload: {reset}}, accounts]) => {
+                // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
                 const buildFinishNavigationAction = () => this.buildAfterLoginNavigationAction(accounts.length);
 
                 return typeof reset === "boolean"

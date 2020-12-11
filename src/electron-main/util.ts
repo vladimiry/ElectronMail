@@ -55,7 +55,8 @@ export function hrtimeDuration(): { end: () => number } {
 }
 
 // TODO add synchronous "read" method to "fs-json-store"
-export function readConfigSync({configStore}: DeepReadonly<Context>): Config | null {
+// returning "deep partialed" result since sync reading normally runs before the storages get updated
+export function readConfigSync({configStore}: DeepReadonly<Context>): import("ts-essentials").DeepPartial<Config> | null {
     let configFile: Buffer | string | undefined;
 
     try {

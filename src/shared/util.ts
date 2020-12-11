@@ -65,6 +65,7 @@ export function initialConfig(): Config {
             jsFlags: [
                 "--max-old-space-size=3072",
             ],
+            commandLineSwitches: [],
             localDbMailsListViewMode: "plain",
             userAgents: [
                 /* eslint-disable max-len */

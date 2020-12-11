@@ -12,7 +12,11 @@ import {INITIAL_STORES} from "src/electron-main/constants";
 import {PACKAGE_NAME, PACKAGE_VERSION} from "src/shared/constants";
 import {generateElectronMainTestPrefixedFile} from "src/electron-main/__test__/util";
 
-function buildMocks() { // eslint-disable-line @typescript-eslint/explicit-function-return-type
+// TODO test "commandLineSwitches" config value applying cases
+
+function buildMocks( // eslint-disable-line @typescript-eslint/explicit-function-return-type
+    additionMocks?: Record<string, unknown>,
+) {
     return {
         electron: {
             app: {
@@ -24,6 +28,7 @@ function buildMocks() { // eslint-disable-line @typescript-eslint/explicit-funct
                 getVersion: (): string => PACKAGE_VERSION,
             },
         },
+        ...additionMocks,
     };
 }
 
@@ -57,7 +62,21 @@ async function loadLibrary(
     );
 }
 
-test.serial("bootstrapCommandLine(): electron.app.commandLine.appendSwitch: default", async (t) => {
+test.serial("bootstrapCommandLine(): electron.app.commandLine.appendSwitch: undefined config", async (t) => {
+    const ctx = buildContext();
+    const mocks = buildMocks({"src/electron-main/util": {readConfigSync: sinon.stub().returns(null)}});
+    const library = await loadLibrary(mocks);
+
+    t.false(mocks.electron.app.commandLine.appendSwitch.called);
+
+    library.bootstrapCommandLine(
+        ctx as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+    );
+
+    t.true(mocks.electron.app.commandLine.appendSwitch.calledWithExactly("js-flags", INITIAL_STORES.config().jsFlags.join(" ")));
+});
+
+test.serial("bootstrapCommandLine(): electron.app.commandLine.appendSwitch: js-flags:default", async (t) => {
     const ctx = buildContext();
     const mocks = buildMocks();
     const library = await loadLibrary(mocks);
@@ -73,7 +92,21 @@ test.serial("bootstrapCommandLine(): electron.app.commandLine.appendSwitch: defa
     t.true(mocks.electron.app.commandLine.appendSwitch.calledWithExactly("js-flags", expected));
 });
 
-test.serial("bootstrapCommandLine(): electron.app.commandLine.appendSwitch: empty", async (t) => {
+test.serial("bootstrapCommandLine(): electron.app.commandLine.appendSwitch: js-flags:undefined", async (t) => {
+    const ctx = buildContext();
+    const mocks = buildMocks({"src/electron-main/util": {readConfigSync: {}}});
+    const library = await loadLibrary(mocks);
+
+    t.false(mocks.electron.app.commandLine.appendSwitch.called);
+
+    library.bootstrapCommandLine(
+        ctx as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+    );
+
+    t.true(mocks.electron.app.commandLine.appendSwitch.calledWithExactly("js-flags", INITIAL_STORES.config().jsFlags.join(" ")));
+});
+
+test.serial("bootstrapCommandLine(): electron.app.commandLine.appendSwitch: js-flags:empty", async (t) => {
     const jsFlags: Exclude<Config["jsFlags"], undefined> = [];
     const ctx = buildContext({readFileSync: () => JSON.stringify({jsFlags})});
     const mocks = buildMocks();
@@ -88,7 +121,7 @@ test.serial("bootstrapCommandLine(): electron.app.commandLine.appendSwitch: empt
     t.true(mocks.electron.app.commandLine.appendSwitch.calledWithExactly("js-flags", ""));
 });
 
-test.serial("bootstrapCommandLine(): electron.app.commandLine.appendSwitch: custom", async (t) => {
+test.serial("bootstrapCommandLine(): electron.app.commandLine.appendSwitch: js-flags:custom", async (t) => {
     const jsFlags: Exclude<Config["jsFlags"], undefined> = [
         "--some-val-1=111",
         "--some-val-2",

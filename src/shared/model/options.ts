@@ -40,6 +40,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     }
     indexingBootstrapBufferSize: number
     jsFlags: string[]
+    commandLineSwitches: Array<string | [name: string, value: string]>
     localDbMailsListViewMode: "plain" | "conversation"
     userAgents: string[]
     zoomFactorDisabled: boolean;

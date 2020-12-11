@@ -55,6 +55,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     customTrayIconColor: string
     customUnreadBgColor: string
     customUnreadTextColor: string
+    disableGpuProcess: boolean;
     disableSpamNotifications: boolean
     doNotRenderNotificationBadgeValue: boolean
     enableHideControlsHotkey: boolean
@@ -76,6 +77,7 @@ export type BaseConfig = Pick<Config,
     | "customTrayIconColor"
     | "customUnreadBgColor"
     | "customUnreadTextColor"
+    | "disableGpuProcess"
     | "disableSpamNotifications"
     | "doNotRenderNotificationBadgeValue"
     | "enableHideControlsHotkey"

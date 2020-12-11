@@ -6,6 +6,7 @@ import {promisify} from "util";
 
 import {CI, ENV, TestContext, initApp, test} from "./workflow";
 import {Config} from "src/shared/model/options";
+import {INITIAL_STORES} from "src/electron-main/constants";
 import {ONE_SECOND_MS, PROTON_API_ENTRY_URLS} from "src/shared/constants";
 import {asyncDelay} from "src/shared/util";
 import {saveScreenshot} from "src/e2e/lib";
@@ -119,6 +120,19 @@ test.serial("auto logout", async (t) => {
     await app.destroyApp();
 
     await afterEach(t);
+});
+
+test.serial("disabled gpu", async (t) => {
+    const [entryUrlValue] = PROTON_API_ENTRY_URLS;
+    const app = await initApp(t, {initial: true, withConfig: {...INITIAL_STORES.config(), disableGpuProcess: true}});
+
+    await app.login({setup: true, savePassword: false});
+    await app.addAccount({entryUrlValue});
+    await app.logout();
+    await app.destroyApp();
+    await afterEach(t);
+
+    // TODO check that there is no "gpu cache" folder created
 });
 
 test.beforeEach(async (t) => {

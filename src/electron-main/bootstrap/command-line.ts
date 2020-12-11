@@ -1,9 +1,13 @@
+import electronLog from "electron-log";
 import {app} from "electron";
 
 import {Config} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
 import {INITIAL_STORES} from "src/electron-main/constants";
+import {curryFunctionMembers} from "src/shared/util";
 import {readConfigSync} from "src/electron-main/util";
+
+const logger = curryFunctionMembers(electronLog, "[src/electron-main/bootstrap/command-line]");
 
 // WARN needs to be called before app is ready, function is synchronous
 export function bootstrapCommandLine(ctx: Context): void {
@@ -12,6 +16,8 @@ export function bootstrapCommandLine(ctx: Context): void {
         = config?.jsFlags ?? INITIAL_STORES.config().jsFlags;
     const commandLineSwitches: import("ts-essentials").DeepPartial<Config>["commandLineSwitches"]
         = config?.commandLineSwitches ?? INITIAL_STORES.config().commandLineSwitches;
+    const disableGpuProcess: import("ts-essentials").DeepPartial<Config>["disableGpuProcess"]
+        = config?.disableGpuProcess ?? INITIAL_STORES.config().disableGpuProcess;
 
     app.commandLine.appendSwitch("js-flags", jsFlags.join(" "));
 
@@ -36,5 +42,15 @@ export function bootstrapCommandLine(ctx: Context): void {
         }
 
         throw new Error(`Invalid "commandLineSwitches" value detected`);
+    }
+
+    if (disableGpuProcess) {
+        app.on("gpu-info-update", () => {
+            logger.verbose("GPU features status:", JSON.stringify(app.getGPUFeatureStatus()));
+        });
+
+        // WARN just this call doesn't seem to completely disable the gpu process
+        // see https://github.com/electron/electron/issues/14273
+        app.disableHardwareAcceleration();
     }
 }

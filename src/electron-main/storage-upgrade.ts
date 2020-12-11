@@ -159,9 +159,6 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         if (typeof config.clearSession !== "undefined") {
             delete config.clearSession;
         }
-        if (typeof config.disableGpuProcess !== "undefined") {
-            delete config.disableGpuProcess;
-        }
         {
             const {updateCheck: defaults} = INITIAL_STORES.config();
             if (typeof config.updateCheck === "undefined") {

@@ -15,6 +15,7 @@ import {
     PROTON_API_ENTRY_URLS,
     RUNTIME_ENV_USER_DATA_DIR,
 } from "src/shared/constants";
+import {Config} from "src/shared/model/options";
 import {accountCssSelector, saveScreenshot, waitForClickable, waitForEnabled} from "src/e2e/lib";
 
 export interface TestContext {
@@ -425,7 +426,13 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
     return workflow;
 }
 
-export async function initApp(t: ExecutionContext<TestContext>, options: { initial: boolean }): Promise<TestContext["workflow"]> {
+export async function initApp(
+    t: ExecutionContext<TestContext>,
+    options: {
+        initial: boolean;
+        withConfig?: Config,
+    },
+): Promise<TestContext["workflow"]> {
     t.context.workflow = buildWorkflow(t);
     t.context.sinon = {
         addAccountSpy: sinon.spy(t.context.workflow, "addAccount"),
@@ -452,6 +459,10 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
             `"config.json" should not exist yet in "${userDataDirPath}"`);
         t.false(fs.existsSync(path.join(userDataDirPath, "settings.bin")),
             `"settings.bin" should not exist yet in "${userDataDirPath}"`);
+    }
+
+    if (options.withConfig) {
+        fs.writeFileSync(path.join(userDataDirPath, "config.json"), JSON.stringify(options.withConfig, null, 2));
     }
 
     t.context.app = new Application({

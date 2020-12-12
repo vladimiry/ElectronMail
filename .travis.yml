@@ -67,6 +67,7 @@ jobs:
   include:
     # pre-building proton web clients in individual jobs to workaround the issue of travis dropping long-running jobs on free plan
     - stage: 'build proton clients'
+      if: env(TRAVIS_PULL_REQUEST) = false
       <<: *embedding-linux-common-anchor
       <<: *embedding-prepare-webclients
       workspaces:
@@ -74,6 +75,7 @@ jobs:
           name: 'linux-webclients-artifact'
           paths: [ './output/git/backup' ]
     - stage: 'build proton clients'
+      if: env(TRAVIS_PULL_REQUEST) = false
       <<: *embedding-macos-common-anchor
       <<: *embedding-prepare-webclients
       workspaces:

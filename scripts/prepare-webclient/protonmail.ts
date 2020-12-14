@@ -214,14 +214,15 @@ const applyPatch = async ({patchFile, cwd}: { patchFile: string; cwd: string }):
 
                 build: async ({repoDir: cwd, folderAsDomainEntry}) => {
                     const {configApiParam} = await configure({cwd, repoType}, folderAsDomainEntry);
-
-                    {
+                    const {publicPath} = await (async () => {
                         const webpackPatch = repoType !== "proton-mail"
                             ? {publicPath: `/${PROVIDER_REPO_MAP[repoType].baseDirName}/`}
                             : undefined;
                         const webpackIndexEntryItems = repoType === "proton-mail" || repoType === "proton-calendar"
                             ? PROVIDER_REPO_MAP[repoType].protonPack.webpackIndexEntryItems
                             : undefined;
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        const packageJson: { config?: { publicPathFlag?: unknown } } = await import(path.join(cwd, "./package.json"));
 
                         // https://github.com/ProtonMail/proton-pack/tree/2e44d5fd9d2df39787202fc08a90757ea47fe480#how-to-configure
                         printAndWriteFile(
@@ -241,23 +242,36 @@ const applyPatch = async ({patchFile, cwd}: { patchFile: string; cwd: string }):
                             }
                             `,
                         );
-                    }
 
-                    await execShell([
-                        "npm",
+                        return {
+                            publicPath: packageJson.config?.publicPathFlag
+                                ? undefined
+                                : webpackPatch?.publicPath,
+                        };
+                    })();
+
+                    await execShell(
                         [
-                            "run",
-                            "bundle",
-                            "--",
-                            "--no-lint",
-                            "--api", configApiParam,
-                            // eslint-disable-next-line
-                            // see possible "buildMode / appMode" values here: https://github.com/ProtonMail/proton-bundler/blob/e366ff769e770c49f5254ebc8ec0ee28cf389e40/lib/tasks/bundle.js#L64-L92
-                            // related issue: https://github.com/ProtonMail/WebClient/issues/205
-                            // "--buildMode", "standalone" | "sso" | undefined,
+                            "npm",
+                            [
+                                "run",
+                                "bundle",
+                                "--",
+                                "--no-lint",
+                                "--api", configApiParam,
+                                ...(publicPath ? ["--publicPath", publicPath] : []),
+                                // eslint-disable-next-line
+                                // see possible "buildMode / appMode" values here: https://github.com/ProtonMail/proton-bundler/blob/e366ff769e770c49f5254ebc8ec0ee28cf389e40/lib/tasks/bundle.js#L64-L92
+                                // related issue: https://github.com/ProtonMail/WebClient/issues/205
+                                // "--buildMode", "standalone" | "sso" | undefined,
+                            ],
+                            {
+                                cwd,
+                                ...(publicPath && {env: {...process.env, PUBLIC_PATH: publicPath}}),
+                            },
                         ],
-                        {cwd},
-                    ]);
+                        publicPath ? {printEnvWhitelist: ["PUBLIC_PATH"]} : undefined,
+                    );
                 },
             },
         });

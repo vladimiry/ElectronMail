@@ -25,7 +25,12 @@ import {StatusCodeError} from "./model/error";
 export function initialConfig(): Config {
     {
         const encryptionPreset: PasswordBasedPreset = {
-            keyDerivation: {type: "sodium.crypto_pwhash", preset: "mode:moderate|algorithm:default"},
+            keyDerivation: {
+                type: "sodium.crypto_pwhash",
+                preset: BUILD_ENVIRONMENT === "e2e"
+                    ? "mode:interactive|algorithm:default"
+                    : "mode:moderate|algorithm:default"
+            },
             encryption: {type: "sodium.crypto_secretbox_easy", preset: "algorithm:default"},
         };
 

@@ -1,7 +1,7 @@
 appId: 'github.com/vladimiry/ElectronMail'
 artifactName: ${name}-${version}-${os}-${arch}${env.ARTIFACT_NAME_POSTFIX}.${ext}
 productName: 'ElectronMail'
-
+publish: {provider: github, releaseType: draft, vPrefixedTagName: true}
 forceCodeSigning: false
 
 # TODO consider moving fully bundable 'dependencies' to 'devDependencies' to reduce final package size

@@ -65,40 +65,6 @@ test.serial("general actions: app start, master password setup, add accounts", a
     await afterEach(t);
 });
 
-if (
-    CI
-    &&
-    Boolean(0) // TODO proton-v4: enable "auto login" e2e test scenario
-) {
-    test.serial("auto login", async (t) => {
-        await (async (): Promise<void> => {
-            const app = await initApp(t, {initial: true});
-            await app.login({setup: true, savePassword: true});
-            await app.afterLoginUrlTest("initial login");
-            await app.logout();
-            await app.destroyApp();
-        })();
-
-        // auto login 1
-        await (async (): Promise<void> => {
-            const app = await initApp(t, {initial: false});
-            await app.afterLoginUrlTest(("auto login 1"));
-            await app.logout();
-            await app.destroyApp();
-        })();
-
-        // auto login 2, making sure previous auto login step didn't remove saved password
-        await (async (): Promise<void> => {
-            const app = await initApp(t, {initial: false});
-            await app.afterLoginUrlTest(("auto login 2"));
-            await app.logout();
-            await app.destroyApp();
-        })();
-
-        await afterEach(t);
-    });
-}
-
 test.serial("auto logout", async (t) => {
     const app = await initApp(t, {initial: true});
     await app.login({setup: true, savePassword: false});
@@ -120,6 +86,45 @@ test.serial("auto logout", async (t) => {
 
     await afterEach(t);
 });
+
+if (CI) { // PLATFORM !== "linux"
+    test.serial("auto login", async (t) => {
+        await (async (): Promise<void> => {
+            const app = await initApp(t, {initial: true});
+            await app.login({setup: true, savePassword: true});
+            await app.afterLoginUrlTest("initial login");
+            const [entryUrlValue] = PROTON_API_ENTRY_URLS;
+            await app.addAccount({entryUrlValue});
+            await app.exit(); // not "logout" but "exit" so the saved password doesn't get removed
+            await app.destroyApp();
+        })();
+
+        // auto login 1
+        await (async (): Promise<void> => {
+            const app = await initApp(t, {initial: false});
+            await app.afterLoginUrlTest(("auto login 1"));
+            await app.exit();
+            await app.destroyApp();
+        })();
+
+        // auto login 2, making sure previous auto login step didn't remove saved password (exited by: exit)
+        await (async (): Promise<void> => {
+            const app = await initApp(t, {initial: false});
+            await app.afterLoginUrlTest(("auto login 2"));
+            await app.logout();
+            await app.destroyApp();
+        })();
+
+        // making sure previous step removed the saved password (exited by: logout)
+        await (async (): Promise<void> => {
+            const app = await initApp(t, {initial: false});
+            await app.loginPageUrlTest(("auto login: final step"));
+            await app.destroyApp();
+        })();
+
+        await afterEach(t);
+    });
+}
 
 test.beforeEach(async (t) => {
     t.context.testStatus = "initial";

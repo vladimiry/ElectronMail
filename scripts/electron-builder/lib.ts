@@ -170,9 +170,7 @@ export async function build(
     await execShell([
         "yarn",
         [
-            "electron-builder:shortcut",
-            "--x64",
-            "--publish", "never",
+            "electron-builder:dist:shortcut",
             "--linux",
             packageType,
         ]

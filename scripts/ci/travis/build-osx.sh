@@ -2,7 +2,8 @@
 
 set -ev
 
-yarn app:dist:base
+npx --no-install npm-run-all lint test:electron-main build assets
+
 npm run clean:prebuilds
 npx --no-install electron-builder install-app-deps --arch=x64
 
@@ -12,7 +13,8 @@ yarn test:e2e
 # see https://github.com/travis-ci/travis-ci/issues/4190#issuecomment-353342526
 # output something every 9 minutes (540 seconds) to prevent Travis killing the job
 while sleep 540; do echo "=====[ $SECONDS seconds still running ]====="; done &
-    yarn electron-builder:dist
+yarn build:electron-builder-hooks
+yarn electron-builder:dist --publish never
 # killing background sleep loop
 kill %1
 
@@ -22,6 +24,6 @@ yarn scripts/dist-packages/print-hashes
 # see https://github.com/travis-ci/travis-ci/issues/4190#issuecomment-353342526
 # output something every 9 minutes (540 seconds) to prevent Travis killing the job
 while sleep 540; do echo "=====[ $SECONDS seconds still running ]====="; done &
-    yarn scripts/dist-packages/upload
+yarn scripts/dist-packages/upload
 # killing background sleep loop
 kill %1

@@ -2,6 +2,7 @@ import {WebPreferences} from "electron";
 
 export const DEFAULT_WEB_PREFERENCES_KEYS = [
     "backgroundThrottling",
+    "contextIsolation",
     "devTools",
     "disableBlinkFeatures",
     "enableRemoteModule",
@@ -16,7 +17,9 @@ export const DEFAULT_WEB_PREFERENCES_KEYS = [
 export const DEFAULT_WEB_PREFERENCES: Readonly<NoExtraProps<Pick<Required<WebPreferences>, typeof DEFAULT_WEB_PREFERENCES_KEYS[number]>>>
     = {
     backgroundThrottling: false,
-    devTools: BUILD_ENVIRONMENT === "development",
+    // TODO disable "contextIsolation" flag
+    contextIsolation: false,
+    devTools: BUILD_ENVIRONMENT !== "production",
     disableBlinkFeatures: "Auxclick",
     nodeIntegration: false,
     nodeIntegrationInWorker: false,

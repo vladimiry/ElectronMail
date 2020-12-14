@@ -15,6 +15,7 @@ import {
     PROTON_API_ENTRY_URLS,
     RUNTIME_ENV_USER_DATA_DIR,
 } from "src/shared/constants";
+import {PLATFORM} from "src/electron-main/constants";
 import {accountCssSelector, saveScreenshot, waitForClickable, waitForEnabled} from "src/e2e/lib";
 
 export interface TestContext {
@@ -39,7 +40,7 @@ export const ENV = {
     loginPrefix: `login-${randomString.generate({length: 8})}`,
 };
 
-export const CI = Boolean(process.env.CI && (process.env.APPVEYOR || process.env.TRAVIS));
+export const CI = Boolean(process.env.CI);
 
 export const {name: PROJECT_NAME, version: PROJECT_VERSION} // eslint-disable-next-line @typescript-eslint/no-var-requires
     = require("package.json") as { name: string, version: string }; // tslint:disable-line: no-import-zones
@@ -51,11 +52,11 @@ const mainScriptFilePath = path.join(appDirPath, "./electron-main-e2e.js");
 const CONF = {
     timeouts: {
         element: ONE_SECOND_MS,
-        elementTouched: ONE_SECOND_MS * (CI ? 1 : 0.3),
-        encryption: ONE_SECOND_MS * (CI ? 5 : 1.5),
-        transition: ONE_SECOND_MS * (CI ? 1 : 0.3),
-        logout: ONE_SECOND_MS * (CI ? 6 : 3),
-        loginFilledOnce: ONE_SECOND_MS * (CI ? 45 : 15),
+        elementTouched: ONE_SECOND_MS * (CI ? 1.5 : 0.3),
+        encryption: ONE_SECOND_MS * (CI ? 10 : 1.5),
+        transition: ONE_SECOND_MS * (CI ? 3 : 0.3),
+        logout: ONE_SECOND_MS * (CI ? 20 : 8),
+        loginFilledOnce: ONE_SECOND_MS * (CI ? 60 : 15),
     },
 } as const;
 
@@ -140,7 +141,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
 
             await (async (): Promise<void> => {
                 selector = `electron-mail-accounts .list-group.accounts-list`;
-                const timeout = CONF.timeouts.encryption * 2;
+                const timeout = CONF.timeouts.encryption * 5;
                 try {
                     await client
                         .$(selector)
@@ -152,13 +153,25 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             })();
 
             if (options.setup) {
+                const {savePassword: notificationDisplaying} = options;
+                const expectedLocationHash = notificationDisplaying
+                    ? "/(settings-outlet:settings/account-edit//accounts-outlet:accounts//notifications-outlet:notifications)"
+                    : "/(settings-outlet:settings/account-edit//accounts-outlet:accounts)";
                 t.is(
-                    await workflow.getLocationHash(), "/(settings-outlet:settings/account-edit//accounts-outlet:accounts)",
+                    await workflow.getLocationHash(),
+                    expectedLocationHash,
                     `login: "accounts" page url`,
                 );
-
+                if (notificationDisplaying) {
+                    // closing notifications block
+                    await waitForClickable(
+                        client,
+                        "electron-mail-notification-item .alert-dismissible.alert-warning > [type=button].close",
+                        {callback: async (el) => el.click()},
+                    );
+                    await client.pause(CONF.timeouts.elementTouched);
+                }
                 // TODO make sure there are no accounts added
-
                 await workflow.closeSettingsModal();
             }
 
@@ -169,22 +182,25 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
         },
 
         async afterLoginUrlTest(workflowPrefix = ""): Promise<void> {
+            const actual = await workflow.getLocationHash();
             t.true(
                 [
                     "/(accounts-outlet:accounts)",
                     "/(accounts-outlet:accounts//stub-outlet:stub)",
-                ].includes(await workflow.getLocationHash()),
-                `workflow.${workflowPrefix}: "accounts" page url (actual: ${await workflow.getLocationHash()})`,
+                    // "/(settings-outlet:settings/account-edit//accounts-outlet:accounts)" // not added account case
+                ].includes(actual),
+                `workflow.${workflowPrefix}: "accounts" page url (${JSON.stringify({actual})})`,
             );
         },
 
         async loginPageUrlTest(workflowPrefix = ""): Promise<void> {
+            const actual = await workflow.getLocationHash();
             t.true(
                 [
                     "/(settings-outlet:settings/login)",
                     "/(settings-outlet:settings/login//stub-outlet:stub)",
-                ].includes(await workflow.getLocationHash()),
-                `workflow.${workflowPrefix}: "login" page url (actual: ${await workflow.getLocationHash()})`,
+                ].includes(actual),
+                `workflow.${workflowPrefix}: "login" page url (${JSON.stringify({actual})})`,
             );
         },
 
@@ -391,6 +407,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
                 "electron-mail-accounts .controls .dropdown-toggle",
                 {callback: async (el) => el.click()},
             );
+            await client.pause(CONF.timeouts.transition);
             await waitForClickable(
                 client,
                 "#logoutMenuItem",
@@ -416,6 +433,23 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             await client.pause(CONF.timeouts.transition);
         },
 
+        async exit(): Promise<void> {
+            const {client} = t.context.app;
+
+            await waitForClickable(
+                client,
+                "electron-mail-accounts .controls .dropdown-toggle",
+                {callback: async (el) => el.click()},
+            );
+            await client.pause(CONF.timeouts.transition);
+            await waitForClickable(
+                client,
+                "#exitMenuItem",
+                {callback: async (el) => el.click()},
+            );
+            delete (t.context as Partial<Pick<typeof t.context, "app">>).app;
+        },
+
         async getLocationHash(): Promise<string> {
             const url = await t.context.app.client.getUrl();
             return String(url.split("#").pop());
@@ -434,13 +468,13 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
     const outputDirPath = t.context.outputDirPath = t.context.outputDirPath || path.join(rootDirPath, "./output/e2e", String(Date.now()));
     const userDataDirPath = path.join(outputDirPath, "./app-data");
     const logFilePath = path.join(userDataDirPath, "log.log");
-    const webdriverLogDirPath = path.join(outputDirPath, "webdriver-driver-log");
-    const chromeDriverLogFilePath = path.join(outputDirPath, "chrome-driver.log");
+    const webdriverLogPath = path.join(outputDirPath, "webdriver-log");
+    const chromeDriverLogPath = path.join(outputDirPath, "chrome-driver.log");
 
     mkOutputDirs([
         outputDirPath,
         userDataDirPath,
-        webdriverLogDirPath,
+        webdriverLogPath,
     ]);
 
     t.context.appDirPath = appDirPath;
@@ -458,22 +492,39 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
         // TODO consider running e2e tests on compiled/binary app too: path.join(rootPath, "./dist/linux-unpacked/electron-mail")
         path: electron as any, // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
         requireName: "electronRequire",
-        env: {
-            [RUNTIME_ENV_USER_DATA_DIR]: userDataDirPath,
-        },
+        env: {[RUNTIME_ENV_USER_DATA_DIR]: userDataDirPath},
         args: [mainScriptFilePath],
 
-        // ...(CI && {
-        //     startTimeout: ONE_SECOND_MS * 15,
-        //     chromeDriverArgs: [/*"no-sandbox", */"headless", "disable-gpu"],
+        webdriverOptions: {
+            // TODO remove the tweaks aimed to fix things on linux/windows
+            // ...(CI && PLATFORM !== "darwin" && {
+            //     useAutomationExtension: false,
+            // }),
+            // WARN don't specify "webdriverLogPath" on upper/specter level since it then enables "trace" to console for some reason
+            // TODO "webdriverOptions.outputDir" option doesn't seem to have an effect
+            outputDir: webdriverLogPath,
+            logLevel: PLATFORM !== "darwin" ? "trace" : "error",
+        },
+
+        // TODO remove the tweaks aimed to fix things on linux/windows
+        // ...(CI && PLATFORM !== "darwin" && {
+        //     connectionRetryCount: 2,
+        //     connectionRetryTimeout: 90 * ONE_SECOND_MS,
+        //     chromeDriverArgs: [
+        //         "--disable-dev-shm-usage",
+        //         "--disable-extensions",
+        //         "--disable-infobars",
+        //         // "--enable-automation",
+        //         "--no-sandbox",
+        //         `--remote-debugging-port=${getRandomInt(9000, 9999)}`,
+        //     ],
         // }),
 
-        // TODO setting path chromedriver config parameters might cause the following errors happening:
+        // WARN setting path chromedriver config parameters might cause the following errors happening:
         // - ChromeDriver did not start within 5000ms
         // - Failed to redirect stderr to log file.
         // - Unable to initialize logging. Exiting...
-        webdriverLogPath: webdriverLogDirPath,
-        chromeDriverLogPath: chromeDriverLogFilePath,
+        chromeDriverLogPath,
     });
 
     // start

@@ -2,38 +2,32 @@ import {pick} from "remeda";
 
 import {PACKAGE_NAME} from "src/shared/constants";
 
-const service = PACKAGE_NAME;
-const account = "master-password";
+type Keytar = Pick<typeof import("keytar"), "getPassword" | "setPassword" | "deletePassword">;
 
-type Keytar = Pick<typeof import("keytar"), "getPassword" | "setPassword" | "deletePassword">;  // tslint:disable-line:no-import-zones
+const credentialsKeys = [
+    PACKAGE_NAME,
+    `master-password${BUILD_ENVIRONMENT === "e2e" ? "-e2e" : ""}`,
+] as const;
 
 // TODO don't expose STATE
 export const STATE: {
     resolveKeytar: () => Promise<Keytar>;
 } = {
     resolveKeytar: async (): ReturnType<(typeof STATE)["resolveKeytar"]> => {
-        const keytar = pick(
-            await import("keytar"), // tslint:disable-line:no-import-zones
-            ["getPassword", "setPassword", "deletePassword"],
-        );
-
+        const keytar = pick(await import("keytar"), ["getPassword", "setPassword", "deletePassword"]);
         STATE.resolveKeytar = async (): ReturnType<(typeof STATE)["resolveKeytar"]> => Promise.resolve(keytar);
-
         return keytar;
     },
 };
 
-export const getPassword: () => ReturnType<Unpacked<Keytar>["getPassword"]> = async () => {
-    const keytar = await STATE.resolveKeytar();
-    return keytar.getPassword(service, account);
+export const getPassword = async (): ReturnType<Unpacked<Keytar>["getPassword"]> => {
+    return (await STATE.resolveKeytar()).getPassword(...credentialsKeys);
 };
 
-export const setPassword: (password: string) => ReturnType<Unpacked<Keytar>["setPassword"]> = async (password) => {
-    const keytar = await STATE.resolveKeytar();
-    return keytar.setPassword(service, account, password);
+export const setPassword = async (password: string): ReturnType<Unpacked<Keytar>["setPassword"]> => {
+    return (await STATE.resolveKeytar()).setPassword(...credentialsKeys, password);
 };
 
-export const deletePassword: () => ReturnType<Unpacked<Keytar>["deletePassword"]> = async () => {
-    const keytar = await STATE.resolveKeytar();
-    return keytar.deletePassword(service, account);
+export const deletePassword = async (): ReturnType<Unpacked<Keytar>["deletePassword"]> => {
+    return (await STATE.resolveKeytar()).deletePassword(...credentialsKeys);
 };

@@ -5,8 +5,8 @@
 ElectronMail is an [Electron](https://electronjs.org)-based unofficial desktop client for [ProtonMail](https://protonmail.com/). The app aims to provide enhanced desktop user experience enabling features that are not supported by the official in-browser web clients. 
 It is written in [TypeScript](http://www.typescriptlang.org) and uses [Angular](https://angular.io).
 
-[![Travis CI](https://img.shields.io/travis/vladimiry/ElectronMail.svg?style=flat-square&label=Travis+CI)](https://travis-ci.org/vladimiry/ElectronMail)
-[![AppVeyor CI](https://img.shields.io/appveyor/ci/vladimiry/ElectronMail.svg?style=flat-square&label=AppVeyor+CI)](https://ci.appveyor.com/project/vladimiry/electronmail)
+[![GitHub Actions CI](https://github.com/vladimiry/ElectronMail/workflows/main/badge.svg?branch=master)](https://github.com/vladimiry/ElectronMail/actions)
+[![Travis CI](https://img.shields.io/travis/vladimiry/ElectronMail.svg?branch=master&style=flat-square&label=Travis+CI)](https://travis-ci.org/vladimiry/ElectronMail)
 [![License](https://img.shields.io/github/license/vladimiry/ElectronMail.svg?color=success&style=flat-square&label=License)](https://github.com/vladimiry/ElectronMail/blob/master/LICENSE)
 [![GitHub top language](https://img.shields.io/github/languages/top/vladimiry/ElectronMail.svg?style=flat-square&label=TypeScript)](https://github.com/vladimiry/ElectronMail/search?l=typescript)
 
@@ -55,7 +55,7 @@ You got it [here](https://github.com/vladimiry/ElectronMail/wiki/FAQ).
 
 ### Building on Continuous Integration server
 
-The [reproducible builds](https://en.wikipedia.org/wiki/Reproducible_builds) idea is respected by the project. So the simplest way to prepare your own installation package from the source code is to clone the project and hook it up to the [AppVeyor](https://www.appveyor.com/) and [Travis CI](https://travis-ci.org/) systems. The respective config files [appveyor.yml](appveyor.yml) and [.travis.yml](.travis.yml) come with the project.
+The [reproducible builds](https://en.wikipedia.org/wiki/Reproducible_builds) idea is respected by the project. So the simplest way to prepare your own installation package from the source code is to clone the project. The respective CI config files come with the project.
 
 ### Building locally
 

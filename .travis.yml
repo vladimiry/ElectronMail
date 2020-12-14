@@ -2,120 +2,40 @@
 # - https://github.com/travis-ci/travis-ci/issues/7590
 # - https://travis-ci.community/t/using-unified-cache-control-cache-identity/1531
 
-branches:
-  only:
-    - master
-
+branches: { only: [ master ] }
 node_js: 12
 language: node_js
-
-embedding-prepare-webclients: &embedding-prepare-webclients
-  cache:
-    yarn: false
-    npm: false
-    directories: [ './output/git/backup' ]
-  script: ./scripts/ci/travis/build-webclients.sh
-
-embedding-linux-common: &embedding-linux-common-anchor
-  os: linux
-  dist: bionic
-  env:
-    # needed for: native modules compiling
-    - CC=gcc-7 CXX=g++-7
-  addons:
-    apt:
-      packages:
-        # needed for: native modules compiling
-        - g++-7
-        # needed for: compiling "desktop-idle" native module
-        - libxss-dev
-        # needed for: keychain initialization and compiling "node-keytar" native module
-        - gnome-keyring
-        - libgnome-keyring-dev
-        - libsecret-1-dev
-        # needed for: keychain access testing before running e2e tests (see "scripts/ci/add-secret-service-item-assert.py")
-        - python3-secretstorage
-        # needed for: tweaking snap package ("unsquashfs" binary)
-        - squashfs-tools
-
-embedding-macos-common: &embedding-macos-common-anchor
-  os: osx
-  osx_image: xcode9.4
-
-embedding-build-app-common: &embedding-build-app-common-anchor
-  cache: false
-  after_failure:
-    - tar -cvf e2e-logs.tar ./output/e2e
-    - yarn scripts/transfer upload e2e-logs.tar
-
-before_install:
-  - | # installing the most recent yarn version
-    curl -o- -L https://yarnpkg.com/install.sh | bash;
-    export PATH="$HOME/.yarn/bin:$PATH";
+cache: false
+anchors:
+  macos-common: &macos-common
+    os: osx
+    osx_image: xcode9.4
+  macos-build-app: &macos-build-app
+    script: ./scripts/ci/travis/build-osx.sh
+    after_failure:
+      - tar -cvf e2e-logs.tar ./output/e2e
+      - yarn scripts/transfer upload e2e-logs.tar
 install:
-  - node --version
-  - npm --version
-  - yarn --version
   - npx envinfo
   - yarn install --pure-lockfile
-notifications:
-  email:
-    on_success: never
-    on_failure: change
-
+notifications: { email: { on_success: never, on_failure: change } }
 jobs:
   include:
-    # pre-building proton web clients in individual jobs to workaround the issue of travis dropping long-running jobs on free plan
     - stage: 'build proton clients'
-      <<: *embedding-linux-common-anchor
-      <<: *embedding-prepare-webclients
-      workspaces:
-        create:
-          name: 'linux-webclients-artifact'
-          paths: [ './output/git/backup' ]
-    - stage: 'build proton clients'
-      <<: *embedding-macos-common-anchor
-      <<: *embedding-prepare-webclients
-      workspaces:
-        create:
-          name: 'macos-webclients-artifact'
-          paths: [ './output/git/backup' ]
-    # [build]
-    - stage: 'build app'
-      <<: *embedding-linux-common-anchor
-      <<: *embedding-build-app-common-anchor
-      workspaces:
-        use:
-          - 'linux-webclients-artifact'
-      sudo: required
-      services:
-        - docker
-        # needed for: running e2e tests
-        - xvfb
-      before_script:
-        - | # init dbus
-          NO_AT_BRIDGE=1;
-          eval $(dbus-launch --sh-syntax);
-        # TODO get back keyring initialization then enable respective e2e test case (see "src/e2e/index.spec.ts")
-        #- | # init keychain
-        #  eval $(echo -n "" | /usr/bin/gnome-keyring-daemon --login);
-        #  eval $(/usr/bin/gnome-keyring-daemon --components=secrets --start);
-        #  python3 ./scripts/ci/add-secret-service-item-assert.py;
-      script: ./scripts/ci/travis/build-linux.sh
-    - stage: 'build app'
-      <<: *embedding-macos-common-anchor
-      <<: *embedding-build-app-common-anchor
-      workspaces:
-        use:
-          - 'macos-webclients-artifact'
-      env: [ { ARTIFACT_NAME_POSTFIX: "-high-sierra" } ]
-      script: ./scripts/ci/travis/build-osx.sh
-    - stage: 'build app'
-      <<: *embedding-macos-common-anchor
-      <<: *embedding-build-app-common-anchor
+      <<: *macos-common
+      cache: { yarn: false, npm: false, directories: [ './output/git/backup' ] }
+      script: ./scripts/ci/prepare-webclients.sh
+      workspaces: { create: { name: 'macos-webclients-artifact', paths: [ './output/git/backup' ] } }
+    - stage: 'build app package'
+      <<: *macos-common
+      <<: *macos-build-app
+      osx_image: xcode9.4
+      workspaces: { use: [ 'macos-webclients-artifact' ] }
+      # the default macos package comes without postfix
+      # env: { ARTIFACT_NAME_POSTFIX: "-high-sierra" }
+    - stage: 'build app package'
+      <<: *macos-common
+      <<: *macos-build-app
       osx_image: xcode11.3
-      workspaces:
-        use:
-          - 'macos-webclients-artifact'
-      env: [ { ARTIFACT_NAME_POSTFIX: "-mojave" } ]
-      script: ./scripts/ci/travis/build-osx.sh
+      workspaces: { use: [ 'macos-webclients-artifact' ] }
+      env: { ARTIFACT_NAME_POSTFIX: "-mojave" }

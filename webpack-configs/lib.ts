@@ -22,7 +22,7 @@ export const ENVIRONMENT_STATE: Readonly<Record<BuildEnvironment, boolean>> = {
     e2e: ENVIRONMENT === "e2e",
 };
 
-CONSOLE_LOG("BuildEnvironment: ", ENVIRONMENT);
+CONSOLE_LOG("BuildEnvironment:", ENVIRONMENT);
 
 export const rootRelativePath = (...value: string[]): string => {
     return path.join(process.cwd(), ...value);

@@ -48,11 +48,8 @@ before_build:
   - npx envinfo
   - yarn install --pure-lockfile
 build_script:
-  - yarn app:dist:build
-  - sh: if [[ -n "$APPVEYOR_PULL_REQUEST_TITLE" ]]; then appveyor exit; fi
-  - ps: if ($env:APPVEYOR_PULL_REQUEST_TITLE) {Exit-AppveyorBuild}
   - yarn scripts/ci/appveyor/download-webclients-artifact
-  - yarn assets
+  - yarn app:dist:base
   - npm run clean:prebuilds
   - npx --no-install electron-builder install-app-deps --arch=x64
   - yarn test:e2e
@@ -74,8 +71,6 @@ for:
       APPVEYOR_CACHE_SKIP_RESTORE: false
     cache:
       - ./output/git/backup
-    init:
-      - if [[ -z "$APPVEYOR_PULL_REQUEST_TITLE" ]]; then appveyor exit; fi
     install:
       - nvm install $nodejs_version
       - ./scripts/ci/appveyor/install-linux.sh

@@ -1,0 +1,27 @@
+diff --git a/node_modules/spectron/lib/api.js b/node_modules/spectron/lib/api.js
+index 8cc01e5..bc75ad5 100644
+--- a/node_modules/spectron/lib/api.js
++++ b/node_modules/spectron/lib/api.js
+@@ -358,15 +358,19 @@ Api.prototype.addCapturePageSupport = function () {
+           args
+         );
+         if (image != null) {
+-          done(image.toPNG().toString('base64'));
++          done(image.toDataURL());
+         } else {
+           done(image);
+         }
+       },
+       rect,
+       self.requireName
+-    ).then(function (image) {
+-      return Buffer.from(image, 'base64');
++    ).then(function (toDataURL) {
++        const arr = toDataURL.split(",");
++        return JSON.stringify({
++            base64Data: arr[1],
++            mimeBasedExtension: arr[0].match(/:(.*?);/)[1].split("/").pop(),
++        });
+     });
+   });
+ 

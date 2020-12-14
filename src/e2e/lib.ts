@@ -44,25 +44,26 @@ export const waitForDisplayed: typeof waitForEnabled = async (client, selector, 
 };
 
 export async function saveScreenshot(t: ExecutionContext<TestContext>): Promise<string | void> {
-    if (true) { // eslint-disable-line no-constant-condition
-        // TODO get back "saveScreenshot" implementation
-        return;
-    }
-
     if (!t.context.app || !t.context.app.browserWindow) { // lgtm [js/unreachable-statement]
         return;
     }
 
+    // TODO the "browserWindow.capturePage()" implementation is broken is Spectron
+    //      probably due to the "Structured Clone Serialization" thing introduced in Electron v9
+    //      so custom implementation is used, see "./patches/patch-package/" directory
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const {base64Data, mimeBasedExtension}: { base64Data: string, mimeBasedExtension: string } = JSON.parse(
+        await t.context.app.browserWindow.capturePage() as unknown as string,
+    );
     const file = path.join(
         t.context.outputDirPath,
-        `sreenshot-${t.title}-${new Date().toISOString()}.png`.replace(/[^A-Za-z0-9.]/g, "_"),
+        `screenshot-${t.title}-${new Date().toISOString()}.${mimeBasedExtension.substr(0, 3)}`
+            .replace(/[^A-Za-z0-9.]/g, "_"),
     );
-    const image = await t.context.app.browserWindow.capturePage();
 
-    await promisify(fs.writeFile)(file, image);
+    await promisify(fs.writeFile)(file, Buffer.from(base64Data, "base64"));
 
-    // eslint-disable-next-line no-console
-    console.info(`Screenshot produced: ${file}`);
+    console.info(`Screenshot saved to: ${file}`); // eslint-disable-line no-console
 
     return file;
 }

@@ -2,21 +2,13 @@
 
 set -ev
 
-DIRS_DEFAULT=(".")
+# listing starts from "." if no arguments passed to the script
+for DIR in "${@:-.}"; do
+    echo listing \"$DIR\" directory content
 
-DIRS="$@"
-
-if [ $# -eq 0 ]; then
-    # no arguments passed to the script
-    DIRS=$DIRS_DEFAULT
-fi
-
-for DIR in $DIRS; do
-    echo listing \"${DIR}\" directory content
-
-    if [ -d $DIR ]; then
+    if [ -d "$DIR" ]; then
         find $DIR \( -name "node_modules" -o -name ".git" \) -prune -o -print
     else
-        echo \"${DIR}\" is not a directory
+        echo \"$DIR\" is not a directory
     fi
 done

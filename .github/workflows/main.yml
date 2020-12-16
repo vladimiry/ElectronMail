@@ -2,45 +2,51 @@
 # - https://github.com/actions/runner/issues/438
 # - https://github.com/actions/runner/issues/646
 
-name: 'GitHub Actions CI'
+name: "GitHub Actions CI"
 on: { push: { branches: [ master ] }, pull_request: { branches: [ master ] } }
 env: { ELECTRON_MAIL_NODE_VERSION: 12 }
 jobs:
   build-proton-clients:
     if: github.event_name == 'push'
-    runs-on: ubuntu-18.04
+    strategy: { matrix: { os: [ ubuntu-18.04 ] }, fail-fast: false }
+    runs-on: ${{ matrix.os }}
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
       - { name: check out repository, uses: actions/checkout@v2 }
-      - { name: setup node, uses: actions/setup-node@v1, with: { node-version: '${{ env.ELECTRON_MAIL_NODE_VERSION }}' } }
+      - { name: setup node, uses: actions/setup-node@v1, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}" } }
       - { name: tweak system, if: runner.os == 'Linux', run: ./scripts/ci/github/tweak-system-linux.sh }
-      - { name: tweak system, if: runner.os == 'Windows', run: pwsh -Command ./scripts/ci/github/tweak-system-windows.ps1 }
-      - { name: envinfo, run: npx envinfo }
-      - { name: install node modules, run: yarn install --pure-lockfile --network-timeout 60000 }
+      - { name: tweak system, if: runner.os == 'Windows', run: ./scripts/ci/github/tweak-system-windows.ps1 }
+      - uses: actions/cache@v2
+        name: cache node modules
+        id: cache-node-modules
+        with: { path: ./node_modules, key: "node-modules-cache-${{ github.job }}-${{ matrix.os }}-${{ hashFiles('./yarn.lock', './patch-package/*.patch') }}" }
+      - { name: install node modules, if: steps.cache-node-modules.outputs.cache-hit != 'true', run: "yarn install --pure-lockfile --network-timeout 60000" }
       # </common>
       - name: cache artifact
         uses: actions/cache@v2
-        with:
-          path: ./output/git/backup
-          key: proton-clients-artifact-cache-${{ runner.os }}-${{ secrets.PROTON_CLIENTS_ARTIFACT_CACHE_VERSION }}
-      - { name: print files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./output/git/backup }
+        with: { path: ./output/git/backup, key: "proton-clients-cache-${{ secrets.PROTON_CLIENTS_ARTIFACT_CACHE_VERSION }}" }
+      - { name: print ./output/git/backup files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./output/git/backup }
       - { name: build, run: ./scripts/ci/prepare-webclients.sh }
-      - { name: print files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./output/git/backup }
-      - { name: upload artifact, uses: actions/upload-artifact@v2, with: { name: proton-clients-artifact,  path: ./output/git/backup, if-no-files-found: error } }
+      - { name: print ./output/git/backup files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./output/git/backup }
+      - { name: tar artifact, run: tar -cvf proton-clients-artifact.tar ./output/git/backup }
+      - { name: upload artifact, uses: actions/upload-artifact@v2, with: { name: proton-clients-artifact, path: ./proton-clients-artifact.tar, if-no-files-found: error } }
   build-app:
     strategy: { matrix: { os: [ ubuntu-18.04, windows-2019, macos-10.15 ] }, fail-fast: false }
     runs-on: ${{ matrix.os }}
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
       - { name: check out repository, uses: actions/checkout@v2 }
-      - { name: setup node, uses: actions/setup-node@v1, with: { node-version: '${{ env.ELECTRON_MAIL_NODE_VERSION }}' } }
+      - { name: setup node, uses: actions/setup-node@v1, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}" } }
       - { name: tweak system, if: runner.os == 'Linux', run: ./scripts/ci/github/tweak-system-linux.sh }
-      - { name: tweak system, if: runner.os == 'Windows', run: pwsh -Command ./scripts/ci/github/tweak-system-windows.ps1 }
-      - { name: envinfo, run: npx envinfo }
-      - { name: install node modules, run: yarn install --pure-lockfile --network-timeout 60000 }
+      - { name: tweak system, if: runner.os == 'Windows', run: ./scripts/ci/github/tweak-system-windows.ps1 }
+      - uses: actions/cache@v2
+        name: cache node modules
+        id: cache-node-modules
+        with: { path: ./node_modules, key: "node-modules-cache-${{ github.job }}-${{ matrix.os }}-${{ hashFiles('./yarn.lock', './patch-package/*.patch') }}" }
+      - { name: install node modules, if: steps.cache-node-modules.outputs.cache-hit != 'true', run: "yarn install --pure-lockfile --network-timeout 60000" }
       # </common>
       - { name: build, run: 'npx --no-install npm-run-all lint test:electron-main build' }
-      - { name: print files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./app }
+      - { name: print ./app files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./app }
       - { name: upload artifact, uses: actions/upload-artifact@v2, with: { name: 'app-artifact-${{ runner.os }}', path: ./app, if-no-files-found: error } }
   package-app:
     if: github.event_name == 'push'
@@ -50,32 +56,38 @@ jobs:
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
       - { name: check out repository, uses: actions/checkout@v2 }
-      - { name: setup node, uses: actions/setup-node@v1, with: { node-version: '${{ env.ELECTRON_MAIL_NODE_VERSION }}' } }
+      - { name: setup node, uses: actions/setup-node@v1, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}" } }
       - { name: tweak system, if: runner.os == 'Linux', run: ./scripts/ci/github/tweak-system-linux.sh }
-      - { name: tweak system, if: runner.os == 'Windows', run: pwsh -Command ./scripts/ci/github/tweak-system-windows.ps1 }
-      - { name: envinfo, run: npx envinfo }
-      - { name: install node modules, run: yarn install --pure-lockfile --network-timeout 60000 }
+      - { name: tweak system, if: runner.os == 'Windows', run: ./scripts/ci/github/tweak-system-windows.ps1 }
+      - uses: actions/cache@v2
+        name: cache node modules
+        id: cache-node-modules
+        with: { path: ./node_modules, key: "node-modules-cache-${{ github.job }}-${{ matrix.os }}-${{ hashFiles('./yarn.lock', './patch-package/*.patch') }}" }
+      - { name: install node modules, if: steps.cache-node-modules.outputs.cache-hit != 'true', run: "yarn install --pure-lockfile --network-timeout 60000" }
       # </common>
-      - { name: download proton clients artifact, uses: actions/download-artifact@v2, with: { name: proton-clients-artifact, path: ./output/git/backup } }
+      - { name: download proton clients artifact, uses: actions/download-artifact@v2, with: { name: proton-clients-artifact } }
+      - { name: unpack proton clients artifact, shell: bash, run: tar -xvf ./proton-clients-artifact.tar }
       - { name: download app artifact, uses: actions/download-artifact@v2, with: { name: 'app-artifact-${{ runner.os }}', path: ./app } }
-      - { name: print files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./app ./output/git/backup }
+      - { name: assets, run: "yarn assets", env: { ELECTRON_MAIL_SHOULD_FAIL_ON_BUILD: "true" } }
+      - { name: print ./app files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./app }
+      - { name: envinfo, run: "npx envinfo" }
       - name: build
         if: runner.os == 'Linux'
-        env: { GH_TOKEN: '${{ secrets.GITHUB_TOKEN }}' }
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
         run: ./scripts/ci/github/package-app-linux.sh
       - name: build
         if: runner.os == 'Windows'
-        env: { GH_TOKEN: '${{ secrets.GITHUB_TOKEN }}' }
-        run: pwsh -Command ./scripts/ci/github/package-app-windos.ps1
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: ./scripts/ci/github/package-app-windos.ps1
       - name: build
         if: matrix.os == 'macos-10.15'
-        env: { GH_TOKEN: '${{ secrets.GITHUB_TOKEN }}', ARTIFACT_NAME_POSTFIX: '-catalina' }
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}", ARTIFACT_NAME_POSTFIX: "-catalina" }
         run: ./scripts/ci/github/package-app-osx.sh
       - name: build
         if: matrix.os == 'macos-11.0'
-        env: { GH_TOKEN: '${{ secrets.GITHUB_TOKEN }}', ARTIFACT_NAME_POSTFIX: '-big-sur' }
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}", ARTIFACT_NAME_POSTFIX: "-big-sur" }
         run: ./scripts/ci/github/package-app-osx.sh
       - name: upload e2e/spectron output
         if: ${{ always() }}
         uses: actions/upload-artifact@v2
-        with: { name: 'output-e2e-artifact-${{ matrix.os }}',  path: ./output/e2e }
+        with: { name: "output-e2e-artifact-${{ matrix.os }}",  path: ./output/e2e }

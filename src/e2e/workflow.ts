@@ -15,7 +15,6 @@ import {
     PROTON_API_ENTRY_URLS,
     RUNTIME_ENV_USER_DATA_DIR,
 } from "src/shared/constants";
-import {PLATFORM} from "src/electron-main/constants";
 import {accountCssSelector, saveScreenshot, waitForClickable, waitForEnabled} from "src/e2e/lib";
 
 export interface TestContext {
@@ -310,9 +309,10 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
                         .$(selector)
                         .then(async (el) => el.waitForDisplayed({timeout}));
                 } catch (error) {
-                    await saveScreenshot(t);
                     t.fail(`Failed to resolve "${selector}" element within ${timeout}ms`);
                     throw error;
+                } finally {
+                    await saveScreenshot(t);
                 }
                 await saveScreenshot(t);
             })();
@@ -495,28 +495,24 @@ export async function initApp(t: ExecutionContext<TestContext>, options: { initi
         env: {[RUNTIME_ENV_USER_DATA_DIR]: userDataDirPath},
         args: [mainScriptFilePath],
 
+        connectionRetryCount: 2,
+        connectionRetryTimeout: ONE_SECOND_MS * 10,
+        startTimeout: ONE_SECOND_MS * 30,
+
         webdriverOptions: {
-            // TODO remove the tweaks aimed to fix things on linux/windows
-            // ...(CI && PLATFORM !== "darwin" && {
-            //     useAutomationExtension: false,
-            // }),
-            // WARN don't specify "webdriverLogPath" on upper/specter level since it then enables "trace" to console for some reason
-            // TODO "webdriverOptions.outputDir" option doesn't seem to have an effect
+            // WARN don't specify "webdriverLogPath" on upper/"spectron" level
+            //      since "spectron" then enables {logLevel: "trace"} but the output then goes to the console rather than to file
+            // TODO "webdriverOptions.outputDir / webdriverLogPath" option doesn't seem to have an effect, the output still goes to console
             outputDir: webdriverLogPath,
-            logLevel: PLATFORM !== "darwin" ? "trace" : "error",
+            logLevel: "error",
         },
 
-        // TODO remove the tweaks aimed to fix things on linux/windows
-        // ...(CI && PLATFORM !== "darwin" && {
-        //     connectionRetryCount: 2,
-        //     connectionRetryTimeout: 90 * ONE_SECOND_MS,
+        // TODO remove the tweaks aimed to fix things on windows
+        // ...(CI && PLATFORM === "win32" && {
         //     chromeDriverArgs: [
-        //         "--disable-dev-shm-usage",
-        //         "--disable-extensions",
-        //         "--disable-infobars",
-        //         // "--enable-automation",
-        //         "--no-sandbox",
-        //         `--remote-debugging-port=${getRandomInt(9000, 9999)}`,
+        //         "--disable-gpu",
+        //         // "--headless",
+        //         // "--no-sandbox",
         //     ],
         // }),
 

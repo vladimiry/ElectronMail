@@ -196,7 +196,7 @@ const applyPatch = async ({patchFile, cwd}: { patchFile: string; cwd: string }):
             repoType,
             folderAsDomainEntries,
             destSubFolder: PROVIDER_REPO_MAP[repoType].baseDirName,
-            flows: {
+            flow: {
                 async install({repoDir}) {
                     await execShell(["npm", ["ci"], {cwd: repoDir}]);
 

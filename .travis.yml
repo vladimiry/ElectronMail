@@ -21,21 +21,21 @@ install:
 notifications: { email: { on_success: never, on_failure: change } }
 jobs:
   include:
-    - stage: 'build proton clients'
+    - stage: "build proton clients"
       <<: *macos-common
-      cache: { yarn: false, npm: false, directories: [ './output/git/backup' ] }
+      cache: { yarn: false, npm: false, directories: [ "./output/git/backup" ] }
       script: ./scripts/ci/prepare-webclients.sh
-      workspaces: { create: { name: 'macos-webclients-artifact', paths: [ './output/git/backup' ] } }
-    - stage: 'build app package'
+      workspaces: { create: { name: "macos-webclients-artifact", paths: [ "./output/git/backup" ] } }
+    - stage: "build app package"
       <<: *macos-common
       <<: *macos-build-app
       osx_image: xcode9.4
-      workspaces: { use: [ 'macos-webclients-artifact' ] }
+      workspaces: { use: [ "macos-webclients-artifact" ] }
       # the default macos package comes without postfix
       # env: { ARTIFACT_NAME_POSTFIX: "-high-sierra" }
-    - stage: 'build app package'
+    - stage: "build app package"
       <<: *macos-common
       <<: *macos-build-app
       osx_image: xcode11.3
-      workspaces: { use: [ 'macos-webclients-artifact' ] }
+      workspaces: { use: [ "macos-webclients-artifact" ] }
       env: { ARTIFACT_NAME_POSTFIX: "-mojave" }

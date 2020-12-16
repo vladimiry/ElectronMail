@@ -7,6 +7,10 @@ import {CONSOLE_LOG, execShell, resolveGitCommitInfo, resolveGitOutputBackupDir}
 import {CWD_ABSOLUTE_DIR, GIT_CLONE_ABSOLUTE_DIR} from "scripts/const";
 import {PROVIDER_REPO_MAP, RUNTIME_ENV_CI_PROTON_CLIENTS_ONLY, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/constants";
 
+const shouldFailOnBuildEnvVarName = "ELECTRON_MAIL_SHOULD_FAIL_ON_BUILD";
+
+const shouldFailOnBuild = Boolean(process.env[shouldFailOnBuildEnvVarName]);
+
 const reposOnlyFilter: DeepReadonly<{ value: Array<keyof typeof PROVIDER_REPO_MAP>, envVariableName: string }> = (() => {
     const envVariableName = RUNTIME_ENV_CI_PROTON_CLIENTS_ONLY;
     const envVariableValue = process.env[envVariableName];
@@ -71,17 +75,13 @@ export async function executeBuildFlow<T extends FolderAsDomainEntry[], O = Unpa
         folderAsDomainEntries,
         repoRelativeDistDir = PROVIDER_REPO_MAP[repoType].repoRelativeDistDir,
         destSubFolder,
-        flows: {
-            postClone,
-            install,
-            build,
-        },
+        flow,
     }: {
         repoType: keyof typeof PROVIDER_REPO_MAP;
         folderAsDomainEntries: T;
         repoRelativeDistDir?: string;
         destSubFolder: string;
-        flows: {
+        flow: {
             postClone?: Flow<O>;
             install?: Flow<O>;
             build: Flow<O>;
@@ -144,8 +144,8 @@ export async function executeBuildFlow<T extends FolderAsDomainEntry[], O = Unpa
 
         if (cloneRequired) {
             await clone(repoType, repoDir);
-            if (postClone) {
-                await postClone(flowOptions);
+            if (flow.postClone) {
+                await flow.postClone(flowOptions);
             }
         } else {
             CONSOLE_LOG("Skip cloning");
@@ -164,13 +164,17 @@ export async function executeBuildFlow<T extends FolderAsDomainEntry[], O = Unpa
         } else { // executing the build
             if (fsExtra.pathExistsSync(path.resolve(repoDir, "node_modules"))) {
                 CONSOLE_LOG("Skip dependencies installing");
-            } else if (install) {
-                await install(flowOptions);
+            } else if (flow.install) {
+                await flow.install(flowOptions);
             } else {
                 await execShell(["npm", ["ci"], {cwd: repoDir}]);
             }
 
-            await build(flowOptions);
+            if (shouldFailOnBuild) {
+                throw new Error(`Halting since "${shouldFailOnBuildEnvVarName}" env var has been enabled`);
+            } else {
+                await flow.build(flowOptions);
+            }
 
             printAndWriteFile(
                 path.join(repoDistDir, WEB_CLIENTS_BLANK_HTML_FILE_NAME),

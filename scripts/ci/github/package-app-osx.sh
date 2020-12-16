@@ -2,12 +2,12 @@
 
 set -ev
 
-echo "::group::build assets"
-yarn assets
+echo "::group::tweak the system"
+brew install automake libtool
 echo "::endgroup::"
 
 echo "::group::build native modules"
-brew install automake libtool
+yarn postinstall:remove:prebuild-install
 npm run clean:prebuilds
 npx --no-install electron-builder install-app-deps --arch=x64
 echo "::endgroup::"

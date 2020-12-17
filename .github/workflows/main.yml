@@ -51,7 +51,7 @@ jobs:
   package-app:
     if: github.event_name == 'push'
     needs: [ build-proton-clients, build-app ]
-    strategy: { matrix: { os: [ ubuntu-18.04, windows-2019, macos-10.15, macos-11.0 ] }, fail-fast: false }
+    strategy: { matrix: { os: [ ubuntu-18.04, windows-2019, macos-10.15 ] }, fail-fast: false }
     runs-on: ${{ matrix.os }}
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
@@ -82,10 +82,6 @@ jobs:
       - name: build
         if: matrix.os == 'macos-10.15'
         env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}", ARTIFACT_NAME_POSTFIX: "-catalina" }
-        run: ./scripts/ci/github/package-app-osx.sh
-      - name: build
-        if: matrix.os == 'macos-11.0'
-        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}", ARTIFACT_NAME_POSTFIX: "-big-sur" }
         run: ./scripts/ci/github/package-app-osx.sh
       - name: upload e2e/spectron output
         if: ${{ always() }}

@@ -58,7 +58,7 @@ echo "::endgroup::"
 echo "::group::package"
 yarn build:electron-builder-hooks
 for PACKAGE_TYPE in "pacman" "snap" "appimage" "deb" "rpm" "freebsd"; do
-    yarn "electron-builder:dist:linux:${PACKAGE_TYPE}" --publish onTagOrDraft
+    yarn "electron-builder:dist:linux:${PACKAGE_TYPE}"
     rm -rf ./dist/linux-unpacked
     rm -rf ./dist/*.yaml
 done

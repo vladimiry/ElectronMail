@@ -98,7 +98,7 @@
     "scripts/dist-packages/upload": "yarn ts-node:shortcut ./scripts/dist-packages/upload.ts ./dist ./output",
     "scripts/download-tray-icon-font": "yarn ts-node:shortcut ./scripts/download-tray-icon-font.ts",
     "scripts/transfer": "yarn ts-node:shortcut ./scripts/transfer/index.ts",
-    "electron-builder:dist:shortcut": "yarn ts-node:shortcut ./scripts/electron-builder/run-with-default-evn-vars.ts --x64",
+    "electron-builder:dist:shortcut": "yarn ts-node:shortcut ./scripts/electron-builder/run-with-default-evn-vars.ts --x64 --publish never",
     "ts-node:shortcut": "cross-env TS_NODE_FILES=true ts-node --require tsconfig-paths/register",
     "webpack:shortcut": "cross-env TS_NODE_FILES=true npx --no-install --node-arg=\"--require tsconfig-paths/register\" webpack"
   },

@@ -19,7 +19,7 @@ echo "::endgroup::"
 
 echo "::group::package"
 yarn build:electron-builder-hooks
-yarn electron-builder:dist --publish onTagOrDraft
+yarn electron-builder:dist
 echo "::endgroup::"
 
 echo "::group::hash & upload"

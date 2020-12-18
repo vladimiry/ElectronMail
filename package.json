@@ -77,7 +77,7 @@
     "electron-builder:dist:linux:freebsd": "yarn electron-builder:dist:shortcut --linux freebsd",
     "electron-builder:dist:linux:pacman": "yarn electron-builder:dist:shortcut --linux pacman",
     "electron-builder:dist:linux:rpm": "yarn electron-builder:dist:shortcut --linux rpm",
-    "lint": "npm-run-all lint:code",
+    "lint": "npm-run-all scripts/code-generation/electron-main lint:code",
     "lint:code": "npm-run-all lint:ts:eslint",
     "lint:ts:base:eslint": "eslint",
     "lint:ts:eslint": "yarn lint:ts:base:eslint \"./src/**/*.ts\" \"./scripts/**/*.ts\" \"./webpack-configs/**/*.ts\"",

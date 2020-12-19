@@ -11,7 +11,7 @@ sudo apt-get install --yes --no-install-recommends libxss-dev
 # purpose: tweaking snap package ("unsquashfs" binary)
 sudo apt-get install --yes --no-install-recommends snapcraft squashfs-tools
 # purpose: compiling "node-keytar" native module and keychain initialization
-sudo apt-get install --yes --no-install-recommends libgnome-keyring-dev libsecret-1-dev
+sudo apt-get install --yes --no-install-recommends libsecret-1-dev
 # purpose: pacman build fails also due missing "bsdtar", see https://github.com/jordansissel/fpm/issues/1453#issuecomment-356138549
 sudo apt-get install --yes --no-install-recommends libarchive-tools
 # purpose: native modules compiling
@@ -26,23 +26,21 @@ npx --no-install electron-builder install-app-deps --arch=x64
 echo "::endgroup::"
 
 echo "::group::test:e2e:setup"
-# purpose: activating "gnome-keyring"
-sudo apt-get install --yes --no-install-recommends libsecret-1-0 gnome-keyring dbus dbus-x11 xvfb libsecret-tools
-# init involved folders
-mkdir -p ~/.cache
-mkdir -p ~/.local/share/keyrings
-# init xvfb stuff
+echo "initializing xvfb stuff..."
 export DISPLAY=":99.0"
 Xvfb :99 -screen 0 1280x1024x24 >/dev/null 2>&1 &
 sleep 3
-# activate dbus and gnome-keyring daemon
-export $(dbus-launch)
+echo "installing packages needed for activating gnome-keyring (secret service implementation)..."
+sudo apt-get install --yes --no-install-recommends gnome-keyring dbus-x11 xvfb libsecret-tools
+echo "activating dbus..."
+export "$(dbus-launch)"
+echo "activating gnome-keyring daemon..."
 echo "" | gnome-keyring-daemon --unlock
 gnome-keyring-daemon --start --daemonize --components=secrets
-export $(echo "" | gnome-keyring-daemon -r -d --unlock)
-# verify that "gnome-keyring" has actually activated the "secret service" d-bus interface/implementation
+export "$(echo '' | gnome-keyring-daemon -r -d --unlock)"
+echo "creating a test keychain record and then listing it..."
 echo -n "secret-tool-password-1" | secret-tool store --label=secret-tool-label-1 secret-tool-key-1 secret-tool-value-1
-# secret-tool search secret-tool-key-1 secret-tool-value-1 # disabled since it often core dumps
+secret-tool search secret-tool-key-1 secret-tool-value-1 # this call sometimes just core dumps
 # init suid/fallback sandbox
 # sudo ./scripts/prepare-chrome-sandbox.sh ./node_modules/electron/dist/chrome-sandbox
 # disable user namespaces so the suid/fallback sandbox takes place

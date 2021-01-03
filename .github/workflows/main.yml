@@ -72,18 +72,9 @@ jobs:
       - { name: assets, run: "yarn assets", env: { ELECTRON_MAIL_SHOULD_FAIL_ON_BUILD: "true" } }
       - { name: print ./app files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./app }
       - { name: envinfo, run: "npx envinfo" }
-      - name: build
-        if: runner.os == 'Linux'
-        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
-        run: ./scripts/ci/github/package-app-linux.sh
-      - name: build
-        if: runner.os == 'Windows'
-        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
-        run: ./scripts/ci/github/package-app-windos.ps1
-      - name: build
-        if: matrix.os == 'macos-10.15'
-        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}", ARTIFACT_NAME_POSTFIX: "-catalina" }
-        run: ./scripts/ci/github/package-app-osx.sh
+      - { name: build, if: runner.os == 'Linux', run: ./scripts/ci/github/package-app-linux.sh }
+      - { name: build, if: runner.os == 'Windows', run: ./scripts/ci/github/package-app-windos.ps1 }
+      - { name: build, if: matrix.os == 'macos-10.15', run: ./scripts/ci/github/package-app-osx.sh, env: { ARTIFACT_NAME_POSTFIX: "-catalina" } }
       - name: upload e2e/spectron output
         if: ${{ always() }}
         uses: actions/upload-artifact@v2

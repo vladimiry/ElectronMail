@@ -1,22 +1,22 @@
 diff --git a/node_modules/react-components/containers/login/MinimalLoginContainer.tsx b/node_modules/react-components/containers/login/MinimalLoginContainer.tsx
-index 3d56292..83a637c 100644
+index 07e92ff..d0396d8 100644
 --- a/node_modules/react-components/containers/login/MinimalLoginContainer.tsx
 +++ b/node_modules/react-components/containers/login/MinimalLoginContainer.tsx
-@@ -14,6 +14,8 @@ import LoginTotpInput from './LoginTotpInput';
- import LoginUnlockInput from './LoginUnlockInput';
- import { FORM } from './interface';
+@@ -17,6 +17,8 @@ interface Props extends Omit<UseLoginProps, 'api'> {
+     needHelp?: React.ReactNode;
+ }
 
 +const ELECTRON_MAIL_FORM_STYLE = { padding: '0.8rem' } as const;
 +
- interface Props extends Omit<UseLoginProps, 'api'> {
-     needHelp?: React.ReactNode;
- }
+ const MinimalLoginContainer = ({ onLogin, ignoreUnlock = false, needHelp }: Props) => {
+     const { createNotification } = useNotifications();
+     const { createModal } = useModals();
 @@ -51,7 +53,7 @@ const MinimalLoginContainer = ({ onLogin, ignoreUnlock = false, needHelp }: Prop
              withLoading(handleLogin().catch(catchHandler));
          };
          return (
--            <form name="loginForm" onSubmit={handleSubmit}>
-+            <form name="loginForm" onSubmit={handleSubmit} style={ELECTRON_MAIL_FORM_STYLE}>
+-            <form name="loginForm" onSubmit={handleSubmit} method="post">
++            <form name="loginForm" onSubmit={handleSubmit} method="post" style={ELECTRON_MAIL_FORM_STYLE}>
                  <Label htmlFor="login">{c('Label').t`Username or ProtonMail address`}</Label>
                  <div className="mb1">
                      <LoginUsernameInput
@@ -24,17 +24,17 @@ index 3d56292..83a637c 100644
              withLoading(handleTotp().catch(catchHandler));
          };
          return (
--            <form name="totpForm" onSubmit={handleSubmit}>
-+            <form name="totpForm" onSubmit={handleSubmit} style={ELECTRON_MAIL_FORM_STYLE}>
-                 <Label htmlFor="twoFa">{c('Label').t`Two-factor code`}</Label>
+-            <form name="totpForm" onSubmit={handleSubmit} method="post">
++            <form name="totpForm" onSubmit={handleSubmit} method="post" style={ELECTRON_MAIL_FORM_STYLE}>
+                 <Label htmlFor="twoFa">{c('Label').t`Two-factor authentication code`}</Label>
                  <div className="mb1">
                      <LoginTotpInput totp={totp} setTotp={loading ? noop : setters.totp} id="twoFa" />
 @@ -118,7 +120,7 @@ const MinimalLoginContainer = ({ onLogin, ignoreUnlock = false, needHelp }: Prop
              withLoading(handleUnlock().catch(catchHandler));
          };
          return (
--            <form name="unlockForm" onSubmit={handleSubmit}>
-+            <form name="unlockForm" onSubmit={handleSubmit} style={ELECTRON_MAIL_FORM_STYLE}>
+-            <form name="unlockForm" onSubmit={handleSubmit} method="post">
++            <form name="unlockForm" onSubmit={handleSubmit} method="post" style={ELECTRON_MAIL_FORM_STYLE}>
                  <Label htmlFor="password">{c('Label').t`Mailbox password`}</Label>
                  <div className="mb1">
                      <LoginUnlockInput

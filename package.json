@@ -222,7 +222,7 @@
     "html-to-text": "6.0.0",
     "html-webpack-plugin": "5.0.0-alpha.1",
     "husky": "4.3.6",
-    "immer": "8.0.0",
+    "immer": "8.0.1",
     "import-sort-cli": "6.0.0",
     "import-sort-parser-typescript": "6.0.0",
     "jasmine": "3.6.3",

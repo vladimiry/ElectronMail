@@ -627,3 +627,13 @@ export const buildUrlOriginsFailedMsgTester: (
     };
     return result;
 })();
+
+export const lowerConsoleMessageEventLogLevel = (
+    logLevel: "error" | "warn",
+    message: string,
+): typeof logLevel => {
+    if (String(message).includes("OfflineError: No network connection")) {
+        return "warn";
+    }
+    return logLevel;
+};

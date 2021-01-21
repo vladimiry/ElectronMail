@@ -12,7 +12,7 @@ import {PACKAGE_VERSION} from "src/shared/constants";
 import {PLATFORM} from "src/electron-main/constants";
 import {applyZoomFactor} from "src/electron-main/window/util";
 import {buildSpellCheckSettingsMenuItems, buildSpellingSuggestionMenuItems} from "src/electron-main/spell-check/menu";
-import {buildUrlOriginsFailedMsgTester, curryFunctionMembers} from "src/shared/util";
+import {buildUrlOriginsFailedMsgTester, curryFunctionMembers, lowerConsoleMessageEventLogLevel} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[web-contents]");
 
@@ -117,7 +117,7 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
                 ["Content Security Policy", "CSP"].some((pattern) => message.includes(pattern))
             );
             if ((isWarn || isError) && !isFullTextSearchInstanceError) {
-                logger[isWarn ? "warn" : "error"](
+                logger[lowerConsoleMessageEventLogLevel(isWarn ? "warn" : "error", message)](
                     JSON.stringify({type, level, message, line, sourceId}),
                 );
             }

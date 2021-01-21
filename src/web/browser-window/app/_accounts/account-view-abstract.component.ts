@@ -11,7 +11,7 @@ import {LogLevel} from "src/shared/model/common";
 import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";
 import {PACKAGE_VERSION} from "src/shared/constants";
 import {WebAccount} from "src/web/browser-window/app/model";
-import {getWebViewPartition} from "src/shared/util";
+import {getWebViewPartition, lowerConsoleMessageEventLogLevel} from "src/shared/util";
 
 type ChildEvent = Parameters<typeof AccountComponent.prototype.onEventChild>[0];
 
@@ -220,7 +220,10 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
                 const isWarn = Number(level) === 2;
                 const isError = Number(level) === 3;
                 if (isWarn || isError) {
-                    this.log(isWarn ? "warn" : "error", ["webview event", JSON.stringify({type, level, message, line, sourceId})]);
+                    this.log(
+                        lowerConsoleMessageEventLogLevel(isWarn ? "warn" : "error", message),
+                        ["webview event", JSON.stringify({type, level, message, line, sourceId})],
+                    );
                 }
             },
         ] as const;

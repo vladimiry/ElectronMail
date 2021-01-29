@@ -3,9 +3,9 @@ import {MetaReducer, Store} from "@ngrx/store";
 import {UnionOf} from "@vladimiry/unionize";
 
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
-import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
+import {getWebLogger} from "src/web/browser-window/util";
 
-const logger = getZoneNameBoundWebLogger("[reducers/root]");
+const logger = getWebLogger("[reducers/root]");
 
 // TODO join all actions in "src/web/src/app/store/actions" once
 type Actions = UnionOf<typeof NAVIGATION_ACTIONS>;

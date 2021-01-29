@@ -3,8 +3,8 @@ import {Deferred} from "ts-deferred";
 import {Store} from "@ngrx/store";
 
 import {DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
-import {DbAccountPk} from "src/shared/model/database";
 import {State} from "src/web/browser-window/app/store/reducers/db-view";
+import {WebAccountPk} from "src/web/browser-window/app/model";
 
 @Component({
     selector: "electron-mail-db-view-entry",
@@ -14,7 +14,7 @@ import {State} from "src/web/browser-window/app/store/reducers/db-view";
 })
 export class DbViewEntryComponent implements OnDestroy, OnInit {
     @Input()
-    dbAccountPk!: DbAccountPk;
+    webAccountPk!: WebAccountPk;
 
     private finishDeferred = new Deferred<void>();
 
@@ -24,12 +24,12 @@ export class DbViewEntryComponent implements OnDestroy, OnInit {
 
     ngOnInit(): void {
         this.store.dispatch(
-            DB_VIEW_ACTIONS.MountInstance({dbAccountPk: this.dbAccountPk, finishPromise: this.finishDeferred.promise}),
+            DB_VIEW_ACTIONS.MountInstance({webAccountPk: this.webAccountPk, finishPromise: this.finishDeferred.promise}),
         );
     }
 
     ngOnDestroy(): void {
         this.finishDeferred.resolve();
-        this.store.dispatch(DB_VIEW_ACTIONS.UnmountInstance({dbAccountPk: this.dbAccountPk}));
+        this.store.dispatch(DB_VIEW_ACTIONS.UnmountInstance({webAccountPk: this.webAccountPk}));
     }
 }

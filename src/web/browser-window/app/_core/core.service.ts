@@ -58,7 +58,7 @@ export class CoreService {
         repoType: keyof typeof PROVIDER_REPO_MAP,
         webViewDomReady$: import("rxjs").Observable<Electron.WebviewTag>,
         setWebViewSrc: (src: string) => void,
-        logger_: ReturnType<typeof import("src/web/browser-window/util").getZoneNameBoundWebLogger>,
+        logger_: import("src/shared/model/common").Logger,
         clientSession?: ProtonClientSession,
     ): Promise<void> {
         const logger = curryFunctionMembers(logger_, "[core.service]", "applyProtonClientSessionAndNavigate");

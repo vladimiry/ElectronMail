@@ -3,7 +3,8 @@ import {pick} from "remeda";
 
 import * as fromRoot from "src/web/browser-window/app/store/reducers/root";
 import {DB_VIEW_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
-import {DbAccountPk, Mail, View} from "src/shared/model/database";
+import {Mail, View} from "src/shared/model/database";
+import {WebAccountPk} from "src/web/browser-window/app/model";
 import {mailDateComparatorDefaultsToDesc, walkConversationNodesTree} from "src/shared/util";
 
 export const featureName = "db-view";
@@ -72,8 +73,8 @@ function sortMails(mailsBundle: MailsBundle): void {
     );
 }
 
-function resolveInstanceKey(dbAccountPk: DbAccountPk): string {
-    return JSON.stringify(dbAccountPk);
+function resolveInstanceKey(webAccountPk: WebAccountPk): string {
+    return JSON.stringify(webAccountPk);
 }
 
 function initMailBundlePaging(): MailsBundle["paging"] {
@@ -146,8 +147,8 @@ function initInstance(): NoExtraProps<Instance> {
 // TODO optimize and simplify "db-view" reducer
 function innerReducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACTIONS>): State {
     return DB_VIEW_ACTIONS.match(action, {
-        SetFolders: ({dbAccountPk, folders}) => {
-            const instanceKey = resolveInstanceKey(dbAccountPk);
+        SetFolders: ({webAccountPk, folders}) => {
+            const instanceKey = resolveInstanceKey(webAccountPk);
             const instance: Instance = {
                 ...(state.instances[instanceKey] || initInstance()),
                 folders,
@@ -190,18 +191,18 @@ function innerReducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACTIO
                         [instanceKey]: instance,
                     },
                 },
-                DB_VIEW_ACTIONS.SelectFolder({dbAccountPk, selectedFolderData: instance.selectedFolderData}),
+                DB_VIEW_ACTIONS.SelectFolder({webAccountPk, selectedFolderData: instance.selectedFolderData}),
             );
 
             return searchMailsBundleItemsRemoved
                 ? innerReducer(
                     result,
-                    DB_VIEW_ACTIONS.Paging({dbAccountPk, mailsBundleKey: "searchMailsBundle", noIncrement: true}),
+                    DB_VIEW_ACTIONS.Paging({webAccountPk, mailsBundleKey: "searchMailsBundle", noIncrement: true}),
                 )
                 : result;
         },
-        SelectFolder: ({dbAccountPk, selectedFolderData}) => {
-            const instanceKey = resolveInstanceKey(dbAccountPk);
+        SelectFolder: ({webAccountPk, selectedFolderData}) => {
+            const instanceKey = resolveInstanceKey(webAccountPk);
             const instance: Instance = {
                 ...(state.instances[instanceKey] || initInstance()),
                 selectedFolderData: selectedFolderData
@@ -299,21 +300,21 @@ function innerReducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACTIO
 
             result = innerReducer(
                 result,
-                DB_VIEW_ACTIONS.Paging({dbAccountPk, mailsBundleKey: "folderMailsBundle", noIncrement: true}),
+                DB_VIEW_ACTIONS.Paging({webAccountPk, mailsBundleKey: "folderMailsBundle", noIncrement: true}),
             );
             result = innerReducer(
                 result,
-                DB_VIEW_ACTIONS.Paging({dbAccountPk, mailsBundleKey: "folderConversationsBundle", noIncrement: true}),
+                DB_VIEW_ACTIONS.Paging({webAccountPk, mailsBundleKey: "folderConversationsBundle", noIncrement: true}),
             );
 
             return result;
         },
-        FullTextSearch: ({dbAccountPk, value: {mailsBundleItems, searched}}) => {
+        FullTextSearch: ({webAccountPk, value: {mailsBundleItems, searched}}) => {
             const keys = ["searchMailsBundle", "searchNoQueryMailsBundle"] as const;
             const [searchResultMailsBundleKey, mailsBundleKeyToEmpty] = searched
                 ? keys
                 : [...keys].reverse();
-            const instanceKey = resolveInstanceKey(dbAccountPk);
+            const instanceKey = resolveInstanceKey(webAccountPk);
             const instance: Instance = {
                 ...(state.instances[instanceKey] || initInstance()),
             };
@@ -338,13 +339,13 @@ function innerReducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACTIO
                             [instanceKey]: instance,
                         },
                     },
-                    DB_VIEW_ACTIONS.Paging({dbAccountPk, mailsBundleKey: searchResultMailsBundleKey, reset: true}),
+                    DB_VIEW_ACTIONS.Paging({webAccountPk, mailsBundleKey: searchResultMailsBundleKey, reset: true}),
                 ),
-                DB_VIEW_ACTIONS.ResetSearchMailsBundleItems({dbAccountPk, mailsBundleKey: mailsBundleKeyToEmpty}),
+                DB_VIEW_ACTIONS.ResetSearchMailsBundleItems({webAccountPk, mailsBundleKey: mailsBundleKeyToEmpty}),
             );
         },
-        ResetSearchMailsBundleItems: ({dbAccountPk, mailsBundleKey}) => {
-            const instanceKey = resolveInstanceKey(dbAccountPk);
+        ResetSearchMailsBundleItems: ({webAccountPk, mailsBundleKey}) => {
+            const instanceKey = resolveInstanceKey(webAccountPk);
             const instance: Instance = {
                 ...(state.instances[instanceKey] || initInstance()),
             };
@@ -359,11 +360,11 @@ function innerReducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACTIO
                         [instanceKey]: instance,
                     },
                 },
-                DB_VIEW_ACTIONS.Paging({dbAccountPk, mailsBundleKey, reset: true}),
+                DB_VIEW_ACTIONS.Paging({webAccountPk, mailsBundleKey, reset: true}),
             );
         },
-        SortMails: ({dbAccountPk, mailsBundleKey, sorterIndex}) => {
-            const instanceKey = resolveInstanceKey(dbAccountPk);
+        SortMails: ({webAccountPk, mailsBundleKey, sorterIndex}) => {
+            const instanceKey = resolveInstanceKey(webAccountPk);
             const instance: Instance = {
                 ...(state.instances[instanceKey] || initInstance()),
             };
@@ -382,8 +383,8 @@ function innerReducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACTIO
                 },
             };
         },
-        Paging: ({dbAccountPk, mailsBundleKey, reset, noIncrement}) => {
-            const instanceKey = resolveInstanceKey(dbAccountPk);
+        Paging: ({webAccountPk, mailsBundleKey, reset, noIncrement}) => {
+            const instanceKey = resolveInstanceKey(webAccountPk);
             const instance: Instance = {
                 ...(state.instances[instanceKey] || initInstance()),
             };
@@ -408,8 +409,8 @@ function innerReducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACTIO
                 },
             };
         },
-        SelectMail: ({dbAccountPk, value: selectedMail}) => {
-            const instanceKey = resolveInstanceKey(dbAccountPk);
+        SelectMail: ({webAccountPk, value: selectedMail}) => {
+            const instanceKey = resolveInstanceKey(webAccountPk);
             const instance: Instance = {
                 ...(state.instances[instanceKey] || initInstance()),
                 selectedMail,
@@ -423,8 +424,8 @@ function innerReducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACTIO
                 },
             };
         },
-        SelectConversationMail: ({dbAccountPk, conversationMail}) => {
-            const instanceKey = resolveInstanceKey(dbAccountPk);
+        SelectConversationMail: ({webAccountPk, conversationMail}) => {
+            const instanceKey = resolveInstanceKey(webAccountPk);
             const instance = state.instances[instanceKey] || initInstance();
 
             if (!instance.selectedMail) {
@@ -445,8 +446,8 @@ function innerReducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACTIO
                 },
             };
         },
-        UnmountInstance: ({dbAccountPk}) => {
-            const instanceKey = resolveInstanceKey(dbAccountPk);
+        UnmountInstance: ({webAccountPk}) => {
+            const instanceKey = resolveInstanceKey(webAccountPk);
             const instances = {...state.instances};
 
             delete instances[instanceKey];

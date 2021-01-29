@@ -1,7 +1,8 @@
-import {Directive, ElementRef, EventEmitter, Injector, Input, OnDestroy, Output, ViewChild} from "@angular/core";
+import {DOCUMENT} from "@angular/common";
+import {Directive, ElementRef, EventEmitter, Injector, Input, OnDestroy, Output, Renderer2} from "@angular/core";
 import {Observable, Subscription, combineLatest, race} from "rxjs";
 import {distinctUntilChanged, filter, map, take} from "rxjs/operators";
-import {pick} from "remeda";
+import {equals, pick} from "remeda";
 
 import {ACCOUNTS_ACTIONS, AppAction, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountComponent} from "src/web/browser-window/app/_accounts/account.component";
@@ -24,33 +25,8 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
 
     readonly account$: Observable<WebAccount> = this.ngChangesObservable("account");
 
-    readonly webViewPartition$ = this.account$.pipe(
-        map(({accountConfig: {login}}) => login),
-        distinctUntilChanged(),
-        map((login) => getWebViewPartition(login)),
-    );
-
-    readonly webViewPreload = __METADATA__.electronLocations.preload[this.viewType];
-
-    private webViewSrcValue = "";
-
     @Input()
-    set webViewSrc(value: string) {
-        this.log("verbose", ["set webViewSrc"]);
-
-        const {webView} = this;
-
-        if (webView) {
-            this.log("verbose", ["set webViewSrc: registerWebViewEventsHandlingOnce()"]);
-            this.registerWebViewEventsHandlingOnce(webView);
-        }
-
-        this.webViewSrcValue = value;
-    }
-
-    get webViewSrc(): string {
-        return this.webViewSrcValue;
-    }
+    webViewSrc!: string;
 
     @Output()
     private readonly event = new EventEmitter<ChildEvent>();
@@ -61,26 +37,6 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
 
     private readonly subscription = new Subscription();
 
-    @ViewChild("tplWebViewRef", {static: true})
-    private tplWebViewRef: ElementRef<Electron.WebviewTag> | undefined;
-
-    private get webView(): ElementRef<Electron.WebviewTag>["nativeElement"] | undefined {
-        return this.tplWebViewRef?.nativeElement;
-    }
-
-    private readonly webViewAddMutationObserver = new MutationObserver((mutations) => {
-        for (const mutation of mutations) {
-            mutation.addedNodes.forEach((node) => {
-                if ((node as Element).tagName === "WEBVIEW") {
-                    this.log("info", ["webViewAddMutationObserver: mounted to DOM"]);
-                    this.log("verbose", ["webViewAddMutationObserver: registerWebViewEventsHandlingOnce()"]);
-                    this.registerWebViewEventsHandlingOnce(node as Electron.WebviewTag);
-                    this.webViewAddMutationObserver.disconnect();
-                }
-            });
-        }
-    });
-
     protected constructor(
         private readonly viewType:
             Extract<keyof typeof __METADATA__.electronLocations.preload, "primary" | "calendar">,
@@ -90,19 +46,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
 
         this.log("info", ["constructor() abstract"]);
 
-        const elementRef = injector.get<ElementRef<HTMLElement>>(ElementRef);
-
-        this.addSubscription(
-            (() => {
-                this.webViewAddMutationObserver.observe(
-                    elementRef.nativeElement,
-                    {childList: true, subtree: true},
-                );
-                return {
-                    unsubscribe: () => this.webViewAddMutationObserver.disconnect(),
-                };
-            })(),
-        );
+        this.webViewConstruction();
 
         {
             let customCssKey: string | undefined;
@@ -131,15 +75,15 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
             );
         }
 
-        // this.subscription.add(
-        //     this.filterDomReadyEvent()
-        //         .pipe(take(1))
-        //         .subscribe(({webView}) => {
-        //             if ((BUILD_ENVIRONMENT === "development")) {
-        //                 webView.openDevTools();
-        //             }
-        //         }),
-        // );
+        this.subscription.add(
+            this.filterDomReadyEvent()
+                .pipe(take(1))
+                .subscribe(({webView}) => {
+                    if ((BUILD_ENVIRONMENT === "development")) {
+                        webView.openDevTools();
+                    }
+                }),
+        );
     }
 
     ngOnDestroy(): void {
@@ -183,12 +127,38 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         return this.subscription.add(teardown);
     }
 
-    private registerWebViewEventsHandlingOnce(webView: Electron.WebviewTag): void {
-        // making sure function called once
-        this.registerWebViewEventsHandlingOnce = () => {
-            this.log("info", ["registerWebViewEventsHandlingOnce()", "noop"]);
-        };
+    private webViewConstruction(): void {
+        let webView: Electron.WebviewTag | undefined;
 
+        this.subscription.add(
+            combineLatest([
+                this.ngChangesObservable("webViewSrc"),
+                this.account$.pipe(map(({accountConfig: {login}}) => getWebViewPartition(login))),
+            ]).pipe(
+                map(([src, partition]) => ({src, partition})),
+                distinctUntilChanged((prev, curr) => equals(prev, curr)), // TODO => "distinctUntilChanged(equals)",
+            ).subscribe(({src, partition}) => {
+                // TODO consider removing the webview and creating/mounting-to-DOM new instance rather than reusing once created
+                if (!webView) {
+                    const document = this.injector.get(DOCUMENT);
+                    webView = document.createElement("webView") as Electron.WebviewTag;
+                    this.registerWebViewEventsHandlingOnce(webView);
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                    Object.assign(webView, {src, partition, preload: __METADATA__.electronLocations.preload[this.viewType]});
+                } else {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                    webView.src = src;
+                }
+                if (!webView.parentNode) {
+                    const elementRef = this.injector.get<ElementRef<HTMLElement>>(ElementRef);
+                    const renderer2 = this.injector.get(Renderer2);
+                    renderer2.appendChild(elementRef.nativeElement, webView);
+                }
+            }),
+        );
+    }
+
+    private registerWebViewEventsHandlingOnce(webView: Electron.WebviewTag): void {
         this.log("info", ["registerWebViewEventsHandlingOnce()"]);
 
         const didNavigateArgs = [

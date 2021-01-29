@@ -254,9 +254,6 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
                 .buildFromTemplate(menuItems)
                 .popup({});
         });
-        webContents.on("preload-error", (event, preloadPath, error) => {
-            logger.error(event.type, preloadPath, error);
-        });
         webContents.on("will-attach-webview", (...[event, webPreferences, {src}]) => {
             if (!src) {
                 throw new Error(`Invalid/empty "src" value received in "${event.type}" handler`);

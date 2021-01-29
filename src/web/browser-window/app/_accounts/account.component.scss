@@ -11,6 +11,14 @@
     overflow-y: auto;
     background-color: $app-color-bg-dark-1;
 
+    &::ng-deep {
+        webview {
+            display: flex;
+            flex: 1;
+            height: 100%;
+        }
+    }
+
     &:not(.vm-live) {
         &::ng-deep #{$app-prefix}-account-view-primary {
             display: none;

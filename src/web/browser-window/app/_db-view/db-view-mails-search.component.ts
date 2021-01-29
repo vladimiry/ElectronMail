@@ -175,7 +175,7 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
     submit(): void {
         this.store.dispatch(
             DB_VIEW_ACTIONS.FullTextSearchRequest({
-                ...this.dbAccountPk,
+                ...this.webAccountPk,
                 query: this.formControls.query.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
                 sentDateAfter: this.formControls.sentDateAfter.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
                 hasAttachments: this.formControls.hasAttachments.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment

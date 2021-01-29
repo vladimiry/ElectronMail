@@ -27,7 +27,7 @@ export function registerApi(providerApi: ProviderApi): void {
         async ping() {}, // eslint-disable-line @typescript-eslint/no-empty-function
 
         async selectMailOnline(input) {
-            _logger.info("selectMailOnline()", input.zoneName);
+            _logger.info("selectMailOnline()", input.accountIndex);
 
             const {ViewMode: viewMode} = await providerApi._custom_.cachedMailSettingsModel$
                 .pipe(first())
@@ -75,15 +75,15 @@ export function registerApi(providerApi: ProviderApi): void {
         },
 
         async makeMailRead(input) {
-            _logger.info("makeMailRead()", input.zoneName);
+            _logger.info("makeMailRead()", input.accountIndex);
 
             await providerApi.message.markMessageAsRead(input.messageIds);
 
             // TODO consider triggering the "refresh" action (clicking the "refresh" button action in "proton ui")
         },
 
-        async deleteMessages({messageIds, zoneName}) {
-            _logger.info("deleteMessages()", zoneName);
+        async deleteMessages({messageIds, accountIndex}) {
+            _logger.info("deleteMessages()", accountIndex);
 
             await providerApi.message.deleteMessages(messageIds);
 
@@ -91,15 +91,15 @@ export function registerApi(providerApi: ProviderApi): void {
         },
 
         async setMailFolder(input) {
-            _logger.info("setMailFolder()", input.zoneName);
+            _logger.info("setMailFolder()", input.accountIndex);
 
             await providerApi.message.labelMessages({LabelID: input.folderId, IDs: input.messageIds});
 
             // TODO consider triggering the "refresh" action (clicking the "refresh" button action in "proton ui")
         },
 
-        async exportMailAttachments({uuid, mailPk, login, zoneName}) {
-            const logger = curryFunctionMembers(_logger, "exportMailAttachments()", zoneName);
+        async exportMailAttachments({uuid, mailPk, login, accountIndex}) {
+            const logger = curryFunctionMembers(_logger, "exportMailAttachments()", accountIndex);
 
             logger.info();
 
@@ -165,8 +165,8 @@ export function registerApi(providerApi: ProviderApi): void {
             });
         },
 
-        async fillLogin({login, zoneName}) {
-            const logger = curryFunctionMembers(_logger, "fillLogin()", zoneName);
+        async fillLogin({login, accountIndex}) {
+            const logger = curryFunctionMembers(_logger, "fillLogin()", accountIndex);
 
             logger.info();
 
@@ -184,12 +184,12 @@ export function registerApi(providerApi: ProviderApi): void {
             elements.username.readOnly = true;
         },
 
-        async login({login, password, zoneName}) {
-            const logger = curryFunctionMembers(_logger, "login()", zoneName);
+        async login({login, password, accountIndex}) {
+            const logger = curryFunctionMembers(_logger, "login()", accountIndex);
 
             logger.info();
 
-            await endpoints.fillLogin({login, zoneName});
+            await endpoints.fillLogin({login, accountIndex});
             logger.verbose(`fillLogin() executed`);
 
             const elements = await resolveDomElements(
@@ -212,8 +212,8 @@ export function registerApi(providerApi: ProviderApi): void {
             logger.verbose(`clicked`);
         },
 
-        async login2fa({secret, zoneName}) {
-            const logger = curryFunctionMembers(_logger, "login2fa()", zoneName);
+        async login2fa({secret, accountIndex}) {
+            const logger = curryFunctionMembers(_logger, "login2fa()", accountIndex);
 
             logger.info();
 
@@ -246,10 +246,10 @@ export function registerApi(providerApi: ProviderApi): void {
             );
         },
 
-        async unlock({mailPassword, zoneName}) {
-            const logger = curryFunctionMembers(_logger, "unlock()", zoneName);
+        async unlock({mailPassword, accountIndex}) {
+            const logger = curryFunctionMembers(_logger, "unlock()", accountIndex);
 
-            logger.info("unlock()", zoneName);
+            logger.info("unlock()", accountIndex);
 
             const elements = await resolveDomElements(
                 {
@@ -267,8 +267,8 @@ export function registerApi(providerApi: ProviderApi): void {
             return dumpProtonSharedSession();
         },
 
-        notification({entryApiUrl, zoneName}) {
-            const logger = curryFunctionMembers(_logger, "notification()", zoneName);
+        notification({entryApiUrl, accountIndex}) {
+            const logger = curryFunctionMembers(_logger, "notification()", accountIndex);
 
             logger.info();
 

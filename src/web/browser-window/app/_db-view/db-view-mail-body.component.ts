@@ -23,7 +23,7 @@ import {DbViewMailComponent} from "src/web/browser-window/app/_db-view/db-view-m
 import {Instance, State} from "src/web/browser-window/app/store/reducers/db-view";
 import {Mail, View} from "src/shared/model/database";
 import {ONE_SECOND_MS, WEB_PROTOCOL_SCHEME} from "src/shared/constants";
-import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
+import {getWebLogger} from "src/web/browser-window/util";
 
 @Component({
     selector: "electron-mail-db-view-mail-body",
@@ -85,7 +85,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         };
     });
 
-    private readonly logger = getZoneNameBoundWebLogger();
+    private readonly logger = getWebLogger();
 
     constructor(
         store: Store<State>,
@@ -153,7 +153,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
     }
 
     selectConversationMail({pk: mailPk}: Pick<Mail, "pk">): void {
-        this.store.dispatch(DB_VIEW_ACTIONS.SelectConversationMailRequest({dbAccountPk: this.dbAccountPk, mailPk}));
+        this.store.dispatch(DB_VIEW_ACTIONS.SelectConversationMailRequest({webAccountPk: this.webAccountPk, mailPk}));
     }
 
     toggleConversationCollapsing(): void {
@@ -167,14 +167,14 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
             filter((prev, curr) => Boolean(prev) && !curr),
             first(),
         ).subscribe(() => {
-            this.store.dispatch(ACCOUNTS_ACTIONS.ToggleDatabaseView({login: this.dbAccountPk.login, forced: {databaseView: false}}));
+            this.store.dispatch(ACCOUNTS_ACTIONS.ToggleDatabaseView({login: this.webAccountPk.login, forced: {databaseView: false}}));
         });
 
         this.selectedMail$
             .pipe(first())
             .subscribe(({conversationMail: {id, mailFolderIds, conversationEntryPk}}) => {
                 this.store.dispatch(ACCOUNTS_ACTIONS.SelectMailOnline({
-                    pk: this.dbAccountPk,
+                    pk: this.webAccountPk,
                     mail: {id, mailFolderIds, conversationEntryPk},
                     selectedFolderId: (this.selectedFolderData ?? {id: null}).id,
                 }));
@@ -182,7 +182,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
     }
 
     reDownload(): void {
-        this.dbAccountPk$.pipe(
+        this.webAccountPk$.pipe(
             withLatestFrom(
                 this.selectedMail$.pipe(
                     map((selectedMail) => selectedMail.conversationMail),

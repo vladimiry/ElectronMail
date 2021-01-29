@@ -55,7 +55,7 @@ export class DbViewMailTabComponent extends DbViewAbstractComponent {
                     throw new Error(`Failed to resolve "unread" virtual folder`);
                 }
 
-                this.store.dispatch(DB_VIEW_ACTIONS.SelectFolder({dbAccountPk: this.dbAccountPk, selectedFolderData: unread}));
+                this.store.dispatch(DB_VIEW_ACTIONS.SelectFolder({webAccountPk: this.webAccountPk, selectedFolderData: unread}));
 
                 return EMPTY;
             }
@@ -77,12 +77,12 @@ export class DbViewMailTabComponent extends DbViewAbstractComponent {
     }
 
     toggleSearchView(): void {
-        const {dbAccountPk} = this;
+        const {webAccountPk} = this;
 
-        this.store.dispatch(DB_VIEW_ACTIONS.SelectMail({dbAccountPk}));
+        this.store.dispatch(DB_VIEW_ACTIONS.SelectMail({webAccountPk}));
 
         for (const mailsBundleKey of ["searchMailsBundle", "searchNoQueryMailsBundle"] as const) {
-            this.store.dispatch(DB_VIEW_ACTIONS.ResetSearchMailsBundleItems({dbAccountPk, mailsBundleKey}));
+            this.store.dispatch(DB_VIEW_ACTIONS.ResetSearchMailsBundleItems({webAccountPk, mailsBundleKey}));
         }
 
         this.searchView = !this.searchView;
@@ -107,6 +107,6 @@ export class DbViewMailTabComponent extends DbViewAbstractComponent {
     }
 
     selectFolder(folder: View.Folder): void {
-        this.store.dispatch(DB_VIEW_ACTIONS.SelectFolder({dbAccountPk: this.dbAccountPk, selectedFolderData: folder}));
+        this.store.dispatch(DB_VIEW_ACTIONS.SelectFolder({webAccountPk: this.webAccountPk, selectedFolderData: folder}));
     }
 }

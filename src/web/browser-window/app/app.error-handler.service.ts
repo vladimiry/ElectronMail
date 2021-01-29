@@ -5,9 +5,9 @@ import {pick} from "remeda";
 import {serializeError} from "serialize-error";
 
 import {NOTIFICATION_ACTIONS} from "./store/actions";
-import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
+import {getWebLogger} from "src/web/browser-window/util";
 
-const logger = getZoneNameBoundWebLogger("[app.error-handler.service]");
+const logger = getWebLogger("[app.error-handler.service]");
 
 @Injectable()
 export class AppErrorHandler implements ErrorHandler {

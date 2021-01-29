@@ -48,7 +48,7 @@
         >
             <electron-mail-db-view-mails
                 *ngIf="mailsBundleKey$ | async; let mailsBundleKey;"
-                [dbAccountPk]="dbAccountPk"
+                [webAccountPk]="webAccountPk"
                 [mailsBundleKey]="mailsBundleKey"
                 [uid]="state.selectedFolderData?.id"
             >
@@ -80,7 +80,7 @@
             class="flex-basis-half pr-2 d-flex flex-column"
         >
             <electron-mail-db-view-mail-body
-                [dbAccountPk]="dbAccountPk"
+                [webAccountPk]="webAccountPk"
                 [selectedFolderData]="state.selectedFolderData"
             ></electron-mail-db-view-mail-body>
         </div>
@@ -99,5 +99,5 @@
 <electron-mail-db-view-mails-search
     (backToListHandler)="toggleSearchView()"
     *ngIf="searchView"
-    [dbAccountPk]="dbAccountPk"
+    [webAccountPk]="webAccountPk"
 ></electron-mail-db-view-mails-search>

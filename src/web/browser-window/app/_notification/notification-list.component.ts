@@ -8,7 +8,7 @@ import {NOTIFICATIONS_OUTLET} from "src/web/browser-window/app/app.constants";
 import {NotificationItem} from "src/web/browser-window/app/store/actions/notification";
 import {NotificationSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/notification";
-import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
+import {getWebLogger} from "src/web/browser-window/util";
 
 @Component({
     selector: "electron-mail-notification-list",
@@ -19,7 +19,7 @@ import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
 export class NotificationListComponent implements OnInit, OnDestroy {
     $items: Observable<NotificationItem[]> = this.store.select(NotificationSelectors.FEATURED.items);
 
-    private readonly logger = getZoneNameBoundWebLogger();
+    private readonly logger = getWebLogger();
 
     private subscription = new Subscription();
 

@@ -369,7 +369,7 @@ async function buildDbPatch(
 const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonPrimaryApi, "buildDbPatch" | "fetchSingleMail"> => {
     return {
         buildDbPatch(input) {
-            const logger = curryFunctionMembers(_logger, "buildDbPatch()", input.zoneName);
+            const logger = curryFunctionMembers(_logger, "buildDbPatch()", input.accountIndex);
 
             logger.info();
 
@@ -458,7 +458,7 @@ const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonPrimaryApi, 
         },
 
         async fetchSingleMail(input) {
-            const logger = curryFunctionMembers(_logger, "fetchSingleMail()", input.zoneName);
+            const logger = curryFunctionMembers(_logger, "fetchSingleMail()", input.accountIndex);
 
             logger.info();
 

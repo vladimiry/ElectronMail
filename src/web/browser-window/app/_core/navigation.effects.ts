@@ -2,22 +2,23 @@ import {Actions, createEffect} from "@ngrx/effects";
 import {EMPTY, from} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Router} from "@angular/router";
-import {concatMap, map, mergeMap} from "rxjs/operators";
+import {concatMap, mergeMap} from "rxjs/operators";
 
 import {ACCOUNTS_OUTLET, SETTINGS_OUTLET, STUB_OUTLET, STUB_PATH} from "src/web/browser-window/app/app.constants";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {NAVIGATION_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
-import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/browser-window/util";
+import {curryFunctionMembers} from "src/shared/util";
+import {getWebLogger} from "src/web/browser-window/util";
 
-const _logger = getZoneNameBoundWebLogger("[navigation.effects.ts]");
+const _logger = getWebLogger("[navigation.effects.ts]");
 
 @Injectable()
 export class NavigationEffects {
     go$ = createEffect(
         () => this.actions$.pipe(
             unionizeActionFilter(NAVIGATION_ACTIONS.is.Go),
-            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-            concatMap(({payload, logger}) => {
+            concatMap(({payload, ...action}) => {
+                const logger = curryFunctionMembers(_logger, `[${action.type}]`);
                 const {path, extras, queryParams} = payload;
                 // WARN privacy note: do not log "queryParams"
                 // since it might be filled with sensitive data (like "login"/"user name")
@@ -36,7 +37,6 @@ export class NavigationEffects {
     toggleBrowserWindow$ = createEffect(
         () => this.actions$.pipe(
             unionizeActionFilter(NAVIGATION_ACTIONS.is.ToggleBrowserWindow),
-            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             concatMap(({payload}) => from(this.electronService.ipcMainClient()("toggleBrowserWindow")(payload)).pipe(
                 mergeMap(() => EMPTY),
             )),
@@ -47,7 +47,6 @@ export class NavigationEffects {
     openAboutWindow$ = createEffect(
         () => this.actions$.pipe(
             unionizeActionFilter(NAVIGATION_ACTIONS.is.OpenAboutWindow),
-            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             concatMap(() => from(this.electronService.ipcMainClient()("openAboutWindow")()).pipe(
                 mergeMap(() => EMPTY),
             )),
@@ -58,7 +57,6 @@ export class NavigationEffects {
     openExternal$ = createEffect(
         () => this.actions$.pipe(
             unionizeActionFilter(NAVIGATION_ACTIONS.is.OpenExternal),
-            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             concatMap(({payload}) => from(this.electronService.ipcMainClient()("openExternal")({url: payload.url})).pipe(
                 mergeMap(() => EMPTY),
             )),
@@ -69,7 +67,6 @@ export class NavigationEffects {
     openSettingsFolder$ = createEffect(
         () => this.actions$.pipe(
             unionizeActionFilter(NAVIGATION_ACTIONS.is.OpenSettingsFolder),
-            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             concatMap(() => from(this.electronService.ipcMainClient()("openSettingsFolder")()).pipe(
                 mergeMap(() => EMPTY),
             )),
@@ -80,7 +77,6 @@ export class NavigationEffects {
     logout$ = createEffect(
         () => this.actions$.pipe(
             unionizeActionFilter(NAVIGATION_ACTIONS.is.Logout),
-            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             concatMap(() => {
                 return from(
                     this.electronService.ipcMainClient()("logout")(),
@@ -112,7 +108,6 @@ export class NavigationEffects {
     quit$ = createEffect(
         () => this.actions$.pipe(
             unionizeActionFilter(NAVIGATION_ACTIONS.is.Quit),
-            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             concatMap(() => from(this.electronService.ipcMainClient()("quit")()).pipe(
                 mergeMap(() => EMPTY),
             )),

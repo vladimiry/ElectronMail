@@ -1,19 +1,17 @@
-import {ChangeDetectionStrategy, Component, Injector, OnInit} from "@angular/core";
+import {Component, Injector, OnInit} from "@angular/core";
 
 import {ACCOUNTS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountViewAbstractComponent} from "src/web/browser-window/app/_accounts/account-view-abstract.component";
 import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
-import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
+import {getWebLogger} from "src/web/browser-window/util";
 import {testProtonCalendarAppPage} from "src/shared/util";
 
 @Component({
     selector: "electron-mail-account-view-calendar",
-    templateUrl: "./account-view-calendar.component.html",
-    styleUrls: ["./account-view-calendar.component.scss"],
-    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: "",
 })
 export class AccountViewCalendarComponent extends AccountViewAbstractComponent implements OnInit {
-    private readonly logger = getZoneNameBoundWebLogger(`[_accounts/account-view-calendar.component]`);
+    private readonly logger = getWebLogger(`[_accounts/account-view-calendar.component]`);
 
     private readonly accountsService: AccountsService;
 

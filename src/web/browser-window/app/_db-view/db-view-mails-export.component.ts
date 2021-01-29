@@ -115,7 +115,7 @@ export class DbViewMailsExportComponent extends DbViewAbstractComponent implemen
                 exportDir: this.formControls.exportDir.value,
                 // eslint-disable-next-line max-len, @typescript-eslint/no-unsafe-assignment
                 includingAttachments: this.formControls.includingAttachments.value,
-                ...this.dbAccountPk,
+                ...this.webAccountPk,
                 ...(mails.length && {mailPks: mails.map(({pk}) => pk)}),
             }),
         );

@@ -35,8 +35,8 @@ import {FIRE_SYNCING_ITERATION$} from "src/web/browser-window/app/app.constants"
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {ONE_MINUTE_MS, ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/constants";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
-import {consumeMemoryRateLimiter, isDatabaseBootstrapped, testProtonCalendarAppPage} from "src/shared/util";
-import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/browser-window/util";
+import {consumeMemoryRateLimiter, curryFunctionMembers, isDatabaseBootstrapped, testProtonCalendarAppPage} from "src/shared/util";
+import {getWebLogger} from "src/web/browser-window/util";
 
 // TODO get rid of require "rate-limiter-flexible/lib/RateLimiterMemory" import
 //      ES import makes the build fail in "web" context since webpack attempts to bundle the whole library which requires "node" context
@@ -45,7 +45,7 @@ const RateLimiterMemory: typeof import("rate-limiter-flexible")["RateLimiterMemo
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     = require("rate-limiter-flexible/lib/RateLimiterMemory");
 
-const _logger = getZoneNameBoundWebLogger("[accounts.effects]");
+const _logger = getWebLogger("[accounts.effects]");
 
 const pingOnlineStatusEverySecond$ = timer(0, ONE_SECOND_MS).pipe(
     filter(() => navigator.onLine),
@@ -70,9 +70,9 @@ export class AccountsEffects {
     setupPrimaryNotificationChannel$ = createEffect(
         () => this.actions$.pipe(
             unionizeActionFilter(ACCOUNTS_ACTIONS.is.SetupPrimaryNotificationChannel),
-            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-            mergeMap(({payload, logger}) => {
-                const {webView, finishPromise} = payload;
+            mergeMap(({payload, ...action}) => {
+                const {webView, finishPromise, account: {accountIndex}} = payload;
+                const logger = curryFunctionMembers(_logger, `[${action.type}][${accountIndex}]`);
                 const {login} = payload.account.accountConfig;
                 const dispose$ = from(finishPromise).pipe(tap(() => {
                     logger.info("dispose");
@@ -85,10 +85,10 @@ export class AccountsEffects {
                 logger.info("setup");
 
                 return merge(
-                    this.api.primaryWebViewClient(webView, {finishPromise}).pipe(
+                    this.api.primaryWebViewClient({webView, accountIndex}, {finishPromise}).pipe(
                         mergeMap((webViewClient) => {
                             return from(
-                                webViewClient("notification")({...parsedEntryUrlBundle, zoneName: logger.zoneName()}),
+                                webViewClient("notification")({...parsedEntryUrlBundle, accountIndex}),
                             );
                         }),
                         withLatestFrom(
@@ -118,14 +118,14 @@ export class AccountsEffects {
                         filter(({payload: {key}}) => key.login === login),
                         mergeMap(({payload}) => {
                             // TODO live attachments export: fire error if offline or not signed-in into the account
-                            return this.api.primaryWebViewClient(webView, {finishPromise}).pipe(
+                            return this.api.primaryWebViewClient({webView, accountIndex}, {finishPromise}).pipe(
                                 mergeMap((webViewClient) => {
                                     return from(
                                         webViewClient("exportMailAttachments", {timeoutMs: payload.timeoutMs})({
                                             uuid: payload.uuid,
                                             mailPk: payload.mailPk,
                                             login: payload.key.login,
-                                            zoneName: logger.zoneName(),
+                                            accountIndex,
                                         }),
                                     );
                                 }),
@@ -156,9 +156,9 @@ export class AccountsEffects {
     setupCalendarNotificationChannel$ = createEffect(
         () => this.actions$.pipe(
             unionizeActionFilter(ACCOUNTS_ACTIONS.is.SetupCalendarNotificationChannel),
-            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-            mergeMap(({payload, logger}) => {
-                const {webView, finishPromise} = payload;
+            mergeMap(({payload, ...action}) => {
+                const {webView, finishPromise, account: {accountIndex}} = payload;
+                const logger = curryFunctionMembers(_logger, `[${action.type}][${accountIndex}]`);
                 const {login} = payload.account.accountConfig;
                 const dispose$ = from(finishPromise).pipe(tap(() => {
                     logger.info("dispose");
@@ -170,10 +170,10 @@ export class AccountsEffects {
                 logger.info("setup");
 
                 return merge(
-                    this.api.calendarWebViewClient(webView, {finishPromise}).pipe(
+                    this.api.calendarWebViewClient({webView, accountIndex}, {finishPromise}).pipe(
                         mergeMap((webViewClient) => {
                             return from(
-                                webViewClient("notification")({zoneName: logger.zoneName()}),
+                                webViewClient("notification")({accountIndex}),
                             );
                         }),
                         withLatestFrom(
@@ -229,10 +229,9 @@ export class AccountsEffects {
     toggleSyncing$ = createEffect(
         () => this.actions$.pipe(
             unionizeActionFilter(ACCOUNTS_ACTIONS.is.ToggleSyncing),
-            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-            mergeMap(({payload, logger}) => {
-                const {pk, webView, finishPromise} = payload;
-                const {login} = pk;
+            mergeMap(({payload, ...action}) => {
+                const {pk: {login, accountIndex}, webView, finishPromise} = payload;
+                const logger = curryFunctionMembers(_logger, `[${action.type}][${accountIndex}]`);
                 const dispose$ = from(finishPromise).pipe(
                     tap(() => {
                         this.store.dispatch(ACCOUNTS_ACTIONS.Patch({login, patch: {syncingActivated: false}, optionalAccount: true}));
@@ -246,7 +245,6 @@ export class AccountsEffects {
                     )),
                 );
                 const ipcMainClient = this.api.ipcMainClient();
-                const zoneName = logger.zoneName();
                 let bootstrappingTriggeredOnce = false;
 
                 logger.info("setup");
@@ -266,16 +264,15 @@ export class AccountsEffects {
                     createEffect(
                         () => this.actions$.pipe(
                             unionizeActionFilter(ACCOUNTS_ACTIONS.is.SelectMailOnline),
-                            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
                             filter(({payload: {pk: key}}) => key.login === login),
                             mergeMap(({payload: selectMailOnlineInput}) => concat(
                                 of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {selectingMailOnline: true}})),
-                                this.api.primaryWebViewClient(webView, {finishPromise}).pipe(
+                                this.api.primaryWebViewClient({webView, accountIndex}, {finishPromise}).pipe(
                                     mergeMap((webViewClient) => {
                                         const selectMailOnlineInput$ = from(
                                             webViewClient("selectMailOnline", {timeoutMs: ONE_SECOND_MS * 5})({
                                                 ...selectMailOnlineInput,
-                                                zoneName,
+                                                accountIndex,
                                             }),
                                         );
                                         return selectMailOnlineInput$.pipe(
@@ -298,15 +295,14 @@ export class AccountsEffects {
                     createEffect(
                         () => this.actions$.pipe(
                             unionizeActionFilter(ACCOUNTS_ACTIONS.is.MakeMailRead),
-                            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
                             filter(({payload}) => payload.pk.login === login),
                             mergeMap(({payload: {messageIds}}) => concat(
                                 of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {makingMailRead: true}})),
-                                this.api.primaryWebViewClient(webView).pipe(
+                                this.api.primaryWebViewClient({webView, accountIndex}).pipe(
                                     mergeMap((webViewClient) => {
                                         return from(
                                             webViewClient("makeMailRead", {timeoutMs: ONE_SECOND_MS * 30})(
-                                                {messageIds, zoneName},
+                                                {messageIds, accountIndex},
                                             ),
                                         ).pipe(
                                             mergeMap(() => this.core.fireSyncingIteration({login})),
@@ -329,15 +325,14 @@ export class AccountsEffects {
                     createEffect(
                         () => this.actions$.pipe(
                             unionizeActionFilter(ACCOUNTS_ACTIONS.is.SetMailFolder),
-                            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
                             filter(({payload}) => payload.pk.login === login),
                             mergeMap(({payload: {folderId, messageIds}}) => concat(
                                 of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {settingMailFolder: true}})),
-                                this.api.primaryWebViewClient(webView).pipe(
+                                this.api.primaryWebViewClient({webView, accountIndex}).pipe(
                                     mergeMap((webViewClient) => {
                                         return from(
                                             webViewClient("setMailFolder", {timeoutMs: ONE_MINUTE_MS})(
-                                                {folderId, messageIds, zoneName},
+                                                {folderId, messageIds, accountIndex},
                                             ),
                                         ).pipe(
                                             mergeMap(() => this.core.fireSyncingIteration({login})),
@@ -360,15 +355,14 @@ export class AccountsEffects {
                     createEffect(
                         () => this.actions$.pipe(
                             unionizeActionFilter(ACCOUNTS_ACTIONS.is.DeleteMessages),
-                            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
                             filter(({payload}) => payload.pk.login === login),
                             mergeMap(({payload: {messageIds}}) => concat(
                                 of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {deletingMessages: true}})),
-                                this.api.primaryWebViewClient(webView).pipe(
+                                this.api.primaryWebViewClient({webView, accountIndex}).pipe(
                                     mergeMap((webViewClient) => {
                                         return from(
                                             webViewClient("deleteMessages", {timeoutMs: ONE_MINUTE_MS})(
-                                                {messageIds, zoneName},
+                                                {messageIds, accountIndex},
                                             ),
                                         ).pipe(
                                             mergeMap(() => this.core.fireSyncingIteration({login})),
@@ -391,19 +385,18 @@ export class AccountsEffects {
                     createEffect(
                         () => this.actions$.pipe(
                             unionizeActionFilter(ACCOUNTS_ACTIONS.is.FetchSingleMail),
-                            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
                             filter(({payload}) => payload.pk.login === login),
                             mergeMap(({payload: {pk, mailPk}}) => concat(
                                 of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {fetchingSingleMail: true}})),
-                                this.api.primaryWebViewClient(webView).pipe(
+                                this.api.primaryWebViewClient({webView, accountIndex}).pipe(
                                     // TODO progress on
                                     mergeMap((webViewClient) => {
                                         return from(
-                                            webViewClient("fetchSingleMail")({...pk, mailPk, zoneName}),
+                                            webViewClient("fetchSingleMail")({...pk, mailPk, accountIndex}),
                                         ).pipe(
-                                            mergeMap(() => {
-                                                return of<Action>(DB_VIEW_ACTIONS.SelectConversationMailRequest({dbAccountPk: pk, mailPk}));
-                                            }),
+                                            mergeMap(() => of<Action>(
+                                                DB_VIEW_ACTIONS.SelectConversationMailRequest({webAccountPk: pk, mailPk})
+                                            )),
                                             finalize(() => {
                                                 this.store.dispatch(
                                                     ACCOUNTS_ACTIONS.PatchProgress(
@@ -419,7 +412,7 @@ export class AccountsEffects {
                     ),
 
                     // syncing
-                    this.api.primaryWebViewClient(webView, {finishPromise}).pipe(
+                    this.api.primaryWebViewClient({webView, accountIndex}, {finishPromise}).pipe(
                         withLatestFrom(
                             this.store.pipe(
                                 select(OptionsSelectors.FEATURED.config),
@@ -466,7 +459,9 @@ export class AccountsEffects {
 
                                     if (bootstrapping && bootstrappingTriggeredOnce) {
                                         return throwError(
-                                            new Error(`Database bootstrap fetch has already been called once for the account, ${zoneName}`),
+                                            new Error(
+                                                `Database bootstrap fetch has already been called once for the account, ${accountIndex}`,
+                                            ),
                                         );
                                     }
 
@@ -488,7 +483,7 @@ export class AccountsEffects {
                                     const result$ = from(
                                         webViewClient(buildDbPatchMethodName, {timeoutMs})({
                                             login,
-                                            zoneName,
+                                            accountIndex,
                                             metadata,
                                         }).pipe(
                                             tap((value) => {
@@ -496,7 +491,7 @@ export class AccountsEffects {
                                             }),
                                         ),
                                     ).pipe(
-                                        concatMap(() => of(ACCOUNTS_ACTIONS.Synced({pk: {login}}))),
+                                        concatMap(() => of(ACCOUNTS_ACTIONS.Synced({pk: {login, accountIndex}}))),
                                         takeUntil(
                                             fromEvent(window, "offline").pipe(
                                                 tap(() => {
@@ -542,14 +537,13 @@ export class AccountsEffects {
     tryToLogin$ = createEffect(
         () => this.actions$.pipe(
             unionizeActionFilter(ACCOUNTS_ACTIONS.is.TryToLogin),
-            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
-            mergeMap(({payload, logger}) => {
+            mergeMap(({payload, ...action}) => {
                 const {account, webView} = payload;
-                const {accountConfig, notifications} = account;
+                const {accountConfig, notifications, accountIndex} = account;
+                const logger = curryFunctionMembers(_logger, `[${action.type}][${accountIndex}]`);
                 const {login, credentials} = accountConfig;
                 const {type: pageType, skipLoginDelayLogic} = notifications.pageType;
                 const resetNotificationsState$ = of(this.accountsService.generatePrimaryNotificationsStateResetAction({login}));
-                const zoneName = logger.zoneName();
 
                 // TODO improve login submitting looping prevention
                 const rateLimitCheck = async (password: string): Promise<void> => {
@@ -578,10 +572,10 @@ export class AccountsEffects {
 
                             return merge(
                                 of(this.accountsService.buildLoginDelaysResetAction({login})),
-                                this.api.primaryWebViewClient(webView).pipe(
+                                this.api.primaryWebViewClient({webView, accountIndex}).pipe(
                                     mergeMap((webViewClient) => {
                                         return from(
-                                            webViewClient("fillLogin")({login, zoneName}),
+                                            webViewClient("fillLogin")({login, accountIndex}),
                                         );
                                     }),
                                     mergeMap(() => of(ACCOUNTS_ACTIONS.Patch({login, patch: {loginFilledOnce: true}}))),
@@ -596,7 +590,7 @@ export class AccountsEffects {
                                     of(this.accountsService.buildLoginDelaysResetAction({login})),
                                     of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: true}})),
                                     resetNotificationsState$,
-                                    this.api.primaryWebViewClient(webView).pipe(
+                                    this.api.primaryWebViewClient({webView, accountIndex}).pipe(
                                         delay(
                                             account.loggedInOnce
                                                 ? ONE_SECOND_MS
@@ -604,7 +598,7 @@ export class AccountsEffects {
                                         ),
                                         mergeMap((webViewClient) => {
                                             return from(
-                                                webViewClient("login")({login, password, zoneName}),
+                                                webViewClient("login")({login, password, accountIndex}),
                                             );
                                         }),
                                         mergeMap(() => EMPTY),
@@ -676,10 +670,10 @@ export class AccountsEffects {
                         const action$ = merge(
                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {twoFactorCode: true}})),
                             resetNotificationsState$,
-                            this.api.primaryWebViewClient(webView).pipe(
+                            this.api.primaryWebViewClient({webView, accountIndex}).pipe(
                                 mergeMap((webViewClient) => {
                                     return from(
-                                        webViewClient("login2fa")({secret, zoneName}),
+                                        webViewClient("login2fa")({secret, accountIndex}),
                                     );
                                 }),
                                 mergeMap(() => EMPTY),
@@ -709,7 +703,7 @@ export class AccountsEffects {
                             of(__ELECTRON_EXPOSURE__.buildIpcPrimaryWebViewClient(webView)).pipe(
                                 mergeMap((webViewClient) => {
                                     return from(
-                                        webViewClient("unlock")({mailPassword, zoneName}),
+                                        webViewClient("unlock")({mailPassword, accountIndex}),
                                     );
                                 }),
                                 mergeMap(() => EMPTY),

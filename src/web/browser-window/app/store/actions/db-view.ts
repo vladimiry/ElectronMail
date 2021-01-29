@@ -1,65 +1,66 @@
 import {ofType, unionize} from "@vladimiry/unionize";
 
-import {DbAccountPk, Mail, View} from "src/shared/model/database";
 import {IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main";
+import {Mail, View} from "src/shared/model/database";
 import {MailsBundleKey, SearchMailsBundleKey} from "src/web/browser-window/app/store/reducers/db-view";
+import {WebAccountIndexProp, WebAccountPk} from "src/web/browser-window/app/model";
 
 export const DB_VIEW_ACTIONS = unionize({
         MountInstance: ofType<{
-            dbAccountPk: DbAccountPk;
+            webAccountPk: WebAccountPk;
             finishPromise: Promise<void>;
         }>(),
         UnmountInstance: ofType<{
-            dbAccountPk: DbAccountPk;
+            webAccountPk: WebAccountPk;
         }>(),
         SetFolders: ofType<{
-            dbAccountPk: DbAccountPk;
+            webAccountPk: WebAccountPk;
             folders: { system: View.Folder[]; custom: View.Folder[] };
         }>(),
         SelectFolder: ofType<{
-            dbAccountPk: DbAccountPk;
+            webAccountPk: WebAccountPk;
             selectedFolderData?: Pick<View.Folder, "id">;
             distinct?: boolean;
         }>(),
         SelectMailRequest: ofType<{
-            dbAccountPk: DbAccountPk;
+            webAccountPk: WebAccountPk;
             mailPk: Mail["pk"];
         }>(),
         SelectMail: ofType<{
-            dbAccountPk: DbAccountPk;
+            webAccountPk: WebAccountPk;
             value?: {
                 listMailPk: Mail["pk"];
                 rootNode: View.RootConversationNode;
                 conversationMail: Mail;
             };
         }>(),
-        DbExport: ofType<NoExtraProps<DeepReadonly<IpcMainServiceScan["ApiImplArgs"]["dbExport"][0]>>>(),
+        DbExport: ofType<NoExtraProps<DeepReadonly<IpcMainServiceScan["ApiImplArgs"]["dbExport"][0] & WebAccountIndexProp>>>(),
         SelectConversationMailRequest: ofType<{
-            dbAccountPk: DbAccountPk;
+            webAccountPk: WebAccountPk;
             mailPk: Mail["pk"];
         }>(),
         SelectConversationMail: ofType<{
-            dbAccountPk: DbAccountPk;
+            webAccountPk: WebAccountPk;
             conversationMail: Mail;
         }>(),
         SortMails: ofType<{
-            dbAccountPk: DbAccountPk;
+            webAccountPk: WebAccountPk;
             mailsBundleKey: MailsBundleKey;
             sorterIndex: number;
         }>(),
         Paging: ofType<{
-            dbAccountPk: DbAccountPk;
+            webAccountPk: WebAccountPk;
             mailsBundleKey: MailsBundleKey;
             reset?: boolean;
             noIncrement?: boolean;
         }>(),
-        FullTextSearchRequest: ofType<Parameters<IpcMainApiEndpoints["dbFullTextSearch"]>[0]>(),
+        FullTextSearchRequest: ofType<Parameters<IpcMainApiEndpoints["dbFullTextSearch"]>[0] & WebAccountIndexProp>(),
         FullTextSearch: ofType<{
-            dbAccountPk: DbAccountPk;
+            webAccountPk: WebAccountPk;
             value: Unpacked<ReturnType<IpcMainApiEndpoints["dbFullTextSearch"]>>;
         }>(),
         ResetSearchMailsBundleItems: ofType<{
-            dbAccountPk: DbAccountPk;
+            webAccountPk: WebAccountPk;
             mailsBundleKey: SearchMailsBundleKey;
         }>(),
     },

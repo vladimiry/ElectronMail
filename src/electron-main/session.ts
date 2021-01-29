@@ -16,16 +16,12 @@ import {registerSessionProtocols} from "src/electron-main/protocol";
 
 const _logger = curryFunctionMembers(electronLog, "[src/electron-main/session]");
 
-// TODO move "usedPartitions" prop to "ctx"
-// eslint-disable-next-line @typescript-eslint/no-use-before-define
-const usedPartitions: Set<Parameters<typeof initSessionByAccount>[1]["login"]> = new Set();
-
 // TODO move "usedSessions" prop to "ctx"
 // TODO remove the session from map on account removing
-const usedSessions = new Map<string, Session>();
+const createdSessions = new Map<string, Session>();
 
 export function resolveInitializedSession({login}: DeepReadonly<LoginFieldContainer>): Session {
-    const session = usedSessions.get(getWebViewPartition(login));
+    const session = createdSessions.get(getWebViewPartition(login));
     if (!session) {
         throw new Error(`Failed to resolve account session`);
     }
@@ -124,14 +120,14 @@ export async function initSessionByAccount(
     const logger = curryFunctionMembers(_logger, "initSessionByAccount()");
     const partition = getWebViewPartition(account.login);
 
-    if (usedPartitions.has(partition)) {
+    if (createdSessions.has(partition)) {
         return;
     }
 
     // TODO make user "electron.session.fromPartition" called once per "partition" across all the code
     const session = electronSession.fromPartition(partition);
 
-    usedSessions.set(partition, session);
+    createdSessions.set(partition, session);
 
     await initSession(ctx, session, {rotateUserAgent: account.rotateUserAgent});
     await registerSessionProtocols(ctx, session);
@@ -167,8 +163,6 @@ export async function initSessionByAccount(
             },
         );
     }
-
-    usedPartitions.add(partition);
 }
 
 export function getDefaultSession(): Session {

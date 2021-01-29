@@ -101,7 +101,7 @@
         <ng-container *ngIf="(mailsBundleItemsSize$ | async)">
             <electron-mail-db-view-mails
                 *ngIf="(mailsBundleKey$ | async) as mailsBundleKey"
-                [dbAccountPk]="dbAccountPk"
+                [webAccountPk]="webAccountPk"
                 [mailsBundleKey]="mailsBundleKey"
             ></electron-mail-db-view-mails>
         </ng-container>
@@ -109,6 +109,6 @@
 </div>
 <div *ngIf="selectedMail$ | async" class="flex-basis-half pr-2 d-flex flex-column">
     <electron-mail-db-view-mail-body
-        [dbAccountPk]="dbAccountPk"
+        [webAccountPk]="webAccountPk"
     ></electron-mail-db-view-mail-body>
 </div>

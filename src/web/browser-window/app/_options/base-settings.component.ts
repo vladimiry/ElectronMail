@@ -10,7 +10,7 @@ import {LAYOUT_MODES, LOG_LEVELS, ZOOM_FACTORS} from "src/shared/constants";
 import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {PACKAGE_GITHUB_PROJECT_URL_TOKEN} from "src/web/browser-window/app/app.constants";
 import {State} from "src/web/browser-window/app/store/reducers/options";
-import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
+import {getWebLogger} from "src/web/browser-window/util";
 
 @Component({
     selector: "electron-mail-base-settings",
@@ -88,7 +88,7 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         distinctUntilChanged(),
     );
 
-    private readonly logger = getZoneNameBoundWebLogger();
+    private readonly logger = getWebLogger();
 
     private readonly subscription = new Subscription();
 

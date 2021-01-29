@@ -2,13 +2,12 @@ import {ActionType, ScanService, createWebViewApiService} from "electron-rpc-api
 
 import {Notifications} from "src/shared/model/account";
 import {PACKAGE_NAME} from "src/shared/constants";
-import {ZoneApiParameter} from "src/shared/api/common";
 import {buildLoggerBundle} from "src/electron-preload/lib/util";
 
 // TODO drop "ZoneApiParameter" use
 export const PROTON_CALENDAR_IPC_WEBVIEW_API_DEFINITION = {
-    ping: ActionType.Promise<DeepReadonly<ZoneApiParameter>>(),
-    notification: ActionType.Observable<ZoneApiParameter, ProtonCalendarNotificationOutput>(),
+    ping: ActionType.Promise<DeepReadonly<{ accountIndex: number} >>(),
+    notification: ActionType.Observable<{ accountIndex: number} , ProtonCalendarNotificationOutput>(),
 } as const;
 
 export const PROTON_CALENDAR_IPC_WEBVIEW_API = createWebViewApiService({

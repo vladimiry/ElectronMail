@@ -74,7 +74,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
         this.subscription.add(
             combineLatest([
                 this.store.select(AccountsSelectors.ACCOUNTS.loggedInAndUnreadSummary).pipe(
-                    distinctUntilChanged((prev, curr) => equals(prev, curr)), // TODO => "distinctUntilChanged(equals)"
+                    distinctUntilChanged((prev, curr) => equals(prev, curr)), // TODO => "distinctUntilChanged(equals)",
                 ),
                 this.store.pipe(select(OptionsSelectors.CONFIG.trayIconColor)),
                 this.store.pipe(select(OptionsSelectors.CONFIG.unreadBgColor)),

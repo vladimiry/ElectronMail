@@ -4,22 +4,22 @@ import {Store, select} from "@ngrx/store";
 import {distinctUntilChanged, map, mergeMap, startWith} from "rxjs/operators";
 
 import {AccountsSelectors, DbViewSelectors} from "src/web/browser-window/app/store/selectors";
-import {DbAccountPk} from "src/shared/model/database";
 import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";
 import {State} from "src/web/browser-window/app/store/reducers/db-view";
+import {WebAccountPk} from "src/web/browser-window/app/model";
 
 @Directive()
 // so weird not single-purpose directive huh, https://github.com/angular/angular/issues/30080#issuecomment-539194668
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
 export abstract class DbViewAbstractComponent extends NgChangesObservableComponent {
     @Input()
-    dbAccountPk!: DbAccountPk;
+    webAccountPk!: WebAccountPk;
 
-    dbAccountPk$: Observable<DbAccountPk> = this.ngChangesObservable("dbAccountPk").pipe(
+    webAccountPk$: Observable<WebAccountPk> = this.ngChangesObservable("webAccountPk").pipe(
         mergeMap((value) => value ? of(value) : EMPTY),
     );
 
-    account$ = this.dbAccountPk$.pipe(
+    account$ = this.webAccountPk$.pipe(
         mergeMap(({login}) => this.store.pipe(
             select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
             mergeMap((value) => value ? [value] : EMPTY),
@@ -43,7 +43,7 @@ export abstract class DbViewAbstractComponent extends NgChangesObservableCompone
         map(([signedIn, online]) => signedIn && online),
     );
 
-    instance$ = this.dbAccountPk$.pipe(
+    instance$ = this.webAccountPk$.pipe(
         mergeMap((pk) => this.store.pipe(
             select(DbViewSelectors.FEATURED.instance(), {pk}),
             distinctUntilChanged(),

@@ -5,11 +5,11 @@ import {serializeError} from "serialize-error";
 import * as fromRoot from "src/web/browser-window/app/store/reducers/root";
 import {NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {NotificationItem} from "src/web/browser-window/app/store/actions/notification";
-import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
+import {getWebLogger} from "src/web/browser-window/util";
 
 export const featureName = "notification";
 
-const logger = getZoneNameBoundWebLogger("[reducers/notification]");
+const logger = getWebLogger("[reducers/notification]");
 
 const itemsLimit = 50;
 

@@ -6,9 +6,9 @@ import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/s
 import {LoginFieldContainer} from "src/shared/model/container";
 import {WebAccount} from "src/web/browser-window/app/model";
 import {accountPickingPredicate} from "src/shared/util";
-import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
+import {getWebLogger} from "src/web/browser-window/util";
 
-const logger = getZoneNameBoundWebLogger("[reducers/accounts]");
+const logger = getWebLogger("[reducers/accounts]");
 
 export const featureName = "accounts";
 
@@ -61,6 +61,7 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                         accounts.push(account);
                     } else {
                         const webAccount: WebAccount = {
+                            accountIndex: -1,
                             accountConfig,
                             progress: {},
                             notifications: {
@@ -98,6 +99,8 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                 });
                 draftState.selectedLogin = webAccountToSelect && webAccountToSelect.accountConfig.login;
             }
+
+            webAccounts.forEach((webAccount, index) => webAccount.accountIndex = index);
 
             draftState.accounts = webAccounts;
             draftState.initialized = true;

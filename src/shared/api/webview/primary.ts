@@ -5,45 +5,44 @@ import {LoginFieldContainer, MailPasswordFieldContainer, PasswordFieldContainer}
 import {Notifications} from "src/shared/model/account";
 import {PACKAGE_NAME} from "src/shared/constants";
 import {ProtonClientSession} from "src/shared/model/proton";
-import {ZoneApiParameter} from "src/shared/api/common";
 import {buildLoggerBundle} from "src/electron-preload/lib/util";
 
 const {Promise, Observable} = ActionType;
 
-// TODO drop "ZoneApiParameter" use
+// TODO drop "{ accountIndex: number}" use
 export const PROTON_PRIMARY_IPC_WEBVIEW_API_DEFINITION = {
     ping:
-        Promise<DeepReadonly<ZoneApiParameter>>(),
+        Promise<DeepReadonly<{ accountIndex: number}>>(),
     fillLogin:
-        Promise<DeepReadonly<LoginFieldContainer & ZoneApiParameter>>(),
+        Promise<DeepReadonly<LoginFieldContainer & { accountIndex: number}>>(),
     login:
-        Promise<DeepReadonly<LoginFieldContainer & PasswordFieldContainer & ZoneApiParameter>>(),
+        Promise<DeepReadonly<LoginFieldContainer & PasswordFieldContainer & { accountIndex: number}>>(),
     login2fa:
-        Promise<DeepReadonly<{ secret: string } & ZoneApiParameter>>(),
+        Promise<DeepReadonly<{ secret: string } & { accountIndex: number}>>(),
     buildDbPatch:
-        Observable<DeepReadonly<DbAccountPk & { metadata: Readonly<FsDbAccount["metadata"]> | null } & ZoneApiParameter>,
+        Observable<DeepReadonly<DbAccountPk & { metadata: Readonly<FsDbAccount["metadata"]> | null } & { accountIndex: number}>,
             void | "timeoutRelease">(),
     selectMailOnline:
         Promise<DeepReadonly<{
             mail: Pick<Mail, "id" | "mailFolderIds" | "conversationEntryPk">
             selectedFolderId: Folder["id"] | null
-        } & ZoneApiParameter>>(),
+        } & { accountIndex: number}>>(),
     fetchSingleMail:
-        Promise<DeepReadonly<DbAccountPk & { mailPk: Mail["pk"] } & ZoneApiParameter>>(),
+        Promise<DeepReadonly<DbAccountPk & { mailPk: Mail["pk"] } & { accountIndex: number}>>(),
     deleteMessages:
-        Promise<DeepReadonly<{ messageIds: Array<Mail["id"]> } & ZoneApiParameter>>(),
+        Promise<DeepReadonly<{ messageIds: Array<Mail["id"]> } & { accountIndex: number}>>(),
     makeMailRead:
-        Promise<DeepReadonly<{ messageIds: Array<Mail["id"]> } & ZoneApiParameter>>(),
+        Promise<DeepReadonly<{ messageIds: Array<Mail["id"]> } & { accountIndex: number}>>(),
     setMailFolder:
-        Promise<DeepReadonly<{ folderId: Folder["id"]; messageIds: Array<Mail["id"]> } & ZoneApiParameter>>(),
+        Promise<DeepReadonly<{ folderId: Folder["id"]; messageIds: Array<Mail["id"]> } & { accountIndex: number}>>(),
     exportMailAttachments:
-        Promise<DeepReadonly<DbAccountPk & { uuid: string; mailPk: Mail["pk"] } & ZoneApiParameter>>(),
+        Promise<DeepReadonly<DbAccountPk & { uuid: string; mailPk: Mail["pk"] } & { accountIndex: number}>>(),
     notification:
-        Observable<DeepReadonly<{ entryUrl: string; entryApiUrl: string } & ZoneApiParameter>, ProtonPrimaryNotificationOutput>(),
+        Observable<DeepReadonly<{ entryUrl: string; entryApiUrl: string } & { accountIndex: number}>, ProtonPrimaryNotificationOutput>(),
     unlock:
-        ActionType.Promise<MailPasswordFieldContainer & ZoneApiParameter>(),
+        ActionType.Promise<MailPasswordFieldContainer & { accountIndex: number}>(),
     resolveSavedProtonClientSession:
-        ActionType.Promise<DeepReadonly<ZoneApiParameter>, ProtonClientSession | null>(),
+        ActionType.Promise<DeepReadonly<{ accountIndex: number}>, ProtonClientSession | null>(),
 } as const;
 
 export const PROTON_PRIMARY_IPC_WEBVIEW_API = createWebViewApiService({

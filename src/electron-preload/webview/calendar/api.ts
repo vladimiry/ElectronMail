@@ -13,8 +13,8 @@ export const registerApi = (providerApi: ProviderApi): void => {
     const endpoints: ProtonCalendarApi = {
         async ping() {}, // eslint-disable-line @typescript-eslint/no-empty-function
 
-        notification({zoneName}) {
-            const logger = curryFunctionMembers(_logger, "notification()", zoneName);
+        notification({accountIndex}) {
+            const logger = curryFunctionMembers(_logger, "notification()", accountIndex);
 
             logger.info();
 

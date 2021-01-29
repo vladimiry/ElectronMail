@@ -8,7 +8,7 @@ import {PACKAGE_GITHUB_PROJECT_URL_TOKEN} from "src/web/browser-window/app/app.c
 import {PACKAGE_NAME} from "src/shared/constants";
 import {SAVE_PASSWORD_WARN_TRUSTED_HTML} from "./const";
 import {State} from "src/web/browser-window/app/store/reducers/options";
-import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
+import {getWebLogger} from "src/web/browser-window/util";
 
 @Component({
     selector: "electron-mail-save-password-label",
@@ -34,7 +34,7 @@ export class SavePasswordLabelComponent implements OnInit, OnDestroy {
         select(OptionsSelectors.FEATURED.snapPasswordManagerServiceHint),
     );
 
-    private readonly logger = getZoneNameBoundWebLogger("[save-password-label]");
+    private readonly logger = getWebLogger("[save-password-label]");
 
     private readonly subscription = new Subscription();
 

@@ -7,9 +7,6 @@ import {concatMap, filter, map, mergeMap} from "rxjs/operators";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {NOTIFICATIONS_OUTLET, NOTIFICATIONS_PATH} from "src/web/browser-window/app/app.constants";
-import {getZoneNameBoundWebLogger, logActionTypeAndBoundLoggerWithActionType} from "src/web/browser-window/util";
-
-const _logger = getZoneNameBoundWebLogger("[notification.effects]");
 
 @Injectable()
 export class NotificationEffects {
@@ -29,7 +26,6 @@ export class NotificationEffects {
     updateOverlayIcon$ = createEffect(
         () => this.actions$.pipe(
             filter(NOTIFICATION_ACTIONS.is.UpdateOverlayIcon),
-            map(logActionTypeAndBoundLoggerWithActionType({_logger})),
             concatMap(({payload}) => {
                 return from(
                     this.electronService.ipcMainClient()("updateOverlayIcon")(payload),

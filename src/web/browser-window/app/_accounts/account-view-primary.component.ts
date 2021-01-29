@@ -1,5 +1,5 @@
-import {ChangeDetectionStrategy, Component, Injector, OnInit} from "@angular/core";
-import {Subject, from, race} from "rxjs";
+import {Component, Injector, OnInit} from "@angular/core";
+import {Subject, combineLatest, from, race} from "rxjs";
 import {distinctUntilChanged, filter, map, pairwise, take, takeUntil} from "rxjs/operators";
 import {equals, pick} from "remeda";
 
@@ -7,17 +7,15 @@ import {ACCOUNTS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountConfig} from "src/shared/model/account";
 import {AccountViewAbstractComponent} from "src/web/browser-window/app/_accounts/account-view-abstract.component";
 import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
-import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
+import {getWebLogger} from "src/web/browser-window/util";
 import {testProtonMailAppPage} from "src/shared/util";
 
 @Component({
     selector: "electron-mail-account-view-primary",
-    templateUrl: "./account-view-primary.component.html",
-    styleUrls: ["./account-view-primary.component.scss"],
-    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: "",
 })
 export class AccountViewPrimaryComponent extends AccountViewAbstractComponent implements OnInit {
-    private readonly logger = getZoneNameBoundWebLogger(`[_accounts/account-view-primary.component]`);
+    private readonly logger = getWebLogger(`[_accounts/account-view-primary.component]`);
 
     private readonly accountsService: AccountsService;
 
@@ -30,9 +28,36 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
 
     ngOnInit(): void {
         this.addSubscription(
-            this.filterDomReadyEvent()
-                .pipe(take(1))
-                .subscribe(({webView}) => this.onWebViewDomReadyOnceHandler(webView)),
+            combineLatest([
+                // resolves the "webview" and also triggers the login on "entry url change"
+                this.filterDomReadyEvent().pipe(
+                    filter(({webView: {src: url}}) => testProtonMailAppPage({url, logger: this.logger}).projectType === "proton-mail"),
+                ),
+                // triggers the login on certain account changes
+                this.account$.pipe(
+                    pairwise(),
+                    filter(([prev, curr]) => {
+                        return (
+                            // login view displayed
+                            (
+                                curr.notifications.pageType.type !== "unknown"
+                                &&
+                                prev.notifications.pageType.type !== curr.notifications.pageType.type
+                            )
+                            ||
+                            // credentials changed
+                            !equals(this.pickCredentialFields(prev.accountConfig), this.pickCredentialFields(curr.accountConfig))
+                            ||
+                            // login delay changed
+                            !equals(this.pickLoginDelayFields(prev.accountConfig), this.pickLoginDelayFields(curr.accountConfig))
+                        );
+                    }),
+                    map(([, curr]) => curr),
+                )
+            ]).subscribe(([{webView}, account]) => {
+                this.log("info", [`dispatch "TryToLogin"`]);
+                this.action(ACCOUNTS_ACTIONS.TryToLogin({account, webView}));
+            }),
         );
 
         this.addSubscription(
@@ -58,12 +83,12 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
 
                 this.account$
                     .pipe(
-                        map(({notifications, accountConfig}) => ({
-                            pk: {login: accountConfig.login},
+                        map(({notifications, accountConfig, accountIndex}) => ({
+                            pk: {login: accountConfig.login, accountIndex},
                             data: {loggedIn: notifications.loggedIn, database: accountConfig.database},
                         })),
                         // process switching of either "loggedIn" or "database" flags
-                        distinctUntilChanged((prev, curr) => equals(prev.data, curr.data)),
+                        distinctUntilChanged(({data: prev}, {data: curr}) => equals(prev, curr)),
                         takeUntil(from(finishPromise)),
                     )
                     .subscribe(({pk, data: {loggedIn, database}}) => {
@@ -84,35 +109,6 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
                             }),
                         );
                     });
-            }),
-        );
-    }
-
-    private onWebViewDomReadyOnceHandler(webView: Electron.WebviewTag): void {
-        this.addSubscription(
-            this.account$.pipe(
-                pairwise(),
-                filter(([prev, curr]) => {
-                    return (
-                        // page changed: "entryUrl" is changeable
-                        // so need to react on "url" change too (deep comparison with "equals")
-                        (
-                            curr.notifications.pageType.type !== "unknown"
-                            &&
-                            !equals(prev.notifications.pageType, curr.notifications.pageType)
-                        )
-                        ||
-                        // credentials changed
-                        !equals(this.pickCredentialFields(prev.accountConfig), this.pickCredentialFields(curr.accountConfig))
-                        ||
-                        // login delay values changed
-                        !equals(this.pickLoginDelayFields(prev.accountConfig), this.pickLoginDelayFields(curr.accountConfig))
-                    );
-                }),
-                map(([, curr]) => curr),
-            ).subscribe((account) => {
-                this.log("info", [`webview mounted: dispatch "TryToLogin"`]);
-                this.action(ACCOUNTS_ACTIONS.TryToLogin({account, webView}));
             }),
         );
     }

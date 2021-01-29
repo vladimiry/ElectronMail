@@ -1,6 +1,5 @@
 import _logger from "electron-log";
 import fs from "fs";
-import mimeTypes from "mime-types";
 import path from "path";
 import pathIsInside from "path-is-inside";
 import {Session, app, protocol} from "electron";
@@ -115,7 +114,7 @@ export async function registerSessionProtocols(ctx: DeepReadonly<Context>, sessi
     await app.whenReady();
 
     for (const {scheme, directory} of ctx.locations.protocolBundles) {
-        const registered = session.protocol.registerBufferProtocol(
+        const registered = session.protocol.registerFileProtocol(
             scheme,
             async (request, callback) => {
                 const resourceLocation = await resolveFileSystemResourceLocation(directory, request);
@@ -130,13 +129,7 @@ export async function registerSessionProtocols(ctx: DeepReadonly<Context>, sessi
                     return;
                 }
 
-                const data = await fsAsync.readFile(resourceLocation);
-                const mimeType = mimeTypes.lookup(path.basename(resourceLocation));
-                const result = mimeType
-                    ? {data, mimeType}
-                    : data;
-
-                callback(result);
+                callback({path: resourceLocation});
             },
         );
         if (!registered) {

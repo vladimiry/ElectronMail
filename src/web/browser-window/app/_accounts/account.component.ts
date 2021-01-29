@@ -30,6 +30,7 @@ import {
     tap,
     withLatestFrom,
 } from "rxjs/operators";
+import {pick} from "remeda";
 
 import {ACCOUNTS_ACTIONS, AppAction, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
@@ -45,9 +46,7 @@ import {ProtonClientSession} from "src/shared/model/proton";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount} from "src/web/browser-window/app/model";
 import {curryFunctionMembers, parseUrlOriginWithNullishCheck} from "src/shared/util";
-import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
-
-let componentIndex = 0;
+import {getWebLogger} from "src/web/browser-window/util";
 
 @Component({
     selector: "electron-mail-account",
@@ -80,6 +79,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     private readonly databaseViewToggled$ = this.account$.pipe(
         map((account) => ({
             login: account.accountConfig.login,
+            accountIndex: account.accountIndex,
             databaseView: account.databaseView,
         })),
         distinctUntilChanged(({databaseView: prev}, {databaseView: curr}) => prev === curr),
@@ -108,12 +108,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
 
     private readonly ipcMainClient = this.electronService.ipcMainClient();
 
-    // TODO resolve "componentIndex" dynamically: accounts$.indexOf(({login}) => this.login === login)
-    private readonly componentIndex: number;
-
-    private readonly logger: ReturnType<typeof getZoneNameBoundWebLogger>;
-
-    private readonly loggerZone: Zone;
+    private readonly logger: ReturnType<typeof getWebLogger>;
 
     private readonly subscription = new Subscription();
 
@@ -132,10 +127,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         private readonly elementRef: ElementRef<HTMLElement>,
     ) {
         super();
-        this.componentIndex = componentIndex;
-        const loggerPrefix = `[account.component][${componentIndex++}]`;
-        this.loggerZone = Zone.current.fork({name: loggerPrefix});
-        this.logger = getZoneNameBoundWebLogger(loggerPrefix);
+        this.logger = getWebLogger();
         this.logger.info(`constructor()`);
     }
 
@@ -204,7 +196,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
             (() => {
                 let dbViewEntryComponentMounted = false;
 
-                return this.databaseViewToggled$.subscribe(async ([{login, databaseView}]) => {
+                return this.databaseViewToggled$.subscribe(async ([{login, accountIndex, databaseView}]) => {
                     this.viewModeClass = databaseView
                         ? "vm-database"
                         : "vm-live";
@@ -214,7 +206,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     } else if (!dbViewEntryComponentMounted) {
                         await this.dbViewModuleResolve.mountDbViewEntryComponent(
                             this.tplDbViewComponentContainerRef,
-                            {login},
+                            {login, accountIndex},
                         );
                         dbViewEntryComponentMounted = true;
                     }
@@ -243,11 +235,11 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         PRODUCT_NAME,
                         {
                             icon: trayIconDataURL,
-                            body: `Account [${title || this.componentIndex}]: ${unread} unread message${unread > 1 ? "s" : ""}.`,
+                            body: `Account [${title || this.account.accountIndex}]: ${unread} unread message${unread > 1 ? "s" : ""}.`,
                         },
                     ).onclick = () => this.zone.run(() => {
-                        this.onDispatchInLoggerZone(ACCOUNTS_ACTIONS.Select({login}));
-                        this.onDispatchInLoggerZone(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));
+                        this.onDispatch(ACCOUNTS_ACTIONS.Select({login}));
+                        this.onDispatch(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));
                     });
                 }),
         );
@@ -276,7 +268,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     onEventChild(
         event:
             | { type: "dom-ready"; viewType: keyof typeof AccountComponent.prototype.webViewsState; webView: Electron.WebviewTag }
-            | { type: "action"; payload: Unpacked<Parameters<typeof AccountComponent.prototype.onDispatchInLoggerZone>> }
+            | { type: "action"; payload: Unpacked<Parameters<typeof AccountComponent.prototype.onDispatch>> }
             | { type: "log"; data: [LogLevel, ...string[]] },
     ): void {
         if (event.type === "log") {
@@ -286,7 +278,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         }
 
         if (event.type === "action") {
-            this.onDispatchInLoggerZone(event.payload);
+            this.onDispatch(event.payload);
             return;
         }
 
@@ -297,8 +289,10 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         this.logger.info("onPrimaryViewLoadedOnce()");
 
         const resolveSavedProtonClientSession = async (): Promise<ProtonClientSession> => {
-            const apiClient = await this.electronService.primaryWebViewClient(primaryWebView).toPromise();
-            const value = await apiClient("resolveSavedProtonClientSession")({zoneName: this.loggerZone.name});
+            const apiClient = await this.electronService
+                .primaryWebViewClient({webView: primaryWebView, accountIndex: this.account.accountIndex})
+                .toPromise();
+            const value = await apiClient("resolveSavedProtonClientSession")(pick(this.account, ["accountIndex"]));
 
             if (!value) {
                 throw new Error(`Failed to resolve "proton client session" object`);
@@ -451,10 +445,8 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         );
     }
 
-    onDispatchInLoggerZone(action: AppAction): void {
-        this.loggerZone.run(() => {
-            this.store.dispatch(action);
-        });
+    onDispatch(action: AppAction): void {
+        this.store.dispatch(action);
     }
 
     ngOnDestroy(): void {
@@ -474,11 +466,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
             }),
             mergeMap((value) => value && value.offsetParent /* only visible element */ ? [value] : EMPTY),
             take(1),
-            takeUntil(
-                timer(ONE_SECOND_MS / 3),
-            ),
-        ).subscribe((value) => {
-            value.focus();
-        });
+            takeUntil(timer(ONE_SECOND_MS / 3)),
+        ).subscribe((value) => value.focus());
     }
 }

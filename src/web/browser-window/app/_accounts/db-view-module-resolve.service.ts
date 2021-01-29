@@ -1,7 +1,7 @@
 import {Compiler, ComponentFactory, ComponentRef, Injectable, Injector, ViewContainerRef} from "@angular/core";
 
 import {DBVIEW_MODULE_ENTRY_COMPONENT_TOKEN} from "src/web/browser-window/app/app.constants";
-import {DbAccountPk} from "src/shared/model/database";
+import {WebAccountPk} from "src/web/browser-window/app/model";
 
 type DbViewEntryComponent = import("src/web/browser-window/app/_db-view/db-view-entry.component").DbViewEntryComponent;
 
@@ -32,12 +32,12 @@ export class DbViewModuleResolve {
 
     async mountDbViewEntryComponent(
         container: ViewContainerRef,
-        dbAccountPk: DbAccountPk,
+        webAccountPk: WebAccountPk,
     ): Promise<ComponentRef<DbViewEntryComponent>> {
         const componentFactory = await this.state.resolveComponentFactory();
         const componentRef = container.createComponent(componentFactory);
 
-        componentRef.instance.dbAccountPk = dbAccountPk;
+        componentRef.instance.webAccountPk = webAccountPk;
         componentRef.changeDetectorRef.detectChanges();
 
         return componentRef;

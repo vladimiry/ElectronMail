@@ -8,13 +8,14 @@ import {DEFAULT_API_CALL_TIMEOUT, ONE_SECOND_MS} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {PROTON_CALENDAR_IPC_WEBVIEW_API_DEFINITION} from "src/shared/api/webview/calendar";
 import {State} from "src/web/browser-window/app/store/reducers/options";
-import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
+import {WebAccountIndexProp} from "src/web/browser-window/app/model";
+import {getWebLogger} from "src/web/browser-window/util";
 
 type SuperCallOptions = Required<Exclude<Parameters<ReturnType<(typeof createIpcMainApiService)>["client"]>[0], undefined>>["options"];
 
 type LimitedCallOptions = Partial<Pick<SuperCallOptions, "timeoutMs" | "finishPromise" | "serialization">>;
 
-const logger = getZoneNameBoundWebLogger("[_core/electron.service]");
+const logger = getWebLogger("[_core/electron.service]");
 
 @Injectable()
 export class ElectronService implements OnDestroy {
@@ -57,7 +58,7 @@ export class ElectronService implements OnDestroy {
     }
 
     primaryWebViewClient(
-        webView: Electron.WebviewTag,
+        {webView, accountIndex}: { webView: Electron.WebviewTag } & WebAccountIndexProp,
         options?: LimitedCallOptions,
     ): Observable<ReturnType<typeof __ELECTRON_EXPOSURE__.buildIpcPrimaryWebViewClient>> {
         const client = __ELECTRON_EXPOSURE__.buildIpcPrimaryWebViewClient(
@@ -67,7 +68,7 @@ export class ElectronService implements OnDestroy {
 
         // TODO consider removing "ping" API or pinging once per "webView", keeping state in WeakMap<WebView, ...>?
         return this.onlinePingWithTimeouts$.pipe(
-            switchMap(({webViewApiPing: timeoutMs}) => this.raceWebViewClient(client, timeoutMs)),
+            switchMap(({webViewApiPing: timeoutMs}) => this.raceWebViewClient({client, accountIndex}, timeoutMs)),
             concatMap(() => {
                 return of(client);
             }),
@@ -75,7 +76,7 @@ export class ElectronService implements OnDestroy {
     }
 
     calendarWebViewClient(
-        webView: Electron.WebviewTag,
+        {webView, accountIndex}: { webView: Electron.WebviewTag } & WebAccountIndexProp,
         options?: LimitedCallOptions,
     ): Observable<ReturnType<typeof __ELECTRON_EXPOSURE__.buildIpcCalendarWebViewClient>> {
         const client = __ELECTRON_EXPOSURE__.buildIpcCalendarWebViewClient(
@@ -86,7 +87,7 @@ export class ElectronService implements OnDestroy {
         // TODO consider removing "ping" API or pinging once per "webView", keeping state in WeakMap<WebView, ...>?
         return this.store.pipe(
             select(OptionsSelectors.CONFIG.timeouts),
-            switchMap(({webViewApiPing: timeoutMs}) => this.raceWebViewClient(client, timeoutMs)),
+            switchMap(({webViewApiPing: timeoutMs}) => this.raceWebViewClient({client, accountIndex}, timeoutMs)),
             concatMap(() => {
                 return of(client);
             }),
@@ -109,12 +110,12 @@ export class ElectronService implements OnDestroy {
         .Model
         .CreateServiceReturn<Pick<(typeof PROTON_CALENDAR_IPC_WEBVIEW_API_DEFINITION), "ping">,
         [import("electron").IpcMessageEvent]>["caller"]>>(
-        client: T,
+        {client, accountIndex}: { client: T } & WebAccountIndexProp,
         timeoutMs: number,
     ) {
         return race(
             defer(async () => {
-                return client("ping", {timeoutMs: ONE_SECOND_MS})({zoneName: logger.zoneName()});
+                return client("ping", {timeoutMs: ONE_SECOND_MS})({accountIndex});
             }).pipe(
                 retryWhen((errors) => {
                     return errors.pipe(

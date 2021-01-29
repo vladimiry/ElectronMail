@@ -198,7 +198,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
     set uid(value: string | undefined) {
         if (this._uid && this._uid !== value) {
             this.store.dispatch(DB_VIEW_ACTIONS.Paging({
-                dbAccountPk: this.dbAccountPk,
+                webAccountPk: this.webAccountPk,
                 mailsBundleKey: this.mailsBundleKey,
                 reset: true,
             }));
@@ -227,7 +227,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
                 const mailPk: Mail["pk"] | null = mailElement.getAttribute("data-pk");
 
                 if (mailPk) {
-                    this.store.dispatch(DB_VIEW_ACTIONS.SelectMailRequest({dbAccountPk: this.dbAccountPk, mailPk}));
+                    this.store.dispatch(DB_VIEW_ACTIONS.SelectMailRequest({webAccountPk: this.webAccountPk, mailPk}));
                 }
             }),
         );
@@ -244,7 +244,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
                 .subscribe(([{keyCode}, selectedLogin]) => {
                     // only processing keydown event on selected account
                     // (subscribed globally / to document)
-                    if (this.dbAccountPk.login !== selectedLogin) {
+                    if (this.webAccountPk.login !== selectedLogin) {
                         // WARN only one mails list component instance should to be rendered per account
                         // (subscribed globally / to document)
                         return;
@@ -268,7 +268,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
                             // selecting first mail if none has been selected before
                             this.store.dispatch(
                                 DB_VIEW_ACTIONS.SelectMailRequest({
-                                    dbAccountPk: this.dbAccountPk,
+                                    webAccountPk: this.webAccountPk,
                                     mailPk: DbViewMailsComponent.resolveMailPk(firstMail),
                                 }),
                             );
@@ -314,7 +314,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
 
                     this.store.dispatch(
                         DB_VIEW_ACTIONS.SelectMailRequest({
-                            dbAccountPk: this.dbAccountPk,
+                            webAccountPk: this.webAccountPk,
                             mailPk: DbViewMailsComponent.resolveMailPk(toSelect as Element),
                         }),
                     );
@@ -344,7 +344,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
         this.subscription.add(
             this.mailsBundleKey$.subscribe(() => {
                 this.store.dispatch(DB_VIEW_ACTIONS.Paging({
-                    dbAccountPk: this.dbAccountPk,
+                    webAccountPk: this.webAccountPk,
                     mailsBundleKey: this.mailsBundleKey,
                     reset: true,
                 }));
@@ -354,14 +354,14 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
 
     sortChange(sorterIndex: number): void {
         this.store.dispatch(DB_VIEW_ACTIONS.SortMails({
-            dbAccountPk: this.dbAccountPk,
+            webAccountPk: this.webAccountPk,
             mailsBundleKey: this.mailsBundleKey,
             sorterIndex: Number(sorterIndex),
         }));
     }
 
     loadMore(): void {
-        this.store.dispatch(DB_VIEW_ACTIONS.Paging({dbAccountPk: this.dbAccountPk, mailsBundleKey: this.mailsBundleKey}));
+        this.store.dispatch(DB_VIEW_ACTIONS.Paging({webAccountPk: this.webAccountPk, mailsBundleKey: this.mailsBundleKey}));
     }
 
     trackByMailBundleItem(
@@ -418,7 +418,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
 
     private resolveSinglePlainItemsAndPkNotification() { // eslint-disable-line @typescript-eslint/explicit-function-return-type
         return this.plainItems$.pipe(
-            withLatestFrom(this.dbAccountPk$),
+            withLatestFrom(this.webAccountPk$),
             first(),
         );
     }

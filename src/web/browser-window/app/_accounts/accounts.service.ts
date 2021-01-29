@@ -12,7 +12,7 @@ import {ONE_SECOND_MS} from "src/shared/constants";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount} from "src/web/browser-window/app/model";
 import {getRandomInt} from "src/shared/util";
-import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
+import {getWebLogger} from "src/web/browser-window/util";
 
 @Injectable()
 export class AccountsService {
@@ -55,7 +55,7 @@ export class AccountsService {
 
     setupLoginDelayTrigger(
         {login}: NoExtraProps<Pick<WebAccount["accountConfig"], "login">>,
-        logger: ReturnType<typeof getZoneNameBoundWebLogger>,
+        logger: ReturnType<typeof getWebLogger>,
     ): Observable<{ trigger: string }> {
         const account$ = this.store.pipe(
             select(AccountsSelectors.ACCOUNTS.pickAccount({login})),

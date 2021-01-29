@@ -12,7 +12,7 @@ import {OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {PACKAGE_GITHUB_PROJECT_URL_TOKEN} from "src/web/browser-window/app/app.constants";
 import {State} from "src/web/browser-window/app/store/reducers/options";
-import {getZoneNameBoundWebLogger} from "src/web/browser-window/util";
+import {getWebLogger} from "src/web/browser-window/util";
 import {validateExternalContentProxyUrlPattern, validateLoginDelaySecondsRange} from "src/shared/util";
 
 @Component({
@@ -122,7 +122,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     );
 
     // other
-    private readonly logger = getZoneNameBoundWebLogger();
+    private readonly logger = getWebLogger();
     private readonly subscription = new Subscription();
 
     constructor(

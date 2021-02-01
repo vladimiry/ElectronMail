@@ -79,7 +79,7 @@ export const isProtonApiError = (
         (
             typeof (error as ProtonApiError).response === "object"
             ||
-            ["AbortError", "TimeoutError", "OfflineError"].includes((error as ProtonApiError).name)
+            ["aborterror", "timeouterror", "offlineerror"].includes((error as ProtonApiError).name.toLowerCase())
         )
     );
 

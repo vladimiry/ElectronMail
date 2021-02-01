@@ -3,12 +3,13 @@ import {isProtonApiError, sanitizeProtonApiError} from "src/electron-preload/lib
 
 export const preprocessError: Parameters<typeof buildDbPatchRetryPipeline>[0] = (() => {
     const strings = {
-        statusTexts: {
+        statusTextLowerCase: {
             "service unavailable": "service unavailable",
             "gateway time-out": "gateway time-out",
+            "internal server error": "internal server error",
         },
-        networkConnectionErrorNames: ["aborterror", "timeouterror", "offlineerror"],
-    };
+        networkConnectionErrorNames: ["aborterror", "timeouterror", "offlineerror"] as readonly string[],
+    } as const;
     const result: typeof preprocessError = (error) => {
         const retriable = (
             !navigator.onLine
@@ -21,17 +22,23 @@ export const preprocessError: Parameters<typeof buildDbPatchRetryPipeline>[0] = 
                     [0, -1].includes(error.status)
                     ||
                     (
+                        error.status === 500
+                        &&
+                        error.response?.statusText?.toLocaleLowerCase() === strings.statusTextLowerCase["internal server error"]
+                    )
+                    ||
+                    (
                         // there were periods when the requests to protonmail's API ended up
                         // with "503 / service unavailable" error quite often during the day
                         error.status === 503
                         ||
-                        error.response?.statusText?.toLocaleLowerCase() === strings.statusTexts["service unavailable"]
+                        error.response?.statusText?.toLocaleLowerCase() === strings.statusTextLowerCase["service unavailable"]
                     )
                     ||
                     (
                         error.status === 504
                         ||
-                        error.response?.statusText?.toLocaleLowerCase() === strings.statusTexts["gateway time-out"]
+                        error.response?.statusText?.toLocaleLowerCase() === strings.statusTextLowerCase["gateway time-out"]
                     )
                     ||
                     strings.networkConnectionErrorNames.includes(error.name.toLocaleLowerCase())

@@ -2,7 +2,8 @@ import UUID from "pure-uuid";
 import asap from "asap-es";
 
 import {Logger} from "src/shared/model/common";
-import {ONE_SECOND_MS, PROVIDER_REPO_NAMES} from "src/shared/constants";
+import {ONE_SECOND_MS} from "src/shared/constants";
+import {PROVIDER_REPO_NAMES} from "src/shared/proton-apps-constants";
 import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
 import {assertTypeOf, asyncDelay, consumeMemoryRateLimiter, curryFunctionMembers} from "src/shared/util";
 import {resolveCachedConfig} from "src/electron-preload/lib/util";

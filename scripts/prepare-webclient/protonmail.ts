@@ -1,10 +1,11 @@
 import fsExtra from "fs-extra";
 import path from "path";
 
-import {BINARY_NAME, PROVIDER_REPO_MAP, PROVIDER_REPO_NAMES} from "src/shared/constants";
+import {BINARY_NAME} from "src/shared/constants";
 import {CONSOLE_LOG, execShell} from "scripts/lib";
 import {CWD_ABSOLUTE_DIR} from "scripts/const";
 import {FolderAsDomainEntry, executeBuildFlow, printAndWriteFile} from "./lib";
+import {PROVIDER_REPO_MAP, PROVIDER_REPO_NAMES} from "src/shared/proton-apps-constants";
 
 const folderAsDomainEntries: Array<FolderAsDomainEntry<{
     configApiParam:

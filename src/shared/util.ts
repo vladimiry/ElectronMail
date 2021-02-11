@@ -10,8 +10,6 @@ import {
     LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN,
     ONE_MINUTE_MS,
     ONE_SECOND_MS,
-    PROVIDER_REPO_MAP,
-    PROVIDER_REPO_NAMES,
     WEB_CLIENTS_BLANK_HTML_FILE_NAME,
     ZOOM_FACTOR_DEFAULT,
 } from "src/shared/constants";
@@ -20,6 +18,7 @@ import {BaseConfig, Config} from "./model/options";
 import {DbPatch} from "./api/common";
 import {FsDbAccount, View} from "src/shared/model/database";
 import {LoginFieldContainer} from "./model/container";
+import {PROVIDER_REPO_MAP, PROVIDER_REPO_NAMES} from "src/shared/proton-apps-constants";
 import {StatusCodeError} from "./model/error";
 
 export function initialConfig(): Config {

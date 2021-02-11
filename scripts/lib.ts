@@ -11,7 +11,7 @@ import {omit, pick} from "remeda";
 import {promisify} from "util";
 
 import {GIT_CLONE_ABSOLUTE_DIR, OUTPUT_ABSOLUTE_DIR} from "scripts/const";
-import {PROVIDER_REPO_MAP} from "src/shared/constants";
+import {PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
 
 // eslint-disable-next-line no-console
 export const CONSOLE_LOG = console.log.bind(console);

@@ -5,7 +5,8 @@ import pathIsInside from "path-is-inside";
 
 import {CONSOLE_LOG, execShell, resolveGitCommitInfo, resolveGitOutputBackupDir} from "scripts/lib";
 import {CWD_ABSOLUTE_DIR, GIT_CLONE_ABSOLUTE_DIR} from "scripts/const";
-import {PROVIDER_REPO_MAP, RUNTIME_ENV_CI_PROTON_CLIENTS_ONLY, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/constants";
+import {PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
+import {RUNTIME_ENV_CI_PROTON_CLIENTS_ONLY, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/constants";
 
 const shouldFailOnBuildEnvVarName = "ELECTRON_MAIL_SHOULD_FAIL_ON_BUILD";
 

@@ -9,7 +9,8 @@ import {promisify} from "util";
 import {Context} from "src/electron-main/model";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
-import {PROVIDER_REPO_MAP, WEB_PROTOCOL_SCHEME} from "src/shared/constants";
+import {PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
+import {WEB_PROTOCOL_SCHEME} from "src/shared/constants";
 import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[protocol]");

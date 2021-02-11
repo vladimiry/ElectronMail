@@ -4,7 +4,7 @@ import {flatten} from "remeda";
 
 import {CONSOLE_LOG, resolveGitOutputBackupDir} from "scripts/lib";
 import {CWD_ABSOLUTE_DIR} from "scripts/const";
-import {PROVIDER_REPO_NAMES} from "src/shared/constants";
+import {PROVIDER_REPO_NAMES} from "src/shared/proton-apps-constants";
 import {sanitizeFastGlobPattern} from "src/shared/util";
 
 const delimiter = ";";

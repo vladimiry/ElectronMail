@@ -24,7 +24,7 @@ jobs:
       # </common>
       - name: cache artifact
         uses: actions/cache@v2
-        with: { path: ./output/git/backup, key: "proton-clients-cache-${{ secrets.PROTON_CLIENTS_ARTIFACT_CACHE_VERSION }}" }
+        with: { path: ./output/git/backup, key: "proton-clients-cache-${{ hashFiles('./src/shared/proton-apps-constants.ts') }}-${{ secrets.PROTON_CLIENTS_ARTIFACT_CACHE_VERSION }}" }
       - { name: print ./output/git/backup files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./output/git/backup }
       - { name: build, run: ./scripts/ci/prepare-webclients.sh }
       - { name: print ./output/git/backup files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./output/git/backup }

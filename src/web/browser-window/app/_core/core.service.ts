@@ -10,9 +10,10 @@ import {ACCOUNTS_ACTIONS, AppAction, NAVIGATION_ACTIONS, unionizeActionFilter} f
 import {AccountConfig} from "src/shared/model/account";
 import {FIRE_SYNCING_ITERATION$, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
-import {PROVIDER_REPO_MAP, WEB_CLIENTS_BLANK_HTML_FILE_NAME, WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS,} from "src/shared/constants";
+import {PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
 import {ProtonClientSession} from "src/shared/model/proton";
 import {State} from "src/web/browser-window/app/store/reducers/root";
+import {WEB_CLIENTS_BLANK_HTML_FILE_NAME, WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS,} from "src/shared/constants";
 import {WebAccount} from "src/web/browser-window/app/model";
 import {curryFunctionMembers, parseUrlOriginWithNullishCheck} from "src/shared/util";
 

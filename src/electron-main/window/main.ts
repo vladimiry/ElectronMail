@@ -188,7 +188,7 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
                 });
             }
 
-            return event.returnValue;
+            return event.returnValue; // eslint-disable-line @typescript-eslint/no-unsafe-return
         });
 
     browserWindow.setMenu(null);

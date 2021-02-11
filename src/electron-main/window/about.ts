@@ -50,12 +50,12 @@ const resolveContent: (ctx: Context) => Promise<Unpacked<ReturnType<typeof injec
                 ),
                 ((): string => {
                     const {versions} = process;
-                    const props: ReadonlyArray<Readonly<{ prop: keyof typeof versions; title: string }>> = [
+                    const props = [
                         {prop: "electron", title: "Electron"},
                         {prop: "chrome", title: "Chromium"},
                         {prop: "node", title: "Node"},
                         {prop: "v8", title: "V8"},
-                    ];
+                    ] as const;
                     return `
                         <ul class="list-versions align-items-left justify-content-center font-weight-light text-muted">
                             ${props.map(({prop, title}) => sanitizeHtml(`<li>${title}: ${versions[prop]}</li>`)).join("")}

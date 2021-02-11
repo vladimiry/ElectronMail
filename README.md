@@ -65,10 +65,10 @@ The [reproducible builds](https://en.wikipedia.org/wiki/Reproducible_builds) ide
 
 ### Building locally
 
-- Regardless of the platform you are working on, you will need to have Node.js v12 installed. v12 as it's recommended to go with the same Node.js version Electron comes with. If you already have Node.js installed, but not the v12, then you might want to use [Node Version Manager](https://github.com/creationix/nvm) to be able to switch between multiple Node.js versions:
+- Regardless of the platform you are working on, you will need to have Node.js v14 installed. v14 as it's recommended to go with the same Node.js version Electron comes with. If you already have Node.js installed, but not the v14, then you might want to use [Node Version Manager](https://github.com/creationix/nvm) to be able to switch between multiple Node.js versions:
   - Install [NVM](https://github.com/creationix/nvm).
-  - Run `nvm install 12`.
-  - Run `nvm use 12`.
+  - Run `nvm install 14`.
+  - Run `nvm use 14`.
 - Some native modules require compiling process to be involved and for that Python and C++ compiler need to be installed on the system:
   - On `Windows`: the simplest to install all the needed stuff on Windows is to run `npm install --global --production windows-build-tools` CLI command.
   - On `Linux`: `python v2.7`, `make` and a C/C++ compiler toolchain, like `GCC` are most likely already installed. Besides [keytar](https://github.com/atom/node-keytar) needs `libsecret` library to be installed.

@@ -176,6 +176,13 @@
                 .btn-group {
                     flex-direction: column;
 
+                    .letters {
+                        &.login {
+                            align-self: center;
+                            width: 50%;
+                        }
+                    }
+
                     &:not(.selected) {
                         > .btn-sm {
                             &:not(:last-child) {
@@ -189,6 +196,11 @@
                         align-items: center;
                         padding-left: ($btn-padding-x-sm * 0.4);
                         padding-right: ($btn-padding-x-sm * 0.4);
+
+                        &.dropdown-toggle {
+                            padding-top: ($btn-padding-x-sm * 1.2);
+                            padding-bottom: ($btn-padding-x-sm * 1.2);
+                        }
 
                         &:not(:last-child) {
                             border-radius: $btn-border-radius-sm $btn-border-radius-sm 0 0;

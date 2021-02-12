@@ -1,4 +1,3 @@
-import {URL} from "@cliqz/url-parser";
 import {pick} from "remeda";
 import {webFrame} from "electron"; // tslint:disable-line:no-import-zones
 
@@ -8,25 +7,7 @@ import {IPC_MAIN_API} from "src/shared/api/main";
 import {LOGGER} from "src/electron-preload/lib/electron-exposure/logger";
 import {Logger} from "src/shared/model/common";
 import {ProtonApiError} from "src/electron-preload/webview/primary/types";
-import {curryFunctionMembers} from "src/shared/util";
-
-const depersonalizeLoggedUrl = (url: string): string => {
-    if (!new URL(url).pathname) {
-        return url;
-    }
-
-    const splitBy = "/";
-    const splitParts = url.split(splitBy);
-    const lastPart = splitParts.pop();
-
-    return [
-        ...splitParts,
-        // assuming that long last part is not the endpoint name/sub-name but a value/id
-        lastPart && lastPart.length >= 15
-            ? "<wiped-out>"
-            : lastPart,
-    ].join(splitBy);
-};
+import {curryFunctionMembers, depersonalizeLoggedUrl} from "src/shared/util";
 
 export const buildLoggerBundle = (prefix: string): Logger => curryFunctionMembers(LOGGER, prefix);
 

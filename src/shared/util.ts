@@ -636,3 +636,20 @@ export const lowerConsoleMessageEventLogLevel = (
     }
     return logLevel;
 };
+export const depersonalizeLoggedUrl = (url: string): string => {
+    if (!new URL(url).pathname) {
+        return url;
+    }
+
+    const splitBy = "/";
+    const splitParts = url.split(splitBy);
+    const lastPart = splitParts.pop();
+
+    return [
+        ...splitParts,
+        // assuming that long last part is not the endpoint name/sub-name but a value/id
+        lastPart && lastPart.length >= 15
+            ? "<wiped-out>"
+            : lastPart,
+    ].join(splitBy);
+};

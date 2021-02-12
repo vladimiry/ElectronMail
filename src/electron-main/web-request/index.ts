@@ -7,6 +7,7 @@ import {
     OnHeadersReceivedListenerDetails,
 } from "electron";
 import {URL} from "@cliqz/url-parser";
+import {pick} from "remeda";
 
 import {ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN} from "src/shared/constants";
 import {AccountConfig} from "src/shared/model/account";
@@ -15,7 +16,12 @@ import {CorsProxy} from "./model";
 import {HEADERS} from "./const";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
-import {buildUrlOriginsFailedMsgTester, curryFunctionMembers, parseUrlOriginWithNullishCheck} from "src/shared/util";
+import {
+    buildUrlOriginsFailedMsgTester,
+    curryFunctionMembers,
+    depersonalizeLoggedUrl,
+    parseUrlOriginWithNullishCheck
+} from "src/shared/util";
 import {getHeader, patchResponseHeaders, resolveCorsProxy} from "./service";
 import {resolveInitializedSession} from "src/electron-main/session";
 
@@ -230,6 +236,10 @@ export function initWebRequestListenersByAccount(
 
     session.webRequest.onErrorOccurred((details) => {
         requestProxyCache.remove(details);
+        logger.warn({
+            ...pick(details, ["resourceType", "error"]),
+            url: depersonalizeLoggedUrl(details.url),
+        });
     });
 
     session.webRequest.onCompleted((details) => {

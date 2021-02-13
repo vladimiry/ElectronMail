@@ -1,6 +1,6 @@
 import {Component, Injector, OnInit} from "@angular/core";
 import {Subject, combineLatest, from, race} from "rxjs";
-import {distinctUntilChanged, filter, map, pairwise, take, takeUntil} from "rxjs/operators";
+import {distinctUntilChanged, filter, map, pairwise, take, takeUntil, withLatestFrom} from "rxjs/operators";
 import {equals, pick} from "remeda";
 
 import {ACCOUNTS_ACTIONS} from "src/web/browser-window/app/store/actions";
@@ -52,9 +52,13 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
                             !equals(this.pickLoginDelayFields(prev.accountConfig), this.pickLoginDelayFields(curr.accountConfig))
                         );
                     }),
-                    map(([, curr]) => curr),
                 )
-            ]).subscribe(([{webView}, account]) => {
+            ]).pipe(
+                withLatestFrom(this.account$),
+            ).subscribe(([[{webView}], account]) => {
+                if (account.notifications.pageType.type === "unknown") {
+                    return;
+                }
                 this.log("info", [`dispatch "TryToLogin"`]);
                 this.action(ACCOUNTS_ACTIONS.TryToLogin({account, webView}));
             }),

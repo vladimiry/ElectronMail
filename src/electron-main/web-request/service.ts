@@ -34,11 +34,11 @@ export const getHeader = (
 };
 
 export function patchResponseHeader(
-    headers: HeadersReceivedResponse["responseHeaders"],
+    headers: Exclude<HeadersReceivedResponse["responseHeaders"], undefined>,
     patch: DeepReadonly<ReturnType<typeof getHeader>>,
     {replace, extend = true, _default = true}: { replace?: boolean; extend?: boolean; _default?: boolean } = {},
 ): void {
-    if (!patch || !headers) {
+    if (!patch) {
         return;
     }
 
@@ -61,11 +61,14 @@ export function patchResponseHeader(
 // and then pick all the "Access-Control-*" header names as a template instead of hardcoding the default headers
 // since over time the server may start giving other headers
 export const patchResponseHeaders: (
-    arg: { corsProxy: CorsProxy; details: OnHeadersReceivedListenerDetails }
-) => OnHeadersReceivedListenerDetails["responseHeaders"]
-    = ({corsProxy, details}) => {
+    arg: { corsProxy: CorsProxy; responseHeaders: OnHeadersReceivedListenerDetails["responseHeaders"] }
+) => OnHeadersReceivedListenerDetails["responseHeaders"] = ({corsProxy, responseHeaders}) => {
+    if (!responseHeaders) {
+        return responseHeaders;
+    }
+
     patchResponseHeader(
-        details.responseHeaders,
+        responseHeaders,
         {
             name: HEADERS.response.accessControlAllowOrigin,
             values: corsProxy.headers.origin.values,
@@ -74,7 +77,7 @@ export const patchResponseHeaders: (
     );
 
     patchResponseHeader(
-        details.responseHeaders,
+        responseHeaders,
         {
             name: HEADERS.response.accessControlAllowMethods,
             values: [
@@ -96,7 +99,7 @@ export const patchResponseHeaders: (
     // TODO apply "access-control-allow-credentials" headers patch for "https://protonirockerxow.onion/*" requests only
     //      see "details.url" value
     patchResponseHeader(
-        details.responseHeaders,
+        responseHeaders,
         {
             name: HEADERS.response.accessControlAllowCredentials,
             values: ["true"],
@@ -108,7 +111,7 @@ export const patchResponseHeaders: (
     // TODO apply "access-control-allow-headers" headers patch for "https://protonirockerxow.onion/*" requests only
     //      see "details.url" value
     patchResponseHeader(
-        details.responseHeaders,
+        responseHeaders,
         {
             name: HEADERS.response.accessControlAllowHeaders,
             values: [
@@ -135,16 +138,33 @@ export const patchResponseHeaders: (
     );
 
     patchResponseHeader(
-        details.responseHeaders,
+        responseHeaders,
         {
             name: HEADERS.response.accessControlExposeHeaders,
             values: ["Date"],
         },
     );
 
-    return details.responseHeaders;
+    // starting from @electron v12 (more exactly from the respective @chromium version)
+    // the "set-cookie" records with "samesite=strict" get blocked by @chromium, for example the "/api/auth/cookies" request case
+    // so to workaround the issue we replace the "samesite=strict|lax"-like attribute with "samesite=none"
+    for (const cookieName of Object.keys(responseHeaders)) {
+        if (cookieName.toLowerCase() !== "set-cookie") {
+            continue;
+        }
+        const cookies = responseHeaders[cookieName];
+        if (cookies) {
+            responseHeaders[cookieName] = cookies.map((cookieValue) => {
+                // TODO consider patching the "samesite" cookie attribute only for "/api/auth/cookies" request
+                return cookieValue.replace(/samesite[\s]*=[\s]*(strict|lax)/i, "samesite=none");
+            });
+        }
+    }
+
+    return responseHeaders;
 };
 
+// TODO consider resolving/returning the proxy only for URLs with `entryApiUrl`-like origin
 export const resolveCorsProxy = (
     {requestHeaders, resourceType}: OnBeforeSendHeadersListenerDetails,
     allowedOrigins: readonly string[],

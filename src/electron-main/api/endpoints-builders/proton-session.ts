@@ -98,6 +98,8 @@ export async function buildEndpoints(
 
             const session = resolveInitializedSession({login});
 
+            // TODO consider setting "samesite=none" cookie attribute when restoring the saved cookie to session
+            //      currently "samesite" is not being restored or set so default value gets applied (likely to be "lax" at the moment)
             await Promise.all([
                 session.cookies.set({
                     ...pickTokenCookiePropsToApply(accessTokenCookie),

@@ -224,8 +224,7 @@ export function initWebRequestListenersByAccount(
             const {corsProxy} = requestProxy;
 
             if (corsProxy) {
-                const responseHeaders = patchResponseHeaders({details, corsProxy});
-                callback({responseHeaders});
+                callback({responseHeaders: patchResponseHeaders({responseHeaders: details.responseHeaders, corsProxy})});
             } else {
                 callback({});
             }

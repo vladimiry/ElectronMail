@@ -8,7 +8,7 @@ import {concatMap, distinctUntilChanged, map, mergeMap} from "rxjs/operators";
 import {ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN, PROTON_API_ENTRY_RECORDS} from "src/shared/constants";
 import {AccountConfig} from "src/shared/model/account";
 import {AccountConfigCreateUpdatePatch} from "src/shared/model/container";
-import {OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {PACKAGE_GITHUB_PROJECT_URL_TOKEN} from "src/web/browser-window/app/app.constants";
 import {State} from "src/web/browser-window/app/store/reducers/options";
@@ -22,6 +22,7 @@ import {validateExternalContentProxyUrlPattern, validateLoginDelaySecondsRange} 
     preserveWhitespaces: true,
 })
 export class AccountEditComponent implements OnInit, OnDestroy {
+    readonly userDataDir = __METADATA__.electronLocations.userDataDir;
     entryUrlItems = [...PROTON_API_ENTRY_RECORDS];
     controls: Record<keyof Pick<AccountConfig,
         | "customCSS"
@@ -71,7 +72,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         ),
         title: new FormControl(null),
         database: new FormControl(null),
-        persistentSession: new FormControl(null),
+        persistentSession: new FormControl(true),
         rotateUserAgent: new FormControl(null),
         entryUrl: new FormControl(
             null,
@@ -264,6 +265,10 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         }
 
         this.store.dispatch(OPTIONS_ACTIONS.RemoveAccountRequest(account));
+    }
+
+    openSettingsFolder(): void {
+        this.store.dispatch(NAVIGATION_ACTIONS.OpenSettingsFolder());
     }
 
     ngOnDestroy(): void {

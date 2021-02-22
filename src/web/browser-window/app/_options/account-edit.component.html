@@ -65,65 +65,13 @@
                 </ng-template>
             </ng-select>
         </div>
-        <div class="row">
-            <div *ngIf="!account" class="form-group col-sm-6 required">
-                <label>Login</label>
-                <input
-                    [ngClass]="controls.login.dirty ? {'is-invalid': controls.login.invalid, 'is-valid': controls.login.valid} : {}"
-                    class="form-control"
-                    formControlName="login"
-                    type="text"
-                >
-            </div>
-            <div [ngClass]="{'col-sm-6': !account, 'col-sm-12': account}" class="form-group">
-                <label>Password</label>
-                <input
-                    [ngClass]="controls.password.dirty ? {'is-invalid': controls.password.invalid, 'is-valid': controls.password.valid} : {}"
-                    class="form-control"
-                    formControlName="password"
-                    type="password"
-                >
-            </div>
-        </div>
-        <div class="form-group">
-            <label class="d-block pull-left">
-                Two-Factor secret key
-                <i
-                    class="fa fa-info-circle text-warning align-self-center"
-                    container="body"
-                    placement="bottom"
-                    popover="This is not the one time password your phone generates for you but a secret seed. Please follow the description link for details."
-                    triggers="mouseenter:mouseleave"
-                ></i>
-            </label>
-            <a class="d-block pull-right" href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/10">#10</a>
+        <div *ngIf="!account" class="form-group required">
+            <label>Login</label>
             <input
-                [ngClass]="controls.twoFactorCode.dirty ? {'is-invalid': controls.twoFactorCode.invalid, 'is-valid': controls.twoFactorCode.valid} : {}"
+                [ngClass]="controls.login.dirty ? {'is-invalid': controls.login.invalid, 'is-valid': controls.login.valid} : {}"
                 class="form-control"
-                formControlName="twoFactorCode"
-                type="password"
-            >
-        </div>
-        <div class="form-group">
-            <label class="d-block pull-left">
-                Mailbox password
-                <i
-                    class="fa fa-info-circle text-warning align-self-center"
-                    container="body"
-                    placement="bottom"
-                    popover="This field is only relevant if you have two-password mode enabled for your account. Please follow the description links for details."
-                    triggers="mouseenter:mouseleave"
-                ></i>
-            </label>
-            <div class="pull-right">
-                <a href="https://protonmail.com/support/knowledge-base/switch-two-password-mode/">description</a>,
-                <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/138">#138</a>
-            </div>
-            <input
-                [ngClass]="controls.mailPassword.dirty ? {'is-invalid': controls.mailPassword.invalid, 'is-valid': controls.mailPassword.valid} : {}"
-                class="form-control"
-                formControlName="mailPassword"
-                type="password"
+                formControlName="login"
+                type="text"
             >
         </div>
         <div class="form-group">
@@ -149,12 +97,12 @@
             <accordion-group [isOpen]="false" heading="Advanced Options">
                 <div class="form-group">
                     <label class="d-block pull-left">
-                        Handle button alias
+                        Login alias
                         <i
                             class="fa fa-info-circle text-primary align-self-center"
                             container="body"
                             placement="bottom"
-                            popover="If specified will be displayed in the UI instead of login."
+                            popover="If specified will be displayed in the app UI instead of login"
                             triggers="mouseenter:mouseleave"
                         ></i>
                     </label>
@@ -313,6 +261,76 @@
                         ></i>
                         <a class="ml-1" href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/273">#273</a>
                     </label>
+                </div>
+            </accordion-group>
+            <accordion-group [isOpen]="false" heading="Account Credentials (obsolete)">
+                <div class="alert alert-warning">
+                    <p>
+                        It's recommended to keep the below credentials input fields empty since the preferred "auto-login into the account"
+                        scenario is via the
+                        <a href="https://github.com/vladimiry/ElectronMail/issues/227">persistent sessions</a> feature.
+                    </p>
+                    <p>
+                        If you fill the below credentials values then the app will automatically fill in and submit the respective forms
+                        when ProtonMail asks you to do so.
+                    </p>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input
+                        [ngClass]="controls.password.dirty ? {'is-invalid': controls.password.invalid, 'is-valid': controls.password.valid} : {}"
+                        class="form-control"
+                        formControlName="password"
+                        type="password"
+                    >
+                </div>
+                <div class="form-group">
+                    <label class="d-block pull-left">
+                        Two-Factor secret key
+                        <i
+                            class="fa fa-info-circle text-warning align-self-center"
+                            container="body"
+                            placement="bottom"
+                            popover="This is not the one time password your phone generates for you but a secret seed. Please follow the description link for details."
+                            triggers="mouseenter:mouseleave"
+                        ></i>
+                    </label>
+                    <a class="d-block pull-right" href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/10">#10</a>
+                    <input
+                        [ngClass]="controls.twoFactorCode.dirty ? {'is-invalid': controls.twoFactorCode.invalid, 'is-valid': controls.twoFactorCode.valid} : {}"
+                        class="form-control"
+                        formControlName="twoFactorCode"
+                        type="password"
+                    >
+                </div>
+                <div class="form-group">
+                    <label class="d-block pull-left">
+                        Mailbox password
+                        <i
+                            class="fa fa-info-circle text-warning align-self-center"
+                            container="body"
+                            placement="bottom"
+                            popover="This field is only relevant if you have two-password mode enabled for your account. Please follow the description links for details."
+                            triggers="mouseenter:mouseleave"
+                        ></i>
+                    </label>
+                    <div class="pull-right">
+                        <a href="https://protonmail.com/support/knowledge-base/switch-two-password-mode/">description</a>,
+                        <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/138">#138</a>
+                    </div>
+                    <input
+                        [ngClass]="controls.mailPassword.dirty ? {'is-invalid': controls.mailPassword.invalid, 'is-valid': controls.mailPassword.valid} : {}"
+                        class="form-control"
+                        formControlName="mailPassword"
+                        type="password"
+                    >
+                </div>
+                <div class="text-muted">
+                    <small>
+                        The credentials stored encrypted in the <code>settings.bin</code> file located in the
+                        <a (click)="$event.preventDefault(); openSettingsFolder();" href="{{ userDataDir }}">settings folder</a>.
+                        See <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/wiki/FAQ">FAQ</a> for details.
+                    </small>
                 </div>
             </accordion-group>
         </accordion>

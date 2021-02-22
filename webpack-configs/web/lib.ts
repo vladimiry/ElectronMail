@@ -66,6 +66,7 @@ export function buildMinimalWebConfig(
                             loader: "html-loader",
                             options: {
                                 minimize: false,
+                                esModule: false,
                             },
                         },
                         {

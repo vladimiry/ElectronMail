@@ -17,9 +17,10 @@
   },
   "main": "./app/electron-main.js",
   "scripts": {
-    "postinstall": "npm-run-all yarn:audit postinstall:patch-package postinstall:remove:prebuild-install postinstall:electron-chromedriver scripts/code-generation/electron-main",
-    "postinstall:remove:prebuild-install": "rimraf ./node_modules/prebuild-install",
+    "postinstall": "npm-run-all yarn:audit postinstall:patch-package postinstall:husky-install postinstall:remove:prebuild-install postinstall:electron-chromedriver scripts/code-generation/electron-main",
     "postinstall:patch-package": "patch-package --patch-dir ./patches/patch-package",
+    "postinstall:husky-install": "husky install",
+    "postinstall:remove:prebuild-install": "rimraf ./node_modules/prebuild-install",
     "postinstall:electron-chromedriver": "npm-run-all postinstall:electron-chromedriver:remove postinstall:electron-chromedriver:download",
     "postinstall:electron-chromedriver:remove": "rimraf ./node_modules/electron-chromedriver/bin",
     "postinstall:electron-chromedriver:download": "node ./node_modules/electron-chromedriver/download-chromedriver.js",

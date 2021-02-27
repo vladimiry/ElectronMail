@@ -3,7 +3,7 @@
 # - https://travis-ci.community/t/using-unified-cache-control-cache-identity/1531
 
 branches: { only: [ master ] }
-node_js: 12
+node_js: 14
 language: node_js
 cache: false
 anchors:

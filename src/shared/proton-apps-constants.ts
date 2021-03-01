@@ -51,7 +51,7 @@ export const PROVIDER_REPO_MAP = {
         repoRelativeDistDir: "./dist",
         baseDirName: "account",
         repo: "https://github.com/ProtonMail/proton-account.git",
-        commit: "c3dd95ed84a2ee4225c8393a3523efde5b88be89",
+        commit: "79f22ed7770aa2e158875f2719b041602807d4ca",
         protonPack: {appConfig: {clientId: "WebAccount"}}
     },
     [PROVIDER_REPO_NAMES[2]]: {
@@ -79,7 +79,7 @@ export const PROVIDER_REPO_MAP = {
         repoRelativeDistDir: "./dist",
         baseDirName: "drive",
         repo: "https://github.com/ProtonMail/proton-drive.git",
-        commit: "6faab373c312b5db4915f6c404b98833df2b7a5c",
+        commit: "53b5464022a34f8b77ef81c2d965f3b3a7927cde",
         protonPack: {appConfig: {clientId: "WebDrive"}},
     },
 } as const;

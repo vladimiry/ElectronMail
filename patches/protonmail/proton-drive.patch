@@ -1,0 +1,13 @@
+diff --git a/src/app/components/SharingModal/GeneratedLinkState.tsx b/src/app/components/SharingModal/GeneratedLinkState.tsx
+index 10b7a5c..f32955f 100644
+--- a/src/app/components/SharingModal/GeneratedLinkState.tsx
++++ b/src/app/components/SharingModal/GeneratedLinkState.tsx
+@@ -51,7 +51,7 @@ function GeneratedLinkState({
+ }: Props) {
+     const contentRef = useRef<HTMLDivElement>(null);
+     const { createNotification } = useNotifications();
+-    const baseUrl = `${window.location.origin}/urls`;
++    const baseUrl = "https://drive.protonmail.com/urls";
+
+     const handleClickCopyURL = () => {
+         if (contentRef.current) {

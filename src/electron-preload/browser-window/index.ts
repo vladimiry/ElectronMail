@@ -28,7 +28,7 @@ if (BUILD_ENVIRONMENT === "e2e") {
             // eslint-disable-next-line @typescript-eslint/no-var-requires
             ? require("electron")
             // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-call
-            : require("electron").remote.require(name);
+            : require("electron").remote.require(name); // eslint-disable-line @typescript-eslint/no-unsafe-member-access
     };
 
     document.addEventListener("DOMContentLoaded", () => {

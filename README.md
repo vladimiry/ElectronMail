@@ -78,16 +78,16 @@ The [reproducible builds](https://en.wikipedia.org/wiki/Reproducible_builds) ide
 - Install [Yarn](https://yarnpkg.com/en/docs/install).
 - Install dependencies running `yarn --pure-lockfile`.
 - Build app running `yarn run app:dist`.
-- Build a package to install running `yarn run electron-builder:dist` command to build Windows/Mac OS X package and one of the following commands to build Linux package:
-  - `yarn run electron-builder:dist:linux:appimage`
-  - `yarn run electron-builder:dist:linux:deb`
-  - `yarn run electron-builder:dist:linux:freebsd`
-  - `yarn run electron-builder:dist:linux:pacman`
-  - `yarn run electron-builder:dist:linux:rpm`
-  - `yarn run electron-builder:dist:linux:snap`
-- The assembled inbstallation package comes into the `./dist` folder.
+- Build a package to install running `npm run electron-builder:dist` command to build Windows/Mac OS X package and one of the following commands to build Linux package:
+  - `npm run electron-builder:dist:linux:appimage`
+  - `npm run electron-builder:dist:linux:deb`
+  - `npm run electron-builder:dist:linux:freebsd`
+  - `npm run electron-builder:dist:linux:pacman`
+  - `npm run electron-builder:dist:linux:rpm`
+  - `npm run electron-builder:dist:linux:snap`
+- The assembled installation package comes into the `./dist` folder.
 
-To recap, considering that all the described build requirements are met, the short command to build let's say Arch Linux package will be `yarn --pure-lockfile && yarn app:dist && yarn electron-builder:dist:linux:pacman`.
+To recap, considering that all the described build requirements are met, the short command to build let's say Arch Linux package will be `yarn --pure-lockfile && yarn app:dist && npm run electron-builder:dist:linux:pacman`.
 
 ## Data/config files created and used by the app
 

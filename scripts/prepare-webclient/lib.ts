@@ -66,7 +66,7 @@ export function printAndWriteFile(file: string, content: Buffer | string): void 
 
 async function cleanDestAndMoveToIt({src, dest}: { src: string, dest: string }): Promise<void> {
     CONSOLE_LOG(`Moving ${src} to ${dest} (cleaning destination dir before)`);
-    await execShell(["npx", ["--no-install", "rimraf", dest]]);
+    await execShell(["npx", ["--no", "rimraf", dest]]);
     await fsExtra.move(src, dest);
 }
 
@@ -153,7 +153,7 @@ export async function executeBuildFlow<T extends FolderAsDomainEntry[], O = Unpa
         }
 
         // making sure dist dir doesn't exist before executing a new build or taking it from backup
-        await execShell(["npx", ["--no-install", "rimraf", repoDistDir]]);
+        await execShell(["npx", ["--no", "rimraf", repoDistDir]]);
 
         const repoDistBackupDir = resolveGitOutputBackupDir({repoType, suffix: `dist-${folderAsDomainEntry.folderNameAsDomain}`});
 
@@ -195,7 +195,7 @@ export async function executeBuildFlow<T extends FolderAsDomainEntry[], O = Unpa
             { // backup the dist
                 const src = repoDistDir;
                 const dest = repoDistBackupDir;
-                await execShell(["npx", ["--no-install", "rimraf", dest]]);
+                await execShell(["npx", ["--no", "rimraf", dest]]);
                 CONSOLE_LOG(`Backup ${src} to ${dest}`);
                 await fsExtra.copy(src, dest);
             }

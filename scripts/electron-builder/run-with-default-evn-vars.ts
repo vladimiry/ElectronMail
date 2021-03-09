@@ -11,8 +11,11 @@ const [
 (async () => {
     await execShell(
         [
-            "npx",
-            ["electron-builder", ...args],
+            "npm",
+            [
+                "exec", "--package=electron-builder", "--", "electron-builder",
+                ...args,
+            ],
             {
                 env: {
                     ...process.env,

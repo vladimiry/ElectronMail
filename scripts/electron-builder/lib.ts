@@ -168,12 +168,13 @@ export async function build(
     packageType: "appimage" | "snap",
 ): Promise<{ packageFile: string }> {
     await execShell([
-        "yarn",
+        "npm",
         [
-            "electron-builder:dist:shortcut",
+            "exec", "--package=ts-node", "--", "ts-node", "--files", "--require", "tsconfig-paths/register",
+            "./scripts/electron-builder/run-with-default-evn-vars.ts", "--x64", "--publish", "never",
             "--linux",
             packageType,
-        ]
+        ],
     ]);
 
     // TODO move "fastGlob" to lib function with inner "sanitizeFastGlobPattern" call

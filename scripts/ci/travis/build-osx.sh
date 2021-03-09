@@ -2,10 +2,10 @@
 
 set -ev
 
-npx --no-install npm-run-all lint test:electron-main build assets
+npx --no npm-run-all lint test:electron-main build assets
 
 npm run clean:prebuilds
-npx --no-install electron-builder install-app-deps --arch=x64
+npm exec --package=electron-builder -- electron-builder install-app-deps --arch=x64
 
 yarn test:e2e
 

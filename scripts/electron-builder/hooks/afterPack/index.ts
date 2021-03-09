@@ -1,13 +1,14 @@
 import path from "path";
-import {AfterPackContext, Configuration} from "app-builder-lib";
 
 import {APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR} from "src/shared/constants";
 import {CONSOLE_LOG, execShell} from "scripts/lib";
 import {copyDictionaryFilesTo} from "scripts/electron-builder/lib";
 
-const printPrefix = `[hook: afterPack]`;
+const hookName = "afterPack";
 
-async function linux({targets, appOutDir}: AfterPackContext): Promise<void> {
+const printPrefix = `[hook: ${hookName}]`;
+
+async function linux({targets, appOutDir}: import("app-builder-lib").AfterPackContext): Promise<void> {
     if (targets.length !== 1) {
         throw new Error(`${printPrefix} Only one target is allowed at a time for Linux platform`);
     }
@@ -25,7 +26,7 @@ async function linux({targets, appOutDir}: AfterPackContext): Promise<void> {
     }
 }
 
-const hook: Required<Configuration>["afterPack"] = async (context) => {
+const hook: Required<import("app-builder-lib").Configuration>[typeof hookName] = async (context) => {
     const electronPlatformNameLoweredCase = context.electronPlatformName.toLowerCase();
 
     CONSOLE_LOG(`${printPrefix} Processing ${JSON.stringify(context.targets.map(({name}) => name))} targets`);

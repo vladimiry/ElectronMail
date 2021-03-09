@@ -39,7 +39,7 @@ async function unpack({packageFile}: { packageFile: string }): Promise<{ package
         extractedImageFolderName,
     );
 
-    await execShell(["npx", ["--no-install", "rimraf", packageDir]]);
+    await execShell(["npx", ["--no", "rimraf", packageDir]]);
     await execShell([packageFile, ["--appimage-extract"], {cwd}]);
 
     return {packageDir};
@@ -78,7 +78,7 @@ async function packAndCleanup({packageFile, packageDir}: { packageFile: string; 
         ],
         {printEnvWhitelist: ["ARCH"]},
     );
-    await execShell(["npx", ["--no-install", "rimraf", packageDir]]);
+    await execShell(["npx", ["--no", "rimraf", packageDir]]);
 }
 
 async function postProcess({packageFile}: { packageFile: string }): Promise<void> {

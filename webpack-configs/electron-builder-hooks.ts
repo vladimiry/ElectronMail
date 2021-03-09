@@ -13,9 +13,8 @@ const hooksDir = (...value: string[]): string => {
 
 // TODO scan folder automatically
 const hooksToBuild = [
-    // "afterAllArtifactBuild",
     "afterPack",
-];
+] as const;
 
 const configurations: Configuration[] = hooksToBuild.map((hookDirName) => {
     const hookDir = path.join(hooksDir(hookDirName));

@@ -12,7 +12,7 @@ async function unpack({packageFile, packageDir}: { packageFile: string; packageD
 async function packAndCleanup({packageFile, packageDir}: { packageFile: string; packageDir: string }): Promise<void> {
     await execShell(["rm", ["--force", packageFile]]);
     await execShell(["snapcraft", ["pack", packageDir, "--output", packageFile]]);
-    await execShell(["npx", ["--no-install", "rimraf", packageDir]]);
+    await execShell(["npx", ["--no", "rimraf", packageDir]]);
 }
 
 function addCommandLineArgs({packageDir}: { packageDir: string; }): void {

@@ -69,6 +69,7 @@ The [reproducible builds](https://en.wikipedia.org/wiki/Reproducible_builds) ide
   - Install [NVM](https://github.com/creationix/nvm).
   - Run `nvm install 14`.
   - Run `nvm use 14`.
+- Make sure you are using `npm` v7, not the v6 (run `npm -v` to see the version).    
 - Some native modules require compiling process to be involved and for that Python and C++ compiler need to be installed on the system:
   - On `Windows`: the simplest to install all the needed stuff on Windows is to run `npm install --global --production windows-build-tools` CLI command.
   - On `Linux`: `python v2.7`, `make` and a C/C++ compiler toolchain, like `GCC` are most likely already installed. Besides [keytar](https://github.com/atom/node-keytar) needs `libsecret` library to be installed.

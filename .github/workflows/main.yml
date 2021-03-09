@@ -14,6 +14,7 @@ jobs:
       # <common> TODO use YAML anchors feature when it gets supported
       - { name: check out repository, uses: actions/checkout@v2 }
       - { name: setup node, uses: actions/setup-node@v1, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}" } }
+      - { name: install npm, run: "npm install -g npm@7" }
       - { name: tweak system, if: runner.os == 'Linux', run: ./scripts/ci/github/tweak-system-linux.sh }
       - { name: tweak system, if: runner.os == 'Windows', run: ./scripts/ci/github/tweak-system-windows.ps1 }
       - uses: actions/cache@v2
@@ -37,6 +38,7 @@ jobs:
       # <common> TODO use YAML anchors feature when it gets supported
       - { name: check out repository, uses: actions/checkout@v2 }
       - { name: setup node, uses: actions/setup-node@v1, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}" } }
+      - { name: install npm, run: "npm install -g npm@7" }
       - { name: tweak system, if: runner.os == 'Linux', run: ./scripts/ci/github/tweak-system-linux.sh }
       - { name: tweak system, if: runner.os == 'Windows', run: ./scripts/ci/github/tweak-system-windows.ps1 }
       - uses: actions/cache@v2
@@ -45,7 +47,7 @@ jobs:
         with: { path: ./node_modules, key: "node-modules-cache-${{ github.job }}-${{ matrix.os }}-${{ hashFiles('./yarn.lock', './patch-package/*.patch') }}" }
       - { name: install node modules, if: steps.cache-node-modules.outputs.cache-hit != 'true', run: "yarn install --pure-lockfile --network-timeout 60000" }
       # </common>
-      - { name: build, run: 'npx --no-install npm-run-all lint test:electron-main build' }
+      - { name: build, run: 'npm exec --package=npm-run-all -- npm-run-all lint test:electron-main build' }
       - { name: print ./app files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./app }
       - { name: upload artifact, uses: actions/upload-artifact@v2, with: { name: 'app-artifact-${{ runner.os }}', path: ./app, if-no-files-found: error } }
   package-app:
@@ -57,6 +59,7 @@ jobs:
       # <common> TODO use YAML anchors feature when it gets supported
       - { name: check out repository, uses: actions/checkout@v2 }
       - { name: setup node, uses: actions/setup-node@v1, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}" } }
+      - { name: install npm, run: "npm install -g npm@7" }
       - { name: tweak system, if: runner.os == 'Linux', run: ./scripts/ci/github/tweak-system-linux.sh }
       - { name: tweak system, if: runner.os == 'Windows', run: ./scripts/ci/github/tweak-system-windows.ps1 }
       - uses: actions/cache@v2

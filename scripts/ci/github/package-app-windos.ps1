@@ -19,7 +19,7 @@ echo "::endgroup::"
 
 echo "::group::package"
 yarn build:electron-builder-hooks
-npm electron-builder:dist
+npm run electron-builder:dist
 echo "::endgroup::"
 
 echo "::group::hash & upload"

@@ -14,7 +14,7 @@ yarn test:e2e
 # output something every 9 minutes (540 seconds) to prevent Travis killing the job
 while sleep 540; do echo "=====[ $SECONDS seconds still running ]====="; done &
 yarn build:electron-builder-hooks
-yarn electron-builder:dist
+npm run electron-builder:dist
 # killing background sleep loop
 kill %1
 

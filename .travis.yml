@@ -16,6 +16,7 @@ anchors:
       - tar -cvf e2e-logs.tar ./output/e2e
       - yarn scripts/transfer upload e2e-logs.tar
 install:
+  - npm install -g npm@7
   - npx envinfo
   - yarn install --pure-lockfile
 notifications: { email: { on_success: never, on_failure: change } }

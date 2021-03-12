@@ -99,7 +99,7 @@
     "scripts/dist-packages/upload": "yarn ts-node:shortcut ./scripts/dist-packages/upload.ts ./dist ./output",
     "scripts/download-tray-icon-font": "yarn ts-node:shortcut ./scripts/download-tray-icon-font.ts",
     "scripts/transfer": "yarn ts-node:shortcut ./scripts/transfer/index.ts",
-    "ts-node:shortcut": "cross-env npm exec --package=ts-node -- ts-node --files --require tsconfig-paths/register",
+    "ts-node:shortcut": "npm exec --package=ts-node -- ts-node --files --require tsconfig-paths/register",
     "webpack:shortcut": "cross-env TS_NODE_FILES=true npm exec --package=webpack-cli --node-options=\"--require tsconfig-paths/register\" -- webpack"
   },
   "ava": {

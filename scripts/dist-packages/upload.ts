@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import {platform} from "os";
 
-import {CONSOLE_LOG, execShell} from "scripts/lib";
+import {catchTopLeventAsync, CONSOLE_LOG, execShell} from "scripts/lib";
 import {listInstallationPackageFiles} from "./lib";
 
 const [, , DIST_DIRECTORY, OUTPUT_DIRECTORY] = process.argv as [null, null, string, string];
@@ -18,7 +18,7 @@ outputStream.on("finish", async () => {
 
 outputArchiver.pipe(outputStream);
 
-(async () => {
+catchTopLeventAsync(async () => {
     for (const file of await listInstallationPackageFiles(DIST_DIRECTORY)) {
         if (file.endsWith(".blockmap")) {
             continue;
@@ -29,7 +29,4 @@ outputArchiver.pipe(outputStream);
     }
 
     await outputArchiver.finalize();
-})().catch((error) => {
-    CONSOLE_LOG(error);
-    process.exit(1);
 });

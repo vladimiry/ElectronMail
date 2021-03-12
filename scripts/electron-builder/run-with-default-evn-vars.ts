@@ -1,5 +1,5 @@
 import {ARTIFACT_NAME_POSTFIX_ENV_VAR_NAME} from "scripts/const";
-import {CONSOLE_LOG, execShell} from "scripts/lib";
+import {catchTopLeventAsync, execShell} from "scripts/lib";
 
 // https://nodejs.org/en/knowledge/command-line/how-to-parse-command-line-arguments/
 const [
@@ -8,7 +8,7 @@ const [
     ...args
 ] = process.argv;
 
-(async () => {
+catchTopLeventAsync(async () => {
     await execShell(
         [
             "npm",
@@ -25,7 +25,4 @@ const [
         ],
         {printEnvWhitelist: [ARTIFACT_NAME_POSTFIX_ENV_VAR_NAME]},
     );
-})().catch((error) => {
-    CONSOLE_LOG(error);
-    process.exit(1);
 });

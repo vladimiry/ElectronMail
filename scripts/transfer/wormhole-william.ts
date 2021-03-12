@@ -1,7 +1,7 @@
 import os from "os";
 import path from "path";
 
-import {CONSOLE_LOG, execShell, resolveExecutable} from "scripts/lib";
+import {catchTopLeventAsync, execShell, resolveExecutable} from "scripts/lib";
 
 const SERVICE_NAME = "wormhole-william";
 const SERVICE_VERSION = "1.0.4";
@@ -47,12 +47,9 @@ async function uploadFileArg(): Promise<{ downloadCodePhrase: string }> {
     return {downloadCodePhrase};
 }
 
-(async () => {
+catchTopLeventAsync(async () => {
     if (ACTION_TYPE_ARG !== "upload") {
         throw new Error(`Unsupported action type: ${ACTION_TYPE_ARG}`);
     }
     await uploadFileArg();
-})().catch((error) => {
-    CONSOLE_LOG(error);
-    process.exit(1);
 });

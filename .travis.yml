@@ -3,7 +3,7 @@
 # - https://travis-ci.community/t/using-unified-cache-control-cache-identity/1531
 
 branches: { only: [ master ] }
-node_js: 14
+node_js: 15
 language: node_js
 cache: false
 anchors:
@@ -16,9 +16,9 @@ anchors:
       - tar -cvf e2e-logs.tar ./output/e2e
       - yarn scripts/transfer upload e2e-logs.tar
 install:
-  - npm install -g npm@7
   - npx envinfo
   - yarn install --pure-lockfile
+  - yarn cache clean
 notifications: { email: { on_success: never, on_failure: change } }
 jobs:
   include:

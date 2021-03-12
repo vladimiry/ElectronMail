@@ -3,8 +3,8 @@ import fs from "fs";
 import path from "path";
 
 import {BINARY_NAME} from "src/shared/constants";
-import {CONSOLE_LOG, execShell, resolveExecutable} from "scripts/lib";
-import {DISABLE_SANDBOX_ARGS_LINE, build, ensureFileHasNoSuidBit} from "scripts/electron-builder/lib";
+import {catchTopLeventAsync, CONSOLE_LOG, execShell, resolveExecutable} from "scripts/lib";
+import {build, DISABLE_SANDBOX_ARGS_LINE, ensureFileHasNoSuidBit} from "scripts/electron-builder/lib";
 
 // TODO pass destination directory instead of hardcoding it ("--appimage-extract" doesn't support destination parameter at the moment)
 const extractedImageFolderName = "squashfs-root";
@@ -88,11 +88,8 @@ async function postProcess({packageFile}: { packageFile: string }): Promise<void
     await packAndCleanup({packageDir, packageFile});
 }
 
-(async () => {
+catchTopLeventAsync(async () => {
     await postProcess(
         await build("appimage"),
     );
-})().catch((error) => {
-    CONSOLE_LOG(error);
-    process.exit(1);
 });

@@ -46,30 +46,29 @@ export async function execShell(
     {
         printStd = true,
         printEnvWhitelist = [],
+        doNotRethrow = false,
     }: {
         printStd?: boolean;
         printEnvWhitelist?: readonly string[];
+        doNotRethrow?: boolean
     } = {},
 ): Promise<Unpacked<ReturnType<typeof spawnAsync>>> {
-    CONSOLE_LOG(
-        "Executing Shell command:",
-        JSON.stringify(
-            {
-                command,
-                args,
-                options: {
-                    ...omit(options || {}, ["env"]),
-                    ...{
-                        whitelistedEnv: options?.env && printEnvWhitelist?.length
-                            ? pick(options.env, [...printEnvWhitelist])
-                            : undefined,
-                    },
-                },
+    {
+        const stringifiedOptions = JSON.stringify({
+            ...omit(options || {}, ["env"]),
+            ...{
+                whitelistedEnv: options?.env && printEnvWhitelist?.length
+                    ? pick(options.env, [...printEnvWhitelist])
+                    : undefined,
             },
-            null,
-            2,
-        ),
-    );
+        });
+        const optionsPart = stringifiedOptions !== "{}"
+            ? ` (options: ${stringifiedOptions})`
+            : "";
+        CONSOLE_LOG(
+            `Executing Shell command${optionsPart}: ${[command, ...(args ?? [])].join(" ")}`,
+        );
+    }
 
     const spawnPromise = spawnAsync(command, args, options);
 
@@ -85,9 +84,13 @@ export async function execShell(
 
     try {
         return await spawnPromise;
-    } catch (error) {
+    } catch (_) {
+        const error = _ as Unpacked<ReturnType<typeof spawnAsync>>;
+        if (doNotRethrow) {
+            return error;
+        }
         (() => {
-            const omitProps: Array<keyof Unpacked<ReturnType<typeof spawnAsync>>> = ["output", "stderr", "stdout"];
+            const omitProps: Array<keyof typeof error> = ["output", "stderr", "stdout"];
             omitProps.forEach((omitProp) => {
                 if (omitProp in error) {
                     delete error[omitProp]; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
@@ -210,4 +213,13 @@ export const resolveExecutable = async (
     }
 
     return {command: destFile};
+};
+
+export const catchTopLeventAsync = (asyncFn: () => Promise<unknown>): void => {
+    (async () => {
+        await asyncFn();
+    })().catch((error) => {
+        CONSOLE_LOG(error);
+        process.exit(1);
+    });
 };

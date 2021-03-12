@@ -1,7 +1,7 @@
 import os from "os";
 import path from "path";
 
-import {CONSOLE_LOG, execShell, resolveExecutable} from "scripts/lib";
+import {catchTopLeventAsync, execShell, resolveExecutable} from "scripts/lib";
 
 const SERVICE_NAME = "ffsend";
 const SERVICE_VERSION = "v0.2.68";
@@ -56,12 +56,9 @@ async function uploadFileArg(): Promise<{ downloadUrl: string }> {
     return {downloadUrl};
 }
 
-(async () => {
+catchTopLeventAsync(async () => {
     if (ACTION_TYPE_ARG !== "upload") {
         throw new Error(`Unsupported action type: ${ACTION_TYPE_ARG}`);
     }
     await uploadFileArg();
-})().catch((error) => {
-    CONSOLE_LOG(error);
-    process.exit(1);
 });

@@ -2,9 +2,9 @@ import fsExtra from "fs-extra";
 import path from "path";
 
 import {BINARY_NAME} from "src/shared/constants";
-import {CONSOLE_LOG, execShell} from "scripts/lib";
+import {catchTopLeventAsync, execShell} from "scripts/lib";
 import {CWD_ABSOLUTE_DIR} from "scripts/const";
-import {FolderAsDomainEntry, executeBuildFlow, printAndWriteFile} from "./lib";
+import {executeBuildFlow, FolderAsDomainEntry, printAndWriteFile} from "./lib";
 import {PROVIDER_REPO_MAP, PROVIDER_REPO_NAMES} from "src/shared/proton-apps-constants";
 
 const folderAsDomainEntries: Array<FolderAsDomainEntry<{
@@ -191,7 +191,7 @@ const applyPatch = async ({patchFile, cwd}: { patchFile: string; cwd: string }):
     ]);
 };
 
-(async () => {
+catchTopLeventAsync(async () => {
     for (const repoType of PROVIDER_REPO_NAMES) {
         await executeBuildFlow({
             repoType,
@@ -277,7 +277,4 @@ const applyPatch = async ({patchFile, cwd}: { patchFile: string; cwd: string }):
             },
         });
     }
-})().catch((error) => {
-    CONSOLE_LOG(error);
-    process.exit(1);
 });

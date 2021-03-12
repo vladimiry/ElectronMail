@@ -2,7 +2,7 @@
 
 set -ev
 
-npx --no npm-run-all lint test:electron-main build assets
+npm exec --package=npm-run-all -- npm-run-all lint test:electron-main build assets
 
 npm run clean:prebuilds
 npm exec --package=electron-builder -- electron-builder install-app-deps --arch=x64

@@ -212,7 +212,7 @@
     "electron": "12.0.1",
     "electron-builder": "22.10.5",
     "escape-string-regexp": "4.0.0",
-    "eslint": "7.21.0",
+    "eslint": "7.22.0",
     "eslint-plugin-import": "2.22.1",
     "eslint-plugin-sonarjs": "0.6.0",
     "file-loader": "6.2.0",
@@ -225,7 +225,7 @@
     "import-sort-cli": "6.0.0",
     "import-sort-parser-typescript": "6.0.0",
     "jasmine": "3.6.4",
-    "jsdom": "16.5.0",
+    "jsdom": "16.5.1",
     "karma": "6.2.0",
     "karma-jasmine": "4.0.1",
     "karma-jsdom-launcher": "9.0.0",
@@ -272,6 +272,7 @@
     "import-sort-cli/yargs": "^15.4.1",
     "import-sort-parser-typescript/typescript": "4.2.3",
     "@ngtools/webpack/@angular-devkit/core/rxjs": "6.6.6",
+    "electron-builder/dmg-builder/dmg-license/plist/xmldom": "^0.5.0",
     "*/**/tslib": "^2",
     "*/**/builder-util-runtime": "8.7.3"
   }

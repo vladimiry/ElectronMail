@@ -6,7 +6,7 @@ echo "::group::tweak the system"
 sudo apt-get update
 # purpose: native modules compiling
 sudo apt-get install --yes --no-install-recommends libtool automake g++-7
-# purpose: compiling "desktop-idle" native module
+# purpose: compiling "desktop-idle" native module (issue: No package 'xscrnsaver' found)
 sudo apt-get install --yes --no-install-recommends libxss-dev
 # purpose: tweaking snap package ("unsquashfs" binary)
 sudo apt-get install --yes --no-install-recommends snapcraft squashfs-tools

@@ -58,10 +58,10 @@
     "clean:app-dev": "rimraf ./app-dev",
     "clean:output": "rimraf ./output",
     "clean:prebuilds": "npm-run-all clean:prebuilds:keytar clean:prebuilds:sodium-native clean:prebuilds:spellchecker clean:prebuilds:desktop-idle",
-    "clean:prebuilds:keytar": "rimraf ./node_modules/keytar/build ./node_modules/keytar/prebuilds",
-    "clean:prebuilds:sodium-native": "rimraf ./node_modules/sodium-native/build ./node_modules/sodium-native/prebuilds ./node_modules/sodium-native/lib",
-    "clean:prebuilds:spellchecker": "rimraf ./node_modules/spellchecker/build ./node_modules/spellchecker/prebuilds",
-    "clean:prebuilds:desktop-idle": "rimraf ./node_modules/desktop-idle/build ./node_modules/desktop-idle/prebuilds",
+    "clean:prebuilds:keytar": "rimraf ./node_modules/keytar/bin ./node_modules/keytar/build ./node_modules/keytar/prebuilds",
+    "clean:prebuilds:sodium-native": "rimraf ./node_modules/sodium-native/bin ./node_modules/sodium-native/build ./node_modules/sodium-native/prebuilds ./node_modules/sodium-native/lib",
+    "clean:prebuilds:spellchecker": "rimraf ./node_modules/spellchecker/bin ./node_modules/spellchecker/build ./node_modules/spellchecker/prebuilds",
+    "clean:prebuilds:desktop-idle": "rimraf ./node_modules/desktop-idle/bin ./node_modules/desktop-idle/build ./node_modules/desktop-idle/prebuilds",
     "assets": "npm-run-all assets:copy assets:webclient",
     "assets:dev": "npm-run-all assets:copy:dev assets:webclient:dev",
     "assets:copy": "cpx \"./src/assets/dist/**/*\" ./app/assets",
@@ -99,7 +99,7 @@
     "scripts/dist-packages/upload": "yarn ts-node:shortcut ./scripts/dist-packages/upload.ts ./dist ./output",
     "scripts/download-tray-icon-font": "yarn ts-node:shortcut ./scripts/download-tray-icon-font.ts",
     "scripts/transfer": "yarn ts-node:shortcut ./scripts/transfer/index.ts",
-    "ts-node:shortcut": "npm exec --package=ts-node -- ts-node --files --require tsconfig-paths/register",
+    "ts-node:shortcut": "cross-env TS_NODE_FILES=true ts-node --require tsconfig-paths/register",
     "webpack:shortcut": "cross-env TS_NODE_FILES=true npm exec --package=webpack-cli --node-options=\"--require tsconfig-paths/register\" -- webpack"
   },
   "ava": {

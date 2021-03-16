@@ -3,7 +3,6 @@
 echo "::group::system setup"
 ./scripts/ci/github/system-setup.ps1 -IncludeWin81Sdk $true
 npm config set msvs_version 2017
-Write-Output "npm config get msvs_version: $(npm config get msvs_version)"
 echo "::endgroup::"
 
 echo "::group::install node modules"

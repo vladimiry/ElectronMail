@@ -1,6 +1,6 @@
 import _logger from "electron-log";
 import {BrowserWindow, Menu, MenuItemConstructorOptions, WebPreferences, app, clipboard, screen} from "electron";
-import {equals, omit, pick} from "remeda";
+import {equals, pick} from "remeda";
 import {inspect} from "util";
 import {isWebUri} from "valid-url";
 
@@ -8,11 +8,15 @@ import {Context} from "./model";
 import {DEFAULT_WEB_PREFERENCES, DEFAULT_WEB_PREFERENCES_KEYS} from "src/electron-main/window/constants";
 import {IPC_MAIN_API_NOTIFICATION$} from "./api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
-import {PACKAGE_VERSION} from "src/shared/constants";
 import {PLATFORM} from "src/electron-main/constants";
 import {applyZoomFactor} from "src/electron-main/window/util";
 import {buildSpellCheckSettingsMenuItems, buildSpellingSuggestionMenuItems} from "src/electron-main/spell-check/menu";
-import {buildUrlOriginsFailedMsgTester, curryFunctionMembers, lowerConsoleMessageEventLogLevel} from "src/shared/util";
+import {
+    buildUrlOriginsFailedMsgTester,
+    curryFunctionMembers,
+    depersonalizeLoggedUrlsInString,
+    lowerConsoleMessageEventLogLevel,
+} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[web-contents]");
 
@@ -73,38 +77,7 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
     app.on("web-contents-created", async (...[, webContents]) => {
         const isFullTextSearchBrowserWindow = ctx.uiContext?.fullTextSearchBrowserWindow?.webContents === webContents;
 
-        if (PACKAGE_VERSION.includes("-debug")) {
-            const mark = "WEBCONTENTS_EVENTS_DEBUG";
-
-            webContents.on("will-attach-webview", (...[/* event */, ...[webPreferences, params]]) => {
-                logger.verbose(
-                    mark,
-                    JSON.stringify({
-                        type: "will-attach-webview",
-                        webPreferences,
-                        params: omit(params, ["partition"]), // "partition" prop includes "login" value, so skipping it as sensitive data
-                    }),
-                );
-            });
-            webContents.on("did-attach-webview", (...[/* event */, childWebContents]) => {
-                logger.verbose(
-                    mark,
-                    JSON.stringify({type: "did-attach-webview", id: childWebContents.id}),
-                );
-            });
-
-            logger.verbose(mark, "handlers subscribed");
-        }
-
-        webContents.on("certificate-error", ({type}, url, error) => {
-            logger.error(
-                JSON.stringify({
-                    type,
-                    url,
-                }),
-                error,
-            );
-        });
+        webContents.on("certificate-error", ({type}, url, error) => logger.error(JSON.stringify({type, url}), error));
         webContents.on("console-message", ({type}, level, message, line, sourceId) => {
             const isWarn = Number(level) === 2;
             const isError = Number(level) === 3;
@@ -118,7 +91,7 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
             );
             if ((isWarn || isError) && !isFullTextSearchInstanceError) {
                 logger[lowerConsoleMessageEventLogLevel(isWarn ? "warn" : "error", message)](
-                    JSON.stringify({type, level, message, line, sourceId}),
+                    JSON.stringify({type, level, message: depersonalizeLoggedUrlsInString(message), line, sourceId}),
                 );
             }
         });
@@ -152,22 +125,10 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
                 }),
             );
         });
-        webContents.on("plugin-crashed", ({type}, name, version) => {
-            logger.error(
-                JSON.stringify({type, name, version}),
-            );
-        });
-        webContents.on("preload-error", ({type}, preloadPath, error) => {
-            logger.error(
-                JSON.stringify({type, preloadPath}),
-                error,
-            );
-        });
-        webContents.on("render-process-gone", ({type}, details) => {
-            logger.error(
-                JSON.stringify({type, details}),
-            );
-        });
+        webContents.on("crashed", ({type}) => logger.error(JSON.stringify({type})));
+        webContents.on("plugin-crashed", ({type}, name, version) => logger.error(JSON.stringify({type, name, version})));
+        webContents.on("preload-error", ({type}, preloadPath, error) => logger.error(JSON.stringify({type, preloadPath}), error));
+        webContents.on("render-process-gone", ({type}, details) => logger.error(JSON.stringify({type, details})));
         webContents.on("new-window", async (event, url) => {
             event.preventDefault();
             if (isWebUri(url)) {

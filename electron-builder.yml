@@ -24,6 +24,8 @@ files:
   - '!node_modules/remeda/{coverage,scripts,src}'
   # spellchecker
   - '!node_modules/spellchecker/{spec}'
+  # re2
+  - '!node_modules/re2'
 compression: normal
 asar: true
 asarUnpack:

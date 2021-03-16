@@ -19,7 +19,7 @@ import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {
     buildUrlOriginsFailedMsgTester,
     curryFunctionMembers,
-    depersonalizeLoggedUrl,
+    depersonalizeProtonApiUrl,
     parseUrlOriginWithNullishCheck
 } from "src/shared/util";
 import {getHeader, patchResponseHeaders, resolveCorsProxy} from "./service";
@@ -237,7 +237,7 @@ export function initWebRequestListenersByAccount(
         requestProxyCache.remove(details);
         logger.warn({
             ...pick(details, ["resourceType", "error"]),
-            url: depersonalizeLoggedUrl(details.url),
+            url: depersonalizeProtonApiUrl(details.url),
         });
     });
 

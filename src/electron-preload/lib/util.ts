@@ -7,7 +7,7 @@ import {IPC_MAIN_API} from "src/shared/api/main";
 import {LOGGER} from "src/electron-preload/lib/electron-exposure/logger";
 import {Logger} from "src/shared/model/common";
 import {ProtonApiError} from "src/electron-preload/webview/primary/types";
-import {curryFunctionMembers, depersonalizeLoggedUrl} from "src/shared/util";
+import {curryFunctionMembers, depersonalizeProtonApiUrl} from "src/shared/util";
 
 export const buildLoggerBundle = (prefix: string): Logger => curryFunctionMembers(LOGGER, prefix);
 
@@ -82,7 +82,7 @@ export const sanitizeProtonApiError = <T extends unknown>(
             // omitting possibly sensitive or unserializable data
             // unserializable issue case: we send the error to main process via IPC
             ...pick(error, ["name", "message", "status"]),
-            responseUrl: error.response?.url && depersonalizeLoggedUrl(error.response?.url),
+            responseUrl: error.response?.url && depersonalizeProtonApiUrl(error.response?.url),
             responseStatusText: error.response?.statusText,
             dataCode: error.data?.Code,
             dataError: typeof error.data?.Error === "string" ? error.data?.Error : undefined,

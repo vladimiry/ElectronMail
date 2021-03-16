@@ -10,9 +10,8 @@ import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {LogLevel} from "src/shared/model/common";
 import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";
-import {PACKAGE_VERSION} from "src/shared/constants";
 import {WebAccount} from "src/web/browser-window/app/model";
-import {getWebViewPartition, lowerConsoleMessageEventLogLevel} from "src/shared/util";
+import {depersonalizeLoggedUrlsInString, getWebViewPartition, lowerConsoleMessageEventLogLevel} from "src/shared/util";
 
 type ChildEvent = Parameters<typeof AccountComponent.prototype.onEventChild>[0];
 
@@ -192,7 +191,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
                 if (isWarn || isError) {
                     this.log(
                         lowerConsoleMessageEventLogLevel(isWarn ? "warn" : "error", message),
-                        ["webview event", JSON.stringify({type, level, message, line, sourceId})],
+                        ["webview event", JSON.stringify({type, level, message: depersonalizeLoggedUrlsInString(message), line, sourceId})],
                     );
                 }
             },
@@ -235,35 +234,6 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         webView.addEventListener(...pluginCrashedArgs);
 
         this.log("info", ["webview handlers subscribed"]);
-
-        if (PACKAGE_VERSION.includes("-debug")) {
-            const mark = "WEBVIEW_EVENTS_DEBUG";
-            const log = (stringifiableProps: Record<string, unknown>): void => {
-                this.log("verbose", [mark, JSON.stringify(stringifiableProps)]);
-            };
-            /* eslint-disable max-len */
-            webView.addEventListener("load-commit", (event) => log(pick(event, ["type", "url", "isMainFrame"])));
-            webView.addEventListener("did-finish-load", (event) => log(pick(event, ["type"])));
-            // webView.addEventListener("did-fail-load", (event) => log(pick(event, ["type", "errorCode", "errorDescription", "validatedURL", "isMainFrame"])));
-            webView.addEventListener("did-frame-finish-load", (event) => log(pick(event, ["type", "isMainFrame"])));
-            webView.addEventListener("did-start-loading", (event) => log(pick(event, ["type"])));
-            webView.addEventListener("did-stop-loading", (event) => log(pick(event, ["type"])));
-            // webView.addEventListener("dom-ready", (event) => log(pick(event, ["type"])));
-            webView.addEventListener("page-title-updated", (event) => log(pick(event, ["type", "title", "explicitSet"])));
-            webView.addEventListener("page-favicon-updated", (event) => log(pick(event, ["type", "favicons"])));
-            webView.addEventListener("console-message", (event) => log(pick(event, ["type", "level", "message", "line", "sourceId"])));
-            webView.addEventListener("will-navigate", (event) => log(pick(event, ["type", "url"])));
-            webView.addEventListener("did-navigate", (event) => log(pick(event, ["type", "url"])));
-            webView.addEventListener("did-navigate-in-page", (event) => log(pick(event, ["type", "url", "isMainFrame"])));
-            webView.addEventListener("close", (event) => log(pick(event, ["type"])));
-            webView.addEventListener("ipc-message", (event) => log(pick(event, ["type", "channel"/*, "args"*/]))); // WARN "args" might include sensitive data, so excluded
-            // webView.addEventListener("crashed", (event) => log(pick(event, ["type"])));
-            // webView.addEventListener("plugin-crashed", (event) => log(pick(event, ["type", "name", "version"])));
-            webView.addEventListener("destroyed", (event) => log(pick(event, ["type"])));
-            // webView.addEventListener("update-target-url", (event) => log(pick(event, ["type", "url"])));
-            /* eslint-enable max-len */
-            this.log("verbose", [mark, "handlers subscribed"]);
-        }
 
         this.subscription.add({
             unsubscribe: () => {

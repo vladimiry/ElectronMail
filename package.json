@@ -57,7 +57,8 @@
     "clean:app": "rimraf ./app",
     "clean:app-dev": "rimraf ./app-dev",
     "clean:output": "rimraf ./output",
-    "clean:prebuilds": "npm-run-all clean:prebuilds:keytar clean:prebuilds:sodium-native clean:prebuilds:spellchecker clean:prebuilds:desktop-idle",
+    "clean:prebuilds": "npm-run-all clean:prebuilds:re2 clean:prebuilds:keytar clean:prebuilds:sodium-native clean:prebuilds:spellchecker clean:prebuilds:desktop-idle",
+    "clean:prebuilds:re2": "rimraf ./node_modules/re2/bin ./node_modules/re2/build ./node_modules/re2/prebuilds",
     "clean:prebuilds:keytar": "rimraf ./node_modules/keytar/bin ./node_modules/keytar/build ./node_modules/keytar/prebuilds",
     "clean:prebuilds:sodium-native": "rimraf ./node_modules/sodium-native/bin ./node_modules/sodium-native/build ./node_modules/sodium-native/prebuilds ./node_modules/sodium-native/lib",
     "clean:prebuilds:spellchecker": "rimraf ./node_modules/spellchecker/bin ./node_modules/spellchecker/build ./node_modules/spellchecker/prebuilds",
@@ -118,6 +119,7 @@
     "@cliqz/url-parser": "1.1.4",
     "@msgpack/msgpack": "2.4.1",
     "@rgba-image/lanczos": "0.1.0",
+    "@types/url-regex-safe": "1.0.0",
     "@vladimiry/unionize": "2.1.2-add-tagprefix-option",
     "asap-es": "1.3.3",
     "class-transformer": "0.4.0",
@@ -153,6 +155,7 @@
     "truncate-utf8-bytes": "1.0.2",
     "ts-deferred": "1.0.4",
     "tslib": "2.1.0",
+    "url-regex-safe": "2.0.2",
     "valid-url": "1.0.9"
   },
   "devDependencies": {

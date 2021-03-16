@@ -1,3 +1,4 @@
+import urlRegexSafe from "url-regex-safe";
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import type {RateLimiterMemory} from "rate-limiter-flexible";
 import {URL} from "@cliqz/url-parser";
@@ -636,7 +637,10 @@ export const lowerConsoleMessageEventLogLevel = (
     }
     return logLevel;
 };
-export const depersonalizeLoggedUrl = (url: string): string => {
+
+// TODO test domain includes one of: https://mail.protonmail.com, https://app.protonmail.ch, https://protonirockerxow.onion
+//      see "./src/shared/constants.ts"
+export const depersonalizeProtonApiUrl = (url: string): string => {
     if (!new URL(url).pathname) {
         return url;
     }
@@ -653,3 +657,10 @@ export const depersonalizeLoggedUrl = (url: string): string => {
             : lastPart,
     ].join(splitBy);
 };
+
+export const depersonalizeLoggedUrlsInString: (value: string) => string = (() => {
+    const urlRegExp = urlRegexSafe({exact: false, strict: true});
+    const replacer = (match: string): string => depersonalizeProtonApiUrl(match);
+    const result: typeof depersonalizeLoggedUrlsInString = (value) => value.replace(urlRegExp, replacer);
+    return result;
+})();

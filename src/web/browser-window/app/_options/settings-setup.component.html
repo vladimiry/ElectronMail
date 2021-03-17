@@ -4,20 +4,18 @@
         <fieldset [disabled]="(signingIn$ | async) || false">
             <div class="form-row">
                 <div class="form-group col-md-6">
-                    <input type="password" class="form-control form-control-lg" formControlName="password" #passwordRef
-                           placeholder="Password"
-                           [ngClass]="password.dirty ? {
-                               'is-invalid': password.invalid,
-                               'is-valid': password.valid
-                           } : {}">
+                    <input
+                        #passwordRef [ngClass]="{'is-invalid': password.dirty && password.invalid}" class="form-control form-control-lg" formControlName="password"
+                        placeholder="Password"
+                        type="password"
+                    >
                 </div>
                 <div class="form-group col-md-6">
-                    <input type="password" class="form-control form-control-lg" formControlName="passwordConfirm"
-                           placeholder="Password Confirm"
-                           [ngClass]="passwordConfirm.dirty ? {
-                               'is-invalid': passwordConfirm.invalid,
-                               'is-valid': passwordConfirm.valid
-                           } : {}">
+                    <input
+                        [ngClass]="{'is-invalid': passwordConfirm.dirty && passwordConfirm.invalid}" class="form-control form-control-lg" formControlName="passwordConfirm"
+                        placeholder="Password Confirm"
+                        type="password"
+                    >
                     <div class="invalid-feedback" *ngIf="passwordConfirm.invalid && passwordConfirm.errors?.mismatch">
                         Passwords don't match.
                     </div>

@@ -68,7 +68,7 @@
         <div *ngIf="!account" class="form-group required">
             <label>Login</label>
             <input
-                [ngClass]="controls.login.dirty ? {'is-invalid': controls.login.invalid, 'is-valid': controls.login.valid} : {}"
+                [ngClass]="{'is-invalid': controls.login.dirty && controls.login.invalid}"
                 class="form-control"
                 formControlName="login"
                 type="text"
@@ -204,9 +204,9 @@
                         </label>
                     </div>
                     <input
-                        [ngClass]="controls.externalContentProxyUrlPattern.dirty
-                               ? {'is-invalid': controls.externalContentProxyUrlPattern.invalid, 'is-valid': controls.externalContentProxyUrlPattern.valid}
-                               : {}" class="form-control" formControlName="externalContentProxyUrlPattern"
+                        [ngClass]="{'is-invalid': controls.externalContentProxyUrlPattern.dirty && controls.externalContentProxyUrlPattern.invalid}"
+                        class="form-control"
+                        formControlName="externalContentProxyUrlPattern"
                         type="text"
                     >
                     <div
@@ -238,9 +238,9 @@
                         </label>
                     </div>
                     <input
-                        [ngClass]="controls.loginDelaySecondsRange.dirty
-                               ? {'is-invalid': controls.loginDelaySecondsRange.invalid, 'is-valid': controls.loginDelaySecondsRange.valid}
-                               : {}" class="form-control" formControlName="loginDelaySecondsRange"
+                        [ngClass]="{'is-invalid': controls.loginDelaySecondsRange.dirty && controls.loginDelaySecondsRange.invalid}"
+                        class="form-control"
+                        formControlName="loginDelaySecondsRange"
                         type="text"
                     >
                     <div
@@ -278,7 +278,7 @@
                 <div class="form-group">
                     <label>Password</label>
                     <input
-                        [ngClass]="controls.password.dirty ? {'is-invalid': controls.password.invalid, 'is-valid': controls.password.valid} : {}"
+                        [ngClass]="{'is-invalid': controls.password.dirty && controls.password.invalid}"
                         class="form-control"
                         formControlName="password"
                         type="password"
@@ -297,7 +297,7 @@
                     </label>
                     <a class="d-block pull-right" href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/10">#10</a>
                     <input
-                        [ngClass]="controls.twoFactorCode.dirty ? {'is-invalid': controls.twoFactorCode.invalid, 'is-valid': controls.twoFactorCode.valid} : {}"
+                        [ngClass]="{'is-invalid': controls.twoFactorCode.dirty && controls.twoFactorCode.invalid}"
                         class="form-control"
                         formControlName="twoFactorCode"
                         type="password"
@@ -319,7 +319,7 @@
                         <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/138">#138</a>
                     </div>
                     <input
-                        [ngClass]="controls.mailPassword.dirty ? {'is-invalid': controls.mailPassword.invalid, 'is-valid': controls.mailPassword.valid} : {}"
+                        [ngClass]="{'is-invalid': controls.mailPassword.dirty && controls.mailPassword.invalid}"
                         class="form-control"
                         formControlName="mailPassword"
                         type="password"

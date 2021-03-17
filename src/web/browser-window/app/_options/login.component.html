@@ -5,7 +5,7 @@
             <div class="form-group">
                 <input
                     #passwordRef
-                    [ngClass]="password.dirty ? {'is-invalid': password.invalid, 'is-valid': password.valid} : {}"
+                    [ngClass]="{'is-invalid': password.dirty && password.invalid}"
                     autocapitalize="off"
                     autocorrect="off"
                     class="form-control form-control-lg"

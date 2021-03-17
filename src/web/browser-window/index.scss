@@ -11,14 +11,6 @@ form .required label::after {
 }
 
 // "bootstrap"
-.form-control {
-    &.is-valid,
-    &.is-invalid {
-        background-position-x: 98%;
-    }
-}
-
-// "bootstrap"
 .dropdown-toggle {
     display: flex;
     align-items: center;

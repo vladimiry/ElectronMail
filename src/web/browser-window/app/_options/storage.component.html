@@ -4,28 +4,29 @@
             <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
                 <div class="form-group required">
                     <label>Current password</label>
-                    <input type="password" class="form-control" formControlName="password"
-                           [ngClass]="password.dirty ? {
-                       'is-invalid': password.invalid,
-                       'is-valid': password.valid
-                   } : {}">
+                    <input
+                        [ngClass]="{'is-invalid': password.dirty && password.invalid}" class="form-control" formControlName="password"
+                        type="password"
+                    >
                 </div>
                 <div class="form-row">
                     <div class="form-group required col-md-6">
                         <label>New password</label>
-                        <input type="password" class="form-control" formControlName="newPassword"
-                               [ngClass]="newPassword.dirty ? {
-                           'is-invalid': newPassword.invalid,
-                           'is-valid': newPassword.valid
-                       } : {}">
+                        <input
+                            [ngClass]="{'is-invalid': newPassword.dirty && newPassword.invalid}"
+                            class="form-control"
+                            formControlName="newPassword"
+                            type="password"
+                        >
                     </div>
                     <div class="form-group required col-md-6">
                         <label>New Password Confirm</label>
-                        <input type="password" class="form-control" formControlName="newPasswordConfirm"
-                               [ngClass]="newPasswordConfirm.dirty ? {
-                           'is-invalid': newPasswordConfirm.invalid,
-                           'is-valid': newPasswordConfirm.valid
-                       } : {}">
+                        <input
+                            [ngClass]="{'is-invalid': newPasswordConfirm.dirty && newPasswordConfirm.invalid}"
+                            class="form-control"
+                            formControlName="newPasswordConfirm"
+                            type="password"
+                        >
                         <div class="invalid-feedback" *ngIf="newPasswordConfirm.invalid && newPasswordConfirm.errors?.mismatch">
                             Passwords don't match.
                         </div>
@@ -43,11 +44,12 @@
             <form [formGroup]="encryptionPresetForm" (ngSubmit)="submitPresets()" novalidate>
                 <div class="form-group required">
                     <label>Current Master Password</label>
-                    <input type="password" class="form-control" formControlName="password"
-                           [ngClass]="encryptionPresetForm.controls.password?.dirty ? {
-                       'is-invalid': encryptionPresetForm.controls.password?.invalid,
-                       'is-valid': encryptionPresetForm.controls.password?.valid
-                   } : {}">
+                    <input
+                        [ngClass]="{'is-invalid': encryptionPresetForm.controls.password?.dirty && encryptionPresetForm.controls.password?.invalid}"
+                        class="form-control"
+                        formControlName="password"
+                        type="password"
+                    >
                 </div>
                 <electron-mail-encryption-presets
                     [formGroup]="encryptionPresetForm"

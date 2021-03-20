@@ -1,0 +1,10 @@
+@import "~src/web/variables";
+
+:host {
+    display: flex;
+    flex-direction: column;
+
+    .monaco-editor > .overflow-guard {
+        border: 1px solid $app-db-view-color-border;
+    }
+}

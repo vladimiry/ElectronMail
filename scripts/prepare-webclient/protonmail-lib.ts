@@ -1,10 +1,9 @@
 import fs from "fs";
 import fsExtra from "fs-extra";
 import path from "path";
-import pathIsInside from "path-is-inside";
 
 import {CONSOLE_LOG, execShell, resolveGitCommitInfo, resolveGitOutputBackupDir} from "scripts/lib";
-import {CWD_ABSOLUTE_DIR, GIT_CLONE_ABSOLUTE_DIR} from "scripts/const";
+import {GIT_CLONE_ABSOLUTE_DIR} from "scripts/const";
 import {PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
 import {RUNTIME_ENV_CI_PROTON_CLIENTS_ONLY, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/constants";
 
@@ -25,16 +24,6 @@ const reposOnlyFilter: DeepReadonly<{ value: Array<keyof typeof PROVIDER_REPO_MA
     CONSOLE_LOG(`${envVariableName} env variable (raw string):`, envVariableValue, "(filtered array):", result);
     return {value: result, envVariableName};
 })();
-
-const [, , BASE_DEST_DIR] = process.argv;
-
-if (!BASE_DEST_DIR) {
-    throw new Error("Empty base destination directory argument");
-}
-
-if (!pathIsInside(path.resolve(CWD_ABSOLUTE_DIR, BASE_DEST_DIR), CWD_ABSOLUTE_DIR)) {
-    throw new Error(`Invalid base destination directory argument value: ${BASE_DEST_DIR}`);
-}
 
 export interface FolderAsDomainEntry<T extends any = any> { // eslint-disable-line @typescript-eslint/no-explicit-any
     folderNameAsDomain: string;
@@ -75,18 +64,20 @@ export async function executeBuildFlow<T extends FolderAsDomainEntry[], O = Unpa
         repoType,
         folderAsDomainEntries,
         repoRelativeDistDir = PROVIDER_REPO_MAP[repoType].repoRelativeDistDir,
+        destDir,
         destSubFolder,
         flow,
     }: {
-        repoType: keyof typeof PROVIDER_REPO_MAP;
-        folderAsDomainEntries: T;
-        repoRelativeDistDir?: string;
-        destSubFolder: string;
+        repoType: keyof typeof PROVIDER_REPO_MAP
+        folderAsDomainEntries: T
+        repoRelativeDistDir?: string
+        destDir: string
+        destSubFolder: string
         flow: {
-            postClone?: Flow<O>;
-            install?: Flow<O>;
-            build: Flow<O>;
-        };
+            postClone?: Flow<O>
+            install?: Flow<O>
+            build: Flow<O>
+        }
     },
 ): Promise<void> {
     if (
@@ -101,7 +92,7 @@ export async function executeBuildFlow<T extends FolderAsDomainEntry[], O = Unpa
     const repoDir = path.join(GIT_CLONE_ABSOLUTE_DIR, repoType);
 
     for (const folderAsDomainEntry of folderAsDomainEntries) {
-        const targetDistDir = path.resolve(BASE_DEST_DIR as string, folderAsDomainEntry.folderNameAsDomain, destSubFolder);
+        const targetDistDir = path.resolve(destDir, folderAsDomainEntry.folderNameAsDomain, destSubFolder);
 
         CONSOLE_LOG(
             `Prepare web client build [${repoType}]:`,
@@ -157,12 +148,7 @@ export async function executeBuildFlow<T extends FolderAsDomainEntry[], O = Unpa
 
         const repoDistBackupDir = resolveGitOutputBackupDir({repoType, suffix: `dist-${folderAsDomainEntry.folderNameAsDomain}`});
 
-        if (fsExtra.pathExistsSync(repoDistBackupDir)) { // taking dist from the backup
-            const src = repoDistBackupDir;
-            const dest = repoDistDir;
-            CONSOLE_LOG(`Copying backup ${src} to ${dest}`);
-            await fsExtra.copy(src, dest);
-        } else { // executing the build
+        const installModules = async (): Promise<void> => {
             if (fsExtra.pathExistsSync(path.resolve(repoDir, "node_modules"))) {
                 CONSOLE_LOG("Skip dependencies installing");
             } else if (flow.install) {
@@ -170,6 +156,21 @@ export async function executeBuildFlow<T extends FolderAsDomainEntry[], O = Unpa
             } else {
                 await execShell(["npm", ["ci"], {cwd: repoDir}]);
             }
+        };
+
+        if (fsExtra.pathExistsSync(repoDistBackupDir)) { // taking dist from the backup
+            const src = repoDistBackupDir;
+            const dest = repoDistDir;
+
+            CONSOLE_LOG(`Copying backup ${src} to ${dest}`);
+            await fsExtra.copy(src, dest);
+
+            if (repoType === "proton-mail") {
+                // installing modules since required by "./scripts/prepare-webclient/monaco-editor-dts.ts"
+                await installModules();
+            }
+        } else { // executing the build
+            await installModules();
 
             if (shouldFailOnBuild) {
                 throw new Error(`Halting since "${shouldFailOnBuildEnvVarName}" env var has been enabled`);

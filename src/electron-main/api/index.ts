@@ -1,4 +1,5 @@
 import electronLog from "electron-log";
+import path from "path";
 import {authenticator} from "otplib";
 import {first} from "rxjs/operators";
 
@@ -6,9 +7,9 @@ import * as EndpointsBuilders from "./endpoints-builders";
 import * as SpellCheck from "src/electron-main/spell-check/api";
 import {Context} from "src/electron-main/model";
 import {Database} from "src/electron-main/database";
-import {IPC_MAIN_API, IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
+import {IPC_MAIN_API, IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
-import {PACKAGE_NAME, PRODUCT_NAME} from "src/shared/constants";
+import {PACKAGE_NAME, PRODUCT_NAME, PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION} from "src/shared/constants";
 import {applyZoomFactor} from "src/electron-main/window/util";
 import {attachFullTextIndexWindow, detachFullTextIndexWindow} from "src/electron-main/window/full-text-search";
 import {buildSettingsAdapter} from "src/electron-main/util";
@@ -56,8 +57,24 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async staticInit() {
+            const fsPromise = await import("fs/promises");
+            const monacoEditorExtraLibArgs: IpcMainServiceScan["ApiImplReturns"]["staticInit"]["monacoEditorExtraLibArgs"]
+                = {system: [""], protonMessage: [""]};
+
+            for (const key of Object.keys(monacoEditorExtraLibArgs) as Array<keyof typeof monacoEditorExtraLibArgs>) {
+                // TODO read file once (cache the content)
+                const fileContent = await fsPromise.readFile(
+                    path.join(ctx.locations.appDir, PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION[key]),
+                );
+                monacoEditorExtraLibArgs[key] = [
+                    fileContent.toString(),
+                    PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION[key],
+                ];
+            }
+
             return {
                 electronLocations: ctx.locations,
+                monacoEditorExtraLibArgs,
             };
         },
 

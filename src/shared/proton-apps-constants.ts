@@ -83,3 +83,8 @@ export const PROVIDER_REPO_MAP = {
         protonPack: {appConfig: {clientId: "WebDrive"}},
     },
 } as const;
+
+export const PROTON_SHARED_MESSAGE_INTERFACE = {
+    projectRelativeFile: "./lib/interfaces/mail/Message.ts",
+    url: "",
+} as const;

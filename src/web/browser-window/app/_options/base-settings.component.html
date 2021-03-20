@@ -229,6 +229,7 @@
             <div class="col-sm-6">
                 <ng-select
                     [clearable]="false"
+                    [searchable]="false"
                     [items]="idleTimeLogOutSecValues"
                     bindLabel="title"
                     bindValue="valueSec"
@@ -243,6 +244,7 @@
             <div class="col-sm-6">
                 <ng-select
                     [clearable]="false"
+                    [searchable]="false"
                     [items]="layoutModes"
                     bindLabel="title"
                     bindValue="value"
@@ -258,6 +260,7 @@
                 <div class="col-sm-6">
                     <ng-select
                         [clearable]="false"
+                        [searchable]="false"
                         [items]="zoomFactors"
                         bindLabel="title"
                         bindValue="value"
@@ -282,7 +285,7 @@
         <div class="row">
             <div class="col-sm-6">
                 <ng-select
-                    [clearable]="false" [items]="logLevels" formControlName="logLevel" id="logLevelSelect"
+                    [clearable]="false" [searchable]="false" [items]="logLevels" formControlName="logLevel" id="logLevelSelect"
                 ></ng-select>
             </div>
         </div>

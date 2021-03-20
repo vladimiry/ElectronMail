@@ -1,108 +1,134 @@
 <div [ngClass]="{'flex-basis-half': selectedMail$ | async}" class="d-flex flex-column flex-grow-1 pr-2">
     <div class="d-flex flex-column h-100">
         <div class="d-flex flex-row flex-shrink-0" style="align-items: end">
-            <button
-                (click)="backToList()"
-                class="btn btn-sm btn-primary mb-2 d-flex flex-shrink-0 align-items-center"
-                style="min-width: 144px"
-            >
-                <i class="fa fa-angle-left mr-1"></i>
-                <span class="d-flex flex-grow-1 flex-column">Folders</span>
-            </button>
-            <fieldset [disabled]="(searching$ | async) || (indexing$ | async) || false" class="d-flex">
+            <fieldset [disabled]="(searching$ | async) || (indexing$ | async) || false" class="d-flex flex-grow-1">
                 <form
                     (ngSubmit)="submit()"
                     [formGroup]="form"
-                    class="d-flex"
+                    class="d-flex flex-column w-100"
                     novalidate
                 >
-                    <div
-                        *ngIf="folders$ | async; let folders;"
-                        [autoClose]="false"
-                        class="btn-group mx-2 d-flex flex-shrink-0 align-items-center"
-                        dropdown
-                        style="position: relative"
-                    >
-                        <button class="btn btn-sm btn-secondary-light text-decoration-none dropdown-toggle" dropdownToggle type="button">
-                            Folders: {{ (selectedIds$ | async)?.length }} of {{ folders.length }}
-                            <span class="caret"></span>
+                    <div class="d-flex pb-2 align-items-center">
+                        <button
+                            (click)="backToList()"
+                            class="btn btn-sm btn-primary d-flex flex-shrink-0 align-items-center"
+                            style="min-width: 144px"
+                            type="button"
+                        >
+                            <i class="fa fa-angle-left mr-1"></i>
+                            <span class="d-flex flex-grow-1 flex-column">Folders</span>
                         </button>
-                        <div *dropdownMenu class="dropdown-menu px-2 py-1" role="menu">
-                            <div class="custom-control custom-switch text-center">
-                                <input
-                                    class="custom-control-input"
-                                    formControlName="allFoldersToggled"
-                                    id="toggleAllFoldersCheckbox"
-                                    type="checkbox"
-                                >
-                                <label class="custom-control-label" for="toggleAllFoldersCheckbox">
-                                    All
-                                </label>
-                            </div>
-                            <hr class="my-1">
-                            <div formGroupName="folders">
-                                <div *ngFor="let folder of folders" class="custom-control custom-switch">
+                        <div
+                            *ngIf="folders$ | async; let folders;"
+                            [autoClose]="false"
+                            class="btn-group mx-2"
+                            dropdown
+                            style="position: relative"
+                        >
+                            <button
+                                class="btn btn-sm btn-secondary-light text-decoration-none dropdown-toggle"
+                                dropdownToggle
+                                type="button"
+                            >
+                                Folders: {{ (selectedIds$ | async)?.length }} of {{ folders.length }}
+                                <span class="caret"></span>
+                            </button>
+                            <div *dropdownMenu class="dropdown-menu px-2 py-1" role="menu">
+                                <div class="custom-control custom-switch text-center">
                                     <input
-                                        [formControlName]="folder.id"
-                                        [id]="'id_' + folder.id"
                                         class="custom-control-input"
+                                        formControlName="allFoldersToggled"
+                                        id="toggleAllFoldersCheckbox"
                                         type="checkbox"
                                     >
-                                    <label [attr.for]="'id_' + folder.id" class="custom-control-label">
-                                        <electron-mail-db-view-folder [folder]="folder"></electron-mail-db-view-folder>
+                                    <label class="custom-control-label" for="toggleAllFoldersCheckbox">
+                                        All
                                     </label>
+                                </div>
+                                <hr class="my-1">
+                                <div formGroupName="folders">
+                                    <div *ngFor="let folder of folders" class="custom-control custom-switch">
+                                        <input
+                                            [formControlName]="folder.id"
+                                            [id]="'id_' + folder.id"
+                                            class="custom-control-input"
+                                            type="checkbox"
+                                        >
+                                        <label [attr.for]="'id_' + folder.id" class="custom-control-label">
+                                            <electron-mail-db-view-folder [folder]="folder"></electron-mail-db-view-folder>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <input
-                        #queryFormControl
-                        [ngClass]="formControls.query.dirty ? {'is-invalid': formControls.query.invalid, 'is-valid': formControls.query.valid} : {}"
-                        class="form-control form-control-sm mr-2 d-flex align-items-center w-auto"
-                        formControlName="query"
-                        placeholder="keyword"
-                        size="16"
-                        type="text"
-                    >
-                    <input
-                        [bsConfig]="{dateInputFormat: 'YYYY-MM-DD'}"
-                        [ngClass]="formControls.sentDateAfter.dirty ? {'is-invalid': formControls.sentDateAfter.invalid, 'is-valid': formControls.sentDateAfter.valid} : {}"
-                        bsDatepicker
-                        class="form-control form-control-sm mr-2 d-flex align-items-center pr-0 w-auto"
-                        formControlName="sentDateAfter"
-                        maxlength="10"
-                        placeholder="date after"
-                        size="10"
-                        type="text"
-                    >
-                    <div class="custom-control custom-switch d-flex align-self-center mr-2">
                         <input
-                            class="custom-control-input"
-                            formControlName="hasAttachments"
-                            id="hasAttachmentsCheckbox"
-                            type="checkbox"
+                            #queryFormControlRef
+                            [ngClass]="{'is-invalid': formControls.query.dirty && formControls.query.invalid}"
+                            class="form-control form-control-sm mr-2"
+                            formControlName="query"
+                            placeholder="keyword"
+                            size="16"
+                            type="text"
                         >
-                        <label class="custom-control-label d-flex" for="hasAttachmentsCheckbox" title="Only messages with attachments">
-                            Attachments
-                        </label>
+                        <input
+                            [bsConfig]="{dateInputFormat: 'YYYY-MM-DD'}"
+                            [ngClass]="{'is-invalid': formControls.sentDateAfter.dirty && formControls.sentDateAfter.invalid}"
+                            bsDatepicker
+                            class="form-control form-control-sm mr-2 pr-0"
+                            formControlName="sentDateAfter"
+                            maxlength="10"
+                            placeholder="date after"
+                            size="10"
+                            type="text"
+                        >
+                        <div class="custom-control custom-switch mr-2">
+                            <input
+                                class="custom-control-input"
+                                formControlName="hasAttachments"
+                                id="hasAttachmentsCheckbox"
+                                type="checkbox"
+                            >
+                            <label
+                                class="custom-control-label d-flex"
+                                for="hasAttachmentsCheckbox"
+                                title="Only messages with attachments"
+                            >
+                                Attachments
+                            </label>
+                        </div>
+                        <button
+                            (click)="codeEditorOpen = !codeEditorOpen"
+                            [ngClass]="{'btn-warning-light': codeEditorOpen, 'btn-secondary-light': !codeEditorOpen}"
+                            class="btn btn-sm d-flex flex-shrink-0 align-items-center mr-2"
+                            title="Toggle JavaScript-based filtering block"
+                            type="button"
+                        >
+                            <i class="fa fa-code"></i>&nbsp;Code
+                        </button>
+                        <button
+                            [disabled]="form.invalid || !(selectedIds$ | async)?.length"
+                            class="btn btn-sm btn-primary d-flex flex-shrink-0 align-items-center"
+                            type="submit"
+                        >
+                            <i class="fa fa-spinner fa-pulse fa-fw mr-1"></i>
+                            <i class="fa fa-search mr-1"></i>
+                            {{ (indexing$ | async) ? "Indexing" : "Search" }}
+                        </button>
                     </div>
-                    <button
-                        [disabled]="form.invalid || !(selectedIds$ | async)?.length"
-                        class="btn btn-sm btn-primary d-flex flex-shrink-0 align-items-center"
-                        type="submit"
-                    >
-                        <i class="fa fa-spinner fa-pulse fa-fw mr-1"></i>
-                        <i class="fa fa-search mr-1"></i>
-                        {{ (indexing$ | async) ? "Indexing" : "Search" }}
-                    </button>
+                    <electron-mail-db-view-monaco-editor
+                        (content)="onEditorContentChange($event)"
+                        *ngIf="codeEditorOpen"
+                        [webAccountPk]="webAccountPk"
+                        class="mb-2"
+                    ></electron-mail-db-view-monaco-editor>
                 </form>
             </fieldset>
         </div>
         <ng-container *ngIf="(mailsBundleItemsSize$ | async)">
             <electron-mail-db-view-mails
                 *ngIf="(mailsBundleKey$ | async) as mailsBundleKey"
-                [webAccountPk]="webAccountPk"
                 [mailsBundleKey]="mailsBundleKey"
+                [webAccountPk]="webAccountPk"
             ></electron-mail-db-view-mails>
         </ng-container>
     </div>

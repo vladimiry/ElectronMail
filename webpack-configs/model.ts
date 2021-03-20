@@ -1,6 +1,3 @@
 export type BuildEnvironment = "production" | "development" | "test" | "e2e";
 
-export type BuildAngularCompilationFlags = Readonly<{
-    aot: boolean;
-    ivy: boolean;
-}>;
+export type BuildAngularCompilationFlags = { readonly aot: boolean, readonly ivy: boolean };

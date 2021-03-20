@@ -23,10 +23,7 @@ export const IPC_MAIN_API_DB_INDEXER_ON_ACTIONS = unionize({
         Bootstrapped: ofType<Record<string, unknown>>(),
         ProgressState: ofType<{
             key: DbModel.DbAccountPk;
-            status: {
-                indexing?: boolean;
-                searching?: boolean;
-            };
+            status: { indexing?: boolean };
         } | {
             status: {
                 indexing?: boolean;
@@ -57,11 +54,7 @@ export const IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS = unionize({
             add: DbModel.IndexableMail[];
             uid: string;
         }>(),
-        Search: ofType<{
-            key: DbModel.DbAccountPk;
-            query: string;
-            uid: string;
-        }>(),
+        Search: ofType<{ query: string, uid: string }>(),
     },
     {
         tag: "type",
@@ -177,6 +170,7 @@ export const ENDPOINTS_DEFINITION = {
         sentDateAfter: string;
         hasAttachments: boolean;
         folderIds?: Array<DbModel.Folder["pk"]>;
+        codeFilter?: string;
     }>, NoExtraProps<{
         searched: boolean;
         mailsBundleItems: Array<{ mail: DbModel.View.Mail & { score?: number }; conversationSize: number }>;
@@ -186,9 +180,11 @@ export const ENDPOINTS_DEFINITION = {
 
     dbIndexerNotification: ActionType.Observable<void, UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>>(),
 
-    staticInit: ActionType.Promise<void, DeepReadonly<{
-        electronLocations: ElectronContextLocations;
-    }>>(),
+    staticInit: ActionType.Promise<void, {
+        electronLocations: ElectronContextLocations
+        monacoEditorExtraLibArgs: Record<"system" | "protonMessage",
+            Parameters<typeof import("monaco-editor")["languages"]["typescript"]["typescriptDefaults"]["addExtraLib"]>>
+    }>(),
 
     init: ActionType.Promise<void, InitResponse>(),
 

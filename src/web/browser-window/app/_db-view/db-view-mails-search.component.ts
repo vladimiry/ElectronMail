@@ -12,7 +12,7 @@ import {
 import {EMPTY, Observable, Subject, combineLatest, merge} from "rxjs";
 import {FormControl, FormGroup} from "@angular/forms";
 import {Store, select} from "@ngrx/store";
-import {distinctUntilChanged, map, mergeMap, switchMap, takeUntil, tap} from "rxjs/operators";
+import {distinctUntilChanged, map, mergeMap, switchMap, takeUntil, tap,} from "rxjs/operators";
 
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
 import {DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
@@ -47,7 +47,7 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
         }),
     );
 
-    @ViewChildren("queryFormControl")
+    @ViewChildren("queryFormControlRef")
     readonly queryFormControlRefs!: QueryList<ElementRef>;
 
     readonly formControls = {
@@ -56,7 +56,7 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
         allFoldersToggled: new FormControl(false),
         sentDateAfter: new FormControl(),
         hasAttachments: new FormControl(false),
-    };
+    } as const;
 
     readonly form = new FormGroup(this.formControls);
 
@@ -65,6 +65,7 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
 
     readonly selectedMail$ = this.instance$.pipe(
         map((value) => value.selectedMail),
+        distinctUntilChanged((prev, curr) => curr?.listMailPk === prev?.listMailPk),
     );
 
     readonly accountProgress$ = this.account$.pipe(
@@ -109,8 +110,12 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
         SYSTEM_FOLDER_IDENTIFIERS.Spam,
     ]);
 
+    codeEditorOpen?: boolean;
+
+    codeFilter?: string;
+
     constructor(
-        store: Store<State>,
+        readonly store: Store<State>,
     ) {
         super(store);
     }
@@ -172,6 +177,10 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
         this.backToListHandler.emit();
     }
 
+    onEditorContentChange({codeEditorContent}: { codeEditorContent?: string }): void {
+        this.codeFilter = codeEditorContent;
+    }
+
     submit(): void {
         this.store.dispatch(
             DB_VIEW_ACTIONS.FullTextSearchRequest({
@@ -180,6 +189,7 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
                 sentDateAfter: this.formControls.sentDateAfter.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
                 hasAttachments: this.formControls.hasAttachments.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
                 folderIds: this.resolveSelectedIds(),
+                ...(this.codeEditorOpen && {codeFilter: this.codeFilter}),
             }),
         );
     }

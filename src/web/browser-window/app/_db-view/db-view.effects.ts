@@ -4,7 +4,7 @@ import {EMPTY, forkJoin, from, merge, of} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {concatMap, filter, finalize, map, mergeMap, switchMap, takeUntil, tap, throttleTime, withLatestFrom} from "rxjs/operators";
-import {pick} from "remeda";
+import {omit, pick} from "remeda";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter,} from "src/web/browser-window/app/store/actions";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
@@ -157,27 +157,32 @@ export class DbViewEffects {
         () => this.actions$.pipe(
             unionizeActionFilter(DB_VIEW_ACTIONS.is.FullTextSearchRequest),
             withLatestFrom(this.store.pipe(select(OptionsSelectors.CONFIG.timeouts))),
-            mergeMap((
-                [{payload: {login, query, folderIds, sentDateAfter, hasAttachments, accountIndex}},
-                    {fullTextSearch: fullTextSearchTimeoutMs}],
-            ) => {
-                const webAccountPk = {login, accountIndex} as const;
-                const dbFullTextSearch$ = from(
-                    this.api.ipcMainClient()(
-                        "dbFullTextSearch",
-                        {
-                            // "fullTextSearchTimeoutMs" is the full-text search specific value
-                            // so adding 20% reserve for result serialization/etc
-                            timeoutMs: fullTextSearchTimeoutMs * 1.2,
-                            serialization: "jsan",
-                        },
-                    )({login, query, folderIds, sentDateAfter, hasAttachments}),
-                );
-                return dbFullTextSearch$.pipe(
-                    mergeMap((value) => [
-                        DB_VIEW_ACTIONS.SelectMail({webAccountPk}),
-                        DB_VIEW_ACTIONS.FullTextSearch({webAccountPk, value}),
-                    ]),
+            mergeMap(([{payload}, {fullTextSearch: fullTextSearchTimeoutMs}]) => {
+                const webAccountPk = pick(payload, ["login", "accountIndex"]);
+                return merge(
+                    of(ACCOUNTS_ACTIONS.PatchProgress({login: payload.login, patch: {searching: true}})),
+                    from(
+                        this.api.ipcMainClient()(
+                            "dbFullTextSearch",
+                            {
+                                // "fullTextSearchTimeoutMs" is the full-text search only specific value
+                                // so adding reserve for "second step of the search" (by folders/data/js-code/etc), result serialization/etc
+                                // TODO introduce addition timeout for the "second step of the search"
+                                timeoutMs: payload.codeFilter
+                                    ? fullTextSearchTimeoutMs * 5
+                                    : fullTextSearchTimeoutMs * 1.2,
+                                serialization: "jsan",
+                            },
+                        )(omit(payload, ["accountIndex"])),
+                    ).pipe(
+                        mergeMap((value) => [
+                            DB_VIEW_ACTIONS.SelectMail({webAccountPk}),
+                            DB_VIEW_ACTIONS.FullTextSearch({webAccountPk, value}),
+                        ]),
+                        finalize(() => {
+                            this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login: payload.login, patch: {searching: false}}));
+                        }),
+                    ),
                 );
             }),
         ),

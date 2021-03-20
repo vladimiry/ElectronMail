@@ -1,14 +1,14 @@
 import UUID from "pure-uuid";
 import electronLog from "electron-log";
-import {Observable, of, race, throwError, timer} from "rxjs";
-import {concatMap, filter, first, mergeMap} from "rxjs/operators";
+import {Observable, from, of, race, throwError, timer} from "rxjs";
+import {concatMap, filter, first, mergeMap, switchMap} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION$, IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_DB_INDEXER_ON_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
-import {IndexableMailId, View} from "src/shared/model/database";
-import {curryFunctionMembers, walkConversationNodesTree} from "src/shared/util";
-import {searchRootConversationNodes} from "src/electron-main/api/endpoints-builders/database/search/service";
+import {IndexableMailId} from "src/shared/model/database";
+import {curryFunctionMembers} from "src/shared/util";
+import {searchRootConversationNodes, secondSearchStep} from "src/electron-main/api/endpoints-builders/database/search/service";
 
 const logger = curryFunctionMembers(electronLog, "[src/electron-main/api/endpoints-builders/database/search/api]");
 
@@ -34,30 +34,21 @@ export async function buildDbSearchEndpoints(
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-        async dbFullTextSearch({login, query, folderIds, hasAttachments, sentDateAfter}) {
+        async dbFullTextSearch({query, ...searchCriteria}) {
             logger.info("dbFullTextSearch()");
 
-            const account = ctx.db.getAccount({login});
-
-            if (!account) {
-                throw new Error("Failed to resolve the account");
-            }
-
-            const searchUid: string | null = query
+            const fullTextSearchUid: string | null = query
                 ? new UUID(4).format()
                 : null;
-            const search$: Observable<DeepReadonly<NoExtraProps<{ mailScoresByPk?: Map<IndexableMailId, number> }>>> = query
+            const fullTextSearch$: Observable<Map<IndexableMailId, number> | null> = query
                 ? race(
                     IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$.pipe(
                         filter(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.is.SearchResult),
-                        filter(({payload}) => payload.uid === searchUid),
+                        filter(({payload}) => payload.uid === fullTextSearchUid),
                         first(),
-                        mergeMap(({payload: {data: {items}}}) => {
-                            const mailScoresByPk = new Map<IndexableMailId, number>(
-                                items.map(({key, score}) => [key, score] as [IndexableMailId, number]),
-                            );
-                            return [{mailScoresByPk}];
-                        }),
+                        mergeMap(({payload: {data: {items}}}) => [new Map<IndexableMailId, number>(
+                            items.map(({key, score}) => [key, score] as [IndexableMailId, number]),
+                        )]),
                     ),
                     await (async () => {
                         const {timeouts: {fullTextSearch: timeoutMs}} = await ctx.config$.pipe(first()).toPromise();
@@ -65,88 +56,24 @@ export async function buildDbSearchEndpoints(
                             concatMap(() => throwError(new Error(`Failed to complete the search in ${timeoutMs}ms`))),
                         );
                     })(),
-                ) : of({});
-            const result$ = search$.pipe(
-                mergeMap(({mailScoresByPk}) => {
-                    const rootConversationNodes = searchRootConversationNodes(
-                        account,
-                        {
-                            mailPks: mailScoresByPk
-                                ? [...mailScoresByPk.keys()]
-                                : undefined,
-                            folderIds,
-                        },
+                )
+                : of(null);
+            const result$ = fullTextSearch$.pipe(
+                switchMap((mailScoresByPk) => {
+                    return from(
+                        (async () => {
+                            return {
+                                mailsBundleItems: await secondSearchStep(ctx, searchCriteria, mailScoresByPk),
+                                searched: Boolean(fullTextSearchUid),
+                            };
+                        })(),
                     );
-                    const filterByFolder = folderIds
-                        ? ({id}: View.Folder): boolean => folderIds.includes(id)
-                        : () => true;
-                    const filterByHasAttachment = hasAttachments
-                        ? (attachmentsCount: number): boolean => Boolean(attachmentsCount)
-                        : () => true;
-                    const filterBySentDateAfter = (() => {
-                        const sentDateAfterFilterValue: number | null = sentDateAfter
-                            ? new Date(String(sentDateAfter).trim()).getTime()
-                            : null;
-                        return sentDateAfterFilterValue
-                            ? (sentDate: number): boolean => sentDate > sentDateAfterFilterValue
-                            : () => true;
-                    })();
-                    const getScore: (mail: Exclude<View.ConversationNode["mail"], undefined>) => number | undefined | null
-                        = mailScoresByPk
-                        ? ({pk}) => mailScoresByPk.get(pk)
-                        : () => null; // no full-text search executing happened, so no score provided
-                    const mailsBundleItems: Unpacked<ReturnType<IpcMainApiEndpoints["dbFullTextSearch"]>>["mailsBundleItems"] = [];
-
-                    for (const rootConversationNode of rootConversationNodes) {
-                        let allNodeMailsCount = 0;
-                        const matchedScoredNodeMails: Array<Unpacked<typeof mailsBundleItems>["mail"]> = [];
-
-                        walkConversationNodesTree([rootConversationNode], ({mail}) => {
-                            if (!mail) {
-                                return;
-                            }
-
-                            allNodeMailsCount++;
-
-                            const score = getScore(mail);
-
-                            if (
-                                (
-                                    score === null // no full-text search executing happened, so accept all mails in this filter
-                                    ||
-                                    typeof score === "number"
-                                )
-                                &&
-                                mail.folders.find(filterByFolder)
-                                &&
-                                filterByHasAttachment(mail.attachmentsCount)
-                                &&
-                                filterBySentDateAfter(mail.sentDate)
-                            ) {
-                                matchedScoredNodeMails.push({...mail, score: score ?? undefined});
-                            }
-                        });
-
-                        if (!matchedScoredNodeMails.length) {
-                            continue;
-                        }
-
-                        mailsBundleItems.push(
-                            ...matchedScoredNodeMails.map((mail) => ({mail, conversationSize: allNodeMailsCount})),
-                        );
-                    }
-
-                    return [{mailsBundleItems, searched: Boolean(searchUid)}];
                 }),
             );
 
-            if (searchUid) {
+            if (fullTextSearchUid) {
                 IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.next(
-                    IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Search({
-                        query,
-                        key: {login},
-                        uid: searchUid,
-                    }),
+                    IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Search({query, uid: fullTextSearchUid}),
                 );
             }
 

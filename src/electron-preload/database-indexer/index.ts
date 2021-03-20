@@ -35,31 +35,27 @@ async function dbIndexerNotificationHandler(
 
                 await dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.ProgressState({key, status: {indexing: true}}));
 
-                await indexingQueue.q(async () => {
-                    removeMailsFromIndex(index, remove);
-                    addToMailsIndex(index, add);
-                });
+                try {
+                    await indexingQueue.q(async () => {
+                        removeMailsFromIndex(index, remove);
+                        addToMailsIndex(index, add);
+                    });
+                } finally {
+                    await dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.ProgressState({key, status: {indexing: false}}));
+                }
 
-                await Promise.all([
-                    dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.ProgressState({key, status: {indexing: false}})),
-                    dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.IndexingResult({uid})),
-                ]);
+                await dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.IndexingResult({uid}));
 
                 return emptyObject;
             },
-            Search: async ({key, uid, query}) => {
+            Search: async ({uid, query}) => {
                 logger.info("action.Search()");
-
-                await dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.ProgressState({key, status: {searching: true}}));
 
                 const {items, expandedTerms} = await indexingQueue.q(async () => {
                     return index.search(query);
                 });
 
-                await Promise.all([
-                    dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.ProgressState({key, status: {searching: false}})),
-                    dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.SearchResult({uid, data: {items, expandedTerms}})),
-                ]);
+                await dbIndexerOn(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.SearchResult({uid, data: {items, expandedTerms}}));
 
                 return emptyObject;
             },

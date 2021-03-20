@@ -223,3 +223,16 @@ export const catchTopLeventAsync = (asyncFn: () => Promise<unknown>): void => {
         process.exit(1);
     });
 };
+
+export const applyPatch = async ({patchFile, cwd}: { patchFile: string; cwd: string }): Promise<void> => {
+    await execShell([
+        "git",
+        [
+            "apply",
+            "--ignore-whitespace",
+            "--reject",
+            patchFile,
+        ],
+        {cwd},
+    ]);
+};

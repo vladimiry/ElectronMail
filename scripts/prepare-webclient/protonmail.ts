@@ -2,10 +2,10 @@ import fsExtra from "fs-extra";
 import path from "path";
 
 import {BINARY_NAME} from "src/shared/constants";
-import {catchTopLeventAsync, execShell} from "scripts/lib";
 import {CWD_ABSOLUTE_DIR} from "scripts/const";
-import {executeBuildFlow, FolderAsDomainEntry, printAndWriteFile} from "./lib";
+import {FolderAsDomainEntry, executeBuildFlow, printAndWriteFile} from "./protonmail-lib";
 import {PROVIDER_REPO_MAP, PROVIDER_REPO_NAMES} from "src/shared/proton-apps-constants";
+import {applyPatch, execShell} from "scripts/lib";
 
 const folderAsDomainEntries: Array<FolderAsDomainEntry<{
     configApiParam:
@@ -178,24 +178,12 @@ function resolveWebpackConfigPatchingCode(
     return result;
 }
 
-const applyPatch = async ({patchFile, cwd}: { patchFile: string; cwd: string }): Promise<void> => {
-    await execShell([
-        "git",
-        [
-            "apply",
-            "--ignore-whitespace",
-            "--reject",
-            patchFile,
-        ],
-        {cwd},
-    ]);
-};
-
-catchTopLeventAsync(async () => {
+export const buildProtonClients = async ({destDir}: { destDir: string }): Promise<void> => {
     for (const repoType of PROVIDER_REPO_NAMES) {
         await executeBuildFlow({
             repoType,
             folderAsDomainEntries,
+            destDir,
             destSubFolder: PROVIDER_REPO_MAP[repoType].baseDirName,
             flow: {
                 async install({repoDir}) {
@@ -277,4 +265,4 @@ catchTopLeventAsync(async () => {
             },
         });
     }
-});
+};

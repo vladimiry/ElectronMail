@@ -120,9 +120,10 @@ export function buildMinimalWebConfig(
 export function buildBaseWebConfig(
     configPatch: Configuration,
     options: {
-        tsConfigFile?: string;
-        chunkName: keyof typeof WEB_CHUNK_NAMES;
-        typescriptLoader?: boolean;
+        tsConfigFile?: string
+        chunkName: keyof typeof WEB_CHUNK_NAMES
+        typescriptLoader?: boolean
+        entries?: Record<string, string>
     },
 ): Configuration {
     const chunkPath = (...value: string[]): string => {
@@ -150,6 +151,7 @@ export function buildBaseWebConfig(
             {
                 entry: {
                     index: chunkPath("./index.ts"),
+                    ...options.entries,
                 },
                 module: {
                     rules: [

@@ -1,5 +1,4 @@
 import {AngularCompilerPlugin, NgToolsLoader, PLATFORM} from "@ngtools/webpack";
-import {DefinePlugin} from "webpack";
 import {readConfiguration} from "@angular/compiler-cli";
 
 import {BuildAngularCompilationFlags, BuildEnvironment} from "webpack-configs/model";
@@ -7,10 +6,7 @@ import {ENVIRONMENT, rootRelativePath} from "webpack-configs/lib";
 import {WEB_CHUNK_NAMES} from "src/shared/constants";
 import {browserWindowAppPath, browserWindowPath, buildBaseWebConfig, cssRuleSetRules} from "./lib";
 
-const angularCompilationFlags: BuildAngularCompilationFlags = {
-    aot: true,
-    ivy: true,
-};
+const angularCompilationFlags: BuildAngularCompilationFlags = {aot: true, ivy: true};
 
 const tsConfigFile = browserWindowPath(({
     production: "./tsconfig.json",
@@ -50,6 +46,37 @@ const config = buildBaseWebConfig(
                         browserWindowAppPath(),
                     ],
                 },
+                {
+                    test: require.resolve("monaco-editor/esm/vs/base/common/platform.js"),
+                    use: [
+                        {
+                            loader: "imports-loader",
+                            options: {
+                                additionalCode: `
+                                    const self = {
+                                        MonacoEnvironment: {
+                                            getWorkerUrl(...[, label]) {
+                                                if (label === "json") {
+                                                    return "./json.worker.js";
+                                                }
+                                                if (label === "css" || label === "scss" || label === "less") {
+                                                    return "./css.worker.js";
+                                                }
+                                                if (label === "html" || label === "handlebars" || label === "razor") {
+                                                    return "./html.worker.js";
+                                                }
+                                                if (label === "typescript" || label === "javascript") {
+                                                    return "./ts.worker.js";
+                                                }
+                                                return "./editor.worker.js";
+                                            },
+                                        },
+                                    };
+                                `,
+                            },
+                        },
+                    ],
+                },
             ],
         },
         resolve: {
@@ -58,9 +85,6 @@ const config = buildBaseWebConfig(
             },
         },
         plugins: [
-            new DefinePlugin({
-                BUILD_ANGULAR_COMPILATION_FLAGS: JSON.stringify(angularCompilationFlags),
-            }),
             (() => {
                 type StrictTemplateOptions
                     = NoExtraProps<Required<import("@angular/compiler-cli/src/ngtsc/core/api").StrictTemplateOptions>>;
@@ -139,6 +163,13 @@ const config = buildBaseWebConfig(
     {
         tsConfigFile,
         chunkName: WEB_CHUNK_NAMES["browser-window"],
+        entries: {
+            "css.worker": "monaco-editor/esm/vs/language/css/css.worker",
+            "editor.worker": "monaco-editor/esm/vs/editor/editor.worker.js",
+            "html.worker": "monaco-editor/esm/vs/language/html/html.worker",
+            "json.worker": "monaco-editor/esm/vs/language/json/json.worker",
+            "ts.worker": "monaco-editor/esm/vs/language/typescript/ts.worker",
+        },
     },
 );
 

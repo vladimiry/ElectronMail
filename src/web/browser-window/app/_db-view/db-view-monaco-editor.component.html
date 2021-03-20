@@ -1,0 +1,23 @@
+<div class="library-block d-flex mb-2">
+    <div class="btn-group" dropdown>
+        <button
+            class="btn btn-sm btn-secondary-light dropdown-toggle"
+            dropdownToggle
+            type="button"
+        >
+            Filtering code snippet samples <span class="caret"></span>
+        </button>
+        <ul *dropdownMenu class="dropdown-menu" role="menu">
+            <li *ngFor="let item of codeSnippets" role="menuitem">
+                <a
+                    (click)="editorInstance?.setValue(item.value); $event.preventDefault()"
+                    class="dropdown-item"
+                    href="#"
+                >{{ item.title }}</a>
+            </li>
+        </ul>
+    </div>
+</div>
+<div
+    class="editor-block"
+></div>

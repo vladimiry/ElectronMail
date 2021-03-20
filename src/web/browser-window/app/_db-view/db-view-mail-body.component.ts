@@ -35,7 +35,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
     @Input()
     selectedFolderData?: Instance["selectedFolderData"];
 
-    selectedMail$ = this.instance$.pipe(
+    selectedMailToggled$ = this.instance$.pipe(
         map((value) => value.selectedMail),
         mergeMap((value) => value ? [value] : EMPTY),
         distinctUntilChanged((prev, curr) => (
@@ -116,7 +116,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         );
 
         this.subscription.add(
-            this.selectedMail$.subscribe((selectedMail) => {
+            this.selectedMailToggled$.subscribe((selectedMail) => {
                 this.renderBody(selectedMail.conversationMail);
             }),
         );
@@ -126,7 +126,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
                 this.conversationCollapsed$.pipe(
                     distinctUntilChanged(),
                 ),
-                this.selectedMail$.pipe(
+                this.selectedMailToggled$.pipe(
                     map((value) => value.rootNode),
                     distinctUntilChanged(),
                 ),
@@ -170,7 +170,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
             this.store.dispatch(ACCOUNTS_ACTIONS.ToggleDatabaseView({login: this.webAccountPk.login, forced: {databaseView: false}}));
         });
 
-        this.selectedMail$
+        this.selectedMailToggled$
             .pipe(first())
             .subscribe(({conversationMail: {id, mailFolderIds, conversationEntryPk}}) => {
                 this.store.dispatch(ACCOUNTS_ACTIONS.SelectMailOnline({
@@ -184,7 +184,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
     reDownload(): void {
         this.webAccountPk$.pipe(
             withLatestFrom(
-                this.selectedMail$.pipe(
+                this.selectedMailToggled$.pipe(
                     map((selectedMail) => selectedMail.conversationMail),
                 ),
             ),

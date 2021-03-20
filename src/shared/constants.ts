@@ -6,7 +6,7 @@ import {
     name as PACKAGE_NAME,
     version as PACKAGE_VERSION,
 } from "package.json";
-import {PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
+import {PROTON_SHARED_MESSAGE_INTERFACE, PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
 
 export const PRODUCT_NAME = "ElectronMail";
 
@@ -44,6 +44,14 @@ export const WEB_CHUNK_NAMES = {
     "about": "about",
     "browser-window": "browser-window",
     "search-in-page-browser-view": "search-in-page-browser-view",
+} as const;
+
+export const PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION = {
+    // TODO "electron-builder" doesn't pack the resources with "node_modules" folder in the path, so renamed to "node_modules_" for now
+    system:
+        "./assets/db-search-monaco-editor/node_modules_/typescript/lib/lib.esnext.d.ts",
+    protonMessage:
+        `./assets/db-search-monaco-editor/proton-shared/${PROTON_SHARED_MESSAGE_INTERFACE.projectRelativeFile.replace(".ts", ".d.ts")}`,
 } as const;
 
 export const LOCAL_WEBCLIENT_PROTOCOL_PREFIX = "webclient";

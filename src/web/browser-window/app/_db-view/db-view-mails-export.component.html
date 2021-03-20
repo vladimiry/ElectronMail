@@ -2,8 +2,8 @@
     (click)="openModal(modalTemplate)"
     [disabled]="mailsBundleItems && !mailsBundleItems.length"
     class="btn btn-sm btn-secondary-light d-flex flex-grow-1"
-    type="button"
     title="Export to EML"
+    type="button"
 >
     {{ title }}
     <span *ngIf="titleSuffix" [innerText]="titleSuffix" class="pl-1"></span>
@@ -18,19 +18,33 @@
     </div>
     <div class="modal-body">
         <form (ngSubmit)="submit()" [formGroup]="form" class="mb-0" novalidate>
-            <div class="input-group mb-2">
-                <input
-                    (click)="selectExportDir()"
-                    [ngClass]="{'is-invalid': formControls.exportDir.invalid}"
-                    class="form-control form-control-sm"
-                    formControlName="exportDir"
-                    placeholder="Click to select a file system directory to export data to"
-                    readonly
-                    required
-                    type="text"
-                >
-                <div class="input-group-append">
-                    <button (click)="selectExportDir()" class="btn btn-sm btn-secondary" type="button">...</button>
+            <div class="d-flex mb-1">
+                <div class="d-flex flex-grow-1">
+                    <div class="input-group">
+                        <input
+                            (click)="selectExportDir()"
+                            [ngClass]="{'is-invalid': formControls.exportDir.invalid}"
+                            class="form-control form-control-sm"
+                            formControlName="exportDir"
+                            placeholder="Click to select a file system directory to export data to"
+                            readonly
+                            required
+                            type="text"
+                        >
+                        <div class="input-group-append">
+                            <button (click)="selectExportDir()" class="btn btn-sm btn-secondary-light" type="button">...</button>
+                        </div>
+                    </div>
+                </div>
+                <div btnRadioGroup class="btn-group ml-2" formControlName="fileType">
+                    <label
+                        btnRadio="eml"
+                        class="btn btn-sm btn-secondary-light mb-0"
+                    >EML</label>
+                    <label
+                        btnRadio="json"
+                        class="btn btn-sm btn-secondary-light mb-0"
+                    >JSON</label>
                 </div>
             </div>
             <div class="mb-1">
@@ -43,7 +57,6 @@
                     >
                     <label class="custom-control-label" for="includingAttachmentsCheckbox">
                         Including attachments
-                        <span class="badge badge-secondary">experimental</span>
                     </label>
                 </div>
                 <div class="text-muted">

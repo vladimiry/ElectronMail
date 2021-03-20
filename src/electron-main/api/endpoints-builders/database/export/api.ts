@@ -12,7 +12,7 @@ import {
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main";
 import {curryFunctionMembers} from "src/shared/util";
-import {writeEmlFile} from "src/electron-main/api/endpoints-builders/database/export/service";
+import {writeFile} from "src/electron-main/api/endpoints-builders/database/export/service";
 
 const logger_ = curryFunctionMembers(electronLog, "[src/electron-main/api/endpoints-builders/database/export/api]");
 
@@ -26,7 +26,7 @@ export async function buildDbExportEndpoints(
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-        dbExport({exportDir, login, mailPks, includingAttachments}) {
+        dbExport({exportDir, fileType, login, mailPks, includingAttachments}) {
             const logger = curryFunctionMembers(logger_, "dbExport()");
 
             logger.info(JSON.stringify({includingAttachments}));
@@ -112,11 +112,12 @@ export async function buildDbExportEndpoints(
                             logger.verbose("attachments processing end", JSON.stringify({mailIndex}));
                         }
 
-                        const {file} = await writeEmlFile(
+                        const {file} = await writeFile({
                             mail,
+                            fileType,
                             exportDir,
-                            loadedAttachments.length ? loadedAttachments : undefined,
-                        );
+                            attachments: loadedAttachments.length ? loadedAttachments : undefined,
+                        });
                         const fileNotification = {
                             file,
                             progress: Math.trunc(

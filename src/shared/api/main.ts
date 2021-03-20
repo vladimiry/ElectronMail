@@ -147,6 +147,7 @@ export const ENDPOINTS_DEFINITION = {
         ActionType.Observable<DeepReadonly<DbModel.DbAccountPk & {
             mailPks?: Array<DbModel.Mail["pk"]>;
             exportDir: string;
+            fileType: "eml" | "json";
             includingAttachments?: boolean;
         }>, { mailsCount: number } | { progress: number; file: string; attachmentsLoadError: boolean }>(),
 

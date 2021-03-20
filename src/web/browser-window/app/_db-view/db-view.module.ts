@@ -1,5 +1,6 @@
 import {BsDatepickerModule} from "ngx-bootstrap/datepicker";
 import {BsDropdownModule} from "ngx-bootstrap/dropdown";
+import {ButtonsModule} from "ngx-bootstrap/buttons";
 import {CollapseModule} from "ngx-bootstrap/collapse";
 import {EffectsModule} from "@ngrx/effects";
 import {ModalModule} from "ngx-bootstrap/modal";
@@ -23,6 +24,7 @@ import {SharedModule} from "src/web/browser-window/app/_shared/shared.module";
     imports: [
         BsDatepickerModule,
         BsDropdownModule,
+        ButtonsModule,
         CollapseModule,
         ModalModule,
         PopoverModule,

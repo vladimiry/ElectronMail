@@ -9,7 +9,7 @@ import {
     fillFoldersAndReturnRootConversationNodes,
     splitAndFormatAndFillSummaryFolders,
 } from "src/electron-main/api/endpoints-builders/database/folders-view";
-import {walkConversationNodesTree} from "src/shared/util";
+import {parseRawProtonMessage, walkConversationNodesTree} from "src/shared/util";
 
 export function searchRootConversationNodes(
     account: DeepReadonly<FsDbAccount>,
@@ -95,10 +95,12 @@ export const secondSearchStep = async (
                 if (typeof mail === "undefined") {
                     throw new Error("Failed to resolve mail.");
                 }
+                const parsedRawMail = parseRawProtonMessage(mail);
                 const serializedMailCodePart = JSON.stringify(
                     JSON.stringify({
-                        ...JSON.parse(mail.raw),
+                        ...parsedRawMail,
                         Body: mail.body,
+                        EncryptedBody: parsedRawMail.Body,
                         ...(mail.failedDownload && {_BodyDecryptionFailed : true}),
                         Folders: formFoldersForQuickJSEvaluation(folders, LABEL_TYPE.MESSAGE_FOLDER),
                         Labels: formFoldersForQuickJSEvaluation(folders, LABEL_TYPE.MESSAGE_LABEL),

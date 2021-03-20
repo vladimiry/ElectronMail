@@ -4,6 +4,7 @@ import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 import {BrowserModule} from "@angular/platform-browser";
 import {BsDatepickerModule} from "ngx-bootstrap/datepicker";
 import {BsDropdownModule} from "ngx-bootstrap/dropdown";
+import {ButtonsModule} from "ngx-bootstrap/buttons";
 import {CollapseModule} from "ngx-bootstrap/collapse";
 import {EffectsModule} from "@ngrx/effects";
 import {ErrorHandler, Injector, NgModule} from "@angular/core";
@@ -35,6 +36,7 @@ import {RoutingModule} from "./app.routing.module";
         BrowserModule,
         BsDatepickerModule.forRoot(),
         BsDropdownModule.forRoot(),
+        ButtonsModule.forRoot(),
         CollapseModule.forRoot(),
         CoreModule,
         ModalModule.forRoot(),

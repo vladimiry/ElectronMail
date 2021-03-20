@@ -23,7 +23,7 @@ import {
     ZOOM_FACTORS,
 } from "src/shared/constants";
 import {NumericBoolean} from "src/shared/model/common";
-import {curryFunctionMembers, pickBaseConfigProperties} from "src/shared/util";
+import {curryFunctionMembers, parseRawProtonMessage, pickBaseConfigProperties} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[src/electron-main/storage-upgrade]");
 
@@ -573,8 +573,7 @@ export async function upgradeDatabase(db: Database, accounts: Settings["accounts
                 if (MIME_TYPES._.isValidValue(mail.mimeType)) {
                     continue;
                 }
-                type RawMail = Pick<import("src/electron-preload/webview/lib/rest-model/response-entity/mail").Message, "MIMEType">;
-                const rawMail: Readonly<RawMail> = JSON.parse(mail.raw);
+                const rawMail = parseRawProtonMessage(mail);
                 (mail as Mutable<Pick<typeof mail, "mimeType">>).mimeType = rawMail.MIMEType;
                 needToSave = true;
             }

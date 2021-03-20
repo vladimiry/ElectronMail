@@ -13,8 +13,10 @@ import {MailsBundle, State} from "src/web/browser-window/app/store/reducers/db-v
 import {View} from "src/shared/model/database";
 import {filterConversationNodesMails} from "src/shared/util";
 
+const selector = "electron-mail-db-view-mails-export";
+
 @Component({
-    selector: "electron-mail-db-view-mails-export",
+    selector,
     templateUrl: "./db-view-mails-export.component.html",
     styleUrls: ["./db-view-mails-export.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -26,10 +28,14 @@ export class DbViewMailsExportComponent extends DbViewAbstractComponent implemen
     @Input()
     rootConversationNode?: View.RootConversationNode;
 
-    readonly formControls: Record<"exportDir" | "includingAttachments", AbstractControl> = {
+    readonly formControls: Record<"exportDir" | "fileType" | "includingAttachments", AbstractControl> = {
         exportDir: new FormControl(
             null,
             Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
+        ),
+        fileType: new FormControl(
+            "eml",
+            Validators.pattern(/eml|json/), // eslint-disable-line @typescript-eslint/unbound-method
         ),
         includingAttachments: new FormControl(false),
     };
@@ -71,13 +77,15 @@ export class DbViewMailsExportComponent extends DbViewAbstractComponent implemen
             this.form.reset();
         }
 
+        this.formControls.fileType.patchValue("eml");
+
         this.modalRef = this.modalService.show(
             modalTemplate,
             {
                 initialState: clone(
                     pick(this, ["mailsBundleItems", "rootConversationNode"]),
                 ),
-                class: "modal-lg",
+                class: `modal-lg ${selector}-modal`,
                 backdrop: "static",
                 ignoreBackdropClick: true,
             },
@@ -113,6 +121,8 @@ export class DbViewMailsExportComponent extends DbViewAbstractComponent implemen
             DB_VIEW_ACTIONS.DbExport({
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 exportDir: this.formControls.exportDir.value,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                fileType: this.formControls.fileType.value,
                 // eslint-disable-next-line max-len, @typescript-eslint/no-unsafe-assignment
                 includingAttachments: this.formControls.includingAttachments.value,
                 ...this.webAccountPk,

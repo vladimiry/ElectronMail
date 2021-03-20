@@ -209,7 +209,7 @@ export class DbViewMonacoEditorComponent extends DbViewAbstractComponent impleme
                                 mail: DeepReadonly<
                                     Omit<import("lib/interfaces/mail/Message").Message, "Body">
                                     &
-                                    { Body: string, _BodyDecryptionFailed?: boolean }
+                                    { Body: string, EncryptedBody: string, _BodyDecryptionFailed?: boolean }
                                     &
                                     ${folderDtsCodeInclude(LABEL_TYPE.MESSAGE_FOLDER)}
                                     &

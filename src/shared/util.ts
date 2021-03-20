@@ -17,7 +17,7 @@ import {
 import {AccountConfig} from "./model/account";
 import {BaseConfig, Config} from "./model/options";
 import {DbPatch} from "./api/common";
-import {FsDbAccount, View} from "src/shared/model/database";
+import {FsDbAccount, Mail, View} from "src/shared/model/database";
 import {LoginFieldContainer} from "./model/container";
 import {PROVIDER_REPO_MAP, PROVIDER_REPO_NAMES} from "src/shared/proton-apps-constants";
 import {StatusCodeError} from "./model/error";
@@ -664,3 +664,10 @@ export const depersonalizeLoggedUrlsInString: (value: string) => string = (() =>
     const result: typeof depersonalizeLoggedUrlsInString = (value) => value.replace(urlRegExp, replacer);
     return result;
 })();
+
+// TODO move "protonmail message rest model" to shared library since being referenced from different places
+export const parseRawProtonMessage = (
+    mail: Mail
+): import("src/electron-preload/webview/lib/rest-model/response-entity/mail").Message => {
+    return JSON.parse(mail.raw); // eslint-disable-line @typescript-eslint/no-unsafe-return
+};

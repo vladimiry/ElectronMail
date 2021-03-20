@@ -1,3 +1,4 @@
+@use "~src/web/browser-window/lib" as lib;
 @import "~src/web/variables";
 
 @mixin account-title-button($color, $border: $color) {
@@ -54,7 +55,7 @@
             }
 
             &:nth-child(2) {
-                @include app-dropdown-toggle-x-padding-split;
+                @include lib.app-dropdown-toggle-x-padding-split;
                 margin-left: 0;
                 flex-grow: 0;
                 border-left-width: 0;

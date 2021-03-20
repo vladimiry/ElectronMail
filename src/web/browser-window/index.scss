@@ -1,3 +1,4 @@
+@use "~src/web/browser-window/lib" as lib;
 @import "~src/web/variables";
 
 html,
@@ -18,7 +19,7 @@ form .required label::after {
 
 // "bootstrap"
 .btn-sm + .dropdown-toggle-split {
-    @include app-dropdown-toggle-x-padding-split;
+    @include lib.app-dropdown-toggle-x-padding-split;
 }
 
 // "bootstrap"
@@ -133,5 +134,15 @@ ng-select.ng-invalid.ng-touched .ng-select-container {
     // hiding "View Problem (Alt+F8)" action
     .action-container:nth-of-type(1) {
         display: none !important;
+    }
+}
+
+.#{$app-prefix}-db-view-mails-export-modal {
+    .btn-group {
+        .btn {
+            &.active {
+                @include lib.btn-warning-light-active();
+            }
+        }
     }
 }

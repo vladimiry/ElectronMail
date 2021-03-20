@@ -1,3 +1,4 @@
+@use "~src/web/browser-window/lib" as lib;
 @import "~src/web/variables";
 
 :host {
@@ -6,11 +7,7 @@
     flex-grow: 1;
 
     .btn-warning-light {
-        $bg: map_get($app-account-title-btn-colors, "selected-bg");
-        $border: map_get($app-account-title-btn-colors, "selected-border");
-        // second pair of bg/border passed to suppress "hover" state
-        // third pair of bg/border passed to suppress "active" state
-        @include button-variant($bg, $border, $bg, $border, $bg, $border);
+        @include lib.btn-warning-light-active();
     }
 
     .custom-switch {

@@ -1,0 +1,19 @@
+@import "~src/web/variables";
+
+@mixin app-dropdown-toggle-x-padding-split {
+    padding-left: $btn-padding-x * 0.9;
+    padding-right: $btn-padding-x * 0.9;
+}
+
+@mixin btn-warning-light-active {
+    // TODO tweak the ".btn-warning-light" style once globally rather than using mixin
+    $bg: map_get($app-account-title-btn-colors, "selected-bg");
+    $border: map_get($app-account-title-btn-colors, "selected-border");
+    @include button-variant($bg, $border, $bg, $border, $bg, $border);
+    color: map_get($app-account-title-btn-colors, "selected-text") !important;
+
+    &:focus {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+}

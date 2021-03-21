@@ -3,7 +3,7 @@ import path from "path";
 
 import {BINARY_NAME} from "src/shared/constants";
 import {CWD_ABSOLUTE_DIR} from "scripts/const";
-import {FolderAsDomainEntry, executeBuildFlow, printAndWriteFile} from "./protonmail-lib";
+import {FolderAsDomainEntry, executeBuildFlow, printAndWriteFile} from "./lib";
 import {PROVIDER_REPO_MAP, PROVIDER_REPO_NAMES} from "src/shared/proton-apps-constants";
 import {applyPatch, execShell} from "scripts/lib";
 

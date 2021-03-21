@@ -3,7 +3,6 @@ import fsExtra from "fs-extra";
 import path from "path";
 
 import {CONSOLE_LOG} from "scripts/lib";
-import {IpcMainServiceScan} from "src/shared/api/main";
 import {PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION} from "src/shared/constants";
 import {PROTON_SHARED_MESSAGE_INTERFACE} from "src/shared/proton-apps-constants";
 
@@ -12,9 +11,9 @@ export const dtsGenerator: { // eslint-disable-line @typescript-eslint/no-unsafe
     default: (options: { baseDir: string, files: string[], out: string }) => Promise<string>
 } = require("dts-generator"); // eslint-disable-line @typescript-eslint/no-var-requires
 
-export const resolveProtonMetadata = async (
+export const generateDtsForMonacoEditor = async (
     {destDir}: { destDir: string },
-): Promise<IpcMainServiceScan["ApiImplReturns"]["staticInit"]["monacoEditorExtraLibArgs"]> => {
+): Promise<void> => {
     const options = {
         system: {
             base: "./node_modules/typescript/lib",
@@ -30,16 +29,25 @@ export const resolveProtonMetadata = async (
 
     // TODO replace "dts-generator" dependency with something capable to combine "./node_modules/typescript/lib/lib.esnext.d.ts"
     for (const key of [/* "system", */ "protonMessage"] as const) {
-        const sourceFile = options[key].in;
+        const {in: sourceFile, out: destFile, base: baseDir} = options[key];
+        if (fsExtra.pathExistsSync(destFile)) {
+            CONSOLE_LOG(`The "${destFile}" file already exists.`);
+            continue;
+        }
         if (!fsExtra.pathExistsSync(sourceFile)) {
             throw new Error(`The source "${sourceFile}" file doesn't exits.`);
         }
-        await dtsGenerator.default({baseDir: options[key].base, files: [sourceFile], out: options[key].out});
-        CONSOLE_LOG(`Merged "${options[key].in}" to "${options[key].out}"`);
+        await dtsGenerator.default({baseDir, files: [sourceFile], out: destFile});
+        CONSOLE_LOG(`Merged "${sourceFile}" to "${destFile}"`);
     }
 
     // TODO drop custom "./node_modules/typescript/lib/lib.esnext.d.ts" combining when "dts-generator" gets replaced
     {
+        const {in: sourceFile, out: destFile} = options.system;
+        if (fsExtra.pathExistsSync(destFile)) {
+            CONSOLE_LOG(`The "${destFile}" file already exists.`);
+            return;
+        }
         const referenceTagRe = /\/\/\/[\s\t]+<reference[\s\t]+lib=["']+(.*)["']+[\s\t]+\/>/;
         const mergedFiles: string[] = [];
         const extractContent = (file: string): string => {
@@ -59,23 +67,8 @@ export const resolveProtonMetadata = async (
             mergedFiles.push(file);
             return resultLines.join("\n");
         };
-        fsExtra.ensureDirSync(path.dirname(options.system.out));
-        fs.writeFileSync(options.system.out, extractContent(options.system.in));
-        CONSOLE_LOG(`Merged to "${options.system.out}" files:`, mergedFiles);
+        fsExtra.ensureDirSync(path.dirname(destFile));
+        fs.writeFileSync(destFile, extractContent(sourceFile));
+        CONSOLE_LOG(`Merged to "${destFile}" files:`, mergedFiles);
     }
-
-    return {
-        system: [
-            fs.readFileSync(options.system.out).toString(),
-            `in-memory:${options.system.in}`,
-        ],
-        protonMessage: [
-            (
-                fs.readFileSync(options.protonMessage.out).toString()
-                +
-                `declare const mail: Omit<import("lib/interfaces/mail/Message").Message, "Body"> & {Body: string};`
-            ),
-            `in-memory:${PROTON_SHARED_MESSAGE_INTERFACE.url}`,
-        ],
-    };
 };

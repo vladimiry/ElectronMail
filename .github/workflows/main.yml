@@ -12,32 +12,50 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
-      - { uses: actions/checkout@v2 }
-      - { uses: actions/cache@v2, id: cache-node-modules, with: { path: ./node_modules, key: "node-modules-cache-${{ matrix.os }}-${{ hashFiles('./yarn.lock', './patch-package/*.patch') }}-${{ secrets.NODE_MODULES_CACHE_VERSION }}" } }
-      - { name: system setup, if: steps.cache-node-modules.outputs.cache-hit != 'true' && runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
       - { uses: actions/setup-node@v1, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}" } }
-      - { name: install node modules, if: steps.cache-node-modules.outputs.cache-hit != 'true' && runner.os != 'Windows', run: "yarn --pure-lockfile --network-timeout 60000" }
-      - { name: install node modules, if: steps.cache-node-modules.outputs.cache-hit != 'true' && runner.os == 'Windows', shell: pwsh, run: ./scripts/ci/github/install-node-modules.ps1 }
+      - { uses: actions/checkout@v2 }
+      - { name: system setup, if: runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
+      - name: get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+      - name: cache yarn cache directory
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: "yarn-cache-dir-${{ matrix.os }}-${{ hashFiles('./yarn.lock', './patch-package/*.patch') }}-${{ secrets.YARN_CACHE_DIR_CACHE_VERSION }}"
+      - { name: install node-gyp, if: runner.os == 'Windows', run: ./scripts/ci/github/install-node-gyp.ps1 }
+      - { name: install node modules, run: "yarn --pure-lockfile --network-timeout 60000" }
       # </common>
       - name: cache artifact
         uses: actions/cache@v2
-        with: { path: ./output/git/backup, key: "proton-clients-cache-${{ hashFiles('./src/shared/proton-apps-constants.ts') }}-${{ secrets.PROTON_CLIENTS_ARTIFACT_CACHE_VERSION }}" }
+        with:
+          path: |
+            ./output/git/backup
+            ./app/assets/db-search-monaco-editor
+          key: "proton-clients-cache-${{ hashFiles('./src/shared/proton-apps-constants.ts') }}-${{ secrets.PROTON_CLIENTS_ARTIFACT_CACHE_VERSION }}"
       - { name: print ./output/git/backup files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./output/git/backup }
       - { name: build, run: ./scripts/ci/prepare-webclients.sh }
       - { name: print ./output/git/backup files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./output/git/backup }
-      - { name: tar artifact, run: tar -cvf proton-clients-artifact.tar ./output/git/backup }
+      - { name: tar artifact, run: tar -cvf proton-clients-artifact.tar ./output/git/backup ./app/assets/db-search-monaco-editor }
       - { name: upload artifact, uses: actions/upload-artifact@v2, with: { name: proton-clients-artifact, path: ./proton-clients-artifact.tar, if-no-files-found: error } }
   build-app:
     strategy: { matrix: { os: [ ubuntu-20.04, windows-2019, macos-10.15 ] }, fail-fast: false }
     runs-on: ${{ matrix.os }}
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
-      - { uses: actions/checkout@v2 }
-      - { uses: actions/cache@v2, id: cache-node-modules, with: { path: ./node_modules, key: "node-modules-cache-${{ matrix.os }}-${{ hashFiles('./yarn.lock', './patch-package/*.patch') }}-${{ secrets.NODE_MODULES_CACHE_VERSION }}" } }
-      - { name: system setup, if: steps.cache-node-modules.outputs.cache-hit != 'true' && runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
       - { uses: actions/setup-node@v1, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}" } }
-      - { name: install node modules, if: steps.cache-node-modules.outputs.cache-hit != 'true' && runner.os != 'Windows', run: "yarn --pure-lockfile --network-timeout 60000" }
-      - { name: install node modules, if: steps.cache-node-modules.outputs.cache-hit != 'true' && runner.os == 'Windows', shell: pwsh, run: ./scripts/ci/github/install-node-modules.ps1 }
+      - { uses: actions/checkout@v2 }
+      - { name: system setup, if: runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
+      - name: get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+      - name: cache yarn cache directory
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: "yarn-cache-dir-${{ matrix.os }}-${{ hashFiles('./yarn.lock', './patch-package/*.patch') }}-${{ secrets.YARN_CACHE_DIR_CACHE_VERSION }}"
+      - { name: install node-gyp, if: runner.os == 'Windows', run: ./scripts/ci/github/install-node-gyp.ps1 }
+      - { name: install node modules, run: "yarn --pure-lockfile --network-timeout 60000" }
       # </common>
       - { name: build, run: 'npm exec --package=npm-run-all -- npm-run-all lint test:electron-main build' }
       - { name: print ./app files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./app }
@@ -49,19 +67,26 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
-      - { uses: actions/checkout@v2 }
-      - { uses: actions/cache@v2, id: cache-node-modules, with: { path: ./node_modules, key: "node-modules-cache-${{ matrix.os }}-${{ hashFiles('./yarn.lock', './patch-package/*.patch') }}-${{ secrets.NODE_MODULES_CACHE_VERSION }}" } }
-      - { name: system setup, if: steps.cache-node-modules.outputs.cache-hit != 'true' && runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
       - { uses: actions/setup-node@v1, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}" } }
-      - { name: install node modules, if: steps.cache-node-modules.outputs.cache-hit != 'true' && runner.os != 'Windows', run: "yarn --pure-lockfile --network-timeout 60000" }
-      - { name: install node modules, if: steps.cache-node-modules.outputs.cache-hit != 'true' && runner.os == 'Windows', shell: pwsh, run: ./scripts/ci/github/install-node-modules.ps1 }
+      - { uses: actions/checkout@v2 }
+      - { name: system setup, if: runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
+      - name: get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+      - name: cache yarn cache directory
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: "yarn-cache-dir-${{ matrix.os }}-${{ hashFiles('./yarn.lock', './patch-package/*.patch') }}-${{ secrets.YARN_CACHE_DIR_CACHE_VERSION }}"
+      - { name: install node-gyp, if: runner.os == 'Windows', run: ./scripts/ci/github/install-node-gyp.ps1 }
+      - { name: install node modules, run: "yarn --pure-lockfile --network-timeout 60000" }
       # </common>
       - { name: download proton clients artifact, uses: actions/download-artifact@v2, with: { name: proton-clients-artifact } }
       - { name: unpack proton clients artifact, shell: bash, run: tar -xvf ./proton-clients-artifact.tar }
       - { name: download app artifact, uses: actions/download-artifact@v2, with: { name: 'app-artifact-${{ runner.os }}', path: ./app } }
       - { name: assets, run: "yarn assets", env: { ELECTRON_MAIL_SHOULD_FAIL_ON_BUILD: "true" } }
       - { name: print ./app files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./app }
-      - { name: build, if: runner.os == 'Windows', shell: pwsh, run: ./scripts/ci/github/package-app.ps1 }
+      - { name: build, if: runner.os == 'Windows', run: ./scripts/ci/github/package-app.ps1 }
       - { name: build, if: runner.os == 'Linux', run: ./scripts/ci/github/package-app-linux.sh }
       - { name: build, if: matrix.os == 'macos-10.15', run: ./scripts/ci/github/package-app-osx.sh, env: { ARTIFACT_NAME_POSTFIX: "-catalina" } }
       - name: upload e2e/spectron output

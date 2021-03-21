@@ -148,7 +148,13 @@ export async function executeBuildFlow<T extends FolderAsDomainEntry[], O = Unpa
 
         const repoDistBackupDir = resolveGitOutputBackupDir({repoType, suffix: `dist-${folderAsDomainEntry.folderNameAsDomain}`});
 
-        const installModules = async (): Promise<void> => {
+        if (fsExtra.pathExistsSync(repoDistBackupDir)) { // taking dist from the backup
+            const src = repoDistBackupDir;
+            const dest = repoDistDir;
+
+            CONSOLE_LOG(`Copying backup ${src} to ${dest}`);
+            await fsExtra.copy(src, dest);
+        } else { // executing the build
             if (fsExtra.pathExistsSync(path.resolve(repoDir, "node_modules"))) {
                 CONSOLE_LOG("Skip dependencies installing");
             } else if (flow.install) {
@@ -156,21 +162,6 @@ export async function executeBuildFlow<T extends FolderAsDomainEntry[], O = Unpa
             } else {
                 await execShell(["npm", ["ci"], {cwd: repoDir}]);
             }
-        };
-
-        if (fsExtra.pathExistsSync(repoDistBackupDir)) { // taking dist from the backup
-            const src = repoDistBackupDir;
-            const dest = repoDistDir;
-
-            CONSOLE_LOG(`Copying backup ${src} to ${dest}`);
-            await fsExtra.copy(src, dest);
-
-            if (repoType === "proton-mail") {
-                // installing modules since required by "./scripts/prepare-webclient/monaco-editor-dts.ts"
-                await installModules();
-            }
-        } else { // executing the build
-            await installModules();
 
             if (shouldFailOnBuild) {
                 throw new Error(`Halting since "${shouldFailOnBuildEnvVarName}" env var has been enabled`);

@@ -94,7 +94,6 @@
     "test:electron-main:compiled:compile": "cross-env TS_NODE_FILES=true npx --no --node-options=\"--require tsconfig-paths/register\" ttsc --project ./src/electron-main/__test__/tsconfig.json",
     "test:web": "cross-env NODE_ENV=test TS_NODE_FILES=true npx --no --node-options=\"--require tsconfig-paths/register\" karma start ./src/web/browser-window/test/karma.conf.ts --single-run",
     "scripts/ci/appveyor/download-webclients-artifact": "yarn ts-node:shortcut ./scripts/ci/appveyor/download-webclients-artifact.ts",
-    "scripts/ci/print-webclients-dist-paths-pattern": "yarn --silent ts-node:shortcut ./scripts/ci/print-webclients-dist-paths-pattern.ts",
     "scripts/code-generation/electron-main": "yarn ts-node:shortcut ./scripts/code-generation/electron-main.ts",
     "scripts/dist-packages/print-hashes": "yarn ts-node:shortcut ./scripts/dist-packages/print-hashes.ts ./dist",
     "scripts/dist-packages/upload": "yarn ts-node:shortcut ./scripts/dist-packages/upload.ts ./dist ./output",

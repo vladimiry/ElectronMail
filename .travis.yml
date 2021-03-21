@@ -24,9 +24,9 @@ jobs:
   include:
     - stage: "build proton clients"
       <<: *macos-common
-      cache: { yarn: false, npm: false, directories: [ "./output/git/backup" ] }
+      cache: { yarn: false, npm: false, directories: [ "./output/git/backup", "./app/assets/db-search-monaco-editor" ] }
       script: ./scripts/ci/prepare-webclients.sh
-      workspaces: { create: { name: "macos-webclients-artifact", paths: [ "./output/git/backup" ] } }
+      workspaces: { create: { name: "macos-webclients-artifact", paths: [ "./output/git/backup", "./app/assets/db-search-monaco-editor" ] } }
     - stage: "build app package"
       <<: *macos-common
       <<: *macos-build-app

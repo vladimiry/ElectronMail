@@ -1,21 +1,14 @@
-# enable debug output printing for "electron-builder" / "node-gyp" like modules
-$env:DEBUG = "true"
-
-echo "::group::system setup"
-./scripts/ci/github/system-setup.ps1 -IncludeWin81Sdk $true
+echo "::group::vs build tools setup"
+./scripts/ci/github/install-vs-build-tools.ps1 -IncludeWin81Sdk $true
 npm config set msvs_version 2017
-echo "::endgroup::"
-
-echo "::group::build native modules (electron-rebuild)"
-npm run postinstall:remove:prebuild-install
-npm run clean:prebuilds
-npm exec --package=electron-rebuild -- electron-rebuild --version $((Get-Content ./package.json | ConvertFrom-Json).devDependencies.electron)
 echo "::endgroup::"
 
 echo "::group::build native modules"
 npm run postinstall:remove:prebuild-install
 npm run clean:prebuilds
+# $env:DEBUG = "*"
 npm exec --package=electron-builder -- electron-builder install-app-deps --arch=x64
+# $env:DEBUG = $null
 echo "::endgroup::"
 
 echo "::group::test:e2e"

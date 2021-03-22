@@ -35,7 +35,7 @@ export class DbViewMailsExportComponent extends DbViewAbstractComponent implemen
         ),
         fileType: new FormControl(
             "eml",
-            Validators.pattern(/eml|json/), // eslint-disable-line @typescript-eslint/unbound-method
+            Validators.pattern(/^(eml|json)$/), // eslint-disable-line @typescript-eslint/unbound-method
         ),
         includingAttachments: new FormControl(false),
     };

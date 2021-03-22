@@ -6,6 +6,12 @@
     flex-direction: row;
     flex-grow: 1;
 
+    form {
+        > .d-flex:nth-of-type(1) {
+            align-self: flex-start;
+        }
+    }
+
     .btn-warning-light {
         @include lib.btn-warning-light-active();
     }

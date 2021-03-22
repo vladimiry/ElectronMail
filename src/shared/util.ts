@@ -11,6 +11,7 @@ import {
     LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN,
     ONE_MINUTE_MS,
     ONE_SECOND_MS,
+    PROTON_API_ENTRY_URLS,
     WEB_CLIENTS_BLANK_HTML_FILE_NAME,
     ZOOM_FACTOR_DEFAULT,
 } from "src/shared/constants";
@@ -638,10 +639,13 @@ export const lowerConsoleMessageEventLogLevel = (
     return logLevel;
 };
 
-// TODO test domain includes one of: https://mail.protonmail.com, https://app.protonmail.ch, https://protonirockerxow.onion
-//      see "./src/shared/constants.ts"
 export const depersonalizeProtonApiUrl = (url: string): string => {
-    if (!new URL(url).pathname) {
+    try {
+        if (!new URL(url).pathname) {
+            return url;
+        }
+    } catch {
+        // the provided url value failed to be parsed to URL so skipping processing
         return url;
     }
 
@@ -659,10 +663,19 @@ export const depersonalizeProtonApiUrl = (url: string): string => {
 };
 
 export const depersonalizeLoggedUrlsInString: (value: string) => string = (() => {
+    // at the moment only proton urls get depersonalized, ie urls that start from the following urls (notice "slash" at the end):
+    //      https://app.protonmail.ch/
+    //      https://mail.protonmail.com/
+    //      https://protonirockerxow.onion/
+    const includesProtonApiUrl = (value?: string): boolean => PROTON_API_ENTRY_URLS.some((domain) => value?.includes(`${domain}/`));
     const urlRegExp = urlRegexSafe({exact: false, strict: true});
-    const replacer = (match: string): string => depersonalizeProtonApiUrl(match);
-    const result: typeof depersonalizeLoggedUrlsInString = (value) => value.replace(urlRegExp, replacer);
-    return result;
+
+    return (value: string): string => {
+        if (includesProtonApiUrl(value)) {
+            return value.replace(urlRegExp, depersonalizeProtonApiUrl);
+        }
+        return value;
+    };
 })();
 
 // TODO move "protonmail message rest model" to shared library since being referenced from different places

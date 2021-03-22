@@ -1,6 +1,6 @@
-@import "~bootstrap/scss/functions";
-@import "~bootstrap/scss/mixins";
-@import "~font-awesome/scss/mixins";
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/mixins";
+@import "font-awesome/scss/mixins";
 
 // >>>>> overriding bootstrap/font-awesome/other-libs variables before importing them
 
@@ -15,8 +15,8 @@ $modal-dialog-margin-y-sm-up: 3rem;
 
 // >>>>> importing bootstrap/font-awesome/other-libs variables
 
-@import "~bootstrap/scss/variables";
-@import "~font-awesome/scss/variables";
+@import "bootstrap/scss/variables";
+@import "font-awesome/scss/variables";
 
 // >>>>> overriding bootstrap/font-awesome/other-libs maps
 

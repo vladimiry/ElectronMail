@@ -1,4 +1,4 @@
-@import "~src/web/variables";
+@import "src/web/variables";
 
 @mixin app-db-view-badge-padding-radius {
     border-radius: $badge-border-radius;

@@ -1,5 +1,5 @@
-@import "~src/web/variables";
-@import "~src/web/browser-window/app/_db-view/lib";
+@import "src/web/variables";
+@import "src/web/browser-window/app/_db-view/lib";
 
 :host {
     $state-line-sent: $app-color-primary-light;

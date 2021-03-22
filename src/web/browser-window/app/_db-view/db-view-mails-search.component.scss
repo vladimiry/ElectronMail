@@ -1,5 +1,5 @@
-@use "~src/web/browser-window/lib" as lib;
-@import "~src/web/variables";
+@use "src/web/browser-window/lib" as lib;
+@import "src/web/variables";
 
 :host {
     display: flex;

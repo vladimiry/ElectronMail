@@ -38,3 +38,16 @@ index 07e92ff..d0396d8 100644
                  <Label htmlFor="password">{c('Label').t`Mailbox password`}</Label>
                  <div className="mb1">
                      <LoginUnlockInput
+diff --git a/src/app/containers/mailbox/MailboxContainer.tsx b/src/app/containers/mailbox/MailboxContainer.tsx
+index 3f222f7..98e9cfe 100644
+--- a/src/app/containers/mailbox/MailboxContainer.tsx
++++ b/src/app/containers/mailbox/MailboxContainer.tsx
+@@ -200,7 +200,7 @@ const MailboxContainer = ({
+     );
+
+     return (
+-        <div ref={elementRef} tabIndex={-1} className="flex-item-fluid flex flex-column flex-nowrap no-outline">
++        <div ref={elementRef} tabIndex={-1} className="flex-item-fluid flex flex-column flex-nowrap no-outline electron-mail-mailbox-container-component">
+             {showToolbar && (
+                 <Toolbar
+                     labelID={labelID}

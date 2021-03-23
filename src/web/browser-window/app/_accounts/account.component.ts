@@ -1,7 +1,8 @@
-import {BehaviorSubject, EMPTY, Observable, Subject, Subscription, combineLatest, merge, of, race, throwError, timer} from "rxjs";
+import {BehaviorSubject, Observable, Subject, Subscription, combineLatest, merge, of, race, throwError, timer} from "rxjs";
 import {
     ChangeDetectionStrategy,
     Component,
+    ComponentRef,
     ElementRef,
     HostBinding,
     Input,
@@ -15,6 +16,7 @@ import {Store, select} from "@ngrx/store";
 import {URL} from "@cliqz/url-parser";
 import {
     concatMap,
+    debounce,
     debounceTime,
     delayWhen,
     distinctUntilChanged,
@@ -36,6 +38,7 @@ import {ACCOUNTS_ACTIONS, AppAction, NAVIGATION_ACTIONS} from "src/web/browser-w
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
+import {DbViewEntryComponent} from "src/web/browser-window/app/_db-view/db-view-entry.component";
 import {DbViewModuleResolve} from "src/web/browser-window/app/_accounts/db-view-module-resolve.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
@@ -60,11 +63,16 @@ export class AccountComponent extends NgChangesObservableComponent implements On
 
     readonly account$: Observable<WebAccount> = this.ngChangesObservable("account");
 
-    viewModeClass: "vm-live" | "vm-database" = "vm-live";
-
     // TODO angular: get rid of @HostBinding("class") /  @Input() workaround https://github.com/angular/angular/issues/7289
     @Input()
     readonly class: string = "";
+
+    viewModeClass: "vm-live" | "vm-database" = "vm-live";
+
+    @HostBinding("class")
+    get getClass(): string {
+        return `${this.class} ${this.viewModeClass}`;
+    }
 
     readonly webViewsState: Readonly<Record<"primary" | "calendar", {
         readonly src$: BehaviorSubject<string>; readonly domReady$: Subject<Electron.WebviewTag>;
@@ -75,16 +83,6 @@ export class AccountComponent extends NgChangesObservableComponent implements On
 
     @ViewChild("tplDbViewComponentContainerRef", {read: ViewContainerRef, static: true})
     private readonly tplDbViewComponentContainerRef!: ViewContainerRef;
-
-    private readonly databaseViewToggled$ = this.account$.pipe(
-        map((account) => ({
-            login: account.accountConfig.login,
-            accountIndex: account.accountIndex,
-            databaseView: account.databaseView,
-        })),
-        distinctUntilChanged(({databaseView: prev}, {databaseView: curr}) => prev === curr),
-        withLatestFrom(this.store.pipe(select(AccountsSelectors.FEATURED.selectedLogin))),
-    );
 
     private readonly onlinePing$ = timer(0, ONE_SECOND_MS).pipe(
         filter(() => navigator.onLine),
@@ -112,11 +110,6 @@ export class AccountComponent extends NgChangesObservableComponent implements On
 
     private readonly subscription = new Subscription();
 
-    @HostBinding("class")
-    get getClass(): string {
-        return `${this.class} ${this.viewModeClass}`;
-    }
-
     constructor(
         private readonly dbViewModuleResolve: DbViewModuleResolve,
         private readonly accountsService: AccountsService,
@@ -124,7 +117,6 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         private readonly core: CoreService,
         private readonly store: Store<State>,
         private readonly zone: NgZone,
-        private readonly elementRef: ElementRef<HTMLElement>,
     ) {
         super();
         this.logger = getWebLogger();
@@ -194,22 +186,67 @@ export class AccountComponent extends NgChangesObservableComponent implements On
 
         this.subscription.add(
             (() => {
-                let dbViewEntryComponentMounted = false;
+                let mountedDbViewEntryComponent: ComponentRef<DbViewEntryComponent> | undefined;
+                let selectedLoginResolvingDebouncedOnce = false;
 
-                return this.databaseViewToggled$.subscribe(async ([{login, accountIndex, databaseView}]) => {
-                    this.viewModeClass = databaseView
-                        ? "vm-database"
-                        : "vm-live";
+                return combineLatest([
+                    this.account$.pipe(
+                        map((account) => ({
+                            login: account.accountConfig.login,
+                            accountIndex: account.accountIndex,
+                            databaseView: account.databaseView,
+                        })),
+                        distinctUntilChanged(({databaseView: prev}, {databaseView: curr}) => prev === curr),
+                    ),
+                    combineLatest([
+                        this.store.pipe(
+                            select(AccountsSelectors.FEATURED.selectedLogin),
+                        ),
+                        this.store.pipe(
+                            select(OptionsSelectors.FEATURED.mainProcessNotification),
+                            filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.ActivateBrowserWindow),
+                            startWith(null),
+                        ),
+                    ]).pipe(
+                        map(([selectedLogin]) => selectedLogin),
+                        debounce(() => {
+                            return selectedLoginResolvingDebouncedOnce
+                                ? of(null) // no debouncing-based delay needed
+                                : this.webViewsState.primary.domReady$ // delay until "primary webview" fires "dom-ready" event
+                                    .pipe(tap(() => selectedLoginResolvingDebouncedOnce = true));
+                        }),
+                    ),
+                ]).pipe(
+                    withLatestFrom(this.webViewsState.primary.domReady$),
+                ).subscribe(async ([[{login, accountIndex, databaseView}, selectedLogin], primaryWebView]) => {
+                    const viewModeClass = databaseView ? "vm-database" : "vm-live";
 
-                    if (!databaseView) {
-                        this.focusPrimaryWebview();
-                    } else if (!dbViewEntryComponentMounted) {
-                        await this.dbViewModuleResolve.mountDbViewEntryComponent(
+                    if (this.viewModeClass !== viewModeClass) {
+                        this.viewModeClass = viewModeClass;
+                    }
+
+                    if (databaseView) {
+                        mountedDbViewEntryComponent ??= await this.dbViewModuleResolve.mountDbViewEntryComponent(
                             this.tplDbViewComponentContainerRef,
                             {login, accountIndex},
                         );
-                        dbViewEntryComponentMounted = true;
                     }
+
+                    if (login !== selectedLogin) {
+                        return;
+                    }
+
+                    await this.ipcMainClient("selectAccount")({
+                        databaseView,
+                        // WARN: "webView.getWebContentsId()" is available only after "webView.dom-ready" event triggering
+                        webContentId: primaryWebView.getWebContentsId(),
+                    });
+
+                    this.focusVisibleViewModeContainerElement(
+                        databaseView
+                            ? mountedDbViewEntryComponent?.injector.get(ElementRef).nativeElement
+                            : primaryWebView,
+                    );
                 });
             })(),
         );
@@ -407,42 +444,6 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                 ]);
             }),
         );
-
-        this.subscription.add(
-            this.databaseViewToggled$.subscribe(async ([{databaseView}, selectedLogin]) => {
-                // tslint:disable-next-line:early-exit
-                if (this.account.accountConfig.login === selectedLogin) {
-                    await this.ipcMainClient("selectAccount")({
-                        databaseView,
-                        // WARN electron: "webView.getWebContentsId()" is available only after "webView.dom-ready" triggered
-                        webContentId: primaryWebView.getWebContentsId(),
-                    });
-                }
-            }),
-        );
-
-        this.subscription.add(
-            combineLatest([
-                this.store.pipe(
-                    select(AccountsSelectors.FEATURED.selectedLogin),
-                ),
-                this.store.pipe(
-                    select(OptionsSelectors.FEATURED.mainProcessNotification),
-                    startWith(IPC_MAIN_API_NOTIFICATION_ACTIONS.ActivateBrowserWindow()),
-                    filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.ActivateBrowserWindow),
-                ),
-            ]).pipe(
-                filter(([selectedLogin]) => this.account.accountConfig.login === selectedLogin),
-                debounceTime(ONE_SECOND_MS * 0.3),
-            ).subscribe(async () => {
-                this.focusPrimaryWebview();
-                await this.ipcMainClient("selectAccount")({
-                    databaseView: this.account.databaseView,
-                    // WARN electron: "webView.getWebContentsId()" is available only after "webView.dom-ready" triggered
-                    webContentId: primaryWebView.getWebContentsId(),
-                });
-            }),
-        );
     }
 
     onDispatch(action: AppAction): void {
@@ -451,22 +452,40 @@ export class AccountComponent extends NgChangesObservableComponent implements On
 
     ngOnDestroy(): void {
         super.ngOnDestroy();
-        this.logger.info(`ngOnDestroy()`);
+        this.logger.info("ngOnDestroy()");
         this.subscription.unsubscribe();
     }
 
-    private focusPrimaryWebview(): void {
-        timer(0, ONE_SECOND_MS / 10).pipe(
-            map(() => {
-                return this.elementRef.nativeElement.querySelector<HTMLElement>(
-                    this.viewModeClass === "vm-live"
-                        ? "electron-mail-account-view-primary > webview"
-                        : "electron-mail-db-view-entry",
-                );
-            }),
-            mergeMap((value) => value && value.offsetParent /* only visible element */ ? [value] : EMPTY),
+    private focusVisibleViewModeContainerElement(
+        element: Partial<Pick<Electron.WebviewTag, "offsetParent" | "focus" | "executeJavaScript">>,
+    ): void {
+        timer(0, ONE_SECOND_MS / 10).pipe( // run test every 0.1 sec
+            filter(() => Boolean(element.offsetParent) /* filter visible element */),
             take(1),
-            takeUntil(timer(ONE_SECOND_MS / 3)),
-        ).subscribe((value) => value.focus());
+            takeUntil(timer(ONE_SECOND_MS * 0.7)), // wait 0.7 sec for webview gets visible
+        ).subscribe(() => {
+            if (typeof element.focus === "function") {
+                element.focus();
+            }
+            if (this.viewModeClass !== "vm-live" || typeof element.executeJavaScript !== "function") {
+                return;
+            }
+            // CSS selector value defined in "./patches/protonmail/proton-mail.patch"
+            element
+                .executeJavaScript(`
+                    setTimeout(
+                        () => {
+                            const el = document.querySelector(".electron-mail-mailbox-container-component");
+                            if (/* visibility test */ el?.offsetParent && typeof el.focus === "function") {
+                                el.focus();
+                            }
+                        },
+                        ${ONE_SECOND_MS / 2},
+                    );`,
+                )
+                .catch((error) => {
+                    this.logger.error("failed to focus protonmail mailbox container DOM element", error);
+                });
+        });
     }
 }

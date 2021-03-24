@@ -1,10 +1,11 @@
 <button
     (click)="openModal(modalTemplate)"
-    [disabled]="mailsBundleItems && !mailsBundleItems.length"
-    class="btn btn-sm btn-secondary-light d-flex flex-grow-1"
-    title="Export to EML"
+    [disabled]="(!mailsBundleItems?.length && !rootConversationNode) || modalOpeningProgress"
+    class="btn btn-sm btn-secondary-light d-flex flex-grow-1 align-items-center"
+    title="Export to EML/JSON"
     type="button"
 >
+    <i *ngIf="modalOpeningProgress" class="fa fa-spinner fa-pulse fa-fw mr-1"></i>
     {{ title }}
     <span *ngIf="titleSuffix" [innerText]="titleSuffix" class="pl-1"></span>
 </button>

@@ -10,6 +10,7 @@ import {DB_VIEW_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/
 import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {MailsBundle, State} from "src/web/browser-window/app/store/reducers/db-view";
+import {ONE_SECOND_MS} from "src/shared/constants";
 import {View} from "src/shared/model/database";
 import {filterConversationNodesMails} from "src/shared/util";
 
@@ -50,6 +51,8 @@ export class DbViewMailsExportComponent extends DbViewAbstractComponent implemen
 
     modalRef?: BsModalRef;
 
+    modalOpeningProgress = false;
+
     constructor(
         store: Store<State>,
         private readonly api: ElectronService,
@@ -67,6 +70,9 @@ export class DbViewMailsExportComponent extends DbViewAbstractComponent implemen
                     this.formControls.includingAttachments.patchValue(false);
                 }
             });
+        this.modalService.onShown
+            .pipe(takeUntil(this.ngOnDestroy$))
+            .subscribe(() => this.modalOpeningProgress = false);
     }
 
     openModal(
@@ -78,17 +84,24 @@ export class DbViewMailsExportComponent extends DbViewAbstractComponent implemen
         }
 
         this.formControls.fileType.patchValue("eml");
+        this.modalOpeningProgress = true;
+        this.markDirty();
 
-        this.modalRef = this.modalService.show(
-            modalTemplate,
-            {
-                initialState: clone(
-                    pick(this, ["mailsBundleItems", "rootConversationNode"]),
-                ),
-                class: `modal-lg ${selector}-modal`,
-                backdrop: "static",
-                ignoreBackdropClick: true,
+        setTimeout(
+            () => {
+                this.modalRef = this.modalService.show(
+                    modalTemplate,
+                    {
+                        initialState: clone(
+                            pick(this, ["mailsBundleItems", "rootConversationNode"]),
+                        ),
+                        class: `modal-lg ${selector}-modal`,
+                        backdrop: "static",
+                        ignoreBackdropClick: true,
+                    },
+                );
             },
+            ONE_SECOND_MS / 10,
         );
     }
 

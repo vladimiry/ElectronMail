@@ -8,7 +8,7 @@ import fsAsync from "fs/promises";
 import {DbExportMailAttachmentItem} from "src/electron-main/api/endpoints-builders/database/export/const";
 import {File, Mail, MailAddress} from "src/shared/model/database";
 import {PACKAGE_NAME} from "src/shared/constants";
-import {parseRawProtonMessage} from "src/shared/util";
+import {parseProtonRestModel} from "src/shared/util";
 
 const eol = "\r\n";
 
@@ -163,7 +163,7 @@ const contentBuilders: Readonly<Record<"eml" | "json", (
                 ? mail.failedDownload.errorMessage
                 : mail.body,
         );
-        const rawMail = parseRawProtonMessage(mail);
+        const rawMail = parseProtonRestModel(mail);
         const lines = [
             "MIME-Version: 1.0", eol,
             ...formatAddresses("From", [mail.sender]),
@@ -216,7 +216,7 @@ const contentBuilders: Readonly<Record<"eml" | "json", (
     json(mail, attachmentsContent) {
         validateAttachmentsCount({downloaded: attachmentsContent?.length, declared: mail.attachments.length});
 
-        const rawMail = parseRawProtonMessage(mail);
+        const rawMail = parseProtonRestModel(mail);
 
         return JSON.stringify(
             {

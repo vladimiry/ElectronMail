@@ -155,13 +155,12 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
             setTimeout(async () => {
                 const {disableSpamNotifications} = await ctx.config$.pipe(first()).toPromise();
-                const includingSpam = !disableSpamNotifications;
 
                 IPC_MAIN_API_NOTIFICATION$.next(
                     IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount({
                         key: accountKey,
                         entitiesModified,
-                        stat: db.accountStat(account, includingSpam),
+                        stat: db.accountStat(account, !disableSpamNotifications),
                     }),
                 );
             });
@@ -212,8 +211,10 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                 return false;
             }
 
+            const {disableSpamNotifications} = await ctx.config$.pipe(first()).toPromise();
+
             return {
-                folders: prepareFoldersView(account),
+                folders: prepareFoldersView(account, !disableSpamNotifications),
             };
         },
 

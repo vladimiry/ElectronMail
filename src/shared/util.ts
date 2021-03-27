@@ -4,6 +4,7 @@ import type {RateLimiterMemory} from "rate-limiter-flexible";
 import {URL} from "@cliqz/url-parser";
 import {pick} from "remeda";
 
+import type * as RestModel from "src/electron-preload/webview/lib/rest-model";
 import {
     ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN,
     DEFAULT_API_CALL_TIMEOUT,
@@ -18,7 +19,7 @@ import {
 import {AccountConfig} from "./model/account";
 import {BaseConfig, Config} from "./model/options";
 import {DbPatch} from "./api/common";
-import {FsDbAccount, Mail, View} from "src/shared/model/database";
+import {Folder, FsDbAccount, Mail, View} from "src/shared/model/database";
 import {LoginFieldContainer} from "./model/container";
 import {PROVIDER_REPO_MAP, PROVIDER_REPO_NAMES} from "src/shared/proton-apps-constants";
 import {StatusCodeError} from "./model/error";
@@ -679,8 +680,8 @@ export const depersonalizeLoggedUrlsInString: (value: string) => string = (() =>
 })();
 
 // TODO move "protonmail message rest model" to shared library since being referenced from different places
-export const parseRawProtonMessage = (
-    mail: Mail
-): import("src/electron-preload/webview/lib/rest-model/response-entity/mail").Message => {
-    return JSON.parse(mail.raw); // eslint-disable-line @typescript-eslint/no-unsafe-return
+export const parseProtonRestModel = <T extends Mail | Folder>(
+    dbEntity: T
+): T extends Mail ? RestModel.Message : RestModel.Label => {
+    return JSON.parse(dbEntity.raw); // eslint-disable-line @typescript-eslint/no-unsafe-return
 };

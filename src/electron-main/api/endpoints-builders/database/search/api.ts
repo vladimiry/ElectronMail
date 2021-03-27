@@ -26,11 +26,13 @@ export async function buildDbSearchEndpoints(
                 throw new Error(`Failed to resolve account by the provided "login"`);
             }
 
+
             const mailPks = "query" in restOptions
                 ? [] // TODO execute the actual search and pick "mailPks" from the search result
                 : restOptions.mailPks;
+            const {disableSpamNotifications} = await ctx.config$.pipe(first()).toPromise();
 
-            return searchRootConversationNodes(account, {folderIds, mailPks});
+            return searchRootConversationNodes(account, {folderIds, mailPks}, !disableSpamNotifications);
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types

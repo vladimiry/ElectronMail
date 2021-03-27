@@ -1,28 +1,8 @@
 import {omit, pipe, sortBy} from "remeda";
 
-import {CONVERSATION_TYPE, ConversationEntry, FsDbAccount, LABEL_TYPE, SYSTEM_FOLDER_IDENTIFIERS, View} from "src/shared/model/database";
-import {PRODUCT_NAME} from "src/shared/constants";
+import {CONVERSATION_TYPE, ConversationEntry, FsDbAccount, SYSTEM_FOLDER_IDENTIFIERS, View} from "src/shared/model/database";
+import {buildAccountFoldersResolver} from "src/electron-main/database/util";
 import {mailDateComparatorDefaultsToDesc, walkConversationNodesTree} from "src/shared/util";
-import {resolveAccountFolders} from "src/electron-main/database/util";
-
-const buildFolderViewPart = (): NoExtraProps<Pick<View.Folder, "rootConversationNodes" | "size" | "unread">> => {
-    return {
-        rootConversationNodes: [],
-        size: 0,
-        unread: 0,
-    };
-};
-
-const buildVirtualUnreadFolder = (): View.Folder => {
-    return {
-        id: SYSTEM_FOLDER_IDENTIFIERS["Virtual Unread"],
-        pk: `${PRODUCT_NAME}_VIRTUAL_UNREAD_PK`,
-        raw: "{}",
-        type: LABEL_TYPE.MESSAGE_FOLDER,
-        name: "Unread",
-        ...buildFolderViewPart(),
-    };
-};
 
 // TODO move the "formatting" and "filling the summary" actions to individual functions
 export const splitAndFormatAndFillSummaryFolders: (
@@ -116,6 +96,7 @@ function resolveAccountConversationNodes(
 
 export function buildFoldersAndRootNodePrototypes(
     account: DeepReadonly<FsDbAccount>,
+    includingSpam: boolean,
 ): {
     folders: View.Folder[];
     rootNodePrototypes: View.ConversationNode[];
@@ -135,25 +116,7 @@ export function buildFoldersAndRootNodePrototypes(
         };
         return result;
     })();
-    const virtualUnreadFolder = buildVirtualUnreadFolder();
-    const folders: View.Folder[] = Array.from(
-        [
-            virtualUnreadFolder,
-            ...resolveAccountFolders(account),
-        ],
-        (folder) => ({...folder, ...buildFolderViewPart()}),
-    );
-    const resolveFolder: ({id}: Pick<View.Folder, "id">) => View.Folder | undefined = (() => {
-        const map = new Map(
-            folders.reduce(
-                (entries: Array<[View.Folder["id"], View.Folder]>, folder) => {
-                    return entries.concat([[folder.id, folder]]);
-                },
-                [],
-            ));
-        const result: typeof resolveFolder = ({id}) => map.get(id);
-        return result;
-    })();
+    const {folders, resolveFolderById, virtualUnreadFolderId} = buildAccountFoldersResolver(account, includingSpam);
     const rootNodePrototypes: View.ConversationNode[] = [];
 
     for (const conversationEntry of conversationEntries) {
@@ -169,11 +132,11 @@ export function buildFoldersAndRootNodePrototypes(
             };
 
             const mailFolderIds = conversationNode.mail.unread
-                ? [...conversationNode.mail.mailFolderIds, virtualUnreadFolder.id]
+                ? [...conversationNode.mail.mailFolderIds, virtualUnreadFolderId]
                 : conversationNode.mail.mailFolderIds;
 
             for (const id of mailFolderIds) {
-                const folder = resolveFolder({id});
+                const folder = resolveFolderById({id});
                 if (folder) {
                     conversationNode.mail.folders.push(folder);
                 }
@@ -240,8 +203,9 @@ export function fillFoldersAndReturnRootConversationNodes(
 
 function buildFoldersView(
     account: DeepReadonly<FsDbAccount>,
+    includingSpam: boolean,
 ): View.Folder[] {
-    const {folders, rootNodePrototypes} = buildFoldersAndRootNodePrototypes(account);
+    const {folders, rootNodePrototypes} = buildFoldersAndRootNodePrototypes(account, includingSpam);
 
     fillFoldersAndReturnRootConversationNodes(rootNodePrototypes);
 
@@ -255,8 +219,9 @@ function buildFoldersView(
 // TODO consider moving performance expensive "prepareFoldersView" function call to the background process
 export function prepareFoldersView(
     account: DeepReadonly<FsDbAccount>,
+    includingSpam: boolean,
 ): ReturnType<typeof splitAndFormatAndFillSummaryFolders> {
     return splitAndFormatAndFillSummaryFolders(
-        buildFoldersView(account),
+        buildFoldersView(account, includingSpam),
     );
 }

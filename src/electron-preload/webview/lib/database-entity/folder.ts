@@ -10,5 +10,6 @@ export function buildFolder(input: RestModel.Label): Model.Folder {
             input.ID as any, // eslint-disable-line @typescript-eslint/no-explicit-any
             false,
         ) ?? input.Name,
+        notify: input.Notify,
     };
 }

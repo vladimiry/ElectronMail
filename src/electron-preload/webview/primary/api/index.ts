@@ -13,7 +13,7 @@ import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/mod
 import {SYSTEM_FOLDER_IDENTIFIERS} from "src/shared/model/database";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 import {buildDbPatch, buildDbPatchEndpoint} from "src/electron-preload/webview/primary/api/build-db-patch";
-import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty, parseRawProtonMessage} from "src/shared/util";
+import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty, parseProtonRestModel} from "src/shared/util";
 import {dumpProtonSharedSession} from "src/electron-preload/webview/primary/shared-session";
 import {fillInputValue, getLocationHref, resolveDomElements, submitTotpToken,} from "src/electron-preload/webview/lib/util";
 import {resolveIpcMainApi} from "src/electron-preload/lib/util";
@@ -105,7 +105,7 @@ export function registerApi(providerApi: ProviderApi): void {
 
             const ipcMain = resolveIpcMainApi({logger: _logger});
             const dbMessage = await ipcMain("dbGetAccountMail")({pk: mailPk, login});
-            const rawMessage = parseRawProtonMessage(dbMessage);
+            const rawMessage = parseProtonRestModel(dbMessage);
             const loadedAttachments: Mutable<IpcMainServiceScan["ApiImplArgs"]["dbExportMailAttachmentsNotification"][0]["attachments"]>
                 = [];
 

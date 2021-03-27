@@ -5,7 +5,7 @@ import * as Constants from "./constants";
 import * as View from "./view";
 import {AccountConfig} from "src/shared/model/account";
 import {LABEL_TYPE} from "./constants";
-import {NumberString, Timestamp} from "src/shared/model/common";
+import {NumberString, NumericBoolean, Timestamp} from "src/shared/model/common";
 
 export * from "./constants";
 
@@ -23,6 +23,7 @@ export type Entity = NoExtraProps<{
 export type Folder = NoExtraProps<Entity & {
     readonly name: string;
     readonly type: Unpacked<typeof LABEL_TYPE._.values>;
+    readonly notify: NumericBoolean;
 }>
 
 export type ConversationEntry = NoExtraProps<Entity & {

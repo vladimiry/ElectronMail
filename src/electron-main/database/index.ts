@@ -6,12 +6,12 @@ import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/li
 import {KeyBasedPreset} from "fs-json-store-encryption-adapter";
 
 import {DATABASE_VERSION, DB_INSTANCE_PROP_NAME} from "./constants";
-import {DB_DATA_CONTAINER_FIELDS, DbAccountPk, FsDb, FsDbAccount, Mail, SYSTEM_FOLDER_IDENTIFIERS} from "src/shared/model/database";
+import {DB_DATA_CONTAINER_FIELDS, DbAccountPk, FsDb, FsDbAccount} from "src/shared/model/database";
 import {LogLevel} from "src/shared/model/common";
 import {SerializationAdapter} from "./serialization";
+import {buildAccountFoldersResolver, patchMetadata} from "src/electron-main/database/util";
 import {curryFunctionMembers} from "src/shared/util";
 import {hrtimeDuration} from "src/electron-main/util";
-import {patchMetadata} from "src/electron-main/database/util";
 
 const _logger = curryFunctionMembers(electronLog, "[electron-main/database]");
 
@@ -237,11 +237,9 @@ export class Database {
 
     accountStat(
         account: DeepReadonly<FsDbAccount>,
-        includingSpam = false,
+        includingSpam: boolean,
     ): { conversationEntries: number; mails: number; folders: number; contacts: number; unread: number } {
-        const excluding: (mail: Mail) => boolean = includingSpam
-            ? (): false => false
-            : this.buildSpamFolderTester();
+        const {resolveFolderById} = buildAccountFoldersResolver(account, includingSpam);
 
         return {
             // TODO measure "Object.keys(...).length" speed and then try caching the "length" if needed
@@ -250,10 +248,10 @@ export class Database {
             folders: Object.keys(account.folders).length,
             contacts: Object.keys(account.contacts).length,
             unread: Object.values(account.mails).reduce(
-                (unread, mail) => {
-                    return excluding(mail)
-                        ? unread
-                        : unread + Number(mail.unread);
+                (accumulator, {mailFolderIds, unread}) => {
+                    return mailFolderIds.some((id) => resolveFolderById({id})?.notify === 1)
+                        ? accumulator + Number(unread)
+                        : accumulator;
                 },
                 0,
             ),
@@ -282,12 +280,6 @@ export class Database {
         return Object
             .keys(this.dbInstance.accounts)
             .map((login) => ({login}));
-    }
-
-    private buildSpamFolderTester(): (mail: Mail) => boolean {
-        const result: ReturnType<typeof Database.prototype.buildSpamFolderTester>
-            = ({mailFolderIds}): boolean => mailFolderIds.includes(SYSTEM_FOLDER_IDENTIFIERS.Spam);
-        return result;
     }
 
     private async buildSerializationAdapter(): Promise<SerializationAdapter> {

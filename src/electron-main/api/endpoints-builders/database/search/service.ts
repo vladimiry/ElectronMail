@@ -1,4 +1,5 @@
 import {QuickJS, getQuickJS, shouldInterruptAfterDeadline} from "quickjs-emscripten";
+import {first} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
 import {Folder, FsDbAccount, IndexableMailId, LABEL_TYPE, Mail, View} from "src/shared/model/database";
@@ -9,15 +10,16 @@ import {
     fillFoldersAndReturnRootConversationNodes,
     splitAndFormatAndFillSummaryFolders,
 } from "src/electron-main/api/endpoints-builders/database/folders-view";
-import {parseRawProtonMessage, walkConversationNodesTree} from "src/shared/util";
+import {parseProtonRestModel, walkConversationNodesTree} from "src/shared/util";
 
 export function searchRootConversationNodes(
     account: DeepReadonly<FsDbAccount>,
     {mailPks, folderIds}: DeepReadonly<{ mailPks?: Array<Mail["pk"]>; folderIds?: Array<Folder["pk"]> }> = {},
+    includingSpam: boolean,
 ): View.RootConversationNode[] {
     // TODO optimize search: implement custom search instead of getting all the mails first and then narrowing the list down
     // TODO don't create functions inside iterations so extensively, "filter" / "walkConversationNodesTree" calls
-    const {rootNodePrototypes, folders} = buildFoldersAndRootNodePrototypes(account);
+    const {rootNodePrototypes, folders} = buildFoldersAndRootNodePrototypes(account, includingSpam);
     const filteredByMails = mailPks
         ? rootNodePrototypes.filter((rootNodePrototype) => {
             let matched = false;
@@ -95,13 +97,13 @@ export const secondSearchStep = async (
                 if (typeof mail === "undefined") {
                     throw new Error("Failed to resolve mail.");
                 }
-                const parsedRawMail = parseRawProtonMessage(mail);
+                const parsedRawMail = parseProtonRestModel(mail);
                 const serializedMailCodePart = JSON.stringify(
                     JSON.stringify({
                         ...parsedRawMail,
                         Body: mail.body,
                         EncryptedBody: parsedRawMail.Body,
-                        ...(mail.failedDownload && {_BodyDecryptionFailed : true}),
+                        ...(mail.failedDownload && {_BodyDecryptionFailed: true}),
                         Folders: formFoldersForQuickJSEvaluation(folders, LABEL_TYPE.MESSAGE_FOLDER),
                         Labels: formFoldersForQuickJSEvaluation(folders, LABEL_TYPE.MESSAGE_LABEL),
                     }),
@@ -137,6 +139,7 @@ export const secondSearchStep = async (
         = mailScoresByPk
         ? ({pk}) => mailScoresByPk.get(pk)
         : () => null; // no full-text search executing happened, so no score provided
+    const {disableSpamNotifications} = await ctx.config$.pipe(first()).toPromise();
     const rootConversationNodes = searchRootConversationNodes(
         account,
         {
@@ -145,6 +148,7 @@ export const secondSearchStep = async (
                 : undefined,
             folderIds,
         },
+        !disableSpamNotifications,
     );
     const mailsBundleItems: Unpacked<ReturnType<typeof secondSearchStep>> = [];
 

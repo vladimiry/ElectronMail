@@ -23,7 +23,7 @@ import {
     ZOOM_FACTORS,
 } from "src/shared/constants";
 import {NumericBoolean} from "src/shared/model/common";
-import {curryFunctionMembers, parseRawProtonMessage, pickBaseConfigProperties} from "src/shared/util";
+import {curryFunctionMembers, parseProtonRestModel, pickBaseConfigProperties} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, "[src/electron-main/storage-upgrade]");
 
@@ -573,8 +573,18 @@ export async function upgradeDatabase(db: Database, accounts: Settings["accounts
                 if (MIME_TYPES._.isValidValue(mail.mimeType)) {
                     continue;
                 }
-                const rawMail = parseRawProtonMessage(mail);
-                (mail as Mutable<Pick<typeof mail, "mimeType">>).mimeType = rawMail.MIMEType;
+                const rawModel = parseProtonRestModel(mail);
+                (mail as Mutable<Pick<typeof mail, "mimeType">>).mimeType = rawModel.MIMEType;
+                needToSave = true;
+            }
+        }
+    }
+
+    if (Number(db.getVersion()) < 10) {
+        for (const {account} of db) {
+            for (const folder of Object.values(account.folders)) {
+                const rawModel = parseProtonRestModel(folder);
+                (folder as Mutable<Pick<typeof folder, "notify">>).notify = rawModel.Notify;
                 needToSave = true;
             }
         }

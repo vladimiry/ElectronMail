@@ -54,6 +54,7 @@ function buildFolder(): Folder {
         id: randomstring.generate(),
         name: randomstring.generate(),
         type: LABEL_TYPE.MESSAGE_FOLDER,
+        notify: 1,
     };
 }
 

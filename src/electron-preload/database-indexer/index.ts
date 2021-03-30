@@ -5,7 +5,7 @@ import {ONE_SECOND_MS} from "src/shared/constants";
 import {SERVICES_FACTORY, addToMailsIndex, createMailsIndex, removeMailsFromIndex} from "./service";
 import {buildLoggerBundle} from "src/electron-preload/lib/util";
 
-const logger = buildLoggerBundle("[preload: database-indexer: index]");
+const logger = buildLoggerBundle(__filename);
 
 // TODO drop "emptyObject"
 const emptyObject = {} as const;

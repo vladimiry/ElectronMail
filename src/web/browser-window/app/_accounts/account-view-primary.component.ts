@@ -15,7 +15,7 @@ import {testProtonMailAppPage} from "src/shared/util";
     template: "",
 })
 export class AccountViewPrimaryComponent extends AccountViewAbstractComponent implements OnInit {
-    private readonly logger = getWebLogger(`[_accounts/account-view-primary.component]`);
+    private readonly logger = getWebLogger(__filename, nameof(AccountViewPrimaryComponent));
 
     private readonly accountsService: AccountsService;
 

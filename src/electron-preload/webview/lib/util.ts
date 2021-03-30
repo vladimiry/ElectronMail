@@ -122,7 +122,7 @@ export async function submitTotpToken(
         submittingDetection?: () => Promise<boolean>;
     } = {},
 ): Promise<void> {
-    const logger = curryFunctionMembers(_logger, "submitTotpToken()");
+    const logger = curryFunctionMembers(_logger, nameof(submitTotpToken));
 
     logger.info();
 
@@ -185,7 +185,7 @@ export function buildDbPatchRetryPipeline<T>(
     {retriesDelay = ONE_SECOND_MS * 5, retriesLimit = 3}: { retriesDelay?: number; retriesLimit?: number } = {},
 ) {
     const errorResult = (error: Error): ReturnType<typeof throwError> => {
-        logger.error(error);
+        logger.error(nameof(buildDbPatchRetryPipeline), error);
         return throwError(error);
     };
 
@@ -201,14 +201,14 @@ export function buildDbPatchRetryPipeline<T>(
             if (retryIndex >= retriesLimit) {
                 if (skippable) {
                     const message = `Skipping "buildDbPatch" call`;
-                    logger.warn(message, error);
+                    logger.warn(nameof(buildDbPatchRetryPipeline), message, error);
                     return from(Promise.resolve());
                 }
                 return errorResult(error);
             }
 
             if (retriable) {
-                logger.warn(`Retrying "buildDbPatch" call (attempt: "${retryIndex}")`);
+                logger.warn(nameof(buildDbPatchRetryPipeline), `Retrying call (attempt: "${retryIndex}")`);
                 return of(error).pipe(
                     delay(retriesDelay),
                 );
@@ -224,16 +224,14 @@ export async function persistDatabasePatch(
     logger: Logger,
     bootstrapPhase?: "initial" | "intermediate" | "final",
 ): Promise<void> {
-    logger.info("persistDatabasePatch() start", JSON.stringify({bootstrapPhase}));
-
+    logger.info(`${nameof(persistDatabasePatch)}() start`, JSON.stringify({bootstrapPhase}));
     await resolveIpcMainApi({logger})("dbPatch")({
         bootstrapPhase,
         login: data.login,
         metadata: data.metadata,
         patch: data.patch,
     });
-
-    logger.info("persistDatabasePatch() end");
+    logger.info(`${nameof(persistDatabasePatch)}() end`);
 }
 
 export function buildEmptyDbPatch(): DbPatch {
@@ -255,7 +253,7 @@ export const fetchEvents = async (
     latestEventId: RestModel.Event["EventID"],
     _logger: Logger,
 ): Promise<{ latestEventId: RestModel.Event["EventID"]; events: RestModel.Event[] } | "refresh"> => {
-    const logger = curryFunctionMembers(_logger, "fetchEvents()");
+    const logger = curryFunctionMembers(_logger, nameof(fetchEvents));
     const events: RestModel.Event[] = [];
     const iterationState: NoExtraProps<{
         latestEventId: RestModel.Event["EventID"];

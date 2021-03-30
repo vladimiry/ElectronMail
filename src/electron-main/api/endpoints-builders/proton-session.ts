@@ -8,7 +8,7 @@ import {filterProtonSessionTokenCookies} from "src/electron-main/util";
 import {resolveInitializedSession} from "src/electron-main/session";
 
 // TODO enable minimal logging
-// const logger = curryFunctionMembers(electronLog, "[electron-main/api/endpoints-builders/proton-session]");
+// const logger = curryFunctionMembers(electronLog, __filename);
 
 function pickTokenCookiePropsToApply(
     cookie: DeepReadonly<Electron.Cookie>,

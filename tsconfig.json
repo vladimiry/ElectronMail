@@ -38,6 +38,15 @@
     "typeRoots": [
       "./node_modules/@types",
       "./src/@types"
+    ],
+    "plugins": [
+      {
+        "transform": "@zerollup/ts-transform-paths"
+      },
+      {
+        "transform": "ts-nameof",
+        "type": "raw"
+      }
     ]
   },
   "include": [

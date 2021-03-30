@@ -10,12 +10,12 @@ import {disableBrowserNotificationFeature} from "src/electron-preload/webview/li
 import {initSpellCheckProvider} from "src/electron-preload/lib/spell-check";
 import {registerDocumentClickEventListener, registerDocumentKeyDownEventListener} from "src/electron-preload/lib/events-handling";
 
-const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, "[provider-api/setup]");
+const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, __filename);
 
 export const setupProviderIntegration = (
     {shouldDisableBrowserNotificationFeature, blankHtmlPage}: ReturnType<typeof testProtonMailAppPage>,
 ): void => {
-    const logger = curryFunctionMembers(_logger, "setupProviderIntegration()");
+    const logger = curryFunctionMembers(_logger, nameof(setupProviderIntegration));
 
     if (blankHtmlPage) {
         logger.info("skipped");

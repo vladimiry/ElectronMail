@@ -541,7 +541,7 @@ const testProtonAppPage = (
         projectType,
     } as const;
 
-    logger.verbose("testProtonAppPage()", JSON.stringify({...result, url, projectType}));
+    logger.verbose(nameof(testProtonAppPage), JSON.stringify({...result, url, projectType}));
 
     return result;
 };

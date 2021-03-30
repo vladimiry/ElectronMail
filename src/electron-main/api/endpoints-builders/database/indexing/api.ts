@@ -17,15 +17,15 @@ import {
 import {curryFunctionMembers} from "src/shared/util";
 import {indexAccount} from "src/electron-main/api/endpoints-builders/database/indexing/service";
 
-const logger = curryFunctionMembers(electronLog, "[src/electron-main/api/endpoints-builders/database/indexing/api]");
+const logger = curryFunctionMembers(electronLog, __filename);
 
 export async function buildDbIndexingEndpoints(
     ctx: Context, // TODO make argument "DeepReadonly"
 ): Promise<Pick<IpcMainApiEndpoints, "dbIndexerOn" | "dbIndexerNotification">> {
-    return {
+    const endpoints: Unpacked<ReturnType<typeof buildDbIndexingEndpoints>> = {
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbIndexerOn(action) {
-            logger.info("dbIndexerOn()", `action.type: ${action.type}`);
+            logger.info(nameof(endpoints.dbIndexerOn), `action.type: ${action.type}`);
 
             // propagating action to custom stream
             setTimeout(() => {
@@ -63,7 +63,7 @@ export async function buildDbIndexingEndpoints(
                     });
                 },
                 ProgressState(payload) {
-                    logger.verbose("dbIndexerOn()", `ProgressState.status: ${JSON.stringify(payload.status)}`);
+                    logger.verbose(nameof(endpoints.dbIndexerOn), `ProgressState.status: ${JSON.stringify(payload.status)}`);
 
                     // propagating status to main channel which streams data to UI process
                     setTimeout(() => {
@@ -92,4 +92,6 @@ export async function buildDbIndexingEndpoints(
             );
         },
     };
+
+    return endpoints;
 }

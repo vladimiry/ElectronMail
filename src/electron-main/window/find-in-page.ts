@@ -7,7 +7,7 @@ import {WEB_CHUNK_NAMES, WEB_PROTOCOL_SCHEME} from "src/shared/constants";
 import {curryFunctionMembers} from "src/shared/util";
 import {injectVendorsAppCssIntoHtmlFile} from "src/electron-main/util";
 
-const logger = curryFunctionMembers(_logger, "[src/electron-main/window/find-in-page]");
+const logger = curryFunctionMembers(_logger, __filename);
 
 const resolveContent: (ctx: Context) => Promise<Unpacked<ReturnType<typeof injectVendorsAppCssIntoHtmlFile>>> = (
     (): typeof resolveContent => {

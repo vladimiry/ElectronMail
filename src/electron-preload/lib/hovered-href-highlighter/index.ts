@@ -15,7 +15,7 @@ const renderVisibleClass = "visible"; // WARN: same value as in "./index.scss"
 export class HoveredHrefHighlightElement extends HTMLElement {
     public static readonly tagName = `${PACKAGE_NAME}-hovered-href-highlight`.toLowerCase();
 
-    private readonly logger = {...buildLoggerBundle(`[${HoveredHrefHighlightElement.tagName}]`)} as const;
+    private readonly logger = {...buildLoggerBundle(`${__filename}: ${nameof(HoveredHrefHighlightElement)}`)} as const;
 
     // TODO share single "notification$" instance between all the element instances, so make it static field?
     private notification$?: Observable<IpcMainServiceScan["ApiImplReturns"]["notification"]>;
@@ -35,7 +35,7 @@ export class HoveredHrefHighlightElement extends HTMLElement {
 
     constructor() {
         super();
-        this.logger.info("constructor()");
+        this.logger.info(nameof(HoveredHrefHighlightElement.prototype.constructor));
         this.root = this.attachShadow({mode: "closed"});
         this.root.innerHTML = `<style>${String(css)}</style>`;
         this.el = this.root.appendChild(document.createElement("div"));
@@ -43,7 +43,7 @@ export class HoveredHrefHighlightElement extends HTMLElement {
     }
 
     destroy(): void {
-        this.logger.info("destroy()");
+        this.logger.info(nameof(HoveredHrefHighlightElement.prototype.destroy)); // eslint-disable-line @typescript-eslint/unbound-method
         this.releaseApiClientDeferred.resolve();
         this.subscription.unsubscribe();
         window.removeEventListener(...this.beforeUnloadEventHandlingArgs);
@@ -52,7 +52,8 @@ export class HoveredHrefHighlightElement extends HTMLElement {
     }
 
     connectedCallback(): void {
-        this.logger.info("connectedCallback()");
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        this.logger.info(nameof(HoveredHrefHighlightElement.prototype.connectedCallback));
 
         this.subscription.add(
             this.resolveNotification()
@@ -119,7 +120,8 @@ export class HoveredHrefHighlightElement extends HTMLElement {
     }
 
     disconnectedCallback(): void {
-        this.logger.info("disconnectedCallback()");
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        this.logger.info(nameof(HoveredHrefHighlightElement.prototype.disconnectedCallback));
         this.subscription.unsubscribe();
     }
 

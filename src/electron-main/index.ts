@@ -20,7 +20,7 @@ registerStandardSchemes(ctx);
 (async (): Promise<void> => {
     await (async (): Promise<void> => {
         // TODO test "logger.transports.file.level" update
-        const {logLevel} = (await ctx.configStore.read()) ?? ctx.initialStores.config;
+        const {logLevel} = await ctx.configStore.read() ?? ctx.initialStores.config;
         electronLog.transports.file.level = logLevel;
     })();
     await upgradeExistingConfig(ctx);
@@ -28,6 +28,6 @@ registerStandardSchemes(ctx);
     await appReadyHandler(ctx);
 })().catch((error) => {
     console.error(error); // eslint-disable-line no-console
-    electronLog.error("[src/electron-main/index]", error);
+    electronLog.error(__filename, error);
     throw error;
 });

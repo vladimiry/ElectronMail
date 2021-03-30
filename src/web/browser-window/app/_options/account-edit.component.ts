@@ -123,7 +123,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     );
 
     // other
-    private readonly logger = getWebLogger();
+    private readonly logger = getWebLogger(__filename, nameof(AccountEditComponent));
     private readonly subscription = new Subscription();
 
     constructor(

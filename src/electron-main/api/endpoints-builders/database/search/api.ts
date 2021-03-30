@@ -10,15 +10,15 @@ import {IndexableMailId} from "src/shared/model/database";
 import {curryFunctionMembers} from "src/shared/util";
 import {searchRootConversationNodes, secondSearchStep} from "src/electron-main/api/endpoints-builders/database/search/service";
 
-const logger = curryFunctionMembers(electronLog, "[src/electron-main/api/endpoints-builders/database/search/api]");
+const logger = curryFunctionMembers(electronLog, __filename);
 
 export async function buildDbSearchEndpoints(
     ctx: DeepReadonly<Context>,
 ): Promise<Pick<IpcMainApiEndpoints, "dbSearchRootConversationNodes" | "dbFullTextSearch">> {
-    return {
+    const endpoints: Unpacked<ReturnType<typeof buildDbSearchEndpoints>> = {
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbSearchRootConversationNodes({login, folderIds, ...restOptions}) {
-            logger.info("dbSearchRootConversationNodes()");
+            logger.info(nameof(endpoints.dbSearchRootConversationNodes));
 
             const account = ctx.db.getAccount({login});
 
@@ -37,7 +37,7 @@ export async function buildDbSearchEndpoints(
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbFullTextSearch({query, ...searchCriteria}) {
-            logger.info("dbFullTextSearch()");
+            logger.info(nameof(endpoints.dbFullTextSearch));
 
             const fullTextSearchUid: string | null = query
                 ? new UUID(4).format()
@@ -82,4 +82,6 @@ export async function buildDbSearchEndpoints(
             return result$.toPromise();
         },
     };
+
+    return endpoints;
 }

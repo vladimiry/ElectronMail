@@ -8,7 +8,7 @@ import {WebAccount} from "src/web/browser-window/app/model";
 import {accountPickingPredicate} from "src/shared/util";
 import {getWebLogger} from "src/web/browser-window/util";
 
-const logger = getWebLogger("[reducers/accounts]");
+const logger = getWebLogger(__filename);
 
 export const featureName = "accounts";
 

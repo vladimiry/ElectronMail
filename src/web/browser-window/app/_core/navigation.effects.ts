@@ -10,7 +10,7 @@ import {NAVIGATION_ACTIONS, unionizeActionFilter} from "src/web/browser-window/a
 import {curryFunctionMembers} from "src/shared/util";
 import {getWebLogger} from "src/web/browser-window/util";
 
-const _logger = getWebLogger("[navigation.effects.ts]");
+const _logger = getWebLogger(__filename);
 
 @Injectable()
 export class NavigationEffects {

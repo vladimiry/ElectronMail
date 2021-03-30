@@ -5,7 +5,7 @@ import {UnionOf} from "@vladimiry/unionize";
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {getWebLogger} from "src/web/browser-window/util";
 
-const logger = getWebLogger("[reducers/root]");
+const logger = getWebLogger(__filename);
 
 // TODO join all actions in "src/web/src/app/store/actions" once
 type Actions = UnionOf<typeof NAVIGATION_ACTIONS>;
@@ -34,7 +34,7 @@ export function createAppMetaReducer(): MetaReducer<State, Actions> {
         return (state, action) => {
             if (BUILD_ENVIRONMENT === "development") { // eslint-disable-line sonarjs/no-collapsible-if
                 if (typeof action.type === "string" && action.type) {
-                    logger.silly(action.type);
+                    logger.silly(nameof(createAppMetaReducer), action.type);
                 }
             }
 

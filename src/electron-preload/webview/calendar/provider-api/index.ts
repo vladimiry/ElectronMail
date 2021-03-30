@@ -7,10 +7,10 @@ import {curryFunctionMembers} from "src/shared/util";
 import {resolveProviderInternals} from "./internals";
 import {resolveStandardSetupPublicApi} from "src/electron-preload/webview/lib/provider-api/standart-setup-internals";
 
-const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.calendar, "[provider-api/index]");
+const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.calendar, __filename);
 
 export const initProviderApi = async (): Promise<ProviderApi> => {
-    const logger = curryFunctionMembers(_logger, "initProviderApi()");
+    const logger = curryFunctionMembers(_logger, nameof(initProviderApi));
 
     logger.info();
 

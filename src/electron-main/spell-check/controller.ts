@@ -5,7 +5,7 @@ import {Locale} from "src/shared/model/common";
 import {constructDummyProvider, constructProvider} from "./providers";
 import {curryFunctionMembers} from "src/shared/util";
 
-const logger = curryFunctionMembers(_logger, "[src/electron-main/spell-check/controller]");
+const logger = curryFunctionMembers(_logger, __filename);
 
 const dummyProvider = constructDummyProvider();
 
@@ -17,7 +17,7 @@ async function provider(locale: Locale): Promise<ReturnType<typeof constructProv
     const location = getLocation();
 
     const setDictionaryResult = spellchecker.setDictionary(locale, location);
-    logger.debug("provider(): spellchecker.setDictionary() returned", JSON.stringify({locale, location, result: setDictionaryResult}));
+    logger.debug(nameof(provider), JSON.stringify({locale, location, setDictionaryResult}));
 
     return constructProvider(locale, spellchecker);
 }
@@ -34,7 +34,7 @@ async function narrowFuzzyLocaleToStateValue(
 export async function initSpellCheckController(
     initialLocale: FuzzyLocale,
 ): Promise<Controller> {
-    logger.debug("initSpellCheckController()", JSON.stringify({initialLocale}));
+    logger.debug(nameof(initSpellCheckController), JSON.stringify({initialLocale}));
 
     const state: {
         provider: Readonly<Provider>;
@@ -72,7 +72,7 @@ export async function initSpellCheckController(
         const dictionaries = await controller.getAvailableDictionaries();
 
         if (!dictionaries.includes(state.currentLocale)) {
-            logger.info(`there is no dictionary for "${state.currentLocale}"`);
+            logger.info(nameof(initSpellCheckController), `there is no dictionary for "${state.currentLocale}"`);
             const setupModule = await import("./setup");
             state.currentLocale = await setupModule.resolveDefaultLocale();
         }

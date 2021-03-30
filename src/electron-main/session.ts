@@ -14,7 +14,7 @@ import {filterProtonSessionTokenCookies} from "src/electron-main/util";
 import {initWebRequestListenersByAccount} from "src/electron-main/web-request";
 import {registerSessionProtocols} from "src/electron-main/protocol";
 
-const _logger = curryFunctionMembers(electronLog, "[src/electron-main/session]");
+const _logger = curryFunctionMembers(electronLog, __filename);
 
 // TODO move "usedSessions" prop to "ctx"
 // TODO remove the session from map on account removing
@@ -47,7 +47,7 @@ export async function initSession(
     session: Session,
     {rotateUserAgent}: DeepReadonly<Partial<Pick<AccountConfig, "rotateUserAgent">>> = {},
 ): Promise<void> {
-    const logger = curryFunctionMembers(_logger, "initSession()");
+    const logger = curryFunctionMembers(_logger, nameof(initSession));
 
     if (rotateUserAgent) {
         if (!ctx.userAgentsPool || !ctx.userAgentsPool.length) {
@@ -84,7 +84,7 @@ export async function configureSessionByAccount(
     ctx: DeepReadonly<Context>,
     account: DeepReadonly<AccountConfig>,
 ): Promise<void> {
-    _logger.info("configureSessionByAccount()");
+    _logger.info(nameof(configureSessionByAccount));
 
     const {proxy} = account;
     const session = resolveInitializedSession({login: account.login});
@@ -117,7 +117,10 @@ export async function initSessionByAccount(
     // eslint-disable-next-line max-len
     account: DeepReadonly<AccountConfig>,
 ): Promise<void> {
-    const logger = curryFunctionMembers(_logger, "initSessionByAccount()");
+    const logger = curryFunctionMembers(_logger, nameof(initSessionByAccount));
+
+    logger.info();
+
     const partition = getWebViewPartition(account.login);
 
     if (createdSessions.has(partition)) {

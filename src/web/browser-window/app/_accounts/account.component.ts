@@ -119,8 +119,8 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         private readonly zone: NgZone,
     ) {
         super();
-        this.logger = getWebLogger();
-        this.logger.info(`constructor()`);
+        this.logger = getWebLogger(__filename, nameof(AccountComponent));
+        this.logger.info();
     }
 
     ngOnInit(): void {
@@ -323,7 +323,8 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     }
 
     onPrimaryViewLoadedOnce(primaryWebView: Electron.WebviewTag): void {
-        this.logger.info("onPrimaryViewLoadedOnce()");
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        this.logger.info(nameof(AccountComponent.prototype.onPrimaryViewLoadedOnce));
 
         const resolveSavedProtonClientSession = async (): Promise<ProtonClientSession> => {
             const apiClient = await this.electronService
@@ -339,7 +340,11 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         };
 
         {
-            const logger = curryFunctionMembers(this.logger, "saving proton session");
+            const logger = curryFunctionMembers(
+                this.logger,
+                nameof(AccountComponent.prototype.onPrimaryViewLoadedOnce), // eslint-disable-line @typescript-eslint/unbound-method
+                "saving proton session",
+            );
 
             this.subscription.add(
                 this.store.pipe(
@@ -452,7 +457,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
 
     ngOnDestroy(): void {
         super.ngOnDestroy();
-        this.logger.info("ngOnDestroy()");
+        this.logger.info(nameof(AccountComponent.prototype.ngOnDestroy)); // eslint-disable-line @typescript-eslint/unbound-method
         this.subscription.unsubscribe();
     }
 

@@ -88,7 +88,7 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         distinctUntilChanged(),
     );
 
-    private readonly logger = getWebLogger();
+    private readonly logger = getWebLogger(__filename, nameof(BaseSettingsComponent));
 
     private readonly subscription = new Subscription();
 

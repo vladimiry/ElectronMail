@@ -16,7 +16,7 @@ const RateLimiterMemory: typeof import("rate-limiter-flexible")["RateLimiterMemo
     = require("rate-limiter-flexible/lib/RateLimiterMemory");
 
 export const attachRateLimiting = async (api: ProviderApi, logger_: Logger): Promise<void> => {
-    const logger = curryFunctionMembers(logger_, "attachRateLimiting()");
+    const logger = curryFunctionMembers(logger_, nameof(attachRateLimiting));
     const callingQueue = new asap(/* 3 TODO allow concurrent API requests */);
     const state: NoExtraProps<{ callsCount: number }> = {callsCount: 0};
     const consumeRateLimiting = await (async () => {

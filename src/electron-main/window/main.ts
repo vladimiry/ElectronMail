@@ -10,7 +10,7 @@ import {curryFunctionMembers} from "src/shared/util";
 import {readConfigSync} from "src/electron-main/util";
 import {syncFindInPageBrowserViewSize} from "src/electron-main/window/find-in-page";
 
-const logger = curryFunctionMembers(_logger, "[src/electron-main/window/main]");
+const logger = curryFunctionMembers(_logger, __filename);
 
 async function resolveBoundsToRestore(
     ctx: Context,
@@ -54,7 +54,7 @@ async function resolveBoundsToRestore(
         ),
     } as const;
 
-    logger.verbose("resolveBoundsToRestore()", JSON.stringify({currentBounds, savedBounds, allDisplaysSummarySize, result}));
+    logger.verbose(nameof(resolveBoundsToRestore), JSON.stringify({currentBounds, savedBounds, allDisplaysSummarySize, result}));
 
     return result;
 }
@@ -85,7 +85,7 @@ async function keepBrowserWindowState(ctx: Context, browserWindow: Electron.Brow
                 } catch (error) {
                     // "browserWindow" might be destroyed at this point
                     console.log(error); // eslint-disable-line no-console
-                    logger.warn("failed to resolve window bounds", error);
+                    logger.warn(nameof(keepBrowserWindowState), "failed to resolve window bounds", error);
                     return;
                 }
 
@@ -143,7 +143,7 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
         .once("ready-to-show", async () => {
             const boundsToRestore = await resolveBoundsToRestore(ctx, browserWindow.getBounds());
 
-            logger.verbose(JSON.stringify({boundsToRestore}));
+            logger.verbose(nameof(initMainBrowserWindow), JSON.stringify({boundsToRestore}));
 
             browserWindow.setBounds(boundsToRestore);
 

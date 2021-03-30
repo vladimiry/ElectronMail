@@ -85,7 +85,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         };
     });
 
-    private readonly logger = getWebLogger();
+    private readonly logger = getWebLogger(__filename, nameof(DbViewMailBodyComponent));
 
     constructor(
         store: Store<State>,

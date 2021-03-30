@@ -18,7 +18,7 @@ export const buildFullyInitializedResolver = <T extends Record<string, { initial
             return;
         }
 
-        logger.info("resolve()");
+        logger.info(nameof(buildFullyInitializedResolver));
 
         resolve(result);
 
@@ -40,7 +40,7 @@ export const markInternalsRecordAsInitialized = <T>(
 
     result[resultKey].initialized = true;
 
-    logger.verbose("[markInternalsRecordAsInitialized()]", `internals record initialized: ${JSON.stringify({resultKey: resultKey})}`);
+    logger.verbose(nameof(markInternalsRecordAsInitialized), `internals record initialized: ${JSON.stringify({resultKey: resultKey})}`);
 
     resolveIfAllInitialized();
 };
@@ -171,7 +171,7 @@ export const handleObservableValue = <R,
     },
     logger: Logger,
 ): void => {
-    logger.verbose("[handleObservableValue()]");
+    logger.verbose(nameof(handleObservableValue));
 
     const markAsInitialized = (): void => {
         markInternalsRecordAsInitialized(

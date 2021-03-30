@@ -13,7 +13,7 @@ import {buildAccountFoldersResolver, patchMetadata} from "src/electron-main/data
 import {curryFunctionMembers} from "src/shared/util";
 import {hrtimeDuration} from "src/electron-main/util";
 
-const _logger = curryFunctionMembers(electronLog, "[electron-main/database]");
+const _logger = curryFunctionMembers(electronLog, __filename);
 
 export class Database {
     static buildEmptyDb(): FsDb {
@@ -34,7 +34,8 @@ export class Database {
         targetDb: DeepReadonly<Database>,
         accountPk: TL,
     ): boolean {
-        const logger = curryFunctionMembers(_logger, "mergeAccount()", `[${sourceDb.options.file} => ${targetDb.options.file}]`);
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        const logger = curryFunctionMembers(_logger, nameof(Database.mergeAccount), `${sourceDb.options.file} => ${targetDb.options.file}`);
 
         logger.verbose();
 
@@ -147,7 +148,7 @@ export class Database {
     }
 
     * [Symbol.iterator](): Iterator<{ account: DeepReadonly<FsDbAccount>; pk: DeepReadonly<DbAccountPk> }> {
-        this.logger.info("accountsIterator()");
+        this.logger.info("iterator()");
 
         const {accounts} = this.dbInstance;
 
@@ -173,7 +174,7 @@ export class Database {
     }
 
     async loadFromFile(): Promise<void> {
-        this.logger.info("loadFromFile()");
+        this.logger.info(nameof(Database.prototype.loadFromFile)); // eslint-disable-line @typescript-eslint/unbound-method
 
         if (!(await this.persisted())) {
             throw new Error(`${this.options.file} does not exist`);
@@ -192,7 +193,7 @@ export class Database {
     }
 
     async saveToFile(): Promise<void> {
-        this.logger.info("saveToFile()");
+        this.logger.info(nameof(Database.prototype.saveToFile)); // eslint-disable-line @typescript-eslint/unbound-method
 
         return this.saveToFileQueue.q(async () => {
             const duration = hrtimeDuration();
@@ -219,7 +220,7 @@ export class Database {
     }
 
     stat(): { records: number; conversationEntries: number; mails: number; folders: number; contacts: number } {
-        this.logger.info("stat()");
+        this.logger.info(nameof(Database.prototype.stat)); // eslint-disable-line @typescript-eslint/unbound-method
 
         const stat = {records: 0, conversationEntries: 0, mails: 0, folders: 0, contacts: 0};
 

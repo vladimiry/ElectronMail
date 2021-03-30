@@ -24,7 +24,7 @@ interface DbPatchBundle {
 
 type BuildDbPatchMethodReturnType = ProtonPrimaryApiScan["ApiImplReturns"]["buildDbPatch"];
 
-const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, "[api/build-db-patch]");
+const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, __filename);
 
 async function buildConversationDbMails(briefConversation: RestModel.Conversation, api: ProviderApi): Promise<DatabaseModel.Mail[]> {
     const result: DatabaseModel.Mail[] = [];
@@ -51,7 +51,7 @@ async function bootstrapDbPatch(
         path: DbPatchBundle,
     ) => Promise<void>,
 ): Promise<void> {
-    const logger = curryFunctionMembers(parentLogger, "bootstrapDbPatch()");
+    const logger = curryFunctionMembers(parentLogger, nameof(bootstrapDbPatch));
     // WARN: "getLatestID" should be called on top of the function, ie before any other fetching
     // so app is able to get any potentially missed changes happened during this function execution
     const {EventID: latestEventId} = await providerApi.events.getLatestID();
@@ -193,7 +193,7 @@ async function buildDbPatch(
     },
     nullUpsert = false,
 ): Promise<DbPatch> {
-    const logger = curryFunctionMembers(input.parentLogger, "buildDbPatch()");
+    const logger = curryFunctionMembers(input.parentLogger, nameof(buildDbPatch));
     const mapping: Record<"mails" | "folders" | "contacts", {
         remove: Array<{ pk: string }>;
         // TODO put entire entity update to "upsertIds" array ("gotTrashed" needed only for "message" updates)
@@ -367,22 +367,22 @@ async function buildDbPatch(
 }
 
 const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonPrimaryApi, "buildDbPatch" | "fetchSingleMail"> => {
-    return {
+    const endpoints: ReturnType<typeof buildDbPatchEndpoint> = {
         buildDbPatch(input) {
-            const logger = curryFunctionMembers(_logger, "buildDbPatch()", input.accountIndex);
+            const logger = curryFunctionMembers(_logger, nameof(endpoints.buildDbPatch), input.accountIndex);
 
             logger.info();
 
             const timeoutReleaseSubject$ = new Subject();
             const releaseTimeout = (cause: "refresh" | "defer"): void => {
-                logger.verbose(`releaseTimeout() triggered by "${cause}"`);
+                logger.verbose(`${nameof(releaseTimeout)}() triggered by "${cause}"`);
                 // the bootstrap fetch process triggered by "refresh" event gets called with short/"dbSyncing" timeout value, so we
                 // release the timeout at this point since bootstrap fetch might take long time (see "dbBootstrapping" timeout)
                 timeoutReleaseSubject$.next();
                 timeoutReleaseSubject$.complete();
             };
             const deferFactory = async (): Promise<BuildDbPatchMethodReturnType> => {
-                logger.info("delayFactory()");
+                logger.info(nameof(deferFactory));
 
                 // TODO handle "account.entryUrl" change event
                 // the account state keeps the "signed-in" state despite of page still being reloaded
@@ -458,7 +458,7 @@ const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonPrimaryApi, 
         },
 
         async fetchSingleMail(input) {
-            const logger = curryFunctionMembers(_logger, "fetchSingleMail()", input.accountIndex);
+            const logger = curryFunctionMembers(_logger, nameof(endpoints.fetchSingleMail), input.accountIndex);
 
             logger.info();
 
@@ -494,6 +494,8 @@ const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonPrimaryApi, 
             );
         },
     };
+
+    return endpoints;
 };
 
 export {

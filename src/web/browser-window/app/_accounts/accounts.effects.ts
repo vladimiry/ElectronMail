@@ -45,7 +45,7 @@ const RateLimiterMemory: typeof import("rate-limiter-flexible")["RateLimiterMemo
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     = require("rate-limiter-flexible/lib/RateLimiterMemory");
 
-const _logger = getWebLogger("[accounts.effects]");
+const _logger = getWebLogger(__filename);
 
 const pingOnlineStatusEverySecond$ = timer(0, ONE_SECOND_MS).pipe(
     filter(() => navigator.onLine),

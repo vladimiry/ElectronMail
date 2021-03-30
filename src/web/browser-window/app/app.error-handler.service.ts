@@ -7,7 +7,7 @@ import {serializeError} from "serialize-error";
 import {NOTIFICATION_ACTIONS} from "./store/actions";
 import {getWebLogger} from "src/web/browser-window/util";
 
-const logger = getWebLogger("[app.error-handler.service]");
+const logger = getWebLogger(__filename);
 
 @Injectable()
 export class AppErrorHandler implements ErrorHandler {

@@ -13,7 +13,7 @@ export const buildLoggerBundle = (prefix: string): Logger => curryFunctionMember
 
 // TODO apply "zoomFactor" in main process only, track of https://github.com/electron/electron/issues/10572
 export const applyZoomFactor = (_logger: Logger): void => {
-    const logger = curryFunctionMembers(_logger, "applyZoomFactor()");
+    const logger = curryFunctionMembers(_logger, nameof(applyZoomFactor));
 
     logger.verbose();
 

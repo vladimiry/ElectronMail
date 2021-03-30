@@ -9,7 +9,7 @@ import {PLATFORM} from "src/electron-main/constants";
 import {curryFunctionMembers, normalizeLocale, removeDuplicateItems, sanitizeFastGlobPattern} from "src/shared/util";
 
 async function resolveHunspellLocales(dir: string): Promise<Locale[]> {
-    const logger = curryFunctionMembers(_logger, "[src/electron-main/spell-check/setup] resolveHunspellLocales()");
+    const logger = curryFunctionMembers(_logger, __filename, nameof(resolveHunspellLocales));
     const fastGlobModule = await import("fast-glob");
 
     const hunspellDictionariesGlob = sanitizeFastGlobPattern(
@@ -46,7 +46,7 @@ export let setup: () => Promise<{
     getLocation: () => string | undefined;
     getAvailableDictionaries: () => readonly Locale[];
 }> = async () => {
-    const logger = curryFunctionMembers(_logger, "[src/electron-main/spell-check/setup] setup()");
+    const logger = curryFunctionMembers(_logger, __filename, nameof(setup));
     const state: {
         location: string | undefined;
         hunspellLocales: Locale[];
@@ -104,7 +104,7 @@ export let setup: () => Promise<{
 };
 
 export let resolveDefaultLocale: () => Promise<Locale> = async () => {
-    const logger = curryFunctionMembers(_logger, "[src/electron-main/spell-check/setup] resolveDefaultLocale()");
+    const logger = curryFunctionMembers(_logger, __filename, nameof(resolveDefaultLocale));
     const resolvedLocale: Locale | undefined = await (
         async (): Promise<string | undefined> => {
             const osLocaleModule = await import("os-locale");

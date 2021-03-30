@@ -13,7 +13,7 @@ export const PROTON_CALENDAR_IPC_WEBVIEW_API_DEFINITION = {
 export const PROTON_CALENDAR_IPC_WEBVIEW_API = createWebViewApiService({
     apiDefinition: PROTON_CALENDAR_IPC_WEBVIEW_API_DEFINITION,
     channel: `${PACKAGE_NAME}:webview-api:calendar`,
-    logger: buildLoggerBundle("[webview-api:calendar]"),
+    logger: buildLoggerBundle(`${__filename} [webview-api:calendar]`),
 });
 
 export type ProtonCalendarApiScan = ScanService<typeof PROTON_CALENDAR_IPC_WEBVIEW_API>;

@@ -4,7 +4,7 @@ import {platformBrowserDynamic} from "@angular/platform-browser-dynamic";
 import {AppModule} from "./app.module";
 import {getWebLogger} from "src/web/browser-window/util";
 
-const logger = getWebLogger("[bootstrap-app]");
+const logger = getWebLogger(__filename);
 
 // TODO call "enableProdMode()" only in prod mode
 // after angular@8.0.1=>8.0.1 update angular stopped working without enabling prod mode (in dev mode)

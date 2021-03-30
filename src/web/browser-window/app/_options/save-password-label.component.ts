@@ -34,7 +34,7 @@ export class SavePasswordLabelComponent implements OnInit, OnDestroy {
         select(OptionsSelectors.FEATURED.snapPasswordManagerServiceHint),
     );
 
-    private readonly logger = getWebLogger("[save-password-label]");
+    private readonly logger = getWebLogger(__filename, nameof(SavePasswordLabelComponent));
 
     private readonly subscription = new Subscription();
 

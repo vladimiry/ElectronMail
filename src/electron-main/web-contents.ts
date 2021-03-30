@@ -18,7 +18,7 @@ import {
     lowerConsoleMessageEventLogLevel,
 } from "src/shared/util";
 
-const logger = curryFunctionMembers(_logger, "[web-contents]");
+const logger = curryFunctionMembers(_logger, __filename);
 
 const checkWebViewWebPreferencesDefaults: (webPreferences: WebPreferences) => boolean = (
     () => {

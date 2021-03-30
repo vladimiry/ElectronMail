@@ -21,7 +21,7 @@ interface NotificationMapValue {
     readonly reset: () => void;
 }
 
-const _logger = curryFunctionMembers(electronLog, "[electron-main/api/endpoints-builders/find-in-page]");
+const _logger = curryFunctionMembers(electronLog, __filename);
 
 export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpoints, ApiMethods>> {
     let findInPageNotification: NotificationMapValue | null = null;
@@ -36,7 +36,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
     const endpoints: Pick<IpcMainApiEndpoints, ApiMethods> = {
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async findInPageDisplay({visible}) {
-            const logger = curryFunctionMembers(_logger, "findInPageDisplay()");
+            const logger = curryFunctionMembers(_logger, nameof(endpoints.findInPageDisplay));
 
             logger.info();
 
@@ -107,7 +107,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                         null as any, // eslint-disable-line @typescript-eslint/no-explicit-any
                     );
                     {
-                        const {destroy} =  uiContext.findInPageBrowserView;
+                        const {destroy} = uiContext.findInPageBrowserView;
                         destroy && destroy(); // eslint-disable-line no-unused-expressions
                     }
                     delete uiContext.findInPageBrowserView;

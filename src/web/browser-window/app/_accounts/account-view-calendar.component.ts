@@ -11,7 +11,7 @@ import {testProtonCalendarAppPage} from "src/shared/util";
     template: "",
 })
 export class AccountViewCalendarComponent extends AccountViewAbstractComponent implements OnInit {
-    private readonly logger = getWebLogger(`[_accounts/account-view-calendar.component]`);
+    private readonly logger = getWebLogger(__filename, nameof(AccountViewCalendarComponent));
 
     private readonly accountsService: AccountsService;
 

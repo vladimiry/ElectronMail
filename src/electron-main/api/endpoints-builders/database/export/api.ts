@@ -14,12 +14,12 @@ import {IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints, IpcMainServiceSc
 import {curryFunctionMembers} from "src/shared/util";
 import {writeFile} from "src/electron-main/api/endpoints-builders/database/export/service";
 
-const logger_ = curryFunctionMembers(electronLog, "[src/electron-main/api/endpoints-builders/database/export/api]");
+const logger_ = curryFunctionMembers(electronLog, __filename);
 
 export async function buildDbExportEndpoints(
     ctx: Context,
 ): Promise<Pick<IpcMainApiEndpoints, "dbExport" | "dbExportMailAttachmentsNotification">> {
-    return {
+    const endpoints: Unpacked<ReturnType<typeof buildDbExportEndpoints>> = {
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbExportMailAttachmentsNotification(payload) {
             MAIL_ATTACHMENTS_EXPORT_NOTIFICATION$.next(payload);
@@ -27,7 +27,7 @@ export async function buildDbExportEndpoints(
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         dbExport({exportDir, fileType, login, mailPks, includingAttachments}) {
-            const logger = curryFunctionMembers(logger_, "dbExport()");
+            const logger = curryFunctionMembers(logger_, nameof(endpoints.dbExport));
 
             logger.info(JSON.stringify({includingAttachments}));
 
@@ -161,4 +161,6 @@ export async function buildDbExportEndpoints(
             });
         },
     };
+
+    return endpoints;
 }

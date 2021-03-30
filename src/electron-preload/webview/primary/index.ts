@@ -6,7 +6,7 @@ import {registerApi} from "./api";
 import {setupProtonOpenNewTabEventHandler} from "src/electron-preload/webview/lib/custom-event";
 import {setupProviderIntegration} from "./provider-api/setup";
 
-const logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, "[index]");
+const logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, __filename);
 const protonAppPageStatus = testProtonMailAppPage({url: getLocationHref(), logger});
 
 setupProtonOpenNewTabEventHandler(logger);

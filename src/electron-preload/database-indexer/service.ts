@@ -6,7 +6,7 @@ import {fromString as htmlToText} from "html-to-text";
 import {INDEXABLE_MAIL_FIELDS, IndexableMail, IndexableMailId, MIME_TYPES, MailAddress, MailsIndex} from "src/shared/model/database";
 import {buildLoggerBundle, resolveIpcMainApi} from "src/electron-preload/lib/util";
 
-const logger = buildLoggerBundle("[preload: database-indexer: service]");
+const logger = buildLoggerBundle(__filename);
 
 export const SERVICES_FACTORY = {
     // tslint-disable-next-line @typescript-eslint/explicit-module-boundary-types

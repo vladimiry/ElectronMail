@@ -66,6 +66,9 @@ export function buildBaseConfig(
                 chunkIds: "named",
                 moduleIds: "named",
             },
+            node: {
+                __filename: true,
+            },
         },
         config,
     );

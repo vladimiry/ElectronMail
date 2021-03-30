@@ -19,7 +19,7 @@ import {deletePassword, getPassword, setPassword} from "src/electron-main/keytar
 import {initSessionByAccount} from "src/electron-main/session";
 import {upgradeDatabase, upgradeSettings} from "src/electron-main/storage-upgrade";
 
-const logger = curryFunctionMembers(electronLog, "[src/electron-main/api/index]");
+const logger = curryFunctionMembers(electronLog, __filename);
 
 export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
     const endpoints: IpcMainApiEndpoints = {
@@ -88,9 +88,9 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             } catch (error) {
                 // log only one-line message in "error" mode so it doesn't affect the e2e tests
                 // eslint-disable-next-line  @typescript-eslint/no-unsafe-member-access
-                logger.error(`"keytar" module is unsupported by the system: `, error.message);
+                logger.error(nameof(endpoints.init), `"keytar" module is unsupported by the system: `, error.message);
                 // log full error in "warn" mode only so it doesn't affect the e2e tests
-                logger.warn(error);
+                logger.warn(nameof(endpoints.init), error);
 
                 ctx.keytarSupport = false;
 
@@ -266,7 +266,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
         // TODO move to "src/electron-main/api/endpoints-builders/database"
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async loadDatabase({accounts}) {
-            logger.info("loadDatabase() start");
+            logger.info(nameof(endpoints.loadDatabase), "start");
 
             const {db, sessionDb, sessionStorage} = ctx;
 
@@ -276,7 +276,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             if (await sessionDb.persisted()) {
                 await sessionDb.loadFromFile();
                 const upgraded = await upgradeDatabase(sessionDb, accounts);
-                logger.verbose("loadDatabase() session database upgraded:", upgraded);
+                logger.verbose(nameof(endpoints.loadDatabase), "session database upgraded:", upgraded);
                 // it will be reset and saved anyway
             }
 
@@ -285,7 +285,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             if (await db.persisted()) {
                 await db.loadFromFile();
                 const upgraded = await upgradeDatabase(db, accounts);
-                logger.verbose("loadDatabase() database upgraded:", upgraded);
+                logger.verbose(nameof(endpoints.loadDatabase), "database upgraded:", upgraded);
                 if (upgraded) {
                     needToSaveDb = true;
                 }
@@ -293,7 +293,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
 
             // merging session database to the primary one
             if (await sessionDb.persisted()) {
-                logger.verbose("loadDatabase() start session db accounts merging to primary db");
+                logger.verbose(nameof(endpoints.loadDatabase), "start session db accounts merging to primary db");
 
                 for (const {pk: accountPk} of sessionDb) {
                     if (
@@ -323,7 +323,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
                 await detachFullTextIndexWindow(ctx);
             }
 
-            logger.info("loadDatabase() end");
+            logger.info(nameof(endpoints.loadDatabase), "end");
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types

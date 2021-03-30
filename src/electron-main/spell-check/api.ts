@@ -5,7 +5,7 @@ import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
 import {curryFunctionMembers} from "src/shared/util";
 
-const logger = curryFunctionMembers(electronLog, "[src/electron-main/spell-check/api]");
+const logger = curryFunctionMembers(electronLog, __filename);
 
 export async function buildEndpoints(
     ctx: Context,

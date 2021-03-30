@@ -15,7 +15,7 @@ import {getWebLogger} from "src/web/browser-window/util";
     templateUrl: "./db-metadata-reset-request.component.html",
 })
 export class DbMetadataResetRequestComponent implements OnInit, OnDestroy {
-    private readonly logger = getWebLogger();
+    private readonly logger = getWebLogger(__filename, nameof(DbMetadataResetRequestComponent));
 
     private readonly subscription = new Subscription();
 

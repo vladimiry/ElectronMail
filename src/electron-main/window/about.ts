@@ -19,7 +19,7 @@ import {applyZoomFactor} from "src/electron-main/window/util";
 import {curryFunctionMembers} from "src/shared/util";
 import {injectVendorsAppCssIntoHtmlFile} from "src/electron-main/util";
 
-const logger = curryFunctionMembers(_logger, "[src/electron-main/window/about]");
+const logger = curryFunctionMembers(_logger, __filename);
 
 const resolveContent: (ctx: Context) => Promise<Unpacked<ReturnType<typeof injectVendorsAppCssIntoHtmlFile>>> = (
     (): typeof resolveContent => {

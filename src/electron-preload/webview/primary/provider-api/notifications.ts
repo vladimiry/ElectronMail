@@ -6,7 +6,7 @@ import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 import {curryFunctionMembers} from "src/shared/util";
 import {sanitizeProtonApiError} from "src/electron-preload/lib/util";
 
-const logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, "[provider-api/notifications]");
+const logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, __filename);
 
 // WARN: has to be initialized ASAP in page/js-code loading/evaluating life cycle
 // since the app needs to be notified about all the fetch request

@@ -5,7 +5,7 @@ import {initProviderApi} from "./provider-api";
 import {registerApi} from "./api";
 import {setupProtonOpenNewTabEventHandler} from "src/electron-preload/webview/lib/custom-event";
 
-const logger = curryFunctionMembers(WEBVIEW_LOGGERS.calendar, "[index]");
+const logger = curryFunctionMembers(WEBVIEW_LOGGERS.calendar, __filename);
 const protonAppPageStatus = testProtonCalendarAppPage({url: getLocationHref(), logger});
 
 setupProtonOpenNewTabEventHandler(logger);

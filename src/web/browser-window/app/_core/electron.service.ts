@@ -15,7 +15,7 @@ type SuperCallOptions = Required<Exclude<Parameters<ReturnType<(typeof createIpc
 
 type LimitedCallOptions = Partial<Pick<SuperCallOptions, "timeoutMs" | "finishPromise" | "serialization">>;
 
-const logger = getWebLogger("[_core/electron.service]");
+const logger = getWebLogger(__filename);
 
 @Injectable()
 export class ElectronService implements OnDestroy {

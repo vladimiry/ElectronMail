@@ -5,7 +5,7 @@ import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/mod
 import {buildBaseEntity, buildPk} from "src/electron-preload/webview/lib/database-entity/index";
 import {buildLoggerBundle} from "src/electron-preload/lib/util";
 
-const logger = buildLoggerBundle("[preload: lib/database/mail]");
+const logger = buildLoggerBundle(__filename);
 
 const directTypeMapping: Readonly<Record<Unpacked<typeof RestModel.MAIL_TYPE._.values>, DatabaseModel.Mail["state"]>> = {
     [RestModel.MAIL_TYPE.INBOX]: DatabaseModel.MAIL_STATE.RECEIVED,

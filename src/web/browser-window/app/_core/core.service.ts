@@ -62,7 +62,8 @@ export class CoreService {
         logger_: import("src/shared/model/common").Logger,
         clientSession?: ProtonClientSession,
     ): Promise<void> {
-        const logger = curryFunctionMembers(logger_, "[core.service]", "applyProtonClientSessionAndNavigate");
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        const logger = curryFunctionMembers(logger_, __filename, nameof(CoreService.prototype.applyProtonClientSessionAndNavigate));
         const {webViewBlankDOMLoaded: loaderIdTimeoutMs} = await this.store
             .pipe(
                 select(OptionsSelectors.CONFIG.timeouts),

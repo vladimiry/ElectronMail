@@ -7,14 +7,14 @@ import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 import {curryFunctionMembers} from "src/shared/util";
 import {getLocationHref} from "src/electron-preload/webview/lib/util";
 
-const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.calendar, "[api/index]");
+const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.calendar, __filename);
 
 export const registerApi = (providerApi: ProviderApi): void => {
     const endpoints: ProtonCalendarApi = {
         async ping() {}, // eslint-disable-line @typescript-eslint/no-empty-function
 
         notification({accountIndex}) {
-            const logger = curryFunctionMembers(_logger, "notification()", accountIndex);
+            const logger = curryFunctionMembers(_logger, nameof.full(endpoints.notification), accountIndex);
 
             logger.info();
 

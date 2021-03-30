@@ -35,7 +35,7 @@ type Methods = keyof Pick<IpcMainApiEndpoints,
 type ContextAwareMethods = keyof Pick<IpcMainApiEndpoints,
     | "hotkey">;
 
-const logger = curryFunctionMembers(electronLog, "[src/electron-main/api/endpoints-builders/general]");
+const logger = curryFunctionMembers(electronLog, __filename);
 
 export async function buildEndpoints(
     ctx: Context,
@@ -251,10 +251,7 @@ export async function buildEndpoints(
                     return (name: string): boolean => {
                         if (!assetNameRegExpLogged) {
                             assetNameRegExpLogged = true;
-                            logger.verbose(
-                                "updateCheck()",
-                                inspect({assetNameRegExp}),
-                            );
+                            logger.verbose(nameof(endpoints.updateCheck), inspect({assetNameRegExp}));
                         }
                         return assetNameRegExp.test(name);
                     };
@@ -296,7 +293,10 @@ export async function buildEndpoints(
 
                     if (rateLimitError) {
                         // TODO consider enabling retry logic
-                        logger.error(new Error(`Update check failed (ignored as rate limit error): ${errorMessageData}`));
+                        logger.error(
+                            nameof(endpoints.updateCheck),
+                            new Error(`Update check failed (ignored as rate limit error): ${errorMessageData}`),
+                        );
                         return [];
                     }
 
@@ -311,7 +311,7 @@ export async function buildEndpoints(
                 }> = await response.json();
 
                 logger.verbose(
-                    "updateCheck()",
+                    nameof(endpoints.updateCheck),
                     JSON.stringify({
                         releasesCount: releases.length,
                         PACKAGE_VERSION,
@@ -334,10 +334,7 @@ export async function buildEndpoints(
                         return {title, url, date} as const;
                     });
 
-                logger.verbose(
-                    "updateCheck()",
-                    JSON.stringify({newReleases}, null, 2),
-                );
+                logger.verbose(nameof(endpoints.updateCheck), JSON.stringify({newReleases}, null, 2));
 
                 return newReleases;
             };

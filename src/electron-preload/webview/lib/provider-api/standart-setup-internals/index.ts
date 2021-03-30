@@ -17,7 +17,7 @@ export const resolveStandardSetupPublicApi = async (
     readonly cache$: Observable<StandardSetupPublicScope["cache"]>
     readonly history$: Observable<StandardSetupPublicScope["history"]>
 }> => {
-    const logger = curryFunctionMembers(_logger, "resolveStandardSetupProviderApi()");
+    const logger = curryFunctionMembers(_logger, nameof(resolveStandardSetupPublicApi));
 
     logger.info("init");
 

@@ -25,7 +25,7 @@ import {
 import {getHeader, patchResponseHeaders, resolveCorsProxy} from "./service";
 import {resolveInitializedSession} from "src/electron-main/session";
 
-const logger = curryFunctionMembers(_logger, "[web-request]");
+const logger = curryFunctionMembers(_logger, __filename);
 
 const requestProxyCache = (() => {
     type MapKeyArg =

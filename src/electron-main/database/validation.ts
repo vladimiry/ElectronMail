@@ -9,7 +9,7 @@ import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {curryFunctionMembers} from "src/shared/util";
 
-const logger = curryFunctionMembers(_logger, "[src/electron-main/database/validation]");
+const logger = curryFunctionMembers(_logger, __filename);
 
 const transformValidationOptions: TransformValidationOptions = {
     validator: {

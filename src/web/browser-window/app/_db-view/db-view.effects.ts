@@ -15,7 +15,7 @@ import {State} from "src/web/browser-window/app/store/reducers/db-view";
 import {curryFunctionMembers} from "src/shared/util";
 import {getWebLogger} from "src/web/browser-window/util";
 
-const _logger = getWebLogger("[db-view.effects]");
+const _logger = getWebLogger(__filename);
 
 @Injectable()
 export class DbViewEffects {

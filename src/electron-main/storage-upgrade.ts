@@ -25,7 +25,7 @@ import {
 import {NumericBoolean} from "src/shared/model/common";
 import {curryFunctionMembers, parseProtonRestModel, pickBaseConfigProperties} from "src/shared/util";
 
-const logger = curryFunctionMembers(_logger, "[src/electron-main/storage-upgrade]");
+const logger = curryFunctionMembers(_logger, __filename);
 
 function isAppVersionLessThan(version: string): boolean {
     return compareVersions(PACKAGE_VERSION, version) === -1;

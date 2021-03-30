@@ -9,7 +9,7 @@ import {getWebLogger} from "src/web/browser-window/util";
 
 export const featureName = "notification";
 
-const logger = getWebLogger("[reducers/notification]");
+const logger = getWebLogger(__filename);
 
 const itemsLimit = 50;
 
@@ -22,6 +22,7 @@ function addNotificationItem(state: State, item: NotificationItem, skipLogging?:
 
     if (item.type === "error" && !skipLogging) {
         logger.error(
+            nameof(addNotificationItem),
             // WARN: make sure there is no circular recursive data
             serializeError(
                 pick(item.data, ["name", "message", "stack"]),

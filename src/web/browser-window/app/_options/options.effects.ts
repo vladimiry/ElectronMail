@@ -16,7 +16,7 @@ import {ProgressPatch, State} from "src/web/browser-window/app/store/reducers/op
 import {curryFunctionMembers} from "src/shared/util";
 import {getWebLogger} from "src/web/browser-window/util";
 
-const _logger = getWebLogger("[options.effects]");
+const _logger = getWebLogger(__filename);
 
 @Injectable()
 export class OptionsEffects {

@@ -43,7 +43,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
     ) {
         super();
 
-        this.log("info", ["constructor() abstract"]);
+        this.log("info", [nameof(AccountViewAbstractComponent), "constructor"]);
 
         this.webViewConstruction();
 
@@ -87,7 +87,8 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
 
     ngOnDestroy(): void {
         super.ngOnDestroy();
-        this.log("info", ["ngOnDestroy()"]);
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        this.log("info", [nameof(AccountViewAbstractComponent.prototype.ngOnDestroy)]);
         this.subscription.unsubscribe();
         this.action(
             ACCOUNTS_ACTIONS.Patch(
@@ -158,7 +159,8 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
     }
 
     private registerWebViewEventsHandlingOnce(webView: Electron.WebviewTag): void {
-        this.log("info", ["registerWebViewEventsHandlingOnce()"]);
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        this.log("info", [nameof(AccountViewAbstractComponent.prototype.registerWebViewEventsHandlingOnce)]);
 
         const didNavigateArgs = [
             "did-navigate",

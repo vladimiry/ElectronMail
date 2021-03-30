@@ -6,10 +6,10 @@ import {ProviderInternals, ProviderInternalsLazy} from "./model";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 import {curryFunctionMembers} from "src/shared/util";
 
-const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, "[provider-api/internals]");
+const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, __filename);
 
 export const resolveProviderInternals = async (): Promise<ProviderInternals> => {
-    const logger = curryFunctionMembers(_logger, "resolveProviderInternals()");
+    const logger = curryFunctionMembers(_logger, nameof(resolveProviderInternals));
 
     logger.info();
 

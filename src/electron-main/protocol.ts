@@ -13,7 +13,7 @@ import {PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
 import {WEB_PROTOCOL_SCHEME} from "src/shared/constants";
 import {curryFunctionMembers} from "src/shared/util";
 
-const logger = curryFunctionMembers(_logger, "[protocol]");
+const logger = curryFunctionMembers(_logger, __filename);
 
 const fsAsync = {
     stat: promisify(fs.stat),
@@ -84,7 +84,7 @@ async function resolveFileSystemResourceLocation(
             })();
     })();
 
-    logger.verbose("resolveFileSystemResourceLocation()", {directory, resource});
+    logger.verbose(nameof(resolveFileSystemResourceLocation), {directory, resource});
 
     if (!pathIsInside(resource, directory)) {
         throw new Error(`Forbidden file system resource "${resource}"`);
@@ -100,7 +100,7 @@ async function resolveFileSystemResourceLocation(
             return path.join(resource, "index.html");
         }
     } catch (error) {
-        logger.error("resolveFileSystemResourceLocation()", error);
+        logger.error(nameof(resolveFileSystemResourceLocation), error);
         if (error.code === "ENOENT") { // eslint-disable-line @typescript-eslint/no-unsafe-member-access
             return null;
         }

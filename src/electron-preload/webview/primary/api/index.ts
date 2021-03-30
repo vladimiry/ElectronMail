@@ -18,7 +18,7 @@ import {dumpProtonSharedSession} from "src/electron-preload/webview/primary/shar
 import {fillInputValue, getLocationHref, resolveDomElements, submitTotpToken,} from "src/electron-preload/webview/lib/util";
 import {resolveIpcMainApi} from "src/electron-preload/lib/util";
 
-const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, "[api/index]");
+const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, __filename);
 
 export function registerApi(providerApi: ProviderApi): void {
     const endpoints: ProtonPrimaryApi = {
@@ -27,7 +27,7 @@ export function registerApi(providerApi: ProviderApi): void {
         async ping() {}, // eslint-disable-line @typescript-eslint/no-empty-function
 
         async selectMailOnline(input) {
-            _logger.info("selectMailOnline()", input.accountIndex);
+            _logger.info(nameof(endpoints.selectMailOnline), input.accountIndex);
 
             const {ViewMode: viewMode} = await providerApi._custom_.cachedMailSettingsModel$
                 .pipe(first())
@@ -75,7 +75,7 @@ export function registerApi(providerApi: ProviderApi): void {
         },
 
         async makeMailRead(input) {
-            _logger.info("makeMailRead()", input.accountIndex);
+            _logger.info(nameof(endpoints.makeMailRead), input.accountIndex);
 
             await providerApi.message.markMessageAsRead(input.messageIds);
 
@@ -83,7 +83,7 @@ export function registerApi(providerApi: ProviderApi): void {
         },
 
         async deleteMessages({messageIds, accountIndex}) {
-            _logger.info("deleteMessages()", accountIndex);
+            _logger.info(nameof(endpoints.deleteMessages), accountIndex);
 
             await providerApi.message.deleteMessages(messageIds);
 
@@ -91,7 +91,7 @@ export function registerApi(providerApi: ProviderApi): void {
         },
 
         async setMailFolder(input) {
-            _logger.info("setMailFolder()", input.accountIndex);
+            _logger.info(nameof(endpoints.setMailFolder), input.accountIndex);
 
             await providerApi.message.labelMessages({LabelID: input.folderId, IDs: input.messageIds});
 
@@ -99,7 +99,7 @@ export function registerApi(providerApi: ProviderApi): void {
         },
 
         async exportMailAttachments({uuid, mailPk, login, accountIndex}) {
-            const logger = curryFunctionMembers(_logger, "exportMailAttachments()", accountIndex);
+            const logger = curryFunctionMembers(_logger, nameof(endpoints.exportMailAttachments), accountIndex);
 
             logger.info();
 
@@ -166,7 +166,7 @@ export function registerApi(providerApi: ProviderApi): void {
         },
 
         async fillLogin({login, accountIndex}) {
-            const logger = curryFunctionMembers(_logger, "fillLogin()", accountIndex);
+            const logger = curryFunctionMembers(_logger, nameof(endpoints.fillLogin), accountIndex);
 
             logger.info();
 
@@ -185,7 +185,7 @@ export function registerApi(providerApi: ProviderApi): void {
         },
 
         async login({login, password, accountIndex}) {
-            const logger = curryFunctionMembers(_logger, "login()", accountIndex);
+            const logger = curryFunctionMembers(_logger, nameof(endpoints.login), accountIndex);
 
             logger.info();
 
@@ -213,7 +213,7 @@ export function registerApi(providerApi: ProviderApi): void {
         },
 
         async login2fa({secret, accountIndex}) {
-            const logger = curryFunctionMembers(_logger, "login2fa()", accountIndex);
+            const logger = curryFunctionMembers(_logger, nameof(endpoints.login2fa), accountIndex);
 
             logger.info();
 
@@ -247,9 +247,9 @@ export function registerApi(providerApi: ProviderApi): void {
         },
 
         async unlock({mailPassword, accountIndex}) {
-            const logger = curryFunctionMembers(_logger, "unlock()", accountIndex);
+            const logger = curryFunctionMembers(_logger, nameof(endpoints.unlock), accountIndex);
 
-            logger.info("unlock()", accountIndex);
+            logger.info(accountIndex);
 
             const elements = await resolveDomElements(
                 {
@@ -268,7 +268,7 @@ export function registerApi(providerApi: ProviderApi): void {
         },
 
         notification({entryApiUrl, accountIndex}) {
-            const logger = curryFunctionMembers(_logger, "notification()", accountIndex);
+            const logger = curryFunctionMembers(_logger, nameof(endpoints.notification), accountIndex);
 
             logger.info();
 

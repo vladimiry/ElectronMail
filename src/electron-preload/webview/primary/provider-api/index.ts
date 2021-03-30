@@ -10,7 +10,7 @@ import {assertTypeOf, curryFunctionMembers} from "src/shared/util";
 import {attachRateLimiting} from "./rate-limiting";
 import {resolveProviderInternals} from "./internals";
 
-const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, "[provider-api/index]");
+const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, __filename);
 
 // TODO move function wrapping to utility function
 const attachLoggingBeforeCall = (api: ProviderApi, logger: Logger): void => {
@@ -29,7 +29,7 @@ const attachLoggingBeforeCall = (api: ProviderApi, logger: Logger): void => {
 };
 
 export const initProviderApi = async (): Promise<ProviderApi> => {
-    const logger = curryFunctionMembers(_logger, "initProviderApi()");
+    const logger = curryFunctionMembers(_logger, nameof(initProviderApi));
 
     logger.info();
 

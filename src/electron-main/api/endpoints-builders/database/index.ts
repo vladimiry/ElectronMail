@@ -18,7 +18,7 @@ import {patchMetadata} from "src/electron-main/database/util";
 import {prepareFoldersView} from "./folders-view";
 import {validateEntity} from "src/electron-main/database/validation";
 
-const _logger = curryFunctionMembers(electronLog, "[electron-main/api/endpoints-builders/database]");
+const _logger = curryFunctionMembers(electronLog, __filename);
 
 type Methods = keyof Pick<IpcMainApiEndpoints,
     | "dbPatch"
@@ -34,14 +34,14 @@ type Methods = keyof Pick<IpcMainApiEndpoints,
     | "dbIndexerNotification">;
 
 export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpoints, Methods>> {
-    return {
+    const endpoints: Unpacked<ReturnType<typeof buildEndpoints>> = {
         ...await buildDbExportEndpoints(ctx),
         ...await buildDbIndexingEndpoints(ctx),
         ...await buildDbSearchEndpoints(ctx),
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbPatch({bootstrapPhase, login, metadata: metadataPatch, patch: entityUpdatesPatch}) {
-            const logger = curryFunctionMembers(_logger, "dbPatch()");
+            const logger = curryFunctionMembers(_logger, nameof(endpoints.dbPatch));
 
             logger.info();
 
@@ -194,7 +194,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbGetAccountMetadata({login}) {
-            _logger.info("dbGetAccountMetadata()");
+            _logger.info(nameof(endpoints.dbGetAccountMetadata));
 
             const account = ctx.db.getAccount({login});
 
@@ -203,7 +203,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbGetAccountDataView({login}) {
-            _logger.info("dbGetAccountDataView()");
+            _logger.info(nameof(endpoints.dbGetAccountDataView));
 
             const account = ctx.db.getAccount({login});
 
@@ -220,7 +220,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbGetAccountMail({login, pk}) {
-            _logger.info("dbGetAccountMail()");
+            _logger.info(nameof(endpoints.dbGetAccountMail));
 
             const account = ctx.db.getAccount({login});
 
@@ -241,4 +241,6 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             };
         },
     };
+
+    return endpoints;
 }

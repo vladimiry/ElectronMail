@@ -4,7 +4,7 @@ import {first} from "rxjs/operators";
 import {Context} from "src/electron-main/model";
 import {curryFunctionMembers} from "src/shared/util";
 
-const logger = curryFunctionMembers(_logger, "[src/electron-main/window/util]");
+const logger = curryFunctionMembers(_logger, __filename);
 
 export const applyZoomFactor = async (
     ctx: DeepReadonly<Context>,
@@ -12,7 +12,7 @@ export const applyZoomFactor = async (
 ): Promise<boolean> => {
     const {zoomFactor, zoomFactorDisabled} = await ctx.config$.pipe(first()).toPromise();
 
-    logger.verbose("applyZoomFactor()", JSON.stringify({zoomFactorDisabled}));
+    logger.verbose(nameof(applyZoomFactor), JSON.stringify({zoomFactorDisabled}));
 
     if (zoomFactorDisabled) {
         return false;

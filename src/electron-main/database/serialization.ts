@@ -54,10 +54,10 @@ export class SerializationAdapter {
 
     public readonly write: (data: DeepReadonly<FsDb>) => Promise<Buffer>;
 
-    private logger = curryFunctionMembers(_logger, "[src/electron-main/database/serialization]", "[SerializationAdapter]");
+    private logger = curryFunctionMembers(_logger, __filename, nameof(SerializationAdapter));
 
     constructor(input: { key: Buffer; preset: EncryptionAdapterBundle.KeyBasedPreset }) {
-        this.logger.info("constructor()");
+        this.logger.info(nameof(SerializationAdapter.prototype.constructor));
 
         const encryptionAdapter = new EncryptionAdapterBundle.EncryptionAdapter(input);
         const read: typeof SerializationAdapter.prototype.read = async (data) => {
@@ -95,7 +95,7 @@ export class SerializationAdapter {
             });
         };
         const write: typeof SerializationAdapter.prototype.write = async (data) => {
-            this.logger.info("write()");
+            this.logger.info(nameof(SerializationAdapter.prototype.write));
 
             this.logger.verbose(`"msgpack.encode" start`);
             const serializedData = (() => {

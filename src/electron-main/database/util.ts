@@ -5,7 +5,7 @@ import {Folder, FsDbAccount, LABEL_TYPE, SYSTEM_FOLDER_IDENTIFIERS, View} from "
 import {PRODUCT_NAME} from "src/shared/constants";
 import {curryFunctionMembers} from "src/shared/util";
 
-const logger = curryFunctionMembers(electronLog, "[src/electron-main/database/util]");
+const logger = curryFunctionMembers(electronLog, __filename);
 
 const resolveAccountFolders: (
     account: DeepReadonly<FsDbAccount>,

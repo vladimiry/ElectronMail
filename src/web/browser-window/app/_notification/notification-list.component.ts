@@ -19,7 +19,7 @@ import {getWebLogger} from "src/web/browser-window/util";
 export class NotificationListComponent implements OnInit, OnDestroy {
     $items: Observable<NotificationItem[]> = this.store.select(NotificationSelectors.FEATURED.items);
 
-    private readonly logger = getWebLogger();
+    private readonly logger = getWebLogger(__filename, nameof(NotificationListComponent));
 
     private subscription = new Subscription();
 

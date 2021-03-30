@@ -48,7 +48,7 @@ export const PROTON_PRIMARY_IPC_WEBVIEW_API_DEFINITION = {
 export const PROTON_PRIMARY_IPC_WEBVIEW_API = createWebViewApiService({
     apiDefinition: PROTON_PRIMARY_IPC_WEBVIEW_API_DEFINITION,
     channel: `${PACKAGE_NAME}:webview-api:primary`,
-    logger: buildLoggerBundle("[webview-api:primary]"),
+    logger: buildLoggerBundle(`${__filename} [webview-api:primary]`),
 });
 
 export type ProtonPrimaryApiScan = ScanService<typeof PROTON_PRIMARY_IPC_WEBVIEW_API>;

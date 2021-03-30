@@ -7,7 +7,7 @@ import {IpcMainApiEndpoints} from "src/shared/api/main";
 import {assertTypeOf, curryFunctionMembers, pickAccountStrict, validateExternalContentProxyUrlPattern} from "src/shared/util";
 import {configureSessionByAccount, initSessionByAccount} from "src/electron-main/session";
 
-const _logger = curryFunctionMembers(electronLog, "[electron-main/api/endpoints-builders/account]");
+const _logger = curryFunctionMembers(electronLog, __filename);
 
 const assertEntryUrl = (value: string): void | never => {
     assertTypeOf({value, expectedType: "string"}, `Invalid "API entry point" value.`);
@@ -29,7 +29,7 @@ export async function buildEndpoints(
     | "changeAccountOrder"
     | "toggleAccountDisabling"
     | "removeAccount">> {
-    return {
+    const endpoints: Unpacked<ReturnType<typeof buildEndpoints>> = {
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async addAccount(
             {
@@ -102,7 +102,7 @@ export async function buildEndpoints(
             assertExternalContentProxyUrlPattern({enableExternalContentProxy, externalContentProxyUrlPattern});
 
             return ctx.settingsStoreQueue.q(async () => {
-                const logger = curryFunctionMembers(_logger, "updateAccount()");
+                const logger = curryFunctionMembers(_logger, nameof(endpoints.updateAccount));
 
                 logger.info();
 
@@ -208,4 +208,6 @@ export async function buildEndpoints(
             });
         },
     };
+
+    return endpoints;
 }

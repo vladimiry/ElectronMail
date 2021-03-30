@@ -5,7 +5,7 @@ import {Locale} from "src/shared/model/common";
 import {Provider} from "./model";
 import {curryFunctionMembers, removeDuplicateItems} from "src/shared/util";
 
-const logger = curryFunctionMembers(_logger, "[src/electron-main/spell-check/setup]");
+const logger = curryFunctionMembers(_logger, __filename);
 
 // eslint-disable-next-line max-len
 // https://github.com/electron-userland/electron-spellchecker/blob/6da4984fcecb9ea05d322abf66ac904252e61c35/src/spell-check-handler.js#L52-L70
@@ -32,7 +32,7 @@ export function constructProvider(
     locale: Locale,
     spellchecker: Spellchecker,
 ): Readonly<Provider> {
-    logger.debug("constructProvider()", JSON.stringify({locale}));
+    logger.debug(nameof(constructProvider), JSON.stringify({locale}));
     const provider: ReturnType<typeof constructProvider> = {
         spellCheck(words, callback) {
             const misspelledWords = removeDuplicateItems(
@@ -47,7 +47,11 @@ export function constructProvider(
                 ),
             );
             // WARN: don't log the actual words/misspelledWords
-            logger.debug("spellCheck()", JSON.stringify({wordsCount: words.length, misspelledWordsCount: misspelledWords.length}));
+            logger.debug(
+                nameof(constructProvider),
+                nameof.full(provider.spellCheck),
+                JSON.stringify({wordsCount: words.length, misspelledWordsCount: misspelledWords.length}),
+            );
             callback(misspelledWords);
         },
         isMisspelled(text) {
@@ -63,7 +67,11 @@ export function constructProvider(
         getSuggestions(text) {
             const suggestions = spellchecker.getCorrectionsForMisspelling(text);
             // WARN: don't log the actual text/suggestions
-            logger.debug("getSuggestions()", JSON.stringify({textLength: text.length, suggestionsCount: suggestions.length}));
+            logger.debug(
+                nameof(constructProvider),
+                nameof.full(provider.getSuggestions),
+                JSON.stringify({textLength: text.length, suggestionsCount: suggestions.length}),
+            );
             return suggestions;
         },
         add(text) {

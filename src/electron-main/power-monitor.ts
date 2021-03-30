@@ -7,7 +7,7 @@ import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {curryFunctionMembers} from "src/shared/util";
 
-const logger = curryFunctionMembers(_logger, "[src/electron-main/power-monitor]");
+const logger = curryFunctionMembers(_logger, __filename);
 
 const idleCheckInterval = ONE_SECOND_MS * 10;
 

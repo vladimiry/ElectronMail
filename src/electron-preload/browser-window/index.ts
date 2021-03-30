@@ -4,7 +4,7 @@ import {exposeElectronStuffToWindow} from "src/electron-preload/lib/electron-exp
 import {initSpellCheckProvider} from "src/electron-preload/lib/spell-check";
 import {registerDocumentKeyDownEventListener} from "src/electron-preload/lib/events-handling";
 
-const logger = buildLoggerBundle("[preload: browser-window]");
+const logger = buildLoggerBundle(__filename);
 
 exposeElectronStuffToWindow();
 

@@ -31,18 +31,18 @@ export class SessionStorage {
         }>,
         public readonly fileFs: FsJsonStore.Model.StoreFs = FsJsonStore.Fs.Fs.fs,
     ) {
-        this.logger = curryFunctionMembers(_logger, `[electron-main/session-storage: ${path.basename(this.options.file)}]`);
+        this.logger = curryFunctionMembers(_logger, `${__filename}: ${path.basename(this.options.file)}`);
     }
 
     reset(): void {
-        this.logger.info("reset()");
+        this.logger.info(nameof(SessionStorage.prototype.reset)); // eslint-disable-line @typescript-eslint/unbound-method
         this.instance = SessionStorage.emptyInstance();
     }
 
     getSession(
         {login, apiEndpointOrigin}: LoginFieldContainer & ApiEndpointOriginFieldContainer,
     ): DeepReadonly<AccountPersistentSession> | undefined {
-        this.logger.info("getSession()");
+        this.logger.info(nameof(SessionStorage.prototype.getSession)); // eslint-disable-line @typescript-eslint/unbound-method
         const bundle = this.instance[login];
         return bundle && bundle[apiEndpointOrigin];
     }
@@ -50,7 +50,7 @@ export class SessionStorage {
     async saveSession(
         {login, apiEndpointOrigin, session}: LoginFieldContainer & ApiEndpointOriginFieldContainer & { session: AccountPersistentSession },
     ): Promise<void> {
-        this.logger.info("saveSession()");
+        this.logger.info(nameof(SessionStorage.prototype.saveSession)); // eslint-disable-line @typescript-eslint/unbound-method
         const bundle = this.instance[login] ?? Object.create(null); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
         bundle[verifyUrlOriginValue(apiEndpointOrigin)] = session; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
         this.instance[login] = bundle; // eslint-disable-line @typescript-eslint/no-unsafe-assignment
@@ -60,7 +60,7 @@ export class SessionStorage {
     async clearSession(
         {login, apiEndpointOrigin}: LoginFieldContainer & ApiEndpointOriginFieldContainer,
     ): Promise<boolean> {
-        this.logger.info("clearSession()");
+        this.logger.info(nameof(SessionStorage.prototype.clearSession)); // eslint-disable-line @typescript-eslint/unbound-method
         // no need to "verify url origin value" during removing the record ("verifyUrlOriginValue()" calling)
         const bundle = this.instance[login];
         if (bundle && (apiEndpointOrigin in bundle)) {
@@ -74,7 +74,7 @@ export class SessionStorage {
     async load(
         actualLogins: ReadonlyArray<AccountConfig["login"]>,
     ): Promise<void> {
-        this.logger.info("loadFromFile()");
+        this.logger.info(nameof(SessionStorage.prototype.load)); // eslint-disable-line @typescript-eslint/unbound-method
         const store = await this.resolveStore();
         this.instance = await store.read() || SessionStorage.emptyInstance();
         await this.removeNonExistingLogins(actualLogins);
@@ -85,7 +85,7 @@ export class SessionStorage {
     }
 
     private async save(): Promise<void> {
-        this.logger.info("saveToFile()");
+        this.logger.info(nameof(SessionStorage.prototype.save)); // eslint-disable-line @typescript-eslint/unbound-method
         await this.saveToFileQueue.q(async () => {
             const store = await this.resolveStore();
             await store.write(this.instance);
@@ -95,7 +95,8 @@ export class SessionStorage {
     private async removeNonExistingLogins(
         actualLogins: ReadonlyArray<AccountConfig["login"]>,
     ): Promise<number> {
-        this.logger.info("removeNonExistingLogins()");
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        this.logger.info(nameof(SessionStorage.prototype.removeNonExistingLogins));
         const loginsToRemove = Object
             .keys(this.instance)
             .filter((savedLogin) => !actualLogins.includes(savedLogin));

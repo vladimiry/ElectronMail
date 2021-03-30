@@ -8,7 +8,7 @@ import {curryFunctionMembers} from "src/shared/util";
 export const resolveStandardSetupStandardSetupProviderInternals = async (
     _logger: Logger,
 ): Promise<StandardSetupProviderInternals> => {
-    const logger = curryFunctionMembers(_logger, "resolveStandardSetupStandardSetupProviderInternals()");
+    const logger = curryFunctionMembers(_logger, nameof(resolveStandardSetupStandardSetupProviderInternals));
 
     logger.info();
 

@@ -12,7 +12,7 @@ import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_DB_INDEXER_ON
 import {curryFunctionMembers} from "src/shared/util";
 import {hrtimeDuration} from "src/electron-main/util";
 
-const logger = curryFunctionMembers(electronLog, "[src/electron-main/api/endpoints-builders/database/indexing/service]");
+const logger = curryFunctionMembers(electronLog, __filename);
 
 export const narrowIndexActionPayload: (
     payload: StrictOmit<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>, { type: "Index" }>["payload"], "uid">,
@@ -41,7 +41,7 @@ async function indexMails(
     key: DeepReadonly<DbAccountPk>,
     timeoutMs: number,
 ): Promise<void> {
-    logger.info("indexMails()");
+    logger.info(nameof(indexMails));
 
     const duration = hrtimeDuration();
     const uid = new UUID(4).format();
@@ -70,7 +70,7 @@ async function indexMails(
     return result$
         .toPromise()
         .then(() => {
-            logger.verbose("indexMails() end", {indexed: mails.length, duration: duration.end()});
+            logger.verbose(nameof(indexMails), "end", {indexed: mails.length, duration: duration.end()});
         });
 }
 
@@ -79,7 +79,7 @@ export async function indexAccount(
     key: DeepReadonly<DbAccountPk>,
     config: DeepReadonly<Config>,
 ): Promise<void> {
-    logger.info("indexAccount()");
+    logger.info(nameof(indexAccount));
 
     const duration = hrtimeDuration();
     const buffer: Mail[] = [];
@@ -99,5 +99,5 @@ export async function indexAccount(
         await indexMails(buffer, key, config.timeouts.indexingBootstrap);
     }
 
-    logger.verbose("indexAccount() end", {indexed: account.mails.size, duration: duration.end()});
+    logger.verbose(nameof(indexAccount), "end", {indexed: account.mails.size, duration: duration.end()});
 }

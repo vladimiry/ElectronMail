@@ -9,7 +9,7 @@ import {Config} from "src/shared/model/options";
 import {Context} from "./model";
 import {curryFunctionMembers} from "src/shared/util";
 
-const logger = curryFunctionMembers(_logger, "[src/electron-main/util]");
+const logger = curryFunctionMembers(_logger, __filename);
 
 export function formatFileUrl(pathname: string): string {
     return formatURL({pathname, protocol: "file:", slashes: true});

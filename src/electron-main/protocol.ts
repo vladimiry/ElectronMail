@@ -34,8 +34,7 @@ export function registerStandardSchemes(ctx: Context): void {
                 secure: true,
                 standard: true,
                 supportFetchAPI: true,
-                // proton v4 (drive): enable service worker thing on https://github.com/electron/electron/issues/20248 resolving
-                // allowServiceWorkers: true,
+                allowServiceWorkers: true,
             },
         })),
     );
@@ -127,6 +126,22 @@ export async function registerSessionProtocols(ctx: DeepReadonly<Context>, sessi
                         IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({message}),
                     );
                     callback({statusCode: 404});
+                    return;
+                }
+
+                if (
+                    resourceLocation.endsWith(
+                        path.join(directory, PROVIDER_REPO_MAP["proton-drive"].baseDirName, "./downloadSW.js"),
+                    )
+                ) {
+                    callback({
+                        path: resourceLocation,
+                        // https://github.com/ProtonMail/proton-drive/blob/04d30ae6c9fbfbc33cfc91499831e2e6458a99b1/src/.htaccess#L42-L45
+                        headers: {
+                            "Service-Worker-Allowed": "/",
+                            "Service-Worker": "script",
+                        },
+                    });
                     return;
                 }
 

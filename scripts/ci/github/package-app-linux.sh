@@ -13,13 +13,21 @@ sudo apt-get install --yes --no-install-recommends snapcraft squashfs-tools
 # purpose: compiling "node-keytar" native module and keychain initialization
 sudo apt-get install --yes --no-install-recommends libsecret-1-dev
 # purpose: pacman build fails also due missing "bsdtar", see https://github.com/jordansissel/fpm/issues/1453#issuecomment-356138549
-sudo apt-get install --yes --no-install-recommends libarchive-tools
+sudo apt-get install --yes --no-install-recommends bsdtar # "libarchive-tools" package on newer than ubuntu 16.04/xenial versions
 # purpose: native modules compiling
 export CC=gcc-7
 export CXX=g++-7
 echo "::endgroup::"
 
 echo "::group::build native modules"
+# assuming that "ubuntu-16.04" image comes with glibc v2.23, see https://github.com/vladimiry/ElectronMail/issues/389#issuecomment-812071591
+GLIBC_INFO_EXPECTED_SUB="release version 2.23"
+GLIBC_INFO=$(lsof -p $$ | grep libc | awk ' { print $NF" --version"; } ' | sh)
+echo $GLIBC_INFO
+if [[ "$GLIBC_INFO" != *"$GLIBC_INFO_EXPECTED_SUB"* ]]; then
+    echo >&2 "unexpected glibc version detected"
+    exit 1
+fi
 npm run postinstall:remove:prebuild-install
 npm run clean:prebuilds
 npm exec --package=electron-builder -- electron-builder install-app-deps --arch=x64
@@ -40,7 +48,7 @@ gnome-keyring-daemon --start --daemonize --components=secrets
 export "$(echo '' | gnome-keyring-daemon -r -d --unlock)"
 echo "creating a test keychain record and then listing it..."
 echo -n "secret-tool-password-1" | secret-tool store --label=secret-tool-label-1 secret-tool-key-1 secret-tool-value-1
-secret-tool search secret-tool-key-1 secret-tool-value-1 # this call sometimes just core dumps
+# secret-tool search secret-tool-key-1 secret-tool-value-1 # this call sometimes just core dumps, especially on old systems like ubuntu-16.04
 # init suid/fallback sandbox
 # sudo ./scripts/prepare-chrome-sandbox.sh ./node_modules/electron/dist/chrome-sandbox
 # disable user namespaces so the suid/fallback sandbox takes place

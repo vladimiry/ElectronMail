@@ -1,0 +1,15 @@
+@use "src/web/variables" as variables;
+
+$secondary: variables.$secondary !default;
+$body-bg: variables.$body-bg !default;
+$body-color: variables.$body-color !default;
+$progress-bar-color: variables.$gray-700 !default;
+
+$app-theming-color-secondary-btn-split-border: darken($secondary, 7%) !default;
+$app-theming-db-view-color-bg-body: lighten(#d1d7dc, 10%) !default;
+$app-theming-db-view-color-bg-mail: $secondary !default;
+$app-theming-db-view-color-border: darken($secondary, 10%) !default;
+$app-theming-db-view-color-text-mail: $body-color !default;
+$app-theming-datepicker-color-bg: $body-bg !default;
+$app-theming-datepicker-color-text: $body-color !default;
+$app-theming-datepicker-color-box-shadow: lighten($app-theming-datepicker-color-text, 40%) !default;

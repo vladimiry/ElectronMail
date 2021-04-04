@@ -1,0 +1,16 @@
+@import "src/web/theming-variables-dark";
+@import "./app-theming";
+
+#{$app-prefix}-db-view-mail-body,
+#{$app-prefix}-db-view-mails {
+    #{$app-prefix}-db-view-mail {
+        &.selected {
+            background-color: inherit !important;
+
+            & {
+                border-color: $secondary !important;
+                color: lighten(map_get($app-account-title-btn-colors, "selected-text"), 10%) !important;
+            }
+        }
+    }
+}

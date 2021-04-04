@@ -15,6 +15,12 @@ export function buildRendererConfig(entry: Configuration["entry"], tsConfigFile:
             externals: {
                 electron: "require('electron')",
             },
+            resolve: {
+                fallback: {
+                    "path": false,
+                    "fs": false,
+                },
+            },
         },
         {
             tsConfigFile,

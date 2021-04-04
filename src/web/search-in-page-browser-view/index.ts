@@ -1,5 +1,8 @@
 import "src/web/search-in-page-browser-view/index.scss";
 import {SearchInPageWidget} from "./widget";
+import {registerNativeThemeReaction} from "src/web/lib/native-theme";
+
+registerNativeThemeReaction(__ELECTRON_EXPOSURE__);
 
 document.addEventListener("DOMContentLoaded", () => {
     const root = document.querySelector(".input-group") as HTMLElement;

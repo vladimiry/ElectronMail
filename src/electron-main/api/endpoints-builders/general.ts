@@ -2,7 +2,7 @@ import ProxyAgent from "proxy-agent";
 import compareVersions from "compare-versions";
 import electronLog from "electron-log";
 import fetch from "node-fetch";
-import {app, dialog, shell} from "electron";
+import {app, dialog, nativeTheme, shell} from "electron";
 import {first, map, startWith} from "rxjs/operators";
 import {from, merge, of, throwError} from "rxjs";
 import {inspect} from "util";
@@ -374,8 +374,7 @@ export async function buildEndpoints(
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         notification() {
             return IPC_MAIN_API_NOTIFICATION$.asObservable().pipe(
-                // TODO replace "startWith" with "defaultIfEmpty" (simply some response needed to avoid timeout error)
-                startWith(IPC_MAIN_API_NOTIFICATION_ACTIONS.Bootstrap({})),
+                startWith(IPC_MAIN_API_NOTIFICATION_ACTIONS.NativeTheme({shouldUseDarkColors: nativeTheme.shouldUseDarkColors})),
             );
         },
 

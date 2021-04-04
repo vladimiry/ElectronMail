@@ -1,0 +1,143 @@
+@use "src/web/browser-window/lib" as lib;
+
+@use "ngx-bootstrap/datepicker/bs-datepicker" with (
+    $theme-gray: theme-color("primary"),
+    $theme-green: theme-color("primary"),
+    $main-bg: $app-theming-datepicker-color-bg,
+    $font-color-01: $app-theming-datepicker-color-text,
+    $main-box-shadow: $app-theming-datepicker-color-box-shadow,
+);
+
+@import "src/web/variables";
+@import "@ng-select/ng-select/scss/default.theme.scss";
+@import "font-awesome/css/font-awesome.css";
+
+// "bootstrap"
+form .required label::after {
+    content: "*";
+    color: theme-color("danger");
+}
+
+.dropdown-toggle {
+    display: flex;
+    align-items: center;
+}
+
+.btn-sm + .dropdown-toggle-split {
+    @include lib.app-dropdown-toggle-x-padding-split;
+}
+
+.modal-footer {
+    padding: $modal-header-padding;
+}
+
+.list-group {
+    > .list-group-item-action {
+        cursor: pointer;
+    }
+
+    .list-group-item + .list-group-item {
+        border-top-width: 1px;
+    }
+
+    .list-group-item-warning {
+        border-color: map_get($app-account-title-btn-colors, "selected-border");
+
+        + .list-group-item {
+            border-top-width: 0;
+        }
+    }
+
+    .list-group-item {
+        &:not(:last-of-type) {
+            &:not(.list-group-item-warning) {
+                border-bottom-width: 0;
+            }
+        }
+    }
+}
+
+bs-dropdown-container {
+    z-index: $zindex-dropdown;
+}
+
+// "ngx-bootstrap"
+accordion-group {
+    &.panel-open {
+        .card-header {
+            &::after {
+                content: $fa-var-caret-up;
+            }
+        }
+    }
+
+    &:not(.panel-open) {
+        .panel {
+            border-bottom-width: 0;
+        }
+    }
+
+    &:not(:first-child) {
+        .panel {
+            border-top-width: 0;
+            border-top-right-radius: 0;
+            border-top-left-radius: 0;
+        }
+    }
+
+    &:not(:last-child) {
+        .panel {
+            border-bottom-right-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+    }
+
+    .card-header {
+        color: $link-color;
+        padding: $list-group-item-padding-y $list-group-item-padding-x;
+        display: flex;
+        align-items: baseline;
+
+        &::after {
+            @include fa-icon;
+            content: $fa-var-caret-down;
+            margin-right: $app-spacer-1;
+        }
+
+        .panel-title {
+            width: 100%;
+        }
+
+        .btn {
+            border-width: 0;
+        }
+    }
+
+    .card-body {
+        padding-top: map-get($spacers, 3);
+        padding-bottom: map-get($spacers, 3);
+    }
+
+    .accordion-toggle {
+        .btn {
+            padding: 0;
+        }
+    }
+}
+
+// "ng-select"
+.ng-dropdown-panel {
+    .ng-dropdown-panel-items .ng-option {
+        color: $dropdown-link-hover-color;
+    }
+}
+
+// "monaco-editor"
+.monaco-hover-content .hover-row.status-bar .actions {
+    // hiding "View Problem (Alt+F8)" action
+    .action-container:nth-of-type(1) {
+        display: none !important;
+    }
+}
+
+

@@ -376,7 +376,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
 
             if (index === 0) {
                 await t.context.app.client
-                    .$(`.modal-body electron-mail-accounts`)
+                    .$(`.modal-body electron-mail-accounts-list`)
                     .then(async (el) => el.waitForDisplayed());
             }
         },

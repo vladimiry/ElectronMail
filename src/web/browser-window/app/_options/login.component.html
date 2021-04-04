@@ -20,9 +20,14 @@
                 <i *ngIf="signingIn$ | async" class="fa fa-spinner fa-pulse fa-fw"></i>
                 Submit
             </button>
-            <div class="form-check text-right">
-                <label class="form-check-label">
-                    <input class="form-check-input" formControlName="savePassword" type="checkbox">
+            <div class="custom-control custom-switch float-right">
+                <input
+                    class="custom-control-input"
+                    formControlName="savePassword"
+                    id="savePasswordCheckbox"
+                    type="checkbox"
+                >
+                <label class="custom-control-label" for="savePasswordCheckbox">
                     <electron-mail-save-password-label
                         [savePassword]="savePassword.value"
                     ></electron-mail-save-password-label>

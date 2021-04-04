@@ -69,7 +69,7 @@
             <label>Login</label>
             <input
                 [ngClass]="{'is-invalid': controls.login.dirty && controls.login.invalid}"
-                class="form-control"
+                class="form-control form-control-sm"
                 formControlName="login"
                 type="text"
             >
@@ -92,7 +92,7 @@
         </div>
         <accordion [closeOthers]="true" class="mb-3">
             <accordion-group [isOpen]="false" heading="Custom CSS">
-                <textarea class="form-control" rows="10" formControlName="customCSS"></textarea>
+                <textarea class="form-control form-control-sm" rows="10" formControlName="customCSS"></textarea>
             </accordion-group>
             <accordion-group [isOpen]="false" heading="Advanced Options">
                 <div class="form-group">
@@ -106,7 +106,7 @@
                             triggers="mouseenter:mouseleave"
                         ></i>
                     </label>
-                    <input class="form-control" formControlName="title" type="text">
+                    <input class="form-control form-control-sm" formControlName="title" type="text">
                 </div>
                 <div class="row">
                     <div class="col-md-6 form-group">
@@ -126,7 +126,7 @@
                         >
                             info
                         </a>
-                        <input class="form-control" formControlName="proxyRules" type="text">
+                        <input class="form-control form-control-sm" formControlName="proxyRules" type="text">
                     </div>
                     <div class="col-md-6 form-group">
                         <label class="d-block pull-left">
@@ -145,7 +145,7 @@
                         >
                             info
                         </a>
-                        <input class="form-control" formControlName="proxyBypassRules" type="text">
+                        <input class="form-control form-control-sm" formControlName="proxyBypassRules" type="text">
                     </div>
                 </div>
                 <div class="form-group">
@@ -170,7 +170,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <div class="custom-control custom-switch">
+                    <div class="custom-control custom-switch mb-2">
                         <input
                             class="custom-control-input"
                             formControlName="enableExternalContentProxy"
@@ -179,7 +179,7 @@
                         >
                         <label
                             (click)="touchExternalContentProxyUrlPatternControl()"
-                            class="custom-control-label mb-2 d-block"
+                            class="custom-control-label d-block"
                             for="enableExternalContentProxyCheckbox"
                         >
                             Route remote images through a proxy
@@ -205,7 +205,7 @@
                     </div>
                     <input
                         [ngClass]="{'is-invalid': controls.externalContentProxyUrlPattern.dirty && controls.externalContentProxyUrlPattern.invalid}"
-                        class="form-control"
+                        class="form-control form-control-sm"
                         formControlName="externalContentProxyUrlPattern"
                         type="text"
                     >
@@ -239,7 +239,7 @@
                     </div>
                     <input
                         [ngClass]="{'is-invalid': controls.loginDelaySecondsRange.dirty && controls.loginDelaySecondsRange.invalid}"
-                        class="form-control"
+                        class="form-control form-control-sm"
                         formControlName="loginDelaySecondsRange"
                         type="text"
                     >
@@ -279,7 +279,7 @@
                     <label>Password</label>
                     <input
                         [ngClass]="{'is-invalid': controls.password.dirty && controls.password.invalid}"
-                        class="form-control"
+                        class="form-control form-control-sm"
                         formControlName="password"
                         type="password"
                     >
@@ -298,7 +298,7 @@
                     <a class="d-block pull-right" href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/10">#10</a>
                     <input
                         [ngClass]="{'is-invalid': controls.twoFactorCode.dirty && controls.twoFactorCode.invalid}"
-                        class="form-control"
+                        class="form-control form-control-sm"
                         formControlName="twoFactorCode"
                         type="password"
                     >
@@ -320,7 +320,7 @@
                     </div>
                     <input
                         [ngClass]="{'is-invalid': controls.mailPassword.dirty && controls.mailPassword.invalid}"
-                        class="form-control"
+                        class="form-control form-control-sm"
                         formControlName="mailPassword"
                         type="password"
                     >

@@ -45,7 +45,7 @@
         <button
             (click)="toggleConversationCollapsing()"
             *ngIf="selectedMail.rootNode.summary.size > 1"
-            class="btn btn-sm btn-secondary-light mr-2"
+            class="btn btn-sm btn-secondary mr-2"
             type="button"
         >
             Conversation ({{ selectedMail.rootNode.summary.size }})
@@ -141,7 +141,7 @@
         <button
             (click)="reDownload()"
             [disabled]="!(onlineAndSignedIn$ | async) || (fetchingSingleMailParams$ | async) || false"
-            class="btn btn-sm btn-secondary-light"
+            class="btn btn-sm btn-secondary"
         >
             <i *ngIf="fetchingSingleMailParams$ | async" class="fa fa-spinner fa-pulse fa-fw"></i>
             Redownload the Email

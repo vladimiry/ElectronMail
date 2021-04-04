@@ -26,12 +26,18 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         map((progress) => Boolean(progress.updatingBaseSettings)),
     );
 
-    readonly logLevels = [...LOG_LEVELS];
+    readonly logLevels = LOG_LEVELS.map((value) => ({title: value.charAt(0).toUpperCase() + value.slice(1), value}));
 
     readonly layoutModes = [...LAYOUT_MODES];
 
+    readonly themeSources = [
+        {value: "system", title: "Follow OS"},
+        {value: "dark", title: "Dark"},
+        {value: "light", title: "Light"},
+    ];
+
     readonly idleTimeLogOutSecValues: Array<Readonly<{ title: string; valueSec: number }>> = [
-        {title: "disabled", valueSec: 0},
+        {title: "Disabled", valueSec: 0},
         {title: "3 minutes", valueSec: 60 * 3},
         {title: "5 minutes", valueSec: 60 * 5},
         {title: "10 minutes", valueSec: 60 * 10},
@@ -62,6 +68,7 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
             Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
         ),
         startHidden: new FormControl(),
+        themeSource: new FormControl(),
         unreadNotifications: new FormControl(),
         zoomFactor: new FormControl(),
         calendarNotification: new FormControl(),

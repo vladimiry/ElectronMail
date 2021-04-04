@@ -13,11 +13,11 @@ import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.con
 import {State} from "src/web/browser-window/app/store/reducers/options";
 
 @Component({
-    selector: "electron-mail-accounts",
-    templateUrl: "./accounts.component.html",
-    styleUrls: ["./accounts.component.scss"],
+    selector: "electron-mail-accounts-list",
+    templateUrl: "./accounts-list.component.html",
+    styleUrls: ["./accounts-list.component.scss"],
 })
-export class AccountsComponent implements OnDestroy {
+export class AccountsListComponent implements OnDestroy {
     readonly accounts$ = this.store.select(OptionsSelectors.SETTINGS.accounts);
 
     readonly changingAccountOrder$: Observable<boolean> = this.store

@@ -10,19 +10,14 @@ import {Fs as StoreFs, Model as StoreModel, Store} from "fs-json-store";
 import {app} from "electron";
 import {distinctUntilChanged, take} from "rxjs/operators";
 
-import {
-    BINARY_NAME,
-    LOCAL_WEBCLIENT_PROTOCOL_PREFIX,
-    RUNTIME_ENV_USER_DATA_DIR,
-    WEB_CHUNK_NAMES,
-    WEB_PROTOCOL_SCHEME
-} from "src/shared/constants";
+import {BINARY_NAME, LOCAL_WEBCLIENT_PROTOCOL_PREFIX, RUNTIME_ENV_USER_DATA_DIR, WEB_PROTOCOL_SCHEME} from "src/shared/constants";
 import {Config, Settings} from "src/shared/model/options";
 import {Context, ContextInitOptions, ContextInitOptionsPaths, ProperLockfileError} from "./model";
 import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {INITIAL_STORES, configEncryptionPresetValidator, settingsAccountLoginUniquenessValidator} from "./constants";
 import {SessionStorage} from "src/electron-main/session-storage";
+import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
 import {formatFileUrl} from "./util";
 
 function exists(file: string, storeFs: StoreModel.StoreFs): boolean {
@@ -122,10 +117,10 @@ function initLocations(
         trayIcon: icon,
         trayIconFont: appRelativePath("./assets/fonts/tray-icon/roboto-derivative.ttf"),
         browserWindowPage: formatFileUrl(
-            appRelativePath("./web/", WEB_CHUNK_NAMES["browser-window"], "index.html"),
+            appRelativePath("./web/", WEBPACK_WEB_CHUNK_NAMES["browser-window"], "index.html"),
         ),
-        aboutBrowserWindowPage: appRelativePath("./web/", WEB_CHUNK_NAMES.about, "index.html"),
-        searchInPageBrowserViewPage: appRelativePath("./web/", WEB_CHUNK_NAMES["search-in-page-browser-view"], "index.html"),
+        aboutBrowserWindowPage: appRelativePath("./web/", WEBPACK_WEB_CHUNK_NAMES.about, "index.html"),
+        searchInPageBrowserViewPage: appRelativePath("./web/", WEBPACK_WEB_CHUNK_NAMES["search-in-page-browser-view"], "index.html"),
         preload: {
             aboutBrowserWindow: appRelativePath("./electron-preload/about.js"),
             browserWindow: appRelativePath("./electron-preload/browser-window.js"),
@@ -135,16 +130,9 @@ function initLocations(
             primary: formatFileUrl(appRelativePath("./electron-preload/webview/primary.js")),
             calendar: formatFileUrl(appRelativePath("./electron-preload/webview/calendar.js")),
         },
-        vendorsAppCssLinkHref: ((): string => {
-            // TODO electron: get rid of "baseURLForDataURL" workaround, see https://github.com/electron/electron/issues/20700
-            const webRelativeCssFilePath = "browser-window/shared-vendor.css";
-            const file = appRelativePath("web", webRelativeCssFilePath);
-            const stat = storeFs._impl.statSync(file);
-            if (!stat.isFile()) {
-                throw new Error(`Location "${file}" exists but it's not a file`);
-            }
-            return `${WEB_PROTOCOL_SCHEME}://${webRelativeCssFilePath}`;
-        })(),
+        // TODO electron: get rid of "baseURLForDataURL" workaround, see https://github.com/electron/electron/issues/20700
+        vendorsAppCssLinkHrefs: ["shared-vendor-dark", "shared-vendor-light"]
+            .map((value) => `${WEB_PROTOCOL_SCHEME}://browser-window/${value}.css`),
         ...((): NoExtraProps<Pick<ElectronContextLocations, "protocolBundles" | "webClients">> => {
             const {protocolBundles, webClients}:
                 {

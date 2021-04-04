@@ -3,6 +3,7 @@
   "include": [
     "../../../src/@types/**/*",
     "../../../src/web/@types/index.d.ts",
+    "../../../src/web/@types/electron-exposure.d.ts",
     "./**/*"
   ]
 }

@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy, Component, ElementRef, EventEmitter, NgZone, OnInit, Output} from "@angular/core";
-import {Store} from "@ngrx/store";
+import {Store, select} from "@ngrx/store";
 import {debounceTime, distinctUntilChanged, filter, map, pairwise, takeUntil, withLatestFrom,} from "rxjs/operators";
 import {fromEvent, merge} from "rxjs";
 import {noop} from "remeda";
@@ -8,6 +8,7 @@ import * as monaco from "monaco-editor";
 import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
 import {LABEL_TYPE, View} from "src/shared/model/database";
 import {ONE_SECOND_MS} from "src/shared/constants";
+import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/db-view";
 
 // TODO turn the hardcoded code samples library into the user-editable list of snippets
@@ -110,6 +111,16 @@ export class DbViewMonacoEditorComponent extends DbViewAbstractComponent impleme
                     ["Delayer.cancel", "Function.onMouseLeave"].every((stackToInclude) => stack.includes(stackToInclude))) {
                     event.preventDefault();
                 }
+            });
+
+        this.store
+            .pipe(
+                select(OptionsSelectors.FEATURED.shouldUseDarkColors),
+                takeUntil(this.ngOnDestroy$),
+            )
+            .subscribe((shouldUseDarkColors) => {
+                const builtInTheme: Parameters<typeof monaco.editor.defineTheme>[1]["base"] = shouldUseDarkColors ? "vs-dark" : "vs";
+                monaco.editor.setTheme(builtInTheme);
             });
 
         this.ngOnDestroy$.subscribe(() => {

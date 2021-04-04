@@ -1,0 +1,128 @@
+@use "src/web/browser-window/lib" as lib;
+@import "src/web/variables";
+
+.list-group-item:not(.list-group-item-warning) {
+    background-color: $card-cap-bg;
+    color: $app-theming-db-view-color-text-mail;
+}
+
+#{$app-prefix}-db-view-mail-tab {
+    .list-group-item:not(.list-group-item-warning) {
+        background-color: $secondary;
+    }
+}
+
+#{$app-prefix}-login {
+    background-color: $body-bg;
+}
+
+#{$app-prefix}-accounts {
+    .wrapper > .accounts-block > .controls {
+        .btn-group {
+            width: 100%;
+
+            > .btn {
+                &:first-child {
+                    border-right-color: $app-theming-color-secondary-btn-split-border;
+                }
+            }
+        }
+    }
+
+    @media (min-width: #{map-get($grid-breakpoints, lg)}) {
+        .layout-mode-left-thin {
+            > .controls,
+            #{$app-prefix}-account-title {
+                .btn-group {
+                    &:not(.selected) {
+                        > .btn-sm {
+                            &:not(:last-child) {
+                                border-bottom-color: $app-theming-color-secondary-btn-split-border;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+#{$app-prefix}-account-title {
+    .btn-group {
+        &:not(.selected) {
+            > .btn:not(:last-child) {
+                border-right-color: $app-theming-color-secondary-btn-split-border;
+            }
+        }
+    }
+}
+
+#{$app-prefix}-account-edit {
+    .rounded {
+        background-color: $card-cap-bg;
+        color: $card-cap-color;
+    }
+}
+
+#{$app-prefix}-db-view-mail-body,
+#{$app-prefix}-db-view-entry {
+    background-color: $app-theming-db-view-color-bg-body;
+}
+
+#{$app-prefix}-db-view-mail {
+    border: 1px solid $app-theming-db-view-color-border;
+
+    .b {
+        border: 1px solid $app-theming-db-view-color-border;
+    }
+
+    .address {
+        color: $app-theming-db-view-color-text-mail;
+    }
+
+    &:not(.selected) {
+        .address,
+        .conversation-size,
+        .date,
+        .score,
+        .folders > .b {
+            background-color: theme-color("secondary");
+        }
+    }
+}
+
+#{$app-prefix}-db-view-mail-body {
+    border: 1px solid $app-theming-db-view-color-border;
+
+    .addresses,
+    .attachments {
+        .badge {
+            border: 1px solid $app-theming-db-view-color-border;
+            color: $app-theming-db-view-color-text-mail;
+        }
+    }
+
+    .addresses {
+        border-bottom: 1px solid $app-theming-db-view-color-border;
+    }
+
+    .attachments {
+        border-top: 1px solid $app-theming-db-view-color-border;
+    }
+}
+
+#{$app-prefix}-db-view-monaco-editor {
+    .monaco-editor > .overflow-guard {
+        border: 1px solid $app-theming-db-view-color-border;
+    }
+}
+
+.#{$app-prefix}-db-view-mails-export-modal {
+    .btn-group {
+        .btn {
+            &.active {
+                @include lib.btn-warning-light-active();
+            }
+        }
+    }
+}

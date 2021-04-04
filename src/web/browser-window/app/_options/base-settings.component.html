@@ -221,47 +221,45 @@
             </div>
         </fieldset>
         <hr>
-        <label class="d-block mb-2">
-            Automatic log out after idle period
-            <span class="badge badge-secondary">experimental</span>
-        </label>
         <div class="row mb-2">
-            <div class="col-sm-6">
+            <div class="col-6">
+                <label class="d-block mb-2">
+                    Controls view mode
+                </label>
                 <ng-select
                     [clearable]="false"
-                    [searchable]="false"
-                    [items]="idleTimeLogOutSecValues"
-                    bindLabel="title"
-                    bindValue="valueSec"
-                    formControlName="idleTimeLogOutSec"
-                ></ng-select>
-            </div>
-        </div>
-        <label class="d-block mb-2">
-            Controls view mode
-        </label>
-        <div class="row mb-2">
-            <div class="col-sm-6">
-                <ng-select
-                    [clearable]="false"
-                    [searchable]="false"
                     [items]="layoutModes"
+                    [searchable]="false"
                     bindLabel="title"
                     bindValue="value"
                     formControlName="layoutMode"
                 ></ng-select>
             </div>
+            <div class="col-6">
+                <label class="d-block mb-2">
+                    Theme source
+                </label>
+                <ng-select
+                    [clearable]="false"
+                    [items]="themeSources"
+                    [searchable]="false"
+                    bindLabel="title"
+                    bindValue="value"
+                    formControlName="themeSource"
+                ></ng-select>
+            </div>
         </div>
-        <fieldset [ngClass]="{'d-none': controls.zoomFactor.disabled}">
+        <fieldset [ngClass]="{'d-none': controls.zoomFactor.disabled}" class="mb-2">
             <label class="d-block mb-2">
                 Page zoom
+                <span class="badge badge-secondary">experimental</span>
             </label>
             <div class="row mb-2">
                 <div class="col-sm-6">
                     <ng-select
                         [clearable]="false"
-                        [searchable]="false"
                         [items]="zoomFactors"
+                        [searchable]="false"
                         bindLabel="title"
                         bindValue="value"
                         formControlName="zoomFactor"
@@ -269,33 +267,53 @@
                 </div>
             </div>
         </fieldset>
-        <label class="d-block mb-2">
-            Log level
-            <i
-                [placement]="'bottom'"
-                [popover]="logLevelSelectPopoverTemplate"
-                class="fa fa-info-circle text-warning align-self-center"
-                container="body"
-                triggers="mouseenter:mouseleave"
-            ></i>
-            <ng-template #logLevelSelectPopoverTemplate>
-                Think twice before selecting a value other than <code>error</code>.
-            </ng-template>
-        </label>
-        <div class="row">
+        <div class="row mb-2">
             <div class="col-sm-6">
+                <label class="d-block mb-2">
+                    Log out after idle period
+                    <span class="badge badge-secondary">experimental</span>
+                </label>
                 <ng-select
-                    [clearable]="false" [searchable]="false" [items]="logLevels" formControlName="logLevel" id="logLevelSelect"
+                    [clearable]="false"
+                    [items]="idleTimeLogOutSecValues"
+                    [searchable]="false"
+                    bindLabel="title"
+                    bindValue="valueSec"
+                    formControlName="idleTimeLogOutSec"
                 ></ng-select>
             </div>
         </div>
-        <div class="text-muted mt-2">
-            <small>
-                The <code>log.log</code> file located in the
-                <a (click)="$event.preventDefault(); openSettingsFolder();" href="{{ userDataDir }}">
-                    settings folder
-                </a>
-            </small>
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <label class="d-block mb-2">
+                    Log level
+                    <i
+                        [placement]="'bottom'"
+                        [popover]="logLevelSelectPopoverTemplate"
+                        class="fa fa-info-circle text-warning align-self-center"
+                        container="body"
+                        triggers="mouseenter:mouseleave"
+                    ></i>
+                    <ng-template #logLevelSelectPopoverTemplate>
+                        Think twice before selecting a value other than <code>error</code>.
+                    </ng-template>
+                </label>
+                <ng-select
+                    [clearable]="false"
+                    [items]="logLevels"
+                    [searchable]="false"
+                    bindLabel="title"
+                    bindValue="value"
+                    formControlName="logLevel"
+                    id="logLevelSelect"
+                ></ng-select>
+                <small class="text-muted mt-2">
+                    The <code>log.log</code> file located in the
+                    <a (click)="$event.preventDefault(); openSettingsFolder();" href="{{ userDataDir }}">
+                        settings folder
+                    </a>
+                </small>
+            </div>
         </div>
     </form>
 </fieldset>

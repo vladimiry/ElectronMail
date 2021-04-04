@@ -2,7 +2,7 @@ import {NgModule} from "@angular/core";
 import {RouterModule, Routes} from "@angular/router";
 
 import {AccountEditComponent} from "src/web/browser-window/app/_options/account-edit.component";
-import {AccountsComponent} from "src/web/browser-window/app/_options/accounts.component";
+import {AccountsListComponent} from "src/web/browser-window/app/_options/accounts-list.component";
 import {BaseSettingsComponent} from "src/web/browser-window/app/_options/base-settings.component";
 import {DbMetadataResetRequestComponent} from "src/web/browser-window/app/_options/db-metadata-reset-request.component";
 import {LoginComponent} from "src/web/browser-window/app/_options/login.component";
@@ -37,7 +37,7 @@ const routes: Routes = [
             },
             {
                 path: "accounts",
-                component: AccountsComponent,
+                component: AccountsListComponent,
             },
             {
                 path: "account-edit",

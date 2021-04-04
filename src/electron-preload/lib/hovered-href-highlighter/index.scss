@@ -1,7 +1,8 @@
-@import "~src/web/variables";
+@use "src/web/theming-variables-dark" as theming-variables-dark;
+@import "src/web/variables";
 
 :host {
-    $bg-color: theme-color("secondary");
+    $background-color: theming-variables-dark.$secondary;
     $padding: 0.2em;
     $padding-l: 0.25em;
 
@@ -14,9 +15,9 @@
         bottom: 0;
         z-index: 10000;
         word-break: break-all;
-        color: color-yiq($bg-color);
-        background-color: $bg-color;
-        border: 1px solid darken($bg-color, 10%);
+        color: theming-variables-dark.$body-color;
+        background-color: $background-color;
+        border: 1px solid darken($background-color, 10%);
         font-size: $app-font-size-base-medium;
         margin: $padding-l $padding;
         padding: $padding $padding-l;

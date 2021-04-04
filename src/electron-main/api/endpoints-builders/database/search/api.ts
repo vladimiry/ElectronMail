@@ -4,8 +4,8 @@ import {Observable, from, of, race, throwError, timer} from "rxjs";
 import {concatMap, filter, first, mergeMap, switchMap} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
-import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION$, IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$} from "src/electron-main/api/constants";
-import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_DB_INDEXER_ON_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
+import {IPC_MAIN_API_DB_INDEXER_REQUEST$, IPC_MAIN_API_DB_INDEXER_RESPONSE$} from "src/electron-main/api/constants";
+import {IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
 import {IndexableMailId} from "src/shared/model/database";
 import {curryFunctionMembers} from "src/shared/util";
 import {searchRootConversationNodes, secondSearchStep} from "src/electron-main/api/endpoints-builders/database/search/service";
@@ -44,8 +44,8 @@ export async function buildDbSearchEndpoints(
                 : null;
             const fullTextSearch$: Observable<Map<IndexableMailId, number> | null> = query
                 ? race(
-                    IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$.pipe(
-                        filter(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.is.SearchResult),
+                    IPC_MAIN_API_DB_INDEXER_RESPONSE$.pipe(
+                        filter(IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS.is.SearchResult),
                         filter(({payload}) => payload.uid === fullTextSearchUid),
                         first(),
                         mergeMap(({payload: {data: {items}}}) => [new Map<IndexableMailId, number>(
@@ -74,8 +74,8 @@ export async function buildDbSearchEndpoints(
             );
 
             if (fullTextSearchUid) {
-                IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.next(
-                    IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Search({query, uid: fullTextSearchUid}),
+                IPC_MAIN_API_DB_INDEXER_REQUEST$.next(
+                    IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS.Search({query, uid: fullTextSearchUid}),
                 );
             }
 

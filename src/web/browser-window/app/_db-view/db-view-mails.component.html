@@ -16,7 +16,7 @@
             </ng-container>
         </button>
         <ng-content select="[controls]"></ng-content>
-        <div class="btn btn-sm border border-secondary-light" style="cursor: default;">
+        <div class="btn btn-sm border border-secondary" style="cursor: default;">
             {{ (title$ | async) + (items.length ? ':' : '') }}
             <span *ngIf="items.length">{{ (paging$ | async)?.end }} of {{ items.length }}</span>
         </div>
@@ -65,7 +65,7 @@
             title="Move to folder"
         >
             <button
-                class="btn btn-sm btn-secondary-light dropdown-toggle"
+                class="btn btn-sm btn-secondary dropdown-toggle"
                 dropdownToggle
                 type="button"
             >
@@ -102,7 +102,7 @@
             title="Sort by"
         >
             <button
-                class="btn btn-sm btn-secondary-light dropdown-toggle"
+                class="btn btn-sm btn-secondary dropdown-toggle"
                 dropdownToggle
                 type="button"
             >
@@ -138,7 +138,7 @@
     <button
         (click)="loadMore()"
         *ngIf="(paging$ | async)?.nextPageSize; let nextPageSize;"
-        class="btn btn-sm btn-secondary-light load-more my-2"
+        class="btn btn-sm btn-secondary load-more my-2"
     >
         More
         <small>(+{{ nextPageSize }})</small>

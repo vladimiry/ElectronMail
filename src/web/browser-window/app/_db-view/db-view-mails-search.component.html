@@ -26,7 +26,7 @@
                             style="position: relative"
                         >
                             <button
-                                class="btn btn-sm btn-secondary-light text-decoration-none dropdown-toggle"
+                                class="btn btn-sm btn-secondary text-decoration-none dropdown-toggle"
                                 dropdownToggle
                                 type="button"
                             >
@@ -98,7 +98,7 @@
                         </div>
                         <button
                             (click)="codeEditorOpen = !codeEditorOpen"
-                            [ngClass]="{'btn-warning-light': codeEditorOpen, 'btn-secondary-light': !codeEditorOpen}"
+                            [ngClass]="{'btn-warning-light': codeEditorOpen, 'btn-secondary': !codeEditorOpen}"
                             class="btn btn-sm d-flex flex-shrink-0 align-items-center mr-2"
                             title="Toggle JavaScript-based filtering block"
                             type="button"

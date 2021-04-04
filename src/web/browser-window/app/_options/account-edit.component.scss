@@ -2,9 +2,8 @@
 
 :host {
     .rounded {
-        background-color: $gray-200;
-        color: $gray-600;
         padding: $list-group-item-padding-y $list-group-item-padding-x;
+        border: $card-border-width solid $card-border-color;
 
         .form-check {
             margin-top: $app-spacer-1;

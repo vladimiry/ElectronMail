@@ -6,22 +6,16 @@
     display: flex;
     flex-direction: column;
     padding: 0 $app-spacer-2 $app-spacer-2;
-    border: 1px solid $app-db-view-color-border;
-    background-color: $app-db-view-color-bg-body;
 
     .addresses,
     .attachments {
         .badge {
             font-weight: normal;
             font-size: $app-font-size-base-medium;
-            color: $gray-700;
-            border: 1px solid $app-db-view-color-border;
         }
     }
 
     .addresses {
-        border-bottom: 1px solid $app-db-view-color-border;
-
         .badge {
             .address:not(:last-of-type)::after {
                 content: ",";
@@ -46,10 +40,6 @@
                 border: 0;
             }
         }
-    }
-
-    .attachments {
-        border-top: 1px solid $app-db-view-color-border;
     }
 
     .controls {

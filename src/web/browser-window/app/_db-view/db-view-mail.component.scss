@@ -8,13 +8,10 @@
     $state-line-with: 4px;
     $state-line-margin: 3px;
 
-    background-color: $app-db-view-color-bg-mail;
-    border: 1px solid $list-group-border-color;
     display: flex;
     flex-direction: column;
     padding: $app-db-view-mail-padding-y $app-db-view-mail-padding-x;
     position: relative;
-    color: $app-db-view-color-text-mail;
 
     .r {
         display: flex;
@@ -111,17 +108,6 @@
         justify-content: center;
         justify-items: center;
         font-size: $app-font-size-base-small;
-        color: $app-db-view-color-text-mail;
-    }
-
-    &:not(.selected) {
-        .address,
-        .conversation-size,
-        .date,
-        .score,
-        .folders > .b {
-            background-color: theme-color("secondary-light");
-        }
     }
 
     &.selected {
@@ -135,7 +121,8 @@
     }
 
     .b {
-        @include app-db-view-badge-padding-radius;
+        border-radius: $badge-border-radius;
+        padding: ($badge-padding-y * 0.15) $badge-padding-x;
     }
 
     .address {

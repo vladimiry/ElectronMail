@@ -1,0 +1,7 @@
+@import "src/web/theming-variables-dark";
+@import "./shared-vendor";
+
+.btn-secondary,
+.btn-primary, {
+    color: $app-theming-db-view-color-text-mail;
+}

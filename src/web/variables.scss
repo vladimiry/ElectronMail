@@ -6,16 +6,8 @@ $app-spacer-1: map-get($spacers, 1);
 $app-spacer-2: map-get($spacers, 2);
 $app-spacer-3: map-get($spacers, 3);
 
-$app-color-bg-dark-1: #3c414e;
-// TODO consider using protonmail's bg-colors more widely
-// $app-color-bg-dark-2: #30353f;
-// $app-color-bg-dark-3: #262a33;
-// $app-color-bg-dark-4: #1b1e24;
-
-$app-color-primary-light: lighten(theme-color("primary"), 2%);
-$app-color-purple-light: lighten(#987ebf, 2%);
-$app-color-warning-light-text: theme-color-level("warning", 6);
-$app-color-secondary-btn-split-border: darken($secondary, 7%);
+$app-color-primary-light: lighten(theme-color("primary"), 2%) !default;
+$app-color-purple-light: lighten(#987ebf, 2%) !default;
 
 // $app-font-size-base-smallest: $font-size-base * 0.75;
 $app-font-size-base-small: $font-size-sm;
@@ -25,16 +17,14 @@ $app-account-title-btn-colors: map-merge(
     (
         "selected-bg": theme-color("warning-light"),
         "selected-border": darken(theme-color("warning-light"), 30%),
-        "selected-text": $app-color-warning-light-text,
+        "selected-text": theme-color-level("warning", 6),
     ), (),
 );
 
-$app-db-view-color-bg-mail: lighten(#d1d7dc, 5%);
-$app-db-view-color-bg-body: lighten($app-db-view-color-bg-mail, 5%);
-$app-db-view-color-text-mail: color-yiq($app-db-view-color-bg-mail);
-$app-db-view-color-border: $list-group-border-color;
 $app-db-view-mail-padding-x: $list-group-item-padding-x * 0.5;
 $app-db-view-mail-padding-y: $list-group-item-padding-y * 0.5;
+
+$app-dark-bg: lighten(#262a33, 5%);
 
 @keyframes app-keyframes-opacity {
     50% {

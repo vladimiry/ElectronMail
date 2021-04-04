@@ -33,6 +33,7 @@ export const OPTIONS_ACTIONS = unionize({
         TrayIconDataURL: ofType<{ value: string }>(),
         ToggleAccountDisablingRequest: ofType<LoginFieldContainer>(),
         ResetDbMetadata: ofType<{ reset?: boolean }>(),
+        ShouldUseDarkColors: ofType<{ shouldUseDarkColors: boolean }>(),
     },
     {
         tag: "type",

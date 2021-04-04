@@ -3,7 +3,7 @@ import {readConfiguration} from "@angular/compiler-cli";
 
 import {BuildAngularCompilationFlags, BuildEnvironment} from "webpack-configs/model";
 import {ENVIRONMENT, rootRelativePath} from "webpack-configs/lib";
-import {WEB_CHUNK_NAMES} from "src/shared/constants";
+import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
 import {browserWindowAppPath, browserWindowPath, buildBaseWebConfig, cssRuleSetRules} from "./lib";
 
 const angularCompilationFlags: BuildAngularCompilationFlags = {aot: true, ivy: true};
@@ -43,7 +43,7 @@ const config = buildBaseWebConfig(
                         "sass-loader",
                     ],
                     include: [
-                        browserWindowAppPath(),
+                        browserWindowAppPath("/"),
                     ],
                 },
                 {
@@ -150,25 +150,49 @@ const config = buildBaseWebConfig(
                             return `vendor_${chunk.hash}.js`;
                         },
                     },
-                    styles: {
-                        name: "shared-vendor",
-                        test: /[\\/]vendor[\\/]shared-vendor\.scss$/,
-                        chunks: "all",
-                        enforce: true,
-                    },
+                    ...Object
+                        .entries(
+                            {
+                                "shared-vendor-dark": "browser-window/vendor/shared-vendor-dark.scss",
+                                "shared-vendor-light": "browser-window/vendor/shared-vendor-light.scss",
+                                "vendor-dark": "browser-window/vendor/vendor-dark.scss",
+                                "vendor-light": "browser-window/vendor/vendor-light.scss",
+                                "app-theming-dark": "browser-window/app-theming-dark.scss",
+                                "app-theming-light": "browser-window/app-theming-light.scss",
+                            } as const,
+                        )
+                        .reduce(
+                            (accumulator, [name, value]) => {
+                                return {
+                                    ...accumulator,
+                                    [`styles-${name}`]: {
+                                        // eslint-disable-next-line no-useless-escape
+                                        test: new RegExp(`src/web/${value}`.replace(/\//g, "(\|\\\\|/)"), "g"),
+                                        name,
+                                        chunks: "all",
+                                        enforce: true,
+                                    },
+                                };
+                            },
+                            {},
+                        ),
                 },
             },
         },
     },
     {
         tsConfigFile,
-        chunkName: WEB_CHUNK_NAMES["browser-window"],
+        chunkName: WEBPACK_WEB_CHUNK_NAMES["browser-window"],
         entries: {
             "css.worker": "monaco-editor/esm/vs/language/css/css.worker",
             "editor.worker": "monaco-editor/esm/vs/editor/editor.worker.js",
             "html.worker": "monaco-editor/esm/vs/language/html/html.worker",
             "json.worker": "monaco-editor/esm/vs/language/json/json.worker",
             "ts.worker": "monaco-editor/esm/vs/language/typescript/ts.worker",
+        },
+        htmlWebpackPlugin: {
+            // TODO enable resource ordering via the HtmlWebpackPlugin/MiniCssExtractPlugin options
+            inject: false,
         },
     },
 );

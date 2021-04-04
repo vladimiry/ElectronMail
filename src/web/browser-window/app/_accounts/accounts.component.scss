@@ -10,7 +10,7 @@
     right: 0;
     top: 0;
     bottom: 0;
-    background-color: $app-color-bg-dark-1;
+    background-color: $app-dark-bg;
 
     // invisible/stub button gets focused so real buttons don't flick on window activation (tray icon "toggle" click)
     & > .btn-stub {
@@ -59,7 +59,6 @@
                 &:first-child {
                     width: 100%;
                     white-space: nowrap;
-                    border-right-color: $app-color-secondary-btn-split-border;
                 }
 
                 &:not(:first-child) {
@@ -181,14 +180,6 @@
                         &.login {
                             align-self: center;
                             width: 50%;
-                        }
-                    }
-
-                    &:not(.selected) {
-                        > .btn-sm {
-                            &:not(:last-child) {
-                                border-bottom-color: $app-color-secondary-btn-split-border;
-                            }
                         }
                     }
 

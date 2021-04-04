@@ -6,7 +6,7 @@ import {merge as webpackMerge} from "webpack-merge";
 import {BuildEnvironment} from "webpack-configs/model";
 import {ENVIRONMENT, ENVIRONMENT_STATE, buildBaseConfig, outputRelativePath, srcRelativePath, typescriptLoaderRule} from "./../lib";
 import {MiniCssExtractPlugin} from "webpack-configs/require-import";
-import {WEB_CHUNK_NAMES} from "src/shared/constants";
+import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
 
 export const browserWindowPath = (...value: string[]): string => {
     return srcRelativePath("./web/browser-window", ...value);
@@ -41,7 +41,7 @@ export function cssRuleSetRules(): RuleSetRule[] {
 export function buildMinimalWebConfig(
     configPatch: Configuration,
     options: {
-        chunkName: keyof typeof WEB_CHUNK_NAMES;
+        chunkName: keyof typeof WEBPACK_WEB_CHUNK_NAMES;
     },
 ): Configuration {
     const chunkPath = (...value: string[]): string => {
@@ -84,7 +84,7 @@ export function buildMinimalWebConfig(
                                 "sass-loader",
                             ],
                             exclude: [
-                                browserWindowAppPath(),
+                                browserWindowAppPath("/"),
                             ],
                         },
                         {
@@ -121,9 +121,10 @@ export function buildBaseWebConfig(
     configPatch: Configuration,
     options: {
         tsConfigFile?: string
-        chunkName: keyof typeof WEB_CHUNK_NAMES
+        chunkName: keyof typeof WEBPACK_WEB_CHUNK_NAMES
         typescriptLoader?: boolean
         entries?: Record<string, string>
+        htmlWebpackPlugin?: Partial<HtmlWebpackPlugin.Options>,
     },
 ): Configuration {
     const chunkPath = (...value: string[]): string => {
@@ -164,6 +165,7 @@ export function buildBaseWebConfig(
                         filename: "index.html",
                         hash: ENVIRONMENT_STATE.production,
                         minify: false,
+                        ...options.htmlWebpackPlugin,
                     }),
                 ],
             },

@@ -12,7 +12,7 @@ import {
     ViewChildren,
 } from "@angular/core";
 import {BehaviorSubject, EMPTY, Observable, Subject, Subscription, combineLatest} from "rxjs";
-import {Store} from "@ngrx/store";
+import {Store, select} from "@ngrx/store";
 import {delay, distinctUntilChanged, filter, first, map, mergeMap, pairwise, withLatestFrom} from "rxjs/operators";
 import {equals} from "remeda";
 
@@ -23,7 +23,10 @@ import {DbViewMailComponent} from "src/web/browser-window/app/_db-view/db-view-m
 import {Instance, State} from "src/web/browser-window/app/store/reducers/db-view";
 import {Mail, View} from "src/shared/model/database";
 import {ONE_SECOND_MS, WEB_PROTOCOL_SCHEME} from "src/shared/constants";
+import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
+import {buildInitialVendorsAppCssLinks} from "src/shared/util";
 import {getWebLogger} from "src/web/browser-window/util";
+import {registerNativeThemeReaction} from "src/web/lib/native-theme";
 
 @Component({
     selector: "electron-mail-db-view-mail-body",
@@ -68,7 +71,11 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
 
     private bodyIframe?: HTMLIFrameElement;
 
+    private bodyIframeSubscription?: Subscription;
+
     private elementRefClickSubscription?: ReturnType<typeof __ELECTRON_EXPOSURE__.registerDocumentClickEventListener>;
+
+    private shouldUseDarkColors?: boolean;
 
     private readonly subscription = new Subscription();
 
@@ -96,11 +103,21 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
     }
 
     ngOnInit(): void {
-        this.elementRefClickSubscription = __ELECTRON_EXPOSURE__.registerDocumentClickEventListener(
-            this.elementRef.nativeElement,
-            this.logger,
+        {
+            this.elementRefClickSubscription = __ELECTRON_EXPOSURE__.registerDocumentClickEventListener(
+                this.elementRef.nativeElement,
+                this.logger,
+            );
+            this.subscription.add({unsubscribe: this.elementRefClickSubscription.unsubscribe});
+        }
+
+        this.subscription.add(
+            this.store
+                .pipe(select(OptionsSelectors.FEATURED.shouldUseDarkColors))
+                .subscribe((shouldUseDarkColors) => {
+                    this.shouldUseDarkColors = shouldUseDarkColors;
+                }),
         );
-        this.subscription.add({unsubscribe: this.elementRefClickSubscription.unsubscribe});
     }
 
     ngAfterViewInit(): void {
@@ -199,6 +216,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         this.subscription.unsubscribe();
         this.iframeBodyEventSubject$.complete();
         this.releaseBodyIframe();
+
     }
 
     private renderBody(mail: Mail): void {
@@ -240,13 +258,18 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
             throw new Error(`Failed to prepare email body rendering "iframe"`);
         }
 
+        const headInjection = buildInitialVendorsAppCssLinks(
+            __METADATA__.electronLocations.vendorsAppCssLinkHrefs,
+            this.shouldUseDarkColors,
+        );
+
         contentWindow.document.open();
         contentWindow.document.write(`
             <html>
             <head>
                 <meta http-equiv="Content-Security-Policy" content="${iframeCsp}">
                 <meta http-equiv="X-Content-Security-Policy" content="${iframeCsp}">
-                <link rel="stylesheet" href="${__METADATA__.electronLocations.vendorsAppCssLinkHref}"/>
+                ${headInjection}
                 <style nonce="${iframeCspInlineStyleNonce}">
                     html, body {
                         background-color: transparent;
@@ -259,6 +282,8 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
             </html>
         `);
         contentWindow.document.close();
+
+        this.bodyIframeSubscription = registerNativeThemeReaction(__ELECTRON_EXPOSURE__, {windowProxy: contentWindow});
 
         this.bodyIframeEventArgs.forEach(({event, handler}) => {
             contentWindow.document.addEventListener(event, handler);
@@ -277,6 +302,8 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
                 contentWindow.document.removeEventListener(event, handler);
             });
         }
+
+        this.bodyIframeSubscription?.unsubscribe();
 
         this.bodyIframe.remove();
     }

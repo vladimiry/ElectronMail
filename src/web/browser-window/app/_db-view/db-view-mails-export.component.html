@@ -1,7 +1,7 @@
 <button
     (click)="openModal(modalTemplate)"
     [disabled]="(!mailsBundleItems?.length && !rootConversationNode) || modalOpeningProgress"
-    class="btn btn-sm btn-secondary-light d-flex flex-grow-1 align-items-center"
+    class="btn btn-sm btn-secondary d-flex flex-grow-1 align-items-center"
     title="Export to EML/JSON"
     type="button"
 >
@@ -33,18 +33,18 @@
                             type="text"
                         >
                         <div class="input-group-append">
-                            <button (click)="selectExportDir()" class="btn btn-sm btn-secondary-light" type="button">...</button>
+                            <button (click)="selectExportDir()" class="btn btn-sm btn-secondary" type="button">...</button>
                         </div>
                     </div>
                 </div>
                 <div btnRadioGroup class="btn-group ml-2" formControlName="fileType">
                     <label
                         btnRadio="eml"
-                        class="btn btn-sm btn-secondary-light mb-0"
+                        class="btn btn-sm btn-secondary mb-0"
                     >EML</label>
                     <label
                         btnRadio="json"
-                        class="btn btn-sm btn-secondary-light mb-0"
+                        class="btn btn-sm btn-secondary mb-0"
                     >JSON</label>
                 </div>
             </div>

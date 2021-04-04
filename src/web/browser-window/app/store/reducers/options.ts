@@ -34,6 +34,7 @@ export interface State extends fromRoot.State, Partial<InitResponse> {
     hasSavedPassword?: boolean;
     mainProcessNotification: UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>;
     trayIconDataURL: string;
+    shouldUseDarkColors?: boolean;
 }
 
 const initialState: State = {
@@ -64,6 +65,7 @@ export function reducer(state = initialState, action: UnionOf<typeof OPTIONS_ACT
         PatchProgress: (progressPatch) => ({...state, progress: {...state.progress, ...progressPatch}}),
         PatchMainProcessNotification: (mainProcessNotification) => ({...state, mainProcessNotification}),
         TrayIconDataURL: ({value: trayIconDataURL}) => ({...state, trayIconDataURL}),
+        ShouldUseDarkColors: ({shouldUseDarkColors}) => ({...state, shouldUseDarkColors}),
         default: () => state,
     });
 }

@@ -1,0 +1,18 @@
+@import "src/web/theming-variables-dark";
+@import "./vendor";
+
+.color-picker {
+    background-color: $body-bg !important;
+
+    input,
+    .hex-text .box div,
+    .rgba-text .box div,
+    .hsla-text .box div {
+        color: $input-color !important;
+    }
+
+    input {
+        border-color: $input-border-color !important;
+        background-color: $body-bg !important;
+    }
+}

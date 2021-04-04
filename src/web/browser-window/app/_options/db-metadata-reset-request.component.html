@@ -15,10 +15,10 @@
         <i *ngIf="resettingDbMetadata$ | async" class="fa fa-spinner fa-pulse fa-fw"></i>
         Schedule full "local store" data refresh/fetch (recommended)
     </button>
-    <button (click)="submit()" class="btn btn-sm btn-secondary-light btn-block">
+    <button (click)="submit()" class="btn btn-sm btn-secondary btn-block">
         Skip (message will be displayed again on next app start)
     </button>
-    <button (click)="submit({reset: false})" class="btn btn-sm btn-secondary-light btn-block">
+    <button (click)="submit({reset: false})" class="btn btn-sm btn-secondary btn-block">
         Don't show anymore (not recommended)
     </button>
 </fieldset>

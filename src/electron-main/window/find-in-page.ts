@@ -3,24 +3,18 @@ import {BrowserView} from "electron";
 
 import {Context} from "src/electron-main/model";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";
-import {WEB_CHUNK_NAMES, WEB_PROTOCOL_SCHEME} from "src/shared/constants";
+import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
+import {WEB_PROTOCOL_SCHEME} from "src/shared/constants";
 import {curryFunctionMembers} from "src/shared/util";
 import {injectVendorsAppCssIntoHtmlFile} from "src/electron-main/util";
 
 const logger = curryFunctionMembers(_logger, __filename);
 
-const resolveContent: (ctx: Context) => Promise<Unpacked<ReturnType<typeof injectVendorsAppCssIntoHtmlFile>>> = (
-    (): typeof resolveContent => {
-        let result: typeof resolveContent = async (ctx: Context) => {
-            const cache = await injectVendorsAppCssIntoHtmlFile(ctx.locations.searchInPageBrowserViewPage, ctx.locations);
-            logger.verbose(JSON.stringify(cache));
-            // memoize the result
-            result = async (): Promise<typeof cache> => cache;
-            return cache;
-        };
-        return result;
-    }
-)();
+const resolveContent = async (ctx: Context): Promise<Unpacked<ReturnType<typeof injectVendorsAppCssIntoHtmlFile>>> => {
+    const injection = await injectVendorsAppCssIntoHtmlFile(ctx.locations.searchInPageBrowserViewPage, ctx.locations);
+    logger.verbose(nameof(resolveContent), JSON.stringify(injection));
+    return injection;
+};
 
 export function syncFindInPageBrowserViewSize(ctx: Context, findInPageBrowserView?: BrowserView): void {
     if (!ctx.uiContext) {
@@ -77,7 +71,7 @@ export const initFindInPageBrowserView: (ctx: Context) => Promise<BrowserView> =
 
             await browserView.webContents.loadURL(
                 `data:text/html,${html}`,
-                {baseURLForDataURL: `${WEB_PROTOCOL_SCHEME}:/${WEB_CHUNK_NAMES["search-in-page-browser-view"]}/`},
+                {baseURLForDataURL: `${WEB_PROTOCOL_SCHEME}:/${WEBPACK_WEB_CHUNK_NAMES["search-in-page-browser-view"]}/`},
             );
 
             syncFindInPageBrowserViewSize(ctx, browserView);

@@ -1,0 +1,54 @@
+@use "src/web/variables" as variables;
+
+$body-bg: lighten(variables.$app-dark-bg, 5%);
+$body-color: darken(variables.$white, 10%);
+$border-color: darken($body-bg, 5%);
+$hr-border-color: $border-color;
+$component-active-color: $body-color;
+$pre-color: $body-color;
+$text-muted: darken($body-color, 35%);
+$close-color: $body-color;
+
+$input-bg: $body-bg;
+$input-disabled-bg: lighten($body-bg, 10%);
+$input-color: $body-color;
+$input-border-color: lighten($body-bg, 10%);
+$input-box-shadow: variables.$app-dark-bg;
+$input-placeholder-color: darken($body-color, 10%);
+
+$card-bg: $body-bg;
+$card-cap-bg: variables.$app-dark-bg;
+$card-border-color: darken($border-color, 5%);
+
+$dropdown-bg: $body-bg;
+$dropdown-color: $body-color;
+$dropdown-link-color: $dropdown-color;
+$dropdown-link-hover-color: darken($dropdown-link-color, 5%);
+$dropdown-link-hover-bg: darken($dropdown-bg, 5%);
+$dropdown-border-color: $border-color;
+$dropdown-divider-bg: $border-color;
+
+$list-group-bg: $body-bg;
+$list-group-border-color: $border-color;
+$list-group-action-color: $body-color;
+$list-group-action-hover-color: darken($body-color, 10%);
+$list-group-hover-bg: $dropdown-link-hover-bg;
+$list-group-action-active-color: $list-group-action-hover-color;
+$list-group-action-active-bg: $list-group-hover-bg;
+
+$tooltip-color: $body-color;
+$tooltip-bg: $body-bg;
+
+$popover-bg: $body-bg;
+
+$modal-content-bg: $body-bg;
+$modal-content-border-color: $border-color;
+$modal-header-border-color: $border-color;
+
+$secondary: darken(#686a71, 2%);
+$progress-bar-color: variables.$gray-100;
+$app-theming-db-view-color-bg-body: $body-bg;
+$app-theming-db-view-color-border: $secondary;
+$app-theming-datepicker-color-box-shadow: lighten($body-bg, 5%);
+
+@import "./theming-variables-light";

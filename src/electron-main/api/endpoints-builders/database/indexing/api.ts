@@ -4,13 +4,13 @@ import {filter, first, startWith, takeUntil} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
 import {
-    IPC_MAIN_API_DB_INDEXER_NOTIFICATION$,
-    IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$,
+    IPC_MAIN_API_DB_INDEXER_REQUEST$,
+    IPC_MAIN_API_DB_INDEXER_RESPONSE$,
     IPC_MAIN_API_NOTIFICATION$,
 } from "src/electron-main/api/constants";
 import {
-    IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS,
-    IPC_MAIN_API_DB_INDEXER_ON_ACTIONS,
+    IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS,
+    IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS,
     IPC_MAIN_API_NOTIFICATION_ACTIONS,
     IpcMainApiEndpoints,
 } from "src/shared/api/main";
@@ -29,10 +29,10 @@ export async function buildDbIndexingEndpoints(
 
             // propagating action to custom stream
             setTimeout(() => {
-                IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$.next(action);
+                IPC_MAIN_API_DB_INDEXER_RESPONSE$.next(action);
             });
 
-            IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.match(action, {
+            IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS.match(action, {
                 Bootstrapped() {
                     const indexAccounts$ = defer(
                         async () => {
@@ -87,8 +87,8 @@ export async function buildDbIndexingEndpoints(
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         dbIndexerNotification() {
-            return IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.asObservable().pipe(
-                startWith(IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Bootstrap({})),
+            return IPC_MAIN_API_DB_INDEXER_REQUEST$.asObservable().pipe(
+                startWith(IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS.Bootstrap({})),
             );
         },
     };

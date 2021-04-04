@@ -52,6 +52,9 @@ export class OptionsEffects {
                                 TrayIconDataURL: (payload) => {
                                     this.store.dispatch(OPTIONS_ACTIONS.TrayIconDataURL({value: payload}));
                                 },
+                                NativeTheme: ({shouldUseDarkColors}) => {
+                                    this.store.dispatch(OPTIONS_ACTIONS.ShouldUseDarkColors({shouldUseDarkColors}));
+                                },
                                 default() {
                                     // NOOP
                                 },

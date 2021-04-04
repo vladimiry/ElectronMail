@@ -40,12 +40,6 @@ export const APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR = "./usr/share/hunspell";
 
 export const UPDATE_CHECK_FETCH_TIMEOUT = ONE_SECOND_MS * 10;
 
-export const WEB_CHUNK_NAMES = {
-    "about": "about",
-    "browser-window": "browser-window",
-    "search-in-page-browser-view": "search-in-page-browser-view",
-} as const;
-
 export const PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION = {
     // TODO "electron-builder" doesn't pack the resources with "node_modules" folder in the path, so renamed to "node_modules_" for now
     system:
@@ -128,9 +122,9 @@ export const ZOOM_FACTORS: ReadonlyArray<number> = [
 ];
 
 export const LAYOUT_MODES = [
-    {value: "top", title: "top"},
-    {value: "left", title: "left"},
-    {value: "left-thin", title: "left (thin)"},
+    {value: "top", title: "Top"},
+    {value: "left", title: "Left"},
+    {value: "left-thin", title: "Left (thin)"},
 ] as const;
 
 export const WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS = "ELECTRON_MAIL_SKIP_LOGIN_DELAYS";

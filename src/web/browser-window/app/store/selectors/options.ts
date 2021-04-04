@@ -16,6 +16,7 @@ export const FEATURED = {
     snapPasswordManagerServiceHint: createSelector(STATE, (state) => state.snapPasswordManagerServiceHint),
     mainProcessNotification: createSelector(STATE, (state) => state.mainProcessNotification),
     trayIconDataURL: createSelector(STATE, (state) => state.trayIconDataURL),
+    shouldUseDarkColors: createSelector(STATE, (state) => state.shouldUseDarkColors),
 } as const;
 
 export const CONFIG = {

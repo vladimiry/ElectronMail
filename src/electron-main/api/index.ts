@@ -10,6 +10,7 @@ import {Database} from "src/electron-main/database";
 import {IPC_MAIN_API, IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {PACKAGE_NAME, PRODUCT_NAME, PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION} from "src/shared/constants";
+import {applyThemeSource} from "src/electron-main/native-theme";
 import {applyZoomFactor} from "src/electron-main/window/util";
 import {attachFullTextIndexWindow, detachFullTextIndexWindow} from "src/electron-main/window/full-text-search";
 import {buildSettingsAdapter} from "src/electron-main/util";
@@ -184,6 +185,10 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
                         await applyZoomFactor(ctx, webContents);
                     }
                 }
+            }
+
+            if (updatedConfig.themeSource !== previousConfig.themeSource) {
+                applyThemeSource(updatedConfig.themeSource);
             }
 
             return updatedConfig;

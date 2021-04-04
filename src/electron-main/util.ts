@@ -4,10 +4,11 @@ import path from "path";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Model as StoreModel} from "fs-json-store";
 import {format as formatURL} from "url";
+import {nativeTheme} from "electron";
 
 import {Config} from "src/shared/model/options";
 import {Context} from "./model";
-import {curryFunctionMembers} from "src/shared/util";
+import {buildInitialVendorsAppCssLinks, curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, __filename);
 
@@ -17,15 +18,15 @@ export function formatFileUrl(pathname: string): string {
 
 export async function injectVendorsAppCssIntoHtmlFile(
     pageLocation: string,
-    {vendorsAppCssLinkHref}: Context["locations"],
+    {vendorsAppCssLinkHrefs}: Context["locations"],
 ): Promise<{ html: string; baseURLForDataURL: string }> {
     const pageContent = fs.readFileSync(pageLocation).toString();
     const baseURLForDataURL = formatFileUrl(`${path.dirname(pageLocation)}${path.sep}`);
-    const htmlInjection = `<link rel="stylesheet" href="${vendorsAppCssLinkHref}"/>`;
+    const htmlInjection = buildInitialVendorsAppCssLinks(vendorsAppCssLinkHrefs, nativeTheme.shouldUseDarkColors);
     const html = pageContent.replace(/(.*)(<head>)(.*)/i, `$1$2${htmlInjection}$3`);
 
     if (!html.includes(htmlInjection)) {
-        logger.error(JSON.stringify({html}));
+        logger.error(nameof(injectVendorsAppCssIntoHtmlFile), JSON.stringify({html}));
         throw new Error(`Failed to inject "${htmlInjection}" into the "${pageLocation}" page`);
     }
 

@@ -7,15 +7,15 @@ import {race, throwError, timer} from "rxjs";
 
 import {Config} from "src/shared/model/options";
 import {DbAccountPk, FsDbAccount, INDEXABLE_MAIL_FIELDS, Mail} from "src/shared/model/database";
-import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION$, IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$,} from "src/electron-main/api/constants";
-import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_DB_INDEXER_ON_ACTIONS,} from "src/shared/api/main";
+import {IPC_MAIN_API_DB_INDEXER_REQUEST$, IPC_MAIN_API_DB_INDEXER_RESPONSE$,} from "src/electron-main/api/constants";
+import {IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS,} from "src/shared/api/main";
 import {curryFunctionMembers} from "src/shared/util";
 import {hrtimeDuration} from "src/electron-main/util";
 
 const logger = curryFunctionMembers(electronLog, __filename);
 
 export const narrowIndexActionPayload: (
-    payload: StrictOmit<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>, { type: "Index" }>["payload"], "uid">,
+    payload: StrictOmit<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS>, { type: "Index" }>["payload"], "uid">,
 ) => typeof payload = ((): typeof narrowIndexActionPayload => {
     type Fn = typeof narrowIndexActionPayload;
     type Mails = ReturnType<Fn>["add"];
@@ -46,8 +46,8 @@ async function indexMails(
     const duration = hrtimeDuration();
     const uid = new UUID(4).format();
     const result$ = race(
-        IPC_MAIN_API_DB_INDEXER_ON_NOTIFICATION$.pipe(
-            filter(IPC_MAIN_API_DB_INDEXER_ON_ACTIONS.is.IndexingResult),
+        IPC_MAIN_API_DB_INDEXER_RESPONSE$.pipe(
+            filter(IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS.is.IndexingResult),
             filter(({payload}) => payload.uid === uid),
             first(),
         ),
@@ -56,8 +56,8 @@ async function indexMails(
         ),
     );
 
-    IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.next(
-        IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Index({
+    IPC_MAIN_API_DB_INDEXER_REQUEST$.next(
+        IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS.Index({
             uid,
             ...narrowIndexActionPayload({
                 key,

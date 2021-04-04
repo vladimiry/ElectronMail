@@ -19,7 +19,7 @@ import {FsDbAccount} from "src/shared/model/database";
 import {PACKAGE_NAME} from "src/shared/constants";
 import {ProtonAttachmentHeadersProp, ProtonClientSession} from "src/shared/model/proton";
 
-export const IPC_MAIN_API_DB_INDEXER_ON_ACTIONS = unionize({
+export const IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS = unionize({
         Bootstrapped: ofType<Record<string, unknown>>(),
         ProgressState: ofType<{
             key: DbModel.DbAccountPk;
@@ -45,7 +45,7 @@ export const IPC_MAIN_API_DB_INDEXER_ON_ACTIONS = unionize({
     },
 );
 
-export const IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS = unionize({
+export const IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS = unionize({
         Bootstrap: ofType<Record<string, unknown>>(),
         // TODO consider splitting huge data portion to chunks, see "ramda.splitEvery"
         Index: ofType<{
@@ -59,13 +59,12 @@ export const IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS = unionize({
     {
         tag: "type",
         value: "payload",
-        tagPrefix: "ipc_main_api_db_indexer_notification_actions:",
+        tagPrefix: "IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS:",
     },
 );
 
 // WARN: do not put sensitive data or any data to the main process notification stream, only status-like signals
 export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
-        Bootstrap: ofType<Record<string, unknown>>(),
         ActivateBrowserWindow: ofType<Record<string, unknown>>(),
         TargetUrl: ofType<DeepReadonly<NoExtraProps<{
             url: string;
@@ -77,7 +76,8 @@ export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
             entitiesModified: boolean;
             stat: { mails: number; folders: number; contacts: number; unread: number };
         }>(),
-        DbIndexerProgressState: ofType<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_ON_ACTIONS>, { type: "ProgressState" }>["payload"]>(),
+        DbIndexerProgressState:
+            ofType<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS>, { type: "ProgressState" }>["payload"]>(),
         DbAttachmentExportRequest: ofType<DeepReadonly<{
             uuid: string;
             key: DbModel.DbAccountPk;
@@ -94,6 +94,7 @@ export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
         TrayIconDataURL: ofType<string>(),
         PowerMonitor: ofType<{ message: "suspend" | "resume" | "shutdown" }>(),
         ProtonSessionTokenCookiesModified: ofType<{ key: DbModel.DbAccountPk }>(),
+        NativeTheme: ofType<{ shouldUseDarkColors: boolean }>(),
     },
     {
         tag: "type",
@@ -177,9 +178,9 @@ export const ENDPOINTS_DEFINITION = {
         mailsBundleItems: Array<{ mail: DbModel.View.Mail & { score?: number }; conversationSize: number }>;
     }>>(),
 
-    dbIndexerOn: ActionType.Promise<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_ON_ACTIONS>>(),
+    dbIndexerOn: ActionType.Promise<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS>>(),
 
-    dbIndexerNotification: ActionType.Observable<void, UnionOf<typeof IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS>>(),
+    dbIndexerNotification: ActionType.Observable<void, UnionOf<typeof IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS>>(),
 
     staticInit: ActionType.Promise<void, {
         electronLocations: ElectronContextLocations

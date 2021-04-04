@@ -6,6 +6,7 @@ import {getDefaultSession, initSession} from "src/electron-main/session";
 import {initApi} from "src/electron-main/api";
 import {initApplicationMenu} from "src/electron-main/menu";
 import {initMainBrowserWindow} from "src/electron-main/window/main";
+import {initNativeThemeNotification} from "src/electron-main/native-theme";
 import {initSpellCheckController} from "src/electron-main/spell-check/controller";
 import {initTray} from "src/electron-main/tray";
 import {initWebContentsCreatingHandlers} from "src/electron-main/web-contents";
@@ -19,12 +20,13 @@ export async function appReadyHandler(ctx: Context): Promise<void> {
 
     const endpoints = await initApi(ctx);
 
-    // "endpoints.readConfig()" call initializes the config.json file
-    // so consequent "ctx.configStore.readExisting()" calls don't fail
-    const {spellCheckLocale, customTrayIconColor, logLevel} = await endpoints.readConfig();
+    // so consequent "ctx.configStore.readExisting()" calls don't fail since "endpoints.readConfig()" call initializes the config
+    const {spellCheckLocale, customTrayIconColor, logLevel, themeSource} = await endpoints.readConfig();
 
     // TODO test "logger.transports.file.level" update
     electronLog.transports.file.level = logLevel;
+
+    initNativeThemeNotification(themeSource);
 
     await (async (): Promise<void> => {
         const spellCheckController = await initSpellCheckController(spellCheckLocale);

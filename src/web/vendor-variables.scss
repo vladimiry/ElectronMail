@@ -2,29 +2,28 @@
 @import "bootstrap/scss/mixins";
 @import "font-awesome/scss/mixins";
 
-// >>>>> overriding bootstrap/font-awesome/other-libs variables before importing them
-
-// $enable-shadows: true;
-$primary: #1ba489;
-$secondary: lighten(#686a71, 9%);
+$primary: #1ba489 !default;
+$secondary: lighten(#ced4da, 2%) !default;
 $modal-header-padding: 0.7rem;
 $list-group-item-padding-x: 1.25rem * 0.5;
 $list-group-item-padding-y: 0.65rem !default;
 $badge-padding-y: 0.15em;
 $modal-dialog-margin-y-sm-up: 3rem;
 
-// >>>>> importing bootstrap/font-awesome/other-libs variables
-
 @import "bootstrap/scss/variables";
 @import "font-awesome/scss/variables";
-
-// >>>>> overriding bootstrap/font-awesome/other-libs maps
 
 $theme-colors: map-merge(
     $theme-colors,
     (
-        secondary: $secondary,
-        secondary-light: darken($gray-400, 1%),
         warning-light: theme-color-level("warning", -9),
     ),
 );
+
+// node_modules/@ng-select/ng-select/scss/default.theme.scss
+$ng-select-primary-text: $body-color;
+$ng-select-bg: $input-bg;
+$ng-select-border: $border-color;
+$ng-select-highlight: $dropdown-link-hover-bg;
+$ng-select-selected: $ng-select-highlight;
+$ng-select-marked: $ng-select-highlight;

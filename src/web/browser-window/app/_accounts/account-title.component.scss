@@ -40,12 +40,6 @@
             }
         }
 
-        &:not(.selected) {
-            > .btn:not(:last-child) {
-                border-right-color: $app-color-secondary-btn-split-border;
-            }
-        }
-
         > .btn {
             &:nth-child(1) {
                 flex-grow: 1;

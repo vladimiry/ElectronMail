@@ -11,79 +11,72 @@ import {
     PACKAGE_LICENSE,
     PACKAGE_VERSION,
     PRODUCT_NAME,
-    WEB_CHUNK_NAMES,
     WEB_PROTOCOL_SCHEME,
     ZOOM_FACTOR_DEFAULT,
 } from "src/shared/constants";
+import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
 import {applyZoomFactor} from "src/electron-main/window/util";
 import {curryFunctionMembers} from "src/shared/util";
 import {injectVendorsAppCssIntoHtmlFile} from "src/electron-main/util";
 
 const logger = curryFunctionMembers(_logger, __filename);
 
-const resolveContent: (ctx: Context) => Promise<Unpacked<ReturnType<typeof injectVendorsAppCssIntoHtmlFile>>> = (
-    (): typeof resolveContent => {
-        let result: typeof resolveContent = async (ctx: Context) => {
-            const {commit, shortCommit} = await import("./about.json");
-            const htmlInjection: string = [
-                sanitizeHtml(
-                    `
-                    <h1 style="position: relative;">
-                        ${PRODUCT_NAME} v${PACKAGE_VERSION}
-                        <a
-                            href="${PACKAGE_GITHUB_PROJECT_URL}/commit/${commit}"
-                            style="position: absolute; left: 100%; bottom: 100%; font-size: 1rem;"
-                        >
-                            ${shortCommit}
-                        </a>
-                    </h1>
-                    <p>${PACKAGE_DESCRIPTION}</p>
-                    <p>Distributed under ${PACKAGE_LICENSE} license.</p>
-                    `,
-                    {
-                        allowedTags: sanitizeHtml.defaults.allowedTags.concat(["h1"]),
-                        allowedAttributes: {
-                            a: ["href", "style"],
-                            h1: ["style"],
-                        },
-                    },
-                ),
-                ((): string => {
-                    const {versions} = process;
-                    const props = [
-                        {prop: "electron", title: "Electron"},
-                        {prop: "chrome", title: "Chromium"},
-                        {prop: "node", title: "Node"},
-                        {prop: "v8", title: "V8"},
-                    ] as const;
-                    return `
-                        <ul class="list-versions align-items-left justify-content-center font-weight-light text-muted">
-                            ${props.map(({prop, title}) => sanitizeHtml(`<li>${title}: ${versions[prop]}</li>`)).join("")}
-                        </ul>
-                    `;
-                })(),
-            ].join("");
-            const pageLocation = ctx.locations.aboutBrowserWindowPage;
-            const cache = await injectVendorsAppCssIntoHtmlFile(pageLocation, ctx.locations);
+const resolveContent = async (ctx: Context): Promise<Unpacked<ReturnType<typeof injectVendorsAppCssIntoHtmlFile>>> => {
+    const {commit, shortCommit} = await import("./about.json");
+    const htmlInjection: string = [
+        sanitizeHtml(
+            `
+                <h1 style="position: relative;">
+                    ${PRODUCT_NAME} v${PACKAGE_VERSION}
+                    <a
+                        href="${PACKAGE_GITHUB_PROJECT_URL}/commit/${commit}"
+                        style="position: absolute; left: 100%; bottom: 100%; font-size: 1rem;"
+                    >
+                        ${shortCommit}
+                    </a>
+                </h1>
+                <p>${PACKAGE_DESCRIPTION}</p>
+                <p>Distributed under ${PACKAGE_LICENSE} license.</p>
+            `,
+            {
+                allowedTags: sanitizeHtml.defaults.allowedTags.concat(["h1"]),
+                allowedAttributes: {
+                    a: ["href", "style"],
+                    h1: ["style"],
+                },
+            },
+        ),
+        ((): string => {
+            const {versions} = process;
+            const props = [
+                {prop: "electron", title: "Electron"},
+                {prop: "chrome", title: "Chromium"},
+                {prop: "node", title: "Node"},
+                {prop: "v8", title: "V8"},
+            ] as const;
+            return `
+                <ul class="list-versions align-items-left justify-content-center font-weight-light text-muted">
+                    ${props.map(({prop, title}) => sanitizeHtml(`<li>${title}: ${versions[prop]}</li>`)).join("")}
+                </ul>
+            `;
+        })(),
+    ].join("");
+    const pageLocation = ctx.locations.aboutBrowserWindowPage;
+    const injection = await injectVendorsAppCssIntoHtmlFile(pageLocation, ctx.locations);
 
-            cache.html = cache.html.replace(
-                /(.*)#MAIN_PROCESS_INJECTION_POINTCUT#(.*)/i,
-                `$1${htmlInjection}$2`,
-            );
-            if (!cache.html.includes(htmlInjection)) {
-                logger.error(JSON.stringify({cache}));
-                throw new Error(`Failed to inject "${htmlInjection}" into the "${pageLocation}" page`);
-            }
-            logger.verbose(JSON.stringify(cache));
+    injection.html = injection.html.replace(
+        /(.*)#MAIN_PROCESS_INJECTION_POINTCUT#(.*)/i,
+        `$1${htmlInjection}$2`,
+    );
 
-            // memoize the result
-            result = async (): Promise<typeof cache> => cache;
-
-            return cache;
-        };
-        return result;
+    if (!injection.html.includes(htmlInjection)) {
+        logger.error(nameof(resolveContent), injection.html);
+        throw new Error(`Failed to inject "${htmlInjection}" into the "${pageLocation}" page`);
     }
-)();
+    logger.verbose(nameof(resolveContent), JSON.stringify(injection));
+
+    return injection;
+};
 
 export async function showAboutBrowserWindow(ctx: Context): Promise<BrowserWindow> {
     if (!ctx.uiContext) {
@@ -118,10 +111,12 @@ export async function showAboutBrowserWindow(ctx: Context): Promise<BrowserWindo
     });
 
     browserWindow
-        .on("ready-to-show", async () => {
+        .once("ready-to-show", async () => {
             if (zoomFactor !== ZOOM_FACTOR_DEFAULT) {
                 await applyZoomFactor(ctx, browserWindow.webContents);
             }
+            browserWindow.show();
+            browserWindow.focus();
         })
         .on("closed", () => {
             if (!ctx.uiContext) {
@@ -132,14 +127,11 @@ export async function showAboutBrowserWindow(ctx: Context): Promise<BrowserWindo
 
     ctx.uiContext.aboutBrowserWindow = browserWindow;
 
-    browserWindow.show();
-    browserWindow.focus();
-
     const {html} = await resolveContent(ctx);
 
     await browserWindow.webContents.loadURL(
         `data:text/html,${html}`,
-        {baseURLForDataURL: `${WEB_PROTOCOL_SCHEME}:/${WEB_CHUNK_NAMES.about}/`},
+        {baseURLForDataURL: `${WEB_PROTOCOL_SCHEME}:/${WEBPACK_WEB_CHUNK_NAMES.about}/`},
     );
 
     if (BUILD_ENVIRONMENT === "development") {

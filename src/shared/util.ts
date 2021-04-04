@@ -109,6 +109,7 @@ export function initialConfig(): Config {
             layoutMode: "top",
             logLevel: "error",
             startHidden: true,
+            themeSource: "system",
             unreadNotifications: true,
             zoomFactor: ZOOM_FACTOR_DEFAULT,
         };
@@ -136,6 +137,7 @@ export const pickBaseConfigProperties = (
         "layoutMode",
         "logLevel",
         "startHidden",
+        "themeSource",
         "unreadNotifications",
         "zoomFactor",
     ],
@@ -684,4 +686,27 @@ export const parseProtonRestModel = <T extends Mail | Folder>(
     dbEntity: T
 ): T extends Mail ? RestModel.Message : RestModel.Label => {
     return JSON.parse(dbEntity.raw); // eslint-disable-line @typescript-eslint/no-unsafe-return
+};
+
+export const buildInitialVendorsAppCssLinks = (
+    hrefs: ReadonlyArray<string>,
+    shouldUseDarkColors?: boolean,
+): string => {
+    return hrefs.reduce(
+        (accumulator, value) => {
+            const stylesheet: boolean = (
+                typeof shouldUseDarkColors !== "boolean"
+                ||
+                (value.endsWith("-dark.css") && shouldUseDarkColors)
+                ||
+                (value.endsWith("-light.css") && !shouldUseDarkColors)
+            );
+            return (
+                accumulator
+                +
+                `<link rel="${stylesheet ? 'stylesheet' : 'preload'}" href="${value}"/>`
+            );
+        },
+        "",
+    );
 };

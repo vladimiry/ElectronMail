@@ -1,9 +1,11 @@
-@use "src/web/variables" as variables;
-
-@import "src/web/vendor-variables";
+@import "src/web/variables";
 @import "bootstrap/scss/bootstrap";
 
 blockquote {
-    border-left: .25em solid variables.$app-db-view-color-border;
+    border-left: .25em solid $gray-500;
     padding-left: .25em;
+}
+
+pre code {
+    color: $code-color;
 }

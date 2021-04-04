@@ -1,11 +1,5 @@
 @import "src/web/variables";
 
-@mixin app-db-view-badge-padding-radius {
-    border-radius: $badge-border-radius;
-    border: 1px solid $app-db-view-color-border;
-    padding: ($badge-padding-y * 0.15) $badge-padding-x;
-}
-
 @mixin app-db-view-selectable-mail($selected-class: "selected") {
     cursor: pointer;
 
@@ -27,7 +21,7 @@
             &,
             .conversation-size,
             .b {
-                color: $app-color-warning-light-text;
+                color: map_get($app-account-title-btn-colors, "selected-text");
             }
         }
 

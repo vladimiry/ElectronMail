@@ -7,7 +7,7 @@ import {NgModule} from "@angular/core";
 import {PopoverModule} from "ngx-bootstrap/popover";
 
 import {AccountEditComponent} from "./account-edit.component";
-import {AccountsComponent} from "./accounts.component";
+import {AccountsListComponent} from "./accounts-list.component";
 import {BaseSettingsComponent} from "./base-settings.component";
 import {DbMetadataResetRequestComponent} from "./db-metadata-reset-request.component";
 import {EncryptionPresetsComponent} from "./encryption-presets.component";
@@ -39,7 +39,7 @@ import {StorageComponent} from "./storage.component";
     ],
     declarations: [
         AccountEditComponent,
-        AccountsComponent,
+        AccountsListComponent,
         BaseSettingsComponent,
         DbMetadataResetRequestComponent,
         EncryptionPresetsComponent,

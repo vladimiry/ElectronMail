@@ -7,8 +7,8 @@ import {omit} from "remeda";
 import {Context} from "src/electron-main/model";
 import {DB_DATA_CONTAINER_FIELDS, IndexableMail} from "src/shared/model/database";
 import {Database} from "src/electron-main/database";
-import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION$, IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
-import {IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS, IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
+import {IPC_MAIN_API_DB_INDEXER_REQUEST$, IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
+import {IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
 import {buildDbExportEndpoints} from "./export/api";
 import {buildDbIndexingEndpoints} from "./indexing/api";
 import {buildDbSearchEndpoints} from "./search/api";
@@ -80,8 +80,8 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                     setTimeout(() => {
                         // send mails to indexing process
                         // TODO performance optimization: send mails to indexing process if indexing feature activated
-                        IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.next(
-                            IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Index(
+                        IPC_MAIN_API_DB_INDEXER_REQUEST$.next(
+                            IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS.Index(
                                 {
                                     uid: new UUID(4).format(),
                                     ...narrowIndexActionPayload({
@@ -124,8 +124,8 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                 setTimeout(() => {
                     // removing stale mails form the full text search index
                     // TODO performance optimization: send mails to indexing process if indexing feature activated
-                    IPC_MAIN_API_DB_INDEXER_NOTIFICATION$.next(
-                        IPC_MAIN_API_DB_INDEXER_NOTIFICATION_ACTIONS.Index(
+                    IPC_MAIN_API_DB_INDEXER_REQUEST$.next(
+                        IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS.Index(
                             {
                                 uid: new UUID(4).format(),
                                 ...narrowIndexActionPayload({

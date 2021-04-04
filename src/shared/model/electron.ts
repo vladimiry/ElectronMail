@@ -20,7 +20,7 @@ export type ElectronContextLocations = Readonly<{
     trayIconFont: string;
     trayIcon: string;
     userDataDir: string;
-    vendorsAppCssLinkHref: string;
+    vendorsAppCssLinkHrefs: string[];
     preload: Readonly<{
         aboutBrowserWindow: string;
         browserWindow: string;

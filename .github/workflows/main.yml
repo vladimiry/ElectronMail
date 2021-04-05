@@ -57,7 +57,7 @@ jobs:
       - { name: install node-gyp, if: runner.os == 'Windows', run: ./scripts/ci/github/install-node-gyp.ps1 }
       - { name: install node modules, run: "yarn --pure-lockfile --network-timeout 60000" }
       # </common>
-      - { name: build, run: 'npm exec --package=npm-run-all -- npm-run-all lint test:electron-main build' }
+      - { name: build, run: 'npm exec --package=npm-run-all -- npm-run-all lint build' }
       - { name: print ./app files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./app }
       - { name: upload artifact, uses: actions/upload-artifact@v2, with: { name: 'app-artifact-${{ runner.os }}', path: ./app, if-no-files-found: error } }
   package-app:

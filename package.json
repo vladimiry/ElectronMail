@@ -26,7 +26,7 @@
     "postinstall:electron-chromedriver:remove": "rimraf ./node_modules/electron-chromedriver/bin",
     "postinstall:electron-chromedriver:download": "node ./node_modules/electron-chromedriver/download-chromedriver.js",
     "yarn:audit": "yarn audit",
-    "app:dist": "npm-run-all lint test:electron-main build assets build:electron-builder-hooks clean:prebuilds electron-builder:install-app-deps",
+    "app:dist": "npm-run-all lint build assets build:electron-builder-hooks clean:prebuilds electron-builder:install-app-deps",
     "build": "npm-run-all build:electron-main build:electron-preload build:web",
     "build:dev": "cross-env NODE_ENV=development npm-run-all build",
     "build:electron-main": "npm-run-all scripts/code-generation/electron-main build:electron-main:compile",
@@ -89,10 +89,6 @@
     "test:e2e:build-code": "cross-env NODE_ENV=e2e npm-run-all build:electron-main build:electron-preload:browser-window",
     "test:e2e:run": "cross-env TS_NODE_FILES=true npm exec --package=ava --node-options=\"--require tsconfig-paths/register --require ts-node/register\" -- ava \"./src/e2e/**/*.{spec,test}.ts\"",
     "test:e2e": "npm-run-all test:e2e:build-code test:e2e:run",
-    "test:electron-main": "cross-env NODE_ENV=test npm-run-all test:electron-main:compiled:clean test:electron-main:compiled:compile test:electron-main:compiled:ava",
-    "test:electron-main:compiled:ava": "ava \"./output/__test__/electron-main/src/electron-main/__test__/**/*.{spec,test}.js\"",
-    "test:electron-main:compiled:clean": "rimraf ./output/__test__/electron-main",
-    "test:electron-main:compiled:compile": "cross-env TS_NODE_FILES=true npm exec --package=typescript --node-options=\"--require tsconfig-paths/register\" -- tsc --project ./src/electron-main/__test__/tsconfig.json",
     "test:web": "cross-env NODE_ENV=test TS_NODE_FILES=true npm exec --package=karma --node-options=\"--require tsconfig-paths/register\" -- karma start ./src/web/browser-window/test/karma.conf.ts --single-run",
     "scripts/code-generation/electron-main": "yarn ts-node:shortcut ./scripts/code-generation/electron-main.ts",
     "scripts/dist-packages/print-hashes": "yarn ts-node:shortcut ./scripts/dist-packages/print-hashes.ts ./dist",
@@ -108,8 +104,7 @@
       "js"
     ],
     "files": [
-      "./src/**/*.{spec,test}.{ts,js}",
-      "./output/__test__/**/*.{spec,test}.{ts,js}"
+      "./src/**/*.{spec,test}.{ts,js}"
     ],
     "timeout": "120s",
     "verbose": true
@@ -244,6 +239,7 @@
     "ndx-query": "1.0.1",
     "ngx-bootstrap": "6.2.0",
     "ngx-color-picker": "11.0.0",
+    "node-libs-browser": "2.2.1",
     "npm-run-all": "4.1.5",
     "null-loader": "4.0.1",
     "patch-package": "6.4.7",
@@ -252,7 +248,6 @@
     "randomstring": "1.1.5",
     "rate-limiter-flexible": "2.2.1",
     "resolve-url-loader": "3.1.2",
-    "rewiremock": "3.14.3",
     "rimraf": "3.0.2",
     "sass": "1.32.8",
     "sass-loader": "11.0.1",

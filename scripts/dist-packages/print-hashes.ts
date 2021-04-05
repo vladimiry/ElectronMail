@@ -1,6 +1,6 @@
 import path from "path";
 
-import {calculateHash, catchTopLeventAsync, CONSOLE_LOG} from "scripts/lib";
+import {CONSOLE_LOG, calculateHash, catchTopLeventAsync} from "scripts/lib";
 import {listInstallationPackageFiles} from "./lib";
 
 const [, , DIST_DIRECTORY] = process.argv as [null, null, string];

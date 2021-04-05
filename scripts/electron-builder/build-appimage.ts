@@ -3,8 +3,8 @@ import fs from "fs";
 import path from "path";
 
 import {BINARY_NAME} from "src/shared/constants";
-import {catchTopLeventAsync, CONSOLE_LOG, execShell, resolveExecutable} from "scripts/lib";
-import {build, DISABLE_SANDBOX_ARGS_LINE, ensureFileHasNoSuidBit} from "scripts/electron-builder/lib";
+import {CONSOLE_LOG, catchTopLeventAsync, execShell, resolveExecutable} from "scripts/lib";
+import {DISABLE_SANDBOX_ARGS_LINE, build, ensureFileHasNoSuidBit} from "scripts/electron-builder/lib";
 
 // TODO pass destination directory instead of hardcoding it ("--appimage-extract" doesn't support destination parameter at the moment)
 const extractedImageFolderName = "squashfs-root";

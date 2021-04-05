@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import {platform} from "os";
 
-import {catchTopLeventAsync, CONSOLE_LOG, execShell} from "scripts/lib";
+import {CONSOLE_LOG, catchTopLeventAsync, execShell} from "scripts/lib";
 import {listInstallationPackageFiles} from "./lib";
 
 const [, , DIST_DIRECTORY, OUTPUT_DIRECTORY] = process.argv as [null, null, string, string];

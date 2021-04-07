@@ -1,4 +1,3 @@
-import urlRegexSafe from "url-regex-safe";
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import type {RateLimiterMemory} from "rate-limiter-flexible";
 import {URL} from "@cliqz/url-parser";
@@ -665,20 +664,19 @@ export const depersonalizeProtonApiUrl = (url: string): string => {
     ].join(splitBy);
 };
 
-export const depersonalizeLoggedUrlsInString: (value: string) => string = (() => {
-    // at the moment only proton urls get depersonalized, ie urls that start from the following urls (notice "slash" at the end):
+export const depersonalizeLoggedUrlsInString: (value: unknown) => string = (() => {
+    // at the moment only proton urls get depersonalized, ie urls that start from the following urls
     //      https://app.protonmail.ch/
     //      https://mail.protonmail.com/
     //      https://protonirockerxow.onion/
-    const includesProtonApiUrl = (value?: string): boolean => PROTON_API_ENTRY_URLS.some((domain) => value?.includes(`${domain}/`));
-    const urlRegExp = urlRegexSafe({exact: false, strict: true});
-
-    return (value: string): string => {
-        if (includesProtonApiUrl(value)) {
-            return value.replace(urlRegExp, depersonalizeProtonApiUrl);
+    const protonUrlRe = new RegExp(PROTON_API_ENTRY_URLS.map((value) => `${value}/\\S*`).join("|"), "gi");
+    const result: typeof depersonalizeLoggedUrlsInString = (value) => {
+        if (typeof value !== "string") {
+            return String(value);
         }
-        return value;
+        return value.replace(protonUrlRe, depersonalizeProtonApiUrl);
     };
+    return result;
 })();
 
 // TODO move "protonmail message rest model" to shared library since being referenced from different places

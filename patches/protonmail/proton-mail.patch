@@ -1,53 +1,37 @@
 diff --git a/node_modules/react-components/containers/login/MinimalLoginContainer.tsx b/node_modules/react-components/containers/login/MinimalLoginContainer.tsx
-index 07e92ff..d0396d8 100644
+index 13ba576..419e6be 100644
 --- a/node_modules/react-components/containers/login/MinimalLoginContainer.tsx
 +++ b/node_modules/react-components/containers/login/MinimalLoginContainer.tsx
-@@ -17,6 +17,8 @@ interface Props extends Omit<UseLoginProps, 'api'> {
-     needHelp?: React.ReactNode;
- }
+@@ -14,6 +14,8 @@ import { handleLogin, handleTotp, handleUnlock } from './loginActions';
+ import LoginTotpInput from './LoginTotpInput';
+ import LoginUnlockInput from './LoginUnlockInput';
 
 +const ELECTRON_MAIL_FORM_STYLE = { padding: '0.8rem' } as const;
 +
- const MinimalLoginContainer = ({ onLogin, ignoreUnlock = false, needHelp }: Props) => {
-     const { createNotification } = useNotifications();
-     const { createModal } = useModals();
-@@ -51,7 +53,7 @@ const MinimalLoginContainer = ({ onLogin, ignoreUnlock = false, needHelp }: Prop
-             withLoading(handleLogin().catch(catchHandler));
-         };
-         return (
--            <form name="loginForm" onSubmit={handleSubmit} method="post">
-+            <form name="loginForm" onSubmit={handleSubmit} method="post" style={ELECTRON_MAIL_FORM_STYLE}>
-                 <Label htmlFor="login">{c('Label').t`Username or ProtonMail address`}</Label>
-                 <div className="mb1">
-                     <LoginUsernameInput
-@@ -92,7 +94,7 @@ const MinimalLoginContainer = ({ onLogin, ignoreUnlock = false, needHelp }: Prop
-             withLoading(handleTotp().catch(catchHandler));
-         };
-         return (
--            <form name="totpForm" onSubmit={handleSubmit} method="post">
-+            <form name="totpForm" onSubmit={handleSubmit} method="post" style={ELECTRON_MAIL_FORM_STYLE}>
-                 <Label htmlFor="twoFa">{c('Label').t`Two-factor authentication code`}</Label>
-                 <div className="mb1">
-                     <LoginTotpInput totp={totp} setTotp={loading ? noop : setters.totp} id="twoFa" />
-@@ -118,7 +120,7 @@ const MinimalLoginContainer = ({ onLogin, ignoreUnlock = false, needHelp }: Prop
-             withLoading(handleUnlock().catch(catchHandler));
-         };
-         return (
--            <form name="unlockForm" onSubmit={handleSubmit} method="post">
-+            <form name="unlockForm" onSubmit={handleSubmit} method="post" style={ELECTRON_MAIL_FORM_STYLE}>
-                 <Label htmlFor="password">{c('Label').t`Mailbox password`}</Label>
-                 <div className="mb1">
-                     <LoginUnlockInput
-diff --git a/src/app/containers/mailbox/MailboxContainer.tsx b/src/app/containers/mailbox/MailboxContainer.tsx
-index 3f222f7..98e9cfe 100644
---- a/src/app/containers/mailbox/MailboxContainer.tsx
-+++ b/src/app/containers/mailbox/MailboxContainer.tsx
-@@ -200,7 +200,7 @@ const MailboxContainer = ({
-     );
-
-     return (
--        <div ref={elementRef} tabIndex={-1} className="flex-item-fluid flex flex-column flex-nowrap no-outline">
-+        <div ref={elementRef} tabIndex={-1} className="flex-item-fluid flex flex-column flex-nowrap no-outline electron-mail-mailbox-container-component">
-             {showToolbar && (
-                 <Toolbar
-                     labelID={labelID}
+ const UnlockForm = ({
+     onSubmit,
+     cancelButton,
+@@ -32,6 +34,7 @@ const UnlockForm = ({
+                 withLoading(onSubmit(keyPassword)).catch(noop);
+             }}
+             method="post"
++            style={ELECTRON_MAIL_FORM_STYLE}
+         >
+             <Label htmlFor="password">{c('Label').t`Mailbox password`}</Label>
+             <div className="mb1">
+@@ -64,6 +67,7 @@ const TOTPForm = ({
+                 withLoading(onSubmit(totp)).catch(noop);
+             }}
+             method="post"
++            style={ELECTRON_MAIL_FORM_STYLE}
+         >
+             <Label htmlFor="twoFa">{c('Label').t`Two-factor authentication code`}</Label>
+             <div className="mb1">
+@@ -98,6 +102,7 @@ const LoginForm = ({
+                 withLoading(onSubmit(username, password)).catch(noop);
+             }}
+             method="post"
++            style={ELECTRON_MAIL_FORM_STYLE}
+         >
+             <Label htmlFor="login">{c('Label').t`Username or ProtonMail address`}</Label>
+             <div className="mb1">

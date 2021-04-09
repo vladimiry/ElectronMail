@@ -127,7 +127,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             if (options.savePassword) {
                 await waitForClickable(
                     client,
-                    "[formControlName=savePassword]",
+                    "#savePasswordCheckbox + label",
                     {callback: async (el) => el.click(), timeout: CONF.timeouts.element},
                 );
             }

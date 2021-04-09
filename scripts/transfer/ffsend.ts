@@ -14,9 +14,9 @@ const [, , ACTION_TYPE_ARG, FILE_ARG] = process.argv as [null, null, "upload" | 
 async function resolveCommand(): Promise<{ command: string }> {
     const binaryBundle = (() => {
         const fileNames = {
-            darwin: {postfix: "macos", sha256: "d7c9b098c81a7112efb3d92439b326145576ebaa9ff301be17b397a49286a386"},
-            linux: {postfix: "linux-x64-static", sha256: "f5f5233d977dc39c23057bf62a3d01924636eab9e9243b996f73bcdf8f3d3ce5"},
-            win32: {postfix: "windows-x64-static.exe", sha256: "2452a79340dddbeb91fb04e436e85927f39597643456221ecb68ec370205a954"},
+            darwin: {postfix: "macos", sha256: "8d96e00a7e8949069b59dfea7c65f76c40eaa98bae4beeb799e14e0c04438165"},
+            linux: {postfix: "linux-x64-static", sha256: "a9cc69c204e34db452a66b18c36d748bcc98ccfcd2c9fd4e1c7cfdbbb18f7058"},
+            win32: {postfix: "windows-x64-static.exe", sha256: "61bf05a5733458a80bab2b7f82d577dd85b72ca76f67319883df9449015c20e0"},
         } as const;
         const platform = os.platform();
         const resolvedItem: typeof fileNames[keyof typeof fileNames] | undefined = fileNames[platform as (keyof typeof fileNames)];

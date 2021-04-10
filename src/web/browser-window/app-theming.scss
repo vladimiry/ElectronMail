@@ -53,6 +53,11 @@
             > .btn:not(:last-child) {
                 border-right-color: $app-theming-color-secondary-btn-split-border;
             }
+
+            .login-delay {
+                // see bootstrap's "button-variant" mixin
+                color: color-yiq($secondary);
+            }
         }
     }
 }

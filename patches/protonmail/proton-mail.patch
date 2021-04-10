@@ -35,3 +35,16 @@ index 13ba576..419e6be 100644
          >
              <Label htmlFor="login">{c('Label').t`Username or ProtonMail address`}</Label>
              <div className="mb1">
+diff --git a/src/app/containers/mailbox/MailboxContainer.tsx b/src/app/containers/mailbox/MailboxContainer.tsx
+index 3f222f7..98e9cfe 100644
+--- a/src/app/containers/mailbox/MailboxContainer.tsx
++++ b/src/app/containers/mailbox/MailboxContainer.tsx
+@@ -200,7 +200,7 @@ const MailboxContainer = ({
+     );
+
+     return (
+-        <div ref={elementRef} tabIndex={-1} className="flex-item-fluid flex flex-column flex-nowrap no-outline">
++        <div ref={elementRef} tabIndex={-1} className="flex-item-fluid flex flex-column flex-nowrap no-outline electron-mail-mailbox-container-component">
+             {showToolbar && (
+                 <Toolbar
+                     labelID={labelID}

@@ -1,4 +1,3 @@
-import escapeStringRegexp from "escape-string-regexp";
 import fs from "fs";
 import path from "path";
 
@@ -11,25 +10,20 @@ const extractedImageFolderName = "squashfs-root";
 
 function addCommandLineArgs({packageDir}: { packageDir: string }): void {
     const shFile = path.join(packageDir, "./AppRun");
-    const shContentOriginal = fs.readFileSync(shFile).toString();
-    const {content: shContentPatched, count: shContentPatchedCount} = (() => {
+    const shFileContent = (() => {
+        const content = fs.readFileSync(shFile).toString();
         const searchValue = `exec "$BIN"`;
         const replaceWith = `${searchValue} ${DISABLE_SANDBOX_ARGS_LINE} --js-flags="--max-old-space-size=6144"`;
-        let count = 0;
-        const content = shContentOriginal.replace(
-            new RegExp(escapeStringRegexp(searchValue), "g"),
-            () => (count++, replaceWith),
-        );
-        return {count, content};
+        const patchedContent = content.replaceAll(searchValue, replaceWith);
+        if (patchedContent === content) {
+            throw new Error(`Failed to patch content of the "${shFile}" file`);
+        }
+        return patchedContent;
     })();
 
-    if (shContentPatched === shContentOriginal || shContentPatchedCount !== 2) {
-        throw new Error(`Failed to patch content of the "${shFile}" file`);
-    }
+    CONSOLE_LOG(`Writing ${shFile} file with content:`, shFileContent);
 
-    CONSOLE_LOG(`Writing ${shFile} file with content:`, shContentPatched);
-
-    fs.writeFileSync(shFile, shContentPatched);
+    fs.writeFileSync(shFile, shFileContent);
 }
 
 async function unpack({packageFile}: { packageFile: string }): Promise<{ packageDir: string }> {

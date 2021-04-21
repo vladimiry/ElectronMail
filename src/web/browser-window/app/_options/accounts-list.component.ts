@@ -1,8 +1,7 @@
 import {CdkDragDrop} from "@angular/cdk/drag-drop";
 import {Component, HostBinding, OnDestroy} from "@angular/core";
-import {Observable} from "rxjs/internal/Observable";
+import {Observable, Subject, Subscription} from "rxjs";
 import {Store} from "@ngrx/store";
-import {Subject, Subscription} from "rxjs";
 import {map, withLatestFrom} from "rxjs/operators";
 
 import {AccountConfig} from "src/shared/model/account";

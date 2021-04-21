@@ -12,7 +12,7 @@ export function bootstrapInit(): void {
         showDialog: true,
     });
 
-    if (PLATFORM == "win32") {
+    if (PLATFORM === "win32") {
         // needed for desktop notifications properly working on Win 10, details https://www.electron.build/configuration/nsis
         app.setAppUserModelId(`github.com/vladimiry/${REPOSITORY_NAME}`);
     }

@@ -12,14 +12,14 @@ index 6eef523..b016a0d 100755
    fi;
 
 diff --git a/node_modules/proton-shared/lib/helpers/browser.ts b/node_modules/proton-shared/lib/helpers/browser.ts
-index cf3991e..8ff16c7 100644
+index 8c94fae..19b5577 100644
 --- a/node_modules/proton-shared/lib/helpers/browser.ts
 +++ b/node_modules/proton-shared/lib/helpers/browser.ts
-@@ -112,20 +112,10 @@ export const requireDirectAction = () => isSafari() || isFirefox() || isEdge();
+@@ -117,20 +117,10 @@ export const requireDirectAction = () => isSafari() || isFirefox() || isEdge();
   * @links { https://mathiasbynens.github.io/rel-noopener/}
   */
  export const openNewTab = (url: string) => {
--    if (isIE11() || isFirefox()) {
+-    if (isIE11()) {
 -        const otherWindow = window.open();
 -        if (!otherWindow) {
 -            return;
@@ -38,15 +38,15 @@ index cf3991e..8ff16c7 100644
 +    window.dispatchEvent(
 +        new CustomEvent(
 +            "electron-mail:./node_modules/proton-shared/lib/helpers/browser.ts:openNewTab",
-+            {detail: { url }},
++            {detail: {url}},
 +        ),
 +    );
  };
 diff --git a/node_modules/proton-shared/lib/constants.ts b/node_modules/proton-shared/lib/constants.ts
-index 37ec3c0..2d4628a 100644
+index 4ce6558..76545f6 100644
 --- a/node_modules/proton-shared/lib/constants.ts
 +++ b/node_modules/proton-shared/lib/constants.ts
-@@ -34,42 +34,42 @@ export const APPS = {
+@@ -36,8 +36,8 @@ export const APPS = {
  } as const;
  export const APPS_CONFIGURATION = {
      [APPS.PROTONACCOUNT]: {
@@ -57,6 +57,7 @@ index 37ec3c0..2d4628a 100644
          name: 'Proton Account',
          clientID: 'WebAccount',
          icon: 'protonaccount',
+@@ -45,7 +45,7 @@ export const APPS_CONFIGURATION = {
      },
      [APPS.PROTONMAIL]: {
          publicPath: '',
@@ -65,6 +66,7 @@ index 37ec3c0..2d4628a 100644
          name: 'ProtonMail',
          clientID: 'WebMail',
          icon: 'protonmail',
+@@ -53,7 +53,7 @@ export const APPS_CONFIGURATION = {
      },
      [APPS.PROTONCONTACTS]: {
          publicPath: '/contacts',
@@ -73,6 +75,7 @@ index 37ec3c0..2d4628a 100644
          name: 'ProtonContacts',
          clientID: 'WebContacts',
          icon: 'protoncontacts',
+@@ -61,7 +61,7 @@ export const APPS_CONFIGURATION = {
      },
      [APPS.PROTONDRIVE]: {
          publicPath: '/drive',
@@ -81,6 +84,7 @@ index 37ec3c0..2d4628a 100644
          name: 'ProtonDrive',
          clientID: 'WebDrive',
          icon: 'protondrive',
+@@ -69,7 +69,7 @@ export const APPS_CONFIGURATION = {
      },
      [APPS.PROTONCALENDAR]: {
          publicPath: '/calendar',
@@ -89,32 +93,32 @@ index 37ec3c0..2d4628a 100644
          name: 'ProtonCalendar',
          clientID: 'WebCalendar',
          icon: 'protoncalendar',
-     },
-     [APPS.PROTONVPN_SETTINGS]: {
--        publicPath: '',
-+        publicPath: '/settings',
-         subdomain: '',
-         name: 'ProtonVPN',
-         clientID: 'WebVPNSettings',
 diff --git a/node_modules/proton-shared/lib/helpers/sentry.js b/node_modules/proton-shared/lib/helpers/sentry.js
-index 9c1b5f5..90bfbc7 100644
---- a/node_modules/proton-shared/lib/helpers/sentry.js
-+++ b/node_modules/proton-shared/lib/helpers/sentry.js
-@@ -1,56 +1,7 @@
--import * as Sentry from '@sentry/browser';
+index f62a21a..ff9ac8d 100644
+--- a/node_modules/proton-shared/lib/helpers/sentry.ts
++++ b/node_modules/proton-shared/lib/helpers/sentry.ts
+@@ -1,75 +1,11 @@
+ import * as Sentry from '@sentry/browser';
+
+-import { ProtonConfig } from '../interfaces';
+-import { VPN_HOSTNAME } from '../constants';
 +function main() {
 
--const isLocalhost = () => document.location.host.startsWith('localhost');
+-const isLocalhost = (host: string) => host.startsWith('localhost');
 -
--const isProduction = (host) => host === 'mail.protonmail.com' || host === 'account.protonvpn.com';
+-const isProduction = (host: string) => host.endsWith('.protonmail.com') || host === VPN_HOSTNAME;
 -
--function main({ SENTRY_DSN, COMMIT_RELEASE, APP_VERSION }) {
+-function main({
+-    SENTRY_DSN,
+-    COMMIT_RELEASE,
+-    APP_VERSION,
+-}: Pick<ProtonConfig, 'SENTRY_DSN' | 'COMMIT_RELEASE' | 'APP_VERSION'>) {
+-    const { host } = window.location;
+-
 -    // No need to configure it if we don't load the DSN
--    if (!SENTRY_DSN || isLocalhost()) {
+-    if (!SENTRY_DSN || isLocalhost(host)) {
 -        return;
 -    }
--
--    const { host } = document.location;
 -
 -    // Assumes SENTRY_DSN is: https://111b3eeaaec34cae8e812df705690a36@sentry/11
 -    // To get https://111b3eeaaec34cae8e812df705690a36@mail.protonmail.com/api/reports/sentry/11
@@ -124,9 +128,11 @@ index 9c1b5f5..90bfbc7 100644
 -        dsn,
 -        release: isProduction(host) ? APP_VERSION : COMMIT_RELEASE,
 -        environment: host,
+-        normalizeDepth: 5,
 -        beforeSend(event) {
+-            // @ts-ignore
 -            if (event && 'error' in event && event.error?.stack) {
--                // Filter out broken ferdi errors
+-                // @ts-ignore Filter out broken ferdi errors
 -                if (event.error.stack.includes(/ferdi/i)) {
 -                    return null;
 -                }
@@ -155,7 +161,19 @@ index 9c1b5f5..90bfbc7 100644
 -    });
  }
 
--export const traceError = (e) => !isLocalhost() && Sentry.captureException(e);
-+export const traceError = (e) => console.error(e);
+-export const traceError = (e: unknown) => {
+-    if (!isLocalhost(window.location.host)) {
+-        Sentry.captureException(e);
+-    }
+-};
++export const traceError = (e: unknown) => console.error(e);
+
+-export const captureMessage = (...args: Parameters<typeof Sentry.captureMessage>) => {
+-    if (!isLocalhost(window.location.host)) {
+-        Sentry.captureMessage(...args);
+-    }
+-};
++export const captureMessage = (...args: Parameters<typeof Sentry.captureMessage>) => console.log(args[0]);
 
  export default main;
+

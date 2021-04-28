@@ -88,6 +88,15 @@ export const sanitizeProtonApiError = <T extends unknown>(
             dataError: typeof error.data?.Error === "string" ? error.data?.Error : undefined,
             dataErrorDescription: typeof error.data?.ErrorDescription === "string" ? error.data?.ErrorDescription : undefined,
         };
+        if (!result.message) {
+            for (const propName of ["dataError", "responseStatusText", "dataErrorDescription"] as const) {
+                const propValue = result[propName];
+                if (propValue) {
+                    result.message = propValue;
+                    break;
+                }
+            }
+        }
         return result as any; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
     }
     return error as any; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return

@@ -1,4 +1,5 @@
 import {EMPTY, combineLatest} from "rxjs";
+import {chunk} from "remeda";
 import {distinctUntilChanged, first, map, mergeMap} from "rxjs/operators";
 
 import {EncryptionPreferences, MessageKeys, ProviderApi} from "./model";
@@ -11,6 +12,8 @@ import {attachRateLimiting} from "./rate-limiting";
 import {resolveProviderInternals} from "./internals";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, __filename);
+
+const protonMaxPageSize = 150;
 
 // TODO move function wrapping to utility function
 const attachLoggingBeforeCall = (api: ProviderApi, logger: Logger): void => {
@@ -146,19 +149,25 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                         internals["./node_modules/proton-shared/lib/api/messages.js"].value.queryMessageMetadata(params),
                     );
                 },
-                async markMessageAsRead(ids) {
-                    return (await resolveHttpApi())(
-                        internals["./node_modules/proton-shared/lib/api/messages.js"].value.markMessageAsRead(ids),
+                async markMessageAsRead(IDs) {
+                    const api = await resolveHttpApi();
+                    const {markMessageAsRead: apiMethod} = internals["./node_modules/proton-shared/lib/api/messages.js"].value;
+                    await Promise.all(
+                        chunk(IDs, protonMaxPageSize).map(async (IDsPortion) => api(apiMethod(IDsPortion))),
                     );
                 },
-                async labelMessages(params) {
-                    return (await resolveHttpApi())(
-                        internals["./node_modules/proton-shared/lib/api/messages.js"].value.labelMessages(params),
+                async labelMessages({LabelID, IDs}) {
+                    const api = await resolveHttpApi();
+                    const {labelMessages: apiMethod} = internals["./node_modules/proton-shared/lib/api/messages.js"].value;
+                    await Promise.all(
+                        chunk(IDs, protonMaxPageSize).map(async (IDsPortion) => api(apiMethod({IDs: IDsPortion, LabelID}))),
                     );
                 },
                 async deleteMessages(IDs) {
-                    return (await resolveHttpApi())(
-                        internals["./node_modules/proton-shared/lib/api/messages.js"].value.deleteMessages(IDs),
+                    const api = await resolveHttpApi();
+                    const {deleteMessages: apiMethod} = internals["./node_modules/proton-shared/lib/api/messages.js"].value;
+                    await Promise.all(
+                        chunk(IDs, protonMaxPageSize).map(async (IDsPortion) => api(apiMethod(IDsPortion)))
                     );
                 },
             },

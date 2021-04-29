@@ -1,7 +1,6 @@
 export const PROVIDER_REPO_NAMES = [
     "proton-mail",
     "proton-account",
-    "proton-contacts",
     "proton-calendar",
     "proton-drive",
 ] as const;
@@ -22,7 +21,7 @@ export const PROVIDER_REPO_MAP = {
         repoRelativeDistDir: "./dist",
         baseDirName: "",
         repo: "https://github.com/ProtonMail/proton-mail.git",
-        commit: "fac8db839bd49c9dcb9341a4eabdcf624625e132",
+        commit: "da1bc2669f7d38b7c79b5e60f9cb3cb56067148c",
         protonPack: {
             appConfig: {clientId: "WebMail"},
             webpackIndexEntryItems: [
@@ -51,21 +50,14 @@ export const PROVIDER_REPO_MAP = {
         repoRelativeDistDir: "./dist",
         baseDirName: "account",
         repo: "https://github.com/ProtonMail/proton-account.git",
-        commit: "d00e5966aa1fbbb95dab98ab83004180fa5a229b",
+        commit: "293da1b9a091ae074489d6152be051a176c4cddd",
         protonPack: {appConfig: {clientId: "WebAccount"}}
     },
     [PROVIDER_REPO_NAMES[2]]: {
         repoRelativeDistDir: "./dist",
-        baseDirName: "contacts",
-        repo: "https://github.com/ProtonMail/proton-contacts.git",
-        commit: "23ca056a7ed486146be2407dd77dba9f53f4f5b4",
-        protonPack: {appConfig: {clientId: "WebContacts"}},
-    },
-    [PROVIDER_REPO_NAMES[3]]: {
-        repoRelativeDistDir: "./dist",
         baseDirName: "calendar",
         repo: "https://github.com/ProtonMail/proton-calendar.git",
-        commit: "8f458f23282e14cab4476c2558d5f08692bd1975",
+        commit: "396be94cea2036db15a34f6c192f5d902f5e480d",
         protonPack: {
             appConfig: {clientId: "WebCalendar"},
             webpackIndexEntryItems: [
@@ -75,11 +67,11 @@ export const PROVIDER_REPO_MAP = {
             ],
         },
     },
-    [PROVIDER_REPO_NAMES[4]]: {
+    [PROVIDER_REPO_NAMES[3]]: {
         repoRelativeDistDir: "./dist",
         baseDirName: "drive",
         repo: "https://github.com/ProtonMail/proton-drive.git",
-        commit: "8e661b81d38d5461a7699c88fc55fbf3c9bfdb17",
+        commit: "05e04a979c35f09f294c9b85a9c79e5ddff04d0c",
         protonPack: {appConfig: {clientId: "WebDrive"}},
     },
 } as const;

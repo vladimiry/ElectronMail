@@ -33,6 +33,15 @@ const codeSnippets = ([
             `,
     },
     {
+        title: "Filter by date (older than 90 days)",
+        value: `
+                const msInOneSecond = 1000;
+                const msInOneDay = 60 * 60  * 24 * msInOneSecond;
+                const msLimit = Date.now() - msInOneDay * 90;
+                filterMessage((mail) => mail.Time * msInOneSecond < msLimit);
+            `,
+    },
+    {
         title: "Filter by sender domain and attachment size",
         value: `
                 const twoMegabytes = 1024 * 1204 * 2;

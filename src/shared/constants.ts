@@ -42,10 +42,11 @@ export const UPDATE_CHECK_FETCH_TIMEOUT = ONE_SECOND_MS * 10;
 
 export const PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION = {
     // TODO "electron-builder" doesn't pack the resources with "node_modules" folder in the path, so renamed to "node_modules_" for now
+    // TODO ".txt" extension used since "electron-builder" somewhere internally disabled packing "*.d.ts" files since v22.11.1
     system:
-        "./assets/db-search-monaco-editor/node_modules_/typescript/lib/lib.esnext.d.ts",
+        "./assets/db-search-monaco-editor/node_modules_/typescript/lib/lib.esnext.d.ts.txt",
     protonMessage:
-        `./assets/db-search-monaco-editor/proton-shared/${PROTON_SHARED_MESSAGE_INTERFACE.projectRelativeFile.replace(".ts", ".d.ts")}`,
+        `./assets/db-search-monaco-editor/proton-shared/${PROTON_SHARED_MESSAGE_INTERFACE.projectRelativeFile.replace(".ts", ".d.ts.txt")}`,
 } as const;
 
 export const LOCAL_WEBCLIENT_PROTOCOL_PREFIX = "webclient";

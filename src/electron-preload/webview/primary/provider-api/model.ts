@@ -126,29 +126,29 @@ export type ProviderInternalsLazy = AddInitializedProp<{
     }
 }>
 
-export type ProviderApi = DeepReadonly<{
-    _custom_: {
+export type ProviderApi = Readonly<{
+    _custom_: Readonly<{
         loggedIn$: import("rxjs").Observable<boolean>
         cachedMailSettingsModel$: import("rxjs").Observable<{ readonly ViewMode: number }>
         buildEventsApiUrlTester: (options: { entryApiUrl: string }) => (url: string) => boolean
         buildMessagesCountApiUrlTester: (options: { entryApiUrl: string }) => (url: string) => boolean
         decryptMessageBody: (message: RestModel.Message) => Promise<string>
-    }
+    }>
     constants: ProviderInternals["./node_modules/proton-shared/lib/constants.ts"]["value"],
-    label: {
+    label: Readonly<{
         get: (
             ...args: Parameters<ProviderInternals["./node_modules/proton-shared/lib/api/labels.ts"]["value"]["get"]>
         ) => Promise<RestModel.LabelsResponse>
-    },
-    conversation: {
+    }>,
+    conversation: Readonly<{
         getConversation: (
             ...args: Parameters<ProviderInternals["./node_modules/proton-shared/lib/api/conversations.js"]["value"]["getConversation"]>
         ) => Promise<RestModel.ConversationResponse>
         queryConversations: (
             ...args: Parameters<ProviderInternals["./node_modules/proton-shared/lib/api/conversations.js"]["value"]["queryConversations"]>
         ) => Promise<RestModel.ConversationsResponse>
-    },
-    message: {
+    }>,
+    message: Readonly<{
         getMessage: (
             ...args: Parameters<ProviderInternals["./node_modules/proton-shared/lib/api/messages.js"]["value"]["getMessage"]>
         ) => Promise<RestModel.MessageResponse>
@@ -164,30 +164,30 @@ export type ProviderApi = DeepReadonly<{
         deleteMessages: (
             ...args: Parameters<ProviderInternals["./node_modules/proton-shared/lib/api/messages.js"]["value"]["deleteMessages"]>
         ) => Promise<void>
-    },
-    contact: {
+    }>,
+    contact: Readonly<{
         queryContacts: (
             ...args: Parameters<ProviderInternals["./node_modules/proton-shared/lib/api/contacts.ts"]["value"]["queryContacts"]>
         ) => Promise<RestModel.ContactsResponse>
         getContact: (
             ...args: Parameters<ProviderInternals["./node_modules/proton-shared/lib/api/contacts.ts"]["value"]["getContact"]>
         ) => Promise<RestModel.ContactResponse>
-    },
-    events: {
+    }>,
+    events: Readonly<{
         getEvents: (
             ...args: Parameters<ProviderInternals["./node_modules/proton-shared/lib/api/events.ts"]["value"]["getEvents"]>
         ) => Promise<RestModel.EventResponse>
         getLatestID: (
             ...args: Parameters<ProviderInternals["./node_modules/proton-shared/lib/api/events.ts"]["value"]["getLatestID"]>
         ) => Promise<RestModel.LatestEventResponse>
-    },
-    attachmentLoader: {
+    }>,
+    attachmentLoader: Readonly<{
         getDecryptedAttachment: (
             attachment: RestModel.Attachment,
             message: RestModel.Message,
         ) => Promise<NoExtraProps<{ data: Uint8Array }>>
-    },
-    history: {
+    }>,
+    history: Readonly<{
         push: (
             options: {
                 conversationId?: DatabaseModel.ConversationEntry["id"] | DatabaseModel.Mail["id"]
@@ -195,8 +195,8 @@ export type ProviderApi = DeepReadonly<{
                 folderId: DatabaseModel.Folder["id"]
             }
         ) => Promise<void>
-    },
-}>
+    }>,
+}>;
 
 export interface EncryptionPreferences {
     readonly pinnedKeys: readonly unknown[]

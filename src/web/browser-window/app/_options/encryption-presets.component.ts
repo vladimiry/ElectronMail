@@ -54,7 +54,7 @@ export class EncryptionPresetsComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.unSubscribe$.next();
+        this.unSubscribe$.next(void 0);
         this.unSubscribe$.complete();
     }
 }

@@ -2,6 +2,7 @@ import UUID from "pure-uuid";
 import electronLog from "electron-log";
 import sanitizeHtml from "sanitize-html";
 import {first} from "rxjs/operators";
+import {lastValueFrom} from "rxjs";
 import {omit} from "remeda";
 
 import {Context} from "src/electron-main/model";
@@ -154,7 +155,8 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             }
 
             setTimeout(async () => {
-                const {disableSpamNotifications} = await ctx.config$.pipe(first()).toPromise();
+                const config = await lastValueFrom(ctx.config$.pipe(first()));
+                const {disableSpamNotifications} = config;
 
                 IPC_MAIN_API_NOTIFICATION$.next(
                     IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount({
@@ -211,7 +213,8 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                 return false;
             }
 
-            const {disableSpamNotifications} = await ctx.config$.pipe(first()).toPromise();
+            const config = await lastValueFrom(ctx.config$.pipe(first()));
+            const {disableSpamNotifications} = config;
 
             return {
                 folders: prepareFoldersView(account, !disableSpamNotifications),

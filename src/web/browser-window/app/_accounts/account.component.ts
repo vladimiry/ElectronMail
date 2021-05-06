@@ -1,4 +1,4 @@
-import {BehaviorSubject, Observable, Subject, Subscription, combineLatest, merge, of, race, throwError, timer} from "rxjs";
+import {BehaviorSubject, Observable, Subject, Subscription, combineLatest, lastValueFrom, merge, of, race, throwError, timer} from "rxjs";
 import {
     ChangeDetectionStrategy,
     Component,
@@ -327,9 +327,10 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         this.logger.info(nameof(AccountComponent.prototype.onPrimaryViewLoadedOnce));
 
         const resolveSavedProtonClientSession = async (): Promise<ProtonClientSession> => {
-            const apiClient = await this.electronService
-                .primaryWebViewClient({webView: primaryWebView, accountIndex: this.account.accountIndex})
-                .toPromise();
+            const apiClient = await lastValueFrom(
+                this.electronService
+                    .primaryWebViewClient({webView: primaryWebView, accountIndex: this.account.accountIndex}),
+            );
             const value = await apiClient("resolveSavedProtonClientSession")(pick(this.account, ["accountIndex"]));
 
             if (!value) {
@@ -436,16 +437,18 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         this.logger,
                         await resolveSavedProtonClientSession(),
                     ),
-                    race(
-                        this.loggedInCalendar$.pipe(
-                            filter(Boolean),
-                        ),
-                        timer(calendarGetsSignedInStateTimeoutMs).pipe(
-                            concatMap(() => throwError(
-                                new Error(`The Calendar has not got the signed-in stage in ${calendarGetsSignedInStateTimeoutMs}ms`)),
+                    lastValueFrom(
+                        race(
+                            this.loggedInCalendar$.pipe(
+                                filter(Boolean),
+                            ),
+                            timer(calendarGetsSignedInStateTimeoutMs).pipe(
+                                concatMap(() => throwError(
+                                    new Error(`The Calendar has not got the signed-in stage in ${calendarGetsSignedInStateTimeoutMs}ms`)),
+                                ),
                             ),
                         ),
-                    ).toPromise(),
+                    ),
                 ]);
             }),
         );

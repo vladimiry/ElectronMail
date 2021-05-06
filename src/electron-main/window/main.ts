@@ -2,6 +2,7 @@ import _logger from "electron-log";
 import {BrowserWindow, Rectangle, app, screen} from "electron";
 import {equals} from "remeda";
 import {first} from "rxjs/operators";
+import {lastValueFrom} from "rxjs";
 
 import {Context} from "src/electron-main/model";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";
@@ -16,7 +17,8 @@ async function resolveBoundsToRestore(
     ctx: Context,
     currentBounds: Readonly<Rectangle>,
 ): Promise<Rectangle> {
-    const {window: {bounds: savedBounds}} = await ctx.config$.pipe(first()).toPromise();
+    const config = await lastValueFrom(ctx.config$.pipe(first()));
+    const {window: {bounds: savedBounds}} = config;
     const x = Math.max(
         savedBounds.x ?? currentBounds.x,
         0,
@@ -61,7 +63,8 @@ async function resolveBoundsToRestore(
 
 async function keepBrowserWindowState(ctx: Context, browserWindow: Electron.BrowserWindow): Promise<void> {
     await (async (): Promise<void> => {
-        const {window: {bounds}} = await ctx.config$.pipe(first()).toPromise();
+        const config = await lastValueFrom(ctx.config$.pipe(first()));
+        const {window: {bounds}} = config;
         const hasSavedPosition = "x" in bounds && "y" in bounds;
 
         if (!hasSavedPosition) {
@@ -72,7 +75,7 @@ async function keepBrowserWindowState(ctx: Context, browserWindow: Electron.Brow
     const saveWindowStateHandler = async (): Promise<void> => {
         await ctx.configStoreQueue.q(
             async () => {
-                const config = await ctx.config$.pipe(first()).toPromise();
+                const config = await lastValueFrom(ctx.config$.pipe(first()));
                 const storedWindowConfig = Object.freeze(config.window);
                 const newWindowConfig = {...config.window};
 
@@ -152,7 +155,7 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
             await keepBrowserWindowState(ctx, browserWindow);
 
             if (
-                !(await ctx.config$.pipe(first()).toPromise()).startHidden
+                !(await lastValueFrom(ctx.config$.pipe(first()))).startHidden
                 ||
                 // always showing the window when the settings is still not configured/saved
                 !(await ctx.settingsStore.readable())

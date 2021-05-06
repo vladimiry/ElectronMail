@@ -1,5 +1,5 @@
 import {Component, Injector, OnInit} from "@angular/core";
-import {Subject, combineLatest, from, race} from "rxjs";
+import {Subject, combineLatest, from, lastValueFrom, race} from "rxjs";
 import {distinctUntilChanged, filter, map, pairwise, take, takeUntil, withLatestFrom} from "rxjs/operators";
 import {equals, pick} from "remeda";
 
@@ -96,7 +96,7 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
                         takeUntil(from(finishPromise)),
                     )
                     .subscribe(({pk, data: {loggedIn, database}}) => {
-                        breakPreviousSyncing$.next();
+                        breakPreviousSyncing$.next(void 0);
 
                         if (!loggedIn || !database) {
                             return; // syncing disabled
@@ -106,10 +106,12 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
                             ACCOUNTS_ACTIONS.ToggleSyncing({
                                 pk,
                                 webView,
-                                finishPromise: race([
-                                    from(finishPromise),
-                                    breakPreviousSyncing$.pipe(take(1)),
-                                ]).toPromise(),
+                                finishPromise: lastValueFrom(
+                                    race([
+                                        from(finishPromise),
+                                        breakPreviousSyncing$.pipe(take(1)),
+                                    ]),
+                                ),
                             }),
                         );
                     });

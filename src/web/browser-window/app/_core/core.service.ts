@@ -1,6 +1,6 @@
 import UUID from "pure-uuid";
 import {Actions} from "@ngrx/effects";
-import {EMPTY, concat, timer} from "rxjs";
+import {EMPTY, concat, lastValueFrom, timer} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {URL} from "@cliqz/url-parser";
@@ -64,12 +64,13 @@ export class CoreService {
     ): Promise<void> {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         const logger = curryFunctionMembers(logger_, __filename, nameof(CoreService.prototype.applyProtonClientSessionAndNavigate));
-        const {webViewBlankDOMLoaded: loaderIdTimeoutMs} = await this.store
-            .pipe(
+        const timeouts = await lastValueFrom(
+            this.store.pipe(
                 select(OptionsSelectors.CONFIG.timeouts),
                 first(),
-            )
-            .toPromise();
+            ),
+        );
+        const {webViewBlankDOMLoaded: loaderIdTimeoutMs} = timeouts;
         const loaderId = new UUID(4).format();
         const loaderIdParam = "loader-id";
         const loaderSrcOrigin = parseUrlOriginWithNullishCheck(
@@ -89,15 +90,17 @@ export class CoreService {
 
         try {
             logger.verbose("webViewDomReady$");
-            webView = await webViewDomReady$.pipe(
-                filter(({src}) => {
-                    const result = Boolean(src) && new URL(src).searchParams.get(loaderIdParam) === loaderId;
-                    logger.verbose("webViewDomReady$ filter", JSON.stringify({src, result}));
-                    return result;
-                }),
-                takeUntil(timer(loaderIdTimeoutMs)),
-                first(), // "first()" throws error if stream closed without any event passed through
-            ).toPromise();
+            webView = await lastValueFrom<Exclude<typeof webView, undefined>>(
+                webViewDomReady$.pipe(
+                    filter(({src}) => {
+                        const result = Boolean(src) && new URL(src).searchParams.get(loaderIdParam) === loaderId;
+                        logger.verbose("webViewDomReady$ filter", JSON.stringify({src, result}));
+                        return result;
+                    }),
+                    takeUntil(timer(loaderIdTimeoutMs)),
+                    first(), // "first()" throws error if stream closed without any event passed through
+                ),
+            );
         } catch (error) {
             const message = `Failed to load "${loaderSrc}" page in ${loaderIdTimeoutMs}ms`;
             logger.error(message, error);

@@ -28,7 +28,7 @@ export abstract class NgChangesObservableComponent implements OnChanges, OnDestr
 
     ngOnDestroy(): void {
         this.ngChanges.complete();
-        this.ngOnDestroy$.next();
+        this.ngOnDestroy$.next(void 0);
         this.ngOnDestroy$.complete();
     }
 

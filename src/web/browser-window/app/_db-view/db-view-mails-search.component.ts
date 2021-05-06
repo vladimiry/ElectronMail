@@ -141,7 +141,7 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
 
                 if (!this.formFolderControlsInitialized$.closed) {
                     setTimeout(() => { // execute below code after folder form controls got rendered (next change detection tick)
-                        this.formFolderControlsInitialized$.next();
+                        this.formFolderControlsInitialized$.next(void 0);
                         this.formFolderControlsInitialized$.complete();
                     });
                 }

@@ -1,4 +1,4 @@
-import {EMPTY, combineLatest} from "rxjs";
+import {EMPTY, combineLatest, lastValueFrom} from "rxjs";
 import {chunk} from "remeda";
 import {distinctUntilChanged, first, map, mergeMap} from "rxjs/operators";
 
@@ -43,8 +43,8 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
         ]);
         const internalsPrivateScope$ = internals["./src/app/containers/PageContainer.tsx"].value$.pipe(distinctUntilChanged());
         const resolvePrivateApi = async () => { // eslint-disable-line @typescript-eslint/explicit-function-return-type
-            return internalsPrivateScope$
-                .pipe(
+            return lastValueFrom(
+                internalsPrivateScope$.pipe(
                     first(),
                     map((value) => {
                         if (!value.privateScope) {
@@ -54,10 +54,10 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                         }
                         return value.privateScope;
                     }),
-                )
-                .toPromise();
+                ),
+            );
         };
-        const resolveHttpApi = async (): Promise<HttpApi> => standardSetupPublicApi.httpApi$.pipe(first()).toPromise();
+        const resolveHttpApi = async (): Promise<HttpApi> => lastValueFrom(standardSetupPublicApi.httpApi$.pipe(first()));
         const providerApi: ProviderApi = {
             _custom_: {
                 loggedIn$: combineLatest([
@@ -259,7 +259,7 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                 async push({folderId, conversationId, mailId}) {
                     // eslint-disable-next-line max-len
                     // https://github.com/ProtonMail/proton-mail/blob/d3ef340d820c51275310b7b8b3e13ff25193dece/src/app/containers/MailboxContainer.tsx#L147-L157
-                    const history = await standardSetupPublicApi.history$.pipe(first()).toPromise();
+                    const history = await lastValueFrom(standardSetupPublicApi.history$.pipe(first()));
                     const {setParamsInLocation} = internals["./src/app/helpers/mailboxUrl.ts"].value;
                     const resolvedUrl = conversationId
                         ? setParamsInLocation(history.location, {labelID: folderId, elementID: conversationId, messageID: mailId})

@@ -2,8 +2,8 @@ import UUID from "pure-uuid";
 import electronLog from "electron-log";
 import {UnionOf} from "@vladimiry/unionize";
 import {concatMap, filter, first} from "rxjs/operators";
+import {lastValueFrom, race, throwError, timer} from "rxjs";
 import {pick} from "remeda";
-import {race, throwError, timer} from "rxjs";
 
 import {Config} from "src/shared/model/options";
 import {DbAccountPk, FsDbAccount, INDEXABLE_MAIL_FIELDS, Mail} from "src/shared/model/database";
@@ -67,11 +67,9 @@ async function indexMails(
         }),
     );
 
-    return result$
-        .toPromise()
-        .then(() => {
-            logger.verbose(nameof(indexMails), "end", {indexed: mails.length, duration: duration.end()});
-        });
+    return lastValueFrom(result$).then(() => {
+        logger.verbose(nameof(indexMails), "end", {indexed: mails.length, duration: duration.end()});
+    });
 }
 
 export async function indexAccount(

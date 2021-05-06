@@ -4,7 +4,7 @@ import electronLog from "electron-log";
 import fetch from "node-fetch";
 import {app, dialog, nativeTheme, shell} from "electron";
 import {first, map, startWith} from "rxjs/operators";
-import {from, merge, of, throwError} from "rxjs";
+import {from, lastValueFrom, merge, of, throwError} from "rxjs";
 import {inspect} from "util";
 import {isWebUri} from "valid-url";
 
@@ -75,7 +75,8 @@ export async function buildEndpoints(
                 return;
             }
 
-            const {window: {maximized}} = await ctx.config$.pipe(first()).toPromise();
+            const config = await lastValueFrom(ctx.config$.pipe(first()));
+            const {window: {maximized}} = config;
 
             await applyZoomFactor(ctx, browserWindow.webContents);
 
@@ -153,7 +154,8 @@ export async function buildEndpoints(
             }
 
             return merge(
-                of({message: "timeout-reset"}), // resets api calling timeouts (dialog potentially can be opened for a long period of time)
+                // resets api calling timeouts (dialog potentially can be opened for a long period of time)
+                of({message: "timeout-reset"} as const),
                 from(
                     dialog.showOpenDialog(
                         browserWindow,
@@ -259,7 +261,8 @@ export async function buildEndpoints(
             )();
 
             return async (): Promise<IpcMainServiceScan["ApiImplReturns"]["updateCheck"]> => {
-                const {updateCheck: {releasesUrl, proxy}} = await ctx.config$.pipe(first()).toPromise();
+                const config = await lastValueFrom(ctx.config$.pipe(first()));
+                const {updateCheck: {releasesUrl, proxy}} = config;
                 const response = await fetch(
                     releasesUrl,
                     {
@@ -345,7 +348,7 @@ export async function buildEndpoints(
             IPC_MAIN_API_NOTIFICATION$.next(
                 IPC_MAIN_API_NOTIFICATION_ACTIONS.ConfigUpdated(
                     await ctx.configStoreQueue.q(async () => {
-                        const config = await ctx.config$.pipe(first()).toPromise();
+                        const config = await lastValueFrom(ctx.config$.pipe(first()));
                         const {hideControls} = arg || {hideControls: !config.hideControls};
 
                         return ctx.configStore.write({

@@ -1,4 +1,4 @@
-import {EMPTY, Observable, from, interval, merge} from "rxjs";
+import {EMPTY, Observable, from, interval, lastValueFrom, merge} from "rxjs";
 import {buffer, concatMap, debounceTime, distinctUntilChanged, filter, first, map, mergeMap, tap, withLatestFrom} from "rxjs/operators";
 import {pick} from "remeda";
 import {serializeError} from "serialize-error";
@@ -29,9 +29,11 @@ export function registerApi(providerApi: ProviderApi): void {
         async selectMailOnline(input) {
             _logger.info(nameof(endpoints.selectMailOnline), input.accountIndex);
 
-            const {ViewMode: viewMode} = await providerApi._custom_.cachedMailSettingsModel$
-                .pipe(first())
-                .toPromise();
+            const cachedMailSettingsModel = await lastValueFrom(
+                providerApi._custom_.cachedMailSettingsModel$
+                    .pipe(first()),
+            );
+            const {ViewMode: viewMode} = cachedMailSettingsModel;
             const messagesViewMode = viewMode === providerApi.constants.VIEW_MODE.SINGLE;
             const {system: systemMailFolderIds, custom: [customFolderId]} = input.mail.mailFolderIds.reduce(
                 (accumulator: {

@@ -1,7 +1,7 @@
 import UUID from "pure-uuid";
 import electronLog from "electron-log";
 import fsExtra from "fs-extra";
-import {Observable, race, throwError, timer} from "rxjs";
+import {Observable, lastValueFrom, race, throwError, timer} from "rxjs";
 import {concatMap, filter, first, mergeMap, tap} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
@@ -55,8 +55,8 @@ export async function buildDbExportEndpoints(
                 let skippedIndividualAttachments = 0;
 
                 const promise = (async (): Promise<void> => {
-                    const {timeouts: {attachmentLoadAverage: attachmentLoadAverageTimeoutMs}}
-                        = await ctx.config$.pipe(first()).toPromise();
+                    const config = await lastValueFrom(ctx.config$.pipe(first()));
+                    const {timeouts: {attachmentLoadAverage: attachmentLoadAverageTimeoutMs}} = config;
 
                     for (let mailIndex = 0; mailIndex < mailsCount; mailIndex++) {
                         const mail = mails[mailIndex];
@@ -85,29 +85,31 @@ export async function buildDbExportEndpoints(
                                 );
                             });
 
-                            await race(
-                                MAIL_ATTACHMENTS_EXPORT_NOTIFICATION$.pipe(
-                                    filter((payload) => payload.accountPk.login === login && payload.uuid === uuid),
-                                    mergeMap((payload) => {
-                                        if ("serializedError" in payload && payload.serializedError) {
-                                            skippedMailAttachments += attachmentsCount;
-                                            return [{attachments: []}];
-                                        }
-                                        return [{attachments: payload.attachments}];
-                                    }),
-                                    first(),
-                                    tap(({attachments}) => {
-                                        loadedAttachments.push(...attachments);
-                                    }),
+                            await lastValueFrom(
+                                race(
+                                    MAIL_ATTACHMENTS_EXPORT_NOTIFICATION$.pipe(
+                                        filter((payload) => payload.accountPk.login === login && payload.uuid === uuid),
+                                        mergeMap((payload) => {
+                                            if ("serializedError" in payload && payload.serializedError) {
+                                                skippedMailAttachments += attachmentsCount;
+                                                return [{attachments: []}];
+                                            }
+                                            return [{attachments: payload.attachments}];
+                                        }),
+                                        first(),
+                                        tap(({attachments}) => {
+                                            loadedAttachments.push(...attachments);
+                                        }),
+                                    ),
+                                    timer(timeoutMs).pipe(
+                                        concatMap(() => throwError(
+                                            new Error(
+                                                `Attachments downloading failed in ${timeoutMs}ms (${JSON.stringify({mailIndex})})`,
+                                            ),
+                                        )),
+                                    ),
                                 ),
-                                timer(timeoutMs).pipe(
-                                    concatMap(() => throwError(
-                                        new Error(
-                                            `Attachments downloading failed in ${timeoutMs}ms (${JSON.stringify({mailIndex})})`,
-                                        ),
-                                    )),
-                                ),
-                            ).toPromise();
+                            );
 
                             logger.verbose("attachments processing end", JSON.stringify({mailIndex}));
                         }

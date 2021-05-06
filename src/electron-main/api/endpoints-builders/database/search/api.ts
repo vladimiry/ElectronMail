@@ -1,6 +1,6 @@
 import UUID from "pure-uuid";
 import electronLog from "electron-log";
-import {Observable, from, of, race, throwError, timer} from "rxjs";
+import {Observable, from, lastValueFrom, of, race, throwError, timer} from "rxjs";
 import {concatMap, filter, first, mergeMap, switchMap} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
@@ -30,7 +30,8 @@ export async function buildDbSearchEndpoints(
             const mailPks = "query" in restOptions
                 ? [] // TODO execute the actual search and pick "mailPks" from the search result
                 : restOptions.mailPks;
-            const {disableSpamNotifications} = await ctx.config$.pipe(first()).toPromise();
+            const config = await lastValueFrom(ctx.config$.pipe(first()));
+            const {disableSpamNotifications} = config;
 
             return searchRootConversationNodes(account, {folderIds, mailPks}, !disableSpamNotifications);
         },
@@ -53,7 +54,8 @@ export async function buildDbSearchEndpoints(
                         )]),
                     ),
                     await (async () => {
-                        const {timeouts: {fullTextSearch: timeoutMs}} = await ctx.config$.pipe(first()).toPromise();
+                        const config = await lastValueFrom(ctx.config$.pipe(first()));
+                        const {timeouts: {fullTextSearch: timeoutMs}} = config;
                         return timer(timeoutMs).pipe(
                             concatMap(() => throwError(new Error(`Failed to complete the search in ${timeoutMs}ms`))),
                         );
@@ -79,7 +81,7 @@ export async function buildDbSearchEndpoints(
                 );
             }
 
-            return result$.toPromise();
+            return lastValueFrom(result$);
         },
     };
 

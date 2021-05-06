@@ -1,7 +1,7 @@
 import electronLog from "electron-log";
 import {Session, session as electronSession} from "electron";
 import {concatMap, first} from "rxjs/operators";
-import {from, race, throwError, timer} from "rxjs";
+import {from, lastValueFrom, race, throwError, timer} from "rxjs";
 
 import {AccountConfig} from "src/shared/model/account";
 import {Context} from "./model";
@@ -51,7 +51,8 @@ export async function initSession(
 
     if (rotateUserAgent) {
         if (!ctx.userAgentsPool || !ctx.userAgentsPool.length) {
-            const {userAgents} = await ctx.config$.pipe(first()).toPromise();
+            const config = await lastValueFrom(ctx.config$.pipe(first()));
+            const {userAgents} = config;
             ctx.userAgentsPool = [...userAgents];
         }
         const {userAgentsPool} = ctx;
@@ -102,14 +103,16 @@ export async function configureSessionByAccount(
 
     initWebRequestListenersByAccount(ctx, account);
 
-    await race(
-        from(
-            session.setProxy(proxyConfig),
+    await lastValueFrom(
+        race(
+            from(
+                session.setProxy(proxyConfig),
+            ),
+            timer(ONE_SECOND_MS * 2).pipe(
+                concatMap(() => throwError(new Error("Failed to configure proxy settings"))),
+            ),
         ),
-        timer(ONE_SECOND_MS * 2).pipe(
-            concatMap(() => throwError(new Error("Failed to configure proxy settings"))),
-        ),
-    ).toPromise();
+    );
 }
 
 export async function initSessionByAccount(

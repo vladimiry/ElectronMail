@@ -1,6 +1,6 @@
 import {DOCUMENT} from "@angular/common";
 import {Directive, ElementRef, EventEmitter, Injector, Input, OnDestroy, Output, Renderer2} from "@angular/core";
-import {Observable, Subscription, combineLatest, race} from "rxjs";
+import {Observable, Subscription, combineLatest, lastValueFrom, race} from "rxjs";
 import {distinctUntilChanged, filter, map, take} from "rxjs/operators";
 import {equals, pick} from "remeda";
 
@@ -115,10 +115,12 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
     }
 
     protected async filterDomReadyOrDestroyedPromise(): Promise<void> {
-        return race([
-            this.filterDomReadyEvent().pipe(take(1)),
-            this.ngOnDestroy$,
-        ]).toPromise().then(() => {}); // eslint-disable-line @typescript-eslint/no-empty-function
+        return lastValueFrom(
+            race([
+                this.filterDomReadyEvent().pipe(take(1)),
+                this.ngOnDestroy$,
+            ]),
+        ).then(() => {}); // eslint-disable-line @typescript-eslint/no-empty-function
     }
 
     protected addSubscription(

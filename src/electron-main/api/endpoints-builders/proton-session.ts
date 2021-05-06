@@ -1,5 +1,5 @@
 import {concatMap, first} from "rxjs/operators";
-import {from, race, throwError, timer} from "rxjs";
+import {from, lastValueFrom, race, throwError, timer} from "rxjs";
 import {pick} from "remeda";
 
 import {Context} from "src/electron-main/model";
@@ -119,16 +119,19 @@ export async function buildEndpoints(
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async resetProtonBackendSession({login}) {
             const session = resolveInitializedSession({login});
-            const {timeouts: {clearSessionStorageData: timeoutMs}} = await ctx.config$.pipe(first()).toPromise();
+            const config = await lastValueFrom(ctx.config$.pipe(first()));
+            const {timeouts: {clearSessionStorageData: timeoutMs}} = config;
 
-            await race(
-                from(
-                    session.clearStorageData(),
+            await lastValueFrom(
+                race(
+                    from(
+                        session.clearStorageData(),
+                    ),
+                    timer(timeoutMs).pipe(
+                        concatMap(() => throwError(new Error(`Session clearing failed in ${timeoutMs}ms`))),
+                    ),
                 ),
-                timer(timeoutMs).pipe(
-                    concatMap(() => throwError(new Error(`Session clearing failed in ${timeoutMs}ms`))),
-                ),
-            ).toPromise();
+            );
         },
     };
 

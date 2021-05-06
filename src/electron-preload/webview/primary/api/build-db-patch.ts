@@ -1,4 +1,4 @@
-import {Subject, defer, merge, race, throwError, timer} from "rxjs";
+import {Subject, defer, lastValueFrom, merge, race, throwError, timer} from "rxjs";
 import {concatMap, filter, first, map, tap} from "rxjs/operators";
 
 import * as Database from "src/electron-preload/webview/lib/database-entity";
@@ -378,7 +378,7 @@ const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonPrimaryApi, 
                 logger.verbose(`${nameof(releaseTimeout)}() triggered by "${cause}"`);
                 // the bootstrap fetch process triggered by "refresh" event gets called with short/"dbSyncing" timeout value, so we
                 // release the timeout at this point since bootstrap fetch might take long time (see "dbBootstrapping" timeout)
-                timeoutReleaseSubject$.next();
+                timeoutReleaseSubject$.next(void 0);
                 timeoutReleaseSubject$.complete();
             };
             const deferFactory = async (): Promise<BuildDbPatchMethodReturnType> => {
@@ -387,16 +387,18 @@ const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonPrimaryApi, 
                 // TODO handle "account.entryUrl" change event
                 // the account state keeps the "signed-in" state despite of page still being reloaded
                 // so we need to reset "signed-in" state with "account.entryUrl" value change
-                await race(
-                    providerApi._custom_.loggedIn$.pipe(
-                        filter(Boolean), // should be logged in
-                        first(),
+                await lastValueFrom(
+                    race(
+                        providerApi._custom_.loggedIn$.pipe(
+                            filter(Boolean), // should be logged in
+                            first(),
+                        ),
+                        // timeout value of calling "buildDbPatch()" is long so we setup custom one here just to test the logged-in state
+                        timer(ONE_SECOND_MS * 5).pipe(
+                            concatMap(() => throwError(new Error(`User is supposed to be logged-in`))),
+                        ),
                     ),
-                    // timeout value of calling "buildDbPatch()" is long so we setup custom one here just to test the logged-in state
-                    timer(ONE_SECOND_MS * 5).pipe(
-                        concatMap(() => throwError(new Error(`User is supposed to be logged-in`))),
-                    ),
-                ).toPromise();
+                );
 
                 const fetchedEvents = (
                     isDatabaseBootstrapped(input.metadata)

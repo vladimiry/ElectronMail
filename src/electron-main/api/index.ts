@@ -2,6 +2,7 @@ import electronLog from "electron-log";
 import path from "path";
 import {authenticator} from "otplib";
 import {first} from "rxjs/operators";
+import {lastValueFrom} from "rxjs";
 
 import * as EndpointsBuilders from "./endpoints-builders";
 import * as SpellCheck from "src/electron-main/spell-check/api";
@@ -322,7 +323,7 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             // saving the session database
             await sessionDb.saveToFile();
 
-            if ((await ctx.config$.pipe(first()).toPromise()).fullTextSearch) {
+            if ((await lastValueFrom(ctx.config$.pipe(first()))).fullTextSearch) {
                 await attachFullTextIndexWindow(ctx);
             } else {
                 await detachFullTextIndexWindow(ctx);

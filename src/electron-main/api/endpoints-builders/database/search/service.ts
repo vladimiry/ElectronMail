@@ -1,5 +1,6 @@
 import {QuickJS, getQuickJS, shouldInterruptAfterDeadline} from "quickjs-emscripten";
 import {first} from "rxjs/operators";
+import {lastValueFrom} from "rxjs";
 
 import {Context} from "src/electron-main/model";
 import {Folder, FsDbAccount, IndexableMailId, LABEL_TYPE, Mail, View} from "src/shared/model/database";
@@ -139,7 +140,8 @@ export const secondSearchStep = async (
         = mailScoresByPk
         ? ({pk}) => mailScoresByPk.get(pk)
         : () => null; // no full-text search executing happened, so no score provided
-    const {disableSpamNotifications} = await ctx.config$.pipe(first()).toPromise();
+    const config = await lastValueFrom(ctx.config$.pipe(first()));
+    const {disableSpamNotifications} = config;
     const rootConversationNodes = searchRootConversationNodes(
         account,
         {

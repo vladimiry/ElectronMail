@@ -5,7 +5,7 @@
     padding-right: variables.$btn-padding-x * 0.9;
 }
 
-@mixin btn-warning-light-active {
+@mixin app-btn-warning-light-active {
     // TODO tweak the ".btn-warning-light" style once globally rather than using mixin
     $bg: map_get(variables.$app-account-title-btn-colors, "selected-bg");
     $border: map_get(variables.$app-account-title-btn-colors, "selected-border");

@@ -13,7 +13,7 @@
     }
 
     .btn-warning-light {
-        @include lib.btn-warning-light-active();
+        @include lib.app-btn-warning-light-active();
     }
 
     .custom-switch {

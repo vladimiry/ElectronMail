@@ -12,13 +12,13 @@ $close-color: $body-color;
 $input-bg: $body-bg;
 $input-disabled-bg: lighten($body-bg, 10%);
 $input-color: $body-color;
-$input-border-color: lighten($body-bg, 10%);
+$input-border-color: $border-color;
 $input-box-shadow: variables.$app-dark-bg;
 $input-placeholder-color: darken($body-color, 10%);
 
 $card-bg: $body-bg;
 $card-cap-bg: variables.$app-dark-bg;
-$card-border-color: darken($border-color, 5%);
+$card-border-color: darken($card-cap-bg, 3%);
 
 $dropdown-bg: $body-bg;
 $dropdown-color: $body-color;
@@ -29,7 +29,7 @@ $dropdown-border-color: $border-color;
 $dropdown-divider-bg: $border-color;
 
 $list-group-bg: $body-bg;
-$list-group-border-color: $border-color;
+$list-group-border-color: $card-border-color;
 $list-group-action-color: $body-color;
 $list-group-action-hover-color: darken($body-color, 10%);
 $list-group-hover-bg: $dropdown-link-hover-bg;
@@ -47,6 +47,7 @@ $modal-header-border-color: $border-color;
 
 $secondary: darken(#686a71, 2%);
 $progress-bar-color: variables.$gray-100;
+
 $app-theming-db-view-color-bg-body: $body-bg;
 $app-theming-db-view-color-border: $secondary;
 $app-theming-datepicker-color-box-shadow: lighten($body-bg, 5%);

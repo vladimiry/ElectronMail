@@ -2,13 +2,32 @@
 @import "src/web/variables";
 
 .list-group-item:not(.list-group-item-warning) {
-    background-color: $card-cap-bg;
     color: $app-theming-db-view-color-text-mail;
+}
+
+#{$app-prefix}-settings .modal-body {
+    .list-group-item:not(.list-group-item-warning) {
+        background-color: $card-cap-bg;
+        border: 1px solid $card-border-color;
+    }
+
+    & > .wrapper > .list-group {
+        .list-group-item:not(.list-group-item-warning) {
+            @include hover-focus() {
+                background-color: darken($card-cap-bg, 5%);
+            }
+        }
+    }
 }
 
 #{$app-prefix}-db-view-mail-tab {
     .list-group-item:not(.list-group-item-warning) {
         background-color: $secondary;
+        border: 1px solid darken($secondary, 10%);
+
+        @include hover-focus() {
+            background-color: darken($secondary, 5%);
+        }
     }
 }
 
@@ -64,8 +83,9 @@
 
 #{$app-prefix}-account-edit {
     .rounded {
-        background-color: $card-cap-bg;
         color: $card-cap-color;
+        background-color: $card-cap-bg;
+        border: 1px solid $card-border-color;
     }
 }
 
@@ -118,7 +138,7 @@
 
 #{$app-prefix}-db-view-monaco-editor {
     .monaco-editor > .overflow-guard {
-        border: 1px solid $app-theming-db-view-color-border;
+        border: 1px solid $border-color;
     }
 }
 
@@ -126,7 +146,7 @@
     .btn-group {
         .btn {
             &.active {
-                @include lib.btn-warning-light-active();
+                @include lib.app-btn-warning-light-active();
             }
         }
     }

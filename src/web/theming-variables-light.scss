@@ -3,7 +3,11 @@
 $secondary: variables.$secondary !default;
 $body-bg: variables.$body-bg !default;
 $body-color: variables.$body-color !default;
+$border-color: variables.$border-color !default;
 $progress-bar-color: variables.$gray-700 !default;
+$card-cap-bg: #f1f3f5 !default;
+$card-border-color: darken($card-cap-bg, 10%) !default;
+$list-group-border-color: $card-border-color !default;
 
 $app-theming-color-secondary-btn-split-border: darken($secondary, 7%) !default;
 $app-theming-db-view-color-bg-body: lighten(#d1d7dc, 10%) !default;

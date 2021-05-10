@@ -181,9 +181,24 @@ export const handleObservableValue = <R,
             logger,
         );
     };
-    const item = webpack_exports[itemKey] as T[K]["_valueShape"];
+    type ReactForwardRef = { $$typeof: string, render: T[K]["_valueShape"] };
+    const resolvedExportsItem: { readonly item: ReactForwardRef["render"], readonly forwardRef?: ReactForwardRef } = (() => {
+        const rawItem = webpack_exports[itemKey] as ReactForwardRef["render"] | ReactForwardRef;
+        if (typeof rawItem !== "object") {
+            return {item: rawItem};
+        }
+        if (
+            String(rawItem.$$typeof) === "Symbol(react.forward_ref)"
+            &&
+            typeof rawItem.render === "function"
+        ) {
+            return {item: rawItem.render, forwardRef: rawItem};
+        }
+        throw new Error(`Unexpected exported item type (${JSON.stringify({itemKey, itemName})})`);
+    })();
+    const {item} = resolvedExportsItem;
 
-    assertTypeOf({value: item, expectedType: "function"}, "Invalid exported item type");
+    assertTypeOf({value: item, expectedType: "function"}, `Invalid exported item type (${JSON.stringify({itemKey, itemName})})`);
 
     {
         const {name: actualName} = item;
@@ -213,10 +228,14 @@ export const handleObservableValue = <R,
             markAsInitialized,
         );
 
-        return typeof itemCallResultCustom !== "undefined"
-            ? itemCallResultCustom
-            : itemCallResult;
+        return itemCallResultCustom ?? itemCallResult;
     };
+
+    if (resolvedExportsItem.forwardRef) {
+        resolvedExportsItem.forwardRef.render = exportsItemOverridden;
+        webpack_exports[itemKey] = resolvedExportsItem.forwardRef;
+        return;
+    }
 
     webpack_exports[itemKey] = exportsItemOverridden;
 };

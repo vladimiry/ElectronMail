@@ -36,12 +36,12 @@ index 9d333b8..2921f49 100644
 
  export default Setup;
 diff --git a/src/app/content/MainContainer.tsx b/src/app/content/MainContainer.tsx
-index cb50e5e..ca76f0f 100644
+index 73380a9..75922b7 100644
 --- a/src/app/content/MainContainer.tsx
 +++ b/src/app/content/MainContainer.tsx
-@@ -62,7 +62,7 @@ const MainContainer = () => {
-         }
-     }, []);
+@@ -43,7 +43,7 @@ const MainContainer = () => {
+         setExpand(false);
+     }, [location.pathname, location.hash]);
 
 -    const app = getAppFromPathnameSafe(location.pathname);
 +    const app = getAppFromPathnameSafe(window.location.pathname);

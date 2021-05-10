@@ -48,3 +48,31 @@ index 3f222f7..98e9cfe 100644
              {showToolbar && (
                  <Toolbar
                      labelID={labelID}
+
+diff --git a/src/app/components/header/AdvancedSearchDropdown.tsx b/src/app/components/header/AdvancedSearchDropdown.tsx
+index 0ac0bc5..bea1c9b 100644
+--- a/src/app/components/header/AdvancedSearchDropdown.tsx
++++ b/src/app/components/header/AdvancedSearchDropdown.tsx
+@@ -330,7 +330,7 @@ const AdvancedSearchDropdown = ({ keyword: fullInput = '', isNarrow, handleCachi
+     );
+
+     // Switches
+-    const showEncryptedSearch = !isMobile() && !!esFeature && !!esFeature.Value && !!isPaid(user);
++    const showEncryptedSearch = false;
+     const showAdvancedSearch = !showEncryptedSearch || showMore;
+     const showProgress = indexKeyExists(user.ID) && esEnabled && (isBuilding || isRefreshing);
+     const showSubTitleSection = wasIndexingDone(user.ID) && esEnabled && !isRefreshing && isDBLimited;
+
+diff --git a/src/app/containers/EncryptedSearchProvider.tsx b/src/app/containers/EncryptedSearchProvider.tsx
+index 7ba1277..ac4fd64 100644
+--- a/src/app/containers/EncryptedSearchProvider.tsx
++++ b/src/app/containers/EncryptedSearchProvider.tsx
+@@ -527,7 +527,7 @@ const EncryptedSearchProvider = ({ children }: Props) => {
+         const t1 = performance.now();
+         const { dbExists, esEnabled, isCacheReady } = esDBStatus;
+
+-        if (!dbExists || !esEnabled) {
++        if (true) {
+             return false;
+         }
+

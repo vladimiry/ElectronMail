@@ -28,7 +28,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
     const resolveContext = (): Exclude<typeof ctx.uiContext, undefined> => {
         if (!ctx.uiContext) {
-            throw new Error(`UI Context has not been initialized`);
+            throw new Error(`"${nameof.full(ctx.uiContext)}" has not been initialized`);
         }
         return ctx.uiContext;
     };
@@ -42,7 +42,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
             if (visible) {
                 if (!ctx.selectedAccount) {
-                    logger.warn(`skipping as "ctx.selectedAccount" undefined`);
+                    logger.warn(`skipping as "${nameof.full(ctx.selectedAccount)}" undefined`);
                     return;
                 }
 
@@ -50,14 +50,14 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                     // TODO figure how to hide webview from search while in database view mode
                     //      webview can't be detached from DOM as it gets reloaded when reattached
                     //      search is not available in database view mode until then
-                    logger.warn(`skipping as "ctx.selectedAccount.databaseView" positive value`);
+                    logger.warn(`skipping as "${nameof.full(ctx.selectedAccount.databaseView)}" positive value`);
                     return;
                 }
 
                 const {findInPage} = await (await ctx.deferredEndpoints.promise).readConfig();
 
                 if (!findInPage) {
-                    logger.debug(`skipping as "findInPage" config option disabled`);
+                    logger.debug(`skipping as "${nameof(findInPage)}" config option disabled`);
                     return;
                 }
             }
@@ -76,17 +76,18 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                         existingView.isDestroyed()
                     )
                 ) {
-                    logger.verbose(`building new "uiContext.findInPageBrowserView" instance`);
+                    logger.verbose(`building new "${nameof.full(uiContext.findInPageBrowserView)}" instance`);
                     setTimeout(
                         async () => (uiContext.findInPageBrowserView = await initFindInPageBrowserView(ctx)).webContents.focus(),
                     );
                 } else {
-                    logger.debug(`skipping building new "uiContext.findInPageBrowserView" instance as existing one is still alive`);
+                    logger.verbose(`focusing existing "${nameof.full(uiContext.findInPageBrowserView)}" instance`);
+                    existingView.webContents.focus();
                 }
             } else {
                 // reset/complete the notification
                 if (findInPageNotification) {
-                    logger.verbose(`destroying "findInPageNotification"`);
+                    logger.verbose(`destroying "${nameof(findInPageNotification)}"`);
                     findInPageNotification.reset();
                     findInPageNotification = null;
                 }
@@ -95,12 +96,12 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                 // so we don't destroy it immediately but with timeout letting API respond to request first
                 setTimeout(() => {
                     if (!uiContext.findInPageBrowserView) {
-                        logger.debug(`skipping destroying as "uiContext.findInPageBrowserView" undefined`);
+                        logger.debug(`skipping destroying as "${nameof.full(uiContext.findInPageBrowserView)}" undefined`);
                         return;
                     }
 
                     // destroy
-                    logger.verbose(`destroying "uiContext.findInPageBrowserView"`);
+                    logger.verbose(`destroying "${nameof.full(uiContext.findInPageBrowserView)}"`);
                     // WARN "setBrowserView" needs to be called with null, see https://github.com/electron/electron/issues/13581
                     browserWindow.setBrowserView(
                         // TODO TS: get rid of any cast, see https://github.com/electron/electron/issues/13581

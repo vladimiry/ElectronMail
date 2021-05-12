@@ -7,7 +7,7 @@ import {lastValueFrom} from "rxjs";
 import {Context} from "src/electron-main/model";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";
 import {PRODUCT_NAME} from "src/shared/constants";
-import {curryFunctionMembers} from "src/shared/util";
+import {curryFunctionMembers, initialConfig} from "src/shared/util";
 import {readConfigSync} from "src/electron-main/util";
 import {syncFindInPageBrowserViewSize} from "src/electron-main/window/find-in-page";
 
@@ -178,7 +178,7 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
                 event.returnValue = false;
 
                 setTimeout(() => {
-                    if (BUILD_DISABLE_CLOSE_TO_TRAY_FEATURE || readConfigSync(ctx)?.hideOnClose) {
+                    if (BUILD_DISABLE_CLOSE_TO_TRAY_FEATURE || !(readConfigSync(ctx) ?? initialConfig()).hideOnClose) {
                         state.forceClose = true;
                         browserWindow.close(); // re-triggering the same "close" event
                     } else {

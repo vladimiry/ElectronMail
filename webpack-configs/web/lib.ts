@@ -3,7 +3,7 @@ import postCssUrl from "postcss-url";
 import {Configuration, RuleSetRule} from "webpack";
 import {merge as webpackMerge} from "webpack-merge";
 
-import {BuildEnvironment} from "webpack-configs/model";
+import {BuildEnvVars} from "webpack-configs/model";
 import {ENVIRONMENT, ENVIRONMENT_STATE, buildBaseConfig, outputRelativePath, srcRelativePath, typescriptLoaderRule} from "./../lib";
 import {MiniCssExtractPlugin} from "webpack-configs/require-import";
 import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
@@ -131,7 +131,7 @@ export function buildBaseWebConfig(
         return srcRelativePath("./web", options.chunkName, ...value);
     };
     const tsConfigFile = options.tsConfigFile ?? chunkPath("./tsconfig.json");
-    const environmentBasedPatch: Record<BuildEnvironment, Configuration> = {
+    const environmentBasedPatch: Record<BuildEnvVars["BUILD_ENVIRONMENT"], Configuration> = {
         production: {},
         development: {},
         e2e: {},

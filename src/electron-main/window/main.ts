@@ -155,6 +155,8 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
             await keepBrowserWindowState(ctx, browserWindow);
 
             if (
+                BUILD_DISABLE_START_HIDDEN_FEATURE
+                ||
                 !(await lastValueFrom(ctx.config$.pipe(first()))).startHidden
                 ||
                 // always showing the window when the settings is still not configured/saved
@@ -176,17 +178,11 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
                 event.returnValue = false;
 
                 setTimeout(() => {
-                    const config = readConfigSync(ctx);
-
-                    if (!config) {
-                        throw new Error(`No config file detected ("${ctx.configStore.file}")`);
-                    }
-
-                    if (config.hideOnClose) {
-                        browserWindow.hide();
-                    } else {
+                    if (BUILD_DISABLE_CLOSE_TO_TRAY_FEATURE || readConfigSync(ctx)?.hideOnClose) {
                         state.forceClose = true;
                         browserWindow.close(); // re-triggering the same "close" event
+                    } else {
+                        browserWindow.hide();
                     }
                 });
             }

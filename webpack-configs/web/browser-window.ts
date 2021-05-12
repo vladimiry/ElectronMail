@@ -1,7 +1,7 @@
 import {AngularCompilerPlugin, NgToolsLoader, PLATFORM} from "@ngtools/webpack";
 import {readConfiguration} from "@angular/compiler-cli";
 
-import {BuildAngularCompilationFlags, BuildEnvironment} from "webpack-configs/model";
+import {BuildAngularCompilationFlags, BuildEnvVars} from "webpack-configs/model";
 import {ENVIRONMENT, rootRelativePath} from "webpack-configs/lib";
 import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
 import {browserWindowAppPath, browserWindowPath, buildBaseWebConfig, cssRuleSetRules} from "./lib";
@@ -12,7 +12,7 @@ const tsConfigFile = browserWindowPath(({
     production: "./tsconfig.json",
     development: "./tsconfig.development.json",
     test: "./test/tsconfig.json",
-} as Record<BuildEnvironment, string>)[ENVIRONMENT]);
+} as Record<BuildEnvVars["BUILD_ENVIRONMENT"], string>)[ENVIRONMENT]);
 
 const config = buildBaseWebConfig(
     {

@@ -1,28 +1,27 @@
 import path from "path";
 import {Configuration, DefinePlugin, RuleSetRule} from "webpack";
 import {Options as TsLoaderOptions} from "ts-loader";
+import {mapValues} from "remeda";
 import {merge as webpackMerge} from "webpack-merge";
 
-import {BuildEnvironment} from "./model";
+import {BuildEnvVars} from "./model";
 import {CONSOLE_LOG} from "scripts/lib";
 
-export const ENVIRONMENT: BuildEnvironment = (
+export const ENVIRONMENT: BuildEnvVars["BUILD_ENVIRONMENT"] = (
     () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
-        const NODE_ENV = process.env.NODE_ENV as Exclude<BuildEnvironment, "production"> | undefined;
+        const NODE_ENV = process.env.NODE_ENV as Exclude<BuildEnvVars["BUILD_ENVIRONMENT"], "production"> | undefined;
         return NODE_ENV === "development" || NODE_ENV === "test" || NODE_ENV === "e2e"
             ? NODE_ENV
             : "production";
     }
 )();
 
-export const ENVIRONMENT_STATE: Readonly<Record<BuildEnvironment, boolean>> = {
+export const ENVIRONMENT_STATE: Readonly<Record<BuildEnvVars["BUILD_ENVIRONMENT"], boolean>> = {
     production: ENVIRONMENT === "production",
     development: ENVIRONMENT === "development",
     test: ENVIRONMENT === "test",
     e2e: ENVIRONMENT === "e2e",
 };
-
-CONSOLE_LOG("BuildEnvironment:", ENVIRONMENT);
 
 export const rootRelativePath = (...value: string[]): string => {
     return path.join(process.cwd(), ...value);
@@ -35,6 +34,22 @@ export const srcRelativePath = (...value: string[]): string => {
 export const outputRelativePath = (...value: string[]): string => {
     return rootRelativePath(ENVIRONMENT_STATE.development ? "./app-dev" : "./app", ...value);
 };
+
+const definePluginValue = mapValues(
+    {
+        BUILD_ENVIRONMENT: ENVIRONMENT,
+        ...((): StrictOmit<BuildEnvVars, "BUILD_ENVIRONMENT"> => {
+            return {
+                BUILD_DISABLE_CLOSE_TO_TRAY_FEATURE: process.env.ELECTRON_MAIL_BUILD_DISABLE_CLOSE_TO_TRAY_FEATURE ?? false,
+                BUILD_DISABLE_START_HIDDEN_FEATURE: process.env.ELECTRON_MAIL_BUILD_DISABLE_START_HIDDEN_FEATURE ?? false,
+                BUILD_START_MAXIMIZED_BY_DEFAULT: process.env.ELECTRON_MAIL_BUILD_START_MAXIMIZED_BY_DEFAULT ?? false,
+            };
+        })(),
+    },
+    (value) => JSON.stringify(value),
+);
+
+CONSOLE_LOG("Injected environment variables:", definePluginValue);
 
 export function buildBaseConfig(
     ...[config]: readonly [Configuration] | readonly [Configuration, { tsConfigFile?: string }]
@@ -50,9 +65,7 @@ export function buildBaseConfig(
                 path: outputRelativePath(),
             },
             plugins: [
-                new DefinePlugin({
-                    BUILD_ENVIRONMENT: JSON.stringify(ENVIRONMENT),
-                }),
+                new DefinePlugin(definePluginValue),
             ],
             resolve: {
                 extensions: ["*", ".js", ".ts"],

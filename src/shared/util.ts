@@ -40,6 +40,7 @@ export function initialConfig(): Config {
             encryptionPreset,
             window: {
                 bounds: {width: 1024, height: 768},
+                ...(BUILD_START_MAXIMIZED_BY_DEFAULT ? {maximized: true} : {}),
             },
             fetching: {
                 rateLimit: {
@@ -108,11 +109,11 @@ export function initialConfig(): Config {
             findInPage: true,
             fullTextSearch: true,
             hideControls: false,
-            hideOnClose: true,
+            hideOnClose: !BUILD_DISABLE_CLOSE_TO_TRAY_FEATURE,
             idleTimeLogOutSec: 0,
             layoutMode: "top",
             logLevel: "error",
-            startHidden: true,
+            startHidden: !BUILD_DISABLE_START_HIDDEN_FEATURE,
             themeSource: "system",
             unreadNotifications: true,
             zoomFactor: ZOOM_FACTOR_DEFAULT,

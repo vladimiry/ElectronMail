@@ -77,7 +77,7 @@
                 </div>
             </accordion-group>
         </accordion>
-        <div class="custom-control custom-switch">
+        <div class="custom-control custom-switch" [ngClass]="{'text-muted': controls.hideOnClose.disabled}">
             <input
                 class="custom-control-input"
                 formControlName="hideOnClose"
@@ -88,7 +88,7 @@
                 Close to tray
             </label>
         </div>
-        <div class="custom-control custom-switch">
+        <div class="custom-control custom-switch" [ngClass]="{'text-muted': controls.startHidden.disabled}">
             <input
                 class="custom-control-input"
                 formControlName="startHidden"

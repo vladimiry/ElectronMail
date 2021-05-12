@@ -116,9 +116,19 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
                 .unsubscribe,
         });
 
-        this.store.select(OptionsSelectors.CONFIG.base)
-            .pipe(first())
-            .subscribe((data) => this.form.patchValue(data));
+        this.subscription.add(
+            this.store.select(OptionsSelectors.CONFIG.base)
+                .pipe(first())
+                .subscribe((data) => {
+                    this.form.patchValue(data);
+                    if (BUILD_DISABLE_START_HIDDEN_FEATURE) {
+                        this.controls.startHidden.disable();
+                    }
+                    if (BUILD_DISABLE_CLOSE_TO_TRAY_FEATURE) {
+                        this.controls.hideOnClose.disable();
+                    }
+                }),
+        );
 
         this.subscription.add(
             this.store.pipe(

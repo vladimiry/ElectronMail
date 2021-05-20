@@ -4,7 +4,7 @@ import path from "path";
 import {catchTopLeventAsync, execShell, resolveExecutable} from "scripts/lib";
 
 const SERVICE_NAME = "ffsend";
-const SERVICE_VERSION = "v0.2.71";
+const SERVICE_VERSION = "v0.2.72";
 const SERVICE_BINARY_DOWNLOAD_URL_PREFIX = `https://github.com/timvisee/${SERVICE_NAME}/releases/download/${SERVICE_VERSION}`;
 const SERVICE_DOWNLOAD_URL_PREFIX = "https://send.vis.ee/download/";
 const SERVICE_DOWNLOAD_COUNT = "1"; // only 1 is supported in anonymous mode
@@ -14,9 +14,9 @@ const [, , ACTION_TYPE_ARG, FILE_ARG] = process.argv as [null, null, "upload" | 
 async function resolveCommand(): Promise<{ command: string }> {
     const binaryBundle = (() => {
         const fileNames = {
-            darwin: {postfix: "macos", sha256: "8d96e00a7e8949069b59dfea7c65f76c40eaa98bae4beeb799e14e0c04438165"},
-            linux: {postfix: "linux-x64-static", sha256: "a9cc69c204e34db452a66b18c36d748bcc98ccfcd2c9fd4e1c7cfdbbb18f7058"},
-            win32: {postfix: "windows-x64-static.exe", sha256: "61bf05a5733458a80bab2b7f82d577dd85b72ca76f67319883df9449015c20e0"},
+            darwin: {postfix: "macos", sha256: "61d28a3f24dc3beb74e8b6d1de28bca760685b81bff907142c51e58f6bc8ff87"},
+            linux: {postfix: "linux-x64-static", sha256: "b8f65f9f560aec05029a7ec81a49d88a2bff2fe41f6678dd2cb92211da0ee1a7"},
+            win32: {postfix: "windows-x64-static.exe", sha256: "0a5aa03e35d6d9218342b2bec753a9800570c000964801cf6bfe45a9bb393c0d"},
         } as const;
         const platform = os.platform();
         const resolvedItem: typeof fileNames[keyof typeof fileNames] | undefined = fileNames[platform as (keyof typeof fileNames)];

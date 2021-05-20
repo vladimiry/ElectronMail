@@ -41,7 +41,7 @@ function directoryExists(file: string, storeFs: StoreModel.StoreFs = StoreFs.Fs.
 
     const stat: ReturnType<typeof import("fs")["statSync"]> = storeFs._impl.statSync(file);
 
-    return stat.isDirectory();
+    return Boolean(stat?.isDirectory());
 }
 
 function listDirsNames(storeFs: StoreModel.StoreFs, dir: string): string[] {

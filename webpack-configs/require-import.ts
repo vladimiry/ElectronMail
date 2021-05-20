@@ -23,3 +23,8 @@ declare class MiniCssExtractPluginClass {
 export const MiniCssExtractPlugin: typeof MiniCssExtractPluginClass
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-var-requires
     = require("mini-css-extract-plugin");
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+export const postCssUrl: () => unknown
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-var-requires
+    = require("postcss-url");

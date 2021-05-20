@@ -80,6 +80,8 @@
         },
         {
             "extends": [
+                // TODO activate "plugin:ngrx/recommended"
+                // "plugin:ngrx/recommended",
                 "plugin:@angular-eslint/recommended"
             ],
             "files": [

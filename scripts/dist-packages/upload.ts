@@ -8,15 +8,15 @@ import {listInstallationPackageFiles} from "./lib";
 
 const [, , DIST_DIRECTORY, OUTPUT_DIRECTORY] = process.argv as [null, null, string, string];
 
-const outputFile = path.join(OUTPUT_DIRECTORY, `dist-${platform()}.tar`);
-const outputStream = fs.createWriteStream(outputFile);
-const outputArchiver = archiver("tar");
+const archiveOutputFile = path.join(OUTPUT_DIRECTORY, `dist-${platform()}.tar`);
+const archiveOutputStream = fs.createWriteStream(archiveOutputFile);
+const archiverInstance = archiver("tar");
 
-outputStream.on("finish", async () => {
-    await execShell(["yarn", ["scripts/transfer", "upload", outputFile]]);
+archiveOutputStream.on("finish", async () => {
+    await execShell(["yarn", ["scripts/transfer", "upload", archiveOutputFile]]);
 });
 
-outputArchiver.pipe(outputStream);
+archiverInstance.pipe(archiveOutputStream);
 
 catchTopLeventAsync(async () => {
     for (const file of await listInstallationPackageFiles(DIST_DIRECTORY)) {
@@ -24,9 +24,12 @@ catchTopLeventAsync(async () => {
             continue;
         }
 
-        outputArchiver.file(file, {name: path.basename(file)});
-        CONSOLE_LOG(`Adding ${file} to ${outputFile} archive`);
+        CONSOLE_LOG(
+            `Adding ${(fs.statSync(file).size / (1024 * 1024)).toFixed(2)} MB ${file} file to the ${archiveOutputFile} archive`,
+        );
+
+        archiverInstance.file(file, {name: path.basename(file)});
     }
 
-    await outputArchiver.finalize();
+    await archiverInstance.finalize();
 });

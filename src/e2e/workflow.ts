@@ -2,10 +2,10 @@ import electron from "electron";
 import fs from "fs";
 import fsExtra from "fs-extra";
 import path from "path";
-import randomString from "randomstring";
 import sinon from "sinon";
 import ava, {ExecutionContext, TestInterface} from "ava";
 import {Application} from "spectron";
+import {randomString} from "remeda";
 
 import {
     BINARY_NAME,
@@ -35,8 +35,8 @@ export interface TestContext {
 export const test = ava as TestInterface<TestContext>;
 
 export const ENV = {
-    masterPassword: `master-password-${randomString.generate({length: 8})}`,
-    loginPrefix: `login-${randomString.generate({length: 8})}`,
+    masterPassword: `master-password-${randomString(8)}`,
+    loginPrefix: `login-${randomString(8)}`,
 };
 
 export const CI = Boolean(process.env.CI);

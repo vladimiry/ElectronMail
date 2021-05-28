@@ -8,10 +8,11 @@ import {EncryptionAdapter, KeyBasedPreset} from "fs-json-store-encryption-adapte
 import {DATABASE_VERSION, DB_INSTANCE_PROP_NAME} from "./constants";
 import {DB_DATA_CONTAINER_FIELDS, DbAccountPk, FsDb, FsDbAccount} from "src/shared/model/database";
 import {LogLevel} from "src/shared/model/common";
+import {ONE_KB_BYTES} from "src/shared/constants";
 import {buildAccountFoldersResolver, patchMetadata} from "src/electron-main/database/util";
 import {buildSerializer} from "src/electron-main/database/serialization";
 import {curryFunctionMembers} from "src/shared/util";
-import {hrtimeDuration} from "src/electron-main/util";
+import {generateDataSaltBase64, hrtimeDuration} from "src/electron-main/util";
 
 const _logger = curryFunctionMembers(electronLog, __filename);
 
@@ -197,6 +198,7 @@ export class Database {
             const dataToStore: DeepReadonly<FsDb> = {
                 ...this.dbInstance,
                 version: DATABASE_VERSION,
+                dataSaltBase64: generateDataSaltBase64(ONE_KB_BYTES * 100, ONE_KB_BYTES * 200),
             };
 
             await this.serializer.write(

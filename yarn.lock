@@ -4323,10 +4323,10 @@ fs-json-store-encryption-adapter@3.0.3:
     sodium-native "^3.2.1"
     tslib "^2.1.0"
 
-fs-json-store@7.0.2:
-  version "7.0.2"
-  resolved "https://registry.yarnpkg.com/fs-json-store/-/fs-json-store-7.0.2.tgz#f028bf18ace596f6cab10ebf6c2c178153e8e530"
-  integrity sha512-KyOHHpd5X9YmiSW//knMyLsFnDDPOhdv9V6PGfAQUx/sgTPnc3kgx1v4Wd5Zmzq44UN4CksbGceTFpFzqonDNA==
+fs-json-store@8.0.0:
+  version "8.0.0"
+  resolved "https://registry.yarnpkg.com/fs-json-store/-/fs-json-store-8.0.0.tgz#933a6b35c8c8c6e7d7d52fda887023282d7030f2"
+  integrity sha512-/UW945ucVJn6ukAlIwMXASMKr0G3bEQ12aETSotKqaD5s74DIyvVHPforujjQKTW2wp3dfPBcqk4PBUjAQoTDA==
   dependencies:
     combine-errors "^3.0.3"
     fs-no-eperm-anymore "^4.0.1"

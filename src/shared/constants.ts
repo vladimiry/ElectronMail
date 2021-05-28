@@ -22,6 +22,10 @@ export {
     PACKAGE_GITHUB_PROJECT_URL,
 };
 
+export const ONE_KB_BYTES = 1024;
+
+export const ONE_MB_BYTES = ONE_KB_BYTES * ONE_KB_BYTES;
+
 export const ONE_SECOND_MS = 1000;
 
 export const ONE_MINUTE_MS = ONE_SECOND_MS * 60;

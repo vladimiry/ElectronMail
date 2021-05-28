@@ -141,9 +141,10 @@ export type  FsDbDataContainerDeletedField = NoExtraProps<Readonly<{
 }>>;
 
 type GenericDb<MetadataPart> = NoExtraProps<{
-    version: string;
+    version: string
+    dataSaltBase64?: string
     accounts: Record<AccountConfig["login"],
-        Readonly<FsDbDataContainer & FsDbDataContainerDeletedField & NoExtraProps<{ metadata: MetadataPart }>>>;
+        Readonly<FsDbDataContainer & FsDbDataContainerDeletedField & NoExtraProps<{ metadata: MetadataPart }>>>
 }>;
 
 type ProtonMetadataPart = NoExtraProps<{

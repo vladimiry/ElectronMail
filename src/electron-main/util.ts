@@ -5,10 +5,11 @@ import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {Model as StoreModel} from "fs-json-store";
 import {format as formatURL} from "url";
 import {nativeTheme} from "electron";
+import {randomBytes} from "crypto";
 
 import {Config} from "src/shared/model/options";
 import {Context} from "./model";
-import {buildInitialVendorsAppCssLinks, curryFunctionMembers} from "src/shared/util";
+import {buildInitialVendorsAppCssLinks, curryFunctionMembers, getRandomInt} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, __filename);
 
@@ -81,4 +82,9 @@ export const filterProtonSessionTokenCookies = <T extends { name: string }>(
         accessTokens: items.filter(({name}) => name.toUpperCase().startsWith("AUTH-")),
         refreshTokens: items.filter(({name}) => name.toUpperCase().startsWith("REFRESH-")),
     } as const;
+};
+
+export const generateDataSaltBase64 = (minBytes: number, maxBytes: number): string => {
+    const size = getRandomInt(minBytes, maxBytes);
+    return randomBytes(size).toString("base64");
 };

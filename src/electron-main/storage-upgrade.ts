@@ -4,6 +4,7 @@
 import _logger from "electron-log";
 import compareVersions from "compare-versions";
 import path from "path";
+import {randomString} from "remeda";
 
 import {AccountConfig} from "src/shared/model/account";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
@@ -534,6 +535,14 @@ export const upgradeSettings: (settings: Settings, ctx: Context) => boolean = ((
                     }
                 });
             },
+            "4.12.2": (settings): void => {
+                if (!settings.dataSaltBase64) {
+                    // any non empty value works since further upgrading process tests the value change
+                    // and then if settings entity got modified it will save the settings
+                    // and the "dataSaltBase64" value gets generated during every settings saving (via overridden "write" method)
+                    settings.dataSaltBase64 = `any non empty value ${randomString(50)}`;
+                }
+            },
         };
     }
 
@@ -622,6 +631,11 @@ export async function upgradeDatabase(db: Database, accounts: Settings["accounts
                 needToSave = true;
             }
         }
+    }
+
+    if (Number(db.getVersion()) < 11) {
+        // "dataSaltBase64" prop generating/attaching enabled for every database file save operation, so just triggering the saving
+        needToSave = true;
     }
 
     // removing non existent accounts

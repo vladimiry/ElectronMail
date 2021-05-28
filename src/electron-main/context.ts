@@ -10,7 +10,14 @@ import {Fs as StoreFs, Model as StoreModel, Store} from "fs-json-store";
 import {app} from "electron";
 import {distinctUntilChanged, take} from "rxjs/operators";
 
-import {BINARY_NAME, LOCAL_WEBCLIENT_PROTOCOL_PREFIX, RUNTIME_ENV_USER_DATA_DIR, WEB_PROTOCOL_SCHEME} from "src/shared/constants";
+import {
+    BINARY_NAME,
+    LOCAL_WEBCLIENT_PROTOCOL_PREFIX,
+    ONE_KB_BYTES,
+    ONE_MB_BYTES,
+    RUNTIME_ENV_USER_DATA_DIR,
+    WEB_PROTOCOL_SCHEME
+} from "src/shared/constants";
 import {Config, Settings} from "src/shared/model/options";
 import {Context, ContextInitOptions, ContextInitOptionsPaths, ProperLockfileError} from "./model";
 import {Database} from "./database";
@@ -18,7 +25,7 @@ import {ElectronContextLocations} from "src/shared/model/electron";
 import {INITIAL_STORES, configEncryptionPresetValidator, settingsAccountLoginUniquenessValidator} from "./constants";
 import {SessionStorage} from "src/electron-main/session-storage";
 import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
-import {formatFileUrl} from "./util";
+import {formatFileUrl, generateDataSaltBase64} from "./util";
 
 function exists(file: string, storeFs: StoreModel.StoreFs): boolean {
     try {
@@ -91,7 +98,7 @@ function initLocations(
     );
 
     logger.transports.file.file = path.join(userDataDir, "log.log");
-    logger.transports.file.maxSize = 1024 * 1024 * 50; // 50MB
+    logger.transports.file.maxSize = ONE_MB_BYTES * 50;
     logger.transports.file.level = INITIAL_STORES.config().logLevel;
     logger.transports.console.level = false;
 
@@ -205,7 +212,45 @@ export function initContext(
         config$,
         configStore,
     } = ((): NoExtraProps<Pick<Context, "config$" | "configStore">> => {
-        const store = new Store<Config>({
+        class ConfigStore extends Store<Config> {
+            readonly valueChangeSubject$ = new ReplaySubject<Config>(1);
+
+            constructor(arg: StoreModel.StoreOptionsInput<Config>) {
+                super(arg);
+
+                const _this = this; // eslint-disable-line @typescript-eslint/no-this-alias
+
+                _this.read = ((read): typeof _this.read => {
+                    const result: typeof _this.read = async (...args) => {
+                        const config = await read(...args);
+                        if (config) {
+                            _this.valueChangeSubject$.next(config);
+                        }
+                        return config;
+                    };
+                    return result;
+                })(_this.read.bind(_this));
+
+                _this.write = ((write): typeof _this.write => {
+                    const result: typeof _this.write = async (...args) => {
+                        let callResult: Unpacked<ReturnType<typeof write>> | undefined;
+                        try {
+                            callResult = await write(...args);
+                        } catch (error) {
+                            if (isProperLockfileError((error))) {
+                                throw wrapProperLockfileError(error);
+                            }
+                            throw error;
+                        }
+                        _this.valueChangeSubject$.next(callResult);
+                        return callResult;
+                    };
+                    return result;
+                })(_this.write.bind(_this));
+            }
+        }
+
+        const store = new ConfigStore({
             fs: storeFs,
             optimisticLocking: true,
             lockfilePathResolver,
@@ -213,42 +258,13 @@ export function initContext(
             validators: [configEncryptionPresetValidator],
             serialize: (data): Buffer => Buffer.from(JSON.stringify(data, null, 2)),
         });
-        const valueChangeSubject$ = new ReplaySubject<Config>(1);
-
-        store.read = ((read): typeof store.read => {
-            const result: typeof store.read = async (...args) => {
-                const config = await read(...args);
-                if (config) {
-                    valueChangeSubject$.next(config);
-                }
-                return config;
-            };
-            return result;
-        })(store.read.bind(store));
-
-        store.write = ((write): typeof store.write => {
-            const result: typeof store.write = async (...args) => {
-                let callResult: Unpacked<ReturnType<typeof write>> | undefined;
-                try {
-                    callResult = await write(...args);
-                } catch (error) {
-                    if (isProperLockfileError((error))) {
-                        throw wrapProperLockfileError(error);
-                    }
-                    throw error;
-                }
-                valueChangeSubject$.next(callResult);
-                return callResult;
-            };
-            return result;
-        })(store.write.bind(store));
 
         return {
             config$: merge(
-                valueChangeSubject$.asObservable().pipe(
+                store.valueChangeSubject$.asObservable().pipe(
                     take(1),
                 ),
-                valueChangeSubject$.asObservable().pipe(
+                store.valueChangeSubject$.asObservable().pipe(
                     distinctUntilChanged(({_rev: prev}, {_rev: curr}) => curr === prev),
                 ),
             ),
@@ -300,27 +316,40 @@ export function initContext(
         configStore,
         configStoreQueue: new asap(),
         settingsStore: (() => {
-            const store = new Store<Settings>({
+            class SettingsStore extends Store<Settings> {
+                constructor(arg: StoreModel.StoreOptionsInput<Settings>) {
+                    super(arg);
+
+                    const _this = this; // eslint-disable-line @typescript-eslint/no-this-alias
+
+                    _this.write = ((write): typeof _this.write => {
+                        const result: typeof _this.write = async (data, ...rest) => {
+                            try {
+                                const dataToSave: StrictOmit<typeof data, "dataSaltBase64"> & Required<Pick<typeof data, "dataSaltBase64">>
+                                    = {
+                                    ...data,
+                                    dataSaltBase64: generateDataSaltBase64(ONE_KB_BYTES * 0.5, ONE_KB_BYTES * 2),
+                                };
+                                return await write(dataToSave, ...rest);
+                            } catch (error) {
+                                if (isProperLockfileError((error))) {
+                                    throw wrapProperLockfileError(error);
+                                }
+                                throw error;
+                            }
+                        };
+                        return result;
+                    })(_this.write.bind(_this));
+                }
+            }
+
+            return new SettingsStore({
                 fs: storeFs,
                 optimisticLocking: true,
                 lockfilePathResolver,
                 file: path.join(locations.userDataDir, "settings.bin"),
                 validators: [settingsAccountLoginUniquenessValidator],
             });
-            store.write = ((write): typeof store.write => {
-                const result: typeof store.write = async (...args) => {
-                    try {
-                        return await write(...args);
-                    } catch (error) {
-                        if (isProperLockfileError((error))) {
-                            throw wrapProperLockfileError(error);
-                        }
-                        throw error;
-                    }
-                };
-                return result;
-            })(store.write.bind(store));
-            return store;
         })(),
         settingsStoreQueue: new asap(),
         keytarSupport: true,

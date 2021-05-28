@@ -125,7 +125,7 @@
     "fast-glob": "3.2.5",
     "fs-backwards-stream": "1.0.0",
     "fs-extra": "10.0.0",
-    "fs-json-store": "7.0.2",
+    "fs-json-store": "8.0.0",
     "fs-json-store-encryption-adapter": "3.0.3",
     "fs-write-stream-atomic": "1.0.10",
     "js-base64": "3.6.1",

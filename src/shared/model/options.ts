@@ -92,11 +92,12 @@ export type BaseConfig = Pick<Config,
     | "unreadNotifications"
     | "zoomFactor">;
 
-export interface Settings extends Partial<StoreModel.StoreEntity> {
-    accounts: AccountConfig[];
-    databaseEncryptionKey: string;
-    sessionStorageEncryptionKey: string;
-}
+export type Settings = Partial<StoreModel.StoreEntity> & NoExtraProps<{
+    accounts: AccountConfig[]
+    databaseEncryptionKey: string
+    sessionStorageEncryptionKey: string
+    dataSaltBase64?: string
+}>;
 
 export const KEY_DERIVATION_PRESETS: Record<string, KeyDerivationPresets> = {
     "node.pbkdf2 (interactive)": {type: "pbkdf2", preset: "mode:interactive|digest:sha256"},

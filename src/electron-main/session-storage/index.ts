@@ -5,17 +5,20 @@ import _logger, {ElectronLog} from "electron-log";
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/lib/private/constants";
 import {EncryptionAdapter, KeyBasedPreset} from "fs-json-store-encryption-adapter";
 
-import {AccountConfig, AccountPersistentSession, AccountPersistentSessionBundle} from "src/shared/model/account";
+import {AccountConfig, AccountPersistentSession} from "src/shared/model/account";
 import {ApiEndpointOriginFieldContainer, LoginFieldContainer} from "src/shared/model/container";
+import {ONE_KB_BYTES} from "src/shared/constants";
+import {SESSION_STORAGE_VERSION} from "src/electron-main/session-storage/const";
+import {SessionStorageModel} from "src/electron-main/session-storage/model";
 import {curryFunctionMembers, verifyUrlOriginValue} from "src/shared/util";
+import {generateDataSaltBase64} from "src/electron-main/util";
 
 export class SessionStorage {
-    static emptyInstance(): typeof SessionStorage.prototype.instance {
-        return Object.create(null); // eslint-disable-line @typescript-eslint/no-unsafe-return
+    static emptyEntity(): typeof SessionStorage.prototype.entity {
+        return {version: SESSION_STORAGE_VERSION, instance: {}};
     }
 
-    private instance: Record<string /* mapped by "login" */, AccountPersistentSessionBundle | undefined>
-        = SessionStorage.emptyInstance();
+    private entity: SessionStorageModel = SessionStorage.emptyEntity();
 
     private readonly logger: ElectronLog;
 
@@ -36,14 +39,14 @@ export class SessionStorage {
 
     reset(): void {
         this.logger.info(nameof(SessionStorage.prototype.reset)); // eslint-disable-line @typescript-eslint/unbound-method
-        this.instance = SessionStorage.emptyInstance();
+        this.entity = SessionStorage.emptyEntity();
     }
 
     getSession(
         {login, apiEndpointOrigin}: LoginFieldContainer & ApiEndpointOriginFieldContainer,
     ): DeepReadonly<AccountPersistentSession> | undefined {
         this.logger.info(nameof(SessionStorage.prototype.getSession)); // eslint-disable-line @typescript-eslint/unbound-method
-        const bundle = this.instance[login];
+        const bundle = this.entity.instance[login];
         return bundle && bundle[apiEndpointOrigin];
     }
 
@@ -51,9 +54,9 @@ export class SessionStorage {
         {login, apiEndpointOrigin, session}: LoginFieldContainer & ApiEndpointOriginFieldContainer & { session: AccountPersistentSession },
     ): Promise<void> {
         this.logger.info(nameof(SessionStorage.prototype.saveSession)); // eslint-disable-line @typescript-eslint/unbound-method
-        const bundle = this.instance[login] ?? Object.create(null); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+        const bundle = this.entity.instance[login] ?? {};
         bundle[verifyUrlOriginValue(apiEndpointOrigin)] = session; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-        this.instance[login] = bundle; // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+        this.entity.instance[login] = bundle; // eslint-disable-line @typescript-eslint/no-unsafe-assignment
         await this.save();
     }
 
@@ -62,7 +65,7 @@ export class SessionStorage {
     ): Promise<boolean> {
         this.logger.info(nameof(SessionStorage.prototype.clearSession)); // eslint-disable-line @typescript-eslint/unbound-method
         // no need to "verify url origin value" during removing the record ("verifyUrlOriginValue()" calling)
-        const bundle = this.instance[login];
+        const bundle = this.entity.instance[login];
         if (bundle && (apiEndpointOrigin in bundle)) {
             delete bundle[apiEndpointOrigin];
             await this.save();
@@ -76,19 +79,33 @@ export class SessionStorage {
     ): Promise<void> {
         this.logger.info(nameof(SessionStorage.prototype.load)); // eslint-disable-line @typescript-eslint/unbound-method
         const store = await this.resolveStore();
-        this.instance = await store.read() || SessionStorage.emptyInstance();
+        this.entity = await store.read() ?? SessionStorage.emptyEntity();
+        // TODO upgrade the structure once on app start
+        if (this.entity.version !== 1) {
+            this.logger.verbose(
+                // eslint-disable-next-line @typescript-eslint/unbound-method
+                `${nameof(SessionStorage.prototype.load)} upgrading session storage structure (version: ${String(this.entity.version)})`,
+            );
+            this.entity = {
+                ...SessionStorage.emptyEntity(),
+                instance: this.entity as unknown as SessionStorageModel["instance"],
+            };
+            await this.save();
+        }
         await this.removeNonExistingLogins(actualLogins);
-    }
-
-    readonlyInstance(): DeepReadonly<typeof SessionStorage.prototype.instance> {
-        return this.instance;
     }
 
     private async save(): Promise<void> {
         this.logger.info(nameof(SessionStorage.prototype.save)); // eslint-disable-line @typescript-eslint/unbound-method
         await this.saveToFileQueue.q(async () => {
             const store = await this.resolveStore();
-            await store.write(this.instance);
+            const {entity} = this;
+            const dataToSave: StrictOmit<typeof entity, "dataSaltBase64"> & Required<Pick<typeof entity, "dataSaltBase64">> = {
+                ...entity,
+                version: SESSION_STORAGE_VERSION,
+                dataSaltBase64: generateDataSaltBase64(ONE_KB_BYTES * 5, ONE_KB_BYTES * 10),
+            };
+            await store.write(dataToSave);
         });
     }
 
@@ -97,11 +114,9 @@ export class SessionStorage {
     ): Promise<number> {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         this.logger.info(nameof(SessionStorage.prototype.removeNonExistingLogins));
-        const loginsToRemove = Object
-            .keys(this.instance)
-            .filter((savedLogin) => !actualLogins.includes(savedLogin));
+        const loginsToRemove = Object.keys(this.entity.instance).filter((savedLogin) => !actualLogins.includes(savedLogin));
         for (const login of loginsToRemove) {
-            delete this.instance[login];
+            delete this.entity.instance[login];
         }
         if (loginsToRemove.length) {
             await this.save();
@@ -109,7 +124,7 @@ export class SessionStorage {
         return loginsToRemove.length;
     }
 
-    private async resolveStore(): Promise<FsJsonStore.Store<typeof SessionStorage.prototype.instance>> {
+    private async resolveStore(): Promise<FsJsonStore.Store<typeof SessionStorage.prototype.entity>> {
         const key = Buffer.from(await this.options.encryption.keyResolver(), BASE64_ENCODING);
         const preset = await this.options.encryption.presetResolver();
 

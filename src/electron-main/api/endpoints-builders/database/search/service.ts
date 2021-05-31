@@ -11,7 +11,8 @@ import {
     fillFoldersAndReturnRootConversationNodes,
     splitAndFormatAndFillSummaryFolders,
 } from "src/electron-main/api/endpoints-builders/database/folders-view";
-import {parseProtonRestModel, walkConversationNodesTree} from "src/shared/util";
+import {parseProtonRestModel, readMailBody} from "src/shared/entity-util";
+import {walkConversationNodesTree} from "src/shared/util";
 
 export function searchRootConversationNodes(
     account: DeepReadonly<FsDbAccount>,
@@ -102,7 +103,7 @@ export const secondSearchStep = async (
                 const serializedMailCodePart = JSON.stringify(
                     JSON.stringify({
                         ...parsedRawMail,
-                        Body: mail.body,
+                        Body: readMailBody(mail),
                         EncryptedBody: parsedRawMail.Body,
                         ...(mail.failedDownload && {_BodyDecryptionFailed: true}),
                         Folders: formFoldersForQuickJSEvaluation(folders, LABEL_TYPE.MESSAGE_FOLDER),

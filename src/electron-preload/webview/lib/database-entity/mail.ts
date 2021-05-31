@@ -4,6 +4,7 @@ import {ONE_SECOND_MS, PACKAGE_VERSION} from "src/shared/constants";
 import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
 import {buildBaseEntity, buildPk} from "src/electron-preload/webview/lib/database-entity/index";
 import {buildLoggerBundle} from "src/electron-preload/lib/util";
+import {lzutf8Util} from "src/shared/entity-util";
 
 const logger = buildLoggerBundle(__filename);
 
@@ -51,12 +52,19 @@ const isConfidential = ((encryptedValues: Array<RestModel.Message["IsEncrypted"]
 ]);
 
 export async function buildMail(input: RestModel.Message, api: ProviderApi): Promise<DatabaseModel.Mail> {
-    const bodyPart: Mutable<Pick<DatabaseModel.Mail, "body" | "failedDownload">> = {
+    const bodyPart: Mutable<Pick<DatabaseModel.Mail, "body" | "bodyCompression" | "failedDownload">> = {
         body: "",
     };
 
     try {
-        bodyPart.body = await api._custom_.decryptMessageBody(input);
+        const decryptedBody = await api._custom_.decryptMessageBody(input);
+
+        if (lzutf8Util.shouldCompress(decryptedBody)) {
+            bodyPart.body = lzutf8Util.compress(decryptedBody);
+            bodyPart.bodyCompression = "lzutf8";
+        } else {
+            bodyPart.body = decryptedBody;
+        }
     } catch (error) {
         // printing mail subject to log helps users locating the problematic item
         logger.error(`body decryption failed, email subject: "${input.Subject}"`, error);

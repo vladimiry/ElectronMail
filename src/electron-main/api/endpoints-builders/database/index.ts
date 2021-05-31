@@ -17,6 +17,7 @@ import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/uti
 import {narrowIndexActionPayload} from "./indexing/service";
 import {patchMetadata} from "src/electron-main/database/util";
 import {prepareFoldersView} from "./folders-view";
+import {readMailBody} from "src/shared/entity-util";
 import {validateEntity} from "src/electron-main/database/validation";
 
 const _logger = curryFunctionMembers(electronLog, __filename);
@@ -240,7 +241,9 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             return {
                 ...omit(mail, ["body"]),
                 // TODO test "dbGetAccountMail" setting "mail.body" through the "sanitizeHtml" call
-                body: sanitizeHtml(mail.body),
+                body: sanitizeHtml(
+                    readMailBody(mail),
+                ),
             };
         },
     };

@@ -3,14 +3,14 @@
         <h2>Master Password Setup</h2>
         <fieldset [disabled]="(signingIn$ | async) || false">
             <div class="form-row">
-                <div class="form-group col-md-6">
+                <div class="col-md-6">
                     <input
                         #passwordRef [ngClass]="{'is-invalid': password.dirty && password.invalid}" class="form-control form-control-lg" formControlName="password"
                         placeholder="Password"
                         type="password"
                     >
                 </div>
-                <div class="form-group col-md-6">
+                <div class="col-md-6">
                     <input
                         [ngClass]="{'is-invalid': passwordConfirm.dirty && passwordConfirm.invalid}" class="form-control form-control-lg" formControlName="passwordConfirm"
                         placeholder="Password Confirm"
@@ -21,7 +21,7 @@
                     </div>
                 </div>
             </div>
-            <div class="form-group text-muted">
+            <div class="text-muted">
                 The app uses this password to encrypt all the sensitive data to be stored in the
                 <a (click)="$event.preventDefault(); openSettingsFolder()" href="{{ userDataDir }}">
                     settings folder

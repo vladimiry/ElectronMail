@@ -271,20 +271,8 @@ export function initContext(
                 },
             } as const;
             return {
-                db: new Database(
-                    {
-                        file: path.join(locations.userDataDir, "database.bin"),
-                        encryption,
-                    },
-                    storeFs,
-                ),
-                sessionDb: new Database(
-                    {
-                        file: path.join(locations.userDataDir, "database-session.bin"),
-                        encryption,
-                    },
-                    storeFs,
-                ),
+                db: new Database({file: path.join(locations.userDataDir, "database.bin"), encryption}),
+                sessionDb: new Database({file: path.join(locations.userDataDir, "database-session.bin"), encryption}),
             };
         })(),
         ...((): NoExtraProps<Pick<Context, "sessionStorage">> => {

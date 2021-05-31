@@ -54,7 +54,7 @@ linux:
   desktop:
     StartupWMClass: electron-mail
   executableArgs:
-    - '--js-flags="--max-old-space-size=6144"'
+    - '--js-flags="--max-old-space-size=12288"'
 
 snap:
   confinement: strict

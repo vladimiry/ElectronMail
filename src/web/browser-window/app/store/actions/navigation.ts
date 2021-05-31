@@ -7,11 +7,11 @@ export const NAVIGATION_ACTIONS = unionize({
             queryParams?: Params;
             extras?: NavigationExtras;
         }>(),
-        Logout: ofType<Record<string, unknown>>(),
-        OpenAboutWindow: ofType<Record<string, unknown>>(),
+        Logout: ofType<{ skipKeytarProcessing?: boolean }>(),
+        OpenAboutWindow: ofType(),
         OpenExternal: ofType<{ url: string }>(),
-        OpenSettingsFolder: ofType<Record<string, unknown>>(),
-        Quit: ofType<Record<string, unknown>>(),
+        OpenSettingsFolder: ofType(),
+        Quit: ofType(),
         ToggleBrowserWindow: ofType<{ forcedState: boolean }>(),
     },
     {

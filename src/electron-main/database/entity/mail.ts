@@ -69,6 +69,10 @@ export class Mail extends Entity implements Model.Mail {
     @IsString()
     body!: Model.Mail["body"];
 
+    @IsIn(["lzutf8"])
+    @IsOptional()
+    bodyCompression!: Model.Mail["bodyCompression"];
+
     @IsNotEmpty()
     @ValidateNested()
     @Type(() => MailAddress)

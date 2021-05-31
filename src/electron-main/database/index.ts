@@ -3,13 +3,13 @@ import asap from "asap-es";
 import path from "path";
 import electronLog, {ElectronLog} from "electron-log";
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/lib/private/constants";
-import {KeyBasedPreset} from "fs-json-store-encryption-adapter";
+import {EncryptionAdapter, KeyBasedPreset} from "fs-json-store-encryption-adapter";
 
 import {DATABASE_VERSION, DB_INSTANCE_PROP_NAME} from "./constants";
 import {DB_DATA_CONTAINER_FIELDS, DbAccountPk, FsDb, FsDbAccount} from "src/shared/model/database";
 import {LogLevel} from "src/shared/model/common";
-import {SerializationAdapter} from "./serialization";
 import {buildAccountFoldersResolver, patchMetadata} from "src/electron-main/database/util";
+import {buildSerializer} from "src/electron-main/database/serialization";
 import {curryFunctionMembers} from "src/shared/util";
 import {hrtimeDuration} from "src/electron-main/util";
 
@@ -26,6 +26,22 @@ export class Database {
     static buildEmptyAccountMetadata(): FsDbAccount["metadata"] {
         return {
             latestEventId: "",
+        };
+    }
+
+    static buildEmptyAccount(): FsDbAccount {
+        return {
+            conversationEntries: Object.create(null), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            mails: Object.create(null), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            folders: Object.create(null), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            contacts: Object.create(null), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            metadata: Database.buildEmptyAccountMetadata(),
+            deletedPks: {
+                conversationEntries: [],
+                mails: [],
+                folders: [],
+                contacts: [],
+            },
         };
     }
 
@@ -96,6 +112,8 @@ export class Database {
 
     private readonly saveToFileQueue = new asap();
 
+    private readonly serializer = buildSerializer(this.options.file);
+
     private [DB_INSTANCE_PROP_NAME]: FsDb = Database.buildEmptyDb();
 
     constructor(
@@ -105,8 +123,7 @@ export class Database {
                 keyResolver: () => Promise<string>;
                 presetResolver: () => Promise<KeyBasedPreset>;
             }>;
-        }>,
-        public readonly fileFs: FsJsonStore.Model.StoreFs = FsJsonStore.Fs.Fs.fs,
+        }>
     ) {
         this.logger = curryFunctionMembers(_logger, `[${path.basename(this.options.file)}]`);
     }
@@ -128,22 +145,8 @@ export class Database {
     }
 
     initEmptyAccount<TL extends DbAccountPk>({login}: TL): FsDbAccount {
-        const account: FsDbAccount = {
-            conversationEntries: Object.create(null), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-            mails: Object.create(null), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-            folders: Object.create(null), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-            contacts: Object.create(null), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-            metadata: Database.buildEmptyAccountMetadata(),
-            deletedPks: {
-                conversationEntries: [],
-                mails: [],
-                folders: [],
-                contacts: [],
-            },
-        };
-
+        const account = Database.buildEmptyAccount();
         this.dbInstance.accounts[login] = account;
-
         return account;
     }
 
@@ -167,10 +170,7 @@ export class Database {
 
     async persisted(): Promise<boolean> {
         // TODO get rid of "fs-json-store" use
-        return new FsJsonStore.Store<FsDb>({
-            file: this.options.file,
-            fs: this.fileFs,
-        }).readable();
+        return new FsJsonStore.Store<FsDb>({file: this.options.file}).readable();
     }
 
     async loadFromFile(): Promise<void> {
@@ -181,12 +181,9 @@ export class Database {
         }
 
         const duration = hrtimeDuration();
-        const serializationAdapter = await this.buildSerializationAdapter();
 
-        this.dbInstance = await serializationAdapter.read(
-            await this.fileFs.readFile(
-                this.options.file,
-            ),
+        this.dbInstance = await this.serializer.read(
+            await this.buildEncryptionAdapter(),
         );
 
         this.logStats("loadFromFile", duration);
@@ -197,22 +194,18 @@ export class Database {
 
         return this.saveToFileQueue.q(async () => {
             const duration = hrtimeDuration();
-            const serializationAdapter = await this.buildSerializationAdapter();
+            const dataToStore: DeepReadonly<FsDb> = {
+                ...this.dbInstance,
+                version: DATABASE_VERSION,
+            };
 
-            await this.fileFs.writeFileAtomic(
-                this.options.file,
-                await serializationAdapter.write({
-                    ...this.readonlyDbInstance(),
-                    version: DATABASE_VERSION,
-                }),
+            await this.serializer.write(
+                await this.buildEncryptionAdapter(),
+                dataToStore,
             );
 
             this.logStats("saveToFile", duration);
         });
-    }
-
-    readonlyDbInstance(): DeepReadonly<FsDb> {
-        return this.dbInstance;
     }
 
     reset(): void {
@@ -283,16 +276,11 @@ export class Database {
             .map((login) => ({login}));
     }
 
-    private async buildSerializationAdapter(): Promise<SerializationAdapter> {
+    private async buildEncryptionAdapter(): Promise<EncryptionAdapter> {
         const key = Buffer.from(await this.options.encryption.keyResolver(), BASE64_ENCODING);
-
         if (key.length !== KEY_BYTES_32) {
             throw new Error(`Invalid encryption key length, expected: ${KEY_BYTES_32}, actual: ${key.length}`);
         }
-
-        return new SerializationAdapter({
-            key,
-            preset: await this.options.encryption.presetResolver(),
-        });
+        return new EncryptionAdapter({key, preset: await this.options.encryption.presetResolver()});
     }
 }

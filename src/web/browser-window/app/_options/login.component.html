@@ -1,23 +1,21 @@
-<div class="d-flex justify-content-center">
-    <form (ngSubmit)="submit()" *ngIf="!(loadingDatabase$ | async); else loadingDatabaseTemplate" [formGroup]="form" novalidate>
+<div class="d-flex flex-column justify-content-center">
+    <form (ngSubmit)="submit()" [formGroup]="form" novalidate>
         <h2>Log in</h2>
-        <fieldset [disabled]="(signingIn$ | async) || false" class="form-group">
-            <div class="form-group">
-                <input
-                    #passwordRef
-                    [ngClass]="{'is-invalid': password.dirty && password.invalid}"
-                    autocapitalize="off"
-                    autocorrect="off"
-                    class="form-control form-control-lg"
-                    formControlName="password"
-                    id="loginFormPasswordControl"
-                    placeholder="Password"
-                    spellcheck="off"
-                    type="password"
-                >
-            </div>
+        <fieldset [disabled]="(signingIn$ | async) || (loadingDatabase$ | async) || false">
+            <input
+                #passwordRef
+                [ngClass]="{'is-invalid': password.dirty && password.invalid}"
+                autocapitalize="off"
+                autocorrect="off"
+                class="form-control form-control-lg"
+                formControlName="password"
+                id="loginFormPasswordControl"
+                placeholder="Password"
+                spellcheck="off"
+                type="password"
+            >
             <button [disabled]="form.invalid" class="btn btn-lg btn-primary btn-block" type="submit">
-                <i *ngIf="signingIn$ | async" class="fa fa-spinner fa-pulse fa-fw"></i>
+                <i *ngIf="(signingIn$ | async) && !(loadingDatabase$ | async)" class="fa fa-spinner fa-pulse fa-fw"></i>
                 Submit
             </button>
             <div class="custom-control custom-switch float-right">
@@ -34,8 +32,10 @@
                 </label>
             </div>
         </fieldset>
+		<div class="progress" *ngIf="loadingDatabase$ | async">
+			<div class="progress-bar progress-bar-striped progress-bar-animated bg-secondary w-100">
+				<span class="px-1">Loading "local store" ...</span>
+			</div>
+		</div>
     </form>
-    <ng-template #loadingDatabaseTemplate>
-        Local database is being loaded... Please wait up to {{ databaseLoadingTimeoutSeconds$ | async }} seconds.
-    </ng-template>
 </div>

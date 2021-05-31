@@ -129,8 +129,8 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-        async logout() {
-            if (ctx.keytarSupport) {
+        async logout({skipKeytarProcessing}) {
+            if (!skipKeytarProcessing && ctx.keytarSupport) {
                 await deletePassword();
             }
 

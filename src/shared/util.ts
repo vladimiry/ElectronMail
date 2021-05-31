@@ -2,8 +2,6 @@ import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import type {RateLimiterMemory} from "rate-limiter-flexible";
 import {URL} from "@cliqz/url-parser";
 import {pick} from "remeda";
-
-import type * as RestModel from "src/electron-preload/webview/lib/rest-model";
 import {
     ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN,
     DEFAULT_API_CALL_TIMEOUT,
@@ -18,10 +16,12 @@ import {
 import {AccountConfig} from "./model/account";
 import {BaseConfig, Config} from "./model/options";
 import {DbPatch} from "./api/common";
-import {Folder, FsDbAccount, Mail, View} from "src/shared/model/database";
+import {FsDbAccount, View} from "src/shared/model/database";
 import {LoginFieldContainer} from "./model/container";
 import {PROVIDER_REPO_MAP, PROVIDER_REPO_NAMES} from "src/shared/proton-apps-constants";
 import {StatusCodeError} from "./model/error";
+
+// TODO split ./src/shared/util.ts to smaller utility files in subfolder
 
 export function initialConfig(): Config {
     {
@@ -70,7 +70,7 @@ export function initialConfig(): Config {
             },
             indexingBootstrapBufferSize: 1000,
             jsFlags: [
-                "--max-old-space-size=3072",
+                "--max-old-space-size=6144",
             ],
             commandLineSwitches: [],
             localDbMailsListViewMode: "plain",
@@ -684,13 +684,6 @@ export const depersonalizeLoggedUrlsInString: (value: unknown) => string = (() =
     };
     return result;
 })();
-
-// TODO move "protonmail message rest model" to shared library since being referenced from different places
-export const parseProtonRestModel = <T extends Mail | Folder>(
-    dbEntity: T
-): T extends Mail ? RestModel.Message : RestModel.Label => {
-    return JSON.parse(dbEntity.raw); // eslint-disable-line @typescript-eslint/no-unsafe-return
-};
 
 export const buildInitialVendorsAppCssLinks = (
     hrefs: ReadonlyArray<string>,

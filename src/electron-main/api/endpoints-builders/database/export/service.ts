@@ -1,14 +1,14 @@
 import UUID from "pure-uuid";
+import fsAsync from "fs/promises";
 import path from "path";
 import truncateStringLength from "truncate-utf8-bytes";
 import {Base64} from "js-base64";
 import {deserializeError} from "serialize-error";
 
-import fsAsync from "fs/promises";
 import {DbExportMailAttachmentItem} from "src/electron-main/api/endpoints-builders/database/export/const";
 import {File, Mail, MailAddress} from "src/shared/model/database";
 import {PACKAGE_NAME} from "src/shared/constants";
-import {parseProtonRestModel} from "src/shared/util";
+import {parseProtonRestModel, readMailBody} from "src/shared/entity-util";
 
 const eol = "\r\n";
 
@@ -161,7 +161,7 @@ const contentBuilders: Readonly<Record<"eml" | "json", (
         const body = Base64.encode(
             mail.failedDownload
                 ? mail.failedDownload.errorMessage
-                : mail.body,
+                : readMailBody(mail)
         );
         const rawMail = parseProtonRestModel(mail);
         const lines = [
@@ -221,7 +221,7 @@ const contentBuilders: Readonly<Record<"eml" | "json", (
         return JSON.stringify(
             {
                 ...rawMail,
-                Body: mail.body,
+                Body: readMailBody(mail),
                 EncryptedBody: rawMail.Body,
                 Attachments: attachmentsContent
                     ? rawMail.Attachments.map((attachment, index) => {

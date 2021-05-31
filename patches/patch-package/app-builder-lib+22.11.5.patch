@@ -1,5 +1,5 @@
 diff --git a/node_modules/app-builder-lib/templates/nsis/include/installer.nsh b/node_modules/app-builder-lib/templates/nsis/include/installer.nsh
-index 31a1416..572f371 100644
+index 34e91df..27f12cd 100644
 --- a/node_modules/app-builder-lib/templates/nsis/include/installer.nsh
 +++ b/node_modules/app-builder-lib/templates/nsis/include/installer.nsh
 @@ -174,7 +174,7 @@
@@ -7,7 +7,7 @@ index 31a1416..572f371 100644
        !insertmacro createMenuDirectory
  
 -      CreateShortCut "$newStartMenuLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
-+      CreateShortCut "$newStartMenuLink" "$appExe" "--js-flags=$\"--max-old-space-size=6144$\"" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
++      CreateShortCut "$newStartMenuLink" "$appExe" "--js-flags=$\"--max-old-space-size=12288$\"" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
        # clear error (if shortcut already exists)
        ClearErrors
        WinShell::SetLnkAUMI "$newStartMenuLink" "${APP_ID}"
@@ -16,7 +16,7 @@ index 31a1416..572f371 100644
        # Shortcuts will be recreated.
        ${if} $keepShortcuts == "false"
 -        CreateShortCut "$newDesktopLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
-+        CreateShortCut "$newDesktopLink" "$appExe" "--js-flags=$\"--max-old-space-size=6144$\"" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
++        CreateShortCut "$newDesktopLink" "$appExe" "--js-flags=$\"--max-old-space-size=12288$\"" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
          ClearErrors
          WinShell::SetLnkAUMI "$newDesktopLink" "${APP_ID}"
        # The keepShortcuts mechanism IS enabled.
@@ -25,7 +25,7 @@ index 31a1416..572f371 100644
        ${orIfNot} ${FileExists} "$oldDesktopLink"
          ${ifNot} ${isUpdated}
 -          CreateShortCut "$newDesktopLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
-+          CreateShortCut "$newDesktopLink" "$appExe" "--js-flags=$\"--max-old-space-size=6144$\"" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
++          CreateShortCut "$newDesktopLink" "$appExe" "--js-flags=$\"--max-old-space-size=12288$\"" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
            ClearErrors
            WinShell::SetLnkAUMI "$newDesktopLink" "${APP_ID}"
          ${endIf}

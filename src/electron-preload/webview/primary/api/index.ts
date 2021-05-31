@@ -13,9 +13,10 @@ import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/mod
 import {SYSTEM_FOLDER_IDENTIFIERS} from "src/shared/model/database";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 import {buildDbPatch, buildDbPatchEndpoint} from "src/electron-preload/webview/primary/api/build-db-patch";
-import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty, parseProtonRestModel} from "src/shared/util";
+import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {dumpProtonSharedSession} from "src/electron-preload/webview/primary/shared-session";
 import {fillInputValue, getLocationHref, resolveDomElements, submitTotpToken,} from "src/electron-preload/webview/lib/util";
+import {parseProtonRestModel} from "src/shared/entity-util";
 import {resolveIpcMainApi} from "src/electron-preload/lib/util";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, __filename);

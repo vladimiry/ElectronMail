@@ -230,6 +230,10 @@ export class OptionsEffects {
                                         return this.buildAfterLoginNavigationAction(settings.accounts.length);
                                     })(),
                                 ]),
+                                catchError((error) => merge(
+                                    of(NAVIGATION_ACTIONS.Logout({skipKeytarProcessing: true})),
+                                    of(NOTIFICATION_ACTIONS.Error(error))
+                                )),
                                 finalize(() => this.dispatchProgress({loadingDatabase: false})),
                             ),
                         );

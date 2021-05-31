@@ -11,6 +11,7 @@ import {IPC_MAIN_API_DB_INDEXER_REQUEST$, IPC_MAIN_API_DB_INDEXER_RESPONSE$,} fr
 import {IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS,} from "src/shared/api/main";
 import {curryFunctionMembers} from "src/shared/util";
 import {hrtimeDuration} from "src/electron-main/util";
+import {readMailBody} from "src/shared/entity-util";
 
 const logger = curryFunctionMembers(electronLog, __filename);
 
@@ -29,7 +30,12 @@ export const narrowIndexActionPayload: (
         return {
             key,
             remove,
-            add: add.map((mail) => pick(mail, fieldsToIndex)),
+            add: add.map((mail) => {
+                return {
+                    ...pick(mail, fieldsToIndex),
+                    [((prop: keyof Pick<typeof mail, "body">) => prop)("body")]: readMailBody(mail),
+                };
+            }),
         };
     };
 

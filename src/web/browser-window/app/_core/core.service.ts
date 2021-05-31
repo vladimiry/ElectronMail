@@ -154,8 +154,8 @@ export class CoreService {
         );
     }
 
-    logOut(): void {
-        this.store.dispatch(NAVIGATION_ACTIONS.Logout());
+    logOut(skipKeytarProcessing?: boolean): void {
+        this.store.dispatch(NAVIGATION_ACTIONS.Logout({skipKeytarProcessing}));
     }
 
     dispatch(action: AppAction): void {

@@ -77,9 +77,9 @@ export class NavigationEffects {
     logout$ = createEffect(
         () => this.actions$.pipe(
             unionizeActionFilter(NAVIGATION_ACTIONS.is.Logout),
-            concatMap(() => {
+            concatMap(({payload: {skipKeytarProcessing}}) => {
                 return from(
-                    this.electronService.ipcMainClient()("logout")(),
+                    this.electronService.ipcMainClient()("logout")({skipKeytarProcessing}),
                 ).pipe(
                     concatMap(() => {
                         return [

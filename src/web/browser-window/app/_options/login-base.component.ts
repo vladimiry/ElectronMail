@@ -5,7 +5,6 @@ import {Store, select} from "@ngrx/store";
 import {filter, map, pairwise} from "rxjs/operators";
 
 import {NOTIFICATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
-import {ONE_SECOND_MS} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {SAVE_PASSWORD_WARN_TRUSTED_HTML} from "./const";
 import {State} from "src/web/browser-window/app/store/reducers/options";
@@ -34,11 +33,6 @@ export abstract class LoginBaseComponent implements AfterViewInit, OnDestroy {
     readonly loadingDatabase$: Observable<boolean> = this.store.pipe(
         select(OptionsSelectors.FEATURED.progress),
         map((progress) => Boolean(progress.loadingDatabase)),
-    );
-
-    readonly databaseLoadingTimeoutSeconds$ = this.store.pipe(
-        select(OptionsSelectors.FEATURED.config),
-        map((config) => (config.timeouts.databaseLoading || 0) / ONE_SECOND_MS),
     );
 
     protected readonly subscription = new Subscription();

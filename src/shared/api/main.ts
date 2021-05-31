@@ -190,7 +190,7 @@ export const ENDPOINTS_DEFINITION = {
 
     init: ActionType.Promise<void, InitResponse>(),
 
-    logout: ActionType.Promise(),
+    logout: ActionType.Promise<{ skipKeytarProcessing?: boolean }>(),
 
     openAboutWindow: ActionType.Promise(),
 

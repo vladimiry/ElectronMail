@@ -23,7 +23,8 @@ import {
     ZOOM_FACTORS,
 } from "src/shared/constants";
 import {NumericBoolean} from "src/shared/model/common";
-import {curryFunctionMembers, parseProtonRestModel, pickBaseConfigProperties} from "src/shared/util";
+import {curryFunctionMembers, pickBaseConfigProperties} from "src/shared/util";
+import {parseProtonRestModel} from "src/shared/entity-util";
 
 const logger = curryFunctionMembers(_logger, __filename);
 
@@ -367,6 +368,12 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
                 ),
             } as const;
             if (stringifiedValues.current === stringifiedValues.pre_4_12_2) {
+                config[key] = INITIAL_STORES.config()[key];
+            }
+        }
+        {
+            const key = "jsFlags";
+            if (config[key].length === 1 && config[key][0] === "--max-old-space-size=3072") {
                 config[key] = INITIAL_STORES.config()[key];
             }
         }

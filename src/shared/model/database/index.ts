@@ -17,6 +17,7 @@ export {
 export type Entity = NoExtraProps<{
     readonly pk: string;
     readonly raw: string;
+    readonly rawCompression?: "lzutf8";
     readonly id: string;
 }>;
 
@@ -47,6 +48,7 @@ export type Mail = NoExtraProps<Entity & {
     readonly sentDate: Timestamp;
     readonly subject: string;
     readonly body: string;
+    readonly bodyCompression?: "lzutf8";
     readonly sender: MailAddress;
     readonly toRecipients: readonly MailAddress[];
     readonly ccRecipients: readonly MailAddress[];

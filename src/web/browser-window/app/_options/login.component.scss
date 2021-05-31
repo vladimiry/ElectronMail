@@ -13,7 +13,14 @@
         height: 100%;
     }
 
-    .btn-block {
-        margin-bottom: ($form-group-margin-bottom * 0.75);
+    fieldset,
+    input[type="password"],
+    button[type="submit"] {
+        margin-bottom: $form-group-margin-bottom * 0.75;
+    }
+
+    .progress {
+        font-size: $font-size-base;
+        height: ($progress-height * 1.5);
     }
 }

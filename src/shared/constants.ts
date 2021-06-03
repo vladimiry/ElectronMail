@@ -1,12 +1,14 @@
+import packageJSON from "package.json";
 import {EntryUrlItem, LogLevel} from "./model/common";
-import {
-    description as PACKAGE_DESCRIPTION,
-    homepage as PACKAGE_GITHUB_PROJECT_URL,
-    license as PACKAGE_LICENSE,
-    name as PACKAGE_NAME,
-    version as PACKAGE_VERSION,
-} from "package.json";
 import {PROTON_SHARED_MESSAGE_INTERFACE, PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
+
+const {
+    description: PACKAGE_DESCRIPTION,
+    homepage: PACKAGE_GITHUB_PROJECT_URL,
+    license: PACKAGE_LICENSE,
+    name: PACKAGE_NAME,
+    version: PACKAGE_VERSION,
+} = packageJSON;
 
 export const PRODUCT_NAME = "ElectronMail";
 

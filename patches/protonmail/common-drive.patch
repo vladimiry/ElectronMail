@@ -93,7 +93,7 @@ index cc0d217..9ead9e0 100644
          name: 'ProtonCalendar',
          bareName: 'Calendar',
          clientID: 'WebCalendar',
-diff --git a/node_modules/proton-shared/lib/helpers/sentry.js b/node_modules/proton-shared/lib/helpers/sentry.js
+diff --git a/node_modules/proton-shared/lib/helpers/sentry.ts b/node_modules/proton-shared/lib/helpers/sentry.ts
 index f62a21a..ff9ac8d 100644
 --- a/node_modules/proton-shared/lib/helpers/sentry.ts
 +++ b/node_modules/proton-shared/lib/helpers/sentry.ts

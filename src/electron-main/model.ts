@@ -53,9 +53,10 @@ export interface UIContext {
     findInPageBrowserView?: Electron.BrowserView & {
         // TODO TS / electron v11: drop custom "BrowserView.isDestroyed/destroy" methods declarations
         //      https://github.com/electron/electron/pull/25112
-        isDestroyed?: () => boolean;
-        destroy?: () => void;
-    };
+        //      https://github.com/electron/electron/issues/26929
+        //      https://github.com/electron/electron/issues/29626
+        webContents: { destroy?: () => void }
+    }
     readonly tray: Electron.Tray;
     readonly appMenu: Electron.Menu;
 }

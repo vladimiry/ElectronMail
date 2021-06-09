@@ -64,11 +64,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                 if (
                     !existingView
                     ||
-                    (
-                        existingView.isDestroyed
-                        &&
-                        existingView.isDestroyed()
-                    )
+                    existingView.webContents.isDestroyed()
                 ) {
                     logger.verbose(`building new "${nameof.full(uiContext.findInPageBrowserView)}" instance`);
                     setTimeout(
@@ -96,15 +92,21 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
                     // destroy
                     logger.verbose(`destroying "${nameof.full(uiContext.findInPageBrowserView)}"`);
-                    // WARN "setBrowserView" needs to be called with null, see https://github.com/electron/electron/issues/13581
-                    browserWindow.setBrowserView(
-                        // TODO TS: get rid of any cast, see https://github.com/electron/electron/issues/13581
-                        null as any, // eslint-disable-line @typescript-eslint/no-explicit-any
-                    );
                     {
-                        const {destroy} = uiContext.findInPageBrowserView;
-                        destroy && destroy(); // eslint-disable-line no-unused-expressions
+                        // TODO drop explicit BrowserView.webContents destroying
+                        //      https://github.com/electron/electron/issues/26929
+                        const {webContents} = uiContext.findInPageBrowserView;
+                        // TODO drop wrapping BrowserView.webContents.destroy() in setImmediate
+                        //      https://github.com/electron/electron/issues/29626
+                        setImmediate(() => {
+                            if (!webContents.isDestroyed() && typeof webContents.destroy === "function") {
+                                webContents.destroy();
+                            }
+                        });
                     }
+                    // WARN "setBrowserView" needs to be called with null, see https://github.com/electron/electron/issues/13581
+                    browserWindow.setBrowserView(null);
+
                     delete uiContext.findInPageBrowserView;
                 });
 

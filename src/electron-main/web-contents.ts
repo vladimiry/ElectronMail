@@ -75,7 +75,8 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
     );
 
     app.on("web-contents-created", async (...[, webContents]) => {
-        const isFullTextSearchBrowserWindow = ctx.uiContext?.fullTextSearchBrowserWindow?.webContents === webContents;
+        const uiContext = ctx.uiContext && await ctx.uiContext;
+        const isFullTextSearchBrowserWindow = uiContext?.fullTextSearchBrowserWindow?.webContents === webContents;
 
         webContents.on("certificate-error", ({type}, url, error) => logger.error(JSON.stringify({type, url}), error));
         webContents.on("console-message", ({type}, level, message, line, sourceId) => {

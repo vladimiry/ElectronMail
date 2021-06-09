@@ -3,7 +3,7 @@ import compareVersions from "compare-versions";
 import electronLog from "electron-log";
 import fetch from "node-fetch";
 import {app, dialog, nativeTheme, shell} from "electron";
-import {first, map, startWith} from "rxjs/operators";
+import {first, map, startWith, switchMap} from "rxjs/operators";
 import {from, lastValueFrom, merge, of, throwError} from "rxjs";
 import {inspect} from "util";
 import {isWebUri} from "valid-url";
@@ -15,6 +15,7 @@ import {PACKAGE_GITHUB_PROJECT_URL, PACKAGE_VERSION, UPDATE_CHECK_FETCH_TIMEOUT}
 import {PLATFORM} from "src/electron-main/constants";
 import {applyZoomFactor} from "src/electron-main/window/util";
 import {curryFunctionMembers} from "src/shared/util";
+import {resolveUiContextStrict} from "src/electron-main/util";
 import {showAboutBrowserWindow} from "src/electron-main/window/about";
 
 type Methods = keyof Pick<IpcMainApiEndpoints,
@@ -70,7 +71,9 @@ export async function buildEndpoints(
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-        async activateBrowserWindow(browserWindow = ctx.uiContext && ctx.uiContext.browserWindow) {
+        async activateBrowserWindow(browserWindow) {
+            browserWindow ??= ((ctx.uiContext && await ctx.uiContext) ?? {}).browserWindow;
+
             if (!browserWindow) {
                 return;
             }
@@ -99,7 +102,7 @@ export async function buildEndpoints(
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async toggleBrowserWindow(arg) {
-            const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
+            const {browserWindow} = (ctx.uiContext && await ctx.uiContext) ?? {};
 
             if (!browserWindow) {
                 return;
@@ -147,35 +150,40 @@ export async function buildEndpoints(
         },
 
         selectPath() {
-            const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
-
-            if (!browserWindow) {
-                return throwError(new Error("Failed to resolve main app window"));
-            }
-
-            return merge(
-                // resets api calling timeouts (dialog potentially can be opened for a long period of time)
-                of({message: "timeout-reset"} as const),
-                from(
-                    dialog.showOpenDialog(
-                        browserWindow,
-                        {
-                            title: "Select file system directory ...",
-                            defaultPath: app.getPath("home"),
-                            properties: ["openDirectory"],
-                        },
-                    ),
-                ).pipe(
-                    map(({canceled, filePaths: [location]}) => {
-                        if (canceled) {
-                            return {message: "canceled"} as const;
-                        }
-                        if (!location) {
-                            throw new Error("Location resolving failed");
-                        }
-                        return {location} as const;
-                    }),
-                ),
+            return from(
+                (async (): Promise<import("electron").BrowserWindow | undefined> => {
+                    return (await resolveUiContextStrict(ctx)).browserWindow;
+                })(),
+            ).pipe(
+                switchMap((browserWindow) => {
+                    if (!browserWindow) {
+                        return throwError(() => new Error("Failed to resolve main app window"));
+                    }
+                    return merge(
+                        // resets api calling timeouts (dialog potentially can be opened for a long period of time)
+                        of({message: "timeout-reset"} as const),
+                        from(
+                            dialog.showOpenDialog(
+                                browserWindow,
+                                {
+                                    title: "Select file system directory ...",
+                                    defaultPath: app.getPath("home"),
+                                    properties: ["openDirectory"],
+                                },
+                            ),
+                        ).pipe(
+                            map(({canceled, filePaths: [location]}) => {
+                                if (canceled) {
+                                    return {message: "canceled"} as const;
+                                }
+                                if (!location) {
+                                    throw new Error("Location resolving failed");
+                                }
+                                return {location} as const;
+                            }),
+                        ),
+                    );
+                }),
             );
         },
 

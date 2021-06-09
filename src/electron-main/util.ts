@@ -88,3 +88,11 @@ export const generateDataSaltBase64 = (minBytes: number, maxBytes: number): stri
     const size = getRandomInt(minBytes, maxBytes);
     return randomBytes(size).toString("base64");
 };
+
+export const resolveUiContextStrict = async (ctx: Context): Promise<Exclude<Context["uiContext"], undefined>> => {
+    const {uiContext} = ctx;
+    if (!uiContext) {
+        throw new Error(`"${nameof(uiContext)}" has not been initialized`);
+    }
+    return uiContext;
+};

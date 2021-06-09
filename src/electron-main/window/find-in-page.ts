@@ -6,7 +6,7 @@ import {DEFAULT_WEB_PREFERENCES} from "./constants";
 import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
 import {WEB_PROTOCOL_SCHEME} from "src/shared/constants";
 import {curryFunctionMembers} from "src/shared/util";
-import {injectVendorsAppCssIntoHtmlFile} from "src/electron-main/util";
+import {injectVendorsAppCssIntoHtmlFile, resolveUiContextStrict} from "src/electron-main/util";
 
 const logger = curryFunctionMembers(_logger, __filename);
 
@@ -16,18 +16,20 @@ const resolveContent = async (ctx: Context): Promise<Unpacked<ReturnType<typeof 
     return injection;
 };
 
-export function syncFindInPageBrowserViewSize(ctx: Context, findInPageBrowserView?: BrowserView): void {
-    if (!ctx.uiContext) {
+export async function syncFindInPageBrowserViewSize(ctx: Context, findInPageBrowserView?: BrowserView): Promise<void> {
+    const uiContext = ctx.uiContext && await ctx.uiContext;
+
+    if (!uiContext) {
         return;
     }
 
-    const browserView = findInPageBrowserView || ctx.uiContext.findInPageBrowserView;
+    const browserView = findInPageBrowserView ?? uiContext.findInPageBrowserView;
 
     if (!browserView) {
         return;
     }
 
-    const {browserWindow} = ctx.uiContext;
+    const {browserWindow} = uiContext;
     const browserWindowBounds = browserWindow.getBounds();
     const alignCenter = browserWindowBounds.width < 600;
     const boundsSize = {
@@ -50,10 +52,6 @@ export function syncFindInPageBrowserViewSize(ctx: Context, findInPageBrowserVie
 export const initFindInPageBrowserView: (ctx: Context) => Promise<BrowserView> = (
     (): typeof initFindInPageBrowserView => {
         const resultFn: typeof initFindInPageBrowserView = async (ctx): Promise<BrowserView> => {
-            if (!ctx.uiContext) {
-                throw new Error(`UI Context has not been initialized`);
-            }
-
             const browserView = new BrowserView({
                 webPreferences: {
                     ...DEFAULT_WEB_PREFERENCES,
@@ -63,7 +61,7 @@ export const initFindInPageBrowserView: (ctx: Context) => Promise<BrowserView> =
 
             // WARN: "setBrowserView" needs to be called before "setBounds" call
             // otherwise BrowserView is invisible on macOS as "setBounds" call takes no effect
-            ctx.uiContext.browserWindow.setBrowserView(browserView);
+            (await resolveUiContextStrict(ctx)).browserWindow.setBrowserView(browserView);
 
             browserView.setAutoResize({width: false, height: false, horizontal: false, vertical: false});
 
@@ -74,7 +72,7 @@ export const initFindInPageBrowserView: (ctx: Context) => Promise<BrowserView> =
                 {baseURLForDataURL: `${WEB_PROTOCOL_SCHEME}:/${WEBPACK_WEB_CHUNK_NAMES["search-in-page-browser-view"]}/`},
             );
 
-            syncFindInPageBrowserViewSize(ctx, browserView);
+            await syncFindInPageBrowserViewSize(ctx, browserView);
 
             return browserView;
         };

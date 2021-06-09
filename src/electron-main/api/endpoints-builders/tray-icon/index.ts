@@ -51,8 +51,7 @@ export async function buildEndpoints(
     return {
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async updateOverlayIcon({hasLoggedOut, unread, unreadBgColor, unreadTextColor, trayIconColor}) {
-            const browserWindow = ctx.uiContext && ctx.uiContext.browserWindow;
-            const tray = ctx.uiContext && ctx.uiContext.tray;
+            const {browserWindow, tray} = (ctx.uiContext && await ctx.uiContext) ?? {};
 
             if (!browserWindow || !tray) {
                 return;

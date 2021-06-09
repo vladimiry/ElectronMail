@@ -7,6 +7,7 @@ import {Context} from "src/electron-main/model";
 import {IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main";
 import {curryFunctionMembers} from "src/shared/util";
 import {initFindInPageBrowserView} from "src/electron-main/window/find-in-page";
+import {resolveUiContextStrict} from "src/electron-main/util";
 
 type ApiMethods = keyof Pick<IpcMainApiEndpoints,
     | "findInPageDisplay"
@@ -25,13 +26,6 @@ const _logger = curryFunctionMembers(electronLog, __filename);
 
 export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpoints, ApiMethods>> {
     let findInPageNotification: NotificationMapValue | null = null;
-
-    const resolveContext = (): Exclude<typeof ctx.uiContext, undefined> => {
-        if (!ctx.uiContext) {
-            throw new Error(`"${nameof.full(ctx.uiContext)}" has not been initialized`);
-        }
-        return ctx.uiContext;
-    };
 
     const endpoints: Pick<IpcMainApiEndpoints, ApiMethods> = {
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -62,7 +56,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                 }
             }
 
-            const uiContext = resolveContext();
+            const uiContext = await resolveUiContextStrict(ctx);
             const {browserWindow} = uiContext;
 
             if (visible) {

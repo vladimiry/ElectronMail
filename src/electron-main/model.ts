@@ -37,7 +37,7 @@ export interface Context {
     settingsStore: StoreModel.Store<Settings>;
     readonly settingsStoreQueue: import("asap-es").IASAP;
     readonly sessionStorage: SessionStorage;
-    uiContext?: UIContext;
+    uiContext?: Promise<UIContext>;
     selectedAccount?: {
         webContentId: number;
         databaseView?: boolean;

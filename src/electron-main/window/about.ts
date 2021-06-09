@@ -18,7 +18,7 @@ import {
 import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
 import {applyZoomFactor} from "src/electron-main/window/util";
 import {curryFunctionMembers} from "src/shared/util";
-import {injectVendorsAppCssIntoHtmlFile} from "src/electron-main/util";
+import {injectVendorsAppCssIntoHtmlFile, resolveUiContextStrict} from "src/electron-main/util";
 
 const logger = curryFunctionMembers(_logger, __filename);
 
@@ -80,11 +80,8 @@ const resolveContent = async (ctx: Context): Promise<Unpacked<ReturnType<typeof 
 };
 
 export async function showAboutBrowserWindow(ctx: Context): Promise<BrowserWindow> {
-    if (!ctx.uiContext) {
-        throw new Error(`UI Context has not been initialized`);
-    }
-
-    const {aboutBrowserWindow: exitingBrowserWindow} = ctx.uiContext;
+    const uiContext = await resolveUiContextStrict(ctx);
+    const {aboutBrowserWindow: exitingBrowserWindow} = uiContext;
 
     if (exitingBrowserWindow && !exitingBrowserWindow.isDestroyed()) {
         exitingBrowserWindow.center();
@@ -121,13 +118,10 @@ export async function showAboutBrowserWindow(ctx: Context): Promise<BrowserWindo
             browserWindow.focus();
         })
         .on("closed", () => {
-            if (!ctx.uiContext) {
-                return;
-            }
-            delete ctx.uiContext.aboutBrowserWindow;
+            delete uiContext?.aboutBrowserWindow;
         });
 
-    ctx.uiContext.aboutBrowserWindow = browserWindow;
+    uiContext.aboutBrowserWindow = browserWindow;
 
     const {html} = await resolveContent(ctx);
 

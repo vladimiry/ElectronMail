@@ -1,20 +1,20 @@
 import {Menu, MenuItemConstructorOptions, app} from "electron";
 
-import {Context} from "src/electron-main/model";
+import {IpcMainApiEndpoints} from "src/shared/api/main";
 import {PLATFORM} from "src/electron-main/constants";
 
-export async function initApplicationMenu(ctx: Context): Promise<Menu> {
-    const endpoints = await ctx.deferredEndpoints.promise;
+// TODO crete "endpoints"-dependent menu items in disabled state and enable on "endpoints" promise resolving
+export async function initApplicationMenu(endpoints: Promise<IpcMainApiEndpoints>): Promise<Menu> {
     const aboutItem: MenuItemConstructorOptions = {
         label: "About",
         async click() {
-            await endpoints.openAboutWindow();
+            await (await endpoints).openAboutWindow();
         },
     };
     const quitItem: MenuItemConstructorOptions = {
         label: "Quit",
         async click() {
-            await endpoints.quit();
+            await (await endpoints).quit();
         },
     };
     const templateItems: MenuItemConstructorOptions[] = PLATFORM === "darwin"

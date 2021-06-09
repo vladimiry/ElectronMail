@@ -6,7 +6,7 @@ import {lastValueFrom} from "rxjs";
 
 import {Context} from "src/electron-main/model";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";
-import {PRODUCT_NAME} from "src/shared/constants";
+import {ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/constants";
 import {curryFunctionMembers, initialConfig} from "src/shared/util";
 import {readConfigSync} from "src/electron-main/util";
 import {syncFindInPageBrowserViewSize} from "src/electron-main/window/find-in-page";
@@ -108,8 +108,8 @@ async function keepBrowserWindowState(ctx: Context, browserWindow: Electron.Brow
             let timeoutId: any; // eslint-disable-line @typescript-eslint/no-explicit-any
             return (): void => {
                 clearTimeout(timeoutId);
-                timeoutId = setTimeout(saveWindowStateHandler, 500);
-                syncFindInPageBrowserViewSize(ctx);
+                timeoutId = setTimeout(saveWindowStateHandler, ONE_SECOND_MS / 2);
+                syncFindInPageBrowserViewSize(ctx); // eslint-disable-line @typescript-eslint/no-floating-promises
             };
         }
     )();

@@ -2,14 +2,13 @@ import {BrowserWindow} from "electron";
 
 import {Context} from "src/electron-main/model";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";
+import {resolveUiContextStrict} from "src/electron-main/util";
 
 export async function attachFullTextIndexWindow(ctx: Context): Promise<BrowserWindow> {
-    if (!ctx.uiContext) {
-        throw new Error(`UI Context has not been initialized`);
-    }
+    const uiContext = await resolveUiContextStrict(ctx);
 
-    if (ctx.uiContext.fullTextSearchBrowserWindow) {
-        throw new Error(`Full-text search process has already been spawned`);
+    if (uiContext.fullTextSearchBrowserWindow) {
+        throw new Error(`"${nameof.full(uiContext.fullTextSearchBrowserWindow)}" is already created`);
     }
 
     // WARN: "fullTextSearchBrowserWindow" starts communicating with main process straight away on preload script loading
@@ -28,17 +27,19 @@ export async function attachFullTextIndexWindow(ctx: Context): Promise<BrowserWi
     browserWindow.setMenu(null);
     await browserWindow.loadURL("data:text/html,<html><body></body></html>");
 
-    ctx.uiContext.fullTextSearchBrowserWindow = browserWindow;
+    uiContext.fullTextSearchBrowserWindow = browserWindow;
 
     return browserWindow;
 }
 
 export async function detachFullTextIndexWindow(ctx: Context): Promise<void> {
-    if (!ctx.uiContext || !ctx.uiContext.fullTextSearchBrowserWindow) {
+    const uiContext = ctx.uiContext && await ctx.uiContext;
+
+    if (!uiContext?.fullTextSearchBrowserWindow) {
         return;
     }
 
     // WARN: don't call "destroy" since app needs "window.onbeforeunload" to be triggered, see cleanup logic in preload script
-    ctx.uiContext.fullTextSearchBrowserWindow.close();
-    delete ctx.uiContext.fullTextSearchBrowserWindow;
+    uiContext.fullTextSearchBrowserWindow.close();
+    delete uiContext.fullTextSearchBrowserWindow;
 }

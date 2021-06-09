@@ -2,13 +2,12 @@ import {Menu, MenuItemConstructorOptions, Tray, app, nativeImage} from "electron
 import {Subscription} from "rxjs";
 import {filter, tap} from "rxjs/operators";
 
-import {Context} from "src/electron-main/model";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
-import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
 
-export async function initTray(ctx: Context): Promise<Tray> {
-    const endpoints = await ctx.deferredEndpoints.promise;
-    const toggleBrowserWindow = async (): Promise<void> => endpoints.toggleBrowserWindow();
+// TODO crete "endpoints"-dependent menu items in disabled state and enable on "endpoints" promise resolving
+export async function initTray(endpoints: Promise<IpcMainApiEndpoints>): Promise<Tray> {
+    const toggleBrowserWindow = async (): Promise<void> => (await endpoints).toggleBrowserWindow();
     const tray = new Tray(nativeImage.createEmpty());
     const optionsMenuItem: MenuItemConstructorOptions = {
         label: "Options",
@@ -17,7 +16,7 @@ export async function initTray(ctx: Context): Promise<Tray> {
             IPC_MAIN_API_NOTIFICATION$.next(
                 IPC_MAIN_API_NOTIFICATION_ACTIONS.OpenOptions(),
             );
-            await endpoints.toggleBrowserWindow({forcedState: true});
+            await (await endpoints).toggleBrowserWindow({forcedState: true});
         },
     };
     const logOutMenuItem: MenuItemConstructorOptions = {
@@ -42,14 +41,14 @@ export async function initTray(ctx: Context): Promise<Tray> {
                 {
                     label: "About",
                     async click(): Promise<void> {
-                        await endpoints.openAboutWindow();
+                        await (await endpoints).openAboutWindow();
                     },
                 },
                 optionsMenuItem,
                 {
                     label: "Open Settings Folder",
                     async click(): Promise<void> {
-                        await endpoints.openSettingsFolder();
+                        await (await endpoints).openSettingsFolder();
                     },
                 },
                 {
@@ -59,7 +58,7 @@ export async function initTray(ctx: Context): Promise<Tray> {
                 {
                     label: "Quit",
                     async click(): Promise<void> {
-                        await endpoints.quit();
+                        await (await endpoints).quit();
                     },
                 },
             ]),

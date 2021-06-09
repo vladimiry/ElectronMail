@@ -23,7 +23,7 @@ import {upgradeDatabase, upgradeSettings} from "src/electron-main/storage-upgrad
 
 const logger = curryFunctionMembers(electronLog, __filename);
 
-export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
+export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
     const endpoints: IpcMainApiEndpoints = {
         ...await EndpointsBuilders.Account.buildEndpoints(ctx),
         ...await EndpointsBuilders.Database.buildEndpoints(ctx),
@@ -178,9 +178,10 @@ export const initApi = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
             }
 
             if (updatedConfig.zoomFactor !== previousConfig.zoomFactor) {
+                const uiContext = ctx.uiContext && await ctx.uiContext;
                 for (const webContents of [
-                    ctx.uiContext?.aboutBrowserWindow?.webContents,
-                    ctx.uiContext?.browserWindow?.webContents,
+                    uiContext?.aboutBrowserWindow?.webContents,
+                    uiContext?.browserWindow?.webContents,
                 ]) {
                     if (webContents) {
                         await applyZoomFactor(ctx, webContents);

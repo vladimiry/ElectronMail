@@ -106,6 +106,13 @@ export class DbViewMailTabComponent extends DbViewAbstractComponent {
         return id;
     }
 
+    // TODO drop "resolveAsFolders" function
+    //      angular improved type inference for "trackBy" call since v12.0.4 but "let-*" attr of "ng-template" always typed as "any"
+    //      so the error occurs: Type '(__0_0: number, __0_1: Folder) => string' is not assignable to type 'TrackByFunction<any>'
+    resolveAsFolders(folders: unknown): View.Folder[] {
+        return folders as View.Folder[];
+    }
+
     selectFolder(folder: View.Folder): void {
         this.store.dispatch(DB_VIEW_ACTIONS.SelectFolder({webAccountPk: this.webAccountPk, selectedFolderData: folder}));
     }

@@ -32,7 +32,7 @@
             <ul class="list-group">
                 <li
                     (click)="selectFolder(folder)"
-                    *ngFor="let folder of folders; trackBy: trackFolder"
+                    *ngFor="let folder of resolveAsFolders(folders); trackBy: trackFolder"
                     [ngClass]="{'list-group-item-warning': state.selectedFolderData.id === folder.id}"
                     class="list-group-item list-group-item-action"
                 >

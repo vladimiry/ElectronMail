@@ -5,7 +5,6 @@ export const DEFAULT_WEB_PREFERENCES_KEYS = [
     "contextIsolation",
     "devTools",
     "disableBlinkFeatures",
-    "enableRemoteModule",
     "nodeIntegration",
     "nodeIntegrationInWorker",
     "sandbox",
@@ -27,5 +26,4 @@ export const DEFAULT_WEB_PREFERENCES: Readonly<NoExtraProps<Pick<Required<WebPre
     spellcheck: false,
     webSecurity: true,
     webviewTag: false,
-    enableRemoteModule: false,
 };

@@ -1,7 +1,7 @@
 import {Subscription} from "rxjs";
 import {addDocumentToIndex, createIndex, removeDocumentFromIndex, vacuumIndex} from "ndx";
 import {expandTerm, query} from "ndx-query";
-import {fromString as htmlToText} from "html-to-text";
+import {htmlToText} from "html-to-text";
 
 import {INDEXABLE_MAIL_FIELDS, IndexableMail, IndexableMailId, MIME_TYPES, MailAddress, MailsIndex} from "src/shared/model/database";
 import {buildLoggerBundle, resolveIpcMainApi} from "src/electron-preload/lib/util";

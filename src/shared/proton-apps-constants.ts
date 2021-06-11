@@ -71,7 +71,7 @@ export const PROVIDER_REPO_MAP = {
         repoRelativeDistDir: "./dist",
         baseDirName: "drive",
         repo: "https://github.com/ProtonMail/proton-drive.git",
-        commit: "0631ebfc1e0fba30b046c8fc8074d73c69d088c2",
+        commit: "4f5922664b742813270832d113094032eef4a649",
         protonPack: {appConfig: {clientId: "WebDrive"}},
     },
 } as const;

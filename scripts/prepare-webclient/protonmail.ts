@@ -193,14 +193,7 @@ export const buildProtonClients = async ({destDir}: { destDir: string }): Promis
                         const resolvePatchFile = (file: string): string => path.join(CWD_ABSOLUTE_DIR, `./patches/protonmail/${file}`);
                         const repoTypePatchFile = resolvePatchFile(`${repoType}.patch`);
 
-                        await applyPatch({
-                            patchFile: resolvePatchFile(
-                                repoType === "proton-drive"
-                                    ? "common-drive.patch"
-                                    : "common-except-drive.patch",
-                            ),
-                            cwd: repoDir,
-                        });
+                        await applyPatch({patchFile: resolvePatchFile("common.patch"), cwd: repoDir});
 
                         if (fsExtra.pathExistsSync(repoTypePatchFile)) {
                             await applyPatch({patchFile: repoTypePatchFile, cwd: repoDir});

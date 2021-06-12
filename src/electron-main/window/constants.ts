@@ -27,6 +27,5 @@ export const DEFAULT_WEB_PREFERENCES: Readonly<NoExtraProps<Pick<Required<WebPre
     spellcheck: false,
     webSecurity: true,
     webviewTag: false,
-    // TODO completely disable "remote" module (still required by "spectron")
-    enableRemoteModule: BUILD_ENVIRONMENT === "e2e",
+    enableRemoteModule: false,
 };

@@ -4,6 +4,7 @@ import {pick} from "remeda";
 
 import {Context} from "src/electron-main/model";
 import {IpcMainApiEndpoints} from "src/shared/api/main";
+import {PLATFORM} from "src/electron-main/constants";
 import {filterProtonSessionTokenCookies} from "src/electron-main/util";
 import {resolveInitializedSession} from "src/electron-main/session";
 
@@ -125,7 +126,10 @@ export async function buildEndpoints(
             await lastValueFrom(
                 race(
                     from(
-                        session.clearStorageData(),
+                        // TODO e2e / playwright: "session.clearStorageData()" hangs when executed e2e test flow on "win32" system
+                        BUILD_ENVIRONMENT === "e2e" && PLATFORM === "win32"
+                            ? Promise.resolve()
+                            : session.clearStorageData()
                     ),
                     timer(timeoutMs).pipe(
                         concatMap(() => throwError(new Error(`Session clearing failed in ${timeoutMs}ms`))),

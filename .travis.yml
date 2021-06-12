@@ -6,6 +6,8 @@ branches: { only: [ master ] }
 node_js: 15
 language: node_js
 cache: false
+env:
+  - PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 anchors:
   macos-common: &macos-common
     os: osx

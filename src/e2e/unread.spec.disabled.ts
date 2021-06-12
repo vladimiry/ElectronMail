@@ -7,6 +7,7 @@ import {
     RUNTIME_ENV_E2E_PROTONMAIL_UNREAD_MIN
 } from "src/shared/constants";
 import {accountBadgeCssSelector} from "src/e2e/lib";
+import {asyncDelay} from "src/shared/util";
 import {initApp, test} from "./workflow";
 
 for (const {login, password, twoFactorCode, unread} of ([
@@ -25,25 +26,16 @@ for (const {login, password, twoFactorCode, unread} of ([
         const workflow = await initApp(t, {initial: true});
         const pauseMs = ONE_SECOND_MS * 20;
         const unreadBadgeSelector = accountBadgeCssSelector();
-        const state: { parsedUnreadText?: string } = {};
 
         await workflow.login({setup: true, savePassword: false});
         await workflow.addAccount({login, password, twoFactorCode});
         await workflow.selectAccount();
 
-        await t.context.app.client.pause(pauseMs);
+        await asyncDelay(pauseMs);
 
         try {
-            try {
-                state.parsedUnreadText = await t.context.app.client
-                    .$(unreadBadgeSelector)
-                    .then(async (el) => el.getText());
-            } catch (e) {
-                t.fail(`failed to locate DOM element by "${unreadBadgeSelector}" selector after the "${pauseMs}" milliseconds pause`);
-                throw e;
-            }
-
-            const parsedUnread = Number(state.parsedUnreadText?.replace(/\D/g, ""));
+            const parsedUnreadText = await t.context.firstWindowPage.$eval(unreadBadgeSelector, (el) => el.innerHTML);
+            const parsedUnread = Number(parsedUnreadText?.replace(/\D/g, ""));
             t.true(!isNaN(parsedUnread) && parsedUnread >= unread, `parsedUnread(${parsedUnread}) >= unread(${unread})`);
         } finally {
             await workflow.destroyApp();

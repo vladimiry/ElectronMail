@@ -103,7 +103,7 @@ function initLocations(
     logger.transports.console.level = false;
 
     if (BUILD_ENVIRONMENT !== "e2e") { // eslint-disable-line sonarjs/no-collapsible-if
-        // TODO electron fix: the "Dictionaries" dir still stays as default place
+        // TODO electron fix: the "Dictionaries" dir still located in the default place
         //      see https://github.com/electron/electron/issues/26039
         if (path.resolve(userDataDir) !== path.resolve(app.getPath("userData"))) {
             // TODO figure why "app.setPath(...)" call breaks normal e2e/spectron test start

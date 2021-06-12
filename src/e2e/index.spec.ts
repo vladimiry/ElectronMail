@@ -87,38 +87,44 @@ test.serial("auto logout", async (t) => {
     await afterEach(t);
 });
 
-if (CI) { // PLATFORM !== "linux"
+if (CI) {
     test.serial("auto login", async (t) => {
         await (async (): Promise<void> => {
             const app = await initApp(t, {initial: true});
             await app.login({setup: true, savePassword: true});
             await app.afterLoginUrlTest("initial login");
-            const [entryUrlValue] = PROTON_API_ENTRY_URLS;
-            await app.addAccount({entryUrlValue});
-            await app.exit(); // not "logout" but "exit" so the saved password doesn't get removed
-            await app.destroyApp();
+            const [firstEntryUrlValue] = PROTON_API_ENTRY_URLS;
+            await app.addAccount({entryUrlValue: firstEntryUrlValue});
+            // await app.exit(); // not "logout" but "exit" so the saved password doesn't get removed
+            await app.destroyApp(true);
         })();
 
         // auto login 1
         await (async (): Promise<void> => {
-            const app = await initApp(t, {initial: false});
-            await app.afterLoginUrlTest(("auto login 1"));
-            await app.exit();
-            await app.destroyApp();
+            const initial = false;
+            const app = await initApp(t, {initial});
+            await app.afterLoginUrlTest("auto login 1", {hiddenWindow: !initial});
+            // await app.exit(); // not "logout" but "exit" so the saved password doesn't get removed
+            await app.destroyApp(true);
         })();
 
         // auto login 2, making sure previous auto login step didn't remove saved password (exited by: exit)
         await (async (): Promise<void> => {
-            const app = await initApp(t, {initial: false});
-            await app.afterLoginUrlTest(("auto login 2"));
-            await app.logout();
+            const initial = false;
+            const app = await initApp(t, {initial});
+            await app.afterLoginUrlTest("auto login 2", {hiddenWindow: !initial});
+            await app.logout({hiddenWindow: !initial});
             await app.destroyApp();
         })();
 
         // making sure previous step removed the saved password (exited by: logout)
         await (async (): Promise<void> => {
-            const app = await initApp(t, {initial: false});
-            await app.loginPageUrlTest(("auto login: final step"));
+            const initial = false;
+            const hiddenWindow = !initial;
+            const app = await initApp(t, {initial});
+            await app.afterLoginUrlTest("auto login: final step 1", {hiddenWindow, expectLoginPage: true});
+            await app.login({setup: false, savePassword: false, hiddenWindow});
+            await app.afterLoginUrlTest("auto login: final step 2", {hiddenWindow});
             await app.destroyApp();
         })();
 

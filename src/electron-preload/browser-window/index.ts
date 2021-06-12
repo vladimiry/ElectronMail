@@ -20,17 +20,6 @@ initSpellCheckProvider(logger);
 applyZoomFactor(logger);
 
 if (BUILD_ENVIRONMENT === "e2e") {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-    (window as any).electronRequire = (
-        name: string,
-    ): any => { // eslint-disable-line @typescript-eslint/no-explicit-any
-        return name === "electron" // eslint-disable-line @typescript-eslint/no-unsafe-return
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
-            ? require("electron")
-            // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-call
-            : require("electron").remote.require(name); // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-    };
-
     document.addEventListener("DOMContentLoaded", () => {
         const content = JSON.stringify({
             title: document.title,

@@ -79,7 +79,7 @@ The [reproducible builds](https://en.wikipedia.org/wiki/Reproducible_builds) ide
 - ProtonMail's [WebClient](https://github.com/ProtonMail/WebClient) requires addition environment setup if you run Windows, [see](https://github.com/ProtonMail/proton-shared/wiki/setup-windows).
 - [Clone](https://help.github.com/articles/cloning-a-repository/) this project to your local device. If you are going to contribute, consider cloning the [forked](https://help.github.com/articles/fork-a-repo/) into your own GitHub account project.
 - Install [Yarn](https://yarnpkg.com/en/docs/install).
-- Install dependencies running `yarn --pure-lockfile`.
+- Install dependencies running `yarn --pure-lockfile` (setting `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` environment variable might speed up the process).
 - Build app running `yarn run app:dist`.
 - Build a package to install running `npm run electron-builder:dist` command to build Windows/Mac OS X package and one of the following commands to build Linux package:
   - `npm run electron-builder:dist:linux:appimage`

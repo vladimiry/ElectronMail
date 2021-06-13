@@ -34,11 +34,3 @@ jobs:
       <<: *macos-build-app
       osx_image: xcode9.4
       workspaces: { use: [ "macos-webclients-artifact" ] }
-      # the default macos package comes without postfix
-      # env: { ARTIFACT_NAME_POSTFIX: "-high-sierra" }
-    - stage: "build app package"
-      <<: *macos-common
-      <<: *macos-build-app
-      osx_image: xcode11.3
-      workspaces: { use: [ "macos-webclients-artifact" ] }
-      env: { ARTIFACT_NAME_POSTFIX: "-mojave" }

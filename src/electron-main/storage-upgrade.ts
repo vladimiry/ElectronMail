@@ -19,6 +19,8 @@ import {
     LAYOUT_MODES,
     PACKAGE_VERSION,
     PROTON_API_ENTRY_PRIMARY_VALUE,
+    PROTON_API_ENTRY_TOR_V2_VALUE,
+    PROTON_API_ENTRY_TOR_V3_VALUE,
     PROTON_API_ENTRY_URLS,
     PROTON_API_ENTRY_VALUE_PREFIX,
     ZOOM_FACTORS,
@@ -523,15 +525,10 @@ export const upgradeSettings: (settings: Settings, ctx: Context) => boolean = ((
                     }
                 })();
 
-                settings.accounts.forEach((account, index) => {
+                settings.accounts.forEach((account) => {
                     delete (account as (typeof account & { type?: "protonmail" | "tutanota" })).type;
-
                     if (account.entryUrl.startsWith(PROTON_API_ENTRY_VALUE_PREFIX)) {
                         account.entryUrl = account.entryUrl.substr(PROTON_API_ENTRY_VALUE_PREFIX.length);
-                    }
-
-                    if (!PROTON_API_ENTRY_URLS.includes(account.entryUrl)) {
-                        throw new Error(`Invalid entry url value: "${account.entryUrl}" (account index: ${index})`);
                     }
                 });
             },
@@ -542,6 +539,16 @@ export const upgradeSettings: (settings: Settings, ctx: Context) => boolean = ((
                     // and the "dataSaltBase64" value gets generated during every settings saving (via overridden "write" method)
                     settings.dataSaltBase64 = `any non empty value ${randomString(50)}`;
                 }
+            },
+            "4.12.3": (settings): void => {
+                settings.accounts.forEach((account, index) => {
+                    if (account.entryUrl === PROTON_API_ENTRY_TOR_V2_VALUE) {
+                        account.entryUrl = PROTON_API_ENTRY_TOR_V3_VALUE;
+                    }
+                    if (!PROTON_API_ENTRY_URLS.includes(account.entryUrl)) {
+                        throw new Error(`Invalid entry url value: "${account.entryUrl}" (account index: ${index})`);
+                    }
+                });
             },
         };
     }

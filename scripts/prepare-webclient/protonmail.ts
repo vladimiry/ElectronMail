@@ -11,7 +11,7 @@ const folderAsDomainEntries: Array<FolderAsDomainEntry<{
     configApiParam:
         | "electron-mail:app.protonmail.ch"
         | "electron-mail:mail.protonmail.com"
-        | "electron-mail:protonirockerxow.onion";
+        | "electron-mail:protonmailrmez3lotccipshtkleegetolb73fuirgj7r4o4vfu7ozyd.onion";
 }>> = [
     {
         folderNameAsDomain: "app.protonmail.ch",
@@ -26,9 +26,9 @@ const folderAsDomainEntries: Array<FolderAsDomainEntry<{
         },
     },
     {
-        folderNameAsDomain: "protonirockerxow.onion",
+        folderNameAsDomain: "protonmailrmez3lotccipshtkleegetolb73fuirgj7r4o4vfu7ozyd.onion",
         options: {
-            configApiParam: "electron-mail:protonirockerxow.onion",
+            configApiParam: "electron-mail:protonmailrmez3lotccipshtkleegetolb73fuirgj7r4o4vfu7ozyd.onion",
         },
     },
 ];

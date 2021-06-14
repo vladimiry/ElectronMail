@@ -95,8 +95,8 @@ export const patchResponseHeaders: (
         },
     );
 
-    // this patching is needed for CORS request to work with https://protonirockerxow.onion/ entry point via Tor proxy
-    // TODO apply "access-control-allow-credentials" headers patch for "https://protonirockerxow.onion/*" requests only
+    // this patching is needed for CORS request to work with Tor entry point via Tor proxy
+    // TODO apply "access-control-allow-credentials" headers patch for Tor requests only
     //      see "details.url" value
     patchResponseHeader(
         responseHeaders,
@@ -107,8 +107,8 @@ export const patchResponseHeaders: (
         {extend: false},
     );
 
-    // this patching is needed for CORS request to work with https://protonirockerxow.onion/ entry point via Tor proxy
-    // TODO apply "access-control-allow-headers" headers patch for "https://protonirockerxow.onion/*" requests only
+    // this patching is needed for CORS request to work with Tor entry point via Tor proxy
+    // TODO apply "access-control-allow-headers" headers patch for Tor requests only
     //      see "details.url" value
     patchResponseHeader(
         responseHeaders,

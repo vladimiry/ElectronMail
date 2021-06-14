@@ -2,6 +2,7 @@ import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import type {RateLimiterMemory} from "rate-limiter-flexible";
 import {URL} from "@cliqz/url-parser";
 import {pick} from "remeda";
+
 import {
     ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN,
     DEFAULT_API_CALL_TIMEOUT,
@@ -674,7 +675,7 @@ export const depersonalizeLoggedUrlsInString: (value: unknown) => string = (() =
     // at the moment only proton urls get depersonalized, ie urls that start from the following urls
     //      https://app.protonmail.ch/
     //      https://mail.protonmail.com/
-    //      https://protonirockerxow.onion/
+    //      https://protonmailrmez3lotccipshtkleegetolb73fuirgj7r4o4vfu7ozyd.onion/
     const protonUrlRe = new RegExp(PROTON_API_ENTRY_URLS.map((value) => `${value}/\\S*`).join("|"), "gi");
     const result: typeof depersonalizeLoggedUrlsInString = (value) => {
         if (typeof value !== "string") {

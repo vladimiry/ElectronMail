@@ -7,7 +7,7 @@ import {EncryptionAdapter, KeyBasedPreset} from "fs-json-store-encryption-adapte
 
 import {AccountConfig, AccountPersistentSession} from "src/shared/model/account";
 import {ApiEndpointOriginFieldContainer, LoginFieldContainer} from "src/shared/model/container";
-import {ONE_KB_BYTES} from "src/shared/constants";
+import {ONE_KB_BYTES, PROTON_API_ENTRY_TOR_V2_VALUE, PROTON_API_ENTRY_TOR_V3_VALUE} from "src/shared/constants";
 import {SESSION_STORAGE_VERSION} from "src/electron-main/session-storage/const";
 import {SessionStorageModel} from "src/electron-main/session-storage/model";
 import {curryFunctionMembers, verifyUrlOriginValue} from "src/shared/util";
@@ -80,8 +80,23 @@ export class SessionStorage {
         this.logger.info(nameof(SessionStorage.prototype.load)); // eslint-disable-line @typescript-eslint/unbound-method
         const store = await this.resolveStore();
         this.entity = await store.read() ?? SessionStorage.emptyEntity();
-        // TODO upgrade the structure once on app start
-        if (this.entity.version !== 1) {
+        {
+            const check1 = this.afterLoadEntityUpgrade(); // TODO upgrade the structure once on app start
+            const check2 = this.removeNonExistingLogins(actualLogins);
+            if (check1 || check2) {
+                await this.save();
+            }
+        }
+    }
+
+    private afterLoadEntityUpgrade(): boolean {
+        const version = typeof this.entity.version !== "number" || isNaN(this.entity.version)
+            ? 0
+            : this.entity.version;
+        let shouldSave = false;
+
+        if (version < 1) {
+            shouldSave = true;
             this.logger.verbose(
                 // eslint-disable-next-line @typescript-eslint/unbound-method
                 `${nameof(SessionStorage.prototype.load)} upgrading session storage structure (version: ${String(this.entity.version)})`,
@@ -90,9 +105,35 @@ export class SessionStorage {
                 ...SessionStorage.emptyEntity(),
                 instance: this.entity as unknown as SessionStorageModel["instance"],
             };
-            await this.save();
         }
-        await this.removeNonExistingLogins(actualLogins);
+        if (version < 2) {
+            shouldSave = true;
+            const sessionBundleTorKeys = {v2: PROTON_API_ENTRY_TOR_V2_VALUE, v3: PROTON_API_ENTRY_TOR_V3_VALUE} as const;
+            Object.entries(this.entity.instance).forEach(([/* login */, sessionBundle]) => {
+                if (!sessionBundle) {
+                    return;
+                }
+                const v2TorSession: AccountPersistentSession | undefined = (sessionBundle)[sessionBundleTorKeys.v2];
+                if (v2TorSession) {
+                    sessionBundle[sessionBundleTorKeys.v3] = v2TorSession;
+                    delete sessionBundle[sessionBundleTorKeys.v2];
+                }
+            });
+        }
+
+        return shouldSave;
+    }
+
+    private removeNonExistingLogins(
+        actualLogins: ReadonlyArray<AccountConfig["login"]>,
+    ): boolean {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        this.logger.info(nameof(SessionStorage.prototype.removeNonExistingLogins));
+        const loginsToRemove = Object.keys(this.entity.instance).filter((savedLogin) => !actualLogins.includes(savedLogin));
+        for (const login of loginsToRemove) {
+            delete this.entity.instance[login];
+        }
+        return Boolean(loginsToRemove.length);
     }
 
     private async save(): Promise<void> {
@@ -107,21 +148,6 @@ export class SessionStorage {
             };
             await store.write(dataToSave);
         });
-    }
-
-    private async removeNonExistingLogins(
-        actualLogins: ReadonlyArray<AccountConfig["login"]>,
-    ): Promise<number> {
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        this.logger.info(nameof(SessionStorage.prototype.removeNonExistingLogins));
-        const loginsToRemove = Object.keys(this.entity.instance).filter((savedLogin) => !actualLogins.includes(savedLogin));
-        for (const login of loginsToRemove) {
-            delete this.entity.instance[login];
-        }
-        if (loginsToRemove.length) {
-            await this.save();
-        }
-        return loginsToRemove.length;
     }
 
     private async resolveStore(): Promise<FsJsonStore.Store<typeof SessionStorage.prototype.entity>> {

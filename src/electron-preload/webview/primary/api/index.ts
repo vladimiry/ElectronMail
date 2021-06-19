@@ -1,5 +1,18 @@
 import {EMPTY, Observable, from, interval, lastValueFrom, merge} from "rxjs";
-import {buffer, concatMap, debounceTime, distinctUntilChanged, filter, first, map, mergeMap, tap, withLatestFrom} from "rxjs/operators";
+import {
+    buffer,
+    concatMap,
+    debounceTime,
+    distinctUntilChanged,
+    filter,
+    first,
+    map,
+    mergeMap,
+    switchMap,
+    tap,
+    throttleTime,
+    withLatestFrom
+} from "rxjs/operators";
 import {pick} from "remeda";
 import {serializeError} from "serialize-error";
 
@@ -13,13 +26,30 @@ import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/mod
 import {SYSTEM_FOLDER_IDENTIFIERS} from "src/shared/model/database";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 import {buildDbPatch, buildDbPatchEndpoint} from "src/electron-preload/webview/primary/api/build-db-patch";
-import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
+import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty, parseUrlOriginWithNullishCheck} from "src/shared/util";
+import {
+    documentCookiesForCustomScheme,
+    fillInputValue,
+    getLocationHref,
+    resolveDomElements,
+    submitTotpToken,
+} from "src/electron-preload/webview/lib/util";
 import {dumpProtonSharedSession} from "src/electron-preload/webview/primary/shared-session";
-import {fillInputValue, getLocationHref, resolveDomElements, submitTotpToken,} from "src/electron-preload/webview/lib/util";
 import {parseProtonRestModel} from "src/shared/entity-util";
 import {resolveIpcMainApi} from "src/electron-preload/lib/util";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, __filename);
+
+const resolveCookieSessionStoragePatch = (): IpcMainServiceScan["ApiImplReturns"]["resolvedSavedSessionStoragePatch"] => {
+    // https://github.com/expo/tough-cookie-web-storage-store/blob/36a20183dad5f84f2c14ae87251737dbbeb2af88/WebStorageCookieStore.js#L12
+    // TODO move "__cookieStore__" to external/reusable constant
+    const sessionStorageCookieStoreKey = {"tough-cookie-web-storage-store": {storageCookieKey: "__cookieStore__"}} as const;
+    const {"tough-cookie-web-storage-store": {storageCookieKey}} = sessionStorageCookieStoreKey;
+    const {__cookieStore__} = {[storageCookieKey]: window.sessionStorage.getItem(storageCookieKey)};
+    return __cookieStore__
+        ? {__cookieStore__}
+        : null;
+};
 
 export function registerApi(providerApi: ProviderApi): void {
     const endpoints: ProtonPrimaryApi = {
@@ -266,11 +296,17 @@ export function registerApi(providerApi: ProviderApi): void {
             elements.submit.click();
         },
 
-        async resolveSavedProtonClientSession() {
+        async resolveLiveProtonClientSession({accountIndex}) {
+            _logger.info(nameof(endpoints.resolveLiveProtonClientSession), accountIndex);
             return dumpProtonSharedSession();
         },
 
-        notification({entryApiUrl, accountIndex}) {
+        async resolvedLiveSessionStoragePatch({accountIndex}) {
+            _logger.info(nameof(endpoints.resolvedLiveSessionStoragePatch), accountIndex);
+            return resolveCookieSessionStoragePatch();
+        },
+
+        notification({login, entryApiUrl, accountIndex}) {
             const logger = curryFunctionMembers(_logger, nameof(endpoints.notification), accountIndex);
 
             logger.info();
@@ -433,9 +469,31 @@ export function registerApi(providerApi: ProviderApi): void {
                     );
                 })(),
             ];
+            const ipcMain = resolveIpcMainApi({logger});
 
-            return merge(...observables).pipe(
-                tap((notification) => logger.verbose(JSON.stringify({notification}))),
+            return merge(
+                merge(...observables).pipe(
+                    tap((notification) => logger.verbose(JSON.stringify({notification}))),
+                ),
+                documentCookiesForCustomScheme.setNotification$.pipe(
+                    throttleTime(ONE_SECOND_MS / 4),
+                    mergeMap(() => {
+                        const sessionStorageItem = resolveCookieSessionStoragePatch();
+                        return sessionStorageItem
+                            ? (
+                                from(
+                                    ipcMain("saveSessionStoragePatch")({
+                                        login,
+                                        apiEndpointOrigin: parseUrlOriginWithNullishCheck(entryApiUrl),
+                                        sessionStorageItem,
+                                    }),
+                                ).pipe(
+                                    switchMap(() => EMPTY),
+                                )
+                            )
+                            : EMPTY;
+                    }),
+                ),
             );
         },
     };

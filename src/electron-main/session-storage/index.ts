@@ -5,7 +5,7 @@ import _logger, {ElectronLog} from "electron-log";
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/lib/private/constants";
 import {EncryptionAdapter, KeyBasedPreset} from "fs-json-store-encryption-adapter";
 
-import {AccountConfig, AccountPersistentSession} from "src/shared/model/account";
+import {AccountConfig, AccountPersistentSession, AccountSessionStoragePatchBundle} from "src/shared/model/account";
 import {ApiEndpointOriginFieldContainer, LoginFieldContainer} from "src/shared/model/container";
 import {ONE_KB_BYTES, PROTON_API_ENTRY_TOR_V2_VALUE, PROTON_API_ENTRY_TOR_V3_VALUE} from "src/shared/constants";
 import {SESSION_STORAGE_VERSION} from "src/electron-main/session-storage/const";
@@ -15,7 +15,11 @@ import {generateDataSaltBase64} from "src/electron-main/util";
 
 export class SessionStorage {
     static emptyEntity(): typeof SessionStorage.prototype.entity {
-        return {version: SESSION_STORAGE_VERSION, instance: {}};
+        return {
+            version: SESSION_STORAGE_VERSION,
+            instance: {},
+            sessionStoragePatchInstance: {},
+        };
     }
 
     private entity: SessionStorageModel = SessionStorage.emptyEntity();
@@ -46,17 +50,29 @@ export class SessionStorage {
         {login, apiEndpointOrigin}: LoginFieldContainer & ApiEndpointOriginFieldContainer,
     ): DeepReadonly<AccountPersistentSession> | undefined {
         this.logger.info(nameof(SessionStorage.prototype.getSession)); // eslint-disable-line @typescript-eslint/unbound-method
-        const bundle = this.entity.instance[login];
-        return bundle && bundle[apiEndpointOrigin];
+        return this.entity.instance[login]?.[apiEndpointOrigin];
+    }
+
+    getSessionStoragePatch(
+        {login, apiEndpointOrigin}: LoginFieldContainer & ApiEndpointOriginFieldContainer,
+    ): DeepReadonly<import("ts-essentials").ValueOf<AccountSessionStoragePatchBundle>> | undefined {
+        this.logger.info(nameof(SessionStorage.prototype.getSessionStoragePatch)); // eslint-disable-line @typescript-eslint/unbound-method
+        return this.entity.sessionStoragePatchInstance[login]?.[apiEndpointOrigin];
     }
 
     async saveSession(
         {login, apiEndpointOrigin, session}: LoginFieldContainer & ApiEndpointOriginFieldContainer & { session: AccountPersistentSession },
     ): Promise<void> {
         this.logger.info(nameof(SessionStorage.prototype.saveSession)); // eslint-disable-line @typescript-eslint/unbound-method
-        const bundle = this.entity.instance[login] ?? {};
-        bundle[verifyUrlOriginValue(apiEndpointOrigin)] = session; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-        this.entity.instance[login] = bundle; // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+        (this.entity.instance[login] ??= {})[verifyUrlOriginValue(apiEndpointOrigin)] = session;
+        await this.save();
+    }
+
+    async saveSessionStoragePatch(
+        {login, apiEndpointOrigin, __cookieStore__}: LoginFieldContainer & ApiEndpointOriginFieldContainer & { __cookieStore__: string },
+    ): Promise<void> {
+        this.logger.info(nameof(SessionStorage.prototype.saveSessionStoragePatch)); // eslint-disable-line @typescript-eslint/unbound-method
+        (this.entity.sessionStoragePatchInstance[login] ??= {})[verifyUrlOriginValue(apiEndpointOrigin)] = {__cookieStore__};
         await this.save();
     }
 
@@ -64,7 +80,6 @@ export class SessionStorage {
         {login, apiEndpointOrigin}: LoginFieldContainer & ApiEndpointOriginFieldContainer,
     ): Promise<boolean> {
         this.logger.info(nameof(SessionStorage.prototype.clearSession)); // eslint-disable-line @typescript-eslint/unbound-method
-        // no need to "verify url origin value" during removing the record ("verifyUrlOriginValue()" calling)
         const bundle = this.entity.instance[login];
         if (bundle && (apiEndpointOrigin in bundle)) {
             delete bundle[apiEndpointOrigin];
@@ -119,6 +134,10 @@ export class SessionStorage {
                     delete sessionBundle[sessionBundleTorKeys.v2];
                 }
             });
+        }
+        if (version < 3) {
+            shouldSave = true;
+            this.entity.sessionStoragePatchInstance ??= {};
         }
 
         return shouldSave;

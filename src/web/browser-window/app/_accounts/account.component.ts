@@ -156,11 +156,14 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         (src: string) => webViewsState.src$.next(src),
                         this.logger,
                     ] as const;
+                    const sessionStoragePatch = await this.ipcMainClient("resolvedSavedSessionStoragePatch")(key);
                     const baseReturn = async (): Promise<void> => {
                         // reset the "backend session"
                         await this.ipcMainClient("resetProtonBackendSession")({login: key.login});
                         // reset the "client session" and navigate
-                        await this.core.applyProtonClientSessionAndNavigate(...applyProtonClientSessionAndNavigateArgs);
+                        await this.core.applyProtonClientSessionAndNavigate(
+                            ...applyProtonClientSessionAndNavigateArgs, {sessionStoragePatch},
+                        );
                     };
 
                     if (!accountConfig.persistentSession) {
@@ -179,7 +182,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
 
                     await this.core.applyProtonClientSessionAndNavigate(...[
                         ...applyProtonClientSessionAndNavigateArgs,
-                        clientSession,
+                        {clientSession, sessionStoragePatch},
                     ] as const);
                 }),
         );
@@ -326,17 +329,17 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         // eslint-disable-next-line @typescript-eslint/unbound-method
         this.logger.info(nameof(AccountComponent.prototype.onPrimaryViewLoadedOnce));
 
-        const resolveSavedProtonClientSession = async (): Promise<ProtonClientSession> => {
-            const apiClient = await lastValueFrom(
-                this.electronService
-                    .primaryWebViewClient({webView: primaryWebView, accountIndex: this.account.accountIndex}),
-            );
-            const value = await apiClient("resolveSavedProtonClientSession")(pick(this.account, ["accountIndex"]));
-
+        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+        const resolvePrimaryWebViewApiClient = async () => lastValueFrom(
+            this.electronService
+                .primaryWebViewClient({webView: primaryWebView, accountIndex: this.account.accountIndex}),
+        );
+        const resolveLiveProtonClientSession = async (): Promise<ProtonClientSession> => {
+            const apiClient = await resolvePrimaryWebViewApiClient();
+            const value = await apiClient("resolveLiveProtonClientSession")(pick(this.account, ["accountIndex"]));
             if (!value) {
                 throw new Error(`Failed to resolve "proton client session" object`);
             }
-
             return value;
         };
 
@@ -390,7 +393,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
 
                     await this.ipcMainClient(ipcMainAction)({
                         login: accountConfig.login,
-                        clientSession: await resolveSavedProtonClientSession(),
+                        clientSession: await resolveLiveProtonClientSession(),
                         apiEndpointOrigin: parseUrlOriginWithNullishCheck(
                             this.core.parseEntryUrl(accountConfig, "proton-mail").entryApiUrl,
                         ),
@@ -425,17 +428,25 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     return;
                 }
 
-                // TODO if "src$" has been set before, consider only refreshing the client session without full page reload
+                const project = "proton-calendar";
+                const [clientSession, sessionStoragePatch] = await Promise.all([
+                    resolveLiveProtonClientSession(),
+                    (async () => {
+                        const apiClient = await resolvePrimaryWebViewApiClient();
+                        return apiClient("resolvedLiveSessionStoragePatch")(pick(this.account, ["accountIndex"]));
+                    })(),
+                ]);
 
+                // TODO if "src$" has been set before, consider only refreshing the client session without full page reload
                 await Promise.all([
                     // the app shares the same backend between mail and calendar, so applying here only the client session
                     await this.core.applyProtonClientSessionAndNavigate(
                         accountConfig,
-                        "proton-calendar",
+                        project,
                         this.webViewsState.calendar.domReady$,
                         (src: string) => this.webViewsState.calendar.src$.next(src),
                         this.logger,
-                        await resolveSavedProtonClientSession(),
+                        {clientSession, sessionStoragePatch},
                     ),
                     lastValueFrom(
                         race(

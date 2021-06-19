@@ -1,6 +1,6 @@
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 import {curryFunctionMembers, testProtonMailAppPage} from "src/shared/util";
-import {getLocationHref} from "src/electron-preload/webview/lib/util";
+import {documentCookiesForCustomScheme, getLocationHref} from "src/electron-preload/webview/lib/util";
 import {initProviderApi} from "./provider-api";
 import {registerApi} from "./api";
 import {setupProtonOpenNewTabEventHandler} from "src/electron-preload/webview/lib/custom-event";
@@ -9,6 +9,7 @@ import {setupProviderIntegration} from "./provider-api/setup";
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, __filename);
 const protonAppPageStatus = testProtonMailAppPage({url: getLocationHref(), logger});
 
+documentCookiesForCustomScheme.enable(logger, true);
 setupProtonOpenNewTabEventHandler(logger);
 setupProviderIntegration(protonAppPageStatus);
 

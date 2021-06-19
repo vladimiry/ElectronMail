@@ -1,6 +1,6 @@
 import electronLog from "electron-log";
-import {Session, session as electronSession} from "electron";
 import {concatMap, first} from "rxjs/operators";
+import {session as electronSession} from "electron";
 import {from, lastValueFrom, race, throwError, timer} from "rxjs";
 
 import {AccountConfig} from "src/shared/model/account";
@@ -13,6 +13,8 @@ import {curryFunctionMembers, getRandomInt, getWebViewPartition} from "src/share
 import {filterProtonSessionTokenCookies} from "src/electron-main/util";
 import {initWebRequestListenersByAccount} from "src/electron-main/web-request";
 import {registerSessionProtocols} from "src/electron-main/protocol";
+
+type Session = import("electron").Session /* & { _documentCookieJar_?: import("tough-cookie").CookieJar } */;
 
 const _logger = curryFunctionMembers(electronLog, __filename);
 

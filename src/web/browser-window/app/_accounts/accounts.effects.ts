@@ -88,7 +88,7 @@ export class AccountsEffects {
                     this.api.primaryWebViewClient({webView, accountIndex}, {finishPromise}).pipe(
                         mergeMap((webViewClient) => {
                             return from(
-                                webViewClient("notification")({...parsedEntryUrlBundle, accountIndex}),
+                                webViewClient("notification")({...parsedEntryUrlBundle, login, accountIndex}),
                             );
                         }),
                         withLatestFrom(

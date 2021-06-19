@@ -9,6 +9,7 @@ import {filter, first, mergeMap, take, takeUntil} from "rxjs/operators";
 import {ACCOUNTS_ACTIONS, AppAction, NAVIGATION_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
 import {AccountConfig} from "src/shared/model/account";
 import {FIRE_SYNCING_ITERATION$, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
+import {IpcMainServiceScan} from "src/shared/api/main";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
 import {ProtonClientSession} from "src/shared/model/proton";
@@ -60,7 +61,10 @@ export class CoreService {
         webViewDomReady$: import("rxjs").Observable<Electron.WebviewTag>,
         setWebViewSrc: (src: string) => void,
         logger_: import("src/shared/model/common").Logger,
-        clientSession?: ProtonClientSession,
+        savedSessionData?: {
+            clientSession?: ProtonClientSession | null
+            sessionStoragePatch?: IpcMainServiceScan["ApiImplReturns"]["resolvedSavedSessionStoragePatch"] | null
+        },
     ): Promise<void> {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         const logger = curryFunctionMembers(logger_, __filename, nameof(CoreService.prototype.applyProtonClientSessionAndNavigate));
@@ -108,29 +112,45 @@ export class CoreService {
         }
 
         const javaScriptCode = (() => {
-            const finalCodePart = `
-                window.sessionStorage.setItem(${JSON.stringify(WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS)}, 1);
-                window.location.assign("./${PROVIDER_REPO_MAP[repoType].baseDirName}")
-            `;
-
-            if (clientSession) {
+            const generateSessionStoragePatchingCode = (patch: Record<string, unknown>): string => {
                 return `(() => {
-                    const windowNameStr = ${JSON.stringify(JSON.stringify(clientSession.windowName))};
-                    const sessionStorageStr = ${JSON.stringify(JSON.stringify(clientSession.sessionStorage))};
+                    const sessionStorageStr = ${JSON.stringify(JSON.stringify(patch))};
                     const sessionStorageParsed = JSON.parse(sessionStorageStr);
-                    window.name = windowNameStr;
                     for (const [key, value] of Object.entries(sessionStorageParsed)) {
                         window.sessionStorage.setItem(key, value);
                     }
-                    ${finalCodePart}
-                })()`;
+                })();`;
+            };
+            const finalCodePart = `(() => {
+                window.sessionStorage.setItem(${JSON.stringify(WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS)}, 1);
+                window.location.assign("./${PROVIDER_REPO_MAP[repoType].baseDirName}")
+            })()`;
+            const prependCodeParts: string[] = [];
+            if (savedSessionData?.clientSession) {
+                prependCodeParts.push(...[
+                    generateSessionStoragePatchingCode(savedSessionData?.clientSession.sessionStorage),
+                    `(() => {
+                        const windowNameStr = ${JSON.stringify(JSON.stringify(savedSessionData?.clientSession.windowName))};
+                        window.name = windowNameStr;
+                    })();`,
+                ]);
+            }
+            if (savedSessionData?.sessionStoragePatch) {
+                prependCodeParts.push(generateSessionStoragePatchingCode(savedSessionData?.sessionStoragePatch));
             }
 
-            return `(() => {
+            if (prependCodeParts.length) {
+                return `
+                    ${prependCodeParts.join("\n\r")};
+                    ${finalCodePart}
+                `;
+            }
+
+            return `
                 window.name = "";
                 window.sessionStorage.clear();
                 ${finalCodePart}
-            })()`;
+            `;
         })();
 
         try {

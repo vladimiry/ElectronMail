@@ -24,6 +24,8 @@ export async function buildEndpoints(
     | "saveProtonSession"
     | "resetSavedProtonSession"
     | "applySavedProtonBackendSession"
+    | "saveSessionStoragePatch"
+    | "resolvedSavedSessionStoragePatch"
     | "resetProtonBackendSession">> {
     const endpoints: Unpacked<ReturnType<typeof buildEndpoints>> = {
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -118,10 +120,22 @@ export async function buildEndpoints(
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+        async saveSessionStoragePatch({login, apiEndpointOrigin, sessionStorageItem: {__cookieStore__}}) {
+            await ctx.sessionStorage.saveSessionStoragePatch({login, apiEndpointOrigin, __cookieStore__});
+        },
+
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+        async resolvedSavedSessionStoragePatch(arg) {
+            return ctx.sessionStorage.getSessionStoragePatch(arg);
+        },
+
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async resetProtonBackendSession({login}) {
             const session = resolveInitializedSession({login});
             const config = await lastValueFrom(ctx.config$.pipe(first()));
             const {timeouts: {clearSessionStorageData: timeoutMs}} = config;
+
+            // delete session._documentCookieJar_;
 
             await lastValueFrom(
                 race(

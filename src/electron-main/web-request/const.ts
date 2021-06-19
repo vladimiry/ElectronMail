@@ -1,5 +1,6 @@
 export const HEADERS = {
     request: {
+        cookie: "Cookie",
         origin: "Origin",
         accessControlRequestHeaders: "Access-Control-Request-Headers",
         accessControlRequestMethod: "Access-Control-Request-Method",

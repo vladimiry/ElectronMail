@@ -29,7 +29,10 @@ export type AccountPersistentSession = NoExtraProps<{
 }>;
 
 export type AccountPersistentSessionBundle
-    = Record<string /* mapped by "api endpoint origin" */, AccountPersistentSession | undefined>;
+    = Record<AccountConfig["entryUrl"] /* mapped by "api endpoint origin" */, AccountPersistentSession | undefined>;
+
+export type AccountSessionStoragePatchBundle
+    = Record<AccountConfig["entryUrl"] /* mapped by "api endpoint origin" */, Record<"__cookieStore__", string> | undefined>;
 
 export type Notifications = NoExtraProps<{
     unread: number

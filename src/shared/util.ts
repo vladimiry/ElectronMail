@@ -485,13 +485,10 @@ export const parsePackagedWebClientUrl: (
             if (!re.exec(urlArg)) {
                 return null;
             }
-
             const url = new URL(urlArg);
-
             // if (!re.exec(url.protocol)) {
             //     return false;
             // }
-
             return pick(url, ["protocol", "hostname", "pathname"]);
         };
         return result;
@@ -707,4 +704,20 @@ export const buildInitialVendorsAppCssLinks = (
         },
         "",
     );
+};
+
+export const resolveApiUrlByPackagedWebClientUrlSafe = (urlArg: string): string => {
+    if (!parsePackagedWebClientUrl(urlArg)) {
+        throw new Error(`The "${urlArg}" doesn't look like the URL of the packaged Proton web client URL`);
+    }
+    const packagedWebClientEndSlashedUrlStr = ((): string => {
+        const url = new URL(urlArg);
+        url.protocol = "https:";
+        return url.toString();
+    })() + "/";
+    const result = PROTON_API_ENTRY_URLS.find((apiEntryUrl) => packagedWebClientEndSlashedUrlStr.startsWith(`${apiEntryUrl}/`));
+    if (!result) {
+        throw new Error(`Failed to resolve Proton entry API URL by "${urlArg}" packaged Proton web client URL`);
+    }
+    return result;
 };

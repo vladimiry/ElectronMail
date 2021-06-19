@@ -202,9 +202,11 @@ export function initWebRequestListenersByAccount(
             const corsProxy = resolveCorsProxy(details, allowedOrigins);
 
             if (corsProxy) {
-                const {name} = getHeader(requestHeaders, HEADERS.request.origin) || {name: HEADERS.request.origin};
-                requestHeaders[name] = resolveFakeOrigin(details);
-                requestProxyCache.patch(details, {corsProxy});
+                {
+                    const {name} = getHeader(requestHeaders, HEADERS.request.origin) || {name: HEADERS.request.origin};
+                    requestHeaders[name] = resolveFakeOrigin(details);
+                    requestProxyCache.patch(details, {corsProxy});
+                }
             }
 
             callback({requestHeaders});

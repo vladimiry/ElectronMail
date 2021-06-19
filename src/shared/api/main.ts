@@ -11,6 +11,7 @@ import {
     NewPasswordFieldContainer,
     PasswordFieldContainer,
 } from "src/shared/model/container";
+import {AccountSessionStoragePatchBundle} from "src/shared/model/account";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {Controller, FuzzyLocale} from "src/electron-main/spell-check/model";
 import {DbPatch} from "./common";
@@ -245,17 +246,24 @@ export const ENDPOINTS_DEFINITION = {
 
     generateTOTPToken: ActionType.Promise<{ secret: string }, { token: string }>(),
 
-    resolveSavedProtonClientSession: ActionType.Promise<LoginFieldContainer & ApiEndpointOriginFieldContainer,
-        ProtonClientSession | null>(),
+    resolveSavedProtonClientSession: ActionType
+        .Promise<LoginFieldContainer & ApiEndpointOriginFieldContainer, ProtonClientSession | null>(),
 
-    saveProtonSession: ActionType.Promise<LoginFieldContainer & ApiEndpointOriginFieldContainer
-        & { clientSession: ProtonClientSession }>(),
+    saveProtonSession: ActionType
+        .Promise<LoginFieldContainer & ApiEndpointOriginFieldContainer & { clientSession: ProtonClientSession }>(),
 
     resetSavedProtonSession: ActionType.Promise<LoginFieldContainer & ApiEndpointOriginFieldContainer>(),
 
     applySavedProtonBackendSession: ActionType.Promise<LoginFieldContainer & ApiEndpointOriginFieldContainer, boolean>(),
 
     resetProtonBackendSession: ActionType.Promise<LoginFieldContainer>(),
+
+    saveSessionStoragePatch: ActionType
+        .Promise<LoginFieldContainer & ApiEndpointOriginFieldContainer & { sessionStorageItem: { __cookieStore__: string } }>(),
+
+    resolvedSavedSessionStoragePatch: ActionType
+        .Promise<LoginFieldContainer & ApiEndpointOriginFieldContainer,
+            DeepReadonly<import("ts-essentials").ValueOf<AccountSessionStoragePatchBundle>> | undefined | null>(),
 
     notification: ActionType.Observable<void, UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>>(),
 

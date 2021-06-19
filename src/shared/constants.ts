@@ -24,6 +24,8 @@ export {
     PACKAGE_GITHUB_PROJECT_URL,
 };
 
+export const SEMICOLON = ";";
+
 export const ONE_KB_BYTES = 1024;
 
 export const ONE_MB_BYTES = ONE_KB_BYTES * ONE_KB_BYTES;

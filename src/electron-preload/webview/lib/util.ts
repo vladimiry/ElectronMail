@@ -1,5 +1,7 @@
+import WebStorageCookieStore from "tough-cookie-web-storage-store";
+import {CookieJar} from "tough-cookie";
+import {Observable, ReplaySubject, from, of, throwError} from "rxjs";
 import {concatMap, delay, retryWhen} from "rxjs/operators";
-import {from, of, throwError} from "rxjs";
 
 import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 import {DbPatch} from "src/shared/api/common";
@@ -8,7 +10,7 @@ import {IpcMainApiEndpoints} from "src/shared/api/main";
 import {Logger} from "src/shared/model/common";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
-import {asyncDelay, curryFunctionMembers, isDatabaseBootstrapped} from "src/shared/util";
+import {asyncDelay, curryFunctionMembers, isDatabaseBootstrapped, resolveApiUrlByPackagedWebClientUrlSafe} from "src/shared/util";
 import {resolveCachedConfig, resolveIpcMainApi} from "src/electron-preload/lib/util";
 
 export const resolveDomElements = async <E extends Element | null,
@@ -304,3 +306,47 @@ export const fetchEvents = async (
         events,
     };
 };
+
+// TODO electron: drop custom "document.cookies" logic required for pages loaded via custom scheme/protocol
+//      https://github.com/electron/electron/issues/27981
+//      https://github.com/ProtonMail/react-components/commit/0558e441583029f644d1a17b68743436a29d5db2#commitcomment-52005249
+export const documentCookiesForCustomScheme: {
+    readonly enable: (logger: Logger, persist: boolean) => void
+    readonly setNotification$: Observable<{ url: string, cookieString: string }>
+} = (() => {
+    // we don't need all the values but just to be able to send a signal, so "buffer = 1" should be enough
+    const setNotificationSubject$ = new ReplaySubject<{ url: string, cookieString: string }>(1);
+    const result: typeof documentCookiesForCustomScheme = {
+        setNotification$: setNotificationSubject$.asObservable(),
+        enable(logger, persist) {
+            logger.verbose(nameof(documentCookiesForCustomScheme), nameof(result.enable));
+
+            const {document, location} = window;
+            const getUrl = (): string => resolveApiUrlByPackagedWebClientUrlSafe(location.toString());
+            const store = new WebStorageCookieStore(window.sessionStorage);
+            const cookieJar = persist
+                ? new CookieJar(store)
+                : new CookieJar();
+
+            Object.defineProperty(document, "cookie", {
+                enumerable: true,
+                configurable: true,
+                get(): typeof document.cookie {
+                    const url = getUrl();
+                    const cookies = cookieJar.getCookiesSync(url);
+                    return cookies
+                        .map((cookie) => cookie.cookieString())
+                        .join("; ");
+                },
+                set(cookieString: typeof document.cookie) {
+                    const url = getUrl();
+                    cookieJar.setCookieSync(cookieString, url);
+                    if (persist) {
+                        setNotificationSubject$.next({url, cookieString});
+                    }
+                },
+            });
+        },
+    };
+    return result;
+})();

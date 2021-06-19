@@ -94,16 +94,16 @@ index 2bd472b..52cf521 100644
          bareName: 'Calendar',
          clientID: 'WebCalendar',
 diff --git a/node_modules/proton-shared/lib/helpers/sentry.ts b/node_modules/proton-shared/lib/helpers/sentry.ts
-index b6fd736..ff9ac8d 100644
+index b75c3d7..ff9ac8d 100644
 --- a/node_modules/proton-shared/lib/helpers/sentry.ts
 +++ b/node_modules/proton-shared/lib/helpers/sentry.ts
-@@ -1,76 +1,11 @@
+@@ -1,78 +1,11 @@
  import * as Sentry from '@sentry/browser';
-
+ 
 -import { ProtonConfig } from '../interfaces';
 -import { VPN_HOSTNAME } from '../constants';
 +function main() {
-
+ 
 -const isLocalhost = (host: string) => host.startsWith('localhost');
 -
 -const isProduction = (host: string) => host.endsWith('.protonmail.com') || host === VPN_HOSTNAME;
@@ -129,13 +129,12 @@ index b6fd736..ff9ac8d 100644
 -        release: isProduction(host) ? APP_VERSION : COMMIT_RELEASE,
 -        environment: host,
 -        normalizeDepth: 5,
--        beforeSend(event) {
--            // @ts-ignore
--            if (event && 'error' in event && event.error?.stack) {
--                // @ts-ignore Filter out broken ferdi errors
--                if (event.error.stack.includes(/ferdi/i)) {
--                    return null;
--                }
+-        beforeSend(event, hint) {
+-            const error = hint?.originalException;
+-            const stack = typeof error === 'string' ? error : error?.stack;
+-            // Filter out broken ferdi errors
+-            if (stack && stack.match(/ferdi|franz/i)) {
+-                return null;
 -            }
 -            return event;
 -        },
@@ -154,6 +153,9 @@ index b6fd736..ff9ac8d 100644
 -            'NetworkError when attempting to fetch resource.',
 -            'No network connection',
 -            'webkitExitFullScreen', // Bug in Firefox for iOS.
+-            'InactiveSession',
+-            /chrome-extension/,
+-            /moz-extension/,
 -        ],
 -    });
 -
@@ -161,19 +163,19 @@ index b6fd736..ff9ac8d 100644
 -        scope.setTag('appVersion', APP_VERSION);
 -    });
  }
-
+ 
 -export const traceError = (e: unknown) => {
 -    if (!isLocalhost(window.location.host)) {
 -        Sentry.captureException(e);
 -    }
 -};
 +export const traceError = (e: unknown) => console.error(e);
-
+ 
 -export const captureMessage = (...args: Parameters<typeof Sentry.captureMessage>) => {
 -    if (!isLocalhost(window.location.host)) {
 -        Sentry.captureMessage(...args);
 -    }
 -};
 +export const captureMessage = (...args: Parameters<typeof Sentry.captureMessage>) => console.log(args[0]);
-
+ 
  export default main;

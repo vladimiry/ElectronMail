@@ -311,21 +311,22 @@ export const fetchEvents = async (
 //      https://github.com/electron/electron/issues/27981
 //      https://github.com/ProtonMail/react-components/commit/0558e441583029f644d1a17b68743436a29d5db2#commitcomment-52005249
 export const documentCookiesForCustomScheme: {
-    readonly enable: (logger: Logger, persist: boolean) => void
+    readonly enable: (logger: Logger) => void
     readonly setNotification$: Observable<{ url: string, cookieString: string }>
 } = (() => {
     // we don't need all the values but just to be able to send a signal, so "buffer = 1" should be enough
     const setNotificationSubject$ = new ReplaySubject<{ url: string, cookieString: string }>(1);
     const result: typeof documentCookiesForCustomScheme = {
         setNotification$: setNotificationSubject$.asObservable(),
-        enable(logger, persist) {
+        enable(logger) {
             logger.verbose(nameof(documentCookiesForCustomScheme), nameof(result.enable));
 
             const {document, location} = window;
             const getUrl = (): string => resolveApiUrlByPackagedWebClientUrlSafe(location.toString());
-            const store = new WebStorageCookieStore(window.sessionStorage);
-            const cookieJar = persist
-                ? new CookieJar(store)
+            // TODO (electron) drop BUILD_ENVIRONMENT !== "e2e" condition:
+            //      electron v13 throws "window.sessionStorage" access denied error in e2e/playwright mode
+            const cookieJar = BUILD_ENVIRONMENT !== "e2e"
+                ? new CookieJar(new WebStorageCookieStore(window.sessionStorage))
                 : new CookieJar();
 
             Object.defineProperty(document, "cookie", {
@@ -341,9 +342,7 @@ export const documentCookiesForCustomScheme: {
                 set(cookieString: typeof document.cookie) {
                     const url = getUrl();
                     cookieJar.setCookieSync(cookieString, url);
-                    if (persist) {
-                        setNotificationSubject$.next({url, cookieString});
-                    }
+                    setNotificationSubject$.next({url, cookieString});
                 },
             });
         },

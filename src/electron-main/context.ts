@@ -130,12 +130,11 @@ function initLocations(
         searchInPageBrowserViewPage: appRelativePath("./web/", WEBPACK_WEB_CHUNK_NAMES["search-in-page-browser-view"], "index.html"),
         preload: {
             aboutBrowserWindow: appRelativePath("./electron-preload/about.js"),
-            browserWindow: appRelativePath("./electron-preload/browser-window.js"),
-            browserWindowE2E: appRelativePath("./electron-preload/browser-window-e2e.js"),
+            browserWindow: appRelativePath(`./electron-preload/browser-window${BUILD_ENVIRONMENT === "e2e" ? "-e2e" : ""}.js`),
             searchInPageBrowserView: appRelativePath("./electron-preload/search-in-page-browser-view.js"),
             fullTextSearchBrowserWindow: appRelativePath("./electron-preload/database-indexer.js"),
-            primary: formatFileUrl(appRelativePath("./electron-preload/webview/primary.js")),
-            calendar: formatFileUrl(appRelativePath("./electron-preload/webview/calendar.js")),
+            primary: formatFileUrl(appRelativePath(`./electron-preload/webview/primary${BUILD_ENVIRONMENT === "e2e" ? "-e2e" : ""}.js`)),
+            calendar: formatFileUrl(appRelativePath(`./electron-preload/webview/calendar${BUILD_ENVIRONMENT === "e2e" ? "-e2e" : ""}.js`)),
         },
         // TODO electron: get rid of "baseURLForDataURL" workaround, see https://github.com/electron/electron/issues/20700
         vendorsAppCssLinkHrefs: ["shared-vendor-dark", "shared-vendor-light"]

@@ -8,7 +8,7 @@ import {setupProtonOpenNewTabEventHandler} from "src/electron-preload/webview/li
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.calendar, __filename);
 const protonAppPageStatus = testProtonCalendarAppPage({url: getLocationHref(), logger});
 
-documentCookiesForCustomScheme.enable(logger, true);
+documentCookiesForCustomScheme.enable(logger);
 setupProtonOpenNewTabEventHandler(logger);
 
 // TODO throw error if "not calendar or blank.html" page loaded

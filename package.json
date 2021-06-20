@@ -82,7 +82,7 @@
     "lint:ts:eslint": "yarn lint:ts:base:eslint \"./src/**/*.ts\" \"./scripts/**/*.ts\" \"./webpack-configs/**/*.ts\"",
     "start:electron": "electron ./app/electron-main.js",
     "start:electron:dev": "electron ./app-dev/electron-main.js",
-    "test:e2e:build-code": "cross-env NODE_ENV=e2e npm-run-all build:electron-main build:electron-preload:browser-window",
+    "test:e2e:build-code": "cross-env NODE_ENV=e2e npm-run-all build:electron-main build:electron-preload:browser-window build:electron-preload:webview-primary build:electron-preload:webview-calendar",
     "test:e2e:run": "cross-env TS_NODE_FILES=true DEBUG=pw:api npm exec --package=ava --node-options=\"--require tsconfig-paths/register --require ts-node/register\" -- ava \"./src/e2e/**/*.{spec,test}.ts\"",
     "test:e2e": "npm-run-all test:e2e:build-code test:e2e:run",
     "scripts/code-generation/electron-main": "yarn ts-node:shortcut ./scripts/code-generation/electron-main.ts",

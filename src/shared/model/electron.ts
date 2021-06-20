@@ -24,7 +24,6 @@ export type ElectronContextLocations = Readonly<{
     preload: Readonly<{
         aboutBrowserWindow: string;
         browserWindow: string;
-        browserWindowE2E: string;
         searchInPageBrowserView: string;
         fullTextSearchBrowserWindow: string;
         primary: string;

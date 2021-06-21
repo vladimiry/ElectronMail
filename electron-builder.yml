@@ -20,8 +20,6 @@ files:
   - '!node_modules/pureimage/{firstimages,tests}'
   # sodium-native TODO: include into the package only needed prebuilds for the platform is being built
   - '!node_modules/sodium-native/{src,test,libsodium,tmp}'
-  - '!node_modules/sodium-native/prebuilds/linux-arm'
-  - '!node_modules/sodium-native/prebuilds/win32-ia32'
   # remeda
   - '!node_modules/remeda/{coverage,scripts,src}'
   # spellchecker

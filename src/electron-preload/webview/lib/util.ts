@@ -323,11 +323,9 @@ export const documentCookiesForCustomScheme: {
 
             const {document, location} = window;
             const getUrl = (): string => resolveApiUrlByPackagedWebClientUrlSafe(location.toString());
-            // TODO (electron) drop BUILD_ENVIRONMENT !== "e2e" condition:
-            //      electron v13 throws "window.sessionStorage" access denied error in e2e/playwright mode
-            const cookieJar = BUILD_ENVIRONMENT !== "e2e"
-                ? new CookieJar(new WebStorageCookieStore(window.sessionStorage))
-                : new CookieJar();
+            const cookieJar = new CookieJar(
+                new WebStorageCookieStore(window.sessionStorage),
+            );
 
             Object.defineProperty(document, "cookie", {
                 enumerable: true,

@@ -27,7 +27,7 @@ export class DbViewEffects {
             mergeMap(({payload: {finishPromise, webAccountPk}, ...action}) => {
                 const logger = curryFunctionMembers(_logger, `[${action.type}][${webAccountPk.accountIndex}]`);
                 const dispose$ = from(finishPromise).pipe(tap(() => logger.info("dispose")));
-                const ipcMainClient = this.api.ipcMainClient({finishPromise, serialization: "jsan"});
+                const ipcMainClient = this.api.ipcMainClient({finishPromise, serialization: "msgpackr"});
 
                 logger.info("setup");
 
@@ -171,7 +171,7 @@ export class DbViewEffects {
                                 timeoutMs: payload.codeFilter
                                     ? fullTextSearchTimeoutMs * 5
                                     : fullTextSearchTimeoutMs * 1.2,
-                                serialization: "jsan",
+                                serialization: "msgpackr",
                             },
                         )(omit(payload, ["accountIndex"])),
                     ).pipe(

@@ -72,6 +72,7 @@ export function buildBaseConfig(
                 alias: {
                     "src": srcRelativePath(),
                     "package.json": rootRelativePath("package.json"),
+                    "msgpackr": rootRelativePath("node_modules/msgpackr/index.js"),
                 },
             },
             optimization: {

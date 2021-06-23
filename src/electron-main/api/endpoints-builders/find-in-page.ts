@@ -82,31 +82,26 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                     findInPageNotification = null;
                 }
 
-                // WARN: "findInPageBrowserView.webContents" is needed to send API response
+                // WARN: "findInPageBrowserView.webContents" is needed to send API "findInPageDisplay" response/callback
                 // so we don't destroy it immediately but with timeout letting API respond to request first
                 setTimeout(() => {
                     if (!uiContext.findInPageBrowserView) {
                         logger.debug(`skipping destroying as "${nameof.full(uiContext.findInPageBrowserView)}" undefined`);
                         return;
                     }
-
-                    // destroy
-                    logger.verbose(`destroying "${nameof.full(uiContext.findInPageBrowserView)}"`);
                     {
+                        logger.verbose(`destroying "${nameof.full(uiContext.findInPageBrowserView)}"`);
+                        // dereferencing required as otherwise the consequent "webContents.destroy" call will crash the app
+                        browserWindow.setBrowserView(null);
                         // TODO drop explicit BrowserView.webContents destroying
                         //      https://github.com/electron/electron/issues/26929
                         const {webContents} = uiContext.findInPageBrowserView;
                         // TODO drop wrapping BrowserView.webContents.destroy() in setImmediate
                         //      https://github.com/electron/electron/issues/29626
-                        setImmediate(() => {
-                            if (!webContents.isDestroyed() && typeof webContents.destroy === "function") {
-                                webContents.destroy();
-                            }
-                        });
+                        if (!webContents.isDestroyed() && typeof webContents.destroy === "function") {
+                            webContents.destroy();
+                        }
                     }
-                    // WARN "setBrowserView" needs to be called with null, see https://github.com/electron/electron/issues/13581
-                    browserWindow.setBrowserView(null);
-
                     delete uiContext.findInPageBrowserView;
                 });
 

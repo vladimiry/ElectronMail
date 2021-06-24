@@ -1,7 +1,7 @@
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import type {RateLimiterMemory} from "rate-limiter-flexible";
 import {URL} from "@cliqz/url-parser";
-import {pick} from "remeda";
+import {mapValues, pick} from "remeda";
 
 import {
     ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN,
@@ -720,4 +720,18 @@ export const resolveApiUrlByPackagedWebClientUrlSafe = (urlArg: string): string 
         throw new Error(`Failed to resolve Proton entry API URL by "${urlArg}" packaged Proton web client URL`);
     }
     return result;
+};
+
+export const getPlainErrorProps = <T>(error: T): T | { code: string, name: string, message: string, stack: string } => {
+    if (typeof error !== "object") {
+        return error;
+    }
+    // TODO consider also iterating "own string" props
+    return mapValues(
+        pick(
+            error as unknown as { code: string, name: string, message: string, stack: string },
+            ["code", "message", "name", "stack"],
+        ),
+        String,
+    );
 };

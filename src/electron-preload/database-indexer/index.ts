@@ -4,6 +4,7 @@ import {IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_DB_INDEXER_RESPONS
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {SERVICES_FACTORY, addToMailsIndex, createMailsIndex, removeMailsFromIndex} from "./service";
 import {buildLoggerBundle} from "src/electron-preload/lib/util";
+import {getPlainErrorProps} from "src/shared/util";
 
 const logger = buildLoggerBundle(__filename);
 
@@ -92,12 +93,20 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 window.addEventListener("error", async (event) => {
+    const {message, filename, lineno, colno, error} = event; // eslint-disable-line @typescript-eslint/no-unsafe-assignment
     try {
-        logger.error("uncaught error", event);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        logger.error("uncaught error", {message, filename, lineno, colno, error: getPlainErrorProps(error)});
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        dbIndexerOn(IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS.ErrorMessage({message: event.message}));
+        dbIndexerOn(IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS.ErrorMessage({message}));
     } catch (error) {
-        // NOOP
-        console.error(error); // eslint-disable-line no-console
+        if (BUILD_ENVIRONMENT === "development") {
+            console.error(error); // eslint-disable-line no-console
+        } else {
+            logger.error(getPlainErrorProps(error));
+        }
+    }
+    if (BUILD_ENVIRONMENT !== "development") {
+        event.preventDefault();
     }
 });

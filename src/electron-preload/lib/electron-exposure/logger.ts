@@ -1,31 +1,20 @@
-import {pick} from "remeda";
-
 import {LogLevel, Logger} from "src/shared/model/common";
 import {ONE_SECOND_MS} from "src/shared/constants";
+import {getPlainErrorProps} from "src/shared/util";
 import {isProtonApiError, resolveIpcMainApi, sanitizeProtonApiError} from "src/electron-preload/lib/util";
 
 let ipcMainApi: ReturnType<typeof resolveIpcMainApi> | undefined;
-
-const getErrorPlainProps = <T>(error: T): T | { code: unknown, name: unknown, message: unknown, stack: unknown } => {
-    if (typeof error !== "object") {
-        return error;
-    }
-    // TODO consider also iterating "own string" props
-    return pick(
-        error as unknown as { code: unknown, name: unknown, message: unknown, stack: unknown },
-        ["code", "message", "name", "stack"],
-    );
-};
 
 function log(level: LogLevel, ...args: unknown[]): void {
     const api = ipcMainApi ??= resolveIpcMainApi({timeoutMs: ONE_SECOND_MS * 3});
 
     api("log")({level, args}).catch(() => {
-        api("log")({level, args: args.map(getErrorPlainProps)}).catch((error) => {
+        api("log")({level, args: args.map((arg) => getPlainErrorProps(arg))}).catch((error) => {
             // eslint-disable-next-line no-console
-            console.error("sending error to main process for logging failed (likely due to the serialization issue):", error);
-            // eslint-disable-next-line no-console
-            console.error("original error args:", level, ...args);
+            console.error(
+                "sending error to main process for logging failed (likely due to the serialization issue):",
+                Object(error).message, // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+            );
         });
     });
 }

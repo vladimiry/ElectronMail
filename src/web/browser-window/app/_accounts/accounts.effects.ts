@@ -24,6 +24,7 @@ import {
     ACCOUNTS_ACTIONS,
     DB_VIEW_ACTIONS,
     NAVIGATION_ACTIONS,
+    NOTIFICATION_ACTIONS,
     OPTIONS_ACTIONS,
     unionizeActionFilter
 } from "src/web/browser-window/app/store/actions";
@@ -489,6 +490,7 @@ export class AccountsEffects {
                                             tap((value) => {
                                                 logger.verbose(`${buildDbPatchMethodName}:value type: ${typeof value}`);
                                             }),
+                                            catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
                                         ),
                                     ).pipe(
                                         concatMap(() => of(ACCOUNTS_ACTIONS.Synced({pk: {login, accountIndex}}))),

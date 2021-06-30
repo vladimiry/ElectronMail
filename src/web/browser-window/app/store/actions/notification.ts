@@ -3,7 +3,7 @@ import {ofType, unionize} from "@vladimiry/unionize";
 import {IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main";
 
 export type NotificationItem =
-    | Readonly<{ type: "error"; data: Readonly<Error> }>
+    | Readonly<{ type: "error"; data: Readonly<Error & {code?: unknown}> }>
     | Readonly<{ type: "message"; data: Readonly<{ message: string; style: "error" | "warning" | "info"; html?: boolean }> }>
     | Readonly<{ type: "update"; data: Readonly<IpcMainServiceScan["ApiImplReturns"]["updateCheck"]> }>;
 

@@ -2,16 +2,25 @@ import _logger from "electron-log";
 import fs from "fs";
 import path from "path";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
+import {Session, nativeTheme} from "electron";
 import {Model as StoreModel} from "fs-json-store";
 import {format as formatURL} from "url";
-import {nativeTheme} from "electron";
 import {randomBytes} from "crypto";
 
 import {Config} from "src/shared/model/options";
 import {Context} from "./model";
 import {buildInitialVendorsAppCssLinks, curryFunctionMembers, getRandomInt} from "src/shared/util";
+import {createSessionUtil} from "src/electron-main/session";
 
 const logger = curryFunctionMembers(_logger, __filename);
+
+export const resolveDefaultAppSession: () => Session = (() => {
+    let session: Session | undefined;
+    const result: typeof resolveDefaultAppSession = () => {
+        return session ??= createSessionUtil.create("partition/default-app-session");
+    };
+    return result;
+})();
 
 export function formatFileUrl(pathname: string): string {
     return formatURL({pathname, protocol: "file:", slashes: true});

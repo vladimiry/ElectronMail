@@ -36,7 +36,10 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     }
     updateCheck: {
         releasesUrl: string
-        proxy: string
+        proxy?: {
+            proxyRules: string
+            proxyBypassRules?: string
+        }
     }
     indexingBootstrapBufferSize: number
     jsFlags: string[]

@@ -3,7 +3,6 @@ import {Deferred} from "ts-deferred";
 import {app} from "electron";
 
 import {Context, UIContext} from "src/electron-main/model";
-import {getDefaultSession, initSession} from "src/electron-main/session";
 import {initApiEndpoints} from "src/electron-main/api";
 import {initApplicationMenu} from "src/electron-main/menu";
 import {initMainBrowserWindow} from "src/electron-main/window/main";
@@ -12,6 +11,7 @@ import {initSpellCheckController} from "src/electron-main/spell-check/controller
 import {initTray} from "src/electron-main/tray";
 import {initWebContentsCreatingHandlers} from "src/electron-main/web-contents";
 import {registerWebFolderFileProtocol} from "src/electron-main/protocol";
+import {resolveDefaultAppSession} from "src/electron-main/util";
 import {setUpPowerMonitorNotification} from "src/electron-main/power-monitor";
 
 export async function appReadyHandler(ctx: Context): Promise<void> {
@@ -24,9 +24,7 @@ export async function appReadyHandler(ctx: Context): Promise<void> {
         return endpoints;
     })();
 
-    registerWebFolderFileProtocol(ctx, getDefaultSession());
-
-    await initSession(ctx, getDefaultSession());
+    registerWebFolderFileProtocol(ctx, resolveDefaultAppSession());
 
     await initApiEndpoints(ctx);
 

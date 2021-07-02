@@ -23,7 +23,7 @@ import {
     parseUrlOriginWithNullishCheck
 } from "src/shared/util";
 import {getHeader, patchResponseHeaders, resolveCorsProxy} from "./service";
-import {resolveInitializedSession} from "src/electron-main/session";
+import {resolveInitializedAccountSession} from "src/electron-main/session";
 
 const logger = curryFunctionMembers(_logger, __filename);
 
@@ -79,7 +79,7 @@ export function initWebRequestListenersByAccount(
         blockNonEntryUrlBasedRequests,
     }: DeepReadonly<AccountConfig>,
 ): void {
-    const session = resolveInitializedSession({login});
+    const session = resolveInitializedAccountSession({login});
     const webClient = ctx.locations.webClients.find(({entryApiUrl}) => entryApiUrl === accountEntryApiUrl);
 
     if (!webClient) {

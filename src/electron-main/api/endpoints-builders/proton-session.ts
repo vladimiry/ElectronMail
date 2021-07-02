@@ -6,7 +6,7 @@ import {Context} from "src/electron-main/model";
 import {IpcMainApiEndpoints} from "src/shared/api/main";
 import {PLATFORM} from "src/electron-main/constants";
 import {filterProtonSessionTokenCookies} from "src/electron-main/util";
-import {resolveInitializedSession} from "src/electron-main/session";
+import {resolveInitializedAccountSession} from "src/electron-main/session";
 
 // TODO enable minimal logging
 // const logger = curryFunctionMembers(electronLog, __filename);
@@ -50,7 +50,7 @@ export async function buildEndpoints(
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async saveProtonSession({login, apiEndpointOrigin, clientSession}) {
-            const session = resolveInitializedSession({login});
+            const session = resolveInitializedAccountSession({login});
             const data = {
                 login,
                 apiEndpointOrigin,
@@ -99,7 +99,7 @@ export async function buildEndpoints(
                 return false;
             }
 
-            const session = resolveInitializedSession({login});
+            const session = resolveInitializedAccountSession({login});
 
             // TODO consider setting "samesite=none" cookie attribute when restoring the saved cookie to session
             //      currently "samesite" is not being restored or set so default value gets applied (likely to be "lax" at the moment)
@@ -131,7 +131,7 @@ export async function buildEndpoints(
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async resetProtonBackendSession({login}) {
-            const session = resolveInitializedSession({login});
+            const session = resolveInitializedAccountSession({login});
             const config = await lastValueFrom(ctx.config$.pipe(first()));
             const {timeouts: {clearSessionStorageData: timeoutMs}} = config;
 

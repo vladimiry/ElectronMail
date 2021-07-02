@@ -6,7 +6,7 @@ import {DEFAULT_WEB_PREFERENCES} from "./constants";
 import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
 import {WEB_PROTOCOL_SCHEME} from "src/shared/constants";
 import {curryFunctionMembers} from "src/shared/util";
-import {injectVendorsAppCssIntoHtmlFile, resolveUiContextStrict} from "src/electron-main/util";
+import {injectVendorsAppCssIntoHtmlFile, resolveDefaultAppSession, resolveUiContextStrict} from "src/electron-main/util";
 
 const logger = curryFunctionMembers(_logger, __filename);
 
@@ -55,6 +55,7 @@ export const initFindInPageBrowserView: (ctx: Context) => Promise<BrowserView> =
             const browserView = new BrowserView({
                 webPreferences: {
                     ...DEFAULT_WEB_PREFERENCES,
+                    session: resolveDefaultAppSession(),
                     preload: ctx.locations.preload.searchInPageBrowserView,
                 },
             });

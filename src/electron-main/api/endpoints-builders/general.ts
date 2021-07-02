@@ -1,7 +1,6 @@
-import ProxyAgent from "proxy-agent";
 import compareVersions from "compare-versions";
 import electronLog from "electron-log";
-import fetch from "node-fetch";
+import fetch from "electron-fetch";
 import {app, dialog, nativeTheme, shell} from "electron";
 import {first, map, startWith, switchMap} from "rxjs/operators";
 import {from, lastValueFrom, merge, of, throwError} from "rxjs";
@@ -14,6 +13,7 @@ import {IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints, IpcMainServiceSc
 import {PACKAGE_GITHUB_PROJECT_URL, PACKAGE_VERSION, UPDATE_CHECK_FETCH_TIMEOUT} from "src/shared/constants";
 import {PLATFORM} from "src/electron-main/constants";
 import {applyZoomFactor} from "src/electron-main/window/util";
+import {createSessionUtil} from "src/electron-main/session";
 import {curryFunctionMembers} from "src/shared/util";
 import {resolveUiContextStrict} from "src/electron-main/util";
 import {showAboutBrowserWindow} from "src/electron-main/window/about";
@@ -267,6 +267,7 @@ export async function buildEndpoints(
                     };
                 }
             )();
+            let session: import("electron").Session | undefined;
 
             return async (): Promise<IpcMainServiceScan["ApiImplReturns"]["updateCheck"]> => {
                 const config = await lastValueFrom(ctx.config$.pipe(first()));
@@ -276,11 +277,15 @@ export async function buildEndpoints(
                     {
                         method: "GET",
                         timeout: UPDATE_CHECK_FETCH_TIMEOUT,
-                        ...(
-                            proxy && {
-                                agent: new ProxyAgent(proxy) as unknown as import("http").Agent,
+                        useElectronNet: true,
+                        useSessionCookies: false,
+                        session: session ?? await (async () => {
+                            session = createSessionUtil.create(`partition/main-process-endpoints/${nameof(endpoints.updateCheck)}`);
+                            if (proxy) {
+                                await session.setProxy(proxy);
                             }
-                        ),
+                            return session;
+                        })(),
                     },
                 );
 

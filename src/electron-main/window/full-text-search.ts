@@ -2,7 +2,7 @@ import {BrowserWindow} from "electron";
 
 import {Context} from "src/electron-main/model";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";
-import {resolveUiContextStrict} from "src/electron-main/util";
+import {resolveDefaultAppSession, resolveUiContextStrict} from "src/electron-main/util";
 
 export async function attachFullTextIndexWindow(ctx: Context): Promise<BrowserWindow> {
     const uiContext = await resolveUiContextStrict(ctx);
@@ -18,6 +18,7 @@ export async function attachFullTextIndexWindow(ctx: Context): Promise<BrowserWi
     const browserWindow = new BrowserWindow({
         webPreferences: {
             ...DEFAULT_WEB_PREFERENCES,
+            session: resolveDefaultAppSession(),
             preload: ctx.locations.preload.fullTextSearchBrowserWindow,
         },
         show: false,

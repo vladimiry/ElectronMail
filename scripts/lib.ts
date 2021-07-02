@@ -1,5 +1,5 @@
 import byline from "byline";
-import fetch from "node-fetch";
+import fetch from "electron-fetch";
 import fs from "fs";
 import fsExtra from "fs-extra";
 import os from "os";
@@ -101,22 +101,12 @@ export async function execShell(
     }
 }
 
-export async function fetchUrl(args: Parameters<typeof fetch>): ReturnType<typeof fetch> {
-    const [request] = args;
-    const url = typeof request === "string"
-        ? request
-        : "url" in request
-            ? request.url
-            : request.href;
-
+export async function fetchUrl(...[url, options]: Parameters<typeof fetch>): ReturnType<typeof fetch> {
     CONSOLE_LOG(`Downloading ${url}`);
-
-    const response = await fetch(...args);
-
+    const response = await fetch(url, options);
     if (!response.ok) {
         throw new Error(`Downloading failed: ${JSON.stringify(pick(response, ["status", "statusText"]))}`);
     }
-
     return response;
 }
 
@@ -192,7 +182,7 @@ export const resolveExecutable = async (
         ||
         !(await calculateHashes()).equal
     ) {
-        const response = await fetchUrl([url]);
+        const response = await fetchUrl(url);
         fsExtra.ensureDirSync(path.dirname(destFile));
         await promisify(fs.writeFile)(destFile, await response.buffer());
     }

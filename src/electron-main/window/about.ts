@@ -18,7 +18,7 @@ import {
 import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
 import {applyZoomFactor} from "src/electron-main/window/util";
 import {curryFunctionMembers} from "src/shared/util";
-import {injectVendorsAppCssIntoHtmlFile, resolveUiContextStrict} from "src/electron-main/util";
+import {injectVendorsAppCssIntoHtmlFile, resolveDefaultAppSession, resolveUiContextStrict} from "src/electron-main/util";
 
 const logger = curryFunctionMembers(_logger, __filename);
 
@@ -105,6 +105,7 @@ export async function showAboutBrowserWindow(ctx: Context): Promise<BrowserWindo
         height: 500 * windowSizeFactor,
         webPreferences: {
             ...DEFAULT_WEB_PREFERENCES,
+            session: resolveDefaultAppSession(),
             preload: ctx.locations.preload.aboutBrowserWindow,
         },
     });

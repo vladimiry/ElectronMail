@@ -381,6 +381,19 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             }
         }
     },
+    "4.12.4": (config) => {
+        {
+            const {proxy} = config.updateCheck;
+            if (typeof proxy === "object") {
+                return;
+            }
+            if (typeof proxy === "string") {
+                config.updateCheck.proxy = {proxyRules: proxy as unknown as string};
+            } else {
+                delete config.updateCheck.proxy;
+            }
+        }
+    },
     // WARN needs to be the last updater
     "100.0.0": (config) => {
         // ensuring default base props are set

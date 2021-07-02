@@ -67,7 +67,6 @@ export function initialConfig(): Config {
             },
             updateCheck: {
                 releasesUrl: "https://api.github.com/repos/vladimiry/ElectronMail/releases",
-                proxy: "",
             },
             indexingBootstrapBufferSize: 1000,
             jsFlags: [
@@ -377,9 +376,8 @@ export function getRandomInt(min: number, max: number): number {
 
 export const getWebViewPartition: (login: AccountConfig["login"]) => string = (
     () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
-        const prefix = "memory/";
+        const prefix = "partition/webview/";
         const result: typeof getWebViewPartition = (login) => `${prefix}${login}`;
-
         return result;
     }
 )();

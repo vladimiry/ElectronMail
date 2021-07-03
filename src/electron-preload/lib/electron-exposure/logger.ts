@@ -3,13 +3,16 @@ import {ONE_SECOND_MS} from "src/shared/constants";
 import {getPlainErrorProps} from "src/shared/util";
 import {isProtonApiError, resolveIpcMainApi, sanitizeProtonApiError} from "src/electron-preload/lib/util";
 
-let ipcMainApi: ReturnType<typeof resolveIpcMainApi> | undefined;
+let existingApiClient: ReturnType<typeof resolveIpcMainApi> | undefined;
 
 function log(level: LogLevel, ...args: unknown[]): void {
-    const api = ipcMainApi ??= resolveIpcMainApi({timeoutMs: ONE_SECOND_MS * 3});
+    const apiClient = existingApiClient ??= resolveIpcMainApi({
+        timeoutMs: ONE_SECOND_MS * 3,
+        finishPromise: new Promise<void>((resolve) => window.addEventListener("beforeunload", () => resolve)),
+    });
 
-    api("log")({level, args}).catch(() => {
-        api("log")({level, args: args.map((arg) => getPlainErrorProps(arg))}).catch((error) => {
+    apiClient("log")({level, args}).catch(() => {
+        apiClient("log")({level, args: args.map((arg) => getPlainErrorProps(arg))}).catch((error) => {
             // eslint-disable-next-line no-console
             console.error(
                 "sending error to main process for logging failed (likely due to the serialization issue):",

@@ -35,25 +35,33 @@ export const createSessionUtil: {
     readonly createdBefore: (partition: string) => boolean
     readonly fromPartition: (partition: string) => Session
 } = (() => {
-    const usedPartitions: Set<string> = new Set();
-    const createdBefore = (partition: string): boolean => {
+    type ResultType = typeof createSessionUtil;
+    const existingPartitions: Set<string> = new Set();
+    const persistentSessionErrorMessage = "Persistent sessions are not allowed.";
+    const createdBefore: ResultType["createdBefore"] = (partition) => {
         _logger.info(nameof.full(createSessionUtil.createdBefore));
-        return usedPartitions.has(partition);
+        return existingPartitions.has(partition);
     };
-    const fromPartition = (partition: string): Session => {
+    const fromPartition: ResultType["fromPartition"] = (partition) => {
         _logger.info(nameof.full(createSessionUtil.fromPartition));
-        return electronSession.fromPartition(partition, {cache: false});
+        const session = electronSession.fromPartition(partition, {cache: false});
+        if (!existingPartitions.has(partition)) {
+            existingPartitions.add(partition);
+        }
+        return session;
     };
-    const create = (partition: string): Session => {
+    const create: ResultType["create"] = (partition) => {
         _logger.info(nameof.full(createSessionUtil.create));
 
         if (String(partition).trim().toLowerCase().startsWith("persist:")) {
-            throw new Error("Persistent sessions are not allowed");
+            throw new Error(persistentSessionErrorMessage);
         }
 
         const session = fromPartition(partition);
 
-        usedPartitions.add(partition);
+        if (session.isPersistent()) {
+            throw new Error(persistentSessionErrorMessage);
+        }
 
         purifyUserAgentHeader(session);
 

@@ -697,7 +697,7 @@ export const buildInitialVendorsAppCssLinks = (
             return (
                 accumulator
                 +
-                `<link rel="${stylesheet ? 'stylesheet' : 'preload'}" href="${value}"/>`
+                `<link ${stylesheet ? 'rel="stylesheet"' : 'rel="preload" as="style"'} href="${value}"/>`
             );
         },
         "",

@@ -30,7 +30,8 @@ const applyTheming = (
         linkElement.rel = "stylesheet";
     }
     for (const linkElement of queryLinkElements(!shouldUseDarkColors, windowProxy)) {
-        linkElement.rel = "preload";
+        const patch: Pick<typeof linkElement, "rel" | "as"> = {rel: "preload", as: "style"};
+        Object.assign(linkElement, patch);
     }
 };
 

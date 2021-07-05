@@ -67,6 +67,8 @@ export function initialConfig(): Config {
             },
             updateCheck: {
                 releasesUrl: "https://api.github.com/repos/vladimiry/ElectronMail/releases",
+                proxyRules: "",
+                proxyBypassRules: "",
             },
             indexingBootstrapBufferSize: 1000,
             jsFlags: [

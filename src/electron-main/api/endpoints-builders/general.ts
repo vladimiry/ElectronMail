@@ -271,7 +271,7 @@ export async function buildEndpoints(
 
             return async (): Promise<IpcMainServiceScan["ApiImplReturns"]["updateCheck"]> => {
                 const config = await lastValueFrom(ctx.config$.pipe(first()));
-                const {updateCheck: {releasesUrl, proxy}} = config;
+                const {updateCheck: {releasesUrl, proxyRules, proxyBypassRules}} = config;
                 const response = await fetch(
                     releasesUrl,
                     {
@@ -281,8 +281,9 @@ export async function buildEndpoints(
                         useSessionCookies: false,
                         session: session ?? await (async () => {
                             session = createSessionUtil.create(`partition/main-process-endpoints/${nameof(endpoints.updateCheck)}`);
-                            if (proxy) {
-                                await session.setProxy(proxy);
+                            const proxyConfig: Readonly<Parameters<typeof session.setProxy>[0]> = {proxyRules, proxyBypassRules};
+                            if (proxyConfig.proxyRules) {
+                                await session.setProxy(proxyConfig);
                             }
                             return session;
                         })(),

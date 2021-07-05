@@ -174,9 +174,6 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             if (typeof config.updateCheck.releasesUrl === "undefined") {
                 config.updateCheck.releasesUrl = defaults.releasesUrl;
             }
-            if (typeof config.updateCheck.proxy === "undefined") {
-                config.updateCheck.proxy = defaults.proxy;
-            }
         }
     },
     "3.7.1": (config) => {
@@ -381,16 +378,27 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             }
         }
     },
-    "4.12.4": (config) => {
+    "4.12.4": (
+        _,
+        config = _ as Config & { updateCheck: { proxy?: unknown } },
+    ) => {
         {
-            const {proxy} = config.updateCheck;
-            if (typeof proxy === "object") {
-                return;
+            const {updateCheck} = config;
+            const {proxy} = updateCheck;
+            if (typeof proxy !== "undefined") {
+                if (
+                    typeof proxy === "string"
+                    &&
+                    typeof updateCheck.proxyRules !== "string"
+                ) {
+                    updateCheck.proxyRules = proxy;
+                }
+                delete updateCheck.proxy;
             }
-            if (typeof proxy === "string") {
-                config.updateCheck.proxy = {proxyRules: proxy as unknown as string};
-            } else {
-                delete config.updateCheck.proxy;
+            for (const key of ["proxyRules", "proxyBypassRules"] as const) {
+                if (typeof updateCheck[key] !== "string") {
+                    updateCheck[key] = INITIAL_STORES.config().updateCheck[key];
+                }
             }
         }
     },

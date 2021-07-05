@@ -3,7 +3,7 @@ import {equals} from "remeda";
 
 import {AccountConfig} from "src/shared/model/account";
 import {Context} from "src/electron-main/model";
-import {IpcMainApiEndpoints} from "src/shared/api/main";
+import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {assertTypeOf, curryFunctionMembers, pickAccountStrict, validateExternalContentProxyUrlPattern} from "src/shared/util";
 import {configureSessionByAccount, initSessionByAccount} from "src/electron-main/session";
 

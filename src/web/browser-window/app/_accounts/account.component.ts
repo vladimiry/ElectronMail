@@ -1,3 +1,4 @@
+import {Action, Store, select} from "@ngrx/store";
 import {BehaviorSubject, Observable, Subject, Subscription, combineLatest, lastValueFrom, merge, of, race, throwError, timer} from "rxjs";
 import {
     ChangeDetectionStrategy,
@@ -12,7 +13,6 @@ import {
     ViewChild,
     ViewContainerRef,
 } from "@angular/core";
-import {Store, select} from "@ngrx/store";
 import {URL} from "@cliqz/url-parser";
 import {
     concatMap,
@@ -32,16 +32,17 @@ import {
     tap,
     withLatestFrom,
 } from "rxjs/operators";
+import {ofType} from "@ngrx/effects";
 import {pick} from "remeda";
 
-import {ACCOUNTS_ACTIONS, AppAction, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {DbViewEntryComponent} from "src/web/browser-window/app/_db-view/db-view-entry.component";
 import {DbViewModuleResolve} from "src/web/browser-window/app/_accounts/db-view-module-resolve.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
-import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {LogLevel} from "src/shared/model/common";
 import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";
 import {ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/constants";
@@ -207,7 +208,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         ),
                         this.store.pipe(
                             select(OptionsSelectors.FEATURED.mainProcessNotification),
-                            filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.ActivateBrowserWindow),
+                            ofType(IPC_MAIN_API_NOTIFICATION_ACTIONS.ActivateBrowserWindow),
                             startWith(null),
                         ),
                     ]).pipe(
@@ -365,7 +366,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                                 of(null), // fired once to unblock the "combineLatest"
                                 this.store.pipe(
                                     select(OptionsSelectors.FEATURED.mainProcessNotification),
-                                    filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.ProtonSessionTokenCookiesModified),
+                                    ofType(IPC_MAIN_API_NOTIFICATION_ACTIONS.ProtonSessionTokenCookiesModified),
                                     debounceTime(ONE_SECOND_MS),
                                     withLatestFrom(this.account$),
                                     filter(([{payload: {key}}, {accountConfig: {login}}]) => key.login === login),
@@ -465,7 +466,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         );
     }
 
-    onDispatch(action: AppAction): void {
+    onDispatch(action: Action): void {
         this.store.dispatch(action);
     }
 

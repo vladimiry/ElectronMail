@@ -1,15 +1,15 @@
 import UUID from "pure-uuid";
-import {Actions} from "@ngrx/effects";
+import {Action, Store, select} from "@ngrx/store";
+import {Actions, ofType} from "@ngrx/effects";
 import {EMPTY, concat, lastValueFrom, timer} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
-import {Store, select} from "@ngrx/store";
 import {URL} from "@cliqz/url-parser";
 import {filter, first, mergeMap, take, takeUntil} from "rxjs/operators";
 
-import {ACCOUNTS_ACTIONS, AppAction, NAVIGATION_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
+import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountConfig} from "src/shared/model/account";
 import {FIRE_SYNCING_ITERATION$, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
-import {IpcMainServiceScan} from "src/shared/api/main";
+import {IpcMainServiceScan} from "src/shared/api/main-process";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
 import {ProtonClientSession} from "src/shared/model/proton";
@@ -23,10 +23,7 @@ export class CoreService {
     constructor(
         private store: Store<State>,
         private zone: NgZone,
-        private readonly actions$: Actions<{
-            type: string;
-            payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-        }>,
+        private readonly actions$: Actions,
     ) {}
 
     parseEntryUrl(
@@ -178,7 +175,7 @@ export class CoreService {
         this.store.dispatch(NAVIGATION_ACTIONS.Logout({skipKeytarProcessing}));
     }
 
-    dispatch(action: AppAction): void {
+    dispatch(action: Action): void {
         this.zone.run(() => {
             this.store.dispatch(action);
         });
@@ -190,13 +187,13 @@ export class CoreService {
         return concat(
             // first should start new syncing iteration
             this.actions$.pipe(
-                unionizeActionFilter(ACCOUNTS_ACTIONS.is.PatchProgress),
+                ofType(ACCOUNTS_ACTIONS.PatchProgress),
                 filter(({payload}) => payload.login === login && Boolean(payload.patch.syncing)),
                 take(1),
             ),
             // then should successfully complete the syncing iteration
             this.actions$.pipe(
-                unionizeActionFilter(ACCOUNTS_ACTIONS.is.Synced),
+                ofType(ACCOUNTS_ACTIONS.Synced),
                 filter(({payload}) => payload.pk.login === login),
                 take(1),
             ),

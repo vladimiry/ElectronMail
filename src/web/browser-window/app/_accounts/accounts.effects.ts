@@ -1,5 +1,5 @@
 import {Action, Store, select} from "@ngrx/store";
-import {Actions, createEffect} from "@ngrx/effects";
+import {Actions, createEffect, ofType} from "@ngrx/effects";
 import {EMPTY, Observable, concat, from, fromEvent, merge, of, throwError, timer} from "rxjs";
 import {Injectable} from "@angular/core";
 import {
@@ -26,14 +26,13 @@ import {
     NAVIGATION_ACTIONS,
     NOTIFICATION_ACTIONS,
     OPTIONS_ACTIONS,
-    unionizeActionFilter
 } from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {FIRE_SYNCING_ITERATION$} from "src/web/browser-window/app/app.constants";
-import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {ONE_MINUTE_MS, ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/constants";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {consumeMemoryRateLimiter, curryFunctionMembers, isDatabaseBootstrapped, testProtonCalendarAppPage} from "src/shared/util";
@@ -63,14 +62,14 @@ export class AccountsEffects {
 
     syncAccountsConfigs$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(OPTIONS_ACTIONS.is.GetSettingsResponse),
+            ofType(OPTIONS_ACTIONS.GetSettingsResponse),
             map(({payload}) => ACCOUNTS_ACTIONS.WireUpConfigs({accountConfigs: payload.accounts})),
         ),
     );
 
     setupPrimaryNotificationChannel$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(ACCOUNTS_ACTIONS.is.SetupPrimaryNotificationChannel),
+            ofType(ACCOUNTS_ACTIONS.SetupPrimaryNotificationChannel),
             mergeMap(({payload, ...action}) => {
                 const {webView, finishPromise, account: {accountIndex}} = payload;
                 const logger = curryFunctionMembers(_logger, `[${action.type}][${accountIndex}]`);
@@ -115,7 +114,7 @@ export class AccountsEffects {
 
                     this.store.pipe(
                         select(OptionsSelectors.FEATURED.mainProcessNotification),
-                        filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbAttachmentExportRequest),
+                        ofType(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbAttachmentExportRequest),
                         filter(({payload: {key}}) => key.login === login),
                         mergeMap(({payload}) => {
                             // TODO live attachments export: fire error if offline or not signed-in into the account
@@ -156,7 +155,7 @@ export class AccountsEffects {
 
     setupCalendarNotificationChannel$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(ACCOUNTS_ACTIONS.is.SetupCalendarNotificationChannel),
+            ofType(ACCOUNTS_ACTIONS.SetupCalendarNotificationChannel),
             mergeMap(({payload, ...action}) => {
                 const {webView, finishPromise, account: {accountIndex}} = payload;
                 const logger = curryFunctionMembers(_logger, `[${action.type}][${accountIndex}]`);
@@ -229,7 +228,7 @@ export class AccountsEffects {
 
     toggleSyncing$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(ACCOUNTS_ACTIONS.is.ToggleSyncing),
+            ofType(ACCOUNTS_ACTIONS.ToggleSyncing),
             mergeMap(({payload, ...action}) => {
                 const {pk: {login, accountIndex}, webView, finishPromise} = payload;
                 const logger = curryFunctionMembers(_logger, `[${action.type}][${accountIndex}]`);
@@ -256,7 +255,7 @@ export class AccountsEffects {
                     // processing "db-view"-related notifications received from the main process
                     this.store.pipe(
                         select(OptionsSelectors.FEATURED.mainProcessNotification),
-                        filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbPatchAccount),
+                        ofType(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount),
                         filter(({payload: {key}}) => key.login === login),
                         mergeMap(({payload}) => of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread: payload.stat.unread}}}))),
                     ),
@@ -264,7 +263,7 @@ export class AccountsEffects {
                     // selecting mail in "proton ui"
                     createEffect(
                         () => this.actions$.pipe(
-                            unionizeActionFilter(ACCOUNTS_ACTIONS.is.SelectMailOnline),
+                            ofType(ACCOUNTS_ACTIONS.SelectMailOnline),
                             filter(({payload: {pk: key}}) => key.login === login),
                             mergeMap(({payload: selectMailOnlineInput}) => concat(
                                 of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {selectingMailOnline: true}})),
@@ -295,7 +294,7 @@ export class AccountsEffects {
                     // processing "make mails read" signal fired in the "db-view" module
                     createEffect(
                         () => this.actions$.pipe(
-                            unionizeActionFilter(ACCOUNTS_ACTIONS.is.MakeMailRead),
+                            ofType(ACCOUNTS_ACTIONS.MakeMailRead),
                             filter(({payload}) => payload.pk.login === login),
                             mergeMap(({payload: {messageIds}}) => concat(
                                 of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {makingMailRead: true}})),
@@ -325,7 +324,7 @@ export class AccountsEffects {
                     // processing "set mails folder" signal fired in the "db-view" module
                     createEffect(
                         () => this.actions$.pipe(
-                            unionizeActionFilter(ACCOUNTS_ACTIONS.is.SetMailFolder),
+                            ofType(ACCOUNTS_ACTIONS.SetMailFolder),
                             filter(({payload}) => payload.pk.login === login),
                             mergeMap(({payload: {folderId, messageIds}}) => concat(
                                 of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {settingMailFolder: true}})),
@@ -355,7 +354,7 @@ export class AccountsEffects {
                     // processing "delete messages" signal fired in the "db-view" module
                     createEffect(
                         () => this.actions$.pipe(
-                            unionizeActionFilter(ACCOUNTS_ACTIONS.is.DeleteMessages),
+                            ofType(ACCOUNTS_ACTIONS.DeleteMessages),
                             filter(({payload}) => payload.pk.login === login),
                             mergeMap(({payload: {messageIds}}) => concat(
                                 of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {deletingMessages: true}})),
@@ -385,7 +384,7 @@ export class AccountsEffects {
                     // processing "fetch single mail" signal fired in the "db-view" module
                     createEffect(
                         () => this.actions$.pipe(
-                            unionizeActionFilter(ACCOUNTS_ACTIONS.is.FetchSingleMail),
+                            ofType(ACCOUNTS_ACTIONS.FetchSingleMail),
                             filter(({payload}) => payload.pk.login === login),
                             mergeMap(({payload: {pk, mailPk}}) => concat(
                                 of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {fetchingSingleMail: true}})),
@@ -538,7 +537,7 @@ export class AccountsEffects {
 
     tryToLogin$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(ACCOUNTS_ACTIONS.is.TryToLogin),
+            ofType(ACCOUNTS_ACTIONS.TryToLogin),
             mergeMap(({payload, ...action}) => {
                 const {account, webView} = payload;
                 const {accountConfig, notifications, accountIndex} = account;
@@ -731,10 +730,7 @@ export class AccountsEffects {
     );
 
     constructor(
-        private readonly actions$: Actions<{
-            type: string;
-            payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-        }>,
+        private readonly actions$: Actions,
         private readonly api: ElectronService,
         private readonly core: CoreService,
         private readonly store: Store<State>,

@@ -1,5 +1,5 @@
 import {ElectronWindow} from "src/shared/model/electron";
-import {IPC_MAIN_API} from "src/shared/api/main";
+import {IPC_MAIN_API} from "src/shared/api/main-process";
 import {LOGGER} from "src/electron-preload/lib/electron-exposure/logger";
 import {PROTON_CALENDAR_IPC_WEBVIEW_API} from "src/shared/api/webview/calendar";
 import {PROTON_PRIMARY_IPC_WEBVIEW_API} from "src/shared/api/webview/primary";

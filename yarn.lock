@@ -998,11 +998,6 @@
   resolved "https://registry.yarnpkg.com/@vladimiry/import-sort-style/-/import-sort-style-0.1.4.tgz#7b666d82ad87b141b7468b35978878a5b5340f13"
   integrity sha512-VRRwbUGJyTV6AKM74TA0eXnog/4MZyXA9lVAoROtw1HZZnw5Swy0i4X5l008XJpS/joEhb7BVO4IQPoW99TM5w==
 
-"@vladimiry/unionize@2.1.2-add-tagprefix-option":
-  version "2.1.2-add-tagprefix-option"
-  resolved "https://registry.yarnpkg.com/@vladimiry/unionize/-/unionize-2.1.2-add-tagprefix-option.tgz#56e15097261a68fc00eca259b28b6e4ee195c054"
-  integrity sha512-d0mLzo9FEXpFj99WlEUsJSgMJNfwt9WXWqb8KzxmVPF9ab3GJlCzJHrA5SDKC+P2+FgG19AD9wbkNa8+OAvo1Q==
-
 "@webassemblyjs/ast@1.11.0":
   version "1.11.0"
   resolved "https://registry.yarnpkg.com/@webassemblyjs/ast/-/ast-1.11.0.tgz#a5aa679efdc9e51707a4207139da57920555961f"

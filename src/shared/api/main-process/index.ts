@@ -1,7 +1,6 @@
 import {ActionType, ScanService, createIpcMainApiService} from "electron-rpc-api";
 import {BrowserWindow} from "electron";
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
-import {UnionOf, ofType, unionize} from "@vladimiry/unionize";
 
 import * as DbModel from "src/shared/model/database";
 import {
@@ -14,95 +13,17 @@ import {
 import {AccountSessionStoragePatchBundle} from "src/shared/model/account";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {Controller, FuzzyLocale} from "src/electron-main/spell-check/model";
-import {DbPatch} from "./common";
+import {DbPatch} from "src/shared/api/common";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {FsDbAccount} from "src/shared/model/database";
+import {
+    IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS,
+    IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS,
+    IPC_MAIN_API_NOTIFICATION_ACTIONS
+} from "src/shared/api/main-process/actions";
 import {PACKAGE_NAME} from "src/shared/constants";
 import {ProtonAttachmentHeadersProp, ProtonClientSession} from "src/shared/model/proton";
-
-export const IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS = unionize({
-        Bootstrapped: ofType<Record<string, unknown>>(),
-        ProgressState: ofType<{
-            key: DbModel.DbAccountPk;
-            status: { indexing?: boolean };
-        } | {
-            status: {
-                indexing?: boolean;
-            };
-        }>(),
-        IndexingResult: ofType<{
-            uid: string;
-        }>(),
-        SearchResult: ofType<{
-            data: ReturnType<DbModel.MailsIndex["search"]>;
-            uid: string;
-        }>(),
-        ErrorMessage: ofType<{ message: string }>(),
-    },
-    {
-        tag: "type",
-        value: "payload",
-        tagPrefix: "ipc_main_api_db_indexer_on:",
-    },
-);
-
-export const IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS = unionize({
-        Bootstrap: ofType<Record<string, unknown>>(),
-        // TODO consider splitting huge data portion to chunks, see "ramda.splitEvery"
-        Index: ofType<{
-            key: DbModel.DbAccountPk;
-            remove: Array<Pick<DbModel.IndexableMail, "pk">>;
-            add: DbModel.IndexableMail[];
-            uid: string;
-        }>(),
-        Search: ofType<{ query: string, uid: string }>(),
-    },
-    {
-        tag: "type",
-        value: "payload",
-        tagPrefix: "IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS:",
-    },
-);
-
-// WARN: do not put sensitive data or any data to the main process notification stream, only status-like signals
-export const IPC_MAIN_API_NOTIFICATION_ACTIONS = unionize({
-        ActivateBrowserWindow: ofType<Record<string, unknown>>(),
-        TargetUrl: ofType<DeepReadonly<NoExtraProps<{
-            url: string;
-            // percent sizes get calculated since absolute sizes use introduce a mistake if "zoomFactor is not 1"
-            position?: { cursorXPercent: number; cursorYPercent: number };
-        }>>>(),
-        DbPatchAccount: ofType<{
-            key: DbModel.DbAccountPk;
-            entitiesModified: boolean;
-            stat: { mails: number; folders: number; contacts: number; unread: number };
-        }>(),
-        DbIndexerProgressState:
-            ofType<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS>, { type: "ProgressState" }>["payload"]>(),
-        DbAttachmentExportRequest: ofType<DeepReadonly<{
-            uuid: string;
-            key: DbModel.DbAccountPk;
-            mailPk: DbModel.Mail["pk"];
-            timeoutMs: number;
-        }>>(),
-        Locale: ofType<{ locale: ReturnType<Controller["getCurrentLocale"]> }>(),
-        ConfigUpdated: ofType<Config>(),
-        OpenOptions: ofType<Record<string, unknown>>(),
-        LogOut: ofType<Record<string, unknown>>(),
-        SignedInStateChange: ofType<{ signedIn: boolean }>(),
-        ErrorMessage: ofType<{ message: string }>(),
-        InfoMessage: ofType<{ message: string }>(),
-        TrayIconDataURL: ofType<string>(),
-        PowerMonitor: ofType<{ message: "suspend" | "resume" | "shutdown" }>(),
-        ProtonSessionTokenCookiesModified: ofType<{ key: DbModel.DbAccountPk }>(),
-        NativeTheme: ofType<{ shouldUseDarkColors: boolean }>(),
-    },
-    {
-        tag: "type",
-        value: "payload",
-        tagPrefix: "ipc_main_api_notification:",
-    },
-);
+import {UnionOf} from "src/shared/ngrx-util";
 
 export const ENDPOINTS_DEFINITION = {
     getSpellCheckMetadata: ActionType.Promise<void, { locale: ReturnType<Controller["getCurrentLocale"]> }>(),

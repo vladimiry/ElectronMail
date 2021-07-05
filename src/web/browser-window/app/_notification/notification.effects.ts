@@ -1,8 +1,7 @@
-import {Actions, createEffect} from "@ngrx/effects";
+import {Actions, createEffect, ofType} from "@ngrx/effects";
 import {EMPTY, from, merge} from "rxjs";
 import {Injectable} from "@angular/core";
-import {UnionOf} from "@vladimiry/unionize";
-import {concatMap, filter, map, mergeMap} from "rxjs/operators";
+import {concatMap, map, mergeMap} from "rxjs/operators";
 
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
@@ -12,10 +11,10 @@ import {NOTIFICATIONS_OUTLET, NOTIFICATIONS_PATH} from "src/web/browser-window/a
 export class NotificationEffects {
     $notification = createEffect(
         () => merge(
-            this.actions$.pipe(filter(NOTIFICATION_ACTIONS.is.Error)),
-            this.actions$.pipe(filter(NOTIFICATION_ACTIONS.is.ErrorSkipLogging)),
-            this.actions$.pipe(filter(NOTIFICATION_ACTIONS.is.Message)),
-            this.actions$.pipe(filter(NOTIFICATION_ACTIONS.is.Update)),
+            this.actions$.pipe(ofType(NOTIFICATION_ACTIONS.Error)),
+            this.actions$.pipe(ofType(NOTIFICATION_ACTIONS.ErrorSkipLogging)),
+            this.actions$.pipe(ofType(NOTIFICATION_ACTIONS.Message)),
+            this.actions$.pipe(ofType(NOTIFICATION_ACTIONS.Update)),
         ).pipe(
             map(() => {
                 return NAVIGATION_ACTIONS.Go({path: [{outlets: {[NOTIFICATIONS_OUTLET]: NOTIFICATIONS_PATH}}]});
@@ -25,7 +24,7 @@ export class NotificationEffects {
 
     updateOverlayIcon$ = createEffect(
         () => this.actions$.pipe(
-            filter(NOTIFICATION_ACTIONS.is.UpdateOverlayIcon),
+            ofType(NOTIFICATION_ACTIONS.UpdateOverlayIcon),
             concatMap(({payload}) => {
                 return from(
                     this.electronService.ipcMainClient()("updateOverlayIcon")(payload),
@@ -39,6 +38,6 @@ export class NotificationEffects {
 
     constructor(
         private electronService: ElectronService,
-        private actions$: Actions<UnionOf<typeof NOTIFICATION_ACTIONS>>,
+        private readonly actions$: Actions,
     ) {}
 }

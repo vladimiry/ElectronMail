@@ -1,15 +1,16 @@
-import {Actions, createEffect} from "@ngrx/effects";
+import {Actions, createEffect, ofType} from "@ngrx/effects";
 import {EMPTY, from, merge, of, timer} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {catchError, concatMap, filter, finalize, map, mergeMap, startWith, switchMap, take, withLatestFrom} from "rxjs/operators";
+import {noop} from "remeda";
 
 import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
-import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
-import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
+import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {ONE_SECOND_MS, PRODUCT_NAME, UPDATE_CHECK_FETCH_TIMEOUT} from "src/shared/constants";
 import {OptionsService} from "src/web/browser-window/app/_options/options.service";
 import {ProgressPatch, State} from "src/web/browser-window/app/store/reducers/options";
@@ -24,7 +25,7 @@ export class OptionsEffects {
 
     setupMainProcessNotification$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(OPTIONS_ACTIONS.is.SetupMainProcessNotification),
+            ofType(OPTIONS_ACTIONS.SetupMainProcessNotification),
             startWith(OPTIONS_ACTIONS.SetupMainProcessNotification()),
             mergeMap(() => {
                 return from(
@@ -49,18 +50,15 @@ export class OptionsEffects {
                                 InfoMessage: ({message}) => {
                                     this.store.dispatch(NOTIFICATION_ACTIONS.Message({message, style: "info"}));
                                 },
-                                TrayIconDataURL: (payload) => {
-                                    this.store.dispatch(OPTIONS_ACTIONS.TrayIconDataURL({value: payload}));
+                                TrayIconDataURL: ({value}) => {
+                                    this.store.dispatch(OPTIONS_ACTIONS.TrayIconDataURL({value}));
                                 },
                                 NativeTheme: ({shouldUseDarkColors}) => {
                                     this.store.dispatch(OPTIONS_ACTIONS.ShouldUseDarkColors({shouldUseDarkColors}));
                                 },
-                                default() {
-                                    // NOOP
-                                },
+                                default: noop,
                             },
                         );
-
                         return of(OPTIONS_ACTIONS.PatchMainProcessNotification(value));
                     }),
                 );
@@ -69,7 +67,7 @@ export class OptionsEffects {
 
     initRequest$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(OPTIONS_ACTIONS.is.InitRequest),
+            ofType(OPTIONS_ACTIONS.InitRequest),
             switchMap(() => {
                 return from(this.ipcMainClient("init")()).pipe(
                     mergeMap((payload) => merge(
@@ -114,7 +112,7 @@ export class OptionsEffects {
 
     getConfigRequest$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(OPTIONS_ACTIONS.is.GetConfigRequest),
+            ofType(OPTIONS_ACTIONS.GetConfigRequest),
             concatMap(() => {
                 return from(
                     this.ipcMainClient("readConfig")(),
@@ -129,7 +127,7 @@ export class OptionsEffects {
 
     getSettingsRequest$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(OPTIONS_ACTIONS.is.GetSettingsRequest),
+            ofType(OPTIONS_ACTIONS.GetSettingsRequest),
             withLatestFrom(this.store.pipe(select(OptionsSelectors.FEATURED.settings))),
             concatMap(([, settings]) => {
                 if ("_rev" in settings) {
@@ -151,7 +149,7 @@ export class OptionsEffects {
 
     resetDbMetadata$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(OPTIONS_ACTIONS.is.ResetDbMetadata),
+            ofType(OPTIONS_ACTIONS.ResetDbMetadata),
             withLatestFrom(
                 this.store.pipe(
                     select(AccountsSelectors.FEATURED.accounts),
@@ -182,7 +180,7 @@ export class OptionsEffects {
 
     signInRequest$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(OPTIONS_ACTIONS.is.SignInRequest),
+            ofType(OPTIONS_ACTIONS.SignInRequest),
             concatMap(({payload, ...action}) => merge(
                 of(this.buildPatchProgress({signingIn: true})),
                 from(
@@ -257,7 +255,7 @@ export class OptionsEffects {
 
     addAccountRequest$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(OPTIONS_ACTIONS.is.AddAccountRequest),
+            ofType(OPTIONS_ACTIONS.AddAccountRequest),
             concatMap(({payload}) => merge(
                 of(this.buildPatchProgress({addingAccount: true})),
                 from(
@@ -277,7 +275,7 @@ export class OptionsEffects {
 
     updateAccountRequest$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(OPTIONS_ACTIONS.is.UpdateAccountRequest),
+            ofType(OPTIONS_ACTIONS.UpdateAccountRequest),
             concatMap(({payload}) => merge(
                 of(this.buildPatchProgress({updatingAccount: true})),
                 from(
@@ -291,7 +289,7 @@ export class OptionsEffects {
 
     changeAccountOrderRequest$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(OPTIONS_ACTIONS.is.ChangeAccountOrderRequest),
+            ofType(OPTIONS_ACTIONS.ChangeAccountOrderRequest),
             concatMap(({payload}) => merge(
                 of(this.buildPatchProgress({changingAccountOrder: true})),
                 from(
@@ -305,7 +303,7 @@ export class OptionsEffects {
 
     toggleAccountDisabling$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(OPTIONS_ACTIONS.is.ToggleAccountDisablingRequest),
+            ofType(OPTIONS_ACTIONS.ToggleAccountDisablingRequest),
             concatMap(({payload}) => merge(
                 of(this.buildPatchProgress({togglingAccountDisabling: true})),
                 from(
@@ -319,7 +317,7 @@ export class OptionsEffects {
 
     removeAccountRequest$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(OPTIONS_ACTIONS.is.RemoveAccountRequest),
+            ofType(OPTIONS_ACTIONS.RemoveAccountRequest),
             concatMap(({payload}) => merge(
                 of(this.buildPatchProgress({removingAccount: true})),
                 from(
@@ -336,7 +334,7 @@ export class OptionsEffects {
 
     changeMasterPasswordRequest$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(OPTIONS_ACTIONS.is.ChangeMasterPasswordRequest),
+            ofType(OPTIONS_ACTIONS.ChangeMasterPasswordRequest),
             concatMap(({payload}) => merge(
                 of(this.buildPatchProgress({changingPassword: true})),
                 from(
@@ -356,7 +354,7 @@ export class OptionsEffects {
 
     updateBaseSettings$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(OPTIONS_ACTIONS.is.PatchBaseSettingsRequest),
+            ofType(OPTIONS_ACTIONS.PatchBaseSettingsRequest),
             concatMap(({payload}) => merge(
                 of(this.buildPatchProgress({updatingBaseSettings: true})),
                 from(
@@ -370,7 +368,7 @@ export class OptionsEffects {
 
     reEncryptingSettings$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(OPTIONS_ACTIONS.is.ReEncryptSettings),
+            ofType(OPTIONS_ACTIONS.ReEncryptSettings),
             concatMap(({payload}) => {
                 const {encryptionPreset, password} = payload;
 
@@ -392,10 +390,7 @@ export class OptionsEffects {
         private api: ElectronService,
         private store: Store<State>,
         private ngZone: NgZone,
-        private actions$: Actions<{
-            type: string;
-            payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-        }>,
+        private readonly actions$: Actions,
     ) {
         store.dispatch = ((dispatch) => {
             const result: typeof store.dispatch = (...args) => {

@@ -3,7 +3,7 @@ import {powerMonitor} from "electron";
 
 import {Config} from "src/shared/model/options";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
-import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {curryFunctionMembers} from "src/shared/util";
 

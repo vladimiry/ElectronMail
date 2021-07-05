@@ -6,7 +6,7 @@ import {from, lastValueFrom, race, throwError, timer} from "rxjs";
 import {AccountConfig} from "src/shared/model/account";
 import {Context} from "./model";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
-import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {LoginFieldContainer} from "src/shared/model/container";
 import {ONE_SECOND_MS, PACKAGE_NAME} from "src/shared/constants";
 import {curryFunctionMembers, getRandomInt, getWebViewPartition} from "src/shared/util";

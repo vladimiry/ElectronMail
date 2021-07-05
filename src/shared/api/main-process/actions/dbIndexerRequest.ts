@@ -1,0 +1,19 @@
+import {props} from "@ngrx/store";
+
+import * as DbModel from "src/shared/model/database";
+import {propsRecordToActionsRecord} from "src/shared/ngrx-util";
+
+export const IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS = propsRecordToActionsRecord(
+    {
+        Bootstrap: null,
+        // TODO consider splitting huge data portion to chunks, see "ramda.splitEvery"
+        Index: props<{
+            key: DbModel.DbAccountPk;
+            remove: Array<Pick<DbModel.IndexableMail, "pk">>;
+            add: DbModel.IndexableMail[];
+            uid: string;
+        }>(),
+        Search: props<{ query: string, uid: string }>(),
+    },
+    {prefix: __filename},
+);

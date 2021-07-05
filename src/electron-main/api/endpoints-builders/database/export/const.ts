@@ -1,6 +1,6 @@
 import {Subject} from "rxjs";
 
-import {IpcMainServiceScan} from "src/shared/api/main";
+import {IpcMainServiceScan} from "src/shared/api/main-process";
 
 export type DbExportMailAttachmentItem
     = Unpacked<IpcMainServiceScan["ApiImplArgs"]["dbExportMailAttachmentsNotification"][0]["attachments"]>;

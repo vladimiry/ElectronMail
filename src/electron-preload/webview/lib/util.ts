@@ -6,7 +6,7 @@ import {concatMap, delay, retryWhen} from "rxjs/operators";
 import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 import {DbPatch} from "src/shared/api/common";
 import {FsDbAccount} from "src/shared/model/database";
-import {IpcMainApiEndpoints} from "src/shared/api/main";
+import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {Logger} from "src/shared/model/common";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";

@@ -19,7 +19,7 @@ import {serializeError} from "serialize-error";
 import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 import * as WebviewConstants from "src/electron-preload/webview/lib/const";
 import {FETCH_NOTIFICATION$} from "src/electron-preload/webview/primary/provider-api/notifications";
-import {IpcMainServiceScan} from "src/shared/api/main";
+import {IpcMainServiceScan} from "src/shared/api/main-process";
 import {ONE_SECOND_MS, WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS} from "src/shared/constants";
 import {PROTON_PRIMARY_IPC_WEBVIEW_API, ProtonPrimaryApi, ProtonPrimaryNotificationOutput} from "src/shared/api/webview/primary";
 import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";

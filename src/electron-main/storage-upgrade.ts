@@ -14,7 +14,7 @@ import {Database} from "./database";
 import {DbAccountPk, LABEL_TYPE, MIME_TYPES} from "src/shared/model/database";
 import {INITIAL_STORES} from "./constants";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
-import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {
     LAYOUT_MODES,
     PACKAGE_VERSION,

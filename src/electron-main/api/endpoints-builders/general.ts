@@ -9,7 +9,8 @@ import {isWebUri} from "valid-url";
 
 import {Context} from "src/electron-main/model";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
-import {IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
+import {IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main-process";
 import {PACKAGE_GITHUB_PROJECT_URL, PACKAGE_VERSION, UPDATE_CHECK_FETCH_TIMEOUT} from "src/shared/constants";
 import {PLATFORM} from "src/electron-main/constants";
 import {applyZoomFactor} from "src/electron-main/window/util";

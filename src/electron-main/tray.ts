@@ -1,9 +1,11 @@
-import {Menu, MenuItemConstructorOptions, Tray, app, nativeImage} from "electron";
+import {app, Menu, MenuItemConstructorOptions, nativeImage, Tray} from "electron";
 import {Subscription} from "rxjs";
-import {filter, tap} from "rxjs/operators";
+import {ofType} from "@ngrx/effects";
+import {tap} from "rxjs/operators";
 
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
-import {IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
+import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 
 // TODO crete "endpoints"-dependent menu items in disabled state and enable on "endpoints" promise resolving
 export async function initTray(endpoints: Promise<IpcMainApiEndpoints>): Promise<Tray> {
@@ -68,7 +70,7 @@ export async function initTray(endpoints: Promise<IpcMainApiEndpoints>): Promise
 
     subscription.add(
         IPC_MAIN_API_NOTIFICATION$.pipe(
-            filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.SignedInStateChange),
+            ofType(IPC_MAIN_API_NOTIFICATION_ACTIONS.SignedInStateChange),
             tap(({payload: {signedIn}}) => {
                 optionsMenuItem.visible = signedIn;
                 logOutMenuItem.visible = signedIn;

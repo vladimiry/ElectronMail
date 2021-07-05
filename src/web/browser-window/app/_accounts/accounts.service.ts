@@ -1,11 +1,11 @@
-import {Actions} from "@ngrx/effects";
+import {Actions, ofType} from "@ngrx/effects";
 import {EMPTY, Observable, merge, of, race, timer} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {delay, distinctUntilChanged, filter, map, mergeMap, pairwise, switchMap, take, takeUntil, tap} from "rxjs/operators";
 import {equals, pick} from "remeda";
 
-import {ACCOUNTS_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
+import {ACCOUNTS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
 import {LoginFieldContainer} from "src/shared/model/container";
 import {ONE_SECOND_MS} from "src/shared/constants";
@@ -18,10 +18,7 @@ import {getWebLogger} from "src/web/browser-window/util";
 export class AccountsService {
     constructor(
         private readonly store: Store<State>,
-        private readonly actions$: Actions<{
-            type: string;
-            payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-        }>,
+        private readonly actions$: Actions,
     ) {}
 
     generatePrimaryNotificationsStateResetAction(
@@ -135,7 +132,7 @@ export class AccountsService {
 
                 const delayTriggersDispose$ = race([
                     this.actions$.pipe(
-                        unionizeActionFilter(ACCOUNTS_ACTIONS.is.TryToLogin),
+                        ofType(ACCOUNTS_ACTIONS.TryToLogin),
                         filter(({payload}) => payload.account.accountConfig.login === login),
                         map(({type: actionType}) => `another "${actionType}" action triggered`),
                     ),

@@ -3,7 +3,7 @@ import {webFrame} from "electron"; // tslint:disable-line:no-import-zones
 
 import {Config} from "src/shared/model/options";
 import {DEFAULT_API_CALL_TIMEOUT} from "src/shared/constants";
-import {IPC_MAIN_API} from "src/shared/api/main";
+import {IPC_MAIN_API} from "src/shared/api/main-process";
 import {LOGGER} from "src/electron-preload/lib/electron-exposure/logger";
 import {Logger} from "src/shared/model/common";
 import {ProtonApiError} from "src/electron-preload/webview/primary/types";

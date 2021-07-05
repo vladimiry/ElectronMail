@@ -1,5 +1,5 @@
 export type ElectronExposure = Readonly<{
-    buildIpcMainClient: (typeof import("src/shared/api/main"))["IPC_MAIN_API"]["client"];
+    buildIpcMainClient: (typeof import("src/shared/api/main-process"))["IPC_MAIN_API"]["client"];
     buildIpcPrimaryWebViewClient: (typeof import("src/shared/api/webview/primary"))["PROTON_PRIMARY_IPC_WEBVIEW_API"]["client"];
     buildIpcCalendarWebViewClient: (typeof import("src/shared/api/webview/calendar"))["PROTON_CALENDAR_IPC_WEBVIEW_API"]["client"];
     registerDocumentClickEventListener: (typeof import("src/electron-preload/lib/events-handling"))["registerDocumentClickEventListener"];

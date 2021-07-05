@@ -1,4 +1,4 @@
-import {Actions, createEffect} from "@ngrx/effects";
+import {Actions, createEffect, ofType} from "@ngrx/effects";
 import {EMPTY, from} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Router} from "@angular/router";
@@ -6,7 +6,7 @@ import {concatMap, mergeMap} from "rxjs/operators";
 
 import {ACCOUNTS_OUTLET, SETTINGS_OUTLET, STUB_OUTLET, STUB_PATH} from "src/web/browser-window/app/app.constants";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
-import {NAVIGATION_ACTIONS, unionizeActionFilter} from "src/web/browser-window/app/store/actions";
+import {NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {curryFunctionMembers} from "src/shared/util";
 import {getWebLogger} from "src/web/browser-window/util";
 
@@ -16,7 +16,7 @@ const _logger = getWebLogger(__filename);
 export class NavigationEffects {
     go$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(NAVIGATION_ACTIONS.is.Go),
+            ofType(NAVIGATION_ACTIONS.Go),
             concatMap(({payload, ...action}) => {
                 const logger = curryFunctionMembers(_logger, `[${action.type}]`);
                 const {path, extras, queryParams} = payload;
@@ -36,7 +36,7 @@ export class NavigationEffects {
 
     toggleBrowserWindow$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(NAVIGATION_ACTIONS.is.ToggleBrowserWindow),
+            ofType(NAVIGATION_ACTIONS.ToggleBrowserWindow),
             concatMap(({payload}) => from(this.electronService.ipcMainClient()("toggleBrowserWindow")(payload)).pipe(
                 mergeMap(() => EMPTY),
             )),
@@ -46,7 +46,7 @@ export class NavigationEffects {
 
     openAboutWindow$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(NAVIGATION_ACTIONS.is.OpenAboutWindow),
+            ofType(NAVIGATION_ACTIONS.OpenAboutWindow),
             concatMap(() => from(this.electronService.ipcMainClient()("openAboutWindow")()).pipe(
                 mergeMap(() => EMPTY),
             )),
@@ -56,7 +56,7 @@ export class NavigationEffects {
 
     openExternal$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(NAVIGATION_ACTIONS.is.OpenExternal),
+            ofType(NAVIGATION_ACTIONS.OpenExternal),
             concatMap(({payload}) => from(this.electronService.ipcMainClient()("openExternal")({url: payload.url})).pipe(
                 mergeMap(() => EMPTY),
             )),
@@ -66,7 +66,7 @@ export class NavigationEffects {
 
     openSettingsFolder$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(NAVIGATION_ACTIONS.is.OpenSettingsFolder),
+            ofType(NAVIGATION_ACTIONS.OpenSettingsFolder),
             concatMap(() => from(this.electronService.ipcMainClient()("openSettingsFolder")()).pipe(
                 mergeMap(() => EMPTY),
             )),
@@ -76,7 +76,7 @@ export class NavigationEffects {
 
     logout$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(NAVIGATION_ACTIONS.is.Logout),
+            ofType(NAVIGATION_ACTIONS.Logout),
             concatMap(({payload: {skipKeytarProcessing}}) => {
                 return from(
                     this.electronService.ipcMainClient()("logout")({skipKeytarProcessing}),
@@ -107,7 +107,7 @@ export class NavigationEffects {
 
     quit$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(NAVIGATION_ACTIONS.is.Quit),
+            ofType(NAVIGATION_ACTIONS.Quit),
             concatMap(() => from(this.electronService.ipcMainClient()("quit")()).pipe(
                 mergeMap(() => EMPTY),
             )),
@@ -117,10 +117,7 @@ export class NavigationEffects {
 
     constructor(
         private electronService: ElectronService,
-        private actions$: Actions<{
-            type: string;
-            payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-        }>,
+        private readonly actions$: Actions,
         private router: Router,
         private ngZone: NgZone,
     ) {}

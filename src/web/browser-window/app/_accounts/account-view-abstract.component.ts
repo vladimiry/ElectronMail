@@ -1,10 +1,11 @@
+import {Action} from "@ngrx/store";
 import {DOCUMENT} from "@angular/common";
 import {Directive, ElementRef, EventEmitter, Injector, Input, OnDestroy, Output, Renderer2} from "@angular/core";
 import {Observable, Subscription, combineLatest, lastValueFrom, race} from "rxjs";
 import {distinctUntilChanged, filter, map, take} from "rxjs/operators";
 import {equals, pick} from "remeda";
 
-import {ACCOUNTS_ACTIONS, AppAction, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountComponent} from "src/web/browser-window/app/_accounts/account.component";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
@@ -101,7 +102,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         this.event.emit({type: "log", data: [level, ...args]});
     }
 
-    protected action(payload: AppAction): void {
+    protected action(payload: Action): void {
         this.event.emit({type: "action", payload});
     }
 

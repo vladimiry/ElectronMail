@@ -1,8 +1,10 @@
 import {Deferred} from "ts-deferred";
 import {Observable, Subscription} from "rxjs";
-import {distinctUntilChanged, filter} from "rxjs/operators";
+import {distinctUntilChanged} from "rxjs/operators";
+import {ofType} from "@ngrx/effects";
 
-import {IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainServiceScan} from "src/shared/api/main";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
+import {IpcMainServiceScan} from "src/shared/api/main-process";
 import {ONE_SECOND_MS, PACKAGE_NAME} from "src/shared/constants";
 import {buildLoggerBundle, resolveIpcMainApi} from "src/electron-preload/lib/util";
 
@@ -58,7 +60,7 @@ export class HoveredHrefHighlightElement extends HTMLElement {
         this.subscription.add(
             this.resolveNotification()
                 .pipe(
-                    filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.TargetUrl),
+                    ofType(IPC_MAIN_API_NOTIFICATION_ACTIONS.TargetUrl),
                     distinctUntilChanged(({payload: {url: prev}}, {payload: {url: curr}}) => curr === prev),
                 )
                 .subscribe(

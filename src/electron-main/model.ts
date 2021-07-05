@@ -4,7 +4,7 @@ import {Model as StoreModel} from "fs-json-store";
 import {Config, Settings} from "src/shared/model/options";
 import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
-import {IpcMainApiEndpoints} from "src/shared/api/main";
+import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {SessionStorage} from "src/electron-main/session-storage";
 import {Controller as SpellCheckController} from "src/electron-main/spell-check/model";
 

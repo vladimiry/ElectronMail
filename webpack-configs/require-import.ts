@@ -6,6 +6,7 @@ export const nodeExternals: (
         modulesFromFile?: {
             excludeFromBundle?: string[],
         },
+        allowlist?: Array<string | RegExp>
     },
 ) => Unpacked<Required<import("webpack").Configuration>["externals"]>
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-var-requires

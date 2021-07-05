@@ -1,7 +1,7 @@
 import {ActionType, ScanService, createWebViewApiService} from "electron-rpc-api";
 
 import {DbAccountPk, Folder, FsDbAccount, Mail} from "src/shared/model/database";
-import {IpcMainServiceScan} from "src/shared/api/main";
+import {IpcMainServiceScan} from "src/shared/api/main-process";
 import {LoginFieldContainer, MailPasswordFieldContainer, PasswordFieldContainer} from "src/shared/model/container";
 import {Notifications} from "src/shared/model/account";
 import {PACKAGE_NAME} from "src/shared/constants";

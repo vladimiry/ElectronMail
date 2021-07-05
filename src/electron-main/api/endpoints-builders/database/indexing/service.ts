@@ -1,14 +1,15 @@
 import UUID from "pure-uuid";
 import electronLog from "electron-log";
-import {UnionOf} from "@vladimiry/unionize";
 import {concatMap, filter, first} from "rxjs/operators";
 import {lastValueFrom, race, throwError, timer} from "rxjs";
+import {ofType} from "@ngrx/effects";
 import {pick} from "remeda";
 
 import {Config} from "src/shared/model/options";
 import {DbAccountPk, FsDbAccount, INDEXABLE_MAIL_FIELDS, Mail} from "src/shared/model/database";
 import {IPC_MAIN_API_DB_INDEXER_REQUEST$, IPC_MAIN_API_DB_INDEXER_RESPONSE$,} from "src/electron-main/api/constants";
-import {IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS,} from "src/shared/api/main";
+import {IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS} from "src/shared/api/main-process/actions";
+import {UnionOf} from "src/shared/ngrx-util";
 import {curryFunctionMembers} from "src/shared/util";
 import {hrtimeDuration} from "src/electron-main/util";
 import {readMailBody} from "src/shared/entity-util";
@@ -53,7 +54,7 @@ async function indexMails(
     const uid = new UUID(4).format();
     const result$ = race(
         IPC_MAIN_API_DB_INDEXER_RESPONSE$.pipe(
-            filter(IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS.is.IndexingResult),
+            ofType(IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS.IndexingResult),
             filter(({payload}) => payload.uid === uid),
             first(),
         ),

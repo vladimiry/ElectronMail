@@ -4,7 +4,7 @@ import {lastValueFrom} from "rxjs";
 
 import {Context} from "src/electron-main/model";
 import {Folder, FsDbAccount, IndexableMailId, LABEL_TYPE, Mail, View} from "src/shared/model/database";
-import {IpcMainApiEndpoints} from "src/shared/api/main";
+import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {
     buildFoldersAndRootNodePrototypes,

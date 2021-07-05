@@ -4,7 +4,7 @@ import {Subject, of} from "rxjs";
 import {startWith} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
-import {IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main";
+import {IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main-process";
 import {curryFunctionMembers} from "src/shared/util";
 import {initFindInPageBrowserView} from "src/electron-main/window/find-in-page";
 import {resolveUiContextStrict} from "src/electron-main/util";

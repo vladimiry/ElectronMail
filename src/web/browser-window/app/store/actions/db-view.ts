@@ -1,32 +1,34 @@
-import {ofType, unionize} from "@vladimiry/unionize";
+import {props} from "@ngrx/store";
 
-import {IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main";
+import {IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main-process";
 import {Mail, View} from "src/shared/model/database";
 import {MailsBundleKey, SearchMailsBundleKey} from "src/web/browser-window/app/store/reducers/db-view";
 import {WebAccountIndexProp, WebAccountPk} from "src/web/browser-window/app/model";
+import {propsRecordToActionsRecord} from "src/shared/ngrx-util";
 
-export const DB_VIEW_ACTIONS = unionize({
-        MountInstance: ofType<{
+export const DB_VIEW_ACTIONS = propsRecordToActionsRecord(
+    {
+        MountInstance: props<{
             webAccountPk: WebAccountPk;
             finishPromise: Promise<void>;
         }>(),
-        UnmountInstance: ofType<{
+        UnmountInstance: props<{
             webAccountPk: WebAccountPk;
         }>(),
-        SetFolders: ofType<{
+        SetFolders: props<{
             webAccountPk: WebAccountPk;
             folders: { system: View.Folder[]; custom: View.Folder[] };
         }>(),
-        SelectFolder: ofType<{
+        SelectFolder: props<{
             webAccountPk: WebAccountPk;
             selectedFolderData?: Pick<View.Folder, "id">;
             distinct?: boolean;
         }>(),
-        SelectMailRequest: ofType<{
+        SelectMailRequest: props<{
             webAccountPk: WebAccountPk;
             mailPk: Mail["pk"];
         }>(),
-        SelectMail: ofType<{
+        SelectMail: props<{
             webAccountPk: WebAccountPk;
             value?: {
                 listMailPk: Mail["pk"];
@@ -34,39 +36,35 @@ export const DB_VIEW_ACTIONS = unionize({
                 conversationMail: Mail;
             };
         }>(),
-        DbExport: ofType<NoExtraProps<DeepReadonly<IpcMainServiceScan["ApiImplArgs"]["dbExport"][0] & WebAccountIndexProp>>>(),
-        SelectConversationMailRequest: ofType<{
+        DbExport: props<NoExtraProps<DeepReadonly<IpcMainServiceScan["ApiImplArgs"]["dbExport"][0] & WebAccountIndexProp>>>(),
+        SelectConversationMailRequest: props<{
             webAccountPk: WebAccountPk;
             mailPk: Mail["pk"];
         }>(),
-        SelectConversationMail: ofType<{
+        SelectConversationMail: props<{
             webAccountPk: WebAccountPk;
             conversationMail: Mail;
         }>(),
-        SortMails: ofType<{
+        SortMails: props<{
             webAccountPk: WebAccountPk;
             mailsBundleKey: MailsBundleKey;
             sorterIndex: number;
         }>(),
-        Paging: ofType<{
+        Paging: props<{
             webAccountPk: WebAccountPk;
             mailsBundleKey: MailsBundleKey;
             reset?: boolean;
             noIncrement?: boolean;
         }>(),
-        FullTextSearchRequest: ofType<Parameters<IpcMainApiEndpoints["dbFullTextSearch"]>[0] & WebAccountIndexProp>(),
-        FullTextSearch: ofType<{
+        FullTextSearchRequest: props<Parameters<IpcMainApiEndpoints["dbFullTextSearch"]>[0] & WebAccountIndexProp>(),
+        FullTextSearch: props<{
             webAccountPk: WebAccountPk;
             value: Unpacked<ReturnType<IpcMainApiEndpoints["dbFullTextSearch"]>>;
         }>(),
-        ResetSearchMailsBundleItems: ofType<{
+        ResetSearchMailsBundleItems: props<{
             webAccountPk: WebAccountPk;
             mailsBundleKey: SearchMailsBundleKey;
         }>(),
     },
-    {
-        tag: "type",
-        value: "payload",
-        tagPrefix: "db-view:",
-    },
+    {prefix: __filename},
 );

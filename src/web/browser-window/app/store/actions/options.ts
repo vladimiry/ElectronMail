@@ -1,5 +1,5 @@
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
-import {ofType, unionize} from "@vladimiry/unionize";
+import {props} from "@ngrx/store";
 
 import {
     AccountConfigCreateUpdatePatch,
@@ -8,36 +8,34 @@ import {
     PasswordFieldContainer,
 } from "src/shared/model/container";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
-import {InitResponse} from "src/shared/api/main";
+import {InitResponse} from "src/shared/api/main-process";
 import {ProgressPatch, State} from "src/web/browser-window/app/store/reducers/options";
+import {propsRecordToActionsRecord} from "src/shared/ngrx-util";
 
-export const OPTIONS_ACTIONS = unionize({
-        AddAccountRequest: ofType<AccountConfigCreateUpdatePatch>(),
-        UpdateAccountRequest: ofType<AccountConfigCreateUpdatePatch>(),
-        ChangeAccountOrderRequest: ofType<LoginFieldContainer & { index: number }>(),
-        RemoveAccountRequest: ofType<{ login: string }>(),
-        ChangeMasterPasswordRequest: ofType<PasswordChangeContainer>(),
-        GetConfigRequest: ofType<{ justRead?: boolean }>(),
-        GetConfigResponse: ofType<Config>(),
-        GetSettingsRequest: ofType<Record<string, unknown>>(),
-        GetSettingsResponse: ofType<Pick<Settings, "_rev" | "accounts">>(),
-        InitRequest: ofType<Record<string, unknown>>(),
-        InitResponse: ofType<InitResponse>(),
-        PatchBaseSettingsRequest: ofType<BaseConfig>(),
-        PatchProgress: ofType<ProgressPatch>(),
-        ReEncryptSettings: ofType<{ password: string; encryptionPreset: PasswordBasedPreset }>(),
-        SignInRequest: ofType<Partial<PasswordFieldContainer> & { savePassword?: boolean }>(),
-        ToggleLocalDbMailsListViewMode: ofType<Record<string, unknown>>(),
-        SetupMainProcessNotification: ofType<Record<string, unknown>>(),
-        PatchMainProcessNotification: ofType<State["mainProcessNotification"]>(),
-        TrayIconDataURL: ofType<{ value: string }>(),
-        ToggleAccountDisablingRequest: ofType<LoginFieldContainer>(),
-        ResetDbMetadata: ofType<{ reset?: boolean }>(),
-        ShouldUseDarkColors: ofType<{ shouldUseDarkColors: boolean }>(),
-    },
+export const OPTIONS_ACTIONS = propsRecordToActionsRecord(
     {
-        tag: "type",
-        value: "payload",
-        tagPrefix: "options:",
+        AddAccountRequest: props<AccountConfigCreateUpdatePatch>(),
+        UpdateAccountRequest: props<AccountConfigCreateUpdatePatch>(),
+        ChangeAccountOrderRequest: props<LoginFieldContainer & { index: number }>(),
+        RemoveAccountRequest: props<{ login: string }>(),
+        ChangeMasterPasswordRequest: props<PasswordChangeContainer>(),
+        GetConfigRequest: null,
+        GetConfigResponse: props<Config>(),
+        GetSettingsRequest: null,
+        GetSettingsResponse: props<Pick<Settings, "_rev" | "accounts">>(),
+        InitRequest: null,
+        InitResponse: props<InitResponse>(),
+        PatchBaseSettingsRequest: props<BaseConfig>(),
+        PatchProgress: props<ProgressPatch>(),
+        ReEncryptSettings: props<{ password: string; encryptionPreset: PasswordBasedPreset }>(),
+        SignInRequest: props<Partial<PasswordFieldContainer> & { savePassword?: boolean }>(),
+        ToggleLocalDbMailsListViewMode: null,
+        SetupMainProcessNotification: null,
+        PatchMainProcessNotification: props<State["mainProcessNotification"]>(),
+        TrayIconDataURL: props<{ value: string }>(),
+        ToggleAccountDisablingRequest: props<LoginFieldContainer>(),
+        ResetDbMetadata: props<{ reset?: boolean }>(),
+        ShouldUseDarkColors: props<{ shouldUseDarkColors: boolean }>(),
     },
+    {prefix: __filename},
 );

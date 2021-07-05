@@ -1,8 +1,9 @@
 import {Subscription} from "rxjs";
-import {distinctUntilChanged, filter, map} from "rxjs/operators";
+import {distinctUntilChanged, map} from "rxjs/operators";
+import {ofType} from "@ngrx/effects";
 
 import {ElectronWindow} from "src/shared/model/electron";
-import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 
 const queryLinkElements: (
     shouldUseDarkColors: boolean,
@@ -62,7 +63,7 @@ export const registerNativeThemeReaction = (
     subscription.add(
         buildIpcMainClient({options: {finishPromise}})("notification")()
             .pipe(
-                filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.NativeTheme),
+                ofType(IPC_MAIN_API_NOTIFICATION_ACTIONS.NativeTheme),
                 map(({payload: {shouldUseDarkColors}}) => shouldUseDarkColors),
                 distinctUntilChanged(),
             )

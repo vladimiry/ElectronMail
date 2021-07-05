@@ -1,6 +1,6 @@
 import {Menu, MenuItemConstructorOptions, app} from "electron";
 
-import {IpcMainApiEndpoints} from "src/shared/api/main";
+import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {PLATFORM} from "src/electron-main/constants";
 
 // TODO crete "endpoints"-dependent menu items in disabled state and enable on "endpoints" promise resolving

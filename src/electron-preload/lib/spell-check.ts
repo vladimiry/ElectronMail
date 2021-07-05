@@ -1,8 +1,8 @@
 import {Deferred} from "ts-deferred";
-import {filter} from "rxjs/operators";
+import {ofType} from "@ngrx/effects";
 import {webFrame} from "electron"; // tslint:disable-line:no-import-zones
 
-import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {Locale, Logger} from "src/shared/model/common";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {resolveIpcMainApi} from "src/electron-preload/lib/util";
@@ -42,7 +42,7 @@ const state: {
         state.setupNotificationListening = () => {}; // eslint-disable-line @typescript-eslint/no-empty-function
 
         const notificationSubscription = ipcMainApiClient("notification")()
-            .pipe(filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.Locale))
+            .pipe(ofType(IPC_MAIN_API_NOTIFICATION_ACTIONS.Locale))
             .subscribe(({payload: {locale}}) => setSpellCheckProvider(locale, ipcMainApiClient));
 
         window.addEventListener(

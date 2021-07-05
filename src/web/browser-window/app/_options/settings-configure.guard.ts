@@ -1,7 +1,7 @@
 import {CanActivate} from "@angular/router";
 import {Injectable} from "@angular/core";
 import {Observable, of} from "rxjs";
-import {Store, select} from "@ngrx/store";
+import {select, Store} from "@ngrx/store";
 import {concatMap} from "rxjs/operators";
 
 import {OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";

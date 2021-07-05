@@ -1,16 +1,18 @@
-import {ofType, unionize} from "@vladimiry/unionize";
+import {props} from "@ngrx/store";
 
 import {AccountConfig} from "src/shared/model/account";
 import {Folder, Mail} from "src/shared/model/database";
 import {ProtonPrimaryApiScan} from "src/shared/api/webview/primary";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount, WebAccountPk, WebAccountProgress} from "src/web/browser-window/app/model";
+import {propsRecordToActionsRecord} from "src/shared/ngrx-util";
 
-export const ACCOUNTS_ACTIONS = unionize({
-        Select: ofType<{ login: string }>(),
-        DeSelect: ofType<{ login: string }>(),
-        PatchProgress: ofType<{ login: string; patch: WebAccountProgress; optionalAccount?: boolean; }>(),
-        Patch: ofType<{
+export const ACCOUNTS_ACTIONS = propsRecordToActionsRecord(
+    {
+        Select: props<{ login: string }>(),
+        DeSelect: props<{ login: string }>(),
+        PatchProgress: props<{ login: string; patch: WebAccountProgress; optionalAccount?: boolean; }>(),
+        Patch: props<{
             login: string;
             patch: NoExtraProps<Partial<{
                 [K in keyof Pick<WebAccount,
@@ -23,27 +25,23 @@ export const ACCOUNTS_ACTIONS = unionize({
             }>>;
             optionalAccount?: boolean;
         }>(),
-        PatchDbExportProgress: ofType<{ pk: WebAccountPk; uuid: string; progress?: number }>(),
-        ToggleDatabaseView: ofType<{ login: string; forced?: Pick<WebAccount, "databaseView"> }>(),
+        PatchDbExportProgress: props<{ pk: WebAccountPk; uuid: string; progress?: number }>(),
+        ToggleDatabaseView: props<{ login: string; forced?: Pick<WebAccount, "databaseView"> }>(),
         ToggleSyncing:
-            ofType<{ pk: WebAccountPk; webView: Electron.WebviewTag; finishPromise: Promise<void> }>(),
-        Synced: ofType<{ pk: WebAccountPk }>(),
-        SetupPrimaryNotificationChannel: ofType<{ account: WebAccount; webView: Electron.WebviewTag; finishPromise: Promise<void> }>(),
-        SetupCalendarNotificationChannel: ofType<{ account: WebAccount; webView: Electron.WebviewTag; finishPromise: Promise<void> }>(),
-        TryToLogin: ofType<{ account: WebAccount; webView: Electron.WebviewTag }>(),
-        WireUpConfigs: ofType<DeepReadonly<{ accountConfigs: AccountConfig[] }>>(),
-        PatchGlobalProgress: ofType<{ patch: State["globalProgress"] }>(),
+            props<{ pk: WebAccountPk; webView: Electron.WebviewTag; finishPromise: Promise<void> }>(),
+        Synced: props<{ pk: WebAccountPk }>(),
+        SetupPrimaryNotificationChannel: props<{ account: WebAccount; webView: Electron.WebviewTag; finishPromise: Promise<void> }>(),
+        SetupCalendarNotificationChannel: props<{ account: WebAccount; webView: Electron.WebviewTag; finishPromise: Promise<void> }>(),
+        TryToLogin: props<{ account: WebAccount; webView: Electron.WebviewTag }>(),
+        WireUpConfigs: props<DeepReadonly<{ accountConfigs: AccountConfig[] }>>(),
+        PatchGlobalProgress: props<{ patch: State["globalProgress"] }>(),
         SelectMailOnline:
-            ofType<{ pk: WebAccountPk } & StrictOmit<ProtonPrimaryApiScan["ApiImplArgs"]["selectMailOnline"][0], "accountIndex">>(),
+            props<{ pk: WebAccountPk } & StrictOmit<ProtonPrimaryApiScan["ApiImplArgs"]["selectMailOnline"][0], "accountIndex">>(),
         DeleteMessages:
-            ofType<{ pk: WebAccountPk } & StrictOmit<ProtonPrimaryApiScan["ApiImplArgs"]["deleteMessages"][0], "accountIndex">>(),
-        FetchSingleMail: ofType<{ pk: WebAccountPk } & { mailPk: Mail["pk"] }>(),
-        MakeMailRead: ofType<{ pk: WebAccountPk } & { messageIds: Array<Mail["id"]> }>(),
-        SetMailFolder: ofType<{ pk: WebAccountPk } & { folderId: Folder["id"]; messageIds: Array<Mail["id"]> }>(),
+            props<{ pk: WebAccountPk } & StrictOmit<ProtonPrimaryApiScan["ApiImplArgs"]["deleteMessages"][0], "accountIndex">>(),
+        FetchSingleMail: props<{ pk: WebAccountPk } & { mailPk: Mail["pk"] }>(),
+        MakeMailRead: props<{ pk: WebAccountPk } & { messageIds: Array<Mail["id"]> }>(),
+        SetMailFolder: props<{ pk: WebAccountPk } & { folderId: Folder["id"]; messageIds: Array<Mail["id"]> }>(),
     },
-    {
-        tag: "type",
-        value: "payload",
-        tagPrefix: "accounts:",
-    },
+    {prefix: __filename},
 );

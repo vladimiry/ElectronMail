@@ -52,6 +52,7 @@
                 "sonarjs/prefer-immediate-return": "off",
                 "sonarjs/cognitive-complexity": "off",
                 "sonarjs/no-duplicate-string": "off",
+                "sonarjs/no-nested-template-literals": "off",
                 "@typescript-eslint/no-floating-promises": "error",
                 "@typescript-eslint/no-unsafe-return": "error",
                 "@typescript-eslint/promise-function-async": "error",

@@ -21,7 +21,7 @@ export default buildBaseConfig(
         externals: [
             nodeExternals({
                 modulesFromFile: {
-                    excludeFromBundle: ["devDependencies", "dependencies"],
+                    excludeFromBundle: ["dependencies"],
                 },
             }),
         ],

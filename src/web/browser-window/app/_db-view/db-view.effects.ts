@@ -1,14 +1,14 @@
 import UUID from "pure-uuid";
-import {Actions, createEffect} from "@ngrx/effects";
+import {Actions, createEffect, ofType} from "@ngrx/effects";
 import {EMPTY, forkJoin, from, merge, of} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {concatMap, filter, finalize, map, mergeMap, switchMap, takeUntil, tap, throttleTime, withLatestFrom} from "rxjs/operators";
 import {omit, pick} from "remeda";
 
-import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS, OPTIONS_ACTIONS, unionizeActionFilter,} from "src/web/browser-window/app/store/actions";
+import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
-import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/db-view";
@@ -23,7 +23,7 @@ export class DbViewEffects {
 
     mountInstance$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(DB_VIEW_ACTIONS.is.MountInstance),
+            ofType(DB_VIEW_ACTIONS.MountInstance),
             mergeMap(({payload: {finishPromise, webAccountPk}, ...action}) => {
                 const logger = curryFunctionMembers(_logger, `[${action.type}][${webAccountPk.accountIndex}]`);
                 const dispose$ = from(finishPromise).pipe(tap(() => logger.info("dispose")));
@@ -37,7 +37,7 @@ export class DbViewEffects {
                     // data load (on change in the main process)
                     this.store.pipe(
                         select(OptionsSelectors.FEATURED.mainProcessNotification),
-                        filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbPatchAccount),
+                        ofType(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount),
                         filter(({payload: {key}}) => key.login === webAccountPk.login),
                         filter(({payload: {entitiesModified}}) => entitiesModified),
                         switchMap(() => from(ipcMainClient("dbGetAccountDataView")(webAccountPk))),
@@ -45,7 +45,7 @@ export class DbViewEffects {
                     // side notification (status/progress patching)
                     this.store.pipe(
                         select(OptionsSelectors.FEATURED.mainProcessNotification),
-                        filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.DbIndexerProgressState),
+                        ofType(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbIndexerProgressState),
                         filter(({payload}) => {
                             return "key" in payload
                                 ? payload.key.login === webAccountPk.login
@@ -83,7 +83,7 @@ export class DbViewEffects {
 
     dbExport$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(DB_VIEW_ACTIONS.is.DbExport),
+            ofType(DB_VIEW_ACTIONS.DbExport),
             mergeMap(({payload}) => {
                 const pk = pick(payload, ["login", "accountIndex"]);
                 const uuid = new UUID(4).format();
@@ -106,7 +106,7 @@ export class DbViewEffects {
 
     selectMailRequest$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(DB_VIEW_ACTIONS.is.SelectMailRequest),
+            ofType(DB_VIEW_ACTIONS.SelectMailRequest),
             mergeMap(({payload}) => {
                 const {webAccountPk, mailPk} = payload;
                 const ipcMainClient = this.api.ipcMainClient();
@@ -142,7 +142,7 @@ export class DbViewEffects {
 
     selectConversationMailRequest$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(DB_VIEW_ACTIONS.is.SelectConversationMailRequest),
+            ofType(DB_VIEW_ACTIONS.SelectConversationMailRequest),
             mergeMap(({payload: {webAccountPk, mailPk}}) => {
                 return from(
                     this.api.ipcMainClient()("dbGetAccountMail")({...webAccountPk, pk: mailPk}),
@@ -155,7 +155,7 @@ export class DbViewEffects {
 
     fullTextSearchRequest$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(DB_VIEW_ACTIONS.is.FullTextSearchRequest),
+            ofType(DB_VIEW_ACTIONS.FullTextSearchRequest),
             withLatestFrom(this.store.pipe(select(OptionsSelectors.CONFIG.timeouts))),
             mergeMap(([{payload}, {fullTextSearch: fullTextSearchTimeoutMs}]) => {
                 const webAccountPk = pick(payload, ["login", "accountIndex"]);
@@ -190,7 +190,7 @@ export class DbViewEffects {
 
     toggleLocalDbMailsListViewMode$ = createEffect(
         () => this.actions$.pipe(
-            unionizeActionFilter(OPTIONS_ACTIONS.is.ToggleLocalDbMailsListViewMode),
+            ofType(OPTIONS_ACTIONS.ToggleLocalDbMailsListViewMode),
             concatMap(() => {
                 return merge(
                     of(OPTIONS_ACTIONS.PatchProgress({togglingLocalDbMailsListViewMode: true})),
@@ -213,9 +213,6 @@ export class DbViewEffects {
         private api: ElectronService,
         private store: Store<State>,
         private ngZone: NgZone,
-        private actions$: Actions<{
-            type: string;
-            payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-        }>,
+        private readonly actions$: Actions,
     ) {}
 }

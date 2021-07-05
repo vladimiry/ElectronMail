@@ -1,6 +1,7 @@
 import electronLog from "electron-log";
 import {defer, lastValueFrom} from "rxjs";
 import {filter, first, startWith, takeUntil} from "rxjs/operators";
+import {ofType} from "@ngrx/effects";
 
 import {Context} from "src/electron-main/model";
 import {
@@ -11,9 +12,9 @@ import {
 import {
     IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS,
     IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS,
-    IPC_MAIN_API_NOTIFICATION_ACTIONS,
-    IpcMainApiEndpoints,
-} from "src/shared/api/main";
+    IPC_MAIN_API_NOTIFICATION_ACTIONS
+} from "src/shared/api/main-process/actions";
+import {IpcMainApiEndpoints,} from "src/shared/api/main-process";
 import {curryFunctionMembers} from "src/shared/util";
 import {indexAccount} from "src/electron-main/api/endpoints-builders/database/indexing/service";
 
@@ -52,7 +53,7 @@ export async function buildDbIndexingEndpoints(
                         // drop indexing on "logout" action
                         takeUntil(
                             IPC_MAIN_API_NOTIFICATION$.pipe(
-                                filter(IPC_MAIN_API_NOTIFICATION_ACTIONS.is.SignedInStateChange),
+                                ofType(IPC_MAIN_API_NOTIFICATION_ACTIONS.SignedInStateChange),
                                 filter(({payload: {signedIn}}) => !signedIn),
                             ),
                         ),
@@ -88,7 +89,7 @@ export async function buildDbIndexingEndpoints(
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         dbIndexerNotification() {
             return IPC_MAIN_API_DB_INDEXER_REQUEST$.asObservable().pipe(
-                startWith(IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS.Bootstrap({})),
+                startWith(IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS.Bootstrap()),
             );
         },
     };

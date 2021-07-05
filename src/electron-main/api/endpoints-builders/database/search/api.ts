@@ -1,12 +1,14 @@
 import UUID from "pure-uuid";
 import electronLog from "electron-log";
-import {Observable, from, lastValueFrom, of, race, throwError, timer} from "rxjs";
+import {from, lastValueFrom, Observable, of, race, throwError, timer} from "rxjs";
 import {concatMap, filter, first, mergeMap, switchMap} from "rxjs/operators";
+import {ofType} from "@ngrx/effects";
 
 import {Context} from "src/electron-main/model";
 import {IPC_MAIN_API_DB_INDEXER_REQUEST$, IPC_MAIN_API_DB_INDEXER_RESPONSE$} from "src/electron-main/api/constants";
-import {IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
+import {IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS} from "src/shared/api/main-process/actions";
 import {IndexableMailId} from "src/shared/model/database";
+import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {curryFunctionMembers} from "src/shared/util";
 import {searchRootConversationNodes, secondSearchStep} from "src/electron-main/api/endpoints-builders/database/search/service";
 
@@ -46,7 +48,7 @@ export async function buildDbSearchEndpoints(
             const fullTextSearch$: Observable<Map<IndexableMailId, number> | null> = query
                 ? race(
                     IPC_MAIN_API_DB_INDEXER_RESPONSE$.pipe(
-                        filter(IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS.is.SearchResult),
+                        ofType(IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS.SearchResult),
                         filter(({payload}) => payload.uid === fullTextSearchUid),
                         first(),
                         mergeMap(({payload: {data: {items}}}) => [new Map<IndexableMailId, number>(

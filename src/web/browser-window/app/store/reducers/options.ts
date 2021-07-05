@@ -1,11 +1,12 @@
-import {UnionOf} from "@vladimiry/unionize";
 import {produce} from "immer";
 
 import * as fromRoot from "src/web/browser-window/app/store/reducers/root";
 import {Config} from "src/shared/model/options";
 import {ICON_URL} from "src/web/constants";
-import {IPC_MAIN_API_NOTIFICATION_ACTIONS, InitResponse} from "src/shared/api/main";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
+import {InitResponse} from "src/shared/api/main-process";
 import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {UnionOf} from "src/shared/ngrx-util";
 import {initialConfig} from "src/shared/util";
 
 export const featureName = "options";
@@ -44,18 +45,20 @@ const initialState: State = {
         accounts: [],
     },
     progress: {},
-    mainProcessNotification: {type: "ActivateBrowserWindow", payload: {}},
+    mainProcessNotification: IPC_MAIN_API_NOTIFICATION_ACTIONS.ActivateBrowserWindow(),
     trayIconDataURL: ICON_URL,
 };
 
-export function reducer(state = initialState, action: UnionOf<typeof OPTIONS_ACTIONS> & UnionOf<typeof NAVIGATION_ACTIONS>): State {
-    if (NAVIGATION_ACTIONS.is.Logout(action)) {
-        return produce(state, (draftState) => {
-            draftState.settings = initialState.settings;
-            // removing "electronLocations" triggers "init" api call
-            delete draftState.checkUpdateAndNotify;
-            delete draftState.keytarSupport;
-        });
+export function reducer(state = initialState, action: UnionOf<typeof OPTIONS_ACTIONS> | UnionOf<typeof NAVIGATION_ACTIONS>): State {
+    if (NAVIGATION_ACTIONS.is(action)) {
+        return action.type === NAVIGATION_ACTIONS.Logout.type
+            ? produce(state, (draftState) => {
+                draftState.settings = initialState.settings;
+                // removing "electronLocations" triggers "init" api call
+                delete draftState.checkUpdateAndNotify;
+                delete draftState.keytarSupport;
+            })
+            : state;
     }
 
     return OPTIONS_ACTIONS.match(action, {

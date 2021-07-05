@@ -2,7 +2,8 @@ import electronLog from "electron-log";
 
 import {Context} from "src/electron-main/model";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
-import {IPC_MAIN_API_NOTIFICATION_ACTIONS, IpcMainApiEndpoints} from "src/shared/api/main";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
+import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(electronLog, __filename);

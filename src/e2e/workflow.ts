@@ -6,6 +6,7 @@ import ava, {ExecutionContext, TestInterface} from "ava";
 import {ElectronApplication, _electron} from "playwright";
 import {omit, randomString} from "remeda";
 
+import packageJSON from "package.json";
 import {
     BINARY_NAME,
     ONE_SECOND_MS,
@@ -42,8 +43,7 @@ export const ENV = {
 
 export const CI = Boolean(process.env.CI);
 
-export const {name: PROJECT_NAME, version: PROJECT_VERSION} // eslint-disable-next-line @typescript-eslint/no-var-requires
-    = require("package.json") as { name: string, version: string }; // tslint:disable-line: no-import-zones
+export const {name: PROJECT_NAME, version: PROJECT_VERSION} = packageJSON;
 
 const rootDirPath = path.resolve(__dirname, process.cwd());
 const appDirPath = path.join(rootDirPath, "./app");

@@ -2,7 +2,7 @@ import path from "path";
 import {Configuration} from "webpack";
 
 import {buildBaseConfig, rootRelativePath, typescriptLoaderRule} from "./lib";
-import {nodeExternals} from "webpack-configs/require-import";
+import {nodeExternals} from "./require-import";
 
 const hooksDir = (...value: string[]): string => {
     return path.join(

@@ -1,7 +1,8 @@
 import path from "path";
+import {mapValues} from "remeda";
 
+import packageJSON from "package.json";
 import {ENVIRONMENT_STATE, buildBaseConfig, srcRelativePath, typescriptLoaderRule} from "./lib";
-import {nodeExternals} from "webpack-configs/require-import";
 
 const baseEntryName = "electron-main";
 const src = (value: string): string => path.join(srcRelativePath(baseEntryName), value);
@@ -18,13 +19,10 @@ export default buildBaseConfig(
                 typescriptLoaderRule({tsConfigFile}),
             ],
         },
-        externals: [
-            nodeExternals({
-                modulesFromFile: {
-                    excludeFromBundle: ["dependencies"],
-                },
-            }),
-        ],
+        externals: mapValues(
+            packageJSON.dependencies,
+            (...[/* value */, key]) => `commonjs ${key}`,
+        ),
     },
     {
         tsConfigFile,

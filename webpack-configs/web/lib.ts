@@ -1,11 +1,12 @@
 import HtmlWebpackPlugin from "html-webpack-plugin";
+import MiniCssExtractPlugin from "mini-css-extract-plugin";
 import {Configuration, RuleSetRule} from "webpack";
 import {merge as webpackMerge} from "webpack-merge";
 
 import {BuildEnvVars} from "webpack-configs/model";
 import {ENVIRONMENT, ENVIRONMENT_STATE, buildBaseConfig, outputRelativePath, srcRelativePath, typescriptLoaderRule} from "./../lib";
-import {MiniCssExtractPlugin, postCssUrl} from "webpack-configs/require-import";
 import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
+import {postCssUrl} from "webpack-configs/require-import";
 
 export const browserWindowPath = (...value: string[]): string => {
     return srcRelativePath("./web/browser-window", ...value);

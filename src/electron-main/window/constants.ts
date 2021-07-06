@@ -5,6 +5,7 @@ export const DEFAULT_WEB_PREFERENCES_KEYS = [
     "contextIsolation",
     "devTools",
     "disableBlinkFeatures",
+    "nativeWindowOpen",
     "nodeIntegration",
     "nodeIntegrationInWorker",
     "sandbox",
@@ -16,10 +17,10 @@ export const DEFAULT_WEB_PREFERENCES_KEYS = [
 export const DEFAULT_WEB_PREFERENCES: Readonly<NoExtraProps<Pick<Required<WebPreferences>, typeof DEFAULT_WEB_PREFERENCES_KEYS[number]>>>
     = {
     backgroundThrottling: false,
-    // TODO disable "contextIsolation" flag
-    contextIsolation: false,
+    contextIsolation: false, // TODO disable "contextIsolation" flag
     devTools: BUILD_ENVIRONMENT !== "production",
     disableBlinkFeatures: "Auxclick",
+    nativeWindowOpen: true,
     nodeIntegration: false,
     nodeIntegrationInWorker: false,
     sandbox: true,

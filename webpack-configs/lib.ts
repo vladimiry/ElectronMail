@@ -1,3 +1,4 @@
+import TerserPlugin from "terser-webpack-plugin";
 import path from "path";
 import {Configuration, DefinePlugin, RuleSetRule} from "webpack";
 import {Options as TsLoaderOptions} from "ts-loader";
@@ -76,9 +77,28 @@ export function buildBaseConfig(
                 },
             },
             optimization: {
-                minimize: false,
                 chunkIds: "named",
                 moduleIds: "named",
+                minimize: true,
+                minimizer: [
+                    // intentionally configured to only remove dead code (tree-shaking) and beautify it, not for the compression
+                    new TerserPlugin({
+                        terserOptions: {
+                            ecma: 2020,
+                            mangle: false,
+                            compress: {
+                                dead_code: true,
+                                defaults: false,
+                                unused: true,
+                            },
+                            format: {
+                                beautify: true,
+                                comments: false,
+                                indent_level: 2,
+                            },
+                        },
+                    }),
+                ],
             },
             node: {
                 __filename: true,

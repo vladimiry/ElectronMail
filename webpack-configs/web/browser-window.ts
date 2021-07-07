@@ -44,19 +44,10 @@ const config = buildBaseWebConfig(
                                     const self = {
                                         MonacoEnvironment: {
                                             getWorkerUrl(...[, label]) {
-                                                if (label === "json") {
-                                                    return "./json.worker.js";
-                                                }
-                                                if (label === "css" || label === "scss" || label === "less") {
-                                                    return "./css.worker.js";
-                                                }
-                                                if (label === "html" || label === "handlebars" || label === "razor") {
-                                                    return "./html.worker.js";
-                                                }
                                                 if (label === "typescript" || label === "javascript") {
-                                                    return "./ts.worker.js";
+                                                    return "./monaco-editor.ts.worker.js";
                                                 }
-                                                return "./editor.worker.js";
+                                                return "./monaco-editor.editor.worker.js";
                                             },
                                         },
                                     };
@@ -70,6 +61,7 @@ const config = buildBaseWebConfig(
         resolve: {
             alias: {
                 images: rootRelativePath("images"),
+                "monaco-editor": rootRelativePath("./node_modules/monaco-editor/esm/vs/editor/editor.main.js"),
             },
         },
         plugins: [
@@ -165,11 +157,8 @@ const config = buildBaseWebConfig(
         tsConfigFile,
         chunkName: WEBPACK_WEB_CHUNK_NAMES["browser-window"],
         entries: {
-            "css.worker": "monaco-editor/esm/vs/language/css/css.worker",
-            "editor.worker": "monaco-editor/esm/vs/editor/editor.worker.js",
-            "html.worker": "monaco-editor/esm/vs/language/html/html.worker",
-            "json.worker": "monaco-editor/esm/vs/language/json/json.worker",
-            "ts.worker": "monaco-editor/esm/vs/language/typescript/ts.worker",
+            "monaco-editor.ts.worker": rootRelativePath("./node_modules/monaco-editor/esm/vs/language/typescript/ts.worker"),
+            "monaco-editor.editor.worker": rootRelativePath("./node_modules/monaco-editor/esm/vs/editor/editor.worker.js"),
         },
         htmlWebpackPlugin: {
             // TODO enable resource ordering via the HtmlWebpackPlugin/MiniCssExtractPlugin options

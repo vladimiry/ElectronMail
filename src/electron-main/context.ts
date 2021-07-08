@@ -15,6 +15,7 @@ import {
     LOCAL_WEBCLIENT_PROTOCOL_PREFIX,
     ONE_KB_BYTES,
     ONE_MB_BYTES,
+    PACKAGE_NAME,
     RUNTIME_ENV_USER_DATA_DIR,
     WEB_PROTOCOL_SCHEME
 } from "src/shared/constants";
@@ -81,18 +82,21 @@ function initLocations(
                     : "../app",
             ),
             userDataDir: path.resolve(
-                (() => {
+                ((): string | undefined => {
                     const envVarName = RUNTIME_ENV_USER_DATA_DIR;
                     const envVarValue = process.env[envVarName];
-                    if (envVarValue && !directoryExists(envVarValue, storeFs)) {
+                    if (!envVarValue) {
+                        return;
+                    }
+                    if (!directoryExists(envVarValue, storeFs)) {
                         throw new Error(
                             `Make sure that the directory exists before passing the "${envVarName}" environment variable`,
                         );
                     }
                     return envVarValue;
                 })()
-                ||
-                app.getPath("userData")
+                ??
+                path.join(app.getPath("appData"), PACKAGE_NAME)
             ),
         }
     );

@@ -1,3 +1,4 @@
+// TODO make "ngrx-util" independent from @angular and use it for all @ngrx manipulations (including "ofType" calls)
 import {ActionCreator, ActionCreatorProps, createAction} from "@ngrx/store";
 import {mapKeys} from "remeda";
 

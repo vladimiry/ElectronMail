@@ -3,24 +3,33 @@ import {ONE_SECOND_MS} from "src/shared/constants";
 import {getPlainErrorProps} from "src/shared/util";
 import {isProtonApiError, resolveIpcMainApi, sanitizeProtonApiError} from "src/electron-preload/lib/util";
 
-let existingApiClient: ReturnType<typeof resolveIpcMainApi> | undefined;
+let apiClient: ReturnType<typeof resolveIpcMainApi> | undefined;
 
-function log(level: LogLevel, ...args: unknown[]): void {
-    const apiClient = existingApiClient ??= resolveIpcMainApi({
-        timeoutMs: ONE_SECOND_MS * 3,
-        finishPromise: new Promise<void>((resolve) => window.addEventListener("beforeunload", () => resolve)),
-    });
+const resolveApiCallParameters = (input: Readonly<{ level: LogLevel, args: unknown[] }>): { level: LogLevel, args: unknown[] } => {
+    const level =
+        input.level === "error"
+        &&
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        input.args.some((value) => Object(value).message === "Uncaught Error: An object could not be cloned.")
+            ? "warn"
+            : input.level;
+    return {level, args: input.args};
+};
 
-    apiClient("log")({level, args}).catch(() => {
-        apiClient("log")({level, args: args.map((arg) => getPlainErrorProps(arg))}).catch((error) => {
-            // eslint-disable-next-line no-console
-            console.error(
-                "sending error to main process for logging failed (likely due to the serialization issue):",
-                Object(error).message, // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-            );
+const log = (level: LogLevel, ...args: unknown[]): void => {
+    const apiCall = (apiClient ??= resolveIpcMainApi({timeoutMs: ONE_SECOND_MS * 3}))("log");
+
+    apiCall(
+        resolveApiCallParameters({level, args}),
+    ).catch(async () => {
+        // TODO re-call only if the "An object could not be cloned"-like error occurred
+        return apiCall(
+            resolveApiCallParameters({level, args: args.map((arg) => getPlainErrorProps(arg))}),
+        ).catch(() => {
+            // NOOP
         });
     });
-}
+};
 
 const sanitizeLoggedArgument = (arg: unknown): unknown => {
     if (isProtonApiError(arg)) {

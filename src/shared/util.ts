@@ -722,42 +722,26 @@ export const resolveApiUrlByPackagedWebClientUrlSafe = (urlArg: string): string 
     return result;
 };
 
-export const getPlainErrorProps = <T>(
-    error: T,
-): T | { code?: string, name?: string, message?: string, stack?: string, constructorName?: string } => {
-    if (error === null) {
+export const getPlainErrorProps = <T extends unknown>(
+    value: T,
+): T | { code?: string, name?: string, message?: string, stack?: string } => {
+    if (value === null) {
         return {message: `stringified "null"`};
     }
-    if (typeof error === "undefined") {
+    if (typeof value === "undefined") {
         return {message: `stringified "undefined"`};
     }
-    if (typeof error !== "object") {
-        return error;
+    if (typeof value !== "object") {
+        return value;
     }
     // TODO consider also iterating "own string" props
     return {
-        constructorName: ((value: unknown) => {
-            if (
-                value
-                &&
-                typeof value === "object"
-                &&
-                typeof value.constructor === "function"
-                &&
-                typeof value.constructor.name === "string"
-            ) {
-                return value.constructor.name;
-            }
-            return undefined;
-        })(error),
         ...mapValues(
             pick(
-                Object(error) as unknown as { code?: unknown, name?: unknown, message?: unknown, stack?: unknown },
+                Object(value) as unknown as { code?: unknown, name?: unknown, message?: unknown, stack?: unknown },
                 ["code", "message", "name", "stack"],
             ),
-            (value) => typeof value === "undefined"
-                ? value
-                : String(value),
+            String,
         ),
     };
 };

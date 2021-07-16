@@ -26,7 +26,7 @@ export class NotificationItemComponent {
         this._item = item;
         this.message = item.type === "update"
             ? (
-                item.data
+                item.data.newReleaseItems
                     .map(({title, url, date}) => {
                         const hint = `Published at: ${formatDate(date, "medium", this.locale)}`;
                         return url

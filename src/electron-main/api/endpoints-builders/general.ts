@@ -315,7 +315,7 @@ export async function buildEndpoints(
                             nameof(endpoints.updateCheck),
                             new Error(`Update check failed (ignored as rate limit error): ${errorMessageData}`),
                         );
-                        return [];
+                        return {newReleaseItems: []};
                     }
 
                     throw new Error(`Update check failed: ${errorMessageData}`);
@@ -337,7 +337,7 @@ export async function buildEndpoints(
                     }),
                 );
 
-                const newReleases = releases
+                const newReleaseItems = releases
                     .filter(({tag_name: tagName}) => compareVersions(tagName, PACKAGE_VERSION) > 0)
                     .filter(({assets}) => assets.some(({name}) => filterAssetName(name)))
                     .sort((o1, o2) => compareVersions(o1.tag_name, o2.tag_name))
@@ -352,9 +352,9 @@ export async function buildEndpoints(
                         return {title, url, date} as const;
                     });
 
-                logger.verbose(nameof(endpoints.updateCheck), JSON.stringify({newReleases}, null, 2));
+                logger.verbose(nameof(endpoints.updateCheck), JSON.stringify({newReleaseItems}, null, 2));
 
-                return newReleases;
+                return {newReleaseItems};
             };
         })(),
 

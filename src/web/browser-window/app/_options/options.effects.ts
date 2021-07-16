@@ -10,6 +10,7 @@ import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/st
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
+import {IpcMainServiceScan} from "src/shared/api/main-process";
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {ONE_SECOND_MS, PRODUCT_NAME, UPDATE_CHECK_FETCH_TIMEOUT} from "src/shared/constants";
 import {OptionsService} from "src/web/browser-window/app/_options/options.service";
@@ -79,13 +80,20 @@ export class OptionsEffects {
                                     mergeMap(() => from(
                                         this.ipcMainClient("updateCheck", {timeoutMs: UPDATE_CHECK_FETCH_TIMEOUT + (ONE_SECOND_MS * 2)})(),
                                     ).pipe(
-                                        filter((items) => Boolean(items.length)),
+                                        catchError((error) => merge(
+                                            of(NOTIFICATION_ACTIONS.Error(error)),
+                                            of({newReleaseItems: []})),
+                                        ),
+                                        filter((value): value is IpcMainServiceScan["ApiImplReturns"]["updateCheck"] => {
+                                            return "newReleaseItems" in value;
+                                        }),
+                                        filter(({newReleaseItems}) => Boolean(newReleaseItems.length)),
                                         withLatestFrom(
                                             this.store.pipe(
                                                 select(OptionsSelectors.FEATURED.trayIconDataURL),
                                             ),
                                         ),
-                                        mergeMap(([items, trayIconDataURL]) => {
+                                        mergeMap(([updateCheckCallResult, trayIconDataURL]) => {
                                             new Notification(
                                                 PRODUCT_NAME,
                                                 {
@@ -95,8 +103,7 @@ export class OptionsEffects {
                                             ).onclick = () => {
                                                 this.store.dispatch(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));
                                             };
-
-                                            return of(NOTIFICATION_ACTIONS.Update(items));
+                                            return of(NOTIFICATION_ACTIONS.Update(updateCheckCallResult));
                                         }),
                                     )),
                                 )

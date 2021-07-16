@@ -159,7 +159,7 @@ export const ENDPOINTS_DEFINITION = {
 
     selectAccount: ActionType.Promise<{ databaseView?: boolean; webContentId: number } | { reset: true }>(),
 
-    updateCheck: ActionType.Promise<void, Array<{ title: string; url?: string; date: string }>>(),
+    updateCheck: ActionType.Promise<void, { newReleaseItems: Array<{ title: string; url?: string; date: string }> }>(),
 
     toggleControls: ActionType.Promise<Pick<Required<Config>, "hideControls"> | void, void>(),
 

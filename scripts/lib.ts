@@ -154,7 +154,6 @@ export const resolveExecutable = async (
     url: string,
     sha256: string,
     subdirectory: string,
-    options?: { optionalHashSumCheck: boolean },
 ): Promise<{ command: string }> => {
     const destFile = path.join(
         OUTPUT_ABSOLUTE_DIR,
@@ -190,11 +189,7 @@ export const resolveExecutable = async (
     {
         const hashes = await calculateHashes();
         if (!hashes.equal) {
-            const message = `Hashes verification failed: ${JSON.stringify(hashes)}`;
-            if (!options?.optionalHashSumCheck) {
-                throw new Error(message);
-            }
-            CONSOLE_LOG(message);
+            throw new Error(`Hashes verification failed: ${JSON.stringify(hashes)}`);
         }
     }
 

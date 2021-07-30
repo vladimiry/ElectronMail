@@ -4,8 +4,6 @@ productName: 'ElectronMail'
 publish: {provider: github, releaseType: draft, vPrefixedTagName: true}
 forceCodeSigning: false
 
-# TODO consider moving fully bundable 'dependencies' to 'devDependencies' to reduce final package size
-
 directories:
   output: ./dist
 files:
@@ -16,12 +14,8 @@ files:
   - '!app/electron-preload/browser-window-e2e.js'
   - '!app/electron-preload/webview/calendar-e2e.js'
   - '!app/electron-preload/webview/primary-e2e.js'
-  - '!node_modules/rxjs/{_esm5,_esm2015,src,bundles}'
-  - '!node_modules/pureimage/{firstimages,tests}'
   # sodium-native TODO: include into the package only needed prebuilds for the platform is being built
   - '!node_modules/sodium-native/{src,test,libsodium,tmp}'
-  # remeda
-  - '!node_modules/remeda/{coverage,scripts,src}'
   # spellchecker
   - '!node_modules/spellchecker/spec'
 compression: normal

@@ -49,10 +49,13 @@ export const generateDtsForMonacoEditor = async (
             return;
         }
         const referenceTagRe = /\/\/\/[\s\t]+<reference[\s\t]+lib=["']+(.*)["']+[\s\t]+\/>/;
-        const mergedFiles: string[] = [];
+        const mergedFiles = new Set<string>();
         const extractContent = (file: string): string => {
+            if (mergedFiles.has(file)) {
+                return "";
+            }
             const lines = fs.readFileSync(file).toString().split("\n");
-            const resultLines: string[] = [`// === file: ${file}`];
+            const resultLines = [`// === file: ${file}`];
             for (const line of lines) {
                 const match = referenceTagRe.exec(line);
                 const libName = match && match[1];
@@ -64,7 +67,7 @@ export const generateDtsForMonacoEditor = async (
                     resultLines.push(line);
                 }
             }
-            mergedFiles.push(file);
+            mergedFiles.add(file);
             return resultLines.join("\n");
         };
         fsExtra.ensureDirSync(path.dirname(destFile));

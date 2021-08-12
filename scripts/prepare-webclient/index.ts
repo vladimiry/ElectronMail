@@ -2,9 +2,9 @@ import path from "path";
 import pathIsInside from "path-is-inside";
 
 import {CWD_ABSOLUTE_DIR} from "scripts/const";
-import {buildProtonClients} from "scripts/prepare-webclient/protonmail";
+import {buildProtonClients} from "./webclients";
 import {catchTopLeventAsync} from "scripts/lib";
-import {generateDtsForMonacoEditor} from "scripts/prepare-webclient/monaco-editor-dts";
+import {generateDtsForMonacoEditor} from "./monaco-editor-dts";
 
 const [, , appDestDir] = process.argv;
 
@@ -18,5 +18,5 @@ if (!pathIsInside(path.resolve(CWD_ABSOLUTE_DIR, appDestDir), CWD_ABSOLUTE_DIR))
 
 catchTopLeventAsync(async () => {
     await buildProtonClients({destDir: path.join(appDestDir, "./webclient")});
-    await generateDtsForMonacoEditor({destDir: appDestDir});
+    await generateDtsForMonacoEditor({sharedProtonPackageDir: "./output/git/WebClients/packages/shared", destDir: appDestDir});
 });

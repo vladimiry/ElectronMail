@@ -1,11 +1,11 @@
-diff --git a/src/app/components/SharingModal/GeneratedLinkState.tsx b/src/app/components/SharingModal/GeneratedLinkState.tsx
-index c5f63bb..b477290 100644
---- a/src/app/components/SharingModal/GeneratedLinkState.tsx
-+++ b/src/app/components/SharingModal/GeneratedLinkState.tsx
-@@ -60,7 +60,7 @@ function GeneratedLinkState({
+diff --git a/applications/drive/src/app/components/SharingModal/GeneratedLinkState.tsx b/applications/drive/src/app/components/SharingModal/GeneratedLinkState.tsx
+index 9308bf1..ff1b976 100644
+--- a/applications/drive/src/app/components/SharingModal/GeneratedLinkState.tsx
++++ b/applications/drive/src/app/components/SharingModal/GeneratedLinkState.tsx
+@@ -72,7 +72,7 @@ function GeneratedLinkState({
+ }: Props) {
      const contentRef = useRef<HTMLDivElement>(null);
      const { createNotification } = useNotifications();
-     const { openConfirmModal } = useConfirm();
 -    const baseUrl = `${window.location.origin}/urls`;
 +    const baseUrl = "https://drive.protonmail.com/urls";
 

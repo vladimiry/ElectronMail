@@ -1,27 +1,27 @@
-diff --git a/src/app/Setup.tsx b/src/app/Setup.tsx
-index 9d333b8..2921f49 100644
---- a/src/app/Setup.tsx
-+++ b/src/app/Setup.tsx
-@@ -4,14 +4,29 @@ import locales from 'proton-shared/lib/i18n/locales';
- import { PublicAuthenticationStore, PrivateAuthenticationStore, useAuthentication } from 'react-components';
+diff --git a/applications/account/src/app/Setup.tsx b/applications/account/src/app/Setup.tsx
+index 19828d5..0d7ce23 100644
+--- a/applications/account/src/app/Setup.tsx
++++ b/applications/account/src/app/Setup.tsx
+@@ -4,14 +4,28 @@ import { locales } from '@proton/shared/lib/i18n/locales';
+ import { PublicAuthenticationStore, PrivateAuthenticationStore, useAuthentication } from '@proton/components';
 
  import PrivateApp from './content/PrivateApp';
 -import PublicApp from './content/PublicApp';
 +
 +const RedirectToOrigin = () => {
 +    const timeoutMs = 5000;
-+    const {origin: destination} = window.location;
++    const { origin: destination } = window.location;
 +    const message = `Redirecting to "${destination}" in ${timeoutMs}ms`;
 +    let timeoutId: undefined | ReturnType<typeof setTimeout>;
 +    React.useEffect(() => {
 +        timeoutId = setTimeout(
 +            () => window.location.replace(destination),
-+            timeoutMs,
++            timeoutMs
 +        );
 +        return () => clearTimeout(timeoutId);
 +    });
 +    return React.createElement(React.Fragment, null, message);
-+}
++};
 
  const Setup = () => {
 -    const { UID, login, logout } = useAuthentication() as PublicAuthenticationStore & PrivateAuthenticationStore;
@@ -30,15 +30,15 @@ index 9d333b8..2921f49 100644
          return <PrivateApp locales={locales} onLogout={logout} />;
      }
 -    return <PublicApp locales={locales} onLogin={login} />;
-+
-+    return <RedirectToOrigin/>;
++    return <RedirectToOrigin />;
  };
 
  export default Setup;
-diff --git a/src/app/content/MainContainer.tsx b/src/app/content/MainContainer.tsx
+
+diff --git a/applications/account/src/app/content/MainContainer.tsx b/applications/account/src/app/content/MainContainer.tsx
 index 73380a9..75922b7 100644
---- a/src/app/content/MainContainer.tsx
-+++ b/src/app/content/MainContainer.tsx
+--- a/applications/account/src/app/content/MainContainer.tsx
++++ b/applications/account/src/app/content/MainContainer.tsx
 @@ -43,7 +43,7 @@ const MainContainer = () => {
          setExpand(false);
      }, [location.pathname, location.hash]);

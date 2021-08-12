@@ -46,7 +46,7 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
                             itemCallResultTypeValidation: "object", // import("react").ReactNode
                             itemCallResultHandler: (itemCallResult, notify, markAsInitialized) => {
                                 const {createElement, useEffect}
-                                    = webpack_require<typeof import("react")>("./node_modules/react/index.js");
+                                    = webpack_require<typeof import("react")>("../../node_modules/react/index.js");
                                 const result = [
                                     createElement(() => {
                                         useEffect(() => {

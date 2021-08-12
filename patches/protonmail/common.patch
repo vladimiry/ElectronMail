@@ -1,7 +1,7 @@
-diff --git a/node_modules/proton-bundler/scripts/validateBuild.sh b/node_modules/proton-bundler/scripts/validateBuild.sh
+diff --git a/packages/bundler/scripts/validateBuild.sh b/packages/bundler/scripts/validateBuild.sh
 index 6eef523..b016a0d 100755
---- a/node_modules/proton-bundler/scripts/validateBuild.sh
-+++ b/node_modules/proton-bundler/scripts/validateBuild.sh
+--- a/packages/bundler/scripts/validateBuild.sh
++++ b/packages/bundler/scripts/validateBuild.sh
 @@ -58,7 +58,7 @@ function main {
    fi;
 
@@ -11,10 +11,10 @@ index 6eef523..b016a0d 100755
      echo "[error] no SourceMaps found inside the directory: $OUTPUT_DIR";
    fi;
 
-diff --git a/node_modules/proton-shared/lib/helpers/browser.ts b/node_modules/proton-shared/lib/helpers/browser.ts
-index 8c94fae..19b5577 100644
---- a/node_modules/proton-shared/lib/helpers/browser.ts
-+++ b/node_modules/proton-shared/lib/helpers/browser.ts
+diff --git a/packages/shared/lib/helpers/browser.ts b/packages/shared/lib/helpers/browser.ts
+index 8c94fae..3602b68 100644
+--- a/packages/shared/lib/helpers/browser.ts
++++ b/packages/shared/lib/helpers/browser.ts
 @@ -117,20 +117,10 @@ export const requireDirectAction = () => isSafari() || isFirefox() || isEdge();
   * @links { https://mathiasbynens.github.io/rel-noopener/}
   */
@@ -37,15 +37,15 @@ index 8c94fae..19b5577 100644
 -    return anchor.click();
 +    window.dispatchEvent(
 +        new CustomEvent(
-+            "electron-mail:./node_modules/proton-shared/lib/helpers/browser.ts:openNewTab",
++            "electron-mail:../../packages/shared/lib/helpers/browser.ts:openNewTab",
 +            {detail: {url}},
 +        ),
 +    );
  };
-diff --git a/node_modules/proton-shared/lib/constants.ts b/node_modules/proton-shared/lib/constants.ts
+diff --git a/packages/shared/lib/constants.ts b/packages/shared/lib/constants.ts
 index 2bd472b..52cf521 100644
---- a/node_modules/proton-shared/lib/constants.ts
-+++ b/node_modules/proton-shared/lib/constants.ts
+--- a/packages/shared/lib/constants.ts
++++ b/packages/shared/lib/constants.ts
 @@ -36,8 +36,8 @@ export const APPS = {
  } as const;
  export const APPS_CONFIGURATION = {
@@ -93,89 +93,3 @@ index 2bd472b..52cf521 100644
          name: 'ProtonCalendar',
          bareName: 'Calendar',
          clientID: 'WebCalendar',
-diff --git a/node_modules/proton-shared/lib/helpers/sentry.ts b/node_modules/proton-shared/lib/helpers/sentry.ts
-index b75c3d7..ff9ac8d 100644
---- a/node_modules/proton-shared/lib/helpers/sentry.ts
-+++ b/node_modules/proton-shared/lib/helpers/sentry.ts
-@@ -1,78 +1,11 @@
- import * as Sentry from '@sentry/browser';
- 
--import { ProtonConfig } from '../interfaces';
--import { VPN_HOSTNAME } from '../constants';
-+function main() {
- 
--const isLocalhost = (host: string) => host.startsWith('localhost');
--
--const isProduction = (host: string) => host.endsWith('.protonmail.com') || host === VPN_HOSTNAME;
--
--function main({
--    SENTRY_DSN,
--    COMMIT_RELEASE,
--    APP_VERSION,
--}: Pick<ProtonConfig, 'SENTRY_DSN' | 'COMMIT_RELEASE' | 'APP_VERSION'>) {
--    const { host } = window.location;
--
--    // No need to configure it if we don't load the DSN
--    if (!SENTRY_DSN || isLocalhost(host)) {
--        return;
--    }
--
--    // Assumes SENTRY_DSN is: https://111b3eeaaec34cae8e812df705690a36@sentry/11
--    // To get https://111b3eeaaec34cae8e812df705690a36@mail.protonmail.com/api/reports/sentry/11
--    const dsn = SENTRY_DSN.replace('sentry', `${host}/api/reports/sentry`);
--
--    Sentry.init({
--        dsn,
--        release: isProduction(host) ? APP_VERSION : COMMIT_RELEASE,
--        environment: host,
--        normalizeDepth: 5,
--        beforeSend(event, hint) {
--            const error = hint?.originalException;
--            const stack = typeof error === 'string' ? error : error?.stack;
--            // Filter out broken ferdi errors
--            if (stack && stack.match(/ferdi|franz/i)) {
--                return null;
--            }
--            return event;
--        },
--        ignoreErrors: [
--            // Ignore random plugins/extensions
--            'top.GLOBALS',
--            'canvas.contentDocument',
--            'MyApp_RemoveAllHighlights',
--            'atomicFindClose',
--            'conduitPage',
--            // https://bugzilla.mozilla.org/show_bug.cgi?id=1678243
--            'XDR encoding failure',
--            'Request timed out',
--            'No network connection',
--            'Failed to fetch',
--            'NetworkError when attempting to fetch resource.',
--            'No network connection',
--            'webkitExitFullScreen', // Bug in Firefox for iOS.
--            'InactiveSession',
--            /chrome-extension/,
--            /moz-extension/,
--        ],
--    });
--
--    Sentry.configureScope((scope) => {
--        scope.setTag('appVersion', APP_VERSION);
--    });
- }
- 
--export const traceError = (e: unknown) => {
--    if (!isLocalhost(window.location.host)) {
--        Sentry.captureException(e);
--    }
--};
-+export const traceError = (e: unknown) => console.error(e);
- 
--export const captureMessage = (...args: Parameters<typeof Sentry.captureMessage>) => {
--    if (!isLocalhost(window.location.host)) {
--        Sentry.captureMessage(...args);
--    }
--};
-+export const captureMessage = (...args: Parameters<typeof Sentry.captureMessage>) => console.log(args[0]);
- 
- export default main;

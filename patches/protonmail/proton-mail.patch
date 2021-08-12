@@ -1,7 +1,7 @@
-diff --git a/node_modules/react-components/containers/login/MinimalLoginContainer.tsx b/node_modules/react-components/containers/login/MinimalLoginContainer.tsx
+diff --git a/packages/components/containers/login/MinimalLoginContainer.tsx b/packages/components/containers/login/MinimalLoginContainer.tsx
 index 13ba576..419e6be 100644
---- a/node_modules/react-components/containers/login/MinimalLoginContainer.tsx
-+++ b/node_modules/react-components/containers/login/MinimalLoginContainer.tsx
+--- a/packages/components/containers/login/MinimalLoginContainer.tsx
++++ b/packages/components/containers/login/MinimalLoginContainer.tsx
 @@ -14,6 +14,8 @@ import { handleLogin, handleTotp, handleUnlock } from './loginActions';
  import LoginTotpInput from './LoginTotpInput';
  import LoginUnlockInput from './LoginUnlockInput';
@@ -35,10 +35,10 @@ index 13ba576..419e6be 100644
          >
              <Label htmlFor="login">{c('Label').t`Username or ProtonMail address`}</Label>
              <div className="mb1">
-diff --git a/src/app/containers/mailbox/MailboxContainer.tsx b/src/app/containers/mailbox/MailboxContainer.tsx
+diff --git a/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx b/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx
 index 3f222f7..98e9cfe 100644
---- a/src/app/containers/mailbox/MailboxContainer.tsx
-+++ b/src/app/containers/mailbox/MailboxContainer.tsx
+--- a/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx
++++ b/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx
 @@ -200,7 +200,7 @@ const MailboxContainer = ({
      );
 
@@ -49,27 +49,27 @@ index 3f222f7..98e9cfe 100644
                  <Toolbar
                      labelID={labelID}
 
-diff --git a/src/app/components/header/AdvancedSearchDropdown.tsx b/src/app/components/header/AdvancedSearchDropdown.tsx
-index eec7ed5..81ab9cd 100644
---- a/src/app/components/header/AdvancedSearchDropdown.tsx
-+++ b/src/app/components/header/AdvancedSearchDropdown.tsx
-@@ -360,7 +360,7 @@ const AdvancedSearchDropdown = ({ keyword: fullInput = '', isNarrow }: Props) =>
+diff --git a/applications/mail/src/app/components/header/AdvancedSearchDropdown.tsx b/applications/mail/src/app/components/header/AdvancedSearchDropdown.tsx
+index 47b98e1..0d3b062 100644
+--- a/applications/mail/src/app/components/header/AdvancedSearchDropdown.tsx
++++ b/applications/mail/src/app/components/header/AdvancedSearchDropdown.tsx
+@@ -379,7 +379,7 @@ const AdvancedSearchDropdown = ({ keyword: fullInput = '', isNarrow }: Props) =>
      );
 
      // Switches
 -    const showEncryptedSearch = !isMobile() && !!esFeature && !!esFeature.Value && !!isPaid(user);
 +    const showEncryptedSearch = false;
      const showAdvancedSearch = !showEncryptedSearch || showMore;
-     const showProgress = indexKeyExists(user.ID) && esEnabled && !isDBReadyAfterBuilding(user.ID);
+     const showProgress = indexKeyExists(user.ID) && esEnabled && (!isDBReadyAfterBuilding(user.ID) || isBuilding);
      const showSubTitleSection = wasIndexingDone(user.ID) && !isRefreshing && isDBLimited;
 
-diff --git a/src/app/containers/EncryptedSearchProvider.tsx b/src/app/containers/EncryptedSearchProvider.tsx
-index 7cf1ec8..8ff1043 100644
---- a/src/app/containers/EncryptedSearchProvider.tsx
-+++ b/src/app/containers/EncryptedSearchProvider.tsx
-@@ -559,7 +559,7 @@ const EncryptedSearchProvider = ({ children }: Props) => {
-         const t1 = performance.now();
-         const { dbExists, esEnabled, isCacheReady, cachePromise } = esStatus;
+diff --git a/applications/mail/src/app/containers/EncryptedSearchProvider.tsx b/applications/mail/src/app/containers/EncryptedSearchProvider.tsx
+index 072ae94..035d49e 100644
+--- a/applications/mail/src/app/containers/EncryptedSearchProvider.tsx
++++ b/applications/mail/src/app/containers/EncryptedSearchProvider.tsx
+@@ -622,7 +622,7 @@ const EncryptedSearchProvider = ({ children }: Props) => {
+             cachedIndexKey,
+         } = esStatus;
 
 -        if (!dbExists || !esEnabled) {
 +        if (true) {

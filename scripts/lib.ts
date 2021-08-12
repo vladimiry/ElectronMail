@@ -19,11 +19,11 @@ export const CONSOLE_LOG = console.log.bind(console);
 export function resolveGitOutputBackupDir(
     {
         repoType,
-        commit = PROVIDER_REPO_MAP[repoType].commit,
+        tag = PROVIDER_REPO_MAP[repoType].tag,
         suffix,
     }: {
         repoType: keyof typeof PROVIDER_REPO_MAP,
-        commit?: string,
+        tag?: string,
         suffix?: string,
     },
 ): string {
@@ -31,7 +31,7 @@ export function resolveGitOutputBackupDir(
         GIT_CLONE_ABSOLUTE_DIR,
         "./backup",
         repoType,
-        `./${commit.substr(0, 7)}${suffix ? ("-" + suffix) : ""}`,
+        `./${tag}${suffix ? ("-" + suffix) : ""}`,
     );
 }
 
@@ -44,11 +44,13 @@ export function formatStreamChunk( // eslint-disable-line @typescript-eslint/exp
 export async function execShell(
     [command, args, options]: Parameters<typeof spawnAsync>,
     {
-        printStd = true,
+        printStdOut = true,
+        printStdErr = true,
         printEnvWhitelist = [],
         doNotRethrow = false,
     }: {
-        printStd?: boolean;
+        printStdOut?: boolean;
+        printStdErr?: boolean;
         printEnvWhitelist?: readonly string[];
         doNotRethrow?: boolean
     } = {},
@@ -71,15 +73,13 @@ export async function execShell(
     }
 
     const spawnPromise = spawnAsync(command, args, options);
+    const {stdout, stderr} = spawnPromise.child;
 
-    if (printStd) {
-        const {stdout, stderr} = spawnPromise.child;
-        if (stdout) {
-            byline(stdout).on("data", (chunk) => CONSOLE_LOG(formatStreamChunk(chunk)));
-        }
-        if (stderr) {
-            byline(stderr).on("data", (chunk) => CONSOLE_LOG(formatStreamChunk(chunk)));
-        }
+    if (printStdOut && stdout) {
+        byline(stdout).on("data", (chunk) => CONSOLE_LOG(formatStreamChunk(chunk)));
+    }
+    if (printStdErr && stderr) {
+        byline(stderr).on("data", (chunk) => CONSOLE_LOG(formatStreamChunk(chunk)));
     }
 
     try {

@@ -19,7 +19,7 @@ import {BaseConfig, Config} from "./model/options";
 import {DbPatch} from "./api/common";
 import {FsDbAccount, View} from "src/shared/model/database";
 import {LoginFieldContainer} from "./model/container";
-import {PROVIDER_REPO_MAP, PROVIDER_REPO_NAMES} from "src/shared/proton-apps-constants";
+import {PROVIDER_APP_NAMES, PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
 import {StatusCodeError} from "./model/error";
 
 // TODO split ./src/shared/util.ts to smaller utility files in subfolder
@@ -499,7 +499,7 @@ export const resolvePackagedWebClientApp: (
     url: Exclude<ReturnType<typeof parsePackagedWebClientUrl>, null>,
 ) => Readonly<{ project: keyof typeof PROVIDER_REPO_MAP; projectSubPath?: string }> = (
     () => {  // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
-        const subProjects = PROVIDER_REPO_NAMES.filter((projectType) => projectType !== "proton-mail");
+        const subProjects = PROVIDER_APP_NAMES.filter((projectType) => projectType !== "proton-mail");
         const result: typeof resolvePackagedWebClientApp = (url) => {
             const pathname = `${url.pathname}/`;
             const foundSubProject = subProjects.find((subProject) => {

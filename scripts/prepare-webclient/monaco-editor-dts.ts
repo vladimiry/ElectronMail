@@ -12,7 +12,7 @@ export const dtsGenerator: { // eslint-disable-line @typescript-eslint/no-unsafe
 } = require("dts-generator"); // eslint-disable-line @typescript-eslint/no-var-requires
 
 export const generateDtsForMonacoEditor = async (
-    {destDir}: { destDir: string },
+    {sharedProtonPackageDir, destDir}: { sharedProtonPackageDir: string, destDir: string },
 ): Promise<void> => {
     const options = {
         system: {
@@ -21,8 +21,8 @@ export const generateDtsForMonacoEditor = async (
             out: path.join(destDir, PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION.system),
         },
         protonMessage: {
-            base: "./output/git/proton-mail/node_modules/proton-shared",
-            in: path.join("./output/git/proton-mail/node_modules/proton-shared", PROTON_SHARED_MESSAGE_INTERFACE.projectRelativeFile),
+            base: sharedProtonPackageDir,
+            in: path.join(sharedProtonPackageDir, PROTON_SHARED_MESSAGE_INTERFACE.projectRelativeFile),
             out: path.join(destDir, PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION.protonMessage),
         },
     } as const;

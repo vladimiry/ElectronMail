@@ -2,7 +2,7 @@ import {Logger} from "src/shared/model/common";
 import {resolveIpcMainApi} from "src/electron-preload/lib/util";
 
 class ProtonOpenNewTabEvent extends CustomEvent<{ url: string }> {
-    static readonly eventType = "electron-mail:./node_modules/proton-shared/lib/helpers/browser.ts:openNewTab";
+    static readonly eventType = "electron-mail:../../packages/shared/lib/helpers/browser.ts:openNewTab";
 
     constructor(detail: { url: string }) {
         super(ProtonOpenNewTabEvent.eventType, {detail});

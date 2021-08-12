@@ -22,7 +22,7 @@ export const resolveStandardSetupPublicApi = async (
     logger.info("init");
 
     const internals = await resolveStandardSetupStandardSetupProviderInternals(logger);
-    const scope$ = internals["./node_modules/react-components/containers/app/StandardSetup.tsx"].value$.pipe(
+    const scope$ = internals["../../packages/components/containers/app/StandardSetup.tsx"].value$.pipe(
         map(({publicScope}) => publicScope),
         distinctUntilChanged(),
     );

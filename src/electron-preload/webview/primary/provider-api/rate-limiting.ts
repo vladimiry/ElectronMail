@@ -3,7 +3,7 @@ import asap from "asap-es";
 
 import {Logger} from "src/shared/model/common";
 import {ONE_SECOND_MS} from "src/shared/constants";
-import {PROVIDER_REPO_NAMES} from "src/shared/proton-apps-constants";
+import {PROVIDER_APP_NAMES} from "src/shared/proton-apps-constants";
 import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
 import {assertTypeOf, asyncDelay, consumeMemoryRateLimiter, curryFunctionMembers} from "src/shared/util";
 import {resolveCachedConfig} from "src/electron-preload/lib/util";
@@ -25,7 +25,7 @@ export const attachRateLimiting = async (api: ProviderApi, logger_: Logger): Pro
             points: rateLimitConfig.maxInInterval,
             duration: rateLimitConfig.intervalMs / ONE_SECOND_MS, // seconds value
         });
-        const repoType: typeof PROVIDER_REPO_NAMES[0] = "proton-mail";
+        const repoType: typeof PROVIDER_APP_NAMES[0] = "proton-mail";
         const key = `[WEBVIEW:${repoType}]:${new UUID(4).format()}`;
         logger.verbose(JSON.stringify({rateLimitConfig}));
         return async () => limiter.consume(key);

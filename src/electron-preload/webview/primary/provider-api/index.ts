@@ -82,7 +82,7 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                             // TODO pick "MailSettingsModel.status" type from https://github.com/ProtonMail/proton-shared/blob/137d769c6cd47337593d3a47302eb23245762154/lib/models/cache.ts
                             status: number
                         }>(
-                            internals["./node_modules/proton-shared/lib/models/mailSettingsModel.js"].value.MailSettingsModel.key,
+                            internals["../../packages/shared/lib/models/mailSettingsModel.js"].value.MailSettingsModel.key,
                         );
                         if (cachedModel?.value) {
                             assertTypeOf(
@@ -122,50 +122,50 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
             label: {
                 async get(type) {
                     return (await resolveHttpApi())(
-                        internals["./node_modules/proton-shared/lib/api/labels.ts"].value.get(type),
+                        internals["../../packages/shared/lib/api/labels.ts"].value.get(type),
                     );
                 },
             },
             conversation: {
                 async getConversation(id) {
                     return (await resolveHttpApi())(
-                        internals["./node_modules/proton-shared/lib/api/conversations.js"].value.getConversation(id),
+                        internals["../../packages/shared/lib/api/conversations.js"].value.getConversation(id),
                     );
                 },
                 async queryConversations(params) {
                     return (await resolveHttpApi())(
-                        internals["./node_modules/proton-shared/lib/api/conversations.js"].value.queryConversations(params),
+                        internals["../../packages/shared/lib/api/conversations.js"].value.queryConversations(params),
                     );
                 },
             },
             message: {
                 async getMessage(id) {
                     return (await resolveHttpApi())(
-                        internals["./node_modules/proton-shared/lib/api/messages.js"].value.getMessage(id),
+                        internals["../../packages/shared/lib/api/messages.js"].value.getMessage(id),
                     );
                 },
                 async queryMessageMetadata(params) {
                     return (await resolveHttpApi())(
-                        internals["./node_modules/proton-shared/lib/api/messages.js"].value.queryMessageMetadata(params),
+                        internals["../../packages/shared/lib/api/messages.js"].value.queryMessageMetadata(params),
                     );
                 },
                 async markMessageAsRead(IDs) {
                     const api = await resolveHttpApi();
-                    const {markMessageAsRead: apiMethod} = internals["./node_modules/proton-shared/lib/api/messages.js"].value;
+                    const {markMessageAsRead: apiMethod} = internals["../../packages/shared/lib/api/messages.js"].value;
                     await Promise.all(
                         chunk(IDs, protonMaxPageSize).map(async (IDsPortion) => api(apiMethod(IDsPortion))),
                     );
                 },
                 async labelMessages({LabelID, IDs}) {
                     const api = await resolveHttpApi();
-                    const {labelMessages: apiMethod} = internals["./node_modules/proton-shared/lib/api/messages.js"].value;
+                    const {labelMessages: apiMethod} = internals["../../packages/shared/lib/api/messages.js"].value;
                     await Promise.all(
                         chunk(IDs, protonMaxPageSize).map(async (IDsPortion) => api(apiMethod({IDs: IDsPortion, LabelID}))),
                     );
                 },
                 async deleteMessages(IDs) {
                     const api = await resolveHttpApi();
-                    const {deleteMessages: apiMethod} = internals["./node_modules/proton-shared/lib/api/messages.js"].value;
+                    const {deleteMessages: apiMethod} = internals["../../packages/shared/lib/api/messages.js"].value;
                     await Promise.all(
                         chunk(IDs, protonMaxPageSize).map(async (IDsPortion) => api(apiMethod(IDsPortion)))
                     );
@@ -174,18 +174,18 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
             contact: {
                 async queryContacts() {
                     return (await resolveHttpApi())(
-                        internals["./node_modules/proton-shared/lib/api/contacts.ts"].value.queryContacts(),
+                        internals["../../packages/shared/lib/api/contacts.ts"].value.queryContacts(),
                     );
                 },
                 async getContact(id) {
                     return (await resolveHttpApi())(
-                        internals["./node_modules/proton-shared/lib/api/contacts.ts"].value.getContact(id),
+                        internals["../../packages/shared/lib/api/contacts.ts"].value.getContact(id),
                     );
                 },
             },
             events: {
                 async getEvents(id) {
-                    const originalParams = internals["./node_modules/proton-shared/lib/api/events.ts"].value.getEvents(id);
+                    const originalParams = internals["../../packages/shared/lib/api/events.ts"].value.getEvents(id);
                     // the app listens for the "events" api calls to enable reactive syncing scenario
                     // so the api calls explicitly triggered by the app should not be listened to prevent infinity looping code issue
                     const additionParams = {[FETCH_NOTIFICATION_SKIP_SYMBOL]: FETCH_NOTIFICATION_SKIP_SYMBOL};
@@ -196,7 +196,7 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                 },
                 async getLatestID() {
                     return (await resolveHttpApi())(
-                        internals["./node_modules/proton-shared/lib/api/events.ts"].value.getLatestID(),
+                        internals["../../packages/shared/lib/api/events.ts"].value.getLatestID(),
                     );
                 },
             },
@@ -254,7 +254,7 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                     return result;
                 })(),
             },
-            constants: internals["./node_modules/proton-shared/lib/constants.ts"].value,
+            constants: internals["../../packages/shared/lib/constants.ts"].value,
             history: {
                 async push({folderId, conversationId, mailId}) {
                     // eslint-disable-next-line max-len

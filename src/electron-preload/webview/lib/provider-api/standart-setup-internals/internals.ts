@@ -14,7 +14,7 @@ export const resolveStandardSetupStandardSetupProviderInternals = async (
 
     return new Promise((resolve /*, reject */) => { // TODO reject on timeout
         const result: StandardSetupProviderInternals = {
-            "./node_modules/react-components/containers/app/StandardSetup.tsx": {
+            "../../packages/components/containers/app/StandardSetup.tsx": {
                 value$: new ReplaySubject(1),
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
                 _valueShape: null as any,
@@ -25,7 +25,7 @@ export const resolveStandardSetupStandardSetupProviderInternals = async (
         webpackJsonpPushUtil.overridePushMethodGlobally({
             resultKeys: Object.keys(result) as ReadonlyArray<keyof typeof result>,
             chunkItemHook({resultKey, webpack_exports, webpack_require}) {
-                if (resultKey === "./node_modules/react-components/containers/app/StandardSetup.tsx") {
+                if (resultKey === "../../packages/components/containers/app/StandardSetup.tsx") {
                     webpackJsonpPushUtil.handleObservableValue(
                         result,
                         {
@@ -35,23 +35,23 @@ export const resolveStandardSetupStandardSetupProviderInternals = async (
                             itemCallResultTypeValidation: "object", // import("react").ReactNode
                             itemCallResultHandler: (itemCallResult, notify, markAsInitialized) => {
                                 const {createElement, useEffect}
-                                    = webpack_require<typeof import("react")>("./node_modules/react/index.js");
+                                    = webpack_require<typeof import("react")>("../../node_modules/react/index.js");
                                 return [
                                     createElement(() => {
                                         const useApiModule = (() => {
-                                            const key = "./node_modules/react-components/hooks/useApi.ts";
+                                            const key = "../../packages/components/hooks/useApi.ts";
                                             return webpack_require<StandardSetupProviderInternalsLazy[typeof key]>(key);
                                         })();
                                         const useAuthenticationModule = (() => {
-                                            const key = "./node_modules/react-components/hooks/useAuthentication.ts";
+                                            const key = "../../packages/components/hooks/useAuthentication.ts";
                                             return webpack_require<StandardSetupProviderInternalsLazy[typeof key]>(key);
                                         })();
                                         const useCacheModule = (() => {
-                                            const key = "./node_modules/react-components/hooks/useCache.ts";
+                                            const key = "../../packages/components/hooks/useCache.ts";
                                             return webpack_require<StandardSetupProviderInternalsLazy[typeof key]>(key);
                                         })();
                                         const reactRouterModule = (() => {
-                                            const key = "./node_modules/react-router/esm/react-router.js";
+                                            const key = "../../node_modules/react-router/esm/react-router.js";
                                             return webpack_require<StandardSetupProviderInternalsLazy[typeof key]>(key);
                                         })();
 

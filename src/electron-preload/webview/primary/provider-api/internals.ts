@@ -25,19 +25,19 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
             "./src/app/helpers/message/messageDecrypt.ts": {
                 value: {decryptMessage: NEVER_FN},
             },
-            "./node_modules/proton-shared/lib/constants.ts": {
+            "../../packages/shared/lib/constants.ts": {
                 value: {VIEW_MODE: {GROUP: NaN, SINGLE: NaN}},
             },
-            "./node_modules/proton-shared/lib/models/mailSettingsModel.js": {
+            "../../packages/shared/lib/models/mailSettingsModel.js": {
                 value: {MailSettingsModel: {key: ""}},
             },
-            "./node_modules/proton-shared/lib/api/labels.ts": {
+            "../../packages/shared/lib/api/labels.ts": {
                 value: {get: NEVER_FN},
             },
-            "./node_modules/proton-shared/lib/api/conversations.js": {
+            "../../packages/shared/lib/api/conversations.js": {
                 value: {getConversation: NEVER_FN, queryConversations: NEVER_FN},
             },
-            "./node_modules/proton-shared/lib/api/messages.js": {
+            "../../packages/shared/lib/api/messages.js": {
                 value: {
                     getMessage: NEVER_FN,
                     queryMessageMetadata: NEVER_FN,
@@ -46,10 +46,10 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
                     deleteMessages: NEVER_FN,
                 },
             },
-            "./node_modules/proton-shared/lib/api/contacts.ts": {
+            "../../packages/shared/lib/api/contacts.ts": {
                 value: {queryContacts: NEVER_FN, getContact: NEVER_FN},
             },
-            "./node_modules/proton-shared/lib/api/events.ts": {
+            "../../packages/shared/lib/api/events.ts": {
                 value: {getEvents: NEVER_FN, getLatestID: NEVER_FN},
             },
             "./src/app/helpers/mailboxUrl.ts": {
@@ -82,11 +82,11 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
                             itemCallResultTypeValidation: "object", // import("react").ReactNode
                             itemCallResultHandler: (itemCallResult, notify, markAsInitialized) => {
                                 const {createElement, useEffect}
-                                    = webpack_require<typeof import("react")>("./node_modules/react/index.js");
+                                    = webpack_require<typeof import("react")>("../../node_modules/react/index.js");
                                 const result = [
                                     createElement(() => {
                                         const useGetEncryptionPreferencesModule = (() => {
-                                            const key = "./node_modules/react-components/hooks/useGetEncryptionPreferences.ts";
+                                            const key = "../../packages/components/hooks/useGetEncryptionPreferences.ts";
                                             return webpack_require<ProviderInternalsLazy[typeof key]>(key);
                                         })();
                                         const useAttachmentCacheModule = (() => {
@@ -141,14 +141,14 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
                 }
 
                 // TODO enable declarative custom validation support
-                if (resultKey === "./node_modules/proton-shared/lib/models/mailSettingsModel.js") {
+                if (resultKey === "../../packages/shared/lib/models/mailSettingsModel.js") {
                     type ValueType = (typeof result)[typeof resultKey]["value"];
                     const key: keyof ValueType = "MailSettingsModel";
                     const value = webpack_exports[key] as Partial<ValueType[typeof key]> | null;
                     if (typeof value?.key !== "string") {
                         throw new Error(`Export item validation failed: ${JSON.stringify({resultKey, key})}`);
                     }
-                } else if (resultKey === "./node_modules/proton-shared/lib/constants.ts") {
+                } else if (resultKey === "../../packages/shared/lib/constants.ts") {
                     type ValueType = (typeof result)[typeof resultKey]["value"];
                     const key: keyof ValueType = "VIEW_MODE";
                     const value = webpack_exports[key] as Partial<ValueType[typeof key]> | null;

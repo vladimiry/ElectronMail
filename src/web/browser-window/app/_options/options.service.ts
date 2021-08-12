@@ -1,4 +1,4 @@
-import {Action} from "@ngrx/store";
+import type {Action} from "@ngrx/store";
 import {Injectable} from "@angular/core";
 
 import {NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";

@@ -1,5 +1,6 @@
 import {BehaviorSubject, EMPTY, Observable, Subject, of} from "rxjs";
-import {Directive, OnChanges, OnDestroy, SimpleChanges} from "@angular/core";
+import {Directive} from "@angular/core";
+import type {OnChanges, OnDestroy, SimpleChanges} from "@angular/core";
 import {distinctUntilChanged, mergeMap, takeUntil} from "rxjs/operators";
 
 @Directive()

@@ -1,7 +1,8 @@
-import {Action, Store, select} from "@ngrx/store";
+import type {Action} from "@ngrx/store";
 import {Actions, createEffect, ofType} from "@ngrx/effects";
 import {EMPTY, Observable, concat, from, fromEvent, merge, of, throwError, timer} from "rxjs";
 import {Injectable} from "@angular/core";
+import {Store, select} from "@ngrx/store";
 import {
     catchError,
     concatMap,

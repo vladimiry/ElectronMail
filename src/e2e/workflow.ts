@@ -1,8 +1,8 @@
 import fs from "fs";
 import fsExtra from "fs-extra";
 import path from "path";
-import sinon from "sinon";
 import ava, {ExecutionContext, TestInterface} from "ava";
+import sinon, {spy as sinonSpy} from "sinon";
 import {ElectronApplication, _electron} from "playwright";
 import {omit, randomString} from "remeda";
 
@@ -410,7 +410,7 @@ export const initApp = async (
     const contextPatch: Mutable<Partial<typeof t.context>> = {};
 
     contextPatch.workflow = t.context.workflow ?? buildWorkflow(t);
-    contextPatch.sinon = t.context.sinon ?? {addAccountSpy: sinon.spy(contextPatch.workflow, "addAccount")};
+    contextPatch.sinon = t.context.sinon ?? {addAccountSpy: sinonSpy(contextPatch.workflow, "addAccount")};
 
     const outputDirPath = contextPatch.outputDirPath = t.context.outputDirPath
         ?? path.join(rootDirPath, "./output/e2e", String(Date.now()));

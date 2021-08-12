@@ -1,5 +1,6 @@
-import {Component, Injector, OnInit} from "@angular/core";
+import {Component, Injector} from "@angular/core";
 import {FormGroup} from "@angular/forms";
+import type {OnInit} from "@angular/core";
 import {combineLatest} from "rxjs";
 import {filter, take} from "rxjs/operators";
 import {select} from "@ngrx/store";

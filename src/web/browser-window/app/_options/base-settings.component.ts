@@ -1,6 +1,7 @@
 import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/forms";
-import {Component, ElementRef, Inject, OnDestroy, OnInit} from "@angular/core";
+import {Component, ElementRef, Inject} from "@angular/core";
 import {Observable, Subscription} from "rxjs";
+import type {OnDestroy, OnInit} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {distinctUntilChanged, distinctUntilKeyChanged, first, map} from "rxjs/operators";
 

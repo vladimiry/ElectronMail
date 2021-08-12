@@ -1,4 +1,4 @@
-import {CanActivate} from "@angular/router";
+import type {CanActivate} from "@angular/router";
 import {Injectable} from "@angular/core";
 import {Observable, of} from "rxjs";
 import {Store, select} from "@ngrx/store";

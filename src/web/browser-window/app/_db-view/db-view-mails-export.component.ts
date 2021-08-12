@@ -1,7 +1,8 @@
 import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/forms";
 import {BsModalRef, BsModalService} from "ngx-bootstrap/modal";
-import {ChangeDetectionStrategy, Component, Input, OnInit, TemplateRef} from "@angular/core";
+import {ChangeDetectionStrategy, Component, Input, TemplateRef} from "@angular/core";
 import {EMPTY, from} from "rxjs";
+import type {OnInit} from "@angular/core";
 import {Store} from "@ngrx/store";
 import {clone, pick} from "remeda";
 import {mergeMap, takeUntil} from "rxjs/operators";

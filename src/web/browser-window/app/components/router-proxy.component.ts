@@ -1,5 +1,6 @@
 import {ActivatedRoute} from "@angular/router";
-import {Component, HostBinding, OnDestroy, OnInit} from "@angular/core";
+import {Component, HostBinding} from "@angular/core";
+import type {OnDestroy, OnInit} from "@angular/core";
 import {Subscription} from "rxjs";
 import {filter, map} from "rxjs/operators";
 

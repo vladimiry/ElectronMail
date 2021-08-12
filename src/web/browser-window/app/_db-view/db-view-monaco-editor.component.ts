@@ -1,4 +1,5 @@
-import {ChangeDetectionStrategy, Component, ElementRef, EventEmitter, NgZone, OnInit, Output} from "@angular/core";
+import {ChangeDetectionStrategy, Component, ElementRef, EventEmitter, NgZone, Output} from "@angular/core";
+import type {OnInit} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {debounceTime, distinctUntilChanged, filter, map, pairwise, takeUntil, withLatestFrom,} from "rxjs/operators";
 import {fromEvent, merge} from "rxjs";

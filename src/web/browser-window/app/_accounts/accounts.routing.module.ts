@@ -1,5 +1,6 @@
 import {NgModule} from "@angular/core";
-import {RouterModule, Routes} from "@angular/router";
+import {RouterModule} from "@angular/router";
+import type {Routes} from "@angular/router";
 
 import {AccountsComponent} from "src/web/browser-window/app/_accounts/accounts.component";
 import {AccountsGuard} from "src/web/browser-window/app/_accounts/accounts.guard";

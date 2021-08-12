@@ -1,4 +1,4 @@
-import {Action, Store, select} from "@ngrx/store";
+import type {Action} from "@ngrx/store";
 import {BehaviorSubject, Observable, Subject, Subscription, combineLatest, lastValueFrom, merge, of, race, throwError, timer} from "rxjs";
 import {
     ChangeDetectionStrategy,
@@ -8,11 +8,11 @@ import {
     HostBinding,
     Input,
     NgZone,
-    OnDestroy,
-    OnInit,
     ViewChild,
     ViewContainerRef,
 } from "@angular/core";
+import type {OnDestroy, OnInit,} from "@angular/core";
+import {Store, select} from "@ngrx/store";
 import {URL} from "@cliqz/url-parser";
 import {
     concatMap,

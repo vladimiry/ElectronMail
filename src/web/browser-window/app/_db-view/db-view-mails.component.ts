@@ -1,5 +1,6 @@
-import {ChangeDetectionStrategy, Component, ElementRef, Input, OnDestroy, OnInit} from "@angular/core";
+import {ChangeDetectionStrategy, Component, ElementRef, Input} from "@angular/core";
 import {Observable, Subscription, combineLatest, fromEvent} from "rxjs";
+import type {OnDestroy, OnInit} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {distinctUntilChanged, first, map, mergeMap, tap, withLatestFrom} from "rxjs/operators";
 

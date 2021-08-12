@@ -1,4 +1,5 @@
-import {Component, ElementRef, Inject, Input, OnDestroy, OnInit} from "@angular/core";
+import {Component, ElementRef, Inject, Input} from "@angular/core";
+import type {OnDestroy, OnInit} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {Subscription} from "rxjs";
 

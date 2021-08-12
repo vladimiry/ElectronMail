@@ -1,8 +1,9 @@
 import UUID from "pure-uuid";
-import {Action, Store, select} from "@ngrx/store";
+import type {Action} from "@ngrx/store";
 import {Actions, ofType} from "@ngrx/effects";
 import {EMPTY, concat, lastValueFrom, timer} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
+import {Store, select} from "@ngrx/store";
 import {URL} from "@cliqz/url-parser";
 import {filter, first, mergeMap, take, takeUntil} from "rxjs/operators";
 

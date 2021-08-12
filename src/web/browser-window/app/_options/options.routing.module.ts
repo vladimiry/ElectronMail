@@ -1,5 +1,6 @@
 import {NgModule} from "@angular/core";
-import {RouterModule, Routes} from "@angular/router";
+import {RouterModule} from "@angular/router";
+import type {Routes} from "@angular/router";
 
 import {AccountEditComponent} from "src/web/browser-window/app/_options/account-edit.component";
 import {AccountsListComponent} from "src/web/browser-window/app/_options/accounts-list.component";

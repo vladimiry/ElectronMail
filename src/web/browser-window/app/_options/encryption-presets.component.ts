@@ -1,5 +1,6 @@
-import {Component, Input, OnDestroy, OnInit} from "@angular/core";
+import {Component, Input} from "@angular/core";
 import {FormGroup} from "@angular/forms";
+import type {OnDestroy, OnInit} from "@angular/core";
 import {Store} from "@ngrx/store";
 import {Subject} from "rxjs";
 import {map, takeUntil} from "rxjs/operators";

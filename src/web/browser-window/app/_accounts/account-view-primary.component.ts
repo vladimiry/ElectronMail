@@ -1,4 +1,5 @@
-import {Component, Injector, OnInit} from "@angular/core";
+import {Component, Injector} from "@angular/core";
+import type {OnInit} from "@angular/core";
 import {Subject, combineLatest, from, lastValueFrom, race} from "rxjs";
 import {distinctUntilChanged, filter, map, pairwise, take, takeUntil, withLatestFrom} from "rxjs/operators";
 import {equals, pick} from "remeda";

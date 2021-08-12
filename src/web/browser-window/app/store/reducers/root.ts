@@ -1,5 +1,6 @@
 import {Injector} from "@angular/core";
-import {MetaReducer, Store} from "@ngrx/store";
+import type {MetaReducer} from "@ngrx/store";
+import {Store} from "@ngrx/store";
 
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {UnionOf} from "src/shared/ngrx-util";

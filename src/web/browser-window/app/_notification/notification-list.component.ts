@@ -1,5 +1,6 @@
-import {ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit} from "@angular/core";
+import {ChangeDetectionStrategy, Component, ElementRef} from "@angular/core";
 import {Observable, Subscription} from "rxjs";
+import type {OnDestroy, OnInit} from "@angular/core";
 import {Store} from "@ngrx/store";
 import {pairwise} from "rxjs/operators";
 

@@ -1,5 +1,6 @@
 import {NgModule} from "@angular/core";
-import {PreloadAllModules, RouterModule, Routes} from "@angular/router";
+import {PreloadAllModules, RouterModule} from "@angular/router";
+import type {Routes} from "@angular/router";
 
 import {
     ACCOUNTS_OUTLET,

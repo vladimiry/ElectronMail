@@ -1,5 +1,6 @@
 import {BehaviorSubject, Subscription} from "rxjs";
-import {ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit} from "@angular/core";
+import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
+import type {OnDestroy, OnInit} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {filter, map} from "rxjs/operators";
 

@@ -1,7 +1,8 @@
-import {Action} from "@ngrx/store";
+import type {Action} from "@ngrx/store";
 import {DOCUMENT} from "@angular/common";
-import {Directive, ElementRef, EventEmitter, Injector, Input, OnDestroy, Output, Renderer2} from "@angular/core";
+import {Directive, ElementRef, EventEmitter, Injector, Input, Output, Renderer2} from "@angular/core";
 import {Observable, Subscription, combineLatest, lastValueFrom, race} from "rxjs";
+import type {OnDestroy} from "@angular/core";
 import {distinctUntilChanged, filter, map, take} from "rxjs/operators";
 import {equals, pick} from "remeda";
 

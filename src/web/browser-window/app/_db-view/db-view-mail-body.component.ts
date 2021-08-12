@@ -1,17 +1,7 @@
 import UUID from "pure-uuid";
-import {
-    AfterViewInit,
-    ChangeDetectionStrategy,
-    Component,
-    ElementRef,
-    Input,
-    NgZone,
-    OnDestroy,
-    OnInit,
-    QueryList,
-    ViewChildren,
-} from "@angular/core";
+import type {AfterViewInit, OnDestroy, OnInit,} from "@angular/core";
 import {BehaviorSubject, EMPTY, Observable, Subject, Subscription, combineLatest} from "rxjs";
+import {ChangeDetectionStrategy, Component, ElementRef, Input, NgZone, QueryList, ViewChildren,} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {delay, distinctUntilChanged, filter, first, map, mergeMap, pairwise, withLatestFrom} from "rxjs/operators";
 import {equals} from "remeda";

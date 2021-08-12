@@ -1,5 +1,6 @@
-import {ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit} from "@angular/core";
+import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
 import {Deferred} from "ts-deferred";
+import type {OnDestroy, OnInit} from "@angular/core";
 import {Store} from "@ngrx/store";
 
 import {DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";

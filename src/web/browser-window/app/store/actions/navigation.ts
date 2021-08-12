@@ -1,4 +1,4 @@
-import {NavigationExtras, Params} from "@angular/router";
+import type {NavigationExtras, Params} from "@angular/router";
 import {props} from "@ngrx/store";
 
 import {propsRecordToActionsRecord} from "src/shared/ngrx-util";

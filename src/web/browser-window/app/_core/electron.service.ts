@@ -1,5 +1,6 @@
-import {Injectable, NgZone, OnDestroy} from "@angular/core";
+import {Injectable, NgZone} from "@angular/core";
 import {Observable, Subscription, defer, of, race, throwError, timer} from "rxjs";
+import type {OnDestroy} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {concatMap, delay, filter, map, mergeMap, retryWhen, switchMap, take, withLatestFrom} from "rxjs/operators";
 import {createIpcMainApiService} from "electron-rpc-api";

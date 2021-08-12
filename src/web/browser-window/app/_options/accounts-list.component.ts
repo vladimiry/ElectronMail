@@ -1,6 +1,7 @@
-import {CdkDragDrop} from "@angular/cdk/drag-drop";
-import {Component, HostBinding, OnDestroy} from "@angular/core";
+import type {CdkDragDrop} from "@angular/cdk/drag-drop";
+import {Component, HostBinding} from "@angular/core";
 import {Observable, Subject, Subscription} from "rxjs";
+import type {OnDestroy} from "@angular/core";
 import {Store} from "@ngrx/store";
 import {map, withLatestFrom} from "rxjs/operators";
 

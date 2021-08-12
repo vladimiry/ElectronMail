@@ -1,4 +1,5 @@
-import {ChangeDetectionStrategy, Component, ElementRef, Input, OnDestroy, OnInit, Renderer2} from "@angular/core";
+import {ChangeDetectionStrategy, Component, ElementRef, Input, Renderer2} from "@angular/core";
+import type {OnDestroy, OnInit} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {Subscription} from "rxjs";
 

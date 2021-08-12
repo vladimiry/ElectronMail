@@ -1,14 +1,5 @@
-import {
-    AfterViewInit,
-    ChangeDetectionStrategy,
-    Component,
-    ElementRef,
-    EventEmitter,
-    OnInit,
-    Output,
-    QueryList,
-    ViewChildren,
-} from "@angular/core";
+import type {AfterViewInit, OnInit} from "@angular/core";
+import {ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Output, QueryList, ViewChildren,} from "@angular/core";
 import {EMPTY, Observable, Subject, combineLatest, merge} from "rxjs";
 import {FormControl, FormGroup} from "@angular/forms";
 import {Store, select} from "@ngrx/store";

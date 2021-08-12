@@ -1,4 +1,5 @@
-import {Component, OnDestroy, OnInit} from "@angular/core";
+import {Component} from "@angular/core";
+import type {OnDestroy, OnInit} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {Subscription, combineLatest} from "rxjs";
 import {distinctUntilChanged, map} from "rxjs/operators";

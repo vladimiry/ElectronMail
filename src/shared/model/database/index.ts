@@ -1,4 +1,4 @@
-import {QueryResult} from "ndx-query";
+import type {QueryResult} from "ndx-query";
 import {Model as StoreModel} from "fs-json-store";
 
 import * as Constants from "./constants";

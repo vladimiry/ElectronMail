@@ -81,8 +81,8 @@ export async function validateEntity<T extends Entity>(
         return JSON.parse( // eslint-disable-line @typescript-eslint/no-unsafe-return
             JSON.stringify(validatedEntityInstance),
         );
-    } catch (e) {
-        logger.error("original validation error", e);
+    } catch (error) {
+        logger.error("original validation error", error);
 
         IPC_MAIN_API_NOTIFICATION$.next(
             IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({
@@ -108,7 +108,7 @@ export async function validateEntity<T extends Entity>(
                         }
                         return {};
                     })(),
-                    error: flattenValidationError(e),
+                    error: flattenValidationError(error as Error),
                 }),
             }),
         );

@@ -1,7 +1,9 @@
 import type {ActionCreator, ActionCreatorProps} from "@ngrx/store";
-// TODO make "ngrx-util" independent from @angular and use it for all @ngrx manipulations (including "ofType" calls)
+import type {ValueOf} from "ts-essentials";
 import {createAction} from "@ngrx/store";
 import {mapKeys} from "remeda";
+
+// TODO make "ngrx-util" independent from @angular and use it for all @ngrx manipulations (including "ofType" calls)
 
 type MatchPropName = "match";
 
@@ -18,7 +20,8 @@ type ActionsRecord<P extends PropsRecord = PropsRecord> = {
         : ActionCreator<T, () => TypedAction<T>>
 };
 
-export type UnionOf<T extends ActionsRecord> = Exclude<ReturnType<import("ts-essentials").ValueOf<StrictOmit<T, MatchPropName>>>, boolean>;
+// eslint-disable-next-line @typescript-eslint/ban-types
+export type UnionOf<T extends ActionsRecord> = Exclude<ReturnType<ValueOf<Omit<StrictOmit<T, MatchPropName>, symbol>>>, boolean>;
 
 export type UnionOfRecord<P extends PropsRecord, T extends ActionsRecord<P> = ActionsRecord<P>>
     = { [K in Exclude<keyof T, MatchPropName>]: ReturnType<T[K]> };
@@ -67,7 +70,7 @@ export const propsRecordToActionsRecord = <P extends PropsRecord>(
         match(value, matchers) {
             const matcher = mapKeys(matchers, (key) => resolvePrefixedType(key))[value.type] ?? matchers.default;
             if (typeof matcher !== "function") {
-                throw new Error(`Failed to resolve matching handler for the "${value.type}" action`);
+                throw new Error(`Failed to resolve matching handler for the "${String(value.type)}" action`);
             }
             const args = (
                 "payload" in value

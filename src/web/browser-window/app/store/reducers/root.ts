@@ -19,7 +19,7 @@ export function createErrorHandlingMetaReducer(injector: Injector): MetaReducer<
             try {
                 return reducer(state, action);
             } catch (error) {
-                injector.get(Store).dispatch(NOTIFICATION_ACTIONS.Error(error));
+                injector.get(Store).dispatch(NOTIFICATION_ACTIONS.Error(error as Error));
             }
             return state as State;
         };

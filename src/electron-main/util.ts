@@ -74,7 +74,7 @@ export function readConfigSync({configStore}: DeepReadonly<Context>): import("ts
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         configFile = configStore.fs._impl.readFileSync(configStore.file); // eslint-disable-line @typescript-eslint/no-unsafe-call
     } catch (error) {
-        if (error.code !== "ENOENT") { // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+        if ((Object(error) as {code?: unknown}).code !== "ENOENT") {
             throw error;
         }
     }

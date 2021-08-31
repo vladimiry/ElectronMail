@@ -166,11 +166,11 @@ export async function submitTotpToken(
 
     try {
         await submit();
-    } catch (e) {
-        const {message} = e; // eslint-disable-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+    } catch (error) {
+        const {message} = (Object(error) as {message?: unknown});
 
         if (message !== errorMessage) {
-            throw e;
+            throw error;
         }
 
         logger.verbose(`submit 1 - fail: ${String(message)}`);

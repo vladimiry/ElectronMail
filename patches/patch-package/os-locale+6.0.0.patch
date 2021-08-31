@@ -1,0 +1,14 @@
+diff --git a/node_modules/os-locale/exec.js b/node_modules/os-locale/exec.js
+index 62995d9..762f8ba 100644
+--- a/node_modules/os-locale/exec.js
++++ b/node_modules/os-locale/exec.js
+@@ -1,7 +1,7 @@
+ // Mini wrapper around `child_process` to make it behave a little like `execa`.
+ 
+-import {promisify} from 'node:util';
+-import childProcess from 'node:child_process';
++import {promisify} from 'util';
++import childProcess from 'child_process';
+ 
+ const execFile = promisify(childProcess.execFile);
+ 

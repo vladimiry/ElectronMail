@@ -162,7 +162,7 @@ export function registerApi(providerApi: ProviderApi): void {
                     /* eslint-enable max-len */
                     const serializedError = serializeError(
                         // sanitizing the error (original error might include the "data"/other props which we don't want to log)
-                        pick(error, ["name", "message", "stack", "code"]), // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+                        pick(error as (Error & {code: unknown}), ["name", "message", "stack", "code"]),
                     );
 
                     logger.error(

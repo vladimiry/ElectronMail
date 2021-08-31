@@ -33,7 +33,7 @@ const fileExists = async (file: string): Promise<boolean> => {
     try {
         return (await fsAsync.stat(file)).isFile();
     } catch (error) {
-        if (error.code === "ENOENT") { // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+        if ((Object(error) as {code?: unknown}).code === "ENOENT") {
             return false;
         }
         throw error;

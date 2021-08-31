@@ -91,14 +91,18 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
             } catch (error) {
                 // log only one-line message in "error" mode so it doesn't affect the e2e tests
                 // eslint-disable-next-line  @typescript-eslint/no-unsafe-member-access
-                logger.error(nameof(endpoints.init), `"keytar" module is unsupported by the system: `, error.message);
+                logger.error(
+                    nameof(endpoints.init),
+                    `"keytar" module is unsupported by the system: `,
+                    (Object(error) as { message?: string }).message,
+                );
                 // log full error in "warn" mode only so it doesn't affect the e2e tests
                 logger.warn(nameof(endpoints.init), error);
 
                 ctx.keytarSupport = false;
 
                 // eslint-disable-next-line  @typescript-eslint/no-unsafe-member-access
-                const errorMessage = String(error.message).toLowerCase();
+                const errorMessage = String((Object(error) as { message?: string }).message).toLowerCase();
 
                 ctx.snapPasswordManagerServiceHint = (
                     errorMessage.includes("snap")

@@ -107,14 +107,15 @@ export let resolveDefaultLocale: () => Promise<Locale> = async () => {
     const logger = curryFunctionMembers(_logger, __filename, nameof(resolveDefaultLocale));
     const resolvedLocale: Locale | undefined = await (
         async (): Promise<string | undefined> => {
-            const osLocaleModule = await import("os-locale");
+            const {osLocale} = await import("os-locale");
             const {getAvailableDictionaries} = await setup();
             const dictionaries = getAvailableDictionaries();
 
             // hunspell requires the fully-qualified result
             const locale = normalizeLocale(
-                await osLocaleModule.default(),
-            ) as Locale | undefined;
+                await osLocale(),
+            ) as ReturnType<typeof normalizeLocale> | undefined;
+
             logger.info(`Resolved OS locale: ${String(locale)}`);
 
             if (!locale || !["en_us", "en"].includes(locale.toLowerCase())) {

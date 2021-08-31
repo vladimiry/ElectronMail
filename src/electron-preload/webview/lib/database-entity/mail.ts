@@ -71,8 +71,8 @@ export async function buildMail(input: RestModel.Message, api: ProviderApi): Pro
         bodyPart.failedDownload = {
             appVersion: PACKAGE_VERSION,
             date: Date.now(),
-            errorMessage: String(error.message), // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-            errorStack: String(error.stack), // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+            errorMessage: String((error as Error).message), // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+            errorStack: String((error as Error).stack), // eslint-disable-line @typescript-eslint/no-unsafe-member-access
             type: "body-decrypting",
         };
     }

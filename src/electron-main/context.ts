@@ -32,7 +32,7 @@ function exists(file: string, storeFs: StoreModel.StoreFs): boolean {
     try {
         storeFs._impl.statSync(file);
     } catch (error) {
-        if (error.code === "ENOENT") {
+        if ((Object(error) as {code?: unknown}).code === "ENOENT") {
             return false;
         }
 

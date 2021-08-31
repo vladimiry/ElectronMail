@@ -102,7 +102,7 @@ export async function execShell(
 }
 
 export async function fetchUrl(...[url, options]: Parameters<typeof fetch>): ReturnType<typeof fetch> {
-    CONSOLE_LOG(`Downloading ${url}`);
+    CONSOLE_LOG(`Downloading ${String(url)}`);
     const response = await fetch(url, options);
     if (!response.ok) {
         throw new Error(`Downloading failed: ${JSON.stringify(pick(response, ["status", "statusText"]))}`);

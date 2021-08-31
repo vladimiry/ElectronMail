@@ -100,7 +100,7 @@ async function resolveFileSystemResourceLocation(
         }
     } catch (error) {
         logger.error(nameof(resolveFileSystemResourceLocation), error);
-        if (error.code === "ENOENT") { // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+        if ((Object(error) as {code?: unknown}).code === "ENOENT") {
             return null;
         }
         throw error;

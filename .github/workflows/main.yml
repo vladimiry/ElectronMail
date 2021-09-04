@@ -24,6 +24,8 @@ jobs:
           path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
           key: "yarn-cache-dir-${{ matrix.os }}-${{ hashFiles('./yarn.lock', './patch-package/*.patch') }}-${{ secrets.YARN_CACHE_DIR_CACHE_VERSION }}"
       - { name: install node-gyp, if: runner.os == 'Windows', run: ./scripts/ci/github/install-node-gyp.ps1 }
+      - { uses: actions/setup-python@v2, with: { python-version: "3.9" } }
+      - { name: envinfo, run: npx envinfo }
       - { name: install node modules, run: "yarn --pure-lockfile --network-timeout 60000" }
       # </common>
       - name: cache artifact
@@ -55,6 +57,8 @@ jobs:
           path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
           key: "yarn-cache-dir-${{ matrix.os }}-${{ hashFiles('./yarn.lock', './patch-package/*.patch') }}-${{ secrets.YARN_CACHE_DIR_CACHE_VERSION }}"
       - { name: install node-gyp, if: runner.os == 'Windows', run: ./scripts/ci/github/install-node-gyp.ps1 }
+      - { uses: actions/setup-python@v2, with: { python-version: "3.9" } }
+      - { name: envinfo, run: npx envinfo }
       - { name: install node modules, run: "yarn --pure-lockfile --network-timeout 60000" }
       # </common>
       - { name: build, run: 'npm exec --package=npm-run-all -- npm-run-all lint build' }
@@ -79,6 +83,8 @@ jobs:
           path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
           key: "yarn-cache-dir-${{ matrix.os }}-${{ hashFiles('./yarn.lock', './patch-package/*.patch') }}-${{ secrets.YARN_CACHE_DIR_CACHE_VERSION }}"
       - { name: install node-gyp, if: runner.os == 'Windows', run: ./scripts/ci/github/install-node-gyp.ps1 }
+      - { uses: actions/setup-python@v2, with: { python-version: "3.9" } }
+      - { name: envinfo, run: npx envinfo }
       - { name: install node modules, run: "yarn --pure-lockfile --network-timeout 60000" }
       # </common>
       - { name: download proton clients artifact, uses: actions/download-artifact@v2, with: { name: proton-clients-artifact } }

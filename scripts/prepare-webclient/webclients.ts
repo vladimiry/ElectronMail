@@ -266,38 +266,65 @@ async function executeBuildFlow<T extends FolderAsDomainEntry[]>(
     const {tag} = PROVIDER_REPO_MAP[repoType];
     const legacyProtonPacking = repoType === "proton-calendar";
 
-    // TODO move block to "folderAsDomainEntry" loop if "node_modules" gets patched
-    if (
-        !fsExtra.pathExistsSync(path.join(repoDir, ".git"))
-        ||
-        !(await execShell(["git", ["tag"], {cwd: repoDir}], {printStdOut: false})).stdout.trim().includes(tag)
-    ) { // cloning
-        await execShell(["npx", ["--no", "rimraf", repoDir]]);
-        fsExtra.ensureDirSync(repoDir);
-        await execShell(["git", ["clone", "https://github.com/ProtonMail/WebClients.git", repoDir]]);
-        await execShell(["git", ["show", "--summary"], {cwd: repoDir}]);
-    } else {
-        await execShell(["git", ["reset", "--hard", "origin/main"], {cwd: repoDir}]);
-        await execShell(["git", ["clean", "-fdx", "--exclude", ".yarn/cache"], {cwd: repoDir}]);
-    }
+    const state: { buildingSetup: () => Promise<void> } = {
+        async buildingSetup() {
+            state.buildingSetup = async () => Promise.resolve(); // one run per "repo type" only needed
 
-    await execShell(["git", ["reset", "--hard", tag], {cwd: repoDir}]);
-    await execShell(["yarn", ["install"], {cwd: repoDir}], {printStdOut: false});
+            // TODO move block to "folderAsDomainEntry" loop if "node_modules" gets patched
+            if (
+                !fsExtra.pathExistsSync(path.join(repoDir, ".git"))
+                ||
+                !(await execShell(["git", ["tag"], {cwd: repoDir}], {printStdOut: false})).stdout.trim().includes(tag)
+            ) { // cloning
+                await execShell(["npx", ["--no", "rimraf", repoDir]]);
+                fsExtra.ensureDirSync(repoDir);
+                await execShell(["git", ["clone", "https://github.com/ProtonMail/WebClients.git", repoDir]]);
+                await execShell(["git", ["show", "--summary"], {cwd: repoDir}]);
+            } else {
+                await execShell(["git", ["reset", "--hard", "origin/main"], {cwd: repoDir}]);
+                await execShell(["git", ["clean", "-fdx"], {cwd: repoDir}]);
+            }
 
-    { // patching
-        const resolvePatchFile = (file: string): string => path.join(CWD_ABSOLUTE_DIR, `./patches/protonmail/${file}`);
-        const repoTypePatchFile = resolvePatchFile(`${repoType}.patch`);
+            await execShell(["git", ["reset", "--hard", tag], {cwd: repoDir}]);
 
-        await applyPatch({patchFile: resolvePatchFile("common.patch"), cwd: repoDir});
+            // TODO "drop yarn install" hacks when executed on CI env
+            if (process.env.CI) {
+                // hacks applied to avoid the following error:
+                //     eslint-disable-next-line max-len
+                //     YN0018: │ sieve.js@https://github.com/ProtonMail/sieve.js.git#commit=a09ab52092164af74278e77612a091e730e9b7e9: The remote archive doesn't match the expected checksum
+                // see https://github.com/yarnpkg/berry/issues/1142 and https://github.com/yarnpkg/berry/issues/1989 for details
+                await execShell(["yarn", ["cache", "clean", "--all"], {cwd: repoDir}]);
+                await execShell([
+                    "yarn", ["install"],
+                    {
+                        cwd: repoDir,
+                        env: {
+                            ...process.env,
+                            YARN_CHECKSUM_BEHAVIOR: "update",
+                            PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "1",
+                        },
+                    },
+                ]);
+            } else {
+                await execShell(["yarn", ["install"], {cwd: repoDir}], {printStdOut: false});
+            }
 
-        if (!legacyProtonPacking) {
-            await applyPatch({patchFile: resolvePatchFile("except-calendar.patch"), cwd: repoDir});
-        }
+            { // patching
+                const resolvePatchFile = (file: string): string => path.join(CWD_ABSOLUTE_DIR, `./patches/protonmail/${file}`);
+                const repoTypePatchFile = resolvePatchFile(`${repoType}.patch`);
 
-        if (fsExtra.pathExistsSync(repoTypePatchFile)) {
-            await applyPatch({patchFile: repoTypePatchFile, cwd: repoDir});
-        }
-    }
+                await applyPatch({patchFile: resolvePatchFile("common.patch"), cwd: repoDir});
+
+                if (!legacyProtonPacking) {
+                    await applyPatch({patchFile: resolvePatchFile("except-calendar.patch"), cwd: repoDir});
+                }
+
+                if (fsExtra.pathExistsSync(repoTypePatchFile)) {
+                    await applyPatch({patchFile: repoTypePatchFile, cwd: repoDir});
+                }
+            }
+        },
+    };
 
     for (const folderAsDomainEntry of folderAsDomainEntries) {
         const targetDistDir = path.resolve(destDir, folderAsDomainEntry.folderNameAsDomain, destSubFolder);
@@ -307,8 +334,8 @@ async function executeBuildFlow<T extends FolderAsDomainEntry[]>(
             JSON.stringify({...folderAsDomainEntry, resolvedDistDir: targetDistDir}),
         );
 
-        if (fsExtra.pathExistsSync(path.join(targetDistDir, "index.html"))) {
-            CONSOLE_LOG("Skip building as directory already exists:", targetDistDir);
+        if (fsExtra.pathExistsSync(path.join(targetDistDir, WEB_CLIENTS_BLANK_HTML_FILE_NAME))) {
+            CONSOLE_LOG("Skip building as bundle already exists:", targetDistDir);
             continue;
         }
 
@@ -324,6 +351,8 @@ async function executeBuildFlow<T extends FolderAsDomainEntry[]>(
             if (shouldFailOnBuild) {
                 throw new Error(`Halting since "${shouldFailOnBuildEnvVarName}" env var has been enabled`);
             } else { // building
+                await state.buildingSetup();
+
                 const {configApiParam} = await configure({cwd: appDir, repoType}, folderAsDomainEntry);
                 const publicPath: string | undefined = repoType !== "proton-mail"
                     ? `/${PROVIDER_REPO_MAP[repoType].baseDirName}/`

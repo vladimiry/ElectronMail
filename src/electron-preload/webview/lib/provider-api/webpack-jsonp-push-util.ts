@@ -92,6 +92,7 @@ export const overridePushMethodGlobally = <T>(
         resultKeys,
         preChunkItemOverridingHook,
         chunkItemHook,
+        legacyProtonPacking,
         logger,
     }: {
         resultKeys: ReadonlyArray<keyof T>,
@@ -103,45 +104,68 @@ export const overridePushMethodGlobally = <T>(
                 webpack_require: Parameters<import("ts-essentials").ValueOf<WebpackJsonpArrayItem[1]>>[2],
             }
         ) => void,
+        legacyProtonPacking?: boolean,
         logger: Logger,
     },
 ): void => {
-    const webpackJsonpAwareWindow = window as WebpackJsonpPropAwareWindow;
-    const webpackJsonp = webpackJsonpAwareWindow.webpackJsonp = webpackJsonpAwareWindow.webpackJsonp || [];
-    const webpackJsonpPushOriginalWithBoundContext = webpackJsonp.push.bind(webpackJsonp);
-    const webpackJsonpPushOverridden: typeof webpackJsonpPushOriginalWithBoundContext = (firstArg, ...restArgs) => {
-        const webpackJsonpPushOriginalCallResult = webpackJsonpPushOriginalWithBoundContext(firstArg, ...restArgs);
-        const [/* chunkItemsIdx */, chunkItemsRecord] = firstArg;
+    const resolveOverriddenPush = (
+        originalPush: Exclude<WebpackJsonpPropAwareWindow["webpackJsonp"], undefined>["push"],
+    ): typeof originalPush => {
+        const result: ReturnType<typeof resolveOverriddenPush> = (firstArg, ...restArgs) => {
+            const [/* chunkItemsIdx */, chunkItemsRecord] = firstArg;
 
-        for (const resultKey of resultKeys) {
-            const [chunkItemKey, chunkItemValue] = Object
-                .entries(chunkItemsRecord)
-                .find(([key]) => key === resultKey) ?? [null, null] as const;
+            for (const resultKey of resultKeys) {
+                const [chunkItemKey, chunkItemValue] = Object
+                    .entries(chunkItemsRecord)
+                    .find(([key]) => key === resultKey) ?? [null, null] as const;
 
-            if (!chunkItemKey || !chunkItemValue) {
-                continue;
+                if (!chunkItemKey || !chunkItemValue) {
+                    continue;
+                }
+
+                if (preChunkItemOverridingHook) {
+                    preChunkItemOverridingHook({resultKey});
+                }
+
+                chunkItemsRecord[chunkItemKey] = function(...args) { // function(module, webpack_exports, webpack_require) {
+                    const chunkItemValueCallResult = chunkItemValue.apply(this, args);
+                    const [/* module */, webpack_exports, webpack_require] = args;
+
+                    chunkItemHook({resultKey, webpack_exports, webpack_require});
+
+                    return chunkItemValueCallResult;
+                };
             }
 
-            if (preChunkItemOverridingHook) {
-                preChunkItemOverridingHook({resultKey});
-            }
-
-            chunkItemsRecord[chunkItemKey] = function(...args) { // function(module, webpack_exports, webpack_require) {
-                const chunkItemValueCallResult = chunkItemValue.apply(this, args);
-                const [/* module */, webpack_exports, webpack_require] = args;
-
-                chunkItemHook({resultKey, webpack_exports, webpack_require});
-
-                return chunkItemValueCallResult;
-            };
-        }
-
-        return webpackJsonpPushOriginalCallResult;
+            return originalPush(firstArg, ...restArgs);
+        };
+        return result;
     };
 
-    logger.verbose(`mount "webpackJsonp.push" override`);
-
-    webpackJsonp.push = webpackJsonpPushOverridden;
+    if (legacyProtonPacking) {
+        const webpackJsonp = (window as WebpackJsonpPropAwareWindow).webpackJsonp ??= [];
+        logger.verbose(`override "webpackJsonp.push"`, {legacyProtonPacking});
+        webpackJsonp.push = resolveOverriddenPush(webpackJsonp.push.bind(webpackJsonp));
+    } else {
+        (window as WebpackJsonpPropAwareWindow).webpackJsonp = new Proxy(
+            (window as WebpackJsonpPropAwareWindow).webpackJsonp ??= [],
+            {
+                set(webpackJsonp, prop, value) {
+                    if (prop !== "push") {
+                        Object.defineProperty(
+                            webpackJsonp,
+                            prop,
+                            {value}, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                        );
+                        return true;
+                    }
+                    logger.verbose(`override "webpackJsonp.push"`, {legacyProtonPacking});
+                    webpackJsonp.push = resolveOverriddenPush(value as typeof webpackJsonp.push);
+                    return true;
+                },
+            },
+        );
+    }
 };
 
 export const handleObservableValue = <R,

@@ -7,6 +7,7 @@ import {curryFunctionMembers} from "src/shared/util";
 
 export const resolveStandardSetupStandardSetupProviderInternals = async (
     _logger: Logger,
+    legacyProtonPacking?: boolean,
 ): Promise<StandardSetupProviderInternals> => {
     const logger = curryFunctionMembers(_logger, nameof(resolveStandardSetupStandardSetupProviderInternals));
 
@@ -23,6 +24,7 @@ export const resolveStandardSetupStandardSetupProviderInternals = async (
         const resolveIfFullyInitialized = webpackJsonpPushUtil.buildFullyInitializedResolver(result, resolve, logger);
 
         webpackJsonpPushUtil.overridePushMethodGlobally({
+            legacyProtonPacking,
             resultKeys: Object.keys(result) as ReadonlyArray<keyof typeof result>,
             chunkItemHook({resultKey, webpack_exports, webpack_require}) {
                 if (resultKey === "../../packages/components/containers/app/StandardSetup.tsx") {

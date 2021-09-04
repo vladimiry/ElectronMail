@@ -1,8 +1,8 @@
-diff --git a/applications/drive/src/app/components/SharingModal/GeneratedLinkState.tsx b/applications/drive/src/app/components/SharingModal/GeneratedLinkState.tsx
-index 9308bf1..ff1b976 100644
---- a/applications/drive/src/app/components/SharingModal/GeneratedLinkState.tsx
-+++ b/applications/drive/src/app/components/SharingModal/GeneratedLinkState.tsx
-@@ -72,7 +72,7 @@ function GeneratedLinkState({
+diff --git a/applications/drive/src/app/components/ShareLinkModal/GeneratedLinkState.tsx b/applications/drive/src/app/components/ShareLinkModal/GeneratedLinkState.tsx
+index 3cb6545..4ad120b 100644
+--- a/applications/drive/src/app/components/ShareLinkModal/GeneratedLinkState.tsx
++++ b/applications/drive/src/app/components/ShareLinkModal/GeneratedLinkState.tsx
+@@ -73,7 +73,7 @@ function GeneratedLinkState({
  }: Props) {
      const contentRef = useRef<HTMLDivElement>(null);
      const { createNotification } = useNotifications();

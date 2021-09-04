@@ -11,6 +11,7 @@ export * from "./model";
 
 export const resolveStandardSetupPublicApi = async (
     _logger: Logger,
+    legacyProtonPacking?: boolean,
 ): Promise<{
     readonly httpApi$: Observable<StandardSetupPublicScope["httpApi"]>
     readonly authentication$: Observable<StandardSetupPublicScope["authentication"]>
@@ -21,7 +22,7 @@ export const resolveStandardSetupPublicApi = async (
 
     logger.info("init");
 
-    const internals = await resolveStandardSetupStandardSetupProviderInternals(logger);
+    const internals = await resolveStandardSetupStandardSetupProviderInternals(logger, legacyProtonPacking);
     const scope$ = internals["../../packages/components/containers/app/StandardSetup.tsx"].value$.pipe(
         map(({publicScope}) => publicScope),
         distinctUntilChanged(),

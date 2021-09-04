@@ -79,11 +79,13 @@ function resolveWebpackConfigPatchingCode(
     {
         appDir,
         webpackConfigVarName,
-        webpackIndexEntryItems
+        webpackIndexEntryItems,
+        legacyProtonPacking,
     }: {
         appDir: string
         webpackConfigVarName: string
         webpackIndexEntryItems?: unknown
+        legacyProtonPacking?: boolean,
     },
 ): string {
     const disableMangling = Boolean(webpackIndexEntryItems);
@@ -95,26 +97,44 @@ function resolveWebpackConfigPatchingCode(
             {
                 minimize: ${!disableMangling /* eslint-disable-line @typescript-eslint/restrict-template-expressions */},
                 moduleIds: "named",
-                namedChunks: true,
-                namedModules: true,
 
                 // allows resolving individual modules from "window.webpackJsonp"
                 concatenateModules: ${!disableMangling /* eslint-disable-line @typescript-eslint/restrict-template-expressions */},
 
-                // allows resolving individual modules by path-based names (from "window.webpackJsonp")
-                namedModules: ${disableMangling /* eslint-disable-line @typescript-eslint/restrict-template-expressions */},
-
                 // allows preserving in the bundle some constants we reference in the provider api code
                 // TODO proton v4: figure how to apply "usedExports: false" to specific files only
                 usedExports: ${!disableMangling /* eslint-disable-line @typescript-eslint/restrict-template-expressions */},
-
-                // TODO proton v4: switch to to "mangleExports" optimization option recently introduced in webpack v5
-                // mangleExports: false,
             },
         );
 
-        ${disableMangling
+        ${legacyProtonPacking
         ? `{
+            Object.assign(
+                ${webpackConfigVarName}.optimization,
+                {
+                    namedChunks: true,
+
+                    // allows resolving individual modules by path-based names (from "window.webpackJsonp")
+                    namedModules: ${disableMangling /* eslint-disable-line @typescript-eslint/restrict-template-expressions */},
+                },
+            );
+        }`
+        : `{
+            Object.assign(
+                ${webpackConfigVarName}.optimization,
+                {
+                    chunkIds: "named",
+                    ${disableMangling ? "mangleExports: false," : ""}
+                },
+            );
+        }`}
+
+        ${disableMangling
+        ? `(() => {
+            if (${!legacyProtonPacking /* eslint-disable-line @typescript-eslint/restrict-template-expressions */}) {
+                webpackConfig.output.chunkLoadingGlobal = "webpackJsonp";
+                return;
+            }
             const items = ${JSON.stringify(webpackIndexEntryItems, null, 2)}
 				.map((item) => require("path").resolve(${JSON.stringify(appDir)}, item));
             Object.assign(
@@ -132,7 +152,7 @@ function resolveWebpackConfigPatchingCode(
                     },
                 },
             );
-        }` : ""}
+        })()` : ""}
 
         ${disableMangling
         ? `
@@ -157,7 +177,7 @@ function resolveWebpackConfigPatchingCode(
         ${webpackIndexEntryItems
         ? `{
             const items = ${JSON.stringify(webpackIndexEntryItems, null, 2)};
-            ${webpackConfigVarName}.entry.index.push(...items);
+            ${webpackConfigVarName}.entry.index.unshift(...items);
         }`
         : ""}
 
@@ -177,7 +197,7 @@ function resolveWebpackConfigPatchingCode(
         ${webpackConfigVarName}.plugins = ${webpackConfigVarName}.plugins.filter((plugin) => {
             switch (plugin.constructor.name) {
                 case "HtmlWebpackPlugin":
-                    plugin.options.minify = false;
+                    plugin[${legacyProtonPacking ? "'options'" : "'userOptions'"}].minify = false;
                     break;
                 case "ImageminPlugin":
                     return false;
@@ -242,6 +262,42 @@ async function executeBuildFlow<T extends FolderAsDomainEntry[]>(
 
     const repoDir = path.join(GIT_CLONE_ABSOLUTE_DIR, "./WebClients");
     const appDir = path.join(repoDir, "./applications", repoType.substr("proton-".length));
+    const repoDistDir = path.join(appDir, repoRelativeDistDir);
+    const {tag} = PROVIDER_REPO_MAP[repoType];
+    const legacyProtonPacking = repoType === "proton-calendar";
+
+    // TODO move block to "folderAsDomainEntry" loop if "node_modules" gets patched
+    if (
+        !fsExtra.pathExistsSync(path.join(repoDir, ".git"))
+        ||
+        !(await execShell(["git", ["tag"], {cwd: repoDir}], {printStdOut: false})).stdout.trim().includes(tag)
+    ) { // cloning
+        await execShell(["npx", ["--no", "rimraf", repoDir]]);
+        fsExtra.ensureDirSync(repoDir);
+        await execShell(["git", ["clone", "https://github.com/ProtonMail/WebClients.git", repoDir]]);
+        await execShell(["git", ["show", "--summary"], {cwd: repoDir}]);
+    } else {
+        await execShell(["git", ["reset", "--hard", "origin/main"], {cwd: repoDir}]);
+        await execShell(["git", ["clean", "-fdx", "--exclude", ".yarn/cache"], {cwd: repoDir}]);
+    }
+
+    await execShell(["git", ["reset", "--hard", tag], {cwd: repoDir}]);
+    await execShell(["yarn", ["install"], {cwd: repoDir}], {printStdOut: false});
+
+    { // patching
+        const resolvePatchFile = (file: string): string => path.join(CWD_ABSOLUTE_DIR, `./patches/protonmail/${file}`);
+        const repoTypePatchFile = resolvePatchFile(`${repoType}.patch`);
+
+        await applyPatch({patchFile: resolvePatchFile("common.patch"), cwd: repoDir});
+
+        if (!legacyProtonPacking) {
+            await applyPatch({patchFile: resolvePatchFile("except-calendar.patch"), cwd: repoDir});
+        }
+
+        if (fsExtra.pathExistsSync(repoTypePatchFile)) {
+            await applyPatch({patchFile: repoTypePatchFile, cwd: repoDir});
+        }
+    }
 
     for (const folderAsDomainEntry of folderAsDomainEntries) {
         const targetDistDir = path.resolve(destDir, folderAsDomainEntry.folderNameAsDomain, destSubFolder);
@@ -256,8 +312,6 @@ async function executeBuildFlow<T extends FolderAsDomainEntry[]>(
             continue;
         }
 
-        const {tag} = PROVIDER_REPO_MAP[repoType];
-        const repoDistDir = path.join(appDir, repoRelativeDistDir);
         const repoDistBackupDir = resolveGitOutputBackupDir({repoType, suffix: `dist-${folderAsDomainEntry.folderNameAsDomain}`});
 
         if (fsExtra.pathExistsSync(repoDistBackupDir)) { // taking "dist" from the backup
@@ -267,53 +321,18 @@ async function executeBuildFlow<T extends FolderAsDomainEntry[]>(
             CONSOLE_LOG(`Copying backup ${src} to ${dest}`);
             await fsExtra.copy(src, dest);
         } else { // building
-            if (
-                !fsExtra.pathExistsSync(path.join(repoDir, ".git"))
-                ||
-                !(await execShell(["git", ["tag"], {cwd: repoDir}], {printStdOut: false})).stdout.trim().includes(tag)
-            ) { // cloning
-                await execShell(["npx", ["--no", "rimraf", repoDir]]);
-                fsExtra.ensureDirSync(repoDir);
-                await execShell(["git", ["clone", "-b", "main", "https://github.com/ProtonMail/WebClients.git", repoDir]]);
-                await execShell(["git", ["show", "--summary"], {cwd: repoDir}]);
-            } else {
-                CONSOLE_LOG("Skip cloning (just resetting)");
-                await execShell(["git", ["reset", "--hard", "origin/main"], {cwd: repoDir}]);
-            }
-
-            await execShell(["git", ["reset", "--hard", tag], {cwd: repoDir}]);
-            await execShell(["yarn", ["install"], {cwd: repoDir}], {printStdOut: false});
-
-            { // patching
-                const resolvePatchFile = (file: string): string => path.join(CWD_ABSOLUTE_DIR, `./patches/protonmail/${file}`);
-                const repoTypePatchFile = resolvePatchFile(`${repoType}.patch`);
-
-                await applyPatch({patchFile: resolvePatchFile("common.patch"), cwd: repoDir});
-
-                if (repoType !== "proton-mail") {
-                    await applyPatch({patchFile: resolvePatchFile("common-sentry.patch"), cwd: repoDir});
-                } else {
-                    await applyPatch({patchFile: resolvePatchFile("proton-mail-sentry.patch"), cwd: repoDir});
-                }
-
-                if (fsExtra.pathExistsSync(repoTypePatchFile)) {
-                    await applyPatch({patchFile: repoTypePatchFile, cwd: repoDir});
-                }
-            }
-
             if (shouldFailOnBuild) {
                 throw new Error(`Halting since "${shouldFailOnBuildEnvVarName}" env var has been enabled`);
             } else { // building
                 const {configApiParam} = await configure({cwd: appDir, repoType}, folderAsDomainEntry);
-                const {publicPath} = await (async () => {
-                    const webpackPatch = repoType !== "proton-mail"
-                        ? {publicPath: `/${PROVIDER_REPO_MAP[repoType].baseDirName}/`}
-                        : undefined;
+                const publicPath: string | undefined = repoType !== "proton-mail"
+                    ? `/${PROVIDER_REPO_MAP[repoType].baseDirName}/`
+                    : undefined;
+
+                if (repoType === "proton-mail" || repoType === "proton-calendar") {
                     const webpackIndexEntryItems = repoType === "proton-mail" || repoType === "proton-calendar"
                         ? PROVIDER_REPO_MAP[repoType].protonPack.webpackIndexEntryItems
                         : undefined;
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                    const packageJson: { config?: { publicPathFlag?: unknown } } = await import(path.join(appDir, "./package.json"));
 
                     // https://github.com/ProtonMail/proton-pack/tree/2e44d5fd9d2df39787202fc08a90757ea47fe480#how-to-configure
                     writeFile(
@@ -325,22 +344,15 @@ async function executeBuildFlow<T extends FolderAsDomainEntry[]>(
                                 appDir,
                                 webpackConfigVarName: "webpackConfig",
                                 webpackIndexEntryItems,
+                                legacyProtonPacking,
                             })
                         }
-                        ${
-                            webpackPatch?.publicPath
-                                ? "webpackConfig.output.publicPath = " + JSON.stringify(webpackPatch?.publicPath)
-                                : ""}
                         return webpackConfig;
                         }`,
                     );
+                }
 
-                    return {
-                        publicPath: packageJson.config?.publicPathFlag
-                            ? undefined
-                            : webpackPatch?.publicPath,
-                    };
-                })();
+                await execShell(["npx", ["--no", "rimraf", repoDistDir]]);
 
                 await execShell(
                     [
@@ -350,9 +362,13 @@ async function executeBuildFlow<T extends FolderAsDomainEntry[]>(
                             repoType,
                             "run",
                             "proton-pack",
-                            "compile",
-                            "--no-lint",
+                            ...(
+                                legacyProtonPacking
+                                    ? ["compile", "--no-lint"]
+                                    : ["build"]
+                            ),
                             `--api=${configApiParam}`,
+                            `--appMode=bundle`, // standalone | sso | bundle
                             ...(publicPath ? [`--publicPath=${publicPath}`] : []),
                             // eslint-disable-next-line
                             // https://github.com/ProtonMail/WebClients/blob/8d7f8a902034405988bd70431c714e9fdbb37a1d/packages/pack/bin/protonPack#L38

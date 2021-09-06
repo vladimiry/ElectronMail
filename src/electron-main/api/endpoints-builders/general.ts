@@ -321,11 +321,14 @@ export async function buildEndpoints(
                     throw new Error(`Update check failed: ${errorMessageData}`);
                 }
 
+                // TODO use some GitHub Rest API interaction library with built-in response format runtime validation
+                //      rather than doing blind/dev-time-only casting
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                const releases: Array<{
-                    tag_name: string;
-                    published_at: string;
-                    assets: Array<{ name: string }>;
+                const releases: ReadonlyArray<{
+                    tag_name: string
+                    published_at: string
+                    prerelease: boolean
+                    assets: Array<{ name: string }>
                 }> = await response.json();
 
                 logger.verbose(
@@ -338,6 +341,7 @@ export async function buildEndpoints(
                 );
 
                 const newReleaseItems = releases
+                    .filter(({prerelease}) => !prerelease)
                     .filter(({tag_name: tagName}) => compareVersions(tagName, PACKAGE_VERSION) > 0)
                     .filter(({assets}) => assets.some(({name}) => filterAssetName(name)))
                     .sort((o1, o2) => compareVersions(o1.tag_name, o2.tag_name))

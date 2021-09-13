@@ -1,7 +1,7 @@
 {
   "name": "electron-mail",
   "description": "Unofficial ProtonMail Desktop App",
-  "version": "4.12.7",
+  "version": "4.12.8",
   "author": "Vladimir Yakovlev <desktop-app@protonmail.ch>",
   "license": "GPL-3.0",
   "homepage": "https://github.com/vladimiry/ElectronMail",
@@ -173,7 +173,7 @@
     "cross-env": "7.0.3",
     "css-loader": "6.2.0",
     "dts-generator": "3.0.0",
-    "electron": "14.0.0",
+    "electron": "15.0.0-beta.5",
     "electron-builder": "22.13.1",
     "electron-fetch": "1.7.4",
     "electron-log": "4.4.1",

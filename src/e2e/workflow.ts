@@ -6,11 +6,11 @@ import sinon, {spy as sinonSpy} from "sinon";
 import {ElectronApplication, _electron} from "playwright";
 import {omit, randomString} from "remeda";
 
-import packageJSON from "package.json";
 import {
     BINARY_NAME,
     ONE_SECOND_MS,
     PACKAGE_NAME,
+    PACKAGE_VERSION,
     PRODUCT_NAME,
     PROTON_API_ENTRY_URLS,
     RUNTIME_ENV_USER_DATA_DIR,
@@ -42,8 +42,6 @@ export const ENV = {
 };
 
 export const CI = Boolean(process.env.CI);
-
-export const {name: PROJECT_NAME, version: PROJECT_VERSION} = packageJSON;
 
 const rootDirPath = path.resolve(__dirname, process.cwd());
 const appDirPath = path.join(rootDirPath, "./app");
@@ -458,7 +456,7 @@ export const initApp = async (
         t.truthy(userAgent, "user agent should be filled");
         // TODO also test user agents of webviews
         {
-            const bannedUserAgentWords = (["electron", PRODUCT_NAME, PACKAGE_NAME, BINARY_NAME, PROJECT_VERSION] as readonly string[])
+            const bannedUserAgentWords = (["electron", PRODUCT_NAME, PACKAGE_NAME, BINARY_NAME, PACKAGE_VERSION] as readonly string[])
                 .map((banned) => banned.toLowerCase());
             t.false(
                 bannedUserAgentWords.some((banned) => userAgent.toLowerCase().includes(banned)),

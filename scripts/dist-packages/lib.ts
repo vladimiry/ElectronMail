@@ -2,10 +2,8 @@ import fastGlob from "fast-glob";
 import fsExtra from "fs-extra";
 import path from "path";
 
+import {PACKAGE_NAME} from "src/shared/constants";
 import {sanitizeFastGlobPattern} from "src/shared/util";
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const {name: PROJECT_NAME} = require("package.json") as { name: string }; // tslint:disable-next-line:no-var-requires no-import-zones
 
 export async function listInstallationPackageFiles(dir: string): Promise<string[]> {
     const result: string[] = [];
@@ -16,7 +14,7 @@ export async function listInstallationPackageFiles(dir: string): Promise<string[
 
     return fastGlob(
         sanitizeFastGlobPattern(
-            path.join(dir, `./${PROJECT_NAME}*.*`),
+            path.join(dir, `./${PACKAGE_NAME}*.*`),
         ),
         {
             absolute: true,

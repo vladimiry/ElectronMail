@@ -1,4 +1,5 @@
 import {Actions, createEffect, ofType} from "@ngrx/effects";
+import type {DecryptionError} from "fs-json-store-encryption-adapter/lib/errors";
 import {EMPTY, from, merge, of, timer} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Store, select} from "@ngrx/store";
@@ -15,7 +16,6 @@ import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS} from "src/web
 import {ONE_SECOND_MS, PRODUCT_NAME, UPDATE_CHECK_FETCH_TIMEOUT} from "src/shared/constants";
 import {OptionsService} from "src/web/browser-window/app/_options/options.service";
 import {ProgressPatch, State} from "src/web/browser-window/app/store/reducers/options";
-import {curryFunctionMembers} from "src/shared/util";
 import {getWebLogger} from "src/web/browser-window/util";
 
 const _logger = getWebLogger(__filename);
@@ -207,10 +207,9 @@ export class OptionsEffects {
                                 concatMap(() => [
                                     OPTIONS_ACTIONS.GetSettingsResponse(settings),
                                     (() => {
-                                        const logger = curryFunctionMembers(_logger, `[${action.type}]`);
                                         const shouldRequestDbMetadataResetInitial = shouldRequestDbMetadataReset === "initial";
 
-                                        logger.info({shouldRequestDbMetadataResetInitial});
+                                        _logger.info(`[${action.type}]`, {shouldRequestDbMetadataResetInitial});
 
                                         if (
                                             shouldRequestDbMetadataResetInitial
@@ -250,10 +249,11 @@ export class OptionsEffects {
                                 .toLowerCase()
                                 .includes("decryption failed")
                         ) {
+                            _logger.error(error, {cause: String((error as DecryptionError).cause)});
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                             error.message = "Failed to decrypt the settings storage";
                         }
-                        return of(NOTIFICATION_ACTIONS.Error(error));
+                        return of(NOTIFICATION_ACTIONS.ErrorSkipLogging(error));
                     }),
                     finalize(() => this.dispatchProgress({signingIn: false})),
                 ),

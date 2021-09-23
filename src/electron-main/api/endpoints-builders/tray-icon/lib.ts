@@ -200,7 +200,7 @@ export async function loggedOutBundle({bitmap: source}: ImageBundle, config: Cir
 }
 
 export async function unreadNative(
-    unread: number,
+    unread: number | null,
     fontFilePath: string,
     {bitmap: source}: ImageBundle,
     config: CircleConfig & { textColor: string },
@@ -208,9 +208,16 @@ export async function unreadNative(
     icon: NativeImage;
     overlay: NativeImage;
 }> {
-    const circle = await (async (text, fontFamily): Promise<ReturnType<typeof buildCircle>> => {
+    const circle = await (async (): Promise<ReturnType<typeof buildCircle>> => {
         const rad = (source.width * config.scale) / 2;
         const textDrawArea = buildCircle(rad, config.color);
+
+        if (!unread) {
+            return textDrawArea;
+        }
+
+        const fontFamily = "some-font-family";
+        let text = String(unread);
 
         if (!text || text.length > 2) {
             text = "+";
@@ -240,7 +247,7 @@ export async function unreadNative(
         ctx.fillText(text, x, y);
 
         return textDrawArea;
-    })(String(unread), "some-font-family");
+    })();
     const {width, height} = circle;
     const icon = cloneBitmap(source);
 

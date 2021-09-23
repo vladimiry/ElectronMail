@@ -138,13 +138,7 @@ export const ENDPOINTS_DEFINITION = {
 
     toggleBrowserWindow: ActionType.Promise<{ forcedState: boolean } | void>(),
 
-    updateOverlayIcon: ActionType.Promise<{
-        hasLoggedOut: boolean;
-        unread: number;
-        trayIconColor?: string;
-        unreadBgColor?: string;
-        unreadTextColor?: string;
-    }>(),
+    updateOverlayIcon: ActionType.Promise<{ hasLoggedOut: boolean,  unread: number }>(),
 
     hotkey: ActionType.Promise<{ type: "copy" | "paste" | "selectAll" }>(),
 

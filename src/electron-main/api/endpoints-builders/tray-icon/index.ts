@@ -1,4 +1,6 @@
 import {app} from "electron";
+import {first} from "rxjs/operators";
+import {lastValueFrom} from "rxjs";
 
 import {CircleConfig, ImageBundle} from "./model";
 import {Context} from "src/electron-main/model";
@@ -8,7 +10,7 @@ import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/act
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {loggedOutBundle, recolor, trayIconBundleFromPath, unreadNative} from "./lib";
 
-const config: DeepReadonly<{
+const trayStyle: DeepReadonly<{
     loggedOut: CircleConfig;
     unread: CircleConfig & { textColor: string };
 }> = {
@@ -31,7 +33,7 @@ const resolveState: (ctx: DeepReadonly<Context>) => Promise<{
 
         const fileIcon = await trayIconBundleFromPath(ctx.locations.trayIcon);
         const defaultIcon = fileIcon;
-        const loggedOutIcon = await loggedOutBundle(defaultIcon, config.loggedOut);
+        const loggedOutIcon = await loggedOutBundle(defaultIcon, trayStyle.loggedOut);
 
         state = {
             trayIconColor: DEFAULT_TRAY_ICON_COLOR,
@@ -51,23 +53,29 @@ export async function buildEndpoints(
 ): Promise<Pick<IpcMainApiEndpoints, "updateOverlayIcon">> {
     return {
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-        async updateOverlayIcon({hasLoggedOut, unread, unreadBgColor, unreadTextColor, trayIconColor}) {
+        async updateOverlayIcon({hasLoggedOut, unread}) {
             const {browserWindow, tray} = (ctx.uiContext && await ctx.uiContext) ?? {};
 
             if (!browserWindow || !tray) {
                 return;
             }
 
-            const state = await resolveState(ctx);
+            const [
+                state,
+                {customUnreadBgColor, customUnreadTextColor, customTrayIconColor, doNotRenderNotificationBadgeValue},
+            ] = await Promise.all([
+                resolveState(ctx),
+                lastValueFrom(ctx.config$.pipe(first())),
+            ]);
 
-            if (trayIconColor && state.trayIconColor !== trayIconColor) {
+            if (customTrayIconColor && state.trayIconColor !== customTrayIconColor) {
                 state.defaultIcon = await recolor({
                     source: state.fileIcon.bitmap,
                     fromColor: DEFAULT_TRAY_ICON_COLOR,
-                    toColor: trayIconColor,
+                    toColor: customTrayIconColor,
                 });
-                state.loggedOutIcon = await loggedOutBundle(state.defaultIcon, config.loggedOut);
-                state.trayIconColor = trayIconColor;
+                state.loggedOutIcon = await loggedOutBundle(state.defaultIcon, trayStyle.loggedOut);
+                state.trayIconColor = customTrayIconColor;
             }
 
             setImmediate(() => {
@@ -82,22 +90,31 @@ export async function buildEndpoints(
 
             if (unread > 0) {
                 const {icon, overlay} = await unreadNative(
-                    unread,
+                    doNotRenderNotificationBadgeValue
+                        ? null
+                        : unread,
                     ctx.locations.trayIconFont,
                     canvas,
                     {
-                        ...config.unread,
-                        ...(unreadBgColor && {color: unreadBgColor}),
-                        ...(unreadTextColor && {textColor: unreadTextColor}),
+                        ...trayStyle.unread,
+                        ...(customUnreadBgColor && {color: customUnreadBgColor}),
+                        ...(customUnreadTextColor && {textColor: customUnreadTextColor}),
                     },
                 );
 
-                browserWindow.setOverlayIcon(overlay, `Unread messages count: ${unread}`);
                 tray.setImage(icon);
-                app.badgeCount = unread;
+                browserWindow.setOverlayIcon(
+                    overlay,
+                    doNotRenderNotificationBadgeValue
+                        ? "Unread messages present"
+                        : `Unread messages count: ${unread}`,
+                );
+                app.badgeCount = doNotRenderNotificationBadgeValue
+                    ? 0
+                    : unread;
             } else {
-                browserWindow.setOverlayIcon(null, "");
                 tray.setImage(canvas.native);
+                browserWindow.setOverlayIcon(null, "");
                 app.badgeCount = 0;
             }
         },

@@ -29,7 +29,7 @@ export async function appReadyHandler(ctx: Context): Promise<void> {
     await initApiEndpoints(ctx);
 
     // so consequent "ctx.configStore.readExisting()" calls don't fail since "endpoints.readConfig()" call initializes the config
-    const {spellCheckLocale, customTrayIconColor, logLevel, themeSource} = await (await ctx.deferredEndpoints.promise).readConfig();
+    const {spellCheckLocale, logLevel, themeSource} = await (await ctx.deferredEndpoints.promise).readConfig();
 
     // TODO test "logger.transports.file.level" update
     electronLog.transports.file.level = logLevel;
@@ -63,5 +63,5 @@ export async function appReadyHandler(ctx: Context): Promise<void> {
     app.on("second-instance", async () => (await uiContextDependentEndpoints).activateBrowserWindow());
     app.on("activate", async () => (await uiContextDependentEndpoints).activateBrowserWindow());
 
-    await (await uiContextDependentEndpoints).updateOverlayIcon({hasLoggedOut: false, unread: 0, trayIconColor: customTrayIconColor});
+    await (await uiContextDependentEndpoints).updateOverlayIcon({hasLoggedOut: false, unread: 0});
 }

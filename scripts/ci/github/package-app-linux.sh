@@ -20,8 +20,8 @@ export CXX=g++-7
 echo "::endgroup::"
 
 echo "::group::build native modules"
-# assuming that "ubuntu-16.04" image comes with glibc v2.23, see https://github.com/vladimiry/ElectronMail/issues/389#issuecomment-812071591
-GLIBC_INFO_EXPECTED_SUB="release version 2.23"
+# assuming that "ubuntu-18.04" image comes with glibc v2.27, see https://github.com/vladimiry/ElectronMail/issues/389#issuecomment-812071591
+GLIBC_INFO_EXPECTED_SUB="release version 2.27"
 GLIBC_INFO=$(lsof -p $$ | grep libc | awk ' { print $NF" --version"; } ' | sh)
 echo $GLIBC_INFO
 if [[ "$GLIBC_INFO" != *"$GLIBC_INFO_EXPECTED_SUB"* ]]; then

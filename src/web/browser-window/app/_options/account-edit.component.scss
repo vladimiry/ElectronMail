@@ -14,6 +14,11 @@
         }
     }
 
+    .row-primary-fields {
+        align-items: center;
+        margin-top: -($app-spacer-1 / 2);
+    }
+
     #accountEditFormEntryUrlField {
         .badge {
             $local-color: theme-color("primary");

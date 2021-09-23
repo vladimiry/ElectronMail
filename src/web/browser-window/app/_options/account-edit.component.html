@@ -74,20 +74,36 @@
                 type="text"
             >
         </div>
-        <div class="form-group">
-            <div class="custom-control custom-switch">
-                <input class="custom-control-input" formControlName="persistentSession" id="persistentSessionCheckbox" type="checkbox">
-                <label class="custom-control-label d-flex" for="persistentSessionCheckbox">
-                    Persistent session
+        <div class="row row-primary-fields">
+            <div class="col-md-6 form-group">
+                <div class="custom-control custom-switch">
+                    <input class="custom-control-input" formControlName="persistentSession" id="persistentSessionCheckbox" type="checkbox">
+                    <label class="custom-control-label d-flex" for="persistentSessionCheckbox">
+                        Persistent session
+                        <i
+                            class="fa fa-info-circle text-warning align-self-center ml-1"
+                            container="body"
+                            placement="bottom"
+                            popover="If option enabled the saved &quot;Proton Session&quot; will be reused on the next computer/app start and so the login form will be skipped."
+                            triggers="mouseenter:mouseleave"
+                        ></i>
+                        <a class="ml-1" href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/227">#227</a>
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-6 form-group form-inline">
+                <label class="pr-1">
+                    Login alias
                     <i
-                        class="fa fa-info-circle text-warning align-self-center ml-1"
+                        class="fa fa-info-circle text-primary align-self-center"
+                        style="margin-left: 3px"
                         container="body"
                         placement="bottom"
-                        popover="If option enabled the saved &quot;Proton Session&quot; will be reused on the next computer/app start and so the login form will be skipped."
+                        popover="If specified will be displayed in the app UI instead of login value. The alias value also gets displayed in the desktop notification message."
                         triggers="mouseenter:mouseleave"
                     ></i>
-                    <a class="ml-1" href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/227">#227</a>
                 </label>
+                <input class="form-control form-control-sm d-flex flex-grow-1" formControlName="title" type="text">
             </div>
         </div>
         <accordion [closeOthers]="true" class="mb-3">
@@ -95,19 +111,6 @@
                 <textarea class="form-control form-control-sm" rows="10" formControlName="customCSS"></textarea>
             </accordion-group>
             <accordion-group [isOpen]="false" heading="Advanced Options">
-                <div class="form-group">
-                    <label class="d-block pull-left">
-                        Login alias
-                        <i
-                            class="fa fa-info-circle text-primary align-self-center"
-                            container="body"
-                            placement="bottom"
-                            popover="If specified will be displayed in the app UI instead of login"
-                            triggers="mouseenter:mouseleave"
-                        ></i>
-                    </label>
-                    <input class="form-control form-control-sm" formControlName="title" type="text">
-                </div>
                 <div class="row">
                     <div class="col-md-6 form-group">
                         <label class="d-block pull-left">

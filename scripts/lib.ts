@@ -13,8 +13,15 @@ import {promisify} from "util";
 import {GIT_CLONE_ABSOLUTE_DIR, OUTPUT_ABSOLUTE_DIR} from "scripts/const";
 import {PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
 
-// eslint-disable-next-line no-console
-export const CONSOLE_LOG = console.log.bind(console);
+export const CONSOLE_LOG: typeof console.log = (...args) => {
+    return console.log( // eslint-disable-line no-console
+        /*reset:*/"\x1b[0m" +
+        /*yellow:*/"\x1b[33m" +
+        ">>> " +
+        /*reset:*/"\x1b[0m",
+        ...args,
+    );
+};
 
 export function resolveGitOutputBackupDir(
     {
@@ -74,12 +81,19 @@ export async function execShell(
 
     const spawnPromise = spawnAsync(command, args, options);
     const {stdout, stderr} = spawnPromise.child;
+    const print = (std: import("stream").Readable): void => {
+        byline(std).on("data", (chunk) => {
+            console.log( // eslint-disable-line no-console
+                formatStreamChunk(chunk),
+            );
+        });
+    };
 
     if (printStdOut && stdout) {
-        byline(stdout).on("data", (chunk) => CONSOLE_LOG(formatStreamChunk(chunk)));
+        print(stdout);
     }
     if (printStdErr && stderr) {
-        byline(stderr).on("data", (chunk) => CONSOLE_LOG(formatStreamChunk(chunk)));
+        print(stderr);
     }
 
     try {

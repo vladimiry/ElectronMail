@@ -20,7 +20,7 @@ export const PROVIDER_REPO_MAP = {
     [PROVIDER_APP_NAMES[0]]: {
         repoRelativeDistDir: "./dist",
         baseDirName: "",
-        tag: "proton-mail@4.6.2",
+        tag: "proton-mail@4.8.0",
         protonPack: {
             appConfig: {clientId: "WebMail"},
             webpackIndexEntryItems: [
@@ -48,13 +48,13 @@ export const PROVIDER_REPO_MAP = {
     [PROVIDER_APP_NAMES[1]]: {
         repoRelativeDistDir: "./dist",
         baseDirName: "account",
-        tag: "proton-account@4.7.1",
+        tag: "proton-account@4.8.1",
         protonPack: {appConfig: {clientId: "WebAccount"}}
     },
     [PROVIDER_APP_NAMES[2]]: {
         repoRelativeDistDir: "./dist",
         baseDirName: "calendar",
-        tag: "proton-calendar@4.4.6",
+        tag: "proton-calendar@4.5.1",
         protonPack: {
             appConfig: {clientId: "WebCalendar"},
             webpackIndexEntryItems: [

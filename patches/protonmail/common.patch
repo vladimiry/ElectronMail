@@ -1,3 +1,154 @@
+diff --git a/packages/pack/scripts/validate.sh b/packages/pack/scripts/validate.sh
+index 1a2ea64..bae388c 100755
+--- a/packages/pack/scripts/validate.sh
++++ b/packages/pack/scripts/validate.sh
+@@ -58,7 +58,7 @@ function main {
+   fi;
+
+   if [ "$hasSourceMap" -eq 0 ]; then
+-    hasError=true;
++    #hasError=true;
+     echo "[error] no SourceMaps found inside the directory: $OUTPUT_DIR";
+   fi;
+
+diff --git a/packages/pack/webpack.config.js b/packages/pack/webpack.config.js
+index dbfc3b18d..89807e7dd 100644
+--- a/packages/pack/webpack.config.js
++++ b/packages/pack/webpack.config.js
+@@ -28,7 +28,20 @@ const getConfig = (env) => {
+         },
+     };
+
+-    return {
++    return (() => {
++        const file = path.resolve("./proton.config.js");
++        if (require("fs").existsSync(file)) {
++            console.log(
++                /*reset:*/"\x1b[0m" +
++                /*yellow:*/"\x1b[33m" +
++                ">>> " +
++                /*reset:*/"\x1b[0m",
++                `Found ${file}, extend the config`,
++            )
++            return require(file);
++        }
++        return (value) => value;
++    })()({
+         target: options.isProduction ? `browserslist:${options.browserslist}` : 'web', // dev-server bug https://github.com/webpack/webpack-dev-server/issues/2812
+         mode: options.isProduction ? 'production' : 'development',
+         bail: options.isProduction,
+@@ -103,7 +116,7 @@ const getConfig = (env) => {
+                 },
+             }),
+         },
+-    };
++    });
+ };
+
+ module.exports = getConfig;
+
+diff --git a/packages/pack/webpack/css.loader.js b/packages/pack/webpack/css.loader.js
+index c50ab972c..a505eb314 100644
+--- a/packages/pack/webpack/css.loader.js
++++ b/packages/pack/webpack/css.loader.js
+@@ -44,11 +44,13 @@ module.exports = ({ browserslist }) => {
+         },
+         {
+             loader: require.resolve('resolve-url-loader'),
++            options: {sourceMap: false},
+         },
+         {
+             loader: require.resolve('sass-loader'),
+             options: {
+                 additionalData: PREPEND_SASS,
++                sourceMap: true, // to please "resolve-url-loader"
+             },
+         },
+     ].filter(Boolean);
+
+diff --git a/packages/shared/lib/helpers/sentry.ts b/packages/shared/lib/helpers/sentry.ts
+index 6cbb045..2993b4e 100644
+--- a/packages/shared/lib/helpers/sentry.ts
++++ b/packages/shared/lib/helpers/sentry.ts
+@@ -1,75 +1,13 @@
+ import * as Sentry from '@sentry/browser';
+
+ import { ProtonConfig } from '../interfaces';
+-import { VPN_HOSTNAME } from '../constants';
+-
+-const isLocalhost = (host: string) => host.startsWith('localhost');
+-
+-const isProduction = (host: string) => host.endsWith('.protonmail.com') || host === VPN_HOSTNAME;
+
+ function main({ SENTRY_DSN, COMMIT, APP_VERSION }: Pick<ProtonConfig, 'SENTRY_DSN' | 'COMMIT' | 'APP_VERSION'>) {
+-    const { host } = window.location;
+-
+-    // No need to configure it if we don't load the DSN
+-    if (!SENTRY_DSN || isLocalhost(host)) {
+-        return;
+-    }
+-
+-    // Assumes SENTRY_DSN is: https://111b3eeaaec34cae8e812df705690a36@sentry/11
+-    // To get https://111b3eeaaec34cae8e812df705690a36@mail.protonmail.com/api/reports/sentry/11
+-    const dsn = SENTRY_DSN.replace('sentry', `${host}/api/reports/sentry`);
+-
+-    Sentry.init({
+-        dsn,
+-        release: isProduction(host) ? APP_VERSION : COMMIT,
+-        environment: host,
+-        normalizeDepth: 5,
+-        beforeSend(event, hint) {
+-            const error = hint?.originalException;
+-            const stack = typeof error === 'string' ? error : error?.stack;
+-            // Filter out broken ferdi errors
+-            if (stack && stack.match(/ferdi|franz/i)) {
+-                return null;
+-            }
+-            return event;
+-        },
+-        ignoreErrors: [
+-            // Ignore random plugins/extensions
+-            'top.GLOBALS',
+-            'canvas.contentDocument',
+-            'MyApp_RemoveAllHighlights',
+-            'atomicFindClose',
+-            'conduitPage',
+-            // https://bugzilla.mozilla.org/show_bug.cgi?id=1678243
+-            'XDR encoding failure',
+-            'Request timed out',
+-            'No network connection',
+-            'Failed to fetch',
+-            'NetworkError when attempting to fetch resource.',
+-            'No network connection',
+-            'webkitExitFullScreen', // Bug in Firefox for iOS.
+-            'InactiveSession',
+-            'UnhandledRejection', // Happens too often in extensions and we have lints for that, so should be safe to ignore.
+-            /chrome-extension/,
+-            /moz-extension/,
+-        ],
+-    });
+
+-    Sentry.configureScope((scope) => {
+-        scope.setTag('appVersion', APP_VERSION);
+-    });
+ }
+
+-export const traceError = (e: unknown) => {
+-    if (!isLocalhost(window.location.host)) {
+-        Sentry.captureException(e);
+-    }
+-};
++export const traceError = (e: unknown) => console.error(e);
+
+-export const captureMessage = (...args: Parameters<typeof Sentry.captureMessage>) => {
+-    if (!isLocalhost(window.location.host)) {
+-        Sentry.captureMessage(...args);
+-    }
+-};
++export const captureMessage = (...args: Parameters<typeof Sentry.captureMessage>) => console.log(args[0]);
+
+ export default main;
+
 diff --git a/packages/shared/lib/helpers/browser.ts b/packages/shared/lib/helpers/browser.ts
 index 8c94fae..3602b68 100644
 --- a/packages/shared/lib/helpers/browser.ts

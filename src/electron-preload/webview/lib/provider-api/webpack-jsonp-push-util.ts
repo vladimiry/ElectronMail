@@ -92,7 +92,6 @@ export const overridePushMethodGlobally = <T>(
         resultKeys,
         preChunkItemOverridingHook,
         chunkItemHook,
-        legacyProtonPacking,
         logger,
     }: {
         resultKeys: ReadonlyArray<keyof T>,
@@ -104,7 +103,6 @@ export const overridePushMethodGlobally = <T>(
                 webpack_require: Parameters<import("ts-essentials").ValueOf<WebpackJsonpArrayItem[1]>>[2],
             }
         ) => void,
-        legacyProtonPacking?: boolean,
         logger: Logger,
     },
 ): void => {
@@ -142,30 +140,24 @@ export const overridePushMethodGlobally = <T>(
         return result;
     };
 
-    if (legacyProtonPacking) {
-        const webpackJsonp = (window as WebpackJsonpPropAwareWindow).webpackJsonp ??= [];
-        logger.verbose(`override "webpackJsonp.push"`, {legacyProtonPacking});
-        webpackJsonp.push = resolveOverriddenPush(webpackJsonp.push.bind(webpackJsonp));
-    } else {
-        (window as WebpackJsonpPropAwareWindow).webpackJsonp = new Proxy(
-            (window as WebpackJsonpPropAwareWindow).webpackJsonp ??= [],
-            {
-                set(webpackJsonp, prop, value) {
-                    if (prop !== "push") {
-                        Object.defineProperty(
-                            webpackJsonp,
-                            prop,
-                            {value}, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-                        );
-                        return true;
-                    }
-                    logger.verbose(`override "webpackJsonp.push"`, {legacyProtonPacking});
-                    webpackJsonp.push = resolveOverriddenPush(value as typeof webpackJsonp.push);
+    (window as WebpackJsonpPropAwareWindow).webpackJsonp = new Proxy(
+        (window as WebpackJsonpPropAwareWindow).webpackJsonp ??= [],
+        {
+            set(webpackJsonp, prop, value) {
+                if (prop !== "push") {
+                    Object.defineProperty(
+                        webpackJsonp,
+                        prop,
+                        {value}, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                    );
                     return true;
-                },
+                }
+                logger.verbose(`override "webpackJsonp.push"`);
+                webpackJsonp.push = resolveOverriddenPush(value as typeof webpackJsonp.push);
+                return true;
             },
-        );
-    }
+        },
+    );
 };
 
 export const handleObservableValue = <R,

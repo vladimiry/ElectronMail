@@ -1,0 +1,19 @@
+{
+  "proton-account": [
+    "common.patch",
+    "proton-account.patch"
+  ],
+  "proton-calendar": [
+    "common.patch",
+    "common-except-mail-account.patch"
+  ],
+  "proton-drive": [
+    "common.patch",
+    "proton-drive.patch",
+    "common-except-mail-account.patch"
+  ],
+  "proton-mail": [
+    "common.patch",
+    "proton-mail.patch"
+  ]
+}

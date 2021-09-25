@@ -2,10 +2,10 @@ import fs from "fs";
 import fsExtra from "fs-extra";
 import path from "path";
 
-import {BINARY_NAME, RUNTIME_ENV_CI_PROTON_CLIENTS_ONLY, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/constants";
 import {CONSOLE_LOG, applyPatch, execShell, resolveGitOutputBackupDir} from "scripts/lib";
 import {CWD_ABSOLUTE_DIR, GIT_CLONE_ABSOLUTE_DIR} from "scripts/const";
 import {PROVIDER_APP_NAMES, PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
+import {RUNTIME_ENV_CI_PROTON_CLIENTS_ONLY, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/constants";
 
 const shouldFailOnBuildEnvVarName = "ELECTRON_MAIL_SHOULD_FAIL_ON_BUILD";
 
@@ -77,15 +77,11 @@ async function configure(
 
 function resolveWebpackConfigPatchingCode(
     {
-        appDir,
         webpackConfigVarName,
         webpackIndexEntryItems,
-        legacyProtonPacking,
     }: {
-        appDir: string
         webpackConfigVarName: string
         webpackIndexEntryItems?: unknown
-        legacyProtonPacking?: boolean,
     },
 ): string {
     const disableMangling = Boolean(webpackIndexEntryItems);
@@ -107,52 +103,17 @@ function resolveWebpackConfigPatchingCode(
             },
         );
 
-        ${legacyProtonPacking
-        ? `{
-            Object.assign(
-                ${webpackConfigVarName}.optimization,
-                {
-                    namedChunks: true,
-
-                    // allows resolving individual modules by path-based names (from "window.webpackJsonp")
-                    namedModules: ${disableMangling /* eslint-disable-line @typescript-eslint/restrict-template-expressions */},
-                },
-            );
-        }`
-        : `{
-            Object.assign(
-                ${webpackConfigVarName}.optimization,
-                {
-                    chunkIds: "named",
-                    ${disableMangling ? "mangleExports: false," : ""}
-                },
-            );
-        }`}
+        Object.assign(
+            ${webpackConfigVarName}.optimization,
+            {
+                chunkIds: "named",
+                ${disableMangling ? "mangleExports: false," : ""}
+            },
+        );
 
         ${disableMangling
-        ? `(() => {
-            if (${!legacyProtonPacking /* eslint-disable-line @typescript-eslint/restrict-template-expressions */}) {
-                webpackConfig.output.chunkLoadingGlobal = "webpackJsonp";
-                return;
-            }
-            const items = ${JSON.stringify(webpackIndexEntryItems, null, 2)}
-				.map((item) => require("path").resolve(${JSON.stringify(appDir)}, item));
-            Object.assign(
-                (${webpackConfigVarName}.optimization.splitChunks.cacheGroups
-                    = ${webpackConfigVarName}.optimization.splitChunks.cacheGroups || {}),
-                {
-                    ${JSON.stringify(BINARY_NAME)}: {
-                        test(module) {
-                            const resource = module && module.resource
-                            return resource && items.some((item) => resource.endsWith(item))
-                        },
-                        enforce: true,
-                        minSize: 0,
-                        name: "${BINARY_NAME}-chunk",
-                    },
-                },
-            );
-        })()` : ""}
+        ? `webpackConfig.output.chunkLoadingGlobal = "webpackJsonp";`
+        : ""}
 
         ${disableMangling
         ? `
@@ -197,7 +158,7 @@ function resolveWebpackConfigPatchingCode(
         ${webpackConfigVarName}.plugins = ${webpackConfigVarName}.plugins.filter((plugin) => {
             switch (plugin.constructor.name) {
                 case "HtmlWebpackPlugin":
-                    plugin[${legacyProtonPacking ? "'options'" : "'userOptions'"}].minify = false;
+                    plugin.userOptions.minify = false;
                     break;
                 case "ImageminPlugin":
                     return false;
@@ -264,7 +225,6 @@ async function executeBuildFlow<T extends FolderAsDomainEntry[]>(
     const appDir = path.join(repoDir, "./applications", repoType.substr("proton-".length));
     const repoDistDir = path.join(appDir, repoRelativeDistDir);
     const {tag} = PROVIDER_REPO_MAP[repoType];
-    const legacyProtonPacking = repoType === "proton-calendar";
 
     const state: { buildingSetup: () => Promise<void> } = {
         async buildingSetup() {
@@ -287,11 +247,31 @@ async function executeBuildFlow<T extends FolderAsDomainEntry[]>(
 
             await execShell(["git", ["reset", "--hard", tag], {cwd: repoDir}]);
 
-            // TODO "drop yarn install" hacks when executed on CI env
+            // dropping unused applications
+            await execShell(["npx", ["--no", "rimraf", "./applications/{storybook,vpn-settings}"], {cwd: repoDir}]);
+
+            {
+                // TODO drop "postinstall" script wiping logic when all referenced https://github.com/ProtonMail/WebClients/tags get updated
+                //      see https://github.com/ProtonMail/WebClients/issues/254 for details
+                const scriptCriteria = {key: "postinstall", value: "is-ci || (husky install; yarn run config-app)"} as const;
+                const packageJSONFileLocation = path.join(repoDir, "./package.json");
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                const packageJSON: { scripts: Record<string, string> } = JSON.parse(fs.readFileSync(packageJSONFileLocation).toString());
+
+                if (
+                    Object
+                        .entries(packageJSON.scripts)
+                        .some(([key, value]) => key === scriptCriteria.key && value === scriptCriteria.value)
+                ) {
+                    CONSOLE_LOG(`Dropping "${scriptCriteria.key}" script from the ${packageJSONFileLocation} file...`);
+                    delete packageJSON.scripts[scriptCriteria.key];
+                    fs.writeFileSync(packageJSONFileLocation, JSON.stringify(packageJSON, null, 2));
+                }
+            }
+
+            // TODO drop "yarn install" hacks when executing on CI env
             if (process.env.CI) {
-                // update yarn/berry to avoid the following error:
-                //     eslint-disable-next-line max-len
-                //     YN0018: │ sieve.js@https://github.com/ProtonMail/sieve.js.git#commit=a09ab52092164af74278e77612a091e730e9b7e9: The remote archive doesn't match the expected checksum
+                // updating yarn/berry to avoid the following error: YN0018: ... The remote archive doesn't match the expected checksum
                 // see details in:
                 //     https://github.com/yarnpkg/berry/issues/1989#issuecomment-921906686
                 //     https://github.com/yarnpkg/berry/issues/1142
@@ -310,22 +290,14 @@ async function executeBuildFlow<T extends FolderAsDomainEntry[]>(
                     },
                 ]);
             } else {
-                await execShell(["yarn", ["install"], {cwd: repoDir}]);
+                await execShell(["yarn", ["install"], {cwd: repoDir}], {printStdOut: false});
             }
 
-            { // patching
-                const resolvePatchFile = (file: string): string => path.join(CWD_ABSOLUTE_DIR, `./patches/protonmail/${file}`);
-                const repoTypePatchFile = resolvePatchFile(`${repoType}.patch`);
-
-                await applyPatch({patchFile: resolvePatchFile("common.patch"), cwd: repoDir});
-
-                if (!legacyProtonPacking) {
-                    await applyPatch({patchFile: resolvePatchFile("except-calendar.patch"), cwd: repoDir});
-                }
-
-                if (fsExtra.pathExistsSync(repoTypePatchFile)) {
-                    await applyPatch({patchFile: repoTypePatchFile, cwd: repoDir});
-                }
+            for (const patchFileName of (await import("patches/protonmail/meta.json"))[repoType]) {
+                await applyPatch({
+                    patchFile: path.join(CWD_ABSOLUTE_DIR, "./patches/protonmail", patchFileName),
+                    cwd: repoDir,
+                });
             }
         },
     };
@@ -374,10 +346,8 @@ async function executeBuildFlow<T extends FolderAsDomainEntry[]>(
                         module.exports = (webpackConfig) => {
                         ${
                             resolveWebpackConfigPatchingCode({
-                                appDir,
                                 webpackConfigVarName: "webpackConfig",
                                 webpackIndexEntryItems,
-                                legacyProtonPacking,
                             })
                         }
                         return webpackConfig;
@@ -395,11 +365,7 @@ async function executeBuildFlow<T extends FolderAsDomainEntry[]>(
                             repoType,
                             "run",
                             "proton-pack",
-                            ...(
-                                legacyProtonPacking
-                                    ? ["compile", "--no-lint"]
-                                    : ["build"]
-                            ),
+                            "build",
                             `--api=${configApiParam}`,
                             `--appMode=bundle`, // standalone | sso | bundle
                             ...(publicPath ? [`--publicPath=${publicPath}`] : []),

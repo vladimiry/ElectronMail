@@ -25,7 +25,6 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
         const resolveIfFullyInitialized = webpackJsonpPushUtil.buildFullyInitializedResolver(result, resolve, logger);
 
         webpackJsonpPushUtil.overridePushMethodGlobally({
-            legacyProtonPacking: true,
             resultKeys: Object.keys(result) as ReadonlyArray<keyof typeof result>,
             preChunkItemOverridingHook({resultKey}) {
                 if (

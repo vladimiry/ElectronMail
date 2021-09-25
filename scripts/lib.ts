@@ -13,12 +13,13 @@ import {promisify} from "util";
 import {GIT_CLONE_ABSOLUTE_DIR, OUTPUT_ABSOLUTE_DIR} from "scripts/const";
 import {PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
 
+export const makeConsoleTextYellow = (value: string): string => {
+    return /*reset:*/"\x1b[0m" + /*yellow:*/"\x1b[33m" + value + /*reset:*/"\x1b[0m";
+};
+
 export const CONSOLE_LOG: typeof console.log = (...args) => {
     return console.log( // eslint-disable-line no-console
-        /*reset:*/"\x1b[0m" +
-        /*yellow:*/"\x1b[33m" +
-        ">>> " +
-        /*reset:*/"\x1b[0m",
+        makeConsoleTextYellow(">>>"),
         ...args,
     );
 };
@@ -75,7 +76,7 @@ export async function execShell(
             ? ` (options: ${stringifiedOptions})`
             : "";
         CONSOLE_LOG(
-            `Executing Shell command${optionsPart}: ${[command, ...(args ?? [])].join(" ")}`,
+            `Executing Shell command${optionsPart}: ${makeConsoleTextYellow([command, ...(args ?? [])].join(" "))}`,
         );
     }
 

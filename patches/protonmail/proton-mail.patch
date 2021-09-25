@@ -1,3 +1,46 @@
+diff --git a/packages/pack/bin/protonPack.js b/packages/pack/bin/protonPack.js
+index 1c55efdf8..1a30adf5a 100755
+--- a/packages/pack/bin/protonPack.js
++++ b/packages/pack/bin/protonPack.js
+@@ -62,6 +62,14 @@ const commandWithLog = (...args) => {
+
+ addGlobalOptions(program.command('build').description('create an optimized production build'))
+     .option('--no-sri', 'disable sri')
++    .option(
++        '--api <api>',
++        '',
++        (api) => {
++            return getApi(api);
++        },
++        getApi('')
++    )
+     .action(async (options, env) => {
+         const configData = getConfigData(options);
+         await writeConfig(getConfigFile(configData));
+@@ -70,7 +78,7 @@ addGlobalOptions(program.command('build').description('create an optimized produ
+         const outputPath = path.resolve('./dist');
+         await commandWithLog(`rm -rf ${outputPath}`);
+         await commandWithLog(
+-            `${require.resolve('webpack-cli/bin/cli.js')} --progress --output-path=${outputPath} ${webpackArgs}`,
++            `${require.resolve('webpack-cli/bin/cli.js')} --output-path=${outputPath} ${webpackArgs}`,
+             {
+                 stdio: 'inherit',
+             }
+
+diff --git a/packages/pack/lib/config.js b/packages/pack/lib/config.js
+index daece3840..557ceba0d 100644
+--- a/packages/pack/lib/config.js
++++ b/packages/pack/lib/config.js
+@@ -128,7 +128,7 @@ const getConfigFile = ({ buildData, appData }) => {
+     export const BRANCH = '${buildData.branch}';
+     export const DATE_VERSION = '${buildData.date}';
+     export const APP_NAME = '${appData.appName}';
+-    export const API_URL = '/api';
++    export const API_URL = '${appData.api}';
+     export const LOCALES = ${JSON.stringify(LOCALES)};
+     export const API_VERSION = '3';
+     export const VERSION_PATH = '${appData.publicPath}assets/version.json';
+
 diff --git a/packages/components/containers/login/MinimalLoginContainer.tsx b/packages/components/containers/login/MinimalLoginContainer.tsx
 index 6fef05c..1719cc8 100644
 --- a/packages/components/containers/login/MinimalLoginContainer.tsx
@@ -51,11 +94,11 @@ index 3f222f7..98e9cfe 100644
                      labelID={labelID}
 
 diff --git a/applications/mail/src/app/components/header/AdvancedSearchDropdown.tsx b/applications/mail/src/app/components/header/AdvancedSearchDropdown.tsx
-index 3492405b4..feed60643 100644
+index 7efb4cea4..afdc5662e 100644
 --- a/applications/mail/src/app/components/header/AdvancedSearchDropdown.tsx
 +++ b/applications/mail/src/app/components/header/AdvancedSearchDropdown.tsx
-@@ -354,7 +354,7 @@ const AdvancedSearchDropdown = ({ keyword: fullInput = '', isNarrow }: Props) =>
-     );
+@@ -337,7 +337,7 @@ const AdvancedSearchDropdown = ({ keyword: fullInput = '', isNarrow }: Props) =>
+         .concat(labels.map(({ ID: value, Name: text }) => ({ value, text, group: c('Group').t`Labels` })));
 
      // Switches
 -    const showEncryptedSearch = !isMobile() && !!esFeature && !!esFeature.Value && !!isPaid(user);
@@ -65,23 +108,181 @@ index 3492405b4..feed60643 100644
      const showSubTitleSection = wasIndexingDone(user.ID) && !isRefreshing && isDBLimited;
 
 diff --git a/applications/mail/src/app/containers/EncryptedSearchProvider.tsx b/applications/mail/src/app/containers/EncryptedSearchProvider.tsx
-index 072ae94..035d49e 100644
+index adf528efb..e5ec3f01a 100644
 --- a/applications/mail/src/app/containers/EncryptedSearchProvider.tsx
 +++ b/applications/mail/src/app/containers/EncryptedSearchProvider.tsx
-@@ -622,7 +622,7 @@ const EncryptedSearchProvider = ({ children }: Props) => {
-             cachedIndexKey,
-         } = esStatus;
+@@ -16,7 +16,6 @@ import { EVENT_ERRORS } from '@proton/shared/lib/errors';
+ import { hasBit } from '@proton/shared/lib/helpers/bitset';
+ import { useGetMessageKeys } from '../hooks/message/useGetMessageKeys';
+ import { Event } from '../models/event';
+-import { Element } from '../models/element';
+ import {
+     EncryptedSearch,
+     EncryptedSearchFunctions,
+@@ -25,8 +24,6 @@ import {
+     IncrementSearch,
+     HighlightMetadata,
+     HighlightString,
+-    LastEmail,
+-    ESMessage,
+     IsSearchResult,
+     ESCache,
+ } from '../models/encryptedSearch';
+@@ -52,9 +49,7 @@ import {
+ } from '../helpers/encryptedSearch/esUtils';
+ import { buildDB, getIndexKey, initialiseDB } from '../helpers/encryptedSearch/esBuild';
+ import {
+-    hybridSearch,
+     normaliseSearchParams,
+-    shouldOnlySortResults,
+     uncachedSearch,
+ } from '../helpers/encryptedSearch/esSearch';
+ import { cacheDB, refreshESCache } from '../helpers/encryptedSearch/esCache';
+@@ -64,7 +59,7 @@ import {
+     refreshIndex,
+     syncMessageEvents,
+ } from '../helpers/encryptedSearch/esSync';
+-import { queryEvents, sendESMetrics } from '../helpers/encryptedSearch/esAPI';
++import { queryEvents } from '../helpers/encryptedSearch/esAPI';
+ import { highlightJSX, insertMarks } from '../helpers/encryptedSearch/esHighlight';
 
+ const EncryptedSearchContext = createContext<EncryptedSearchFunctions>(null as any);
+@@ -692,128 +687,7 @@ const EncryptedSearchProvider = ({ children }: Props) => {
+     /**
+      * Execute an encrypted search
+      */
+-    const encryptedSearch: EncryptedSearch = async (labelID, setCache) => {
+-        const t1 = performance.now();
+-        const {
+-            dbExists,
+-            esEnabled,
+-            previousNormSearchParams,
+-            permanentResults,
+-            isSearchPartial: wasSearchPartial,
+-            cachedIndexKey,
+-            isCaching,
+-        } = esStatus;
+-
 -        if (!dbExists || !esEnabled) {
-+        if (true) {
-             return false;
-         }
+-            return false;
+-        }
+-
+-        const isIDBIntact = await canUseES(userID);
+-        if (!isIDBIntact) {
+-            await dbCorruptError();
+-            return false;
+-        }
+-
+-        // Prevent old searches from interfering with newer ones
+-        abortSearchingRef.current.abort();
+-
+-        // Caching needs to be triggered here for when a refresh happens on a search URL
+-        if (!isCaching && !esCacheRef.current.isCacheReady) {
+-            void cacheIndexedDB();
+-        }
+-
+-        const searchParameters = extractSearchParameters(location);
+-        const filterParameter = filterFromUrl(location);
+-        const sortParameter = sortFromUrl(location);
+-        const normalisedSearchParams = normaliseSearchParams(searchParameters, labelID, filterParameter, sortParameter);
+-
+-        // In case only sorting changed, for complete searches it doesn't make sense to perform a new search
+-        if (!wasSearchPartial && previousNormSearchParams) {
+-            const shouldSortOnly = shouldOnlySortResults(normalisedSearchParams, previousNormSearchParams);
+-            if (shouldSortOnly) {
+-                setCache(permanentResults, pageRef.current);
+-                return true;
+-            }
+-        }
+-
+-        setESStatus((esStatus) => {
+-            return {
+-                ...esStatus,
+-                isSearching: true,
+-                isSearchPartial: true,
+-            };
+-        });
+-
+-        // Record the number of messages that were actually searched (i.e. not discarded by means of filters)
+-        let numMessagesSearched = 0;
+-        const incrementMessagesSearched = () => {
+-            numMessagesSearched++;
+-        };
+-
+-        abortSearchingRef.current = new AbortController();
+-        const controlledSetCache = (Elements: Element[]) => {
+-            if (!abortSearchingRef.current.signal.aborted) {
+-                setCache(Elements, pageRef.current);
+-            }
+-        };
+-
+-        let searchResults: ESMessage[] = [];
+-        let isSearchPartial = false;
+-        let lastEmail: LastEmail | undefined;
+-        try {
+-            ({ searchResults, isSearchPartial, lastEmail } = await hybridSearch(
+-                esCacheRef,
+-                normalisedSearchParams,
+-                cachedIndexKey,
+-                getUserKeys,
+-                userID,
+-                incrementMessagesSearched,
+-                controlledSetCache,
+-                abortSearchingRef
+-            ));
+-        } catch (error: any) {
+-            esSentryReport('encryptedSearch: hybridSearch', { error });
+-            // If the key is the problem, then we want to wipe the DB and fall back to
+-            // server-side search, otherwise we want to show a generic error and still
+-            // fall back to server-side search
+-            if (error.message === 'Key not found') {
+-                await dbCorruptError();
+-                return false;
+-            }
+-            throw error;
+-        }
+-
+-        if (!abortSearchingRef.current.signal.aborted) {
+-            setESStatus((esStatus) => {
+-                return {
+-                    ...esStatus,
+-                    permanentResults: searchResults,
+-                    labelID,
+-                    setElementsCache: setCache,
+-                    lastEmail,
+-                    previousNormSearchParams: normalisedSearchParams,
+-                    page: 0,
+-                    isSearchPartial,
+-                    isSearching: false,
+-                };
+-            });
+-            setCache(searchResults, pageRef.current);
+-
+-            const t2 = performance.now();
+-            void sendESMetrics(
+-                api,
+-                userID,
+-                esCacheRef.current.cacheSize,
+-                numMessagesSearched,
+-                Math.ceil(t2 - t1),
+-                searchResults.length,
+-                !esCacheRef.current.isCacheReady,
+-                esCacheRef.current.isCacheLimited
+-            );
+-        }
+-
+-        return true;
+-    };
++    const encryptedSearch: EncryptedSearch = async (labelID, setCache) => false;
+
+     /**
+      * Increase the number of results in case the cache is limited as the user changes page
 
 diff --git a/applications/mail/src/app/App.tsx b/applications/mail/src/app/App.tsx
-index daf8cf8..429b0ea 100644
+index a4bc16d65..84140bc5b 100644
 --- a/applications/mail/src/app/App.tsx
 +++ b/applications/mail/src/app/App.tsx
-@@ -9,7 +9,6 @@ import { initLocales } from '@proton/shared/lib/i18n/locales';
+@@ -10,7 +10,6 @@ import { initLocales } from '@proton/shared/lib/i18n/locales';
 
  import * as config from './config';
  import PrivateApp from './PrivateApp';
@@ -89,8 +290,8 @@ index daf8cf8..429b0ea 100644
 
  import './app.scss';
 
-@@ -22,18 +21,6 @@ const enhancedConfig = {
-
+@@ -24,19 +23,6 @@ const enhancedConfig = {
+ newVersionUpdater(enhancedConfig);
  sentry(enhancedConfig);
 
 -if ('registerProtocolHandler' in navigator) {
@@ -98,9 +299,10 @@ index daf8cf8..429b0ea 100644
 -        navigator.registerProtocolHandler(
 -            'mailto',
 -            `${window.location.origin}${MAILTO_PROTOCOL_HANDLER_PATH}`,
+-            // @ts-expect-error third arg is still recommended (cf. https://developer.mozilla.org/en-US/docs/Web/API/Navigator/registerProtocolHandler)
 -            'ProtonMail'
 -        );
--    } catch (e) {
+-    } catch (e: any) {
 -        console.error(e);
 -    }
 -}

@@ -16,7 +16,7 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
 
     return (async (): Promise<ProviderApi> => {
         const [standardSetupPublicApi, internals] = await Promise.all([
-            resolveStandardSetupPublicApi(logger, true),
+            resolveStandardSetupPublicApi(logger),
             resolveProviderInternals(),
         ]);
         const internalsPrivateScope$ = internals["./src/app/content/PrivateApp.tsx"].value$.pipe(distinctUntilChanged());

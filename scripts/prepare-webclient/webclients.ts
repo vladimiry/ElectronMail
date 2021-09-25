@@ -247,9 +247,6 @@ async function executeBuildFlow<T extends FolderAsDomainEntry[]>(
 
             await execShell(["git", ["reset", "--hard", tag], {cwd: repoDir}]);
 
-            // dropping unused applications
-            await execShell(["npx", ["--no", "rimraf", "./applications/{storybook,vpn-settings}"], {cwd: repoDir}]);
-
             {
                 // TODO drop "postinstall" script wiping logic when all referenced https://github.com/ProtonMail/WebClients/tags get updated
                 //      see https://github.com/ProtonMail/WebClients/issues/254 for details
@@ -271,21 +268,20 @@ async function executeBuildFlow<T extends FolderAsDomainEntry[]>(
 
             // TODO drop "yarn install" hacks when executing on CI env
             if (process.env.CI) {
-                // updating yarn/berry to avoid the following error: YN0018: ... The remote archive doesn't match the expected checksum
-                // see details in:
-                //     https://github.com/yarnpkg/berry/issues/1989#issuecomment-921906686
-                //     https://github.com/yarnpkg/berry/issues/1142
-                await execShell(["yarn", ["set", "version", "3.1.0-rc.3"], {cwd: repoDir}]);
-                await execShell(["yarn", ["plugin", "import", "workspace-tools"], {cwd: repoDir}]);
+                // hacks applied to avoid the following error:
+                //     eslint-disable-next-line max-len
+                //     YN0018: │ sieve.js@https://github.com/ProtonMail/sieve.js.git#commit=a09ab52092164af74278e77612a091e730e9b7e9: The remote archive doesn't match the expected checksum
+                // see https://github.com/yarnpkg/berry/issues/1142 and https://github.com/yarnpkg/berry/issues/1989 for details
+                await execShell(["yarn", ["cache", "clean", "--all"], {cwd: repoDir}]);
                 await execShell([
-                    "yarn",
-                    ["install"],
+                    "yarn", ["install"],
                     {
                         cwd: repoDir,
                         env: {
                             ...process.env,
-                            YARN_ENABLE_IMMUTABLE_INSTALLS: "false",
                             PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "1",
+                            YARN_CHECKSUM_BEHAVIOR: "update",
+                            YARN_ENABLE_IMMUTABLE_INSTALLS: "false",
                         },
                     },
                 ]);

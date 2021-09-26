@@ -52,6 +52,7 @@ Some Linux package types are available for installing from the repositories (`Pa
 - :sunglasses: **Routing images through proxy**. The opt-in feature has been enabled since [v4.9.0](https://github.com/vladimiry/ElectronMail/releases/tag/v4.9.0). See [#312](https://github.com/vladimiry/ElectronMail/issues/312) for details.
 - :sunglasses: **Batch mails removing** bypassing the trash. Enabled since [v4.9.0](https://github.com/vladimiry/ElectronMail/releases/tag/v4.9.0). Requires [local store](https://github.com/vladimiry/ElectronMail/wiki/FAQ) feature to be enabled.
 - :sunglasses: **Batch mails moving between folders**. Enabled since [v4.5.0](https://github.com/vladimiry/ElectronMail/releases/tag/v4.5.0). Requires [local store](https://github.com/vladimiry/ElectronMail/wiki/FAQ) feature to be enabled.
+- :sunglasses: **Per-account custom CSS injection (per-account styling)**. Enabled since [v4.10.0](https://github.com/vladimiry/ElectronMail/releases/tag/v4.10.0). See [#355](https://github.com/vladimiry/ElectronMail/issues/355) for details.
 
 - :pencil: **Spell Checking**.
 

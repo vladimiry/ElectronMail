@@ -1,0 +1,15 @@
+diff --git a/packages/components/containers/api/humanVerification/Captcha.tsx b/packages/components/containers/api/humanVerification/Captcha.tsx
+index 1192f7a32..44a5bcf04 100644
+--- a/packages/components/containers/api/humanVerification/Captcha.tsx
++++ b/packages/components/containers/api/humanVerification/Captcha.tsx
+@@ -7,6 +7,10 @@ const getIframeUrl = (apiUrl: string, token: string) => {
+     url.hostname = getRelativeApiHostname(url.hostname);
+     url.pathname = '/core/v4/captcha';
+     url.searchParams.set('Token', token);
++    // not really necessary for "apiUrl"-based logic
++    // but it's better to patch it still so we get the patching error when the account/drive/calendar tags adopt the following change:
++    // https://github.com/ProtonMail/WebClients/commit/fc43e8ddd0b79212119ebc05f053e6561c5e166f#diff-2debfe7bb7d7c2f9d2bba32af4e155d0885b324582ee8861e0d4bfe11985ebae commit
++    url.protocol = "https:";
+     return url;
+ };
+

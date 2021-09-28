@@ -3,7 +3,7 @@ import {Spellchecker} from "spellchecker";
 
 import {Locale} from "src/shared/model/common";
 import {Provider} from "./model";
-import {curryFunctionMembers, removeDuplicateItems} from "src/shared/util";
+import {curryFunctionMembers, removeArrayDuplicateItems} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, __filename);
 
@@ -35,7 +35,7 @@ export function constructProvider(
     logger.debug(nameof(constructProvider), JSON.stringify({locale}));
     const provider: ReturnType<typeof constructProvider> = {
         spellCheck(words, callback) {
-            const misspelledWords = removeDuplicateItems(
+            const misspelledWords = removeArrayDuplicateItems(
                 words.reduce(
                     (accumulator: typeof words, word) => {
                         if (provider.isMisspelled(word)) {

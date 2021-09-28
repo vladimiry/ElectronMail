@@ -23,7 +23,8 @@ export abstract class NgChangesObservableComponent implements OnChanges, OnDestr
         }
 
         this.ngChanges.next(
-            props as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+            props as any,
         );
     }
 

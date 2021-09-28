@@ -74,8 +74,8 @@ export const isProtonApiError = (
 type SanitizedProtonApiError = NoExtraProps<Pick<ProtonApiError, "name" | "message" | "status">
     & { responseUrl?: string; responseStatusText?: string; dataCode?: number; dataError?: string; dataErrorDescription?: string }>;
 
-export const sanitizeProtonApiError = <T extends unknown>(
-    error: T
+export const sanitizeProtonApiError = (
+    error: unknown
 ): typeof error extends ProtonApiError ? SanitizedProtonApiError : unknown => {
     if (isProtonApiError(error)) {
         const result: SanitizedProtonApiError = {

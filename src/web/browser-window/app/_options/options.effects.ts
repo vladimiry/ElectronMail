@@ -81,7 +81,11 @@ export class OptionsEffects {
                                         this.ipcMainClient("updateCheck", {timeoutMs: UPDATE_CHECK_FETCH_TIMEOUT + (ONE_SECOND_MS * 2)})(),
                                     ).pipe(
                                         catchError((error) => merge(
-                                            of(NOTIFICATION_ACTIONS.Error(error)),
+                                            of(
+                                                NOTIFICATION_ACTIONS.Error(
+                                                    error, // eslint-disable-line @typescript-eslint/no-unsafe-argument
+                                                ),
+                                            ),
                                             of({newReleaseItems: []})),
                                         ),
                                         filter((value): value is IpcMainServiceScan["ApiImplReturns"]["updateCheck"] => {
@@ -236,7 +240,11 @@ export class OptionsEffects {
                                 ]),
                                 catchError((error) => merge(
                                     of(NAVIGATION_ACTIONS.Logout({skipKeytarProcessing: true})),
-                                    of(NOTIFICATION_ACTIONS.Error(error))
+                                    of(
+                                        NOTIFICATION_ACTIONS.Error(
+                                            error, // eslint-disable-line @typescript-eslint/no-unsafe-argument
+                                        ),
+                                    )
                                 )),
                                 finalize(() => this.dispatchProgress({loadingDatabase: false})),
                             ),
@@ -253,7 +261,11 @@ export class OptionsEffects {
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                             error.message = "Failed to decrypt the settings storage";
                         }
-                        return of(NOTIFICATION_ACTIONS.ErrorSkipLogging(error));
+                        return of(
+                            NOTIFICATION_ACTIONS.ErrorSkipLogging(
+                                error, // eslint-disable-line @typescript-eslint/no-unsafe-argument
+                            ),
+                        );
                     }),
                     finalize(() => this.dispatchProgress({signingIn: false})),
                 ),
@@ -352,7 +364,11 @@ export class OptionsEffects {
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                         error.message = "Failed to change the master password! " +
                             "Please make sure that correct current password has been entered.";
-                        return of(NOTIFICATION_ACTIONS.Error(error));
+                        return of(
+                            NOTIFICATION_ACTIONS.Error(
+                                error, // eslint-disable-line @typescript-eslint/no-unsafe-argument
+                            ),
+                        );
                     }),
                     finalize(() => this.dispatchProgress({changingPassword: false})),
                 ),

@@ -44,9 +44,12 @@ export function resolveGitOutputBackupDir(
 }
 
 export function formatStreamChunk( // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
-    chunk: any, // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+    chunk: any, // eslint-disable-line @typescript-eslint/no-explicit-any
 ): string {
-    return Buffer.from(chunk, "utf-8").toString();
+    return Buffer.from(
+        chunk, // eslint-disable-line @typescript-eslint/no-unsafe-argument
+        "utf-8",
+    ).toString();
 }
 
 export async function execShell(

@@ -332,7 +332,7 @@ export function buildEnumBundle<M, K extends keyof M, V extends Extract<M[keyof 
         rawValue: any, // eslint-disable-line @typescript-eslint/no-explicit-any
         strict: boolean = true, // eslint-disable-line @typescript-eslint/no-inferrable-types
     ) => {
-        const name = resolveNameByValue(rawValue, strict);
+        const name = resolveNameByValue(rawValue, strict); // eslint-disable-line @typescript-eslint/no-unsafe-argument
         if (typeof name === "undefined") {
             return undefined as any; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
         }
@@ -461,8 +461,8 @@ export const validateExternalContentProxyUrlPattern = (
     );
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function removeDuplicateItems<T extends any>(array: ReadonlyArray<T>): T[] {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-constraint
+export function removeArrayDuplicateItems<T extends any>(array: ReadonlyArray<T>): T[] {
     return [...new Set<T>(array).values()];
 }
 
@@ -722,7 +722,7 @@ export const resolveApiUrlByPackagedWebClientUrlSafe = (urlArg: string): string 
     return result;
 };
 
-export const getPlainErrorProps = <T extends unknown>(
+export const getPlainErrorProps = <T extends unknown>( // eslint-disable-line @typescript-eslint/no-unnecessary-type-constraint
     value: T,
 ): T | { code?: string, name?: string, message?: string, stack?: string } => {
     if (value === null) {

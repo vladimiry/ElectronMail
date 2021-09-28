@@ -158,7 +158,7 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
         async patchBaseConfig(patch) {
             const {updated: updatedConfig, previous: previousConfig} = await ctx.configStoreQueue.q(async () => {
                 const previous = await ctx.configStore.readExisting();
-                const updated = await ctx.configStore.write({
+                const updated = await ctx.configStore.write({ // eslint-disable-line @typescript-eslint/no-unsafe-argument
                     ...previous,
                     ...JSON.parse(JSON.stringify(patch)), // parse => stringify call strips out undefined values from the object
                 });

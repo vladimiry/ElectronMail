@@ -247,7 +247,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     });
 
                     this.focusVisibleViewModeContainerElement(
-                        databaseView
+                        databaseView // eslint-disable-line @typescript-eslint/no-unsafe-argument
                             ? mountedDbViewEntryComponent?.injector.get(ElementRef).nativeElement
                             : primaryWebView,
                     );

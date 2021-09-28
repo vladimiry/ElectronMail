@@ -7,7 +7,7 @@ export function buildFolder(input: RestModel.Label): Model.Folder {
         ...buildBaseEntity(input),
         type: input.Type,
         name: Model.SYSTEM_FOLDER_IDENTIFIERS._.resolveNameByValue(
-            input.ID as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+            input.ID as any, // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
             false,
         ) ?? input.Name,
         notify: input.Notify,

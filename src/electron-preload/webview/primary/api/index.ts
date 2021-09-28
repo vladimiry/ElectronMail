@@ -419,7 +419,9 @@ export function registerApi(providerApi: ProviderApi): void {
                                         (accumulator, {handler}) => {
                                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                                             const responseData = JSON.parse(responseText);
-                                            const value = handler(responseData);
+                                            const value = handler(
+                                                responseData, // eslint-disable-line @typescript-eslint/no-unsafe-argument
+                                            );
 
                                             return typeof value === "number"
                                                 ? accumulator.concat([{unread: value}])

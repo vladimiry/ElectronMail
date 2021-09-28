@@ -7,30 +7,7 @@ import {CWD_ABSOLUTE_DIR, GIT_CLONE_ABSOLUTE_DIR} from "scripts/const";
 import {PROVIDER_APP_NAMES, PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
 import {RUNTIME_ENV_CI_PROTON_CLIENTS_ONLY, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/constants";
 
-const shouldFailOnBuildEnvVarName = "ELECTRON_MAIL_SHOULD_FAIL_ON_BUILD";
-
-const shouldFailOnBuild = Boolean(process.env[shouldFailOnBuildEnvVarName]);
-
-const reposOnlyFilter: DeepReadonly<{ value: Array<keyof typeof PROVIDER_REPO_MAP>, envVariableName: string }> = (() => {
-    const envVariableName = RUNTIME_ENV_CI_PROTON_CLIENTS_ONLY;
-    const envVariableValue = process.env[envVariableName];
-    const result = envVariableValue
-        ? envVariableValue
-            .split(";")
-            .map((value) => value.trim())
-            .filter((value) => value in PROVIDER_REPO_MAP)
-            .map((value) => value as keyof typeof PROVIDER_REPO_MAP)
-        : [];
-    CONSOLE_LOG(`${envVariableName} env variable (raw string):`, envVariableValue, "(filtered array):", result);
-    return {value: result, envVariableName};
-})();
-
-const folderAsDomainEntries: Array<FolderAsDomainEntry<{
-    configApiParam:
-        | "electron-mail:app.protonmail.ch"
-        | "electron-mail:mail.protonmail.com"
-        | "electron-mail:protonmailrmez3lotccipshtkleegetolb73fuirgj7r4o4vfu7ozyd.onion";
-}>> = [
+const folderAsDomainEntries = [
     {
         folderNameAsDomain: "app.protonmail.ch",
         options: {
@@ -49,11 +26,29 @@ const folderAsDomainEntries: Array<FolderAsDomainEntry<{
             configApiParam: "electron-mail:protonmailrmez3lotccipshtkleegetolb73fuirgj7r4o4vfu7ozyd.onion",
         },
     },
-];
+] as const;
+
+const shouldFailOnBuildEnvVarName = "ELECTRON_MAIL_SHOULD_FAIL_ON_BUILD";
+
+const shouldFailOnBuild = Boolean(process.env[shouldFailOnBuildEnvVarName]);
+
+const reposOnlyFilter: DeepReadonly<{ value: Array<keyof typeof PROVIDER_REPO_MAP>, envVariableName: string }> = (() => {
+    const envVariableName = RUNTIME_ENV_CI_PROTON_CLIENTS_ONLY;
+    const envVariableValue = process.env[envVariableName];
+    const result = envVariableValue
+        ? envVariableValue
+            .split(";")
+            .map((value) => value.trim())
+            .filter((value) => value in PROVIDER_REPO_MAP)
+            .map((value) => value as keyof typeof PROVIDER_REPO_MAP)
+        : [];
+    CONSOLE_LOG(`${envVariableName} env variable (raw string):`, envVariableValue, "(filtered array):", result);
+    return {value: result, envVariableName};
+})();
 
 async function configure(
     {cwd, envFileName = "./appConfig.json", repoType}: { cwd: string; envFileName?: string; repoType: keyof typeof PROVIDER_REPO_MAP },
-    {folderNameAsDomain, options}: Unpacked<typeof folderAsDomainEntries>,
+    {folderNameAsDomain, options}: typeof folderAsDomainEntries[number],
 ): Promise<{ configApiParam: string }> {
     const {configApiParam} = options;
 
@@ -180,11 +175,6 @@ function resolveWebpackConfigPatchingCode(
     return result;
 }
 
-interface FolderAsDomainEntry<T extends any = any> { // eslint-disable-line @typescript-eslint/no-explicit-any
-    folderNameAsDomain: string;
-    options: T;
-}
-
 function writeFile(file: string, content: Buffer | string): void {
     CONSOLE_LOG(`Writing ${file} file with content...`);
     fsExtra.ensureDirSync(path.dirname(file));
@@ -197,16 +187,14 @@ async function cleanDestAndMoveToIt({src, dest}: { src: string, dest: string }):
     await fsExtra.move(src, dest);
 }
 
-async function executeBuildFlow<T extends FolderAsDomainEntry[]>(
+async function executeBuildFlow(
     {
         repoType,
-        folderAsDomainEntries,
         repoRelativeDistDir = PROVIDER_REPO_MAP[repoType].repoRelativeDistDir,
         destDir,
         destSubFolder,
     }: {
         repoType: keyof typeof PROVIDER_REPO_MAP
-        folderAsDomainEntries: T
         repoRelativeDistDir?: string
         destDir: string
         destSubFolder: string
@@ -415,7 +403,6 @@ export const buildProtonClients = async ({destDir}: { destDir: string }): Promis
     for (const repoType of PROVIDER_APP_NAMES) {
         await executeBuildFlow({
             repoType,
-            folderAsDomainEntries,
             destDir,
             destSubFolder: PROVIDER_REPO_MAP[repoType].baseDirName,
         });

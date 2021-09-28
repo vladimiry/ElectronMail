@@ -120,7 +120,13 @@ export class DbViewMailsExportComponent extends DbViewAbstractComponent implemen
                 ({location}) => {
                     this.formControls.exportDir.patchValue(location);
                 },
-                (error) => this.store.dispatch(NOTIFICATION_ACTIONS.Error(error)),
+                (error) => {
+                    this.store.dispatch(
+                        NOTIFICATION_ACTIONS.Error(
+                            error, // eslint-disable-line @typescript-eslint/no-unsafe-argument
+                        ),
+                    );
+                },
             );
     }
 

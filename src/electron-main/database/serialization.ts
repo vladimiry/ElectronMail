@@ -219,7 +219,7 @@ export const buildSerializer: (file: string) => {
                         oboe(decryptedReadable)
                             .done((parsed) => {
                                 readLogger.verbose(`${nameof(oboe)} end`);
-                                resolve(parsed);
+                                resolve(parsed); // eslint-disable-line @typescript-eslint/no-unsafe-argument
                             })
                             .fail((error) => {
                                 readLogger.error(`${nameof(oboe)} fail`, error);

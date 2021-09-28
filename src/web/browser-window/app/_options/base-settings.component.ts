@@ -154,7 +154,9 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         this.subscription.add(
             this.form.valueChanges.subscribe(() => {
                 this.store.dispatch(
-                    OPTIONS_ACTIONS.PatchBaseSettingsRequest(this.form.getRawValue()),
+                    OPTIONS_ACTIONS.PatchBaseSettingsRequest(
+                        this.form.getRawValue(), // eslint-disable-line @typescript-eslint/no-unsafe-argument
+                    ),
                 );
             }),
         );

@@ -15,7 +15,7 @@ files:
   - '!app/electron-preload/webview/calendar-e2e.js'
   - '!app/electron-preload/webview/primary-e2e.js'
   # sodium-native TODO: include into the package only needed prebuilds for the platform is being built
-  - '!node_modules/sodium-native/{src,test,libsodium,tmp}'
+  - '!node_modules/sodium-native/{src,test,libsodium,tmp,deps}'
   # spellchecker
   - '!node_modules/spellchecker/spec'
 compression: normal

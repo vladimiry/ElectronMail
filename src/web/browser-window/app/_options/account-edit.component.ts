@@ -95,6 +95,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                     loginDelaySecondsRange: {value},
                 } = this.controls;
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 const validated = Boolean(value) && validateLoginDelaySecondsRange(value);
                 if (validated && "validationError" in validated) {
                     return {errorMsg: validated.validationError};
@@ -238,6 +239,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
             loginDelayUntilSelected: Boolean(controls.loginDelayUntilSelected.value),
             loginDelaySecondsRange: (() => {
                 const validated = this.controls.loginDelaySecondsRange.value
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                     ? validateLoginDelaySecondsRange(this.controls.loginDelaySecondsRange.value)
                     : undefined;
                 if (validated && "validationError" in validated) {

@@ -105,7 +105,7 @@ async function keepBrowserWindowState(ctx: Context, browserWindow: Electron.Brow
     };
     const saveWindowStateHandlerDebounced = (
         (): () => void => {
-            let timeoutId: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+            let timeoutId: Parameters<typeof clearTimeout>[0];
             return (): void => {
                 clearTimeout(timeoutId);
                 timeoutId = setTimeout(saveWindowStateHandler, ONE_SECOND_MS / 2);

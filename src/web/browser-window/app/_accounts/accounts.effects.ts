@@ -57,9 +57,9 @@ export class AccountsEffects {
     private readonly loginRateLimiterOptions = {
         points: 2,
         duration: 10, // seconds value
-    } as const
+    } as const;
 
-    private readonly loginRateLimiter = new RateLimiterMemory(this.loginRateLimiterOptions)
+    private readonly loginRateLimiter = new RateLimiterMemory(this.loginRateLimiterOptions);
 
     syncAccountsConfigs$ = createEffect(
         () => this.actions$.pipe(
@@ -490,7 +490,13 @@ export class AccountsEffects {
                                             tap((value) => {
                                                 logger.verbose(`${buildDbPatchMethodName}:value type: ${typeof value}`);
                                             }),
-                                            catchError((error) => of(NOTIFICATION_ACTIONS.Error(error))),
+                                            catchError((error) => {
+                                                return of(
+                                                    NOTIFICATION_ACTIONS.Error(
+                                                        error, // eslint-disable-line @typescript-eslint/no-unsafe-argument
+                                                    ),
+                                                );
+                                            }),
                                         ),
                                     ).pipe(
                                         concatMap(() => of(ACCOUNTS_ACTIONS.Synced({pk: {login, accountIndex}}))),

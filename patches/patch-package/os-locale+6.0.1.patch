@@ -1,5 +1,5 @@
 diff --git a/node_modules/os-locale/exec.js b/node_modules/os-locale/exec.js
-index 62995d9..762f8ba 100644
+index 3439de5..2a30c93 100644
 --- a/node_modules/os-locale/exec.js
 +++ b/node_modules/os-locale/exec.js
 @@ -1,7 +1,7 @@

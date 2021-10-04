@@ -2,7 +2,7 @@ import _logger from "electron-log";
 import fs from "fs";
 import path from "path";
 import pathIsInside from "path-is-inside";
-import {Session, app, protocol} from "electron";
+import {ProtocolResponse, Session, app, protocol} from "electron";
 import {URL} from "@cliqz/url-parser";
 import {promisify} from "util";
 
@@ -100,7 +100,7 @@ async function resolveFileSystemResourceLocation(
         }
     } catch (error) {
         logger.error(nameof(resolveFileSystemResourceLocation), error);
-        if ((Object(error) as {code?: unknown}).code === "ENOENT") {
+        if ((Object(error) as { code?: unknown }).code === "ENOENT") {
             return null;
         }
         throw error;
@@ -129,23 +129,24 @@ export async function registerSessionProtocols(ctx: DeepReadonly<Context>, sessi
                     return;
                 }
 
-                if (
-                    resourceLocation.endsWith(
-                        path.join(directory, PROVIDER_REPO_MAP["proton-drive"].baseDirName, "./downloadSW.js"),
-                    )
-                ) {
-                    callback({
-                        path: resourceLocation,
-                        // https://github.com/ProtonMail/proton-drive/blob/04d30ae6c9fbfbc33cfc91499831e2e6458a99b1/src/.htaccess#L42-L45
-                        headers: {
-                            "Service-Worker-Allowed": "/",
-                            "Service-Worker": "script",
-                        },
-                    });
-                    return;
+                const callbackResponse: Pick<ProtocolResponse, "path" | "headers"> = {path: resourceLocation};
+
+                // TODO tweak e2e test: navigate to "/drive" (requires to be signed-in into the mail account)
+                //      so the scope misconfiguration-related error get printed to "log.log" file and the test gets failed then
+                if (resourceLocation.startsWith(
+                    path.join(directory, PROVIDER_REPO_MAP["proton-drive"].baseDirName, "downloadSW."),
+                )) {
+                    /* eslint-disable max-len */
+                    // https://github.com/ProtonMail/proton-drive/blob/04d30ae6c9fbfbc33cfc91499831e2e6458a99b1/src/.htaccess#L42-L45
+                    // https://github.com/ProtonMail/WebClients/blob/38397839bdf9c14f7c0c8af5cef46122ec399cb2/applications/drive/src/.htaccess#L36
+                    /* eslint-enable max-len */
+                    callbackResponse.headers = {
+                        "Service-Worker-Allowed": "/",
+                        "Service-Worker": "script",
+                    };
                 }
 
-                callback({path: resourceLocation});
+                callback(callbackResponse);
             },
         );
         if (!registered) {

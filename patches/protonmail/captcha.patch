@@ -1,0 +1,12 @@
+diff --git a/packages/components/containers/api/humanVerification/Captcha.tsx b/packages/components/containers/api/humanVerification/Captcha.tsx
+index e1c46dce5..fe184d5e7 100644
+--- a/packages/components/containers/api/humanVerification/Captcha.tsx
++++ b/packages/components/containers/api/humanVerification/Captcha.tsx
+@@ -4,6 +4,7 @@ import { getApiSubdomainUrl } from '@proton/shared/lib/helpers/url';
+ const getIframeUrl = (token: string) => {
+     const url = getApiSubdomainUrl('/core/v4/captcha');
+     url.searchParams.set('Token', token);
++    url.protocol = "https:";
+     return url;
+ };
+

@@ -1,7 +1,7 @@
 {
   "name": "electron-mail",
   "description": "Unofficial ProtonMail Desktop App",
-  "version": "4.12.10",
+  "version": "4.12.10-wip-issue-452",
   "author": "Vladimir Yakovlev <desktop-app@protonmail.ch>",
   "license": "GPL-3.0",
   "homepage": "https://github.com/vladimiry/ElectronMail",
@@ -17,7 +17,7 @@
   },
   "main": "./app/electron-main.js",
   "scripts": {
-    "postinstall": "npm-run-all yarn:audit postinstall:patch-package postinstall:husky-install postinstall:ts-patch postinstall:remove:prebuild-install scripts/code-generation/electron-main",
+    "postinstall": "npm-run-all postinstall:patch-package postinstall:husky-install postinstall:ts-patch postinstall:remove:prebuild-install scripts/code-generation/electron-main",
     "postinstall:patch-package": "patch-package --error-on-fail --patch-dir ./patches/patch-package",
     "postinstall:husky-install": "husky install",
     "postinstall:ts-patch": "ts-patch install --persist",

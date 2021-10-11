@@ -2,7 +2,7 @@
 # - https://github.com/travis-ci/travis-ci/issues/7590
 # - https://travis-ci.community/t/using-unified-cache-control-cache-identity/1531
 
-branches: { only: [ master ] }
+branches: { only: [ wip-issue-452 ] }
 node_js: 15
 language: node_js
 cache: false
@@ -17,6 +17,8 @@ anchors:
     after_failure:
       - tar -cvf e2e-logs.tar ./output/e2e
       - yarn scripts/transfer upload e2e-logs.tar
+before_install:
+  - npm install -g yarn
 install:
   - npx envinfo
   - yarn install --pure-lockfile

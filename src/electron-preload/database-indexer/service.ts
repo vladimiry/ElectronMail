@@ -1,5 +1,5 @@
 import {Subscription} from "rxjs";
-import {addDocumentToIndex, createIndex, removeDocumentFromIndex, vacuumIndex} from "ndx";
+import {addDocumentToIndex, createIndex, removeDocumentFromIndex} from "ndx";
 import {expandTerm, query} from "ndx-query";
 import {htmlToText} from "html-to-text";
 
@@ -170,7 +170,6 @@ export function createMailsIndex(): MailsIndex {
     const fields = Object.values(fieldDescription);
     const fieldAccessors = fields.map((field) => field.accessor);
     const fieldBoostFactors = fields.map((field) => field.boost);
-    const removed = new Set<IndexableMailId>();
     const termFilter = (term: string): string => {
         return trimNonLetterCharactersFilter( // "trimNonWordCharactersFilter" from "ndx-utils" is too aggressive
             lowerCaseFilter(term),
@@ -187,11 +186,7 @@ export function createMailsIndex(): MailsIndex {
             mail,
         ),
         remove: (id) => {
-            removeDocumentFromIndex(index, removed, id);
-
-            if (removed.size > 25) {
-                vacuumIndex(index, removed);
-            }
+            removeDocumentFromIndex(index, new Set<IndexableMailId>(), id);
         },
         search: (q) => {
             return {

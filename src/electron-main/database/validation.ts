@@ -13,6 +13,8 @@ const logger = curryFunctionMembers(_logger, __filename);
 
 const transformValidationOptions: TransformValidationOptions = {
     validator: {
+        // prevent unknown to "class-validator" objects to pass validation
+        forbidUnknownValues: true,
         // stripe out unknown properties
         whitelist: true,
         // do not attach to error object an entity being validated

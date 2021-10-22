@@ -1,17 +1,3 @@
-diff --git a/packages/pack/bin/protonPack.js b/packages/pack/bin/protonPack.js
-index 55715b89d..c87879ad4 100755
---- a/packages/pack/bin/protonPack.js
-+++ b/packages/pack/bin/protonPack.js
-@@ -81,7 +81,7 @@ addGlobalOptions(program.command('build').description('create an optimized produ
-         const outputPath = path.resolve('./dist');
-         await commandWithLog(`rm -rf ${outputPath}`);
-         await commandWithLog(
--            `${require.resolve('webpack-cli/bin/cli.js')} --progress --output-path=${outputPath} ${webpackArgs}`,
-+            `${require.resolve('webpack-cli/bin/cli.js')} --output-path=${outputPath} ${webpackArgs}`,
-             {
-                 stdio: 'inherit',
-             }
-
 diff --git a/applications/account/src/app/Setup.tsx b/applications/account/src/app/Setup.tsx
 index 19828d5..0d7ce23 100644
 --- a/applications/account/src/app/Setup.tsx

@@ -219,18 +219,19 @@ async function executeBuildFlow(
             state.buildingSetup = async () => Promise.resolve(); // one run per "repo type" only needed
 
             // TODO move block to "folderAsDomainEntry" loop if "node_modules" gets patched
-            if (
-                !fsExtra.pathExistsSync(path.join(repoDir, ".git"))
-                ||
-                !(await execShell(["git", ["tag"], {cwd: repoDir}], {printStdOut: false})).stdout.trim().includes(tag)
-            ) { // cloning
+            if (fsExtra.pathExistsSync(path.join(repoDir, ".git"))) {
+                await execShell(["git", ["reset", "--hard", "origin/main"], {cwd: repoDir}]);
+                await execShell(["git", ["clean", "-fdx"], {cwd: repoDir}]);
+                if (
+                    !(await execShell(["git", ["tag"], {cwd: repoDir}], {printStdOut: false})).stdout.trim().includes(tag)
+                ) {
+                    await execShell(["git", ["fetch", "--all", "--tags"], {cwd: repoDir}]);
+                }
+            } else { // cloning
                 await execShell(["npx", ["--no", "rimraf", repoDir]]);
                 fsExtra.ensureDirSync(repoDir);
                 await execShell(["git", ["clone", "https://github.com/ProtonMail/WebClients.git", repoDir]]);
                 await execShell(["git", ["show", "--summary"], {cwd: repoDir}]);
-            } else {
-                await execShell(["git", ["reset", "--hard", "origin/main"], {cwd: repoDir}]);
-                await execShell(["git", ["clean", "-fdx"], {cwd: repoDir}]);
             }
 
             await execShell(["git", ["reset", "--hard", tag], {cwd: repoDir}]);

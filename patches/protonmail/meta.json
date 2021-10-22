@@ -1,22 +1,29 @@
 {
   "proton-account": [
     "common.patch",
-    "common-except-mail.patch",
+    "sentry.patch",
+    "captcha.patch",
+    "pack-api-arg.patch",
     "proton-account.patch"
   ],
   "proton-calendar": [
     "common.patch",
-    "common-except-mail-account.patch",
-    "common-except-mail.patch"
+    "sentry.patch",
+    "captcha.patch",
+    "pack-api-arg.patch"
   ],
   "proton-drive": [
     "common.patch",
-    "proton-drive.patch",
-    "common-except-mail-account.patch",
-    "common-except-mail.patch"
+    "sentry.patch",
+    "captcha.patch",
+    "pack-api-arg.patch",
+    "proton-drive.patch"
   ],
   "proton-mail": [
     "common.patch",
+    "sentry.patch",
+    "captcha.patch",
+    "pack-api-arg.patch",
     "proton-mail.patch"
   ]
 }

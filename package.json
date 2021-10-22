@@ -13,7 +13,7 @@
     "url": "https://github.com/vladimiry/ElectronMail/issues"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=16.0.0"
   },
   "main": "./app/electron-main.js",
   "scripts": {

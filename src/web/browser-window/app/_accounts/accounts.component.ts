@@ -24,29 +24,15 @@ import {WebAccount} from "src/web/browser-window/app/model";
 export class AccountsComponent implements OnInit, OnDestroy {
     readonly userDataDir = __METADATA__.electronLocations.userDataDir;
 
-    readonly initialized$ = this.store.pipe(select(AccountsSelectors.FEATURED.initialized));
-
-    readonly layoutMode$ = this.store.pipe(select(OptionsSelectors.CONFIG.layoutMode));
-
-    readonly hideControls$ = this.store.pipe(select(OptionsSelectors.CONFIG.hideControls));
-
+    readonly initialized$: Observable<boolean | undefined>;
+    readonly layoutMode$: Observable<"top" | "left" | "left-thin">;
+    readonly hideControls$: Observable<boolean>;
     selectedAccount?: WebAccount;
-
     unreadSummary?: number;
-
     private accountsMap = new Map<WebAccount["accountConfig"]["login"], WebAccount>();
-
-    private accounts$ = this.store.pipe(select(AccountsSelectors.FEATURED.accounts));
-
-    readonly logins$ = this.accounts$.pipe(
-        map((accounts) => accounts.map((account) => account.accountConfig.login)),
-        distinctUntilChanged(),
-    );
-
-    readonly loginsWithoutOrdering$ = this.logins$.pipe(
-        // account views should not be re-crated if we reorder the accounts in the settings
-        distinctUntilChanged((prev, curr) => equals([...prev].sort(), [...curr].sort())),
-    );
+    private accounts$: Observable<WebAccount[]>;
+    readonly logins$: Observable<string[]>;
+    readonly loginsWithoutOrdering$: Observable<string[]>;
 
     private readonly subscription = new Subscription();
 
@@ -55,6 +41,19 @@ export class AccountsComponent implements OnInit, OnDestroy {
         private api: ElectronService,
         private store: Store<State>,
     ) {
+        this.initialized$ = this.store.pipe(select(AccountsSelectors.FEATURED.initialized));
+        this.layoutMode$ = this.store.pipe(select(OptionsSelectors.CONFIG.layoutMode));
+        this.hideControls$ = this.store.pipe(select(OptionsSelectors.CONFIG.hideControls));
+        this.accounts$ = this.store.pipe(select(AccountsSelectors.FEATURED.accounts));
+        this.logins$ = this.accounts$.pipe(
+            map((accounts) => accounts.map((account) => account.accountConfig.login)),
+            distinctUntilChanged(),
+        );
+        this.loginsWithoutOrdering$ = this.logins$.pipe(
+            // account views should not be re-crated if we reorder the accounts in the settings
+            distinctUntilChanged((prev, curr) => equals([...prev].sort(), [...curr].sort())),
+        );
+
         this.subscription.add(
             this.accounts$.subscribe((accounts) => {
                 this.accountsMap = new Map(accounts.reduce((entries: Array<[string, WebAccount]>, account) => {

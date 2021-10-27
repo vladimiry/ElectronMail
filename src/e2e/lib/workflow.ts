@@ -1,102 +1,62 @@
-import fs from "fs";
-import fsExtra from "fs-extra";
 import path from "path";
-import ava, {ExecutionContext, TestInterface} from "ava";
-import sinon, {spy as sinonSpy} from "sinon";
-import {ElectronApplication, _electron} from "playwright";
-import {omit, randomString} from "remeda";
+import {expect} from "@playwright/test";
 
-import {
-    BINARY_NAME,
-    ONE_SECOND_MS,
-    PACKAGE_NAME,
-    PACKAGE_VERSION,
-    PRODUCT_NAME,
-    PROTON_API_ENTRY_URLS,
-    RUNTIME_ENV_USER_DATA_DIR,
-} from "src/shared/constants";
-import {accountCssSelector, mainProcessEvaluationFunctions, saveScreenshot} from "src/e2e/lib";
+import {CONF, ENV, GLOBAL_STATE} from "src/e2e/lib/const";
+import {ONE_SECOND_MS, PROTON_API_ENTRY_URLS} from "src/shared/constants";
+import {TestContext} from "./model";
+import {accountCssSelector, mainProcessEvaluationFunctions} from "src/e2e/lib/util";
 import {asyncDelay} from "src/shared/util";
 
-export interface TestContext {
-    testStatus: "initial" | "success" | "fail";
-    readonly app: ElectronApplication;
-    readonly firstWindowPage: Unpacked<ReturnType<ElectronApplication["firstWindow"]>>;
-    readonly outputDirPath: string;
-    readonly userDataDirPath: string;
-    readonly appDirPath: string;
-    readonly logFilePath: string;
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    readonly workflow: ReturnType<typeof buildWorkflow>;
-    readonly sinon: {
-        // eslint-disable-next-line @typescript-eslint/no-use-before-define
-        readonly addAccountSpy: sinon.SinonSpy<[Parameters<ReturnType<typeof buildWorkflow>["addAccount"]>[0]], Promise<void>>;
-    };
-}
-
-export const test = ava as TestInterface<TestContext>;
-
-export const ENV = {
-    masterPassword: `master-password-${randomString(8)}`,
-    loginPrefix: `login-${randomString(8)}`,
-};
-
-export const CI = Boolean(process.env.CI);
-
-const rootDirPath = path.resolve(__dirname, process.cwd());
-const appDirPath = path.join(rootDirPath, "./app");
-const mainScriptFilePath = path.join(appDirPath, "./electron-main-e2e.js");
-
-const CONF = {
-    timeouts: {
-        element: ONE_SECOND_MS,
-        elementTouched: ONE_SECOND_MS * (CI ? 1.5 : 0.3),
-        encryption: ONE_SECOND_MS * (CI ? 10 : 1.5),
-        transition: ONE_SECOND_MS * (CI ? 3 : 0.3),
-        logout: ONE_SECOND_MS * (CI ? 20 : 8),
-        loginFilledOnce: ONE_SECOND_MS * (CI ? 60 : 15),
-    },
-} as const;
-
-const GLOBAL_STATE = {
-    loginPrefixCount: 0,
-};
-
-function mkOutputDirs(dirs: string[]): void {
-    dirs.forEach((dir) => fsExtra.ensureDirSync(dir));
-}
-
-function resolveEntryUrlIndexByValue(entryUrl: string): number {
+const resolveEntryUrlIndexByValue = (entryUrl: string): number => {
     const index = PROTON_API_ENTRY_URLS.findIndex((url) => url === entryUrl);
-
     if (index === -1) {
         throw new Error(`Failed to resolve entry url index by "${entryUrl}" value`);
     }
-
     return index;
-}
+};
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function buildWorkflow(t: ExecutionContext<TestContext>) {
-    const {context} = t;
+export const buildWorkflow = (testContext: TestContext) => {
     const workflow = {
-        async destroyApp(allowDestroyedExecutionContext?: boolean): Promise<void> {
-            await saveScreenshot(t);
-
-            try {
-                await context.app.close();
-            } catch (e) {
-                if (
-                    allowDestroyedExecutionContext
+        async saveScreenshot(title?: string): Promise<string | void> {
+            {
+                const alive = (
+                    testContext.app.windows().length > 1
                     &&
-                    (e as { message?: string }).message === "Execution context was destroyed, most likely because of a navigation."
-                ) {
-                    console.log(e); // eslint-disable-line no-console
+                    await testContext.app.evaluate(
+                        ({BrowserWindow}) => BrowserWindow.getFocusedWindow()?.webContents.isDestroyed() === false,
+                    )
+                );
+                if (!alive) {
                     return;
                 }
-                throw e;
             }
+            const file = path.join(
+                testContext.outputDirPath,
+                `screenshot-${String(title)}-${new Date().toISOString()}.png`.replace(/[^A-Za-z0-9.]/g, "_"),
+            );
+            await testContext.firstWindowPage.screenshot({path: file});
+            console.info(`Screenshot saved to: ${file}`); // eslint-disable-line no-console
+            return file;
         },
+
+        // async destroyApp(allowDestroyedExecutionContext?: boolean): Promise<void> {
+        //     await workflow.saveScreenshot();
+        //
+        //     try {
+        //         await testContext.app.close();
+        //     } catch (e) {
+        //         if (
+        //             allowDestroyedExecutionContext
+        //             &&
+        //             (e as { message?: string }).message === "Execution context was destroyed, most likely because of a navigation."
+        //         ) {
+        //             console.log(e); // eslint-disable-line no-console
+        //             return;
+        //         }
+        //         throw e;
+        //     }
+        // },
 
         async login(options: { setup: boolean; savePassword: boolean; hiddenWindow?: boolean }): Promise<void> {
             await asyncDelay(CONF.timeouts.transition);
@@ -104,7 +64,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             if (options.setup) {
                 const expected = "/(settings-outlet:settings/settings-setup)";
                 try {
-                    await context.firstWindowPage.waitForURL(
+                    await testContext.firstWindowPage.waitForURL(
                         `**${expected}`,
                         {timeout: CONF.timeouts.elementTouched * 2, waitUntil: "networkidle"},
                     );
@@ -121,19 +81,19 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
                 await workflow.loginPageUrlTest(`login: "settings-setup" page url`, {hiddenWindow: options.hiddenWindow});
             }
 
-            await context.firstWindowPage.fill("[formControlName=password]", ENV.masterPassword, {timeout: CONF.timeouts.element});
+            await testContext.firstWindowPage.fill("[formControlName=password]", ENV.masterPassword, {timeout: CONF.timeouts.element});
 
             if (options.setup) {
-                await context.firstWindowPage.fill(
+                await testContext.firstWindowPage.fill(
                     "[formControlName=passwordConfirm]",
                     ENV.masterPassword,
                     {timeout: CONF.timeouts.element},
                 );
             }
             if (options.savePassword) {
-                await context.firstWindowPage.click("#savePasswordCheckbox + label", {timeout: CONF.timeouts.element});
+                await testContext.firstWindowPage.click("#savePasswordCheckbox + label", {timeout: CONF.timeouts.element});
             }
-            await context.firstWindowPage.click("button[type=submit]", {timeout: CONF.timeouts.element * 2});
+            await testContext.firstWindowPage.click("button[type=submit]", {timeout: CONF.timeouts.element * 2});
 
             if (options.setup) {
                 const {savePassword: notificationDisplaying} = options;
@@ -142,7 +102,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
                         ? "/(settings-outlet:settings/account-edit//accounts-outlet:accounts//notifications-outlet:notifications)"
                         : "/(settings-outlet:settings/account-edit//accounts-outlet:accounts)";
                     try {
-                        await context.firstWindowPage.waitForURL(
+                        await testContext.firstWindowPage.waitForURL(
                             `**${expected}`,
                             {timeout: CONF.timeouts.encryption * 5, waitUntil: "networkidle"},
                         );
@@ -158,7 +118,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
                 }
                 if (notificationDisplaying) {
                     // closing notifications block
-                    await context.firstWindowPage.click(
+                    await testContext.firstWindowPage.click(
                         "electron-mail-notification-item .alert-dismissible.alert-warning > [type=button].close",
                     );
                     await asyncDelay(CONF.timeouts.elementTouched);
@@ -166,11 +126,11 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
                 // TODO make sure there are no accounts added
                 await workflow.closeSettingsModal("login");
             } else {
-                const expected = t.context.sinon.addAccountSpy.callCount
+                const expected = testContext.sinon.addAccountSpy.callCount
                     ? "/(accounts-outlet:accounts)"
                     : "/(settings-outlet:settings/account-edit//accounts-outlet:accounts//stub-outlet:stub)";
                 try {
-                    await context.firstWindowPage.waitForURL(
+                    await testContext.firstWindowPage.waitForURL(
                         `**${expected}`,
                         {timeout: CONF.timeouts.encryption * 5, waitUntil: "networkidle"},
                     );
@@ -189,8 +149,8 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
 
             {
                 const actual = await workflow.accountsCount();
-                const expected = t.context.sinon.addAccountSpy.callCount;
-                t.is(actual, expected);
+                const expected = testContext.sinon.addAccountSpy.callCount;
+                expect(actual).toStrictEqual(expected);
             }
         },
 
@@ -206,21 +166,25 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
                     "/(accounts-outlet:accounts//stub-outlet:stub)",
                     // "/(settings-outlet:settings/account-edit//accounts-outlet:accounts)" // not added account case
                 ];
-            t.true(
-                expected.includes(actual),
-                `workflow.${workflowPrefix}: "accounts" page url (${JSON.stringify({expected, actual})})`,
-            );
+            try {
+                expect(expected).toContainEqual(actual);
+            } catch {
+                console.log({workflowPrefix}); // eslint-disable-line no-console
+            }
         },
 
         async loginPageUrlTest(workflowPrefix: string, options?: { hiddenWindow?: boolean }): Promise<void> {
             const actual = await workflow.getLocationHash(options?.hiddenWindow);
-            t.true(
-                [
-                    "/(settings-outlet:settings/login)",
-                    "/(settings-outlet:settings/login//stub-outlet:stub)",
-                ].includes(actual),
-                `workflow.${workflowPrefix}: "login" page url (${JSON.stringify({actual})})`,
-            );
+            try {
+                expect(
+                    [
+                        "/(settings-outlet:settings/login)",
+                        "/(settings-outlet:settings/login//stub-outlet:stub)",
+                    ],
+                ).toContainEqual(actual);
+            } catch {
+                console.log({workflowPrefix}); // eslint-disable-line no-console
+            }
         },
 
         async addAccount(
@@ -233,10 +197,10 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
             await workflow.openSettingsModal(0);
 
             // select adding account menu item
-            await context.firstWindowPage.click("#goToAccountsSettingsLink");
+            await testContext.firstWindowPage.click("#goToAccountsSettingsLink");
 
             {
-                const el = await context.firstWindowPage.waitForSelector(
+                const el = await testContext.firstWindowPage.waitForSelector(
                     "#accountEditFormEntryUrlField .ng-select-container",
                     {state: "visible"},
                 );
@@ -247,52 +211,52 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
                 const entryUrlIndex = account.entryUrlValue
                     ? resolveEntryUrlIndexByValue(account.entryUrlValue)
                     : 0;
-                await context.firstWindowPage.click(`[entry-url-option-index="${entryUrlIndex}"]`);
+                await testContext.firstWindowPage.click(`[entry-url-option-index="${entryUrlIndex}"]`);
             }
 
-            await context.firstWindowPage.fill("[formControlName=login]", login);
+            await testContext.firstWindowPage.fill("[formControlName=login]", login);
             if (account.password) {
-                await context.firstWindowPage.fill("[formControlName=password]", account.password);
+                await testContext.firstWindowPage.fill("[formControlName=password]", account.password);
             }
             if (account.twoFactorCode) {
-                await context.firstWindowPage.fill("[formControlName=twoFactorCode]", account.twoFactorCode);
+                await testContext.firstWindowPage.fill("[formControlName=twoFactorCode]", account.twoFactorCode);
             }
 
             const expectedAccountsCount = await workflow.accountsCount() + 1;
 
-            await context.firstWindowPage.click(`.modal-body button[type="submit"]`);
+            await testContext.firstWindowPage.click(`.modal-body button[type="submit"]`);
 
             // account got added to the settings modal account list
-            await context.firstWindowPage.waitForSelector(
+            await testContext.firstWindowPage.waitForSelector(
                 `.modal-body .d-inline-block > span[data-login='${login}']`,
                 {timeout: CONF.timeouts.encryption, state: "visible"},
             );
 
             await workflow.closeSettingsModal("addAccount");
 
-            t.is(expectedAccountsCount, await workflow.accountsCount(), "test expected accounts count");
+            expect(expectedAccountsCount).toStrictEqual(await workflow.accountsCount());
 
             await workflow.selectAccount(expectedAccountsCount - 1);
 
             // make sure webview api got initialized (page loaded and login auto-filled)
             try {
-                await context.firstWindowPage.waitForSelector(
+                await testContext.firstWindowPage.waitForSelector(
                     `${accountCssSelector(expectedAccountsCount - 1)} > .login-filled-once`,
                     {timeout: CONF.timeouts.loginFilledOnce, state: "visible"},
                 );
             } finally {
-                await saveScreenshot(t);
+                await workflow.saveScreenshot();
             }
         },
 
         async selectAccount(zeroStartedAccountIndex = 0): Promise<void> {
-            await context.firstWindowPage.click(accountCssSelector(zeroStartedAccountIndex));
+            await testContext.firstWindowPage.click(accountCssSelector(zeroStartedAccountIndex));
             await asyncDelay(CONF.timeouts.elementTouched);
             // TODO make sure account is selected
         },
 
         async accountsCount(): Promise<number> {
-            return (await context.firstWindowPage.$$(`.list-group.accounts-list > electron-mail-account-title`)).length;
+            return (await testContext.firstWindowPage.$$(`.list-group.accounts-list > electron-mail-account-title`)).length;
         },
 
         async openSettingsModal(index?: number): Promise<void> {
@@ -300,31 +264,31 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
 
             // open modal if not yet opened
             try {
-                await context.firstWindowPage.waitForSelector(listGroupSelector, {timeout: ONE_SECOND_MS, state: "visible"});
+                await testContext.firstWindowPage.waitForSelector(listGroupSelector, {timeout: ONE_SECOND_MS, state: "visible"});
             } catch {
-                await context.firstWindowPage.click(".controls .dropdown-toggle");
-                await context.firstWindowPage.click("#optionsMenuItem");
+                await testContext.firstWindowPage.click(".controls .dropdown-toggle");
+                await testContext.firstWindowPage.click("#optionsMenuItem");
             }
             // making sure modal is opened TODO consider test by url too
-            await context.firstWindowPage.waitForSelector(listGroupSelector, {state: "visible"});
+            await testContext.firstWindowPage.waitForSelector(listGroupSelector, {state: "visible"});
 
             if (typeof index === "undefined") {
                 return;
             }
 
-            await context.firstWindowPage.click(`${listGroupSelector} .list-group-item-action:nth-child(${index + 1})`);
+            await testContext.firstWindowPage.click(`${listGroupSelector} .list-group-item-action:nth-child(${index + 1})`);
 
             if (index === 0) {
-                await context.firstWindowPage.waitForSelector(".modal-body electron-mail-accounts-list", {state: "visible"});
+                await testContext.firstWindowPage.waitForSelector(".modal-body electron-mail-accounts-list", {state: "visible"});
             }
         },
 
         async closeSettingsModal(cause: "addAccount" | "login"): Promise<void> {
-            await context.firstWindowPage.click(`[type="button"].close`);
+            await testContext.firstWindowPage.click(`[type="button"].close`);
             {
                 const expected = "/(accounts-outlet:accounts)";
                 try {
-                    await context.firstWindowPage.waitForURL(
+                    await testContext.firstWindowPage.waitForURL(
                         `**${expected}`,
                         {timeout: CONF.timeouts.elementTouched * 2, waitUntil: "networkidle"},
                     );
@@ -337,16 +301,16 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
         },
 
         async logout(options?: { hiddenWindow?: boolean }): Promise<void> {
-            await context.firstWindowPage.click("electron-mail-accounts .controls .dropdown-toggle");
+            await testContext.firstWindowPage.click("electron-mail-accounts .controls .dropdown-toggle");
             await asyncDelay(CONF.timeouts.transition);
-            await context.firstWindowPage.click("#logoutMenuItem");
+            await testContext.firstWindowPage.click("#logoutMenuItem");
             try {
-                await context.firstWindowPage.waitForSelector(
+                await testContext.firstWindowPage.waitForSelector(
                     "#loginFormPasswordControl",
                     {state: "visible", timeout: CONF.timeouts.logout},
                 );
             } catch {
-                await saveScreenshot(t);
+                await workflow.saveScreenshot();
             }
             await workflow.loginPageUrlTest("logout: login page url", options);
             await asyncDelay(CONF.timeouts.transition);
@@ -355,11 +319,11 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
         async exit(): Promise<void> {
             {
                 // option #1
-                await context.firstWindowPage.click("electron-mail-accounts .controls .dropdown-toggle");
+                await testContext.firstWindowPage.click("electron-mail-accounts .controls .dropdown-toggle");
                 await asyncDelay(CONF.timeouts.transition);
-                await context.firstWindowPage.click("#exitMenuItem");
+                await testContext.firstWindowPage.click("#exitMenuItem");
                 //// option #2
-                // await context.app.evaluate(
+                // await testContext.app.evaluate(
                 //     async (electron, options: { resolveFocusedWindow: boolean, resolveBrowserWindowStringified: string }) => {
                 //         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 //         const resolveBrowserWindow: typeof mainProcessEvaluationFunctions.resolveBrowserWindow
@@ -383,7 +347,7 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
         },
 
         async getLocationHash(hiddenWindow?: boolean): Promise<string> {
-            const url = await context.app.evaluate(
+            const url = await testContext.app.evaluate(
                 (electron, options: { resolveFocusedWindow: boolean, resolveBrowserWindowStringified: string }) => {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                     const resolveBrowserWindow: typeof mainProcessEvaluationFunctions.resolveBrowserWindow
@@ -400,85 +364,4 @@ function buildWorkflow(t: ExecutionContext<TestContext>) {
     };
 
     return workflow;
-}
-
-export const initApp = async (
-    t: ExecutionContext<TestContext>, options: { initial: boolean },
-): Promise<TestContext["workflow"]> => {
-    const contextPatch: Mutable<Partial<typeof t.context>> = {};
-
-    contextPatch.workflow = t.context.workflow ?? buildWorkflow(t);
-    contextPatch.sinon = t.context.sinon ?? {addAccountSpy: sinonSpy(contextPatch.workflow, "addAccount")};
-
-    const outputDirPath = contextPatch.outputDirPath = t.context.outputDirPath
-        ?? path.join(rootDirPath, "./output/e2e", String(Date.now()));
-    const userDataDirPath = path.join(outputDirPath, "./app-data");
-    const logFilePath = path.join(userDataDirPath, "log.log");
-
-    mkOutputDirs([
-        outputDirPath,
-        userDataDirPath,
-    ]);
-
-    contextPatch.appDirPath = appDirPath;
-    contextPatch.userDataDirPath = userDataDirPath;
-    contextPatch.logFilePath = logFilePath;
-
-    if (options.initial) {
-        t.false(fs.existsSync(path.join(userDataDirPath, "config.json")),
-            `"config.json" should not exist yet in "${userDataDirPath}"`);
-        t.false(fs.existsSync(path.join(userDataDirPath, "settings.bin")),
-            `"settings.bin" should not exist yet in "${userDataDirPath}"`);
-    }
-
-    const app = contextPatch.app = await _electron.launch({
-        args: [
-            mainScriptFilePath,
-            `--user-data-dir=${userDataDirPath}`,
-        ],
-        env: {
-            ...process.env,
-            ELECTRON_ENABLE_LOGGING: "1",
-            [RUNTIME_ENV_USER_DATA_DIR]: userDataDirPath,
-        },
-    });
-    const firstWindowPage = contextPatch.firstWindowPage = await app.firstWindow();
-
-    await (async (): Promise<void> => {
-        const el = await firstWindowPage.waitForSelector(
-            ".e2e-stub-element",
-            {timeout: ONE_SECOND_MS * 3, state: options.initial ? "visible" : "attached"},
-        );
-        const elText = await el.innerText();
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const {title: pageTitle, userAgent}: { title: string; userAgent: string } = JSON.parse(elText);
-        t.is(pageTitle, "", "page title should be empty");
-        t.truthy(userAgent, "user agent should be filled");
-        // TODO also test user agents of webviews
-        {
-            const bannedUserAgentWords = (["electron", PRODUCT_NAME, PACKAGE_NAME, BINARY_NAME, PACKAGE_VERSION] as readonly string[])
-                .map((banned) => banned.toLowerCase());
-            t.false(
-                bannedUserAgentWords.some((banned) => userAgent.toLowerCase().includes(banned)),
-                `User agent "${userAgent}" should not include any of "${JSON.stringify(bannedUserAgentWords)}"`,
-            );
-        }
-    })();
-
-    t.deepEqual(
-        omit(
-            await app.evaluate(
-                mainProcessEvaluationFunctions.testMainProcessSpecificStuff, // eslint-disable-line @typescript-eslint/unbound-method
-                {...options, resolveBrowserWindowStringified: mainProcessEvaluationFunctions.resolveBrowserWindow.toString()},
-            ),
-            ["resolveBrowserWindowStringified"],
-        ),
-        options,
-    );
-
-    await asyncDelay(CONF.timeouts.encryption);
-
-    Object.assign(t.context, contextPatch);
-
-    return t.context.workflow;
 };

@@ -1,13 +1,11 @@
 {
   "extends": "../../../../tsconfig.json",
   "compilerOptions": {
+    "module": "CommonJS",
     "importHelpers": true,
     "declaration": false,
     "sourceMap": false,
     "outDir": ".",
-    // TODO TS remove "skipLibCheck" flag, needed to work around the following error:
-    // TS2440: Import declaration conflicts with local declaration of 'ElectronPlatformName'
-    "skipLibCheck": true
   },
   "include": [
     "../../../../src/@types/**/*",

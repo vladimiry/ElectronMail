@@ -1,11 +1,11 @@
-import {Component, Input} from "@angular/core";
-import {FormGroup} from "@angular/forms";
-import type {OnDestroy, OnInit} from "@angular/core";
+import {Observable, Subject} from "rxjs";
 import {Store} from "@ngrx/store";
-import {Subject} from "rxjs";
 import {map, takeUntil} from "rxjs/operators";
 
-import {ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "src/shared/model/options";
+import {Component, Input} from "@angular/core";
+import {Config, ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "src/shared/model/options";
+import {FormGroup} from "@angular/forms";
+import type {OnDestroy, OnInit} from "@angular/core";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 
@@ -15,16 +15,18 @@ import {State} from "src/web/browser-window/app/store/reducers/options";
     preserveWhitespaces: true,
 })
 export class EncryptionPresetsComponent implements OnInit, OnDestroy {
-    config$ = this.store.select(OptionsSelectors.FEATURED.config);
-    unSubscribe$ = new Subject();
-    keyDerivation = KEY_DERIVATION_PRESETS;
-    keyDerivationTitles = Object.keys(this.keyDerivation);
-    encryption = ENCRYPTION_DERIVATION_PRESETS;
-    encryptionTitles = Object.keys(this.encryption);
+    readonly config$: Observable<Config>;
+    readonly unSubscribe$ = new Subject();
+    readonly keyDerivation = KEY_DERIVATION_PRESETS;
+    readonly keyDerivationTitles = Object.keys(this.keyDerivation);
+    readonly encryption = ENCRYPTION_DERIVATION_PRESETS;
+    readonly encryptionTitles = Object.keys(this.encryption);
     @Input()
     formGroup!: FormGroup;
 
-    constructor(private store: Store<State>) {}
+    constructor(private store: Store<State>) {
+        this.config$ = this.store.select(OptionsSelectors.FEATURED.config);
+    }
 
     ngOnInit(): void {
         this.config$

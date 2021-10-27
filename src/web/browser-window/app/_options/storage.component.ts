@@ -1,10 +1,10 @@
-import {Component} from "@angular/core";
-import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {Observable} from "rxjs";
 import {Store} from "@ngrx/store";
 import {map} from "rxjs/operators";
 
+import {Component} from "@angular/core";
 import {ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "src/shared/model/options";
+import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/options";
@@ -55,14 +55,17 @@ export class StorageComponent {
             Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
         ),
     });
-    changingPassword$: Observable<boolean> = this.store
-        .select(OptionsSelectors.FEATURED.progress)
-        .pipe(map((progress) => Boolean(progress.changingPassword)));
-    reEncryptingSettings$: Observable<boolean> = this.store
-        .select(OptionsSelectors.FEATURED.progress)
-        .pipe(map((progress) => Boolean(progress.reEncryptingSettings)));
+    changingPassword$: Observable<boolean>;
+    reEncryptingSettings$: Observable<boolean>;
 
-    constructor(private store: Store<State>) {}
+    constructor(private store: Store<State>) {
+        this.changingPassword$ = this.store
+            .select(OptionsSelectors.FEATURED.progress)
+            .pipe(map((progress) => Boolean(progress.changingPassword)));
+        this.reEncryptingSettings$ = this.store
+            .select(OptionsSelectors.FEATURED.progress)
+            .pipe(map((progress) => Boolean(progress.reEncryptingSettings)));
+    }
 
     submit(): void {
         this.store.dispatch(OPTIONS_ACTIONS.ChangeMasterPasswordRequest({

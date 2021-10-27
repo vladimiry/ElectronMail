@@ -113,7 +113,7 @@ export class Database {
 
     private readonly saveToFileQueue = new asap();
 
-    private readonly serializer = buildSerializer(this.options.file);
+    private readonly serializer: ReturnType<typeof buildSerializer>;
 
     private [DB_INSTANCE_PROP_NAME]: FsDb = Database.buildEmptyDb();
 
@@ -126,6 +126,7 @@ export class Database {
             }>;
         }>
     ) {
+        this.serializer = buildSerializer(this.options.file);
         this.logger = curryFunctionMembers(_logger, `[${path.basename(this.options.file)}]`);
     }
 

@@ -3,7 +3,7 @@ import {Observable, Subscription} from "rxjs";
 import {distinctUntilChanged} from "rxjs/operators";
 import {ofType} from "@ngrx/effects";
 
-import css from "css-loader?modules=icss!sass-loader!./index.scss";
+import css from "src/electron-preload/lib/hovered-href-highlighter/index.scss";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {IpcMainServiceScan} from "src/shared/api/main-process";
 import {ONE_SECOND_MS, PACKAGE_NAME} from "src/shared/constants";

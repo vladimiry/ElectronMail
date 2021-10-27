@@ -1,10 +1,10 @@
-import type {AfterViewInit, OnDestroy} from "@angular/core";
-import {Directive, ElementRef, Injector, QueryList, ViewChildren} from "@angular/core";
-import {FormControl, Validators} from "@angular/forms";
 import {Observable, Subscription} from "rxjs";
 import {Store, select} from "@ngrx/store";
 import {filter, map, pairwise} from "rxjs/operators";
 
+import type {AfterViewInit, OnDestroy} from "@angular/core";
+import {Directive, ElementRef, Injector, QueryList, ViewChildren} from "@angular/core";
+import {FormControl, Validators} from "@angular/forms";
 import {NOTIFICATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {SAVE_PASSWORD_WARN_TRUSTED_HTML} from "./const";
@@ -24,23 +24,25 @@ export abstract class LoginBaseComponent implements AfterViewInit, OnDestroy {
     @ViewChildren("passwordRef")
     passwordElementRefQuery!: QueryList<ElementRef>;
 
-    protected readonly store = this.injector.get<Store<State>>(Store);
-
-    readonly signingIn$: Observable<boolean> = this.store.pipe(
-        select(OptionsSelectors.FEATURED.progress),
-        map((progress) => Boolean(progress.signingIn)),
-    );
-
-    readonly loadingDatabase$: Observable<boolean> = this.store.pipe(
-        select(OptionsSelectors.FEATURED.progress),
-        map((progress) => Boolean(progress.loadingDatabase)),
-    );
+    protected readonly store: Store<State>;
+    readonly signingIn$: Observable<boolean>;
+    readonly loadingDatabase$: Observable<boolean>;
 
     protected readonly subscription = new Subscription();
 
     constructor(
         protected injector: Injector,
     ) {
+        this.store = this.injector.get<Store<State>>(Store);
+        this.signingIn$ = this.store.pipe(
+            select(OptionsSelectors.FEATURED.progress),
+            map((progress) => Boolean(progress.signingIn)),
+        );
+        this.loadingDatabase$ = this.store.pipe(
+            select(OptionsSelectors.FEATURED.progress),
+            map((progress) => Boolean(progress.loadingDatabase)),
+        );
+
         this.subscription.add(
             this.store.pipe(
                 select(OptionsSelectors.FEATURED.keytarSupport),

@@ -1,3 +1,5 @@
+import {expect} from "@playwright/test";
+
 import {LoginFieldContainer} from "src/shared/model/container";
 import {
     ONE_SECOND_MS,
@@ -6,9 +8,10 @@ import {
     RUNTIME_ENV_E2E_PROTONMAIL_PASSWORD,
     RUNTIME_ENV_E2E_PROTONMAIL_UNREAD_MIN
 } from "src/shared/constants";
-import {accountBadgeCssSelector} from "src/e2e/lib";
+import {accountBadgeCssSelector} from "src/e2e/lib/util";
 import {asyncDelay} from "src/shared/util";
-import {initApp, test} from "./workflow";
+import {initAppWithTestContext} from "./lib/init-app";
+import {test} from "./lib/test";
 
 for (const {login, password, twoFactorCode, unread} of ([
     {
@@ -22,23 +25,20 @@ for (const {login, password, twoFactorCode, unread} of ([
         continue;
     }
 
-    test.serial(`unread check: `, async (t) => {
-        const workflow = await initApp(t, {initial: true});
-        const pauseMs = ONE_SECOND_MS * 20;
-        const unreadBadgeSelector = accountBadgeCssSelector();
+    test("unread check:", async () => {
+        await initAppWithTestContext({initial: true}, async (testContext) => {
+            const pauseMs = ONE_SECOND_MS * 20;
+            const unreadBadgeSelector = accountBadgeCssSelector();
 
-        await workflow.login({setup: true, savePassword: false});
-        await workflow.addAccount({login, password, twoFactorCode});
-        await workflow.selectAccount();
+            await testContext.workflow.login({setup: true, savePassword: false});
+            await testContext.workflow.addAccount({login, password, twoFactorCode});
+            await testContext.workflow.selectAccount();
 
-        await asyncDelay(pauseMs);
+            await asyncDelay(pauseMs);
 
-        try {
-            const parsedUnreadText = await t.context.firstWindowPage.$eval(unreadBadgeSelector, (el) => el.innerHTML);
+            const parsedUnreadText = await testContext.firstWindowPage.$eval(unreadBadgeSelector, (el) => el.innerHTML);
             const parsedUnread = Number(parsedUnreadText?.replace(/\D/g, ""));
-            t.true(!isNaN(parsedUnread) && parsedUnread >= unread, `parsedUnread(${parsedUnread}) >= unread(${unread})`);
-        } finally {
-            await workflow.destroyApp();
-        }
+            expect(!isNaN(parsedUnread) && parsedUnread >= unread).toStrictEqual(true);
+        });
     });
 }

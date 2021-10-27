@@ -7,7 +7,7 @@ npm config set msvs_version 2017
 echo "::endgroup::"
 
 echo "::group::build native modules"
-npm run postinstall:remove:prebuild-install
+npm run prepare:remove:prebuild-install
 npm run clean:prebuilds
 npm exec --package=electron-builder -- electron-builder install-app-deps --arch=x64
 echo "::endgroup::"

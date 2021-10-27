@@ -1,5 +1,5 @@
+import _fetch from "electron-fetch";
 import byline from "byline";
-import fetch from "electron-fetch";
 import fs from "fs";
 import fsExtra from "fs-extra";
 import os from "os";
@@ -12,6 +12,15 @@ import {promisify} from "util";
 
 import {GIT_CLONE_ABSOLUTE_DIR, OUTPUT_ABSOLUTE_DIR} from "scripts/const";
 import {PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
+
+// TODO make "./scripts/electron-builder/hooks/afterPack/index.cjs" execution in ESM mode same as the other scripts
+const fetch = typeof _fetch === "function"
+    ? _fetch
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+    : (_fetch as any).default as typeof _fetch;
+if (typeof fetch !== "function") {
+    throw new Error(`Unexpected "${nameof(fetch)}" type: ${typeof fetch}`);
+}
 
 export const makeConsoleTextYellow = (value: string): string => {
     return /*reset:*/"\x1b[0m" + /*yellow:*/"\x1b[33m" + value + /*reset:*/"\x1b[0m";

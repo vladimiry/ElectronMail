@@ -1,6 +1,6 @@
 import TerserPlugin from "terser-webpack-plugin";
 import path from "path";
-import {Configuration, DefinePlugin, RuleSetRule} from "webpack";
+import webpack, {Configuration, RuleSetRule} from "webpack";
 import {Options as TsLoaderOptions} from "ts-loader";
 import {mapValues} from "remeda";
 import {merge as webpackMerge} from "webpack-merge";
@@ -66,7 +66,7 @@ export function buildBaseConfig(
                 path: outputRelativePath(),
             },
             plugins: [
-                new DefinePlugin(definePluginValue),
+                new webpack.DefinePlugin(definePluginValue),
             ],
             resolve: {
                 extensions: ["*", ".js", ".ts"],

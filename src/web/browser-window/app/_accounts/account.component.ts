@@ -1,17 +1,5 @@
 import type {Action} from "@ngrx/store";
 import {BehaviorSubject, Observable, Subject, Subscription, combineLatest, lastValueFrom, merge, of, race, throwError, timer} from "rxjs";
-import {
-    ChangeDetectionStrategy,
-    Component,
-    ComponentRef,
-    ElementRef,
-    HostBinding,
-    Input,
-    NgZone,
-    ViewChild,
-    ViewContainerRef,
-} from "@angular/core";
-import type {OnDestroy, OnInit,} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {URL} from "@cliqz/url-parser";
 import {
@@ -38,6 +26,17 @@ import {pick} from "remeda";
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
+import {
+    ChangeDetectionStrategy,
+    Component,
+    ComponentRef,
+    ElementRef,
+    HostBinding,
+    Input,
+    NgZone,
+    ViewChild,
+    ViewContainerRef,
+} from "@angular/core";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {DbViewEntryComponent} from "src/web/browser-window/app/_db-view/db-view-entry.component";
 import {DbViewModuleResolve} from "src/web/browser-window/app/_accounts/db-view-module-resolve.service";
@@ -46,6 +45,7 @@ import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/act
 import {LogLevel} from "src/shared/model/common";
 import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";
 import {ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/constants";
+import type {OnDestroy, OnInit,} from "@angular/core";
 import {ProtonClientSession} from "src/shared/model/proton";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount} from "src/web/browser-window/app/model";
@@ -105,7 +105,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         distinctUntilChanged(),
     );
 
-    private readonly ipcMainClient = this.electronService.ipcMainClient();
+    private readonly ipcMainClient;
 
     private readonly logger: ReturnType<typeof getWebLogger>;
 
@@ -120,6 +120,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         private readonly zone: NgZone,
     ) {
         super();
+        this.ipcMainClient = this.electronService.ipcMainClient();
         this.logger = getWebLogger(__filename, nameof(AccountComponent));
         this.logger.info();
     }

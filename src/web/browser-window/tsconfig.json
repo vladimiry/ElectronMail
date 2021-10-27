@@ -1,8 +1,7 @@
 {
   "extends": "../../../tsconfig.json",
   "compilerOptions": {
-    "module": "ESNext",
-    "target": "es2015"
+    "target": "ES2021"
   },
   "include": [
     "../../../src/@types/**/*",

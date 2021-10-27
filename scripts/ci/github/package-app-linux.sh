@@ -28,7 +28,7 @@ if [[ "$GLIBC_INFO" != *"$GLIBC_INFO_EXPECTED_SUB"* ]]; then
     echo >&2 "unexpected glibc version detected"
     exit 1
 fi
-npm run postinstall:remove:prebuild-install
+npm run prepare:remove:prebuild-install
 npm run clean:prebuilds
 npm exec --package=electron-builder -- electron-builder install-app-deps --arch=x64
 echo "::endgroup::"

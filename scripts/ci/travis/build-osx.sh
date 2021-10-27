@@ -4,6 +4,7 @@ set -ev
 
 npm exec --package=npm-run-all -- npm-run-all lint build assets
 
+npm run prepare:remove:prebuild-install
 npm run clean:prebuilds
 npm exec --package=electron-builder -- electron-builder install-app-deps --arch=x64
 

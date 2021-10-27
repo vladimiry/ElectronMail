@@ -170,10 +170,7 @@ export async function build(
     await execShell([
         "npm",
         [
-            "exec", "--package=ts-node", "--", "ts-node", "--files", "--require", "tsconfig-paths/register",
-            "./scripts/electron-builder/run-with-default-evn-vars.ts", "--x64", "--publish", "never",
-            "--linux",
-            packageType,
+            "run", `electron-builder:dist:linux:${packageType}:do`,
         ],
     ]);
 

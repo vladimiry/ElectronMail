@@ -1,9 +1,9 @@
-import {Component, ElementRef, Inject, Input} from "@angular/core";
-import type {OnDestroy, OnInit} from "@angular/core";
+import {Observable, Subscription} from "rxjs";
 import {Store, select} from "@ngrx/store";
-import {Subscription} from "rxjs";
 
+import {Component, ElementRef, Inject, Input} from "@angular/core";
 import {NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
+import type {OnDestroy, OnInit} from "@angular/core";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {PACKAGE_GITHUB_PROJECT_URL_TOKEN} from "src/web/browser-window/app/app.constants";
 import {PACKAGE_NAME} from "src/shared/constants";
@@ -25,15 +25,11 @@ export class SavePasswordLabelComponent implements OnInit, OnDestroy {
 
     readonly savePasswordWarnHtmlMessage = SAVE_PASSWORD_WARN_TRUSTED_HTML;
 
-    readonly keytarSupport$ = this.store.pipe(
-        select(OptionsSelectors.FEATURED.keytarSupport),
-    );
-
     readonly projectName = PACKAGE_NAME;
 
-    readonly snapPasswordManagerServiceHint$ = this.store.pipe(
-        select(OptionsSelectors.FEATURED.snapPasswordManagerServiceHint),
-    );
+    readonly keytarSupport$: Observable<boolean | undefined>;
+
+    readonly snapPasswordManagerServiceHint$: Observable<boolean | undefined>;
 
     private readonly logger = getWebLogger(__filename, nameof(SavePasswordLabelComponent));
 
@@ -44,7 +40,14 @@ export class SavePasswordLabelComponent implements OnInit, OnDestroy {
         public readonly PACKAGE_GITHUB_PROJECT_URL: string,
         private readonly store: Store<State>,
         private readonly elementRef: ElementRef,
-    ) {}
+    ) {
+        this.keytarSupport$ = this.store.pipe(
+            select(OptionsSelectors.FEATURED.keytarSupport),
+        );
+        this.snapPasswordManagerServiceHint$ = this.store.pipe(
+            select(OptionsSelectors.FEATURED.snapPasswordManagerServiceHint),
+        );
+    }
 
     ngOnInit(): void {
         this.subscription.add({

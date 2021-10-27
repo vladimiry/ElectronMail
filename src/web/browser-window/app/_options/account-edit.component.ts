@@ -109,24 +109,10 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         ),
     };
     form = new FormGroup(this.controls);
-    // account
     account?: AccountConfig;
-    account$: Observable<AccountConfig> = merge(this.activatedRoute.params, this.activatedRoute.queryParams).pipe(
-        mergeMap(({login}) => login ? [String(login)] : []),
-        concatMap((login) => this.store.select(OptionsSelectors.SETTINGS.pickAccount({login}))),
-        mergeMap((account) => account ? [account] : []),
-    );
-    // progress
-    processing$: Observable<boolean> = this.store.pipe(
-        select(OptionsSelectors.FEATURED.progress),
-        map((progress) => Boolean(progress.addingAccount || progress.updatingAccount)),
-        distinctUntilChanged(),
-    );
-    removing$: Observable<boolean> = this.store.pipe(
-        select(OptionsSelectors.FEATURED.progress),
-        map((progress) => Boolean(progress.removingAccount)),
-        distinctUntilChanged(),
-    );
+    account$: Observable<AccountConfig>;
+    processing$: Observable<boolean>;
+    removing$: Observable<boolean>;
 
     // other
     private readonly logger = getWebLogger(__filename, nameof(AccountEditComponent));
@@ -138,7 +124,23 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         private readonly store: Store<State>,
         private readonly activatedRoute: ActivatedRoute,
         private readonly elementRef: ElementRef,
-    ) {}
+    ) {
+        this.account$ = merge(this.activatedRoute.params, this.activatedRoute.queryParams).pipe(
+            mergeMap(({login}) => login ? [String(login)] : []),
+            concatMap((login) => this.store.select(OptionsSelectors.SETTINGS.pickAccount({login}))),
+            mergeMap((account) => account ? [account] : []),
+        );
+        this.processing$ = this.store.pipe(
+            select(OptionsSelectors.FEATURED.progress),
+            map((progress) => Boolean(progress.addingAccount || progress.updatingAccount)),
+            distinctUntilChanged(),
+        );
+        this.removing$ = this.store.pipe(
+            select(OptionsSelectors.FEATURED.progress),
+            map((progress) => Boolean(progress.removingAccount)),
+            distinctUntilChanged(),
+        );
+    }
 
     ngOnInit(): void {
         const {controls} = this;

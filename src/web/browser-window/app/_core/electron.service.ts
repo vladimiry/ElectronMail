@@ -1,11 +1,12 @@
-import {Injectable, NgZone} from "@angular/core";
 import {Observable, Subscription, defer, of, race, throwError, timer} from "rxjs";
-import type {OnDestroy} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {concatMap, delay, filter, map, mergeMap, retryWhen, switchMap, take, withLatestFrom} from "rxjs/operators";
 import {createIpcMainApiService} from "electron-rpc-api";
 
+import {Config} from "src/shared/model/options";
 import {DEFAULT_API_CALL_TIMEOUT, ONE_SECOND_MS} from "src/shared/constants";
+import {Injectable, NgZone} from "@angular/core";
+import type {OnDestroy} from "@angular/core";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {PROTON_CALENDAR_IPC_WEBVIEW_API_DEFINITION} from "src/shared/api/webview/calendar";
 import {State} from "src/web/browser-window/app/store/reducers/options";
@@ -22,17 +23,18 @@ const logger = getWebLogger(__filename);
 export class ElectronService implements OnDestroy {
     private defaultApiCallTimeoutMs = DEFAULT_API_CALL_TIMEOUT;
     private readonly subscription = new Subscription();
-    private readonly onlinePingWithTimeouts$ = timer(0, ONE_SECOND_MS).pipe(
-        filter(() => navigator.onLine),
-        take(1),
-        withLatestFrom(this.store.pipe(select(OptionsSelectors.CONFIG.timeouts))),
-        map(([, timeouts]) => timeouts),
-    );
+    private readonly onlinePingWithTimeouts$: Observable<Config["timeouts"]>;
 
     constructor(
         private store: Store<State>,
         private ngZone: NgZone,
     ) {
+        this.onlinePingWithTimeouts$ = timer(0, ONE_SECOND_MS).pipe(
+            filter(() => navigator.onLine),
+            take(1),
+            withLatestFrom(this.store.pipe(select(OptionsSelectors.CONFIG.timeouts))),
+            map(([, timeouts]) => timeouts),
+        );
         this.subscription.add(
             this.store
                 .pipe(

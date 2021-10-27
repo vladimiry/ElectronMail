@@ -1,13 +1,14 @@
 import {NativeImage, nativeImage} from "electron";
 import {PassThrough} from "stream";
 import {createReadStream} from "fs";
+import {decodePNGFromStream, encodePNGToStream, make, registerFont} from "pureimage";
 import {hslToRgb, rgbToHsl, toHsl} from "color-fns";
 import {lanczos} from "@rgba-image/lanczos";
 
-import {Bitmap} from "pureimage/types/bitmap";
 import {CircleConfig, ImageBundle} from "./model";
 import {PLATFORM} from "src/electron-main/constants";
-import {decodePNGFromStream, encodePNGToStream, make, registerFont} from "pureimage";
+
+type Bitmap = ReturnType<typeof make>;
 
 // TODO explore https://github.com/vonderheide/mono-bitmap as a potential "pureimage" replacement
 
@@ -24,7 +25,7 @@ const pureimageUInt32: Readonly<{
 
 const buildCircle: (rad: number, color: string) => Bitmap = (rad, color) => {
     const bitmap = make(rad * 2, rad * 2, null);
-    const ctx = bitmap.getContext();
+    const ctx = bitmap.getContext("2d");
 
     ctx.fillStyle = color;
     ctx.beginPath();
@@ -191,7 +192,7 @@ export async function loggedOutBundle({bitmap: source}: ImageBundle, config: Cir
     const bitmap = cloneBitmap(source);
 
     skipSettingTransparentPixels(bitmap);
-    bitmap.getContext().drawImage(circle, 0, 0, width, height, 0, 0, width, height);
+    bitmap.getContext("2d").drawImage(circle, 0, 0, width, height, 0, 0, width, height);
 
     return {
         bitmap,
@@ -227,7 +228,7 @@ export async function unreadNative(
         const size = rad * scale;
         const x = size - rad * 1.1;
         const y = size + rad * scale * (text.length - 1) * .1;
-        const ctx = textDrawArea.getContext();
+        const ctx = textDrawArea.getContext("2d");
 
         await new Promise<ReturnType<(typeof registerFont)>>((resolve) => {
             const fontRecord = registerFont(
@@ -254,7 +255,7 @@ export async function unreadNative(
     skipSettingTransparentPixels(icon);
 
     icon
-        .getContext()
+        .getContext("2d")
         .drawImage(circle, 0, 0, width, height, icon.width - width, icon.height - height, width, height);
 
     return {

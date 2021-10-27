@@ -1,10 +1,12 @@
 import {AngularWebpackPlugin, AngularWebpackPluginOptions} from "@ngtools/webpack";
-import {readConfiguration} from "@angular/compiler-cli";
 
+import linkerPlugin from "@angular/compiler-cli/linker/babel";
 import {BuildAngularCompilationFlags, BuildEnvVars} from "webpack-configs/model";
 import {ENVIRONMENT, rootRelativePath} from "webpack-configs/lib";
+import {LegacyNgcOptions, StrictTemplateOptions} from "@angular/compiler-cli/src/ngtsc/core/api";
 import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
-import {browserWindowAppPath, browserWindowPath, buildBaseWebConfig, cssRuleSetRules} from "./lib";
+import {browserWindowAppPath, browserWindowPath, buildBaseWebConfig, cssRuleSetRules, sassLoaderRuleSetRules} from "./lib";
+import {readConfiguration} from "@angular/compiler-cli";
 
 const angularCompilationFlags: BuildAngularCompilationFlags = {aot: true, ivy: true};
 
@@ -18,6 +20,37 @@ const config = buildBaseWebConfig(
     {
         module: {
             rules: [
+                // { // see https://github.com/angular/angular/issues/44026
+                //     test: /\.m?js$/,
+                //     exclude: [
+                //         rootRelativePath("./node_modules/monaco-editor"),
+                //     ],
+                //     use: {
+                //         loader: "babel-loader",
+                //         options: {
+                //             cacheDirectory: true,
+                //             plugins: [linkerPlugin],
+                //         },
+                //     }
+                // },
+                {
+                    test: /\.m?[j|t]s$/,
+                    use: {
+                        loader: "babel-loader",
+                        options: {
+                            cacheDirectory: true,
+                            compact: false,
+                            plugins: [
+                                linkerPlugin,
+                                // always transform async/await to support zone.js thing
+                                "@babel/plugin-proposal-async-generator-functions",
+                                "@babel/plugin-transform-async-to-generator",
+                                // babel's equivalent to typescript's "importHelpers" option
+                                "@babel/plugin-transform-runtime",
+                            ],
+                        },
+                    },
+                },
                 {
                     test: /\.[jt]sx?$/,
                     loader: "@ngtools/webpack",
@@ -28,14 +61,14 @@ const config = buildBaseWebConfig(
                         "to-string-loader",
                         ...cssRuleSetRules(),
                         "resolve-url-loader",
-                        "sass-loader",
+                        ...sassLoaderRuleSetRules,
                     ],
                     include: [
                         browserWindowAppPath("/"),
                     ],
                 },
                 {
-                    test: require.resolve("monaco-editor/esm/vs/base/common/platform.js"),
+                    test: rootRelativePath("./node_modules/monaco-editor/esm/vs/base/common/platform.js"),
                     use: [
                         {
                             loader: "imports-loader",
@@ -43,11 +76,13 @@ const config = buildBaseWebConfig(
                                 additionalCode: `
                                     const self = {
                                         MonacoEnvironment: {
-                                            getWorkerUrl(...[, label]) {
-                                                if (label === "typescript" || label === "javascript") {
-                                                    return "./monaco-editor.ts.worker.js";
-                                                }
-                                                return "./monaco-editor.editor.worker.js";
+                                            getWorker(...[/* workerId */, label]) {
+                                                return new Worker(
+                                                    ["typescript", "javascript"].includes(label)
+                                                        ? "./monaco-editor.ts.worker.mjs"
+                                                        : "./monaco-editor.editor.worker.mjs",
+                                                    { name: label, type: "module" },
+                                                );
                                             },
                                         },
                                     };
@@ -61,24 +96,18 @@ const config = buildBaseWebConfig(
         resolve: {
             alias: {
                 images: rootRelativePath("images"),
-                "monaco-editor": rootRelativePath("./node_modules/monaco-editor/esm/vs/editor/editor.main.js"),
             },
         },
         plugins: [
             (() => {
-                type StrictTemplateOptions
-                    = NoExtraProps<Required<import("@angular/compiler-cli/src/ngtsc/core/api").StrictTemplateOptions>>;
-                const strictTemplateOptions: NoExtraProps<Pick<StrictTemplateOptions, "strictTemplates">> = {
+                const strictTemplateOptions: NoExtraProps<Pick<NoExtraProps<Required<StrictTemplateOptions>>, "strictTemplates">> = {
                     // if "true", implies all template strictness flags below (unless individually disabled)
                     // see https://angular.io/guide/template-typecheck
                     strictTemplates: angularCompilationFlags.ivy,
                 };
 
-                type LegacyNgcOptions
-                    = NoExtraProps<Required<Pick<import("@angular/compiler-cli/src/ngtsc/core/api").LegacyNgcOptions,
-                    | "fullTemplateTypeCheck"
-                    | "strictInjectionParameters">>>;
-                const legacyNgcOptions: LegacyNgcOptions = {
+                const legacyNgcOptions
+                    : NoExtraProps<Required<Pick<LegacyNgcOptions, "fullTemplateTypeCheck" | "strictInjectionParameters">>> = {
                     fullTemplateTypeCheck: angularCompilationFlags.aot || angularCompilationFlags.ivy,
                     strictInjectionParameters: true,
                 };

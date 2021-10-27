@@ -1,10 +1,6 @@
-import path from "path";
-import {ExecutionContext} from "ava";
-
-import {TestContext} from "src/e2e/workflow";
 
 // WARN use only function arguments
-// using any external variables/libraries might break things since serialization takes place (funciton executed on the "main" process)
+//      using any external variables/libraries might break things since serialization takes place (function executed on the "main" process)
 export const mainProcessEvaluationFunctions = {
     resolveBrowserWindow: (
         {BrowserWindow}: typeof import("electron"),
@@ -29,7 +25,7 @@ export const mainProcessEvaluationFunctions = {
     },
     async testMainProcessSpecificStuff(
         electron: typeof import("electron"),
-        options: { initial: boolean, resolveBrowserWindowStringified: string },
+        options: NoExtraProps<{ initial: boolean, resolveBrowserWindowStringified: string }>,
     ): Promise<typeof options> {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const resolveBrowserWindow: typeof mainProcessEvaluationFunctions.resolveBrowserWindow
@@ -59,26 +55,6 @@ export const mainProcessEvaluationFunctions = {
         return options;
     }
 } as const;
-
-export const saveScreenshot = async (t: ExecutionContext<TestContext>): Promise<string | void> => {
-    {
-        const alive = (
-            t.context.app.windows().length > 1
-            &&
-            await t.context.app.evaluate(({BrowserWindow}) => BrowserWindow.getFocusedWindow()?.webContents.isDestroyed() === false)
-        );
-        if (!alive) {
-            return;
-        }
-    }
-    const file = path.join(
-        t.context.outputDirPath,
-        `screenshot-${t.title}-${new Date().toISOString()}.png`.replace(/[^A-Za-z0-9.]/g, "_"),
-    );
-    await t.context.firstWindowPage.screenshot({path: file});
-    console.info(`Screenshot saved to: ${file}`); // eslint-disable-line no-console
-    return file;
-};
 
 export const accountCssSelector = (zeroStartedAccountIndex = 0): string => {
     return `.list-group.accounts-list > electron-mail-account-title:nth-child(${zeroStartedAccountIndex + 1})`;

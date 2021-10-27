@@ -1,8 +1,8 @@
+import {Observable, Subscription} from "rxjs";
+import {Store, select} from "@ngrx/store";
+
 import {ChangeDetectionStrategy, Component, ElementRef, Input, Renderer2} from "@angular/core";
 import type {OnDestroy, OnInit} from "@angular/core";
-import {Store, select} from "@ngrx/store";
-import {Subscription} from "rxjs";
-
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 
@@ -19,7 +19,7 @@ export class UnreadBadgeComponent implements OnInit, OnDestroy {
     @Input()
     alwaysRenderTheValue = false;
 
-    readonly doNotRenderNotificationBadgeValue$ = this.store.pipe(select(OptionsSelectors.CONFIG.doNotRenderNotificationBadgeValue));
+    readonly doNotRenderNotificationBadgeValue$: Observable<boolean>;
 
     private readonly subscription = new Subscription();
 
@@ -27,7 +27,9 @@ export class UnreadBadgeComponent implements OnInit, OnDestroy {
         private readonly store: Store<State>,
         private readonly elementRef: ElementRef,
         private readonly renderer: Renderer2,
-    ) {}
+    ) {
+        this.doNotRenderNotificationBadgeValue$ = this.store.pipe(select(OptionsSelectors.CONFIG.doNotRenderNotificationBadgeValue));
+    }
 
     ngOnInit(): void {
         this.subscription.add(

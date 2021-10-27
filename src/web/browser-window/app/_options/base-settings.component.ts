@@ -1,14 +1,14 @@
-import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/forms";
-import {Component, ElementRef, Inject} from "@angular/core";
 import {Observable, Subscription} from "rxjs";
-import type {OnDestroy, OnInit} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {distinctUntilChanged, distinctUntilKeyChanged, first, map} from "rxjs/operators";
 
+import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/forms";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {BaseConfig} from "src/shared/model/options";
+import {Component, ElementRef, Inject} from "@angular/core";
 import {LAYOUT_MODES, LOG_LEVELS, ZOOM_FACTORS} from "src/shared/constants";
 import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
+import type {OnDestroy, OnInit} from "@angular/core";
 import {PACKAGE_GITHUB_PROJECT_URL_TOKEN} from "src/web/browser-window/app/app.constants";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 import {getWebLogger} from "src/web/browser-window/util";
@@ -21,11 +21,6 @@ import {getWebLogger} from "src/web/browser-window/util";
 })
 export class BaseSettingsComponent implements OnInit, OnDestroy {
     readonly userDataDir = __METADATA__.electronLocations.userDataDir;
-
-    readonly processing$: Observable<boolean> = this.store.pipe(
-        select(OptionsSelectors.FEATURED.progress),
-        map((progress) => Boolean(progress.updatingBaseSettings)),
-    );
 
     readonly logLevels = LOG_LEVELS.map((value) => ({title: value.charAt(0).toUpperCase() + value.slice(1), value}));
 
@@ -79,22 +74,12 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
 
     readonly colorPickerOpened: { bg: boolean; text: boolean; icon: boolean } = {bg: false, text: false, icon: false};
 
-    readonly $trayIconColor = this.store.pipe(select(OptionsSelectors.CONFIG.trayIconColor));
-
-    readonly $unreadBgColor = this.store.pipe(select(OptionsSelectors.CONFIG.unreadBgColor));
-
-    readonly $unreadTextColor = this.store.pipe(select(OptionsSelectors.CONFIG.unreadTextColor));
-
-    readonly $unreadSummary = this.store.pipe(
-        select(AccountsSelectors.ACCOUNTS.loggedInAndUnreadSummary),
-        map(({unread}) => unread),
-    );
-
-    readonly localStoreInUse$: Observable<boolean> = this.store.pipe(
-        select(AccountsSelectors.FEATURED.accounts),
-        map((accounts) => accounts.some((account) => account.accountConfig.database)),
-        distinctUntilChanged(),
-    );
+    readonly processing$: Observable<boolean>;
+    readonly $trayIconColor: Observable<string>;
+    readonly $unreadBgColor: Observable<string>;
+    readonly $unreadTextColor: Observable<string>;
+    readonly $unreadSummary: Observable<number>;
+    readonly localStoreInUse$: Observable<boolean>;
 
     private readonly logger = getWebLogger(__filename, nameof(BaseSettingsComponent));
 
@@ -105,7 +90,24 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         public readonly PACKAGE_GITHUB_PROJECT_URL: string,
         private readonly store: Store<State>,
         private readonly elementRef: ElementRef,
-    ) {}
+    ) {
+        this.processing$ = this.store.pipe(
+            select(OptionsSelectors.FEATURED.progress),
+            map((progress) => Boolean(progress.updatingBaseSettings)),
+        );
+        this.$trayIconColor = this.store.pipe(select(OptionsSelectors.CONFIG.trayIconColor));
+        this.$unreadBgColor = this.store.pipe(select(OptionsSelectors.CONFIG.unreadBgColor));
+        this.$unreadTextColor = this.store.pipe(select(OptionsSelectors.CONFIG.unreadTextColor));
+        this.$unreadSummary = this.store.pipe(
+            select(AccountsSelectors.ACCOUNTS.loggedInAndUnreadSummary),
+            map(({unread}) => unread),
+        );
+        this.localStoreInUse$ = this.store.pipe(
+            select(AccountsSelectors.FEATURED.accounts),
+            map((accounts) => accounts.some((account) => account.accountConfig.database)),
+            distinctUntilChanged(),
+        );
+    }
 
     ngOnInit(): void {
         this.subscription.add({

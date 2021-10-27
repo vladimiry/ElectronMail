@@ -11,8 +11,8 @@
     /*
     emitting
     */
-    "target": "es2019",
-    "module": "commonjs",
+    "target": "ESNext",
+    "module": "ESNext",
     "declaration": false,
     "emitDecoratorMetadata": true,
     "importHelpers": true,

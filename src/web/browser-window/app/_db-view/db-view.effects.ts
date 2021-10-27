@@ -1,7 +1,6 @@
 import UUID from "pure-uuid";
 import {Actions, createEffect, ofType} from "@ngrx/effects";
 import {EMPTY, forkJoin, from, merge, of} from "rxjs";
-import {Injectable, NgZone} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {concatMap, filter, finalize, map, mergeMap, switchMap, takeUntil, tap, throttleTime, withLatestFrom} from "rxjs/operators";
 import {omit, pick} from "remeda";
@@ -9,6 +8,7 @@ import {omit, pick} from "remeda";
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
+import {Injectable, NgZone} from "@angular/core";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/db-view";
@@ -19,8 +19,6 @@ const _logger = getWebLogger(__filename);
 
 @Injectable()
 export class DbViewEffects {
-    readonly ipcMainClient = this.api.ipcMainClient();
-
     mountInstance$ = createEffect(
         () => this.actions$.pipe(
             ofType(DB_VIEW_ACTIONS.MountInstance),
@@ -195,7 +193,7 @@ export class DbViewEffects {
                 return merge(
                     of(OPTIONS_ACTIONS.PatchProgress({togglingLocalDbMailsListViewMode: true})),
                     from(
-                        this.ipcMainClient("toggleLocalDbMailsListViewMode")(),
+                        this.api.ipcMainClient()("toggleLocalDbMailsListViewMode")(),
                     ).pipe(
                         concatMap((config) => [
                             OPTIONS_ACTIONS.GetConfigResponse(config),

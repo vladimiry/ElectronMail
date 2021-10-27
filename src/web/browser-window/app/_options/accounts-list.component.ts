@@ -1,13 +1,13 @@
-import type {CdkDragDrop} from "@angular/cdk/drag-drop";
-import {Component, HostBinding} from "@angular/core";
 import {Observable, Subject, Subscription} from "rxjs";
-import type {OnDestroy} from "@angular/core";
 import {Store} from "@ngrx/store";
 import {map, withLatestFrom} from "rxjs/operators";
 
 import {AccountConfig} from "src/shared/model/account";
+import type {CdkDragDrop} from "@angular/cdk/drag-drop";
+import {Component, HostBinding} from "@angular/core";
 import {LoginFieldContainer} from "src/shared/model/container";
 import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
+import type {OnDestroy} from "@angular/core";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {State} from "src/web/browser-window/app/store/reducers/options";
@@ -18,15 +18,9 @@ import {State} from "src/web/browser-window/app/store/reducers/options";
     styleUrls: ["./accounts-list.component.scss"],
 })
 export class AccountsListComponent implements OnDestroy {
-    readonly accounts$ = this.store.select(OptionsSelectors.SETTINGS.accounts);
-
-    readonly changingAccountOrder$: Observable<boolean> = this.store
-        .select(OptionsSelectors.FEATURED.progress)
-        .pipe(map((progress) => Boolean(progress.changingAccountOrder)));
-
-    readonly togglingAccountDisabling$: Observable<boolean> = this.store
-        .select(OptionsSelectors.FEATURED.progress)
-        .pipe(map((progress) => Boolean(progress.togglingAccountDisabling)));
+    readonly accounts$: Observable<AccountConfig[]>;
+    readonly changingAccountOrder$: Observable<boolean>;
+    readonly togglingAccountDisabling$: Observable<boolean>;
 
     @HostBinding("class.reordering-disabled")
     reorderingDisabled = true;
@@ -38,6 +32,14 @@ export class AccountsListComponent implements OnDestroy {
     constructor(
         private readonly store: Store<State>,
     ) {
+        this.accounts$ = this.store.select(OptionsSelectors.SETTINGS.accounts);
+        this.changingAccountOrder$ = this.store
+            .select(OptionsSelectors.FEATURED.progress)
+            .pipe(map((progress) => Boolean(progress.changingAccountOrder)));
+        this.togglingAccountDisabling$ = this.store
+            .select(OptionsSelectors.FEATURED.progress)
+            .pipe(map((progress) => Boolean(progress.togglingAccountDisabling)));
+
         this.subscription.add(
             this.changingAccountOrder$
                 .pipe(withLatestFrom(this.accounts$))

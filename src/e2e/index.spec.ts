@@ -1,147 +1,75 @@
-import byline from "byline";
 import fs from "fs";
 import path from "path";
-import {ExecutionContext} from "ava";
-import {promisify} from "util";
 
-import {CI, ENV, TestContext, initApp, test} from "./workflow";
 import {Config} from "src/shared/model/options";
+import {IS_CI} from "src/e2e/lib/const";
 import {ONE_SECOND_MS, PROTON_API_ENTRY_URLS} from "src/shared/constants";
 import {asyncDelay} from "src/shared/util";
-import {saveScreenshot} from "src/e2e/lib";
+import {initAppWithTestContext} from "src/e2e/lib/init-app";
+import {test} from "./lib/test";
 
-async function afterEach(t: ExecutionContext<TestContext>): Promise<void> {
-    if (fs.existsSync(t.context.logFilePath)) {
-        await new Promise((resolve, reject) => {
-            const stream = byline.createStream(
-                fs.createReadStream(t.context.logFilePath),
-            );
-            stream.on("data", (_, line = String(_)) => {
-                if (
-                    line.includes("keytar")
-                    ||
-                    (
-                        line.includes("[electron-rpc-api]")
-                        &&
-                        line.includes(`Object has been destroyed: "sender"`)
-                    )
-                    ||
-                    (
-                        line.includes(`failed to resolve window bounds`)
-                        &&
-                        line.includes("Object has been destroyed")
-                    )
-                ) {
-                    return;
-                }
-                t.fail(`App log file error line`);
-            });
-            stream.on("error", reject);
-            stream.on("end", resolve);
-        });
-    }
-
-    // additionally making sure that settings file is actually encrypted by simply scanning it for the raw "login" value
-    const rawSettings = promisify(fs.readFile)(path.join(t.context.userDataDirPath, "settings.bin"));
-    t.true(rawSettings.toString().indexOf(ENV.loginPrefix) === -1);
-}
-
-test.serial("general actions: app start, master password setup, add accounts", async (t) => {
-    const app = await initApp(t, {initial: true});
-
-    // screenshot with user agent clearly displayed
-    await saveScreenshot(t);
-
-    await app.login({setup: true, savePassword: false});
-
-    for (const entryUrlValue of PROTON_API_ENTRY_URLS) {
-        await app.addAccount({entryUrlValue});
-    }
-
-    await app.logout();
-
-    await app.destroyApp();
-
-    await afterEach(t);
+test("general actions: app start, master password setup, add accounts", async () => {
+    await initAppWithTestContext({initial: true}, async ({workflow}) => {
+        await workflow.saveScreenshot(); // screenshot with user agent clearly displayed at this point
+        await workflow.login({setup: true, savePassword: false});
+        for (const entryUrlValue of PROTON_API_ENTRY_URLS) {
+            await workflow.addAccount({entryUrlValue});
+        }
+        await workflow.logout();
+    });
 });
 
-test.serial("auto logout", async (t) => {
-    const app = await initApp(t, {initial: true});
-    await app.login({setup: true, savePassword: false});
-    await app.logout();
+test("auto logout", async () => {
+    await initAppWithTestContext({initial: true}, async (testContext) => {
+        await testContext.workflow.login({setup: true, savePassword: false});
+        await testContext.workflow.logout();
 
-    const configFile = path.join(t.context.userDataDirPath, "config.json");
-    const configFileData = JSON.parse(fs.readFileSync(configFile).toString()) as Config;
-    const idleTimeLogOutSec = 10;
+        const configFile = path.join(testContext.userDataDirPath, "config.json");
+        const configFileData = JSON.parse(fs.readFileSync(configFile).toString()) as Config;
+        const idleTimeLogOutSec = 10;
 
-    configFileData.startHidden = true;
-    configFileData.idleTimeLogOutSec = idleTimeLogOutSec;
-    fs.writeFileSync(configFile, JSON.stringify(configFileData, null, 2));
+        configFileData.startHidden = true;
+        configFileData.idleTimeLogOutSec = idleTimeLogOutSec;
+        fs.writeFileSync(configFile, JSON.stringify(configFileData, null, 2));
 
-    await app.login({setup: false, savePassword: false});
-    await asyncDelay(idleTimeLogOutSec * ONE_SECOND_MS * 1.5);
-    await app.loginPageUrlTest("auto-logout");
-
-    await app.destroyApp();
-
-    await afterEach(t);
+        await testContext.workflow.login({setup: false, savePassword: false});
+        await asyncDelay(idleTimeLogOutSec * ONE_SECOND_MS * 1.5);
+        await testContext.workflow.loginPageUrlTest("auto-logout");
+    });
 });
 
-if (CI) {
-    test.serial("auto login", async (t) => {
-        await (async (): Promise<void> => {
-            const app = await initApp(t, {initial: true});
-            await app.login({setup: true, savePassword: true});
-            await app.afterLoginUrlTest("initial login");
+if (IS_CI) {
+    test("auto login", async () => {
+        let initial = true;
+        const testContext = await initAppWithTestContext({initial, allowDestroyedExecutionContext: true}, async ({workflow}) => {
+            await workflow.login({setup: true, savePassword: true});
+            await workflow.afterLoginUrlTest("initial login");
             const [firstEntryUrlValue] = PROTON_API_ENTRY_URLS;
-            await app.addAccount({entryUrlValue: firstEntryUrlValue});
-            // await app.exit(); // not "logout" but "exit" so the saved password doesn't get removed
-            await app.destroyApp(true);
-        })();
-
-        // auto login 1
-        await (async (): Promise<void> => {
-            const initial = false;
-            const app = await initApp(t, {initial});
-            await app.afterLoginUrlTest("auto login 1", {hiddenWindow: !initial});
-            // await app.exit(); // not "logout" but "exit" so the saved password doesn't get removed
-            await app.destroyApp(true);
-        })();
-
-        // auto login 2, making sure previous auto login step didn't remove saved password (exited by: exit)
-        await (async (): Promise<void> => {
-            const initial = false;
-            const app = await initApp(t, {initial});
-            await app.afterLoginUrlTest("auto login 2", {hiddenWindow: !initial});
-            await app.logout({hiddenWindow: !initial});
-            await app.destroyApp();
-        })();
-
-        // making sure previous step removed the saved password (exited by: logout)
-        await (async (): Promise<void> => {
-            const initial = false;
-            const hiddenWindow = !initial;
-            const app = await initApp(t, {initial});
-            await app.afterLoginUrlTest("auto login: final step 1", {hiddenWindow, expectLoginPage: true});
-            await app.login({setup: false, savePassword: false, hiddenWindow});
-            await app.afterLoginUrlTest("auto login: final step 2", {hiddenWindow});
-            await app.destroyApp();
-        })();
-
-        await afterEach(t);
+            await workflow.addAccount({entryUrlValue: firstEntryUrlValue});
+            // no "logout" action performed so the saved password doesn't get removed
+        });
+        { // auto login 1
+            initial = false;
+            await initAppWithTestContext({testContext, initial, allowDestroyedExecutionContext: true}, async ({workflow}) => {
+                await workflow.afterLoginUrlTest("auto login 1", {hiddenWindow: !initial});
+                // no "logout" action performed so the saved password doesn't get removed
+            });
+        }
+        { // auto login 2, making sure previous auto login step didn't remove saved password (exited by: exit/destroy)
+            initial = false;
+            await initAppWithTestContext({testContext, initial}, async ({workflow}) => {
+                const initial = false;
+                await workflow.afterLoginUrlTest("auto login 2", {hiddenWindow: !initial});
+                await workflow.logout({hiddenWindow: !initial});
+            });
+        }
+        { // making sure previous step has removed the saved password (exited by: logout)
+            initial = false;
+            await initAppWithTestContext({testContext, initial}, async ({workflow}) => {
+                await workflow.afterLoginUrlTest("auto login: final step 1", {hiddenWindow: !initial, expectLoginPage: true});
+                await workflow.login({setup: false, savePassword: false, hiddenWindow: !initial});
+                await workflow.afterLoginUrlTest("auto login: final step 2", {hiddenWindow: !initial});
+            });
+        }
     });
 }
-
-test.beforeEach(async (t) => {
-    t.context.testStatus = "initial";
-});
-
-test.afterEach(async (t) => {
-    t.context.testStatus = "success";
-});
-
-test.afterEach.always(async (t) => {
-    if (t.context.testStatus !== "success") {
-        await saveScreenshot(t);
-    }
-});

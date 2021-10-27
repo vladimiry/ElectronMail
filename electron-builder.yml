@@ -10,11 +10,8 @@ files:
   # TODO exclude not needed stuff in 'files:' section to reduce app packages size, can save megabytes, so a significant improvement
   - './app/**/*'
   - './package.json'
-  - '!app/electron-main-e2e.js'
-  - '!app/electron-preload/browser-window-e2e.js'
-  - '!app/electron-preload/webview/calendar-e2e.js'
-  - '!app/electron-preload/webview/primary-e2e.js'
-  # sodium-native TODO: include into the package only needed prebuilds for the platform is being built
+  - '!app/**/*/index-e2e.{js,cjs,mjs}'
+  # sodium-native TODO: include into the package only needed prebuilds for the platform is being assembled
   - '!node_modules/sodium-native/{src,test,libsodium,tmp,deps}'
   # spellchecker
   - '!node_modules/spellchecker/spec'
@@ -26,7 +23,7 @@ asarUnpack:
   - '**/node_modules/msgpackr-extract/**/*'
   - '**/node_modules/sodium-native/**/*'
   - '**/node_modules/spellchecker/**/*'
-afterPack: './scripts/electron-builder/hooks/afterPack/index.js'
+afterPack: './scripts/electron-builder/hooks/afterPack/index.cjs'
 
 mac:
   icon: ./app/assets/icons/mac/icon.icns

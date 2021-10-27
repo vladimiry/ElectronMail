@@ -268,6 +268,10 @@ async function executeBuildFlow(
                         cwd: repoDir,
                         env: {
                             ...process.env,
+                            ...{ // disable node options inheritance form the parent/own process
+                                NODE_OPTIONS: "",
+                                npm_config_node_options: "",
+                            },
                             PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "1",
                             YARN_CHECKSUM_BEHAVIOR: "update",
                             YARN_ENABLE_IMMUTABLE_INSTALLS: "false",
@@ -278,7 +282,7 @@ async function executeBuildFlow(
                 await execShell(["yarn", ["install"], {cwd: repoDir}], {printStdOut: false});
             }
 
-            for (const patchFileName of (await import("patches/protonmail/meta.json"))[repoType]) {
+            for (const patchFileName of (await import("patches/protonmail/meta.json")).default[repoType]) {
                 await applyPatch({
                     patchFile: path.join(CWD_ABSOLUTE_DIR, "./patches/protonmail", patchFileName),
                     cwd: repoDir,

@@ -1,15 +1,15 @@
 import fs from "fs";
 import fsExtra from "fs-extra";
 import path from "path";
+import dtsGeneratorImport, {DtsGeneratorOptions} from "dts-generator";
 
 import {CONSOLE_LOG} from "scripts/lib";
 import {PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION} from "src/shared/constants";
 import {PROTON_SHARED_MESSAGE_INTERFACE} from "src/shared/proton-apps-constants";
 
-// TODO "require/var-requires"-based import
-export const dtsGenerator: { // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-    default: (options: { baseDir: string, files: string[], out: string }) => Promise<string>
-} = require("dts-generator"); // eslint-disable-line @typescript-eslint/no-var-requires
+const dtsGenerator: { // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+    default: (arg: NoExtraProps<StrictOmit<DtsGeneratorOptions, "name">>) => ReturnType<typeof dtsGeneratorImport>
+} = dtsGeneratorImport as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 export const generateDtsForMonacoEditor = async (
     {sharedProtonPackageDir, destDir}: { sharedProtonPackageDir: string, destDir: string },

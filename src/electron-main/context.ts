@@ -32,7 +32,7 @@ function exists(file: string, storeFs: StoreModel.StoreFs): boolean {
     try {
         storeFs._impl.statSync(file);
     } catch (error) {
-        if ((Object(error) as {code?: unknown}).code === "ENOENT") {
+        if ((Object(error) as { code?: unknown }).code === "ENOENT") {
             return false;
         }
 
@@ -78,8 +78,8 @@ function initLocations(
             appDir: path.resolve(
                 __dirname,
                 BUILD_ENVIRONMENT === "development"
-                    ? "../app-dev"
-                    : "../app",
+                    ? "../../app-dev"
+                    : "../../app",
             ),
             userDataDir: path.resolve(
                 ((): string | undefined => {
@@ -133,12 +133,14 @@ function initLocations(
         aboutBrowserWindowPage: appRelativePath("./web/", WEBPACK_WEB_CHUNK_NAMES.about, "index.html"),
         searchInPageBrowserViewPage: appRelativePath("./web/", WEBPACK_WEB_CHUNK_NAMES["search-in-page-browser-view"], "index.html"),
         preload: {
-            aboutBrowserWindow: appRelativePath("./electron-preload/about.js"),
-            browserWindow: appRelativePath(`./electron-preload/browser-window${BUILD_ENVIRONMENT === "e2e" ? "-e2e" : ""}.js`),
-            searchInPageBrowserView: appRelativePath("./electron-preload/search-in-page-browser-view.js"),
-            fullTextSearchBrowserWindow: appRelativePath("./electron-preload/database-indexer.js"),
-            primary: formatFileUrl(appRelativePath(`./electron-preload/webview/primary${BUILD_ENVIRONMENT === "e2e" ? "-e2e" : ""}.js`)),
-            calendar: formatFileUrl(appRelativePath(`./electron-preload/webview/calendar${BUILD_ENVIRONMENT === "e2e" ? "-e2e" : ""}.js`)),
+            aboutBrowserWindow: appRelativePath("./electron-preload/about/index.js"),
+            browserWindow: appRelativePath(`./electron-preload/browser-window/index${BUILD_ENVIRONMENT === "e2e" ? "-e2e" : ""}.js`),
+            searchInPageBrowserView: appRelativePath("./electron-preload/search-in-page-browser-view/index.js"),
+            fullTextSearchBrowserWindow: appRelativePath("./electron-preload/database-indexer/index.js"),
+            primary:
+                formatFileUrl(appRelativePath(`./electron-preload/webview/primary/index${BUILD_ENVIRONMENT === "e2e" ? "-e2e" : ""}.js`)),
+            calendar:
+                formatFileUrl(appRelativePath(`./electron-preload/webview/calendar/index${BUILD_ENVIRONMENT === "e2e" ? "-e2e" : ""}.js`)),
         },
         // TODO electron: get rid of "baseURLForDataURL" workaround, see https://github.com/electron/electron/issues/20700
         vendorsAppCssLinkHrefs: ["shared-vendor-dark", "shared-vendor-light"]

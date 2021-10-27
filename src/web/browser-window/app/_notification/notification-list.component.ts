@@ -1,13 +1,13 @@
-import {ChangeDetectionStrategy, Component, ElementRef} from "@angular/core";
 import {Observable, Subscription} from "rxjs";
-import type {OnDestroy, OnInit} from "@angular/core";
 import {Store} from "@ngrx/store";
 import {pairwise} from "rxjs/operators";
 
+import {ChangeDetectionStrategy, Component, ElementRef} from "@angular/core";
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {NOTIFICATIONS_OUTLET} from "src/web/browser-window/app/app.constants";
 import {NotificationItem} from "src/web/browser-window/app/store/actions/notification";
 import {NotificationSelectors} from "src/web/browser-window/app/store/selectors";
+import type {OnDestroy, OnInit} from "@angular/core";
 import {State} from "src/web/browser-window/app/store/reducers/notification";
 import {getWebLogger} from "src/web/browser-window/util";
 
@@ -18,7 +18,7 @@ import {getWebLogger} from "src/web/browser-window/util";
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NotificationListComponent implements OnInit, OnDestroy {
-    $items: Observable<NotificationItem[]> = this.store.select(NotificationSelectors.FEATURED.items);
+    $items: Observable<NotificationItem[]>;
 
     private readonly logger = getWebLogger(__filename, nameof(NotificationListComponent));
 
@@ -27,7 +27,9 @@ export class NotificationListComponent implements OnInit, OnDestroy {
     constructor(
         private store: Store<State>,
         private elementRef: ElementRef,
-    ) {}
+    ) {
+        this.$items = this.store.select(NotificationSelectors.FEATURED.items);
+    }
 
     ngOnInit(): void {
         this.subscription.add({

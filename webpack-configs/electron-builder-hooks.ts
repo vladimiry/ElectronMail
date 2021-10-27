@@ -1,8 +1,8 @@
+import nodeExternals from "webpack-node-externals";
 import path from "path";
 import {Configuration} from "webpack";
 
 import {buildBaseConfig, rootRelativePath, typescriptLoaderRule} from "./lib";
-import {nodeExternals} from "./require-import";
 
 const hooksDir = (...value: string[]): string => {
     return path.join(
@@ -32,6 +32,7 @@ const configurations: Configuration[] = hooksToBuild.map((hookDirName) => {
                 path: hookDir,
                 libraryTarget: "commonjs2",
                 libraryExport: "default",
+                filename: "[name].cjs",
             },
             module: {
                 rules: [

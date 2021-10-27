@@ -1,17 +1,17 @@
 import type {Action} from "@ngrx/store";
-import {DOCUMENT} from "@angular/common";
-import {Directive, ElementRef, EventEmitter, Injector, Input, Output, Renderer2} from "@angular/core";
 import {Observable, Subscription, combineLatest, lastValueFrom, race} from "rxjs";
-import type {OnDestroy} from "@angular/core";
 import {distinctUntilChanged, filter, map, take} from "rxjs/operators";
 import {equals, pick} from "remeda";
 
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountComponent} from "src/web/browser-window/app/_accounts/account.component";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
+import {DOCUMENT} from "@angular/common";
+import {Directive, ElementRef, EventEmitter, Injector, Input, Output, Renderer2} from "@angular/core";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {LogLevel} from "src/shared/model/common";
 import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";
+import type {OnDestroy} from "@angular/core";
 import {WebAccount} from "src/web/browser-window/app/model";
 import {depersonalizeLoggedUrlsInString, getWebViewPartition, lowerConsoleMessageEventLogLevel} from "src/shared/util";
 
@@ -32,9 +32,9 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
     @Output()
     private readonly event = new EventEmitter<ChildEvent>();
 
-    protected readonly api: ElectronService = this.injector.get(ElectronService);
+    protected readonly api: ElectronService;
 
-    protected readonly core: CoreService = this.injector.get(CoreService);
+    protected readonly core: CoreService;
 
     private readonly subscription = new Subscription();
 
@@ -44,6 +44,9 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         private readonly injector: Injector,
     ) {
         super();
+
+        this.api = this.injector.get(ElectronService);
+        this.core = this.injector.get(CoreService);
 
         this.log("info", [nameof(AccountViewAbstractComponent), "constructor"]);
 

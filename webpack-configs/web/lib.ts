@@ -1,12 +1,25 @@
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
 import {Configuration, RuleSetRule} from "webpack";
+import {noop} from "remeda";
 import {merge as webpackMerge} from "webpack-merge";
 
 import {BuildEnvVars} from "webpack-configs/model";
 import {ENVIRONMENT, ENVIRONMENT_STATE, buildBaseConfig, outputRelativePath, srcRelativePath, typescriptLoaderRule} from "./../lib";
 import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
-import {postCssUrl} from "webpack-configs/require-import";
+
+export const sassLoaderRuleSetRules: RuleSetRule[] = [
+    {
+        loader: "sass-loader",
+        options: {
+            warnRuleAsWarning: true,
+            sassOptions: (/* loaderContext */) => {
+                // const logger = loaderContext.getLogger("sass-loader");
+                return {logger: {debug: noop, warn: noop}};
+            },
+        },
+    },
+];
 
 export const browserWindowPath = (...value: string[]): string => {
     return srcRelativePath("./web/browser-window", ...value);
@@ -27,7 +40,7 @@ export function cssRuleSetRules(): RuleSetRule[] {
                 sourceMap: false, // TODO handle sourceMap
                 postcssOptions: {
                     plugins: [
-                        postCssUrl(),
+                        "postcss-url",
                     ],
                 },
             },
@@ -55,6 +68,10 @@ export function buildMinimalWebConfig(
                 output: {
                     path: outputRelativePath("./web", options.chunkName),
                     publicPath: "",
+                    libraryTarget: "module",
+                },
+                experiments: {
+                    outputModule: true,
                 },
                 module: {
                     rules: [
@@ -81,7 +98,7 @@ export function buildMinimalWebConfig(
                             use: [
                                 MiniCssExtractPlugin.loader,
                                 ...cssRuleSetRules(),
-                                "sass-loader",
+                                ...sassLoaderRuleSetRules,
                             ],
                             exclude: [
                                 browserWindowAppPath("/"),
@@ -147,6 +164,7 @@ export function buildBaseWebConfig(
                         filename: "index.html",
                         hash: ENVIRONMENT_STATE.production,
                         minify: false,
+                        scriptLoading: "module",
                         ...options.htmlWebpackPlugin,
                     }),
                 ],

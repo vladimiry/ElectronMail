@@ -8,6 +8,7 @@ export type AccountConfig = NoExtraProps<{
     externalContentProxyUrlPattern?: string;
     enableExternalContentProxy?: boolean;
     database?: boolean; // TODO proton-v4: rename AccountConfig.database => AccountConfig.localStore
+    localStoreViewByDefault?: boolean;
     // databaseCalendar?: boolean;
     credentials: NoExtraProps<Partial<Record<"password" | "twoFactorCode" | "mailPassword", string>>>;
     proxy?: NoExtraProps<{

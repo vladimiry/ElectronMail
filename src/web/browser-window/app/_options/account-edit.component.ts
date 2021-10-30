@@ -30,6 +30,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         | "login"
         | "title"
         | "database"
+        | "localStoreViewByDefault"
         | "persistentSession"
         | "rotateUserAgent"
         | "entryUrl"
@@ -73,6 +74,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         ),
         title: new FormControl(null),
         database: new FormControl(null),
+        localStoreViewByDefault: new FormControl(null),
         persistentSession: new FormControl(true),
         rotateUserAgent: new FormControl(null),
         entryUrl: new FormControl(
@@ -157,6 +159,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                 controls.customCSS.patchValue(account.customCSS);
                 controls.title.patchValue(account.title);
                 controls.database.patchValue(account.database);
+                controls.localStoreViewByDefault.patchValue(account.localStoreViewByDefault);
                 controls.persistentSession.patchValue(account.persistentSession);
                 controls.rotateUserAgent.patchValue(account.rotateUserAgent);
                 controls.entryUrl.patchValue(account.entryUrl);
@@ -228,6 +231,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             enableExternalContentProxy: Boolean(controls.enableExternalContentProxy.value),
             database: Boolean(controls.database.value),
+            localStoreViewByDefault: Boolean(controls.localStoreViewByDefault.value),
             persistentSession: Boolean(controls.persistentSession.value),
             rotateUserAgent: Boolean(controls.rotateUserAgent.value),
             credentials: {

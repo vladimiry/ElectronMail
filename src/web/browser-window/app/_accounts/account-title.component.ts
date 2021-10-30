@@ -2,7 +2,7 @@ import {BehaviorSubject, Subscription} from "rxjs";
 import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
 import type {OnDestroy, OnInit} from "@angular/core";
 import {Store, select} from "@ngrx/store";
-import {filter, map} from "rxjs/operators";
+import {filter, first, map} from "rxjs/operators";
 
 import {ACCOUNTS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
@@ -75,15 +75,22 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit(): void {
-        if (!this.highlighting) {
-            return;
+        if (this.highlighting) {
+            this.subscription.add(
+                this.store
+                    .pipe(select(AccountsSelectors.FEATURED.selectedLogin))
+                    .subscribe((selectedLogin) => {
+                        this.patchState({selected: this.accountLogin === selectedLogin});
+                    }),
+            );
         }
-
         this.subscription.add(
-            this.store
-                .pipe(select(AccountsSelectors.FEATURED.selectedLogin))
-                .subscribe((selectedLogin) => {
-                    this.patchState({selected: this.accountLogin === selectedLogin});
+            this.state$
+                .pipe(first())
+                .subscribe(({account: {accountConfig: {localStoreViewByDefault}}}) => {
+                    if (localStoreViewByDefault) {
+                        this.store.dispatch(ACCOUNTS_ACTIONS.ToggleDatabaseView({login: this.accountLogin, forced: {databaseView: true}}));
+                    }
                 }),
         );
     }

@@ -266,6 +266,12 @@
                         <a class="ml-1" href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/273">#273</a>
                     </label>
                 </div>
+                <div class="custom-control custom-switch clearfix">
+                    <input class="custom-control-input" formControlName="localStoreViewByDefault" id="localStoreViewByDefaultCheckbox" type="checkbox">
+                    <label class="custom-control-label d-flex" for="localStoreViewByDefaultCheckbox">
+                        Enable the&nbsp;<a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/wiki/FAQ">local store</a>&nbsp;view mode by default
+                    </label>
+                </div>
             </accordion-group>
             <accordion-group [isOpen]="false" heading="Account Credentials (obsolete)">
                 <div class="alert alert-warning">

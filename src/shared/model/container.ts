@@ -24,6 +24,7 @@ export type AccountConfigCreateUpdatePatch = NoExtraProps<Pick<AccountConfig,
     | "customCSS"
     | "credentials"
     | "database"
+    | "localStoreViewByDefault"
     | "entryUrl"
     | "blockNonEntryUrlBasedRequests"
     | "externalContentProxyUrlPattern"

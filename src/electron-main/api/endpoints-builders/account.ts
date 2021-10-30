@@ -41,6 +41,7 @@ export async function buildEndpoints(
                 externalContentProxyUrlPattern,
                 enableExternalContentProxy,
                 database,
+                localStoreViewByDefault,
                 persistentSession,
                 rotateUserAgent,
                 credentials,
@@ -61,6 +62,7 @@ export async function buildEndpoints(
                 externalContentProxyUrlPattern,
                 enableExternalContentProxy,
                 database,
+                localStoreViewByDefault,
                 persistentSession,
                 rotateUserAgent,
                 credentials,
@@ -90,6 +92,7 @@ export async function buildEndpoints(
                 externalContentProxyUrlPattern,
                 enableExternalContentProxy,
                 database,
+                localStoreViewByDefault,
                 persistentSession,
                 rotateUserAgent,
                 credentials,
@@ -125,6 +128,7 @@ export async function buildEndpoints(
                 account.customCSS = customCSS;
                 account.title = title;
                 account.database = database;
+                account.localStoreViewByDefault = localStoreViewByDefault;
                 account.persistentSession = persistentSession;
                 account.rotateUserAgent = rotateUserAgent;
                 account.entryUrl = entryUrl;

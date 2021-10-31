@@ -18,7 +18,7 @@ The download page with Linux/OSX/Windows installation packages is [here](https:/
 
 The way of verifying that the installation packages attached to the [releases](https://github.com/vladimiry/ElectronMail/releases) have been assembled from the source code [is being provided](https://github.com/vladimiry/ElectronMail/issues/183).
 
-Some Linux package types are available for installing from the repositories (`Pacman` and `Snap` packages are being maintained by [@joshirio](https://github.com/joshirio)):
+Some Linux package types are available for installing from the repositories (`Pacman` and `Snap` repositories are being maintained by [@joshirio](https://github.com/joshirio)):
 
 [![Get it from the AUR](images/aurlogo.png)](https://aur.archlinux.org/packages/electronmail-bin)
 

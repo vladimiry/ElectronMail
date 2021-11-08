@@ -1,3 +1,13 @@
+<ng-container *ngIf="(state$ | async)?.contextMenuOpen">
+    <ul class="dropdown-menu px-0 py-1" role="menu" style="display: block">
+        <li role="menuitem">
+            <button (click)="unloadContextMenuAction($event)" class="dropdown-item d-flex" title="Unload" type="button">
+                <i class="fa fa-window-close"></i>
+                <span class="ml-1">Unload</span>
+            </button>
+        </li>
+    </ul>
+</ng-container>
 <div
     *ngIf="state$ | async; let state"
     [ngClass]="{'selected': state.selected, 'stored': state.stored, 'login-filled-once': state.account.loginFilledOnce}"

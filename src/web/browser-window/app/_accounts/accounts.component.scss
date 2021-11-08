@@ -136,6 +136,15 @@
         }
     }
 
+    .layout-mode-left,
+    .layout-mode-left-thin {
+        &::ng-deep #{$app-prefix}-account-title {
+            .dropdown-item > span {
+                display: none;
+            }
+        }
+    }
+
     @media (min-width: #{map-get($grid-breakpoints, lg)}) {
         [class*="layout-mode-left"] {
             flex-flow: row;
@@ -208,6 +217,10 @@
             &::ng-deep {
                 #{$app-prefix}-account-title {
                     $margin-v: ($app-spacer-1 / 1.5);
+
+                    .dropdown-item {
+                        padding: $app-spacer-2;
+                    }
 
                     #{$app-prefix}-unread-badge {
                         margin-bottom: $margin-v;

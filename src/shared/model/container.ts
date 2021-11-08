@@ -21,6 +21,7 @@ export interface NewPasswordFieldContainer {
 export interface PasswordChangeContainer extends PasswordFieldContainer, NewPasswordFieldContainer {}
 
 export type AccountConfigCreateUpdatePatch = NoExtraProps<Pick<AccountConfig,
+    | "contextMenu"
     | "customCSS"
     | "credentials"
     | "database"

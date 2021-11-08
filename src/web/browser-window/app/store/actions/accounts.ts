@@ -9,6 +9,8 @@ import {propsRecordToActionsRecord} from "src/shared/ngrx-util";
 
 export const ACCOUNTS_ACTIONS = propsRecordToActionsRecord(
     {
+        Unload: props<{ login: string, uuid: string }>(),
+        UnloadRollback: props<{ uuid: string }>(),
         Select: props<{ login: string }>(),
         DeSelect: props<{ login: string }>(),
         PatchProgress: props<{ login: string; patch: WebAccountProgress; optionalAccount?: boolean; }>(),

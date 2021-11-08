@@ -49,6 +49,7 @@
                 ></electron-mail-unread-badge>
             </div>
             <electron-mail-account-title
+                (accountUnloadRollback)="accountUnloadRollback($event)"
                 (click)="cancelEvent($event)"
                 *ngIf="selectedAccount"
                 [account]="selectedAccount"
@@ -58,6 +59,7 @@
             <ul *dropdownMenu class="dropdown-menu dropdown-menu-right" role="menu">
                 <li *ngFor="let login of logins" role="menuitem">
                     <electron-mail-account-title
+                        (accountUnloadRollback)="accountUnloadRollback($event)"
                         (click)="activateAccountByLogin($event, login)"
                         [account]="getAccountByLogin(login)"
                     ></electron-mail-account-title>
@@ -66,6 +68,7 @@
         </div>
         <ul class="list-group accounts-list d-none d-lg-flex">
             <electron-mail-account-title
+                (accountUnloadRollback)="accountUnloadRollback($event)"
                 (click)="activateAccountByLogin($event, login)"
                 *ngFor="let login of logins"
                 [account]="getAccountByLogin(login)"

@@ -21,6 +21,7 @@ export type AccountConfig = NoExtraProps<{
     rotateUserAgent?: boolean;
     disabled?: boolean;
     customCSS?: string;
+    contextMenu?: boolean;
 }>;
 
 export type AccountPersistentSession = NoExtraProps<{

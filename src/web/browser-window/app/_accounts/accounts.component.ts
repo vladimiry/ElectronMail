@@ -1,15 +1,16 @@
-import {Component} from "@angular/core";
-import type {OnDestroy, OnInit} from "@angular/core";
+import {Observable, Subscription, combineLatest, race, throwError, timer} from "rxjs";
 import {Store, select} from "@ngrx/store";
-import {Subscription, combineLatest} from "rxjs";
-import {distinctUntilChanged, map} from "rxjs/operators";
-import {equals} from "remeda";
+import {concatMap, distinctUntilChanged, first, map, pairwise, startWith, tap} from "rxjs/operators";
+import {equals, noop} from "remeda";
 
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountConfig} from "src/shared/model/account";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
+import {Component} from "@angular/core";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
+import {ONE_SECOND_MS} from "src/shared/constants";
+import type {OnDestroy, OnInit} from "@angular/core";
 import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount} from "src/web/browser-window/app/model";
@@ -136,6 +137,47 @@ export class AccountsComponent implements OnInit, OnDestroy {
     cancelEvent(event: Event): void {
         event.preventDefault();
         event.stopPropagation();
+    }
+
+    accountUnloadRollback({accountUnloadRollbackUuid: uuid}: { accountUnloadRollbackUuid: string }): void {
+        { // reverting the accounts list back after the "minus one" list got rendered
+            const targetNode = document;
+            const renderedAccountsTimeoutMs = ONE_SECOND_MS;
+            const resolveRenderedAccountsCount =
+                // TODO read tag names from the "Component.selector" property
+                (): number => targetNode.querySelectorAll("electron-mail-accounts electron-mail-account").length;
+            race(
+                new Observable<ReturnType<typeof resolveRenderedAccountsCount>>(
+                    (subscribe) => {
+                        const mutation = new MutationObserver(() => {
+                            subscribe.next(resolveRenderedAccountsCount());
+                        });
+                        mutation.observe(
+                            targetNode,
+                            {childList: true, subtree: true},
+                        );
+                        return (): void => mutation.disconnect();
+                    },
+                ).pipe(
+                    startWith(resolveRenderedAccountsCount()),
+                    distinctUntilChanged(),
+                    pairwise(),
+                    first(),
+                    tap(([prev, curr]) => {
+                        const countDiff = prev - curr;
+                        if (countDiff !== 1 /* "minus one" list got rendered */) {
+                            throw new Error(`Only single account disabling expected to happen (actual count diff: ${countDiff})`);
+                        }
+                        this.store.dispatch(ACCOUNTS_ACTIONS.UnloadRollback({uuid}));
+                    }),
+                ),
+                timer(renderedAccountsTimeoutMs).pipe(
+                    concatMap(() => throwError(() => new Error(
+                        `Failed to received the accounts count change in ${renderedAccountsTimeoutMs}ms`,
+                    ))),
+                ),
+            ).subscribe(noop);
+        }
     }
 
     ngOnDestroy(): void {

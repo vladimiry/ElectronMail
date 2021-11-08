@@ -34,6 +34,7 @@ export async function buildEndpoints(
         async addAccount(
             {
                 login,
+                contextMenu,
                 customCSS,
                 title,
                 entryUrl,
@@ -55,6 +56,7 @@ export async function buildEndpoints(
 
             const account: AccountConfig = {
                 login,
+                contextMenu,
                 customCSS,
                 title,
                 entryUrl,
@@ -85,6 +87,7 @@ export async function buildEndpoints(
         async updateAccount(
             {
                 login,
+                contextMenu,
                 customCSS,
                 title,
                 entryUrl,
@@ -125,6 +128,7 @@ export async function buildEndpoints(
                 );
                 logger.verbose(JSON.stringify({shouldConfigureSession}));
 
+                account.contextMenu = contextMenu;
                 account.customCSS = customCSS;
                 account.title = title;
                 account.database = database;

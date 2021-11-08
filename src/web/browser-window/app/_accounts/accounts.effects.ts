@@ -1,7 +1,6 @@
 import type {Action} from "@ngrx/store";
 import {Actions, createEffect, ofType} from "@ngrx/effects";
-import {EMPTY, Observable, concat, from, fromEvent, merge, of, throwError, timer} from "rxjs";
-import {Injectable} from "@angular/core";
+import {EMPTY, Observable, concat, from, fromEvent, merge, of, race, throwError, timer} from "rxjs";
 import {Store, select} from "@ngrx/store";
 import {
     catchError,
@@ -11,6 +10,7 @@ import {
     delay,
     filter,
     finalize,
+    first,
     map,
     mergeMap,
     switchMap,
@@ -19,6 +19,7 @@ import {
     tap,
     withLatestFrom,
 } from "rxjs/operators";
+import {produce} from "immer";
 import {serializeError} from "serialize-error";
 
 import {
@@ -34,6 +35,7 @@ import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {FIRE_SYNCING_ITERATION$} from "src/web/browser-window/app/app.constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
+import {Injectable} from "@angular/core";
 import {ONE_MINUTE_MS, ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/constants";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {consumeMemoryRateLimiter, curryFunctionMembers, isDatabaseBootstrapped, testProtonCalendarAppPage} from "src/shared/util";
@@ -732,6 +734,41 @@ export class AccountsEffects {
                 logger.verbose("empty");
 
                 return [];
+            }),
+        ),
+    );
+
+    unload$ = createEffect(
+        () => this.actions$.pipe(
+            ofType(ACCOUNTS_ACTIONS.Unload),
+            withLatestFrom(this.store.pipe(select(AccountsSelectors.FEATURED.accounts))),
+            concatMap(([{payload}, accounts]) => {
+                const accountConfigs = accounts.map(({accountConfig}) => accountConfig);
+                const renderedAccountsTimeoutMs = ONE_SECOND_MS;
+                return concat(
+                    of(
+                        ACCOUNTS_ACTIONS.WireUpConfigs({
+                            accountConfigs: produce(accountConfigs, (draftState) => {
+                                const accountToUnload = draftState.find(({login}) => login === payload.login);
+                                if (!accountToUnload) {
+                                    throw new Error("Failed to resolve account by login.");
+                                }
+                                accountToUnload.disabled = true;
+                            }),
+                        }),
+                    ),
+                    race(
+                        this.actions$.pipe(
+                            ofType(ACCOUNTS_ACTIONS.UnloadRollback),
+                            filter(({payload: {uuid}}) => uuid === payload.uuid),
+                            first(),
+                            concatMap(() => of(ACCOUNTS_ACTIONS.WireUpConfigs({accountConfigs}))),
+                        ),
+                        timer(renderedAccountsTimeoutMs).pipe(
+                            concatMap(() => throwError(() => new Error(`Failed to received response in ${renderedAccountsTimeoutMs}ms`))),
+                        ),
+                    ),
+                );
             }),
         ),
     );

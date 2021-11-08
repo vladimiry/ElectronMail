@@ -1,15 +1,15 @@
-import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/forms";
-import {ActivatedRoute} from "@angular/router";
-import {Component, ElementRef, Inject} from "@angular/core";
 import {Observable, Subscription, merge} from "rxjs";
-import type {OnDestroy, OnInit} from "@angular/core";
 import {Store, select} from "@ngrx/store";
 import {concatMap, distinctUntilChanged, map, mergeMap} from "rxjs/operators";
 
 import {ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN, PROTON_API_ENTRY_RECORDS} from "src/shared/constants";
+import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/forms";
 import {AccountConfig} from "src/shared/model/account";
 import {AccountConfigCreateUpdatePatch} from "src/shared/model/container";
+import {ActivatedRoute} from "@angular/router";
+import {Component, ElementRef, Inject} from "@angular/core";
 import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
+import type {OnDestroy, OnInit} from "@angular/core";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {PACKAGE_GITHUB_PROJECT_URL_TOKEN} from "src/web/browser-window/app/app.constants";
 import {State} from "src/web/browser-window/app/store/reducers/options";
@@ -26,6 +26,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     readonly userDataDir = __METADATA__.electronLocations.userDataDir;
     entryUrlItems = [...PROTON_API_ENTRY_RECORDS];
     controls: Record<keyof Pick<AccountConfig,
+        | "contextMenu"
         | "customCSS"
         | "login"
         | "title"
@@ -42,6 +43,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         | keyof Pick<Required<Required<AccountConfig>["proxy"]>, "proxyRules" | "proxyBypassRules">
         | keyof AccountConfig["credentials"],
         AbstractControl> = {
+        contextMenu: new FormControl(false),
         customCSS: new FormControl(null),
         blockNonEntryUrlBasedRequests: new FormControl(null),
         externalContentProxyUrlPattern: new FormControl(
@@ -156,6 +158,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
 
                 this.form.removeControl(((name: keyof Pick<typeof AccountEditComponent.prototype.controls, "login">) => name)("login"));
 
+                controls.contextMenu.patchValue(account.contextMenu);
                 controls.customCSS.patchValue(account.customCSS);
                 controls.title.patchValue(account.title);
                 controls.database.patchValue(account.database);
@@ -217,33 +220,32 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                 controls.proxyBypassRules.value.trim() // eslint-disable-line @typescript-eslint/no-unsafe-call
             ),
         };
-        const patch: Readonly<AccountConfigCreateUpdatePatch> = { // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-            login: account // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+        /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+        const patch: Readonly<AccountConfigCreateUpdatePatch> = {
+            login: account
                 ? account.login :
                 controls.login.value,
-            title: controls.title.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-            customCSS: controls.customCSS.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-            entryUrl: controls.entryUrl.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            title: controls.title.value,
+            contextMenu: Boolean(controls.contextMenu.value),
+            customCSS: controls.customCSS.value,
+            entryUrl: controls.entryUrl.value,
             blockNonEntryUrlBasedRequests: Boolean(controls.blockNonEntryUrlBasedRequests.value),
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             externalContentProxyUrlPattern: controls.externalContentProxyUrlPattern.value,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             enableExternalContentProxy: Boolean(controls.enableExternalContentProxy.value),
             database: Boolean(controls.database.value),
             localStoreViewByDefault: Boolean(controls.localStoreViewByDefault.value),
             persistentSession: Boolean(controls.persistentSession.value),
             rotateUserAgent: Boolean(controls.rotateUserAgent.value),
             credentials: {
-                password: controls.password.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-                twoFactorCode: controls.twoFactorCode.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-                mailPassword: controls.mailPassword.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                password: controls.password.value,
+                twoFactorCode: controls.twoFactorCode.value,
+                mailPassword: controls.mailPassword.value,
             },
             ...((proxy.proxyRules || proxy.proxyBypassRules) && {proxy}),
             loginDelayUntilSelected: Boolean(controls.loginDelayUntilSelected.value),
             loginDelaySecondsRange: (() => {
                 const validated = this.controls.loginDelaySecondsRange.value
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                     ? validateLoginDelaySecondsRange(this.controls.loginDelaySecondsRange.value)
                     : undefined;
                 if (validated && "validationError" in validated) {
@@ -252,6 +254,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                 return validated;
             })(),
         };
+        /* eslint-enable @typescript-eslint/no-unsafe-assignment */
 
         this.store.dispatch(
             account

@@ -6,7 +6,7 @@ import {equals, noop} from "remeda";
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountConfig} from "src/shared/model/account";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
-import {Component} from "@angular/core";
+import {Component, ElementRef} from "@angular/core";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {ONE_SECOND_MS} from "src/shared/constants";
@@ -40,6 +40,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
         private coreService: CoreService,
         private api: ElectronService,
         private store: Store<State>,
+        private readonly elementRef: ElementRef<HTMLElement>,
     ) {
         this.initialized$ = this.store.pipe(select(AccountsSelectors.FEATURED.initialized));
         this.layoutMode$ = this.store.pipe(select(OptionsSelectors.CONFIG.layoutMode));
@@ -140,11 +141,10 @@ export class AccountsComponent implements OnInit, OnDestroy {
 
     accountUnloadRollback({accountUnloadRollbackUuid: uuid}: { accountUnloadRollbackUuid: string }): void {
         { // reverting the accounts list back after the "minus one" list got rendered
-            const targetNode = document;
+            const {nativeElement: targetNode} = this.elementRef;
             const renderedAccountsTimeoutMs = ONE_SECOND_MS;
-            const resolveRenderedAccountsCount =
-                // TODO read tag names from the "Component.selector" property
-                (): number => targetNode.querySelectorAll("electron-mail-accounts electron-mail-account").length;
+            // TODO read tag names from the "Component.selector" property
+            const resolveRenderedAccountsCount = (): number => targetNode.querySelectorAll("electron-mail-account").length;
             race(
                 new Observable<ReturnType<typeof resolveRenderedAccountsCount>>(
                     (subscribe) => {

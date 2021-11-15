@@ -1,4 +1,4 @@
-import {Actions, createEffect, ofType} from "@ngrx/effects";
+import {Actions, createEffect} from "@ngrx/effects";
 import {EMPTY, from, merge} from "rxjs";
 import {Injectable} from "@angular/core";
 import {concatMap, map, mergeMap} from "rxjs/operators";
@@ -6,6 +6,7 @@ import {concatMap, map, mergeMap} from "rxjs/operators";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {NOTIFICATIONS_OUTLET, NOTIFICATIONS_PATH} from "src/web/browser-window/app/app.constants";
+import {ofType} from "src/shared/ngrx-util-of-type";
 
 @Injectable()
 export class NotificationEffects {

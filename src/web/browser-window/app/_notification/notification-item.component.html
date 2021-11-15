@@ -1,15 +1,15 @@
 <div
     [ngClass]="{
-        'alert-danger': item.type === 'error' || (item.type === 'message' && item.data.style === 'error'),
-        'alert-warning': item.type === 'message' && item.data.style === 'warning',
-        'alert-info': item.type === 'message' && item.data.style === 'info',
-        'alert-secondary': item.type === 'update'
+        'alert-danger': item.type_ === 'error' || (item.type_ === 'message' && item.data.style === 'error'),
+        'alert-warning': item.type_ === 'message' && item.data.style === 'warning',
+        'alert-info': item.type_ === 'message' && item.data.style === 'info',
+        'alert-secondary': item.type_ === 'update'
     }"
     class="alert alert-dismissible"
     role="alert"
 >
     <!-- TODO move to "ngSwitch" directive use on https://github.com/angular/angular/issues/20780 resolving -->
-    <ng-container *ngIf="item.type === 'update'">
+    <ng-container *ngIf="item.type_ === 'update'">
         <div class="d-inline">
             New app version available for download: <span [innerHTML]="message"></span>
             <i
@@ -27,10 +27,10 @@
             </ng-template>
         </div>
     </ng-container>
-    <ng-container *ngIf="item.type === 'error'">
+    <ng-container *ngIf="item.type_ === 'error'">
         <span [innerText]="message"></span>
     </ng-container>
-    <ng-container *ngIf="item.type === 'message'">
+    <ng-container *ngIf="item.type_ === 'message'">
         <ng-container [ngSwitch]="item.data.html">
             <span *ngSwitchCase="true" [innerHTML]="message"></span>
             <span *ngSwitchDefault [innerText]="message"></span>

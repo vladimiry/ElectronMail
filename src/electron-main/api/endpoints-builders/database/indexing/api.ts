@@ -1,7 +1,6 @@
 import electronLog from "electron-log";
 import {defer, lastValueFrom} from "rxjs";
 import {filter, first, startWith, takeUntil} from "rxjs/operators";
-import {ofType} from "@ngrx/effects";
 
 import {Context} from "src/electron-main/model";
 import {
@@ -17,6 +16,7 @@ import {
 import {IpcMainApiEndpoints,} from "src/shared/api/main-process";
 import {curryFunctionMembers} from "src/shared/util";
 import {indexAccount} from "src/electron-main/api/endpoints-builders/database/indexing/service";
+import {ofType} from "src/shared/ngrx-util-of-type";
 
 const logger = curryFunctionMembers(electronLog, __filename);
 

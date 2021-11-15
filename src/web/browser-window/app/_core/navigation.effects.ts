@@ -1,4 +1,4 @@
-import {Actions, createEffect, ofType} from "@ngrx/effects";
+import {Actions, createEffect} from "@ngrx/effects";
 import {EMPTY, from} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Router} from "@angular/router";
@@ -9,6 +9,7 @@ import {ElectronService} from "src/web/browser-window/app/_core/electron.service
 import {NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {curryFunctionMembers} from "src/shared/util";
 import {getWebLogger} from "src/web/browser-window/util";
+import {ofType} from "src/shared/ngrx-util-of-type";
 
 const _logger = getWebLogger(__filename);
 

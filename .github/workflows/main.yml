@@ -12,7 +12,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
-      - { uses: actions/setup-node@v1, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}" } }
+      - { uses: actions/setup-node@v2, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}" } }
       - { uses: actions/checkout@v2 }
       - { name: system setup, if: runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
       - name: get yarn cache directory path
@@ -45,7 +45,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
-      - { uses: actions/setup-node@v1, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}" } }
+      - { uses: actions/setup-node@v2, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}" } }
       - { uses: actions/checkout@v2 }
       - { name: system setup, if: runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
       - name: get yarn cache directory path
@@ -71,7 +71,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
-      - { uses: actions/setup-node@v1, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}" } }
+      - { uses: actions/setup-node@v2, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}" } }
       - { uses: actions/checkout@v2 }
       - { name: system setup, if: runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
       - name: get yarn cache directory path

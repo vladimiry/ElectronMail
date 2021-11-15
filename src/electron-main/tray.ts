@@ -1,11 +1,11 @@
 import {app, Menu, MenuItemConstructorOptions, nativeImage, Tray} from "electron";
 import {Subscription} from "rxjs";
-import {ofType} from "@ngrx/effects";
 import {tap} from "rxjs/operators";
 
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
+import {ofType} from "src/shared/ngrx-util-of-type";
 
 // TODO crete "endpoints"-dependent menu items in disabled state and enable on "endpoints" promise resolving
 export async function initTray(endpoints: Promise<IpcMainApiEndpoints>): Promise<Tray> {

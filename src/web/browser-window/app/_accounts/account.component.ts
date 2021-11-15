@@ -20,8 +20,8 @@ import {
     tap,
     withLatestFrom,
 } from "rxjs/operators";
-import {ofType} from "@ngrx/effects";
 import {pick} from "remeda";
+import {ofType} from "src/shared/ngrx-util-of-type";
 
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
@@ -208,7 +208,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                             select(AccountsSelectors.FEATURED.selectedLogin),
                         ),
                         this.store.pipe(
-                            select(OptionsSelectors.FEATURED.mainProcessNotification),
+                            select(OptionsSelectors.FEATURED.mainProcessNotificationAction),
                             ofType(IPC_MAIN_API_NOTIFICATION_ACTIONS.ActivateBrowserWindow),
                             startWith(null),
                         ),
@@ -366,7 +366,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                             merge(
                                 of(null), // fired once to unblock the "combineLatest"
                                 this.store.pipe(
-                                    select(OptionsSelectors.FEATURED.mainProcessNotification),
+                                    select(OptionsSelectors.FEATURED.mainProcessNotificationAction),
                                     ofType(IPC_MAIN_API_NOTIFICATION_ACTIONS.ProtonSessionTokenCookiesModified),
                                     debounceTime(ONE_SECOND_MS),
                                     withLatestFrom(this.account$),

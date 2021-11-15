@@ -100,19 +100,22 @@ export async function buildEndpoints(
             }
 
             const session = resolveInitializedAccountSession({login});
-
-            // TODO consider setting "samesite=none" cookie attribute when restoring the saved cookie to session
-            //      currently "samesite" is not being restored or set so default value gets applied (likely to be "lax" at the moment)
+            const sameSiteNoneCookieAttribute: Readonly<NoExtraProps<Pick<import("electron").CookiesSetDetails, "sameSite" | "secure">>> = {
+                sameSite: "no_restriction",
+                secure: true, // "samesite=none" attribute requires "secure" attribute
+            };
             await Promise.all([
                 session.cookies.set({
                     ...pickTokenCookiePropsToApply(accessTokenCookie),
                     // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
                     url: `${apiEndpointOrigin}${accessTokenCookie.path}`,
+                    ...sameSiteNoneCookieAttribute,
                 }),
                 session.cookies.set({
                     ...pickTokenCookiePropsToApply(refreshTokenCookie),
                     // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
                     url: `${apiEndpointOrigin}${refreshTokenCookie.path}`,
+                    ...sameSiteNoneCookieAttribute,
                 }),
             ]);
 

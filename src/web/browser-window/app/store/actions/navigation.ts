@@ -1,7 +1,6 @@
 import type {NavigationExtras, Params} from "@angular/router";
-import {props} from "@ngrx/store";
 
-import {propsRecordToActionsRecord} from "src/shared/ngrx-util";
+import {props, propsRecordToActionsRecord} from "src/shared/ngrx-util";
 
 export const NAVIGATION_ACTIONS = propsRecordToActionsRecord(
     {

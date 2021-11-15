@@ -79,7 +79,7 @@ export const attachRateLimiting = async (api: ProviderApi, logger_: Logger): Pro
                 });
             };
 
-            (apiGroup as Record<typeof methodName, typeof originalMethod>)[methodName] = overriddenMethod;
+            (apiGroup as Record<typeof methodName, unknown>)[methodName] = overriddenMethod;
 
             logger.verbose(`attached rate limiting to method: ${logMethodName}`);
         }

@@ -149,10 +149,8 @@ const formatEmlDate: (mail: Mail) => string = (() => {
 })();
 
 // TODO consider sanitizing "mail.body"
-const contentBuilders: Readonly<Record<"eml" | "json", (
-    mail: Mail,
-    attachmentsContent?: DeepReadonly<DbExportMailAttachmentItem[]>,
-) => string>> = {
+const contentBuilders: Record<"eml" | "json",
+    (mail: DeepReadonly<Mail>, attachmentsContent?: DeepReadonly<DbExportMailAttachmentItem[]>) => string> = {
     eml(mail, attachmentsContent) {
         const mixedBoundary = `=mixed-${new UUID(4).format()}@${PACKAGE_NAME}`;
         const relatedBoundary = `=related-${new UUID(4).format()}@${PACKAGE_NAME}`;
@@ -243,11 +241,11 @@ const contentBuilders: Readonly<Record<"eml" | "json", (
 };
 
 export const writeFile = async (
-    options: Readonly<{
+    options: DeepReadonly<{
         mail: Mail,
         fileType: "eml" | "json",
         exportDir: string,
-        attachments?: DeepReadonly<DbExportMailAttachmentItem[]>
+        attachments?: DbExportMailAttachmentItem[]
     }>
 ): Promise<{ file: string }> => {
     const file = await generateFileName(options.mail, options.exportDir, options.fileType);

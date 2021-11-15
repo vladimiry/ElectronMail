@@ -1,10 +1,8 @@
-import {props} from "@ngrx/store";
-
 import * as DbModel from "src/shared/model/database";
 import {Config} from "src/shared/model/options";
 import {Controller} from "src/electron-main/spell-check/model";
 import {IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS} from "src/shared/api/main-process/actions";
-import {propsRecordToActionsRecord, UnionOf} from "src/shared/ngrx-util";
+import {props, propsRecordToActionsRecord, UnionOf} from "src/shared/ngrx-util";
 
 // WARN: do not put sensitive data or any data to the main process notification stream, only status-like signals
 export const IPC_MAIN_API_NOTIFICATION_ACTIONS = propsRecordToActionsRecord(

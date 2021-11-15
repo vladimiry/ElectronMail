@@ -79,8 +79,11 @@ export const ENDPOINTS_DEFINITION = {
             uuid: string;
             accountPk: NoExtraProps<DbModel.DbAccountPk>;
             attachments: Array<NoExtraProps<ProtonAttachmentHeadersProp
-                & ({ data: Uint8Array } | { serializedError: import("serialize-error").ErrorObject })>>;
-            serializedError?: import("serialize-error").ErrorObject
+                & (
+                | { data: Uint8Array }
+                | { serializedError: NoExtraProps<Pick<import("serialize-error").ErrorObject, "name" | "stack" | "message" | "code">> }
+                )>>;
+            serializedError?: NoExtraProps<Pick<import("serialize-error").ErrorObject, "name" | "stack" | "message" | "code">>
         }>>>(),
 
     dbSearchRootConversationNodes:

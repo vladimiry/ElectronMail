@@ -27,7 +27,7 @@ export class NotificationItemComponent {
     @Input()
     set item(item: NotificationItem) {
         this._item = item;
-        this.message = item.type === "update"
+        this.message = item.type_ === "update"
             ? (
                 item.data.newReleaseItems
                     .map(({title, url, date}) => {

@@ -1,9 +1,7 @@
-import type {ActionCreator, ActionCreatorProps} from "@ngrx/store";
+import type {ActionCreator, ActionCreatorProps, Creator} from "@ngrx/store";
+import type {NotAllowedInPropsCheck} from "@ngrx/store/src/models";
 import type {ValueOf} from "ts-essentials";
-import {createAction} from "@ngrx/store";
 import {mapKeys} from "remeda";
-
-// TODO make "ngrx-util" independent from @angular and use it for all @ngrx manipulations (including "ofType" calls)
 
 type MatchPropName = "match";
 
@@ -21,7 +19,7 @@ type ActionsRecord<P extends PropsRecord = PropsRecord> = {
 };
 
 // eslint-disable-next-line @typescript-eslint/ban-types
-export type UnionOf<T extends ActionsRecord> = Exclude<ReturnType<ValueOf<Omit<StrictOmit<T, MatchPropName>, symbol>>>, boolean>;
+export type UnionOf<T extends ActionsRecord> = Exclude<ReturnType<ValueOf<Omit<StrictOmit<T, MatchPropName>, symbol | number>>>, boolean>;
 
 export type UnionOfRecord<P extends PropsRecord, T extends ActionsRecord<P> = ActionsRecord<P>>
     = { [K in Exclude<keyof T, MatchPropName>]: ReturnType<T[K]> };
@@ -41,6 +39,16 @@ type Match<P extends PropsRecord> = <A>(
         | Partial<Cases<UnionOfRecord<P>, A>> & { default: (variant: UnionOf<ActionsRecord<P>>) => A }
 ) => A;
 
+// picked from https://github.com/ngrx/platform/blob/fb78f7394765608ecf4718bba6a3df16a43e8913/modules/store/src/action_creator.ts#L128
+// TODO enable automatic picking
+export const props = <P extends SafeProps, SafeProps = NotAllowedInPropsCheck<P>>(): ActionCreatorProps<P> => {
+    return {_as: "props", _p: undefined!}; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+};
+
+const defineType = <T extends string>(type: TypedAction<T>["type"], creator: Creator): ActionCreator<T> => {
+    return Object.defineProperty(creator, 'type', {value: type, writable: false}) as ActionCreator<T>;
+};
+
 // TODO actions: freeze the result
 export const propsRecordToActionsRecord = <P extends PropsRecord>(
     value: P,
@@ -56,15 +64,15 @@ export const propsRecordToActionsRecord = <P extends PropsRecord>(
     };
     return {
         ...Object.entries(value).reduce(
-            (accumulator, [key, actionCreatorProps]) => ({
-                ...accumulator,
-                [key]: actionCreatorProps
-                    ? createAction(
-                        resolvePrefixedType(key),
-                        (value: typeof actionCreatorProps._p) => ({payload: value}),
-                    )
-                    : createAction(resolvePrefixedType(key)),
-            }),
+            (accumulator, [key, actionCreatorProps]) => {
+                const type = resolvePrefixedType(key);
+                return {
+                    ...accumulator,
+                    [key]: actionCreatorProps
+                        ? defineType(type, (value: typeof actionCreatorProps._p) => ({payload: value, type}))
+                        : defineType(type, () => ({type})),
+                };
+            },
             {} as ActionsRecord<P>,
         ),
         match(value, matchers) {

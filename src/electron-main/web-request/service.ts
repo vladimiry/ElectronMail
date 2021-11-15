@@ -145,19 +145,29 @@ export const patchResponseHeaders: (
         },
     );
 
-    // starting from @electron v12 (more exactly from the respective @chromium version)
-    // the "set-cookie" records with "samesite=strict" get blocked by @chromium, for example the "/api/auth/cookies" request case
-    // so to workaround the issue we replace the "samesite=strict|lax"-like attribute with "samesite=none"
-    for (const cookieName of Object.keys(responseHeaders)) {
-        if (cookieName.toLowerCase() !== "set-cookie") {
-            continue;
-        }
-        const cookies = responseHeaders[cookieName];
-        if (cookies) {
-            responseHeaders[cookieName] = cookies.map((cookieValue) => {
+    {
+        // starting from @electron v12 (more exactly from the respective @chromium version)
+        // the "set-cookie" records with "samesite=strict" get blocked by @chromium, for example the "/api/auth/cookies" request case
+        // so to workaround the issue we replace the "samesite=strict|lax"-like attribute with "samesite=none"
+        for (const cookieName of Object.keys(responseHeaders)) {
+            if (cookieName.toLowerCase() !== "set-cookie") {
+                continue;
+            }
+            const cookies = responseHeaders[cookieName];
+            if (cookies) {
                 // TODO consider patching the "samesite" cookie attribute only for "/api/auth/cookies" request
-                return cookieValue.replace(/samesite[\s]*=[\s]*(strict|lax)/i, "samesite=none");
-            });
+                responseHeaders[cookieName] = cookies.map((cookieValue) => {
+                    if ((/samesite[\s]*=[\s]*(strict|lax|none)/i).test(cookieValue)) {
+                        cookieValue = cookieValue.replace(/samesite[\s]*=[\s]*(strict|lax)/i, "samesite=none");
+                    } else {
+                        cookieValue = `${cookieValue}; samesite=none`;
+                    }
+                    cookieValue = /(;[\s]*secure)|(secure[\s]*;)/i.test(cookieValue)
+                        ? cookieValue
+                        : `${cookieValue}; secure`; // "samesite=none" attribute requires "secure" attribute
+                    return cookieValue;
+                });
+            }
         }
     }
 

@@ -1,11 +1,9 @@
-import {props} from "@ngrx/store";
-
 import {AccountConfig} from "src/shared/model/account";
 import {Folder, Mail} from "src/shared/model/database";
 import {ProtonPrimaryApiScan} from "src/shared/api/webview/primary";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount, WebAccountPk, WebAccountProgress} from "src/web/browser-window/app/model";
-import {propsRecordToActionsRecord} from "src/shared/ngrx-util";
+import {props, propsRecordToActionsRecord} from "src/shared/ngrx-util";
 
 export const ACCOUNTS_ACTIONS = propsRecordToActionsRecord(
     {

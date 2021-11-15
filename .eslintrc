@@ -42,6 +42,22 @@
                         "patterns": [
                             "rxjs/*",
                             "!rxjs/operators"
+                        ],
+                        "paths": [
+                            {
+                                "name": "@ngrx/store",
+                                "importNames": [
+                                    "props"
+                                ],
+                                "message": "Import \"props\" from \"src/shared/ngrx-util\" instead."
+                            },
+                            {
+                                "name": "@ngrx/effects",
+                                "importNames": [
+                                    "ofType"
+                                ],
+                                "message": "Import \"ofType\" from \"src/shared/ngrx-util-of-type\" instead."
+                            }
                         ]
                     }
                 ],

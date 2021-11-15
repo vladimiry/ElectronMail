@@ -2,7 +2,6 @@ import UUID from "pure-uuid";
 import electronLog from "electron-log";
 import {concatMap, filter, first} from "rxjs/operators";
 import {lastValueFrom, race, throwError, timer} from "rxjs";
-import {ofType} from "@ngrx/effects";
 import {pick} from "remeda";
 
 import {Config} from "src/shared/model/options";
@@ -13,6 +12,7 @@ import {UnionOf} from "src/shared/ngrx-util";
 import {curryFunctionMembers} from "src/shared/util";
 import {hrtimeDuration} from "src/electron-main/util";
 import {readMailBody} from "src/shared/entity-util";
+import {ofType} from "src/shared/ngrx-util-of-type";
 
 const logger = curryFunctionMembers(electronLog, __filename);
 

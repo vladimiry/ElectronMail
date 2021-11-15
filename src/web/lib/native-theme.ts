@@ -1,9 +1,9 @@
 import {Subscription} from "rxjs";
 import {distinctUntilChanged, map} from "rxjs/operators";
-import {ofType} from "@ngrx/effects";
 
 import {ElectronWindow} from "src/shared/model/electron";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
+import {ofType} from "src/shared/ngrx-util-of-type";
 
 const queryLinkElements: (
     shouldUseDarkColors: boolean,

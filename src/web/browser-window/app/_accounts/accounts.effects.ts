@@ -1,5 +1,5 @@
 import type {Action} from "@ngrx/store";
-import {Actions, createEffect, ofType} from "@ngrx/effects";
+import {Actions, createEffect} from "@ngrx/effects";
 import {EMPTY, Observable, concat, from, fromEvent, merge, of, race, throwError, timer} from "rxjs";
 import {Store, select} from "@ngrx/store";
 import {
@@ -40,6 +40,7 @@ import {ONE_MINUTE_MS, ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/constants";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {consumeMemoryRateLimiter, curryFunctionMembers, isDatabaseBootstrapped, testProtonCalendarAppPage} from "src/shared/util";
 import {getWebLogger} from "src/web/browser-window/util";
+import {ofType} from "src/shared/ngrx-util-of-type";
 
 // TODO get rid of require "rate-limiter-flexible/lib/RateLimiterMemory" import
 //      ES import makes the build fail in "web" context since webpack attempts to bundle the whole library which requires "node" context
@@ -116,7 +117,7 @@ export class AccountsEffects {
                     ),
 
                     this.store.pipe(
-                        select(OptionsSelectors.FEATURED.mainProcessNotification),
+                        select(OptionsSelectors.FEATURED.mainProcessNotificationAction),
                         ofType(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbAttachmentExportRequest),
                         filter(({payload: {key}}) => key.login === login),
                         mergeMap(({payload}) => {
@@ -257,7 +258,7 @@ export class AccountsEffects {
 
                     // processing "db-view"-related notifications received from the main process
                     this.store.pipe(
-                        select(OptionsSelectors.FEATURED.mainProcessNotification),
+                        select(OptionsSelectors.FEATURED.mainProcessNotificationAction),
                         ofType(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount),
                         filter(({payload: {key}}) => key.login === login),
                         mergeMap(({payload}) => of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: {unread: payload.stat.unread}}}))),

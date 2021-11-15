@@ -1,5 +1,5 @@
 import UUID from "pure-uuid";
-import {Actions, createEffect, ofType} from "@ngrx/effects";
+import {Actions, createEffect} from "@ngrx/effects";
 import {EMPTY, forkJoin, from, merge, of} from "rxjs";
 import {Store, select} from "@ngrx/store";
 import {concatMap, filter, finalize, map, mergeMap, switchMap, takeUntil, tap, throttleTime, withLatestFrom} from "rxjs/operators";
@@ -14,6 +14,7 @@ import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/db-view";
 import {curryFunctionMembers} from "src/shared/util";
 import {getWebLogger} from "src/web/browser-window/util";
+import {ofType} from "src/shared/ngrx-util-of-type";
 
 const _logger = getWebLogger(__filename);
 
@@ -34,7 +35,7 @@ export class DbViewEffects {
                     from(ipcMainClient("dbGetAccountDataView")(webAccountPk)),
                     // data load (on change in the main process)
                     this.store.pipe(
-                        select(OptionsSelectors.FEATURED.mainProcessNotification),
+                        select(OptionsSelectors.FEATURED.mainProcessNotificationAction),
                         ofType(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount),
                         filter(({payload: {key}}) => key.login === webAccountPk.login),
                         filter(({payload: {entitiesModified}}) => entitiesModified),
@@ -42,7 +43,7 @@ export class DbViewEffects {
                     ),
                     // side notification (status/progress patching)
                     this.store.pipe(
-                        select(OptionsSelectors.FEATURED.mainProcessNotification),
+                        select(OptionsSelectors.FEATURED.mainProcessNotificationAction),
                         ofType(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbIndexerProgressState),
                         filter(({payload}) => {
                             return "key" in payload

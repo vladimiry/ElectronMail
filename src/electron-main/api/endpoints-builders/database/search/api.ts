@@ -2,7 +2,6 @@ import UUID from "pure-uuid";
 import electronLog from "electron-log";
 import {from, lastValueFrom, Observable, of, race, throwError, timer} from "rxjs";
 import {concatMap, filter, first, mergeMap, switchMap} from "rxjs/operators";
-import {ofType} from "@ngrx/effects";
 
 import {Context} from "src/electron-main/model";
 import {IPC_MAIN_API_DB_INDEXER_REQUEST$, IPC_MAIN_API_DB_INDEXER_RESPONSE$} from "src/electron-main/api/constants";
@@ -11,6 +10,7 @@ import {IndexableMailId} from "src/shared/model/database";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {curryFunctionMembers} from "src/shared/util";
 import {searchRootConversationNodes, secondSearchStep} from "src/electron-main/api/endpoints-builders/database/search/service";
+import {ofType} from "src/shared/ngrx-util-of-type";
 
 const logger = curryFunctionMembers(electronLog, __filename);
 

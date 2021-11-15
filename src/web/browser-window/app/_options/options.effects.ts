@@ -1,4 +1,4 @@
-import {Actions, createEffect, ofType} from "@ngrx/effects";
+import {Actions, createEffect} from "@ngrx/effects";
 import type {DecryptionError} from "fs-json-store-encryption-adapter/lib/errors";
 import {EMPTY, from, merge, of, timer} from "rxjs";
 import {Store, select} from "@ngrx/store";
@@ -17,6 +17,7 @@ import {ONE_SECOND_MS, PRODUCT_NAME, UPDATE_CHECK_FETCH_TIMEOUT} from "src/share
 import {OptionsService} from "src/web/browser-window/app/_options/options.service";
 import {ProgressPatch, State} from "src/web/browser-window/app/store/reducers/options";
 import {getWebLogger} from "src/web/browser-window/util";
+import {ofType} from "src/shared/ngrx-util-of-type";
 
 const _logger = getWebLogger(__filename);
 
@@ -58,7 +59,7 @@ export class OptionsEffects {
                                 default: noop,
                             },
                         );
-                        return of(OPTIONS_ACTIONS.PatchMainProcessNotification(value));
+                        return of(OPTIONS_ACTIONS.PatchMainProcessNotification({action: value}));
                     }),
                 );
             })),

@@ -33,7 +33,7 @@ export interface State extends fromRoot.State, Partial<InitResponse> {
     settings: Parameters<typeof OPTIONS_ACTIONS.GetSettingsResponse>[0];
     progress: ProgressPatch;
     hasSavedPassword?: boolean;
-    mainProcessNotification: UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>;
+    mainProcessNotification: { action: UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS> };
     trayIconDataURL: string;
     shouldUseDarkColors?: boolean;
 }
@@ -45,7 +45,7 @@ const initialState: State = {
         accounts: [],
     },
     progress: {},
-    mainProcessNotification: IPC_MAIN_API_NOTIFICATION_ACTIONS.ActivateBrowserWindow(),
+    mainProcessNotification: { action: IPC_MAIN_API_NOTIFICATION_ACTIONS.ActivateBrowserWindow() },
     trayIconDataURL: ICON_URL,
 };
 

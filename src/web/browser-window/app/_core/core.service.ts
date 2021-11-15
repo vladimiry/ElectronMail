@@ -1,6 +1,6 @@
 import UUID from "pure-uuid";
 import type {Action} from "@ngrx/store";
-import {Actions, ofType} from "@ngrx/effects";
+import {Actions} from "@ngrx/effects";
 import {EMPTY, concat, lastValueFrom, timer} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Store, select} from "@ngrx/store";
@@ -18,6 +18,7 @@ import {State} from "src/web/browser-window/app/store/reducers/root";
 import {WEB_CLIENTS_BLANK_HTML_FILE_NAME, WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS,} from "src/shared/constants";
 import {WebAccount} from "src/web/browser-window/app/model";
 import {curryFunctionMembers, parseUrlOriginWithNullishCheck} from "src/shared/util";
+import {ofType} from "src/shared/ngrx-util-of-type";
 
 @Injectable()
 export class CoreService {

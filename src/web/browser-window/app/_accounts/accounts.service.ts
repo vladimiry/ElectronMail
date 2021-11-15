@@ -1,4 +1,4 @@
-import {Actions, ofType} from "@ngrx/effects";
+import {Actions} from "@ngrx/effects";
 import {EMPTY, Observable, merge, of, race, timer} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Store, select} from "@ngrx/store";
@@ -13,6 +13,7 @@ import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount} from "src/web/browser-window/app/model";
 import {getRandomInt} from "src/shared/util";
 import {getWebLogger} from "src/web/browser-window/util";
+import {ofType} from "src/shared/ngrx-util-of-type";
 
 @Injectable()
 export class AccountsService {

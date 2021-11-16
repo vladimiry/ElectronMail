@@ -94,7 +94,7 @@ jobs:
       - { name: print ./app files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./app }
       - { name: build, if: runner.os == 'Windows', run: ./scripts/ci/github/package-app.ps1 }
       - { name: build, if: runner.os == 'Linux', run: ./scripts/ci/github/package-app-linux.sh }
-      - { name: build, if: matrix.os == 'macos-10.15', run: ./scripts/ci/github/package-app-osx.sh, env: { ARTIFACT_NAME_POSTFIX: "-catalina" } }
+      - { name: build, if: matrix.os == 'macos-10.15', run: ./scripts/ci/github/package-app-osx.sh, env: { MACOSX_DEPLOYMENT_TARGET: "10.13" } }
       - name: upload e2e/spectron output
         if: ${{ always() }}
         uses: actions/upload-artifact@v2

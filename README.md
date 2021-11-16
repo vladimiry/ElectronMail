@@ -6,7 +6,6 @@ ElectronMail is an [Electron](https://electronjs.org)-based unofficial desktop c
 It is written in [TypeScript](http://www.typescriptlang.org) and uses [Angular](https://angular.io).
 
 [![GitHub Actions CI](https://img.shields.io/github/workflow/status/vladimiry/ElectronMail/GitHub%20Actions%20CI?branch=master&style=flat-square&logo=github&label=GitHub%20Actions%20CI)](https://github.com/vladimiry/ElectronMail/actions)
-[![Travis CI](https://img.shields.io/travis/com/vladimiry/ElectronMail.svg?branch=master&style=flat-square&logo=travis&label=Travis+CI)](https://travis-ci.com/github/vladimiry/ElectronMail)
 [![License](https://img.shields.io/github/license/vladimiry/ElectronMail.svg?style=flat-square&label=License)](https://github.com/vladimiry/ElectronMail/blob/master/LICENSE)
 [![GitHub top language](https://img.shields.io/github/languages/top/vladimiry/ElectronMail.svg?style=flat-square&label=TypeScript)](https://github.com/vladimiry/ElectronMail/search?l=typescript)
 

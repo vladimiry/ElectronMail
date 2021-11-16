@@ -1,13 +1,28 @@
-diff --git a/applications/drive/src/app/components/ShareLinkModal/GeneratedLinkState.tsx b/applications/drive/src/app/components/ShareLinkModal/GeneratedLinkState.tsx
-index 3cb6545..4ad120b 100644
---- a/applications/drive/src/app/components/ShareLinkModal/GeneratedLinkState.tsx
-+++ b/applications/drive/src/app/components/ShareLinkModal/GeneratedLinkState.tsx
-@@ -73,7 +73,7 @@ function GeneratedLinkState({
- }: Props) {
-     const contentRef = useRef<HTMLDivElement>(null);
-     const { createNotification } = useNotifications();
+diff --git a/applications/drive/src/app/utils/FileSaver/download.ts b/applications/drive/src/app/utils/FileSaver/download.ts
+index 92eb4e5e2..e1664fd78 100644
+--- a/applications/drive/src/app/utils/FileSaver/download.ts
++++ b/applications/drive/src/app/utils/FileSaver/download.ts
+@@ -11,8 +11,7 @@ import { TransferMeta } from '@proton/shared/lib/interfaces/drive/transfer';
+  * IOS - forces all browsers to use webkit, so same problems as safari in all browsers.
+  * For them download is done in-memory using blob response.
+  */
+-export const isUnsupported = () =>
+-    !('serviceWorker' in navigator) || isSafari() || (isEdge() && !isEdgeChromium()) || isIos();
++export const isUnsupported = () => !('serviceWorker' in navigator)
+
+ // createDownloadIframe opens download URL created in service worker to
+ // initialize the download in the browser. The response has headers to
+
+diff --git a/applications/drive/src/app/utils/link.ts b/applications/drive/src/app/utils/link.ts
+index 31b5d775d..c08a2317d 100644
+--- a/applications/drive/src/app/utils/link.ts
++++ b/applications/drive/src/app/utils/link.ts
+@@ -65,7 +65,7 @@ export const getSharedLink = (sharedURL?: { Token: string; Password: string; Fla
+
+     const [generatedPassword] = splitGeneratedAndCustomPassword(sharedURL.Password, sharedURL);
+
 -    const baseUrl = `${window.location.origin}/urls`;
 +    const baseUrl = "https://drive.protonmail.com/urls";
+     return `${baseUrl}/${sharedURL.Token}${generatedPassword !== '' ? `#${generatedPassword}` : ''}`;
+ };
 
-     const [password, setPassword] = useState(customPassword);
-     const [expiration, setExpiration] = useState(initialExpiration);

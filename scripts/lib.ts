@@ -68,11 +68,13 @@ export async function execShell(
         printStdErr = true,
         printEnvWhitelist = [],
         doNotRethrow = false,
+        doNotDropNodeOptionsRelatedEnvVars = false,
     }: {
         printStdOut?: boolean;
         printStdErr?: boolean;
         printEnvWhitelist?: readonly string[];
         doNotRethrow?: boolean
+        doNotDropNodeOptionsRelatedEnvVars?: boolean
     } = {},
 ): Promise<Unpacked<ReturnType<typeof spawnAsync>>> {
     {
@@ -92,7 +94,21 @@ export async function execShell(
         );
     }
 
-    const spawnPromise = spawnAsync(command, args, options);
+    const spawnPromise = spawnAsync(
+        command,
+        args,
+        {
+            ...options,
+            env: {
+                ...process.env,
+                ...options?.env,
+                ...(!doNotDropNodeOptionsRelatedEnvVars && { // disable node options inheritance form the parent/own process
+                    NODE_OPTIONS: "",
+                    npm_config_node_options: "",
+                }),
+            },
+        },
+    );
     const {stdout, stderr} = spawnPromise.child;
     const print = (std: import("stream").Readable): void => {
         byline(std).on("data", (chunk) => {

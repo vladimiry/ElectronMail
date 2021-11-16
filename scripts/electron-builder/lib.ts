@@ -170,8 +170,14 @@ export async function build(
     await execShell([
         "npm",
         [
-            "run", `electron-builder:dist:linux:${packageType}:do`,
+            ...`run electron-builder:shortcut -- --x64 --publish never --linux ${packageType}`.split(" "),
         ],
+        {
+            env: {
+                // see https://github.com/develar/app-builder/blob/e229f413d635b78a59b0d4ef1a9aa0f3967c0fd4/pkg/node-modules/rebuild.go#L377
+                npm_config_user_agent: (process.env.npm_config_user_agent ?? "").replace(/yarn/i, ""),
+            },
+        },
     ]);
 
     // TODO move "fastGlob" to lib function with inner "sanitizeFastGlobPattern" call

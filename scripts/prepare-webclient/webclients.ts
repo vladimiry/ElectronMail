@@ -255,8 +255,7 @@ async function executeBuildFlow(
                 }
             }
 
-            // TODO drop "yarn install" hacks when executing on CI env
-            if (process.env.CI) {
+            if (process.env.CI) { // TODO drop "yarn install" hacks when executing on CI env
                 // hacks applied to avoid the following error:
                 //     eslint-disable-next-line max-len
                 //     YN0018: │ sieve.js@https://github.com/ProtonMail/sieve.js.git#commit=a09ab52092164af74278e77612a091e730e9b7e9: The remote archive doesn't match the expected checksum
@@ -268,10 +267,6 @@ async function executeBuildFlow(
                         cwd: repoDir,
                         env: {
                             ...process.env,
-                            ...{ // disable node options inheritance form the parent/own process
-                                NODE_OPTIONS: "",
-                                npm_config_node_options: "",
-                            },
                             PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "1",
                             YARN_CHECKSUM_BEHAVIOR: "update",
                             YARN_ENABLE_IMMUTABLE_INSTALLS: "false",

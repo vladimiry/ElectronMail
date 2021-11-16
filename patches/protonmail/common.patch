@@ -82,10 +82,32 @@ index c50ab972c..a505eb314 100644
 
 
 diff --git a/packages/shared/lib/helpers/browser.ts b/packages/shared/lib/helpers/browser.ts
-index 8c94fae..3602b68 100644
+index 9aaa78a28..f3d24b47c 100644
 --- a/packages/shared/lib/helpers/browser.ts
 +++ b/packages/shared/lib/helpers/browser.ts
-@@ -117,20 +117,10 @@ export const requireDirectAction = () => isSafari() || isFirefox() || isEdge();
+@@ -1,6 +1,21 @@
+ import UAParser from 'ua-parser-js';
+
+ const uaParser = new UAParser();
++{
++    const platform = String(navigator.platform);
++    const userAgents = {
++        linux: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36",
++        windows: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36",
++        macos: "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_0_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
++    } as const;
++    uaParser.setUA(
++        platform.startsWith("Linux")
++            ? userAgents.linux
++            : platform.startsWith("Win")
++                ? userAgents.windows
++                : userAgents.macos
++    );
++}
+ const ua = uaParser.getResult();
+
+ export const hasModulesSupport = () => {
+@@ -89,20 +104,10 @@ export const requireDirectAction = () => isSafari() || isFirefox() || isEdge();
   * @links { https://mathiasbynens.github.io/rel-noopener/}
   */
  export const openNewTab = (url: string) => {
@@ -112,6 +134,7 @@ index 8c94fae..3602b68 100644
 +        ),
 +    );
  };
+
 diff --git a/packages/shared/lib/constants.ts b/packages/shared/lib/constants.ts
 index 2bd472b..52cf521 100644
 --- a/packages/shared/lib/constants.ts

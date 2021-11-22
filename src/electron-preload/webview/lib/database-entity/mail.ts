@@ -55,9 +55,14 @@ export async function buildMail(input: RestModel.Message, api: ProviderApi): Pro
     const bodyPart: Mutable<Pick<DatabaseModel.Mail, "body" | "bodyCompression" | "failedDownload">> = {
         body: "",
     };
+    let subject = input.Subject;
 
     try {
-        const decryptedBody = await api._custom_.decryptMessageBody(input);
+        const {decryptedSubject, decryptedBody} = await api._custom_.decryptMessage(input);
+
+        if (decryptedSubject) {
+            subject = decryptedSubject;
+        }
 
         if (lzutf8Util.shouldCompress(decryptedBody)) {
             bodyPart.body = lzutf8Util.compress(decryptedBody);
@@ -67,7 +72,7 @@ export async function buildMail(input: RestModel.Message, api: ProviderApi): Pro
         }
     } catch (error) {
         // printing mail subject to log helps users locating the problematic item
-        logger.error(`body decryption failed, email subject: "${input.Subject}"`, error);
+        logger.error(`body decryption failed, email subject: "${subject}"`, error);
         bodyPart.failedDownload = {
             appVersion: PACKAGE_VERSION,
             date: Date.now(),
@@ -82,7 +87,7 @@ export async function buildMail(input: RestModel.Message, api: ProviderApi): Pro
         conversationEntryPk: buildPk(input.ConversationID),
         mailFolderIds: input.LabelIDs,
         sentDate: input.Time * ONE_SECOND_MS,
-        subject: input.Subject,
+        subject,
         ...bodyPart,
         sender: Address({...input.Sender, ...buildAddressId(input, "Sender")}),
         toRecipients: input.ToList.map((address, i) => Address({...address, ...buildAddressId(input, "ToList", i)})),

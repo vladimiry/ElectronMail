@@ -89,10 +89,6 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
                                             const key = "../../packages/components/hooks/useGetEncryptionPreferences.ts";
                                             return webpack_require<ProviderInternalsLazy[typeof key]>(key);
                                         })();
-                                        const useAttachmentCacheModule = (() => {
-                                            const key = "./src/app/containers/AttachmentProvider.tsx";
-                                            return webpack_require<ProviderInternalsLazy[typeof key]>(key);
-                                        })();
                                         const getDecryptedAttachmentModule = (() => {
                                             const key = "./src/app/helpers/attachment/attachmentLoader.ts";
                                             return webpack_require<ProviderInternalsLazy[typeof key]>(key);
@@ -105,7 +101,6 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
                                         // WARN contexts should be resolved outside of the "useEffect" handler
                                         // TODO validate resolved proton entities (at least test the "typeof" result)
                                         const getEncryptionPreferences = useGetEncryptionPreferencesModule.default();
-                                        const attachmentCache = useAttachmentCacheModule.useAttachmentCache();
                                         const {getDecryptedAttachment} = getDecryptedAttachmentModule;
                                         const getMessageKeys = useGetMessageKeysModule.useGetMessageKeys();
 
@@ -114,7 +109,6 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
                                                 privateScope: {
                                                     getEncryptionPreferences,
                                                     getMessageKeys,
-                                                    attachmentCache,
                                                     getDecryptedAttachment,
                                                 },
                                             });

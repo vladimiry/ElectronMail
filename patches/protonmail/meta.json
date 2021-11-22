@@ -1,29 +1,33 @@
 {
   "proton-account": [
     "common.patch",
-    "sentry-2.patch",
+    "sentry-3.patch",
     "captcha-2.patch",
     "pack-api-arg.patch",
+    "session-storage-2.patch",
     "proton-account.patch"
   ],
   "proton-calendar": [
     "common.patch",
-    "sentry-1.patch",
-    "captcha-1.patch",
-    "pack-api-arg.patch"
+    "sentry-3.patch",
+    "captcha-2.patch",
+    "pack-api-arg.patch",
+    "session-storage-2.patch"
   ],
   "proton-drive": [
     "common.patch",
-    "sentry-2.patch",
+    "sentry-3.patch",
     "captcha-2.patch",
     "pack-api-arg.patch",
+    "session-storage-2.patch",
     "proton-drive.patch"
   ],
   "proton-mail": [
     "common.patch",
-    "sentry-2.patch",
+    "sentry-3.patch",
     "captcha-2.patch",
     "pack-api-arg.patch",
+    "session-storage-2.patch",
     "proton-mail.patch"
   ]
 }

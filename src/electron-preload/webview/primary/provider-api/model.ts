@@ -5,7 +5,7 @@ import {
     DefineObservableValue,
     WrapToValueProp
 } from "src/electron-preload/webview/lib/provider-api/model";
-import {Cache, HttpApi, HttpApiArg} from "src/electron-preload/webview/lib/provider-api/standart-setup-internals/model";
+import {HttpApi, HttpApiArg} from "src/electron-preload/webview/lib/provider-api/standart-setup-internals/model";
 import {PROVIDER_REPO_MAP, PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS} from "src/shared/proton-apps-constants";
 
 /* eslint-disable max-len */
@@ -15,7 +15,6 @@ export type Keys = StrictExclude<(typeof PROVIDER_REPO_MAP)["proton-mail"]["prot
 
 export type LazyKeys = StrictExclude<StrictExtract<Keys,
     | "../../packages/components/hooks/useGetEncryptionPreferences.ts"
-    | "./src/app/containers/AttachmentProvider.tsx"
     | "./src/app/helpers/attachment/attachmentLoader.ts"
     | "./src/app/hooks/message/useGetMessageKeys.ts">, never>
 
@@ -28,8 +27,6 @@ export type ProviderInternals = AddInitializedProp<{
         readonly privateScope: null | {
             // https://github.com/ProtonMail/react-components/blob/276aeddfba47dd473e96a54dbd2b12d6214a6359/hooks/useGetEncryptionPreferences.ts
             readonly getEncryptionPreferences: (senderAddress: RestModel.Message["Sender"]["Address"]) => Promise<EncryptionPreferences>
-            // https://github.com/ProtonMail/proton-mail/blob/7f0116a096ca6a00369f18b0c62fa79a48e4e62e/src/app/containers/AttachmentProvider.tsx
-            readonly attachmentCache: Cache
             // https://github.com/ProtonMail/proton-mail/blob/77b133013cdb5695aa23c0c4c29cc6578878faa5/src/app/hooks/message/useGetMessageKeys.ts#L13
             readonly getMessageKeys: (message: Pick<RestModel.Message, "AddressID">) => Promise<MessageKeys>
             // https://github.com/ProtonMail/proton-mail/blob/77b133013cdb5695aa23c0c4c29cc6578878faa5/src/app/helpers/attachment/attachmentLoader.ts#L46
@@ -47,12 +44,13 @@ export type ProviderInternals = AddInitializedProp<{
     }, (arg: unknown) => import("react").ReactNode>
 } & WrapToValueProp<{
     [K in StrictExtract<ImmediateKeys, "./src/app/helpers/message/messageDecrypt.ts">]: {
-        // https://github.com/ProtonMail/proton-mail/blob/0418b3f3ce98e6fc2c787f9524e9a2cb4a78800c/src/app/helpers/message/messageDecrypt.ts#L99
+        // https://github.com/ProtonMail/WebClients/blob/251c8d9e990a14fd30be196a59852953d0189e2c/applications/mail/src/app/helpers/message/messageDecrypt.ts#L144
         readonly decryptMessage: (
             message: RestModel.Message,
             privateKeys: MessageKeys["privateKeys"],
-            attachmentsCache: Cache,
-        ) => Promise<{ readonly decryptedBody: string }>
+            // getAttachment?: (ID: string) => DecryptResultPmcrypto | undefined,
+            // onUpdateAttachment?: (ID: string, attachment: DecryptResultPmcrypto) => void
+        ) => Promise<{ readonly decryptedSubject?: string, readonly decryptedBody?: string }>
     }
 } & {
     [K in StrictExtract<ImmediateKeys, "../../packages/shared/lib/constants.ts">]: {
@@ -113,10 +111,6 @@ export type ProviderInternalsLazy = AddInitializedProp<{
         default: () => PrivateScope["getEncryptionPreferences"]
     }
 } & {
-    [K in StrictExtract<LazyKeys, "./src/app/containers/AttachmentProvider.tsx">]: {
-        useAttachmentCache: () => PrivateScope["attachmentCache"]
-    }
-} & {
     [K in StrictExtract<LazyKeys, "./src/app/hooks/message/useGetMessageKeys.ts">]: {
         useGetMessageKeys: () => PrivateScope["getMessageKeys"]
     }
@@ -132,7 +126,7 @@ export type ProviderApi = Readonly<{
         cachedMailSettingsModel$: import("rxjs").Observable<{ readonly ViewMode: number }>
         buildEventsApiUrlTester: (options: { entryApiUrl: string }) => (url: string) => boolean
         buildMessagesCountApiUrlTester: (options: { entryApiUrl: string }) => (url: string) => boolean
-        decryptMessageBody: (message: RestModel.Message) => Promise<string>
+        decryptMessage: (message: RestModel.Message) => Promise<{ decryptedSubject?: string, decryptedBody: string }>
     }>
     constants: ProviderInternals["../../packages/shared/lib/constants.ts"]["value"],
     label: Readonly<{

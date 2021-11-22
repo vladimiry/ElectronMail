@@ -103,20 +103,20 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                     const re = new RegExp(`^${entryApiUrl}/api/mail/v4/messages/count$`);
                     return (url) => re.test(url);
                 },
-                async decryptMessageBody(message) {
+                async decryptMessage(message) {
                     const privateApi = await resolvePrivateApi();
                     const messageKeys = await privateApi.getMessageKeys(message);
-                    const decryptedMessage = await internals["./src/app/helpers/message/messageDecrypt.ts"].value.decryptMessage(
+                    const {
+                        decryptedSubject,
+                        decryptedBody
+                    } = await internals["./src/app/helpers/message/messageDecrypt.ts"].value.decryptMessage(
                         message,
                         messageKeys.privateKeys,
-                        privateApi.attachmentCache,
                     );
-
-                    if (typeof decryptedMessage.decryptedBody !== "string") {
+                    if (typeof decryptedBody !== "string") {
                         throw new Error("Invalid message body content");
                     }
-
-                    return decryptedMessage.decryptedBody;
+                    return {decryptedSubject, decryptedBody};
                 },
             },
             label: {

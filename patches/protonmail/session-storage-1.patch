@@ -1,0 +1,51 @@
+diff --git a/packages/shared/lib/helpers/secureSessionStorage.ts b/packages/shared/lib/helpers/secureSessionStorage.ts
+index 486337ccf..5a59ae185 100644
+--- a/packages/shared/lib/helpers/secureSessionStorage.ts
++++ b/packages/shared/lib/helpers/secureSessionStorage.ts
+@@ -138,7 +138,7 @@ export const separateParts = (data: any) =>
+         },
+         { share1: {}, share2: {} }
+     );
+-
++/* electron-mail mark */
+ export const save = (keys: string[], data: any) => {
+     if (!hasSessionStorage()) {
+         return;
+@@ -192,3 +192,4 @@ export const load2 = () => {
+         return {};
+     }
+ };
++/* electron-mail mark */
+
+diff --git a/packages/components/containers/app/ProtonApp.tsx b/packages/components/containers/app/ProtonApp.tsx
+index c9e13872e..ddabc9259 100644
+--- a/packages/components/containers/app/ProtonApp.tsx
++++ b/packages/components/containers/app/ProtonApp.tsx
+@@ -105,10 +105,12 @@ interface Props {
+
+ const ProtonApp = ({ config, children, hasInitialAuth }: Props) => {
+     const authentication = useInstance(() => {
++        /* electron-mail mark */
+         if (isSSOMode) {
+             return createAuthentication(createSecureSessionStorage2());
+         }
+         return createAuthentication(createSecureSessionStorage([MAILBOX_PASSWORD_KEY, UID_KEY]));
++        /* electron-mail mark */
+     });
+     const pathRef = useRef<string | undefined>();
+     const cacheRef = useRef<Cache<string, any>>();
+
+diff --git a/packages/shared/lib/authentication/createSecureSessionStorage.ts b/packages/shared/lib/authentication/createSecureSessionStorage.ts
+index 845f4a517..7883422f1 100644
+--- a/packages/shared/lib/authentication/createSecureSessionStorage.ts
++++ b/packages/shared/lib/authentication/createSecureSessionStorage.ts
+@@ -1,3 +1,4 @@
++/* electron-mail mark */
+ import createStore from '../helpers/store';
+ import { load, save } from '../helpers/secureSessionStorage';
+
+@@ -30,3 +31,4 @@ const createSecureSessionStorage = (keys: string[] = []) => {
+ export type SecureSessionStorage = ReturnType<typeof createSecureSessionStorage>;
+
+ export default createSecureSessionStorage;
++/* electron-mail mark */

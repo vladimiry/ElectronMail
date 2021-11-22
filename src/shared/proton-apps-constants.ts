@@ -20,7 +20,7 @@ export const PROVIDER_REPO_MAP = {
     [PROVIDER_APP_NAMES[0]]: {
         repoRelativeDistDir: "./dist",
         baseDirName: "",
-        tag: "proton-mail@4.11.2",
+        tag: "proton-mail@4.13.6",
         protonPack: {
             appConfig: {clientId: "WebMail"},
             webpackIndexEntryItems: [
@@ -38,7 +38,6 @@ export const PROVIDER_REPO_MAP = {
                 // lazy/dynamic
                 // triggered via "./src/app/containers/PageContainer.tsx":
                 "../../packages/components/hooks/useGetEncryptionPreferences.ts",
-                "./src/app/containers/AttachmentProvider.tsx",
                 "./src/app/helpers/attachment/attachmentLoader.ts",
                 "./src/app/hooks/message/useGetMessageKeys.ts",
                 ...PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS,
@@ -48,13 +47,13 @@ export const PROVIDER_REPO_MAP = {
     [PROVIDER_APP_NAMES[1]]: {
         repoRelativeDistDir: "./dist",
         baseDirName: "account",
-        tag: "proton-account@4.13.0",
+        tag: "proton-account@4.16.1",
         protonPack: {appConfig: {clientId: "WebAccount"}}
     },
     [PROVIDER_APP_NAMES[2]]: {
         repoRelativeDistDir: "./dist",
         baseDirName: "calendar",
-        tag: "proton-calendar@4.7.6",
+        tag: "proton-calendar@4.9.2",
         protonPack: {
             appConfig: {clientId: "WebCalendar"},
             webpackIndexEntryItems: [
@@ -67,7 +66,7 @@ export const PROVIDER_REPO_MAP = {
     [PROVIDER_APP_NAMES[3]]: {
         repoRelativeDistDir: "./dist",
         baseDirName: "drive",
-        tag: "proton-drive@4.7.1",
+        tag: "proton-drive@4.8.0",
         protonPack: {appConfig: {clientId: "WebDrive"}},
     },
 } as const;

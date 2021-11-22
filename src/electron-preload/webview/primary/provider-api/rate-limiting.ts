@@ -85,7 +85,7 @@ export const attachRateLimiting = async (api: ProviderApi, logger_: Logger): Pro
         }
     };
 
-    attach(api, "_custom_", ["decryptMessageBody"]);
+    attach(api, "_custom_", ["decryptMessage"]);
     attach(api, "label", ["get"]);
     attach(api, "conversation", ["getConversation", "queryConversations"]);
     attach(api, "message", ["getMessage", "queryMessageMetadata", "labelMessages", "markMessageAsRead"]);

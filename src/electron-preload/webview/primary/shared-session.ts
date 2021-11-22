@@ -4,8 +4,8 @@ function pickSessionStorageItems(
     keys: string[] | undefined = (() => { // collection all keys if not specified
         const allKeys = [];
 
-        for (let i = 0, len = sessionStorage.length; i < len; i++) {
-            const key = sessionStorage.key(i);
+        for (let i = 0, len = window.sessionStorage.length; i < len; i++) {
+            const key = window.sessionStorage.key(i);
 
             if (!key) {
                 continue;
@@ -21,7 +21,7 @@ function pickSessionStorageItems(
     const result: Record<string, any> = Object.create(null);
 
     for (const key of keys) {
-        result[key] = sessionStorage.getItem(key);
+        result[key] = window.sessionStorage.getItem(key);
     }
 
     return result;
@@ -33,7 +33,6 @@ export function dumpProtonSharedSession(): ProtonClientSession | null {
             windowName: window.name,
             sessionStorage: pickSessionStorageItems(),
         } as const;
-
         return () => {
             window.name = backup.windowName;
             window.sessionStorage.clear();
@@ -52,14 +51,7 @@ export function dumpProtonSharedSession(): ProtonClientSession | null {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
     const windowName: Readonly<Record<string, any /* TODO TS: replace "any" with "JSONValue" */>> = JSON.parse(window.name);
-    const windowNameKeys = Object.keys(windowName);
-
-    if (!windowNameKeys.length) {
-        restore();
-        return null;
-    }
-
-    const sessionStorage = pickSessionStorageItems(windowNameKeys);
+    const sessionStorage = pickSessionStorageItems(["proton:storage"]);
 
     restore();
 
@@ -68,4 +60,3 @@ export function dumpProtonSharedSession(): ProtonClientSession | null {
         sessionStorage,
     };
 }
-

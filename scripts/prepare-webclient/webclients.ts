@@ -225,7 +225,7 @@ async function executeBuildFlow(
                 if (
                     !(await execShell(["git", ["tag"], {cwd: repoDir}], {printStdOut: false})).stdout.trim().includes(tag)
                 ) {
-                    await execShell(["git", ["fetch", "--all", "--tags"], {cwd: repoDir}]);
+                    await execShell(["git", ["fetch", "--force", "--all", "--tags"], {cwd: repoDir}]);
                 }
             } else { // cloning
                 await execShell(["npx", ["--no", "rimraf", repoDir]]);

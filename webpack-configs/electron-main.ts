@@ -2,7 +2,7 @@ import path from "path";
 import {mapValues} from "remeda";
 import webpack from "webpack";
 
-import packageJSON from "package.json";
+import packageJSON from "package.json" assert {type: "json"};
 import {ENVIRONMENT_STATE, buildBaseConfig, outputRelativePath, srcRelativePath, typescriptLoaderRule} from "./lib";
 
 const baseEntryName = "electron-main";

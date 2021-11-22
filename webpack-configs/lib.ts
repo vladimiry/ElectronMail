@@ -83,7 +83,7 @@ export function buildBaseConfig(
                     // intentionally configured to only remove dead code (tree-shaking) and beautify it, not for the compression
                     new TerserPlugin({
                         terserOptions: {
-                            ecma: 2020,
+                            // ecma: 2020,
                             mangle: false,
                             compress: {
                                 dead_code: true,

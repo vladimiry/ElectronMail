@@ -23,7 +23,7 @@ import {injectVendorsAppCssIntoHtmlFile, resolveDefaultAppSession, resolveUiCont
 const logger = curryFunctionMembers(_logger, __filename);
 
 const resolveContent = async (ctx: Context): Promise<Unpacked<ReturnType<typeof injectVendorsAppCssIntoHtmlFile>>> => {
-    const {commit, shortCommit} = await import("./about.json");
+    const {commit, shortCommit} = await import("./about.json", {assert: {type: "json"}});
     const htmlInjection: string = [
         sanitizeHtml(
             `

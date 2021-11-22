@@ -1,4 +1,4 @@
-import packageJSON from "package.json";
+import packageJSON from "package.json" assert {type: "json"};
 import {EntryUrlItem, LogLevel} from "./model/common";
 import {PROTON_SHARED_MESSAGE_INTERFACE, PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
 
@@ -43,8 +43,6 @@ export const DEFAULT_UNREAD_BADGE_BG_COLOR = "#de4251";
 export const DEFAULT_UNREAD_BADGE_BG_TEXT = "#ffffff";
 
 export const DEFAULT_MESSAGES_STORE_PORTION_SIZE = 500;
-
-export const APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR = "./usr/share/hunspell";
 
 export const UPDATE_CHECK_FETCH_TIMEOUT = ONE_SECOND_MS * 10;
 

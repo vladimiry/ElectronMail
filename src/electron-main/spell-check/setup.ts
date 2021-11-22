@@ -3,10 +3,11 @@ import os from "os";
 import path from "path";
 import semver from "semver";
 
-import {APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR} from "src/shared/constants";
 import {Locale} from "src/shared/model/common";
 import {PLATFORM} from "src/electron-main/constants";
-import {curryFunctionMembers, normalizeLocale, removeArrayDuplicateItems, sanitizeFastGlobPattern} from "src/shared/util";
+import {curryFunctionMembers, removeArrayDuplicateItems} from "src/shared/util";
+import {APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR} from "src/shared/hunspell-const";
+import {normalizeLocale, sanitizeFastGlobPattern} from "src/shared/sanitize-util";
 
 async function resolveHunspellLocales(dir: string): Promise<Locale[]> {
     const logger = curryFunctionMembers(_logger, __filename, nameof(resolveHunspellLocales));

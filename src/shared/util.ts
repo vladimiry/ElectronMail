@@ -13,13 +13,13 @@ import {
     PROTON_API_ENTRY_URLS,
     WEB_CLIENTS_BLANK_HTML_FILE_NAME,
     ZOOM_FACTOR_DEFAULT,
-} from "src/shared/constants";
+} from "./constants";
 import {AccountConfig} from "./model/account";
 import {BaseConfig, Config} from "./model/options";
 import {DbPatch} from "./api/common";
-import {FsDbAccount, View} from "src/shared/model/database";
+import {FsDbAccount, View} from "./model/database";
 import {LoginFieldContainer} from "./model/container";
-import {PROVIDER_APP_NAMES, PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
+import {PROVIDER_APP_NAMES, PROVIDER_REPO_MAP} from "./proton-apps-constants";
 import {StatusCodeError} from "./model/error";
 
 // TODO split ./src/shared/util.ts to smaller utility files in subfolder
@@ -469,16 +469,6 @@ export const validateExternalContentProxyUrlPattern = (
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-constraint
 export function removeArrayDuplicateItems<T extends any>(array: ReadonlyArray<T>): T[] {
     return [...new Set<T>(array).values()];
-}
-
-export function normalizeLocale(value: string): string {
-    return value.replace(/[^A-Za-z]/g, "_");
-}
-
-// - Breaking changes: https://github.com/mrmlnc/fast-glob/releases/tag/3.0.0
-// - How to write patterns on Windows: https://github.com/mrmlnc/fast-glob
-export function sanitizeFastGlobPattern(pattern: string): string {
-    return pattern.replace(/\\/g, "/");
 }
 
 export const parsePackagedWebClientUrl: (

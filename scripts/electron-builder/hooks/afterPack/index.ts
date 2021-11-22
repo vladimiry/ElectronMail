@@ -1,8 +1,8 @@
 import path from "path";
 
-import {APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR} from "src/shared/constants";
 import {CONSOLE_LOG, execShell} from "scripts/lib";
 import {copyDictionaryFilesTo} from "scripts/electron-builder/lib";
+import {APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR} from "src/shared/hunspell-const";
 
 const hookName = "afterPack";
 

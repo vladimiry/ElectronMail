@@ -10,7 +10,7 @@ import {createHash} from "crypto";
 import {omit, pick} from "remeda";
 import {promisify} from "util";
 
-import {GIT_CLONE_ABSOLUTE_DIR, OUTPUT_ABSOLUTE_DIR} from "scripts/const";
+import {GIT_CLONE_ABSOLUTE_DIR, OUTPUT_ABSOLUTE_DIR} from "./const";
 import {PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
 
 // TODO make "./scripts/electron-builder/hooks/afterPack/index.cjs" execution in ESM mode same as the other scripts

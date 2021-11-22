@@ -3,7 +3,7 @@ import fsExtra from "fs-extra";
 import path from "path";
 
 import {PACKAGE_NAME} from "src/shared/constants";
-import {sanitizeFastGlobPattern} from "src/shared/util";
+import {sanitizeFastGlobPattern} from "src/shared/sanitize-util";
 
 export async function listInstallationPackageFiles(dir: string): Promise<string[]> {
     const result: string[] = [];

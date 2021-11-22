@@ -1,9 +1,10 @@
 import fs from "fs";
 import path from "path";
 
-import {APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR, BINARY_NAME} from "src/shared/constants";
+import {BINARY_NAME} from "src/shared/constants";
 import {CONSOLE_LOG, catchTopLeventAsync, execShell} from "scripts/lib";
 import {build, copyDictionaryFilesTo, ensureFileHasNoSuidBit} from "scripts/electron-builder/lib";
+import {APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR} from "src/shared/hunspell-const";
 
 async function unpack({packageFile, packageDir}: { packageFile: string; packageDir: string }): Promise<void> {
     await execShell(["unsquashfs", ["-dest", packageDir, "-processors", "1", packageFile]]);

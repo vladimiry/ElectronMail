@@ -6,7 +6,7 @@ import path from "path";
 import {CONSOLE_LOG, execShell} from "scripts/lib";
 import {GIT_CLONE_ABSOLUTE_DIR} from "scripts/const";
 import {Locale} from "src/shared/model/common";
-import {normalizeLocale, sanitizeFastGlobPattern} from "src/shared/util";
+import {normalizeLocale, sanitizeFastGlobPattern} from "src/shared/sanitize-util";
 
 interface Dictionary {
     locale: Locale;

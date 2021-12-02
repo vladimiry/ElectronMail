@@ -288,7 +288,8 @@ export function initContext(
                     return databaseEncryptionKey;
                 },
                 async presetResolver() {
-                    return {encryption: {type: "sodium.crypto_secretbox_easy", preset: "algorithm:default"}} as const;
+                    const {encryptionPreset: {encryption}} = await configStore.readExisting();
+                    return {encryption};
                 },
             } as const;
             return {
@@ -303,7 +304,8 @@ export function initContext(
                     return sessionStorageEncryptionKey;
                 },
                 async presetResolver() {
-                    return {encryption: {type: "sodium.crypto_secretbox_easy", preset: "algorithm:default"}} as const;
+                    const {encryptionPreset: {encryption}} = await configStore.readExisting();
+                    return {encryption};
                 },
             } as const;
             return {

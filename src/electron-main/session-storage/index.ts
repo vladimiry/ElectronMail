@@ -12,6 +12,7 @@ import {SESSION_STORAGE_VERSION} from "src/electron-main/session-storage/const";
 import {SessionStorageModel} from "src/electron-main/session-storage/model";
 import {curryFunctionMembers, verifyUrlOriginValue} from "src/shared/util";
 import {generateDataSaltBase64} from "src/electron-main/util";
+import {FsDb} from "src/shared/model/database";
 
 export class SessionStorage {
     static emptyEntity(): typeof SessionStorage.prototype.entity {
@@ -65,7 +66,7 @@ export class SessionStorage {
     ): Promise<void> {
         this.logger.info(nameof(SessionStorage.prototype.saveSession)); // eslint-disable-line @typescript-eslint/unbound-method
         (this.entity.instance[login] ??= {})[verifyUrlOriginValue(apiEndpointOrigin)] = session;
-        await this.save();
+        await this.saveToFile();
     }
 
     async saveSessionStoragePatch(
@@ -73,7 +74,7 @@ export class SessionStorage {
     ): Promise<void> {
         this.logger.info(nameof(SessionStorage.prototype.saveSessionStoragePatch)); // eslint-disable-line @typescript-eslint/unbound-method
         (this.entity.sessionStoragePatchInstance[login] ??= {})[verifyUrlOriginValue(apiEndpointOrigin)] = {__cookieStore__};
-        await this.save();
+        await this.saveToFile();
     }
 
     async clearSession(
@@ -83,7 +84,7 @@ export class SessionStorage {
         const bundle = this.entity.instance[login];
         if (bundle && (apiEndpointOrigin in bundle)) {
             delete bundle[apiEndpointOrigin];
-            await this.save();
+            await this.saveToFile();
             return true;
         }
         return false;
@@ -99,9 +100,14 @@ export class SessionStorage {
             const check1 = this.afterLoadEntityUpgrade(); // TODO upgrade the structure once on app start
             const check2 = this.removeNonExistingLogins(actualLogins);
             if (check1 || check2) {
-                await this.save();
+                await this.saveToFile();
             }
         }
+    }
+
+    async persisted(): Promise<boolean> {
+        // TODO get rid of "fs-json-store" use
+        return new FsJsonStore.Store<FsDb>({file: this.options.file}).readable();
     }
 
     private afterLoadEntityUpgrade(): boolean {
@@ -155,8 +161,8 @@ export class SessionStorage {
         return Boolean(loginsToRemove.length);
     }
 
-    private async save(): Promise<void> {
-        this.logger.info(nameof(SessionStorage.prototype.save)); // eslint-disable-line @typescript-eslint/unbound-method
+    async saveToFile(): Promise<void> {
+        this.logger.info(nameof(SessionStorage.prototype.saveToFile)); // eslint-disable-line @typescript-eslint/unbound-method
         await this.saveToFileQueue.q(async () => {
             const store = await this.resolveStore();
             const {entity} = this;

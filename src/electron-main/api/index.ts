@@ -265,6 +265,7 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async reEncryptSettings({encryptionPreset, password}) {
+            // update the config first (as the consequent actions require it to be updated)
             await ctx.configStoreQueue.q(async () => {
                 await ctx.configStore.write({
                     ...await ctx.configStore.readExisting(),
@@ -272,7 +273,20 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
                 });
             });
 
-            return endpoints.changeMasterPassword({password, newPassword: password});
+            const [result] = await Promise.all([
+                // re-encrypt "settings.bin" file
+                endpoints.changeMasterPassword({password, newPassword: password}),
+                // re-encrypt "database & session storage" files
+                (async () => {
+                    for (const db of [ctx.db, ctx.sessionDb, ctx.sessionStorage] as const) {
+                        if (await db.persisted()) {
+                            await db.saveToFile();
+                        }
+                    }
+                })(),
+            ]);
+
+            return result;
         },
 
         // TODO move to "src/electron-main/api/endpoints-builders/database"

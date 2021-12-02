@@ -13,7 +13,7 @@ import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/act
 import {Injectable, NgZone} from "@angular/core";
 import {IpcMainServiceScan} from "src/shared/api/main-process";
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
-import {ONE_SECOND_MS, PRODUCT_NAME, UPDATE_CHECK_FETCH_TIMEOUT} from "src/shared/constants";
+import {ONE_MINUTE_MS, ONE_SECOND_MS, PRODUCT_NAME, UPDATE_CHECK_FETCH_TIMEOUT} from "src/shared/constants";
 import {OptionsService} from "src/web/browser-window/app/_options/options.service";
 import {ProgressPatch, State} from "src/web/browser-window/app/store/reducers/options";
 import {getWebLogger} from "src/web/browser-window/util";
@@ -403,7 +403,7 @@ export class OptionsEffects {
                 return merge(
                     of(this.buildPatchProgress({reEncryptingSettings: true})),
                     from(
-                        this.api.ipcMainClient()("reEncryptSettings")({encryptionPreset, password}),
+                        this.api.ipcMainClient({timeoutMs: ONE_MINUTE_MS * 10})("reEncryptSettings")({encryptionPreset, password}),
                     ).pipe(
                         map((settings) => OPTIONS_ACTIONS.GetSettingsResponse(settings)),
                         finalize(() => this.dispatchProgress({reEncryptingSettings: false})),

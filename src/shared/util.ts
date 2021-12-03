@@ -33,7 +33,7 @@ export function initialConfig(): Config {
                     ? "mode:interactive|algorithm:default"
                     : "mode:moderate|algorithm:default"
             },
-            encryption: {type: "sodium.crypto_secretbox_easy", preset: "algorithm:default"},
+            encryption: {type: "crypto", preset: "algorithm:aes-256-cbc"},
         };
 
         return {

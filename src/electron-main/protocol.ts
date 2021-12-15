@@ -7,8 +7,6 @@ import {URL} from "@cliqz/url-parser";
 import {promisify} from "util";
 
 import {Context} from "src/electron-main/model";
-import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
-import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
 import {WEB_PROTOCOL_SCHEME} from "src/shared/constants";
 import {curryFunctionMembers} from "src/shared/util";
@@ -122,9 +120,6 @@ export async function registerSessionProtocols(ctx: DeepReadonly<Context>, sessi
                 if (!resourceLocation) {
                     const message = `Failed to resolve "${request.url}" resource`;
                     logger.error(message);
-                    IPC_MAIN_API_NOTIFICATION$.next(
-                        IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({message}),
-                    );
                     callback({statusCode: 404});
                     return;
                 }

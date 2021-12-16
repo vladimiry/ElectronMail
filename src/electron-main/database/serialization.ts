@@ -288,7 +288,7 @@ export const buildSerializer: (file: string) => {
                 const fileStream = (() => {
                     const stream = new WriteStreamAtomic(file, {highWaterMark: constants.dataWritingBufferSize, encoding: "binary"});
                     const streamErrorDeferred = new Deferred<void>();
-                    const writeToStream = (chunk: Buffer): Promise<void> => {
+                    const writeToStream = async (chunk: Buffer): Promise<void> => {
                         return new Promise<void>((resolve, reject) => {
                             stream.write(chunk, (error) => {
                                 if (error) {
@@ -317,7 +317,12 @@ export const buildSerializer: (file: string) => {
                                     ),
                                 ]),
                             );
-                            stream.end(() => stream.destroy());
+                            await new Promise<void>((resolve) => {
+                                stream.end(() => {
+                                    stream.destroy();
+                                    resolve();
+                                });
+                            });
                             streamErrorDeferred.resolve();
                         },
                     } as const;

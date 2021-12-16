@@ -288,6 +288,17 @@ export const buildSerializer: (file: string) => {
                 const fileStream = (() => {
                     const stream = new WriteStreamAtomic(file, {highWaterMark: constants.dataWritingBufferSize, encoding: "binary"});
                     const streamErrorDeferred = new Deferred<void>();
+                    const writeToStream = (chunk: Buffer): Promise<void> => {
+                        return new Promise<void>((resolve, reject) => {
+                            stream.write(chunk, (error) => {
+                                if (error) {
+                                    streamErrorDeferred.reject(error);
+                                    return reject(error);
+                                }
+                                resolve();
+                            });
+                        });
+                    };
                     let closePromise: Promise<void> | undefined;
                     stream.once("error", (error) => streamErrorDeferred.reject(error));
                     return {
@@ -295,18 +306,10 @@ export const buildSerializer: (file: string) => {
                         errorHandlingPromise: streamErrorDeferred.promise,
                         async write(chunk: Buffer): Promise<void> {
                             closePromise ??= new Promise((resolve) => stream.once("close", resolve));
-                            return new Promise<void>((resolve, reject) => { // TODO TS "promisify(write)" rather than wrapping in promise
-                                stream.write(chunk, (error) => {
-                                    if (error) {
-                                        streamErrorDeferred.reject(error); // TODO remove this line: error already handled in "close" event
-                                        return reject(error);
-                                    }
-                                    resolve();
-                                });
-                            });
+                            return writeToStream(chunk);
                         },
-                        end(): void {
-                            stream.write(
+                        async finish(): Promise<void> {
+                            await writeToStream(
                                 Buffer.concat([
                                     constants.headerZeroByteMark,
                                     Buffer.from(
@@ -375,7 +378,7 @@ export const buildSerializer: (file: string) => {
                                 }
                             }
 
-                            fileStream.end();
+                            await fileStream.finish();
                         } finally {
                             if (fileStream.closePromise) {
                                 await fileStream.closePromise;

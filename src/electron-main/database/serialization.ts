@@ -317,8 +317,7 @@ export const buildSerializer: (file: string) => {
                                     ),
                                 ]),
                             );
-                            stream.end();
-                            stream.destroy();
+                            stream.end(() => stream.destroy());
                             streamErrorDeferred.resolve();
                         },
                     } as const;

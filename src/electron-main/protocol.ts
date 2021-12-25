@@ -18,9 +18,9 @@ const fsAsync = {
     readFile: promisify(fs.readFile),
 } as const;
 
-const baseDirNames: readonly string[] = Object
+const basePaths: readonly string[] = Object
     .values(PROVIDER_REPO_MAP)
-    .map(({baseDirName}) => baseDirName);
+    .map(({basePath}) => basePath);
 
 export function registerStandardSchemes(ctx: Context): void {
     // WARN: "protocol.registerStandardSchemes" needs to be called once, see https://github.com/electron/electron/issues/15943
@@ -75,7 +75,7 @@ async function resolveFileSystemResourceLocation(
                     .relative(directory, urlBasedResource)
                     .split(path.sep)
                     .shift();
-                return leadingFolder && baseDirNames.includes(leadingFolder)
+                return leadingFolder && basePaths.includes(leadingFolder)
                     ? path.join(directory, leadingFolder)
                     : directory;
             })();
@@ -129,7 +129,7 @@ export async function registerSessionProtocols(ctx: DeepReadonly<Context>, sessi
                 // TODO tweak e2e test: navigate to "/drive" (requires to be signed-in into the mail account)
                 //      so the scope misconfiguration-related error get printed to "log.log" file and the test gets failed then
                 if (resourceLocation.startsWith(
-                    path.join(directory, PROVIDER_REPO_MAP["proton-drive"].baseDirName, "downloadSW."),
+                    path.join(directory, PROVIDER_REPO_MAP["proton-drive"].basePath, "downloadSW."),
                 )) {
                     /* eslint-disable max-len */
                     // https://github.com/ProtonMail/proton-drive/blob/04d30ae6c9fbfbc33cfc91499831e2e6458a99b1/src/.htaccess#L42-L45

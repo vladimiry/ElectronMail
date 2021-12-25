@@ -29,5 +29,12 @@
     "pack-api-arg.patch",
     "session-storage-2.patch",
     "proton-mail.patch"
+  ],
+  "proton-vpn-settings": [
+    "common.patch",
+    "sentry-3.patch",
+    "captcha-2.patch",
+    "pack-api-arg.patch",
+    "session-storage-2.patch"
   ]
 }

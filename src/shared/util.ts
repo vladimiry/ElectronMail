@@ -498,7 +498,7 @@ export const resolvePackagedWebClientApp: (
         const result: typeof resolvePackagedWebClientApp = (url) => {
             const pathname = `${url.pathname}/`;
             const foundSubProject = subProjects.find((subProject) => {
-                return pathname.startsWith(`/${PROVIDER_REPO_MAP[subProject].baseDirName}/`);
+                return pathname.startsWith(`/${PROVIDER_REPO_MAP[subProject].basePath}/`);
             });
             const project = foundSubProject || "proton-mail";
             const [

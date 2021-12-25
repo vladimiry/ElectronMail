@@ -314,8 +314,8 @@ async function executeBuildFlow(
                 await state.buildingSetup();
 
                 const {configApiParam} = await configure({cwd: appDir, repoType}, folderAsDomainEntry);
-                const publicPath: string | undefined = repoType !== "proton-mail"
-                    ? `/${PROVIDER_REPO_MAP[repoType].baseDirName}/`
+                const publicPath: string | undefined = PROVIDER_REPO_MAP[repoType].basePath
+                    ? `/${PROVIDER_REPO_MAP[repoType].basePath}/`
                     : undefined;
 
                 if (repoType === "proton-mail" || repoType === "proton-calendar") {
@@ -404,7 +404,7 @@ export const buildProtonClients = async ({destDir}: { destDir: string }): Promis
         await executeBuildFlow({
             repoType,
             destDir,
-            destSubFolder: PROVIDER_REPO_MAP[repoType].baseDirName,
+            destSubFolder: PROVIDER_REPO_MAP[repoType].basePath,
         });
     }
 };

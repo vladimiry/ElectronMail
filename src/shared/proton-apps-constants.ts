@@ -3,6 +3,7 @@ export const PROVIDER_APP_NAMES = [
     "proton-account",
     "proton-calendar",
     "proton-drive",
+    "proton-vpn-settings",
 ] as const;
 
 export const PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS = [
@@ -19,7 +20,7 @@ export const PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS = [
 export const PROVIDER_REPO_MAP = {
     [PROVIDER_APP_NAMES[0]]: {
         repoRelativeDistDir: "./dist",
-        baseDirName: "",
+        basePath: "",
         tag: "proton-mail@4.13.6",
         protonPack: {
             appConfig: {clientId: "WebMail"},
@@ -46,13 +47,13 @@ export const PROVIDER_REPO_MAP = {
     },
     [PROVIDER_APP_NAMES[1]]: {
         repoRelativeDistDir: "./dist",
-        baseDirName: "account",
+        basePath: "account",
         tag: "proton-account@4.16.1",
         protonPack: {appConfig: {clientId: "WebAccount"}}
     },
     [PROVIDER_APP_NAMES[2]]: {
         repoRelativeDistDir: "./dist",
-        baseDirName: "calendar",
+        basePath: "calendar",
         tag: "proton-calendar@4.9.2",
         protonPack: {
             appConfig: {clientId: "WebCalendar"},
@@ -65,9 +66,15 @@ export const PROVIDER_REPO_MAP = {
     },
     [PROVIDER_APP_NAMES[3]]: {
         repoRelativeDistDir: "./dist",
-        baseDirName: "drive",
+        basePath: "drive",
         tag: "proton-drive@4.8.0",
         protonPack: {appConfig: {clientId: "WebDrive"}},
+    },
+    [PROVIDER_APP_NAMES[4]]: {
+        repoRelativeDistDir: "./dist",
+        basePath: "account/vpn",
+        tag: "proton-vpn-settings@4.13.0",
+        protonPack: {appConfig: {clientId: "WebVPNSettings"}},
     },
 } as const;
 

@@ -186,3 +186,17 @@ index 2bd472b..52cf521 100644
          name: 'ProtonCalendar',
          bareName: 'Calendar',
          clientID: 'WebCalendar',
+
+diff --git a/packages/components/components/link/SettingsLink.tsx b/packages/components/components/link/SettingsLink.tsx
+index ebce00d20..96498d8c8 100644
+--- a/packages/components/components/link/SettingsLink.tsx
++++ b/packages/components/components/link/SettingsLink.tsx
+@@ -37,7 +37,7 @@ const SettingsLink = ({ path, app, children, ...rest }: Props, ref: Ref<HTMLAnch
+             ref={ref}
+             toApp={APPS.PROTONACCOUNT}
+             // If going to settings for the same app
+-            target={isGoingToSameSettings ? '_self' : '_blank'}
++            target={isGoingToSameSettings || app === APPS.PROTONVPN_SETTINGS ? '_self' : '_blank'}
+             {...rest}
+         >
+             {children}

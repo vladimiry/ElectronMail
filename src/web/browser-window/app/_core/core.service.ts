@@ -44,8 +44,8 @@ export class CoreService {
         if (!bundle) {
             throw new Error(`Invalid "entryUrl" value: "${JSON.stringify(bundle)}"`);
         }
-        const {baseDirName} = PROVIDER_REPO_MAP[repoType];
-        const entryUrl = `${bundle.entryUrl}${baseDirName ? "/" + baseDirName : ""}`;
+        const {basePath} = PROVIDER_REPO_MAP[repoType];
+        const entryUrl = `${bundle.entryUrl}${basePath ? "/" + basePath : ""}`;
 
         return {
             entryUrl,
@@ -122,7 +122,7 @@ export class CoreService {
             };
             const finalCodePart = `(() => {
                 window.sessionStorage.setItem(${JSON.stringify(WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS)}, 1);
-                window.location.assign("./${PROVIDER_REPO_MAP[repoType].baseDirName}")
+                window.location.assign("./${PROVIDER_REPO_MAP[repoType].basePath}")
             })()`;
             const prependCodeParts: string[] = [];
             if (savedSessionData?.clientSession) {

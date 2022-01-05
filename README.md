@@ -17,13 +17,15 @@ The download page with Linux/OSX/Windows installation packages is [here](https:/
 
 The way of verifying that the installation packages attached to the [releases](https://github.com/vladimiry/ElectronMail/releases) have been assembled from the source code [is being provided](https://github.com/vladimiry/ElectronMail/issues/183).
 
-Some Linux package types are available for installing from the repositories (`Pacman` and `Snap` repositories are being maintained by [@joshirio](https://github.com/joshirio)):
+Some package types are available for installing from the repositories (`Pacman` and `Snap` repositories are being maintained by [@joshirio](https://github.com/joshirio)):
 
 [![Get it from the AUR](images/aurlogo.png)](https://aur.archlinux.org/packages/electronmail-bin)
 
-[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/electron-mail)
+[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/electron-mail) 
 
 <a href="https://flathub.org/apps/details/com.github.vladimiry.ElectronMail"><img width="182" alt="Get it from the Flathub" src="https://flathub.org/assets/badges/flathub-badge-en.png"/></a>
+
+<a href="https://community.chocolatey.org/packages/electron-mail"><img width="182" alt="Get it from the Chocolatey" src="https://rawcdn.githack.com/chocolatey/choco-theme/545caa1ccdb57d5d2313f43e14e435f8d9745523/images/global-shared/logo-square.svg"/></a>
 
 ## Features
 

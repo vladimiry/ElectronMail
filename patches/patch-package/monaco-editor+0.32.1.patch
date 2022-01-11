@@ -1,0 +1,18 @@
+diff --git a/node_modules/monaco-editor/esm/vs/editor/editor.main.js b/node_modules/monaco-editor/esm/vs/editor/editor.main.js
+index 97bfc6b..801b925 100644
+--- a/node_modules/monaco-editor/esm/vs/editor/editor.main.js
++++ b/node_modules/monaco-editor/esm/vs/editor/editor.main.js
+@@ -1,7 +1,9 @@
+-import '../basic-languages/monaco.contribution';
+-import '../language/css/monaco.contribution';
+-import '../language/html/monaco.contribution';
+-import '../language/json/monaco.contribution';
++// import '../basic-languages/monaco.contribution';
++import '../basic-languages/javascript/javascript.contribution';
++import '../basic-languages/typescript/typescript.contribution';
++// import '../language/css/monaco.contribution';
++// import '../language/html/monaco.contribution';
++// import '../language/json/monaco.contribution';
+ import '../language/typescript/monaco.contribution';
+ 
+ export * from './edcore.main';

@@ -11,7 +11,7 @@ catchTopLeventAsync(async () => {
         return;
     }
     if (ACTION_TYPE_ARG === "rollback") {
-        await execShell(["yarn", ["add", "--dev", "typescript@4.5.4"]]);
+        await execShell(["yarn", ["add", "--dev", "typescript@4.5.5"]]);
         return;
     }
     throw new Error(`Unexpected action type argument: ${String(ACTION_TYPE_ARG)}`);

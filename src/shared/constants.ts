@@ -1,7 +1,7 @@
+import packageJSON from "package.json";
+
 import {EntryUrlItem, LogLevel} from "./model/common";
 import {PROTON_SHARED_MESSAGE_INTERFACE, PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
-
-import packageJSON from "package.json" assert {type: "json"};
 
 const {
     description: PACKAGE_DESCRIPTION,

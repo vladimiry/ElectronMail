@@ -15,18 +15,10 @@ index 04ea846..1a88606 100644
        const extension = replacementExtensions[i];
        const guess = new URL(search.toString());
 diff --git a/node_modules/ts-node/dist-raw/node-options.js b/node_modules/ts-node/dist-raw/node-options.js
-index 0602a47..4a58b9f 100644
+index 2272275..0e208c4 100644
 --- a/node_modules/ts-node/dist-raw/node-options.js
 +++ b/node_modules/ts-node/dist-raw/node-options.js
-@@ -26,6 +26,7 @@ function parseOptions() {
- 
- function parseArgv(argv) {
-   return require('arg')({
-+    '--experimental-json-modules': Boolean,
-     '--preserve-symlinks': Boolean,
-     '--preserve-symlinks-main': Boolean,
-     '--input-type': String,
-@@ -97,5 +98,16 @@ function getOptionValuesFromOtherEnvVars() {
+@@ -99,5 +99,16 @@ function getOptionValuesFromOtherEnvVars() {
    if(process.env.NODE_PENDING_DEPRECATION === '1') {
      options['--pending-deprecation'] = true;
    }

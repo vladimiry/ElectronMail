@@ -1,6 +1,6 @@
 @use "src/web/browser-window/lib" as lib;
 
-@use "ngx-bootstrap/datepicker/bs-datepicker" with (
+@use "node_modules/ngx-bootstrap/datepicker/bs-datepicker" with (
     $theme-gray: theme-color("primary"),
     $theme-green: theme-color("primary"),
     $main-bg: $app-theming-datepicker-color-bg,

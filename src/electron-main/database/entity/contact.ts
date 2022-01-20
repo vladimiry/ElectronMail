@@ -1,8 +1,8 @@
 import {IsArray, IsIn, IsNotEmpty, IsOptional, IsString, ValidateNested} from "class-validator";
 import {Type} from "class-transformer";
 
-import * as Model from "src/shared/model/database";
 import {Entity} from "./base";
+import * as Model from "src/shared/model/database";
 
 class ContactAddress extends Entity implements Model.ContactAddress {
     @IsIn(Model.CONTACT_ADDRESS_TYPE._.values)

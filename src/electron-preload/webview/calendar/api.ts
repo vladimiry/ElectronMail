@@ -1,11 +1,11 @@
-import {Observable, merge} from "rxjs";
 import {map, tap} from "rxjs/operators";
+import {merge, Observable} from "rxjs";
 
+import {curryFunctionMembers} from "src/shared/util";
+import {getLocationHref} from "src/electron-preload/webview/lib/util";
 import {PROTON_CALENDAR_IPC_WEBVIEW_API, ProtonCalendarApi, ProtonCalendarNotificationOutput} from "src/shared/api/webview/calendar";
 import {ProviderApi} from "./provider-api/model";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
-import {curryFunctionMembers} from "src/shared/util";
-import {getLocationHref} from "src/electron-preload/webview/lib/util";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.calendar, __filename);
 

@@ -1,8 +1,8 @@
-import TerserPlugin from "terser-webpack-plugin";
-import path from "path";
-import webpack, {Configuration, RuleSetRule} from "webpack";
-import {Options as TsLoaderOptions} from "ts-loader";
 import {mapValues} from "remeda";
+import path from "path";
+import TerserPlugin from "terser-webpack-plugin";
+import {Options as TsLoaderOptions} from "ts-loader";
+import webpack, {Configuration, RuleSetRule} from "webpack";
 import {merge as webpackMerge} from "webpack-merge";
 
 import {BuildEnvVars} from "./model";

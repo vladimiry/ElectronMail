@@ -1,7 +1,7 @@
 import {omit, pipe, sortBy} from "remeda";
 
-import {CONVERSATION_TYPE, ConversationEntry, FsDbAccount, SYSTEM_FOLDER_IDENTIFIERS, View} from "src/shared/model/database";
 import {buildAccountFoldersResolver} from "src/electron-main/database/util";
+import {CONVERSATION_TYPE, ConversationEntry, FsDbAccount, SYSTEM_FOLDER_IDENTIFIERS, View} from "src/shared/model/database";
 import {mailDateComparatorDefaultsToDesc, walkConversationNodesTree} from "src/shared/util";
 
 // TODO move the "formatting" and "filling the summary" actions to individual functions

@@ -1,6 +1,6 @@
-import * as DbModel from "src/shared/model/database";
 import {Config} from "src/shared/model/options";
 import {Controller} from "src/electron-main/spell-check/model";
+import * as DbModel from "src/shared/model/database";
 import {IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS} from "src/shared/api/main-process/actions";
 import {props, propsRecordToActionsRecord, UnionOf} from "src/shared/ngrx-util";
 

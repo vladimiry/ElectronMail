@@ -1,14 +1,14 @@
-import {Observable, Subscription} from "rxjs";
-import {Store, select} from "@ngrx/store";
-import {map} from "rxjs/operators";
-
 import {Component, ElementRef, Inject} from "@angular/core";
-import {OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {map} from "rxjs/operators";
+import {Observable, Subscription} from "rxjs";
 import type {OnDestroy, OnInit} from "@angular/core";
+import {select, Store} from "@ngrx/store";
+
+import {getWebLogger} from "src/web/browser-window/util";
+import {OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {PACKAGE_GITHUB_PROJECT_URL_TOKEN} from "src/web/browser-window/app/app.constants";
 import {State} from "src/web/browser-window/app/store/reducers/options";
-import {getWebLogger} from "src/web/browser-window/util";
 
 @Component({
     selector: "electron-mail-db-metadata-reset-request",

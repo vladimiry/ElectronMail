@@ -1,5 +1,5 @@
-import type {DeepPartial} from "ts-essentials";
 import {app} from "electron";
+import type {DeepPartial} from "ts-essentials";
 
 import {Config} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";

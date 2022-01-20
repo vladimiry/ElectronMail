@@ -1,12 +1,12 @@
-import fs from "fs";
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/lib/private/constants";
-import {Model as StoreModel} from "fs-json-store";
+import fs from "fs";
 import {platform} from "os";
 import {randomBytes} from "crypto";
+import {Model as StoreModel} from "fs-json-store";
 
 import {BaseConfig, Config, ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS, Settings} from "src/shared/model/options";
-import {PACKAGE_NAME} from "src/shared/constants";
 import {initialConfig} from "src/shared/util";
+import {PACKAGE_NAME} from "src/shared/constants";
 
 export const PLATFORM = platform();
 

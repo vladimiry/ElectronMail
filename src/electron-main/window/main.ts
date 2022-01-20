@@ -1,13 +1,13 @@
 import _logger from "electron-log";
-import {BrowserWindow, Rectangle, app, screen} from "electron";
+import {app, BrowserWindow, Rectangle, screen} from "electron";
 import {equals} from "remeda";
 import {first} from "rxjs/operators";
 import {lastValueFrom} from "rxjs";
 
 import {Context} from "src/electron-main/model";
+import {curryFunctionMembers, initialConfig} from "src/shared/util";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";
 import {ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/constants";
-import {curryFunctionMembers, initialConfig} from "src/shared/util";
 import {readConfigSync, resolveDefaultAppSession} from "src/electron-main/util";
 import {syncFindInPageBrowserViewSize} from "src/electron-main/window/find-in-page";
 

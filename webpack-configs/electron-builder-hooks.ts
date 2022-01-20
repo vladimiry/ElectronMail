@@ -1,6 +1,6 @@
+import {Configuration} from "webpack";
 import nodeExternals from "webpack-node-externals";
 import path from "path";
-import {Configuration} from "webpack";
 
 import {buildBaseConfig, rootRelativePath, typescriptLoaderRule} from "./lib";
 

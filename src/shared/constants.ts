@@ -1,6 +1,7 @@
-import packageJSON from "package.json" assert {type: "json"};
 import {EntryUrlItem, LogLevel} from "./model/common";
 import {PROTON_SHARED_MESSAGE_INTERFACE, PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
+
+import packageJSON from "package.json" assert {type: "json"};
 
 const {
     description: PACKAGE_DESCRIPTION,
@@ -16,13 +17,7 @@ export const REPOSITORY_NAME = PRODUCT_NAME;
 
 export const BINARY_NAME = PACKAGE_NAME;
 
-export {
-    PACKAGE_NAME,
-    PACKAGE_VERSION,
-    PACKAGE_LICENSE,
-    PACKAGE_DESCRIPTION,
-    PACKAGE_GITHUB_PROJECT_URL,
-};
+export {PACKAGE_DESCRIPTION, PACKAGE_GITHUB_PROJECT_URL, PACKAGE_LICENSE, PACKAGE_NAME, PACKAGE_VERSION};
 
 export const SEMICOLON = ";";
 

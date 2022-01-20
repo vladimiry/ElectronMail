@@ -1,9 +1,9 @@
 import path from "path";
 import pathIsInside from "path-is-inside";
 
-import {CWD_ABSOLUTE_DIR} from "scripts/const";
 import {buildProtonClients} from "./webclients";
 import {catchTopLeventAsync} from "scripts/lib";
+import {CWD_ABSOLUTE_DIR} from "scripts/const";
 import {generateDtsForMonacoEditor} from "./monaco-editor-dts";
 
 const [, , appDestDir] = process.argv;

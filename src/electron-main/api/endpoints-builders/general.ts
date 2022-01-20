@@ -1,21 +1,21 @@
+import {app, dialog, nativeTheme, shell} from "electron";
 import compareVersions from "compare-versions";
 import electronLog from "electron-log";
 import fetch from "electron-fetch";
-import {app, dialog, nativeTheme, shell} from "electron";
 import {first, map, startWith, switchMap} from "rxjs/operators";
 import {from, lastValueFrom, merge, of, throwError} from "rxjs";
 import {inspect} from "util";
 import {isWebUri} from "valid-url";
 
+import {applyZoomFactor} from "src/electron-main/window/util";
 import {Context} from "src/electron-main/model";
+import {createSessionUtil} from "src/electron-main/session";
+import {curryFunctionMembers} from "src/shared/util";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main-process";
 import {PACKAGE_GITHUB_PROJECT_URL, PACKAGE_VERSION, UPDATE_CHECK_FETCH_TIMEOUT} from "src/shared/constants";
 import {PLATFORM} from "src/electron-main/constants";
-import {applyZoomFactor} from "src/electron-main/window/util";
-import {createSessionUtil} from "src/electron-main/session";
-import {curryFunctionMembers} from "src/shared/util";
 import {resolveUiContextStrict} from "src/electron-main/util";
 import {showAboutBrowserWindow} from "src/electron-main/window/about";
 

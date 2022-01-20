@@ -1,18 +1,15 @@
 import type {QueryResult} from "ndx-query";
 import {Model as StoreModel} from "fs-json-store";
 
-import * as Constants from "./constants";
-import * as View from "./view";
 import {AccountConfig} from "src/shared/model/account";
+import * as Constants from "./constants";
 import {LABEL_TYPE} from "./constants";
 import {NumberString, NumericBoolean, Timestamp} from "src/shared/model/common";
+import * as View from "./view";
 
 export * from "./constants";
 
-export {
-    View,
-    Constants,
-};
+export {Constants, View};
 
 export type Entity = NoExtraProps<{
     readonly pk: string;

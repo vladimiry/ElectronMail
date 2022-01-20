@@ -1,0 +1,19 @@
+{
+  "root": true,
+  "bracketSpacing": false,
+  "sortImportsBy": "names",
+  "groupRules": [
+    {},
+    "^(scripts/|src/|webpack-configs/|webpack-configs/|\\./|\\.\\./)"
+  ],
+  "wrappingStyle": {
+    "maxBindingNamesPerLine": 0,
+    "maxDefaultAndBindingNamesPerLine": 0,
+    "maxExportNamesPerLine": 0,
+    "maxNamesPerWrappedLine": 0,
+    "ignoreComments": false
+  },
+  "keepUnused": [
+    ".*"
+  ]
+}

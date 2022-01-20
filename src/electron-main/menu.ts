@@ -1,4 +1,4 @@
-import {Menu, MenuItemConstructorOptions, app} from "electron";
+import {app, Menu, MenuItemConstructorOptions} from "electron";
 
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {PLATFORM} from "src/electron-main/constants";

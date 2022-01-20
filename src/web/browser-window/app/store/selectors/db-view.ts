@@ -1,6 +1,6 @@
 import {createFeatureSelector, createSelector} from "@ngrx/store";
 
-import {State, featureName} from "src/web/browser-window/app/store/reducers/db-view";
+import {featureName, State} from "src/web/browser-window/app/store/reducers/db-view";
 import {WebAccountPk} from "src/web/browser-window/app/model";
 
 export const STATE = createFeatureSelector<State>(featureName);

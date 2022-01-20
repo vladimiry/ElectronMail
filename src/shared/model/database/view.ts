@@ -1,4 +1,4 @@
-import * as Model from ".";
+import * as Model from "./";
 
 export interface Folder extends Mutable<Model.Folder> {
     size: number;

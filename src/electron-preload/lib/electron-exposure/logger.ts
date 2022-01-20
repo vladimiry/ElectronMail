@@ -1,7 +1,7 @@
-import {LogLevel, Logger} from "src/shared/model/common";
-import {ONE_SECOND_MS} from "src/shared/constants";
 import {getPlainErrorProps} from "src/shared/util";
 import {isProtonApiError, resolveIpcMainApi, sanitizeProtonApiError} from "src/electron-preload/lib/util";
+import {Logger, LogLevel} from "src/shared/model/common";
+import {ONE_SECOND_MS} from "src/shared/constants";
 
 let apiClient: ReturnType<typeof resolveIpcMainApi> | undefined;
 

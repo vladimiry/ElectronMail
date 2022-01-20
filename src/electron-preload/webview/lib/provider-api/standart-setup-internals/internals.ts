@@ -1,9 +1,9 @@
 import {ReplaySubject} from "rxjs";
 
-import * as webpackJsonpPushUtil from "src/electron-preload/webview/lib/provider-api/webpack-jsonp-push-util";
+import {curryFunctionMembers} from "src/shared/util";
 import {Logger} from "src/shared/model/common";
 import {StandardSetupProviderInternals, StandardSetupProviderInternalsLazy} from "./model";
-import {curryFunctionMembers} from "src/shared/util";
+import * as webpackJsonpPushUtil from "src/electron-preload/webview/lib/provider-api/webpack-jsonp-push-util";
 
 export const resolveStandardSetupStandardSetupProviderInternals = async (
     _logger: Logger,

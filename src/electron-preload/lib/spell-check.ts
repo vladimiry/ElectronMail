@@ -3,9 +3,9 @@ import {webFrame} from "electron"; // tslint:disable-line:no-import-zones
 
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {Locale, Logger} from "src/shared/model/common";
+import {ofType} from "src/shared/ngrx-util-of-type";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {resolveIpcMainApi} from "src/electron-preload/lib/util";
-import {ofType} from "src/shared/ngrx-util-of-type";
 
 const apiClientCleanupService = (() => {
     const deferred = new Deferred<void>();

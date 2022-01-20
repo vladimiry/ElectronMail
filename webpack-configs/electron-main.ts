@@ -1,9 +1,10 @@
-import path from "path";
 import {mapValues} from "remeda";
+import path from "path";
 import webpack from "webpack";
 
+import {buildBaseConfig, ENVIRONMENT_STATE, outputRelativePath, srcRelativePath, typescriptLoaderRule} from "./lib";
+
 import packageJSON from "package.json" assert {type: "json"};
-import {ENVIRONMENT_STATE, buildBaseConfig, outputRelativePath, srcRelativePath, typescriptLoaderRule} from "./lib";
 
 const baseEntryName = "electron-main";
 const src = (value: string): string => path.join(srcRelativePath(baseEntryName), value);

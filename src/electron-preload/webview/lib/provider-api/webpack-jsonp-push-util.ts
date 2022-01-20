@@ -1,6 +1,6 @@
 import {AddInitializedProp, PickObservableValues, WebpackJsonpArrayItem, WebpackJsonpPropAwareWindow} from "./model";
-import {Logger} from "src/shared/model/common";
 import {assertTypeOf} from "src/shared/util";
+import {Logger} from "src/shared/model/common";
 
 export const buildFullyInitializedResolver = <T extends Record<string, { initialized?: boolean }>>(
     result: T,

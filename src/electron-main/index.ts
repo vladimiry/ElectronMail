@@ -1,5 +1,5 @@
-import electronLog from "electron-log";
 import {app} from "electron";
+import electronLog from "electron-log";
 
 import {appReadyHandler} from "./bootstrap/app-ready";
 import {bootstrapCommandLine} from "./bootstrap/command-line";

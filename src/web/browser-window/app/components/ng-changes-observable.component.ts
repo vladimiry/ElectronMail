@@ -1,7 +1,7 @@
-import {BehaviorSubject, EMPTY, Observable, Subject, of} from "rxjs";
+import {BehaviorSubject, EMPTY, Observable, of, Subject} from "rxjs";
 import {Directive} from "@angular/core";
-import type {OnChanges, OnDestroy, SimpleChanges} from "@angular/core";
 import {distinctUntilChanged, mergeMap, takeUntil} from "rxjs/operators";
+import type {OnChanges, OnDestroy, SimpleChanges} from "@angular/core";
 
 @Directive()
 // so weird not single-purpose directive huh, https://github.com/angular/angular/issues/30080#issuecomment-539194668

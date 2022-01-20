@@ -1,19 +1,19 @@
 import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/forms";
 import {BsModalRef, BsModalService} from "ngx-bootstrap/modal";
 import {ChangeDetectionStrategy, Component, Input, TemplateRef} from "@angular/core";
+import {clone, pick} from "remeda";
 import {EMPTY, from} from "rxjs";
+import {mergeMap, takeUntil} from "rxjs/operators";
 import type {OnInit} from "@angular/core";
 import {Store} from "@ngrx/store";
-import {clone, pick} from "remeda";
-import {mergeMap, takeUntil} from "rxjs/operators";
 
 import {DB_VIEW_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
+import {filterConversationNodesMails} from "src/shared/util";
 import {MailsBundle, State} from "src/web/browser-window/app/store/reducers/db-view";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {View} from "src/shared/model/database";
-import {filterConversationNodesMails} from "src/shared/util";
 
 const selector = "electron-mail-db-view-mails-export";
 

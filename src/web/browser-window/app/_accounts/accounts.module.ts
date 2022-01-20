@@ -1,16 +1,16 @@
 import {BsDropdownModule} from "ngx-bootstrap/dropdown";
 import {EffectsModule} from "@ngrx/effects";
-import {NO_ERRORS_SCHEMA, NgModule} from "@angular/core";
+import {NgModule, NO_ERRORS_SCHEMA} from "@angular/core";
 
 import {AccountComponent} from "./account.component";
-import {AccountTitleComponent} from "./account-title.component";
-import {AccountViewCalendarComponent} from "./account-view-calendar.component";
-import {AccountViewPrimaryComponent} from "./account-view-primary.component";
 import {AccountsComponent} from "./accounts.component";
 import {AccountsEffects} from "./accounts.effects";
 import {AccountsGuard} from "./accounts.guard";
 import {AccountsRoutingModule} from "./accounts.routing.module";
 import {AccountsService} from "./accounts.service";
+import {AccountTitleComponent} from "./account-title.component";
+import {AccountViewCalendarComponent} from "./account-view-calendar.component";
+import {AccountViewPrimaryComponent} from "./account-view-primary.component";
 import {DbViewModuleResolve} from "./db-view-module-resolve.service";
 import {SharedModule} from "src/web/browser-window/app/_shared/shared.module";
 

@@ -1,17 +1,17 @@
-import WebStorageCookieStore from "tough-cookie-web-storage-store";
-import {CookieJar} from "tough-cookie";
-import {Observable, ReplaySubject, from, of, throwError} from "rxjs";
 import {concatMap, delay, retryWhen} from "rxjs/operators";
+import {CookieJar} from "tough-cookie";
+import {from, Observable, of, ReplaySubject, throwError} from "rxjs";
+import WebStorageCookieStore from "tough-cookie-web-storage-store";
 
-import * as RestModel from "src/electron-preload/webview/lib/rest-model";
+import {asyncDelay, curryFunctionMembers, isDatabaseBootstrapped, resolveApiUrlByPackagedWebClientUrlSafe} from "src/shared/util";
 import {DbPatch} from "src/shared/api/common";
 import {FsDbAccount} from "src/shared/model/database";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {Logger} from "src/shared/model/common";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
-import {asyncDelay, curryFunctionMembers, isDatabaseBootstrapped, resolveApiUrlByPackagedWebClientUrlSafe} from "src/shared/util";
 import {resolveCachedConfig, resolveIpcMainApi} from "src/electron-preload/lib/util";
+import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 
 export const resolveDomElements = async <E extends Element | null,
     Q extends Readonly<Record<string, () => E>>,

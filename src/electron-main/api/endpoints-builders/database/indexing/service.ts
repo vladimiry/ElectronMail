@@ -1,18 +1,18 @@
-import UUID from "pure-uuid";
-import electronLog from "electron-log";
 import {concatMap, filter, first} from "rxjs/operators";
+import electronLog from "electron-log";
 import {lastValueFrom, race, throwError, timer} from "rxjs";
 import {pick} from "remeda";
+import UUID from "pure-uuid";
 
 import {Config} from "src/shared/model/options";
-import {DbAccountPk, FsDbAccount, INDEXABLE_MAIL_FIELDS, Mail} from "src/shared/model/database";
-import {IPC_MAIN_API_DB_INDEXER_REQUEST$, IPC_MAIN_API_DB_INDEXER_RESPONSE$,} from "src/electron-main/api/constants";
-import {IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS} from "src/shared/api/main-process/actions";
-import {UnionOf} from "src/shared/ngrx-util";
 import {curryFunctionMembers} from "src/shared/util";
+import {DbAccountPk, FsDbAccount, INDEXABLE_MAIL_FIELDS, Mail} from "src/shared/model/database";
 import {hrtimeDuration} from "src/electron-main/util";
-import {readMailBody} from "src/shared/entity-util";
+import {IPC_MAIN_API_DB_INDEXER_REQUEST$, IPC_MAIN_API_DB_INDEXER_RESPONSE$} from "src/electron-main/api/constants";
+import {IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS} from "src/shared/api/main-process/actions";
 import {ofType} from "src/shared/ngrx-util-of-type";
+import {readMailBody} from "src/shared/entity-util";
+import {UnionOf} from "src/shared/ngrx-util";
 
 const logger = curryFunctionMembers(electronLog, __filename);
 

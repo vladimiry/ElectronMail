@@ -13,10 +13,10 @@ import {DbViewEntryComponent} from "./db-view-entry.component";
 import {DbViewFolderComponent} from "./db-view-folder.component";
 import {DbViewMailBodyComponent} from "./db-view-mail-body.component";
 import {DbViewMailComponent} from "./db-view-mail.component";
-import {DbViewMailTabComponent} from "./db-view-mail-tab.component";
 import {DbViewMailsComponent} from "./db-view-mails.component";
 import {DbViewMailsExportComponent} from "./db-view-mails-export.component";
 import {DbViewMailsSearchComponent} from "./db-view-mails-search.component";
+import {DbViewMailTabComponent} from "./db-view-mail-tab.component";
 import {DbViewMonacoEditorComponent} from "./db-view-monaco-editor.component";
 import {SharedModule} from "src/web/browser-window/app/_shared/shared.module";
 

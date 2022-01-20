@@ -1,8 +1,8 @@
 import {ChangeDetectionStrategy, Component, ElementRef, Input} from "@angular/core";
-import {Observable, Subscription, combineLatest, fromEvent} from "rxjs";
-import type {OnDestroy, OnInit} from "@angular/core";
-import {Store, select} from "@ngrx/store";
+import {combineLatest, fromEvent, Observable, Subscription} from "rxjs";
 import {distinctUntilChanged, first, map, mergeMap, tap, withLatestFrom} from "rxjs/operators";
+import type {OnDestroy, OnInit} from "@angular/core";
+import {select, Store} from "@ngrx/store";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";

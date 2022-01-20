@@ -1,10 +1,10 @@
-import {Subscription} from "rxjs";
 import {addDocumentToIndex, createIndex, removeDocumentFromIndex} from "ndx";
 import {expandTerm, query} from "ndx-query";
 import {htmlToText} from "html-to-text";
+import {Subscription} from "rxjs";
 
-import {INDEXABLE_MAIL_FIELDS, IndexableMail, IndexableMailId, MIME_TYPES, MailAddress, MailsIndex} from "src/shared/model/database";
 import {buildLoggerBundle, resolveIpcMainApi} from "src/electron-preload/lib/util";
+import {INDEXABLE_MAIL_FIELDS, IndexableMail, IndexableMailId, MailAddress, MailsIndex, MIME_TYPES} from "src/shared/model/database";
 
 const logger = buildLoggerBundle(__filename);
 

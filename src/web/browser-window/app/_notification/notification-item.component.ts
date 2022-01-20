@@ -1,7 +1,7 @@
+import ASSETS_LIST_IMG_URL from "images/assets-list.gif";
 import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output} from "@angular/core";
 import {formatDate} from "@angular/common";
 
-import ASSETS_LIST_IMG_URL from "images/assets-list.gif";
 import {NotificationItem} from "src/web/browser-window/app/store/actions/notification";
 
 @Component({

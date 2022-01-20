@@ -1,6 +1,6 @@
 import * as DatabaseModel from "src/shared/model/database";
-import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 import {lzutf8Util} from "src/shared/entity-util";
+import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 
 export {buildContact} from "src/electron-preload/webview/lib/database-entity/contact";
 export {buildFolder} from "src/electron-preload/webview/lib/database-entity/folder";

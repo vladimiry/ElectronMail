@@ -1,6 +1,6 @@
 import fastGlob from "fast-glob";
-import path from "path";
 import {flatten} from "remeda";
+import path from "path";
 
 import {CONSOLE_LOG, resolveGitOutputBackupDir} from "scripts/lib";
 import {CWD_ABSOLUTE_DIR} from "scripts/const";

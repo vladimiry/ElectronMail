@@ -1,9 +1,9 @@
-import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 import {curryFunctionMembers, getPlainErrorProps, testProtonCalendarAppPage} from "src/shared/util";
 import {documentCookiesForCustomScheme, getLocationHref} from "src/electron-preload/webview/lib/util";
 import {initProviderApi} from "./provider-api";
 import {registerApi} from "./api";
 import {setupProtonOpenNewTabEventHandler} from "src/electron-preload/webview/lib/custom-event";
+import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.calendar, __filename);
 const protonAppPageStatus = testProtonCalendarAppPage({url: getLocationHref(), logger});

@@ -1,9 +1,9 @@
-import UUID from "pure-uuid";
+import {Base64} from "js-base64";
+import {deserializeError} from "serialize-error";
 import fsAsync from "fs/promises";
 import path from "path";
 import truncateStringLength from "truncate-utf8-bytes";
-import {Base64} from "js-base64";
-import {deserializeError} from "serialize-error";
+import UUID from "pure-uuid";
 
 import {DbExportMailAttachmentItem} from "src/electron-main/api/endpoints-builders/database/export/const";
 import {File, Mail, MailAddress} from "src/shared/model/database";

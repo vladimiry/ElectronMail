@@ -1,21 +1,21 @@
-import UUID from "pure-uuid";
-import type {AfterViewInit, OnDestroy, OnInit,} from "@angular/core";
-import {BehaviorSubject, EMPTY, Observable, Subject, Subscription, combineLatest} from "rxjs";
-import {ChangeDetectionStrategy, Component, ElementRef, Input, NgZone, QueryList, ViewChildren,} from "@angular/core";
-import {Store, select} from "@ngrx/store";
+import type {AfterViewInit, OnDestroy, OnInit} from "@angular/core";
+import {BehaviorSubject, combineLatest, EMPTY, Observable, Subject, Subscription} from "rxjs";
+import {ChangeDetectionStrategy, Component, ElementRef, Input, NgZone, QueryList, ViewChildren} from "@angular/core";
 import {delay, distinctUntilChanged, filter, first, map, mergeMap, pairwise, withLatestFrom} from "rxjs/operators";
 import {equals} from "remeda";
+import {select, Store} from "@ngrx/store";
+import UUID from "pure-uuid";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {buildInitialVendorsAppCssLinks} from "src/shared/util";
 import {DB_VIEW_MAIL_SELECTED_CLASS_NAME} from "src/web/browser-window/app/_db-view/const";
 import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
 import {DbViewMailComponent} from "src/web/browser-window/app/_db-view/db-view-mail.component";
+import {getWebLogger} from "src/web/browser-window/util";
 import {Instance, State} from "src/web/browser-window/app/store/reducers/db-view";
 import {Mail, View} from "src/shared/model/database";
 import {ONE_SECOND_MS, WEB_PROTOCOL_SCHEME} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
-import {buildInitialVendorsAppCssLinks} from "src/shared/util";
-import {getWebLogger} from "src/web/browser-window/util";
 import {registerNativeThemeReaction} from "src/web/lib/native-theme";
 
 @Component({

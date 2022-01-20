@@ -1,10 +1,10 @@
-import {Observable, Subscription} from "rxjs";
-import {Store, select} from "@ngrx/store";
-import {filter, map, pairwise} from "rxjs/operators";
-
 import type {AfterViewInit, OnDestroy} from "@angular/core";
 import {Directive, ElementRef, Injector, QueryList, ViewChildren} from "@angular/core";
+import {filter, map, pairwise} from "rxjs/operators";
 import {FormControl, Validators} from "@angular/forms";
+import {Observable, Subscription} from "rxjs";
+import {select, Store} from "@ngrx/store";
+
 import {NOTIFICATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {SAVE_PASSWORD_WARN_TRUSTED_HTML} from "./const";

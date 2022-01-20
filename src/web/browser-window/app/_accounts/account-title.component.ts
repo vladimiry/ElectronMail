@@ -1,10 +1,10 @@
-import UUID from "pure-uuid";
 import {BehaviorSubject, Subscription} from "rxjs";
 import {ChangeDetectionStrategy, Component, ElementRef, EventEmitter, HostListener, Input, Output} from "@angular/core";
-import type {OnDestroy, OnInit} from "@angular/core";
-import {Store, select} from "@ngrx/store";
-import type {Unsubscribable} from "rxjs";
 import {filter, first, map} from "rxjs/operators";
+import type {OnDestroy, OnInit} from "@angular/core";
+import {select, Store} from "@ngrx/store";
+import type {Unsubscribable} from "rxjs";
+import UUID from "pure-uuid";
 
 import {ACCOUNTS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";

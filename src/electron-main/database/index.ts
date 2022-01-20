@@ -1,18 +1,18 @@
-import * as FsJsonStore from "fs-json-store";
 import asap from "asap-es";
-import path from "path";
-import electronLog, {ElectronLog} from "electron-log";
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/lib/private/constants";
+import electronLog, {ElectronLog} from "electron-log";
 import {EncryptionAdapter, KeyBasedPreset} from "fs-json-store-encryption-adapter";
+import * as FsJsonStore from "fs-json-store";
+import path from "path";
 
-import {DATABASE_VERSION, DB_INSTANCE_PROP_NAME} from "./constants";
-import {DB_DATA_CONTAINER_FIELDS, DbAccountPk, FsDb, FsDbAccount} from "src/shared/model/database";
-import {LogLevel} from "src/shared/model/common";
-import {ONE_KB_BYTES} from "src/shared/constants";
 import {buildAccountFoldersResolver, patchMetadata} from "src/electron-main/database/util";
 import {buildSerializer} from "src/electron-main/database/serialization";
 import {curryFunctionMembers} from "src/shared/util";
+import {DATABASE_VERSION, DB_INSTANCE_PROP_NAME} from "./constants";
+import {DB_DATA_CONTAINER_FIELDS, DbAccountPk, FsDb, FsDbAccount} from "src/shared/model/database";
 import {generateDataSaltBase64, hrtimeDuration} from "src/electron-main/util";
+import {LogLevel} from "src/shared/model/common";
+import {ONE_KB_BYTES} from "src/shared/constants";
 
 const _logger = curryFunctionMembers(electronLog, __filename);
 

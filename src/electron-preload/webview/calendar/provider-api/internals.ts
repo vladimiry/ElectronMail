@@ -1,9 +1,9 @@
 import {BehaviorSubject} from "rxjs";
 
-import * as webpackJsonpPushUtil from "src/electron-preload/webview/lib/provider-api/webpack-jsonp-push-util";
-import {ProviderInternals} from "./model";
-import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 import {curryFunctionMembers} from "src/shared/util";
+import {ProviderInternals} from "./model";
+import * as webpackJsonpPushUtil from "src/electron-preload/webview/lib/provider-api/webpack-jsonp-push-util";
+import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.calendar, __filename);
 

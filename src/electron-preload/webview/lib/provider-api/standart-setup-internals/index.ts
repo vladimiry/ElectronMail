@@ -1,10 +1,10 @@
-import {Observable} from "rxjs";
 import {distinctUntilChanged, map} from "rxjs/operators";
+import {Observable} from "rxjs";
 
-import {Logger} from "src/shared/model/common";
-import {StandardSetupPublicScope} from "src/electron-preload/webview/lib/provider-api/standart-setup-internals/model";
 import {curryFunctionMembers} from "src/shared/util";
+import {Logger} from "src/shared/model/common";
 import {resolveStandardSetupStandardSetupProviderInternals} from "./internals";
+import {StandardSetupPublicScope} from "src/electron-preload/webview/lib/provider-api/standart-setup-internals/model";
 
 export * from "./internals";
 export * from "./model";

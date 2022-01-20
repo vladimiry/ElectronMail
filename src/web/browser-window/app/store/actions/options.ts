@@ -1,10 +1,7 @@
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 
 import {
-    AccountConfigCreateUpdatePatch,
-    LoginFieldContainer,
-    PasswordChangeContainer,
-    PasswordFieldContainer,
+    AccountConfigCreateUpdatePatch, LoginFieldContainer, PasswordChangeContainer, PasswordFieldContainer,
 } from "src/shared/model/container";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {InitResponse} from "src/shared/api/main-process";

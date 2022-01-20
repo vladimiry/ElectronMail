@@ -1,21 +1,21 @@
-import {Subject, defer, lastValueFrom, merge, race, throwError, timer} from "rxjs";
 import {concatMap, filter, first, map, tap} from "rxjs/operators";
+import {defer, lastValueFrom, merge, race, Subject, throwError, timer} from "rxjs";
 
-import * as Database from "src/electron-preload/webview/lib/database-entity";
-import * as DatabaseModel from "src/shared/model/database";
-import * as RestModel from "src/electron-preload/webview/lib/rest-model";
-import {DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_SECOND_MS} from "src/shared/constants";
-import {DbPatch} from "src/shared/api/common";
-import {EVENT_ACTION} from "src/electron-preload/webview/lib/rest-model";
-import {FsDbAccount, LABEL_TYPE, SYSTEM_FOLDER_IDENTIFIERS} from "src/shared/model/database";
-import {Logger} from "src/shared/model/common";
-import {ProtonPrimaryApi, ProtonPrimaryApiScan} from "src/shared/api/webview/primary";
-import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
-import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 import {buildDbPatchRetryPipeline, buildEmptyDbPatch, fetchEvents, persistDatabasePatch} from "src/electron-preload/webview/lib/util";
 import {curryFunctionMembers, isDatabaseBootstrapped} from "src/shared/util";
+import * as Database from "src/electron-preload/webview/lib/database-entity";
+import * as DatabaseModel from "src/shared/model/database";
+import {DbPatch} from "src/shared/api/common";
+import {DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_SECOND_MS} from "src/shared/constants";
+import {EVENT_ACTION} from "src/electron-preload/webview/lib/rest-model";
+import {FsDbAccount, LABEL_TYPE, SYSTEM_FOLDER_IDENTIFIERS} from "src/shared/model/database";
 import {isProtonApiError, resolveCachedConfig, sanitizeProtonApiError} from "src/electron-preload/lib/util";
+import {Logger} from "src/shared/model/common";
 import {preprocessError} from "src/electron-preload/webview/primary/util";
+import {ProtonPrimaryApi, ProtonPrimaryApiScan} from "src/shared/api/webview/primary";
+import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
+import * as RestModel from "src/electron-preload/webview/lib/rest-model";
+import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 
 interface DbPatchBundle {
     patch: DbPatch;
@@ -500,7 +500,4 @@ const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonPrimaryApi, 
     return endpoints;
 };
 
-export {
-    buildDbPatchEndpoint,
-    buildDbPatch,
-};
+export {buildDbPatch, buildDbPatchEndpoint};

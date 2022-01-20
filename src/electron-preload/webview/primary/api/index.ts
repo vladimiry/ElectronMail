@@ -1,42 +1,27 @@
-import {EMPTY, Observable, from, interval, lastValueFrom, merge} from "rxjs";
 import {
-    buffer,
-    concatMap,
-    debounceTime,
-    distinctUntilChanged,
-    filter,
-    first,
-    map,
-    mergeMap,
-    switchMap,
-    tap,
-    throttleTime,
-    withLatestFrom
+    buffer, concatMap, debounceTime, distinctUntilChanged, filter, first, map, mergeMap, switchMap, tap, throttleTime, withLatestFrom,
 } from "rxjs/operators";
+import {EMPTY, from, interval, lastValueFrom, merge, Observable} from "rxjs";
 import {pick} from "remeda";
 import {serializeError} from "serialize-error";
 
-import * as RestModel from "src/electron-preload/webview/lib/rest-model";
-import * as WebviewConstants from "src/electron-preload/webview/lib/const";
-import {FETCH_NOTIFICATION$} from "src/electron-preload/webview/primary/provider-api/notifications";
-import {IpcMainServiceScan} from "src/shared/api/main-process";
-import {ONE_SECOND_MS, WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS} from "src/shared/constants";
-import {PROTON_PRIMARY_IPC_WEBVIEW_API, ProtonPrimaryApi, ProtonPrimaryNotificationOutput} from "src/shared/api/webview/primary";
-import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
-import {SYSTEM_FOLDER_IDENTIFIERS} from "src/shared/model/database";
-import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 import {buildDbPatch, buildDbPatchEndpoint} from "src/electron-preload/webview/primary/api/build-db-patch";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty, parseUrlOriginWithNullishCheck} from "src/shared/util";
 import {
-    documentCookiesForCustomScheme,
-    fillInputValue,
-    getLocationHref,
-    resolveDomElements,
-    submitTotpToken,
+    documentCookiesForCustomScheme, fillInputValue, getLocationHref, resolveDomElements, submitTotpToken,
 } from "src/electron-preload/webview/lib/util";
 import {dumpProtonSharedSession} from "src/electron-preload/webview/primary/shared-session";
+import {FETCH_NOTIFICATION$} from "src/electron-preload/webview/primary/provider-api/notifications";
+import {IpcMainServiceScan} from "src/shared/api/main-process";
+import {ONE_SECOND_MS, WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS} from "src/shared/constants";
 import {parseProtonRestModel} from "src/shared/entity-util";
+import {PROTON_PRIMARY_IPC_WEBVIEW_API, ProtonPrimaryApi, ProtonPrimaryNotificationOutput} from "src/shared/api/webview/primary";
+import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
 import {resolveIpcMainApi} from "src/electron-preload/lib/util";
+import * as RestModel from "src/electron-preload/webview/lib/rest-model";
+import {SYSTEM_FOLDER_IDENTIFIERS} from "src/shared/model/database";
+import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
+import * as WebviewConstants from "src/electron-preload/webview/lib/const";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, __filename);
 

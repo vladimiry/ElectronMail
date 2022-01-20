@@ -1,6 +1,5 @@
-import {NativeImage} from "electron";
-
 import {Bitmap} from "pureimage/types/bitmap";
+import {NativeImage} from "electron";
 
 export interface CircleConfig {
     readonly scale: number;

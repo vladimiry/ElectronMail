@@ -1,14 +1,14 @@
 import {Actions, createEffect} from "@ngrx/effects";
+import {concatMap, mergeMap} from "rxjs/operators";
 import {EMPTY, from} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import {Router} from "@angular/router";
-import {concatMap, mergeMap} from "rxjs/operators";
 
 import {ACCOUNTS_OUTLET, SETTINGS_OUTLET, STUB_OUTLET, STUB_PATH} from "src/web/browser-window/app/app.constants";
-import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
-import {NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {curryFunctionMembers} from "src/shared/util";
+import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {getWebLogger} from "src/web/browser-window/util";
+import {NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {ofType} from "src/shared/ngrx-util-of-type";
 
 const _logger = getWebLogger(__filename);

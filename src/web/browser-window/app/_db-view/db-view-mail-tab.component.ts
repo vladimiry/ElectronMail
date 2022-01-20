@@ -1,7 +1,7 @@
 import {ChangeDetectionStrategy, Component, HostBinding, HostListener} from "@angular/core";
-import {EMPTY, Observable, of} from "rxjs";
-import {Store, select} from "@ngrx/store";
 import {distinctUntilChanged, map, mergeMap} from "rxjs/operators";
+import {EMPTY, Observable, of} from "rxjs";
+import {select, Store} from "@ngrx/store";
 
 import {DB_VIEW_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";

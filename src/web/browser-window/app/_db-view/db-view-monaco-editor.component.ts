@@ -1,11 +1,11 @@
 import {ChangeDetectionStrategy, Component, ElementRef, EventEmitter, NgZone, Output} from "@angular/core";
-import type {OnInit} from "@angular/core";
-import {Store, select} from "@ngrx/store";
-import {debounceTime, distinctUntilChanged, filter, map, pairwise, takeUntil, withLatestFrom,} from "rxjs/operators";
+import {debounceTime, distinctUntilChanged, filter, map, pairwise, takeUntil, withLatestFrom} from "rxjs/operators";
 import {fromEvent, merge} from "rxjs";
-import {noop} from "remeda";
-
 import * as monaco from "monaco-editor";
+import {noop} from "remeda";
+import type {OnInit} from "@angular/core";
+import {select, Store} from "@ngrx/store";
+
 import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
 import {LABEL_TYPE, View} from "src/shared/model/database";
 import {ONE_SECOND_MS} from "src/shared/constants";

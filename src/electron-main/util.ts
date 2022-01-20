@@ -1,15 +1,15 @@
 import _logger from "electron-log";
-import fs from "fs";
-import path from "path";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
-import {Session, nativeTheme} from "electron";
-import {Model as StoreModel} from "fs-json-store";
 import {format as formatURL} from "url";
+import fs from "fs";
+import {nativeTheme, Session} from "electron";
+import path from "path";
 import {randomBytes} from "crypto";
+import {Model as StoreModel} from "fs-json-store";
 
+import {buildInitialVendorsAppCssLinks, curryFunctionMembers, getRandomInt} from "src/shared/util";
 import {Config} from "src/shared/model/options";
 import {Context} from "./model";
-import {buildInitialVendorsAppCssLinks, curryFunctionMembers, getRandomInt} from "src/shared/util";
 import {createSessionUtil} from "src/electron-main/session";
 
 const logger = curryFunctionMembers(_logger, __filename);

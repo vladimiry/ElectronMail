@@ -1,16 +1,16 @@
-import {Observable, Subscription, combineLatest, race, throwError, timer} from "rxjs";
-import {Store, select} from "@ngrx/store";
+import {combineLatest, Observable, race, Subscription, throwError, timer} from "rxjs";
+import {Component, ElementRef} from "@angular/core";
 import {concatMap, distinctUntilChanged, first, map, pairwise, startWith, tap} from "rxjs/operators";
 import {equals, noop} from "remeda";
+import type {OnDestroy, OnInit} from "@angular/core";
+import {select, Store} from "@ngrx/store";
 
-import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountConfig} from "src/shared/model/account";
+import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
-import {Component, ElementRef} from "@angular/core";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {ONE_SECOND_MS} from "src/shared/constants";
-import type {OnDestroy, OnInit} from "@angular/core";
 import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount} from "src/web/browser-window/app/model";

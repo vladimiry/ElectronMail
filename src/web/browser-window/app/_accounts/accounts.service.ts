@@ -1,19 +1,19 @@
 import {Actions} from "@ngrx/effects";
-import {EMPTY, Observable, merge, of, race, timer} from "rxjs";
-import {Injectable} from "@angular/core";
-import {Store, select} from "@ngrx/store";
 import {delay, distinctUntilChanged, filter, map, mergeMap, pairwise, switchMap, take, takeUntil, tap} from "rxjs/operators";
+import {EMPTY, merge, Observable, of, race, timer} from "rxjs";
 import {equals, pick} from "remeda";
+import {Injectable} from "@angular/core";
+import {select, Store} from "@ngrx/store";
 
 import {ACCOUNTS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
+import {getRandomInt} from "src/shared/util";
+import {getWebLogger} from "src/web/browser-window/util";
 import {LoginFieldContainer} from "src/shared/model/container";
+import {ofType} from "src/shared/ngrx-util-of-type";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount} from "src/web/browser-window/app/model";
-import {getRandomInt} from "src/shared/util";
-import {getWebLogger} from "src/web/browser-window/util";
-import {ofType} from "src/shared/ngrx-util-of-type";
 
 @Injectable()
 export class AccountsService {

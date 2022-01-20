@@ -1,18 +1,17 @@
-import UUID from "pure-uuid";
+import {concatMap, filter, first, mergeMap, tap} from "rxjs/operators";
 import electronLog from "electron-log";
 import fsExtra from "fs-extra";
-import {Observable, lastValueFrom, race, throwError, timer} from "rxjs";
-import {concatMap, filter, first, mergeMap, tap} from "rxjs/operators";
+import {lastValueFrom, Observable, race, throwError, timer} from "rxjs";
+import UUID from "pure-uuid";
 
 import {Context} from "src/electron-main/model";
+import {curryFunctionMembers} from "src/shared/util";
 import {
-    DbExportMailAttachmentItem,
-    MAIL_ATTACHMENTS_EXPORT_NOTIFICATION$
+    DbExportMailAttachmentItem, MAIL_ATTACHMENTS_EXPORT_NOTIFICATION$,
 } from "src/electron-main/api/endpoints-builders/database/export/const";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main-process";
-import {curryFunctionMembers} from "src/shared/util";
 import {writeFile} from "src/electron-main/api/endpoints-builders/database/export/service";
 
 const logger_ = curryFunctionMembers(electronLog, __filename);

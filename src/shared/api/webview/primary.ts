@@ -1,12 +1,12 @@
-import {ActionType, ScanService, createWebViewApiService} from "electron-rpc-api";
+import {ActionType, createWebViewApiService, ScanService} from "electron-rpc-api";
 
+import {buildLoggerBundle} from "src/electron-preload/lib/util";
 import {DbAccountPk, Folder, FsDbAccount, Mail} from "src/shared/model/database";
 import {IpcMainServiceScan} from "src/shared/api/main-process";
 import {LoginFieldContainer, MailPasswordFieldContainer, PasswordFieldContainer} from "src/shared/model/container";
 import {Notifications} from "src/shared/model/account";
 import {PACKAGE_NAME} from "src/shared/constants";
 import {ProtonClientSession} from "src/shared/model/proton";
-import {buildLoggerBundle} from "src/electron-preload/lib/util";
 
 const {Promise, Observable} = ActionType;
 

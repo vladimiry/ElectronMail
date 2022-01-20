@@ -1,11 +1,11 @@
-import {Observable, Subject} from "rxjs";
-import {Store} from "@ngrx/store";
-import {map, takeUntil} from "rxjs/operators";
-
 import {Component, Input} from "@angular/core";
-import {Config, ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "src/shared/model/options";
 import {FormGroup} from "@angular/forms";
+import {map, takeUntil} from "rxjs/operators";
+import {Observable, Subject} from "rxjs";
 import type {OnDestroy, OnInit} from "@angular/core";
+import {Store} from "@ngrx/store";
+
+import {Config, ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "src/shared/model/options";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 

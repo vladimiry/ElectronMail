@@ -1,10 +1,10 @@
 import {BehaviorSubject} from "rxjs";
 
-import * as webpackJsonpPushUtil from "src/electron-preload/webview/lib/provider-api/webpack-jsonp-push-util";
+import {curryFunctionMembers} from "src/shared/util";
 import {NEVER_FN} from "src/electron-preload/webview/lib/provider-api/const";
 import {ProviderInternals, ProviderInternalsLazy} from "./model";
+import * as webpackJsonpPushUtil from "src/electron-preload/webview/lib/provider-api/webpack-jsonp-push-util";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
-import {curryFunctionMembers} from "src/shared/util";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, __filename);
 

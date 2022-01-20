@@ -1,16 +1,16 @@
-import UUID from "pure-uuid";
+import {concatMap, filter, first, mergeMap, switchMap} from "rxjs/operators";
 import electronLog from "electron-log";
 import {from, lastValueFrom, Observable, of, race, throwError, timer} from "rxjs";
-import {concatMap, filter, first, mergeMap, switchMap} from "rxjs/operators";
+import UUID from "pure-uuid";
 
 import {Context} from "src/electron-main/model";
+import {curryFunctionMembers} from "src/shared/util";
+import {IndexableMailId} from "src/shared/model/database";
 import {IPC_MAIN_API_DB_INDEXER_REQUEST$, IPC_MAIN_API_DB_INDEXER_RESPONSE$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS} from "src/shared/api/main-process/actions";
-import {IndexableMailId} from "src/shared/model/database";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
-import {curryFunctionMembers} from "src/shared/util";
-import {searchRootConversationNodes, secondSearchStep} from "src/electron-main/api/endpoints-builders/database/search/service";
 import {ofType} from "src/shared/ngrx-util-of-type";
+import {searchRootConversationNodes, secondSearchStep} from "src/electron-main/api/endpoints-builders/database/search/service";
 
 const logger = curryFunctionMembers(electronLog, __filename);
 

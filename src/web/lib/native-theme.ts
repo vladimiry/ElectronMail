@@ -1,5 +1,5 @@
-import {Subscription} from "rxjs";
 import {distinctUntilChanged, map} from "rxjs/operators";
+import {Subscription} from "rxjs";
 
 import {ElectronWindow} from "src/shared/model/electron";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";

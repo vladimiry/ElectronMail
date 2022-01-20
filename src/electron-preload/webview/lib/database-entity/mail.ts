@@ -1,10 +1,10 @@
-import * as DatabaseModel from "src/shared/model/database";
-import * as RestModel from "src/electron-preload/webview/lib/rest-model";
-import {ONE_SECOND_MS, PACKAGE_VERSION} from "src/shared/constants";
-import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
 import {buildBaseEntity, buildPk} from "src/electron-preload/webview/lib/database-entity/index";
 import {buildLoggerBundle} from "src/electron-preload/lib/util";
+import * as DatabaseModel from "src/shared/model/database";
 import {lzutf8Util} from "src/shared/entity-util";
+import {ONE_SECOND_MS, PACKAGE_VERSION} from "src/shared/constants";
+import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
+import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 
 const logger = buildLoggerBundle(__filename);
 

@@ -1,24 +1,24 @@
-import UUID from "pure-uuid";
 import type {Action} from "@ngrx/store";
 import {Actions} from "@ngrx/effects";
-import {EMPTY, concat, lastValueFrom, timer} from "rxjs";
-import {Injectable, NgZone} from "@angular/core";
-import {Store, select} from "@ngrx/store";
-import {URL} from "@cliqz/url-parser";
+import {concat, EMPTY, lastValueFrom, timer} from "rxjs";
 import {filter, first, mergeMap, take, takeUntil} from "rxjs/operators";
+import {Injectable, NgZone} from "@angular/core";
+import {select, Store} from "@ngrx/store";
+import {URL} from "@cliqz/url-parser";
+import UUID from "pure-uuid";
 
-import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountConfig} from "src/shared/model/account";
+import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {curryFunctionMembers, parseUrlOriginWithNullishCheck} from "src/shared/util";
 import {FIRE_SYNCING_ITERATION$, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {IpcMainServiceScan} from "src/shared/api/main-process";
-import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
-import {PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
-import {ProtonClientSession} from "src/shared/model/proton";
-import {State} from "src/web/browser-window/app/store/reducers/root";
-import {WEB_CLIENTS_BLANK_HTML_FILE_NAME, WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS,} from "src/shared/constants";
-import {WebAccount} from "src/web/browser-window/app/model";
-import {curryFunctionMembers, parseUrlOriginWithNullishCheck} from "src/shared/util";
 import {ofType} from "src/shared/ngrx-util-of-type";
+import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
+import {ProtonClientSession} from "src/shared/model/proton";
+import {PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
+import {State} from "src/web/browser-window/app/store/reducers/root";
+import {WEB_CLIENTS_BLANK_HTML_FILE_NAME, WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS} from "src/shared/constants";
+import {WebAccount} from "src/web/browser-window/app/model";
 
 @Injectable()
 export class CoreService {

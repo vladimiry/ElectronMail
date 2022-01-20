@@ -1,7 +1,7 @@
 import lzutf8 from "lzutf8";
 
-import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 import {Folder, Mail} from "src/shared/model/database";
+import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 
 export const lzutf8Util: Readonly<{
     shouldCompress: (value: string) => boolean,

@@ -1,7 +1,7 @@
 import {IsIn, IsOptional, IsString} from "class-validator";
 
-import * as Model from "src/shared/model/database";
 import {Entity} from "./base";
+import * as Model from "src/shared/model/database";
 
 export class ConversationEntry extends Entity implements Model.ConversationEntry {
     @IsIn(Model.CONVERSATION_TYPE._.values)

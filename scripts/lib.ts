@@ -1,14 +1,14 @@
 import _fetch from "electron-fetch";
 import byline from "byline";
+import {createHash} from "crypto";
 import fs from "fs";
 import fsExtra from "fs-extra";
+import {omit, pick} from "remeda";
 import os from "os";
 import path from "path";
+import {promisify} from "util";
 import spawnAsync from "@expo/spawn-async";
 import {URL} from "@cliqz/url-parser";
-import {createHash} from "crypto";
-import {omit, pick} from "remeda";
-import {promisify} from "util";
 
 import {GIT_CLONE_ABSOLUTE_DIR, OUTPUT_ABSOLUTE_DIR} from "./const";
 import {PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";

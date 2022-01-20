@@ -1,21 +1,17 @@
-import electronLog from "electron-log";
 import {defer, lastValueFrom} from "rxjs";
+import electronLog from "electron-log";
 import {filter, first, startWith, takeUntil} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
-import {
-    IPC_MAIN_API_DB_INDEXER_REQUEST$,
-    IPC_MAIN_API_DB_INDEXER_RESPONSE$,
-    IPC_MAIN_API_NOTIFICATION$,
-} from "src/electron-main/api/constants";
-import {
-    IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS,
-    IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS,
-    IPC_MAIN_API_NOTIFICATION_ACTIONS
-} from "src/shared/api/main-process/actions";
-import {IpcMainApiEndpoints,} from "src/shared/api/main-process";
 import {curryFunctionMembers} from "src/shared/util";
 import {indexAccount} from "src/electron-main/api/endpoints-builders/database/indexing/service";
+import {
+    IPC_MAIN_API_DB_INDEXER_REQUEST$, IPC_MAIN_API_DB_INDEXER_RESPONSE$, IPC_MAIN_API_NOTIFICATION$,
+} from "src/electron-main/api/constants";
+import {
+    IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS, IPC_MAIN_API_NOTIFICATION_ACTIONS,
+} from "src/shared/api/main-process/actions";
+import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {ofType} from "src/shared/ngrx-util-of-type";
 
 const logger = curryFunctionMembers(electronLog, __filename);

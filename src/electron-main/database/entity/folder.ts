@@ -1,7 +1,7 @@
 import {IsIn, IsInt, IsString} from "class-validator";
 
-import * as Model from "src/shared/model/database";
 import {Entity} from "./base";
+import * as Model from "src/shared/model/database";
 
 export class Folder extends Entity implements Model.Folder {
     @IsString()

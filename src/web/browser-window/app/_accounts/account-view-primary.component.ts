@@ -1,13 +1,13 @@
+import {combineLatest, from, lastValueFrom, race, Subject} from "rxjs";
 import {Component, Injector} from "@angular/core";
-import type {OnInit} from "@angular/core";
-import {Subject, combineLatest, from, lastValueFrom, race} from "rxjs";
 import {distinctUntilChanged, filter, map, pairwise, take, takeUntil, withLatestFrom} from "rxjs/operators";
 import {equals, pick} from "remeda";
+import type {OnInit} from "@angular/core";
 
-import {ACCOUNTS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountConfig} from "src/shared/model/account";
-import {AccountViewAbstractComponent} from "src/web/browser-window/app/_accounts/account-view-abstract.component";
+import {ACCOUNTS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
+import {AccountViewAbstractComponent} from "src/web/browser-window/app/_accounts/account-view-abstract.component";
 import {getWebLogger} from "src/web/browser-window/util";
 import {testProtonMailAppPage} from "src/shared/util";
 

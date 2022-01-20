@@ -1,18 +1,19 @@
-import * as FsJsonStore from "fs-json-store";
-import asap from "asap-es";
-import path from "path";
 import _logger, {ElectronLog} from "electron-log";
+import asap from "asap-es";
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/lib/private/constants";
 import {EncryptionAdapter, KeyBasedPreset} from "fs-json-store-encryption-adapter";
+import * as FsJsonStore from "fs-json-store";
+import path from "path";
 
-import {AccountConfig, AccountPersistentSession, AccountSessionStoragePatchBundle} from "src/shared/model/account";
+import {AccountConfig, AccountPersistentSession} from "src/shared/model/account";
+import type {AccountSessionStoragePatchBundle} from "src/shared/model/account";
 import {ApiEndpointOriginFieldContainer, LoginFieldContainer} from "src/shared/model/container";
+import {curryFunctionMembers, verifyUrlOriginValue} from "src/shared/util";
+import {FsDb} from "src/shared/model/database";
+import {generateDataSaltBase64} from "src/electron-main/util";
 import {ONE_KB_BYTES, PROTON_API_ENTRY_TOR_V2_VALUE, PROTON_API_ENTRY_TOR_V3_VALUE} from "src/shared/constants";
 import {SESSION_STORAGE_VERSION} from "src/electron-main/session-storage/const";
 import {SessionStorageModel} from "src/electron-main/session-storage/model";
-import {curryFunctionMembers, verifyUrlOriginValue} from "src/shared/util";
-import {generateDataSaltBase64} from "src/electron-main/util";
-import {FsDb} from "src/shared/model/database";
 
 export class SessionStorage {
     static emptyEntity(): typeof SessionStorage.prototype.entity {

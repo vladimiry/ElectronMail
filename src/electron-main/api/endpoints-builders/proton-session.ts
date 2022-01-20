@@ -3,9 +3,9 @@ import {from, lastValueFrom, race, throwError, timer} from "rxjs";
 import {pick} from "remeda";
 
 import {Context} from "src/electron-main/model";
+import {filterProtonSessionTokenCookies} from "src/electron-main/util";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {PLATFORM} from "src/electron-main/constants";
-import {filterProtonSessionTokenCookies} from "src/electron-main/util";
 import {resolveInitializedAccountSession} from "src/electron-main/session";
 
 // TODO enable minimal logging

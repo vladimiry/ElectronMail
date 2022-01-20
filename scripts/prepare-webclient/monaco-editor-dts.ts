@@ -1,7 +1,7 @@
+import dtsGeneratorImport, {DtsGeneratorOptions} from "dts-generator";
 import fs from "fs";
 import fsExtra from "fs-extra";
 import path from "path";
-import dtsGeneratorImport, {DtsGeneratorOptions} from "dts-generator";
 
 import {CONSOLE_LOG} from "scripts/lib";
 import {PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION} from "src/shared/constants";

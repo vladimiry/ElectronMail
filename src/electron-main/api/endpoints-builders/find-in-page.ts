@@ -1,12 +1,12 @@
 import electronLog from "electron-log";
 import {webContents as ElectronWebContents} from "electron";
-import {Subject, of} from "rxjs";
+import {of, Subject} from "rxjs";
 import {startWith} from "rxjs/operators";
 
 import {Context} from "src/electron-main/model";
-import {IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main-process";
 import {curryFunctionMembers} from "src/shared/util";
 import {initFindInPageBrowserView} from "src/electron-main/window/find-in-page";
+import {IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main-process";
 import {resolveUiContextStrict} from "src/electron-main/util";
 
 type ApiMethods = keyof Pick<IpcMainApiEndpoints,

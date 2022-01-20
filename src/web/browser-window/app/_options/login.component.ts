@@ -1,8 +1,8 @@
+import {combineLatest} from "rxjs";
 import {Component, Injector} from "@angular/core";
+import {filter, take} from "rxjs/operators";
 import {FormGroup} from "@angular/forms";
 import type {OnInit} from "@angular/core";
-import {combineLatest} from "rxjs";
-import {filter, take} from "rxjs/operators";
 import {select} from "@ngrx/store";
 
 import {LoginBaseComponent} from "src/web/browser-window/app/_options/login-base.component";

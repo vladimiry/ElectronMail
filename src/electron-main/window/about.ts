@@ -1,24 +1,19 @@
 import _logger from "electron-log";
-import sanitizeHtml from "sanitize-html";
 import {BrowserWindow} from "electron";
 import {first} from "rxjs/operators";
 import {lastValueFrom} from "rxjs";
+import sanitizeHtml from "sanitize-html";
 
+import {applyZoomFactor} from "src/electron-main/window/util";
 import {Context} from "src/electron-main/model";
+import {curryFunctionMembers} from "src/shared/util";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";
+import {injectVendorsAppCssIntoHtmlFile, resolveDefaultAppSession, resolveUiContextStrict} from "src/electron-main/util";
 import {
-    PACKAGE_DESCRIPTION,
-    PACKAGE_GITHUB_PROJECT_URL,
-    PACKAGE_LICENSE,
-    PACKAGE_VERSION,
-    PRODUCT_NAME,
-    WEB_PROTOCOL_SCHEME,
+    PACKAGE_DESCRIPTION, PACKAGE_GITHUB_PROJECT_URL, PACKAGE_LICENSE, PACKAGE_VERSION, PRODUCT_NAME, WEB_PROTOCOL_SCHEME,
     ZOOM_FACTOR_DEFAULT,
 } from "src/shared/constants";
 import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
-import {applyZoomFactor} from "src/electron-main/window/util";
-import {curryFunctionMembers} from "src/shared/util";
-import {injectVendorsAppCssIntoHtmlFile, resolveDefaultAppSession, resolveUiContextStrict} from "src/electron-main/util";
 
 const logger = curryFunctionMembers(_logger, __filename);
 

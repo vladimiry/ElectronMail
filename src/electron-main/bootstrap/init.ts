@@ -1,6 +1,6 @@
+import {app} from "electron";
 import electronUnhandled from "electron-unhandled";
 import logger from "electron-log";
-import {app} from "electron";
 
 import {PLATFORM} from "src/electron-main/constants";
 import {REPOSITORY_NAME} from "src/shared/constants";

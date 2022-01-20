@@ -2,9 +2,9 @@ import {Injector} from "@angular/core";
 import type {MetaReducer} from "@ngrx/store";
 import {Store} from "@ngrx/store";
 
+import {getWebLogger} from "src/web/browser-window/util";
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {UnionOf} from "src/shared/ngrx-util";
-import {getWebLogger} from "src/web/browser-window/util";
 
 const logger = getWebLogger(__filename);
 

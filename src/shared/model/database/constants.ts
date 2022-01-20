@@ -1,6 +1,6 @@
 import {BINARY_NAME} from "src/shared/constants";
-import {FsDbDataContainer, IndexableMail} from "src/shared/model/database/index";
 import {buildEnumBundle} from "src/shared/util";
+import {FsDbDataContainer, IndexableMail} from "src/shared/model/database/index";
 
 export const SYSTEM_FOLDER_IDENTIFIERS = buildEnumBundle({
     ["Virtual Unread"]: `${BINARY_NAME}_virtual_unread_id`.replace(/[a-z0-9_]/gi, "_"), // virtual "id" value (not stored anywhere)

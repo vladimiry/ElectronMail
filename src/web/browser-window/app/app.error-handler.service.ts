@@ -1,11 +1,11 @@
 import combineErrors from "combine-errors";
 import {ErrorHandler, Injectable, Injector} from "@angular/core";
-import {Store} from "@ngrx/store";
 import {pick} from "remeda";
 import {serializeError} from "serialize-error";
+import {Store} from "@ngrx/store";
 
-import {NOTIFICATION_ACTIONS} from "./store/actions";
 import {getWebLogger} from "src/web/browser-window/util";
+import {NOTIFICATION_ACTIONS} from "./store/actions";
 
 const logger = getWebLogger(__filename);
 

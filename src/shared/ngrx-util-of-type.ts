@@ -2,8 +2,8 @@
 // TODO enable automatic picking
 
 import type {Action, ActionCreator, Creator} from "@ngrx/store";
-import type {OperatorFunction} from "rxjs";
 import {filter} from "rxjs/operators";
+import type {OperatorFunction} from "rxjs";
 
 // Module-private helper type
 type ActionExtractor<T extends string | AC,

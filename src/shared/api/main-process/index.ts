@@ -1,25 +1,19 @@
-import {ActionType, ScanService, createIpcMainApiService} from "electron-rpc-api";
+import {ActionType, createIpcMainApiService, ScanService} from "electron-rpc-api";
 import {BrowserWindow} from "electron";
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 
-import * as DbModel from "src/shared/model/database";
 import {
-    AccountConfigCreateUpdatePatch,
-    ApiEndpointOriginFieldContainer,
-    LoginFieldContainer,
-    NewPasswordFieldContainer,
-    PasswordFieldContainer,
+    AccountConfigCreateUpdatePatch, ApiEndpointOriginFieldContainer, LoginFieldContainer, NewPasswordFieldContainer, PasswordFieldContainer,
 } from "src/shared/model/container";
-import {AccountSessionStoragePatchBundle} from "src/shared/model/account";
+import type {AccountSessionStoragePatchBundle} from "src/shared/model/account";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {Controller, FuzzyLocale} from "src/electron-main/spell-check/model";
+import * as DbModel from "src/shared/model/database";
 import {DbPatch} from "src/shared/api/common";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {FsDbAccount} from "src/shared/model/database";
 import {
-    IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS,
-    IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS,
-    IPC_MAIN_API_NOTIFICATION_ACTIONS
+    IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS, IPC_MAIN_API_NOTIFICATION_ACTIONS,
 } from "src/shared/api/main-process/actions";
 import {PACKAGE_NAME} from "src/shared/constants";
 import {ProtonAttachmentHeadersProp, ProtonClientSession} from "src/shared/model/proton";

@@ -1,13 +1,13 @@
 import {produce} from "immer";
 
-import * as fromRoot from "src/web/browser-window/app/store/reducers/root";
 import {Config} from "src/shared/model/options";
+import * as fromRoot from "src/web/browser-window/app/store/reducers/root";
 import {ICON_URL} from "src/web/constants";
-import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
+import {initialConfig} from "src/shared/util";
 import {InitResponse} from "src/shared/api/main-process";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {UnionOf} from "src/shared/ngrx-util";
-import {initialConfig} from "src/shared/util";
 
 export const featureName = "options";
 

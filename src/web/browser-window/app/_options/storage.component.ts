@@ -1,10 +1,10 @@
+import {Component} from "@angular/core";
+import {FormControl, FormGroup, Validators} from "@angular/forms";
+import {map} from "rxjs/operators";
 import {Observable} from "rxjs";
 import {Store} from "@ngrx/store";
-import {map} from "rxjs/operators";
 
-import {Component} from "@angular/core";
 import {ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS} from "src/shared/model/options";
-import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/options";

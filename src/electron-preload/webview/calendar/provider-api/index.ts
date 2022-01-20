@@ -1,11 +1,11 @@
 import {combineLatest} from "rxjs";
 import {distinctUntilChanged, map} from "rxjs/operators";
 
-import {ProviderApi} from "./model";
-import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 import {curryFunctionMembers} from "src/shared/util";
+import {ProviderApi} from "./model";
 import {resolveProviderInternals} from "./internals";
 import {resolveStandardSetupPublicApi} from "src/electron-preload/webview/lib/provider-api/standart-setup-internals";
+import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.calendar, __filename);
 

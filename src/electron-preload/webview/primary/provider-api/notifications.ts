@@ -1,10 +1,10 @@
 import {Observable, ReplaySubject} from "rxjs";
 
+import {curryFunctionMembers} from "src/shared/util";
 import {FETCH_NOTIFICATION_SKIP_SYMBOL} from "./const";
 import {ProtonApiError} from "src/electron-preload/webview/primary/types";
-import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
-import {curryFunctionMembers} from "src/shared/util";
 import {sanitizeProtonApiError} from "src/electron-preload/lib/util";
+import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, __filename);
 

@@ -1,28 +1,22 @@
 import _logger from "electron-log";
 import {
-    OnBeforeRequestListenerDetails,
-    OnBeforeSendHeadersListenerDetails,
-    OnCompletedListenerDetails,
-    OnErrorOccurredListenerDetails,
+    OnBeforeRequestListenerDetails, OnBeforeSendHeadersListenerDetails, OnCompletedListenerDetails, OnErrorOccurredListenerDetails,
     OnHeadersReceivedListenerDetails,
 } from "electron";
-import {URL} from "@cliqz/url-parser";
 import {pick} from "remeda";
+import {URL} from "@cliqz/url-parser";
 
 import {ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN} from "src/shared/constants";
 import {AccountConfig} from "src/shared/model/account";
+import {
+    buildUrlOriginsFailedMsgTester, curryFunctionMembers, depersonalizeProtonApiUrl, parseUrlOriginWithNullishCheck,
+} from "src/shared/util";
 import {Context} from "src/electron-main/model";
 import {CorsProxy} from "./model";
+import {getHeader, patchResponseHeaders, resolveCorsProxy} from "./service";
 import {HEADERS} from "./const";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
-import {
-    buildUrlOriginsFailedMsgTester,
-    curryFunctionMembers,
-    depersonalizeProtonApiUrl,
-    parseUrlOriginWithNullishCheck
-} from "src/shared/util";
-import {getHeader, patchResponseHeaders, resolveCorsProxy} from "./service";
 import {resolveInitializedAccountSession} from "src/electron-main/session";
 
 const logger = curryFunctionMembers(_logger, __filename);

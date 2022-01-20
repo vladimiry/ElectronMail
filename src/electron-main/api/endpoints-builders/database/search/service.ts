@@ -1,16 +1,14 @@
-import {QuickJS, getQuickJS, shouldInterruptAfterDeadline} from "quickjs-emscripten";
 import {first} from "rxjs/operators";
+import {getQuickJS, QuickJS, shouldInterruptAfterDeadline} from "quickjs-emscripten";
 import {lastValueFrom} from "rxjs";
 
+import {
+    buildFoldersAndRootNodePrototypes, fillFoldersAndReturnRootConversationNodes, splitAndFormatAndFillSummaryFolders,
+} from "src/electron-main/api/endpoints-builders/database/folders-view";
 import {Context} from "src/electron-main/model";
 import {Folder, FsDbAccount, IndexableMailId, LABEL_TYPE, Mail, View} from "src/shared/model/database";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {ONE_SECOND_MS} from "src/shared/constants";
-import {
-    buildFoldersAndRootNodePrototypes,
-    fillFoldersAndReturnRootConversationNodes,
-    splitAndFormatAndFillSummaryFolders,
-} from "src/electron-main/api/endpoints-builders/database/folders-view";
 import {parseProtonRestModel, readMailBody} from "src/shared/entity-util";
 import {walkConversationNodesTree} from "src/shared/util";
 

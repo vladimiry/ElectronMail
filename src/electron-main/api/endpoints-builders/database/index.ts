@@ -1,20 +1,20 @@
-import UUID from "pure-uuid";
 import electronLog from "electron-log";
-import sanitizeHtml from "sanitize-html";
 import {first} from "rxjs/operators";
 import {lastValueFrom} from "rxjs";
 import {omit} from "remeda";
+import sanitizeHtml from "sanitize-html";
+import UUID from "pure-uuid";
 
-import {Context} from "src/electron-main/model";
-import {DB_DATA_CONTAINER_FIELDS, IndexableMail} from "src/shared/model/database";
-import {Database} from "src/electron-main/database";
-import {IPC_MAIN_API_DB_INDEXER_REQUEST$, IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
-import {IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
-import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {buildDbExportEndpoints} from "./export/api";
 import {buildDbIndexingEndpoints} from "./indexing/api";
 import {buildDbSearchEndpoints} from "./search/api";
+import {Context} from "src/electron-main/model";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
+import {Database} from "src/electron-main/database";
+import {DB_DATA_CONTAINER_FIELDS, IndexableMail} from "src/shared/model/database";
+import {IPC_MAIN_API_DB_INDEXER_REQUEST$, IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
+import {IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
+import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {narrowIndexActionPayload} from "./indexing/service";
 import {patchMetadata} from "src/electron-main/database/util";
 import {prepareFoldersView} from "./folders-view";

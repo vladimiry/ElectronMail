@@ -1,8 +1,8 @@
-import {Observable, Subscription} from "rxjs";
-import {Store, select} from "@ngrx/store";
-
 import {ChangeDetectionStrategy, Component, ElementRef, Input, Renderer2} from "@angular/core";
+import {Observable, Subscription} from "rxjs";
 import type {OnDestroy, OnInit} from "@angular/core";
+import {select, Store} from "@ngrx/store";
+
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 

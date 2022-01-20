@@ -1,7 +1,7 @@
 import type {ActionCreator, ActionCreatorProps, Creator} from "@ngrx/store";
+import {mapKeys} from "remeda";
 import type {NotAllowedInPropsCheck} from "@ngrx/store/src/models";
 import type {ValueOf} from "ts-essentials";
-import {mapKeys} from "remeda";
 
 type MatchPropName = "match";
 

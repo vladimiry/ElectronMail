@@ -9,24 +9,18 @@ import {randomString} from "remeda";
 import {AccountConfig} from "src/shared/model/account";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
-import {DB_INSTANCE_PROP_NAME} from "src/electron-main/database/constants";
+import {curryFunctionMembers, pickBaseConfigProperties} from "src/shared/util";
 import {Database} from "./database";
+import {DB_INSTANCE_PROP_NAME} from "src/electron-main/database/constants";
 import {DbAccountPk, LABEL_TYPE, MIME_TYPES} from "src/shared/model/database";
 import {INITIAL_STORES} from "./constants";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {
-    LAYOUT_MODES,
-    PACKAGE_VERSION,
-    PROTON_API_ENTRY_PRIMARY_VALUE,
-    PROTON_API_ENTRY_TOR_V2_VALUE,
-    PROTON_API_ENTRY_TOR_V3_VALUE,
-    PROTON_API_ENTRY_URLS,
-    PROTON_API_ENTRY_VALUE_PREFIX,
-    ZOOM_FACTORS,
+    LAYOUT_MODES, PACKAGE_VERSION, PROTON_API_ENTRY_PRIMARY_VALUE, PROTON_API_ENTRY_TOR_V2_VALUE, PROTON_API_ENTRY_TOR_V3_VALUE,
+    PROTON_API_ENTRY_URLS, PROTON_API_ENTRY_VALUE_PREFIX, ZOOM_FACTORS,
 } from "src/shared/constants";
 import {NumericBoolean} from "src/shared/model/common";
-import {curryFunctionMembers, pickBaseConfigProperties} from "src/shared/util";
 import {parseProtonRestModel} from "src/shared/entity-util";
 
 const logger = curryFunctionMembers(_logger, __filename);

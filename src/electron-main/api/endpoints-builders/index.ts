@@ -5,11 +5,4 @@ import * as General from "./general";
 import * as ProtonSession from "./proton-session";
 import * as TrayIcon from "./tray-icon";
 
-export {
-    Account,
-    Database,
-    FindInPage,
-    General,
-    ProtonSession,
-    TrayIcon,
-};
+export {Account, Database, FindInPage, General, ProtonSession, TrayIcon};

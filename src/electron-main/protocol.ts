@@ -1,15 +1,15 @@
 import _logger from "electron-log";
+import {app, protocol, ProtocolResponse, Session} from "electron";
 import fs from "fs";
 import path from "path";
 import pathIsInside from "path-is-inside";
-import {ProtocolResponse, Session, app, protocol} from "electron";
-import {URL} from "@cliqz/url-parser";
 import {promisify} from "util";
+import {URL} from "@cliqz/url-parser";
 
 import {Context} from "src/electron-main/model";
+import {curryFunctionMembers} from "src/shared/util";
 import {PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
 import {WEB_PROTOCOL_SCHEME} from "src/shared/constants";
-import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, __filename);
 

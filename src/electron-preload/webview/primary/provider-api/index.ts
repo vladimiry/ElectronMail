@@ -1,15 +1,15 @@
-import {EMPTY, combineLatest, lastValueFrom} from "rxjs";
 import {chunk} from "remeda";
+import {combineLatest, EMPTY, lastValueFrom} from "rxjs";
 import {distinctUntilChanged, first, map, mergeMap} from "rxjs/operators";
 
+import {assertTypeOf, curryFunctionMembers} from "src/shared/util";
+import {attachRateLimiting} from "./rate-limiting";
 import {EncryptionPreferences, MessageKeys, ProviderApi} from "./model";
 import {FETCH_NOTIFICATION_SKIP_SYMBOL} from "./const";
 import {HttpApi, resolveStandardSetupPublicApi} from "src/electron-preload/webview/lib/provider-api/standart-setup-internals";
 import {Logger} from "src/shared/model/common";
-import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
-import {assertTypeOf, curryFunctionMembers} from "src/shared/util";
-import {attachRateLimiting} from "./rate-limiting";
 import {resolveProviderInternals} from "./internals";
+import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, __filename);
 

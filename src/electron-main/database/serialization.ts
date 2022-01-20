@@ -1,20 +1,20 @@
-import * as msgpack from "@msgpack/msgpack";
 import _logger from "electron-log";
-import WriteStreamAtomic from "fs-write-stream-atomic";
-import fs from "fs";
-import fsBackwardsStream from "fs-backwards-stream";
-import oboe from "oboe";
-import path from "path";
-import zlib from "zlib";
 import {Deferred} from "ts-deferred";
 import {EncryptionAdapter, KeyBasedFileHeader} from "fs-json-store-encryption-adapter";
-import {Readable} from "stream";
+import fs from "fs";
+import fsBackwardsStream from "fs-backwards-stream";
+import * as msgpack from "@msgpack/msgpack";
+import oboe from "oboe";
+import path from "path";
 import {promisify} from "util";
+import {Readable} from "stream";
+import WriteStreamAtomic from "fs-write-stream-atomic";
+import zlib from "zlib";
 
-import {Database} from ".";
+import {curryFunctionMembers, getRandomInt} from "src/shared/util";
+import {Database} from "./";
 import {FsDb} from "src/shared/model/database";
 import {ONE_MB_BYTES} from "src/shared/constants";
-import {curryFunctionMembers, getRandomInt} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, __filename);
 

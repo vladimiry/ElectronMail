@@ -1,11 +1,11 @@
 import {pick} from "remeda";
 
-import * as fromRoot from "src/web/browser-window/app/store/reducers/root";
 import {DB_VIEW_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
+import * as fromRoot from "src/web/browser-window/app/store/reducers/root";
 import {Mail, View} from "src/shared/model/database";
+import {mailDateComparatorDefaultsToDesc, walkConversationNodesTree} from "src/shared/util";
 import {UnionOf} from "src/shared/ngrx-util";
 import {WebAccountPk} from "src/web/browser-window/app/model";
-import {mailDateComparatorDefaultsToDesc, walkConversationNodesTree} from "src/shared/util";
 
 export const featureName = "db-view";
 

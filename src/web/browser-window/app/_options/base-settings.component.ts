@@ -1,17 +1,17 @@
-import {Observable, Subscription} from "rxjs";
-import {Store, select} from "@ngrx/store";
-import {distinctUntilChanged, distinctUntilKeyChanged, first, map} from "rxjs/operators";
-
 import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/forms";
+import {Component, ElementRef, Inject} from "@angular/core";
+import {distinctUntilChanged, distinctUntilKeyChanged, first, map} from "rxjs/operators";
+import {Observable, Subscription} from "rxjs";
+import type {OnDestroy, OnInit} from "@angular/core";
+import {select, Store} from "@ngrx/store";
+
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {BaseConfig} from "src/shared/model/options";
-import {Component, ElementRef, Inject} from "@angular/core";
+import {getWebLogger} from "src/web/browser-window/util";
 import {LAYOUT_MODES, LOG_LEVELS, ZOOM_FACTORS} from "src/shared/constants";
 import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
-import type {OnDestroy, OnInit} from "@angular/core";
 import {PACKAGE_GITHUB_PROJECT_URL_TOKEN} from "src/web/browser-window/app/app.constants";
 import {State} from "src/web/browser-window/app/store/reducers/options";
-import {getWebLogger} from "src/web/browser-window/util";
 
 @Component({
     selector: "electron-mail-base-settings",

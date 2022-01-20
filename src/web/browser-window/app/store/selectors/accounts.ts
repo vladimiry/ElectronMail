@@ -1,8 +1,8 @@
 import {createFeatureSelector, createSelector} from "@ngrx/store";
 
-import {LoginFieldContainer} from "src/shared/model/container";
-import {State, featureName} from "src/web/browser-window/app/store/reducers/accounts";
 import {accountPickingPredicate} from "src/shared/util";
+import {featureName, State} from "src/web/browser-window/app/store/reducers/accounts";
+import {LoginFieldContainer} from "src/shared/model/container";
 
 export const STATE = createFeatureSelector<State>(featureName);
 

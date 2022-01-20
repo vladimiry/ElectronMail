@@ -1,19 +1,19 @@
-import {Observable, Subscription, merge} from "rxjs";
-import {Store, select} from "@ngrx/store";
-import {concatMap, distinctUntilChanged, map, mergeMap} from "rxjs/operators";
-
-import {ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN, PROTON_API_ENTRY_RECORDS} from "src/shared/constants";
 import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/forms";
-import {AccountConfig} from "src/shared/model/account";
-import {AccountConfigCreateUpdatePatch} from "src/shared/model/container";
 import {ActivatedRoute} from "@angular/router";
 import {Component, ElementRef, Inject} from "@angular/core";
-import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {concatMap, distinctUntilChanged, map, mergeMap} from "rxjs/operators";
+import {merge, Observable, Subscription} from "rxjs";
 import type {OnDestroy, OnInit} from "@angular/core";
+import {select, Store} from "@ngrx/store";
+
+import {ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN, PROTON_API_ENTRY_RECORDS} from "src/shared/constants";
+import {AccountConfig} from "src/shared/model/account";
+import {AccountConfigCreateUpdatePatch} from "src/shared/model/container";
+import {getWebLogger} from "src/web/browser-window/util";
+import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {PACKAGE_GITHUB_PROJECT_URL_TOKEN} from "src/web/browser-window/app/app.constants";
 import {State} from "src/web/browser-window/app/store/reducers/options";
-import {getWebLogger} from "src/web/browser-window/util";
 import {validateExternalContentProxyUrlPattern, validateLoginDelaySecondsRange} from "src/shared/util";
 
 @Component({

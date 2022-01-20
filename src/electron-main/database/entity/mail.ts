@@ -1,8 +1,8 @@
 import {ArrayUnique, IsArray, IsBoolean, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, ValidateNested} from "class-validator";
 import {Type} from "class-transformer";
 
-import * as Model from "src/shared/model/database";
 import {Entity} from "./base";
+import * as Model from "src/shared/model/database";
 
 class MailAddress extends Entity implements Model.MailAddress {
     @IsNotEmpty()

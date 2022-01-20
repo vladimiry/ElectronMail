@@ -1,17 +1,11 @@
+import {mapValues, pick} from "remeda";
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import type {RateLimiterMemory} from "rate-limiter-flexible";
 import {URL} from "@cliqz/url-parser";
-import {mapValues, pick} from "remeda";
 
 import {
-    ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN,
-    DEFAULT_API_CALL_TIMEOUT,
-    DEFAULT_MESSAGES_STORE_PORTION_SIZE,
-    LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN,
-    ONE_MINUTE_MS,
-    ONE_SECOND_MS,
-    PROTON_API_ENTRY_URLS,
-    WEB_CLIENTS_BLANK_HTML_FILE_NAME,
+    ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN, DEFAULT_API_CALL_TIMEOUT, DEFAULT_MESSAGES_STORE_PORTION_SIZE,
+    LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN, ONE_MINUTE_MS, ONE_SECOND_MS, PROTON_API_ENTRY_URLS, WEB_CLIENTS_BLANK_HTML_FILE_NAME,
     ZOOM_FACTOR_DEFAULT,
 } from "./constants";
 import {AccountConfig} from "./model/account";

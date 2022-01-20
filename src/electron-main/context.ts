@@ -1,32 +1,26 @@
 // TODO drop eslint disabling
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
 
-import asap from "asap-es";
-import logger from "electron-log";
-import path from "path";
-import {Deferred} from "ts-deferred";
-import {ReplaySubject, merge} from "rxjs";
-import {Fs as StoreFs, Model as StoreModel, Store} from "fs-json-store";
 import {app} from "electron";
+import asap from "asap-es";
+import {Deferred} from "ts-deferred";
 import {distinctUntilChanged, take} from "rxjs/operators";
+import logger from "electron-log";
+import {merge, ReplaySubject} from "rxjs";
+import path from "path";
+import {Fs as StoreFs, Model as StoreModel, Store} from "fs-json-store";
 
 import {
-    BINARY_NAME,
-    LOCAL_WEBCLIENT_PROTOCOL_PREFIX,
-    ONE_KB_BYTES,
-    ONE_MB_BYTES,
-    PACKAGE_NAME,
-    RUNTIME_ENV_USER_DATA_DIR,
-    WEB_PROTOCOL_SCHEME
+    BINARY_NAME, LOCAL_WEBCLIENT_PROTOCOL_PREFIX, ONE_KB_BYTES, ONE_MB_BYTES, PACKAGE_NAME, RUNTIME_ENV_USER_DATA_DIR, WEB_PROTOCOL_SCHEME,
 } from "src/shared/constants";
 import {Config, Settings} from "src/shared/model/options";
+import {configEncryptionPresetValidator, INITIAL_STORES, settingsAccountLoginUniquenessValidator} from "./constants";
 import {Context, ContextInitOptions, ContextInitOptionsPaths, ProperLockfileError} from "./model";
 import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
-import {INITIAL_STORES, configEncryptionPresetValidator, settingsAccountLoginUniquenessValidator} from "./constants";
+import {formatFileUrl, generateDataSaltBase64} from "./util";
 import {SessionStorage} from "src/electron-main/session-storage";
 import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
-import {formatFileUrl, generateDataSaltBase64} from "./util";
 
 function exists(file: string, storeFs: StoreModel.StoreFs): boolean {
     try {

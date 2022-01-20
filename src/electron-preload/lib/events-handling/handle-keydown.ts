@@ -1,6 +1,6 @@
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
-import {Logger} from "src/shared/model/common";
 import {isPasswordInput, isWritable} from "src/electron-preload/lib/events-handling/lib";
+import {Logger} from "src/shared/model/common";
 import {resolveIpcMainApi} from "src/electron-preload/lib/util";
 
 type ObservableElement = Pick<HTMLElement, "addEventListener" | "removeEventListener">;

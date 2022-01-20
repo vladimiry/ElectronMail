@@ -1,7 +1,7 @@
+import {combineLatest, EMPTY, fromEvent, merge, Observable, of} from "rxjs";
 import {Directive, Input, ɵmarkDirty as markDirty} from "@angular/core";
-import {EMPTY, Observable, combineLatest, fromEvent, merge, of} from "rxjs";
-import {Store, select} from "@ngrx/store";
 import {distinctUntilChanged, map, mergeMap, startWith} from "rxjs/operators";
+import {select, Store} from "@ngrx/store";
 
 import {AccountsSelectors, DbViewSelectors} from "src/web/browser-window/app/store/selectors";
 import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";

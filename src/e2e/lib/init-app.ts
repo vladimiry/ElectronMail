@@ -1,17 +1,17 @@
 import byline from "byline";
+import {expect} from "@playwright/test";
 import fs from "fs";
 import fsExtra from "fs-extra";
 import path from "path";
 import playwright from "playwright";
-import {expect} from "@playwright/test";
 import {spy as sinonSpy} from "sinon";
 
 import {APP_DIR_PATH, CONF, ENV, MAIN_SCRIPT_FILE, ROOT_DIR_PATH} from "src/e2e/lib/const";
-import {BINARY_NAME, ONE_SECOND_MS, PACKAGE_NAME, PACKAGE_VERSION, PRODUCT_NAME, RUNTIME_ENV_USER_DATA_DIR,} from "src/shared/constants";
-import {TestContext} from "./model";
 import {asyncDelay} from "src/shared/util";
+import {BINARY_NAME, ONE_SECOND_MS, PACKAGE_NAME, PACKAGE_VERSION, PRODUCT_NAME, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
 import {buildWorkflow} from "./workflow";
 import {mainProcessEvaluationFunctions} from "src/e2e/lib/util";
+import {TestContext} from "./model";
 
 export const initAppWithTestContext = async (
     options: {

@@ -1,6 +1,6 @@
-import electronLog from "electron-log";
-import {Deferred} from "ts-deferred";
 import {app} from "electron";
+import {Deferred} from "ts-deferred";
+import electronLog from "electron-log";
 
 import {Context, UIContext} from "src/electron-main/model";
 import {initApiEndpoints} from "src/electron-main/api";

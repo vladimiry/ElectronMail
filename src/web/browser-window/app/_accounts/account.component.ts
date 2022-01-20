@@ -1,56 +1,34 @@
 import type {Action} from "@ngrx/store";
-import {BehaviorSubject, Observable, Subject, Subscription, combineLatest, lastValueFrom, merge, of, race, throwError, timer} from "rxjs";
-import {Store, select} from "@ngrx/store";
-import {URL} from "@cliqz/url-parser";
+import {BehaviorSubject, combineLatest, lastValueFrom, merge, Observable, of, race, Subject, Subscription, throwError, timer} from "rxjs";
 import {
-    concatMap,
-    debounce,
-    debounceTime,
-    delayWhen,
-    distinctUntilChanged,
-    filter,
-    first,
-    map,
-    mergeMap,
-    pairwise,
-    startWith,
-    switchMap,
-    take,
-    takeUntil,
-    tap,
-    withLatestFrom,
+    ChangeDetectionStrategy, Component, ComponentRef, ElementRef, HostBinding, Input, NgZone, ViewChild, ViewContainerRef,
+} from "@angular/core";
+import {
+    concatMap, debounce, debounceTime, delayWhen, distinctUntilChanged, filter, first, map, mergeMap, pairwise, startWith, switchMap, take,
+    takeUntil, tap, withLatestFrom,
 } from "rxjs/operators";
+import type {OnDestroy, OnInit} from "@angular/core";
 import {pick} from "remeda";
-import {ofType} from "src/shared/ngrx-util-of-type";
+import {select, Store} from "@ngrx/store";
+import {URL} from "@cliqz/url-parser";
 
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
-import {
-    ChangeDetectionStrategy,
-    Component,
-    ComponentRef,
-    ElementRef,
-    HostBinding,
-    Input,
-    NgZone,
-    ViewChild,
-    ViewContainerRef,
-} from "@angular/core";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
+import {curryFunctionMembers, parseUrlOriginWithNullishCheck} from "src/shared/util";
 import {DbViewEntryComponent} from "src/web/browser-window/app/_db-view/db-view-entry.component";
 import {DbViewModuleResolve} from "src/web/browser-window/app/_accounts/db-view-module-resolve.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
+import {getWebLogger} from "src/web/browser-window/util";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {LogLevel} from "src/shared/model/common";
 import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";
+import {ofType} from "src/shared/ngrx-util-of-type";
 import {ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/constants";
-import type {OnDestroy, OnInit,} from "@angular/core";
 import {ProtonClientSession} from "src/shared/model/proton";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount} from "src/web/browser-window/app/model";
-import {curryFunctionMembers, parseUrlOriginWithNullishCheck} from "src/shared/util";
-import {getWebLogger} from "src/web/browser-window/util";
 
 @Component({
     selector: "electron-mail-account",

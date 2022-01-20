@@ -1,13 +1,13 @@
 import {noop} from "remeda";
 import {produce} from "immer";
 
-import * as fromRoot from "src/web/browser-window/app/store/reducers/root";
+import {accountPickingPredicate} from "src/shared/util";
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
+import * as fromRoot from "src/web/browser-window/app/store/reducers/root";
+import {getWebLogger} from "src/web/browser-window/util";
 import {LoginFieldContainer} from "src/shared/model/container";
 import {UnionOf} from "src/shared/ngrx-util";
 import {WebAccount} from "src/web/browser-window/app/model";
-import {accountPickingPredicate} from "src/shared/util";
-import {getWebLogger} from "src/web/browser-window/util";
 
 const logger = getWebLogger(__filename);
 

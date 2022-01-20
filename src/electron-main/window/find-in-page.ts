@@ -2,11 +2,11 @@ import _logger from "electron-log";
 import {BrowserView} from "electron";
 
 import {Context} from "src/electron-main/model";
-import {DEFAULT_WEB_PREFERENCES} from "./constants";
-import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
-import {WEB_PROTOCOL_SCHEME} from "src/shared/constants";
 import {curryFunctionMembers} from "src/shared/util";
+import {DEFAULT_WEB_PREFERENCES} from "./constants";
 import {injectVendorsAppCssIntoHtmlFile, resolveDefaultAppSession, resolveUiContextStrict} from "src/electron-main/util";
+import {WEB_PROTOCOL_SCHEME} from "src/shared/constants";
+import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
 
 const logger = curryFunctionMembers(_logger, __filename);
 

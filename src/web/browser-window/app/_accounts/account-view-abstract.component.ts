@@ -1,19 +1,19 @@
 import type {Action} from "@ngrx/store";
-import {Observable, Subscription, combineLatest, lastValueFrom, race} from "rxjs";
-import {distinctUntilChanged, filter, map, take} from "rxjs/operators";
-import {equals, pick} from "remeda";
-
-import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
-import {AccountComponent} from "src/web/browser-window/app/_accounts/account.component";
-import {CoreService} from "src/web/browser-window/app/_core/core.service";
-import {DOCUMENT} from "@angular/common";
+import {combineLatest, lastValueFrom, Observable, race, Subscription} from "rxjs";
 import {Directive, ElementRef, EventEmitter, Injector, Input, Output, Renderer2} from "@angular/core";
+import {distinctUntilChanged, filter, map, take} from "rxjs/operators";
+import {DOCUMENT} from "@angular/common";
+import {equals, pick} from "remeda";
+import type {OnDestroy} from "@angular/core";
+
+import {AccountComponent} from "src/web/browser-window/app/_accounts/account.component";
+import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {CoreService} from "src/web/browser-window/app/_core/core.service";
+import {depersonalizeLoggedUrlsInString, getWebViewPartition, lowerConsoleMessageEventLogLevel} from "src/shared/util";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {LogLevel} from "src/shared/model/common";
 import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";
-import type {OnDestroy} from "@angular/core";
 import {WebAccount} from "src/web/browser-window/app/model";
-import {depersonalizeLoggedUrlsInString, getWebViewPartition, lowerConsoleMessageEventLogLevel} from "src/shared/util";
 
 type ChildEvent = Parameters<typeof AccountComponent.prototype.onEventChild>[0];
 

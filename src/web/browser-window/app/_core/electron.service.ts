@@ -1,17 +1,17 @@
-import {Observable, Subscription, defer, of, race, throwError, timer} from "rxjs";
-import {Store, select} from "@ngrx/store";
 import {concatMap, delay, filter, map, mergeMap, retryWhen, switchMap, take, withLatestFrom} from "rxjs/operators";
 import {createIpcMainApiService} from "electron-rpc-api";
+import {defer, Observable, of, race, Subscription, throwError, timer} from "rxjs";
+import {Injectable, NgZone} from "@angular/core";
+import type {OnDestroy} from "@angular/core";
+import {select, Store} from "@ngrx/store";
 
 import {Config} from "src/shared/model/options";
 import {DEFAULT_API_CALL_TIMEOUT, ONE_SECOND_MS} from "src/shared/constants";
-import {Injectable, NgZone} from "@angular/core";
-import type {OnDestroy} from "@angular/core";
+import {getWebLogger} from "src/web/browser-window/util";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {PROTON_CALENDAR_IPC_WEBVIEW_API_DEFINITION} from "src/shared/api/webview/calendar";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 import {WebAccountIndexProp} from "src/web/browser-window/app/model";
-import {getWebLogger} from "src/web/browser-window/util";
 
 type SuperCallOptions = Required<Exclude<Parameters<ReturnType<(typeof createIpcMainApiService)>["client"]>[0], undefined>>["options"];
 

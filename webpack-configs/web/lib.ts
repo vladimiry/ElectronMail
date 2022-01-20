@@ -1,11 +1,11 @@
+import {Configuration, RuleSetRule} from "webpack";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
-import {Configuration, RuleSetRule} from "webpack";
 import {noop} from "remeda";
 import {merge as webpackMerge} from "webpack-merge";
 
+import {buildBaseConfig, ENVIRONMENT, ENVIRONMENT_STATE, outputRelativePath, srcRelativePath, typescriptLoaderRule} from "../lib";
 import {BuildEnvVars} from "webpack-configs/model";
-import {ENVIRONMENT, ENVIRONMENT_STATE, buildBaseConfig, outputRelativePath, srcRelativePath, typescriptLoaderRule} from "./../lib";
 import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
 
 export const sassLoaderRuleSetRules: RuleSetRule[] = [

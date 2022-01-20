@@ -1,5 +1,5 @@
-import {LOG_LEVELS} from "src/shared/constants";
 import {curryFunctionMembers} from "src/shared/util";
+import {LOG_LEVELS} from "src/shared/constants";
 
 const LOGGER = __ELECTRON_EXPOSURE__.Logger;
 

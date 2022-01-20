@@ -1,9 +1,9 @@
 import {createFeatureSelector, createSelector} from "@ngrx/store";
 
-import {DEFAULT_TRAY_ICON_COLOR, DEFAULT_UNREAD_BADGE_BG_COLOR, DEFAULT_UNREAD_BADGE_BG_TEXT} from "src/shared/constants";
-import {LoginFieldContainer} from "src/shared/model/container";
-import {State, featureName} from "src/web/browser-window/app/store/reducers/options";
 import {accountPickingPredicate, pickBaseConfigProperties} from "src/shared/util";
+import {DEFAULT_TRAY_ICON_COLOR, DEFAULT_UNREAD_BADGE_BG_COLOR, DEFAULT_UNREAD_BADGE_BG_TEXT} from "src/shared/constants";
+import {featureName, State} from "src/web/browser-window/app/store/reducers/options";
+import {LoginFieldContainer} from "src/shared/model/container";
 
 export const STATE = createFeatureSelector<State>(featureName);
 

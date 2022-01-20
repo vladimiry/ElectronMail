@@ -1,6 +1,6 @@
 import asap from "asap-es";
-import {Subscription, from, fromEvent} from "rxjs";
 import {debounceTime, filter, switchMap} from "rxjs/operators";
+import {from, fromEvent, Subscription} from "rxjs";
 
 import {ONE_SECOND_MS} from "src/shared/constants";
 

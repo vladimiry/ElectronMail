@@ -1,13 +1,13 @@
-import {Observable, Subject, Subscription} from "rxjs";
-import {Store} from "@ngrx/store";
-import {map, withLatestFrom} from "rxjs/operators";
-
-import {AccountConfig} from "src/shared/model/account";
 import type {CdkDragDrop} from "@angular/cdk/drag-drop";
 import {Component, HostBinding} from "@angular/core";
+import {map, withLatestFrom} from "rxjs/operators";
+import {Observable, Subject, Subscription} from "rxjs";
+import type {OnDestroy} from "@angular/core";
+import {Store} from "@ngrx/store";
+
+import {AccountConfig} from "src/shared/model/account";
 import {LoginFieldContainer} from "src/shared/model/container";
 import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
-import type {OnDestroy} from "@angular/core";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {State} from "src/web/browser-window/app/store/reducers/options";

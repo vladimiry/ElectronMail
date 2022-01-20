@@ -1,16 +1,13 @@
 import {expect} from "@playwright/test";
 
-import {LoginFieldContainer} from "src/shared/model/container";
-import {
-    ONE_SECOND_MS,
-    RUNTIME_ENV_E2E_PROTONMAIL_2FA_CODE,
-    RUNTIME_ENV_E2E_PROTONMAIL_LOGIN,
-    RUNTIME_ENV_E2E_PROTONMAIL_PASSWORD,
-    RUNTIME_ENV_E2E_PROTONMAIL_UNREAD_MIN
-} from "src/shared/constants";
 import {accountBadgeCssSelector} from "src/e2e/lib/util";
 import {asyncDelay} from "src/shared/util";
 import {initAppWithTestContext} from "./lib/init-app";
+import {LoginFieldContainer} from "src/shared/model/container";
+import {
+    ONE_SECOND_MS, RUNTIME_ENV_E2E_PROTONMAIL_2FA_CODE, RUNTIME_ENV_E2E_PROTONMAIL_LOGIN, RUNTIME_ENV_E2E_PROTONMAIL_PASSWORD,
+    RUNTIME_ENV_E2E_PROTONMAIL_UNREAD_MIN,
+} from "src/shared/constants";
 import {test} from "./lib/test";
 
 for (const {login, password, twoFactorCode, unread} of ([

@@ -2,8 +2,8 @@ import fsExtra from "fs-extra";
 import webpack, {Configuration} from "webpack";
 import {merge as webpackMerge} from "webpack-merge";
 
-import {buildBaseConfig, ENVIRONMENT_STATE, outputRelativePath, srcRelativePath, typescriptLoaderRule} from "webpack-configs/lib";
 import {browserWindowAppPath, sassLoaderRuleSetRules} from "webpack-configs/web/lib";
+import {buildBaseConfig, ENVIRONMENT_STATE, outputRelativePath, srcRelativePath, typescriptLoaderRule} from "webpack-configs/lib";
 
 const build = (configPatch: Configuration, tsConfigFile: string): Configuration => {
     const hoveredHrefHighlighterSassFile = srcRelativePath("./electron-preload/lib/hovered-href-highlighter/index.scss");

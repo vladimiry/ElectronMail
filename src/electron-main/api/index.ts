@@ -1,25 +1,25 @@
-import electronLog from "electron-log";
-import path from "path";
 import {authenticator} from "otplib";
+import electronLog from "electron-log";
 import {first} from "rxjs/operators";
 import {lastValueFrom} from "rxjs";
+import path from "path";
 
-import * as EndpointsBuilders from "./endpoints-builders";
-import * as SpellCheck from "src/electron-main/spell-check/api";
-import {Context} from "src/electron-main/model";
-import {Database} from "src/electron-main/database";
-import {IPC_MAIN_API, IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main-process";
-import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
-import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
-import {PACKAGE_NAME, PRODUCT_NAME, PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION} from "src/shared/constants";
 import {applyThemeSource} from "src/electron-main/native-theme";
 import {applyZoomFactor} from "src/electron-main/window/util";
 import {attachFullTextIndexWindow, detachFullTextIndexWindow} from "src/electron-main/window/full-text-search";
 import {buildSettingsAdapter} from "src/electron-main/util";
 import {clearIdleTimeLogOut, setupIdleTimeLogOut} from "src/electron-main/power-monitor";
+import {Context} from "src/electron-main/model";
 import {curryFunctionMembers} from "src/shared/util";
+import {Database} from "src/electron-main/database";
 import {deletePassword, getPassword, setPassword} from "src/electron-main/keytar";
+import * as EndpointsBuilders from "./endpoints-builders";
 import {initSessionByAccount} from "src/electron-main/session";
+import {IPC_MAIN_API, IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main-process";
+import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
+import {PACKAGE_NAME, PRODUCT_NAME, PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION} from "src/shared/constants";
+import * as SpellCheck from "src/electron-main/spell-check/api";
 import {upgradeDatabase, upgradeSettings} from "src/electron-main/storage-upgrade";
 
 const logger = curryFunctionMembers(electronLog, __filename);

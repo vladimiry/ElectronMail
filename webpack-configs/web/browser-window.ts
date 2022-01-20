@@ -1,12 +1,12 @@
 import {AngularWebpackPlugin, AngularWebpackPluginOptions} from "@ngtools/webpack";
-
+import {LegacyNgcOptions, StrictTemplateOptions} from "@angular/compiler-cli/src/ngtsc/core/api";
 import linkerPlugin from "@angular/compiler-cli/linker/babel";
+import {readConfiguration} from "@angular/compiler-cli";
+
+import {browserWindowAppPath, browserWindowPath, buildBaseWebConfig, cssRuleSetRules, sassLoaderRuleSetRules} from "./lib";
 import {BuildAngularCompilationFlags, BuildEnvVars} from "webpack-configs/model";
 import {ENVIRONMENT, rootRelativePath} from "webpack-configs/lib";
-import {LegacyNgcOptions, StrictTemplateOptions} from "@angular/compiler-cli/src/ngtsc/core/api";
 import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
-import {browserWindowAppPath, browserWindowPath, buildBaseWebConfig, cssRuleSetRules, sassLoaderRuleSetRules} from "./lib";
-import {readConfiguration} from "@angular/compiler-cli";
 
 const angularCompilationFlags: BuildAngularCompilationFlags = {aot: true, ivy: true};
 

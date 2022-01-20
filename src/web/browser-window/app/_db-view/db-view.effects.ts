@@ -1,20 +1,20 @@
-import UUID from "pure-uuid";
 import {Actions, createEffect} from "@ngrx/effects";
-import {EMPTY, forkJoin, from, merge, of} from "rxjs";
-import {Store, select} from "@ngrx/store";
 import {concatMap, filter, finalize, map, mergeMap, switchMap, takeUntil, tap, throttleTime, withLatestFrom} from "rxjs/operators";
+import {EMPTY, forkJoin, from, merge, of} from "rxjs";
+import {Injectable, NgZone} from "@angular/core";
 import {omit, pick} from "remeda";
+import {select, Store} from "@ngrx/store";
+import UUID from "pure-uuid";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {curryFunctionMembers} from "src/shared/util";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
+import {getWebLogger} from "src/web/browser-window/util";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
-import {Injectable, NgZone} from "@angular/core";
+import {ofType} from "src/shared/ngrx-util-of-type";
 import {ONE_SECOND_MS} from "src/shared/constants";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/db-view";
-import {curryFunctionMembers} from "src/shared/util";
-import {getWebLogger} from "src/web/browser-window/util";
-import {ofType} from "src/shared/ngrx-util-of-type";
 
 const _logger = getWebLogger(__filename);
 

@@ -1,9 +1,9 @@
-import {NativeImage, nativeImage} from "electron";
-import {PassThrough} from "stream";
 import {createReadStream} from "fs";
 import {decodePNGFromStream, encodePNGToStream, make, registerFont} from "pureimage";
 import {hslToRgb, rgbToHsl, toHsl} from "color-fns";
 import {lanczos} from "@rgba-image/lanczos";
+import {nativeImage, NativeImage} from "electron";
+import {PassThrough} from "stream";
 
 import {CircleConfig, ImageBundle} from "./model";
 import {PLATFORM} from "src/electron-main/constants";

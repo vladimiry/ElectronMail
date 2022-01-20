@@ -1,9 +1,9 @@
 import type {AfterViewInit, OnInit} from "@angular/core";
-import {ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Output, QueryList, ViewChildren,} from "@angular/core";
-import {EMPTY, Observable, Subject, combineLatest, merge} from "rxjs";
+import {ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Output, QueryList, ViewChildren} from "@angular/core";
+import {combineLatest, EMPTY, merge, Observable, Subject} from "rxjs";
+import {distinctUntilChanged, map, mergeMap, switchMap, takeUntil, tap} from "rxjs/operators";
 import {FormControl, FormGroup} from "@angular/forms";
-import {Store, select} from "@ngrx/store";
-import {distinctUntilChanged, map, mergeMap, switchMap, takeUntil, tap,} from "rxjs/operators";
+import {select, Store} from "@ngrx/store";
 
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
 import {DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";

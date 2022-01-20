@@ -1,23 +1,23 @@
 import {Actions, createEffect} from "@ngrx/effects";
+import {catchError, concatMap, filter, finalize, map, mergeMap, startWith, switchMap, take, withLatestFrom} from "rxjs/operators";
 import type {DecryptionError} from "fs-json-store-encryption-adapter/lib/errors";
 import {EMPTY, from, merge, of, timer} from "rxjs";
-import {Store, select} from "@ngrx/store";
-import {catchError, concatMap, filter, finalize, map, mergeMap, startWith, switchMap, take, withLatestFrom} from "rxjs/operators";
+import {Injectable, NgZone} from "@angular/core";
 import {noop} from "remeda";
+import {select, Store} from "@ngrx/store";
 
 import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
+import {getWebLogger} from "src/web/browser-window/util";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
-import {Injectable, NgZone} from "@angular/core";
 import {IpcMainServiceScan} from "src/shared/api/main-process";
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {ofType} from "src/shared/ngrx-util-of-type";
 import {ONE_MINUTE_MS, ONE_SECOND_MS, PRODUCT_NAME, UPDATE_CHECK_FETCH_TIMEOUT} from "src/shared/constants";
 import {OptionsService} from "src/web/browser-window/app/_options/options.service";
 import {ProgressPatch, State} from "src/web/browser-window/app/store/reducers/options";
-import {getWebLogger} from "src/web/browser-window/util";
-import {ofType} from "src/shared/ngrx-util-of-type";
 
 const _logger = getWebLogger(__filename);
 

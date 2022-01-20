@@ -1,9 +1,9 @@
 import _logger from "electron-log";
 import {Spellchecker} from "spellchecker";
 
+import {curryFunctionMembers, removeArrayDuplicateItems} from "src/shared/util";
 import {Locale} from "src/shared/model/common";
 import {Provider} from "./model";
-import {curryFunctionMembers, removeArrayDuplicateItems} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, __filename);
 

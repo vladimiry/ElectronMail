@@ -1,11 +1,11 @@
 import asap from "asap-es";
 
+import {addToMailsIndex, createMailsIndex, removeMailsFromIndex, SERVICES_FACTORY} from "./service";
+import {buildLoggerBundle} from "src/electron-preload/lib/util";
+import {getPlainErrorProps} from "src/shared/util";
 import {IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS} from "src/shared/api/main-process/actions";
 import {IpcMainServiceScan} from "src/shared/api/main-process";
 import {ONE_SECOND_MS} from "src/shared/constants";
-import {SERVICES_FACTORY, addToMailsIndex, createMailsIndex, removeMailsFromIndex} from "./service";
-import {buildLoggerBundle} from "src/electron-preload/lib/util";
-import {getPlainErrorProps} from "src/shared/util";
 
 const logger = buildLoggerBundle(__filename);
 

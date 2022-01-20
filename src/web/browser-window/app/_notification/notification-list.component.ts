@@ -1,15 +1,15 @@
-import {Observable, Subscription} from "rxjs";
-import {Store} from "@ngrx/store";
-import {pairwise} from "rxjs/operators";
-
 import {ChangeDetectionStrategy, Component, ElementRef} from "@angular/core";
-import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
-import {NOTIFICATIONS_OUTLET} from "src/web/browser-window/app/app.constants";
-import {NotificationItem} from "src/web/browser-window/app/store/actions/notification";
-import {NotificationSelectors} from "src/web/browser-window/app/store/selectors";
+import {Observable, Subscription} from "rxjs";
 import type {OnDestroy, OnInit} from "@angular/core";
-import {State} from "src/web/browser-window/app/store/reducers/notification";
+import {pairwise} from "rxjs/operators";
+import {Store} from "@ngrx/store";
+
 import {getWebLogger} from "src/web/browser-window/util";
+import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {NotificationItem} from "src/web/browser-window/app/store/actions/notification";
+import {NOTIFICATIONS_OUTLET} from "src/web/browser-window/app/app.constants";
+import {NotificationSelectors} from "src/web/browser-window/app/store/selectors";
+import {State} from "src/web/browser-window/app/store/reducers/notification";
 
 @Component({
     selector: "electron-mail-notification-list",

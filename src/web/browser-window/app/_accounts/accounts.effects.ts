@@ -1,46 +1,29 @@
 import type {Action} from "@ngrx/store";
 import {Actions, createEffect} from "@ngrx/effects";
-import {EMPTY, Observable, concat, from, fromEvent, merge, of, race, throwError, timer} from "rxjs";
-import {Store, select} from "@ngrx/store";
 import {
-    catchError,
-    concatMap,
-    debounce,
-    debounceTime,
-    delay,
-    filter,
-    finalize,
-    first,
-    map,
-    mergeMap,
-    switchMap,
-    take,
-    takeUntil,
-    tap,
+    catchError, concatMap, debounce, debounceTime, delay, filter, finalize, first, map, mergeMap, switchMap, take, takeUntil, tap,
     withLatestFrom,
 } from "rxjs/operators";
+import {concat, EMPTY, from, fromEvent, merge, Observable, of, race, throwError, timer} from "rxjs";
+import {Injectable} from "@angular/core";
 import {produce} from "immer";
+import {select, Store} from "@ngrx/store";
 import {serializeError} from "serialize-error";
 
 import {
-    ACCOUNTS_ACTIONS,
-    DB_VIEW_ACTIONS,
-    NAVIGATION_ACTIONS,
-    NOTIFICATION_ACTIONS,
-    OPTIONS_ACTIONS,
+    ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS, NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS,
 } from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
+import {consumeMemoryRateLimiter, curryFunctionMembers, isDatabaseBootstrapped, testProtonCalendarAppPage} from "src/shared/util";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {FIRE_SYNCING_ITERATION$} from "src/web/browser-window/app/app.constants";
+import {getWebLogger} from "src/web/browser-window/util";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
-import {Injectable} from "@angular/core";
+import {ofType} from "src/shared/ngrx-util-of-type";
 import {ONE_MINUTE_MS, ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/constants";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
-import {consumeMemoryRateLimiter, curryFunctionMembers, isDatabaseBootstrapped, testProtonCalendarAppPage} from "src/shared/util";
-import {getWebLogger} from "src/web/browser-window/util";
-import {ofType} from "src/shared/ngrx-util-of-type";
 
 // TODO get rid of require "rate-limiter-flexible/lib/RateLimiterMemory" import
 //      ES import makes the build fail in "web" context since webpack attempts to bundle the whole library which requires "node" context

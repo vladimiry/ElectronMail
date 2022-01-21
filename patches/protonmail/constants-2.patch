@@ -1,0 +1,51 @@
+diff --git a/packages/shared/lib/constants.ts b/packages/shared/lib/constants.ts
+index e359e3f66..128155d13 100644
+--- a/packages/shared/lib/constants.ts
++++ b/packages/shared/lib/constants.ts
+@@ -38,8 +38,8 @@ export const APPS = {
+ } as const;
+ export const APPS_CONFIGURATION = {
+     [APPS.PROTONACCOUNT]: {
+-        publicPath: '',
+-        subdomain: 'account',
++        publicPath: '/account',
++        subdomain: '',
+         name: 'Proton Account',
+         bareName: 'Account',
+         clientID: 'web-account',
+@@ -66,7 +66,7 @@ export const APPS_CONFIGURATION = {
+     },
+     [APPS.PROTONCONTACTS]: {
+         publicPath: '/contacts',
+-        subdomain: 'contacts',
++        subdomain: '',
+         name: 'ProtonContacts',
+         bareName: 'Contacts',
+         clientID: 'web-contacts',
+@@ -75,7 +75,7 @@ export const APPS_CONFIGURATION = {
+     },
+     [APPS.PROTONDRIVE]: {
+         publicPath: '/drive',
+-        subdomain: 'drive',
++        subdomain: '',
+         name: 'ProtonDrive',
+         bareName: 'Drive',
+         clientID: 'web-drive',
+@@ -84,7 +84,7 @@ export const APPS_CONFIGURATION = {
+     },
+     [APPS.PROTONCALENDAR]: {
+         publicPath: '/calendar',
+-        subdomain: 'calendar',
++        subdomain: '',
+         name: 'ProtonCalendar',
+         bareName: 'Calendar',
+         clientID: 'web-calendar',
+@@ -92,7 +92,7 @@ export const APPS_CONFIGURATION = {
+         settingsSlug: 'calendar',
+     },
+     [APPS.PROTONVPN_SETTINGS]: {
+-        publicPath: '',
++        publicPath: 'account/vpn',
+         subdomain: '',
+         name: 'ProtonVPN',
+         bareName: 'VPN',

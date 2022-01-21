@@ -36,165 +36,25 @@ index 6fef05c..1719cc8 100644
                  {hasChallenge && (
                      <Challenge
 
-diff --git a/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx b/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx
-index 3d977c01f..07b7e6e1a 100644
---- a/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx
-+++ b/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx
-@@ -233,7 +233,7 @@ const MailboxContainer = ({
-     );
+diff --git a/packages/encrypted-search/lib/esUtils.ts b/packages/encrypted-search/lib/esUtils.ts
+index 565746063..24978868a 100644
+--- a/packages/encrypted-search/lib/esUtils.ts
++++ b/packages/encrypted-search/lib/esUtils.ts
+@@ -280,13 +280,7 @@ export const updateSizeIDB = (userID: string, addend: number) => {
+  * but also because IDB is not corrupt, i.e. the object store exists
+  */
+ export const canUseES = async (userID: string, storeName: string) => {
+-    if (!indexKeyExists(userID)) {
+-        return false;
+-    }
+-    const esDB = await openESDB(userID);
+-    const isIntact = esDB.objectStoreNames.contains(storeName);
+-    esDB.close();
+-    return isIntact;
++    return Promise.resolve(false);
+ };
 
-     return (
--        <div ref={elementRef} tabIndex={-1} className="flex-item-fluid flex flex-column flex-nowrap no-outline">
-+        <div ref={elementRef} tabIndex={-1} className="flex-item-fluid flex flex-column flex-nowrap no-outline electron-mail-mailbox-container-component">
-             {showToolbar && (
-                 <ErrorBoundary small>
-                     <Toolbar
-
-diff --git a/applications/mail/src/app/components/header/AdvancedSearchDropdown.tsx b/applications/mail/src/app/components/header/AdvancedSearchDropdown.tsx
-index 47b6e1e6f..989a1d771 100644
---- a/applications/mail/src/app/components/header/AdvancedSearchDropdown.tsx
-+++ b/applications/mail/src/app/components/header/AdvancedSearchDropdown.tsx
-@@ -172,7 +172,7 @@ const AdvancedSearchDropdown = ({ keyword: fullInput = '', isNarrow }: Props) =>
-         loadingLabels || loadingFolders || loadingMailSettings || loadingESFeature || loadingScheduledFeature;
-
-     // Switches
--    const showEncryptedSearch = !isMobile() && !!esFeature && !!esFeature.Value && !!isPaid(user);
-+    const showEncryptedSearch = false;
-     const showAdvancedSearch = !showEncryptedSearch || showMore;
-     const dropdownSearchButtonProps = {
-         ref: anchorRef,
-
-diff --git a/applications/mail/src/app/containers/EncryptedSearchProvider.tsx b/applications/mail/src/app/containers/EncryptedSearchProvider.tsx
-index 444313146..4ed701c49 100644
---- a/applications/mail/src/app/containers/EncryptedSearchProvider.tsx
-+++ b/applications/mail/src/app/containers/EncryptedSearchProvider.tsx
-@@ -717,125 +717,7 @@ const EncryptedSearchProvider = ({ children }: Props) => {
-     /**
-      * Execute an encrypted search
-      */
--    const encryptedSearch: EncryptedSearch = async (labelID, setCache) => {
--        // Prevent old searches from interfering with newer ones
--        abortSearchingRef.current.abort();
--        setESStatus((esStatus) => {
--            return {
--                ...esStatus,
--                isSearching: false,
--                isSearchPartial: false,
--            };
--        });
--
--        const t1 = performance.now();
--        const {
--            dbExists,
--            esEnabled,
--            previousNormSearchParams,
--            permanentResults,
--            isSearchPartial: wasSearchPartial,
--            cachedIndexKey,
--            isCaching,
--            isFirstSearch,
--        } = esStatus;
--
--        if (!dbExists || !esEnabled) {
--            return false;
--        }
--
--        const isIDBIntact = await canUseES(userID);
--        if (!isIDBIntact) {
--            return dbCorruptError().then(() => false);
--        }
--
--        abortSearchingRef.current = new AbortController();
--
--        // Caching needs to be triggered here for when a refresh happens on a search URL
--        if (!isCaching && !esCacheRef.current.isCacheReady) {
--            void cacheIndexedDB();
--        }
--
--        const { searchParameters, filterParameter, sortParameter } = parseSearchParams(history.location);
--        const normalisedSearchParams = normaliseSearchParams(searchParameters, labelID, filterParameter, sortParameter);
--
--        // In case only sorting changed, for complete searches it doesn't make sense to perform a new search
--        if (!wasSearchPartial && previousNormSearchParams) {
--            const shouldSortOnly = shouldOnlySortResults(normalisedSearchParams, previousNormSearchParams);
--            if (shouldSortOnly) {
--                setCache(permanentResults, pageRef.current);
--                return true;
--            }
--        }
--
--        setESStatus((esStatus) => {
--            return {
--                ...esStatus,
--                isSearching: true,
--                isSearchPartial: true,
--                isFirstSearch: false,
--            };
--        });
--
--        const controlledSetCache = (Elements: Element[]) => {
--            if (!abortSearchingRef.current.signal.aborted) {
--                setCache(Elements, pageRef.current);
--            }
--        };
--
--        let searchResults: ESMessage[] = [];
--        let isSearchPartial = false;
--        let lastEmail: LastEmail | undefined;
--        try {
--            ({ searchResults, isSearchPartial, lastEmail } = await hybridSearch(
--                esCacheRef,
--                normalisedSearchParams,
--                cachedIndexKey,
--                getUserKeys,
--                userID,
--                controlledSetCache,
--                abortSearchingRef
--            ));
--        } catch (error: any) {
--            esSentryReport('encryptedSearch: hybridSearch', { error });
--            // If the key is the problem, then we want to wipe the DB and fall back to
--            // server-side search, otherwise we want to show a generic error and still
--            // fall back to server-side search
--            if (error.message === 'Key not found') {
--                return dbCorruptError().then(() => false);
--            }
--            throw error;
--        }
--
--        if (!abortSearchingRef.current.signal.aborted) {
--            setESStatus((esStatus) => {
--                return {
--                    ...esStatus,
--                    permanentResults: searchResults,
--                    labelID,
--                    setElementsCache: setCache,
--                    lastEmail,
--                    previousNormSearchParams: normalisedSearchParams,
--                    page: 0,
--                    isSearchPartial,
--                    isSearching: false,
--                };
--            });
--            setCache(searchResults, pageRef.current);
--
--            const t2 = performance.now();
--            void sendSearchingMetrics(
--                api,
--                userID,
--                esCacheRef.current.cacheSize,
--                Math.ceil(t2 - t1),
--                isFirstSearch,
--                esCacheRef.current.isCacheLimited
--            );
--        }
--
--        return true;
--    };
-+    const encryptedSearch: EncryptedSearch = async (labelID, setCache) => false;
-
-     /**
-      * Increase the number of results in case the cache is limited as the user changes page
+ /**
 
 diff --git a/applications/mail/src/app/App.tsx b/applications/mail/src/app/App.tsx
 index 3da997386..c629fde0d 100644
@@ -221,45 +81,113 @@ index 3da997386..c629fde0d 100644
      const [hasInitialAuth] = useState(() => {
          return !window.location.pathname.startsWith(G_OAUTH_REDIRECT_PATH);
 
-diff --git a/applications/mail/src/app/helpers/message/messageDecrypt.ts b/applications/mail/src/app/helpers/message/messageDecrypt.ts
-index d135a42fd..0c01fb0a0 100644
---- a/applications/mail/src/app/helpers/message/messageDecrypt.ts
-+++ b/applications/mail/src/app/helpers/message/messageDecrypt.ts
-@@ -141,12 +141,12 @@ const decryptLegacyMessage = async (message: Message, privateKeys: OpenPGPKey[])
-  * Willingly not dealing with public keys and signature verification
-  * It will be done separately when public keys will be ready
-  */
--export const decryptMessage = async (
-+export const decryptMessage = async ( /* electron-mail mark */
-     message: Message,
-     privateKeys: OpenPGPKey[],
-     getAttachment?: (ID: string) => DecryptResultPmcrypto | undefined,
-     onUpdateAttachment?: (ID: string, attachment: DecryptResultPmcrypto) => void
--): Promise<DecryptMessageResult> => {
-+): Promise<DecryptMessageResult> => { /* electron-mail mark */
-     if (isMIME(message)) {
-         return decryptMimeMessage(message, privateKeys, getAttachment, onUpdateAttachment);
-     }
+diff --git a/applications/mail/src/app/components/header/AdvancedSearchDropdown.tsx b/applications/mail/src/app/components/header/AdvancedSearchDropdown.tsx
+index 7da0f183e..c07f51d91 100644
+--- a/applications/mail/src/app/components/header/AdvancedSearchDropdown.tsx
++++ b/applications/mail/src/app/components/header/AdvancedSearchDropdown.tsx
+@@ -200,7 +200,7 @@ const AdvancedSearchDropdown = ({ keyword: fullInput = '', isNarrow }: Props) =>
+         loadingScheduledFeature;
+
+     // Switches
+-    const showEncryptedSearch = !isMobile() && !!esFeature && !!esFeature.Value && !!isPaid(user);
++    const showEncryptedSearch = false;
+     const showAdvancedSearch = !showEncryptedSearch || showMore;
+     const dropdownSearchButtonProps = {
+         ref: anchorRef,
+
+diff --git a/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx b/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx
+index 562696c4e..6531defba 100644
+--- a/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx
++++ b/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx
+@@ -247,6 +247,7 @@ const MailboxContainer = ({
+                 tabIndex={-1}
+                 className="flex-item-fluid flex flex-column flex-nowrap outline-none"
+                 data-testid="mailbox"
++                electron-mail-mailbox-container-component
+             >
+                 {showToolbar && (
+                     <ErrorBoundary small>
 
 diff --git a/applications/mail/src/app/helpers/attachment/attachmentLoader.ts b/applications/mail/src/app/helpers/attachment/attachmentLoader.ts
-index aff462ffb..dc1b62d4a 100644
+index c7d094d1b..3667af1eb 100644
 --- a/applications/mail/src/app/helpers/attachment/attachmentLoader.ts
 +++ b/applications/mail/src/app/helpers/attachment/attachmentLoader.ts
-@@ -44,12 +44,12 @@ export const getRequest = ({ ID = '' }: Attachment = {}, api: Api): Promise<Arra
+@@ -48,6 +48,7 @@ export const getRequest = ({ ID = '' }: Attachment = {}, api: Api, messageKeys:
      return api(getAttachment(ID));
  };
 
--export const getDecryptedAttachment = async (
-+export const getDecryptedAttachment = async ( /* electron-mail mark */
++/* electron-mail mark */
+ export const getDecryptedAttachment = async (
      attachment: Attachment,
      verification: MessageVerification | undefined,
-     messageKeys: MessageKeys,
-     api: Api
--): Promise<DecryptResultPmcrypto> => {
-+): Promise<DecryptResultPmcrypto> => { /* electron-mail mark */
-     const encryptedBinary = await getRequest(attachment, api);
-     try {
-         const sessionKey = await getSessionKey(attachment, messageKeys.privateKeys);
+@@ -82,6 +83,7 @@ export const getDecryptedAttachment = async (
+         throw newError;
+     }
+ };
++/* electron-mail mark */
+
+ export const getAndVerify = async (
+     attachment: Attachment = {},
+
+diff --git a/applications/mail/src/app/helpers/message/messageDecrypt.ts b/applications/mail/src/app/helpers/message/messageDecrypt.ts
+index 375be1b51..a6bd8390e 100644
+--- a/applications/mail/src/app/helpers/message/messageDecrypt.ts
++++ b/applications/mail/src/app/helpers/message/messageDecrypt.ts
+@@ -47,6 +47,7 @@ const binaryToString = (data: Uint8Array) =>
+         // nbsp can be contained in message body and "crash" DOMPurify
+         .replace(/\u00A0/g, ' ');
+
++/* electron-mail mark */
+ export interface DecryptMessageResult {
+     decryptedBody: string;
+     decryptedRawContent: Uint8Array;
+@@ -56,6 +57,7 @@ export interface DecryptMessageResult {
+     errors?: MessageErrors;
+     mimetype?: MIME_TYPES;
+ }
++/* electron-mail mark */
+
+ const decryptMimeMessage = async (
+     message: Message,
+@@ -164,6 +166,7 @@ const decryptLegacyMessage = async (
+  * Willingly not dealing with public keys and signature verification
+  * It will be done separately when public keys will be ready
+  */
++/* electron-mail mark */
+ export const decryptMessage = async (
+     message: Message,
+     privateKeys: OpenPGPKey[],
+@@ -176,6 +179,7 @@ export const decryptMessage = async (
+     }
+     return decryptLegacyMessage(message, privateKeys, password);
+ };
++/* electron-mail mark */
+
+ /**
+  * Verify the extracted `signature` of a decryption result against its `decryptedRawContent`
+
+diff --git a/applications/mail/src/app/logic/messages/messagesTypes.ts b/applications/mail/src/app/logic/messages/messagesTypes.ts
+index 91dcf4e63..aa1a6a1cf 100644
+--- a/applications/mail/src/app/logic/messages/messagesTypes.ts
++++ b/applications/mail/src/app/logic/messages/messagesTypes.ts
+@@ -44,6 +44,8 @@ export interface MessageVerification {
+      */
+     verificationErrors: Error[] | undefined;
+
++    /* electron-mail mark */
++
+     /**
+      * Pinned public keys of the sender, if any
+      */
+@@ -54,6 +56,8 @@ export interface MessageVerification {
+      */
+     senderVerified: boolean | undefined;
+
++    /* electron-mail mark */
++
+     /**
+      * If the message is signed, the public key that verifies the signature
+      */
 
 diff --git a/applications/mail/src/app/hooks/message/useGetMessageKeys.ts b/applications/mail/src/app/hooks/message/useGetMessageKeys.ts
 index 4c16c85b5..8b93c6084 100644

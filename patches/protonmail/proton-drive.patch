@@ -1,7 +1,7 @@
-diff --git a/applications/drive/src/app/components/downloads/fileSaver/download.ts b/applications/drive/src/app/components/downloads/fileSaver/download.ts
-index 92eb4e5e2..df95b7a7f 100644
---- a/applications/drive/src/app/components/downloads/fileSaver/download.ts
-+++ b/applications/drive/src/app/components/downloads/fileSaver/download.ts
+diff --git a/applications/drive/src/app/store/downloads/fileSaver/download.ts b/applications/drive/src/app/store/downloads/fileSaver/download.ts
+index 7bef98525..0650e8019 100644
+--- a/applications/drive/src/app/store/downloads/fileSaver/download.ts
++++ b/applications/drive/src/app/store/downloads/fileSaver/download.ts
 @@ -11,8 +11,7 @@ import { TransferMeta } from '@proton/shared/lib/interfaces/drive/transfer';
   * IOS - forces all browsers to use webkit, so same problems as safari in all browsers.
   * For them download is done in-memory using blob response.
@@ -13,11 +13,11 @@ index 92eb4e5e2..df95b7a7f 100644
  // createDownloadIframe opens download URL created in service worker to
  // initialize the download in the browser. The response has headers to
 
-diff --git a/applications/drive/src/app/utils/link.ts b/applications/drive/src/app/utils/link.ts
-index 31b5d775d..c08a2317d 100644
---- a/applications/drive/src/app/utils/link.ts
-+++ b/applications/drive/src/app/utils/link.ts
-@@ -65,7 +65,7 @@ export const getSharedLink = (sharedURL?: { Token: string; Password: string; Fla
+diff --git a/applications/drive/src/app/store/shares/shareUrl.ts b/applications/drive/src/app/store/shares/shareUrl.ts
+index 4a2fa5caa..95884ed0d 100644
+--- a/applications/drive/src/app/store/shares/shareUrl.ts
++++ b/applications/drive/src/app/store/shares/shareUrl.ts
+@@ -35,6 +35,6 @@ export const getSharedLink = (sharedURL?: { Token: string; Password: string; Fla
 
      const [generatedPassword] = splitGeneratedAndCustomPassword(sharedURL.Password, sharedURL);
 
@@ -25,4 +25,3 @@ index 31b5d775d..c08a2317d 100644
 +    const baseUrl = "https://drive.protonmail.com/urls";
      return `${baseUrl}/${sharedURL.Token}${generatedPassword !== '' ? `#${generatedPassword}` : ''}`;
  };
-

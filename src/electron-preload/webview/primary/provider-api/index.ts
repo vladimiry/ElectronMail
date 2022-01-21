@@ -4,7 +4,7 @@ import {distinctUntilChanged, first, map, mergeMap} from "rxjs/operators";
 
 import {assertTypeOf, curryFunctionMembers} from "src/shared/util";
 import {attachRateLimiting} from "./rate-limiting";
-import {EncryptionPreferences, MessageKeys, ProviderApi} from "./model";
+import {EncryptionPreferences, MessageVerification, ProviderApi} from "./model";
 import {FETCH_NOTIFICATION_SKIP_SYMBOL} from "./const";
 import {HttpApi, resolveStandardSetupPublicApi} from "src/electron-preload/webview/lib/provider-api/standart-setup-internals";
 import {Logger} from "src/shared/model/common";
@@ -106,13 +106,15 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                 async decryptMessage(message) {
                     const privateApi = await resolvePrivateApi();
                     const messageKeys = await privateApi.getMessageKeys(message);
-                    const {
-                        decryptedSubject,
-                        decryptedBody
-                    } = await internals["./src/app/helpers/message/messageDecrypt.ts"].value.decryptMessage(
+                    const decryptMessage = await internals["./src/app/helpers/message/messageDecrypt.ts"].value.decryptMessage(
                         message,
                         messageKeys.privateKeys,
                     );
+                    if (decryptMessage.errors) {
+                        logger.error(decryptMessage.errors);
+                        throw new Error("Failed to decrypt a message");
+                    }
+                    const {decryptedSubject, decryptedBody} = decryptMessage;
                     if (typeof decryptedBody !== "string") {
                         throw new Error("Invalid message body content");
                     }
@@ -202,22 +204,20 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
             },
             attachmentLoader: {
                 getDecryptedAttachment: (() => {
-                    const constructExtendedMessage = (
+                    const constructMessageVerification = (
                         encryptionPreferences: EncryptionPreferences,
-                        messageKeys: MessageKeys,
-                    ): Parameters<Unpacked<ReturnType<typeof resolvePrivateApi>>["getDecryptedAttachment"]>[1] => {
-                        const extendedMessage: ReturnType<typeof constructExtendedMessage> = {
+                    ): NoExtraProps<MessageVerification> => {
+                        const result = {
                             senderPinnedKeys: encryptionPreferences.pinnedKeys,
                             senderVerified: Boolean(encryptionPreferences.isContactSignatureVerified),
-                            privateKeys: messageKeys.privateKeys,
-                        };
+                        } as const;
                         // this proxy helps early detecting unexpected/not-yet-reviewed protonmail's "getDecryptedAttachment" behaviour
                         // if/likely-when the behaviour gets changed by protonmail
                         return new Proxy(
-                            extendedMessage,
+                            result,
                             {
                                 get(target, prop) {
-                                    if (!(prop in extendedMessage)) {
+                                    if (!(prop in result)) {
                                         throw new Error([
                                             "Unexpected email message prop accessing detected",
                                             `during the attachment download (${JSON.stringify({prop})})`,
@@ -240,8 +240,13 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                             privateApi.getMessageKeys(message),
                             privateApi.getEncryptionPreferences(message.Sender.Address),
                         ]);
-                        const extendedMessage = constructExtendedMessage(encryptionPreferences, messageKeys);
-                        const {data} = await privateApi.getDecryptedAttachment(attachment, extendedMessage, messageKeys, protonApi);
+                        const verification = constructMessageVerification(encryptionPreferences);
+                        const {data} = await privateApi.getDecryptedAttachment(
+                            attachment,
+                            verification,
+                            messageKeys,
+                            protonApi,
+                        );
 
                         // the custom error also has the "data" prop, so this test won't suppress/override the custom error
                         // so this test should help detecting at early stage the protonmail's code change

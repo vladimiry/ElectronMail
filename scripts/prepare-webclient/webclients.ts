@@ -47,7 +47,7 @@ const reposOnlyFilter: DeepReadonly<{ value: Array<keyof typeof PROVIDER_REPO_MA
 })();
 
 async function configure(
-    {cwd, envFileName = "./appConfig.json", repoType}: { cwd: string; envFileName?: string; repoType: keyof typeof PROVIDER_REPO_MAP },
+    {cwd, envFileName = "./appConfig.json"}: { cwd: string, envFileName?: string },
     {folderNameAsDomain, options}: typeof folderAsDomainEntries[number],
 ): Promise<{ configApiParam: string }> {
     const {configApiParam} = options;
@@ -55,7 +55,6 @@ async function configure(
     writeFile(
         path.join(cwd, envFileName),
         JSON.stringify({
-            appConfig: PROVIDER_REPO_MAP[repoType].protonPack.appConfig,
             [configApiParam]: {
                 // https://github.com/ProtonMail/WebClient/issues/166#issuecomment-561060855
                 api: `https://${folderNameAsDomain}/api`,
@@ -73,10 +72,12 @@ async function configure(
 function resolveWebpackConfigPatchingCode(
     {
         webpackConfigVarName,
+        repoType,
         webpackIndexEntryItems,
     }: {
         webpackConfigVarName: string
-        webpackIndexEntryItems?: unknown
+        repoType: keyof typeof PROVIDER_REPO_MAP,
+        webpackIndexEntryItems?: unknown,
     },
 ): string {
     const disableMangling = Boolean(webpackIndexEntryItems);
@@ -120,7 +121,9 @@ function resolveWebpackConfigPatchingCode(
             // terserPluginInstance.options.minify = false;
             terserPluginInstance.options.parallel = false;
             Object.assign(
-                terserPluginInstance.options.terserOptions,
+                ${repoType === "proton-drive" || repoType === "proton-vpn-settings"
+                    ? 'terserPluginInstance.options.terserOptions'
+                    : 'terserPluginInstance.options.minimizer.options'},
                 {
                     // proton v4: needed to preserve original function names
                     //            just "{keep_fnames: true, mangle: false}" is not sufficient
@@ -313,7 +316,7 @@ async function executeBuildFlow(
             } else { // building
                 await state.buildingSetup();
 
-                const {configApiParam} = await configure({cwd: appDir, repoType}, folderAsDomainEntry);
+                const {configApiParam} = await configure({cwd: appDir}, folderAsDomainEntry);
                 const publicPath: string | undefined = PROVIDER_REPO_MAP[repoType].basePath
                     ? `/${PROVIDER_REPO_MAP[repoType].basePath}/`
                     : undefined;
@@ -331,6 +334,7 @@ async function executeBuildFlow(
                         ${
                             resolveWebpackConfigPatchingCode({
                                 webpackConfigVarName: "webpackConfig",
+                                repoType,
                                 webpackIndexEntryItems,
                             })
                         }

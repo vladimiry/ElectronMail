@@ -1,0 +1,35 @@
+diff --git a/packages/pack/webpack.config.js b/packages/pack/webpack.config.js
+index d9dc7c72b..9c9370966 100644
+--- a/packages/pack/webpack.config.js
++++ b/packages/pack/webpack.config.js
+@@ -29,7 +29,20 @@ const getConfig = (env) => {
+         silent: env.silent || false,
+     };
+
+-    return {
++    return (() => {
++        const file = path.resolve("./proton.config.js");
++        if (require("fs").existsSync(file)) {
++            console.log(
++                /*reset:*/"\x1b[0m" +
++                /*yellow:*/"\x1b[33m" +
++                ">>> " +
++                /*reset:*/"\x1b[0m",
++                `Found ${file}, extend the config`,
++            )
++            return require(file);
++        }
++        return (value) => value;
++    })()({
+         target: options.isProduction ? `browserslist:${options.browserslist}` : 'web', // dev-server bug https://github.com/webpack/webpack-dev-server/issues/2812
+         mode: options.isProduction ? 'production' : 'development',
+         bail: options.isProduction,
+@@ -115,7 +128,7 @@ const getConfig = (env) => {
+                 },
+             }),
+         },
+-    };
++    });
+ };
+
+ module.exports = getConfig;

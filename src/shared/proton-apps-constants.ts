@@ -21,9 +21,8 @@ export const PROVIDER_REPO_MAP = {
     [PROVIDER_APP_NAMES[0]]: {
         repoRelativeDistDir: "./dist",
         basePath: "",
-        tag: "proton-mail@4.13.6",
+        tag: "proton-mail@4.17.0",
         protonPack: {
-            appConfig: {clientId: "WebMail"},
             webpackIndexEntryItems: [
                 // immediate
                 "../../packages/shared/lib/api/contacts.ts",
@@ -48,15 +47,14 @@ export const PROVIDER_REPO_MAP = {
     [PROVIDER_APP_NAMES[1]]: {
         repoRelativeDistDir: "./dist",
         basePath: "account",
-        tag: "proton-account@4.16.1",
-        protonPack: {appConfig: {clientId: "WebAccount"}}
+        tag: "proton-account@4.21.0",
+        protonPack: {}
     },
     [PROVIDER_APP_NAMES[2]]: {
         repoRelativeDistDir: "./dist",
         basePath: "calendar",
-        tag: "proton-calendar@4.9.2",
+        tag: "proton-calendar@4.10.2",
         protonPack: {
-            appConfig: {clientId: "WebCalendar"},
             webpackIndexEntryItems: [
                 // immediate
                 "./src/app/content/PrivateApp.tsx",
@@ -67,14 +65,14 @@ export const PROVIDER_REPO_MAP = {
     [PROVIDER_APP_NAMES[3]]: {
         repoRelativeDistDir: "./dist",
         basePath: "drive",
-        tag: "proton-drive@4.8.0",
-        protonPack: {appConfig: {clientId: "WebDrive"}},
+        tag: "proton-drive@4.10.0",
+        protonPack: {},
     },
     [PROVIDER_APP_NAMES[4]]: {
         repoRelativeDistDir: "./dist",
         basePath: "account/vpn",
         tag: "proton-vpn-settings@4.13.0",
-        protonPack: {appConfig: {clientId: "WebVPNSettings"}},
+        protonPack: {},
     },
 } as const;
 

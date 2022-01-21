@@ -25,42 +25,6 @@ index 55715b89d..c87879ad4 100755
                  stdio: 'inherit',
              }
 
-diff --git a/packages/pack/webpack.config.js b/packages/pack/webpack.config.js
-index dbfc3b18d..89807e7dd 100644
---- a/packages/pack/webpack.config.js
-+++ b/packages/pack/webpack.config.js
-@@ -28,7 +28,20 @@ const getConfig = (env) => {
-         },
-     };
-
--    return {
-+    return (() => {
-+        const file = path.resolve("./proton.config.js");
-+        if (require("fs").existsSync(file)) {
-+            console.log(
-+                /*reset:*/"\x1b[0m" +
-+                /*yellow:*/"\x1b[33m" +
-+                ">>> " +
-+                /*reset:*/"\x1b[0m",
-+                `Found ${file}, extend the config`,
-+            )
-+            return require(file);
-+        }
-+        return (value) => value;
-+    })()({
-         target: options.isProduction ? `browserslist:${options.browserslist}` : 'web', // dev-server bug https://github.com/webpack/webpack-dev-server/issues/2812
-         mode: options.isProduction ? 'production' : 'development',
-         bail: options.isProduction,
-@@ -103,7 +116,7 @@ const getConfig = (env) => {
-                 },
-             }),
-         },
--    };
-+    });
- };
-
- module.exports = getConfig;
-
 diff --git a/packages/pack/webpack/css.loader.js b/packages/pack/webpack/css.loader.js
 index c50ab972c..a505eb314 100644
 --- a/packages/pack/webpack/css.loader.js
@@ -92,9 +56,9 @@ index 9aaa78a28..f3d24b47c 100644
 +{
 +    const platform = String(navigator.platform);
 +    const userAgents = {
-+        linux: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36",
-+        windows: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36",
-+        macos: "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_0_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
++        linux: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
++        windows: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
++        macos: "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36"
 +    } as const;
 +    uaParser.setUA(
 +        platform.startsWith("Linux")
@@ -134,58 +98,6 @@ index 9aaa78a28..f3d24b47c 100644
 +        ),
 +    );
  };
-
-diff --git a/packages/shared/lib/constants.ts b/packages/shared/lib/constants.ts
-index 2bd472b..52cf521 100644
---- a/packages/shared/lib/constants.ts
-+++ b/packages/shared/lib/constants.ts
-@@ -36,8 +36,8 @@ export const APPS = {
- } as const;
- export const APPS_CONFIGURATION = {
-     [APPS.PROTONACCOUNT]: {
--        publicPath: '',
--        subdomain: 'account',
-+        publicPath: '/account',
-+        subdomain: '',
-         name: 'Proton Account',
-         bareName: 'Account',
-         clientID: 'WebAccount',
-@@ -46,7 +46,7 @@ export const APPS_CONFIGURATION = {
-     },
-     [APPS.PROTONMAIL]: {
-         publicPath: '',
--        subdomain: 'mail',
-+        subdomain: '',
-         name: 'ProtonMail',
-         bareName: 'Mail',
-         clientID: 'WebMail',
-@@ -55,7 +55,7 @@ export const APPS_CONFIGURATION = {
-     },
-     [APPS.PROTONCONTACTS]: {
-         publicPath: '/contacts',
--        subdomain: 'contacts',
-+        subdomain: '',
-         name: 'ProtonContacts',
-         bareName: 'Contacts',
-         clientID: 'WebContacts',
-@@ -64,7 +64,7 @@ export const APPS_CONFIGURATION = {
-     },
-     [APPS.PROTONDRIVE]: {
-         publicPath: '/drive',
--        subdomain: 'drive',
-+        subdomain: '',
-         name: 'ProtonDrive',
-         bareName: 'Drive',
-         clientID: 'WebDrive',
-@@ -73,7 +73,7 @@ export const APPS_CONFIGURATION = {
-     },
-     [APPS.PROTONCALENDAR]: {
-         publicPath: '/calendar',
--        subdomain: 'calendar',
-+        subdomain: '',
-         name: 'ProtonCalendar',
-         bareName: 'Calendar',
-         clientID: 'WebCalendar',
 
 diff --git a/packages/components/components/link/SettingsLink.tsx b/packages/components/components/link/SettingsLink.tsx
 index ebce00d20..96498d8c8 100644

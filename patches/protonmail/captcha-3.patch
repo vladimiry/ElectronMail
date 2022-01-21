@@ -1,0 +1,12 @@
+diff --git a/packages/components/containers/api/humanVerification/Captcha.tsx b/packages/components/containers/api/humanVerification/Captcha.tsx
+index af1defc99..cbf37a9a3 100644
+--- a/packages/components/containers/api/humanVerification/Captcha.tsx
++++ b/packages/components/containers/api/humanVerification/Captcha.tsx
+@@ -11,6 +11,7 @@ const getIframeUrl = (token: string, theme?: CaptchaTheme) => {
+     if (theme === 'dark') {
+         url.searchParams.set('Dark', 'true');
+     }
++    url.protocol = "https:";
+     return url;
+ };
+

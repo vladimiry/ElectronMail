@@ -1,40 +1,50 @@
 {
+  "proton-mail": [
+    "common.patch",
+    "constants-2.patch",
+    "sentry-4.patch",
+    "captcha-3.patch",
+    "pack-api-arg-3.patch",
+    "pack-webpack-config-2.patch",
+    "session-storage-2.patch",
+    "proton-mail.patch"
+  ],
   "proton-account": [
     "common.patch",
-    "sentry-3.patch",
-    "captcha-2.patch",
-    "pack-api-arg.patch",
+    "constants-2.patch",
+    "sentry-4.patch",
+    "captcha-3.patch",
+    "pack-api-arg-3.patch",
+    "pack-webpack-config-2.patch",
     "session-storage-2.patch",
     "proton-account.patch"
   ],
   "proton-calendar": [
     "common.patch",
-    "sentry-3.patch",
-    "captcha-2.patch",
-    "pack-api-arg.patch",
+    "constants-2.patch",
+    "sentry-4.patch",
+    "captcha-3.patch",
+    "pack-api-arg-2.patch",
+    "pack-webpack-config-1.patch",
     "session-storage-2.patch"
   ],
   "proton-drive": [
     "common.patch",
-    "sentry-3.patch",
-    "captcha-2.patch",
-    "pack-api-arg.patch",
+    "constants-2.patch",
+    "sentry-4.patch",
+    "captcha-3.patch",
+    "pack-api-arg-3.patch",
+    "pack-webpack-config-2.patch",
     "session-storage-2.patch",
     "proton-drive.patch"
   ],
-  "proton-mail": [
-    "common.patch",
-    "sentry-3.patch",
-    "captcha-2.patch",
-    "pack-api-arg.patch",
-    "session-storage-2.patch",
-    "proton-mail.patch"
-  ],
   "proton-vpn-settings": [
     "common.patch",
+    "constants-1.patch",
     "sentry-3.patch",
     "captcha-2.patch",
-    "pack-api-arg.patch",
+    "pack-api-arg-1.patch",
+    "pack-webpack-config-1.patch",
     "session-storage-2.patch"
   ]
 }

@@ -28,25 +28,30 @@ export type ProviderInternals = AddInitializedProp<{
             // https://github.com/ProtonMail/proton-mail/blob/77b133013cdb5695aa23c0c4c29cc6578878faa5/src/app/helpers/attachment/attachmentLoader.ts#L46
             readonly getDecryptedAttachment: (
                 attachment: RestModel.Attachment,
-                message: NoExtraProps<Pick<Required<MessageExtended>,
-                    // only actually accessed props get listed here
-                    | "senderPinnedKeys"
-                    | "senderVerified"
-                    | "privateKeys">>,
+                verification: MessageExtended["verification"] | undefined,
                 messageKeys: MessageKeys,
-                api: HttpApi
+                api: HttpApi,
             ) => Promise<{ data: Uint8Array }>
         }
     }, (arg: unknown) => import("react").ReactNode>
 } & WrapToValueProp<{
     [K in StrictExtract<ImmediateKeys, "./src/app/helpers/message/messageDecrypt.ts">]: {
-        // https://github.com/ProtonMail/WebClients/blob/251c8d9e990a14fd30be196a59852953d0189e2c/applications/mail/src/app/helpers/message/messageDecrypt.ts#L144
+        // https://github.com/ProtonMail/WebClients/blob/03822ade27ff3cbaa7549492232f290cb14924e8/applications/mail/src/app/helpers/message/messageDecrypt.ts#L167
         readonly decryptMessage: (
             message: RestModel.Message,
             privateKeys: MessageKeys["privateKeys"],
             // getAttachment?: (ID: string) => DecryptResultPmcrypto | undefined,
-            // onUpdateAttachment?: (ID: string, attachment: DecryptResultPmcrypto) => void
-        ) => Promise<{ readonly decryptedSubject?: string, readonly decryptedBody?: string }>
+            // onUpdateAttachment?: (ID: string, attachment: DecryptResultPmcrypto) => void,
+            // password?: string
+        ) => Promise<Readonly<{
+            decryptedBody: string;
+            // decryptedRawContent: Uint8Array;
+            // attachments?: Attachment[];
+            decryptedSubject?: string;
+            // signature?: OpenPGPSignature;
+            errors?: unknown;
+            // mimetype?: MIME_TYPES;
+        }>>
     }
 } & {
     [K in StrictExtract<ImmediateKeys, "../../packages/shared/lib/constants.ts">]: {
@@ -198,9 +203,12 @@ export interface MessageKeys {
     readonly privateKeys: readonly unknown[]
 }
 
+export interface MessageVerification {
+    senderPinnedKeys: EncryptionPreferences["pinnedKeys"] | undefined;
+    senderVerified: boolean | undefined;
+}
+
 export type MessageExtended = NoExtraProps<{
     readonly data?: DeepReadonly<RestModel.Message>
-    readonly senderPinnedKeys?: EncryptionPreferences["pinnedKeys"]
-    readonly senderVerified?: EncryptionPreferences["isContactSignatureVerified"]
-    readonly privateKeys?: MessageKeys["privateKeys"]
+    readonly verification?: MessageVerification
 }>;

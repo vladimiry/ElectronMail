@@ -1,8 +1,8 @@
 diff --git a/packages/shared/lib/helpers/sentry.ts b/packages/shared/lib/helpers/sentry.ts
-index 5664f0fa6..375d20e29 100644
+index aff0d3010..375d20e29 100644
 --- a/packages/shared/lib/helpers/sentry.ts
 +++ b/packages/shared/lib/helpers/sentry.ts
-@@ -1,95 +1,12 @@
+@@ -1,96 +1,12 @@
  import * as Sentry from '@sentry/browser';
 
  import { ProtonConfig } from '../interfaces';
@@ -21,13 +21,13 @@ index 5664f0fa6..375d20e29 100644
 -    }
 -
 -    // Assumes SENTRY_DSN is: https://111b3eeaaec34cae8e812df705690a36@sentry/11
--    // To get https://111b3eeaaec34cae8e812df705690a36@mail.protonmail.com/api/reports/sentry/11
--    const dsn = SENTRY_DSN.replace('sentry', `${host}/api/reports/sentry`);
+-    // To get https://111b3eeaaec34cae8e812df705690a36@protonmail.com/api/core/v4/reports/sentry/11
+-    const dsn = SENTRY_DSN.replace('sentry', `${host}/api/core/v4/reports/sentry`);
 -
 -    Sentry.init({
 -        dsn,
 -        release: isProduction(host) ? APP_VERSION : COMMIT,
--        environment: host,
+-        environment: host.split('.').splice(1).join('.'),
 -        normalizeDepth: 5,
 -        beforeSend(event, hint) {
 -            const error = hint?.originalException;
@@ -77,6 +77,7 @@ index 5664f0fa6..375d20e29 100644
 -            'UploadConflictError', // User uploading the same file again in Drive.
 -            'UploadUserError', // Upload error on user's side in Drive.
 -            'ChunkLoadError', // WebPack loading source code.
+-            'ResizeObserver loop limit exceeded', // Chromium bug https://stackoverflow.com/questions/49384120/resizeobserver-loop-limit-exceeded
 -        ],
 -    });
 -

@@ -1,0 +1,51 @@
+diff --git a/packages/shared/lib/constants.ts b/packages/shared/lib/constants.ts
+index 2bd472b..52cf521 100644
+--- a/packages/shared/lib/constants.ts
++++ b/packages/shared/lib/constants.ts
+@@ -36,8 +36,8 @@ export const APPS = {
+ } as const;
+ export const APPS_CONFIGURATION = {
+     [APPS.PROTONACCOUNT]: {
+-        publicPath: '',
+-        subdomain: 'account',
++        publicPath: '/account',
++        subdomain: '',
+         name: 'Proton Account',
+         bareName: 'Account',
+         clientID: 'WebAccount',
+@@ -46,7 +46,7 @@ export const APPS_CONFIGURATION = {
+     },
+     [APPS.PROTONMAIL]: {
+         publicPath: '',
+-        subdomain: 'mail',
++        subdomain: '',
+         name: 'ProtonMail',
+         bareName: 'Mail',
+         clientID: 'WebMail',
+@@ -55,7 +55,7 @@ export const APPS_CONFIGURATION = {
+     },
+     [APPS.PROTONCONTACTS]: {
+         publicPath: '/contacts',
+-        subdomain: 'contacts',
++        subdomain: '',
+         name: 'ProtonContacts',
+         bareName: 'Contacts',
+         clientID: 'WebContacts',
+@@ -64,7 +64,7 @@ export const APPS_CONFIGURATION = {
+     },
+     [APPS.PROTONDRIVE]: {
+         publicPath: '/drive',
+-        subdomain: 'drive',
++        subdomain: '',
+         name: 'ProtonDrive',
+         bareName: 'Drive',
+         clientID: 'WebDrive',
+@@ -73,7 +73,7 @@ export const APPS_CONFIGURATION = {
+     },
+     [APPS.PROTONCALENDAR]: {
+         publicPath: '/calendar',
+-        subdomain: 'calendar',
++        subdomain: '',
+         name: 'ProtonCalendar',
+         bareName: 'Calendar',
+         clientID: 'WebCalendar',

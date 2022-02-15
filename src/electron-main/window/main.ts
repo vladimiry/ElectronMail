@@ -193,10 +193,15 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
 
     await browserWindow.loadURL(ctx.locations.browserWindowPage);
 
+    const {webContents} = browserWindow;
+
+    webContents.on("did-navigate-in-page", () => {
+        webContents.clearHistory();
+    });
+
     if (BUILD_ENVIRONMENT === "development") {
-        browserWindow.webContents.openDevTools(/* {mode: "detach"} */);
+        webContents.openDevTools(/* {mode: "detach"} */);
     }
 
     return browserWindow;
 }
-

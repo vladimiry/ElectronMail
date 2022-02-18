@@ -19,3 +19,9 @@ export const getWebLogger = (...args: string[]): typeof LOGGER => {
 
     return logger;
 };
+
+export const sha256 = async (input: string): Promise<string> => {
+    const buffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
+    return new TextDecoder().decode(new Uint8Array(buffer));
+};
+

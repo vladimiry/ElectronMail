@@ -20,7 +20,7 @@ import {curryFunctionMembers, parseUrlOriginWithNullishCheck} from "src/shared/u
 import {DbViewEntryComponent} from "src/web/browser-window/app/_db-view/db-view-entry.component";
 import {DbViewModuleResolve} from "src/web/browser-window/app/_accounts/db-view-module-resolve.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
-import {getWebLogger} from "src/web/browser-window/util";
+import {getWebLogger, sha256} from "src/web/browser-window/util";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {LogLevel} from "src/shared/model/common";
 import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";
@@ -250,12 +250,14 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         ),
                     ),
                 )
-                .subscribe(([{login, unread, title}, trayIconDataURL]) => {
+                .subscribe(async ([{login, unread, title}, trayIconDataURL]) => {
+                    const notificationTag = `main_unread_notification_${await sha256(login)}`;
                     new Notification(
                         PRODUCT_NAME,
                         {
                             icon: trayIconDataURL,
                             body: `Account [${title || this.account.accountIndex}]: ${unread} unread message${unread > 1 ? "s" : ""}.`,
+                            tag: notificationTag,
                         },
                     ).onclick = () => this.zone.run(() => {
                         this.onDispatch(ACCOUNTS_ACTIONS.Select({login}));

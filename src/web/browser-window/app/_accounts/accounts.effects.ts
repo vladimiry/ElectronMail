@@ -19,7 +19,7 @@ import {consumeMemoryRateLimiter, curryFunctionMembers, isDatabaseBootstrapped, 
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {FIRE_SYNCING_ITERATION$} from "src/web/browser-window/app/app.constants";
-import {getWebLogger} from "src/web/browser-window/util";
+import {getWebLogger, sha256} from "src/web/browser-window/util";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {ofType} from "src/shared/ngrx-util-of-type";
 import {ONE_MINUTE_MS, ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/constants";
@@ -171,8 +171,11 @@ export class AccountsEffects {
                                 select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
                                 mergeMap((account) => account ? [account] : EMPTY),
                             ),
+                            from((async () => {
+                                return {notificationTag: `calendar_notification_${await sha256(login)}`};
+                            })()),
                         ),
-                        mergeMap(([notification, trayIconDataURL, {webviewSrcValues}]) => {
+                        mergeMap(([notification, trayIconDataURL, {webviewSrcValues}, {notificationTag}]) => {
                             if (!("calendarNotification" in notification)) {
                                 return of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: notification}}));
                             }
@@ -196,6 +199,7 @@ export class AccountsEffects {
                                     body: typeof options === "object"
                                         ? options.body
                                         : options,
+                                    tag: notificationTag,
                                 },
                             ).onclick = () => {
                                 this.store.dispatch(ACCOUNTS_ACTIONS.Select({login}));

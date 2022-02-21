@@ -224,6 +224,18 @@ export function initWebRequestListenersByAccount(
                 patchCorsResponseHeaders(responseHeaders, corsProxy);
             }
 
+            if (new URL(details.url).pathname === "/core/v4/captcha") {
+                for (const headerName of Object.keys(responseHeaders)) {
+                    const headerValues = responseHeaders[headerName];
+                    if (headerName.toLowerCase() !== "content-security-policy" || !headerValues) {
+                        continue;
+                    }
+                    responseHeaders[headerName] = headerValues.map((headerValue) => {
+                        return headerValue.replace(/(frame-ancestors|report-uri|report-to)[\s]+([^;]*)[;]?/gi, "");
+                    });
+                }
+            }
+
             patchSameSiteCookieRecord(responseHeaders);
 
             callback({responseHeaders});

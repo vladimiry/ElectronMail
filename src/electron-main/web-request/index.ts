@@ -13,7 +13,7 @@ import {
 } from "src/shared/util";
 import {Context} from "src/electron-main/model";
 import {CorsProxy} from "./model";
-import {getHeader, patchResponseHeaders, resolveCorsProxy} from "./service";
+import {getHeader, patchCorsResponseHeaders, patchSameSiteCookieRecord, resolveCorsProxy} from "./service";
 import {HEADERS} from "./const";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
@@ -210,22 +210,23 @@ export function initWebRequestListenersByAccount(
     // according to electron docs "only the last attached listener will be used", so no need to unsubscribe previously registered handlers
     session.webRequest.onHeadersReceived(
         (details, callback) => {
-            const requestProxy = requestProxyCache.get(details);
+            const {responseHeaders} = details;
+            const corsProxy = requestProxyCache.get(details)?.corsProxy;
 
-            if (!requestProxy) {
+            requestProxyCache.remove(details);
+
+            if (!responseHeaders) {
                 callback({});
                 return;
             }
 
-            const {corsProxy} = requestProxy;
-
             if (corsProxy) {
-                callback({responseHeaders: patchResponseHeaders({responseHeaders: details.responseHeaders, corsProxy})});
-            } else {
-                callback({});
+                patchCorsResponseHeaders(responseHeaders, corsProxy);
             }
 
-            requestProxyCache.remove(details);
+            patchSameSiteCookieRecord(responseHeaders);
+
+            callback({responseHeaders});
         },
     );
 

@@ -60,13 +60,10 @@ export function patchResponseHeader(
 // TODO consider doing initial preflight/OPTIONS call to https://mail.protonmail.com
 // and then pick all the "Access-Control-*" header names as a template instead of hardcoding the default headers
 // since over time the server may start giving other headers
-export const patchResponseHeaders: (
-    arg: { corsProxy: CorsProxy; responseHeaders: OnHeadersReceivedListenerDetails["responseHeaders"] }
-) => OnHeadersReceivedListenerDetails["responseHeaders"] = ({corsProxy, responseHeaders}) => {
-    if (!responseHeaders) {
-        return responseHeaders;
-    }
-
+export const patchCorsResponseHeaders: (
+    responseHeaders: Exclude<OnHeadersReceivedListenerDetails["responseHeaders"], undefined>,
+    corsProxy: CorsProxy,
+) => void = (responseHeaders, corsProxy) => {
     patchResponseHeader(
         responseHeaders,
         {
@@ -144,34 +141,38 @@ export const patchResponseHeaders: (
             values: ["Date"],
         },
     );
+};
 
-    {
-        // starting from @electron v12 (more exactly from the respective @chromium version)
-        // the "set-cookie" records with "samesite=strict" get blocked by @chromium, for example the "/api/auth/cookies" request case
-        // so to workaround the issue we replace the "samesite=strict|lax"-like attribute with "samesite=none"
-        for (const cookieName of Object.keys(responseHeaders)) {
-            if (cookieName.toLowerCase() !== "set-cookie") {
-                continue;
-            }
-            const cookies = responseHeaders[cookieName];
-            if (cookies) {
-                // TODO consider patching the "samesite" cookie attribute only for "/api/auth/cookies" request
-                responseHeaders[cookieName] = cookies.map((cookieValue) => {
-                    if ((/samesite[\s]*=[\s]*(strict|lax|none)/i).test(cookieValue)) {
-                        cookieValue = cookieValue.replace(/samesite[\s]*=[\s]*(strict|lax)/i, "samesite=none");
-                    } else {
-                        cookieValue = `${cookieValue}; samesite=none`;
-                    }
-                    cookieValue = /(;[\s]*secure)|(secure[\s]*;)/i.test(cookieValue)
-                        ? cookieValue
-                        : `${cookieValue}; secure`; // "samesite=none" attribute requires "secure" attribute
-                    return cookieValue;
-                });
-            }
+export const patchSameSiteCookieRecord = (
+    responseHeaders: Exclude<OnHeadersReceivedListenerDetails["responseHeaders"], undefined>,
+) => {
+    // starting from @electron v12 (more exactly from the respective @chromium version)
+    // the "set-cookie" records with "samesite=strict" get blocked by @chromium, for example the "/api/auth/cookies" request case
+    // so to workaround the issue we replace the "samesite=strict|lax"-like attribute with "samesite=none"
+    for (const headerName of Object.keys(responseHeaders)) {
+        if (headerName.toLowerCase() !== "set-cookie") {
+            continue;
         }
-    }
 
-    return responseHeaders;
+        const headerValues = responseHeaders[headerName];
+
+        if (!headerValues) {
+            continue;
+        }
+
+        // TODO consider patching the "samesite" cookie attribute only for "/api/auth/cookies" request
+        responseHeaders[headerName] = headerValues.map((headerValue) => {
+            if ((/samesite[\s]*=[\s]*(strict|lax|none)/i).test(headerValue)) {
+                headerValue = headerValue.replace(/samesite[\s]*=[\s]*(strict|lax)/i, "samesite=none");
+            } else {
+                headerValue = `${headerValue}; samesite=none`;
+            }
+            headerValue = /(;[\s]*secure)|(secure[\s]*;)/i.test(headerValue)
+                ? headerValue
+                : `${headerValue}; secure`; // "samesite=none" attribute requires "secure" attribute
+            return headerValue;
+        });
+    }
 };
 
 // TODO consider resolving/returning the proxy only for URLs with `entryApiUrl`-like origin

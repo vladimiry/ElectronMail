@@ -1,0 +1,48 @@
+diff --git a/packages/components/hooks/useLinkHandler.tsx b/packages/components/hooks/useLinkHandler.tsx
+index e65208ec9..6178f5aaf 100644
+--- a/packages/components/hooks/useLinkHandler.tsx
++++ b/packages/components/hooks/useLinkHandler.tsx
+@@ -4,7 +4,7 @@ import punycode from 'punycode.js';
+ 
+ import { getSecondLevelDomain } from '@proton/shared/lib/helpers/url';
+ import { MailSettings } from '@proton/shared/lib/interfaces';
+-import { isIE11, isEdge } from '@proton/shared/lib/helpers/browser';
++import { isIE11, isEdge, openNewTab } from '@proton/shared/lib/helpers/browser';
+ import isTruthy from '@proton/shared/lib/helpers/isTruthy';
+ import { PROTON_DOMAINS } from '@proton/shared/lib/constants';
+ 
+@@ -162,6 +162,10 @@ export const useLinkHandler: UseLinkHandler = (
+             return;
+         }
+ 
++        event.preventDefault();
++        event.stopPropagation(); // Required for Safari
++        const encodedLink = await encoder(src);
++
+         if (
+             askForConfirmation &&
+             isExternal(src.raw) &&
+@@ -169,20 +173,17 @@ export const useLinkHandler: UseLinkHandler = (
+                 .filter(isTruthy) // currentDomain can be null
+                 .some((domain) => isSubDomain(hostname, domain))
+         ) {
+-            event.preventDefault();
+-            event.stopPropagation(); // Required for Safari
+-
+-            const link = await encoder(src);
+-
+             const modalId = createModal(
+                 <LinkConfirmationModal
+-                    link={link}
++                    link={encodedLink}
+                     onClose={() => setConfirmationModalID(undefined)}
+                     isOutside={isOutside}
+                 />
+             );
+ 
+             setConfirmationModalID(modalId);
++        } else {
++            openNewTab(encodedLink);
+         }
+     });
+ 

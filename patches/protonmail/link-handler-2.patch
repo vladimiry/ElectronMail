@@ -1,5 +1,5 @@
 diff --git a/packages/components/hooks/useLinkHandler.tsx b/packages/components/hooks/useLinkHandler.tsx
-index e65208ec9..6178f5aaf 100644
+index 7fdec1d3b..256ddf8be 100644
 --- a/packages/components/hooks/useLinkHandler.tsx
 +++ b/packages/components/hooks/useLinkHandler.tsx
 @@ -4,7 +4,7 @@ import punycode from 'punycode.js';
@@ -11,7 +11,7 @@ index e65208ec9..6178f5aaf 100644
  import isTruthy from '@proton/shared/lib/helpers/isTruthy';
  import { PROTON_DOMAINS } from '@proton/shared/lib/constants';
  
-@@ -162,6 +162,10 @@ export const useLinkHandler: UseLinkHandler = (
+@@ -163,6 +163,10 @@ export const useLinkHandler: UseLinkHandler = (
              return;
          }
  
@@ -22,7 +22,7 @@ index e65208ec9..6178f5aaf 100644
          if (
              askForConfirmation &&
              isExternal(src.raw) &&
-@@ -169,20 +173,17 @@ export const useLinkHandler: UseLinkHandler = (
+@@ -170,13 +174,10 @@ export const useLinkHandler: UseLinkHandler = (
                  .filter(isTruthy) // currentDomain can be null
                  .some((domain) => isSubDomain(hostname, domain))
          ) {
@@ -30,19 +30,12 @@ index e65208ec9..6178f5aaf 100644
 -            event.stopPropagation(); // Required for Safari
 -
 -            const link = await encoder(src);
+-            setLink(link);
 -
-             const modalId = createModal(
-                 <LinkConfirmationModal
--                    link={link}
-+                    link={encodedLink}
-                     onClose={() => setConfirmationModalID(undefined)}
-                     isOutside={isOutside}
-                 />
-             );
- 
-             setConfirmationModalID(modalId);
++            setLink(encodedLink);
+             setLinkConfirmationModalOpen(true);
 +        } else {
 +            openNewTab(encodedLink);
          }
      });
- 
+

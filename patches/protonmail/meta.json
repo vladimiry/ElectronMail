@@ -5,9 +5,9 @@
     "sentry-4.patch",
     "captcha-3.patch",
     "pack-api-arg-3.patch",
-    "pack-webpack-config-2.patch",
+    "pack-webpack-config-3.patch",
     "session-storage-2.patch",
-    "link-handler.patch",
+    "link-handler-2.patch",
     "proton-mail.patch"
   ],
   "proton-account": [
@@ -16,9 +16,9 @@
     "sentry-4.patch",
     "captcha-3.patch",
     "pack-api-arg-3.patch",
-    "pack-webpack-config-2.patch",
+    "pack-webpack-config-3.patch",
     "session-storage-2.patch",
-    "link-handler.patch",
+    "link-handler-2.patch",
     "proton-account.patch"
   ],
   "proton-calendar": [
@@ -26,29 +26,30 @@
     "constants-2.patch",
     "sentry-4.patch",
     "captcha-3.patch",
-    "pack-api-arg-2.patch",
-    "pack-webpack-config-1.patch",
-    "link-handler.patch",
+    "pack-api-arg-3.patch",
+    "pack-webpack-config-3.patch",
+    "link-handler-2.patch",
     "session-storage-2.patch"
   ],
   "proton-drive": [
+    "common.patch",
+    "constants-3.patch",
+    "sentry-4.patch",
+    "captcha-3.patch",
+    "pack-api-arg-3.patch",
+    "pack-webpack-config-3.patch",
+    "session-storage-2.patch",
+    "link-handler-2.patch",
+    "proton-drive.patch"
+  ],
+  "proton-vpn-settings": [
     "common.patch",
     "constants-2.patch",
     "sentry-4.patch",
     "captcha-3.patch",
     "pack-api-arg-3.patch",
-    "pack-webpack-config-2.patch",
+    "pack-webpack-config-3.patch",
     "session-storage-2.patch",
-    "link-handler.patch",
-    "proton-drive.patch"
-  ],
-  "proton-vpn-settings": [
-    "common.patch",
-    "constants-1.patch",
-    "sentry-3.patch",
-    "captcha-2.patch",
-    "pack-api-arg-1.patch",
-    "pack-webpack-config-1.patch",
-    "session-storage-2.patch"
+    "link-handler-2.patch"
   ]
 }

@@ -1,9 +1,9 @@
 diff --git a/packages/pack/webpack.config.js b/packages/pack/webpack.config.js
-index d9dc7c72b..9c9370966 100644
+index a39cbea19..8069fc544 100644
 --- a/packages/pack/webpack.config.js
 +++ b/packages/pack/webpack.config.js
-@@ -29,7 +29,20 @@ const getConfig = (env) => {
-         silent: env.silent || false,
+@@ -32,7 +32,20 @@ const getConfig = (env) => {
+         overlayErrors: env.overlayErrors || false,
      };
 
 -    return {
@@ -13,7 +13,7 @@ index d9dc7c72b..9c9370966 100644
 +            console.log(
 +                /*reset:*/"\x1b[0m" +
 +                /*yellow:*/"\x1b[33m" +
-+                ">>> " +
++                ">>>" +
 +                /*reset:*/"\x1b[0m",
 +                `Found ${file}, extend the config`,
 +            )
@@ -24,7 +24,7 @@ index d9dc7c72b..9c9370966 100644
          target: options.isProduction ? `browserslist:${options.browserslist}` : 'web', // dev-server bug https://github.com/webpack/webpack-dev-server/issues/2812
          mode: options.isProduction ? 'production' : 'development',
          bail: options.isProduction,
-@@ -115,7 +128,7 @@ const getConfig = (env) => {
+@@ -118,7 +131,7 @@ const getConfig = (env) => {
                  },
              }),
          },

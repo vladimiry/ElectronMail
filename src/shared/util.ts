@@ -375,20 +375,24 @@ export function getRandomInt(min: number, max: number): number {
     return min + Math.floor(Math.random() * (max - min)); // the maximum is exclusive and the minimum is inclusive
 }
 
-export const getWebViewPartition: (login: AccountConfig["login"]) => string = (
+type getWebViewPartitionType = (login: AccountConfig["login"]) => string;
+
+export const getWebViewPartition: getWebViewPartitionType = (
     () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
         const prefix = "partition/webview/";
-        const result: typeof getWebViewPartition = (login) => `${prefix}${login}`;
+        const result: getWebViewPartitionType = (login) => `${prefix}${login}`;
         return result;
     }
 )();
 
-export const validateLoginDelaySecondsRange: (
+type validateLoginDelaySecondsRangeType = (
     loginDelaySecondsRange: string,
-) => { validationError: string } | Required<AccountConfig>["loginDelaySecondsRange"] = (
+) => { validationError: string } | Required<AccountConfig>["loginDelaySecondsRange"];
+
+export const validateLoginDelaySecondsRange: validateLoginDelaySecondsRangeType = (
     () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
         const re = /^(\d+)-(\d+)$/;
-        const result: typeof validateLoginDelaySecondsRange = (loginDelaySecondsRange) => {
+        const result: validateLoginDelaySecondsRangeType = (loginDelaySecondsRange) => {
             const match = re.exec(loginDelaySecondsRange) || [];
             const end = Number(match.pop());
             const start = Number(match.pop());
@@ -465,12 +469,12 @@ export function removeArrayDuplicateItems<T extends any>(array: ReadonlyArray<T>
     return [...new Set<T>(array).values()];
 }
 
-export const parsePackagedWebClientUrl: (
-    urlArg: string,
-) => (null | Readonly<Pick<URL, "protocol" | "hostname" | "pathname">>) = (
+type parsePackagedWebClientUrlType = (urlArg: string) => (null | Readonly<Pick<URL, "protocol" | "hostname" | "pathname">>);
+
+export const parsePackagedWebClientUrl: parsePackagedWebClientUrlType = (
     () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
         const re = new RegExp(`^(${LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN}:)`);
-        const result: typeof parsePackagedWebClientUrl = (urlArg) => {
+        const result: parsePackagedWebClientUrlType = (urlArg) => {
             if (!re.exec(urlArg)) {
                 return null;
             }
@@ -484,12 +488,14 @@ export const parsePackagedWebClientUrl: (
     }
 )();
 
-export const resolvePackagedWebClientApp: (
+type resolvePackagedWebClientAppType = (
     url: Exclude<ReturnType<typeof parsePackagedWebClientUrl>, null>,
-) => Readonly<{ project: keyof typeof PROVIDER_REPO_MAP; projectSubPath?: string }> = (
+) => Readonly<{ project: keyof typeof PROVIDER_REPO_MAP; projectSubPath?: string }>;
+
+export const resolvePackagedWebClientApp: resolvePackagedWebClientAppType = (
     () => {  // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
         const subProjects = PROVIDER_APP_NAMES.filter((projectType) => projectType !== "proton-mail");
-        const result: typeof resolvePackagedWebClientApp = (url) => {
+        const result: resolvePackagedWebClientAppType = (url) => {
             const pathname = `${url.pathname}/`;
             const foundSubProject = subProjects.find((subProject) => {
                 return pathname.startsWith(`/${PROVIDER_REPO_MAP[subProject].basePath}/`);
@@ -607,12 +613,14 @@ export const parseUrlOriginWithNullishCheck = (url: string): string | never => {
     return origin;
 };
 
-export const buildUrlOriginsFailedMsgTester: (
+type buildUrlOriginsFailedMsgTesterType = (
     // array item can be either url or already parsed origin (mixed array item types allowed)
     // since each array item value get parsed/verified by the function
     originsOrUrlsWhitelist: readonly string[],
-) => (url: string) => null | string = (() => {
-    const result: typeof buildUrlOriginsFailedMsgTester = (allowedOriginsOrUrls) => {
+) => (url: string) => null | string;
+
+export const buildUrlOriginsFailedMsgTester: buildUrlOriginsFailedMsgTesterType = (() => {
+    const result: buildUrlOriginsFailedMsgTesterType = (allowedOriginsOrUrls) => {
         const originsWhitelist = allowedOriginsOrUrls.map(parseUrlOriginWithNullishCheck);
         return (url: string) => {
             const urlOrigin = parseUrlOriginWithNullishCheck(url);
@@ -657,13 +665,15 @@ export const depersonalizeProtonApiUrl = (url: string): string => {
     ].join(splitBy);
 };
 
-export const depersonalizeLoggedUrlsInString: (value: unknown) => string = (() => {
+type depersonalizeLoggedUrlsInStringType = (value: unknown) => string;
+
+export const depersonalizeLoggedUrlsInString: depersonalizeLoggedUrlsInStringType = (() => {
     // at the moment only proton urls get depersonalized, ie urls that start from the following urls
     //      https://app.protonmail.ch/
     //      https://mail.protonmail.com/
     //      https://protonmailrmez3lotccipshtkleegetolb73fuirgj7r4o4vfu7ozyd.onion/
     const protonUrlRe = new RegExp(PROTON_API_ENTRY_URLS.map((value) => `${value}/\\S*`).join("|"), "gi");
-    const result: typeof depersonalizeLoggedUrlsInString = (value) => {
+    const result: depersonalizeLoggedUrlsInStringType = (value) => {
         if (typeof value !== "string") {
             return String(value);
         }

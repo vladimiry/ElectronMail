@@ -260,8 +260,9 @@ export class Database {
         methodDuration: ReturnType<typeof hrtimeDuration>,
         logLevel: LogLevel = "verbose",
     ): void {
-        const dataToLog: ReturnType<typeof Database.prototype.stat> & { methodTime: number; statTime: number } = (
-            (): typeof dataToLog => {
+        type dataToLogType = ReturnType<typeof Database.prototype.stat> & { methodTime: number; statTime: number };
+        const dataToLog: dataToLogType = (
+            (): dataToLogType => {
                 const methodTime = methodDuration.end(); // first of all
                 const statsDuration = hrtimeDuration(); // before the "stat()" called
                 const stat = this.stat();

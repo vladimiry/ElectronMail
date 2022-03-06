@@ -14,9 +14,11 @@ import {createSessionUtil} from "src/electron-main/session";
 
 const logger = curryFunctionMembers(_logger, __filename);
 
-export const resolveDefaultAppSession: () => Session = (() => {
+type resolveDefaultAppSessionType = () => Session;
+
+export const resolveDefaultAppSession: resolveDefaultAppSessionType = (() => {
     let session: Session | undefined;
-    const result: typeof resolveDefaultAppSession = () => {
+    const result: resolveDefaultAppSessionType = () => {
         return session ??= createSessionUtil.create("partition/default-app-session");
     };
     return result;

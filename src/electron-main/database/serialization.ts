@@ -41,10 +41,12 @@ type SerializationHeader = DeepReadonly<{
     [k in keyof KeyBasedFileHeader]?: KeyBasedFileHeader[k]
 }>;
 
-export const buildSerializer: (file: string) => {
+type buildSerializerType = (file: string) => {
     read: (encryptionAdapter: EncryptionAdapter) => Promise<FsDb>
     write: (encryptionAdapter: EncryptionAdapter, data: DeepReadonly<FsDb>) => Promise<void>
-} = (() => {
+};
+
+export const buildSerializer: buildSerializerType = (() => {
     const constants = {
         gzip: "gzip",
         zero: 0,
@@ -187,7 +189,7 @@ export const buildSerializer: (file: string) => {
             stream.destroy();
         });
     };
-    const result: typeof buildSerializer = (file) => {
+    const result: buildSerializerType = (file) => {
         const {readLogger, writeLogger} = (() => {
             return {
                 readLogger: curryFunctionMembers(logger, path.basename(file), "read"),

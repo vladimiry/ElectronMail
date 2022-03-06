@@ -49,9 +49,11 @@ export async function syncFindInPageBrowserViewSize(ctx: Context, findInPageBrow
     browserView.setBounds(bounds);
 }
 
-export const initFindInPageBrowserView: (ctx: Context) => Promise<BrowserView> = (
-    (): typeof initFindInPageBrowserView => {
-        const resultFn: typeof initFindInPageBrowserView = async (ctx): Promise<BrowserView> => {
+type initFindInPageBrowserViewType = (ctx: Context) => Promise<BrowserView>;
+
+export const initFindInPageBrowserView: initFindInPageBrowserViewType = (
+    (): initFindInPageBrowserViewType => {
+        const resultFn: initFindInPageBrowserViewType = async (ctx): Promise<BrowserView> => {
             const browserView = new BrowserView({
                 webPreferences: {
                     ...DEFAULT_WEB_PREFERENCES,

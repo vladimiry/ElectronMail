@@ -8,11 +8,13 @@ import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, __filename);
 
+type FETCH_NOTIFICATION$_Type = Observable<NoExtraProps<{ url: string; responseTextPromise: Promise<string> }>>;
+
 // WARN: has to be initialized ASAP in page/js-code loading/evaluating life cycle
 // since the app needs to be notified about all the fetch request
-export const FETCH_NOTIFICATION$: Observable<NoExtraProps<{ url: string; responseTextPromise: Promise<string> }>> = (() => {
+export const FETCH_NOTIFICATION$: FETCH_NOTIFICATION$_Type = (() => {
     // WARN: has to be replay subject since the app starts listening for fetch calls with some delay
-    const subject = new ReplaySubject<Unpacked<typeof FETCH_NOTIFICATION$>>(100);
+    const subject = new ReplaySubject<Unpacked<FETCH_NOTIFICATION$_Type>>(100);
     const originalFetch = window.fetch;
     const overriddenFetch: typeof originalFetch = async function(this: typeof originalFetch, ...args) {
         const [firstArg, configArg] = args;

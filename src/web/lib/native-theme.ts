@@ -5,15 +5,17 @@ import {ElectronWindow} from "src/shared/model/electron";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {ofType} from "src/shared/ngrx-util-of-type";
 
-const queryLinkElements: (
+type queryLinkElementsType = (
     shouldUseDarkColors: boolean,
     windowProxy: Exclude<HTMLIFrameElement["contentWindow"], null>,
-) => HTMLLinkElement[] = (() => {
+) => HTMLLinkElement[];
+
+const queryLinkElements: queryLinkElementsType = (() => {
     const shouldUseDarkColorsBasedFileEndings = {
         "true": "-dark.css",
         "false": "-light.css",
     } as const;
-    const result: typeof queryLinkElements = (shouldUseDarkColors, windowProxy) => {
+    const result: queryLinkElementsType = (shouldUseDarkColors, windowProxy) => {
         return Array.from(
             windowProxy.document.querySelectorAll<HTMLLinkElement>(
                 `head > link[href$="${shouldUseDarkColorsBasedFileEndings[shouldUseDarkColors ? "true" : "false"]}"]`,

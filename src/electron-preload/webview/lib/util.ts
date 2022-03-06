@@ -307,16 +307,18 @@ export const fetchEvents = async (
     };
 };
 
+type documentCookiesForCustomSchemeType = {
+    readonly enable: (logger: Logger) => void
+    readonly setNotification$: Observable<{ url: string, cookieString: string }>
+};
+
 // TODO electron: drop custom "document.cookies" logic required for pages loaded via custom scheme/protocol
 //      https://github.com/electron/electron/issues/27981
 //      https://github.com/ProtonMail/react-components/commit/0558e441583029f644d1a17b68743436a29d5db2#commitcomment-52005249
-export const documentCookiesForCustomScheme: {
-    readonly enable: (logger: Logger) => void
-    readonly setNotification$: Observable<{ url: string, cookieString: string }>
-} = (() => {
+export const documentCookiesForCustomScheme: documentCookiesForCustomSchemeType = (() => {
     // we don't need all the values but just to be able to send a signal, so "buffer = 1" should be enough
     const setNotificationSubject$ = new ReplaySubject<{ url: string, cookieString: string }>(1);
-    const result: typeof documentCookiesForCustomScheme = {
+    const result: documentCookiesForCustomSchemeType = {
         setNotification$: setNotificationSubject$.asObservable(),
         enable(logger) {
             logger.verbose(nameof(documentCookiesForCustomScheme), nameof(result.enable));

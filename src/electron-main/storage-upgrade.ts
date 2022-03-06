@@ -460,7 +460,9 @@ export function upgradeConfig(config: Config): boolean {
     return upgrade(config, CONFIG_UPGRADES);
 }
 
-export const upgradeSettings: (settings: Settings, ctx: Context) => boolean = ((): typeof upgradeSettings => {
+type upgradeSettingsType = (settings: Settings, ctx: Context) => boolean;
+
+export const upgradeSettings: upgradeSettingsType = ((): upgradeSettingsType => {
     function buildSettingsUpgraders(ctx: Context): Record<string, (settings: Settings) => void> {
         return {
             "1.1.1": (settings): void => {
@@ -591,7 +593,7 @@ export const upgradeSettings: (settings: Settings, ctx: Context) => boolean = ((
         };
     }
 
-    const result: typeof upgradeSettings = (settings, ctx) => {
+    const result: upgradeSettingsType = (settings, ctx) => {
         return upgrade(settings, buildSettingsUpgraders(ctx));
     };
 

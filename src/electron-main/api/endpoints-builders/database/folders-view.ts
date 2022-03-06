@@ -4,10 +4,10 @@ import {buildAccountFoldersResolver} from "src/electron-main/database/util";
 import {CONVERSATION_TYPE, ConversationEntry, FsDbAccount, SYSTEM_FOLDER_IDENTIFIERS, View} from "src/shared/model/database";
 import {mailDateComparatorDefaultsToDesc, walkConversationNodesTree} from "src/shared/util";
 
+type splitAndFormatAndFillSummaryFoldersType = (folders: View.Folder[]) => { system: View.Folder[]; custom: View.Folder[] };
+
 // TODO move the "formatting" and "filling the summary" actions to individual functions
-export const splitAndFormatAndFillSummaryFolders: (
-    folders: View.Folder[],
-) => { system: View.Folder[]; custom: View.Folder[] } = (
+export const splitAndFormatAndFillSummaryFolders: splitAndFormatAndFillSummaryFoldersType = (
     () => {
         const resolveSystemFolderCustomizer = (() => {
             const customizers = { // just "order" value is set for now, later the icon/etc props might be added
@@ -26,7 +26,7 @@ export const splitAndFormatAndFillSummaryFolders: (
         const sortFolders = sortBy(
             (folder: View.Folder) => (resolveSystemFolderCustomizer(folder) ?? {order: folder.name}).order,
         );
-        const result: typeof splitAndFormatAndFillSummaryFolders = (folders) => {
+        const result: splitAndFormatAndFillSummaryFoldersType = (folders) => {
             const bundle = {
                 system: pipe(
                     folders.filter(({id}) => SYSTEM_FOLDER_IDENTIFIERS._.isValidValue(id)),
@@ -102,12 +102,13 @@ export function buildFoldersAndRootNodePrototypes(
     rootNodePrototypes: View.ConversationNode[];
 } {
     const conversationEntries = resolveAccountConversationNodes(account);
-    const nodeLookup: (
+    type nodeLookupType = (
         pk: ConversationEntry["pk"] | Required<ConversationEntry>["previousPk"],
         node?: View.ConversationNode,
-    ) => View.ConversationNode = (() => {
+    ) => View.ConversationNode;
+    const nodeLookup: nodeLookupType = (() => {
         const nodeLookupMap = new Map<ConversationEntry["pk"], View.ConversationNode>();
-        const result: typeof nodeLookup = (pk, node = {entryPk: pk, children: []}) => {
+        const result: nodeLookupType = (pk, node = {entryPk: pk, children: []}) => {
             node = nodeLookupMap.get(pk) || node;
             if (!nodeLookupMap.has(pk)) {
                 nodeLookupMap.set(pk, node);

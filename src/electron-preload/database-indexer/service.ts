@@ -29,18 +29,22 @@ const lowerCaseFilter = (term: string): string => {
     return term.toLowerCase();
 };
 
-const tokenizer: (value: string) => string[] = (
-    (): typeof tokenizer => {
+type tokenizerType = (value: string) => string[];
+
+const tokenizer: tokenizerType = (
+    (): tokenizerType => {
         const tokenizeRe = /[\s-]+/; // whitespace and hyphen
-        const result: typeof tokenizer = (value) => {
+        const result: tokenizerType = (value) => {
             return value.trim().split(tokenizeRe);
         };
         return result;
     }
 )();
 
-const trimNonLetterCharactersFilter: (value: string) => string = (
-    (): typeof trimNonLetterCharactersFilter => {
+type trimNonLetterCharactersFilterType = (value: string) => string;
+
+const trimNonLetterCharactersFilter: trimNonLetterCharactersFilterType = (
+    (): trimNonLetterCharactersFilterType => {
         // TODO make sure all the possible unicode categories listed here except {L} and {N}
         const toTrim = "[\\p{M}\\p{Z}\\p{S}\\p{P}\\p{C}]+";
         const startEndTrimmingRe = new RegExp(`(^${toTrim})|(${toTrim}$)`, "gu");

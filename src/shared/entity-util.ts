@@ -3,18 +3,20 @@ import lzutf8 from "lzutf8";
 import {Folder, Mail} from "src/shared/model/database";
 import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 
-export const lzutf8Util: Readonly<{
+type lzutf8UtilType = Readonly<{
     shouldCompress: (value: string) => boolean,
     compress: (value: string) => string
     decompress: (value: string) => string
-}> = (() => {
+}>;
+
+export const lzutf8Util: lzutf8UtilType = (() => {
     // TODO make the "min length to compress" value configurable
     const minLengthToCompress = 70;
     const options = {
         compression: {inputEncoding: "String", outputEncoding: "StorageBinaryString"},
         decompression: {inputEncoding: "StorageBinaryString", outputEncoding: "String"},
     } as const;
-    const result: typeof lzutf8Util = {
+    const result: lzutf8UtilType = {
         shouldCompress(value) {
             return value.length >= minLengthToCompress;
         },

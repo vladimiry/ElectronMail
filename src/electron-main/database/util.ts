@@ -7,11 +7,13 @@ import {PRODUCT_NAME} from "src/shared/constants";
 
 const logger = curryFunctionMembers(electronLog, __filename);
 
-const resolveAccountFolders: (
+type resolveAccountFoldersType = (
     account: DeepReadonly<FsDbAccount>,
     includingSpam: boolean,
-) => readonly Folder[] = (
-    (): typeof resolveAccountFolders => {
+) => readonly Folder[];
+
+const resolveAccountFolders: resolveAccountFoldersType = (
+    (): resolveAccountFoldersType => {
         const staticFolders: ReadonlyArray<StrictOmit<Folder, "notify">> = (
             [
                 SYSTEM_FOLDER_IDENTIFIERS.Inbox,

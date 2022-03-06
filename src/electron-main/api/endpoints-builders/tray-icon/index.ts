@@ -18,15 +18,17 @@ const trayStyle: DeepReadonly<{
     unread: {scale: .75, color: DEFAULT_UNREAD_BADGE_BG_COLOR, textColor: DEFAULT_UNREAD_BADGE_BG_TEXT},
 };
 
-const resolveState: (ctx: DeepReadonly<Context>) => Promise<{
+type resolveStateType = (ctx: DeepReadonly<Context>) => Promise<{
     readonly fileIcon: ImageBundle;
     trayIconColor: string;
     defaultIcon: ImageBundle;
     loggedOutIcon: ImageBundle;
-}> = (() => {
-    let state: Unpacked<ReturnType<typeof resolveState>> | undefined;
+}>;
 
-    const resultFn: typeof resolveState = async (ctx: DeepReadonly<Context>) => {
+const resolveState: resolveStateType = (() => {
+    let state: Unpacked<ReturnType<resolveStateType>> | undefined;
+
+    const resultFn: resolveStateType = async (ctx: DeepReadonly<Context>) => {
         if (state) {
             return state;
         }

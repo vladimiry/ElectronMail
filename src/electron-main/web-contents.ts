@@ -17,11 +17,13 @@ import {PLATFORM} from "src/electron-main/constants";
 
 const logger = curryFunctionMembers(_logger, __filename);
 
-const checkWebViewWebPreferencesDefaults: (webPreferences: WebPreferences) => boolean = (
+type checkWebViewWebPreferencesDefaultsType = (webPreferences: WebPreferences) => boolean;
+
+const checkWebViewWebPreferencesDefaults: checkWebViewWebPreferencesDefaultsType = (
     () => {
         const expected = DEFAULT_WEB_PREFERENCES;
         const pickKeys = DEFAULT_WEB_PREFERENCES_KEYS;
-        const resultFn: typeof checkWebViewWebPreferencesDefaults = (webPreferences) => {
+        const resultFn: checkWebViewWebPreferencesDefaultsType = (webPreferences) => {
             const actual = pick(webPreferences, pickKeys);
             const same = equals(actual, expected);
             if (!same) {

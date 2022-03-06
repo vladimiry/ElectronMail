@@ -30,12 +30,14 @@ const purifyUserAgentHeader = (session: Session): void => {
     session.setUserAgent(purifiedUserAgent);
 };
 
-export const createSessionUtil: {
+type createSessionUtilType = {
     readonly create: (partition: string) => Session
     readonly createdBefore: (partition: string) => boolean
     readonly fromPartition: (partition: string) => Session
-} = (() => {
-    type ResultType = typeof createSessionUtil;
+};
+
+export const createSessionUtil: createSessionUtilType = (() => {
+    type ResultType = createSessionUtilType;
     const existingPartitions: Set<string> = new Set();
     const persistentSessionErrorMessage = "Persistent sessions are not allowed.";
     const createdBefore: ResultType["createdBefore"] = (partition) => {

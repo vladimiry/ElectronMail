@@ -1,7 +1,9 @@
 import {buildDbPatchRetryPipeline} from "src/electron-preload/webview/lib/util";
 import {isProtonApiError, sanitizeProtonApiError} from "src/electron-preload/lib/util";
 
-export const preprocessError: Parameters<typeof buildDbPatchRetryPipeline>[0] = (() => {
+type preprocessErrorType = Parameters<typeof buildDbPatchRetryPipeline>[0];
+
+export const preprocessError: preprocessErrorType = (() => {
     const strings = {
         statusTextLowerCase: {
             "service unavailable": "service unavailable",
@@ -10,7 +12,7 @@ export const preprocessError: Parameters<typeof buildDbPatchRetryPipeline>[0] = 
         },
         networkConnectionErrorNames: ["aborterror", "timeouterror", "offlineerror"] as readonly string[],
     } as const;
-    const result: typeof preprocessError = (error) => {
+    const result: preprocessErrorType = (error) => {
         const retriable = (
             !navigator.onLine
             ||

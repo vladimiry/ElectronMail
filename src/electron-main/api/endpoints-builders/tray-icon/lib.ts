@@ -73,8 +73,10 @@ const cloneBitmap: (input: Pick<Bitmap, "width" | "height" | "data">) => Bitmap 
     return output;
 };
 
-const bitmapToNativeImage: (source: Bitmap) => Promise<NativeImage> = (
-    (): typeof bitmapToNativeImage => {
+type bitmapToNativeImageType = (source: Bitmap) => Promise<NativeImage>;
+
+const bitmapToNativeImage: bitmapToNativeImageType = (
+    (): bitmapToNativeImageType => {
         const darwinSize = Object.freeze({width: 16, height: 16}); // macOS uses 16x16 tray icon
         const platformSpecificScale: (source: Bitmap) => Promise<Bitmap> = PLATFORM === "darwin"
             ? async (source): ReturnType<typeof platformSpecificScale> => {
@@ -100,7 +102,7 @@ const bitmapToNativeImage: (source: Bitmap) => Promise<NativeImage> = (
                 return result;
             }
             : async (source): ReturnType<typeof platformSpecificScale> => source;
-        const resultFn: typeof bitmapToNativeImage = async (source: Bitmap): Promise<NativeImage> => {
+        const resultFn: bitmapToNativeImageType = async (source: Bitmap): Promise<NativeImage> => {
             return nativeImage.createFromBuffer(
                 await encodePNGToBuffer(
                     await platformSpecificScale(source),

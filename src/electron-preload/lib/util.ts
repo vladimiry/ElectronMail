@@ -111,12 +111,12 @@ export const resolveIpcMainApi = (
     return IPC_MAIN_API.client({options: {timeoutMs, ...restOptions}});
 };
 
-export const resolveCachedConfig: (
-    logger: Logger,
-) => Promise<Config> = (
+type resolveCachedConfigType = (logger: Logger) => Promise<Config>
+
+export const resolveCachedConfig: resolveCachedConfigType = (
     () => {
         let value: Config | undefined;
-        const result: typeof resolveCachedConfig = async (logger) => {
+        const result: resolveCachedConfigType = async (logger) => {
             if (value) {
                 return value;
             }

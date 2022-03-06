@@ -1,5 +1,5 @@
 import {first} from "rxjs/operators";
-import {getQuickJS, QuickJS, shouldInterruptAfterDeadline} from "quickjs-emscripten";
+import {getQuickJS, QuickJSWASMModule, shouldInterruptAfterDeadline} from "quickjs-emscripten";
 import {lastValueFrom} from "rxjs";
 
 import {
@@ -65,7 +65,7 @@ const formFoldersForQuickJSEvaluation = (
         .map(({id, name, unread, size}) => ({Id: id, Name: name, Unread: unread, Size: size}));
 };
 
-const resolveQuickJS: () => Promise<QuickJS> = (() => {
+const resolveQuickJS: () => Promise<QuickJSWASMModule> = (() => {
     let getQuickJSPromise: ReturnType<typeof getQuickJS> | undefined;
     return async () => getQuickJSPromise ??= getQuickJS();
 })();

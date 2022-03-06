@@ -16,10 +16,12 @@ import {UnionOf} from "src/shared/ngrx-util";
 
 const logger = curryFunctionMembers(electronLog, __filename);
 
-export const narrowIndexActionPayload: (
+type narrowIndexActionPayloadType = (
     payload: StrictOmit<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS>, { type: "Index" }>["payload"], "uid">,
-) => typeof payload = ((): typeof narrowIndexActionPayload => {
-    type Fn = typeof narrowIndexActionPayload;
+) => typeof payload;
+
+export const narrowIndexActionPayload: narrowIndexActionPayloadType = ((): narrowIndexActionPayloadType => {
+    type Fn = narrowIndexActionPayloadType;
     type Mails = ReturnType<Fn>["add"];
 
     const fieldsToIndex = [

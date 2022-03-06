@@ -145,7 +145,7 @@ export const patchCorsResponseHeaders: (
 
 export const patchSameSiteCookieRecord = (
     responseHeaders: Exclude<OnHeadersReceivedListenerDetails["responseHeaders"], undefined>,
-) => {
+): void => {
     // starting from @electron v12 (more exactly from the respective @chromium version)
     // the "set-cookie" records with "samesite=strict" get blocked by @chromium, for example the "/api/auth/cookies" request case
     // so to workaround the issue we replace the "samesite=strict|lax"-like attribute with "samesite=none"

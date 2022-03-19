@@ -1,9 +1,9 @@
 import {addDocumentToIndex, createIndex, removeDocumentFromIndex} from "ndx";
 import {expandTerm, query} from "ndx-query";
-import {htmlToText} from "html-to-text";
 import {Subscription} from "rxjs";
 
 import {buildLoggerBundle, resolveIpcMainApi} from "src/electron-preload/lib/util";
+import {htmlToText} from "./html-to-text";
 import {INDEXABLE_MAIL_FIELDS, IndexableMail, IndexableMailId, MailAddress, MailsIndex, MIME_TYPES} from "src/shared/model/database";
 
 const logger = buildLoggerBundle(__filename);
@@ -113,7 +113,7 @@ function buildFieldDescription(): DeepReadonly<Record<typeof INDEXABLE_MAIL_FIEL
                 }
 
                 try {
-                    return htmlToText(body, {wordwrap: false});
+                    return htmlToText(body);
                 } catch (error) {
                     if (error instanceof RangeError) {
                         const msg = `falling back to iframe-based "html-to-text" conversion`;

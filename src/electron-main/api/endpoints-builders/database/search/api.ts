@@ -6,11 +6,11 @@ import UUID from "pure-uuid";
 import {Context} from "src/electron-main/model";
 import {curryFunctionMembers} from "src/shared/util";
 import {IndexableMailId} from "src/shared/model/database";
-import {IPC_MAIN_API_DB_INDEXER_REQUEST$, IPC_MAIN_API_DB_INDEXER_RESPONSE$} from "src/electron-main/api/constants";
+import {IPC_MAIN_API_DB_INDEXER_REQUEST$, IPC_MAIN_API_DB_INDEXER_RESPONSE$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS} from "src/shared/api/main-process/actions";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {ofType} from "src/shared/ngrx-util-of-type";
-import {searchRootConversationNodes, secondSearchStep} from "src/electron-main/api/endpoints-builders/database/search/service";
+import * as service from "./service";
 
 const logger = curryFunctionMembers(electronLog, __filename);
 
@@ -35,7 +35,7 @@ export async function buildDbSearchEndpoints(
             const config = await lastValueFrom(ctx.config$.pipe(first()));
             const {disableSpamNotifications} = config;
 
-            return searchRootConversationNodes(account, {folderIds, mailPks}, !disableSpamNotifications);
+            return service.searchRootConversationNodes(account, {folderIds, mailPks}, !disableSpamNotifications);
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -69,7 +69,7 @@ export async function buildDbSearchEndpoints(
                     return from(
                         (async () => {
                             return {
-                                mailsBundleItems: await secondSearchStep(ctx, searchCriteria, mailScoresByPk),
+                                mailsBundleItems: await service.secondSearchStep(ctx, searchCriteria, mailScoresByPk),
                                 searched: Boolean(fullTextSearchUid),
                             };
                         })(),

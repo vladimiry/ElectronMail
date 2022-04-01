@@ -1,8 +1,8 @@
 import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/forms";
 import {ActivatedRoute} from "@angular/router";
-import {Component, ElementRef, Inject} from "@angular/core";
-import {concatMap, distinctUntilChanged, map, mergeMap} from "rxjs/operators";
-import {merge, Observable, Subscription} from "rxjs";
+import {combineLatest, merge, Observable, of, Subscription} from "rxjs";
+import {Component, ElementRef, Inject, Input} from "@angular/core";
+import {concatMap, distinctUntilChanged, map, mergeMap, startWith, switchMap} from "rxjs/operators";
 import type {OnDestroy, OnInit} from "@angular/core";
 import {select, Store} from "@ngrx/store";
 
@@ -23,26 +23,36 @@ import {validateExternalContentProxyUrlPattern, validateLoginDelaySecondsRange} 
     preserveWhitespaces: true,
 })
 export class AccountEditComponent implements OnInit, OnDestroy {
+    @Input()
+    accountIndex = 0;
     readonly userDataDir = __METADATA__.electronLocations.userDataDir;
     entryUrlItems = [...PROTON_API_ENTRY_RECORDS];
     controls: Record<keyof Pick<AccountConfig,
-        | "contextMenu"
-        | "customCSS"
-        | "login"
-        | "title"
-        | "database"
-        | "localStoreViewByDefault"
-        | "persistentSession"
-        | "rotateUserAgent"
-        | "entryUrl"
-        | "blockNonEntryUrlBasedRequests"
-        | "externalContentProxyUrlPattern"
-        | "enableExternalContentProxy"
-        | "loginDelayUntilSelected"
-        | "loginDelaySecondsRange">
+            | "customNotification"
+            | "customNotificationCode"
+            | "notificationShellExec"
+            | "notificationShellExecCode"
+            | "contextMenu"
+            | "customCSS"
+            | "login"
+            | "title"
+            | "database"
+            | "localStoreViewByDefault"
+            | "persistentSession"
+            | "rotateUserAgent"
+            | "entryUrl"
+            | "blockNonEntryUrlBasedRequests"
+            | "externalContentProxyUrlPattern"
+            | "enableExternalContentProxy"
+            | "loginDelayUntilSelected"
+            | "loginDelaySecondsRange">
         | keyof Pick<Required<Required<AccountConfig>["proxy"]>, "proxyRules" | "proxyBypassRules">
         | keyof AccountConfig["credentials"],
         AbstractControl> = {
+        customNotification: new FormControl(false),
+        customNotificationCode: new FormControl(null),
+        notificationShellExec: new FormControl(false),
+        notificationShellExecCode: new FormControl(null),
         contextMenu: new FormControl(false),
         customCSS: new FormControl(null),
         blockNonEntryUrlBasedRequests: new FormControl(null),
@@ -113,8 +123,10 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     account$: Observable<AccountConfig>;
     processing$: Observable<boolean>;
     removing$: Observable<boolean>;
+    notificationEditorCode = "";
+    customNotificationCodeEditable$: Observable<boolean>;
+    notificationShellExecCodeEditable$: Observable<boolean>;
 
-    // other
     private readonly logger = getWebLogger(__filename, nameof(AccountEditComponent));
     private readonly subscription = new Subscription();
 
@@ -140,6 +152,24 @@ export class AccountEditComponent implements OnInit, OnDestroy {
             map((progress) => Boolean(progress.removingAccount)),
             distinctUntilChanged(),
         );
+        this.customNotificationCodeEditable$ = merge(
+            this.controls.customNotification.valueChanges,
+            this.controls.database.valueChanges,
+        ).pipe(
+            startWith(null), // initial logic triggering (once)
+            switchMap(() => of(
+                Boolean(this.controls.customNotification.value) && Boolean(this.controls.database.value)
+            )),
+        );
+        this.notificationShellExecCodeEditable$ = merge(
+            this.controls.notificationShellExec.valueChanges,
+            this.controls.database.valueChanges,
+        ).pipe(
+            startWith(null), // initial logic triggering (once)
+            switchMap(() => of(
+                Boolean(this.controls.notificationShellExec.value) && Boolean(this.controls.database.value)
+            )),
+        );
     }
 
     ngOnInit(): void {
@@ -155,22 +185,51 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         });
 
         this.subscription.add(
+            // toggle control should be disabled when:
+            //  - account is not saved yet ("login" is empty/undefined)
+            //  - "local store" feature is not enabled for the account
+            combineLatest([
+                this.controls.database.valueChanges.pipe(
+                    map(() => Boolean(this.controls.database.value)), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                ),
+                this.account$.pipe(
+                    map(({login}) => Boolean(login)),
+                ),
+            ]).pipe(
+                startWith([false, false]),   // initial logic triggering (once),
+            ).subscribe(([database, login]) => {
+                const methodName = database && login ? "enable" : "disable";
+                this.controls.customNotification[methodName]();
+                this.controls.notificationShellExec[methodName]();
+            }),
+        );
+
+        this.subscription.add(
             this.account$.subscribe((account) => {
                 this.account = account;
 
                 this.form.removeControl(((name: keyof Pick<typeof AccountEditComponent.prototype.controls, "login">) => name)("login"));
 
-                controls.contextMenu.patchValue(account.contextMenu);
-                controls.customCSS.patchValue(account.customCSS);
-                controls.title.patchValue(account.title);
-                controls.database.patchValue(account.database);
-                controls.localStoreViewByDefault.patchValue(account.localStoreViewByDefault);
-                controls.persistentSession.patchValue(account.persistentSession);
-                controls.rotateUserAgent.patchValue(account.rotateUserAgent);
-                controls.entryUrl.patchValue(account.entryUrl);
-                controls.blockNonEntryUrlBasedRequests.patchValue(account.blockNonEntryUrlBasedRequests);
-                controls.externalContentProxyUrlPattern.patchValue(account.externalContentProxyUrlPattern);
-                controls.enableExternalContentProxy.patchValue(account.enableExternalContentProxy);
+                for (const prop of [
+                    "customNotification",
+                    "customNotificationCode",
+                    "notificationShellExec",
+                    "notificationShellExecCode",
+                    "contextMenu",
+                    "customCSS",
+                    "title",
+                    "database",
+                    "localStoreViewByDefault",
+                    "persistentSession",
+                    "rotateUserAgent",
+                    "entryUrl",
+                    "blockNonEntryUrlBasedRequests",
+                    "externalContentProxyUrlPattern",
+                    "enableExternalContentProxy",
+                ] as const) {
+                    controls[prop].patchValue(account[prop]);
+                }
+
                 controls.proxyRules.patchValue(account.proxy?.proxyRules);
                 controls.proxyBypassRules.patchValue(account.proxy?.proxyBypassRules);
 
@@ -228,6 +287,10 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                 ? account.login :
                 controls.login.value,
             title: controls.title.value,
+            customNotification: Boolean(controls.customNotification.value),
+            customNotificationCode: controls.customNotificationCode.value,
+            notificationShellExec: Boolean(controls.notificationShellExec.value),
+            notificationShellExecCode: controls.notificationShellExecCode.value,
             contextMenu: Boolean(controls.contextMenu.value),
             customCSS: controls.customCSS.value,
             entryUrl: controls.entryUrl.value,
@@ -247,7 +310,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
             loginDelayUntilSelected: Boolean(controls.loginDelayUntilSelected.value),
             loginDelaySecondsRange: (() => {
                 const validated = this.controls.loginDelaySecondsRange.value
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                     ? validateLoginDelaySecondsRange(this.controls.loginDelaySecondsRange.value)
                     : undefined;
                 if (validated && "validationError" in validated) {
@@ -281,6 +344,14 @@ export class AccountEditComponent implements OnInit, OnDestroy {
 
     openSettingsFolder(): void {
         this.store.dispatch(NAVIGATION_ACTIONS.OpenSettingsFolder());
+    }
+
+    customNotificationCodeChange({codeEditorContent}: { codeEditorContent?: string }): void {
+        this.controls.customNotificationCode.patchValue(codeEditorContent);
+    }
+
+    notificationShellExecCodeChange({codeEditorContent}: { codeEditorContent?: string }): void {
+        this.controls.notificationShellExecCode.patchValue(codeEditorContent);
     }
 
     ngOnDestroy(): void {

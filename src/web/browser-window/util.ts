@@ -1,5 +1,6 @@
 import {curryFunctionMembers} from "src/shared/util";
 import {LOG_LEVELS} from "src/shared/constants";
+import {WebAccountPk} from "src/web/browser-window/app/model";
 
 const LOGGER = __ELECTRON_EXPOSURE__.Logger;
 
@@ -25,3 +26,4 @@ export const sha256 = async (input: string): Promise<string> => {
     return new TextDecoder().decode(new Uint8Array(buffer));
 };
 
+export const resolveDbViewInstanceKey = ({login}: Pick<WebAccountPk, "login">): string => JSON.stringify(login);

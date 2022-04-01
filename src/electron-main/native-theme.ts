@@ -1,7 +1,7 @@
 import {nativeTheme} from "electron";
 
 import {Config} from "src/shared/model/options";
-import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
+import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 
 export const applyThemeSource = (themeSource: Config["themeSource"]): void => {

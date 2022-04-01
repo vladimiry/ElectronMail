@@ -152,9 +152,7 @@ export type FsDb = NoExtraProps<Partial<StoreModel.StoreEntity> & GenericDb<Prot
 
 export type FsDbAccount = NoExtraProps<FsDb["accounts"][string]>;
 
-export type DbAccountPk = NoExtraProps<{
-    login: string;
-}>;
+export type DbAccountPk = NoExtraProps<{ login: string }>;
 
 export type IndexableMail = NoExtraProps<Pick<Mail, keyof Pick<Mail,
     | "pk"

@@ -1,7 +1,8 @@
 import {createFeatureSelector, createSelector} from "@ngrx/store";
 
+import {AccountConfig} from "src/shared/model/account";
 import {featureName, State} from "src/web/browser-window/app/store/reducers/db-view";
-import {WebAccountPk} from "src/web/browser-window/app/model";
+import {resolveDbViewInstanceKey} from "src/web/browser-window/util";
 
 export const STATE = createFeatureSelector<State>(featureName);
 
@@ -10,7 +11,7 @@ export const FEATURED = {
     instance() {
         return createSelector(
             STATE,
-            ({instances}: State, {pk}: { pk: WebAccountPk }) => instances[JSON.stringify(pk)],
+            ({instances}: State, login: AccountConfig["login"]) => instances[resolveDbViewInstanceKey({login})],
         );
     },
 } as const;

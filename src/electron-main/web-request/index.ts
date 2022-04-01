@@ -15,7 +15,7 @@ import {Context} from "src/electron-main/model";
 import {CorsProxy} from "./model";
 import {getHeader, patchCorsResponseHeaders, patchSameSiteCookieRecord, resolveCorsProxy} from "./service";
 import {HEADERS} from "./const";
-import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
+import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {resolveInitializedAccountSession} from "src/electron-main/session";
 

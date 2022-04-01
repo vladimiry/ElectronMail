@@ -2,7 +2,7 @@ import {app, Menu, MenuItemConstructorOptions, nativeImage, Tray} from "electron
 import {Subscription} from "rxjs";
 import {tap} from "rxjs/operators";
 
-import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
+import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {ofType} from "src/shared/ngrx-util-of-type";

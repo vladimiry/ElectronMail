@@ -11,7 +11,7 @@ import {applyZoomFactor} from "src/electron-main/window/util";
 import {Context} from "src/electron-main/model";
 import {createSessionUtil} from "src/electron-main/session";
 import {curryFunctionMembers} from "src/shared/util";
-import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
+import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main-process";
 import {PACKAGE_GITHUB_PROJECT_URL, PACKAGE_VERSION, UPDATE_CHECK_FETCH_TIMEOUT} from "src/shared/constants";

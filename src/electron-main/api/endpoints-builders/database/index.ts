@@ -12,7 +12,8 @@ import {Context} from "src/electron-main/model";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {Database} from "src/electron-main/database";
 import {DB_DATA_CONTAINER_FIELDS, IndexableMail} from "src/shared/model/database";
-import {IPC_MAIN_API_DB_INDEXER_REQUEST$, IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
+import * as DbModel from "src/shared/model/database";
+import {IPC_MAIN_API_DB_INDEXER_REQUEST$, IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {narrowIndexActionPayload} from "./indexing/service";
@@ -28,6 +29,7 @@ type Methods = keyof Pick<IpcMainApiEndpoints,
     | "dbResetDbMetadata"
     | "dbGetAccountMetadata"
     | "dbGetAccountDataView"
+    | "dbGetAccountFoldersView"
     | "dbGetAccountMail"
     | "dbExport"
     | "dbExportMailAttachmentsNotification"
@@ -220,6 +222,28 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
             return {
                 folders: prepareFoldersView(account, !disableSpamNotifications),
+            };
+        },
+
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+        async dbGetAccountFoldersView({login}) {
+            _logger.info(nameof(endpoints.dbGetAccountFoldersView));
+
+            const account = ctx.db.getAccount({login});
+
+            if (!account) {
+                throw new Error(`${nameof(endpoints.dbGetAccountFoldersView)}: account resolving failed`);
+            }
+
+            const {system, custom} = prepareFoldersView(account, true);
+            const folderMapper = ({id, unread, name, type}: DbModel.View.Folder):
+                Pick<DbModel.View.Folder, "id" | "unread" | "name" | "type"> => ({id, unread, name, type});
+
+            return {
+                folders: {
+                    system: system.map(folderMapper),
+                    custom: custom.map(folderMapper),
+                },
             };
         },
 

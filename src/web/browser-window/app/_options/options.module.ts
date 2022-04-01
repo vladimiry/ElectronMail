@@ -7,6 +7,8 @@ import {NgModule} from "@angular/core";
 import {PopoverModule} from "ngx-bootstrap/popover";
 
 import {AccountEditComponent} from "./account-edit.component";
+import {AccountEditNotificationEditorComponent} from "./account-edit-notification-editor.component";
+import {AccountEditNotificationExecEditorComponent} from "./account-edit-notification-exec-editor.component";
 import {AccountsListComponent} from "./accounts-list.component";
 import {BaseSettingsComponent} from "./base-settings.component";
 import {DbMetadataResetRequestComponent} from "./db-metadata-reset-request.component";
@@ -39,6 +41,8 @@ import {StorageComponent} from "./storage.component";
     ],
     declarations: [
         AccountEditComponent,
+        AccountEditNotificationEditorComponent,
+        AccountEditNotificationExecEditorComponent,
         AccountsListComponent,
         BaseSettingsComponent,
         DbMetadataResetRequestComponent,

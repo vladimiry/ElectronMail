@@ -6,7 +6,7 @@ import {ValidationError} from "class-validator";
 import {Contact, Entity, Folder, FsDbDataContainer, Mail, ValidatedEntity} from "src/shared/model/database";
 import {curryFunctionMembers} from "src/shared/util";
 import * as Entities from "./entity";
-import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
+import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 
 const logger = curryFunctionMembers(_logger, __filename);

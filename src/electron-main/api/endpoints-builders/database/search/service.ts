@@ -1,15 +1,12 @@
-import {first} from "rxjs/operators";
-import {getQuickJS, QuickJSWASMModule, shouldInterruptAfterDeadline} from "quickjs-emscripten";
-import {lastValueFrom} from "rxjs";
+import {shouldInterruptAfterDeadline} from "quickjs-emscripten";
 
-import {
-    buildFoldersAndRootNodePrototypes, fillFoldersAndReturnRootConversationNodes, splitAndFormatAndFillSummaryFolders,
-} from "src/electron-main/api/endpoints-builders/database/folders-view";
+import {augmentRawMailWithFolders, resolveCachedQuickJSInstance} from "src/electron-main/api/util";
 import {Context} from "src/electron-main/model";
-import {Folder, FsDbAccount, IndexableMailId, LABEL_TYPE, Mail, View} from "src/shared/model/database";
+import {Folder, FsDbAccount, IndexableMailId, Mail, View} from "src/shared/model/database";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {ONE_SECOND_MS} from "src/shared/constants";
-import {parseProtonRestModel, readMailBody} from "src/shared/entity-util";
+import {QUICK_JS_EVAL_CODE_VARIABLE_NAME} from "src/electron-main/api/const";
+import * as searchService from "src/electron-main/api/endpoints-builders/database/folders-view";
 import {walkConversationNodesTree} from "src/shared/util";
 
 export function searchRootConversationNodes(
@@ -19,7 +16,7 @@ export function searchRootConversationNodes(
 ): View.RootConversationNode[] {
     // TODO optimize search: implement custom search instead of getting all the mails first and then narrowing the list down
     // TODO don't create functions inside iterations so extensively, "filter" / "walkConversationNodesTree" calls
-    const {rootNodePrototypes, folders} = buildFoldersAndRootNodePrototypes(account, includingSpam);
+    const {rootNodePrototypes, folders} = searchService.buildFoldersAndRootNodePrototypes(account, includingSpam);
     const filteredByMails = mailPks
         ? rootNodePrototypes.filter((rootNodePrototype) => {
             let matched = false;
@@ -34,7 +31,7 @@ export function searchRootConversationNodes(
             return matched;
         })
         : rootNodePrototypes;
-    const filteredByMailsWithFoldersAttached = fillFoldersAndReturnRootConversationNodes(filteredByMails);
+    const filteredByMailsWithFoldersAttached = searchService.fillFoldersAndReturnRootConversationNodes(filteredByMails);
 
     const result = folderIds
         ? filteredByMailsWithFoldersAttached.filter((rootNodePrototype) => {
@@ -51,24 +48,10 @@ export function searchRootConversationNodes(
         : filteredByMailsWithFoldersAttached;
 
     // TODO use separate function to fill the system folders names
-    splitAndFormatAndFillSummaryFolders(folders);
+    searchService.splitAndFormatAndFillSummaryFolders(folders);
 
     return result;
 }
-
-const formFoldersForQuickJSEvaluation = (
-    folders: DeepReadonly<Array<View.Folder>>,
-    type: Unpacked<typeof LABEL_TYPE._.values>,
-): Array<{ Id: string, Name: string, Unread: number, Size: number }> => {
-    return folders
-        .filter((folder) => folder.type === type)
-        .map(({id, name, unread, size}) => ({Id: id, Name: name, Unread: unread, Size: size}));
-};
-
-const resolveQuickJS: () => Promise<QuickJSWASMModule> = (() => {
-    let getQuickJSPromise: ReturnType<typeof getQuickJS> | undefined;
-    return async () => getQuickJSPromise ??= getQuickJS();
-})();
 
 export const secondSearchStep = async (
     ctx: DeepReadonly<Context>,
@@ -83,7 +66,7 @@ export const secondSearchStep = async (
         throw new Error("Failed to resolve the account");
     }
 
-    const quickJS = await resolveQuickJS();
+    const quickJS = codeFilter && await resolveCachedQuickJSInstance();
     const filters = {
         byFolder: folderIds
             ? ({id}: View.Folder): boolean => folderIds.includes(id)
@@ -95,33 +78,32 @@ export const secondSearchStep = async (
             ? ({pk, folders}: View.Mail): boolean => {
                 const mail = account.mails[pk];
                 if (typeof mail === "undefined") {
-                    throw new Error("Failed to resolve mail.");
+                    throw new Error(`Failed to resolve ${nameof(mail)}`);
                 }
-                const parsedRawMail = parseProtonRestModel(mail);
-                const serializedMailCodePart = JSON.stringify(
-                    JSON.stringify({
-                        ...parsedRawMail,
-                        Body: readMailBody(mail),
-                        EncryptedBody: parsedRawMail.Body,
-                        ...(mail.failedDownload && {_BodyDecryptionFailed: true}),
-                        Folders: formFoldersForQuickJSEvaluation(folders, LABEL_TYPE.MESSAGE_FOLDER),
-                        Labels: formFoldersForQuickJSEvaluation(folders, LABEL_TYPE.MESSAGE_LABEL),
-                    }),
+                if (!quickJS) {
+                    throw new Error(`"${nameof(quickJS)}" has not been initialized`);
+                }
+                const augmentedRawMailSerialized = JSON.stringify(
+                    JSON.stringify(
+                        augmentRawMailWithFolders(mail, folders, false),
+                    ),
                 );
-                return quickJS.evalCode(`
+                const evalCode = `
                     (() => {
-                        let _result_ = false;
-                        function filterMessage(filter) {
-                            _result_ = filter(
-                                JSON.parse(${serializedMailCodePart}),
+                        let ${QUICK_JS_EVAL_CODE_VARIABLE_NAME} = false;
+                        const filterMessage = (fn) => {
+                            ${QUICK_JS_EVAL_CODE_VARIABLE_NAME} = fn(
+                                JSON.parse(${augmentedRawMailSerialized}),
                             );
-                        }
+                        };
                         {
                             ${codeFilter}
                         }
-                        return Boolean(_result_);
+                        return Boolean(${QUICK_JS_EVAL_CODE_VARIABLE_NAME});
                     })()
-                    `,
+                `;
+                return quickJS.evalCode(
+                    evalCode,
                     {shouldInterrupt: shouldInterruptAfterDeadline(Date.now() + ONE_SECOND_MS)},
                 ) as boolean;
             }
@@ -139,8 +121,6 @@ export const secondSearchStep = async (
         = mailScoresByPk
         ? ({pk}) => mailScoresByPk.get(pk)
         : () => null; // no full-text search executing happened, so no score provided
-    const config = await lastValueFrom(ctx.config$.pipe(first()));
-    const {disableSpamNotifications} = config;
     const rootConversationNodes = searchRootConversationNodes(
         account,
         {
@@ -149,7 +129,7 @@ export const secondSearchStep = async (
                 : undefined,
             folderIds,
         },
-        !disableSpamNotifications,
+        true,
     );
     const mailsBundleItems: Unpacked<ReturnType<typeof secondSearchStep>> = [];
 

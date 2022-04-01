@@ -5,6 +5,7 @@ import path from "path";
 import truncateStringLength from "truncate-utf8-bytes";
 import UUID from "pure-uuid";
 
+import {augmentRawMailWithBodyFields} from "src/electron-main/api/util";
 import {DbExportMailAttachmentItem} from "src/electron-main/api/endpoints-builders/database/export/const";
 import {File, Mail, MailAddress} from "src/shared/model/database";
 import {PACKAGE_NAME} from "src/shared/constants";
@@ -33,7 +34,7 @@ const fileExists = async (file: string): Promise<boolean> => {
     try {
         return (await fsAsync.stat(file)).isFile();
     } catch (error) {
-        if ((Object(error) as {code?: unknown}).code === "ENOENT") {
+        if ((Object(error) as { code?: unknown }).code === "ENOENT") {
             return false;
         }
         throw error;
@@ -220,9 +221,7 @@ const contentBuilders: Record<"eml" | "json",
 
         return JSON.stringify(
             {
-                ...rawMail,
-                Body: readMailBody(mail),
-                EncryptedBody: rawMail.Body,
+                ...augmentRawMailWithBodyFields(mail, false),
                 Attachments: attachmentsContent
                     ? rawMail.Attachments.map((attachment, index) => {
                         const attachmentContent = attachmentsContent[index];

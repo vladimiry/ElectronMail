@@ -19,6 +19,10 @@
         margin-top: -($app-spacer-1 / 2);
     }
 
+    .custom-notification-hint {
+        color: map_get($app-account-title-btn-colors, "selected-text");
+    }
+
     #accountEditFormEntryUrlField {
         .badge {
             $local-color: theme-color("primary");

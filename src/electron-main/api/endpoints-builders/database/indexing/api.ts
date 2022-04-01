@@ -7,7 +7,7 @@ import {curryFunctionMembers} from "src/shared/util";
 import {indexAccount} from "src/electron-main/api/endpoints-builders/database/indexing/service";
 import {
     IPC_MAIN_API_DB_INDEXER_REQUEST$, IPC_MAIN_API_DB_INDEXER_RESPONSE$, IPC_MAIN_API_NOTIFICATION$,
-} from "src/electron-main/api/constants";
+} from "src/electron-main/api/const";
 import {
     IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS, IPC_MAIN_API_NOTIFICATION_ACTIONS,
 } from "src/shared/api/main-process/actions";

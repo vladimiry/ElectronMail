@@ -11,7 +11,7 @@ import {
 } from "src/shared/util";
 import {Context} from "./model";
 import {DEFAULT_WEB_PREFERENCES, DEFAULT_WEB_PREFERENCES_KEYS} from "src/electron-main/window/constants";
-import {IPC_MAIN_API_NOTIFICATION$} from "./api/constants";
+import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {PLATFORM} from "src/electron-main/constants";
 

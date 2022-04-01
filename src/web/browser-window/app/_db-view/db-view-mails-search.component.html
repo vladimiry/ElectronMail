@@ -118,7 +118,8 @@
                     <electron-mail-db-view-monaco-editor
                         (content)="onEditorContentChange($event)"
                         *ngIf="codeEditorOpen"
-                        [webAccountPk]="webAccountPk"
+                        [login]="webAccountPk.login"
+                        [widthBySelector]="'electron-mail-db-view-entry'"
                         class="mb-2"
                     ></electron-mail-db-view-monaco-editor>
                 </form>

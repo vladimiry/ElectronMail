@@ -16,7 +16,7 @@ import {deletePassword, getPassword, setPassword} from "src/electron-main/keytar
 import * as EndpointsBuilders from "./endpoints-builders";
 import {initSessionByAccount} from "src/electron-main/session";
 import {IPC_MAIN_API, IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main-process";
-import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
+import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {PACKAGE_NAME, PRODUCT_NAME, PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION} from "src/shared/constants";
 import * as SpellCheck from "src/electron-main/spell-check/api";
@@ -32,6 +32,7 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
         ...await EndpointsBuilders.General.buildEndpoints(ctx),
         ...await EndpointsBuilders.ProtonSession.buildEndpoints(ctx),
         ...await EndpointsBuilders.TrayIcon.buildEndpoints(ctx),
+        ...await EndpointsBuilders.UnreadNotification.buildDbUnreadNotificationEndpoints(ctx),
         ...await SpellCheck.buildEndpoints(ctx),
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types

@@ -22,6 +22,10 @@ export type AccountConfig = NoExtraProps<{
     disabled?: boolean;
     customCSS?: string;
     contextMenu?: boolean;
+    customNotification?: boolean;
+    customNotificationCode?: string;
+    notificationShellExec?: boolean;
+    notificationShellExecCode?: string;
 }>;
 
 export type AccountPersistentSession = NoExtraProps<{

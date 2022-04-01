@@ -47,47 +47,38 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     readonly class: string = "";
 
     viewModeClass: "vm-live" | "vm-database" = "vm-live";
-
-    @HostBinding("class")
-    get getClass(): string {
-        return `${this.class} ${this.viewModeClass}`;
-    }
-
     readonly webViewsState: Readonly<Record<"primary" | "calendar", {
         readonly src$: BehaviorSubject<string>; readonly domReady$: Subject<Electron.WebviewTag>;
     }>> = {
         primary: {src$: new BehaviorSubject(""), domReady$: new Subject()},
         calendar: {src$: new BehaviorSubject(""), domReady$: new Subject()},
     };
-
     @ViewChild("tplDbViewComponentContainerRef", {read: ViewContainerRef, static: true})
     private readonly tplDbViewComponentContainerRef!: ViewContainerRef;
-
     private readonly onlinePing$ = timer(0, ONE_SECOND_MS).pipe(
         filter(() => navigator.onLine),
         take(1),
     );
-
     private readonly persistentSession$ = this.account$.pipe(
         map(({accountConfig: {persistentSession}}) => Boolean(persistentSession)),
         distinctUntilChanged(),
     );
-
     private readonly loggedIn$ = this.account$.pipe(
         map(({notifications: {loggedIn}}) => loggedIn),
         distinctUntilChanged(),
     );
-
     private readonly loggedInCalendar$ = this.account$.pipe(
         map(({notifications: {loggedInCalendar}}) => loggedInCalendar),
         distinctUntilChanged(),
     );
-
     private readonly ipcMainClient;
-
     private readonly logger: ReturnType<typeof getWebLogger>;
-
     private readonly subscription = new Subscription();
+
+    @HostBinding("class")
+    get getClass(): string {
+        return `${this.class} ${this.viewModeClass}`;
+    }
 
     constructor(
         private readonly dbViewModuleResolve: DbViewModuleResolve,
@@ -240,7 +231,31 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     withLatestFrom(this.store.pipe(select(OptionsSelectors.CONFIG.unreadNotifications))),
                     filter(([, unreadNotifications]) => Boolean(unreadNotifications)),
                     map(([account]) => account),
-                    map(({accountConfig: {login, title}, notifications: {unread}}) => ({login, title, unread})),
+                    map((
+                        {
+                            accountConfig: {
+                                login,
+                                title,
+                                database,
+                                customNotificationCode,
+                                customNotification,
+                                notificationShellExec,
+                                notificationShellExecCode,
+                            },
+                            notifications: {unread},
+                        },
+                    ) => {
+                        return {
+                            login,
+                            title,
+                            database,
+                            customNotificationCode,
+                            customNotification,
+                            notificationShellExec,
+                            notificationShellExecCode,
+                            unread,
+                        };
+                    }),
                     pairwise(),
                     filter(([prev, curr]) => curr.unread > prev.unread),
                     map(([, curr]) => curr),
@@ -250,20 +265,63 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         ),
                     ),
                 )
-                .subscribe(async ([{login, unread, title}, trayIconDataURL]) => {
-                    const notificationTag = `main_unread_notification_${await sha256(login)}`;
-                    new Notification(
-                        PRODUCT_NAME,
-                        {
-                            icon: trayIconDataURL,
-                            body: `Account [${title || this.account.accountIndex}]: ${unread} unread message${unread > 1 ? "s" : ""}.`,
-                            tag: notificationTag,
-                        },
-                    ).onclick = () => this.zone.run(() => {
-                        this.onDispatch(ACCOUNTS_ACTIONS.Select({login}));
-                        this.onDispatch(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));
-                    });
-                }),
+                .subscribe(
+                    async ([
+                               {
+                                   customNotification,
+                                   customNotificationCode,
+                                   database,
+                                   login,
+                                   notificationShellExec,
+                                   notificationShellExecCode,
+                                   title,
+                                   unread,
+                               },
+                               trayIconDataURL,
+                           ]) => {
+                        const useCustomNotification = customNotification && customNotificationCode;
+                        const executeShellCommand = notificationShellExec && notificationShellExecCode;
+                        const accountMetadataSettled = Boolean(
+                            (
+                                useCustomNotification
+                                ||
+                                executeShellCommand
+                            )
+                            &&
+                            database
+                            &&
+                            (await this.ipcMainClient("dbGetAccountMetadata")({login}))?.latestEventId
+                        );
+                        const body = useCustomNotification && accountMetadataSettled
+                            ? await this.ipcMainClient("resolveUnreadNotificationMessage")({
+                                login,
+                                alias: title,
+                                code: customNotificationCode,
+                            })
+                            : `Account [${title || this.account.accountIndex}]: ${unread} unread message${unread > 1 ? "s" : ""}.`;
+
+                        if (body) {
+                            new Notification(
+                                PRODUCT_NAME,
+                                {icon: trayIconDataURL, body, tag: `main_unread_notification_${await sha256(login)}`},
+                            ).onclick = () => this.zone.run(() => {
+                                this.onDispatch(ACCOUNTS_ACTIONS.Select({login}));
+                                this.onDispatch(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));
+                            });
+                        } else {
+                            this.logger.verbose(`skipping notification displaying due to the empty "${nameof(body)}"`);
+                        }
+
+                        if (executeShellCommand && accountMetadataSettled) {
+                            // TODO make the "notification shell exec" timeout configurable
+                            await this.ipcMainClient("executeUnreadNotificationShellCommand", {timeoutMs: ONE_SECOND_MS * 30})({
+                                login,
+                                alias: title,
+                                code: notificationShellExecCode,
+                            });
+                        }
+                    },
+                ),
         );
 
         // removing "proton session" on "persistent session" toggle gets disabled notification

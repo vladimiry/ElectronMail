@@ -14,7 +14,7 @@ import {Database} from "./database";
 import {DB_INSTANCE_PROP_NAME} from "src/electron-main/database/constants";
 import {DbAccountPk, LABEL_TYPE, MIME_TYPES} from "src/shared/model/database";
 import {INITIAL_STORES} from "./constants";
-import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
+import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {
     LAYOUT_MODES, PACKAGE_VERSION, PROTON_API_ENTRY_PRIMARY_VALUE, PROTON_API_ENTRY_TOR_V2_VALUE, PROTON_API_ENTRY_TOR_V3_VALUE,

@@ -34,6 +34,10 @@ export async function buildEndpoints(
         async addAccount(
             {
                 login,
+                customNotification,
+                customNotificationCode,
+                notificationShellExec,
+                notificationShellExecCode,
                 contextMenu,
                 customCSS,
                 title,
@@ -56,6 +60,10 @@ export async function buildEndpoints(
 
             const account: AccountConfig = {
                 login,
+                customNotification,
+                customNotificationCode,
+                notificationShellExec,
+                notificationShellExecCode,
                 contextMenu,
                 customCSS,
                 title,
@@ -87,6 +95,10 @@ export async function buildEndpoints(
         async updateAccount(
             {
                 login,
+                customNotification,
+                customNotificationCode,
+                notificationShellExec,
+                notificationShellExecCode,
                 contextMenu,
                 customCSS,
                 title,
@@ -128,6 +140,10 @@ export async function buildEndpoints(
                 );
                 logger.verbose(JSON.stringify({shouldConfigureSession}));
 
+                account.customNotification = customNotification;
+                account.customNotificationCode = customNotificationCode;
+                account.notificationShellExec = notificationShellExec;
+                account.notificationShellExecCode = notificationShellExecCode;
                 account.contextMenu = contextMenu;
                 account.customCSS = customCSS;
                 account.title = title;
@@ -139,6 +155,9 @@ export async function buildEndpoints(
                 account.blockNonEntryUrlBasedRequests = blockNonEntryUrlBasedRequests;
                 account.externalContentProxyUrlPattern = externalContentProxyUrlPattern;
                 account.enableExternalContentProxy = enableExternalContentProxy;
+                account.proxy = proxy;
+                account.loginDelayUntilSelected = loginDelayUntilSelected;
+                account.loginDelaySecondsRange = loginDelaySecondsRange;
 
                 if (credentials) {
                     const {credentials: existingCredentials} = account;
@@ -153,10 +172,6 @@ export async function buildEndpoints(
                         account.credentials.mailPassword = credentials.mailPassword;
                     }
                 }
-
-                account.proxy = proxy;
-                account.loginDelayUntilSelected = loginDelayUntilSelected;
-                account.loginDelaySecondsRange = loginDelaySecondsRange;
 
                 if (shouldConfigureSession) {
                     await configureSessionByAccount(ctx, account);

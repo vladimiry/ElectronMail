@@ -2,10 +2,10 @@ import {ActionType, createIpcMainApiService, ScanService} from "electron-rpc-api
 import {BrowserWindow} from "electron";
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 
+import type {AccountConfig, AccountSessionStoragePatchBundle} from "src/shared/model/account";
 import {
     AccountConfigCreateUpdatePatch, ApiEndpointOriginFieldContainer, LoginFieldContainer, NewPasswordFieldContainer, PasswordFieldContainer,
 } from "src/shared/model/container";
-import type {AccountSessionStoragePatchBundle} from "src/shared/model/account";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {Controller, FuzzyLocale} from "src/electron-main/spell-check/model";
 import * as DbModel from "src/shared/model/database";
@@ -55,6 +55,14 @@ export const ENDPOINTS_DEFINITION = {
             folders: {
                 system: DbModel.View.Folder[];
                 custom: DbModel.View.Folder[];
+            };
+        } | false>(),
+
+    dbGetAccountFoldersView: ActionType.Promise<DbModel.DbAccountPk,
+        {
+            folders: {
+                system: Array<NoExtraProps<Pick<DbModel.View.Folder, "id" | "unread" | "type" | "name">>>;
+                custom: Array<NoExtraProps<Pick<DbModel.View.Folder, "id" | "unread" | "type" | "name">>>;
             };
         } | false>(),
 
@@ -135,7 +143,7 @@ export const ENDPOINTS_DEFINITION = {
 
     toggleBrowserWindow: ActionType.Promise<{ forcedState: boolean } | void>(),
 
-    updateOverlayIcon: ActionType.Promise<{ hasLoggedOut: boolean,  unread: number }>(),
+    updateOverlayIcon: ActionType.Promise<{ hasLoggedOut: boolean, unread: number }>(),
 
     hotkey: ActionType.Promise<{ type: "copy" | "paste" | "selectAll" }>(),
 
@@ -180,6 +188,12 @@ export const ENDPOINTS_DEFINITION = {
     notification: ActionType.Observable<void, UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>>(),
 
     log: ActionType.Promise<{ level: import("src/shared/model/common").LogLevel, args: unknown[] }>(),
+
+    resolveUnreadNotificationMessage: ActionType.Promise<NoExtraProps<DbModel.DbAccountPk
+        & { code: string, alias: AccountConfig["title"] }>, string>(),
+
+    executeUnreadNotificationShellCommand: ActionType.Promise<NoExtraProps<DbModel.DbAccountPk
+        & { code: string, alias: AccountConfig["title"] }>, void>(),
 };
 
 export interface InitResponse {

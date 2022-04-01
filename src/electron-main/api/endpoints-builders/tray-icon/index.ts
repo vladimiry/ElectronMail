@@ -5,7 +5,7 @@ import {lastValueFrom} from "rxjs";
 import {CircleConfig, ImageBundle} from "./model";
 import {Context} from "src/electron-main/model";
 import {DEFAULT_TRAY_ICON_COLOR, DEFAULT_UNREAD_BADGE_BG_COLOR, DEFAULT_UNREAD_BADGE_BG_TEXT} from "src/shared/constants";
-import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
+import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {loggedOutBundle, recolor, trayIconBundleFromPath, unreadNative} from "./lib";

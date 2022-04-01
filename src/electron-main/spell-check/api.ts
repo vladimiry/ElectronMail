@@ -2,7 +2,7 @@ import electronLog from "electron-log";
 
 import {Context} from "src/electron-main/model";
 import {curryFunctionMembers} from "src/shared/util";
-import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/constants";
+import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 

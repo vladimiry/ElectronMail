@@ -208,6 +208,7 @@
     "oboe": "2.1.5",
     "os-locale": "6.0.2",
     "otplib": "12.0.1",
+    "outdent": "0.8.0",
     "patch-package": "6.4.7",
     "path-is-inside": "1.0.2",
     "playwright": "1.18.1",

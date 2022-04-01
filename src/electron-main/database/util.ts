@@ -119,7 +119,7 @@ export const buildAccountFoldersResolver = (
 ): {
     folders: View.Folder[]
     virtualUnreadFolderId: Folder["id"]
-    resolveFolderById: ({id}: Pick<View.Folder, "id">) => View.Folder | undefined
+    resolveFolderById: ({id}: Pick<Folder, "id">) => View.Folder | undefined
 } => {
     const virtualUnreadFolder = buildVirtualUnreadFolder();
     const folders: View.Folder[] = Array.from(

@@ -3,8 +3,9 @@ import {Directive, Input, ɵmarkDirty as markDirty} from "@angular/core";
 import {distinctUntilChanged, map, mergeMap, startWith} from "rxjs/operators";
 import {select, Store} from "@ngrx/store";
 
-import {AccountsSelectors, DbViewSelectors} from "src/web/browser-window/app/store/selectors";
+import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
 import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";
+import {resolveInstance$} from "./util";
 import {State} from "src/web/browser-window/app/store/reducers/db-view";
 import {WebAccountPk} from "src/web/browser-window/app/model";
 
@@ -43,13 +44,7 @@ export abstract class DbViewAbstractComponent extends NgChangesObservableCompone
         map(([signedIn, online]) => signedIn && online),
     );
 
-    instance$ = this.webAccountPk$.pipe(
-        mergeMap((pk) => this.store.pipe(
-            select(DbViewSelectors.FEATURED.instance(), {pk}),
-            distinctUntilChanged(),
-            mergeMap((instance) => instance ? of(instance) : EMPTY),
-        )),
-    );
+    instance$ = resolveInstance$(this.store, this.webAccountPk$.pipe(map(({login}) => login)));
 
     protected constructor(
         protected store: Store<State>,

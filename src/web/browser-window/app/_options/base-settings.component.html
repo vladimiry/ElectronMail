@@ -5,7 +5,7 @@
         novalidate
     >
         <accordion class="mb-2">
-            <accordion-group [isOpen]="false" heading="Colors customization">
+            <accordion-group [isOpen]="false" heading="Tray Icon & Unread Badge appearance">
                 <div class="form-group">
                     <label class="d-block mb-2">
                         Tray/Notification icon color
@@ -73,6 +73,17 @@
                                 type="text"
                             />
                         </div>
+                    </div>
+                    <div class="custom-control custom-switch mt-2">
+                        <input
+                            class="custom-control-input"
+                            formControlName="disableNotLoggedInTrayIndication"
+                            id="disableNotLoggedInTrayIndicationCheckbox"
+                            type="checkbox"
+                        >
+                        <label class="custom-control-label" for="disableNotLoggedInTrayIndicationCheckbox">
+                            Disable "not logged in" into the account tray icon indication (yellow dot).
+                        </label>
                     </div>
                 </div>
             </accordion-group>

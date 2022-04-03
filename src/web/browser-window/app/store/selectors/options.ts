@@ -31,6 +31,7 @@ export const CONFIG = {
     timeouts: createSelector(FEATURED.config, (config) => config.timeouts),
     localDbMailsListViewMode: createSelector(FEATURED.config, (config) => config.localDbMailsListViewMode),
     doNotRenderNotificationBadgeValue: createSelector(FEATURED.config, (config) => config.doNotRenderNotificationBadgeValue),
+    disableNotLoggedInTrayIndication: createSelector(FEATURED.config, (config) => config.disableNotLoggedInTrayIndication),
     zoomFactorDisabled: createSelector(FEATURED.config, (config) => config.zoomFactorDisabled),
     persistentSessionSavingInterval: createSelector(FEATURED.config, (config) => config.persistentSessionSavingInterval),
 } as const;

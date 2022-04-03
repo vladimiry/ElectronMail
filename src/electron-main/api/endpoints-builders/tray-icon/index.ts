@@ -64,7 +64,13 @@ export async function buildEndpoints(
 
             const [
                 state,
-                {customUnreadBgColor, customUnreadTextColor, customTrayIconColor, doNotRenderNotificationBadgeValue},
+                {
+                    customTrayIconColor,
+                    customUnreadBgColor,
+                    customUnreadTextColor,
+                    disableNotLoggedInTrayIndication,
+                    doNotRenderNotificationBadgeValue,
+                },
             ] = await Promise.all([
                 resolveState(ctx),
                 lastValueFrom(ctx.config$.pipe(first())),
@@ -86,7 +92,7 @@ export async function buildEndpoints(
                 );
             });
 
-            const canvas = hasLoggedOut
+            const canvas = !disableNotLoggedInTrayIndication && hasLoggedOut
                 ? state.loggedOutIcon
                 : state.defaultIcon;
 

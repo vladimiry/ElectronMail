@@ -56,6 +56,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     customTrayIconColor: string
     customUnreadBgColor: string
     customUnreadTextColor: string
+    disableNotLoggedInTrayIndication: boolean
     disableSpamNotifications: boolean
     doNotRenderNotificationBadgeValue: boolean
     enableHideControlsHotkey: boolean
@@ -78,6 +79,7 @@ export type BaseConfig = Pick<Config,
     | "customTrayIconColor"
     | "customUnreadBgColor"
     | "customUnreadTextColor"
+    | "disableNotLoggedInTrayIndication"
     | "disableSpamNotifications"
     | "doNotRenderNotificationBadgeValue"
     | "enableHideControlsHotkey"

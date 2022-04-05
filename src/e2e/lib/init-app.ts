@@ -1,9 +1,9 @@
 import byline from "byline";
-import {expect} from "@playwright/test";
 import fs from "fs";
 import fsExtra from "fs-extra";
 import path from "path";
 import playwright from "playwright";
+import playwrightTest from "@playwright/test";
 import {spy as sinonSpy} from "sinon";
 
 import {APP_DIR_PATH, CONF, ENV, MAIN_SCRIPT_FILE, ROOT_DIR_PATH} from "src/e2e/lib/const";
@@ -12,6 +12,8 @@ import {BINARY_NAME, ONE_SECOND_MS, PACKAGE_NAME, PACKAGE_VERSION, PRODUCT_NAME,
 import {buildWorkflow} from "./workflow";
 import {mainProcessEvaluationFunctions} from "src/e2e/lib/util";
 import {TestContext} from "./model";
+
+const {expect} = playwrightTest;
 
 export const initAppWithTestContext = async (
     options: {

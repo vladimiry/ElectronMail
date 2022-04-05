@@ -1,11 +1,13 @@
-import {expect} from "@playwright/test";
 import path from "path";
+import playwrightTest from "@playwright/test";
 
 import {accountCssSelector, mainProcessEvaluationFunctions} from "src/e2e/lib/util";
 import {asyncDelay} from "src/shared/util";
 import {CONF, ENV, GLOBAL_STATE} from "src/e2e/lib/const";
 import {ONE_SECOND_MS, PROTON_API_ENTRY_URLS} from "src/shared/constants";
 import {TestContext} from "./model";
+
+const {expect} = playwrightTest;
 
 const resolveEntryUrlIndexByValue = (entryUrl: string): number => {
     const index = PROTON_API_ENTRY_URLS.findIndex((url) => url === entryUrl);

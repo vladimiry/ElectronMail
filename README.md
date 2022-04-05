@@ -71,10 +71,10 @@ The [reproducible builds](https://en.wikipedia.org/wiki/Reproducible_builds) ide
 
 ### Building locally
 
-- Regardless of the platform you are working on, you will need to have Node.js v16 installed. You might want to use [Node Version Manager](https://github.com/creationix/nvm) to be able to switch between the Node.js versions:
+- Regardless of the platform you are working on, you will need to have Node.js v16.13.x installed. You might want to use [Node Version Manager](https://github.com/creationix/nvm) to be able to switch between the Node.js versions:
   - Install [NVM](https://github.com/creationix/nvm).
-  - Run `nvm install 16`.
-  - Run `nvm use 16`.
+  - Run `nvm install 16.13.2`.
+  - Run `nvm use 16.13.2`.
 - Make sure you are using `npm` v7+, not the v6 (run `npm -v` to see the version).    
 - Some native modules require compiling process to be involved and for that Python and C++ compiler need to be installed on the system:
   - On `Windows`: the simplest way to install all the needed stuff on Windows is to run `npm install --global --production windows-build-tools` CLI command.
@@ -82,19 +82,19 @@ The [reproducible builds](https://en.wikipedia.org/wiki/Reproducible_builds) ide
   - On `macOS`: `python` and [Xcode](https://developer.apple.com/xcode/download/) need to be installed. You also need to install the `Command Line Tools` via Xcode, can be found under the `Xcode -> Preferences -> Downloads` menu.
 - ProtonMail's [WebClient](https://github.com/ProtonMail/WebClient) requires addition environment setup if you run Windows, [see](https://github.com/ProtonMail/proton-shared/wiki/setup-windows).
 - [Clone](https://help.github.com/articles/cloning-a-repository/) this project to your local device. If you are going to contribute, consider cloning the [forked](https://help.github.com/articles/fork-a-repo/) into your own GitHub account project.
-- Install [Yarn](https://yarnpkg.com/en/docs/install).
-- Install dependencies running `yarn --pure-lockfile` (setting `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` environment variable might speed up the process).
-- Build app running `yarn run app:dist`.
-- Build a package to install running `npm run electron-builder:dist` command to build Windows/Mac OS X package and one of the following commands to build Linux package:
-  - `npm run electron-builder:dist:linux:appimage`
-  - `npm run electron-builder:dist:linux:deb`
-  - `npm run electron-builder:dist:linux:freebsd`
-  - `npm run electron-builder:dist:linux:pacman`
-  - `npm run electron-builder:dist:linux:rpm`
-  - `npm run electron-builder:dist:linux:snap`
+- Install [pnpm](https://pnpm.io/installation).
+- Install dependencies running `pnpm install --frozen-lockfile` (setting `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` environment variable might speed up the process).
+- Build app running `pnpm run app:dist`.
+- Build a package to install running `pnpm run electron-builder:dist` command to build Windows/Mac OS X package and one of the following commands to build Linux package:
+  - `pnpm run electron-builder:dist:linux:appimage`
+  - `pnpm run electron-builder:dist:linux:deb`
+  - `pnpm run electron-builder:dist:linux:freebsd`
+  - `pnpm run electron-builder:dist:linux:pacman`
+  - `pnpm run electron-builder:dist:linux:rpm`
+  - `pnpm run electron-builder:dist:linux:snap`
 - The assembled installation package comes into the `./dist` folder.
 
-To recap, considering that all the described build requirements are met, the short command to build let's say Arch Linux package will be `yarn --pure-lockfile && yarn app:dist && npm run electron-builder:dist:linux:pacman`.
+To recap, considering that all the described build requirements are met, the short command to build let's say Arch Linux package will be `pnpm install --frozen-lockfile && pnpm run app:dist && pnpm run electron-builder:dist:linux:pacman`.
 
 ## Data/config files created and used by the app
 

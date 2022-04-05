@@ -1,6 +1,6 @@
 {
   "*.ts": [
     "format-imports",
-    "yarn run lint:ts:base:eslint --fix"
+    "pnpm run lint:ts:base:eslint -- --fix"
   ]
 }

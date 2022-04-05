@@ -28,8 +28,8 @@ if [[ "$GLIBC_INFO" != *"$GLIBC_INFO_EXPECTED_SUB"* ]]; then
     echo >&2 "unexpected glibc version detected"
     exit 1
 fi
-npm run prepare:remove:prebuild-install
-npm run clean:prebuilds
+pnpm run prepare:remove:prebuild-install
+pnpm run clean:prebuilds
 npm exec --package=electron-builder -- electron-builder install-app-deps --arch=x64
 echo "::endgroup::"
 
@@ -58,19 +58,19 @@ sudo sysctl kernel.unprivileged_userns_clone=1
 echo "::endgroup::"
 
 echo "::group::test:e2e"
-yarn test:e2e
+pnpm run test:e2e
 echo "::endgroup::"
 
 echo "::group::package"
-yarn build:electron-builder-hooks
+pnpm run build:electron-builder-hooks
 for PACKAGE_TYPE in "pacman" "snap" "appimage" "deb" "rpm" "freebsd"; do
-    npm run "electron-builder:dist:linux:${PACKAGE_TYPE}"
+    pnpm run "electron-builder:dist:linux:${PACKAGE_TYPE}"
     rm -rf ./dist/linux-unpacked
     rm -rf ./dist/*.yaml
 done
 echo "::endgroup::"
 
 echo "::group::hash & upload"
-yarn scripts/dist-packages/print-hashes
-yarn scripts/dist-packages/upload
+pnpm run scripts/dist-packages/print-hashes
+pnpm run scripts/dist-packages/upload
 echo "::endgroup::"

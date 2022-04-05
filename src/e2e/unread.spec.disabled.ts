@@ -1,4 +1,4 @@
-import {expect} from "@playwright/test";
+import playwrightTest from "@playwright/test";
 
 import {accountBadgeCssSelector} from "src/e2e/lib/util";
 import {asyncDelay} from "src/shared/util";
@@ -9,6 +9,8 @@ import {
     RUNTIME_ENV_E2E_PROTONMAIL_UNREAD_MIN,
 } from "src/shared/constants";
 import {test} from "./lib/test";
+
+const {expect} = playwrightTest;
 
 for (const {login, password, twoFactorCode, unread} of ([
     {

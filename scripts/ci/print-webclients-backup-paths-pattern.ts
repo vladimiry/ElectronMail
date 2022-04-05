@@ -2,9 +2,9 @@ import fastGlob from "fast-glob";
 import {flatten} from "remeda";
 import path from "path";
 
-import {CONSOLE_LOG, resolveGitOutputBackupDir} from "scripts/lib";
 import {CWD_ABSOLUTE_DIR} from "scripts/const";
 import {PROVIDER_APP_NAMES} from "src/shared/proton-apps-constants";
+import {resolveGitOutputBackupDir} from "scripts/lib";
 import {sanitizeFastGlobPattern} from "src/shared/sanitize-util";
 
 const {sync: fastGlobSync} = fastGlob;
@@ -28,4 +28,5 @@ const result: string = flatten(
     }),
 ).join(delimiter);
 
-CONSOLE_LOG(result);
+// WARN a "clean" output is required, so the CONSOLE_LOG is not used here
+console.log(result); // eslint-disable-line no-console

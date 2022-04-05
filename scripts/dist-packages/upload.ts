@@ -13,7 +13,7 @@ const archiveOutputStream = fs.createWriteStream(archiveOutputFile);
 const archiverInstance = archiver("tar");
 
 archiveOutputStream.on("finish", async () => {
-    await execShell(["yarn", ["scripts/transfer", "upload", archiveOutputFile]]);
+    await execShell(["pnpm", ["run", "scripts/transfer", "upload", archiveOutputFile]]);
 });
 
 archiverInstance.pipe(archiveOutputStream);

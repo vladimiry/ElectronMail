@@ -5,11 +5,12 @@
 # Visual Studio Code IDE
 /.vscode
 
-# Node.js
+# node modules stuff
 node_modules
 npm-debug.log
 yarn-error.log
 package-lock.json
+.pnpm-debug.log
 
 # generated code
 /src/electron-main/window/about.json

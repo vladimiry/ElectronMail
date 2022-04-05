@@ -12,21 +12,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
-      - { uses: actions/setup-node@v2, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}" } }
       - { uses: actions/checkout@v2 }
+      - { uses: pnpm/action-setup@v2, with: { version: "latest" } }
+      - { uses: actions/setup-node@v2, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}", cache: "pnpm" } }
       - { name: system setup, if: runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
-      - name: get yarn cache directory path
-        id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn cache dir)"
-      - name: cache yarn cache directory
-        uses: actions/cache@v2
-        with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: "yarn-cache-dir-${{ matrix.os }}-${{ hashFiles('./yarn.lock', './patch-package/*.patch') }}-${{ secrets.YARN_CACHE_DIR_CACHE_VERSION }}"
       - { name: install node-gyp, if: runner.os == 'Windows', run: ./scripts/ci/github/install-node-gyp.ps1 }
       - { uses: actions/setup-python@v2, with: { python-version: "3.9" } }
       - { name: envinfo, run: npx envinfo }
-      - { name: install node modules, run: "yarn --pure-lockfile --network-timeout 60000" }
+      - { name: install node modules, run: "pnpm install --frozen-lockfile" }
       # </common>
       - name: cache artifact
         uses: actions/cache@v2
@@ -45,21 +38,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
-      - { uses: actions/setup-node@v2, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}" } }
       - { uses: actions/checkout@v2 }
+      - { uses: pnpm/action-setup@v2, with: { version: "latest" } }
+      - { uses: actions/setup-node@v2, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}", cache: "pnpm" } }
       - { name: system setup, if: runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
-      - name: get yarn cache directory path
-        id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn cache dir)"
-      - name: cache yarn cache directory
-        uses: actions/cache@v2
-        with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: "yarn-cache-dir-${{ matrix.os }}-${{ hashFiles('./yarn.lock', './patch-package/*.patch') }}-${{ secrets.YARN_CACHE_DIR_CACHE_VERSION }}"
       - { name: install node-gyp, if: runner.os == 'Windows', run: ./scripts/ci/github/install-node-gyp.ps1 }
       - { uses: actions/setup-python@v2, with: { python-version: "3.9" } }
       - { name: envinfo, run: npx envinfo }
-      - { name: install node modules, run: "yarn --pure-lockfile --network-timeout 60000" }
+      - { name: install node modules, run: "pnpm install --frozen-lockfile" }
       # </common>
       - { name: build, run: 'npm exec --package=npm-run-all -- npm-run-all lint build' }
       - { name: print ./app files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./app }
@@ -71,21 +57,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
-      - { uses: actions/setup-node@v2, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}" } }
       - { uses: actions/checkout@v2 }
+      - { uses: pnpm/action-setup@v2, with: { version: "latest" } }
+      - { uses: actions/setup-node@v2, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}", cache: "pnpm" } }
       - { name: system setup, if: runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
-      - name: get yarn cache directory path
-        id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn cache dir)"
-      - name: cache yarn cache directory
-        uses: actions/cache@v2
-        with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: "yarn-cache-dir-${{ matrix.os }}-${{ hashFiles('./yarn.lock', './patch-package/*.patch') }}-${{ secrets.YARN_CACHE_DIR_CACHE_VERSION }}"
       - { name: install node-gyp, if: runner.os == 'Windows', run: ./scripts/ci/github/install-node-gyp.ps1 }
       - { uses: actions/setup-python@v2, with: { python-version: "3.9" } }
       - { name: envinfo, run: npx envinfo }
-      - { name: install node modules, run: "yarn --pure-lockfile --network-timeout 60000" }
+      - { name: install node modules, run: "pnpm install --frozen-lockfile" }
       # </common>
       - { name: download proton clients artifact, uses: actions/download-artifact@v2, with: { name: proton-clients-artifact } }
       - { name: unpack proton clients artifact, shell: bash, run: tar -xvf ./proton-clients-artifact.tar }

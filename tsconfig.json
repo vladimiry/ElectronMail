@@ -33,6 +33,21 @@
     "paths": {
       "remeda/*": [
         "./node_modules/remeda/dist/es/*"
+      ],
+      "patches/*": [
+        "./patches/*"
+      ],
+      "scripts/*": [
+        "./scripts/*"
+      ],
+      "src/*": [
+        "./src/*"
+      ],
+      "webpack-configs/*": [
+        "./webpack-configs/*"
+      ],
+      "package.json": [
+        "package.json"
       ]
     },
     "typeRoots": [
@@ -41,7 +56,7 @@
     ],
     "plugins": [
       {
-        "transform": "@zerollup/ts-transform-paths"
+        "transform": "typescript-transform-paths"
       },
       {
         "transform": "ts-nameof",

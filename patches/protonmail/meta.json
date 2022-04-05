@@ -1,8 +1,8 @@
 {
   "proton-mail": [
     "common.patch",
-    "constants-2.patch",
-    "sentry-4.patch",
+    "constants-3.patch",
+    "sentry-5.patch",
     "captcha-3.patch",
     "pack-api-arg-3.patch",
     "pack-webpack-config-3.patch",
@@ -12,8 +12,8 @@
   ],
   "proton-account": [
     "common.patch",
-    "constants-2.patch",
-    "sentry-4.patch",
+    "constants-3.patch",
+    "sentry-5.patch",
     "captcha-3.patch",
     "pack-api-arg-3.patch",
     "pack-webpack-config-3.patch",
@@ -44,8 +44,8 @@
   ],
   "proton-vpn-settings": [
     "common.patch",
-    "constants-2.patch",
-    "sentry-4.patch",
+    "constants-3.patch",
+    "sentry-5.patch",
     "captcha-3.patch",
     "pack-api-arg-3.patch",
     "pack-webpack-config-3.patch",

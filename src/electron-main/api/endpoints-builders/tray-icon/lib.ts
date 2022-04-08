@@ -77,7 +77,8 @@ type bitmapToNativeImageType = (source: Bitmap) => Promise<NativeImage>;
 
 const bitmapToNativeImage: bitmapToNativeImageType = (
     (): bitmapToNativeImageType => {
-        const darwinSize = Object.freeze({width: 16, height: 16}); // macOS uses 16x16 tray icon
+        // https://github.com/vladimiry/ElectronMail/issues/199#issuecomment-1072651640
+        const darwinSize = {width: 22, height: 22} as const;
         const platformSpecificScale: (source: Bitmap) => Promise<Bitmap> = PLATFORM === "darwin"
             ? async (source): ReturnType<typeof platformSpecificScale> => {
                 const sourceBits = source.data.byteLength / (source.width * source.height);

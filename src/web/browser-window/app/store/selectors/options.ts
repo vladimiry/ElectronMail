@@ -15,7 +15,6 @@ export const FEATURED = {
     keytarSupport: createSelector(STATE, (state) => state.keytarSupport),
     snapPasswordManagerServiceHint: createSelector(STATE, (state) => state.snapPasswordManagerServiceHint),
     mainProcessNotificationAction: createSelector(STATE, (state) => state.mainProcessNotification.action),
-    trayIconDataURL: createSelector(STATE, (state) => state.trayIconDataURL),
     shouldUseDarkColors: createSelector(STATE, (state) => state.shouldUseDarkColors),
 } as const;
 

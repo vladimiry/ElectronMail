@@ -28,7 +28,6 @@ export const OPTIONS_ACTIONS = propsRecordToActionsRecord(
         ToggleLocalDbMailsListViewMode: null,
         SetupMainProcessNotification: null,
         PatchMainProcessNotification: props<State["mainProcessNotification"]>(),
-        TrayIconDataURL: props<{ value: string }>(),
         ToggleAccountDisablingRequest: props<LoginFieldContainer>(),
         ResetDbMetadata: props<{ reset?: boolean }>(),
         ShouldUseDarkColors: props<{ shouldUseDarkColors: boolean }>(),

@@ -5,8 +5,6 @@ import {lastValueFrom} from "rxjs";
 import {CircleConfig, ImageBundle} from "./model";
 import {Context} from "src/electron-main/model";
 import {DEFAULT_TRAY_ICON_COLOR, DEFAULT_UNREAD_BADGE_BG_COLOR, DEFAULT_UNREAD_BADGE_BG_TEXT} from "src/shared/constants";
-import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
-import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {loggedOutBundle, recolor, trayIconBundleFromPath, unreadNative} from "./lib";
 
@@ -85,12 +83,6 @@ export async function buildEndpoints(
                 state.loggedOutIcon = await loggedOutBundle(state.defaultIcon, trayStyle.loggedOut);
                 state.trayIconColor = customTrayIconColor;
             }
-
-            setImmediate(() => {
-                IPC_MAIN_API_NOTIFICATION$.next(
-                    IPC_MAIN_API_NOTIFICATION_ACTIONS.TrayIconDataURL({value: state.defaultIcon.native.toDataURL()}),
-                );
-            });
 
             const canvas = !disableNotLoggedInTrayIndication && hasLoggedOut
                 ? state.loggedOutIcon

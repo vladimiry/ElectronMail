@@ -19,6 +19,7 @@ import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {curryFunctionMembers, parseUrlOriginWithNullishCheck} from "src/shared/util";
 import {DbViewEntryComponent} from "src/web/browser-window/app/_db-view/db-view-entry.component";
 import {DbViewModuleResolve} from "src/web/browser-window/app/_accounts/db-view-module-resolve.service";
+import {DESKTOP_NOTIFICATION_ICON_URL} from "src/web/constants";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {getWebLogger, sha256} from "src/web/browser-window/util";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
@@ -259,26 +260,20 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     pairwise(),
                     filter(([prev, curr]) => curr.unread > prev.unread),
                     map(([, curr]) => curr),
-                    withLatestFrom(
-                        this.store.pipe(
-                            select(OptionsSelectors.FEATURED.trayIconDataURL),
-                        ),
-                    ),
                 )
                 .subscribe(
-                    async ([
-                               {
-                                   customNotification,
-                                   customNotificationCode,
-                                   database,
-                                   login,
-                                   notificationShellExec,
-                                   notificationShellExecCode,
-                                   title,
-                                   unread,
-                               },
-                               trayIconDataURL,
-                           ]) => {
+                    async (
+                        {
+                            login,
+                            title,
+                            database,
+                            customNotificationCode,
+                            customNotification,
+                            notificationShellExec,
+                            notificationShellExecCode,
+                            unread,
+                        },
+                    ) => {
                         const useCustomNotification = customNotification && customNotificationCode;
                         const executeShellCommand = notificationShellExec && notificationShellExecCode;
                         const accountMetadataSettled = Boolean(
@@ -303,7 +298,11 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         if (body) {
                             new Notification(
                                 PRODUCT_NAME,
-                                {icon: trayIconDataURL, body, tag: `main_unread_notification_${await sha256(login)}`},
+                                {
+                                    body,
+                                    tag: `main_unread_notification_${await sha256(login)}`,
+                                    icon: DESKTOP_NOTIFICATION_ICON_URL,
+                                },
                             ).onclick = () => this.zone.run(() => {
                                 this.onDispatch(ACCOUNTS_ACTIONS.Select({login}));
                                 this.onDispatch(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));

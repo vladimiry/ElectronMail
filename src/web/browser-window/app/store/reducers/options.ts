@@ -2,7 +2,6 @@ import {produce} from "immer";
 
 import {Config} from "src/shared/model/options";
 import * as fromRoot from "src/web/browser-window/app/store/reducers/root";
-import {ICON_URL} from "src/web/constants";
 import {initialConfig} from "src/shared/util";
 import {InitResponse} from "src/shared/api/main-process";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
@@ -34,7 +33,6 @@ export interface State extends fromRoot.State, Partial<InitResponse> {
     progress: ProgressPatch;
     hasSavedPassword?: boolean;
     mainProcessNotification: { action: UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS> };
-    trayIconDataURL: string;
     shouldUseDarkColors?: boolean;
 }
 
@@ -45,8 +43,7 @@ const initialState: State = {
         accounts: [],
     },
     progress: {},
-    mainProcessNotification: { action: IPC_MAIN_API_NOTIFICATION_ACTIONS.ActivateBrowserWindow() },
-    trayIconDataURL: ICON_URL,
+    mainProcessNotification: {action: IPC_MAIN_API_NOTIFICATION_ACTIONS.ActivateBrowserWindow()},
 };
 
 export function reducer(state = initialState, action: UnionOf<typeof OPTIONS_ACTIONS> | UnionOf<typeof NAVIGATION_ACTIONS>): State {
@@ -67,7 +64,6 @@ export function reducer(state = initialState, action: UnionOf<typeof OPTIONS_ACT
         GetSettingsResponse: ({_rev, accounts}) => ({...state, settings: {_rev, accounts}}),
         PatchProgress: (progressPatch) => ({...state, progress: {...state.progress, ...progressPatch}}),
         PatchMainProcessNotification: (mainProcessNotification) => ({...state, mainProcessNotification}),
-        TrayIconDataURL: ({value: trayIconDataURL}) => ({...state, trayIconDataURL}),
         ShouldUseDarkColors: ({shouldUseDarkColors}) => ({...state, shouldUseDarkColors}),
         default: () => state,
     });

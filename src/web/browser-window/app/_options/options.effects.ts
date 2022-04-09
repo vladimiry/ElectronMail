@@ -9,6 +9,7 @@ import {select, Store} from "@ngrx/store";
 import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
+import {DESKTOP_NOTIFICATION_ICON_URL} from "src/web/constants";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {getWebLogger} from "src/web/browser-window/util";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
@@ -49,9 +50,6 @@ export class OptionsEffects {
                                 },
                                 InfoMessage: ({message}) => {
                                     this.store.dispatch(NOTIFICATION_ACTIONS.Message({message, style: "info"}));
-                                },
-                                TrayIconDataURL: ({value}) => {
-                                    this.store.dispatch(OPTIONS_ACTIONS.TrayIconDataURL({value}));
                                 },
                                 NativeTheme: ({shouldUseDarkColors}) => {
                                     this.store.dispatch(OPTIONS_ACTIONS.ShouldUseDarkColors({shouldUseDarkColors}));
@@ -94,17 +92,12 @@ export class OptionsEffects {
                                             return "newReleaseItems" in value;
                                         }),
                                         filter(({newReleaseItems}) => Boolean(newReleaseItems.length)),
-                                        withLatestFrom(
-                                            this.store.pipe(
-                                                select(OptionsSelectors.FEATURED.trayIconDataURL),
-                                            ),
-                                        ),
-                                        mergeMap(([updateCheckCallResult, trayIconDataURL]) => {
+                                        mergeMap((updateCheckCallResult) => {
                                             new Notification(
                                                 PRODUCT_NAME,
                                                 {
-                                                    icon: trayIconDataURL,
                                                     body: "App update is available.",
+                                                    icon: DESKTOP_NOTIFICATION_ICON_URL,
                                                 },
                                             ).onclick = () => {
                                                 this.store.dispatch(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));

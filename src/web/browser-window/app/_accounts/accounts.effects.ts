@@ -17,6 +17,7 @@ import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/st
 import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
 import {consumeMemoryRateLimiter, curryFunctionMembers, isDatabaseBootstrapped, testProtonCalendarAppPage} from "src/shared/util";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
+import {DESKTOP_NOTIFICATION_ICON_URL} from "src/web/constants";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {FIRE_SYNCING_ITERATION$} from "src/web/browser-window/app/app.constants";
 import {getWebLogger, sha256} from "src/web/browser-window/util";
@@ -165,9 +166,6 @@ export class AccountsEffects {
                         }),
                         withLatestFrom(
                             this.store.pipe(
-                                select(OptionsSelectors.FEATURED.trayIconDataURL),
-                            ),
-                            this.store.pipe(
                                 select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
                                 mergeMap((account) => account ? [account] : EMPTY),
                             ),
@@ -175,7 +173,7 @@ export class AccountsEffects {
                                 return {notificationTag: `calendar_notification_${await sha256(login)}`};
                             })()),
                         ),
-                        mergeMap(([notification, trayIconDataURL, {webviewSrcValues}, {notificationTag}]) => {
+                        mergeMap(([notification, {webviewSrcValues}, {notificationTag}]) => {
                             if (!("calendarNotification" in notification)) {
                                 return of(ACCOUNTS_ACTIONS.Patch({login, patch: {notifications: notification}}));
                             }
@@ -195,11 +193,11 @@ export class AccountsEffects {
                             new Notification(
                                 `${PRODUCT_NAME}: ${title}`,
                                 {
-                                    icon: trayIconDataURL,
                                     body: typeof options === "object"
                                         ? options.body
                                         : options,
                                     tag: notificationTag,
+                                    icon: DESKTOP_NOTIFICATION_ICON_URL,
                                 },
                             ).onclick = () => {
                                 this.store.dispatch(ACCOUNTS_ACTIONS.Select({login}));

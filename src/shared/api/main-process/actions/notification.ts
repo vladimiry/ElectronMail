@@ -33,7 +33,6 @@ export const IPC_MAIN_API_NOTIFICATION_ACTIONS = propsRecordToActionsRecord(
         SignedInStateChange: props<{ signedIn: boolean }>(),
         ErrorMessage: props<{ message: string }>(),
         InfoMessage: props<{ message: string }>(),
-        TrayIconDataURL: props<{ value: string }>(),
         PowerMonitor: props<{ message: "suspend" | "resume" | "shutdown" }>(),
         ProtonSessionTokenCookiesModified: props<{ key: DbModel.DbAccountPk }>(),
         NativeTheme: props<{ shouldUseDarkColors: boolean }>(),

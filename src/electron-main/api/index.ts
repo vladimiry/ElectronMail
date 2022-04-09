@@ -19,6 +19,7 @@ import {IPC_MAIN_API, IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {PACKAGE_NAME, PRODUCT_NAME, PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION} from "src/shared/constants";
+import {PLATFORM} from "src/electron-main/constants";
 import * as SpellCheck from "src/electron-main/spell-check/api";
 import {upgradeDatabase, upgradeSettings} from "src/electron-main/storage-upgrade";
 
@@ -79,6 +80,7 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
             return {
                 electronLocations: ctx.locations,
                 monacoEditorExtraLibArgs,
+                os: {platform: PLATFORM},
             };
         },
 

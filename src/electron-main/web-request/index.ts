@@ -14,7 +14,7 @@ import {
 import {Context} from "src/electron-main/model";
 import {CorsProxy} from "./model";
 import {getHeader, patchCorsResponseHeaders, patchSameSiteCookieRecord, resolveCorsProxy} from "./service";
-import {HEADERS} from "./const";
+import {HEADERS, STATIC_ALLOWED_ORIGINS} from "./const";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {resolveInitializedAccountSession} from "src/electron-main/session";
@@ -81,14 +81,9 @@ export function initWebRequestListenersByAccount(
     }
 
     const allowedOrigins: readonly string[] = [
+        ...STATIC_ALLOWED_ORIGINS,
         webClient.entryApiUrl,
         webClient.entryUrl,
-        "chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai",
-        ...(
-            BUILD_ENVIRONMENT === "development"
-                ? ["devtools://devtools"]
-                : []
-        ),
     ].map(parseUrlOriginWithNullishCheck);
 
     // according to electron docs "only the last attached listener will be used" so no need to unsubscribe previously registered handlers

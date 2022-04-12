@@ -14,3 +14,13 @@ export const HEADERS = {
         accessControlExposeHeaders: "Access-Control-Expose-Headers",
     },
 } as const;
+
+export const STATIC_ALLOWED_ORIGINS = [
+    "chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai", // chromium built-in "PDF viewer" extension
+    "https://fra-storage.protonmail.com", // proton-drive specific endpoint
+    ...(
+        BUILD_ENVIRONMENT === "development"
+            ? ["devtools://devtools"]
+            : []
+    ),
+] as const;

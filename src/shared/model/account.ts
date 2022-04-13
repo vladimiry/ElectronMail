@@ -21,7 +21,6 @@ export type AccountConfig = NoExtraProps<{
     rotateUserAgent?: boolean;
     disabled?: boolean;
     customCSS?: string;
-    contextMenu?: boolean;
     customNotification?: boolean;
     customNotificationCode?: string;
     notificationShellExec?: boolean;

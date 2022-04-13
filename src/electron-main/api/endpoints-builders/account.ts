@@ -38,7 +38,6 @@ export async function buildEndpoints(
                 customNotificationCode,
                 notificationShellExec,
                 notificationShellExecCode,
-                contextMenu,
                 customCSS,
                 title,
                 entryUrl,
@@ -64,7 +63,6 @@ export async function buildEndpoints(
                 customNotificationCode,
                 notificationShellExec,
                 notificationShellExecCode,
-                contextMenu,
                 customCSS,
                 title,
                 entryUrl,
@@ -99,7 +97,6 @@ export async function buildEndpoints(
                 customNotificationCode,
                 notificationShellExec,
                 notificationShellExecCode,
-                contextMenu,
                 customCSS,
                 title,
                 entryUrl,
@@ -144,7 +141,6 @@ export async function buildEndpoints(
                 account.customNotificationCode = customNotificationCode;
                 account.notificationShellExec = notificationShellExec;
                 account.notificationShellExecCode = notificationShellExecCode;
-                account.contextMenu = contextMenu;
                 account.customCSS = customCSS;
                 account.title = title;
                 account.database = database;

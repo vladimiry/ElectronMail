@@ -6,8 +6,10 @@ import {select, Store} from "@ngrx/store";
 import type {Unsubscribable} from "rxjs";
 import UUID from "pure-uuid";
 
-import {ACCOUNTS_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {AccountConfig} from "src/shared/model/account";
+import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
+import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount} from "src/web/browser-window/app/model";
 
@@ -126,19 +128,29 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
 
     @HostListener("contextmenu", ["$event"])
     onContextMenu(event: MouseEvent): void {
-        if (!this.stateSubject$.value.account.accountConfig.contextMenu) {
-            return;
-        }
         event.preventDefault();
         this.patchState({contextMenuOpen: true});
     }
 
     unloadContextMenuAction(event: MouseEvent): void {
         event.preventDefault();
+        event.stopPropagation();
+        this.patchState({contextMenuOpen: false});
         const uuid = new UUID(4).format();
         this.accountUnloadRollback.emit({accountUnloadRollbackUuid: uuid});
         this.store.dispatch(ACCOUNTS_ACTIONS.Unload({login: this.stateSubject$.value.account.accountConfig.login, uuid}));
+    }
+
+    editContextMenuAction(event: MouseEvent, {login}: Pick<AccountConfig, "login">): void {
+        event.preventDefault();
+        event.stopPropagation();
         this.patchState({contextMenuOpen: false});
+        this.store.dispatch(
+            NAVIGATION_ACTIONS.Go({
+                path: [{outlets: {[SETTINGS_OUTLET]: `${SETTINGS_PATH}/account-edit`}}],
+                queryParams: {login},
+            }),
+        );
     }
 
     toggleViewMode(event: Event): void {

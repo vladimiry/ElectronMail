@@ -32,7 +32,6 @@ export class AccountEditComponent implements OnInit, OnDestroy {
             | "customNotificationCode"
             | "notificationShellExec"
             | "notificationShellExecCode"
-            | "contextMenu"
             | "customCSS"
             | "login"
             | "title"
@@ -53,7 +52,6 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         customNotificationCode: new FormControl(null),
         notificationShellExec: new FormControl(false),
         notificationShellExecCode: new FormControl(null),
-        contextMenu: new FormControl(false),
         customCSS: new FormControl(null),
         blockNonEntryUrlBasedRequests: new FormControl(null),
         externalContentProxyUrlPattern: new FormControl(
@@ -215,7 +213,6 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                     "customNotificationCode",
                     "notificationShellExec",
                     "notificationShellExecCode",
-                    "contextMenu",
                     "customCSS",
                     "title",
                     "database",
@@ -291,7 +288,6 @@ export class AccountEditComponent implements OnInit, OnDestroy {
             customNotificationCode: controls.customNotificationCode.value,
             notificationShellExec: Boolean(controls.notificationShellExec.value),
             notificationShellExecCode: controls.notificationShellExecCode.value,
-            contextMenu: Boolean(controls.contextMenu.value),
             customCSS: controls.customCSS.value,
             entryUrl: controls.entryUrl.value,
             blockNonEntryUrlBasedRequests: Boolean(controls.blockNonEntryUrlBasedRequests.value),

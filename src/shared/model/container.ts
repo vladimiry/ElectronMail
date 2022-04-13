@@ -25,7 +25,6 @@ export type AccountConfigCreateUpdatePatch = NoExtraProps<Pick<AccountConfig,
     | "customNotificationCode"
     | "notificationShellExec"
     | "notificationShellExecCode"
-    | "contextMenu"
     | "customCSS"
     | "credentials"
     | "database"

@@ -590,6 +590,11 @@ export const upgradeSettings: upgradeSettingsType = ((): upgradeSettingsType => 
                     }
                 });
             },
+            "4.14.0": (settings: Settings): void => {
+                settings.accounts.forEach((account) => {
+                    delete (account as typeof account & { contextMenu?: boolean }).contextMenu;
+                });
+            },
         };
     }
 

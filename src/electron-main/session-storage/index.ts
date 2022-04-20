@@ -11,7 +11,9 @@ import {ApiEndpointOriginFieldContainer, LoginFieldContainer} from "src/shared/m
 import {curryFunctionMembers, verifyUrlOriginValue} from "src/shared/util";
 import {FsDb} from "src/shared/model/database";
 import {generateDataSaltBase64} from "src/electron-main/util";
-import {ONE_KB_BYTES, PROTON_API_ENTRY_TOR_V2_VALUE, PROTON_API_ENTRY_TOR_V3_VALUE} from "src/shared/constants";
+import {
+    ONE_KB_BYTES, PROTON_API_ENTRY_TOR_V2_VALUE, PROTON_API_ENTRY_TOR_V3_VALUE, PROTON_API_ENTRY_TOR_V4_VALUE,
+} from "src/shared/constants";
 import {SESSION_STORAGE_VERSION} from "src/electron-main/session-storage/const";
 import {SessionStorageModel} from "src/electron-main/session-storage/model";
 
@@ -115,6 +117,18 @@ export class SessionStorage {
         const version = typeof this.entity.version !== "number" || isNaN(this.entity.version)
             ? 0
             : this.entity.version;
+        const upgradeTorDomain = (domainFrom: string, domainTo: string): void => {
+            Object.entries(this.entity.instance).forEach(([/* login */, sessionBundle]) => {
+                if (!sessionBundle) {
+                    return;
+                }
+                const domainFromSession = (sessionBundle)[domainFrom];
+                if (domainFromSession) {
+                    sessionBundle[domainTo] = domainFromSession;
+                    delete sessionBundle[domainFrom];
+                }
+            });
+        };
         let shouldSave = false;
 
         if (version < 1) {
@@ -130,21 +144,15 @@ export class SessionStorage {
         }
         if (version < 2) {
             shouldSave = true;
-            const sessionBundleTorKeys = {v2: PROTON_API_ENTRY_TOR_V2_VALUE, v3: PROTON_API_ENTRY_TOR_V3_VALUE} as const;
-            Object.entries(this.entity.instance).forEach(([/* login */, sessionBundle]) => {
-                if (!sessionBundle) {
-                    return;
-                }
-                const v2TorSession: AccountPersistentSession | undefined = (sessionBundle)[sessionBundleTorKeys.v2];
-                if (v2TorSession) {
-                    sessionBundle[sessionBundleTorKeys.v3] = v2TorSession;
-                    delete sessionBundle[sessionBundleTorKeys.v2];
-                }
-            });
+            upgradeTorDomain(PROTON_API_ENTRY_TOR_V2_VALUE, PROTON_API_ENTRY_TOR_V3_VALUE);
         }
         if (version < 3) {
             shouldSave = true;
             this.entity.sessionStoragePatchInstance ??= {};
+        }
+        if (version < 4) {
+            shouldSave = true;
+            upgradeTorDomain(PROTON_API_ENTRY_TOR_V3_VALUE, PROTON_API_ENTRY_TOR_V4_VALUE);
         }
 
         return shouldSave;

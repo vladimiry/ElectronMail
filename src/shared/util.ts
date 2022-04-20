@@ -673,7 +673,7 @@ export const depersonalizeLoggedUrlsInString: depersonalizeLoggedUrlsInStringTyp
     // at the moment only proton urls get depersonalized, ie urls that start from the following urls
     //      https://app.protonmail.ch/
     //      https://mail.protonmail.com/
-    //      https://protonmailrmez3lotccipshtkleegetolb73fuirgj7r4o4vfu7ozyd.onion/
+    //      https://mail.protonmailrmez3lotccipshtkleegetolb73fuirgj7r4o4vfu7ozyd.onion/
     const protonUrlRe = new RegExp(PROTON_API_ENTRY_URLS.map((value) => `${value}/\\S*`).join("|"), "gi");
     const result: depersonalizeLoggedUrlsInStringType = (value) => {
         if (typeof value !== "string") {

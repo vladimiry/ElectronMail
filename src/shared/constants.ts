@@ -61,7 +61,10 @@ export const PROTON_API_ENTRY_PRIMARY_VALUE = "https://mail.protonmail.com";
 // @deprecated Tor v2 address will be retired by October 15, 2021
 export const PROTON_API_ENTRY_TOR_V2_VALUE = "https://protonirockerxow.onion";
 
+// @deprecated on 2022-04-20, see https://github.com/ProtonMail/WebClients/issues/271#issuecomment-1104398459
 export const PROTON_API_ENTRY_TOR_V3_VALUE = "https://protonmailrmez3lotccipshtkleegetolb73fuirgj7r4o4vfu7ozyd.onion";
+
+export const PROTON_API_ENTRY_TOR_V4_VALUE = "https://mail.protonmailrmez3lotccipshtkleegetolb73fuirgj7r4o4vfu7ozyd.onion";
 
 function getBuiltInWebClientTitle(): string {
     return PROVIDER_REPO_MAP["proton-mail"].tag;
@@ -77,7 +80,7 @@ export const PROTON_API_ENTRY_RECORDS: DeepReadonly<EntryUrlItem[]> = [
         title: `https://app.protonmail.ch (${getBuiltInWebClientTitle()})`,
     },
     {
-        value: PROTON_API_ENTRY_TOR_V3_VALUE,
+        value: PROTON_API_ENTRY_TOR_V4_VALUE,
         title: `Tor version 3 address (${getBuiltInWebClientTitle()})`,
     },
 ];

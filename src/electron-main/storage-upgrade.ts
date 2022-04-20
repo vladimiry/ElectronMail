@@ -18,7 +18,7 @@ import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {
     LAYOUT_MODES, PACKAGE_VERSION, PROTON_API_ENTRY_PRIMARY_VALUE, PROTON_API_ENTRY_TOR_V2_VALUE, PROTON_API_ENTRY_TOR_V3_VALUE,
-    PROTON_API_ENTRY_URLS, PROTON_API_ENTRY_VALUE_PREFIX, ZOOM_FACTORS,
+    PROTON_API_ENTRY_TOR_V4_VALUE, PROTON_API_ENTRY_URLS, PROTON_API_ENTRY_VALUE_PREFIX, ZOOM_FACTORS,
 } from "src/shared/constants";
 import {NumericBoolean} from "src/shared/model/common";
 import {parseProtonRestModel} from "src/shared/entity-util";
@@ -580,19 +580,22 @@ export const upgradeSettings: upgradeSettingsType = ((): upgradeSettingsType => 
                     settings.dataSaltBase64 = `any non empty value ${randomString(50)}`;
                 }
             },
-            "4.12.3": (settings): void => {
+            "4.14.0": (settings: Settings): void => {
+                settings.accounts.forEach((account) => {
+                    delete (account as typeof account & { contextMenu?: boolean }).contextMenu;
+                });
+            },
+            "4.14.1": (settings): void => {
                 settings.accounts.forEach((account, index) => {
                     if (account.entryUrl === PROTON_API_ENTRY_TOR_V2_VALUE) {
                         account.entryUrl = PROTON_API_ENTRY_TOR_V3_VALUE;
                     }
+                    if (account.entryUrl === PROTON_API_ENTRY_TOR_V3_VALUE) {
+                        account.entryUrl = PROTON_API_ENTRY_TOR_V4_VALUE;
+                    }
                     if (!PROTON_API_ENTRY_URLS.includes(account.entryUrl)) {
                         throw new Error(`Invalid entry url value: "${account.entryUrl}" (account index: ${index})`);
                     }
-                });
-            },
-            "4.14.0": (settings: Settings): void => {
-                settings.accounts.forEach((account) => {
-                    delete (account as typeof account & { contextMenu?: boolean }).contextMenu;
                 });
             },
         };

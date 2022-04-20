@@ -4,8 +4,8 @@ import path from "path";
 
 import {applyPatch, CONSOLE_LOG, execShell, resolveGitOutputBackupDir} from "scripts/lib";
 import {CWD_ABSOLUTE_DIR, GIT_CLONE_ABSOLUTE_DIR} from "scripts/const";
+import {PROTON_API_ENTRY_TOR_V4_VALUE, RUNTIME_ENV_CI_PROTON_CLIENTS_ONLY, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/constants";
 import {PROVIDER_APP_NAMES, PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
-import {RUNTIME_ENV_CI_PROTON_CLIENTS_ONLY, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/constants";
 
 const folderAsDomainEntries = [
     {
@@ -21,9 +21,9 @@ const folderAsDomainEntries = [
         },
     },
     {
-        folderNameAsDomain: "protonmailrmez3lotccipshtkleegetolb73fuirgj7r4o4vfu7ozyd.onion",
+        folderNameAsDomain: PROTON_API_ENTRY_TOR_V4_VALUE.substring("https://".length),
         options: {
-            configApiParam: "electron-mail:protonmailrmez3lotccipshtkleegetolb73fuirgj7r4o4vfu7ozyd.onion",
+            configApiParam: `electron-mail:${PROTON_API_ENTRY_TOR_V4_VALUE.substring("https://".length)}`,
         },
     },
 ] as const;

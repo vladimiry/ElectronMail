@@ -99,20 +99,6 @@ index bc23e00d8..82db68e53 100644
 +    return false;
  }
 
-diff --git a/applications/mail/src/app/components/header/AdvancedSearchDropdown.tsx b/applications/mail/src/app/components/header/AdvancedSearchDropdown.tsx
-index 567260eb0..7d56243a6 100644
---- a/applications/mail/src/app/components/header/AdvancedSearchDropdown.tsx
-+++ b/applications/mail/src/app/components/header/AdvancedSearchDropdown.tsx
-@@ -203,7 +203,7 @@ const AdvancedSearchDropdown = ({ keyword: fullInput = '', isNarrow }: Props) =>
-         loadingScheduledFeature;
-
-     // Switches
--    const showEncryptedSearch = !isMobile() && !!esFeature && !!esFeature.Value && !!isPaid(user);
-+    const showEncryptedSearch = false;
-     const showAdvancedSearch = !showEncryptedSearch || showMore;
-     const dropdownSearchButtonProps = {
-         ref: anchorRef,
-
 diff --git a/applications/mail/src/app/components/header/search/MailSearch.tsx b/applications/mail/src/app/components/header/search/MailSearch.tsx
 index 3faa0160b..e7b680365 100644
 --- a/applications/mail/src/app/components/header/search/MailSearch.tsx

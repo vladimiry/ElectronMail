@@ -51,6 +51,8 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         hideOnClose: new FormControl(),
         layoutMode: new FormControl(),
         customTrayIconColor: new FormControl(),
+        customTrayIconSize: new FormControl(),
+        customTrayIconSizeValue: new FormControl(),
         customUnreadBgColor: new FormControl(),
         customUnreadTextColor: new FormControl(),
         disableNotLoggedInTrayIndication: new FormControl(),
@@ -75,7 +77,6 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
 
     readonly colorPickerOpened: { bg: boolean; text: boolean; icon: boolean } = {bg: false, text: false, icon: false};
 
-    readonly processing$: Observable<boolean>;
     readonly $trayIconColor: Observable<string>;
     readonly $unreadBgColor: Observable<string>;
     readonly $unreadTextColor: Observable<string>;
@@ -92,10 +93,6 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         private readonly store: Store<State>,
         private readonly elementRef: ElementRef,
     ) {
-        this.processing$ = this.store.pipe(
-            select(OptionsSelectors.FEATURED.progress),
-            map((progress) => Boolean(progress.updatingBaseSettings)),
-        );
         this.$trayIconColor = this.store.pipe(select(OptionsSelectors.CONFIG.trayIconColor));
         this.$unreadBgColor = this.store.pipe(select(OptionsSelectors.CONFIG.unreadBgColor));
         this.$unreadTextColor = this.store.pipe(select(OptionsSelectors.CONFIG.unreadTextColor));

@@ -54,6 +54,8 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     calendarNotification: boolean
     checkUpdateAndNotify: boolean
     customTrayIconColor: string
+    customTrayIconSize: boolean
+    customTrayIconSizeValue: number
     customUnreadBgColor: string
     customUnreadTextColor: string
     disableNotLoggedInTrayIndication: boolean
@@ -77,6 +79,8 @@ export type BaseConfig = Pick<Config,
     | "calendarNotification"
     | "checkUpdateAndNotify"
     | "customTrayIconColor"
+    | "customTrayIconSize"
+    | "customTrayIconSizeValue"
     | "customUnreadBgColor"
     | "customUnreadTextColor"
     | "disableNotLoggedInTrayIndication"

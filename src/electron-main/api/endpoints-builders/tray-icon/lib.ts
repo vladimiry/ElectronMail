@@ -5,6 +5,7 @@ import {lanczos} from "@rgba-image/lanczos";
 import {nativeImage, NativeImage} from "electron";
 import {PassThrough} from "stream";
 
+import {BaseConfig} from "src/shared/model/options";
 import {CircleConfig, ImageBundle} from "./model";
 import {PLATFORM} from "src/electron-main/constants";
 
@@ -73,122 +74,126 @@ const cloneBitmap: (input: Pick<Bitmap, "width" | "height" | "data">) => Bitmap 
     return output;
 };
 
-type bitmapToNativeImageType = (source: Bitmap) => Promise<NativeImage>;
-
-const bitmapToNativeImage: bitmapToNativeImageType = (
-    (): bitmapToNativeImageType => {
-        // https://github.com/vladimiry/ElectronMail/issues/199#issuecomment-1072651640
-        const darwinSize = {width: 22, height: 22} as const;
-        const platformSpecificScale: (source: Bitmap) => Promise<Bitmap> = PLATFORM === "darwin"
-            ? async (source): ReturnType<typeof platformSpecificScale> => {
-                const sourceBits = source.data.byteLength / (source.width * source.height);
-                const dest = {
-                    data: Uint8ClampedArray.from(new Array(darwinSize.width * darwinSize.height * sourceBits)),
-                    ...darwinSize,
-                };
-
-                lanczos(
-                    {
-                        data: new Uint8ClampedArray(source.data),
-                        width: source.width,
-                        height: source.height,
-                    },
-                    dest,
-                );
-
-                const result = make(dest.width, dest.height, null);
-
-                result.data = Buffer.from(dest.data);
-
-                return result;
-            }
-            : async (source): ReturnType<typeof platformSpecificScale> => source;
-        const resultFn: bitmapToNativeImageType = async (source: Bitmap): Promise<NativeImage> => {
-            return nativeImage.createFromBuffer(
-                await encodePNGToBuffer(
-                    await platformSpecificScale(source),
-                ),
-            );
-        };
-        return resultFn;
-    }
-)();
+const bitmapToNativeImage = async (
+    source: Bitmap, config: Pick<BaseConfig, "customTrayIconSize" | "customTrayIconSizeValue">,
+): Promise<NativeImage> => {
+    const customSize = config.customTrayIconSize
+        ? config.customTrayIconSizeValue
+        : PLATFORM === "darwin"
+            ? 22 // https://github.com/vladimiry/ElectronMail/issues/199#issuecomment-1072651640
+            : null;
+    return nativeImage.createFromBuffer(
+        await encodePNGToBuffer(
+            typeof customSize === "number"
+                ? (() => {
+                    const sourceBits = source.data.byteLength / (source.width * source.height);
+                    const dest = {
+                        data: Uint8ClampedArray.from(new Array(customSize * customSize * sourceBits)),
+                        ...{width: customSize, height: customSize},
+                    };
+                    lanczos(
+                        {
+                            data: new Uint8ClampedArray(source.data),
+                            width: source.width,
+                            height: source.height,
+                        },
+                        dest,
+                    );
+                    const result = make(dest.width, dest.height, null);
+                    result.data = Buffer.from(dest.data);
+                    return result;
+                })()
+                : source
+        ),
+    );
+};
 
 export async function recolor(
     {source, fromColor, toColor}: Readonly<{ source: Bitmap; fromColor: string; toColor: string }>,
+    sizeConfig: Pick<BaseConfig, "customTrayIconSize" | "customTrayIconSizeValue">,
 ): Promise<ImageBundle> {
-    const hslColors = {
-        from: toHsl(fromColor),
-        to: toHsl(toColor),
-    } as const;
-    if (!hslColors.from || !hslColors.to) {
-        throw new Error(`Failed to parse some of the Hex colors: ${JSON.stringify({from: fromColor, toColor})}`);
-    }
-
-    const hslColorShift = {
-        hue: hslColors.to.hue - hslColors.from.hue,
-        sat: hslColors.to.sat - hslColors.from.sat,
-        lum: hslColors.to.lum - hslColors.from.lum,
-    } as const;
-
     const bitmap = cloneBitmap(source);
 
-    for (let x = 0; x < bitmap.width; x++) {
-        for (let y = 0; y < bitmap.height; y++) {
-            const [red, green, blue, alpha] = pureimageUInt32.getBytesBigEndian(
-                bitmap.getPixelRGBA(x, y),
-            );
+    if (toColor) {
+        const hslColors = {
+            from: toHsl(fromColor),
+            to: toHsl(toColor),
+        } as const;
 
-            // skip transparent / semi-transparent pixels
-            if (alpha < 10) {
-                continue;
+        if (!hslColors.from || !hslColors.to) {
+            throw new Error(`Failed to parse some of the Hex colors: ${JSON.stringify({from: fromColor, toColor})}`);
+        }
+
+        const hslColorShift = {
+            hue: hslColors.to.hue - hslColors.from.hue,
+            sat: hslColors.to.sat - hslColors.from.sat,
+            lum: hslColors.to.lum - hslColors.from.lum,
+        } as const;
+
+        for (let x = 0; x < bitmap.width; x++) {
+            for (let y = 0; y < bitmap.height; y++) {
+                const [red, green, blue, alpha] = pureimageUInt32.getBytesBigEndian(
+                    bitmap.getPixelRGBA(x, y),
+                );
+
+                // skip transparent / semi-transparent pixels
+                if (alpha < 10) {
+                    continue;
+                }
+
+                const hsl = rgbToHsl({red, green, blue});
+                if (!hsl) {
+                    throw new Error(`Failed to form HSL value from RGB color: ${JSON.stringify({red, green, blue})}`);
+                }
+
+                const newHsl = {
+                    hue: hsl.hue + hslColorShift.hue,
+                    sat: hsl.sat + hslColorShift.sat,
+                    lum: hsl.lum + hslColorShift.lum,
+                } as const;
+
+                const newRgb = hslToRgb(newHsl);
+                if (!newRgb) {
+                    throw new Error(`Failed to form RGB value from HSL color: ${JSON.stringify(newHsl)}`);
+                }
+
+                bitmap.setPixelRGBA(
+                    x,
+                    y,
+                    pureimageUInt32.fromBytesBigEndian(
+                        newRgb.red,
+                        newRgb.green,
+                        newRgb.blue,
+                        alpha,
+                    ),
+                );
             }
-
-            const hsl = rgbToHsl({red, green, blue});
-            if (!hsl) {
-                throw new Error(`Failed to form HSL value from RGB color: ${JSON.stringify({red, green, blue})}`);
-            }
-
-            const newHsl = {
-                hue: hsl.hue + hslColorShift.hue,
-                sat: hsl.sat + hslColorShift.sat,
-                lum: hsl.lum + hslColorShift.lum,
-            } as const;
-
-            const newRgb = hslToRgb(newHsl);
-            if (!newRgb) {
-                throw new Error(`Failed to form RGB value from HSL color: ${JSON.stringify(newHsl)}`);
-            }
-
-            bitmap.setPixelRGBA(
-                x,
-                y,
-                pureimageUInt32.fromBytesBigEndian(
-                    newRgb.red,
-                    newRgb.green,
-                    newRgb.blue,
-                    alpha,
-                ),
-            );
         }
     }
 
     return {
         bitmap,
-        native: await bitmapToNativeImage(bitmap),
+        native: await bitmapToNativeImage(bitmap, sizeConfig),
     };
 }
 
-export async function trayIconBundleFromPath(trayIconPath: string): Promise<ImageBundle> {
+export async function trayIconBundleFromPath(
+    trayIconPath: string,
+    sizeConfig: Pick<BaseConfig, "customTrayIconSize" | "customTrayIconSizeValue">,
+): Promise<ImageBundle> {
     const bitmap = await decodePNGFromStream(createReadStream(trayIconPath));
 
     return {
         bitmap,
-        native: await bitmapToNativeImage(bitmap),
+        native: await bitmapToNativeImage(bitmap, sizeConfig),
     };
 }
 
-export async function loggedOutBundle({bitmap: source}: ImageBundle, config: CircleConfig): Promise<ImageBundle> {
+export async function loggedOutBundle(
+    {bitmap: source}: ImageBundle,
+    config: CircleConfig,
+    sizeConfig: Pick<BaseConfig, "customTrayIconSize" | "customTrayIconSizeValue">,
+): Promise<ImageBundle> {
     const rad = (source.width * config.scale) / 2;
     const circle = buildCircle(rad, config.color);
     const {width, height} = circle;
@@ -199,7 +204,7 @@ export async function loggedOutBundle({bitmap: source}: ImageBundle, config: Cir
 
     return {
         bitmap,
-        native: await bitmapToNativeImage(bitmap),
+        native: await bitmapToNativeImage(bitmap, sizeConfig),
     };
 }
 
@@ -208,6 +213,7 @@ export async function unreadNative(
     fontFilePath: string,
     {bitmap: source}: ImageBundle,
     config: CircleConfig & { textColor: string },
+    sizeConfig: Pick<BaseConfig, "customTrayIconSize" | "customTrayIconSizeValue">,
 ): Promise<{
     icon: NativeImage;
     overlay: NativeImage;
@@ -262,7 +268,7 @@ export async function unreadNative(
         .drawImage(circle, 0, 0, width, height, icon.width - width, icon.height - height, width, height);
 
     return {
-        icon: await bitmapToNativeImage(icon),
-        overlay: await bitmapToNativeImage(circle),
+        icon: await bitmapToNativeImage(icon, sizeConfig),
+        overlay: await bitmapToNativeImage(circle, sizeConfig),
     };
 }

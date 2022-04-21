@@ -1,3 +1,4 @@
+import {keys} from "ts-transformer-keys";
 import {mapValues, pick} from "remeda";
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import type {RateLimiterMemory} from "rate-limiter-flexible";
@@ -102,6 +103,8 @@ export function initialConfig(): Config {
             calendarNotification: false,
             checkUpdateAndNotify: false,
             customTrayIconColor: "",
+            customTrayIconSize: false,
+            customTrayIconSizeValue: 22,
             customUnreadBgColor: "",
             customUnreadTextColor: "",
             disableNotLoggedInTrayIndication: false,
@@ -127,28 +130,7 @@ export const pickBaseConfigProperties = (
     config: Config,
 ): NoExtraProps<Required<BaseConfig>> => pick(
     config,
-    [
-        "calendarNotification",
-        "checkUpdateAndNotify",
-        "customTrayIconColor",
-        "customUnreadBgColor",
-        "customUnreadTextColor",
-        "disableNotLoggedInTrayIndication",
-        "disableSpamNotifications",
-        "doNotRenderNotificationBadgeValue",
-        "enableHideControlsHotkey",
-        "findInPage",
-        "fullTextSearch",
-        "hideControls",
-        "hideOnClose",
-        "idleTimeLogOutSec",
-        "layoutMode",
-        "logLevel",
-        "startHidden",
-        "themeSource",
-        "unreadNotifications",
-        "zoomFactor",
-    ],
+    keys<BaseConfig>(),
 );
 
 export const accountPickingPredicate: (criteria: LoginFieldContainer) => (account: AccountConfig) => boolean = ({login: criteriaLogin}) => {

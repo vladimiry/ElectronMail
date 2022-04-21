@@ -585,7 +585,7 @@ export const upgradeSettings: upgradeSettingsType = ((): upgradeSettingsType => 
                     delete (account as typeof account & { contextMenu?: boolean }).contextMenu;
                 });
             },
-            "4.14.1": (settings): void => {
+            "4.15.0": (settings): void => {
                 settings.accounts.forEach((account, index) => {
                     if (account.entryUrl === PROTON_API_ENTRY_TOR_V2_VALUE) {
                         account.entryUrl = PROTON_API_ENTRY_TOR_V3_VALUE;

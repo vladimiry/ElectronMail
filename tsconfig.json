@@ -61,6 +61,9 @@
       {
         "transform": "ts-nameof",
         "type": "raw"
+      },
+      {
+        "transform": "ts-transformer-keys/transformer"
       }
     ]
   },

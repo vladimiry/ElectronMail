@@ -151,6 +151,7 @@ specifiers:
   ts-nameof: 5.0.0
   ts-node: 10.7.0
   ts-patch: 2.0.1
+  ts-transformer-keys: 0.4.3
   tslib: ^2
   turndown: 7.1.1
   typescript: ^4
@@ -306,6 +307,7 @@ devDependencies:
   ts-nameof: 5.0.0_typescript@4.6.3
   ts-node: 10.7.0_e6a8a9b497f380f485f6d23f5cd591ca
   ts-patch: 2.0.1_typescript@4.6.3
+  ts-transformer-keys: 0.4.3_typescript@4.6.3
   tslib: 2.3.1
   turndown: 7.1.1
   typescript: 4.6.3
@@ -7967,6 +7969,14 @@ packages:
       resolve: 1.22.0
       shelljs: 0.8.5
       strip-ansi: 6.0.1
+      typescript: 4.6.3
+    dev: true
+
+  /ts-transformer-keys/0.4.3_typescript@4.6.3:
+    resolution: {integrity: sha512-pOTLlet1SnAvhKNr9tMAFwuv5283OkUNiq1fXTEK+vrSv+kxU3e2Ijr/UkqyX2vuMmvcNHdpXC31hob7ljH//g==}
+    peerDependencies:
+      typescript: '>=2.4.1'
+    dependencies:
       typescript: 4.6.3
     dev: true
 

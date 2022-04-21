@@ -1,15 +1,15 @@
-<fieldset [disabled]="(processing$ | async) || false">
-    <form
-        [formGroup]="form"
-        class="form-group m-0"
-        novalidate
-    >
-        <accordion class="mb-2">
-            <accordion-group [isOpen]="false" heading="Tray Icon & Unread Badge appearance">
-                <div class="form-group">
-                    <label class="d-block mb-2">
-                        Tray icon color
-                    </label>
+<form
+    [formGroup]="form"
+    class="form-group m-0"
+    novalidate
+>
+    <accordion class="mb-2">
+        <accordion-group [isOpen]="false" heading="Tray Icon & Unread Badge appearance">
+            <label class="d-block mb-2">
+                Tray icon
+            </label>
+            <div class="row">
+                <div class="col-sm-6 pb-1">
                     <input
                         (colorPickerChange)="trayIconColorPickerChangeHandler($event)"
                         *ngIf="($trayIconColor | async) as trayIconColor"
@@ -17,314 +17,335 @@
                         [cpOutputFormat]="'hex'"
                         [cpPosition]="'bottom'"
                         [cpToggle]="colorPickerOpened.icon"
-                        [value]="(trayIconColor) + ''"
+                        [value]="'color: ' + (trayIconColor)"
                         class="form-control form-control-sm"
                         readonly
                         style="cursor: pointer;"
                         type="text"
                     />
                 </div>
-                <div>
-                    <label class="d-block mb-2">
-                        Notification badge
-                        <electron-mail-unread-badge
-                            [value]="($unreadSummary | async) || 0"
-                        ></electron-mail-unread-badge>
-                        <div class="custom-control custom-switch float-md-right">
-                            <input
-                                class="custom-control-input"
-                                formControlName="doNotRenderNotificationBadgeValue"
-                                id="doNotRenderNotificationBadgeValueCheckbox"
-                                type="checkbox"
-                            >
-                            <label class="custom-control-label" for="doNotRenderNotificationBadgeValueCheckbox">
-                                Don't render the value
-                            </label>
-                        </div>
-                    </label>
-                    <div class="row">
-                        <div class="col-sm-6 pb-1">
-                            <input
-                                (colorPickerChange)="bgColorPickerChangeHandler($event)"
-                                *ngIf="($unreadBgColor | async) as unreadBgColor"
-                                [colorPicker]="unreadBgColor"
-                                [cpOutputFormat]="'hex'"
-                                [cpPosition]="'bottom'"
-                                [cpToggle]="colorPickerOpened.bg"
-                                [value]="'background: ' + (unreadBgColor)"
-                                class="form-control form-control-sm"
-                                readonly
-                                style="cursor: pointer;"
-                                type="text"
-                            />
-                        </div>
-                        <div class="col-sm-6 pb-1">
-                            <input
-                                (colorPickerChange)="textColorPickerChangeHandler($event)"
-                                *ngIf="($unreadTextColor | async) as unreadTextColor"
-                                [colorPicker]="unreadTextColor"
-                                [cpOutputFormat]="'hex'"
-                                [cpPosition]="'bottom'"
-                                [cpToggle]="colorPickerOpened.text"
-                                [value]="'text: ' + (unreadTextColor)"
-                                class="form-control form-control-sm"
-                                readonly
-                                style="cursor: pointer;"
-                                type="text"
-                            />
-                        </div>
-                    </div>
-                    <div class="custom-control custom-switch mt-2">
+                <div class="col-sm-6 pb-1 d-flex flex-row">
+                    <div class="custom-control custom-switch mr-2 d-flex align-items-center" style="white-space: nowrap;">
                         <input
                             class="custom-control-input"
-                            formControlName="disableNotLoggedInTrayIndication"
-                            id="disableNotLoggedInTrayIndicationCheckbox"
+                            formControlName="customTrayIconSize"
+                            id="customTrayIconSizeCheckbox"
                             type="checkbox"
                         >
-                        <label class="custom-control-label" for="disableNotLoggedInTrayIndicationCheckbox">
-                            Disable "not logged in" into the account tray icon indication (yellow dot).
+                        <label class="custom-control-label" for="customTrayIconSizeCheckbox">
+                            Custom size ({{ controls.customTrayIconSizeValue.value }})
                         </label>
                     </div>
+                    <input
+                        class="form-control form-control-sm d-flex"
+                        formControlName="customTrayIconSizeValue"
+                        min="16"
+                        max="128"
+                        type="range"
+                    >
                 </div>
-            </accordion-group>
-        </accordion>
-        <div class="custom-control custom-switch" [ngClass]="{'text-muted': controls.hideOnClose.disabled}">
+            </div>
+            <div class="custom-control custom-switch mt-2">
+                <input
+                    class="custom-control-input"
+                    formControlName="disableNotLoggedInTrayIndication"
+                    id="disableNotLoggedInTrayIndicationCheckbox"
+                    type="checkbox"
+                >
+                <label class="custom-control-label" for="disableNotLoggedInTrayIndicationCheckbox">
+                    Disable "not logged in" into the account indication (yellow dot)
+                </label>
+            </div>
+            <hr>
+            <div>
+                <label class="d-block mb-2">
+                    Notification badge
+                    <electron-mail-unread-badge
+                        [value]="($unreadSummary | async) || 0"
+                    ></electron-mail-unread-badge>
+                    <div class="custom-control custom-switch float-md-right">
+                        <input
+                            class="custom-control-input"
+                            formControlName="doNotRenderNotificationBadgeValue"
+                            id="doNotRenderNotificationBadgeValueCheckbox"
+                            type="checkbox"
+                        >
+                        <label class="custom-control-label" for="doNotRenderNotificationBadgeValueCheckbox">
+                            Don't render the value
+                        </label>
+                    </div>
+                </label>
+                <div class="row">
+                    <div class="col-sm-6 pb-1">
+                        <input
+                            (colorPickerChange)="bgColorPickerChangeHandler($event)"
+                            *ngIf="($unreadBgColor | async) as unreadBgColor"
+                            [colorPicker]="unreadBgColor"
+                            [cpOutputFormat]="'hex'"
+                            [cpPosition]="'bottom'"
+                            [cpToggle]="colorPickerOpened.bg"
+                            [value]="'background: ' + (unreadBgColor)"
+                            class="form-control form-control-sm"
+                            readonly
+                            style="cursor: pointer;"
+                            type="text"
+                        />
+                    </div>
+                    <div class="col-sm-6 pb-1">
+                        <input
+                            (colorPickerChange)="textColorPickerChangeHandler($event)"
+                            *ngIf="($unreadTextColor | async) as unreadTextColor"
+                            [colorPicker]="unreadTextColor"
+                            [cpOutputFormat]="'hex'"
+                            [cpPosition]="'bottom'"
+                            [cpToggle]="colorPickerOpened.text"
+                            [value]="'text: ' + (unreadTextColor)"
+                            class="form-control form-control-sm"
+                            readonly
+                            style="cursor: pointer;"
+                            type="text"
+                        />
+                    </div>
+                </div>
+            </div>
+        </accordion-group>
+    </accordion>
+    <div class="custom-control custom-switch" [ngClass]="{'text-muted': controls.hideOnClose.disabled}">
+        <input
+            class="custom-control-input"
+            formControlName="hideOnClose"
+            id="hideOnCloseCheckbox"
+            type="checkbox"
+        >
+        <label class="custom-control-label" for="hideOnCloseCheckbox">
+            Close to tray
+        </label>
+    </div>
+    <div class="custom-control custom-switch" [ngClass]="{'text-muted': controls.startHidden.disabled}">
+        <input
+            class="custom-control-input"
+            formControlName="startHidden"
+            id="startHiddenCheckbox"
+            type="checkbox"
+        >
+        <label class="custom-control-label" for="startHiddenCheckbox">
+            Start minimized to tray
+        </label>
+    </div>
+    <div class="custom-control custom-switch">
+        <input
+            class="custom-control-input"
+            formControlName="findInPage"
+            id="findInPageCheckbox"
+            type="checkbox"
+        >
+        <label class="custom-control-label" for="findInPageCheckbox">
+            Find in page (Ctrl+F)
+            <i
+                [placement]="'bottom'"
+                [popover]="findInPagePopoverTemplate"
+                class="fa fa-info-circle text-primary"
+                container="body"
+                triggers="mouseenter:mouseleave"
+            ></i>
+            <ng-template #findInPagePopoverTemplate>
+                <p>
+                    The <code>in page search</code> is only available within accounts page. So if you have no accounts added to the
+                    app then
+                    Ctrl+F hotkey will take no effect.
+                </p>
+                <p>
+                    The search window will be automatically closed on switching between accounts.
+                </p>
+                <p>
+                    Search window will be automatically closed on switching to the <code>database view</code> mode. Ctrl+F hotkey
+                    takes no effect
+                    while in <code>database view</code> mode.
+                </p>
+            </ng-template>
+        </label>
+    </div>
+    <div class="custom-control custom-switch">
+        <input
+            class="custom-control-input"
+            formControlName="checkUpdateAndNotify"
+            id="checkUpdateAndNotifyCheckbox"
+            type="checkbox"
+        >
+        <label class="custom-control-label" for="checkUpdateAndNotifyCheckbox">
+            Check for update and notify
+        </label>
+    </div>
+    <div class="custom-control custom-switch">
+        <input
+            class="custom-control-input"
+            formControlName="unreadNotifications"
+            id="unreadNotificationsCheckbox"
+            type="checkbox"
+        >
+        <label class="custom-control-label" for="unreadNotificationsCheckbox">
+            Desktop notifications for unread email messages
+        </label>
+    </div>
+    <div class="custom-control custom-switch">
+        <input
+            class="custom-control-input"
+            formControlName="calendarNotification"
+            id="calendarNotificationCheckbox"
+            type="checkbox"
+        >
+        <label class="custom-control-label" for="calendarNotificationCheckbox">
+            Desktop notifications for calendar events
+            <span class="badge badge-secondary">experimental</span>
+            <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/229#issuecomment-695130931">#229</a>
+        </label>
+    </div>
+    <hr>
+    <div class="custom-control custom-switch">
+        <input
+            class="custom-control-input"
+            formControlName="hideControls"
+            id="hideControlsCheckbox"
+            type="checkbox"
+        >
+        <label class="custom-control-label" for="hideControlsCheckbox">
+            Hide controls bar
+        </label>
+    </div>
+    <div class="custom-control custom-switch">
+        <input
+            class="custom-control-input"
+            formControlName="enableHideControlsHotkey"
+            id="enableHideControlsHotkeyCheckbox"
+            type="checkbox"
+        >
+        <label class="custom-control-label" for="enableHideControlsHotkeyCheckbox">
+            Enable F12 hotkey for hiding controls bar
+        </label>
+    </div>
+    <hr>
+    <div class="text-muted mb-2">
+        Switches of this block only make sense and take effect if the
+        <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/wiki/FAQ">local store</a> feature is enabled for at least
+        one email account.
+    </div>
+    <fieldset [disabled]="!(localStoreInUse$ | async) || false">
+        <div class="custom-control custom-switch">
             <input
                 class="custom-control-input"
-                formControlName="hideOnClose"
-                id="hideOnCloseCheckbox"
+                formControlName="fullTextSearch"
+                id="fullTextSearchCheckbox"
                 type="checkbox"
             >
-            <label class="custom-control-label" for="hideOnCloseCheckbox">
-                Close to tray
-            </label>
-        </div>
-        <div class="custom-control custom-switch" [ngClass]="{'text-muted': controls.startHidden.disabled}">
-            <input
-                class="custom-control-input"
-                formControlName="startHidden"
-                id="startHiddenCheckbox"
-                type="checkbox"
-            >
-            <label class="custom-control-label" for="startHiddenCheckbox">
-                Start minimized to tray
+            <label class="custom-control-label" for="fullTextSearchCheckbox">
+                Full-text search
             </label>
         </div>
         <div class="custom-control custom-switch">
             <input
                 class="custom-control-input"
-                formControlName="findInPage"
-                id="findInPageCheckbox"
+                formControlName="disableSpamNotifications"
+                id="disableSpamNotificationsCheckbox"
                 type="checkbox"
             >
-            <label class="custom-control-label" for="findInPageCheckbox">
-                Find in page (Ctrl+F)
+            <label class="custom-control-label" for="disableSpamNotificationsCheckbox">
+                Disable notifications on spam folders
+            </label>
+        </div>
+    </fieldset>
+    <hr>
+    <div class="row mb-2">
+        <div class="col-6">
+            <label class="d-block mb-2">
+                Controls view mode
+            </label>
+            <ng-select
+                [clearable]="false"
+                [items]="layoutModes"
+                [searchable]="false"
+                bindLabel="title"
+                bindValue="value"
+                formControlName="layoutMode"
+            ></ng-select>
+        </div>
+        <div class="col-6">
+            <label class="d-block mb-2">
+                Theme source
+            </label>
+            <ng-select
+                [clearable]="false"
+                [items]="themeSources"
+                [searchable]="false"
+                bindLabel="title"
+                bindValue="value"
+                formControlName="themeSource"
+            ></ng-select>
+        </div>
+    </div>
+    <fieldset [ngClass]="{'d-none': controls.zoomFactor.disabled}" class="mb-2">
+        <label class="d-block mb-2">
+            Page zoom
+            <span class="badge badge-secondary">experimental</span>
+        </label>
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <ng-select
+                    [clearable]="false"
+                    [items]="zoomFactors"
+                    [searchable]="false"
+                    bindLabel="title"
+                    bindValue="value"
+                    formControlName="zoomFactor"
+                ></ng-select>
+            </div>
+        </div>
+    </fieldset>
+    <div class="row mb-2">
+        <div class="col-sm-6">
+            <label class="d-block mb-2">
+                Log out after idle period
+                <span class="badge badge-secondary">experimental</span>
+            </label>
+            <ng-select
+                [clearable]="false"
+                [items]="idleTimeLogOutSecValues"
+                [searchable]="false"
+                bindLabel="title"
+                bindValue="valueSec"
+                formControlName="idleTimeLogOutSec"
+            ></ng-select>
+        </div>
+    </div>
+    <div class="row mb-2">
+        <div class="col-sm-6">
+            <label class="d-block mb-2">
+                Log level
                 <i
                     [placement]="'bottom'"
-                    [popover]="findInPagePopoverTemplate"
-                    class="fa fa-info-circle text-primary"
+                    [popover]="logLevelSelectPopoverTemplate"
+                    class="fa fa-info-circle text-warning align-self-center"
                     container="body"
                     triggers="mouseenter:mouseleave"
                 ></i>
-                <ng-template #findInPagePopoverTemplate>
-                    <p>
-                        The <code>in page search</code> is only available within accounts page. So if you have no accounts added to the
-                        app then
-                        Ctrl+F hotkey will take no effect.
-                    </p>
-                    <p>
-                        The search window will be automatically closed on switching between accounts.
-                    </p>
-                    <p>
-                        Search window will be automatically closed on switching to the <code>database view</code> mode. Ctrl+F hotkey
-                        takes no effect
-                        while in <code>database view</code> mode.
-                    </p>
+                <ng-template #logLevelSelectPopoverTemplate>
+                    Think twice before selecting a value other than <code>error</code>.
                 </ng-template>
             </label>
+            <ng-select
+                [clearable]="false"
+                [items]="logLevels"
+                [searchable]="false"
+                bindLabel="title"
+                bindValue="value"
+                formControlName="logLevel"
+                id="logLevelSelect"
+            ></ng-select>
+            <small class="text-muted mt-2">
+                The <code>log.log</code> file located in the
+                <a (click)="$event.preventDefault(); openSettingsFolder();" href="{{ userDataDir }}">
+                    settings folder
+                </a>
+            </small>
         </div>
-        <div class="custom-control custom-switch">
-            <input
-                class="custom-control-input"
-                formControlName="checkUpdateAndNotify"
-                id="checkUpdateAndNotifyCheckbox"
-                type="checkbox"
-            >
-            <label class="custom-control-label" for="checkUpdateAndNotifyCheckbox">
-                Check for update and notify
-            </label>
-        </div>
-        <div class="custom-control custom-switch">
-            <input
-                class="custom-control-input"
-                formControlName="unreadNotifications"
-                id="unreadNotificationsCheckbox"
-                type="checkbox"
-            >
-            <label class="custom-control-label" for="unreadNotificationsCheckbox">
-                Desktop notifications for unread email messages
-            </label>
-        </div>
-        <div class="custom-control custom-switch">
-            <input
-                class="custom-control-input"
-                formControlName="calendarNotification"
-                id="calendarNotificationCheckbox"
-                type="checkbox"
-            >
-            <label class="custom-control-label" for="calendarNotificationCheckbox">
-                Desktop notifications for calendar events
-                <span class="badge badge-secondary">experimental</span>
-                <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/229#issuecomment-695130931">#229</a>
-            </label>
-        </div>
-        <hr>
-        <div class="custom-control custom-switch">
-            <input
-                class="custom-control-input"
-                formControlName="hideControls"
-                id="hideControlsCheckbox"
-                type="checkbox"
-            >
-            <label class="custom-control-label" for="hideControlsCheckbox">
-                Hide controls bar
-            </label>
-        </div>
-        <div class="custom-control custom-switch">
-            <input
-                class="custom-control-input"
-                formControlName="enableHideControlsHotkey"
-                id="enableHideControlsHotkeyCheckbox"
-                type="checkbox"
-            >
-            <label class="custom-control-label" for="enableHideControlsHotkeyCheckbox">
-                Enable F12 hotkey for hiding controls bar
-            </label>
-        </div>
-        <hr>
-        <div class="text-muted mb-2">
-            Switches of this block only make sense and take effect if the
-            <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/wiki/FAQ">local store</a> feature is enabled for at least
-            one email account.
-        </div>
-        <fieldset [disabled]="!(localStoreInUse$ | async) || false">
-            <div class="custom-control custom-switch">
-                <input
-                    class="custom-control-input"
-                    formControlName="fullTextSearch"
-                    id="fullTextSearchCheckbox"
-                    type="checkbox"
-                >
-                <label class="custom-control-label" for="fullTextSearchCheckbox">
-                    Full-text search
-                </label>
-            </div>
-            <div class="custom-control custom-switch">
-                <input
-                    class="custom-control-input"
-                    formControlName="disableSpamNotifications"
-                    id="disableSpamNotificationsCheckbox"
-                    type="checkbox"
-                >
-                <label class="custom-control-label" for="disableSpamNotificationsCheckbox">
-                    Disable notifications on spam folders
-                </label>
-            </div>
-        </fieldset>
-        <hr>
-        <div class="row mb-2">
-            <div class="col-6">
-                <label class="d-block mb-2">
-                    Controls view mode
-                </label>
-                <ng-select
-                    [clearable]="false"
-                    [items]="layoutModes"
-                    [searchable]="false"
-                    bindLabel="title"
-                    bindValue="value"
-                    formControlName="layoutMode"
-                ></ng-select>
-            </div>
-            <div class="col-6">
-                <label class="d-block mb-2">
-                    Theme source
-                </label>
-                <ng-select
-                    [clearable]="false"
-                    [items]="themeSources"
-                    [searchable]="false"
-                    bindLabel="title"
-                    bindValue="value"
-                    formControlName="themeSource"
-                ></ng-select>
-            </div>
-        </div>
-        <fieldset [ngClass]="{'d-none': controls.zoomFactor.disabled}" class="mb-2">
-            <label class="d-block mb-2">
-                Page zoom
-                <span class="badge badge-secondary">experimental</span>
-            </label>
-            <div class="row mb-2">
-                <div class="col-sm-6">
-                    <ng-select
-                        [clearable]="false"
-                        [items]="zoomFactors"
-                        [searchable]="false"
-                        bindLabel="title"
-                        bindValue="value"
-                        formControlName="zoomFactor"
-                    ></ng-select>
-                </div>
-            </div>
-        </fieldset>
-        <div class="row mb-2">
-            <div class="col-sm-6">
-                <label class="d-block mb-2">
-                    Log out after idle period
-                    <span class="badge badge-secondary">experimental</span>
-                </label>
-                <ng-select
-                    [clearable]="false"
-                    [items]="idleTimeLogOutSecValues"
-                    [searchable]="false"
-                    bindLabel="title"
-                    bindValue="valueSec"
-                    formControlName="idleTimeLogOutSec"
-                ></ng-select>
-            </div>
-        </div>
-        <div class="row mb-2">
-            <div class="col-sm-6">
-                <label class="d-block mb-2">
-                    Log level
-                    <i
-                        [placement]="'bottom'"
-                        [popover]="logLevelSelectPopoverTemplate"
-                        class="fa fa-info-circle text-warning align-self-center"
-                        container="body"
-                        triggers="mouseenter:mouseleave"
-                    ></i>
-                    <ng-template #logLevelSelectPopoverTemplate>
-                        Think twice before selecting a value other than <code>error</code>.
-                    </ng-template>
-                </label>
-                <ng-select
-                    [clearable]="false"
-                    [items]="logLevels"
-                    [searchable]="false"
-                    bindLabel="title"
-                    bindValue="value"
-                    formControlName="logLevel"
-                    id="logLevelSelect"
-                ></ng-select>
-                <small class="text-muted mt-2">
-                    The <code>log.log</code> file located in the
-                    <a (click)="$event.preventDefault(); openSettingsFolder();" href="{{ userDataDir }}">
-                        settings folder
-                    </a>
-                </small>
-            </div>
-        </div>
-    </form>
-</fieldset>
+    </div>
+</form>

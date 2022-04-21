@@ -21,7 +21,7 @@ export const PROVIDER_REPO_MAP = {
     [PROVIDER_APP_NAMES[0]]: {
         repoRelativeDistDir: "./dist",
         basePath: "",
-        tag: "proton-mail@4.20.5",
+        tag: "proton-mail@4.20.6",
         protonPack: {
             webpackIndexEntryItems: [
                 // immediate

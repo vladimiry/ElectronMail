@@ -43,7 +43,6 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     jsFlags: string[]
     commandLineSwitches: Array<string | [name: string, value?: string]>
     localDbMailsListViewMode: "plain" | "conversation"
-    userAgents: string[]
     zoomFactorDisabled: boolean;
     persistentSessionSavingInterval: number;
     dbSyncingIntervalTrigger: number;

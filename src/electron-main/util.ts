@@ -2,15 +2,17 @@ import _logger from "electron-log";
 import {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import {format as formatURL} from "url";
 import fs from "fs";
-import {nativeTheme, Session} from "electron";
+import {nativeTheme, session as electronSession, Session} from "electron";
 import path from "path";
 import {randomBytes} from "crypto";
 import {Model as StoreModel} from "fs-json-store";
 
+import {AccountConfig} from "src/shared/model/account";
 import {buildInitialVendorsAppCssLinks, curryFunctionMembers, getRandomInt} from "src/shared/util";
 import {Config} from "src/shared/model/options";
 import {Context} from "./model";
 import {createSessionUtil} from "src/electron-main/session";
+import {PACKAGE_NAME} from "src/shared/constants";
 
 const logger = curryFunctionMembers(_logger, __filename);
 
@@ -76,7 +78,7 @@ export function readConfigSync({configStore}: DeepReadonly<Context>): import("ts
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         configFile = configStore.fs._impl.readFileSync(configStore.file); // eslint-disable-line @typescript-eslint/no-unsafe-call
     } catch (error) {
-        if ((Object(error) as {code?: unknown}).code !== "ENOENT") {
+        if ((Object(error) as { code?: unknown }).code !== "ENOENT") {
             throw error;
         }
     }
@@ -106,4 +108,19 @@ export const resolveUiContextStrict = async (ctx: Context): Promise<Exclude<Cont
         throw new Error(`"${nameof(uiContext)}" has not been initialized`);
     }
     return uiContext;
+};
+
+export const getPurifiedUserAgent = (userAgent: string): string => {
+    const appNameRe = new RegExp(`${PACKAGE_NAME}[\\/\\S]+`, "i");
+    const electronRe = new RegExp("electron", "i");
+    return userAgent
+        .split(appNameRe)
+        .join("")
+        .split(/\s+/)
+        .filter((chunk) => !electronRe.exec(chunk))
+        .join(" ");
+};
+
+export const getUserAgentByAccount = ({customUserAgent}: Pick<AccountConfig, "customUserAgent">): string => {
+    return customUserAgent || getPurifiedUserAgent(electronSession.defaultSession.getUserAgent());
 };

@@ -14,6 +14,7 @@ import {
 import {Context} from "src/electron-main/model";
 import {CorsProxy} from "./model";
 import {getHeader, patchCorsResponseHeaders, patchSameSiteCookieRecord, resolveCorsProxy} from "./service";
+import {getUserAgentByAccount} from "src/electron-main/util";
 import {HEADERS, STATIC_ALLOWED_ORIGINS} from "./const";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
@@ -71,6 +72,7 @@ export function initWebRequestListenersByAccount(
         externalContentProxyUrlPattern,
         enableExternalContentProxy,
         blockNonEntryUrlBasedRequests,
+        customUserAgent,
     }: DeepReadonly<AccountConfig>,
 ): void {
     const session = resolveInitializedAccountSession({login});
@@ -192,10 +194,17 @@ export function initWebRequestListenersByAccount(
 
             if (corsProxy) {
                 {
-                    const {name} = getHeader(requestHeaders, HEADERS.request.origin) || {name: HEADERS.request.origin};
-                    requestHeaders[name] = resolveFakeOrigin(details);
+                    const {name: headerName} = getHeader(requestHeaders, HEADERS.request.origin) ?? {name: HEADERS.request.origin};
+                    requestHeaders[headerName] = resolveFakeOrigin(details);
                     requestProxyCache.patch(details, {corsProxy});
                 }
+            }
+
+            {
+                // the "session.setUserAgent()" makes an effect only once (first call, see the docs)
+                // so we resolve and set the header explicitly for each request
+                const {name: headerName} = getHeader(requestHeaders, HEADERS.request.userAgent) ?? {name: HEADERS.request.userAgent};
+                requestHeaders[headerName] = getUserAgentByAccount({customUserAgent});
             }
 
             callback({requestHeaders});

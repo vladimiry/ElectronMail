@@ -5,6 +5,7 @@ export const HEADERS = {
         accessControlRequestHeaders: "Access-Control-Request-Headers",
         accessControlRequestMethod: "Access-Control-Request-Method",
         contentType: "Content-Type",
+        userAgent: "User-Agent",
     },
     response: {
         accessControlAllowCredentials: "Access-Control-Allow-Credentials",

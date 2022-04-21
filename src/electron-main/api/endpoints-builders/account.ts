@@ -47,7 +47,7 @@ export async function buildEndpoints(
                 database,
                 localStoreViewByDefault,
                 persistentSession,
-                rotateUserAgent,
+                customUserAgent,
                 credentials,
                 proxy,
                 loginDelayUntilSelected,
@@ -72,7 +72,7 @@ export async function buildEndpoints(
                 database,
                 localStoreViewByDefault,
                 persistentSession,
-                rotateUserAgent,
+                customUserAgent,
                 credentials,
                 proxy,
                 loginDelayUntilSelected,
@@ -106,7 +106,7 @@ export async function buildEndpoints(
                 database,
                 localStoreViewByDefault,
                 persistentSession,
-                rotateUserAgent,
+                customUserAgent,
                 credentials,
                 proxy,
                 loginDelayUntilSelected,
@@ -134,6 +134,8 @@ export async function buildEndpoints(
                     account.externalContentProxyUrlPattern !== externalContentProxyUrlPattern
                     ||
                     account.enableExternalContentProxy !== enableExternalContentProxy
+                    ||
+                    account.customUserAgent !== customUserAgent
                 );
                 logger.verbose(JSON.stringify({shouldConfigureSession}));
 
@@ -146,7 +148,7 @@ export async function buildEndpoints(
                 account.database = database;
                 account.localStoreViewByDefault = localStoreViewByDefault;
                 account.persistentSession = persistentSession;
-                account.rotateUserAgent = rotateUserAgent;
+                account.customUserAgent = customUserAgent;
                 account.entryUrl = entryUrl;
                 account.blockNonEntryUrlBasedRequests = blockNonEntryUrlBasedRequests;
                 account.externalContentProxyUrlPattern = externalContentProxyUrlPattern;

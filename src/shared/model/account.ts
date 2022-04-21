@@ -18,7 +18,7 @@ export type AccountConfig = NoExtraProps<{
     loginDelayUntilSelected?: boolean;
     loginDelaySecondsRange?: NoExtraProps<{ start: number; end: number }>;
     persistentSession?: boolean;
-    rotateUserAgent?: boolean;
+    customUserAgent?: string;
     disabled?: boolean;
     customCSS?: string;
     customNotification?: boolean;

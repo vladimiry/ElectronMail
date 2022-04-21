@@ -43,7 +43,6 @@ export interface Context {
         databaseView?: boolean;
     };
     getSpellCheckController: () => SpellCheckController;
-    userAgentsPool?: Config["userAgents"];
 }
 
 export interface UIContext {

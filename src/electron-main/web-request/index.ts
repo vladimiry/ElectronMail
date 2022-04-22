@@ -86,6 +86,10 @@ export function initWebRequestListenersByAccount(
         ...STATIC_ALLOWED_ORIGINS,
         webClient.entryApiUrl,
         webClient.entryUrl,
+        ((): string => {
+            const {hostname, protocol} = new URL(webClient.entryApiUrl);
+            return `${protocol}//storage.${hostname.split(".").slice(-2).join(".")}`; // proton-drive specific endpoint
+        })(),
     ].map(parseUrlOriginWithNullishCheck);
 
     // according to electron docs "only the last attached listener will be used" so no need to unsubscribe previously registered handlers

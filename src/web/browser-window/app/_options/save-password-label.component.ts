@@ -7,7 +7,7 @@ import {getWebLogger} from "src/web/browser-window/util";
 import {NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {PACKAGE_GITHUB_PROJECT_URL_TOKEN} from "src/web/browser-window/app/app.constants";
-import {PACKAGE_NAME} from "src/shared/constants";
+import {PACKAGE_NAME} from "src/shared/const";
 import {SAVE_PASSWORD_WARN_TRUSTED_HTML} from "./const";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 

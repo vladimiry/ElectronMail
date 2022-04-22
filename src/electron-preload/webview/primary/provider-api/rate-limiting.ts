@@ -3,8 +3,8 @@ import UUID from "pure-uuid";
 
 import {assertTypeOf, asyncDelay, consumeMemoryRateLimiter, curryFunctionMembers} from "src/shared/util";
 import {Logger} from "src/shared/model/common";
-import {ONE_SECOND_MS} from "src/shared/constants";
-import {PROVIDER_APP_NAMES} from "src/shared/proton-apps-constants";
+import {ONE_SECOND_MS} from "src/shared/const";
+import {PROVIDER_APP_NAMES} from "src/shared/const/proton-apps";
 import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
 import {resolveCachedConfig} from "src/electron-preload/lib/util";
 

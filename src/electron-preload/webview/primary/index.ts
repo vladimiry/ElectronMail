@@ -1,7 +1,8 @@
 const main = async (): Promise<void> => {
     const [
         {WEBVIEW_LOGGERS},
-        {curryFunctionMembers, testProtonMailAppPage, getPlainErrorProps},
+        {curryFunctionMembers, getPlainErrorProps},
+        {testProtonMailAppPage},
         {documentCookiesForCustomScheme, getLocationHref},
         {initProviderApi},
         {registerApi},
@@ -10,13 +11,13 @@ const main = async (): Promise<void> => {
     ] = await Promise.all([
         import("src/electron-preload/webview/lib/const"),
         import("src/shared/util"),
+        import("src/shared/util/proton-webclient"),
         import("src/electron-preload/webview/lib/util"),
         import("./provider-api"),
         import("./api"),
         import("src/electron-preload/webview/lib/custom-event"),
         import("./provider-api/setup"),
     ]);
-
     const logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, __filename);
     const protonAppPageStatus = testProtonMailAppPage({url: getLocationHref(), logger});
 

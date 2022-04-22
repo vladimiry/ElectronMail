@@ -1,23 +1,25 @@
-import {concatMap} from "rxjs/operators";
+import {concatMap, first} from "rxjs/operators";
 import electronLog from "electron-log";
 import {session as electronSession, Session} from "electron";
 import {from, lastValueFrom, race, throwError, timer} from "rxjs";
 
-import {AccountConfig} from "src/shared/model/account";
-import {Context} from "./model";
-import {curryFunctionMembers, getWebViewPartition} from "src/shared/util";
-import {filterProtonSessionTokenCookies, getPurifiedUserAgent, getUserAgentByAccount} from "src/electron-main/util";
+import type {AccountConfig} from "src/shared/model/account";
+import type {AccountSessionAppData, Context} from "./model";
+import {curryFunctionMembers} from "src/shared/util";
+import {filterProtonSessionApplyingCookies, getPurifiedUserAgent, getUserAgentByAccount} from "src/electron-main/util";
+import {getWebViewPartitionName} from "src/shared/util/proton-webclient";
 import {initWebRequestListenersByAccount} from "src/electron-main/web-request";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
-import {LoginFieldContainer} from "src/shared/model/container";
-import {ONE_SECOND_MS} from "src/shared/constants";
-import {registerSessionProtocols} from "src/electron-main/protocol";
+import {ONE_SECOND_MS} from "src/shared/const";
+import {PLATFORM} from "src/electron-main/constants";
+import {PROTON_API_ENTRY_URLS} from "src/shared/const/proton-url";
+import {registerAccountSessionProtocols} from "src/electron-main/protocol";
 
 const _logger = curryFunctionMembers(electronLog, __filename);
 
 type createSessionUtilType = {
-    readonly create: (partition: string) => Session
+    readonly create: (partition: string) => Session & Partial<AccountSessionAppData>;
     readonly createdBefore: (partition: string) => boolean
     readonly fromPartition: (partition: string) => Session
 };
@@ -77,20 +79,33 @@ export const createSessionUtil: createSessionUtilType = (() => {
     };
 })();
 
-export const resolveInitializedAccountSession = ({login}: DeepReadonly<LoginFieldContainer>): Session => {
+export const resolveInitializedAccountSession = (
+    {login, entryUrl}: DeepReadonly<Pick<AccountConfig, "login" | "entryUrl">>,
+): Session => {
     return createSessionUtil.fromPartition(
-        getWebViewPartition(login),
+        getWebViewPartitionName({login, entryUrl}),
     );
 };
 
+export const enableNetworkEmulationToAllAccountSessions = (
+    {login}: DeepReadonly<Pick<AccountConfig, "login">>,
+    value: "offline" | "online",
+): void => {
+    for (const entryUrl of PROTON_API_ENTRY_URLS) {
+        // at this stage all the account session are supposed to be initialized (account sessions get initialized eagerly)
+        const session = resolveInitializedAccountSession({login, entryUrl});
+        session.enableNetworkEmulation({offline: value === "offline"});
+    }
+};
+
 export const configureSessionByAccount = async (
-    ctx: DeepReadonly<Context>,
-    account: DeepReadonly<AccountConfig>,
+    account: DeepReadonly<StrictOmit<AccountConfig, "entryUrl">>,
+    {entryUrl}: DeepReadonly<Pick<AccountConfig, "entryUrl">>,
 ): Promise<void> => {
     _logger.info(nameof(configureSessionByAccount));
 
     const {proxy} = account;
-    const session = resolveInitializedAccountSession({login: account.login});
+    const session = resolveInitializedAccountSession({login: account.login, entryUrl});
     const proxyConfig = {
         ...{
             pacScript: "",
@@ -103,9 +118,8 @@ export const configureSessionByAccount = async (
         }),
     };
 
-    session.setUserAgent(getUserAgentByAccount(account));
-
-    initWebRequestListenersByAccount(ctx, account);
+    session.setUserAgent(getUserAgentByAccount({customUserAgent: account.customUserAgent}));
+    initWebRequestListenersByAccount({...account, entryUrl});
 
     await lastValueFrom(
         race(
@@ -119,54 +133,80 @@ export const configureSessionByAccount = async (
     );
 };
 
-export const initSessionByAccount = async (
+export const resetSessionStorages = async (
     ctx: DeepReadonly<Context>,
-    // eslint-disable-next-line max-len
-    account: DeepReadonly<AccountConfig>,
+    {login, apiEndpointOrigin}: DeepReadonly<{ login: string, apiEndpointOrigin: string }>,
 ): Promise<void> => {
-    const logger = curryFunctionMembers(_logger, nameof(initSessionByAccount));
+    const session = resolveInitializedAccountSession({login, entryUrl: apiEndpointOrigin});
+    const config = await lastValueFrom(ctx.config$.pipe(first()));
+    const {timeouts: {clearSessionStorageData: timeoutMs}} = config;
+
+    // delete session._documentCookieJar_;
+
+    await lastValueFrom(
+        race(
+            from(
+                // TODO e2e / playwright: "session.clearStorageData()" hangs when executed e2e test flow on "win32" system
+                BUILD_ENVIRONMENT === "e2e" && PLATFORM === "win32"
+                    ? Promise.resolve()
+                    : session.clearStorageData()
+            ),
+            timer(timeoutMs).pipe(
+                concatMap(() => throwError(new Error(`Session clearing failed in ${timeoutMs}ms`))),
+            ),
+        ),
+    );
+};
+
+export const initAccountSessions = async (
+    ctx: DeepReadonly<Context>,
+    account: DeepReadonly<StrictOmit<AccountConfig, "entryUrl">>,
+): Promise<void> => {
+    const logger = curryFunctionMembers(_logger, nameof(initAccountSessions));
 
     logger.info();
 
-    const partition = getWebViewPartition(account.login);
+    // account sessions get initialized eagerly
+    for (const entryUrl of PROTON_API_ENTRY_URLS) {
+        const partition = getWebViewPartitionName({login: account.login, entryUrl});
 
-    if (createSessionUtil.createdBefore(partition)) {
-        return;
-    }
+        if (createSessionUtil.createdBefore(partition)) {
+            // resetting the session to handle to case when account was removed and then added again
+            // TODO drop the account's session on account removing instead of dropping the session's stores
+            //      currently @electron doesn't support sessions removing
+            await resetSessionStorages(ctx, {login: account.login, apiEndpointOrigin: entryUrl});
+            continue;
+        }
 
-    const session = createSessionUtil.create(partition);
+        const session = createSessionUtil.create(partition);
 
-    await registerSessionProtocols(ctx, session);
-    await configureSessionByAccount(ctx, account);
+        session["_electron_mail_data_"] = {entryUrl};
 
-    {
-        type Cause = "explicit" | "overwrite" | "expired" | "evicted" | "expired-overwrite";
+        await registerAccountSessionProtocols(ctx, session as (typeof session & Required<Pick<typeof session, "_electron_mail_data_">>));
+        await configureSessionByAccount(account, {entryUrl});
 
-        const skipCauses: ReadonlyArray<Cause> = ["expired", "evicted", "expired-overwrite"];
-
-        session.cookies.on(
-            "changed",
-            // TODO electron/TS: drop explicit callback args typing (currently typed as Function in electron.d.ts)
-            (...[, cookie, cause, removed]: [
-                event: unknown,
-                cookie: Electron.Cookie,
-                cause: "explicit" | "overwrite" | "expired" | "evicted" | "expired-overwrite",
-                removed: boolean
-            ]) => {
-                if (removed || skipCauses.includes(cause)) {
-                    return;
-                }
-
-                const protonSessionTokenCookies = filterProtonSessionTokenCookies([cookie]);
-
-                if (protonSessionTokenCookies.accessTokens.length || protonSessionTokenCookies.refreshTokens.length) {
-                    logger.verbose("proton session token cookies modified");
-
-                    IPC_MAIN_API_NOTIFICATION$.next(
-                        IPC_MAIN_API_NOTIFICATION_ACTIONS.ProtonSessionTokenCookiesModified({key: {login: account.login}}),
-                    );
-                }
-            },
-        );
+        {
+            const causesToSkip: ReadonlyArray<Parameters<Parameters<typeof session.cookies.on>[1]>[2]>
+                = ["expired", "evicted", "expired-overwrite"];
+            session.cookies.on(
+                "changed",
+                (...[, cookie, cause, removed]) => {
+                    if (removed || causesToSkip.includes(cause)) {
+                        return;
+                    }
+                    const {
+                        accessTokens: {length: count1},
+                        refreshTokens: {length: count2},
+                        sessionIds: {length: count3},
+                    } = filterProtonSessionApplyingCookies([cookie]);
+                    if (count1 || count2 || count3) {
+                        logger.verbose("proton session token cookies modified");
+                        IPC_MAIN_API_NOTIFICATION$.next(
+                            IPC_MAIN_API_NOTIFICATION_ACTIONS.ProtonSessionTokenCookiesModified({key: {login: account.login}}),
+                        );
+                    }
+                },
+            );
+        }
     }
 };

@@ -10,9 +10,9 @@ import {DbAccountPk, FsDbAccount, INDEXABLE_MAIL_FIELDS, Mail} from "src/shared/
 import {hrtimeDuration} from "src/electron-main/util";
 import {IPC_MAIN_API_DB_INDEXER_REQUEST$, IPC_MAIN_API_DB_INDEXER_RESPONSE$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS} from "src/shared/api/main-process/actions";
-import {ofType} from "src/shared/ngrx-util-of-type";
-import {readMailBody} from "src/shared/entity-util";
-import {UnionOf} from "src/shared/ngrx-util";
+import {ofType} from "src/shared/util/ngrx-of-type";
+import {readMailBody} from "src/shared/util/entity";
+import {UnionOf} from "src/shared/util/ngrx";
 
 const logger = curryFunctionMembers(electronLog, __filename);
 

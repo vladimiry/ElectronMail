@@ -5,7 +5,8 @@ import {asyncDelay} from "src/shared/util";
 import {Config} from "src/shared/model/options";
 import {initAppWithTestContext} from "src/e2e/lib/init-app";
 import {IS_CI} from "src/e2e/lib/const";
-import {ONE_SECOND_MS, PROTON_API_ENTRY_URLS} from "src/shared/constants";
+import {ONE_SECOND_MS} from "src/shared/const";
+import {PROTON_API_ENTRY_URLS} from "src/shared/const/proton-url";
 import {test} from "./lib/test";
 
 test("general actions: app start, master password setup, add accounts", async () => {

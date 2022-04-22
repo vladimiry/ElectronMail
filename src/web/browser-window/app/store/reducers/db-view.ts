@@ -5,7 +5,7 @@ import * as fromRoot from "src/web/browser-window/app/store/reducers/root";
 import {Mail, View} from "src/shared/model/database";
 import {mailDateComparatorDefaultsToDesc, walkConversationNodesTree} from "src/shared/util";
 import {resolveDbViewInstanceKey} from "src/web/browser-window/util";
-import {UnionOf} from "src/shared/ngrx-util";
+import {UnionOf} from "src/shared/util/ngrx";
 
 export const featureName = "db-view";
 

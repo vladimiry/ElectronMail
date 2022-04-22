@@ -38,7 +38,7 @@ export const outputRelativePath = (...value: string[]): string => {
 };
 
 export const resolveExistingFile = (file: string): string => {
-    const result = path.resolve(file);
+    const result = path.join(file);
     if (!fsExtra.pathExistsSync(result)) {
         throw new Error(`File "${file}" doesn't exist`);
     }

@@ -2,16 +2,14 @@ import electronLog from "electron-log";
 import {equals} from "remeda";
 
 import {AccountConfig} from "src/shared/model/account";
-import {assertTypeOf, curryFunctionMembers, pickAccountStrict, validateExternalContentProxyUrlPattern} from "src/shared/util";
-import {configureSessionByAccount, initSessionByAccount} from "src/electron-main/session";
+import {assertEntryUrl} from "src/electron-main/util";
+import {configureSessionByAccount, enableNetworkEmulationToAllAccountSessions, initAccountSessions} from "src/electron-main/session";
 import {Context} from "src/electron-main/model";
+import {curryFunctionMembers, pickAccountStrict} from "src/shared/util";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
+import {validateExternalContentProxyUrlPattern} from "src/shared/util/url";
 
 const _logger = curryFunctionMembers(electronLog, __filename);
-
-const assertEntryUrl = (value: string): void | never => {
-    assertTypeOf({value, expectedType: "string"}, `Invalid "API entry point" value.`);
-};
 
 const assertExternalContentProxyUrlPattern = (
     arg: Pick<NoExtraProps<DeepReadonly<AccountConfig>>, "externalContentProxyUrlPattern" | "enableExternalContentProxy">,
@@ -26,6 +24,7 @@ export async function buildEndpoints(
 ): Promise<Pick<IpcMainApiEndpoints,
     | "addAccount"
     | "updateAccount"
+    | "enableNetworkEmulationForAccountSessions"
     | "changeAccountOrder"
     | "toggleAccountDisabling"
     | "removeAccount">> {
@@ -84,10 +83,11 @@ export async function buildEndpoints(
                 return ctx.settingsStore.write(settings);
             });
 
-            await initSessionByAccount(ctx, account);
+            await initAccountSessions(ctx, account);
 
             return result;
         },
+
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async updateAccount(
@@ -123,7 +123,6 @@ export async function buildEndpoints(
 
                 const settings = await ctx.settingsStore.readExisting();
                 const account = pickAccountStrict(settings.accounts, {login});
-
                 const shouldConfigureSession = (
                     account.entryUrl !== entryUrl
                     ||
@@ -171,12 +170,21 @@ export async function buildEndpoints(
                     }
                 }
 
+                const updatedSettings = ctx.settingsStore.write(settings);
+
                 if (shouldConfigureSession) {
-                    await configureSessionByAccount(ctx, account);
+                    await (await ctx.deferredEndpoints.promise)
+                        .enableNetworkEmulationForAccountSessions({login: account.login, value: "offline"});
+                    await configureSessionByAccount(account, {entryUrl: account.entryUrl});
                 }
 
-                return ctx.settingsStore.write(settings);
+                return updatedSettings;
             });
+        },
+
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+        async enableNetworkEmulationForAccountSessions({login, value}) {
+            enableNetworkEmulationToAllAccountSessions({login}, value);
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types

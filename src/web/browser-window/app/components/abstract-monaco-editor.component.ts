@@ -8,7 +8,7 @@ import {select, Store} from "@ngrx/store";
 import {AccountConfig} from "src/shared/model/account";
 import {LABEL_TYPE, View} from "src/shared/model/database";
 import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";
-import {ONE_SECOND_MS} from "src/shared/constants";
+import {ONE_SECOND_MS} from "src/shared/const";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/root";
 

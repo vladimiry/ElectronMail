@@ -8,25 +8,18 @@ import path from "path";
 import {AccountConfig, AccountPersistentSession} from "src/shared/model/account";
 import type {AccountSessionStoragePatchBundle} from "src/shared/model/account";
 import {ApiEndpointOriginFieldContainer, LoginFieldContainer} from "src/shared/model/container";
-import {curryFunctionMembers, verifyUrlOriginValue} from "src/shared/util";
+import {curryFunctionMembers} from "src/shared/util";
+import {emptySessionStorageEntity} from "./util";
 import {FsDb} from "src/shared/model/database";
 import {generateDataSaltBase64} from "src/electron-main/util";
-import {
-    ONE_KB_BYTES, PROTON_API_ENTRY_TOR_V2_VALUE, PROTON_API_ENTRY_TOR_V3_VALUE, PROTON_API_ENTRY_TOR_V4_VALUE,
-} from "src/shared/constants";
+import {ONE_KB_BYTES} from "src/shared/const";
 import {SESSION_STORAGE_VERSION} from "src/electron-main/session-storage/const";
 import {SessionStorageModel} from "src/electron-main/session-storage/model";
+import {upgradeSessionStorage} from "src/electron-main/session-storage/upgrade";
+import {verifyUrlOriginValue} from "src/shared/util/url";
 
 export class SessionStorage {
-    static emptyEntity(): typeof SessionStorage.prototype.entity {
-        return {
-            version: SESSION_STORAGE_VERSION,
-            instance: {},
-            sessionStoragePatchInstance: {},
-        };
-    }
-
-    private entity: SessionStorageModel = SessionStorage.emptyEntity();
+    private entity: SessionStorageModel = emptySessionStorageEntity();
 
     private readonly logger: ElectronLog;
 
@@ -47,7 +40,7 @@ export class SessionStorage {
 
     reset(): void {
         this.logger.info(nameof(SessionStorage.prototype.reset)); // eslint-disable-line @typescript-eslint/unbound-method
-        this.entity = SessionStorage.emptyEntity();
+        this.entity = emptySessionStorageEntity();
     }
 
     getSession(
@@ -98,9 +91,9 @@ export class SessionStorage {
     ): Promise<void> {
         this.logger.info(nameof(SessionStorage.prototype.load)); // eslint-disable-line @typescript-eslint/unbound-method
         const store = await this.resolveStore();
-        this.entity = await store.read() ?? SessionStorage.emptyEntity();
+        this.entity = await store.read() ?? emptySessionStorageEntity();
         {
-            const check1 = this.afterLoadEntityUpgrade(); // TODO upgrade the structure once on app start
+            const check1 = upgradeSessionStorage(this.entity); // TODO upgrade the structure once on app start
             const check2 = this.removeNonExistingLogins(actualLogins);
             if (check1 || check2) {
                 await this.saveToFile();
@@ -111,51 +104,6 @@ export class SessionStorage {
     async persisted(): Promise<boolean> {
         // TODO get rid of "fs-json-store" use
         return new FsJsonStore.Store<FsDb>({file: this.options.file}).readable();
-    }
-
-    private afterLoadEntityUpgrade(): boolean {
-        const version = typeof this.entity.version !== "number" || isNaN(this.entity.version)
-            ? 0
-            : this.entity.version;
-        const upgradeTorDomain = (domainFrom: string, domainTo: string): void => {
-            Object.entries(this.entity.instance).forEach(([/* login */, sessionBundle]) => {
-                if (!sessionBundle) {
-                    return;
-                }
-                const domainFromSession = (sessionBundle)[domainFrom];
-                if (domainFromSession) {
-                    sessionBundle[domainTo] = domainFromSession;
-                    delete sessionBundle[domainFrom];
-                }
-            });
-        };
-        let shouldSave = false;
-
-        if (version < 1) {
-            shouldSave = true;
-            this.logger.verbose(
-                // eslint-disable-next-line @typescript-eslint/unbound-method
-                `${nameof(SessionStorage.prototype.load)} upgrading session storage structure (version: ${String(this.entity.version)})`,
-            );
-            this.entity = {
-                ...SessionStorage.emptyEntity(),
-                instance: this.entity as unknown as SessionStorageModel["instance"],
-            };
-        }
-        if (version < 2) {
-            shouldSave = true;
-            upgradeTorDomain(PROTON_API_ENTRY_TOR_V2_VALUE, PROTON_API_ENTRY_TOR_V3_VALUE);
-        }
-        if (version < 3) {
-            shouldSave = true;
-            this.entity.sessionStoragePatchInstance ??= {};
-        }
-        if (version < 4) {
-            shouldSave = true;
-            upgradeTorDomain(PROTON_API_ENTRY_TOR_V3_VALUE, PROTON_API_ENTRY_TOR_V4_VALUE);
-        }
-
-        return shouldSave;
     }
 
     private removeNonExistingLogins(

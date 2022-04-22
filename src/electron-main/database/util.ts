@@ -3,7 +3,7 @@ import {equals} from "remeda";
 
 import {curryFunctionMembers} from "src/shared/util";
 import {Folder, FsDbAccount, LABEL_TYPE, SYSTEM_FOLDER_IDENTIFIERS, View} from "src/shared/model/database";
-import {PRODUCT_NAME} from "src/shared/constants";
+import {PRODUCT_NAME} from "src/shared/const";
 
 const logger = curryFunctionMembers(electronLog, __filename);
 

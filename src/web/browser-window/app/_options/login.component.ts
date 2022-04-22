@@ -5,7 +5,7 @@ import {FormGroup} from "@angular/forms";
 import type {OnInit} from "@angular/core";
 import {select} from "@ngrx/store";
 
-import {LoginBaseComponent} from "src/web/browser-window/app/_options/login-base.component";
+import {LoginBaseComponent} from "./login-base.component";
 import {OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 

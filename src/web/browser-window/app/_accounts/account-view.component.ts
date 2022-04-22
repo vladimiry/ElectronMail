@@ -1,8 +1,6 @@
 import type {Action} from "@ngrx/store";
 import {BehaviorSubject, combineLatest, lastValueFrom, merge, Observable, of, race, Subject, Subscription, throwError, timer} from "rxjs";
-import {
-    ChangeDetectionStrategy, Component, ComponentRef, ElementRef, HostBinding, Input, NgZone, ViewChild, ViewContainerRef,
-} from "@angular/core";
+import {Component, ComponentRef, ElementRef, HostBinding, Input, NgZone, ViewChild, ViewContainerRef} from "@angular/core";
 import {
     concatMap, debounceTime, delayWhen, distinctUntilChanged, filter, first, map, mergeMap, pairwise, startWith, switchMap, take, takeUntil,
     tap, withLatestFrom,
@@ -10,13 +8,12 @@ import {
 import type {OnDestroy, OnInit} from "@angular/core";
 import {pick} from "remeda";
 import {select, Store} from "@ngrx/store";
-import {URL} from "@cliqz/url-parser";
 
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
-import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
+import {AccountsService} from "./accounts.service";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
-import {curryFunctionMembers, parseUrlOriginWithNullishCheck} from "src/shared/util";
+import {curryFunctionMembers} from "src/shared/util";
 import {DbViewEntryComponent} from "src/web/browser-window/app/_db-view/db-view-entry.component";
 import {DbViewModuleResolve} from "./db-view-module-resolve.service";
 import {DESKTOP_NOTIFICATION_ICON_URL} from "src/web/constants";
@@ -25,19 +22,22 @@ import {getWebLogger, sha256} from "src/web/browser-window/util";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {LogLevel} from "src/shared/model/common";
 import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";
-import {ofType} from "src/shared/ngrx-util-of-type";
-import {ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/constants";
+import {ofType} from "src/shared/util/ngrx-of-type";
+import {ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/const";
 import {ProtonClientSession} from "src/shared/model/proton";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount} from "src/web/browser-window/app/model";
 
+const componentDestroyingNotificationSubject$ = new Subject<void>();
+
 @Component({
-    selector: "electron-mail-account",
-    templateUrl: "./account.component.html",
-    styleUrls: ["./account.component.scss"],
-    changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: "electron-mail-account-view",
+    templateUrl: "./account-view.component.html",
+    styleUrls: ["./account-view.component.scss"],
 })
-export class AccountComponent extends NgChangesObservableComponent implements OnInit, OnDestroy {
+export class AccountViewComponent extends NgChangesObservableComponent implements OnInit, OnDestroy {
+    static componentDestroyingNotification$ = componentDestroyingNotificationSubject$.asObservable();
+
     @Input()
     readonly account!: WebAccount;
 
@@ -91,7 +91,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     ) {
         super();
         this.ipcMainClient = this.electronService.ipcMainClient();
-        this.logger = getWebLogger(__filename, nameof(AccountComponent));
+        this.logger = getWebLogger(__filename, nameof(AccountViewComponent));
         this.logger.info();
     }
 
@@ -107,8 +107,9 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         this.subscription.add(
             this.account$
                 .pipe(
-                    distinctUntilChanged(({accountConfig: {entryUrl: prev}}, {accountConfig: {entryUrl: curr}}) => curr === prev),
-                    // WARN: "switchMap" used to drop previously setup notification (we don't need them to run in parallel)
+                    // processing just first/initial value here
+                    // account reloading with a new session in the case of "entryUrl" change gets handled via the "unload" action call
+                    first(),
                     switchMap(({accountConfig: {login}}) => this.accountsService.setupLoginDelayTrigger({login}, this.logger)),
                     delayWhen(() => this.onlinePing$),
                     withLatestFrom(this.account$),
@@ -119,7 +120,7 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     const {primary: webViewsState} = this.webViewsState;
                     const key = {
                         login: accountConfig.login,
-                        apiEndpointOrigin: parseUrlOriginWithNullishCheck(this.core.parseEntryUrl(accountConfig, project).entryApiUrl),
+                        apiEndpointOrigin: this.core.parseEntryUrl(accountConfig, project).sessionStorage.apiEndpointOrigin,
                     } as const;
                     const applyProtonClientSessionAndNavigateArgs = [
                         accountConfig,
@@ -131,27 +132,22 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     const sessionStoragePatch = await this.ipcMainClient("resolvedSavedSessionStoragePatch")(key);
                     const baseReturn = async (): Promise<void> => {
                         // reset the "backend session"
-                        await this.ipcMainClient("resetProtonBackendSession")({login: key.login});
+                        await this.ipcMainClient("resetProtonBackendSession")(key);
                         // reset the "client session" and navigate
                         await this.core.applyProtonClientSessionAndNavigate(
                             ...applyProtonClientSessionAndNavigateArgs, {sessionStoragePatch},
                         );
                     };
-
                     if (!accountConfig.persistentSession) {
                         return baseReturn();
                     }
-
                     const clientSession = await this.ipcMainClient("resolveSavedProtonClientSession")(key);
-
                     if (!clientSession) {
                         return baseReturn();
                     }
-
                     if (!(await this.ipcMainClient("applySavedProtonBackendSession")(key))) {
                         return baseReturn();
                     }
-
                     await this.core.applyProtonClientSessionAndNavigate(...[
                         ...applyProtonClientSessionAndNavigateArgs,
                         {clientSession, sessionStoragePatch},
@@ -162,7 +158,6 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         this.subscription.add(
             (() => {
                 let mountedDbViewEntryComponent: ComponentRef<DbViewEntryComponent> | undefined;
-
                 return combineLatest([
                     this.account$.pipe(
                         map((account) => ({
@@ -190,29 +185,24 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     ),
                 ]).subscribe(async ([{login, accountIndex, databaseView}, selectedLogin, primaryWebView]) => {
                     const viewModeClass = databaseView ? "vm-database" : "vm-live";
-
                     if (this.viewModeClass !== viewModeClass) {
                         this.viewModeClass = viewModeClass;
                     }
-
                     if (databaseView) {
                         mountedDbViewEntryComponent ??= await this.dbViewModuleResolve.mountDbViewEntryComponent(
                             this.tplDbViewComponentContainerRef,
                             {login, accountIndex},
                         );
                     }
-
                     if (login !== selectedLogin) {
                         return;
                     }
-
                     await this.ipcMainClient("selectAccount")({
                         login,
                         databaseView,
                         // WARN: "webView.getWebContentsId()" is available only after "webView.dom-ready" event triggering
                         webContentId: primaryWebView?.getWebContentsId(),
                     });
-
                     this.focusVisibleViewModeContainerElement(
                         databaseView // eslint-disable-line @typescript-eslint/no-unsafe-argument
                             ? mountedDbViewEntryComponent?.injector.get(ElementRef).nativeElement
@@ -228,7 +218,12 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     withLatestFrom(this.store.pipe(select(OptionsSelectors.CONFIG.unreadNotifications))),
                     filter(([, unreadNotifications]) => Boolean(unreadNotifications)),
                     map(([account]) => account),
-                    map((
+                    pairwise(),
+                    filter(([prev, curr]) => curr.notifications.unread > prev.notifications.unread),
+                    map(([, curr]) => curr),
+                )
+                .subscribe(
+                    async (
                         {
                             accountConfig: {
                                 login,
@@ -242,42 +237,10 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                             notifications: {unread},
                         },
                     ) => {
-                        return {
-                            login,
-                            title,
-                            database,
-                            customNotificationCode,
-                            customNotification,
-                            notificationShellExec,
-                            notificationShellExecCode,
-                            unread,
-                        };
-                    }),
-                    pairwise(),
-                    filter(([prev, curr]) => curr.unread > prev.unread),
-                    map(([, curr]) => curr),
-                )
-                .subscribe(
-                    async (
-                        {
-                            login,
-                            title,
-                            database,
-                            customNotificationCode,
-                            customNotification,
-                            notificationShellExec,
-                            notificationShellExecCode,
-                            unread,
-                        },
-                    ) => {
                         const useCustomNotification = customNotification && customNotificationCode;
                         const executeShellCommand = notificationShellExec && notificationShellExecCode;
                         const accountMetadataSettled = Boolean(
-                            (
-                                useCustomNotification
-                                ||
-                                executeShellCommand
-                            )
+                            (useCustomNotification || executeShellCommand)
                             &&
                             database
                             &&
@@ -290,7 +253,6 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                                 code: customNotificationCode,
                             })
                             : `Account [${title || this.account.accountIndex}]: ${unread} unread message${unread > 1 ? "s" : ""}.`;
-
                         if (body) {
                             new Notification(
                                 PRODUCT_NAME,
@@ -300,13 +262,12 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                                     icon: DESKTOP_NOTIFICATION_ICON_URL,
                                 },
                             ).onclick = () => this.zone.run(() => {
-                                this.onDispatch(ACCOUNTS_ACTIONS.Select({login}));
-                                this.onDispatch(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));
+                                this.store.dispatch(ACCOUNTS_ACTIONS.Select({login}));
+                                this.store.dispatch(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));
                             });
                         } else {
                             this.logger.verbose(`skipping notification displaying due to the empty "${nameof(body)}"`);
                         }
-
                         if (executeShellCommand && accountMetadataSettled) {
                             // TODO make the "notification shell exec" timeout configurable
                             await this.ipcMainClient("executeUnreadNotificationShellCommand", {timeoutMs: ONE_SECOND_MS * 30})({
@@ -331,19 +292,18 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     if (persistentSession) { // just extra check
                         throw new Error(`"persistentSession" value is supposed to be "false" here`);
                     }
-
-                    const parsedEntryUrl = this.core.parseEntryUrl(accountConfig, "proton-mail");
-                    const key = {login: accountConfig.login, apiEndpointOrigin: new URL(parsedEntryUrl.entryApiUrl).origin} as const;
-
-                    await this.ipcMainClient("resetSavedProtonSession")(key);
+                    await this.ipcMainClient("resetSavedProtonSession")({
+                        login: accountConfig.login,
+                        apiEndpointOrigin: this.core.parseEntryUrl(accountConfig, "proton-mail").sessionStorage.apiEndpointOrigin,
+                    });
                 }),
         );
     }
 
     onEventChild(
         event:
-            | { type: "dom-ready"; viewType: keyof typeof AccountComponent.prototype.webViewsState; webView: Electron.WebviewTag }
-            | { type: "action"; payload: Unpacked<Parameters<typeof AccountComponent.prototype.onDispatch>> }
+            | { type: "dom-ready"; viewType: keyof typeof AccountViewComponent.prototype.webViewsState; webView: Electron.WebviewTag }
+            | { type: "action"; payload: Action }
             | { type: "log"; data: [LogLevel, ...string[]] },
     ): void {
         if (event.type === "log") {
@@ -351,18 +311,16 @@ export class AccountComponent extends NgChangesObservableComponent implements On
             this.logger[level](...args);
             return;
         }
-
         if (event.type === "action") {
-            this.onDispatch(event.payload);
+            this.store.dispatch(event.payload);
             return;
         }
-
         this.webViewsState[event.viewType].domReady$.next(event.webView);
     }
 
     onPrimaryViewLoadedOnce(primaryWebView: Electron.WebviewTag): void {
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        this.logger.info(nameof(AccountComponent.prototype.onPrimaryViewLoadedOnce));
+        this.logger.info(nameof(AccountViewComponent.prototype.onPrimaryViewLoadedOnce));
 
         // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
         const resolvePrimaryWebViewApiClient = async () => lastValueFrom(
@@ -381,10 +339,9 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         {
             const logger = curryFunctionMembers(
                 this.logger,
-                nameof(AccountComponent.prototype.onPrimaryViewLoadedOnce), // eslint-disable-line @typescript-eslint/unbound-method
+                nameof(AccountViewComponent.prototype.onPrimaryViewLoadedOnce), // eslint-disable-line @typescript-eslint/unbound-method
                 "saving proton session",
             );
-
             this.subscription.add(
                 this.store.pipe(
                     select(OptionsSelectors.CONFIG.persistentSessionSavingInterval),
@@ -423,15 +380,11 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     }),
                 ).subscribe(async ([, {accountConfig}]) => {
                     const ipcMainAction = "saveProtonSession";
-
                     logger.verbose(ipcMainAction);
-
                     await this.ipcMainClient(ipcMainAction)({
                         login: accountConfig.login,
                         clientSession: await resolveLiveProtonClientSession(),
-                        apiEndpointOrigin: parseUrlOriginWithNullishCheck(
-                            this.core.parseEntryUrl(accountConfig, "proton-mail").entryApiUrl,
-                        ),
+                        apiEndpointOrigin: this.core.parseEntryUrl(accountConfig, "proton-mail").sessionStorage.apiEndpointOrigin,
                     });
                 }),
             );
@@ -462,7 +415,6 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                 if (!loggedIn || loggedInCalendar) {
                     return;
                 }
-
                 const project = "proton-calendar";
                 const [clientSession, sessionStoragePatch] = await Promise.all([
                     resolveLiveProtonClientSession(),
@@ -471,7 +423,6 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         return apiClient("resolvedLiveSessionStoragePatch")(pick(this.account, ["accountIndex"]));
                     })(),
                 ]);
-
                 // TODO if "src$" has been set before, consider only refreshing the client session without full page reload
                 await Promise.all([
                     // the app shares the same backend between mail and calendar, so applying here only the client session
@@ -500,14 +451,11 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         );
     }
 
-    onDispatch(action: Action): void {
-        this.store.dispatch(action);
-    }
-
     ngOnDestroy(): void {
         super.ngOnDestroy();
-        this.logger.info(nameof(AccountComponent.prototype.ngOnDestroy)); // eslint-disable-line @typescript-eslint/unbound-method
+        this.logger.info(nameof(AccountViewComponent.prototype.ngOnDestroy)); // eslint-disable-line @typescript-eslint/unbound-method
         this.subscription.unsubscribe();
+        componentDestroyingNotificationSubject$.next();
     }
 
     private focusVisibleViewModeContainerElement(

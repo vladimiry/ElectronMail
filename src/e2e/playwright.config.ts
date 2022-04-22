@@ -1,6 +1,6 @@
 import {PlaywrightTestConfig} from "@playwright/test";
 
-import {ONE_MINUTE_MS} from "src/shared/constants";
+import {ONE_MINUTE_MS} from "src/shared/const";
 
 const config: PlaywrightTestConfig = {
     timeout: ONE_MINUTE_MS * 10,

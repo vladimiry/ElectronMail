@@ -6,12 +6,19 @@ import fsExtra from "fs-extra";
 import {omit, pick} from "remeda";
 import os from "os";
 import path from "path";
+import pathIsInside from "path-is-inside";
 import {promisify} from "util";
 import spawnAsync from "@expo/spawn-async";
 import {URL} from "@cliqz/url-parser";
 
-import {GIT_CLONE_ABSOLUTE_DIR, OUTPUT_ABSOLUTE_DIR} from "./const";
-import {PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
+import {CWD_ABSOLUTE_DIR, GIT_CLONE_ABSOLUTE_DIR, OUTPUT_ABSOLUTE_DIR} from "./const";
+import {PROVIDER_REPO_MAP} from "src/shared/const/proton-apps";
+
+export const assertPathIsInCwd = (value: string): void => {
+    if (!pathIsInside(value, CWD_ABSOLUTE_DIR)) {
+        throw new Error(`Path "${value}" is not inside "${CWD_ABSOLUTE_DIR}"`);
+    }
+};
 
 // TODO make "./scripts/electron-builder/hooks/afterPack/index.cjs" execution in ESM mode same as the other scripts
 const fetch = typeof _fetch === "function"

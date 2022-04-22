@@ -1,11 +1,11 @@
 import path from "path";
 import {randomString} from "remeda";
 
-import {ONE_SECOND_MS} from "src/shared/constants";
+import {ONE_SECOND_MS} from "src/shared/const";
 
 export const IS_CI = Boolean(process.env.CI);
 
-export const ROOT_DIR_PATH = path.resolve(process.cwd());
+export const ROOT_DIR_PATH = path.join(process.cwd());
 
 export const APP_DIR_PATH = path.join(ROOT_DIR_PATH, "./app");
 

@@ -5,7 +5,7 @@ import {DbAccountPk, Folder, FsDbAccount, Mail} from "src/shared/model/database"
 import {IpcMainServiceScan} from "src/shared/api/main-process";
 import {LoginFieldContainer, MailPasswordFieldContainer, PasswordFieldContainer} from "src/shared/model/container";
 import {Notifications} from "src/shared/model/account";
-import {PACKAGE_NAME} from "src/shared/constants";
+import {PACKAGE_NAME} from "src/shared/const";
 import {ProtonClientSession} from "src/shared/model/proton";
 
 const {Promise, Observable} = ActionType;
@@ -39,7 +39,7 @@ export const PROTON_PRIMARY_IPC_WEBVIEW_API_DEFINITION = {
     exportMailAttachments:
         Promise<DeepReadonly<DbAccountPk & { uuid: string; mailPk: Mail["pk"] } & { accountIndex: number }>>(),
     notification:
-        Observable<DeepReadonly<LoginFieldContainer & { entryUrl: string; entryApiUrl: string } & { accountIndex: number }>,
+        Observable<DeepReadonly<LoginFieldContainer & { apiEndpointOriginSS: string, entryApiUrl: string, accountIndex: number }>,
             ProtonPrimaryNotificationOutput>(),
     unlock:
         ActionType.Promise<MailPasswordFieldContainer & { accountIndex: number }>(),

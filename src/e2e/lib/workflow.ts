@@ -4,7 +4,8 @@ import playwrightTest from "@playwright/test";
 import {accountCssSelector, mainProcessEvaluationFunctions} from "src/e2e/lib/util";
 import {asyncDelay} from "src/shared/util";
 import {CONF, ENV, GLOBAL_STATE} from "src/e2e/lib/const";
-import {ONE_SECOND_MS, PROTON_API_ENTRY_URLS} from "src/shared/constants";
+import {ONE_SECOND_MS} from "src/shared/const";
+import {PROTON_API_ENTRY_URLS} from "src/shared/const/proton-url";
 import {TestContext} from "./model";
 
 const {expect} = playwrightTest;

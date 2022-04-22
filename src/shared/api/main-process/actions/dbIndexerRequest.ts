@@ -1,5 +1,5 @@
 import * as DbModel from "src/shared/model/database";
-import {props, propsRecordToActionsRecord} from "src/shared/ngrx-util";
+import {props, propsRecordToActionsRecord} from "src/shared/util/ngrx";
 
 export const IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS = propsRecordToActionsRecord(
     {

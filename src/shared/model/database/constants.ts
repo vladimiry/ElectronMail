@@ -1,4 +1,4 @@
-import {BINARY_NAME} from "src/shared/constants";
+import {BINARY_NAME} from "src/shared/const";
 import {buildEnumBundle} from "src/shared/util";
 import {FsDbDataContainer, IndexableMail} from "src/shared/model/database/index";
 

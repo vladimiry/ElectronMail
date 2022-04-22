@@ -11,8 +11,8 @@ import path from "path";
 import {Fs as StoreFs, Model as StoreModel, Store} from "fs-json-store";
 
 import {
-    BINARY_NAME, LOCAL_WEBCLIENT_PROTOCOL_PREFIX, ONE_KB_BYTES, ONE_MB_BYTES, PACKAGE_NAME, RUNTIME_ENV_USER_DATA_DIR, WEB_PROTOCOL_SCHEME,
-} from "src/shared/constants";
+    BINARY_NAME, ONE_KB_BYTES, ONE_MB_BYTES, PACKAGE_NAME, RUNTIME_ENV_USER_DATA_DIR, WEB_PROTOCOL_DIR, WEB_PROTOCOL_SCHEME,
+} from "src/shared/const";
 import {Config, Settings} from "src/shared/model/options";
 import {configEncryptionPresetValidator, INITIAL_STORES, settingsAccountLoginUniquenessValidator} from "./constants";
 import {Context, ContextInitOptions, ContextInitOptionsPaths, ProperLockfileError} from "./model";
@@ -20,7 +20,7 @@ import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {formatFileUrl, generateDataSaltBase64} from "./util";
 import {SessionStorage} from "src/electron-main/session-storage";
-import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
+import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/const/webpack";
 
 function exists(file: string, storeFs: StoreModel.StoreFs): boolean {
     try {
@@ -46,21 +46,6 @@ function directoryExists(file: string, storeFs: StoreModel.StoreFs = StoreFs.Fs.
     return Boolean(stat?.isDirectory());
 }
 
-function listDirsNames(storeFs: StoreModel.StoreFs, dir: string): string[] {
-    const result: string[] = [];
-    if (!(exists(dir, storeFs))) {
-        return result;
-    }
-    const files: string[] = storeFs._impl.readdirSync(dir);
-    for (const dirName of files) {
-        const dirPath = path.join(dir, dirName);
-        if (directoryExists(dirPath, storeFs)) {
-            result.push(dirName);
-        }
-    }
-    return result;
-}
-
 function initLocations(
     storeFs: StoreModel.StoreFs,
     paths?: ContextInitOptionsPaths,
@@ -69,13 +54,13 @@ function initLocations(
         paths
         ??
         {
-            appDir: path.resolve(
+            appDir: path.join(
                 __dirname,
                 BUILD_ENVIRONMENT === "development"
                     ? "../../app-dev"
                     : "../../app",
             ),
-            userDataDir: path.resolve(
+            userDataDir: path.join(
                 ((): string | undefined => {
                     const envVarName = RUNTIME_ENV_USER_DATA_DIR;
                     const envVarValue = process.env[envVarName];
@@ -122,10 +107,11 @@ function initLocations(
         trayIcon: icon,
         trayIconFont: appRelativePath("./assets/fonts/tray-icon/roboto-derivative.ttf"),
         browserWindowPage: formatFileUrl(
-            appRelativePath("./web/", WEBPACK_WEB_CHUNK_NAMES["browser-window"], "index.html"),
+            appRelativePath(WEB_PROTOCOL_DIR, WEBPACK_WEB_CHUNK_NAMES["browser-window"], "index.html"),
         ),
-        aboutBrowserWindowPage: appRelativePath("./web/", WEBPACK_WEB_CHUNK_NAMES.about, "index.html"),
-        searchInPageBrowserViewPage: appRelativePath("./web/", WEBPACK_WEB_CHUNK_NAMES["search-in-page-browser-view"], "index.html"),
+        aboutBrowserWindowPage: appRelativePath(WEB_PROTOCOL_DIR, WEBPACK_WEB_CHUNK_NAMES.about, "index.html"),
+        searchInPageBrowserViewPage:
+            appRelativePath(WEB_PROTOCOL_DIR, WEBPACK_WEB_CHUNK_NAMES["search-in-page-browser-view"], "index.html"),
         preload: {
             aboutBrowserWindow: appRelativePath("./electron-preload/about/index.js"),
             browserWindow: appRelativePath(`./electron-preload/browser-window/index${BUILD_ENVIRONMENT === "e2e" ? "-e2e" : ""}.js`),
@@ -139,35 +125,6 @@ function initLocations(
         // TODO electron: get rid of "baseURLForDataURL" workaround, see https://github.com/electron/electron/issues/20700
         vendorsAppCssLinkHrefs: ["shared-vendor-dark", "shared-vendor-light"]
             .map((value) => `${WEB_PROTOCOL_SCHEME}://browser-window/${value}.css`),
-        ...((): NoExtraProps<Pick<ElectronContextLocations, "protocolBundles" | "webClients">> => {
-            const {protocolBundles, webClients}:
-                {
-                    webClients: Array<Unpacked<ElectronContextLocations["webClients"]>>;
-                    protocolBundles: Array<{ scheme: string; directory: string }>;
-                } = {
-                protocolBundles: [],
-                webClients: [],
-            };
-            const webClientsDir = appRelativePath("webclient");
-
-            let schemeIndex = 0;
-
-            for (const dirName of listDirsNames(storeFs, webClientsDir)) {
-                const directory = path.resolve(webClientsDir, dirName);
-                const scheme = `${LOCAL_WEBCLIENT_PROTOCOL_PREFIX}${schemeIndex++}`;
-
-                webClients.push({
-                    entryUrl: `${scheme}://${dirName}`,
-                    entryApiUrl: `https://${dirName}`,
-                });
-                protocolBundles.push({
-                    scheme,
-                    directory,
-                });
-            }
-
-            return {protocolBundles, webClients};
-        })(),
     };
 }
 

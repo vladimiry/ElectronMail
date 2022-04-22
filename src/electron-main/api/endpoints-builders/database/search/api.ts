@@ -9,7 +9,7 @@ import {IndexableMailId} from "src/shared/model/database";
 import {IPC_MAIN_API_DB_INDEXER_REQUEST$, IPC_MAIN_API_DB_INDEXER_RESPONSE$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS} from "src/shared/api/main-process/actions";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
-import {ofType} from "src/shared/ngrx-util-of-type";
+import {ofType} from "src/shared/util/ngrx-of-type";
 import * as service from "./service";
 
 const logger = curryFunctionMembers(electronLog, __filename);

@@ -1,3 +1,5 @@
+import {LOCAL_WEBCLIENT_ORIGIN} from "src/shared/const";
+
 export const HEADERS = {
     request: {
         cookie: "Cookie",
@@ -17,8 +19,8 @@ export const HEADERS = {
 } as const;
 
 export const STATIC_ALLOWED_ORIGINS = [
+    LOCAL_WEBCLIENT_ORIGIN,
     "chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai", // chromium built-in "PDF viewer" extension
-    "https://fra-storage.protonmail.com", // proton-drive specific endpoint
     ...(
         BUILD_ENVIRONMENT === "development"
             ? ["devtools://devtools"]

@@ -1,5 +1,5 @@
 diff --git a/packages/components/hooks/useLinkHandler.tsx b/packages/components/hooks/useLinkHandler.tsx
-index 7fdec1d3b..256ddf8be 100644
+index 5b7079cf3..782372313 100644
 --- a/packages/components/hooks/useLinkHandler.tsx
 +++ b/packages/components/hooks/useLinkHandler.tsx
 @@ -4,7 +4,7 @@ import punycode from 'punycode.js';
@@ -11,7 +11,7 @@ index 7fdec1d3b..256ddf8be 100644
  import isTruthy from '@proton/shared/lib/helpers/isTruthy';
  import { PROTON_DOMAINS } from '@proton/shared/lib/constants';
  
-@@ -163,6 +163,10 @@ export const useLinkHandler: UseLinkHandler = (
+@@ -164,6 +164,10 @@ export const useLinkHandler: UseLinkHandler = (
              return;
          }
  
@@ -20,9 +20,9 @@ index 7fdec1d3b..256ddf8be 100644
 +        const encodedLink = await encoder(src);
 +
          if (
-             askForConfirmation &&
+             (askForConfirmation || isPhishingAttempt) &&
              isExternal(src.raw) &&
-@@ -170,13 +174,10 @@ export const useLinkHandler: UseLinkHandler = (
+@@ -171,13 +175,10 @@ export const useLinkHandler: UseLinkHandler = (
                  .filter(isTruthy) // currentDomain can be null
                  .some((domain) => isSubDomain(hostname, domain))
          ) {
@@ -38,4 +38,4 @@ index 7fdec1d3b..256ddf8be 100644
 +            openNewTab(encodedLink);
          }
      });
-
+ 

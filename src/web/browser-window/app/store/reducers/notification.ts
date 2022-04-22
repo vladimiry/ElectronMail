@@ -4,7 +4,7 @@ import * as fromRoot from "src/web/browser-window/app/store/reducers/root";
 import {getWebLogger} from "src/web/browser-window/util";
 import {NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {NotificationItem} from "src/web/browser-window/app/store/actions/notification";
-import {UnionOf} from "src/shared/ngrx-util";
+import {UnionOf} from "src/shared/util/ngrx";
 
 export const featureName = "notification";
 

@@ -2,7 +2,7 @@ import asap from "asap-es";
 import {debounceTime, filter, switchMap} from "rxjs/operators";
 import {from, fromEvent, Subscription} from "rxjs";
 
-import {ONE_SECOND_MS} from "src/shared/constants";
+import {ONE_SECOND_MS} from "src/shared/const";
 
 export class SearchInPageWidget {
     private readonly apiClient = __ELECTRON_EXPOSURE__.buildIpcMainClient({

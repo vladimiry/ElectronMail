@@ -38,6 +38,12 @@
                     web client:
                 </div>
             </ng-template>
+            <ng-template #entryUrlItemTemplate let-index="index" let-item="item">
+                {{ item.title }}
+                <div class="badge badge-secondary badge-local">
+                    web client:
+                </div>
+            </ng-template>
             <div class="clearfix">
                 <label class="d-block pull-left">API entry point</label>
                 <div class="pull-right">

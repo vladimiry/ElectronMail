@@ -42,12 +42,11 @@ export function dumpProtonSharedSession(): ProtonClientSession | null {
         };
     })();
 
-    // proton dumps session to "window.name" and "window.sessionStorage" on "window.unload" event
+    // dumping the proton session
+    // https://github.com/ProtonMail/WebClients/commit/c448533e4d72d6909812ec12aaaff832b790de2b
     // https://github.com/ProtonMail/proton-shared/blob/37716bc2685d9cef8245efcb8d16e827b97a03c5/lib/createSecureSessionStorage.js#L14-L16
-    window.dispatchEvent(new Event("unload"));
-    // proton dumps session to "window.name" and "window.sessionStorage" on "window.unload" event
     // https://github.com/ProtonMail/proton-shared/blob/c7e008673b518be87127dcfb4e1e2cecac3dbec6/lib/createSecureSessionStorage.js#L23
-    window.dispatchEvent(new Event("pagehide"));
+    window.dispatchEvent(new Event("electron-mail:packages/shared/lib/authentication/createSecureSessionStorage.ts:unloadLike"));
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
     const windowName: Readonly<Record<string, any /* TODO TS: replace "any" with "JSONValue" */>> = JSON.parse(window.name);

@@ -8,8 +8,8 @@ import UUID from "pure-uuid";
 import {augmentRawMailWithBodyFields} from "src/electron-main/api/util";
 import {DbExportMailAttachmentItem} from "src/electron-main/api/endpoints-builders/database/export/const";
 import {File, Mail, MailAddress} from "src/shared/model/database";
-import {PACKAGE_NAME} from "src/shared/constants";
-import {parseProtonRestModel, readMailBody} from "src/shared/entity-util";
+import {PACKAGE_NAME} from "src/shared/const";
+import {parseProtonRestModel, readMailBody} from "src/shared/util/entity";
 
 const eol = "\r\n";
 

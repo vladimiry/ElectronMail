@@ -13,10 +13,6 @@ export const FEATURED = {
     initialized: createSelector(STATE, (s) => s.initialized),
     selectedLogin: createSelector(STATE, (s) => s.selectedLogin),
     globalProgress: createSelector(STATE, (s) => s.globalProgress),
-    selectedAccount: createSelector(
-        STATE,
-        (s) => s.accounts.find((a) => a.accountConfig.login === s.selectedLogin),
-    ),
 } as const;
 
 export const ACCOUNTS = {

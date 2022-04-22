@@ -5,8 +5,8 @@ import type {OnInit} from "@angular/core";
 
 import {AbstractMonacoEditorComponent} from "src/web/browser-window/app/components/abstract-monaco-editor.component";
 import {formatCodeLines} from "src/web/browser-window/app/store/util";
-import {ONE_SECOND_MS} from "src/shared/constants";
-import {resolveInstance$} from "src/web/browser-window/app/_db-view/util";
+import {ONE_SECOND_MS} from "src/shared/const";
+import {resolveInstance$} from "./util";
 import {SPACER_PX} from "src/web/constants";
 
 // TODO turn the hardcoded code samples library into the user-editable list of snippets

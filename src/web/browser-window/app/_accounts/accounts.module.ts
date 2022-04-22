@@ -2,14 +2,18 @@ import {BsDropdownModule} from "ngx-bootstrap/dropdown";
 import {EffectsModule} from "@ngrx/effects";
 import {NgModule, NO_ERRORS_SCHEMA} from "@angular/core";
 
-import {AccountComponent} from "./account.component";
+import {AccountsCalendarNsEffects} from "./effects/accounts-calendar-ns.effects";
 import {AccountsComponent} from "./accounts.component";
-import {AccountsEffects} from "./accounts.effects";
+import {AccountsDbSyncingEffects} from "./effects/accounts-db-syncing.effects";
+import {AccountsEffects} from "./effects/accounts.effects";
 import {AccountsGuard} from "./accounts.guard";
+import {AccountsLoginFormSubmittingEffects} from "./effects/accounts-login-form-submitting.effects";
+import {AccountsPrimaryNsEffects} from "./effects/accounts-primary-ns.effects";
 import {AccountsRoutingModule} from "./accounts.routing.module";
 import {AccountsService} from "./accounts.service";
 import {AccountTitleComponent} from "./account-title.component";
 import {AccountViewCalendarComponent} from "./account-view-calendar.component";
+import {AccountViewComponent} from "./account-view.component";
 import {AccountViewPrimaryComponent} from "./account-view-primary.component";
 import {DbViewModuleResolve} from "./db-view-module-resolve.service";
 import {SharedModule} from "src/web/browser-window/app/_shared/shared.module";
@@ -19,10 +23,16 @@ import {SharedModule} from "src/web/browser-window/app/_shared/shared.module";
         BsDropdownModule,
         SharedModule,
         AccountsRoutingModule,
-        EffectsModule.forFeature([AccountsEffects]),
+        EffectsModule.forFeature([
+            AccountsCalendarNsEffects,
+            AccountsDbSyncingEffects,
+            AccountsEffects,
+            AccountsLoginFormSubmittingEffects,
+            AccountsPrimaryNsEffects,
+        ]),
     ],
     declarations: [
-        AccountComponent,
+        AccountViewComponent,
         AccountsComponent,
         AccountTitleComponent,
         AccountViewCalendarComponent,

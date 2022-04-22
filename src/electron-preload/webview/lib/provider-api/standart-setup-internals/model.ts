@@ -1,5 +1,5 @@
 import {AddInitializedProp, DefineObservableValue} from "src/electron-preload/webview/lib/provider-api/model";
-import {PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS} from "src/shared/proton-apps-constants";
+import {PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS} from "src/shared/const/proton-apps";
 
 /* eslint-disable max-len */
 

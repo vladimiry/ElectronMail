@@ -5,7 +5,7 @@ import {from, timer} from "rxjs";
 import {AbstractMonacoEditorComponent} from "src/web/browser-window/app/components/abstract-monaco-editor.component";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {formatCodeLines} from "src/web/browser-window/app/store/util";
-import {ONE_SECOND_MS} from "src/shared/constants";
+import {ONE_SECOND_MS} from "src/shared/const";
 import {SPACER_PX} from "src/web/constants";
 
 // TODO reference template/styles from external files (so can be shared with the class ancestor/successor)

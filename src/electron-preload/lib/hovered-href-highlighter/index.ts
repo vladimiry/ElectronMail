@@ -6,8 +6,8 @@ import {buildLoggerBundle, resolveIpcMainApi} from "src/electron-preload/lib/uti
 import css from "src/electron-preload/lib/hovered-href-highlighter/index.scss";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {IpcMainServiceScan} from "src/shared/api/main-process";
-import {ofType} from "src/shared/ngrx-util-of-type";
-import {ONE_SECOND_MS, PACKAGE_NAME} from "src/shared/constants";
+import {ofType} from "src/shared/util/ngrx-of-type";
+import {ONE_SECOND_MS, PACKAGE_NAME} from "src/shared/const";
 
 const [[, cssCode]] = css;
 const {locals: {renderVisibleClass}} = css;

@@ -3,10 +3,10 @@ import os from "os";
 import path from "path";
 import semver from "semver";
 
-import {APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR} from "src/shared/hunspell-const";
-import {curryFunctionMembers, removeArrayDuplicateItems} from "src/shared/util";
+import {APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR} from "src/shared/const/hunspell";
+import {curryFunctionMembers, reduceDuplicateItemsFromArray} from "src/shared/util";
 import {Locale} from "src/shared/model/common";
-import {normalizeLocale, sanitizeFastGlobPattern} from "src/shared/sanitize-util";
+import {normalizeLocale, sanitizeFastGlobPattern} from "src/shared/util/sanitize";
 import {PLATFORM} from "src/electron-main/constants";
 
 async function resolveHunspellLocales(dir: string): Promise<Locale[]> {
@@ -80,7 +80,7 @@ export let setup: () => Promise<{
     const spellCheckerDictionaries = spellCheckerModule.getAvailableDictionaries();
     logger.verbose("spellchecker.getAvailableDictionaries():", spellCheckerDictionaries);
 
-    const availableDictionaries: readonly Locale[] = removeArrayDuplicateItems(
+    const availableDictionaries: readonly Locale[] = reduceDuplicateItemsFromArray(
         [
             ...spellCheckerDictionaries,
             // this needs to be called after OS-dependent initialization got completed (see above code lines), ie "state" got settled down

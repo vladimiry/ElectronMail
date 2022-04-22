@@ -17,11 +17,13 @@ export const PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS = [
     "../../node_modules/react-router/esm/react-router.js",
 ] as const;
 
+// using "<app-type>-api"-like subdomain as discussed in https://github.com/ProtonMail/WebClients/issues/276
 export const PROVIDER_REPO_MAP = {
     [PROVIDER_APP_NAMES[0]]: {
-        repoRelativeDistDir: "./dist",
         basePath: "",
-        tag: "proton-mail@4.20.6",
+        apiSubdomain: "mail-api",
+        repoRelativeDistDir: "./dist",
+        tag: "proton-mail@5.0.1.3",
         protonPack: {
             webpackIndexEntryItems: [
                 // immediate
@@ -45,15 +47,17 @@ export const PROVIDER_REPO_MAP = {
         },
     },
     [PROVIDER_APP_NAMES[1]]: {
-        repoRelativeDistDir: "./dist",
         basePath: "account",
-        tag: "proton-account@4.28.0",
+        apiSubdomain: "account-api",
+        repoRelativeDistDir: "./dist",
+        tag: "proton-account@5.0.1.3",
         protonPack: {}
     },
     [PROVIDER_APP_NAMES[2]]: {
-        repoRelativeDistDir: "./dist",
         basePath: "calendar",
-        tag: "proton-calendar@4.11.2",
+        apiSubdomain: "calendar-api",
+        repoRelativeDistDir: "./dist",
+        tag: "proton-calendar@5.0.1.2",
         protonPack: {
             webpackIndexEntryItems: [
                 // immediate
@@ -63,15 +67,17 @@ export const PROVIDER_REPO_MAP = {
         },
     },
     [PROVIDER_APP_NAMES[3]]: {
-        repoRelativeDistDir: "./dist",
         basePath: "drive",
-        tag: "proton-drive@4.11.2",
+        apiSubdomain: "drive-api",
+        repoRelativeDistDir: "./dist",
+        tag: "proton-drive@5.0.1.2",
         protonPack: {},
     },
     [PROVIDER_APP_NAMES[4]]: {
-        repoRelativeDistDir: "./dist",
         basePath: "account/vpn",
-        tag: "proton-vpn-settings@4.22.0",
+        apiSubdomain: "account-api",
+        repoRelativeDistDir: "./dist",
+        tag: "proton-vpn-settings@5.0.1.1",
         protonPack: {},
     },
 } as const;

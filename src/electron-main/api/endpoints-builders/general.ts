@@ -15,7 +15,7 @@ import {curryFunctionMembers} from "src/shared/util";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main-process";
-import {PACKAGE_GITHUB_PROJECT_URL, PACKAGE_VERSION, UPDATE_CHECK_FETCH_TIMEOUT} from "src/shared/constants";
+import {PACKAGE_GITHUB_PROJECT_URL, PACKAGE_VERSION, UPDATE_CHECK_FETCH_TIMEOUT} from "src/shared/const";
 import {PLATFORM} from "src/electron-main/constants";
 import {resolveUiContextStrict} from "src/electron-main/util";
 import {showAboutBrowserWindow} from "src/electron-main/window/about";

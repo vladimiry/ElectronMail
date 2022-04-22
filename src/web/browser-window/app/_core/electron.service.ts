@@ -6,7 +6,7 @@ import type {OnDestroy} from "@angular/core";
 import {select, Store} from "@ngrx/store";
 
 import {Config} from "src/shared/model/options";
-import {DEFAULT_API_CALL_TIMEOUT, ONE_SECOND_MS} from "src/shared/constants";
+import {DEFAULT_API_CALL_TIMEOUT, ONE_SECOND_MS} from "src/shared/const";
 import {getWebLogger} from "src/web/browser-window/util";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {PROTON_CALENDAR_IPC_WEBVIEW_API_DEFINITION} from "src/shared/api/webview/calendar";

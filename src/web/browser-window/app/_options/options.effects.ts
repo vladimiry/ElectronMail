@@ -15,9 +15,9 @@ import {getWebLogger} from "src/web/browser-window/util";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {IpcMainServiceScan} from "src/shared/api/main-process";
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
-import {ofType} from "src/shared/ngrx-util-of-type";
-import {ONE_MINUTE_MS, ONE_SECOND_MS, PRODUCT_NAME, UPDATE_CHECK_FETCH_TIMEOUT} from "src/shared/constants";
-import {OptionsService} from "src/web/browser-window/app/_options/options.service";
+import {ofType} from "src/shared/util/ngrx-of-type";
+import {ONE_MINUTE_MS, ONE_SECOND_MS, PRODUCT_NAME, UPDATE_CHECK_FETCH_TIMEOUT} from "src/shared/const";
+import {OptionsService} from "./options.service";
 import {ProgressPatch, State} from "src/web/browser-window/app/store/reducers/options";
 
 const _logger = getWebLogger(__filename);

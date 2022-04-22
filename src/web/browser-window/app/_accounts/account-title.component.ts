@@ -1,12 +1,10 @@
 import {BehaviorSubject, Subscription} from "rxjs";
-import {ChangeDetectionStrategy, Component, ElementRef, EventEmitter, HostListener, Input, Output} from "@angular/core";
+import {Component, ElementRef, HostListener, Input} from "@angular/core";
 import {filter, first, map} from "rxjs/operators";
 import type {OnDestroy, OnInit} from "@angular/core";
 import {select, Store} from "@ngrx/store";
 import type {Unsubscribable} from "rxjs";
-import UUID from "pure-uuid";
 
-import {AccountConfig} from "src/shared/model/account";
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
 import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
@@ -33,26 +31,19 @@ const initialComponentState: DeepReadonly<StrictOmit<ComponentState, "account">>
     selector: "electron-mail-account-title",
     templateUrl: "./account-title.component.html",
     styleUrls: ["./account-title.component.scss"],
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountTitleComponent implements OnInit, OnDestroy {
     @Input()
     highlighting = true;
 
-    @Output()
-    private readonly accountUnloadRollback
-        = new EventEmitter<Parameters<typeof
-        import("./accounts.component")["AccountsComponent"]["prototype"]["accountUnloadRollback"]>[0]>();
-
     private readonly stateSubject$ = new BehaviorSubject<ComponentState>({...initialComponentState} as ComponentState);
 
     // TODO consider replacing observable with just an object explicitly triggering ChangeDetectorRef.detectChanges() after its mutation
     // tslint:disable-next-line:member-ordering
-    state$ = this.stateSubject$
+    readonly state$ = this.stateSubject$
         .asObservable()
         .pipe(
             filter((state) => Boolean(state.account)),
-            // .pipe(debounceTime(200)),
             map((state) => {
                 return {
                     ...state,
@@ -61,14 +52,10 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
             }),
         );
 
-    private accountLogin!: string;
-
-    private subscription = new Subscription();
+    private readonly subscription = new Subscription();
 
     @Input()
     set account(account: WebAccount) {
-        this.accountLogin = account.accountConfig.login;
-
         this.patchState({
             account,
             stored: account.accountConfig.database,
@@ -93,7 +80,9 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
             this.subscription.add(
                 this.store
                     .pipe(select(AccountsSelectors.FEATURED.selectedLogin))
-                    .subscribe((selectedLogin) => this.patchState({selected: this.accountLogin === selectedLogin})),
+                    .subscribe((selectedLogin) => {
+                        return this.patchState({selected: this.stateSubject$.value.account.accountConfig.login === selectedLogin});
+                    }),
             );
         }
         this.subscription.add(
@@ -119,7 +108,7 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
                 .subscribe(({account: {accountConfig: {database, localStoreViewByDefault}}}) => {
                     if (database && localStoreViewByDefault) {
                         this.store.dispatch(ACCOUNTS_ACTIONS.ToggleDatabaseView(
-                            {login: this.accountLogin, forced: {databaseView: true}},
+                            {login: this.stateSubject$.value.account.accountConfig.login, forced: {databaseView: true}},
                         ));
                     }
                 }),
@@ -134,28 +123,24 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
 
     unloadContextMenuAction(event: MouseEvent): void {
         event.preventDefault();
-        event.stopPropagation();
         this.patchState({contextMenuOpen: false});
-        const uuid = new UUID(4).format();
-        this.accountUnloadRollback.emit({accountUnloadRollbackUuid: uuid});
-        this.store.dispatch(ACCOUNTS_ACTIONS.Unload({login: this.stateSubject$.value.account.accountConfig.login, uuid}));
+        this.store.dispatch(ACCOUNTS_ACTIONS.Unload({login: this.stateSubject$.value.account.accountConfig.login}));
     }
 
-    editContextMenuAction(event: MouseEvent, {login}: Pick<AccountConfig, "login">): void {
+    editContextMenuAction(event: MouseEvent): void {
         event.preventDefault();
-        event.stopPropagation();
         this.patchState({contextMenuOpen: false});
         this.store.dispatch(
             NAVIGATION_ACTIONS.Go({
                 path: [{outlets: {[SETTINGS_OUTLET]: `${SETTINGS_PATH}/account-edit`}}],
-                queryParams: {login},
+                queryParams: {login: this.stateSubject$.value.account.accountConfig.login},
             }),
         );
     }
 
     toggleViewMode(event: Event): void {
         event.stopPropagation();
-        this.store.dispatch(ACCOUNTS_ACTIONS.ToggleDatabaseView({login: this.accountLogin}));
+        this.store.dispatch(ACCOUNTS_ACTIONS.ToggleDatabaseView({login: this.stateSubject$.value.account.accountConfig.login}));
     }
 
     ngOnDestroy(): void {

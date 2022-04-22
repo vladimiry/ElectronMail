@@ -1,3 +1,5 @@
+import type {Cookie as ElectronCookie} from "electron";
+
 import {ProtonClientSession} from "src/shared/model/proton";
 
 export type AccountConfig = NoExtraProps<{
@@ -28,7 +30,7 @@ export type AccountConfig = NoExtraProps<{
 }>;
 
 export type AccountPersistentSession = NoExtraProps<{
-    readonly cookies: Electron.Cookie[];
+    readonly cookies: ElectronCookie[];
     readonly sessionStorage: ProtonClientSession["sessionStorage"];
     readonly window: { name?: ProtonClientSession["windowName"] };
 }>;

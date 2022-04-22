@@ -14,11 +14,11 @@ import {curryFunctionMembers} from "src/shared/util";
 import {Database} from "src/electron-main/database";
 import {deletePassword, getPassword, setPassword} from "src/electron-main/keytar";
 import * as EndpointsBuilders from "./endpoints-builders";
-import {initSessionByAccount} from "src/electron-main/session";
+import {initAccountSessions} from "src/electron-main/session";
 import {IPC_MAIN_API, IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main-process";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
-import {PACKAGE_NAME, PRODUCT_NAME, PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION} from "src/shared/constants";
+import {PACKAGE_NAME, PRODUCT_NAME, PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION} from "src/shared/const";
 import {PLATFORM} from "src/electron-main/constants";
 import * as SpellCheck from "src/electron-main/spell-check/api";
 import {upgradeDatabase, upgradeSettings} from "src/electron-main/storage-upgrade";
@@ -250,7 +250,7 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
             ctx.settingsStore = store;
 
             for (const account of settings.accounts) {
-                await initSessionByAccount(ctx, account);
+                await initAccountSessions(ctx, account);
             }
 
             await (async (): Promise<void> => {

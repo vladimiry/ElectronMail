@@ -1,4 +1,4 @@
-import {PACKAGE_NAME} from "src/shared/constants";
+import {PACKAGE_NAME} from "src/shared/const";
 
 type Code =
     | "NotFoundAccount"

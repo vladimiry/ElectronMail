@@ -6,7 +6,7 @@ import {merge as webpackMerge} from "webpack-merge";
 
 import {buildBaseConfig, ENVIRONMENT, ENVIRONMENT_STATE, outputRelativePath, srcRelativePath, typescriptLoaderRule} from "../lib";
 import {BuildEnvVars} from "webpack-configs/model";
-import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
+import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/const/webpack";
 
 export const sassLoaderRuleSetRules: RuleSetRule[] = [
     {

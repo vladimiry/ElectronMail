@@ -8,7 +8,7 @@ import {spy as sinonSpy} from "sinon";
 
 import {APP_DIR_PATH, CONF, ENV, MAIN_SCRIPT_FILE, ROOT_DIR_PATH} from "src/e2e/lib/const";
 import {asyncDelay} from "src/shared/util";
-import {BINARY_NAME, ONE_SECOND_MS, PACKAGE_NAME, PACKAGE_VERSION, PRODUCT_NAME, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/constants";
+import {BINARY_NAME, ONE_SECOND_MS, PACKAGE_NAME, PACKAGE_VERSION, PRODUCT_NAME, RUNTIME_ENV_USER_DATA_DIR} from "src/shared/const";
 import {buildWorkflow} from "./workflow";
 import {mainProcessEvaluationFunctions} from "src/e2e/lib/util";
 import {TestContext} from "./model";

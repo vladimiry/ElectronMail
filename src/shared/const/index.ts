@@ -1,7 +1,7 @@
 import packageJSON from "package.json" assert {type: "json"};
 
-import {EntryUrlItem, LogLevel} from "./model/common";
-import {PROTON_SHARED_MESSAGE_INTERFACE, PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
+import {LogLevel} from "src/shared/model/common";
+import {PROTON_SHARED_MESSAGE_INTERFACE} from "src/shared/const/proton-apps";
 
 const {
     description: PACKAGE_DESCRIPTION,
@@ -18,8 +18,6 @@ export const REPOSITORY_NAME = PRODUCT_NAME;
 export const BINARY_NAME = PACKAGE_NAME;
 
 export {PACKAGE_DESCRIPTION, PACKAGE_GITHUB_PROJECT_URL, PACKAGE_LICENSE, PACKAGE_NAME, PACKAGE_VERSION};
-
-export const SEMICOLON = ";";
 
 export const ONE_KB_BYTES = 1024;
 
@@ -50,42 +48,11 @@ export const PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION = {
         `./assets/db-search-monaco-editor/proton-shared/${PROTON_SHARED_MESSAGE_INTERFACE.projectRelativeFile.replace(".ts", ".d.ts.txt")}`,
 } as const;
 
-export const LOCAL_WEBCLIENT_PROTOCOL_PREFIX = "webclient";
+export const LOCAL_WEBCLIENT_SCHEME_NAME = "webclient";
 
-export const LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN = `${LOCAL_WEBCLIENT_PROTOCOL_PREFIX}[\\d]+`;
+export const LOCAL_WEBCLIENT_DIR_NAME = "mail.proton.me";
 
-export const PROTON_API_ENTRY_VALUE_PREFIX = "local:::";
-
-export const PROTON_API_ENTRY_PRIMARY_VALUE = "https://mail.protonmail.com";
-
-// @deprecated Tor v2 address will be retired by October 15, 2021
-export const PROTON_API_ENTRY_TOR_V2_VALUE = "https://protonirockerxow.onion";
-
-// @deprecated on 2022-04-20, see https://github.com/ProtonMail/WebClients/issues/271#issuecomment-1104398459
-export const PROTON_API_ENTRY_TOR_V3_VALUE = "https://protonmailrmez3lotccipshtkleegetolb73fuirgj7r4o4vfu7ozyd.onion";
-
-export const PROTON_API_ENTRY_TOR_V4_VALUE = "https://mail.protonmailrmez3lotccipshtkleegetolb73fuirgj7r4o4vfu7ozyd.onion";
-
-function getBuiltInWebClientTitle(): string {
-    return PROVIDER_REPO_MAP["proton-mail"].tag;
-}
-
-export const PROTON_API_ENTRY_RECORDS: DeepReadonly<EntryUrlItem[]> = [
-    {
-        value: PROTON_API_ENTRY_PRIMARY_VALUE,
-        title: `${PROTON_API_ENTRY_PRIMARY_VALUE} (${getBuiltInWebClientTitle()})`,
-    },
-    {
-        value: "https://app.protonmail.ch",
-        title: `https://app.protonmail.ch (${getBuiltInWebClientTitle()})`,
-    },
-    {
-        value: PROTON_API_ENTRY_TOR_V4_VALUE,
-        title: `Tor version 3 address (${getBuiltInWebClientTitle()})`,
-    },
-];
-
-export const PROTON_API_ENTRY_URLS = PROTON_API_ENTRY_RECORDS.map(({value: url}) => url);
+export const LOCAL_WEBCLIENT_ORIGIN = `${LOCAL_WEBCLIENT_SCHEME_NAME}://${LOCAL_WEBCLIENT_DIR_NAME}`;
 
 export const WEB_CLIENTS_BLANK_HTML_FILE_NAME = "blank.html";
 
@@ -141,6 +108,8 @@ export const WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS = "ELECTRON_MAIL_SKI
 
 // TODO electron: get rid of "baseURLForDataURL" workaround, see https://github.com/electron/electron/issues/20700
 export const WEB_PROTOCOL_SCHEME = "web";
+
+export const WEB_PROTOCOL_DIR = WEB_PROTOCOL_SCHEME;
 
 export const BROWSER_WINDOW_RELATIVE_DESKTOP_NOTIFICATION_ICON = "browser-window/desktop-notification-icon.png";
 

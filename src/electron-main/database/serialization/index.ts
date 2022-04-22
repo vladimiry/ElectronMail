@@ -16,7 +16,7 @@ import {curryFunctionMembers, getRandomInt} from "src/shared/util";
 import {Database} from "src/electron-main/database";
 import type {FsDb} from "src/shared/model/database";
 import * as Model from "./model";
-import {ONE_MB_BYTES} from "src/shared/constants";
+import {ONE_MB_BYTES} from "src/shared/const";
 
 const logger = curryFunctionMembers(_logger, __filename);
 

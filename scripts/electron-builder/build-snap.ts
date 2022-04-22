@@ -1,10 +1,10 @@
 import fs from "fs";
 import path from "path";
 
-import {APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR} from "src/shared/hunspell-const";
-import {BINARY_NAME} from "src/shared/constants";
+import {APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR} from "src/shared/const/hunspell";
+import {assertPathIsInCwd, catchTopLeventAsync, CONSOLE_LOG, execShell} from "scripts/lib";
+import {BINARY_NAME} from "src/shared/const";
 import {build, copyDictionaryFilesTo, ensureFileHasNoSuidBit} from "scripts/electron-builder/lib";
-import {catchTopLeventAsync, CONSOLE_LOG, execShell} from "scripts/lib";
 
 async function unpack({packageFile, packageDir}: { packageFile: string; packageDir: string }): Promise<void> {
     await execShell(["unsquashfs", ["-dest", packageDir, "-processors", "1", packageFile]]);
@@ -13,6 +13,7 @@ async function unpack({packageFile, packageDir}: { packageFile: string; packageD
 async function packAndCleanup({packageFile, packageDir}: { packageFile: string; packageDir: string }): Promise<void> {
     await execShell(["rm", ["--force", packageFile]]);
     await execShell(["snapcraft", ["pack", packageDir, "--output", packageFile]]);
+    assertPathIsInCwd(packageDir);
     await execShell(["npx", ["--no", "rimraf", packageDir]]);
 }
 

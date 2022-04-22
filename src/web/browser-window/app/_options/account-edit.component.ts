@@ -6,15 +6,17 @@ import {concatMap, distinctUntilChanged, map, mergeMap, startWith, switchMap} fr
 import type {OnDestroy, OnInit} from "@angular/core";
 import {select, Store} from "@ngrx/store";
 
-import {ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN, PROTON_API_ENTRY_RECORDS} from "src/shared/constants";
+import {ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN} from "src/shared/const";
 import {AccountConfig} from "src/shared/model/account";
 import {AccountConfigCreateUpdatePatch} from "src/shared/model/container";
 import {getWebLogger} from "src/web/browser-window/util";
 import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {PACKAGE_GITHUB_PROJECT_URL_TOKEN} from "src/web/browser-window/app/app.constants";
+import {PROTON_API_ENTRY_RECORDS} from "src/shared/const/proton-url";
 import {State} from "src/web/browser-window/app/store/reducers/options";
-import {validateExternalContentProxyUrlPattern, validateLoginDelaySecondsRange} from "src/shared/util";
+import {validateExternalContentProxyUrlPattern} from "src/shared/util/url";
+import {validateLoginDelaySecondsRange} from "src/shared/util";
 
 @Component({
     selector: "electron-mail-account-edit",

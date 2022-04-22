@@ -15,9 +15,9 @@ import {FsDbAccount} from "src/shared/model/database";
 import {
     IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS, IPC_MAIN_API_NOTIFICATION_ACTIONS,
 } from "src/shared/api/main-process/actions";
-import {PACKAGE_NAME} from "src/shared/constants";
+import {PACKAGE_NAME} from "src/shared/const";
 import {ProtonAttachmentHeadersProp, ProtonClientSession} from "src/shared/model/proton";
-import {UnionOf} from "src/shared/ngrx-util";
+import {UnionOf} from "src/shared/util/ngrx";
 
 export const ENDPOINTS_DEFINITION = {
     getSpellCheckMetadata: ActionType.Promise<void, { locale: ReturnType<Controller["getCurrentLocale"]> }>(),
@@ -29,6 +29,8 @@ export const ENDPOINTS_DEFINITION = {
     addAccount: ActionType.Promise<AccountConfigCreateUpdatePatch, Settings>(),
 
     updateAccount: ActionType.Promise<AccountConfigCreateUpdatePatch, Settings>(),
+
+    enableNetworkEmulationForAccountSessions: ActionType.Promise<LoginFieldContainer & { value: "offline" | "online" }>(),
 
     changeAccountOrder: ActionType.Promise<LoginFieldContainer & { index: number }, Settings>(),
 
@@ -177,7 +179,7 @@ export const ENDPOINTS_DEFINITION = {
 
     applySavedProtonBackendSession: ActionType.Promise<LoginFieldContainer & ApiEndpointOriginFieldContainer, boolean>(),
 
-    resetProtonBackendSession: ActionType.Promise<LoginFieldContainer>(),
+    resetProtonBackendSession: ActionType.Promise<LoginFieldContainer & ApiEndpointOriginFieldContainer>(),
 
     saveSessionStoragePatch: ActionType
         .Promise<LoginFieldContainer & ApiEndpointOriginFieldContainer & { sessionStorageItem: { __cookieStore__: string } }>(),

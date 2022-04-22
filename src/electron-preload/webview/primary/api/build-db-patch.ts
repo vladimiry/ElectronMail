@@ -6,7 +6,7 @@ import {curryFunctionMembers, isDatabaseBootstrapped} from "src/shared/util";
 import * as Database from "src/electron-preload/webview/lib/database-entity";
 import * as DatabaseModel from "src/shared/model/database";
 import {DbPatch} from "src/shared/api/common";
-import {DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_SECOND_MS} from "src/shared/constants";
+import {DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_SECOND_MS} from "src/shared/const";
 import {EVENT_ACTION} from "src/electron-preload/webview/lib/rest-model";
 import {FsDbAccount, LABEL_TYPE, SYSTEM_FOLDER_IDENTIFIERS} from "src/shared/model/database";
 import {isProtonApiError, resolveCachedConfig, sanitizeProtonApiError} from "src/electron-preload/lib/util";

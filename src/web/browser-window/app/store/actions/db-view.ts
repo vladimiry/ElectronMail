@@ -1,7 +1,7 @@
 import {IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main-process";
 import {Mail, View} from "src/shared/model/database";
 import {MailsBundleKey, SearchMailsBundleKey} from "src/web/browser-window/app/store/reducers/db-view";
-import {props, propsRecordToActionsRecord} from "src/shared/ngrx-util";
+import {props, propsRecordToActionsRecord} from "src/shared/util/ngrx";
 import {WebAccountIndexProp, WebAccountPk} from "src/web/browser-window/app/model";
 
 export const DB_VIEW_ACTIONS = propsRecordToActionsRecord(

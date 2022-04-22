@@ -16,12 +16,14 @@ import {DbAccountPk, LABEL_TYPE, MIME_TYPES} from "src/shared/model/database";
 import {INITIAL_STORES} from "./constants";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
-import {
-    LAYOUT_MODES, PACKAGE_VERSION, PROTON_API_ENTRY_PRIMARY_VALUE, PROTON_API_ENTRY_TOR_V2_VALUE, PROTON_API_ENTRY_TOR_V3_VALUE,
-    PROTON_API_ENTRY_TOR_V4_VALUE, PROTON_API_ENTRY_URLS, PROTON_API_ENTRY_VALUE_PREFIX, ZOOM_FACTORS,
-} from "src/shared/constants";
+import {LAYOUT_MODES, PACKAGE_VERSION, ZOOM_FACTORS} from "src/shared/const";
 import {NumericBoolean} from "src/shared/model/common";
-import {parseProtonRestModel} from "src/shared/entity-util";
+import {parseProtonRestModel} from "src/shared/util/entity";
+import {
+    PROTON_API_ENTRY_PRIMARY_VALUE, PROTON_API_ENTRY_PROTONMAIL_CH_VALUE, PROTON_API_ENTRY_PROTONMAIL_COM_VALUE,
+    PROTON_API_ENTRY_TOR_V2_VALUE, PROTON_API_ENTRY_TOR_V3_VALUE, PROTON_API_ENTRY_TOR_V4_VALUE, PROTON_API_ENTRY_URLS,
+    PROTON_API_ENTRY_VALUE_PREFIX,
+} from "src/shared/const/proton-url";
 
 const logger = curryFunctionMembers(_logger, __filename);
 
@@ -371,7 +373,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             }
         }
     },
-    // WARN needs to be the last updater
+    // last updater
     "100.0.0": (config) => {
         // ensuring default base props are set
         Object.assign(
@@ -440,7 +442,6 @@ export const upgradeSettings: upgradeSettingsType = ((): upgradeSettingsType => 
                         ? settings.dbEncryptionKey
                         : INITIAL_STORES.settings().databaseEncryptionKey;
                 }
-
                 // rename "storeMails" => "database"
                 settings.accounts.forEach((account: AccountConfig & { storeMails?: boolean }) => {
                     if (typeof account.database !== "undefined" || typeof account.storeMails === "undefined") {
@@ -450,15 +451,6 @@ export const upgradeSettings: upgradeSettingsType = ((): upgradeSettingsType => 
                     delete account.storeMails;
                 });
             },
-            // "2.0.0": (settings) => {
-            //     // dropping "online web clients" support, see https://github.com/vladimiry/ElectronMail/issues/80
-            //     settings.accounts.forEach((account) => {
-            //         if (PROTON_API_ENTRY_URLS.includes(account.entryUrl)) {
-            //             return;
-            //         }
-            //         account.entryUrl = `${PROTON_API_ENTRY_VALUE_PREFIX}${account.entryUrl}`;
-            //     });
-            // },
             "3.5.0": (settings): void => {
                 // dropping https://beta.protonmail.com entry point, see https://github.com/vladimiry/ElectronMail/issues/164
                 settings.accounts.forEach((account) => {
@@ -467,13 +459,6 @@ export const upgradeSettings: upgradeSettingsType = ((): upgradeSettingsType => 
                     if (account.entryUrl.includes("https://beta.protonmail.com")) { // lgtm [js/incomplete-url-substring-sanitization]
                         account.entryUrl = PROTON_API_ENTRY_PRIMARY_VALUE;
                     }
-                    // if (
-                    //     !PROTON_API_ENTRY_URLS.includes(account.entryUrl)
-                    //     &&
-                    //     !account.entryUrl.includes("https://mail.tutanota.com") // tutanota accounts will be dropped by "4.0.0" upgrader
-                    // ) {
-                    //     throw new Error(`Invalid entry url value "${account.entryUrl}"`);
-                    // }
                 });
             },
             "4.0.0": (settings): void => {
@@ -538,20 +523,27 @@ export const upgradeSettings: upgradeSettingsType = ((): upgradeSettingsType => 
                 });
             },
             "4.15.0": (settings): void => {
-                settings.accounts.forEach((account, index) => {
-                    {
-                        if (account.entryUrl === PROTON_API_ENTRY_TOR_V2_VALUE) {
-                            account.entryUrl = PROTON_API_ENTRY_TOR_V3_VALUE;
-                        }
-                        if (account.entryUrl === PROTON_API_ENTRY_TOR_V3_VALUE) {
-                            account.entryUrl = PROTON_API_ENTRY_TOR_V4_VALUE;
-                        }
-                        if (!PROTON_API_ENTRY_URLS.includes(account.entryUrl)) {
-                            throw new Error(`Invalid entry url value: "${account.entryUrl}" (account index: ${index})`);
-                        }
+                for (const account of settings.accounts) {
+                    if ([PROTON_API_ENTRY_TOR_V2_VALUE, PROTON_API_ENTRY_TOR_V3_VALUE].includes(account.entryUrl)) {
+                        account.entryUrl = PROTON_API_ENTRY_TOR_V4_VALUE;
                     }
                     {
                         delete (account as typeof account & { rotateUserAgent?: unknown }).rotateUserAgent;
+                    }
+                }
+            },
+            "5.0.0": (settings): void => {
+                for (const account of settings.accounts) {
+                    if ([PROTON_API_ENTRY_PROTONMAIL_COM_VALUE, PROTON_API_ENTRY_PROTONMAIL_CH_VALUE].includes(account.entryUrl)) {
+                        account.entryUrl = PROTON_API_ENTRY_PRIMARY_VALUE;
+                    }
+                }
+            },
+            // last updater
+            "100.0.0": (settings): void => {
+                settings.accounts.forEach((account, index) => {
+                    if (!PROTON_API_ENTRY_URLS.includes(account.entryUrl)) {
+                        throw new Error(`Invalid entry url value: "${account.entryUrl}" (account index: ${index})`);
                     }
                 });
             },

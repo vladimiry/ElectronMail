@@ -6,7 +6,7 @@ import {initialConfig} from "src/shared/util";
 import {InitResponse} from "src/shared/api/main-process";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
-import {UnionOf} from "src/shared/ngrx-util";
+import {UnionOf} from "src/shared/util/ngrx";
 
 export const featureName = "options";
 

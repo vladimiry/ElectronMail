@@ -2,15 +2,15 @@ import {NgModule} from "@angular/core";
 import {RouterModule} from "@angular/router";
 import type {Routes} from "@angular/router";
 
-import {AccountEditComponent} from "src/web/browser-window/app/_options/account-edit.component";
-import {AccountsListComponent} from "src/web/browser-window/app/_options/accounts-list.component";
-import {BaseSettingsComponent} from "src/web/browser-window/app/_options/base-settings.component";
-import {DbMetadataResetRequestComponent} from "src/web/browser-window/app/_options/db-metadata-reset-request.component";
-import {LoginComponent} from "src/web/browser-window/app/_options/login.component";
-import {SettingsComponent} from "src/web/browser-window/app/_options/settings.component";
-import {SettingsConfigureGuard} from "src/web/browser-window/app/_options/settings-configure.guard";
-import {SettingsSetupComponent} from "src/web/browser-window/app/_options/settings-setup.component";
-import {StorageComponent} from "src/web/browser-window/app/_options/storage.component";
+import {AccountEditComponent} from "./account-edit.component";
+import {AccountsListComponent} from "./accounts-list.component";
+import {BaseSettingsComponent} from "./base-settings.component";
+import {DbMetadataResetRequestComponent} from "./db-metadata-reset-request.component";
+import {LoginComponent} from "./login.component";
+import {SettingsComponent} from "./settings.component";
+import {SettingsConfigureGuard} from "./settings-configure.guard";
+import {SettingsSetupComponent} from "./settings-setup.component";
+import {StorageComponent} from "./storage.component";
 
 // TODO define path names as constants and trigger navigation using them
 const routes: Routes = [

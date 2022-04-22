@@ -19,7 +19,7 @@ import {CoreModule} from "./_core/core.module";
 import * as DbViewReducer from "./store/reducers/db-view";
 import * as NotificationReducer from "./store/reducers/notification";
 import * as OptionsReducer from "./store/reducers/options";
-import {PACKAGE_GITHUB_PROJECT_URL} from "src/shared/constants";
+import {PACKAGE_GITHUB_PROJECT_URL} from "src/shared/const";
 import {PACKAGE_GITHUB_PROJECT_URL_TOKEN} from "./app.constants";
 import * as RootReducer from "./store/reducers/root";
 import {RouterProxyComponent} from "./components/router-proxy.component";

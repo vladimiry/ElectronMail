@@ -1,7 +1,7 @@
 import {AddInitializedProp, DefineObservableValue, WrapToValueProp} from "src/electron-preload/webview/lib/provider-api/model";
 import * as DatabaseModel from "src/shared/model/database/index";
 import {HttpApi, HttpApiArg} from "src/electron-preload/webview/lib/provider-api/standart-setup-internals/model";
-import {PROVIDER_REPO_MAP, PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS} from "src/shared/proton-apps-constants";
+import {PROVIDER_REPO_MAP, PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS} from "src/shared/const/proton-apps";
 import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 
 /* eslint-disable max-len */

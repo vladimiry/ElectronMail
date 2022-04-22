@@ -6,7 +6,7 @@ import path from "path";
 import {CONSOLE_LOG, execShell} from "scripts/lib";
 import {GIT_CLONE_ABSOLUTE_DIR} from "scripts/const";
 import {Locale} from "src/shared/model/common";
-import {normalizeLocale, sanitizeFastGlobPattern} from "src/shared/sanitize-util";
+import {normalizeLocale, sanitizeFastGlobPattern} from "src/shared/util/sanitize";
 
 interface Dictionary {
     locale: Locale;
@@ -170,7 +170,7 @@ export async function build(
     await execShell([
         "pnpm",
         [
-            ...`run electron-builder:shortcut -- --x64 --publish never --linux ${packageType}`.split(" "),
+            ...`run electron-builder:shortcut --x64 --publish never --linux ${packageType}`.split(" "),
         ],
     ]);
 

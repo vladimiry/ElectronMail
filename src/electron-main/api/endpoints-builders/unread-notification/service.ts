@@ -8,7 +8,7 @@ import {augmentRawMailWithFolders, resolveCachedQuickJSInstance} from "src/elect
 import {buildAccountFoldersResolver} from "src/electron-main/database/util";
 import {curryFunctionMembers} from "src/shared/util";
 import {FsDbAccount} from "src/shared/model/database";
-import {ONE_SECOND_MS} from "src/shared/constants";
+import {ONE_SECOND_MS} from "src/shared/const";
 import {QUICK_JS_EVAL_CODE_VARIABLE_NAME} from "src/electron-main/api/const";
 
 const logger = curryFunctionMembers(electronLog, __filename);

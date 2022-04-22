@@ -1,6 +1,7 @@
 import {Deferred} from "ts-deferred";
 import {Model as StoreModel} from "fs-json-store";
 
+import {AccountConfig} from "src/shared/model/account";
 import {Config, Settings} from "src/shared/model/options";
 import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
@@ -66,3 +67,7 @@ export interface ProperLockfileError {
     code: "ELOCKED"
     file: string
 }
+
+// TODO stop putting account-specific data to the session
+// this hack is currently used to bind the "entryUrl" to a session for the "session.protocol.registerStreamProtocol" use purposes
+export type AccountSessionAppData = { "_electron_mail_data_": Pick<AccountConfig, "entryUrl"> };

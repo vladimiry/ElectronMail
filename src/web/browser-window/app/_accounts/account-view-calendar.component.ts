@@ -2,10 +2,10 @@ import {Component, Injector} from "@angular/core";
 import type {OnInit} from "@angular/core";
 
 import {ACCOUNTS_ACTIONS} from "src/web/browser-window/app/store/actions";
-import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
-import {AccountViewAbstractComponent} from "src/web/browser-window/app/_accounts/account-view-abstract.component";
+import {AccountsService} from "./accounts.service";
+import {AccountViewAbstractComponent} from "./account-view-abstract-component.directive";
 import {getWebLogger} from "src/web/browser-window/util";
-import {testProtonCalendarAppPage} from "src/shared/util";
+import {testProtonCalendarAppPage} from "src/shared/util/proton-webclient";
 
 @Component({
     selector: "electron-mail-account-view-calendar",

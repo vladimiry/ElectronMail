@@ -1,5 +1,5 @@
 import {curryFunctionMembers} from "src/shared/util";
-import {LOG_LEVELS} from "src/shared/constants";
+import {LOG_LEVELS} from "src/shared/const";
 import {WebAccountPk} from "src/web/browser-window/app/model";
 
 const LOGGER = __ELECTRON_EXPOSURE__.Logger;

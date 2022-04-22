@@ -3,7 +3,8 @@ import {URL} from "@cliqz/url-parser";
 
 import {CorsProxy, GetHeaderCallResult} from "./model";
 import {HEADERS} from "./const";
-import {verifyUrlOriginValue} from "src/shared/util";
+import {processProtonCookieRecord} from "src/shared/util/proton-url";
+import {resolvePrimaryDomainNameFromUrlHostname, verifyUrlOriginValue} from "src/shared/util/url";
 
 export const getHeader = (
     headers: Exclude<HeadersReceivedResponse["responseHeaders"] | BeforeSendResponse["requestHeaders"], undefined>,
@@ -143,34 +144,20 @@ export const patchCorsResponseHeaders: (
     );
 };
 
-export const patchSameSiteCookieRecord = (
-    responseHeaders: Exclude<OnHeadersReceivedListenerDetails["responseHeaders"], undefined>,
+export const patchResponseSetCookieHeaderRecords = (
+    {url, responseHeaders}: Pick<Required<OnHeadersReceivedListenerDetails>, "url" | "responseHeaders">,
 ): void => {
-    // starting from @electron v12 (more exactly from the respective @chromium version)
-    // the "set-cookie" records with "samesite=strict" get blocked by @chromium, for example the "/api/auth/cookies" request case
-    // so to workaround the issue we replace the "samesite=strict|lax"-like attribute with "samesite=none"
-    for (const headerName of Object.keys(responseHeaders)) {
-        if (headerName.toLowerCase() !== "set-cookie") {
-            continue;
-        }
+    const requestUrlPrimaryDomainName = resolvePrimaryDomainNameFromUrlHostname(new URL(url).hostname);
 
+    for (const headerName of Object.keys(responseHeaders)) {
         const headerValues = responseHeaders[headerName];
 
-        if (!headerValues) {
+        if (headerName.toLowerCase() !== "set-cookie" || !headerValues) {
             continue;
         }
 
-        // TODO consider patching the "samesite" cookie attribute only for "/api/auth/cookies" request
-        responseHeaders[headerName] = headerValues.map((headerValue) => {
-            if ((/samesite[\s]*=[\s]*(strict|lax|none)/i).test(headerValue)) {
-                headerValue = headerValue.replace(/samesite[\s]*=[\s]*(strict|lax)/i, "samesite=none");
-            } else {
-                headerValue = `${headerValue}; samesite=none`;
-            }
-            headerValue = /(;[\s]*secure)|(secure[\s]*;)/i.test(headerValue)
-                ? headerValue
-                : `${headerValue}; secure`; // "samesite=none" attribute requires "secure" attribute
-            return headerValue;
+        responseHeaders[headerName] = headerValues.map((cookieString) => {
+            return processProtonCookieRecord(cookieString, {requestUrlPrimaryDomainName});
         });
     }
 };

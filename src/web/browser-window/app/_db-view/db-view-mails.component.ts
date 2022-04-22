@@ -6,8 +6,8 @@ import {select, Store} from "@ngrx/store";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
-import {DB_VIEW_MAIL_DATA_PK_ATTR_NAME, DB_VIEW_MAIL_SELECTED_CLASS_NAME} from "src/web/browser-window/app/_db-view/const";
-import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
+import {DB_VIEW_MAIL_DATA_PK_ATTR_NAME, DB_VIEW_MAIL_SELECTED_CLASS_NAME} from "./const";
+import {DbViewAbstractComponent} from "./db-view-abstract.component";
 import {Folder, Mail} from "src/shared/model/database/view";
 import {LABEL_TYPE, SYSTEM_FOLDER_IDENTIFIERS} from "src/shared/model/database";
 import {MailsBundleKey, State} from "src/web/browser-window/app/store/reducers/db-view";

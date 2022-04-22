@@ -1,5 +1,5 @@
 import {IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main-process";
-import {props, propsRecordToActionsRecord} from "src/shared/ngrx-util";
+import {props, propsRecordToActionsRecord} from "src/shared/util/ngrx";
 
 export type NotificationItem =
     | Readonly<{ type_: "error"; data: Readonly<Error & { code?: unknown }> }>

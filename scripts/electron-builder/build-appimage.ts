@@ -1,9 +1,9 @@
 import fs from "fs";
 import path from "path";
 
-import {BINARY_NAME} from "src/shared/constants";
+import {assertPathIsInCwd, catchTopLeventAsync, CONSOLE_LOG, execShell, resolveExecutable} from "scripts/lib";
+import {BINARY_NAME} from "src/shared/const";
 import {build, DISABLE_SANDBOX_ARGS_LINE, ensureFileHasNoSuidBit} from "scripts/electron-builder/lib";
-import {catchTopLeventAsync, CONSOLE_LOG, execShell, resolveExecutable} from "scripts/lib";
 
 // TODO pass destination directory instead of hardcoding it ("--appimage-extract" doesn't support destination parameter at the moment)
 const extractedImageFolderName = "squashfs-root";
@@ -33,6 +33,7 @@ async function unpack({packageFile}: { packageFile: string }): Promise<{ package
         extractedImageFolderName,
     );
 
+    assertPathIsInCwd(packageDir);
     await execShell(["npx", ["--no", "rimraf", packageDir]]);
     await execShell([packageFile, ["--appimage-extract"], {cwd}]);
 
@@ -71,6 +72,7 @@ async function packAndCleanup({packageFile, packageDir}: { packageFile: string; 
         ],
         {printEnvWhitelist: ["ARCH"]},
     );
+    assertPathIsInCwd(packageDir);
     await execShell(["npx", ["--no", "rimraf", packageDir]]);
 }
 

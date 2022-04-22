@@ -7,7 +7,7 @@ import {lastValueFrom} from "rxjs";
 import {Context} from "src/electron-main/model";
 import {curryFunctionMembers, initialConfig} from "src/shared/util";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";
-import {ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/constants";
+import {ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/const";
 import {readConfigSync, resolveDefaultAppSession} from "src/electron-main/util";
 import {syncFindInPageBrowserViewSize} from "src/electron-main/window/find-in-page";
 

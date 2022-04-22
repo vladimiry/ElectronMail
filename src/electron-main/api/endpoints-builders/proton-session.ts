@@ -1,23 +1,15 @@
-import {concatMap, first} from "rxjs/operators";
-import {from, lastValueFrom, race, throwError, timer} from "rxjs";
-import {pick} from "remeda";
+import {URL} from "@cliqz/url-parser";
 
 import {Context} from "src/electron-main/model";
-import {filterProtonSessionTokenCookies} from "src/electron-main/util";
+import {filterProtonSessionApplyingCookies} from "src/electron-main/util";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
-import {PLATFORM} from "src/electron-main/constants";
-import {resolveInitializedAccountSession} from "src/electron-main/session";
+import {processProtonCookieRecord} from "src/shared/util/proton-url";
+import {resetSessionStorages, resolveInitializedAccountSession} from "src/electron-main/session";
+import {resolvePrimaryDomainNameFromUrlHostname} from "src/shared/util/url";
 
 // TODO enable minimal logging
-// const logger = curryFunctionMembers(electronLog, __filename);
 
-function pickTokenCookiePropsToApply(
-    cookie: DeepReadonly<Electron.Cookie>,
-): Pick<typeof cookie, "httpOnly" | "name" | "path" | "secure" | "value"> {
-    return pick(cookie, ["httpOnly", "name", "path", "secure", "value"]);
-}
-
-export async function buildEndpoints(
+export const buildEndpoints = async (
     ctx: Context,
 ): Promise<Pick<IpcMainApiEndpoints,
     | "resolveSavedProtonClientSession"
@@ -26,7 +18,7 @@ export async function buildEndpoints(
     | "applySavedProtonBackendSession"
     | "saveSessionStoragePatch"
     | "resolvedSavedSessionStoragePatch"
-    | "resetProtonBackendSession">> {
+    | "resetProtonBackendSession">> => {
     const endpoints: Unpacked<ReturnType<typeof buildEndpoints>> = {
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async resolveSavedProtonClientSession({login, apiEndpointOrigin}) {
@@ -50,29 +42,30 @@ export async function buildEndpoints(
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async saveProtonSession({login, apiEndpointOrigin, clientSession}) {
-            const session = resolveInitializedAccountSession({login});
-            const data = {
+            const session = resolveInitializedAccountSession({login, entryUrl: apiEndpointOrigin});
+            const requestUrlPrimaryDomainName = resolvePrimaryDomainNameFromUrlHostname(new URL(apiEndpointOrigin).hostname);
+            const cookies = [...await session.cookies.get({})].map((cookie) => {
+                return processProtonCookieRecord(cookie, {requestUrlPrimaryDomainName});
+            });
+            const dataToSave = {
                 login,
                 apiEndpointOrigin,
                 session: {
-                    cookies: await session.cookies.get({}),
+                    cookies,
                     sessionStorage: clientSession.sessionStorage,
-                    window: {
-                        name: clientSession.windowName,
-                    },
+                    window: {name: clientSession.windowName},
                 },
             } as const;
-
-            const {accessTokens, refreshTokens} = filterProtonSessionTokenCookies(data.session.cookies);
+            const {accessTokens, refreshTokens} = filterProtonSessionApplyingCookies(dataToSave.session.cookies);
 
             if (accessTokens.length > 1 || refreshTokens.length > 1) {
                 throw new Error([
                     `The app refuses to save more than one "proton-session" cookies records set `,
-                    `(access tokens count: ${accessTokens.length}, refresh tokens count: ${refreshTokens.length}).`,
+                    `(${nameof(accessTokens)} count: ${accessTokens.length}, ${nameof(refreshTokens)} count: ${refreshTokens.length}).`,
                 ].join(""));
             }
 
-            await ctx.sessionStorage.saveSession(data);
+            await ctx.sessionStorage.saveSession(dataToSave);
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -85,39 +78,41 @@ export async function buildEndpoints(
             const savedSession = ctx.sessionStorage.getSession({login, apiEndpointOrigin});
 
             // resetting the session before applying cookies from storage
-            await endpoints.resetProtonBackendSession({login});
+            await endpoints.resetProtonBackendSession({login, apiEndpointOrigin});
 
             if (!savedSession) {
                 return false;
             }
 
-            const tokenCookie = filterProtonSessionTokenCookies(savedSession.cookies);
-            const accessTokenCookie = [...tokenCookie.accessTokens].pop();
-            const refreshTokenCookie = [...tokenCookie.refreshTokens].pop();
+            const session = resolveInitializedAccountSession({login, entryUrl: apiEndpointOrigin});
+            const cookies = (() => {
+                const values = filterProtonSessionApplyingCookies(savedSession.cookies);
+                return {
+                    accessToken: [...values.accessTokens].pop(),
+                    refreshToken: [...values.refreshTokens].pop(),
+                    sessionId: [...values.sessionIds].pop(),
+                } as const;
+            })();
 
-            if (!accessTokenCookie || !refreshTokenCookie) {
+            if (!cookies.accessToken || !cookies.refreshToken) {
                 return false;
             }
 
-            const session = resolveInitializedAccountSession({login});
-            const sameSiteNoneCookieAttribute: Readonly<NoExtraProps<Pick<import("electron").CookiesSetDetails, "sameSite" | "secure">>> = {
-                sameSite: "no_restriction",
-                secure: true, // "samesite=none" attribute requires "secure" attribute
-            };
-            await Promise.all([
-                session.cookies.set({
-                    ...pickTokenCookiePropsToApply(accessTokenCookie),
-                    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-                    url: `${apiEndpointOrigin}${accessTokenCookie.path}`,
-                    ...sameSiteNoneCookieAttribute,
-                }),
-                session.cookies.set({
-                    ...pickTokenCookiePropsToApply(refreshTokenCookie),
-                    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-                    url: `${apiEndpointOrigin}${refreshTokenCookie.path}`,
-                    ...sameSiteNoneCookieAttribute,
-                }),
-            ]);
+            await session.cookies.set({
+                ...cookies.accessToken,
+                url: `${apiEndpointOrigin}/${cookies.accessToken.path ?? ""}`,
+            });
+            await session.cookies.set({
+                ...cookies.refreshToken,
+                url: `${apiEndpointOrigin}/${cookies.refreshToken.path ?? ""}`,
+            });
+
+            if (cookies.sessionId) {
+                await session.cookies.set({
+                    ...cookies.sessionId,
+                    url: `${apiEndpointOrigin}/${cookies.sessionId.path ?? ""}`,
+                });
+            }
 
             return true;
         },
@@ -133,28 +128,10 @@ export async function buildEndpoints(
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-        async resetProtonBackendSession({login}) {
-            const session = resolveInitializedAccountSession({login});
-            const config = await lastValueFrom(ctx.config$.pipe(first()));
-            const {timeouts: {clearSessionStorageData: timeoutMs}} = config;
-
-            // delete session._documentCookieJar_;
-
-            await lastValueFrom(
-                race(
-                    from(
-                        // TODO e2e / playwright: "session.clearStorageData()" hangs when executed e2e test flow on "win32" system
-                        BUILD_ENVIRONMENT === "e2e" && PLATFORM === "win32"
-                            ? Promise.resolve()
-                            : session.clearStorageData()
-                    ),
-                    timer(timeoutMs).pipe(
-                        concatMap(() => throwError(new Error(`Session clearing failed in ${timeoutMs}ms`))),
-                    ),
-                ),
-            );
+        async resetProtonBackendSession({login, apiEndpointOrigin}) {
+            await resetSessionStorages(ctx, {login, apiEndpointOrigin});
         },
     };
 
     return endpoints;
-}
+};

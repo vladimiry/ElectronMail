@@ -1,9 +1,9 @@
 import {Component, Inject, Injector} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 
-import {LoginBaseComponent} from "src/web/browser-window/app/_options/login-base.component";
+import {LoginBaseComponent} from "./login-base.component";
 import {NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
-import {PACKAGE_GITHUB_PROJECT_URL} from "src/shared/constants";
+import {PACKAGE_GITHUB_PROJECT_URL} from "src/shared/const";
 import {PACKAGE_GITHUB_PROJECT_URL_TOKEN} from "src/web/browser-window/app/app.constants";
 
 @Component({

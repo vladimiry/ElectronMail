@@ -12,8 +12,8 @@ import {injectVendorsAppCssIntoHtmlFile, resolveDefaultAppSession, resolveUiCont
 import {
     PACKAGE_DESCRIPTION, PACKAGE_GITHUB_PROJECT_URL, PACKAGE_LICENSE, PACKAGE_VERSION, PRODUCT_NAME, WEB_PROTOCOL_SCHEME,
     ZOOM_FACTOR_DEFAULT,
-} from "src/shared/constants";
-import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
+} from "src/shared/const";
+import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/const/webpack";
 
 const logger = curryFunctionMembers(_logger, __filename);
 

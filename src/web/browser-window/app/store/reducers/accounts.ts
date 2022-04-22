@@ -6,7 +6,7 @@ import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/s
 import * as fromRoot from "src/web/browser-window/app/store/reducers/root";
 import {getWebLogger} from "src/web/browser-window/util";
 import {LoginFieldContainer} from "src/shared/model/container";
-import {UnionOf} from "src/shared/ngrx-util";
+import {UnionOf} from "src/shared/util/ngrx";
 import {WebAccount} from "src/web/browser-window/app/model";
 
 const logger = getWebLogger(__filename);
@@ -16,7 +16,7 @@ export const featureName = "accounts";
 export interface State extends fromRoot.State {
     selectedLogin?: string;
     initialized?: boolean;
-    globalProgress: { indexing?: boolean };
+    globalProgress: { indexing?: boolean/*, accountTogglingByEntryUrlChange?: boolean*/ };
     // TODO consider using "@ngrx/entity" library instead of dealing with a raw array
     accounts: WebAccount[];
 }

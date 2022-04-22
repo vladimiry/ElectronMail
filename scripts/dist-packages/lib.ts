@@ -2,8 +2,8 @@ import fastGlob from "fast-glob";
 import fsExtra from "fs-extra";
 import path from "path";
 
-import {PACKAGE_NAME} from "src/shared/constants";
-import {sanitizeFastGlobPattern} from "src/shared/sanitize-util";
+import {PACKAGE_NAME} from "src/shared/const";
+import {sanitizeFastGlobPattern} from "src/shared/util/sanitize";
 
 export async function listInstallationPackageFiles(dir: string): Promise<string[]> {
     const result: string[] = [];

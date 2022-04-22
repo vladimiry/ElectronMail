@@ -7,7 +7,7 @@ import {select, Store} from "@ngrx/store";
 
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
 import {DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
-import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
+import {DbViewAbstractComponent} from "./db-view-abstract.component";
 import {Instance, State} from "src/web/browser-window/app/store/reducers/db-view";
 import {SYSTEM_FOLDER_IDENTIFIERS, View} from "src/shared/model/database";
 

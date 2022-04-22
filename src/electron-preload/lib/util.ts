@@ -2,8 +2,9 @@ import {pick} from "remeda";
 import {webFrame} from "electron"; // tslint:disable-line:no-import-zones
 
 import {Config} from "src/shared/model/options";
-import {curryFunctionMembers, depersonalizeProtonApiUrl} from "src/shared/util";
-import {DEFAULT_API_CALL_TIMEOUT} from "src/shared/constants";
+import {curryFunctionMembers} from "src/shared/util";
+import {DEFAULT_API_CALL_TIMEOUT} from "src/shared/const";
+import {depersonalizeProtonApiUrl} from "src/shared/util/proton-url";
 import {IPC_MAIN_API} from "src/shared/api/main-process";
 import {Logger} from "src/shared/model/common";
 import {LOGGER} from "src/electron-preload/lib/electron-exposure/logger";

@@ -6,13 +6,14 @@ import {isWebUri} from "valid-url";
 
 import {applyZoomFactor} from "src/electron-main/window/util";
 import {buildSpellCheckSettingsMenuItems, buildSpellingSuggestionMenuItems} from "src/electron-main/spell-check/menu";
-import {
-    buildUrlOriginsFailedMsgTester, curryFunctionMembers, depersonalizeLoggedUrlsInString, lowerConsoleMessageEventLogLevel,
-} from "src/shared/util";
+import {buildUrlOriginsFailedMsgTester} from "src/shared/util/url";
 import {Context} from "./model";
+import {curryFunctionMembers, lowerConsoleMessageEventLogLevel} from "src/shared/util";
 import {DEFAULT_WEB_PREFERENCES, DEFAULT_WEB_PREFERENCES_KEYS} from "src/electron-main/window/constants";
+import {depersonalizeLoggedUrlsInString} from "src/shared/util/proton-url";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
+import {LOCAL_WEBCLIENT_ORIGIN} from "src/shared/const";
 import {PLATFORM} from "src/electron-main/constants";
 
 const logger = curryFunctionMembers(_logger, __filename);
@@ -69,9 +70,7 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
     const emptyArray = [] as const;
     const endpoints = await ctx.deferredEndpoints.promise;
     const spellCheckController = ctx.getSpellCheckController();
-    const verifyWebviewUrlAccess = buildUrlOriginsFailedMsgTester(
-        ctx.locations.webClients.map(({entryUrl}) => entryUrl),
-    );
+    const verifyWebviewUrlAccess = buildUrlOriginsFailedMsgTester([LOCAL_WEBCLIENT_ORIGIN]);
 
     app.on("web-contents-created", async (...[, webContents]) => {
         const uiContext = ctx.uiContext && await ctx.uiContext;

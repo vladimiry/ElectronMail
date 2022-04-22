@@ -1,15 +1,21 @@
 import _logger from "electron-log";
 import {app, protocol, ProtocolResponse, Session} from "electron";
 import fs from "fs";
+import {lookup as lookupMimeType} from "mrmime";
 import path from "path";
 import pathIsInside from "path-is-inside";
 import {promisify} from "util";
+import {Readable} from "stream";
 import {URL} from "@cliqz/url-parser";
 
-import {Context} from "src/electron-main/model";
+import {AccountConfig} from "src/shared/model/account";
+import {AccountSessionAppData, Context} from "src/electron-main/model";
+import {assertEntryUrl} from "src/electron-main/util";
 import {curryFunctionMembers} from "src/shared/util";
-import {PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
-import {WEB_PROTOCOL_SCHEME} from "src/shared/constants";
+import {LOCAL_WEBCLIENT_DIR_NAME, LOCAL_WEBCLIENT_SCHEME_NAME, WEB_PROTOCOL_DIR, WEB_PROTOCOL_SCHEME} from "src/shared/const";
+import {PROTON_API_URL_PLACEHOLDER} from "src/shared/const/proton-url";
+import {PROVIDER_REPO_MAP} from "src/shared/const/proton-apps";
+import {resolveProtonApiOrigin, resolveProtonAppTypeFromUrlHref} from "src/shared/util/proton-url";
 
 const logger = curryFunctionMembers(_logger, __filename);
 
@@ -22,11 +28,11 @@ const basePaths: readonly string[] = Object
     .values(PROVIDER_REPO_MAP)
     .map(({basePath}) => basePath);
 
-export function registerStandardSchemes(ctx: Context): void {
+export const registerStandardSchemes = (): void => {
     // WARN: "protocol.registerStandardSchemes" needs to be called once, see https://github.com/electron/electron/issues/15943
-    protocol.registerSchemesAsPrivileged(
-        ctx.locations.protocolBundles.map(({scheme}) => ({
-            scheme,
+    protocol.registerSchemesAsPrivileged([
+        {
+            scheme: LOCAL_WEBCLIENT_SCHEME_NAME,
             privileges: {
                 corsEnabled: true,
                 secure: true,
@@ -34,13 +40,13 @@ export function registerStandardSchemes(ctx: Context): void {
                 supportFetchAPI: true,
                 allowServiceWorkers: true,
             },
-        })),
-    );
-}
+        },
+    ]);
+};
 
 // TODO electron: get rid of "baseURLForDataURL" workaround, see https://github.com/electron/electron/issues/20700
 export function registerWebFolderFileProtocol(ctx: Context, session: Session): void {
-    const webPath = path.join(ctx.locations.appDir, "./web");
+    const webPath = path.join(ctx.locations.appDir, WEB_PROTOCOL_DIR);
     const scheme = WEB_PROTOCOL_SCHEME;
     const registered = session.protocol.registerFileProtocol(
         scheme,
@@ -60,13 +66,10 @@ export function registerWebFolderFileProtocol(ctx: Context, session: Session): v
     }
 }
 
-async function resolveFileSystemResourceLocation(
-    directory: string,
-    request: Parameters<Parameters<(typeof protocol)["registerBufferProtocol"]>[1]>[0],
-): Promise<string | null> {
+async function resolveFileSystemResourceLocation(directory: string, requestUrl: URL): Promise<string | null> {
     const resource = (() => {
         const urlBasedResource = path.normalize(
-            path.join(directory, new URL(request.url).pathname),
+            path.join(directory, requestUrl.pathname),
         );
         return path.extname(urlBasedResource)
             ? urlBasedResource
@@ -107,45 +110,82 @@ async function resolveFileSystemResourceLocation(
     return null;
 }
 
-export async function registerSessionProtocols(ctx: DeepReadonly<Context>, session: Session): Promise<void> {
-    // TODO setup timeout on "ready" even firing
-    await app.whenReady();
+const readFileAndInjectApiUrl = async (
+    fileLocation: string,
+    {entryUrl: accountEntryUrl, requestUrl}: Readonly<Pick<AccountConfig, "entryUrl">> & { requestUrl: URL },
+): Promise<Readable> => {
+    assertEntryUrl(accountEntryUrl);
 
-    for (const {scheme, directory} of ctx.locations.protocolBundles) {
-        const registered = session.protocol.registerFileProtocol(
-            scheme,
-            async (request, callback) => {
-                const resourceLocation = await resolveFileSystemResourceLocation(directory, request);
+    return Readable.from(
+        Buffer.from(
+            (await fsAsync.readFile(fileLocation)).toString().replaceAll(
+                PROTON_API_URL_PLACEHOLDER,
+                resolveProtonApiOrigin({
+                    accountEntryUrl,
+                    subdomain: PROVIDER_REPO_MAP[resolveProtonAppTypeFromUrlHref(requestUrl.href).type].apiSubdomain,
+                }),
+            ),
+        ),
+    );
+};
 
-                if (!resourceLocation) {
-                    const message = `Failed to resolve "${request.url}" resource`;
-                    logger.error(message);
-                    callback({statusCode: 404});
-                    return;
-                }
+export async function registerAccountSessionProtocols(
+    ctx: DeepReadonly<Context>,
+    session: Session & DeepReadonly<AccountSessionAppData>,
+): Promise<void> {
+    await app.whenReady(); // TODO setup timeout on "ready" even firing
 
-                const callbackResponse: Pick<ProtocolResponse, "path" | "headers"> = {path: resourceLocation};
+    const scheme = LOCAL_WEBCLIENT_SCHEME_NAME;
+    const directory = path.join(ctx.locations.appDir, LOCAL_WEBCLIENT_DIR_NAME);
+    const registered = session.protocol.registerStreamProtocol(
+        scheme,
+        async (request, callback) => {
+            const requestUrl = new URL(request.url);
+            const resourceLocation = await resolveFileSystemResourceLocation(directory, requestUrl);
 
-                // TODO tweak e2e test: navigate to "/drive" (requires to be signed-in into the mail account)
-                //      so the scope misconfiguration-related error get printed to "log.log" file and the test gets failed then
-                if (resourceLocation.startsWith(
-                    path.join(directory, PROVIDER_REPO_MAP["proton-drive"].basePath, "downloadSW."),
-                )) {
-                    /* eslint-disable max-len */
-                    // https://github.com/ProtonMail/proton-drive/blob/04d30ae6c9fbfbc33cfc91499831e2e6458a99b1/src/.htaccess#L42-L45
-                    // https://github.com/ProtonMail/WebClients/blob/38397839bdf9c14f7c0c8af5cef46122ec399cb2/applications/drive/src/.htaccess#L36
-                    /* eslint-enable max-len */
-                    callbackResponse.headers = {
+            if (!resourceLocation) {
+                const message = `Failed to resolve "${request.url}" resource`;
+                logger.error(message);
+                callback({statusCode: 404});
+                return;
+            }
+
+            const resourceExt = (path.parse(resourceLocation).ext ?? "").toLowerCase();
+            const mimeType = lookupMimeType(resourceExt);
+            if (!mimeType) {
+                throw new Error(`Failed to resolve "${nameof(mimeType)}" by the ${JSON.stringify({resourceExt})} value`);
+            }
+            const data: Readable = resourceExt === ".js" || resourceExt === ".html"
+                ? await readFileAndInjectApiUrl(
+                    resourceLocation,
+                    {entryUrl: session._electron_mail_data_.entryUrl, requestUrl},
+                )
+                : fs.createReadStream(resourceLocation);
+            const callbackResponse: ProtocolResponse = {mimeType, data};
+
+            // TODO tweak e2e test: navigate to "/drive" (requires to be signed-in into the mail account)
+            //      so the scope misconfiguration-related error get printed to "log.log" file and the test gets failed then
+            if (resourceLocation.startsWith(
+                path.join(directory, PROVIDER_REPO_MAP["proton-drive"].basePath, "downloadSW."),
+            )) {
+                /* eslint-disable max-len */
+                // https://github.com/ProtonMail/proton-drive/blob/04d30ae6c9fbfbc33cfc91499831e2e6458a99b1/src/.htaccess#L42-L45
+                // https://github.com/ProtonMail/WebClients/blob/38397839bdf9c14f7c0c8af5cef46122ec399cb2/applications/drive/src/.htaccess#L36
+                /* eslint-enable max-len */
+                Object.assign(
+                    callbackResponse.headers ??= {},
+                    {
                         "Service-Worker-Allowed": "/",
                         "Service-Worker": "script",
-                    };
-                }
+                    },
+                );
+            }
 
-                callback(callbackResponse);
-            },
-        );
-        if (!registered) {
-            throw new Error(`Failed to register "${scheme}" protocol mapped to "${directory}" directory`);
-        }
+            callback(callbackResponse);
+        },
+    );
+
+    if (!registered) {
+        throw new Error(`Failed to register "${scheme}" protocol mapped to "${directory}" directory`);
     }
 }

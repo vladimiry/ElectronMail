@@ -15,7 +15,7 @@ const ctx = initContext();
 
 bootstrapCommandLine(ctx);
 
-registerStandardSchemes(ctx);
+registerStandardSchemes();
 
 (async (): Promise<void> => {
     await (async (): Promise<void> => {

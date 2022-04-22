@@ -2,20 +2,16 @@ import {keys} from "ts-transformer-keys";
 import {mapValues, pick} from "remeda";
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import type {RateLimiterMemory} from "rate-limiter-flexible";
-import {URL} from "@cliqz/url-parser";
 
+import {AccountConfig} from "src/shared/model/account";
+import {BaseConfig, Config} from "src/shared/model/options";
+import {DbPatch} from "src/shared/api/common";
 import {
-    ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN, DEFAULT_API_CALL_TIMEOUT, DEFAULT_MESSAGES_STORE_PORTION_SIZE,
-    LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN, ONE_MINUTE_MS, ONE_SECOND_MS, PROTON_API_ENTRY_URLS, WEB_CLIENTS_BLANK_HTML_FILE_NAME,
-    ZOOM_FACTOR_DEFAULT,
-} from "./constants";
-import {AccountConfig} from "./model/account";
-import {BaseConfig, Config} from "./model/options";
-import {DbPatch} from "./api/common";
-import {FsDbAccount, View} from "./model/database";
-import {LoginFieldContainer} from "./model/container";
-import {PROVIDER_APP_NAMES, PROVIDER_REPO_MAP} from "./proton-apps-constants";
-import {StatusCodeError} from "./model/error";
+    DEFAULT_API_CALL_TIMEOUT, DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_MINUTE_MS, ONE_SECOND_MS, ZOOM_FACTOR_DEFAULT,
+} from "src/shared/const";
+import {FsDbAccount, View} from "src/shared/model/database";
+import {LoginFieldContainer} from "src/shared/model/container";
+import {StatusCodeError} from "src/shared/model/error";
 
 // TODO split ./src/shared/util.ts to smaller utility files in subfolder
 
@@ -79,7 +75,7 @@ export function initialConfig(): Config {
             shouldRequestDbMetadataReset: "initial",
             dbCompression: {
                 type: BUILD_ENVIRONMENT === "e2e" ? "zstd" : "gzip",
-                level: 6 /* zlib.Z_DEFAULT_COMPRESSION */,
+                level: 7,
                 mailsPortionSize: {min: 800, max: 1000},
             },
             // base
@@ -122,11 +118,9 @@ export const accountPickingPredicate: (criteria: LoginFieldContainer) => (accoun
 
 export const pickAccountStrict = (accounts: AccountConfig[], criteria: LoginFieldContainer): AccountConfig => {
     const account = accounts.find(accountPickingPredicate(criteria));
-
     if (!account) {
         throw new StatusCodeError(`Account with "${criteria.login}" login has not been found`, "NotFoundAccount");
     }
-
     return account;
 };
 
@@ -151,7 +145,6 @@ export function curryFunctionMembers<T extends object | ((...a: any[]) => any)>(
     const dest: T = typeof src === "function" // eslint-disable-line @typescript-eslint/no-unsafe-assignment
         ? src.bind(undefined) :
         Object.create(null);
-
     for (const key of Object.getOwnPropertyNames(src)) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
         const srcMember = (src as any)[key]; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
@@ -162,7 +155,6 @@ export function curryFunctionMembers<T extends object | ((...a: any[]) => any)>(
             ? srcMember.bind(src, ...args)
             : srcMember;
     }
-
     return dest;
 }
 
@@ -184,20 +176,15 @@ export function walkConversationNodesTree(
     fn: (arg: { node: View.ConversationNode; mail?: View.ConversationNode["mail"] }) => void | "break",
 ): void {
     const state: { nodes: View.ConversationNode[] } = {nodes: [...rootNodes]};
-
     while (state.nodes.length) {
         const node = state.nodes.pop();
-
         if (!node) {
             continue;
         }
-
         const called = fn({node, mail: node.mail});
-
         if (typeof called === "string" && called === "break") {
             return;
         }
-
         state.nodes.unshift(...[...node.children]);
     }
 }
@@ -221,20 +208,6 @@ export function mailDateComparatorDefaultsToDesc(o1: View.Mail, o2: View.Mail, o
     return order === "desc"
         ? o2.sentDate - o1.sentDate
         : o1.sentDate - o2.sentDate;
-}
-
-export function mapBy<T, K>(iterable: Iterable<T>, by: (t: T) => K): Map<K, T[]> {
-    const map = new Map<K, T[]>();
-
-    for (const el of iterable) {
-        const key = by(el);
-        const list = map.get(key) || [];
-
-        list.push(el);
-        map.set(key, list);
-    }
-
-    return map;
 }
 
 // TODO consider using https://github.com/cedx/enum.js instead
@@ -325,7 +298,6 @@ export function isDatabaseBootstrapped(
     if (!metadata) {
         return false;
     }
-
     return (
         typeof metadata.latestEventId === "string"
         &&
@@ -338,19 +310,8 @@ export function isDatabaseBootstrapped(
 export function getRandomInt(min: number, max: number): number {
     min = Math.ceil(min);
     max = Math.floor(max);
-
     return min + Math.floor(Math.random() * (max - min)); // the maximum is exclusive and the minimum is inclusive
 }
-
-type getWebViewPartitionType = (login: AccountConfig["login"]) => string;
-
-export const getWebViewPartition: getWebViewPartitionType = (
-    () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
-        const prefix = "partition/webview/";
-        const result: getWebViewPartitionType = (login) => `${prefix}${login}`;
-        return result;
-    }
-)();
 
 type validateLoginDelaySecondsRangeType = (
     loginDelaySecondsRange: string,
@@ -378,157 +339,10 @@ export const validateLoginDelaySecondsRange: validateLoginDelaySecondsRangeType 
     }
 )();
 
-export const parseLoginDelaySecondsRange: (
-    loginDelaySecondsRange: string,
-) => Required<AccountConfig>["loginDelaySecondsRange"] | undefined = (loginDelaySecondsRange) => {
-    const validation = validateLoginDelaySecondsRange(loginDelaySecondsRange);
-
-    if ("validationError" in validation) {
-        return;
-    }
-
-    return validation;
-};
-
-export const validateExternalContentProxyUrlPattern = (
-    {
-        externalContentProxyUrlPattern: value,
-        enableExternalContentProxy: enabled,
-    }: Pick<NoExtraProps<DeepReadonly<AccountConfig>>, "externalContentProxyUrlPattern" | "enableExternalContentProxy">,
-): boolean => {
-    if (!enabled && !value) { // empty value allowed if feature not enabled
-        return true;
-    }
-
-    if (!value) {
-        return false;
-    }
-
-    const parsedUrl = (() => {
-        try {
-            const url = new URL(value);
-            return {
-                origin: parseUrlOriginWithNullishCheck(value),
-                ...pick(url, ["pathname", "search"]),
-            };
-        } catch {
-            return null;
-        }
-    })();
-
-    return Boolean(
-        parsedUrl
-        &&
-        (
-            parsedUrl.origin
-            &&
-            !parsedUrl.origin.includes(ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN)
-        )
-        &&
-        [parsedUrl.pathname, parsedUrl.search]
-            .filter((valuePart) => valuePart.includes(ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN))
-            .length === 1
-    );
-};
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-constraint
-export function removeArrayDuplicateItems<T extends any>(array: ReadonlyArray<T>): T[] {
+export function reduceDuplicateItemsFromArray<T extends any>(array: ReadonlyArray<T>): T[] {
     return [...new Set<T>(array).values()];
 }
-
-type parsePackagedWebClientUrlType = (urlArg: string) => (null | Readonly<Pick<URL, "protocol" | "hostname" | "pathname">>);
-
-export const parsePackagedWebClientUrl: parsePackagedWebClientUrlType = (
-    () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
-        const re = new RegExp(`^(${LOCAL_WEBCLIENT_PROTOCOL_RE_PATTERN}:)`);
-        const result: parsePackagedWebClientUrlType = (urlArg) => {
-            if (!re.exec(urlArg)) {
-                return null;
-            }
-            const url = new URL(urlArg);
-            // if (!re.exec(url.protocol)) {
-            //     return false;
-            // }
-            return pick(url, ["protocol", "hostname", "pathname"]);
-        };
-        return result;
-    }
-)();
-
-type resolvePackagedWebClientAppType = (
-    url: Exclude<ReturnType<typeof parsePackagedWebClientUrl>, null>,
-) => Readonly<{ project: keyof typeof PROVIDER_REPO_MAP; projectSubPath?: string }>;
-
-export const resolvePackagedWebClientApp: resolvePackagedWebClientAppType = (
-    () => {  // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
-        const subProjects = PROVIDER_APP_NAMES.filter((projectType) => projectType !== "proton-mail");
-        const result: resolvePackagedWebClientAppType = (url) => {
-            const pathname = `${url.pathname}/`;
-            const foundSubProject = subProjects.find((subProject) => {
-                return pathname.startsWith(`/${PROVIDER_REPO_MAP[subProject].basePath}/`);
-            });
-            const project = foundSubProject || "proton-mail";
-            const [
-                /* "," does skip the first item since it's a "project" itself: */,
-                ...projectSubPathParts
-            ] = pathname.split("/").filter(Boolean);
-            const projectSubPath = projectSubPathParts.length
-                ? projectSubPathParts.join("/")
-                : undefined;
-
-            return {project, projectSubPath};
-        };
-        return result;
-    }
-)();
-
-const testProtonAppPage = (
-    targetProjectType: keyof typeof PROVIDER_REPO_MAP,
-    {url, logger}: { url: string; logger: import("src/shared/model/common").Logger },
-): {
-    shouldInitProviderApi: boolean
-    blankHtmlPage: boolean
-    packagedWebClientUrl: ReturnType<typeof parsePackagedWebClientUrl>
-    projectType?: keyof typeof PROVIDER_REPO_MAP,
-} => {
-    let projectType: keyof typeof PROVIDER_REPO_MAP | undefined;
-    const packagedWebClientUrl = parsePackagedWebClientUrl(url);
-    const blankHtmlPage = packagedWebClientUrl?.pathname === `/${WEB_CLIENTS_BLANK_HTML_FILE_NAME}`;
-    const protonMailProject = Boolean(
-        !blankHtmlPage
-        &&
-        packagedWebClientUrl
-        &&
-        (projectType = resolvePackagedWebClientApp(packagedWebClientUrl).project) === targetProjectType
-    );
-    const result = {
-        shouldInitProviderApi: protonMailProject,
-        blankHtmlPage,
-        packagedWebClientUrl,
-        projectType,
-    } as const;
-
-    logger.verbose(nameof(testProtonAppPage), JSON.stringify({...result, url, projectType}));
-
-    return result;
-};
-
-export const testProtonMailAppPage = (
-    params: { url: string; logger: import("src/shared/model/common").Logger },
-): ReturnType<typeof testProtonAppPage> & { shouldDisableBrowserNotificationFeature: boolean } => {
-    const baseResult = testProtonAppPage("proton-mail", params);
-
-    return {
-        ...baseResult,
-        shouldDisableBrowserNotificationFeature: baseResult.shouldInitProviderApi,
-    };
-};
-
-export const testProtonCalendarAppPage = (
-    params: { url: string; logger: import("src/shared/model/common").Logger },
-): ReturnType<typeof testProtonAppPage> => {
-    return testProtonAppPage("proton-calendar", params);
-};
 
 export const consumeMemoryRateLimiter = async (
     consume: () => ReturnType<typeof RateLimiterMemory.prototype.consume>,
@@ -558,47 +372,6 @@ export const assertTypeOf = (
     }
 };
 
-export const verifyUrlOriginValue = (origin: string): string | never => {
-    if (
-        !origin
-        ||
-        // browsers resolve "new URL(...).origin" of custom schemes as "null" string value
-        // example: new URL("webclient://domain.net/blank.html?loader-id=2fb1c580").origin
-        String(origin).trim() === "null"
-    ) {
-        throw new Error(`Unexpected "origin" value detected (value: "${JSON.stringify({origin: String(origin)})}")`);
-    }
-
-    return origin;
-};
-
-export const parseUrlOriginWithNullishCheck = (url: string): string | never => {
-    const {origin} = new URL(url);
-
-    verifyUrlOriginValue(origin);
-
-    return origin;
-};
-
-type buildUrlOriginsFailedMsgTesterType = (
-    // array item can be either url or already parsed origin (mixed array item types allowed)
-    // since each array item value get parsed/verified by the function
-    originsOrUrlsWhitelist: readonly string[],
-) => (url: string) => null | string;
-
-export const buildUrlOriginsFailedMsgTester: buildUrlOriginsFailedMsgTesterType = (() => {
-    const result: buildUrlOriginsFailedMsgTesterType = (allowedOriginsOrUrls) => {
-        const originsWhitelist = allowedOriginsOrUrls.map(parseUrlOriginWithNullishCheck);
-        return (url: string) => {
-            const urlOrigin = parseUrlOriginWithNullishCheck(url);
-            return originsWhitelist.includes(urlOrigin)
-                ? null
-                : `No matched value found in ${JSON.stringify(originsWhitelist)} URL origins list for "${urlOrigin}" value.`;
-        };
-    };
-    return result;
-})();
-
 export const lowerConsoleMessageEventLogLevel = (
     logLevel: "error" | "warn",
     message: string,
@@ -608,46 +381,6 @@ export const lowerConsoleMessageEventLogLevel = (
     }
     return logLevel;
 };
-
-export const depersonalizeProtonApiUrl = (url: string): string => {
-    try {
-        if (!new URL(url).pathname) {
-            return url;
-        }
-    } catch {
-        // the provided url value failed to be parsed to URL so skipping processing
-        return url;
-    }
-
-    const splitBy = "/";
-    const splitParts = url.split(splitBy);
-    const lastPart = splitParts.pop();
-
-    return [
-        ...splitParts,
-        // assuming that long last part is not the endpoint name/sub-name but a value/id
-        lastPart && lastPart.length >= 15
-            ? "<wiped-out>"
-            : lastPart,
-    ].join(splitBy);
-};
-
-type depersonalizeLoggedUrlsInStringType = (value: unknown) => string;
-
-export const depersonalizeLoggedUrlsInString: depersonalizeLoggedUrlsInStringType = (() => {
-    // at the moment only proton urls get depersonalized, ie urls that start from the following urls
-    //      https://app.protonmail.ch/
-    //      https://mail.protonmail.com/
-    //      https://mail.protonmailrmez3lotccipshtkleegetolb73fuirgj7r4o4vfu7ozyd.onion/
-    const protonUrlRe = new RegExp(PROTON_API_ENTRY_URLS.map((value) => `${value}/\\S*`).join("|"), "gi");
-    const result: depersonalizeLoggedUrlsInStringType = (value) => {
-        if (typeof value !== "string") {
-            return String(value);
-        }
-        return value.replace(protonUrlRe, depersonalizeProtonApiUrl);
-    };
-    return result;
-})();
 
 export const buildInitialVendorsAppCssLinks = (
     hrefs: ReadonlyArray<string>,
@@ -670,22 +403,6 @@ export const buildInitialVendorsAppCssLinks = (
         },
         "",
     );
-};
-
-export const resolveApiUrlByPackagedWebClientUrlSafe = (urlArg: string): string => {
-    if (!parsePackagedWebClientUrl(urlArg)) {
-        throw new Error(`The "${urlArg}" doesn't look like the URL of the packaged Proton web client URL`);
-    }
-    const packagedWebClientEndSlashedUrlStr = ((): string => {
-        const url = new URL(urlArg);
-        url.protocol = "https:";
-        return url.toString();
-    })() + "/";
-    const result = PROTON_API_ENTRY_URLS.find((apiEntryUrl) => packagedWebClientEndSlashedUrlStr.startsWith(`${apiEntryUrl}/`));
-    if (!result) {
-        throw new Error(`Failed to resolve Proton entry API URL by "${urlArg}" packaged Proton web client URL`);
-    }
-    return result;
 };
 
 export const getPlainErrorProps = <T extends unknown>( // eslint-disable-line @typescript-eslint/no-unnecessary-type-constraint

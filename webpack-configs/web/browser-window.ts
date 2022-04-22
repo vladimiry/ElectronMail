@@ -6,7 +6,7 @@ import {readConfiguration} from "@angular/compiler-cli";
 import {browserWindowAppPath, browserWindowPath, buildBaseWebConfig, cssRuleSetRules, sassLoaderRuleSetRules} from "./lib";
 import {BuildAngularCompilationFlags, BuildEnvVars} from "webpack-configs/model";
 import {ENVIRONMENT, rootRelativePath} from "webpack-configs/lib";
-import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
+import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/const/webpack";
 
 const angularCompilationFlags: BuildAngularCompilationFlags = {aot: true, ivy: true};
 

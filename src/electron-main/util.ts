@@ -12,7 +12,8 @@ import {buildInitialVendorsAppCssLinks, curryFunctionMembers, getRandomInt} from
 import {Config} from "src/shared/model/options";
 import {Context} from "./model";
 import {createSessionUtil} from "src/electron-main/session";
-import {PACKAGE_NAME} from "src/shared/constants";
+import {PACKAGE_NAME} from "src/shared/const";
+import {PROTON_API_ENTRY_URLS} from "src/shared/const/proton-url";
 
 const logger = curryFunctionMembers(_logger, __filename);
 
@@ -88,12 +89,15 @@ export function readConfigSync({configStore}: DeepReadonly<Context>): import("ts
         : null;
 }
 
-export const filterProtonSessionTokenCookies = <T extends { name: string }>(
-    items: readonly T[],
-): { readonly accessTokens: typeof items; readonly refreshTokens: typeof items } => {
+export const filterProtonSessionApplyingCookies = <T extends { name: string }>(items: readonly T[]): {
+    readonly accessTokens: typeof items
+    readonly refreshTokens: typeof items
+    readonly sessionIds: typeof items
+} => {
     return {
         accessTokens: items.filter(({name}) => name.toUpperCase().startsWith("AUTH-")),
         refreshTokens: items.filter(({name}) => name.toUpperCase().startsWith("REFRESH-")),
+        sessionIds: items.filter(({name}) => name.toUpperCase() === "SESSION-ID"),
     } as const;
 };
 
@@ -123,4 +127,10 @@ export const getPurifiedUserAgent = (userAgent: string): string => {
 
 export const getUserAgentByAccount = ({customUserAgent}: Pick<AccountConfig, "customUserAgent">): string => {
     return customUserAgent || getPurifiedUserAgent(electronSession.defaultSession.getUserAgent());
+};
+
+export const assertEntryUrl = (value: string): void | never => {
+    if (!PROTON_API_ENTRY_URLS.includes(value)) {
+        throw new Error(`Invalid API entry point value: ${value}`);
+    }
 };

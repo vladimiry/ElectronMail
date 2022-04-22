@@ -9,7 +9,7 @@ import {curryFunctionMembers} from "src/shared/util";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {getWebLogger} from "src/web/browser-window/util";
 import {NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
-import {ofType} from "src/shared/ngrx-util-of-type";
+import {ofType} from "src/shared/util/ngrx-of-type";
 
 const _logger = getWebLogger(__filename);
 

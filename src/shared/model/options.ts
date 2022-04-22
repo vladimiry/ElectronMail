@@ -68,7 +68,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     hideControls: boolean
     hideOnClose: boolean
     idleTimeLogOutSec: number
-    layoutMode: (typeof import("src/shared/constants").LAYOUT_MODES)[number]["value"]
+    layoutMode: (typeof import("src/shared/const").LAYOUT_MODES)[number]["value"]
     logLevel: LogLevel
     startHidden: boolean
     themeSource: "system" | "dark" | "light"

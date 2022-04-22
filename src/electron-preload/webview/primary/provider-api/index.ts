@@ -96,11 +96,11 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                     distinctUntilChanged(),
                 ),
                 buildEventsApiUrlTester({entryApiUrl}) {
-                    const re = new RegExp(`^${entryApiUrl}/api/v4/events/.+$`);
+                    const re = new RegExp(`^${entryApiUrl}/v4/events/.+$`);
                     return (url) => re.test(url);
                 },
                 buildMessagesCountApiUrlTester({entryApiUrl}) {
-                    const re = new RegExp(`^${entryApiUrl}/api/mail/v4/messages/count$`);
+                    const re = new RegExp(`^${entryApiUrl}/mail/v4/messages/count$`);
                     return (url) => re.test(url);
                 },
                 async decryptMessage(message) {

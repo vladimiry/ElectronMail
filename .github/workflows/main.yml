@@ -47,8 +47,7 @@ jobs:
       - { name: envinfo, run: npx envinfo }
       - { name: install node modules, run: "pnpm install --frozen-lockfile" }
       # </common>
-      - { name: build, run: 'npm exec --package=npm-run-all -- npm-run-all lint build', if: runner.os == 'macOS', env: {RUSTFLAGS: "-C link-args=-Wl,-undefined,dynamic_lookup"} }
-      - { name: build, run: 'npm exec --package=npm-run-all -- npm-run-all lint build', if: runner.os != 'macOS' }
+      - { name: build, run: 'npm exec --package=npm-run-all -- npm-run-all lint build' }
       - { name: print ./app files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./app }
       - { name: upload artifact, uses: actions/upload-artifact@v2, with: { name: 'app-artifact-${{ runner.os }}', path: ./app, if-no-files-found: error } }
   package-app:

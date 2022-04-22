@@ -2,7 +2,7 @@ import {NgModule} from "@angular/core";
 import {RouterModule} from "@angular/router";
 import type {Routes} from "@angular/router";
 
-import {NotificationListComponent} from "src/web/browser-window/app/_notification/notification-list.component";
+import {NotificationListComponent} from "./notification-list.component";
 
 export const routes: Routes = [
     {

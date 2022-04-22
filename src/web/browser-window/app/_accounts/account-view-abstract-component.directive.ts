@@ -3,19 +3,21 @@ import {combineLatest, lastValueFrom, Observable, race, Subscription} from "rxjs
 import {Directive, ElementRef, EventEmitter, Injector, Input, Output, Renderer2} from "@angular/core";
 import {distinctUntilChanged, filter, map, take} from "rxjs/operators";
 import {DOCUMENT} from "@angular/common";
-import {equals, pick} from "remeda";
 import type {OnDestroy} from "@angular/core";
+import {pick} from "remeda";
 
-import {AccountComponent} from "src/web/browser-window/app/_accounts/account.component";
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {AccountViewComponent} from "./account-view.component";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
-import {depersonalizeLoggedUrlsInString, getWebViewPartition, lowerConsoleMessageEventLogLevel} from "src/shared/util";
+import {depersonalizeLoggedUrlsInString} from "src/shared/util/proton-url";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
+import {getWebViewPartitionName} from "src/shared/util/proton-webclient";
 import {LogLevel} from "src/shared/model/common";
+import {lowerConsoleMessageEventLogLevel} from "src/shared/util";
 import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";
 import {WebAccount} from "src/web/browser-window/app/model";
 
-type ChildEvent = Parameters<typeof AccountComponent.prototype.onEventChild>[0];
+type ChildEvent = Parameters<typeof AccountViewComponent.prototype.onEventChild>[0];
 
 @Directive()
 // so weird not single-purpose directive huh, https://github.com/angular/angular/issues/30080#issuecomment-539194668
@@ -31,6 +33,8 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
 
     @Output()
     private readonly event = new EventEmitter<ChildEvent>();
+
+    private webView?: Electron.WebviewTag;
 
     protected readonly api: ElectronService;
 
@@ -54,8 +58,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
 
         {
             let customCssKey: string | undefined;
-
-            this.subscription.add(
+            this.addSubscription(
                 combineLatest([
                     this.filterDomReadyEvent(),
                     this.account$.pipe(
@@ -68,11 +71,9 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
                         await webView.removeInsertedCSS(customCssKey);
                         customCssKey = undefined;
                     }
-
                     if (!customCSS?.trim()) {
                         return;
                     }
-
                     this.log("verbose", ["inserting custom css"]);
                     customCssKey = await webView.insertCSS(customCSS);
                 }),
@@ -80,7 +81,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         }
 
         if (BUILD_ENVIRONMENT === "development") {
-            this.subscription.add(
+            this.addSubscription(
                 this.filterDomReadyEvent()
                     .pipe(take(1))
                     .subscribe(({webView}) => webView.openDevTools()),
@@ -133,31 +134,36 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
     }
 
     private webViewConstruction(): void {
-        let webView: Electron.WebviewTag | undefined;
-
-        this.subscription.add(
+        this.addSubscription(
             combineLatest([
-                this.ngChangesObservable("webViewSrc").pipe(filter(Boolean)), // empty "src" shouldn't trigger webview adding
-                this.account$.pipe(map(({accountConfig: {login}}) => getWebViewPartition(login))),
+                this.ngChangesObservable("webViewSrc").pipe(
+                    filter(Boolean), // empty "src" shouldn't trigger webview adding
+                    distinctUntilChanged(),
+                ),
+                this.account$.pipe(
+                    map(({accountConfig: {login, entryUrl}}) => getWebViewPartitionName({login, entryUrl})),
+                ),
             ]).pipe(
                 map(([src, partition]) => ({src, partition})),
-                distinctUntilChanged((prev, curr) => equals(prev, curr)), // TODO => "distinctUntilChanged(equals)",
+                distinctUntilChanged(({partition: prev}, {partition: curr}) => curr === prev),
+                // from the https://www.electronjs.org/docs/latest/api/webview-tag doc:
+                //   the "partition" value can only be modified before the first navigation
+                //   since the session of an active renderer process cannot change
+                // processing only one notification as "webview.partition" can't be changed
+                // the entire component gets re-created via the "unload" action
+                take(1),
             ).subscribe(({src, partition}) => {
-                // TODO consider removing the webview and creating/mounting-to-DOM new instance rather than reusing once created
-                if (!webView) {
+                { // creating
                     const document = this.injector.get(DOCUMENT);
-                    webView = document.createElement("webView") as Electron.WebviewTag;
-                    this.registerWebViewEventsHandlingOnce(webView);
+                    this.webView = document.createElement("webView") as Electron.WebviewTag;
+                    this.registerWebViewEventsHandlingOnce(this.webView);
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                    Object.assign(webView, {src, partition, preload: __METADATA__.electronLocations.preload[this.viewType]});
-                } else {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                    webView.src = src;
+                    Object.assign(this.webView, {src, partition, preload: __METADATA__.electronLocations.preload[this.viewType]});
                 }
-                if (!webView.parentNode) {
+                { // mounting
                     const elementRef = this.injector.get<ElementRef<HTMLElement>>(ElementRef);
                     const renderer2 = this.injector.get(Renderer2);
-                    renderer2.appendChild(elementRef.nativeElement, webView);
+                    renderer2.appendChild(elementRef.nativeElement, this.webView);
                 }
             }),
         );
@@ -242,7 +248,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
 
         this.log("info", ["webview handlers subscribed"]);
 
-        this.subscription.add({
+        this.addSubscription({
             unsubscribe: () => {
                 webView.removeEventListener(...didNavigateArgs);
                 webView.removeEventListener(...domReadyArgs);

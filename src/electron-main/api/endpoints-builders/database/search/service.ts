@@ -4,7 +4,7 @@ import {augmentRawMailWithFolders, resolveCachedQuickJSInstance} from "src/elect
 import {Context} from "src/electron-main/model";
 import {Folder, FsDbAccount, IndexableMailId, Mail, View} from "src/shared/model/database";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
-import {ONE_SECOND_MS} from "src/shared/constants";
+import {ONE_SECOND_MS} from "src/shared/const";
 import {QUICK_JS_EVAL_CODE_VARIABLE_NAME} from "src/electron-main/api/const";
 import * as searchService from "src/electron-main/api/endpoints-builders/database/folders-view";
 import {walkConversationNodesTree} from "src/shared/util";

@@ -3,7 +3,7 @@ import {Subscription} from "rxjs";
 
 import {ElectronWindow} from "src/shared/model/electron";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
-import {ofType} from "src/shared/ngrx-util-of-type";
+import {ofType} from "src/shared/util/ngrx-of-type";
 
 type queryLinkElementsType = (
     shouldUseDarkColors: boolean,

@@ -1,4 +1,4 @@
-import {BROWSER_WINDOW_RELATIVE_DESKTOP_NOTIFICATION_ICON, WEB_PROTOCOL_SCHEME} from "src/shared/constants";
+import {BROWSER_WINDOW_RELATIVE_DESKTOP_NOTIFICATION_ICON, WEB_PROTOCOL_SCHEME} from "src/shared/const";
 import ICON_URL from "src/assets/dist/icons/icon.png";
 
 export {ICON_URL};

@@ -1,7 +1,7 @@
 import {Component} from "@angular/core";
 import {Store} from "@ngrx/store";
 
-import {OptionsService} from "src/web/browser-window/app/_options/options.service";
+import {OptionsService} from "./options.service";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 
 @Component({

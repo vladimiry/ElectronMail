@@ -13,7 +13,7 @@ import {DATABASE_VERSION, DB_INSTANCE_PROP_NAME} from "./constants";
 import {DB_DATA_CONTAINER_FIELDS, DbAccountPk, FsDb, FsDbAccount} from "src/shared/model/database";
 import {generateDataSaltBase64, hrtimeDuration} from "src/electron-main/util";
 import {LogLevel} from "src/shared/model/common";
-import {ONE_KB_BYTES} from "src/shared/constants";
+import {ONE_KB_BYTES} from "src/shared/const";
 
 const _logger = curryFunctionMembers(electronLog, __filename);
 

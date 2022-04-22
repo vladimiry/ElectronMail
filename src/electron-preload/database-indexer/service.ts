@@ -3,7 +3,7 @@ import {expandTerm, query} from "ndx-query";
 import {Subscription} from "rxjs";
 
 import {buildLoggerBundle, resolveIpcMainApi} from "src/electron-preload/lib/util";
-import {htmlToText} from "src/shared/html-to-text";
+import {htmlToText} from "src/shared/util/html-to-text";
 import {INDEXABLE_MAIL_FIELDS, IndexableMail, IndexableMailId, MailAddress, MailsIndex, MIME_TYPES} from "src/shared/model/database";
 
 const logger = buildLoggerBundle(__filename);

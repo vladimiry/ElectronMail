@@ -29,6 +29,4 @@ export type ElectronContextLocations = Readonly<{
         primary: string;
         calendar: string;
     }>;
-    protocolBundles: ReadonlyArray<Readonly<{ scheme: string; directory: string }>>;
-    webClients: ReadonlyArray<Readonly<{ entryUrl: string; entryApiUrl: string }>>;
 }>;

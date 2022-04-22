@@ -11,8 +11,8 @@ import {curryFunctionMembers} from "src/shared/util";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {getWebLogger} from "src/web/browser-window/util";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
-import {ofType} from "src/shared/ngrx-util-of-type";
-import {ONE_SECOND_MS} from "src/shared/constants";
+import {ofType} from "src/shared/util/ngrx-of-type";
+import {ONE_SECOND_MS} from "src/shared/const";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/db-view";
 

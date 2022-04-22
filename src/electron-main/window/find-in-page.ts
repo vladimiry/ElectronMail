@@ -5,8 +5,8 @@ import {Context} from "src/electron-main/model";
 import {curryFunctionMembers} from "src/shared/util";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";
 import {injectVendorsAppCssIntoHtmlFile, resolveDefaultAppSession, resolveUiContextStrict} from "src/electron-main/util";
-import {WEB_PROTOCOL_SCHEME} from "src/shared/constants";
-import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/webpack-conts";
+import {WEB_PROTOCOL_SCHEME} from "src/shared/const";
+import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/const/webpack";
 
 const logger = curryFunctionMembers(_logger, __filename);
 

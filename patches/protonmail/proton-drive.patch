@@ -1,7 +1,7 @@
-diff --git a/applications/drive/src/app/store/downloads/fileSaver/download.ts b/applications/drive/src/app/store/downloads/fileSaver/download.ts
+diff --git a/applications/drive/src/app/store/_downloads/fileSaver/download.ts b/applications/drive/src/app/store/_downloads/fileSaver/download.ts
 index 7bef98525..0650e8019 100644
---- a/applications/drive/src/app/store/downloads/fileSaver/download.ts
-+++ b/applications/drive/src/app/store/downloads/fileSaver/download.ts
+--- a/applications/drive/src/app/store/_downloads/fileSaver/download.ts
++++ b/applications/drive/src/app/store/_downloads/fileSaver/download.ts
 @@ -11,8 +11,7 @@ import { TransferMeta } from '@proton/shared/lib/interfaces/drive/transfer';
   * IOS - forces all browsers to use webkit, so same problems as safari in all browsers.
   * For them download is done in-memory using blob response.
@@ -13,15 +13,15 @@ index 7bef98525..0650e8019 100644
  // createDownloadIframe opens download URL created in service worker to
  // initialize the download in the browser. The response has headers to
 
-diff --git a/applications/drive/src/app/store/shares/shareUrl.ts b/applications/drive/src/app/store/shares/shareUrl.ts
-index 4a2fa5caa..95884ed0d 100644
---- a/applications/drive/src/app/store/shares/shareUrl.ts
-+++ b/applications/drive/src/app/store/shares/shareUrl.ts
-@@ -35,6 +35,6 @@ export const getSharedLink = (sharedURL?: { Token: string; Password: string; Fla
+diff --git a/applications/drive/src/app/store/_shares/shareUrl.ts b/applications/drive/src/app/store/_shares/shareUrl.ts
+index 733cf9242..ab5781793 100644
+--- a/applications/drive/src/app/store/_shares/shareUrl.ts
++++ b/applications/drive/src/app/store/_shares/shareUrl.ts
+@@ -40,6 +40,6 @@ export const getSharedLink = (sharedURL?: {
 
      const [generatedPassword] = splitGeneratedAndCustomPassword(sharedURL.Password, sharedURL);
 
--    const baseUrl = `${window.location.origin}/urls`;
-+    const baseUrl = "https://drive.protonmail.com/urls";
-     return `${baseUrl}/${sharedURL.Token}${generatedPassword !== '' ? `#${generatedPassword}` : ''}`;
+-    const url = sharedURL.PublicUrl ? sharedURL.PublicUrl : `${window.location.origin}/urls/${sharedURL.Token}`;
++    const url = sharedURL.PublicUrl ? sharedURL.PublicUrl : `https://drive.protonmail.com/urls/${sharedURL.Token}`;
+     return `${url}${generatedPassword !== '' ? `#${generatedPassword}` : ''}`;
  };

@@ -9,15 +9,16 @@ import UUID from "pure-uuid";
 
 import {AccountConfig} from "src/shared/model/account";
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
-import {curryFunctionMembers, parseUrlOriginWithNullishCheck} from "src/shared/util";
+import {curryFunctionMembers} from "src/shared/util";
 import {FIRE_SYNCING_ITERATION$, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {IpcMainServiceScan} from "src/shared/api/main-process";
-import {ofType} from "src/shared/ngrx-util-of-type";
+import {LOCAL_WEBCLIENT_ORIGIN, WEB_CLIENTS_BLANK_HTML_FILE_NAME, WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS} from "src/shared/const";
+import {ofType} from "src/shared/util/ngrx-of-type";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
+import {parseUrlOriginWithNullishCheck} from "src/shared/util/url";
 import {ProtonClientSession} from "src/shared/model/proton";
-import {PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
+import {PROVIDER_REPO_MAP} from "src/shared/const/proton-apps";
 import {State} from "src/web/browser-window/app/store/reducers/root";
-import {WEB_CLIENTS_BLANK_HTML_FILE_NAME, WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS} from "src/shared/constants";
 import {WebAccount} from "src/web/browser-window/app/model";
 
 @Injectable()
@@ -29,27 +30,16 @@ export class CoreService {
     ) {}
 
     parseEntryUrl(
-        accountConfig: WebAccount["accountConfig"],
+        {entryUrl}: WebAccount["accountConfig"],
         repoType: keyof typeof PROVIDER_REPO_MAP,
-    ): Readonly<{ entryUrl: string; entryApiUrl: string }> {
-        const entryApiUrl = accountConfig.entryUrl;
-
-        if (!entryApiUrl || !entryApiUrl.startsWith("https://")) {
-            throw new Error(`Invalid "entryApiUrl" value: "${entryApiUrl}"`);
-        }
-
-        const bundle = __METADATA__.electronLocations.webClients
-            .filter((webClient) => webClient.entryApiUrl === entryApiUrl)
-            .pop();
-        if (!bundle) {
-            throw new Error(`Invalid "entryUrl" value: "${JSON.stringify(bundle)}"`);
+    ): Readonly<{ entryPageUrl: string, sessionStorage: { apiEndpointOrigin: string } }> {
+        if (!entryUrl || !entryUrl.startsWith("https://")) {
+            throw new Error(`Invalid "${JSON.stringify({entryUrl})}" value`);
         }
         const {basePath} = PROVIDER_REPO_MAP[repoType];
-        const entryUrl = `${bundle.entryUrl}${basePath ? "/" + basePath : ""}`;
-
         return {
-            entryUrl,
-            entryApiUrl,
+            entryPageUrl: `${LOCAL_WEBCLIENT_ORIGIN}${basePath ? "/" + basePath : ""}`,
+            sessionStorage: {apiEndpointOrigin: parseUrlOriginWithNullishCheck(entryUrl)},
         };
     }
 
@@ -77,7 +67,7 @@ export class CoreService {
         const loaderId = new UUID(4).format();
         const loaderIdParam = "loader-id";
         const loaderSrcOrigin = parseUrlOriginWithNullishCheck(
-            this.parseEntryUrl(accountConfig, repoType).entryUrl,
+            this.parseEntryUrl(accountConfig, repoType).entryPageUrl,
         );
         const loaderSrc = `${loaderSrcOrigin}/${WEB_CLIENTS_BLANK_HTML_FILE_NAME}?${loaderIdParam}=${loaderId}`;
         let webView: Electron.WebviewTag | undefined;
@@ -123,7 +113,7 @@ export class CoreService {
             const finalCodePart = `(() => {
                 window.sessionStorage.setItem(${JSON.stringify(WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS)}, 1);
                 window.location.assign("./${PROVIDER_REPO_MAP[repoType].basePath}")
-            })()`;
+            })();`;
             const prependCodeParts: string[] = [];
             if (savedSessionData?.clientSession) {
                 prependCodeParts.push(...[

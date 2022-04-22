@@ -36,83 +36,6 @@ index 6fef05c..1719cc8 100644
                  {hasChallenge && (
                      <Challenge
 
-diff --git a/packages/encrypted-search/lib/esUtils.ts b/packages/encrypted-search/lib/esUtils.ts
-index 565746063..24978868a 100644
---- a/packages/encrypted-search/lib/esUtils.ts
-+++ b/packages/encrypted-search/lib/esUtils.ts
-@@ -280,13 +280,7 @@ export const updateSizeIDB = (userID: string, addend: number) => {
-  * but also because IDB is not corrupt, i.e. the object store exists
-  */
- export const canUseES = async (userID: string, storeName: string) => {
--    if (!indexKeyExists(userID)) {
--        return false;
--    }
--    const esDB = await openESDB(userID);
--    const isIntact = esDB.objectStoreNames.contains(storeName);
--    esDB.close();
--    return isIntact;
-+    return Promise.resolve(false);
- };
-
- /**
-
-diff --git a/applications/mail/src/app/App.tsx b/applications/mail/src/app/App.tsx
-index 3da997386..c629fde0d 100644
---- a/applications/mail/src/app/App.tsx
-+++ b/applications/mail/src/app/App.tsx
-@@ -13,7 +13,6 @@ import * as config from './config';
- import PrivateApp from './PrivateApp';
-
- import './app.scss';
--import { registerMailToProtocolHandler } from './helpers/url';
-
- const locales = initLocales(require.context('../../locales', true, /.json$/, 'lazy'));
-
-@@ -26,11 +25,6 @@ newVersionUpdater(enhancedConfig);
- sentry(enhancedConfig);
- setVcalProdId(getProdId(enhancedConfig));
-
--// If the browser is Chromium based, register automatically the mailto protocol handler
--if ('chrome' in window) {
--    registerMailToProtocolHandler();
--}
--
- const App = () => {
-     const [hasInitialAuth] = useState(() => {
-         return !window.location.pathname.startsWith(G_OAUTH_REDIRECT_PATH);
-
-diff --git a/applications/drive/src/app/store/search/useSearchEnabledFeature.tsx b/applications/drive/src/app/store/search/useSearchEnabledFeature.tsx
-index bc23e00d8..82db68e53 100644
---- a/applications/drive/src/app/store/search/useSearchEnabledFeature.tsx
-+++ b/applications/drive/src/app/store/search/useSearchEnabledFeature.tsx
-@@ -1,11 +1,3 @@
--import { FeatureCode, useFeature, useUser } from '@proton/components';
--import { isMobile } from '@proton/shared/lib/helpers/browser';
--import { isPaid } from '@proton/shared/lib/user/helpers';
--
- export default function useSearchEnabledFeature() {
--    const [user] = useUser();
--    const { feature } = useFeature(FeatureCode.DriveSearchEnabled);
--
--    const showEncryptedSearch = !isMobile() && !!feature?.Value && !!isPaid(user);
--    return showEncryptedSearch;
-+    return false;
- }
-
-diff --git a/applications/mail/src/app/components/header/search/MailSearch.tsx b/applications/mail/src/app/components/header/search/MailSearch.tsx
-index 3faa0160b..e7b680365 100644
---- a/applications/mail/src/app/components/header/search/MailSearch.tsx
-+++ b/applications/mail/src/app/components/header/search/MailSearch.tsx
-@@ -54,7 +54,7 @@ const MailSearch = ({ breakpoints }: Props) => {
-     const { isDBLimited, dropdownOpened } = getESDBStatus();
-     const esState = useEncryptedSearchToggleState(isOpen);
-
--    const showEncryptedSearch = !isMobile() && !!esFeature && !!esFeature.Value && !!isPaid(user);
-+    const showEncryptedSearch = false;
-
-     // Show more from inside AdvancedSearch to persist the state when the overlay is closed
-     const { state: showMore, toggle: toggleShowMore } = useToggle(false);
-
 diff --git a/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx b/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx
 index 562696c4e..6531defba 100644
 --- a/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx
@@ -331,3 +254,148 @@ index 35d7a0aba..352f1c8a3 100644
 +}; /* electron-mail mark */
 
  export default useCache;
+
+diff --git a/applications/mail/src/app/App.tsx b/applications/mail/src/app/App.tsx
+index 50ae8f9a3..c79b724ee 100644
+--- a/applications/mail/src/app/App.tsx
++++ b/applications/mail/src/app/App.tsx
+@@ -22,11 +22,6 @@ newVersionUpdater(config);
+ sentry({ config, uid: authentication.getUID(), sessionTracking: getSessionTrackingEnabled() });
+ setVcalProdId(getProdId(config));
+ 
+-// If the browser is Chromium based, register automatically the mailto protocol handler
+-if ('chrome' in window) {
+-    registerMailToProtocolHandler();
+-}
+-
+ const App = () => {
+     const [hasInitialAuth] = useState(() => {
+         return !window.location.pathname.startsWith(G_OAUTH_REDIRECT_PATH);
+
+diff --git a/applications/mail/src/app/EOApp.tsx b/applications/mail/src/app/EOApp.tsx
+index fa8ab5f17..2c5bd2d2c 100644
+--- a/applications/mail/src/app/EOApp.tsx
++++ b/applications/mail/src/app/EOApp.tsx
+@@ -36,11 +36,6 @@ newVersionUpdater(config);
+ sentry({ config, sessionTracking: getSessionTrackingEnabled() });
+ setVcalProdId(getProdId(config));
+ 
+-// If the browser is Chromium based, register automatically the mailto protocol handler
+-if ('chrome' in window) {
+-    registerMailToProtocolHandler();
+-}
+-
+ const App = () => {
+     const cacheRef = useRef<Cache<string, any>>();
+     if (!cacheRef.current) {
+
+diff --git a/applications/mail/src/app/components/header/MailDefaultHandlerModal.tsx b/applications/mail/src/app/components/header/MailDefaultHandlerModal.tsx
+index bdabb99e0..a56b8cdcb 100644
+--- a/applications/mail/src/app/components/header/MailDefaultHandlerModal.tsx
++++ b/applications/mail/src/app/components/header/MailDefaultHandlerModal.tsx
+@@ -4,13 +4,10 @@ import { Href } from '@proton/components/components/link';
+ import { MAIL_APP_NAME } from '@proton/shared/lib/constants';
+ import { getKnowledgeBaseUrl } from '@proton/shared/lib/helpers/url';
+ 
+-import { registerMailToProtocolHandler } from '../../helpers/url';
+-
+ const MailDefaultHandlerModal = (props: ModalProps) => {
+     const { onClose } = props;
+ 
+     const handleAskForPermission = () => {
+-        registerMailToProtocolHandler();
+ 
+         onClose?.();
+     };
+
+diff --git a/applications/mail/src/app/components/header/MailHeader.tsx b/applications/mail/src/app/components/header/MailHeader.tsx
+index 246b88729..71dd17426 100644
+--- a/applications/mail/src/app/components/header/MailHeader.tsx
++++ b/applications/mail/src/app/components/header/MailHeader.tsx
+@@ -35,7 +35,6 @@ import { getLabelName } from '../../helpers/labels';
+ import { useEncryptedSearchContext } from '../../containers/EncryptedSearchProvider';
+ import { useOnCompose, useOnMailTo } from '../../containers/ComposeProvider';
+ import { MESSAGE_ACTIONS } from '../../constants';
+-import MailDefaultHandlerModal from './MailDefaultHandlerModal';
+ import ClearBrowserDataModal from './ClearBrowserDataModal';
+ import MailSearch from './search/MailSearch';
+ import MailOnboardingModal from '../onboarding/MailOnboardingModal';
+@@ -192,7 +191,6 @@ const MailHeader = ({ labelID, elementID, breakpoints, expanded, onToggleExpand
+             <MailViewLayoutModal {...mailViewLayoutProps} />
+             <MailDensityModal {...mailDensityProps} />
+             <MailComposerModeModal {...mailComposerModeProps} />
+-            <MailDefaultHandlerModal {...mailDefaultHandlerProps} />
+             <ClearBrowserDataModal {...clearBrowserDataProps} />
+             <FeedbackModal
+                 {...feedbackModalProps}
+
+diff --git a/applications/mail/src/app/helpers/url.ts b/applications/mail/src/app/helpers/url.ts
+index 2aaa779d3..487f54ff3 100644
+--- a/applications/mail/src/app/helpers/url.ts
++++ b/applications/mail/src/app/helpers/url.ts
+@@ -91,16 +91,5 @@ export const mailtoParser = (mailto: string): PartialMessageState => {
+ };
+ 
+ export const registerMailToProtocolHandler = () => {
+-    if ('registerProtocolHandler' in navigator) {
+-        try {
+-            navigator.registerProtocolHandler(
+-                'mailto',
+-                `${window.location.origin}${MAILTO_PROTOCOL_HANDLER_PATH}`,
+-                // @ts-expect-error third arg is still recommended (cf. https://developer.mozilla.org/en-US/docs/Web/API/Navigator/registerProtocolHandler)
+-                'ProtonMail'
+-            );
+-        } catch (e: any) {
+-            console.error(e);
+-        }
+-    }
++    // NOOP
+ };
+
+diff --git a/applications/mail/src/app/components/header/search/MailSearch.tsx b/applications/mail/src/app/components/header/search/MailSearch.tsx
+index 8afef84c8..b1874420a 100644
+--- a/applications/mail/src/app/components/header/search/MailSearch.tsx
++++ b/applications/mail/src/app/components/header/search/MailSearch.tsx
+@@ -56,7 +56,7 @@ const MailSearch = ({ breakpoints }: Props) => {
+     const { isDBLimited, dropdownOpened } = getESDBStatus();
+     const esState = useEncryptedSearchToggleState(isOpen);
+ 
+-    const showEncryptedSearch = !isMobile() && !!esFeature && !!esFeature.Value && !!isPaid(user);
++    const showEncryptedSearch = false;
+ 
+     // Show more from inside AdvancedSearch to persist the state when the overlay is closed
+     const { state: showMore, toggle: toggleShowMore } = useToggle(false);
+
+diff --git a/packages/encrypted-search/lib/constants.ts b/packages/encrypted-search/lib/constants.ts
+index 1b28a2765..ee7c59df8 100644
+--- a/packages/encrypted-search/lib/constants.ts
++++ b/packages/encrypted-search/lib/constants.ts
+@@ -67,7 +67,7 @@ export const defaultESStatus = {
+     isBuilding: false,
+     isDBLimited: false,
+     esEnabled: false,
+-    esSupported: true,
++    esSupported: false,
+     isRefreshing: false,
+     isSearchPartial: false,
+     isSearching: false,
+
+diff --git a/packages/encrypted-search/lib/esUtils.ts b/packages/encrypted-search/lib/esUtils.ts
+index 4f8928ead..ea00c2542 100644
+--- a/packages/encrypted-search/lib/esUtils.ts
++++ b/packages/encrypted-search/lib/esUtils.ts
+@@ -227,13 +227,7 @@ export const updateSizeIDB = (userID: string, addend: number) => {
+  * but also because IDB is not corrupt, i.e. the object store exists
+  */
+ export const canUseES = async (userID: string, storeName: string) => {
+-    if (!indexKeyExists(userID)) {
+-        return false;
+-    }
+-    const esDB = await openESDB(userID);
+-    const isIntact = esDB.objectStoreNames.contains(storeName);
+-    esDB.close();
+-    return isIntact;
++    return false;
+ };
+ 
+ /**

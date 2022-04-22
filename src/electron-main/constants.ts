@@ -6,7 +6,7 @@ import {Model as StoreModel} from "fs-json-store";
 
 import {BaseConfig, Config, ENCRYPTION_DERIVATION_PRESETS, KEY_DERIVATION_PRESETS, Settings} from "src/shared/model/options";
 import {initialConfig} from "src/shared/util";
-import {PACKAGE_NAME} from "src/shared/constants";
+import {PACKAGE_NAME} from "src/shared/const";
 
 export const PLATFORM = platform();
 

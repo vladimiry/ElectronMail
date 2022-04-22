@@ -6,7 +6,7 @@ import {Injectable} from "@angular/core";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {NOTIFICATIONS_OUTLET, NOTIFICATIONS_PATH} from "src/web/browser-window/app/app.constants";
-import {ofType} from "src/shared/ngrx-util-of-type";
+import {ofType} from "src/shared/util/ngrx-of-type";
 
 @Injectable()
 export class NotificationEffects {

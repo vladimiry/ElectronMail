@@ -2,7 +2,7 @@ import {ActionType, createWebViewApiService, ScanService} from "electron-rpc-api
 
 import {buildLoggerBundle} from "src/electron-preload/lib/util";
 import {Notifications} from "src/shared/model/account";
-import {PACKAGE_NAME} from "src/shared/constants";
+import {PACKAGE_NAME} from "src/shared/const";
 
 // TODO drop "ZoneApiParameter" use
 export const PROTON_CALENDAR_IPC_WEBVIEW_API_DEFINITION = {

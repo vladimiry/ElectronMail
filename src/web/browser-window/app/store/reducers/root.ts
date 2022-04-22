@@ -4,7 +4,7 @@ import {Store} from "@ngrx/store";
 
 import {getWebLogger} from "src/web/browser-window/util";
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
-import {UnionOf} from "src/shared/ngrx-util";
+import {UnionOf} from "src/shared/util/ngrx";
 
 const logger = getWebLogger(__filename);
 

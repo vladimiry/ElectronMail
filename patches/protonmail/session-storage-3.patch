@@ -1,33 +1,60 @@
-diff --git a/packages/components/containers/app/ProtonApp.tsx b/packages/components/containers/app/ProtonApp.tsx
-index fd4084640..a8104025f 100644
---- a/packages/components/containers/app/ProtonApp.tsx
-+++ b/packages/components/containers/app/ProtonApp.tsx
-@@ -103,7 +103,9 @@ interface Props {
- }
-
- const ProtonApp = ({ config, children, hasInitialAuth }: Props) => {
-+    /* electron-mail mark */
-     const authentication = useInstance(() => createAuthentication(createSecureSessionStorage()));
-+    /* electron-mail mark */
-     const pathRef = useRef<string | undefined>();
-     const cacheRef = useRef<Cache<string, any>>();
-     if (!cacheRef.current) {
+diff --git a/packages/shared/lib/authentication/authentication.ts b/packages/shared/lib/authentication/authentication.ts
+index 896e1d299..467d0aa72 100644
+--- a/packages/shared/lib/authentication/authentication.ts
++++ b/packages/shared/lib/authentication/authentication.ts
+@@ -1,6 +1,8 @@
++/* electron-mail mark */
+ import createAuthentication from './createAuthenticationStore';
+ import createSecureSessionStorage from './createSecureSessionStorage';
+ 
+ const authentication = createAuthentication(createSecureSessionStorage());
+ 
+ export default authentication;
++/* electron-mail mark */
 
 diff --git a/packages/shared/lib/authentication/createSecureSessionStorage.ts b/packages/shared/lib/authentication/createSecureSessionStorage.ts
-index 9e47ba48b..66ff855a4 100644
+index 9e47ba48b..0b995ac96 100644
 --- a/packages/shared/lib/authentication/createSecureSessionStorage.ts
 +++ b/packages/shared/lib/authentication/createSecureSessionStorage.ts
-@@ -1,6 +1,7 @@
+@@ -1,27 +1,24 @@
++/* electron-mail mark */
  import createStore from '../helpers/store';
  import { save, load } from '../helpers/secureSessionStorage';
-
-+/* electron-mail mark */
+ 
  const createSecureSessionStorage = () => {
      const store = createStore(load());
-
-@@ -30,3 +31,4 @@ const createSecureSessionStorage = () => {
++    const saveStateDo = () => {
++        save(store.getState());
++    };
++
++    window.addEventListener("electron-mail:packages/shared/lib/authentication/createSecureSessionStorage.ts:unloadLike", saveStateDo);
+ 
+     if ('onpagehide' in window) {
+         const handlePageShow = () => {
+             // This does not need to do anything. The main purpose is just to reset window.name and sessionStorage to fix the Safari 13.1 described below
+             load();
+         };
+-
+-        const handlePageHide = () => {
+-            // Cannot use !event.persisted because Safari 13.1 does not send that when you are navigating on the same domain
+-            save(store.getState());
+-        };
+-
+         window.addEventListener('pageshow', handlePageShow, true);
+-        window.addEventListener('pagehide', handlePageHide, true);
++        window.addEventListener('pagehide', saveStateDo, true);
+     } else {
+-        const handleUnload = () => {
+-            save(store.getState());
+-        };
+-        window.addEventListener('unload', handleUnload, true);
++        window.addEventListener('unload', saveStateDo, true);
+     }
+ 
+     return store;
+@@ -30,3 +27,4 @@ const createSecureSessionStorage = () => {
  export type SecureSessionStorage = ReturnType<typeof createSecureSessionStorage>;
-
+ 
  export default createSecureSessionStorage;
 +/* electron-mail mark */
 

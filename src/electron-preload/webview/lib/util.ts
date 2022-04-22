@@ -3,12 +3,12 @@ import {CookieJar} from "tough-cookie";
 import {from, Observable, of, ReplaySubject, throwError} from "rxjs";
 import WebStorageCookieStore from "tough-cookie-web-storage-store";
 
-import {asyncDelay, curryFunctionMembers, isDatabaseBootstrapped, resolveApiUrlByPackagedWebClientUrlSafe} from "src/shared/util";
+import {asyncDelay, curryFunctionMembers, isDatabaseBootstrapped} from "src/shared/util";
 import {DbPatch} from "src/shared/api/common";
 import {FsDbAccount} from "src/shared/model/database";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
+import {LOCAL_WEBCLIENT_ORIGIN, ONE_SECOND_MS} from "src/shared/const";
 import {Logger} from "src/shared/model/common";
-import {ONE_SECOND_MS} from "src/shared/constants";
 import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
 import {resolveCachedConfig, resolveIpcMainApi} from "src/electron-preload/lib/util";
 import * as RestModel from "src/electron-preload/webview/lib/rest-model";
@@ -167,7 +167,7 @@ export async function submitTotpToken(
     try {
         await submit();
     } catch (error) {
-        const {message} = (Object(error) as {message?: unknown});
+        const {message} = (Object(error) as { message?: unknown });
 
         if (message !== errorMessage) {
             throw error;
@@ -322,9 +322,8 @@ export const documentCookiesForCustomScheme: documentCookiesForCustomSchemeType 
         setNotification$: setNotificationSubject$.asObservable(),
         enable(logger) {
             logger.verbose(nameof(documentCookiesForCustomScheme), nameof(result.enable));
-
-            const {document, location} = window;
-            const getUrl = (): string => resolveApiUrlByPackagedWebClientUrlSafe(location.toString());
+            const {document} = window;
+            const getUrl = (): string => LOCAL_WEBCLIENT_ORIGIN;
             const cookieJar = new CookieJar(
                 new WebStorageCookieStore(window.sessionStorage),
             );

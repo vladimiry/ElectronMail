@@ -6,15 +6,15 @@ import {pick} from "remeda";
 import {serializeError} from "serialize-error";
 
 import {buildDbPatch, buildDbPatchEndpoint} from "src/electron-preload/webview/primary/api/build-db-patch";
-import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty, parseUrlOriginWithNullishCheck} from "src/shared/util";
+import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {
     documentCookiesForCustomScheme, fillInputValue, getLocationHref, resolveDomElements, submitTotpToken,
 } from "src/electron-preload/webview/lib/util";
 import {dumpProtonSharedSession} from "src/electron-preload/webview/primary/shared-session";
 import {FETCH_NOTIFICATION$} from "src/electron-preload/webview/primary/provider-api/notifications";
 import {IpcMainServiceScan} from "src/shared/api/main-process";
-import {ONE_SECOND_MS, WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS} from "src/shared/constants";
-import {parseProtonRestModel} from "src/shared/entity-util";
+import {ONE_SECOND_MS, WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS} from "src/shared/const";
+import {parseProtonRestModel} from "src/shared/util/entity";
 import {PROTON_PRIMARY_IPC_WEBVIEW_API, ProtonPrimaryApi, ProtonPrimaryNotificationOutput} from "src/shared/api/webview/primary";
 import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
 import {resolveIpcMainApi} from "src/electron-preload/lib/util";
@@ -291,7 +291,7 @@ export function registerApi(providerApi: ProviderApi): void {
             return resolveCookieSessionStoragePatch();
         },
 
-        notification({login, entryApiUrl, accountIndex}) {
+        notification({login, entryApiUrl, apiEndpointOriginSS, accountIndex}) {
             const logger = curryFunctionMembers(_logger, nameof(endpoints.notification), accountIndex);
 
             logger.info();
@@ -471,7 +471,7 @@ export function registerApi(providerApi: ProviderApi): void {
                                 from(
                                     ipcMain("saveSessionStoragePatch")({
                                         login,
-                                        apiEndpointOrigin: parseUrlOriginWithNullishCheck(entryApiUrl),
+                                        apiEndpointOrigin: apiEndpointOriginSS,
                                         sessionStorageItem,
                                     }),
                                 ).pipe(

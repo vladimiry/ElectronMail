@@ -5,7 +5,7 @@ import {buildLoggerBundle} from "src/electron-preload/lib/util";
 import {getPlainErrorProps} from "src/shared/util";
 import {IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS} from "src/shared/api/main-process/actions";
 import {IpcMainServiceScan} from "src/shared/api/main-process";
-import {ONE_SECOND_MS} from "src/shared/constants";
+import {ONE_SECOND_MS} from "src/shared/const";
 
 const logger = buildLoggerBundle(__filename);
 

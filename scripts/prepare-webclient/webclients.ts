@@ -2,31 +2,11 @@ import fs from "fs";
 import fsExtra from "fs-extra";
 import path from "path";
 
-import {applyPatch, CONSOLE_LOG, execShell, resolveGitOutputBackupDir} from "scripts/lib";
+import {applyPatch, assertPathIsInCwd, CONSOLE_LOG, execShell, resolveGitOutputBackupDir} from "scripts/lib";
+import {BINARY_NAME, RUNTIME_ENV_CI_PROTON_CLIENTS_ONLY, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/const";
 import {CWD_ABSOLUTE_DIR, GIT_CLONE_ABSOLUTE_DIR} from "scripts/const";
-import {PROTON_API_ENTRY_TOR_V4_VALUE, RUNTIME_ENV_CI_PROTON_CLIENTS_ONLY, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/constants";
-import {PROVIDER_APP_NAMES, PROVIDER_REPO_MAP} from "src/shared/proton-apps-constants";
-
-const folderAsDomainEntries = [
-    {
-        folderNameAsDomain: "app.protonmail.ch",
-        options: {
-            configApiParam: "electron-mail:app.protonmail.ch",
-        },
-    },
-    {
-        folderNameAsDomain: "mail.protonmail.com",
-        options: {
-            configApiParam: "electron-mail:mail.protonmail.com",
-        },
-    },
-    {
-        folderNameAsDomain: PROTON_API_ENTRY_TOR_V4_VALUE.substring("https://".length),
-        options: {
-            configApiParam: `electron-mail:${PROTON_API_ENTRY_TOR_V4_VALUE.substring("https://".length)}`,
-        },
-    },
-] as const;
+import {PROTON_API_URL_PLACEHOLDER} from "src/shared/const/proton-url";
+import {PROVIDER_APP_NAMES, PROVIDER_REPO_MAP} from "src/shared/const/proton-apps";
 
 const shouldFailOnBuildEnvVarName = "ELECTRON_MAIL_SHOULD_FAIL_ON_BUILD";
 
@@ -48,16 +28,14 @@ const reposOnlyFilter: DeepReadonly<{ value: Array<keyof typeof PROVIDER_REPO_MA
 
 async function configure(
     {cwd, envFileName = "./appConfig.json"}: { cwd: string, envFileName?: string },
-    {folderNameAsDomain, options}: typeof folderAsDomainEntries[number],
 ): Promise<{ configApiParam: string }> {
-    const {configApiParam} = options;
-
+    const configApiParam = `${BINARY_NAME}_API_PARAM`;
     writeFile(
         path.join(cwd, envFileName),
         JSON.stringify({
             [configApiParam]: {
                 // https://github.com/ProtonMail/WebClient/issues/166#issuecomment-561060855
-                api: `https://${folderNameAsDomain}/api`,
+                api: PROTON_API_URL_PLACEHOLDER,
                 secure: "https://secure.protonmail.com",
             },
             // so "dsn: SENTRY_CONFIG[env].sentry" code line not throwing ("env" variable gets resolved with "dev" value)
@@ -65,7 +43,6 @@ async function configure(
             dev: {},
         }, null, 2),
     );
-
     return {configApiParam};
 }
 
@@ -122,8 +99,8 @@ function resolveWebpackConfigPatchingCode(
             terserPluginInstance.options.parallel = false;
             Object.assign(
                 ${repoType === "proton-drive" || repoType === "proton-vpn-settings"
-                    ? 'terserPluginInstance.options.terserOptions'
-                    : 'terserPluginInstance.options.minimizer.options'},
+            ? 'terserPluginInstance.options.terserOptions'
+            : 'terserPluginInstance.options.minimizer.options'},
                 {
                     // proton v4: needed to preserve original function names
                     //            just "{keep_fnames: true, mangle: false}" is not sufficient
@@ -186,6 +163,7 @@ function writeFile(file: string, content: Buffer | string): void {
 
 async function cleanDestAndMoveToIt({src, dest}: { src: string, dest: string }): Promise<void> {
     CONSOLE_LOG(`Moving ${src} to ${dest} (cleaning destination dir before)`);
+    assertPathIsInCwd(dest);
     await execShell(["npx", ["--no", "rimraf", dest]]);
     await fsExtra.move(src, dest);
 }
@@ -231,6 +209,7 @@ async function executeBuildFlow(
                     await execShell(["git", ["fetch", "--force", "--all", "--tags"], {cwd: repoDir}]);
                 }
             } else { // cloning
+                assertPathIsInCwd(repoDir);
                 await execShell(["npx", ["--no", "rimraf", repoDir]]);
                 fsExtra.ensureDirSync(repoDir);
                 await execShell(["git", ["clone", "https://github.com/ProtonMail/WebClients.git", repoDir]]);
@@ -280,6 +259,7 @@ async function executeBuildFlow(
                 await execShell(["yarn", ["install"], {cwd: repoDir}], {printStdOut: false});
             }
 
+            // eslint-disable-next-line import/no-relative-parent-imports
             for (const patchFileName of (await import("../../patches/protonmail/meta.json", {assert: {type: "json"}})).default[repoType]) {
                 await applyPatch({
                     patchFile: path.join(CWD_ABSOLUTE_DIR, "./patches/protonmail", patchFileName),
@@ -289,22 +269,20 @@ async function executeBuildFlow(
         },
     };
 
-    for (const folderAsDomainEntry of folderAsDomainEntries) {
-        const targetDistDir = path.resolve(destDir, folderAsDomainEntry.folderNameAsDomain, destSubFolder);
+    {
+        const targetDistDir = path.join(destDir, destSubFolder);
 
-        CONSOLE_LOG(
-            `Prepare web client build [${repoType}]:`,
-            JSON.stringify({...folderAsDomainEntry, resolvedDistDir: targetDistDir}),
-        );
+        CONSOLE_LOG(`Prepare web client build [${repoType}]:`, JSON.stringify({targetDistDir}));
 
         if (fsExtra.pathExistsSync(path.join(targetDistDir, WEB_CLIENTS_BLANK_HTML_FILE_NAME))) {
             CONSOLE_LOG("Skip building as bundle already exists:", targetDistDir);
-            continue;
+            return;
         }
 
-        const repoDistBackupDir = resolveGitOutputBackupDir({repoType, suffix: `dist-${folderAsDomainEntry.folderNameAsDomain}`});
+        const repoDistBackupDir = resolveGitOutputBackupDir({repoType, suffix: `dist`});
 
         if (fsExtra.pathExistsSync(repoDistBackupDir)) { // taking "dist" from the backup
+            assertPathIsInCwd(repoDistDir);
             await execShell(["npx", ["--no", "rimraf", repoDistDir]]);
             const src = repoDistBackupDir;
             const dest = repoDistDir;
@@ -316,7 +294,7 @@ async function executeBuildFlow(
             } else { // building
                 await state.buildingSetup();
 
-                const {configApiParam} = await configure({cwd: appDir}, folderAsDomainEntry);
+                const {configApiParam} = await configure({cwd: appDir});
                 const publicPath: string | undefined = PROVIDER_REPO_MAP[repoType].basePath
                     ? `/${PROVIDER_REPO_MAP[repoType].basePath}/`
                     : undefined;
@@ -343,6 +321,7 @@ async function executeBuildFlow(
                     );
                 }
 
+                assertPathIsInCwd(repoDistDir);
                 await execShell(["npx", ["--no", "rimraf", repoDistDir]]);
 
                 await execShell(
@@ -354,6 +333,8 @@ async function executeBuildFlow(
                             "run",
                             "proton-pack",
                             "build",
+                            // SRI disabled by patching as "--no-sri" doesn't make effect
+                            // "--no-sri", // the API URL gets injected dynamically by custom protocol which obviously breaks SRI stuff
                             `--api=${configApiParam}`,
                             `--appMode=bundle`, // standalone | sso | bundle
                             ...(publicPath ? [`--publicPath=${publicPath}`] : []),
@@ -392,6 +373,7 @@ async function executeBuildFlow(
             { // backup the dist
                 const src = repoDistDir;
                 const dest = repoDistBackupDir;
+                assertPathIsInCwd(dest);
                 await execShell(["npx", ["--no", "rimraf", dest]]);
                 CONSOLE_LOG(`Backup ${src} to ${dest}`);
                 await fsExtra.copy(src, dest);

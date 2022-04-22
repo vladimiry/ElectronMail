@@ -8,13 +8,13 @@ import UUID from "pure-uuid";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {buildInitialVendorsAppCssLinks} from "src/shared/util";
-import {DB_VIEW_MAIL_SELECTED_CLASS_NAME} from "src/web/browser-window/app/_db-view/const";
-import {DbViewAbstractComponent} from "src/web/browser-window/app/_db-view/db-view-abstract.component";
-import {DbViewMailComponent} from "src/web/browser-window/app/_db-view/db-view-mail.component";
+import {DB_VIEW_MAIL_SELECTED_CLASS_NAME} from "./const";
+import {DbViewAbstractComponent} from "./db-view-abstract.component";
+import {DbViewMailComponent} from "./db-view-mail.component";
 import {getWebLogger} from "src/web/browser-window/util";
 import {Instance, State} from "src/web/browser-window/app/store/reducers/db-view";
 import {Mail, View} from "src/shared/model/database";
-import {ONE_SECOND_MS, WEB_PROTOCOL_SCHEME} from "src/shared/constants";
+import {ONE_SECOND_MS, WEB_PROTOCOL_SCHEME} from "src/shared/const";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {registerNativeThemeReaction} from "src/web/lib/native-theme";
 

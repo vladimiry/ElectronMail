@@ -6,7 +6,7 @@ import {
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {InitResponse} from "src/shared/api/main-process";
 import {ProgressPatch, State} from "src/web/browser-window/app/store/reducers/options";
-import {props, propsRecordToActionsRecord} from "src/shared/ngrx-util";
+import {props, propsRecordToActionsRecord} from "src/shared/util/ngrx";
 
 export const OPTIONS_ACTIONS = propsRecordToActionsRecord(
     {

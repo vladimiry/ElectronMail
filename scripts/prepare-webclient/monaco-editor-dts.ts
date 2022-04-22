@@ -4,8 +4,8 @@ import fsExtra from "fs-extra";
 import path from "path";
 
 import {CONSOLE_LOG} from "scripts/lib";
-import {PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION} from "src/shared/constants";
-import {PROTON_SHARED_MESSAGE_INTERFACE} from "src/shared/proton-apps-constants";
+import {PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION} from "src/shared/const";
+import {PROTON_SHARED_MESSAGE_INTERFACE} from "src/shared/const/proton-apps";
 
 const dtsGenerator: { // eslint-disable-line @typescript-eslint/no-unsafe-assignment
     default: (arg: NoExtraProps<StrictOmit<DtsGeneratorOptions, "name">>) => ReturnType<typeof dtsGeneratorImport>

@@ -1,6 +1,6 @@
 import {pick} from "remeda";
 
-import {PACKAGE_NAME} from "src/shared/constants";
+import {PACKAGE_NAME} from "src/shared/const";
 
 type Keytar = Pick<typeof import("keytar"), "getPassword" | "setPassword" | "deletePassword">;
 

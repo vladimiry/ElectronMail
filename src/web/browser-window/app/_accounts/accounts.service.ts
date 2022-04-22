@@ -10,8 +10,8 @@ import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
 import {getRandomInt} from "src/shared/util";
 import {getWebLogger} from "src/web/browser-window/util";
 import {LoginFieldContainer} from "src/shared/model/container";
-import {ofType} from "src/shared/ngrx-util-of-type";
-import {ONE_SECOND_MS} from "src/shared/constants";
+import {ofType} from "src/shared/util/ngrx-of-type";
+import {ONE_SECOND_MS} from "src/shared/const";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount} from "src/web/browser-window/app/model";
 
@@ -101,7 +101,7 @@ export class AccountsService {
                 }
 
                 if (loginDelayUntilSelected) {
-                    const deselectAccount$ = (
+                    const fireDeselectAndDelayForOneSec$ = (
                         () => {
                             this.store.dispatch(ACCOUNTS_ACTIONS.DeSelect({login}));
                             return timer(ONE_SECOND_MS);
@@ -109,7 +109,7 @@ export class AccountsService {
                     )();
 
                     delayTriggers.push(
-                        deselectAccount$.pipe(
+                        fireDeselectAndDelayForOneSec$.pipe(
                             mergeMap(() => merge(
                                 (() => {
                                     this.store.dispatch(

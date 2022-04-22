@@ -1,7 +1,7 @@
 import {URL} from "@cliqz/url-parser";
 
 import {Logger} from "src/shared/model/common";
-import {parsePackagedWebClientUrl} from "src/shared/util";
+import {parsePackagedWebClientUrl} from "src/shared/util/proton-webclient";
 import {resolveIpcMainApi} from "src/electron-preload/lib/util";
 import {resolveLink} from "src/electron-preload/lib/events-handling/lib";
 

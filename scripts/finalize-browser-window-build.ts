@@ -2,7 +2,7 @@ import fs from "fs";
 import fsExtra from "fs-extra";
 import path from "path";
 
-import {BROWSER_WINDOW_RELATIVE_DESKTOP_NOTIFICATION_ICON} from "src/shared/constants";
+import {BROWSER_WINDOW_RELATIVE_DESKTOP_NOTIFICATION_ICON, WEB_PROTOCOL_DIR} from "src/shared/const";
 
 const appDir = process.env.NODE_ENV === "development" ? "./app-dev" : "./app";
 
@@ -13,7 +13,7 @@ const appDir = process.env.NODE_ENV === "development" ? "./app-dev" : "./app";
         `const apiClient = yield resolvePrimaryWebViewApiClient();`,
         `customCssKey = yield webView.insertCSS(customCSS);`,
     ] as const;
-    const fileLocation = path.join(appDir, "./web/browser-window/_accounts.mjs");
+    const fileLocation = path.join(appDir, WEB_PROTOCOL_DIR, `./browser-window/_accounts.mjs`);
     const fileContent = fs.readFileSync(fileLocation).toString();
 
     if (filePatterns.some((pattern) => !fileContent.includes(pattern))) {
@@ -23,7 +23,7 @@ const appDir = process.env.NODE_ENV === "development" ? "./app-dev" : "./app";
 
 // copy desktop notification icon
 ((): void => {
-    const destFilePath = path.join(appDir, "./web", BROWSER_WINDOW_RELATIVE_DESKTOP_NOTIFICATION_ICON);
+    const destFilePath = path.join(appDir, WEB_PROTOCOL_DIR, BROWSER_WINDOW_RELATIVE_DESKTOP_NOTIFICATION_ICON);
     fs.copyFileSync("./src/assets/dist/icons/icon.png", destFilePath);
 
     if (!fsExtra.pathExistsSync(destFilePath)) {

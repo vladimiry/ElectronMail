@@ -1,7 +1,7 @@
 import _logger from "electron-log";
 import {Spellchecker} from "spellchecker";
 
-import {curryFunctionMembers, removeArrayDuplicateItems} from "src/shared/util";
+import {curryFunctionMembers, reduceDuplicateItemsFromArray} from "src/shared/util";
 import {Locale} from "src/shared/model/common";
 import {Provider} from "./model";
 
@@ -35,7 +35,7 @@ export function constructProvider(
     logger.debug(nameof(constructProvider), JSON.stringify({locale}));
     const provider: ReturnType<typeof constructProvider> = {
         spellCheck(words, callback) {
-            const misspelledWords = removeArrayDuplicateItems(
+            const misspelledWords = reduceDuplicateItemsFromArray(
                 words.reduce(
                     (accumulator: typeof words, word) => {
                         if (provider.isMisspelled(word)) {

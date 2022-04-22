@@ -19,7 +19,7 @@ import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {narrowIndexActionPayload} from "./indexing/service";
 import {patchMetadata} from "src/electron-main/database/util";
 import {prepareFoldersView} from "./folders-view";
-import {readMailBody} from "src/shared/entity-util";
+import {readMailBody} from "src/shared/util/entity";
 import {validateEntity} from "src/electron-main/database/validation";
 
 const _logger = curryFunctionMembers(electronLog, __filename);

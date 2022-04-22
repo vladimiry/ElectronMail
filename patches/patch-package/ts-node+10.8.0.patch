@@ -1,0 +1,50 @@
+diff --git a/node_modules/ts-node/dist-raw/node-internal-modules-esm-resolve.js b/node_modules/ts-node/dist-raw/node-internal-modules-esm-resolve.js
+index 2fbd832..0f39f96 100644
+--- a/node_modules/ts-node/dist-raw/node-internal-modules-esm-resolve.js
++++ b/node_modules/ts-node/dist-raw/node-internal-modules-esm-resolve.js
+@@ -307,11 +307,10 @@ function resolveExtensions(search) {
+ 
+ /** This replaces JS with TS extensions */
+ function resolveReplacementExtensions(search) {
+-  const lastDotIndex = search.pathname.lastIndexOf('.');
+-  if(lastDotIndex >= 0) {
+-    const ext = search.pathname.slice(lastDotIndex);
++  const ext = require('path').parse(search.pathname).ext;
++  if(ext) {
+     if (ext === '.js' || ext === '.jsx' || ext === '.mjs' || ext === '.cjs') {
+-      const pathnameWithoutExtension = search.pathname.slice(0, lastDotIndex);
++      const pathnameWithoutExtension = search.pathname.slice(0, search.pathname.length - ext.length);
+       const replacementExts =
+         ext === '.js' ? replacementsForJs
+         : ext === '.jsx' ? replacementsForJsx
+@@ -324,6 +323,9 @@ function resolveReplacementExtensions(search) {
+         if (fileExists(guess)) return guess;
+       }
+     }
++  } else {
++    const indexFile = `${search}/index.ts`;
++    return fileExists(indexFile) ? indexFile : `${search}.ts`;	  
+   }
+   return undefined;
+ }
+diff --git a/node_modules/ts-node/dist-raw/node-options.js b/node_modules/ts-node/dist-raw/node-options.js
+index 2272275..98d3901 100644
+--- a/node_modules/ts-node/dist-raw/node-options.js
++++ b/node_modules/ts-node/dist-raw/node-options.js
+@@ -99,5 +99,16 @@ function getOptionValuesFromOtherEnvVars() {
+   if(process.env.NODE_PENDING_DEPRECATION === '1') {
+     options['--pending-deprecation'] = true;
+   }
++  if (process.env.npm_config_node_options) {
++      const errors = [];
++      const envArgv = ParseNodeOptionsEnvVar(process.env.npm_config_node_options, errors);
++      if (errors.length) {
++          throw new Error(String(errors));
++      }
++      Object.assign(
++          options,
++          parseArgv(envArgv),
++      );
++  }   
+   return options;
+ }

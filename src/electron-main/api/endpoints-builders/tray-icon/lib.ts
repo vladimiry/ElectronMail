@@ -86,16 +86,19 @@ const bitmapToNativeImage = async (
         await encodePNGToBuffer(
             typeof customSize === "number"
                 ? (() => {
+                    const colorSpace = "srgb";
                     const sourceBits = source.data.byteLength / (source.width * source.height);
                     const dest = {
                         data: Uint8ClampedArray.from(new Array(customSize * customSize * sourceBits)),
+                        colorSpace,
                         ...{width: customSize, height: customSize},
-                    };
+                    } as const;
                     lanczos(
                         {
                             data: new Uint8ClampedArray(source.data),
                             width: source.width,
                             height: source.height,
+                            colorSpace,
                         },
                         dest,
                     );

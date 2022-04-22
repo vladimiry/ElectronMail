@@ -1,0 +1,13 @@
+diff --git a/node_modules/typescript-transform-paths/dist/visitor.js b/node_modules/typescript-transform-paths/dist/visitor.js
+index 4fb6475..6e2a314 100644
+--- a/node_modules/typescript-transform-paths/dist/visitor.js
++++ b/node_modules/typescript-transform-paths/dist/visitor.js
+@@ -86,7 +86,7 @@ function nodeVisitor(node) {
+                     return undefined; // No imports left, elide entire declaration
+                 importClause = updatedImportClause;
+             }
+-            return factory.updateImportDeclaration(node, node.decorators, node.modifiers, importClause, p);
++            return factory.updateImportDeclaration(node, node.decorators, node.modifiers, importClause, p, node.assertClause);
+         });
+     /**
+      * Update ExportDeclaration

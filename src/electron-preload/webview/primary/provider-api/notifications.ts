@@ -36,9 +36,9 @@ export const FETCH_NOTIFICATION$: FETCH_NOTIFICATION$_Type = (() => {
 
             setTimeout(() => {
                 if (skipNotification) {
-                    const url = typeof firstArg === "string"
-                        ? firstArg
-                        : firstArg.url;
+                    const url = typeof firstArg === "object" && "url" in firstArg
+                        ? firstArg.url
+                        : String(firstArg);
                     logger.verbose("fetch notification skipped", JSON.stringify({url}));
                     return;
                 }

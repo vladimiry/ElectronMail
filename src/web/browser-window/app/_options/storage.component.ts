@@ -15,15 +15,15 @@ import {State} from "src/web/browser-window/app/store/reducers/options";
     preserveWhitespaces: true,
 })
 export class StorageComponent {
-    password = new FormControl(
+    password = new FormControl<string | null>(
         null,
         Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
     );
-    newPassword = new FormControl(
+    newPassword = new FormControl<string | null>(
         null,
         Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
     );
-    newPasswordConfirm = new FormControl(null, [
+    newPasswordConfirm = new FormControl<string | null>(null, [
         Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
         // TODO make "controls match" to be "common/util" validator
         () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
@@ -42,15 +42,15 @@ export class StorageComponent {
         newPasswordConfirm: this.newPasswordConfirm,
     });
     encryptionPresetForm = new FormGroup({
-        password: new FormControl(
+        password: new FormControl<string | null>(
             null,
             Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
         ),
-        keyDerivation: new FormControl(
+        keyDerivation: new FormControl<string | null>(
             null,
             Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
         ),
-        encryption: new FormControl(
+        encryption: new FormControl<string | null>(
             null,
             Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
         ),
@@ -68,26 +68,33 @@ export class StorageComponent {
     }
 
     submit(): void {
-        this.store.dispatch(OPTIONS_ACTIONS.ChangeMasterPasswordRequest({
-            password: this.password.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-            newPassword: this.newPassword.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-        }));
+        const password = this.password.value;
+        const newPassword = this.newPassword.value;
+        if (!password || !newPassword) {
+            throw new Error(`Empty values not allowed: ${nameof.full(password)}, ${nameof.full(newPassword)}`);
+        }
+        this.store.dispatch(OPTIONS_ACTIONS.ChangeMasterPasswordRequest({password, newPassword}));
     }
 
     submitPresets(): void {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const keyDerivation = KEY_DERIVATION_PRESETS[this.encryptionPresetForm.controls.keyDerivation?.value];
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const encryption = ENCRYPTION_DERIVATION_PRESETS[this.encryptionPresetForm.controls.encryption?.value];
-
-        if (!keyDerivation || !encryption) {
-            throw new Error("Invalid keyDerivation/encryption values detected");
+        const keyDerivationPresetKey = this.encryptionPresetForm.controls.keyDerivation?.value;
+        const encryptionFormPresetKey = this.encryptionPresetForm.controls.encryption?.value;
+        if (!keyDerivationPresetKey || !encryptionFormPresetKey) {
+            throw new Error(`Empty values not allowed: ${nameof(keyDerivationPresetKey)}, ${nameof(encryptionFormPresetKey)}`);
         }
 
-        this.store.dispatch(OPTIONS_ACTIONS.ReEncryptSettings({
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            password: this.encryptionPresetForm.controls.password?.value,
-            encryptionPreset: {keyDerivation, encryption},
-        }));
+        {
+            const keyDerivation = KEY_DERIVATION_PRESETS[keyDerivationPresetKey];
+            const encryption = ENCRYPTION_DERIVATION_PRESETS[encryptionFormPresetKey];
+            const password = this.encryptionPresetForm.controls.password?.value;
+            if (!keyDerivation || !encryption || !password) {
+                throw new Error(`Empty values not allowed: ${nameof(keyDerivation)}, ${nameof(encryption)}, ${nameof(password)}`);
+            }
+
+            this.store.dispatch(OPTIONS_ACTIONS.ReEncryptSettings({
+                password,
+                encryptionPreset: {keyDerivation, encryption},
+            }));
+        }
     }
 }

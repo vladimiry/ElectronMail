@@ -42,6 +42,7 @@ const config = buildBaseWebConfig(
                             compact: false,
                             plugins: [
                                 linkerPlugin,
+                                "@babel/plugin-syntax-import-assertions",
                                 // always transform async/await to support zone.js thing
                                 "@babel/plugin-proposal-async-generator-functions",
                                 "@babel/plugin-transform-async-to-generator",

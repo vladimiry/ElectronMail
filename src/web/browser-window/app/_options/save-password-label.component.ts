@@ -19,7 +19,7 @@ export class SavePasswordLabelComponent implements OnInit, OnDestroy {
     readonly userDataDir = __METADATA__.electronLocations.userDataDir;
 
     @Input()
-    savePassword = false;
+    savePassword: boolean | null = false;
 
     keytarUnsupportedDetails = false;
 

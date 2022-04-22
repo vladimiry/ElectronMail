@@ -206,7 +206,12 @@ export class AccountEditComponent implements OnInit, OnDestroy {
             this.account$.subscribe((account) => {
                 this.account = account;
 
-                this.form.removeControl(((name: keyof Pick<typeof AccountEditComponent.prototype.controls, "login">) => name)("login"));
+                {
+                    const controlName: keyof Pick<typeof AccountEditComponent.prototype.controls, "login"> = "login";
+                    const removeControl = this.form.removeControl.bind(this.form);
+                    // @ts-expect-error eslint-disable-line @typescript-eslint/ban-ts-comment
+                    removeControl(controlName);
+                }
 
                 for (const prop of [
                     "customNotification",

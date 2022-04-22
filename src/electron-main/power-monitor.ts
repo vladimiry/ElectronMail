@@ -32,16 +32,14 @@ export async function setupIdleTimeLogOut({idleTimeLogOutSec}: Readonly<Pick<Con
         return;
     }
 
-    const {getIdleTime} = await import("desktop-idle");
-
     delete state.idle;
 
     state.clearIntervalId = setInterval(
         async () => {
-            const idleTime = getIdleTime();
-            const idle = idleTime >= idleTimeLogOutSec;
+            const systemIdleTime = powerMonitor.getSystemIdleTime();
+            const idle = systemIdleTime >= idleTimeLogOutSec;
 
-            logger.debug(JSON.stringify({idleTime, idleTimeLogOutSec, idle}));
+            logger.debug(JSON.stringify({systemIdleTime, idleTimeLogOutSec, idle}));
 
             if (!idle) {
                 delete state.idle;

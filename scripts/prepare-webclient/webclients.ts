@@ -280,7 +280,7 @@ async function executeBuildFlow(
                 await execShell(["yarn", ["install"], {cwd: repoDir}], {printStdOut: false});
             }
 
-            for (const patchFileName of (await import("patches/protonmail/meta.json")).default[repoType]) {
+            for (const patchFileName of (await import("../../patches/protonmail/meta.json", {assert: {type: "json"}})).default[repoType]) {
                 await applyPatch({
                     patchFile: path.join(CWD_ABSOLUTE_DIR, "./patches/protonmail", patchFileName),
                     cwd: repoDir,

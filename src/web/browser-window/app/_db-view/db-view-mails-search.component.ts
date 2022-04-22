@@ -42,10 +42,10 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
     readonly queryFormControlRefs!: QueryList<ElementRef>;
 
     readonly formControls = {
-        query: new FormControl(),
-        folders: new FormGroup({}),
+        query: new FormControl<string>(""),
+        folders: new FormGroup<{ [key in string]: FormControl<boolean> }>({}),
         allFoldersToggled: new FormControl(false),
-        sentDateAfter: new FormControl(),
+        sentDateAfter: new FormControl<string>(""),
         hasAttachments: new FormControl(false),
     } as const;
 
@@ -112,6 +112,8 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
     }
 
     ngOnInit(): void {
+        const removeFolderControl = this.formControls.folders.removeControl.bind(this.formControls.folders);
+        const addFolderControl = this.formControls.folders.addControl.bind(this.formControls.folders);
         this.folders$
             .pipe(takeUntil(this.ngOnDestroy$))
             .subscribe((folders) => {
@@ -119,14 +121,17 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
 
                 Object.keys(this.formControls.folders).forEach((name) => {
                     if (!folderIds.includes(name)) {
-                        this.formControls.folders.removeControl(name);
+                        // @ts-expect-error eslint-disable-line @typescript-eslint/ban-ts-comment
+                        removeFolderControl(name);
                     }
                 });
 
                 folders.forEach(({id}) => {
                     if (!this.formControls.folders.contains(id)) {
                         const selectedByDefault = !this.defaultUncheckedFolderIds.has(id);
-                        this.formControls.folders.addControl(id, new FormControl(selectedByDefault));
+                        const control = new FormControl(selectedByDefault);
+                        // @ts-expect-error eslint-disable-line @typescript-eslint/ban-ts-comment
+                        addFolderControl(id, control);
                     }
                 });
 
@@ -141,18 +146,15 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
         this.formControls.allFoldersToggled.valueChanges
             .pipe(takeUntil(this.ngOnDestroy$))
             .subscribe(() => {
-                const {value} = this.formControls.allFoldersToggled; // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-                Object
-                    .values(this.formControls.folders.controls)
-                    .forEach((control) => control.patchValue(value));
+                const value = Boolean(this.formControls.allFoldersToggled.value);
+                for (const control of Object.values(this.formControls.folders.controls)) {
+                    control.patchValue(value);
+                }
             });
     }
 
     resolveSelectedIds(): Unpacked<typeof DbViewMailsSearchComponent.prototype.selectedIds$> {
-        // eslint-disable-next-line prefer-destructuring, @typescript-eslint/no-unsafe-assignment
-        const value: Record<View.Folder["id"], boolean> = this.formControls.folders.value;
-
-        return Object.entries(value)
+        return Object.entries(this.formControls.folders.value)
             .filter(([, value]) => Boolean(value))
             .map(([key]) => key);
     }
@@ -176,9 +178,9 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
         this.store.dispatch(
             DB_VIEW_ACTIONS.FullTextSearchRequest({
                 ...this.webAccountPk,
-                query: this.formControls.query.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-                sentDateAfter: this.formControls.sentDateAfter.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-                hasAttachments: this.formControls.hasAttachments.value, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                query: this.formControls.query.value ?? "",
+                sentDateAfter: this.formControls.sentDateAfter.value ?? "",
+                hasAttachments: Boolean(this.formControls.hasAttachments.value),
                 folderIds: this.resolveSelectedIds(),
                 ...(this.codeEditorOpen && {codeFilter: this.codeFilter}),
             }),

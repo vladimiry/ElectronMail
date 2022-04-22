@@ -4,7 +4,7 @@
 
 name: "GitHub Actions CI"
 on: { push: { branches: [ master ] }, pull_request: { branches: [ master ] } }
-env: { ELECTRON_MAIL_NODE_VERSION: 16.13.x, PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 }
+env: { ELECTRON_MAIL_NODE_VERSION: 16, PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 }
 jobs:
   build-proton-clients:
     if: github.event_name == 'push'
@@ -47,7 +47,8 @@ jobs:
       - { name: envinfo, run: npx envinfo }
       - { name: install node modules, run: "pnpm install --frozen-lockfile" }
       # </common>
-      - { name: build, run: 'npm exec --package=npm-run-all -- npm-run-all lint build' }
+      - { name: build, run: 'npm exec --package=npm-run-all -- npm-run-all lint build', if: runner.os == 'macOS', env: {RUSTFLAGS: "-C link-args=-Wl,-undefined,dynamic_lookup"} }
+      - { name: build, run: 'npm exec --package=npm-run-all -- npm-run-all lint build', if: runner.os != 'macOS' }
       - { name: print ./app files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./app }
       - { name: upload artifact, uses: actions/upload-artifact@v2, with: { name: 'app-artifact-${{ runner.os }}', path: ./app, if-no-files-found: error } }
   package-app:

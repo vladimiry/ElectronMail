@@ -18,13 +18,11 @@ files:
 compression: normal
 asar: true
 asarUnpack:
-  - 'electron-main/**/*.node'
-  - '**/node_modules/desktop-idle/**/*'
-  - '**/node_modules/keytar/**/*'
-  - '**/node_modules/msgpackr-extract/**/*'
-  - '**/node_modules/msgpackr-extract-*/**/*'
-  - '**/node_modules/sodium-native/**/*'
-  - '**/node_modules/spellchecker/**/*'
+  - './app/electron-main/*.node'
+  - './node_modules/keytar/**/*'
+  - './node_modules/msgpackr-extract/**/*'
+  - './node_modules/sodium-native/**/*'
+  - './node_modules/spellchecker/**/*'
 afterPack: './scripts/electron-builder/hooks/afterPack/index.cjs'
 
 mac:

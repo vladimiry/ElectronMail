@@ -1,6 +1,6 @@
 {
   "*.ts": [
     "format-imports",
-    "pnpm run lint:ts:base:eslint -- --fix"
+    "pnpm run lint:ts:base:eslint --fix"
   ]
 }

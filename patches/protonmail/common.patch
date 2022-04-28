@@ -93,7 +93,7 @@ index 9aaa78a28..f3d24b47c 100644
 -    return anchor.click();
 +    window.dispatchEvent(
 +        new CustomEvent(
-+            "electron-mail:../../packages/shared/lib/helpers/browser.ts:openNewTab",
++            "electron-mail:packages/shared/lib/helpers/browser.ts:openNewTab",
 +            {detail: {url}},
 +        ),
 +    );

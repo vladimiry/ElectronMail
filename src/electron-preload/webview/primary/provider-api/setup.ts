@@ -31,14 +31,14 @@ export const setupProviderIntegration = (
         disableBrowserNotificationFeature(logger);
     }
 
-    IFRAME_NOTIFICATION$.subscribe(({iframeDocument}) => {
+    IFRAME_NOTIFICATION$.subscribe((iframeDocument) => {
         registerDocumentKeyDownEventListener(iframeDocument, logger);
         registerDocumentClickEventListener(iframeDocument, logger);
     });
 
     IFRAME_NOTIFICATION$
         .pipe(
-            mergeMap(({iframeDocument}) => {
+            mergeMap((iframeDocument) => {
                 const $readyState = iframeDocument.readyState !== "loading"
                     ? of(iframeDocument).pipe(
                         tap(() => logger.verbose(`"iframeDocument" resolved: readyState "${iframeDocument.readyState}"`)),

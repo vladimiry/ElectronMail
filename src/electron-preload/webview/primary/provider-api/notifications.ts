@@ -3,6 +3,7 @@ import {Observable, ReplaySubject} from "rxjs";
 import {curryFunctionMembers} from "src/shared/util";
 import {FETCH_NOTIFICATION_SKIP_SYMBOL} from "./const";
 import {ProtonApiError} from "src/electron-preload/webview/primary/types";
+import {ProtonRoosterEditorReadyEvent} from "src/electron-preload/webview/lib/custom-event";
 import {sanitizeProtonApiError} from "src/electron-preload/lib/util";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 
@@ -64,48 +65,13 @@ export const FETCH_NOTIFICATION$: FETCH_NOTIFICATION$_Type = (() => {
     return subject.asObservable();
 })();
 
-// TODO consider making composer iframe adding detection reactive by listening for "react-components/components/editor/SquireIframe.tsx"
-//      component mounting (more exactly by listening for calling "onReady" component prop)
-export const IFRAME_NOTIFICATION$ = new Observable<{ iframeDocument: Document }>(
+export const IFRAME_NOTIFICATION$ = new Observable<typeof ProtonRoosterEditorReadyEvent.prototype.detail.iframeDocument>(
     (subscribe) => {
-        const processAddedNode: (addedNode: Node | Element) => void = (addedNode) => {
-            if (
-                !("tagName" in addedNode)
-                ||
-                addedNode.tagName !== "DIV"
-                ||
-                !addedNode.classList.contains("composer")
-                ||
-                !addedNode.querySelector(".composer-container")
-            ) {
-                return;
-            }
-
-            const iframe = addedNode.querySelector("iframe");
-            const iframeDocument = (
-                iframe
-                &&
-                (
-                    iframe.contentDocument
-                    ||
-                    (iframe.contentWindow && iframe.contentWindow.document)
-                )
-            );
-
-            if (!iframeDocument) {
-                return;
-            }
-
-            subscribe.next({iframeDocument});
-        };
-
-        new MutationObserver((mutations) => {
-            for (const mutation of mutations) {
-                mutation.addedNodes.forEach(processAddedNode);
-            }
-        }).observe(
-            document,
-            {childList: true, subtree: true},
-        );
+        const args = [
+            ProtonRoosterEditorReadyEvent.eventType,
+            ({detail: {iframeDocument}}: Pick<typeof ProtonRoosterEditorReadyEvent.prototype, "detail">) => subscribe.next(iframeDocument),
+        ] as const;
+        window.addEventListener(...args);
+        return () => window.removeEventListener(...args);
     },
 );

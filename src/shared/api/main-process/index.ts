@@ -157,7 +157,7 @@ export const ENDPOINTS_DEFINITION = {
 
     findInPageNotification: ActionType.Observable<void, Electron.FoundInPageResult | { requestId: null }>(),
 
-    selectAccount: ActionType.Promise<{ databaseView?: boolean; webContentId: number } | { reset: true }>(),
+    selectAccount: ActionType.Promise<{ login: string, databaseView?: boolean, webContentId?: number } | { reset: true }>(),
 
     updateCheck: ActionType.Promise<void, { newReleaseItems: Array<{ title: string; url?: string; date: string }> }>(),
 

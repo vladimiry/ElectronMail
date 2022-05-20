@@ -1,6 +1,7 @@
 import {app, dialog, nativeTheme, shell} from "electron";
 import compareVersions from "compare-versions";
 import electronLog from "electron-log";
+import {equals} from "remeda";
 import fetch from "electron-fetch";
 import {first, map, startWith, switchMap} from "rxjs/operators";
 import {from, lastValueFrom, merge, of, throwError} from "rxjs";
@@ -125,21 +126,22 @@ export async function buildEndpoints(
             const prevSelectedAccount = ctx.selectedAccount;
             const newSelectedAccount = "reset" in args
                 ? undefined
-                : {
-                    webContentId: args.webContentId,
-                    databaseView: args.databaseView,
-                };
+                : args;
             const needToCloseFindInPageWindow = (
-                // reset - no accounts in the list
+                // reset: no accounts in the list
                 !newSelectedAccount
                 ||
+                // "find in page" is not available in "local store" mode (since this view currently doesn't have own "webContent")
                 // TODO figure how to hide webview from search while in database view mode
                 //      webview can't be detached from DOM as it gets reloaded when reattached
                 //      search is not available in database view mode until then
                 newSelectedAccount.databaseView
                 ||
-                // changed selected account
-                prevSelectedAccount && prevSelectedAccount.webContentId !== newSelectedAccount.webContentId
+                ( // changed selected account
+                    prevSelectedAccount
+                    &&
+                    !equals(prevSelectedAccount, newSelectedAccount)
+                )
             );
 
             if (needToCloseFindInPageWindow) {

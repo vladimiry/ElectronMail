@@ -137,7 +137,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
 
         this.subscription.add(
             combineLatest([
-                this.ngChangesObservable("webViewSrc"),
+                this.ngChangesObservable("webViewSrc").pipe(filter(Boolean)), // empty "src" shouldn't trigger webview adding
                 this.account$.pipe(map(({accountConfig: {login}}) => getWebViewPartition(login))),
             ]).pipe(
                 map(([src, partition]) => ({src, partition})),

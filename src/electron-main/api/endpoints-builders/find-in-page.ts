@@ -113,7 +113,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async findInPage({query, options}) {
-            if (!ctx.selectedAccount) {
+            if (!ctx.selectedAccount?.webContentId) {
                 return null;
             }
 
@@ -137,7 +137,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                 findInPageNotification = null;
             }
 
-            if (!ctx.selectedAccount) {
+            if (!ctx.selectedAccount?.webContentId) {
                 return of({requestId: null});
             }
 

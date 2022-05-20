@@ -39,8 +39,9 @@ export interface Context {
     readonly sessionStorage: SessionStorage;
     uiContext?: Promise<UIContext>;
     selectedAccount?: {
-        webContentId: number;
+        login: string;
         databaseView?: boolean;
+        webContentId?: number;
     };
     getSpellCheckController: () => SpellCheckController;
 }

@@ -4,8 +4,8 @@ import {
     ChangeDetectionStrategy, Component, ComponentRef, ElementRef, HostBinding, Input, NgZone, ViewChild, ViewContainerRef,
 } from "@angular/core";
 import {
-    concatMap, debounce, debounceTime, delayWhen, distinctUntilChanged, filter, first, map, mergeMap, pairwise, startWith, switchMap, take,
-    takeUntil, tap, withLatestFrom,
+    concatMap, debounceTime, delayWhen, distinctUntilChanged, filter, first, map, mergeMap, pairwise, startWith, switchMap, take, takeUntil,
+    tap, withLatestFrom,
 } from "rxjs/operators";
 import type {OnDestroy, OnInit} from "@angular/core";
 import {pick} from "remeda";
@@ -18,7 +18,7 @@ import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.ser
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {curryFunctionMembers, parseUrlOriginWithNullishCheck} from "src/shared/util";
 import {DbViewEntryComponent} from "src/web/browser-window/app/_db-view/db-view-entry.component";
-import {DbViewModuleResolve} from "src/web/browser-window/app/_accounts/db-view-module-resolve.service";
+import {DbViewModuleResolve} from "./db-view-module-resolve.service";
 import {DESKTOP_NOTIFICATION_ICON_URL} from "src/web/constants";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {getWebLogger, sha256} from "src/web/browser-window/util";
@@ -162,7 +162,6 @@ export class AccountComponent extends NgChangesObservableComponent implements On
         this.subscription.add(
             (() => {
                 let mountedDbViewEntryComponent: ComponentRef<DbViewEntryComponent> | undefined;
-                let selectedLoginResolvingDebouncedOnce = false;
 
                 return combineLatest([
                     this.account$.pipe(
@@ -184,16 +183,12 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                         ),
                     ]).pipe(
                         map(([selectedLogin]) => selectedLogin),
-                        debounce(() => {
-                            return selectedLoginResolvingDebouncedOnce
-                                ? of(null) // no debouncing-based delay needed
-                                : this.webViewsState.primary.domReady$ // delay until "primary webview" fires "dom-ready" event
-                                    .pipe(tap(() => selectedLoginResolvingDebouncedOnce = true));
-                        }),
                     ),
-                ]).pipe(
-                    withLatestFrom(this.webViewsState.primary.domReady$),
-                ).subscribe(async ([[{login, accountIndex, databaseView}, selectedLogin], primaryWebView]) => {
+                    this.webViewsState.primary.domReady$.pipe(
+                        startWith(null),
+                        take(2), // "null" value and then first "dom-read" value
+                    ),
+                ]).subscribe(async ([{login, accountIndex, databaseView}, selectedLogin, primaryWebView]) => {
                     const viewModeClass = databaseView ? "vm-database" : "vm-live";
 
                     if (this.viewModeClass !== viewModeClass) {
@@ -212,9 +207,10 @@ export class AccountComponent extends NgChangesObservableComponent implements On
                     }
 
                     await this.ipcMainClient("selectAccount")({
+                        login,
                         databaseView,
                         // WARN: "webView.getWebContentsId()" is available only after "webView.dom-ready" event triggering
-                        webContentId: primaryWebView.getWebContentsId(),
+                        webContentId: primaryWebView?.getWebContentsId(),
                     });
 
                     this.focusVisibleViewModeContainerElement(
@@ -515,8 +511,11 @@ export class AccountComponent extends NgChangesObservableComponent implements On
     }
 
     private focusVisibleViewModeContainerElement(
-        element: Partial<Pick<Electron.WebviewTag, "offsetParent" | "focus" | "executeJavaScript">>,
+        element: undefined | null | Partial<Pick<Electron.WebviewTag, "offsetParent" | "focus" | "executeJavaScript">>,
     ): void {
+        if (!element) {
+            return;
+        }
         timer(0, ONE_SECOND_MS / 10).pipe( // run test every 0.1 sec
             filter(() => Boolean(element.offsetParent) /* filter visible element */),
             take(1),

@@ -1,8 +1,7 @@
 <electron-mail-account-view-primary
-    *ngIf="webViewsState.primary.src$ | async; let src"
     (event)="onEventChild($event)"
     [account]="account"
-    [webViewSrc]="src"
+    [webViewSrc]="(webViewsState.primary.src$ | async) || ''"
 ></electron-mail-account-view-primary>
 
 <electron-mail-account-view-calendar
